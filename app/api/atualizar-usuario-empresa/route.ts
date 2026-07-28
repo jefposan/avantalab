@@ -212,8 +212,8 @@ export async function POST(request: Request) {
 
     if (loginNormalizado) {
       const { data: conflitoLogin, error: erroConflitoLogin } = await supabaseAdmin
-        .from('usuarios_empresa')
-        .select('id')
+        .from('usuarios_contas')
+        .select('user_id')
         .eq('login', loginNormalizado)
         .neq('user_id', usuarioAlvo.user_id)
         .limit(1)
@@ -229,9 +229,9 @@ export async function POST(request: Request) {
     }
 
     const { data: conflitoEmailVinculo, error: erroConflitoEmailVinculo } = await supabaseAdmin
-      .from('usuarios_empresa')
-      .select('id')
-      .ilike('email', emailEnviado)
+      .from('usuarios_contas')
+      .select('user_id')
+      .eq('email', emailEnviado)
       .neq('user_id', usuarioAlvo.user_id)
       .limit(1)
       .maybeSingle();
@@ -322,6 +322,26 @@ export async function POST(request: Request) {
     if (novaSenha && usuarioAlvo.user_id) {
       const { error: erroSenha } = await supabaseAdmin.auth.admin.updateUserById(usuarioAlvo.user_id, { password: novaSenha });
       if (erroSenha) return respostaErro('Os dados foram salvos, mas a senha nao pode ser atualizada.', 500, 'senha');
+    }
+
+    if (usuarioAlvo.user_id) {
+      const { error: erroDiretorio } = await supabaseAdmin
+        .from('usuarios_contas')
+        .update({
+          nome,
+          email: emailEnviado,
+          ...(loginNormalizado ? { login: loginNormalizado } : {}),
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('user_id', usuarioAlvo.user_id);
+
+      if (erroDiretorio) {
+        console.error('Erro ao sincronizar diretorio global:', erroDiretorio);
+        return respostaErro(
+          'Os dados foram salvos, mas o diretório global da conta não pôde ser sincronizado.',
+          500
+        );
+      }
     }
 
     return NextResponse.json({

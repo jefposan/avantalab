@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.24 -->
+<!-- ava-version: 1.6.1.25 -->
+
+> Revisão 1.6.1.25: diretório e exclusão segura de contas aplicados à Gestão
+> Web e Mobile; sem mudança operacional no AvantaVendas.
 
 > Revisão 1.6.1.24: explicações do card Saldo do mês aplicadas somente à Gestão
 > Web; sem impacto operacional no AvantaVendas.

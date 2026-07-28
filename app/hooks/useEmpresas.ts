@@ -553,7 +553,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       titulo: excluindoProprioAcesso ? 'Excluir minha conta' : 'Excluir usuário',
       mensagem: excluindoProprioAcesso
         ? 'Você está prestes a excluir o seu próprio acesso a esta empresa.\n\nApós a exclusão, você será desconectado e voltará para a tela de login.\n\nDeseja continuar?'
-        : 'Deseja excluir este usuário?\n\nEle perderá o acesso a esta empresa. Essa ação não poderá ser desfeita.',
+        : 'Deseja excluir este usuário?\n\nEle perderá o acesso a esta empresa. Se esta conta tiver sido criada neste perfil e não possuir outros vínculos ou histórico, o login também será excluído definitivamente. Caso contrário, somente este acesso será removido.',
       textoConfirmar: 'Excluir',
       acao: async () => {
         const resultado = await excluirUsuarioEmpresa(acessoId);
@@ -569,6 +569,14 @@ export function useEmpresas(deps: UseEmpresasDeps) {
         }
 
         await carregarUsuariosEmpresa();
+        abrirAviso(
+          resultado.data?.exclusaoTotal
+            ? 'Usuário excluído definitivamente'
+            : 'Acesso removido',
+          resultado.mensagem,
+          undefined,
+          'sucesso'
+        );
       },
     });
   };

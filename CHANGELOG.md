@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.1.25 - 2026-07-27
+
+- Gestão Web e Mobile: contas criadas em **Usuários e Permissões** passam a
+  integrar um diretório global consistente para pesquisa por e-mail ou login.
+- Ao excluir um usuário, o login é apagado definitivamente somente quando a
+  conta foi criada internamente e não possui outro perfil, vínculo ou histórico.
+  Nos demais casos, apenas o acesso ao perfil atual é removido.
+- **Adicionar usuário existente** volta a localizar contas preservadas mesmo
+  quando elas não possuem mais acesso a nenhum perfil financeiro.
+
 ## 1.6.1.24 - 2026-07-27
 
 - Gestão Web: as linhas **Inicial**, **Final** e **Previsto** do card **Saldo do

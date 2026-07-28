@@ -4988,7 +4988,8 @@
     var escolha = await solicitarDialogoSistemaMobile({
       titulo: 'Excluir usuário',
       rotulo: 'Acesso à empresa',
-      mensagem: 'Este usuário perderá o acesso a esta empresa. Deseja continuar?',
+      mensagem:
+        'Este usuário perderá o acesso a esta empresa. Se a conta foi criada neste perfil e não possui outros vínculos ou histórico, o login também será excluído definitivamente. Caso contrário, somente este acesso será removido.',
       variante: 'destrutiva',
       acoes: [
         { valor: 'cancelar', rotulo: 'Manter usuário', estilo: 'secundaria' },
@@ -5025,7 +5026,12 @@
     }
 
     await carregarUsuariosMobile();
-    mostrarToast('Usuario excluido.');
+    mostrarToast(
+      resultado.mensagem ||
+        (resultado.exclusaoTotal
+          ? 'Usuario e login excluidos definitivamente.'
+          : 'Acesso removido deste perfil.')
+    );
   }
 
   function alternarSenha(stateKey, inputId, buttonId) {

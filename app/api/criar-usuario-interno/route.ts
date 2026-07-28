@@ -135,8 +135,8 @@ export async function POST(request: Request) {
     }
 
     const { data: loginExistente, error: erroLoginExistente } = await supabaseAdmin
-      .from('usuarios_empresa')
-      .select('id, empresa_id')
+      .from('usuarios_contas')
+      .select('user_id')
       .eq('login', login)
       .limit(1)
       .maybeSingle();
@@ -155,8 +155,8 @@ export async function POST(request: Request) {
     }
 
     const { data: emailExistente, error: erroEmailExistente } = await supabaseAdmin
-      .from('usuarios_empresa')
-      .select('id, empresa_id')
+      .from('usuarios_contas')
+      .select('user_id')
       .ilike('email', email)
       .limit(1)
       .maybeSingle();
@@ -193,6 +193,11 @@ export async function POST(request: Request) {
         email,
         password: senha,
         email_confirm: true,
+        app_metadata: {
+          origem_avantalab: 'usuario_interno',
+          empresa_origem_id: empresaId,
+          criado_por: user.id,
+        },
         user_metadata: {
           nome,
           email,
@@ -224,6 +229,25 @@ export async function POST(request: Request) {
     500
   );
 }
+
+    const { error: erroContaGlobal } = await supabaseAdmin
+      .from('usuarios_contas')
+      .upsert({
+        user_id: usuarioCriado.user.id,
+        email,
+        nome,
+        login,
+        origem: 'usuario_interno',
+        empresa_origem_id: empresaId,
+        criado_por: user.id,
+        atualizado_em: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+    if (erroContaGlobal) {
+      console.error('Erro ao registrar conta global:', erroContaGlobal);
+      await supabaseAdmin.auth.admin.deleteUser(usuarioCriado.user.id);
+      return respostaErro('Não foi possível registrar a conta do usuário.', 500);
+    }
 
     const { data: vinculoCriado, error: erroVinculo } = await supabaseAdmin
       .from('usuarios_empresa')

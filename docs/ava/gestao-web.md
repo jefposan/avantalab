@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.24 -->
+<!-- ava-version: 1.6.1.25 -->
+
+> Revisão 1.6.1.25: em **Usuários e Permissões**, excluir apaga definitivamente
+> uma conta interna somente quando não existe outro vínculo, perfil ou histórico;
+> caso contrário, remove apenas o acesso atual e mantém a conta pesquisável por
+> e-mail ou login em **Adicionar usuário existente**.
 
 > Revisão 1.6.1.24: no card **Saldo do mês**, as linhas **Inicial**, **Final** e
 > **Previsto** explicam o cálculo de cada valor em um tooltip que acompanha o
@@ -383,6 +388,11 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   existente** para vinculá-la ao perfil. E-mail e login são conferidos no
   servidor antes de salvar; um erro mantém o preenchimento e leva o cursor ao
   campo que precisa de atenção.
+- Ao excluir um usuário criado dentro do perfil, o login é apagado
+  definitivamente somente se a conta não possuir outro perfil, vínculo ou
+  histórico no sistema. Caso exista qualquer dependência, somente o acesso ao
+  perfil atual é removido; a conta continua disponível em **Adicionar usuário
+  existente** por e-mail ou login.
 - Confirmações destrutivas da Administração e dos gerenciadores de conteúdo
   usam o card visual do sistema; fechar, voltar ou pressionar Esc cancela sem
   alterar dados.

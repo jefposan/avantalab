@@ -97,33 +97,95 @@ export async function POST(request: Request) {
       );
     }
 
-    const ehUsuarioInterno =
-      usuarioAlvo.email?.endsWith('@usuarios.avantalab.local') ||
-      usuarioAlvo.email?.includes('@usuarios.avantalab.local');
+    if (usuarioAlvo.perfil === 'gestor_master') {
+      const { count, error: erroContagem } = await supabaseAdmin
+        .from('usuarios_empresa')
+        .select('id', { count: 'exact', head: true })
+        .eq('empresa_id', usuarioAlvo.empresa_id)
+        .eq('perfil', 'gestor_master')
+        .eq('status', 'ativo');
 
-    let podeExcluirAuthInterno = Boolean(ehUsuarioInterno && usuarioAlvo.user_id);
-
-    if (podeExcluirAuthInterno && usuarioAlvo.user_id) {
-      const { data: outrosVinculos, error: erroOutrosVinculos } =
-        await supabaseAdmin
-          .from('usuarios_empresa')
-          .select('id')
-          .eq('user_id', usuarioAlvo.user_id)
-          .neq('id', acessoId)
-          .limit(1);
-
-      if (erroOutrosVinculos) {
-        console.error(
-          'Erro ao verificar outros vinculos do usuario:',
-          erroOutrosVinculos
-        );
+      if (erroContagem) {
+        console.error('Erro ao contar gestores master:', erroContagem);
         return respostaErro(
-          'Nao foi possivel verificar os acessos deste usuario.',
+          'Não foi possível validar os gestores master.',
           500
         );
       }
 
-      podeExcluirAuthInterno = (outrosVinculos || []).length === 0;
+      if ((count || 0) <= 1) {
+        return respostaErro(
+          'A empresa precisa manter pelo menos um gestor master ativo.',
+          403
+        );
+      }
+    }
+
+    const { data: contaGlobal, error: erroContaGlobal } = usuarioAlvo.user_id
+      ? await supabaseAdmin
+          .from('usuarios_contas')
+          .select('origem')
+          .eq('user_id', usuarioAlvo.user_id)
+          .maybeSingle()
+      : { data: null, error: null };
+
+    if (erroContaGlobal) {
+      console.error('Erro ao consultar a conta global:', erroContaGlobal);
+      return respostaErro(
+        'Não foi possível verificar os outros vínculos deste usuário.',
+        500
+      );
+    }
+
+    let auditoria = {
+      pode_excluir_total: false,
+      bloqueios: [] as Array<{ origem?: string; quantidade?: number }>,
+    };
+
+    if (usuarioAlvo.user_id) {
+      const { data, error: erroAuditoria } = await supabaseAdmin.rpc(
+        'auditar_exclusao_total_usuario_rpc',
+        {
+          p_user_id: usuarioAlvo.user_id,
+          p_acesso_ignorado: acessoId,
+        }
+      );
+
+      if (erroAuditoria) {
+        console.error('Erro ao auditar vínculos do usuário:', erroAuditoria);
+        return respostaErro(
+          'Não foi possível verificar todos os vínculos deste usuário. Nenhuma alteração foi realizada.',
+          500
+        );
+      }
+
+      auditoria = data || auditoria;
+    }
+
+    const contaCriadaInternamente =
+      contaGlobal?.origem === 'usuario_interno';
+    const podeExcluirTotal =
+      Boolean(usuarioAlvo.user_id) &&
+      contaCriadaInternamente &&
+      auditoria.pode_excluir_total === true;
+
+    if (podeExcluirTotal && usuarioAlvo.user_id) {
+      const { error: erroExcluirAuth } =
+        await supabaseAdmin.auth.admin.deleteUser(usuarioAlvo.user_id);
+
+      if (!erroExcluirAuth) {
+        return NextResponse.json({
+          erro: false,
+          exclusaoTotal: true,
+          mensagem:
+            'Usuário e login excluídos definitivamente. O e-mail e o login estão livres para novo cadastro.',
+        });
+      }
+
+      console.error(
+        'Erro ao excluir conta global; preservando o login:',
+        erroExcluirAuth
+      );
     }
 
     const { error: erroExcluirVinculo } = await supabaseAdmin
@@ -136,24 +198,11 @@ export async function POST(request: Request) {
       return respostaErro('Não foi possível excluir o usuário da empresa.', 500);
     }
 
-    if (podeExcluirAuthInterno && usuarioAlvo.user_id) {
-      const { error: erroExcluirAuth } = await supabaseAdmin.auth.admin.deleteUser(
-        usuarioAlvo.user_id
-      );
-
-      if (erroExcluirAuth) {
-        console.error('Erro ao excluir usuário interno do Auth:', erroExcluirAuth);
-
-        return respostaErro(
-          'O usuário foi removido da empresa, mas não foi possível remover o login interno.',
-          500
-        );
-      }
-    }
-
     return NextResponse.json({
       erro: false,
-      mensagem: 'Usuário excluído com sucesso.',
+      exclusaoTotal: false,
+      mensagem:
+        'Acesso removido deste perfil. A conta foi preservada porque possui outros vínculos, perfil próprio ou histórico no sistema.',
     });
   } catch (error) {
     console.error('Erro inesperado ao excluir usuário interno:', error);

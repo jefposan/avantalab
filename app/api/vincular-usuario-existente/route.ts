@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
 import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
+import { buscarContaAuthPorEmail } from '../../lib/usuario-disponibilidade-servidor';
 
 type PerfilUsuario =
   | 'gestor_master'
@@ -33,30 +34,64 @@ function normalizarTexto(valor: unknown) {
 async function buscarUsuarioPorTermo(supabaseAdmin: any, termo: string) {
   const termoLimpo = normalizarTexto(termo);
 
-  const { data: porEmail, error: erroEmail } = await supabaseAdmin
-    .from('usuarios_empresa')
-    .select('id, user_id, nome, email, login')
+  const { data: contaPorEmail, error: erroEmail } = await supabaseAdmin
+    .from('usuarios_contas')
+    .select('user_id, nome, email, login')
     .eq('email', termoLimpo)
-    .limit(10);
+    .maybeSingle();
 
   if (erroEmail) {
-    console.error('Erro ao buscar usuario por email:', erroEmail);
+    console.error('Erro ao buscar usuario por email no diretorio global:', erroEmail);
     throw new Error('Nao foi possivel pesquisar o usuario.');
   }
 
-  const { data: porLogin, error: erroLogin } = await supabaseAdmin
-    .from('usuarios_empresa')
-    .select('id, user_id, nome, email, login')
-    .eq('login', termoLimpo)
-    .limit(10);
+  let usuario = contaPorEmail;
 
-  if (erroLogin) {
-    console.error('Erro ao buscar usuario por login:', erroLogin);
-    throw new Error('Nao foi possivel pesquisar o usuario.');
+  if (!usuario) {
+    const { data: contaPorLogin, error: erroLogin } = await supabaseAdmin
+      .from('usuarios_contas')
+      .select('user_id, nome, email, login')
+      .eq('login', termoLimpo)
+      .maybeSingle();
+
+    if (erroLogin) {
+      console.error(
+        'Erro ao buscar usuario por login no diretorio global:',
+        erroLogin
+      );
+      throw new Error('Nao foi possivel pesquisar o usuario.');
+    }
+
+    usuario = contaPorLogin;
   }
 
-  const candidatos = [...(porEmail || []), ...(porLogin || [])];
-  const usuario = candidatos.find((item) => item.user_id);
+  if (!usuario && termoLimpo.includes('@')) {
+    const contaAuth = await buscarContaAuthPorEmail(supabaseAdmin, termoLimpo);
+    if (contaAuth) {
+      const { data: authCompleto } = await supabaseAdmin.auth.admin.getUserById(
+        contaAuth.id
+      );
+      const metadados = authCompleto?.user?.user_metadata || {};
+      const contaRecuperada = {
+        user_id: contaAuth.id,
+        nome:
+          metadados.nome ||
+          metadados.full_name ||
+          metadados.name ||
+          termoLimpo.split('@')[0],
+        email: termoLimpo,
+        login: metadados.login || null,
+      };
+      const { error: erroRecuperacao } = await supabaseAdmin
+        .from('usuarios_contas')
+        .upsert(contaRecuperada, { onConflict: 'user_id' });
+      if (erroRecuperacao) {
+        console.error('Erro ao recuperar conta global:', erroRecuperacao);
+        throw new Error('Nao foi possivel preparar esta conta para vinculo.');
+      }
+      usuario = contaRecuperada;
+    }
+  }
 
   if (!usuario) return null;
 
@@ -242,7 +277,7 @@ export async function POST(request: Request) {
 
       const { data: usuarioFonte, error: erroUsuarioFonte } =
         await supabaseAdmin
-          .from('usuarios_empresa')
+          .from('usuarios_contas')
           .select('user_id, nome, email, login')
           .eq('user_id', userId)
           .limit(1)

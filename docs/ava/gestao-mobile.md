@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.24 -->
+<!-- ava-version: 1.6.1.25 -->
+
+> Revisão 1.6.1.25: em **Usuários**, a exclusão apaga uma conta interna somente
+> quando não existe outro vínculo, perfil ou histórico; contas preservadas
+> continuam pesquisáveis por e-mail ou login em **Adicionar usuário existente**.
 
 > Revisão 1.6.1.24: explicações do card Saldo do mês aplicadas somente à Gestão
 > Web; sem impacto operacional na Gestão Mobile.
@@ -379,6 +383,10 @@ deve usar os nomes do menu e da barra inferior do celular.
   já existir, use **Adicionar usuário existente**. Antes de salvar, o servidor
   verifica e-mail e login; um erro mantém os campos e leva o cursor ao dado que
   precisa ser corrigido.
+- Ao excluir um usuário criado dentro do perfil, o login é apagado
+  definitivamente apenas quando não há outro perfil, vínculo ou histórico.
+  Caso contrário, somente o acesso atual é removido e a conta permanece
+  disponível em **Adicionar usuário existente**.
 - Em **Editar dados cadastrais** e na conclusão obrigatória de um perfil Empresa,
   o CNPJ fica ao lado de **Buscar**. A consulta cadastral preenche somente os
   campos compatíveis que estiverem vazios e informa quantos dados existentes

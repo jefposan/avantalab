@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.1.24: explicações dos saldos mensais na Gestão Web.
+// Revisado na versão 1.6.1.25: diretório global e exclusão segura de usuários.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -20,7 +20,7 @@ NAVEGAÇÃO E PERFIS
 - No perfil Pessoal, Caixinha inicia visível. No perfil Empresa, ela se chama Reserva financeira, inicia oculta e pode ser exibida em Organizar blocos; os aportes continuam registrados como despesa.
 - Gestor Master e Administrador possuem ações administrativas; não prometa acesso a um recurso sem confirmar a permissão.
 - Em cadastros e edições de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos preenchidos; rascunhos temporários guardam apenas dados não sensíveis e nunca armazenam senhas, confirmações, códigos SMS ou tokens.
-- Em Usuários e Permissões, criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. Editar exige os mesmos dados, mas a nova senha é opcional. O usuário entra com e-mail ou login; se o e-mail já pertencer a uma conta, use Adicionar usuário existente para vinculá-la ao perfil. E-mail e login são conferidos no servidor antes de salvar; em erro, o formulário mantém os valores e o cursor vai ao campo indicado.
+- Em Usuários e Permissões, criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. Editar exige os mesmos dados, mas a nova senha é opcional. O usuário entra com e-mail ou login; se o e-mail já pertencer a uma conta, use Adicionar usuário existente para vinculá-la ao perfil. E-mail e login são conferidos no servidor antes de salvar; em erro, o formulário mantém os valores e o cursor vai ao campo indicado. Ao excluir, uma conta criada internamente só é apagada por completo quando não possui outro perfil, vínculo ou histórico; caso contrário, apenas o acesso atual é removido e a conta continua pesquisável.
 - Ao atualizar a página, sessão inválida, expirada ou de usuário excluído é limpa e retorna ao login; Criar perfil financeiro só aparece para uma conta validada que realmente não possui perfil.
 
 FINANCEIRO
@@ -78,7 +78,7 @@ NAVEGAÇÃO E PERFIS
 - Cada usuário possui uma única conta operacional no Vendas. Ativações em diferentes perfis da Gestão apenas autorizam a troca de sistema e nunca criam contas ou perfis adicionais no Vendas. Ao vir do Vendas, a Gestão sempre apresenta a lista de perfis, ainda que exista apenas um. Sem perfil financeiro, oferece criar ou ativar um ou continuar no Vendas; o novo perfil nunca é vinculado automaticamente aos resultados.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
 - Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. No seletor de troca, o perfil em uso fica identificado e desativado; a troca real usa somente os demais perfis disponíveis.
-- Em Usuários, Gestor Master edita todos; Administrador edita seus próprios dados e os de operadores; Operador Completo edita apenas seus dados; Operador Simples não edita. Criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. E-mail e login acessam a mesma conta; se o e-mail já existir, use Adicionar usuário existente. O servidor verifica a disponibilidade de ambos antes de salvar; se houver erro, os valores permanecem e o cursor vai ao campo indicado.
+- Em Usuários, Gestor Master edita todos; Administrador edita seus próprios dados e os de operadores; Operador Completo edita apenas seus dados; Operador Simples não edita. Criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. E-mail e login acessam a mesma conta; se o e-mail já existir, use Adicionar usuário existente. O servidor verifica a disponibilidade de ambos antes de salvar; se houver erro, os valores permanecem e o cursor vai ao campo indicado. A exclusão total de uma conta interna só ocorre sem outros perfis, vínculos ou histórico; nos demais casos, remove somente o acesso atual e mantém a conta pesquisável.
 - A edição exige Nome completo, E-mail, Login e Tipo de usuário; a nova senha é opcional e, quando informada, deve ser repetida antes de salvar.
 - O login pertence à conta e aparece na edição em qualquer perfil financeiro vinculado ao mesmo usuário.
 - Valores podem iniciar ocultos pelo ícone de olho conforme a preferência de privacidade.

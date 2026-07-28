@@ -1588,8 +1588,10 @@ export async function excluirUsuarioEmpresa(acessoId: string) {
 
   return {
     erro: false,
-    mensagem: '',
-    data: true,
+    mensagem: resultado.mensagem || 'Usuário excluído com sucesso.',
+    data: {
+      exclusaoTotal: resultado.exclusaoTotal === true,
+    },
   };
 }
 export async function criarEmpresaInicial(nomeEmpresa: string) {
