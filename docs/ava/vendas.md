@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.41 -->
+<!-- ava-version: 1.6.1.42 -->
+
+> Revisão 1.6.1.42: em Configurações > Integração com Gestão, Desvincular perfil
+> financeiro fica mais afastado dos controles de envio e tem altura mais compacta.
 
 > Revisão 1.6.1.41: refinamento de hover no Relatório Contábil da Gestão Web;
 > sem impacto operacional no AvantaVendas.

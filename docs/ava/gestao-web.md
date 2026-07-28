@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.41 -->
+<!-- ava-version: 1.6.1.42 -->
+
+> Revisão 1.6.1.42: ajuste visual no botão Desvincular perfil financeiro do
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.41: o hover das linhas do Relatório Contábil usa cinza ainda
 > mais claro.

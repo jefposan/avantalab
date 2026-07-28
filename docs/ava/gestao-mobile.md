@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.41 -->
+<!-- ava-version: 1.6.1.42 -->
+
+> Revisão 1.6.1.42: ajuste visual no botão Desvincular perfil financeiro do
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.41: refinamento de hover no Relatório Contábil da Gestão Web;
 > sem impacto operacional na Gestão Mobile.

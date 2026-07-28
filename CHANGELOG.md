@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.42 - 2026-07-28
+
+- AvantaVendas: o botão Desvincular perfil financeiro ganha respiro em relação
+  aos controles de integração e altura visual mais compacta.
+
 ## 1.6.1.41 - 2026-07-27
 
 - Relatório Contábil: o hover das linhas recebe tom de cinza ainda mais claro.
