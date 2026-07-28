@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Empresa, Recebimento, SituacaoRecebimento, Subempresa } from './types';
-import { formatarData, formatarDataHora, formatarMoeda, limitesDoMes, rotuloFormaPagamento, rotuloSituacao } from './helpers';
+import { formatarMoeda, limitesDoMes, rotuloFormaPagamento, rotuloSituacao } from './helpers';
 import type { ComprovanteRecebimento } from '../data/repo';
 import BotaoComprovante from './BotaoComprovante';
 
@@ -22,6 +22,23 @@ type Props = {
 const SITUACOES: SituacaoRecebimento[] = [
   'aguardando_conferencia', 'baixado', 'recebido_a_menor', 'recebido_a_maior', 'em_atraso', 'devolvido_para_correcao',
 ];
+
+function formatarDataCurta(iso: string | null): string {
+  if (!iso) return '—';
+  const [ano, mes, dia] = iso.split('T')[0].split('-');
+  return `${dia}/${mes}/${ano.slice(-2)}`;
+}
+
+function formatarDataHoraCurta(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 export default function ListaRecebimentos({ chaveMes, empresas, subempresas, colaboradores, recebimentos, darkMode, podeEstornar, onEstornar, onObterComprovante }: Props) {
   const [fEmpresa, setFEmpresa] = useState('');
@@ -90,7 +107,7 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
 
   return (
     <>
-    <div>
+    <div className={styles.listaRecebimentos}>
       <div className={styles.filtersRow}>
         <div className={styles.recebimentosPeriodo} aria-label="Período dos recebimentos">
           <span className={styles.recebimentosPeriodoTitulo}>Selecione o período</span>
@@ -139,32 +156,32 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
         <table className={`${styles.table} ${styles.tabelaRecebimentos} ${podeEstornar ? styles.tabelaRecebimentosComAcao : ''}`}>
           <thead>
             <tr>
-              <th>Empresa/local</th><th>Cliente</th><th>Vencimento</th><th>Combinado</th><th>Recebido</th>
+              <th>Empresa/local</th><th>Vencimento</th><th>Valor</th><th>Recebido</th>
               <th>Diferença</th><th>Recebido em</th><th>Recebido por</th><th>Pagamento</th><th>Situação</th><th>Comprovante</th>{podeEstornar && <th>Ação</th>}
             </tr>
           </thead>
           <tbody>
             {filtrados.length === 0 ? (
-              <tr><td colSpan={podeEstornar ? 12 : 11} className={styles.muted} style={{ padding: 16 }}>Nenhum recebimento para os filtros.</td></tr>
+              <tr className={styles.tabelaLinhaVazia}><td colSpan={podeEstornar ? 11 : 10} className={styles.muted} style={{ padding: 16 }}>Nenhum recebimento para os filtros.</td></tr>
             ) : filtrados.map((r) => {
               const rot = rotuloSituacao(r.situacao);
               const dif = (r.valorRecebido ?? 0) - r.valorCombinado;
+              const recebimentoPodeSerEstornado = r.valorRecebido != null && r.recebidoEm != null;
               return (
                 <tr key={r.id}>
-                  <td style={{ fontWeight: 700 }}>{nomeEmpresa(r.empresaId)}</td>
-                  <td>{nomeSub(r.subempresaId)}</td>
-                  <td>{formatarData(r.vencimento)}</td>
-                  <td>{formatarMoeda(r.valorCombinado)}</td>
-                  <td>{r.valorRecebido == null ? '—' : formatarMoeda(r.valorRecebido)}</td>
-                  <td style={{ color: r.valorRecebido == null ? '#94a3b8' : dif === 0 ? '#166534' : dif < 0 ? '#b45309' : '#1e40af' }}>
+                  <td data-label="Empresa/local" style={{ fontWeight: 700 }}>{nomeEmpresa(r.empresaId)}</td>
+                  <td data-label="Vencimento">{formatarDataCurta(r.vencimento)}</td>
+                  <td data-label="Valor">{formatarMoeda(r.valorCombinado)}</td>
+                  <td data-label="Recebido">{r.valorRecebido == null ? '—' : formatarMoeda(r.valorRecebido)}</td>
+                  <td data-label="Diferença" style={{ color: r.valorRecebido == null ? '#94a3b8' : dif === 0 ? '#166534' : dif < 0 ? '#b45309' : '#1e40af' }}>
                     {r.valorRecebido == null ? '—' : formatarMoeda(dif)}
                   </td>
-                  <td style={{ fontSize: 12 }}>{formatarDataHora(r.recebidoEm)}</td>
-                  <td>{nomeColab(r.colaboradorId)}</td>
-                  <td>{rotuloFormaPagamento(r.formaPagamento)}</td>
-                  <td><span className={styles.badge} style={{ background: rot.fundo, color: rot.cor }}>{rot.texto}</span></td>
-                  <td>{r.temComprovante ? <BotaoComprovante lancamentoId={r.id} onObter={onObterComprovante} compacto darkMode={darkMode} /> : '—'}</td>
-                  {podeEstornar && <td>{r.situacao === 'baixado' && <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={() => abrirEstorno(r)}>Estornar</button>}</td>}
+                  <td data-label="Recebido em" style={{ fontSize: 12 }}>{formatarDataHoraCurta(r.recebidoEm)}</td>
+                  <td data-label="Recebido por">{nomeColab(r.colaboradorId)}</td>
+                  <td data-label="Pagamento">{rotuloFormaPagamento(r.formaPagamento)}</td>
+                  <td data-label="Situação"><span className={styles.badge} style={{ background: rot.fundo, color: rot.cor }}>{rot.texto}</span></td>
+                  <td data-label="Comprovante">{r.temComprovante ? <BotaoComprovante lancamentoId={r.id} onObter={onObterComprovante} compacto darkMode={darkMode} /> : '—'}</td>
+                  {podeEstornar && <td data-label="Ação">{recebimentoPodeSerEstornado && <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={() => abrirEstorno(r)}>Estornar</button>}</td>}
                 </tr>
               );
             })}
@@ -176,7 +193,7 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
       <div className={styles.overlay} role="presentation" onClick={() => !estornando && setEstornoPendente(null)}>
         <div className={styles.comprovante} role="dialog" aria-modal="true" aria-labelledby="estorno-titulo" onClick={(event) => event.stopPropagation()}>
           <h3 id="estorno-titulo" style={{ fontWeight: 800, fontSize: 17, margin: 0 }}>Estornar recebimento?</h3>
-          <p className={styles.muted} style={{ margin: '6px 0 14px' }}>A baixa será desfeita e a cobrança voltará para a situação aberta correspondente.</p>
+          <p className={styles.muted} style={{ margin: '6px 0 14px' }}>O recebimento será desfeito e a cobrança voltará para a situação aberta correspondente.</p>
           <div className={styles.readonlyBox} style={{ textAlign: 'left', marginBottom: 12 }}>
             <div className={styles.readonlyRow}><span>Cliente</span><span>{nomeSub(estornoPendente.subempresaId)}</span></div>
             <div className={styles.readonlyRow}><span>Valor</span><span>{formatarMoeda(estornoPendente.valorRecebido ?? estornoPendente.valorCombinado)}</span></div>

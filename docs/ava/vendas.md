@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.25 -->
+<!-- ava-version: 1.6.1.26 -->
+
+> Revisão 1.6.1.26: responsividade e estorno ampliado na administração web de
+> Recebimentos Presenciais; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.25: diretório e exclusão segura de contas aplicados à Gestão
 > Web e Mobile; sem mudança operacional no AvantaVendas.

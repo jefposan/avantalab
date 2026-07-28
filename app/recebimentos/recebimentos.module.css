@@ -602,36 +602,166 @@
   table-layout: fixed;
 }
 .tabelaRecebimentos th,
-.tabelaRecebimentos td { overflow-wrap: anywhere; }
+.tabelaRecebimentos td {
+  overflow-wrap: normal;
+  word-break: normal;
+}
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(1) { width: 14%; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(2) { width: 12%; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(3) { width: 8%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(2) { width: 9%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(3),
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(4),
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(5),
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(6) { width: 8%; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(7),
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(8) { width: 10%; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(9) { width: 8%; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(10) { width: 9%; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(11) { width: 5%; }
-.tabelaRecebimentosComAcao th:nth-child(1) { width: 12%; }
-.tabelaRecebimentosComAcao th:nth-child(2) { width: 10%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(5) { width: 9%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(6),
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(7) { width: 11%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(8) { width: 9%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(9) { width: 11%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(10) { width: 8%; }
+.tabelaRecebimentosComAcao th:nth-child(1) { width: 11%; }
+.tabelaRecebimentosComAcao th:nth-child(2) { width: 8%; }
 .tabelaRecebimentosComAcao th:nth-child(3),
 .tabelaRecebimentosComAcao th:nth-child(4),
-.tabelaRecebimentosComAcao th:nth-child(5),
-.tabelaRecebimentosComAcao th:nth-child(6) { width: 7%; }
-.tabelaRecebimentosComAcao th:nth-child(7),
+.tabelaRecebimentosComAcao th:nth-child(5) { width: 8%; }
+.tabelaRecebimentosComAcao th:nth-child(6) { width: 10%; }
+.tabelaRecebimentosComAcao th:nth-child(7) { width: 9%; }
 .tabelaRecebimentosComAcao th:nth-child(8) { width: 9%; }
-.tabelaRecebimentosComAcao th:nth-child(9) { width: 8%; }
-.tabelaRecebimentosComAcao th:nth-child(10) { width: 8%; }
-.tabelaRecebimentosComAcao th:nth-child(11) { width: 5%; }
-.tabelaRecebimentosComAcao th:nth-child(12) { width: 6%; }
+.tabelaRecebimentosComAcao th:nth-child(9) { width: 12%; }
+.tabelaRecebimentosComAcao th:nth-child(10) { width: 10%; }
+.tabelaRecebimentosComAcao th:nth-child(11) { width: 7%; }
+.tabelaRecebimentos th:nth-child(n+2):nth-child(-n+6),
+.tabelaRecebimentos td:nth-child(n+2):nth-child(-n+6),
+.tabelaRecebimentos th:nth-child(8),
+.tabelaRecebimentos td:nth-child(8) { white-space: nowrap; }
+.tabelaRecebimentos th:nth-child(9),
+.tabelaRecebimentos td:nth-child(9),
 .tabelaRecebimentos th:nth-child(10),
 .tabelaRecebimentos td:nth-child(10),
 .tabelaRecebimentos th:nth-child(11),
-.tabelaRecebimentos td:nth-child(11),
-.tabelaRecebimentos th:nth-child(12),
-.tabelaRecebimentos td:nth-child(12) { text-align: center; }
+.tabelaRecebimentos td:nth-child(11) { text-align: center; }
+.tabelaLinhaVazia td { text-align: left !important; }
+
+/* A listagem responde à largura efetiva do AvantaCard, não à largura total
+   do monitor. Em áreas intermediárias, cada lançamento vira uma grade de
+   leitura em duas linhas e preserva todos os dados sem esmagar colunas. */
+.listaRecebimentos {
+  container: recebimentos-lista / inline-size;
+}
+
+@container recebimentos-lista (max-width: 1319px) {
+  .listaRecebimentos .filtersRow {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+  }
+  .listaRecebimentos .recebimentosPeriodo { grid-column: span 2; }
+  .listaRecebimentos .filterSelect {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .listaRecebimentos .tableWrap { overflow-x: visible; }
+  .listaRecebimentos .tabelaRecebimentos,
+  .listaRecebimentos .tabelaRecebimentos tbody {
+    display: block;
+    width: 100%;
+  }
+  .listaRecebimentos .tabelaRecebimentos thead { display: none; }
+  .listaRecebimentos .tabelaRecebimentos tbody {
+    display: grid;
+    gap: 8px;
+  }
+  .listaRecebimentos .tabelaRecebimentos tbody tr {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .listaRecebimentos .tabelaRecebimentos td {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 10px;
+    border-bottom: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .listaRecebimentos .tabelaRecebimentos td::before {
+    content: attr(data-label);
+    color: #64748b;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(1) { grid-column: span 4; }
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(2),
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(3),
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(4),
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(5) { grid-column: span 2; }
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(6),
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(7),
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(8),
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(10) { grid-column: span 2; }
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(9) { grid-column: span 4; }
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(10) {
+    grid-column: span 2;
+    align-items: center;
+    text-align: center;
+  }
+  .listaRecebimentos .tabelaRecebimentosComAcao td:nth-child(9) { grid-column: span 3; }
+  .listaRecebimentos .tabelaRecebimentosComAcao td:nth-child(10) { grid-column: span 1; }
+  .listaRecebimentos .tabelaRecebimentosComAcao td:nth-child(11) {
+    grid-column: span 2;
+    align-items: center;
+    text-align: center;
+  }
+  .listaRecebimentos .tabelaRecebimentos .tabelaLinhaVazia {
+    display: block;
+  }
+  .listaRecebimentos .tabelaLinhaVazia td {
+    display: block;
+    width: 100%;
+  }
+  .listaRecebimentos .tabelaLinhaVazia td::before { content: none; }
+}
+
+@container recebimentos-lista (max-width: 900px) {
+  .listaRecebimentos .recebimentosPeriodo { grid-column: 1 / -1; }
+}
+
+@container recebimentos-lista (max-width: 680px) {
+  .listaRecebimentos .filtersRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .listaRecebimentos .recebimentosPeriodo { grid-column: span 2; }
+  .listaRecebimentos .tabelaRecebimentos tbody tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .listaRecebimentos .tabelaRecebimentos td:nth-child(n) {
+    grid-column: span 1;
+  }
+}
+
+@container recebimentos-lista (max-width: 480px) {
+  .listaRecebimentos .filtersRow,
+  .listaRecebimentos .tabelaRecebimentos tbody tr {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .listaRecebimentos .recebimentosPeriodo { grid-column: span 1; }
+  .listaRecebimentos .recebimentosDatas {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .listaRecebimentos .filtroData,
+  .listaRecebimentos .filtroData .filterSelect { width: 100%; }
+}
 .tabelaVencimentos {
   min-width: 810px;
   table-layout: fixed;
@@ -1754,6 +1884,11 @@
 .darkScope .table th { border-bottom-color: #475569; color: #94a3b8; }
 .darkScope .table td { border-bottom-color: #1e293b; color: #e2e8f0; }
 .darkScope .table tbody tr:hover td { background: #17263a; }
+.darkScope .tabelaRecebimentos tbody tr {
+  border-color: #334155;
+  background: #111827;
+}
+.darkScope .tabelaRecebimentos td::before { color: #94a3b8; }
 .darkScope .prazoInadimplente { color: #fca5a5; }
 .darkScope .prazoProximo { color: #93c5fd; }
 .darkScope .btnGhost { border-color: #475569; background: #0f172a; color: #a5f3fc; }

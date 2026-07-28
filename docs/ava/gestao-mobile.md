@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.25 -->
+<!-- ava-version: 1.6.1.26 -->
+
+> Revisão 1.6.1.26: responsividade e estorno ampliado na administração web de
+> Recebimentos Presenciais; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.25: em **Usuários**, a exclusão apaga uma conta interna somente
 > quando não existe outro vínculo, perfil ou histórico; contas preservadas

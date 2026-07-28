@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.25 -->
+<!-- ava-version: 1.6.1.26 -->
+
+> Revisão 1.6.1.26: em Recebimentos Presenciais, a listagem se reorganiza de
+> acordo com a largura disponível, usa datas com ano abreviado e apresenta a
+> coluna **Valor**. Gestor e Administrador podem estornar qualquer recebimento
+> efetivamente lançado, mesmo antes da conferência; o estorno exige motivo e
+> devolve a cobrança para **Previsto** ou **Em atraso**, conforme o vencimento.
 
 > Revisão 1.6.1.25: em **Usuários e Permissões**, excluir apaga definitivamente
 > uma conta interna somente quando não existe outro vínculo, perfil ou histórico;

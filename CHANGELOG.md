@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.1.26 - 2026-07-27
+
+- Recebimentos Presenciais: o popup administrativo passa a aproveitar melhor a
+  largura disponível e a listagem reorganiza os lançamentos quando o card fica
+  estreito, evitando títulos e valores sobrepostos.
+- Na listagem, datas usam ano com dois dígitos, **Combinado** passa a **Valor** e
+  a coluna redundante **Tipo** é removida.
+- Gestores e administradores podem estornar qualquer recebimento efetivamente
+  lançado, inclusive enquanto aguarda conferência; previsões e atrasos sem valor
+  recebido permanecem sem a ação.
+
 ## 1.6.1.25 - 2026-07-27
 
 - Gestão Web e Mobile: contas criadas em **Usuários e Permissões** passam a
