@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.26 -->
+<!-- ava-version: 1.6.1.27 -->
+
+> Revisão 1.6.1.27: na aba **Conferência** de Recebimentos Presenciais, Valor
+> contratado, Valor declarado, Diferença, Forma de pagamento e Comprovante
+> aparecem em uma única faixa no desktop. Em áreas estreitas, o resumo se
+> reorganiza sem esconder observações ou ações.
 
 > Revisão 1.6.1.26: em Recebimentos Presenciais, a listagem se reorganiza de
 > acordo com a largura disponível, usa datas com ano abreviado e apresenta a

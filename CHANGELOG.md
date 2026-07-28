@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.27 - 2026-07-27
+
+- Recebimentos Presenciais: os cards da aba **Conferência** passam a exibir
+  Valor contratado, Valor declarado, Diferença, Forma de pagamento e
+  Comprovante em uma única faixa no desktop.
+- O resumo quebra de forma controlada conforme a largura disponível, reduzindo
+  a altura dos cards sem ocultar informações, observações ou ações.
+
 ## 1.6.1.26 - 2026-07-27
 
 - Recebimentos Presenciais: o popup administrativo passa a aproveitar melhor a

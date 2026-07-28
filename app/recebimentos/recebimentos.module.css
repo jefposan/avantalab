@@ -962,6 +962,73 @@
 .readonlyRow span:first-child { color: #64748b; }
 .readonlyRow span:last-child { font-weight: 700; text-align: right; }
 
+/* Conferência: os cinco dados principais ocupam uma única faixa compacta no
+   desktop. A quebra responde à largura efetiva do card, não ao monitor. */
+.conferenciaLista {
+  container: conferencia-recebimentos / inline-size;
+}
+.conferenciaItem {
+  margin-bottom: 8px;
+}
+.conferenciaResumo {
+  grid-template-columns:
+    minmax(120px, 1fr)
+    minmax(120px, 1fr)
+    minmax(110px, 0.9fr)
+    minmax(150px, 1.25fr)
+    minmax(120px, 0.9fr);
+  gap: 8px;
+  margin-top: 6px;
+  padding: 8px 10px;
+}
+.conferenciaResumoItem {
+  min-width: 0;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+  padding-inline: 8px;
+}
+.conferenciaResumoItem > span:first-child {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.conferenciaResumoItem > span:last-child {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  white-space: nowrap;
+}
+.conferenciaResumoItem .selectFormaConferencia {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+}
+.conferenciaObservacao {
+  grid-column: 1 / -1;
+  padding-top: 6px;
+  border-top: 1px solid #e2e8f0;
+}
+.conferenciaObservacao > span:last-child {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@container conferencia-recebimentos (max-width: 950px) {
+  .conferenciaResumo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .conferenciaObservacao { grid-column: 1 / -1; }
+}
+
+@container conferencia-recebimentos (max-width: 560px) {
+  .conferenciaResumo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .conferenciaObservacao { grid-column: auto; }
+}
+
 /* Parcelas em atraso (baixa uma a uma pelo colaborador) */
 .atrasoBox {
   background: #fbfcfe;
@@ -1865,6 +1932,7 @@
   background: #111827;
   color: #e2e8f0;
 }
+.darkScope .conferenciaObservacao { border-top-color: #334155; }
 .darkScope :is(.atrasoItem, .subItem) {
   border-color: #334155;
   background: #0f172a;

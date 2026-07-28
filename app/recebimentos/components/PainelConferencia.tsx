@@ -42,7 +42,7 @@ export default function PainelConferencia({
   const nomeColab = (id: string | null) => (id ? colaboradores.find((c) => c.id === id)?.nome ?? '—' : '—');
 
   return (
-    <div className={styles.listaShell}>
+    <div className={`${styles.listaShell} ${styles.conferenciaLista}`}>
       {/* Topo estático (fixo): título + aviso de permissão. */}
       <div>
         <h3 className={styles.sectionTitle} style={{ marginBottom: podeConfirmar ? 12 : 0 }}>Conferência de recebimentos</h3>
@@ -63,7 +63,7 @@ export default function PainelConferencia({
           const dif = (r.valorRecebido ?? 0) - r.valorCombinado;
           const formaPagamento = r.formaPagamento ?? formasPagamento[r.id] ?? '';
           return (
-            <div key={r.id} className={styles.subItem} style={{ marginBottom: 12 }}>
+            <div key={r.id} className={`${styles.subItem} ${styles.conferenciaItem}`}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                 <div>
                   <div className={styles.subNome}>{nomeEmpresa(r.empresaId)} · {nomeSub(r.subempresaId)}</div>
@@ -72,14 +72,14 @@ export default function PainelConferencia({
                 <span className={styles.badge} style={{ background: rot.fundo, color: rot.cor, height: 'fit-content' }}>{rot.texto}</span>
               </div>
 
-              <div className={styles.readonlyBox} style={{ marginTop: 10 }}>
-                <div className={styles.readonlyRow}><span>Valor contratado</span><span>{formatarMoeda(r.valorCombinado)}</span></div>
-                <div className={styles.readonlyRow}><span>Valor declarado</span><span>{formatarMoeda(r.valorRecebido ?? 0)}</span></div>
-                <div className={styles.readonlyRow}>
+              <div className={`${styles.readonlyBox} ${styles.conferenciaResumo}`}>
+                <div className={`${styles.readonlyRow} ${styles.conferenciaResumoItem}`}><span>Valor contratado</span><span>{formatarMoeda(r.valorCombinado)}</span></div>
+                <div className={`${styles.readonlyRow} ${styles.conferenciaResumoItem}`}><span>Valor declarado</span><span>{formatarMoeda(r.valorRecebido ?? 0)}</span></div>
+                <div className={`${styles.readonlyRow} ${styles.conferenciaResumoItem}`}>
                   <span>Diferença</span>
                   <span style={{ color: dif === 0 ? '#166534' : dif < 0 ? '#b45309' : '#1e40af' }}>{formatarMoeda(dif)}</span>
                 </div>
-                <div className={styles.readonlyRow}>
+                <div className={`${styles.readonlyRow} ${styles.conferenciaResumoItem}`}>
                   <span>Forma de pagamento</span>
                   {r.formaPagamento ? (
                     <span>{rotuloFormaPagamento(r.formaPagamento)}</span>
@@ -100,11 +100,11 @@ export default function PainelConferencia({
                     </select>
                   )}
                 </div>
-                <div className={styles.readonlyRow}>
+                <div className={`${styles.readonlyRow} ${styles.conferenciaResumoItem}`}>
                   <span>Comprovante</span>
                   <span>{r.temComprovante ? <BotaoComprovante lancamentoId={r.id} onObter={onObterComprovante} darkMode={darkMode} /> : 'Não anexado'}</span>
                 </div>
-                {r.observacao && <div className={styles.readonlyRow}><span>Observação</span><span>{r.observacao}</span></div>}
+                {r.observacao && <div className={`${styles.readonlyRow} ${styles.conferenciaResumoItem} ${styles.conferenciaObservacao}`}><span>Observação</span><span>{r.observacao}</span></div>}
               </div>
 
               {podeConfirmar && (() => {

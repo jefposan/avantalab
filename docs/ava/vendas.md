@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.26 -->
+<!-- ava-version: 1.6.1.27 -->
+
+> Revisão 1.6.1.27: compactação responsiva da Conferência na administração web
+> de Recebimentos Presenciais; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.26: responsividade e estorno ampliado na administração web de
 > Recebimentos Presenciais; sem impacto operacional no AvantaVendas.
