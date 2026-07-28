@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.41 - 2026-07-27
+
+- Relatório Contábil: o hover das linhas recebe tom de cinza ainda mais claro.
+
+## 1.6.1.40 - 2026-07-27
+
+- Relatório Contábil: o destaque ao passar o mouse nas linhas dos cards adota
+  cinza mais claro; os cabeçalhos MÊS e ano recebem contraste reforçado.
+
 ## 1.6.1.39 - 2026-07-27
 
 - Controle de Ponto: ao selecionar um funcionário específico no relatório, o

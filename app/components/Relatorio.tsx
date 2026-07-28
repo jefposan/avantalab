@@ -294,10 +294,10 @@ export default function Relatorio({
       <table className={`w-full text-xs ${textClass}`}>
         <thead>
           <tr className={`border-b-2 ${borderClass} bg-slate-50 dark:bg-slate-800/50`}>
-            <th className={`py-1.5 px-3 text-left border-r ${borderClass} w-1/3 text-slate-500 text-[10px]`}>
+            <th className={`py-1.5 px-3 text-left border-r ${borderClass} w-1/3 text-[10px] text-slate-950 dark:text-slate-100`}>
               MÊS
             </th>
-            <th className="py-1.5 px-3 text-right text-slate-500 text-[11px] font-bold">
+            <th className="py-1.5 px-3 text-right text-[11px] font-bold text-slate-950 dark:text-slate-100">
               {anoSelecionado}
             </th>
           </tr>
@@ -313,7 +313,7 @@ export default function Relatorio({
                 key={linha.mes}
                 className={`border-b ${borderClass} ${
                   index % 2 === 0 ? '' : bgRowAlt
-                } hover:bg-blue-50/50 dark:hover:bg-slate-600 transition-colors`}
+                } hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors`}
               >
                 <td className={`py-1 px-3 text-[10px] font-bold border-r ${borderClass}`}>
                   {linha.mes}

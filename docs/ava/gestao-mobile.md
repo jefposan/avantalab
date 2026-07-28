@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.39 -->
+<!-- ava-version: 1.6.1.41 -->
+
+> Revisão 1.6.1.41: refinamento de hover no Relatório Contábil da Gestão Web;
+> sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.40: contraste e hover do Relatório Contábil na Gestão Web;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.39: destaque do seletor de funcionário no relatório web do
 > Controle de Ponto; sem impacto operacional na Gestão Mobile.

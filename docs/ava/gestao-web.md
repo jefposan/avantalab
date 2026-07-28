@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.39 -->
+<!-- ava-version: 1.6.1.41 -->
+
+> Revisão 1.6.1.41: o hover das linhas do Relatório Contábil usa cinza ainda
+> mais claro.
+
+> Revisão 1.6.1.40: as linhas dos cards de Relatório Contábil usam hover cinza
+> mais claro; os cabeçalhos MÊS e ano recebem contraste reforçado.
 
 > Revisão 1.6.1.39: ao selecionar um funcionário específico no relatório de
 > Controle de Ponto, o campo recebe destaque visual e foco reforçado.
