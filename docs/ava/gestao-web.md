@@ -1,6 +1,43 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.27 -->
+<!-- ava-version: 1.6.1.39 -->
+
+> Revisão 1.6.1.39: ao selecionar um funcionário específico no relatório de
+> Controle de Ponto, o campo recebe destaque visual e foco reforçado.
+
+> Revisão 1.6.1.38: Faltas no período passa a aparecer dentro do card
+> Pontualidade na entrada, abaixo do horário previsto.
+
+> Revisão 1.6.1.37: no seletor de ano do relatório de Controle de Ponto, o
+> rótulo ANO fica centralizado abaixo do número.
+
+> Revisão 1.6.1.36: os controles compactos do relatório de Controle de Ponto
+> recebem nova redução de altura; Pontualidade na entrada permanece inalterada.
+
+> Revisão 1.6.1.35: controles de período e Buscar registros do Controle de
+> Ponto ficam mais compactos; Pontualidade na entrada mantém sua altura.
+
+> Revisão 1.6.1.34: título e valor de Faltas no período no Controle de Ponto
+> ficam centralizados como um único conjunto.
+
+> Revisão 1.6.1.33: indicadores e horário previsto do card de Pontualidade na
+> entrada no Controle de Ponto ficam centralizados.
+
+> Revisão 1.6.1.32: no relatório do Controle de Ponto, De, Até e Buscar
+> registros ficam na mesma linha em telas amplas.
+
+> Revisão 1.6.1.31: o resumo de Pontualidade na entrada em Controle de Ponto
+> informa Pontuais, Atrasos, Adiantados e o total de dias avaliados.
+
+> Revisão 1.6.1.30: o destaque das linhas de dia em Controle de Ponto usa cinza
+> claro; dias de falta continuam identificados em vermelho.
+
+> Revisão 1.6.1.29: as linhas dos dias nos relatórios de Controle de Ponto
+> recebem destaque ao passar o mouse, facilitando a leitura do registro ativo.
+
+> Revisão 1.6.1.28: em Controle de Ponto > Relatórios, ao buscar um funcionário,
+> cada dia de trabalho sem entrada aparece na lista como **Falta**, com borda e
+> etiqueta vermelhas. Excel e PDF refletem a mesma situação.
 
 > Revisão 1.6.1.27: na aba **Conferência** de Recebimentos Presenciais, Valor
 > contratado, Valor declarado, Diferença, Forma de pagamento e Comprovante

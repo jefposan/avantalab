@@ -1,5 +1,66 @@
 # Changelog
 
+## 1.6.1.39 - 2026-07-27
+
+- Controle de Ponto: ao selecionar um funcionário específico no relatório, o
+  campo recebe borda institucional, fundo azul sutil e foco reforçado.
+
+## 1.6.1.38 - 2026-07-27
+
+- Controle de Ponto: Faltas no período passa a integrar o card Pontualidade na
+  entrada, logo abaixo do horário previsto.
+
+## 1.6.1.37 - 2026-07-27
+
+- Controle de Ponto: o rótulo ANO fica centralizado abaixo do número no seletor
+  de ano do relatório.
+
+## 1.6.1.36 - 2026-07-27
+
+- Controle de Ponto: controles compactos do relatório recebem nova redução de
+  altura, mantendo Pontualidade na entrada inalterada.
+
+## 1.6.1.35 - 2026-07-27
+
+- Controle de Ponto: controles de período e Buscar registros ficam mais
+  compactos; o card Pontualidade na entrada mantém sua altura.
+
+## 1.6.1.34 - 2026-07-27
+
+- Controle de Ponto: título e valor de Faltas no período passam a compor um
+  único conjunto centralizado no card.
+
+## 1.6.1.33 - 2026-07-27
+
+- Controle de Ponto: indicadores e horário previsto do card de Pontualidade na
+  entrada passam a ficar centralizados.
+
+## 1.6.1.32 - 2026-07-27
+
+- Controle de Ponto: os filtros De, Até e a ação Buscar registros passam a
+  compartilhar a mesma linha no relatório web, mantendo empilhamento no celular.
+
+## 1.6.1.31 - 2026-07-27
+
+- Controle de Ponto: o resumo de Pontualidade na entrada passa a informar os
+  adiantados e corrige o plural de **Pontuais**.
+
+## 1.6.1.30 - 2026-07-27
+
+- Controle de Ponto: o destaque de hover nas linhas dos relatórios passa a usar
+  cinza claro, preservando o vermelho semântico das faltas.
+
+## 1.6.1.29 - 2026-07-27
+
+- Controle de Ponto: ao passar o mouse sobre uma linha de dia nos relatórios do
+  gestor ou em Meus registros, o respectivo dia recebe destaque visual.
+
+## 1.6.1.28 - 2026-07-27
+
+- Controle de Ponto: o relatório individual passa a listar os dias de trabalho
+  sem entrada como **Falta**, com borda e etiqueta vermelhas. A mesma situação
+  também é apresentada nas exportações Excel e PDF.
+
 ## 1.6.1.27 - 2026-07-27
 
 - Recebimentos Presenciais: os cards da aba **Conferência** passam a exibir

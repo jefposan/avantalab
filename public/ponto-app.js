@@ -787,7 +787,7 @@
               return '<div class="flex items-center justify-between gap-2 text-xs"><span class="font-bold text-slate-500">' + escapeHtml(rotuloAcao(r.tipo)) + '</span><span class="flex items-center gap-2"><span class="font-black text-slate-800">' + escapeHtml(horaPonto(r.registrado_em)) + '</span><button id="ponto-comprovante-' + escapeHtml(r.id) + '" type="button" class="rounded-md px-2 py-1 text-[10px] font-black text-cyan-800">PDF</button></span></div>';
             }).join('');
             var horas = calcHorasDia(regs);
-            return '<div class="rounded-xl border border-slate-200 bg-white p-3"><div class="mb-1 flex items-center justify-between"><p class="text-sm font-black text-slate-900">' + escapeHtml(dia.slice(8, 10) + '/' + dia.slice(5, 7) + '/' + dia.slice(0, 4)) + '</p>' + (horas ? '<span class="text-[11px] font-black text-cyan-700">' + horas + '</span>' : '') + '</div><div class="grid gap-0.5">' + linhas + '</div></div>';
+            return '<div class="rounded-xl border border-slate-200 bg-white p-3 transition-colors hover:border-slate-300 hover:bg-slate-100"><div class="mb-1 flex items-center justify-between"><p class="text-sm font-black text-slate-900">' + escapeHtml(dia.slice(8, 10) + '/' + dia.slice(5, 7) + '/' + dia.slice(0, 4)) + '</p>' + (horas ? '<span class="text-[11px] font-black text-cyan-700">' + horas + '</span>' : '') + '</div><div class="grid gap-0.5">' + linhas + '</div></div>';
           }).join(''));
 
     return (

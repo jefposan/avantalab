@@ -1,6 +1,42 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.27 -->
+<!-- ava-version: 1.6.1.39 -->
+
+> Revisão 1.6.1.39: destaque do seletor de funcionário no relatório web do
+> Controle de Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.38: Faltas no período integrado ao card de pontualidade no
+> relatório web do Controle de Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.37: alinhamento do seletor de ano no relatório web do Controle
+> de Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.36: nova compactação dos controles no relatório web do Controle
+> de Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.35: compactação dos controles no relatório web do Controle de
+> Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.34: centralização de Faltas no período no relatório web do
+> Controle de Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.33: centralização do card de pontualidade no relatório web do
+> Controle de Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.32: organização dos filtros no relatório web do Controle de
+> Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.31: resumo de pontualidade no relatório web do Controle de
+> Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.30: ajuste de cor do hover nos relatórios do Controle de Ponto;
+> sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.29: destaque ao passar o mouse nos relatórios do Controle de
+> Ponto; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.28: listagem de faltas no relatório web do Controle de Ponto;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.27: compactação responsiva da Conferência na administração web
 > de Recebimentos Presenciais; sem impacto operacional na Gestão Mobile.
