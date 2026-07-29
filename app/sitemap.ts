@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 const siteUrl = 'https://avantalab.com.br';
-const landingPublicadoEm = new Date('2026-07-29T12:00:00-03:00');
+const landingPublicadoEm = new Date('2026-07-29T12:30:00-03:00');
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

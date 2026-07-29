@@ -4,6 +4,7 @@ import Link from 'next/link';
 import CalculatorHub from './components/CalculatorHub';
 import BotaoProximoScroll from './components/BotaoProximoScroll';
 import LandingPreviewHeader from './components/LandingPreviewHeader';
+import LinkRolagemPublica from './components/LinkRolagemPublica';
 import AvaPlansPreview from './components/AvaPlansPreview';
 import styles from './preview/landing/preview-landing.module.css';
 import effects from './preview/landing/preview-effects.module.css';
@@ -63,7 +64,18 @@ const dadosEstruturados = {
   '@context': 'https://schema.org',
   '@graph': [
     { '@type': 'Organization', name: 'AvantaLab', url: siteUrl, logo: `${siteUrl}/images/landing/logo-avantalab.png`, contactPoint: { '@type': 'ContactPoint', email: 'contato@avantalab.com.br', contactType: 'customer support', availableLanguage: 'Portuguese' } },
+    { '@type': 'WebSite', name: 'AvantaLab', url: siteUrl, inLanguage: 'pt-BR' },
     { '@type': 'SoftwareApplication', name: 'AvantaLab Gestão', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url: siteUrl, description: 'Plataforma de gestão financeira e operacional com indicadores, rotinas de equipe e assistência por IA.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL', description: 'Plano Free gratuito para uso pessoal, sem cartão de crédito' } },
+    {
+      '@type': 'OfferCatalog',
+      name: 'Planos AvantaLab',
+      itemListElement: [
+        { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'BRL', description: 'Uso pessoal gratuito no mobile, sem cartão.' },
+        { '@type': 'Offer', name: 'Pessoal Premium', price: '9.90', priceCurrency: 'BRL', description: 'Plano pessoal premium mensal.' },
+        { '@type': 'Offer', name: 'Business', price: '34.90', priceCurrency: 'BRL', description: 'Gestão empresarial essencial mensal.' },
+        { '@type': 'Offer', name: 'Business Pro', price: '49.90', priceCurrency: 'BRL', description: 'Ecossistema empresarial completo mensal.' },
+      ],
+    },
     { '@type': 'FAQPage', mainEntity: perguntas.map(([pergunta, resposta]) => ({ '@type': 'Question', name: pergunta, acceptedAnswer: { '@type': 'Answer', text: resposta } })) },
   ],
 };
@@ -84,7 +96,7 @@ export default function PreviewLandingPage() {
             <p className={styles.lead}>O AvantaLab reúne financeiro, indicadores, rotinas da equipe e a Ava em uma plataforma simples de operar — do primeiro lançamento à visão completa da operação.</p>
             <div className={styles.heroActions}>
               <Link className={styles.primaryButton} href="/gestao?cadastro=1">Começar grátis <span aria-hidden="true">→</span></Link>
-              <a className={styles.secondaryButton} href="#recursos">Conhecer a plataforma</a>
+              <LinkRolagemPublica className={styles.secondaryButton} href="#recursos">Conhecer a plataforma</LinkRolagemPublica>
             </div>
             <ul className={styles.trustList} aria-label="Destaques da plataforma">
               <li>Free sem cartão de crédito</li>

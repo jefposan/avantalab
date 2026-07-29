@@ -3,8 +3,10 @@ import Image from 'next/image';
 import LegalPageBackLink from '../components/LegalPageBackLink';
 
 export const metadata: Metadata = {
-  title: 'Suporte | AvantaLab Gestão',
+  title: 'Central de Suporte',
   description: 'Central de ajuda, contato e sugestões para usuários do AvantaLab Gestão.',
+  alternates: { canonical: '/suporte' },
+  openGraph: { title: 'Central de Suporte | AvantaLab', description: 'Ajuda, contato e sugestões para usuários do AvantaLab.', url: '/suporte' },
 };
 
 const suporteEmail = 'contato@avantalab.com.br';
