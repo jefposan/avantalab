@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.101 - 2026-07-29
+
+- SEO público: adicionadas páginas de intenção para gestão financeira,
+  controle financeiro pessoal, controle de ponto e Vendas Mobile, com
+  metadados, FAQ estruturado, CTAs e sitemap próprios.
+
 ## 1.6.1.100 - 2026-07-29
 
 - SEO: metadados globais e canônicos das páginas institucionais foram
