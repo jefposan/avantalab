@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.107.16 - 2026-07-29
+
+- AvantaVendas: ao cumprir a meta mensal, o card Meta do período passa a
+  informar “Meta atingida, parabéns!”.
+
 ## 1.6.1.107.15 - 2026-07-29
 
 - PADRÃO AVANTA 1.4.0: o login validado da Gestão e do AvantaVendas passa a ser

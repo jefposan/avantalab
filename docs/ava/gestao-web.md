@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.15 -->
+<!-- ava-version: 1.6.1.107.16 -->
+
+> Revisão 1.6.1.107.16: mensagem de meta atingida ajustada no AvantaVendas;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.15: o modelo atual de autenticação foi incorporado ao
 > PADRÃO AVANTA 1.4.0 para novos sistemas; sem mudança operacional na Gestão.

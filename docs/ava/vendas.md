@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.15 -->
+<!-- ava-version: 1.6.1.107.16 -->
+
+> Revisão 1.6.1.107.16: ao cumprir a meta, o card Meta do período informa
+> **Meta atingida, parabéns!**.
 
 > Revisão 1.6.1.107.15: o login atual da Gestão e do AvantaVendas foi
 > formalizado no PADRÃO AVANTA 1.4.0; sem mudança operacional nesta versão.
