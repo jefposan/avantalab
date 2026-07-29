@@ -1210,6 +1210,20 @@ const bordaSobreCorPrimaria = corEhClara(corPrimaria)
   ? 'rgba(15, 23, 42, 0.25)'
   : 'rgba(255, 255, 255, 0.30)';
 
+const corComFundo = (cor: string, fundo: string, opacidade: number) => {
+  const normalizar = (valor: string) => valor.replace('#', '');
+  const principal = normalizar(cor);
+  const base = normalizar(fundo);
+  if (principal.length !== 6 || base.length !== 6) return cor;
+
+  const canal = (indice: number) => Math.round(
+    parseInt(principal.slice(indice, indice + 2), 16) * opacidade +
+    parseInt(base.slice(indice, indice + 2), 16) * (1 - opacidade)
+  ).toString(16).padStart(2, '0');
+
+  return `#${canal(0)}${canal(2)}${canal(4)}`;
+};
+
   const estiloTemaPrimario = {
   backgroundColor: corPrimaria,
   borderColor: corPrimaria,
@@ -6853,7 +6867,8 @@ if (modalSelecionarEmpresa) {
               const corPerfil = typeof empresa.cor_primaria === 'string' && empresa.cor_primaria.trim()
                 ? empresa.cor_primaria
                 : '#003E73';
-              const textoPerfil = corEhClara(corPerfil) ? '#0f172a' : '#ffffff';
+              const corFundoTextoPerfil = corComFundo(corPerfil, darkMode ? '#0f172a' : '#ffffff', 0.64);
+              const textoPerfil = corEhClara(corFundoTextoPerfil) ? '#0f172a' : '#ffffff';
 
               return (
                 <div

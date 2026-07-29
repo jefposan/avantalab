@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.105 - 2026-07-29
+
+- Seleção de perfil: o texto dos cards passa a calcular contraste a partir do
+  fundo efetivo do degradê, evitando rótulos ilegíveis em cores claras.
+
 ## 1.6.1.104 - 2026-07-29
 
 - Página inicial: adicionada a seção Soluções AvantaLab, criando links internos para as páginas públicas de intenção de busca.
