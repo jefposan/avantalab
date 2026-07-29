@@ -102,7 +102,7 @@ const inicioLoginSocialGestao = autenticacaoGestao.indexOf(
   'const handleOAuthLogin = async (provedor: ProvedorOAuth)',
 );
 const inicioPreparacaoGestao = autenticacaoGestao.indexOf(
-  'iniciarEstadoLoginSocial(provedor);',
+  'iniciarLoginSocial(provedor);',
   inicioLoginSocialGestao,
 );
 const decisaoPlataformaGestao = autenticacaoGestao.indexOf(
@@ -117,9 +117,9 @@ exigir(
 );
 exigir(
   autenticacaoGestao.includes('sessionStorage.removeItem(CHAVE_LOGIN_SOCIAL_PENDENTE)') &&
-    autenticacaoGestao.includes('setGoogleLoading(false)') &&
-    autenticacaoGestao.includes('setAppleLoading(false)'),
-  'Cancelar o login social da Gestão precisa limpar a espera e restaurar Google e Apple.',
+    autenticacaoGestao.includes('setLoginSocialPendente(null)') &&
+    autenticacaoGestao.includes('if (loginSocialPendenteRef.current) return;'),
+  'A Gestão precisa limpar a espera social e impedir solicitações duplicadas.',
 );
 exigir(
   !autenticacaoGestao.includes("CapacitorApp.addListener('appStateChange'"),

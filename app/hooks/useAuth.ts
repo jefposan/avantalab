@@ -98,9 +98,6 @@ export function useAuth(deps: UseAuthDeps) {
 
   // --- Estados de autenticação de entrada ---
   const [modoAuth, setModoAuth] = useState<'login' | 'cadastro'>('login');
-  // A landing pública oficial é a raiz (/). A Gestão abre diretamente no
-  // acesso para não manter uma segunda landing antiga dentro do sistema.
-  const [mostrarLandingPreLogin, setMostrarLandingPreLogin] = useState(false);
 
   // Deep link da landing: /?cadastro=1 abre direto a tela de criar cadastro.
   useEffect(() => {
@@ -109,7 +106,6 @@ export function useAuth(deps: UseAuthDeps) {
     if (parametros.get('cadastro') === '1') {
       // Ajuste único no mount a partir de estado externo (URL); não gera cascata.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMostrarLandingPreLogin(false);
       setModoAuth('cadastro');
     }
   }, []);
@@ -154,17 +150,13 @@ export function useAuth(deps: UseAuthDeps) {
   const [authErro, setAuthErro] = useState('');
   const [authMensagem, setAuthMensagem] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
-  const provedorOAuthNativoPendenteRef = useRef<ProvedorOAuth | null>(null);
-  const [provedorOAuthNativoPendente, setProvedorOAuthNativoPendente] =
+  const loginSocialPendenteRef = useRef<ProvedorOAuth | null>(null);
+  const [loginSocialPendente, setLoginSocialPendente] =
     useState<ProvedorOAuth | null>(null);
 
-  const limparEstadoLoginSocial = useCallback((limparFeedback = true) => {
-    provedorOAuthNativoPendenteRef.current = null;
-    setProvedorOAuthNativoPendente(null);
-    setGoogleLoading(false);
-    setAppleLoading(false);
+  const limparLoginSocial = useCallback((limparFeedback = true) => {
+    loginSocialPendenteRef.current = null;
+    setLoginSocialPendente(null);
     try {
       sessionStorage.removeItem(CHAVE_LOGIN_SOCIAL_PENDENTE);
     } catch {
@@ -176,11 +168,9 @@ export function useAuth(deps: UseAuthDeps) {
     }
   }, []);
 
-  const iniciarEstadoLoginSocial = useCallback((provedor: ProvedorOAuth) => {
-    provedorOAuthNativoPendenteRef.current = provedor;
-    setProvedorOAuthNativoPendente(provedor);
-    setGoogleLoading(provedor === 'google');
-    setAppleLoading(provedor === 'apple');
+  const iniciarLoginSocial = useCallback((provedor: ProvedorOAuth) => {
+    loginSocialPendenteRef.current = provedor;
+    setLoginSocialPendente(provedor);
     try {
       sessionStorage.setItem(CHAVE_LOGIN_SOCIAL_PENDENTE, provedor);
     } catch {
@@ -198,12 +188,12 @@ export function useAuth(deps: UseAuthDeps) {
           sessionStorage.removeItem(CHAVE_LOGIN_SOCIAL_PENDENTE);
           return;
         }
-        iniciarEstadoLoginSocial(provedorSalvo);
+        iniciarLoginSocial(provedorSalvo);
       });
     } catch {
       // Sem restauração quando o armazenamento da aba estiver indisponível.
     }
-  }, [iniciarEstadoLoginSocial]);
+  }, [iniciarLoginSocial]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -236,7 +226,7 @@ export function useAuth(deps: UseAuthDeps) {
         return;
       }
 
-      const provedor = provedorOAuthNativoPendenteRef.current;
+      const provedor = loginSocialPendenteRef.current;
       setAuthErro('');
 
       try {
@@ -277,7 +267,7 @@ export function useAuth(deps: UseAuthDeps) {
             : 'Não foi possível concluir o login social.'
         );
       } finally {
-        limparEstadoLoginSocial(false);
+        limparLoginSocial(false);
         await fecharNavegador();
       }
     };
@@ -299,8 +289,8 @@ export function useAuth(deps: UseAuthDeps) {
       );
       await guardarListener(
         Browser.addListener('browserFinished', () => {
-          if (!provedorOAuthNativoPendenteRef.current) return;
-          limparEstadoLoginSocial();
+          if (!loginSocialPendenteRef.current) return;
+          limparLoginSocial();
         })
       );
       const aberturaInicial = await CapacitorApp.getLaunchUrl();
@@ -309,24 +299,21 @@ export function useAuth(deps: UseAuthDeps) {
       }
     })().catch((erro) => {
       console.error('Erro ao preparar retorno OAuth nativo:', erro);
-      limparEstadoLoginSocial();
+      limparLoginSocial();
     });
 
     return () => {
       desmontado = true;
       for (const listener of listeners) void listener.remove();
     };
-  }, [limparEstadoLoginSocial]);
+  }, [limparLoginSocial]);
   const [carregandoSistema, setCarregandoSistema] = useState(true);
   const [mensagemCarregamentoSistema, setMensagemCarregamentoSistema] = useState(
     'Carregando sistema...'
   );
 
   const cancelarLoginSocial = useCallback(async () => {
-    limparEstadoLoginSocial();
-    setAuthLoading(false);
-    setCarregandoSistema(false);
-    setMensagemCarregamentoSistema('Carregando sistema...');
+    limparLoginSocial();
 
     if (!Capacitor.isNativePlatform()) return;
 
@@ -335,7 +322,7 @@ export function useAuth(deps: UseAuthDeps) {
     } catch {
       // O painel pode já ter sido dispensado; o estado local já foi restaurado.
     }
-  }, [limparEstadoLoginSocial]);
+  }, [limparLoginSocial]);
 
   // --- Estados de onboarding (criar empresa inicial) ---
   const [emailConfirmado, setEmailConfirmado] = useState(false);
@@ -973,11 +960,13 @@ export function useAuth(deps: UseAuthDeps) {
   // ---------------------------------------------------------------------------
 
   const handleOAuthLogin = async (provedor: ProvedorOAuth) => {
+    if (loginSocialPendenteRef.current) return;
+
     const nomeProvedor = provedor === 'google' ? 'Google' : 'Apple';
 
     setAuthErro('');
     setAuthMensagem('');
-    iniciarEstadoLoginSocial(provedor);
+    iniciarLoginSocial(provedor);
 
     if (!Capacitor.isNativePlatform()) {
       // O Supabase retorna à raiz pública. Guardamos apenas a intenção deste
@@ -992,7 +981,7 @@ export function useAuth(deps: UseAuthDeps) {
         limparRetornoOauthPendente();
         console.error(`Erro login ${nomeProvedor}:`, error);
         setAuthErro(`Erro ${nomeProvedor}: ${error.message}`);
-        limparEstadoLoginSocial(false);
+        limparLoginSocial(false);
       }
       return;
     }
@@ -1015,7 +1004,7 @@ export function useAuth(deps: UseAuthDeps) {
       });
     } catch (erro) {
       console.error(`Erro login ${nomeProvedor}:`, erro);
-      limparEstadoLoginSocial(false);
+      limparLoginSocial(false);
       setAuthErro(
         erro instanceof Error
           ? `Erro ${nomeProvedor}: ${erro.message}`
@@ -1240,7 +1229,6 @@ export function useAuth(deps: UseAuthDeps) {
   return {
     // Modo de autenticação
     modoAuth, setModoAuth,
-    mostrarLandingPreLogin, setMostrarLandingPreLogin,
 
     // Campos de login
     loginEmail, setLoginEmail,
@@ -1281,9 +1269,7 @@ export function useAuth(deps: UseAuthDeps) {
     authErro, setAuthErro,
     authMensagem, setAuthMensagem,
     authLoading, setAuthLoading,
-    googleLoading, setGoogleLoading,
-    appleLoading, setAppleLoading,
-    provedorOAuthNativoPendente,
+    loginSocialPendente,
     carregandoSistema, setCarregandoSistema,
     mensagemCarregamentoSistema, setMensagemCarregamentoSistema,
 

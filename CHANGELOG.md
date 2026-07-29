@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.1.107.13 - 2026-07-29
+
+- Autenticação: removidos os estados duplicados de carregamento de Google e
+  Apple, os resets de carregamento geral que não pertenciam ao OAuth e as
+  propriedades correspondentes espalhadas entre hook, página e card.
+- Gestão: removido o restante inacessível da antiga landing interna. A raiz
+  pública continua sendo a única landing e a Gestão mantém somente login,
+  cadastro e recuperação.
+- O fluxo social passa a ter uma única fonte de estado, com proteção contra
+  clique duplicado, preparação, retorno e cancelamento.
+
 ## 1.6.1.107.12 - 2026-07-29
 
 - Gestão: Google e Apple agora usam o mesmo estado único de preparação do

@@ -1,9 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.12 -->
+<!-- ava-version: 1.6.1.107.13 -->
 
-> Revisão 1.6.1.107.12: a Gestão passou a usar o mesmo estado único e persistente
-> da preparação social do AvantaVendas; sem alteração no fluxo do Vendas.
+> Revisão 1.6.1.107.13: limpeza do código social e da landing interna da Gestão;
+> sem alteração operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.10: correção da ordem assíncrona do login social da Gestão
 > no iOS; sem impacto operacional no AvantaVendas.

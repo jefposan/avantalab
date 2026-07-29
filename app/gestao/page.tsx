@@ -431,7 +431,6 @@ export default function AppGestao() {
   });
   const {
     modoAuth, setModoAuth,
-    mostrarLandingPreLogin, setMostrarLandingPreLogin,
     loginEmail, setLoginEmail,
     loginSenha, setLoginSenha,
     mostrarSenhaLogin, setMostrarSenhaLogin,
@@ -455,9 +454,7 @@ export default function AppGestao() {
     authLoading, setAuthLoading,
     carregandoSistema, setCarregandoSistema,
     mensagemCarregamentoSistema, setMensagemCarregamentoSistema,
-    googleLoading, setGoogleLoading,
-    appleLoading, setAppleLoading,
-    provedorOAuthNativoPendente,
+    loginSocialPendente,
     modoRedefinirSenha, setModoRedefinirSenha,
     novaSenha, setNovaSenha,
     confirmarNovaSenha, setConfirmarNovaSenha,
@@ -1389,11 +1386,9 @@ useEffect(() => {
     const parametros = new URLSearchParams(window.location.search);
     if (parametros.get('cadastro') === '1') {
       setModoAuth('cadastro');
-      setMostrarLandingPreLogin(false);
       window.history.replaceState(null, '', window.location.pathname);
     } else if (parametros.get('entrar') === '1') {
       setModoAuth('login');
-      setMostrarLandingPreLogin(false);
       window.history.replaceState(null, '', window.location.pathname);
     }
   };
@@ -1585,7 +1580,6 @@ const tipoUrl = paramsConfirmacao.get('type') || hashConfirmacao.get('type');
 
 if (modoUrl === 'redefinir-senha' || tipoUrl === 'recovery') {
   setModoRedefinirSenha(true);
-  setMostrarLandingPreLogin(false);
   setAcessoLiberado(false);
   setAcessoNaoConfigurado(false);
   setModalSelecionarEmpresa(false);
@@ -1609,7 +1603,6 @@ if (paramsConfirmacao.get('confirmado') === '1') {
       setAcessoNaoConfigurado(false);
       setModoRedefinirSenha(false);
       setModoAuth('login');
-      setMostrarLandingPreLogin(false);
       setMounted(true);
       setCarregandoSistema(false);
 
@@ -1631,7 +1624,6 @@ if (paramsConfirmacao.get('confirmado') === '1') {
       setNomeEmpresaAtual('');
       setPerfilUsuario(null);
       setModoAuth('login');
-      setMostrarLandingPreLogin(false);
       setAuthErro(mensagem);
       setMounted(true);
       setCarregandoSistema(false);
@@ -1679,7 +1671,6 @@ if (paramsConfirmacao.get('confirmado') === '1') {
 
       if (tipo === 'recovery') {
   setModoRedefinirSenha(true);
-  setMostrarLandingPreLogin(false);
   setAcessoLiberado(false);
   setAcessoNaoConfigurado(false);
   setModalSelecionarEmpresa(false);
@@ -6173,7 +6164,6 @@ setAcessoNaoConfigurado(false);
 setValidacaoTelefoneObrigatoria(false);
 setModoRedefinirSenha(false);
 setModoAuth('login');
-setMostrarLandingPreLogin(false);
 
 setEmpresaId(null);
 setNomeEmpresaAtual('');
@@ -6269,7 +6259,6 @@ const encerrarSessaoExpirada = async () => {
   encerrandoSessaoRef.current = true;
   try {
     await handleLogout();
-    setMostrarLandingPreLogin(false);
     setModoAuth('login');
     setAuthErro('Sua sessão expirou. Entre novamente para continuar.');
     setAuthMensagem('');
@@ -6583,21 +6572,21 @@ const lancamentosMobile = [...lancamentosDoMes].sort(
 );
 const categoriasMobile = analiseDespesas.dados.slice(0, 4);
 
-const loginSocialNativoPendente = Boolean(provedorOAuthNativoPendente);
+const loginSocialEmAndamento = Boolean(loginSocialPendente);
 
-if (!mounted || carregandoSistema || authLoading || loginSocialNativoPendente) {
+if (!mounted || carregandoSistema || authLoading || loginSocialEmAndamento) {
   return (
     <TelaCarregandoSistema
-      titulo={loginSocialNativoPendente ? 'Preparando acesso' : 'Carregando...'}
+      titulo={loginSocialEmAndamento ? 'Preparando acesso' : 'Carregando...'}
       mensagem={
-        loginSocialNativoPendente
+        loginSocialEmAndamento
           ? 'Aguardando a confirmação do login social.'
           : authLoading
           ? 'Entrando e preparando seus dados...'
           : mensagemCarregamentoSistema
       }
       onCancelar={
-        loginSocialNativoPendente
+        loginSocialEmAndamento
           ? () => {
               void cancelarLoginSocial();
             }
@@ -6606,13 +6595,6 @@ if (!mounted || carregandoSistema || authLoading || loginSocialNativoPendente) {
     />
   );
 }
-
-const mostrarLandingPreLoginAtiva =
-  mostrarLandingPreLogin &&
-  !modoRedefinirSenha &&
-  modoAuth === 'login' &&
-  !authErro &&
-  !authMensagem;
 
 if (emailConfirmado) {
   return (
@@ -7201,8 +7183,6 @@ if (validacaoTelefoneObrigatoria) {
         fecharAviso={fecharAviso}
         modoAuth={modoAuth}
         setModoAuth={setModoAuth}
-        mostrarLandingPreLogin={mostrarLandingPreLogin}
-        setMostrarLandingPreLogin={setMostrarLandingPreLogin}
         loginEmail={loginEmail}
         setLoginEmail={setLoginEmail}
         loginSenha={loginSenha}
@@ -7239,8 +7219,6 @@ if (validacaoTelefoneObrigatoria) {
         authErro={authErro}
         authMensagem={authMensagem}
         authLoading={authLoading}
-        googleLoading={googleLoading}
-        appleLoading={appleLoading}
         modoRedefinirSenha={modoRedefinirSenha}
         novaSenha={novaSenha}
         setNovaSenha={setNovaSenha}

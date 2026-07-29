@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.12 -->
+<!-- ava-version: 1.6.1.107.13 -->
 
-> Revisão 1.6.1.107.12: o estado único de preparação também evita botões sociais
-> presos após cancelamento; o redirecionamento Web/PWA permanece na raiz.
+> Revisão 1.6.1.107.13: removido o código inacessível da antiga landing interna
+> da Gestão; a landing pública oficial permanece exclusivamente na raiz.
 
 > Revisão 1.6.1.107.10: no iOS, os rótulos sociais são restaurados antes da
 > espera pelo navegador nativo, garantindo o retorno limpo ao dispensar a folha.

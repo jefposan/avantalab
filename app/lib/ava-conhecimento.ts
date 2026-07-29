@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.12: Gestão e Vendas mantêm o login social em
-// Preparando acesso até retorno, erro ou cancelamento explícito.
+// Revisado na versão 1.6.1.107.13: a Gestão mantém uma única fonte de estado
+// para preparação e cancelamento social; sem mudança operacional no Vendas.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

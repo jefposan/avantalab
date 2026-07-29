@@ -38,8 +38,6 @@ interface AuthCardProps {
   // Auth state
   modoAuth: 'login' | 'cadastro';
   setModoAuth: React.Dispatch<React.SetStateAction<'login' | 'cadastro'>>;
-  mostrarLandingPreLogin: boolean;
-  setMostrarLandingPreLogin: React.Dispatch<React.SetStateAction<boolean>>;
   loginEmail: string;
   setLoginEmail: React.Dispatch<React.SetStateAction<string>>;
   loginSenha: string;
@@ -72,8 +70,6 @@ interface AuthCardProps {
   authErro: string;
   authMensagem: string;
   authLoading: boolean;
-  googleLoading: boolean;
-  appleLoading: boolean;
   modoRedefinirSenha: boolean;
   novaSenha: string;
   setNovaSenha: React.Dispatch<React.SetStateAction<string>>;
@@ -126,7 +122,6 @@ function IconeVendas({ nome }: { nome: string }) {
 export default function AuthCard({
   modalAvisoAberto, tituloAviso, mensagemAviso, tipoAviso, fecharAviso,
   modoAuth, setModoAuth,
-  mostrarLandingPreLogin, setMostrarLandingPreLogin,
   loginEmail, setLoginEmail,
   loginSenha, setLoginSenha,
   mostrarSenhaLogin, setMostrarSenhaLogin,
@@ -141,7 +136,7 @@ export default function AuthCard({
   cadastroCupom, setCadastroCupom,
   codigoSmsCadastro, setCodigoSmsCadastro,
   smsCadastroEnviado, segundosReenvioSms, reenviandoSmsCadastro,
-  authErro, authMensagem, authLoading, googleLoading, appleLoading,
+  authErro, authMensagem, authLoading,
   modoRedefinirSenha,
   novaSenha, setNovaSenha,
   confirmarNovaSenha, setConfirmarNovaSenha,
@@ -226,16 +221,9 @@ export default function AuthCard({
     }
   };
 
-  const mostrarLandingPreLoginAtiva =
-    mostrarLandingPreLogin &&
-    !modoRedefinirSenha &&
-    modoAuth === 'login' &&
-    !authErro &&
-    !authMensagem;
-
   const tipoPerfilInicialNormalizado = normalizarTipoPerfil(tipoPerfilInicial);
   const loginPorTelefone = tipoLogin === 'telefone';
-  const loginMobilePadrao = modoAuth === 'login' && !modoRedefinirSenha && !mostrarLandingPreLoginAtiva;
+  const loginMobilePadrao = modoAuth === 'login' && !modoRedefinirSenha;
 
   const alterarTipoLogin = (novoTipo: 'email' | 'telefone') => {
     setTipoLogin(novoTipo);
@@ -353,63 +341,7 @@ export default function AuthCard({
           )}
           <div className={`relative z-20 w-full rounded-3xl border p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
             loginMobilePadrao ? 'row-start-2 mx-auto w-[80%] max-w-[336px] self-center rounded-[18px] border-white/70 bg-white/[.30] p-4 shadow-[0_18px_45px_rgba(0,31,60,0.22),inset_0_1px_0_rgba(255,255,255,0.45)] backdrop-blur-xl backdrop-saturate-[1.35] [@media(pointer:fine)]:mx-0 lg:mx-0 lg:-translate-y-5' : 'border-white/20 bg-white/10'
-          } ${
-            mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
-          }`}>
-            {mostrarLandingPreLoginAtiva ? (
-              <div className="grid gap-6">
-                <div>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
-                    AvantaLab Gestão
-                  </p>
-
-                  <h1 className="max-w-xl text-3xl font-black leading-tight text-slate-900 lg:text-4xl">
-                    Gestão empresarial integrada, segura e simples de operar.
-                  </h1>
-
-                  <p className="mt-4 max-w-lg text-base font-semibold leading-relaxed text-slate-600">
-                    O AvantaLab Gestão centraliza rotinas financeiras e operacionais em uma plataforma prática, moderna e fácil de usar, com estrutura segura para organizar informações, acompanhar indicadores e apoiar decisões do dia a dia empresarial.
-                  </p>
-                </div>
-
-                <div className="grid gap-2 rounded-2xl border border-white/35 bg-white/35 p-4 text-sm font-bold leading-snug text-slate-700 shadow-sm backdrop-blur">
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-800">Principais benefícios</p>
-                  <p>✓ Controle receitas, despesas e pagamentos programados.</p>
-                  <p>✓ Acompanhe gráficos e comparativos mês a mês.</p>
-                  <p>✓ Receba avisos e notificações sobre compromissos financeiros.</p>
-                  <p>✓ Use IA para entender seus números e tirar dúvidas do sistema.</p>
-                  <p>✓ Gerencie ponto e rotinas operacionais.</p>
-                  <p>✓ Acesse pelo computador ou celular.</p>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMostrarLandingPreLogin(false);
-                      setModoAuth('cadastro');
-                    }}
-                    className="h-12 rounded-xl px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
-                    style={{
-                      background: 'linear-gradient(135deg,#003E73,#00A6C8)',
-                    }}
-                  >
-                    Criar conta grátis
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMostrarLandingPreLogin(false);
-                      setModoAuth('login');
-                    }}
-                    className="h-12 rounded-xl border border-slate-300 bg-white/85 px-5 text-sm font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98] cursor-pointer"
-                  >
-                    Entrar
-                  </button>
-                </div>
-              </div>
-            ) : (
+          } lg:max-w-md`}>
             <>
             <div className="mb-2 lg:mb-5">
               <h1 className="text-[22px] font-black leading-tight text-slate-900">
@@ -602,8 +534,8 @@ export default function AuthCard({
     {authErro && <div className="text-center text-[13px] text-red-600">{authErro}</div>}
     {authMensagem && <div className="text-center text-[13px] text-emerald-700">{authMensagem}</div>}
     <button type="submit" disabled={authLoading} className="min-h-8 rounded-[10px] bg-[#1687D9] text-[13px] font-extrabold text-white disabled:opacity-60">{authLoading ? 'Entrando...' : 'Entrar'}</button>
-    <button type="button" onClick={handleGoogleLogin} disabled={googleLoading || appleLoading} className="inline-flex min-h-8 items-center justify-center gap-2 rounded-[10px] border border-[#d9e0e4] bg-white text-[12px] font-extrabold text-[#334155] disabled:opacity-60"><span className="grid size-[18px] place-items-center rounded-full bg-[conic-gradient(from_-45deg,_#4285f4_0_25%,_#34a853_0_45%,_#fbbc05_0_68%,_#ea4335_0_100%)] text-[12px] font-black text-white">G</span>{googleLoading ? 'Conectando...' : 'Continuar com Google'}</button>
-    <button type="button" onClick={handleAppleLogin} disabled={googleLoading || appleLoading} className="inline-flex min-h-8 items-center justify-center gap-2 rounded-[10px] bg-[#111827] text-[12px] font-extrabold text-white shadow-sm transition hover:bg-[#030712] disabled:opacity-60"><span aria-hidden="true" className="text-[18px] leading-none"></span>{appleLoading ? 'Conectando...' : 'Continuar com Apple'}</button>
+    <button type="button" onClick={handleGoogleLogin} disabled={authLoading} className="inline-flex min-h-8 items-center justify-center gap-2 rounded-[10px] border border-[#d9e0e4] bg-white text-[12px] font-extrabold text-[#334155] disabled:opacity-60"><span className="grid size-[18px] place-items-center rounded-full bg-[conic-gradient(from_-45deg,_#4285f4_0_25%,_#34a853_0_45%,_#fbbc05_0_68%,_#ea4335_0_100%)] text-[12px] font-black text-white">G</span>Continuar com Google</button>
+    <button type="button" onClick={handleAppleLogin} disabled={authLoading} className="inline-flex min-h-8 items-center justify-center gap-2 rounded-[10px] bg-[#111827] text-[12px] font-extrabold text-white shadow-sm transition hover:bg-[#030712] disabled:opacity-60"><span aria-hidden="true" className="text-[18px] leading-none"></span>Continuar com Apple</button>
     <p className="-mt-0.5 text-center text-[12px] text-[#737b83]">Não tem conta? <button type="button" onClick={() => setModoAuth('cadastro')} className="font-extrabold text-[#248b85]">Cadastre-se</button></p>
   </form>
   <div className="hidden space-y-3 lg:block">
@@ -764,26 +696,22 @@ export default function AuthCard({
     <button
       type="button"
       onClick={handleGoogleLogin}
-      disabled={googleLoading || appleLoading}
+      disabled={authLoading}
       className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
     >
-      {googleLoading ? (
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-sky-700" />
-      ) : (
-        <img src="/images/google-logo.svg" alt="" className="h-4 w-4" />
-      )}
-      <span>{googleLoading ? 'Conectando...' : 'Conectar com Google'}</span>
+      <img src="/images/google-logo.svg" alt="" className="h-4 w-4" />
+      <span>Conectar com Google</span>
     </button>
   </div>
 
   <button
     type="button"
     onClick={handleAppleLogin}
-    disabled={googleLoading || appleLoading}
+    disabled={authLoading}
     className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-[#111827] px-3 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#030712] disabled:cursor-not-allowed disabled:opacity-70"
   >
     <span aria-hidden="true" className="text-base leading-none"></span>
-    <span>{appleLoading ? 'Conectando...' : 'Continuar com Apple'}</span>
+    <span>Continuar com Apple</span>
   </button>
 
 </form>
@@ -1156,7 +1084,6 @@ export default function AuthCard({
               </div>
             )}
             </>
-            )}
             </div>
           </div>
       </section>
