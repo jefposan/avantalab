@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.1.100 - 2026-07-29
+
+- SEO: metadados globais e canônicos das páginas institucionais foram
+  refinados; dados estruturados agora descrevem o site, o software e os planos.
+
+## 1.6.1.99 - 2026-07-29
+
+- Página inicial: “Conhecer a plataforma” passou a usar o mesmo ponto de
+  rolagem do item “Recursos” no menu, com offset consistente do cabeçalho.
+
 ## 1.6.1.98 - 2026-07-29
 
 - Recebimentos Presenciais: a abertura de comprovantes também exige assinatura

@@ -5,8 +5,10 @@ import TermsOfUseDocument from '../components/TermsOfUseDocument';
 import { TERMOS_VERSAO } from '../lib/legal';
 
 export const metadata: Metadata = {
-  title: 'Termos de Uso | AvantaLab Gestão',
+  title: 'Termos de Uso',
   description: 'Termos de Uso do AvantaLab Gestão.',
+  alternates: { canonical: '/termos' },
+  openGraph: { title: 'Termos de Uso | AvantaLab', description: 'Termos de Uso do AvantaLab Gestão.', url: '/termos' },
 };
 
 export default function TermsOfUsePage() {

@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.98 -->
+<!-- ava-version: 1.6.1.100 -->
+
+> Revisão 1.6.1.100: SEO público foi refinado; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.99: rolagem pública foi alinhada entre CTAs e menu; sem
+> impacto na orientação da Ava.
+>
 
 > Revisão 1.6.1.98: comprovantes de Recebimentos também exigem assinatura
 > vigente; sem impacto na orientação da Ava.

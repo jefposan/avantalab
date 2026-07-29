@@ -5,8 +5,10 @@ import PrivacyPolicyDocument from '../components/PrivacyPolicyDocument';
 import { TERMOS_VERSAO } from '../lib/legal';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidade | AvantaLab Gestão',
+  title: 'Política de Privacidade',
   description: 'Política de Privacidade do AvantaLab Gestão.',
+  alternates: { canonical: '/privacidade' },
+  openGraph: { title: 'Política de Privacidade | AvantaLab', description: 'Política de Privacidade do AvantaLab Gestão.', url: '/privacidade' },
 };
 
 export default function PrivacyPolicyPage() {

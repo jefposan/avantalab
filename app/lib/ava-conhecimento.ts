@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.98: comprovantes de Recebimentos validam a
-// assinatura vigente, sem alterar a orientação operacional da Ava.
+// Revisado na versão 1.6.1.100: SEO público foi refinado, sem alterar a
+// orientação operacional da Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

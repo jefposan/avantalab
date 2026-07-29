@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { rolarParaSecaoPublica } from '../lib/rolagem-publica';
 import landingStyles from '../preview/landing/preview-landing.module.css';
 import styles from './LandingPreviewHeader.module.css';
 
@@ -43,18 +44,7 @@ export default function LandingPreviewHeader() {
   const rolarParaSecao = (event: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     event.preventDefault();
 
-    const destino = document.querySelector<HTMLElement>(href);
-    const cabecalho = document.querySelector<HTMLElement>('[data-public-header]');
-    if (!destino) return;
-
-    const movimentoReduzido = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const alvoVisual = destino.querySelector<HTMLElement>('[data-scroll-target]') ?? destino;
-    const margemDeLeitura = 16;
-    const topo = alvoVisual.getBoundingClientRect().top + window.scrollY
-      - (cabecalho?.offsetHeight ?? 74) - margemDeLeitura;
-
-    window.history.replaceState(null, '', href);
-    window.scrollTo({ top: Math.max(0, topo), behavior: movimentoReduzido ? 'auto' : 'smooth' });
+    rolarParaSecaoPublica(href);
     setMenuAberto(false);
   };
 

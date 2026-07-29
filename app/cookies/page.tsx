@@ -3,8 +3,10 @@ import Image from 'next/image';
 import LegalPageBackLink from '../components/LegalPageBackLink';
 
 export const metadata: Metadata = {
-  title: 'Política de Cookies | AvantaLab Gestão',
+  title: 'Política de Cookies',
   description: 'Informações sobre cookies e tecnologias semelhantes utilizadas pelo AvantaLab.',
+  alternates: { canonical: '/cookies' },
+  openGraph: { title: 'Política de Cookies | AvantaLab', description: 'Informações sobre cookies e tecnologias semelhantes utilizadas pelo AvantaLab.', url: '/cookies' },
 };
 
 const secoes = [

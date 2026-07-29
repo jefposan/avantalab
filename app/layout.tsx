@@ -7,8 +7,21 @@ const shareImage = 'https://avantalab.com.br/images/avantalab-share-meta-safe-ce
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://avantalab.com.br'),
-  title: 'AvantaLab Gestao',
-  description: 'Controle entradas, despesas e saldo do seu negocio ou das suas financas pessoais.',
+  title: {
+    default: 'Gestão financeira, operação e equipe | AvantaLab',
+    template: '%s | AvantaLab',
+  },
+  description: 'Organize o financeiro, acompanhe a operação e tome decisões melhores com o AvantaLab.',
+  applicationName: 'AvantaLab',
+  creator: 'AvantaLab',
+  publisher: 'AvantaLab',
+  category: 'BusinessApplication',
+  formatDetection: { email: false, address: false, telephone: false },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
+  },
   manifest: '/manifest.json',
   openGraph: {
     title: 'AvantaLab Gestao',
