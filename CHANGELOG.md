@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.107.01 - 2026-07-29
+
+- AvantaVendas: o card de cliente sem endereço agora oferece o botão Localização na
+  própria linha do endereço, que usa a localização do aparelho para preenchê-lo.
+
 ## 1.6.1.107 - 2026-07-29
 
 - AvantaVendas: ao atingir a meta mensal, o Dashboard celebra a conquista uma

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107 -->
+<!-- ava-version: 1.6.1.107.01 -->
+
+> Revisão 1.6.1.107.01: no card sem endereço, Localização solicita a localização
+> do aparelho e grava o endereço encontrado; não é necessário abrir a edição.
 
 > Revisão 1.6.1.107: ao atingir a meta mensal, o Dashboard celebra uma vez por
 > meta e mês. Em Clientes, o botão Localização no fim do campo Endereço solicita

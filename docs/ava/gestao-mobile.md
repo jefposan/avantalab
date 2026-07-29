@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107 -->
+<!-- ava-version: 1.6.1.107.01 -->
+
+> Revisão 1.6.1.107.01: botão de localização no card sem endereço do
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107: celebração de meta e preenchimento de endereço por
 > localização adicionados ao AvantaVendas; sem impacto operacional na Gestão Mobile.

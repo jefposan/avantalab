@@ -3798,6 +3798,70 @@ function preencherEnderecoPorLocalizacao() {
   }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
 }
 
+async function buscarEnderecoPorGeolocalizacao(posicao) {
+  const { latitude, longitude } = posicao.coords;
+  const resposta = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`, { headers: { Accept: 'application/json' } });
+  const dados = await resposta.json();
+  if (!resposta.ok || !dados?.address) throw new Error('Endereço não encontrado.');
+  const endereco = dados.address;
+  const logradouro = endereco.road || endereco.pedestrian || endereco.footway || endereco.cycleway || '';
+  const bairro = endereco.suburb || endereco.neighbourhood || endereco.quarter || '';
+  const textoEndereco = [logradouro, bairro].filter(Boolean).join(' - ') || String(dados.display_name || '').split(',').slice(0, 2).join(',').trim();
+  if (!textoEndereco) throw new Error('Endereço não encontrado.');
+  return {
+    endereco: textoEndereco,
+    numero: endereco.house_number || '',
+    cidade: endereco.city || endereco.town || endereco.village || endereco.municipality || '',
+    estado: endereco.state ? String(endereco.state_code || endereco.state || '').replace(/^BR-/, '').slice(0, 2).toUpperCase() : '',
+    cep: endereco.postcode ? String(endereco.postcode).replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').slice(0, 9) : '',
+  };
+}
+
+function preencherEnderecoClientePorLocalizacao(clienteId, botao) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  if (!navigator.geolocation) { toast('A localização não é suportada neste aparelho.'); return; }
+  const rotulo = botao?.querySelector('span');
+  if (botao) { botao.disabled = true; botao.classList.add('is-loading'); }
+  if (rotulo) rotulo.textContent = 'Localizando…';
+  const finalizar = () => {
+    if (botao) { botao.disabled = false; botao.classList.remove('is-loading'); }
+    if (rotulo) rotulo.textContent = 'Localização';
+  };
+  navigator.geolocation.getCurrentPosition(async (posicao) => {
+    try {
+      const endereco = await buscarEnderecoPorGeolocalizacao(posicao);
+      const dados = {
+        ...cliente,
+        endereco: endereco.endereco,
+        numero: cliente.numero || endereco.numero,
+        cidade: cliente.cidade || endereco.cidade,
+        estado: cliente.estado || endereco.estado,
+        cep: cliente.cep || endereco.cep,
+      };
+      iniciarMutacaoDadosVendas();
+      try {
+        const salvo = backendAtivo
+          ? await executarMutacaoGarantidaVendas('cliente_salvar', dados.id, dados, () => window.VendasDb.saveClient(dados))
+          : { ...dados, atualizado_em: new Date().toISOString() };
+        state.clientes = state.clientes.map((item) => item.id === clienteId ? salvo : item);
+        await confirmarMutacaoDadosVendas();
+        render();
+        toast('Endereço inserido pela localização.');
+      } finally {
+        finalizarMutacaoDadosVendas();
+      }
+    } catch (erro) {
+      toast('Não foi possível localizar o endereço.');
+    } finally {
+      finalizar();
+    }
+  }, (erro) => {
+    finalizar();
+    toast(erro.code === 1 ? 'Permita a localização para inserir o endereço.' : 'Não foi possível obter sua localização.');
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+}
+
 function aplicarBusca() {
   buscaAplicada = state.busca;
   if (state.aba === 'vendas') limitePedidos = 10;
@@ -3960,6 +4024,14 @@ function enderecoPrincipalCliente(cliente) {
   return String(endereco || cliente?.logradouro || '').trim();
 }
 
+function enderecoResumidoCliente(cliente, enderecoPrincipal) {
+  const partes = String(enderecoPrincipal || '').split(/\s+-\s+/).map((parte) => parte.trim()).filter(Boolean);
+  const rua = partes.shift() || '';
+  const bairro = String(cliente?.bairro || partes.join(' - ') || '').trim();
+  const ruaComNumero = [rua, cliente?.numero].filter(Boolean).join(', ');
+  return [ruaComNumero, bairro].filter(Boolean).join(' - ');
+}
+
 function renderCliente(c, resumoFinanceiro = null, aniversarianteHoje = false) {
   const resumo = resumoFinanceiro || {};
   const ultimaVenda = resumo.ultimaVenda || null;
@@ -3968,11 +4040,8 @@ function renderCliente(c, resumoFinanceiro = null, aniversarianteHoje = false) {
   const credito = Number(resumo.credito || 0);
   const iniciais = String(c.nome || 'C').split(/\s+/).slice(0, 2).map((parte) => parte[0] || '').join('').toUpperCase();
   const enderecoPrincipal = enderecoPrincipalCliente(c);
-  const partesEndereco = [enderecoPrincipal, c.numero, c.complemento, c.bairro, c.cidade, c.estado, c.cep]
-    .map((parte) => String(parte || '').trim())
-    .filter(Boolean);
   const temEndereco = Boolean(enderecoPrincipal);
-  const local = partesEndereco.join(', ');
+  const local = enderecoResumidoCliente(c, enderecoPrincipal);
   const temTelefone = Boolean(String(c.telefone || '').replace(/\D/g, ''));
   return `
     <article class="client-card ${c.ativo === false ? 'inactive' : ''} ${aniversarianteHoje ? 'client-birthday-today' : ''}" data-cliente-id="${escapeAttr(c.id)}">
@@ -3986,7 +4055,7 @@ function renderCliente(c, resumoFinanceiro = null, aniversarianteHoje = false) {
         <div class="client-contact-actions">${temTelefone ? `<button type="button" onclick="ligarCliente('${c.id}')" aria-label="Ligar para ${escapeAttr(c.nome)}">${svgIcon('phone')} Ligar</button><button type="button" onclick="abrirWhatsappCliente('${c.id}')" aria-label="Chamar ${escapeAttr(c.nome)} no WhatsApp"><span class="whatsapp-mark">◉</span> WhatsApp</button>` : '<span class="client-contact-empty">Telefone não informado</span>'}</div>
         ${temEndereco
           ? `<button type="button" class="client-address-link" onclick="abrirMapasCliente('${c.id}')" aria-label="Abrir endereço de ${escapeAttr(c.nome)} no Waze ou mapas">${svgIcon('map-pin')}<span>${escapeHtml(local)}</span><span class="client-address-arrow" aria-hidden="true">›</span></button>`
-          : `<div class="client-address-link client-address-empty">${svgIcon('map-pin')}<span>Adicione o endereço para abrir no waze ou mapas.</span></div>`}
+          : `<div class="client-address-link client-address-empty">${svgIcon('map-pin')}<span>Adicione o endereço.</span><button type="button" class="secondary client-address-insert" onclick="preencherEnderecoClientePorLocalizacao('${c.id}', this)" aria-label="Usar minha localização para preencher o endereço de ${escapeAttr(c.nome)}">${svgIcon('map-pin')}<span>Localização</span></button></div>`}
       </div>
       <div class="client-values">
         <div class="client-debt-highlight"><span>Débito Atual</span><b class="${debito > 0 ? 'negative' : 'positive'}">${moeda(debito)}</b></div>
@@ -6917,6 +6986,7 @@ window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.acionarNavegacaoInferior = acionarNavegacaoInferior;
 window.buscarCepCliente = buscarCepCliente;
 window.preencherEnderecoPorLocalizacao = preencherEnderecoPorLocalizacao;
+window.preencherEnderecoClientePorLocalizacao = preencherEnderecoClientePorLocalizacao;
 window.abrirMenuCliente = abrirMenuCliente;
 window.atualizarBuscaClientes = atualizarBuscaClientes;
 window.limparBuscaClientes = limparBuscaClientes;
