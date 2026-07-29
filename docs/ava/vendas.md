@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.02 -->
+<!-- ava-version: 1.6.1.107.03 -->
+
+> Revisão 1.6.1.107.03: login, cadastro e recuperação usam a cena clara mesmo
+> quando a preferência de modo escuro do sistema está ativa. Após autenticar,
+> a preferência é preservada e o Vendas continua no tema escolhido.
 
 > Revisão 1.6.1.107.02: a entrada também oferece **Continuar com Apple** e usa
 > a mesma conta operacional já utilizada por e-mail, telefone ou Google.

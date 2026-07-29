@@ -2544,6 +2544,51 @@ body:has(.login-screen) {
   overscroll-behavior: none;
 }
 
+/* A preferência de tema pertence ao sistema autenticado. Nas telas públicas,
+   a cena de acesso é sempre clara, como na Gestão Mobile, sem perder a
+   preferência que será reaplicada após o login. */
+html.dark-theme:has(.login-screen),
+html.dark-theme:has(.login-screen) body {
+  color: #0f172a;
+  background: #eef6fb;
+}
+
+.dark-theme .login-screen,
+.dark-theme .login-screen form,
+.dark-theme .login-screen form > label,
+.dark-theme .login-screen .access-login-heading h1,
+.dark-theme .login-screen .access-login-heading p,
+.dark-theme .login-screen .remember-option,
+.dark-theme .login-screen .login-register {
+  color: inherit;
+}
+
+.dark-theme .login-screen input,
+.dark-theme .login-screen select,
+.dark-theme .login-screen textarea {
+  border-color: #d9e0e4;
+  color: #2d353b;
+  background: #fff;
+}
+
+.dark-theme .login-screen .login-methods {
+  background: #eef3f5;
+}
+
+.dark-theme .login-screen .login-methods button {
+  color: #6d7680;
+  background: transparent;
+}
+
+.dark-theme .login-screen .login-methods button.active {
+  color: #fff;
+  background: #1687D9;
+}
+
+.dark-theme .login-screen .login-submit {
+  border: 0;
+}
+
 .login-screen {
   -webkit-overflow-scrolling: touch;
 }

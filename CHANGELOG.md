@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.03 - 2026-07-29
+
+- AvantaVendas: a preferência de modo escuro deixa de vazar para login,
+  cadastro e recuperação de acesso. As telas públicas preservam a cena clara
+  padrão e o tema salvo continua ativo após a autenticação.
+
 ## 1.6.1.107.02 - 2026-07-29
 
 - Autenticação: incluído **Continuar com Apple** na Gestão Web, Gestão Mobile,

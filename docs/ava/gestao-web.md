@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.02 -->
+<!-- ava-version: 1.6.1.107.03 -->
+
+> Revisão 1.6.1.107.03: o tema escuro salvo do AvantaVendas não se aplica às
+> telas públicas de entrada; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.02: a entrada também oferece **Continuar com Apple**. A
 > conta Apple usa o mesmo fluxo de criação ou acesso de conta já existente; sem

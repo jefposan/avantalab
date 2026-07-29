@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.02 -->
+<!-- ava-version: 1.6.1.107.03 -->
+
+> Revisão 1.6.1.107.03: o tema escuro salvo do AvantaVendas não se aplica às
+> telas públicas de entrada; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107.02: a entrada também oferece **Continuar com Apple**. O
 > fluxo usa a mesma conta AvantaLab e não altera e-mail, telefone ou Google.
