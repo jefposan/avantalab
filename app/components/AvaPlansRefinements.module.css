@@ -1,0 +1,13 @@
+.plansHeading {
+  max-width: 1000px;
+}
+
+.plansHeading h2 {
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .plansHeading h2 {
+    white-space: normal;
+  }
+}

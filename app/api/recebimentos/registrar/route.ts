@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { clientesServidor, respostaErro, usuarioDaRequisicao } from '../_lib';
+import { assinaturaEmpresaLiberada, clientesServidor, respostaErro, usuarioDaRequisicao } from '../_lib';
 
 export const runtime = 'nodejs';
 
@@ -53,6 +53,9 @@ export async function POST(request: Request) {
     const arquivo = form.get('comprovante');
 
     if (!empresaId) return respostaErro('Empresa não informada.');
+    if (!await assinaturaEmpresaLiberada(empresaId)) {
+      return respostaErro('A assinatura deste perfil precisa estar ativa para registrar recebimentos.', 403);
+    }
     if (!lancamentoExistenteId && !recebimentoEmpresaId) return respostaErro('Selecione o cliente do recebimento.');
     if (!Number.isFinite(valorRecebido) || valorRecebido < 0) return respostaErro('Informe um valor recebido válido.');
     if (!FORMAS_PAGAMENTO.has(formaPagamento)) return respostaErro('Selecione uma forma de pagamento.');

@@ -5,7 +5,7 @@
 //   1) Se já existe assinatura registrada → usa ela.
 //   2) Se não existe → deriva:
 //        • perfil criado ANTES do lançamento → cliente atual (mantém acesso).
-//        • empresa criada DEPOIS → trial de TRIAL_DIAS a partir da criação.
+//        • empresa criada DEPOIS → aguarda a contratação escolhida.
 //        • pessoal criado DEPOIS → grátis (núcleo livre, premium bloqueado).
 //
 // Não grava nada no banco: só lê e calcula. Usa a service role.
@@ -14,7 +14,6 @@
 import { createClient } from '@supabase/supabase-js';
 import {
   DATA_LANCAMENTO,
-  TRIAL_DIAS,
   type EstadoAcesso,
   type StatusAssinatura,
   type TipoPerfil,
@@ -100,14 +99,9 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
     return { tipoPerfil, status: 'ativa', validoAte: null, trialFim: null, plano: null, ciclo: null };
   }
 
-  // Novos, após o lançamento:
-  if (tipoPerfil === 'empresa') {
-    const fim = new Date(criadoEm as Date);
-    fim.setDate(fim.getDate() + TRIAL_DIAS);
-    return { tipoPerfil, status: 'trial', validoAte: null, trialFim: fim.toISOString(), plano: null, ciclo: null };
-  }
-
-  // Pessoal novo → grátis (núcleo sempre livre; recursos premium bloqueados).
+  // Perfis criados após o lançamento aguardam contratação. O único teste é
+  // gravado explicitamente no Business Pro por /api/cobranca/definir-inicio;
+  // assim um perfil empresarial não ganha trial apenas por ter sido criado.
   return { tipoPerfil, status: 'expirada', validoAte: null, trialFim: null, plano: null, ciclo: null };
 }
 

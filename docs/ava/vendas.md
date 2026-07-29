@@ -1,6 +1,152 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.42 -->
+<!-- ava-version: 1.6.1.98 -->
+
+> Revisão 1.6.1.98: comprovantes de Recebimentos também exigem assinatura
+> vigente; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.97: o login do Controle de Ponto exige módulo instalado e
+> assinatura empresarial vigente; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.96: remover o módulo empresarial bloqueia a equipe e desfaz
+> o destino financeiro, mas o uso pessoal gratuito continua disponível.
+>
+
+> Revisão 1.6.1.95: o Recebimentos Presenciais exige módulo instalado e
+> assinatura empresarial vigente; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.94: mudanças de plano atualizam a cobrança pendente para
+> manter o acesso e o valor contratados alinhados; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.93: o gestor Business pode migrar a assinatura para Business
+> Pro no painel, preservando o ciclo; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.92: o Vendas Mobile exige plano empresarial; no Business Pro a
+> instalação é sem cobrança e no Business há assinatura mensal.
+> sem impacto operacional até a ativação da cobrança no AvantaVendas.
+>
+> Revisão 1.6.1.81: a progressão comercial entre planos foi esclarecida na
+> página pública; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.80: preços anuais apresentados na página pública foram
+> atualizados; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.79: refinamento de texto público do Business Pro; sem impacto
+> operacional no AvantaVendas.
+>
+> Revisão 1.6.1.78: refinamento visual do CTA público do Business Pro; sem
+> impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.77: a página pública destaca o teste de 7 dias do Business Pro;
+> sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.76: comunicação pública de planos e chamadas atualizadas; sem
+> impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.75: refinamento de altura e navegação da página pública; sem
+> impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.74: correção técnica dos estilos públicos de planos; sem
+> impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.73: a comunicação comercial pública dos planos foi atualizada;
+> sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.72: a página pública recebe o botão oficial de próxima rolagem;
+> sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.71: refinamento tipográfico da seção pública de planos; sem
+> impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.70: destinos do menu público são alinhados pelo conteúdo
+> visível da seção; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.69: a rolagem do menu público passa a compensar o header fixo;
+> sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.68: a navegação interna da página inicial em prévia recebe
+> rolagem suave; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.67: página inicial em prévia passa a apresentar IA Ava e planos
+> públicos; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.66: páginas públicas de informações passam a usar o logotipo
+> oficial no cabeçalho; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.65: a Central de Suporte passa a oferecer retorno à página
+> inicial; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.64: o retorno das páginas legais passa a usar a expressão
+> Página inicial; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.63: páginas legais passam a oferecer retorno à Landing; sem
+> impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.62: Landing em prévia recebe navegação mobile acessível,
+> melhorias de acessibilidade nas calculadoras e Política de Cookies; sem
+> impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.61: o painel ilustrativo da Landing em prévia passa a usar
+> gráfico de barras de receitas e despesas; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.60: o conteúdo do balão demonstrativo da Ava na Landing em
+> prévia foi centralizado verticalmente; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.59: o balão demonstrativo da Ava na Landing em prévia apresenta
+> uma pergunta de saldo mensal; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.58: o balão demonstrativo da Ava no painel da Landing em prévia
+> utiliza o arquivo oficial do logotipo; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.57: o card da IA Ava na Landing em prévia utiliza o arquivo
+> oficial do logotipo; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.56: referência persistida de Total mensal no Gestão Mobile;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.55: a Landing em prévia aplica o ícone institucional da IA Ava;
+> sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.54: a Landing em prévia passa a divulgar Controle de Ponto e
+> importação de despesas por faturas ou extratos; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.53: o texto institucional da Landing em prévia identifica a Ava
+> como assistente de IA; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.52: a Landing em prévia passa a apresentar links públicos para
+> Termos de Uso e Política de Privacidade; sem impacto operacional no AvantaVendas.
+>
+> Revisão 1.6.1.51: os exemplos das calculadoras públicas passaram a ser
+> placeholders, sem impacto operacional nos fluxos do AvantaVendas.
+>
+> Revisão 1.6.1.50: a Landing em prévia inclui simulador público para financiar
+> carro ou casa; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.49: o header da Landing em prévia sobrepõe o hero e o logo volta
+> ao início; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.48: o header da Landing em prévia passa a ser transparente no
+> topo; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.47: a troca de calculadora na Landing não desloca a página em
+> telas amplas; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.46: a calculadora pública de CDI atualiza a Taxa DI pela série
+> oficial do Banco Central; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.45: a Landing em prévia passa a oferecer calculadoras públicas
+> de simulação; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.44: efeitos e backgrounds da prévia da Landing foram
+> restaurados; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.43: adicionadas prévias públicas da Landing e da central de
+> Calculadoras; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.42: em Configurações > Integração com Gestão, Desvincular perfil
 > financeiro fica mais afastado dos controles de envio e tem altura mais compacta.
@@ -155,6 +301,54 @@
 
 > Revisão 1.6.0.84.144: em Configurações > Empresas e conteúdos > Vincular
 > outra empresa, os campos ficam formatados e legíveis nos temas claro e escuro.
+
+> Revisão 1.6.0.84.143: faixa horizontal e busca de produtos no protótipo web
+> `/custos`; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.142: edição de insumos no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.141: máscara monetária no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.140: Meta de vendas no protótipo web `/custos`; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.139: cadastro de produto no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.138: correção dos indicadores no protótipo web `/custos`;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.137: carteira de produtos no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.136: ajuste visual no protótipo web `/custos`; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.135: controles monetários no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.134: alinhamento monetário no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.133: padronização monetária no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.132: ajuste tipográfico no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.131: segunda compactação visual no protótipo web `/custos`;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.130: compactação visual no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.129: exclusão de insumos no protótipo web `/custos`; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.128: protótipo web de Custos e Precificação em `/custos`;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.127: validação de linhas incompletas no importador da Gestão
 > Web; sem impacto operacional no AvantaVendas.

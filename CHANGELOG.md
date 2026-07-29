@@ -1,5 +1,315 @@
 # Changelog
 
+## 1.6.1.98 - 2026-07-29
+
+- Recebimentos Presenciais: a abertura de comprovantes também exige assinatura
+  empresarial vigente, evitando acesso externo residual ao módulo.
+
+## 1.6.1.97 - 2026-07-29
+
+- Controle de Ponto: o login do funcionário agora valida também a assinatura
+  empresarial vigente, além de confirmar que o módulo está instalado.
+
+## 1.6.1.96 - 2026-07-29
+
+- Vendas Mobile: remover o módulo empresarial agora bloqueia os vínculos de
+  equipe e remove o destino financeiro daquele perfil, sem afetar o uso
+  gratuito individual nem apagar dados pessoais.
+
+## 1.6.1.95 - 2026-07-29
+
+- Recebimentos Presenciais: colaboradores e gestores passam a ter o acesso
+  externo do módulo bloqueado quando a assinatura empresarial não está vigente.
+
+## 1.6.1.94 - 2026-07-29
+
+- Assinaturas: mudanças de ciclo ou upgrade para Business Pro atualizam também
+  a cobrança pendente, mantendo o valor cobrado alinhado ao acesso liberado.
+
+## 1.6.1.93 - 2026-07-29
+
+- Assinaturas: um Business ativo pode migrar para Business Pro sem cancelar ou
+  recriar a assinatura; o ciclo atual é preservado e reduções não são feitas
+  acidentalmente pelo painel.
+
+## 1.6.1.92 - 2026-07-29
+
+- Módulos: ativação do Business Pro passou a ser validada no servidor; planos
+  pessoais não podem ativar módulos e Business permanece sujeito à cobrança.
+
+## 1.6.1.91 - 2026-07-29
+
+- Business Pro: módulos continuam incluídos, porém ficam desativados até o
+  gestor escolher instalá-los; a instalação não gera cobrança avulsa.
+
+## 1.6.1.90 - 2026-07-29
+
+- Business Pro: módulos atuais e futuros passam a ser sincronizados e ativados
+  automaticamente pelo plano, sem contratação ou instalação avulsa.
+
+## 1.6.1.89 - 2026-07-29
+
+- Módulos Business: remover um módulo cancela exclusivamente sua assinatura
+  mensal recorrente e desativa o acesso, sem alterar o plano principal.
+
+## 1.6.1.88 - 2026-07-29
+
+- Sessões Business: ao abrir um perfil Business, o login atual encerra as
+  outras sessões do mesmo usuário. Business Pro mantém sessões simultâneas.
+
+## 1.6.1.87 - 2026-07-29
+
+- Limites comerciais: criação de perfis foi centralizada no servidor e passa a
+  validar quantidade total e tipo permitido antes da inserção.
+
+## 1.6.1.86 - 2026-07-29
+
+- Limites comerciais: criação e vínculo de usuários agora são validados no
+  servidor conforme o plano ativo, com sugestão de upgrade ao atingir o limite.
+
+## 1.6.1.85 - 2026-07-29
+
+- Módulos Business: a instalação agora inicia uma assinatura mensal recorrente
+  de R$ 14,90 no Asaas. A ativação ocorre somente após o webhook confirmar o
+  pagamento; não há liberação direta pelo navegador.
+
+## 1.6.1.84 - 2026-07-29
+
+- Página pública: a nova apresentação comercial passou de prévia para a rota
+  oficial `/`; a Gestão foi preservada em `/gestao`.
+- SEO: definidos canônico, dados estruturados indexáveis, redirecionamento da
+  prévia, `robots.txt`, sitemap e bloqueio explícito de indexação do sistema.
+- Desempenho: a rota pública deixa de enviar a diretiva `no-store`; a Gestão
+  autenticada continua sem cache persistente.
+
+## 1.6.1.83 - 2026-07-29
+
+- Cobrança: novas contratações empresariais passam a escolher Business ou
+  Business Pro; o teste de 7 dias é exclusivo do Business Pro.
+- Cobrança: preços e ciclos atualizados para Pessoal Premium, Business e
+  Business Pro. Assinaturas empresariais antigas continuam compatíveis como
+  Business durante a transição.
+- Módulos avulsos: Business permanece preparado apenas para assinatura mensal
+  recorrente de R$ 14,90 por módulo; não há opção anual avulsa.
+
+## 1.6.1.82 - 2026-07-29
+
+- Assinaturas: criado o catálogo central dos planos comerciais, limites e
+  preços, usado pela página pública de planos.
+- Módulos avulsos: preparada a persistência para uma assinatura mensal por
+  módulo no Business, no valor fixo de R$ 14,90.
+
+## 1.6.1.81 - 2026-07-29
+
+- Planos na página inicial em prévia: as listas de recursos passam a explicitar
+  a progressão entre Free, Pessoal Premium, Business e Business Pro.
+
+## 1.6.1.80 - 2026-07-29
+
+- Planos na página inicial em prévia: preços anuais do Business e Business Pro
+  passam para R$ 249,90 e R$ 359,90, respectivamente.
+
+## 1.6.1.79 - 2026-07-29
+
+- Business Pro na página inicial em prévia: removida a mensagem redundante do
+  teste abaixo do preço, mantendo o selo e o CTA de 7 dias grátis.
+
+## 1.6.1.78 - 2026-07-29
+
+- Business Pro na página inicial em prévia: CTA do teste passa a exibir a oferta
+  em duas linhas, com destaque para os 7 dias grátis.
+
+## 1.6.1.77 - 2026-07-29
+
+- Business Pro na página inicial em prévia: destacados o teste de 7 dias grátis
+  no selo, na mensagem de preço, no CTA e nas perguntas frequentes.
+
+## 1.6.1.76 - 2026-07-29
+
+- Página inicial em prévia: mensagens, CTAs, perguntas frequentes e dados
+  estruturados passam a refletir a nova estrutura comercial dos planos.
+- Planos: Business Pro recebe diferenciação visual de ecossistema completo,
+  preservando o destaque do Pessoal Premium para uso pessoal.
+
+## 1.6.1.75 - 2026-07-29
+
+- Página inicial em prévia: Como funciona, IA Ava e Dúvidas passam a ocupar a
+  altura útil da tela; a próxima rolagem agora também alcança o rodapé e seus
+  links legais.
+
+## 1.6.1.74 - 2026-07-28
+
+- Planos na página inicial em prévia: corrigida a compatibilidade dos estilos da
+  tabela comparativa com CSS Modules do Next.
+
+## 1.6.1.73 - 2026-07-28
+
+- Página inicial em prévia: a seção de planos passa a apresentar Free, Pessoal
+  Premium, Business e Business Pro, com preços, limites e comparação comercial.
+
+## 1.6.1.72 - 2026-07-28
+
+- Página inicial em prévia: incluído o botão oficial de próxima rolagem, com
+  avanço pelos destinos públicos e alinhamento ao conteúdo visível de cada seção.
+
+## 1.6.1.71 - 2026-07-28
+
+- Planos: título principal passa a permanecer em uma única linha em telas com
+  largura suficiente, mantendo a leitura responsiva em telas menores.
+
+## 1.6.1.70 - 2026-07-28
+
+- Página inicial em prévia: cada destino da navegação interna passa a alinhar o
+  primeiro conteúdo visível abaixo do header, eliminando o espaço excessivo.
+
+## 1.6.1.69 - 2026-07-28
+
+- Página inicial em prévia: a rolagem do menu passa a compensar a altura real
+  do header fixo e uma margem de leitura, alinhando corretamente as seções.
+- Navegação principal: Planos passa a aparecer antes de Calculadoras.
+
+## 1.6.1.68 - 2026-07-28
+
+- Página inicial em prévia: itens de navegação interna passam a rolar de modo
+  suave até a seção escolhida, respeitando a preferência de movimento reduzido.
+
+## 1.6.1.67 - 2026-07-28
+
+- Página inicial em prévia: adicionadas as seções IA Ava e Planos, com conversa
+  demonstrativa, comparação Pessoal/Empresa e alternância de cobrança mensal e
+  anual, integradas à navegação pública.
+
+## 1.6.1.66 - 2026-07-28
+
+- Páginas públicas de informações: substituído o rótulo AvantaLab Gestão pelo
+  logotipo oficial do AvantaLab no cabeçalho dos cards.
+
+## 1.6.1.65 - 2026-07-28
+
+- Central de Suporte: incluído botão de retorno à página inicial no topo do
+  card, alinhado às páginas públicas de informações.
+
+## 1.6.1.64 - 2026-07-28
+
+- Páginas legais: o retorno ao conteúdo público passa a usar o texto claro
+  `Voltar à página inicial`.
+
+## 1.6.1.63 - 2026-07-28
+
+- Páginas legais: Termos de Uso, Política de Privacidade e Política de Cookies
+  passam a oferecer botão de retorno à Landing no topo do card.
+
+## 1.6.1.62 - 2026-07-28
+
+- Landing em prévia: adicionados menu mobile acessível, compensação de âncoras
+  para o header fixo, navegação por teclado nas calculadoras, metadados sociais
+  e dados estruturados preparados para a publicação.
+- Privacidade: criada Política de Cookies, vinculada ao rodapé, e reforçado o
+  canal de contato para solicitações relacionadas a dados pessoais.
+
+## 1.6.1.61 - 2026-07-28
+
+- Landing em prévia: o gráfico de linha ilustrativo do painel foi substituído
+  por barras de comparação entre receitas e despesas, seguindo as cores e a
+  leitura do gráfico comparativo do AvantaLab.
+
+## 1.6.1.60 - 2026-07-28
+
+- Landing em prévia: o conteúdo do balão demonstrativo da Ava é alinhado ao
+  centro vertical.
+
+## 1.6.1.59 - 2026-07-28
+
+- Landing em prévia: o balão da Ava passa a apresentar uma pergunta de exemplo
+  sobre o saldo do mês.
+
+## 1.6.1.58 - 2026-07-28
+
+- Landing em prévia: o balão de demonstração da Ava no painel ilustrativo passa
+  a utilizar o arquivo oficial do logotipo da assistente.
+
+## 1.6.1.57 - 2026-07-28
+
+- Landing em prévia: o card da IA Ava passa a exibir o arquivo oficial do
+  logotipo da assistente, substituindo o badge textual provisório.
+
+## 1.6.1.56 - 2026-07-28
+
+- Gestão Mobile: Total mensal passa a ter referência persistida. A etiqueta e
+  a exclusão dependem dessa referência, sem confundir receitas avulsas.
+
+## 1.6.1.55 - 2026-07-28
+
+- Landing em prévia: o recurso da IA Ava passa a usar o ícone institucional da
+  assistente.
+
+## 1.6.1.54 - 2026-07-28
+
+- Landing em prévia: a seção de recursos passa a apresentar Controle de Ponto e
+  importação de despesas por faturas ou extratos.
+
+## 1.6.1.53 - 2026-07-28
+
+- Landing em prévia: o destaque institucional passa a identificar a Ava como
+  assistente de IA.
+
+## 1.6.1.52 - 2026-07-28
+
+- Landing em prévia: rodapé agora apresenta o aviso de direitos autorais e
+  links públicos para Termos de Uso e Política de Privacidade; criada a página
+  pública dos Termos, alinhada ao texto exibido no aplicativo.
+
+## 1.6.1.51 - 2026-07-28
+
+- Calculadoras na Landing: os valores de exemplo passam a ser placeholders,
+  mantendo os campos numéricos vazios e evitando resultados zerados antes do
+  preenchimento; a Taxa DI atual continua disponível pelo botão específico.
+
+## 1.6.1.50 - 2026-07-28
+
+- Calculadoras na Landing: adicionada a opção `Financiar carro ou casa`, com
+  simulação de entrada, custos financiados, SAC ou Price, parcelas, juros e
+  total estimado; o resultado reforça a comparação pelo CET da proposta real.
+
+## 1.6.1.49 - 2026-07-28
+
+- Landing em prévia: o header passa a sobrepor o hero para que a transparência
+  no topo revele o background; o logo agora rola ao início da página.
+
+## 1.6.1.48 - 2026-07-28
+
+- Landing em prévia: o header fica transparente no topo e recebe a superfície
+  translúcida somente após o início da rolagem.
+
+## 1.6.1.47 - 2026-07-28
+
+- Calculadoras na Landing: estabilizada a altura do painel em telas amplas ao
+  trocar de ferramenta, eliminando o salto visual da página.
+
+## 1.6.1.46 - 2026-07-28
+
+- Calculadora de CDI: a Taxa DI passa a ser consultada na série diária SGS 12
+  do Banco Central, anualizada pela convenção de 252 dias úteis, aplicada
+  automaticamente enquanto o campo não tiver sido editado e disponível no botão
+  `Aplicar taxa real`.
+
+## 1.6.1.45 - 2026-07-28
+
+- Landing pública em prévia: a seção de Calculadoras agora reúne simulações
+  interativas de renda passiva, reserva de emergência, investimento com CDI e
+  juros compostos; a antiga rota isolada redireciona para essa seção.
+
+## 1.6.1.44 - 2026-07-28
+
+- Prévia da Landing: restauradas as camadas de background institucional, luz e
+  profundidade visual no hero, nas faixas de destaque e no CTA final.
+
+## 1.6.1.43 - 2026-07-28
+
+- Adicionadas as prévias públicas de Landing e Calculadoras em
+  `/preview/landing` e `/preview/calculadoras`, com navegação, CTAs, conteúdo
+  institucional e metadados `noindex` para validação antes da publicação.
+
 ## 1.6.1.42 - 2026-07-28
 
 - AvantaVendas: o botão Desvincular perfil financeiro ganha respiro em relação
@@ -358,6 +668,122 @@
 - Vendas Mobile: os campos de `Vincular outra empresa` passam a ocupar a largura
   disponível e recebem labels, contorno, raio, espaçamento e foco visível nos
   temas claro e escuro.
+
+## 1.6.0.84.143 - 2026-07-26
+
+- Custos e Precificação: `Produtos cadastrados` passa a usar uma faixa
+  horizontal de cards selecionáveis, mantendo estável a altura da Visão geral.
+- Adicionada busca por nome, apresentação ou situação do produto.
+- Incluídos três novos produtos de exemplo para validar a rolagem e a filtragem.
+- As ações de insumos ficam reunidas no menu `⋯`; o menu abre lateralmente e a
+  exclusão continua exigindo confirmação.
+
+## 1.6.0.84.142 - 2026-07-26
+
+- Custos e Precificação: a lista de insumos passa a mostrar `Editar` ao lado de
+  `Excluir`.
+- A edição ocorre na própria linha e permite alterar nome, categoria, unidade e
+  custo, com ações para salvar ou cancelar.
+
+## 1.6.0.84.141 - 2026-07-26
+
+- Custos e Precificação: todos os campos monetários passam a montar o valor
+  durante a digitação, sempre em reais e com duas casas decimais.
+- A entrada funciona por centavos: `1`, `2`, `3` resultam progressivamente em
+  `R$ 0,01`, `R$ 0,12` e `R$ 1,23`.
+
+## 1.6.0.84.140 - 2026-07-26
+
+- Custos e Precificação: adicionada a tela `Meta de vendas`.
+- O usuário pode informar despesas operacionais, lucro mensal desejado, margem
+  de contribuição de referência e vendas realizadas.
+- O módulo calcula ponto de equilíbrio, meta mensal com lucro, progresso e
+  faturamento restante; os valores são locais nesta fase e ficam preparados
+  para futura leitura dos lançamentos classificados do AvantaLab.
+
+## 1.6.0.84.139 - 2026-07-26
+
+- Custos e Precificação: a Visão geral passa a oferecer o botão `Novo produto`.
+- O cadastro solicita nome, apresentação e parâmetros iniciais, cria o produto
+  como rascunho e abre sua composição vazia.
+- Após o cadastro, o usuário pode adicionar insumos à composição para formar o
+  custo e usar o produto no Simulador.
+
+## 1.6.0.84.138 - 2026-07-26
+
+- Custos e Precificação: a Visão geral deixa de apresentar médias financeiras
+  entre produtos diferentes.
+- Os cards agora mostram produtos cadastrados, composições validadas,
+  composições em rascunho e insumos efetivamente utilizados; valores
+  financeiros permanecem vinculados ao produto selecionado.
+
+## 1.6.0.84.137 - 2026-07-26
+
+- Custos e Precificação: o protótipo passa a incluir quatro produtos de exemplo,
+  cada um com composição, custos indiretos, impostos, taxas e margem próprios.
+- A Visão geral agora apresenta médias consolidadas da carteira e cards para
+  selecionar o produto analisado.
+- Composição e Simulador ganharam seletor de produto; os dados locais anteriores
+  são migrados e preservados.
+- O cabeçalho de Composição foi reorganizado com rótulo acima da lista e ação de
+  restauração separada, eliminando o agrupamento excessivo dos controles.
+
+## 1.6.0.84.136 - 2026-07-26
+
+- Custos e Precificação: a altura visual do botão `Excluir` na lista de insumos
+  foi reduzida em aproximadamente 40%, sem alterar os demais controles e
+  preservando uma área ampliada de interação.
+
+## 1.6.0.84.135 - 2026-07-26
+
+- Custos e Precificação: os campos monetários recuperaram os controles de
+  aumentar e diminuir no lado direito, mantendo o valor alinhado antes deles,
+  a máscara brasileira e as dimensões atuais.
+
+## 1.6.0.84.134 - 2026-07-26
+
+- Custos e Precificação: valores monetários foram alinhados à direita nas áreas
+  que ocupam, incluindo campos, tabelas, indicadores e resultados.
+
+## 1.6.0.84.133 - 2026-07-26
+
+- Custos e Precificação: todos os valores monetários agora são apresentados em
+  reais, no padrão brasileiro e sempre com duas casas decimais.
+- Os campos de custo aceitam edição com vírgula e são normalizados ao sair do
+  campo, preservando os valores numéricos no armazenamento local.
+
+## 1.6.0.84.132 - 2026-07-25
+
+- Custos e Precificação: o valor unitário na lista de insumos ganhou tipografia
+  maior e mais legível, sem alterar as dimensões do campo.
+
+## 1.6.0.84.131 - 2026-07-25
+
+- Custos e Precificação: as linhas de insumos foram compactadas novamente no
+  desktop, mantendo a área mínima de toque dos controles em telas móveis.
+
+## 1.6.0.84.130 - 2026-07-25
+
+- Custos e Precificação: as linhas da lista de insumos foram compactadas,
+  preservando os controles com área de toque acessível.
+
+## 1.6.0.84.129 - 2026-07-25
+
+- Custos e Precificação: a lista de insumos passa a oferecer exclusão com o
+  card oficial de confirmação do AvantaLab.
+- Quando o insumo estiver em uso, a confirmação avisa e também remove o item
+  da composição, recalculando os valores e preservando a consistência local.
+
+## 1.6.0.84.128 - 2026-07-25
+
+- Novo protótipo de **Custos e Precificação** disponível em `/custos`, dentro
+  do servidor principal do AvantaLab.
+- A validação permite montar uma composição, cadastrar insumos e simular preço
+  e margem, persistindo somente neste navegador e sem banco ou integração com
+  os dados financeiros.
+- Os arquivos do protótipo passam a ficar concentrados em `app/custos`; o
+  servidor independente da porta `3100` deixa de ser necessário.
+
 ## 1.6.0.84.127 - 2026-07-25
 
 - Importação de despesas: linhas parcialmente preenchidas no modelo Excel

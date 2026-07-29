@@ -10,6 +10,9 @@ import {
   type DadosCobrancaAssinatura,
   type EstadoAcesso,
 } from '../lib/cobranca';
+import { PLANOS_COMERCIAIS } from '../lib/planos-comerciais';
+
+type PlanoContratavel = 'pessoal_premium' | 'business' | 'business_pro';
 
 type Fatura = {
   id: string;
@@ -39,7 +42,7 @@ interface AssinaturaModalProps {
   aberto: boolean;
   onFechar: () => void;
   onEstadoAtualizado?: (estado: EstadoAcesso | null) => void;
-  onAssinar?: (ciclo: 'mensal' | 'anual', dados: DadosCobrancaAssinatura) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
+  onAssinar?: (plano: PlanoContratavel, ciclo: 'mensal' | 'anual', dados: DadosCobrancaAssinatura) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
   empresaId: string | null;
   nomePadrao?: string;
   emailPadrao?: string;
@@ -93,13 +96,14 @@ export default function AssinaturaModal({
 }: AssinaturaModalProps) {
   const [detalhes, setDetalhes] = useState<DetalhesAssinatura | null>(null);
   const [carregando, setCarregando] = useState(false);
-  const [acao, setAcao] = useState<'mensal' | 'anual' | 'cancelar' | 'assinar-mensal' | 'assinar-anual' | null>(null);
+  const [acao, setAcao] = useState<'mensal' | 'anual' | 'business_pro' | 'cancelar' | 'assinar-mensal' | 'assinar-anual' | null>(null);
   const [erro, setErro] = useState('');
   const [nomeCobranca, setNomeCobranca] = useState(nomePadrao);
   const [cpfCnpj, setCpfCnpj] = useState('');
   const [emailCobranca, setEmailCobranca] = useState(emailPadrao);
   const [telefoneCobranca, setTelefoneCobranca] = useState(telefonePadrao);
   const [confirmarCancelamento, setConfirmarCancelamento] = useState(false);
+  const [planoEmpresa, setPlanoEmpresa] = useState<'business' | 'business_pro'>('business');
   const requisicaoRef = useRef(false);
 
   const carregar = useCallback(async () => {
@@ -144,7 +148,7 @@ export default function AssinaturaModal({
     onFechar();
   };
 
-  const executar = async (tipo: 'mensal' | 'anual' | 'cancelar') => {
+  const executar = async (tipo: 'mensal' | 'anual' | 'business_pro' | 'cancelar') => {
     if (!empresaId || acao) return;
     setAcao(tipo);
     setErro('');
@@ -155,7 +159,11 @@ export default function AssinaturaModal({
       const resposta = await fetch('/api/cobranca/gerenciar', {
         method: tipo === 'cancelar' ? 'DELETE' : 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(tipo === 'cancelar' ? { empresaId } : { empresaId, ciclo: tipo }),
+        body: JSON.stringify(tipo === 'cancelar'
+          ? { empresaId }
+          : tipo === 'business_pro'
+            ? { empresaId, ciclo: cicloAtual === 'anual' ? 'anual' : 'mensal', plano: 'business_pro' }
+            : { empresaId, ciclo: tipo }),
       });
       const json = await resposta.json();
       if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível concluir a alteração.');
@@ -194,7 +202,8 @@ export default function AssinaturaModal({
     setAcao(`assinar-${ciclo}`);
     setErro('');
     try {
-      const resultado = await onAssinar?.(ciclo, { nome, cpfCnpj: documento, email, telefone });
+      const plano = tipoPessoal ? 'pessoal_premium' : planoEmpresa;
+      const resultado = await onAssinar?.(plano, ciclo, { nome, cpfCnpj: documento, email, telefone });
       if (resultado && resultado.ok && resultado.url) {
         if (janela) janela.location.href = resultado.url;
         else window.open(resultado.url, '_blank');
@@ -241,8 +250,7 @@ export default function AssinaturaModal({
   // Plano atual: "<Tipo> · mensal/anual" (pago) ou "<Tipo> · cortesia/cupom".
   const rotuloPlanoExibido = cortesiaAtiva
     ? `${tipoLabel} · ${viaCupom ? 'cupom' : 'cortesia'}`
-    : cicloAtual ? `${tipoLabel} · ${cicloAtual}`
-    : estadoAtual?.plano ? tipoLabel
+    : estadoAtual?.plano ? rotuloPlano(estadoAtual.plano, cicloAtual || null)
     : '—';
   // Valor e vencimento: só em plano pago (mensal/anual).
   const planoPago = !cortesiaAtiva && Boolean(assinatura);
@@ -255,11 +263,13 @@ export default function AssinaturaModal({
     estadoAtual?.status === 'trial'
     || (tipoPessoal && estadoAtual?.status === 'expirada')
   );
-  const precoMensal = tipoPessoal ? 'R$ 9,90' : 'R$ 34,90';
-  const precoAnual = tipoPessoal ? 'R$ 99,00' : 'R$ 348,00';
+  const planoParaContratacao: PlanoContratavel = tipoPessoal ? 'pessoal_premium' : planoEmpresa;
+  const precoMensal = dinheiro(PLANOS_COMERCIAIS[planoParaContratacao].precos.mensal ?? 0);
+  const precoAnual = dinheiro(PLANOS_COMERCIAIS[planoParaContratacao].precos.anual ?? 0);
   const card = darkMode ? 'bg-slate-900 text-slate-100 border-slate-700' : 'bg-white text-slate-900 border-slate-200';
   const muted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
+  const planoAtualEmpresa = estadoAtual?.plano === 'business_pro' ? 'business_pro' : 'business';
 
   return (
     <div className="fixed inset-0 z-[5600] flex items-center justify-center bg-black/60 px-4 py-5" onClick={fechar}>
@@ -276,7 +286,7 @@ export default function AssinaturaModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-          {erro && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
+          {erro && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
           {carregando && !detalhes ? <div className="py-14 text-center text-sm font-medium text-slate-500">Carregando assinatura...</div> : <>
             {carencia && <div className="mb-4 w-full rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900"><strong>Pagamento pendente.</strong> Regularize até {formatarData(estadoAtual?.validoAte || null)} para evitar o bloqueio do perfil.</div>}
             {canceladaNoFim && <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900"><strong>Renovação cancelada.</strong> O acesso permanece disponível até {formatarData(estadoAtual?.validoAte || null)}.</div>}
@@ -291,6 +301,22 @@ export default function AssinaturaModal({
             {podeGerenciar && podeContratar && <section className="mt-5">
               <h3 className="text-sm font-semibold">Contratar assinatura</h3>
               <p className={`mt-1 text-xs ${muted}`}>Você pode contratar agora sem perder os dias restantes do período de teste.</p>
+              {!tipoPessoal && <fieldset className="mt-3 grid grid-cols-2 gap-2" aria-label="Plano empresarial">
+                <legend className="sr-only">Plano empresarial</legend>
+                {([
+                  ['business', 'Business', 'Módulos à parte.'],
+                  ['business_pro', 'Business Pro', 'Todos os módulos incluídos.'],
+                ] as const).map(([plano, titulo, descricao]) => <button
+                  key={plano}
+                  type="button"
+                  aria-pressed={planoEmpresa === plano}
+                  onClick={() => setPlanoEmpresa(plano)}
+                  className={`rounded-lg border px-3 py-2 text-left transition ${planoEmpresa === plano ? 'border-sky-600 bg-sky-50 text-sky-900' : darkMode ? 'border-slate-600 bg-slate-800 text-slate-200' : 'border-slate-300 bg-white text-slate-700'}`}
+                >
+                  <span className="block text-xs font-bold">{titulo}</span>
+                  <span className={`mt-0.5 block text-[10px] ${muted}`}>{descricao}</span>
+                </button>)}
+              </fieldset>}
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <input type="text" value={nomeCobranca} onChange={(e) => setNomeCobranca(e.target.value)} placeholder="Nome ou razão social" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
                 <input type="text" inputMode="numeric" value={cpfCnpj} onChange={(e) => setCpfCnpj(e.target.value)} placeholder="CPF ou CNPJ" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
@@ -304,6 +330,13 @@ export default function AssinaturaModal({
             </section>}
 
             {podeGerenciar && assinatura && !canceladaNoFim && !cortesiaAtiva && <section className="mt-5">
+              {!tipoPessoal && planoAtualEmpresa === 'business' && <div className={`mb-5 rounded-[14px_24px_24px_24px] border p-4 ${painel}`}>
+                <h3 className="text-sm font-semibold">Eleve para Business Pro</h3>
+                <p className={`mt-1 text-xs leading-relaxed ${muted}`}>Amplie agora para até 10 usuários e perfis, sessões simultâneas e todos os módulos incluídos. A cobrança pendente será atualizada para o novo plano.</p>
+                <button type="button" disabled={acao !== null} onClick={() => void executar('business_pro')} className="mt-3 min-h-11 w-full rounded-lg bg-sky-700 px-3 text-xs font-semibold uppercase text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60">
+                  {acao === 'business_pro' ? 'Alterando plano...' : 'Migrar para Business Pro'}
+                </button>
+              </div>}
               <h3 className="text-sm font-semibold">Ciclo de cobrança</h3>
               <p className={`mt-1 text-xs ${muted}`}>A alteração vale para a próxima renovação e não modifica cobranças já geradas.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">

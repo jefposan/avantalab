@@ -1,6 +1,152 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.42 -->
+<!-- ava-version: 1.6.1.98 -->
+
+> Revisão 1.6.1.98: comprovantes de Recebimentos também exigem assinatura
+> vigente; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.97: o login do Controle de Ponto exige módulo instalado e
+> assinatura empresarial vigente; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.96: remover o módulo Vendas Mobile desfaz os vínculos de
+> equipe e o destino financeiro, preservando os dados pessoais; sem impacto na Ava.
+>
+
+> Revisão 1.6.1.95: o Recebimentos Presenciais exige módulo instalado e
+> assinatura empresarial vigente; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.94: mudanças de plano atualizam a cobrança pendente para
+> manter o acesso e o valor contratados alinhados; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.93: o gestor Business pode migrar a assinatura para Business
+> Pro no painel, preservando o ciclo; sem impacto na orientação da Ava.
+>
+
+> Revisão 1.6.1.92: módulos só podem ser ativados nos planos empresariais;
+> Business Pro instala sem cobrança e Business exige a assinatura mensal.
+> sem impacto operacional até a ativação da cobrança no Gestão Web.
+>
+> Revisão 1.6.1.81: a progressão comercial entre planos foi esclarecida na
+> página pública; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.80: preços anuais apresentados na página pública foram
+> atualizados; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.79: refinamento de texto público do Business Pro; sem impacto
+> operacional no Gestão Web.
+>
+> Revisão 1.6.1.78: refinamento visual do CTA público do Business Pro; sem
+> impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.77: a página pública destaca o teste de 7 dias do Business Pro;
+> sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.76: comunicação pública de planos e chamadas atualizadas; sem
+> impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.75: refinamento de altura e navegação da página pública; sem
+> impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.74: correção técnica dos estilos públicos de planos; sem
+> impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.73: a comunicação comercial pública dos planos foi atualizada;
+> sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.72: a página pública recebe o botão oficial de próxima rolagem;
+> sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.71: refinamento tipográfico da seção pública de planos; sem
+> impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.70: destinos do menu público são alinhados pelo conteúdo
+> visível da seção; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.69: a rolagem do menu público passa a compensar o header fixo;
+> sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.68: a navegação interna da página inicial em prévia recebe
+> rolagem suave; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.67: página inicial em prévia passa a apresentar IA Ava e planos
+> públicos; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.66: páginas públicas de informações passam a usar o logotipo
+> oficial no cabeçalho; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.65: a Central de Suporte passa a oferecer retorno à página
+> inicial; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.64: o retorno das páginas legais passa a usar a expressão
+> Página inicial; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.63: páginas legais passam a oferecer retorno à Landing; sem
+> impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.62: Landing em prévia recebe navegação mobile acessível,
+> melhorias de acessibilidade nas calculadoras e Política de Cookies; sem
+> impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.61: o painel ilustrativo da Landing em prévia passa a usar
+> gráfico de barras de receitas e despesas; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.60: o conteúdo do balão demonstrativo da Ava na Landing em
+> prévia foi centralizado verticalmente; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.59: o balão demonstrativo da Ava na Landing em prévia apresenta
+> uma pergunta de saldo mensal; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.58: o balão demonstrativo da Ava no painel da Landing em prévia
+> utiliza o arquivo oficial do logotipo; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.57: o card da IA Ava na Landing em prévia utiliza o arquivo
+> oficial do logotipo; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.56: referência persistida de Total mensal no Gestão Mobile;
+> sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.55: a Landing em prévia aplica o ícone institucional da IA Ava;
+> sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.54: a Landing em prévia passa a divulgar Controle de Ponto e
+> importação de despesas por faturas ou extratos; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.53: o texto institucional da Landing em prévia identifica a Ava
+> como assistente de IA; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.52: a Landing em prévia passa a apresentar links públicos para
+> Termos de Uso e Política de Privacidade; sem impacto operacional no Gestão Web.
+>
+> Revisão 1.6.1.51: os exemplos das calculadoras públicas passaram a ser
+> placeholders, sem impacto operacional nos fluxos do Gestão Web.
+>
+> Revisão 1.6.1.50: a Landing em prévia inclui simulador público para financiar
+> carro ou casa; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.49: o header da Landing em prévia sobrepõe o hero e o logo volta
+> ao início; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.48: o header da Landing em prévia passa a ser transparente no
+> topo; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.47: a troca de calculadora na Landing não desloca a página em
+> telas amplas; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.46: a calculadora pública de CDI atualiza a Taxa DI pela série
+> oficial do Banco Central; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.45: a Landing em prévia passa a oferecer calculadoras públicas
+> de simulação; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.44: efeitos e backgrounds da prévia da Landing foram
+> restaurados; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.43: adicionadas prévias públicas da Landing e da central de
+> Calculadoras; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.42: ajuste visual no botão Desvincular perfil financeiro do
 > AvantaVendas; sem impacto operacional na Gestão Web.
@@ -182,6 +328,71 @@
 
 > Revisão 1.6.0.84.144: formatação dos campos de vínculo comercial no Vendas
 > Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.0.84.143: na Visão geral de `/custos`, os produtos são exibidos
+> em uma faixa horizontal de cards selecionáveis, com busca por produto. Três
+> novos exemplos permitem validar a rolagem. As ações de cada insumo ficam no
+> menu `⋯`, com edição e exclusão confirmada.
+
+> Revisão 1.6.0.84.142: na lista de insumos de `/custos`, `Editar` permite
+> alterar nome, categoria, unidade e custo na própria linha; o usuário pode
+> salvar ou cancelar a alteração.
+
+> Revisão 1.6.0.84.141: todos os campos monetários de `/custos` mantêm duas
+> casas decimais durante a digitação. A sequência `1`, `2`, `3` forma
+> progressivamente `R$ 0,01`, `R$ 0,12` e `R$ 1,23`.
+
+> Revisão 1.6.0.84.140: `/custos` ganha `Meta de vendas`. A tela recebe despesas
+> operacionais, lucro mensal desejado, margem de contribuição de referência e
+> vendas realizadas; calcula ponto de equilíbrio, meta com lucro, progresso e
+> quanto falta vender. Nesta fase os valores são locais e simuláveis.
+
+> Revisão 1.6.0.84.139: na Visão geral de `/custos`, `Novo produto` abre o
+> cadastro de nome, apresentação e parâmetros iniciais. Ao salvar, o produto
+> nasce como `Rascunho` e sua composição vazia é aberta para adicionar insumos e
+> formar o custo.
+
+> Revisão 1.6.0.84.138: a Visão geral de `/custos` substitui médias financeiras
+> por indicadores de produtos cadastrados, composições validadas, composições em
+> rascunho e insumos utilizados. Valores financeiros pertencem ao produto
+> selecionado.
+
+> Revisão 1.6.0.84.137: `/custos` passa a oferecer quatro produtos locais de
+> exemplo. A Visão geral mostra médias da carteira e permite selecionar um
+> produto; Composição e Simulador usam a lista `Produto em análise`. Cada
+> produto possui componentes e parâmetros próprios. Dados locais anteriores são
+> migrados automaticamente.
+
+> Revisão 1.6.0.84.136: redução visual do botão `Excluir` na lista de insumos
+> de `/custos`; sem mudança operacional.
+
+> Revisão 1.6.0.84.135: os campos monetários de `/custos` mantêm a máscara
+> brasileira e voltam a oferecer controles laterais para aumentar ou diminuir
+> o valor em centavos.
+
+> Revisão 1.6.0.84.134: alinhamento à direita dos valores monetários nas áreas
+> do protótipo `/custos`; sem mudança operacional.
+
+> Revisão 1.6.0.84.133: todos os valores monetários do protótipo `/custos`
+> aparecem em reais com duas casas decimais; campos de custo aceitam vírgula e
+> são formatados ao concluir a edição.
+
+> Revisão 1.6.0.84.132: aumento da tipografia do valor unitário na lista de
+> insumos em `/custos`; sem mudança operacional.
+
+> Revisão 1.6.0.84.131: segunda compactação visual das linhas de insumos em
+> `/custos`; sem mudança operacional.
+
+> Revisão 1.6.0.84.130: compactação visual das linhas de insumos em `/custos`;
+> sem mudança operacional.
+
+> Revisão 1.6.0.84.129: no protótipo `/custos`, a lista de insumos oferece
+> exclusão confirmada. Se o insumo estiver na composição, a confirmação informa
+> que ele também será removido dela.
+
+> Revisão 1.6.0.84.128: `/custos` abre o protótipo de Custos e Precificação
+> para validação. Os dados ficam somente no navegador e ainda não integram
+> cadastro, financeiro, vendas, permissões ou banco do AvantaLab.
 
 > Revisão 1.6.0.84.127: linhas parcialmente preenchidas no modelo Excel
 > permanecem visíveis na revisão. Data, tipo e valor são obrigatórios,

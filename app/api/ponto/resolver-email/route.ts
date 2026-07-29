@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { COBRANCA_ATIVA, assinaturaVigente } from '../../../lib/cobranca';
+import { resolverEstadoAcesso } from '../../../lib/cobranca-servidor';
 
 function soDigitos(v: string) {
   return String(v || '').replace(/\D/g, '');
@@ -56,6 +58,16 @@ export async function POST(request: Request) {
           { erro: true, bloqueado: true, mensagem: 'O controle de ponto está indisponível para a sua empresa no momento. Fale com o gestor.' },
           { status: 403 }
         );
+      }
+
+      if (COBRANCA_ATIVA) {
+        const estado = await resolverEstadoAcesso(data.empresa_id);
+        if (estado?.tipoPerfil === 'empresa' && !assinaturaVigente(estado)) {
+          return NextResponse.json(
+            { erro: true, bloqueado: true, mensagem: 'O controle de ponto está indisponível para a sua empresa no momento. Fale com o gestor.' },
+            { status: 403 }
+          );
+        }
       }
     }
 

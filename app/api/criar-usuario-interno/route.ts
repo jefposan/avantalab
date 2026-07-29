@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
 import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
+import { validarLimiteDeUsuarios } from '../../lib/limites-comerciais-servidor';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
 import { normalizarEmail, validarEmail } from '../../lib/email';
 import { buscarContaAuthPorEmail } from '../../lib/usuario-disponibilidade-servidor';
@@ -129,6 +130,8 @@ export async function POST(request: Request) {
         if (!podeUsar('usuarios_internos', estado)) {
           return respostaErro('Criar usuários faz parte do Premium Pessoal. Assine para desbloquear.', 403);
         }
+        const limite = await validarLimiteDeUsuarios(supabaseAdmin, empresaId, estado);
+        if (!limite.permitido) return respostaErro(limite.mensagem, 409);
       } catch (erroCobranca) {
         console.error('Erro ao validar Premium (criar usuário):', erroCobranca);
       }

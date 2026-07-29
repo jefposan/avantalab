@@ -1,6 +1,9 @@
 'use client';
 import React, { useRef, useState } from 'react';
-import { PRECOS, type DadosCobrancaAssinatura, type EstadoAcesso } from '../lib/cobranca';
+import { type DadosCobrancaAssinatura, type EstadoAcesso } from '../lib/cobranca';
+import { PLANOS_COMERCIAIS } from '../lib/planos-comerciais';
+
+type PlanoContratavel = 'pessoal_premium' | 'business' | 'business_pro';
 
 // Formata como CPF (000.000.000-00) até 11 dígitos, ou CNPJ (00.000.000/0000-00) acima.
 function formatarCpfCnpj(valor: string): string {
@@ -24,8 +27,8 @@ interface PaywallEmpresaProps {
   estadoAcesso?: EstadoAcesso | null;
   faturaPendenteUrl?: string | null;
   // Retorna { ok, url } em caso de sucesso, ou { ok:false, mensagem } em caso de falha.
-  onAssinar?: (ciclo: 'mensal' | 'anual', dados: DadosCobrancaAssinatura) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
-  onEscolherPlano?: (ciclo: 'mensal' | 'anual') => void;
+  onAssinar?: (plano: PlanoContratavel, ciclo: 'mensal' | 'anual', dados: DadosCobrancaAssinatura) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
+  onEscolherPlano?: (plano: PlanoContratavel, ciclo: 'mensal' | 'anual') => void;
   onAtualizarPagamento?: () => Promise<{ ok: boolean; liberado: boolean; mensagem?: string }>;
   // Resgate de cupom: retorna mensagem de erro (string) ou nada em caso de sucesso.
   onResgatarCupom?: (codigo: string) => Promise<string | null | void>;
@@ -54,12 +57,14 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
   const [cupom, setCupom] = useState('');
   const [resgatando, setResgatando] = useState(false);
   const [cupomErro, setCupomErro] = useState('');
+  const [planoEmpresa, setPlanoEmpresa] = useState<'business' | 'business_pro'>(() => estadoAcesso?.plano === 'business_pro' ? 'business_pro' : 'business');
   const [instanteAbertura] = useState(() => Date.now());
   const assinaturaEmCursoRef = useRef(false);
   const resgateEmCursoRef = useRef(false);
   const acessoWebPessoal = tipoPerfil === 'pessoal';
-  const precoMensal = PRECOS[acessoWebPessoal ? 'pessoal_premium' : 'empresa'].mensal;
-  const precoAnual = PRECOS[acessoWebPessoal ? 'pessoal_premium' : 'empresa'].anual;
+  const planoSelecionado: PlanoContratavel = acessoWebPessoal ? 'pessoal_premium' : planoEmpresa;
+  const precoMensal = PLANOS_COMERCIAIS[planoSelecionado].precos.mensal ?? 0;
+  const precoAnual = PLANOS_COMERCIAIS[planoSelecionado].precos.anual ?? 0;
   const economiaAnual = Math.round((precoMensal * 12 - precoAnual) * 100) / 100;
 
   const trialRealmenteVencido = (estadoAcesso?.status === 'trial' || estadoAcesso?.status === 'expirada')
@@ -105,7 +110,7 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
   const clicar = async (ciclo: 'mensal' | 'anual') => {
     if (assinaturaEmCursoRef.current) return;
     if (onEscolherPlano) {
-      onEscolherPlano(ciclo);
+      onEscolherPlano(planoSelecionado, ciclo);
       return;
     }
     const digitos = cpfCnpj.replace(/\D/g, '');
@@ -134,7 +139,7 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
     setErro('');
     setCarregando(ciclo);
     try {
-      const r = await onAssinar?.(ciclo, { nome, cpfCnpj: digitos, email, telefone });
+      const r = await onAssinar?.(planoSelecionado, ciclo, { nome, cpfCnpj: digitos, email, telefone });
       if (r && typeof r === 'object' && r.ok && r.url) {
         if (janela) janela.location.href = r.url;
         else window.open(r.url, '_blank');
@@ -302,6 +307,28 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
                   />
                 </label>
               </div>}
+
+              {!acessoWebPessoal && (
+                <fieldset className="mt-3 grid grid-cols-2 gap-2" aria-label="Plano empresarial">
+                  <legend className="sr-only">Plano empresarial</legend>
+                  {([
+                    ['business', 'Business', 'Monte os módulos que precisar.'],
+                    ['business_pro', 'Business Pro', 'Tudo liberado + 7 dias grátis para novos testes.'],
+                  ] as const).map(([plano, titulo, descricao]) => {
+                    const ativo = planoEmpresa === plano;
+                    return <button
+                      key={plano}
+                      type="button"
+                      aria-pressed={ativo}
+                      onClick={() => setPlanoEmpresa(plano)}
+                      className={`rounded-xl border p-2.5 text-left transition ${ativo ? 'border-sky-700 bg-sky-50 ring-2 ring-sky-600/20' : 'border-slate-200 bg-white/75 hover:border-sky-300'}`}
+                    >
+                      <span className="block text-xs font-black text-slate-900">{titulo}</span>
+                      <span className="mt-1 block text-[10px] font-semibold leading-snug text-slate-500">{descricao}</span>
+                    </button>;
+                  })}
+                </fieldset>
+              )}
 
               {/* Planos */}
               <div className="mt-3 grid gap-2 sm:grid-cols-2">

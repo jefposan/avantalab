@@ -60,6 +60,45 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Assinatura de módulo: é independente da assinatura principal e só libera
+    // o módulo após a confirmação do pagamento pela Asaas.
+    const { data: assinaturaModulo } = assinaturaGw
+      ? await db
+          .from('assinaturas_modulos')
+          .select('id, empresa_id, modulo_id, status, valido_ate')
+          .eq('gateway_subscription_id', assinaturaGw)
+          .maybeSingle()
+      : { data: null };
+    if (assinaturaModulo) {
+      let novoStatus: 'ativa' | 'inadimplente' | 'cancelada' | null = null;
+      let validoAte: string | null = assinaturaModulo.valido_ate || null;
+      if (evento === 'PAYMENT_CONFIRMED' || evento === 'PAYMENT_RECEIVED') novoStatus = 'ativa';
+      else if (evento === 'PAYMENT_OVERDUE') novoStatus = 'inadimplente';
+      else if (evento === 'PAYMENT_REFUNDED' || evento === 'PAYMENT_CHARGEBACK_REQUESTED' || evento === 'SUBSCRIPTION_INACTIVATED' || evento === 'SUBSCRIPTION_DELETED') novoStatus = 'cancelada';
+
+      if (novoStatus === 'inadimplente') {
+        const fim = new Date();
+        fim.setDate(fim.getDate() + 3);
+        validoAte = fim.toISOString();
+      } else if (novoStatus === 'cancelada') {
+        validoAte = new Date().toISOString();
+      } else if (novoStatus === 'ativa') {
+        validoAte = null;
+      }
+      if (novoStatus) {
+        await db.from('assinaturas_modulos').update({ status: novoStatus, valido_ate: validoAte, atualizado_em: new Date().toISOString() }).eq('id', assinaturaModulo.id);
+        await db.from('empresa_modulos').upsert({
+          empresa_id: assinaturaModulo.empresa_id,
+          modulo_id: assinaturaModulo.modulo_id,
+          ativo: novoStatus === 'ativa',
+          origem: 'assinatura_modulo',
+          atualizado_em: new Date().toISOString(),
+        }, { onConflict: 'empresa_id,modulo_id' });
+      }
+      await db.from('cobranca_webhook_eventos').update({ status: 'processado', erro: null, processado_em: new Date().toISOString() }).eq('id', registroEventoId);
+      return NextResponse.json({ recebido: true, modulo: true });
+    }
+
     let consulta = db.from('assinaturas').select('id, empresa_id, status, valido_ate');
     if (empresaId && assinaturaGw) consulta = consulta.eq('empresa_id', empresaId).eq('gateway_subscription_id', assinaturaGw);
     else if (empresaId) consulta = consulta.eq('empresa_id', empresaId);

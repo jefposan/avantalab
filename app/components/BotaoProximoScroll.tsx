@@ -160,10 +160,11 @@ export default function BotaoProximoScroll({
       .map((id) => document.getElementById(id))
       .filter((elemento): elemento is HTMLElement => Boolean(elemento))
       .map((elemento) => {
-        const margem = Number.parseFloat(window.getComputedStyle(elemento).scrollMarginTop) || 0;
+        const alvoVisivel = elemento.querySelector<HTMLElement>('[data-scroll-target]') ?? elemento;
+        const margem = Number.parseFloat(window.getComputedStyle(alvoVisivel).scrollMarginTop) || 0;
         return {
-          elemento,
-          top: Math.max(0, elemento.getBoundingClientRect().top + window.scrollY - margem),
+          elemento: alvoVisivel,
+          top: Math.max(0, alvoVisivel.getBoundingClientRect().top + window.scrollY - margem),
         };
       })
       .find((destino) => destino.top > atual + 24);
