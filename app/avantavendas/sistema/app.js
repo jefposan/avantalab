@@ -2147,12 +2147,35 @@ async function entrarComGoogle() {
   }
 }
 
+async function entrarComApple() {
+  if (conectandoGoogle) return;
+  const lembrar = document.getElementById('loginLembrar')?.checked === true;
+  document.activeElement?.blur();
+  fixarAlturaPreparacao();
+  conectandoGoogle = true;
+  sessionStorage.setItem(GOOGLE_CONNECTING_KEY, '1');
+  registrarPreferenciaSessaoVendas(lembrar, true);
+  render();
+  try {
+    const origem = origemAcessoVendas();
+    await window.VendasDb.signInWithApple(`${window.location.origin}/avantavendas${origem === 'gestao' ? '?origem=gestao' : ''}`);
+  } catch (error) {
+    conectandoGoogle = false;
+    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+    liberarAlturaPreparacao();
+    render();
+    erroAcessoVendas = traduzErro(error);
+    render();
+  }
+}
+
 function adicionarBotoesGoogle() {
   const form = app.querySelector('.login-screen form');
   const rodape = form?.querySelector('.login-register');
   if (!form || !rodape || form.querySelector('.google-login-button') || cadastroEtapa === 'sms') return;
   const texto = conectandoGoogle ? 'Conectando...' : (modoLogin === 'cadastro' ? 'Cadastrar com Google' : 'Continuar com Google');
-  rodape.insertAdjacentHTML('beforebegin', `<button type="button" class="google-login-button" onclick="entrarComGoogle()"><span class="google-login-mark" aria-hidden="true">G</span>${texto}</button>`);
+  const textoApple = conectandoGoogle ? 'Conectando...' : (modoLogin === 'cadastro' ? 'Cadastrar com Apple' : 'Continuar com Apple');
+  rodape.insertAdjacentHTML('beforebegin', `<button type="button" class="google-login-button" onclick="entrarComGoogle()"><span class="google-login-mark" aria-hidden="true">G</span>${texto}</button><button type="button" class="apple-login-button" onclick="entrarComApple()"><span aria-hidden="true"></span>${textoApple}</button>`);
   if (conectandoGoogle) {
     form.classList.add('google-connecting');
     form.querySelectorAll('input, select, button').forEach((controle) => { controle.disabled = true; });
@@ -2749,7 +2772,7 @@ async function inicializarApp() {
       return;
     }
     const sessaoAtiva = conectandoGoogle
-      ? await comLimiteDeTempo(aguardarSessaoGoogle(), 'Não foi possível concluir o acesso com o Google.', 12000)
+      ? await comLimiteDeTempo(aguardarSessaoGoogle(), 'Não foi possível concluir o login social.', 12000)
       : await comLimiteDeTempo(window.VendasDb.hasSession(), 'Não foi possível restaurar sua sessão.', 10000);
     atualizarProgressoPreparacao('auth', 1, 1, sessaoAtiva ? 'Sessão restaurada' : 'Sessão não encontrada');
     if (!sessaoAtiva) {
@@ -7039,6 +7062,7 @@ window.limparBusca = limparBusca;
 window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
 window.entrarComGoogle = entrarComGoogle;
+window.entrarComApple = entrarComApple;
 window.trocarTipoLogin = trocarTipoLogin;
 window.alternarSenhaLogin = alternarSenhaLogin;
 window.alternarSenhaCampoVendas = alternarSenhaCampoVendas;

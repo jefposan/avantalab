@@ -74,6 +74,7 @@ interface AuthCardProps {
   authMensagem: string;
   authLoading: boolean;
   googleLoading: boolean;
+  appleLoading: boolean;
   modoRedefinirSenha: boolean;
   novaSenha: string;
   setNovaSenha: React.Dispatch<React.SetStateAction<string>>;
@@ -99,6 +100,7 @@ interface AuthCardProps {
   handleLogin: (tipoLogin?: 'email' | 'telefone') => Promise<void>;
   handleCadastroTeste: () => Promise<void>;
   handleGoogleLogin: () => Promise<void>;
+  handleAppleLogin: () => Promise<void>;
   handleRecuperarSenha: () => Promise<void>;
   handleAtualizarSenha: () => Promise<void>;
   reenviarCodigoSmsCadastro: () => Promise<void>;
@@ -140,7 +142,7 @@ export default function AuthCard({
   cadastroCupom, setCadastroCupom,
   codigoSmsCadastro, setCodigoSmsCadastro,
   smsCadastroEnviado, segundosReenvioSms, reenviandoSmsCadastro,
-  authErro, authMensagem, authLoading, googleLoading,
+  authErro, authMensagem, authLoading, googleLoading, appleLoading,
   modoRedefinirSenha,
   novaSenha, setNovaSenha,
   confirmarNovaSenha, setConfirmarNovaSenha,
@@ -151,7 +153,7 @@ export default function AuthCard({
   tipoPerfilInicial, setTipoPerfilInicial,
   onAbrirTermos, onAbrirPrivacidade,
   cadastroDdi, setCadastroDdi,
-  handleLogin, handleCadastroTeste, handleGoogleLogin,
+  handleLogin, handleCadastroTeste, handleGoogleLogin, handleAppleLogin,
   handleRecuperarSenha, handleAtualizarSenha,
   reenviarCodigoSmsCadastro, reenviarCodigoRedefinirSenha,
 }: AuthCardProps) {
@@ -615,8 +617,9 @@ export default function AuthCard({
     </div>
     {authErro && <div className="text-center text-[13px] text-red-600">{authErro}</div>}
     {authMensagem && <div className="text-center text-[13px] text-emerald-700">{authMensagem}</div>}
-    <button type="submit" disabled={authLoading} className="min-h-11 rounded-[10px] bg-[#0A1F44] text-[13px] font-extrabold text-white disabled:opacity-60">{authLoading ? 'Entrando...' : 'Entrar'}</button>
-    <button type="button" onClick={handleGoogleLogin} disabled={googleLoading} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] border border-[#d9e0e4] bg-white text-[12px] font-extrabold text-[#334155] disabled:opacity-60"><span className="grid size-[18px] place-items-center rounded-full bg-[conic-gradient(from_-45deg,_#4285f4_0_25%,_#34a853_0_45%,_#fbbc05_0_68%,_#ea4335_0_100%)] text-[12px] font-black text-white">G</span>{googleLoading ? 'Conectando...' : 'Continuar com Google'}</button>
+    <button type="submit" disabled={authLoading} className="min-h-8 rounded-[10px] bg-[#1687D9] text-[13px] font-extrabold text-white disabled:opacity-60">{authLoading ? 'Entrando...' : 'Entrar'}</button>
+    <button type="button" onClick={handleGoogleLogin} disabled={googleLoading || appleLoading} className="inline-flex min-h-8 items-center justify-center gap-2 rounded-[10px] border border-[#d9e0e4] bg-white text-[12px] font-extrabold text-[#334155] disabled:opacity-60"><span className="grid size-[18px] place-items-center rounded-full bg-[conic-gradient(from_-45deg,_#4285f4_0_25%,_#34a853_0_45%,_#fbbc05_0_68%,_#ea4335_0_100%)] text-[12px] font-black text-white">G</span>{googleLoading ? 'Conectando...' : 'Continuar com Google'}</button>
+    <button type="button" onClick={handleAppleLogin} disabled={googleLoading || appleLoading} className="inline-flex min-h-8 items-center justify-center gap-2 rounded-[10px] bg-[#111827] text-[12px] font-extrabold text-white shadow-sm transition hover:bg-[#030712] disabled:opacity-60"><span aria-hidden="true" className="text-[18px] leading-none"></span>{appleLoading ? 'Conectando...' : 'Continuar com Apple'}</button>
     <p className="-mt-0.5 text-center text-[12px] text-[#737b83]">Não tem conta? <button type="button" onClick={() => setModoAuth('cadastro')} className="font-extrabold text-[#248b85]">Cadastre-se</button></p>
   </form>
   <div className="hidden space-y-3 lg:block">
@@ -777,7 +780,7 @@ export default function AuthCard({
     <button
       type="button"
       onClick={handleGoogleLogin}
-      disabled={googleLoading}
+      disabled={googleLoading || appleLoading}
       className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
     >
       {googleLoading ? (
@@ -788,6 +791,16 @@ export default function AuthCard({
       <span>{googleLoading ? 'Conectando...' : 'Conectar com Google'}</span>
     </button>
   </div>
+
+  <button
+    type="button"
+    onClick={handleAppleLogin}
+    disabled={googleLoading || appleLoading}
+    className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-[#111827] px-3 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#030712] disabled:cursor-not-allowed disabled:opacity-70"
+  >
+    <span aria-hidden="true" className="text-base leading-none"></span>
+    <span>{appleLoading ? 'Conectando...' : 'Continuar com Apple'}</span>
+  </button>
 </form>
 
 <p className="text-center text-[10px] leading-snug text-slate-500">

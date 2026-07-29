@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.01 -->
+<!-- ava-version: 1.6.1.107.02 -->
+
+> Revisão 1.6.1.107.02: a entrada também oferece **Continuar com Apple**. O
+> fluxo usa a mesma conta AvantaLab e não altera e-mail, telefone ou Google.
 
 > Revisão 1.6.1.107.01: botão de localização no card sem endereço do
 > AvantaVendas; sem impacto operacional na Gestão Mobile.
@@ -697,9 +700,10 @@ deve usar os nomes do menu e da barra inferior do celular.
 
 ## Conta e limites
 
-- No aplicativo Android/iOS, **Entrar com Google** abre o navegador seguro do
-  sistema. Ao concluir, o AvantaLab reabre automaticamente; ao cancelar, o
-  usuário pode tentar novamente na tela de login.
+- No aplicativo Android/iOS, **Continuar com Google** ou **Continuar com Apple**
+  abre o navegador seguro do sistema. Ao concluir, o AvantaLab reabre
+  automaticamente; ao cancelar, o usuário pode tentar novamente na tela de
+  login. No PWA, o retorno permanece na própria Gestão Mobile.
 - Perfil, dados cadastrais, backup e restauração ficam nas áreas de perfil/menu.
 - A senha é da conta AvantaLab e pode afetar outros ambientes autenticados com o
   mesmo login.

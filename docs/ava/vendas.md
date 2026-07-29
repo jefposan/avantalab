@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.01 -->
+<!-- ava-version: 1.6.1.107.02 -->
+
+> Revisão 1.6.1.107.02: a entrada também oferece **Continuar com Apple** e usa
+> a mesma conta operacional já utilizada por e-mail, telefone ou Google.
 
 > Revisão 1.6.1.107.01: no card sem endereço, Localização solicita a localização
 > do aparelho e grava o endereço encontrado; não é necessário abrir a edição.
@@ -597,6 +600,8 @@ função existir ali.
   Gestão**.
 - A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão
   financeira não recebem acesso aos dados de perfis empresariais de terceiros.
+- A entrada permite **Continuar com Apple** além de e-mail, telefone e Google.
+  Depois da autenticação, o usuário retorna à própria sala do Vendas.
 
 ## Clientes
 

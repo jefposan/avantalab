@@ -37,6 +37,10 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>Usamos a câmera para registrar fotos de comprovantes e documentos nos lançamentos financeiros.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Usamos sua biblioteca de fotos para anexar comprovantes e documentos aos lançamentos financeiros.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

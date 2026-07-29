@@ -1,6 +1,6 @@
 # PADRÃO AVANTA
 
-Versão oficial: **1.2.1**
+Versão oficial: **1.3.0**
 Identificador: `PADRAO-AVANTA`
 Manifesto: `docs/padrao-avanta/manifest.json`
 
@@ -30,6 +30,7 @@ antes de criar uma convenção isolada. Não duplicar componentes existentes.
 | Preferências do usuário/empresa | `preferencias.md` |
 | Novo módulo ou sistema plugado | todos os documentos, especialmente `modulos.md` |
 | Revisão de uma tela existente | documentos da área alterada e `checklist.md` |
+| Login, cadastro ou recuperação de acesso mobile | documentos da área alterada, especialmente `componentes.md` e `acessibilidade.md` |
 
 ## Fundamentos já implementados
 

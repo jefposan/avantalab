@@ -5990,6 +5990,36 @@
     }
   }
 
+  async function entrarApple() {
+    if (state.carregando) return;
+
+    var checkboxManterConectado = document.getElementById('manter-conectado');
+    if (checkboxManterConectado) {
+      state.manterConectado = Boolean(checkboxManterConectado.checked);
+    }
+
+    state.erro = '';
+    state.mensagem = '';
+    state.carregando = true;
+    state.loginAcao = 'apple';
+    registrarPreferenciaSessaoMobile(state.manterConectado, true);
+    render();
+
+    var resposta = await db.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: window.location.origin + '/mobile',
+      },
+    });
+
+    if (resposta.error) {
+      state.carregando = false;
+      state.loginAcao = '';
+      limparPreferenciaSessaoMobile();
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel conectar com a Apple agora. Tente novamente em instantes.'));
+    }
+  }
+
   async function enviarCodigoSenha() {
     var login = (campo('login-senha') || state.loginRecuperacao || campo('login')).trim().toLowerCase();
 
@@ -8738,6 +8768,10 @@
         '<button id="entrar-google" type="button" class="gestao-google-login-button">' +
           '<span class="gestao-google-login-mark" aria-hidden="true">G</span>' +
           '<span>' + (state.loginAcao === 'google' ? 'Conectando...' : 'Continuar com Google') + '</span>' +
+        '</button>' +
+        '<button id="entrar-apple" type="button" class="gestao-apple-login-button">' +
+          '<span aria-hidden="true"></span>' +
+          '<span>' + (state.loginAcao === 'apple' ? 'Conectando...' : 'Continuar com Apple') + '</span>' +
         '</button>' +
         '<p class="gestao-login-register">Não tem conta? <button id="abrir-cadastro" type="button">Cadastre-se</button></p>'
     );
@@ -12562,6 +12596,7 @@
 
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);
+    bind('entrar-apple', entrarApple);
     bind('login-tipo-email', function () {
       state.loginValor = campo('login').trim();
       state.loginTipo = 'email';

@@ -440,6 +440,7 @@ export default function AppGestao() {
     carregandoSistema, setCarregandoSistema,
     mensagemCarregamentoSistema, setMensagemCarregamentoSistema,
     googleLoading, setGoogleLoading,
+    appleLoading, setAppleLoading,
     modoRedefinirSenha, setModoRedefinirSenha,
     novaSenha, setNovaSenha,
     confirmarNovaSenha, setConfirmarNovaSenha,
@@ -464,6 +465,7 @@ export default function AppGestao() {
     reenviarCodigoRedefinirSenha,
     handleAtualizarSenha,
     handleGoogleLogin,
+    handleAppleLogin,
   } = auth;
 
   // Callbacks de orquestração passados para useAuth
@@ -6563,11 +6565,11 @@ const lancamentosMobile = [...lancamentosDoMes].sort(
 );
 const categoriasMobile = analiseDespesas.dados.slice(0, 4);
 
-if (!mounted || carregandoSistema || authLoading || googleLoading) {
+if (!mounted || carregandoSistema || authLoading || googleLoading || appleLoading) {
   return (
     <TelaCarregandoSistema
       mensagem={
-        authLoading || googleLoading
+        authLoading || googleLoading || appleLoading
           ? 'Entrando e preparando seus dados...'
           : mensagemCarregamentoSistema
       }
@@ -7208,6 +7210,7 @@ if (validacaoTelefoneObrigatoria) {
         authMensagem={authMensagem}
         authLoading={authLoading}
         googleLoading={googleLoading}
+        appleLoading={appleLoading}
         modoRedefinirSenha={modoRedefinirSenha}
         novaSenha={novaSenha}
         setNovaSenha={setNovaSenha}
@@ -7227,6 +7230,7 @@ if (validacaoTelefoneObrigatoria) {
         handleLogin={handleLogin}
         handleCadastroTeste={handleCadastroTeste}
         handleGoogleLogin={handleGoogleLogin}
+        handleAppleLogin={handleAppleLogin}
         handleRecuperarSenha={handleRecuperarSenha}
         handleAtualizarSenha={handleAtualizarSenha}
         reenviarCodigoSmsCadastro={reenviarCodigoSmsCadastro}
