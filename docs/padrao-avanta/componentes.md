@@ -47,6 +47,27 @@ divisor ou agrupamento sem identidade própria.
 - Tabela fornece cabeçalho, vazio, carregamento e comportamento responsivo.
 - Modal fornece título, fechamento acessível, foco inicial e restauração do foco.
 
+### Acesso e autenticação mobile
+
+Este padrão vale para os cards de **login, cadastro e recuperação de acesso**
+dos aplicativos e PWAs AvantaLab. Deve ser reutilizado em novos aplicativos;
+não criar uma escala de botões local para autenticação.
+
+- A face visual dos botões de ação de acesso tem **32 px** de altura e raio de
+  10 px. O alvo de toque continua com pelo menos 44 × 44 px, usando área
+  interativa ou espaçamento interno sem aumentar visualmente a face do botão.
+- **Entrar**, **Continuar** e a ação primária usam `#1687D9`, o mesmo azul do
+  seletor de método ativo (E-mail/Telefone), com texto branco.
+- **Continuar com Google** usa superfície branca, borda `#d9e0e4`, texto
+  `#334155` e a marca Google. **Continuar com Apple** usa `#111827` com texto
+  branco e o símbolo Apple. Ambos mantêm a mesma altura visual da ação primária.
+- Os três botões ficam em largura integral, em coluna e com espaçamento de 8 px.
+  O carregamento troca somente o rótulo por `Conectando…`/`Entrando…`, desabilita
+  as ações concorrentes e nunca deixa o card sem resposta após erro ou cancelamento.
+- Não usar o azul escuro institucional como ação de entrada mobile quando este
+  padrão estiver aplicado; ele continua disponível para ações primárias de
+  outros contextos.
+
 ### Botão de próxima rolagem
 
 - Reutilizar `app/components/BotaoProximoScroll.tsx`; não copiar sua marcação,

@@ -1,5 +1,12 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.3.0 - 2026-07-29
+
+- Formalizado o padrão de autenticação mobile: face visual de 32 px, botão
+  primário no azul `#1687D9` e variantes oficiais para Google e Apple.
+- Mantida a exigência de alvo de toque acessível, sem obrigar o card visual a
+  ficar mais alto.
+
 ## 1.2.1 - 2026-07-26
 
 - O botão de próxima rolagem em containers passa a acompanhar a parte visível da

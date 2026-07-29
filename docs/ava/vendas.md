@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.105 -->
+<!-- ava-version: 1.6.1.107 -->
+
+> Revisão 1.6.1.107: a entrada também oferece **Continuar com Apple** e usa a
+> mesma conta operacional já utilizada por e-mail, telefone ou Google.
 
 > Revisão 1.6.1.105: contraste automático nos cards de seleção de perfil;
 > sem impacto operacional no AvantaVendas.
@@ -638,6 +641,8 @@ função existir ali.
   Gestão**.
 - A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão
   financeira não recebem acesso aos dados de perfis empresariais de terceiros.
+- A entrada permite **Continuar com Apple** além de e-mail, telefone e Google.
+  Depois da autenticação, o usuário retorna à própria sala do Vendas.
 
 ## Clientes
 

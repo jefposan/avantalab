@@ -64,6 +64,7 @@ function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | u
 const CHAVE_RASCUNHO_CADASTRO_WEB = 'avantalab_web_rascunho_cadastro';
 const REDIRECT_GOOGLE_NATIVO = 'br.com.avantalab.app://auth/callback';
 const EMAIL_CONTA_REVISAO_APPLE = 'teste@teste.com.br';
+type ProvedorOAuth = 'google' | 'apple';
 
 function ehContaRevisaoAppApple(email: unknown) {
   return String(email || '').trim().toLowerCase() === EMAIL_CONTA_REVISAO_APPLE;
@@ -150,7 +151,9 @@ export function useAuth(deps: UseAuthDeps) {
   const [authMensagem, setAuthMensagem] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const loginGoogleNativoPendenteRef = useRef(false);
+  const loginAppleNativoPendenteRef = useRef(false);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -166,7 +169,19 @@ export function useAuth(deps: UseAuthDeps) {
       }
     };
 
-    const processarRetornoGoogle = async (url: string) => {
+    const definirCarregamentoOAuth = (provedor: ProvedorOAuth, carregando: boolean) => {
+      if (provedor === 'google') setGoogleLoading(carregando);
+      else setAppleLoading(carregando);
+    };
+
+    const limparLoginOAuthNativo = () => {
+      loginGoogleNativoPendenteRef.current = false;
+      loginAppleNativoPendenteRef.current = false;
+      setGoogleLoading(false);
+      setAppleLoading(false);
+    };
+
+    const processarRetornoOAuth = async (url: string) => {
       let callbackUrl: URL;
 
       try {
@@ -183,8 +198,18 @@ export function useAuth(deps: UseAuthDeps) {
         return;
       }
 
+      const provedor: ProvedorOAuth | null = loginAppleNativoPendenteRef.current
+        ? 'apple'
+        : loginGoogleNativoPendenteRef.current
+          ? 'google'
+          : null;
       loginGoogleNativoPendenteRef.current = false;
-      setGoogleLoading(true);
+      loginAppleNativoPendenteRef.current = false;
+      if (provedor) definirCarregamentoOAuth(provedor, true);
+      else {
+        setGoogleLoading(true);
+        setAppleLoading(true);
+      }
       setAuthErro('');
 
       try {
@@ -207,7 +232,7 @@ export function useAuth(deps: UseAuthDeps) {
 
           if (!accessToken || !refreshToken) {
             throw new Error(
-              'O Google não retornou os dados necessários para concluir o login.'
+              'O provedor não retornou os dados necessários para concluir o login.'
             );
           }
 
@@ -218,14 +243,15 @@ export function useAuth(deps: UseAuthDeps) {
           if (error) throw error;
         }
       } catch (erro) {
-        console.error('Erro no retorno do Google:', erro);
+        console.error(`Erro no retorno do ${provedor ?? 'login social'}:`, erro);
         setAuthErro(
           erro instanceof Error
             ? erro.message
-            : 'Não foi possível concluir o login com Google.'
+            : 'Não foi possível concluir o login social.'
         );
       } finally {
-        setGoogleLoading(false);
+        if (provedor) definirCarregamentoOAuth(provedor, false);
+        else limparLoginOAuthNativo();
         await fecharNavegador();
       }
     };
@@ -242,32 +268,29 @@ export function useAuth(deps: UseAuthDeps) {
     void (async () => {
       await guardarListener(
         CapacitorApp.addListener('appUrlOpen', ({ url }) => {
-          void processarRetornoGoogle(url);
+          void processarRetornoOAuth(url);
         })
       );
       await guardarListener(
         Browser.addListener('browserFinished', () => {
-          if (!loginGoogleNativoPendenteRef.current) return;
-          loginGoogleNativoPendenteRef.current = false;
-          setGoogleLoading(false);
+          if (!loginGoogleNativoPendenteRef.current && !loginAppleNativoPendenteRef.current) return;
+          limparLoginOAuthNativo();
         })
       );
       await guardarListener(
         CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-          if (!isActive || !loginGoogleNativoPendenteRef.current) return;
-          loginGoogleNativoPendenteRef.current = false;
-          setGoogleLoading(false);
+          if (!isActive || (!loginGoogleNativoPendenteRef.current && !loginAppleNativoPendenteRef.current)) return;
+          limparLoginOAuthNativo();
         })
       );
 
       const aberturaInicial = await CapacitorApp.getLaunchUrl();
       if (aberturaInicial?.url) {
-        await processarRetornoGoogle(aberturaInicial.url);
+        await processarRetornoOAuth(aberturaInicial.url);
       }
     })().catch((erro) => {
-      console.error('Erro ao preparar retorno nativo do Google:', erro);
-      loginGoogleNativoPendenteRef.current = false;
-      setGoogleLoading(false);
+      console.error('Erro ao preparar retorno OAuth nativo:', erro);
+      limparLoginOAuthNativo();
     });
 
     return () => {
@@ -912,33 +935,38 @@ export function useAuth(deps: UseAuthDeps) {
   };
 
   // ---------------------------------------------------------------------------
-  // Funções — Google Login
+  // Funções — Login social
   // ---------------------------------------------------------------------------
 
-  const handleGoogleLogin = async () => {
+  const handleOAuthLogin = async (provedor: ProvedorOAuth) => {
+    const nomeProvedor = provedor === 'google' ? 'Google' : 'Apple';
+
     setAuthErro('');
     setAuthMensagem('');
-    setGoogleLoading(true);
+    if (provedor === 'google') setGoogleLoading(true);
+    else setAppleLoading(true);
 
     if (!Capacitor.isNativePlatform()) {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: provedor,
         options: { redirectTo: `${window.location.origin}/` },
       });
 
       if (error) {
-        console.error('Erro login Google:', error);
-        setAuthErro(`Erro Google: ${error.message}`);
-        setGoogleLoading(false);
+        console.error(`Erro login ${nomeProvedor}:`, error);
+        setAuthErro(`Erro ${nomeProvedor}: ${error.message}`);
+        if (provedor === 'google') setGoogleLoading(false);
+        else setAppleLoading(false);
       }
       return;
     }
 
-    loginGoogleNativoPendenteRef.current = true;
+    if (provedor === 'google') loginGoogleNativoPendenteRef.current = true;
+    else loginAppleNativoPendenteRef.current = true;
 
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: provedor,
         options: {
           redirectTo: REDIRECT_GOOGLE_NATIVO,
           skipBrowserRedirect: true,
@@ -946,23 +974,28 @@ export function useAuth(deps: UseAuthDeps) {
       });
 
       if (error) throw error;
-      if (!data.url) throw new Error('Não foi possível abrir o login do Google.');
+      if (!data.url) throw new Error(`Não foi possível abrir o login da ${nomeProvedor}.`);
 
       await Browser.open({
         url: data.url,
         presentationStyle: 'fullscreen',
       });
     } catch (erro) {
-      console.error('Erro login Google:', erro);
-      loginGoogleNativoPendenteRef.current = false;
+      console.error(`Erro login ${nomeProvedor}:`, erro);
+      if (provedor === 'google') loginGoogleNativoPendenteRef.current = false;
+      else loginAppleNativoPendenteRef.current = false;
       setAuthErro(
         erro instanceof Error
-          ? `Erro Google: ${erro.message}`
-          : 'Não foi possível abrir o login do Google.'
+          ? `Erro ${nomeProvedor}: ${erro.message}`
+          : `Não foi possível abrir o login da ${nomeProvedor}.`
       );
-      setGoogleLoading(false);
+      if (provedor === 'google') setGoogleLoading(false);
+      else setAppleLoading(false);
     }
   };
+
+  const handleGoogleLogin = () => handleOAuthLogin('google');
+  const handleAppleLogin = () => handleOAuthLogin('apple');
 
   // ---------------------------------------------------------------------------
   // Funções — Criar empresa inicial (onboarding)
@@ -1219,6 +1252,7 @@ export function useAuth(deps: UseAuthDeps) {
     authMensagem, setAuthMensagem,
     authLoading, setAuthLoading,
     googleLoading, setGoogleLoading,
+    appleLoading, setAppleLoading,
     carregandoSistema, setCarregandoSistema,
     mensagemCarregamentoSistema, setMensagemCarregamentoSistema,
 
@@ -1238,6 +1272,7 @@ export function useAuth(deps: UseAuthDeps) {
     reenviarCodigoRedefinirSenha,
     handleAtualizarSenha,
     handleGoogleLogin,
+    handleAppleLogin,
     handleCriarEmpresaInicial,
     handleCriarPerfilInicialDoCadastro,
 

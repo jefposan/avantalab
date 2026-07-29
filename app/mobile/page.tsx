@@ -374,9 +374,11 @@ export default function MobilePage() {
             .gestao-remember-option span { width: 16px; height: 16px; border: 1px solid #b9c2c8; border-radius: 5px; background: #fff; }
             .gestao-remember-option input:checked + span { border-color: #1F8A9E; background: #1F8A9E; box-shadow: inset 0 0 0 4px #fff; }
             .gestao-forgot-link, .gestao-login-register button { border: 0; padding: 0; color: #1F8A9E; background: transparent; font-size: 12px; font-weight: 800; }
-            .gestao-login-submit { min-height: 44px; border: 0; border-radius: 10px; color: #fff; background: #003E73; font-size: 13px; font-weight: 800; }
-            .gestao-google-login-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #d9e0e4; border-radius: 10px; color: #334155; background: #fff; font-size: 12px; font-weight: 800; }
+            .gestao-login-submit { min-height: 32px; border: 0; border-radius: 10px; color: #fff; background: #1687D9; font-size: 13px; font-weight: 800; }
+            .gestao-google-login-button { display: inline-flex; min-height: 32px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #d9e0e4; border-radius: 10px; color: #334155; background: #fff; font-size: 12px; font-weight: 800; }
             .gestao-google-login-mark { display: inline-grid; width: 18px; height: 18px; place-items: center; border-radius: 999px; color: #fff; background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 45%, #fbbc05 0 68%, #ea4335 0 100%); font-size: 12px; font-weight: 950; line-height: 1; }
+            .gestao-apple-login-button { display: inline-flex; min-height: 32px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 10px; color: #fff; background: #111827; font-size: 12px; font-weight: 800; }
+            .gestao-apple-login-button > span:first-child { font-size: 18px; line-height: 1; }
             .gestao-login-register { margin: -2px 0 0; color: #737b83; font-size: 12px; text-align: center; }
             @media (max-height: 620px) { .gestao-login-brand img { width: auto; height: 26px; max-width: min(48vw, 176px); max-height: none; } }
             @media (max-width: 850px) { .gestao-login-screen input { font-size: 16px !important; } }

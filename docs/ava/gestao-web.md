@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.105 -->
+<!-- ava-version: 1.6.1.107 -->
+
+> Revisão 1.6.1.107: a entrada também oferece **Continuar com Apple**. A conta
+> Apple usa o mesmo fluxo de criação ou acesso de conta já existente; sem
+> impacto nos acessos por e-mail, telefone ou Google.
 
 > Revisão 1.6.1.105: contraste automático nos cards de seleção de perfil.
 
@@ -670,6 +674,9 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 - Um login pode ter perfis Empresa e Pessoal. As permissões dependem do vínculo:
   Gestor Master, Administrador e operadores não enxergam necessariamente as
   mesmas ações.
+- Além de e-mail/senha e Google, a tela de entrada oferece **Continuar com
+  Apple**. A autenticação Apple cria ou acessa a mesma conta AvantaLab conforme
+  o e-mail informado pelo provedor.
 - Em **Usuários e Permissões**, um novo usuário exige nome completo, e-mail
   real, login, senha inicial e tipo. Na edição, os mesmos dados permanecem
   obrigatórios e apenas a nova senha é opcional. O usuário entra com e-mail ou

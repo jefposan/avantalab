@@ -9,6 +9,9 @@ erro. Placeholder é exemplo, não substitui label. Associar label e controle po
 ## Medidas e comportamento
 
 - Altura padrão web: 44px; alvo de toque mobile: mínimo 48px.
+- Exceção visual de autenticação mobile: a face dos botões de acesso pode ter
+  32px conforme `componentes.md`, desde que a área interativa preserve ao menos
+  44 × 44px.
 - Fonte: 14px; label, ajuda e erro: 12px.
 - Raio: 12px; padding horizontal: 12px.
 - Estados: normal, hover, foco visível, preenchido, desabilitado, somente leitura

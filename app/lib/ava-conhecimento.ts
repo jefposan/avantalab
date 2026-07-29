@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.100: SEO público foi refinado, sem alterar a
-// orientação operacional da Ava.
+// Revisado na versão 1.6.1.107: a entrada passa a oferecer Apple OAuth nos
+// ambientes Gestão e Vendas.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -108,7 +108,7 @@ LANÇAMENTOS E RESULTADOS
 - A Caixinha, os relatórios e os gráficos usam o perfil e período selecionados; o resultado do Vendas aparece como uma receita consolidada por mês atualizada no acesso. Não estime resultados sem dados no contexto.
 
 CONTA E SUPORTE
-- No aplicativo Android/iOS, Entrar com Google abre o navegador seguro do sistema e retorna automaticamente ao AvantaLab depois da autenticação. Se o usuário cancelar, ele pode tentar novamente na tela de login.
+- No aplicativo Android/iOS, Continuar com Google ou Continuar com Apple abre o navegador seguro do sistema e retorna automaticamente ao AvantaLab depois da autenticação. Se o usuário cancelar, ele pode tentar novamente na tela de login.
 - Perfil e dados cadastrais ficam no Menu/Gerenciar perfil. Backup e restauração devem ser confirmados pelo usuário antes de qualquer substituição.
 - A senha é da conta AvantaLab, portanto pode impactar outros acessos com o mesmo login.
 - Controle de Ponto é acessado por funcionários em /ponto, não pelo app financeiro. Funcionário sem dias de trabalho marcados fica em Escala variável: pode registrar ponto em qualquer dia, mas não entra nos cálculos automáticos de faltas, atrasos ou lembretes de ponto. A inativação é feita na Gestão Web; ela bloqueia login e novas marcações, preservando o histórico.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.107 - 2026-07-29
+
+- Autenticação: incluído **Continuar com Apple** na Gestão Web, Gestão Mobile,
+  Vendas Mobile e aplicativos Capacitor. O fluxo usa OAuth do Supabase e, no
+  aplicativo nativo, retorna pelo navegador seguro do sistema.
+- iOS: declarados os usos de câmera e biblioteca de fotos para anexar
+  comprovantes e documentos em lançamentos.
+
 ## 1.6.1.105 - 2026-07-29
 
 - Seleção de perfil: o texto dos cards passa a calcular contraste a partir do
