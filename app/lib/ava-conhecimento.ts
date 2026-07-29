@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.04: o cancelamento de login social nativo volta
-// ao acesso; a Ava continua orientando apenas recursos plugados.
+// Revisado na versão 1.6.1.107.05: o cancelamento de login social também volta
+// ao acesso no Vendas; a Ava continua orientando apenas recursos plugados.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.04 -->
+<!-- ava-version: 1.6.1.107.05 -->
+
+> Revisão 1.6.1.107.05: o Vendas também permite cancelar o login social
+> pendente; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.04: cancelamento do login social nativo retorna à tela de
 > acesso; sem impacto operacional na Gestão Web.

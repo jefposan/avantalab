@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.04 -->
+<!-- ava-version: 1.6.1.107.05 -->
+
+> Revisão 1.6.1.107.05: durante login por Google ou Apple, o botão de
+> cancelamento limpa o retorno pendente e volta ao acesso.
 
 > Revisão 1.6.1.107.04: cancelamento do login social nativo retorna à tela de
 > acesso; sem impacto operacional no AvantaVendas.

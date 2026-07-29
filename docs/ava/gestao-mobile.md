@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.04 -->
+<!-- ava-version: 1.6.1.107.05 -->
+
+> Revisão 1.6.1.107.05: o Vendas também permite cancelar o login social
+> pendente; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107.04: se o login por Google ou Apple for cancelado no
 > aplicativo, a pessoa retorna à tela de acesso sem permanecer em preparação.

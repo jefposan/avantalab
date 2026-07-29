@@ -578,6 +578,17 @@ body.sheet-open {
   font-weight: 650;
   line-height: 1.45;
 }
+
+.preparing-access-cancel {
+  min-height: 36px;
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #334155;
+  background: rgba(255,255,255,.86);
+  font-size: 12px;
+  font-weight: 800;
+}
 .access-progress { width: min(100%, 238px); height: 8px; overflow: hidden; border-radius: 999px; background: rgba(10,31,68,.14); box-shadow: inset 0 1px 2px rgba(10,31,68,.1); }
 .access-progress > i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#1687D9,#1F8A9E); box-shadow: 0 2px 8px rgba(22,135,217,.34); transition: width .24s ease; }
 .access-progress-value { margin-top: -7px; color: #0874a8; font-size: 11px; font-variant-numeric: tabular-nums; }

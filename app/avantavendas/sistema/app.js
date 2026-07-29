@@ -326,6 +326,16 @@ function liberarAlturaPreparacao() {
   try { sessionStorage.removeItem(PREPARING_VIEWPORT_HEIGHT_KEY); } catch { /* armazenamento indisponível */ }
 }
 
+function cancelarLoginSocialVendas() {
+  conectandoGoogle = false;
+  carregandoBackend = false;
+  preparandoRecursosSala = false;
+  erroAcessoVendas = '';
+  try { sessionStorage.removeItem(GOOGLE_CONNECTING_KEY); } catch { /* armazenamento indisponível */ }
+  liberarAlturaPreparacao();
+  render();
+}
+
 function reconstruirSalaAposRotacao() {
   window.clearTimeout(temporizadorReconstrucaoSala);
   temporizadorReconstrucaoSala = window.setTimeout(() => {
@@ -1581,7 +1591,10 @@ function renderMarcaAcesso() {
 
 function renderPreparandoAcesso() {
   const progresso = window.__AVANTALAB_VENDAS_PROGRESSO__ || { valor: 5, rotulo: 'Preparando recursos do aplicativo' };
-  return `<section class="login-screen preparing-access-screen">${renderMarcaAcesso()}<div class="preparing-access-card"><p>AvantaLab</p><span class="loader"></span><h1>Preparando acesso</h1><small id="accessProgressLabel">${escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo')}</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:${Number(progresso.valor || 5)}%"></i></div><b id="accessProgressValue" class="access-progress-value">${Number(progresso.valor || 5)}%</b></div></section>`;
+  const acaoCancelar = conectandoGoogle
+    ? '<button type="button" class="preparing-access-cancel" onclick="cancelarLoginSocialVendas()">Cancelar e voltar ao login</button>'
+    : '';
+  return `<section class="login-screen preparing-access-screen">${renderMarcaAcesso()}<div class="preparing-access-card"><p>AvantaLab</p><span class="loader"></span><h1>Preparando acesso</h1><small id="accessProgressLabel">${escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo')}</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:${Number(progresso.valor || 5)}%"></i></div><b id="accessProgressValue" class="access-progress-value">${Number(progresso.valor || 5)}%</b>${acaoCancelar}</div></section>`;
 }
 
 function atualizarProgressoPreparacao(grupo, concluido, total, rotulo) {
@@ -7063,6 +7076,7 @@ window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
 window.entrarComGoogle = entrarComGoogle;
 window.entrarComApple = entrarComApple;
+window.cancelarLoginSocialVendas = cancelarLoginSocialVendas;
 window.trocarTipoLogin = trocarTipoLogin;
 window.alternarSenhaLogin = alternarSenhaLogin;
 window.alternarSenhaCampoVendas = alternarSenhaCampoVendas;

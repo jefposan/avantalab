@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.107.05 - 2026-07-29
+
+- AvantaVendas: login por Google e Apple agora oferece cancelamento explícito
+  durante a preparação, limpando o retorno pendente e voltando ao acesso.
+
 ## 1.6.1.107.04 - 2026-07-29
 
 - Login social nativo: a tela de preparação agora oferece cancelamento explícito
