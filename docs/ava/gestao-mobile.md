@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.100 -->
+<!-- ava-version: 1.6.1.101 -->
+
+> Revisão 1.6.1.101: páginas públicas de SEO foram adicionadas; sem impacto na orientação da Ava.
+>
 
 > Revisão 1.6.1.100: SEO público foi refinado; sem impacto na orientação da Ava.
 >
