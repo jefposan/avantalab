@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.103 -->
+<!-- ava-version: 1.6.1.104 -->
+
+> Revisão 1.6.1.104: links públicos de soluções foram ampliados; sem impacto na orientação da Ava.
+>
 
 > Revisão 1.6.1.103: refinamento de rastreamento público; sem impacto na orientação da Ava.
 >

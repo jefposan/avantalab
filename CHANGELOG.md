@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1.104 - 2026-07-29
+
+- Página inicial: adicionada a seção Soluções AvantaLab, criando links internos para as páginas públicas de intenção de busca.
+
 ## 1.6.1.103 - 2026-07-29
 
 - SEO: removido o bloqueio amplo `/gestao` do `robots.txt`, pois regras por

@@ -11,6 +11,7 @@ import effects from './preview/landing/preview-effects.module.css';
 import avaBadge from './preview/landing/ava-badge.module.css';
 import dashboardChart from './preview/landing/dashboard-chart.module.css';
 import anchorOffset from './preview/landing/anchor-offset.module.css';
+import solutionsStyles from './preview/landing/landing-solutions.module.css';
 
 const siteUrl = 'https://avantalab.com.br';
 const destinosProximaRolagem = ['recursos', 'como-funciona', 'ia-ava', 'planos', 'calculadoras', 'perguntas', 'proximo-passo', 'rodape'] as const;
@@ -44,6 +45,13 @@ const recursos = [
   ['Equipe no mesmo ritmo', 'Centralize ponto, permissões e rotinas operacionais sem somar mais uma ferramenta.'],
   ['Controle de Ponto', 'Acompanhe jornada, registros, ajustes e relatórios da equipe em um só lugar.'],
   ['Importação de despesas', 'Traga despesas de faturas ou extratos para organizar e revisar os lançamentos com mais agilidade.'],
+];
+
+const solucoes = [
+  ['/gestao-financeira', 'Gestão financeira empresarial', 'Organize receitas, despesas, indicadores e rotinas da empresa em uma única visão.'],
+  ['/controle-financeiro-pessoal', 'Controle financeiro pessoal', 'Comece pelo celular, sem cartão, para acompanhar sua vida financeira com clareza.'],
+  ['/controle-de-ponto', 'Controle de ponto', 'Acompanhe jornada, registros e relatórios da equipe como parte da operação.'],
+  ['/vendas-mobile', 'Vendas Mobile', 'Leve clientes, produtos, pedidos e pagamentos para a rotina comercial no celular.'],
 ];
 
 const etapas = [
@@ -129,6 +137,17 @@ export default function PreviewLandingPage() {
           <h2>Menos planilhas espalhadas. Mais contexto para agir.</h2>
           <p className={styles.sectionLead}>Uma base única para cuidar do financeiro e acompanhar a operação com consistência.</p>
           <div className={styles.resourceGrid}>{recursos.map(([titulo, texto]) => <article className={styles.resourceCard} key={titulo}>{titulo === 'Ava, sua assistente' ? <span className={avaBadge.logo}><Image src="/images/ava-logo-principal.png" alt="Logo da Ava" width={768} height={420} /></span> : <span aria-hidden="true">↗</span>}<h3>{titulo}</h3><p>{texto}</p></article>)}</div>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${solutionsStyles.section}`} id="solucoes" aria-labelledby="titulo-solucoes">
+        <div className={styles.wrap}>
+          <p className={styles.kicker}>Soluções AvantaLab</p>
+          <h2 id="titulo-solucoes">A solução certa para cada parte da sua rotina.</h2>
+          <p className={styles.sectionLead}>Conheça como o AvantaLab organiza o financeiro, a equipe e a operação em diferentes momentos do seu dia a dia.</p>
+          <div className={solutionsStyles.grid}>
+            {solucoes.map(([href, titulo, texto]) => <Link className={solutionsStyles.card} href={href} key={href}><span className={solutionsStyles.icon} aria-hidden="true">↗</span><h3>{titulo}</h3><p>{texto}</p><b>Conhecer solução <i aria-hidden="true">→</i></b></Link>)}
+          </div>
         </div>
       </section>
 
