@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.102 - 2026-07-29
+
+- SEO: Googlebot e Bingbot foram liberados explicitamente no `robots.txt`,
+  evitando ambiguidade com regras de IA gerenciadas pela Cloudflare; títulos
+  das páginas públicas também deixaram de repetir a marca.
+
 ## 1.6.1.101 - 2026-07-29
 
 - SEO público: adicionadas páginas de intenção para gestão financeira,
