@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.09 - 2026-07-29
+
+- Login social nativo: depois que o painel seguro assume o fluxo, os rótulos
+  Google e Apple são restaurados imediatamente no card. O retorno após fechar
+  a folha não depende mais de eventos de cancelamento do iOS.
+
 ## 1.6.1.107.08 - 2026-07-29
 
 - Login social nativo: Google e Apple passam a compartilhar uma única fonte de

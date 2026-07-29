@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.08 -->
+<!-- ava-version: 1.6.1.107.09 -->
+
+> Revisão 1.6.1.107.09: após abrir o painel seguro, Google e Apple voltam ao
+> rótulo normal no card; dispensar a folha do iOS retorna a um login pronto.
 
 > Revisão 1.6.1.107.08: Google e Apple usam um único estado de login social;
 > dispensar o painel seguro restaura ambos os botões para nova tentativa.

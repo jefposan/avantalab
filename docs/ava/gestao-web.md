@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.08 -->
+<!-- ava-version: 1.6.1.107.09 -->
+
+> Revisão 1.6.1.107.09: o card restaura os rótulos sociais assim que o painel
+> seguro abre, evitando carregamento residual quando o iOS não informa o
+> cancelamento.
 
 > Revisão 1.6.1.107.08: o cancelamento do painel seguro restaura os botões de
 > Google e Apple sem manter um provedor em carregamento.

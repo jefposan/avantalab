@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.08: o login social nativo restaura Google e
-// Apple ao dispensar o painel seguro; os demais ambientes não mudam.
+// Revisado na versão 1.6.1.107.09: o card restaura os rótulos sociais assim
+// que o painel nativo assume o fluxo; os demais ambientes não mudam.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
