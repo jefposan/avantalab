@@ -46,6 +46,47 @@ if (manifesto) {
   if (!componentes.includes('Sem essa solicitação, não impor AvantaCard')) {
     falhas.push('A regra condicional de uso do AvantaCard não está documentada.');
   }
+
+  const autenticacao = await ler('docs/padrao-avanta/autenticacao.md');
+  for (const contrato of [
+    'uma única fonte de estado social',
+    '`${window.location.origin}/`',
+    'skipBrowserRedirect: true',
+    "App.addListener('appUrlOpen'",
+    "Browser.addListener('browserFinished'",
+    'Preparando acesso',
+    'Cancelar e voltar ao login',
+    '44 × 44 px',
+  ]) {
+    if (!autenticacao.includes(contrato)) {
+      falhas.push(`Contrato obrigatório ausente em autenticacao.md: ${contrato}`);
+    }
+  }
+
+  const hookAutenticacao = await ler('app/hooks/useAuth.ts');
+  for (const referencia of [
+    'loginSocialPendenteRef',
+    "CapacitorApp.addListener('appUrlOpen'",
+    'skipBrowserRedirect: true',
+    'Browser.open',
+    'Browser.close',
+  ]) {
+    if (!hookAutenticacao.includes(referencia)) {
+      falhas.push(`Referência de autenticação da Gestão ausente: ${referencia}`);
+    }
+  }
+
+  const loginVendas = await ler('app/avantavendas/sistema/app.js');
+  for (const referencia of [
+    'Preparando acesso',
+    'cancelarLoginSocialVendas',
+    'entrarComGoogle',
+    'entrarComApple',
+  ]) {
+    if (!loginVendas.includes(referencia)) {
+      falhas.push(`Referência de autenticação do AvantaVendas ausente: ${referencia}`);
+    }
+  }
 }
 
 const agents = await ler('AGENTS.md');

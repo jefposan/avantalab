@@ -1,5 +1,15 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.4.0 - 2026-07-29
+
+- O modelo validado de login da Gestão e do AvantaVendas passa a ser o padrão
+  oficial para novos acessos do ecossistema.
+- Formalizados a máquina única de estado para Google/Apple, a tela
+  **Preparando acesso**, o cancelamento recuperável e os contratos distintos de
+  retorno para Web/PWA e Capacitor.
+- Documentados deep link, conclusão da sessão Supabase, origem do acesso,
+  persistência por Lembrar-me, safe areas, status bar e matriz mínima de testes.
+
 ## 1.3.0 - 2026-07-29
 
 - Formalizado o padrão de autenticação mobile: face visual de 32 px, botão

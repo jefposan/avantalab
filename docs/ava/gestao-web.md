@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.14 -->
+<!-- ava-version: 1.6.1.107.15 -->
+
+> Revisão 1.6.1.107.15: o modelo atual de autenticação foi incorporado ao
+> PADRÃO AVANTA 1.4.0 para novos sistemas; sem mudança operacional na Gestão.
 
 > Revisão 1.6.1.107.14: removida a implementação React antiga da landing; a
 > landing SEO da raiz é a única versão pública. Sem impacto operacional na

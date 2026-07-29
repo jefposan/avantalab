@@ -19,6 +19,10 @@
 
 ## Integrações e entrega
 
+- [ ] Quando há autenticação, `autenticacao.md` foi seguido em Web/PWA e nativo.
+- [ ] Google e Apple usam uma fonte única de estado, preparação cancelável e
+      restauração garantida após erro ou fechamento.
+- [ ] Redirect web, deep link nativo, sessão, origem e logout foram testados.
 - [ ] Preferências possuem namespace, versão e fallback.
 - [ ] Ava e manuais operacionais foram revisados.
 - [ ] `app/lib/version.ts` e `CHANGELOG.md` foram avaliados/atualizados.

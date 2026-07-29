@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.14: a landing React antiga foi removida e a
-// landing SEO da raiz é a única implementação pública; sem impacto operacional.
+// Revisado na versão 1.6.1.107.15: o login atual foi formalizado no
+// PADRÃO AVANTA 1.4.0; sem mudança operacional nos ambientes.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

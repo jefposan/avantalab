@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.1.107.15 - 2026-07-29
+
+- PADRÃO AVANTA 1.4.0: o login validado da Gestão e do AvantaVendas passa a ser
+  o contrato oficial para futuros acessos do ecossistema.
+- O padrão agora exige uma única máquina de estado para Google/Apple, preparação
+  cancelável, retorno específico para Web/PWA e Capacitor, conclusão da sessão
+  Supabase, origem correta, safe areas e testes de cancelamento.
+- O verificador passa a conferir a documentação e as implementações de
+  referência para impedir regressões silenciosas no fluxo de autenticação.
+
 ## 1.6.1.107.14 - 2026-07-29
 
 - Landing pública: removidos definitivamente o componente React antigo e seu

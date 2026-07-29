@@ -53,6 +53,10 @@ Este padrão vale para os cards de **login, cadastro e recuperação de acesso**
 dos aplicativos e PWAs AvantaLab. Deve ser reutilizado em novos aplicativos;
 não criar uma escala de botões local para autenticação.
 
+O contrato funcional completo é obrigatório e está em `autenticacao.md`,
+incluindo Google, Apple, Web/PWA, Capacitor, deep link, cancelamento, sessão e
+testes. Esta seção resume apenas a face dos controles.
+
 - A face visual dos botões de ação de acesso tem **32 px** de altura e raio de
   10 px. O alvo de toque continua com pelo menos 44 × 44 px, usando área
   interativa ou espaçamento interno sem aumentar visualmente a face do botão.

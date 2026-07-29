@@ -1,6 +1,6 @@
 # PADRÃO AVANTA
 
-Versão oficial: **1.3.0**
+Versão oficial: **1.4.0**
 Identificador: `PADRAO-AVANTA`
 Manifesto: `docs/padrao-avanta/manifest.json`
 
@@ -30,7 +30,7 @@ antes de criar uma convenção isolada. Não duplicar componentes existentes.
 | Preferências do usuário/empresa | `preferencias.md` |
 | Novo módulo ou sistema plugado | todos os documentos, especialmente `modulos.md` |
 | Revisão de uma tela existente | documentos da área alterada e `checklist.md` |
-| Login, cadastro ou recuperação de acesso mobile | documentos da área alterada, especialmente `componentes.md` e `acessibilidade.md` |
+| Login, cadastro, recuperação ou OAuth | `autenticacao.md`, `componentes.md`, `campos-formatacao.md` e `acessibilidade.md` |
 
 ## Fundamentos já implementados
 
@@ -39,6 +39,9 @@ antes de criar uma convenção isolada. Não duplicar componentes existentes.
   `app/components/AvantaCard.module.css`.
 - Especificação AvantaShell: `planejamento/padrao-avanta-card.md`.
 - Formatações compartilhadas: `app/lib/formatters.ts` e `app/lib/telefone.ts`.
+- Autenticação: contrato em `autenticacao.md`; referências em
+  `app/components/AuthCard.tsx`, `app/hooks/useAuth.ts`,
+  `public/mobile-app.js` e `app/avantavendas/sistema/`.
 - Próxima rolagem: `app/components/BotaoProximoScroll.tsx`.
 - Versão do produto: `app/lib/version.ts`.
 

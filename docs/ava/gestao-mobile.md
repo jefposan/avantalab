@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.14 -->
+<!-- ava-version: 1.6.1.107.15 -->
+
+> Revisão 1.6.1.107.15: o login atual da Gestão e do AvantaVendas foi
+> formalizado no PADRÃO AVANTA 1.4.0; sem mudança operacional nesta versão.
 
 > Revisão 1.6.1.107.14: exclusão da landing React antiga e consolidação da
 > landing SEO oficial; sem impacto operacional na Gestão Mobile.
