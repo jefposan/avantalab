@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.10 - 2026-07-29
+
+- Login social no iOS: os botões são restaurados antes de aguardar a Promise
+  do navegador nativo, que pode permanecer pendente enquanto a folha Apple
+  estiver aberta. Fechar a confirmação retorna ao login sem **Conectando…**.
+
 ## 1.6.1.107.09 - 2026-07-29
 
 - Login social nativo: depois que o painel seguro assume o fluxo, os rótulos

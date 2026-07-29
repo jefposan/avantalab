@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.09 -->
+<!-- ava-version: 1.6.1.107.10 -->
+
+> Revisão 1.6.1.107.10: no iOS, os rótulos sociais são restaurados antes da
+> espera pelo navegador nativo, garantindo o retorno limpo ao dispensar a folha.
 
 > Revisão 1.6.1.107.09: o card restaura os rótulos sociais assim que o painel
 > seguro abre, evitando carregamento residual quando o iOS não informa o

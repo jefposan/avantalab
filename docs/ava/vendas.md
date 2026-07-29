@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.09 -->
+<!-- ava-version: 1.6.1.107.10 -->
+
+> Revisão 1.6.1.107.10: correção da ordem assíncrona do login social da Gestão
+> no iOS; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.09: recuperação garantida dos rótulos sociais nativos da
 > Gestão; sem impacto operacional no AvantaVendas.

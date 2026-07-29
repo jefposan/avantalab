@@ -972,17 +972,18 @@ export function useAuth(deps: UseAuthDeps) {
       if (error) throw error;
       if (!data.url) throw new Error(`Não foi possível abrir o login da ${nomeProvedor}.`);
 
-      await Browser.open({
+      const aberturaNavegador = Browser.open({
         url: data.url,
         presentationStyle: 'fullscreen',
       });
 
-      // A superfície nativa já assumiu o fluxo e fornece seu próprio estado de
-      // carregamento. Restauramos os rótulos imediatamente, preservando apenas
-      // a referência pendente usada para concluir um eventual deep link.
-      // Assim, dispensar a folha Apple/Google nunca devolve o card travado.
+      // Browser.open pode manter a Promise pendente durante toda a folha do
+      // iOS. Os rótulos precisam ser restaurados antes do await; a referência
+      // pendente continua separada para concluir um eventual deep link.
       setGoogleLoading(false);
       setAppleLoading(false);
+
+      await aberturaNavegador;
     } catch (erro) {
       console.error(`Erro login ${nomeProvedor}:`, erro);
       limparEstadoLoginSocial(false);

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.09 -->
+<!-- ava-version: 1.6.1.107.10 -->
+
+> Revisão 1.6.1.107.10: o carregamento visual é encerrado antes de aguardar a
+> Promise do painel iOS; fechar a confirmação retorna com os botões disponíveis.
 
 > Revisão 1.6.1.107.09: após abrir o painel seguro, Google e Apple voltam ao
 > rótulo normal no card; dispensar a folha do iOS retorna a um login pronto.
