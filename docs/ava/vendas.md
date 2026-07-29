@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.105 -->
+<!-- ava-version: 1.6.1.106 -->
+
+> Revisão 1.6.1.106: a Ava orienta somente recursos efetivamente plugados ao
+> sistema publicado; projetos em desenvolvimento ficam fora do guia.
 
 > Revisão 1.6.1.105: contraste automático nos cards de seleção de perfil;
 > sem impacto operacional no AvantaVendas.
@@ -270,9 +273,6 @@
 > armazenados. A solicitação de conteúdo também identifica e valida Nome
 > completo.
 
-> Revisão 1.6.1.10: Central de Consultas e pesquisa assistida de CNPJ adicionadas
-> à Gestão Web; sem impacto operacional no AvantaVendas.
-
 > Revisão 1.6.1.09: a troca AvantaVendas → Gestão passa a abrir a rota da
 > Gestão sem reutilizar documento antigo do cache. Se a conexão falhar, o
 > usuário permanece no Vendas e pode tentar novamente.
@@ -323,54 +323,6 @@
 
 > Revisão 1.6.0.84.144: em Configurações > Empresas e conteúdos > Vincular
 > outra empresa, os campos ficam formatados e legíveis nos temas claro e escuro.
-
-> Revisão 1.6.0.84.143: faixa horizontal e busca de produtos no protótipo web
-> `/custos`; sem impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.142: edição de insumos no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.141: máscara monetária no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.140: Meta de vendas no protótipo web `/custos`; sem impacto
-> operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.139: cadastro de produto no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.138: correção dos indicadores no protótipo web `/custos`;
-> sem impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.137: carteira de produtos no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.136: ajuste visual no protótipo web `/custos`; sem impacto
-> operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.135: controles monetários no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.134: alinhamento monetário no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.133: padronização monetária no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.132: ajuste tipográfico no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.131: segunda compactação visual no protótipo web `/custos`;
-> sem impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.130: compactação visual no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.129: exclusão de insumos no protótipo web `/custos`; sem
-> impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.128: protótipo web de Custos e Precificação em `/custos`;
-> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.127: validação de linhas incompletas no importador da Gestão
 > Web; sem impacto operacional no AvantaVendas.

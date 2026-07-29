@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.106 - 2026-07-29
+
+- Ava: removidas referências a projetos ainda não plugados ao sistema, como
+  Custos e Precificação e Central de Consultas.
+
 ## 1.6.1.105 - 2026-07-29
 
 - Seleção de perfil: o texto dos cards passa a calcular contraste a partir do

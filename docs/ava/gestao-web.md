@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.105 -->
+<!-- ava-version: 1.6.1.106 -->
+
+> Revisão 1.6.1.106: a Ava orienta somente recursos efetivamente plugados ao
+> sistema publicado; projetos em desenvolvimento ficam fora do guia.
 
 > Revisão 1.6.1.105: contraste automático nos cards de seleção de perfil.
 
@@ -289,12 +292,6 @@
 > confirmações e códigos nunca são gravados no navegador. Em Recebimentos, o
 > formulário só é limpo após confirmação do servidor.
 
-> Revisão 1.6.1.10: a rota `/consulta` disponibiliza a Central de Consultas para
-> pesquisa cadastral de CNPJ. No cadastro empresarial, inclusive na etapa
-> obrigatória, **Pesquisar CNPJ** prepara os campos compatíveis para confirmação,
-> preservando conteúdo existente por padrão. No celular, a ação ocupa uma linha
-> própria; em telas maiores, permanece ao lado do documento.
-
 > Revisão 1.6.1.09: conclusão e recuperação do acesso na Gestão Mobile; sem
 > impacto operacional na Gestão Web.
 
@@ -349,71 +346,6 @@
 
 > Revisão 1.6.0.84.144: formatação dos campos de vínculo comercial no Vendas
 > Mobile; sem impacto operacional na Gestão Web.
-
-> Revisão 1.6.0.84.143: na Visão geral de `/custos`, os produtos são exibidos
-> em uma faixa horizontal de cards selecionáveis, com busca por produto. Três
-> novos exemplos permitem validar a rolagem. As ações de cada insumo ficam no
-> menu `⋯`, com edição e exclusão confirmada.
-
-> Revisão 1.6.0.84.142: na lista de insumos de `/custos`, `Editar` permite
-> alterar nome, categoria, unidade e custo na própria linha; o usuário pode
-> salvar ou cancelar a alteração.
-
-> Revisão 1.6.0.84.141: todos os campos monetários de `/custos` mantêm duas
-> casas decimais durante a digitação. A sequência `1`, `2`, `3` forma
-> progressivamente `R$ 0,01`, `R$ 0,12` e `R$ 1,23`.
-
-> Revisão 1.6.0.84.140: `/custos` ganha `Meta de vendas`. A tela recebe despesas
-> operacionais, lucro mensal desejado, margem de contribuição de referência e
-> vendas realizadas; calcula ponto de equilíbrio, meta com lucro, progresso e
-> quanto falta vender. Nesta fase os valores são locais e simuláveis.
-
-> Revisão 1.6.0.84.139: na Visão geral de `/custos`, `Novo produto` abre o
-> cadastro de nome, apresentação e parâmetros iniciais. Ao salvar, o produto
-> nasce como `Rascunho` e sua composição vazia é aberta para adicionar insumos e
-> formar o custo.
-
-> Revisão 1.6.0.84.138: a Visão geral de `/custos` substitui médias financeiras
-> por indicadores de produtos cadastrados, composições validadas, composições em
-> rascunho e insumos utilizados. Valores financeiros pertencem ao produto
-> selecionado.
-
-> Revisão 1.6.0.84.137: `/custos` passa a oferecer quatro produtos locais de
-> exemplo. A Visão geral mostra médias da carteira e permite selecionar um
-> produto; Composição e Simulador usam a lista `Produto em análise`. Cada
-> produto possui componentes e parâmetros próprios. Dados locais anteriores são
-> migrados automaticamente.
-
-> Revisão 1.6.0.84.136: redução visual do botão `Excluir` na lista de insumos
-> de `/custos`; sem mudança operacional.
-
-> Revisão 1.6.0.84.135: os campos monetários de `/custos` mantêm a máscara
-> brasileira e voltam a oferecer controles laterais para aumentar ou diminuir
-> o valor em centavos.
-
-> Revisão 1.6.0.84.134: alinhamento à direita dos valores monetários nas áreas
-> do protótipo `/custos`; sem mudança operacional.
-
-> Revisão 1.6.0.84.133: todos os valores monetários do protótipo `/custos`
-> aparecem em reais com duas casas decimais; campos de custo aceitam vírgula e
-> são formatados ao concluir a edição.
-
-> Revisão 1.6.0.84.132: aumento da tipografia do valor unitário na lista de
-> insumos em `/custos`; sem mudança operacional.
-
-> Revisão 1.6.0.84.131: segunda compactação visual das linhas de insumos em
-> `/custos`; sem mudança operacional.
-
-> Revisão 1.6.0.84.130: compactação visual das linhas de insumos em `/custos`;
-> sem mudança operacional.
-
-> Revisão 1.6.0.84.129: no protótipo `/custos`, a lista de insumos oferece
-> exclusão confirmada. Se o insumo estiver na composição, a confirmação informa
-> que ele também será removido dela.
-
-> Revisão 1.6.0.84.128: `/custos` abre o protótipo de Custos e Precificação
-> para validação. Os dados ficam somente no navegador e ainda não integram
-> cadastro, financeiro, vendas, permissões ou banco do AvantaLab.
 
 > Revisão 1.6.0.84.127: linhas parcialmente preenchidas no modelo Excel
 > permanecem visíveis na revisão. Data, tipo e valor são obrigatórios,

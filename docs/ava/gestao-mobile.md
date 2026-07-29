@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.105 -->
+<!-- ava-version: 1.6.1.106 -->
+
+> Revisão 1.6.1.106: a Ava orienta somente recursos efetivamente plugados ao
+> sistema publicado; projetos em desenvolvimento ficam fora do guia.
 
 > Revisão 1.6.1.105: contraste automático nos cards de seleção de perfil;
 > sem impacto operacional na Gestão Mobile.
@@ -282,9 +285,6 @@
 > perfil formam um rascunho temporário por usuário e perfil; a senha permanece
 > apenas em memória e nunca é armazenada no navegador.
 
-> Revisão 1.6.1.10: Central de Consultas e pesquisa assistida de CNPJ adicionadas
-> à Gestão Web; sem impacto operacional na Gestão Mobile.
-
 > Revisão 1.6.1.09: Preparando acesso só conclui os 100% depois que a tela
 > principal estiver montada. Se o PWA for suspenso ou perder conexão durante a
 > abertura, retornar ao aplicativo retoma a conclusão; uma versão antiga ainda
@@ -338,54 +338,6 @@
 
 > Revisão 1.6.0.84.144: formatação dos campos de vínculo comercial no Vendas
 > Mobile; sem impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.143: faixa horizontal e busca de produtos no protótipo web
-> `/custos`; sem impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.142: edição de insumos no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.141: máscara monetária no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.140: Meta de vendas no protótipo web `/custos`; sem impacto
-> operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.139: cadastro de produto no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.138: correção dos indicadores no protótipo web `/custos`;
-> sem impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.137: carteira de produtos no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.136: ajuste visual no protótipo web `/custos`; sem impacto
-> operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.135: controles monetários no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.134: alinhamento monetário no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.133: padronização monetária no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.132: ajuste tipográfico no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.131: segunda compactação visual no protótipo web `/custos`;
-> sem impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.130: compactação visual no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.129: exclusão de insumos no protótipo web `/custos`; sem
-> impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.128: protótipo web de Custos e Precificação em `/custos`;
-> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.127: validação de linhas incompletas no importador da Gestão
 > Web; sem impacto operacional na Gestão Mobile.
