@@ -155,6 +155,7 @@
     mes: meses[new Date().getMonth()],
     ano: String(new Date().getFullYear()),
     faturamentos: {},
+    referenciasTotaisMensais: {},
     lancamentos: [],
     notaArquivoPendente: null,
     notaLendo: false,
@@ -3374,13 +3375,13 @@
   function entradasReceitaVisiveis(atual) {
     var mes = atual && atual.mes ? atual.mes : state.mes;
     var entradas = (atual && atual.entradas ? atual.entradas : []).slice();
-    var temTotalDefinido = Object.prototype.hasOwnProperty.call(state.faturamentos, mes);
+    var temTotalDefinido = !!state.referenciasTotaisMensais[mes];
     var totalMensal = Number(state.faturamentos[mes] || 0);
     var totalEntradasRealizadas = entradas.reduce(function (acc, item) {
       return item.status === 'prevista' ? acc : acc + Number(item.valor || 0);
     }, 0);
     var totalBase = Math.max(0, totalMensal - totalEntradasRealizadas);
-    var totalNaoRepresentado = temTotalDefinido && totalBase > 0.009;
+    var totalNaoRepresentado = temTotalDefinido;
 
     if (!totalNaoRepresentado) return entradas;
 
@@ -3388,12 +3389,16 @@
       id: '__total_mensal__-' + mes,
       mes: mes,
       dia: 0,
-      origem: 'Total do mes',
+      origem: 'Total mensal',
       valor: totalBase,
       status: 'total_mensal',
       tipo: 'total_mensal',
       totalMensal: true,
     }].concat(entradas);
+  }
+
+  function temTotalMensalReferencia(mes) {
+    return !!state.referenciasTotaisMensais[mes];
   }
 
   function insightDespesasHtml(atual, anterior) {
@@ -5715,11 +5720,13 @@
     state.receitaVendasOcultaPorMes = receitaVendasOcultaPorMes;
 
     state.faturamentos = {};
+    state.referenciasTotaisMensais = {};
     (resultados[1].data || []).forEach(function (item) {
       state.faturamentos[item.mes] = Math.max(
         0,
         Number(item.valor || 0) - Number(receitaVendasOcultaPorMes[item.mes] || 0)
       );
+      state.referenciasTotaisMensais[item.mes] = !!item.referencia_total_mensal;
     });
 
     state.entradas = (resultados[2].data || []).filter(function (item) {
@@ -7486,6 +7493,7 @@
           ano: Number(state.ano),
           mes: state.mes,
           valor: apagarAvulsas ? valor : valor + totalEntradasRealizadas,
+          referencia_total_mensal: true,
         },
         { onConflict: 'empresa_id,ano,mes' }
       )
@@ -7513,12 +7521,12 @@
 
     var totalEntradas = state.entradas
       .filter(function (e) { return e.mes === state.mes; })
-      .reduce(function (acc, e) { return acc + e.valor; }, 0);
+      .reduce(function (acc, e) { return e.status === 'prevista' ? acc : acc + Number(e.valor || 0); }, 0);
 
     state.confirmacaoExclusaoTotalMes = {
       mensagem: totalEntradas > 0
-        ? 'O total definido manualmente será removido. As receitas lançadas (' + formatarMoeda(totalEntradas) + ') serão mantidas.'
-        : 'Não há receitas lançadas neste mês. O total do mês será zerado.',
+        ? 'A referência Total mensal será removida. As receitas lançadas (' + formatarMoeda(totalEntradas) + ') serão mantidas.'
+        : 'A referência Total mensal será removida e o mês ficará sem receitas lançadas.',
     };
     render();
   }
@@ -7529,7 +7537,7 @@
     state.confirmacaoExclusaoTotalMes = null;
     var totalEntradas = state.entradas
       .filter(function (e) { return e.mes === state.mes; })
-      .reduce(function (acc, e) { return acc + e.valor; }, 0);
+      .reduce(function (acc, e) { return e.status === 'prevista' ? acc : acc + Number(e.valor || 0); }, 0);
 
     state.carregando = true;
     state.erro = '';
@@ -7544,6 +7552,7 @@
             ano: Number(state.ano),
             mes: state.mes,
             valor: totalEntradas,
+            referencia_total_mensal: false,
           },
           { onConflict: 'empresa_id,ano,mes' }
         )
@@ -7557,6 +7566,7 @@
       }
 
       state.faturamentos[state.mes] = totalEntradas;
+      delete state.referenciasTotaisMensais[state.mes];
     } else {
       var del = await db
         .from('faturamentos')
@@ -7572,6 +7582,7 @@
       }
 
       delete state.faturamentos[state.mes];
+      delete state.referenciasTotaisMensais[state.mes];
     }
 
     state.carregando = false;
@@ -10437,7 +10448,7 @@
           : '<div class="grid gap-3">' +
               '<p class="rounded-xl border px-3 py-2 text-xs font-semibold ' + (escuro ? 'border-cyan-400/40 bg-cyan-950/35 text-cyan-100' : 'border-cyan-100 bg-cyan-50 text-cyan-900') + '">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
               campoValor('receita-total', 'Total do mes', state.receitaTotal) +
-              (Object.prototype.hasOwnProperty.call(state.faturamentos, state.mes)
+              (temTotalMensalReferencia(state.mes)
                 ? '<button id="excluir-total-receita" type="button" class="h-10 rounded-xl border px-4 text-xs font-black uppercase tracking-wide ' + (escuro ? 'border-red-400/50 bg-red-950/35 text-red-300' : 'border-red-200 bg-red-50 text-red-600') + '">' + (state.carregando ? 'Excluindo...' : 'Excluir total do mes') + '</button>'
                 : '') +
               '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
