@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.06 -->
+<!-- ava-version: 1.6.1.107.07 -->
+
+> Revisão 1.6.1.107.07: ajuste do cancelamento de login social nativo da
+> Gestão; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.06: retorno automático do OAuth da Gestão Web/PWA; sem
 > impacto operacional no AvantaVendas.

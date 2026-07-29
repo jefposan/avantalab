@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.06: o retorno OAuth da Gestão Web/PWA segue
-// automaticamente para a Gestão; os demais ambientes não mudam.
+// Revisado na versão 1.6.1.107.07: dispensar o painel social nativo limpa o
+// login pendente sem botão extra; os demais ambientes não mudam.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

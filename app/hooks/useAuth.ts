@@ -158,23 +158,6 @@ export function useAuth(deps: UseAuthDeps) {
   const loginGoogleNativoPendenteRef = useRef(false);
   const loginAppleNativoPendenteRef = useRef(false);
 
-  const cancelarLoginSocial = async () => {
-    loginGoogleNativoPendenteRef.current = false;
-    loginAppleNativoPendenteRef.current = false;
-    setGoogleLoading(false);
-    setAppleLoading(false);
-    setAuthErro('');
-    setAuthMensagem('');
-
-    if (!Capacitor.isNativePlatform()) return;
-
-    try {
-      await Browser.close();
-    } catch {
-      // O navegador seguro pode já ter sido dispensado pelo usuário.
-    }
-  };
-
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -194,11 +177,16 @@ export function useAuth(deps: UseAuthDeps) {
       else setAppleLoading(carregando);
     };
 
-    const limparLoginOAuthNativo = () => {
+    const limparLoginOAuthNativo = (limparFeedback = true) => {
       loginGoogleNativoPendenteRef.current = false;
       loginAppleNativoPendenteRef.current = false;
       setGoogleLoading(false);
       setAppleLoading(false);
+      setAuthLoading(false);
+      if (limparFeedback) {
+        setAuthErro('');
+        setAuthMensagem('');
+      }
     };
 
     const processarRetornoOAuth = async (url: string) => {
@@ -271,7 +259,7 @@ export function useAuth(deps: UseAuthDeps) {
         );
       } finally {
         if (provedor) definirCarregamentoOAuth(provedor, false);
-        else limparLoginOAuthNativo();
+        else limparLoginOAuthNativo(false);
         await fecharNavegador();
       }
     };
@@ -1300,7 +1288,6 @@ export function useAuth(deps: UseAuthDeps) {
     handleAtualizarSenha,
     handleGoogleLogin,
     handleAppleLogin,
-    cancelarLoginSocial,
     handleCriarEmpresaInicial,
     handleCriarPerfilInicialDoCadastro,
 

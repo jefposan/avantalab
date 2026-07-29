@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.06 -->
+<!-- ava-version: 1.6.1.107.07 -->
+
+> Revisão 1.6.1.107.07: fechar ou dispensar o painel seguro de Google ou Apple
+> limpa o login pendente e retorna à tela de acesso pronta para nova tentativa.
 
 > Revisão 1.6.1.107.06: retorno automático do OAuth da Gestão Web/PWA; sem
 > impacto operacional na Gestão Mobile nativa.

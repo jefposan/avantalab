@@ -466,7 +466,6 @@ export default function AppGestao() {
     handleAtualizarSenha,
     handleGoogleLogin,
     handleAppleLogin,
-    cancelarLoginSocial,
   } = auth;
 
   // Callbacks de orquestração passados para useAuth
@@ -7232,7 +7231,6 @@ if (validacaoTelefoneObrigatoria) {
         handleCadastroTeste={handleCadastroTeste}
         handleGoogleLogin={handleGoogleLogin}
         handleAppleLogin={handleAppleLogin}
-        cancelarLoginSocial={cancelarLoginSocial}
         handleRecuperarSenha={handleRecuperarSenha}
         handleAtualizarSenha={handleAtualizarSenha}
         reenviarCodigoSmsCadastro={reenviarCodigoSmsCadastro}

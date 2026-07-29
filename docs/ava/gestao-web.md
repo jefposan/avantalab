@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.06 -->
+<!-- ava-version: 1.6.1.107.07 -->
+
+> Revisão 1.6.1.107.07: dispensar o painel seguro de Google ou Apple limpa o
+> login pendente sem exibir um botão extra no card de acesso.
 
 > Revisão 1.6.1.107.06: após login por Google ou Apple iniciado na Gestão,
 > a sessão confirmada segue automaticamente para a tela de Gestão e seus

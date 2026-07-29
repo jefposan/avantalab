@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.07 - 2026-07-29
+
+- Login social nativo: removido o botão redundante de cancelamento no card de
+  acesso. Fechar ou dispensar a folha segura do Google/Apple limpa o estado do
+  login e deixa a tela pronta para uma nova tentativa.
+
 ## 1.6.1.107.06 - 2026-07-29
 
 - Login por Google e Apple iniciado na Gestão Web/PWA agora retorna da raiz
