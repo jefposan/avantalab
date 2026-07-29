@@ -10,7 +10,10 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: ['/', '/termos', '/privacidade', '/cookies', '/suporte'],
-        disallow: ['/gestao', '/admin', '/api/', '/preview/', '/mobile/', '/ponto/', '/recebimentos/'],
+        // `/gestao` não entra aqui: regras de robots usam prefixo e bloqueariam
+        // também a página pública `/gestao-financeira`. A Gestão já declara
+        // `noindex` em seu próprio layout.
+        disallow: ['/admin', '/api/', '/preview/', '/mobile/', '/ponto/', '/recebimentos/'],
       },
     ],
     sitemap: 'https://avantalab.com.br/sitemap.xml',

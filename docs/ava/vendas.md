@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.102 -->
+<!-- ava-version: 1.6.1.103 -->
+
+> Revisão 1.6.1.103: refinamento de rastreamento público; sem impacto na orientação da Ava.
+>
 
 > Revisão 1.6.1.102: regras públicas de rastreamento foram esclarecidas; sem impacto na orientação da Ava.
 >
