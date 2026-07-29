@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.03 -->
+<!-- ava-version: 1.6.1.107.04 -->
+
+> Revisão 1.6.1.107.04: cancelamento do login social nativo retorna à tela de
+> acesso; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.03: o tema escuro salvo do AvantaVendas não se aplica às
 > telas públicas de entrada; sem impacto operacional na Gestão Web.

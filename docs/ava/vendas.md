@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.03 -->
+<!-- ava-version: 1.6.1.107.04 -->
+
+> Revisão 1.6.1.107.04: cancelamento do login social nativo retorna à tela de
+> acesso; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.03: login, cadastro e recuperação usam a cena clara mesmo
 > quando a preferência de modo escuro do sistema está ativa. Após autenticar,

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.03 -->
+<!-- ava-version: 1.6.1.107.04 -->
+
+> Revisão 1.6.1.107.04: se o login por Google ou Apple for cancelado no
+> aplicativo, a pessoa retorna à tela de acesso sem permanecer em preparação.
 
 > Revisão 1.6.1.107.03: o tema escuro salvo do AvantaVendas não se aplica às
 > telas públicas de entrada; sem impacto operacional na Gestão Mobile.

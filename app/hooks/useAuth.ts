@@ -155,6 +155,23 @@ export function useAuth(deps: UseAuthDeps) {
   const loginGoogleNativoPendenteRef = useRef(false);
   const loginAppleNativoPendenteRef = useRef(false);
 
+  const cancelarLoginSocial = async () => {
+    loginGoogleNativoPendenteRef.current = false;
+    loginAppleNativoPendenteRef.current = false;
+    setGoogleLoading(false);
+    setAppleLoading(false);
+    setAuthErro('');
+    setAuthMensagem('');
+
+    if (!Capacitor.isNativePlatform()) return;
+
+    try {
+      await Browser.close();
+    } catch {
+      // O navegador seguro pode já ter sido dispensado pelo usuário.
+    }
+  };
+
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -279,6 +296,9 @@ export function useAuth(deps: UseAuthDeps) {
       );
       await guardarListener(
         CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+          // Abrir o navegador seguro pode deixar o app inativo; isso não é
+          // cancelamento. O retorno ao app sem callback, por outro lado, é o
+          // encerramento/dispensa do fluxo social e precisa liberar a tela.
           if (!isActive || (!loginGoogleNativoPendenteRef.current && !loginAppleNativoPendenteRef.current)) return;
           limparLoginOAuthNativo();
         })
@@ -1273,6 +1293,7 @@ export function useAuth(deps: UseAuthDeps) {
     handleAtualizarSenha,
     handleGoogleLogin,
     handleAppleLogin,
+    cancelarLoginSocial,
     handleCriarEmpresaInicial,
     handleCriarPerfilInicialDoCadastro,
 

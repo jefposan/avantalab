@@ -466,6 +466,7 @@ export default function AppGestao() {
     handleAtualizarSenha,
     handleGoogleLogin,
     handleAppleLogin,
+    cancelarLoginSocial,
   } = auth;
 
   // Callbacks de orquestração passados para useAuth
@@ -6565,11 +6566,11 @@ const lancamentosMobile = [...lancamentosDoMes].sort(
 );
 const categoriasMobile = analiseDespesas.dados.slice(0, 4);
 
-if (!mounted || carregandoSistema || authLoading || googleLoading || appleLoading) {
+if (!mounted || carregandoSistema || authLoading) {
   return (
     <TelaCarregandoSistema
       mensagem={
-        authLoading || googleLoading || appleLoading
+        authLoading
           ? 'Entrando e preparando seus dados...'
           : mensagemCarregamentoSistema
       }
@@ -7231,6 +7232,7 @@ if (validacaoTelefoneObrigatoria) {
         handleCadastroTeste={handleCadastroTeste}
         handleGoogleLogin={handleGoogleLogin}
         handleAppleLogin={handleAppleLogin}
+        cancelarLoginSocial={cancelarLoginSocial}
         handleRecuperarSenha={handleRecuperarSenha}
         handleAtualizarSenha={handleAtualizarSenha}
         reenviarCodigoSmsCadastro={reenviarCodigoSmsCadastro}

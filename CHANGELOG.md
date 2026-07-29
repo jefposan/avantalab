@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.04 - 2026-07-29
+
+- Login social nativo: a tela de preparação agora oferece cancelamento explícito
+  para Google e Apple. Ao dispensar o navegador seguro, o aplicativo também
+  limpa o estado pendente e retorna à tela de acesso.
+
 ## 1.6.1.107.03 - 2026-07-29
 
 - AvantaVendas: a preferência de modo escuro deixa de vazar para login,
