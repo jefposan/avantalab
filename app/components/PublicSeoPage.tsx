@@ -20,7 +20,7 @@ export type PublicSeoPageData = {
 export function metadataPublicSeoPage(data: PublicSeoPageData): Metadata {
   const url = `${siteUrl}/${data.slug}`;
   return {
-    title: `${data.title} | AvantaLab`,
+    title: data.title,
     description: data.description,
     alternates: { canonical: url },
     openGraph: { title: `${data.title} | AvantaLab`, description: data.description, url, siteName: 'AvantaLab', locale: 'pt_BR', type: 'website', images: [{ url: '/images/avantalab-share-meta-safe-center-v2.jpg', width: 1200, height: 628, alt: 'AvantaLab Gestão' }] },
