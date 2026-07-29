@@ -156,9 +156,12 @@ export function useAuth(deps: UseAuthDeps) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const provedorOAuthNativoPendenteRef = useRef<ProvedorOAuth | null>(null);
+  const [provedorOAuthNativoPendente, setProvedorOAuthNativoPendente] =
+    useState<ProvedorOAuth | null>(null);
 
   const limparEstadoLoginSocial = useCallback((limparFeedback = true) => {
     provedorOAuthNativoPendenteRef.current = null;
+    setProvedorOAuthNativoPendente(null);
     setGoogleLoading(false);
     setAppleLoading(false);
     if (limparFeedback) {
@@ -200,6 +203,7 @@ export function useAuth(deps: UseAuthDeps) {
 
       const provedor = provedorOAuthNativoPendenteRef.current;
       provedorOAuthNativoPendenteRef.current = null;
+      setProvedorOAuthNativoPendente(null);
       setGoogleLoading(provedor === 'google');
       setAppleLoading(provedor === 'apple');
       setAuthErro('');
@@ -296,6 +300,21 @@ export function useAuth(deps: UseAuthDeps) {
   const [mensagemCarregamentoSistema, setMensagemCarregamentoSistema] = useState(
     'Carregando sistema...'
   );
+
+  const cancelarLoginSocial = useCallback(async () => {
+    limparEstadoLoginSocial();
+    setAuthLoading(false);
+    setCarregandoSistema(false);
+    setMensagemCarregamentoSistema('Carregando sistema...');
+
+    if (!Capacitor.isNativePlatform()) return;
+
+    try {
+      await Browser.close();
+    } catch {
+      // O painel pode já ter sido dispensado; o estado local já foi restaurado.
+    }
+  }, [limparEstadoLoginSocial]);
 
   // --- Estados de onboarding (criar empresa inicial) ---
   const [emailConfirmado, setEmailConfirmado] = useState(false);
@@ -959,6 +978,7 @@ export function useAuth(deps: UseAuthDeps) {
     }
 
     provedorOAuthNativoPendenteRef.current = provedor;
+    setProvedorOAuthNativoPendente(provedor);
 
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -1254,6 +1274,7 @@ export function useAuth(deps: UseAuthDeps) {
     authLoading, setAuthLoading,
     googleLoading, setGoogleLoading,
     appleLoading, setAppleLoading,
+    provedorOAuthNativoPendente,
     carregandoSistema, setCarregandoSistema,
     mensagemCarregamentoSistema, setMensagemCarregamentoSistema,
 
@@ -1274,6 +1295,7 @@ export function useAuth(deps: UseAuthDeps) {
     handleAtualizarSenha,
     handleGoogleLogin,
     handleAppleLogin,
+    cancelarLoginSocial,
     handleCriarEmpresaInicial,
     handleCriarPerfilInicialDoCadastro,
 

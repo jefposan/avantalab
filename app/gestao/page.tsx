@@ -229,8 +229,12 @@ function FundoCarregamentoResponsivo() {
 
 function TelaCarregandoSistema({
   mensagem,
+  titulo = 'Carregando...',
+  onCancelar,
 }: {
   mensagem: string;
+  titulo?: string;
+  onCancelar?: () => void;
 }) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
@@ -249,12 +253,24 @@ function TelaCarregandoSistema({
           </p>
 
           <h1 className="text-xl font-black text-slate-900">
-            Carregando...
+            {titulo}
           </h1>
 
-          <p className="text-sm font-semibold text-slate-500">
+          <p className="text-sm font-semibold text-slate-500" aria-live="polite">
             {mensagem}
           </p>
+
+          {onCancelar && (
+            <button
+              type="button"
+              onClick={onCancelar}
+              className="mt-1 flex min-h-11 w-full items-center justify-center rounded-xl px-1 text-xs font-bold text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-[#1687D9] focus-visible:ring-offset-2"
+            >
+              <span className="flex h-8 w-full items-center justify-center rounded-[10px] border border-slate-300 bg-white/90 px-3 shadow-sm">
+                Cancelar e voltar ao login
+              </span>
+            </button>
+          )}
         </div>
       </section>
     </main>
@@ -441,6 +457,7 @@ export default function AppGestao() {
     mensagemCarregamentoSistema, setMensagemCarregamentoSistema,
     googleLoading, setGoogleLoading,
     appleLoading, setAppleLoading,
+    provedorOAuthNativoPendente,
     modoRedefinirSenha, setModoRedefinirSenha,
     novaSenha, setNovaSenha,
     confirmarNovaSenha, setConfirmarNovaSenha,
@@ -466,6 +483,7 @@ export default function AppGestao() {
     handleAtualizarSenha,
     handleGoogleLogin,
     handleAppleLogin,
+    cancelarLoginSocial,
   } = auth;
 
   // Callbacks de orquestração passados para useAuth
@@ -6565,13 +6583,25 @@ const lancamentosMobile = [...lancamentosDoMes].sort(
 );
 const categoriasMobile = analiseDespesas.dados.slice(0, 4);
 
-if (!mounted || carregandoSistema || authLoading) {
+const loginSocialNativoPendente = Boolean(provedorOAuthNativoPendente);
+
+if (!mounted || carregandoSistema || authLoading || loginSocialNativoPendente) {
   return (
     <TelaCarregandoSistema
+      titulo={loginSocialNativoPendente ? 'Preparando acesso' : 'Carregando...'}
       mensagem={
-        authLoading
+        loginSocialNativoPendente
+          ? 'Aguardando a confirmação do login social.'
+          : authLoading
           ? 'Entrando e preparando seus dados...'
           : mensagemCarregamentoSistema
+      }
+      onCancelar={
+        loginSocialNativoPendente
+          ? () => {
+              void cancelarLoginSocial();
+            }
+          : undefined
       }
     />
   );

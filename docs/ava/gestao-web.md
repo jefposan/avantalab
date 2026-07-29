@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.10 -->
+<!-- ava-version: 1.6.1.107.11 -->
+
+> Revisão 1.6.1.107.11: a preparação do login social nativo oferece uma ação
+> explícita para cancelar e voltar ao acesso; sem impacto no OAuth Web/PWA.
 
 > Revisão 1.6.1.107.10: no iOS, os rótulos sociais são restaurados antes da
 > espera pelo navegador nativo, garantindo o retorno limpo ao dispensar a folha.

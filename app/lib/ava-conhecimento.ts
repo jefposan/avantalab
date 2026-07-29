@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.10: o iOS restaura os rótulos sociais antes de
-// aguardar a Promise do navegador; os demais ambientes não mudam.
+// Revisado na versão 1.6.1.107.11: a preparação social nativa da Gestão permite
+// cancelar e voltar ao login; o Vendas mantém o fluxo equivalente.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.11 - 2026-07-29
+
+- Gestão Mobile: o login nativo por Google ou Apple agora mantém uma tela
+  **Preparando acesso** com **Cancelar e voltar ao login**, seguindo o fluxo já
+  validado no Vendas. Cancelar limpa os provedores, o carregamento e o navegador.
+
 ## 1.6.1.107.10 - 2026-07-29
 
 - Login social no iOS: os botões são restaurados antes de aguardar a Promise

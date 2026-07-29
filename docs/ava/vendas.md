@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.10 -->
+<!-- ava-version: 1.6.1.107.11 -->
+
+> Revisão 1.6.1.107.11: a Gestão adotou o cancelamento explícito durante
+> **Preparando acesso**, seguindo o fluxo já utilizado no AvantaVendas.
 
 > Revisão 1.6.1.107.10: correção da ordem assíncrona do login social da Gestão
 > no iOS; sem impacto operacional no AvantaVendas.
