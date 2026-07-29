@@ -63,6 +63,7 @@ function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | u
 }
 
 const CHAVE_RASCUNHO_CADASTRO_WEB = 'avantalab_web_rascunho_cadastro';
+const CHAVE_LOGIN_SOCIAL_PENDENTE = 'avantalab_gestao_login_social_pendente';
 const REDIRECT_GOOGLE_NATIVO = 'br.com.avantalab.app://auth/callback';
 const EMAIL_CONTA_REVISAO_APPLE = 'teste@teste.com.br';
 type ProvedorOAuth = 'google' | 'apple';
@@ -164,11 +165,45 @@ export function useAuth(deps: UseAuthDeps) {
     setProvedorOAuthNativoPendente(null);
     setGoogleLoading(false);
     setAppleLoading(false);
+    try {
+      sessionStorage.removeItem(CHAVE_LOGIN_SOCIAL_PENDENTE);
+    } catch {
+      // O fluxo continua mesmo se o armazenamento da aba estiver indisponível.
+    }
     if (limparFeedback) {
       setAuthErro('');
       setAuthMensagem('');
     }
   }, []);
+
+  const iniciarEstadoLoginSocial = useCallback((provedor: ProvedorOAuth) => {
+    provedorOAuthNativoPendenteRef.current = provedor;
+    setProvedorOAuthNativoPendente(provedor);
+    setGoogleLoading(provedor === 'google');
+    setAppleLoading(provedor === 'apple');
+    try {
+      sessionStorage.setItem(CHAVE_LOGIN_SOCIAL_PENDENTE, provedor);
+    } catch {
+      // O card de preparação permanece funcional pelo estado em memória.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const provedorSalvo = sessionStorage.getItem(CHAVE_LOGIN_SOCIAL_PENDENTE);
+      if (provedorSalvo !== 'google' && provedorSalvo !== 'apple') return;
+
+      void supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          sessionStorage.removeItem(CHAVE_LOGIN_SOCIAL_PENDENTE);
+          return;
+        }
+        iniciarEstadoLoginSocial(provedorSalvo);
+      });
+    } catch {
+      // Sem restauração quando o armazenamento da aba estiver indisponível.
+    }
+  }, [iniciarEstadoLoginSocial]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -202,10 +237,6 @@ export function useAuth(deps: UseAuthDeps) {
       }
 
       const provedor = provedorOAuthNativoPendenteRef.current;
-      provedorOAuthNativoPendenteRef.current = null;
-      setProvedorOAuthNativoPendente(null);
-      setGoogleLoading(provedor === 'google');
-      setAppleLoading(provedor === 'apple');
       setAuthErro('');
 
       try {
@@ -272,16 +303,6 @@ export function useAuth(deps: UseAuthDeps) {
           limparEstadoLoginSocial();
         })
       );
-      await guardarListener(
-        CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-          // Abrir o navegador seguro pode deixar o app inativo; isso não é
-          // cancelamento. O retorno ao app sem callback, por outro lado, é o
-          // encerramento/dispensa do fluxo social e precisa liberar a tela.
-          if (!isActive || !provedorOAuthNativoPendenteRef.current) return;
-          limparEstadoLoginSocial();
-        })
-      );
-
       const aberturaInicial = await CapacitorApp.getLaunchUrl();
       if (aberturaInicial?.url) {
         await processarRetornoOAuth(aberturaInicial.url);
@@ -956,8 +977,7 @@ export function useAuth(deps: UseAuthDeps) {
 
     setAuthErro('');
     setAuthMensagem('');
-    setGoogleLoading(provedor === 'google');
-    setAppleLoading(provedor === 'apple');
+    iniciarEstadoLoginSocial(provedor);
 
     if (!Capacitor.isNativePlatform()) {
       // O Supabase retorna à raiz pública. Guardamos apenas a intenção deste
@@ -977,9 +997,6 @@ export function useAuth(deps: UseAuthDeps) {
       return;
     }
 
-    provedorOAuthNativoPendenteRef.current = provedor;
-    setProvedorOAuthNativoPendente(provedor);
-
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provedor,
@@ -992,18 +1009,10 @@ export function useAuth(deps: UseAuthDeps) {
       if (error) throw error;
       if (!data.url) throw new Error(`Não foi possível abrir o login da ${nomeProvedor}.`);
 
-      const aberturaNavegador = Browser.open({
+      await Browser.open({
         url: data.url,
         presentationStyle: 'fullscreen',
       });
-
-      // Browser.open pode manter a Promise pendente durante toda a folha do
-      // iOS. Os rótulos precisam ser restaurados antes do await; a referência
-      // pendente continua separada para concluir um eventual deep link.
-      setGoogleLoading(false);
-      setAppleLoading(false);
-
-      await aberturaNavegador;
     } catch (erro) {
       console.error(`Erro login ${nomeProvedor}:`, erro);
       limparEstadoLoginSocial(false);

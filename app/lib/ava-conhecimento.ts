@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.11: a preparação social nativa da Gestão permite
-// cancelar e voltar ao login; o Vendas mantém o fluxo equivalente.
+// Revisado na versão 1.6.1.107.12: Gestão e Vendas mantêm o login social em
+// Preparando acesso até retorno, erro ou cancelamento explícito.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

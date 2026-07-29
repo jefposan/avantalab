@@ -1,10 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.11 -->
+<!-- ava-version: 1.6.1.107.12 -->
 
-> Revisão 1.6.1.107.11: durante Google ou Apple, **Preparando acesso** oferece
-> **Cancelar e voltar ao login**. A ação fecha o navegador quando possível,
-> limpa o estado pendente e devolve os dois provedores disponíveis.
+> Revisão 1.6.1.107.12: Google e Apple seguem o mesmo fluxo estável do
+> AvantaVendas. Ao tocar no provedor, o login dá lugar a **Preparando acesso**;
+> **Cancelar e voltar ao login** encerra a espera e restaura os dois botões.
 
 > Revisão 1.6.1.107.10: o carregamento visual é encerrado antes de aguardar a
 > Promise do painel iOS; fechar a confirmação retorna com os botões disponíveis.

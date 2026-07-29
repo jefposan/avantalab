@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.107.12 - 2026-07-29
+
+- Gestão: Google e Apple agora usam o mesmo estado único de preparação do
+  AvantaVendas. Ao iniciar o provedor, o login é substituído imediatamente por
+  **Preparando acesso**; a tela permanece estável até retorno, erro ou
+  cancelamento explícito, que restaura os dois botões sem **Conectando…**.
+- Removida a limpeza antecipada baseada apenas na ativação do app no iOS, pois
+  ela podia desmontar a preparação antes do encerramento real do OAuth.
+
 ## 1.6.1.107.11 - 2026-07-29
 
 - Gestão Mobile: o login nativo por Google ou Apple agora mantém uma tela

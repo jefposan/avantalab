@@ -19,6 +19,8 @@ const [
   serviceWorkerVendas,
   configuracaoNext,
   rotaVersao,
+  autenticacaoGestao,
+  vendas,
 ] = await Promise.all([
   ler('public/mobile-app.js'),
   ler('app/mobile/page.tsx'),
@@ -26,6 +28,8 @@ const [
   ler('app/avantavendas/sw.js/route.ts'),
   ler('next.config.ts'),
   ler('app/mobile/versao/route.ts'),
+  ler('app/hooks/useAuth.ts'),
+  ler('app/avantavendas/sistema/app.js'),
 ]);
 
 const inicioConclusao = aplicativo.indexOf("state.dadosCriticosProntos = true;");
@@ -92,6 +96,39 @@ exigir(
 exigir(
   rotaVersao.includes("import { APP_VERSION }") && rotaVersao.includes("'Cache-Control': 'no-store"),
   'A rota de versão precisa usar a versão oficial e resposta sem cache.',
+);
+
+const inicioLoginSocialGestao = autenticacaoGestao.indexOf(
+  'const handleOAuthLogin = async (provedor: ProvedorOAuth)',
+);
+const inicioPreparacaoGestao = autenticacaoGestao.indexOf(
+  'iniciarEstadoLoginSocial(provedor);',
+  inicioLoginSocialGestao,
+);
+const decisaoPlataformaGestao = autenticacaoGestao.indexOf(
+  'if (!Capacitor.isNativePlatform())',
+  inicioLoginSocialGestao,
+);
+exigir(
+  inicioLoginSocialGestao >= 0 &&
+    inicioPreparacaoGestao > inicioLoginSocialGestao &&
+    inicioPreparacaoGestao < decisaoPlataformaGestao,
+  'A Gestão precisa abrir Preparando acesso antes de iniciar OAuth Web ou nativo.',
+);
+exigir(
+  autenticacaoGestao.includes('sessionStorage.removeItem(CHAVE_LOGIN_SOCIAL_PENDENTE)') &&
+    autenticacaoGestao.includes('setGoogleLoading(false)') &&
+    autenticacaoGestao.includes('setAppleLoading(false)'),
+  'Cancelar o login social da Gestão precisa limpar a espera e restaurar Google e Apple.',
+);
+exigir(
+  !autenticacaoGestao.includes("CapacitorApp.addListener('appStateChange'"),
+  'A Gestão não pode cancelar OAuth apenas porque o iOS reativou o app.',
+);
+exigir(
+  vendas.includes('onclick="cancelarLoginSocialVendas()"') &&
+    vendas.includes('Cancelar e voltar ao login'),
+  'O AvantaVendas precisa manter a referência de cancelamento em Preparando acesso.',
 );
 
 if (falhas.length) {
