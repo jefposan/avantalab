@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import {
   buscarEmpresasDoUsuario,
@@ -155,8 +155,17 @@ export function useAuth(deps: UseAuthDeps) {
   const [authLoading, setAuthLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
-  const loginGoogleNativoPendenteRef = useRef(false);
-  const loginAppleNativoPendenteRef = useRef(false);
+  const provedorOAuthNativoPendenteRef = useRef<ProvedorOAuth | null>(null);
+
+  const limparEstadoLoginSocial = useCallback((limparFeedback = true) => {
+    provedorOAuthNativoPendenteRef.current = null;
+    setGoogleLoading(false);
+    setAppleLoading(false);
+    if (limparFeedback) {
+      setAuthErro('');
+      setAuthMensagem('');
+    }
+  }, []);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -169,23 +178,6 @@ export function useAuth(deps: UseAuthDeps) {
         await Browser.close();
       } catch {
         // O Android pode encerrar a Custom Tab ao entregar o deep link.
-      }
-    };
-
-    const definirCarregamentoOAuth = (provedor: ProvedorOAuth, carregando: boolean) => {
-      if (provedor === 'google') setGoogleLoading(carregando);
-      else setAppleLoading(carregando);
-    };
-
-    const limparLoginOAuthNativo = (limparFeedback = true) => {
-      loginGoogleNativoPendenteRef.current = false;
-      loginAppleNativoPendenteRef.current = false;
-      setGoogleLoading(false);
-      setAppleLoading(false);
-      setAuthLoading(false);
-      if (limparFeedback) {
-        setAuthErro('');
-        setAuthMensagem('');
       }
     };
 
@@ -206,18 +198,10 @@ export function useAuth(deps: UseAuthDeps) {
         return;
       }
 
-      const provedor: ProvedorOAuth | null = loginAppleNativoPendenteRef.current
-        ? 'apple'
-        : loginGoogleNativoPendenteRef.current
-          ? 'google'
-          : null;
-      loginGoogleNativoPendenteRef.current = false;
-      loginAppleNativoPendenteRef.current = false;
-      if (provedor) definirCarregamentoOAuth(provedor, true);
-      else {
-        setGoogleLoading(true);
-        setAppleLoading(true);
-      }
+      const provedor = provedorOAuthNativoPendenteRef.current;
+      provedorOAuthNativoPendenteRef.current = null;
+      setGoogleLoading(provedor === 'google');
+      setAppleLoading(provedor === 'apple');
       setAuthErro('');
 
       try {
@@ -258,8 +242,7 @@ export function useAuth(deps: UseAuthDeps) {
             : 'Não foi possível concluir o login social.'
         );
       } finally {
-        if (provedor) definirCarregamentoOAuth(provedor, false);
-        else limparLoginOAuthNativo(false);
+        limparEstadoLoginSocial(false);
         await fecharNavegador();
       }
     };
@@ -281,8 +264,8 @@ export function useAuth(deps: UseAuthDeps) {
       );
       await guardarListener(
         Browser.addListener('browserFinished', () => {
-          if (!loginGoogleNativoPendenteRef.current && !loginAppleNativoPendenteRef.current) return;
-          limparLoginOAuthNativo();
+          if (!provedorOAuthNativoPendenteRef.current) return;
+          limparEstadoLoginSocial();
         })
       );
       await guardarListener(
@@ -290,8 +273,8 @@ export function useAuth(deps: UseAuthDeps) {
           // Abrir o navegador seguro pode deixar o app inativo; isso não é
           // cancelamento. O retorno ao app sem callback, por outro lado, é o
           // encerramento/dispensa do fluxo social e precisa liberar a tela.
-          if (!isActive || (!loginGoogleNativoPendenteRef.current && !loginAppleNativoPendenteRef.current)) return;
-          limparLoginOAuthNativo();
+          if (!isActive || !provedorOAuthNativoPendenteRef.current) return;
+          limparEstadoLoginSocial();
         })
       );
 
@@ -301,14 +284,14 @@ export function useAuth(deps: UseAuthDeps) {
       }
     })().catch((erro) => {
       console.error('Erro ao preparar retorno OAuth nativo:', erro);
-      limparLoginOAuthNativo();
+      limparEstadoLoginSocial();
     });
 
     return () => {
       desmontado = true;
       for (const listener of listeners) void listener.remove();
     };
-  }, []);
+  }, [limparEstadoLoginSocial]);
   const [carregandoSistema, setCarregandoSistema] = useState(true);
   const [mensagemCarregamentoSistema, setMensagemCarregamentoSistema] = useState(
     'Carregando sistema...'
@@ -954,8 +937,8 @@ export function useAuth(deps: UseAuthDeps) {
 
     setAuthErro('');
     setAuthMensagem('');
-    if (provedor === 'google') setGoogleLoading(true);
-    else setAppleLoading(true);
+    setGoogleLoading(provedor === 'google');
+    setAppleLoading(provedor === 'apple');
 
     if (!Capacitor.isNativePlatform()) {
       // O Supabase retorna à raiz pública. Guardamos apenas a intenção deste
@@ -970,14 +953,12 @@ export function useAuth(deps: UseAuthDeps) {
         limparRetornoOauthPendente();
         console.error(`Erro login ${nomeProvedor}:`, error);
         setAuthErro(`Erro ${nomeProvedor}: ${error.message}`);
-        if (provedor === 'google') setGoogleLoading(false);
-        else setAppleLoading(false);
+        limparEstadoLoginSocial(false);
       }
       return;
     }
 
-    if (provedor === 'google') loginGoogleNativoPendenteRef.current = true;
-    else loginAppleNativoPendenteRef.current = true;
+    provedorOAuthNativoPendenteRef.current = provedor;
 
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -997,15 +978,12 @@ export function useAuth(deps: UseAuthDeps) {
       });
     } catch (erro) {
       console.error(`Erro login ${nomeProvedor}:`, erro);
-      if (provedor === 'google') loginGoogleNativoPendenteRef.current = false;
-      else loginAppleNativoPendenteRef.current = false;
+      limparEstadoLoginSocial(false);
       setAuthErro(
         erro instanceof Error
           ? `Erro ${nomeProvedor}: ${erro.message}`
           : `Não foi possível abrir o login da ${nomeProvedor}.`
       );
-      if (provedor === 'google') setGoogleLoading(false);
-      else setAppleLoading(false);
     }
   };
 

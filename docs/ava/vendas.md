@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.07 -->
+<!-- ava-version: 1.6.1.107.08 -->
+
+> Revisão 1.6.1.107.08: correção do estado social nativo da Gestão; sem impacto
+> operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.07: ajuste do cancelamento de login social nativo da
 > Gestão; sem impacto operacional no AvantaVendas.

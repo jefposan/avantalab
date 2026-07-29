@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.08 - 2026-07-29
+
+- Login social nativo: Google e Apple passam a compartilhar uma única fonte de
+  estado para o provedor ativo. Fechar ou cancelar o painel seguro sempre
+  restaura os dois botões e evita que algum permaneça em **Conectando…**.
+
 ## 1.6.1.107.07 - 2026-07-29
 
 - Login social nativo: removido o botão redundante de cancelamento no card de

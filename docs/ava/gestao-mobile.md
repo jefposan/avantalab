@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.07 -->
+<!-- ava-version: 1.6.1.107.08 -->
+
+> Revisão 1.6.1.107.08: Google e Apple usam um único estado de login social;
+> dispensar o painel seguro restaura ambos os botões para nova tentativa.
 
 > Revisão 1.6.1.107.07: fechar ou dispensar o painel seguro de Google ou Apple
 > limpa o login pendente e retorna à tela de acesso pronta para nova tentativa.

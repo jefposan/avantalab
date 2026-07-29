@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.07 -->
+<!-- ava-version: 1.6.1.107.08 -->
+
+> Revisão 1.6.1.107.08: o cancelamento do painel seguro restaura os botões de
+> Google e Apple sem manter um provedor em carregamento.
 
 > Revisão 1.6.1.107.07: dispensar o painel seguro de Google ou Apple limpa o
 > login pendente sem exibir um botão extra no card de acesso.
