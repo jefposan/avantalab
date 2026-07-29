@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      { source: "/", headers: semCachePwa },
+      { source: "/gestao", headers: semCachePwa },
       { source: "/sw.js", headers: semCachePwa },
       { source: "/mobile", headers: semCachePwa },
       { source: "/mobile/versao", headers: semCachePwa },

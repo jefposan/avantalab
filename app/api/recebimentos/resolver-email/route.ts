@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { clientesServidor, cpfValido, respostaErro, soDigitos, MODULO_RECEBIMENTOS } from '../_lib';
+import { assinaturaEmpresaLiberada, clientesServidor, cpfValido, respostaErro, soDigitos, MODULO_RECEBIMENTOS } from '../_lib';
 
 export const runtime = 'nodejs';
 
@@ -27,6 +27,9 @@ export async function POST(request: Request) {
       .eq('ativo', true)
       .maybeSingle();
     if (!erroModulo && !modulo) {
+      return respostaErro('O Recebimentos Presenciais está indisponível. Fale com o gestor.', 403, { bloqueado: true });
+    }
+    if (!await assinaturaEmpresaLiberada(data.empresa_id)) {
       return respostaErro('O Recebimentos Presenciais está indisponível. Fale com o gestor.', 403, { bloqueado: true });
     }
     return NextResponse.json({ erro: false, email: data.email, empresaId: data.empresa_id });

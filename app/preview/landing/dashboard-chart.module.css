@@ -1,0 +1,98 @@
+.chart {
+  display: block !important;
+}
+
+.header,
+.legend,
+.group {
+  display: flex !important;
+}
+
+.header {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header strong {
+  color: #003e73;
+  font-size: 0.68rem;
+}
+
+.header span {
+  color: #5b6b7d;
+  font-size: 0.68rem;
+}
+
+.legend {
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  color: #5b6b7d;
+  font-size: 0.48rem;
+  font-weight: 700;
+}
+
+.legend i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #003e73;
+}
+
+.legend span:nth-child(2) i {
+  background: #94a3b8;
+}
+
+.bars {
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr);
+  align-items: end;
+  gap: 0.35rem;
+  height: 84px;
+  margin-top: 0.35rem;
+  padding: 0.35rem 0.2rem 0;
+  border-bottom: 1px solid #dce7f0;
+  background: repeating-linear-gradient(to top, transparent 0, transparent 26px, #edf3f7 27px);
+}
+
+.group {
+  height: 100%;
+  align-items: end;
+  justify-content: center;
+  gap: 0.16rem;
+}
+
+.income,
+.expense {
+  width: 28%;
+  min-height: 4px;
+  border-radius: 3px 3px 0 0;
+}
+
+.income {
+  background: #003e73;
+}
+
+.expense {
+  background: #94a3b8;
+}
+
+.months {
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.months span {
+  color: #7b8b9b;
+  font-size: 0.43rem;
+  font-weight: 800;
+  text-align: center;
+}

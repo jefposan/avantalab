@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { exigirAdmin } from '../../lib/admin-server';
-import { DATA_LANCAMENTO, TRIAL_DIAS, assinaturaVigente, type EstadoAcesso, type TipoPerfil, type StatusAssinatura } from '../../lib/cobranca';
+import { DATA_LANCAMENTO, assinaturaVigente, type EstadoAcesso, type TipoPerfil, type StatusAssinatura } from '../../lib/cobranca';
 
 function naoAutorizado() {
   return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
@@ -26,11 +26,6 @@ function estadoDoPerfil(tipoPerfil: TipoPerfil, criadoEmISO: string | null, row:
   const criadoEm = criadoEmISO ? new Date(criadoEmISO) : null;
   const anteriorAoLancamento = !criadoEm || criadoEm < new Date(DATA_LANCAMENTO);
   if (anteriorAoLancamento) return { tipoPerfil, status: 'ativa', validoAte: null, trialFim: null, plano: null, ciclo: null };
-  if (tipoPerfil === 'empresa') {
-    const fim = new Date(criadoEm as Date);
-    fim.setDate(fim.getDate() + TRIAL_DIAS);
-    return { tipoPerfil, status: fim > new Date() ? 'trial' : 'expirada', validoAte: null, trialFim: fim.toISOString(), plano: null, ciclo: null };
-  }
   return { tipoPerfil, status: 'expirada', validoAte: null, trialFim: null, plano: null, ciclo: null };
 }
 

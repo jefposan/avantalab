@@ -30,6 +30,10 @@ export default function PrivacyPolicyDocument({ textClassName = 'text-slate-600'
           <p className={textClassName}>{text}</p>
         </section>
       ))}
+      <section>
+        <h2 className="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">17. Canal de privacidade</h2>
+        <p className={textClassName}>Dúvidas, solicitações ou exercício de direitos relacionados a dados pessoais podem ser enviados para <a className="font-semibold text-sky-700 underline underline-offset-4" href="mailto:contato@avantalab.com.br">contato@avantalab.com.br</a>. O AvantaLab responderá conforme os prazos e hipóteses aplicáveis.</p>
+      </section>
     </div>
   );
 }

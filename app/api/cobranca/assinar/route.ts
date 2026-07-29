@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { atualizarClienteAsaas, criarClienteAsaas, criarAssinaturaAsaas, listarCobrancasAssinaturaAsaas, removerAssinaturaAsaas } from '../../../lib/asaas';
 import { PRECOS, type PlanoPago, type Ciclo } from '../../../lib/cobranca';
+import { normalizarPlanoComercial } from '../../../lib/planos-comerciais';
 
 export const runtime = 'nodejs';
 const STATUS_FATURA_PAGAVEL = new Set(['PENDING', 'OVERDUE']);
@@ -26,14 +27,16 @@ export async function POST(request: Request) {
 
   const corpo = await request.json().catch(() => ({}));
   const empresaId = String(corpo.empresaId || '').trim();
-  const plano = String(corpo.plano || '') as PlanoPago;
+  const planoRecebido = String(corpo.plano || '');
+  const planoNormalizado = normalizarPlanoComercial(planoRecebido);
+  const plano = (planoNormalizado || planoRecebido) as PlanoPago;
   const ciclo = String(corpo.ciclo || '') as Ciclo;
   const dadosCobranca = corpo.cobranca && typeof corpo.cobranca === 'object' ? corpo.cobranca : {};
   let nomeCobranca = limparTexto(dadosCobranca.nome || corpo.nomeCobranca);
   let emailCobranca = limparTexto(dadosCobranca.email || corpo.emailCobranca).toLowerCase();
   let telefoneCobranca = String(dadosCobranca.telefone || corpo.telefoneCobranca || '').replace(/\D/g, '');
   let cpfCnpj = String(dadosCobranca.cpfCnpj || corpo.cpfCnpj || '').replace(/\D/g, ''); // só dígitos
-  if (!empresaId || !(plano in PRECOS) || (ciclo !== 'mensal' && ciclo !== 'anual')) {
+  if (!empresaId || !['pessoal_premium', 'business', 'business_pro'].includes(plano) || (ciclo !== 'mensal' && ciclo !== 'anual')) {
     return NextResponse.json({ erro: true, mensagem: 'dados inválidos' }, { status: 400 });
   }
   // 1) Autentica o usuário e pega o e-mail.
@@ -112,8 +115,10 @@ export async function POST(request: Request) {
     .from('empresas').select('nome, tipo_perfil').eq('id', empresaId).maybeSingle();
   const nomePerfil = emp?.nome || 'Cliente AvantaLab';
   const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
-  const planoEsperado: PlanoPago = tipoPerfil === 'pessoal' ? 'pessoal_premium' : 'empresa';
-  if (plano !== planoEsperado) {
+  const planoPermitido = tipoPerfil === 'pessoal'
+    ? plano === 'pessoal_premium'
+    : plano === 'business' || plano === 'business_pro';
+  if (!planoPermitido) {
     return NextResponse.json({ erro: true, mensagem: 'O plano informado não corresponde ao tipo deste perfil.' }, { status: 400 });
   }
 
@@ -175,7 +180,7 @@ export async function POST(request: Request) {
     value: valor,
     nextDueDate: hojeSaoPaulo(),
     cycle: ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
-    description: `AvantaLab — ${plano} (${ciclo})`,
+    description: `AvantaLab — ${plano === 'business_pro' ? 'Business Pro' : plano === 'business' ? 'Business' : 'Pessoal Premium'} (${ciclo})`,
     externalReference: empresaId,
   });
   if (!a.ok || !a.data?.id) return NextResponse.json({ erro: true, mensagem: a.erro || 'falha ao criar assinatura' }, { status: 502 });

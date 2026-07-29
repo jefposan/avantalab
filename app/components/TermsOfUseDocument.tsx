@@ -1,0 +1,34 @@
+interface TermsOfUseDocumentProps {
+  textClassName?: string;
+}
+
+const sections = [
+  ['1. Aceitação e versão vigente', 'Ao criar conta, acessar ou utilizar o AvantaLab Gestão, o usuário declara que leu, compreendeu e concorda com estes Termos de Uso e com a Política de Privacidade vigente. O aceite poderá ser registrado com data, hora, versão do documento e dados técnicos necessários para comprovação.'],
+  ['2. Finalidade da plataforma', 'O AvantaLab Gestão é uma ferramenta de apoio à organização, controle e análise de informações financeiras, administrativas e operacionais, incluindo lançamentos, receitas, despesas, relatórios, indicadores, agenda, notificações, backup, restauração, controle de ponto quando contratado ou habilitado, e recursos de apoio por automação ou inteligência artificial.'],
+  ['3. Cadastro, conta e credenciais', 'O usuário deve fornecer informações verdadeiras, atuais e completas no cadastro e manter a confidencialidade de suas credenciais. Cada acesso realizado com login e senha válidos poderá ser considerado como realizado pelo respectivo titular da conta, salvo prova de falha exclusiva da plataforma.'],
+  ['4. Responsabilidade pelas informações inseridas', 'O usuário e a empresa ou perfil financeiro vinculado são responsáveis pela veracidade, atualização, licitude, autorização de uso e conferência dos dados inseridos no sistema, incluindo dados financeiros, administrativos, de clientes, colaboradores, fornecedores, agenda, controle de ponto e demais registros. Relatórios, indicadores e análises dependem diretamente da qualidade dos dados cadastrados pelo próprio usuário.'],
+  ['5. Proteção de dados e LGPD', 'O tratamento de dados pessoais observará a Lei Geral de Proteção de Dados Pessoais (LGPD) e demais normas aplicáveis. Para dados de conta, autenticação, cobrança, suporte, segurança e relacionamento, o AvantaLab poderá atuar como controlador. Para dados operacionais inseridos pelo usuário em nome de sua empresa ou perfil financeiro, o AvantaLab atuará, em regra, como operador, tratando os dados conforme as instruções do usuário ou da empresa responsável, salvo hipóteses legais ou tratamentos próprios descritos na Política de Privacidade.'],
+  ['6. Uso adequado e condutas proibidas', 'O usuário compromete-se a utilizar a plataforma de forma lícita, ética e adequada, não realizando ações que comprometam segurança, estabilidade, funcionamento, integridade, disponibilidade ou confidencialidade do sistema. É vedado inserir dados que o usuário não tenha autorização legal para tratar, tentar acessar dados de terceiros sem permissão, burlar controles de acesso, explorar falhas, praticar engenharia reversa indevida, sobrecarregar a infraestrutura ou utilizar o sistema para finalidade ilícita.'],
+  ['7. Disponibilidade, integrações e serviços de terceiros', 'Embora sejam adotados esforços para manter o sistema disponível e funcional, podem ocorrer interrupções por manutenção, atualizações, falhas técnicas, instabilidades de internet, provedores de nuvem, banco de dados, autenticação, pagamento, notificações, SMS, email, serviços de inteligência artificial ou outros serviços de terceiros necessários à operação.'],
+  ['8. Backup, restauração e guarda dos dados', 'A plataforma pode oferecer recursos de backup e restauração para apoio ao usuário, mas a conferência do arquivo gerado, a guarda de cópias próprias e a escolha correta do modo de restauração são de responsabilidade do usuário. A exclusão, substituição ou importação de dados poderá alterar registros existentes, conforme confirmação apresentada na interface.'],
+  ['9. Planos, cobrança e acesso', 'O acesso a determinados recursos poderá depender de plano, cortesia, cupom, período de teste ou pagamento vigente. A falta de pagamento, encerramento de cortesia, violação destes Termos ou uso indevido poderá resultar em limitação, suspensão ou bloqueio do acesso, preservadas as regras de guarda, exportação e retenção descritas na Política de Privacidade e nas telas do sistema.'],
+  ['10. Segurança da conta', 'O usuário deve proteger seus dispositivos, senhas, códigos de acesso e sessões autenticadas. O AvantaLab poderá adotar medidas de segurança, validação, bloqueio preventivo, logs técnicos e controles de acesso para reduzir riscos de fraude, acesso indevido, perda ou alteração não autorizada de dados.'],
+  ['11. Limitação de responsabilidade', 'O AvantaLab Gestão é uma ferramenta de apoio gerencial e não substitui contabilidade, auditoria, consultoria financeira, jurídica, trabalhista, fiscal ou previdenciária. Decisões tomadas com base nas informações exibidas são de responsabilidade do usuário. A plataforma não se responsabiliza por dados incorretos inseridos pelo usuário, decisões de negócio, perdas indiretas, lucros cessantes, falhas de terceiros, indisponibilidades inevitáveis ou uso indevido da conta.'],
+  ['12. Propriedade intelectual', 'O sistema, telas, layout, marca, textos, fluxos, componentes, códigos, identidade visual e demais elementos da plataforma pertencem ao AvantaLab ou a seus licenciantes. O uso da plataforma não transfere ao usuário qualquer direito de propriedade intelectual, sendo permitido apenas o uso regular conforme estes Termos.'],
+  ['13. Encerramento, exclusão e retenção', 'O usuário poderá solicitar encerramento de conta, exclusão de perfil ou eliminação de dados, quando aplicável. Algumas informações poderão ser mantidas pelo período necessário ao cumprimento de obrigações legais, regulatórias, contratuais, fiscais, auditoria, prevenção a fraudes, segurança, exercício regular de direitos ou preservação em backups técnicos por prazo limitado.'],
+  ['14. Alterações dos termos', 'Estes Termos de Uso poderão ser atualizados para refletir melhorias, mudanças operacionais, comerciais, legais, regulatórias ou funcionais. Mudanças relevantes poderão exigir novo aceite. O uso contínuo da plataforma após a atualização caracteriza ciência da versão vigente, respeitados os casos em que novo consentimento seja legalmente necessário.'],
+  ['15. Legislação aplicável e contato', 'Estes Termos são regidos pela legislação brasileira. Dúvidas, solicitações ou comunicações relacionadas ao uso da plataforma, privacidade ou proteção de dados devem ser encaminhadas pelos canais oficiais de suporte ou contato disponibilizados pelo AvantaLab.'],
+] as const;
+
+export default function TermsOfUseDocument({ textClassName = 'text-slate-600' }: TermsOfUseDocumentProps) {
+  return (
+    <div className="space-y-6 text-sm leading-relaxed">
+      {sections.map(([title, text]) => (
+        <section key={title}>
+          <h2 className="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">{title}</h2>
+          <p className={textClassName}>{text}</p>
+        </section>
+      ))}
+    </div>
+  );
+}

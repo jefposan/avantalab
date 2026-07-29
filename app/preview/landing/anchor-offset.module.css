@@ -1,0 +1,25 @@
+.root :global(section[id]) {
+  scroll-margin-top: 92px;
+}
+
+.root :global([data-scroll-target]) {
+  scroll-margin-top: 90px;
+}
+
+.root :global([data-full-section]) {
+  min-height: calc(100svh - 74px);
+}
+
+@media (max-width: 640px) {
+  .root :global(section[id]) {
+    scroll-margin-top: 78px;
+  }
+
+  .root :global([data-scroll-target]) {
+    scroll-margin-top: 80px;
+  }
+
+  .root :global([data-full-section]) {
+    min-height: calc(100svh - 64px);
+  }
+}

@@ -5,8 +5,8 @@ import { COBRANCA_ATIVA, TRIAL_DIAS } from '../../../lib/cobranca';
 export const runtime = 'nodejs';
 
 // Define como começa a cobrança de um perfil EMPRESA recém-criado:
-//   modo 'trial'   → 7 dias grátis (status 'trial', trial_fim = agora + TRIAL_DIAS).
-//   modo 'assinar' → já bloqueado (status 'expirada') → cai direto no paywall.
+//   modo 'trial'   → teste de 7 dias exclusivo do Business Pro.
+//   modo 'assinar' → já bloqueado (Business como sugestão inicial) → paywall.
 //
 // Só age quando COBRANCA_ATIVA. Com a flag desligada é no-op (não grava nada,
 // mantém o comportamento atual em produção). Grava uma linha em `assinaturas`,
@@ -59,6 +59,7 @@ export async function POST(request: Request) {
   // 5) Grava o estado inicial escolhido.
   let trialFim: string | null = null;
   let status = 'expirada';
+  const plano = modo === 'trial' ? 'business_pro' : 'business';
   if (modo === 'trial') {
     const fim = new Date();
     fim.setDate(fim.getDate() + TRIAL_DIAS);
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
   await admin.from('assinaturas').insert({
     empresa_id: empresaId,
     tipo_perfil: 'empresa',
+    plano,
     status,
     trial_fim: trialFim,
     valido_ate: null,

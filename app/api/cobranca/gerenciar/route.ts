@@ -7,6 +7,7 @@ import {
   type CobrancaAssinaturaAsaas,
 } from '../../../lib/asaas';
 import { PRECOS, type Ciclo, type PlanoPago } from '../../../lib/cobranca';
+import { normalizarPlanoComercial } from '../../../lib/planos-comerciais';
 import { autenticarPerfilCobranca, resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
 
 export const runtime = 'nodejs';
@@ -93,9 +94,7 @@ export async function GET(request: Request) {
   const valorFatura = Number(
     faturasDaAssinatura.find((item) => Number(item.valor || 0) > 0)?.valor || 0,
   );
-  const planoLocal: PlanoPago | null = local?.plano === 'pessoal_premium'
-    ? 'pessoal_premium'
-    : (local?.plano === 'empresa' ? 'empresa' : null);
+  const planoLocal = normalizarPlanoComercial(local?.plano) as Exclude<PlanoPago, 'empresa'> | null;
   const cicloLocal: Ciclo | null = local?.ciclo === 'mensal'
     ? 'mensal'
     : (local?.ciclo === 'anual' ? 'anual' : null);
@@ -132,28 +131,48 @@ export async function PATCH(request: Request) {
   const corpo = await request.json().catch(() => ({}));
   const empresaId = String(corpo.empresaId || '').trim();
   const ciclo = String(corpo.ciclo || '') as Ciclo;
+  const planoSolicitado = String(corpo.plano || '').trim();
   if (!empresaId || !['mensal', 'anual'].includes(ciclo)) {
     return NextResponse.json({ erro: true, mensagem: 'Dados inválidos.' }, { status: 400 });
   }
   const acesso = await autenticarPerfilCobranca(request, empresaId, true);
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
 
-  const { data: empresa } = await acesso.db.from('empresas').select('tipo_perfil').eq('id', empresaId).maybeSingle();
-  const plano: PlanoPago = empresa?.tipo_perfil === 'pessoal' ? 'pessoal_premium' : 'empresa';
   const { data: local } = await acesso.db
     .from('assinaturas')
-    .select('status, gateway_subscription_id')
+    .select('status, plano, gateway_subscription_id')
     .eq('empresa_id', empresaId)
     .maybeSingle();
   if (!local?.gateway_subscription_id || local.status === 'cancelada') {
     return NextResponse.json({ erro: true, mensagem: 'Não existe uma assinatura ativa para alterar.' }, { status: 409 });
+  }
+  const planoNormalizado = normalizarPlanoComercial(local.plano);
+  const planoAtual: PlanoPago = planoNormalizado === 'pessoal_premium' || planoNormalizado === 'business' || planoNormalizado === 'business_pro'
+    ? planoNormalizado
+    : 'business';
+  let plano: PlanoPago = planoAtual;
+
+  // A troca de plano por aqui é deliberadamente unidirecional: Business pode
+  // subir para Business Pro sem cancelar a assinatura atual. Reduções exigem
+  // uma revisão dos módulos já instalados e não devem acontecer por engano.
+  if (planoSolicitado) {
+    if (planoSolicitado !== 'business_pro' || planoAtual !== 'business') {
+      return NextResponse.json({ erro: true, mensagem: 'Esta alteração de plano não está disponível.' }, { status: 409 });
+    }
+    const estado = await resolverEstadoAcessoParaUsuario(empresaId, acesso.usuario.id);
+    if (estado?.tipoPerfil !== 'empresa') {
+      return NextResponse.json({ erro: true, mensagem: 'Business Pro está disponível apenas para perfis empresariais.' }, { status: 403 });
+    }
+    plano = 'business_pro';
   }
 
   const atualizada = await atualizarAssinaturaAsaas(local.gateway_subscription_id, {
     value: PRECOS[plano][ciclo],
     cycle: ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
     description: `AvantaLab — ${plano} (${ciclo})`,
-    updatePendingPayments: false,
+    // A alteração comercial é imediata: a cobrança pendente acompanha o
+    // plano escolhido, evitando liberar Business Pro com uma fatura Business.
+    updatePendingPayments: true,
   });
   if (!atualizada.ok) {
     return NextResponse.json({ erro: true, mensagem: atualizada.erro || 'Não foi possível alterar o plano.' }, { status: 502 });
@@ -164,7 +183,7 @@ export async function PATCH(request: Request) {
     ciclo,
     atualizado_em: new Date().toISOString(),
   }).eq('empresa_id', empresaId);
-  return NextResponse.json({ ok: true, ciclo });
+  return NextResponse.json({ ok: true, ciclo, plano });
 }
 
 export async function DELETE(request: Request) {

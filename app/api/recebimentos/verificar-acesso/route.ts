@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { clientesServidor, MODULO_RECEBIMENTOS, respostaErro, usuarioDaRequisicao } from '../_lib';
+import { assinaturaEmpresaLiberada, clientesServidor, MODULO_RECEBIMENTOS, respostaErro, usuarioDaRequisicao } from '../_lib';
 
 export const runtime = 'nodejs';
 
@@ -38,7 +38,8 @@ export async function POST(request: Request) {
     ]);
     const empresaNome = erroEmpresa ? '' : String(empresa?.nome ?? '').trim();
     if (erroModulo) return NextResponse.json({ ativo: true, indeterminado: true, empresaNome });
-    return NextResponse.json({ ativo: Boolean(modulo), motivo: modulo ? undefined : 'modulo', empresaNome });
+    const assinaturaAtiva = await assinaturaEmpresaLiberada(empresaId);
+    return NextResponse.json({ ativo: Boolean(modulo) && assinaturaAtiva, motivo: !modulo ? 'modulo' : (assinaturaAtiva ? undefined : 'assinatura'), empresaNome });
   } catch (error) {
     console.error('Erro ao verificar acesso de recebimentos:', error);
     return NextResponse.json({ ativo: true, indeterminado: true });

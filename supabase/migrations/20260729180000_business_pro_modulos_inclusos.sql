@@ -1,0 +1,3 @@
+-- Business Pro dá direito a todos os módulos atuais e futuros, mas não os
+-- instala automaticamente. O gestor escolhe quais recursos quer ativar; a
+-- instalação não cria cobrança avulsa quando o plano principal é Business Pro.

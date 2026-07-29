@@ -1,5 +1,7 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { COBRANCA_ATIVA, assinaturaVigente } from '../../lib/cobranca';
+import { resolverEstadoAcesso } from '../../lib/cobranca-servidor';
 export { validarNomeCompleto } from '../../lib/nome-pessoa';
 
 export const MODULO_RECEBIMENTOS = 'recebimentos_presencial';
@@ -51,11 +53,18 @@ export async function usuarioDaRequisicao(request: Request, url: string, anonKey
   return error ? null : data.user;
 }
 
+/** Mantém os acessos externos de módulos alinhados à assinatura do perfil. */
+export async function assinaturaEmpresaLiberada(empresaId: string): Promise<boolean> {
+  if (!COBRANCA_ATIVA) return true;
+  const estado = await resolverEstadoAcesso(empresaId);
+  return estado?.tipoPerfil !== 'empresa' || assinaturaVigente(estado);
+}
+
 export async function validarGestor(
   admin: SupabaseClient,
   userId: string,
   empresaId: string,
-): Promise<'ok' | 'sem_permissao' | 'modulo_inativo' | 'erro'> {
+): Promise<'ok' | 'sem_permissao' | 'modulo_inativo' | 'assinatura_inativa' | 'erro'> {
   const { data: permissao, error: erroPermissao } = await admin
     .from('usuarios_empresa')
     .select('id')
@@ -75,12 +84,14 @@ export async function validarGestor(
     .eq('ativo', true)
     .maybeSingle();
   if (erroModulo) return 'erro';
-  return modulo ? 'ok' : 'modulo_inativo';
+  if (!modulo) return 'modulo_inativo';
+  return await assinaturaEmpresaLiberada(empresaId) ? 'ok' : 'assinatura_inativa';
 }
 
 export function erroValidacaoGestor(resultado: Exclude<Awaited<ReturnType<typeof validarGestor>>, 'ok'>) {
   if (resultado === 'sem_permissao') return respostaErro('Você não tem permissão para gerenciar colaboradores.', 403);
   if (resultado === 'modulo_inativo') return respostaErro('O módulo Recebimentos Presenciais não está ativo nesta empresa.', 403);
+  if (resultado === 'assinatura_inativa') return respostaErro('A assinatura deste perfil precisa estar ativa para usar o Recebimentos Presenciais.', 403);
   return respostaErro('Não foi possível validar sua permissão.', 500);
 }
 

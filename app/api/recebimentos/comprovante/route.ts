@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import {
+  assinaturaEmpresaLiberada,
   clientesServidor,
   respostaErro,
   usuarioDaRequisicao,
@@ -28,6 +29,9 @@ export async function GET(request: Request) {
     if (erroLancamento || !lancamento) return respostaErro('Lançamento não encontrado.', 404);
 
     const empresaId = String(lancamento.empresa_id);
+    if (!await assinaturaEmpresaLiberada(empresaId)) {
+      return respostaErro('A assinatura deste perfil precisa estar ativa para acessar comprovantes.', 403);
+    }
     const gestor = await validarGestor(clientes.admin, user.id, empresaId);
     let autorizado = gestor === 'ok';
     if (!autorizado && String(lancamento.colaborador_user_id ?? '') === user.id) {

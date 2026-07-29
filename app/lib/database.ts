@@ -1594,69 +1594,26 @@ export async function excluirUsuarioEmpresa(acessoId: string) {
     },
   };
 }
-export async function criarEmpresaInicial(nomeEmpresa: string) {
-  const { data, error } = await supabase.rpc('criar_empresa_inicial_rpc', {
-    p_nome_empresa: nomeEmpresa,
+export async function criarEmpresaInicial(nomeEmpresa: string, tipoPerfil: 'empresa' | 'pessoal' = 'empresa', somentePrimeiro = false) {
+  const { data: sessao } = await supabase.auth.getSession();
+  const token = sessao.session?.access_token;
+  if (!token) return { erro: true, mensagem: 'Sessão não encontrada. Faça login novamente.', data: null, criado: false };
+  const resposta = await fetch('/api/criar-perfil', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ nome: nomeEmpresa, tipoPerfil, somentePrimeiro }),
   });
-
-  if (error) {
-    console.error('Erro ao criar empresa inicial:', error);
-
-    return {
-      erro: true,
-      mensagem: tratarErroSupabase(error),
-      data: null,
-    };
-  }
-
-  if (!data) {
-    console.error('Empresa inicial criada sem retorno de dados — possível problema de sessão ou permissão RLS.');
-    return {
-      erro: true,
-      mensagem: 'O servidor não retornou os dados do perfil criado. Verifique sua conexão, faça login novamente e tente de novo.',
-      data: null,
-    };
-  }
-
+  const resultado = await resposta.json().catch(() => ({}));
   return {
-    erro: false,
-    mensagem: '',
-    data,
+    erro: !resposta.ok || resultado.erro === true,
+    mensagem: resultado.mensagem || '',
+    data: resultado.empresa || null,
+    criado: resultado.criado === true,
   };
 }
 
 export async function criarPrimeiroPerfilCadastro(nomeEmpresa: string, tipoPerfil: 'empresa' | 'pessoal') {
-  const { data, error } = await supabase.rpc('criar_primeiro_perfil_cadastro_rpc', {
-    p_nome_empresa: nomeEmpresa,
-    p_tipo_perfil: tipoPerfil,
-  });
-
-  if (error) {
-    console.error('Erro ao criar primeiro perfil do cadastro:', error);
-    return {
-      erro: true,
-      mensagem: tratarErroSupabase(error),
-      data: null,
-      criado: false,
-    };
-  }
-
-  const retorno = data as { empresa?: Record<string, unknown>; criado?: boolean } | null;
-  if (!retorno?.empresa) {
-    return {
-      erro: true,
-      mensagem: 'O servidor não retornou os dados do primeiro perfil.',
-      data: null,
-      criado: false,
-    };
-  }
-
-  return {
-    erro: false,
-    mensagem: '',
-    data: retorno.empresa,
-    criado: retorno.criado === true,
-  };
+  return criarEmpresaInicial(nomeEmpresa, tipoPerfil, true);
 }
 
 export async function buscarEmailPorLogin(login: string) {

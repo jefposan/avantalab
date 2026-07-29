@@ -13,7 +13,7 @@
 // Para testar no preview: definir NEXT_PUBLIC_COBRANCA_ATIVA=true lá.
 export const COBRANCA_ATIVA = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true';
 
-// Dias de trial do perfil empresa (contados da criação do perfil).
+// Dias de teste, exclusivos do Business Pro.
 export const TRIAL_DIAS = 7;
 
 // Data de lançamento da cobrança. Perfis criados ANTES desta data mantêm
@@ -25,11 +25,15 @@ export const DATA_LANCAMENTO = process.env.NEXT_PUBLIC_COBRANCA_LANCAMENTO || '2
 export type TipoPerfil = 'empresa' | 'pessoal';
 
 // Planos pagos e preços (R$). Fonte única da verdade.
-export type PlanoPago = 'empresa' | 'pessoal_premium';
+export type PlanoPago = 'pessoal_premium' | 'business' | 'business_pro' | 'empresa';
 export type Ciclo = 'mensal' | 'anual';
 export const PRECOS: Record<PlanoPago, Record<Ciclo, number>> = {
-  empresa: { mensal: 34.9, anual: 348.0 },
-  pessoal_premium: { mensal: 9.9, anual: 99.0 },
+  pessoal_premium: { mensal: 9.9, anual: 99.9 },
+  business: { mensal: 34.9, anual: 249.9 },
+  business_pro: { mensal: 49.9, anual: 359.9 },
+  // Compatibilidade temporária com assinaturas gravadas antes da nomenclatura
+  // comercial. Nenhuma nova contratação deve persistir este valor.
+  empresa: { mensal: 34.9, anual: 249.9 },
 };
 
 export type StatusAssinatura =
@@ -73,7 +77,11 @@ export function rotuloStatusAssinatura(status: StatusAssinatura): string {
 // Rótulo amigável do plano + ciclo.
 export function rotuloPlano(plano: string | null, ciclo: string | null): string {
   if (!plano) return '—';
-  const nome = plano === 'pessoal_premium' ? 'Premium Pessoal' : 'Empresa';
+  const nome = plano === 'pessoal_premium'
+    ? 'Pessoal Premium'
+    : plano === 'business_pro'
+      ? 'Business Pro'
+      : 'Business';
   const cic = ciclo === 'anual' ? 'Anual' : ciclo === 'mensal' ? 'Mensal' : '';
   return cic ? `${nome} · ${cic}` : nome;
 }
@@ -101,7 +109,7 @@ export const RECURSOS_PREMIUM_PESSOAL: { recurso: Recurso; icone: string; titulo
   { recurso: 'analises', icone: '📊', titulo: 'Análises avançadas', descricao: 'Aba Relatório e Gráficos completos.' },
   { recurso: 'exportacao', icone: '💾', titulo: 'Backup e exportação', descricao: 'Exporte e restaure seus dados em Excel.' },
   { recurso: 'busca_lancamentos', icone: '🔎', titulo: 'Busca nos lançamentos', descricao: 'Encontre qualquer lançamento na hora.' },
-  { recurso: 'multiplos_perfis', icone: '👥', titulo: 'Múltiplos perfis pessoais', descricao: 'Crie mais perfis pessoais (grátis = 1). Criar perfil empresa continua livre.' },
+  { recurso: 'multiplos_perfis', icone: '👥', titulo: 'Múltiplos perfis pessoais', descricao: 'Crie até 3 perfis pessoais. Perfis empresariais exigem um plano Business.' },
   { recurso: 'notificacoes', icone: '🔔', titulo: 'Notificações', descricao: 'Lembretes e avisos de pagamentos.' },
   { recurso: 'agenda', icone: '📅', titulo: 'Agenda', descricao: 'Organize lembretes, compromissos e lançamentos futuros.' },
   { recurso: 'vendas_mobile', icone: '🛍️', titulo: 'Vendas Mobile', descricao: 'Acesse clientes, produtos, pedidos e pagamentos integrados à Gestão.' },
