@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.103 - 2026-07-29
+
+- SEO: removido o bloqueio amplo `/gestao` do `robots.txt`, pois regras por
+  prefixo também impediam o rastreamento de `/gestao-financeira`; a Gestão
+  interna segue protegida por `noindex`.
+
 ## 1.6.1.102 - 2026-07-29
 
 - SEO: Googlebot e Bingbot foram liberados explicitamente no `robots.txt`,
