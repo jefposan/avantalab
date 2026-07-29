@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.13: a Gestão mantém uma única fonte de estado
-// para preparação e cancelamento social; sem mudança operacional no Vendas.
+// Revisado na versão 1.6.1.107.14: a landing React antiga foi removida e a
+// landing SEO da raiz é a única implementação pública; sem impacto operacional.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

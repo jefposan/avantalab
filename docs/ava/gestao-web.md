@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.13 -->
+<!-- ava-version: 1.6.1.107.14 -->
+
+> Revisão 1.6.1.107.14: removida a implementação React antiga da landing; a
+> landing SEO da raiz é a única versão pública. Sem impacto operacional na
+> Gestão Web.
 
 > Revisão 1.6.1.107.13: removido o código inacessível da antiga landing interna
 > da Gestão; a landing pública oficial permanece exclusivamente na raiz.

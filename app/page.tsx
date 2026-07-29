@@ -3,16 +3,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import CalculatorHub from './components/CalculatorHub';
 import BotaoProximoScroll from './components/BotaoProximoScroll';
-import LandingPreviewHeader from './components/LandingPreviewHeader';
+import LandingHeader from './components/LandingHeader';
 import RedirecionamentoPosOAuth from './components/RedirecionamentoPosOAuth';
 import LinkRolagemPublica from './components/LinkRolagemPublica';
 import AvaPlansPreview from './components/AvaPlansPreview';
-import styles from './preview/landing/preview-landing.module.css';
-import effects from './preview/landing/preview-effects.module.css';
-import avaBadge from './preview/landing/ava-badge.module.css';
-import dashboardChart from './preview/landing/dashboard-chart.module.css';
-import anchorOffset from './preview/landing/anchor-offset.module.css';
-import solutionsStyles from './preview/landing/landing-solutions.module.css';
+import styles from './styles/landing/landing.module.css';
+import effects from './styles/landing/landing-effects.module.css';
+import avaBadge from './styles/landing/ava-badge.module.css';
+import dashboardChart from './styles/landing/dashboard-chart.module.css';
+import anchorOffset from './styles/landing/anchor-offset.module.css';
+import solutionsStyles from './styles/landing/landing-solutions.module.css';
 
 const siteUrl = 'https://avantalab.com.br';
 const destinosProximaRolagem = ['recursos', 'como-funciona', 'ia-ava', 'planos', 'calculadoras', 'perguntas', 'proximo-passo', 'rodape'] as const;
@@ -89,14 +89,14 @@ const dadosEstruturados = {
   ],
 };
 
-export default function PreviewLandingPage() {
+export default function AvantaLandingPage() {
   return (
     <main className={`${styles.page} ${effects.root} ${anchorOffset.root}`}>
       <RedirecionamentoPosOAuth />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosEstruturados) }} />
       <a className={styles.skipLink} href="#conteudo">Pular para o conteúdo</a>
 
-      <LandingPreviewHeader />
+      <LandingHeader />
 
       <section className={styles.hero} id="conteudo" data-public-hero>
         <div className={styles.wrap}>

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.13 -->
+<!-- ava-version: 1.6.1.107.14 -->
+
+> Revisão 1.6.1.107.14: exclusão da landing React antiga e consolidação da
+> landing SEO oficial; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107.13: o login social mantém somente um estado de preparação,
 > com bloqueio de repetição e cancelamento; removidos estados antigos duplicados.

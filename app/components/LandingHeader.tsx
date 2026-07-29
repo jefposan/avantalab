@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { rolarParaSecaoPublica } from '../lib/rolagem-publica';
-import landingStyles from '../preview/landing/preview-landing.module.css';
-import styles from './LandingPreviewHeader.module.css';
+import landingStyles from '../styles/landing/landing.module.css';
+import styles from './LandingHeader.module.css';
 
-export default function LandingPreviewHeader() {
+export default function LandingHeader() {
   const [rolado, setRolado] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
   const itensMenu = [

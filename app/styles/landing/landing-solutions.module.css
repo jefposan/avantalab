@@ -1,3 +1,4 @@
+/* Soluções da landing SEO oficial. */
 .section { background: linear-gradient(145deg, #f7fbfe, #fff); }
 .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
 .card { position: relative; display: block; min-height: 210px; padding: 1.5rem; border: 1px solid #dce7f0; border-radius: 18px; background: #fff; color: #13263b; text-decoration: none; box-shadow: 0 10px 30px rgb(0 62 115 / 5%); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }

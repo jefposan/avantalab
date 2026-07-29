@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.13 -->
+<!-- ava-version: 1.6.1.107.14 -->
+
+> Revisão 1.6.1.107.14: exclusão da landing React antiga e consolidação da
+> landing SEO oficial; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.13: limpeza do código social e da landing interna da Gestão;
 > sem alteração operacional no AvantaVendas.

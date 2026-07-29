@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.1.107.14 - 2026-07-29
+
+- Landing pública: removidos definitivamente o componente React antigo e seu
+  CSS, que já não possuíam consumidores no sistema.
+- A landing SEO oficial passa a usar nomes e diretório próprios, sem os
+  identificadores legados de preview, preservando integralmente conteúdo,
+  layout e assets compartilhados.
+- A URL histórica `/preview/landing` permanece apenas como redirecionamento
+  permanente para a raiz canônica, sem manter uma segunda implementação.
+
 ## 1.6.1.107.13 - 2026-07-29
 
 - Autenticação: removidos os estados duplicados de carregamento de Google e
