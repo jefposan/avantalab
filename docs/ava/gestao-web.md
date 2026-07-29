@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.106 -->
+<!-- ava-version: 1.6.1.107 -->
+
+> Revisão 1.6.1.107: celebração de meta e preenchimento de endereço por
+> localização adicionados ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.106: a Ava orienta somente recursos efetivamente plugados ao
 > sistema publicado; projetos em desenvolvimento ficam fora do guia.

@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.106 -->
+<!-- ava-version: 1.6.1.107 -->
+
+> Revisão 1.6.1.107: ao atingir a meta mensal, o Dashboard celebra uma vez por
+> meta e mês. Em Clientes, o botão Localização no fim do campo Endereço solicita
+> permissão do aparelho, preenche dados encontrados e permite revisão antes de salvar.
 
 > Revisão 1.6.1.106: a Ava orienta somente recursos efetivamente plugados ao
 > sistema publicado; projetos em desenvolvimento ficam fora do guia.
@@ -605,7 +609,9 @@ função existir ali.
 - Ao trocar de página, a pesquisa da tela anterior é limpa. Um texto pesquisado
   em **Clientes**, por exemplo, não aparece em **Pagamentos** nem em outra área.
 - **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
-  são recomendados para ligação/WhatsApp e mapas.
+  são recomendados para ligação/WhatsApp e mapas. No fim do campo **Endereço**,
+  **Localização** pede a permissão do aparelho, preenche o endereço encontrado e
+  permite revisão antes de salvar.
 - Quando existe endereço, toda a linha destacada no card abre a escolha entre
   Google Maps, Mapas Apple e Waze. Sem endereço, a linha fica inativa e orienta
   o cadastro antes de usar os mapas. Cidade, estado ou CEP sem logradouro não
@@ -704,6 +710,8 @@ função existir ali.
   entre o arquivo anterior e o próximo da pasta.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
   estoque, vínculos comerciais, destino financeiro, PWA, backup e reset.
+- Ao atingir a meta mensal, o Dashboard celebra a conquista uma vez para aquela
+  meta e mês e também mostra a situação **Meta atingida!** no card.
 - Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta
   mensal e período de clientes inativos são preferências da conta: permanecem
   após atualizar ou reinstalar o PWA e são restauradas em outro aparelho depois

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107 - 2026-07-29
+
+- AvantaVendas: ao atingir a meta mensal, o Dashboard celebra a conquista uma
+  vez por meta e mês; a ficha de cliente passa a preencher o endereço a partir
+  da localização do aparelho, mediante permissão e revisão antes de salvar.
+
 ## 1.6.1.106 - 2026-07-29
 
 - Ava: removidas referências a projetos ainda não plugados ao sistema, como

@@ -655,10 +655,14 @@ body.sheet-open {
 .cliente-sheet-backdrop .field textarea { min-height: 32px; border-radius: 9px; padding: 5px 9px; font-size: 13px; }
 .cliente-sheet-backdrop .field textarea { min-height: 56px; }
 .cliente-sheet-backdrop .actions { gap: 7px; margin-top: 1px; }.cliente-sheet-backdrop .actions button { min-height: 34px; padding: 0 11px; font-size: 11px; }
-.phone-system-field, .cep-system-field { display: flex; gap: 7px; }
+.phone-system-field, .cep-system-field, .client-address-system-field { display: flex; gap: 7px; }
 .phone-system-field select { width: 112px; flex: 0 0 112px; }
-.phone-system-field input, .cep-system-field input { min-width: 0; flex: 1; }
-.cep-system-field button { min-height: 34px; padding: 6px 10px; }
+.phone-system-field input, .cep-system-field input, .client-address-system-field input { min-width: 0; flex: 1; }
+.cep-system-field button, .client-address-system-field button { min-height: 34px; padding: 6px 10px; }
+.client-address-system-field button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+.client-address-system-field button .svg-icon { width: 14px; height: 14px; }
+.client-address-system-field button.is-loading { opacity: .72; cursor: wait; }
+.client-address-field small { color: #64748b; font-size: 10px; line-height: 1.25; }
 .client-city-state { grid-template-columns: minmax(0, 1fr) 100px; }
 
 .sheet-backdrop-centered {
@@ -973,6 +977,15 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .goal-card em { color: #1687D9; font-size: 13px; font-style: normal; }
 .goal-card .progress { display: block; height: 8px; overflow: hidden; border-radius: 999px; margin: 0; background: #e7eef4; }
 .goal-card .progress i { display: block; height: 100%; border-radius: inherit; background: var(--tridium); }
+.goal-card.goal-achieved { border-color: #22c55e; box-shadow: 0 4px 14px rgba(34,197,94,.19); }
+.goal-card.goal-achieved .progress i { background: linear-gradient(90deg,#22c55e,#f59e0b); }
+.goal-card.goal-achieved p { color: #15803d; }
+.goal-celebration { position: fixed; z-index: calc(var(--vendas-layer-modal) + 20); inset: 0; overflow: hidden; pointer-events: none; }
+.goal-celebration-message { position: absolute; top: calc(var(--vendas-safe-top) + 18px); left: 50%; display: grid; min-width: min(280px, calc(100vw - 32px)); gap: 3px; transform: translateX(-50%); border: 1px solid rgba(255,255,255,.65); border-radius: 14px; padding: 12px 16px; color: #fff; background: linear-gradient(135deg,#15803d,#16a34a); box-shadow: 0 12px 32px rgba(21,128,61,.35); text-align: center; animation: goal-celebration-in .32s ease-out both; }
+.goal-celebration-message strong { font-size: 16px; }.goal-celebration-message span { font-size: 12px; }
+.goal-confetti { position: absolute; top: -14px; left: calc(var(--x) * 1%); width: 8px; height: 14px; border-radius: 2px; background: var(--cor); animation: goal-confetti-fall 2.8s cubic-bezier(.2,.7,.3,1) var(--delay) both; }
+@keyframes goal-celebration-in { from { opacity: 0; transform: translate(-50%,-12px) scale(.96); } to { opacity: 1; transform: translate(-50%,0) scale(1); } }
+@keyframes goal-confetti-fall { from { opacity: 0; transform: translateY(-12px) rotate(0deg); } 12% { opacity: 1; } to { opacity: 0; transform: translateY(78vh) rotate(540deg); } }
 .orders-goal .progress i { background: #4778ed; }
 .goal-card p { margin: 0; color: #64748b; font-size: 10px; text-align: center; }
 .dashboard-kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin: 0; }
@@ -2301,6 +2314,8 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dark-theme .dashboard-sticky-head .month-switcher > div { border-color: #334155; background: #172033; }
 .dark-theme .dashboard-kpis .kpi, .dark-theme .dashboard-movement-card { border-color: #334155; color: #f8fafc; background: #172033; }
 .dark-theme .dashboard-kpis .kpi span, .dark-theme .goal-card p, .dark-theme .goal-card .goal-values b { color: #cbd5e1; }
+.dark-theme .goal-card.goal-achieved { border-color: #22c55e; background: #132a25; }
+.dark-theme .goal-card.goal-achieved p, .dark-theme .client-address-field small { color: #bbf7d0; }
 .dark-theme .dashboard-kpis .kpi strong, .dark-theme .dashboard-finance-bars span b, .dark-theme .dashboard-bar-row b, .dark-theme .profitability-report b { color: #f8fafc; }
 .dark-theme .dashboard-panel th, .dark-theme .dashboard-panel td { border-color: #334155; color: #cbd5e1; }
 .dark-theme .dashboard-panel-body, .dark-theme .dashboard-product-chart { background: #172033; }

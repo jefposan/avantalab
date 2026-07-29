@@ -15,6 +15,7 @@ const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
 const CACHE_VENDAS_VERSAO = 5;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
 const PREFERENCIAS_VENDAS_VERSAO = 1;
+const META_CELEBRADA_PREFIX = 'avantalab.vendas_mobile.meta_celebrada';
 const IDS_ATALHOS_PREFERENCIAS_VENDAS = new Set(['tema', 'dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao', 'gestao']);
 const IDS_SALA_PREFERENCIAS_VENDAS = new Set(['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'novidades', 'divulgacao', 'informacoes']);
 const HOJE = new Date();
@@ -915,6 +916,32 @@ function toast(msg) {
   el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2800);
+}
+
+function chaveMetaCelebrada(meta) {
+  return `${META_CELEBRADA_PREFIX}:${state.mesReferencia}:${Number(meta).toFixed(2)}`;
+}
+
+function celebrarMetaAtingida(totalVendido) {
+  const meta = Number(state.metaMensal || 0);
+  if (!(meta > 0) || Number(totalVendido || 0) < meta) return;
+
+  const chave = chaveMetaCelebrada(meta);
+  try {
+    if (localStorage.getItem(chave)) return;
+    localStorage.setItem(chave, '1');
+  } catch { /* Sem armazenamento, a celebração continua disponível nesta abertura. */ }
+
+  const anterior = document.getElementById('metaCelebracaoVendas');
+  if (anterior) anterior.remove();
+  const celebracao = document.createElement('div');
+  celebracao.id = 'metaCelebracaoVendas';
+  celebracao.className = 'goal-celebration';
+  celebracao.setAttribute('role', 'status');
+  celebracao.setAttribute('aria-live', 'polite');
+  celebracao.innerHTML = `<div class="goal-celebration-message"><strong>Meta atingida!</strong><span>Parabéns pela conquista do mês.</span></div>${Array.from({ length: 28 }, (_, indice) => `<i class="goal-confetti" style="--x:${(indice * 37) % 100};--delay:${(indice % 7) * 70}ms;--cor:${['#0ea5e9','#22c55e','#f59e0b','#ec4899','#8b5cf6'][indice % 5]}"></i>`).join('')}`;
+  document.body.appendChild(celebracao);
+  setTimeout(() => celebracao.remove(), 4200);
 }
 
 let spriteIconesEstavelPronto = false;
@@ -2872,6 +2899,8 @@ function renderDashboard() {
   const maiorMovimento = Math.max(t.total, totalRecebido, 1);
   const margemPercentual = t.total > 0 ? (t.margem / t.total) * 100 : 0;
   const progressoMensal = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
+  const metaAtingida = state.metaMensal > 0 && t.total >= state.metaMensal;
+  if (metaAtingida) requestAnimationFrame(() => celebrarMetaAtingida(t.total));
   const tabelaClientes = clientesTop.length ? clientesTop.map((item) => `<tr><td><b>${escapeHtml(item.nome)}</b><small>${item.pedidos} ${item.pedidos === 1 ? 'pedido' : 'pedidos'}</small></td><td>${moeda(item.total)}</td></tr>`).join('') : '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
   const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr class="dashboard-inactive-row" tabindex="0" role="button" onclick="abrirClienteDashboard('${item.id}')" onkeydown="if(event.key==='Enter'||event.key===' ')abrirClienteDashboard('${item.id}')"><td>${escapeHtml(item.nome)}</td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente sem pedido no período selecionado.</td></tr>';
   const graficoProdutos = produtosTop.length ? produtosTop.map((item) => `<div class="dashboard-bar-row"><span><b>${escapeHtml(item.nome)}</b><small>${item.qtd} un. · ${moeda(item.total)}</small></span><i><em style="width:${Math.max(4, item.qtd / produtosTop[0].qtd * 100)}%"></em></i></div>`).join('') : '<p>Sem vendas de produtos no período.</p>';
@@ -2884,7 +2913,7 @@ function renderDashboard() {
         <section class="month-switcher"><div><button aria-label="Mês anterior" onclick="mudarMes(-1)">${svgIcon('chevron-left')}</button><strong>${nomeMesReferencia()}</strong><button aria-label="Próximo mês" onclick="mudarMes(1)">${svgIcon('chevron-right')}</button></div><button class="current-month" onclick="irMesAtual()">${svgIcon('calendar')}<span>${mesReferenciaAtual() ? 'Mês atual' : 'Ir para o mês atual'}</span></button></section>
       </div>
       <section class="goal-grid">
-        <article class="goal-card sales-goal"><h3>${svgIcon('target')}<span>Meta Mensal</span><button type="button" onclick="setAba('configuracoes')" aria-label="Configurar metas">${svgIcon('settings')}</button></h3><div class="goal-card-body"><div class="goal-values"><b>Vendas <em>${moeda(t.total)}</em></b><b>Meta <em>${moeda(state.metaMensal)}</em></b></div><div class="progress"><i style="width:${Math.max(2, progressoMensal)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir a meta.</p></div></article>
+        <article class="goal-card sales-goal ${metaAtingida ? 'goal-achieved' : ''}"><h3>${svgIcon('target')}<span>Meta Mensal</span><button type="button" onclick="setAba('configuracoes')" aria-label="Configurar metas">${svgIcon('settings')}</button></h3><div class="goal-card-body"><div class="goal-values"><b>Vendas <em>${moeda(t.total)}</em></b><b>Meta <em>${moeda(state.metaMensal)}</em></b></div><div class="progress"><i style="width:${Math.max(2, progressoMensal)}%"></i></div><p>${metaAtingida ? '<b>Meta atingida!</b> Parabéns pela conquista.' : `Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir a meta.`}</p></div></article>
       </section>
       <section class="dashboard-kpis">
         ${kpi('Total Vendido', moeda(t.total), '$')}
@@ -3731,6 +3760,42 @@ async function buscarCepCliente() {
     document.getElementById('cliCep').value = `${cep.slice(0, 5)}-${cep.slice(5)}`;
     document.getElementById('cliNumero')?.focus();
   } catch (error) { toast('Não foi possível localizar esse CEP.'); }
+}
+
+function preencherEnderecoPorLocalizacao() {
+  if (!navigator.geolocation) { toast('A localização não é suportada neste aparelho.'); return; }
+  const botao = document.getElementById('cliBuscarLocalizacao');
+  if (botao) { botao.disabled = true; botao.classList.add('is-loading'); botao.querySelector('span').textContent = 'Localizando…'; }
+  const finalizar = () => {
+    if (!botao) return;
+    botao.disabled = false;
+    botao.classList.remove('is-loading');
+    botao.querySelector('span').textContent = 'Localização';
+  };
+  navigator.geolocation.getCurrentPosition(async (posicao) => {
+    try {
+      const { latitude, longitude } = posicao.coords;
+      const resposta = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`, { headers: { Accept: 'application/json' } });
+      const dados = await resposta.json();
+      if (!resposta.ok || !dados?.address) throw new Error('Endereço não encontrado.');
+      const endereco = dados.address;
+      const logradouro = endereco.road || endereco.pedestrian || endereco.footway || endereco.cycleway || '';
+      const bairro = endereco.suburb || endereco.neighbourhood || endereco.quarter || '';
+      const textoEndereco = [logradouro, bairro].filter(Boolean).join(' - ') || String(dados.display_name || '').split(',').slice(0, 2).join(',').trim();
+      if (!textoEndereco) throw new Error('Endereço não encontrado.');
+      document.getElementById('cliEndereco').value = textoEndereco;
+      if (endereco.house_number && !valor('cliNumero').trim()) document.getElementById('cliNumero').value = endereco.house_number;
+      if (endereco.city || endereco.town || endereco.village || endereco.municipality) document.getElementById('cliCidade').value = endereco.city || endereco.town || endereco.village || endereco.municipality;
+      if (endereco.state) document.getElementById('cliEstado').value = String(endereco.state_code || endereco.state || '').replace(/^BR-/, '').slice(0, 2).toUpperCase();
+      if (endereco.postcode) document.getElementById('cliCep').value = String(endereco.postcode).replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').slice(0, 9);
+      toast('Endereço preenchido. Revise antes de salvar.');
+      document.getElementById('cliEndereco')?.focus();
+    } catch (error) { toast('Não foi possível localizar o endereço. Preencha manualmente.'); }
+    finally { finalizar(); }
+  }, (erro) => {
+    finalizar();
+    toast(erro.code === 1 ? 'Permita a localização para preencher o endereço.' : 'Não foi possível obter sua localização.');
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
 }
 
 function aplicarBusca() {
@@ -6106,7 +6171,7 @@ function abrirCliente(clienteId = '') {
       ${campo('cliEmail', 'E-mail', c.email || '', 'email')}
       <div class="field client-birth-field"><label>Data de nascimento</label><div class="client-birth-control"><input id="cliNascimento" type="text" inputmode="numeric" maxlength="5" autocomplete="bday" placeholder="dd/mm" value="${escapeAttr(dataNascimentoParaCampo(c.data_nascimento))}" oninput="formatarDataNascimentoCampo(this)"></div></div>
       ${campoCepCliente(c.cep || '')}
-      ${campo('cliEndereco', 'Endereço', c.endereco || '')}
+      <div class="field client-address-field"><label>Endereço</label><div class="client-address-system-field"><input id="cliEndereco" type="text" autocomplete="street-address" value="${escapeAttr(c.endereco || '')}"><button id="cliBuscarLocalizacao" type="button" class="secondary" onclick="preencherEnderecoPorLocalizacao()" aria-label="Usar minha localização para preencher o endereço">${svgIcon('map-pin')}<span>Localização</span></button></div><small>Usa a localização do aparelho; revise o endereço antes de salvar.</small></div>
       <div class="grid-2 client-address-extra">
         ${campo('cliNumero', 'Número', c.numero || '')}
         ${campo('cliComplemento', 'Complemento', c.complemento || '')}
@@ -6851,6 +6916,7 @@ window.sairMenuMobile = sairMenuMobile;
 window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.acionarNavegacaoInferior = acionarNavegacaoInferior;
 window.buscarCepCliente = buscarCepCliente;
+window.preencherEnderecoPorLocalizacao = preencherEnderecoPorLocalizacao;
 window.abrirMenuCliente = abrirMenuCliente;
 window.atualizarBuscaClientes = atualizarBuscaClientes;
 window.limparBuscaClientes = limparBuscaClientes;
