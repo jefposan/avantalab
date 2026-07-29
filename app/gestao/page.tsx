@@ -6156,7 +6156,7 @@ setAcessoNaoConfigurado(false);
 setValidacaoTelefoneObrigatoria(false);
 setModoRedefinirSenha(false);
 setModoAuth('login');
-setMostrarLandingPreLogin(true);
+setMostrarLandingPreLogin(false);
 
 setEmpresaId(null);
 setNomeEmpresaAtual('');

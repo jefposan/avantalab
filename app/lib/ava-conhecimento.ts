@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.05: o cancelamento de login social também volta
-// ao acesso no Vendas; a Ava continua orientando apenas recursos plugados.
+// Revisado na versão 1.6.1.107.06: o retorno OAuth da Gestão Web/PWA segue
+// automaticamente para a Gestão; os demais ambientes não mudam.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.05 -->
+<!-- ava-version: 1.6.1.107.06 -->
+
+> Revisão 1.6.1.107.06: retorno automático do OAuth da Gestão Web/PWA; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.05: durante login por Google ou Apple, o botão de
 > cancelamento limpa o retorno pendente e volta ao acesso.

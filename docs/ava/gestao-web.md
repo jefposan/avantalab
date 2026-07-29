@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.05 -->
+<!-- ava-version: 1.6.1.107.06 -->
+
+> Revisão 1.6.1.107.06: após login por Google ou Apple iniciado na Gestão,
+> a sessão confirmada segue automaticamente para a tela de Gestão e seus
+> perfis, sem uma segunda confirmação na landing pública. A rota Gestão abre
+> diretamente no acesso; a landing pública oficial é a raiz do AvantaLab.
 
 > Revisão 1.6.1.107.05: o Vendas também permite cancelar o login social
 > pendente; sem impacto operacional na Gestão Web.

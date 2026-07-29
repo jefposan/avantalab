@@ -4,6 +4,7 @@ import Link from 'next/link';
 import CalculatorHub from './components/CalculatorHub';
 import BotaoProximoScroll from './components/BotaoProximoScroll';
 import LandingPreviewHeader from './components/LandingPreviewHeader';
+import RedirecionamentoPosOAuth from './components/RedirecionamentoPosOAuth';
 import LinkRolagemPublica from './components/LinkRolagemPublica';
 import AvaPlansPreview from './components/AvaPlansPreview';
 import styles from './preview/landing/preview-landing.module.css';
@@ -91,6 +92,7 @@ const dadosEstruturados = {
 export default function PreviewLandingPage() {
   return (
     <main className={`${styles.page} ${effects.root} ${anchorOffset.root}`}>
+      <RedirecionamentoPosOAuth />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosEstruturados) }} />
       <a className={styles.skipLink} href="#conteudo">Pular para o conteúdo</a>
 

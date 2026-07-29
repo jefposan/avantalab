@@ -21,6 +21,7 @@ import { Capacitor } from '@capacitor/core';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
+import { limparRetornoOauthPendente, registrarRetornoOauthGestao } from '../lib/oauth-retorno';
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -96,7 +97,9 @@ export function useAuth(deps: UseAuthDeps) {
 
   // --- Estados de autenticação de entrada ---
   const [modoAuth, setModoAuth] = useState<'login' | 'cadastro'>('login');
-  const [mostrarLandingPreLogin, setMostrarLandingPreLogin] = useState(true);
+  // A landing pública oficial é a raiz (/). A Gestão abre diretamente no
+  // acesso para não manter uma segunda landing antiga dentro do sistema.
+  const [mostrarLandingPreLogin, setMostrarLandingPreLogin] = useState(false);
 
   // Deep link da landing: /?cadastro=1 abre direto a tela de criar cadastro.
   useEffect(() => {
@@ -967,12 +970,16 @@ export function useAuth(deps: UseAuthDeps) {
     else setAppleLoading(true);
 
     if (!Capacitor.isNativePlatform()) {
+      // O Supabase retorna à raiz pública. Guardamos apenas a intenção deste
+      // login para que a landing encaminhe a sessão confirmada à Gestão.
+      registrarRetornoOauthGestao();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provedor,
         options: { redirectTo: `${window.location.origin}/` },
       });
 
       if (error) {
+        limparRetornoOauthPendente();
         console.error(`Erro login ${nomeProvedor}:`, error);
         setAuthErro(`Erro ${nomeProvedor}: ${error.message}`);
         if (provedor === 'google') setGoogleLoading(false);

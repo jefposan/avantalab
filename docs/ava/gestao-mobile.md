@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.05 -->
+<!-- ava-version: 1.6.1.107.06 -->
+
+> Revisão 1.6.1.107.06: retorno automático do OAuth da Gestão Web/PWA; sem
+> impacto operacional na Gestão Mobile nativa.
 
 > Revisão 1.6.1.107.05: o Vendas também permite cancelar o login social
 > pendente; sem impacto operacional na Gestão Mobile.

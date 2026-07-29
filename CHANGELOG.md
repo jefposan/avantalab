@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.107.06 - 2026-07-29
+
+- Login por Google e Apple iniciado na Gestão Web/PWA agora retorna da raiz
+  pública diretamente para a Gestão assim que o Supabase confirma a sessão,
+  sem exigir um segundo clique em Entrar.
+- A Gestão deixa de renderizar sua landing legada antes ou depois do login; a
+  landing pública oficial passa a ser exclusivamente a raiz do AvantaLab.
+
 ## 1.6.1.107.05 - 2026-07-29
 
 - AvantaVendas: login por Google e Apple agora oferece cancelamento explícito

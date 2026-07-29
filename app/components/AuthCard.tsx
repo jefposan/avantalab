@@ -5,7 +5,6 @@ import QRCode from 'qrcode';
 import { normalizarTipoPerfil, rotuloTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { PAISES } from '../lib/paises';
 import DraggableModalCard from './DraggableModalCard';
-import LandingPage from './LandingPage';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -243,21 +242,6 @@ export default function AuthCard({
     setTipoLogin(novoTipo);
     setLoginEmail('');
   };
-
-  if (mostrarLandingPreLoginAtiva && !modalAvisoAberto) {
-    return (
-      <LandingPage
-        onCriarConta={() => {
-          setMostrarLandingPreLogin(false);
-          setModoAuth('cadastro');
-        }}
-        onEntrar={() => {
-          setMostrarLandingPreLogin(false);
-          setModoAuth('login');
-        }}
-      />
-    );
-  }
 
   return (
     <main className="relative min-h-screen overflow-x-hidden font-sans">
