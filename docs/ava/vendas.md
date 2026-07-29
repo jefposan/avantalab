@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.104 -->
+<!-- ava-version: 1.6.1.105 -->
+
+> Revisão 1.6.1.105: contraste automático nos cards de seleção de perfil;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.104: links públicos de soluções foram ampliados; sem impacto na orientação da Ava.
 >
