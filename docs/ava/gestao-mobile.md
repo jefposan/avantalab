@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.20 -->
+<!-- ava-version: 1.6.1.107.21 -->
+
+> Revisão 1.6.1.107.21: o cadastro passa a usar o mesmo fundo e posicionamento
+> responsivo do logo da tela de login; sem mudança nos campos ou ações.
 
 > Revisão 1.6.1.107.20: o card de login permanece centralizado horizontalmente.
 > No cadastro, o seletor Empresa/Pessoal foi compactado e o cupom fica ao lado

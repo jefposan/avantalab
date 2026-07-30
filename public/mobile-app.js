@@ -8673,14 +8673,28 @@
     );
   }
 
+  function cenaAcessoGestaoMobile(card) {
+    return (
+      '<section class="gestao-login-screen">' +
+        '<div class="gestao-login-brand"><img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" /></div>' +
+        card +
+      '</section>'
+    );
+  }
+
   function telaLogin() {
     var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
     if (!boasVindas && !state.modoCadastro && !state.modoSenha) {
-      return (
-        '<section class="gestao-login-screen">' +
-          '<div class="gestao-login-brand"><img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" /></div>' +
-          '<form class="gestao-login-form" onsubmit="return false"><div class="gestao-login-heading"><h1>Gestão Financeira</h1><p>Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.</p></div>' + telaLoginCampos() + '</form>' +
-        '</section>'
+      return cenaAcessoGestaoMobile(
+        '<form class="gestao-login-form" onsubmit="return false"><div class="gestao-login-heading"><h1>Gestão Financeira</h1><p>Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.</p></div>' + telaLoginCampos() + '</form>'
+      );
+    }
+    if (state.modoCadastro) {
+      return cenaAcessoGestaoMobile(
+        '<form class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/35 p-3 text-slate-900 shadow-2xl backdrop-blur-xl" onsubmit="return false" style="grid-row:2;justify-self:center;background-color:rgba(255,255,255,.18);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);overscroll-behavior:contain;">' +
+          '<div class="mb-2"><h1 class="text-xl font-black text-slate-900">Criar cadastro</h1></div>' +
+          telaCadastro() +
+        '</form>'
       );
     }
     var maxH = boasVindas

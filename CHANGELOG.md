@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.21 - 2026-07-30
+
+- Cadastro mobile: fundo e logo passam a usar a mesma cena responsiva do login,
+  com fundo oficial sem marca incorporada, logo separado e card estabilizado na
+  área útil da tela.
+
 ## 1.6.1.107.20 - 2026-07-30
 
 - Gestão Mobile: o card de login volta a ficar centralizado horizontalmente na

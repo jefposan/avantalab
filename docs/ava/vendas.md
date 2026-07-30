@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.20 -->
+<!-- ava-version: 1.6.1.107.21 -->
+
+> Revisão 1.6.1.107.21: padronização visual do cadastro da Gestão Mobile; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.20: ajustes visuais na Gestão e landing mobile; sem impacto
 > operacional no AvantaVendas.
