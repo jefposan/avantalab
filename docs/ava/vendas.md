@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.44 -->
+<!-- ava-version: 1.6.1.107.45 -->
+
+> Revisão 1.6.1.107.45: correção exclusiva da continuidade OAuth nativa da
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.44: ajuste restrito ao retorno OAuth do Google na Gestão
 > Mobile nativa; sem impacto operacional no AvantaVendas.

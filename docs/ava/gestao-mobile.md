@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.44 -->
+<!-- ava-version: 1.6.1.107.45 -->
+
+> Revisão 1.6.1.107.45: após concluir Google ou Apple pelo navegador seguro,
+> a Gestão Mobile prossegue na sessão confirmada sem recarregar a página; o
+> card **Preparando acesso** não entra em ciclo.
 
 > Revisão 1.6.1.107.44: no aplicativo iOS/Android, o retorno do Google pelo
 > navegador seguro reconhece tokens recebidos tanto na query quanto no fragmento

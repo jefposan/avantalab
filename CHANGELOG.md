@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.45 - 2026-07-30
+
+- Após login social no iOS/Capacitor, a Gestão Mobile continua a sessão já
+  confirmada sem recarregar a página. Isso elimina o ciclo de **Preparando
+  acesso** após autenticação com Google ou Apple.
+
 ## 1.6.1.107.44 - 2026-07-30
 
 - Login com Google no iOS/Capacitor passa a reconhecer tokens OAuth retornados

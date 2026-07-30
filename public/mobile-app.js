@@ -84,14 +84,15 @@
         access_token: retorno.accessToken,
         refresh_token: retorno.refreshToken,
       }).then(function (resposta) {
-        if (resposta.error) {
+        var usuario = resposta.data && resposta.data.session && resposta.data.session.user;
+        if (resposta.error || !usuario) {
           state.carregando = false;
           state.loginAcao = '';
           limparPreferenciaSessaoMobile();
           setErro(mensagemErro(resposta.error, 'Não foi possível concluir o login social.'));
           return;
         }
-        window.location.replace('/mobile');
+        void concluirLoginSocialNativoMobile(usuario);
       }).catch(function (erro) {
         state.carregando = false;
         state.loginAcao = '';
@@ -109,6 +110,68 @@
       return;
     }
     render();
+  }
+
+  // Depois de um retorno pelo deep link, não recarregamos a página. Uma
+  // recarga poderia ler o marcador temporário de OAuth antes de a sessão ser
+  // restaurada e deixar a tela de preparação em ciclo. Este caminho replica a
+  // continuação do login por e-mail a partir da sessão já confirmada.
+  async function concluirLoginSocialNativoMobile(usuario) {
+    var tentativaLogin = Number(state.tentativaLogin || 0) + 1;
+    state.tentativaLogin = tentativaLogin;
+    limparLoginSocialPendenteMobile();
+    registrarPreferenciaSessaoMobile(state.manterConectado, false);
+    state.usuario = usuario;
+    state.autenticado = true;
+    state.carregando = true;
+    state.loginAcao = '';
+
+    var metadados = usuario.user_metadata || {};
+    if (metadados.tipo === 'funcionario_ponto') {
+      try { await db.auth.signOut({ scope: 'local' }); } catch (erro) {}
+      state.carregando = false;
+      setErro('Este acesso é do Controle de Ponto. Registre seu horário pelo app de ponto.');
+      return;
+    }
+
+    try {
+      var perfisCarregados = await carregarEmpresas(usuario.id, usuario);
+      if (tentativaLogin !== state.tentativaLogin) return;
+
+      if (perfisCarregados === false) {
+        state.carregando = false;
+        setErro('Sua sessão foi iniciada, mas os perfis demoraram para responder. Tente novamente.');
+        return;
+      }
+
+      if (!state.empresa) {
+        state.carregando = false;
+        if (ehContaRevisaoAppAppleMobile(usuario)) {
+          var perfilRevisaoCriado = await criarPerfilInicial({
+            nome: 'AvantaLab — Conta de teste',
+            tipoPerfil: 'pessoal',
+          });
+          if (perfilRevisaoCriado) return;
+        }
+        var perfilCriadoNoCadastro = await criarPerfilInicialDoCadastroMobile(metadados);
+        if (perfilCriadoNoCadastro) return;
+        state.criarPerfilNome = String(metadados.nome_perfil_inicial || '');
+        state.criarPerfilTipo = normalizarTipoPerfil(metadados.tipo_perfil_inicial || state.cadastroTipoPerfil);
+        state.modoCriarPerfil = true;
+        render();
+        return;
+      }
+
+      if (await prepararSistemaInicialAntesDosDadosMobile()) {
+        render();
+        return;
+      }
+      await carregarDados();
+    } catch (erro) {
+      state.carregando = false;
+      state.loginAcao = '';
+      setErro(mensagemErro(erro, 'Não foi possível concluir o login social.'));
+    }
   }
   window.addEventListener('avantalab:oauth-nativo-mobile', function (event) {
     processarRetornoOAuthNativoMobile(event && event.detail ? event.detail : {});
