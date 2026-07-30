@@ -10946,19 +10946,21 @@
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Restauracao</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Importar um backup do AvantaLab</span></span>' +
           '</div>' +
         '</button>' +
+        '<button id="menu-excluir-conta" type="button" class="rounded-[12px_24px_24px_24px] border border-rose-200 bg-rose-50 px-2.5 py-1 text-left text-rose-800 shadow-[0_4px_11px_rgba(15,23,42,.05)] transition active:scale-[0.99]" style="order:13;"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">&#9888;</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black leading-none">Excluir minha conta</span><span class="mt-0.5 block truncate text-[9px] font-semibold leading-none text-rose-600">Remover acesso e dados pessoais</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center">' + chevronMenuSvg() + '</span></span></button>' +
       '</div>'
     ) : '';
 
     return (
       '<div id="menu-overlay" class="absolute inset-0 z-50 bg-slate-950/75" style="will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
-        '<aside id="menu-aside" data-preserve-scroll class="h-full w-[84vw] max-w-[348px] overflow-y-auto rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';padding-bottom:calc(env(safe-area-inset-bottom) + 120px);backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + animacaoPainel + '">' +
-          '<div class="relative mb-4 overflow-hidden rounded-[16px_32px_32px_32px] border border-white/20 p-4 text-white shadow-xl shadow-sky-950/15" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
+        '<aside id="menu-aside" class="flex h-full w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + animacaoPainel + '">' +
+          '<div class="relative mb-4 shrink-0 overflow-hidden rounded-[16px_32px_32px_32px] border border-white/20 p-4 text-white shadow-xl shadow-sky-950/15" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +
             '<div class="flex items-start justify-between gap-3">' +
               '<div class="relative min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.28em] text-cyan-100">AvantaLab</p><h2 class="mt-1 truncate text-lg font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-1 truncate text-[11px] font-semibold text-cyan-50/90">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
               '<button id="fechar-menu" type="button" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white shadow-sm backdrop-blur active:scale-95" aria-label="Fechar menu">' + iconeFecharGeometricoMobile() + '</button>' +
             '</div>' +
           '</div>' +
+          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 120px);-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;">' +
           '<div class="grid gap-1.5">' +
             ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios())
               ? menuBotaoHtml(
@@ -10987,8 +10989,8 @@
             '</button>' +
             configSubItens +
             '<button id="menu-feedback" type="button" class="rounded-[14px_26px_26px_26px] border border-cyan-300 px-2.5 py-2 text-left shadow-[0_6px_15px_rgba(8,145,178,.13)] transition active:scale-[0.99]" style="background:radial-gradient(circle at 90% 50%,rgba(20,184,166,.18),transparent 28%),linear-gradient(135deg,#E6FFFB 0%,#CFFAFE 100%)"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm" style="background:linear-gradient(135deg,#06B6D4,#0891B2)">' + iconeMenuLateralSvg('menu-feedback') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none text-sky-900">Duvidas e Sugestoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-cyan-700">Ajude a melhorar o AvantaLab</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/75 text-cyan-700 shadow-sm">' + chevronMenuSvg() + '</span></div></button>' +
-            '<button id="menu-excluir-conta" type="button" class="rounded-[14px_26px_26px_26px] border border-rose-200 bg-rose-50 px-2.5 py-2 text-left text-rose-800 shadow-sm transition active:scale-[0.99]"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">&#9888;</span><span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">Excluir minha conta</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-rose-600">Remover acesso e dados pessoais</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center">' + chevronMenuSvg() + '</span></span></button>' +
             '<button id="sair" type="button" class="rounded-[14px_26px_26px_26px] border border-rose-100 px-2.5 py-2 text-left text-xs font-black text-rose-700 shadow-sm transition active:scale-[0.99]" style="background:linear-gradient(90deg,#FFF1F2 0%,#FFFFFF 72%)"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center text-rose-600">' + iconeMenuLateralSvg('sair') + '</span><span>Sair</span></span></button>' +
+          '</div>' +
           '</div>' +
         '</aside>' +
       '</div>'
@@ -12752,7 +12754,7 @@
       }
     }
     if (typeof window._avaMenuScrollTravado === 'number') {
-      _scrollContainers['menu-aside'] = window._avaMenuScrollTravado;
+      _scrollContainers['menu-botoes-scroll'] = window._avaMenuScrollTravado;
     }
     root.setAttribute('data-avantalab-mobile-ready', '1');
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
@@ -13034,16 +13036,16 @@
     bind('menu-agenda', function () { fecharMenuLateralAnimado(abrirAgendaMobile); });
     bind('menu-avisos', function () { fecharMenuLateralAnimado(abrirNotificacoesMobile); });
     async function executarChaveMenuSemMover(id, acao) {
-      var aside = document.getElementById('menu-aside');
-      var scrollAtual = aside ? aside.scrollTop : 0;
+      var listaMenu = document.getElementById('menu-botoes-scroll');
+      var scrollAtual = listaMenu ? listaMenu.scrollTop : 0;
       window._avaMenuScrollTravado = scrollAtual;
       try {
         await acao();
       } finally {
         if (state.menuAberto) render();
         var restaurarPosicao = function () {
-          var asideAtual = document.getElementById('menu-aside');
-          if (asideAtual) asideAtual.scrollTop = scrollAtual;
+          var listaMenuAtual = document.getElementById('menu-botoes-scroll');
+          if (listaMenuAtual) listaMenuAtual.scrollTop = scrollAtual;
         };
         window.requestAnimationFrame(function () {
           restaurarPosicao();
@@ -13149,11 +13151,11 @@
           if (state.menuConfigAberto && state.menuConfigAnimacao === 'entrar') state.menuConfigAnimacao = '';
         }, 270);
         setTimeout(function () {
-          var aside = document.getElementById('menu-aside');
-          if (!aside || !state.menuConfigAberto) return;
+          var listaMenu = document.getElementById('menu-botoes-scroll');
+          if (!listaMenu || !state.menuConfigAberto) return;
           window.requestAnimationFrame(function () {
-            var limite = Math.max(0, aside.scrollHeight - aside.clientHeight);
-            aside.scrollTo({ top: limite, behavior: 'smooth' });
+            var limite = Math.max(0, listaMenu.scrollHeight - listaMenu.clientHeight);
+            listaMenu.scrollTo({ top: limite, behavior: 'smooth' });
           });
         }, 285);
       }

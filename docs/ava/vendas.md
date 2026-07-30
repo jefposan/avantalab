@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.36 -->
+<!-- ava-version: 1.6.1.107.38 -->
+
+> Revisão 1.6.1.107.38: ajuste de rolagem exclusivo do Menu da Gestão Mobile;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.37: mudança de localização exclusiva da Gestão Mobile; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.36: ajuste visual de cadastro na Gestão Mobile; sem impacto
 > operacional no AvantaVendas.

@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.36 -->
+<!-- ava-version: 1.6.1.107.38 -->
+
+> Revisão 1.6.1.107.38: ajuste de rolagem exclusivo do Menu da Gestão Mobile;
+> sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.107.37: mudança de localização exclusiva da Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.36: ajuste de posicionamento exclusivo do cadastro mobile;
 > sem impacto operacional na Gestão Web.

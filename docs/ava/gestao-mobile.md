@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.36 -->
+<!-- ava-version: 1.6.1.107.38 -->
+
+> Revisão 1.6.1.107.38: no Menu, o card de identificação permanece fixo e a
+> lista de opções rola sem barra visual; sem mudança de ações ou permissões.
+
+> Revisão 1.6.1.107.37: **Excluir minha conta** está em Menu > Configurações,
+> como última opção do grupo. A confirmação de exclusão permanece obrigatória.
 
 > Revisão 1.6.1.107.36: card de cadastro no navegador foi reposicionado para
 > preservar mais conteúdo visível; sem mudança de fluxo operacional.
@@ -715,7 +721,8 @@ deve usar os nomes do menu e da barra inferior do celular.
   a contratação a um gestor ou administrador.
 - Em **Configurações**, os controles com chave aparecem primeiro.
   **Gerenciar perfil**, **Usuários** e **Editar dados cadastrais** aparecem em
-  sequência.
+  sequência; **Excluir minha conta** é a última opção e exige digitar
+  **EXCLUIR** antes da confirmação.
 - Em **Usuários**, criar exige Nome completo, E-mail, Login, Senha inicial e
   Tipo de usuário. Na edição, nome, e-mail, login e tipo continuam obrigatórios,
   mas a nova senha é opcional. E-mail e login acessam a mesma conta; se o e-mail

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.1.107.38 - 2026-07-30
+
+- Gestão Mobile: o card superior do Menu fica fixo; somente os botões rolam,
+  por toque e sem barra de rolagem visível.
+
+## 1.6.1.107.37 - 2026-07-30
+
+- Gestão Mobile: **Excluir minha conta** passa a ficar dentro de
+  **Configurações**, como a última opção do grupo.
+
 ## 1.6.1.107.36 - 2026-07-30
 
 - Cadastro mobile no navegador: reduzido o espaço entre o topo da cena e o
