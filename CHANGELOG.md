@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.107.44 - 2026-07-30
+
+- Login com Google no iOS/Capacitor passa a reconhecer tokens OAuth retornados
+  tanto na query quanto no fragmento do deep link, como já ocorre no PWA.
+
 ## 1.6.1.107.43 - 2026-07-30
 
 - Aplicativos iOS e Android iniciam diretamente na **Gestão Mobile**; a landing

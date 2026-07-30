@@ -1,6 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.43: aplicativos nativos iniciam diretamente na
+// Revisado na versão 1.6.1.107.44: retorno OAuth nativo reconhece query e
+// fragmento no deep link Google; aplicativos nativos iniciam diretamente na
 // Gestão Mobile; a orientação operacional da Ava não muda.
 
 /*

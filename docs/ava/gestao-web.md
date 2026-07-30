@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.43 -->
+<!-- ava-version: 1.6.1.107.44 -->
+
+> Revisão 1.6.1.107.44: ajuste restrito ao retorno OAuth do Google em
+> aplicativos nativos; sem mudança operacional na Gestão Web.
 
 > Revisão 1.6.1.107.43: início direto dos aplicativos nativos na Gestão
 > Mobile; sem impacto operacional na Gestão Web.

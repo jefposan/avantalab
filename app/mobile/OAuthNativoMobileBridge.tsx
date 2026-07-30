@@ -26,6 +26,16 @@ declare global {
 
 const REDIRECT_OAUTH_NATIVO = 'br.com.avantalab.app://auth/callback';
 
+/**
+ * O retorno OAuth pode chegar como query (`?code=…`) ou fragmento
+ * (`#access_token=…`). Navegadores comuns deixam o Supabase processar ambos,
+ * mas o deep link do Capacitor é tratado manualmente nesta ponte.
+ */
+function lerParametroOAuth(url: URL, nome: string) {
+  return url.searchParams.get(nome)
+    ?? new URLSearchParams(url.hash.replace(/^#/, '')).get(nome);
+}
+
 function emitirRetorno(retorno: RetornoOAuthMobile) {
   window.__avantalabUltimoRetornoOAuthNativoMobile = retorno;
   window.dispatchEvent(new CustomEvent<RetornoOAuthMobile>('avantalab:oauth-nativo-mobile', {
@@ -63,13 +73,13 @@ export default function OAuthNativoMobileBridge() {
       provedorPendenteRef.current = null;
 
       try {
-        const erroOAuth = callbackUrl.searchParams.get('error_description')
-          ?? callbackUrl.searchParams.get('error');
+        const erroOAuth = lerParametroOAuth(callbackUrl, 'error_description')
+          ?? lerParametroOAuth(callbackUrl, 'error');
         if (erroOAuth) throw new Error(erroOAuth);
 
-        const codigo = callbackUrl.searchParams.get('code');
-        let accessToken = callbackUrl.searchParams.get('access_token');
-        let refreshToken = callbackUrl.searchParams.get('refresh_token');
+        const codigo = lerParametroOAuth(callbackUrl, 'code');
+        let accessToken = lerParametroOAuth(callbackUrl, 'access_token');
+        let refreshToken = lerParametroOAuth(callbackUrl, 'refresh_token');
 
         if (codigo) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(codigo);

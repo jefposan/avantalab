@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.43 -->
+<!-- ava-version: 1.6.1.107.44 -->
+
+> Revisão 1.6.1.107.44: no aplicativo iOS/Android, o retorno do Google pelo
+> navegador seguro reconhece tokens recebidos tanto na query quanto no fragmento
+> do deep link e conclui a mesma sessão OAuth usada no PWA.
 
 > Revisão 1.6.1.107.43: os aplicativos iOS e Android iniciam diretamente na
 > Gestão Mobile; sessão válida abre o sistema e, sem sessão, aparece o login.
