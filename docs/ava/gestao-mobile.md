@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107 -->
+<!-- ava-version: 1.6.1.107.02 -->
+
+> Revisão 1.6.1.107.02: no aplicativo nativo, a entrada por Google ou Apple
+> abre no navegador seguro do sistema e retorna à Gestão Mobile. Cancelar ou
+> ocorrer erro restaura a tela de login; no PWA o fluxo continua pelo navegador.
+
+> Revisão 1.6.1.107.01: os botões públicos de entrar e criar conta conduzem
+> aparelhos móveis e aplicativos nativos diretamente à Gestão Mobile. Saída,
+> expiração ou ausência de sessão retornam à própria tela de login, sem passar
+> pela landing.
 
 > Revisão 1.6.1.107: a entrada também oferece **Continuar com Apple**. O fluxo
 > usa a mesma conta AvantaLab e não altera e-mail, telefone ou Google.

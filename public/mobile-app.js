@@ -52,6 +52,53 @@
       detectSessionInUrl: true,
     },
   });
+
+  // O bridge React só é usado dentro do Capacitor. O PWA mantém o OAuth por
+  // redirecionamento https normal. A sessão é aplicada neste cliente para que
+  // toda a Gestão Mobile continue usando a mesma instância de autenticação.
+  function processarRetornoOAuthNativoMobile(retorno) {
+    // Em uma abertura fria o deep link pode chegar antes deste arquivo. Mantém
+    // o retorno até que o estado da Gestão Mobile esteja pronto para recebê-lo.
+    if (!state) {
+      window.__avantalabUltimoRetornoOAuthNativoMobile = retorno;
+      return;
+    }
+    var provedor = retorno.provider === 'apple' ? 'Apple' : 'Google';
+
+    if (retorno.status === 'concluido' && retorno.accessToken && retorno.refreshToken) {
+      db.auth.setSession({
+        access_token: retorno.accessToken,
+        refresh_token: retorno.refreshToken,
+      }).then(function (resposta) {
+        if (resposta.error) {
+          state.carregando = false;
+          state.loginAcao = '';
+          limparPreferenciaSessaoMobile();
+          setErro(mensagemErro(resposta.error, 'Não foi possível concluir o login social.'));
+          return;
+        }
+        window.location.replace('/mobile');
+      }).catch(function (erro) {
+        state.carregando = false;
+        state.loginAcao = '';
+        limparPreferenciaSessaoMobile();
+        setErro(mensagemErro(erro, 'Não foi possível concluir o login social.'));
+      });
+      return;
+    }
+
+    state.carregando = false;
+    state.loginAcao = '';
+    limparPreferenciaSessaoMobile();
+    if (retorno.status === 'erro') {
+      setErro(retorno.mensagem || 'Não foi possível concluir o login com ' + provedor + '.');
+      return;
+    }
+    render();
+  }
+  window.addEventListener('avantalab:oauth-nativo-mobile', function (event) {
+    processarRetornoOAuthNativoMobile(event && event.detail ? event.detail : {});
+  });
   var CHAVE_ULTIMO_PERFIL_MOBILE = 'avantalab_mobile_ultimo_perfil_id';
   var CHAVE_RASCUNHO_CADASTRO_MOBILE = 'avantalab_mobile_rascunho_cadastro';
   var CHAVE_RASCUNHO_USUARIO_MOBILE = 'avantalab:rascunho:v1:gestao-mobile:usuarios:';
@@ -393,6 +440,12 @@
     agendaRepeticao: 'mensal',
   };
   var temporizadorLiberacaoAcessoMobile = null;
+
+  if (window.__avantalabUltimoRetornoOAuthNativoMobile) {
+    var retornoOAuthNativoInicial = window.__avantalabUltimoRetornoOAuthNativoMobile;
+    delete window.__avantalabUltimoRetornoOAuthNativoMobile;
+    processarRetornoOAuthNativoMobile(retornoOAuthNativoInicial);
+  }
 
   function restaurarRascunhoCadastroMobile() {
     try {
@@ -737,7 +790,7 @@
     if (sessao && (evento === 'SIGNED_IN' || evento === 'TOKEN_REFRESHED')) {
       renovarSessaoPersistenteMobile();
     } else if (evento === 'SIGNED_OUT' && state.pronto) {
-      window.location.replace('/?entrar=1');
+      window.location.replace(destinoLogoutMobile());
     }
   });
 
@@ -2312,9 +2365,9 @@
     try {
       return sessionStorage.getItem(CHAVE_ORIGEM_ACESSO_MOBILE) === 'vendas'
         ? '/avantavendas?entrar=1'
-        : '/?entrar=1';
+        : '/mobile?entrar=1';
     } catch (error) {
-      return '/?entrar=1';
+      return '/mobile?entrar=1';
     }
   }
 
@@ -5975,6 +6028,18 @@
     registrarPreferenciaSessaoMobile(state.manterConectado, true);
     render();
 
+    if (typeof window.__avantalabAbrirOAuthNativoMobile === 'function') {
+      try {
+        await window.__avantalabAbrirOAuthNativoMobile('google');
+      } catch (error) {
+        state.carregando = false;
+        state.loginAcao = '';
+        limparPreferenciaSessaoMobile();
+        setErro(mensagemErro(error, 'Nao foi possivel conectar com o Google agora. Tente novamente em instantes.'));
+      }
+      return;
+    }
+
     var resposta = await db.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -6004,6 +6069,18 @@
     state.loginAcao = 'apple';
     registrarPreferenciaSessaoMobile(state.manterConectado, true);
     render();
+
+    if (typeof window.__avantalabAbrirOAuthNativoMobile === 'function') {
+      try {
+        await window.__avantalabAbrirOAuthNativoMobile('apple');
+      } catch (error) {
+        state.carregando = false;
+        state.loginAcao = '';
+        limparPreferenciaSessaoMobile();
+        setErro(mensagemErro(error, 'Nao foi possivel conectar com a Apple agora. Tente novamente em instantes.'));
+      }
+      return;
+    }
 
     var resposta = await db.auth.signInWithOAuth({
       provider: 'apple',

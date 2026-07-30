@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107 -->
+<!-- ava-version: 1.6.1.107.02 -->
+
+> Revisão 1.6.1.107.02: o retorno OAuth nativo da Gestão Mobile foi alinhado
+> ao da Gestão Web; sem alteração na orientação da Ava dentro da Gestão Web.
+
+> Revisão 1.6.1.107.01: botões públicos de entrada passaram a escolher a
+> Gestão Web no desktop e a Gestão Mobile em aparelhos móveis; sem impacto na
+> orientação dentro da Gestão Web. A saída mobile não volta mais para a
+> landing pública.
 
 > Revisão 1.6.1.107: a entrada também oferece **Continuar com Apple**. A conta
 > Apple usa o mesmo fluxo de criação ou acesso de conta já existente; sem

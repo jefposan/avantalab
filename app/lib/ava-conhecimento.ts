@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107: a entrada passa a oferecer Apple OAuth nos
-// ambientes Gestão e Vendas.
+// Revisado na versão 1.6.1.107.02: OAuth nativo da Gestão Mobile segue o
+// navegador seguro e deep link; a orientação operacional da Ava não muda.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

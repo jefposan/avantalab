@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.6.1.107.02 - 2026-07-30
+
+- Gestão Mobile no Capacitor: Google e Apple agora usam o mesmo navegador
+  seguro e deep link nativo da Gestão Web. O retorno conclui a sessão no
+  Supabase; cancelamento ou erro devolve os botões ao estado normal, sem
+  afetar o fluxo OAuth do navegador e do PWA.
+
+## 1.6.1.107.01 - 2026-07-30
+
+- Entrada pública: os botões **Entrar** e **Começar grátis** da landing,
+  planos e páginas públicas passam a usar o mesmo destino. No desktop abrem a
+  Gestão Web; em iPhone, iPad, Android e Capacitor abrem a Gestão Mobile.
+- Gestão Mobile: logout, expiração e ausência de sessão retornam diretamente
+  para o login correto, em vez de voltar para a landing com um parâmetro sem uso.
+
 ## 1.6.1.107 - 2026-07-29
 
 - Autenticação: incluído **Continuar com Apple** na Gestão Web, Gestão Mobile,

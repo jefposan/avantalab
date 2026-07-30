@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import AcessoPublicoLink from './AcessoPublicoLink';
 import { rolarParaSecaoPublica } from '../lib/rolagem-publica';
 import landingStyles from '../preview/landing/preview-landing.module.css';
 import styles from './LandingPreviewHeader.module.css';
@@ -59,13 +60,13 @@ export default function LandingPreviewHeader() {
         </div>
         <button type="button" className={styles.menuButton} aria-expanded={menuAberto} aria-controls="menu-publico-mobile" aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuAberto((aberto) => !aberto)}><span /><span /><span /></button>
         <div className={landingStyles.navActions}>
-          <Link className={landingStyles.entrar} href="/gestao?entrar=1">Entrar</Link>
-          <Link className={landingStyles.primaryButton} href="/gestao?cadastro=1">Começar grátis <span aria-hidden="true">→</span></Link>
+          <AcessoPublicoLink className={landingStyles.entrar} modo="entrar">Entrar</AcessoPublicoLink>
+          <AcessoPublicoLink className={landingStyles.primaryButton} modo="cadastro">Começar grátis <span aria-hidden="true">→</span></AcessoPublicoLink>
         </div>
       </nav>
       <div id="menu-publico-mobile" className={`${styles.mobileMenu} ${menuAberto ? styles.mobileMenuAberto : ''}`} aria-hidden={!menuAberto}>
         {itensMenu.map(([href, texto]) => <a key={href} href={href} tabIndex={menuAberto ? 0 : -1} onClick={(event) => rolarParaSecao(event, href)}>{texto}</a>)}
-        <Link href="/gestao?entrar=1" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Entrar no sistema</Link>
+        <AcessoPublicoLink modo="entrar" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Entrar no sistema</AcessoPublicoLink>
       </div>
     </header>
   );

@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107 -->
+<!-- ava-version: 1.6.1.107.02 -->
+
+> Revisão 1.6.1.107.02: correção restrita ao OAuth nativo da Gestão Mobile;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.01: a entrada pública foi centralizada entre desktop e
+> aparelhos móveis; a saída da Gestão conserva o retorno ao login do Vendas
+> quando esta for a origem do acesso.
 
 > Revisão 1.6.1.107: a entrada também oferece **Continuar com Apple** e usa a
 > mesma conta operacional já utilizada por e-mail, telefone ou Google.
