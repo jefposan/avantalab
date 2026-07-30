@@ -1,7 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.21: cadastro mobile passa a compartilhar a cena
-// responsiva de fundo e logo do login; sem mudança operacional na Ava.
+// Revisado na versão 1.6.1.107.22: card e campos do cadastro mobile foram
+// estreitados e o navegador mantém o campo ativo visível acima do teclado;
+// sem mudança operacional na Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

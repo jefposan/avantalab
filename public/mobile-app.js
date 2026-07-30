@@ -8682,6 +8682,42 @@
     );
   }
 
+  function ajustarCampoCadastroNoNavegadorMobile(campo) {
+    if (isStandalone() || !campo || !campo.closest) return;
+    var card = campo.closest('[data-cadastro-mobile-card]');
+    if (!card || document.activeElement !== campo) return;
+
+    var viewport = window.visualViewport;
+    var topoViewport = viewport ? Number(viewport.offsetTop || 0) : 0;
+    var baseViewport = topoViewport + (viewport ? Number(viewport.height || 0) : Number(window.innerHeight || 0));
+    var cardRect = card.getBoundingClientRect();
+    var bloco = campo.closest('label') || campo.parentElement || campo;
+    var campoRect = bloco.getBoundingClientRect();
+    var limiteTopo = Math.max(cardRect.top + 10, topoViewport + 10);
+    var limiteBase = Math.min(cardRect.bottom - 10, baseViewport - 12);
+    var deslocamento = 0;
+
+    if (campoRect.bottom > limiteBase) {
+      deslocamento = campoRect.bottom - limiteBase;
+    } else if (campoRect.top < limiteTopo) {
+      deslocamento = campoRect.top - limiteTopo;
+    }
+    if (Math.abs(deslocamento) > 1) card.scrollTop += deslocamento;
+  }
+
+  function agendarFocoCadastroNoNavegadorMobile(campo) {
+    if (isStandalone()) return;
+    window.requestAnimationFrame(function () {
+      ajustarCampoCadastroNoNavegadorMobile(campo);
+    });
+    window.setTimeout(function () {
+      ajustarCampoCadastroNoNavegadorMobile(campo);
+    }, 180);
+    window.setTimeout(function () {
+      ajustarCampoCadastroNoNavegadorMobile(campo);
+    }, 360);
+  }
+
   function telaLogin() {
     var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
     if (!boasVindas && !state.modoCadastro && !state.modoSenha) {
@@ -8691,7 +8727,7 @@
     }
     if (state.modoCadastro) {
       return cenaAcessoGestaoMobile(
-        '<form class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/35 p-3 text-slate-900 shadow-2xl backdrop-blur-xl" onsubmit="return false" style="grid-row:2;justify-self:center;background-color:rgba(255,255,255,.18);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);overscroll-behavior:contain;">' +
+        '<form data-cadastro-mobile-card class="mx-auto min-w-0 shrink-0 overflow-y-auto rounded-3xl border border-white/35 p-3 text-slate-900 shadow-2xl backdrop-blur-xl" onsubmit="return false" style="grid-row:2;justify-self:center;width:min(88%,320px);background-color:rgba(255,255,255,.18);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);overscroll-behavior:contain;">' +
           '<div class="mb-2"><h1 class="text-xl font-black text-slate-900">Criar cadastro</h1></div>' +
           telaCadastro() +
         '</form>'
@@ -15009,6 +15045,29 @@
         try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}
       }, 300);
     });
+
+    // No navegador comum, a redução do viewport causada pelo teclado precisa
+    // reposicionar o campo ativo dentro do card do cadastro. O PWA instalado
+    // mantém o comportamento nativo já validado e não passa por esta rotina.
+    document.addEventListener('focusin', function (e) {
+      var campoCadastro = e.target;
+      if (isStandalone() || !campoCadastro || !campoCadastro.matches || !campoCadastro.closest) return;
+      if (!campoCadastro.matches('input, select, textarea')) return;
+      if (!campoCadastro.closest('[data-cadastro-mobile-card]')) return;
+      agendarFocoCadastroNoNavegadorMobile(campoCadastro);
+    });
+
+    if (window.visualViewport && !window._avaCadastroNavegadorViewportBound) {
+      window._avaCadastroNavegadorViewportBound = true;
+      var reposicionarCadastroNoViewport = function () {
+        if (isStandalone()) return;
+        var campoAtivo = document.activeElement;
+        if (!campoAtivo || !campoAtivo.closest || !campoAtivo.closest('[data-cadastro-mobile-card]')) return;
+        agendarFocoCadastroNoNavegadorMobile(campoAtivo);
+      };
+      window.visualViewport.addEventListener('resize', reposicionarCadastroNoViewport);
+      window.visualViewport.addEventListener('scroll', reposicionarCadastroNoViewport);
+    }
 
     document.addEventListener('focusout', function (e) {
       if (!window._avaRenderLancamentoPendente) return;

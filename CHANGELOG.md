@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.107.22 - 2026-07-30
+
+- Cadastro mobile: card e controles informados foram estreitados, preservando
+  medidas e estilos do botão de envio do código por SMS e dos demais elementos.
+  No navegador comum, o campo ativo também permanece visível quando o teclado
+  reduz a área útil; o comportamento já validado do PWA não foi alterado.
+
 ## 1.6.1.107.21 - 2026-07-30
 
 - Cadastro mobile: fundo e logo passam a usar a mesma cena responsiva do login,

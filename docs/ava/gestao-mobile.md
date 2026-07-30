@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.21 -->
+<!-- ava-version: 1.6.1.107.22 -->
+
+> Revisão 1.6.1.107.22: o card e os controles indicados do cadastro foram
+> estreitados. No navegador comum, o campo ativo permanece visível quando o
+> teclado abre; o PWA mantém seu comportamento anterior. Campos, ações e regras
+> de preenchimento permanecem iguais.
 
 > Revisão 1.6.1.107.21: o cadastro passa a usar o mesmo fundo e posicionamento
 > responsivo do logo da tela de login; sem mudança nos campos ou ações.

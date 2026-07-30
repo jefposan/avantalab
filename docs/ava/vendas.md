@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.21 -->
+<!-- ava-version: 1.6.1.107.22 -->
+
+> Revisão 1.6.1.107.22: compactação horizontal do cadastro da Gestão Mobile;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.21: padronização visual do cadastro da Gestão Mobile; sem
 > impacto operacional no AvantaVendas.
