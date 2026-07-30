@@ -9,6 +9,20 @@
   // Flag da versão paga (espelha NEXT_PUBLIC_COBRANCA_ATIVA no web).
   var COBRANCA_ATIVA_MOBILE = root.getAttribute('data-cobranca-ativa') === 'true';
 
+  function ehIosNativoMobile() {
+    try {
+      return Boolean(
+        window.Capacitor
+        && window.Capacitor.isNativePlatform
+        && window.Capacitor.isNativePlatform()
+        && window.Capacitor.getPlatform
+        && window.Capacitor.getPlatform() === 'ios'
+      );
+    } catch (error) {
+      return false;
+    }
+  }
+
   function deveRedirecionarMobileParaWeb() {
     var standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -152,6 +166,11 @@
     assinaturaEmail: '',
     assinaturaTelefone: '',
     assinaturaConfirmarCancelamento: false,
+    assinaturaApplePrecoMensal: 'R$ 9,90',
+    assinaturaApplePrecoAnual: 'R$ 99,90',
+    assinaturaAppleAtiva: false,
+    assinaturaAppleManagementUrl: '',
+    contaExclusaoAcao: false,
     mes: meses[new Date().getMonth()],
     ano: String(new Date().getFullYear()),
     faturamentos: {},
@@ -944,9 +963,9 @@
 
   function telaPaywallMobile() {
     if (state.paywallSelecionando) return telaPaywallSelecaoMobile();
-    var precos = state.paywallPrecos || { empresa: { mensal: 34.9, anual: 348 } };
+    var precos = state.paywallPrecos || { empresa: { mensal: 34.9, anual: 249.9 } };
     var mensal = (precos.empresa && precos.empresa.mensal) || 34.9;
-    var anualAno = (precos.empresa && precos.empresa.anual) || 348;
+    var anualAno = (precos.empresa && precos.empresa.anual) || 249.9;
     var anualMes = anualAno / 12;
     function brl(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
     var nome = state.paywallNome ? escapeHtml(state.paywallNome) : 'Este perfil';
@@ -1894,7 +1913,7 @@
           '<div>' +
             '<p class="text-[9px] font-black uppercase tracking-[0.2em] text-white/80">A partir de</p>' +
             '<p class="text-xl font-black text-white">R$ 8,25<span class="text-xs font-bold text-white/80">/mês</span></p>' +
-            '<p class="text-[10px] font-semibold text-white/80">no anual (R$ 99,00/ano) · ou R$ 9,90/mês</p>' +
+            '<p class="text-[10px] font-semibold text-white/80">no anual (R$ 99,90/ano) · ou R$ 9,90/mês</p>' +
           '</div>' +
           '<button id="premium-assinar" type="button" class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-[11px] font-black uppercase tracking-wide text-sky-800 shadow-lg active:scale-[0.98]">Ir para assinatura</button>' +
         '</div>' +
@@ -2002,6 +2021,13 @@
     state.assinaturaErro = '';
     state.assinaturaAcao = '';
     render();
+    if (
+      ehIosNativoMobile()
+      && state.empresa
+      && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal'
+    ) {
+      executarAssinaturaAppleMobile('status');
+    }
   }
 
   function abrirAssinaturaPeloMenuMobile() {
@@ -2010,8 +2036,38 @@
 
   function contratacaoAssinaturaMobileHtml() {
     var pessoal = state.empresa && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal';
+    var iosNativo = ehIosNativoMobile();
+    if (iosNativo && !pessoal) {
+      return '<div class="grid gap-3">' +
+        '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+          '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Plano empresarial</p>' +
+          '<h3 class="mt-1 text-lg font-black">Business e Business Pro</h3>' +
+          '<p class="mt-1 text-xs font-semibold leading-relaxed text-white/85">Este aplicativo permite acessar assinaturas empresariais já contratadas.</p>' +
+        '</div>' +
+        '<p class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold leading-relaxed text-slate-600">Planos empresariais não são vendidos neste aplicativo. A contratação e a administração comercial são realizadas na plataforma AvantaLab para empresas.</p>' +
+      '</div>';
+    }
     var precoMensal = pessoal ? 'R$ 9,90' : 'R$ 34,90';
-    var precoAnual = pessoal ? 'R$ 99,00' : 'R$ 348,00';
+    var precoAnual = pessoal ? 'R$ 99,90' : 'R$ 249,90';
+    if (iosNativo && pessoal) {
+      precoMensal = state.assinaturaApplePrecoMensal || precoMensal;
+      precoAnual = state.assinaturaApplePrecoAnual || precoAnual;
+      return '<div class="grid gap-3">' +
+        '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+          '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Assinatura pessoal</p>' +
+          '<h3 class="mt-1 text-lg font-black">Pessoal Premium</h3>' +
+          '<p class="mt-1 text-xs font-semibold leading-relaxed text-white/85">Escolha o ciclo e confirme a compra com sua Conta Apple.</p>' +
+        '</div>' +
+        (state.assinaturaErro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.assinaturaErro) + '</div>' : '') +
+        '<div class="grid grid-cols-2 gap-2">' +
+          '<button id="assinatura-assinar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border border-sky-300 bg-sky-50 px-2 text-[10px] font-black uppercase text-sky-700 disabled:opacity-60">' + (state.assinaturaAcao === 'apple-mensal' ? 'Processando...' : 'Mensal · ' + escapeHtml(precoMensal)) + '</button>' +
+          '<button id="assinatura-assinar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl bg-sky-700 px-2 text-[10px] font-black uppercase text-white disabled:opacity-60">' + (state.assinaturaAcao === 'apple-anual' ? 'Processando...' : 'Anual · ' + escapeHtml(precoAnual)) + '</button>' +
+        '</div>' +
+        '<button id="assinatura-restaurar-apple" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl border border-slate-300 bg-white text-[10px] font-black uppercase text-slate-700 disabled:opacity-60">' + (state.assinaturaAcao === 'apple-restaurar' ? 'Restaurando...' : 'Restaurar compras') + '</button>' +
+        '<p class="text-[10px] font-semibold leading-relaxed text-slate-500">O pagamento será cobrado na sua Conta Apple. A assinatura é renovada automaticamente, salvo cancelamento com pelo menos 24 horas de antecedência do fim do período. Você pode administrar ou cancelar nas configurações de assinaturas da App Store.</p>' +
+        '<p class="text-center text-[10px] font-bold text-slate-500"><a href="/termos" class="text-sky-700 underline">Termos de Uso</a> · <a href="/privacidade" class="text-sky-700 underline">Política de Privacidade</a></p>' +
+      '</div>';
+    }
     return '<div class="grid gap-3">' +
       '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
         '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Contratação</p>' +
@@ -2031,6 +2087,57 @@
       '</div>' +
       '<p class="text-center text-[10px] font-semibold leading-relaxed text-slate-500">O pagamento será aberto em uma página segura. Seus dados permanecem preservados durante a contratação.</p>' +
     '</div>';
+  }
+
+  async function executarAssinaturaAppleMobile(acao, ciclo) {
+    if (!ehIosNativoMobile() || !state.empresa || state.assinaturaAcao) return;
+    if (normalizarTipoPerfil(state.empresa.tipo_perfil) !== 'pessoal') {
+      state.assinaturaErro = 'Planos empresariais não são vendidos neste aplicativo.';
+      render();
+      return;
+    }
+    if (typeof window.__avantalabIosBilling !== 'function') {
+      state.assinaturaErro = 'A App Store ainda não está disponível. Feche e abra o aplicativo novamente.';
+      render();
+      return;
+    }
+    state.assinaturaAcao = acao === 'purchase'
+      ? 'apple-' + ciclo
+      : (acao === 'restore' ? 'apple-restaurar' : 'apple-status');
+    state.assinaturaErro = '';
+    render();
+    try {
+      var token = await _avaPaywallToken();
+      var resposta = await window.__avantalabIosBilling({
+        action: acao,
+        ciclo: ciclo,
+        userId: state.usuario && state.usuario.id || '',
+        empresaId: state.empresa.id,
+        accessToken: token
+      });
+      if (!resposta || !resposta.ok) {
+        if (!resposta || !resposta.cancelado) {
+          throw new Error(resposta && resposta.mensagem || 'Não foi possível concluir a operação na App Store.');
+        }
+        state.assinaturaAcao = '';
+        render();
+        return;
+      }
+      state.assinaturaApplePrecoMensal = resposta.precoMensal || state.assinaturaApplePrecoMensal;
+      state.assinaturaApplePrecoAnual = resposta.precoAnual || state.assinaturaApplePrecoAnual;
+      state.assinaturaAppleAtiva = Boolean(resposta.ativo);
+      state.assinaturaAppleManagementUrl = resposta.managementUrl || '';
+      state.assinaturaAcao = '';
+      if (acao === 'purchase' || acao === 'restore') {
+        await carregarAssinaturaMobile();
+        mostrarToast(resposta.ativo ? 'Assinatura Apple validada.' : 'Nenhuma assinatura ativa foi encontrada.');
+        return;
+      }
+    } catch (erro) {
+      state.assinaturaErro = erro && erro.message ? erro.message : 'Não foi possível acessar a App Store.';
+    }
+    state.assinaturaAcao = '';
+    render();
   }
 
   async function alterarAssinaturaMobile(ciclo) {
@@ -2060,6 +2167,10 @@
 
   async function assinarPeloPainelMobile(ciclo) {
     if (!state.empresa || state.assinaturaAcao) return;
+    if (ehIosNativoMobile()) {
+      await executarAssinaturaAppleMobile('purchase', ciclo === 'anual' ? 'anual' : 'mensal');
+      return;
+    }
     if (state.cadastroPerfilStatus && !state.cadastroPerfilStatus.completo) {
       state.modalMenu = '';
       state.paywallCadastroCiclo = ciclo === 'anual' ? 'anual' : 'mensal';
@@ -6538,7 +6649,7 @@
         '</div>' +
         ((COBRANCA_ATIVA_MOBILE && tipo === 'empresa') ?
           '<div class="rounded-xl border border-sky-200 bg-sky-50 p-3">' +
-            '<p class="text-[11px] font-bold leading-snug text-sky-900">Perfil empresa tem <b>7 dias gr&aacute;tis</b>. Depois: R$ 34,90/m&ecirc;s, ou R$ 29,00/m&ecirc;s no plano anual.</p>' +
+            '<p class="text-[11px] font-bold leading-snug text-sky-900">Perfil empresa tem <b>7 dias gr&aacute;tis</b>. Depois: R$ 34,90/m&ecirc;s ou R$ 249,90/ano.</p>' +
             '<div class="mt-2 grid grid-cols-2 gap-2">' +
               '<button id="inicio-empresa-trial" type="button" class="rounded-lg px-2 py-2 text-[10px] font-black uppercase tracking-wide transition ' + (state.inicioEmpresaModo === 'trial' ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600') + '">7 dias gr&aacute;tis</button>' +
               '<button id="inicio-empresa-assinar" type="button" class="rounded-lg px-2 py-2 text-[10px] font-black uppercase tracking-wide transition ' + (state.inicioEmpresaModo === 'assinar' ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600') + '">Assinar agora</button>' +
@@ -6762,6 +6873,35 @@
     } catch (error) {}
     limparPreferenciaSessaoMobile();
     window.location.replace(destinoLogout);
+  }
+
+  async function excluirContaMobile() {
+    if (state.contaExclusaoAcao) return;
+    if (campo('excluir-conta-confirmacao').trim().toUpperCase() !== 'EXCLUIR') {
+      state.erro = 'Digite EXCLUIR para confirmar.';
+      render();
+      return;
+    }
+    state.contaExclusaoAcao = true;
+    state.erro = '';
+    render();
+    try {
+      var token = await _avaPaywallToken();
+      var resposta = await fetch('/api/conta', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ confirmacao: 'EXCLUIR' })
+      });
+      var json = await lerResposta(resposta);
+      if (!resposta.ok || !json.ok) throw new Error(json.mensagem || 'Não foi possível excluir a conta.');
+      try { await db.auth.signOut({ scope: 'local' }); } catch (error) {}
+      window.location.replace('/mobile?entrar=1&contaExcluida=1');
+      return;
+    } catch (erroExclusao) {
+      state.erro = erroExclusao && erroExclusao.message ? erroExclusao.message : 'Não foi possível excluir a conta.';
+    }
+    state.contaExclusaoAcao = false;
+    render();
   }
 
   function montarContextoIA() {
@@ -10752,6 +10892,7 @@
             '</button>' +
             configSubItens +
             '<button id="menu-feedback" type="button" class="rounded-[14px_26px_26px_26px] border border-cyan-300 px-2.5 py-2 text-left shadow-[0_6px_15px_rgba(8,145,178,.13)] transition active:scale-[0.99]" style="background:radial-gradient(circle at 90% 50%,rgba(20,184,166,.18),transparent 28%),linear-gradient(135deg,#E6FFFB 0%,#CFFAFE 100%)"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm" style="background:linear-gradient(135deg,#06B6D4,#0891B2)">' + iconeMenuLateralSvg('menu-feedback') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none text-sky-900">Duvidas e Sugestoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-cyan-700">Ajude a melhorar o AvantaLab</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/75 text-cyan-700 shadow-sm">' + chevronMenuSvg() + '</span></div></button>' +
+            '<button id="menu-excluir-conta" type="button" class="rounded-[14px_26px_26px_26px] border border-rose-200 bg-rose-50 px-2.5 py-2 text-left text-rose-800 shadow-sm transition active:scale-[0.99]"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">&#9888;</span><span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">Excluir minha conta</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-rose-600">Remover acesso e dados pessoais</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center">' + chevronMenuSvg() + '</span></span></button>' +
             '<button id="sair" type="button" class="rounded-[14px_26px_26px_26px] border border-rose-100 px-2.5 py-2 text-left text-xs font-black text-rose-700 shadow-sm transition active:scale-[0.99]" style="background:linear-gradient(90deg,#FFF1F2 0%,#FFFFFF 72%)"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center text-rose-600">' + iconeMenuLateralSvg('sair') + '</span><span>Sair</span></span></button>' +
           '</div>' +
         '</aside>' +
@@ -10996,6 +11137,7 @@
       despesasFixas: 'Gerenciar despesas fixas',
       assinatura: 'Assinatura',
       contratarAssinatura: 'Assinar Premium',
+      excluirConta: 'Excluir minha conta',
       premium: 'Acesso exclusivo para assinantes',
       sobre: 'Sobre',
       notificacoes: 'Notificações',
@@ -11036,12 +11178,28 @@
     if (state.modalMenu === 'despesasFixas') return despesasFixasMenuHtml();
     if (state.modalMenu === 'assinatura') return assinaturaMobileHtml();
     if (state.modalMenu === 'contratarAssinatura') return contratacaoAssinaturaMobileHtml();
+    if (state.modalMenu === 'excluirConta') return excluirContaMobileHtml();
     if (state.modalMenu === 'premium') return premiumPessoalHtml();
     if (state.modalMenu === 'sobre') return sobreMobileHtml();
     if (state.modalMenu === 'notificacoes') return notificacoesMobileHtml();
     if (state.modalMenu === 'detalheTipoDespesa') return detalheTipoDespesaHtml();
     if (state.modalMenu === 'pontoRelatorio') return pontoRelatorioMobileHtml();
     return '';
+  }
+
+  function excluirContaMobileHtml() {
+    return '<div class="grid gap-4">' +
+      '<div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-900">' +
+        '<p class="text-xs font-black uppercase tracking-wide">Ação permanente</p>' +
+        '<p class="mt-2 text-xs font-semibold leading-relaxed">Sua conta, sessões e dados pessoais serão removidos. Perfis sem outros usuários também serão excluídos. Registros trabalhistas e fiscais sujeitos a retenção legal poderão ser preservados de forma bloqueada e sem acesso à conta.</p>' +
+      '</div>' +
+      (state.erro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.erro) + '</div>' : '') +
+      '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Para confirmar, digite EXCLUIR' +
+        '<input id="excluir-conta-confirmacao" type="text" autocomplete="off" autocapitalize="characters" style="font-size:16px" class="h-11 rounded-xl border border-rose-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-500" />' +
+      '</label>' +
+      '<button id="confirmar-exclusao-conta" type="button" ' + (state.contaExclusaoAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-rose-600 px-4 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.contaExclusaoAcao ? 'Excluindo...' : 'Excluir conta definitivamente') + '</button>' +
+      '<button id="cancelar-exclusao-conta" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-4 text-xs font-black uppercase text-slate-700">Cancelar</button>' +
+    '</div>';
   }
 
   function detalheTipoDespesaHtml() {
@@ -11492,11 +11650,12 @@
   }
 
   function sugestaoAssinaturaMobileHtml(pessoal, podeGerenciar) {
+    var iosNativo = ehIosNativoMobile();
     var titulo = pessoal ? 'Assinatura Pessoal' : 'Assinatura Empresa';
     var nomePlano = pessoal ? 'Premium Pessoal' : 'Plano Empresa';
     var precos = state.paywallPrecos || {
-      pessoal_premium: { mensal: 9.9, anual: 99 },
-      empresa: { mensal: 34.9, anual: 348 },
+      pessoal_premium: { mensal: 9.9, anual: 99.9 },
+      empresa: { mensal: 34.9, anual: 249.9 },
     };
     var precosPlano = pessoal ? precos.pessoal_premium : precos.empresa;
     var valorMensal = dinheiro(Number(precosPlano && precosPlano.mensal || (pessoal ? 9.9 : 34.9))) + '/mês';
@@ -11512,9 +11671,11 @@
           '<div class="rounded-xl border border-sky-200 bg-white px-2 py-2.5"><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Mensal</p><strong class="mt-1 block text-xs text-slate-900">' + valorMensal + '</strong></div>' +
           '<div class="rounded-xl border border-sky-200 bg-white px-2 py-2.5"><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Anual</p><strong class="mt-1 block text-xs text-slate-900">' + valorAnual + '</strong></div>' +
         '</div>' +
-        (podeGerenciar
+        (iosNativo && !pessoal
+          ? '<p class="mt-3 rounded-xl border border-sky-200 bg-white px-3 py-2 text-center text-[11px] font-semibold leading-relaxed text-slate-600">Planos empresariais não são vendidos neste aplicativo. Assinaturas existentes continuam acessíveis normalmente.</p>'
+          : (podeGerenciar
           ? '<button id="assinatura-abrir-contratacao" type="button" class="mt-3 h-11 w-full rounded-xl bg-[#003E73] px-4 text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">Ver opções de assinatura</button>'
-          : '<p class="mt-3 rounded-xl border border-sky-200 bg-white px-3 py-2 text-center text-[11px] font-semibold leading-relaxed text-slate-600">Solicite a um gestor ou administrador do perfil para contratar uma assinatura.</p>') +
+          : '<p class="mt-3 rounded-xl border border-sky-200 bg-white px-3 py-2 text-center text-[11px] font-semibold leading-relaxed text-slate-600">Solicite a um gestor ou administrador do perfil para contratar uma assinatura.</p>')) +
       '</div>' +
     '</section>';
   }
@@ -11536,6 +11697,8 @@
     var pessoal = state.empresa && state.empresa.tipo_perfil
       ? normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal'
       : estado.tipoPerfil === 'pessoal';
+    var assinaturaApple = !!(detalhes && detalhes.origemAssinatura === 'apple_app_store');
+    var iosNativo = ehIosNativoMobile();
     var trialExpirado = estado.status === 'expirada'
       && !!estado.trialFim
       && new Date(estado.trialFim).getTime() <= Date.now();
@@ -11613,14 +11776,15 @@
         (mostrarValor ? '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Valor contratado</p><strong class="mt-1 block text-xs text-slate-900">' + dinheiro(valorContratado) + '</strong></div>' : '') +
         (temAssinatura ? '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Próximo vencimento</p><strong class="mt-1 block text-xs text-slate-900">' + vencimentoExibido + '</strong></div>' : '') +
       '</div>' +
-      (temAssinatura
+      (temAssinatura && !(iosNativo && assinaturaApple)
         ? '<div><div class="flex items-center justify-between"><h3 class="text-xs font-black text-slate-900">Faturas recentes</h3><button id="assinatura-atualizar" type="button" ' + (state.assinaturaCarregando ? 'disabled ' : '') + 'class="rounded-lg border border-sky-300 bg-sky-50 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wide text-sky-700 active:scale-[0.98] disabled:opacity-60">' + (state.assinaturaCarregando ? 'Atualizando...' : 'Atualizar') + '</button></div><div class="mt-2 grid gap-1.5">' + (listaFaturas || '<p class="rounded-xl border border-dashed border-slate-300 px-3 py-5 text-center text-xs font-semibold text-slate-400">Nenhuma fatura disponível.</p>') + '</div></div>'
         : (cortesiaAtiva ? '' : sugestaoAssinaturaMobileHtml(pessoal, podeGerenciar))) +
-      (podeGerenciar && temAssinatura && assinatura && !canceladaNoFim && !cortesiaAtiva ? '<div><h3 class="text-xs font-black text-slate-900">Ciclo de cobranca</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">A mudanca vale para a proxima renovacao.</p><div class="mt-2 grid grid-cols-2 gap-2">' +
+      (iosNativo && assinaturaApple && temAssinatura ? '<div class="grid gap-2"><button id="assinatura-gerenciar-apple" type="button" class="h-10 rounded-xl bg-[#003E73] px-4 text-[10px] font-black uppercase text-white">Gerenciar na App Store</button><button id="assinatura-restaurar-apple" type="button" class="h-10 rounded-xl border border-slate-300 bg-white text-[10px] font-black uppercase text-slate-700">Restaurar compras</button></div>' : '') +
+      (podeGerenciar && temAssinatura && assinatura && !iosNativo && !canceladaNoFim && !cortesiaAtiva ? '<div><h3 class="text-xs font-black text-slate-900">Ciclo de cobranca</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">A mudanca vale para a proxima renovacao.</p><div class="mt-2 grid grid-cols-2 gap-2">' +
         '<button id="assinatura-mensal" type="button" ' + (state.assinaturaAcao || ciclo === 'mensal' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'mensal' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'mensal' ? 'Alterando...' : 'Mensal') + '</button>' +
         '<button id="assinatura-anual" type="button" ' + (state.assinaturaAcao || ciclo === 'anual' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'anual' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'anual' ? 'Alterando...' : 'Anual') + '</button>' +
       '</div></div>' : '') +
-      (podeGerenciar && temAssinatura && assinatura && !canceladaNoFim && !cortesiaAtiva ? (!state.assinaturaConfirmarCancelamento
+      (podeGerenciar && temAssinatura && assinatura && !iosNativo && !canceladaNoFim && !cortesiaAtiva ? (!state.assinaturaConfirmarCancelamento
         ? '<button id="assinatura-abrir-cancelamento" type="button" class="h-10 rounded-xl border border-red-200 bg-red-50 text-[10px] font-black uppercase text-red-600">Cancelar renovacao</button>'
         : '<div class="rounded-xl border border-red-200 bg-red-50 p-3"><p class="text-[10px] font-semibold leading-relaxed text-red-800">A renovacao sera interrompida. O acesso continua ate o fim do periodo pago.</p><div class="mt-2 grid grid-cols-2 gap-2"><button id="assinatura-voltar-cancelamento" type="button" class="h-9 rounded-lg border border-slate-300 bg-white text-[10px] font-black text-slate-600">Voltar</button><button id="assinatura-confirmar-cancelamento" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-9 rounded-lg bg-red-600 text-[10px] font-black text-white disabled:opacity-60">' + (state.assinaturaAcao === 'cancelar' ? 'Cancelando...' : 'Confirmar') + '</button></div></div>') : '') +
     '</div>';
@@ -12514,6 +12678,9 @@
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + confirmacaoTotalReceitaMobileHtml() + confirmacaoExclusaoTotalMesMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
+    window.dispatchEvent(new CustomEvent('avantalab:theme-changed', {
+      detail: { dark: Boolean(state.autenticado && state.darkMode) }
+    }));
     sincronizarProgressoAcessoMobile();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
@@ -12893,6 +13060,7 @@
       }
     });
     bind('menu-feedback', function () { fecharMenuLateralAnimado(abrirFeedbackMobile); });
+    bind('menu-excluir-conta', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('excluirConta'); }); });
     bind('fechar-modal-menu', fecharModalMenu);
     bind('aviso-carencia-assinatura', abrirAssinaturaMobile);
     bind('assinatura-atualizar', carregarAssinaturaMobile);
@@ -12901,9 +13069,13 @@
     bind('assinatura-anual', function () { alterarAssinaturaMobile('anual'); });
     bind('assinatura-assinar-mensal', function () { assinarPeloPainelMobile('mensal'); });
     bind('assinatura-assinar-anual', function () { assinarPeloPainelMobile('anual'); });
+    bind('assinatura-restaurar-apple', function () { executarAssinaturaAppleMobile('restore'); });
+    bind('assinatura-gerenciar-apple', function () { executarAssinaturaAppleMobile('manage'); });
     bind('assinatura-abrir-cancelamento', function () { state.assinaturaConfirmarCancelamento = true; render(); });
     bind('assinatura-voltar-cancelamento', function () { state.assinaturaConfirmarCancelamento = false; render(); });
     bind('assinatura-confirmar-cancelamento', cancelarAssinaturaMobile);
+    bind('confirmar-exclusao-conta', excluirContaMobile);
+    bind('cancelar-exclusao-conta', fecharModalMenu);
     Array.prototype.forEach.call(document.querySelectorAll('[data-detalhar-tipo-despesa]'), function (item) {
       item.addEventListener('click', function () {
         state.tipoDespesaDetalhe = item.getAttribute('data-detalhar-tipo-despesa') || '';

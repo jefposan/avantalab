@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.1.107.17 - 2026-07-29
+
+- iOS: assinaturas pessoais passam a usar compra nativa da App Store, com
+  ciclos mensal e anual, preços localizados, restauração e gerenciamento.
+- O servidor valida a permissão Pessoal Premium na RevenueCat e mantém a
+  assinatura da loja separada das assinaturas web da Asaas.
+- No app iOS, planos empresariais podem ser acessados quando já contratados,
+  mas não exibem checkout externo; a contratação Business permanece no Web.
+- A barra de status do iPhone passa a adaptar os indicadores ao tema sem mudar
+  a área segura, e a Gestão Mobile oferece exclusão definitiva da conta.
+
 ## 1.6.1.107.16 - 2026-07-29
 
 - AvantaVendas: ao cumprir a meta mensal, o card Meta do período passa a

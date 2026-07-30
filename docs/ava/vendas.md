@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.16 -->
+<!-- ava-version: 1.6.1.107.17 -->
+
+> Revisão 1.6.1.107.17: ajustes de assinatura e conta foram realizados na
+> Gestão Mobile; sem mudança operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.16: ao cumprir a meta, o card Meta do período informa
 > **Meta atingida, parabéns!**.

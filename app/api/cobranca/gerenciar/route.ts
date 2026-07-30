@@ -40,6 +40,13 @@ export async function GET(request: Request) {
     .select('id, status, plano, ciclo, gateway_subscription_id, cupom_id')
     .eq('empresa_id', empresaId)
     .maybeSingle();
+  const { data: assinaturaLoja } = await acesso.db
+    .from('assinaturas_loja')
+    .select('id, status, ciclo, valido_ate, produto_id, loja')
+    .eq('user_id', acesso.usuario.id)
+    .eq('loja', 'apple_app_store')
+    .eq('entitlement_id', 'pessoal_premium')
+    .maybeSingle();
 
   let assinatura = null;
   let faturas: ReturnType<typeof faturaPublica>[] = [];
@@ -85,10 +92,30 @@ export async function GET(request: Request) {
   // Um registro de acesso (trial, cortesia ou cupom) não é necessariamente uma
   // assinatura contratada. O app usa esta sinalização para não misturar
   // benefícios gratuitos com valor, renovação e histórico financeiro.
-  const temAssinatura = Boolean(
+  const temAssinaturaAsaas = Boolean(
     local?.gateway_subscription_id
     && STATUS_COM_ASSINATURA.has(estado?.status || local.status || ''),
   );
+  const temAssinaturaApple = Boolean(
+    estado?.tipoPerfil === 'pessoal'
+    && assinaturaLoja
+    && STATUS_COM_ASSINATURA.has(estado?.status || assinaturaLoja.status || ''),
+  );
+  const temAssinatura = temAssinaturaAsaas || temAssinaturaApple;
+  const origemAssinatura = temAssinaturaApple && !temAssinaturaAsaas
+    ? 'apple_app_store'
+    : (temAssinaturaAsaas ? 'asaas' : null);
+  if (origemAssinatura === 'apple_app_store') {
+    assinatura = {
+      id: assinaturaLoja?.id || null,
+      status: assinaturaLoja?.status || null,
+      valor: null,
+      ciclo: assinaturaLoja?.ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
+      proximoVencimento: assinaturaLoja?.valido_ate || null,
+      formaPagamento: 'APP_STORE',
+      produtoId: assinaturaLoja?.produto_id || null,
+    };
+  }
   const faturasDaAssinatura = temAssinatura ? faturas : [];
   const valorGateway = Number(assinatura?.valor || 0);
   const valorFatura = Number(
@@ -124,6 +151,7 @@ export async function GET(request: Request) {
     faturas: faturasDaAssinatura,
     viaCupom,
     podeGerenciar: acesso.podeGerenciar,
+    origemAssinatura,
   });
 }
 

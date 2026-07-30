@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.16 -->
+<!-- ava-version: 1.6.1.107.17 -->
+
+> Revisão 1.6.1.107.17: assinaturas pessoais da App Store passam a liberar os
+> mesmos perfis pessoais no Web; o checkout web da Asaas permanece inalterado.
 
 > Revisão 1.6.1.107.16: mensagem de meta atingida ajustada no AvantaVendas;
 > sem impacto operacional na Gestão Web.

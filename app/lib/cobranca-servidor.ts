@@ -141,6 +141,33 @@ export async function resolverEstadoAcessoParaUsuario(
     || (estado.status === 'cortesia' && (!estado.validoAte || new Date(estado.validoAte) > new Date()))
     || ((estado.status === 'inadimplente' || estado.status === 'cancelada') && !!estado.validoAte && new Date(estado.validoAte) > new Date());
   if (vigente) return estado;
+
+  // O Pessoal Premium contratado pela App Store pertence ao login. Assim, a
+  // mesma compra libera os perfis pessoais permitidos pelo plano sem apagar
+  // ou substituir uma eventual assinatura web vinculada a um perfil.
+  const db = servico();
+  const { data: assinaturaLoja, error: erroLoja } = await db
+    .from('assinaturas_loja')
+    .select('status, ciclo, valido_ate')
+    .eq('user_id', userId)
+    .eq('loja', 'apple_app_store')
+    .eq('entitlement_id', 'pessoal_premium')
+    .maybeSingle();
+  if (!erroLoja && assinaturaLoja) {
+    const validaAte = assinaturaLoja.valido_ate ? new Date(assinaturaLoja.valido_ate) : null;
+    const vigenteNaLoja = ['ativa', 'cancelada', 'inadimplente'].includes(assinaturaLoja.status)
+      && Boolean(validaAte && validaAte > new Date());
+    if (vigenteNaLoja) {
+      return {
+        ...estado,
+        status: assinaturaLoja.status as StatusAssinatura,
+        validoAte: assinaturaLoja.valido_ate,
+        plano: 'pessoal_premium',
+        ciclo: assinaturaLoja.ciclo,
+      };
+    }
+  }
+
   if (await usuarioTemEmpresaAssinante(userId)) {
     return { ...estado, status: 'cortesia', validoAte: null, plano: 'pessoal_premium', ciclo: null };
   }

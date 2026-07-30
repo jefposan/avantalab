@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.15: o login atual foi formalizado no
-// PADRÃO AVANTA 1.4.0; sem mudança operacional nos ambientes.
+// Revisado na versão 1.6.1.107.17: assinatura pessoal nativa no iOS e exclusão
+// de conta na Gestão Mobile; Web reconhece o mesmo benefício e Vendas não muda.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -69,9 +69,10 @@ NAVEGAÇÃO E PERFIS
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
-- Assinatura é o primeiro botão do Menu e fica fora de Configurações. A tela sempre mostra situação e tipo do plano. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente. Cortesia e cupom ativos não exibem preços nem opções de contratação; nos demais estados sem contrato, aparece a oferta de Assinatura Pessoal ou Assinatura Empresa conforme o perfil. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
+- Assinatura é o primeiro botão do Menu e fica fora de Configurações. A tela sempre mostra situação e tipo do plano. No aplicativo iOS, Pessoal Premium usa a compra da App Store, permite restaurar compras e gerenciar a renovação; Business e Business Pro não são vendidos no aplicativo e continuam contratados somente pela plataforma web. No PWA, a cobrança web permanece igual. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente compatível com aquele ambiente. Cortesia e cupom ativos não exibem preços nem opções de contratação. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.
 - Em Configurações, os controles com chave aparecem primeiro. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
+- Excluir minha conta fica no Menu e exige digitar EXCLUIR. A operação remove o acesso e os dados pessoais; registros trabalhistas ou fiscais sujeitos a retenção legal podem permanecer anonimizados e sem acesso à conta.
 - Em Editar dados cadastrais e na conclusão obrigatória de um perfil Empresa, CNPJ e Buscar ficam lado a lado. A consulta usa o endpoint interno, preenche somente campos compatíveis ainda vazios e informa quantos dados existentes foram preservados. Depois aparecem Razão Social, Nome Fantasia e Tipo de Empresa; Responsável fica em Contato, antes de Site e Instagram. CPF/CNPJ recebe máscara durante a digitação e precisa passar pela validação antes da conclusão.
 - Em cadastros de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos; rascunhos do navegador não incluem senhas, confirmações, códigos SMS nem tokens.
 - Ao tocar em um campo textual editável já preenchido, o cursor vai para o final do conteúdo para permitir apagar da direita para a esquerda. A seleção intencional de um trecho por gesto longo permanece disponível.

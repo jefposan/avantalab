@@ -3,6 +3,8 @@ import Script from 'next/script';
 import AvaMobileBridge from './AvaMobileBridge';
 import BackupMobileBridge from './BackupMobileBridge';
 import VendasMobileConteudoBridge from './VendasMobileConteudoBridge';
+import IosBillingBridge from './IosBillingBridge';
+import NativeShellBridge from './NativeShellBridge';
 import { APP_VERSION } from '../lib/version';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -68,6 +70,7 @@ export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
+  const revenueCatIosApiKey = process.env.NEXT_PUBLIC_REVENUECAT_IOS_API_KEY || '';
   const mobileAssetVersion = APP_VERSION;
   const bootstrapCarregamento = `
     (function () {
@@ -575,6 +578,8 @@ export default function MobilePage() {
       <AvaMobileBridge />
       <BackupMobileBridge />
       <VendasMobileConteudoBridge />
+      <IosBillingBridge apiKey={revenueCatIosApiKey} />
+      <NativeShellBridge />
 
       <Script
         id="avantalab-mobile-bootstrap"

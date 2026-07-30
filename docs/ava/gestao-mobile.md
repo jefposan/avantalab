@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.16 -->
+<!-- ava-version: 1.6.1.107.17 -->
+
+> Revisão 1.6.1.107.17: no aplicativo iOS, o Pessoal Premium é contratado pela
+> App Store, com restauração de compras e gerenciamento da assinatura Apple.
+> Planos Business permanecem contratáveis somente na plataforma web. O menu
+> também permite excluir a própria conta com confirmação explícita.
 
 > Revisão 1.6.1.107.16: mensagem de meta atingida ajustada no AvantaVendas;
 > sem impacto operacional na Gestão Mobile.

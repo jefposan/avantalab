@@ -12,6 +12,7 @@
     "instagramUrl": "https://www.instagram.com/avanta.lab"
   },
   "versoes": [
+    {"versao":"1.6.1.107.17","titulo":"Assinatura segura no iPhone","data":"Julho/2026","itens":["No app iOS, o Pessoal Premium pode ser assinado e restaurado pela App Store.","Planos empresariais continuam contratados na plataforma web e podem ser acessados pelo aplicativo.","O menu passa a oferecer exclusão da própria conta com confirmação de segurança."]},
     {"versao":"1.5.4.28","titulo":"Consignado pronto para novas vendas","data":"Julho/2026","itens":["Enquanto houver produtos consignados, Gerar pedido fica disponível.","Cada pedido abate somente as quantidades escolhidas e permite novas vendas parciais até o saldo zerar."]},
     {"versao":"1.5.4.27","titulo":"Cards estáveis ao abrir um popup","data":"Julho/2026","itens":["O encaixe automático da lista de Clientes pausa enquanto um card ou popup está aberto.","Ao fechar, a lista permanece parada antes de retomar o comportamento normal."]},
     {"versao":"1.5.4.26","titulo":"Gerar pedido sempre disponível","data":"Julho/2026","itens":["O botão Gerar pedido permanece visível no card de consignado enquanto houver itens disponíveis.","Ao tocar, abre a etapa própria para informar as quantidades vendidas e confirmar o pedido."]},
