@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.107.20 - 2026-07-30
+
+- Gestão Mobile: o card de login volta a ficar centralizado horizontalmente na
+  área útil do celular.
+- Cadastro mobile: cabeçalho mais direto, seletor de perfil compacto e cupom ao
+  lado da ação azul de envio do código por SMS.
+- Landing mobile: **Entrar** passa ao header, entre o menu e **Começar grátis**,
+  e deixa de aparecer duplicado dentro do menu.
+
 ## 1.6.1.107.19 - 2026-07-30
 
 - Gestão Mobile: o acesso iniciado pela landing abre o login mobile quando não

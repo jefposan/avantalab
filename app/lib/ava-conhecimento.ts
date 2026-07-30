@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.19: a entrada móvel sem sessão abre o login
-// localmente, sem retornar à landing; Vendas não muda.
+// Revisado na versão 1.6.1.107.20: login recentralizado, cadastro mobile mais
+// compacto e ação Entrar movida para o header da landing mobile; Vendas não muda.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

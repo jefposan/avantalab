@@ -8700,11 +8700,9 @@
           (boasVindas
             ? telaBoasVindas()
             : '<div class="' + (state.modoCadastro ? 'mb-2' : 'mb-3') + '">' +
-                ((state.modoCadastro || state.modoSenha) ? '<p class="mb-1 text-[10px] font-black uppercase tracking-[.18em] text-cyan-800">Gestão Financeira</p>' : '') +
+                (state.modoSenha ? '<p class="mb-1 text-[10px] font-black uppercase tracking-[.18em] text-cyan-800">Gestão Financeira</p>' : '') +
                 '<h1 class="' + (state.modoCadastro ? 'text-xl' : 'text-2xl') + ' font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Gestão Financeira') + '</h1>' +
-                '<p class="mt-1 text-xs leading-snug text-slate-600">' +
-                  (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.') +
-                '</p>' +
+                (state.modoSenha ? '<p class="mt-1 text-xs leading-snug text-slate-600">Digite seu login, receba o codigo por SMS e defina uma nova senha.</p>' : '') +
               '</div>' +
               (state.modoCadastro ? telaCadastro() : state.modoSenha ? telaSenha() : telaLoginCampos())) +
         '</div>' +
@@ -8923,7 +8921,7 @@
       '<div class="grid gap-2">' +
         '<div>' +
           '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do primeiro perfil</p>' +
-          seletorTipoPerfilHtml('cadastro-tipo', tipoCadastro) +
+          seletorTipoPerfilHtml('cadastro-tipo', tipoCadastro, true) +
         '</div>' +
         (tipoCadastro === 'empresa'
           ? inputHtml('cadastro-empresa', 'Empresa', 'text', 'Nome fantasia', state.cadastro.nomeEmpresa)
@@ -8953,10 +8951,12 @@
           '</p>'
         : '') +
         alertaHtml() +
-        '<input id="cadastro-cupom" type="text" placeholder="Cupom (opcional)" value="' + (state.cadastroCupom || '') + '" class="h-10 w-full rounded-xl border border-slate-300 bg-white/90 px-3 text-sm font-semibold uppercase tracking-wide text-slate-800 outline-none" />' +
-        '<button id="cadastro-submit" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">' +
-          (state.carregando ? (state.smsCadastroEnviado ? 'Validando...' : 'Enviando...') : (state.smsCadastroEnviado ? 'Concluir cadastro' : 'Enviar codigo por SMS')) +
-        '</button>' +
+        '<div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">' +
+          '<input id="cadastro-cupom" type="text" placeholder="Cupom opcional" value="' + (state.cadastroCupom || '') + '" class="h-10 min-w-0 rounded-xl border border-slate-300 bg-white/90 px-3 text-sm font-semibold uppercase tracking-wide text-slate-800 outline-none" />' +
+          '<button id="cadastro-submit" type="button" class="h-10 shrink-0 whitespace-nowrap rounded-xl bg-[#1687D9] px-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg">' +
+            (state.carregando ? (state.smsCadastroEnviado ? 'Validando...' : 'Enviando...') : (state.smsCadastroEnviado ? 'Concluir cadastro' : 'Enviar c&oacute;digo por SMS')) +
+          '</button>' +
+        '</div>' +
         (state.smsCadastroEnviado ? '<button id="reenviar-cadastro" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>' : '') +
         '<div class="text-center text-xs text-slate-600">Ja tem conta? <button id="voltar-login-cadastro" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
       '</div>'
@@ -11526,13 +11526,14 @@
     );
   }
 
-  function seletorTipoPerfilHtml(idPrefix, valorAtual) {
+  function seletorTipoPerfilHtml(idPrefix, valorAtual, compacto) {
     var tipos = ['empresa', 'pessoal'];
+    var altura = compacto ? 'h-[34px]' : 'h-10';
     return (
       '<div class="grid grid-cols-2 gap-2">' +
         tipos.map(function (tipo) {
           var ativo = normalizarTipoPerfil(valorAtual) === tipo;
-          return '<button type="button" id="' + idPrefix + '-' + tipo + '" class="h-10 rounded-xl border text-xs font-black uppercase tracking-wide ' +
+          return '<button type="button" id="' + idPrefix + '-' + tipo + '" class="' + altura + ' rounded-xl border text-xs font-black uppercase tracking-wide ' +
             (ativo ? 'border-cyan-500 bg-cyan-600 text-white' : 'border-slate-200 bg-white text-slate-600') + '">' +
             rotuloTipoPerfil(tipo) + '</button>';
         }).join('') +
@@ -15073,8 +15074,6 @@
         state.carregando = false;
         state.autenticado = false;
         state.telaAcesso = 'login';
-        state.modoCadastro = false;
-        state.modoSenha = false;
         state.pronto = true;
         render();
         return;

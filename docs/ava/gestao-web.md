@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.19 -->
+<!-- ava-version: 1.6.1.107.20 -->
+
+> Revisão 1.6.1.107.20: ajustes visuais no login, cadastro e header da landing
+> mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.19: o acesso móvel sem sessão permanece na tela de login
 > da Gestão Mobile; sem impacto operacional na Gestão Web.

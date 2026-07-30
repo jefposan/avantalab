@@ -347,6 +347,7 @@ export default function MobilePage() {
             .gestao-login-form {
               display: grid;
               grid-row: 2;
+              justify-self: center;
               width: min(80%, 336px);
               max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);
               gap: 8px;

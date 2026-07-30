@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.19 -->
+<!-- ava-version: 1.6.1.107.20 -->
+
+> Revisão 1.6.1.107.20: o card de login permanece centralizado horizontalmente.
+> No cadastro, o seletor Empresa/Pessoal foi compactado e o cupom fica ao lado
+> da ação azul para enviar o código por SMS. Na landing mobile, **Entrar** fica
+> no header, entre o menu e **Começar grátis**, sem duplicação dentro do menu.
 
 > Revisão 1.6.1.107.19: ao entrar pela landing no navegador móvel sem uma
 > sessão ativa, a Gestão Mobile abre sua própria tela de login, sem retorno à

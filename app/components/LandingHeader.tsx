@@ -70,13 +70,12 @@ export default function LandingHeader() {
         </div>
         <button type="button" className={styles.menuButton} aria-expanded={menuAberto} aria-controls="menu-publico-mobile" aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuAberto((aberto) => !aberto)}><span /><span /><span /></button>
         <div className={landingStyles.navActions}>
-          <Link className={landingStyles.entrar} href="/gestao?entrar=1" onClick={abrirEntrada}>Entrar</Link>
+          <Link className={`${landingStyles.entrar} ${styles.mobileEntrar}`} href="/gestao?entrar=1" onClick={abrirEntrada}>Entrar</Link>
           <Link className={landingStyles.primaryButton} href="/gestao?cadastro=1">Começar grátis <span aria-hidden="true">→</span></Link>
         </div>
       </nav>
       <div id="menu-publico-mobile" className={`${styles.mobileMenu} ${menuAberto ? styles.mobileMenuAberto : ''}`} aria-hidden={!menuAberto}>
         {itensMenu.map(([href, texto]) => <a key={href} href={href} tabIndex={menuAberto ? 0 : -1} onClick={(event) => rolarParaSecao(event, href)}>{texto}</a>)}
-        <Link href="/gestao?entrar=1" tabIndex={menuAberto ? 0 : -1} onClick={abrirEntrada}>Entrar no sistema</Link>
       </div>
     </header>
   );
