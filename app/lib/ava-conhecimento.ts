@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.24: a preparação do login social mobile volta a
-// oferecer cancelamento explícito, restaurando a tela limpa de login.
+// Revisado na versão 1.6.1.107.36: reposicionamento visual do cadastro mobile
+// no navegador, sem impacto na orientação operacional da Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -66,6 +66,7 @@ NAVEGAÇÃO E PERFIS
 - Ao chegar à Gestão pelo Vendas, sair retorna ao login do Vendas. Quem iniciou
   pela Gestão retorna à entrada da própria Gestão.
 - Na entrada da Gestão Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto.
+- No card de cadastro, **Cadastrar com Google** e **Cadastrar com Apple** criam ou acessam a mesma conta-base do cadastro por e-mail. Se ainda faltarem dados do primeiro perfil, a Gestão solicita a conclusão depois da autenticação.
 - Durante o login com Google ou Apple, **Preparando acesso** oferece **Cancelar e voltar ao login**. A ação encerra a tentativa pendente e restaura a tela de login sem manter o botão em Conectando.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.

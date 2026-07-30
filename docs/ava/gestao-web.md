@@ -1,6 +1,45 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.24 -->
+<!-- ava-version: 1.6.1.107.36 -->
+
+> Revisão 1.6.1.107.36: ajuste de posicionamento exclusivo do cadastro mobile;
+> sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.107.35: login e cadastro adotam a mesma ordem e as mesmas
+> cores do acesso mobile, mantendo medidas adequadas ao desktop.
+
+> Revisão 1.6.1.107.34: correção de compactação no cadastro mobile; sem
+> impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.107.33: os seletores **Empresa/Pessoal** do cadastro foram
+> reduzidos visualmente; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.32: refinamento visual dos placeholders de telefone e
+> cupom; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.31: os seletores **Empresa/Pessoal** do cadastro foram
+> reduzidos visualmente; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.30: os seletores **Empresa/Pessoal** do cadastro foram
+> compactados visualmente; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.29: o seletor ativo **Empresa/Pessoal** do cadastro usa o
+> azul padrão AvantaLab; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.28: os seletores **Empresa** e **Pessoal** do cadastro
+> foram compactados visualmente, sem alteração no fluxo de criação de perfil.
+
+> Revisão 1.6.1.107.27: ajuste visual de placeholders no cadastro mobile; sem
+> impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.107.26: no cadastro, os seletores **Empresa** e **Pessoal**
+> adotam a mesma altura visual compacta dos campos e das ações sociais; sem
+> mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.25: o card de cadastro oferece **Cadastrar com Google** e
+> **Cadastrar com Apple**, usando a mesma conta-base e o mesmo fluxo seguro do
+> login social. Os campos e a ação por SMS adotam a mesma altura visual compacta
+> dos botões sociais.
 
 > Revisão 1.6.1.107.24: cancelamento do login social corrigido na Gestão
 > Mobile; sem impacto operacional na Gestão Web.

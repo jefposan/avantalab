@@ -506,7 +506,7 @@ export default function AuthCard({
   <>
   <form
     onSubmit={(e) => { e.preventDefault(); void handleLogin(tipoLogin); }}
-    className="grid gap-2 lg:hidden"
+    className="grid gap-3"
   >
     <div className="flex rounded-[12px] bg-[#eef3f5] p-0.5">
       <button type="button" onClick={() => alterarTipoLogin('email')} className={`inline-flex min-h-[34px] flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 text-[13px] font-bold ${!loginPorTelefone ? 'bg-[#1687D9] text-white shadow-[0_2px_5px_rgba(22,135,217,.28)]' : 'text-[#6d7680]'}`}><IconeVendas nome="mail" />E-mail</button>
@@ -538,7 +538,7 @@ export default function AuthCard({
     <button type="button" onClick={handleAppleLogin} disabled={authLoading} className="inline-flex min-h-8 items-center justify-center gap-2 rounded-[10px] bg-[#111827] text-[12px] font-extrabold text-white shadow-sm transition hover:bg-[#030712] disabled:opacity-60"><span aria-hidden="true" className="text-[18px] leading-none"></span>Continuar com Apple</button>
     <p className="-mt-0.5 text-center text-[12px] text-[#737b83]">Não tem conta? <button type="button" onClick={() => setModoAuth('cadastro')} className="font-extrabold text-[#248b85]">Cadastre-se</button></p>
   </form>
-  <div className="hidden space-y-3 lg:block">
+  <div className="hidden">
 
         {/* ================= INÍCIO DO FORMULÁRIO DE LOGIN ================= */}
 
@@ -779,7 +779,7 @@ export default function AuthCard({
                         onClick={() => setTipoPerfilInicial(tipo)}
                         className={`rounded-lg px-3 py-1 text-xs font-black uppercase tracking-wide transition ${
                           ativo
-                            ? 'bg-slate-900 text-white shadow'
+                            ? 'bg-[#1687D9] text-white shadow'
                             : 'text-slate-500 hover:bg-white hover:text-slate-800'
                         }`}
                       >
@@ -1048,28 +1048,52 @@ export default function AuthCard({
 )}
 
                 <input
-  type="text"
-  autoComplete="off"
-  placeholder="Cupom (opcional)"
-  value={cadastroCupom}
-  onChange={(e) => setCadastroCupom(e.target.value.toUpperCase())}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm uppercase tracking-wide text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-/>
+                  type="text"
+                  autoComplete="off"
+                  placeholder="Cupom (opcional)"
+                  value={cadastroCupom}
+                  onChange={(e) => setCadastroCupom(e.target.value.toUpperCase())}
+                  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm uppercase tracking-wide text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+                />
 
                 <button
-  type="button"
-  onClick={handleCadastroTeste}
-  disabled={authLoading}
-  className="w-full rounded-xl bg-slate-900 px-4 py-1.5 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
->
-  {authLoading
-  ? smsCadastroEnviado
-    ? 'Validando código...'
-    : 'Enviando código...'
-  : smsCadastroEnviado
-    ? 'Concluir cadastro'
-    : 'Enviar código por SMS'}
-</button>
+                  type="button"
+                  onClick={handleCadastroTeste}
+                  disabled={authLoading}
+                  className="w-full rounded-xl bg-[#1687D9] px-4 py-1.5 font-bold text-white shadow-lg transition hover:bg-[#0f76c0] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {authLoading
+                    ? smsCadastroEnviado
+                      ? 'Validando código...'
+                      : 'Enviando código...'
+                    : smsCadastroEnviado
+                      ? 'Concluir cadastro'
+                      : 'Enviar código por SMS'}
+                </button>
+
+                {!smsCadastroEnviado && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleGoogleLogin}
+                      disabled={authLoading}
+                      className="inline-flex min-h-8 w-full items-center justify-center gap-2 rounded-[10px] border border-[#d9e0e4] bg-white text-[12px] font-extrabold text-[#334155] shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Image src="/images/google-logo.svg" alt="" width={16} height={16} className="h-4 w-4" />
+                      <span>Cadastrar com Google</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleAppleLogin}
+                      disabled={authLoading}
+                      className="inline-flex min-h-8 w-full items-center justify-center gap-2 rounded-[10px] bg-[#111827] text-[12px] font-extrabold text-white shadow-sm transition hover:bg-[#030712] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <span aria-hidden="true" className="text-[18px] leading-none"></span>
+                      <span>Cadastrar com Apple</span>
+                    </button>
+                  </>
+                )}
 
                 <div className="text-center text-sm text-slate-600">
                   Já tem conta?{' '}

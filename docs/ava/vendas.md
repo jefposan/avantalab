@@ -1,6 +1,42 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.24 -->
+<!-- ava-version: 1.6.1.107.36 -->
+
+> Revisão 1.6.1.107.36: ajuste visual de cadastro na Gestão Mobile; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.35: ajuste visual de acesso na Gestão Web; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.34: correção visual de cadastro na Gestão; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.33: ajuste visual de cadastro na Gestão; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.32: ajuste visual de acesso na Gestão; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.31: ajuste visual de cadastro na Gestão; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.30: ajuste visual de cadastro na Gestão; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.29: ajuste visual de seletor no cadastro da Gestão; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.28: ajuste visual de cadastro na Gestão Web; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.27: ajuste visual de placeholders no cadastro mobile da
+> Gestão; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.26: ajuste visual no cadastro da Gestão; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.25: cadastro social adicionado à Gestão; sem impacto
+> operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.24: cancelamento do login social corrigido na Gestão
 > Mobile; sem impacto operacional no AvantaVendas.

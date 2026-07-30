@@ -1,5 +1,72 @@
 # Changelog
 
+## 1.6.1.107.36 - 2026-07-30
+
+- Cadastro mobile no navegador: reduzido o espaço entre o topo da cena e o
+  card, preservando mais conteúdo visível na parte inferior da tela.
+
+## 1.6.1.107.35 - 2026-07-30
+
+- Gestão Web: login e cadastro passam a seguir a mesma ordem e cores do acesso
+  mobile, preservando a escala confortável do desktop.
+
+## 1.6.1.107.34 - 2026-07-30
+
+- Correção do cadastro mobile: a compactação de 24 px passa a atingir somente
+  os seletores **Empresa** e **Pessoal**; os campos retornam à altura de 32 px.
+
+## 1.6.1.107.33 - 2026-07-30
+
+- Cadastro da Gestão Web e Gestão Mobile: seletores **Empresa** e **Pessoal**
+  reduzidos para 24 px de altura visual.
+
+## 1.6.1.107.32 - 2026-07-30
+
+- Login e cadastro da Gestão: os placeholders de telefone e cupom foram
+  centralizados, preservando o texto digitado alinhado à esquerda. O rótulo do
+  cadastro foi simplificado para **Tipo do perfil**.
+
+## 1.6.1.107.31 - 2026-07-30
+
+- Cadastro da Gestão Web e Gestão Mobile: seletores **Empresa** e **Pessoal**
+  ajustados para 26 px de altura visual.
+
+## 1.6.1.107.30 - 2026-07-30
+
+- Cadastro da Gestão Web e Gestão Mobile: seletores **Empresa** e **Pessoal**
+  compactados para 28 px de altura visual.
+
+## 1.6.1.107.29 - 2026-07-30
+
+- Cadastro da Gestão Web e Gestão Mobile: o estado ativo dos seletores
+  **Empresa** e **Pessoal** passa a usar o azul padrão AvantaLab `#1687D9`.
+
+## 1.6.1.107.28 - 2026-07-30
+
+- Cadastro da Gestão Web: removido o espaçamento excedente ao redor dos
+  seletores **Empresa** e **Pessoal**, deixando o conjunto com a mesma altura
+  visual de 32 px das ações Google e Apple.
+
+## 1.6.1.107.27 - 2026-07-30
+
+- Cadastro da Gestão Mobile: placeholders dos campos compactos ajustados para
+  14 px, preservando o texto digitado em 16 px para evitar zoom automático do
+  navegador mobile.
+
+## 1.6.1.107.26 - 2026-07-30
+
+- Cadastro da Gestão Web e Gestão Mobile: os seletores **Empresa** e
+  **Pessoal** passam a ter a mesma face compacta de 32 px dos campos e das
+  ações Google e Apple.
+
+## 1.6.1.107.25 - 2026-07-30
+
+- Cadastro da Gestão Web e Gestão Mobile: adicionadas as opções **Cadastrar com
+  Google** e **Cadastrar com Apple**, reutilizando o mesmo fluxo social do login.
+  Durante a validação do código por SMS, essas opções permanecem ocultas. Os
+  campos e a ação por SMS passam a usar a mesma face compacta de 32 px dos
+  botões sociais.
+
 ## 1.6.1.107.24 - 2026-07-30
 
 - Gestão Mobile: durante a conexão com Google ou Apple, a tela **Preparando

@@ -1,6 +1,45 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.24 -->
+<!-- ava-version: 1.6.1.107.36 -->
+
+> Revisão 1.6.1.107.36: card de cadastro no navegador foi reposicionado para
+> preservar mais conteúdo visível; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.35: alinhamento visual do acesso web ao padrão mobile; sem
+> impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.107.34: correção de compactação no cadastro; somente os
+> seletores **Empresa/Pessoal** foram reduzidos visualmente.
+
+> Revisão 1.6.1.107.33: os seletores **Empresa/Pessoal** do cadastro foram
+> reduzidos visualmente; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.32: refinamento visual dos placeholders de telefone e
+> cupom, além do rótulo de tipo de perfil; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.31: os seletores **Empresa/Pessoal** do cadastro foram
+> reduzidos visualmente; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.30: os seletores **Empresa/Pessoal** do cadastro foram
+> compactados visualmente; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.29: o seletor ativo **Empresa/Pessoal** do cadastro usa o
+> azul padrão AvantaLab; sem mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.28: ajuste visual dos seletores de tipo de perfil no
+> cadastro web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.107.27: os placeholders compactos do cadastro foram reduzidos
+> visualmente, sem alteração no preenchimento ou no fluxo de acesso.
+
+> Revisão 1.6.1.107.26: no cadastro, os seletores **Empresa** e **Pessoal**
+> usam a mesma altura visual compacta dos campos e das ações sociais; sem
+> mudança de fluxo operacional.
+
+> Revisão 1.6.1.107.25: o card de cadastro oferece **Cadastrar com Google** e
+> **Cadastrar com Apple**. A autenticação cria ou acessa a conta-base e, quando
+> necessário, o sistema solicita a conclusão dos dados do primeiro perfil. Os
+> campos e a ação por SMS usam a mesma altura visual compacta dos botões sociais.
 
 > Revisão 1.6.1.107.24: durante o login com Google ou Apple, **Preparando
 > acesso** exibe **Cancelar e voltar ao login**. A ação encerra a tentativa e

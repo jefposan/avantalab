@@ -8972,7 +8972,7 @@
       '</div>' +
       '<label class="gestao-login-label">' + (loginPorTelefone ? 'Telefone' : 'E-mail ou login') +
         '<span class="gestao-login-field">' + iconeContato +
-          '<input id="login" type="' + (loginPorTelefone ? 'tel' : 'text') + '" inputmode="' + (loginPorTelefone ? 'tel' : 'email') + '" autocomplete="' + (loginPorTelefone ? 'tel' : 'username') + '" placeholder="' + (loginPorTelefone ? 'Digite seu telefone' : 'Digite seu e-mail ou login') + '" value="' + escapeHtml(state.loginValor || '') + '" />' +
+          '<input id="login" class="' + (loginPorTelefone ? 'gestao-login-placeholder-telefone' : '') + '" type="' + (loginPorTelefone ? 'tel' : 'text') + '" inputmode="' + (loginPorTelefone ? 'tel' : 'email') + '" autocomplete="' + (loginPorTelefone ? 'tel' : 'username') + '" placeholder="' + (loginPorTelefone ? 'Digite seu telefone' : 'Digite seu e-mail ou login') + '" value="' + escapeHtml(state.loginValor || '') + '" />' +
         '</span>' +
       '</label>' +
       '<label class="gestao-login-label">Senha' +
@@ -9006,26 +9006,26 @@
     return (
       '<div class="grid gap-2">' +
         '<div>' +
-          '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do primeiro perfil</p>' +
+          '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do perfil</p>' +
           seletorTipoPerfilHtml('cadastro-tipo', tipoCadastro, true) +
         '</div>' +
         (tipoCadastro === 'empresa'
-          ? inputHtml('cadastro-empresa', 'Empresa', 'text', 'Nome fantasia', state.cadastro.nomeEmpresa)
+          ? inputHtml('cadastro-empresa', 'Empresa', 'text', 'Nome fantasia', state.cadastro.nomeEmpresa, true)
           : '') +
-        inputHtml('cadastro-nome', tipoCadastro === 'empresa' ? 'Responsável' : 'Nome completo', 'text', 'Nome completo', state.cadastro.nome) +
-        inputHtml('cadastro-email', 'Email', 'email', 'seuemail@exemplo.com', state.cadastro.email) +
+        inputHtml('cadastro-nome', tipoCadastro === 'empresa' ? 'Responsável' : 'Nome completo', 'text', 'Nome completo', state.cadastro.nome, true) +
+        inputHtml('cadastro-email', 'Email', 'email', 'seuemail@exemplo.com', state.cadastro.email, true) +
         '<div class="grid grid-cols-[7rem_1fr] gap-2">' +
-          '<div><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="cadastro-ddi" class="h-[38px] w-full rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.cadastroDdi) + '</select></div>' +
-          '<div>' + inputHtml('cadastro-telefone', 'Celular', 'tel', '(11) 99999-9999', formatarTelefoneCadastroMobile(state.cadastro.telefone, state.cadastroDdi)) + '</div>' +
+          '<div><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="cadastro-ddi" class="h-8 w-full rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.cadastroDdi) + '</select></div>' +
+          '<div>' + inputHtml('cadastro-telefone', 'Celular', 'tel', '(11) 99999-9999', formatarTelefoneCadastroMobile(state.cadastro.telefone, state.cadastroDdi), true, true) + '</div>' +
         '</div>' +
         '<div class="grid grid-cols-2 gap-2">' +
-          '<div>' + senhaInputHtml('cadastro-senha', 'Senha', '', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) + '</div>' +
-          '<div>' + senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', '', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) + '</div>' +
+          '<div>' + senhaInputHtml('cadastro-senha', 'Senha', '', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha, true) + '</div>' +
+          '<div>' + senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', '', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha, true) + '</div>' +
         '</div>' +
         (state.smsCadastroEnviado ?
           '<div class="rounded-xl border-2 border-sky-400 bg-sky-50 px-3 py-2.5 shadow-sm">' +
             '<p class="mb-1 text-[11px] font-black uppercase tracking-wide text-sky-700">Digite o c&oacute;digo recebido</p>' +
-            '<input id="cadastro-codigo" type="text" inputmode="numeric" autofocus placeholder="Codigo recebido por SMS" class="w-full rounded-xl border border-sky-300 bg-white px-3 py-2 text-sm font-semibold tracking-widest text-slate-800 outline-none" />' +
+            '<input id="cadastro-codigo" type="text" inputmode="numeric" autofocus placeholder="Codigo recebido por SMS" class="h-8 w-full rounded-xl border border-sky-300 bg-white px-3 py-0 text-sm font-semibold tracking-widest text-slate-800 outline-none placeholder:text-sm" />' +
             '<p class="mt-1 text-[11px] font-semibold text-sky-800">Enviamos o codigo para o celular informado.</p>' +
           '</div>'
         : '') +
@@ -9038,11 +9038,15 @@
         : '') +
         alertaHtml() +
         '<div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">' +
-          '<input id="cadastro-cupom" type="text" placeholder="CUPOM" value="' + (state.cadastroCupom || '') + '" class="h-10 min-w-0 rounded-xl border border-slate-300 bg-white/90 px-3 text-sm font-semibold uppercase tracking-wide text-slate-800 outline-none" />' +
-          '<button id="cadastro-submit" type="button" class="h-10 shrink-0 whitespace-nowrap rounded-xl bg-[#1687D9] px-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg">' +
+          '<input id="cadastro-cupom" type="text" placeholder="CUPOM" value="' + (state.cadastroCupom || '') + '" class="h-8 min-w-0 rounded-xl border border-slate-300 bg-white/90 px-3 text-sm font-semibold uppercase tracking-wide text-slate-800 outline-none placeholder:text-center placeholder:text-sm" />' +
+          '<button id="cadastro-submit" type="button" class="h-8 shrink-0 whitespace-nowrap rounded-xl bg-[#1687D9] px-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg">' +
             (state.carregando ? (state.smsCadastroEnviado ? 'Validando...' : 'Enviando...') : (state.smsCadastroEnviado ? 'Concluir cadastro' : 'Enviar c&oacute;digo por SMS')) +
           '</button>' +
         '</div>' +
+        (!state.smsCadastroEnviado
+          ? '<button id="cadastro-google" type="button" class="gestao-google-login-button"><span class="gestao-google-login-mark" aria-hidden="true">G</span><span>Cadastrar com Google</span></button>' +
+            '<button id="cadastro-apple" type="button" class="gestao-apple-login-button"><span aria-hidden="true"></span><span>Cadastrar com Apple</span></button>'
+          : '') +
         (state.smsCadastroEnviado ? '<button id="reenviar-cadastro" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>' : '') +
         '<div class="text-center text-xs text-slate-600">Ja tem conta? <button id="voltar-login-cadastro" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
       '</div>'
@@ -9125,23 +9129,28 @@
     return '';
   }
 
-  function inputHtml(id, label, type, placeholder, value) {
+  function inputHtml(id, label, type, placeholder, value, compacto, placeholderCentralizado) {
+    var altura = compacto ? 'h-8' : 'h-10';
+    var placeholderCompacto = compacto ? ' placeholder:text-sm' : '';
+    var alinhamentoPlaceholder = placeholderCentralizado ? ' placeholder:text-center' : '';
     return (
       '<label class="grid gap-1 text-xs font-semibold text-slate-700">' +
         escapeHtml(label) +
-        '<input id="' + id + '" type="' + type + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="h-10 w-full min-w-0 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
+        '<input id="' + id + '" type="' + type + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="' + altura + placeholderCompacto + alinhamentoPlaceholder + ' w-full min-w-0 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
       '</label>'
     );
   }
 
-  function senhaInputHtml(id, label, placeholder, stateKey, toggleId, value) {
+  function senhaInputHtml(id, label, placeholder, stateKey, toggleId, value, compacto) {
     var visivel = !!state[stateKey];
+    var altura = compacto ? 'h-8' : 'h-10';
+    var placeholderCompacto = compacto ? ' placeholder:text-sm' : '';
 
     return (
       '<label class="grid gap-1 text-xs font-semibold text-slate-700">' +
         escapeHtml(label) +
         '<span class="relative block">' +
-          '<input id="' + id + '" type="' + (visivel ? 'text' : 'password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="h-10 w-full rounded-xl border border-slate-300 px-4 pr-10 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
+          '<input id="' + id + '" type="' + (visivel ? 'text' : 'password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="' + altura + placeholderCompacto + ' w-full rounded-xl border border-slate-300 px-4 pr-10 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
           '<button id="' + toggleId + '" type="button" class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/35 text-xs font-black text-slate-600 backdrop-blur-sm" aria-label="' + (visivel ? 'Ocultar senha' : 'Exibir senha') + '">' +
             iconeVisibilidadeSenhaMobile(visivel) +
           '</button>' +
@@ -11614,13 +11623,13 @@
 
   function seletorTipoPerfilHtml(idPrefix, valorAtual, compacto) {
     var tipos = ['empresa', 'pessoal'];
-    var altura = compacto ? 'h-[34px]' : 'h-10';
+    var altura = compacto ? 'h-6' : 'h-10';
     return (
       '<div class="grid grid-cols-2 gap-2">' +
         tipos.map(function (tipo) {
           var ativo = normalizarTipoPerfil(valorAtual) === tipo;
           return '<button type="button" id="' + idPrefix + '-' + tipo + '" class="' + altura + ' rounded-xl border text-xs font-black uppercase tracking-wide ' +
-            (ativo ? 'border-cyan-500 bg-cyan-600 text-white' : 'border-slate-200 bg-white text-slate-600') + '">' +
+            (ativo ? 'border-[#1687D9] bg-[#1687D9] text-white' : 'border-slate-200 bg-white text-slate-600') + '">' +
             rotuloTipoPerfil(tipo) + '</button>';
         }).join('') +
       '</div>'
@@ -12851,6 +12860,8 @@
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);
     bind('entrar-apple', entrarApple);
+    bind('cadastro-google', entrarGoogle);
+    bind('cadastro-apple', entrarApple);
     bind('cancelar-login-social-mobile', cancelarLoginSocialMobile);
     bind('login-tipo-email', function () {
       state.loginValor = campo('login').trim();

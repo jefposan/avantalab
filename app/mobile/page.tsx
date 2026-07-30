@@ -314,9 +314,9 @@ export default function MobilePage() {
             .gestao-login-screen-cadastro-navegador {
               position: relative;
               inset: auto;
-              grid-template-rows: clamp(104px, 17dvh, 136px) auto;
+              grid-template-rows: clamp(72px, 11dvh, 96px) auto;
               align-content: start;
-              gap: 12px;
+              gap: 8px;
               height: auto;
               min-height: 100dvh;
               overflow: visible;
@@ -392,6 +392,7 @@ export default function MobilePage() {
             .gestao-login-field { position: relative; display: flex; align-items: center; }
             .gestao-login-field > svg { position: absolute; left: 12px; width: 16px; height: 16px; color: #88919a; }
             .gestao-login-field input { width: 100%; height: 44px; border: 1px solid #d9e0e4; border-radius: 12px; padding: 0 40px; color: #2d353b; background: #fff; font: inherit; outline-color: #1F8A9E; }
+            .gestao-login-field input.gestao-login-placeholder-telefone::placeholder { text-align: center; }
             .gestao-login-password button { position: absolute; right: 4px; display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 8px; color: #717b84; background: transparent; }
             .gestao-login-options { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: -2px; }
             .gestao-remember-option { display: flex; align-items: center; gap: 6px; color: #59616a; font-size: 12px; font-weight: 600; }
