@@ -18,6 +18,7 @@ import {
   type StatusAssinatura,
   type TipoPerfil,
 } from './cobranca';
+import { EMAIL_CONTA_REVISAO_APPLE } from './conta-revisao';
 
 function servico() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -136,7 +137,36 @@ export async function resolverEstadoAcessoParaUsuario(
   userId: string,
 ): Promise<EstadoAcesso | null> {
   const estado = await resolverEstadoAcesso(empresaId);
-  if (!estado || estado.tipoPerfil !== 'pessoal') return estado;
+  if (!estado) return estado;
+
+  const db = servico();
+  const { data: vinculoRevisao } = await db
+    .from('usuarios_empresa')
+    .select('id')
+    .eq('empresa_id', empresaId)
+    .eq('user_id', userId)
+    .eq('status', 'ativo')
+    .ilike('email', EMAIL_CONTA_REVISAO_APPLE)
+    .limit(1)
+    .maybeSingle();
+
+  // A conta fornecida à Apple precisa permitir a exploração completa do app,
+  // mas não pode fingir que uma assinatura foi comprada. O modo de revisão
+  // libera os recursos e mantém o fluxo real de compra/restauração disponível.
+  if (vinculoRevisao) {
+    return {
+      ...estado,
+      tipoPerfil: 'pessoal',
+      status: 'ativa',
+      validoAte: null,
+      trialFim: null,
+      plano: 'pessoal_premium',
+      ciclo: null,
+      modoRevisao: true,
+    };
+  }
+
+  if (estado.tipoPerfil !== 'pessoal') return estado;
   const vigente = estado.status === 'ativa'
     || (estado.status === 'cortesia' && (!estado.validoAte || new Date(estado.validoAte) > new Date()))
     || ((estado.status === 'inadimplente' || estado.status === 'cancelada') && !!estado.validoAte && new Date(estado.validoAte) > new Date());
@@ -145,7 +175,6 @@ export async function resolverEstadoAcessoParaUsuario(
   // O Pessoal Premium contratado pela App Store pertence ao login. Assim, a
   // mesma compra libera os perfis pessoais permitidos pelo plano sem apagar
   // ou substituir uma eventual assinatura web vinculada a um perfil.
-  const db = servico();
   const { data: assinaturaLoja, error: erroLoja } = await db
     .from('assinaturas_loja')
     .select('status, ciclo, valido_ate')

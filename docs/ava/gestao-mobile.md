@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.38 -->
+<!-- ava-version: 1.6.1.107.39 -->
+
+> Revisão 1.6.1.107.39: a conta controlada de revisão da Apple acessa o perfil
+> Pessoal demonstrativo sem bloqueios de cadastro ou assinatura. Em
+> **Menu > Assinatura**, mensal, anual e restauração continuam disponíveis
+> para validar a compra Sandbox.
 
 > Revisão 1.6.1.107.38: no Menu, o card de identificação permanece fixo e a
 > lista de opções rola sem barra visual; sem mudança de ações ou permissões.

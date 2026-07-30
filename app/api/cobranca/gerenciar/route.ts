@@ -99,7 +99,7 @@ export async function GET(request: Request) {
   const temAssinaturaApple = Boolean(
     estado?.tipoPerfil === 'pessoal'
     && assinaturaLoja
-    && STATUS_COM_ASSINATURA.has(estado?.status || assinaturaLoja.status || ''),
+    && STATUS_COM_ASSINATURA.has(assinaturaLoja.status || ''),
   );
   const temAssinatura = temAssinaturaAsaas || temAssinaturaApple;
   const origemAssinatura = temAssinaturaApple && !temAssinaturaAsaas

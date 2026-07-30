@@ -52,6 +52,9 @@ export type EstadoAcesso = {
   trialFim: string | null;    // fim do trial (perfil empresa)
   plano: string | null;       // ex.: 'empresa', 'pessoal_premium'
   ciclo: string | null;       // 'mensal' | 'anual'
+  // Conta controlada exclusivamente para a revisão das lojas. Mantém o acesso
+  // demonstrativo aberto sem simular uma assinatura comercial contratada.
+  modoRevisao?: boolean;
 };
 
 export type DadosCobrancaAssinatura = {

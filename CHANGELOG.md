@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.39 - 2026-07-30
+
+- Revisão iOS: a conta `teste@teste.com.br` usa um perfil Pessoal de
+  demonstração, sem bloqueio por cadastro ou assinatura, preservando o acesso
+  às opções reais de compra e restauração do Pessoal Premium pela App Store.
+
 ## 1.6.1.107.38 - 2026-07-30
 
 - Gestão Mobile: o card superior do Menu fica fixo; somente os botões rolam,

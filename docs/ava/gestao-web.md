@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.38 -->
+<!-- ava-version: 1.6.1.107.39 -->
+
+> Revisão 1.6.1.107.39: regra exclusiva da conta controlada de revisão iOS;
+> sem mudança operacional para os usuários da Gestão Web.
 
 > Revisão 1.6.1.107.38: ajuste de rolagem exclusivo do Menu da Gestão Mobile;
 > sem impacto operacional na Gestão Web.

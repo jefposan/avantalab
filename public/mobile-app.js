@@ -11797,16 +11797,21 @@
       : estado.tipoPerfil === 'pessoal';
     var assinaturaApple = !!(detalhes && detalhes.origemAssinatura === 'apple_app_store');
     var iosNativo = ehIosNativoMobile();
+    var modoRevisao = Boolean(estado.modoRevisao || ehContaRevisaoAppAppleMobile(state.usuario));
     var trialExpirado = estado.status === 'expirada'
       && !!estado.trialFim
       && new Date(estado.trialFim).getTime() <= Date.now();
     // Cliente anterior ao lançamento, sem contrato no gateway, é uma cortesia
     // operacional e não uma assinatura paga.
-    var cortesiaAtiva = estado.status === 'cortesia'
-      || (estado.status === 'ativa' && !temAssinatura);
+    var cortesiaAtiva = !modoRevisao && (
+      estado.status === 'cortesia'
+      || (estado.status === 'ativa' && !temAssinatura)
+    );
     var viaCupom = cortesiaAtiva && !!(detalhes && detalhes.viaCupom);
     var emAtraso = temAssinatura && estado.status === 'inadimplente';
-    var situacaoRotulo = viaCupom
+    var situacaoRotulo = modoRevisao && !temAssinatura
+      ? 'Acesso de revisão'
+      : viaCupom
       ? 'Cupom'
       : (cortesiaAtiva
         ? 'Cortesia'
@@ -11828,8 +11833,12 @@
         : (emAtraso
           ? 'background:#FEF3C7;color:#B45309'
           : 'background:#FEE2E2;color:#B91C1C'));
-    var nomePlano = pessoal ? 'Premium Pessoal' : 'Empresa';
-    var complementoPlano = temAssinatura
+    var nomePlano = modoRevisao && !temAssinatura
+      ? 'Pessoal'
+      : (pessoal ? 'Premium Pessoal' : 'Empresa');
+    var complementoPlano = modoRevisao && !temAssinatura
+      ? 'demonstração'
+      : temAssinatura
       ? (ciclo || 'assinatura')
       : (viaCupom
         ? 'cupom'

@@ -9,6 +9,7 @@ import {
   validarCpf,
   validarNomeCompleto,
 } from '../../lib/cadastro-perfil';
+import { ehContaRevisaoApple } from '../../lib/conta-revisao';
 
 export const runtime = 'nodejs';
 
@@ -128,6 +129,17 @@ export async function GET(request: Request) {
     whatsapp: cadastro.whatsapp || ctx.vinculo.telefone || assinatura?.cobranca_telefone || '',
     email_empresa: cadastro.email_empresa || assinatura?.cobranca_email || ctx.vinculo.email || ctx.usuario.email || '',
   };
+
+  if (ehContaRevisaoApple(ctx.usuario.email)) {
+    return NextResponse.json({
+      ok: true,
+      ...statusCadastro(preenchido, 'pessoal', true),
+      completo: true,
+      obrigatorio: false,
+      diasRestantes: 0,
+      modoRevisao: true,
+    });
+  }
 
   return NextResponse.json({
     ok: true,
