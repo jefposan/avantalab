@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.39 -->
+<!-- ava-version: 1.6.1.107.40 -->
+
+> Revisão 1.6.1.107.40: no aplicativo nativo, o cadastro usa a mesma cena do
+> login, com a marca separada e posicionada entre a área segura e o card. Sem
+> mudança de campos, cadastro ou permissões.
 
 > Revisão 1.6.1.107.39: a conta controlada de revisão da Apple acessa o perfil
 > Pessoal demonstrativo sem bloqueios de cadastro ou assinatura. Em

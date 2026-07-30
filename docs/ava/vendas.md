@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.39 -->
+<!-- ava-version: 1.6.1.107.40 -->
+
+> Revisão 1.6.1.107.40: ajuste visual exclusivo do cadastro nativo da Gestão;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.39: regra exclusiva da conta controlada de revisão iOS na
 > Gestão Mobile; sem impacto operacional no AvantaVendas.

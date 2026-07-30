@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.107.40 - 2026-07-30
+
+- Gestão Mobile: no aplicativo iOS/Android, o cadastro reconhece o WebView
+  nativo como instalado e usa a mesma cena do login: marca separada, mesma
+  escala e posicionamento entre a área segura e o card. Navegador e PWA comum
+  mantêm seu layout rolável próprio.
+
 ## 1.6.1.107.39 - 2026-07-30
 
 - Revisão iOS: a conta `teste@teste.com.br` usa um perfil Pessoal de

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.39 -->
+<!-- ava-version: 1.6.1.107.40 -->
+
+> Revisão 1.6.1.107.40: ajuste visual exclusivo do cadastro no aplicativo
+> nativo; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.39: regra exclusiva da conta controlada de revisão iOS;
 > sem mudança operacional para os usuários da Gestão Web.

@@ -4101,7 +4101,16 @@
   }
 
   function isStandalone() {
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    // O WebView do Capacitor não anuncia necessariamente display-mode: standalone.
+    // Sem este reconhecimento, o cadastro entra no layout específico de navegador,
+    // deslocando a marca para o topo em vez de usar a mesma cena do login/PWA instalado.
+    var capacitor = window.Capacitor;
+    var nativoCapacitor = Boolean(
+      capacitor &&
+      typeof capacitor.isNativePlatform === 'function' &&
+      capacitor.isNativePlatform()
+    );
+    return nativoCapacitor || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   }
 
   function deveBloquearScroll() {
