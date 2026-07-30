@@ -56,7 +56,7 @@ export default function LandingHeader() {
 
     if (!deveAbrirMobile) return;
     event.preventDefault();
-    window.location.assign('/mobile');
+    window.location.assign('/mobile?entrar=1');
   };
 
   return (

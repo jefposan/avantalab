@@ -15067,7 +15067,16 @@
           if (state.preparacaoAcessoInterrompida) return;
         }
       } else {
-        window.location.replace(destinoLogoutMobile());
+        // A landing encaminha o acesso móvel para /mobile?entrar=1. Sem uma
+        // sessão restaurada, esta rota deve exibir o próprio login, nunca
+        // voltar à landing e criar um ciclo de navegação.
+        state.carregando = false;
+        state.autenticado = false;
+        state.telaAcesso = 'login';
+        state.modoCadastro = false;
+        state.modoSenha = false;
+        state.pronto = true;
+        render();
         return;
       }
       state.pronto = true;

@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.18: pelo navegador móvel, a landing encaminha
-// a entrada diretamente à Gestão Mobile; Vendas não muda.
+// Revisado na versão 1.6.1.107.19: a entrada móvel sem sessão abre o login
+// localmente, sem retornar à landing; Vendas não muda.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

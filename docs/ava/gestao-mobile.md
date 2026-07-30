@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.18 -->
+<!-- ava-version: 1.6.1.107.19 -->
+
+> Revisão 1.6.1.107.19: ao entrar pela landing no navegador móvel sem uma
+> sessão ativa, a Gestão Mobile abre sua própria tela de login, sem retorno à
+> página pública.
 
 > Revisão 1.6.1.107.18: pelo navegador móvel, Entrar na landing abre diretamente
 > a Gestão Mobile e o acesso social retorna à própria rota mobile.

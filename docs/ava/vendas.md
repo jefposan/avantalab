@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.18 -->
+<!-- ava-version: 1.6.1.107.19 -->
+
+> Revisão 1.6.1.107.19: correção do acesso sem sessão na Gestão Mobile; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.18: correção de destino de entrada da Gestão; sem impacto
 > operacional no AvantaVendas.

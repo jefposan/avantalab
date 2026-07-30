@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.18 -->
+<!-- ava-version: 1.6.1.107.19 -->
+
+> Revisão 1.6.1.107.19: o acesso móvel sem sessão permanece na tela de login
+> da Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.18: pelo navegador móvel, Entrar na landing abre a Gestão
 > Mobile; o acesso Web continua na rota própria, sem decisão tardia de interface.

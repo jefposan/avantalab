@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.107.19 - 2026-07-30
+
+- Gestão Mobile: o acesso iniciado pela landing abre o login mobile quando não
+  há sessão, sem retornar à página pública em ciclo.
+
 ## 1.6.1.107.18 - 2026-07-29
 
 - Acesso: pelo navegador móvel, o botão **Entrar** da landing abre diretamente
