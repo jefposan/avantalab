@@ -73,7 +73,31 @@
   var CHAVE_SISTEMA_SESSAO_MOBILE = 'avantalab_mobile_sistema_sessao_';
   var CHAVE_CONTEXTO_SISTEMA_MOBILE = 'avantalab_mobile_sistema_contexto';
   var CHAVE_ORIGEM_ACESSO_MOBILE = 'avantalab_mobile_origem_acesso';
+  var CHAVE_LOGIN_SOCIAL_PENDENTE_MOBILE = 'avantalab_mobile_login_social_pendente';
   var EMAIL_CONTA_REVISAO_APPLE = 'teste@teste.com.br';
+
+  function lerLoginSocialPendenteMobile() {
+    try {
+      var provedor = sessionStorage.getItem(CHAVE_LOGIN_SOCIAL_PENDENTE_MOBILE);
+      return provedor === 'google' || provedor === 'apple' ? provedor : '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function salvarLoginSocialPendenteMobile(provedor) {
+    try {
+      sessionStorage.setItem(CHAVE_LOGIN_SOCIAL_PENDENTE_MOBILE, provedor);
+    } catch (error) {}
+  }
+
+  function limparLoginSocialPendenteMobile() {
+    try {
+      sessionStorage.removeItem(CHAVE_LOGIN_SOCIAL_PENDENTE_MOBILE);
+    } catch (error) {}
+  }
+
+  var loginSocialPendenteInicialMobile = lerLoginSocialPendenteMobile();
 
   function ehContaRevisaoAppAppleMobile(usuario) {
     return String(usuario && usuario.email || '').trim().toLowerCase() === EMAIL_CONTA_REVISAO_APPLE;
@@ -213,8 +237,8 @@
     preparacaoAcessoInterrompida: false,
     dadosCriticosProntos: false,
     mensagem: '',
-    carregando: false,
-    loginAcao: '',
+    carregando: Boolean(loginSocialPendenteInicialMobile),
+    loginAcao: loginSocialPendenteInicialMobile,
     tentativaLogin: 0,
     empresaAcao: '',
     perfilSelecionandoId: '',
@@ -6083,6 +6107,7 @@
     state.mensagem = '';
     state.carregando = true;
     state.loginAcao = 'google';
+    salvarLoginSocialPendenteMobile('google');
     registrarPreferenciaSessaoMobile(state.manterConectado, true);
     render();
 
@@ -6096,9 +6121,30 @@
     if (resposta.error) {
       state.carregando = false;
       state.loginAcao = '';
+      limparLoginSocialPendenteMobile();
       limparPreferenciaSessaoMobile();
       setErro(mensagemErro(resposta.error, 'Nao foi possivel conectar com o Google agora. Tente novamente em instantes.'));
     }
+  }
+
+  function loginSocialMobileEmAndamento() {
+    return state.loginAcao === 'google' || state.loginAcao === 'apple';
+  }
+
+  function cancelarLoginSocialMobile() {
+    if (!loginSocialMobileEmAndamento()) return;
+
+    state.tentativaLogin = Number(state.tentativaLogin || 0) + 1;
+    state.carregando = false;
+    state.loginAcao = '';
+    state.erro = '';
+    state.mensagem = '';
+    state.telaAcesso = 'login';
+    state.modoSenha = false;
+    state.modoCadastro = false;
+    limparLoginSocialPendenteMobile();
+    limparPreferenciaSessaoMobile();
+    render();
   }
 
   async function entrarApple() {
@@ -6113,6 +6159,7 @@
     state.mensagem = '';
     state.carregando = true;
     state.loginAcao = 'apple';
+    salvarLoginSocialPendenteMobile('apple');
     registrarPreferenciaSessaoMobile(state.manterConectado, true);
     render();
 
@@ -6126,6 +6173,7 @@
     if (resposta.error) {
       state.carregando = false;
       state.loginAcao = '';
+      limparLoginSocialPendenteMobile();
       limparPreferenciaSessaoMobile();
       setErro(mensagemErro(resposta.error, 'Nao foi possivel conectar com a Apple agora. Tente novamente em instantes.'));
     }
@@ -8775,6 +8823,9 @@
       valor: 5,
       rotulo: 'Preparando recursos do aplicativo',
     };
+    var acaoCancelarLoginSocial = loginSocialMobileEmAndamento()
+      ? '<button id="cancelar-login-social-mobile" type="button" class="mt-3 flex h-10 w-full items-center justify-center rounded-xl border border-slate-300 bg-white/90 px-4 text-xs font-black text-slate-700 shadow-sm">Cancelar e voltar ao login</button>'
+      : '';
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:cover;">' +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
@@ -8784,6 +8835,7 @@
           '<div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso"><i id="mobileAccessProgressBar" class="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 transition-[width] duration-200" style="width:' + Number(progresso.valor || 5) + '%"></i></div>' +
           '<b id="mobileAccessProgressValue" class="mt-1 block text-[11px] font-black text-cyan-700">' + Number(progresso.valor || 5) + '%</b>' +
           '<button id="mobileAccessContinueButton" type="button" onclick="window.__avantalabConcluirAcessoMobile && window.__avantalabConcluirAcessoMobile()" class="mt-3 hidden h-10 w-full rounded-xl bg-cyan-700 px-4 text-xs font-black uppercase tracking-wide text-white">Continuar</button>' +
+          acaoCancelarLoginSocial +
         '</div>' +
       '</section>'
     );
@@ -12698,7 +12750,7 @@
     removerChatIAOverlay();
     var telaAtual;
     if (previaConfirmacaoCelular) telaAtual = telaTelefoneObrigatorioMobile(true);
-    else if (!state.pronto) telaAtual = telaCarregandoMobile();
+    else if (!state.pronto || (state.carregando && loginSocialMobileEmAndamento())) telaAtual = telaCarregandoMobile();
     else if (state.falhaAcesso) telaAtual = telaAvisoMobile('Não foi possível concluir o acesso', state.falhaAcesso);
     else if (!state.autenticado) telaAtual = state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin();
     else if (ehFuncionarioPontoMobile()) telaAtual = telaRedirecionandoPonto();
@@ -12799,6 +12851,7 @@
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);
     bind('entrar-apple', entrarApple);
+    bind('cancelar-login-social-mobile', cancelarLoginSocialMobile);
     bind('login-tipo-email', function () {
       state.loginValor = campo('login').trim();
       state.loginTipo = 'email';
@@ -15085,6 +15138,8 @@
         sessao.data.session && sessao.data.session.user ? 'Sessão restaurada' : 'Sessão não encontrada'
       );
       if (sessao.data.session && sessao.data.session.user) {
+        limparLoginSocialPendenteMobile();
+        state.loginAcao = '';
         renovarSessaoPersistenteMobile();
         var mdSessao = sessao.data.session.user.user_metadata || {};
         // Funcionario do Controle de Ponto nao acessa o sistema: encaminha para /ponto.
@@ -15128,10 +15183,15 @@
         // A landing encaminha o acesso móvel para /mobile?entrar=1. Sem uma
         // sessão restaurada, esta rota deve exibir o próprio login, nunca
         // voltar à landing e criar um ciclo de navegação.
-        state.carregando = false;
         state.autenticado = false;
         state.telaAcesso = 'login';
         state.pronto = true;
+        if (loginSocialMobileEmAndamento()) {
+          state.carregando = true;
+          render();
+          return;
+        }
+        state.carregando = false;
         render();
         return;
       }

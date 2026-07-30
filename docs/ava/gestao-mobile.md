@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.23 -->
+<!-- ava-version: 1.6.1.107.24 -->
+
+> Revisão 1.6.1.107.24: durante o login com Google ou Apple, **Preparando
+> acesso** exibe **Cancelar e voltar ao login**. A ação encerra a tentativa e
+> restaura a tela de login sem manter o estado Conectando.
 
 > Revisão 1.6.1.107.23: no navegador comum, o card de cadastro não possui
 > rolagem interna; ao abrir o teclado, a página inteira acompanha o campo

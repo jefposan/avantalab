@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.23 -->
+<!-- ava-version: 1.6.1.107.24 -->
+
+> Revisão 1.6.1.107.24: cancelamento do login social corrigido na Gestão
+> Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.23: rolagem do cadastro da Gestão Mobile ajustada somente
 > no navegador; sem impacto operacional no AvantaVendas.

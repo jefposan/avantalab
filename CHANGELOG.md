@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.107.24 - 2026-07-30
+
+- Gestão Mobile: durante a conexão com Google ou Apple, a tela **Preparando
+  acesso** volta a exibir **Cancelar e voltar ao login**. A ação interrompe o
+  estado pendente e restaura imediatamente a página limpa de login, sem manter
+  o botão em **Conectando...**.
+
 ## 1.6.1.107.23 - 2026-07-30
 
 - Cadastro mobile no navegador: removida a rolagem interna do card. Com o
