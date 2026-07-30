@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.22 -->
+<!-- ava-version: 1.6.1.107.23 -->
+
+> Revisão 1.6.1.107.23: rolagem do cadastro da Gestão Mobile ajustada somente
+> no navegador; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.22: compactação horizontal do cadastro da Gestão Mobile;
 > sem impacto operacional no AvantaVendas.

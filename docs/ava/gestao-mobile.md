@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.22 -->
+<!-- ava-version: 1.6.1.107.23 -->
+
+> Revisão 1.6.1.107.23: no navegador comum, o card de cadastro não possui
+> rolagem interna; ao abrir o teclado, a página inteira acompanha o campo
+> ativo. Os campos Senha e Confirmar senha usam somente seus labels. O PWA
+> instalado permanece com seu comportamento anterior. O campo de cupom exibe
+> somente CUPOM.
 
 > Revisão 1.6.1.107.22: o card e os controles indicados do cadastro foram
 > estreitados. No navegador comum, o campo ativo permanece visível quando o

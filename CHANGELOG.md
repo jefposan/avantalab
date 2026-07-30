@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.107.23 - 2026-07-30
+
+- Cadastro mobile no navegador: removida a rolagem interna do card. Com o
+  teclado aberto, a página inteira acompanha o campo ativo; o PWA instalado
+  permanece inalterado.
+- Cadastro mobile: removidos os placeholders dos campos **Senha** e
+  **Confirmar senha**; os labels continuam visíveis. O campo de cupom passa a
+  exibir somente **CUPOM**.
+
 ## 1.6.1.107.22 - 2026-07-30
 
 - Cadastro mobile: card e controles informados foram estreitados, preservando

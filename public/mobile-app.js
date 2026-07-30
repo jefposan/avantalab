@@ -8673,48 +8673,30 @@
     );
   }
 
-  function cenaAcessoGestaoMobile(card) {
+  function cenaAcessoGestaoMobile(card, classeExtra) {
     return (
-      '<section class="gestao-login-screen">' +
+      '<section class="gestao-login-screen' + (classeExtra ? ' ' + classeExtra : '') + '">' +
         '<div class="gestao-login-brand"><img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" /></div>' +
         card +
       '</section>'
     );
   }
 
-  function ajustarCampoCadastroNoNavegadorMobile(campo) {
-    if (isStandalone() || !campo || !campo.closest) return;
-    var card = campo.closest('[data-cadastro-mobile-card]');
-    if (!card || document.activeElement !== campo) return;
-
-    var viewport = window.visualViewport;
-    var topoViewport = viewport ? Number(viewport.offsetTop || 0) : 0;
-    var baseViewport = topoViewport + (viewport ? Number(viewport.height || 0) : Number(window.innerHeight || 0));
-    var cardRect = card.getBoundingClientRect();
-    var bloco = campo.closest('label') || campo.parentElement || campo;
-    var campoRect = bloco.getBoundingClientRect();
-    var limiteTopo = Math.max(cardRect.top + 10, topoViewport + 10);
-    var limiteBase = Math.min(cardRect.bottom - 10, baseViewport - 12);
-    var deslocamento = 0;
-
-    if (campoRect.bottom > limiteBase) {
-      deslocamento = campoRect.bottom - limiteBase;
-    } else if (campoRect.top < limiteTopo) {
-      deslocamento = campoRect.top - limiteTopo;
-    }
-    if (Math.abs(deslocamento) > 1) card.scrollTop += deslocamento;
+  function rolarPaginaParaCampoCadastroNoNavegador(campo) {
+    if (isStandalone() || !campo || document.activeElement !== campo) return;
+    try { campo.scrollIntoView({ behavior: 'auto', block: 'center' }); } catch (erro) {}
   }
 
-  function agendarFocoCadastroNoNavegadorMobile(campo) {
+  function agendarFocoCadastroNoNavegador(campo) {
     if (isStandalone()) return;
     window.requestAnimationFrame(function () {
-      ajustarCampoCadastroNoNavegadorMobile(campo);
+      rolarPaginaParaCampoCadastroNoNavegador(campo);
     });
     window.setTimeout(function () {
-      ajustarCampoCadastroNoNavegadorMobile(campo);
+      rolarPaginaParaCampoCadastroNoNavegador(campo);
     }, 180);
     window.setTimeout(function () {
-      ajustarCampoCadastroNoNavegadorMobile(campo);
+      rolarPaginaParaCampoCadastroNoNavegador(campo);
     }, 360);
   }
 
@@ -8726,11 +8708,13 @@
       );
     }
     if (state.modoCadastro) {
+      var cadastroNoNavegador = !isStandalone();
       return cenaAcessoGestaoMobile(
-        '<form data-cadastro-mobile-card class="mx-auto min-w-0 shrink-0 overflow-y-auto rounded-3xl border border-white/35 p-3 text-slate-900 shadow-2xl backdrop-blur-xl" onsubmit="return false" style="grid-row:2;justify-self:center;width:min(88%,320px);background-color:rgba(255,255,255,.18);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);overscroll-behavior:contain;">' +
+        '<form data-cadastro-mobile-card class="mx-auto min-w-0 shrink-0 ' + (cadastroNoNavegador ? '' : 'overflow-y-auto ') + 'rounded-3xl border border-white/35 p-3 text-slate-900 shadow-2xl backdrop-blur-xl" onsubmit="return false" style="grid-row:2;justify-self:center;width:min(88%,320px);background-color:rgba(255,255,255,.18);' + (cadastroNoNavegador ? '' : 'max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);overscroll-behavior:contain;') + '">' +
           '<div class="mb-2"><h1 class="text-xl font-black text-slate-900">Criar cadastro</h1></div>' +
           telaCadastro() +
-        '</form>'
+        '</form>',
+        cadastroNoNavegador ? 'gestao-login-screen-cadastro-navegador' : ''
       );
     }
     var maxH = boasVindas
@@ -8983,8 +8967,8 @@
           '<div>' + inputHtml('cadastro-telefone', 'Celular', 'tel', '(11) 99999-9999', formatarTelefoneCadastroMobile(state.cadastro.telefone, state.cadastroDdi)) + '</div>' +
         '</div>' +
         '<div class="grid grid-cols-2 gap-2">' +
-          '<div>' + senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) + '</div>' +
-          '<div>' + senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) + '</div>' +
+          '<div>' + senhaInputHtml('cadastro-senha', 'Senha', '', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) + '</div>' +
+          '<div>' + senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', '', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) + '</div>' +
         '</div>' +
         (state.smsCadastroEnviado ?
           '<div class="rounded-xl border-2 border-sky-400 bg-sky-50 px-3 py-2.5 shadow-sm">' +
@@ -9002,7 +8986,7 @@
         : '') +
         alertaHtml() +
         '<div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">' +
-          '<input id="cadastro-cupom" type="text" placeholder="Cupom opcional" value="' + (state.cadastroCupom || '') + '" class="h-10 min-w-0 rounded-xl border border-slate-300 bg-white/90 px-3 text-sm font-semibold uppercase tracking-wide text-slate-800 outline-none" />' +
+          '<input id="cadastro-cupom" type="text" placeholder="CUPOM" value="' + (state.cadastroCupom || '') + '" class="h-10 min-w-0 rounded-xl border border-slate-300 bg-white/90 px-3 text-sm font-semibold uppercase tracking-wide text-slate-800 outline-none" />' +
           '<button id="cadastro-submit" type="button" class="h-10 shrink-0 whitespace-nowrap rounded-xl bg-[#1687D9] px-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg">' +
             (state.carregando ? (state.smsCadastroEnviado ? 'Validando...' : 'Enviando...') : (state.smsCadastroEnviado ? 'Concluir cadastro' : 'Enviar c&oacute;digo por SMS')) +
           '</button>' +
@@ -15046,27 +15030,27 @@
       }, 300);
     });
 
-    // No navegador comum, a redução do viewport causada pelo teclado precisa
-    // reposicionar o campo ativo dentro do card do cadastro. O PWA instalado
-    // mantém o comportamento nativo já validado e não passa por esta rotina.
+    // No navegador comum, o teclado reduz a área visível depois do foco. A
+    // página acompanha o campo ativo; o card de cadastro não é um container
+    // de rolagem. O PWA preserva o comportamento nativo já validado.
     document.addEventListener('focusin', function (e) {
       var campoCadastro = e.target;
       if (isStandalone() || !campoCadastro || !campoCadastro.matches || !campoCadastro.closest) return;
       if (!campoCadastro.matches('input, select, textarea')) return;
       if (!campoCadastro.closest('[data-cadastro-mobile-card]')) return;
-      agendarFocoCadastroNoNavegadorMobile(campoCadastro);
+      agendarFocoCadastroNoNavegador(campoCadastro);
     });
 
-    if (window.visualViewport && !window._avaCadastroNavegadorViewportBound) {
-      window._avaCadastroNavegadorViewportBound = true;
-      var reposicionarCadastroNoViewport = function () {
+    if (window.visualViewport && !window._avaCadastroNavegadorPaginaBound) {
+      window._avaCadastroNavegadorPaginaBound = true;
+      var acompanharCampoCadastroNoViewport = function () {
         if (isStandalone()) return;
         var campoAtivo = document.activeElement;
         if (!campoAtivo || !campoAtivo.closest || !campoAtivo.closest('[data-cadastro-mobile-card]')) return;
-        agendarFocoCadastroNoNavegadorMobile(campoAtivo);
+        agendarFocoCadastroNoNavegador(campoAtivo);
       };
-      window.visualViewport.addEventListener('resize', reposicionarCadastroNoViewport);
-      window.visualViewport.addEventListener('scroll', reposicionarCadastroNoViewport);
+      window.visualViewport.addEventListener('resize', acompanharCampoCadastroNoViewport);
+      window.visualViewport.addEventListener('scroll', acompanharCampoCadastroNoViewport);
     }
 
     document.addEventListener('focusout', function (e) {

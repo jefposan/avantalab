@@ -311,6 +311,27 @@ export default function MobilePage() {
               content: '';
             }
             .gestao-login-screen > * { position: relative; z-index: 1; }
+            .gestao-login-screen-cadastro-navegador {
+              position: relative;
+              inset: auto;
+              grid-template-rows: clamp(104px, 17dvh, 136px) auto;
+              align-content: start;
+              gap: 12px;
+              height: auto;
+              min-height: 100dvh;
+              overflow: visible;
+              overscroll-behavior: auto;
+              padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left));
+            }
+            .gestao-login-screen-cadastro-navegador .gestao-login-brand {
+              padding: 0;
+              overflow: visible;
+            }
+            .gestao-login-screen-cadastro-navegador [data-cadastro-mobile-card] {
+              max-height: none !important;
+              overflow: visible !important;
+              overscroll-behavior: auto !important;
+            }
             .gestao-login-brand {
               display: flex;
               flex-direction: column;

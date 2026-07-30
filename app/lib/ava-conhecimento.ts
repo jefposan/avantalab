@@ -1,8 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.22: card e campos do cadastro mobile foram
-// estreitados e o navegador mantém o campo ativo visível acima do teclado;
-// sem mudança operacional na Ava.
+// Revisado na versão 1.6.1.107.23: no navegador, o cadastro move a página
+// inteira para manter o campo ativo visível, sem rolagem interna no card; os
+// campos de senha usam somente seus labels.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
