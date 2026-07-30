@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.42 -->
+<!-- ava-version: 1.6.1.107.43 -->
+
+> Revisão 1.6.1.107.43: início direto dos aplicativos nativos na Gestão
+> Mobile; sem impacto operacional no Vendas.
 
 > Revisão 1.6.1.107.42: correção restrita à entrada pública e OAuth nativo da
 > Gestão Mobile; sem impacto operacional no AvantaVendas.

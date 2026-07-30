@@ -6,7 +6,9 @@ const config: CapacitorConfig = {
   webDir: 'public',
 
   server: {
-    url: 'https://app.avantalab.com.br',
+    // O aplicativo nativo começa na Gestão Mobile. A raiz continua sendo a
+    // landing pública do web/PWA e não é carregada no WebView do Capacitor.
+    url: 'https://app.avantalab.com.br/mobile',
     cleartext: false,
   },
 

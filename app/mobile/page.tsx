@@ -67,7 +67,14 @@ export const viewport: Viewport = {
   themeColor: '#003E73',
 };
 
-export default function MobilePage() {
+type MobileSearchParams = {
+  entrar?: string;
+  cadastro?: string;
+};
+
+export default async function MobilePage({ searchParams }: { searchParams: Promise<MobileSearchParams> }) {
+  const parametros = await searchParams;
+  const acessoDireto = parametros.entrar === '1' || parametros.cadastro === '1';
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
@@ -134,7 +141,7 @@ export default function MobilePage() {
       };
       function telaPreparacaoVisivel() {
         var root = document.getElementById('mobile-root');
-        return !!root && String(root.textContent || '').indexOf('Preparando acesso') >= 0;
+        return !!root && root.getAttribute('data-avantalab-mobile-preparando') === '1';
       }
       function registrarFalhaGlobal(tipo, erro) {
         try {
@@ -250,6 +257,8 @@ export default function MobilePage() {
         as="image"
         type="image/webp"
       />
+      <link rel="preload" href={`/mobile-supabase.js?v=${mobileAssetVersion}`} as="script" />
+      <link rel="preload" href={`/mobile-app.js?v=${mobileAssetVersion}`} as="script" />
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -572,33 +581,51 @@ export default function MobilePage() {
         data-supabase-anon-key={supabaseAnonKey}
         data-cobranca-ativa={cobrancaAtiva}
         data-app-version={APP_VERSION}
+        data-avantalab-mobile-preparando="1"
       >
-        <section
-          className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4"
-          style={{
-            height: '100dvh',
-            backgroundPosition: 'center bottom',
-            backgroundSize: 'cover',
-          }}
-        >
-          <div
-            className="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl"
+        {acessoDireto ? (
+          <section
+            className="avantalab-mobile-bg fixed inset-0 overflow-hidden"
+            style={{
+              height: '100dvh',
+              backgroundPosition: 'center bottom',
+              backgroundSize: 'cover',
+            }}
+            aria-live="polite"
+            aria-label={parametros.cadastro === '1' ? 'Abrindo cadastro' : 'Abrindo login'}
           >
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">
-              AvantaLab
-            </p>
-            <h1 className="mt-2 text-xl font-black">
-              Preparando acesso
-            </h1>
-            <p className="mt-2 text-sm font-semibold text-slate-600">
-              <span id="mobileAccessProgressLabel">Iniciando a Gestão Mobile</span>
-            </p>
-            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso">
-              <i id="mobileAccessProgressBar" className="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 transition-[width] duration-200" style={{ width: '5%' }} />
+            <span className="sr-only">
+              {parametros.cadastro === '1' ? 'Abrindo cadastro' : 'Abrindo login'}
+            </span>
+          </section>
+        ) : (
+          <section
+            className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4"
+            style={{
+              height: '100dvh',
+              backgroundPosition: 'center bottom',
+              backgroundSize: 'cover',
+            }}
+          >
+            <div
+              className="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl"
+            >
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">
+                AvantaLab
+              </p>
+              <h1 className="mt-2 text-xl font-black">
+                Preparando acesso
+              </h1>
+              <p className="mt-2 text-sm font-semibold text-slate-600">
+                <span id="mobileAccessProgressLabel">Iniciando a Gestão Mobile</span>
+              </p>
+              <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso">
+                <i id="mobileAccessProgressBar" className="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 transition-[width] duration-200" style={{ width: '5%' }} />
+              </div>
+              <b id="mobileAccessProgressValue" className="mt-1 block text-[11px] font-black text-cyan-700">5%</b>
             </div>
-            <b id="mobileAccessProgressValue" className="mt-1 block text-[11px] font-black text-cyan-700">5%</b>
-          </div>
-        </section>
+          </section>
+        )}
       </div>
       <AvaMobileBridge />
       <BackupMobileBridge />

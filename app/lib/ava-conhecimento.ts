@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.42: entrada pública e OAuth nativo da Gestão
-// Mobile foram alinhados; a orientação operacional da Ava não muda.
+// Revisado na versão 1.6.1.107.43: aplicativos nativos iniciam diretamente na
+// Gestão Mobile; a orientação operacional da Ava não muda.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

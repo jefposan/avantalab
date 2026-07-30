@@ -8923,6 +8923,15 @@
   }
 
   function telaCarregandoMobile() {
+    var parametrosAcesso = new URLSearchParams(window.location.search);
+    var acessoDireto = parametrosAcesso.get('entrar') === '1' || parametrosAcesso.get('cadastro') === '1';
+    if (acessoDireto) {
+      return (
+        '<section class="avantalab-mobile-bg fixed inset-0 overflow-hidden" style="height:100dvh;background-position:center bottom;background-size:cover;" aria-live="polite" aria-label="Abrindo acesso">' +
+          '<span class="sr-only">Abrindo acesso</span>' +
+        '</section>'
+      );
+    }
     var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || {
       valor: 5,
       rotulo: 'Preparando recursos do aplicativo',
@@ -8946,7 +8955,7 @@
   }
 
   function telaPreparacaoAcessoMobileVisivel() {
-    return String(root.textContent || '').indexOf('Preparando acesso') >= 0;
+    return root.getAttribute('data-avantalab-mobile-preparando') === '1';
   }
 
   function concluirAcessoMobile() {
@@ -12870,6 +12879,8 @@
       _scrollContainers['menu-botoes-scroll'] = window._avaMenuScrollTravado;
     }
     root.setAttribute('data-avantalab-mobile-ready', '1');
+    if (state.pronto) root.removeAttribute('data-avantalab-mobile-preparando');
+    else root.setAttribute('data-avantalab-mobile-preparando', '1');
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
     var telaAtual;

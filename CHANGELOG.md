@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.107.43 - 2026-07-30
+
+- Aplicativos iOS e Android iniciam diretamente na **Gestão Mobile**; a landing
+  continua exclusiva do web e PWA. Sessão válida abre o sistema e, sem sessão,
+  o próprio login é exibido.
+- Ao abrir **Entrar** ou **Começar grátis** pela landing, a Gestão Mobile não
+  mostra o card intermediário de preparação antes de exibir login ou cadastro.
+
 ## 1.6.1.107.42 - 2026-07-30
 
 - Entrada pública: **Entrar** e **Começar grátis** usam um único destino. No

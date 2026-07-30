@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.42 -->
+<!-- ava-version: 1.6.1.107.43 -->
+
+> Revisão 1.6.1.107.43: os aplicativos iOS e Android iniciam diretamente na
+> Gestão Mobile; sessão válida abre o sistema e, sem sessão, aparece o login.
+> Pela landing, Entrar e Começar grátis abrem login e cadastro sem card
+> intermediário de preparação.
 
 > Revisão 1.6.1.107.42: a entrada pública móvel abre a Gestão Mobile. No
 > aplicativo, Google e Apple retornam pelo navegador seguro e deep link; erro
