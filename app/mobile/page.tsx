@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import AvaMobileBridge from './AvaMobileBridge';
 import BackupMobileBridge from './BackupMobileBridge';
+import OAuthNativoMobileBridge from './OAuthNativoMobileBridge';
 import VendasMobileConteudoBridge from './VendasMobileConteudoBridge';
 import IosBillingBridge from './IosBillingBridge';
 import NativeShellBridge from './NativeShellBridge';
@@ -601,6 +602,7 @@ export default function MobilePage() {
       </div>
       <AvaMobileBridge />
       <BackupMobileBridge />
+      <OAuthNativoMobileBridge />
       <VendasMobileConteudoBridge />
       <IosBillingBridge apiKey={revenueCatIosApiKey} />
       <NativeShellBridge />

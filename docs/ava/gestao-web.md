@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.41 -->
+<!-- ava-version: 1.6.1.107.42 -->
+
+> Revisão 1.6.1.107.42: a entrada pública abre a Gestão Web no desktop e a
+> Gestão Mobile em aparelhos móveis; sem impacto operacional dentro do Web.
 
 > Revisão 1.6.1.107.41: abertura direta dos planos é exclusiva da Gestão
 > Mobile no aplicativo iOS; sem impacto operacional na Gestão Web.

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.41 -->
+<!-- ava-version: 1.6.1.107.42 -->
+
+> Revisão 1.6.1.107.42: correção restrita à entrada pública e OAuth nativo da
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.41: abertura direta dos planos é exclusiva da Gestão
 > Mobile no aplicativo iOS; sem impacto operacional no AvantaVendas.

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import CalculatorHub from './components/CalculatorHub';
 import BotaoProximoScroll from './components/BotaoProximoScroll';
 import LandingHeader from './components/LandingHeader';
+import AcessoPublicoLink from './components/AcessoPublicoLink';
 import RedirecionamentoPosOAuth from './components/RedirecionamentoPosOAuth';
 import LinkRolagemPublica from './components/LinkRolagemPublica';
 import AvaPlansPreview from './components/AvaPlansPreview';
@@ -105,7 +106,7 @@ export default function AvantaLandingPage() {
             <h1>Seu negócio organizado para <em>decidir melhor.</em></h1>
             <p className={styles.lead}>O AvantaLab reúne financeiro, indicadores, rotinas da equipe e a Ava em uma plataforma simples de operar — do primeiro lançamento à visão completa da operação.</p>
             <div className={styles.heroActions}>
-              <Link className={styles.primaryButton} href="/gestao?cadastro=1">Começar grátis <span aria-hidden="true">→</span></Link>
+              <AcessoPublicoLink className={styles.primaryButton} modo="cadastro">Começar grátis <span aria-hidden="true">→</span></AcessoPublicoLink>
               <LinkRolagemPublica className={styles.secondaryButton} href="#recursos">Conhecer a plataforma</LinkRolagemPublica>
             </div>
             <ul className={styles.trustList} aria-label="Destaques da plataforma">
@@ -173,7 +174,7 @@ export default function AvantaLandingPage() {
       </section>
 
       <section className={styles.finalCta} id="proximo-passo" data-final-cta>
-        <div className={styles.wrap} data-scroll-target><p className={styles.kicker}>Próximo passo</p><h2>Organize hoje. Decida com mais segurança amanhã.</h2><p>Comece pelo Free ou escolha o plano que acompanha a sua rotina pessoal ou empresarial.</p><Link className={styles.primaryButton} href="/gestao?cadastro=1">Começar grátis <span aria-hidden="true">→</span></Link></div>
+        <div className={styles.wrap} data-scroll-target><p className={styles.kicker}>Próximo passo</p><h2>Organize hoje. Decida com mais segurança amanhã.</h2><p>Comece pelo Free ou escolha o plano que acompanha a sua rotina pessoal ou empresarial.</p><AcessoPublicoLink className={styles.primaryButton} modo="cadastro">Começar grátis <span aria-hidden="true">→</span></AcessoPublicoLink></div>
       </section>
 
       <footer className={styles.footer} id="rodape"><div className={styles.wrap}><Image src="/images/landing/logo-avantalab.png" alt="AvantaLab" width={154} height={40} /><div><Link href="/suporte">Suporte</Link><Link href="/termos">Termos de Uso</Link><Link href="/privacidade">Política de Privacidade</Link><Link href="/cookies">Cookies</Link></div><small>© 2026 AvantaLab. Todos os direitos reservados.</small></div></footer>

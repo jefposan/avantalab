@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import AcessoPublicoLink from './AcessoPublicoLink';
 import { rolarParaSecaoPublica } from '../lib/rolagem-publica';
 import landingStyles from '../styles/landing/landing.module.css';
 import styles from './LandingHeader.module.css';
@@ -48,17 +49,6 @@ export default function LandingHeader() {
     setMenuAberto(false);
   };
 
-  const abrirEntrada = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    const agenteMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
-    const telaComToque = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
-    const deveAbrirMobile = window.innerWidth < 1024 && (agenteMobile || telaComToque);
-    setMenuAberto(false);
-
-    if (!deveAbrirMobile) return;
-    event.preventDefault();
-    window.location.assign('/mobile?entrar=1');
-  };
-
   return (
     <header data-public-header className={`${landingStyles.header} ${styles.header} ${rolado ? styles.rolado : ''}`}>
       <nav className={landingStyles.nav} aria-label="Navegação principal">
@@ -70,12 +60,13 @@ export default function LandingHeader() {
         </div>
         <button type="button" className={styles.menuButton} aria-expanded={menuAberto} aria-controls="menu-publico-mobile" aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuAberto((aberto) => !aberto)}><span /><span /><span /></button>
         <div className={landingStyles.navActions}>
-          <Link className={`${landingStyles.entrar} ${styles.mobileEntrar}`} href="/gestao?entrar=1" onClick={abrirEntrada}>Entrar</Link>
-          <Link className={landingStyles.primaryButton} href="/gestao?cadastro=1">Começar grátis <span aria-hidden="true">→</span></Link>
+          <AcessoPublicoLink className={`${landingStyles.entrar} ${styles.mobileEntrar}`} modo="entrar">Entrar</AcessoPublicoLink>
+          <AcessoPublicoLink className={landingStyles.primaryButton} modo="cadastro">Começar grátis <span aria-hidden="true">→</span></AcessoPublicoLink>
         </div>
       </nav>
       <div id="menu-publico-mobile" className={`${styles.mobileMenu} ${menuAberto ? styles.mobileMenuAberto : ''}`} aria-hidden={!menuAberto}>
         {itensMenu.map(([href, texto]) => <a key={href} href={href} tabIndex={menuAberto ? 0 : -1} onClick={(event) => rolarParaSecao(event, href)}>{texto}</a>)}
+        <AcessoPublicoLink modo="entrar" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Entrar no sistema</AcessoPublicoLink>
       </div>
     </header>
   );

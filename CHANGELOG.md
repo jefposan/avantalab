@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.107.42 - 2026-07-30
+
+- Entrada pública: **Entrar** e **Começar grátis** usam um único destino. No
+  desktop abrem a Gestão Web; em aparelhos móveis e Capacitor, a Gestão Mobile.
+- Gestão Mobile no Capacitor: Google e Apple usam navegador seguro e deep link
+  nativo; retorno conclui a sessão e cancelamento restaura o login.
+
 ## 1.6.1.107.41 - 2026-07-30
 
 - Gestão Mobile iOS: em perfil Pessoal sem assinatura vigente, **Menu >

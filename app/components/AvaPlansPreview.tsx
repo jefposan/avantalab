@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import AcessoPublicoLink from './AcessoPublicoLink';
 import { useState } from 'react';
 import styles from './AvaPlansPreview.module.css';
 import refinements from './AvaPlansRefinements.module.css';
@@ -104,7 +105,7 @@ export default function AvaPlansPreview() {
               <p className={commerce.price}><span>R$</span><strong>0</strong><small>grátis</small></p>
               <p className={commerce.priceNote}>Acesso sem cartão de crédito.</p>
               <ul>{recursosFree.map((item) => <li key={item}><Check />{item}</li>)}</ul>
-              <Link className={commerce.secondaryAction} href="/gestao?cadastro=1">Começar com Free</Link>
+              <AcessoPublicoLink className={commerce.secondaryAction} modo="cadastro">Começar com Free</AcessoPublicoLink>
             </article>
             <article className={`${commerce.plan} ${commerce.premium}`}>
               <span className={commerce.badge}>Mais escolhido para uso pessoal</span>
@@ -114,7 +115,7 @@ export default function AvaPlansPreview() {
               <p className={commerce.price}><span>R$</span><strong>{preco.premium.valor}</strong><small>{preco.premium.sufixo}</small></p>
               <p className={commerce.priceNote}>{preco.premium.nota}</p>
               <ul>{recursosPremium.map((item) => <li key={item}><Check />{item}</li>)}</ul>
-              <Link className={commerce.primaryAction} href="/gestao?cadastro=1">Quero o Pessoal Premium <span aria-hidden="true">→</span></Link>
+              <AcessoPublicoLink className={commerce.primaryAction} modo="cadastro">Quero o Pessoal Premium <span aria-hidden="true">→</span></AcessoPublicoLink>
             </article>
             <article className={commerce.plan}>
               <p className={commerce.audience}>Plano empresarial</p>
@@ -123,7 +124,7 @@ export default function AvaPlansPreview() {
               <p className={commerce.price}><span>R$</span><strong>{preco.business.valor}</strong><small>{preco.business.sufixo}</small></p>
               <p className={commerce.priceNote}>{preco.business.nota}</p>
               <ul>{recursosBusiness.map((item) => <li key={item}><Check />{item}</li>)}</ul>
-              <Link className={commerce.secondaryAction} href="/gestao?cadastro=1">Quero o Business</Link>
+              <AcessoPublicoLink className={commerce.secondaryAction} modo="cadastro">Quero o Business</AcessoPublicoLink>
             </article>
             <article className={`${commerce.plan} ${commerce.pro} ${polish.proPlan}`}>
               <span className={`${commerce.badge} ${polish.proBadge}`}>7 dias grátis</span>
@@ -133,7 +134,7 @@ export default function AvaPlansPreview() {
               <p className={`${commerce.price} ${polish.proPrice}`}><span>R$</span><strong>{preco.pro.valor}</strong><small>{preco.pro.sufixo}</small></p>
               <p className={`${commerce.priceNote} ${polish.proNote}`}>{preco.pro.nota}</p>
               <ul>{recursosPro.map((item) => <li key={item}><Check />{item}</li>)}</ul>
-              <Link className={`${commerce.primaryAction} ${polish.proAction}`} href="/gestao?cadastro=1"><span className={trialCta.copy}><span>Testar Business Pro</span><span>por 7 dias <strong>GRÁTIS</strong></span></span><span aria-hidden="true">→</span></Link>
+              <AcessoPublicoLink className={`${commerce.primaryAction} ${polish.proAction}`} modo="cadastro"><span className={trialCta.copy}><span>Testar Business Pro</span><span>por 7 dias <strong>GRÁTIS</strong></span></span><span aria-hidden="true">→</span></AcessoPublicoLink>
             </article>
           </div>
           <div className={commerce.comparison}>

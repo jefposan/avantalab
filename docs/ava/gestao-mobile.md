@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.41 -->
+<!-- ava-version: 1.6.1.107.42 -->
+
+> Revisão 1.6.1.107.42: a entrada pública móvel abre a Gestão Mobile. No
+> aplicativo, Google e Apple retornam pelo navegador seguro e deep link; erro
+> ou cancelamento restaura o login.
 
 > Revisão 1.6.1.107.41: no aplicativo iOS, perfil Pessoal sem assinatura
 > vigente abre **Menu > Assinatura** diretamente nos planos Mensal e Anual e em

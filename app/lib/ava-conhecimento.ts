@@ -1,8 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.41: no iOS, perfil Pessoal sem assinatura abre
-// diretamente os planos e a restauração; assinaturas existentes mantêm resumo
-// e gerenciamento pela App Store.
+// Revisado na versão 1.6.1.107.42: entrada pública e OAuth nativo da Gestão
+// Mobile foram alinhados; a orientação operacional da Ava não muda.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
