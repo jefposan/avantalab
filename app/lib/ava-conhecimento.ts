@@ -1,7 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.38: o card superior do Menu da Gestão Mobile
-// permanece fixo enquanto as opções rolam, sem impacto operacional na Ava.
+// Revisado na versão 1.6.1.107.41: no iOS, perfil Pessoal sem assinatura abre
+// diretamente os planos e a restauração; assinaturas existentes mantêm resumo
+// e gerenciamento pela App Store.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -71,7 +72,7 @@ NAVEGAÇÃO E PERFIS
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
-- Assinatura é o primeiro botão do Menu e fica fora de Configurações. A tela sempre mostra situação e tipo do plano. No aplicativo iOS, Pessoal Premium usa a compra da App Store, permite restaurar compras e gerenciar a renovação; Business e Business Pro não são vendidos no aplicativo e continuam contratados somente pela plataforma web. No PWA, a cobrança web permanece igual. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente compatível com aquele ambiente. Cortesia e cupom ativos não exibem preços nem opções de contratação. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
+- Assinatura é o primeiro botão do Menu e fica fora de Configurações. No aplicativo iOS, um perfil Pessoal sem assinatura vigente abre diretamente os planos Mensal e Anual e Restaurar compras; uma assinatura existente exibe situação, gerenciamento e restauração. Pessoal Premium usa compra da App Store; Business e Business Pro não são vendidos no aplicativo e continuam contratados somente pela plataforma web. No PWA, a cobrança web permanece igual. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente compatível com aquele ambiente. Cortesia e cupom ativos não exibem preços nem opções de contratação. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.
 - Em Configurações, os controles com chave aparecem primeiro. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
 - Excluir minha conta fica em Menu > Configurações, como a última opção do grupo, e exige digitar EXCLUIR. A operação remove o acesso e os dados pessoais; registros trabalhistas ou fiscais sujeitos a retenção legal podem permanecer anonimizados e sem acesso à conta.

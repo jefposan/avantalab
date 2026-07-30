@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.40 -->
+<!-- ava-version: 1.6.1.107.41 -->
+
+> Revisão 1.6.1.107.41: no aplicativo iOS, perfil Pessoal sem assinatura
+> vigente abre **Menu > Assinatura** diretamente nos planos Mensal e Anual e em
+> **Restaurar compras**. Quem já possui assinatura continua vendo seu resumo e
+> as ações de gerenciamento da App Store.
 
 > Revisão 1.6.1.107.40: no aplicativo nativo, o cadastro usa a mesma cena do
 > login, com a marca separada e posicionada entre a área segura e o card. Sem

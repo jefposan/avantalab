@@ -2037,7 +2037,25 @@
     state.assinaturaErro = '';
     state.assinaturaConfirmarCancelamento = false;
     render();
-    carregarAssinaturaMobile();
+    carregarAssinaturaMobile().then(function () {
+      // No app iOS, um perfil pessoal sem contrato não precisa atravessar um
+      // painel de resumo antes de comprar. Mantemos o resumo para quem já tem
+      // assinatura, pois ele oferece gerenciamento e restauração.
+      var detalhes = state.assinaturaDetalhes;
+      var pessoal = state.empresa
+        && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal';
+      var podeGerenciar = !detalhes || detalhes.podeGerenciar !== false;
+      if (
+        state.modalMenu === 'assinatura'
+        && ehIosNativoMobile()
+        && pessoal
+        && podeGerenciar
+        && !(detalhes && detalhes.temAssinatura)
+        && !state.assinaturaErro
+      ) {
+        abrirContratacaoAssinaturaMobile();
+      }
+    });
   }
 
   function abrirContratacaoAssinaturaMobile() {

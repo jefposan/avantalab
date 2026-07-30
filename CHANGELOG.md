@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.107.41 - 2026-07-30
+
+- Gestão Mobile iOS: em perfil Pessoal sem assinatura vigente, **Menu >
+  Assinatura** abre diretamente os planos Mensal e Anual da App Store, com
+  **Restaurar compras**. O resumo continua disponível para assinaturas já
+  contratadas, incluindo o gerenciamento da renovação.
+
 ## 1.6.1.107.40 - 2026-07-30
 
 - Gestão Mobile: no aplicativo iOS/Android, o cadastro reconhece o WebView
