@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.17 -->
+<!-- ava-version: 1.6.1.107.18 -->
+
+> Revisão 1.6.1.107.18: correção de destino de entrada da Gestão; sem impacto
+> operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.17: ajustes de assinatura e conta foram realizados na
 > Gestão Mobile; sem mudança operacional no AvantaVendas.

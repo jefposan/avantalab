@@ -1403,15 +1403,6 @@ useEffect(() => {
       return;
     }
 
-    const larguraPequena = window.innerWidth < 1024;
-    const dispositivoMobile =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      ((navigator as Navigator & { standalone?: boolean }).standalone ?? false) ||
-      /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
-
-    if (larguraPequena && dispositivoMobile && window.location.pathname === '/') {
-      window.location.replace('/mobile');
-    }
   });
 
   return () => data.subscription.unsubscribe();

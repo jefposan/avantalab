@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.17 -->
+<!-- ava-version: 1.6.1.107.18 -->
+
+> Revisão 1.6.1.107.18: pelo navegador móvel, Entrar na landing abre a Gestão
+> Mobile; o acesso Web continua na rota própria, sem decisão tardia de interface.
 
 > Revisão 1.6.1.107.17: assinaturas pessoais da App Store passam a liberar os
 > mesmos perfis pessoais no Web; o checkout web da Asaas permanece inalterado.

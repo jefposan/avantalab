@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.18 - 2026-07-29
+
+- Acesso: pelo navegador móvel, o botão **Entrar** da landing abre diretamente
+  a Gestão Mobile. O retorno social mantém a rota de origem, sem depender de
+  uma escolha tardia entre as interfaces Web e Mobile.
+
 ## 1.6.1.107.17 - 2026-07-29
 
 - iOS: assinaturas pessoais passam a usar compra nativa da App Store, com

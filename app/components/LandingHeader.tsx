@@ -48,6 +48,17 @@ export default function LandingHeader() {
     setMenuAberto(false);
   };
 
+  const abrirEntrada = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const agenteMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
+    const telaComToque = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+    const deveAbrirMobile = window.innerWidth < 1024 && (agenteMobile || telaComToque);
+    setMenuAberto(false);
+
+    if (!deveAbrirMobile) return;
+    event.preventDefault();
+    window.location.assign('/mobile');
+  };
+
   return (
     <header data-public-header className={`${landingStyles.header} ${styles.header} ${rolado ? styles.rolado : ''}`}>
       <nav className={landingStyles.nav} aria-label="Navegação principal">
@@ -59,13 +70,13 @@ export default function LandingHeader() {
         </div>
         <button type="button" className={styles.menuButton} aria-expanded={menuAberto} aria-controls="menu-publico-mobile" aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuAberto((aberto) => !aberto)}><span /><span /><span /></button>
         <div className={landingStyles.navActions}>
-          <Link className={landingStyles.entrar} href="/gestao?entrar=1">Entrar</Link>
+          <Link className={landingStyles.entrar} href="/gestao?entrar=1" onClick={abrirEntrada}>Entrar</Link>
           <Link className={landingStyles.primaryButton} href="/gestao?cadastro=1">Começar grátis <span aria-hidden="true">→</span></Link>
         </div>
       </nav>
       <div id="menu-publico-mobile" className={`${styles.mobileMenu} ${menuAberto ? styles.mobileMenuAberto : ''}`} aria-hidden={!menuAberto}>
         {itensMenu.map(([href, texto]) => <a key={href} href={href} tabIndex={menuAberto ? 0 : -1} onClick={(event) => rolarParaSecao(event, href)}>{texto}</a>)}
-        <Link href="/gestao?entrar=1" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Entrar no sistema</Link>
+        <Link href="/gestao?entrar=1" tabIndex={menuAberto ? 0 : -1} onClick={abrirEntrada}>Entrar no sistema</Link>
       </div>
     </header>
   );

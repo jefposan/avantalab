@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.17 -->
+<!-- ava-version: 1.6.1.107.18 -->
+
+> Revisão 1.6.1.107.18: pelo navegador móvel, Entrar na landing abre diretamente
+> a Gestão Mobile e o acesso social retorna à própria rota mobile.
 
 > Revisão 1.6.1.107.17: no aplicativo iOS, o Pessoal Premium é contratado pela
 > App Store, com restauração de compras e gerenciamento da assinatura Apple.

@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.17: assinatura pessoal nativa no iOS e exclusão
-// de conta na Gestão Mobile; Web reconhece o mesmo benefício e Vendas não muda.
+// Revisado na versão 1.6.1.107.18: pelo navegador móvel, a landing encaminha
+// a entrada diretamente à Gestão Mobile; Vendas não muda.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
