@@ -9,6 +9,7 @@ type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
   recebimentos: Recebimento[];
+  chaveMes: string;
   // Recebimento avulso (sem cobrança vinculada).
   onConfirmar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante: File | null, resumo: ResumoRecebimento) => Promise<void> | void;
   // Registro de uma cobrança prevista ou em atraso específica (uma a uma).
@@ -26,7 +27,7 @@ export type ResumoRecebimento = {
   tipo: ReturnType<typeof tipoDiferenca>;
 };
 
-export default function FormularioRecebimento({ empresas, subempresas, recebimentos, onConfirmar, onReceberCobranca, onCancelar }: Props) {
+export default function FormularioRecebimento({ empresas, subempresas, recebimentos, chaveMes, onConfirmar, onReceberCobranca, onCancelar }: Props) {
   const empresasAtivas = useMemo(
     () => empresas.filter((e) => e.ativo).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })),
     [empresas],
@@ -62,6 +63,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
         .filter(
           (r) =>
             r.empresaId === empresaId &&
+            r.vencimento.slice(0, 7) === chaveMes &&
             r.valorRecebido == null &&
             (r.situacao === 'em_atraso' || r.situacao === 'previsto'),
         )
@@ -85,7 +87,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
 
       return [...vencidas.sort(ordenarPorCliente), ...proximas.sort(ordenarPorCliente)];
     },
-    [recebimentos, empresas, subempresas, empresaId, hojeIso],
+    [recebimentos, empresas, subempresas, empresaId, chaveMes, hojeIso],
   );
 
   const cobranca = useMemo(() => cobrancasAbertas.find((r) => r.id === cobrancaId) ?? null, [cobrancasAbertas, cobrancaId]);

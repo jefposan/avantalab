@@ -18,9 +18,17 @@ type Props = {
   onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null) => Promise<void> | void;
 };
 
+const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+function mesAtual() {
+  const agora = new Date();
+  return { ano: agora.getFullYear(), mes: agora.getMonth() };
+}
+
 export default function PainelColaborador({ colaborador, empresas, subempresas, recebimentos, onRegistrar, onReceberCobranca }: Props) {
   const [formAberto, setFormAberto] = useState(false);
   const [comprovante, setComprovante] = useState<ResumoRecebimento | null>(null);
+  const [mesRef, setMesRef] = useState(mesAtual);
   const avantaShell = criarAvantaShellPreset({ corPrimaria: COR_PRIMARIA, darkMode: false });
 
   const hoje = useMemo(() => new Date(), []);
@@ -58,6 +66,39 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
     setComprovante(resumo);
   }
 
+  function abrirFormulario() {
+    setMesRef(mesAtual());
+    setFormAberto(true);
+  }
+
+  function mudarMes(delta: number) {
+    setMesRef((atual) => {
+      const data = new Date(atual.ano, atual.mes + delta, 1);
+      return { ano: data.getFullYear(), mes: data.getMonth() };
+    });
+  }
+
+  const chaveMes = `${mesRef.ano}-${String(mesRef.mes + 1).padStart(2, '0')}`;
+  const seletorMes = (
+    <div className={`${styles.mesSeletor} ${styles.mesSeletorColaborador}`}>
+      <button type="button" className={styles.mesSeletorBtn} onClick={() => mudarMes(-1)} aria-label="Mês anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8} width="14" height="14">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 6l-6 6 6 6" />
+        </svg>
+      </button>
+      <span className={styles.mesSeletorDiv} aria-hidden="true" />
+      <span className={styles.mesSeletorLabel}>
+        {MESES_CURTOS[mesRef.mes]} <b>{mesRef.ano}</b>
+      </span>
+      <span className={styles.mesSeletorDiv} aria-hidden="true" />
+      <button type="button" className={styles.mesSeletorBtn} onClick={() => mudarMes(1)} aria-label="Próximo mês">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8} width="14" height="14">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
+        </svg>
+      </button>
+    </div>
+  );
+
   return (
     <div className={styles.mobileWrap}>
       <div className={styles.heroCard}>
@@ -83,25 +124,27 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
           type="button"
           className={`${styles.btn}`}
           style={{ background: '#fff', color: COR_PRIMARIA, width: '100%', marginTop: 14 }}
-          onClick={() => setFormAberto(true)}
+          onClick={abrirFormulario}
         >
-          + Registrar recebimento
+          + Registrar recebimentos
         </button>
       </div>
 
       {formAberto && (
         <div style={{ marginTop: 16 }}>
           <AvantaCard
-            title="Registrar recebimento"
+            title="Registrar recebimentos"
+            headerRight={seletorMes}
             hideDragHandle
             hideMenu
-            style={avantaShell.cardStyle}
+            style={{ ...avantaShell.cardStyle, ['--plato-w' as string]: '30%' }}
             bodyStyle={avantaShell.bodyStyle}
           >
             <FormularioRecebimento
               empresas={empresas}
               subempresas={subempresas}
               recebimentos={recebimentos}
+              chaveMes={chaveMes}
               onConfirmar={handleConfirmar}
               onReceberCobranca={handleReceberCobranca}
               onCancelar={() => setFormAberto(false)}

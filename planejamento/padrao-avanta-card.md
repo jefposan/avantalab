@@ -81,7 +81,9 @@ Skin fornecida pela tela consumidora: `--avanta-tras-bg`,
 A frente tem três responsabilidades separadas:
 
 - `.frontShape`: SVG absoluto, `viewBox="0 0 1000 108"`, com um único `<path>`
-  para vale + subida + platô. É a única fonte visual da curva.
+  para vale + subida + platô. É a única fonte visual da curva. O ponto final
+  da subida acompanha `--plato-w`, mantendo os controles sobre a área reta do
+  platô quando sua largura é ajustada.
 - `.plato`: container absoluto dos controles. Não deve ter `background`,
   `border-radius` ou pseudo-elemento de solda.
 - `.body`: corpo do card, com conteúdo livre e superfície fornecida pela tela.

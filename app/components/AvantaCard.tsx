@@ -112,6 +112,18 @@ export function AvantaCard({
   const cardStyle = preset ? { ...preset.cardStyle, ...style } : style;
   const corpoStyle = preset ? { ...preset.bodyStyle, ...bodyStyle } : bodyStyle;
   const conteudoPlato = plato ?? headerRight;
+  const larguraPlato = (() => {
+    const valor = (cardStyle as (React.CSSProperties & Record<string, string | number | undefined>) | undefined)?.['--plato-w'];
+    if (typeof valor !== 'string') return 25;
+    const percentual = Number.parseFloat(valor);
+    return Number.isFinite(percentual) ? Math.min(50, Math.max(20, percentual)) : 25;
+  })();
+  // A curva acompanha a largura do platô. Assim, controles maiores continuam
+  // sobre a área reta da silhueta, sem avançar sobre a subida em "S".
+  const fimCurva = 1000 - (larguraPlato * 10);
+  const inicioCurva = Math.max(0, fimCurva - 150);
+  const controleInicial = inicioCurva + 70;
+  const controleFinal = fimCurva - 88;
 
   return (
     <section
@@ -140,7 +152,7 @@ export function AvantaCard({
         >
           <path
             className={styles.frontShapePath}
-            d="M 0 78 H 610 C 680 78 672 0 760 0 H 1000 V 108 H 0 Z"
+            d={`M 0 78 H ${inicioCurva} C ${controleInicial} 78 ${controleFinal} 0 ${fimCurva} 0 H 1000 V 108 H 0 Z`}
           />
         </svg>
 
