@@ -39,6 +39,8 @@
 	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>Usamos a câmera para registrar fotos de comprovantes e documentos nos lançamentos financeiros.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Usamos o microfone somente quando você grava uma mensagem de voz para transcrição e atendimento pela Ava.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Usamos sua biblioteca de fotos para anexar comprovantes e documentos aos lançamentos financeiros.</string>
 	<key>UILaunchStoryboardName</key>

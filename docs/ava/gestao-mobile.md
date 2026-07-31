@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.61 -->
+<!-- ava-version: 1.6.1.107.62 -->
+
+> Revisão 1.6.1.107.62: a Ava informa que a gravação de voz é opcional,
+> depende da permissão do microfone e é convertida em texto para a conversa.
 
 > Revisão 1.6.1.107.61: o card de identificação do menu preserva suas dimensões
 > originais e remove a borda e a sombra lateral assimétricas; sem mudança operacional.
@@ -904,6 +907,10 @@ deve usar os nomes do menu e da barra inferior do celular.
   abre o navegador seguro do sistema. Ao concluir, o AvantaLab reabre
   automaticamente; ao cancelar, o usuário pode tentar novamente na tela de
   login. No PWA, o retorno permanece na própria Gestão Mobile.
+- Na conversa com a Ava, tocar no microfone solicita a permissão do aparelho e
+  inicia a gravação. Ao encerrar, o áudio é enviado para transcrição e a
+  mensagem resultante segue como texto. Se a permissão for negada, a conversa
+  continua disponível pelo campo de texto.
 - Perfil, dados cadastrais, backup e restauração ficam nas áreas de perfil/menu.
 - A senha é da conta AvantaLab e pode afetar outros ambientes autenticados com o
   mesmo login.

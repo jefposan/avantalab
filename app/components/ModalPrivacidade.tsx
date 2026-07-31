@@ -85,7 +85,7 @@ export default function ModalPrivacidade({
               3. Informações coletadas
             </h3>
             <p className={textMuted}>
-              Poderemos tratar dados de cadastro e autenticação, como nome, email, telefone, senha criptografada ou credenciais de autenticação, versão e data do aceite dos termos, perfil financeiro vinculado, empresa, preferências de configuração e identificadores técnicos. Também poderemos tratar dados inseridos voluntariamente no sistema, como receitas, despesas, valores, descrições, categorias, agenda, relatórios, documentos de backup, usuários vinculados, dados de cobrança e, quando usado o módulo de ponto, informações como nome, CPF, cargo, horários, registros de ponto e localização configurada.
+              Poderemos tratar dados de cadastro e autenticação, como nome, email, telefone, senha criptografada ou credenciais de autenticação, versão e data do aceite dos termos, perfil financeiro vinculado, empresa, preferências de configuração e identificadores técnicos. Também poderemos tratar dados inseridos voluntariamente no sistema, como receitas, despesas, valores, descrições, categorias, agenda, relatórios, documentos de backup, usuários vinculados, dados de cobrança e, quando usado o módulo de ponto, informações como nome, CPF, cargo, horários, registros de ponto e localização configurada. Quando o usuário aciona voluntariamente o microfone da Ava, o áudio da mensagem também é tratado para produzir sua transcrição.
             </p>
           </section>
 
@@ -163,10 +163,10 @@ export default function ModalPrivacidade({
 
           <section>
             <h3 className="font-black uppercase text-xs tracking-widest mb-2">
-              12. Inteligência artificial, notificações e suporte
+              12. Inteligência artificial, áudio, notificações e suporte
             </h3>
             <p className={textMuted}>
-              Quando o usuário acionar recursos como assistente de IA, análises automáticas, notificações ou suporte, dados necessários ao contexto da solicitação poderão ser processados para gerar resposta, orientação, aviso ou atendimento. O usuário deve evitar enviar dados pessoais excessivos, sensíveis ou de terceiros quando não forem necessários à finalidade pretendida.
+              Quando o usuário acionar recursos como assistente de IA, análises automáticas, notificações ou suporte, dados necessários ao contexto da solicitação poderão ser processados para gerar resposta, orientação, aviso ou atendimento. A gravação de voz ocorre somente após ação do usuário e autorização do microfone. O áudio é enviado ao serviço de transcrição utilizado pelo AvantaLab e não é armazenado pelo AvantaLab após o processamento; o texto transcrito pode integrar a conversa com a Ava. O usuário deve evitar enviar dados pessoais excessivos, sensíveis ou de terceiros quando não forem necessários à finalidade pretendida.
             </p>
           </section>
 

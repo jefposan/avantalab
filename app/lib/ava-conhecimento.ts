@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.61: remoção da borda e sombra lateral do card do menu;
-// a orientação operacional permanece válida.
+// Revisado na versão 1.6.1.107.62: o uso opcional de voz pela Ava informa a
+// permissão de microfone e o processamento temporário para transcrição.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -111,6 +111,7 @@ LANÇAMENTOS E RESULTADOS
 
 CONTA E SUPORTE
 - No aplicativo Android/iOS, Continuar com Google ou Continuar com Apple abre o navegador seguro do sistema e retorna automaticamente ao AvantaLab depois da autenticação. Se o usuário cancelar, ele pode tentar novamente na tela de login.
+- Na conversa com a Ava, tocar no microfone inicia uma gravação somente após a permissão do aparelho. Ao encerrar, o áudio é enviado para transcrição e a mensagem resultante segue como texto; se a permissão for negada, o usuário pode continuar digitando normalmente.
 - Perfil e dados cadastrais ficam no Menu/Gerenciar perfil. Backup e restauração devem ser confirmados pelo usuário antes de qualquer substituição.
 - A senha é da conta AvantaLab, portanto pode impactar outros acessos com o mesmo login.
 - Controle de Ponto é acessado por funcionários em /ponto, não pelo app financeiro. Funcionário sem dias de trabalho marcados fica em Escala variável: pode registrar ponto em qualquer dia, mas não entra nos cálculos automáticos de faltas, atrasos ou lembretes de ponto. A inativação é feita na Gestão Web; ela bloqueia login e novas marcações, preservando o histórico.

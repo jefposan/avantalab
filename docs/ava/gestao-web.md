@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.61 -->
+<!-- ava-version: 1.6.1.107.62 -->
+
+> Revisão 1.6.1.107.62: permissão nativa de microfone, política de áudio e
+> estabilização do build iOS; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.61: remoção da borda e da sombra lateral do card de
 > identificação da Gestão Mobile; sem impacto operacional na Gestão Web.

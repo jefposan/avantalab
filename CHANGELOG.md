@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.1.107.62 - 2026-07-31
+
+- iOS: adicionada a descrição de uso do microfone para as mensagens de voz da
+  Ava, evitando encerramento do aplicativo ao solicitar a permissão nativa.
+- iOS: removido o registro manual redundante do RevenueCat; o Capacitor mantém
+  o `PurchasesPlugin` pela lista gerada no sync e o Archive volta a compilar
+  com a otimização Release habilitada.
+- Privacidade: o uso voluntário de áudio, a transcrição e o descarte pelo
+  AvantaLab após o processamento passam a ser informados explicitamente.
+- O número interno do build iOS avança para 5.
+
 ## 1.6.1.107.61 - 2026-07-31
 
 - Gestão Mobile: o card de identificação do menu volta às dimensões originais e

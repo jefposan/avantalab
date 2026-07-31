@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.61 -->
+<!-- ava-version: 1.6.1.107.62 -->
+
+> Revisão 1.6.1.107.62: permissão nativa de microfone, política de áudio e
+> estabilização do build iOS; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.61: remoção da borda e da sombra lateral do card de
 > identificação da Gestão Mobile; sem impacto operacional no AvantaVendas.
