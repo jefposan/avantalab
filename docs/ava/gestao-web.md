@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.52 -->
+<!-- ava-version: 1.6.1.107.53 -->
+
+> Revisão 1.6.1.107.53: os carregamentos e telas públicas responsivas da Gestão
+> adotam a cena oficial de marca separada e card centralizado; sem mudança
+> operacional na Gestão Web.
 
 > Revisão 1.6.1.107.52: contratação pessoal simplificada no web/PWA, sem
 > impacto nas demais operações da Gestão Web.

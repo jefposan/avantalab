@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.52: contratação pessoal simplificada no iOS,
-// web e PWA, sem alterar a orientação operacional da Ava.
+// Revisado na versão 1.6.1.107.53: cenas de acesso mobile seguem a composição
+// de marca separada e card centralizado; sem impacto operacional.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.107.53 - 2026-07-31
+
+- PADRÃO AVANTA: cenas mobile de acesso, recuperação, bloqueio e carregamento
+  passam a usar a mesma composição de três faixas. A marca fica separada e
+  centralizada no espaço entre a área segura superior e o card, sem coordenada
+  fixa no topo.
+- Gestão Mobile e Gestão React aplicam o padrão também nos estados especiais de
+  preparação, aviso, confirmação de celular e carregamento de perfil.
+
 ## 1.6.1.107.52 - 2026-07-30
 
 - Assinaturas pessoais: contratação direta a partir do menu, sem card

@@ -237,13 +237,13 @@ function TelaCarregandoSistema({
   onCancelar?: () => void;
 }) {
   return (
-    <main className="relative min-h-screen overflow-hidden font-sans">
+    <main className="avanta-access-scene relative overflow-hidden font-sans">
       <FundoCarregamentoResponsivo />
 
       <img
         src="/images/logo-avantalab-oficial.png"
         alt="AvantaLab — Do zero ao operacional"
-        className="pointer-events-none absolute left-1/2 top-[max(24px,env(safe-area-inset-top))] z-10 h-auto w-[clamp(136px,32vw,248px)] max-w-[66%] -translate-x-1/2 object-contain"
+        className="avanta-access-brand pointer-events-none relative z-10"
       />
 
       <div className="absolute inset-0 bg-transparent" />
@@ -7157,15 +7157,18 @@ if (validacaoTelefoneObrigatoria) {
   // "flash" de login entre selecionar o perfil e a página carregar).
   if (carregandoPerfil && !modalSelecionarEmpresa) {
     return (
-      <main className="avanta-loading-stage relative overflow-hidden font-sans">
+      <main className="avanta-access-scene relative overflow-hidden font-sans">
         <FundoCarregamentoResponsivo />
+        <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" className="avanta-access-brand pointer-events-none relative z-10" />
         <div className="absolute inset-0 bg-transparent" />
-        <div className="avanta-loading-glass avanta-loading-card relative z-10 rounded-3xl border shadow-2xl">
-          <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
-            <span className="avanta-loading-spinner animate-spin" />
+        <section className="avanta-loading-stage relative z-10">
+          <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
+            <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
+              <span className="avanta-loading-spinner animate-spin" />
+            </div>
+            <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando perfil…</p>
           </div>
-          <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando perfil…</p>
-        </div>
+        </section>
       </main>
     );
   }
@@ -7248,15 +7251,18 @@ if (validacaoTelefoneObrigatoria) {
   // (evita o flash do conteúdo antes de o paywall bloquear).
   if (acessoLiberado && empresaId && (!cadastroPerfilCarregado || (COBRANCA_ATIVA && !estadoCarregado))) {
     return (
-      <main className="avanta-loading-stage relative overflow-hidden font-sans">
+      <main className="avanta-access-scene relative overflow-hidden font-sans">
         <FundoCarregamentoResponsivo />
+        <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" className="avanta-access-brand pointer-events-none relative z-10" />
         <div className="absolute inset-0 bg-transparent" />
-        <div className="avanta-loading-glass avanta-loading-card relative z-10 rounded-3xl border shadow-2xl">
-          <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
-            <span className="avanta-loading-spinner animate-spin" />
+        <section className="avanta-loading-stage relative z-10">
+          <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
+            <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
+              <span className="avanta-loading-spinner animate-spin" />
+            </div>
+            <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando…</p>
           </div>
-          <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando…</p>
-        </div>
+        </section>
       </main>
     );
   }
@@ -7308,18 +7314,21 @@ if (validacaoTelefoneObrigatoria) {
 
   if (acessoLiberado && empresaId && cadastroPerfilErro) {
     return (
-      <main className="avanta-loading-stage relative overflow-hidden font-sans">
+      <main className="avanta-access-scene relative overflow-hidden font-sans">
         <FundoCarregamentoResponsivo />
-        <section className="relative z-10 mx-4 w-full max-w-sm rounded-xl border border-white/50 bg-white/90 p-5 text-center shadow-xl backdrop-blur-xl">
-          <h1 className="text-base font-black text-slate-900">Não foi possível verificar o cadastro</h1>
-          <p className="mt-2 text-sm text-slate-600">{cadastroPerfilErro}</p>
-          <button
-            type="button"
-            onClick={() => setCadastroPerfilTentativa((atual) => atual + 1)}
-            className="mt-4 h-9 rounded-lg bg-[#003E73] px-5 text-xs font-black text-white"
-          >
-            Tentar novamente
-          </button>
+        <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" className="avanta-access-brand pointer-events-none relative z-10" />
+        <section className="avanta-loading-stage relative z-10">
+          <div className="w-full max-w-sm rounded-xl border border-white/50 bg-white/90 p-5 text-center shadow-xl backdrop-blur-xl">
+            <h1 className="text-base font-black text-slate-900">Não foi possível verificar o cadastro</h1>
+            <p className="mt-2 text-sm text-slate-600">{cadastroPerfilErro}</p>
+            <button
+              type="button"
+              onClick={() => setCadastroPerfilTentativa((atual) => atual + 1)}
+              className="mt-4 h-9 rounded-lg bg-[#003E73] px-5 text-xs font-black text-white"
+            >
+              Tentar novamente
+            </button>
+          </div>
         </section>
       </main>
     );

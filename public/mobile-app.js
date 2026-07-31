@@ -1076,14 +1076,14 @@
 
   function telaAvisoMobile(titulo, texto) {
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;">' +
-        '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
+      cenaAcessoGestaoMobile(
+        '<div class="gestao-login-form text-center">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">' + escapeHtml(titulo) + '</h1>' +
           '<p class="mt-2 text-sm font-semibold leading-relaxed text-slate-600">' + escapeHtml(texto) + '</p>' +
           '<button type="button" onclick="window.location.reload()" class="mt-4 h-11 w-full rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">Tentar novamente</button>' +
-        '</div>' +
-      '</section>'
+        '</div>'
+      )
     );
   }
 
@@ -8896,15 +8896,15 @@
 
   function telaLoginWrapper(conteudo, titulo, subtitulo) {
     return (
-      '<section class="avantalab-mobile-bg avantalab-mobile-bg-login fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
-        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
+      cenaAcessoGestaoMobile(
+        '<div class="gestao-login-form">' +
           '<div class="mb-5">' +
             '<h1 class="text-3xl font-black text-slate-900">' + escapeHtml(titulo) + '</h1>' +
             '<p class="mt-1 text-xs leading-snug text-slate-600">' + escapeHtml(subtitulo) + '</p>' +
           '</div>' +
           conteudo +
-        '</div>' +
-      '</section>'
+        '</div>'
+      )
     );
   }
 
@@ -8958,26 +8958,22 @@
         ? 'calc(80dvh - 1.5rem)'
         : 'calc(80dvh - 5.5rem)');
     var padClass = state.modoCadastro ? 'p-3' : 'p-3';
-
-    var topLogin = boasVindas
-      ? 'clamp(12rem,28dvh,14rem)'
-      : (state.modoCadastro ? 'clamp(5rem,12dvh,7rem)' : 'clamp(7rem,18dvh,10rem)');
+    var conteudoAcesso = boasVindas
+      ? telaBoasVindas() + cardInstalarLoginHtml()
+      : '<div class="' + (state.modoCadastro ? 'mb-2' : 'mb-3') + '">' +
+          (state.modoSenha ? '<p class="mb-1 text-[10px] font-black uppercase tracking-[.18em] text-cyan-800">Gestão Financeira</p>' : '') +
+          '<h1 class="' + (state.modoCadastro ? 'text-xl' : 'text-2xl') + ' font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Gestão Financeira') + '</h1>' +
+          (state.modoSenha ? '<p class="mt-1 text-xs leading-snug text-slate-600">Digite seu login, receba o codigo por SMS e defina uma nova senha.</p>' : '') +
+        '</div>' +
+        (state.modoCadastro ? telaCadastro() : state.modoSenha ? telaSenha() : telaLoginCampos());
 
     return (
-      '<section class="avantalab-mobile-bg avantalab-mobile-bg-login fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:' + topLogin + ';background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
-        '<div class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/35 ' + padClass + ' text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:' + maxH + ';overscroll-behavior:contain;">' +
-          (boasVindas
-            ? telaBoasVindas()
-            : '<div class="' + (state.modoCadastro ? 'mb-2' : 'mb-3') + '">' +
-                (state.modoSenha ? '<p class="mb-1 text-[10px] font-black uppercase tracking-[.18em] text-cyan-800">Gestão Financeira</p>' : '') +
-                '<h1 class="' + (state.modoCadastro ? 'text-xl' : 'text-2xl') + ' font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Gestão Financeira') + '</h1>' +
-                (state.modoSenha ? '<p class="mt-1 text-xs leading-snug text-slate-600">Digite seu login, receba o codigo por SMS e defina uma nova senha.</p>' : '') +
-              '</div>' +
-              (state.modoCadastro ? telaCadastro() : state.modoSenha ? telaSenha() : telaLoginCampos())) +
-        '</div>' +
-        (!state.modoCadastro && !state.modoSenha ? cardInstalarLoginHtml() : '') +
-        (state.modalMenu ? modalMenuHtml() : '') +
-      '</section>'
+      cenaAcessoGestaoMobile(
+        '<div class="gestao-login-form ' + padClass + '" style="max-height:' + maxH + ';">' +
+          conteudoAcesso +
+        '</div>'
+      ) +
+      (state.modalMenu ? modalMenuHtml() : '')
     );
   }
 
@@ -9023,9 +9019,8 @@
       ? '<button id="cancelar-login-social-mobile" type="button" class="mt-3 flex h-10 w-full items-center justify-center rounded-xl border border-slate-300 bg-white/90 px-4 text-xs font-black text-slate-700 shadow-sm">Cancelar e voltar ao login</button>'
       : '';
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:cover;">' +
-        '<img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" class="pointer-events-none absolute top-[max(44px,calc(env(safe-area-inset-top)+24px))] h-auto w-[clamp(136px,46.4vw,248px)] max-w-[66%] object-contain">' +
-        '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
+      cenaAcessoGestaoMobile(
+        '<div class="gestao-login-form text-center">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
           '<p id="mobileAccessProgressLabel" class="mt-2 text-sm font-semibold text-slate-600">' + escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo') + '</p>' +
@@ -9033,8 +9028,8 @@
           '<b id="mobileAccessProgressValue" class="mt-1 block text-[11px] font-black text-cyan-700">' + Number(progresso.valor || 5) + '%</b>' +
           '<button id="mobileAccessContinueButton" type="button" onclick="window.__avantalabConcluirAcessoMobile && window.__avantalabConcluirAcessoMobile()" class="mt-3 hidden h-10 w-full rounded-xl bg-cyan-700 px-4 text-xs font-black uppercase tracking-wide text-white">Continuar</button>' +
           acaoCancelarLoginSocial +
-        '</div>' +
-      '</section>'
+        '</div>'
+      )
     );
   }
 
@@ -9273,8 +9268,8 @@
 
   function telaTelefoneObrigatorioMobile(modoPrevia) {
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
-        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-3 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 2.5rem);overscroll-behavior:contain;">' +
+      cenaAcessoGestaoMobile(
+        '<div class="gestao-login-form p-3" style="max-height:calc(100dvh - 2.5rem);">' +
           '<div class="mb-3">' +
             '<h1 class="text-2xl font-black text-slate-900">Confirme seu celular</h1>' +
             '<p class="mt-1 text-xs leading-snug text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
@@ -9301,8 +9296,8 @@
               ? '<a href="/mobile" class="text-center text-xs font-bold text-slate-600 underline">Fechar prévia</a>'
               : '<button id="sair-telefone-obrigatorio" type="button" class="text-xs font-bold text-slate-600 underline">Sair</button>') +
           '</div>' +
-        '</div>' +
-      '</section>'
+        '</div>'
+      )
     );
   }
 
@@ -9406,13 +9401,13 @@
   function telaRedirecionandoPonto() {
     redirecionarParaPonto();
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;">' +
-        '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
+      cenaAcessoGestaoMobile(
+        '<div class="gestao-login-form text-center">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Controle de Ponto</h1>' +
           '<p class="mt-2 text-sm font-semibold text-slate-600">Abrindo acesso seguro...</p>' +
-        '</div>' +
-      '</section>'
+        '</div>'
+      )
     );
   }
 

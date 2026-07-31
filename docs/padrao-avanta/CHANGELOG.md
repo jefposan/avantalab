@@ -1,5 +1,14 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.5.0 - 2026-07-31
+
+- Formalizada a composição obrigatória das cenas mobile de acesso: fundo sem
+  logo incorporado, grade de três faixas e marca centralizada no espaço entre a
+  área segura superior e o card.
+- A regra passa a abranger login, cadastro, recuperação, bloqueio e carregamento
+  em PWA, WebView, Android e iOS; dashboards e modais autenticados ficam fora
+  desse escopo.
+
 ## 1.4.0 - 2026-07-29
 
 - O modelo validado de login da Gestão e do AvantaVendas passa a ser o padrão

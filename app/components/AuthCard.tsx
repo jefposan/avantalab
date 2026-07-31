@@ -330,27 +330,21 @@ export default function AuthCard({
 
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 
-      <section className={`relative z-10 min-h-[100dvh] px-4 pb-8 lg:flex lg:min-h-screen lg:items-center lg:px-20 lg:py-10 ${
-        loginMobilePadrao ? 'grid grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch pt-0' : 'flex items-start pt-[clamp(8.25rem,18dvh,10rem)]'
-      }`}>
-        {!loginMobilePadrao && (
-          <Image
-            src="/images/logo-avantalab-oficial.png"
-            alt="AvantaLab — Do zero ao operacional"
-            width={248}
-            height={72}
-            priority
-            className="pointer-events-none absolute left-1/2 top-[max(24px,env(safe-area-inset-top))] h-auto w-[clamp(136px,32vw,248px)] max-w-[66%] -translate-x-1/2 object-contain"
-          />
-        )}
-        <div className={loginMobilePadrao ? 'contents lg:block lg:w-full lg:max-w-7xl' : 'w-full lg:max-w-7xl'}>
-          {loginMobilePadrao && (
-            <div className="row-start-1 grid min-h-0 place-items-center overflow-hidden pt-[env(safe-area-inset-top)] lg:hidden">
-              <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={248} height={72} priority className="h-auto w-[clamp(136px,46.4vw,248px)] max-h-[58%] max-w-[66%] object-contain" />
-            </div>
-          )}
+      <section className="relative z-10 grid min-h-[100dvh] grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch px-4 pb-8 pt-0 lg:flex lg:min-h-screen lg:items-center lg:px-20 lg:py-10">
+        <Image
+          src="/images/logo-avantalab-oficial.png"
+          alt="AvantaLab — Do zero ao operacional"
+          width={248}
+          height={72}
+          priority
+          className="pointer-events-none absolute left-1/2 top-[max(24px,env(safe-area-inset-top))] hidden h-auto w-[clamp(136px,32vw,248px)] max-w-[66%] -translate-x-1/2 object-contain lg:block"
+        />
+        <div className="contents lg:block lg:w-full lg:max-w-7xl">
+          <div className="row-start-1 grid min-h-0 place-items-center overflow-hidden pt-[env(safe-area-inset-top)] lg:hidden">
+            <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={248} height={72} priority className="h-auto w-[clamp(136px,46.4vw,248px)] max-h-[58%] max-w-[66%] object-contain" />
+          </div>
           <div className={`relative z-20 w-full rounded-3xl border p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
-            loginMobilePadrao ? 'row-start-2 mx-auto w-[80%] max-w-[336px] self-center rounded-[18px] border-white/70 bg-white/[.30] p-4 shadow-[0_18px_45px_rgba(0,31,60,0.22),inset_0_1px_0_rgba(255,255,255,0.45)] backdrop-blur-xl backdrop-saturate-[1.35] [@media(pointer:fine)]:mx-0 lg:mx-0 lg:-translate-y-5' : 'border-white/20 bg-white/10'
+            loginMobilePadrao ? 'row-start-2 mx-auto w-[80%] max-w-[336px] self-center rounded-[18px] border-white/70 bg-white/[.30] p-4 shadow-[0_18px_45px_rgba(0,31,60,0.22),inset_0_1px_0_rgba(255,255,255,0.45)] backdrop-blur-xl backdrop-saturate-[1.35] [@media(pointer:fine)]:mx-0 lg:mx-0 lg:-translate-y-5' : 'row-start-2 mx-auto w-full max-w-md self-center border-white/20 bg-white/10'
           } lg:max-w-md`}>
             <>
             <div className="mb-2 lg:mb-5">

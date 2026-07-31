@@ -43,6 +43,14 @@ compatível, ele deve ser reutilizado.
 - O card fica centralizado horizontalmente e estabilizado na área útil vertical.
   A marca ocupa o espaço disponível entre o topo seguro e o card, centralizada
   nesse intervalo.
+- A composição obrigatória das cenas de acesso, recuperação, bloqueio e
+  carregamento é uma grade de três faixas: `minmax(0, 1fr) auto minmax(0, 1fr)`.
+  A marca fica na primeira faixa, o card na faixa central e a última faixa
+  absorve o espaço restante. Não posicionar a marca por `top`, margem fixa ou
+  coordenada absoluta. O padrão continua válido em iOS, Android, PWA e WebView.
+- Uma tela sem card (transição técnica imperceptível) não precisa exibir marca.
+  Telas autenticadas, dashboards e modais de conteúdo não são cenas de acesso e
+  não devem receber marca decorativa apenas por usarem o fundo institucional.
 - Em WebView, usar a altura visual estável do aparelho, respeitar
   `env(safe-area-inset-*)`, impedir bounce da página externa e permitir rolagem
   somente no conteúdo do card quando ela for realmente necessária.

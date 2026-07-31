@@ -57,6 +57,8 @@ if (manifesto) {
     'Preparando acesso',
     'Cancelar e voltar ao login',
     '44 × 44 px',
+    'minmax(0, 1fr) auto minmax(0, 1fr)',
+    'Não posicionar a marca por `top`',
   ]) {
     if (!autenticacao.includes(contrato)) {
       falhas.push(`Contrato obrigatório ausente em autenticacao.md: ${contrato}`);

@@ -361,6 +361,22 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
               max-height: 58%;
               object-fit: contain;
             }
+            .gestao-access-brand {
+              grid-row: 1;
+              align-self: center;
+              justify-self: center;
+              width: clamp(136px, 46.4vw, 248px);
+              max-width: 66%;
+              max-height: 58%;
+              height: auto;
+              margin-top: env(safe-area-inset-top);
+              object-fit: contain;
+            }
+            .gestao-access-card {
+              grid-row: 2;
+              align-self: center;
+              justify-self: center;
+            }
             .gestao-login-heading h1 {
               margin: 0;
               color: #0f172a;
@@ -600,7 +616,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
           </section>
         ) : (
           <section
-            className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4"
+            className="avantalab-mobile-bg gestao-login-screen"
             style={{
               height: '100dvh',
               backgroundPosition: 'center bottom',
@@ -610,10 +626,10 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
             <img
               src="/images/logo-avantalab-oficial.png"
               alt="AvantaLab — Do zero ao operacional"
-              className="pointer-events-none absolute top-[max(44px,calc(env(safe-area-inset-top)+24px))] h-auto w-[clamp(136px,46.4vw,248px)] max-w-[66%] object-contain"
+              className="gestao-access-brand pointer-events-none"
             />
             <div
-              className="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl"
+              className="gestao-access-card w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl"
             >
               <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">
                 AvantaLab

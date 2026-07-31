@@ -32,3 +32,14 @@
   scroll.
 - Bottom sheet mobile mantém cabeçalho e ações críticas acessíveis.
 - Definir `z-index` por camada do sistema, não por competição de números locais.
+
+## Cena de acesso mobile
+
+- Fundos institucionais de login, cadastro, recuperação, bloqueio e carregamento
+  usam o arquivo oficial sem logo incorporado.
+- Quando houver marca e card, a cena usa uma grade com três faixas:
+  `minmax(0, 1fr) auto minmax(0, 1fr)`. A marca ocupa a primeira faixa e fica
+  centralizada no espaço entre a área segura superior e o card central.
+- O card ocupa a segunda faixa. A última faixa equilibra a composição e nunca
+  deve ser substituída por uma margem fixa. A marca não usa `position: absolute`
+  com `top` nessas cenas.

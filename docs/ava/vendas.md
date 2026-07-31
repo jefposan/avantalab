@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.52 -->
+<!-- ava-version: 1.6.1.107.53 -->
+
+> Revisão 1.6.1.107.53: consolidação do padrão visual das cenas de acesso do
+> ecossistema; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.52: contratação pessoal simplificada na Gestão Financeira;
 > sem impacto operacional no AvantaVendas.

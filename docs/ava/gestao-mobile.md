@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.52 -->
+<!-- ava-version: 1.6.1.107.53 -->
+
+> Revisão 1.6.1.107.53: login, recuperação, confirmação de celular, avisos e
+> carregamentos usam a mesma cena visual de marca separada e card centralizado;
+> sem alteração dos passos operacionais.
 
 > Revisão 1.6.1.107.52: a contratação de assinatura pessoal foi simplificada;
 > no iOS usa a App Store e no web/PWA encaminha ao checkout Asaas.
