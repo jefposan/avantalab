@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.51 -->
+<!-- ava-version: 1.6.1.107.52 -->
+
+> Revisão 1.6.1.107.52: contratação pessoal simplificada na Gestão Financeira;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.51: padronização visual das entradas de Controle de Ponto
 > e Recebimentos Presenciais; sem impacto operacional no AvantaVendas.

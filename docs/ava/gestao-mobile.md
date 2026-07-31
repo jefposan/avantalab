@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.51 -->
+<!-- ava-version: 1.6.1.107.52 -->
+
+> Revisão 1.6.1.107.52: a contratação de assinatura pessoal foi simplificada;
+> no iOS usa a App Store e no web/PWA encaminha ao checkout Asaas.
 
 > Revisão 1.6.1.107.51: padronização visual das entradas de Controle de Ponto
 > e Recebimentos Presenciais; sem mudança operacional na Gestão Mobile.

@@ -325,6 +325,7 @@
     assinaturaApplePrecoAnual: 'R$ 99,90',
     assinaturaAppleAtiva: false,
     assinaturaAppleManagementUrl: '',
+    assinaturaCicloSelecionado: '',
     contaExclusaoAcao: false,
     mes: meses[new Date().getMonth()],
     ano: String(new Date().getFullYear()),
@@ -2175,19 +2176,20 @@
     state.assinaturaConfirmarCancelamento = false;
     render();
     carregarAssinaturaMobile().then(function () {
-      // No app iOS, um perfil pessoal sem contrato não precisa atravessar um
-      // painel de resumo antes de comprar. Mantemos o resumo para quem já tem
-      // assinatura, pois ele oferece gerenciamento e restauração.
       var detalhes = state.assinaturaDetalhes;
-      var pessoal = state.empresa
-        && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal';
-      var podeGerenciar = !detalhes || detalhes.podeGerenciar !== false;
+      var estado = detalhes && detalhes.estado || state.paywallEstado || {};
+      var temAssinatura = Boolean(detalhes && detalhes.temAssinatura);
+      var modoRevisao = Boolean(estado.modoRevisao || ehContaRevisaoAppAppleMobile(state.usuario));
+      var cortesiaAtiva = !modoRevisao && (
+        estado.status === 'cortesia'
+        || (estado.status === 'ativa' && !temAssinatura)
+      );
       if (
         state.modalMenu === 'assinatura'
-        && ehIosNativoMobile()
-        && pessoal
-        && podeGerenciar
-        && !(detalhes && detalhes.temAssinatura)
+        && detalhes
+        && detalhes.podeGerenciar !== false
+        && !temAssinatura
+        && !cortesiaAtiva
         && !state.assinaturaErro
       ) {
         abrirContratacaoAssinaturaMobile();
@@ -2199,6 +2201,7 @@
     state.modalMenu = 'contratarAssinatura';
     state.assinaturaErro = '';
     state.assinaturaAcao = '';
+    state.assinaturaCicloSelecionado = '';
     render();
     if (
       ehIosNativoMobile()
@@ -2239,9 +2242,10 @@
         '</div>' +
         (state.assinaturaErro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.assinaturaErro) + '</div>' : '') +
         '<div class="grid grid-cols-2 gap-2">' +
-          '<button id="assinatura-assinar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border border-sky-300 bg-sky-50 px-2 text-[10px] font-black uppercase text-sky-700 disabled:opacity-60">' + (state.assinaturaAcao === 'apple-mensal' ? 'Processando...' : 'Mensal · ' + escapeHtml(precoMensal)) + '</button>' +
-          '<button id="assinatura-assinar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl bg-sky-700 px-2 text-[10px] font-black uppercase text-white disabled:opacity-60">' + (state.assinaturaAcao === 'apple-anual' ? 'Processando...' : 'Anual · ' + escapeHtml(precoAnual)) + '</button>' +
+          '<button id="assinatura-selecionar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'mensal' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Mensal · ' + escapeHtml(precoMensal) + '</button>' +
+          '<button id="assinatura-selecionar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'anual' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Anual · ' + escapeHtml(precoAnual) + '</button>' +
         '</div>' +
+        '<button id="assinatura-confirmar-apple" type="button" ' + (!state.assinaturaCicloSelecionado || state.assinaturaAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-[#003E73] px-4 text-[10px] font-black uppercase text-white disabled:opacity-50">' + ((state.assinaturaAcao === 'apple-mensal' || state.assinaturaAcao === 'apple-anual') ? 'Abrindo App Store...' : 'Assinar com Apple') + '</button>' +
         '<button id="assinatura-restaurar-apple" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl border border-slate-300 bg-white text-[10px] font-black uppercase text-slate-700 disabled:opacity-60">' + (state.assinaturaAcao === 'apple-restaurar' ? 'Restaurando...' : 'Restaurar compras') + '</button>' +
         '<p class="text-[10px] font-semibold leading-relaxed text-slate-500">O pagamento será cobrado na sua Conta Apple. A assinatura é renovada automaticamente, salvo cancelamento com pelo menos 24 horas de antecedência do fim do período. Você pode administrar ou cancelar nas configurações de assinaturas da App Store.</p>' +
         '<p class="text-center text-[10px] font-bold text-slate-500"><a href="/termos" class="text-sky-700 underline">Termos de Uso</a> · <a href="/privacidade" class="text-sky-700 underline">Política de Privacidade</a></p>' +
@@ -2251,19 +2255,20 @@
       '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
         '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Contratação</p>' +
         '<h3 class="mt-1 text-lg font-black">' + (pessoal ? 'Premium Pessoal' : 'Plano Empresa') + '</h3>' +
-        '<p class="mt-1 text-xs font-semibold leading-relaxed text-white/85">Escolha o ciclo e informe os dados de cobrança para liberar os recursos do perfil.</p>' +
+        '<p class="mt-1 text-xs font-semibold leading-relaxed text-white/85">Escolha o ciclo e siga para o checkout seguro do Asaas.</p>' +
       '</div>' +
       (state.assinaturaErro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.assinaturaErro) + '</div>' : '') +
       '<div class="grid grid-cols-2 gap-2">' +
-        '<input id="assinatura-nome" type="text" value="' + escapeHtml(state.assinaturaNome || nomeEmpresa(state.empresa || {})) + '" placeholder="Nome/razão social" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
-        '<input id="assinatura-cpf" type="text" inputmode="numeric" value="' + escapeHtml(state.assinaturaCpf || '') + '" placeholder="CPF/CNPJ" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
+        '<button id="assinatura-selecionar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'mensal' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Mensal · ' + precoMensal + '</button>' +
+        '<button id="assinatura-selecionar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'anual' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Anual · ' + precoAnual + '</button>' +
+      '</div>' +
+      '<div class="grid grid-cols-2 gap-2">' +
+        '<input id="assinatura-nome" type="text" value="' + escapeHtml(state.assinaturaNome || nomeEmpresa(state.empresa || {})) + '" placeholder="' + (pessoal ? 'Nome completo' : 'Razão social') + '" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
+        '<input id="assinatura-cpf" type="text" inputmode="numeric" value="' + escapeHtml(state.assinaturaCpf || '') + '" placeholder="' + (pessoal ? 'CPF' : 'CNPJ') + '" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
         '<input id="assinatura-email" type="email" value="' + escapeHtml(state.assinaturaEmail || emailUsuarioAtualMobile()) + '" placeholder="E-mail de cobrança" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
         '<input id="assinatura-telefone" type="tel" inputmode="tel" value="' + escapeHtml(state.assinaturaTelefone || telefonePadraoMobile()) + '" placeholder="Telefone" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
       '</div>' +
-      '<div class="grid grid-cols-2 gap-2">' +
-        '<button id="assinatura-assinar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border border-sky-300 bg-sky-50 px-2 text-[10px] font-black uppercase text-sky-700 disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-mensal' ? 'Processando...' : 'Mensal · ' + precoMensal) + '</button>' +
-        '<button id="assinatura-assinar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl bg-sky-700 px-2 text-[10px] font-black uppercase text-white disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-anual' ? 'Processando...' : 'Anual · ' + precoAnual) + '</button>' +
-      '</div>' +
+      '<button id="assinatura-continuar-asaas" type="button" ' + (!state.assinaturaCicloSelecionado || state.assinaturaAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-[#003E73] px-4 text-[10px] font-black uppercase text-white disabled:opacity-50">' + (state.assinaturaAcao ? 'Abrindo checkout...' : 'Continuar para pagamento seguro') + '</button>' +
       '<p class="text-center text-[10px] font-semibold leading-relaxed text-slate-500">O pagamento será aberto em uma página segura. Seus dados permanecem preservados durante a contratação.</p>' +
     '</div>';
   }
@@ -2348,12 +2353,6 @@
     if (!state.empresa || state.assinaturaAcao) return;
     if (ehIosNativoMobile()) {
       await executarAssinaturaAppleMobile('purchase', ciclo === 'anual' ? 'anual' : 'mensal');
-      return;
-    }
-    if (state.cadastroPerfilStatus && !state.cadastroPerfilStatus.completo) {
-      state.modalMenu = '';
-      state.paywallCadastroCiclo = ciclo === 'anual' ? 'anual' : 'mensal';
-      render();
       return;
     }
     state.assinaturaNome = campo('assinatura-nome').trim().replace(/\s+/g, ' ');
@@ -13377,8 +13376,10 @@
     bind('assinatura-abrir-contratacao', abrirContratacaoAssinaturaMobile);
     bind('assinatura-mensal', function () { alterarAssinaturaMobile('mensal'); });
     bind('assinatura-anual', function () { alterarAssinaturaMobile('anual'); });
-    bind('assinatura-assinar-mensal', function () { assinarPeloPainelMobile('mensal'); });
-    bind('assinatura-assinar-anual', function () { assinarPeloPainelMobile('anual'); });
+    bind('assinatura-selecionar-mensal', function () { state.assinaturaCicloSelecionado = 'mensal'; state.assinaturaErro = ''; render(); });
+    bind('assinatura-selecionar-anual', function () { state.assinaturaCicloSelecionado = 'anual'; state.assinaturaErro = ''; render(); });
+    bind('assinatura-confirmar-apple', function () { assinarPeloPainelMobile(state.assinaturaCicloSelecionado); });
+    bind('assinatura-continuar-asaas', function () { assinarPeloPainelMobile(state.assinaturaCicloSelecionado); });
     bind('assinatura-restaurar-apple', function () { executarAssinaturaAppleMobile('restore'); });
     bind('assinatura-gerenciar-apple', function () { executarAssinaturaAppleMobile('manage'); });
     bind('assinatura-abrir-cancelamento', function () { state.assinaturaConfirmarCancelamento = true; render(); });

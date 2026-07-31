@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.51: padronização visual das entradas de Ponto
-// e Recebimentos Presenciais, sem alterar a orientação operacional da Ava.
+// Revisado na versão 1.6.1.107.52: contratação pessoal simplificada no iOS,
+// web e PWA, sem alterar a orientação operacional da Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.51 -->
+<!-- ava-version: 1.6.1.107.52 -->
+
+> Revisão 1.6.1.107.52: contratação pessoal simplificada no web/PWA, sem
+> impacto nas demais operações da Gestão Web.
 
 > Revisão 1.6.1.107.51: padronização visual das entradas de Controle de Ponto
 > e Recebimentos Presenciais; sem alteração operacional na Gestão Web.

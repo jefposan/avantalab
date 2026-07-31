@@ -75,39 +75,39 @@ export async function POST(request: Request) {
     .select('nome_fantasia, nome_responsavel, razao_social, documento, email_empresa, telefone, whatsapp, cep, rua, numero, complemento, bairro, inscricao_estadual, inscricao_estadual_isento, inscricao_municipal, inscricao_municipal_isento, concluido_em')
     .eq('empresa_id', empresaId)
     .maybeSingle();
-  if (!cadastroPerfil?.concluido_em) {
-    return NextResponse.json({ erro: true, mensagem: 'Complete o cadastro do perfil antes de iniciar a assinatura.' }, { status: 409 });
-  }
-  nomeCobranca = limparTexto(cadastroPerfil.razao_social || cadastroPerfil.nome_responsavel || cadastroPerfil.nome_fantasia);
-  cpfCnpj = String(cadastroPerfil.documento || '').replace(/\D/g, '');
-  emailCobranca = limparTexto(cadastroPerfil.email_empresa).toLowerCase();
-  telefoneCobranca = String(cadastroPerfil.whatsapp || cadastroPerfil.telefone || '').replace(/\D/g, '');
+  // O checkout não exige a conclusão do cadastro operacional do perfil. Para
+  // cobrar no Asaas bastam os dados de cobrança, informados nesta etapa e
+  // complementados pelo que já existir no perfil.
+  nomeCobranca = nomeCobranca || limparTexto(cadastroPerfil?.razao_social || cadastroPerfil?.nome_responsavel || cadastroPerfil?.nome_fantasia);
+  cpfCnpj = cpfCnpj || String(cadastroPerfil?.documento || '').replace(/\D/g, '');
+  emailCobranca = emailCobranca || limparTexto(cadastroPerfil?.email_empresa || userEmail).toLowerCase();
+  telefoneCobranca = telefoneCobranca || String(cadastroPerfil?.whatsapp || cadastroPerfil?.telefone || '').replace(/\D/g, '');
   if (nomeCobranca.length < 3) {
-    return NextResponse.json({ erro: true, mensagem: 'O cadastro não possui nome ou razão social válido.' }, { status: 400 });
+    return NextResponse.json({ erro: true, mensagem: 'Informe um nome de cobrança válido.' }, { status: 400 });
   }
   if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
-    return NextResponse.json({ erro: true, mensagem: 'O cadastro não possui CPF ou CNPJ válido.' }, { status: 400 });
+    return NextResponse.json({ erro: true, mensagem: 'Informe um CPF ou CNPJ válido.' }, { status: 400 });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailCobranca)) {
-    return NextResponse.json({ erro: true, mensagem: 'O cadastro não possui e-mail de cobrança válido.' }, { status: 400 });
+    return NextResponse.json({ erro: true, mensagem: 'Informe um e-mail de cobrança válido.' }, { status: 400 });
   }
   if (telefoneCobranca.length < 10 || telefoneCobranca.length > 13) {
-    return NextResponse.json({ erro: true, mensagem: 'O cadastro não possui telefone de cobrança válido.' }, { status: 400 });
+    return NextResponse.json({ erro: true, mensagem: 'Informe um telefone de cobrança válido.' }, { status: 400 });
   }
 
   const dadosCliente = {
     name: nomeCobranca,
     email: emailCobranca || userEmail || undefined,
     cpfCnpj,
-    phone: String(cadastroPerfil.telefone || '').replace(/\D/g, '') || undefined,
+    phone: String(cadastroPerfil?.telefone || '').replace(/\D/g, '') || undefined,
     mobilePhone: telefoneCobranca,
-    address: limparTexto(cadastroPerfil.rua) || undefined,
-    addressNumber: limparTexto(cadastroPerfil.numero) || undefined,
-    complement: limparTexto(cadastroPerfil.complemento) || undefined,
-    province: limparTexto(cadastroPerfil.bairro) || undefined,
-    postalCode: String(cadastroPerfil.cep || '').replace(/\D/g, '') || undefined,
-    stateInscription: cadastroPerfil.inscricao_estadual_isento ? undefined : limparTexto(cadastroPerfil.inscricao_estadual) || undefined,
-    municipalInscription: cadastroPerfil.inscricao_municipal_isento ? undefined : limparTexto(cadastroPerfil.inscricao_municipal) || undefined,
+    address: limparTexto(cadastroPerfil?.rua) || undefined,
+    addressNumber: limparTexto(cadastroPerfil?.numero) || undefined,
+    complement: limparTexto(cadastroPerfil?.complemento) || undefined,
+    province: limparTexto(cadastroPerfil?.bairro) || undefined,
+    postalCode: String(cadastroPerfil?.cep || '').replace(/\D/g, '') || undefined,
+    stateInscription: cadastroPerfil?.inscricao_estadual_isento ? undefined : limparTexto(cadastroPerfil?.inscricao_estadual) || undefined,
+    municipalInscription: cadastroPerfil?.inscricao_municipal_isento ? undefined : limparTexto(cadastroPerfil?.inscricao_municipal) || undefined,
     externalReference: empresaId,
   };
 

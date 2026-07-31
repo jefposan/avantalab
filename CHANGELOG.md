@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.107.52 - 2026-07-30
+
+- Assinaturas pessoais: contratação direta a partir do menu, sem card
+  intermediário. No iOS, os ciclos da App Store e a restauração de compras
+  aparecem sem solicitar dados de cobrança. No web/PWA, o checkout Asaas
+  exige apenas os dados de cobrança necessários, sem bloquear pelo cadastro
+  operacional completo.
+
 ## 1.6.1.107.51 - 2026-07-30
 
 - Controle de Ponto e Recebimentos Presenciais: a marca de acesso passa a
