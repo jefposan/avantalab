@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.38 -->
+<!-- ava-version: 1.6.1.107.40 -->
+
+> Revisão 1.6.1.107.40: login com Google ou Apple retorna diretamente à Gestão
+> Web/PWA após a confirmação, sem passagem visual pela landing.
+
+> Revisão 1.6.1.107.39: lista de ponto exclusiva da Gestão Mobile; sem impacto
+> operacional na Gestão Web.
 
 > Revisão 1.6.1.107.38: ajuste de rolagem exclusivo do Menu da Gestão Mobile;
 > sem impacto operacional na Gestão Web.

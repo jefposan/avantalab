@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.38: o card superior do Menu da Gestão Mobile
-// permanece fixo enquanto as opções rolam, sem impacto operacional na Ava.
+// Revisado na versão 1.6.1.107.40: OAuth da Gestão Web/PWA retorna diretamente
+// ao sistema, sem impacto operacional na orientação da Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -70,6 +70,8 @@ NAVEGAÇÃO E PERFIS
 - Durante o login com Google ou Apple, **Preparando acesso** oferece **Cancelar e voltar ao login**. A ação encerra a tentativa pendente e restaura a tela de login sem manter o botão em Conectando.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
+- Em Controle de ponto > Ver controle de ponto, todos os funcionários ativos aparecem, mesmo sem atraso, falta ou outra ocorrência. Toque em um nome para ver seus registros do dia.
+- No login da Gestão Web/PWA, Google e Apple retornam diretamente ao sistema depois da confirmação; não é necessário refazer o acesso caso a landing não seja exibida.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
 - Assinatura é o primeiro botão do Menu e fica fora de Configurações. A tela sempre mostra situação e tipo do plano. No aplicativo iOS, Pessoal Premium usa a compra da App Store, permite restaurar compras e gerenciar a renovação; Business e Business Pro não são vendidos no aplicativo e continuam contratados somente pela plataforma web. No PWA, a cobrança web permanece igual. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente compatível com aquele ambiente. Cortesia e cupom ativos não exibem preços nem opções de contratação. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.

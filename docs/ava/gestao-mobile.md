@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.38 -->
+<!-- ava-version: 1.6.1.107.40 -->
+
+> Revisão 1.6.1.107.40: ajuste de retorno OAuth exclusivo da Gestão Web/PWA;
+> sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.107.39: em **Controle de ponto > Ver controle de ponto**, a
+> lista inclui todos os funcionários ativos. Toque em um nome para abrir seus
+> registros do dia, mesmo que ele não tenha uma ocorrência de pontualidade.
 
 > Revisão 1.6.1.107.38: no Menu, o card de identificação permanece fixo e a
 > lista de opções rola sem barra visual; sem mudança de ações ou permissões.

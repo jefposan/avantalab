@@ -23,8 +23,9 @@ compatível, ele deve ser reutilizado.
    Supabase; o provedor não cria uma área paralela do sistema.
 3. Google e Apple compartilham uma única máquina de estados e uma única fonte de estado social.
    Não criar `googleLoading`, `appleLoading` e flags equivalentes concorrentes.
-4. Web/PWA preservam o redirecionamento para
-   `${window.location.origin}/` quando a entrada pertence à Gestão.
+4. Web/PWA retornam diretamente para `${window.location.origin}/gestao` quando
+   a entrada pertence à Gestão, sem renderizar a landing entre o OAuth e o
+   carregamento do sistema.
 5. Aplicativo nativo usa navegador seguro, deep link próprio e conclusão
    explícita da sessão dentro do aplicativo.
 6. Cancelamento, fechamento do navegador, erro do provedor e callback inválido
@@ -131,15 +132,15 @@ ler o valor atual.
 ## Web e PWA
 
 1. Chamar `signInWithOAuth` sem `skipBrowserRedirect`.
-2. A Gestão usa `redirectTo: `${window.location.origin}/``.
-3. Antes de sair para o provedor, registrar em `sessionStorage` a intenção do
-   login e o destino interno esperado.
-4. Na raiz, aguardar o Supabase confirmar a sessão. Só então encaminhar para a
-   Gestão ou para o sistema de origem.
+2. A Gestão usa `redirectTo: `${window.location.origin}/gestao``.
+3. Antes de sair para o provedor, limpar qualquer intenção antiga de retorno
+   pela landing para que ela não seja exibida entre o OAuth e a Gestão.
+4. A rota `/gestao` aguarda o Supabase confirmar a sessão e então carrega o
+   sistema; não deve haver uma passagem intermediária pela landing.
 5. Sem sessão, a raiz permanece na landing SEO oficial. Nunca renderizar uma
    landing antiga ou uma cópia interna de autenticação.
-6. Erro ou retorno incompleto apagam a intenção pendente e devolvem o login
-   pronto, com mensagem compreensível.
+6. Erro ou retorno incompleto devolvem o login pronto, com mensagem
+   compreensível.
 
 Rotas de Vendas podem retornar diretamente ao próprio caminho, desde que
 preservem a origem e nunca obriguem uma passagem indevida pela landing.

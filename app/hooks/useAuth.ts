@@ -21,7 +21,7 @@ import { Capacitor } from '@capacitor/core';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
-import { limparRetornoOauthPendente, registrarRetornoOauthGestao } from '../lib/oauth-retorno';
+import { limparRetornoOauthPendente } from '../lib/oauth-retorno';
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -969,12 +969,12 @@ export function useAuth(deps: UseAuthDeps) {
     iniciarLoginSocial(provedor);
 
     if (!Capacitor.isNativePlatform()) {
-      // O Supabase retorna à raiz pública. Guardamos apenas a intenção deste
-      // login para que a landing encaminhe a sessão confirmada à Gestão.
-      registrarRetornoOauthGestao();
+      // Web e PWA retornam diretamente à Gestão. Isso evita renderizar a
+      // landing entre a confirmação OAuth e o carregamento do sistema.
+      limparRetornoOauthPendente();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provedor,
-        options: { redirectTo: `${window.location.origin}/` },
+        options: { redirectTo: `${window.location.origin}/gestao` },
       });
 
       if (error) {

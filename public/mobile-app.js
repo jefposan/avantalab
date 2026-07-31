@@ -352,6 +352,7 @@
     lembrarSistemaInicial: false,
     sistemaInicialAvaliadoPerfilId: '',
     pontoResumo: [],
+    pontoFuncionarios: [],
     pontoFuncionariosHoje: 0,
     pontoResumoCarregando: false,
     pontoRelatorioUsuarioId: '',
@@ -2827,6 +2828,7 @@
     state.vendasMobileModuloAtivo = false;
     state.preparacaoSistemaVendas = null;
     state.pontoResumo = [];
+    state.pontoFuncionarios = [];
     state.pontoFuncionariosHoje = 0;
     state.pontoResumoCarregando = false;
 
@@ -3115,6 +3117,7 @@
   async function carregarResumoPontoMobile() {
     if (!podeGerenciarPontoMobile()) {
       state.pontoResumo = [];
+      state.pontoFuncionarios = [];
       state.pontoFuncionariosHoje = 0;
       state.pontoResumoCarregando = false;
       return;
@@ -3140,10 +3143,14 @@
     ]);
 
     if (respostas[0].error || respostas[1].error) {
+      state.pontoFuncionarios = [];
       state.pontoResumoCarregando = false;
       render();
       return;
     }
+    state.pontoFuncionarios = (respostas[0].data || []).map(function (funcionario) {
+      return { userId: funcionario.user_id, nome: funcionario.nome };
+    }).filter(function (funcionario) { return funcionario.userId && funcionario.nome; });
     var diasNaoUteis = respostas[2].error ? [] : (respostas[2].data || []);
     if (diaNaoUtilPontoMobile(periodo.data, diasNaoUteis)) {
       state.pontoFuncionariosHoje = 0;
@@ -5908,6 +5915,7 @@
     });
     if (!podeGerenciarPontoMobile()) {
       state.pontoResumo = [];
+      state.pontoFuncionarios = [];
       state.pontoFuncionariosHoje = 0;
       state.pontoResumoCarregando = false;
     }
@@ -9656,10 +9664,10 @@
   function pontoRelatorioMobileHtml() {
     if (!state.pontoRelatorioUsuarioId) {
       return '<div class="grid gap-2">' +
-        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900">Resumo de ocorrencias do dia. Toque em um funcionario para ver os registros.</p>' +
-        (state.pontoResumo.length ? state.pontoResumo.map(function (item) {
-          return '<button type="button" data-ponto-relatorio-user="' + escapeHtml(item.userId) + '" data-ponto-relatorio-nome="' + escapeHtml(item.nome) + '" class="flex min-h-10 items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-left"><span class="truncate text-xs font-bold text-slate-800">' + escapeHtml(item.nome) + '</span><span class="text-[10px] font-black uppercase text-cyan-700">' + escapeHtml(item.status) + '</span></button>';
-        }).join('') : '<p class="py-5 text-center text-sm font-semibold text-emerald-600">Equipe em dia.</p>') +
+        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900">Selecione um funcionario para ver o relatorio de registros do dia.</p>' +
+        (state.pontoFuncionarios.length ? state.pontoFuncionarios.map(function (funcionario) {
+          return '<button type="button" data-ponto-relatorio-user="' + escapeHtml(funcionario.userId) + '" data-ponto-relatorio-nome="' + escapeHtml(funcionario.nome) + '" class="flex min-h-10 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-left active:brightness-95"><span class="min-w-0 flex-1 truncate text-xs font-bold text-slate-800">' + escapeHtml(funcionario.nome) + '</span><span class="shrink-0 text-[10px] font-black uppercase text-cyan-700">Ver relatorio</span></button>';
+        }).join('') : '<p class="py-5 text-center text-sm font-semibold text-slate-500">Nenhum funcionario ativo cadastrado.</p>') +
       '</div>';
     }
 

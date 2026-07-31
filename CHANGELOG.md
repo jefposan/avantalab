@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.1.107.40 - 2026-07-30
+
+- Gestão Web e PWA: Google e Apple agora retornam diretamente para a Gestão
+  após o OAuth, sem renderizar a landing entre a autenticação e o carregamento
+  do sistema.
+
+## 1.6.1.107.39 - 2026-07-30
+
+- Gestão Mobile: **Ver controle de ponto** passa a listar todos os funcionários
+  ativos, inclusive os sem ocorrência de pontualidade; cada seleção abre o
+  relatório de registros do dia.
+
 ## 1.6.1.107.38 - 2026-07-30
 
 - Gestão Mobile: o card superior do Menu fica fixo; somente os botões rolam,

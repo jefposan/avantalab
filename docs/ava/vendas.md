@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.38 -->
+<!-- ava-version: 1.6.1.107.40 -->
+
+> Revisão 1.6.1.107.40: ajuste de retorno OAuth exclusivo da Gestão Web/PWA;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.39: ajuste de lista no Controle de Ponto da Gestão Mobile;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.38: ajuste de rolagem exclusivo do Menu da Gestão Mobile;
 > sem impacto operacional no AvantaVendas.

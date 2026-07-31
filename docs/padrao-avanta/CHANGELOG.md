@@ -1,5 +1,10 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.4.1 - 2026-07-30
+
+- Web e PWA da Gestão retornam diretamente para `/gestao` após Google ou Apple,
+  sem renderizar a landing entre a confirmação OAuth e a entrada no sistema.
+
 ## 1.4.0 - 2026-07-29
 
 - O modelo validado de login da Gestão e do AvantaVendas passa a ser o padrão
