@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
 import { FORMAS_PAGAMENTO_RECEBIMENTO, type Colaborador, type Empresa, type FormaPagamentoRecebimento, type Recebimento, type Subempresa } from './types';
 import { aguardandoConferencia, formatarDataHora, formatarMoeda, rotuloFormaPagamento, rotuloSituacao } from './helpers';
@@ -19,14 +20,16 @@ type Props = {
   onDevolver: (id: string, motivo: string) => void;
   onDivergencia: (id: string, motivo: string) => void;
   onEstornar: (id: string, motivo: string) => void;
+  portalBusca?: HTMLElement | null;
 };
 
 export default function PainelConferencia({
   podeConfirmar, darkMode, empresas, subempresas, colaboradores, recebimentos,
-  onConfirmarBaixa, onObterComprovante, onDevolver, onDivergencia, onEstornar,
+  onConfirmarBaixa, onObterComprovante, onDevolver, onDivergencia, onEstornar, portalBusca,
 }: Props) {
   const [motivos, setMotivos] = useState<Record<string, string>>({});
   const [formasPagamento, setFormasPagamento] = useState<Record<string, FormaPagamentoRecebimento | ''>>({});
+  const [busca, setBusca] = useState('');
   // Ação pendente por recebimento: revela o campo de motivo + botão Confirmar.
   // A ação só é efetivada ao confirmar.
   const [acaoMotivo, setAcaoMotivo] = useState<Record<string, 'devolver' | 'divergencia' | 'estornar' | null>>({});
@@ -37,15 +40,34 @@ export default function PainelConferencia({
     [recebimentos],
   );
 
-  const nomeEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nome ?? '—';
-  const nomeSub = (id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto';
-  const nomeColab = (id: string | null) => (id ? colaboradores.find((c) => c.id === id)?.nome ?? '—' : '—');
+  const nomeEmpresa = useCallback((id: string) => empresas.find((e) => e.id === id)?.nome ?? '—', [empresas]);
+  const nomeSub = useCallback((id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto', [subempresas]);
+  const nomeColab = useCallback((id: string | null) => (id ? colaboradores.find((c) => c.id === id)?.nome ?? '—' : '—'), [colaboradores]);
+  const termoBusca = busca.trim().toLocaleLowerCase('pt-BR');
+  const pendentesFiltrados = useMemo(
+    () => !termoBusca ? pendentes : pendentes.filter((r) =>
+      `${nomeEmpresa(r.empresaId)} ${nomeSub(r.subempresaId)} ${nomeColab(r.colaboradorId)}`.toLocaleLowerCase('pt-BR').includes(termoBusca),
+    ),
+    [pendentes, termoBusca, nomeEmpresa, nomeSub, nomeColab],
+  );
+
+  const campoBusca = (
+    <div className={styles.buscaFixa} role="search">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" />
+      </svg>
+      <input className={styles.buscaFixaInput} placeholder="Pesquisar empresa ou cliente…" value={busca} onChange={(event) => setBusca(event.target.value)} aria-label="Pesquisar empresa, cliente ou colaborador" />
+      {busca && <button type="button" className={styles.buscaLimpar} onClick={() => setBusca('')} aria-label="Limpar pesquisa">×</button>}
+    </div>
+  );
 
   return (
     <div className={`${styles.listaShell} ${styles.conferenciaLista}`}>
+      {portalBusca && createPortal(campoBusca, portalBusca)}
       {/* Topo estático (fixo): título + aviso de permissão. */}
       <div>
         <h3 className={styles.sectionTitle} style={{ marginBottom: podeConfirmar ? 12 : 0 }}>Conferência de recebimentos</h3>
+        {portalBusca === undefined && <div className={styles.conferenciaBuscaLocal}>{campoBusca}</div>}
         {!podeConfirmar && (
           <div className={styles.aviso} style={{ marginBottom: 14 }}>
             A confirmação de baixa é restrita a Gestor e Administrador.
@@ -55,10 +77,10 @@ export default function PainelConferencia({
 
       {/* Apenas a lista rola. */}
       <div className={styles.listaRolavel}>
-      {pendentes.length === 0 ? (
-        <p className={styles.muted}>Nenhum recebimento aguardando conferência.</p>
+      {pendentesFiltrados.length === 0 ? (
+        <p className={styles.muted}>{busca ? 'Nenhum recebimento encontrado.' : 'Nenhum recebimento aguardando conferência.'}</p>
       ) : (
-        pendentes.map((r) => {
+        pendentesFiltrados.map((r) => {
           const rot = rotuloSituacao(r.situacao);
           const dif = (r.valorRecebido ?? 0) - r.valorCombinado;
           const formaPagamento = r.formaPagamento ?? formasPagamento[r.id] ?? '';

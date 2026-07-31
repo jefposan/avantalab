@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import type { ReactNode } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Empresa, Recebimento, SituacaoRecebimento, Subempresa } from './types';
 import { formatarMoeda, limitesDoMes, rotuloFormaPagamento, rotuloSituacao } from './helpers';
@@ -17,6 +19,8 @@ type Props = {
   podeEstornar: boolean;
   onEstornar: (id: string, motivo: string) => Promise<void>;
   onObterComprovante: (id: string) => Promise<ComprovanteRecebimento>;
+  portalBusca?: HTMLElement | null;
+  seletorMes?: ReactNode;
 };
 
 const SITUACOES: SituacaoRecebimento[] = [
@@ -40,11 +44,12 @@ function formatarDataHoraCurta(iso: string | null): string {
   });
 }
 
-export default function ListaRecebimentos({ chaveMes, empresas, subempresas, colaboradores, recebimentos, darkMode, podeEstornar, onEstornar, onObterComprovante }: Props) {
+export default function ListaRecebimentos({ chaveMes, empresas, subempresas, colaboradores, recebimentos, darkMode, podeEstornar, onEstornar, onObterComprovante, portalBusca, seletorMes }: Props) {
   const [fEmpresa, setFEmpresa] = useState('');
   const [fSub, setFSub] = useState('');
   const [fColab, setFColab] = useState('');
   const [fSit, setFSit] = useState('');
+  const [busca, setBusca] = useState('');
   // Intervalo de datas (por vencimento). Segue o mês do platô por padrão e
   // volta a acompanhá-lo sempre que o mês é trocado.
   const [dataInicial, setDataInicial] = useState('');
@@ -60,15 +65,17 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
     setDataFinal(fim);
   }, [chaveMes]);
 
-  const nomeEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nome ?? '—';
-  const nomeSub = (id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto';
-  const nomeColab = (id: string | null) => (id ? colaboradores.find((c) => c.id === id)?.nome ?? '—' : '—');
+  const nomeEmpresa = useCallback((id: string) => empresas.find((e) => e.id === id)?.nome ?? '—', [empresas]);
+  const nomeSub = useCallback((id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto', [subempresas]);
+  const nomeColab = useCallback((id: string | null) => (id ? colaboradores.find((c) => c.id === id)?.nome ?? '—' : '—'), [colaboradores]);
+  const termoBusca = busca.trim().toLocaleLowerCase('pt-BR');
 
   const filtrados = useMemo(() => {
     return recebimentos.filter((r) => {
       // Previsões alimentam os totais dos meses futuros, mas sua composição
       // não é exposta na listagem detalhada de recebimentos.
       if (r.situacao === 'previsto') return false;
+      if (termoBusca && !`${nomeEmpresa(r.empresaId)} ${nomeSub(r.subempresaId)} ${nomeColab(r.colaboradorId)}`.toLocaleLowerCase('pt-BR').includes(termoBusca)) return false;
       if (fEmpresa && r.empresaId !== fEmpresa) return false;
       if (fSub && r.subempresaId !== fSub) return false;
       if (fColab && r.colaboradorId !== fColab) return false;
@@ -77,9 +84,18 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
       if (dataFinal && r.vencimento > dataFinal) return false;
       return true;
     });
-  }, [recebimentos, fEmpresa, fSub, fColab, fSit, dataInicial, dataFinal]);
+  }, [recebimentos, termoBusca, nomeEmpresa, nomeSub, nomeColab, fEmpresa, fSub, fColab, fSit, dataInicial, dataFinal]);
 
   const subsFiltro = fEmpresa ? subempresas.filter((s) => s.empresaId === fEmpresa) : subempresas;
+  const campoBusca = (
+    <div className={styles.buscaFixa} role="search">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" />
+      </svg>
+      <input className={styles.buscaFixaInput} placeholder="Pesquisar empresa ou cliente…" value={busca} onChange={(event) => setBusca(event.target.value)} aria-label="Pesquisar empresa, cliente ou colaborador" />
+      {busca && <button type="button" className={styles.buscaLimpar} onClick={() => setBusca('')} aria-label="Limpar pesquisa">×</button>}
+    </div>
+  );
 
   function abrirEstorno(recebimento: Recebimento) {
     setEstornoPendente(recebimento);
@@ -108,6 +124,8 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
   return (
     <>
     <div className={styles.listaRecebimentos}>
+      {portalBusca && createPortal(campoBusca, portalBusca)}
+      {portalBusca === undefined && <div className={styles.recebimentosBuscaLocal}>{campoBusca}</div>}
       <div className={styles.filtersRow}>
         <div className={styles.recebimentosPeriodo} aria-label="Período dos recebimentos">
           <span className={styles.recebimentosPeriodoTitulo}>Selecione o período</span>
@@ -150,6 +168,7 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
           <option value="">Todas as situações</option>
           {SITUACOES.map((s) => <option key={s} value={s}>{rotuloSituacao(s).texto}</option>)}
         </select>
+        {seletorMes && <div className={styles.recebimentosMesInline}>{seletorMes}</div>}
       </div>
 
       <div className={styles.tableWrap}>

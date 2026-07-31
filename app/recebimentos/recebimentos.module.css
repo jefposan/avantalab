@@ -660,8 +660,24 @@
 .listaRecebimentos {
   container: recebimentos-lista / inline-size;
 }
+.recebimentosBuscaLocal {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+.recebimentosBuscaLocal .buscaFixa,
+.conferenciaBuscaLocal .buscaFixa {
+  width: 280px;
+  max-width: 100%;
+}
+.conferenciaBuscaLocal { margin: 10px 0; }
 
 @container recebimentos-lista (max-width: 1319px) {
+  .recebimentosBuscaLocal {
+    justify-content: stretch;
+    margin-bottom: 10px;
+  }
+  .recebimentosBuscaLocal .buscaFixa { width: 100%; }
   .listaRecebimentos .filtersRow {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1323,10 +1339,15 @@
 .platoBuscaVencimentos {
   display: flex;
   align-items: center;
-  width: min(100%, 300px);
+  width: 280px;
+  max-width: 100%;
 }
 .platoBuscaVencimentos .buscaFixa { width: 100%; min-width: 0; height: 32px; }
 .platoBuscaVencimentos .buscaFixaInput { width: 100%; min-width: 0; }
+.platoBuscaRecebimentos { width: 280px; max-width: 100%; }
+.platoBuscaRecebimentos .buscaFixa { width: 100%; min-width: 0; height: 32px; }
+.platoBuscaRecebimentos .buscaFixaInput { width: 100%; min-width: 0; }
+.mesSeletorEmpilhado { position: static; transform: none; }
 .listaAcaoPrincipal {
   min-height: 34px;
   padding: 6px 11px;
@@ -1825,6 +1846,11 @@
   align-items: flex-end;
   gap: 8px;
   margin-bottom: 14px;
+}
+.recebimentosMesInline {
+  display: flex;
+  align-self: center;
+  margin-left: auto;
 }
 .filterSelect {
   border: 1px solid #cbd5e1;

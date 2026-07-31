@@ -87,6 +87,9 @@ export default function PainelAdministrativo(props: Props) {
   const [integracaoMensagem, setIntegracaoMensagem] = useState('');
   const [integracaoErro, setIntegracaoErro] = useState('');
   const [portalBuscaProximos, setPortalBuscaProximos] = useState<HTMLDivElement | null>(null);
+  const [portalBuscaConferencia, setPortalBuscaConferencia] = useState<HTMLDivElement | null>(null);
+  const [portalBuscaInadimplentes, setPortalBuscaInadimplentes] = useState<HTMLDivElement | null>(null);
+  const [portalBuscaRecebimentos, setPortalBuscaRecebimentos] = useState<HTMLDivElement | null>(null);
   const avantaShell = criarAvantaShellPreset({ corPrimaria: props.corPrimaria, darkMode });
   const hojeIso = useMemo(() => dataLocalIso(), []);
 
@@ -204,8 +207,9 @@ export default function PainelAdministrativo(props: Props) {
 
   // Seletor de mês no padrão da página de lançamentos: bloco único com setas,
   // centralizado no platô do AvantaCard.
-  const seletorMes = (
-    <div className={styles.mesSeletor} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+  function criarSeletorMes(empilhado = false) {
+    return (
+    <div className={`${styles.mesSeletor} ${empilhado ? styles.mesSeletorEmpilhado : ''}`} style={empilhado ? undefined : { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
       <button type="button" className={styles.mesSeletorBtn} onClick={() => mudarMes(-1)} aria-label="Mês anterior">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8} width="14" height="14">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 6l-6 6 6 6" />
@@ -222,7 +226,10 @@ export default function PainelAdministrativo(props: Props) {
         </svg>
       </button>
     </div>
-  );
+    );
+  }
+  const seletorMes = criarSeletorMes();
+  const seletorMesEmpilhado = criarSeletorMes(true);
   const abaUsaCompetencia = aba === 'visao' || aba === 'recebimentos' || aba === 'resultados';
 
   return (
@@ -253,9 +260,15 @@ export default function PainelAdministrativo(props: Props) {
           </>
         }
         headerRight={aba === 'empresas'
-          ? <div id="recebimentos-empresas-acoes-plato" className={styles.platoAcoesEmpresas} />
+            ? <div id="recebimentos-empresas-acoes-plato" className={styles.platoAcoesEmpresas} />
           : aba === 'colaboradores'
             ? <div id="recebimentos-colaboradores-acoes-plato" className={styles.platoAcaoColaboradores} />
+            : aba === 'recebimentos'
+              ? <div ref={setPortalBuscaRecebimentos} className={styles.platoBuscaRecebimentos} />
+            : aba === 'conferencia'
+              ? <div ref={setPortalBuscaConferencia} className={styles.platoBuscaVencimentos} />
+              : aba === 'inadimplentes'
+                ? <div ref={setPortalBuscaInadimplentes} className={styles.platoBuscaVencimentos} />
             : aba === 'proximo'
               ? <div ref={setPortalBuscaProximos} className={styles.platoBuscaVencimentos} />
               : abaUsaCompetencia ? seletorMes : undefined}
@@ -263,7 +276,7 @@ export default function PainelAdministrativo(props: Props) {
         hideMenu
         className={styles.painelCardFixo}
         bodyClassName={styles.painelCardCorpo}
-        style={aba === 'empresas' || aba === 'colaboradores' || aba === 'proximo'
+        style={aba === 'empresas' || aba === 'colaboradores' || aba === 'proximo' || aba === 'recebimentos'
           ? { ...avantaShell.cardStyle, ['--plato-w' as string]: '30%' }
           : avantaShell.cardStyle}
         bodyStyle={avantaShell.bodyStyle}
@@ -317,6 +330,7 @@ export default function PainelAdministrativo(props: Props) {
             onDevolver={props.onDevolver}
             onDivergencia={props.onDivergencia}
             onEstornar={props.onEstornar}
+            portalBusca={portalBuscaConferencia}
           />
         )}
 
@@ -377,11 +391,11 @@ export default function PainelAdministrativo(props: Props) {
         )}
 
         {aba === 'recebimentos' && (
-          <ListaRecebimentos chaveMes={chaveMes} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} recebimentos={recebimentos} darkMode={darkMode} podeEstornar={podeConfirmar} onEstornar={props.onEstornarDireto} onObterComprovante={props.onObterComprovante} />
+          <ListaRecebimentos chaveMes={chaveMes} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} recebimentos={recebimentos} darkMode={darkMode} podeEstornar={podeConfirmar} onEstornar={props.onEstornarDireto} onObterComprovante={props.onObterComprovante} portalBusca={portalBuscaRecebimentos} seletorMes={seletorMesEmpilhado} />
         )}
 
         {aba === 'inadimplentes' && (
-          <ListaInadimplentes empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} podeBaixar={podeConfirmar} onBaixar={props.onBaixarDireto} />
+          <ListaInadimplentes empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} podeBaixar={podeConfirmar} onBaixar={props.onBaixarDireto} portalBusca={portalBuscaInadimplentes} />
         )}
 
         {aba === 'proximo' && (

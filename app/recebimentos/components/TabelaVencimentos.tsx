@@ -52,7 +52,7 @@ export default function TabelaVencimentos({
     () => !termo ? recebimentos : recebimentos.filter((recebimento) =>
       `${nomeEmpresa(recebimento.empresaId)} ${nomeSubempresa(recebimento.subempresaId)}`.toLocaleLowerCase('pt-BR').includes(termo),
     ),
-    [recebimentos, termo, empresas, subempresas],
+    [recebimentos, termo, nomeEmpresa, nomeSubempresa],
   );
 
   const campoBusca = (

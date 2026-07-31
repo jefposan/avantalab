@@ -11,9 +11,10 @@ type Props = {
   recebimentos: Recebimento[];
   podeBaixar: boolean;
   onBaixar: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void> | void;
+  portalBusca?: HTMLElement | null;
 };
 
-export default function ListaInadimplentes({ empresas, subempresas, recebimentos, podeBaixar, onBaixar }: Props) {
+export default function ListaInadimplentes({ empresas, subempresas, recebimentos, podeBaixar, onBaixar, portalBusca }: Props) {
   const hojeIso = useMemo(() => dataLocalIso(), []);
 
   const inadimplentes = useMemo(
@@ -35,6 +36,7 @@ export default function ListaInadimplentes({ empresas, subempresas, recebimentos
       recebimentos={inadimplentes}
       podeBaixar={podeBaixar}
       onBaixar={onBaixar}
+      portalBusca={portalBusca}
     />
   );
 }
