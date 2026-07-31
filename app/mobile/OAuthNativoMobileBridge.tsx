@@ -20,6 +20,7 @@ type RetornoOAuthMobile = {
 declare global {
   interface Window {
     __avantalabAbrirOAuthNativoMobile?: (provedor: ProvedorOAuth) => Promise<void>;
+    __avantalabCancelarOAuthNativoMobile?: () => Promise<void>;
     __avantalabUltimoRetornoOAuthNativoMobile?: RetornoOAuthMobile;
   }
 }
@@ -164,6 +165,11 @@ export default function OAuthNativoMobileBridge() {
       }
     };
 
+    window.__avantalabCancelarOAuthNativoMobile = async () => {
+      provedorPendenteRef.current = null;
+      await fecharNavegador();
+    };
+
     void (async () => {
       await guardarListener(CapacitorApp.addListener('appUrlOpen', ({ url }) => {
         void concluirRetorno(url);
@@ -190,6 +196,7 @@ export default function OAuthNativoMobileBridge() {
     return () => {
       desmontado = true;
       delete window.__avantalabAbrirOAuthNativoMobile;
+      delete window.__avantalabCancelarOAuthNativoMobile;
       for (const listener of listeners) void listener.remove();
     };
   }, []);

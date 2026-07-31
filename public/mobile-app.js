@@ -6309,6 +6309,7 @@
   function cancelarLoginSocialMobile() {
     if (!loginSocialMobileEmAndamento()) return;
 
+    var cancelarOAuthNativo = window.__avantalabCancelarOAuthNativoMobile;
     state.tentativaLogin = Number(state.tentativaLogin || 0) + 1;
     state.carregando = false;
     state.loginAcao = '';
@@ -6320,6 +6321,13 @@
     limparLoginSocialPendenteMobile();
     limparPreferenciaSessaoMobile();
     render();
+
+    if (typeof cancelarOAuthNativo === 'function') {
+      Promise.resolve(cancelarOAuthNativo()).catch(function () {
+        // O painel seguro pode já ter sido dispensado. O login local permanece
+        // restaurado e pronto para uma nova tentativa.
+      });
+    }
   }
 
   async function entrarApple() {
@@ -9004,7 +9012,10 @@
   function telaCarregandoMobile() {
     var parametrosAcesso = new URLSearchParams(window.location.search);
     var acessoDireto = parametrosAcesso.get('entrar') === '1' || parametrosAcesso.get('cadastro') === '1';
-    if (acessoDireto) {
+    // A transição vazia pertence somente ao bootstrap da rota direta. Depois
+    // que Google ou Apple iniciam, o estado social sempre prevalece e mantém
+    // o card Preparando acesso com uma saída explícita para cancelamento.
+    if (acessoDireto && !loginSocialMobileEmAndamento()) {
       return (
         '<section class="avantalab-mobile-bg fixed inset-0 overflow-hidden" style="height:100dvh;background-position:center bottom;background-size:cover;" aria-live="polite" aria-label="Abrindo acesso">' +
           '<span class="sr-only">Abrindo acesso</span>' +

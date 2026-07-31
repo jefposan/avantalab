@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.54 -->
+<!-- ava-version: 1.6.1.107.55 -->
+
+> Revisão 1.6.1.107.55: correção exclusiva da preparação e do cancelamento
+> OAuth nos aplicativos nativos; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.54: correção exclusiva da ponte nativa de compras no iOS;
 > sem impacto operacional na Gestão Web.

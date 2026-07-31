@@ -20,6 +20,7 @@ const [
   configuracaoNext,
   rotaVersao,
   autenticacaoGestao,
+  ponteOAuthNativa,
   vendas,
 ] = await Promise.all([
   ler('public/mobile-app.js'),
@@ -29,6 +30,7 @@ const [
   ler('next.config.ts'),
   ler('app/mobile/versao/route.ts'),
   ler('app/hooks/useAuth.ts'),
+  ler('app/mobile/OAuthNativoMobileBridge.tsx'),
   ler('app/avantavendas/sistema/app.js'),
 ]);
 
@@ -124,6 +126,16 @@ exigir(
 exigir(
   !autenticacaoGestao.includes("CapacitorApp.addListener('appStateChange'"),
   'A Gestão não pode cancelar OAuth apenas porque o iOS reativou o app.',
+);
+exigir(
+  aplicativo.includes('if (acessoDireto && !loginSocialMobileEmAndamento())'),
+  'A rota direta não pode esconder Preparando acesso durante Google ou Apple.',
+);
+exigir(
+  aplicativo.includes('window.__avantalabCancelarOAuthNativoMobile') &&
+    ponteOAuthNativa.includes('window.__avantalabCancelarOAuthNativoMobile = async () =>') &&
+    ponteOAuthNativa.includes('delete window.__avantalabCancelarOAuthNativoMobile'),
+  'O cancelamento social precisa encerrar o navegador nativo e limpar sua ponte.',
 );
 exigir(
   vendas.includes('onclick="cancelarLoginSocialVendas()"') &&

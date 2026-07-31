@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.54 -->
+<!-- ava-version: 1.6.1.107.55 -->
+
+> Revisão 1.6.1.107.55: Google e Apple mantêm **Preparando acesso** com a
+> ação de cancelamento também na rota direta; cancelar fecha o navegador
+> seguro quando possível e devolve o login pronto.
 
 > Revisão 1.6.1.107.54: correção da disponibilidade da ponte nativa de compras
 > no iOS; contratação e restauração mantêm os mesmos passos operacionais.

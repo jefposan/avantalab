@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.107.55 - 2026-07-31
+
+- Gestão Mobile: Google e Apple mantêm o card **Preparando acesso** com
+  **Cancelar e voltar ao login** mesmo quando o aplicativo foi aberto pela
+  rota direta de entrada ou cadastro.
+- No aplicativo nativo, cancelar a preparação também fecha o navegador seguro
+  quando possível e restaura imediatamente o login para uma nova tentativa.
+
 ## 1.6.1.107.54 - 2026-07-31
 
 - iOS: o controlador principal registra explicitamente o plugin nativo de

@@ -1,7 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.54: correção da ponte nativa de compras no iOS;
-// sem alteração nas orientações operacionais da Ava.
+// Revisado na versão 1.6.1.107.55: correção da preparação e do cancelamento
+// OAuth nos aplicativos nativos; a orientação operacional já descreve o
+// comportamento esperado e permanece válida.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
