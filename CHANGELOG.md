@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.107.54 - 2026-07-31
+
+- iOS: o controlador principal registra explicitamente o plugin nativo de
+  compras quando a descoberta automática do Capacitor/Swift Package Manager
+  não o disponibiliza, eliminando o falso aviso de plugin não implementado.
+- O número interno do build iOS avança para 4, permitindo distinguir e
+  reinstalar a versão corrigida no iPhone.
+
 ## 1.6.1.107.53 - 2026-07-31
 
 - PADRÃO AVANTA: cenas mobile de acesso, recuperação, bloqueio e carregamento

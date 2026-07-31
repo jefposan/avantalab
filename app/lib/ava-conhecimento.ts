@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.53: cenas de acesso mobile seguem a composição
-// de marca separada e card centralizado; sem impacto operacional.
+// Revisado na versão 1.6.1.107.54: correção da ponte nativa de compras no iOS;
+// sem alteração nas orientações operacionais da Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

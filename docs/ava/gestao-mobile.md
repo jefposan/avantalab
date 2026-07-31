@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.53 -->
+<!-- ava-version: 1.6.1.107.54 -->
+
+> Revisão 1.6.1.107.54: correção da disponibilidade da ponte nativa de compras
+> no iOS; contratação e restauração mantêm os mesmos passos operacionais.
 
 > Revisão 1.6.1.107.53: login, recuperação, confirmação de celular, avisos e
 > carregamentos usam a mesma cena visual de marca separada e card centralizado;

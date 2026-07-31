@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.53 -->
+<!-- ava-version: 1.6.1.107.54 -->
+
+> Revisão 1.6.1.107.54: correção exclusiva da ponte nativa de compras no iOS;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.53: os carregamentos e telas públicas responsivas da Gestão
 > adotam a cena oficial de marca separada e card centralizado; sem mudança

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.53 -->
+<!-- ava-version: 1.6.1.107.54 -->
+
+> Revisão 1.6.1.107.54: correção exclusiva da ponte nativa de compras da Gestão
+> no iOS; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.53: consolidação do padrão visual das cenas de acesso do
 > ecossistema; sem impacto operacional no AvantaVendas.
