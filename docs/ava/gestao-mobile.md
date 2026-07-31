@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.59 -->
+<!-- ava-version: 1.6.1.107.60 -->
+
+> Revisão 1.6.1.107.60: o card de identificação do menu recebeu um recuo
+> lateral mínimo; sem mudança nas opções ou ações do menu.
 
 > Revisão 1.6.1.107.59: no aplicativo iOS, o menu lateral começa abaixo da
 > área segura superior; sem mudança nas opções ou ações do menu.

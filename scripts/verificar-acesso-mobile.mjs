@@ -144,6 +144,10 @@ exigir(
   'O menu lateral da Gestão precisa respeitar a área segura superior somente no iOS nativo.',
 );
 exigir(
+  aplicativo.includes('class="relative mx-1 mb-4 shrink-0 overflow-hidden'),
+  'O card de identificação do menu precisa preservar o recuo lateral contra cortes.',
+);
+exigir(
   vendas.includes('onclick="cancelarLoginSocialVendas()"') &&
     vendas.includes('Cancelar e voltar ao login'),
   'O AvantaVendas precisa manter a referência de cancelamento em Preparando acesso.',

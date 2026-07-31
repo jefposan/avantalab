@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.59: ajuste da área segura do menu iOS;
+// Revisado na versão 1.6.1.107.60: recuo visual do card do menu mobile;
 // a orientação operacional permanece válida.
 
 /*

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.59 -->
+<!-- ava-version: 1.6.1.107.60 -->
+
+> Revisão 1.6.1.107.60: ajuste visual exclusivo do card de identificação do
+> menu da Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.59: ajuste de área segura exclusivo do menu da Gestão
 > Mobile no iOS; sem impacto operacional no AvantaVendas.

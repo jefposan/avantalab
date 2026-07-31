@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.60 - 2026-07-31
+
+- Gestão Mobile: o card de identificação no topo do menu recebe um recuo
+  lateral mínimo e simétrico, preservando bordas, raios e sombra nos limites
+  do painel.
+
 ## 1.6.1.107.59 - 2026-07-31
 
 - Gestão Mobile no iOS: o painel do menu lateral começa abaixo da área segura
