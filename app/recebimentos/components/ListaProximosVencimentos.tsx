@@ -11,9 +11,10 @@ type Props = {
   recebimentos: Recebimento[];
   podeBaixar: boolean;
   onBaixar: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void> | void;
+  portalBusca?: HTMLElement | null;
 };
 
-export default function ListaProximosVencimentos({ empresas, subempresas, recebimentos, podeBaixar, onBaixar }: Props) {
+export default function ListaProximosVencimentos({ empresas, subempresas, recebimentos, podeBaixar, onBaixar, portalBusca }: Props) {
   const hojeIso = useMemo(() => dataLocalIso(), []);
   const proximos = useMemo(
     () => cobrancasNosProximosDias(recebimentos, hojeIso, 30),
@@ -32,6 +33,7 @@ export default function ListaProximosVencimentos({ empresas, subempresas, recebi
       recebimentos={proximos}
       podeBaixar={podeBaixar}
       onBaixar={onBaixar}
+      portalBusca={portalBusca}
     />
   );
 }

@@ -86,6 +86,7 @@ export default function PainelAdministrativo(props: Props) {
   const [integracaoSalvando, setIntegracaoSalvando] = useState(false);
   const [integracaoMensagem, setIntegracaoMensagem] = useState('');
   const [integracaoErro, setIntegracaoErro] = useState('');
+  const [portalBuscaProximos, setPortalBuscaProximos] = useState<HTMLDivElement | null>(null);
   const avantaShell = criarAvantaShellPreset({ corPrimaria: props.corPrimaria, darkMode });
   const hojeIso = useMemo(() => dataLocalIso(), []);
 
@@ -255,12 +256,14 @@ export default function PainelAdministrativo(props: Props) {
           ? <div id="recebimentos-empresas-acoes-plato" className={styles.platoAcoesEmpresas} />
           : aba === 'colaboradores'
             ? <div id="recebimentos-colaboradores-acoes-plato" className={styles.platoAcaoColaboradores} />
-            : abaUsaCompetencia ? seletorMes : undefined}
+            : aba === 'proximo'
+              ? <div ref={setPortalBuscaProximos} className={styles.platoBuscaVencimentos} />
+              : abaUsaCompetencia ? seletorMes : undefined}
         hideDragHandle
         hideMenu
         className={styles.painelCardFixo}
         bodyClassName={styles.painelCardCorpo}
-        style={aba === 'empresas' || aba === 'colaboradores'
+        style={aba === 'empresas' || aba === 'colaboradores' || aba === 'proximo'
           ? { ...avantaShell.cardStyle, ['--plato-w' as string]: '30%' }
           : avantaShell.cardStyle}
         bodyStyle={avantaShell.bodyStyle}
@@ -382,7 +385,7 @@ export default function PainelAdministrativo(props: Props) {
         )}
 
         {aba === 'proximo' && (
-          <ListaProximosVencimentos empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} podeBaixar={podeConfirmar} onBaixar={props.onBaixarDireto} />
+          <ListaProximosVencimentos empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} podeBaixar={podeConfirmar} onBaixar={props.onBaixarDireto} portalBusca={portalBuscaProximos} />
         )}
 
         {aba === 'resultados' && <GraficoResultados chaveMes={chaveMes} recebimentos={recebimentos} />}

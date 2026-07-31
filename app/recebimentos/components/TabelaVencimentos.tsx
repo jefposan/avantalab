@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
 import type { Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
 import { diferencaDiasIso, diasEmAtraso, formatarData, formatarMoeda } from './helpers';
@@ -14,6 +15,7 @@ type Props = {
   recebimentos: Recebimento[];
   podeBaixar?: boolean;
   onBaixar?: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void> | void;
+  portalBusca?: HTMLElement | null;
 };
 
 const FORMAS_PAGAMENTO: Array<[FormaPagamentoRecebimento, string]> = [
@@ -35,6 +37,7 @@ export default function TabelaVencimentos({
   recebimentos,
   podeBaixar = false,
   onBaixar,
+  portalBusca,
 }: Props) {
   const hoje = new Date(`${hojeIso}T00:00:00`);
   const [busca, setBusca] = useState('');
@@ -50,6 +53,16 @@ export default function TabelaVencimentos({
       `${nomeEmpresa(recebimento.empresaId)} ${nomeSubempresa(recebimento.subempresaId)}`.toLocaleLowerCase('pt-BR').includes(termo),
     ),
     [recebimentos, termo, empresas, subempresas],
+  );
+
+  const campoBusca = (
+    <div className={styles.buscaFixa} role="search">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" />
+      </svg>
+      <input className={styles.buscaFixaInput} placeholder="Pesquisar empresa ou cliente…" value={busca} onChange={(event) => setBusca(event.target.value)} aria-label="Pesquisar empresa ou cliente" />
+      {busca && <button type="button" className={styles.buscaLimpar} onClick={() => setBusca('')} aria-label="Limpar pesquisa">×</button>}
+    </div>
   );
 
   function abrirBaixa(recebimento: Recebimento) {
@@ -75,18 +88,13 @@ export default function TabelaVencimentos({
   return (
     <>
       <div>
+        {portalBusca && createPortal(campoBusca, portalBusca)}
         <div className={styles.listaTopo}>
           <div>
             <h3 className={styles.sectionTitle} style={{ margin: 0 }}>{titulo}</h3>
             <p className={styles.muted} style={{ margin: '4px 0 0' }}>{descricao}</p>
           </div>
-          <div className={styles.buscaFixa} role="search">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" />
-            </svg>
-            <input className={styles.buscaFixaInput} placeholder="Pesquisar empresa ou cliente…" value={busca} onChange={(event) => setBusca(event.target.value)} aria-label="Pesquisar empresa ou cliente" />
-            {busca && <button type="button" className={styles.buscaLimpar} onClick={() => setBusca('')} aria-label="Limpar pesquisa">×</button>}
-          </div>
+          {portalBusca === undefined && campoBusca}
         </div>
 
         <div className={styles.tableWrap}>
