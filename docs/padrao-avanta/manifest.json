@@ -1,8 +1,8 @@
 {
   "id": "PADRAO-AVANTA",
   "nome": "Padrão AvantaLab de Desenvolvimento",
-  "versao": "1.3.0",
-  "atualizadoEm": "2026-07-29",
+  "versao": "1.4.0",
+  "atualizadoEm": "2026-07-31",
   "documentoPrincipal": "README.md",
   "documentosObrigatorios": [
     "identidade-visual.md",

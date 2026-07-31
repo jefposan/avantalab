@@ -6,6 +6,13 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { supabase } from '../lib/supabase';
+import {
+  abrirOAuthSeguro,
+  concluirOAuthSupabase,
+  ehCancelamentoOAuth,
+  prepararPopupOAuthWeb,
+  REDIRECT_OAUTH_NATIVO,
+} from '../lib/oauth-social';
 
 type ProvedorOAuth = 'google' | 'apple';
 
@@ -24,8 +31,6 @@ declare global {
   }
 }
 
-const REDIRECT_OAUTH_NATIVO = 'br.com.avantalab.app://auth/callback';
-
 function emitirRetorno(retorno: RetornoOAuthMobile) {
   window.__avantalabUltimoRetornoOAuthNativoMobile = retorno;
   window.dispatchEvent(new CustomEvent<RetornoOAuthMobile>('avantalab:oauth-nativo-mobile', {
@@ -34,16 +39,14 @@ function emitirRetorno(retorno: RetornoOAuthMobile) {
 }
 
 /**
- * Faz a ponte entre a Gestão Mobile imperativa e os plugins nativos.
- * No navegador ela não registra nada: o fluxo OAuth existente do PWA continua
- * usando a URL https da própria página.
+ * Faz a ponte entre a Gestão Mobile imperativa e a autenticação social.
+ * Google usa sessão segura no iOS, Custom Tab no Android e popup no PWA/web.
+ * Apple preserva o fluxo já validado por redirect no web e Browser no nativo.
  */
 export default function OAuthNativoMobileBridge() {
   const provedorPendenteRef = useRef<ProvedorOAuth | null>(null);
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
     let desmontado = false;
     const listeners: PluginListenerHandle[] = [];
 
@@ -63,43 +66,23 @@ export default function OAuthNativoMobileBridge() {
       provedorPendenteRef.current = null;
 
       try {
-        const erroOAuth = callbackUrl.searchParams.get('error_description')
-          ?? callbackUrl.searchParams.get('error');
-        if (erroOAuth) throw new Error(erroOAuth);
-
-        const codigo = callbackUrl.searchParams.get('code');
-        let accessToken = callbackUrl.searchParams.get('access_token');
-        let refreshToken = callbackUrl.searchParams.get('refresh_token');
-
-        if (codigo) {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(codigo);
-          if (error) throw error;
-          accessToken = data.session?.access_token ?? null;
-          refreshToken = data.session?.refresh_token ?? null;
-        } else if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) throw error;
-        }
-
-        if (!accessToken || !refreshToken) {
-          throw new Error('O provedor não retornou os dados necessários para concluir o login.');
-        }
+        const sessao = await concluirOAuthSupabase(url);
 
         emitirRetorno({
           status: 'concluido',
           provider: provedor,
-          accessToken,
-          refreshToken,
+          accessToken: sessao.access_token,
+          refreshToken: sessao.refresh_token,
         });
       } catch (erro) {
-        emitirRetorno({
-          status: 'erro',
-          provider: provedor,
-          mensagem: erro instanceof Error ? erro.message : 'Não foi possível concluir o login social.',
-        });
+        if (ehCancelamentoOAuth(erro)) emitirRetorno({ status: 'cancelado', provider: provedor });
+        else {
+          emitirRetorno({
+            status: 'erro',
+            provider: provedor,
+            mensagem: erro instanceof Error ? erro.message : 'Não foi possível concluir o login social.',
+          });
+        }
       } finally {
         await fecharNavegador();
       }
@@ -116,26 +99,70 @@ export default function OAuthNativoMobileBridge() {
         throw new Error('Já existe um login social em andamento.');
       }
 
+      let popupWeb: Window | null = null;
+
+      if (provedor === 'google' && !Capacitor.isNativePlatform()) {
+        popupWeb = prepararPopupOAuthWeb();
+      }
+
+      // Apple no PWA/web continua com o redirect já utilizado em produção.
+      if (!Capacitor.isNativePlatform() && provedor === 'apple') {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: { redirectTo: `${window.location.origin}/mobile` },
+        });
+        if (error) throw error;
+        return;
+      }
+
       provedorPendenteRef.current = provedor;
       try {
+        const googleEmJanelaSegura = provedor === 'google'
+          && (Capacitor.getPlatform() === 'ios' || !Capacitor.isNativePlatform());
+        const redirectTo = !Capacitor.isNativePlatform()
+          ? `${window.location.origin}/`
+          : REDIRECT_OAUTH_NATIVO;
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: provedor,
           options: {
-            redirectTo: REDIRECT_OAUTH_NATIVO,
+            redirectTo,
             skipBrowserRedirect: true,
           },
         });
         if (error) throw error;
         if (!data.url) throw new Error('Não foi possível abrir o login social.');
 
+        if (googleEmJanelaSegura) {
+          const callbackUrl = await abrirOAuthSeguro({
+            authUrl: data.url,
+            redirectUrl: redirectTo,
+            popup: popupWeb,
+          });
+          const sessao = await concluirOAuthSupabase(callbackUrl);
+          provedorPendenteRef.current = null;
+          emitirRetorno({
+            status: 'concluido',
+            provider: provedor,
+            accessToken: sessao.access_token,
+            refreshToken: sessao.refresh_token,
+          });
+          return;
+        }
+
         await Browser.open({ url: data.url, presentationStyle: 'fullscreen' });
       } catch (erro) {
+        popupWeb?.close();
         provedorPendenteRef.current = null;
+        if (ehCancelamentoOAuth(erro)) {
+          emitirRetorno({ status: 'cancelado', provider: provedor });
+          return;
+        }
         throw erro;
       }
     };
 
     void (async () => {
+      if (!Capacitor.isNativePlatform()) return;
       await guardarListener(CapacitorApp.addListener('appUrlOpen', ({ url }) => {
         void concluirRetorno(url);
       }));

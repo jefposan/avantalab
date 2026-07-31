@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { inter } from "./lib/fonts";
 import WebPopupScrollLock from "./components/WebPopupScrollLock";
+import OAuthPopupCallbackBridge from "./components/OAuthPopupCallbackBridge";
 
 const shareImage = 'https://avantalab.com.br/images/avantalab-share-meta-safe-center-v2.jpg?v=20260717-01';
 
@@ -74,6 +75,7 @@ export default function RootLayout({
         />
       </head>
       <body className="typography-system min-h-full flex flex-col">
+        <OAuthPopupCallbackBridge />
         <WebPopupScrollLock />
         {children}
       </body>

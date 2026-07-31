@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.02 -->
+<!-- ava-version: 1.6.1.107.04 -->
+
+> Revisão 1.6.1.107.04: correção restrita à inicialização sem sessão da Gestão
+> Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.03: a nova janela segura do Google é restrita à Gestão
+> Web/Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.02: correção restrita ao OAuth nativo da Gestão Mobile;
 > sem impacto operacional no AvantaVendas.

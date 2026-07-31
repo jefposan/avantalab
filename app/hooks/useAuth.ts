@@ -21,6 +21,13 @@ import { Capacitor } from '@capacitor/core';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
+import {
+  abrirOAuthSeguro,
+  concluirOAuthSupabase,
+  ehCancelamentoOAuth,
+  prepararPopupOAuthWeb,
+  REDIRECT_OAUTH_NATIVO,
+} from '../lib/oauth-social';
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -62,7 +69,6 @@ function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | u
 }
 
 const CHAVE_RASCUNHO_CADASTRO_WEB = 'avantalab_web_rascunho_cadastro';
-const REDIRECT_GOOGLE_NATIVO = 'br.com.avantalab.app://auth/callback';
 const EMAIL_CONTA_REVISAO_APPLE = 'teste@teste.com.br';
 type ProvedorOAuth = 'google' | 'apple';
 
@@ -940,11 +946,63 @@ export function useAuth(deps: UseAuthDeps) {
 
   const handleOAuthLogin = async (provedor: ProvedorOAuth) => {
     const nomeProvedor = provedor === 'google' ? 'Google' : 'Apple';
+    const googleComJanelaSegura = provedor === 'google'
+      && (Capacitor.getPlatform() === 'ios' || !Capacitor.isNativePlatform());
+    let popupWeb: Window | null = null;
+
+    // Precisa ocorrer no mesmo gesto do clique para não ser bloqueado pelo
+    // navegador. A URL real é aplicada somente depois que o Supabase a gerar.
+    if (googleComJanelaSegura && !Capacitor.isNativePlatform()) {
+      try {
+        popupWeb = prepararPopupOAuthWeb();
+      } catch (erro) {
+        setAuthErro(erro instanceof Error ? erro.message : 'Não foi possível abrir o login do Google.');
+        return;
+      }
+    }
 
     setAuthErro('');
     setAuthMensagem('');
     if (provedor === 'google') setGoogleLoading(true);
     else setAppleLoading(true);
+
+    if (googleComJanelaSegura) {
+      try {
+        const redirectTo = Capacitor.getPlatform() === 'ios'
+          ? REDIRECT_OAUTH_NATIVO
+          : `${window.location.origin}/`;
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo,
+            skipBrowserRedirect: true,
+          },
+        });
+
+        if (error) throw error;
+        if (!data.url) throw new Error('Não foi possível abrir o login do Google.');
+
+        const callbackUrl = await abrirOAuthSeguro({
+          authUrl: data.url,
+          redirectUrl: redirectTo,
+          popup: popupWeb,
+        });
+        await concluirOAuthSupabase(callbackUrl);
+      } catch (erro) {
+        popupWeb?.close();
+        if (!ehCancelamentoOAuth(erro)) {
+          console.error('Erro login Google:', erro);
+          setAuthErro(
+            erro instanceof Error
+              ? `Erro Google: ${erro.message}`
+              : 'Não foi possível concluir o login do Google.'
+          );
+        }
+      } finally {
+        setGoogleLoading(false);
+      }
+      return;
+    }
 
     if (!Capacitor.isNativePlatform()) {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -968,7 +1026,7 @@ export function useAuth(deps: UseAuthDeps) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provedor,
         options: {
-          redirectTo: REDIRECT_GOOGLE_NATIVO,
+          redirectTo: REDIRECT_OAUTH_NATIVO,
           skipBrowserRedirect: true,
         },
       });

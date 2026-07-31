@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
-import { formatarDescricao } from '../lib/formatters';
+import { formatarDescricao, formatarMoedaDigitada } from '../lib/formatters';
 import { supabase } from '../lib/supabase';
 import ModalConfirmacao from './ModalConfirmacao';
 
@@ -14,12 +14,6 @@ const textoNumero = (valor: string) => {
   const texto = String(valor || '').replace(/R\$|\s/g, '');
   return Number(texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto);
 };
-const formatarMoedaDigitada = (valor: string) => {
-  const digitos = String(valor || '').replace(/\D/g, '');
-  if (!digitos) return '';
-  return (Number(digitos) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
-
 export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimaria }: Props) {
   const [catalogoId, setCatalogoId] = useState('');
   const [produtos, setProdutos] = useState<Produto[]>([]);

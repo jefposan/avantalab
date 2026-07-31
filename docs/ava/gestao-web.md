@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.02 -->
+<!-- ava-version: 1.6.1.107.04 -->
+
+> Revisão 1.6.1.107.04: correção restrita à inicialização sem sessão da Gestão
+> Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.107.03: **Continuar com Google** abre uma janela dedicada na
+> Gestão Web e devolve a sessão à tela original; cancelar permite tentar de
+> novo. Apple e os demais acessos mantêm o comportamento existente.
 
 > Revisão 1.6.1.107.02: o retorno OAuth nativo da Gestão Mobile foi alinhado
 > ao da Gestão Web; sem alteração na orientação da Ava dentro da Gestão Web.
@@ -684,7 +691,8 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   mesmas ações.
 - Além de e-mail/senha e Google, a tela de entrada oferece **Continuar com
   Apple**. A autenticação Apple cria ou acessa a mesma conta AvantaLab conforme
-  o e-mail informado pelo provedor.
+  o e-mail informado pelo provedor. **Continuar com Google** abre uma janela
+  dedicada; ao concluir, ela fecha e a sessão continua na tela de entrada.
 - Em **Usuários e Permissões**, um novo usuário exige nome completo, e-mail
   real, login, senha inicial e tipo. Na edição, os mesmos dados permanecem
   obrigatórios e apenas a nova senha é opcional. O usuário entra com e-mail ou

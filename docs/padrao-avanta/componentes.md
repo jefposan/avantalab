@@ -64,6 +64,19 @@ não criar uma escala de botões local para autenticação.
 - Os três botões ficam em largura integral, em coluna e com espaçamento de 8 px.
   O carregamento troca somente o rótulo por `Conectando…`/`Entrando…`, desabilita
   as ações concorrentes e nunca deixa o card sem resposta após erro ou cancelamento.
+- **Google no iOS nativo** usa `ASWebAuthenticationSession`, apresentado como
+  folha segura do sistema e com retorno interceptado pelo aplicativo. No
+  Android nativo usa Custom Tab; no Web/PWA usa uma janela dedicada, aberta no
+  gesto do usuário e fechada depois de devolver a sessão à tela original.
+- O callback Web/PWA deve ser concluído na janela que iniciou o acesso. Não
+  transformar a janela auxiliar em uma segunda instância autenticada do
+  sistema, não deixar o usuário na landing e não consumir duas vezes o código
+  PKCE do provedor.
+- Cancelar, fechar a folha ou fechar a janela auxiliar é uma saída normal: não
+  exibir mensagem técnica, limpar o estado `Conectando…` e reabilitar Google,
+  Apple e as demais ações imediatamente.
+- O fluxo Apple homologado deve ser preservado até que uma alteração própria
+  seja validada no iOS, Android, Web e PWA.
 - Não usar o azul escuro institucional como ação de entrada mobile quando este
   padrão estiver aplicado; ele continua disponível para ações primárias de
   outros contextos.

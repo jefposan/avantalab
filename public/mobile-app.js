@@ -14972,7 +14972,19 @@
           if (state.preparacaoAcessoInterrompida) return;
         }
       } else {
-        window.location.replace(destinoLogoutMobile());
+        // Sem sessão, a própria rota atual já contém o destino correto
+        // (boas-vindas, ?entrar=1 ou ?cadastro=1). Redirecionar novamente para
+        // /mobile?entrar=1 cria um ciclo infinito quando essa URL já está
+        // aberta e impede o React de concluir a hidratação dos bridges.
+        state.usuario = null;
+        state.autenticado = false;
+        state.carregando = false;
+        state.loginAcao = '';
+        state.pronto = true;
+        if (typeof window.__avantalabConfirmarAcessoMobile === 'function') {
+          window.__avantalabConfirmarAcessoMobile();
+        }
+        render();
         return;
       }
       state.pronto = true;

@@ -1,5 +1,14 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.4.0 - 2026-07-31
+
+- Padronizado o comportamento do login social: Google usa a folha segura do
+  sistema no iOS, Custom Tab no Android e janela dedicada no Web/PWA.
+- Cancelamento fecha o fluxo sem exibir erro técnico e sempre restaura os
+  botões; a sessão concluída retorna à tela que iniciou o acesso.
+- Apple preserva o fluxo seguro já homologado até que uma mudança específica
+  seja validada em todas as plataformas.
+
 ## 1.3.0 - 2026-07-29
 
 - Formalizado o padrão de autenticação mobile: face visual de 32 px, botão

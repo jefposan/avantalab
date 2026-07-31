@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.6.1.107.04 - 2026-07-31
+
+- Gestão Mobile: corrigido o ciclo de recarregamento em `/mobile`,
+  `/mobile?entrar=1` e `/mobile?cadastro=1` quando não existe sessão ativa. A
+  própria rota agora renderiza o estado correspondente sem redirecionar para si
+  mesma, permitindo que a página e os bridges concluam a inicialização.
+
+## 1.6.1.107.03 - 2026-07-31
+
+- Login com Google: no iOS, a autenticação passa a abrir na folha segura do
+  sistema (`ASWebAuthenticationSession`), sem transferir o usuário para o
+  navegador. Na Gestão Web e no PWA, o mesmo acesso usa uma janela dedicada e
+  devolve a sessão à tela original. Cancelar fecha o fluxo e libera os botões
+  para uma nova tentativa. Android e login com Apple preservam o fluxo atual.
+
 ## 1.6.1.107.02 - 2026-07-30
 
 - Gestão Mobile no Capacitor: Google e Apple agora usam o mesmo navegador

@@ -5,6 +5,21 @@ export const formatarMoeda = (valor: number) => {
   }).format(valor);
 };
 
+export const moedaDigitadaParaNumero = (valor: string) => {
+  const digitos = String(valor || '').replace(/\D/g, '').slice(0, 15);
+  if (!digitos) return null;
+  return Number(digitos) / 100;
+};
+
+export const formatarMoedaDigitada = (valor: string) => {
+  const numero = moedaDigitadaParaNumero(valor);
+  if (numero === null) return '';
+  return numero.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const SIGLAS_DESCRICAO: Record<string, string> = {
   cnpj: 'CNPJ',
   cofins: 'COFINS',

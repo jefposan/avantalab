@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.02 -->
+<!-- ava-version: 1.6.1.107.04 -->
+
+> Revisão 1.6.1.107.04: corrigida a abertura sem sessão para que boas-vindas,
+> entrada e cadastro sejam exibidos diretamente, sem ciclo de recarregamento.
+
+> Revisão 1.6.1.107.03: Google abre na folha segura do iOS, em Custom Tab no
+> Android e em janela dedicada no PWA. Conclusão e cancelamento retornam à
+> própria Gestão Mobile. Apple mantém o fluxo já validado.
 
 > Revisão 1.6.1.107.02: no aplicativo nativo, a entrada por Google ou Apple
 > abre no navegador seguro do sistema e retorna à Gestão Mobile. Cancelar ou
@@ -751,10 +758,10 @@ deve usar os nomes do menu e da barra inferior do celular.
 
 ## Conta e limites
 
-- No aplicativo Android/iOS, **Continuar com Google** ou **Continuar com Apple**
-  abre o navegador seguro do sistema. Ao concluir, o AvantaLab reabre
-  automaticamente; ao cancelar, o usuário pode tentar novamente na tela de
-  login. No PWA, o retorno permanece na própria Gestão Mobile.
+- No iOS, **Continuar com Google** abre a folha segura do próprio sistema; no
+  Android, abre uma Custom Tab; e no PWA, uma janela dedicada. Ao concluir ou
+  cancelar, o usuário retorna à própria Gestão Mobile. **Continuar com Apple**
+  mantém o navegador seguro e o retorno automático já validado.
 - Perfil, dados cadastrais, backup e restauração ficam nas áreas de perfil/menu.
 - A senha é da conta AvantaLab e pode afetar outros ambientes autenticados com o
   mesmo login.
