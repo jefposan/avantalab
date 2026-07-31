@@ -1320,6 +1320,13 @@
 .platoAcoesEmpresas .listaAcaoPrincipal { min-height: 32px; padding-inline: 10px; white-space: nowrap; }
 .platoAcaoColaboradores { display: flex; width: 100%; justify-content: flex-end; }
 .platoAcaoColaboradores .listaAcaoPrincipal { min-height: 32px; padding-inline: 10px; white-space: nowrap; }
+.platoBuscaVencimentos {
+  display: flex;
+  align-items: center;
+  width: min(100%, 300px);
+}
+.platoBuscaVencimentos .buscaFixa { width: 100%; min-width: 0; height: 32px; }
+.platoBuscaVencimentos .buscaFixaInput { width: 100%; min-width: 0; }
 .listaAcaoPrincipal {
   min-height: 34px;
   padding: 6px 11px;
