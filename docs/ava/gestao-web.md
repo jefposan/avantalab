@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.49 -->
+<!-- ava-version: 1.6.1.107.50 -->
+
+> Revisão 1.6.1.107.50: ajuste visual exclusivo do Recebimentos Presenciais;
+> sem alteração operacional na Gestão Web.
 
 > Revisão 1.6.1.107.49: atualização de cache exclusiva do Controle de Ponto;
 > sem alteração operacional na Gestão Web.

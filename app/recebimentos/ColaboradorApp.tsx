@@ -234,8 +234,8 @@ export default function ColaboradorApp() {
   if (estado === 'login') {
     return (
       <div className={styles.loginWrap}>
+        <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
         <div className={styles.loginContent}>
-          <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
           <form className={styles.loginCard} onSubmit={(event) => { event.preventDefault(); void entrar(); }}>
             <div className={styles.loginMarca}>AvantaLab</div>
             <h1 className={styles.loginTitulo}>Recebimentos Presenciais</h1>

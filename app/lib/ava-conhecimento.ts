@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.49: atualização de cache do Controle de Ponto
+// Revisado na versão 1.6.1.107.50: ajuste visual do Recebimentos Presenciais
 // sem alterar a orientação operacional da Ava.
 
 /*

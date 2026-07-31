@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.49 -->
+<!-- ava-version: 1.6.1.107.50 -->
+
+> Revisão 1.6.1.107.50: ajuste visual exclusivo do Recebimentos Presenciais;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.49: atualização de cache exclusiva do Controle de Ponto;
 > sem impacto operacional no AvantaVendas.

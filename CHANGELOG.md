@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.50 - 2026-07-30
+
+- Recebimentos Presenciais: a marca de acesso deixa de ficar fixa no topo e
+  passa a ocupar o centro do espaço disponível entre a área segura e o card,
+  como nas demais entradas mobile do AvantaLab.
+
 ## 1.6.1.107.49 - 2026-07-30
 
 - Controle de Ponto: a revisão do script de interface foi incrementada para

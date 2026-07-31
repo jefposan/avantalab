@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.49 -->
+<!-- ava-version: 1.6.1.107.50 -->
+
+> Revisão 1.6.1.107.50: ajuste visual exclusivo do Recebimentos Presenciais;
+> sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107.49: atualização de cache do Controle de Ponto; sem
 > mudança operacional na Gestão Mobile.
