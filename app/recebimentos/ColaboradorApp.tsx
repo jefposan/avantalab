@@ -201,8 +201,8 @@ export default function ColaboradorApp() {
 
   if (estado === 'carregando') {
     return (
-      <main className={`${styles.loginWrap} ${styles.preparandoAcesso}`}>
-        <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
+      <main className={`${styles.loginWrap} ${styles.preparandoAcesso} avanta-access-scene`}>
+        <img className="avanta-access-brand" src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
         <section className="avanta-loading-stage" role="status" aria-live="polite">
           <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
             <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
