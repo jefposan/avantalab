@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.46 -->
+<!-- ava-version: 1.6.1.107.47 -->
+
+> Revisão 1.6.1.107.47: telas de acesso e preparação passaram a usar fundo sem
+> marca incorporada e logotipo independente, sem alteração nos passos de login,
+> cadastro, assinatura ou navegação.
 
 > Revisão 1.6.1.107.46: cancelar a confirmação de Google ou Apple no
 > aplicativo nativo restaura o login limpo, sem mostrar mensagens técnicas do

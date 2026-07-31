@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.1.107.47 - 2026-07-30
+
+- Cenas de acesso, carregamento e recuperação agora usam exclusivamente os
+  fundos oficiais sem logotipo incorporado. A marca AvantaLab é exibida como
+  elemento independente nas cenas de preparação, preservando posicionamento
+  responsivo e áreas seguras no mobile.
+- Gestão Mobile, Vendas, Ponto, Recebimentos, autenticação Web e Paywall deixam
+  de referenciar os arquivos de fundo antigos. Os service workers foram
+  versionados para substituir os recursos em cache na próxima abertura.
+
 ## 1.6.1.107.46 - 2026-07-30
 
 - Cancelar a confirmação de Google ou Apple no aplicativo nativo volta ao login

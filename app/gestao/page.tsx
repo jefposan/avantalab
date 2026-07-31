@@ -215,11 +215,11 @@ function textoRegistro(valor: unknown): string {
 function FundoCarregamentoResponsivo() {
   return (
     <picture className="absolute inset-0 block h-full w-full" aria-hidden="true">
-      <source media="(max-width: 1023px)" srcSet="/images/bg-avantalab-mobile.webp" type="image/webp" />
-      <source media="(max-width: 1023px)" srcSet="/images/bg-avantalab-mobile.png" type="image/png" />
-      <source srcSet="/images/bg-avantalab.webp" type="image/webp" />
+      <source media="(max-width: 1023px)" srcSet="/images/bg-avantalab-mobile-1080x1920-sem-logo.webp" type="image/webp" />
+      <source media="(max-width: 1023px)" srcSet="/images/bg-avantalab-mobile-1080x1920-sem-logo.png" type="image/png" />
+      <source srcSet="/images/bg-avantalab-sem-logo.webp" type="image/webp" />
       <img
-        src="/images/bg-avantalab.png"
+        src="/images/bg-avantalab-sem-logo.png"
         alt=""
         className="h-full w-full object-cover object-bottom lg:object-center"
       />
@@ -239,6 +239,12 @@ function TelaCarregandoSistema({
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
       <FundoCarregamentoResponsivo />
+
+      <img
+        src="/images/logo-avantalab-oficial.png"
+        alt="AvantaLab — Do zero ao operacional"
+        className="pointer-events-none absolute left-1/2 top-[max(24px,env(safe-area-inset-top))] z-10 h-auto w-[clamp(136px,32vw,248px)] max-w-[66%] -translate-x-1/2 object-contain"
+      />
 
       <div className="absolute inset-0 bg-transparent" />
 
@@ -6592,13 +6598,13 @@ if (emailConfirmado) {
     <main className="relative min-h-screen overflow-hidden font-sans">
       <div
         className="absolute inset-0 hidden bg-cover bg-center lg:block"
-        style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-sem-logo.png') type('image/png'))" }}
       />
 
       <div
         className="absolute inset-0 bg-no-repeat lg:hidden"
         style={{
-          backgroundImage: "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))",
+          backgroundImage: "image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png'))",
           backgroundSize: 'cover',
           backgroundPosition: 'center bottom',
         }}
@@ -6668,8 +6674,8 @@ if (acessoNaoConfigurado) {
         }`}
         style={{
           backgroundImage: isTelaMobile
-            ? "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))"
-            : "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))",
+            ? "image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png'))"
+            : "image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-sem-logo.png') type('image/png'))",
           backgroundSize: isTelaMobile ? 'cover' : undefined,
           backgroundPosition: isTelaMobile ? 'center bottom' : 'center',
         }}
@@ -6994,7 +7000,7 @@ if (validacaoTelefoneObrigatoria) {
     <main className="relative min-h-screen overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-sem-logo.png') type('image/png'))" }}
       />
 
       <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />

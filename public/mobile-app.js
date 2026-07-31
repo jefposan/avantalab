@@ -9025,6 +9025,7 @@
       : '';
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:cover;">' +
+        '<img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" class="pointer-events-none absolute top-[max(44px,calc(env(safe-area-inset-top)+24px))] h-auto w-[clamp(136px,46.4vw,248px)] max-w-[66%] object-contain">' +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
@@ -15244,7 +15245,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v296';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v297';
               })
               .map(function (key) {
                 return caches.delete(key);

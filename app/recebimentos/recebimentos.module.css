@@ -16,6 +16,7 @@
 }
 .loginWrap {
   --cp: #003e73;
+  position: relative;
   min-height: 100dvh;
   display: grid;
   place-items: center;
@@ -26,6 +27,16 @@
   background-repeat: no-repeat;
   background-size: cover;
   background-attachment: fixed;
+}
+.brandLogo {
+  position: absolute;
+  top: max(24px, env(safe-area-inset-top));
+  left: 50%;
+  width: clamp(136px, 46.4vw, 220px);
+  height: auto;
+  max-width: 66%;
+  transform: translateX(-50%);
+  object-fit: contain;
 }
 .preparandoAcesso {
   display: block;
@@ -39,7 +50,7 @@
   }
 
   .loginWrap {
-    background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
+    background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png'));
     background-size: 100% auto;
   }
 }

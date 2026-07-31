@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.46 -->
+<!-- ava-version: 1.6.1.107.47 -->
+
+> Revisão 1.6.1.107.47: Vendas passa a compartilhar o fundo de acesso sem logo
+> embutido e a marca independente; sem mudança de fluxo operacional.
 
 > Revisão 1.6.1.107.46: tratamento de cancelamento OAuth exclusivo da Gestão
 > Mobile nativa; sem impacto operacional no AvantaVendas.

@@ -192,11 +192,11 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
       {/* Fundo (mesmo da tela de login) */}
       <div
         className="absolute inset-0 hidden bg-cover bg-center lg:block"
-        style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-sem-logo.png') type('image/png'))" }}
       />
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat lg:hidden"
-        style={{ backgroundImage: "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))" }}
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png'))" }}
       />
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 

@@ -314,7 +314,7 @@ export default function AuthCard({
 )}
       <div
         className="absolute inset-0 hidden bg-cover bg-center lg:block"
-        style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-sem-logo.png') type('image/png'))" }}
       />
 
       <div
@@ -322,7 +322,7 @@ export default function AuthCard({
         style={{
           backgroundImage: loginMobilePadrao
             ? "url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp')"
-            : "image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'))",
+            : "image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png'))",
           backgroundSize: loginMobilePadrao ? 'cover' : 'auto 108%',
           backgroundPosition: 'center bottom',
         }}
@@ -333,6 +333,16 @@ export default function AuthCard({
       <section className={`relative z-10 min-h-[100dvh] px-4 pb-8 lg:flex lg:min-h-screen lg:items-center lg:px-20 lg:py-10 ${
         loginMobilePadrao ? 'grid grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch pt-0' : 'flex items-start pt-[clamp(8.25rem,18dvh,10rem)]'
       }`}>
+        {!loginMobilePadrao && (
+          <Image
+            src="/images/logo-avantalab-oficial.png"
+            alt="AvantaLab — Do zero ao operacional"
+            width={248}
+            height={72}
+            priority
+            className="pointer-events-none absolute left-1/2 top-[max(24px,env(safe-area-inset-top))] h-auto w-[clamp(136px,32vw,248px)] max-w-[66%] -translate-x-1/2 object-contain"
+          />
+        )}
         <div className={loginMobilePadrao ? 'contents lg:block lg:w-full lg:max-w-7xl' : 'w-full lg:max-w-7xl'}>
           {loginMobilePadrao && (
             <div className="row-start-1 grid min-h-0 place-items-center overflow-hidden pt-[env(safe-area-inset-top)] lg:hidden">

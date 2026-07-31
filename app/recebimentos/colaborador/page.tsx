@@ -53,7 +53,7 @@ export default function RecebimentosColaboradorPage() {
     <>
       <link
         rel="preload"
-        href="/images/bg-avantalab-mobile-1080x1920.webp"
+        href="/images/bg-avantalab-mobile-1080x1920-sem-logo.webp"
         as="image"
         type="image/webp"
       />

@@ -42,7 +42,7 @@ export default function PontoPage() {
     <main className="min-h-screen bg-slate-100">
       <link
         rel="preload"
-        href="/images/bg-avantalab-mobile-1080x1920.webp"
+        href="/images/bg-avantalab-mobile-1080x1920-sem-logo.webp"
         as="image"
         type="image/webp"
       />
@@ -51,7 +51,7 @@ export default function PontoPage() {
           __html: `
             .avantalab-mobile-bg {
               background-color: #eef6fb;
-              background-image: var(--avantalab-mobile-bg-overlay, none), image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
+              background-image: var(--avantalab-mobile-bg-overlay, none), image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png'));
               background-position: center bottom;
               background-repeat: no-repeat;
               background-size: 100% auto;
@@ -75,6 +75,11 @@ export default function PontoPage() {
         data-supabase-anon-key={supabaseAnonKey}
       >
         <section className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style={{ height: '100dvh' }}>
+          <img
+            src="/images/logo-avantalab-oficial.png"
+            alt="AvantaLab — Do zero ao operacional"
+            className="pointer-events-none absolute top-[max(44px,calc(env(safe-area-inset-top)+24px))] h-auto w-[clamp(136px,46.4vw,248px)] max-w-[66%] object-contain"
+          />
           <div className="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">
             <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>
             <h1 className="mt-2 text-xl font-black">Controle de Ponto</h1>

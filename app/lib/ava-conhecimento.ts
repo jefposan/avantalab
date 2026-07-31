@@ -1,8 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.46: cancelamentos OAuth nativos retornam ao
-// login limpo sem mensagens técnicas; a orientação operacional da Ava não
-// muda.
+// Revisado na versão 1.6.1.107.47: fundos e marca das cenas de acesso foram
+// padronizados sem alterar a orientação operacional da Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.46 -->
+<!-- ava-version: 1.6.1.107.47 -->
+
+> Revisão 1.6.1.107.47: padronização visual de fundos e marca nas cenas de
+> acesso; sem alteração operacional na Gestão Web.
 
 > Revisão 1.6.1.107.46: tratamento de cancelamento OAuth exclusivo dos
 > aplicativos nativos; sem mudança operacional na Gestão Web.

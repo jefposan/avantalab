@@ -69,7 +69,7 @@ export default function ColaboradorApp() {
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/recebimentos-sw.js?v=7', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
+    navigator.serviceWorker.register('/recebimentos-sw.js?v=8', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -202,6 +202,7 @@ export default function ColaboradorApp() {
   if (estado === 'carregando') {
     return (
       <main className={`${styles.loginWrap} ${styles.preparandoAcesso}`}>
+        <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
         <section className="avanta-loading-stage" role="status" aria-live="polite">
           <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
             <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
@@ -219,6 +220,7 @@ export default function ColaboradorApp() {
   if (estado === 'bloqueado') {
     return (
       <div className={styles.loginWrap}>
+        <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
         <div className={styles.loginCard}>
           <div className={styles.loginMarca}>AvantaLab</div>
           <h1 className={styles.loginTitulo}>Acesso indisponível</h1>
@@ -233,6 +235,7 @@ export default function ColaboradorApp() {
     return (
       <div className={styles.loginWrap}>
         <div className={styles.loginContent}>
+          <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
           <form className={styles.loginCard} onSubmit={(event) => { event.preventDefault(); void entrar(); }}>
             <div className={styles.loginMarca}>AvantaLab</div>
             <h1 className={styles.loginTitulo}>Recebimentos Presenciais</h1>

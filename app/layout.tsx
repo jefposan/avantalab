@@ -60,14 +60,14 @@ export default function RootLayout({
       <head>
         <link
           rel="preload"
-          href="/images/bg-avantalab.webp"
+          href="/images/bg-avantalab-sem-logo.webp"
           as="image"
           type="image/webp"
           media="(min-width: 1024px)"
         />
         <link
           rel="preload"
-          href="/images/bg-avantalab-mobile.webp"
+          href="/images/bg-avantalab-mobile-1080x1920-sem-logo.webp"
           as="image"
           type="image/webp"
           media="(max-width: 1023px)"

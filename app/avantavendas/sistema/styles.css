@@ -1387,7 +1387,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .logout-screen h1 { margin: 16px 0 7px; }
 .logout-screen p { margin: 0 0 20px; color: #727980; }
 .logout-screen button { min-height: 43px; }
-.login-screen { display: grid; min-height: 100dvh; place-items: center; padding: 32px 24px; background: #eef6fb url('./assets/bg-avantalab-mobile.png') center bottom / cover no-repeat; }
+.login-screen { display: grid; min-height: 100dvh; place-items: center; padding: 32px 24px; background: #eef6fb; }
 .login-brand { margin-bottom: 22px; color: #fff; text-align: center; }
 .login-brand strong { display: block; font-size: 27px; letter-spacing: -.03em; }
 .login-brand p { margin: 5px 0 0; color: rgba(255,255,255,.84); font-size: 14px; }
