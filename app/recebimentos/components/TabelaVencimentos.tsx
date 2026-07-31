@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
 import type { Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
@@ -45,8 +45,8 @@ export default function TabelaVencimentos({
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamentoRecebimento>('dinheiro');
   const [baixando, setBaixando] = useState(false);
   const [erroBaixa, setErroBaixa] = useState('');
-  const nomeEmpresa = (id: string) => empresas.find((empresa) => empresa.id === id)?.nome ?? '—';
-  const nomeSubempresa = (id: string | null) => id ? subempresas.find((subempresa) => subempresa.id === id)?.nome ?? '—' : 'Cliente direto';
+  const nomeEmpresa = useCallback((id: string) => empresas.find((empresa) => empresa.id === id)?.nome ?? '—', [empresas]);
+  const nomeSubempresa = useCallback((id: string | null) => id ? subempresas.find((subempresa) => subempresa.id === id)?.nome ?? '—' : 'Cliente direto', [subempresas]);
   const termo = busca.trim().toLocaleLowerCase('pt-BR');
   const recebimentosFiltrados = useMemo(
     () => !termo ? recebimentos : recebimentos.filter((recebimento) =>
