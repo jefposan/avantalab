@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.46 - 2026-07-30
+
+- Cancelar a confirmação de Google ou Apple no aplicativo nativo volta ao login
+  limpo. Mensagens técnicas como `Auth session missing!` não são exibidas no
+  card de acesso.
+
 ## 1.6.1.107.45 - 2026-07-30
 
 - Após login social no iOS/Capacitor, a Gestão Mobile continua a sessão já

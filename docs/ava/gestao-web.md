@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.45 -->
+<!-- ava-version: 1.6.1.107.46 -->
+
+> Revisão 1.6.1.107.46: tratamento de cancelamento OAuth exclusivo dos
+> aplicativos nativos; sem mudança operacional na Gestão Web.
 
 > Revisão 1.6.1.107.45: continuidade do OAuth nativo sem recarga da página;
 > sem mudança operacional na Gestão Web.

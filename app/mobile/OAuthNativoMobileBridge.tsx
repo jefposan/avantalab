@@ -36,6 +36,20 @@ function lerParametroOAuth(url: URL, nome: string) {
     ?? new URLSearchParams(url.hash.replace(/^#/, '')).get(nome);
 }
 
+function ehCancelamentoOAuth(mensagem: string) {
+  const normalizada = mensagem.trim().toLowerCase();
+  return [
+    'access_denied',
+    'access denied',
+    'user cancelled',
+    'user canceled',
+    'cancelado',
+    'cancelled',
+    'canceled',
+    'auth session missing',
+  ].some((trecho) => normalizada.includes(trecho));
+}
+
 function emitirRetorno(retorno: RetornoOAuthMobile) {
   window.__avantalabUltimoRetornoOAuthNativoMobile = retorno;
   window.dispatchEvent(new CustomEvent<RetornoOAuthMobile>('avantalab:oauth-nativo-mobile', {
@@ -105,10 +119,15 @@ export default function OAuthNativoMobileBridge() {
           refreshToken,
         });
       } catch (erro) {
+        const mensagem = erro instanceof Error
+          ? erro.message
+          : 'Não foi possível concluir o login social.';
         emitirRetorno({
-          status: 'erro',
+          // Alguns provedores retornam um callback sem sessão quando a pessoa
+          // fecha sua confirmação. Isso é cancelamento, não um erro exibível.
+          status: ehCancelamentoOAuth(mensagem) ? 'cancelado' : 'erro',
           provider: provedor,
-          mensagem: erro instanceof Error ? erro.message : 'Não foi possível concluir o login social.',
+          mensagem,
         });
       } finally {
         await fecharNavegador();

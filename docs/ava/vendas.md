@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.45 -->
+<!-- ava-version: 1.6.1.107.46 -->
+
+> Revisão 1.6.1.107.46: tratamento de cancelamento OAuth exclusivo da Gestão
+> Mobile nativa; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.45: correção exclusiva da continuidade OAuth nativa da
 > Gestão Mobile; sem impacto operacional no AvantaVendas.

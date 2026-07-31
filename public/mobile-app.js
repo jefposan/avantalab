@@ -70,6 +70,17 @@
   // O bridge React só é usado dentro do Capacitor. O PWA mantém o OAuth por
   // redirecionamento https normal. A sessão é aplicada neste cliente para que
   // toda a Gestão Mobile continue usando a mesma instância de autenticação.
+  function retornoOAuthCanceladoMobile(retorno) {
+    if (retorno.status === 'cancelado') return true;
+    var mensagem = String(retorno.mensagem || '').toLowerCase();
+    return mensagem.indexOf('auth session missing') >= 0 ||
+      mensagem.indexOf('access_denied') >= 0 ||
+      mensagem.indexOf('access denied') >= 0 ||
+      mensagem.indexOf('cancelado') >= 0 ||
+      mensagem.indexOf('cancelled') >= 0 ||
+      mensagem.indexOf('canceled') >= 0;
+  }
+
   function processarRetornoOAuthNativoMobile(retorno) {
     // Em uma abertura fria o deep link pode chegar antes deste arquivo. Mantém
     // o retorno até que o estado da Gestão Mobile esteja pronto para recebê-lo.
@@ -105,8 +116,18 @@
     state.carregando = false;
     state.loginAcao = '';
     limparPreferenciaSessaoMobile();
+    limparLoginSocialPendenteMobile();
+    if (retornoOAuthCanceladoMobile(retorno)) {
+      // Cancelar a confirmação do provedor volta para um login limpo. Nunca
+      // expomos mensagens técnicas da sessão OAuth dentro do card de acesso.
+      state.erro = '';
+      state.mensagem = '';
+      state.telaAcesso = 'login';
+      render();
+      return;
+    }
     if (retorno.status === 'erro') {
-      setErro(retorno.mensagem || 'Não foi possível concluir o login com ' + provedor + '.');
+      setErro('Não foi possível concluir o login com ' + provedor + '. Tente novamente.');
       return;
     }
     render();

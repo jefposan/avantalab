@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.45 -->
+<!-- ava-version: 1.6.1.107.46 -->
+
+> Revisão 1.6.1.107.46: cancelar a confirmação de Google ou Apple no
+> aplicativo nativo restaura o login limpo, sem mostrar mensagens técnicas do
+> OAuth no card de acesso.
 
 > Revisão 1.6.1.107.45: após concluir Google ou Apple pelo navegador seguro,
 > a Gestão Mobile prossegue na sessão confirmada sem recarregar a página; o
