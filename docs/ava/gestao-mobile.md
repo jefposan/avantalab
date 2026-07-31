@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.55 -->
+<!-- ava-version: 1.6.1.107.56 -->
+
+> Revisão 1.6.1.107.56: centralização exclusiva das cenas completas de
+> carregamento no desktop; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107.55: Google e Apple mantêm **Preparando acesso** com a
 > ação de cancelamento também na rota direta; cancelar fecha o navegador

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.107.56 - 2026-07-31
+
+- Gestão Web e Recebimentos Presenciais: as cenas completas de
+  **Carregando** e **Preparando acesso** no desktop agora mantêm logotipo e
+  card centralizados horizontal e verticalmente, seguindo a mesma composição
+  já usada no mobile.
+
 ## 1.6.1.107.55 - 2026-07-31
 
 - Gestão Mobile: Google e Apple mantêm o card **Preparando acesso** com

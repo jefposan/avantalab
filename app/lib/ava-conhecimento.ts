@@ -1,8 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.55: correção da preparação e do cancelamento
-// OAuth nos aplicativos nativos; a orientação operacional já descreve o
-// comportamento esperado e permanece válida.
+// Revisado na versão 1.6.1.107.56: centralização visual exclusiva das cenas
+// completas de carregamento no desktop; a orientação operacional permanece
+// válida.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

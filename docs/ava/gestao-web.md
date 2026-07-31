@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.55 -->
+<!-- ava-version: 1.6.1.107.56 -->
+
+> Revisão 1.6.1.107.56: as telas web completas de **Carregando** e
+> **Preparando acesso** mantêm marca e card centralizados; sem mudança
+> operacional na Gestão Web.
 
 > Revisão 1.6.1.107.55: correção exclusiva da preparação e do cancelamento
 > OAuth nos aplicativos nativos; sem impacto operacional na Gestão Web.

@@ -158,8 +158,8 @@ nav {
   padding: clamp(6rem, 13vh, 8rem) 1.5rem 2.5rem;
 }
 
-/* PADRÃO AVANTA: cena de acesso mobile. A marca não usa coordenada fixa;
-   a primeira faixa da grade representa exatamente o espaço até o card. */
+/* PADRÃO AVANTA: cena de acesso. A marca não usa coordenada fixa; a primeira
+   faixa da grade representa exatamente o espaço até o card. */
 .avanta-access-scene {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -188,23 +188,27 @@ nav {
 
 @media (min-width: 1024px) {
   .avanta-access-scene {
-    display: block;
-    min-height: 100vh;
-    padding: 0;
+    min-height: 100dvh;
+    padding: 0 max(24px, env(safe-area-inset-right)) 0 max(24px, env(safe-area-inset-left));
   }
 
   .avanta-access-brand {
-    position: absolute;
-    top: max(24px, env(safe-area-inset-top));
-    left: 50%;
+    position: relative;
+    top: auto;
+    left: auto;
+    grid-row: 1;
+    align-self: center;
+    justify-self: center;
     z-index: 10;
-    width: clamp(136px, 32vw, 248px);
-    transform: translateX(-50%);
+    width: clamp(160px, 18vw, 248px);
+    transform: none;
   }
 
   .avanta-access-scene > .avanta-loading-stage {
-    min-height: 100vh;
-    padding: clamp(6rem, 13vh, 8rem) 1.5rem 2.5rem;
+    grid-row: 2;
+    align-self: center;
+    min-height: 0;
+    padding: 0;
   }
 }
 

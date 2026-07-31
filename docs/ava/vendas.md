@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.55 -->
+<!-- ava-version: 1.6.1.107.56 -->
+
+> Revisão 1.6.1.107.56: centralização exclusiva das cenas completas de
+> carregamento no desktop; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.55: correção exclusiva da preparação e do cancelamento
 > OAuth na Gestão Mobile nativa; sem impacto operacional no AvantaVendas.
