@@ -58,15 +58,27 @@ export default function PontoPage() {
               background-attachment: fixed;
             }
             .ponto-access-brand {
-              position: absolute;
+              grid-row: 1;
+              align-self: center;
+              justify-self: center;
               z-index: 1;
-              top: max(24px, env(safe-area-inset-top));
-              left: 50%;
               width: clamp(136px, 46.4vw, 248px);
               height: auto;
               max-width: 66%;
-              transform: translateX(-50%);
+              max-height: 58%;
+              margin-top: env(safe-area-inset-top);
               object-fit: contain;
+            }
+            .ponto-access-layout {
+              display: grid !important;
+              grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+              align-items: stretch;
+              justify-items: center;
+              padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+            }
+            .ponto-access-card {
+              grid-row: 2;
+              align-self: center;
             }
             @media (min-aspect-ratio: 9/16) { .avantalab-mobile-bg { background-size: auto 100%; } }
             @media (max-aspect-ratio: 9/18) { .avantalab-mobile-bg { background-size: auto 100%; } }
@@ -85,13 +97,13 @@ export default function PontoPage() {
         data-supabase-url={supabaseUrl}
         data-supabase-anon-key={supabaseAnonKey}
       >
-        <section className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style={{ height: '100dvh' }}>
+        <section className="avantalab-mobile-bg ponto-access-layout fixed inset-0 overflow-hidden" style={{ height: '100dvh' }}>
           <img
             src="/images/logo-avantalab-oficial.png"
             alt="AvantaLab — Do zero ao operacional"
             className="ponto-access-brand pointer-events-none"
           />
-          <div className="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">
+          <div className="ponto-access-card w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">
             <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>
             <h1 className="mt-2 text-xl font-black">Controle de Ponto</h1>
             <p className="mt-2 text-sm font-semibold text-slate-600">Preparando acesso…</p>
@@ -100,7 +112,7 @@ export default function PontoPage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/ponto-app.js?v=21" defer />
+      <script src="/ponto-app.js?v=22" defer />
     </main>
   );
 }

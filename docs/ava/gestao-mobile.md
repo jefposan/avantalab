@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.50 -->
+<!-- ava-version: 1.6.1.107.51 -->
+
+> Revisão 1.6.1.107.51: padronização visual das entradas de Controle de Ponto
+> e Recebimentos Presenciais; sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107.50: ajuste visual exclusivo do Recebimentos Presenciais;
 > sem mudança operacional na Gestão Mobile.

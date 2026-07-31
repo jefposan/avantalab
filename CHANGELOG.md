@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.51 - 2026-07-30
+
+- Controle de Ponto e Recebimentos Presenciais: a marca de acesso passa a
+  ocupar a faixa superior disponível e fica centralizada entre a área segura
+  e o card, sem posicionamento fixo no topo.
+
 ## 1.6.1.107.50 - 2026-07-30
 
 - Recebimentos Presenciais: a marca de acesso deixa de ficar fixa no topo e
