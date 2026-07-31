@@ -6844,11 +6844,14 @@ if (acessoNaoConfigurado) {
 
 if (modalSelecionarEmpresa) {
   return (
-    <main className={`min-h-screen flex items-center justify-center overflow-y-auto px-4 py-10 ${
-      darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
+    <main className={`avanta-access-scene relative overflow-y-auto font-sans ${
+      darkMode ? 'bg-slate-950 text-slate-100 lg:bg-transparent' : 'bg-slate-100 text-slate-800 lg:bg-transparent'
     }`}>
+      <div className="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
+        <FundoCarregamentoResponsivo />
+      </div>
       <section
-        className={`my-auto flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border shadow-2xl ${
+        className={`relative z-10 row-start-2 my-auto flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border shadow-2xl ${
           darkMode
             ? 'bg-slate-900 border-slate-700'
             : 'bg-white border-slate-200'

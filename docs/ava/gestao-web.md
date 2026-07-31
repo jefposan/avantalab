@@ -1,6 +1,17 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.56 -->
+<!-- ava-version: 1.6.1.107.59 -->
+
+> Revisão 1.6.1.107.59: ajuste de área segura exclusivo do menu da Gestão
+> Mobile no iOS; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.107.58: a seleção de perfil após login mantém o fundo visual
+> institucional da transição, sem logotipo adicional; sem mudança operacional
+> na Gestão Web.
+
+> Revisão 1.6.1.107.57: depois de uma cortesia revogada, uma nova contratação
+> segue normalmente para aguardar pagamento e é liberada após a confirmação;
+> sem mudança nos passos do usuário na Gestão Web.
 
 > Revisão 1.6.1.107.56: as telas web completas de **Carregando** e
 > **Preparando acesso** mantêm marca e card centralizados; sem mudança

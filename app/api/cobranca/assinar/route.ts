@@ -193,6 +193,9 @@ export async function POST(request: Request) {
   if (pgs.ok && primeiraCobranca) invoiceUrl = primeiraCobranca.invoiceUrl || '';
 
   // 6) Guarda os identificadores no nosso banco (status vira 'ativa' via webhook).
+  // Uma cortesia revogada também termina como "cancelada". Ao contratar de
+  // novo, esse é um ciclo novo: o estado precisa voltar a aguardar pagamento,
+  // sem que o cancelamento histórico impeça a confirmação da nova cobrança.
   const base = {
     empresa_id: empresaId,
     tipo_perfil: tipoPerfil,
@@ -208,7 +211,12 @@ export async function POST(request: Request) {
     atualizado_em: new Date().toISOString(),
   };
   if (assinExistente) {
-    await admin.from('assinaturas').update(base).eq('empresa_id', empresaId);
+    await admin.from('assinaturas').update({
+      ...base,
+      status: 'expirada',
+      valido_ate: null,
+      trial_fim: null,
+    }).eq('empresa_id', empresaId);
   } else {
     // Novo registro aguardando pagamento (bloqueado até o webhook confirmar).
     await admin.from('assinaturas').insert({ ...base, status: 'expirada' });

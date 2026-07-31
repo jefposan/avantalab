@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.6.1.107.59 - 2026-07-31
+
+- Gestão Mobile no iOS: o painel do menu lateral começa abaixo da área segura
+  superior do aparelho, sem alterar o PWA, o Android ou o restante da tela.
+
+## 1.6.1.107.58 - 2026-07-31
+
+- Gestão Web: após o login, a seleção de perfil passa a manter o fundo
+  institucional usado nas cenas de preparação e carregamento, sem repetir o
+  logotipo.
+
+## 1.6.1.107.57 - 2026-07-31
+
+- Cobrança: um perfil cuja cortesia foi revogada pode contratar novamente.
+  A nova assinatura substitui o status histórico de cancelamento por
+  aguardando pagamento e é liberada normalmente ao receber a confirmação da
+  Asaas.
+
 ## 1.6.1.107.56 - 2026-07-31
 
 - Gestão Web e Recebimentos Presenciais: as cenas completas de

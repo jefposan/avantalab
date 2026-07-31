@@ -138,6 +138,12 @@ exigir(
   'O cancelamento social precisa encerrar o navegador nativo e limpar sua ponte.',
 );
 exigir(
+  aplicativo.includes('var limiteTopoMenuIos = ehIosNativoMobile()') &&
+    aplicativo.includes('margin-top:env(safe-area-inset-top,0px)') &&
+    aplicativo.includes('height:calc(100% - env(safe-area-inset-top,0px))'),
+  'O menu lateral da Gestão precisa respeitar a área segura superior somente no iOS nativo.',
+);
+exigir(
   vendas.includes('onclick="cancelarLoginSocialVendas()"') &&
     vendas.includes('Cancelar e voltar ao login'),
   'O AvantaVendas precisa manter a referência de cancelamento em Preparando acesso.',

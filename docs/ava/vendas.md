@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.56 -->
+<!-- ava-version: 1.6.1.107.59 -->
+
+> Revisão 1.6.1.107.59: ajuste de área segura exclusivo do menu da Gestão
+> Mobile no iOS; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.58: ajuste visual exclusivo da seleção de perfil no
+> desktop; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.57: correção da retomada de contratação empresarial no
+> Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.56: centralização exclusiva das cenas completas de
 > carregamento no desktop; sem impacto operacional no AvantaVendas.

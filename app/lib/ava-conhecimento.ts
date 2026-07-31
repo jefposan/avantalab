@@ -1,8 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.56: centralização visual exclusiva das cenas
-// completas de carregamento no desktop; a orientação operacional permanece
-// válida.
+// Revisado na versão 1.6.1.107.59: ajuste da área segura do menu iOS;
+// a orientação operacional permanece válida.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

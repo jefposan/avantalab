@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.56 -->
+<!-- ava-version: 1.6.1.107.59 -->
+
+> Revisão 1.6.1.107.59: no aplicativo iOS, o menu lateral começa abaixo da
+> área segura superior; sem mudança nas opções ou ações do menu.
+
+> Revisão 1.6.1.107.58: ajuste visual exclusivo da seleção de perfil no
+> desktop; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.107.57: correção da retomada de contratação empresarial no
+> Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107.56: centralização exclusiva das cenas completas de
 > carregamento no desktop; sem impacto operacional na Gestão Mobile.
