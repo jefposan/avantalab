@@ -385,7 +385,14 @@
   white-space: nowrap;
 }
 .mesSeletorLabel b { font-weight: 700; color: #64748b; }
-.mesSeletorColaborador { height: 28px; transform: translateX(-8px); }
+.mesSeletorColaborador {
+  /* O platô pode ficar estreito em celulares. O seletor mantém sua largura
+     mínima e avança apenas para a esquerda, sem comprimir/cortar a seta final. */
+  height: 28px;
+  min-width: 122px;
+  flex: 0 0 auto;
+  transform: translateX(-8px);
+}
 .mesSeletorColaborador .mesSeletorBtn { padding-inline: 4px; }
 .mesSeletorColaborador .mesSeletorLabel {
   min-width: 68px;
