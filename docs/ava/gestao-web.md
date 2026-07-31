@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.47 -->
+<!-- ava-version: 1.6.1.107.49 -->
+
+> Revisão 1.6.1.107.49: atualização de cache exclusiva do Controle de Ponto;
+> sem alteração operacional na Gestão Web.
+
+> Revisão 1.6.1.107.48: ajuste visual exclusivo do Controle de Ponto; sem
+> alteração operacional na Gestão Web.
 
 > Revisão 1.6.1.107.47: padronização visual de fundos e marca nas cenas de
 > acesso; sem alteração operacional na Gestão Web.

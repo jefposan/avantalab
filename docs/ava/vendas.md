@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.47 -->
+<!-- ava-version: 1.6.1.107.49 -->
+
+> Revisão 1.6.1.107.49: atualização de cache exclusiva do Controle de Ponto;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.107.48: ajuste visual exclusivo do Controle de Ponto; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.47: Vendas passa a compartilhar o fundo de acesso sem logo
 > embutido e a marca independente; sem mudança de fluxo operacional.

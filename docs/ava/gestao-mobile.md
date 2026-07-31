@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.47 -->
+<!-- ava-version: 1.6.1.107.49 -->
+
+> Revisão 1.6.1.107.49: atualização de cache do Controle de Ponto; sem
+> mudança operacional na Gestão Mobile.
+
+> Revisão 1.6.1.107.48: correção visual exclusiva do Controle de Ponto; sem
+> mudança operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107.47: telas de acesso e preparação passaram a usar fundo sem
 > marca incorporada e logotipo independente, sem alteração nos passos de login,

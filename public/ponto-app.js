@@ -717,9 +717,14 @@
   }
 
   // ---------- telas ----------
+  function marcaAcessoPonto() {
+    return '<img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" class="ponto-access-brand pointer-events-none">';
+  }
+
   function telaLogin() {
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-hidden px-4 pb-6" style="height:100dvh;padding-top:22dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.10),rgba(255,255,255,0));">' +
+        marcaAcessoPonto() +
         '<div class="mx-auto w-full max-w-sm overflow-y-auto rounded-3xl border border-white/35 p-6 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.22);max-height:calc(82dvh);overscroll-behavior:contain;">' +
           '<div class="mb-4">' +
             '<h1 class="text-2xl font-black text-slate-900">Controle de Ponto</h1>' +
@@ -889,6 +894,7 @@
   function telaCarregandoPonto() {
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;">' +
+        marcaAcessoPonto() +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Controle de Ponto</h1>' +

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.1.107.49 - 2026-07-30
+
+- Controle de Ponto: a revisão do script de interface foi incrementada para
+  impedir que o navegador reutilize a tela antiga sem a marca separada após o
+  carregador inicial.
+
+## 1.6.1.107.48 - 2026-07-30
+
+- Controle de Ponto: login e **Preparando acesso** agora exibem a marca
+  AvantaLab separadamente sobre o fundo oficial sem-logo, inclusive após o
+  carregador inicial ser substituído pelo script do Ponto.
+
 ## 1.6.1.107.47 - 2026-07-30
 
 - Cenas de acesso, carregamento e recuperação agora usam exclusivamente os

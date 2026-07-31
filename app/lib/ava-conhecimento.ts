@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.47: fundos e marca das cenas de acesso foram
-// padronizados sem alterar a orientação operacional da Ava.
+// Revisado na versão 1.6.1.107.49: atualização de cache do Controle de Ponto
+// sem alterar a orientação operacional da Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

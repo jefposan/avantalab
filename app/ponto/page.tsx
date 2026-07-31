@@ -57,6 +57,17 @@ export default function PontoPage() {
               background-size: 100% auto;
               background-attachment: fixed;
             }
+            .ponto-access-brand {
+              position: absolute;
+              z-index: 1;
+              top: max(24px, env(safe-area-inset-top));
+              left: 50%;
+              width: clamp(136px, 46.4vw, 248px);
+              height: auto;
+              max-width: 66%;
+              transform: translateX(-50%);
+              object-fit: contain;
+            }
             @media (min-aspect-ratio: 9/16) { .avantalab-mobile-bg { background-size: auto 100%; } }
             @media (max-aspect-ratio: 9/18) { .avantalab-mobile-bg { background-size: auto 100%; } }
             @supports (-webkit-touch-callout: none) { .avantalab-mobile-bg { background-attachment: scroll; } }
@@ -78,7 +89,7 @@ export default function PontoPage() {
           <img
             src="/images/logo-avantalab-oficial.png"
             alt="AvantaLab — Do zero ao operacional"
-            className="pointer-events-none absolute top-[max(44px,calc(env(safe-area-inset-top)+24px))] h-auto w-[clamp(136px,46.4vw,248px)] max-w-[66%] object-contain"
+            className="ponto-access-brand pointer-events-none"
           />
           <div className="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">
             <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>
@@ -89,7 +100,7 @@ export default function PontoPage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/ponto-app.js?v=20" defer />
+      <script src="/ponto-app.js?v=21" defer />
     </main>
   );
 }
