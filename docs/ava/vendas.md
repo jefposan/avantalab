@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.60 -->
+<!-- ava-version: 1.6.1.107.61 -->
+
+> Revisão 1.6.1.107.61: remoção da borda e da sombra lateral do card de
+> identificação da Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.60: ajuste visual exclusivo do card de identificação do
 > menu da Gestão Mobile; sem impacto operacional no AvantaVendas.

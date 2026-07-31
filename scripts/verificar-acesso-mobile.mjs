@@ -144,8 +144,10 @@ exigir(
   'O menu lateral da Gestão precisa respeitar a área segura superior somente no iOS nativo.',
 );
 exigir(
-  aplicativo.includes('class="relative mx-1 mb-4 shrink-0 overflow-hidden'),
-  'O card de identificação do menu precisa preservar o recuo lateral contra cortes.',
+  aplicativo.includes(
+    'class="relative mb-4 shrink-0 overflow-hidden rounded-[16px_32px_32px_32px] p-4 text-white" style="background-image:',
+  ),
+  'O card de identificação do menu não pode reintroduzir borda ou sombra lateral assimétrica.',
 );
 exigir(
   vendas.includes('onclick="cancelarLoginSocialVendas()"') &&

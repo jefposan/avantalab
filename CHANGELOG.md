@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.107.61 - 2026-07-31
+
+- Gestão Mobile: o card de identificação do menu volta às dimensões originais e
+  remove a borda translúcida e a sombra lateral que criavam linhas clara e
+  escura nas extremidades.
+
 ## 1.6.1.107.60 - 2026-07-31
 
 - Gestão Mobile: o card de identificação no topo do menu recebe um recuo

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.60: recuo visual do card do menu mobile;
+// Revisado na versão 1.6.1.107.61: remoção da borda e sombra lateral do card do menu;
 // a orientação operacional permanece válida.
 
 /*

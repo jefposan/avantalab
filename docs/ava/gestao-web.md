@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.60 -->
+<!-- ava-version: 1.6.1.107.61 -->
+
+> Revisão 1.6.1.107.61: remoção da borda e da sombra lateral do card de
+> identificação da Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.60: ajuste visual exclusivo do card de identificação do
 > menu da Gestão Mobile; sem impacto operacional na Gestão Web.

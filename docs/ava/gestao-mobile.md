@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.60 -->
+<!-- ava-version: 1.6.1.107.61 -->
+
+> Revisão 1.6.1.107.61: o card de identificação do menu preserva suas dimensões
+> originais e remove a borda e a sombra lateral assimétricas; sem mudança operacional.
 
 > Revisão 1.6.1.107.60: o card de identificação do menu recebeu um recuo
 > lateral mínimo; sem mudança nas opções ou ações do menu.
