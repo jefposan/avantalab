@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.113 -->
+<!-- ava-version: 1.6.1.115 -->
+
+> Revisão 1.6.1.115: o aporte inicial da **Caixinha/Reserva financeira** fica
+> recolhido até usar **Adicionar aporte inicial**. Depois, pode ser atualizado
+> ou excluído. **Ver lançamentos** mostra os aportes normais com a data de cada
+> um.
+
+> Revisão 1.6.1.114: ao adicionar um aporte na **Caixinha** ou uma reserva, a
+> data começa em hoje e pode ser alterada. O sistema cria a despesa na data
+> escolhida, sem usar o mês que está aberto no dashboard.
 
 > Revisão 1.6.1.113: ao criar um perfil Empresa, escolha **Usar 7 dias
 > grátis** para liberar o Business Pro ou **Assinar agora** para abrir os
@@ -821,7 +830,7 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 
 - O dashboard é a página inicial. Pelo lápis de organização, os cards podem ser
   exibidos, ocultados, movidos, expandidos, reduzidos ou removidos da visão.
-- No perfil Pessoal, **Caixinha** começa visível. No perfil Empresa, **Reserva financeira** começa oculta e pode ser exibida em Organizar blocos; ambas registram aportes como despesa.
+- No perfil Pessoal, **Caixinha** começa visível. No perfil Empresa, **Reserva financeira** começa oculta e pode ser exibida em Organizar blocos; ambas registram aportes como despesa na data escolhida no lançamento, iniciada em hoje.
 - **Menu** concentra perfil, usuários, aparência, despesas/categorias,
   despesas fixas, backup/restauração e módulos. No Web, ele abre em uma gaveta
   lateral esquerda; Visual e Configurações expandem seus próprios subbotões.

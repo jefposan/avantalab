@@ -3156,38 +3156,47 @@ const caixinhaMovimentosMes = caixinhaMovimentos.filter((mov) => {
 const caixinhaAportesMes = caixinhaMovimentosMes.reduce((acc, mov) => (
   mov.tipo === 'aporte' ? acc + Number(mov.valor || 0) : acc
 ), 0);
-const caixinhaUltimosMovimentos = [...caixinhaMovimentos]
-  .sort((a, b) => String(b.dataMovimento).localeCompare(String(a.dataMovimento)) || String(b.criadoEm).localeCompare(String(a.criadoEm)))
-  .slice(0, 3);
+const caixinhaUltimosMovimentos = caixinhaMovimentos
+  .filter((mov) => mov.tipo === 'aporte')
+  .slice()
+  .sort((a, b) => String(b.dataMovimento).localeCompare(String(a.dataMovimento)) || String(b.criadoEm).localeCompare(String(a.criadoEm)));
 
 const adicionarAporteCaixinha = async ({
-  dia,
+  data,
   descricao,
   valorTexto,
 }: {
-  dia: string;
+  data: string;
   descricao: string;
   valorTexto: string;
 }): Promise<{ ok: boolean; mensagem?: string }> => {
   if (!empresaId) return { ok: false, mensagem: 'Perfil não identificado.' };
   if (!podeInserirLancamentos) return { ok: false, mensagem: 'Seu perfil não pode adicionar lançamentos.' };
 
-  const mes = mesParaAnalise || mesAtivo || mesResumoDash;
-  const indiceMes = meses.indexOf(mes);
-  const diaNumerico = Number(dia);
-  const limite = getMaxDias(mes, anoSelecionado);
   const valor = parseInt(String(valorTexto || '').replace(/\D/g, '') || '0', 10) / 100;
   const rotuloReserva = tipoPerfilAtualNormalizado === 'pessoal' ? 'Caixinha' : 'Reserva financeira';
   const descricaoFinal = formatarDescricao(descricao) || (tipoPerfilAtualNormalizado === 'pessoal' ? 'Aporte na caixinha' : 'Aporte na reserva financeira');
-
-  if (indiceMes < 0 || !diaNumerico || diaNumerico < 1 || diaNumerico > limite) {
-    return { ok: false, mensagem: `Informe um dia entre 1 e ${limite}.` };
-  }
   if (valor <= 0) {
     return { ok: false, mensagem: 'Informe um valor válido para aportar.' };
   }
 
-  const ano = Number(anoSelecionado);
+  const partesData = String(data || '').split('-').map(Number);
+  const [ano, mesNumero, diaNumerico] = partesData;
+  const indiceMes = mesNumero - 1;
+  const dataValidada = new Date(ano, indiceMes, diaNumerico);
+  if (
+    partesData.length !== 3
+    || !ano
+    || indiceMes < 0
+    || indiceMes > 11
+    || !diaNumerico
+    || dataValidada.getFullYear() !== ano
+    || dataValidada.getMonth() !== indiceMes
+    || dataValidada.getDate() !== diaNumerico
+  ) {
+    return { ok: false, mensagem: 'Informe uma data válida para o aporte.' };
+  }
+  const mes = meses[indiceMes];
   const dataMovimento = `${ano}-${String(indiceMes + 1).padStart(2, '0')}-${String(diaNumerico).padStart(2, '0')}`;
   const ehFuturo = dataFutura(ano, indiceMes, diaNumerico);
   const lancamento = await salvarLancamento({
@@ -3277,6 +3286,22 @@ const definirSaldoInicialCaixinha = async (valorTexto: string): Promise<{ ok: bo
   ]);
   notificarFinanceiroAtualizado();
 
+  return { ok: true };
+};
+
+const excluirSaldoInicialCaixinha = async (): Promise<{ ok: boolean; mensagem?: string }> => {
+  if (!empresaId) return { ok: false, mensagem: 'Perfil não identificado.' };
+  if (!podeInserirLancamentos) return { ok: false, mensagem: 'Seu perfil não pode alterar a caixinha.' };
+
+  const { error } = await supabase
+    .from('caixinhas_movimentos')
+    .delete()
+    .eq('empresa_id', empresaId)
+    .eq('tipo', 'saldo_inicial');
+  if (error) return { ok: false, mensagem: error.message || 'Não foi possível excluir o saldo inicial.' };
+
+  setCaixinhaMovimentos((prev) => prev.filter((mov) => mov.tipo !== 'saldo_inicial'));
+  notificarFinanceiroAtualizado();
   return { ok: true };
 };
 
@@ -10768,6 +10793,7 @@ if (validacaoTelefoneObrigatoria) {
         caixinhaUltimosMovimentos={caixinhaUltimosMovimentos}
         onAdicionarAporteCaixinha={adicionarAporteCaixinha}
         onDefinirSaldoInicialCaixinha={definirSaldoInicialCaixinha}
+        onExcluirSaldoInicialCaixinha={excluirSaldoInicialCaixinha}
         tipoPerfil={tipoPerfilAtualNormalizado}
         dashboardOrdem={recursoBloqueado('organizar_dashboard') ? ordemDashboardPadrao : dashboardOrdem}
         dashboardOcultos={recursoBloqueado('organizar_dashboard') ? ocultosDashboardPadrao : dashboardOcultos}

@@ -173,8 +173,9 @@ interface DashboardProps {
     valor: number;
     dataMovimento: string;
   }>;
-  onAdicionarAporteCaixinha: (dados: { dia: string; descricao: string; valorTexto: string }) => Promise<{ ok: boolean; mensagem?: string }>;
+  onAdicionarAporteCaixinha: (dados: { data: string; descricao: string; valorTexto: string }) => Promise<{ ok: boolean; mensagem?: string }>;
   onDefinirSaldoInicialCaixinha: (valorTexto: string) => Promise<{ ok: boolean; mensagem?: string }>;
+  onExcluirSaldoInicialCaixinha: () => Promise<{ ok: boolean; mensagem?: string }>;
   tipoPerfil: 'empresa' | 'pessoal';
   dashboardOrdem: { left: string[]; a: string[]; b: string[] };
   dashboardOcultos: string[];
@@ -207,7 +208,7 @@ export default function Dashboard({
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
   receitasAConfirmar, onConfirmarReceita, onEditarReceita, onExcluirReceita,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
-  caixinhaSaldo, caixinhaSaldoInicial, caixinhaAportesMes, caixinhaUltimosMovimentos, onAdicionarAporteCaixinha, onDefinirSaldoInicialCaixinha,
+  caixinhaSaldo, caixinhaSaldoInicial, caixinhaAportesMes, caixinhaUltimosMovimentos, onAdicionarAporteCaixinha, onDefinirSaldoInicialCaixinha, onExcluirSaldoInicialCaixinha,
   tipoPerfil,
   dashboardOrdem, dashboardOcultos, onAtualizarLayoutDashboard,
   dashboardExpandidos, onOcultarCardDashboard, onDefinirOcultosDashboard,
@@ -262,10 +263,15 @@ export default function Dashboard({
     receitas: number;
     despesas: number;
   } | null>(null);
-  const [caixinhaDia, setCaixinhaDia] = useState(String(new Date().getDate()));
+  const [caixinhaData, setCaixinhaData] = useState(() => {
+    const hoje = new Date();
+    return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+  });
   const [caixinhaDescricao, setCaixinhaDescricao] = useState('Reserva');
   const [caixinhaValor, setCaixinhaValor] = useState('');
   const [caixinhaSaldoInicialValor, setCaixinhaSaldoInicialValor] = useState('');
+  const [caixinhaSaldoInicialAberto, setCaixinhaSaldoInicialAberto] = useState(false);
+  const [caixinhaLancamentosVisiveis, setCaixinhaLancamentosVisiveis] = useState(false);
   const [caixinhaSalvando, setCaixinhaSalvando] = useState(false);
   const [caixinhaSaldoInicialSalvando, setCaixinhaSaldoInicialSalvando] = useState(false);
   const [caixinhaMensagem, setCaixinhaMensagem] = useState('');
@@ -630,7 +636,7 @@ export default function Dashboard({
     setCaixinhaMensagem('');
 
     const resultado = await onAdicionarAporteCaixinha({
-      dia: caixinhaDia,
+      data: caixinhaData,
       descricao: caixinhaDescricao,
       valorTexto: caixinhaValor,
     });
@@ -654,11 +660,32 @@ export default function Dashboard({
 
     if (resultado.ok) {
       setCaixinhaMensagem('Saldo inicial salvo.');
+      setCaixinhaSaldoInicialAberto(false);
     } else {
       setCaixinhaMensagem(resultado.mensagem || 'Não foi possível salvar o saldo inicial.');
     }
 
     setCaixinhaSaldoInicialSalvando(false);
+  };
+
+  const excluirSaldoInicialCaixinha = async () => {
+    if (caixinhaSaldoInicialSalvando) return;
+    setCaixinhaSaldoInicialSalvando(true);
+    setCaixinhaMensagem('');
+    const resultado = await onExcluirSaldoInicialCaixinha();
+    if (resultado.ok) {
+      setCaixinhaSaldoInicialValor('');
+      setCaixinhaSaldoInicialAberto(false);
+      setCaixinhaMensagem('Saldo inicial excluído.');
+    } else {
+      setCaixinhaMensagem(resultado.mensagem || 'Não foi possível excluir o saldo inicial.');
+    }
+    setCaixinhaSaldoInicialSalvando(false);
+  };
+
+  const formatarDataAporte = (data: string) => {
+    const [ano, mes, dia] = String(data || '').split('-');
+    return ano && mes && dia ? `${dia}/${mes}/${ano}` : '—';
   };
 
   const corEhClara = (hex: string) => {
@@ -1388,7 +1415,11 @@ const mostrarComparativoResumoDash =
                 {ocultarValores ? 'R$ ••••' : formatarMoeda(caixinhaSaldoInicial)}
               </strong>
             </div>
-            <div className="grid grid-cols-[minmax(0,1fr)_150px] gap-2 max-sm:grid-cols-1">
+            {!caixinhaSaldoInicialAberto ? (
+              <button type="button" onClick={() => setCaixinhaSaldoInicialAberto(true)} className={`h-10 w-full rounded-xl border px-3 text-xs font-black uppercase tracking-wide transition ${darkMode ? 'border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}>
+                {caixinhaSaldoInicial > 0 ? 'Alterar aporte inicial' : 'Adicionar aporte inicial'}
+              </button>
+            ) : <div className="grid grid-cols-[minmax(0,1fr)_104px_76px] gap-2 max-sm:grid-cols-1">
               <input
                 value={caixinhaSaldoInicialValor}
                 onChange={handleCaixinhaSaldoInicialChange}
@@ -1406,19 +1437,17 @@ const mostrarComparativoResumoDash =
               >
                 {caixinhaSaldoInicialSalvando ? 'Salvando...' : caixinhaSaldoInicial > 0 ? 'Atualizar' : 'Definir'}
               </button>
-            </div>
+              <button type="button" onClick={() => void excluirSaldoInicialCaixinha()} disabled={caixinhaSaldoInicialSalvando || caixinhaSaldoInicial <= 0} className="h-10 rounded-xl border border-red-200 bg-red-50 px-2 text-[10px] font-black uppercase tracking-wide text-red-600 transition hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50">Excluir</button>
+            </div>}
           </div>
 
-          <div className="grid grid-cols-[76px_minmax(0,1fr)_132px] gap-2 max-sm:grid-cols-1">
+          <div className="grid grid-cols-[154px_minmax(0,1fr)_132px] gap-2 max-sm:grid-cols-1">
             <input
-              type="number"
-              min={1}
-              max={31}
-              value={caixinhaDia}
-              onChange={(e) => setCaixinhaDia(e.target.value)}
-              className={`h-10 rounded-xl border px-3 text-base font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
-              aria-label={ehPerfilPessoal ? 'Dia do aporte' : 'Dia da reserva'}
-              placeholder="Dia"
+              type="date"
+              value={caixinhaData}
+              onChange={(e) => setCaixinhaData(e.target.value)}
+              className={`h-10 rounded-xl border px-3 text-sm font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
+              aria-label={ehPerfilPessoal ? 'Data do aporte' : 'Data da reserva'}
             />
             <input
               value={caixinhaDescricao}
@@ -1435,15 +1464,14 @@ const mostrarComparativoResumoDash =
             />
           </div>
 
-          <button
-            type="button"
-            onClick={enviarAporteCaixinha}
-            disabled={caixinhaSalvando}
-            className="h-10 w-full rounded-xl text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ backgroundColor: corPrimaria }}
-          >
-            {caixinhaSalvando ? 'Adicionando...' : ehPerfilPessoal ? 'Adicionar aporte' : 'Adicionar reserva'}
-          </button>
+          <div className="grid grid-cols-[minmax(0,1fr)_144px] gap-2 max-sm:grid-cols-1">
+            <button type="button" onClick={enviarAporteCaixinha} disabled={caixinhaSalvando} className="h-10 rounded-xl text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>
+              {caixinhaSalvando ? 'Adicionando...' : ehPerfilPessoal ? 'Adicionar aporte' : 'Adicionar reserva'}
+            </button>
+            <button type="button" onClick={() => setCaixinhaLancamentosVisiveis((visivel) => !visivel)} className={`h-10 rounded-xl border px-3 text-[10px] font-black uppercase tracking-wide transition ${darkMode ? 'border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`} aria-expanded={caixinhaLancamentosVisiveis}>
+              {caixinhaLancamentosVisiveis ? 'Ocultar lançamentos' : 'Ver lançamentos'}
+            </button>
+          </div>
 
           {caixinhaMensagem && (
             <p className={`text-center text-xs font-bold ${caixinhaMensagem.includes('adicionado') ? 'text-emerald-500' : 'text-red-500'}`}>
@@ -1451,19 +1479,16 @@ const mostrarComparativoResumoDash =
             </p>
           )}
 
-          <div className="space-y-2">
-            <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Últimos movimentos</p>
+          {caixinhaLancamentosVisiveis && <div className="space-y-2">
+            <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Lançamentos de aporte</p>
             {caixinhaUltimosMovimentos.length > 0 ? caixinhaUltimosMovimentos.map((mov) => (
-              <div key={mov.id} className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
+              <div key={mov.id} className={`grid grid-cols-[80px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
+                <span className={`text-[10px] font-black tabular-nums ${textMuted}`}>{formatarDataAporte(mov.dataMovimento)}</span>
                 <span className={`min-w-0 truncate text-xs font-bold ${textStrong}`}>{mov.descricao || (ehPerfilPessoal ? 'Aporte na caixinha' : 'Aporte na reserva financeira')}</span>
                 <strong className="shrink-0 text-xs font-black text-emerald-500">{ocultarValores ? 'R$ ••••' : formatarMoeda(mov.valor)}</strong>
               </div>
-            )) : (
-              <p className={`rounded-lg px-3 py-2 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>
-                {ehPerfilPessoal ? 'Nenhum aporte registrado.' : 'Nenhuma reserva registrada.'}
-              </p>
-            )}
-          </div>
+            )) : <p className={`rounded-lg px-3 py-2 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>{ehPerfilPessoal ? 'Nenhum aporte registrado.' : 'Nenhuma reserva registrada.'}</p>}
+          </div>}
         </div>
       </div>
     ),

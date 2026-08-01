@@ -463,12 +463,14 @@
     resumoPerfilDestaqueId: '',
     resumoPerfilExibidoId: '',
     meusPerfisExpandido: false,
-    caixinhaDia: String(new Date().getDate()),
+    caixinhaData: (function () { var hoje = new Date(); return hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0'); })(),
     caixinhaDescricao: 'Reserva',
     caixinhaValor: '',
     caixinhaSaldoInicialValor: '',
     caixinhaSalvando: false,
     caixinhaSaldoInicialSalvando: false,
+    caixinhaSaldoInicialAberto: false,
+    caixinhaLancamentosVisiveis: false,
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     vendasMobileModuloAtivo: false,
@@ -7533,20 +7535,14 @@
   async function salvarAporteCaixinhaMobile() {
     if (!state.empresa || state.caixinhaSalvando) return;
 
-    var dia = Number(campo('caixinha-dia'));
+    var dataTexto = campo('caixinha-data');
     var descricao = campo('caixinha-descricao') || 'Reserva';
     var valorTexto = campo('caixinha-valor');
     var valor = normalizarValor(valorTexto);
-    var limite = maxDias(state.mes, state.ano);
 
-    state.caixinhaDia = campo('caixinha-dia') || state.caixinhaDia;
+    state.caixinhaData = dataTexto || state.caixinhaData;
     state.caixinhaDescricao = descricao;
     state.caixinhaValor = valorTexto;
-
-    if (!dia || dia < 1 || dia > limite) {
-      setErro('Informe um dia entre 1 e ' + limite + '.');
-      return;
-    }
     if (valor <= 0) {
       setErro('Informe um valor valido para aportar.');
       return;
@@ -7557,18 +7553,27 @@
     state.erro = '';
     render();
 
-    var mesIndice = indiceMes(state.mes);
-    var ano = Number(state.ano);
+    var partesData = String(state.caixinhaData || '').split('-').map(Number);
+    var ano = partesData[0];
+    var mesIndice = partesData[1] - 1;
+    var dia = partesData[2];
+    var dataValidada = new Date(ano, mesIndice, dia);
+    if (partesData.length !== 3 || !ano || mesIndice < 0 || mesIndice > 11 || !dia || dataValidada.getFullYear() !== ano || dataValidada.getMonth() !== mesIndice || dataValidada.getDate() !== dia) {
+      state.caixinhaSalvando = false;
+      state.carregando = false;
+      setErro('Informe uma data valida para o aporte.');
+      return;
+    }
     var descricaoFinal = formatarDescricao(descricao) || 'Aporte na caixinha';
-    var ehFuturo = dataFutura(ano, mesIndice, dia);
     var dataMovimento = ano + '-' + String(mesIndice + 1).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
+    var ehFuturo = dataFutura(ano, mesIndice, dia);
 
     var lancamento = await db
       .from('lancamentos')
       .insert({
         empresa_id: state.empresa.id,
         ano: ano,
-        mes: state.mes,
+        mes: meses[mesIndice],
         dia: dia,
         despesa_nome: 'Caixinha',
         descricao: descricaoFinal,
@@ -7669,9 +7674,33 @@
 
     state.caixinhaSaldoInicialValor = '';
     state.caixinhaSaldoInicialSalvando = false;
+    state.caixinhaSaldoInicialAberto = false;
     await carregarDados();
     notificarFinanceiroAtualizadoMobile();
     mostrarToast('Saldo inicial da caixinha salvo.');
+  }
+
+  async function excluirSaldoInicialCaixinhaMobile() {
+    if (!state.empresa || state.caixinhaSaldoInicialSalvando) return;
+    state.caixinhaSaldoInicialSalvando = true;
+    state.erro = '';
+    render();
+    var resposta = await db
+      .from('caixinhas_movimentos')
+      .delete()
+      .eq('empresa_id', state.empresa.id)
+      .eq('tipo', 'saldo_inicial');
+    if (resposta.error) {
+      state.caixinhaSaldoInicialSalvando = false;
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel excluir o saldo inicial.'));
+      return;
+    }
+    state.caixinhaSaldoInicialValor = '';
+    state.caixinhaSaldoInicialAberto = false;
+    state.caixinhaSaldoInicialSalvando = false;
+    await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
+    mostrarToast('Saldo inicial excluido.');
   }
 
   function solicitarResetCaixinhaMobile() {
@@ -10094,11 +10123,11 @@
         aportesMes += valor;
       }
     });
-    var ultimos = (state.caixinhaMovimentos || []).slice().sort(function (a, b) {
+    var aportes = (state.caixinhaMovimentos || []).filter(function (mov) { return mov.tipo === 'aporte'; }).slice().sort(function (a, b) {
       return String(b.dataMovimento || '').localeCompare(String(a.dataMovimento || '')) ||
         String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
-    }).slice(0, 2);
-    return { saldo: saldo, saldoInicial: saldoInicial, aportesMes: aportesMes, ultimos: ultimos };
+    });
+    return { saldo: saldo, saldoInicial: saldoInicial, aportesMes: aportesMes, aportes: aportes };
   }
 
   function caixinhaCardHtml(atual) {
@@ -10106,14 +10135,22 @@
     var resumo = caixinhaResumo(atual);
     var escuro = state.darkMode;
     var saldoInicialInput = state.caixinhaSaldoInicialValor || (resumo.saldoInicial > 0 ? dinheiro(resumo.saldoInicial).replace('R$', '').trim() : '');
-    var ultimosHtml = resumo.ultimos.length
-      ? resumo.ultimos.map(function (mov) {
-          return '<div class="flex items-center justify-between gap-2 rounded-xl ' + (escuro ? 'bg-slate-800/60' : 'bg-slate-50') + ' px-3 py-2">' +
+    var aportesHtml = resumo.aportes.length
+      ? resumo.aportes.map(function (mov) {
+          return '<div class="grid grid-cols-[80px_minmax(0,1fr)_auto] items-center gap-2 rounded-xl ' + (escuro ? 'bg-slate-800/60' : 'bg-slate-50') + ' px-3 py-2">' +
+            '<span class="text-[10px] font-black tabular-nums text-slate-500">' + escapeHtml(dataAssinaturaMobile(mov.dataMovimento)) + '</span>' +
             '<span class="min-w-0 truncate text-xs font-bold text-slate-700">' + escapeHtml(mov.descricao || 'Aporte na caixinha') + '</span>' +
             '<strong class="shrink-0 text-xs font-black text-emerald-600">' + valorFinanceiroCardHtml(mov.valor, cardId) + '</strong>' +
           '</div>';
         }).join('')
       : '<p class="rounded-xl bg-slate-50 px-3 py-2 text-center text-xs font-semibold text-slate-500">Nenhum aporte registrado.</p>';
+    var aporteInicialForm = state.caixinhaSaldoInicialAberto
+      ? '<div class="grid grid-cols-[minmax(0,1fr)_104px_72px] gap-2">' +
+          '<input id="caixinha-saldo-inicial" inputmode="decimal" value="' + escapeHtml(saldoInicialInput) + '" placeholder="0,00" style="font-size:16px" class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-base font-black text-slate-900 outline-none">' +
+          '<button id="salvar-caixinha-saldo-inicial" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-2 text-[10px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.99]">' + (state.caixinhaSaldoInicialSalvando ? '...' : (resumo.saldoInicial > 0 ? 'Atualizar' : 'Definir')) + '</button>' +
+          '<button id="excluir-caixinha-saldo-inicial" type="button"' + (resumo.saldoInicial > 0 ? '' : ' disabled') + ' class="h-10 rounded-xl border border-red-200 bg-red-50 px-2 text-[10px] font-black uppercase tracking-wide text-red-600 disabled:opacity-50">Excluir</button>' +
+        '</div>'
+      : '<button id="abrir-caixinha-saldo-inicial" type="button" class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-[11px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.99]">' + (resumo.saldoInicial > 0 ? 'Alterar aporte inicial' : 'Adicionar aporte inicial') + '</button>';
 
     return (
       '<section class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">' +
@@ -10140,18 +10177,18 @@
             '<span class="min-w-0"><span class="block text-[10px] font-black uppercase tracking-wide text-slate-500">Aporte inicial</span><span class="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">Valor que ja existia antes do AvantaLab</span></span>' +
             '<strong class="shrink-0 text-xs font-black text-emerald-600">' + valorFinanceiroCardHtml(resumo.saldoInicial, cardId) + '</strong>' +
           '</div>' +
-          '<div class="grid grid-cols-[minmax(0,1fr)_104px] gap-2">' +
-            '<input id="caixinha-saldo-inicial" inputmode="decimal" value="' + escapeHtml(saldoInicialInput) + '" placeholder="0,00" style="font-size:16px" class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-base font-black text-slate-900 outline-none">' +
-            '<button id="salvar-caixinha-saldo-inicial" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-3 text-[11px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.99]">' + (state.caixinhaSaldoInicialSalvando ? 'Salvando...' : (resumo.saldoInicial > 0 ? 'Atualizar' : 'Definir')) + '</button>' +
-          '</div>' +
+          aporteInicialForm +
         '</div>' +
-        '<div class="mt-3 grid grid-cols-[70px_minmax(0,1fr)] gap-2">' +
-          '<input id="caixinha-dia" type="number" min="1" max="31" value="' + escapeHtml(state.caixinhaDia || '') + '" placeholder="Dia" style="font-size:16px" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none">' +
+        '<div class="mt-3 grid grid-cols-[140px_minmax(0,1fr)] gap-2">' +
+          '<input id="caixinha-data" type="date" value="' + escapeHtml(state.caixinhaData || '') + '" aria-label="Data do aporte" style="font-size:16px" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none">' +
           '<input id="caixinha-descricao" type="text" value="' + escapeHtml(state.caixinhaDescricao || '') + '" placeholder="Descrição" style="font-size:16px" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none">' +
         '</div>' +
         '<input id="caixinha-valor" inputmode="decimal" value="' + escapeHtml(state.caixinhaValor || '') + '" placeholder="0,00" style="font-size:16px" class="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-base font-black text-slate-900 outline-none">' +
-        '<button id="salvar-caixinha-aporte" type="button" class="mt-2 h-10 w-full rounded-xl bg-cyan-700 text-xs font-black uppercase tracking-wide text-white shadow-sm active:scale-[0.99]">' + (state.caixinhaSalvando ? 'Adicionando...' : 'Adicionar aporte') + '</button>' +
-        '<div class="mt-3 space-y-2">' + ultimosHtml + '</div></div>' +
+        '<div class="mt-2 grid grid-cols-[minmax(0,1fr)_140px] gap-2">' +
+          '<button id="salvar-caixinha-aporte" type="button" class="h-10 rounded-xl bg-cyan-700 text-xs font-black uppercase tracking-wide text-white shadow-sm active:scale-[0.99]">' + (state.caixinhaSalvando ? 'Adicionando...' : 'Adicionar aporte') + '</button>' +
+          '<button id="toggle-caixinha-lancamentos" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-2 text-[10px] font-black uppercase tracking-wide text-slate-700">' + (state.caixinhaLancamentosVisiveis ? 'Ocultar lançamentos' : 'Ver lançamentos') + '</button>' +
+        '</div>' +
+        (state.caixinhaLancamentosVisiveis ? '<div class="mt-3 space-y-2"><p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Lançamentos de aporte</p>' + aportesHtml + '</div>' : '') + '</div>' +
       '</section>'
     );
   }
@@ -13986,7 +14023,10 @@
       if (state.meusPerfisExpandido) rolarCardMeusPerfisAoTopo();
     });
     bind('salvar-caixinha-saldo-inicial', salvarSaldoInicialCaixinhaMobile);
+    bind('abrir-caixinha-saldo-inicial', function () { state.caixinhaSaldoInicialAberto = true; render(); });
+    bind('excluir-caixinha-saldo-inicial', excluirSaldoInicialCaixinhaMobile);
     bind('salvar-caixinha-aporte', salvarAporteCaixinhaMobile);
+    bind('toggle-caixinha-lancamentos', function () { state.caixinhaLancamentosVisiveis = !state.caixinhaLancamentosVisiveis; render(); });
     var caixinhaSaldoInicialEl = document.getElementById('caixinha-saldo-inicial');
     if (caixinhaSaldoInicialEl) {
       caixinhaSaldoInicialEl.addEventListener('input', function () {
@@ -14001,8 +14041,8 @@
         this.value = state.caixinhaValor;
       });
     }
-    var caixinhaDiaEl = document.getElementById('caixinha-dia');
-    if (caixinhaDiaEl) caixinhaDiaEl.addEventListener('input', function () { state.caixinhaDia = this.value; });
+    var caixinhaDataEl = document.getElementById('caixinha-data');
+    if (caixinhaDataEl) caixinhaDataEl.addEventListener('input', function () { state.caixinhaData = this.value; });
     var caixinhaDescricaoEl = document.getElementById('caixinha-descricao');
     if (caixinhaDescricaoEl) caixinhaDescricaoEl.addEventListener('input', function () { state.caixinhaDescricao = this.value; });
     bind('toggle-categorias', function () {

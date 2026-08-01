@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.1.115 - 2026-08-01
+
+- Gestão Web e Mobile: o aporte inicial da Caixinha fica recolhido e pode ser
+  adicionado, alterado ou excluído. A lista de aportes abre por **Ver
+  lançamentos** e exibe a data de cada item.
+
+## 1.6.1.114 - 2026-08-01
+
+- Gestão Web e Mobile: um novo aporte na Caixinha/Reserva financeira inicia com
+  a data atual, que pode ser alterada. A saída correspondente usa a data
+  escolhida, sem depender do mês aberto no dashboard.
+
 ## 1.6.1.113 - 2026-08-01
 
 - Cadastro de perfil Empresa: a escolha passa a ser explícita entre **Usar 7

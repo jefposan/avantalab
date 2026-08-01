@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.113 -->
+<!-- ava-version: 1.6.1.115 -->
+
+> Revisão 1.6.1.115: o aporte inicial da **Caixinha** fica recolhido até usar
+> **Adicionar aporte inicial**. Depois, pode ser atualizado ou excluído. **Ver
+> lançamentos** mostra os aportes normais com a data de cada um.
+
+> Revisão 1.6.1.114: ao adicionar um aporte na **Caixinha**, a data começa em
+> hoje e pode ser alterada. O sistema cria a despesa na data escolhida, sem
+> usar o mês que está aberto no dashboard.
 
 > Revisão 1.6.1.113: ao criar um perfil Empresa, escolha **Usar 7 dias
 > grátis** para liberar o Business Pro ou **Assinar agora** para seguir à
