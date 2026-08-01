@@ -4668,10 +4668,11 @@
     var coresTipo = {
       despesa: 'bg-amber-100 text-amber-700',
       agenda: 'bg-cyan-100 text-cyan-700',
+      assinatura: 'bg-violet-100 text-violet-700',
       novidade: 'bg-emerald-100 text-emerald-700',
       sistema: 'bg-slate-100 text-slate-600'
     };
-    var rotulosTipo = { despesa: 'Despesa', agenda: 'Agenda', novidade: 'Novidade', sistema: 'Sistema' };
+    var rotulosTipo = { despesa: 'Despesa', agenda: 'Agenda', assinatura: 'Assinatura', novidade: 'Novidade', sistema: 'Sistema' };
     var lixeiraSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
     var header = '<div class="mb-2 flex items-center justify-between gap-2">' +
       '<span class="text-[11px] font-bold text-slate-500">' + lista.length + ' notifica&ccedil;' + (lista.length > 1 ? '&otilde;es' : '&atilde;o') + '</span>' +
@@ -4681,7 +4682,8 @@
       var naoLida = n.lida === false;
       var selo = coresTipo[n.tipo] || coresTipo.sistema;
       var rotulo = rotulosTipo[n.tipo] || 'Aviso';
-      return '<div class="rounded-2xl border p-3 ' + (naoLida ? 'border-cyan-200 bg-cyan-50/60' : 'border-slate-200 bg-white') + '">' +
+      var acaoAssinatura = n.tipo === 'assinatura';
+      return '<div' + (acaoAssinatura ? ' data-abrir-assinatura-notificacao="1" role="button" tabindex="0"' : '') + ' class="rounded-2xl border p-3 ' + (acaoAssinatura ? 'cursor-pointer active:scale-[0.99] ' : '') + (naoLida ? 'border-cyan-200 bg-cyan-50/60' : 'border-slate-200 bg-white') + '">' +
           '<div class="mb-1 flex items-center gap-2">' +
             (naoLida ? '<span class="h-2 w-2 shrink-0 rounded-full bg-cyan-500"></span>' : '') +
             '<span class="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase ' + selo + '">' + escapeHtml(rotulo) + '</span>' +
@@ -14462,6 +14464,15 @@
       botao.addEventListener('click', function (event) {
         event.stopPropagation();
         excluirNotificacaoMobile(botao.getAttribute('data-excluir-notificacao'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-abrir-assinatura-notificacao]'), function (aviso) {
+      aviso.addEventListener('click', function () { abrirAssinaturaMobile(); });
+      aviso.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          abrirAssinaturaMobile();
+        }
       });
     });
     configurarDragDashboard();

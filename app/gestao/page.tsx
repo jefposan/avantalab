@@ -758,7 +758,7 @@ const [agendaDescricao, setAgendaDescricao] = useState('');
 const [agendaRepetir, setAgendaRepetir] = useState(false);
 const [agendaRepeticao, setAgendaRepeticao] = useState<'diaria'|'semanal'|'quinzenal'|'mensal'|'anual'>('mensal');
 const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | null>(null);
-const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string; lida: boolean }[]>([]);
+const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string; tipo: string; lida: boolean }[]>([]);
 const [modalAprovacoesAberto, setModalAprovacoesAberto] = useState(false);
 const [solicitacoesAprovacao, setSolicitacoesAprovacao] = useState<SolicitacaoAprovacao[]>([]);
 const [acessosVendasAprovados, setAcessosVendasAprovados] = useState<AcessoVendasAprovado[]>([]);
@@ -2332,7 +2332,7 @@ useEffect(() => {
     try {
       const { data, error } = await supabase
         .from('notificacoes')
-        .select('id, titulo, corpo, lida')
+        .select('id, titulo, corpo, tipo, lida')
         .order('criado_em', { ascending: false })
         .limit(50);
       if (error) return;
@@ -2341,6 +2341,7 @@ useEffect(() => {
           id: String(n.id),
           titulo: textoRegistro(n.titulo),
           corpo: textoRegistro(n.corpo),
+          tipo: textoRegistro(n.tipo),
           lida: n.lida === true,
         }))
       );
@@ -5773,7 +5774,15 @@ const alertasSistema = useMemo(() => {
 
   // Avisos/novidades vindos do Supabase aparecem no sininho apenas enquanto nao foram visualizados.
   notificacoesWeb.filter((n) => !n.lida).forEach((n) => {
-    alertas.push({ id: 'notif-' + n.id, titulo: n.titulo, mensagem: n.corpo, naoLida: !n.lida });
+    const avisoAssinatura = n.tipo === 'assinatura';
+    alertas.push({
+      id: 'notif-' + n.id,
+      titulo: n.titulo,
+      mensagem: n.corpo,
+      acaoTexto: avisoAssinatura ? 'Ver assinatura' : undefined,
+      acao: avisoAssinatura ? () => setModalAssinatura(true) : undefined,
+      naoLida: !n.lida,
+    });
   });
 
   if (podeAcessarAjustes && solicitacoesAprovacao.length > 0) {

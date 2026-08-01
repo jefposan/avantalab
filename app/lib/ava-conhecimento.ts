@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.109: em Clientes, a busca permanece ao clicar fora,
-// e um novo clique no campo limpa somente seu texto.
+// Revisado na versão 1.6.1.110: o sininho avisa gestores e administradores
+// sobre vencimento e atraso de faturas recorrentes; no Mobile também há push.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -23,6 +23,7 @@ NAVEGAÇÃO E PERFIS
 - Um login pode ter vários perfis Empresa ou Pessoal. Em Meus perfis, o usuário pode selecionar/destacar um perfil; a troca efetiva usa os controles próprios de troca de perfil.
 - No perfil Pessoal, Caixinha inicia visível. No perfil Empresa, ela se chama Reserva financeira, inicia oculta e pode ser exibida em Organizar blocos; os aportes continuam registrados como despesa.
 - Gestor Master e Administrador possuem ações administrativas; não prometa acesso a um recurso sem confirmar a permissão.
+- O sininho avisa Gestor Master e Administrador sobre faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Em cada aviso de assinatura, **Ver assinatura** abre o painel para consultar ou regularizar a fatura.
 - Em cadastros e edições de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos preenchidos; rascunhos temporários guardam apenas dados não sensíveis e nunca armazenam senhas, confirmações, códigos SMS ou tokens.
 - Em Usuários e Permissões, criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. Editar exige os mesmos dados, mas a nova senha é opcional. O usuário entra com e-mail ou login; se o e-mail já pertencer a uma conta, use Adicionar usuário existente para vinculá-la ao perfil. E-mail e login são conferidos no servidor antes de salvar; em erro, o formulário mantém os valores e o cursor vai ao campo indicado. Ao excluir, uma conta criada internamente só é apagada por completo quando não possui outro perfil, vínculo ou histórico; caso contrário, apenas o acesso atual é removido e a conta continua pesquisável.
 - Ao atualizar a página, sessão inválida, expirada ou de usuário excluído é limpa e retorna ao login; Criar perfil financeiro só aparece para uma conta validada que realmente não possui perfil.
@@ -70,6 +71,7 @@ NAVEGAÇÃO E PERFIS
 - Durante o login com Google ou Apple, **Preparando acesso** oferece **Cancelar e voltar ao login**. A ação encerra a tentativa pendente e restaura a tela de login sem manter o botão em Conectando.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
+- Gestor Master e Administrador recebem no sininho avisos de faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Tocar em um aviso de assinatura abre **Assinatura**; quando as notificações do aparelho estiverem ativas, ele também é entregue por push.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
 - Assinatura é o primeiro botão do Menu e fica fora de Configurações. No aplicativo iOS, um perfil Pessoal sem assinatura vigente abre diretamente os planos Mensal e Anual e Restaurar compras; uma assinatura existente exibe situação, gerenciamento e restauração. Pessoal Premium usa compra da App Store; Business e Business Pro não são vendidos no aplicativo e continuam contratados somente pela plataforma web. No PWA, a cobrança web permanece igual. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente compatível com aquele ambiente. Cortesia e cupom ativos não exibem preços nem opções de contratação. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.

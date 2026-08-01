@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.110 - 2026-08-01
+
+- Gestão Web e Mobile: gestores e administradores recebem no sininho avisos de
+  faturas recorrentes a vencer (5, 2 e 0 dias) e em atraso (1, 3 e 7 dias).
+  O aviso abre a Assinatura; no Mobile, também é enviado como push quando o
+  aparelho estiver com notificações ativadas.
+
 ## 1.6.1.109 - 2026-08-01
 
 - AvantaVendas: em Clientes, uma busca permanece ao clicar fora; um novo clique

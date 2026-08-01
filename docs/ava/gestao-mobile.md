@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.109 -->
+<!-- ava-version: 1.6.1.110 -->
+
+> Revisão 1.6.1.110: o sininho avisa gestores e administradores sobre faturas
+> recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Tocar no
+> aviso abre **Assinatura**; com as notificações do aparelho ativas, o mesmo
+> aviso também chega por push.
 
 > Revisão 1.6.1.109: ajuste de pesquisa exclusivo do AvantaVendas; sem
 > impacto operacional na Gestão Mobile.

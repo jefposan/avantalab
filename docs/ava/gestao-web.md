@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.109 -->
+<!-- ava-version: 1.6.1.110 -->
+
+> Revisão 1.6.1.110: o sininho avisa gestores e administradores sobre faturas
+> recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Escolher
+> **Ver assinatura** no aviso abre o painel de Assinatura para regularização.
 
 > Revisão 1.6.1.109: ajuste de pesquisa exclusivo do AvantaVendas; sem
 > impacto operacional na Gestão Web.
