@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.6.1.107.62.04 - 2026-07-31
+
+- iOS: o modal de assinatura informa quando os planos da App Store ainda estão
+  sendo carregados, mantendo as ações indisponíveis até a consulta terminar.
+
+## 1.6.1.107.62.03 - 2026-07-31
+
+- Gestão Web: a marca AvantaLab nas telas de login e cadastro passa a ficar
+  centralizada verticalmente na viewport, enquanto o card preserva sua posição.
+
+## 1.6.1.107.62.02 - 2026-07-31
+
+- Gestão Web: o card de seleção de perfil após o login volta a ficar
+  centralizado sobre o fundo institucional.
+
+## 1.6.1.107.62.01 - 2026-07-31
+
+- Gestão Web: login e cadastro passam a compartilhar a mesma posição do card
+  na cena de acesso; a marca AvantaLab continua centralizada na viewport.
+
 ## 1.6.1.107.62 - 2026-07-31
 
 - iOS: adicionada a descrição de uso do microfone para as mensagens de voz da

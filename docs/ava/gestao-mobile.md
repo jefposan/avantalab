@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.62 -->
+<!-- ava-version: 1.6.1.107.62.04 -->
+
+> Revisão 1.6.1.107.62.04: no aplicativo iOS, o modal de assinatura informa
+> quando os planos da App Store estão sendo carregados; sem mudança no fluxo
+> operacional de compra ou restauração.
+
+> Revisão 1.6.1.107.62.03: ajuste visual exclusivo das telas de acesso web;
+> sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.107.62.02: ajuste visual exclusivo da seleção de perfil no
+> desktop; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.107.62.01: ajuste visual exclusivo do acesso web; sem impacto
+> operacional na Gestão Mobile.
 
 > Revisão 1.6.1.107.62: a Ava informa que a gravação de voz é opcional,
 > depende da permissão do microfone e é convertida em texto para a conversa.

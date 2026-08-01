@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.62: o uso opcional de voz pela Ava informa a
-// permissão de microfone e o processamento temporário para transcrição.
+// Revisado na versão 1.6.1.107.62.04: feedback de carregamento dos planos no
+// iOS; a orientação operacional de assinatura permanece válida.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

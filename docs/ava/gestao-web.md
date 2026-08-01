@@ -1,6 +1,18 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.62 -->
+<!-- ava-version: 1.6.1.107.62.04 -->
+
+> Revisão 1.6.1.107.62.04: feedback de carregamento exclusivo da assinatura
+> no aplicativo iOS; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.107.62.03: a marca das telas web de login e cadastro fica
+> centralizada verticalmente; sem mudança operacional na Gestão Web.
+
+> Revisão 1.6.1.107.62.02: o card de seleção de perfil após o login fica
+> centralizado; sem mudança operacional na Gestão Web.
+
+> Revisão 1.6.1.107.62.01: login e cadastro web usam a mesma posição de card
+> e mantêm a marca centralizada; sem mudança operacional na Gestão Web.
 
 > Revisão 1.6.1.107.62: permissão nativa de microfone, política de áudio e
 > estabilização do build iOS; sem impacto operacional na Gestão Web.

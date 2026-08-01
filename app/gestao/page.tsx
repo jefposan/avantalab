@@ -6851,7 +6851,7 @@ if (modalSelecionarEmpresa) {
         <FundoCarregamentoResponsivo />
       </div>
       <section
-        className={`relative z-10 row-start-2 my-auto flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border shadow-2xl ${
+        className={`relative z-10 row-start-2 my-auto flex w-full max-w-sm flex-col justify-self-center overflow-hidden rounded-2xl border shadow-2xl ${
           darkMode
             ? 'bg-slate-900 border-slate-700'
             : 'bg-white border-slate-200'
