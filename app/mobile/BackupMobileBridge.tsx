@@ -10,6 +10,7 @@ import {
   type ModoImportacaoBackup,
   type ResultadoImportacaoBackup,
 } from '../lib/exportacao';
+import PontosRestauracaoModal from '../components/PontosRestauracaoModal';
 
 type DadosMobile = {
   empresaId: string;
@@ -43,10 +44,11 @@ export default function BackupMobileBridge() {
   const [processando, setProcessando] = useState(false);
   const [confirmarBackup, setConfirmarBackup] = useState(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
+  const [pontosAbertos, setPontosAbertos] = useState(false);
 
   useEffect(() => {
     const receber = (evento: Event) => {
-      const detalhe = (evento as CustomEvent<{ acao: 'backup' | 'restauracao'; dados: DadosMobile }>).detail;
+      const detalhe = (evento as CustomEvent<{ acao: 'backup' | 'restauracao' | 'pontos'; dados: DadosMobile }>).detail;
       if (!detalhe?.dados?.empresaId) return;
       setDados(detalhe.dados);
       if (detalhe.acao === 'backup') setConfirmarBackup(true);
@@ -54,6 +56,7 @@ export default function BackupMobileBridge() {
         setArquivo(null); setAnalise(null); setModo('atualizar'); setConfirmacao('');
         inputRef.current?.click();
       }
+      if (detalhe.acao === 'pontos') setPontosAbertos(true);
     };
     window.addEventListener('avantalab:mobile-backup', receber);
     return () => window.removeEventListener('avantalab:mobile-backup', receber);
@@ -160,5 +163,6 @@ export default function BackupMobileBridge() {
     </div>}
 
     {aviso && <div className={painel}><section className={card}><header className="bg-[#003E73] px-4 py-3 text-white"><h2 className="text-lg font-black">{aviso.titulo}</h2></header><div className="whitespace-pre-line p-4 text-sm font-semibold leading-relaxed text-slate-600">{aviso.mensagem}</div><footer className="border-t border-slate-200 p-3"><button type="button" onClick={fecharAviso} className="h-11 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase text-white">OK</button></footer></section></div>}
+    <PontosRestauracaoModal aberto={pontosAbertos} empresaId={dados?.empresaId || ''} darkMode={dados?.darkMode || false} onFechar={() => setPontosAbertos(false)} />
   </>;
 }

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.110 -->
+<!-- ava-version: 1.6.1.111 -->
+
+> Revisão 1.6.1.111: Gestor Master encontra **Pontos de restauração** em
+> **Menu > Configurações > Backup e restauração**. Os pontos preservam o estado
+> completo do perfil e a restauração exige digitar **RESTAURAR**; o Excel
+> continua sendo apenas o backup baixável.
 
 > Revisão 1.6.1.110: o sininho avisa gestores e administradores sobre faturas
 > recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Tocar no

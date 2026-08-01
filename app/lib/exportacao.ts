@@ -106,6 +106,22 @@ type LinhaImportacao<T> = {
   valido: boolean;
 };
 
+// O Excel continua independente dos Pontos de restauração. Antes de qualquer
+// importação, o Gestor Master ganha um snapshot estruturado no servidor; se o
+// recurso ainda não estiver disponível para o perfil, a importação legada não
+// é bloqueada.
+async function criarPontoAntesImportacao(empresaId: string) {
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.access_token) return;
+    await fetch('/api/pontos-restauracao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` },
+      body: JSON.stringify({ acao: 'criar_pre', empresaId, nome: 'Segurança antes da importação' }),
+    });
+  } catch {}
+}
+
 function sanitizarNomeArquivo(valor: string) {
   return normalizarTexto(valor || 'perfil')
     .replace(/[^a-z0-9]+/g, '-')
@@ -1148,10 +1164,12 @@ async function apagarDadosFinanceirosAtuais(empresaId: string): Promise<Partial<
 }
 
 export async function importarBackupExcelAtualizar(params: ImportarBackupExcelParams): Promise<ResultadoImportacaoBackup> {
+  await criarPontoAntesImportacao(params.empresaId);
   return importarLinhasBackup({ ...params, modo: 'atualizar' });
 }
 
 export async function importarBackupExcelSubstituir(params: ImportarBackupExcelParams): Promise<ResultadoImportacaoBackup> {
+  await criarPontoAntesImportacao(params.empresaId);
   const removidos = await apagarDadosFinanceirosAtuais(params.empresaId);
   const resultado = await importarLinhasBackup({ ...params, modo: 'substituir' });
 

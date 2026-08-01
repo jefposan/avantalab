@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.111 - 2026-08-01
+
+- Gestão Web e Mobile: **Pontos de restauração** criam snapshots estruturados
+  do perfil para Gestor Master, com criação manual, retenção e restauração
+  protegida por confirmação. O Excel continua sendo a exportação baixável.
+
 ## 1.6.1.110 - 2026-08-01
 
 - Gestão Web e Mobile: gestores e administradores recebem no sininho avisos de

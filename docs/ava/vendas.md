@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.110 -->
+<!-- ava-version: 1.6.1.111 -->
+
+> Revisão 1.6.1.111: Pontos de restauração são exclusivos da Gestão Web e
+> Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.110: avisos de vencimento de faturas são exclusivos da Gestão
 > Web e Mobile; sem impacto operacional no AvantaVendas.
