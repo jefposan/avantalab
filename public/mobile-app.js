@@ -2234,6 +2234,7 @@
     if (iosNativo && pessoal) {
       precoMensal = state.assinaturaApplePrecoMensal || precoMensal;
       precoAnual = state.assinaturaApplePrecoAnual || precoAnual;
+      var carregandoPlanosApple = state.assinaturaAcao === 'apple-status';
       return '<div class="grid gap-3">' +
         '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
           '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Assinatura pessoal</p>' +
@@ -2241,6 +2242,7 @@
           '<p class="mt-1 text-xs font-semibold leading-relaxed text-white/85">Escolha o ciclo e confirme a compra com sua Conta Apple.</p>' +
         '</div>' +
         (state.assinaturaErro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.assinaturaErro) + '</div>' : '') +
+        (carregandoPlanosApple ? '<div role="status" aria-live="polite" aria-busy="true" class="flex items-center gap-3 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-sky-800"><span aria-hidden="true" class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-sky-200 border-t-sky-700 motion-reduce:animate-none"></span><span class="text-[11px] font-bold leading-snug">Carregando planos da App Store...<small class="mt-0.5 block text-[9px] font-semibold text-sky-700">Isso pode levar alguns segundos.</small></span></div>' : '') +
         '<div class="grid grid-cols-2 gap-2">' +
           '<button id="assinatura-selecionar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'mensal' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Mensal · ' + escapeHtml(precoMensal) + '</button>' +
           '<button id="assinatura-selecionar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'anual' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Anual · ' + escapeHtml(precoAnual) + '</button>' +

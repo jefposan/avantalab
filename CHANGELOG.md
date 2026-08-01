@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.6.1.107.62.04 - 2026-07-31
+## 1.6.1.108 - 2026-07-31
 
 - iOS: o modal de assinatura informa quando os planos da App Store ainda estão
   sendo carregados, mantendo as ações indisponíveis até a consulta terminar.

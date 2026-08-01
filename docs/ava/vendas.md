@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.107.62.04 -->
+<!-- ava-version: 1.6.1.108 -->
 
-> Revisão 1.6.1.107.62.04: feedback de carregamento exclusivo da assinatura
+> Revisão 1.6.1.108: feedback de carregamento exclusivo da assinatura
 > na Gestão Mobile para iOS; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.107.62.03: ajuste visual exclusivo das telas de acesso web;

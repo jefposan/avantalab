@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.107.62.04 -->
+<!-- ava-version: 1.6.1.108 -->
 
-> Revisão 1.6.1.107.62.04: no aplicativo iOS, o modal de assinatura informa
+> Revisão 1.6.1.108: no aplicativo iOS, o modal de assinatura informa
 > quando os planos da App Store estão sendo carregados; sem mudança no fluxo
 > operacional de compra ou restauração.
 

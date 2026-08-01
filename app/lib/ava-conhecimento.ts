@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.107.62.04: feedback de carregamento dos planos no
+// Revisado na versão 1.6.1.108: feedback de carregamento dos planos no
 // iOS; a orientação operacional de assinatura permanece válida.
 
 /*

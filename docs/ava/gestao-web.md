@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.107.62.04 -->
+<!-- ava-version: 1.6.1.108 -->
 
-> Revisão 1.6.1.107.62.04: feedback de carregamento exclusivo da assinatura
+> Revisão 1.6.1.108: feedback de carregamento exclusivo da assinatura
 > no aplicativo iOS; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.107.62.03: a marca das telas web de login e cadastro fica
