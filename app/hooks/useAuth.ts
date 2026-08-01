@@ -1149,9 +1149,10 @@ export function useAuth(deps: UseAuthDeps) {
       } catch { /* silencioso */ }
     }
 
-    // Cobrança: define o início do perfil EMPRESA (7 dias grátis x assinar agora).
-    // Só quando a flag está ligada e não houve cupom (o cupom já concede cortesia).
-    if (empresaCriadaId && perfilCriadoAgora && COBRANCA_ATIVA && tipoPerfil === 'empresa' && !cupomCriacao) {
+    // O teste é ativado de imediato. Já "Assinar agora" não cria uma
+    // assinatura expirada: após o cadastro, o paywall apresenta os planos e
+    // somente a contratação efetiva grava a cobrança.
+    if (empresaCriadaId && perfilCriadoAgora && COBRANCA_ATIVA && tipoPerfil === 'empresa' && !cupomCriacao && modoInicioEmpresa === 'trial') {
       try {
         const tokenSessao = sessaoAtual.session?.access_token;
         if (tokenSessao) {

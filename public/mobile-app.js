@@ -6830,8 +6830,9 @@
         }
       } catch (e) { /* silencioso */ }
       state.cadastroCupom = '';
-    } else if (criadaId && perfilCriadoAgora && COBRANCA_ATIVA_MOBILE && tipo === 'empresa') {
-      // Sem cupom: define o início do perfil empresa (7 dias grátis x assinar agora).
+    } else if (criadaId && perfilCriadoAgora && COBRANCA_ATIVA_MOBILE && tipo === 'empresa' && modoInicioEmpresa === 'trial') {
+      // O teste é ativado de imediato. "Assinar agora" não cria uma
+      // assinatura expirada: a contratação é iniciada apenas ao escolher um plano.
       try {
         var tokInicio = await tokenSessao();
         if (tokInicio) {
@@ -6896,7 +6897,7 @@
         '</div>' +
         ((COBRANCA_ATIVA_MOBILE && tipo === 'empresa') ?
           '<div class="rounded-xl border border-sky-200 bg-sky-50 p-3">' +
-            '<p class="text-[11px] font-bold leading-snug text-sky-900">Perfil empresa tem <b>7 dias gr&aacute;tis</b>. Depois: R$ 34,90/m&ecirc;s ou R$ 249,90/ano.</p>' +
+            '<p class="text-[11px] font-bold leading-snug text-sky-900">Escolha entre testar o <b>Business Pro por 7 dias gr&aacute;tis</b> ou assinar agora e selecionar o plano depois.</p>' +
             '<div class="mt-2 grid grid-cols-2 gap-2">' +
               '<button id="inicio-empresa-trial" type="button" class="rounded-lg px-2 py-2 text-[10px] font-black uppercase tracking-wide transition ' + (state.inicioEmpresaModo === 'trial' ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600') + '">7 dias gr&aacute;tis</button>' +
               '<button id="inicio-empresa-assinar" type="button" class="rounded-lg px-2 py-2 text-[10px] font-black uppercase tracking-wide transition ' + (state.inicioEmpresaModo === 'assinar' ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600') + '">Assinar agora</button>' +

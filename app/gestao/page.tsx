@@ -629,6 +629,32 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     }
   }, [empresaId]);
 
+  const iniciarTesteEmpresa = useCallback(async (): Promise<{
+    ok: boolean;
+    liberado: boolean;
+    mensagem?: string;
+  }> => {
+    if (!empresaId) return { ok: false, liberado: false, mensagem: 'Perfil não encontrado.' };
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) return { ok: false, liberado: false, mensagem: 'Sessão não encontrada. Entre novamente.' };
+      const resposta = await fetch('/api/cobranca/definir-inicio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ empresaId, modo: 'trial' }),
+      });
+      const json = await resposta.json();
+      if (!resposta.ok || !json.ok) return { ok: false, liberado: false, mensagem: json.mensagem || 'Não foi possível iniciar o período de teste.' };
+      const estadoAtualizado = await atualizarEstadoCobranca();
+      return estadoAtualizado.liberado
+        ? { ok: true, liberado: true, mensagem: 'Teste do Business Pro liberado por 7 dias.' }
+        : estadoAtualizado;
+    } catch {
+      return { ok: false, liberado: false, mensagem: 'Não foi possível iniciar o período de teste agora.' };
+    }
+  }, [empresaId, atualizarEstadoCobranca]);
+
   useEffect(() => {
     const carregarEstado = () => atualizarEstadoCobranca();
     if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) {
@@ -6770,7 +6796,7 @@ if (acessoNaoConfigurado) {
   {COBRANCA_ATIVA && tipoPerfilInicialNormalizado === 'empresa' && (
     <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-3">
       <p className="text-xs font-bold leading-snug text-sky-900">
-        O teste de <b>7 dias grátis</b> é exclusivo do Business Pro. Você também pode criar o perfil e escolher Business ou Business Pro depois.
+        Escolha entre testar o <b>Business Pro por 7 dias grátis</b> ou assinar agora e selecionar o plano após criar o perfil.
       </p>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {(['trial', 'assinar'] as const).map((m) => {
@@ -6784,7 +6810,7 @@ if (acessoNaoConfigurado) {
                 ativo ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600 hover:bg-sky-100'
               }`}
             >
-              {m === 'trial' ? 'Testar Business Pro' : 'Escolher plano depois'}
+              {m === 'trial' ? 'Usar 7 dias grátis' : 'Assinar agora'}
             </button>
           );
         })}
@@ -7249,6 +7275,8 @@ if (validacaoTelefoneObrigatoria) {
         reenviandoSmsRedefinirSenha={reenviandoSmsRedefinirSenha}
         tipoPerfilInicial={tipoPerfilInicial}
         setTipoPerfilInicial={setTipoPerfilInicial}
+        inicioEmpresaModo={inicioEmpresaModo}
+        setInicioEmpresaModo={setInicioEmpresaModo}
         handleLogin={handleLogin}
         handleCadastroTeste={handleCadastroTeste}
         handleGoogleLogin={handleGoogleLogin}
@@ -7300,6 +7328,7 @@ if (validacaoTelefoneObrigatoria) {
             setCicloCadastroPaywall(ciclo);
           }}
           onAtualizarPagamento={atualizarEstadoCobranca}
+          onIniciarTeste={iniciarTesteEmpresa}
           onResgatarCupom={resgatarCupom}
           onTrocarPerfil={empresasDoUsuario.length > 1 ? abrirTrocaEmpresa : undefined}
           onCriarPerfil={abrirCriacaoNovaEmpresa}
@@ -8838,7 +8867,7 @@ if (validacaoTelefoneObrigatoria) {
             {COBRANCA_ATIVA && tipoPerfilInicialNormalizado === 'empresa' && (
               <div className="rounded-xl border border-sky-200 bg-sky-50 p-3">
                 <p className="text-xs font-bold leading-snug text-sky-900">
-                  O teste de <b>7 dias grátis</b> é exclusivo do Business Pro. Você também pode criar o perfil e escolher Business ou Business Pro depois.
+                  Escolha entre testar o <b>Business Pro por 7 dias grátis</b> ou assinar agora e selecionar o plano após criar o perfil.
                 </p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {(['trial', 'assinar'] as const).map((m) => {
@@ -8849,7 +8878,7 @@ if (validacaoTelefoneObrigatoria) {
                           ativo ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600 hover:bg-sky-100'
                         }`}
                       >
-                        {m === 'trial' ? 'Testar Business Pro' : 'Escolher plano depois'}
+                        {m === 'trial' ? 'Usar 7 dias grátis' : 'Assinar agora'}
                       </button>
                     );
                   })}

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import QRCode from 'qrcode';
 import { normalizarTipoPerfil, rotuloTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { PAISES } from '../lib/paises';
+import { COBRANCA_ATIVA } from '../lib/cobranca';
 import DraggableModalCard from './DraggableModalCard';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -86,6 +87,8 @@ interface AuthCardProps {
   reenviandoSmsRedefinirSenha: boolean;
   tipoPerfilInicial: TipoPerfil;
   setTipoPerfilInicial: React.Dispatch<React.SetStateAction<TipoPerfil>>;
+  inicioEmpresaModo: 'trial' | 'assinar';
+  setInicioEmpresaModo: React.Dispatch<React.SetStateAction<'trial' | 'assinar'>>;
   onAbrirTermos: () => void;
   onAbrirPrivacidade: () => void;
   cadastroDdi: string;
@@ -145,6 +148,7 @@ export default function AuthCard({
   codigoSmsRedefinirSenha, setCodigoSmsRedefinirSenha,
   smsRedefinirSenhaEnviado, segundosReenvioRedefinirSenha, reenviandoSmsRedefinirSenha,
   tipoPerfilInicial, setTipoPerfilInicial,
+  inicioEmpresaModo, setInicioEmpresaModo,
   onAbrirTermos, onAbrirPrivacidade,
   cadastroDdi, setCadastroDdi,
   handleLogin, handleCadastroTeste, handleGoogleLogin, handleAppleLogin,
@@ -794,17 +798,32 @@ export default function AuthCard({
                 </div>
 
                 {tipoPerfilInicialNormalizado === 'empresa' && (
-                  <label className="block">
-                    <span className="mb-0.5 block text-[10px] font-black uppercase text-slate-600">Empresa</span>
-                    <input
-                      type="text"
-                      autoComplete="organization"
-                      placeholder="Nome fantasia"
-                      value={cadastroNomeEmpresa}
-                      onChange={(e) => setCadastroNomeEmpresa(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-                    />
-                  </label>
+                  <>
+                    <label className="block">
+                      <span className="mb-0.5 block text-[10px] font-black uppercase text-slate-600">Empresa</span>
+                      <input
+                        type="text"
+                        autoComplete="organization"
+                        placeholder="Nome fantasia"
+                        value={cadastroNomeEmpresa}
+                        onChange={(e) => setCadastroNomeEmpresa(e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+                      />
+                    </label>
+                    {COBRANCA_ATIVA && <fieldset className="rounded-xl border border-sky-200 bg-sky-50 p-2" aria-label="Como deseja iniciar o perfil empresarial">
+                      <legend className="sr-only">Como deseja iniciar o perfil empresarial</legend>
+                      <p className="mb-1.5 text-[10px] font-bold leading-snug text-sky-900">Escolha como deseja começar</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {(['trial', 'assinar'] as const).map((modo) => {
+                          const ativo = inicioEmpresaModo === modo;
+                          return <button key={modo} type="button" aria-pressed={ativo} onClick={() => setInicioEmpresaModo(modo)} className={`min-h-11 rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wide transition ${ativo ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600 hover:bg-sky-100'}`}>
+                            {modo === 'trial' ? 'Usar 7 dias grátis' : 'Assinar agora'}
+                          </button>;
+                        })}
+                      </div>
+                      <p className="mt-1.5 text-[10px] leading-snug text-sky-800">O teste libera o Business Pro. Em Assinar agora, você escolhe o plano e o ciclo após criar o perfil.</p>
+                    </fieldset>}
+                  </>
                 )}
 
                 <label className="block">

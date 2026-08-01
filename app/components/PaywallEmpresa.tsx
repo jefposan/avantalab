@@ -30,6 +30,7 @@ interface PaywallEmpresaProps {
   onAssinar?: (plano: PlanoContratavel, ciclo: 'mensal' | 'anual', dados: DadosCobrancaAssinatura) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
   onEscolherPlano?: (plano: PlanoContratavel, ciclo: 'mensal' | 'anual') => void;
   onAtualizarPagamento?: () => Promise<{ ok: boolean; liberado: boolean; mensagem?: string }>;
+  onIniciarTeste?: () => Promise<{ ok: boolean; liberado: boolean; mensagem?: string }>;
   // Resgate de cupom: retorna mensagem de erro (string) ou nada em caso de sucesso.
   onResgatarCupom?: (codigo: string) => Promise<string | null | void>;
   onTrocarPerfil?: () => void; // volta à seleção de perfis (se houver mais de um)
@@ -44,7 +45,7 @@ const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
 
 // Tela mostrada quando o perfil empresa precisa regularizar ou iniciar a
 // assinatura, com a identidade visual da tela de login.
-export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao, estadoAcesso, faturaPendenteUrl, onAssinar, onEscolherPlano, onAtualizarPagamento, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair, tipoPerfil = 'empresa' }: PaywallEmpresaProps) {
+export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao, estadoAcesso, faturaPendenteUrl, onAssinar, onEscolherPlano, onAtualizarPagamento, onIniciarTeste, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair, tipoPerfil = 'empresa' }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [nomeCobranca, setNomeCobranca] = useState(nomePerfil || '');
@@ -53,6 +54,7 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
   const [telefoneCobranca, setTelefoneCobranca] = useState(telefonePadrao || '');
   const [aguardandoPagamento, setAguardandoPagamento] = useState(false);
   const [atualizandoPagamento, setAtualizandoPagamento] = useState(false);
+  const [iniciandoTeste, setIniciandoTeste] = useState(false);
   const [pagamentoMsg, setPagamentoMsg] = useState('');
   const [cupom, setCupom] = useState('');
   const [resgatando, setResgatando] = useState(false);
@@ -88,6 +90,25 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
     : estadoAcesso?.status === 'inadimplente'
       ? 'Regularize o pagamento para liberar novamente o acesso ao perfil.'
       : 'Escolha um plano para ativar o perfil. Seus dados permanecem guardados.';
+  const podeIniciarTeste = !acessoWebPessoal
+    && estadoAcesso?.status === 'expirada'
+    && !estadoAcesso.trialFim
+    && !faturaPendenteUrl
+    && Boolean(onIniciarTeste);
+
+  const iniciarTeste = async () => {
+    if (!onIniciarTeste || iniciandoTeste) return;
+    setIniciandoTeste(true);
+    setErro('');
+    try {
+      const resultado = await onIniciarTeste();
+      if (!resultado.ok) setErro(resultado.mensagem || 'Não foi possível iniciar o período de teste.');
+    } catch {
+      setErro('Não foi possível iniciar o período de teste agora.');
+    } finally {
+      setIniciandoTeste(false);
+    }
+  };
 
   const resgatar = async () => {
     const codigo = cupom.trim();
@@ -217,6 +238,16 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
           <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-600">
             {textoBloqueio}
           </p>
+
+          {podeIniciarTeste && (
+            <div className="mt-3 rounded-2xl border border-sky-200 bg-sky-50/90 p-3">
+              <p className="text-xs font-black text-sky-950">Prefere conhecer antes de assinar?</p>
+              <p className="mt-1 text-xs leading-relaxed text-sky-900">Use uma única vez os 7 dias grátis do Business Pro. Depois, você escolhe o plano que melhor atende sua operação.</p>
+              <button type="button" onClick={() => void iniciarTeste()} disabled={iniciandoTeste} className="mt-2.5 h-10 w-full rounded-xl border border-sky-300 bg-white text-xs font-black uppercase tracking-wide text-sky-800 transition hover:bg-sky-700 hover:text-white disabled:opacity-60">
+                {iniciandoTeste ? 'Liberando teste...' : 'Usar 7 dias grátis'}
+              </button>
+            </div>
+          )}
 
           {erro && (
             <div className="mt-3 rounded-xl border border-red-300 bg-red-50/90 px-3 py-2 text-xs font-bold text-red-700">

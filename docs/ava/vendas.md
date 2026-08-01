@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.112 -->
+<!-- ava-version: 1.6.1.113 -->
+
+> Revisão 1.6.1.113: ajuste de início de teste e assinatura é exclusivo da
+> Gestão Web e Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.112: busca do Admin e permissões de Pontos de restauração não
 > alteram a operação do AvantaVendas.

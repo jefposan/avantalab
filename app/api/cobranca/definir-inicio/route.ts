@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 
 // Define como começa a cobrança de um perfil EMPRESA recém-criado:
 //   modo 'trial'   → teste de 7 dias exclusivo do Business Pro.
-//   modo 'assinar' → já bloqueado (Business como sugestão inicial) → paywall.
+//   modo 'assinar' → não grava assinatura; o paywall orienta a contratação.
 //
 // Só age quando COBRANCA_ATIVA. Com a flag desligada é no-op (não grava nada,
 // mantém o comportamento atual em produção). Grava uma linha em `assinaturas`,
@@ -51,23 +51,35 @@ export async function POST(request: Request) {
   const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
   if (tipoPerfil !== 'empresa') return NextResponse.json({ ok: true, ignorado: true });
 
-  // 4) Se já existe assinatura (ex.: cupom já aplicado), não sobrescreve.
+  // 4) Assinar agora é apenas uma intenção de navegação, nunca um bloqueio
+  // persistido. A assinatura passa a existir somente após a contratação.
+  if (modo === 'assinar') return NextResponse.json({ ok: true, modo, ignorado: true });
+
+  // 5) O teste pode ser iniciado uma única vez. Exceção: perfis criados pela
+  // versão anterior com "assinar" ganhavam um registro business/expirada sem
+  // cobrança; eles podem corrigir essa escolha e iniciar o teste.
   const { data: existente } = await admin
-    .from('assinaturas').select('status').eq('empresa_id', empresaId).maybeSingle();
-  if (existente) return NextResponse.json({ ok: true, jaExiste: true, status: existente.status });
+    .from('assinaturas')
+    .select('status, plano, trial_fim, valido_ate, gateway_customer_id, gateway_subscription_id')
+    .eq('empresa_id', empresaId)
+    .maybeSingle();
+  const registroLegadoSemCobranca = existente
+    && existente.status === 'expirada'
+    && existente.plano === 'business'
+    && !existente.trial_fim
+    && !existente.valido_ate
+    && !existente.gateway_customer_id
+    && !existente.gateway_subscription_id;
+  if (existente && !registroLegadoSemCobranca) return NextResponse.json({ ok: true, jaExiste: true, status: existente.status });
 
-  // 5) Grava o estado inicial escolhido.
-  let trialFim: string | null = null;
-  let status = 'expirada';
-  const plano = modo === 'trial' ? 'business_pro' : 'business';
-  if (modo === 'trial') {
-    const fim = new Date();
-    fim.setDate(fim.getDate() + TRIAL_DIAS);
-    trialFim = fim.toISOString();
-    status = 'trial';
-  }
+  // 6) Grava o teste do Business Pro.
+  const fim = new Date();
+  fim.setDate(fim.getDate() + TRIAL_DIAS);
+  const trialFim = fim.toISOString();
+  const status = 'trial';
+  const plano = 'business_pro';
 
-  await admin.from('assinaturas').insert({
+  const dadosTrial = {
     empresa_id: empresaId,
     tipo_perfil: 'empresa',
     plano,
@@ -76,7 +88,11 @@ export async function POST(request: Request) {
     valido_ate: null,
     gateway: 'asaas',
     atualizado_em: new Date().toISOString(),
-  });
+  };
+  const { error: erroGravacao } = registroLegadoSemCobranca
+    ? await admin.from('assinaturas').update(dadosTrial).eq('empresa_id', empresaId)
+    : await admin.from('assinaturas').insert(dadosTrial);
+  if (erroGravacao) return NextResponse.json({ erro: true, mensagem: 'Não foi possível iniciar o período de teste.' }, { status: 500 });
 
-  return NextResponse.json({ ok: true, modo, status });
+  return NextResponse.json({ ok: true, modo: 'trial', status, trialFim });
 }

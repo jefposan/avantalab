@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.112 -->
+<!-- ava-version: 1.6.1.113 -->
+
+> Revisão 1.6.1.113: ao criar um perfil Empresa, escolha **Usar 7 dias
+> grátis** para liberar o Business Pro ou **Assinar agora** para abrir os
+> planos logo após o cadastro. Assinar agora não cria uma assinatura expirada.
+> Um perfil legado que tenha ficado expirado sem cobrança pode iniciar esse
+> teste uma única vez no paywall.
 
 > Revisão 1.6.1.112: Administrador e Operador Completo podem criar e consultar
 > Pontos de restauração; somente Gestor Master restaura ou exclui um ponto.

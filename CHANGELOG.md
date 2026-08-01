@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.113 - 2026-08-01
+
+- Cadastro de perfil Empresa: a escolha passa a ser explícita entre **Usar 7
+  dias grátis** do Business Pro ou **Assinar agora**. Assinar agora abre os
+  planos após criar o perfil, sem gravar uma assinatura expirada.
+- Perfis criados pelo fluxo anterior, sem cobrança e marcados como expirados,
+  podem iniciar uma única vez o teste do Business Pro no paywall.
+
 ## 1.6.1.112 - 2026-08-01
 
 - Admin: a busca de Perfis passa a exibir **×** para limpar o termo e voltar à

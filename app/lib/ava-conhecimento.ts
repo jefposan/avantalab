@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.112: Administrador e Operador Completo criam e
-// consultam pontos; restauração e exclusão seguem exclusivas do Gestor Master.
+// Revisado na versão 1.6.1.113: perfil Empresa escolhe entre teste de 7 dias
+// do Business Pro e assinatura; o fluxo de assinatura não cria expiração.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -76,6 +76,7 @@ NAVEGAÇÃO E PERFIS
 - Em Menu > Configurações > Backup e restauração, Gestor Master, Administrador e Operador Completo abrem **Pontos de restauração**. Eles preservam o estado completo do perfil, incluindo agenda e preferências; somente Gestor Master restaura ou exclui. O backup por Excel permanece separado e não passa a incluir esses dados.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
 - Assinatura é o primeiro botão do Menu e fica fora de Configurações. No aplicativo iOS, um perfil Pessoal sem assinatura vigente abre diretamente os planos Mensal e Anual e Restaurar compras; uma assinatura existente exibe situação, gerenciamento e restauração. Pessoal Premium usa compra da App Store; Business e Business Pro não são vendidos no aplicativo e continuam contratados somente pela plataforma web. No PWA, a cobrança web permanece igual. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente compatível com aquele ambiente. Cortesia e cupom ativos não exibem preços nem opções de contratação. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
+- Ao criar um perfil Empresa, **Usar 7 dias grátis** libera o Business Pro por um único período de teste. **Assinar agora** cria o perfil sem gravar uma assinatura expirada e abre os planos para a contratação. Um perfil legado expirado sem cobrança pode usar esse teste uma única vez no paywall web.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.
 - Em Configurações, os controles com chave aparecem primeiro. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
 - Excluir minha conta fica em Menu > Configurações, como a última opção do grupo, e exige digitar EXCLUIR. A operação remove o acesso e os dados pessoais; registros trabalhistas ou fiscais sujeitos a retenção legal podem permanecer anonimizados e sem acesso à conta.
