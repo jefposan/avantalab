@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.108: feedback de carregamento dos planos no
-// iOS; a orientação operacional de assinatura permanece válida.
+// Revisado na versão 1.6.1.109: em Clientes, a busca permanece ao clicar fora,
+// e um novo clique no campo limpa somente seu texto.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

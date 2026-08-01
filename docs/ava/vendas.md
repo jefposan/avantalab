@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.108 -->
+<!-- ava-version: 1.6.1.109 -->
+
+> Revisão 1.6.1.109: em Clientes, uma busca permanece ao clicar fora; um novo
+> clique no campo limpa somente seu texto, sem recarregar a página.
 
 > Revisão 1.6.1.108: feedback de carregamento exclusivo da assinatura
 > na Gestão Mobile para iOS; sem impacto operacional no AvantaVendas.

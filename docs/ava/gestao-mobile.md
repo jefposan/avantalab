@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.108 -->
+<!-- ava-version: 1.6.1.109 -->
+
+> Revisão 1.6.1.109: ajuste de pesquisa exclusivo do AvantaVendas; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.108: no aplicativo iOS, o modal de assinatura informa
 > quando os planos da App Store estão sendo carregados; sem mudança no fluxo

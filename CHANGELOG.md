@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.109 - 2026-08-01
+
+- AvantaVendas: em Clientes, uma busca permanece ao clicar fora; um novo clique
+  no campo limpa somente seu texto, sem recarregar a página.
+
 ## 1.6.1.108 - 2026-07-31
 
 - iOS: o modal de assinatura informa quando os planos da App Store ainda estão

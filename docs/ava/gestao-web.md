@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.108 -->
+<!-- ava-version: 1.6.1.109 -->
+
+> Revisão 1.6.1.109: ajuste de pesquisa exclusivo do AvantaVendas; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.108: feedback de carregamento exclusivo da assinatura
 > no aplicativo iOS; sem impacto operacional na Gestão Web.

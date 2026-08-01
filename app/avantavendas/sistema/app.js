@@ -4004,7 +4004,7 @@ function limparPesquisaClientesAoEntrar() {
 function renderBarraBuscaClientes() {
   const temBusca = Boolean(String(state.busca || '').trim());
   const rotuloOrdem = `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}`;
-  return `<div class="client-search-toolbar is-open"><div class="client-search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="Pesquisar clientes" oninput="atualizarBuscaClientes(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="client-search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBuscaClientes()" aria-label="Limpar pesquisa">×</button></div><button type="button" class="client-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button><button type="button" class="primary client-search-submit" onclick="aplicarBusca()">Buscar</button></div>`;
+  return `<div class="client-search-toolbar is-open"><div class="client-search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="Pesquisar clientes" onclick="prepararNovaBuscaClientes(this)" oninput="atualizarBuscaClientes(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="client-search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBuscaClientes()" aria-label="Limpar pesquisa">×</button></div><button type="button" class="client-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button><button type="button" class="primary client-search-submit" onclick="aplicarBusca()">Buscar</button></div>`;
 }
 
 function atualizarBuscaClientes(valor) {
@@ -4016,6 +4016,14 @@ function atualizarBuscaClientes(valor) {
     render();
     requestAnimationFrame(() => app.querySelector('.clientes-page .client-search-input-wrap input')?.focus());
   }
+}
+
+function prepararNovaBuscaClientes(campo) {
+  if (state.aba !== 'clientes' || (!state.busca && !buscaAplicada)) return;
+  state.busca = '';
+  buscaAplicada = '';
+  campo.value = '';
+  app.querySelector('.clientes-page .client-search-clear')?.classList.add('is-hidden');
 }
 
 function limparBuscaClientes() {
@@ -7027,6 +7035,7 @@ window.preencherEnderecoClientePorLocalizacao = preencherEnderecoClientePorLocal
 window.abrirMenuCliente = abrirMenuCliente;
 window.atualizarBuscaClientes = atualizarBuscaClientes;
 window.limparBuscaClientes = limparBuscaClientes;
+window.prepararNovaBuscaClientes = prepararNovaBuscaClientes;
 window.abrirAgendamentoCliente = abrirAgendamentoCliente;
 window.abrirNovoPedidoCliente = abrirNovoPedidoCliente;
 window.abrirNovoPedidoGeral = abrirNovoPedidoGeral;
