@@ -10123,14 +10123,12 @@ if (validacaoTelefoneObrigatoria) {
               Restauração{recursoBloqueado('exportacao') && <span className="ml-auto text-[10px]" title="Recurso Premium">🔒</span>}
             </button>
           </Tooltip>
-          {perfilUsuario === 'gestor_master' && (
-            <Tooltip texto="Crie, consulte e restaure pontos completos do perfil." posicao="right" wrapperClassName="w-full">
-              <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setPontosRestauracaoAberto(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-violet-300 transition-colors hover:bg-slate-700">
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 2M3 12a9 9 0 1 0 3-6.7L3 8" /></svg>
-                Pontos de restauração
-              </button>
-            </Tooltip>
-          )}
+          <Tooltip texto="Crie, consulte e restaure pontos completos do perfil. Disponível ao Gestor Master." posicao="right" wrapperClassName="w-full">
+            <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setPontosRestauracaoAberto(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-violet-300 transition-colors hover:bg-slate-700">
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 2M3 12a9 9 0 1 0 3-6.7L3 8" /></svg>
+              Pontos de restauração
+            </button>
+          </Tooltip>
         </div>
     )}
 

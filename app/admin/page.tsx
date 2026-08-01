@@ -386,14 +386,14 @@ export default function AdminPage() {
     }
   };
 
-  const buscarPerfis = async (pagina = 1, filtros?: { situacao?: PerfilFiltro; tipo?: PerfilTipoFiltro; ordem?: PerfilOrdem }) => {
+  const buscarPerfis = async (pagina = 1, filtros?: { situacao?: PerfilFiltro; tipo?: PerfilTipoFiltro; ordem?: PerfilOrdem }, busca = perfilBusca) => {
     setBuscandoPerfis(true);
     setError('');
     try {
       const situacao = filtros?.situacao ?? perfilFiltro;
       const tipo = filtros?.tipo ?? perfilTipoFiltro;
       const ordem = filtros?.ordem ?? perfilOrdem;
-      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(perfilBusca.trim())}&filtro=${situacao}&tipo=${tipo}&ordem=${ordem}&pagina=${pagina}&porPagina=${perfilPorPagina}`, { headers: authHeaders() });
+      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(busca.trim())}&filtro=${situacao}&tipo=${tipo}&ordem=${ordem}&pagina=${pagina}&porPagina=${perfilPorPagina}`, { headers: authHeaders() });
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível buscar.');
       setPerfis(data.perfis || []);
@@ -997,7 +997,7 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="mt-3 flex flex-col gap-2 lg:flex-row">
-                <input value={perfilBusca} onChange={(event) => setPerfilBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void buscarPerfis(1); }} placeholder="Nome do perfil (vazio = todos)" className="h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700 lg:h-10 lg:flex-1" />
+                <div className="relative min-w-0 flex-1"><input value={perfilBusca} onChange={(event) => setPerfilBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void buscarPerfis(1); }} placeholder="Nome do perfil (vazio = todos)" className="h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 pr-11 text-sm outline-none focus:border-cyan-700 lg:h-10" />{perfilBusca && <button type="button" onClick={() => { setPerfilBusca(''); void buscarPerfis(1, undefined, ''); }} aria-label="Limpar busca de perfis" title="Limpar busca" className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-md text-lg leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 lg:h-8 lg:w-8">×</button>}</div>
                 <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:flex lg:shrink-0">
                   <button type="button" onClick={() => setFiltrosPerfilAbertos((aberto) => !aberto)} aria-expanded={filtrosPerfilAbertos} className={`relative flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-black uppercase lg:h-10 lg:px-3 ${filtrosPerfilAbertos || totalFiltrosPerfilAtivos ? 'border-cyan-300 bg-cyan-50 text-cyan-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><Icon name="filter" size={15} />Filtros{totalFiltrosPerfilAtivos > 0 && <span className="rounded-full bg-cyan-700 px-1.5 py-0.5 text-[9px] text-white">{totalFiltrosPerfilAtivos}</span>}</button>
                   <button type="button" onClick={() => { const porCriacao = perfilOrdem.startsWith('criado_em'); const ordem = porCriacao ? (perfilOrdem === 'criado_em_desc' ? 'criado_em_asc' : 'criado_em_desc') : (perfilOrdem === 'nome_asc' ? 'nome_desc' : 'nome_asc'); setPerfilOrdem(ordem); void buscarPerfis(1, { ordem }); }} aria-label={perfilOrdem.startsWith('criado_em') ? `Ordenar perfis por data de criação, ${perfilOrdem === 'criado_em_desc' ? 'mais antigos primeiro' : 'mais recentes primeiro'}` : `Ordenar perfis de ${perfilOrdem === 'nome_asc' ? 'Z a A' : 'A a Z'}`} className="flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border border-slate-300 px-2 text-xs font-black uppercase text-slate-600 hover:bg-slate-50 lg:h-10 lg:px-3"><Icon name="filter" size={15} />Ordem {perfilOrdem === 'nome_desc' || perfilOrdem === 'criado_em_desc' ? 'Z/A' : 'A/Z'}</button>

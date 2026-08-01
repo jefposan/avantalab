@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.111 -->
+<!-- ava-version: 1.6.1.112 -->
+
+> Revisão 1.6.1.112: Administrador e Operador Completo podem criar e consultar
+> Pontos de restauração; somente Gestor Master restaura ou exclui um ponto.
 
 > Revisão 1.6.1.111: Gestor Master encontra **Pontos de restauração** em
 > **Menu > Configurações > Backup e restauração**. Os pontos preservam o estado

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.111 -->
+<!-- ava-version: 1.6.1.112 -->
+
+> Revisão 1.6.1.112: busca do Admin e permissões de Pontos de restauração não
+> alteram a operação do AvantaVendas.
 
 > Revisão 1.6.1.111: Pontos de restauração são exclusivos da Gestão Web e
 > Mobile; sem impacto operacional no AvantaVendas.

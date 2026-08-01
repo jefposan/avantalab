@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.111: Pontos de restauração preservam snapshots
-// completos e seguros do perfil, separados da exportação por Excel.
+// Revisado na versão 1.6.1.112: Administrador e Operador Completo criam e
+// consultam pontos; restauração e exclusão seguem exclusivas do Gestor Master.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -23,7 +23,7 @@ NAVEGAÇÃO E PERFIS
 - Um login pode ter vários perfis Empresa ou Pessoal. Em Meus perfis, o usuário pode selecionar/destacar um perfil; a troca efetiva usa os controles próprios de troca de perfil.
 - No perfil Pessoal, Caixinha inicia visível. No perfil Empresa, ela se chama Reserva financeira, inicia oculta e pode ser exibida em Organizar blocos; os aportes continuam registrados como despesa.
 - Gestor Master e Administrador possuem ações administrativas; não prometa acesso a um recurso sem confirmar a permissão.
-- Em Menu > Configurações > Backup e restauração, somente o Gestor Master acessa Pontos de restauração. Eles salvam um snapshot completo do perfil, separado do Excel; restaurar exige digitar RESTAURAR e cria antes um ponto de segurança. O Excel continua somente como backup baixável.
+- Em Menu > Configurações > Backup e restauração, Gestor Master, Administrador e Operador Completo consultam e criam Pontos de restauração. Somente Gestor Master restaura ou exclui; restaurar exige digitar RESTAURAR e cria antes um ponto de segurança. O Excel continua somente como backup baixável.
 - O sininho avisa Gestor Master e Administrador sobre faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Em cada aviso de assinatura, **Ver assinatura** abre o painel para consultar ou regularizar a fatura.
 - Em cadastros e edições de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos preenchidos; rascunhos temporários guardam apenas dados não sensíveis e nunca armazenam senhas, confirmações, códigos SMS ou tokens.
 - Em Usuários e Permissões, criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. Editar exige os mesmos dados, mas a nova senha é opcional. O usuário entra com e-mail ou login; se o e-mail já pertencer a uma conta, use Adicionar usuário existente para vinculá-la ao perfil. E-mail e login são conferidos no servidor antes de salvar; em erro, o formulário mantém os valores e o cursor vai ao campo indicado. Ao excluir, uma conta criada internamente só é apagada por completo quando não possui outro perfil, vínculo ou histórico; caso contrário, apenas o acesso atual é removido e a conta continua pesquisável.
@@ -73,7 +73,7 @@ NAVEGAÇÃO E PERFIS
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Gestor Master e Administrador recebem no sininho avisos de faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Tocar em um aviso de assinatura abre **Assinatura**; quando as notificações do aparelho estiverem ativas, ele também é entregue por push.
-- Em Menu > Configurações > Backup e restauração, apenas Gestor Master abre **Pontos de restauração**. Eles preservam o estado completo do perfil, incluindo agenda e preferências; restaurar exige digitar RESTAURAR e cria antes um ponto de segurança. O backup por Excel permanece separado e não passa a incluir esses dados.
+- Em Menu > Configurações > Backup e restauração, Gestor Master, Administrador e Operador Completo abrem **Pontos de restauração**. Eles preservam o estado completo do perfil, incluindo agenda e preferências; somente Gestor Master restaura ou exclui. O backup por Excel permanece separado e não passa a incluir esses dados.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
 - Assinatura é o primeiro botão do Menu e fica fora de Configurações. No aplicativo iOS, um perfil Pessoal sem assinatura vigente abre diretamente os planos Mensal e Anual e Restaurar compras; uma assinatura existente exibe situação, gerenciamento e restauração. Pessoal Premium usa compra da App Store; Business e Business Pro não são vendidos no aplicativo e continuam contratados somente pela plataforma web. No PWA, a cobrança web permanece igual. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente compatível com aquele ambiente. Cortesia e cupom ativos não exibem preços nem opções de contratação. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.

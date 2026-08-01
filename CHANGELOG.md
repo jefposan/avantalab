@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.112 - 2026-08-01
+
+- Admin: a busca de Perfis passa a exibir **×** para limpar o termo e voltar à
+  lista sem filtro.
+- Pontos de restauração: Administrador e Operador Completo podem criar e
+  consultar pontos; restaurar e excluir permanecem protegidos para Gestor Master.
+
 ## 1.6.1.111 - 2026-08-01
 
 - Gestão Web e Mobile: **Pontos de restauração** criam snapshots estruturados
