@@ -128,8 +128,42 @@ exigir(
   'A Gestão não pode cancelar OAuth apenas porque o iOS reativou o app.',
 );
 exigir(
-  aplicativo.includes('if (acessoDireto && !loginSocialMobileEmAndamento())'),
-  'A rota direta não pode esconder Preparando acesso durante Google ou Apple.',
+  aplicativo.includes(
+    'if (acessoDireto && !state.autenticado && !loginSocialMobileEmAndamento())',
+  ),
+  'A rota direta só pode ocultar Preparando acesso antes de autenticar.',
+);
+exigir(
+  aplicativo.includes(
+    "state.autenticado = true;\n    state.pronto = false;\n    state.carregando = true;\n    state.loginAcao = '';\n    render();",
+  ),
+  'O login por senha precisa entrar em uma única cena estável de preparação.',
+);
+
+const inicioPreparacaoSistema = aplicativo.indexOf(
+  'async function prepararSistemaInicialAntesDosDadosMobile()',
+);
+const fimPreparacaoSistema = aplicativo.indexOf(
+  '\n  function seletorSistemaInicialHtml()',
+  inicioPreparacaoSistema,
+);
+const blocoPreparacaoSistema = aplicativo.slice(inicioPreparacaoSistema, fimPreparacaoSistema);
+exigir(
+  inicioPreparacaoSistema >= 0 &&
+    !blocoPreparacaoSistema.includes('garantir_acessos_gestor_vendas_mobile_rpc') &&
+    !blocoPreparacaoSistema.includes('confirmarModuloVendasMobileNoPerfil'),
+  'A integração opcional com Vendas não pode bloquear a abertura da Gestão.',
+);
+exigir(
+  aplicativo.includes('agendarRenderSegundoPlanoMobile(empresaIdResumo)') &&
+    aplicativo.includes('carregarResumoPontoMobile(false)') &&
+    aplicativo.includes('carregarNotificacoesNaoLidas(false)'),
+  'As atualizações complementares da entrada precisam consolidar a renderização do painel.',
+);
+exigir(
+  aplicativo.indexOf("db.rpc('garantir_acessos_gestor_vendas_mobile_rpc')", inicioConclusao) >
+    renderFinal,
+  'A reparação de acesso ao Vendas deve ocorrer somente depois de a Gestão estar aberta.',
 );
 exigir(
   aplicativo.includes('window.__avantalabCancelarOAuthNativoMobile') &&

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.119 - 2026-08-01
+
+- Gestão Mobile: após autenticar, o acesso mantém uma única tela estável de
+  preparação até o painel estar pronto. A validação opcional do Vendas e as
+  sincronizações complementares passam para segundo plano, reduzindo
+  reconstruções e flashes sem remover verificações de segurança.
+
 ## 1.6.1.118 - 2026-08-01
 
 - Gestão Web e Mobile: a data de **Lançar aporte** passa a ficar centralizada

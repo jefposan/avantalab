@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.118 -->
+<!-- ava-version: 1.6.1.119 -->
+
+> Revisão 1.6.1.119: estabilização do acesso exclusiva da Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.118: no seletor de data de **Lançar aporte**, a data curta
 > fica centralizada; sem mudança operacional.

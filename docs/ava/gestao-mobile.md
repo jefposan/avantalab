@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.118 -->
+<!-- ava-version: 1.6.1.119 -->
+
+> Revisão 1.6.1.119: depois da autenticação, **Preparando acesso** permanece
+> como uma única tela até a Gestão estar pronta. A Gestão abre diretamente;
+> verificações opcionais do Vendas e sincronizações complementares continuam
+> em segundo plano.
 
 > Revisão 1.6.1.118: no seletor de data de **Lançar aporte**, a data curta
 > fica centralizada; sem mudança operacional.
@@ -875,20 +880,19 @@ deve usar os nomes do menu e da barra inferior do celular.
   campos compatíveis que estiverem vazios e informa quantos dados existentes
   foram preservados. Razão Social, Nome Fantasia e Tipo de Empresa aparecem
   depois do documento; Responsável fica em Contato, antes de Site e Instagram.
-- Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
-  a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
-  depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado.
+- Depois do login, a rota da Gestão abre diretamente a própria Gestão. Com o
+  módulo Vendas Mobile ativo e permissão, **Menu > Ir para Vendas** e o atalho
+  de mesmo nome abrem o outro sistema.
 - Em **Preparando acesso**, a etapa **Acesso pronto** e os 100% somente são
-  concluídos depois que a tela principal estiver montada. As sincronizações
-  complementares continuam em segundo plano. Ao voltar de uma suspensão do PWA
+  concluídos depois que a tela principal estiver montada. A verificação do
+  Vendas e as sincronizações complementares continuam em segundo plano, sem
+  reconstruir repetidamente o painel. Ao voltar de uma suspensão do PWA
   ou recuperar a conexão, o aplicativo retoma a abertura e verifica se a versão
   ainda é atual. Se a preparação ficar sem progresso por tempo anormal, realiza
   uma única reconexão automática; persistindo a falha, exibe **Tentar novamente**
   sem entrar em ciclo de recargas.
-- Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile; a
-  tela com as duas opções é exibida somente na entrada após o login. Ao tocar, a
-  Gestão consulta o estado atual do módulo no servidor para não solicitar uma
-  ativação que já tenha sido concluída.
+- Dentro da Gestão, **Menu > Ir para Vendas** consulta o estado atual do módulo
+  no servidor para não solicitar uma ativação que já tenha sido concluída.
 - Quando a Gestão é aberta pelo AvantaVendas instalado, a troca permanece na
   mesma janela em modo aplicativo, sem barras de endereço ou atalhos do
   navegador.

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.118 -->
+<!-- ava-version: 1.6.1.119 -->
+
+> Revisão 1.6.1.119: estabilização da entrada exclusiva da Gestão Mobile; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.118: centralização da data na Caixinha é exclusiva da Gestão;
 > sem impacto operacional no AvantaVendas.

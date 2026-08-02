@@ -155,13 +155,17 @@
       return;
     }
 
+    // A sessão já foi confirmada. Mantém uma única cena de preparação enquanto
+    // perfis e dados obrigatórios são carregados, sem voltar ao login.
+    state.pronto = false;
+    render();
+
     try {
       var perfisCarregados = await carregarEmpresas(usuario.id, usuario);
       if (tentativaLogin !== state.tentativaLogin) return;
 
       if (perfisCarregados === false) {
-        state.carregando = false;
-        setErro('Sua sessão foi iniciada, mas os perfis demoraram para responder. Tente novamente.');
+        exibirFalhaDeAcessoMobile('Sua sessão foi iniciada, mas os perfis demoraram para responder. Tente novamente.');
         return;
       }
 
@@ -179,6 +183,7 @@
         state.criarPerfilNome = String(metadados.nome_perfil_inicial || '');
         state.criarPerfilTipo = normalizarTipoPerfil(metadados.tipo_perfil_inicial || state.cadastroTipoPerfil);
         state.modoCriarPerfil = true;
+        state.pronto = true;
         render();
         return;
       }
@@ -189,9 +194,8 @@
       }
       await carregarDados();
     } catch (erro) {
-      state.carregando = false;
       state.loginAcao = '';
-      setErro(mensagemErro(erro, 'Não foi possível concluir o login social.'));
+      exibirFalhaDeAcessoMobile(mensagemErro(erro, 'Não foi possível concluir o login social.'));
     }
   }
   window.addEventListener('avantalab:oauth-nativo-mobile', function (event) {
@@ -476,9 +480,6 @@
     pontoModuloAtivo: false,
     vendasMobileModuloAtivo: false,
     vendasMobileModuloVerificando: false,
-    // Resultado da validação feita antes do seletor de sistemas. É consumido
-    // pela primeira carga do Gestão para não repetir as mesmas RPCs.
-    preparacaoSistemaVendas: null,
     seletorSistemaAberto: false,
     seletorSistemaInicialBloqueante: false,
     ativacaoVendasMobileAberta: false,
@@ -2812,35 +2813,10 @@
 
   async function prepararSistemaInicialAntesDosDadosMobile() {
     state.vendasMobileModuloAtivo = false;
-    state.preparacaoSistemaVendas = null;
-    if (!state.empresa || !podeGerenciarUsuarios()) {
-      atualizarProgressoAcessoMobile('access', 3, 3, 'Permissões confirmadas');
-      return false;
-    }
-
-    var acessoGestor = await promessaMobileComPrazo(
-      db.rpc('garantir_acessos_gestor_vendas_mobile_rpc'),
-      10000,
-      'A validação da integração com o Vendas demorou mais que o esperado.'
-    );
-    atualizarProgressoAcessoMobile('access', 1, 3, 'Verificando módulo do perfil');
-    if (acessoGestor.error) {
-      console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestor.error);
-    }
-
-    atualizarProgressoAcessoMobile('access', 2, 3, 'Validando integração com o Vendas');
-    var acessoAtivo = await promessaMobileComPrazo(
-      confirmarModuloVendasMobileNoPerfil(state.empresa.id, false),
-      10000,
-      'A confirmação do módulo Vendas demorou mais que o esperado.'
-    );
-    state.vendasMobileModuloAtivo = !acessoAtivo.error && acessoAtivo.data === true;
-    state.preparacaoSistemaVendas = {
-      empresaId: state.empresa.id,
-      acessoVendasAtivo: state.vendasMobileModuloAtivo,
-      integracaoValidada: true,
-    };
-    atualizarProgressoAcessoMobile('access', 3, 3, 'Acesso aos sistemas confirmado');
+    // /mobile sempre abre a Gestão. A disponibilidade do Vendas vem da mesma
+    // consulta de módulos dos dados do perfil; reparações opcionais ocorrem
+    // depois da abertura e não atrasam o acesso principal.
+    atualizarProgressoAcessoMobile('access', 1, 1, 'Permissões confirmadas');
     return avaliarSistemaInicialMobile();
   }
 
@@ -2984,7 +2960,6 @@
     window._avaProfilePillHidden = false;
     state.pontoModuloAtivo = false;
     state.vendasMobileModuloAtivo = false;
-    state.preparacaoSistemaVendas = null;
     state.pontoResumo = [];
     state.pontoFuncionariosHoje = 0;
     state.pontoResumoCarregando = false;
@@ -3271,7 +3246,21 @@
     });
   }
 
-  async function carregarResumoPontoMobile() {
+  var temporizadorRenderSegundoPlanoMobile = null;
+
+  function agendarRenderSegundoPlanoMobile(empresaIdEsperada) {
+    if (temporizadorRenderSegundoPlanoMobile) {
+      window.clearTimeout(temporizadorRenderSegundoPlanoMobile);
+    }
+    temporizadorRenderSegundoPlanoMobile = window.setTimeout(function () {
+      temporizadorRenderSegundoPlanoMobile = null;
+      if (!state.autenticado || !state.pronto || !state.empresa) return;
+      if (empresaIdEsperada && state.empresa.id !== empresaIdEsperada) return;
+      render();
+    }, 280);
+  }
+
+  async function carregarResumoPontoMobile(renderizar) {
     if (!podeGerenciarPontoMobile()) {
       state.pontoResumo = [];
       state.pontoFuncionariosHoje = 0;
@@ -3300,7 +3289,7 @@
 
     if (respostas[0].error || respostas[1].error) {
       state.pontoResumoCarregando = false;
-      render();
+      if (renderizar !== false) render();
       return;
     }
     var diasNaoUteis = respostas[2].error ? [] : (respostas[2].data || []);
@@ -3308,7 +3297,7 @@
       state.pontoFuncionariosHoje = 0;
       state.pontoResumo = [];
       state.pontoResumoCarregando = false;
-      render();
+      if (renderizar !== false) render();
       return;
     }
 
@@ -3365,7 +3354,7 @@
     state.pontoFuncionariosHoje = funcionariosHoje.length;
     state.pontoResumo = resumo;
     state.pontoResumoCarregando = false;
-    render();
+    if (renderizar !== false) render();
   }
 
   function configurarRealtimePontoMobile() {
@@ -3413,7 +3402,7 @@
     });
   }
 
-  async function sincronizarAgendaSupabase() {
+  async function sincronizarAgendaSupabase(renderizar) {
     if (!state.usuario || !state.usuario.id) return;
     try {
       var resposta = await db.from('agenda_itens').select('*').eq('user_id', state.usuario.id);
@@ -3443,7 +3432,7 @@
       }
 
       salvarAgendaItensMobile();
-      render();
+      if (renderizar !== false) render();
     } catch (e) {}
   }
 
@@ -4592,7 +4581,7 @@
     } catch (e) {}
   }
 
-  async function carregarNotificacoesNaoLidas() {
+  async function carregarNotificacoesNaoLidas(renderizar) {
     if (!state.usuario || !state.usuario.id) return;
     try {
       var resposta = await db
@@ -4602,7 +4591,7 @@
       if (resposta.error) return;
       state.notificacoesNaoLidas = resposta.count || 0;
       atualizarBadgeApp(state.notificacoesNaoLidas);
-      render();
+      if (renderizar !== false) render();
     } catch (e) {}
   }
 
@@ -5465,15 +5454,20 @@
     });
 
     if (acessoComTelefone) {
-      await db
-        .from('usuarios_empresa')
-        .update({
-          telefone: acessoComTelefone.telefone,
-          telefone_confirmado: true,
-          telefone_confirmado_em: new Date().toISOString(),
-          atualizado_em: new Date().toISOString(),
-        })
-        .eq('user_id', usuarioId);
+      var vinculosParaSincronizarTelefone = vinculos.data.filter(function (vinculo) {
+        return vinculo.telefone !== acessoComTelefone.telefone || vinculo.telefone_confirmado !== true;
+      });
+      if (vinculosParaSincronizarTelefone.length) {
+        await db
+          .from('usuarios_empresa')
+          .update({
+            telefone: acessoComTelefone.telefone,
+            telefone_confirmado: true,
+            telefone_confirmado_em: new Date().toISOString(),
+            atualizado_em: new Date().toISOString(),
+          })
+          .in('id', vinculosParaSincronizarTelefone.map(function (vinculo) { return vinculo.id; }));
+      }
 
       vinculos.data = vinculos.data.map(function (vinculo) {
         return Object.assign({}, vinculo, {
@@ -5548,7 +5542,7 @@
       var hoje = new Date();
       var anoAtual = hoje.getFullYear();
       var mesAtualIdx = hoje.getMonth();
-      if (Number(anoCarregado) !== anoAtual) return;
+      if (Number(anoCarregado) !== anoAtual) return 0;
       var alvos = [0, 1].map(function(offset) {
         var idxTotal = mesAtualIdx + offset;
         return {
@@ -5560,7 +5554,7 @@
 
       var recsResp = await db.from('recorrencias').select('*').eq('empresa_id', empresaId).eq('ativo', true);
       var recs = recsResp.data || [];
-      if (!recs.length) return;
+      if (!recs.length) return 0;
 
       var anosAlvo = alvos.map(function(alvo) { return alvo.ano; }).filter(function(ano, idx, arr) {
         return arr.indexOf(ano) === idx;
@@ -5612,7 +5606,10 @@
         }
       }
       if (novos.length) state.lancamentos = (state.lancamentos || []).concat(novos);
-    } catch (e) {}
+      return novos.length;
+    } catch (e) {
+      return 0;
+    }
   }
 
   // Cobrança: verifica no servidor se o perfil empresa vencido precisa de paywall.
@@ -5819,7 +5816,7 @@
     if (exibeTelaPreparacao) state.dadosCriticosProntos = false;
     // O resumo comparativo roda após a entrada e não integra a preparação
     // bloqueante; o percentual representa somente o que libera o perfil.
-    var totalEtapasDados = 13;
+    var totalEtapasDados = 11;
     // O início da carga é uma etapa real: as verificações foram disparadas.
     // Isso impede que a barra pareça presa nos 60% enquanto elas respondem.
     var etapasDadosConcluidas = 1;
@@ -5864,6 +5861,7 @@
       state.codigoTelefoneObrigatorio = '';
       state.smsTelefoneObrigatorioEnviado = false;
       state.carregando = false;
+      state.pronto = true;
       render();
       return;
     }
@@ -5878,14 +5876,7 @@
     }
     var empresaId = state.empresa.id;
     var ano = Number(state.ano);
-    var preparacaoSistemaVendas = state.preparacaoSistemaVendas;
     await prepararDadosContaRevisaoMobile();
-    var podeReaproveitarPreparacaoVendas = !!(
-      preparacaoSistemaVendas &&
-      preparacaoSistemaVendas.empresaId === empresaId
-    );
-    // O contexto só é válido para a primeira carga do perfil já validado.
-    state.preparacaoSistemaVendas = null;
 
     atualizarProgressoAcessoMobile(
       'data',
@@ -5899,9 +5890,11 @@
     await aguardarPinturaProgressoMobile(0);
 
     state.carregando = true;
-    render();
+    // Se a cena de preparação já está visível, apenas seu progresso é
+    // atualizado no DOM. Evita reconstruir a mesma tela no meio da transição.
+    if (!telaPreparacaoAcessoMobileVisivel()) render();
 
-    // Assinatura, cadastro, integração e dados financeiros são independentes.
+    // Assinatura, cadastro e dados financeiros são independentes.
     // Dispará-los juntos reduz o tempo total para o da consulta mais lenta,
     // em vez de somar blocos sequenciais atrás do marco visual de 60%.
     var tokenPerfilCompartilhado = tokenSessao();
@@ -5920,27 +5913,6 @@
       'A verificação de assinatura e cadastro demorou mais que o esperado.'
     );
 
-    var integracaoVendasPromise = Promise.resolve().then(async function () {
-      // Instalar o módulo já autoriza Gestor Master e Administrador a alternar
-      // entre os sistemas. Uma falha desta reparação nunca bloqueia a Gestão.
-      if (podeGerenciarUsuarios() && !podeReaproveitarPreparacaoVendas) {
-        try {
-          var acessoGestorVendas = await promessaMobileComPrazo(
-            db.rpc('garantir_acessos_gestor_vendas_mobile_rpc'),
-            10000,
-            'A preparação da integração com o Vendas demorou mais que o esperado.'
-          );
-          if (acessoGestorVendas.error) {
-            console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestorVendas.error);
-          }
-        } catch (error) {
-          console.warn('A integração com o Vendas não respondeu durante a carga:', error);
-        }
-      }
-      avancarEtapaDados('Integração entre sistemas verificada');
-      return true;
-    });
-
     var resultadosPromise = Promise.all([
       acompanharEtapaDados(buscarLancamentosAnoMobile(empresaId, ano), 'Carregando despesas e lançamentos'),
       acompanharEtapaDados(db.from('faturamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
@@ -5949,12 +5921,6 @@
       acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
       acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
       acompanharEtapaDados(db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando caixinhas'),
-      acompanharEtapaDados(
-        podeReaproveitarPreparacaoVendas
-          ? Promise.resolve({ data: preparacaoSistemaVendas.acessoVendasAtivo, error: null })
-          : confirmarModuloVendasMobileNoPerfil(empresaId, false),
-        'Confirmando acesso ao Vendas'
-      ),
     ]);
 
     var cargaCritica;
@@ -5962,7 +5928,6 @@
       cargaCritica = await promessaMobileComPrazo(
         Promise.all([
           verificacoesPerfilPromise,
-          integracaoVendasPromise,
           resultadosPromise,
         ]),
         28000,
@@ -5988,10 +5953,11 @@
     var cadastroPerfilOk = verificacoesPerfil[1];
     if (!cadastroPerfilOk && !state.paywallAtivo) {
       state.carregando = false;
+      state.pronto = true;
       render();
       return;
     }
-    var resultados = cargaCritica[2];
+    var resultados = cargaCritica[1];
 
     // Guarda o dia da carga (São Paulo) — usado para só recarregar ao voltar
     // ao app quando o dia virou (despesas previstas do novo dia).
@@ -6064,7 +6030,7 @@
 
     var modulosAtivosMobile = (resultados[5] && resultados[5].data) || [];
     state.pontoModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'ponto'; });
-    state.vendasMobileModuloAtivo = !resultados[7].error && resultados[7].data === true;
+    state.vendasMobileModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'vendas_mobile'; });
     state.caixinhaMovimentos = ((resultados[6] && resultados[6].data) || []).map(function (item) {
       return {
         id: item.id,
@@ -6119,7 +6085,7 @@
         if (
           state.empresa && state.empresa.id === empresaIdResumo &&
           String(state.ano) === anoResumo && state.mes === mesResumo
-        ) render();
+        ) agendarRenderSegundoPlanoMobile(empresaIdResumo);
       }).catch(function (erro) {
         console.warn('Não foi possível atualizar o resumo dos perfis em segundo plano:', erro);
       });
@@ -6138,20 +6104,41 @@
         }
       };
       executarSegundoPlano('Falha ao atualizar despesas fixas', function () {
-        return garantirFixasDoMes(empresaIdResumo, Number(anoResumo)).then(function () {
+        return garantirFixasDoMes(empresaIdResumo, Number(anoResumo)).then(function (quantidadeCriada) {
           if (
+            quantidadeCriada > 0 &&
             state.empresa && state.empresa.id === empresaIdResumo &&
             String(state.ano) === anoResumo
-          ) render();
+          ) agendarRenderSegundoPlanoMobile(empresaIdResumo);
         });
       });
-      executarSegundoPlano('Falha ao sincronizar agenda em segundo plano', sincronizarAgendaSupabase);
+      executarSegundoPlano('Falha ao sincronizar agenda em segundo plano', function () {
+        return sincronizarAgendaSupabase(false).then(function () {
+          agendarRenderSegundoPlanoMobile(empresaIdResumo);
+        });
+      });
       executarSegundoPlano('Falha ao iniciar agenda em tempo real', configurarRealtimeAgendaMobile);
       executarSegundoPlano('Falha ao iniciar financeiro em tempo real', configurarRealtimeFinanceiroMobile);
       executarSegundoPlano('Falha ao iniciar notificações em tempo real', configurarRealtimeNotificacoesMobile);
       executarSegundoPlano('Falha ao iniciar ponto em tempo real', configurarRealtimePontoMobile);
-      executarSegundoPlano('Falha ao carregar resumo do ponto', carregarResumoPontoMobile);
-      executarSegundoPlano('Falha ao carregar notificações', carregarNotificacoesNaoLidas);
+      executarSegundoPlano('Falha ao carregar resumo do ponto', function () {
+        return carregarResumoPontoMobile(false).then(function () {
+          agendarRenderSegundoPlanoMobile(empresaIdResumo);
+        });
+      });
+      executarSegundoPlano('Falha ao carregar notificações', function () {
+        return carregarNotificacoesNaoLidas(false).then(function () {
+          agendarRenderSegundoPlanoMobile(empresaIdResumo);
+        });
+      });
+      executarSegundoPlano('Falha ao preparar integração com o Vendas', function () {
+        if (!state.vendasMobileModuloAtivo || !podeGerenciarUsuarios()) return;
+        return db.rpc('garantir_acessos_gestor_vendas_mobile_rpc').then(function (resultado) {
+          if (resultado.error) {
+            console.warn('Não foi possível reparar o acesso integrado ao Vendas Mobile:', resultado.error);
+          }
+        });
+      });
       executarSegundoPlano('Falha ao avaliar tutorial', avaliarTourMobile);
       executarSegundoPlano('Falha ao avaliar permissão de notificações', avaliarPromptNotificacoes);
     }, 0);
@@ -6225,13 +6212,16 @@
     registrarPreferenciaSessaoMobile(state.manterConectado, false);
     state.usuario = resposta.data.user;
     state.autenticado = true;
+    state.pronto = false;
+    state.carregando = true;
+    state.loginAcao = '';
+    render();
     var perfisCarregados = await carregarEmpresas(resposta.data.user.id, resposta.data.user);
     if (tentativaLogin !== state.tentativaLogin) return;
 
     if (perfisCarregados === false) {
-      state.carregando = false;
       state.loginAcao = '';
-      setErro('Sua sessao foi iniciada, mas os perfis demoraram para responder. Tente novamente.');
+      exibirFalhaDeAcessoMobile('Sua sessão foi iniciada, mas os perfis demoraram para responder. Tente novamente.');
       return;
     }
 
@@ -6250,18 +6240,15 @@
       state.criarPerfilNome = String(mdLogin.nome_perfil_inicial || '');
       state.criarPerfilTipo = normalizarTipoPerfil(mdLogin.tipo_perfil_inicial || state.cadastroTipoPerfil);
       state.modoCriarPerfil = true;
+      state.pronto = true;
       render();
       return;
     }
 
-    state.carregando = false;
-    state.loginAcao = '';
     if (await prepararSistemaInicialAntesDosDadosMobile()) {
       render();
       return;
     }
-    state.carregando = true;
-    render();
     await carregarDados();
   }
 
@@ -9050,7 +9037,7 @@
     // A transição vazia pertence somente ao bootstrap da rota direta. Depois
     // que Google ou Apple iniciam, o estado social sempre prevalece e mantém
     // o card Preparando acesso com uma saída explícita para cancelamento.
-    if (acessoDireto && !loginSocialMobileEmAndamento()) {
+    if (acessoDireto && !state.autenticado && !loginSocialMobileEmAndamento()) {
       return (
         '<section class="avantalab-mobile-bg fixed inset-0 overflow-hidden" style="height:100dvh;background-position:center bottom;background-size:cover;" aria-live="polite" aria-label="Abrindo acesso">' +
           '<span class="sr-only">Abrindo acesso</span>' +
@@ -15441,6 +15428,9 @@
         }
         state.usuario = sessao.data.session.user;
         state.autenticado = true;
+        state.pronto = false;
+        state.carregando = true;
+        render();
         var perfisCarregados = await carregarEmpresas(state.usuario.id, state.usuario);
         if (!perfisCarregados) {
           var erroPerfis = new Error('Não foi possível carregar os perfis no tempo esperado.');
@@ -15469,6 +15459,9 @@
           var aguardandoEscolhaSistema = await prepararSistemaInicialAntesDosDadosMobile();
           if (!aguardandoEscolhaSistema) await carregarDados();
           if (state.preparacaoAcessoInterrompida) return;
+          // carregarDados já conclui e pinta a interface em todos os estados
+          // terminais; uma segunda renderização aqui causava o flash do painel.
+          return;
         }
       } else {
         // A landing encaminha o acesso móvel para /mobile?entrar=1. Sem uma
