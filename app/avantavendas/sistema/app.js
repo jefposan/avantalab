@@ -3099,12 +3099,38 @@ function dataAgendaPorExtenso(data) {
   const [ano, mes, dia] = data.split('-').map(Number);
   return `${String(dia).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(ano, mes - 1, 1))}`;
 }
+function formatarDataCurtaAgendaVendas(data) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data || ''))) return '';
+  const [ano, mes, dia] = String(data).split('-');
+  return `${dia}/${mes}/${ano.slice(-2)}`;
+}
+function deslocarDataAgendaVendas(data, dias) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data || ''))) return dataFormularioAgenda();
+  const [ano, mes, dia] = String(data).split('-').map(Number);
+  const destino = new Date(ano, mes - 1, dia, 12);
+  destino.setDate(destino.getDate() + Number(dias || 0));
+  return isoData(destino);
+}
+function sincronizarDataAgendaVendas(data) {
+  const campo = document.getElementById('agendaDataVendas');
+  const visual = document.getElementById('agendaDataVisualVendas');
+  const valorData = String(data || campo?.value || '');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valorData)) state.agendaDataFormulario = valorData;
+  if (visual) visual.textContent = formatarDataCurtaAgendaVendas(valorData) || 'Selecionar data';
+}
+function ajustarDiaAgendaVendas(direcao) {
+  const campo = document.getElementById('agendaDataVendas');
+  if (!campo) return;
+  campo.value = deslocarDataAgendaVendas(campo.value || dataFormularioAgenda(), direcao);
+  sincronizarDataAgendaVendas(campo.value);
+}
 function abrirFormularioAgendaVendas() { state.agendaClientePreselecionado = ''; state.agendaDataFormulario = dataFormularioAgenda(); state.agendaFormAberto = true; render(); }
 function cancelarFormularioAgendaVendas() { state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = ''; render(); }
 function renderFormularioAgendaVendas() {
   const data = dataFormularioAgenda();
   const vemDoCliente = Boolean(state.agendaClientePreselecionado);
-  return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarFormularioAgendaVendas()"><section class="agenda-form-card"><header><div><small>Novo agendamento</small><h3>${vemDoCliente ? 'Agende para a data desejada' : dataAgendaPorExtenso(data)}</h3></div><button type="button" class="close" onclick="cancelarFormularioAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaClienteVendas" placeholder="Nome do cliente" autocomplete="off" value="${escapeAttr(state.agendaClientePreselecionado)}">${vemDoCliente ? `<label class="agenda-date-field"><span>Dia do agendamento</span><input id="agendaDataVendas" type="date" value="${escapeAttr(data)}"></label>` : ''}<select id="agendaEtiquetaVendas"><option value="Visita">Visita</option><option value="Entrega">Entrega</option><option value="Recebimento">Recebimento</option><option value="Cobrar">Cobrar</option></select><textarea id="agendaDescricaoVendas" placeholder="Notas"></textarea><div><button type="button" class="ghost" onclick="cancelarFormularioAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarItemAgendaVendas()">Salvar</button></div></div></section></div>`;
+  const campoData = vemDoCliente ? `<div class="agenda-date-row"><label class="agenda-date-field" for="agendaDataVendas"><span>Dia do agendamento</span><span class="agenda-date-input-shell"><span id="agendaDataVisualVendas" class="agenda-date-value" aria-hidden="true">${formatarDataCurtaAgendaVendas(data)}</span><input id="agendaDataVendas" type="date" value="${escapeAttr(data)}" aria-label="Data do agendamento" onchange="sincronizarDataAgendaVendas(this.value)"></span></label><div class="agenda-date-stepper" role="group" aria-label="Alterar dia do agendamento"><button type="button" class="agenda-date-step" onclick="ajustarDiaAgendaVendas(-1)" aria-label="Dia anterior">&lt;</button><button type="button" class="agenda-date-step" onclick="ajustarDiaAgendaVendas(1)" aria-label="Próximo dia">&gt;</button></div></div>` : '';
+  return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarFormularioAgendaVendas()"><section class="agenda-form-card"><header><div><small>Novo agendamento</small><h3>${vemDoCliente ? 'Agende para a data desejada' : dataAgendaPorExtenso(data)}</h3></div><button type="button" class="close" onclick="cancelarFormularioAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaClienteVendas" placeholder="Nome do cliente" autocomplete="off" value="${escapeAttr(state.agendaClientePreselecionado)}">${campoData}<select id="agendaEtiquetaVendas"><option value="Visita">Visita</option><option value="Entrega">Entrega</option><option value="Recebimento">Recebimento</option><option value="Cobrar">Cobrar</option></select><textarea id="agendaDescricaoVendas" placeholder="Notas"></textarea><div><button type="button" class="ghost" onclick="cancelarFormularioAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarItemAgendaVendas()">Salvar</button></div></div></section></div>`;
 }
 function salvarItemAgendaVendas() {
   const titulo = valor('agendaClienteVendas').trim();
@@ -7122,6 +7148,8 @@ window.moverMesAgendaVendas = moverMesAgendaVendas;
 window.abrirFormularioAgendaVendas = abrirFormularioAgendaVendas;
 window.cancelarFormularioAgendaVendas = cancelarFormularioAgendaVendas;
 window.salvarItemAgendaVendas = salvarItemAgendaVendas;
+window.sincronizarDataAgendaVendas = sincronizarDataAgendaVendas;
+window.ajustarDiaAgendaVendas = ajustarDiaAgendaVendas;
 window.excluirItemAgendaVendas = excluirItemAgendaVendas;
 window.abrirMoverAgendaVendas = abrirMoverAgendaVendas;
 window.cancelarMoverAgendaVendas = cancelarMoverAgendaVendas;

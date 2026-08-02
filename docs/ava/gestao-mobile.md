@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.120 -->
+<!-- ava-version: 1.6.1.121 -->
+
+> Revisão 1.6.1.121: ajuste do agendamento exclusivo do AvantaVendas; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.120: estabilização do retorno OAuth exclusiva da Gestão Web;
 > sem impacto operacional na Gestão Mobile.

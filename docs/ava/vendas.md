@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.120 -->
+<!-- ava-version: 1.6.1.121 -->
+
+> Revisão 1.6.1.121: ao criar um agendamento pelo card do cliente, a data é
+> exibida em `dd/mm/aa`; os botões `<` e `>` retrocedem ou avançam um dia, e
+> tocar no campo continua abrindo o seletor de data do aparelho.
 
 > Revisão 1.6.1.120: estabilização do retorno OAuth exclusiva da Gestão Web;
 > sem impacto operacional no AvantaVendas.

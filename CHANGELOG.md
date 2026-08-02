@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.121 - 2026-08-02
+
+- AvantaVendas: o agendamento iniciado pelo card do cliente apresenta a data
+  em `dd/mm/aa`, mantém o seletor nativo ao tocar no campo e oferece botões
+  `<` e `>` para retroceder ou avançar um dia. Campo e controles passam a
+  respeitar a mesma largura dos demais itens do formulário.
+
 ## 1.6.1.120 - 2026-08-01
 
 - Gestão Web: a landing deixa de aparecer durante o retorno do login com

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.120: retorno OAuth estável na Gestão Web.
+// Revisado na versão 1.6.1.121: data curta e navegação diária no agendamento do Vendas.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -153,7 +153,7 @@ SALA E NAVEGAÇÃO
 - Ao tocar em um campo textual editável já preenchido, o cursor vai para o final do conteúdo para permitir apagar da direita para a esquerda. A seleção intencional de um trecho por gesto longo permanece disponível.
 
 CLIENTES
-- Em Clientes, o cabeçalho compacto mostra o título e Novo cliente; na linha de busca, o campo de pesquisa fica à esquerda, Ordem vem em seguida e Buscar ocupa o canto direito. Ao acessar novamente a página, a pesquisa anterior é limpa e a lista completa volta a aparecer. Ao trocar de página, a busca também é limpa e não reaparece em Pagamentos ou nas outras áreas. A rolagem dos cards é livre, sem encaixe ou movimento automático. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. No fim do campo Endereço, Localização solicita a permissão do aparelho, preenche o endereço encontrado e permite revisão antes de salvar. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.
+- Em Clientes, o cabeçalho compacto mostra o título e Novo cliente; na linha de busca, o campo de pesquisa fica à esquerda, Ordem vem em seguida e Buscar ocupa o canto direito. Ao acessar novamente a página, a pesquisa anterior é limpa e a lista completa volta a aparecer. Ao trocar de página, a busca também é limpa e não reaparece em Pagamentos ou nas outras áreas. A rolagem dos cards é livre, sem encaixe ou movimento automático. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. No fim do campo Endereço, Localização solicita a permissão do aparelho, preenche o endereço encontrado e permite revisão antes de salvar. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes. No agendamento aberto pela ficha, a data aparece em dd/mm/aa; < volta um dia, > avança um dia e tocar na data abre o seletor do aparelho.
 - No card do cliente, a linha destacada do endereço abre Google Maps, Mapas Apple ou Waze somente quando existe logradouro. Sem logradouro, a própria linha mostra Localização no canto direito; o botão solicita a localização do aparelho e grava o endereço encontrado, sem abrir a edição. Cidade, estado ou CEP isolados mantêm a linha sem acesso aos mapas.
 - O card que chega ao centro útil da tela recebe destaque e somente o vizinho imediato acima e abaixo ficam desfocados com mais intensidade. Esse efeito é apenas visual: a lista acompanha livremente o gesto e não move nem encaixa a página automaticamente.
 - Clientes, pedidos e pagamentos só informam sucesso depois da confirmação do Supabase. Antes de um novo pedido ou pagamento, o Vendas recarrega no servidor o financeiro daquela cliente e usa essa leitura para compor os saldos do comprovante; o cache local nunca define esse cálculo. Históricos com mais de 1.000 registros são carregados em todas as páginas antes do cálculo dos saldos.

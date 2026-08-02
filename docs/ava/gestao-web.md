@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.120 -->
+<!-- ava-version: 1.6.1.121 -->
+
+> Revisão 1.6.1.121: ajuste do agendamento exclusivo do AvantaVendas; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.120: após iniciar o acesso Web, a landing não reaparece
 > durante o retorno de Google/Apple nem enquanto uma sessão ativa é retomada.
