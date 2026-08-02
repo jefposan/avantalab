@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.119: acesso estável e direto à Gestão Mobile.
+// Revisado na versão 1.6.1.120: retorno OAuth estável na Gestão Web.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -15,6 +15,7 @@ const GUIAS: Record<AmbienteAva, string> = {
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
 
 NAVEGAÇÃO E PERFIS
+- Depois que o acesso Web é iniciado, a landing não reaparece durante o retorno de Google/Apple nem na retomada de uma sessão ativa. Preparando acesso permanece visível até a Gestão abrir; se a confirmação falhar, o sistema retorna ao login com uma mensagem clara.
 - O perfil Pessoal gratuito usa a Gestão Mobile. Ao tentar entrar na Gestão Web, ele vê a página de assinatura do Premium Pessoal; assinatura vigente ou cortesia libera o mesmo perfil também no Web.
 - O dashboard é a página inicial. Os cards podem ser organizados pelo lápis: mostrar, ocultar, mover entre colunas, expandir, reduzir ou remover da visão.
 - Menu reúne perfil, usuários, visual, categorias/despesas, despesas fixas, backup/restauração, módulos e configurações do perfil. No Web, ele abre como gaveta lateral esquerda; Visual e Configurações expandem seus próprios subbotões.

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.119 -->
+<!-- ava-version: 1.6.1.120 -->
+
+> Revisão 1.6.1.120: após iniciar o acesso Web, a landing não reaparece
+> durante o retorno de Google/Apple nem enquanto uma sessão ativa é retomada.
+> A preparação permanece em uma única cena até abrir a Gestão; falhas devolvem
+> o login com uma mensagem clara.
 
 > Revisão 1.6.1.119: estabilização do acesso exclusiva da Gestão Mobile; sem
 > impacto operacional na Gestão Web.

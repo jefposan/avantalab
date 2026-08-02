@@ -974,7 +974,7 @@ export function useAuth(deps: UseAuthDeps) {
       registrarRetornoOauthGestao();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provedor,
-        options: { redirectTo: `${window.location.origin}/` },
+        options: { redirectTo: `${window.location.origin}/?retorno=gestao` },
       });
 
       if (error) {

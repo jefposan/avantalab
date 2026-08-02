@@ -92,10 +92,11 @@ const dadosEstruturados = {
 
 export default function AvantaLandingPage() {
   return (
-    <main className={`${styles.page} ${effects.root} ${anchorOffset.root}`}>
+    <>
       <RedirecionamentoPosOAuth />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosEstruturados) }} />
-      <a className={styles.skipLink} href="#conteudo">Pular para o conteúdo</a>
+      <main className={`${styles.page} ${effects.root} ${anchorOffset.root}`}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosEstruturados) }} />
+        <a className={styles.skipLink} href="#conteudo">Pular para o conteúdo</a>
 
       <LandingHeader />
 
@@ -179,6 +180,7 @@ export default function AvantaLandingPage() {
 
       <footer className={styles.footer} id="rodape"><div className={styles.wrap}><Image src="/images/landing/logo-avantalab.png" alt="AvantaLab" width={154} height={40} /><div><Link href="/suporte">Suporte</Link><Link href="/termos">Termos de Uso</Link><Link href="/privacidade">Política de Privacidade</Link><Link href="/cookies">Cookies</Link></div><small>© 2026 AvantaLab. Todos os direitos reservados.</small></div></footer>
       <BotaoProximoScroll destinos={destinosProximaRolagem} distanciaInferior={22} ariaLabel="Avançar para a próxima seção" title="Próxima seção" />
-    </main>
+      </main>
+    </>
   );
 }

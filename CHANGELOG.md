@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.120 - 2026-08-01
+
+- Gestão Web: a landing deixa de aparecer durante o retorno do login com
+  Google ou Apple e quando já existe uma sessão ativa. Retorno, validação da
+  sessão e carregamento do perfil usam uma única cena estável; erros e tempo
+  excedido devolvem o login operável com mensagem.
+
 ## 1.6.1.119 - 2026-08-01
 
 - Gestão Mobile: após autenticar, o acesso mantém uma única tela estável de

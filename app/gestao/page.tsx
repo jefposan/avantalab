@@ -31,6 +31,7 @@ import CadastroPerfilModal from '@/app/components/CadastroPerfilModal';
 import AssinaturaModal from '@/app/components/AssinaturaModal';
 import PontosRestauracaoModal from '@/app/components/PontosRestauracaoModal';
 import PremiumPessoalModal from '@/app/components/PremiumPessoalModal';
+import TelaCarregandoAcesso, { FundoAcessoResponsivo } from '@/app/components/TelaCarregandoAcesso';
 import ModalAprovacoes, { type AcessoVendasAprovado, type SolicitacaoAprovacao } from '@/app/components/ModalAprovacoes';
 import NovidadesVendasModal from '@/app/components/NovidadesVendasModal';
 import { COBRANCA_ATIVA, assinaturaVigente, emCarencia, precisaPaywallEmpresa, precisaPaywallWebPessoal, precisaUpgradePessoal, type DadosCobrancaAssinatura, type EstadoAcesso, type Recurso } from '@/app/lib/cobranca';
@@ -211,77 +212,6 @@ type CaixinhaMovimento = {
 
 function textoRegistro(valor: unknown): string {
   return valor === null || valor === undefined ? '' : String(valor);
-}
-
-function FundoCarregamentoResponsivo() {
-  return (
-    <picture className="absolute inset-0 block h-full w-full" aria-hidden="true">
-      <source media="(max-width: 1023px)" srcSet="/images/bg-avantalab-mobile-1080x1920-sem-logo.webp" type="image/webp" />
-      <source media="(max-width: 1023px)" srcSet="/images/bg-avantalab-mobile-1080x1920-sem-logo.png" type="image/png" />
-      <source srcSet="/images/bg-avantalab-sem-logo.webp" type="image/webp" />
-      <img
-        src="/images/bg-avantalab-sem-logo.png"
-        alt=""
-        className="h-full w-full object-cover object-bottom lg:object-center"
-      />
-    </picture>
-  );
-}
-
-function TelaCarregandoSistema({
-  mensagem,
-  titulo = 'Carregando...',
-  onCancelar,
-}: {
-  mensagem: string;
-  titulo?: string;
-  onCancelar?: () => void;
-}) {
-  return (
-    <main className="avanta-access-scene relative overflow-hidden font-sans">
-      <FundoCarregamentoResponsivo />
-
-      <img
-        src="/images/logo-avantalab-oficial.png"
-        alt="AvantaLab — Do zero ao operacional"
-        className="avanta-access-brand pointer-events-none relative z-10"
-      />
-
-      <div className="absolute inset-0 bg-transparent" />
-
-      <section className="avanta-loading-stage relative z-10">
-        <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
-          <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
-            <span className="avanta-loading-spinner animate-spin" />
-          </div>
-
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
-            AvantaLab Gestão
-          </p>
-
-          <h1 className="text-xl font-black text-slate-900">
-            {titulo}
-          </h1>
-
-          <p className="text-sm font-semibold text-slate-500" aria-live="polite">
-            {mensagem}
-          </p>
-
-          {onCancelar && (
-            <button
-              type="button"
-              onClick={onCancelar}
-              className="mt-1 flex min-h-11 w-full items-center justify-center rounded-xl px-1 text-xs font-bold text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-[#1687D9] focus-visible:ring-offset-2"
-            >
-              <span className="flex h-8 w-full items-center justify-center rounded-[10px] border border-slate-300 bg-white/90 px-3 shadow-sm">
-                Cancelar e voltar ao login
-              </span>
-            </button>
-          )}
-        </div>
-      </section>
-    </main>
-  );
 }
 
 // Despesa com data (ano/mes/dia) ainda no futuro em relacao a hoje (horario do dispositivo).
@@ -1418,11 +1348,19 @@ useEffect(() => {
     setIsTelaMobile(ehMobile);
 
     const parametros = new URLSearchParams(window.location.search);
+    const erroOauth = parametros.get('oauthErro');
+    if (erroOauth) {
+      setModoAuth('login');
+      setAuthErro(erroOauth);
+      setAuthMensagem('');
+    }
     if (parametros.get('cadastro') === '1') {
       setModoAuth('cadastro');
       window.history.replaceState(null, '', window.location.pathname);
     } else if (parametros.get('entrar') === '1') {
       setModoAuth('login');
+      window.history.replaceState(null, '', window.location.pathname);
+    } else if (erroOauth) {
       window.history.replaceState(null, '', window.location.pathname);
     }
   };
@@ -6659,7 +6597,7 @@ const loginSocialEmAndamento = Boolean(loginSocialPendente);
 
 if (!mounted || carregandoSistema || authLoading || loginSocialEmAndamento) {
   return (
-    <TelaCarregandoSistema
+    <TelaCarregandoAcesso
       titulo={loginSocialEmAndamento ? 'Preparando acesso' : 'Carregando...'}
       mensagem={
         loginSocialEmAndamento
@@ -6934,7 +6872,7 @@ if (modalSelecionarEmpresa) {
       darkMode ? 'bg-slate-950 text-slate-100 lg:bg-transparent' : 'bg-slate-100 text-slate-800 lg:bg-transparent'
     }`}>
       <div className="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
-        <FundoCarregamentoResponsivo />
+        <FundoAcessoResponsivo />
       </div>
       <section
         className={`relative z-10 row-start-2 my-auto flex w-full max-w-sm flex-col justify-self-center overflow-hidden rounded-2xl border shadow-2xl ${
@@ -7246,19 +7184,10 @@ if (validacaoTelefoneObrigatoria) {
   // "flash" de login entre selecionar o perfil e a página carregar).
   if (carregandoPerfil && !modalSelecionarEmpresa) {
     return (
-      <main className="avanta-access-scene relative overflow-hidden font-sans">
-        <FundoCarregamentoResponsivo />
-        <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" className="avanta-access-brand pointer-events-none relative z-10" />
-        <div className="absolute inset-0 bg-transparent" />
-        <section className="avanta-loading-stage relative z-10">
-          <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
-            <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
-              <span className="avanta-loading-spinner animate-spin" />
-            </div>
-            <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando perfil…</p>
-          </div>
-        </section>
-      </main>
+      <TelaCarregandoAcesso
+        titulo="Carregando..."
+        mensagem="Preparando seu perfil financeiro..."
+      />
     );
   }
 
@@ -7343,7 +7272,7 @@ if (validacaoTelefoneObrigatoria) {
   if (acessoLiberado && empresaId && (!cadastroPerfilCarregado || (COBRANCA_ATIVA && !estadoCarregado))) {
     return (
       <main className="avanta-access-scene relative overflow-hidden font-sans">
-        <FundoCarregamentoResponsivo />
+        <FundoAcessoResponsivo />
         <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" className="avanta-access-brand pointer-events-none relative z-10" />
         <div className="absolute inset-0 bg-transparent" />
         <section className="avanta-loading-stage relative z-10">
@@ -7407,7 +7336,7 @@ if (validacaoTelefoneObrigatoria) {
   if (acessoLiberado && empresaId && cadastroPerfilErro) {
     return (
       <main className="avanta-access-scene relative overflow-hidden font-sans">
-        <FundoCarregamentoResponsivo />
+        <FundoAcessoResponsivo />
         <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" className="avanta-access-brand pointer-events-none relative z-10" />
         <section className="avanta-loading-stage relative z-10">
           <div className="w-full max-w-sm rounded-xl border border-white/50 bg-white/90 p-5 text-center shadow-xl backdrop-blur-xl">

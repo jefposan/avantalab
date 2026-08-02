@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.119 -->
+<!-- ava-version: 1.6.1.120 -->
+
+> Revisão 1.6.1.120: estabilização do retorno OAuth exclusiva da Gestão Web;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.119: depois da autenticação, **Preparando acesso** permanece
 > como uma única tela até a Gestão estar pronta. A Gestão abre diretamente;

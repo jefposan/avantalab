@@ -1,4 +1,5 @@
 const CHAVE_RETORNO_OAUTH = 'avantalab.oauth.retorno';
+const CHAVE_LOGIN_SOCIAL_PENDENTE = 'avantalab_gestao_login_social_pendente';
 const VALIDADE_RETORNO_OAUTH_MS = 15 * 60 * 1000;
 const DESTINO_GESTAO = '/gestao';
 
@@ -46,4 +47,10 @@ export function lerRetornoOauthPendente(): string | null {
 export function limparRetornoOauthPendente(): void {
   if (!podeUsarSessao()) return;
   window.sessionStorage.removeItem(CHAVE_RETORNO_OAUTH);
+}
+
+export function limparEstadoRetornoOauthGestao(): void {
+  if (!podeUsarSessao()) return;
+  window.sessionStorage.removeItem(CHAVE_RETORNO_OAUTH);
+  window.sessionStorage.removeItem(CHAVE_LOGIN_SOCIAL_PENDENTE);
 }
