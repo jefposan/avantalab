@@ -1,7 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.115: aporte inicial recolhido e lista de aportes
-// por data na Caixinha/Reserva financeira.
+// Revisado na versão 1.6.1.116: aporte editável na própria linha e data curta.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -79,6 +78,7 @@ NAVEGAÇÃO E PERFIS
 - Ao criar um perfil Empresa, **Usar 7 dias grátis** libera o Business Pro por um único período de teste. **Assinar agora** cria o perfil sem gravar uma assinatura expirada e abre os planos para a contratação. Um perfil legado expirado sem cobrança pode usar esse teste uma única vez no paywall web.
 - Ao adicionar um aporte na **Caixinha** ou **Reserva financeira**, a data começa em hoje e pode ser alterada; a despesa correspondente usa a data escolhida, mesmo que o dashboard esteja mostrando outro mês.
 - O aporte inicial fica recolhido até escolher **Adicionar aporte inicial**. Depois de definir ou atualizar, o campo fecha novamente; ele também pode ser excluído. **Ver lançamentos** abre a lista de aportes normais, com a data de cada item.
+- Na Gestão Web, tocar em um aporte da lista abre sua edição na própria linha. Salvar atualiza também a despesa vinculada; a data da lista usa dd/mm/aa.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.
 - Em Configurações, os controles com chave aparecem primeiro. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
 - Excluir minha conta fica em Menu > Configurações, como a última opção do grupo, e exige digitar EXCLUIR. A operação remove o acesso e os dados pessoais; registros trabalhistas ou fiscais sujeitos a retenção legal podem permanecer anonimizados e sem acesso à conta.

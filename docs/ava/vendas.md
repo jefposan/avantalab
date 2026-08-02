@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.115 -->
+<!-- ava-version: 1.6.1.116 -->
+
+> Revisão 1.6.1.116: formato e edição de aportes são exclusivos da Gestão;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.115: organização do aporte inicial e histórico da Caixinha é
 > exclusiva da Gestão Web e Mobile; sem impacto operacional no AvantaVendas.

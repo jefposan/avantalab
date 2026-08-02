@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.115 -->
+<!-- ava-version: 1.6.1.116 -->
+
+> Revisão 1.6.1.116: em **Ver lançamentos**, cada aporte mostra a data curta e
+> pode ser editado na própria linha; a despesa vinculada é atualizada junto.
 
 > Revisão 1.6.1.115: o aporte inicial da **Caixinha/Reserva financeira** fica
 > recolhido até usar **Adicionar aporte inicial**. Depois, pode ser atualizado

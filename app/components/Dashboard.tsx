@@ -168,6 +168,7 @@ interface DashboardProps {
   caixinhaAportesMes: number;
   caixinhaUltimosMovimentos: Array<{
     id: string;
+    lancamentoId: string | null;
     tipo: string;
     descricao: string;
     valor: number;
@@ -176,6 +177,7 @@ interface DashboardProps {
   onAdicionarAporteCaixinha: (dados: { data: string; descricao: string; valorTexto: string }) => Promise<{ ok: boolean; mensagem?: string }>;
   onDefinirSaldoInicialCaixinha: (valorTexto: string) => Promise<{ ok: boolean; mensagem?: string }>;
   onExcluirSaldoInicialCaixinha: () => Promise<{ ok: boolean; mensagem?: string }>;
+  onEditarAporteCaixinha: (dados: { id: string; data: string; descricao: string; valorTexto: string }) => Promise<{ ok: boolean; mensagem?: string }>;
   tipoPerfil: 'empresa' | 'pessoal';
   dashboardOrdem: { left: string[]; a: string[]; b: string[] };
   dashboardOcultos: string[];
@@ -208,7 +210,7 @@ export default function Dashboard({
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
   receitasAConfirmar, onConfirmarReceita, onEditarReceita, onExcluirReceita,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
-  caixinhaSaldo, caixinhaSaldoInicial, caixinhaAportesMes, caixinhaUltimosMovimentos, onAdicionarAporteCaixinha, onDefinirSaldoInicialCaixinha, onExcluirSaldoInicialCaixinha,
+  caixinhaSaldo, caixinhaSaldoInicial, caixinhaAportesMes, caixinhaUltimosMovimentos, onAdicionarAporteCaixinha, onDefinirSaldoInicialCaixinha, onExcluirSaldoInicialCaixinha, onEditarAporteCaixinha,
   tipoPerfil,
   dashboardOrdem, dashboardOcultos, onAtualizarLayoutDashboard,
   dashboardExpandidos, onOcultarCardDashboard, onDefinirOcultosDashboard,
@@ -272,6 +274,7 @@ export default function Dashboard({
   const [caixinhaSaldoInicialValor, setCaixinhaSaldoInicialValor] = useState('');
   const [caixinhaSaldoInicialAberto, setCaixinhaSaldoInicialAberto] = useState(false);
   const [caixinhaLancamentosVisiveis, setCaixinhaLancamentosVisiveis] = useState(false);
+  const [caixinhaAporteEditando, setCaixinhaAporteEditando] = useState<{ id: string; data: string; descricao: string; valor: string } | null>(null);
   const [caixinhaSalvando, setCaixinhaSalvando] = useState(false);
   const [caixinhaSaldoInicialSalvando, setCaixinhaSaldoInicialSalvando] = useState(false);
   const [caixinhaMensagem, setCaixinhaMensagem] = useState('');
@@ -685,7 +688,21 @@ export default function Dashboard({
 
   const formatarDataAporte = (data: string) => {
     const [ano, mes, dia] = String(data || '').split('-');
-    return ano && mes && dia ? `${dia}/${mes}/${ano}` : '—';
+    return ano && mes && dia ? `${dia}/${mes}/${ano.slice(-2)}` : '—';
+  };
+
+  const salvarEdicaoAporte = async () => {
+    if (!caixinhaAporteEditando) return;
+    const resultado = await onEditarAporteCaixinha({
+      id: caixinhaAporteEditando.id,
+      data: caixinhaAporteEditando.data,
+      descricao: caixinhaAporteEditando.descricao,
+      valorTexto: caixinhaAporteEditando.valor,
+    });
+    if (resultado.ok) {
+      setCaixinhaAporteEditando(null);
+      setCaixinhaMensagem('Aporte atualizado.');
+    } else setCaixinhaMensagem(resultado.mensagem || 'Não foi possível atualizar o aporte.');
   };
 
   const corEhClara = (hex: string) => {
@@ -1481,13 +1498,19 @@ const mostrarComparativoResumoDash =
 
           {caixinhaLancamentosVisiveis && <div className="space-y-2">
             <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Lançamentos de aporte</p>
-            {caixinhaUltimosMovimentos.length > 0 ? caixinhaUltimosMovimentos.map((mov) => (
-              <div key={mov.id} className={`grid grid-cols-[80px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
-                <span className={`text-[10px] font-black tabular-nums ${textMuted}`}>{formatarDataAporte(mov.dataMovimento)}</span>
-                <span className={`min-w-0 truncate text-xs font-bold ${textStrong}`}>{mov.descricao || (ehPerfilPessoal ? 'Aporte na caixinha' : 'Aporte na reserva financeira')}</span>
-                <strong className="shrink-0 text-xs font-black text-emerald-500">{ocultarValores ? 'R$ ••••' : formatarMoeda(mov.valor)}</strong>
-              </div>
-            )) : <p className={`rounded-lg px-3 py-2 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>{ehPerfilPessoal ? 'Nenhum aporte registrado.' : 'Nenhuma reserva registrada.'}</p>}
+            {caixinhaUltimosMovimentos.length > 0 ? caixinhaUltimosMovimentos.map((mov) => {
+              const editando = caixinhaAporteEditando?.id === mov.id;
+              return editando ? <div key={mov.id} className={`grid gap-2 rounded-lg p-3 ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
+                <div className="grid grid-cols-[112px_minmax(0,1fr)_92px] gap-2 max-sm:grid-cols-1">
+                  <input type="date" value={caixinhaAporteEditando.data} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, data: e.target.value })} className={`h-10 rounded-xl border px-2 text-xs font-bold ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Data do aporte" />
+                  <input value={caixinhaAporteEditando.descricao} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, descricao: e.target.value })} className={`h-10 rounded-xl border px-3 text-xs font-bold ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Descrição do aporte" />
+                  <input inputMode="decimal" value={caixinhaAporteEditando.valor} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, valor: e.target.value })} className={`h-10 rounded-xl border px-3 text-right text-xs font-black ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Valor do aporte" />
+                </div>
+                <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => void salvarEdicaoAporte()} className="h-9 rounded-lg text-[10px] font-black uppercase text-white" style={{ backgroundColor: corPrimaria }}>Salvar</button><button type="button" onClick={() => setCaixinhaAporteEditando(null)} className={`h-9 rounded-lg border text-[10px] font-black uppercase ${darkMode ? 'border-slate-600 text-slate-100' : 'border-slate-300 text-slate-700'}`}>Cancelar</button></div>
+              </div> : <button key={mov.id} type="button" onClick={() => setCaixinhaAporteEditando({ id: mov.id, data: mov.dataMovimento, descricao: mov.descricao, valor: String(mov.valor.toFixed(2)).replace('.', ',') })} className={`grid w-full grid-cols-[80px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:ring-1 ${darkMode ? 'bg-slate-800/50 hover:ring-slate-600' : 'bg-slate-50 hover:ring-slate-300'}`}>
+                <span className={`text-[10px] font-black tabular-nums ${textMuted}`}>{formatarDataAporte(mov.dataMovimento)}</span><span className={`min-w-0 truncate text-xs font-bold ${textStrong}`}>{mov.descricao || (ehPerfilPessoal ? 'Aporte na caixinha' : 'Aporte na reserva financeira')}</span><strong className="shrink-0 text-xs font-black text-emerald-500">{ocultarValores ? 'R$ ••••' : formatarMoeda(mov.valor)}</strong>
+              </button>;
+            }) : <p className={`rounded-lg px-3 py-2 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>{ehPerfilPessoal ? 'Nenhum aporte registrado.' : 'Nenhuma reserva registrada.'}</p>}
           </div>}
         </div>
       </div>

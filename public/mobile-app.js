@@ -10138,7 +10138,7 @@
     var aportesHtml = resumo.aportes.length
       ? resumo.aportes.map(function (mov) {
           return '<div class="grid grid-cols-[80px_minmax(0,1fr)_auto] items-center gap-2 rounded-xl ' + (escuro ? 'bg-slate-800/60' : 'bg-slate-50') + ' px-3 py-2">' +
-            '<span class="text-[10px] font-black tabular-nums text-slate-500">' + escapeHtml(dataAssinaturaMobile(mov.dataMovimento)) + '</span>' +
+            '<span class="text-[10px] font-black tabular-nums text-slate-500">' + escapeHtml((function () { var p = String(mov.dataMovimento || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0].slice(-2) : '—'; })()) + '</span>' +
             '<span class="min-w-0 truncate text-xs font-bold text-slate-700">' + escapeHtml(mov.descricao || 'Aporte na caixinha') + '</span>' +
             '<strong class="shrink-0 text-xs font-black text-emerald-600">' + valorFinanceiroCardHtml(mov.valor, cardId) + '</strong>' +
           '</div>';

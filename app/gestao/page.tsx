@@ -3305,6 +3305,30 @@ const excluirSaldoInicialCaixinha = async (): Promise<{ ok: boolean; mensagem?: 
   return { ok: true };
 };
 
+const editarAporteCaixinha = async ({ id, data, descricao, valorTexto }: { id: string; data: string; descricao: string; valorTexto: string }): Promise<{ ok: boolean; mensagem?: string }> => {
+  if (!empresaId || !podeInserirLancamentos) return { ok: false, mensagem: 'Seu perfil não pode alterar a caixinha.' };
+  const movimento = caixinhaMovimentos.find((item) => item.id === id && item.tipo === 'aporte');
+  if (!movimento) return { ok: false, mensagem: 'Aporte não encontrado.' };
+  const [ano, mesNumero, dia] = String(data || '').split('-').map(Number);
+  const mesIndice = mesNumero - 1;
+  const dataValidada = new Date(ano, mesIndice, dia);
+  const valor = parseInt(String(valorTexto || '').replace(/\D/g, '') || '0', 10) / 100;
+  if (!ano || mesIndice < 0 || mesIndice > 11 || !dia || dataValidada.getFullYear() !== ano || dataValidada.getMonth() !== mesIndice || dataValidada.getDate() !== dia || valor <= 0) return { ok: false, mensagem: 'Informe data e valor válidos.' };
+  const descricaoFinal = formatarDescricao(descricao) || 'Aporte na caixinha';
+  const ehFuturo = dataFutura(ano, mesIndice, dia);
+  const dataMovimento = `${ano}-${String(mesNumero).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+  if (movimento.lancamentoId) {
+    const { error: erroLancamento } = await supabase.from('lancamentos').update({ ano, mes: meses[mesIndice], dia, descricao: descricaoFinal, valor, status: ehFuturo ? 'prevista' : null, tipo_obs: ehFuturo ? 'previsto' : null }).eq('id', movimento.lancamentoId).eq('empresa_id', empresaId);
+    if (erroLancamento) return { ok: false, mensagem: erroLancamento.message || 'Não foi possível atualizar a despesa vinculada.' };
+  }
+  const { error } = await supabase.from('caixinhas_movimentos').update({ descricao: descricaoFinal, valor, data_movimento: dataMovimento, atualizado_em: new Date().toISOString() }).eq('id', id).eq('empresa_id', empresaId);
+  if (error) return { ok: false, mensagem: error.message || 'Não foi possível atualizar o aporte.' };
+  setCaixinhaMovimentos((prev) => prev.map((item) => item.id === id ? { ...item, descricao: descricaoFinal, valor, dataMovimento } : item));
+  setLancamentos((prev) => prev.map((item) => String(item.id) === movimento.lancamentoId ? { ...item, ano, mes: meses[mesIndice], dia, descricao: descricaoFinal, valor, status: ehFuturo ? 'prevista' : null, tipo: ehFuturo ? 'previsto' : null } : item));
+  notificarFinanceiroAtualizado();
+  return { ok: true };
+};
+
 // O card avisa somente durante o dia programado. Depois dessa janela diária,
 // o lançamento continua previsto, mas deixa de ocupar o aviso do dashboard.
 const despesasAConfirmar = lancamentos.filter(
@@ -10794,6 +10818,7 @@ if (validacaoTelefoneObrigatoria) {
         onAdicionarAporteCaixinha={adicionarAporteCaixinha}
         onDefinirSaldoInicialCaixinha={definirSaldoInicialCaixinha}
         onExcluirSaldoInicialCaixinha={excluirSaldoInicialCaixinha}
+        onEditarAporteCaixinha={editarAporteCaixinha}
         tipoPerfil={tipoPerfilAtualNormalizado}
         dashboardOrdem={recursoBloqueado('organizar_dashboard') ? ordemDashboardPadrao : dashboardOrdem}
         dashboardOcultos={recursoBloqueado('organizar_dashboard') ? ocultosDashboardPadrao : dashboardOcultos}

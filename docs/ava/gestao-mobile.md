@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.115 -->
+<!-- ava-version: 1.6.1.116 -->
+
+> Revisão 1.6.1.116: em **Ver lançamentos**, a data do aporte usa o formato
+> curto; edição na própria linha permanece disponível na Gestão Web.
 
 > Revisão 1.6.1.115: o aporte inicial da **Caixinha** fica recolhido até usar
 > **Adicionar aporte inicial**. Depois, pode ser atualizado ou excluído. **Ver

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.116 - 2026-08-01
+
+- Gestão Web: datas dos aportes usam `dd/mm/aa`; tocar em um aporte abre a
+  edição na própria linha e mantém a despesa vinculada sincronizada.
+
 ## 1.6.1.115 - 2026-08-01
 
 - Gestão Web e Mobile: o aporte inicial da Caixinha fica recolhido e pode ser
