@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.116 -->
+<!-- ava-version: 1.6.1.117 -->
+
+> Revisão 1.6.1.117: no card **Caixinha**, o botão ao lado do olho recolhe o
+> conteúdo após Saldo e Aportes no mês. **Lançar aporte** identifica os campos
+> e o seletor visual de data mostra `dd/mm/aa`.
 
 > Revisão 1.6.1.116: em **Ver lançamentos**, a data do aporte usa o formato
 > curto; edição na própria linha permanece disponível na Gestão Web.

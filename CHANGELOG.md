@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.117 - 2026-08-01
+
+- Gestão Web e Mobile: o card da Caixinha pode ser recolhido após **Saldo** e
+  **Aportes no mês**; o seletor de data mostra `dd/mm/aa` e a área de novo
+  aporte passou a ter título próprio. No Web, a edição continua na própria
+  linha, agora sem abrir um bloco separado.
+
 ## 1.6.1.116 - 2026-08-01
 
 - Gestão Web: datas dos aportes usam `dd/mm/aa`; tocar em um aporte abre a

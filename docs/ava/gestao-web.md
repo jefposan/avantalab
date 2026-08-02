@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.116 -->
+<!-- ava-version: 1.6.1.117 -->
+
+> Revisão 1.6.1.117: no card **Caixinha/Reserva financeira**, o botão ao lado
+> do olho recolhe tudo após Saldo e Aportes no mês. **Lançar aporte** identifica
+> os campos de data, descrição e valor; a data aparece como `dd/mm/aa` e a
+> edição de um lançamento permanece na mesma linha.
 
 > Revisão 1.6.1.116: em **Ver lançamentos**, cada aporte mostra a data curta e
 > pode ser editado na própria linha; a despesa vinculada é atualizada junto.

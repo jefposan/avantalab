@@ -471,6 +471,7 @@
     caixinhaSaldoInicialSalvando: false,
     caixinhaSaldoInicialAberto: false,
     caixinhaLancamentosVisiveis: false,
+    caixinhaRecolhida: false,
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     vendasMobileModuloAtivo: false,
@@ -10151,6 +10152,7 @@
           '<button id="excluir-caixinha-saldo-inicial" type="button"' + (resumo.saldoInicial > 0 ? '' : ' disabled') + ' class="h-10 rounded-xl border border-red-200 bg-red-50 px-2 text-[10px] font-black uppercase tracking-wide text-red-600 disabled:opacity-50">Excluir</button>' +
         '</div>'
       : '<button id="abrir-caixinha-saldo-inicial" type="button" class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-[11px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.99]">' + (resumo.saldoInicial > 0 ? 'Alterar aporte inicial' : 'Adicionar aporte inicial') + '</button>';
+    var dataAporteCurta = (function () { var p = String(state.caixinhaData || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0].slice(-2) : '—'; })();
 
     return (
       '<section class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">' +
@@ -10159,7 +10161,7 @@
             '<h2 class="text-sm font-black tracking-wide text-white">Caixinha</h2>' +
             '<p class="mt-0.5 truncate text-[11px] font-semibold text-cyan-100">Reserva e investimentos do perfil</p>' +
           '</div>' +
-          botaoVisibilidadeValoresHtml(cardId, true) +
+          '<div class="flex items-center gap-1">' + botaoVisibilidadeValoresHtml(cardId, true) + '<button id="toggle-caixinha-recolhida" type="button" aria-label="' + (state.caixinhaRecolhida ? 'Expandir Caixinha' : 'Recolher Caixinha') + '" class="flex h-10 w-10 items-center justify-center rounded-xl text-white/85 active:bg-white/15"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="' + (state.caixinhaRecolhida ? 'm6 9 6 6 6-6' : 'm18 15-6-6-6 6') + '"></path></svg></button></div>' +
         '</div>' +
         '<div class="p-4">' +
         '<div class="grid grid-cols-2 gap-2">' +
@@ -10172,23 +10174,23 @@
             '<strong class="mt-1 block truncate text-base font-black text-slate-900">' + valorFinanceiroCardHtml(resumo.aportesMes, cardId) + '</strong>' +
           '</div>' +
         '</div>' +
-        '<div class="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
+        (state.caixinhaRecolhida ? '' : '<div class="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
           '<div class="mb-2 flex items-center justify-between gap-2">' +
             '<span class="min-w-0"><span class="block text-[10px] font-black uppercase tracking-wide text-slate-500">Aporte inicial</span><span class="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">Valor que ja existia antes do AvantaLab</span></span>' +
             '<strong class="shrink-0 text-xs font-black text-emerald-600">' + valorFinanceiroCardHtml(resumo.saldoInicial, cardId) + '</strong>' +
           '</div>' +
           aporteInicialForm +
         '</div>' +
-        '<div class="mt-3 grid grid-cols-[140px_minmax(0,1fr)] gap-2">' +
-          '<input id="caixinha-data" type="date" value="' + escapeHtml(state.caixinhaData || '') + '" aria-label="Data do aporte" style="font-size:16px" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none">' +
+        '<div class="mt-3"><p class="mb-2 text-[10px] font-black uppercase tracking-wide text-slate-500">Lançar aporte</p><div class="grid grid-cols-[116px_minmax(0,1fr)] gap-2">' +
+          '<div class="relative h-10 rounded-xl border border-slate-200 bg-white"><input id="caixinha-data" type="date" value="' + escapeHtml(state.caixinhaData || '') + '" aria-label="Data do aporte" class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"><span aria-hidden="true" class="flex h-full items-center px-3 text-sm font-bold tabular-nums text-slate-900">' + escapeHtml(dataAporteCurta) + '</span></div>' +
           '<input id="caixinha-descricao" type="text" value="' + escapeHtml(state.caixinhaDescricao || '') + '" placeholder="Descrição" style="font-size:16px" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none">' +
-        '</div>' +
+        '</div></div>' +
         '<input id="caixinha-valor" inputmode="decimal" value="' + escapeHtml(state.caixinhaValor || '') + '" placeholder="0,00" style="font-size:16px" class="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-base font-black text-slate-900 outline-none">' +
         '<div class="mt-2 grid grid-cols-[minmax(0,1fr)_140px] gap-2">' +
           '<button id="salvar-caixinha-aporte" type="button" class="h-10 rounded-xl bg-cyan-700 text-xs font-black uppercase tracking-wide text-white shadow-sm active:scale-[0.99]">' + (state.caixinhaSalvando ? 'Adicionando...' : 'Adicionar aporte') + '</button>' +
           '<button id="toggle-caixinha-lancamentos" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-2 text-[10px] font-black uppercase tracking-wide text-slate-700">' + (state.caixinhaLancamentosVisiveis ? 'Ocultar lançamentos' : 'Ver lançamentos') + '</button>' +
         '</div>' +
-        (state.caixinhaLancamentosVisiveis ? '<div class="mt-3 space-y-2"><p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Lançamentos de aporte</p>' + aportesHtml + '</div>' : '') + '</div>' +
+        (state.caixinhaLancamentosVisiveis ? '<div class="mt-3 space-y-2"><p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Lançamentos de aporte</p>' + aportesHtml + '</div>' : '') + '</div>') + '</div>' +
       '</section>'
     );
   }
@@ -14027,6 +14029,7 @@
     bind('excluir-caixinha-saldo-inicial', excluirSaldoInicialCaixinhaMobile);
     bind('salvar-caixinha-aporte', salvarAporteCaixinhaMobile);
     bind('toggle-caixinha-lancamentos', function () { state.caixinhaLancamentosVisiveis = !state.caixinhaLancamentosVisiveis; render(); });
+    bind('toggle-caixinha-recolhida', function () { state.caixinhaRecolhida = !state.caixinhaRecolhida; render(); });
     var caixinhaSaldoInicialEl = document.getElementById('caixinha-saldo-inicial');
     if (caixinhaSaldoInicialEl) {
       caixinhaSaldoInicialEl.addEventListener('input', function () {

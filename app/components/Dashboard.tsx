@@ -273,6 +273,7 @@ export default function Dashboard({
   const [caixinhaValor, setCaixinhaValor] = useState('');
   const [caixinhaSaldoInicialValor, setCaixinhaSaldoInicialValor] = useState('');
   const [caixinhaSaldoInicialAberto, setCaixinhaSaldoInicialAberto] = useState(false);
+  const [caixinhaRecolhida, setCaixinhaRecolhida] = useState(false);
   const [caixinhaLancamentosVisiveis, setCaixinhaLancamentosVisiveis] = useState(false);
   const [caixinhaAporteEditando, setCaixinhaAporteEditando] = useState<{ id: string; data: string; descricao: string; valor: string } | null>(null);
   const [caixinhaSalvando, setCaixinhaSalvando] = useState(false);
@@ -690,6 +691,19 @@ export default function Dashboard({
     const [ano, mes, dia] = String(data || '').split('-');
     return ano && mes && dia ? `${dia}/${mes}/${ano.slice(-2)}` : '—';
   };
+
+  const CampoDataAporte = ({ value, onChange, ariaLabel }: { value: string; onChange: (value: string) => void; ariaLabel: string }) => (
+    <div className={`relative h-10 min-w-0 rounded-xl border transition focus-within:ring-2 focus-within:ring-offset-1 ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100 focus-within:ring-slate-500' : 'border-slate-200 bg-white text-slate-800 focus-within:ring-slate-400'}`}>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={ariaLabel}
+        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+      />
+      <span aria-hidden="true" className="flex h-full items-center px-3 text-sm font-bold tabular-nums">{formatarDataAporte(value)}</span>
+    </div>
+  );
 
   const salvarEdicaoAporte = async () => {
     if (!caixinhaAporteEditando) return;
@@ -1402,6 +1416,29 @@ const mostrarComparativoResumoDash =
         <div className="flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>{nomeCaixinha}</span>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setOcultarValores(!ocultarValores)}
+              className="flex h-6 w-6 items-center justify-center rounded text-white/75 transition hover:bg-white/15 hover:text-white"
+              title={ocultarValores ? 'Mostrar valores' : 'Ocultar valores'}
+              aria-label={ocultarValores ? `Mostrar valores da ${nomeCaixinhaMinusculo}` : `Ocultar valores da ${nomeCaixinhaMinusculo}`}
+            >
+              {ocultarValores ? (
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m3 3 18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 4.2A10.3 10.3 0 0112 4c4.5 0 8.3 3 9.5 8a10.2 10.2 0 01-3.1 4.7M6.2 6.2A10.1 10.1 0 002.5 12C3.7 17 7.5 20 12 20c1 0 2-.1 2.9-.4" /></svg>
+              ) : (
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.5 12C3.7 7 7.5 4 12 4s8.3 3 9.5 8c-1.2 5-5 8-9.5 8s-8.3-3-9.5-8Z" /><circle cx="12" cy="12" r="3" /></svg>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCaixinhaRecolhida((recolhida) => !recolhida)}
+              className="flex h-6 w-6 items-center justify-center rounded text-white/75 transition hover:bg-white/15 hover:text-white"
+              title={caixinhaRecolhida ? 'Expandir card' : 'Recolher card'}
+              aria-label={caixinhaRecolhida ? `Expandir ${nomeCaixinhaMinusculo}` : `Recolher ${nomeCaixinhaMinusculo}`}
+              aria-expanded={!caixinhaRecolhida}
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={caixinhaRecolhida ? 'm6 9 6 6 6-6' : 'm18 15-6-6-6 6'} /></svg>
+            </button>
             <DragHandle tone="light" />
             <BotaoOpcoesCard id="caixinha" tone="light" />
           </div>
@@ -1422,7 +1459,7 @@ const mostrarComparativoResumoDash =
             </div>
           </div>
 
-          <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/40' : 'border-slate-200 bg-slate-50/80'}`}>
+          {!caixinhaRecolhida && <><div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/40' : 'border-slate-200 bg-slate-50/80'}`}>
             <div className="mb-2 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>{ehPerfilPessoal ? 'Aporte inicial' : 'Saldo inicial'}</p>
@@ -1458,27 +1495,13 @@ const mostrarComparativoResumoDash =
             </div>}
           </div>
 
-          <div className="grid grid-cols-[154px_minmax(0,1fr)_132px] gap-2 max-sm:grid-cols-1">
-            <input
-              type="date"
-              value={caixinhaData}
-              onChange={(e) => setCaixinhaData(e.target.value)}
-              className={`h-10 rounded-xl border px-3 text-sm font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
-              aria-label={ehPerfilPessoal ? 'Data do aporte' : 'Data da reserva'}
-            />
-            <input
-              value={caixinhaDescricao}
-              onChange={(e) => setCaixinhaDescricao(e.target.value)}
-              className={`h-10 rounded-xl border px-3 text-base font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
-              placeholder="Descrição"
-            />
-            <input
-              value={caixinhaValor}
-              onChange={handleCaixinhaValorChange}
-              inputMode="decimal"
-              className={`h-10 rounded-xl border px-3 text-right text-base font-black outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
-              placeholder="0,00"
-            />
+          <div>
+            <p className={`mb-2 text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Lançar aporte</p>
+            <div className="grid grid-cols-[116px_minmax(0,1fr)_112px] gap-2 max-sm:grid-cols-1">
+              <CampoDataAporte value={caixinhaData} onChange={setCaixinhaData} ariaLabel={ehPerfilPessoal ? 'Data do aporte' : 'Data da reserva'} />
+              <input value={caixinhaDescricao} onChange={(e) => setCaixinhaDescricao(e.target.value)} className={`h-10 min-w-0 rounded-xl border px-3 text-base font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} placeholder="Descrição" />
+              <input value={caixinhaValor} onChange={handleCaixinhaValorChange} inputMode="decimal" className={`h-10 min-w-0 rounded-xl border px-3 text-right text-base font-black outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} placeholder="0,00" />
+            </div>
           </div>
 
           <div className="grid grid-cols-[minmax(0,1fr)_144px] gap-2 max-sm:grid-cols-1">
@@ -1500,18 +1523,17 @@ const mostrarComparativoResumoDash =
             <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Lançamentos de aporte</p>
             {caixinhaUltimosMovimentos.length > 0 ? caixinhaUltimosMovimentos.map((mov) => {
               const editando = caixinhaAporteEditando?.id === mov.id;
-              return editando ? <div key={mov.id} className={`grid gap-2 rounded-lg p-3 ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
-                <div className="grid grid-cols-[112px_minmax(0,1fr)_92px] gap-2 max-sm:grid-cols-1">
-                  <input type="date" value={caixinhaAporteEditando.data} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, data: e.target.value })} className={`h-10 rounded-xl border px-2 text-xs font-bold ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Data do aporte" />
-                  <input value={caixinhaAporteEditando.descricao} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, descricao: e.target.value })} className={`h-10 rounded-xl border px-3 text-xs font-bold ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Descrição do aporte" />
-                  <input inputMode="decimal" value={caixinhaAporteEditando.valor} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, valor: e.target.value })} className={`h-10 rounded-xl border px-3 text-right text-xs font-black ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Valor do aporte" />
-                </div>
-                <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => void salvarEdicaoAporte()} className="h-9 rounded-lg text-[10px] font-black uppercase text-white" style={{ backgroundColor: corPrimaria }}>Salvar</button><button type="button" onClick={() => setCaixinhaAporteEditando(null)} className={`h-9 rounded-lg border text-[10px] font-black uppercase ${darkMode ? 'border-slate-600 text-slate-100' : 'border-slate-300 text-slate-700'}`}>Cancelar</button></div>
+              return editando ? <div key={mov.id} className={`grid grid-cols-[96px_minmax(0,1fr)_84px_36px_36px] items-center gap-2 rounded-lg px-2 py-2 max-sm:grid-cols-[88px_minmax(0,1fr)_76px] ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
+                <CampoDataAporte value={caixinhaAporteEditando.data} onChange={(data) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, data })} ariaLabel="Data do aporte" />
+                <input value={caixinhaAporteEditando.descricao} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, descricao: e.target.value })} className={`h-10 min-w-0 rounded-xl border px-3 text-xs font-bold ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Descrição do aporte" />
+                <input inputMode="decimal" value={caixinhaAporteEditando.valor} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, valor: e.target.value })} className={`h-10 min-w-0 rounded-xl border px-2 text-right text-xs font-black ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Valor do aporte" />
+                <button type="button" onClick={() => void salvarEdicaoAporte()} className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ backgroundColor: corPrimaria }} aria-label="Salvar aporte" title="Salvar aporte"><svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m5 12 4 4L19 6" /></svg></button>
+                <button type="button" onClick={() => setCaixinhaAporteEditando(null)} className={`flex h-9 w-9 items-center justify-center rounded-lg border ${darkMode ? 'border-slate-600 text-slate-100' : 'border-slate-300 text-slate-700'}`} aria-label="Cancelar edição" title="Cancelar edição"><svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 6 12 12M18 6 6 18" /></svg></button>
               </div> : <button key={mov.id} type="button" onClick={() => setCaixinhaAporteEditando({ id: mov.id, data: mov.dataMovimento, descricao: mov.descricao, valor: String(mov.valor.toFixed(2)).replace('.', ',') })} className={`grid w-full grid-cols-[80px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:ring-1 ${darkMode ? 'bg-slate-800/50 hover:ring-slate-600' : 'bg-slate-50 hover:ring-slate-300'}`}>
                 <span className={`text-[10px] font-black tabular-nums ${textMuted}`}>{formatarDataAporte(mov.dataMovimento)}</span><span className={`min-w-0 truncate text-xs font-bold ${textStrong}`}>{mov.descricao || (ehPerfilPessoal ? 'Aporte na caixinha' : 'Aporte na reserva financeira')}</span><strong className="shrink-0 text-xs font-black text-emerald-500">{ocultarValores ? 'R$ ••••' : formatarMoeda(mov.valor)}</strong>
               </button>;
             }) : <p className={`rounded-lg px-3 py-2 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>{ehPerfilPessoal ? 'Nenhum aporte registrado.' : 'Nenhuma reserva registrada.'}</p>}
-          </div>}
+          </div>}</>}
         </div>
       </div>
     ),

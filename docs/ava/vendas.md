@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.116 -->
+<!-- ava-version: 1.6.1.117 -->
+
+> Revisão 1.6.1.117: recolhimento e organização do card da Caixinha são
+> exclusivos da Gestão; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.116: formato e edição de aportes são exclusivos da Gestão;
 > sem impacto operacional no AvantaVendas.
