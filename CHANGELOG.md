@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.118 - 2026-08-01
+
+- Gestão Web e Mobile: a data de **Lançar aporte** passa a ficar centralizada
+  no próprio seletor.
+
 ## 1.6.1.117 - 2026-08-01
 
 - Gestão Web e Mobile: o card da Caixinha pode ser recolhido após **Saldo** e

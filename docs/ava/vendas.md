@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.117 -->
+<!-- ava-version: 1.6.1.118 -->
+
+> Revisão 1.6.1.118: centralização da data na Caixinha é exclusiva da Gestão;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.117: recolhimento e organização do card da Caixinha são
 > exclusivos da Gestão; sem impacto operacional no AvantaVendas.

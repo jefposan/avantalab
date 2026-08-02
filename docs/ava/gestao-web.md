@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.117 -->
+<!-- ava-version: 1.6.1.118 -->
+
+> Revisão 1.6.1.118: no seletor de data de **Lançar aporte**, a data curta
+> fica centralizada; sem mudança operacional.
 
 > Revisão 1.6.1.117: no card **Caixinha/Reserva financeira**, o botão ao lado
 > do olho recolhe tudo após Saldo e Aportes no mês. **Lançar aporte** identifica

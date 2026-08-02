@@ -10182,7 +10182,7 @@
           aporteInicialForm +
         '</div>' +
         '<div class="mt-3"><p class="mb-2 text-[10px] font-black uppercase tracking-wide text-slate-500">Lançar aporte</p><div class="grid grid-cols-[116px_minmax(0,1fr)] gap-2">' +
-          '<div class="relative h-10 rounded-xl border border-slate-200 bg-white"><input id="caixinha-data" type="date" value="' + escapeHtml(state.caixinhaData || '') + '" aria-label="Data do aporte" class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"><span aria-hidden="true" class="flex h-full items-center px-3 text-sm font-bold tabular-nums text-slate-900">' + escapeHtml(dataAporteCurta) + '</span></div>' +
+          '<div class="relative h-10 rounded-xl border border-slate-200 bg-white"><input id="caixinha-data" type="date" value="' + escapeHtml(state.caixinhaData || '') + '" aria-label="Data do aporte" class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"><span aria-hidden="true" class="flex h-full items-center justify-center px-3 text-center text-sm font-bold tabular-nums text-slate-900">' + escapeHtml(dataAporteCurta) + '</span></div>' +
           '<input id="caixinha-descricao" type="text" value="' + escapeHtml(state.caixinhaDescricao || '') + '" placeholder="Descrição" style="font-size:16px" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none">' +
         '</div></div>' +
         '<input id="caixinha-valor" inputmode="decimal" value="' + escapeHtml(state.caixinhaValor || '') + '" placeholder="0,00" style="font-size:16px" class="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-base font-black text-slate-900 outline-none">' +

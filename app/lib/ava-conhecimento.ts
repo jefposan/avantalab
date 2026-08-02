@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.117: Caixinha recolhível e lançamento identificado.
+// Revisado na versão 1.6.1.118: data centralizada no lançamento da Caixinha.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

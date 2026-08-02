@@ -701,7 +701,7 @@ export default function Dashboard({
         aria-label={ariaLabel}
         className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
       />
-      <span aria-hidden="true" className="flex h-full items-center px-3 text-sm font-bold tabular-nums">{formatarDataAporte(value)}</span>
+      <span aria-hidden="true" className="flex h-full items-center justify-center px-3 text-center text-sm font-bold tabular-nums">{formatarDataAporte(value)}</span>
     </div>
   );
 
