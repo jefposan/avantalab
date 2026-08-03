@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.122 -->
+<!-- ava-version: 1.6.1.123 -->
+
+> Revisão 1.6.1.123: ajuste de área segura e rolagem do painel de avisos
+> exclusivo da Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.122: identificação e permanência dos avisos são exclusivas da
 > Gestão Web e Mobile; sem impacto operacional no AvantaVendas.

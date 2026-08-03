@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.122 -->
+<!-- ava-version: 1.6.1.123 -->
+
+> Revisão 1.6.1.123: o painel de avisos respeita a área segura superior do
+> iPhone; quantidade e **Fechar todas** permanecem fixos durante a rolagem.
 
 > Revisão 1.6.1.122: cada aviso identifica o perfil financeiro de origem.
 > Abrir ou fechar o painel não remove avisos nem o indicador; eles permanecem
@@ -859,8 +862,10 @@ deve usar os nomes do menu e da barra inferior do celular.
 - A barra inferior possui **Início**, **Lançar** e **Menu**; dois atalhos laterais
   podem ser ajustados em **Menu > Organizar atalhos**.
 - Avisos já recebidos podem ser consultados e apagados em **Menu > Configurações >
-  Avisos e notificações**; a ativação das notificações do aparelho fica no item
-  **Notificações**, no mesmo submenu.
+  Avisos e notificações**. No iPhone, o painel respeita a área segura superior;
+  quantidade e **Fechar todas** permanecem fixos enquanto somente os cards
+  rolam. A ativação das notificações do aparelho fica no item **Notificações**,
+  no mesmo submenu.
 - **Sobre** apresenta as principais novidades em marcos consolidados, sem listar
   ajustes exclusivamente técnicos.
 - **Assinatura** é o primeiro item do **Menu**. A tela sempre informa a situação

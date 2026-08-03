@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.122 -->
+<!-- ava-version: 1.6.1.123 -->
+
+> Revisão 1.6.1.123: ajuste de área segura e rolagem do painel de avisos
+> exclusivo da Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.122: cada aviso do sininho identifica o perfil financeiro de
 > origem. Abrir ou fechar o painel não remove avisos; eles permanecem no

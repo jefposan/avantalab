@@ -4668,11 +4668,11 @@
     };
     var rotulosTipo = { despesa: 'Despesa', agenda: 'Agenda', assinatura: 'Assinatura', novidade: 'Novidade', sistema: 'Sistema' };
     var fecharSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>';
-    var header = '<div class="mb-2 flex items-center justify-between gap-2">' +
+    var header = '<div class="flex shrink-0 items-center justify-between gap-2 pb-2">' +
       '<span class="text-[11px] font-bold text-slate-500">' + lista.length + ' notifica&ccedil;' + (lista.length > 1 ? '&otilde;es' : '&atilde;o') + '</span>' +
       '<button id="limpar-notificacoes" type="button" class="min-h-[44px] rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-[10px] font-black text-rose-600 active:bg-rose-50">Fechar todas</button>' +
     '</div>';
-    return header + '<div class="grid gap-2">' + lista.map(function (n) {
+    return '<div class="flex h-full min-h-0 flex-col">' + header + '<div id="notificacoes-lista-scroll" data-preserve-scroll class="grid min-h-0 flex-1 content-start gap-2 overflow-y-auto overscroll-contain pr-1" style="-webkit-overflow-scrolling:touch;">' + lista.map(function (n) {
       var naoLida = n.lida === false;
       var selo = coresTipo[n.tipo] || coresTipo.sistema;
       var rotulo = rotulosTipo[n.tipo] || 'Aviso';
@@ -4688,7 +4688,7 @@
           '<p class="text-sm font-black text-slate-900">' + escapeHtml(n.titulo || '') + '</p>' +
           (n.corpo ? '<p class="mt-0.5 whitespace-pre-line text-xs font-semibold text-slate-600">' + escapeHtml(n.corpo) + '</p>' : '') +
         '</div>';
-    }).join('') + '</div>';
+    }).join('') + '</div></div>';
   }
 
   async function excluirNotificacaoMobile(id) {
@@ -11484,14 +11484,24 @@
     var camadaModal = state.modalMenu === 'assinatura' || state.modalMenu === 'contratarAssinatura'
       ? 'z-[13040]'
       : (state.modalMenu === 'premium' ? 'z-[13020]' : 'z-[60]');
+    var painelNotificacoes = state.modalMenu === 'notificacoes';
+    var estiloOverlay = painelNotificacoes
+      ? 'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-bottom:calc(env(safe-area-inset-bottom) + 78px)'
+      : 'padding-bottom:calc(env(safe-area-inset-bottom) + 78px)';
+    var estiloPainel = painelNotificacoes
+      ? 'max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 106px)'
+      : 'max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)';
+    var classeConteudo = painelNotificacoes
+      ? 'min-h-0 flex-1 overflow-hidden p-4'
+      : 'min-h-0 flex-1 overflow-y-auto p-4 overscroll-contain';
     return (
-      '<div id="modal-menu-overlay" class="fixed inset-0 ' + camadaModal + ' flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
-        '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
+      '<div id="modal-menu-overlay" class="fixed inset-0 ' + camadaModal + ' flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="' + estiloOverlay + '">' +
+        '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' shadow-2xl" style="' + estiloPainel + '">' +
           '<div class="shrink-0 flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
             '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button>' +
           '</div>' +
-          '<div id="modal-menu-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto p-4 overscroll-contain">' + conteudoModalMenuHtml() + '</div>' +
+          '<div id="modal-menu-scroll"' + (painelNotificacoes ? '' : ' data-preserve-scroll') + ' class="' + classeConteudo + '">' + conteudoModalMenuHtml() + '</div>' +
         '</section>' +
       '</div>'
     );

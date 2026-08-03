@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.122: perfil de origem e fechamento explícito dos avisos.
+// Revisado na versão 1.6.1.123: área segura e cabeçalho fixo dos avisos no Mobile.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -72,7 +72,7 @@ NAVEGAÇÃO E PERFIS
 - No card de cadastro, **Cadastrar com Google** e **Cadastrar com Apple** criam ou acessam a mesma conta-base do cadastro por e-mail. Se ainda faltarem dados do primeiro perfil, a Gestão solicita a conclusão depois da autenticação.
 - Durante o login com Google ou Apple, **Preparando acesso** oferece **Cancelar e voltar ao login**. A ação encerra a tentativa pendente e restaura a tela de login sem manter o botão em Conectando.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
-- Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações e identificam o perfil financeiro de origem. Abrir ou fechar o painel não os remove; eles e o indicador permanecem até usar **Fechar aviso** ou **Fechar todas**. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
+- Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações e identificam o perfil financeiro de origem. Abrir ou fechar o painel não os remove; eles e o indicador permanecem até usar **Fechar aviso** ou **Fechar todas**. No iPhone, o painel fica abaixo da área segura; quantidade e **Fechar todas** permanecem fixos enquanto os cards rolam. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Gestor Master e Administrador recebem no sininho avisos de faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Tocar em um aviso de assinatura abre **Assinatura**; quando as notificações do aparelho estiverem ativas, ele também é entregue por push.
 - Em Menu > Configurações > Backup e restauração, Gestor Master, Administrador e Operador Completo abrem **Pontos de restauração**. Eles preservam o estado completo do perfil, incluindo agenda e preferências; somente Gestor Master restaura ou exclui. O backup por Excel permanece separado e não passa a incluir esses dados.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.

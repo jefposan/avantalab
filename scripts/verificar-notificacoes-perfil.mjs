@@ -46,7 +46,14 @@ exigir(
   'O fechamento explícito de um ou de todos os avisos deve existir nos dois ambientes.',
 );
 exigir(
-  versao.includes("APP_VERSION = '1.6.1.122'"),
+  mobile.includes("padding-top:calc(env(safe-area-inset-top,0px) + 12px)")
+    && mobile.includes('id="notificacoes-lista-scroll" data-preserve-scroll')
+    && mobile.includes('grid min-h-0 flex-1 content-start gap-2 overflow-y-auto overscroll-contain')
+    && mobile.includes('flex shrink-0 items-center justify-between gap-2 pb-2'),
+  'O painel Mobile deve respeitar a área segura e manter o cabeçalho fora da rolagem dos avisos.',
+);
+exigir(
+  versao.includes("APP_VERSION = '1.6.1.123'"),
   'A versão precisa registrar a nova regra de avisos.',
 );
 

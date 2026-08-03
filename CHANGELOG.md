@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.123 - 2026-08-03
+
+- Gestão Mobile: o painel de avisos passa a respeitar a área segura superior
+  do iPhone. A faixa com a quantidade de notificações e **Fechar todas** fica
+  fixa, enquanto somente a lista de avisos acompanha a rolagem.
+
 ## 1.6.1.122 - 2026-08-03
 
 - Gestão Web e Mobile: avisos do sininho passam a identificar o perfil
