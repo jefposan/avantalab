@@ -4672,7 +4672,7 @@
       '<span class="text-[11px] font-bold text-slate-500">' + lista.length + ' notifica&ccedil;' + (lista.length > 1 ? '&otilde;es' : '&atilde;o') + '</span>' +
       '<button id="limpar-notificacoes" type="button" class="min-h-[44px] rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-[10px] font-black text-rose-600 active:bg-rose-50">Fechar todas</button>' +
     '</div>';
-    return '<div class="flex h-full min-h-0 flex-col">' + header + '<div id="notificacoes-lista-scroll" data-preserve-scroll class="grid min-h-0 flex-1 content-start gap-2 overflow-y-auto overscroll-contain pr-1" style="-webkit-overflow-scrolling:touch;">' + lista.map(function (n) {
+    return header + '<div id="notificacoes-lista-scroll" data-preserve-scroll class="grid min-h-0 flex-1 content-start gap-2 overflow-y-auto overscroll-contain pr-1" style="-webkit-overflow-scrolling:touch;touch-action:pan-y;">' + lista.map(function (n) {
       var naoLida = n.lida === false;
       var selo = coresTipo[n.tipo] || coresTipo.sistema;
       var rotulo = rotulosTipo[n.tipo] || 'Aviso';
@@ -4688,7 +4688,7 @@
           '<p class="text-sm font-black text-slate-900">' + escapeHtml(n.titulo || '') + '</p>' +
           (n.corpo ? '<p class="mt-0.5 whitespace-pre-line text-xs font-semibold text-slate-600">' + escapeHtml(n.corpo) + '</p>' : '') +
         '</div>';
-    }).join('') + '</div></div>';
+    }).join('') + '</div>';
   }
 
   async function excluirNotificacaoMobile(id) {
@@ -11489,10 +11489,10 @@
       ? 'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-bottom:calc(env(safe-area-inset-bottom) + 78px)'
       : 'padding-bottom:calc(env(safe-area-inset-bottom) + 78px)';
     var estiloPainel = painelNotificacoes
-      ? 'max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 106px)'
+      ? 'height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 106px);max-height:680px'
       : 'max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)';
     var classeConteudo = painelNotificacoes
-      ? 'min-h-0 flex-1 overflow-hidden p-4'
+      ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-4'
       : 'min-h-0 flex-1 overflow-y-auto p-4 overscroll-contain';
     return (
       '<div id="modal-menu-overlay" class="fixed inset-0 ' + camadaModal + ' flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="' + estiloOverlay + '">' +

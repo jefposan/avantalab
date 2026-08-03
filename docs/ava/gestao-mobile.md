@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.123 -->
+<!-- ava-version: 1.6.1.124 -->
+
+> Revisão 1.6.1.124: a lista de cards do painel de avisos volta a rolar no
+> iPhone, mantendo a faixa de quantidade e **Fechar todas** fixa.
 
 > Revisão 1.6.1.123: o painel de avisos respeita a área segura superior do
 > iPhone; quantidade e **Fechar todas** permanecem fixos durante a rolagem.

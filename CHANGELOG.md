@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.124 - 2026-08-03
+
+- Gestão Mobile: corrigida a altura interna do painel de avisos para restaurar
+  a rolagem dos cards no iPhone, mantendo quantidade e **Fechar todas** fixos.
+
 ## 1.6.1.123 - 2026-08-03
 
 - Gestão Mobile: o painel de avisos passa a respeitar a área segura superior

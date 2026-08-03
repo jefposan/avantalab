@@ -47,13 +47,16 @@ exigir(
 );
 exigir(
   mobile.includes("padding-top:calc(env(safe-area-inset-top,0px) + 12px)")
+    && mobile.includes("height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 106px);max-height:680px")
+    && mobile.includes("? 'flex min-h-0 flex-1 flex-col overflow-hidden p-4'")
     && mobile.includes('id="notificacoes-lista-scroll" data-preserve-scroll')
     && mobile.includes('grid min-h-0 flex-1 content-start gap-2 overflow-y-auto overscroll-contain')
+    && mobile.includes('touch-action:pan-y')
     && mobile.includes('flex shrink-0 items-center justify-between gap-2 pb-2'),
-  'O painel Mobile deve respeitar a área segura e manter o cabeçalho fora da rolagem dos avisos.',
+  'O painel Mobile deve respeitar a área segura, manter o cabeçalho fixo e fornecer altura efetiva para a rolagem dos avisos.',
 );
 exigir(
-  versao.includes("APP_VERSION = '1.6.1.123'"),
+  versao.includes("APP_VERSION = '1.6.1.124'"),
   'A versão precisa registrar a nova regra de avisos.',
 );
 

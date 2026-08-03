@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.123: área segura e cabeçalho fixo dos avisos no Mobile.
+// Revisado na versão 1.6.1.124: rolagem dos cards com cabeçalho fixo no Mobile.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
