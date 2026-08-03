@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.124 -->
+<!-- ava-version: 1.6.1.125 -->
+
+> Revisão 1.6.1.125: no aplicativo iOS instalado, os avisos podem usar a
+> permissão nativa do iPhone e o ícone acompanha a quantidade pendente. No
+> PWA, o comportamento de notificações permanece o mesmo.
 
 > Revisão 1.6.1.124: a lista de cards do painel de avisos volta a rolar no
 > iPhone, mantendo a faixa de quantidade e **Fechar todas** fixa.

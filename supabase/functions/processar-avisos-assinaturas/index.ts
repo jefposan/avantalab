@@ -1,13 +1,8 @@
-import webpush from 'npm:web-push@3.6.7';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { enviarPush } from '../_shared/push.ts';
 
 const url = Deno.env.get('SUPABASE_URL')!;
 const chaveServico = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-webpush.setVapidDetails(
-  Deno.env.get('VAPID_SUBJECT') || 'mailto:contato@avantalab.com.br',
-  Deno.env.get('VAPID_PUBLIC_KEY')!,
-  Deno.env.get('VAPID_PRIVATE_KEY')!,
-);
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
 const marcos: Record<number, { chave: string; titulo: string; corpo: (valor: string) => string }> = {
@@ -91,10 +86,9 @@ Deno.serve(async (req) => {
         if (!notificacaoId) continue;
         criadas++;
         await db.from('assinatura_avisos').update({ notificacao_id: notificacaoId }).eq('id', aviso.id);
-        const { data: assinaturas } = await db.from('push_subscriptions').select('id, endpoint, p256dh, auth').eq('user_id', gestor.user_id).eq('app_origem', 'mobile');
+        const { data: assinaturas } = await db.from('push_subscriptions').select('id, endpoint, p256dh, auth, canal, apns_token').eq('user_id', gestor.user_id).eq('app_origem', 'mobile');
         for (const item of assinaturas || []) {
-          try { await webpush.sendNotification({ endpoint: item.endpoint, keys: { p256dh: item.p256dh, auth: item.auth } }, JSON.stringify({ titulo: marco.titulo, corpo, url: '/mobile?assinatura=1' })); enviadas++; }
-          catch (erro: any) { if ([404, 410].includes(erro?.statusCode)) await db.from('push_subscriptions').delete().eq('id', item.id); }
+          if (await enviarPush(db, item, { titulo: marco.titulo, corpo, url: '/mobile?assinatura=1' })) enviadas++;
         }
       }
     }

@@ -56,8 +56,8 @@ exigir(
   'O painel Mobile deve respeitar a área segura, manter o cabeçalho fixo e fornecer altura efetiva para a rolagem dos avisos.',
 );
 exigir(
-  versao.includes("APP_VERSION = '1.6.1.124'"),
-  'A versão precisa registrar a nova regra de avisos.',
+  versao.includes("APP_VERSION = '1.6.1.125'"),
+  'A versão precisa registrar a atualização nativa de avisos.',
 );
 
 if (falhas.length) {

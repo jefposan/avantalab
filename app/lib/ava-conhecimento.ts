@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.124: rolagem dos cards com cabeçalho fixo no Mobile.
+// Revisado na versão 1.6.1.125: push nativo e indicador no ícone do iOS.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

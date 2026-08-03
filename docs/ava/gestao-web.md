@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.124 -->
+<!-- ava-version: 1.6.1.125 -->
+
+> Revisão 1.6.1.125: notificações nativas e indicador no ícone são exclusivos
+> do aplicativo iOS instalado; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.124: correção da rolagem do painel de avisos exclusiva da
 > Gestão Mobile; sem impacto operacional na Gestão Web.

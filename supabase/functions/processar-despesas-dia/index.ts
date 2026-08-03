@@ -20,7 +20,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import webpush from 'npm:web-push@3.6.7';
+import { enviarPush } from '../_shared/push.ts';
 
 // Os lancamentos gravam o mes por extenso em MAIUSCULO (ex.: 'JULHO'). Precisa casar exatamente.
 const MESES = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
@@ -30,12 +30,6 @@ Deno.serve(async (request) => {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-
-    webpush.setVapidDetails(
-      Deno.env.get('VAPID_SUBJECT') || 'mailto:contato@avantalab.com.br',
-      Deno.env.get('VAPID_PUBLIC_KEY')!,
-      Deno.env.get('VAPID_PRIVATE_KEY')!,
     );
 
     let body: { data?: string } = {};
@@ -130,35 +124,23 @@ Deno.serve(async (request) => {
 
       const { data: subs } = await supabase
         .from('push_subscriptions')
-        .select('endpoint, p256dh, auth')
+        .select('id, endpoint, p256dh, auth, canal, apns_token')
         .in('user_id', usuariosEmpresa)
         .eq('app_origem', 'mobile');
 
       const despesasEmpresa = lista.filter((x) => x.empresa_id === empresaId);
       const qtd = despesasEmpresa.length;
-      const payload = JSON.stringify({
+      const payload = {
         title: qtd > 1 ? `${qtd} pagamentos agendados para hoje` : 'Pagamento agendado para hoje',
         body: qtd > 1
           ? `${nomePerfil}: abra o app para consultar os pagamentos do dia.`
           : `${nomePerfil}: ${despesasEmpresa[0]?.despesa_nome || 'Despesa do dia'}`,
         url: '/mobile',
         perfil: nomePerfil,
-      });
+      };
 
       for (const s of subs || []) {
-        try {
-          await webpush.sendNotification(
-            { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-            payload,
-          );
-          pushesEnviados++;
-        } catch (e: any) {
-          // 404/410 = inscricao expirada: remove.
-          const code = e && (e.statusCode || e.status);
-          if (code === 404 || code === 410) {
-            await supabase.from('push_subscriptions').delete().eq('endpoint', s.endpoint);
-          }
-        }
+        if (await enviarPush(supabase, s, payload)) pushesEnviados++;
       }
     }
 

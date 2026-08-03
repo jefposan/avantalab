@@ -4327,6 +4327,17 @@
 
   async function ativarNotificacoesMobile() {
     try {
+      if (typeof window.__avantalabAtivarPushNativoMobile === 'function') {
+        if (!state.usuario || !state.usuario.id) { mostrarToast('Faca login para ativar as notificacoes.'); return; }
+        var tokenNativo = await window.__avantalabAtivarPushNativoMobile();
+        var resultadoNativo = await db.from('push_subscriptions').upsert({
+          user_id: state.usuario.id, empresa_id: state.empresa ? state.empresa.id : null,
+          endpoint: 'apns:' + tokenNativo, p256dh: '', auth: '', apns_token: tokenNativo,
+          canal: 'apns', user_agent: navigator.userAgent, app_origem: 'mobile', atualizado_em: new Date().toISOString(),
+        }, { onConflict: 'endpoint' });
+        if (resultadoNativo.error) throw resultadoNativo.error;
+        state.notificacoesAtivas = true; mostrarToast('Notificacoes ativadas neste iPhone.'); return;
+      }
       if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
         mostrarToast('Este aparelho/navegador nao suporta notificacoes push.');
         return;
@@ -4376,6 +4387,11 @@
 
   async function desativarNotificacoesMobile() {
     try {
+      if (typeof window.__avantalabDesativarPushNativoMobile === 'function') {
+        var tokenNativo = await window.__avantalabDesativarPushNativoMobile();
+        if (tokenNativo && state.usuario?.id) await db.from('push_subscriptions').delete().eq('endpoint', 'apns:' + tokenNativo);
+        state.notificacoesAtivas = false; atualizarBadgeApp(0); mostrarToast('Notificacoes desativadas neste iPhone.'); return;
+      }
       var registro = await navigator.serviceWorker.ready;
       var inscricao = await registro.pushManager.getSubscription();
       if (inscricao) {
@@ -4415,6 +4431,9 @@
   async function atualizarEstadoNotificacoesMobile(renderizar) {
     var ativas = false;
     try {
+      if (typeof window.__avantalabEstadoPushNativoMobile === 'function') {
+        ativas = await window.__avantalabEstadoPushNativoMobile();
+      } else
       if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
         var registro = await navigator.serviceWorker.ready;
         var inscricao = await registro.pushManager.getSubscription();
@@ -4574,6 +4593,7 @@
   // ─── Sininho + badge (avisos pendentes de fechamento) ───────
   function atualizarBadgeApp(quantidade) {
     try {
+      if (typeof window.__avantalabAtualizarBadgeNativo === 'function') window.__avantalabAtualizarBadgeNativo(quantidade);
       if ('setAppBadge' in navigator) {
         if (quantidade > 0) navigator.setAppBadge(quantidade);
         else if ('clearAppBadge' in navigator) navigator.clearAppBadge();

@@ -9,17 +9,12 @@
 //   ADMIN_FEEDBACKS_TOKEN  (a mesma senha usada no /admin)
 // SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY sao injetados automaticamente.
 
-import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { enviarPush } from "../_shared/push.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY")!;
-const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY")!;
-const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:contato@avantalab.com.br";
 const ADMIN_TOKEN = Deno.env.get("ADMIN_FEEDBACKS_TOKEN") || "";
-
-webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -65,24 +60,13 @@ Deno.serve(async (req) => {
     // Push para todas as inscricoes
     const { data: subs } = await db
       .from("push_subscriptions")
-      .select("id, endpoint, p256dh, auth")
+      .select("id, endpoint, p256dh, auth, canal, apns_token")
       .eq("app_origem", "mobile");
 
-    const payload = JSON.stringify({ titulo, corpo, url: "/mobile" });
     let enviados = 0;
 
     for (const s of subs || []) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          payload,
-        );
-        enviados++;
-      } catch (err: any) {
-        if (err && (err.statusCode === 404 || err.statusCode === 410)) {
-          await db.from("push_subscriptions").delete().eq("id", s.id);
-        }
-      }
+      if (await enviarPush(db, s, { titulo, corpo, url: "/mobile" })) enviados++;
     }
 
     return json({

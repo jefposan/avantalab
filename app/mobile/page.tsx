@@ -6,6 +6,7 @@ import OAuthNativoMobileBridge from './OAuthNativoMobileBridge';
 import VendasMobileConteudoBridge from './VendasMobileConteudoBridge';
 import IosBillingBridge from './IosBillingBridge';
 import NativeShellBridge from './NativeShellBridge';
+import NativePushNotificationsBridge from './NativePushNotificationsBridge';
 import { APP_VERSION } from '../lib/version';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -654,6 +655,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
       <VendasMobileConteudoBridge />
       <IosBillingBridge apiKey={revenueCatIosApiKey} />
       <NativeShellBridge />
+      <NativePushNotificationsBridge />
 
       <Script
         id="avantalab-mobile-bootstrap"

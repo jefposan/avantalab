@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.125 - 2026-08-03
+
+- iOS (Capacitor): a Gestão Mobile passa a solicitar notificações nativas,
+  receber o token APNs e refletir a quantidade de avisos pendentes no ícone do
+  aplicativo. O envio preserva o Web Push do PWA e passa a aceitar APNs.
+
 ## 1.6.1.124 - 2026-08-03
 
 - Gestão Mobile: corrigida a altura interna do painel de avisos para restaurar
