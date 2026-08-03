@@ -715,7 +715,7 @@ const [agendaDescricao, setAgendaDescricao] = useState('');
 const [agendaRepetir, setAgendaRepetir] = useState(false);
 const [agendaRepeticao, setAgendaRepeticao] = useState<'diaria'|'semanal'|'quinzenal'|'mensal'|'anual'>('mensal');
 const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | null>(null);
-const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string; tipo: string; lida: boolean }[]>([]);
+const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string; tipo: string; perfilNome: string }[]>([]);
 const [modalAprovacoesAberto, setModalAprovacoesAberto] = useState(false);
 const [solicitacoesAprovacao, setSolicitacoesAprovacao] = useState<SolicitacaoAprovacao[]>([]);
 const [acessosVendasAprovados, setAcessosVendasAprovados] = useState<AcessoVendasAprovado[]>([]);
@@ -723,7 +723,6 @@ const [aprovacoesCarregando, setAprovacoesCarregando] = useState(false);
 const [aprovacaoProcessandoId, setAprovacaoProcessandoId] = useState<string | null>(null);
 const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 const painelAjustesRef = useRef<HTMLDivElement | null>(null);
-const painelAvisosAbertoAnterior = useRef(false);
 const financeiroRealtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
 const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
@@ -2298,29 +2297,33 @@ useEffect(() => {
     try {
       const { data, error } = await supabase
         .from('notificacoes')
-        .select('id, titulo, corpo, tipo, lida')
+        .select('id, empresa_id, titulo, corpo, tipo')
         .order('criado_em', { ascending: false })
         .limit(50);
       if (error) return;
+      const notificacoes = data || [];
+      const empresaIds = Array.from(new Set(notificacoes.map((n: RegistroSupabase) => textoRegistro(n.empresa_id)).filter(Boolean)));
+      const nomesPorEmpresa = new Map<string, string>();
+      if (empresaIds.length) {
+        const { data: perfis } = await supabase.from('empresas').select('id, nome').in('id', empresaIds);
+        (perfis || []).forEach((perfil: RegistroSupabase) => {
+          nomesPorEmpresa.set(textoRegistro(perfil.id), textoRegistro(perfil.nome));
+        });
+      }
       setNotificacoesWeb(
-        (data || []).map((n: RegistroSupabase) => ({
+        notificacoes.map((n: RegistroSupabase) => {
+          const notificacaoEmpresaId = textoRegistro(n.empresa_id);
+          return {
           id: String(n.id),
           titulo: textoRegistro(n.titulo),
           corpo: textoRegistro(n.corpo),
           tipo: textoRegistro(n.tipo),
-          lida: n.lida === true,
-        }))
+          perfilNome: nomesPorEmpresa.get(notificacaoEmpresaId)
+            || (notificacaoEmpresaId === empresaId ? nomeEmpresaAtual : '')
+            || 'Perfil não identificado',
+          };
+        })
       );
-    } catch {}
-  }
-
-  // Ao fechar o painel: marca as nao lidas como lidas, mas mantem o historico visivel.
-  async function marcarNotificacoesLidasWeb() {
-    try {
-      const idsNaoLidas = notificacoesWeb.filter((n) => !n.lida).map((n) => n.id);
-      if (!idsNaoLidas.length) return;
-      setNotificacoesWeb((prev) => prev.map((n) => ({ ...n, lida: true })));
-      await supabase.from('notificacoes').update({ lida: true }).in('id', idsNaoLidas);
     } catch {}
   }
 
@@ -5501,15 +5504,6 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, empresaId]);
 
-// Ao fechar o painel, os avisos visualizados deixam de aparecer no sininho.
-useEffect(() => {
-  if (painelAvisosAbertoAnterior.current && !painelAvisosAberto) {
-    marcarNotificacoesLidasWeb();
-  }
-  painelAvisosAbertoAnterior.current = painelAvisosAberto;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [painelAvisosAberto]);
-
 const abrirImportacaoBackup = () => {
   if (!podeAcessarAjustes) {
     abrirAviso(
@@ -5784,19 +5778,21 @@ const alertasSistema = useMemo(() => {
     mensagem: string;
     acaoTexto?: string;
     acao?: () => void | Promise<void>;
+    perfilNome?: string;
     naoLida?: boolean;
   }[] = [];
 
-  // Avisos/novidades vindos do Supabase aparecem no sininho apenas enquanto nao foram visualizados.
-  notificacoesWeb.filter((n) => !n.lida).forEach((n) => {
+  // Avisos permanecem no sininho ate o usuario fecha-los explicitamente.
+  notificacoesWeb.forEach((n) => {
     const avisoAssinatura = n.tipo === 'assinatura';
     alertas.push({
       id: 'notif-' + n.id,
       titulo: n.titulo,
       mensagem: n.corpo,
+      perfilNome: n.perfilNome,
       acaoTexto: avisoAssinatura ? 'Ver assinatura' : undefined,
       acao: avisoAssinatura ? () => setModalAssinatura(true) : undefined,
-      naoLida: !n.lida,
+      naoLida: true,
     });
   });
 

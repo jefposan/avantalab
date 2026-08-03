@@ -6,6 +6,7 @@ interface Aviso {
   id: string;
   titulo: string;
   mensagem: string;
+  perfilNome?: string;
   acao?: () => void | Promise<void>;
   acaoTexto?: string;
   naoLida?: boolean;
@@ -604,11 +605,11 @@ export default function AppHeader({
                     <button
                       type="button"
                       onClick={() => onLimparAvisos()}
-                      className="rounded-lg border px-2 py-1 text-[11px] font-black uppercase tracking-wide transition hover:brightness-110"
+                      className="min-h-11 rounded-lg border px-2 py-1 text-[10px] font-black uppercase tracking-wide transition hover:brightness-110"
                       style={{ borderColor: bordaSobreCorPrimaria, color: textoSobreCorPrimaria }}
-                      title="Apagar todos os avisos"
+                      title="Fechar todos os avisos"
                     >
-                      Limpar
+                      Fechar todos
                     </button>
                   )}
                   <button
@@ -649,14 +650,19 @@ export default function AppHeader({
                           <button
                             type="button"
                             onClick={() => onExcluirAviso(aviso.id)}
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition ${darkMode ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'}`}
-                            aria-label="Excluir aviso"
-                            title="Excluir aviso"
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition ${darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700'}`}
+                            aria-label="Fechar aviso"
+                            title="Fechar aviso"
                           >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M6 6l12 12M18 6L6 18" /></svg>
                           </button>
                         )}
                       </div>
+                      {aviso.perfilNome && (
+                        <p className={`mt-1 inline-flex max-w-full items-center rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${darkMode ? 'bg-cyan-950/70 text-cyan-200' : 'bg-cyan-100 text-cyan-800'}`}>
+                          <span className="truncate">Perfil: {aviso.perfilNome}</span>
+                        </p>
+                      )}
                       <p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>{aviso.mensagem}</p>
                       {aviso.acao && aviso.acaoTexto && (
                         <button

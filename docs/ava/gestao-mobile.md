@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.121 -->
+<!-- ava-version: 1.6.1.122 -->
+
+> Revisão 1.6.1.122: cada aviso identifica o perfil financeiro de origem.
+> Abrir ou fechar o painel não remove avisos nem o indicador; eles permanecem
+> até **Fechar aviso** ou **Fechar todas**.
 
 > Revisão 1.6.1.121: ajuste do agendamento exclusivo do AvantaVendas; sem
 > impacto operacional na Gestão Mobile.

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.121: data curta e navegação diária no agendamento do Vendas.
+// Revisado na versão 1.6.1.122: perfil de origem e fechamento explícito dos avisos.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -25,6 +25,7 @@ NAVEGAÇÃO E PERFIS
 - Gestor Master e Administrador possuem ações administrativas; não prometa acesso a um recurso sem confirmar a permissão.
 - Em Menu > Configurações > Backup e restauração, Gestor Master, Administrador e Operador Completo consultam e criam Pontos de restauração. Somente Gestor Master restaura ou exclui; restaurar exige digitar RESTAURAR e cria antes um ponto de segurança. O Excel continua somente como backup baixável.
 - O sininho avisa Gestor Master e Administrador sobre faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Em cada aviso de assinatura, **Ver assinatura** abre o painel para consultar ou regularizar a fatura.
+- Cada aviso recebido pelo sininho identifica o perfil financeiro de origem. Abrir ou fechar o painel não remove avisos; eles e o indicador do sininho permanecem até usar **Fechar aviso** ou **Fechar todos**.
 - Em cadastros e edições de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos preenchidos; rascunhos temporários guardam apenas dados não sensíveis e nunca armazenam senhas, confirmações, códigos SMS ou tokens.
 - Em Usuários e Permissões, criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. Editar exige os mesmos dados, mas a nova senha é opcional. O usuário entra com e-mail ou login; se o e-mail já pertencer a uma conta, use Adicionar usuário existente para vinculá-la ao perfil. E-mail e login são conferidos no servidor antes de salvar; em erro, o formulário mantém os valores e o cursor vai ao campo indicado. Ao excluir, uma conta criada internamente só é apagada por completo quando não possui outro perfil, vínculo ou histórico; caso contrário, apenas o acesso atual é removido e a conta continua pesquisável.
 - Ao atualizar a página, sessão inválida, expirada ou de usuário excluído é limpa e retorna ao login; Criar perfil financeiro só aparece para uma conta validada que realmente não possui perfil.
@@ -71,7 +72,7 @@ NAVEGAÇÃO E PERFIS
 - No card de cadastro, **Cadastrar com Google** e **Cadastrar com Apple** criam ou acessam a mesma conta-base do cadastro por e-mail. Se ainda faltarem dados do primeiro perfil, a Gestão solicita a conclusão depois da autenticação.
 - Durante o login com Google ou Apple, **Preparando acesso** oferece **Cancelar e voltar ao login**. A ação encerra a tentativa pendente e restaura a tela de login sem manter o botão em Conectando.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
-- Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
+- Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações e identificam o perfil financeiro de origem. Abrir ou fechar o painel não os remove; eles e o indicador permanecem até usar **Fechar aviso** ou **Fechar todas**. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Gestor Master e Administrador recebem no sininho avisos de faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Tocar em um aviso de assinatura abre **Assinatura**; quando as notificações do aparelho estiverem ativas, ele também é entregue por push.
 - Em Menu > Configurações > Backup e restauração, Gestor Master, Administrador e Operador Completo abrem **Pontos de restauração**. Eles preservam o estado completo do perfil, incluindo agenda e preferências; somente Gestor Master restaura ou exclui. O backup por Excel permanece separado e não passa a incluir esses dados.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.

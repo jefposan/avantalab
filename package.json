@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/verificar-padrao-avanta.mjs && node scripts/verificar-conhecimento-ava.mjs && node scripts/verificar-acesso-mobile.mjs && node scripts/verificar-acesso-web.mjs && node scripts/verificar-agenda-vendas.mjs && next build",
+    "build": "node scripts/verificar-padrao-avanta.mjs && node scripts/verificar-conhecimento-ava.mjs && node scripts/verificar-acesso-mobile.mjs && node scripts/verificar-acesso-web.mjs && node scripts/verificar-agenda-vendas.mjs && node scripts/verificar-notificacoes-perfil.mjs && next build",
     "verificar:padrao-avanta": "node scripts/verificar-padrao-avanta.mjs",
     "verificar:ava": "node scripts/verificar-conhecimento-ava.mjs",
     "test:consultas": "node --no-warnings --experimental-strip-types --test tests/consultas/*.test.mjs",
     "verificar:acesso-mobile": "node scripts/verificar-acesso-mobile.mjs",
     "verificar:acesso-web": "node scripts/verificar-acesso-web.mjs",
     "verificar:agenda-vendas": "node scripts/verificar-agenda-vendas.mjs",
+    "verificar:notificacoes-perfil": "node scripts/verificar-notificacoes-perfil.mjs",
     "start": "next start",
     "lint": "eslint"
   },

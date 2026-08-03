@@ -4571,7 +4571,7 @@
     );
   }
 
-  // ─── Sininho + badge (notificacoes nao lidas) ───────────────
+  // ─── Sininho + badge (avisos pendentes de fechamento) ───────
   function atualizarBadgeApp(quantidade) {
     try {
       if ('setAppBadge' in navigator) {
@@ -4586,23 +4586,11 @@
     try {
       var resposta = await db
         .from('notificacoes')
-        .select('id', { count: 'exact', head: true })
-        .eq('lida', false);
+        .select('id', { count: 'exact', head: true });
       if (resposta.error) return;
       state.notificacoesNaoLidas = resposta.count || 0;
       atualizarBadgeApp(state.notificacoesNaoLidas);
       if (renderizar !== false) render();
-    } catch (e) {}
-  }
-
-  async function marcarNotificacoesComoLidas() {
-    state.notificacoesNaoLidas = 0;
-    atualizarBadgeApp(0);
-    render();
-    try {
-      if (state.usuario && state.usuario.id) {
-        await db.from('notificacoes').update({ lida: true }).eq('lida', false);
-      }
     } catch (e) {}
   }
 
@@ -4618,8 +4606,6 @@
     render();
     await carregarNotificacoesLista();
     render();
-    // marca como lidas (zera a bolinha) mantendo as mensagens visiveis no painel
-    marcarNotificacoesComoLidas();
   }
 
   async function carregarNotificacoesLista() {
@@ -4627,10 +4613,26 @@
     try {
       var resp = await db
         .from('notificacoes')
-        .select('id, titulo, corpo, url, tipo, lida, criado_em')
+        .select('id, empresa_id, titulo, corpo, url, tipo, lida, criado_em')
         .order('criado_em', { ascending: false })
         .limit(50);
-      state.notificacoesLista = (resp && resp.data) ? resp.data : [];
+      var notificacoes = (resp && resp.data) ? resp.data : [];
+      var empresaIds = notificacoes.map(function (n) { return String(n.empresa_id || ''); }).filter(Boolean);
+      empresaIds = empresaIds.filter(function (id, indice) { return empresaIds.indexOf(id) === indice; });
+      var nomesPorEmpresa = {};
+      if (empresaIds.length) {
+        var respostaPerfis = await db.from('empresas').select('id, nome').in('id', empresaIds);
+        (respostaPerfis.data || []).forEach(function (perfil) {
+          nomesPorEmpresa[String(perfil.id)] = String(perfil.nome || '');
+        });
+      }
+      state.notificacoesLista = notificacoes.map(function (n) {
+        var empresaIdAviso = String(n.empresa_id || '');
+        var nomePerfilAtual = state.empresa && String(state.empresa.id) === empresaIdAviso ? String(state.empresa.nome || '') : '';
+        return Object.assign({}, n, {
+          perfil_nome: nomesPorEmpresa[empresaIdAviso] || nomePerfilAtual || 'Perfil não identificado'
+        });
+      });
     } catch (e) {
       state.notificacoesLista = [];
     }
@@ -4665,10 +4667,10 @@
       sistema: 'bg-slate-100 text-slate-600'
     };
     var rotulosTipo = { despesa: 'Despesa', agenda: 'Agenda', assinatura: 'Assinatura', novidade: 'Novidade', sistema: 'Sistema' };
-    var lixeiraSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+    var fecharSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>';
     var header = '<div class="mb-2 flex items-center justify-between gap-2">' +
       '<span class="text-[11px] font-bold text-slate-500">' + lista.length + ' notifica&ccedil;' + (lista.length > 1 ? '&otilde;es' : '&atilde;o') + '</span>' +
-      '<button id="limpar-notificacoes" type="button" class="rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-black text-rose-600 active:bg-rose-50">Limpar todas</button>' +
+      '<button id="limpar-notificacoes" type="button" class="min-h-[44px] rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-[10px] font-black text-rose-600 active:bg-rose-50">Fechar todas</button>' +
     '</div>';
     return header + '<div class="grid gap-2">' + lista.map(function (n) {
       var naoLida = n.lida === false;
@@ -4680,8 +4682,9 @@
             (naoLida ? '<span class="h-2 w-2 shrink-0 rounded-full bg-cyan-500"></span>' : '') +
             '<span class="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase ' + selo + '">' + escapeHtml(rotulo) + '</span>' +
             '<span class="ml-auto shrink-0 text-[10px] font-bold text-slate-400">' + escapeHtml(quandoNotificacaoTexto(n.criado_em)) + '</span>' +
-            '<button type="button" data-excluir-notificacao="' + escapeHtml(n.id) + '" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-400 active:bg-slate-100" aria-label="Excluir">' + lixeiraSvg + '</button>' +
+            '<button type="button" data-excluir-notificacao="' + escapeHtml(n.id) + '" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100" aria-label="Fechar aviso">' + fecharSvg + '</button>' +
           '</div>' +
+          '<p class="mb-1 inline-flex max-w-full items-center rounded-full bg-cyan-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-800"><span class="truncate">Perfil: ' + escapeHtml(n.perfil_nome || 'Perfil não identificado') + '</span></p>' +
           '<p class="text-sm font-black text-slate-900">' + escapeHtml(n.titulo || '') + '</p>' +
           (n.corpo ? '<p class="mt-0.5 whitespace-pre-line text-xs font-semibold text-slate-600">' + escapeHtml(n.corpo) + '</p>' : '') +
         '</div>';
@@ -9503,11 +9506,9 @@
   function acoesHeaderMobileHtml() {
     var premiumInativo = premiumPessoalBloqueadoMobile();
     var avisosHtml = '';
-    if (state.visao === 'home' && (agendaTemAvisoHoje() || state.notificacoesNaoLidas > 0)) {
+    if (state.visao === 'home' && state.notificacoesNaoLidas > 0) {
       avisosHtml = '<button id="avisos-dashboard" type="button" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white shadow-sm backdrop-blur' + (premiumInativo ? ' grayscale opacity-50' : '') + '" aria-label="Notificacoes"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' + sinoAvisoSvg() +
-        (state.notificacoesNaoLidas > 0
-          ? '<span class="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white/60">' + (state.notificacoesNaoLidas > 99 ? '99+' : state.notificacoesNaoLidas) + '</span>'
-          : '<span class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-white/60"></span>') +
+        '<span class="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white/60">' + (state.notificacoesNaoLidas > 99 ? '99+' : state.notificacoesNaoLidas) + '</span>' +
         '</button>';
     }
     var sistemasHtml = podeTrocarSistemaMobile()

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.122 - 2026-08-03
+
+- Gestão Web e Mobile: avisos do sininho passam a identificar o perfil
+  financeiro de origem. Abrir ou fechar o painel não elimina mais os avisos;
+  o sininho e o contador permanecem até o usuário fechar cada aviso ou usar
+  **Fechar todos**.
+
 ## 1.6.1.121 - 2026-08-02
 
 - AvantaVendas: o agendamento iniciado pelo card do cliente apresenta a data

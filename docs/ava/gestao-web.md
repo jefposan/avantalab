@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.121 -->
+<!-- ava-version: 1.6.1.122 -->
+
+> Revisão 1.6.1.122: cada aviso do sininho identifica o perfil financeiro de
+> origem. Abrir ou fechar o painel não remove avisos; eles permanecem no
+> sininho até **Fechar aviso** ou **Fechar todos**.
 
 > Revisão 1.6.1.121: ajuste do agendamento exclusivo do AvantaVendas; sem
 > impacto operacional na Gestão Web.
