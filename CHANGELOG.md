@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.131 - 2026-08-03
+
+- Avanta Admin: **Consumo das plataformas** passa a acompanhar saldo, gasto do
+  mês, tentativas de verificação SMS, confirmações e taxa de conversão da
+  Twilio. As credenciais permanecem somente no servidor e falhas da integração
+  não impedem a consulta dos demais serviços. Quando o envio usa uma subconta,
+  credenciais opcionais da conta principal permitem consultar também o saldo.
+
 ## 1.6.1.128 - 2026-08-03
 
 - AvantaVendas: restaurada a formatação original dos botões do card **Novo

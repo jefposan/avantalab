@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
+import twilio from 'twilio';
 import { exigirAdmin } from '../../lib/admin-server';
 import { obterSaldoAsaas } from '../../lib/asaas';
 
@@ -7,7 +8,7 @@ export const runtime = 'nodejs';
 
 // ─────────────────────────────────────────────────────────────
 // /api/admin-consumo — uso x limite das plataformas (Supabase,
-// Vercel, GitHub, OpenAI e Asaas) para o painel /admin.
+// Vercel, GitHub, OpenAI, Asaas e Twilio) para o painel /admin.
 //
 // Tokens (variáveis de ambiente, todas opcionais — sem elas o
 // painel mostra o que dá e instruções do que falta):
@@ -19,6 +20,11 @@ export const runtime = 'nodejs';
 //   ASAAS_API_KEY  → mesma chave já usada pela integração de pagamentos
 //   CLOUDFLARE_API_TOKEN → token com Account > Account Analytics > Read
 //   CLOUDFLARE_ZONE_ID   → identificador da zona avantalab.com.br
+//   TWILIO_ACCOUNT_SID    → SID da conta Twilio usada pelo sistema
+//   TWILIO_AUTH_TOKEN     → token privado da mesma conta
+//   TWILIO_VERIFY_SERVICE_SID → serviço Verify (opcional no resumo)
+//   TWILIO_BILLING_ACCOUNT_SID → conta principal para consultar saldo (opcional)
+//   TWILIO_BILLING_AUTH_TOKEN  → token da conta principal (opcional)
 //
 // O Supabase não precisa de token novo: usa a service role + a
 // função SQL admin_metricas_uso() (SQL devolvido no aviso caso
@@ -410,6 +416,126 @@ async function consumoAsaas(): Promise<Plataforma> {
   return plataforma;
 }
 
+async function consumoTwilio(): Promise<Plataforma> {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim() || '';
+  const authToken = process.env.TWILIO_AUTH_TOKEN?.trim() || '';
+  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID?.trim() || '';
+  const billingAccountSid = process.env.TWILIO_BILLING_ACCOUNT_SID?.trim() || accountSid;
+  const billingAuthToken = process.env.TWILIO_BILLING_AUTH_TOKEN?.trim() || authToken;
+  const plataforma: Plataforma = {
+    nome: 'Twilio',
+    configurado: Boolean(accountSid && authToken),
+    itens: [],
+    avisos: [],
+    link: 'https://console.twilio.com/us1/billing/manage-billing/billing-overview',
+  };
+
+  if (!plataforma.configurado) {
+    plataforma.itens.push(
+      { nome: 'Saldo disponível', usado: null, limite: null, formato: 'reais' },
+      { nome: 'Custo no mês', usado: null, limite: null, formato: 'reais' },
+    );
+    plataforma.avisos.push('Defina TWILIO_ACCOUNT_SID e TWILIO_AUTH_TOKEN para acompanhar saldo, consumo e verificações.');
+    return plataforma;
+  }
+
+  const cliente = twilio(accountSid, authToken);
+  const clienteCobranca = billingAccountSid === accountSid && billingAuthToken === authToken
+    ? cliente
+    : twilio(billingAccountSid, billingAuthToken);
+
+  try {
+    const saldo = await clienteCobranca.balance.fetch();
+    const valor = Number(saldo.balance);
+    plataforma.itens.push({
+      nome: 'Saldo disponível',
+      usado: Number.isFinite(valor) ? valor : null,
+      limite: null,
+      formato: 'reais',
+      detalhe: `Saldo pré-pago da conta em ${String(saldo.currency || 'USD').toUpperCase()}.`,
+    });
+    if (Number.isFinite(valor) && valor <= 5) {
+      plataforma.avisos.push('Twilio: saldo abaixo de US$ 5. Os envios serão interrompidos quando o crédito terminar.');
+    }
+  } catch (error) {
+    const codigo = typeof error === 'object' && error !== null && 'code' in error ? Number(error.code) : null;
+    const saldoDaSubconta = codigo === 20404 && !process.env.TWILIO_BILLING_ACCOUNT_SID?.trim();
+    plataforma.itens.push({
+      nome: 'Saldo disponível',
+      usado: null,
+      limite: null,
+      formato: 'reais',
+      detalhe: saldoDaSubconta
+        ? 'A conta de envio é uma subconta; o saldo pertence à conta principal.'
+        : 'Consulte o painel oficial enquanto a leitura estiver indisponível.',
+    });
+    plataforma.avisos.push(saldoDaSubconta
+      ? 'Twilio: para exibir o saldo da conta principal, defina TWILIO_BILLING_ACCOUNT_SID e TWILIO_BILLING_AUTH_TOKEN no servidor.'
+      : 'Twilio: não foi possível consultar o saldo agora. Confirme as credenciais e o acesso de cobrança.');
+  }
+
+  try {
+    const registros = await cliente.usage.records.thisMonth.list({
+      category: 'totalprice',
+      includeSubaccounts: true,
+      limit: 1,
+    });
+    const custo = Number(registros[0]?.price);
+    plataforma.itens.push({
+      nome: 'Custo no mês',
+      usado: Number.isFinite(custo) ? Math.abs(custo) : 0,
+      limite: null,
+      formato: 'reais',
+      detalhe: 'Total acumulado no mês, incluindo Verify, SMS e cobranças recorrentes da conta.',
+    });
+  } catch {
+    plataforma.itens.push({ nome: 'Custo no mês', usado: null, limite: null, formato: 'reais' });
+    plataforma.avisos.push('Twilio: o consumo financeiro do mês não pôde ser consultado agora.');
+  }
+
+  try {
+    const agora = new Date();
+    const inicio = new Date(agora.getTime() - 29 * 24 * 60 * 60 * 1000);
+    const resumo = await cliente.verify.v2.verificationAttemptsSummary().fetch({
+      ...(verifyServiceSid ? { verifyServiceSid } : {}),
+      dateCreatedAfter: inicio,
+      dateCreatedBefore: agora,
+      channel: 'sms',
+    });
+    const tentativas = Number(resumo.totalAttempts) || 0;
+    const convertidas = Number(resumo.totalConverted) || 0;
+    const naoConvertidas = Number(resumo.totalUnconverted) || 0;
+    const conversao = Number(resumo.conversionRatePercentage);
+    plataforma.itens.push(
+      {
+        nome: 'Verificações SMS (30 dias)',
+        usado: tentativas,
+        limite: null,
+        formato: 'numero',
+        detalhe: verifyServiceSid ? 'Tentativas do serviço Verify usado pelo AvantaLab.' : 'Tentativas de todos os serviços Verify da conta.',
+      },
+      { nome: 'Verificações aprovadas', usado: convertidas, limite: null, formato: 'numero' },
+      {
+        nome: 'Não convertidas',
+        usado: naoConvertidas,
+        limite: null,
+        formato: 'numero',
+        detalhe: 'Inclui códigos não confirmados, expirados ou tentativas ainda pendentes.',
+      },
+      {
+        nome: 'Taxa de confirmação',
+        usado: Number.isFinite(conversao) ? conversao : tentativas > 0 ? Math.round((convertidas / tentativas) * 1000) / 10 : 0,
+        limite: null,
+        formato: 'percentual',
+      },
+    );
+  } catch {
+    plataforma.avisos.push('Twilio: o resumo de verificações dos últimos 30 dias não está disponível agora.');
+  }
+
+  return plataforma;
+}
+
 async function consultarCloudflare30Dias(zoneId: string): Promise<CloudflareTotals> {
   const token = process.env.CLOUDFLARE_API_TOKEN?.trim() || '';
   if (!token) throw new Error('token não configurado');
@@ -557,18 +683,19 @@ export async function GET(request: Request) {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 
-    const [supabase, vercel, github, openai, asaas, cloudflare, historicoIa] = await Promise.all([
+    const [supabase, vercel, github, openai, asaas, twilioUso, cloudflare, historicoIa] = await Promise.all([
       consumoSupabase(db),
       consumoVercel(),
       consumoGithub(),
       consumoOpenAI(),
       consumoAsaas(),
+      consumoTwilio(),
       consumoCloudflare(),
       historicoImportadorIa(db),
     ]);
     return NextResponse.json({
       erro: false,
-      plataformas: [supabase, vercel, github, openai, asaas, cloudflare],
+      plataformas: [supabase, vercel, github, openai, asaas, twilioUso, cloudflare],
       historicoIa,
       geradoEm: new Date().toISOString(),
     });

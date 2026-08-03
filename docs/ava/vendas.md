@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.128 -->
+<!-- ava-version: 1.6.1.131 -->
+
+> Revisão 1.6.1.131: acompanhamento da Twilio adicionado somente ao console
+> global `/admin`; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.128: os botões do card aberto pelo `+` recuperam a formatação
 > original; somente a ordem e as cores definidas na revisão anterior mudam.

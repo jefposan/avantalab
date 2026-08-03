@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.128 -->
+<!-- ava-version: 1.6.1.131 -->
+
+> Revisão 1.6.1.131: em `/admin` > **Consumo**, o card Twilio informa saldo,
+> gasto mensal e o resumo das verificações SMS dos últimos 30 dias. A consulta
+> é administrativa e não expõe credenciais no navegador. Se o envio usar uma
+> subconta, o saldo depende das credenciais de cobrança da conta principal.
 
 > Revisão 1.6.1.128: correção visual exclusiva das ações rápidas do
 > AvantaVendas; sem impacto operacional na Gestão Web.
