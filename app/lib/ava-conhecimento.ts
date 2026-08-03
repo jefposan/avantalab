@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.127: aniversário e ações rápidas do AvantaVendas.
+// Revisado na versão 1.6.1.128: formatação original das ações rápidas restaurada.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.127 -->
+<!-- ava-version: 1.6.1.128 -->
+
+> Revisão 1.6.1.128: os botões do card aberto pelo `+` recuperam a formatação
+> original; somente a ordem e as cores definidas na revisão anterior mudam.
 
 > Revisão 1.6.1.127: o cadastro usa **Data de Aniversário** com ícone de bolo.
 > No botão `+`, **Lançar pagamento** aparece à esquerda em verde e **Lançar

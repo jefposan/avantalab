@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.127 -->
+<!-- ava-version: 1.6.1.128 -->
+
+> Revisão 1.6.1.128: correção visual exclusiva das ações rápidas do
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.127: rótulo de aniversário e ordem das ações rápidas são
 > exclusivos do AvantaVendas; sem impacto operacional na Gestão Web.

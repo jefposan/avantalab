@@ -13,8 +13,8 @@ const exigir = (condicao, mensagem) => {
   if (!condicao) falhas.push(mensagem);
 };
 
-const acaoPagamento = '<button class="quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">';
-const acaoPedido = '<button class="quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">';
+const acaoPagamento = '<button class="secondary quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">';
+const acaoPedido = '<button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">';
 
 exigir(
   aplicacao.includes('<label for="cliNascimento">${svgIconEstavel(\'cake\')}<span>Data de Aniversário</span></label>')
@@ -28,10 +28,10 @@ exigir(
   'Pagamento deve ficar à esquerda e Pedido à direita no card do botão +.',
 );
 exigir(
-  estilos.includes('.quick-action-button.quick-action-payment')
+  estilos.includes('.quick-action-button.quick-action-payment.secondary')
     && estilos.includes('--vendas-pagamento: #1F8A9E;')
     && estilos.includes('background: var(--vendas-pagamento);')
-    && estilos.includes('.quick-action-button.quick-action-order')
+    && estilos.includes('.quick-action-button.quick-action-order.primary')
     && estilos.includes('--vendas-pedido: #1687D9;')
     && estilos.includes('background: var(--vendas-pedido);')
     && estilos.includes('.client-payment { background: var(--vendas-pagamento); }')
@@ -39,7 +39,7 @@ exigir(
   'As ações rápidas devem reutilizar as cores de Pagamento e Pedido do card do cliente.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '14'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '15'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

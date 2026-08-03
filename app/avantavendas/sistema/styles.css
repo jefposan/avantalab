@@ -715,18 +715,18 @@ body.sheet-open {
 }
 
 /* Novo lançamento: replica a ordem e as cores das ações do card do cliente. */
-.quick-action-button.quick-action-payment,
-.quick-action-button.quick-action-order {
+.quick-action-button.quick-action-payment.secondary,
+.quick-action-button.quick-action-order.primary {
   border: 1px solid rgba(255,255,255,.24);
   color: #fff;
 }
 
-.quick-action-button.quick-action-payment {
+.quick-action-button.quick-action-payment.secondary {
   background: var(--vendas-pagamento);
   box-shadow: 0 10px 20px rgba(31,138,158,.22);
 }
 
-.quick-action-button.quick-action-order {
+.quick-action-button.quick-action-order.primary {
   background: var(--vendas-pedido);
   box-shadow: 0 10px 20px rgba(22,135,217,.22);
 }

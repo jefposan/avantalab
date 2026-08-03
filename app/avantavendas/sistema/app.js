@@ -2088,7 +2088,7 @@ function fecharCamadasNavegacao() {
 }
 
 function abrirAcoesRapidas() {
-  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">${svgIcon('credit-card')}<span>Lançar pagamento</span></button><button class="quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="secondary quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">${svgIcon('credit-card')}<span>Lançar pagamento</span></button><button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button></div>`, 'sheet-backdrop-centered');
 }
 
 async function sairSistema() {

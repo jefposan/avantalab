@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.128 - 2026-08-03
+
+- AvantaVendas: restaurada a formatação original dos botões do card **Novo
+  lançamento**. Somente a ordem e as cores permanecem ajustadas: Pagamento à
+  esquerda em verde e Pedido à direita em azul.
+
 ## 1.6.1.127 - 2026-08-03
 
 - AvantaVendas: o cadastro do cliente passa a identificar **Data de
