@@ -984,6 +984,7 @@ function svgIcon(nome, classe = '') {
 const ICONES_SVG_ESTAVEIS = {
   settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2.83 2.83-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21h-4v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06-2.83-2.83.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3v-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06 2.83-2.83.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3h4v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06 2.83 2.83-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21v4h-.09A1.65 1.65 0 0 0 19.4 15Z"/>',
   calendar: '<path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
   cake: '<path d="M4 11h16v9H4zM3 20h18"/><path d="M7 11V8M12 11V6M17 11V8M7 5h0M12 3h0M17 5h0"/><path d="M4 14h16"/>',
   home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/>',
   'message-circle': '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A8 8 0 1 1 21 15Z"/>',
@@ -998,21 +999,31 @@ function logoVendas() {
   return `<span class="vendas-brand-logo"><img class="vendas-logo-claro" src="/avantavendas/recursos/assets/logo-vendas-claro.png" alt="AvantaLab — Cada venda, um avanço"><img class="vendas-logo-escuro" src="/avantavendas/recursos/assets/logo-vendas-escuro.png" alt="" aria-hidden="true"></span>`;
 }
 
-function acoesCabecalhoSistema(aniversariantesHoje) {
-  return aniversariantesHoje.length
-    ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>`
-    : '';
+function botaoAgendamentosHojeVendas(agendamentosHoje) {
+  if (!agendamentosHoje.length) return '';
+  const quantidade = agendamentosHoje.length;
+  return `<button class="agenda-header-button" onclick="abrirAgendaHojeVendas()" aria-label="${quantidade} item${quantidade === 1 ? '' : 's'} na agenda de hoje" title="Agenda de hoje">${svgIconEstavel('bell')}<i>${quantidade}</i></button>`;
 }
 
-function preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje) {
+function botaoAniversariosHojeVendas(aniversariantesHoje) {
+  if (!aniversariantesHoje.length) return '';
+  const quantidade = aniversariantesHoje.length;
+  return `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${quantidade} aniversário${quantidade === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${quantidade}</i></button>`;
+}
+
+function acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje) {
+  return `${botaoAgendamentosHojeVendas(agendamentosHoje)}${botaoAniversariosHojeVendas(aniversariantesHoje)}`;
+}
+
+function preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje, agendamentosHoje) {
   const destino = app.querySelector('[data-system-header-slot]');
   if (!destino) return;
   if (!cabecalhoAnterior) {
-    destino.outerHTML = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje)}</div></header>`;
+    destino.outerHTML = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}</div></header>`;
     return;
   }
   const acoes = cabecalhoAnterior.querySelector('.system-header-actions');
-  const proximoConteudoAcoes = acoesCabecalhoSistema(aniversariantesHoje);
+  const proximoConteudoAcoes = acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje);
   if (acoes && acoes.innerHTML !== proximoConteudoAcoes) acoes.innerHTML = proximoConteudoAcoes;
   destino.replaceWith(cabecalhoAnterior);
 }
@@ -1277,6 +1288,7 @@ function assinaturaVisualSalaBotoes() {
     ordem: itensSalaBotoesOrdenados().map(([id]) => id),
     organizando: Boolean(state.organizandoSalaBotoes),
     aniversarios: aniversariosHojeVendas().map((cliente) => cliente.id).sort(),
+    agendaHoje: agendamentosHojeVendas().map((item) => String(item.id)).sort(),
     acesso: `${state.acessoVendas?.empresa_id || ''}:${state.acessoVendas?.papel || ''}`,
     atalhos: [state.atalhoInferiorEsquerdo, state.atalhoInferiorDireito],
   });
@@ -1409,6 +1421,7 @@ function render() {
   }
   if (!assinaturaSalaAtual) cancelarGarantiaSalaBotoes();
   const aniversariantesHoje = aniversariosHojeVendas();
+  const agendamentosHoje = agendamentosHojeVendas();
   const cabecalhoAnterior = app.querySelector('.system-header');
   cabecalhoAnterior?.remove();
   app.innerHTML = `
@@ -1437,7 +1450,7 @@ function render() {
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
     ${state.agendaFormAberto && state.aba !== 'agenda' ? renderFormularioAgendaVendas() : ''}
   `;
-  preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje);
+  preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje, agendamentosHoje);
   sincronizarNavegacaoInferior();
   if (preservarRolagemConteudo && rolagemConteudoAnterior > 0) {
     requestAnimationFrame(() => {
@@ -1826,8 +1839,9 @@ function renderMenuMobile() {
   const itens = itensSalaBotoesOrdenados();
   const organizando = state.organizandoSalaBotoes;
   const aniversariantesHoje = aniversariosHojeVendas();
+  const agendamentosHoje = agendamentosHojeVendas();
   return `<section class="mobile-menu" aria-label="Menu principal">
-    <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Ir para Gestão" title="Ir para Gestão">${iconeTopoTrocaSistemaVendas()}</button>` : ''}</div></header>
+    <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Ir para Gestão" title="Ir para Gestão">${iconeTopoTrocaSistemaVendas()}</button>` : ''}</div></header>
     <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" ${organizando ? '' : 'hidden'}>Clique no botão e arraste para a nova posição</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
@@ -2074,7 +2088,7 @@ function fecharCamadasNavegacao() {
 }
 
 function abrirAcoesRapidas() {
-  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="primary quick-action-button" onclick="abrirNovoPedidoGeral()">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button><button class="secondary quick-action-button" onclick="abrirNovoPagamentoGeral()">${svgIcon('credit-card')}<span>Lançar pagamento</span></button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">${svgIcon('credit-card')}<span>Lançar pagamento</span></button><button class="quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button></div>`, 'sheet-backdrop-centered');
 }
 
 async function sairSistema() {
@@ -3076,6 +3090,27 @@ function itensAgendaDoDiaVendas(ano, mes, dia) {
     if (item.repeticao === 'anual') return inicio.getMonth() === alvo.getMonth() && inicio.getDate() === alvo.getDate();
     return inicio.getDate() === alvo.getDate();
   });
+}
+
+function agendamentosHojeVendas() {
+  const hoje = new Date();
+  const itensHoje = itensAgendaDoDiaVendas(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  return [...new Map(itensHoje.map((item) => [String(item.id), item])).values()];
+}
+
+function abrirAgendaHojeVendas() {
+  const hoje = new Date();
+  const agendaJaAberta = state.aba === 'agenda' && !state.menuAberto;
+  state.agendaAno = hoje.getFullYear();
+  state.agendaMes = hoje.getMonth();
+  state.agendaDiaSelecionado = hoje.getDate();
+  state.agendaFormAberto = false;
+  state.agendaClientePreselecionado = '';
+  state.agendaDataFormulario = '';
+  state.agendaExpandida = false;
+  state.agendaItemMovendo = null;
+  if (agendaJaAberta) render();
+  else setAba('agenda');
 }
 
 function renderItemAgendaVendas(item) {
@@ -6309,7 +6344,7 @@ function abrirCliente(clienteId = '') {
       ${campo('cliNome', 'Nome', c.nome || '')}
       ${campoTelefone('cliTelefone', 'Telefone / WhatsApp', c.telefone || '')}
       ${campo('cliEmail', 'E-mail', c.email || '', 'email')}
-      <div class="field client-birth-field"><label>Data de nascimento</label><div class="client-birth-control"><input id="cliNascimento" type="text" inputmode="numeric" maxlength="5" autocomplete="bday" placeholder="dd/mm" value="${escapeAttr(dataNascimentoParaCampo(c.data_nascimento))}" oninput="formatarDataNascimentoCampo(this)"></div></div>
+      <div class="field client-birth-field"><label for="cliNascimento">${svgIconEstavel('cake')}<span>Data de Aniversário</span></label><div class="client-birth-control"><input id="cliNascimento" type="text" inputmode="numeric" maxlength="5" autocomplete="bday" placeholder="dd/mm" value="${escapeAttr(dataNascimentoParaCampo(c.data_nascimento))}" oninput="formatarDataNascimentoCampo(this)"></div></div>
       ${campoCepCliente(c.cep || '')}
       <div class="field client-address-field"><label>Endereço</label><div class="client-address-system-field"><input id="cliEndereco" type="text" autocomplete="street-address" value="${escapeAttr(c.endereco || '')}"><button id="cliBuscarLocalizacao" type="button" class="secondary" onclick="preencherEnderecoPorLocalizacao()" aria-label="Usar minha localização para preencher o endereço">${svgIcon('map-pin')}<span>Localização</span></button></div><small>Usa a localização do aparelho; revise o endereço antes de salvar.</small></div>
       <div class="grid-2 client-address-extra">
@@ -6349,7 +6384,7 @@ function mostrarAvisoClienteIncompleto(clienteId, semTelefone, semEndereco) {
 
 async function salvarCliente(clienteId, ignorarAviso = false) {
   const dataNascimento = dataNascimentoParaIso(valor('cliNascimento'));
-  if (dataNascimento === undefined) { toast('Informe a data de nascimento no formato dd/mm.'); return; }
+  if (dataNascimento === undefined) { toast('Informe a data de aniversário no formato dd/mm.'); return; }
   const dados = {
     id: clienteId || clientePersistenciaIdAtual || uuidPersistenciaVendas(),
     nome: valor('cliNome').trim(),
@@ -7158,6 +7193,7 @@ window.salvarMeta = salvarMeta;
 window.formatarDataNascimentoCampo = formatarDataNascimentoCampo;
 window.salvarIntegracaoGestao = salvarIntegracaoGestao;
 window.abrirAgendaAniversariantes = abrirAgendaAniversariantes;
+window.abrirAgendaHojeVendas = abrirAgendaHojeVendas;
 window.abrirPerfilFinanceiroVendas = abrirPerfilFinanceiroVendas;
 window.selecionarPerfilFinanceiroVendas = selecionarPerfilFinanceiroVendas;
 window.abrirPeriodoTrocaPerfilFinanceiroVendas = abrirPeriodoTrocaPerfilFinanceiroVendas;

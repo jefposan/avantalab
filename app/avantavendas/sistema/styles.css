@@ -13,6 +13,8 @@
   --borda: #dbe5ef;
   --fundo: #f8fafc;
   --card: #ffffff;
+  --vendas-pagamento: #1F8A9E;
+  --vendas-pedido: #1687D9;
   --sombra: 0 10px 15px -3px rgba(0, 179, 169, 0.1), 0 4px 6px -2px rgba(0, 179, 169, 0.05);
   --vendas-layer-screen: 100;
   --vendas-layer-navigation: 110;
@@ -712,21 +714,21 @@ body.sheet-open {
   line-height: 1.2;
 }
 
-/* Novo lançamento: duas ações distintas, mas dentro da mesma família AvantaLab. */
-.quick-action-button.primary,
-.quick-action-button.secondary {
+/* Novo lançamento: replica a ordem e as cores das ações do card do cliente. */
+.quick-action-button.quick-action-payment,
+.quick-action-button.quick-action-order {
   border: 1px solid rgba(255,255,255,.24);
   color: #fff;
 }
 
-.quick-action-button.primary {
-  background: linear-gradient(145deg, #0A1F44 0%, #1267B1 100%);
-  box-shadow: 0 10px 20px rgba(10,31,68,.22);
+.quick-action-button.quick-action-payment {
+  background: var(--vendas-pagamento);
+  box-shadow: 0 10px 20px rgba(31,138,158,.22);
 }
 
-.quick-action-button.secondary {
-  background: linear-gradient(145deg, #1687D9 0%, #00A6C8 100%);
-  box-shadow: 0 10px 20px rgba(0,126,173,.20);
+.quick-action-button.quick-action-order {
+  background: var(--vendas-pedido);
+  box-shadow: 0 10px 20px rgba(22,135,217,.22);
 }
 
 .quick-action-button .svg-icon {
@@ -769,6 +771,8 @@ body.sheet-open {
 .sheet > .sheet-header .close { color: #fff; background: rgba(255,255,255,.16); }
 .cliente-sheet-backdrop .sheet > .sheet-header { margin: -12px -12px 10px; padding: 12px; }
 .cliente-sheet-backdrop .client-birth-field { width: 100%; max-width: 100%; overflow: hidden; }
+.cliente-sheet-backdrop .client-birth-field > label { display: inline-flex; width: fit-content; align-items: center; gap: 5px; }
+.cliente-sheet-backdrop .client-birth-field > label .svg-icon { width: 14px; height: 14px; color: #e11d48; }
 .cliente-sheet-backdrop .client-birth-control { width: 100%; max-width: 100%; overflow: hidden; }
 .cliente-sheet-backdrop .client-birth-control input { display: block; width: 100%; max-width: 100%; min-width: 0; margin: 0; text-align: center; letter-spacing: .04em; }
 
@@ -932,6 +936,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .main-area { width: calc(100% - 255px); min-height: var(--vendas-viewport-height); margin-left: 255px; background: #fff; }
 .system-header { position: fixed; top: 0; right: 0; left: 255px; z-index: 50; display: flex; height: var(--vendas-system-header-height); align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding: var(--vendas-safe-top) 26px 0; background: #fff; }
 .system-header-actions { display: flex; min-width: 0; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: 8px; }
+.agenda-header-button { position: relative; display: grid; width: 37px; height: 37px; place-items: center; border: 1px solid #bae6fd; border-radius: 999px; color: #0369a1; background: #f0f9ff; }.agenda-header-button .svg-icon { width: 20px; height: 20px; }.agenda-header-button i { position: absolute; top: -5px; right: -5px; display: grid; min-width: 17px; height: 17px; place-items: center; border-radius: 999px; padding: 0 3px; color: #fff; background: #0284c7; font-size: 9px; font-style: normal; font-weight: 900; }
 .birthday-header-button { position: relative; display: grid; width: 37px; height: 37px; place-items: center; border: 1px solid #f5b5bd; border-radius: 999px; color: #c02645; background: #fff1f3; }.birthday-header-button .svg-icon { width: 20px; height: 20px; }.birthday-header-button i { position: absolute; top: -5px; right: -5px; display: grid; min-width: 17px; height: 17px; place-items: center; border-radius: 999px; padding: 0 3px; color: #fff; background: #e11d48; font-size: 9px; font-style: normal; font-weight: 900; }
 .system-switch-header-button { display: grid; width: 37px; height: 37px; flex: 0 0 37px; place-items: center; overflow: hidden; border: 0; border-radius: 12px; padding: 0; background: transparent; box-shadow: 0 3px 9px rgba(14,116,144,.14); }.system-switch-header-button img { display: block; width: 100%; height: 100%; object-fit: cover; }.system-switch-header-button .svg-icon { width: 21px; height: 21px; }
 .management-profile-selector-screen { padding: calc(24px + var(--vendas-safe-top)) 16px calc(24px + var(--vendas-safe-bottom)); }
@@ -1767,8 +1772,8 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .client-actions button { min-height: 38px; border: 0; border-radius: 8px; color: #fff; font-size: 12px; font-weight: 800; }
 .client-details { width: 100%; background: #0A1F44; }
 .client-actions > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.client-payment { background: #1F8A9E; }
-.client-order { background: #1687D9; }
+.client-payment { background: var(--vendas-pagamento); }
+.client-order { background: var(--vendas-pedido); }
 .client-transaction-backdrop { top: 0; bottom: auto; height: var(--transaction-viewport-height, 100dvh); padding: 12px 12px calc(env(safe-area-inset-bottom) + 86px); }
 .client-transaction-backdrop .sheet { display: flex; width: min(94vw, 470px); max-height: calc(var(--transaction-viewport-height, 100dvh) - env(safe-area-inset-bottom) - 108px); flex-direction: column; overflow: hidden; }
 .client-transaction-backdrop .sheet > .sheet-header { flex: 0 0 auto; }
@@ -2194,7 +2199,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
   .mobile-menu-header .mobile-menu-brand { min-height: 0; border: 0; padding: 0; background: transparent; }
   .mobile-menu-header .mobile-menu-brand img { background: transparent; }
   .mobile-menu-header .system-header-actions { margin-left: auto; }
-  .mobile-menu-header .birthday-header-button, .mobile-menu-header .system-switch-header-button { width: 37px; height: 37px; flex: 0 0 37px; border-width: 1px; font-size: 16px; }
+  .mobile-menu-header .agenda-header-button, .mobile-menu-header .birthday-header-button, .mobile-menu-header .system-switch-header-button { width: 37px; height: 37px; flex: 0 0 37px; border-width: 1px; font-size: 16px; }
+  .mobile-menu-header .agenda-header-button { border-color: #bae6fd; color: #0369a1; background: #f0f9ff; }
+  .dark-theme .mobile-menu-header .agenda-header-button { border-color: #155e75; color: #67e8f9; background: #102838; }
   .mobile-menu-card, .mobile-menu-wide { overflow: hidden; border: 0; padding: 0; background: transparent; box-shadow: none; text-shadow: none; transform: none !important; }
   .mobile-menu-card { width: 90%; min-height: 0; justify-self: center; overflow: visible; aspect-ratio: 1 / 1; box-shadow: none; }
   .mobile-menu-wide { min-height: 0; aspect-ratio: 685 / 300; }
@@ -2299,7 +2306,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 @media (hover: hover) and (pointer: fine) { .dark-theme .client-address-link:not(.client-address-empty):hover { border-color: #38bdf8; background: #123047; } }
 .dark-theme .client-address-empty { border-color: #334155; color: #94a3b8; background: #202b3e; }
 .dark-theme .sheet-backdrop .sheet { border-color: rgba(224,242,254,.88); box-shadow: 0 0 0 1px rgba(186,230,253,.24), 0 0 22px rgba(56,189,248,.28), 0 18px 42px rgba(2,8,23,.48); }
+.dark-theme .agenda-header-button { border-color: #155e75; color: #67e8f9; background: #102838; }.dark-theme .agenda-header-button i { background: #0284c7; }
 .dark-theme .birthday-header-button { border-color: #9f3650; color: #fda4af; background: #3b1624; }.dark-theme .birthday-header-button i { background: #e11d48; }.dark-theme .client-card.client-birthday-today { border-color: #fda4af; box-shadow: 0 0 0 1px rgba(253,164,175,.28), 0 0 18px rgba(244,63,94,.25), 0 12px 28px rgba(2,8,23,.42); }
+.dark-theme .cliente-sheet-backdrop .client-birth-field > label .svg-icon { color: #fda4af; }
 .dark-theme .system-switch-header-button { background: transparent; }
 .dark-theme .suggestions-sales-backdrop .sheet { border: 1px solid rgba(224,242,254,.88); box-shadow: 0 0 0 1px rgba(186,230,253,.24), 0 0 22px rgba(56,189,248,.28), 0 18px 42px rgba(2,8,23,.48); }
 .dark-theme .settings-card h3 { border-color: #334155; }.dark-theme .settings-card h3 .svg-icon { color: #67e8f9; background: #102838; }.dark-theme .settings-card dt, .dark-theme .settings-card dd { border-color: #29384d; }.dark-theme .switch-line { border-color: #3b4b63; color: #e2e8f0; background: #111b2d; }.dark-theme .settings-exit-card { border-color: #5b2631; background: #251922; }
@@ -2469,6 +2478,8 @@ html.agenda-form-open, body.agenda-form-open { overflow: hidden; overscroll-beha
   .mobile-menu-header { min-height: calc(72px + var(--vendas-safe-top)); padding: calc(12px + var(--vendas-safe-top)) 22px 12px; }
   .mobile-menu-brand .vendas-brand-logo { width: 184px; }
   .mobile-menu-header button { font-size: 34px; }
+  .mobile-menu-header.has-agenda-alert .mobile-menu-brand { min-width: 0; flex: 1; }
+  .mobile-menu-header.has-agenda-alert .mobile-menu-brand .vendas-brand-logo { width: min(164px,100%); }
   .mobile-menu-grid { gap: 18px; margin-top: 40px; padding: 0 24px; }
   .mobile-menu-grid-wrap { margin-top: 40px; }
   .mobile-menu-grid-wrap .mobile-menu-grid { margin-top: 0; }

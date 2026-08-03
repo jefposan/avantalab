@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.1.127 - 2026-08-03
+
+- AvantaVendas: o cadastro do cliente passa a identificar **Data de
+  Aniversário** com um ícone de bolo. No card aberto pelo botão `+`, **Lançar
+  pagamento** fica à esquerda em verde e **Lançar pedido** à direita em azul,
+  seguindo a mesma ordem e as mesmas cores do card do cliente.
+
+## 1.6.1.126 - 2026-08-03
+
+- AvantaVendas: o cabeçalho passa a exibir um sininho com a quantidade de
+  itens da agenda do dia, incluindo aniversários. Ao tocar, a agenda abre
+  diretamente no dia atual; o atalho específico de aniversários permanece.
+
 ## 1.6.1.125 - 2026-08-03
 
 - iOS (Capacitor): a Gestão Mobile passa a solicitar notificações nativas,

@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.125 -->
+<!-- ava-version: 1.6.1.127 -->
+
+> Revisão 1.6.1.127: o cadastro usa **Data de Aniversário** com ícone de bolo.
+> No botão `+`, **Lançar pagamento** aparece à esquerda em verde e **Lançar
+> pedido** à direita em azul, como no card do cliente.
+
+> Revisão 1.6.1.126: quando existem itens na agenda de hoje, o cabeçalho exibe
+> um sininho com a quantidade, incluindo aniversários. Ao tocar, a agenda abre
+> diretamente no dia atual; o bolo continua sendo o atalho de aniversários.
 
 > Revisão 1.6.1.125: notificações nativas e indicador no ícone são exclusivos
 > do aplicativo iOS da Gestão; sem impacto operacional no AvantaVendas.
@@ -858,7 +866,8 @@ função existir ali.
 - **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
   são recomendados para ligação/WhatsApp e mapas. No fim do campo **Endereço**,
   **Localização** pede a permissão do aparelho, preenche o endereço encontrado e
-  permite revisão antes de salvar.
+  permite revisão antes de salvar. **Data de Aniversário**, identificada pelo
+  ícone de bolo, recebe dia e mês no formato `dd/mm`.
 - Quando existe endereço, toda a linha destacada no card abre a escolha entre
   Google Maps, Mapas Apple e Waze. Sem endereço, a linha fica inativa e orienta
   o cadastro antes de usar os mapas. Cidade, estado ou CEP sem logradouro não
@@ -897,6 +906,8 @@ função existir ali.
 - Ao iniciar um pedido ou pagamento sem cliente predefinido, o foco abre na busca
   de cliente. A lista mostra somente os nomes, em fonte maior; a pesquisa ainda
   pode localizar pelo nome, telefone ou e-mail.
+- No card aberto pelo botão `+`, **Lançar pagamento** fica à esquerda em verde e
+  **Lançar pedido** à direita em azul, repetindo as ações do card do cliente.
 - Ao tocar em **Pagamento** no card de um cliente, o formulário permanece fixo
   enquanto o teclado numérico abre no mesmo toque e o campo **Valor pago** recebe
   um único foco automático.
@@ -947,6 +958,8 @@ função existir ali.
 ## Agenda, conteúdo e configurações
 
 - Agenda cria lembretes de visita, entrega e recebimento e permite mudar datas.
+  Quando o dia atual possui itens, inclusive aniversários, o sininho do
+  cabeçalho mostra a quantidade e abre diretamente a agenda de hoje.
 - **Gestor Master**, **Administrador** e **Operador Completo** podem criar,
   editar e excluir novidades, pastas, subpastas, imagens e vídeos em
   Divulgação, desde que o módulo Vendas Mobile esteja ativo no perfil.

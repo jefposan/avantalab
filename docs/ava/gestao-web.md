@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.125 -->
+<!-- ava-version: 1.6.1.127 -->
+
+> Revisão 1.6.1.127: rótulo de aniversário e ordem das ações rápidas são
+> exclusivos do AvantaVendas; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.126: o sininho da agenda do dia é exclusivo do AvantaVendas;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.125: notificações nativas e indicador no ícone são exclusivos
 > do aplicativo iOS instalado; sem impacto operacional na Gestão Web.

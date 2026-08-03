@@ -37,7 +37,23 @@ exigir(
   'Campo e setas devem caber na mesma largura dos demais controles.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '12'"),
+  aplicacao.includes('function agendamentosHojeVendas()')
+    && aplicacao.includes('const itensHoje = itensAgendaDoDiaVendas(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())')
+    && aplicacao.includes('new Map(itensHoje.map((item) => [String(item.id), item]))')
+    && aplicacao.includes('function abrirAgendaHojeVendas()')
+    && aplicacao.includes('state.agendaDiaSelecionado = hoje.getDate()')
+    && aplicacao.includes('agendaHoje: agendamentosHojeVendas().map((item) => String(item.id)).sort()'),
+  'O sininho deve contar todos os itens de hoje, inclusive aniversários, e abrir o dia atual.',
+);
+exigir(
+  aplicacao.includes('class="agenda-header-button"')
+    && aplicacao.includes('onclick="abrirAgendaHojeVendas()"')
+    && aplicacao.includes("svgIconEstavel('bell')")
+    && estilos.includes('.agenda-header-button'),
+  'O cabeçalho precisa exibir o sininho acessível com o contador da agenda de hoje.',
+);
+exigir(
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '14'"),
   'A revisão dos arquivos estáticos do AvantaVendas precisa invalidar o cache anterior.',
 );
 
