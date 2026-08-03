@@ -14,6 +14,18 @@ const exigir = (condicao, mensagem) => {
   if (!condicao) falhas.push(mensagem);
 };
 
+function compararVersoes(atual, minima) {
+  const atualPartes = atual.split('.').map((parte) => Number(parte) || 0);
+  const minimaPartes = minima.split('.').map((parte) => Number(parte) || 0);
+  const totalPartes = Math.max(atualPartes.length, minimaPartes.length);
+  for (let indice = 0; indice < totalPartes; indice += 1) {
+    const valorAtual = atualPartes[indice] || 0;
+    const valorMinimo = minimaPartes[indice] || 0;
+    if (valorAtual !== valorMinimo) return valorAtual > valorMinimo ? 1 : -1;
+  }
+  return 0;
+}
+
 exigir(
   mobile.includes("select('id, empresa_id, titulo, corpo, url, tipo, lida, criado_em')")
     && mobile.includes("db.from('empresas').select('id, nome').in('id', empresaIds)")
@@ -55,8 +67,9 @@ exigir(
     && mobile.includes('flex shrink-0 items-center justify-between gap-2 pb-2'),
   'O painel Mobile deve respeitar a área segura, manter o cabeçalho fixo e fornecer altura efetiva para a rolagem dos avisos.',
 );
+const versaoAtual = versao.match(/APP_VERSION\s*=\s*'([^']+)'/)?.[1] || '';
 exigir(
-  versao.includes("APP_VERSION = '1.6.1.128'"),
+  Boolean(versaoAtual) && compararVersoes(versaoAtual, '1.6.1.125') >= 0,
   'A versão precisa registrar a atualização nativa de avisos.',
 );
 
