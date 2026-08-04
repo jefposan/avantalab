@@ -24,6 +24,8 @@
 
   var db = supabaseGlobal.createClient(config.supabaseUrl, config.supabaseAnonKey);
   var VAPID_PUBLIC_KEY = 'BL_wlTejki6TPH1TJSHw8q6VeeSoaoH5Ciiirjs0nSg0M4riD5jl-RnkUVArlGMuI5h-eshP98kQKFPsjjM7f4c';
+  var canalConfiguracaoPonto = null;
+  var intervaloConfiguracaoPonto = null;
 
   var ehIos = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
   function ehStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
@@ -96,6 +98,36 @@
       return { ativo: false, podeCadastrar: false };
     }
   }
+
+  async function atualizarConfiguracaoPontoSilenciosa() {
+    var empresaId = (state.funcionario && state.funcionario.empresa_id) || (state.empresa && state.empresa.id);
+    if (!state.autenticado || !empresaId) return;
+    try {
+      var resposta = await db.from('ponto_config').select('latitude, longitude, raio_m, reconhecimento_facial_status').eq('empresa_id', empresaId).maybeSingle();
+      if (!resposta.error && resposta.data) {
+        state.pontoConfig = resposta.data;
+        if (state.pronto && !state.entrando) render();
+      }
+    } catch (e) {}
+  }
+
+  function pararSincronizacaoConfiguracaoPonto() {
+    if (intervaloConfiguracaoPonto) { clearInterval(intervaloConfiguracaoPonto); intervaloConfiguracaoPonto = null; }
+    if (canalConfiguracaoPonto) { db.removeChannel(canalConfiguracaoPonto); canalConfiguracaoPonto = null; }
+  }
+
+  function iniciarSincronizacaoConfiguracaoPonto(empresaId) {
+    pararSincronizacaoConfiguracaoPonto();
+    if (!empresaId) return;
+    // Realtime aplica mudanças assim que o gestor salva; a consulta periódica
+    // cobre aparelhos/rede que ainda não tenham o canal realtime disponível.
+    canalConfiguracaoPonto = db.channel('ponto-config-' + empresaId)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ponto_config', filter: 'empresa_id=eq.' + empresaId }, atualizarConfiguracaoPontoSilenciosa)
+      .subscribe();
+    intervaloConfiguracaoPonto = setInterval(atualizarConfiguracaoPontoSilenciosa, 15000);
+  }
+  window.addEventListener('focus', atualizarConfiguracaoPontoSilenciosa);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) atualizarConfiguracaoPontoSilenciosa(); });
 
   // ---------- helpers ----------
   function escapeHtml(v) {
@@ -360,6 +392,7 @@
   }
 
   async function sair() {
+    pararSincronizacaoConfiguracaoPonto();
     try { await db.auth.signOut(); } catch (e) {}
     state.autenticado = false; state.usuario = null; state.empresa = null; state.funcionario = null;
     state.pontoConfig = null; state.facial = { ativo: false, podeCadastrar: false }; state.pontoHoje = []; state.comprovante = null; state.view = 'bater';
@@ -391,6 +424,7 @@
 
   // Encerra a sessão e mostra a tela de login com a mensagem de bloqueio.
   async function bloquearPonto(msg) {
+    pararSincronizacaoConfiguracaoPonto();
     try { await db.auth.signOut(); } catch (e) {}
     state.autenticado = false; state.usuario = null; state.empresa = null; state.funcionario = null;
     state.pontoConfig = null; state.pontoHoje = []; state.comprovante = null; state.view = 'bater';
@@ -436,6 +470,7 @@
       if (f && !f.error && f.data) state.funcionario = f.data;
       if (emp && !emp.error && emp.data) state.empresa = emp.data;
       state.pontoConfig = (cfg && !cfg.error && cfg.data) ? cfg.data : null;
+      iniciarSincronizacaoConfiguracaoPonto((f && f.data && f.data.empresa_id) || empresaId);
       state.facial = facial || { ativo: false, podeCadastrar: false };
       if (hoje && !hoje.error) state.pontoHoje = hoje.data || [];
       // Notificações não são requisito para abrir o ponto; não podem atrasar o acesso.
