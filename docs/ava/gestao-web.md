@@ -1,6 +1,18 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.134 -->
+<!-- ava-version: 1.6.1.137 -->
+
+> Revisão 1.6.1.137: funcionários selecionados podem cadastrar ou atualizar a
+> face no próprio ponto; quando o adicional está habilitado, a marcação exige a
+> confirmação guiada antes de ser registrada.
+>
+> Revisão 1.6.1.136: a infraestrutura facial está protegida no servidor, mas
+> a câmera guiada ainda não foi liberada para o funcionário; a aba Facial
+> permanece em preparação até essa entrega.
+>
+> Revisão 1.6.1.135: a aba Facial do Controle de Ponto prepara funcionários
+> para reconhecimento facial, sem captura até a configuração da infraestrutura
+> AWS, retenção segura e revisão jurídica.
 
 > Revisão 1.6.1.134: uma despesa programada aparece como **Previsto** antes da
 > data, **A confirmar** no dia e **Pendente** depois do vencimento. O card
@@ -8,10 +20,22 @@
 > ou exclusão. Enquanto pendente, o valor não integra totais, gráficos nem o
 > resultado realizado; permanece somente no saldo previsto.
 
+> Revisão 1.6.1.133: correção visual exclusiva da sala de botões do
+> AvantaVendas; sem impacto operacional na Gestão Web ou no PWA da Gestão.
+
+> Revisão 1.6.1.132: preparação do aplicativo Android independente do
+> AvantaVendas; sem mudança operacional na Gestão Web nesta revisão.
+
 > Revisão 1.6.1.131: em `/admin` > **Consumo**, o card Twilio informa saldo,
 > gasto mensal e o resumo das verificações SMS dos últimos 30 dias. A consulta
 > é administrativa e não expõe credenciais no navegador. Se o envio usar uma
 > subconta, o saldo depende das credenciais de cobrança da conta principal.
+
+> Revisão 1.6.1.130: ajuste exclusivo da troca entre aplicativos iOS; sem
+> impacto operacional na Gestão Web ou no PWA.
+
+> Revisão 1.6.1.129: correção da troca entre aplicativos exclusiva da Gestão
+> Mobile no iOS; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.128: correção visual exclusiva das ações rápidas do
 > AvantaVendas; sem impacto operacional na Gestão Web.
@@ -971,6 +995,11 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   programada. Para encerrar o acesso, desmarque **Funcionário ativo** e salve:
   login e novas marcações ficam bloqueados, mas relatórios e histórico são
   preservados. A reativação usa o mesmo controle. Na administração do ponto,
+  a aba **Facial** prepara o adicional: selecione os funcionários e confirme
+  privacidade, alternativa de marcação e ausência de sanção automática. O
+  preço informado é R$ 14,90 por funcionário ao mês, com referência de até 120
+  verificações mensais. Enquanto estiver **Em preparação**, não há captura ou
+  cadastro facial.
   a aba **Auditoria** mostra as marcações e as alterações de acesso registradas.
   O funcionário recebe um comprovante imediatamente após cada marcação e pode
   imprimi-lo; o código mostrado identifica o registro salvo no banco.

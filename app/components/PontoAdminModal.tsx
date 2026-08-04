@@ -37,7 +37,7 @@ function cpfValido(cpf: string) {
 
 export const DIAS_SEMANA: Array<[number, string]> = [[0, 'Dom'], [1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb']];
 const TODOS_FUNCIONARIOS = '__todos__';
-export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'calendario' | 'relatorios' | 'auditoria' | 'conformidade';
+export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'facial' | 'calendario' | 'relatorios' | 'auditoria' | 'conformidade';
 
 export type EventoAuditoriaPonto = {
   id: string;
@@ -95,7 +95,15 @@ export type PontoConfig = {
   latitude: number | null;
   longitude: number | null;
   raio_m: number;
+  reconhecimento_facial_status?: 'desativado' | 'preparacao' | 'ativo' | 'suspenso';
+  reconhecimento_facial_valor_centavos?: number;
+  reconhecimento_facial_franquia_mensal?: number;
 } | null;
+
+export type FuncionarioFacialPonto = {
+  funcionario_user_id: string;
+  status: 'pendente_cadastro' | 'ativo' | 'suspenso' | 'removido';
+};
 
 interface PontoAdminModalProps {
   aberto: boolean;
@@ -110,6 +118,8 @@ interface PontoAdminModalProps {
   onRedefinirSenha: (funcionarioUserId: string, novaSenha: string) => Promise<{ erro: boolean; mensagem?: string }>;
   config: PontoConfig;
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
+  funcionariosFacial: FuncionarioFacialPonto[];
+  onSalvarPreparacaoFacial: (funcionariosIds: string[]) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
   onCarregarAuditoria: () => Promise<EventoAuditoriaPonto[]>;
   onCarregarAssinatura: () => Promise<EstadoAssinaturaPonto | null>;
@@ -138,6 +148,8 @@ export default function PontoAdminModal({
   onRedefinirSenha,
   config,
   onSalvarConfig,
+  funcionariosFacial,
+  onSalvarPreparacaoFacial,
   onCarregarRegistros,
   onCarregarAuditoria,
   onCarregarAssinatura,
@@ -175,6 +187,10 @@ export default function PontoAdminModal({
   const [capturando, setCapturando] = useState(false);
   const [salvandoLocal, setSalvandoLocal] = useState(false);
   const [msgLocal, setMsgLocal] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const [facialSelecionados, setFacialSelecionados] = useState<string[]>([]);
+  const [salvandoFacial, setSalvandoFacial] = useState(false);
+  const [aceiteFacial, setAceiteFacial] = useState(false);
+  const [msgFacial, setMsgFacial] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
   const hojeISO = () => {
     const n = new Date();
     return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
@@ -653,6 +669,32 @@ export default function PontoAdminModal({
     setMsgLocal(r.erro ? { tipo: 'erro', texto: r.mensagem || 'Não foi possível salvar.' } : { tipo: 'ok', texto: 'Local da empresa salvo!' });
   };
 
+  useEffect(() => {
+    setFacialSelecionados(funcionariosFacial
+      .filter((item) => item.status !== 'removido')
+      .map((item) => item.funcionario_user_id));
+  }, [funcionariosFacial]);
+
+  const alternarFuncionarioFacial = (userId: string) => {
+    setFacialSelecionados((atual) => atual.includes(userId)
+      ? atual.filter((id) => id !== userId)
+      : [...atual, userId]);
+  };
+
+  const salvarPreparacaoFacial = async () => {
+    setMsgFacial(null);
+    if (!aceiteFacial) {
+      setMsgFacial({ tipo: 'erro', texto: 'Confirme as condições de privacidade e alternativa de marcação antes de continuar.' });
+      return;
+    }
+    setSalvandoFacial(true);
+    const resultado = await onSalvarPreparacaoFacial(facialSelecionados);
+    setSalvandoFacial(false);
+    setMsgFacial(resultado.erro
+      ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível salvar a preparação.' }
+      : { tipo: 'ok', texto: facialSelecionados.length ? 'Preparação facial salva. O cadastro será liberado após a infraestrutura AWS ser configurada.' : 'Reconhecimento facial desativado para novos cadastros.' });
+  };
+
   const salvarDiaNaoUtil = async () => {
     setMsgCalendario(null);
     if (!diaNaoUtilInicio || !diaNaoUtilFim) {
@@ -745,7 +787,7 @@ export default function PontoAdminModal({
     setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível preparar o manual.' } : { tipo: 'ok', texto: 'Manual REP-P disponível em Documentos gerados.' });
   };
   const gerarEspelhoPonto = async () => { if (!funcSel) { setMsgConformidade({ tipo: 'erro', texto: 'Selecione um funcionário na aba Relatórios antes de gerar o Espelho.' }); return; } setGerandoEspelho(true); const resultado = await onGerarEspelhoPonto(funcSel.user_id, afdInicio, afdFim); setGerandoEspelho(false); if (!resultado.erro) void carregarDocumentosRepP(); setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível gerar o Espelho.' } : { tipo: 'ok', texto: 'Espelho gerado, baixado e preservado no histórico.' }); };
-  const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria'], ['conformidade', 'Conformidade']];
+  const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['facial', 'Facial'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria'], ['conformidade', 'Conformidade']];
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
@@ -773,6 +815,7 @@ export default function PontoAdminModal({
                 setAba(a);
                 setMsg(null);
                 setMsgLocal(null);
+                setMsgFacial(null);
                 setMsgCalendario(null);
                 if (a === 'auditoria') void carregarAuditoria();
                 if (a === 'conformidade') void carregarDocumentosRepP();
@@ -944,6 +987,35 @@ export default function PontoAdminModal({
               <button type="button" onClick={salvarLocal} disabled={salvandoLocal} className="mt-1 h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoLocal ? 'Salvando...' : 'Salvar local da empresa'}</button>
               {msgLocal && <p className={`text-xs font-bold ${msgLocal.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgLocal.texto}</p>}
               <p className={`text-[11px] ${textMuted}`}>Dica: para pegar as coordenadas exatas, abra o Google Maps no local, toque/clique com o botão direito e copie a latitude/longitude.</p>
+            </div>
+          )}
+
+          {aba === 'facial' && (
+            <div className="grid gap-3">
+              <div className={`rounded-xl border p-3 ${itemBorda}`}>
+                <p className="text-sm font-black">Reconhecimento facial</p>
+                <p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Adicional de R$ 14,90 por funcionário selecionado ao mês. Inclui até 120 verificações mensais por funcionário; excedentes ficam cobertos na margem comercial inicial.</p>
+                <p className={`mt-2 text-[11px] font-bold ${config?.reconhecimento_facial_status === 'preparacao' ? 'text-amber-600' : textMuted}`}>Status: {config?.reconhecimento_facial_status === 'preparacao' ? 'Em preparação' : 'Desativado'}. A captura só será ativada após configuração da AWS e retenção segura dos dados.</p>
+              </div>
+              <div className={`rounded-xl border p-3 ${itemBorda}`}>
+                <p className={`text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Funcionários incluídos</p>
+                <p className={`mt-1 text-[11px] ${textMuted}`}>Selecione somente quem deverá usar o recurso. O cadastro facial não é iniciado nesta etapa.</p>
+                <div className="mt-3 grid gap-2">
+                  {funcionarios.filter((f) => f.ativo).length === 0 ? <p className={`text-xs ${textMuted}`}>Cadastre ao menos um funcionário ativo antes de preparar o adicional.</p> : funcionarios.filter((f) => f.ativo).map((f) => (
+                    <label key={f.user_id} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-2.5 ${itemBorda}`}>
+                      <input type="checkbox" checked={facialSelecionados.includes(f.user_id)} onChange={() => alternarFuncionarioFacial(f.user_id)} className="h-4 w-4" />
+                      <span className="min-w-0 flex-1"><span className="block truncate text-xs font-black">{f.nome}</span><span className={`block truncate text-[10px] ${textMuted}`}>{f.cargo || 'Sem cargo'}</span></span>
+                    </label>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs font-black" style={{ color: corSistema }}>Estimativa: {facialSelecionados.length} funcionário{facialSelecionados.length === 1 ? '' : 's'} × R$ 14,90/mês</p>
+              </div>
+              <label className={`flex items-start gap-2 rounded-xl border p-3 text-[11px] leading-relaxed ${itemBorda}`}>
+                <input type="checkbox" checked={aceiteFacial} onChange={(e) => setAceiteFacial(e.target.checked)} className="mt-0.5 h-4 w-4" />
+                <span>Confirmo que a empresa definirá a base legal e o aviso de privacidade aplicáveis ao dado biométrico, oferecerá uma alternativa de marcação quando necessária e não usará falhas automáticas para sanções.</span>
+              </label>
+              <button type="button" onClick={salvarPreparacaoFacial} disabled={salvandoFacial} className="h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoFacial ? 'Salvando...' : 'Salvar preparação facial'}</button>
+              {msgFacial && <p className={`text-xs font-bold ${msgFacial.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgFacial.texto}</p>}
             </div>
           )}
 

@@ -1,12 +1,41 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.134 -->
+<!-- ava-version: 1.6.1.137 -->
+
+> Revisão 1.6.1.137: sem impacto operacional no AvantaVendas; a câmera facial
+> do Controle de Ponto foi liberada para o funcionário.
+>
+> Revisão 1.6.1.136: sem impacto operacional no AvantaVendas; a infraestrutura
+> facial do Controle de Ponto foi protegida no servidor.
+>
+> Revisão 1.6.1.135: preparação do reconhecimento facial no Controle de Ponto;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.134: correção do estado de despesas aplicada somente à Gestão
 > Web e Mobile; sem impacto operacional no AvantaVendas.
 
+> Revisão 1.6.1.133: os cards da sala de botões mantêm a proporção quadrada em
+> telas estreitas no Android, iPhone e PWA. O ajuste é somente visual e não
+> altera ações, navegação ou dados.
+
+> Revisão 1.6.1.132: o aplicativo AvantaVendas passa a oferecer também uma
+> versão Android nativa. Login Google/Apple retorna ao app pelo mesmo deep link
+> seguro; câmera, fotos, localização e microfone da Ava usam as permissões do
+> aparelho. **Ir para Gestão** abre o aplicativo de destino quando instalado ou
+> a loja correspondente quando ele não estiver disponível. O PWA não muda.
+
 > Revisão 1.6.1.131: acompanhamento da Twilio adicionado somente ao console
 > global `/admin`; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.130: somente no aplicativo iOS, **Ir para Gestão** abre
+> diretamente o outro aplicativo, sem listar ou transferir perfis e sem alterar
+> a sala de botões do Vendas. Cada aplicativo usa sua própria sessão. No PWA e
+> no navegador, a seleção de perfil e a navegação existentes não mudam.
+
+> Revisão 1.6.1.129: no iPhone, **Ir para Gestão** abre o outro aplicativo sem
+> gerar falso erro de Google ou Apple. Quando a Gestão já possui uma sessão
+> válida, ela abre conectada; sem sessão própria, apresenta o login normalmente.
+> No sentido inverso, o botão do Gestão abre o aplicativo AvantaVendas instalado.
 
 > Revisão 1.6.1.128: os botões do card aberto pelo `+` recuperam a formatação
 > original; somente a ordem e as cores definidas na revisão anterior mudam.
@@ -841,7 +870,9 @@ função existir ali.
 - Todo usuário autenticado no Vendas pode usar **Ir para Gestão** no canto
   direito do header fixo da sala de botões ou adicionar **Ir para Gestão** a um
   atalho configurável.
-  Ao tocar, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
+  No aplicativo iOS, o toque apenas abre o app Gestão, sem lista ou transferência
+  de perfil; ao retornar, o Vendas continua na sala de botões. No PWA e no
+  navegador, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
   mesmo quando existe apenas um, a seleção e a confirmação são obrigatórias. Se
   a conta ainda não possuir perfil na Gestão, a tela avisa e oferece criar ou
   ativar um perfil, ou continuar somente no Vendas. Criar um perfil não o define
@@ -854,8 +885,11 @@ função existir ali.
 - O destino financeiro é opcional e só pode ser definido ou alterado manualmente
   em **Configurações > Integração com
   Gestão**.
-- A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão
-  financeira não recebem acesso aos dados de perfis empresariais de terceiros.
+- No iOS, cada aplicativo restaura apenas sua própria sessão e seu próprio
+  perfil; se o destino não estiver autenticado, apresenta o login. No PWA, a
+  sessão e o perfil escolhidos são preservados na navegação. Usuários sem
+  permissão financeira não recebem acesso aos dados de perfis empresariais de
+  terceiros.
 - A entrada permite **Continuar com Apple** além de e-mail, telefone e Google.
   Depois da autenticação, o usuário retorna à própria sala do Vendas.
 

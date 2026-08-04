@@ -14,7 +14,7 @@ import ModalInstrucoes from '@/app/components/ModalInstrucoes';
 import ModalDespesasBase from '@/app/components/ModalDespesasBase';
 import ModalLogo from '@/app/components/ModalLogo';
 import ModulosModal, { type Modulo } from '@/app/components/ModulosModal';
-import PontoAdminModal, { type AbaPontoAdmin, type DocumentoRepP, type EstadoAssinaturaPonto, type EventoAuditoriaPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from '@/app/components/PontoAdminModal';
+import PontoAdminModal, { type AbaPontoAdmin, type DocumentoRepP, type EstadoAssinaturaPonto, type EventoAuditoriaPonto, type FuncionarioFacialPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from '@/app/components/PontoAdminModal';
 import RecebimentosAdminModal from '@/app/components/RecebimentosAdminModal';
 import SobreModal from '@/app/components/SobreModal';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
@@ -794,6 +794,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [pontoFuncionarios, setPontoFuncionarios] = useState<FuncionarioPonto[]>([]);
   const [pontoFuncCarregando, setPontoFuncCarregando] = useState(false);
   const [pontoConfig, setPontoConfig] = useState<PontoConfig>(null);
+  const [pontoFuncionariosFacial, setPontoFuncionariosFacial] = useState<FuncionarioFacialPonto[]>([]);
   const [pontoDiasNaoUteis, setPontoDiasNaoUteis] = useState<PontoDiaNaoUtil[]>([]);
   const [pontoDiasNaoUteisCarregando, setPontoDiasNaoUteisCarregando] = useState(false);
   const [pontoResumoDia, setPontoResumoDia] = useState<Array<{
@@ -2714,12 +2715,19 @@ useEffect(() => {
     try {
       const { data, error } = await supabase
         .from('ponto_config')
-        .select('latitude, longitude, raio_m')
+        .select('latitude, longitude, raio_m, reconhecimento_facial_status, reconhecimento_facial_valor_centavos, reconhecimento_facial_franquia_mensal')
         .eq('empresa_id', empresaId)
         .maybeSingle();
       if (!error) {
         const raioConfig = Math.min(10000, Math.max(1, Number(data?.raio_m ?? 100) || 100));
-        setPontoConfig(data ? { latitude: data.latitude, longitude: data.longitude, raio_m: raioConfig } : { latitude: null, longitude: null, raio_m: 100 });
+        setPontoConfig(data ? {
+          latitude: data.latitude,
+          longitude: data.longitude,
+          raio_m: raioConfig,
+          reconhecimento_facial_status: data.reconhecimento_facial_status || 'desativado',
+          reconhecimento_facial_valor_centavos: Number(data.reconhecimento_facial_valor_centavos || 1490),
+          reconhecimento_facial_franquia_mensal: Number(data.reconhecimento_facial_franquia_mensal || 120),
+        } : { latitude: null, longitude: null, raio_m: 100, reconhecimento_facial_status: 'desativado', reconhecimento_facial_valor_centavos: 1490, reconhecimento_facial_franquia_mensal: 120 });
       }
     } catch {}
   }
@@ -2732,10 +2740,49 @@ useEffect(() => {
         .from('ponto_config')
         .upsert({ empresa_id: empresaId, latitude: dados.latitude, longitude: dados.longitude, raio_m: raioConfig, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id' });
       if (error) { console.error('salvarPontoConfig', error); return { erro: true, mensagem: 'Não foi possível salvar o local.' }; }
-      setPontoConfig({ latitude: dados.latitude, longitude: dados.longitude, raio_m: raioConfig });
+      setPontoConfig((atual) => ({
+        latitude: dados.latitude,
+        longitude: dados.longitude,
+        raio_m: raioConfig,
+        reconhecimento_facial_status: atual?.reconhecimento_facial_status || 'desativado',
+        reconhecimento_facial_valor_centavos: atual?.reconhecimento_facial_valor_centavos || 1490,
+        reconhecimento_facial_franquia_mensal: atual?.reconhecimento_facial_franquia_mensal || 120,
+      }));
       return { erro: false };
     } catch {
       return { erro: true, mensagem: 'Erro ao salvar o local da empresa.' };
+    }
+  }
+
+  async function carregarFuncionariosFacialPonto() {
+    if (!empresaId) return;
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) return;
+      const resposta = await fetch(`/api/ponto/reconhecimento-facial/configuracao?empresaId=${encodeURIComponent(empresaId)}`, { headers: { Authorization: `Bearer ${token}` } });
+      const resultado = await resposta.json().catch(() => null);
+      if (resposta.ok && !resultado?.erro) setPontoFuncionariosFacial(resultado.funcionarios || []);
+    } catch { /* a aba mostra seleção vazia até a próxima abertura */ }
+  }
+
+  async function salvarPreparacaoFacialPonto(funcionariosIds: string[]) {
+    if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) return { erro: true, mensagem: 'Sessão não encontrada. Faça login novamente.' };
+      const resposta = await fetch('/api/ponto/reconhecimento-facial/configuracao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ empresaId, funcionariosIds, aceite: true }),
+      });
+      const resultado = await resposta.json().catch(() => null);
+      if (!resposta.ok || resultado?.erro) return { erro: true, mensagem: resultado?.mensagem || 'Não foi possível salvar a preparação facial.' };
+      await Promise.all([carregarPontoConfig(), carregarFuncionariosFacialPonto()]);
+      return { erro: false };
+    } catch {
+      return { erro: true, mensagem: 'Erro ao salvar a preparação facial.' };
     }
   }
 
@@ -7833,6 +7880,8 @@ if (validacaoTelefoneObrigatoria) {
   onRedefinirSenha={redefinirSenhaPonto}
   config={pontoConfig}
   onSalvarConfig={salvarPontoConfig}
+  funcionariosFacial={pontoFuncionariosFacial}
+  onSalvarPreparacaoFacial={salvarPreparacaoFacialPonto}
   onCarregarRegistros={carregarRegistrosPonto}
   onCarregarAuditoria={carregarAuditoriaPonto}
   onCarregarAssinatura={carregarAssinaturaPonto}
@@ -9972,7 +10021,7 @@ if (validacaoTelefoneObrigatoria) {
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
           <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="right" wrapperClassName="order-30 w-full">
             <button
-              onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setRelatorioInicialPonto(null); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); carregarDiasNaoUteisPonto(); }}
+              onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setRelatorioInicialPonto(null); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); carregarFuncionariosFacialPonto(); carregarDiasNaoUteisPonto(); }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
@@ -10814,6 +10863,7 @@ if (validacaoTelefoneObrigatoria) {
           setModalPontoAdmin(true);
           carregarFuncionariosPonto();
           carregarPontoConfig();
+          carregarFuncionariosFacialPonto();
           carregarDiasNaoUteisPonto();
         }}
       />

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import PontoFacialLiveness from '../components/PontoFacialLiveness';
 
 const shareImage = 'https://avantalab.com.br/images/ponto-share-meta.jpg';
 
@@ -110,6 +111,7 @@ export default function PontoPage() {
           </div>
         </section>
       </div>
+      <PontoFacialLiveness identityPoolId={process.env.NEXT_PUBLIC_AWS_COGNITO_IDENTITY_POOL_ID || ''} />
 
       <script src="/mobile-supabase.js" defer />
       <script src="/ponto-app.js?v=22" defer />

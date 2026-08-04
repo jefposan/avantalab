@@ -63,7 +63,20 @@
     notificacoesAtualizando: false,
     ajustesAberto: false,
     pontoAcessoMotivo: '',
+    facialDepois: null,
   };
+
+  async function iniciarFacial(tipo, depois) {
+    var empresaId = (state.empresa && state.empresa.id) || (state.funcionario && state.funcionario.empresa_id);
+    var sessao = await db.auth.getSession();
+    var token = sessao && sessao.data && sessao.data.session && sessao.data.session.access_token;
+    if (!empresaId || !token) { mostrarToast('Sessão não encontrada. Entre novamente.'); return; }
+    state.facialDepois = depois || null;
+    window.dispatchEvent(new CustomEvent('avantalab:facial-iniciar', { detail: { empresaId: empresaId, token: token, tipo: tipo } }));
+  }
+  window.addEventListener('avantalab:facial-concluido', function () { var depois = state.facialDepois; state.facialDepois = null; if (depois) depois(); });
+  window.addEventListener('avantalab:facial-erro', function (e) { state.facialDepois = null; mostrarToast((e.detail && e.detail.mensagem) || 'Não foi possível confirmar a identidade.'); });
+  window.addEventListener('avantalab:facial-cancelado', function () { state.facialDepois = null; });
 
   // ---------- helpers ----------
   function escapeHtml(v) {
@@ -381,7 +394,7 @@
       var res = await Promise.all([
         comPrazo(db.from('ponto_funcionarios').select('nome, cpf, cargo, ativo, dias_trabalho, hora_entrada, hora_saida, empresa_id').eq('user_id', uid).maybeSingle(), 10000, 'carregar o cadastro do funcionário'),
         empresaId ? comPrazo(db.from('empresas').select('id, nome').eq('id', empresaId).maybeSingle(), 10000, 'carregar a empresa') : vazio,
-        empresaId ? comPrazo(db.from('ponto_config').select('latitude, longitude, raio_m').eq('empresa_id', empresaId).maybeSingle(), 10000, 'carregar a configuração do ponto') : vazio,
+        empresaId ? comPrazo(db.from('ponto_config').select('latitude, longitude, raio_m, reconhecimento_facial_status').eq('empresa_id', empresaId).maybeSingle(), 10000, 'carregar a configuração do ponto') : vazio,
         comPrazo(db.from('ponto_registros').select('id, tipo, registrado_em').eq('user_id', uid).eq('dia', diaPontoHoje()).order('registrado_em', { ascending: true }), 10000, 'carregar os registros de hoje'),
       ]);
       var f = res[0], emp = res[1], cfg = res[2], hoje = res[3];
@@ -849,6 +862,8 @@
     }).join('');
 
     var botoesHtml = '';
+    var facialAtivo = state.pontoConfig && state.pontoConfig.reconhecimento_facial_status && state.pontoConfig.reconhecimento_facial_status !== 'desativado' && state.pontoConfig.reconhecimento_facial_status !== 'suspenso';
+    if (facialAtivo) botoesHtml += '<button id="ponto-cadastrar-facial" type="button" class="mb-2 min-h-11 w-full rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-xs font-black text-cyan-800">Cadastrar ou atualizar reconhecimento facial</button>';
     if (proxima) {
       botoesHtml += '<button id="ponto-acao" data-tipo="' + proxima + '" type="button" ' + (state.batendo ? 'disabled' : '') + ' class="h-14 w-full rounded-2xl bg-cyan-600 text-base font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-60">' + (state.batendo ? 'Registrando...' : escapeHtml(rotuloAcao(proxima))) + '</button>';
       if (podeEncerrar && proxima !== 'saida') {
@@ -939,8 +954,10 @@
     bind('ponto-confirmar-ok', function () {
       var tipo = state.confirmarTipo;
       if (!tipo) return;
-      bater(tipo);
+      var facialAtivo = state.pontoConfig && state.pontoConfig.reconhecimento_facial_status && state.pontoConfig.reconhecimento_facial_status !== 'desativado' && state.pontoConfig.reconhecimento_facial_status !== 'suspenso';
+      if (facialAtivo) iniciarFacial('marcacao', function () { bater(tipo); }); else bater(tipo);
     });
+    bind('ponto-cadastrar-facial', function () { iniciarFacial('cadastro', function () { mostrarToast('Reconhecimento facial cadastrado com sucesso.'); }); });
     bind('ponto-atualizar-localizacao', atualizarLocalizacao);
     bind('ponto-ajustes', function () { state.ajustesAberto = true; render(); });
     bind('ponto-ajustes-fechar', function () { state.ajustesAberto = false; render(); });

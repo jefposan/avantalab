@@ -1,6 +1,18 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.134 -->
+<!-- ava-version: 1.6.1.137 -->
+
+> Revisão 1.6.1.137: funcionários selecionados podem cadastrar ou atualizar a
+> face no próprio ponto; quando o adicional está habilitado, a marcação exige a
+> confirmação guiada antes de ser registrada.
+>
+> Revisão 1.6.1.136: a infraestrutura facial está protegida no servidor, mas
+> a câmera guiada ainda não foi liberada para o funcionário; a aba Facial
+> permanece em preparação até essa entrega.
+>
+> Revisão 1.6.1.135: a preparação do reconhecimento facial ocorre na Gestão
+> Web; sem impacto operacional na Gestão Mobile enquanto a captura estiver em
+> preparação.
 
 > Revisão 1.6.1.134: uma despesa programada aparece como **Previsto** antes da
 > data, **A confirmar** no dia e **Pendente** depois do vencimento. O card
@@ -8,8 +20,25 @@
 > ou exclusão. Enquanto pendente, o valor não integra totais, gráficos nem o
 > resultado realizado; permanece somente no saldo previsto.
 
+> Revisão 1.6.1.133: correção visual exclusiva da sala de botões do
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.132: preparação do aplicativo Android independente do
+> AvantaVendas; sem mudança operacional na Gestão Mobile nesta revisão.
+
 > Revisão 1.6.1.131: acompanhamento da Twilio adicionado somente ao console
 > global `/admin`; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.130: no aplicativo iOS, a troca entre Gestão e AvantaVendas
+> apenas abre o app de destino, sem transferir perfil, contexto ou autenticação.
+> O aplicativo de origem permanece na sala atual quando o usuário retorna. O
+> PWA e o navegador mantêm os fluxos existentes.
+
+> Revisão 1.6.1.129: no iPhone, abrir a Gestão pelo AvantaVendas preserva a
+> sessão já existente e não apresenta falso erro de login com Google ou Apple.
+> Se a Gestão não tiver uma sessão própria válida, ela continua exibindo o
+> login. **Ir para Vendas** abre o aplicativo AvantaVendas instalado, sem
+> carregar o PWA dentro da Gestão.
 
 > Revisão 1.6.1.128: correção visual exclusiva das ações rápidas do
 > AvantaVendas; sem impacto operacional na Gestão Mobile.

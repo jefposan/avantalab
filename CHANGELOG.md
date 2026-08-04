@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.6.1.137 - 2026-08-04
+
+- Controle de Ponto: incluída a câmera guiada de prova de vida e reconhecimento
+  facial no fluxo do funcionário, com cadastro/atualização facial separado da
+  marcação e confirmação antes de registrar o ponto.
+
+## 1.6.1.136 - 2026-08-04
+
+- Controle de Ponto: infraestrutura AWS do reconhecimento facial conectada ao
+  servidor com prova de vida, comparação com o cadastro autorizado e cofre S3
+  dedicado. As chaves permanecem somente no ambiente de produção; as evidências
+  têm retenção automática de cinco anos. A interface de captura continua
+  bloqueada até a etapa de câmera guiada ser entregue.
+
+## 1.6.1.135 - 2026-08-03
+
+- Controle de Ponto: iniciada a preparação do adicional de reconhecimento
+  facial por funcionário, a **R$ 14,90/mês** e com referência de até 120
+  verificações mensais. Gestores selecionam os funcionários elegíveis e
+  registram as condições de privacidade na aba Facial; a captura permanece em
+  preparação até a infraestrutura AWS, retenção e revisão jurídica serem
+  configuradas. Nenhuma imagem, vídeo ou template biométrico é guardado no
+  banco AvantaLab nesta etapa.
+
 ## 1.6.1.134 - 2026-08-03
 
 - Gestão Web e Mobile: despesas programadas agora mudam de **Previsto** para
@@ -8,6 +32,20 @@
   excluído. Despesas pendentes deixam de compor totais, gráficos e resultado
   realizado, permanecendo somente na projeção até a confirmação manual.
 
+## 1.6.1.133 - 2026-08-03
+
+- AvantaVendas: os cards da sala de botões preservam a proporção quadrada em
+  telas estreitas, incluindo Android, iPhone e PWA. A correção é exclusivamente
+  visual e não altera ações, navegação ou dados do sistema.
+
+## 1.6.1.132 - 2026-08-03
+
+- AvantaVendas Android: criado o projeto Capacitor independente com o pacote
+  `br.com.avantalab.vendas`, retorno seguro do OAuth por deep link e permissões
+  nativas para câmera, microfone, localização e notificações. As pontes de
+  câmera, fotos, localização e troca para a Gestão passam a aceitar Android sem
+  alterar o fluxo Web/PWA nem o projeto Android da Gestão.
+
 ## 1.6.1.131 - 2026-08-03
 
 - Avanta Admin: **Consumo das plataformas** passa a acompanhar saldo, gasto do
@@ -15,6 +53,23 @@
   Twilio. As credenciais permanecem somente no servidor e falhas da integração
   não impedem a consulta dos demais serviços. Quando o envio usa uma subconta,
   credenciais opcionais da conta principal permitem consultar também o saldo.
+
+## 1.6.1.130 - 2026-08-03
+
+- Troca de aplicativos no iOS: **Ir para Gestão** e **Ir para Vendas** passam
+  somente a abrir o aplicativo de destino, sem selecionar ou transferir perfil,
+  contexto ou autenticação. O aplicativo de origem permanece na sala atual ao
+  retornar. O fluxo Web/PWA continua inalterado, inclusive com seleção de perfil
+  quando aplicável.
+
+## 1.6.1.129 - 2026-08-03
+
+- Gestão Mobile no iOS: o deep link usado pelo AvantaVendas para abrir a
+  Gestão deixa de ser interpretado como retorno de Google ou Apple. A troca
+  entre os aplicativos preserva a sessão já existente no Gestão sem exibir
+  falso erro de autenticação social. No sentido inverso, o botão do Gestão
+  passa a abrir o aplicativo AvantaVendas instalado, sem carregar o PWA dentro
+  do Gestão.
 
 ## 1.6.1.128 - 2026-08-03
 
