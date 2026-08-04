@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Amplify } from 'aws-amplify';
 import { FaceLivenessDetector } from '@aws-amplify/ui-react-liveness';
 import AvantaCard from './AvantaCard';
@@ -43,6 +43,8 @@ function AvisoFotossensibilidadeOculto() {
 export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId: string }) {
   const [sessao, setSessao] = useState<Sessao | null>(null);
   const [mensagem, setMensagem] = useState('');
+  const detectorRef = useRef<HTMLDivElement>(null);
+  const cancelarRef = useRef<HTMLButtonElement>(null);
   const emCadastro = sessao?.tipo === 'cadastro';
   const cancelar = () => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); };
 
@@ -89,6 +91,21 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     return () => window.removeEventListener('avantalab:facial-iniciar', iniciar);
   }, [identityPoolId]);
 
+  useEffect(() => {
+    if (!sessao || !detectorRef.current) return;
+    const organizarAcoes = () => {
+      const iniciar = detectorRef.current?.querySelector<HTMLButtonElement>('.amplify-button--primary');
+      const cancelarBotao = cancelarRef.current;
+      if (!iniciar || !cancelarBotao || !iniciar.parentElement) return;
+      iniciar.parentElement.classList.add('avanta-facial-acoes');
+      if (!iniciar.parentElement.contains(cancelarBotao)) iniciar.parentElement.appendChild(cancelarBotao);
+    };
+    organizarAcoes();
+    const observador = new MutationObserver(organizarAcoes);
+    observador.observe(detectorRef.current, { childList: true, subtree: true });
+    return () => observador.disconnect();
+  }, [sessao]);
+
   const concluir = async () => {
     if (!sessao) return;
     const sessaoConcluida = sessao;
@@ -128,20 +145,20 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     ['--amplify-components-liveness-camera-module-background-color' as string]: '#f8fafc',
   };
   return <div className="fixed inset-0 z-[100] overflow-y-auto bg-[radial-gradient(circle_at_top,#075985_0%,#003e73_42%,#020617_100%)] px-3 py-5 sm:p-8" role="dialog" aria-modal="true" aria-label="Verificação facial">
-    <style>{`.avanta-facial .amplify-button--primary{min-height:40px!important;height:40px!important;width:220px!important;border-radius:10px!important;background:#1687D9!important;border-color:#1687D9!important;color:#fff!important;font-size:14px!important;font-weight:800!important;box-shadow:0 6px 14px rgba(22,135,217,.22)!important}.avanta-facial .amplify-button--primary:active{transform:scale(.98)}.avanta-facial .amplify-button--primary:focus-visible{outline:3px solid rgba(22,135,217,.35)!important;outline-offset:3px}.avanta-facial .amplify-liveness-start-screen{padding-bottom:0!important}.avanta-facial .amplify-liveness-figures{margin-bottom:0!important}`}</style>
-    <AvantaCard title={emCadastro ? 'Cadastro facial' : 'Confirmação facial'} corPrimaria="#007f99" hideDragHandle hideMenu className="avanta-facial mx-auto max-w-xl text-slate-900" bodyClassName="!min-h-[calc(100dvh-130px)] !p-0 overflow-hidden" style={temaFacial} plato={<span className="rounded-full bg-cyan-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-800">Ponto seguro</span>}>
-      <div className="border-b border-slate-200 bg-white px-5 py-3">
+    <style>{`.avanta-facial .amplify-button--primary{min-height:40px!important;height:40px!important;width:220px!important;border-radius:10px!important;background:#1687D9!important;border-color:#1687D9!important;color:#fff!important;font-size:14px!important;font-weight:800!important;box-shadow:0 6px 14px rgba(22,135,217,.22)!important}.avanta-facial-acoes{display:flex!important;justify-content:center!important;gap:8px!important;margin-top:0!important}.avanta-facial-acoes .amplify-button--primary{width:calc(50% - 4px)!important}.avanta-facial-acoes .avanta-facial-cancelar{width:calc(50% - 4px)!important}.avanta-facial .amplify-button--primary:active{transform:scale(.98)}.avanta-facial .amplify-button--primary:focus-visible{outline:3px solid rgba(22,135,217,.35)!important;outline-offset:3px}.avanta-facial .amplify-liveness-start-screen{padding-bottom:0!important}.avanta-facial .amplify-liveness-figures{margin-bottom:0!important}`}</style>
+    <AvantaCard title={sessao ? 'Verificação em andamento' : emCadastro ? 'Cadastro facial' : 'Confirmação facial'} corPrimaria="#007f99" hideDragHandle hideMenu className="avanta-facial mx-auto max-w-xl text-slate-900" bodyClassName="!min-h-[calc(100dvh-130px)] !p-0 overflow-hidden" style={temaFacial} plato={<span className="rounded-full bg-cyan-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-800">Ponto seguro</span>}>
+      {!sessao && <div className="border-b border-slate-200 bg-white px-5 py-3">
         <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-600 text-white">1</span><span className="text-cyan-800">Preparar</span>
           <span className="h-px flex-1 bg-cyan-200" />
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-slate-500">2</span><span className="text-slate-500">Confirmar</span>
         </div>
-      </div>
-      <div className="p-4 sm:p-5">
+      </div>}
+      <div className={sessao ? 'flex min-h-[calc(100dvh-195px)] flex-col p-3' : 'p-4 sm:p-5'}>
         <div className="rounded-xl border border-cyan-100 bg-cyan-50 px-3 py-2 text-xs font-semibold leading-snug text-slate-700" role="status">
           {mensagem || 'Posicione o rosto inteiro no contorno, com boa luz. Siga as orientações na tela e fique imóvel quando solicitado.'}
         </div>
-        {sessao && <div className="relative z-10 mt-3 min-h-[calc(100dvh-320px)] overflow-hidden rounded-2xl border border-slate-200 bg-white pt-1 shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={textosPtBr} components={{ PhotosensitiveWarning: AvisoFotossensibilidadeOculto }} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={cancelar} /><div className="flex justify-center px-4 pb-2 pt-1"><button type="button" className="h-10 min-h-10 w-[220px] rounded-[10px] border border-slate-300 bg-white px-4 text-sm font-black text-slate-600 shadow-sm transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#1687D9]" onClick={cancelar}>Cancelar verificação</button></div></div>}
+        {sessao && <><div ref={detectorRef} className="relative z-10 min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white pt-2 shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={textosPtBr} components={{ PhotosensitiveWarning: AvisoFotossensibilidadeOculto }} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={cancelar} /></div><div className="flex justify-center pt-1"><button ref={cancelarRef} type="button" className="avanta-facial-cancelar h-10 min-h-10 w-[220px] rounded-[10px] border border-slate-300 bg-white px-4 text-sm font-black text-slate-600 shadow-sm transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#1687D9]" onClick={cancelar}>Cancelar verificação</button></div></>}
         {mensagem && <button type="button" className="mt-4 min-h-12 w-full rounded-xl bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/20 transition active:scale-[0.99]" onClick={cancelar}>Voltar ao ponto</button>}
       </div>
     </AvantaCard>
