@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.151 - 2026-08-04
+
+- AvantaVendas: o card de novo pedido agora aguarda o teclado concluir sua
+  abertura antes de calcular o deslocamento, evitando o balanço durante o foco
+  do campo de desconto.
+
 ## 1.6.1.149 - 2026-08-04
 
 - AvantaVendas: ao abrir o teclado no card de novo pedido, o card inteiro agora

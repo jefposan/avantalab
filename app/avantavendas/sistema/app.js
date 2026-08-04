@@ -6940,10 +6940,15 @@ function ajustarSheetTransacaoAoTeclado(wrap) {
   wrap.classList.toggle('transaction-keyboard-lifted', deslocamento > 0);
 }
 
-function agendarAjusteSheetTransacao(wrap) {
+function agendarAjusteSheetTransacao(wrap, atraso = 140) {
   if (!wrap?.isConnected) return;
+  window.clearTimeout(wrap.__temporizadorAjusteTransacao);
   cancelAnimationFrame(wrap.__quadroAjusteTransacao || 0);
-  wrap.__quadroAjusteTransacao = requestAnimationFrame(() => ajustarSheetTransacaoAoTeclado(wrap));
+  // O viewport do iPhone muda em pequenas etapas enquanto o teclado anima.
+  // Esperar a última etapa evita recalcular o deslocamento e fazer o card oscilar.
+  wrap.__temporizadorAjusteTransacao = window.setTimeout(() => {
+    wrap.__quadroAjusteTransacao = requestAnimationFrame(() => ajustarSheetTransacaoAoTeclado(wrap));
+  }, atraso);
 }
 
 function prepararSheetTransacaoParaTeclado(wrap) {
@@ -6956,9 +6961,7 @@ function prepararSheetTransacaoParaTeclado(wrap) {
   wrap.addEventListener('focusin', (event) => {
     if (!campoEditavelSheetTransacao(event.target)) return;
     wrap.__campoAtivoTransacao = event.target;
-    agendarAjusteSheetTransacao(wrap);
-    window.setTimeout(() => agendarAjusteSheetTransacao(wrap), 120);
-    window.setTimeout(() => agendarAjusteSheetTransacao(wrap), 280);
+    agendarAjusteSheetTransacao(wrap, 180);
   }, opcoes);
   wrap.addEventListener('focusout', () => {
     window.setTimeout(() => {
@@ -6968,7 +6971,7 @@ function prepararSheetTransacaoParaTeclado(wrap) {
       } else {
         wrap.__campoAtivoTransacao = null;
       }
-      agendarAjusteSheetTransacao(wrap);
+      agendarAjusteSheetTransacao(wrap, 80);
     }, 0);
   }, opcoes);
   window.addEventListener('resize', () => agendarAjusteSheetTransacao(wrap), opcoes);

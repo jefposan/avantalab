@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.149 -->
+<!-- ava-version: 1.6.1.151 -->
+
+> Revisão 1.6.1.151: estabilização do teclado aplicada somente ao novo pedido
+> do AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.149: ajuste do teclado aplicado somente ao card de novo pedido
 > do AvantaVendas; sem impacto operacional na Gestão Web.

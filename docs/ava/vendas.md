@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.149 -->
+<!-- ava-version: 1.6.1.151 -->
+
+> Revisão 1.6.1.151: ao abrir o teclado no novo pedido, o card calcula uma
+> única posição estável após a abertura, sem oscilar durante a edição.
 
 > Revisão 1.6.1.149: no card de novo pedido, abrir o teclado desloca o card
 > inteiro para manter visível o campo em edição, inclusive o desconto. Fechar o

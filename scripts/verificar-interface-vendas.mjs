@@ -19,6 +19,8 @@ const acaoPedido = '<button class="primary quick-action-button quick-action-orde
 exigir(
   aplicacao.includes('function ajustarSheetTransacaoAoTeclado(wrap)')
     && aplicacao.includes("window.visualViewport?.addEventListener('resize'")
+    && aplicacao.includes('window.clearTimeout(wrap.__temporizadorAjusteTransacao)')
+    && aplicacao.includes('agendarAjusteSheetTransacao(wrap, 180)')
     && aplicacao.includes("wrap.style.setProperty('--transaction-sheet-offset'")
     && estilos.includes('transform: translate3d(0, var(--transaction-sheet-offset, 0px), 0);'),
   'O card de pedido deve subir inteiro para manter o campo focado acima do teclado.',
@@ -46,7 +48,7 @@ exigir(
   'As ações rápidas devem reutilizar as cores de Pagamento e Pedido do card do cliente.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '16'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '17'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 
