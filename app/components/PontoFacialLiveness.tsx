@@ -14,8 +14,11 @@ const textosPtBr = {
   photosensitivityWarningInfoText: 'Algumas pessoas podem sentir desconforto com luzes coloridas. Não prossiga se isso não for seguro para você.',
   photosensitivityWarningLabelText: 'Saiba mais sobre fotossensibilidade',
   startScreenBeginCheckText: 'Iniciar verificação',
+  goodFitCaptionText: 'Enquadramento adequado', goodFitAltText: 'Exemplo de rosto bem posicionado no oval',
+  tooFarCaptionText: 'Aproxime-se um pouco', tooFarAltText: 'Exemplo de rosto distante demais da câmera',
   hintCenterFaceText: 'Centralize seu rosto',
   hintCenterFaceInstructionText: 'Mantenha o rosto dentro do contorno',
+  hintFaceOffCenterText: 'Centralize melhor o rosto', hintMatchIndicatorText: 'Rosto alinhado',
   hintMoveFaceFrontOfCameraText: 'Posicione o rosto em frente à câmera',
   hintTooManyFacesText: 'Deixe apenas uma pessoa na câmera',
   hintFaceDetectedText: 'Rosto identificado',
@@ -23,6 +26,7 @@ const textosPtBr = {
   hintTooCloseText: 'Afaste-se um pouco', hintTooFarText: 'Aproxime-se um pouco',
   hintConnectingText: 'Conectando câmera…', hintVerifyingText: 'Verificando…', hintCheckCompleteText: 'Verificação concluída',
   hintIlluminationTooBrightText: 'A luz está muito forte', hintIlluminationTooDarkText: 'O ambiente está escuro', hintIlluminationNormalText: 'Iluminação adequada',
+  hintHoldFaceForFreshnessText: 'Fique imóvel por alguns instantes',
   cameraNotFoundHeadingText: 'Câmera não encontrada', cameraNotFoundMessageText: 'Permita o uso da câmera e tente novamente.', retryCameraPermissionsText: 'Tentar novamente',
   waitingCameraPermissionText: 'Aguardando permissão da câmera…', cancelLivenessCheckText: 'Cancelar', recordingIndicatorText: 'Verificação em andamento',
   landscapeHeaderText: 'Mantenha o celular na vertical', landscapeMessageText: 'Esta verificação funciona somente em modo retrato. Gire o celular para a posição vertical e tente novamente.', portraitMessageText: 'Mantenha o celular na vertical durante toda a verificação.',
@@ -88,7 +92,7 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
   return <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/90 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label="Verificação facial">
     <div className="avanta-facial mx-auto w-full max-w-xl rounded-3xl bg-white p-4 shadow-2xl" style={{ ['--amplify-colors-brand-primary-80' as string]: '#007f99', ['--amplify-colors-brand-primary-90' as string]: '#006b83', ['--amplify-colors-brand-primary-100' as string]: '#00566a' }}>
       <h2 className="text-base font-black text-slate-900">Confirmação facial</h2>
-      <p className="mt-1 text-sm font-semibold text-slate-600" role="status">{mensagem || 'Siga as instruções na tela. A câmera é usada somente nesta confirmação.'}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-600" role="status">{mensagem || 'Antes de iniciar: deixe o rosto inteiro no oval, sem aproximar demais, com boa luz e sem se mover quando a tela pedir.'}</p>
       {sessao && <FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={textosPtBr} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={() => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); }} />}
       {mensagem && <button type="button" className="mt-4 min-h-11 w-full rounded-xl bg-slate-900 px-4 text-sm font-black text-white" onClick={() => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); }}>Voltar</button>}
     </div>

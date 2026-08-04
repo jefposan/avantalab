@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.139 -->
+<!-- ava-version: 1.6.1.140 -->
 
+> Revisão 1.6.1.140: a câmera facial orienta em português sobre distância,
+> centralização, luz e imobilidade antes de aceitar a prova de vida.
+>
 > Revisão 1.6.1.139: após a captura facial, o funcionário já pode guardar o
 > celular enquanto o sistema confirma o resultado.
 >

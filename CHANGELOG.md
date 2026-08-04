@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.140 - 2026-08-04
+
+- Controle de Ponto: reforçadas as orientações de enquadramento facial em
+  português (distância, centralização, luz e imobilidade) antes e durante a
+  prova de vida, mantendo o mínimo de 90% de confiança.
+
 ## 1.6.1.139 - 2026-08-04
 
 - Controle de Ponto: ao terminar a captura facial, a câmera é encerrada antes
