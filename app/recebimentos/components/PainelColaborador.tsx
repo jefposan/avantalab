@@ -27,6 +27,8 @@ function mesAtual() {
 
 export default function PainelColaborador({ colaborador, empresas, subempresas, recebimentos, onRegistrar, onReceberCobranca }: Props) {
   const [formAberto, setFormAberto] = useState(false);
+  const [correcoesAbertas, setCorrecoesAbertas] = useState(false);
+  const [correcaoSelecionada, setCorrecaoSelecionada] = useState<Recebimento | null>(null);
   const [comprovante, setComprovante] = useState<ResumoRecebimento | null>(null);
   const [mesRef, setMesRef] = useState(mesAtual);
   const avantaShell = criarAvantaShellPreset({ corPrimaria: COR_PRIMARIA, darkMode: false });
@@ -50,6 +52,17 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
     () => aguardando.reduce((s, r) => s + (r.valorRecebido ?? 0), 0),
     [aguardando],
   );
+  const devolvidos = useMemo(
+    () => meus.filter((r) => r.situacao === 'devolvido_para_correcao'),
+    [meus],
+  );
+  // Uma devolução permanece no ambiente próprio de correção para não duplicar
+  // a informação no histórico. Ao ser reenviada, volta ao histórico com o
+  // novo status de conferência.
+  const historico = useMemo(
+    () => meus.filter((r) => r.situacao !== 'devolvido_para_correcao'),
+    [meus],
+  );
 
   const nomeEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nome ?? '—';
   const nomeSub = (id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto';
@@ -57,18 +70,39 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
   async function handleConfirmar(empresaId: string, subempresaId: string | null, valor: number, obs: string, formaPagamento: FormaPagamentoRecebimento, arquivo: File | null, resumo: ResumoRecebimento) {
     await onRegistrar(empresaId, subempresaId, valor, obs, formaPagamento, arquivo);
     setFormAberto(false);
+    setCorrecaoSelecionada(null);
     setComprovante(resumo);
   }
 
   async function handleReceberCobranca(recebimentoId: string, valor: number, obs: string, formaPagamento: FormaPagamentoRecebimento, arquivo: File | null, resumo: ResumoRecebimento) {
     await onReceberCobranca(recebimentoId, valor, obs, formaPagamento, arquivo);
     setFormAberto(false);
+    setCorrecaoSelecionada(null);
     setComprovante(resumo);
   }
 
   function abrirFormulario() {
+    setCorrecaoSelecionada(null);
     setMesRef(mesAtual());
     setFormAberto(true);
+  }
+
+  function abrirCorrecao(recebimento: Recebimento) {
+    setFormAberto(false);
+    setCorrecoesAbertas(false);
+    setCorrecaoSelecionada(recebimento);
+  }
+
+  function motivoDevolucao(observacao: string | null) {
+    const marcador = 'Devolvido:';
+    const indice = observacao?.lastIndexOf(marcador) ?? -1;
+    const motivo = indice >= 0 ? observacao?.slice(indice + marcador.length).trim() : observacao?.trim();
+    return motivo || 'Motivo não informado.';
+  }
+
+  function competencia(vencimento: string) {
+    const [ano, mes] = vencimento.split('-');
+    return `${MESES_CURTOS[Number(mes) - 1] ?? '—'}/${ano.slice(-2)}`;
   }
 
   function mudarMes(delta: number) {
@@ -128,7 +162,47 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
         >
           + Registrar recebimentos
         </button>
+        {devolvidos.length > 0 && (
+          <button
+            type="button"
+            className={`${styles.btn} ${styles.btnCorrecaoPwa}`}
+            onClick={() => { setFormAberto(false); setCorrecaoSelecionada(null); setCorrecoesAbertas((atual) => !atual); }}
+          >
+            <span>Corrigir devoluções</span>
+            <span className={styles.btnCorrecaoContador}>{devolvidos.length}</span>
+          </button>
+        )}
       </div>
+
+      {correcoesAbertas && devolvidos.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <AvantaCard
+            title="Correções pendentes"
+            headerRight={<span className={styles.correcaoPill}>{devolvidos.length} pendente(s)</span>}
+            hideDragHandle
+            hideMenu
+            style={avantaShell.cardStyle}
+            bodyStyle={avantaShell.bodyStyle}
+          >
+            <p className={styles.correcaoIntroducao}>Revise o motivo informado pelo gestor e corrija o lançamento original.</p>
+            <div className={styles.correcoesLista}>
+              {devolvidos.map((r) => (
+                <button key={r.id} type="button" className={styles.correcaoItem} onClick={() => abrirCorrecao(r)}>
+                  <span className={styles.correcaoItemTopo}>
+                    <span>
+                      <strong>{nomeEmpresa(r.empresaId)}</strong>
+                      <small>{nomeSub(r.subempresaId)} · Competência {competencia(r.vencimento)}</small>
+                    </span>
+                    <span className={styles.correcaoAcao}>Corrigir</span>
+                  </span>
+                  <span className={styles.correcaoItemValores}>Declarado: {formatarMoeda(r.valorRecebido ?? 0)} · {rotuloFormaPagamento(r.formaPagamento)}</span>
+                  <span className={styles.correcaoMotivo}><b>Motivo do gestor:</b> {motivoDevolucao(r.observacao)}</span>
+                </button>
+              ))}
+            </div>
+          </AvantaCard>
+        </div>
+      )}
 
       {formAberto && (
         <div style={{ marginTop: 16 }}>
@@ -153,6 +227,30 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
         </div>
       )}
 
+      {correcaoSelecionada && (
+        <div style={{ marginTop: 16 }}>
+          <AvantaCard
+            title="Corrigir lançamento"
+            hideDragHandle
+            hideMenu
+            style={avantaShell.cardStyle}
+            bodyStyle={avantaShell.bodyStyle}
+          >
+            <FormularioRecebimento
+              key={correcaoSelecionada.id}
+              empresas={empresas}
+              subempresas={subempresas}
+              recebimentos={recebimentos}
+              chaveMes={chaveMes}
+              cobrancaCorrecao={correcaoSelecionada}
+              onConfirmar={handleConfirmar}
+              onReceberCobranca={handleReceberCobranca}
+              onCancelar={() => setCorrecaoSelecionada(null)}
+            />
+          </AvantaCard>
+        </div>
+      )}
+
       <div style={{ marginTop: 16 }}>
         <AvantaCard
           title="Meu histórico"
@@ -161,10 +259,10 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
           style={avantaShell.cardStyle}
           bodyStyle={avantaShell.bodyStyle}
         >
-          {meus.length === 0 ? (
+          {historico.length === 0 ? (
             <p className={styles.muted}>Nenhum recebimento registrado ainda.</p>
           ) : (
-            meus.map((r) => {
+            historico.map((r) => {
               const rot = rotuloSituacao(r.situacao);
               const dif = (r.valorRecebido ?? 0) - r.valorCombinado;
               return (

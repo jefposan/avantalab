@@ -3,13 +3,15 @@
 import { useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import { FORMAS_PAGAMENTO_RECEBIMENTO, type Empresa, type FormaPagamentoRecebimento, type Recebimento, type Subempresa } from './types';
-import { dataLocalIso, diasEmAtraso, formatarData, formatarMoeda, formatarValorInput, parseValorBR, rotuloFrequenciaRecebimento, tipoDiferenca } from './helpers';
+import { dataLocalIso, diasEmAtraso, formatarData, formatarMoeda, formatarValorInput, parseValorBR, rotuloFrequenciaRecebimento, tipoDiferenca, valorParaInput } from './helpers';
 
 type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
   recebimentos: Recebimento[];
   chaveMes: string;
+  /** Lançamento devolvido pelo gestor: é corrigido no mesmo registro. */
+  cobrancaCorrecao?: Recebimento | null;
   // Recebimento avulso (sem cobrança vinculada).
   onConfirmar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante: File | null, resumo: ResumoRecebimento) => Promise<void> | void;
   // Registro de uma cobrança prevista ou em atraso específica (uma a uma).
@@ -27,19 +29,19 @@ export type ResumoRecebimento = {
   tipo: ReturnType<typeof tipoDiferenca>;
 };
 
-export default function FormularioRecebimento({ empresas, subempresas, recebimentos, chaveMes, onConfirmar, onReceberCobranca, onCancelar }: Props) {
+export default function FormularioRecebimento({ empresas, subempresas, recebimentos, chaveMes, cobrancaCorrecao = null, onConfirmar, onReceberCobranca, onCancelar }: Props) {
   const empresasAtivas = useMemo(
     () => empresas.filter((e) => e.ativo).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })),
     [empresas],
   );
-  const [empresaId, setEmpresaId] = useState('');
+  const [empresaId, setEmpresaId] = useState(() => cobrancaCorrecao?.empresaId ?? '');
   const [subempresaId, setSubempresaId] = useState('');
   // Cobrança selecionada para baixa individual.
-  const [cobrancaId, setCobrancaId] = useState('');
-  const [valorTexto, setValorTexto] = useState('');
-  const [formaPagamento, setFormaPagamento] = useState<FormaPagamentoRecebimento | ''>('');
+  const [cobrancaId, setCobrancaId] = useState(() => cobrancaCorrecao?.id ?? '');
+  const [valorTexto, setValorTexto] = useState(() => cobrancaCorrecao?.valorRecebido == null ? '' : valorParaInput(cobrancaCorrecao.valorRecebido));
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamentoRecebimento | ''>(() => cobrancaCorrecao?.formaPagamento ?? '');
   const [comprovante, setComprovante] = useState<File | null>(null);
-  const [observacao, setObservacao] = useState('');
+  const [observacao, setObservacao] = useState(() => cobrancaCorrecao?.observacao?.split(' · Devolvido:')[0] ?? '');
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const comprovanteInput = useRef<HTMLInputElement | null>(null);
@@ -90,7 +92,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
     [recebimentos, empresas, subempresas, empresaId, chaveMes, hojeIso],
   );
 
-  const cobranca = useMemo(() => cobrancasAbertas.find((r) => r.id === cobrancaId) ?? null, [cobrancasAbertas, cobrancaId]);
+  const cobranca = useMemo(() => cobrancaCorrecao ?? cobrancasAbertas.find((r) => r.id === cobrancaId) ?? null, [cobrancaCorrecao, cobrancasAbertas, cobrancaId]);
   const sub = useMemo(() => {
     const id = cobranca ? cobranca.subempresaId : subempresaId;
     return subempresas.find((s) => s.id === id) ?? null;
@@ -184,17 +186,24 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
 
   return (
     <div>
-      <div className={styles.field}>
-        <label className={styles.label}>Empresa</label>
-        <select className={styles.select} value={empresaId} onChange={(e) => selecionarEmpresa(e.target.value)}>
-          <option value="">Selecione…</option>
-          {empresasAtivas.map((e) => (
-            <option key={e.id} value={e.id}>{e.nome}</option>
-          ))}
-        </select>
-      </div>
+      {cobrancaCorrecao ? (
+        <div className={`${styles.readonlyBox} ${styles.correcaoDestino}`}>
+          <div className={styles.readonlyRow}><span>Empresa</span><span>{empresa?.nome ?? '—'}</span></div>
+          <div className={styles.readonlyRow}><span>Cliente</span><span>{nomeSub(cobrancaCorrecao.subempresaId)}</span></div>
+        </div>
+      ) : (
+        <div className={styles.field}>
+          <label className={styles.label}>Empresa</label>
+          <select className={styles.select} value={empresaId} onChange={(e) => selecionarEmpresa(e.target.value)}>
+            <option value="">Selecione…</option>
+            {empresasAtivas.map((e) => (
+              <option key={e.id} value={e.id}>{e.nome}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
-      {empresaId && cobrancasAbertas.length > 0 && (
+      {!cobrancaCorrecao && empresaId && cobrancasAbertas.length > 0 && (
         <div className={styles.atrasoBox}>
           <div className={styles.atrasoTitulo}>Próximo a vencer e vencidos ({cobrancasAbertas.length})</div>
           <p className={styles.atrasoDica}>
@@ -224,7 +233,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
         </div>
       )}
 
-      {!cobranca && cobrancasAbertas.length === 0 && !clienteDireto && (
+      {!cobrancaCorrecao && !cobranca && cobrancasAbertas.length === 0 && !clienteDireto && (
         <div className={styles.field}>
           <label className={styles.label}>Subempresa</label>
           <select
@@ -330,7 +339,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
           <span>{comprovante ? 'Comprovante ✓' : 'Comprovante'}</span>
         </button>
         <button type="button" disabled={salvando || !podeConfirmar} className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => void confirmar()}>
-          {salvando ? 'Registrando…' : 'Confirmar'}
+          {salvando ? 'Registrando…' : cobrancaCorrecao ? 'Enviar correção' : 'Confirmar'}
         </button>
       </div>
       {comprovante && (
