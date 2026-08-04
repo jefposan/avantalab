@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Amplify } from 'aws-amplify';
 import { FaceLivenessDetector } from '@aws-amplify/ui-react-liveness';
+import AvantaCard from './AvantaCard';
 import '@aws-amplify/ui-react/styles.css';
 
 type Inicio = { empresaId: string; token: string; tipo: 'cadastro' | 'marcacao' };
@@ -122,20 +123,9 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     ['--amplify-components-liveness-camera-module-background-color' as string]: '#f8fafc',
   };
   return <div className="fixed inset-0 z-[100] overflow-y-auto bg-[radial-gradient(circle_at_top,#075985_0%,#003e73_42%,#020617_100%)] px-3 py-5 sm:p-8" role="dialog" aria-modal="true" aria-label="Verificação facial">
-    <div className="avanta-facial mx-auto w-full max-w-xl overflow-hidden rounded-[28px] bg-slate-50 shadow-2xl ring-1 ring-white/20" style={temaFacial}>
-      <header className="bg-gradient-to-br from-[#003e73] via-[#075985] to-[#00a6c8] px-5 py-5 text-white">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" strokeLinecap="round"/><path d="M8.5 11.5c.8 1 1.8 1.5 3.5 1.5s2.7-.5 3.5-1.5M9 8.5h.01M15 8.5h.01" strokeLinecap="round"/></svg>
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-100">AvantaLab · Ponto seguro</p>
-            <h2 className="mt-1 text-xl font-black leading-tight">{emCadastro ? 'Cadastrar reconhecimento facial' : 'Confirmação de identidade'}</h2>
-            <p className="mt-1 text-xs font-semibold text-cyan-50">Sua câmera é usada somente nesta verificação.</p>
-          </div>
-        </div>
-      </header>
-      <div className="border-b border-slate-200 bg-white px-5 py-3">
+    <AvantaCard title={emCadastro ? 'Cadastro facial' : 'Confirmação facial'} corPrimaria="#007f99" hideDragHandle hideMenu className="avanta-facial mx-auto max-w-xl text-slate-900" bodyClassName="!min-h-0 !p-0 overflow-hidden" style={temaFacial} plato={<span className="rounded-full bg-cyan-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-800">Ponto seguro</span>}>
+      <div className="px-5 pt-2 text-xs font-semibold text-slate-600">Sua câmera é usada somente nesta verificação.</div>
+      <div className="mt-3 border-y border-slate-200 bg-white px-5 py-3">
         <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-600 text-white">1</span><span className="text-cyan-800">Preparar</span>
           <span className="h-px flex-1 bg-cyan-200" />
@@ -149,6 +139,6 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
         {sessao && <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={textosPtBr} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={() => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); }} /></div>}
         {mensagem && <button type="button" className="mt-4 min-h-12 w-full rounded-xl bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/20 transition active:scale-[0.99]" onClick={() => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); }}>Voltar ao ponto</button>}
       </div>
-    </div>
+    </AvantaCard>
   </div>;
 }
