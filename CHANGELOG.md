@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1.144 - 2026-08-04
+
+- Controle de Ponto: limite da prova de vida facial ajustado de 90% para 70%;
+  a comparação de identidade com o cadastro permanece em 90%.
+
 ## 1.6.1.143 - 2026-08-04
 
 - Controle de Ponto: a experiência de cadastro e confirmação facial recebeu

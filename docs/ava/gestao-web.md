@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.143 -->
+<!-- ava-version: 1.6.1.144 -->
+
+> Revisão 1.6.1.144: o limite da prova de vida facial é 70%; a comparação da
+> identidade cadastrada continua em 90%.
 
 > Revisão 1.6.1.143: a verificação facial ganhou interface AvantaLab, com
 > orientação clara antes da câmera e retorno visível ao ponto em caso de erro.

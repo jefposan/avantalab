@@ -65,5 +65,5 @@ export async function compararComReferencia(origem: Image, chaveReferencia: stri
   }));
 }
 
-export const LIMIAR_PROVA_DE_VIDA = 90;
+export const LIMIAR_PROVA_DE_VIDA = 70;
 export const LIMIAR_SIMILARIDADE = 90;

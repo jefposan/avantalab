@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.143 -->
+<!-- ava-version: 1.6.1.144 -->
+
+> Revisão 1.6.1.144: sem impacto operacional no AvantaVendas; o limite da
+> prova de vida do Controle de Ponto foi ajustado.
 
 > Revisão 1.6.1.143: sem impacto operacional no AvantaVendas; a tela facial do
 > Controle de Ponto recebeu revisão visual.
