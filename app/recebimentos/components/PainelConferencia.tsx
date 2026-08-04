@@ -8,6 +8,15 @@ import { aguardandoConferencia, formatarDataHora, formatarMoeda, rotuloFormaPaga
 import type { ComprovanteRecebimento } from '../data/repo';
 import BotaoComprovante from './BotaoComprovante';
 
+const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+function rotuloCompetencia(vencimento: string): string {
+  const [ano, mes] = vencimento.split('-');
+  const indiceMes = Number(mes) - 1;
+  const mesCurto = MESES_CURTOS[indiceMes] ?? '—';
+  return `Competência · ${mesCurto}/${ano?.slice(-2) ?? '—'}`;
+}
+
 type Props = {
   podeConfirmar: boolean;
   darkMode: boolean;
@@ -88,7 +97,10 @@ export default function PainelConferencia({
             <div key={r.id} className={`${styles.subItem} ${styles.conferenciaItem}`}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                 <div>
-                  <div className={styles.subNome}>{nomeEmpresa(r.empresaId)} · {nomeSub(r.subempresaId)}</div>
+                  <div className={styles.conferenciaIdentificacao}>
+                    <div className={styles.subNome}>{nomeEmpresa(r.empresaId)} · {nomeSub(r.subempresaId)}</div>
+                    <span className={styles.competenciaPill}>{rotuloCompetencia(r.vencimento)}</span>
+                  </div>
                   <div className={styles.subMeta}>Colaborador: {nomeColab(r.colaboradorId)} · {formatarDataHora(r.recebidoEm)}</div>
                 </div>
                 <span className={styles.badge} style={{ background: rot.fundo, color: rot.cor, height: 'fit-content' }}>{rot.texto}</span>

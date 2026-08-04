@@ -1015,6 +1015,27 @@
 .conferenciaItem {
   margin-bottom: 8px;
 }
+.conferenciaIdentificacao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.competenciaPill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cp) 12%, #fff);
+  color: var(--cp);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
 .conferenciaResumo {
   grid-template-columns:
     minmax(120px, 1fr)
@@ -1995,6 +2016,10 @@
   color: #e2e8f0;
 }
 .darkScope .conferenciaObservacao { border-top-color: #334155; }
+.darkScope .competenciaPill {
+  background: color-mix(in srgb, var(--cp) 22%, #0f172a);
+  color: color-mix(in srgb, var(--cp) 55%, #fff);
+}
 .darkScope :is(.atrasoItem, .subItem) {
   border-color: #334155;
   background: #0f172a;
