@@ -44,6 +44,7 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
   const [sessao, setSessao] = useState<Sessao | null>(null);
   const [mensagem, setMensagem] = useState('');
   const emCadastro = sessao?.tipo === 'cadastro';
+  const cancelar = () => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); };
 
   useEffect(() => {
     if (!identityPoolId) return;
@@ -139,8 +140,9 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
         <div className="rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm font-semibold leading-relaxed text-slate-700" role="status">
           {mensagem || 'Posicione o rosto inteiro no contorno, com boa luz. Siga as orientações na tela e fique imóvel quando solicitado.'}
         </div>
-        {sessao && <div className="mt-4 min-h-[calc(100dvh-330px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={textosPtBr} components={{ PhotosensitiveWarning: AvisoFotossensibilidadeOculto }} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={() => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); }} /></div>}
-        {mensagem && <button type="button" className="mt-4 min-h-12 w-full rounded-xl bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/20 transition active:scale-[0.99]" onClick={() => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); }}>Voltar ao ponto</button>}
+        {sessao && <div className="relative z-10 mt-4 min-h-[calc(100dvh-330px)] overflow-hidden rounded-2xl border border-slate-200 bg-white pt-2 shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={textosPtBr} components={{ PhotosensitiveWarning: AvisoFotossensibilidadeOculto }} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={cancelar} /></div>}
+        {sessao && <button type="button" className="mt-3 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-wide text-slate-500 transition hover:bg-slate-50" onClick={cancelar}>Cancelar verificação</button>}
+        {mensagem && <button type="button" className="mt-4 min-h-12 w-full rounded-xl bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/20 transition active:scale-[0.99]" onClick={cancelar}>Voltar ao ponto</button>}
       </div>
     </AvantaCard>
   </div>;
