@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.147 -->
+<!-- ava-version: 1.6.1.149 -->
+
+> Revisão 1.6.1.149: no card de novo pedido, abrir o teclado desloca o card
+> inteiro para manter visível o campo em edição, inclusive o desconto. Fechar o
+> teclado devolve o card à posição original e preserva os dados preenchidos.
 
 > Revisão 1.6.1.147: sem impacto operacional no AvantaVendas; somente o card
 > AWS do console global `/admin` foi simplificado.

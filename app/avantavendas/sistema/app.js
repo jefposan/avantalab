@@ -6905,6 +6905,77 @@ function valor(idCampo) {
   return document.getElementById(idCampo)?.value || '';
 }
 
+function campoEditavelSheetTransacao(elemento) {
+  return elemento instanceof HTMLInputElement
+    || elemento instanceof HTMLTextAreaElement
+    || elemento instanceof HTMLSelectElement;
+}
+
+function ajustarSheetTransacaoAoTeclado(wrap) {
+  if (!wrap?.isConnected || !wrap.classList.contains('client-transaction-backdrop')) return;
+  const sheetAtual = wrap.querySelector('.sheet');
+  const campoAtivo = wrap.__campoAtivoTransacao;
+  const viewport = window.visualViewport;
+  const alturaVisivel = Math.round(viewport?.height || window.innerHeight);
+  const topoVisivel = Math.round(viewport?.offsetTop || 0);
+  const alturaInicial = Number(wrap.dataset.transactionBaseHeight || alturaVisivel);
+  const tecladoAberto = alturaInicial - alturaVisivel > 80;
+  if (!sheetAtual || !campoAtivo?.isConnected || !tecladoAberto) {
+    wrap.style.setProperty('--transaction-sheet-offset', '0px');
+    wrap.classList.remove('transaction-keyboard-lifted');
+    return;
+  }
+
+  const deslocamentoAtual = Math.abs(Number.parseFloat(wrap.style.getPropertyValue('--transaction-sheet-offset')) || 0);
+  const campoRect = campoAtivo.getBoundingClientRect();
+  const campoTopoOriginal = campoRect.top + deslocamentoAtual;
+  const campoBaseOriginal = campoRect.bottom + deslocamentoAtual;
+  const limiteSuperior = topoVisivel + 12;
+  const limiteInferior = topoVisivel + alturaVisivel - 18;
+  const deslocamentoNecessario = Math.max(0, campoBaseOriginal - limiteInferior);
+  const deslocamentoMaximo = Math.max(0, campoTopoOriginal - limiteSuperior);
+  const deslocamento = Math.min(deslocamentoNecessario, deslocamentoMaximo);
+
+  wrap.style.setProperty('--transaction-sheet-offset', `${-Math.round(deslocamento)}px`);
+  wrap.classList.toggle('transaction-keyboard-lifted', deslocamento > 0);
+}
+
+function agendarAjusteSheetTransacao(wrap) {
+  if (!wrap?.isConnected) return;
+  cancelAnimationFrame(wrap.__quadroAjusteTransacao || 0);
+  wrap.__quadroAjusteTransacao = requestAnimationFrame(() => ajustarSheetTransacaoAoTeclado(wrap));
+}
+
+function prepararSheetTransacaoParaTeclado(wrap) {
+  if (!wrap?.classList.contains('client-transaction-backdrop')) return;
+  const controlador = new AbortController();
+  const opcoes = { signal: controlador.signal };
+  wrap.__controladorTecladoTransacao = controlador;
+  wrap.style.setProperty('--transaction-sheet-offset', '0px');
+
+  wrap.addEventListener('focusin', (event) => {
+    if (!campoEditavelSheetTransacao(event.target)) return;
+    wrap.__campoAtivoTransacao = event.target;
+    agendarAjusteSheetTransacao(wrap);
+    window.setTimeout(() => agendarAjusteSheetTransacao(wrap), 120);
+    window.setTimeout(() => agendarAjusteSheetTransacao(wrap), 280);
+  }, opcoes);
+  wrap.addEventListener('focusout', () => {
+    window.setTimeout(() => {
+      const campoAtual = document.activeElement;
+      if (wrap.contains(campoAtual) && campoEditavelSheetTransacao(campoAtual)) {
+        wrap.__campoAtivoTransacao = campoAtual;
+      } else {
+        wrap.__campoAtivoTransacao = null;
+      }
+      agendarAjusteSheetTransacao(wrap);
+    }, 0);
+  }, opcoes);
+  window.addEventListener('resize', () => agendarAjusteSheetTransacao(wrap), opcoes);
+  window.visualViewport?.addEventListener('resize', () => agendarAjusteSheetTransacao(wrap), opcoes);
+  window.visualViewport?.addEventListener('scroll', () => agendarAjusteSheetTransacao(wrap), opcoes);
+}
+
 function sheet(html, backdropClass = '') {
   fecharSheet();
   elementoRolagemAnteriorSheet = elementoRolagemPrincipalVendas();
@@ -6916,6 +6987,7 @@ function sheet(html, backdropClass = '') {
     const alturaViewport = Math.round(window.visualViewport?.height || window.innerHeight);
     if (Number.isFinite(alturaViewport) && alturaViewport > 0) {
       wrap.style.setProperty('--transaction-viewport-height', `${alturaViewport}px`);
+      wrap.dataset.transactionBaseHeight = String(alturaViewport);
     }
   }
   wrap.innerHTML = `<section class="sheet">${html}</section>`;
@@ -6928,6 +7000,7 @@ function sheet(html, backdropClass = '') {
   document.body.appendChild(wrap);
   document.body.classList.add('sheet-open');
   document.documentElement.classList.add('sheet-open');
+  prepararSheetTransacaoParaTeclado(wrap);
   if (elementoRolagemAnteriorSheet === document.documentElement || elementoRolagemAnteriorSheet === document.body) {
     document.body.style.top = `-${rolagemAnteriorSheet}px`;
   }
@@ -6948,6 +7021,8 @@ function fecharSheet(evento = null) {
   if (campoAtivo instanceof HTMLElement && sheetAtual?.contains(campoAtivo)) {
     campoAtivo.blur();
   }
+  sheetAtual?.__controladorTecladoTransacao?.abort();
+  cancelAnimationFrame(sheetAtual?.__quadroAjusteTransacao || 0);
   if (document.getElementById('prodImagemArquivo') && produtoImagemUploadPendente?.previewUrl) {
     URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
     produtoImagemUploadPendente = null;

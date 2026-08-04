@@ -17,6 +17,13 @@ const acaoPagamento = '<button class="secondary quick-action-button quick-action
 const acaoPedido = '<button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">';
 
 exigir(
+  aplicacao.includes('function ajustarSheetTransacaoAoTeclado(wrap)')
+    && aplicacao.includes("window.visualViewport?.addEventListener('resize'")
+    && aplicacao.includes("wrap.style.setProperty('--transaction-sheet-offset'")
+    && estilos.includes('transform: translate3d(0, var(--transaction-sheet-offset, 0px), 0);'),
+  'O card de pedido deve subir inteiro para manter o campo focado acima do teclado.',
+);
+exigir(
   aplicacao.includes('<label for="cliNascimento">${svgIconEstavel(\'cake\')}<span>Data de Aniversário</span></label>')
     && aplicacao.includes("toast('Informe a data de aniversário no formato dd/mm.')"),
   'O cadastro do cliente deve identificar Data de Aniversário com o SVG de bolo.',
@@ -39,7 +46,7 @@ exigir(
   'As ações rápidas devem reutilizar as cores de Pagamento e Pedido do card do cliente.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '15'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '16'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

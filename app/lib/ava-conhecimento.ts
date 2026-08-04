@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.6.1.147: o /admin prioriza custos, créditos e indicadores faciais úteis da AWS.
+// Revisado na versão 1.6.1.149: o card de novo pedido do Vendas acompanha o teclado sem ocultar o campo ativo.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -176,7 +176,7 @@ CLIENTES
 CATÁLOGO, PEDIDOS E PAGAMENTOS
 - Produtos permite cadastrar, editar, ativar/desativar, buscar, trabalhar com pacotes e imagens. Custo e preço de venda são usados para rentabilidade; estoque é opcional e pode ser ajustado em Configurações > Controle de estoque.
 - Pedido e itens são salvos na mesma transação: se alguma parte falhar, o pedido anterior permanece intacto.
-- Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar.
+- Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar. No celular, abrir o teclado desloca o card inteiro para manter o campo ativo visível, inclusive o desconto; fechar o teclado devolve o card à posição original sem apagar o preenchimento.
 - Ao iniciar um pedido ou pagamento sem cliente predefinido, o foco e o teclado abrem diretamente na busca. Digite nome, telefone ou e-mail e toque em um resultado; o primeiro cliente não é selecionado automaticamente.
 - Em Produtos, os indicadores de produtos cadastrados, pacotes ativos e o botão Gerenciar permanecem fixos com o cabeçalho enquanto a lista rola abaixo. No campo Produto, digite nome, código, marca ou categoria para filtrar imediatamente a lista; toque no resultado para selecionar o produto e preencher seu preço.
 - Consignado não entra como venda/recebimento até ser convertido em pedido. Ao abrir um consignado, são exibidos somente produtos e quantidades; apenas a lista rola, mantendo cabeçalho, resumo e ações fixos. O botão Gerar pedido fica disponível sempre que houver quantidade restante; nele, informe com + e − quanto foi vendido de cada item, respeitando o limite disponível destacado em cada produto, e confirme: o pedido entra no histórico da cliente e as quantidades são abatidas do consignado. Conversões parciais mantêm o consignado disponível para novos pedidos até zerar os produtos. Na edição, os controles de quantidade mantêm o produto tocado e a posição da lista em foco. Não trate consignado como receita realizada.

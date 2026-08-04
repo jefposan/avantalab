@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.147 -->
+<!-- ava-version: 1.6.1.149 -->
+
+> Revisão 1.6.1.149: ajuste do teclado aplicado somente ao card de novo pedido
+> do AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.147: simplificação do card AWS somente no console global
 > `/admin`; sem impacto operacional na Gestão Mobile.

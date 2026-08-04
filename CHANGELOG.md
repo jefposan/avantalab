@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.149 - 2026-08-04
+
+- AvantaVendas: ao abrir o teclado no card de novo pedido, o card inteiro agora
+  sobe o necessário para manter o campo focado visível, inclusive o desconto.
+  Ao fechar o teclado, o card retorna à posição original sem alterar o pedido.
+
 ## 1.6.1.147 - 2026-08-04
 
 - Avanta Admin: o card de consumo AWS foi simplificado para mostrar somente

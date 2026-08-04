@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.147 -->
+<!-- ava-version: 1.6.1.149 -->
+
+> Revisão 1.6.1.149: ajuste do teclado aplicado somente ao card de novo pedido
+> do AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.147: o card AWS em `/admin` > **Consumo** foi simplificado para
 > custos, créditos e indicadores faciais úteis, sem métricas técnicas do
