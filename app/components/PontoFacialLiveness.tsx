@@ -121,6 +121,20 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     return () => observador.disconnect();
   }, [sessao]);
 
+  useEffect(() => {
+    if (!sessao) return;
+    // O detector precisa usar o canvas em tela cheia no iOS para inicializar o
+    // stream da AWS. Se a negociação não avançar, não deixamos a pessoa presa
+    // em "Conectando câmera…": encerramos a sessão local e permitimos tentar
+    // novamente com uma nova sessão facial.
+    const limite = window.setTimeout(() => {
+      setSessao(null);
+      setMensagem('A câmera demorou demais para conectar. Verifique a internet e tente novamente.');
+      window.dispatchEvent(new CustomEvent('avantalab:facial-erro', { detail: { mensagem: 'A câmera demorou demais para conectar.' } }));
+    }, 25000);
+    return () => window.clearTimeout(limite);
+  }, [sessao]);
+
   const concluir = async () => {
     if (!sessao) return;
     const sessaoConcluida = sessao;
@@ -160,7 +174,7 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     ['--amplify-components-liveness-camera-module-background-color' as string]: '#f8fafc',
   };
   return <div className="fixed inset-0 z-[100] overflow-y-auto bg-[radial-gradient(circle_at_top,#075985_0%,#003e73_42%,#020617_100%)] px-3 py-5 sm:p-8" role="dialog" aria-modal="true" aria-label="Verificação facial">
-    <style>{`.avanta-facial .amplify-button--primary{min-height:40px!important;height:40px!important;width:220px!important;border-radius:10px!important;background:#1687D9!important;border-color:#1687D9!important;color:#fff!important;font-size:14px!important;font-weight:800!important;box-shadow:0 6px 14px rgba(22,135,217,.22)!important}.avanta-facial-acoes{display:flex!important;justify-content:center!important;gap:8px!important;margin-top:0!important}.avanta-facial-acoes .amplify-button--primary{width:calc(50% - 4px)!important}.avanta-facial-acoes .avanta-facial-cancelar{width:calc(50% - 4px)!important}.avanta-facial .amplify-button--primary:active{transform:scale(.98)}.avanta-facial .amplify-button--primary:focus-visible{outline:3px solid rgba(22,135,217,.35)!important;outline-offset:3px}.avanta-facial .amplify-liveness-start-screen{padding-bottom:0!important}.avanta-facial .amplify-liveness-figures{margin-bottom:0!important}.avanta-facial-leitura .amplify-liveness-camera-module--mobile,.avanta-facial-leitura .amplify-liveness-oval-canvas--mobile,.avanta-facial-leitura .amplify-liveness-freshness-canvas{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}`}</style>
+    <style>{`.avanta-facial .amplify-button--primary{min-height:40px!important;height:40px!important;width:220px!important;border-radius:10px!important;background:#1687D9!important;border-color:#1687D9!important;color:#fff!important;font-size:14px!important;font-weight:800!important;box-shadow:0 6px 14px rgba(22,135,217,.22)!important}.avanta-facial-acoes{display:flex!important;justify-content:center!important;gap:8px!important;margin-top:0!important}.avanta-facial-acoes .amplify-button--primary{width:calc(50% - 4px)!important}.avanta-facial-acoes .avanta-facial-cancelar{width:calc(50% - 4px)!important}.avanta-facial .amplify-button--primary:active{transform:scale(.98)}.avanta-facial .amplify-button--primary:focus-visible{outline:3px solid rgba(22,135,217,.35)!important;outline-offset:3px}.avanta-facial .amplify-liveness-start-screen{padding-bottom:0!important}.avanta-facial .amplify-liveness-figures{margin-bottom:0!important}`}</style>
     <AvantaCard title={sessao ? 'Verificação em andamento' : emCadastro ? 'Cadastro facial' : 'Confirmação facial'} corPrimaria="#007f99" hideDragHandle hideMenu className="avanta-facial mx-auto max-w-xl text-slate-900" bodyClassName="!min-h-[calc(100dvh-130px)] !p-0 !overflow-visible" style={temaFacial} plato={<span className="rounded-full bg-cyan-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-800">Ponto seguro</span>}>
       {!sessao && <div className="border-b border-slate-200 bg-white px-5 py-3">
         <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide">
