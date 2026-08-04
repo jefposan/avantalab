@@ -43,18 +43,24 @@ function AvisoFotossensibilidadeOculto() {
 export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId: string }) {
   const [sessao, setSessao] = useState<Sessao | null>(null);
   const [mensagem, setMensagem] = useState('');
-  const [emCaptura, setEmCaptura] = useState(false);
   const detectorRef = useRef<HTMLDivElement>(null);
-  const cancelarInicialRef = useRef<HTMLButtonElement>(null);
+  const cancelarAreaRef = useRef<HTMLDivElement>(null);
+  const cancelarRef = useRef<HTMLButtonElement>(null);
+  const cancelarCapturaRef = useRef<HTMLButtonElement>(null);
   const emCadastro = sessao?.tipo === 'cadastro';
-  const cancelar = () => { setSessao(null); setMensagem(''); setEmCaptura(false); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); };
+  const cancelar = () => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); };
 
   useEffect(() => {
-    if (!identityPoolId) return;
-    Amplify.configure({ Auth: { Cognito: { identityPoolId, allowGuestAccess: true } } });
+    if (identityPoolId) Amplify.configure({ Auth: { Cognito: { identityPoolId, allowGuestAccess: true } } });
     const iniciar = async (event: Event) => {
       const inicio = (event as CustomEvent<Inicio>).detail;
       if (!inicio?.empresaId || !inicio.token) return;
+      if (!identityPoolId) {
+        const detalhe = 'Reconhecimento facial não configurado neste ambiente.';
+        setMensagem(detalhe);
+        window.dispatchEvent(new CustomEvent('avantalab:facial-erro', { detail: { mensagem: detalhe } }));
+        return;
+      }
       // Compatibilidade com versões antigas do PWA: elas ainda disparavam este
       // evento para toda a empresa em preparação. Antes de abrir a câmera,
       // confirmamos a habilitação individual. Se não houver facial ativo, a
@@ -96,15 +102,26 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     if (!sessao || !detectorRef.current) return;
     const organizarAcoes = () => {
       const iniciar = detectorRef.current?.querySelector<HTMLButtonElement>('.amplify-button--primary');
-      const cancelarBotao = cancelarInicialRef.current;
+      const cancelarBotao = cancelarRef.current;
+      const cancelarCaptura = cancelarCapturaRef.current;
       if (iniciar?.parentElement) {
-        setEmCaptura(false);
+        cancelarBotao?.classList.remove('hidden');
+        cancelarCaptura?.classList.add('hidden');
         if (!cancelarBotao) return;
         iniciar.parentElement.classList.add('avanta-facial-acoes');
         if (!iniciar.parentElement.contains(cancelarBotao)) iniciar.parentElement.insertBefore(cancelarBotao, iniciar);
         return;
       }
-      if (detectorRef.current?.querySelector('.amplify-liveness-camera-module--mobile')) setEmCaptura(true);
+      if (detectorRef.current?.querySelector('.amplify-liveness-camera-module--mobile')) {
+        cancelarBotao?.classList.add('hidden');
+        cancelarCaptura?.classList.remove('hidden');
+        return;
+      }
+      cancelarCaptura?.classList.add('hidden');
+      cancelarBotao?.classList.remove('hidden');
+      if (cancelarAreaRef.current && cancelarBotao && !cancelarAreaRef.current.contains(cancelarBotao)) {
+        cancelarAreaRef.current.appendChild(cancelarBotao);
+      }
     };
     organizarAcoes();
     const observador = new MutationObserver(organizarAcoes);
@@ -151,7 +168,7 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     ['--amplify-components-liveness-camera-module-background-color' as string]: '#f8fafc',
   };
   return <div className="fixed inset-0 z-[100] overflow-y-auto bg-[radial-gradient(circle_at_top,#075985_0%,#003e73_42%,#020617_100%)] px-3 py-5 sm:p-8" role="dialog" aria-modal="true" aria-label="Verificação facial">
-    <style>{`.avanta-facial .amplify-button--primary{min-height:40px!important;height:40px!important;width:220px!important;border-radius:10px!important;background:#1687D9!important;border-color:#1687D9!important;color:#fff!important;font-size:14px!important;font-weight:800!important;box-shadow:0 6px 14px rgba(22,135,217,.22)!important}.avanta-facial-acoes{display:flex!important;justify-content:center!important;gap:8px!important;width:min(100%,332px)!important;margin:0 auto!important}.avanta-facial .avanta-facial-acoes .amplify-button--primary,.avanta-facial .avanta-facial-acoes .avanta-facial-cancelar-inicial{position:static!important;width:auto!important;min-width:0!important;flex:0 1 156px!important;white-space:nowrap}.avanta-facial .avanta-facial-cancelar-captura{position:fixed!important;z-index:40!important;left:50%!important;bottom:24px!important;transform:translateX(-50%)!important;font-size:13px!important}.avanta-facial .amplify-liveness-cancel-container{display:none!important}.avanta-facial>[class*="cardTras"]{z-index:30!important}.avanta-facial [class*="headerRight"]{width:100%!important;justify-content:center!important}.avanta-facial .amplify-button--primary:active{transform:scale(.98)}.avanta-facial .amplify-button--primary:focus-visible{outline:3px solid rgba(22,135,217,.35)!important;outline-offset:3px}.avanta-facial .amplify-liveness-start-screen{padding-bottom:0!important}.avanta-facial .amplify-liveness-figures{margin-bottom:0!important}`}</style>
+    <style>{`.avanta-facial .amplify-button--primary{min-height:40px!important;height:40px!important;width:220px!important;border-radius:10px!important;background:#1687D9!important;border-color:#1687D9!important;color:#fff!important;font-size:14px!important;font-weight:800!important;box-shadow:0 6px 14px rgba(22,135,217,.22)!important}.avanta-facial-acoes{display:flex!important;justify-content:center!important;gap:8px!important;width:min(100%,332px)!important;margin:0 auto!important}.avanta-facial .avanta-facial-acoes .amplify-button--primary,.avanta-facial .avanta-facial-acoes .avanta-facial-cancelar{position:static!important;left:auto!important;bottom:auto!important;transform:none!important;width:auto!important;min-width:0!important;flex:0 1 156px!important;white-space:nowrap}.avanta-facial .avanta-facial-cancelar{position:fixed!important;z-index:40!important;left:50%!important;bottom:24px!important;transform:translateX(-50%)!important;font-size:13px!important}.avanta-facial [class*="headerRight"]{width:100%!important;justify-content:center!important}.avanta-facial .amplify-button--primary:active{transform:scale(.98)}.avanta-facial .amplify-button--primary:focus-visible{outline:3px solid rgba(22,135,217,.35)!important;outline-offset:3px}.avanta-facial .amplify-liveness-start-screen{padding-bottom:0!important}.avanta-facial .amplify-liveness-figures{margin-bottom:0!important}`}</style>
     <AvantaCard title={sessao ? 'Captura facial' : emCadastro ? 'Cadastro facial' : 'Confirmação facial'} corPrimaria="#007f99" hideDragHandle hideMenu className="avanta-facial mx-auto max-w-xl text-slate-900" bodyClassName="!min-h-[calc(100dvh-130px)] !p-0 !overflow-visible" style={{ ...temaFacial, ['--plato-w' as string]: '36%' }} plato={sessao ? <span className="whitespace-nowrap rounded-full bg-cyan-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-800">Ponto seguro</span> : undefined}>
       {!sessao && <div className="border-b border-slate-200 bg-white px-5 py-3">
         <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide">
@@ -164,7 +181,7 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
         {!sessao && <div className="rounded-xl border border-cyan-100 bg-cyan-50 px-3 py-2 text-xs font-semibold leading-snug text-slate-700" role="status">
           {mensagem || 'Posicione o rosto inteiro no contorno, com boa luz. Siga as orientações na tela e fique imóvel quando solicitado.'}
         </div>}
-        {sessao && <><div ref={detectorRef} className="avanta-facial-leitura relative z-0 min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white pt-2 shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={{ ...textosPtBr, recordingIndicatorText: '' }} components={{ PhotosensitiveWarning: AvisoFotossensibilidadeOculto }} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={cancelar} /></div>{!emCaptura && <div className="flex min-h-10 justify-center"><button ref={cancelarInicialRef} type="button" className="avanta-facial-cancelar-inicial h-10 min-h-10 w-[156px] rounded-[10px] border border-slate-300 bg-white px-3 text-sm font-black text-slate-600 shadow-sm transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#1687D9]" onClick={(event) => { event.stopPropagation(); cancelar(); }}>Cancelar</button></div>}{emCaptura && <button type="button" className="avanta-facial-cancelar-captura h-10 min-h-10 w-[156px] rounded-[10px] border border-slate-300 bg-white px-3 text-sm font-black text-slate-600 shadow-sm transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#1687D9]" onClick={cancelar}>Cancelar</button>}</>}
+        {sessao && <><div ref={detectorRef} className="avanta-facial-leitura relative z-0 min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white pt-2 shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={{ ...textosPtBr, recordingIndicatorText: '' }} components={{ PhotosensitiveWarning: AvisoFotossensibilidadeOculto }} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={cancelar} /></div><div ref={cancelarAreaRef} className="flex min-h-10 justify-center"><button ref={cancelarRef} type="button" className="avanta-facial-cancelar h-10 min-h-10 w-[156px] rounded-[10px] border border-slate-300 bg-white px-3 text-sm font-black text-slate-600 shadow-sm transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#1687D9]" onClick={(event) => { event.stopPropagation(); cancelar(); }}>Cancelar</button></div><button ref={cancelarCapturaRef} type="button" className="avanta-facial-cancelar hidden h-10 min-h-10 w-[156px] rounded-[10px] border border-slate-300 bg-white px-3 text-sm font-black text-slate-600 shadow-sm transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#1687D9]" onClick={cancelar}>Cancelar</button></>}
         {mensagem && <button type="button" className="mt-4 min-h-12 w-full rounded-xl bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/20 transition active:scale-[0.99]" onClick={cancelar}>Voltar ao ponto</button>}
       </div>
     </AvantaCard>
