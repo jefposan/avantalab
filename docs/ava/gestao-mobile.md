@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.146 -->
+<!-- ava-version: 1.6.1.147 -->
+
+> Revisão 1.6.1.147: simplificação do card AWS somente no console global
+> `/admin`; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.146: o acompanhamento de consumo da AWS foi adicionado somente
 > ao console global `/admin`; sem impacto operacional na Gestão Mobile.

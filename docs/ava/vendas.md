@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.146 -->
+<!-- ava-version: 1.6.1.147 -->
+
+> Revisão 1.6.1.147: sem impacto operacional no AvantaVendas; somente o card
+> AWS do console global `/admin` foi simplificado.
 
 > Revisão 1.6.1.146: sem impacto operacional no AvantaVendas; o consumo da AWS
 > foi acrescentado somente ao console global `/admin`.

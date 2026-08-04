@@ -39,6 +39,31 @@ type ConsumoPlataforma = {
   link: string;
 };
 
+const ITENS_TECNICOS_AWS_OCULTOS = new Set([
+  'Chamadas AWS bem-sucedidas (30 dias)',
+  'Liveness iniciados pela AWS',
+  'CompareFaces na AWS',
+  'Erros AWS (30 dias)',
+  'Chamadas limitadas',
+  'Latência média AWS',
+]);
+
+function itensConsumoVisiveis(plataforma: ConsumoPlataforma) {
+  if (plataforma.nome !== 'AWS · Reconhecimento facial') return plataforma.itens;
+  return plataforma.itens.filter((item) => (
+    !ITENS_TECNICOS_AWS_OCULTOS.has(item.nome)
+    && !item.nome.startsWith('Free Tier')
+  ));
+}
+
+function avisosConsumoVisiveis(plataforma: ConsumoPlataforma) {
+  if (plataforma.nome !== 'AWS · Reconhecimento facial') return plataforma.avisos;
+  return plataforma.avisos.filter((aviso) => (
+    !aviso.startsWith('AWS: métricas do Rekognition indisponíveis')
+    && !aviso.startsWith('AWS: uso do Free Tier indisponível')
+  ));
+}
+
 type HistoricoIa = {
   id: string;
   nome_perfil: string;
@@ -1075,15 +1100,17 @@ export default function AdminPage() {
             )}
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {consumo.map((plataforma) => (
-                <section key={plataforma.nome} className="flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              {consumo.map((plataforma) => {
+                const itensVisiveis = itensConsumoVisiveis(plataforma);
+                const avisosVisiveis = avisosConsumoVisiveis(plataforma);
+                return <section key={plataforma.nome} className="flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-black text-slate-950">{plataforma.nome}</h3>
                     <a href={plataforma.link} target="_blank" rel="noreferrer" className="rounded-md border border-slate-300 px-2.5 py-1.5 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50">Abrir painel</a>
                   </div>
 
                   <div className="mt-3 grid gap-3">
-                    {plataforma.itens.map((item) => {
+                    {itensVisiveis.map((item) => {
                       const pct = item.usado !== null && item.limite ? Math.min(100, Math.round((item.usado / item.limite) * 100)) : null;
                       return (
                         <div key={item.nome}>
@@ -1106,18 +1133,18 @@ export default function AdminPage() {
                         </div>
                       );
                     })}
-                    {!plataforma.itens.length && <p className="text-xs text-slate-400">Sem métricas disponíveis.</p>}
+                    {!itensVisiveis.length && <p className="text-xs text-slate-400">Sem métricas disponíveis.</p>}
                   </div>
 
-                  {plataforma.avisos.length > 0 && (
+                  {avisosVisiveis.length > 0 && (
                     <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2.5">
-                      {plataforma.avisos.map((aviso, indice) => aviso.trimStart().startsWith('create or replace')
+                      {avisosVisiveis.map((aviso, indice) => aviso.trimStart().startsWith('create or replace')
                         ? <pre key={indice} className="mt-1 overflow-x-auto rounded bg-slate-900 p-2 text-[9px] leading-relaxed text-emerald-300">{aviso}</pre>
                         : <p key={indice} className="text-[11px] font-semibold leading-snug text-amber-800">{aviso}</p>)}
                     </div>
                   )}
-                </section>
-              ))}
+                </section>;
+              })}
             </div>
 
             {consumo.length > 0 && (

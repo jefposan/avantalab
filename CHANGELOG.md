@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.147 - 2026-08-04
+
+- Avanta Admin: o card de consumo AWS foi simplificado para mostrar somente
+  custos, créditos e indicadores faciais úteis. Métricas técnicas do CloudWatch
+  e franquias específicas do Free Tier continuam coletadas internamente, mas
+  não são mais exibidas no `/admin`.
+
 ## 1.6.1.146 - 2026-08-04
 
 - Avanta Admin: o painel **Consumo** passa a acompanhar a AWS usada pelo

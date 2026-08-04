@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.146 -->
+<!-- ava-version: 1.6.1.147 -->
+
+> Revisão 1.6.1.147: o card AWS em `/admin` > **Consumo** foi simplificado para
+> custos, créditos e indicadores faciais úteis, sem métricas técnicas do
+> CloudWatch nem franquias específicas do Free Tier na apresentação. A coleta
+> técnica permanece disponível internamente.
 
 > Revisão 1.6.1.146: em `/admin` > **Consumo**, o card **AWS · Reconhecimento
 > facial** reúne custo oficial do mês, créditos e Free Tier quando disponíveis,
