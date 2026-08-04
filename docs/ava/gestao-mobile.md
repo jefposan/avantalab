@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.138 -->
+<!-- ava-version: 1.6.1.139 -->
 
+> Revisão 1.6.1.139: após a captura facial, o funcionário já pode guardar o
+> celular enquanto o sistema confirma o resultado.
+>
 > Revisão 1.6.1.138: a confirmação facial está em português, pede o celular na
 > vertical e aguarda o resultado da prova de vida antes de informar o desfecho.
 >

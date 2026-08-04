@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.138 -->
+<!-- ava-version: 1.6.1.139 -->
 
+> Revisão 1.6.1.139: sem impacto operacional no AvantaVendas; após a captura
+> facial do Controle de Ponto, a orientação do celular deixa de ser exigida.
+>
 > Revisão 1.6.1.138: sem impacto operacional no AvantaVendas; a confirmação
 > facial do Controle de Ponto ganhou tradução e tratamento de espera.
 >

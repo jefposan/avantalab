@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.139 - 2026-08-04
+
+- Controle de Ponto: ao terminar a captura facial, a câmera é encerrada antes
+  da confirmação no servidor. A orientação vertical não é mais exigida enquanto
+  o resultado está sendo verificado.
+
 ## 1.6.1.138 - 2026-08-04
 
 - Controle de Ponto: reconhecimento facial traduzido para português, com tema

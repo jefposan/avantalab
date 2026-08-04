@@ -61,16 +61,21 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
 
   const concluir = async () => {
     if (!sessao) return;
+    const sessaoConcluida = sessao;
+    // A captura terminou. Desmontamos imediatamente o detector para que a
+    // orientação do aparelho não seja mais avaliada durante a confirmação no
+    // servidor — o funcionário pode guardar o celular nesta etapa.
+    setSessao(null);
     setMensagem('Analisando a prova de vida…');
     const proximaEtapa = window.setTimeout(() => setMensagem('Conferindo identidade…'), 1200);
     try {
       const resposta = await fetch('/api/ponto/reconhecimento-facial/resultado', {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessao.token}` },
-        body: JSON.stringify({ empresaId: sessao.empresaId, sessaoId: sessao.sessaoId }),
+        body: JSON.stringify({ empresaId: sessaoConcluida.empresaId, sessaoId: sessaoConcluida.sessaoId }),
       });
       const dados = await resposta.json();
       if (!resposta.ok || !dados.aprovado) throw new Error(dados.mensagem || 'Identidade não confirmada.');
-      window.dispatchEvent(new CustomEvent('avantalab:facial-concluido', { detail: { tipo: sessao.tipo } })); setSessao(null); setMensagem('');
+      window.dispatchEvent(new CustomEvent('avantalab:facial-concluido', { detail: { tipo: sessaoConcluida.tipo } })); setMensagem('');
     } catch (erro) {
       const detalhe = erro instanceof Error ? erro.message : 'Não foi possível confirmar a identidade.';
       setMensagem(detalhe); window.dispatchEvent(new CustomEvent('avantalab:facial-erro', { detail: { mensagem: detalhe } }));
