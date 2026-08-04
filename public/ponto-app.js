@@ -37,6 +37,7 @@
     empresa: null,
     funcionario: null,
     pontoConfig: null,
+    facial: { ativo: false, podeCadastrar: false },
     pontoHoje: [],
     batendo: false,
     comprovante: null,
@@ -77,6 +78,24 @@
   window.addEventListener('avantalab:facial-concluido', function () { var depois = state.facialDepois; state.facialDepois = null; if (depois) depois(); });
   window.addEventListener('avantalab:facial-erro', function (e) { state.facialDepois = null; mostrarToast((e.detail && e.detail.mensagem) || 'Não foi possível confirmar a identidade.'); });
   window.addEventListener('avantalab:facial-cancelado', function () { state.facialDepois = null; });
+
+  async function carregarStatusFacial(empresaId) {
+    if (!empresaId) return { ativo: false, podeCadastrar: false };
+    try {
+      var sessao = await db.auth.getSession();
+      var token = sessao && sessao.data && sessao.data.session && sessao.data.session.access_token;
+      if (!token) return { ativo: false, podeCadastrar: false };
+      var resposta = await buscarComPrazo('/api/ponto/reconhecimento-facial/status?empresaId=' + encodeURIComponent(empresaId), {
+        headers: { Authorization: 'Bearer ' + token },
+      }, 8000, 'consultar a habilitação facial');
+      if (!resposta.ok) return { ativo: false, podeCadastrar: false };
+      var dados = await resposta.json();
+      return { ativo: dados && dados.ativo === true, podeCadastrar: dados && dados.podeCadastrar === true };
+    } catch (e) {
+      // A indisponibilidade do adicional nunca pode impedir a marcação comum.
+      return { ativo: false, podeCadastrar: false };
+    }
+  }
 
   // ---------- helpers ----------
   function escapeHtml(v) {
@@ -343,7 +362,7 @@
   async function sair() {
     try { await db.auth.signOut(); } catch (e) {}
     state.autenticado = false; state.usuario = null; state.empresa = null; state.funcionario = null;
-    state.pontoConfig = null; state.pontoHoje = []; state.comprovante = null; state.view = 'bater';
+    state.pontoConfig = null; state.facial = { ativo: false, podeCadastrar: false }; state.pontoHoje = []; state.comprovante = null; state.view = 'bater';
     state.cpf = ''; state.senha = ''; state.verSenha = false; state.erro = '';
     state.entrando = false; state.etapaEntrada = ''; state.tentativaEntrada += 1; state.batendo = false; state.registros = []; state.periodo = 'dia';
     state.localizacaoAtual = null; state.localizacaoAtualizadaEm = 0; state.localizacaoAtualizando = false; state.localizacaoMsg = '';
@@ -396,8 +415,9 @@
         empresaId ? comPrazo(db.from('empresas').select('id, nome').eq('id', empresaId).maybeSingle(), 10000, 'carregar a empresa') : vazio,
         empresaId ? comPrazo(db.from('ponto_config').select('latitude, longitude, raio_m, reconhecimento_facial_status').eq('empresa_id', empresaId).maybeSingle(), 10000, 'carregar a configuração do ponto') : vazio,
         comPrazo(db.from('ponto_registros').select('id, tipo, registrado_em').eq('user_id', uid).eq('dia', diaPontoHoje()).order('registrado_em', { ascending: true }), 10000, 'carregar os registros de hoje'),
+        carregarStatusFacial(empresaId),
       ]);
-      var f = res[0], emp = res[1], cfg = res[2], hoje = res[3];
+      var f = res[0], emp = res[1], cfg = res[2], hoje = res[3], facial = res[4];
       if (!f || f.error || !f.data || f.data.ativo !== true) {
         await bloquearPonto('Seu acesso ao Controle de Ponto está inativo. Fale com o gestor.');
         return;
@@ -416,6 +436,7 @@
       if (f && !f.error && f.data) state.funcionario = f.data;
       if (emp && !emp.error && emp.data) state.empresa = emp.data;
       state.pontoConfig = (cfg && !cfg.error && cfg.data) ? cfg.data : null;
+      state.facial = facial || { ativo: false, podeCadastrar: false };
       if (hoje && !hoje.error) state.pontoHoje = hoje.data || [];
       // Notificações não são requisito para abrir o ponto; não podem atrasar o acesso.
       await comPrazo(verificarNotificacoesPonto(), 5000, 'verificar notificações').catch(function (erro) {
@@ -862,8 +883,9 @@
     }).join('');
 
     var botoesHtml = '';
-    var facialAtivo = state.pontoConfig && state.pontoConfig.reconhecimento_facial_status && state.pontoConfig.reconhecimento_facial_status !== 'desativado' && state.pontoConfig.reconhecimento_facial_status !== 'suspenso';
-    if (facialAtivo) botoesHtml += '<button id="ponto-cadastrar-facial" type="button" class="mb-2 min-h-11 w-full rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-xs font-black text-cyan-800">Cadastrar ou atualizar reconhecimento facial</button>';
+    var facialAtivo = state.facial && state.facial.ativo === true;
+    var facialPodeCadastrar = state.facial && state.facial.podeCadastrar === true;
+    if (facialAtivo || facialPodeCadastrar) botoesHtml += '<button id="ponto-cadastrar-facial" type="button" class="mb-2 min-h-11 w-full rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-xs font-black text-cyan-800">' + (facialAtivo ? 'Atualizar reconhecimento facial' : 'Cadastrar reconhecimento facial') + '</button>';
     if (proxima) {
       botoesHtml += '<button id="ponto-acao" data-tipo="' + proxima + '" type="button" ' + (state.batendo ? 'disabled' : '') + ' class="h-14 w-full rounded-2xl bg-cyan-600 text-base font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-60">' + (state.batendo ? 'Registrando...' : escapeHtml(rotuloAcao(proxima))) + '</button>';
       if (podeEncerrar && proxima !== 'saida') {
@@ -954,7 +976,7 @@
     bind('ponto-confirmar-ok', function () {
       var tipo = state.confirmarTipo;
       if (!tipo) return;
-      var facialAtivo = state.pontoConfig && state.pontoConfig.reconhecimento_facial_status && state.pontoConfig.reconhecimento_facial_status !== 'desativado' && state.pontoConfig.reconhecimento_facial_status !== 'suspenso';
+      var facialAtivo = state.facial && state.facial.ativo === true;
       if (facialAtivo) iniciarFacial('marcacao', function () { bater(tipo); }); else bater(tipo);
     });
     bind('ponto-cadastrar-facial', function () { iniciarFacial('cadastro', function () { mostrarToast('Reconhecimento facial cadastrado com sucesso.'); }); });

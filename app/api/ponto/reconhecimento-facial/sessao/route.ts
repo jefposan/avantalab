@@ -14,12 +14,14 @@ export async function POST(request: Request) {
 
   const { data: configuracao } = await acesso.db.from('ponto_config')
     .select('reconhecimento_facial_status').eq('empresa_id', empresaId).maybeSingle();
-  if (configuracao?.reconhecimento_facial_status === 'desativado' || configuracao?.reconhecimento_facial_status === 'suspenso') {
+  if (!configuracao || configuracao.reconhecimento_facial_status === 'desativado' || configuracao.reconhecimento_facial_status === 'suspenso') {
     return erro('O reconhecimento facial não está habilitado para esta empresa.', 403);
   }
   const { data: funcionario } = await acesso.db.from('ponto_facial_funcionarios')
     .select('status').eq('empresa_id', empresaId).eq('funcionario_user_id', acesso.usuario.id).maybeSingle();
   if (!funcionario || funcionario.status === 'removido' || funcionario.status === 'suspenso') return erro('Seu reconhecimento facial não está habilitado.', 403);
+  if (tipo === 'marcacao' && funcionario.status !== 'ativo') return erro('Seu reconhecimento facial não está habilitado.', 403);
+  if (tipo === 'cadastro' && funcionario.status !== 'pendente_cadastro' && funcionario.status !== 'ativo') return erro('Seu reconhecimento facial não está habilitado.', 403);
 
   try {
     const sessaoId = await criarSessaoProvaDeVida();

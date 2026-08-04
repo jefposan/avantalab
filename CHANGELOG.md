@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.141 - 2026-08-04
+
+- Controle de Ponto: o reconhecimento facial passa a ser exigido exclusivamente
+  para o funcionário que estiver individualmente ativo no adicional. Sem essa
+  habilitação, a marcação segue o fluxo comum, sem botão ou bloqueio facial.
+
 ## 1.6.1.140 - 2026-08-04
 
 - Controle de Ponto: reforçadas as orientações de enquadramento facial em

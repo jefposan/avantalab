@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.140 -->
+<!-- ava-version: 1.6.1.141 -->
+
+> Revisão 1.6.1.141: a confirmação facial só é exigida do funcionário
+> individualmente ativado no adicional. Sem ativação individual, a marcação
+> segue normalmente e o botão facial não é exibido.
 
 > Revisão 1.6.1.140: a câmera facial orienta em português sobre distância,
 > centralização, luz e imobilidade antes de aceitar a prova de vida.

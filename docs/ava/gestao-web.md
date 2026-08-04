@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.140 -->
+<!-- ava-version: 1.6.1.141 -->
+
+> Revisão 1.6.1.141: a confirmação facial só é exigida do funcionário
+> individualmente ativado no adicional. Sem ativação individual, a marcação
+> segue normalmente e o botão facial não é exibido.
 
 > Revisão 1.6.1.140: a câmera facial orienta em português sobre distância,
 > centralização, luz e imobilidade antes de aceitar a prova de vida.
@@ -1007,8 +1011,9 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   a aba **Facial** prepara o adicional: selecione os funcionários e confirme
   privacidade, alternativa de marcação e ausência de sanção automática. O
   preço informado é R$ 14,90 por funcionário ao mês, com referência de até 120
-  verificações mensais. Enquanto estiver **Em preparação**, não há captura ou
-  cadastro facial.
+  verificações mensais. Somente o funcionário selecionado recebe o botão de
+  cadastro; a marcação só exige a confirmação após o cadastro ficar ativo. Quem
+  não estiver habilitado continua usando a marcação comum, sem bloqueio facial.
   a aba **Auditoria** mostra as marcações e as alterações de acesso registradas.
   O funcionário recebe um comprovante imediatamente após cada marcação e pode
   imprimi-lo; o código mostrado identifica o registro salvo no banco.
