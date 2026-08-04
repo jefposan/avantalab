@@ -4,6 +4,7 @@ import { compararComReferencia, guardarEvidenciaFacial, LIMIAR_PROVA_DE_VIDA, LI
 
 function erro(mensagem: string, status = 400) { return NextResponse.json({ erro: true, mensagem }, { status }); }
 function idValido(valor: unknown) { return typeof valor === 'string' && /^[a-z0-9-]{8,128}$/i.test(valor); }
+const aguardar = (ms: number) => new Promise<void>((resolver) => setTimeout(resolver, ms));
 
 export async function POST(request: Request) {
   const corpo = await request.json().catch(() => ({}));
@@ -19,12 +20,19 @@ export async function POST(request: Request) {
   if (!verificacao || verificacao.status !== 'iniciada') return erro('Sessão facial não encontrada.', 404);
 
   try {
-    const resultado = await obterResultadoProvaDeVida(sessaoId);
+    let resultado = await obterResultadoProvaDeVida(sessaoId);
+    // A análise é assíncrona: após a animação terminar, o resultado pode levar
+    // alguns segundos para ficar disponível. Não reprovamos uma sessão válida
+    // apenas porque a consulta chegou antes do processamento da AWS.
+    for (let tentativa = 0; resultado.Status === 'IN_PROGRESS' && tentativa < 10; tentativa += 1) {
+      await aguardar(500);
+      resultado = await obterResultadoProvaDeVida(sessaoId);
+    }
     const confianca = Number(resultado.Confidence || 0);
     const referencia = resultado.ReferenceImage?.Bytes;
     if (resultado.Status !== 'SUCCEEDED' || !referencia || confianca < LIMIAR_PROVA_DE_VIDA) {
       await acesso.db.from('ponto_facial_verificacoes').update({ status: 'reprovada', confianca_prova_vida: confianca, motivo: 'Prova de vida insuficiente.', concluido_em: new Date().toISOString() }).eq('id', verificacao.id);
-      return erro('Não foi possível confirmar a prova de vida.', 422);
+      return erro(resultado.Status === 'IN_PROGRESS' ? 'A verificação demorou mais que o esperado. Tente novamente.' : 'Não foi possível confirmar a prova de vida.', 422);
     }
 
     const chaveEvidencia = `${empresaId}/${acesso.usuario.id}/${verificacao.id}/referencia.jpg`;

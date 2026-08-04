@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.138 - 2026-08-04
+
+- Controle de Ponto: reconhecimento facial traduzido para português, com tema
+  AvantaLab, orientação vertical explicada e conferência final responsiva
+  (consulta a cada meio segundo, por até cinco segundos) antes de concluir ou
+  reprovar a marcação.
+
 ## 1.6.1.137 - 2026-08-04
 
 - Controle de Ponto: incluída a câmera guiada de prova de vida e reconhecimento

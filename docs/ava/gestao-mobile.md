@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.137 -->
+<!-- ava-version: 1.6.1.138 -->
 
+> Revisão 1.6.1.138: a confirmação facial está em português, pede o celular na
+> vertical e aguarda o resultado da prova de vida antes de informar o desfecho.
+>
 > Revisão 1.6.1.137: funcionários selecionados podem cadastrar ou atualizar a
 > face no próprio ponto; quando o adicional está habilitado, a marcação exige a
 > confirmação guiada antes de ser registrada.

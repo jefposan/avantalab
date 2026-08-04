@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.137 -->
+<!-- ava-version: 1.6.1.138 -->
 
+> Revisão 1.6.1.138: sem impacto operacional no AvantaVendas; a confirmação
+> facial do Controle de Ponto ganhou tradução e tratamento de espera.
+>
 > Revisão 1.6.1.137: sem impacto operacional no AvantaVendas; a câmera facial
 > do Controle de Ponto foi liberada para o funcionário.
 >
