@@ -39,14 +39,31 @@ export default function PainelConferencia({
   const [motivos, setMotivos] = useState<Record<string, string>>({});
   const [formasPagamento, setFormasPagamento] = useState<Record<string, FormaPagamentoRecebimento | ''>>({});
   const [busca, setBusca] = useState('');
+  const [mesReferencia, setMesReferencia] = useState(() => {
+    const hoje = new Date();
+    return { ano: hoje.getFullYear(), mes: hoje.getMonth() };
+  });
+  const [todosMeses, setTodosMeses] = useState(true);
   // Ação pendente por recebimento: revela o campo de motivo + botão Confirmar.
   // A ação só é efetivada ao confirmar.
   const [acaoMotivo, setAcaoMotivo] = useState<Record<string, 'devolver' | 'divergencia' | 'estornar' | null>>({});
 
-  // A conferência é uma fila operacional única, sem recorte por competência.
+  const chaveMes = `${mesReferencia.ano}-${String(mesReferencia.mes + 1).padStart(2, '0')}`;
+  function mudarMes(delta: number) {
+    setMesReferencia((atual) => {
+      const data = new Date(atual.ano, atual.mes + delta, 1);
+      return { ano: data.getFullYear(), mes: data.getMonth() };
+    });
+    setTodosMeses(false);
+  }
+
+  // A fila começa completa. Ao navegar pelas setas, a conferência passa a
+  // considerar apenas a competência (mês do vencimento) selecionada.
   const pendentes = useMemo(
-    () => recebimentos.filter((r) => aguardandoConferencia(r.situacao)),
-    [recebimentos],
+    () => recebimentos.filter((r) =>
+      aguardandoConferencia(r.situacao) && (todosMeses || r.vencimento.slice(0, 7) === chaveMes),
+    ),
+    [recebimentos, todosMeses, chaveMes],
   );
 
   const nomeEmpresa = useCallback((id: string) => empresas.find((e) => e.id === id)?.nome ?? '—', [empresas]);
@@ -77,6 +94,31 @@ export default function PainelConferencia({
       <div>
         <h3 className={styles.sectionTitle} style={{ marginBottom: podeConfirmar ? 12 : 0 }}>Conferência de recebimentos</h3>
         {portalBusca === undefined && <div className={styles.conferenciaBuscaLocal}>{campoBusca}</div>}
+        <div className={styles.conferenciaPeriodo} aria-label="Filtro por competência">
+          <div className={styles.mesSeletor}>
+            <button type="button" className={styles.mesSeletorBtn} onClick={() => mudarMes(-1)} aria-label="Mês anterior">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8} width="14" height="14" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 6l-6 6 6 6" />
+              </svg>
+            </button>
+            <span className={styles.mesSeletorDiv} aria-hidden="true" />
+            <span className={styles.mesSeletorLabel}>{MESES_CURTOS[mesReferencia.mes]} <b>{mesReferencia.ano}</b></span>
+            <span className={styles.mesSeletorDiv} aria-hidden="true" />
+            <button type="button" className={styles.mesSeletorBtn} onClick={() => mudarMes(1)} aria-label="Próximo mês">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8} width="14" height="14" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
+              </svg>
+            </button>
+          </div>
+          <button
+            type="button"
+            className={`${styles.btn} ${styles.btnSm} ${styles.conferenciaTodos} ${todosMeses ? styles.conferenciaTodosAtivo : ''}`}
+            aria-pressed={todosMeses}
+            onClick={() => setTodosMeses(true)}
+          >
+            Todos
+          </button>
+        </div>
         {!podeConfirmar && (
           <div className={styles.aviso} style={{ marginBottom: 14 }}>
             A confirmação de baixa é restrita a Gestor e Administrador.

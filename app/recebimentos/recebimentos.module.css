@@ -1015,6 +1015,25 @@
 .conferenciaItem {
   margin-bottom: 8px;
 }
+.conferenciaPeriodo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+.conferenciaTodos {
+  min-height: 32px;
+  padding-inline: 12px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #d8e2ec;
+}
+.conferenciaTodosAtivo {
+  border-color: color-mix(in srgb, var(--cp) 35%, #d8e2ec);
+  background: color-mix(in srgb, var(--cp) 12%, #fff);
+  color: var(--cp);
+}
 .conferenciaIdentificacao {
   display: flex;
   align-items: center;
@@ -2016,6 +2035,16 @@
   color: #e2e8f0;
 }
 .darkScope .conferenciaObservacao { border-top-color: #334155; }
+.darkScope .conferenciaTodos {
+  border-color: #475569;
+  background: #0f172a;
+  color: #cbd5e1;
+}
+.darkScope .conferenciaTodosAtivo {
+  border-color: color-mix(in srgb, var(--cp) 60%, #475569);
+  background: color-mix(in srgb, var(--cp) 22%, #0f172a);
+  color: color-mix(in srgb, var(--cp) 55%, #fff);
+}
 .darkScope .competenciaPill {
   background: color-mix(in srgb, var(--cp) 22%, #0f172a);
   color: color-mix(in srgb, var(--cp) 55%, #fff);
