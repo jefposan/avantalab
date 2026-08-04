@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import type { ReactNode } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
 import { diferencaDiasIso, diasEmAtraso, formatarData, formatarMoeda } from './helpers';
@@ -16,6 +17,7 @@ type Props = {
   podeBaixar?: boolean;
   onBaixar?: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void> | void;
   portalBusca?: HTMLElement | null;
+  filtroCompetencia?: ReactNode;
 };
 
 const FORMAS_PAGAMENTO: Array<[FormaPagamentoRecebimento, string]> = [
@@ -38,6 +40,7 @@ export default function TabelaVencimentos({
   podeBaixar = false,
   onBaixar,
   portalBusca,
+  filtroCompetencia,
 }: Props) {
   const hoje = new Date(`${hojeIso}T00:00:00`);
   const [busca, setBusca] = useState('');
@@ -94,7 +97,10 @@ export default function TabelaVencimentos({
             <h3 className={styles.sectionTitle} style={{ margin: 0 }}>{titulo}</h3>
             <p className={styles.muted} style={{ margin: '4px 0 0' }}>{descricao}</p>
           </div>
-          {portalBusca === undefined && campoBusca}
+          <div className={styles.listaTopoAcoes}>
+            {filtroCompetencia}
+            {portalBusca === undefined && campoBusca}
+          </div>
         </div>
 
         <div className={styles.tableWrap}>

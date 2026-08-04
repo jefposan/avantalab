@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
 import { cobrancasNosProximosDias, dataLocalIso } from './helpers';
 import TabelaVencimentos from './TabelaVencimentos';
+import FiltroCompetencia from './FiltroCompetencia';
 
 type Props = {
   empresas: Empresa[];
@@ -16,9 +17,23 @@ type Props = {
 
 export default function ListaProximosVencimentos({ empresas, subempresas, recebimentos, podeBaixar, onBaixar, portalBusca }: Props) {
   const hojeIso = useMemo(() => dataLocalIso(), []);
+  const [mesReferencia, setMesReferencia] = useState(() => {
+    const hoje = new Date();
+    return { ano: hoje.getFullYear(), mes: hoje.getMonth() };
+  });
+  const [todosMeses, setTodosMeses] = useState(false);
+  const chaveMes = `${mesReferencia.ano}-${String(mesReferencia.mes + 1).padStart(2, '0')}`;
+  function mudarMes(delta: number) {
+    setMesReferencia((atual) => {
+      const data = new Date(atual.ano, atual.mes + delta, 1);
+      return { ano: data.getFullYear(), mes: data.getMonth() };
+    });
+    setTodosMeses(false);
+  }
   const proximos = useMemo(
-    () => cobrancasNosProximosDias(recebimentos, hojeIso, 30),
-    [recebimentos, hojeIso],
+    () => cobrancasNosProximosDias(recebimentos, hojeIso, 30)
+      .filter((recebimento) => todosMeses || recebimento.vencimento.slice(0, 7) === chaveMes),
+    [recebimentos, hojeIso, todosMeses, chaveMes],
   );
 
   return (
@@ -34,6 +49,7 @@ export default function ListaProximosVencimentos({ empresas, subempresas, recebi
       podeBaixar={podeBaixar}
       onBaixar={onBaixar}
       portalBusca={portalBusca}
+      filtroCompetencia={<FiltroCompetencia referencia={mesReferencia} todos={todosMeses} onMudarMes={mudarMes} onMostrarTodos={() => setTodosMeses(true)} />}
     />
   );
 }

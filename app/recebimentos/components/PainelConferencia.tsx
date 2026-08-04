@@ -7,6 +7,7 @@ import { FORMAS_PAGAMENTO_RECEBIMENTO, type Colaborador, type Empresa, type Form
 import { aguardandoConferencia, formatarDataHora, formatarMoeda, rotuloFormaPagamento, rotuloSituacao } from './helpers';
 import type { ComprovanteRecebimento } from '../data/repo';
 import BotaoComprovante from './BotaoComprovante';
+import FiltroCompetencia from './FiltroCompetencia';
 
 const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
@@ -43,7 +44,7 @@ export default function PainelConferencia({
     const hoje = new Date();
     return { ano: hoje.getFullYear(), mes: hoje.getMonth() };
   });
-  const [todosMeses, setTodosMeses] = useState(true);
+  const [todosMeses, setTodosMeses] = useState(false);
   // Ação pendente por recebimento: revela o campo de motivo + botão Confirmar.
   // A ação só é efetivada ao confirmar.
   const [acaoMotivo, setAcaoMotivo] = useState<Record<string, 'devolver' | 'divergencia' | 'estornar' | null>>({});
@@ -57,8 +58,8 @@ export default function PainelConferencia({
     setTodosMeses(false);
   }
 
-  // A fila começa completa. Ao navegar pelas setas, a conferência passa a
-  // considerar apenas a competência (mês do vencimento) selecionada.
+  // A fila inicia na competência atual. A opção Todos remove esse recorte;
+  // as setas mantêm o filtro no mês de vencimento selecionado.
   const pendentes = useMemo(
     () => recebimentos.filter((r) =>
       aguardandoConferencia(r.situacao) && (todosMeses || r.vencimento.slice(0, 7) === chaveMes),
@@ -92,33 +93,11 @@ export default function PainelConferencia({
       {portalBusca && createPortal(campoBusca, portalBusca)}
       {/* Topo estático (fixo): título + aviso de permissão. */}
       <div>
-        <h3 className={styles.sectionTitle} style={{ marginBottom: podeConfirmar ? 12 : 0 }}>Conferência de recebimentos</h3>
-        {portalBusca === undefined && <div className={styles.conferenciaBuscaLocal}>{campoBusca}</div>}
-        <div className={styles.conferenciaPeriodo} aria-label="Filtro por competência">
-          <div className={styles.mesSeletor}>
-            <button type="button" className={styles.mesSeletorBtn} onClick={() => mudarMes(-1)} aria-label="Mês anterior">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8} width="14" height="14" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 6l-6 6 6 6" />
-              </svg>
-            </button>
-            <span className={styles.mesSeletorDiv} aria-hidden="true" />
-            <span className={styles.mesSeletorLabel}>{MESES_CURTOS[mesReferencia.mes]} <b>{mesReferencia.ano}</b></span>
-            <span className={styles.mesSeletorDiv} aria-hidden="true" />
-            <button type="button" className={styles.mesSeletorBtn} onClick={() => mudarMes(1)} aria-label="Próximo mês">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8} width="14" height="14" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
-              </svg>
-            </button>
-          </div>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnSm} ${styles.conferenciaTodos} ${todosMeses ? styles.conferenciaTodosAtivo : ''}`}
-            aria-pressed={todosMeses}
-            onClick={() => setTodosMeses(true)}
-          >
-            Todos
-          </button>
+        <div className={styles.conferenciaTopo}>
+          <h3 className={styles.sectionTitle}>Conferência de recebimentos</h3>
+          <FiltroCompetencia referencia={mesReferencia} todos={todosMeses} onMudarMes={mudarMes} onMostrarTodos={() => setTodosMeses(true)} />
         </div>
+        {portalBusca === undefined && <div className={styles.conferenciaBuscaLocal}>{campoBusca}</div>}
         {!podeConfirmar && (
           <div className={styles.aviso} style={{ marginBottom: 14 }}>
             A confirmação de baixa é restrita a Gestor e Administrador.

@@ -1015,12 +1015,21 @@
 .conferenciaItem {
   margin-bottom: 8px;
 }
-.conferenciaPeriodo {
+.conferenciaTopo {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.conferenciaTopo .sectionTitle { margin: 0; }
+.conferenciaPeriodo,
+.filtroCompetencia {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  margin: 10px 0 14px;
+  flex: 0 0 auto;
+  margin: 0;
 }
 .conferenciaTodos {
   min-height: 32px;
@@ -1033,6 +1042,11 @@
   border-color: color-mix(in srgb, var(--cp) 35%, #d8e2ec);
   background: color-mix(in srgb, var(--cp) 12%, #fff);
   color: var(--cp);
+}
+@container conferencia-recebimentos (max-width: 620px) {
+  .conferenciaTopo { align-items: flex-start; flex-wrap: wrap; }
+  .conferenciaPeriodo,
+  .filtroCompetencia { margin-left: auto; }
 }
 .conferenciaIdentificacao {
   display: flex;
@@ -1903,6 +1917,7 @@
 }
 .recebimentosMesInline {
   display: flex;
+  gap: 8px;
   align-self: center;
   margin-left: auto;
 }

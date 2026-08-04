@@ -9,6 +9,7 @@ import ListaEmpresas from './ListaEmpresas';
 import ListaColaboradores from './ListaColaboradores';
 import ListaRecebimentos from './ListaRecebimentos';
 import PainelConferencia from './PainelConferencia';
+import FiltroCompetencia from './FiltroCompetencia';
 import ListaInadimplentes from './ListaInadimplentes';
 import ListaProximosVencimentos from './ListaProximosVencimentos';
 import GraficoResultados from './GraficoResultados';
@@ -79,6 +80,7 @@ export default function PainelAdministrativo(props: Props) {
     const hoje = new Date();
     return { ano: hoje.getFullYear(), mes: hoje.getMonth() };
   });
+  const [todosMesesRecebimentos, setTodosMesesRecebimentos] = useState(false);
   const [nomeEntrada, setNomeEntrada] = useState('Recebimentos em campo');
   const [tituloEtiqueta, setTituloEtiqueta] = useState('Recebimentos');
   const [integracao, setIntegracao] = useState<IntegracaoFinanceiraRecebimentos | null>(null);
@@ -108,6 +110,11 @@ export default function PainelAdministrativo(props: Props) {
       const data = new Date(atual.ano, atual.mes + delta, 1);
       return { ano: data.getFullYear(), mes: data.getMonth() };
     });
+  }
+
+  function mudarMesRecebimentos(delta: number) {
+    mudarMes(delta);
+    setTodosMesesRecebimentos(false);
   }
 
   const chaveMes = `${mesRef.ano}-${String(mesRef.mes + 1).padStart(2, '0')}`;
@@ -229,7 +236,14 @@ export default function PainelAdministrativo(props: Props) {
     );
   }
   const seletorMes = criarSeletorMes();
-  const seletorMesEmpilhado = criarSeletorMes(true);
+  const seletorMesRecebimentos = (
+    <FiltroCompetencia
+      referencia={mesRef}
+      todos={todosMesesRecebimentos}
+      onMudarMes={mudarMesRecebimentos}
+      onMostrarTodos={() => setTodosMesesRecebimentos(true)}
+    />
+  );
   const abaUsaCompetencia = aba === 'visao' || aba === 'recebimentos' || aba === 'resultados';
 
   return (
@@ -391,7 +405,7 @@ export default function PainelAdministrativo(props: Props) {
         )}
 
         {aba === 'recebimentos' && (
-          <ListaRecebimentos chaveMes={chaveMes} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} recebimentos={recebimentos} darkMode={darkMode} podeEstornar={podeConfirmar} onEstornar={props.onEstornarDireto} onObterComprovante={props.onObterComprovante} portalBusca={portalBuscaRecebimentos} seletorMes={seletorMesEmpilhado} />
+          <ListaRecebimentos chaveMes={chaveMes} todosMeses={todosMesesRecebimentos} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} recebimentos={recebimentos} darkMode={darkMode} podeEstornar={podeConfirmar} onEstornar={props.onEstornarDireto} onObterComprovante={props.onObterComprovante} portalBusca={portalBuscaRecebimentos} seletorMes={seletorMesRecebimentos} />
         )}
 
         {aba === 'inadimplentes' && (

@@ -11,6 +11,7 @@ import BotaoComprovante from './BotaoComprovante';
 
 type Props = {
   chaveMes: string;
+  todosMeses?: boolean;
   empresas: Empresa[];
   subempresas: Subempresa[];
   colaboradores: Colaborador[];
@@ -44,7 +45,7 @@ function formatarDataHoraCurta(iso: string | null): string {
   });
 }
 
-export default function ListaRecebimentos({ chaveMes, empresas, subempresas, colaboradores, recebimentos, darkMode, podeEstornar, onEstornar, onObterComprovante, portalBusca, seletorMes }: Props) {
+export default function ListaRecebimentos({ chaveMes, todosMeses = false, empresas, subempresas, colaboradores, recebimentos, darkMode, podeEstornar, onEstornar, onObterComprovante, portalBusca, seletorMes }: Props) {
   const [fEmpresa, setFEmpresa] = useState('');
   const [fSub, setFSub] = useState('');
   const [fColab, setFColab] = useState('');
@@ -60,10 +61,15 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
   const [erroEstorno, setErroEstorno] = useState('');
 
   useEffect(() => {
+    if (todosMeses) {
+      setDataInicial('');
+      setDataFinal('');
+      return;
+    }
     const { inicio, fim } = limitesDoMes(chaveMes);
     setDataInicial(inicio);
     setDataFinal(fim);
-  }, [chaveMes]);
+  }, [chaveMes, todosMeses]);
 
   const nomeEmpresa = useCallback((id: string) => empresas.find((e) => e.id === id)?.nome ?? '—', [empresas]);
   const nomeSub = useCallback((id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto', [subempresas]);
