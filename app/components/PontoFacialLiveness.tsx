@@ -45,6 +45,25 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     const iniciar = async (event: Event) => {
       const inicio = (event as CustomEvent<Inicio>).detail;
       if (!inicio?.empresaId || !inicio.token) return;
+      // Compatibilidade com versões antigas do PWA: elas ainda disparavam este
+      // evento para toda a empresa em preparação. Antes de abrir a câmera,
+      // confirmamos a habilitação individual. Se não houver facial ativo, a
+      // marcação comum continua sem mostrar aviso nem erro.
+      if (inicio.tipo === 'marcacao') {
+        try {
+          const habilitacao = await fetch(`/api/ponto/reconhecimento-facial/status?empresaId=${encodeURIComponent(inicio.empresaId)}`, {
+            headers: { Authorization: `Bearer ${inicio.token}` },
+          });
+          const dadosHabilitacao = await habilitacao.json();
+          if (habilitacao.ok && dadosHabilitacao?.ativo !== true) {
+            window.dispatchEvent(new CustomEvent('avantalab:facial-concluido', { detail: { tipo: inicio.tipo, dispensado: true } }));
+            return;
+          }
+        } catch {
+          // A versão atual não envia a marcação comum para esta etapa. Em uma
+          // versão antiga, mantemos a resposta segura da sessão abaixo.
+        }
+      }
       setMensagem('Preparando a câmera…');
       try {
         const resposta = await fetch('/api/ponto/reconhecimento-facial/sessao', {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.142 - 2026-08-04
+
+- Controle de Ponto: corrigido o cache do PWA e incluída uma proteção de
+  compatibilidade. Mesmo em um aplicativo antigo, funcionário sem facial ativo
+  segue diretamente para a marcação comum, sem aviso ou abertura de câmera.
+
 ## 1.6.1.141 - 2026-08-04
 
 - Controle de Ponto: o reconhecimento facial passa a ser exigido exclusivamente

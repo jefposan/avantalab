@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.141 -->
+<!-- ava-version: 1.6.1.142 -->
+
+> Revisão 1.6.1.142: mesmo se o celular conservar uma versão anterior do
+> aplicativo, quem não estiver individualmente habilitado no facial segue para
+> a marcação comum, sem aviso ou abertura de câmera.
 
 > Revisão 1.6.1.141: a confirmação facial só é exigida do funcionário
 > individualmente ativado no adicional. Sem ativação individual, a marcação
