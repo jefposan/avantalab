@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.142 -->
+<!-- ava-version: 1.6.1.143 -->
+
+> Revisão 1.6.1.143: a verificação facial ganhou interface AvantaLab, com
+> orientação clara antes da câmera e retorno visível ao ponto em caso de erro.
 
 > Revisão 1.6.1.142: mesmo se o celular conservar uma versão anterior do
 > aplicativo, quem não estiver individualmente habilitado no facial segue para

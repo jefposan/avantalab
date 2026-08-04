@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.142 -->
+<!-- ava-version: 1.6.1.143 -->
+
+> Revisão 1.6.1.143: sem impacto operacional no AvantaVendas; a tela facial do
+> Controle de Ponto recebeu revisão visual.
 
 > Revisão 1.6.1.142: sem impacto operacional no AvantaVendas; reforçada a
 > compatibilidade do cache do Controle de Ponto.

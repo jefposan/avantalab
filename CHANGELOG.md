@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.143 - 2026-08-04
+
+- Controle de Ponto: a experiência de cadastro e confirmação facial recebeu
+  interface AvantaLab, com cabeçalho institucional, etapas claras, orientação
+  de privacidade e estados de recuperação mais legíveis.
+
 ## 1.6.1.142 - 2026-08-04
 
 - Controle de Ponto: corrigido o cache do PWA e incluída uma proteção de
