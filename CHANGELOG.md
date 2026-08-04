@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.134 - 2026-08-03
+
+- Gestão Web e Mobile: despesas programadas agora mudam de **Previsto** para
+  **A confirmar** na data e para **Pendente** depois do vencimento. O aviso de
+  confirmação permanece disponível até o lançamento ser confirmado, editado ou
+  excluído. Despesas pendentes deixam de compor totais, gráficos e resultado
+  realizado, permanecendo somente na projeção até a confirmação manual.
+
 ## 1.6.1.131 - 2026-08-03
 
 - Avanta Admin: **Consumo das plataformas** passa a acompanhar saldo, gasto do

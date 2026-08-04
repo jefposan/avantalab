@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.131 -->
+<!-- ava-version: 1.6.1.134 -->
+
+> Revisão 1.6.1.134: uma despesa programada aparece como **Previsto** antes da
+> data, **A confirmar** no dia e **Pendente** depois do vencimento. O card
+> **Lançamentos a confirmar** mantém despesas vencidas até confirmação, edição
+> ou exclusão. Enquanto pendente, o valor não integra totais, gráficos nem o
+> resultado realizado; permanece somente no saldo previsto.
 
 > Revisão 1.6.1.131: em `/admin` > **Consumo**, o card Twilio informa saldo,
 > gasto mensal e o resumo das verificações SMS dos últimos 30 dias. A consulta

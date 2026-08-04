@@ -901,11 +901,15 @@ export async function removerNotaLancamento(lancamentoId: string | number) {
 export async function definirStatusLancamento(
   id: string | number,
   empresaId: string,
-  status: string | null
+  status: string | null,
+  tipoObs?: string | null
 ) {
+  const atualizacao: { status: string | null; tipo_obs?: string | null } = { status };
+  if (tipoObs !== undefined) atualizacao.tipo_obs = tipoObs;
+
   const { error } = await supabase
     .from('lancamentos')
-    .update({ status })
+    .update(atualizacao)
     .eq('id', id)
     .eq('empresa_id', empresaId);
 

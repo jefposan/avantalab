@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.131 -->
+<!-- ava-version: 1.6.1.134 -->
+
+> Revisão 1.6.1.134: correção do estado de despesas aplicada somente à Gestão
+> Web e Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.131: acompanhamento da Twilio adicionado somente ao console
 > global `/admin`; sem impacto operacional no AvantaVendas.

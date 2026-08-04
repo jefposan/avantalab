@@ -1165,19 +1165,30 @@ const mostrarComparativoResumoDash =
           <BotaoOpcoesCard id="aConfirmar" />
         </div>
         <div className="grid gap-2 overflow-y-auto p-3">
-          {despesasAConfirmar.map((d) => (
-            <div key={`desp-${d.id}`} className="rounded-xl border border-slate-200 bg-white p-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="min-w-0 truncate text-sm font-bold text-slate-800">{d.despesa} <span className="text-xs font-semibold text-slate-400">· dia {d.dia}</span></p>
-                <strong className="shrink-0 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
+          {despesasAConfirmar.map((d) => {
+            const hoje = new Date();
+            const dataProgramada = new Date(Number(anoSelecionado), meses.indexOf(d.mes), Number(d.dia));
+            const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+            const pendente = dataProgramada < inicioHoje;
+            return (
+              <div key={`desp-${d.id}`} className="rounded-xl border border-slate-200 bg-white p-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="min-w-0 truncate text-sm font-bold text-slate-800">
+                    {d.despesa} <span className="text-xs font-semibold text-slate-400">· dia {d.dia}</span>
+                    <span className={`ml-1.5 inline-block rounded-full px-1.5 py-0.5 align-middle text-[9px] font-black ${pendente ? 'bg-red-100 text-red-700' : 'bg-sky-100 text-sky-700'}`}>
+                      {pendente ? 'Pendente' : 'A confirmar'}
+                    </span>
+                  </p>
+                  <strong className="shrink-0 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
+                </div>
+                <div className="mt-2 grid grid-cols-3 gap-1.5">
+                  <button type="button" onClick={() => onConfirmarPrevista(d.id)} className="h-8 rounded-lg bg-emerald-600 text-[11px] font-black text-white hover:bg-emerald-700 cursor-pointer">Confirmar</button>
+                  <button type="button" onClick={() => onAjustarPrevista(d)} className="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 hover:bg-slate-50 cursor-pointer">Editar</button>
+                  <button type="button" onClick={() => onExcluirPrevista(d.id)} className="h-8 rounded-lg border border-red-200 bg-white text-[11px] font-black text-red-600 hover:bg-red-50 cursor-pointer">Excluir</button>
+                </div>
               </div>
-              <div className="mt-2 grid grid-cols-3 gap-1.5">
-                <button type="button" onClick={() => onConfirmarPrevista(d.id)} className="h-8 rounded-lg bg-emerald-600 text-[11px] font-black text-white hover:bg-emerald-700 cursor-pointer">Confirmar</button>
-                <button type="button" onClick={() => onAjustarPrevista(d)} className="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 hover:bg-slate-50 cursor-pointer">Editar</button>
-                <button type="button" onClick={() => onExcluirPrevista(d.id)} className="h-8 rounded-lg border border-red-200 bg-white text-[11px] font-black text-red-600 hover:bg-red-50 cursor-pointer">Excluir</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {receitasAConfirmar.map((r) => (
             <div key={`rec-${r.id}`} className="rounded-xl border border-emerald-200 bg-white p-2.5">
               <div className="flex items-center justify-between gap-2">

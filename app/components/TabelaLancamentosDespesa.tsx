@@ -34,21 +34,47 @@ function dataFuturaTab(ano: number, mesIndice: number, dia: number): boolean {
 }
 
 const SELO_TIPO: Record<string, { txt: string; cls: string }> = {
-  previsto: { txt: 'Previsto', cls: 'bg-amber-100 text-amber-700' },
   fixa: { txt: 'Fixa', cls: 'bg-indigo-100 text-indigo-700' },
   parcela: { txt: 'Parcela', cls: 'bg-violet-100 text-violet-700' },
 };
 
+const SELO_SITUACAO = {
+  previsto: { txt: 'Previsto', cls: 'bg-amber-100 text-amber-700' },
+  confirmar: { txt: 'A confirmar', cls: 'bg-sky-100 text-sky-700' },
+  pendente: { txt: 'Pendente', cls: 'bg-red-100 text-red-700' },
+} as const;
+
 function renderSeloPrevista(
   lanc: LancamentoDespesa,
-  _mesAtivo: string | null,
-  _anoSelecionado: string
+  mesAtivo: string | null,
+  anoSelecionado: string
 ) {
-  const selo = lanc.tipo ? SELO_TIPO[lanc.tipo] : null;
-  if (!selo) return null;
+  const selos: Array<{ txt: string; cls: string }> = [];
+  const seloTipo = lanc.tipo ? SELO_TIPO[lanc.tipo] : null;
+  if (seloTipo) selos.push(seloTipo);
+
+  if (lanc.status === 'prevista') {
+    const mesIndice = MESES_TAB.indexOf(String(lanc.mes || mesAtivo || '').toUpperCase());
+    const ano = Number(anoSelecionado);
+    const hoje = new Date();
+    const ehHoje =
+      ano === hoje.getFullYear() &&
+      mesIndice === hoje.getMonth() &&
+      Number(lanc.dia) === hoje.getDate();
+    const situacao = dataFuturaTab(ano, mesIndice, Number(lanc.dia))
+      ? SELO_SITUACAO.previsto
+      : ehHoje
+        ? SELO_SITUACAO.confirmar
+        : SELO_SITUACAO.pendente;
+    selos.push(situacao);
+  }
+
+  if (!selos.length) return null;
   return (
-    <div className="mb-1">
-      <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-black ${selo.cls}`}>{selo.txt}</span>
+    <div className="mb-1 flex flex-wrap gap-1">
+      {selos.map((selo) => (
+        <span key={selo.txt} className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-black ${selo.cls}`}>{selo.txt}</span>
+      ))}
     </div>
   );
 }

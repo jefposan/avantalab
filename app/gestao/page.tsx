@@ -231,6 +231,25 @@ function ehDataHoje(ano: number, mesIndice: number, dia: number): boolean {
   return Number(ano) === hoje.getFullYear() && Number(mesIndice) === hoje.getMonth() && Number(dia) === hoje.getDate();
 }
 
+function despesaRealizada(
+  lancamento: Pick<LancamentoFinanceiro, 'dia' | 'status'>,
+  ano: number,
+  mesIndice: number
+): boolean {
+  return lancamento.status !== 'cancelada'
+    && lancamento.status !== 'prevista'
+    && !dataFutura(ano, mesIndice, lancamento.dia);
+}
+
+function despesaProjetada(
+  lancamento: Pick<LancamentoFinanceiro, 'dia' | 'status'>,
+  ano: number,
+  mesIndice: number
+): boolean {
+  return lancamento.status !== 'cancelada'
+    && (lancamento.status === 'prevista' || dataFutura(ano, mesIndice, lancamento.dia));
+}
+
 // Tipos que pedem confirmacao na data (parcela NAO pede).
 function tipoPedeConfirmacao(tipo: string | null | undefined): boolean {
   return tipo === 'previsto' || tipo === 'fixa';
@@ -2966,7 +2985,7 @@ useEffect(() => {
       return (
         String(lancamento.mes || '').toUpperCase() === nomeMes &&
         Number(lancamento.dia) === Number(dia) &&
-        dataFutura(ano, mes, dia) &&
+        (lancamento.status === 'prevista' || dataFutura(ano, mes, dia)) &&
         (tipo === 'previsto' || tipo === 'parcela' || tipo === 'fixa' || Boolean(lancamento.recorrenciaId))
       );
     });
@@ -3050,15 +3069,25 @@ const lancamentosDoMesAnterior = mesAnteriorParaAnalise
   ? lancamentos.filter(l => l.mes === mesAnteriorParaAnalise)
   : [];
 
-// Despesas com data futura nao entram no total realizado do mes; somam no previsto.
-const totalDespesasMes = lancamentosDoMes.reduce(
-  (acc, lanc) =>
-    acc + (dataFutura(Number(anoSelecionado), indiceMesParaAnalise, lanc.dia) ? 0 : lanc.valor),
+const lancamentosRealizadosDoMes = lancamentosDoMes.filter((lancamento) =>
+  despesaRealizada(lancamento, Number(anoSelecionado), indiceMesParaAnalise)
+);
+
+const lancamentosRealizadosAno = lancamentos.filter((lancamento) =>
+  despesaRealizada(lancamento, Number(anoSelecionado), meses.indexOf(lancamento.mes))
+);
+
+// Uma despesa prevista so integra o realizado depois da confirmacao manual,
+// mesmo quando a data programada ja passou.
+const totalDespesasMes = lancamentosRealizadosDoMes.reduce(
+  (acc, lanc) => acc + lanc.valor,
   0
 );
 
 const totalDespesasMesAnterior = lancamentosDoMesAnterior.reduce(
-  (acc, lanc) => acc + lanc.valor,
+  (acc, lanc) => acc + (
+    despesaRealizada(lanc, Number(anoSelecionado), indiceMesParaAnalise - 1) ? lanc.valor : 0
+  ),
   0
 );
 
@@ -3270,13 +3299,13 @@ const editarAporteCaixinha = async ({ id, data, descricao, valorTexto }: { id: s
   return { ok: true };
 };
 
-// O card avisa somente durante o dia programado. Depois dessa janela diária,
-// o lançamento continua previsto, mas deixa de ocupar o aviso do dashboard.
+// A partir da data programada, o lançamento permanece no card ate ser
+// confirmado, editado ou excluido. Itens vencidos aparecem como pendentes.
 const despesasAConfirmar = lancamentos.filter(
   (l) =>
     l.status === 'prevista' &&
     tipoPedeConfirmacao(l.tipo) &&
-    ehDataHoje(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
+    !dataFutura(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
 );
 
 // Receitas previstas seguem a mesma janela diária do card compartilhado.
@@ -3289,12 +3318,13 @@ const receitasAConfirmar = faturamentosEntradas.filter(
 // Card de saldo (Inicial/Final/Previsto) com seletor proprio de mes.
 const mesSaldoCardNome = meses[saldoCardMesIdx];
 const mesSaldoAntNome = saldoCardMesIdx > 0 ? meses[saldoCardMesIdx - 1] : null;
-const somaDespesasMesSaldo = (mesNome: string, mIdx: number, futuras: boolean) =>
+const somaDespesasMesSaldo = (mesNome: string, mIdx: number, projetadas: boolean) =>
   lancamentos
     .filter((l) => l.mes === mesNome)
     .reduce(
-      (acc, l) =>
-        acc + (dataFutura(Number(anoSelecionado), mIdx, l.dia) === futuras ? l.valor : 0),
+      (acc, l) => acc + ((projetadas
+        ? despesaProjetada(l, Number(anoSelecionado), mIdx)
+        : despesaRealizada(l, Number(anoSelecionado), mIdx)) ? l.valor : 0),
       0
     );
 // Receitas previstas: nao entram no total efetivado ate a confirmacao.
@@ -3401,9 +3431,9 @@ const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
   0
 );
 
-  const maiorGasto = lancamentosDoMes.length > 0 ? lancamentosDoMes.reduce((prev, curr) => (curr.valor > prev.valor ? curr : prev), { despesa: '', valor: 0 }) : { despesa: 'Nenhuma despesa', valor: 0 };
+  const maiorGasto = lancamentosRealizadosDoMes.length > 0 ? lancamentosRealizadosDoMes.reduce((prev, curr) => (curr.valor > prev.valor ? curr : prev), { despesa: '', valor: 0 }) : { despesa: 'Nenhuma despesa', valor: 0 };
   const receitasTotais = Object.values(faturamentos).reduce((a, b) => a + b, 0);
-  const despesasTotais = lancamentos.reduce((a, b) => a + b.valor, 0);
+  const despesasTotais = lancamentosRealizadosAno.reduce((a, b) => a + b.valor, 0);
   const lucroTotalAnual = receitasTotais - despesasTotais;
   const formatarValorCampo = (valor: number) =>
     valor.toLocaleString('pt-BR', {
@@ -4425,10 +4455,16 @@ const cancelarDespesaFixaDoMes = async (lanc: LancamentoFinanceiro | TabelaLanca
 
 const confirmarDespesaPrevista = async (id: string | number) => {
   if (!empresaId) return;
-  const ok = await definirStatusLancamento(id, empresaId, 'confirmada');
+  const lancamento = lancamentos.find((item) => String(item.id) === String(id));
+  const tipoAposConfirmacao = lancamento?.tipo === 'previsto'
+    ? null
+    : lancamento?.tipo;
+  const ok = await definirStatusLancamento(id, empresaId, 'confirmada', tipoAposConfirmacao);
   if (ok) {
     setLancamentos((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, status: 'confirmada' } : l))
+      prev.map((l) => (String(l.id) === String(id)
+        ? { ...l, status: 'confirmada', tipo: l.tipo === 'previsto' ? null : l.tipo }
+        : l))
     );
     notificarFinanceiroAtualizado();
   } else {
@@ -5068,14 +5104,19 @@ const salvarEdicaoLancamento = async () => {
   const ehFixaEditada = lancamentoAtual?.tipo === 'fixa' || Boolean(lancamentoAtual?.recorrenciaId);
   const ehParcelaEditada = lancamentoAtual?.tipo === 'parcela';
   const ehFuturaEditada = dataFutura(Number(anoSelecionado), meses.indexOf(mesAtivo), diaNumerico);
-  const tipoEditado = ehFixaEditada ? 'fixa' : ehParcelaEditada ? 'parcela' : ehFuturaEditada ? 'previsto' : null;
+  const continuavaPrevista = lancamentoAtual?.status === 'prevista';
+  const tipoEditado = ehFixaEditada
+    ? 'fixa'
+    : ehParcelaEditada
+      ? 'parcela'
+      : ehFuturaEditada || (continuavaPrevista && lancamentoAtual?.tipo === 'previsto')
+        ? 'previsto'
+        : null;
   const statusEditado = ehParcelaEditada
     ? (lancamentoAtual?.status || null)
-    : ehFuturaEditada
+    : ehFuturaEditada || continuavaPrevista
       ? 'prevista'
-      : ehFixaEditada && lancamentoAtual?.status === 'prevista'
-        ? 'confirmada'
-        : null;
+      : null;
 
   const salvo = await atualizarLancamento({
     id: lancamentoEditandoId,
@@ -5837,7 +5878,7 @@ const alertasSistema = useMemo(() => {
   const analiseDespesas = (() => {
   const totais: Record<string, { nome: string; valor: number }> = {};
 
-  lancamentosDoMes.forEach((l) => {
+  lancamentosRealizadosDoMes.forEach((l) => {
     const despesaBase = despesasCadastradas.find(
       (d) => normalizarTexto(d.nome) === normalizarTexto(l.despesa)
     );
@@ -7598,13 +7639,21 @@ if (validacaoTelefoneObrigatoria) {
                             ? 'Fixa'
                             : lancamento.tipo === 'parcela'
                               ? 'Parcela'
-                              : 'Previsto';
+                              : null;
+                          const situacao = lancamento.status === 'prevista'
+                            ? dataFutura(agendaAnoAtivo, agendaMesAtivo, Number(lancamento.dia))
+                              ? 'Previsto'
+                              : ehDataHoje(agendaAnoAtivo, agendaMesAtivo, Number(lancamento.dia))
+                                ? 'A confirmar'
+                                : 'Pendente'
+                            : null;
+                          const detalhe = [tipo, situacao].filter(Boolean).join(' · ');
                           return (
                             <div key={`despesa-${lancamento.id}`} className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <p className="truncate text-sm font-black text-slate-900">{lancamento.despesa || 'Despesa'}</p>
-                                  <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">Despesa futura · {tipo}</p>
+                                  <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">Despesa{detalhe ? ` · ${detalhe}` : ''}</p>
                                 </div>
                                 <strong className="shrink-0 text-sm font-black tabular-nums text-rose-600">{formatarMoeda(Number(lancamento.valor || 0))}</strong>
                               </div>
@@ -10641,7 +10690,7 @@ if (validacaoTelefoneObrigatoria) {
     <div className={classeConteudoPagina}>
       <Graficos
         meses={meses}
-        lancamentos={lancamentos}
+        lancamentos={lancamentosRealizadosAno}
         faturamentos={faturamentos}
         despesasCadastradas={despesasCadastradas}
         tipoPerfil={tipoPerfilAtualNormalizado}
@@ -10657,7 +10706,7 @@ if (validacaoTelefoneObrigatoria) {
     <div className={classeConteudoPagina}>
       <PorCategoria
         meses={meses}
-        lancamentos={lancamentos}
+        lancamentos={lancamentosRealizadosAno}
         despesasCadastradas={despesasCadastradas}
         tipoPerfil={tipoPerfilAtualNormalizado}
         corPrimaria={corPrimaria}
@@ -10671,7 +10720,7 @@ if (validacaoTelefoneObrigatoria) {
     <div className={classeConteudoPagina}>
       <Relatorio
         meses={meses}
-        lancamentos={lancamentos}
+        lancamentos={lancamentosRealizadosAno}
         faturamentos={faturamentos}
         despesasCadastradas={despesasCadastradas}
         corPrimaria={corPrimaria}
@@ -10687,7 +10736,7 @@ if (validacaoTelefoneObrigatoria) {
     <div className={classeConteudoPagina}>
       <Dashboard
         meses={meses}
-        lancamentos={lancamentos}
+        lancamentos={lancamentosRealizadosAno}
         faturamentos={faturamentos}
         anoSelecionado={anoSelecionado}
         empresaId={empresaId}
@@ -10926,7 +10975,7 @@ if (validacaoTelefoneObrigatoria) {
   enviarFeedbackVisual={enviarFeedbackVisual}
   supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}
   contexto={(() => {
-    const porCategoria = lancamentosDoMes.reduce<Record<string, number>>((acc, l) => {
+    const porCategoria = lancamentosRealizadosDoMes.reduce<Record<string, number>>((acc, l) => {
       acc[l.despesa] = (acc[l.despesa] || 0) + l.valor;
       return acc;
     }, {});

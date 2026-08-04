@@ -3044,7 +3044,7 @@
   function despesasFuturasDoDia(ano, mes, dia) {
     var mesIndice = indiceMes(mes);
     return (state.lancamentos || []).filter(function (item) {
-      return item && item.mes === mes && Number(item.dia) === Number(dia) && dataFutura(Number(ano), mesIndice, dia);
+      return item && item.mes === mes && Number(item.dia) === Number(dia) && (item.status === 'prevista' || dataFutura(Number(ano), mesIndice, dia));
     });
   }
 
@@ -3563,15 +3563,23 @@
     return item && ehDataHoje(Number(state.ano), indiceMes(item.mes), item.dia);
   }
 
+  function ehDespesaRealizada(item, mesIndice) {
+    return item && item.status !== 'cancelada' && item.status !== 'prevista' && !ehDespesaFutura(mesIndice, item.dia);
+  }
+
+  function ehDespesaProjetada(item, mesIndice) {
+    return item && item.status !== 'cancelada' && (item.status === 'prevista' || ehDespesaFutura(mesIndice, item.dia));
+  }
+
   // Tipos que pedem confirmacao na data (parcela NAO pede).
   function tipoPedeConfirmacao(tipo) {
     return tipo === 'previsto' || tipo === 'fixa';
   }
 
-  // O aviso aparece somente durante o dia programado. Depois dessa janela,
-  // o lancamento continua previsto, mas deixa de ocupar o card.
+  // A partir da data programada, o aviso permanece ate a confirmacao,
+  // edicao ou exclusao. Itens vencidos sao apresentados como pendentes.
   function ehDespesaAConfirmar(item) {
-    return item && item.status === 'prevista' && tipoPedeConfirmacao(item.tipo) && ehDespesaHoje(item);
+    return item && item.status === 'prevista' && tipoPedeConfirmacao(item.tipo) && !ehDespesaFutura(indiceMes(item.mes), item.dia);
   }
 
   // Receita prevista segue a mesma janela diaria do card compartilhado.
@@ -3588,17 +3596,26 @@
     return tipo === 'vendas_mobile_sistema' || tipo === 'recebimentos_sistema';
   }
 
-  // Selo colorido por tipo de despesa (previsto/fixa/parcela).
+  // O tipo (fixa/parcela) e a situacao temporal sao informacoes independentes.
   function seloTipoHtml(item) {
-    if (!item || !item.tipo) return '';
-    var mapa = {
-      previsto: { txt: 'Previsto', cls: 'bg-amber-100 text-amber-700' },
+    if (!item) return '';
+    var selos = [];
+    var tipos = {
       fixa: { txt: 'Fixa', cls: 'bg-indigo-100 text-indigo-700' },
       parcela: { txt: 'Parcela', cls: 'bg-violet-100 text-violet-700' },
     };
-    var s = mapa[item.tipo];
-    if (!s) return '';
-    return ' <span class="ml-1 inline-block rounded-full px-1.5 align-middle text-[10px] font-black ' + s.cls + '">' + s.txt + '</span>';
+    if (tipos[item.tipo]) selos.push(tipos[item.tipo]);
+    if (item.status === 'prevista') {
+      var mesIndice = indiceMes(item.mes);
+      selos.push(ehDespesaFutura(mesIndice, item.dia)
+        ? { txt: 'Previsto', cls: 'bg-amber-100 text-amber-700' }
+        : ehDespesaHoje(item)
+          ? { txt: 'A confirmar', cls: 'bg-sky-100 text-sky-700' }
+          : { txt: 'Pendente', cls: 'bg-red-100 text-red-700' });
+    }
+    return selos.map(function (s) {
+      return ' <span class="ml-1 inline-block rounded-full px-1.5 align-middle text-[10px] font-black ' + s.cls + '">' + s.txt + '</span>';
+    }).join('');
   }
 
   function dadosMes(mes) {
@@ -3610,9 +3627,9 @@
     var despesasRealizadas = 0;
     var despesasFuturas = 0;
     lancamentos.forEach(function (item) {
-      if (ehDespesaFutura(mesIndice, item.dia)) {
+      if (ehDespesaProjetada(item, mesIndice)) {
         despesasFuturas += item.valor;
-      } else {
+      } else if (ehDespesaRealizada(item, mesIndice)) {
         despesasRealizadas += item.valor;
       }
     });
@@ -5783,7 +5800,7 @@
       );
     }
     (respostas[1].data || []).forEach(function (item) {
-      if (item.status === 'cancelada' || dataFutura(Number(item.ano || ano), indiceMes(item.mes), Number(item.dia || 1))) return;
+      if (item.status === 'cancelada' || item.status === 'prevista' || dataFutura(Number(item.ano || ano), indiceMes(item.mes), Number(item.dia || 1))) return;
       despesas[item.empresa_id] = (despesas[item.empresa_id] || 0) + Number(item.valor || 0);
     });
 
@@ -8791,10 +8808,15 @@
       var ehFixaEditada = item.tipo === 'fixa' || Boolean(item.recorrenciaId);
       var ehParcelaEditada = item.tipo === 'parcela';
       var ehFuturaEditada = dataFutura(Number(state.ano), indiceMes(mesItem), dia);
-      var tipoEditado = ehFixaEditada ? 'fixa' : (ehParcelaEditada ? 'parcela' : (ehFuturaEditada ? 'previsto' : null));
+      var continuavaPrevista = item.status === 'prevista';
+      var tipoEditado = ehFixaEditada
+        ? 'fixa'
+        : (ehParcelaEditada
+          ? 'parcela'
+          : (ehFuturaEditada || (continuavaPrevista && item.tipo === 'previsto') ? 'previsto' : null));
       var statusEditado = ehParcelaEditada
         ? (item.status || null)
-        : (ehFuturaEditada ? 'prevista' : (ehFixaEditada && item.status === 'prevista' ? 'confirmada' : null));
+        : (ehFuturaEditada || continuavaPrevista ? 'prevista' : null);
       var despesa = await db
         .from('lancamentos')
         .update({
@@ -8827,7 +8849,10 @@
     if (!state.empresa) return;
     state.carregando = true;
     render();
-    var resp = await db.from('lancamentos').update({ status: 'confirmada' }).eq('id', id).eq('empresa_id', state.empresa.id);
+    var lancamento = (state.lancamentos || []).find(function (item) { return String(item.id) === String(id); });
+    var atualizacao = { status: 'confirmada' };
+    if (lancamento && lancamento.tipo === 'previsto') atualizacao.tipo_obs = null;
+    var resp = await db.from('lancamentos').update(atualizacao).eq('id', id).eq('empresa_id', state.empresa.id);
     if (resp.error) {
       state.carregando = false;
       setErro('Nao foi possivel confirmar a despesa.');
@@ -9747,9 +9772,12 @@
             var attrConfirmar = p.rec ? 'data-confirmar-receita-id' : 'data-confirmar-id';
             var attrEditar = p.rec ? 'data-editar-receita-id' : 'data-ajustar-id';
             var attrExcluir = p.rec ? 'data-excluir-receita-id' : 'data-excluir-prevista-id';
+            var seloPrazo = p.rec ? '' : (ehDespesaHoje(item)
+              ? ' <span class="ml-1 inline-block rounded-full bg-sky-100 px-1.5 py-0.5 align-middle text-[9px] font-black text-sky-700">A confirmar</span>'
+              : ' <span class="ml-1 inline-block rounded-full bg-red-100 px-1.5 py-0.5 align-middle text-[9px] font-black text-red-700">Pendente</span>');
             return '<div class="rounded-xl border border-slate-200 bg-white p-2.5">' +
               '<div class="flex items-center justify-between gap-2">' +
-                '<p class="min-w-0 truncate text-sm font-bold text-slate-800">' + escapeHtml(nome) + ' <span class="text-xs font-semibold text-slate-400">&middot; ' + (p.rec ? 'receita &middot; ' : '') + 'dia ' + item.dia + '</span></p>' +
+                '<p class="min-w-0 truncate text-sm font-bold text-slate-800">' + escapeHtml(nome) + ' <span class="text-xs font-semibold text-slate-400">&middot; ' + (p.rec ? 'receita &middot; ' : '') + 'dia ' + item.dia + '</span>' + seloPrazo + '</p>' +
                 '<strong class="shrink-0 text-sm font-black ' + corValor + '">' + dinheiro(item.valor) + '</strong>' +
               '</div>' +
               '<div class="mt-2 grid grid-cols-1 gap-1.5 min-[380px]:grid-cols-3">' +
@@ -10004,7 +10032,7 @@
       '</section>';
     }
     var receitas = Number(atual.receitas || 0);
-    var despesas = Number(atual.despesasTotais || atual.despesas || 0);
+    var despesas = Number(atual.despesas || 0);
     var resultado = receitas - despesas;
     var caixinha = caixinhaResumo(atual);
     var porDespesa = {};
@@ -10303,12 +10331,16 @@
   }
 
   function agendaDespesaHtml(item) {
+    var mesIndice = indiceMes(item.mes);
+    var situacao = item.status === 'prevista'
+      ? (ehDespesaFutura(mesIndice, item.dia) ? 'Despesa prevista' : (ehDespesaHoje(item) ? 'Despesa a confirmar' : 'Despesa pendente'))
+      : 'Despesa';
     return (
       '<div class="rounded-2xl border border-rose-100 bg-white p-3 shadow-sm">' +
         '<div class="flex items-start justify-between gap-3">' +
           '<div class="min-w-0">' +
             '<p class="truncate text-sm font-black text-slate-900">' + escapeHtml(item.despesa || 'Despesa') + '</p>' +
-            '<p class="mt-0.5 text-[10px] font-black uppercase tracking-wide text-rose-600">Despesa futura</p>' +
+            '<p class="mt-0.5 text-[10px] font-black uppercase tracking-wide text-rose-600">' + situacao + '</p>' +
           '</div>' +
           '<strong class="shrink-0 text-sm font-black tabular-nums text-rose-600">' + Number(item.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + '</strong>' +
         '</div>' +
@@ -10527,7 +10559,7 @@
   function lancamentosRealizadosDoMes(atual) {
     var mesIndice = indiceMes(state.mes);
     return (atual.lancamentos || []).filter(function (lancamento) {
-      return !ehDespesaFutura(mesIndice, lancamento.dia);
+      return ehDespesaRealizada(lancamento, mesIndice);
     });
   }
 
