@@ -99,19 +99,14 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
       const cancelarBotao = cancelarRef.current;
       if (!cancelarBotao) return;
       if (iniciar?.parentElement) {
-        const naTelaInicial = Boolean(detectorRef.current?.querySelector('.amplify-liveness-start-screen'));
         iniciar.parentElement.classList.add('avanta-facial-acoes');
-        // Na abertura, a ordem é a convencional: cancelar antes de iniciar.
-        // No estado de erro da AWS, o rótulo curto evita quebrar a ação em duas linhas.
-        cancelarBotao.textContent = naTelaInicial ? 'Cancelar verificação' : 'Cancelar';
-        if (!iniciar.parentElement.contains(cancelarBotao)) iniciar.parentElement.insertBefore(cancelarBotao, iniciar);
+        if (!iniciar.parentElement.contains(cancelarBotao)) iniciar.parentElement.appendChild(cancelarBotao);
         return;
       }
       // Ao iniciar a leitura, o componente da AWS substitui a tela inicial e
       // desmonta seu botão primário. Recolocamos o cancelar na área fixa do
       // card para que a pessoa nunca fique sem saída durante a captura.
       if (cancelarAreaRef.current && !cancelarAreaRef.current.contains(cancelarBotao)) {
-        cancelarBotao.textContent = 'Cancelar';
         cancelarAreaRef.current.appendChild(cancelarBotao);
       }
     };
@@ -119,20 +114,6 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     const observador = new MutationObserver(organizarAcoes);
     observador.observe(detectorRef.current, { childList: true, subtree: true });
     return () => observador.disconnect();
-  }, [sessao]);
-
-  useEffect(() => {
-    if (!sessao) return;
-    // O detector precisa usar o canvas em tela cheia no iOS para inicializar o
-    // stream da AWS. Se a negociação não avançar, não deixamos a pessoa presa
-    // em "Conectando câmera…": encerramos a sessão local e permitimos tentar
-    // novamente com uma nova sessão facial.
-    const limite = window.setTimeout(() => {
-      setSessao(null);
-      setMensagem('A câmera demorou demais para conectar. Verifique a internet e tente novamente.');
-      window.dispatchEvent(new CustomEvent('avantalab:facial-erro', { detail: { mensagem: 'A câmera demorou demais para conectar.' } }));
-    }, 25000);
-    return () => window.clearTimeout(limite);
   }, [sessao]);
 
   const concluir = async () => {
@@ -174,7 +155,7 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
     ['--amplify-components-liveness-camera-module-background-color' as string]: '#f8fafc',
   };
   return <div className="fixed inset-0 z-[100] overflow-y-auto bg-[radial-gradient(circle_at_top,#075985_0%,#003e73_42%,#020617_100%)] px-3 py-5 sm:p-8" role="dialog" aria-modal="true" aria-label="Verificação facial">
-    <style>{`.avanta-facial .amplify-button--primary{min-height:40px!important;height:40px!important;width:220px!important;border-radius:10px!important;background:#1687D9!important;border-color:#1687D9!important;color:#fff!important;font-size:14px!important;font-weight:800!important;box-shadow:0 6px 14px rgba(22,135,217,.22)!important}.avanta-facial-acoes{display:flex!important;justify-content:center!important;gap:8px!important;margin-top:0!important}.avanta-facial-acoes .amplify-button--primary{width:calc(50% - 4px)!important}.avanta-facial-acoes .avanta-facial-cancelar{width:calc(50% - 4px)!important}.avanta-facial .amplify-button--primary:active{transform:scale(.98)}.avanta-facial .amplify-button--primary:focus-visible{outline:3px solid rgba(22,135,217,.35)!important;outline-offset:3px}.avanta-facial .amplify-liveness-start-screen{padding-bottom:0!important}.avanta-facial .amplify-liveness-figures{margin-bottom:0!important}`}</style>
+    <style>{`.avanta-facial .amplify-button--primary{min-height:40px!important;height:40px!important;width:220px!important;border-radius:10px!important;background:#1687D9!important;border-color:#1687D9!important;color:#fff!important;font-size:14px!important;font-weight:800!important;box-shadow:0 6px 14px rgba(22,135,217,.22)!important}.avanta-facial-acoes{display:flex!important;justify-content:center!important;gap:8px!important;margin-top:0!important}.avanta-facial-acoes .amplify-button--primary{width:calc(50% - 4px)!important}.avanta-facial-acoes .avanta-facial-cancelar{width:calc(50% - 4px)!important}.avanta-facial .amplify-button--primary:active{transform:scale(.98)}.avanta-facial .amplify-button--primary:focus-visible{outline:3px solid rgba(22,135,217,.35)!important;outline-offset:3px}.avanta-facial .amplify-liveness-start-screen{padding-bottom:0!important}.avanta-facial .amplify-liveness-figures{margin-bottom:0!important}.avanta-facial-leitura .amplify-liveness-camera-module{max-height:calc(100dvh - 270px)!important}`}</style>
     <AvantaCard title={sessao ? 'Verificação em andamento' : emCadastro ? 'Cadastro facial' : 'Confirmação facial'} corPrimaria="#007f99" hideDragHandle hideMenu className="avanta-facial mx-auto max-w-xl text-slate-900" bodyClassName="!min-h-[calc(100dvh-130px)] !p-0 !overflow-visible" style={temaFacial} plato={<span className="rounded-full bg-cyan-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-800">Ponto seguro</span>}>
       {!sessao && <div className="border-b border-slate-200 bg-white px-5 py-3">
         <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide">
