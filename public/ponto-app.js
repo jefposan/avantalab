@@ -241,7 +241,7 @@
 
   async function registroServiceWorkerPonto() {
     if (!('serviceWorker' in navigator)) return null;
-    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=6', { scope: '/ponto' }); }
+    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=7', { scope: '/ponto' }); }
     catch (e) { return null; }
   }
 
