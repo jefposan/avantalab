@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.144 -->
+<!-- ava-version: 1.6.1.146 -->
+
+> Revisão 1.6.1.146: em `/admin` > **Consumo**, o card **AWS · Reconhecimento
+> facial** reúne custo oficial do mês, créditos e Free Tier quando disponíveis,
+> métricas do Rekognition e indicadores registrados pelo AvantaLab. A consulta
+> é administrativa e mantém as credenciais somente no servidor.
 
 > Revisão 1.6.1.144: o limite da prova de vida facial é 70%; a comparação da
 > identidade cadastrada continua em 90%.

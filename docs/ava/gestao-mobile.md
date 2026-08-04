@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.144 -->
+<!-- ava-version: 1.6.1.146 -->
+
+> Revisão 1.6.1.146: o acompanhamento de consumo da AWS foi adicionado somente
+> ao console global `/admin`; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.144: o limite da prova de vida facial é 70%; a comparação da
 > identidade cadastrada continua em 90%.

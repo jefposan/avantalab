@@ -27,7 +27,7 @@ type ConsumoItem = {
   nome: string;
   usado: number | null;
   limite: number | null;
-  formato: 'bytes' | 'numero' | 'minutos' | 'reais' | 'brl' | 'percentual';
+  formato: 'bytes' | 'numero' | 'minutos' | 'segundos' | 'reais' | 'brl' | 'percentual';
   detalhe?: string;
 };
 
@@ -209,6 +209,7 @@ function formatConsumo(valor: number | null, formato: ConsumoItem['formato']) {
   if (valor === null) return '—';
   if (formato === 'bytes') return formatBytes(valor);
   if (formato === 'minutos') return `${valor.toLocaleString('pt-BR')} min`;
+  if (formato === 'segundos') return `${valor.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} s`;
   if (formato === 'reais') return `US$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
   if (formato === 'brl') return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   if (formato === 'percentual') return `${valor.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}%`;
@@ -1062,7 +1063,7 @@ export default function AdminPage() {
             <section className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-base font-black text-slate-950">Consumo das plataformas</h2>
-                <p className="text-xs text-slate-500">Uso atual x limite do plano gratuito de cada serviço.{consumoGeradoEm ? ` Atualizado em ${formatDate(consumoGeradoEm)}.` : ''}</p>
+                <p className="text-xs text-slate-500">Uso, limites, saldos, créditos e custos disponíveis em cada serviço.{consumoGeradoEm ? ` Atualizado em ${formatDate(consumoGeradoEm)}.` : ''}</p>
               </div>
               <button type="button" onClick={() => void carregarConsumo()} disabled={consumoCarregando} className="flex h-10 items-center justify-center gap-2 rounded-md bg-cyan-700 px-4 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">
                 <Icon name="refresh" size={15} />{consumoCarregando ? 'Consultando...' : consumo.length ? 'Atualizar' : 'Consultar consumo'}

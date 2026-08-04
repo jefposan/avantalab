@@ -3,12 +3,13 @@ import { unstable_cache } from 'next/cache';
 import twilio from 'twilio';
 import { exigirAdmin } from '../../lib/admin-server';
 import { obterSaldoAsaas } from '../../lib/asaas';
+import { consumoAwsReconhecimentoFacial } from '../../lib/aws-consumo-servidor';
 
 export const runtime = 'nodejs';
 
 // ─────────────────────────────────────────────────────────────
 // /api/admin-consumo — uso x limite das plataformas (Supabase,
-// Vercel, GitHub, OpenAI, Asaas e Twilio) para o painel /admin.
+// Vercel, GitHub, OpenAI, Asaas, Twilio, Cloudflare e AWS) para o painel /admin.
 //
 // Tokens (variáveis de ambiente, todas opcionais — sem elas o
 // painel mostra o que dá e instruções do que falta):
@@ -25,6 +26,9 @@ export const runtime = 'nodejs';
 //   TWILIO_VERIFY_SERVICE_SID → serviço Verify (opcional no resumo)
 //   TWILIO_BILLING_ACCOUNT_SID → conta principal para consultar saldo (opcional)
 //   TWILIO_BILLING_AUTH_TOKEN  → token da conta principal (opcional)
+//   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY → integração facial já existente
+//   AWS_BILLING_ACCESS_KEY_ID / AWS_BILLING_SECRET_ACCESS_KEY → chave opcional
+//     somente de leitura para Cost Explorer, Billing, Free Tier e CloudWatch
 //
 // O Supabase não precisa de token novo: usa a service role + a
 // função SQL admin_metricas_uso() (SQL devolvido no aviso caso
@@ -66,7 +70,7 @@ type Item = {
   nome: string;
   usado: number | null;   // null = não medível via API
   limite: number | null;  // null = sem teto conhecido
-  formato: 'bytes' | 'numero' | 'minutos' | 'reais' | 'brl' | 'percentual';
+  formato: 'bytes' | 'numero' | 'minutos' | 'segundos' | 'reais' | 'brl' | 'percentual';
   detalhe?: string;
 };
 
@@ -683,7 +687,7 @@ export async function GET(request: Request) {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 
-    const [supabase, vercel, github, openai, asaas, twilioUso, cloudflare, historicoIa] = await Promise.all([
+    const [supabase, vercel, github, openai, asaas, twilioUso, cloudflare, awsFacial, historicoIa] = await Promise.all([
       consumoSupabase(db),
       consumoVercel(),
       consumoGithub(),
@@ -691,11 +695,12 @@ export async function GET(request: Request) {
       consumoAsaas(),
       consumoTwilio(),
       consumoCloudflare(),
+      consumoAwsReconhecimentoFacial(db),
       historicoImportadorIa(db),
     ]);
     return NextResponse.json({
       erro: false,
-      plataformas: [supabase, vercel, github, openai, asaas, twilioUso, cloudflare],
+      plataformas: [supabase, vercel, github, openai, asaas, twilioUso, cloudflare, awsFacial],
       historicoIa,
       geradoEm: new Date().toISOString(),
     });

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.146 - 2026-08-04
+
+- Avanta Admin: o painel **Consumo** passa a acompanhar a AWS usada pelo
+  reconhecimento facial. O card reúne custos oficiais, créditos e Free Tier
+  quando o IAM permitir, métricas do Rekognition no CloudWatch e indicadores
+  próprios do AvantaLab, como verificações, médias, aprovações, falhas e
+  projeção técnica. As credenciais continuam restritas ao servidor e cada
+  fonte falha de forma independente, sem interromper os demais serviços.
+
 ## 1.6.1.144 - 2026-08-04
 
 - Controle de Ponto: limite da prova de vida facial ajustado de 90% para 70%;

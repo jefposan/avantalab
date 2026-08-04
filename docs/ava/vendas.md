@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.144 -->
+<!-- ava-version: 1.6.1.146 -->
+
+> Revisão 1.6.1.146: sem impacto operacional no AvantaVendas; o consumo da AWS
+> foi acrescentado somente ao console global `/admin`.
 
 > Revisão 1.6.1.144: sem impacto operacional no AvantaVendas; o limite da
 > prova de vida do Controle de Ponto foi ajustado.
