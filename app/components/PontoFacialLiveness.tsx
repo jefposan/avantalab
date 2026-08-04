@@ -36,6 +36,10 @@ const textosPtBr = {
   clientHeaderText: 'Não foi possível usar a câmera', clientMessageText: 'Verifique as permissões e mantenha o celular na vertical.', serverHeaderText: 'Não foi possível concluir a verificação', serverMessageText: 'Tente novamente em alguns instantes.',
 };
 
+function AvisoFotossensibilidadeOculto() {
+  return null;
+}
+
 export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId: string }) {
   const [sessao, setSessao] = useState<Sessao | null>(null);
   const [mensagem, setMensagem] = useState('');
@@ -124,8 +128,7 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
   };
   return <div className="fixed inset-0 z-[100] overflow-y-auto bg-[radial-gradient(circle_at_top,#075985_0%,#003e73_42%,#020617_100%)] px-3 py-5 sm:p-8" role="dialog" aria-modal="true" aria-label="Verificação facial">
     <AvantaCard title={emCadastro ? 'Cadastro facial' : 'Confirmação facial'} corPrimaria="#007f99" hideDragHandle hideMenu className="avanta-facial mx-auto max-w-xl text-slate-900" bodyClassName="!min-h-0 !p-0 overflow-hidden" style={temaFacial} plato={<span className="rounded-full bg-cyan-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-800">Ponto seguro</span>}>
-      <div className="px-5 pt-2 text-xs font-semibold text-slate-600">Sua câmera é usada somente nesta verificação.</div>
-      <div className="mt-3 border-y border-slate-200 bg-white px-5 py-3">
+      <div className="border-b border-slate-200 bg-white px-5 py-3">
         <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-600 text-white">1</span><span className="text-cyan-800">Preparar</span>
           <span className="h-px flex-1 bg-cyan-200" />
@@ -136,7 +139,7 @@ export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId
         <div className="rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm font-semibold leading-relaxed text-slate-700" role="status">
           {mensagem || 'Posicione o rosto inteiro no contorno, com boa luz. Siga as orientações na tela e fique imóvel quando solicitado.'}
         </div>
-        {sessao && <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={textosPtBr} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={() => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); }} /></div>}
+        {sessao && <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={textosPtBr} components={{ PhotosensitiveWarning: AvisoFotossensibilidadeOculto }} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={() => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); }} /></div>}
         {mensagem && <button type="button" className="mt-4 min-h-12 w-full rounded-xl bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/20 transition active:scale-[0.99]" onClick={() => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); }}>Voltar ao ponto</button>}
       </div>
     </AvantaCard>
