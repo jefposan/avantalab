@@ -98,6 +98,7 @@ export type PontoConfig = {
   reconhecimento_facial_status?: 'desativado' | 'preparacao' | 'ativo' | 'suspenso';
   reconhecimento_facial_valor_centavos?: number;
   reconhecimento_facial_franquia_mensal?: number;
+  reconhecimento_facial_tipos?: string[];
 } | null;
 
 export type FuncionarioFacialPonto = {
@@ -119,7 +120,7 @@ interface PontoAdminModalProps {
   config: PontoConfig;
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   funcionariosFacial: FuncionarioFacialPonto[];
-  onSalvarPreparacaoFacial: (funcionariosIds: string[]) => Promise<{ erro: boolean; mensagem?: string }>;
+  onSalvarPreparacaoFacial: (funcionariosIds: string[], tiposMarcacao: string[]) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
   onCarregarAuditoria: () => Promise<EventoAuditoriaPonto[]>;
   onCarregarAssinatura: () => Promise<EstadoAssinaturaPonto | null>;
@@ -188,6 +189,7 @@ export default function PontoAdminModal({
   const [salvandoLocal, setSalvandoLocal] = useState(false);
   const [msgLocal, setMsgLocal] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
   const [facialSelecionados, setFacialSelecionados] = useState<string[]>([]);
+  const [tiposFacial, setTiposFacial] = useState<string[]>(['entrada']);
   const [salvandoFacial, setSalvandoFacial] = useState(false);
   const [aceiteFacial, setAceiteFacial] = useState(false);
   const [msgFacial, setMsgFacial] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
@@ -674,6 +676,7 @@ export default function PontoAdminModal({
       .filter((item) => item.status !== 'removido')
       .map((item) => item.funcionario_user_id));
   }, [funcionariosFacial]);
+  useEffect(() => { setTiposFacial(config?.reconhecimento_facial_tipos?.length ? config.reconhecimento_facial_tipos : ['entrada']); }, [config]);
 
   const alternarFuncionarioFacial = (userId: string) => {
     setFacialSelecionados((atual) => atual.includes(userId)
@@ -688,7 +691,7 @@ export default function PontoAdminModal({
       return;
     }
     setSalvandoFacial(true);
-    const resultado = await onSalvarPreparacaoFacial(facialSelecionados);
+    const resultado = await onSalvarPreparacaoFacial(facialSelecionados, tiposFacial);
     setSalvandoFacial(false);
     setMsgFacial(resultado.erro
       ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível salvar a preparação.' }
@@ -996,6 +999,11 @@ export default function PontoAdminModal({
                 <p className="text-sm font-black">Reconhecimento facial</p>
                 <p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Adicional de R$ 14,90 por funcionário selecionado ao mês. Inclui até 120 verificações mensais por funcionário; excedentes ficam cobertos na margem comercial inicial.</p>
                 <p className={`mt-2 text-[11px] font-bold ${config?.reconhecimento_facial_status === 'preparacao' ? 'text-amber-600' : textMuted}`}>Status: {config?.reconhecimento_facial_status === 'preparacao' ? 'Em preparação' : 'Desativado'}. A captura só será ativada após configuração da AWS e retenção segura dos dados.</p>
+              </div>
+              <div className={`rounded-xl border p-3 ${itemBorda}`}>
+                <p className={`text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Batidas que exigem facial</p>
+                <p className={`mt-1 text-[11px] ${textMuted}`}>Escolha em quais momentos a confirmação será solicitada.</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">{[['entrada','Entrada'],['saida_refeicao','Saída p/ refeição'],['retorno_refeicao','Retorno da refeição'],['saida','Saída']].map(([tipo,rotulo]) => <label key={tipo} className={`flex items-center gap-2 rounded-lg border p-2 text-xs font-bold ${itemBorda}`}><input type="checkbox" checked={tiposFacial.includes(tipo)} onChange={() => setTiposFacial(atual => atual.includes(tipo) ? atual.filter(item => item !== tipo) : [...atual, tipo])} />{rotulo}</label>)}</div>
               </div>
               <div className={`rounded-xl border p-3 ${itemBorda}`}>
                 <p className={`text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Funcionários incluídos</p>

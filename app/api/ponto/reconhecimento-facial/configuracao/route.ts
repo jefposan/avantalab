@@ -13,6 +13,12 @@ function idsValidos(valor: unknown): string[] {
   if (!Array.isArray(valor)) return [];
   return Array.from(new Set(valor.filter((id): id is string => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id))));
 }
+const TIPOS_MARCACAO = ['entrada', 'saida_refeicao', 'retorno_refeicao', 'saida'];
+function tiposValidos(valor: unknown): string[] {
+  if (!Array.isArray(valor)) return ['entrada'];
+  const tipos = Array.from(new Set(valor.filter((tipo): tipo is string => typeof tipo === 'string' && TIPOS_MARCACAO.includes(tipo))));
+  return tipos.length ? tipos : ['entrada'];
+}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -33,6 +39,7 @@ export async function POST(request: Request) {
   const corpo = await request.json().catch(() => ({}));
   const empresaId = String(corpo.empresaId || '').trim();
   const funcionariosIds = idsValidos(corpo.funcionariosIds);
+  const tiposMarcacao = tiposValidos(corpo.tiposMarcacao);
   const aceite = corpo.aceite === true;
   const acesso = await autenticarPerfilCobranca(request, empresaId, true);
   if (!acesso) return respostaErro('Acesso não autorizado.', 403);
@@ -53,6 +60,7 @@ export async function POST(request: Request) {
     reconhecimento_facial_status: funcionariosIds.length ? 'preparacao' : 'desativado',
     reconhecimento_facial_valor_centavos: PRECO_CENTAVOS,
     reconhecimento_facial_franquia_mensal: FRANQUIA_MENSAL,
+    reconhecimento_facial_tipos: tiposMarcacao,
     reconhecimento_facial_aceite_versao: VERSAO_ACEITE,
     reconhecimento_facial_aceite_em: agora,
     reconhecimento_facial_aceite_por: acesso.usuario.id,
@@ -88,7 +96,7 @@ export async function POST(request: Request) {
     evento: 'reconhecimento_facial_preparado',
     origem: 'gestao_web',
     motivo: 'Preparação do adicional facial.',
-    dados: { funcionarios: funcionariosIds.length, valor_centavos: PRECO_CENTAVOS, franquia_mensal: FRANQUIA_MENSAL, aceite_versao: VERSAO_ACEITE },
+    dados: { funcionarios: funcionariosIds.length, tipos_marcacao: tiposMarcacao, valor_centavos: PRECO_CENTAVOS, franquia_mensal: FRANQUIA_MENSAL, aceite_versao: VERSAO_ACEITE },
   });
 
   return NextResponse.json({ erro: false, status: funcionariosIds.length ? 'preparacao' : 'desativado' });

@@ -103,7 +103,7 @@
     var empresaId = (state.funcionario && state.funcionario.empresa_id) || (state.empresa && state.empresa.id);
     if (!state.autenticado || !empresaId) return;
     try {
-      var resposta = await db.from('ponto_config').select('latitude, longitude, raio_m, reconhecimento_facial_status').eq('empresa_id', empresaId).maybeSingle();
+      var resposta = await db.from('ponto_config').select('latitude, longitude, raio_m, reconhecimento_facial_status, reconhecimento_facial_tipos').eq('empresa_id', empresaId).maybeSingle();
       if (!resposta.error && resposta.data) {
         state.pontoConfig = resposta.data;
         if (state.pronto && !state.entrando) render();
@@ -447,7 +447,7 @@
       var res = await Promise.all([
         comPrazo(db.from('ponto_funcionarios').select('nome, cpf, cargo, ativo, dias_trabalho, hora_entrada, hora_saida, empresa_id').eq('user_id', uid).maybeSingle(), 10000, 'carregar o cadastro do funcionário'),
         empresaId ? comPrazo(db.from('empresas').select('id, nome').eq('id', empresaId).maybeSingle(), 10000, 'carregar a empresa') : vazio,
-        empresaId ? comPrazo(db.from('ponto_config').select('latitude, longitude, raio_m, reconhecimento_facial_status').eq('empresa_id', empresaId).maybeSingle(), 10000, 'carregar a configuração do ponto') : vazio,
+        empresaId ? comPrazo(db.from('ponto_config').select('latitude, longitude, raio_m, reconhecimento_facial_status, reconhecimento_facial_tipos').eq('empresa_id', empresaId).maybeSingle(), 10000, 'carregar a configuração do ponto') : vazio,
         comPrazo(db.from('ponto_registros').select('id, tipo, registrado_em').eq('user_id', uid).eq('dia', diaPontoHoje()).order('registrado_em', { ascending: true }), 10000, 'carregar os registros de hoje'),
         carregarStatusFacial(empresaId),
       ]);
@@ -1011,7 +1011,8 @@
     bind('ponto-confirmar-ok', function () {
       var tipo = state.confirmarTipo;
       if (!tipo) return;
-      var facialAtivo = state.facial && state.facial.ativo === true;
+      var tiposFacial = (state.pontoConfig && state.pontoConfig.reconhecimento_facial_tipos) || ['entrada'];
+      var facialAtivo = state.facial && state.facial.ativo === true && tiposFacial.indexOf(tipo) !== -1;
       if (facialAtivo) iniciarFacial('marcacao', function () { bater(tipo); }); else bater(tipo);
     });
     bind('ponto-cadastrar-facial', function () { iniciarFacial('cadastro', function () { mostrarToast('Reconhecimento facial cadastrado com sucesso.'); }); });

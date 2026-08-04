@@ -285,6 +285,35 @@ export default function AppGestao() {
     finalizarTour, pularTour,
   } = ui;
 
+  const registrarConclusaoTour = useCallback(() => {
+    const salvarNaConta = async () => {
+      const { data: dadosUsuario, error: erroUsuario } = await supabase.auth.getUser();
+      const usuario = dadosUsuario.user;
+      if (erroUsuario || !usuario || usuario.user_metadata?.avantalab_gestao_tour_concluido === true) return;
+
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          ...usuario.user_metadata,
+          avantalab_gestao_tour_concluido: true,
+        },
+      });
+      if (error) console.warn('Não foi possível registrar a conclusão do tutorial na conta.', error);
+    };
+
+    localStorage.setItem('avantalab_tour_concluido', 'true');
+    void salvarNaConta();
+  }, []);
+
+  const finalizarTourPersistente = useCallback(() => {
+    finalizarTour();
+    registrarConclusaoTour();
+  }, [finalizarTour, registrarConclusaoTour]);
+
+  const pularTourPersistente = useCallback(() => {
+    pularTour();
+    registrarConclusaoTour();
+  }, [pularTour, registrarConclusaoTour]);
+
   const empresas = useEmpresas({
     abrirAviso,
     abrirConfirmacao,
@@ -2231,15 +2260,36 @@ useEffect(() => {
   };
 }, [mounted, acessoLiberado, validacaoTelefoneObrigatoria]);
 
-// Tour primeiro acesso: exibe automaticamente quando ainda não foi concluído
+// Tour primeiro acesso: acompanha a conta; a cópia local só evita uma nova
+// abertura enquanto o aplicativo ainda está carregando a sessão.
 useEffect(() => {
   if (!mounted || !acessoLiberado || validacaoTelefoneObrigatoria) return;
-  const jaConcluido = localStorage.getItem('avantalab_tour_concluido');
-  if (!jaConcluido) {
-    const timerTour = window.setTimeout(() => setTourAberto(true), 0);
-    return () => window.clearTimeout(timerTour);
-  }
-}, [mounted, acessoLiberado, validacaoTelefoneObrigatoria]);
+  let cancelado = false;
+  let timerTour: number | null = null;
+
+  void (async () => {
+    const jaConcluidoLocalmente = localStorage.getItem('avantalab_tour_concluido') === 'true';
+    const { data: dadosUsuario } = await supabase.auth.getUser();
+    const jaConcluidoNaConta = dadosUsuario.user?.user_metadata?.avantalab_gestao_tour_concluido === true;
+    if (cancelado) return;
+
+    // Migra silenciosamente a conclusão existente para que uma reinstalação
+    // não faça o tutorial voltar a aparecer para quem já o concluiu.
+    if (jaConcluidoLocalmente && !jaConcluidoNaConta) {
+      registrarConclusaoTour();
+      return;
+    }
+
+    if (!jaConcluidoLocalmente && !jaConcluidoNaConta) {
+      timerTour = window.setTimeout(() => setTourAberto(true), 0);
+    }
+  })();
+
+  return () => {
+    cancelado = true;
+    if (timerTour !== null) window.clearTimeout(timerTour);
+  };
+}, [mounted, acessoLiberado, validacaoTelefoneObrigatoria, registrarConclusaoTour]);
 
   // --- CÁLCULOS E FUNÇÕES ---
 
@@ -2715,7 +2765,7 @@ useEffect(() => {
     try {
       const { data, error } = await supabase
         .from('ponto_config')
-        .select('latitude, longitude, raio_m, reconhecimento_facial_status, reconhecimento_facial_valor_centavos, reconhecimento_facial_franquia_mensal')
+        .select('latitude, longitude, raio_m, reconhecimento_facial_status, reconhecimento_facial_valor_centavos, reconhecimento_facial_franquia_mensal, reconhecimento_facial_tipos')
         .eq('empresa_id', empresaId)
         .maybeSingle();
       if (!error) {
@@ -2727,6 +2777,7 @@ useEffect(() => {
           reconhecimento_facial_status: data.reconhecimento_facial_status || 'desativado',
           reconhecimento_facial_valor_centavos: Number(data.reconhecimento_facial_valor_centavos || 1490),
           reconhecimento_facial_franquia_mensal: Number(data.reconhecimento_facial_franquia_mensal || 120),
+          reconhecimento_facial_tipos: data.reconhecimento_facial_tipos || ['entrada'],
         } : { latitude: null, longitude: null, raio_m: 100, reconhecimento_facial_status: 'desativado', reconhecimento_facial_valor_centavos: 1490, reconhecimento_facial_franquia_mensal: 120 });
       }
     } catch {}
@@ -2766,7 +2817,7 @@ useEffect(() => {
     } catch { /* a aba mostra seleção vazia até a próxima abertura */ }
   }
 
-  async function salvarPreparacaoFacialPonto(funcionariosIds: string[]) {
+  async function salvarPreparacaoFacialPonto(funcionariosIds: string[], tiposMarcacao: string[]) {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
     try {
       const { data: sessao } = await supabase.auth.getSession();
@@ -2775,7 +2826,7 @@ useEffect(() => {
       const resposta = await fetch('/api/ponto/reconhecimento-facial/configuracao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ empresaId, funcionariosIds, aceite: true }),
+      body: JSON.stringify({ empresaId, funcionariosIds, tiposMarcacao, aceite: true }),
       });
       const resultado = await resposta.json().catch(() => null);
       if (!resposta.ok || resultado?.erro) return { erro: true, mensagem: resultado?.mensagem || 'Não foi possível salvar a preparação facial.' };
@@ -4614,16 +4665,36 @@ const atualizarLayoutDashboard = (novaOrdem: { left: string[]; a: string[]; b: s
     abrirPremium('organizar_dashboard');
     return;
   }
+  const ordemAnterior = dashboardOrdem;
+  const expandidosAnteriores = dashboardExpandidos;
   setDashboardOrdem(novaOrdem);
   setDashboardExpandidos(novosExpandidos);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem, dashboardOcultos, novosExpandidos);
+  if (empresaId) {
+    void salvarDashboardOrdemWeb(empresaId, novaOrdem, dashboardOcultos, novosExpandidos).then((salvo) => {
+      if (salvo) return;
+      setDashboardOrdem(ordemAnterior);
+      setDashboardExpandidos(expandidosAnteriores);
+      abrirAviso('Alteração não salva', 'Não foi possível salvar a organização dos cards. Tente novamente.');
+    });
+  }
 };
 
 const restaurarOrdemDashboard = () => {
+  const ordemAnterior = dashboardOrdem;
+  const ocultosAnteriores = dashboardOcultos;
+  const expandidosAnteriores = dashboardExpandidos;
   setDashboardOrdem(ordemDashboardPadrao);
   setDashboardOcultos(ocultosDashboardPadrao);
   setDashboardExpandidos([]);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, ordemDashboardPadrao, ocultosDashboardPadrao, []);
+  if (empresaId) {
+    void salvarDashboardOrdemWeb(empresaId, ordemDashboardPadrao, ocultosDashboardPadrao, []).then((salvo) => {
+      if (salvo) return;
+      setDashboardOrdem(ordemAnterior);
+      setDashboardOcultos(ocultosAnteriores);
+      setDashboardExpandidos(expandidosAnteriores);
+      abrirAviso('Alteração não salva', 'Não foi possível restaurar a organização dos cards. Tente novamente.');
+    });
+  }
 };
 
 const definirOcultosDashboard = (novosOcultos: string[]) => {
@@ -4636,8 +4707,15 @@ const definirOcultosDashboard = (novosOcultos: string[]) => {
   const ocultosNormalizados = novosOcultos.filter(
     (id, index) => dashboardCardsKanban.includes(id) && novosOcultos.indexOf(id) === index
   );
+  const ocultosAnteriores = dashboardOcultos;
   setDashboardOcultos(ocultosNormalizados);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, dashboardOrdem, ocultosNormalizados, dashboardExpandidos);
+  if (empresaId) {
+    void salvarDashboardOrdemWeb(empresaId, dashboardOrdem, ocultosNormalizados, dashboardExpandidos).then((salvo) => {
+      if (salvo) return;
+      setDashboardOcultos(ocultosAnteriores);
+      abrirAviso('Alteração não salva', 'Não foi possível salvar a visibilidade dos cards. Tente novamente.');
+    });
+  }
 };
 
 const ocultarCardDashboard = (id: string) => {
@@ -10999,8 +11077,8 @@ if (validacaoTelefoneObrigatoria) {
 {/* ================= TOUR PRIMEIRO ACESSO ================= */}
 <TourPrimeiroAcesso
   aberto={tourAberto}
-  aoFinalizar={finalizarTour}
-  aoPular={pularTour}
+  aoFinalizar={finalizarTourPersistente}
+  aoPular={pularTourPersistente}
   corPrimaria={corPrimaria}
   darkMode={darkMode}
 />
