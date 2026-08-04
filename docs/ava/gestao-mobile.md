@@ -1,18 +1,37 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.151 -->
+<!-- ava-version: 1.6.1.154 -->
+
+> Revisão 1.6.1.154: o título de **Novo lançamento** permanece completo; a
+> pílula fica centralizada somente no espaço disponível antes do botão X.
+
+> Revisão 1.6.1.153: a pílula de período de **Novo lançamento** fica
+> centralizada entre o título e o botão de fechar.
+
+> Revisão 1.6.1.152: em **Novo lançamento**, a pílula do cabeçalho inicia no
+> mês vigente e tem setas para escolher o período. A escolha define o mês e o
+> ano da despesa, receita ou parcelamento, sem alterar o mês aberto no painel.
 
 > Revisão 1.6.1.151: estabilização do teclado aplicada somente ao novo pedido
 > do AvantaVendas; sem impacto operacional na Gestão Mobile.
 
+> Revisão 1.6.1.150: durante a captura facial, Ponto seguro ocupa o platô e
+> Cancelar permanece disponível durante toda a verificação.
+
 > Revisão 1.6.1.149: ajuste do teclado aplicado somente ao card de novo pedido
 > do AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.148: na captura facial, a etiqueta Ponto seguro permanece
+> inteira no platô, inclusive em telas estreitas.
 
 > Revisão 1.6.1.147: simplificação do card AWS somente no console global
 > `/admin`; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.146: o acompanhamento de consumo da AWS foi adicionado somente
 > ao console global `/admin`; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.1.145: a conclusão do Tutorial e a organização dos cards do
+> resumo permanecem vinculadas à conta. Reinstalar o aplicativo não os restaura.
 
 > Revisão 1.6.1.144: o limite da prova de vida facial é 70%; a comparação da
 > identidade cadastrada continua em 90%.

@@ -419,6 +419,8 @@
     exclusaoRecorrencia: null,
     caixinhaResetConfirmacao: false,
     tipoLancamento: 'despesa',
+    lancamentoMesIndice: null,
+    lancamentoAno: null,
     modoReceita: 'entrada',
     despesaDia: '',
     despesaDiaAutoHoje: false,
@@ -3819,7 +3821,41 @@
     return String(new Date().getDate());
   }
 
+  function periodoLancamentoMobile() {
+    var hoje = new Date();
+    var indice = Number(state.lancamentoMesIndice);
+    var ano = Number(state.lancamentoAno);
+    if (!Number.isInteger(indice) || indice < 0 || indice > 11) indice = hoje.getMonth();
+    if (!ano) ano = hoje.getFullYear();
+    return { indice: indice, mes: meses[indice], ano: ano };
+  }
+
+  function iniciarPeriodoLancamentoMobile() {
+    var hoje = new Date();
+    state.lancamentoMesIndice = hoje.getMonth();
+    state.lancamentoAno = hoje.getFullYear();
+  }
+
+  function mudarPeriodoLancamentoMobile(delta) {
+    var periodo = periodoLancamentoMobile();
+    var data = new Date(periodo.ano, periodo.indice + Number(delta || 0), 1);
+    state.lancamentoMesIndice = data.getMonth();
+    state.lancamentoAno = data.getFullYear();
+    state.erro = '';
+    state._diaInvalido = false;
+
+    var limite = maxDias(meses[state.lancamentoMesIndice], state.lancamentoAno);
+    ['despesaDia', 'entradaDia'].forEach(function (chave) {
+      var dia = Number(state[chave]);
+      if (dia > limite) state[chave] = String(limite);
+    });
+    state.despesaDiaAutoHoje = false;
+    state.entradaDiaAutoHoje = false;
+    render();
+  }
+
   function prepararNovoLancamentoMobile() {
+    iniciarPeriodoLancamentoMobile();
     if (!state.despesaDia) {
       state.despesaDia = diaHojeLancamentoMobile();
       state.despesaDiaAutoHoje = true;
@@ -7446,12 +7482,13 @@
   async function salvarDespesa(ignorarAvisoDuplicado) {
     if (!state.empresa || state.lancandoDespesa) return;
 
+    var periodo = periodoLancamentoMobile();
     var dia = Number(campo('despesa-dia'));
     var nome = campo('despesa-nome');
     var descricao = campo('despesa-descricao');
     var valorTexto = campo('despesa-valor');
     var valor = normalizarValor(valorTexto);
-    var limite = maxDias(state.mes, state.ano);
+    var limite = maxDias(periodo.mes, periodo.ano);
     state.despesaDia = campo('despesa-dia');
     state.despesaDiaAutoHoje = false;
     state.despesaNome = nome;
@@ -7478,7 +7515,7 @@
 
     if (state.duplicadosAtivo) {
       var existeIgual = state.lancamentos.some(function (item) {
-        return item.mes === state.mes && Number(item.valor) === Number(valor);
+        return item.mes === periodo.mes && Number(item.valor) === Number(valor);
       });
 
       if (existeIgual && !ignorarAvisoDuplicado) {
@@ -7494,7 +7531,7 @@
     render();
 
     var totalParcelas = (state.formParcelar && state.formParcelas >= 2) ? state.formParcelas : 1;
-    var mesIndex = indiceMes(state.mes);
+    var mesIndex = periodo.indice;
     var ok = true;
     var primeiroLancamentoId = null;
 
@@ -7502,7 +7539,7 @@
       var idxMes = (mesIndex + p) % 12;
       var anosExtra = Math.floor((mesIndex + p) / 12);
       var mesParc = meses[idxMes];
-      var anoParc = Number(state.ano) + anosExtra;
+      var anoParc = periodo.ano + anosExtra;
       var descBase = formatarDescricao(descricao);
       var descParc = totalParcelas > 1
         ? (descBase ? descBase + ' (' + (p + 1) + '/' + totalParcelas + ')' : '(' + (p + 1) + '/' + totalParcelas + ')')
@@ -7833,11 +7870,12 @@
   async function salvarEntrada() {
     if (!state.empresa) return;
 
+    var periodo = periodoLancamentoMobile();
     var dia = Number(campo('entrada-dia'));
     var origem = campo('entrada-origem');
     var valorTexto = campo('entrada-valor');
     var valor = normalizarValor(valorTexto);
-    var limite = maxDias(state.mes, state.ano);
+    var limite = maxDias(periodo.mes, periodo.ano);
     state.entradaDia = campo('entrada-dia');
     state.entradaDiaAutoHoje = false;
     state.entradaOrigem = origem;
@@ -7854,14 +7892,14 @@
 
     // Receita com data futura -> "prevista": nao entra no total efetivado agora
     // (entra so na previsao). Ao confirmar, e somada ao total do mes.
-    var ehFutura = dataFutura(Number(state.ano), indiceMes(state.mes), dia);
+    var ehFutura = dataFutura(periodo.ano, periodo.indice, dia);
 
     var resposta = await db
       .from('faturamentos_entradas')
       .insert({
         empresa_id: state.empresa.id,
-        ano: Number(state.ano),
-        mes: state.mes,
+        ano: periodo.ano,
+        mes: periodo.mes,
         dia: dia,
         origem: formatarDescricao(origem),
         valor: valor,
@@ -7879,14 +7917,26 @@
     }
 
     if (!ehFutura) {
-      var totalAtual = state.faturamentos[state.mes] || 0;
+      var totalExistente = await db
+        .from('faturamentos')
+        .select('valor')
+        .eq('empresa_id', state.empresa.id)
+        .eq('ano', periodo.ano)
+        .eq('mes', periodo.mes)
+        .maybeSingle();
+      if (totalExistente.error) {
+        state.carregando = false;
+        setErro('Entrada salva, mas o total do mes nao pode ser atualizado agora.');
+        return;
+      }
+      var totalAtual = totalExistente.data ? Number(totalExistente.data.valor || 0) : 0;
       var total = await db
         .from('faturamentos')
         .upsert(
           {
             empresa_id: state.empresa.id,
-            ano: Number(state.ano),
-            mes: state.mes,
+            ano: periodo.ano,
+            mes: periodo.mes,
             valor: totalAtual + valor,
           },
           { onConflict: 'empresa_id,ano,mes' }
@@ -7914,6 +7964,7 @@
   async function salvarTotalReceita(decisaoReceitasAvulsas) {
     if (!state.empresa) return;
 
+    var periodo = periodoLancamentoMobile();
     var valorTexto = campo('receita-total');
     var valor = normalizarValor(valorTexto);
     state.receitaTotal = valorTexto;
@@ -7923,7 +7974,17 @@
       return;
     }
 
-    var entradasAvulsas = state.entradas.filter(function (e) { return e.mes === state.mes; });
+    var entradasResposta = await db
+      .from('faturamentos_entradas')
+      .select('id, valor, status')
+      .eq('empresa_id', state.empresa.id)
+      .eq('ano', periodo.ano)
+      .eq('mes', periodo.mes);
+    if (entradasResposta.error) {
+      setErro('Nao foi possivel consultar as receitas deste mes.');
+      return;
+    }
+    var entradasAvulsas = entradasResposta.data || [];
     var totalEntradasRealizadas = entradasAvulsas.reduce(function (acc, e) {
       return e.status === 'prevista' ? acc : acc + Number(e.valor || 0);
     }, 0);
@@ -7950,8 +8011,8 @@
         .from('faturamentos_entradas')
         .delete()
         .eq('empresa_id', state.empresa.id)
-        .eq('ano', Number(state.ano))
-        .eq('mes', state.mes);
+        .eq('ano', periodo.ano)
+        .eq('mes', periodo.mes);
 
       if (exclusaoEntradas.error) {
         state.carregando = false;
@@ -7965,8 +8026,8 @@
       .upsert(
         {
           empresa_id: state.empresa.id,
-          ano: Number(state.ano),
-          mes: state.mes,
+          ano: periodo.ano,
+          mes: periodo.mes,
           valor: apagarAvulsas ? valor : valor + totalEntradasRealizadas,
           referencia_total_mensal: true,
         },
@@ -7992,27 +8053,30 @@
   }
 
   function abrirConfirmacaoExclusaoTotalMesMobile() {
-    if (!state.empresa || !state.mes) return;
-
-    var totalEntradas = state.entradas
-      .filter(function (e) { return e.mes === state.mes; })
-      .reduce(function (acc, e) { return e.status === 'prevista' ? acc : acc + Number(e.valor || 0); }, 0);
-
     state.confirmacaoExclusaoTotalMes = {
-      mensagem: totalEntradas > 0
-        ? 'A referência Total mensal será removida. As receitas lançadas (' + formatarMoeda(totalEntradas) + ') serão mantidas.'
-        : 'A referência Total mensal será removida e o mês ficará sem receitas lançadas.',
+      mensagem: 'A referência Total mensal do período selecionado será removida. As receitas lançadas serão mantidas.',
     };
     render();
   }
 
   async function excluirTotalMesMobile() {
-    if (!state.empresa || !state.mes || !state.confirmacaoExclusaoTotalMes) return;
+    if (!state.empresa || !state.confirmacaoExclusaoTotalMes) return;
 
+    var periodo = periodoLancamentoMobile();
     state.confirmacaoExclusaoTotalMes = null;
-    var totalEntradas = state.entradas
-      .filter(function (e) { return e.mes === state.mes; })
-      .reduce(function (acc, e) { return e.status === 'prevista' ? acc : acc + Number(e.valor || 0); }, 0);
+    var entradasResposta = await db
+      .from('faturamentos_entradas')
+      .select('valor, status')
+      .eq('empresa_id', state.empresa.id)
+      .eq('ano', periodo.ano)
+      .eq('mes', periodo.mes);
+    if (entradasResposta.error) {
+      setErro('Nao foi possivel consultar as receitas deste mes.');
+      return;
+    }
+    var totalEntradas = (entradasResposta.data || []).reduce(function (acc, e) {
+      return e.status === 'prevista' ? acc : acc + Number(e.valor || 0);
+    }, 0);
 
     state.carregando = true;
     state.erro = '';
@@ -8024,8 +8088,8 @@
         .upsert(
           {
             empresa_id: state.empresa.id,
-            ano: Number(state.ano),
-            mes: state.mes,
+            ano: periodo.ano,
+            mes: periodo.mes,
             valor: totalEntradas,
             referencia_total_mensal: false,
           },
@@ -8040,15 +8104,13 @@
         return;
       }
 
-      state.faturamentos[state.mes] = totalEntradas;
-      delete state.referenciasTotaisMensais[state.mes];
     } else {
       var del = await db
         .from('faturamentos')
         .delete()
         .eq('empresa_id', state.empresa.id)
-        .eq('ano', Number(state.ano))
-        .eq('mes', state.mes);
+        .eq('ano', periodo.ano)
+        .eq('mes', periodo.mes);
 
       if (del.error) {
         state.carregando = false;
@@ -8056,8 +8118,6 @@
         return;
       }
 
-      delete state.faturamentos[state.mes];
-      delete state.referenciasTotaisMensais[state.mes];
     }
 
     state.carregando = false;
@@ -10865,6 +10925,7 @@
   function modalLancamentoHtml() {
     var despesaAtiva = state.tipoLancamento === 'despesa';
     var novaAberta = state.novaDespesaAberta;
+    var periodo = periodoLancamentoMobile();
     var campoEscuro = !!state.darkMode;
     var corpoModal = campoEscuro ? 'bg-slate-900 text-slate-100' : 'bg-white';
     var abas = campoEscuro ? 'border border-slate-700 bg-slate-800/80' : 'bg-slate-100';
@@ -10889,7 +10950,11 @@
               '</div>'
             : '<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 text-white" style="background-color:#003E73">' +
                 '<h2 class="text-base font-black">Novo lan&ccedil;amento</h2>' +
-                '<span class="justify-self-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-center text-base font-black leading-none tracking-wide text-white shadow-sm">' + escapeHtml(String(state.mes || '').toUpperCase()) + '</span>' +
+                '<div class="flex items-center justify-self-center rounded-full border border-white/25 bg-white/15 px-1 py-1 text-white shadow-sm" aria-label="Mês do lançamento: ' + escapeHtml(nomeMesCompleto(periodo.mes) + ' de ' + periodo.ano) + '">' +
+                  '<button id="lancamento-mes-anterior" type="button" class="flex h-7 w-7 items-center justify-center rounded-full text-xl font-black leading-none transition hover:bg-white/15" aria-label="Mês anterior">&lsaquo;</button>' +
+                  '<span class="min-w-[72px] px-1 text-center text-xs font-black leading-none tracking-wide">' + escapeHtml(nomeMesCompleto(periodo.mes).toUpperCase()) + '</span>' +
+                  '<button id="lancamento-mes-proximo" type="button" class="flex h-7 w-7 items-center justify-center rounded-full text-xl font-black leading-none transition hover:bg-white/15" aria-label="Próximo mês">&rsaquo;</button>' +
+                '</div>' +
                 '<button id="fechar-lancamento" type="button" class="justify-self-end flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar lançamento">' + iconeFecharGeometricoMobile() + '</button>' +
               '</div>' +
               '<div class="' + corpoModal + ' p-4">' +
@@ -10936,10 +11001,11 @@
     var rotuloCampo = escuro ? 'text-slate-300' : 'text-slate-600';
     var selectCampo = escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900';
     var pilulaInativa = escuro ? 'border-slate-500 bg-slate-800 text-slate-200' : 'border-slate-300 bg-white text-slate-500';
+    var periodo = periodoLancamentoMobile();
     return (
       '<div class="grid gap-3">' +
         '<div class="flex items-end gap-6">' +
-          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'type="number" min="1" max="' + maxDias(state.mes, state.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"', state.despesaDia) + '</div>' +
+          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'type="number" min="1" max="' + maxDias(periodo.mes, periodo.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"', state.despesaDia) + '</div>' +
           '<label class="grid min-w-0 flex-1 gap-1 text-xs font-black uppercase tracking-wide ' + rotuloCampo + '">Despesa' +
             '<select id="despesa-nome" style="font-size:16px" class="h-11 w-full rounded-md border px-3 text-base font-bold normal-case tracking-normal ' + selectCampo + '">' +
               '<option value=""' + (!state.despesaNome ? ' selected' : '') + '>Selecione</option>' +
@@ -10981,6 +11047,7 @@
 
   function modalReceitaCamposHtml() {
     var entradaAtiva = state.modoReceita !== 'total';
+    var periodo = periodoLancamentoMobile();
     var escuro = !!state.darkMode;
     var abas = escuro ? 'border border-slate-700 bg-slate-800/80' : 'bg-slate-100';
     var abaAtiva = escuro ? 'border border-slate-500 bg-slate-700 text-emerald-300 shadow-sm' : 'bg-white text-emerald-600 shadow-sm';
@@ -10995,7 +11062,7 @@
         (entradaAtiva
           ? '<div class="grid gap-3">' +
               '<div class="flex items-end gap-6">' +
-                '<div class="w-20 shrink-0">' + campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"', state.entradaDia) + '</div>' +
+                '<div class="w-20 shrink-0">' + campoClaro('entrada-dia', 'Dia', 'type="number" min="1" max="' + maxDias(periodo.mes, periodo.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"', state.entradaDia) + '</div>' +
                 '<div class="min-w-0 flex-1">' + campoClaro('entrada-origem', 'Origem', '', state.entradaOrigem) + '</div>' +
               '</div>' +
               campoValor('entrada-valor', 'Valor', state.entradaValor) +
@@ -11004,7 +11071,7 @@
           : '<div class="grid gap-3">' +
               '<p class="rounded-xl border px-3 py-2 text-xs font-semibold ' + (escuro ? 'border-cyan-400/40 bg-cyan-950/35 text-cyan-100' : 'border-cyan-100 bg-cyan-50 text-cyan-900') + '">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
               campoValor('receita-total', 'Total do mes', state.receitaTotal) +
-              (temTotalMensalReferencia(state.mes)
+              (String(state.ano) === String(periodo.ano) && temTotalMensalReferencia(periodo.mes)
                 ? '<button id="excluir-total-receita" type="button" class="h-10 rounded-xl border px-4 text-xs font-black uppercase tracking-wide ' + (escuro ? 'border-red-400/50 bg-red-950/35 text-red-300' : 'border-red-200 bg-red-50 text-red-600') + '">' + (state.carregando ? 'Excluindo...' : 'Excluir total do mes') + '</button>'
                 : '') +
               '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
@@ -13944,7 +14011,8 @@
       });
       diaInputEl.addEventListener('blur', function() {
         var val = Number(this.value);
-        var limite = maxDias(state.mes, state.ano);
+        var periodo = periodoLancamentoMobile();
+        var limite = maxDias(periodo.mes, periodo.ano);
         if (this.value !== '' && (isNaN(val) || val < 1 || val > limite)) {
           var msg = 'Data invalida. Informe um dia entre 1 e ' + limite + '.';
           state.erro = msg;
@@ -13957,7 +14025,8 @@
       });
       diaInputEl.addEventListener('input', function() {
         var val = Number(this.value);
-        var limite = maxDias(state.mes, state.ano);
+        var periodo = periodoLancamentoMobile();
+        var limite = maxDias(periodo.mes, periodo.ano);
         if (this.value === '' || (!isNaN(val) && val >= 1 && val <= limite)) {
           state.erro = '';
           state._diaInvalido = false;
@@ -14208,6 +14277,8 @@
       limparRascunhoLancamentoMobile();
       render();
     });
+    bind('lancamento-mes-anterior', function () { mudarPeriodoLancamentoMobile(-1); });
+    bind('lancamento-mes-proximo', function () { mudarPeriodoLancamentoMobile(1); });
     bind('tipo-despesa', function () {
       state.tipoLancamento = 'despesa';
       render();

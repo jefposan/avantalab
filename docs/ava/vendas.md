@@ -1,19 +1,37 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.151 -->
+<!-- ava-version: 1.6.1.154 -->
+
+> Revisão 1.6.1.154: ajuste de cabeçalho aplicado somente ao novo lançamento
+> da Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.153: centralização da pílula de período aplicada somente ao
+> novo lançamento da Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.152: seletor de período do novo lançamento aplicado somente à
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.151: ao abrir o teclado no novo pedido, o card calcula uma
 > única posição estável após a abertura, sem oscilar durante a edição.
 
+> Revisão 1.6.1.150: sem impacto operacional no AvantaVendas; o cabeçalho e o
+> Cancelar da captura facial foram ajustados somente no Controle de Ponto.
+
 > Revisão 1.6.1.149: no card de novo pedido, abrir o teclado desloca o card
 > inteiro para manter visível o campo em edição, inclusive o desconto. Fechar o
 > teclado devolve o card à posição original e preserva os dados preenchidos.
+
+> Revisão 1.6.1.148: sem impacto operacional no AvantaVendas; o platô da
+> captura facial foi ajustado somente no Controle de Ponto da Gestão.
 
 > Revisão 1.6.1.147: sem impacto operacional no AvantaVendas; somente o card
 > AWS do console global `/admin` foi simplificado.
 
 > Revisão 1.6.1.146: sem impacto operacional no AvantaVendas; o consumo da AWS
 > foi acrescentado somente ao console global `/admin`.
+
+> Revisão 1.6.1.145: sem impacto operacional no AvantaVendas; preferências do
+> tutorial e dos cards foram reforçadas somente na Gestão.
 
 > Revisão 1.6.1.144: sem impacto operacional no AvantaVendas; o limite da
 > prova de vida do Controle de Ponto foi ajustado.

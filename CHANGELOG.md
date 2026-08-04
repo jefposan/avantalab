@@ -1,16 +1,44 @@
 # Changelog
 
+## 1.6.1.154 - 2026-08-04
+
+- Gestão Mobile: o cabeçalho de **Novo lançamento** preserva o título completo;
+  a pílula de mês fica centralizada apenas no espaço entre o título e o X.
+
+## 1.6.1.153 - 2026-08-04
+
+- Gestão Mobile: a pílula de mês do card **Novo lançamento** foi centralizada
+  entre o título e o botão de fechar.
+
+## 1.6.1.152 - 2026-08-04
+
+- Gestão Mobile: o card **Novo lançamento** agora abre no mês vigente e traz
+  setas para selecionar o mês e o ano do lançamento. A escolha vale somente
+  para o novo registro, inclusive receitas e parcelamentos, sem mudar o mês
+  que está aberto no painel ao fundo.
+
 ## 1.6.1.151 - 2026-08-04
 
 - AvantaVendas: o card de novo pedido agora aguarda o teclado concluir sua
   abertura antes de calcular o deslocamento, evitando o balanço durante o foco
   do campo de desconto.
 
+## 1.6.1.150 - 2026-08-04
+
+- Controle de Ponto: durante a verificação facial, **Ponto seguro** ocupa o
+  platô do AvantaCard, o status fica no cabeçalho da leitura e o botão
+  **Cancelar** permanece fixo e funcional em toda a captura.
+
 ## 1.6.1.149 - 2026-08-04
 
 - AvantaVendas: ao abrir o teclado no card de novo pedido, o card inteiro agora
   sobe o necessário para manter o campo focado visível, inclusive o desconto.
   Ao fechar o teclado, o card retorna à posição original sem alterar o pedido.
+
+## 1.6.1.148 - 2026-08-04
+
+- Controle de Ponto: o platô da captura facial foi ampliado no mobile e a
+  etiqueta **Ponto seguro** permanece em uma única linha.
 
 ## 1.6.1.147 - 2026-08-04
 
@@ -27,6 +55,12 @@
   próprios do AvantaLab, como verificações, médias, aprovações, falhas e
   projeção técnica. As credenciais continuam restritas ao servidor e cada
   fonte falha de forma independente, sem interromper os demais serviços.
+
+## 1.6.1.145 - 2026-08-04
+
+- Gestão Web e Mobile: a conclusão do tutorial passa a acompanhar a conta e a
+  organização dos cards só permanece na tela após confirmação do servidor.
+  Reinstalar o aplicativo não restaura essas preferências.
 
 ## 1.6.1.144 - 2026-08-04
 

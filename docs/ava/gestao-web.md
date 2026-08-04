@@ -1,12 +1,27 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.151 -->
+<!-- ava-version: 1.6.1.154 -->
+
+> Revisão 1.6.1.154: ajuste de cabeçalho aplicado somente ao novo lançamento
+> da Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.153: centralização da pílula de período aplicada somente ao
+> novo lançamento da Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.152: seletor de período do novo lançamento aplicado somente à
+> Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.151: estabilização do teclado aplicada somente ao novo pedido
 > do AvantaVendas; sem impacto operacional na Gestão Web.
 
+> Revisão 1.6.1.150: durante a captura facial, Ponto seguro ocupa o platô e
+> Cancelar permanece disponível durante toda a verificação.
+
 > Revisão 1.6.1.149: ajuste do teclado aplicado somente ao card de novo pedido
 > do AvantaVendas; sem impacto operacional na Gestão Web.
+
+> Revisão 1.6.1.148: na captura facial, a etiqueta Ponto seguro permanece
+> inteira no platô, inclusive em telas estreitas.
 
 > Revisão 1.6.1.147: o card AWS em `/admin` > **Consumo** foi simplificado para
 > custos, créditos e indicadores faciais úteis, sem métricas técnicas do
@@ -17,6 +32,9 @@
 > facial** reúne custo oficial do mês, créditos e Free Tier quando disponíveis,
 > métricas do Rekognition e indicadores registrados pelo AvantaLab. A consulta
 > é administrativa e mantém as credenciais somente no servidor.
+
+> Revisão 1.6.1.145: a conclusão do Tutorial e a organização dos cards do
+> resumo permanecem vinculadas à conta. Reinstalar o aplicativo não os restaura.
 
 > Revisão 1.6.1.144: o limite da prova de vida facial é 70%; a comparação da
 > identidade cadastrada continua em 90%.
