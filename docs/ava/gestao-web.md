@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.03 -->
+<!-- ava-version: 1.7.0.04 -->
+
+> Revisão 1.7.0.04: correção do fluxo de criação inicial aplicada à Gestão
+> Mobile; a Gestão Web já utilizava a rota segura e não muda operacionalmente.
 
 > Revisão 1.7.0.03: a barra inferior da tela do funcionário fica ancorada na base
 > quando houver espaço e mantém separação segura do card anterior em telas

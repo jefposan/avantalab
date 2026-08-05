@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0: contratação e liberação financeira separadas do reconhecimento facial do Ponto.
+// Revisado na versão 1.7.0.04: a criação inicial de perfil no Gestão Mobile usa a rota segura e não fica presa em Criando.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

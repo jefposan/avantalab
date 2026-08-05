@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.03 -->
+<!-- ava-version: 1.7.0.04 -->
+
+> Revisão 1.7.0.04: correção da criação inicial aplicada somente à Gestão
+> Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.03: ajuste responsivo restrito à barra inferior do Controle de
 > Ponto; sem impacto operacional no AvantaVendas.

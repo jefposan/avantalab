@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.04 - 2026-08-05
+
+- Gestão Mobile: a criação do primeiro perfil Pessoa ou Empresa passou a usar a
+  rota segura do servidor, já adotada na Gestão Web. O botão deixa de permanecer
+  em **Criando...** quando a antiga RPC não está disponível e informa falhas de
+  sessão ou conexão de forma recuperável.
+
 ## 1.7.0.03 - 2026-08-05
 
 - Controle de Ponto: a barra inferior com **Sair**, **Ajustes** e **Ajuda** passa

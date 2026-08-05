@@ -4817,6 +4817,41 @@
     return sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
   }
 
+  async function criarPerfilViaApiMobile(nome, tipoPerfil, somentePrimeiro) {
+    try {
+      var token = await tokenSessao();
+      if (!token) {
+        return { error: { message: 'Sua sessao expirou. Entre novamente para criar o perfil.' }, data: null, criado: false };
+      }
+      var retorno = await requisitarJsonMobileComRetry('/api/criar-perfil', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token,
+        },
+        body: JSON.stringify({
+          nome: nome,
+          tipoPerfil: normalizarTipoPerfil(tipoPerfil),
+          somentePrimeiro: somentePrimeiro === true,
+        }),
+      });
+      if (!retorno.resposta.ok || !retorno.json || retorno.json.erro) {
+        return {
+          error: { message: (retorno.json && retorno.json.mensagem) || 'Nao foi possivel criar o perfil financeiro.' },
+          data: null,
+          criado: false,
+        };
+      }
+      return { error: null, data: retorno.json.empresa || null, criado: retorno.json.criado === true };
+    } catch (error) {
+      return {
+        error: { message: mensagemErro(error, 'A criacao demorou mais que o esperado. Confira sua conexao e tente novamente.') },
+        data: null,
+        criado: false,
+      };
+    }
+  }
+
   async function lerNotaPorFotoMobile(arquivo) {
     if (recursoExclusivoAssinanteMobile()) {
       mostrarAvisoAssinanteMobile('Leitura de nota', 'O envio de foto ou arquivo para leitura da nota é uma função exclusiva para assinantes.');
@@ -6822,12 +6857,7 @@
     state.criarPerfilErro = '';
     render();
 
-    var resposta = criacaoAutomatica
-      ? await db.rpc('criar_primeiro_perfil_cadastro_rpc', {
-          p_nome_empresa: nome,
-          p_tipo_perfil: tipo,
-        })
-      : await db.rpc('criar_empresa_inicial_rpc', { p_nome_empresa: nome });
+    var resposta = await criarPerfilViaApiMobile(nome, tipo, true);
 
     if (resposta.error || !resposta.data) {
       state.carregando = false;
@@ -6835,11 +6865,8 @@
       return false;
     }
 
-    var retornoPrimeiroPerfil = criacaoAutomatica ? resposta.data : null;
-    var criada = criacaoAutomatica
-      ? retornoPrimeiroPerfil && retornoPrimeiroPerfil.empresa
-      : (Array.isArray(resposta.data) ? resposta.data[0] : resposta.data);
-    var perfilCriadoAgora = !criacaoAutomatica || !!(retornoPrimeiroPerfil && retornoPrimeiroPerfil.criado);
+    var criada = resposta.data;
+    var perfilCriadoAgora = resposta.criado === true;
     var criadaId = criada && (criada.id || criada.empresa_id);
 
     if (!criadaId) {
@@ -8346,9 +8373,7 @@
     state.criarPerfilErro = '';
     render();
 
-    var resposta = await db.rpc('criar_empresa_inicial_rpc', {
-      p_nome_empresa: nome,
-    });
+    var resposta = await criarPerfilViaApiMobile(nome, tipoPerfil, false);
 
     if (resposta.error) {
       state.carregando = false;
@@ -8357,16 +8382,14 @@
       return;
     }
 
-    var dadosBrutos = resposta.data;
-    var semDados = !dadosBrutos || (Array.isArray(dadosBrutos) && dadosBrutos.length === 0);
-    if (semDados) {
+    if (!resposta.data) {
       state.carregando = false;
       state.empresaAcao = '';
       setErroCriarPerfil('O servidor criou o perfil mas não retornou os dados. Recarregue a página e verifique se o perfil foi criado antes de tentar novamente.');
       return;
     }
 
-    var criada = Array.isArray(dadosBrutos) ? dadosBrutos[0] : dadosBrutos;
+    var criada = resposta.data;
     var criadaId = criada && (criada.id || criada.empresa_id);
 
     if (!criadaId) {

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.03 -->
+<!-- ava-version: 1.7.0.04 -->
+
+> Revisão 1.7.0.04: ao criar o primeiro perfil Pessoa ou Empresa, o Mobile usa
+> o fluxo seguro do servidor e recupera o botão **Criar perfil** se houver
+> falha de sessão ou conexão, sem permanecer em **Criando...**.
 
 > Revisão 1.7.0.03: a barra inferior do Ponto ocupa a base disponível e, em telas
 > baixas, aproxima-se do conteúdo somente até o respiro mínimo, sem sobreposição.
