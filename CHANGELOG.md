@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.03 - 2026-08-05
+
+- Controle de Ponto: a barra inferior com **Sair**, **Ajustes** e **Ajuda** passa
+  a ocupar a base da tela quando houver espaço. Em alturas menores, permanece no
+  fluxo e conserva um respiro mínimo abaixo do card anterior, sem sobreposição.
+
 ## 1.7.0.02 - 2026-08-05
 
 - Controle de Ponto: o fundo institucional também foi aplicado à tela principal

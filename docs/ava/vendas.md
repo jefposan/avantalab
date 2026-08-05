@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.02 -->
+<!-- ava-version: 1.7.0.03 -->
+
+> Revisão 1.7.0.03: ajuste responsivo restrito à barra inferior do Controle de
+> Ponto; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.02: fundo institucional aplicado à tela principal do Controle de
 > Ponto; sem impacto operacional no AvantaVendas.

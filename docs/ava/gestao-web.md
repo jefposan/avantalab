@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.02 -->
+<!-- ava-version: 1.7.0.03 -->
+
+> Revisão 1.7.0.03: a barra inferior da tela do funcionário fica ancorada na base
+> quando houver espaço e mantém separação segura do card anterior em telas
+> menores; sem mudança nas ações Sair, Ajustes ou Ajuda.
 
 > Revisão 1.7.0.02: o fundo institucional também passou a compor a tela principal
 > do funcionário, atrás da ação **Bater ponto**; sem alteração no registro ou nas

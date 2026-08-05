@@ -120,7 +120,7 @@ export default function PontoPage() {
       <PontoFacialLiveness identityPoolId={process.env.NEXT_PUBLIC_AWS_COGNITO_IDENTITY_POOL_ID || ''} />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/ponto-app.js?v=28" defer />
+      <script src="/ponto-app.js?v=29" defer />
     </main>
   );
 }
