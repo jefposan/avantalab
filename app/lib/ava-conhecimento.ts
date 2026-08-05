@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.04: a criação inicial de perfil no Gestão Mobile usa a rota segura e não fica presa em Criando.
+// Revisado na versão 1.7.0.05: a criação inicial de perfil no Gestão Mobile sempre libera o formulário se a preparação posterior falhar.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -6857,6 +6857,7 @@
     state.criarPerfilErro = '';
     render();
 
+    try {
     var resposta = await criarPerfilViaApiMobile(nome, tipo, true);
 
     if (resposta.error || !resposta.data) {
@@ -6957,6 +6958,11 @@
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
     return true;
+    } catch (error) {
+      state.carregando = false;
+      setErroCriarPerfil(mensagemErro(error, 'O perfil foi criado, mas não foi possível concluir sua preparação. Recarregue a página para verificar.'));
+      return false;
+    }
   }
 
   async function criarPerfilInicialDoCadastroMobile(metadata) {
@@ -8373,6 +8379,7 @@
     state.criarPerfilErro = '';
     render();
 
+    try {
     var resposta = await criarPerfilViaApiMobile(nome, tipoPerfil, false);
 
     if (resposta.error) {
@@ -8429,6 +8436,11 @@
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
     mostrarToast('Perfil criado.');
+    } catch (error) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErroCriarPerfil(mensagemErro(error, 'O perfil foi criado, mas não foi possível concluir sua preparação. Recarregue a página para verificar.'));
+    }
   }
 
   function abrirEdicaoEmpresaMobile() {

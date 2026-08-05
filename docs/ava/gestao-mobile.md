@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.04 -->
+<!-- ava-version: 1.7.0.05 -->
+
+> Revisão 1.7.0.05: se a preparação do perfil após a criação não puder ser
+> concluída, o formulário retorna com orientação para recarregar; ele não fica
+> bloqueado em **Criando...**.
 
 > Revisão 1.7.0.04: ao criar o primeiro perfil Pessoa ou Empresa, o Mobile usa
 > o fluxo seguro do servidor e recupera o botão **Criar perfil** se houver

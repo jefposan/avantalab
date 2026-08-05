@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.04 -->
+<!-- ava-version: 1.7.0.05 -->
+
+> Revisão 1.7.0.05: tratamento adicional da criação inicial aplicado apenas à
+> Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.04: correção do fluxo de criação inicial aplicada à Gestão
 > Mobile; a Gestão Web já utilizava a rota segura e não muda operacionalmente.

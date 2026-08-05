@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.05 - 2026-08-05
+
+- Gestão Mobile: a criação de perfil agora também trata falhas nas etapas finais
+  de preparação. O botão deixa de ficar em **Criando...** e o formulário volta
+  com uma orientação recuperável caso categorias, configurações ou o
+  carregamento inicial não possam ser concluídos.
+
 ## 1.7.0.04 - 2026-08-05
 
 - Gestão Mobile: a criação do primeiro perfil Pessoa ou Empresa passou a usar a
