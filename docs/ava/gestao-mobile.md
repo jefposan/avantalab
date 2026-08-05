@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.16 -->
+<!-- ava-version: 1.7.0.17 -->
+
+> Revisão 1.7.0.17: a lista interna do Menu tem rolagem nativa com altura
+> limitada, mantendo todos os botões acessíveis no navegador sem deslocar a
+> navegação inferior.
 
 > Revisão 1.7.0.16: no navegador, o Menu mede a navegação inferior visível e
 > reserva o espaço necessário. Quando a lista for maior que a tela, seus botões

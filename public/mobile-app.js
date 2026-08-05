@@ -11444,7 +11444,7 @@
 
     return (
       '<div id="menu-overlay" class="absolute inset-0 z-50 bg-slate-950/75" style="bottom:calc(env(safe-area-inset-bottom) + 82px);will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
-        '<aside id="menu-aside" class="flex h-full w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';-webkit-overflow-scrolling:touch;touch-action:pan-y;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + limiteTopoMenuIos + animacaoPainel + '">' +
+        '<aside id="menu-aside" class="flex h-full w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="display:flex;flex-direction:column;height:100%;min-height:0;max-height:100%;background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';-webkit-overflow-scrolling:touch;touch-action:pan-y;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + limiteTopoMenuIos + animacaoPainel + '">' +
           '<div class="relative mb-4 shrink-0 overflow-hidden rounded-[16px_32px_32px_32px] p-4 text-white" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +
             '<div class="flex items-start justify-between gap-3">' +
@@ -11452,7 +11452,7 @@
               '<button id="fechar-menu" type="button" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white shadow-sm backdrop-blur active:scale-95" aria-label="Fechar menu">' + iconeFecharGeometricoMobile() + '</button>' +
             '</div>' +
           '</div>' +
-          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:24px;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;scrollbar-width:none;-ms-overflow-style:none;">' +
+          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="height:0;min-height:0;flex:1 1 0%;max-height:100%;overflow-y:scroll;padding-bottom:24px;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;scrollbar-width:none;-ms-overflow-style:none;">' +
           '<div class="grid gap-1.5">' +
             ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios())
               ? menuBotaoHtml(

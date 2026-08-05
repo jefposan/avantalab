@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.17 - 2026-08-05
+
+- Gestão Mobile: reforçada a geometria da lista interna do Menu. Ela possui
+  altura limitada e rolagem nativa explícita, garantindo acesso aos botões no
+  fim da lista sem deslocar a navegação inferior.
+
 ## 1.7.0.16 - 2026-08-05
 
 - Gestão Mobile no navegador: o Menu agora mede a altura real da barra inferior

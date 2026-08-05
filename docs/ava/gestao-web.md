@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.16 -->
+<!-- ava-version: 1.7.0.17 -->
+
+> Revisão 1.7.0.17: correção restrita à rolagem do Menu da Gestão Mobile;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.16: correção restrita ao Menu da Gestão Mobile no navegador;
 > sem impacto operacional na Gestão Web.

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.16: o Menu da Gestão Mobile mede a navegação inferior real no navegador e mantém todos os botões acessíveis por rolagem, sem afetar o app nativo.
+// Revisado na versão 1.7.0.17: o Menu da Gestão Mobile usa uma área interna de rolagem com altura explícita, mantendo todos os botões acessíveis sem afetar o app nativo.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
