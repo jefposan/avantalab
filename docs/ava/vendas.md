@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.08 -->
+<!-- ava-version: 1.7.0.09 -->
 
-> Revisão 1.7.0.08: sem impacto operacional no AvantaVendas.
+> Revisão 1.7.0.09: sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.06: reforço de recuperação aplicado aos acessos da Gestão; sem
 > impacto operacional no AvantaVendas.

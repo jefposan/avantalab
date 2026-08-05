@@ -1,10 +1,11 @@
 # Changelog
 
-## 1.7.0.08 - 2026-08-05
+## 1.7.0.09 - 2026-08-05
 
-- Gestão Mobile: raiz, shell e Agenda passam a usar uma única altura segura do
-  viewport (`100svh`), sem alturas duplicadas. A área visível é preservada com
-  a barra do Chrome em cima ou embaixo; o Menu usa exclusivamente a rolagem nativa.
+- Gestão Mobile: o navegador usa altura segura do viewport (`100svh`),
+  preservando a área visível com a barra do Chrome em cima ou embaixo. iOS e
+  Android nativos mantêm a altura dinâmica anterior (`100dvh`); o Menu usa
+  exclusivamente a rolagem nativa.
 
 ## 1.7.0.06 - 2026-08-05
 

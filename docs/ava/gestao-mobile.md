@@ -1,10 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.08 -->
+<!-- ava-version: 1.7.0.09 -->
 
-> Revisão 1.7.0.08: a Gestão Mobile usa uma única altura segura do navegador,
-> preservando os botões do Menu quando a barra do Chrome estiver em cima ou em
->baixo. A rolagem do Menu permanece nativa.
+> Revisão 1.7.0.09: no navegador, a Gestão Mobile usa altura segura que
+> preserva os botões do Menu com a barra do Chrome em cima ou embaixo. Os apps
+> iOS e Android mantêm sua altura dinâmica nativa; a rolagem do Menu permanece
+> nativa.
 
 > Revisão 1.7.0.06: login por senha, Google ou Apple, cadastro e criação de
 > perfil recuperam a tela em falhas inesperadas de conexão; nenhuma ação fica

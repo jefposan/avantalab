@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.08: a Gestão Mobile usa altura segura do navegador no Chrome móvel; o Menu preserva a rolagem nativa.
+// Revisado na versão 1.7.0.09: a altura segura do Chrome móvel é isolada do iOS e Android nativos; o Menu preserva a rolagem nativa.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
