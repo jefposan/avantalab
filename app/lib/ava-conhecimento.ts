@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.09: a altura segura do Chrome móvel é isolada do iOS e Android nativos; o Menu preserva a rolagem nativa.
+// Revisado na versão 1.7.0.10: o Menu reserva a barra inferior e preserva a rolagem nativa; a altura do navegador segue isolada dos apps nativos.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
