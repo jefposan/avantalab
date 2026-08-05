@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.15 -->
+<!-- ava-version: 1.7.0.16 -->
+
+> Revisão 1.7.0.16: no navegador, o Menu mede a navegação inferior visível e
+> reserva o espaço necessário. Quando a lista for maior que a tela, seus botões
+> permanecem acessíveis por rolagem, inclusive no Chrome com a barra inferior.
 
 > Revisão 1.7.0.15: correção técnica da inicialização da Gestão Mobile no
 > navegador. O acesso volta a concluir normalmente após **Preparando acesso**;

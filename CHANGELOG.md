@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.16 - 2026-08-05
+
+- Gestão Mobile no navegador: o Menu agora mede a altura real da barra inferior
+  e reserva esse espaço. Quando necessário, a lista de ações rola até o último
+  botão, sem ficar encoberta pela navegação fixa.
+
 ## 1.7.0.15 - 2026-08-05
 
 - Gestão Mobile: corrigido erro de inicialização no navegador que poderia manter

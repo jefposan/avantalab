@@ -4349,6 +4349,29 @@
     var altura = viewport ? viewport.height : window.innerHeight;
     if (!altura || altura < 1) return;
     document.documentElement.style.setProperty('--ava-mobile-viewport-height', Math.round(altura) + 'px');
+    sincronizarAreaRolavelMenuNoNavegador();
+  }
+
+  function sincronizarAreaRolavelMenuNoNavegador() {
+    // O Chrome pode ocupar uma altura diferente com sua barra inferior aberta.
+    // Medimos a navegação realmente desenhada, em vez de supor uma altura fixa,
+    // para que a lista do Menu mantenha todos os botões alcançáveis por rolagem.
+    var capacitor = window.Capacitor;
+    var nativoCapacitor = Boolean(
+      capacitor
+      && typeof capacitor.isNativePlatform === 'function'
+      && capacitor.isNativePlatform()
+    );
+    if (nativoCapacitor) return;
+
+    var overlay = document.getElementById('menu-overlay');
+    var navegacao = document.getElementById('navegacao-inferior-mobile');
+    if (!overlay || !navegacao || !overlay.parentElement) return;
+
+    var baseMenu = overlay.parentElement.getBoundingClientRect();
+    var baseNavegacao = navegacao.getBoundingClientRect();
+    var reservaInferior = Math.max(0, Math.ceil(baseMenu.bottom - baseNavegacao.top));
+    overlay.style.bottom = reservaInferior + 'px';
   }
 
   sincronizarAlturaViewportNavegadorMobile();
@@ -9891,7 +9914,7 @@
     else if (fixasAtivo) indiceAtivo = esquerdo === 'despesasFixas' ? 1 : (direito === 'despesasFixas' ? 3 : 0);
     var indiceAnterior = typeof window._avaNavIndice === 'number' ? window._avaNavIndice : indiceAtivo;
 
-    return '<nav class="fixed inset-x-0 bottom-0 z-[90] border-t ' + (state.darkMode ? 'border-slate-700 bg-slate-900/95' : 'border-slate-200 bg-white/95') + ' shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur-xl" style="padding-bottom:env(safe-area-inset-bottom);" aria-label="Navegacao principal">' +
+    return '<nav id="navegacao-inferior-mobile" class="fixed inset-x-0 bottom-0 z-[90] border-t ' + (state.darkMode ? 'border-slate-700 bg-slate-900/95' : 'border-slate-200 bg-white/95') + ' shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur-xl" style="padding-bottom:env(safe-area-inset-bottom);" aria-label="Navegacao principal">' +
       '<div class="relative mx-auto grid h-[66px] max-w-md grid-cols-5 items-end px-2">' +
         '<span class="pointer-events-none absolute left-2 right-2 top-0 h-0.5 overflow-visible"><span data-nav-indicador data-nav-destino="' + indiceAtivo + '" class="block h-0.5 w-1/5 rounded-full bg-cyan-600 transition-transform duration-300 ease-out" style="transform:translateX(' + (indiceAnterior * 100) + '%)"></span></span>' +
         itemNavegacaoInferiorHtml('nav-home', 'home', 'Início', indiceAtivo === 0) +
@@ -13266,6 +13289,8 @@
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + confirmacaoTotalReceitaMobileHtml() + confirmacaoExclusaoTotalMesMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
+    sincronizarAreaRolavelMenuNoNavegador();
+    window.requestAnimationFrame(sincronizarAreaRolavelMenuNoNavegador);
     window.dispatchEvent(new CustomEvent('avantalab:theme-changed', {
       detail: { dark: Boolean(state.autenticado && state.darkMode) }
     }));
