@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.19 -->
+<!-- ava-version: 1.7.0.20 -->
+
+> Revisão 1.7.0.20: reversão restrita às tentativas de viewport da Gestão
+> Mobile; sem impacto operacional no Vendas Mobile e no suporte a PDFs.
 
 > Revisão 1.7.0.19: reversão visual restrita à navegação da Gestão Mobile no
 > navegador; sem impacto operacional no Vendas Mobile.

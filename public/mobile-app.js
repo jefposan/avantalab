@@ -4110,16 +4110,9 @@
     state.visao = 'home';
     state.busca = '';
     state.agendaDiaSelecionado = null;
-    // Uma abertura nova sempre começa pelo cabeçalho. A posição só é mantida
-    // durante uma alteração dentro do próprio menu (ex.: um interruptor).
-    delete window._avaMenuScrollTravado;
     state.menuAberto = true;
     state.menuAnimacao = 'entrar';
     render();
-    window.requestAnimationFrame(function () {
-      var painel = document.getElementById('menu-botoes-scroll');
-      if (painel) painel.scrollTop = 0;
-    });
     atualizarEstadoNotificacoesMobile(false);
     setTimeout(function () {
       if (state.menuAberto && state.menuAnimacao === 'entrar') state.menuAnimacao = '';
@@ -4319,46 +4312,6 @@
       capacitor.isNativePlatform()
     );
     return nativoCapacitor || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  }
-
-  function alturaShellMobile() {
-    // Aplicativos Capacitor não têm as barras móveis do Chrome. Mantém a
-    // unidade dinâmica original no iOS e Android; no navegador, a altura vem
-    // da viewport visual, que exclui a barra inferior quando ela está aberta.
-    var capacitor = window.Capacitor;
-    var nativoCapacitor = Boolean(
-      capacitor &&
-      typeof capacitor.isNativePlatform === 'function' &&
-      capacitor.isNativePlatform()
-    );
-    return nativoCapacitor ? '100dvh' : 'var(--ava-mobile-viewport-height,100svh)';
-  }
-
-  function sincronizarAlturaViewportNavegadorMobile() {
-    // No navegador, a altura do shell acompanha a viewport visual. A navegação
-    // inferior web fica ancorada dentro desse shell, sem depender do defeito de
-    // position:fixed do WebKit no iOS 26.
-    var capacitor = window.Capacitor;
-    var nativoCapacitor = Boolean(
-      capacitor
-      && typeof capacitor.isNativePlatform === 'function'
-      && capacitor.isNativePlatform()
-    );
-    if (nativoCapacitor) return;
-    var viewport = window.visualViewport;
-    var altura = viewport ? viewport.height : window.innerHeight;
-    if (!altura || altura < 1) return;
-    document.documentElement.style.setProperty('--ava-mobile-viewport-height', Math.round(altura) + 'px');
-  }
-
-  sincronizarAlturaViewportNavegadorMobile();
-  if (!window._avaViewportNavegadorBound) {
-    window._avaViewportNavegadorBound = true;
-    window.addEventListener('resize', sincronizarAlturaViewportNavegadorMobile, { passive: true });
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', sincronizarAlturaViewportNavegadorMobile, { passive: true });
-      window.visualViewport.addEventListener('scroll', sincronizarAlturaViewportNavegadorMobile, { passive: true });
-    }
   }
 
   function deveBloquearScroll() {
@@ -9743,7 +9696,7 @@
     // Agenda: tela cheia, sem o cabeçalho global (que mostra outro mês e confunde).
     if (state.visao === 'agenda') {
       return (
-        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="position:fixed;inset:0;bottom:auto;height:' + alturaShellMobile() + ';overflow:hidden;overscroll-behavior:none;">' +
+        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="position:fixed;inset:0;overflow:hidden;overscroll-behavior:none;">' +
           agendaMobileHtml(atual) +
           (state.modalLancamento ? modalLancamentoHtml() : '') +
           (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
@@ -9760,7 +9713,7 @@
     }
 
     return (
-      '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="bottom:auto;height:' + alturaShellMobile() + ';overscroll-behavior:none;">' +
+      '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="overscroll-behavior:none;">' +
         '<div id="mobile-header-wrap" class="relative z-40 shrink-0" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);isolation:isolate;">' +
         '<header id="mobile-main-header" class="relative z-10 overflow-hidden rounded-[0_0_28px_28px] px-3 pb-3 text-white sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);border-radius:0 0 28px 28px;clip-path:inset(0 round 0 0 28px 28px);-webkit-mask-image:-webkit-radial-gradient(white, black);box-shadow:0 10px 10px rgba(8,47,73,0.18);contain:paint;">' +
           '<div class="mx-auto max-w-md">' +
@@ -9890,6 +9843,7 @@
     else if (perfilAtivo) indiceAtivo = esquerdo === 'perfil' ? 1 : (direito === 'perfil' ? 3 : 0);
     else if (fixasAtivo) indiceAtivo = esquerdo === 'despesasFixas' ? 1 : (direito === 'despesasFixas' ? 3 : 0);
     var indiceAnterior = typeof window._avaNavIndice === 'number' ? window._avaNavIndice : indiceAtivo;
+
     return '<nav class="fixed inset-x-0 bottom-0 z-[90] border-t ' + (state.darkMode ? 'border-slate-700 bg-slate-900/95' : 'border-slate-200 bg-white/95') + ' shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur-xl" style="padding-bottom:env(safe-area-inset-bottom);" aria-label="Navegacao principal">' +
       '<div class="relative mx-auto grid h-[66px] max-w-md grid-cols-5 items-end px-2">' +
         '<span class="pointer-events-none absolute left-2 right-2 top-0 h-0.5 overflow-visible"><span data-nav-indicador data-nav-destino="' + indiceAtivo + '" class="block h-0.5 w-1/5 rounded-full bg-cyan-600 transition-transform duration-300 ease-out" style="transform:translateX(' + (indiceAnterior * 100) + '%)"></span></span>' +
@@ -10679,7 +10633,7 @@
     }
 
     return (
-      '<div class="flex flex-col overflow-hidden" style="height:' + alturaShellMobile() + ';overscroll-behavior:none;">' +
+      '<div class="flex flex-col overflow-hidden" style="height:100dvh;overscroll-behavior:none;">' +
         '<div class="flex shrink-0 items-center px-3 pb-3 text-white shadow-lg" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<div class="flex h-10 flex-1 items-center justify-between rounded-2xl border border-white/15 bg-white/10 px-1 shadow-sm backdrop-blur">' +
             '<button id="agenda-mes-prev" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-2xl font-black leading-none text-white active:bg-white/10" aria-label="M&ecirc;s anterior">&lsaquo;</button>' +
@@ -11419,8 +11373,8 @@
     ) : '';
 
     return (
-      '<div id="menu-overlay" class="absolute inset-0 z-50 bg-slate-950/75" style="bottom:calc(env(safe-area-inset-bottom) + 82px);will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
-        '<aside id="menu-aside" class="flex h-full min-h-0 w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';-webkit-overflow-scrolling:touch;touch-action:pan-y;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + limiteTopoMenuIos + animacaoPainel + '">' +
+      '<div id="menu-overlay" class="absolute inset-0 z-50 bg-slate-950/75" style="will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
+        '<aside id="menu-aside" class="flex h-full w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + limiteTopoMenuIos + animacaoPainel + '">' +
           '<div class="relative mb-4 shrink-0 overflow-hidden rounded-[16px_32px_32px_32px] p-4 text-white" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +
             '<div class="flex items-start justify-between gap-3">' +
@@ -11428,7 +11382,7 @@
               '<button id="fechar-menu" type="button" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white shadow-sm backdrop-blur active:scale-95" aria-label="Fechar menu">' + iconeFecharGeometricoMobile() + '</button>' +
             '</div>' +
           '</div>' +
-          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:24px;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;scrollbar-width:none;-ms-overflow-style:none;">' +
+          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 120px);-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;">' +
           '<div class="grid gap-1.5">' +
             ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios())
               ? menuBotaoHtml(

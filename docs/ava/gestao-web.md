@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.19 -->
+<!-- ava-version: 1.7.0.20 -->
+
+> Revisão 1.7.0.20: reversão restrita às tentativas de viewport da Gestão
+> Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.19: reversão visual restrita à navegação da Gestão Mobile no
 > navegador; sem impacto operacional na Gestão Web.

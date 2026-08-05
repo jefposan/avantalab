@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.20 - 2026-08-05
+
+- Gestão Mobile: revertidas integralmente as tentativas de adaptação do Menu e
+  da navegação inferior ao Chrome no iPhone, retornando o shell, a rolagem e a
+  inicialização ao estado estável anterior. O suporte a PDFs e as demais
+  entregas posteriores foram preservados.
+
 ## 1.7.0.19 - 2026-08-05
 
 - Gestão Mobile no navegador: restaurado o posicionamento fixo da navegação

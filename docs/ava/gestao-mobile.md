@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.19 -->
+<!-- ava-version: 1.7.0.20 -->
+
+> Revisão 1.7.0.20: revertidas as tentativas de adaptação do Menu e da
+> navegação inferior ao Chrome no iPhone. A Gestão Mobile retorna integralmente
+> ao shell, à rolagem e à inicialização anteriores; PDFs permanecem disponíveis.
 
 > Revisão 1.7.0.19: restaurado o posicionamento fixo da navegação inferior no
 > navegador após regressão visual. O funcionamento dos botões não muda.

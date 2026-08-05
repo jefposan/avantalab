@@ -433,7 +433,6 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
             .gestao-apple-login-button { display: inline-flex; min-height: 32px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 10px; color: #fff; background: #111827; font-size: 12px; font-weight: 800; }
             .gestao-apple-login-button > span:first-child { font-size: 18px; line-height: 1; }
             .gestao-login-register { margin: -2px 0 0; color: #737b83; font-size: 12px; text-align: center; }
-            #menu-aside::-webkit-scrollbar,
             .mobile-menu-buttons-scroll::-webkit-scrollbar { display: none; }
             @media (max-height: 620px) { .gestao-login-brand img { width: auto; height: 26px; max-width: min(48vw, 176px); max-height: none; } }
             @media (max-width: 850px) { .gestao-login-screen input { font-size: 16px !important; } }

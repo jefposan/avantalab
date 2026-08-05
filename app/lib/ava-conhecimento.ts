@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.19: restaurado o posicionamento fixo da navegação inferior após regressão visual no Chrome do iPhone.
+// Revisado na versão 1.7.0.20: revertidas as tentativas de adaptação do Menu e da navegação inferior ao Chrome no iPhone; retorno ao fluxo estável anterior.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
