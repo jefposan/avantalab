@@ -1,10 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.07 -->
+<!-- ava-version: 1.7.0.08 -->
 
-> Revisão 1.7.0.07: no Chrome, a Gestão Mobile acompanha a área visível mesmo
-> quando a barra inferior do navegador aparece. O Menu mantém todos os botões
-> acessíveis por rolagem, com cabeçalho e conteúdo ao fundo fixos.
+> Revisão 1.7.0.08: a Gestão Mobile usa uma única altura segura do navegador,
+> preservando os botões do Menu quando a barra do Chrome estiver em cima ou em
+>baixo. A rolagem do Menu permanece nativa.
 
 > Revisão 1.7.0.06: login por senha, Google ou Apple, cadastro e criação de
 > perfil recuperam a tela em falhas inesperadas de conexão; nenhuma ação fica

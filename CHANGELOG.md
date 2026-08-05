@@ -1,10 +1,10 @@
 # Changelog
 
-## 1.7.0.07 - 2026-08-05
+## 1.7.0.08 - 2026-08-05
 
-- Gestão Mobile: o shell acompanha o viewport visual do Chrome quando a barra
-  inferior do navegador aparece. Isso elimina a faixa vazia abaixo do app e
-  mantém todos os atalhos do Menu acessíveis por rolagem, com o fundo bloqueado.
+- Gestão Mobile: raiz, shell e Agenda passam a usar uma única altura segura do
+  viewport (`100svh`), sem alturas duplicadas. A área visível é preservada com
+  a barra do Chrome em cima ou embaixo; o Menu usa exclusivamente a rolagem nativa.
 
 ## 1.7.0.06 - 2026-08-05
 

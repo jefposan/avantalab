@@ -251,7 +251,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
   `;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white" style={{overflow:'visible'}}>
+    <main className="bg-slate-950 text-white" style={{ minHeight: '100svh', overflow: 'visible' }}>
       <link
         rel="preload"
         href="/images/bg-avantalab-mobile-1080x1920-sem-logo.webp"
@@ -308,8 +308,8 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
               display: grid;
               grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
               width: 100%;
-              height: 100dvh;
-              min-height: 100dvh;
+              height: 100svh;
+              min-height: 100svh;
               overflow: hidden;
               overscroll-behavior: none;
               padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
@@ -329,7 +329,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
               align-content: start;
               gap: 8px;
               height: auto;
-              min-height: 100dvh;
+              min-height: 100svh;
               overflow: visible;
               overscroll-behavior: auto;
               padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left));
@@ -605,7 +605,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
           <section
             className="avantalab-mobile-bg fixed inset-0 overflow-hidden"
             style={{
-              height: '100dvh',
+              height: '100svh',
               backgroundPosition: 'center bottom',
               backgroundSize: 'cover',
             }}
@@ -620,7 +620,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
           <section
             className="avantalab-mobile-bg gestao-login-screen"
             style={{
-              height: '100dvh',
+              height: '100svh',
               backgroundPosition: 'center bottom',
               backgroundSize: 'cover',
             }}

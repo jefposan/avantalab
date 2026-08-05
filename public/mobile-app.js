@@ -4314,26 +4314,6 @@
     return nativoCapacitor || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   }
 
-  function sincronizarAlturaViewportMobile() {
-    // No Chrome móvel, a barra inferior do navegador pode reduzir apenas o
-    // viewport visual. O shell precisa acompanhar essa altura para não criar
-    // uma faixa vazia abaixo do app nem esconder o fim de painéis roláveis.
-    var viewport = window.visualViewport;
-    var altura = viewport ? viewport.height : window.innerHeight;
-    if (!altura || altura < 1) return;
-    document.documentElement.style.setProperty('--ava-mobile-viewport-height', Math.round(altura) + 'px');
-  }
-
-  sincronizarAlturaViewportMobile();
-  if (!window._avaViewportMobileBound) {
-    window._avaViewportMobileBound = true;
-    window.addEventListener('resize', sincronizarAlturaViewportMobile, { passive: true });
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', sincronizarAlturaViewportMobile, { passive: true });
-      window.visualViewport.addEventListener('scroll', sincronizarAlturaViewportMobile, { passive: true });
-    }
-  }
-
   function deveBloquearScroll() {
     return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto);
   }
@@ -9716,7 +9696,7 @@
     // Agenda: tela cheia, sem o cabeçalho global (que mostra outro mês e confunde).
     if (state.visao === 'agenda') {
       return (
-        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="position:fixed;inset:0;bottom:auto;height:var(--ava-mobile-viewport-height,100dvh);overflow:hidden;overscroll-behavior:none;">' +
+        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="position:fixed;inset:0;bottom:auto;height:100svh;overflow:hidden;overscroll-behavior:none;">' +
           agendaMobileHtml(atual) +
           (state.modalLancamento ? modalLancamentoHtml() : '') +
           (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
@@ -9733,7 +9713,7 @@
     }
 
     return (
-      '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="bottom:auto;height:var(--ava-mobile-viewport-height,100dvh);overscroll-behavior:none;">' +
+      '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="bottom:auto;height:100svh;overscroll-behavior:none;">' +
         '<div id="mobile-header-wrap" class="relative z-40 shrink-0" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);isolation:isolate;">' +
         '<header id="mobile-main-header" class="relative z-10 overflow-hidden rounded-[0_0_28px_28px] px-3 pb-3 text-white sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);border-radius:0 0 28px 28px;clip-path:inset(0 round 0 0 28px 28px);-webkit-mask-image:-webkit-radial-gradient(white, black);box-shadow:0 10px 10px rgba(8,47,73,0.18);contain:paint;">' +
           '<div class="mx-auto max-w-md">' +
@@ -10653,7 +10633,7 @@
     }
 
     return (
-      '<div class="flex flex-col overflow-hidden" style="height:100dvh;overscroll-behavior:none;">' +
+      '<div class="flex h-full min-h-0 flex-col overflow-hidden" style="overscroll-behavior:none;">' +
         '<div class="flex shrink-0 items-center px-3 pb-3 text-white shadow-lg" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<div class="flex h-10 flex-1 items-center justify-between rounded-2xl border border-white/15 bg-white/10 px-1 shadow-sm backdrop-blur">' +
             '<button id="agenda-mes-prev" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-2xl font-black leading-none text-white active:bg-white/10" aria-label="M&ecirc;s anterior">&lsaquo;</button>' +

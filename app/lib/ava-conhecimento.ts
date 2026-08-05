@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.07: Menu da Gestão Mobile reconhece rolagem vertical no Chrome sem liberar o fundo.
+// Revisado na versão 1.7.0.08: a Gestão Mobile usa altura segura do navegador no Chrome móvel; o Menu preserva a rolagem nativa.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
