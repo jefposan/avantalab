@@ -4314,6 +4314,26 @@
     return nativoCapacitor || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   }
 
+  function sincronizarAlturaViewportMobile() {
+    // No Chrome móvel, a barra inferior do navegador pode reduzir apenas o
+    // viewport visual. O shell precisa acompanhar essa altura para não criar
+    // uma faixa vazia abaixo do app nem esconder o fim de painéis roláveis.
+    var viewport = window.visualViewport;
+    var altura = viewport ? viewport.height : window.innerHeight;
+    if (!altura || altura < 1) return;
+    document.documentElement.style.setProperty('--ava-mobile-viewport-height', Math.round(altura) + 'px');
+  }
+
+  sincronizarAlturaViewportMobile();
+  if (!window._avaViewportMobileBound) {
+    window._avaViewportMobileBound = true;
+    window.addEventListener('resize', sincronizarAlturaViewportMobile, { passive: true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', sincronizarAlturaViewportMobile, { passive: true });
+      window.visualViewport.addEventListener('scroll', sincronizarAlturaViewportMobile, { passive: true });
+    }
+  }
+
   function deveBloquearScroll() {
     return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto);
   }
@@ -9696,7 +9716,7 @@
     // Agenda: tela cheia, sem o cabeçalho global (que mostra outro mês e confunde).
     if (state.visao === 'agenda') {
       return (
-        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="position:fixed;inset:0;overflow:hidden;overscroll-behavior:none;">' +
+        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="position:fixed;inset:0;bottom:auto;height:var(--ava-mobile-viewport-height,100dvh);overflow:hidden;overscroll-behavior:none;">' +
           agendaMobileHtml(atual) +
           (state.modalLancamento ? modalLancamentoHtml() : '') +
           (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
@@ -9713,7 +9733,7 @@
     }
 
     return (
-      '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="overscroll-behavior:none;">' +
+      '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="bottom:auto;height:var(--ava-mobile-viewport-height,100dvh);overscroll-behavior:none;">' +
         '<div id="mobile-header-wrap" class="relative z-40 shrink-0" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);isolation:isolate;">' +
         '<header id="mobile-main-header" class="relative z-10 overflow-hidden rounded-[0_0_28px_28px] px-3 pb-3 text-white sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);border-radius:0 0 28px 28px;clip-path:inset(0 round 0 0 28px 28px);-webkit-mask-image:-webkit-radial-gradient(white, black);box-shadow:0 10px 10px rgba(8,47,73,0.18);contain:paint;">' +
           '<div class="mx-auto max-w-md">' +
@@ -11374,15 +11394,14 @@
 
     return (
       '<div id="menu-overlay" class="absolute inset-0 z-50 bg-slate-950/75" style="will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
-        '<aside id="menu-aside" class="flex h-full w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + limiteTopoMenuIos + animacaoPainel + '">' +
-          '<div class="relative mb-4 shrink-0 overflow-hidden rounded-[16px_32px_32px_32px] p-4 text-white" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
+        '<aside id="menu-aside" data-preserve-scroll class="h-full w-[84vw] max-w-[348px] overflow-y-auto overscroll-contain rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';padding-bottom:calc(env(safe-area-inset-bottom) + 120px);-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;scrollbar-width:none;-ms-overflow-style:none;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + limiteTopoMenuIos + animacaoPainel + '">' +
+          '<div class="relative mb-4 shrink-0 overflow-hidden rounded-[16px_32px_32px_32px] p-4 text-white" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);position:sticky;top:0;z-index:10;">' +
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +
             '<div class="flex items-start justify-between gap-3">' +
               '<div class="relative min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.28em] text-cyan-100">AvantaLab</p><h2 class="mt-1 truncate text-lg font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-1 truncate text-[11px] font-semibold text-cyan-50/90">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
               '<button id="fechar-menu" type="button" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white shadow-sm backdrop-blur active:scale-95" aria-label="Fechar menu">' + iconeFecharGeometricoMobile() + '</button>' +
             '</div>' +
           '</div>' +
-          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 120px);-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;">' +
           '<div class="grid gap-1.5">' +
             ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios())
               ? menuBotaoHtml(
@@ -11412,7 +11431,6 @@
             configSubItens +
             '<button id="menu-feedback" type="button" class="rounded-[14px_26px_26px_26px] border border-cyan-300 px-2.5 py-2 text-left shadow-[0_6px_15px_rgba(8,145,178,.13)] transition active:scale-[0.99]" style="background:radial-gradient(circle at 90% 50%,rgba(20,184,166,.18),transparent 28%),linear-gradient(135deg,#E6FFFB 0%,#CFFAFE 100%)"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm" style="background:linear-gradient(135deg,#06B6D4,#0891B2)">' + iconeMenuLateralSvg('menu-feedback') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none text-sky-900">Duvidas e Sugestoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-cyan-700">Ajude a melhorar o AvantaLab</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/75 text-cyan-700 shadow-sm">' + chevronMenuSvg() + '</span></div></button>' +
             '<button id="sair" type="button" class="rounded-[14px_26px_26px_26px] border border-rose-100 px-2.5 py-2 text-left text-xs font-black text-rose-700 shadow-sm transition active:scale-[0.99]" style="background:linear-gradient(90deg,#FFF1F2 0%,#FFFFFF 72%)"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center text-rose-600">' + iconeMenuLateralSvg('sair') + '</span><span>Sair</span></span></button>' +
-          '</div>' +
           '</div>' +
         '</aside>' +
       '</div>'
@@ -13195,7 +13213,7 @@
       }
     }
     if (typeof window._avaMenuScrollTravado === 'number') {
-      _scrollContainers['menu-botoes-scroll'] = window._avaMenuScrollTravado;
+      _scrollContainers['menu-aside'] = window._avaMenuScrollTravado;
     }
     root.setAttribute('data-avantalab-mobile-ready', '1');
     if (state.pronto) root.removeAttribute('data-avantalab-mobile-preparando');
@@ -13479,16 +13497,16 @@
     bind('menu-agenda', function () { fecharMenuLateralAnimado(abrirAgendaMobile); });
     bind('menu-avisos', function () { fecharMenuLateralAnimado(abrirNotificacoesMobile); });
     async function executarChaveMenuSemMover(id, acao) {
-      var listaMenu = document.getElementById('menu-botoes-scroll');
-      var scrollAtual = listaMenu ? listaMenu.scrollTop : 0;
+      var aside = document.getElementById('menu-aside');
+      var scrollAtual = aside ? aside.scrollTop : 0;
       window._avaMenuScrollTravado = scrollAtual;
       try {
         await acao();
       } finally {
         if (state.menuAberto) render();
         var restaurarPosicao = function () {
-          var listaMenuAtual = document.getElementById('menu-botoes-scroll');
-          if (listaMenuAtual) listaMenuAtual.scrollTop = scrollAtual;
+          var asideAtual = document.getElementById('menu-aside');
+          if (asideAtual) asideAtual.scrollTop = scrollAtual;
         };
         window.requestAnimationFrame(function () {
           restaurarPosicao();
@@ -13595,11 +13613,11 @@
           if (state.menuConfigAberto && state.menuConfigAnimacao === 'entrar') state.menuConfigAnimacao = '';
         }, 270);
         setTimeout(function () {
-          var listaMenu = document.getElementById('menu-botoes-scroll');
-          if (!listaMenu || !state.menuConfigAberto) return;
+          var aside = document.getElementById('menu-aside');
+          if (!aside || !state.menuConfigAberto) return;
           window.requestAnimationFrame(function () {
-            var limite = Math.max(0, listaMenu.scrollHeight - listaMenu.clientHeight);
-            listaMenu.scrollTo({ top: limite, behavior: 'smooth' });
+            var limite = Math.max(0, aside.scrollHeight - aside.clientHeight);
+            aside.scrollTo({ top: limite, behavior: 'smooth' });
           });
         }, 285);
       }

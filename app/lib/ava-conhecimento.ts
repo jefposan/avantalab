@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.06: login, cadastro e criação de perfil recuperam a tela em falhas inesperadas no Gestão Mobile e Web.
+// Revisado na versão 1.7.0.07: Menu da Gestão Mobile reconhece rolagem vertical no Chrome sem liberar o fundo.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.07 - 2026-08-05
+
+- Gestão Mobile: o shell acompanha o viewport visual do Chrome quando a barra
+  inferior do navegador aparece. Isso elimina a faixa vazia abaixo do app e
+  mantém todos os atalhos do Menu acessíveis por rolagem, com o fundo bloqueado.
+
 ## 1.7.0.06 - 2026-08-05
 
 - Acesso e criação de perfil: Gestão Mobile e Gestão Web agora recuperam o
