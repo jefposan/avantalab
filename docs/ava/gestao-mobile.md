@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.13 -->
+<!-- ava-version: 1.7.0.14 -->
+
+> Revisão 1.7.0.14: no navegador, o Menu respeita a área efetivamente visível
+> do Chrome. O cabeçalho permanece acessível e a lista de ações rola de forma
+> independente, inclusive com a barra inferior aberta.
 
 > Revisão 1.7.0.13: em **Conteúdo para a equipe > Divulgação**, o gestor pode
 > incluir PDFs nas pastas. O Google Cloud cria a capa da primeira página; o arquivo

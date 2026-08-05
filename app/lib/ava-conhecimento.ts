@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.13: PDFs de Divulgação têm capa criada no Google Cloud, leitura e compartilhamento no Vendas; o seletor no iPhone preserva o conteúdo aberto.
+// Revisado na versão 1.7.0.14: o menu da Gestão Mobile fixa o cabeçalho e rola somente os botões, respeitando a viewport visível do navegador.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

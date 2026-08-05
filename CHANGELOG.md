@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.14 - 2026-08-05
+
+- Gestão Mobile no navegador: o menu agora usa a altura real da área visível do
+  Chrome. O cabeçalho fica íntegro e somente a lista de ações rola, inclusive
+  quando a barra inferior do navegador está aberta.
+
 ## 1.7.0.13 - 2026-08-05
 
 - Conteúdo para a equipe: corrigida a geração da capa da primeira página de

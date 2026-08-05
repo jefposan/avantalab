@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.13 -->
+<!-- ava-version: 1.7.0.14 -->
+
+> Revisão 1.7.0.14: correção restrita ao Menu da Gestão Mobile no navegador;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.13: em **Conteúdo para a equipe > Divulgação**, o gestor pode
 > incluir PDFs nas pastas. O Google Cloud cria a capa da primeira página; o arquivo

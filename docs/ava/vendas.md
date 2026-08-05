@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.13 -->
+<!-- ava-version: 1.7.0.14 -->
+
+> Revisão 1.7.0.14: correção restrita ao Menu da Gestão Mobile no navegador;
+> sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.7.0.13: em **Divulgação**, PDFs publicados pela empresa aparecem com
 > capa criada no Google Cloud, podem ser abertos para leitura e compartilhados como arquivo PDF. No iPhone, o retorno do Arquivos não fecha a publicação.
