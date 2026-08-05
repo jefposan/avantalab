@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.157 -->
+<!-- ava-version: 1.6.2 -->
+
+> Revisão 1.6.2: redesign da validação facial aplicado somente ao Controle de
+> Ponto; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.157: guia interno e ajuste de sombra aplicados somente ao
 > Controle de Ponto; sem impacto operacional no AvantaVendas.

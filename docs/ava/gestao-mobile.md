@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.157 -->
+<!-- ava-version: 1.6.2 -->
+
+> Revisão 1.6.2: no fluxo facial do `/ponto`, a tela de preparação explica
+> enquadramento, iluminação e acessórios sem abrir a câmera. **Iniciar
+> verificação** abre a captura; após a aprovação, **Continuar** conclui o cadastro
+> facial ou registra a batida que estava pendente. Falhas oferecem nova tentativa
+> com linguagem simples, sem alterar as exigências configuradas pelo gestor.
 
 > Revisão 1.6.1.157: **Ajuda** no rodapé do `/ponto` abre um guia rápido sem
 > sair do módulo. O conteúdo explica localização, batida, confirmação, facial

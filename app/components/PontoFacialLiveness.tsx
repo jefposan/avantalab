@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Amplify } from 'aws-amplify';
 import { FaceLivenessDetector } from '@aws-amplify/ui-react-liveness';
-import AvantaCard from './AvantaCard';
+import PontoFacialExperienceV2, { type EtapaFacialV2 } from './PontoFacialExperienceV2';
 import '@aws-amplify/ui-react/styles.css';
 
 type Inicio = { empresaId: string; token: string; tipo: 'cadastro' | 'marcacao' };
 type Sessao = Inicio & { sessaoId: string; regiao: string };
+type Conclusao = { tipo: Inicio['tipo']; horario: string };
 
 const textosPtBr = {
   photosensitivityWarningHeadingText: 'Aviso de fotossensibilidade',
@@ -19,171 +20,196 @@ const textosPtBr = {
   tooFarCaptionText: 'Aproxime-se um pouco', tooFarAltText: 'Exemplo de rosto distante demais da câmera',
   hintCenterFaceText: 'Centralize seu rosto',
   hintCenterFaceInstructionText: 'Mantenha o rosto dentro do contorno',
-  hintFaceOffCenterText: 'Centralize melhor o rosto', hintMatchIndicatorText: 'Rosto alinhado',
-  hintMoveFaceFrontOfCameraText: 'Posicione o rosto em frente à câmera',
+  hintFaceOffCenterText: 'Centralize seu rosto', hintMatchIndicatorText: 'Rosto alinhado',
+  hintMoveFaceFrontOfCameraText: 'Olhe para frente',
   hintTooManyFacesText: 'Deixe apenas uma pessoa na câmera',
-  hintFaceDetectedText: 'Rosto identificado',
-  hintCanNotIdentifyText: 'Não foi possível identificar seu rosto',
+  hintFaceDetectedText: 'Excelente',
+  hintCanNotIdentifyText: 'Centralize seu rosto',
   hintTooCloseText: 'Afaste-se um pouco', hintTooFarText: 'Aproxime-se um pouco',
-  hintConnectingText: 'Conectando câmera…', hintVerifyingText: 'Verificando…', hintCheckCompleteText: 'Verificação concluída',
-  hintIlluminationTooBrightText: 'A luz está muito forte', hintIlluminationTooDarkText: 'O ambiente está escuro', hintIlluminationNormalText: 'Iluminação adequada',
-  hintHoldFaceForFreshnessText: 'Fique imóvel por alguns instantes',
+  hintConnectingText: 'Conectando câmera…', hintVerifyingText: 'Verificando…', hintCheckCompleteText: 'Captura realizada',
+  hintIlluminationTooBrightText: 'A luz está muito forte', hintIlluminationTooDarkText: 'Melhore a iluminação', hintIlluminationNormalText: 'Iluminação adequada',
+  hintHoldFaceForFreshnessText: 'Não mova o rosto',
   cameraNotFoundHeadingText: 'Câmera não encontrada', cameraNotFoundMessageText: 'Permita o uso da câmera e tente novamente.', retryCameraPermissionsText: 'Tentar novamente',
-  waitingCameraPermissionText: 'Aguardando permissão da câmera…', cancelLivenessCheckText: 'Cancelar', recordingIndicatorText: 'Verificação em andamento',
-  landscapeHeaderText: 'Mantenha o celular na vertical', landscapeMessageText: 'Esta verificação funciona somente em modo retrato. Gire o celular para a posição vertical e tente novamente.', portraitMessageText: 'Mantenha o celular na vertical durante toda a verificação.',
+  waitingCameraPermissionText: 'Aguardando permissão da câmera…', cancelLivenessCheckText: 'Cancelar', recordingIndicatorText: '',
+  landscapeHeaderText: 'Mantenha o celular na vertical', landscapeMessageText: 'Gire o celular para a posição vertical e tente novamente.', portraitMessageText: 'Mantenha o celular na vertical durante toda a verificação.',
   tryAgainText: 'Tentar novamente', connectionTimeoutHeaderText: 'A conexão demorou demais', connectionTimeoutMessageText: 'Verifique sua internet e tente novamente.', timeoutHeaderText: 'Tempo esgotado', timeoutMessageText: 'A verificação demorou demais. Tente novamente.',
-  faceDistanceHeaderText: 'Ajuste a posição do rosto', faceDistanceMessageText: 'Siga as orientações na tela e tente novamente.', multipleFacesHeaderText: 'Mais de um rosto identificado', multipleFacesMessageText: 'Deixe apenas você na câmera e tente novamente.',
-  clientHeaderText: 'Não foi possível usar a câmera', clientMessageText: 'Verifique as permissões e mantenha o celular na vertical.', serverHeaderText: 'Não foi possível concluir a verificação', serverMessageText: 'Tente novamente em alguns instantes.',
+  faceDistanceHeaderText: 'Ajuste a posição do rosto', faceDistanceMessageText: 'Centralize seu rosto e tente novamente.', multipleFacesHeaderText: 'Mais de um rosto identificado', multipleFacesMessageText: 'Deixe apenas você na câmera e tente novamente.',
+  clientHeaderText: 'Não foi possível usar a câmera', clientMessageText: 'Verifique as permissões e mantenha o celular na vertical.', serverHeaderText: 'Não foi possível concluir', serverMessageText: 'Vamos tentar novamente em alguns instantes.',
 };
 
-function AvisoFotossensibilidadeOculto() {
-  return null;
+function AvisoFotossensibilidadeOculto() { return null; }
+
+function mensagemHumana(valor: unknown) {
+  const texto = valor instanceof Error ? valor.message : String(valor || '');
+  const normalizado = texto.toLocaleLowerCase('pt-BR');
+  if (normalizado.includes('ilumina') || normalizado.includes('escuro') || normalizado.includes('luz')) return 'A iluminação não está adequada. Procure um local mais iluminado e tente novamente.';
+  if (normalizado.includes('câmera') || normalizado.includes('camera') || normalizado.includes('permiss')) return 'Não conseguimos acessar a câmera. Confira a permissão e tente novamente.';
+  if (normalizado.includes('rosto') || normalizado.includes('face') || normalizado.includes('identidade')) return 'Não conseguimos confirmar seu rosto. Centralize-se no oval e tente novamente.';
+  if (normalizado.includes('conex') || normalizado.includes('internet') || normalizado.includes('timeout')) return 'A conexão demorou mais que o esperado. Confira sua internet e tente novamente.';
+  return 'Não foi possível concluir a verificação. Vamos tentar novamente.';
 }
 
 export default function PontoFacialLiveness({ identityPoolId }: { identityPoolId: string }) {
+  const [inicioAtivo, setInicioAtivo] = useState<Inicio | null>(null);
   const [sessao, setSessao] = useState<Sessao | null>(null);
+  const [etapa, setEtapa] = useState<EtapaFacialV2 | null>(null);
   const [mensagem, setMensagem] = useState('');
+  const [orientacao, setOrientacao] = useState('Centralize seu rosto');
+  const [progresso, setProgresso] = useState(8);
+  const [conclusao, setConclusao] = useState<Conclusao | null>(null);
   const detectorRef = useRef<HTMLDivElement>(null);
-  const cancelarAreaRef = useRef<HTMLDivElement>(null);
-  const cancelarRef = useRef<HTMLButtonElement>(null);
-  const cancelarCapturaRef = useRef<HTMLButtonElement>(null);
-  const emCadastro = sessao?.tipo === 'cadastro';
-  const cancelar = () => { setSessao(null); setMensagem(''); window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado')); };
+
+  const limpar = useCallback(() => {
+    setInicioAtivo(null); setSessao(null); setEtapa(null); setMensagem('');
+    setOrientacao('Centralize seu rosto'); setProgresso(8); setConclusao(null);
+  }, []);
+
+  const cancelar = useCallback(() => {
+    limpar();
+    window.dispatchEvent(new CustomEvent('avantalab:facial-cancelado'));
+  }, [limpar]);
+
+  const criarSessao = useCallback(async (inicio: Inicio) => {
+    setInicioAtivo(inicio); setSessao(null); setConclusao(null); setEtapa('carregando');
+    setMensagem('Preparando uma conexão segura com a câmera…'); setProgresso(12);
+    try {
+      const resposta = await fetch('/api/ponto/reconhecimento-facial/sessao', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${inicio.token}` },
+        body: JSON.stringify({ empresaId: inicio.empresaId, tipo: inicio.tipo }),
+      });
+      const dados = await resposta.json();
+      if (!resposta.ok || dados.erro) throw new Error(dados.mensagem || 'Não foi possível iniciar a verificação.');
+      setSessao({ ...inicio, sessaoId: dados.sessaoId, regiao: dados.regiao });
+      setMensagem(''); setProgresso(8); setEtapa('preparacao');
+    } catch (erro) {
+      setMensagem(mensagemHumana(erro)); setEtapa('erro');
+    }
+  }, []);
 
   useEffect(() => {
     if (identityPoolId) Amplify.configure({ Auth: { Cognito: { identityPoolId, allowGuestAccess: true } } });
     const iniciar = async (event: Event) => {
       const inicio = (event as CustomEvent<Inicio>).detail;
       if (!inicio?.empresaId || !inicio.token) return;
+      setInicioAtivo(inicio);
       if (!identityPoolId) {
-        const detalhe = 'Reconhecimento facial não configurado neste ambiente.';
-        setMensagem(detalhe);
-        window.dispatchEvent(new CustomEvent('avantalab:facial-erro', { detail: { mensagem: detalhe } }));
+        setMensagem('O reconhecimento facial não está disponível neste ambiente.'); setEtapa('erro');
         return;
       }
-      // Compatibilidade com versões antigas do PWA: elas ainda disparavam este
-      // evento para toda a empresa em preparação. Antes de abrir a câmera,
-      // confirmamos a habilitação individual. Se não houver facial ativo, a
-      // marcação comum continua sem mostrar aviso nem erro.
       if (inicio.tipo === 'marcacao') {
         try {
-          const habilitacao = await fetch(`/api/ponto/reconhecimento-facial/status?empresaId=${encodeURIComponent(inicio.empresaId)}`, {
-            headers: { Authorization: `Bearer ${inicio.token}` },
-          });
+          const habilitacao = await fetch(`/api/ponto/reconhecimento-facial/status?empresaId=${encodeURIComponent(inicio.empresaId)}`, { headers: { Authorization: `Bearer ${inicio.token}` } });
           const dadosHabilitacao = await habilitacao.json();
           if (habilitacao.ok && dadosHabilitacao?.ativo !== true) {
+            limpar();
             window.dispatchEvent(new CustomEvent('avantalab:facial-concluido', { detail: { tipo: inicio.tipo, dispensado: true } }));
             return;
           }
         } catch {
-          // A versão atual não envia a marcação comum para esta etapa. Em uma
-          // versão antiga, mantemos a resposta segura da sessão abaixo.
+          // A sessão abaixo mantém o comportamento seguro para versões antigas do PWA.
         }
       }
-      setMensagem('Preparando a câmera…');
-      try {
-        const resposta = await fetch('/api/ponto/reconhecimento-facial/sessao', {
-          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${inicio.token}` },
-          body: JSON.stringify({ empresaId: inicio.empresaId, tipo: inicio.tipo }),
-        });
-        const dados = await resposta.json();
-        if (!resposta.ok || dados.erro) throw new Error(dados.mensagem || 'Não foi possível iniciar a verificação.');
-        setSessao({ ...inicio, sessaoId: dados.sessaoId, regiao: dados.regiao }); setMensagem('');
-      } catch (erro) {
-        const detalhe = erro instanceof Error ? erro.message : 'Não foi possível iniciar a verificação.';
-        setMensagem(detalhe); window.dispatchEvent(new CustomEvent('avantalab:facial-erro', { detail: { mensagem: detalhe } }));
-      }
+      await criarSessao(inicio);
     };
     window.addEventListener('avantalab:facial-iniciar', iniciar);
     return () => window.removeEventListener('avantalab:facial-iniciar', iniciar);
-  }, [identityPoolId]);
+  }, [criarSessao, identityPoolId, limpar]);
 
   useEffect(() => {
-    if (!sessao || !detectorRef.current) return;
-    const organizarAcoes = () => {
-      const iniciar = detectorRef.current?.querySelector<HTMLButtonElement>('.amplify-button--primary');
-      const cancelarBotao = cancelarRef.current;
-      const cancelarCaptura = cancelarCapturaRef.current;
-      if (iniciar?.parentElement) {
-        cancelarBotao?.classList.remove('hidden');
-        cancelarCaptura?.classList.add('hidden');
-        if (!cancelarBotao) return;
-        iniciar.parentElement.classList.add('avanta-facial-acoes');
-        if (!iniciar.parentElement.contains(cancelarBotao)) iniciar.parentElement.insertBefore(cancelarBotao, iniciar);
-        return;
-      }
-      if (detectorRef.current?.querySelector('.amplify-liveness-camera-module--mobile')) {
-        cancelarBotao?.classList.add('hidden');
-        cancelarCaptura?.classList.remove('hidden');
-        return;
-      }
-      cancelarCaptura?.classList.add('hidden');
-      cancelarBotao?.classList.remove('hidden');
-      if (cancelarAreaRef.current && cancelarBotao && !cancelarAreaRef.current.contains(cancelarBotao)) {
-        cancelarAreaRef.current.appendChild(cancelarBotao);
-      }
+    if (etapa !== 'captura') return;
+    const intervalo = window.setInterval(() => setProgresso((atual) => Math.min(72, atual + 3)), 550);
+    return () => window.clearInterval(intervalo);
+  }, [etapa]);
+
+  useEffect(() => {
+    const pontoRoot = document.getElementById('ponto-root');
+    if (!etapa || !pontoRoot) return;
+    pontoRoot.setAttribute('inert', '');
+    pontoRoot.setAttribute('aria-hidden', 'true');
+    return () => {
+      pontoRoot.removeAttribute('inert');
+      pontoRoot.removeAttribute('aria-hidden');
     };
-    organizarAcoes();
-    const observador = new MutationObserver(organizarAcoes);
-    observador.observe(detectorRef.current, { childList: true, subtree: true });
+  }, [etapa]);
+
+  useEffect(() => {
+    if (etapa !== 'captura' || !detectorRef.current) return;
+    const atualizarOrientacao = () => {
+      const texto = detectorRef.current?.querySelector<HTMLElement>('.amplify-liveness-hint__text')?.innerText.trim();
+      if (texto) setOrientacao(texto);
+    };
+    atualizarOrientacao();
+    const observador = new MutationObserver(atualizarOrientacao);
+    observador.observe(detectorRef.current, { childList: true, subtree: true, characterData: true });
     return () => observador.disconnect();
-  }, [sessao]);
+  }, [etapa, sessao]);
+
+  const iniciarCaptura = () => {
+    if (!sessao) return;
+    setOrientacao('Centralize seu rosto'); setProgresso(14); setEtapa('captura');
+  };
+
+  const falharCaptura = (erro?: unknown) => {
+    setSessao(null); setMensagem(mensagemHumana(erro)); setEtapa('erro');
+  };
 
   const concluir = async () => {
     if (!sessao) return;
     const sessaoConcluida = sessao;
-    // A captura terminou. Desmontamos imediatamente o detector para que a
-    // orientação do aparelho não seja mais avaliada durante a confirmação no
-    // servidor — o funcionário pode guardar o celular nesta etapa.
-    setSessao(null);
-    setMensagem('Analisando a prova de vida…');
-    const proximaEtapa = window.setTimeout(() => setMensagem('Conferindo identidade…'), 1200);
+    setEtapa('processando'); setMensagem('Analisando a prova de vida…'); setProgresso(82);
+    const proximaEtapa = window.setTimeout(() => { setMensagem('Conferindo sua identidade…'); setProgresso(92); }, 1000);
     try {
       const resposta = await fetch('/api/ponto/reconhecimento-facial/resultado', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessao.token}` },
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessaoConcluida.token}` },
         body: JSON.stringify({ empresaId: sessaoConcluida.empresaId, sessaoId: sessaoConcluida.sessaoId }),
       });
       const dados = await resposta.json();
       if (!resposta.ok || !dados.aprovado) throw new Error(dados.mensagem || 'Identidade não confirmada.');
-      window.dispatchEvent(new CustomEvent('avantalab:facial-concluido', { detail: { tipo: sessaoConcluida.tipo } })); setMensagem('');
+      setSessao(null); setMensagem(''); setProgresso(100);
+      setConclusao({ tipo: sessaoConcluida.tipo, horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }) });
+      setEtapa('sucesso');
     } catch (erro) {
-      const detalhe = erro instanceof Error ? erro.message : 'Não foi possível confirmar a identidade.';
-      setMensagem(detalhe); window.dispatchEvent(new CustomEvent('avantalab:facial-erro', { detail: { mensagem: detalhe } }));
+      setSessao(null); setMensagem(mensagemHumana(erro)); setEtapa('erro');
     } finally {
       window.clearTimeout(proximaEtapa);
     }
   };
 
-  if (!sessao && !mensagem) return null;
-  const temaFacial = {
-    ['--amplify-colors-brand-primary-10' as string]: '#e6f7fb',
-    ['--amplify-colors-brand-primary-20' as string]: '#c7eef6',
-    ['--amplify-colors-brand-primary-60' as string]: '#00a6c8',
-    ['--amplify-colors-brand-primary-80' as string]: '#007f99',
-    ['--amplify-colors-brand-primary-90' as string]: '#006b83',
-    ['--amplify-colors-brand-primary-100' as string]: '#003e73',
-    ['--amplify-colors-font-primary' as string]: '#0f172a',
-    ['--amplify-colors-font-secondary' as string]: '#475569',
-    ['--amplify-colors-border-primary' as string]: '#cbd5e1',
-    ['--amplify-components-liveness-camera-module-background-color' as string]: '#f8fafc',
+  const tentarNovamente = () => { if (inicioAtivo) void criarSessao(inicioAtivo); };
+
+  const continuar = () => {
+    const tipo = conclusao?.tipo || inicioAtivo?.tipo;
+    if (!tipo) return;
+    limpar();
+    window.dispatchEvent(new CustomEvent('avantalab:facial-concluido', { detail: { tipo } }));
   };
-  return <div className="fixed inset-0 z-[100] overflow-y-auto bg-[radial-gradient(circle_at_top,#075985_0%,#003e73_42%,#020617_100%)] px-3 py-5 sm:p-8" role="dialog" aria-modal="true" aria-label="Verificação facial">
-    <style>{`.avanta-facial .amplify-button--primary{min-height:40px!important;height:40px!important;width:220px!important;border-radius:10px!important;background:#1687D9!important;border-color:#1687D9!important;color:#fff!important;font-size:14px!important;font-weight:800!important;box-shadow:0 6px 14px rgba(22,135,217,.22)!important}.avanta-facial-acoes{display:flex!important;justify-content:center!important;gap:8px!important;width:min(100%,332px)!important;margin:0 auto!important}.avanta-facial .avanta-facial-acoes .amplify-button--primary,.avanta-facial .avanta-facial-acoes .avanta-facial-cancelar{position:static!important;left:auto!important;bottom:auto!important;transform:none!important;width:auto!important;min-width:0!important;flex:0 1 156px!important;white-space:nowrap}.avanta-facial .avanta-facial-cancelar{position:fixed!important;z-index:40!important;left:50%!important;bottom:24px!important;transform:translateX(-50%)!important;font-size:13px!important}.avanta-facial [class*="headerRight"]{width:100%!important;justify-content:center!important}.avanta-facial .amplify-button--primary:active{transform:scale(.98)}.avanta-facial .amplify-button--primary:focus-visible{outline:3px solid rgba(22,135,217,.35)!important;outline-offset:3px}.avanta-facial .amplify-liveness-start-screen{padding-bottom:0!important}.avanta-facial .amplify-liveness-figures{margin-bottom:0!important}`}</style>
-    <AvantaCard title={sessao ? 'Captura facial' : emCadastro ? 'Cadastro facial' : 'Confirmação facial'} corPrimaria="#007f99" hideDragHandle hideMenu className="avanta-facial mx-auto max-w-xl text-slate-900" bodyClassName="!min-h-[calc(100dvh-130px)] !p-0 !overflow-visible" style={{ ...temaFacial, ['--plato-w' as string]: '36%' }} plato={sessao ? <span className="whitespace-nowrap rounded-full bg-cyan-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-800">Ponto seguro</span> : undefined}>
-      {!sessao && <div className="border-b border-slate-200 bg-white px-5 py-3">
-        <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-600 text-white">1</span><span className="text-cyan-800">Preparar</span>
-          <span className="h-px flex-1 bg-cyan-200" />
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-slate-500">2</span><span className="text-slate-500">Confirmar</span>
-        </div>
-      </div>}
-      <div className={sessao ? 'flex min-h-[calc(100dvh-195px)] flex-col gap-2 p-3' : 'p-4 sm:p-5'}>
-        {!sessao && <div className="rounded-xl border border-cyan-100 bg-cyan-50 px-3 py-2 text-xs font-semibold leading-snug text-slate-700" role="status">
-          {mensagem || 'Posicione o rosto inteiro no contorno, com boa luz. Siga as orientações na tela e fique imóvel quando solicitado.'}
-        </div>}
-        {sessao && <><div ref={detectorRef} className="avanta-facial-leitura relative z-0 min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white pt-2 shadow-sm"><FaceLivenessDetector sessionId={sessao.sessaoId} region={sessao.regiao} displayText={{ ...textosPtBr, recordingIndicatorText: '' }} components={{ PhotosensitiveWarning: AvisoFotossensibilidadeOculto }} onAnalysisComplete={concluir} onError={() => setMensagem('A câmera não conseguiu concluir a verificação. Mantenha o celular na vertical e tente novamente.')} onUserCancel={cancelar} /></div><div ref={cancelarAreaRef} className="flex min-h-10 justify-center"><button ref={cancelarRef} type="button" className="avanta-facial-cancelar h-10 min-h-10 w-[156px] rounded-[10px] border border-slate-300 bg-white px-3 text-sm font-black text-slate-600 shadow-sm transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#1687D9]" onClick={(event) => { event.stopPropagation(); cancelar(); }}>Cancelar</button></div><button ref={cancelarCapturaRef} type="button" className="avanta-facial-cancelar hidden h-10 min-h-10 w-[156px] rounded-[10px] border border-slate-300 bg-white px-3 text-sm font-black text-slate-600 shadow-sm transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#1687D9]" onClick={cancelar}>Cancelar</button></>}
-        {mensagem && <button type="button" className="mt-4 min-h-12 w-full rounded-xl bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/20 transition active:scale-[0.99]" onClick={cancelar}>Voltar ao ponto</button>}
-      </div>
-    </AvantaCard>
-  </div>;
+
+  if (!etapa || !inicioAtivo) return null;
+
+  const detector = etapa === 'captura' && sessao ? <div ref={detectorRef} className="h-full w-full">
+    <FaceLivenessDetector
+      sessionId={sessao.sessaoId}
+      region={sessao.regiao}
+      disableStartScreen
+      displayText={textosPtBr}
+      components={{ PhotosensitiveWarning: AvisoFotossensibilidadeOculto }}
+      onAnalysisComplete={concluir}
+      onError={falharCaptura}
+      onUserCancel={cancelar}
+    />
+  </div> : undefined;
+
+  return <PontoFacialExperienceV2
+    etapa={etapa}
+    tipo={inicioAtivo.tipo}
+    mensagem={mensagem}
+    orientacao={orientacao}
+    progresso={progresso}
+    horario={conclusao?.horario}
+    detector={detector}
+    onIniciar={iniciarCaptura}
+    onCancelar={cancelar}
+    onTentarNovamente={tentarNovamente}
+    onContinuar={continuar}
+  />;
 }

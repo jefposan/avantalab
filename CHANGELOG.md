@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.2 - 2026-08-04
+
+- Controle de Ponto: a validação facial ganhou uma experiência visual própria e
+  integrada ao novo painel, com preparação orientada, captura em oval, feedback
+  simples, progresso discreto, mensagens humanas de recuperação e confirmação
+  antes do registro do ponto.
+- Reconhecimento Facial: sessão AWS Rekognition, prova de vida, comparação de
+  identidade, habilitação individual, APIs e regras de marcação foram
+  preservadas. A câmera inicia somente após **Iniciar verificação** e o registro
+  continua apenas quando o funcionário confirma a tela de sucesso.
+
 ## 1.6.1.157 - 2026-08-04
 
 - Controle de Ponto: o halo do botão central foi reduzido para preservar o

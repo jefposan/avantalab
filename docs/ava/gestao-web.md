@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.157 -->
+<!-- ava-version: 1.6.2 -->
+
+> Revisão 1.6.2: a validação facial do `/ponto` orienta o funcionário antes de
+> abrir a câmera, mostra instruções simples durante a captura e aguarda o toque
+> em **Continuar** após o sucesso. Só então a marcação pendente é registrada. Em
+> caso de falha, **Tentar novamente** prepara uma nova sessão segura; **Cancelar**
+> retorna ao ponto sem registrar.
 
 > Revisão 1.6.1.157: em `/ponto`, **Ajuda** abre um guia interno com os passos
 > de localização, registro, confirmação, facial e consulta do histórico. O X
