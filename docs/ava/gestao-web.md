@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.05 -->
+<!-- ava-version: 1.7.0.06 -->
+
+> Revisão 1.7.0.06: login, cadastro e preparação do perfil financeiro passam a
+> recuperar o formulário em falhas inesperadas, sem manter ações bloqueadas.
 
 > Revisão 1.7.0.05: tratamento adicional da criação inicial aplicado apenas à
 > Gestão Mobile; sem impacto operacional na Gestão Web.

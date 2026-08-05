@@ -6279,6 +6279,7 @@
     state.erro = '';
     render();
 
+    try {
     var resposta;
     if (state.loginTipo === 'telefone') {
       var telefone = login.replace(/\D/g, '');
@@ -6361,6 +6362,13 @@
       return;
     }
     await carregarDados();
+    } catch (error) {
+      if (tentativaLogin !== state.tentativaLogin) return;
+      state.carregando = false;
+      state.loginAcao = '';
+      state.pronto = true;
+      setErro(mensagemErro(error, 'Não foi possível concluir o acesso agora. Confira sua conexão e tente novamente.'));
+    }
   }
 
   async function entrarGoogle() {
@@ -6391,6 +6399,7 @@
       return;
     }
 
+    try {
     var resposta = await db.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -6404,6 +6413,13 @@
       limparLoginSocialPendenteMobile();
       limparPreferenciaSessaoMobile();
       setErro(mensagemErro(resposta.error, 'Nao foi possivel conectar com o Google agora. Tente novamente em instantes.'));
+    }
+    } catch (error) {
+      state.carregando = false;
+      state.loginAcao = '';
+      limparLoginSocialPendenteMobile();
+      limparPreferenciaSessaoMobile();
+      setErro(mensagemErro(error, 'Nao foi possivel conectar com o Google agora. Tente novamente em instantes.'));
     }
   }
 
@@ -6463,6 +6479,7 @@
       return;
     }
 
+    try {
     var resposta = await db.auth.signInWithOAuth({
       provider: 'apple',
       options: {
@@ -6476,6 +6493,13 @@
       limparLoginSocialPendenteMobile();
       limparPreferenciaSessaoMobile();
       setErro(mensagemErro(resposta.error, 'Nao foi possivel conectar com a Apple agora. Tente novamente em instantes.'));
+    }
+    } catch (error) {
+      state.carregando = false;
+      state.loginAcao = '';
+      limparLoginSocialPendenteMobile();
+      limparPreferenciaSessaoMobile();
+      setErro(mensagemErro(error, 'Nao foi possivel conectar com a Apple agora. Tente novamente em instantes.'));
     }
   }
 
@@ -6691,6 +6715,7 @@
     state.erro = '';
     render();
 
+    try {
     var verificacao = await fetch('/api/sms/verificar-codigo', {
       method: 'POST',
       headers: {
@@ -6762,6 +6787,10 @@
     };
     limparRascunhoCadastroMobile();
     setMensagem('Cadastro criado e celular confirmado. Faca login para acessar.');
+    } catch (error) {
+      state.carregando = false;
+      setErro(mensagemErro(error, 'Nao foi possivel concluir o cadastro agora. Confira sua conexao e tente novamente.'));
+    }
   }
 
   var DESPESAS_PADRAO_EMPRESA_MOBILE = [

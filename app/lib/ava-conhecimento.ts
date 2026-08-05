@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.05: a criação inicial de perfil no Gestão Mobile sempre libera o formulário se a preparação posterior falhar.
+// Revisado na versão 1.7.0.06: login, cadastro e criação de perfil recuperam a tela em falhas inesperadas no Gestão Mobile e Web.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

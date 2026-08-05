@@ -526,7 +526,7 @@ export function useAuth(deps: UseAuthDeps) {
     }
 
     let respostaLogin;
-
+    try {
     if (tipoLogin === 'telefone') {
       const telefone = loginDigitado.replace(/\D/g, '');
       if (telefone.length < 10 || telefone.length > 11) {
@@ -553,6 +553,12 @@ export function useAuth(deps: UseAuthDeps) {
         email: emailParaLogin,
         password: loginSenha,
       });
+    }
+    } catch (erro) {
+      console.error('Falha inesperada no login:', erro);
+      setAuthErro('Não foi possível concluir o login agora. Confira sua conexão e tente novamente.');
+      setAuthLoading(false);
+      return;
     }
     const { data: dadosLogin, error } = respostaLogin;
 
@@ -713,6 +719,7 @@ export function useAuth(deps: UseAuthDeps) {
     if (cadastroSenha !== cadastroConfirmarSenha) {
       setAuthErro('As senhas não coincidem.'); setAuthLoading(false); return;
     }
+    try {
     if (!smsCadastroEnviado) {
       const respostaSms = await fetch('/api/sms/enviar-codigo', {
         method: 'POST',
@@ -822,6 +829,11 @@ export function useAuth(deps: UseAuthDeps) {
     setCadastroDdi(DDI_PADRAO);
     try { sessionStorage.removeItem(CHAVE_RASCUNHO_CADASTRO_WEB); } catch {}
     setModoAuth('login');
+    } catch (erro) {
+      console.error('Falha inesperada no cadastro:', erro);
+      setAuthLoading(false);
+      setAuthErro('Não foi possível concluir o cadastro agora. Confira sua conexão e tente novamente.');
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -1038,6 +1050,7 @@ export function useAuth(deps: UseAuthDeps) {
     setAuthMensagem('');
     setCriandoEmpresaInicial(true);
 
+    try {
     const { data: sessaoAtual } = await supabase.auth.getSession();
     if (!sessaoAtual.session) {
       criandoEmpresaInicialRef.current = false;
@@ -1189,6 +1202,13 @@ export function useAuth(deps: UseAuthDeps) {
       window.location.href = window.location.origin + window.location.pathname;
     }, 700);
     return true;
+    } catch (erro) {
+      criandoEmpresaInicialRef.current = false;
+      setCriandoEmpresaInicial(false);
+      console.error('Falha ao preparar o perfil financeiro:', erro);
+      setAuthErro('O perfil foi criado, mas não foi possível concluir a preparação. Recarregue a página para verificar.');
+      return false;
+    }
   }
 
   async function handleCriarPerfilInicialDoCadastro(

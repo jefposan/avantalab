@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.05 -->
+<!-- ava-version: 1.7.0.06 -->
+
+> Revisão 1.7.0.06: login por senha, Google ou Apple, cadastro e criação de
+> perfil recuperam a tela em falhas inesperadas de conexão; nenhuma ação fica
+> bloqueada indefinidamente.
 
 > Revisão 1.7.0.05: se a preparação do perfil após a criação não puder ser
 > concluída, o formulário retorna com orientação para recarregar; ele não fica

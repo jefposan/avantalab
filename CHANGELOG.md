@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.06 - 2026-08-05
+
+- Acesso e criação de perfil: Gestão Mobile e Gestão Web agora recuperam o
+  formulário em falhas inesperadas de login, cadastro, login social ou
+  preparação do perfil financeiro. Nenhuma dessas etapas permanece bloqueada
+  em **Entrando...**, **Criando...** ou **Enviando...**.
+
 ## 1.7.0.05 - 2026-08-05
 
 - Gestão Mobile: a criação de perfil agora também trata falhas nas etapas finais
