@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.154 -->
+<!-- ava-version: 1.6.1.157 -->
+
+> Revisão 1.6.1.157: em `/ponto`, **Ajuda** abre um guia interno com os passos
+> de localização, registro, confirmação, facial e consulta do histórico. O X
+> fecha o guia e devolve o funcionário à tela de ponto.
+
+> Revisão 1.6.1.156: refinamento exclusivamente visual no `/ponto`; o painel
+> cabe na altura do celular, mantém somente **Ajustes** no rodapé e preserva
+> todas as ações, validações e regras de registro já documentadas.
+
+> Revisão 1.6.1.155: no `/ponto`, a ação **Bater ponto** ocupa o centro do
+> painel do funcionário. Entrada, refeição, retorno e saída aparecem ao redor,
+> com estados concluído, próximo e pendente; localização, facial, registros,
+> ajustes, ajuda e saída continuam acessíveis em cards e atalhos compactos.
 
 > Revisão 1.6.1.154: ajuste de cabeçalho aplicado somente ao novo lançamento
 > da Gestão Mobile; sem impacto operacional na Gestão Web.

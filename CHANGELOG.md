@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.6.1.157 - 2026-08-04
+
+- Controle de Ponto: o halo do botão central foi reduzido para preservar o
+  espaço visual dos cards laterais.
+- Controle de Ponto: **Ajuda** agora abre um guia rápido dentro do próprio
+  módulo, com quatro passos objetivos e fechamento pelo X, sem redirecionar o
+  funcionário para outra página.
+
+## 1.6.1.156 - 2026-08-04
+
+- Controle de Ponto: a tela principal foi compactada para permanecer inteira na
+  altura dos celulares, o botão central foi reduzido para não avançar sobre os
+  cards laterais e o atalho duplicado de ajustes foi removido do cabeçalho.
+- Controle de Ponto: no login, o card de instalação agora ocupa somente a
+  altura do texto e do botão **Instalar**.
+
+## 1.6.1.155 - 2026-08-04
+
+- Controle de Ponto: a tela principal do funcionário foi redesenhada como um
+  painel premium e responsivo, com **Bater ponto** como ação central, fluxo do
+  dia ao redor, localização compacta, facial em formato de badge, atalhos de
+  registros e barra inferior. GPS, reconhecimento facial, confirmações,
+  comprovantes e regras de marcação permanecem inalterados.
+
 ## 1.6.1.154 - 2026-08-04
 
 - Gestão Mobile: o cabeçalho de **Novo lançamento** preserva o título completo;

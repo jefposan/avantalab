@@ -81,6 +81,11 @@ export default function PontoPage() {
               grid-row: 2;
               align-self: center;
             }
+            .ponto-install-card {
+              grid-row: 3;
+              align-self: start;
+              height: fit-content;
+            }
             @media (min-aspect-ratio: 9/16) { .avantalab-mobile-bg { background-size: auto 100%; } }
             @media (max-aspect-ratio: 9/18) { .avantalab-mobile-bg { background-size: auto 100%; } }
             @supports (-webkit-touch-callout: none) { .avantalab-mobile-bg { background-attachment: scroll; } }
@@ -114,7 +119,7 @@ export default function PontoPage() {
       <PontoFacialLiveness identityPoolId={process.env.NEXT_PUBLIC_AWS_COGNITO_IDENTITY_POOL_ID || ''} />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/ponto-app.js?v=24" defer />
+      <script src="/ponto-app.js?v=27" defer />
     </main>
   );
 }

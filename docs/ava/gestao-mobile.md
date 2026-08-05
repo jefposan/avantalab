@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.154 -->
+<!-- ava-version: 1.6.1.157 -->
+
+> Revisão 1.6.1.157: **Ajuda** no rodapé do `/ponto` abre um guia rápido sem
+> sair do módulo. O conteúdo explica localização, batida, confirmação, facial
+> e histórico; o X retorna à tela principal.
+
+> Revisão 1.6.1.156: o painel do `/ponto` foi compactado para evitar rolagem,
+> com círculo central menor, somente um atalho de ajustes no rodapé e card de
+> instalação ajustado ao conteúdo. Sem mudança no fluxo operacional.
+
+> Revisão 1.6.1.155: o `/ponto` ganhou painel responsivo centrado em **Bater
+> ponto**, com as quatro etapas do dia ao redor, localização compacta, status
+> facial, consultas e navegação inferior. As confirmações, validações e regras
+> do registro permanecem as mesmas.
 
 > Revisão 1.6.1.154: o título de **Novo lançamento** permanece completo; a
 > pílula fica centralizada somente no espaço disponível antes do botão X.

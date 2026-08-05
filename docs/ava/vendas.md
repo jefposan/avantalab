@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.154 -->
+<!-- ava-version: 1.6.1.157 -->
+
+> Revisão 1.6.1.157: guia interno e ajuste de sombra aplicados somente ao
+> Controle de Ponto; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.156: ajustes visuais aplicados somente ao Controle de Ponto;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.155: redesign aplicado somente à tela principal do Controle
+> de Ponto; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.154: ajuste de cabeçalho aplicado somente ao novo lançamento
 > da Gestão Mobile; sem impacto operacional no AvantaVendas.

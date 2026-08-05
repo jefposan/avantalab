@@ -65,6 +65,7 @@
     notificacoesAtivas: false,
     notificacoesAtualizando: false,
     ajustesAberto: false,
+    ajudaAberta: false,
     pontoAcessoMotivo: '',
     facialDepois: null,
   };
@@ -128,6 +129,13 @@
   }
   window.addEventListener('focus', atualizarConfiguracaoPontoSilenciosa);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) atualizarConfiguracaoPontoSilenciosa(); });
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape' || !state.ajudaAberta) return;
+    state.ajudaAberta = false;
+    render();
+    var ajuda = document.getElementById('ponto-ajuda');
+    if (ajuda) ajuda.focus();
+  });
 
   // ---------- helpers ----------
   function escapeHtml(v) {
@@ -241,7 +249,7 @@
 
   async function registroServiceWorkerPonto() {
     if (!('serviceWorker' in navigator)) return null;
-    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=7', { scope: '/ponto' }); }
+    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=8', { scope: '/ponto' }); }
     catch (e) { return null; }
   }
 
@@ -770,10 +778,36 @@
     );
   }
 
+  function ajudaPontoHtml() {
+    if (!state.ajudaAberta) return '';
+    var passos = [
+      ['1', 'Confira a localização', 'Antes de registrar, confirme se a localização está atualizada. Se necessário, toque em Atualizar.'],
+      ['2', 'Toque em Bater ponto', 'O sistema identifica automaticamente a próxima etapa: entrada, saída para refeição, retorno ou saída.'],
+      ['3', 'Confirme o registro', 'Revise a etapa exibida e toque em Confirmar. Se a empresa exigir reconhecimento facial nessa batida, siga as instruções da câmera.'],
+      ['4', 'Acompanhe o dia', 'Os cards mostram horários concluídos e a próxima batida. Em Meus registros você consulta o histórico e os comprovantes.'],
+    ];
+    return (
+      '<div id="ponto-ajuda-overlay" class="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4" role="presentation">' +
+        '<section role="dialog" aria-modal="true" aria-labelledby="ponto-ajuda-titulo" class="my-auto w-full max-w-sm overflow-y-auto rounded-3xl bg-white p-5 text-slate-900 shadow-2xl" style="max-height:calc(100dvh - 32px)">' +
+          '<div class="flex items-start justify-between gap-3">' +
+            '<div><p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Guia rápido</p><h2 id="ponto-ajuda-titulo" class="mt-1 text-xl font-black">Como usar o ponto</h2><p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">Registre sua jornada em quatro passos simples.</p></div>' +
+            '<button id="ponto-ajuda-fechar" type="button" aria-label="Fechar ajuda" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500">' +
+              '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 6l12 12M18 6L6 18"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<ol class="mt-4 grid gap-2">' + passos.map(function (passo) {
+            return '<li class="grid grid-cols-[36px_1fr] gap-3 rounded-2xl bg-slate-50 p-3"><span class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-700" aria-hidden="true">' + passo[0] + '</span><div><h3 class="text-sm font-black text-slate-800">' + passo[1] + '</h3><p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">' + passo[2] + '</p></div></li>';
+          }).join('') + '</ol>' +
+          '<p class="mt-4 rounded-2xl bg-blue-50 p-3 text-xs font-semibold leading-relaxed text-blue-900"><strong>Dica:</strong> nunca feche a tela enquanto o registro ou a verificação facial estiverem em andamento.</p>' +
+        '</section>' +
+      '</div>'
+    );
+  }
+
   function cardInstalarHtml() {
     if (ehStandalone()) return '';
     return (
-      '<div class="mx-auto mt-3 w-full max-w-sm rounded-2xl border border-white/30 p-3 text-slate-800 shadow-lg backdrop-blur-lg" style="background-color:rgba(255,255,255,.16)">' +
+      '<div class="ponto-install-card mx-auto mt-3 h-fit w-full max-w-sm self-start rounded-2xl border border-white/30 p-3 text-slate-800 shadow-lg backdrop-blur-lg" style="background-color:rgba(255,255,255,.16)">' +
         '<div class="flex items-center justify-between gap-3">' +
           '<div class="min-w-0">' +
             '<p class="text-xs font-black uppercase tracking-wide" style="color:#003E73">Controle de Ponto</p>' +
@@ -889,6 +923,73 @@
     );
   }
 
+  function telaPontoPremium() {
+    if (state.view === 'registros') return telaRegistros();
+    if (state.comprovante) return telaComprovante();
+
+    var tipos = (state.pontoHoje || []).map(function (r) { return r.tipo; });
+    var proxima = proximaAcao(tipos);
+    var podeEncerrar = tipos.indexOf('entrada') !== -1 && tipos.indexOf('saida') === -1;
+    var agora = new Date();
+    var diaSemana = agora.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'America/Sao_Paulo' });
+    var dataHoje = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Sao_Paulo' }).replace('.', '').toUpperCase();
+    var partesNome = String(nomeFunc() || '').trim().split(/\s+/).filter(Boolean);
+    var iniciais = ((partesNome[0] || 'A').charAt(0) + (partesNome.length > 1 ? partesNome[partesNome.length - 1].charAt(0) : '')).toUpperCase();
+    var iconeRelogio = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path stroke-linecap="round" d="M12 7v5l3.5 2"/></svg>';
+    var iconeAjustes = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.7 1.7 0 00.34 1.88l.06.06-2.86 2.86-.06-.06A1.7 1.7 0 0015 19.4a1.7 1.7 0 00-1 .6 1.7 1.7 0 00-.4 1.1V21H9.6v-.1A1.7 1.7 0 009 19.4a1.7 1.7 0 00-1.88.34l-.06.06-2.86-2.86.06-.06A1.7 1.7 0 004.6 15a1.7 1.7 0 00-.6-1A1.7 1.7 0 002.9 13.6H3V9.6h-.1A1.7 1.7 0 004.6 9a1.7 1.7 0 00-.34-1.88l-.06-.06L7.06 4.2l.06.06A1.7 1.7 0 009 4.6a1.7 1.7 0 001-.6 1.7 1.7 0 00.4-1.1V3h4v-.1A1.7 1.7 0 0015 4.6a1.7 1.7 0 001.88-.34l.06-.06 2.86 2.86-.06.06A1.7 1.7 0 0019.4 9a1.7 1.7 0 00.6 1 1.7 1.7 0 001.1.4H21v4h.1a1.7 1.7 0 00-1.7.6Z"/></svg>';
+    var localOk = localizacaoRecente();
+    var localizacaoHtml =
+      '<section class="ponto-location" aria-label="Localização do registro">' +
+        '<span class="ponto-location-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1116 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>' +
+        '<div class="ponto-location-copy"><p>Localização</p><span><i class="' + (localOk ? 'is-ok' : '') + '"></i>' + escapeHtml(state.localizacaoAtualizando ? 'Atualizando localização…' : (localOk ? 'Localização atualizada' : 'Atualize antes de registrar')) + '</span><small>' + escapeHtml(state.localizacaoMsg || 'A precisão será conferida no registro.') + '</small></div>' +
+        '<button id="ponto-atualizar-localizacao" type="button" ' + (state.localizacaoAtualizando || state.batendo ? 'disabled' : '') + '>' + (state.localizacaoAtualizando ? 'Atualizando…' : 'Atualizar') + '</button>' +
+      '</section>';
+
+    var etapas = [
+      { tipo: 'entrada', titulo: 'Entrada', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12h14m-5-5 5 5-5 5"/></svg>' },
+      { tipo: 'saida_refeicao', titulo: 'Saída almoço', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M7 3v8m3-8v8M7 7h3m-1.5 4v10M16 3v18m0-18c2 2 2 6 0 8"/></svg>' },
+      { tipo: 'retorno_refeicao', titulo: 'Retorno', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M19 8V4m0 0h-4m4 0-3 3a7 7 0 10.7 9.2"/></svg>' },
+      { tipo: 'saida', titulo: 'Saída', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12h14m-5-5 5 5-5 5"/></svg>' },
+    ];
+    var etapasHtml = etapas.map(function (etapa) {
+      var reg = (state.pontoHoje || []).filter(function (r) { return r.tipo === etapa.tipo; })[0];
+      var classe = reg ? ' is-done' : (proxima === etapa.tipo ? ' is-next' : '');
+      return '<article class="ponto-step' + classe + '"><span class="ponto-step-icon">' + (reg ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path stroke-linecap="round" stroke-linejoin="round" d="m6 12 4 4 8-9"/></svg>' : etapa.icone) + '</span><p>' + escapeHtml(etapa.titulo) + '</p><strong>' + (reg ? escapeHtml(horaPonto(reg.registrado_em)) : '--:--') + '</strong><small>' + (reg ? 'Concluído' : (proxima === etapa.tipo ? 'Próximo' : 'Pendente')) + '</small></article>';
+    });
+    var acaoCentral = proxima
+      ? '<button id="ponto-acao" data-tipo="' + proxima + '" type="button" ' + (state.batendo ? 'disabled' : '') + ' aria-label="Registrar ' + escapeHtml(rotuloAcao(proxima)) + '"><span class="ponto-action-icon">' + iconeRelogio + '</span><strong>' + (state.batendo ? 'REGISTRANDO…' : 'BATER<br>PONTO') + '</strong><small>' + (state.batendo ? 'Aguarde um instante' : 'Toque para registrar') + '</small></button>'
+      : '<div class="ponto-action is-complete" role="status"><span class="ponto-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6"/></svg></span><strong>JORNADA<br>CONCLUÍDA</strong><small>Registros completos</small></div>';
+    var facialAtivo = state.facial && state.facial.ativo === true;
+    var facialPodeCadastrar = state.facial && state.facial.podeCadastrar === true;
+    var facialHtml = (facialAtivo || facialPodeCadastrar)
+      ? '<button id="ponto-cadastrar-facial" type="button" class="ponto-facial-badge"><span class="ponto-facial-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M4 8V5a1 1 0 011-1h3m8 0h3a1 1 0 011 1v3M4 16v3a1 1 0 001 1h3m8 0h3a1 1 0 001-1v-3"/><circle cx="12" cy="11" r="3.5"/><path stroke-linecap="round" d="M8.5 17c.8-1.5 2-2.2 3.5-2.2s2.7.7 3.5 2.2"/></svg></span><span><strong>' + (facialAtivo ? 'Reconhecimento facial ativo' : 'Cadastro facial disponível') + '</strong><small>' + (facialAtivo ? 'Toque para atualizar' : 'Toque para cadastrar') + '</small></span><svg class="ponto-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg></button>'
+      : '';
+
+    var cssPontoPremium = '<style>' +
+      '.ponto-home{position:fixed;inset:0;overflow:hidden;background:#f5f7fa;color:#1b1f23;font-family:var(--av-font-family,Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);overscroll-behavior-y:contain}.ponto-shell{display:flex;width:100%;height:100%;max-width:460px;flex-direction:column;margin:0 auto;padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 10px)}' +
+      '.ponto-hero{position:relative;overflow:hidden;min-height:126px;border-radius:24px;padding:20px;color:#fff;background:linear-gradient(135deg,#0b2c67 0%,#0a5ed7 64%,#187fd9 100%);box-shadow:0 12px 30px rgba(11,44,103,.18)}.ponto-hero:after{content:"";position:absolute;inset:auto -20% -70% 20%;height:130px;border-radius:50%;background:rgba(255,255,255,.08);transform:rotate(-8deg)}.ponto-hero-main{position:relative;z-index:1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:13px}' +
+      '.ponto-avatar{display:flex;width:58px;height:58px;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.82);border-radius:50%;background:rgba(255,255,255,.14);font-size:17px;font-weight:600;letter-spacing:.04em;box-shadow:0 5px 15px rgba(0,0,0,.12)}.ponto-identity{min-width:0}.ponto-identity h1{margin:0;font-size:clamp(20px,6vw,27px);font-weight:600;letter-spacing:-.025em;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ponto-identity p{margin:5px 0 0;color:rgba(255,255,255,.82);font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '.ponto-date{position:relative;z-index:1;display:flex;align-items:center;gap:8px;margin:14px 0 0 71px;color:rgba(255,255,255,.78);font-size:11px;font-weight:500;text-transform:capitalize}.ponto-date strong{color:#fff;font-size:12px;font-weight:600;letter-spacing:.035em}.ponto-date svg{width:17px;height:17px}' +
+      '.ponto-location{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:11px;margin-top:12px;padding:12px 13px;border-radius:20px;background:#fff;box-shadow:0 5px 18px rgba(20,45,80,.06)}.ponto-location-icon{display:flex;width:42px;height:42px;align-items:center;justify-content:center;border-radius:50%;background:#edf6ff;color:#0a5ed7}.ponto-location-icon svg{width:22px;height:22px}.ponto-location-copy{min-width:0}.ponto-location-copy p{margin:0;color:#667085;font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}.ponto-location-copy span{display:flex;align-items:center;gap:6px;margin-top:2px;color:#24324a;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ponto-location-copy i{width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:#f59e0b}.ponto-location-copy i.is-ok{background:#24b36b}.ponto-location-copy small{display:block;margin-top:1px;color:#98a2b3;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ponto-location button{min-height:38px;padding:0 13px;border:0;border-radius:18px;background:#f0f6ff;color:#0a5ed7;font-size:10px;font-weight:600;text-transform:uppercase}.ponto-location button:disabled{opacity:.55}' +
+      '.ponto-orbit{--action-size:clamp(150px,44vw,184px);display:grid;flex:0 1 auto;grid-template-columns:minmax(0,1fr) var(--action-size) minmax(0,1fr);grid-template-rows:repeat(2,minmax(76px,1fr));align-items:center;gap:8px 8px;margin-top:12px}.ponto-step{display:flex;min-width:0;min-height:74px;flex-direction:column;align-items:center;justify-content:center;padding:6px 3px;border-radius:20px;background:#fff;text-align:center;box-shadow:0 4px 14px rgba(20,45,80,.055)}.ponto-step:nth-child(1){grid-column:1;grid-row:1}.ponto-step:nth-child(2){grid-column:1;grid-row:2}.ponto-step:nth-child(3){grid-column:3;grid-row:1}.ponto-step:nth-child(4){grid-column:3;grid-row:2}.ponto-step-icon{display:flex;width:29px;height:29px;align-items:center;justify-content:center;border-radius:50%;background:#f3f5f8;color:#8b95a7}.ponto-step-icon svg{width:16px;height:16px}.ponto-step p{min-height:20px;margin:4px 0 0;color:#687386;font-size:8.5px;font-weight:600;line-height:1.2;text-transform:uppercase}.ponto-step strong{margin-top:1px;color:#aab1bd;font-size:12px;font-weight:600}.ponto-step small{margin-top:1px;color:#b1b7c1;font-size:7.5px;font-weight:500}.ponto-step.is-done{background:#f2fbf6}.ponto-step.is-done .ponto-step-icon{background:#dcf7e8;color:#24b36b}.ponto-step.is-done strong{color:#24a864}.ponto-step.is-done small{color:#5b9976}.ponto-step.is-next{box-shadow:inset 0 0 0 1.5px rgba(10,94,215,.16),0 5px 16px rgba(10,94,215,.08)}.ponto-step.is-next .ponto-step-icon{background:#eaf3ff;color:#0a5ed7}.ponto-step.is-next small{color:#0a5ed7}' +
+      '#ponto-acao,.ponto-action{position:relative;grid-column:2;grid-row:1/3;display:flex;width:var(--action-size);height:var(--action-size);flex-direction:column;align-items:center;justify-content:center;overflow:hidden;border:8px solid #fff;border-radius:50%;background:linear-gradient(145deg,#3aa8ff 0%,#0a5ed7 55%,#0b4fae 100%);color:#fff;box-shadow:0 0 0 7px rgba(10,94,215,.045),0 12px 22px rgba(10,94,215,.16);transition:transform .18s ease,box-shadow .2s ease}#ponto-acao:active{transform:scale(.96)}#ponto-acao:disabled{opacity:.72}.ponto-action-icon{display:flex;width:43px;height:43px;align-items:center;justify-content:center;margin-bottom:7px;border:1.5px solid rgba(255,255,255,.72);border-radius:50%}.ponto-action-icon svg{width:25px;height:25px}.ponto-action strong,#ponto-acao strong{font-size:clamp(20px,6vw,27px);font-weight:600;letter-spacing:.015em;line-height:1.03}.ponto-action small,#ponto-acao small{margin-top:8px;color:rgba(255,255,255,.82);font-size:10px;font-weight:500}.ponto-action.is-complete{background:linear-gradient(145deg,#42c981,#24b36b 64%,#198652);box-shadow:0 0 0 7px rgba(36,179,107,.045),0 12px 22px rgba(36,179,107,.14)}#ponto-acao.ponto-action-pulse{animation:ponto-action-tap .25s ease-out}.ponto-action-pulse:after{content:"";position:absolute;inset:25%;border:1px solid rgba(255,255,255,.5);border-radius:50%;animation:ponto-ripple .4s ease-out forwards}' +
+      '.ponto-early-exit{display:block;margin:10px auto 0;padding:6px 10px;border:0;background:transparent;color:#8a94a4;font-size:10px;font-weight:500;text-decoration:underline;text-underline-offset:3px}.ponto-facial-badge{display:grid;width:min(100%,330px);min-height:52px;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:14px auto 0;padding:8px 12px;border:0;border-radius:18px;background:#edf5ff;color:#0a5ed7;text-align:left}.ponto-facial-icon{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border-radius:12px;background:#fff}.ponto-facial-icon svg{width:21px;height:21px}.ponto-facial-badge span:nth-child(2){min-width:0}.ponto-facial-badge strong{display:block;font-size:11px;font-weight:600}.ponto-facial-badge small{display:block;margin-top:1px;color:#6e8bb4;font-size:8.5px;font-weight:500}.ponto-chevron{width:16px;height:16px;color:#82a5d3}' +
+      '.ponto-links{overflow:hidden;margin-top:14px;border-radius:20px;background:#fff;box-shadow:0 5px 18px rgba(20,45,80,.06)}.ponto-link-row{display:grid;width:100%;min-height:60px;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;padding:8px 14px;border:0;background:#fff;color:#26354f;text-align:left}.ponto-link-row+.ponto-link-row{border-top:1px solid #edf0f4}.ponto-link-icon{display:flex;width:37px;height:37px;align-items:center;justify-content:center;border-radius:14px;background:#edf5ff;color:#0a5ed7}.ponto-link-icon svg{width:20px;height:20px}.ponto-link-row strong{display:block;font-size:12px;font-weight:600}.ponto-link-row small{display:block;margin-top:2px;color:#98a2b3;font-size:9px;font-weight:500}.ponto-link-row>.ponto-chevron{color:#a5aebb}' +
+      '.ponto-bottom-nav{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:end;gap:8px;margin-top:14px;padding:10px 12px 7px;border-radius:24px;background:#fff;box-shadow:0 5px 18px rgba(20,45,80,.07)}.ponto-nav-action{display:flex;min-height:48px;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:#7b8494;font-size:8.5px;font-weight:600}.ponto-nav-action svg{width:21px;height:21px}.ponto-nav-action.is-primary{color:#0a5ed7}.ponto-nav-action.is-primary span{display:flex;width:46px;height:46px;align-items:center;justify-content:center;border-radius:50%;background:#0a5ed7;color:#fff;box-shadow:0 7px 15px rgba(10,94,215,.2)}.ponto-nav-action.is-primary svg{width:23px;height:23px}.ponto-nav-action.is-logout{color:#9a5961}.ponto-home button{font-family:inherit;cursor:pointer}.ponto-home button:focus-visible{outline:3px solid rgba(58,168,255,.4);outline-offset:3px}' +
+      '@keyframes ponto-action-tap{0%{transform:scale(1)}35%{transform:scale(.96)}70%{transform:scale(1.05)}100%{transform:scale(1)}}@keyframes ponto-ripple{from{opacity:.8;transform:scale(.5)}to{opacity:0;transform:scale(3)}}@media(max-width:350px){.ponto-shell{padding-left:10px;padding-right:10px}.ponto-hero{min-height:104px;padding:14px}.ponto-avatar{width:46px;height:46px}.ponto-date{margin-top:8px;margin-left:59px}.ponto-date span{display:none}.ponto-orbit{--action-size:148px;column-gap:7px}.ponto-step p{font-size:7.7px}.ponto-location{gap:7px;padding:9px}.ponto-location-icon{width:36px;height:36px}.ponto-location-copy small{display:none}.ponto-location button{padding:0 8px;font-size:8.5px}}@media(max-height:760px){.ponto-shell{padding-top:calc(env(safe-area-inset-top) + 7px);padding-bottom:calc(env(safe-area-inset-bottom) + 7px)}.ponto-hero{min-height:96px;padding:12px 15px}.ponto-avatar{width:46px;height:46px}.ponto-identity h1{font-size:20px}.ponto-identity p{margin-top:3px;font-size:11px}.ponto-date{margin-top:6px;margin-left:59px}.ponto-location{margin-top:7px;padding:8px 10px}.ponto-location-icon{width:36px;height:36px}.ponto-location-copy small{display:none}.ponto-location button{min-height:34px}.ponto-orbit{--action-size:152px;grid-template-rows:repeat(2,minmax(69px,1fr));gap:5px 8px;margin-top:7px}.ponto-step{min-height:67px;padding:4px 2px}.ponto-step-icon{width:25px;height:25px}.ponto-step p{min-height:17px;margin-top:3px}.ponto-step small{display:none}.ponto-action-icon{width:36px;height:36px;margin-bottom:5px}.ponto-action-icon svg{width:21px;height:21px}.ponto-action strong,#ponto-acao strong{font-size:20px}.ponto-action small,#ponto-acao small{margin-top:5px}.ponto-early-exit{margin-top:3px;padding:3px 8px}.ponto-facial-badge{min-height:44px;margin-top:6px;padding:5px 10px}.ponto-facial-icon{width:30px;height:30px}.ponto-links{margin-top:6px}.ponto-link-row{min-height:47px;padding:5px 12px}.ponto-link-icon{width:32px;height:32px}.ponto-link-row small{display:none}.ponto-bottom-nav{margin-top:6px;padding:3px 10px 2px}.ponto-nav-action{min-height:43px}.ponto-nav-action.is-primary span{width:38px;height:38px}}@media(max-height:610px){.ponto-shell{padding-top:calc(env(safe-area-inset-top) + 5px);padding-bottom:calc(env(safe-area-inset-bottom) + 5px)}.ponto-hero{min-height:78px;padding:9px 12px}.ponto-avatar{width:39px;height:39px;font-size:14px}.ponto-hero-main{gap:9px}.ponto-identity h1{font-size:17px}.ponto-identity p{font-size:10px}.ponto-date{margin-top:3px;margin-left:48px;font-size:9px}.ponto-date svg{width:14px;height:14px}.ponto-date strong{font-size:9px}.ponto-location{margin-top:5px;padding:6px 8px;border-radius:16px}.ponto-location-icon{width:32px;height:32px}.ponto-location-copy p{font-size:8px}.ponto-location-copy span{font-size:10px}.ponto-location button{min-height:30px;padding:0 8px;font-size:8px}.ponto-orbit{--action-size:136px;grid-template-rows:repeat(2,minmax(59px,1fr));gap:4px 7px;margin-top:5px}.ponto-step{min-height:57px;border-radius:15px}.ponto-step-icon{width:21px;height:21px}.ponto-step-icon svg{width:13px;height:13px}.ponto-step p{min-height:14px;margin-top:2px;font-size:7px}.ponto-step strong{font-size:10px}.ponto-action-icon{width:31px;height:31px}.ponto-action strong,#ponto-acao strong{font-size:17px}.ponto-action small,#ponto-acao small{font-size:8px}.ponto-early-exit{font-size:8px}.ponto-facial-badge{min-height:38px;margin-top:4px;padding:3px 9px}.ponto-facial-icon{width:27px;height:27px}.ponto-facial-badge strong{font-size:9px}.ponto-facial-badge small{display:none}.ponto-links{margin-top:4px;border-radius:16px}.ponto-link-row{min-height:38px;padding:3px 10px}.ponto-link-icon{width:27px;height:27px;border-radius:10px}.ponto-link-row strong{font-size:10px}.ponto-bottom-nav{margin-top:4px;border-radius:17px;padding:1px 9px}.ponto-nav-action{min-height:37px}.ponto-nav-action.is-primary span{width:30px;height:30px}.ponto-nav-action svg{width:17px;height:17px}}@media(prefers-reduced-motion:reduce){#ponto-acao,.ponto-action{transition:none}#ponto-acao.ponto-action-pulse,.ponto-action-pulse:after{animation:none}}' +
+    '</style>';
+
+    return cssPontoPremium + '<div class="ponto-home"><div class="ponto-shell">' +
+      '<header class="ponto-hero"><div class="ponto-hero-main"><span class="ponto-avatar" aria-hidden="true">' + escapeHtml(iniciais) + '</span><div class="ponto-identity"><h1>Olá, ' + escapeHtml(partesNome[0] || nomeFunc()) + '</h1><p>' + escapeHtml(nomeEmpresa()) + '</p></div></div><div class="ponto-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path stroke-linecap="round" d="M8 3v4m8-4v4M3 10h18"/></svg><span>' + escapeHtml(diaSemana) + '</span><strong>' + escapeHtml(dataHoje) + '</strong></div></header>' +
+      localizacaoHtml +
+      '<section class="ponto-orbit" aria-label="Fluxo de registros do dia">' + etapasHtml.join('') + acaoCentral + '</section>' +
+      (podeEncerrar && proxima !== 'saida' ? '<button id="ponto-encerrar" type="button" class="ponto-early-exit" ' + (state.batendo ? 'disabled' : '') + '>Encerrar expediente agora</button>' : '') +
+      facialHtml +
+      '<section class="ponto-links" aria-label="Consultas de ponto"><button id="ponto-meus-registros" type="button" class="ponto-link-row"><span class="ponto-link-icon">' + iconeRelogio + '</span><span><strong>Meus registros</strong><small>Confira seus horários registrados</small></span><svg class="ponto-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg></button><button id="ponto-historico-dia" type="button" class="ponto-link-row"><span class="ponto-link-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M5 20V10m7 10V4m7 16v-7"/></svg></span><span><strong>Histórico do dia</strong><small>Acompanhe seu resumo diário</small></span><svg class="ponto-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg></button></section>' +
+      '<nav class="ponto-bottom-nav" aria-label="Ações do aplicativo"><button id="ponto-sair" type="button" class="ponto-nav-action is-logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10 5H6a2 2 0 00-2 2v10a2 2 0 002 2h4m5-4 4-3-4-3m4 3H9"/></svg>Sair</button><button id="ponto-ajustes" type="button" class="ponto-nav-action is-primary"><span>' + iconeAjustes + '</span>Ajustes</button><button id="ponto-ajuda" type="button" class="ponto-nav-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M9.8 9a2.4 2.4 0 014.7.7c0 1.8-2.5 2-2.5 3.8m0 3h.01"/></svg>Ajuda</button></nav>' +
+    '</div></div>';
+  }
+
   function telaPonto() {
     if (state.view === 'registros') return telaRegistros();
     if (state.comprovante) return telaComprovante();
@@ -985,8 +1086,12 @@
     var tela;
     if (!state.pronto || (state.autenticado && state.entrando)) tela = telaCarregandoPonto();
     else if (!state.autenticado) tela = telaLogin();
-    else tela = telaPonto();
-    root.innerHTML = tela + toastHtml() + instrucaoInstalarHtml() + confirmacaoPontoHtml() + ajustesPontoHtml();
+    else tela = telaPontoPremium();
+    root.innerHTML = tela + toastHtml() + instrucaoInstalarHtml() + confirmacaoPontoHtml() + ajustesPontoHtml() + ajudaPontoHtml();
+    if (state.ajudaAberta) {
+      var conteudoPonto = document.querySelector('.ponto-home');
+      if (conteudoPonto) { conteudoPonto.setAttribute('inert', ''); conteudoPonto.setAttribute('aria-hidden', 'true'); }
+    }
 
     bind('ponto-entrar', entrar);
     bind('ponto-instalar-fechar', function () { state.instalarInstrucao = false; render(); });
@@ -1005,7 +1110,13 @@
     var cpfEl = document.getElementById('ponto-cpf');
     if (cpfEl) cpfEl.addEventListener('blur', function () { this.value = fmtCpf(this.value); });
 
-    bind('ponto-acao', function () { var el = document.getElementById('ponto-acao'); if (el) { state.confirmarTipo = el.getAttribute('data-tipo'); render(); } });
+    bind('ponto-acao', function () {
+      var el = document.getElementById('ponto-acao');
+      if (!el || state.batendo) return;
+      var tipo = el.getAttribute('data-tipo');
+      el.classList.add('ponto-action-pulse');
+      setTimeout(function () { state.confirmarTipo = tipo; render(); }, 250);
+    });
     bind('ponto-encerrar', function () { state.confirmarTipo = 'saida'; render(); });
     bind('ponto-confirmar-cancelar', function () { state.confirmarTipo = null; render(); });
     bind('ponto-confirmar-ok', function () {
@@ -1018,6 +1129,10 @@
     bind('ponto-cadastrar-facial', function () { iniciarFacial('cadastro', function () { mostrarToast('Reconhecimento facial cadastrado com sucesso.'); }); });
     bind('ponto-atualizar-localizacao', atualizarLocalizacao);
     bind('ponto-ajustes', function () { state.ajustesAberto = true; render(); });
+    bind('ponto-ajuda', function () { state.ajudaAberta = true; render(); var fechar = document.getElementById('ponto-ajuda-fechar'); if (fechar) fechar.focus(); });
+    bind('ponto-ajuda-fechar', function () { state.ajudaAberta = false; render(); var ajuda = document.getElementById('ponto-ajuda'); if (ajuda) ajuda.focus(); });
+    var ovAjuda = document.getElementById('ponto-ajuda-overlay');
+    if (ovAjuda) ovAjuda.addEventListener('click', function (e) { if (e.target === ovAjuda) { state.ajudaAberta = false; render(); var ajuda = document.getElementById('ponto-ajuda'); if (ajuda) ajuda.focus(); } });
     bind('ponto-ajustes-fechar', function () { state.ajustesAberto = false; render(); });
     var ovAjustes = document.getElementById('ponto-ajustes-overlay');
     if (ovAjustes) ovAjustes.addEventListener('click', function (e) { if (e.target === ovAjustes) { state.ajustesAberto = false; render(); } });
@@ -1043,6 +1158,7 @@
       } catch (e) { mostrarToast((e && e.message) || 'Não foi possível preparar a impressão.'); }
     });
     bind('ponto-meus-registros', function () { carregarRegistros('dia'); });
+    bind('ponto-historico-dia', function () { carregarRegistros('dia'); });
     bind('ponto-voltar', function () { state.view = 'bater'; render(); });
     bind('ponto-periodo-dia', function () { carregarRegistros('dia'); });
     bind('ponto-periodo-semana', function () { carregarRegistros('semana'); });
