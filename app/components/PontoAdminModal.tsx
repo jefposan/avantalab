@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import DraggableModalCard from './DraggableModalCard';
 import { validarNomeCompleto } from '../lib/nome-pessoa';
 import {
+  compararSelecaoFacial,
   formatarCentavos,
   type EstadoCobrancaFacial,
   type ResumoAlteracaoFacial,
@@ -721,6 +722,14 @@ export default function PontoAdminModal({
       : [...atual, userId]);
   };
 
+  const funcionariosFacialAtuais = funcionariosFacial
+    .filter((item) => item.status !== 'removido')
+    .map((item) => item.funcionario_user_id);
+  const { somenteReducao: alteracaoFacialSomenteReducao } = compararSelecaoFacial(
+    funcionariosFacialAtuais,
+    facialSelecionados,
+  );
+
   const revisarCobrancaFacial = async () => {
     setMsgFacial(null);
     if (!aceiteFacial) {
@@ -1140,7 +1149,21 @@ export default function PontoAdminModal({
                   </div>
                 </div>
               ) : !temCobrancaFacialPendente && !cobrancaFacialEncerrando && (
-                <button type="button" onClick={revisarCobrancaFacial} disabled={salvandoFacial} className="min-h-11 rounded-xl px-3 text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoFacial ? 'Calculando...' : cobrancaFacial?.status === 'ativa' ? 'Revisar alteração' : 'Continuar para pagamento'}</button>
+                <button
+                  type="button"
+                  onClick={alteracaoFacialSomenteReducao ? confirmarCobrancaFacial : revisarCobrancaFacial}
+                  disabled={salvandoFacial}
+                  className="min-h-11 rounded-xl px-3 text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60"
+                  style={{ backgroundColor: corSistema }}
+                >
+                  {salvandoFacial
+                    ? (alteracaoFacialSomenteReducao ? 'Salvando...' : 'Calculando...')
+                    : alteracaoFacialSomenteReducao
+                      ? 'Salvar alterações'
+                      : cobrancaFacial?.status === 'ativa'
+                        ? 'Revisar alteração'
+                        : 'Continuar para pagamento'}
+                </button>
               )}
 
               {cobrancaFacial && ['ativa', 'inadimplente', 'cancelamento_programado', 'pendente_pagamento'].includes(cobrancaFacial.status) && (

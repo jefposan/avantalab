@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.22 - 2026-08-05
+
+- Controle de Ponto: ao desmarcar um funcionário que já utiliza reconhecimento
+  facial, a tela exibe **Salvar alterações** e aplica a remoção sem encaminhar
+  ao pagamento. Configurações anteriores ao fluxo de cobrança também podem ser
+  reduzidas ou totalmente desativadas sem criar uma nova contratação.
+
 ## 1.7.0.21 - 2026-08-05
 
 - Gestão Mobile no Chrome para iPhone: o Menu recebe uma rolagem de toque

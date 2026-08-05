@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.21 -->
+<!-- ava-version: 1.7.0.22 -->
+
+> Revisão 1.7.0.22: correção restrita à administração do reconhecimento facial
+> no Controle de Ponto; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.21: correção restrita à rolagem do Menu da Gestão Mobile no
 > Chrome para iPhone; sem impacto operacional no AvantaVendas.

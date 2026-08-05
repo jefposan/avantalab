@@ -35,6 +35,18 @@ export type ResumoAlteracaoFacial = {
   exigePagamento: boolean;
 };
 
+export function compararSelecaoFacial(atuais: string[], selecionados: string[]) {
+  const atuaisUnicos = new Set(atuais);
+  const selecionadosUnicos = new Set(selecionados);
+  const adicionados = [...selecionadosUnicos].filter((id) => !atuaisUnicos.has(id));
+  const removidos = [...atuaisUnicos].filter((id) => !selecionadosUnicos.has(id));
+  return {
+    adicionados,
+    removidos,
+    somenteReducao: removidos.length > 0 && adicionados.length === 0,
+  };
+}
+
 function dataUtc(data: string) {
   const partes = data.slice(0, 10).split('-').map(Number);
   return new Date(Date.UTC(partes[0], Math.max(0, partes[1] - 1), partes[2], 12));

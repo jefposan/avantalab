@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.21 -->
+<!-- ava-version: 1.7.0.22 -->
+
+> Revisão 1.7.0.22: na aba **Facial** do Controle de Ponto, desmarcar um
+> funcionário habilitado revela **Salvar alterações**. A remoção é imediata,
+> reduz a próxima mensalidade e não abre pagamento; ao remover o último
+> funcionário, o adicional é desativado imediatamente. Configurações antigas
+> também podem ser reduzidas sem exigir uma nova contratação.
 
 > Revisão 1.7.0.21: correção restrita à rolagem por toque do Menu da Gestão
 > Mobile no Chrome para iPhone; sem mudança operacional na Gestão Web.

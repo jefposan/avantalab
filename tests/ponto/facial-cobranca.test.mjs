@@ -3,9 +3,32 @@ import test from 'node:test';
 
 import {
   calcularProporcionalFacialCentavos,
+  compararSelecaoFacial,
   cobrancaFacialPermiteUso,
   PONTO_FACIAL_VALOR_UNITARIO_CENTAVOS,
 } from '../../app/lib/ponto-facial-cobranca.ts';
+
+test('identifica redução facial sem encaminhar a seleção ao pagamento', () => {
+  assert.deepEqual(
+    compararSelecaoFacial(['funcionario-a', 'funcionario-b'], ['funcionario-a']),
+    {
+      adicionados: [],
+      removidos: ['funcionario-b'],
+      somenteReducao: true,
+    },
+  );
+});
+
+test('não classifica substituição de funcionário como simples redução', () => {
+  assert.deepEqual(
+    compararSelecaoFacial(['funcionario-a'], ['funcionario-b']),
+    {
+      adicionados: ['funcionario-b'],
+      removidos: ['funcionario-a'],
+      somenteReducao: false,
+    },
+  );
+});
 
 test('cobra a mensalidade cheia na contratação sem ciclo anterior', () => {
   assert.equal(

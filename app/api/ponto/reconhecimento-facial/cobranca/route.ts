@@ -13,6 +13,7 @@ import { autenticarPerfilCobranca, resolverEstadoAcesso } from '../../../../lib/
 import { normalizarPlanoComercial } from '../../../../lib/planos-comerciais';
 import {
   calcularProporcionalFacialCentavos,
+  compararSelecaoFacial,
   PONTO_FACIAL_VALOR_UNITARIO_CENTAVOS,
   type ResumoAlteracaoFacial,
 } from '../../../../lib/ponto-facial-cobranca';
@@ -123,40 +124,49 @@ export async function POST(request: Request) {
   if (!acesso) return erro('Acesso não autorizado.', 403);
 
   if (acao === 'cancelar') return cancelar(acesso, empresaId, corpo.desativarAgora === true);
-  if (!await validarPlanoEmpresa(empresaId)) {
-    return erro('O adicional facial exige uma assinatura Business ou Business Pro ativa.', 409);
-  }
 
   const funcionariosIds = idsValidos(corpo.funcionariosIds);
   const tiposMarcacao = tiposValidos(corpo.tiposMarcacao);
-  if (!funcionariosIds.length) return erro('Selecione ao menos um funcionário ou use a opção de cancelar a assinatura.');
   if (!await validarFuncionarios(acesso.db, empresaId, funcionariosIds)) return erro('Selecione apenas funcionários ativos da empresa.');
 
   const [assinatura, atuais] = await Promise.all([
     buscarAssinaturaFacial(acesso.db, empresaId),
     funcionariosSelecionados(acesso.db, empresaId),
   ]);
+  if (!funcionariosIds.length && !assinatura && !atuais.length) {
+    return erro('Selecione ao menos um funcionário para contratar o reconhecimento facial.');
+  }
   if (assinatura?.status === 'cancelamento_programado') {
     return erro('A renovação facial já foi cancelada. Você pode manter o uso até o fim do período pago ou desativá-lo agora.', 409);
   }
   const assinaturaContratada = Boolean(assinatura && ['ativa', 'inadimplente', 'cancelamento_programado'].includes(assinatura.status));
-  const quantidadeAnterior = assinaturaContratada ? Number(assinatura?.quantidade_atual || 0) : 0;
-  const atuaisIds = new Set(assinaturaContratada ? atuais.map((item) => item.funcionario_user_id) : []);
-  const novosIds = new Set(funcionariosIds);
-  const adicionados = funcionariosIds.filter((id) => !atuaisIds.has(id));
-  const removidos = [...atuaisIds].filter((id) => !novosIds.has(id));
+  const configuracaoLegada = !assinatura && atuais.length > 0;
+  const quantidadeAnterior = assinaturaContratada
+    ? Number(assinatura?.quantidade_atual || 0)
+    : configuracaoLegada ? atuais.length : 0;
+  const atuaisIds = new Set(
+    assinaturaContratada || configuracaoLegada
+      ? atuais.map((item) => item.funcionario_user_id)
+      : [],
+  );
+  const { adicionados, removidos } = compararSelecaoFacial([...atuaisIds], funcionariosIds);
+  if (adicionados.length > 0 && !await validarPlanoEmpresa(empresaId)) {
+    return erro('O adicional facial exige uma assinatura Business ou Business Pro ativa.', 409);
+  }
   const resumo = montarResumo(
     quantidadeAnterior,
     funcionariosIds.length,
     adicionados.length,
     removidos.length,
     assinatura?.proximo_vencimento || null,
-    assinaturaContratada,
+    assinaturaContratada || (configuracaoLegada && adicionados.length === 0),
   );
 
   if (acao === 'resumir') return NextResponse.json({ erro: false, resumo });
   if (acao !== 'contratar') return erro('Ação de cobrança inválida.');
-  if (corpo.aceite !== true) return erro('Confirme que a empresa informou os funcionários e possui um procedimento alternativo para falhas na validação facial.');
+  if (adicionados.length > 0 && corpo.aceite !== true) {
+    return erro('Confirme que a empresa informou os funcionários e possui um procedimento alternativo para falhas na validação facial.');
+  }
   const { data: alteracaoPendente } = await acesso.db.from('ponto_facial_alteracoes_cobranca')
     .select('id').eq('empresa_id', empresaId).eq('status', 'pendente_pagamento')
     .order('criado_em', { ascending: false }).limit(1).maybeSingle();
@@ -165,6 +175,26 @@ export async function POST(request: Request) {
       erro: false,
       pendente: true,
       mensagem: 'Já existe uma cobrança facial aguardando pagamento.',
+      cobranca: await montarEstadoCobrancaFacial(acesso.db, empresaId),
+    });
+  }
+
+  if (assinaturaContratada && funcionariosIds.length === 0) {
+    return cancelar(acesso, empresaId, true);
+  }
+
+  if (configuracaoLegada && adicionados.length === 0 && funcionariosIds.length <= quantidadeAnterior) {
+    await aplicarAlteracaoImediata(acesso, empresaId, funcionariosIds, tiposMarcacao, [], removidos);
+    await auditar(acesso, empresaId, 'reconhecimento_facial_configuracao_legada_reduzida', {
+      quantidade_anterior: quantidadeAnterior,
+      quantidade_nova: funcionariosIds.length,
+      funcionarios_removidos: removidos,
+      sem_cobranca: true,
+    });
+    return NextResponse.json({
+      erro: false,
+      pendente: false,
+      mensagem: 'Configuração facial atualizada.',
       cobranca: await montarEstadoCobrancaFacial(acesso.db, empresaId),
     });
   }

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.21 -->
+<!-- ava-version: 1.7.0.22 -->
+
+> Revisão 1.7.0.22: na administração do Controle de Ponto, a retirada de um
+> funcionário da seleção facial passa a ser salva diretamente, sem abrir
+> pagamento. A retirada do último funcionário desativa o adicional.
 
 > Revisão 1.7.0.21: no Chrome para iPhone, a lista interna do Menu pode ser
 > rolada por toque até o último botão mesmo com a barra inferior do navegador
