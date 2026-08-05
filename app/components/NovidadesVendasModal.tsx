@@ -227,9 +227,12 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   useEffect(() => {
     const input = inputArquivos.current;
     if (!input || !pastaAtiva) return;
-    const acaoOriginal = input.click.bind(input);
-    input.click = () => setSeletorArquivosAberto(true);
-    return () => { input.click = acaoOriginal; };
+    const abrirSeletor = (evento: MouseEvent) => {
+      evento.preventDefault();
+      setSeletorArquivosAberto(true);
+    };
+    input.addEventListener('click', abrirSeletor);
+    return () => input.removeEventListener('click', abrirSeletor);
   }, [pastaAtiva]);
 
   useEffect(() => {
@@ -584,7 +587,9 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     referencia.current?.click();
   };
 
-  return <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/65 px-3 py-5" onClick={onFechar}>
+  return <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/65 px-3 py-5" onClick={(evento) => {
+    if (evento.target === evento.currentTarget) onFechar();
+  }}>
     <input ref={inputFotosVideos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
     <input ref={inputCamera} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
     <input ref={inputPdf} type="file" accept="application/pdf,.pdf" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />

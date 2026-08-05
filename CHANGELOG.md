@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.8.0 - 2026-08-05
+## 1.7.0.12 - 2026-08-05
+
+- Conteúdo para a equipe: corrigido o retorno do seletor Arquivos no iPhone. A
+  escolha de PDF não fecha o conteúdo e os próximos envios continuam usando o
+  seletor em português.
+
+## 1.7.0.11 - 2026-08-05
 
 - Conteúdo para a equipe: Divulgação passa a aceitar PDFs. O worker do Google
   Cloud cria a capa da primeira página, o Vendas Mobile exibe o documento no
