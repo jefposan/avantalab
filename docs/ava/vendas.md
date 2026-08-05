@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.14 -->
+<!-- ava-version: 1.7.0.15 -->
+
+> Revisão 1.7.0.15: correção restrita à inicialização da Gestão Mobile no
+> navegador; sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.7.0.14: correção restrita ao Menu da Gestão Mobile no navegador;
 > sem impacto operacional no Vendas Mobile.

@@ -4338,7 +4338,13 @@
     // 100svh é somente uma estimativa estável. No Chrome para iPhone, a barra
     // inferior pode continuar ocupando espaço depois de aberta; visualViewport
     // é a única medida que acompanha exatamente a área clicável restante.
-    if (ehAppNativoMobile()) return;
+    var capacitor = window.Capacitor;
+    var nativoCapacitor = Boolean(
+      capacitor
+      && typeof capacitor.isNativePlatform === 'function'
+      && capacitor.isNativePlatform()
+    );
+    if (nativoCapacitor) return;
     var viewport = window.visualViewport;
     var altura = viewport ? viewport.height : window.innerHeight;
     if (!altura || altura < 1) return;

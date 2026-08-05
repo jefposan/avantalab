@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.14: o menu da Gestão Mobile fixa o cabeçalho e rola somente os botões, respeitando a viewport visível do navegador.
+// Revisado na versão 1.7.0.15: corrigida a inicialização do Menu da Gestão Mobile no navegador, preservando a altura visível sem afetar o app nativo.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

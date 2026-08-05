@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.14 -->
+<!-- ava-version: 1.7.0.15 -->
+
+> Revisão 1.7.0.15: correção técnica da inicialização da Gestão Mobile no
+> navegador. O acesso volta a concluir normalmente após **Preparando acesso**;
+> sem mudança de operação para o usuário.
 
 > Revisão 1.7.0.14: no navegador, o Menu respeita a área efetivamente visível
 > do Chrome. O cabeçalho permanece acessível e a lista de ações rola de forma

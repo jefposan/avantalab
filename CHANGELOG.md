@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.0.15 - 2026-08-05
+
+- Gestão Mobile: corrigido erro de inicialização no navegador que poderia manter
+  a tela **Preparando acesso** em 20% após o carregamento do aplicativo.
+
 ## 1.7.0.14 - 2026-08-05
 
 - Gestão Mobile no navegador: o menu agora usa a altura real da área visível do
