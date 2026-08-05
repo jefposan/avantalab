@@ -687,7 +687,7 @@ export default function PontoAdminModal({
   const salvarPreparacaoFacial = async () => {
     setMsgFacial(null);
     if (!aceiteFacial) {
-      setMsgFacial({ tipo: 'erro', texto: 'Confirme as condições de privacidade e alternativa de marcação antes de continuar.' });
+      setMsgFacial({ tipo: 'erro', texto: 'Confirme que a empresa informou os funcionários e possui um procedimento alternativo para falhas na validação facial.' });
       return;
     }
     setSalvandoFacial(true);
@@ -1020,7 +1020,7 @@ export default function PontoAdminModal({
               </div>
               <label className={`flex items-start gap-2 rounded-xl border p-3 text-[11px] leading-relaxed ${itemBorda}`}>
                 <input type="checkbox" checked={aceiteFacial} onChange={(e) => setAceiteFacial(e.target.checked)} className="mt-0.5 h-4 w-4" />
-                <span>Confirmo que a empresa definirá a base legal e o aviso de privacidade aplicáveis ao dado biométrico, oferecerá uma alternativa de marcação quando necessária e não usará falhas automáticas para sanções.</span>
+                <span>Confirmo que os funcionários serão informados sobre o uso dos dados faciais e que a empresa disponibilizará outra forma de regularizar ou registrar o ponto quando a validação facial não puder ser concluída.</span>
               </label>
               <button type="button" onClick={salvarPreparacaoFacial} disabled={salvandoFacial} className="h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoFacial ? 'Salvando...' : 'Salvar preparação facial'}</button>
               {msgFacial && <p className={`text-xs font-bold ${msgFacial.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgFacial.texto}</p>}

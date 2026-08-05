@@ -35,10 +35,9 @@ export async function POST(request: Request) {
       return erro(resultado.Status === 'IN_PROGRESS' ? 'A verificação demorou mais que o esperado. Tente novamente.' : 'Não foi possível confirmar a prova de vida.', 422);
     }
 
-    const chaveEvidencia = `${empresaId}/${acesso.usuario.id}/${verificacao.id}/referencia.jpg`;
-    await guardarEvidenciaFacial(chaveEvidencia, referencia);
-
     if (verificacao.tipo === 'cadastro') {
+      const chaveEvidencia = `${empresaId}/${acesso.usuario.id}/${verificacao.id}/referencia.jpg`;
+      await guardarEvidenciaFacial(chaveEvidencia, referencia);
       await acesso.db.from('ponto_facial_funcionarios').update({ status: 'ativo', referencia_provedor_id: chaveEvidencia, consentimento_versao: 'facial-v1', consentimento_em: new Date().toISOString(), atualizado_em: new Date().toISOString() })
         .eq('empresa_id', empresaId).eq('funcionario_user_id', acesso.usuario.id);
       await acesso.db.from('ponto_facial_verificacoes').update({ status: 'aprovada', confianca_prova_vida: confianca, motivo: 'Cadastro facial confirmado.', concluido_em: new Date().toISOString() }).eq('id', verificacao.id);

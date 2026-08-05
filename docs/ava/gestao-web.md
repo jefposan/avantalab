@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.2 -->
+<!-- ava-version: 1.6.2.01 -->
+
+> Revisão 1.6.2.01: o cadastro facial conserva uma única imagem de referência
+> no armazenamento privado. A captura realizada em cada batida é comparada em
+> memória e descartada; permanecem somente os dados da verificação e do ponto.
+> Para salvar a ativação, o gestor confirma que os funcionários serão informados
+> e que a empresa possui procedimento alternativo para falhas na validação.
 
 > Revisão 1.6.2: a validação facial do `/ponto` orienta o funcionário antes de
 > abrir a câmera, mostra instruções simples durante a captura e aguarda o toque

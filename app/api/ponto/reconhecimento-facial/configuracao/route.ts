@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   const aceite = corpo.aceite === true;
   const acesso = await autenticarPerfilCobranca(request, empresaId, true);
   if (!acesso) return respostaErro('Acesso não autorizado.', 403);
-  if (!aceite) return respostaErro('Confirme que a empresa possui base legal, aviso de privacidade e alternativa de marcação antes de preparar o reconhecimento facial.');
+  if (!aceite) return respostaErro('Confirme que a empresa informou os funcionários e possui um procedimento alternativo para falhas na validação facial.');
 
   const { data: funcionarios, error: erroFuncionarios } = await acesso.db
     .from('ponto_funcionarios')

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.2.01 - 2026-08-04
+
+- Reconhecimento Facial: somente a imagem usada no cadastro facial permanece
+  armazenada no bucket privado. Nas marcações de ponto, a captura é comparada
+  em memória com a referência e descartada após o processamento; o histórico
+  conserva apenas resultado, confiança, similaridade, motivo e horários.
+- Controle de Ponto: o aceite administrativo explica em linguagem direta que
+  os funcionários devem ser informados e que a empresa precisa oferecer um
+  procedimento alternativo quando a validação facial não puder ser concluída.
+
 ## 1.6.2 - 2026-08-04
 
 - Controle de Ponto: a validação facial ganhou uma experiência visual própria e

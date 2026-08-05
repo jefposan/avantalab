@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.2 -->
+<!-- ava-version: 1.6.2.01 -->
+
+> Revisão 1.6.2.01: redução da retenção de imagens aplicada somente ao
+> reconhecimento facial do Controle de Ponto, incluindo texto mais claro no
+> aceite administrativo; sem impacto no AvantaVendas.
 
 > Revisão 1.6.2: redesign da validação facial aplicado somente ao Controle de
 > Ponto; sem impacto operacional no AvantaVendas.
