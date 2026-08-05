@@ -97,8 +97,11 @@ async function executarFfmpeg(entrada, saida) {
   });
 }
 
-async function executarCapaPdf(entrada, saida) {
-  const argumentos = ['-f', '1', '-l', '1', '-singlefile', '-jpeg', '-jpegopt', 'quality=88', '-scale-to-x', '720', '-scale-to-y', '-1', entrada, saida];
+async function executarCapaPdf(entrada, destinoRaiz) {
+  // O pdftoppm recebe uma raiz de saída, não o nome final do arquivo. Com
+  // -singlefile e -jpeg ele cria "<raiz>.jpg"; passar "capa.jpg" faria o
+  // binário criar "capa.jpg.jpg" e a fila não encontraria a capa em seguida.
+  const argumentos = ['-f', '1', '-l', '1', '-singlefile', '-jpeg', '-jpegopt', 'quality=88', '-scale-to-x', '720', '-scale-to-y', '-1', entrada, destinoRaiz];
   await new Promise((resolve, reject) => {
     const processo = spawn('pdftoppm', argumentos, { stdio: ['ignore', 'ignore', 'pipe'] });
     let erro = '';
@@ -172,7 +175,7 @@ async function processar(jobId, materialId) {
 
   try {
     await baixarMaterial(material, entrada, material.tipo === 'pdf' ? MAX_PDF_BYTES : MAX_VIDEO_BYTES);
-    if (material.tipo === 'pdf') await executarCapaPdf(entrada, saida);
+    if (material.tipo === 'pdf') await executarCapaPdf(entrada, join(pastaTemporaria, 'capa'));
     else await executarFfmpeg(entrada, saida);
     const capa = await readFile(saida);
     if (!capa.length) throw new Error('O FFmpeg não gerou uma capa válida.');

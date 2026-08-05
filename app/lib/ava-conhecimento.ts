@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.12: PDFs de Divulgação têm capa criada no Google Cloud, leitura e compartilhamento no Vendas; o seletor no iPhone preserva o conteúdo aberto.
+// Revisado na versão 1.7.0.13: PDFs de Divulgação têm capa criada no Google Cloud, leitura e compartilhamento no Vendas; o seletor no iPhone preserva o conteúdo aberto.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

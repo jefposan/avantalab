@@ -1,11 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.12 -->
+<!-- ava-version: 1.7.0.13 -->
 
-> Revisão 1.7.0.12: em **Conteúdo para a equipe > Divulgação**, o gestor pode
+> Revisão 1.7.0.13: em **Conteúdo para a equipe > Divulgação**, o gestor pode
 > incluir PDFs nas pastas. O Google Cloud cria a capa da primeira página; o arquivo
 > fica disponível para leitura e compartilhamento no Vendas Mobile. No iPhone,
-> retornar do Arquivos mantém o conteúdo aberto e o seletor em português.
+> retornar do Arquivos mantém o conteúdo aberto e o seletor em português. PDFs
+> enviados antes da correção da capa são processados novamente.
 
 > Revisão 1.7.0.06: login por senha, Google ou Apple, cadastro e criação de
 > perfil recuperam a tela em falhas inesperadas de conexão; nenhuma ação fica

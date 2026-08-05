@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.13 - 2026-08-05
+
+- Conteúdo para a equipe: corrigida a geração da capa da primeira página de
+  PDFs no worker do Google Cloud. PDFs que ficaram sem capa são reenfileirados
+  para processamento.
+
 ## 1.7.0.12 - 2026-08-05
 
 - Conteúdo para a equipe: corrigido o retorno do seletor Arquivos no iPhone. A

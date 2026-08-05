@@ -1,9 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.12 -->
+<!-- ava-version: 1.7.0.13 -->
 
-> Revisão 1.7.0.12: em **Divulgação**, PDFs publicados pela empresa aparecem com
+> Revisão 1.7.0.13: em **Divulgação**, PDFs publicados pela empresa aparecem com
 > capa criada no Google Cloud, podem ser abertos para leitura e compartilhados como arquivo PDF. No iPhone, o retorno do Arquivos não fecha a publicação.
+> PDFs publicados antes da correção da capa são processados novamente.
 
 > Revisão 1.7.0.06: reforço de recuperação aplicado aos acessos da Gestão; sem
 > impacto operacional no AvantaVendas.
