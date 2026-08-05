@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.7.0 - 2026-08-05
+
+- Controle de Ponto: implantado o fluxo separado de contratação do
+  reconhecimento facial por R$ 14,90 mensais por funcionário, com resumo antes
+  da cobrança e liberação somente após a confirmação da Asaas.
+- Inclusões durante o ciclo geram cobrança proporcional; remoções desativam o
+  funcionário imediatamente e reduzem somente a próxima mensalidade, sem
+  devolução ou crédito pelo período corrente.
+- O cancelamento interrompe a renovação e permite manter o facial até o fim do
+  período pago ou desativá-lo de imediato. Em atraso, aplica-se carência de três
+  dias; o registro comum de ponto nunca é bloqueado por pendência financeira do
+  adicional facial.
+- A experiência de validação facial recebeu o fundo institucional específico,
+  ancorado na base para preservar integralmente as ondas inferiores em qualquer
+  proporção de tela; quando necessário, o recorte ocorre somente no topo.
+
 ## 1.6.2.02 - 2026-08-05
 
 - Central de Consultas: três análises pagas foram preparadas para a Direct Data

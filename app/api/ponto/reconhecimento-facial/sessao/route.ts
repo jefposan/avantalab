@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { autenticarPerfilCobranca } from '../../../../lib/cobranca-servidor';
 import { criarSessaoProvaDeVida, infraestruturaFacialDisponivel } from '../../../../lib/reconhecimento-facial-servidor';
+import { cobrancaFacialPermiteUso } from '../../../../lib/ponto-facial-cobranca';
 
 function erro(mensagem: string, status = 400) { return NextResponse.json({ erro: true, mensagem }, { status }); }
 
@@ -12,11 +13,14 @@ export async function POST(request: Request) {
   if (!acesso) return erro('Acesso não autorizado.', 403);
   if (!infraestruturaFacialDisponivel()) return erro('Reconhecimento facial ainda não está disponível.', 503);
 
-  const { data: configuracao } = await acesso.db.from('ponto_config')
-    .select('reconhecimento_facial_status').eq('empresa_id', empresaId).maybeSingle();
+  const [{ data: configuracao }, { data: assinatura }] = await Promise.all([
+    acesso.db.from('ponto_config').select('reconhecimento_facial_status').eq('empresa_id', empresaId).maybeSingle(),
+    acesso.db.from('ponto_facial_assinaturas').select('status, valido_ate').eq('empresa_id', empresaId).maybeSingle(),
+  ]);
   if (!configuracao || configuracao.reconhecimento_facial_status === 'desativado' || configuracao.reconhecimento_facial_status === 'suspenso') {
     return erro('O reconhecimento facial não está habilitado para esta empresa.', 403);
   }
+  if (!cobrancaFacialPermiteUso(assinatura)) return erro('A assinatura do reconhecimento facial não está ativa.', 402);
   const { data: funcionario } = await acesso.db.from('ponto_facial_funcionarios')
     .select('status').eq('empresa_id', empresaId).eq('funcionario_user_id', acesso.usuario.id).maybeSingle();
   if (!funcionario || funcionario.status === 'removido' || funcionario.status === 'suspenso') return erro('Seu reconhecimento facial não está habilitado.', 403);

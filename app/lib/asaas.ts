@@ -175,3 +175,7 @@ export function criarCobrancaAvulsaAsaas(dados: {
     body: JSON.stringify(dados),
   });
 }
+
+export function removerCobrancaAsaas(id: string) {
+  return asaasFetch(`/payments/${id}`, { method: 'DELETE' });
+}

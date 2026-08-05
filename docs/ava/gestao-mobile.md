@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.2.02 -->
+<!-- ava-version: 1.7.0 -->
+
+> Revisão 1.7.0: a contratação facial passa a ser confirmada na Gestão Web
+> antes de liberar o cadastro do funcionário. Enquanto a cobrança estiver
+> pendente, cancelada, suspensa ou fora da carência, o funcionário continua
+> registrando o ponto normalmente, sem câmera nem aviso de erro facial.
+> O novo fundo da validação facial preserva as ondas inferiores em diferentes
+> alturas de tela, sem impacto nas etapas ou nos controles do funcionário.
 
 > Revisão 1.6.2.01: somente a imagem do cadastro facial fica armazenada. Nas
 > batidas, a captura é usada temporariamente para comparação e descartada após

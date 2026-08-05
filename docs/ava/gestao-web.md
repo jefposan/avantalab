@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.2.02 -->
+<!-- ava-version: 1.7.0 -->
+
+> Revisão 1.7.0: a aba **Facial** apresenta resumo e cobrança separada de
+> R$ 14,90 por funcionário ao mês. A seleção inicial só libera o cadastro após
+> confirmação da Asaas. Inclusões no ciclo têm cobrança proporcional; remoções
+> são imediatas e reduzem a próxima mensalidade, sem devolução ou crédito. Ao
+> cancelar, o gestor escolhe usar até o fim do período pago ou desativar agora.
+> Atrasos têm três dias de carência e nunca impedem a marcação comum do ponto.
+> O fundo institucional da validação facial foi atualizado sem alterar o fluxo
+> operacional, as permissões ou as regras de captura.
 
 > Revisão 1.6.2.01: o cadastro facial conserva uma única imagem de referência
 > no armazenamento privado. A captura realizada em cada batida é comparada em

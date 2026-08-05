@@ -14,7 +14,8 @@ import ModalInstrucoes from '@/app/components/ModalInstrucoes';
 import ModalDespesasBase from '@/app/components/ModalDespesasBase';
 import ModalLogo from '@/app/components/ModalLogo';
 import ModulosModal, { type Modulo } from '@/app/components/ModulosModal';
-import PontoAdminModal, { type AbaPontoAdmin, type DocumentoRepP, type EstadoAssinaturaPonto, type EventoAuditoriaPonto, type FuncionarioFacialPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from '@/app/components/PontoAdminModal';
+import PontoAdminModal, { type AbaPontoAdmin, type DocumentoRepP, type EstadoAssinaturaPonto, type EventoAuditoriaPonto, type FuncionarioFacialPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil, type ResultadoCobrancaFacial } from '@/app/components/PontoAdminModal';
+import type { EstadoCobrancaFacial } from '@/app/lib/ponto-facial-cobranca';
 import RecebimentosAdminModal from '@/app/components/RecebimentosAdminModal';
 import SobreModal from '@/app/components/SobreModal';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
@@ -824,6 +825,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [pontoFuncCarregando, setPontoFuncCarregando] = useState(false);
   const [pontoConfig, setPontoConfig] = useState<PontoConfig>(null);
   const [pontoFuncionariosFacial, setPontoFuncionariosFacial] = useState<FuncionarioFacialPonto[]>([]);
+  const [pontoCobrancaFacial, setPontoCobrancaFacial] = useState<EstadoCobrancaFacial | null>(null);
   const [pontoDiasNaoUteis, setPontoDiasNaoUteis] = useState<PontoDiaNaoUtil[]>([]);
   const [pontoDiasNaoUteisCarregando, setPontoDiasNaoUteisCarregando] = useState(false);
   const [pontoResumoDia, setPontoResumoDia] = useState<Array<{
@@ -2813,29 +2815,48 @@ useEffect(() => {
       if (!token) return;
       const resposta = await fetch(`/api/ponto/reconhecimento-facial/configuracao?empresaId=${encodeURIComponent(empresaId)}`, { headers: { Authorization: `Bearer ${token}` } });
       const resultado = await resposta.json().catch(() => null);
-      if (resposta.ok && !resultado?.erro) setPontoFuncionariosFacial(resultado.funcionarios || []);
+      if (resposta.ok && !resultado?.erro) {
+        setPontoFuncionariosFacial(resultado.funcionarios || []);
+        setPontoCobrancaFacial(resultado.cobranca || null);
+      }
     } catch { /* a aba mostra seleção vazia até a próxima abertura */ }
   }
 
-  async function salvarPreparacaoFacialPonto(funcionariosIds: string[], tiposMarcacao: string[]) {
+  async function executarCobrancaFacialPonto(
+    acao: 'resumir' | 'contratar' | 'cancelar',
+    funcionariosIds: string[] = [],
+    tiposMarcacao: string[] = [],
+    desativarAgora = false,
+  ): Promise<ResultadoCobrancaFacial> {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
     try {
       const { data: sessao } = await supabase.auth.getSession();
       const token = sessao.session?.access_token;
       if (!token) return { erro: true, mensagem: 'Sessão não encontrada. Faça login novamente.' };
-      const resposta = await fetch('/api/ponto/reconhecimento-facial/configuracao', {
+      const resposta = await fetch('/api/ponto/reconhecimento-facial/cobranca', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ empresaId, funcionariosIds, tiposMarcacao, aceite: true }),
+        body: JSON.stringify({ empresaId, acao, funcionariosIds, tiposMarcacao, aceite: true, desativarAgora }),
       });
       const resultado = await resposta.json().catch(() => null);
-      if (!resposta.ok || resultado?.erro) return { erro: true, mensagem: resultado?.mensagem || 'Não foi possível salvar a preparação facial.' };
-      await Promise.all([carregarPontoConfig(), carregarFuncionariosFacialPonto()]);
-      return { erro: false };
+      if (!resposta.ok || resultado?.erro) return { erro: true, mensagem: resultado?.mensagem || 'Não foi possível processar a cobrança facial.' };
+      if (resultado.cobranca) setPontoCobrancaFacial(resultado.cobranca);
+      if (acao !== 'resumir') await Promise.all([carregarPontoConfig(), carregarFuncionariosFacialPonto()]);
+      return {
+        erro: false,
+        mensagem: resultado.mensagem,
+        resumo: resultado.resumo,
+        invoiceUrl: resultado.invoiceUrl || resultado.cobranca?.invoiceUrl || null,
+        pendente: resultado.pendente === true,
+      };
     } catch {
-      return { erro: true, mensagem: 'Erro ao salvar a preparação facial.' };
+      return { erro: true, mensagem: 'Erro ao processar a cobrança facial.' };
     }
   }
+
+  const calcularCobrancaFacialPonto = (funcionariosIds: string[], tiposMarcacao: string[]) => executarCobrancaFacialPonto('resumir', funcionariosIds, tiposMarcacao);
+  const contratarCobrancaFacialPonto = (funcionariosIds: string[], tiposMarcacao: string[]) => executarCobrancaFacialPonto('contratar', funcionariosIds, tiposMarcacao);
+  const cancelarCobrancaFacialPonto = (desativarAgora: boolean) => executarCobrancaFacialPonto('cancelar', [], [], desativarAgora);
 
   async function criarDiaNaoUtilPonto(dados: { dataInicio: string; dataFim: string; tipo: string; descricao: string; recorrenteAnual: boolean }) {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
@@ -7959,7 +7980,11 @@ if (validacaoTelefoneObrigatoria) {
   config={pontoConfig}
   onSalvarConfig={salvarPontoConfig}
   funcionariosFacial={pontoFuncionariosFacial}
-  onSalvarPreparacaoFacial={salvarPreparacaoFacialPonto}
+  cobrancaFacial={pontoCobrancaFacial}
+  onCalcularCobrancaFacial={calcularCobrancaFacialPonto}
+  onContratarCobrancaFacial={contratarCobrancaFacialPonto}
+  onCancelarCobrancaFacial={cancelarCobrancaFacialPonto}
+  onAtualizarCobrancaFacial={carregarFuncionariosFacialPonto}
   onCarregarRegistros={carregarRegistrosPonto}
   onCarregarAuditoria={carregarAuditoriaPonto}
   onCarregarAssinatura={carregarAssinaturaPonto}

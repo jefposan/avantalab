@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { atualizarAssinaturaAsaas } from '../../../lib/asaas';
+import { fimDaCarencia, somarUmMesData } from '../../../lib/ponto-facial-cobranca-servidor';
 
 export const runtime = 'nodejs';
 
@@ -24,7 +26,12 @@ export async function POST(request: Request) {
   const evento = String(corpo.event);
   const pagamento = corpo.payment || {};
   const assinaturaPayload = corpo.subscription || {};
-  const empresaId: string | null = pagamento.externalReference || assinaturaPayload.externalReference || null;
+  const referenciaExterna = String(pagamento.externalReference || assinaturaPayload.externalReference || '');
+  const empresaIdFacial = referenciaExterna.match(/^ponto_facial:([0-9a-f-]{36})$/i)?.[1]
+    || referenciaExterna.match(/^ponto_facial_empresa:([0-9a-f-]{36})$/i)?.[1]
+    || null;
+  const alteracaoFacialId = referenciaExterna.match(/^ponto_facial_alteracao:([0-9a-f-]{36})$/i)?.[1] || null;
+  const empresaId: string | null = /^[0-9a-f-]{36}$/i.test(referenciaExterna) ? referenciaExterna : empresaIdFacial;
   const assinaturaGw: string | null = pagamento.subscription || assinaturaPayload.id || null;
   const pagamentoGw: string | null = pagamento.id || null;
 
@@ -60,6 +67,14 @@ export async function POST(request: Request) {
   }
 
   try {
+    const resultadoFacial = await processarCobrancaFacial({
+      db, evento, pagamento, assinaturaGw, pagamentoGw, empresaIdFacial, alteracaoFacialId,
+    });
+    if (resultadoFacial) {
+      await db.from('cobranca_webhook_eventos').update({ status: 'processado', erro: null, processado_em: new Date().toISOString() }).eq('id', registroEventoId);
+      return NextResponse.json({ recebido: true, facial: true });
+    }
+
     // Assinatura de módulo: é independente da assinatura principal e só libera
     // o módulo após a confirmação do pagamento pela Asaas.
     const { data: assinaturaModulo } = assinaturaGw
@@ -172,4 +187,137 @@ export async function POST(request: Request) {
     }).eq('id', registroEventoId);
     return NextResponse.json({ erro: true, mensagem: 'falha ao processar evento' }, { status: 500 });
   }
+}
+
+async function processarCobrancaFacial({
+  db,
+  evento,
+  pagamento,
+  assinaturaGw,
+  pagamentoGw,
+  empresaIdFacial,
+  alteracaoFacialId,
+}: {
+  // O webhook opera com service role e tabelas adicionadas por migração, que
+  // ainda não fazem parte de um schema TypeScript gerado neste projeto.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any;
+  evento: string;
+  pagamento: Record<string, unknown>;
+  assinaturaGw: string | null;
+  pagamentoGw: string | null;
+  empresaIdFacial: string | null;
+  alteracaoFacialId: string | null;
+}) {
+  let alteracao: Record<string, unknown> | null = null;
+  if (alteracaoFacialId) {
+    const { data } = await db.from('ponto_facial_alteracoes_cobranca')
+      .select('id, empresa_id, assinatura_id, tipo, status, quantidade_nova, funcionarios_adicionados')
+      .eq('id', alteracaoFacialId).maybeSingle();
+    alteracao = data;
+  } else if (pagamentoGw) {
+    const { data } = await db.from('ponto_facial_alteracoes_cobranca')
+      .select('id, empresa_id, assinatura_id, tipo, status, quantidade_nova, funcionarios_adicionados')
+      .eq('gateway_payment_id', pagamentoGw).maybeSingle();
+    alteracao = data;
+  }
+
+  let assinatura: Record<string, unknown> | null = null;
+  if (alteracao?.assinatura_id) {
+    const { data } = await db.from('ponto_facial_assinaturas')
+      .select('id, empresa_id, status, quantidade_atual, quantidade_proxima, valor_mensal_centavos, gateway_subscription_id, proximo_vencimento, valido_ate')
+      .eq('id', String(alteracao.assinatura_id)).maybeSingle();
+    assinatura = data;
+  } else if (assinaturaGw) {
+    const { data } = await db.from('ponto_facial_assinaturas')
+      .select('id, empresa_id, status, quantidade_atual, quantidade_proxima, valor_mensal_centavos, gateway_subscription_id, proximo_vencimento, valido_ate')
+      .eq('gateway_subscription_id', assinaturaGw).maybeSingle();
+    assinatura = data;
+  } else if (empresaIdFacial) {
+    const { data } = await db.from('ponto_facial_assinaturas')
+      .select('id, empresa_id, status, quantidade_atual, quantidade_proxima, valor_mensal_centavos, gateway_subscription_id, proximo_vencimento, valido_ate')
+      .eq('empresa_id', empresaIdFacial).maybeSingle();
+    assinatura = data;
+  }
+  if (!assinatura) return false;
+
+  const empresaId = String(assinatura.empresa_id);
+  const assinaturaId = String(assinatura.id);
+  const statusPagamento = String(pagamento.status || evento.replace(/^PAYMENT_/, '') || 'UNKNOWN');
+  if (pagamentoGw) {
+    await db.from('ponto_facial_faturas').upsert({
+      empresa_id: empresaId,
+      assinatura_id: assinaturaId,
+      alteracao_id: alteracao?.id || null,
+      gateway_payment_id: pagamentoGw,
+      gateway_subscription_id: assinaturaGw || assinatura.gateway_subscription_id || null,
+      status: statusPagamento,
+      valor_centavos: Math.round(Number(pagamento.value || 0) * 100),
+      vencimento: pagamento.dueDate || null,
+      pagamento_em: pagamento.paymentDate || pagamento.confirmedDate || null,
+      forma_pagamento: pagamento.billingType || null,
+      invoice_url: pagamento.invoiceUrl || null,
+      payload: pagamento,
+      atualizado_em: new Date().toISOString(),
+    }, { onConflict: 'gateway_payment_id' });
+  }
+  if (alteracao?.id && (pagamentoGw || pagamento.invoiceUrl)) {
+    await db.from('ponto_facial_alteracoes_cobranca').update({
+      gateway_payment_id: pagamentoGw || undefined,
+      invoice_url: pagamento.invoiceUrl || undefined,
+      vencimento: pagamento.dueDate || undefined,
+      atualizado_em: new Date().toISOString(),
+    }).eq('id', String(alteracao.id));
+  }
+
+  const pago = evento === 'PAYMENT_CONFIRMED' || evento === 'PAYMENT_RECEIVED';
+  const vencido = evento === 'PAYMENT_OVERDUE';
+  const revertido = evento === 'PAYMENT_REFUNDED' || evento === 'PAYMENT_CHARGEBACK_REQUESTED';
+  const assinaturaEncerrada = evento === 'SUBSCRIPTION_INACTIVATED' || evento === 'SUBSCRIPTION_DELETED';
+  const agora = new Date().toISOString();
+
+  if (pago) {
+    const quantidadeNova = Number(alteracao?.quantidade_nova ?? assinatura.quantidade_proxima ?? assinatura.quantidade_atual ?? 0);
+    const vencimentoPago = String(pagamento.dueDate || assinatura.proximo_vencimento || '').slice(0, 10);
+    const proximoVencimento = vencimentoPago ? somarUmMesData(vencimentoPago) : assinatura.proximo_vencimento || null;
+
+    if (alteracao?.status === 'pendente_pagamento') {
+      await db.from('ponto_facial_funcionarios').update({ status: 'pendente_cadastro', removido_em: null, atualizado_em: agora })
+        .eq('empresa_id', empresaId).eq('status', 'pendente_pagamento');
+      await db.from('ponto_facial_funcionarios').update({ status: 'ativo', removido_em: null, atualizado_em: agora })
+        .eq('empresa_id', empresaId).eq('status', 'pendente_cadastro').not('referencia_provedor_id', 'is', null);
+      await db.from('ponto_facial_alteracoes_cobranca').update({ status: 'aplicada', aplicado_em: agora, atualizado_em: agora })
+        .eq('id', String(alteracao.id));
+      if (alteracao.tipo === 'aumento' && assinatura.gateway_subscription_id) {
+        const atualizada = await atualizarAssinaturaAsaas(String(assinatura.gateway_subscription_id), {
+          value: Number(assinatura.valor_mensal_centavos || 0) / 100,
+          description: `AvantaLab — reconhecimento facial (${quantidadeNova} funcionário${quantidadeNova === 1 ? '' : 's'})`,
+          updatePendingPayments: false,
+        });
+        if (!atualizada.ok) throw new Error(atualizada.erro || 'Falha ao atualizar a recorrência facial.');
+      }
+    }
+
+    await db.from('ponto_facial_assinaturas').update({
+      status: 'ativa', quantidade_atual: quantidadeNova, quantidade_proxima: quantidadeNova,
+      valor_mensal_centavos: quantidadeNova * 1490, proximo_vencimento: proximoVencimento,
+      valido_ate: null, desativacao_imediata: false, atualizado_em: agora,
+    }).eq('id', assinaturaId);
+    await db.from('ponto_config').update({ reconhecimento_facial_status: quantidadeNova ? 'ativo' : 'desativado', atualizado_em: agora }).eq('empresa_id', empresaId);
+    if (alteracao?.id) await db.from('ponto_auditoria').insert({
+      empresa_id: empresaId, ator_user_id: null, evento: 'reconhecimento_facial_cobranca_confirmada',
+      origem: 'asaas_webhook', motivo: 'Pagamento do reconhecimento facial confirmado.',
+      dados: { alteracao_id: alteracao.id, quantidade: quantidadeNova, pagamento_id: pagamentoGw },
+    });
+  } else if (vencido) {
+    const validoAte = fimDaCarencia(String(pagamento.dueDate || '') || null);
+    await db.from('ponto_facial_assinaturas').update({ status: 'inadimplente', valido_ate: validoAte, atualizado_em: agora }).eq('id', assinaturaId);
+  } else if (revertido) {
+    await db.from('ponto_facial_assinaturas').update({ status: 'suspensa', valido_ate: agora, atualizado_em: agora }).eq('id', assinaturaId);
+    await db.from('ponto_config').update({ reconhecimento_facial_status: 'suspenso', atualizado_em: agora }).eq('empresa_id', empresaId);
+  } else if (assinaturaEncerrada && assinatura.status !== 'cancelamento_programado') {
+    await db.from('ponto_facial_assinaturas').update({ status: 'cancelada', valido_ate: agora, atualizado_em: agora }).eq('id', assinaturaId);
+    await db.from('ponto_config').update({ reconhecimento_facial_status: 'suspenso', atualizado_em: agora }).eq('empresa_id', empresaId);
+  }
+  return true;
 }

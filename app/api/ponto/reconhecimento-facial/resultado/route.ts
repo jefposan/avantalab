@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { autenticarPerfilCobranca } from '../../../../lib/cobranca-servidor';
 import { compararComReferencia, guardarEvidenciaFacial, LIMIAR_PROVA_DE_VIDA, LIMIAR_SIMILARIDADE, obterResultadoProvaDeVida } from '../../../../lib/reconhecimento-facial-servidor';
+import { cobrancaFacialPermiteUso } from '../../../../lib/ponto-facial-cobranca';
 
 function erro(mensagem: string, status = 400) { return NextResponse.json({ erro: true, mensagem }, { status }); }
 function idValido(valor: unknown) { return typeof valor === 'string' && /^[a-z0-9-]{8,128}$/i.test(valor); }
@@ -13,6 +14,12 @@ export async function POST(request: Request) {
   if (!idValido(sessaoId)) return erro('Sessão facial inválida.');
   const acesso = await autenticarPerfilCobranca(request, empresaId);
   if (!acesso) return erro('Acesso não autorizado.', 403);
+
+  const { data: assinatura } = await acesso.db.from('ponto_facial_assinaturas')
+    .select('status, valido_ate').eq('empresa_id', empresaId).maybeSingle();
+  if (!cobrancaFacialPermiteUso(assinatura)) {
+    return erro('A assinatura do reconhecimento facial não está ativa.', 402);
+  }
 
   const { data: verificacao } = await acesso.db.from('ponto_facial_verificacoes')
     .select('id, tipo, status').eq('empresa_id', empresaId).eq('funcionario_user_id', acesso.usuario.id)

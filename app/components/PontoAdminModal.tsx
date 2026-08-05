@@ -2,6 +2,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DraggableModalCard from './DraggableModalCard';
 import { validarNomeCompleto } from '../lib/nome-pessoa';
+import {
+  formatarCentavos,
+  type EstadoCobrancaFacial,
+  type ResumoAlteracaoFacial,
+} from '../lib/ponto-facial-cobranca';
 
 export type FuncionarioPonto = {
   id: string;
@@ -103,7 +108,15 @@ export type PontoConfig = {
 
 export type FuncionarioFacialPonto = {
   funcionario_user_id: string;
-  status: 'pendente_cadastro' | 'ativo' | 'suspenso' | 'removido';
+  status: 'pendente_pagamento' | 'pendente_cadastro' | 'ativo' | 'suspenso' | 'removido';
+};
+
+export type ResultadoCobrancaFacial = {
+  erro: boolean;
+  mensagem?: string;
+  resumo?: ResumoAlteracaoFacial;
+  invoiceUrl?: string | null;
+  pendente?: boolean;
 };
 
 interface PontoAdminModalProps {
@@ -120,7 +133,11 @@ interface PontoAdminModalProps {
   config: PontoConfig;
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   funcionariosFacial: FuncionarioFacialPonto[];
-  onSalvarPreparacaoFacial: (funcionariosIds: string[], tiposMarcacao: string[]) => Promise<{ erro: boolean; mensagem?: string }>;
+  cobrancaFacial: EstadoCobrancaFacial | null;
+  onCalcularCobrancaFacial: (funcionariosIds: string[], tiposMarcacao: string[]) => Promise<ResultadoCobrancaFacial>;
+  onContratarCobrancaFacial: (funcionariosIds: string[], tiposMarcacao: string[]) => Promise<ResultadoCobrancaFacial>;
+  onCancelarCobrancaFacial: (desativarAgora: boolean) => Promise<ResultadoCobrancaFacial>;
+  onAtualizarCobrancaFacial: () => Promise<void>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
   onCarregarAuditoria: () => Promise<EventoAuditoriaPonto[]>;
   onCarregarAssinatura: () => Promise<EstadoAssinaturaPonto | null>;
@@ -150,7 +167,11 @@ export default function PontoAdminModal({
   config,
   onSalvarConfig,
   funcionariosFacial,
-  onSalvarPreparacaoFacial,
+  cobrancaFacial,
+  onCalcularCobrancaFacial,
+  onContratarCobrancaFacial,
+  onCancelarCobrancaFacial,
+  onAtualizarCobrancaFacial,
   onCarregarRegistros,
   onCarregarAuditoria,
   onCarregarAssinatura,
@@ -193,6 +214,8 @@ export default function PontoAdminModal({
   const [salvandoFacial, setSalvandoFacial] = useState(false);
   const [aceiteFacial, setAceiteFacial] = useState(false);
   const [msgFacial, setMsgFacial] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const [resumoCobrancaFacial, setResumoCobrancaFacial] = useState<ResumoAlteracaoFacial | null>(null);
+  const [confirmandoCancelamentoFacial, setConfirmandoCancelamentoFacial] = useState(false);
   const hojeISO = () => {
     const n = new Date();
     return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
@@ -465,6 +488,27 @@ export default function PontoAdminModal({
       .finally(() => setRelCarregando(false));
   }, [aberto, aba, funcionarios, onCarregarRegistros, relatorioInicial]);
 
+  useEffect(() => {
+    setFacialSelecionados(funcionariosFacial
+      .filter((item) => item.status !== 'removido')
+      .map((item) => item.funcionario_user_id));
+  }, [funcionariosFacial]);
+  useEffect(() => { setTiposFacial(config?.reconhecimento_facial_tipos?.length ? config.reconhecimento_facial_tipos : ['entrada']); }, [config]);
+  useEffect(() => { setResumoCobrancaFacial(null); }, [facialSelecionados, tiposFacial]);
+  useEffect(() => {
+    const temPendente = cobrancaFacial?.status === 'pendente_pagamento' || cobrancaFacial?.valorPendenteCentavos != null;
+    if (!aberto || !temPendente) return;
+    const atualizar = () => { if (document.visibilityState === 'visible') void onAtualizarCobrancaFacial(); };
+    const intervalo = window.setInterval(atualizar, 6000);
+    window.addEventListener('focus', atualizar);
+    document.addEventListener('visibilitychange', atualizar);
+    return () => {
+      window.clearInterval(intervalo);
+      window.removeEventListener('focus', atualizar);
+      document.removeEventListener('visibilitychange', atualizar);
+    };
+  }, [aberto, cobrancaFacial?.status, cobrancaFacial?.valorPendenteCentavos, onAtualizarCobrancaFacial]);
+
   if (!aberto) return null;
 
   type DiaRel = { dia: string; entrada?: string; saidaAlmoco?: string; entradaAlmoco?: string; saida?: string; distancia: number | null; statusEntrada: 'pontual' | 'atraso' | 'adiantado' | 'falta' | 'sem' };
@@ -671,31 +715,44 @@ export default function PontoAdminModal({
     setMsgLocal(r.erro ? { tipo: 'erro', texto: r.mensagem || 'Não foi possível salvar.' } : { tipo: 'ok', texto: 'Local da empresa salvo!' });
   };
 
-  useEffect(() => {
-    setFacialSelecionados(funcionariosFacial
-      .filter((item) => item.status !== 'removido')
-      .map((item) => item.funcionario_user_id));
-  }, [funcionariosFacial]);
-  useEffect(() => { setTiposFacial(config?.reconhecimento_facial_tipos?.length ? config.reconhecimento_facial_tipos : ['entrada']); }, [config]);
-
   const alternarFuncionarioFacial = (userId: string) => {
     setFacialSelecionados((atual) => atual.includes(userId)
       ? atual.filter((id) => id !== userId)
       : [...atual, userId]);
   };
 
-  const salvarPreparacaoFacial = async () => {
+  const revisarCobrancaFacial = async () => {
     setMsgFacial(null);
     if (!aceiteFacial) {
       setMsgFacial({ tipo: 'erro', texto: 'Confirme que a empresa informou os funcionários e possui um procedimento alternativo para falhas na validação facial.' });
       return;
     }
     setSalvandoFacial(true);
-    const resultado = await onSalvarPreparacaoFacial(facialSelecionados, tiposFacial);
+    const resultado = await onCalcularCobrancaFacial(facialSelecionados, tiposFacial);
     setSalvandoFacial(false);
+    if (resultado.erro || !resultado.resumo) {
+      setMsgFacial({ tipo: 'erro', texto: resultado.mensagem || 'Não foi possível calcular a contratação facial.' });
+      return;
+    }
+    setResumoCobrancaFacial(resultado.resumo);
+  };
+
+  const confirmarCobrancaFacial = async () => {
+    setMsgFacial(null); setSalvandoFacial(true);
+    const resultado = await onContratarCobrancaFacial(facialSelecionados, tiposFacial);
+    setSalvandoFacial(false); setResumoCobrancaFacial(null);
     setMsgFacial(resultado.erro
-      ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível salvar a preparação.' }
-      : { tipo: 'ok', texto: facialSelecionados.length ? 'Preparação facial salva. O cadastro será liberado após a infraestrutura AWS ser configurada.' : 'Reconhecimento facial desativado para novos cadastros.' });
+      ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível gerar a cobrança facial.' }
+      : { tipo: 'ok', texto: resultado.mensagem || (resultado.pendente ? 'Cobrança gerada. Conclua o pagamento para liberar o facial.' : 'Configuração facial atualizada.') });
+  };
+
+  const cancelarCobrancaFacial = async (desativarAgora: boolean) => {
+    setMsgFacial(null); setSalvandoFacial(true);
+    const resultado = await onCancelarCobrancaFacial(desativarAgora);
+    setSalvandoFacial(false); setConfirmandoCancelamentoFacial(false); setResumoCobrancaFacial(null);
+    setMsgFacial(resultado.erro
+      ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível cancelar a assinatura facial.' }
+      : { tipo: 'ok', texto: desativarAgora ? 'Reconhecimento facial desativado. Não haverá novas cobranças.' : 'Renovação cancelada. O facial permanece disponível até o fim do período pago.' });
   };
 
   const salvarDiaNaoUtil = async () => {
@@ -790,6 +847,8 @@ export default function PontoAdminModal({
     setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível preparar o manual.' } : { tipo: 'ok', texto: 'Manual REP-P disponível em Documentos gerados.' });
   };
   const gerarEspelhoPonto = async () => { if (!funcSel) { setMsgConformidade({ tipo: 'erro', texto: 'Selecione um funcionário na aba Relatórios antes de gerar o Espelho.' }); return; } setGerandoEspelho(true); const resultado = await onGerarEspelhoPonto(funcSel.user_id, afdInicio, afdFim); setGerandoEspelho(false); if (!resultado.erro) void carregarDocumentosRepP(); setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível gerar o Espelho.' } : { tipo: 'ok', texto: 'Espelho gerado, baixado e preservado no histórico.' }); };
+  const temCobrancaFacialPendente = cobrancaFacial?.status === 'pendente_pagamento' || cobrancaFacial?.valorPendenteCentavos != null;
+  const cobrancaFacialEncerrando = cobrancaFacial?.status === 'cancelamento_programado';
   const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['facial', 'Facial'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria'], ['conformidade', 'Conformidade']];
 
   return (
@@ -996,34 +1055,108 @@ export default function PontoAdminModal({
           {aba === 'facial' && (
             <div className="grid gap-3">
               <div className={`rounded-xl border p-3 ${itemBorda}`}>
-                <p className="text-sm font-black">Reconhecimento facial</p>
-                <p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Adicional de R$ 14,90 por funcionário selecionado ao mês. Inclui até 120 verificações mensais por funcionário; excedentes ficam cobertos na margem comercial inicial.</p>
-                <p className={`mt-2 text-[11px] font-bold ${config?.reconhecimento_facial_status === 'preparacao' ? 'text-amber-600' : textMuted}`}>Status: {config?.reconhecimento_facial_status === 'preparacao' ? 'Em preparação' : 'Desativado'}. A captura só será ativada após configuração da AWS e retenção segura dos dados.</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black">Reconhecimento facial</p>
+                    <p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Adicional independente de R$ 14,90 por funcionário ao mês. A cobrança é consolidada em uma única mensalidade da empresa.</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${
+                    temCobrancaFacialPendente ? 'bg-amber-100 text-amber-700'
+                      : cobrancaFacial?.status === 'ativa' ? 'bg-emerald-100 text-emerald-700'
+                        : cobrancaFacial?.status === 'inadimplente' ? 'bg-orange-100 text-orange-700'
+                          : cobrancaFacial?.status === 'cancelamento_programado' ? 'bg-slate-200 text-slate-700'
+                            : 'bg-slate-100 text-slate-500'
+                  }`}>{
+                    temCobrancaFacialPendente ? (cobrancaFacial?.status === 'ativa' ? 'Alteração pendente' : 'Aguardando pagamento')
+                      : cobrancaFacial?.status === 'ativa' ? 'Ativo'
+                        : cobrancaFacial?.status === 'inadimplente' ? 'Pagamento pendente'
+                          : cobrancaFacial?.status === 'cancelamento_programado' ? 'Cancelamento programado'
+                            : cobrancaFacial?.legadoSemCobranca ? 'Configuração anterior' : 'Não contratado'
+                  }</span>
+                </div>
+                {cobrancaFacial && cobrancaFacial.quantidadeProxima > 0 && (
+                  <div className={`mt-3 grid grid-cols-2 gap-2 rounded-lg p-2.5 ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                    <span><span className={`block text-[9px] font-black uppercase tracking-wide ${textMuted}`}>Funcionários</span><strong className="text-sm">{cobrancaFacial.quantidadeProxima}</strong></span>
+                    <span className="text-right"><span className={`block text-[9px] font-black uppercase tracking-wide ${textMuted}`}>{cobrancaFacial.status === 'cancelamento_programado' ? 'Renovação' : 'Próxima mensalidade'}</span><strong className="text-sm">{cobrancaFacial.status === 'cancelamento_programado' ? 'Cancelada' : formatarCentavos(cobrancaFacial.valorMensalCentavos)}</strong></span>
+                  </div>
+                )}
+                {cobrancaFacial?.legadoSemCobranca && <p className="mt-2 text-[11px] font-semibold text-amber-700">Esta configuração é anterior ao fluxo de cobrança. Ao salvar uma alteração, a contratação será apresentada antes de qualquer nova liberação.</p>}
               </div>
+
+              {temCobrancaFacialPendente && cobrancaFacial && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-950" role="status">
+                  <p className="text-xs font-black">Pagamento pendente</p>
+                  <p className="mt-1 text-[11px] leading-relaxed">{cobrancaFacial.status === 'ativa'
+                    ? 'Os funcionários já ativos continuam usando o facial. Os novos serão liberados após a confirmação deste pagamento.'
+                    : 'O facial ainda não será exigido. Conclua o pagamento para liberar o cadastro dos funcionários selecionados.'}</p>
+                  {cobrancaFacial.valorPendenteCentavos !== null && <p className="mt-2 text-sm font-black">{formatarCentavos(cobrancaFacial.valorPendenteCentavos)}</p>}
+                  {cobrancaFacial.invoiceUrl ? <a href={cobrancaFacial.invoiceUrl} target="_blank" rel="noopener noreferrer" className="mt-3 flex min-h-11 items-center justify-center rounded-xl bg-amber-600 px-3 text-xs font-black text-white">Continuar pagamento</a> : <p className="mt-2 text-[11px] font-bold">A Asaas está preparando o link de pagamento. Reabra esta aba em alguns instantes.</p>}
+                </div>
+              )}
+
+              {cobrancaFacialEncerrando && cobrancaFacial?.validoAte && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-700" role="status">
+                  <p className="text-xs font-black">Renovação cancelada</p>
+                  <p className="mt-1 text-[11px] leading-relaxed">O facial permanece disponível até {new Date(cobrancaFacial.validoAte).toLocaleDateString('pt-BR')}. Se preferir, você ainda pode desativá-lo imediatamente.</p>
+                </div>
+              )}
+
               <div className={`rounded-xl border p-3 ${itemBorda}`}>
                 <p className={`text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Batidas que exigem facial</p>
                 <p className={`mt-1 text-[11px] ${textMuted}`}>Escolha em quais momentos a confirmação será solicitada.</p>
-                <div className="mt-3 grid grid-cols-2 gap-2">{[['entrada','Entrada'],['saida_refeicao','Saída p/ refeição'],['retorno_refeicao','Retorno da refeição'],['saida','Saída']].map(([tipo,rotulo]) => <label key={tipo} className={`flex items-center gap-2 rounded-lg border p-2 text-xs font-bold ${itemBorda}`}><input type="checkbox" checked={tiposFacial.includes(tipo)} onChange={() => setTiposFacial(atual => atual.includes(tipo) ? atual.filter(item => item !== tipo) : [...atual, tipo])} />{rotulo}</label>)}</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">{[['entrada','Entrada'],['saida_refeicao','Saída p/ refeição'],['retorno_refeicao','Retorno da refeição'],['saida','Saída']].map(([tipo,rotulo]) => <label key={tipo} className={`flex items-center gap-2 rounded-lg border p-2 text-xs font-bold ${itemBorda} ${cobrancaFacialEncerrando ? 'opacity-60' : ''}`}><input type="checkbox" disabled={cobrancaFacialEncerrando} checked={tiposFacial.includes(tipo)} onChange={() => setTiposFacial(atual => atual.includes(tipo) ? atual.filter(item => item !== tipo) : [...atual, tipo])} />{rotulo}</label>)}</div>
               </div>
               <div className={`rounded-xl border p-3 ${itemBorda}`}>
                 <p className={`text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Funcionários incluídos</p>
                 <p className={`mt-1 text-[11px] ${textMuted}`}>Selecione somente quem deverá usar o recurso. O cadastro facial não é iniciado nesta etapa.</p>
                 <div className="mt-3 grid gap-2">
                   {funcionarios.filter((f) => f.ativo).length === 0 ? <p className={`text-xs ${textMuted}`}>Cadastre ao menos um funcionário ativo antes de preparar o adicional.</p> : funcionarios.filter((f) => f.ativo).map((f) => (
-                    <label key={f.user_id} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-2.5 ${itemBorda}`}>
-                      <input type="checkbox" checked={facialSelecionados.includes(f.user_id)} onChange={() => alternarFuncionarioFacial(f.user_id)} className="h-4 w-4" />
+                    <label key={f.user_id} className={`flex items-center gap-3 rounded-lg border p-2.5 ${itemBorda} ${cobrancaFacialEncerrando ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+                      <input type="checkbox" disabled={cobrancaFacialEncerrando} checked={facialSelecionados.includes(f.user_id)} onChange={() => alternarFuncionarioFacial(f.user_id)} className="h-4 w-4" />
                       <span className="min-w-0 flex-1"><span className="block truncate text-xs font-black">{f.nome}</span><span className={`block truncate text-[10px] ${textMuted}`}>{f.cargo || 'Sem cargo'}</span></span>
                     </label>
                   ))}
                 </div>
                 <p className="mt-3 text-xs font-black" style={{ color: corSistema }}>Estimativa: {facialSelecionados.length} funcionário{facialSelecionados.length === 1 ? '' : 's'} × R$ 14,90/mês</p>
               </div>
-              <label className={`flex items-start gap-2 rounded-xl border p-3 text-[11px] leading-relaxed ${itemBorda}`}>
+              {!cobrancaFacialEncerrando && <label className={`flex items-start gap-2 rounded-xl border p-3 text-[11px] leading-relaxed ${itemBorda}`}>
                 <input type="checkbox" checked={aceiteFacial} onChange={(e) => setAceiteFacial(e.target.checked)} className="mt-0.5 h-4 w-4" />
                 <span>Confirmo que os funcionários serão informados sobre o uso dos dados faciais e que a empresa disponibilizará outra forma de regularizar ou registrar o ponto quando a validação facial não puder ser concluída.</span>
-              </label>
-              <button type="button" onClick={salvarPreparacaoFacial} disabled={salvandoFacial} className="h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoFacial ? 'Salvando...' : 'Salvar preparação facial'}</button>
-              {msgFacial && <p className={`text-xs font-bold ${msgFacial.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgFacial.texto}</p>}
+              </label>}
+
+              {resumoCobrancaFacial ? (
+                <div className={`rounded-xl border p-3 ${itemBorda}`} aria-live="polite">
+                  <p className="text-sm font-black">Resumo da contratação</p>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <span className={textMuted}>Funcionários</span><strong className="text-right">{resumoCobrancaFacial.quantidadeNova}</strong>
+                    <span className={textMuted}>Valor unitário</span><strong className="text-right">R$ 14,90/mês</strong>
+                    {resumoCobrancaFacial.exigePagamento && <><span className={textMuted}>{resumoCobrancaFacial.tipo === 'aumento' ? 'Proporcional agora' : 'Pagamento inicial'}</span><strong className="text-right">{formatarCentavos(resumoCobrancaFacial.valorAgoraCentavos)}</strong></>}
+                    <span className={textMuted}>Próxima mensalidade</span><strong className="text-right">{formatarCentavos(resumoCobrancaFacial.valorMensalCentavos)}</strong>
+                  </div>
+                  {resumoCobrancaFacial.removidos > 0 && <p className="mt-3 text-[11px] leading-relaxed text-amber-700">{resumoCobrancaFacial.removidos} funcionário{resumoCobrancaFacial.removidos === 1 ? '' : 's'} será{resumoCobrancaFacial.removidos === 1 ? '' : 'ão'} desativado{resumoCobrancaFacial.removidos === 1 ? '' : 's'} imediatamente. O período atual não gera devolução ou crédito.</p>}
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setResumoCobrancaFacial(null)} disabled={salvandoFacial} className={`min-h-11 rounded-xl border px-3 text-xs font-black ${itemBorda}`}>Voltar</button>
+                    <button type="button" onClick={confirmarCobrancaFacial} disabled={salvandoFacial} className="min-h-11 rounded-xl px-3 text-xs font-black text-white disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoFacial ? 'Processando...' : resumoCobrancaFacial.exigePagamento ? 'Gerar cobrança' : 'Confirmar alteração'}</button>
+                  </div>
+                </div>
+              ) : !temCobrancaFacialPendente && !cobrancaFacialEncerrando && (
+                <button type="button" onClick={revisarCobrancaFacial} disabled={salvandoFacial} className="min-h-11 rounded-xl px-3 text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoFacial ? 'Calculando...' : cobrancaFacial?.status === 'ativa' ? 'Revisar alteração' : 'Continuar para pagamento'}</button>
+              )}
+
+              {cobrancaFacial && ['ativa', 'inadimplente', 'cancelamento_programado', 'pendente_pagamento'].includes(cobrancaFacial.status) && (
+                confirmandoCancelamentoFacial ? (
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-red-950">
+                    <p className="text-xs font-black">Cancelar reconhecimento facial?</p>
+                    <p className="mt-1 text-[11px] leading-relaxed">Não haverá devolução nem crédito. Você pode manter o facial até o fim do período pago ou desativá-lo agora.</p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                      <button type="button" onClick={() => setConfirmandoCancelamentoFacial(false)} className="min-h-11 rounded-xl border border-red-200 bg-white px-2 text-[11px] font-black">Voltar</button>
+                      <button type="button" onClick={() => cancelarCobrancaFacial(false)} disabled={salvandoFacial} className="min-h-11 rounded-xl border border-red-300 bg-white px-2 text-[11px] font-black">Usar até o fim</button>
+                      <button type="button" onClick={() => cancelarCobrancaFacial(true)} disabled={salvandoFacial} className="min-h-11 rounded-xl bg-red-600 px-2 text-[11px] font-black text-white">Desativar agora</button>
+                    </div>
+                  </div>
+                ) : <button type="button" onClick={() => setConfirmandoCancelamentoFacial(true)} className="min-h-11 rounded-xl border border-red-200 px-3 text-xs font-black text-red-600">Cancelar assinatura facial</button>
+              )}
+              {msgFacial && <p role={msgFacial.tipo === 'erro' ? 'alert' : 'status'} className={`text-xs font-bold ${msgFacial.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgFacial.texto}</p>}
             </div>
           )}
 

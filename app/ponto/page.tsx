@@ -47,6 +47,7 @@ export default function PontoPage() {
         as="image"
         type="image/webp"
       />
+      <link rel="preload" href="/images/bg-ponto-facial.webp" as="image" type="image/webp" />
       <style
         dangerouslySetInnerHTML={{
           __html: `

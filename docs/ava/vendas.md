@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.2.02 -->
+<!-- ava-version: 1.7.0 -->
+
+> Revisão 1.7.0: cobrança e liberação separadas do reconhecimento facial foram
+> implantadas somente no Controle de Ponto; sem impacto operacional no
+> AvantaVendas. A atualização do fundo da validação facial também permanece
+> restrita ao Controle de Ponto.
 
 > Revisão 1.6.2.01: redução da retenção de imagens aplicada somente ao
 > reconhecimento facial do Controle de Ponto, incluindo texto mais claro no
