@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.01 -->
+<!-- ava-version: 1.7.0.02 -->
+
+> Revisão 1.7.0.02: o fundo institucional passou a aparecer também na tela
+> principal do Ponto, antes da captura facial, preservando as ondas inferiores e
+> sem mudar a ação **Bater ponto**.
 
 > Revisão 1.7.0.01: o fundo da validação facial permanece visível em todas as
 > etapas, com as ondas ancoradas na base e eventual recorte somente no topo; sem

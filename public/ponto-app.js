@@ -249,7 +249,7 @@
 
   async function registroServiceWorkerPonto() {
     if (!('serviceWorker' in navigator)) return null;
-    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=8', { scope: '/ponto' }); }
+    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=9', { scope: '/ponto' }); }
     catch (e) { return null; }
   }
 
@@ -966,7 +966,7 @@
       : '';
 
     var cssPontoPremium = '<style>' +
-      '.ponto-home{position:fixed;inset:0;overflow:hidden;background:#f5f7fa;color:#1b1f23;font-family:var(--av-font-family,Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);overscroll-behavior-y:contain}.ponto-shell{display:flex;width:100%;height:100%;max-width:460px;flex-direction:column;margin:0 auto;padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 10px)}' +
+      '.ponto-home{position:fixed;inset:0;overflow:hidden;background-color:#f5f7fa;background-image:url("/images/bg-ponto-facial.webp?v=1.7.0.02");background-position:center bottom;background-repeat:no-repeat;background-size:cover;color:#1b1f23;font-family:var(--av-font-family,Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);overscroll-behavior-y:contain}.ponto-shell{display:flex;width:100%;height:100%;max-width:460px;flex-direction:column;margin:0 auto;padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 10px)}' +
       '.ponto-hero{position:relative;overflow:hidden;min-height:126px;border-radius:24px;padding:20px;color:#fff;background:linear-gradient(135deg,#0b2c67 0%,#0a5ed7 64%,#187fd9 100%);box-shadow:0 12px 30px rgba(11,44,103,.18)}.ponto-hero:after{content:"";position:absolute;inset:auto -20% -70% 20%;height:130px;border-radius:50%;background:rgba(255,255,255,.08);transform:rotate(-8deg)}.ponto-hero-main{position:relative;z-index:1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:13px}' +
       '.ponto-avatar{display:flex;width:58px;height:58px;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.82);border-radius:50%;background:rgba(255,255,255,.14);font-size:17px;font-weight:600;letter-spacing:.04em;box-shadow:0 5px 15px rgba(0,0,0,.12)}.ponto-identity{min-width:0}.ponto-identity h1{margin:0;font-size:clamp(20px,6vw,27px);font-weight:600;letter-spacing:-.025em;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ponto-identity p{margin:5px 0 0;color:rgba(255,255,255,.82);font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '.ponto-date{position:relative;z-index:1;display:flex;align-items:center;gap:8px;margin:14px 0 0 71px;color:rgba(255,255,255,.78);font-size:11px;font-weight:500;text-transform:capitalize}.ponto-date strong{color:#fff;font-size:12px;font-weight:600;letter-spacing:.035em}.ponto-date svg{width:17px;height:17px}' +

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.01 -->
+<!-- ava-version: 1.7.0.02 -->
+
+> Revisão 1.7.0.02: fundo institucional aplicado à tela principal do Controle de
+> Ponto; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.01: correção visual restrita ao fundo do reconhecimento facial
 > do Controle de Ponto; sem impacto operacional no AvantaVendas.

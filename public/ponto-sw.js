@@ -1,7 +1,7 @@
-const PONTO_CACHE = 'avantalab-ponto-v14';
+const PONTO_CACHE = 'avantalab-ponto-v15';
 const PONTO_SHELL = [
   '/ponto',
-  '/ponto-app.js?v=27',
+  '/ponto-app.js?v=28',
   '/mobile-supabase.js',
   '/ponto-manifest.json',
   '/images/avanta-ponto-icon-180.png',

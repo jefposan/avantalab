@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.01 -->
+<!-- ava-version: 1.7.0.02 -->
+
+> Revisão 1.7.0.02: o fundo institucional também passou a compor a tela principal
+> do funcionário, atrás da ação **Bater ponto**; sem alteração no registro ou nas
+> validações de localização e reconhecimento facial.
 
 > Revisão 1.7.0.01: o fundo da validação facial foi fixado em uma camada própria,
 > preservando as ondas inferiores durante preparação e captura; sem impacto

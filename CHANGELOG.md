@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.02 - 2026-08-05
+
+- Controle de Ponto: o fundo institucional também foi aplicado à tela principal
+  do funcionário, atrás do botão **Bater ponto**, com as ondas ancoradas na base.
+  A versão do PWA foi renovada para impedir a reutilização do visual anterior.
+
 ## 1.7.0.01 - 2026-08-05
 
 - Controle de Ponto: o fundo institucional da validação facial passou para uma
