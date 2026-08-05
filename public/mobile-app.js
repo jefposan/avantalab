@@ -23,6 +23,16 @@
     }
   }
 
+  function ehChromeIosNavegadorMobile() {
+    try {
+      // Chrome no iPhone continua usando WebKit. A identificação por CriOS
+      // mantém este tratamento fora do Safari, Android e apps Capacitor.
+      return /CriOS/i.test(navigator.userAgent) && !ehIosNativoMobile();
+    } catch (error) {
+      return false;
+    }
+  }
+
   function deveRedirecionarMobileParaWeb() {
     var standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -11419,6 +11429,64 @@
     );
   }
 
+  function configurarRolagemMenuChromeIos() {
+    if (!ehChromeIosNavegadorMobile()) return;
+
+    var lista = document.getElementById('menu-botoes-scroll');
+    if (!lista) return;
+
+    // No Chrome do iPhone, a barra inferior pode deixar o compositor e a
+    // viewport de layout fora de sincronia. Garante um percurso real mesmo
+    // quando o navegador calcula que quase todo o conteúdo já está visível.
+    var percursoMinimo = 200;
+    var percursoAtual = Math.max(0, lista.scrollHeight - lista.clientHeight);
+    if (percursoAtual < percursoMinimo) {
+      var paddingAtual = parseFloat(window.getComputedStyle(lista).paddingBottom) || 0;
+      lista.style.paddingBottom = (paddingAtual + percursoMinimo - percursoAtual) + 'px';
+    }
+
+    // Nesse navegador apenas, substitui o gesto nativo instável por rolagem
+    // direta do contêiner. O shell e a navegação inferior não são movidos.
+    lista.style.touchAction = 'none';
+    lista.style.overscrollBehaviorY = 'contain';
+    lista.style.webkitOverflowScrolling = 'auto';
+    lista.style.transform = 'translateZ(0)';
+    lista.style.willChange = 'scroll-position';
+
+    var toqueAtivo = false;
+    var ultimoX = 0;
+    var ultimoY = 0;
+
+    lista.addEventListener('touchstart', function (event) {
+      if (!event.touches || event.touches.length !== 1) return;
+      toqueAtivo = true;
+      ultimoX = event.touches[0].clientX;
+      ultimoY = event.touches[0].clientY;
+    }, { passive: true });
+
+    lista.addEventListener('touchmove', function (event) {
+      if (!toqueAtivo || !event.touches || event.touches.length !== 1) return;
+
+      var xAtual = event.touches[0].clientX;
+      var yAtual = event.touches[0].clientY;
+      var deltaX = xAtual - ultimoX;
+      var deltaY = ultimoY - yAtual;
+
+      ultimoX = xAtual;
+      ultimoY = yAtual;
+
+      if (Math.abs(deltaY) <= Math.abs(deltaX) || Math.abs(deltaY) < 1) return;
+
+      var limite = Math.max(0, lista.scrollHeight - lista.clientHeight);
+      lista.scrollTop = Math.max(0, Math.min(limite, lista.scrollTop + deltaY));
+      if (event.cancelable) event.preventDefault();
+    }, { passive: false });
+
+    var encerrarToque = function () { toqueAtivo = false; };
+    lista.addEventListener('touchend', encerrarToque, { passive: true });
+    lista.addEventListener('touchcancel', encerrarToque, { passive: true });
+  }
+
   function chatIAModalHtml() {
     var dark = !!state.darkMode;
     var logoChatSrc = dark ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png';
@@ -13459,6 +13527,7 @@
         fecharMenuLateralAnimado();
       });
     }
+    configurarRolagemMenuChromeIos();
     bind('menu-configurar-resumo', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('configurarResumo'); }); });
     bind('menu-usuario', function () { fecharMenuLateralAnimado(abrirUsuariosMobile); });
     bind('menu-gerenciar', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('gerenciar'); }); });

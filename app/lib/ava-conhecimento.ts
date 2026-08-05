@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.20: revertidas as tentativas de adaptação do Menu e da navegação inferior ao Chrome no iPhone; retorno ao fluxo estável anterior.
+// Revisado na versão 1.7.0.21: o Menu da Gestão Mobile recebe fallback de rolagem por toque exclusivo do Chrome no iPhone; sem impacto na Gestão Web, AvantaVendas ou apps nativos.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

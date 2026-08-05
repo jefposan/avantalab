@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.20 -->
+<!-- ava-version: 1.7.0.21 -->
+
+> Revisão 1.7.0.21: correção restrita à rolagem por toque do Menu da Gestão
+> Mobile no Chrome para iPhone; sem mudança operacional na Gestão Web.
 
 > Revisão 1.7.0.20: reversão restrita às tentativas de viewport da Gestão
 > Mobile; sem impacto operacional na Gestão Web.

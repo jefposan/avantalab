@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.21 - 2026-08-05
+
+- Gestão Mobile no Chrome para iPhone: o Menu recebe uma rolagem de toque
+  própria e restrita ao `CriOS`, permitindo alcançar todos os botões mesmo com
+  a barra inferior do navegador ativa. O shell e a navegação fixa permanecem
+  inalterados; Safari, Android e aplicativos Capacitor não usam esse fallback.
+
 ## 1.7.0.20 - 2026-08-05
 
 - Gestão Mobile: revertidas integralmente as tentativas de adaptação do Menu e

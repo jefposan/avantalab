@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.20 -->
+<!-- ava-version: 1.7.0.21 -->
+
+> Revisão 1.7.0.21: no Chrome para iPhone, a lista interna do Menu pode ser
+> rolada por toque até o último botão mesmo com a barra inferior do navegador
+> ativa. Safari, Android e aplicativos nativos mantêm o comportamento anterior.
 
 > Revisão 1.7.0.20: revertidas as tentativas de adaptação do Menu e da
 > navegação inferior ao Chrome no iPhone. A Gestão Mobile retorna integralmente

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.20 -->
+<!-- ava-version: 1.7.0.21 -->
+
+> Revisão 1.7.0.21: correção restrita à rolagem do Menu da Gestão Mobile no
+> Chrome para iPhone; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.20: reversão restrita às tentativas de viewport da Gestão
 > Mobile; sem impacto operacional no Vendas Mobile e no suporte a PDFs.
