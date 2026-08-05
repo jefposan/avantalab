@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.18 - 2026-08-05
+
+- Gestão Mobile no navegador: Menu e navegação inferior passam a compartilhar
+  o mesmo shell, evitando o defeito de posicionamento fixo do WebKit no iOS 26.
+  A medição visual ineficaz e os reforços redundantes das tentativas anteriores
+  foram removidos. Apps Capacitor mantêm a navegação fixa existente.
+
 ## 1.7.0.17 - 2026-08-05
 
 - Gestão Mobile: reforçada a geometria da lista interna do Menu. Ela possui

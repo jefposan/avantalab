@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.17 -->
+<!-- ava-version: 1.7.0.18 -->
+
+> Revisão 1.7.0.18: no navegador, Menu e navegação inferior compartilham o
+> mesmo shell, mantendo os últimos botões acessíveis mesmo com a barra inferior
+> do Chrome no iOS 26. Nos apps Capacitor, a navegação permanece inalterada.
 
 > Revisão 1.7.0.17: a lista interna do Menu tem rolagem nativa com altura
 > limitada, mantendo todos os botões acessíveis no navegador sem deslocar a

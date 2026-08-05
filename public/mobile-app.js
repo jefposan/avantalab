@@ -4335,9 +4335,9 @@
   }
 
   function sincronizarAlturaViewportNavegadorMobile() {
-    // 100svh é somente uma estimativa estável. No Chrome para iPhone, a barra
-    // inferior pode continuar ocupando espaço depois de aberta; visualViewport
-    // é a única medida que acompanha exatamente a área clicável restante.
+    // No navegador, a altura do shell acompanha a viewport visual. A navegação
+    // inferior web fica ancorada dentro desse shell, sem depender do defeito de
+    // position:fixed do WebKit no iOS 26.
     var capacitor = window.Capacitor;
     var nativoCapacitor = Boolean(
       capacitor
@@ -4349,29 +4349,6 @@
     var altura = viewport ? viewport.height : window.innerHeight;
     if (!altura || altura < 1) return;
     document.documentElement.style.setProperty('--ava-mobile-viewport-height', Math.round(altura) + 'px');
-    sincronizarAreaRolavelMenuNoNavegador();
-  }
-
-  function sincronizarAreaRolavelMenuNoNavegador() {
-    // O Chrome pode ocupar uma altura diferente com sua barra inferior aberta.
-    // Medimos a navegação realmente desenhada, em vez de supor uma altura fixa,
-    // para que a lista do Menu mantenha todos os botões alcançáveis por rolagem.
-    var capacitor = window.Capacitor;
-    var nativoCapacitor = Boolean(
-      capacitor
-      && typeof capacitor.isNativePlatform === 'function'
-      && capacitor.isNativePlatform()
-    );
-    if (nativoCapacitor) return;
-
-    var overlay = document.getElementById('menu-overlay');
-    var navegacao = document.getElementById('navegacao-inferior-mobile');
-    if (!overlay || !navegacao || !overlay.parentElement) return;
-
-    var baseMenu = overlay.parentElement.getBoundingClientRect();
-    var baseNavegacao = navegacao.getBoundingClientRect();
-    var reservaInferior = Math.max(0, Math.ceil(baseMenu.bottom - baseNavegacao.top));
-    overlay.style.bottom = reservaInferior + 'px';
   }
 
   sincronizarAlturaViewportNavegadorMobile();
@@ -9913,8 +9890,15 @@
     else if (perfilAtivo) indiceAtivo = esquerdo === 'perfil' ? 1 : (direito === 'perfil' ? 3 : 0);
     else if (fixasAtivo) indiceAtivo = esquerdo === 'despesasFixas' ? 1 : (direito === 'despesasFixas' ? 3 : 0);
     var indiceAnterior = typeof window._avaNavIndice === 'number' ? window._avaNavIndice : indiceAtivo;
+    var capacitor = window.Capacitor;
+    var nativoCapacitor = Boolean(
+      capacitor
+      && typeof capacitor.isNativePlatform === 'function'
+      && capacitor.isNativePlatform()
+    );
+    var posicaoNavegacao = nativoCapacitor ? 'fixed' : 'absolute';
 
-    return '<nav id="navegacao-inferior-mobile" class="fixed inset-x-0 bottom-0 z-[90] border-t ' + (state.darkMode ? 'border-slate-700 bg-slate-900/95' : 'border-slate-200 bg-white/95') + ' shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur-xl" style="padding-bottom:env(safe-area-inset-bottom);" aria-label="Navegacao principal">' +
+    return '<nav class="' + posicaoNavegacao + ' inset-x-0 bottom-0 z-[90] border-t ' + (state.darkMode ? 'border-slate-700 bg-slate-900/95' : 'border-slate-200 bg-white/95') + ' shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur-xl" style="padding-bottom:env(safe-area-inset-bottom);" aria-label="Navegacao principal">' +
       '<div class="relative mx-auto grid h-[66px] max-w-md grid-cols-5 items-end px-2">' +
         '<span class="pointer-events-none absolute left-2 right-2 top-0 h-0.5 overflow-visible"><span data-nav-indicador data-nav-destino="' + indiceAtivo + '" class="block h-0.5 w-1/5 rounded-full bg-cyan-600 transition-transform duration-300 ease-out" style="transform:translateX(' + (indiceAnterior * 100) + '%)"></span></span>' +
         itemNavegacaoInferiorHtml('nav-home', 'home', 'Início', indiceAtivo === 0) +
@@ -11444,7 +11428,7 @@
 
     return (
       '<div id="menu-overlay" class="absolute inset-0 z-50 bg-slate-950/75" style="bottom:calc(env(safe-area-inset-bottom) + 82px);will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
-        '<aside id="menu-aside" class="flex h-full w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="display:flex;flex-direction:column;height:100%;min-height:0;max-height:100%;background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';-webkit-overflow-scrolling:touch;touch-action:pan-y;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + limiteTopoMenuIos + animacaoPainel + '">' +
+        '<aside id="menu-aside" class="flex h-full min-h-0 w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';-webkit-overflow-scrolling:touch;touch-action:pan-y;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + limiteTopoMenuIos + animacaoPainel + '">' +
           '<div class="relative mb-4 shrink-0 overflow-hidden rounded-[16px_32px_32px_32px] p-4 text-white" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +
             '<div class="flex items-start justify-between gap-3">' +
@@ -11452,7 +11436,7 @@
               '<button id="fechar-menu" type="button" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white shadow-sm backdrop-blur active:scale-95" aria-label="Fechar menu">' + iconeFecharGeometricoMobile() + '</button>' +
             '</div>' +
           '</div>' +
-          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="height:0;min-height:0;flex:1 1 0%;max-height:100%;overflow-y:scroll;padding-bottom:24px;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;scrollbar-width:none;-ms-overflow-style:none;">' +
+          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:24px;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;scrollbar-width:none;-ms-overflow-style:none;">' +
           '<div class="grid gap-1.5">' +
             ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios())
               ? menuBotaoHtml(
@@ -13289,8 +13273,6 @@
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + confirmacaoTotalReceitaMobileHtml() + confirmacaoExclusaoTotalMesMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
-    sincronizarAreaRolavelMenuNoNavegador();
-    window.requestAnimationFrame(sincronizarAreaRolavelMenuNoNavegador);
     window.dispatchEvent(new CustomEvent('avantalab:theme-changed', {
       detail: { dark: Boolean(state.autenticado && state.darkMode) }
     }));

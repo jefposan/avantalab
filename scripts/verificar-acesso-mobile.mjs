@@ -183,6 +183,19 @@ exigir(
   ),
   'O card de identificação do menu não pode reintroduzir borda ou sombra lateral assimétrica.',
 );
+const inicioNavegacaoInferior = aplicativo.indexOf('function navegacaoInferiorHtml()');
+const fimNavegacaoInferior = aplicativo.indexOf('\n  function rodapeMobileHtml()', inicioNavegacaoInferior);
+const blocoNavegacaoInferior = aplicativo.slice(inicioNavegacaoInferior, fimNavegacaoInferior);
+exigir(
+  blocoNavegacaoInferior.includes("var posicaoNavegacao = nativoCapacitor ? 'fixed' : 'absolute';") &&
+    blocoNavegacaoInferior.includes("class=\"' + posicaoNavegacao + ' inset-x-0 bottom-0"),
+  'A navegação inferior precisa permanecer fixa no Capacitor e absoluta dentro do shell no navegador.',
+);
+exigir(
+  !aplicativo.includes('sincronizarAreaRolavelMenuNoNavegador') &&
+    !aplicativo.includes('id="navegacao-inferior-mobile"'),
+  'O navegador não pode medir a posição visual do rodapé afetado pelo WebKit do iOS 26.',
+);
 exigir(
   vendas.includes('onclick="cancelarLoginSocialVendas()"') &&
     vendas.includes('Cancelar e voltar ao login'),
