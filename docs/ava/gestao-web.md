@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0 -->
+<!-- ava-version: 1.7.0.01 -->
+
+> Revisão 1.7.0.01: o fundo da validação facial foi fixado em uma camada própria,
+> preservando as ondas inferiores durante preparação e captura; sem impacto
+> operacional nas regras de ponto ou reconhecimento.
 
 > Revisão 1.7.0: a aba **Facial** apresenta resumo e cobrança separada de
 > R$ 14,90 por funcionário ao mês. A seleção inicial só libera o cadastro após

@@ -81,6 +81,7 @@ export default function PontoFacialExperienceV2({ etapa, tipo, mensagem, orienta
   }, [etapa, onCancelar]);
 
   return <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="facial-v2-titulo">
+    <span className={styles.backgroundLayer} aria-hidden="true" />
     <main ref={shellRef} className={styles.shell} tabIndex={-1}>
       {(etapa === 'preparacao' || etapa === 'captura') && <Cabecalho onVoltar={onCancelar} />}
 

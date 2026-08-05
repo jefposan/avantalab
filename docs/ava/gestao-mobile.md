@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0 -->
+<!-- ava-version: 1.7.0.01 -->
+
+> Revisão 1.7.0.01: o fundo da validação facial permanece visível em todas as
+> etapas, com as ondas ancoradas na base e eventual recorte somente no topo; sem
+> alteração no uso da câmera ou no registro do ponto.
 
 > Revisão 1.7.0: a contratação facial passa a ser confirmada na Gestão Web
 > antes de liberar o cadastro do funcionário. Enquanto a cobrança estiver

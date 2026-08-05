@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.01 - 2026-08-05
+
+- Controle de Ponto: o fundo institucional da validação facial passou para uma
+  camada visual própria, abaixo de todo o fluxo, com as ondas preservadas na
+  base e recorte restrito ao topo. O ajuste evita que a câmera e os estados da
+  experiência encubram o fundo da tela.
+
 ## 1.7.0 - 2026-08-05
 
 - Controle de Ponto: implantado o fluxo separado de contratação do
