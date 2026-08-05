@@ -1,6 +1,6 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.2.01 -->
+<!-- ava-version: 1.6.2.02 -->
 
 > Revisão 1.6.2.01: redução da retenção de imagens aplicada somente ao
 > reconhecimento facial do Controle de Ponto, incluindo texto mais claro no

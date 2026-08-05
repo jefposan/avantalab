@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.2.02 - 2026-08-05
+
+- Central de Consultas: três análises pagas foram preparadas para a Direct Data
+  por R$ 11,99, R$ 20,99 e R$ 31,99, com estorno em falhas do fornecedor.
+- Meus créditos: carteira genérica por perfil, recarga avulsa pela Asaas,
+  extrato e confirmação idempotente; módulos e facial continuam separados.
+
 ## 1.6.2.01 - 2026-08-04
 
 - Reconhecimento Facial: somente a imagem usada no cadastro facial permanece

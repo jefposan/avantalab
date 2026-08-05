@@ -33,21 +33,24 @@ const opcoes = [
   },
   {
     id: 'credito',
-    titulo: 'Consulta de crédito',
-    descricao: 'Informações empresariais de crédito.',
-    disponivel: false,
+    titulo: 'Crédito Essencial',
+    descricao: 'Score e dossiê de crédito por R$ 11,99.',
+    disponivel: true,
+    destino: '/consulta/credito?tipo=credito_essencial',
   },
   {
     id: 'restricoes',
-    titulo: 'Protestos e restrições',
-    descricao: 'Pesquisa de ocorrências e apontamentos.',
-    disponivel: false,
+    titulo: 'Crédito Avançado',
+    descricao: 'Inclui protestos nacionais e processos por R$ 20,99.',
+    disponivel: true,
+    destino: '/consulta/credito?tipo=credito_avancada',
   },
   {
     id: 'completa',
-    titulo: 'Consulta completa',
-    descricao: 'Visão consolidada de informações empresariais.',
-    disponivel: false,
+    titulo: 'Crédito Completa',
+    descricao: 'Análise ampliada, incluindo SCR detalhado, por R$ 31,99.',
+    disponivel: true,
+    destino: '/consulta/credito?tipo=credito_completa',
   },
 ];
 
@@ -174,7 +177,10 @@ export default function CentralConsultasCard() {
                 className={`${styles.opcao} ${
                   opcao.disponivel ? styles.opcaoDisponivel : styles.opcaoIndisponivel
                 }`}
-                onClick={opcao.disponivel ? abrirConsultaCnpj : undefined}
+                onClick={opcao.disponivel ? () => {
+                  if ('destino' in opcao && opcao.destino) window.location.assign(opcao.destino);
+                  else abrirConsultaCnpj();
+                } : undefined}
                 disabled={!opcao.disponivel}
                 aria-disabled={!opcao.disponivel}
               >

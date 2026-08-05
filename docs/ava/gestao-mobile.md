@@ -1,6 +1,6 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.2.01 -->
+<!-- ava-version: 1.6.2.02 -->
 
 > Revisão 1.6.2.01: somente a imagem do cadastro facial fica armazenada. Nas
 > batidas, a captura é usada temporariamente para comparação e descartada após

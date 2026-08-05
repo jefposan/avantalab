@@ -1,6 +1,6 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.2.01 -->
+<!-- ava-version: 1.6.2.02 -->
 
 > Revisão 1.6.2.01: o cadastro facial conserva uma única imagem de referência
 > no armazenamento privado. A captura realizada em cada batida é comparada em

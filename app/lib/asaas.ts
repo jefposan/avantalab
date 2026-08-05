@@ -150,3 +150,28 @@ export function obterSaldoAsaas() {
     cache: 'no-store',
   });
 }
+
+export type CobrancaAvulsaAsaas = {
+  id: string;
+  status?: string;
+  invoiceUrl?: string;
+  dueDate?: string;
+  value?: number;
+  billingType?: string;
+  externalReference?: string;
+};
+
+// Cobrança única usada por produtos pré-pagos, sem criar assinatura recorrente.
+export function criarCobrancaAvulsaAsaas(dados: {
+  customer: string;
+  billingType: 'UNDEFINED' | 'PIX' | 'CREDIT_CARD' | 'BOLETO';
+  value: number;
+  dueDate: string;
+  description: string;
+  externalReference: string;
+}) {
+  return asaasFetch<CobrancaAvulsaAsaas>('/payments', {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+}
