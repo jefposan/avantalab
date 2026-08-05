@@ -1,10 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.10 -->
+<!-- ava-version: 1.8.0 -->
 
-> Revisão 1.7.0.10: o Menu reserva a navegação inferior, mantendo todos os
-> botões acessíveis pela rolagem nativa. A adaptação de viewport do navegador
-> permanece isolada dos apps iOS e Android.
+> Revisão 1.8.0: em **Conteúdo para a equipe > Divulgação**, o gestor pode
+> incluir PDFs nas pastas. O Google Cloud cria a capa da primeira página; o arquivo
+> fica disponível para leitura e compartilhamento no Vendas Mobile.
 
 > Revisão 1.7.0.06: login por senha, Google ou Apple, cadastro e criação de
 > perfil recuperam a tela em falhas inesperadas de conexão; nenhuma ação fica

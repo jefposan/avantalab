@@ -1,8 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.10 -->
+<!-- ava-version: 1.8.0 -->
 
-> Revisão 1.7.0.10: sem impacto operacional na Gestão Web.
+> Revisão 1.8.0: em **Conteúdo para a equipe > Divulgação**, o gestor pode
+> incluir PDFs nas pastas. O Google Cloud cria a capa da primeira página; o arquivo
+> fica disponível para leitura e compartilhamento no Vendas Mobile.
 
 > Revisão 1.7.0.06: login, cadastro e preparação do perfil financeiro passam a
 > recuperar o formulário em falhas inesperadas, sem manter ações bloqueadas.

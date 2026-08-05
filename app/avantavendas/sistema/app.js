@@ -3282,15 +3282,22 @@ function renderDivulgacao() {
     }
     return (state.divulgacaoMateriais || []).filter((item) => visitadas.has(item.pasta_id)).length;
   };
+  const rotuloMaterial = (material) => material.tipo === 'video' ? 'Vídeo' : material.tipo === 'pdf' ? 'PDF' : 'Imagem';
+  const capaMaterial = (material, contexto = 'material') => {
+    if (material?.miniatura_url) return `<img src="${escapeAttr(material.miniatura_url)}" alt="">`;
+    if (material?.tipo === 'video') return `<span class="material-cover-processing">${svgIcon('video')}<small>${material.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</small></span>`;
+    if (material?.tipo === 'pdf') return `<span class="material-cover-pdf" aria-label="Documento PDF"><b>PDF</b><small>${contexto === 'pasta' ? 'Documento' : 'Abrir documento'}</small></span>`;
+    return contexto === 'pasta' ? svgIcon('folder') : svgIcon('package');
+  };
   const cardsPastas = pastas.map((pasta) => {
     const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pasta.id);
     const totalMateriais = contarMateriaisDaPasta(pasta.id);
     const capa = materiais.find((item) => item.miniatura_url) || materiais[0];
     const subpastas = (state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === pasta.id).length;
     const resumo = pasta.descricao || `${subpastas ? `${subpastas} ${subpastas === 1 ? 'subpasta' : 'subpastas'} · ` : ''}${totalMateriais} ${totalMateriais === 1 ? 'material' : 'materiais'}`;
-    return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capa?.miniatura_url ? `<img src="${escapeAttr(capa.miniatura_url)}" alt="">` : capa?.tipo === 'video' ? `<span class="material-cover-processing">${svgIcon('video')}<small>${capa.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</small></span>` : svgIcon('folder')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(resumo)}</small><em>${totalMateriais}</em></span></button>`;
+    return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capaMaterial(capa, 'pasta')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(resumo)}</small><em>${totalMateriais}</em></span></button>`;
   }).join('');
-  const cardsMateriais = materiais.map((item) => `<button type="button" class="material-thumb" onclick="abrirMaterialDivulgacao('${item.id}')"><span>${item.miniatura_url ? `<img src="${escapeAttr(item.miniatura_url)}" alt="${escapeAttr(item.titulo)}">` : item.tipo === 'video' ? `<span class="material-cover-processing">${svgIcon('video')}<small>${item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</small></span>` : svgIcon('package')}</span><b>${escapeHtml(item.titulo)}</b><small>${item.tipo === 'video' ? 'Vídeo' : 'Imagem'}</small></button>`).join('');
+  const cardsMateriais = materiais.map((item) => `<button type="button" class="material-thumb" onclick="abrirMaterialDivulgacao('${item.id}')"><span>${capaMaterial(item)}</span><b>${escapeHtml(item.titulo)}</b><small>${rotuloMaterial(item)}</small></button>`).join('');
   const voltarId = pastaAtual?.pasta_pai_id || '';
   const navegacao = pastaAtual ? `<div class="material-page-location"><button type="button" class="material-page-back" onclick="voltarPastaDivulgacao('${voltarId}')">${svgIcon('chevron-left')} Voltar</button><div><small>Pasta atual</small><b>${escapeHtml(pastaAtual.nome)}</b>${pastaAtual.descricao ? `<span>${escapeHtml(pastaAtual.descricao)}</span>` : ''}</div></div>` : '';
   const conteudo = cardsPastas || cardsMateriais
@@ -3336,8 +3343,12 @@ function conteudoVisualizadorMaterialDivulgacao(materialId) {
   const proximo = materiais[indice + 1] || null;
   const visualizacao = material.tipo === 'video'
     ? `<video src="${escapeAttr(material.arquivo_url)}" controls playsinline preload="metadata"></video>`
-    : `<img src="${escapeAttr(material.arquivo_url)}" alt="${escapeAttr(material.titulo)}" draggable="false">`;
-  return `<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">${material.tipo === 'video' ? 'Vídeo' : 'Imagem'} · ${indice + 1} de ${materiais.length} · toque para ampliar</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}<button type="button" class="material-preview" onclick="alternarMaterialExpandido(event)" aria-label="Ampliar material">${visualizacao}</button>${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button>`;
+    : material.tipo === 'pdf'
+      ? `<iframe src="${escapeAttr(material.arquivo_url)}#view=FitH" title="${escapeAttr(material.titulo)}" class="material-preview-pdf"></iframe>`
+      : `<img src="${escapeAttr(material.arquivo_url)}" alt="${escapeAttr(material.titulo)}" draggable="false">`;
+  const instrucao = material.tipo === 'pdf' ? 'documento para leitura' : 'toque para ampliar';
+  const acaoVisualizacao = material.tipo === 'pdf' ? '' : ' onclick="alternarMaterialExpandido(event)"';
+  return `<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">${material.tipo === 'video' ? 'Vídeo' : material.tipo === 'pdf' ? 'PDF' : 'Imagem'} · ${indice + 1} de ${materiais.length} · ${instrucao}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}<button type="button" class="material-preview"${acaoVisualizacao} aria-label="${material.tipo === 'pdf' ? 'Ler documento' : 'Ampliar material'}">${visualizacao}</button>${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button>`;
 }
 
 function abrirMaterialDivulgacao(materialId) {
@@ -3404,7 +3415,7 @@ async function compartilharMaterialDivulgacao(materialId) {
     const resposta = await fetch(material.arquivo_url);
     if (!resposta.ok) throw new Error('Não foi possível baixar o material.');
     const blob = await resposta.blob();
-    const extensao = blob.type.split('/')[1]?.replace('quicktime', 'mov') || (material.tipo === 'video' ? 'mp4' : 'jpg');
+    const extensao = blob.type === 'application/pdf' || material.tipo === 'pdf' ? 'pdf' : blob.type.split('/')[1]?.replace('quicktime', 'mov') || (material.tipo === 'video' ? 'mp4' : 'jpg');
     const nome = `${String(material.titulo || 'material').replace(/[^a-zA-Z0-9_-]+/g, '-')}.${extensao}`;
     const arquivo = new File([blob], nome, { type: blob.type });
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) {

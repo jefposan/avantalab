@@ -1,10 +1,11 @@
 # Changelog
 
-## 1.7.0.10 - 2026-08-05
+## 1.8.0 - 2026-08-05
 
-- Gestão Mobile: o Menu agora reserva a altura da barra de navegação inferior;
-  seus últimos botões não ficam mais encobertos e continuam acessíveis pela
-  rolagem nativa. A adaptação de viewport permanece isolada ao navegador.
+- Conteúdo para a equipe: Divulgação passa a aceitar PDFs. O worker do Google
+  Cloud cria a capa da primeira página, o Vendas Mobile exibe o documento no
+  visualizador e o compartilha como arquivo PDF. A escolha de material agora é
+  apresentada em português antes de acionar fotos, câmera ou arquivos do aparelho.
 
 ## 1.7.0.06 - 2026-08-05
 

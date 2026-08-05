@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.10: o Menu reserva a barra inferior e preserva a rolagem nativa; a altura do navegador segue isolada dos apps nativos.
+// Revisado na versão 1.8.0: PDFs de Divulgação têm capa criada no Google Cloud, leitura e compartilhamento no Vendas; gestores os adicionam em Conteúdo para a equipe.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -12,6 +12,7 @@ const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY |
 const WORKER_SECRET = String(process.env.WORKER_SECRET || '').trim();
 const BUCKET = process.env.STORAGE_BUCKET || 'vendas-divulgacao';
 const MAX_VIDEO_BYTES = Number(process.env.MAX_VIDEO_BYTES || 110 * 1024 * 1024);
+const MAX_PDF_BYTES = Number(process.env.MAX_PDF_BYTES || 35 * 1024 * 1024);
 
 function json(res, status, payload) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
@@ -96,17 +97,28 @@ async function executarFfmpeg(entrada, saida) {
   });
 }
 
-async function baixarVideo(material, destino) {
+async function executarCapaPdf(entrada, saida) {
+  const argumentos = ['-f', '1', '-l', '1', '-singlefile', '-jpeg', '-jpegopt', 'quality=88', '-scale-to-x', '720', '-scale-to-y', '-1', entrada, saida];
+  await new Promise((resolve, reject) => {
+    const processo = spawn('pdftoppm', argumentos, { stdio: ['ignore', 'ignore', 'pipe'] });
+    let erro = '';
+    processo.stderr.on('data', (parte) => { erro = `${erro}${parte}`.slice(-4000); });
+    processo.on('error', reject);
+    processo.on('close', (codigo) => codigo === 0 ? resolve() : reject(new Error(erro || `pdftoppm encerrou com código ${codigo}.`)));
+  });
+}
+
+async function baixarMaterial(material, destino, limiteBytes) {
   const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${caminhoCodificado(material.arquivo_path)}`;
   const resposta = await fetch(url, { headers: headersSupabase() });
-  if (!resposta.ok || !resposta.body) throw new Error(`Não foi possível baixar o vídeo (${resposta.status}).`);
+  if (!resposta.ok || !resposta.body) throw new Error(`Não foi possível baixar o material (${resposta.status}).`);
   const tamanho = Number(resposta.headers.get('content-length') || material.tamanho_bytes || 0);
-  if (tamanho > MAX_VIDEO_BYTES) throw new Error('O vídeo excede o limite aceito pelo processador.');
+  if (tamanho > limiteBytes) throw new Error('O arquivo excede o limite aceito pelo processador.');
   const partes = [];
   let recebido = 0;
   for await (const parte of resposta.body) {
     recebido += parte.length;
-    if (recebido > MAX_VIDEO_BYTES) throw new Error('O vídeo excede o limite aceito pelo processador.');
+    if (recebido > limiteBytes) throw new Error('O arquivo excede o limite aceito pelo processador.');
     partes.push(partes.length ? parte : Buffer.from(parte));
   }
   await writeFile(destino, Buffer.concat(partes));
@@ -142,7 +154,7 @@ async function processar(jobId, materialId) {
     'id,empresa_id,pasta_id,tipo,arquivo_path,miniatura_url,mime_type,tamanho_bytes'
   );
   if (!material) throw new Error('Material não encontrado.');
-  if (material.tipo !== 'video') throw new Error('O material não é um vídeo.');
+  if (!['video', 'pdf'].includes(material.tipo)) throw new Error('O material não é compatível com a geração de capa.');
   if (material.miniatura_url) {
     await atualizar('vendas_mobile_thumbnail_jobs', jobId, { status: 'concluido', concluido_em: new Date().toISOString(), atualizado_em: new Date().toISOString() });
     return { concluido: true, repetido: true };
@@ -153,14 +165,15 @@ async function processar(jobId, materialId) {
   await atualizar('vendas_mobile_divulgacao_materiais', materialId, { miniatura_status: 'processando', miniatura_erro: null, atualizado_em: agora });
 
   const pastaTemporaria = await mkdtemp(join(tmpdir(), 'avantalab-thumb-'));
-  const extensao = extname(material.arquivo_path).replace(/[^.a-zA-Z0-9]/g, '') || '.mp4';
-  const entrada = join(pastaTemporaria, `video${extensao}`);
+  const extensao = extname(material.arquivo_path).replace(/[^.a-zA-Z0-9]/g, '') || (material.tipo === 'pdf' ? '.pdf' : '.mp4');
+  const entrada = join(pastaTemporaria, `${material.tipo}${extensao}`);
   const saida = join(pastaTemporaria, 'capa.jpg');
   const miniaturaPath = `${material.empresa_id}/${material.pasta_id}/${material.id}-capa.jpg`;
 
   try {
-    await baixarVideo(material, entrada);
-    await executarFfmpeg(entrada, saida);
+    await baixarMaterial(material, entrada, material.tipo === 'pdf' ? MAX_PDF_BYTES : MAX_VIDEO_BYTES);
+    if (material.tipo === 'pdf') await executarCapaPdf(entrada, saida);
+    else await executarFfmpeg(entrada, saida);
     const capa = await readFile(saida);
     if (!capa.length) throw new Error('O FFmpeg não gerou uma capa válida.');
     await enviarMiniatura(miniaturaPath, saida);

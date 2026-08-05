@@ -1,11 +1,11 @@
 # AvantaLab Video Thumbnail Worker
 
-Serviço do Cloud Run que gera capas JPEG para vídeos publicados em Divulgação.
+Serviço do Cloud Run que gera capas JPEG para vídeos e PDFs publicados em Divulgação.
 O upload do celular termina antes desta etapa; a fila no Supabase chama este
 serviço em segundo plano.
 
-A capa usa sempre o primeiro frame decodificado do vídeo (`n=0`), permitindo
-que a arte inicial do arquivo seja utilizada como miniatura.
+A capa usa sempre o primeiro frame decodificado do vídeo (`n=0`) ou a primeira
+página do PDF, permitindo pré-visualização consistente no Vendas Mobile.
 
 ## Variáveis obrigatórias
 
@@ -13,8 +13,8 @@ que a arte inicial do arquivo seja utilizada como miniatura.
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `WORKER_SECRET`
 
-Variáveis opcionais: `STORAGE_BUCKET` (padrão `vendas-divulgacao`) e
-`MAX_VIDEO_BYTES` (padrão 110 MB).
+Variáveis opcionais: `STORAGE_BUCKET` (padrão `vendas-divulgacao`),
+`MAX_VIDEO_BYTES` (padrão 110 MB) e `MAX_PDF_BYTES` (padrão 35 MB).
 
 ## Implantação
 

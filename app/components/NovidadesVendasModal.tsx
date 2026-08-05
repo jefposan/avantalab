@@ -8,7 +8,7 @@ import ModalConfirmacao from './ModalConfirmacao';
 type Novidade = { id: string; tipo: string; titulo: string; descricao: string; criado_em: string };
 type Pasta = { id: string; pasta_pai_id: string | null; nome: string; descricao: string | null; criado_em: string };
 type Material = {
-  id: string; pasta_id: string; titulo: string; tipo: 'imagem' | 'video'; arquivo_path: string;
+  id: string; pasta_id: string; titulo: string; tipo: 'imagem' | 'video' | 'pdf'; arquivo_path: string;
   arquivo_url: string; miniatura_path: string | null; miniatura_url: string | null;
   miniatura_status: 'nao_aplicavel' | 'pendente' | 'processando' | 'pronta' | 'erro';
   arquivo_hash: string | null; tamanho_bytes: number | null; criado_em: string;
@@ -49,6 +49,16 @@ function aguardarPinturaDaInterface() {
   return new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   });
+}
+function tipoMaterialArquivo(arquivo: File): Material['tipo'] | null {
+  const nome = arquivo.name.toLocaleLowerCase('pt-BR');
+  if (arquivo.type === 'application/pdf' || nome.endsWith('.pdf')) return 'pdf';
+  if (arquivo.type.startsWith('video/')) return 'video';
+  if (arquivo.type.startsWith('image/')) return 'imagem';
+  return null;
+}
+function rotuloMaterial(tipo: Material['tipo']) {
+  return tipo === 'video' ? 'Vídeo' : tipo === 'pdf' ? 'PDF' : 'Imagem';
 }
 function pastasEmArvore(pastas: Pasta[], pai: string | null = null, nivel = 0): Array<{ pasta: Pasta; nivel: number }> {
   return pastas
@@ -104,6 +114,7 @@ function Icone({ tipo, className = 'h-5 w-5' }: { tipo: string; className?: stri
   if (tipo === 'edit') return <svg {...props}><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /></svg>;
   if (tipo === 'image') return <svg {...props}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></svg>;
   if (tipo === 'video') return <svg {...props}><rect x="3" y="5" width="14" height="14" rx="2" /><path d="m17 10 4-2v8l-4-2" /></svg>;
+  if (tipo === 'pdf') return <svg {...props}><path d="M6 2h8l4 4v16H6z" /><path d="M14 2v5h5M8.5 15h7M8.5 18h5" /></svg>;
   if (tipo === 'upload') return <svg {...props}><path d="M12 16V4m0 0L7 9m5-5 5 5M4 20h16" /></svg>;
   if (tipo === 'evento') return <svg {...props}><path d="M8 2v4M16 2v4M3 10h18" /><rect x="3" y="4" width="18" height="18" rx="2" /></svg>;
   if (tipo === 'campanha' || tipo === 'comunicado') return <svg {...props}><path d="m3 11 18-5v12L3 14zM11.6 16.4 13 21H8l-1.5-6" /></svg>;
@@ -170,7 +181,11 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [materialEmVisualizacao, setMaterialEmVisualizacao] = useState<Material | null>(null);
   const [excluindo, setExcluindo] = useState(false);
   const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; etapa: string; cancelando: boolean } | null>(null);
+  const [seletorArquivosAberto, setSeletorArquivosAberto] = useState(false);
   const inputArquivos = useRef<HTMLInputElement>(null);
+  const inputFotosVideos = useRef<HTMLInputElement>(null);
+  const inputCamera = useRef<HTMLInputElement>(null);
+  const inputPdf = useRef<HTMLInputElement>(null);
   const controladorEnvio = useRef<AbortController | null>(null);
   const gestoVisualizacao = useRef<{ x: number; y: number; pointerId: number } | null>(null);
 
@@ -208,6 +223,14 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     window.addEventListener('keydown', fecharComEsc);
     return () => window.removeEventListener('keydown', fecharComEsc);
   }, [materialEmVisualizacao]);
+
+  useEffect(() => {
+    const input = inputArquivos.current;
+    if (!input || !pastaAtiva) return;
+    const acaoOriginal = input.click.bind(input);
+    input.click = () => setSeletorArquivosAberto(true);
+    return () => { input.click = acaoOriginal; };
+  }, [pastaAtiva]);
 
   useEffect(() => {
     if (!aberto || !empresaId) return;
@@ -297,7 +320,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
         const progressoInicial = Math.max(2, totalBytes ? bytesConcluidos / totalBytes * 100 : 0);
         setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, progresso: progressoInicial, etapa: 'Verificando duplicidade', cancelando: false });
-        const tipoMaterial = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'imagem' : null;
+        const tipoMaterial = tipoMaterialArquivo(file);
         if (!tipoMaterial) {
           falhas.push(`${file.name}: formato não aceito`);
           bytesConcluidos += file.size;
@@ -376,8 +399,11 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
           setEnvioAtivo((atual) => atual ? { ...atual, progresso: Math.min(99, progressoConfirmacao), etapa: 'Registrando material' } : null);
         } catch (e) {
           if (!controlador.signal.aborted) {
-            await supabase.storage.from(BUCKET).remove([caminho]);
-            caminhosCriados.splice(caminhosCriados.indexOf(caminho), 1);
+            await supabase.storage.from(BUCKET).remove(caminhosDesteMaterial);
+            caminhosDesteMaterial.forEach((caminhoCriado) => {
+              const indiceCriado = caminhosCriados.indexOf(caminhoCriado);
+              if (indiceCriado >= 0) caminhosCriados.splice(indiceCriado, 1);
+            });
           }
           if (controlador.signal.aborted) throw e;
           falhas.push(`${file.name}: ${e instanceof Error ? e.message : 'falha no envio'}`);
@@ -385,10 +411,9 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
           continue;
         }
         const arquivoUrl = supabase.storage.from(BUCKET).getPublicUrl(caminho).data.publicUrl;
-        const miniaturaPath: string | null = null;
         const miniaturaUrl: string | null = tipoMaterial === 'imagem' ? arquivoUrl : null;
         const tituloMaterial = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
-        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: miniaturaPath, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size, arquivo_hash: arquivoHash }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em').abortSignal(controlador.signal).single();
+        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: null, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size, arquivo_hash: arquivoHash }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em').abortSignal(controlador.signal).single();
         if (error || !data) {
           await supabase.storage.from(BUCKET).remove(caminhosDesteMaterial);
           caminhosCriados.splice(caminhosCriados.indexOf(caminho), 1);
@@ -405,7 +430,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         materiaisPorHash.set(arquivoHash, data as Material);
         enviados += 1;
         bytesConcluidos += file.size;
-        setEnvioAtivo((atual) => atual ? { ...atual, progresso: totalBytes ? bytesConcluidos / totalBytes * 100 : 100, etapa: tipoMaterial === 'video' ? 'Vídeo enviado · preparando capa' : 'Material concluído' } : null);
+        setEnvioAtivo((atual) => atual ? { ...atual, progresso: totalBytes ? bytesConcluidos / totalBytes * 100 : 100, etapa: tipoMaterial === 'video' ? 'Vídeo enviado · preparando capa' : tipoMaterial === 'pdf' ? 'PDF enviado · preparando capa' : 'Material concluído' } : null);
       }
       const partes: string[] = [];
       if (enviados) partes.push(`${enviados} ${enviados === 1 ? 'arquivo enviado' : 'arquivos enviados'}`);
@@ -430,7 +455,9 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     } finally {
       controladorEnvio.current = null;
       setEnvioAtivo(null); setSalvando(false);
-      if (inputArquivos.current) inputArquivos.current.value = '';
+      [inputArquivos, inputFotosVideos, inputCamera, inputPdf].forEach((referencia) => {
+        if (referencia.current) referencia.current.value = '';
+      });
     }
   };
 
@@ -551,19 +578,41 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     : exclusaoPendente
       ? `“${exclusaoPendente.item.titulo}” será excluído definitivamente.`
       : '';
+  const abrirSeletorArquivos = () => setSeletorArquivosAberto(true);
+  const selecionarArquivos = (referencia: React.RefObject<HTMLInputElement | null>) => {
+    setSeletorArquivosAberto(false);
+    referencia.current?.click();
+  };
 
   return <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/65 px-3 py-5" onClick={onFechar}>
+    <input ref={inputFotosVideos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
+    <input ref={inputCamera} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
+    <input ref={inputPdf} type="file" accept="application/pdf,.pdf" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
+    {seletorArquivosAberto && <div className="fixed inset-0 z-[6150] flex items-end justify-center bg-slate-950/55 p-3 sm:items-center" onClick={() => setSeletorArquivosAberto(false)} role="dialog" aria-modal="true" aria-label="Adicionar materiais">
+      <section className={`w-full max-w-sm rounded-3xl border p-3 shadow-2xl ${darkMode ? 'border-slate-700 bg-slate-900 text-white' : 'border-white bg-white text-slate-900'}`} onClick={(e) => e.stopPropagation()}>
+        <h3 className="px-2 pt-1 text-base font-black">Adicionar materiais</h3>
+        <p className={`px-2 pt-1 text-xs ${suave}`}>Escolha como deseja incluir o material nesta pasta.</p>
+        <div className="mt-3 grid gap-2">
+          <button type="button" onClick={() => selecionarArquivos(inputFotosVideos)} className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-left text-sm font-black ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><Icone tipo="image" className="h-5 w-5 text-cyan-600" /><span>Selecionar fotos e vídeos</span></button>
+          <button type="button" onClick={() => selecionarArquivos(inputCamera)} className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-left text-sm font-black ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><Icone tipo="image" className="h-5 w-5 text-cyan-600" /><span>Tirar foto</span></button>
+          <button type="button" onClick={() => selecionarArquivos(inputPdf)} className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-left text-sm font-black ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><Icone tipo="pdf" className="h-5 w-5 text-red-600" /><span>Selecionar arquivos PDF</span></button>
+        </div>
+        <button type="button" onClick={() => setSeletorArquivosAberto(false)} className={`mt-2 min-h-11 w-full rounded-xl text-xs font-black uppercase ${darkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>Cancelar</button>
+      </section>
+    </div>}
     {materialEmVisualizacao && <div className="fixed inset-0 z-[6100] flex items-center justify-center bg-slate-950/95 sm:p-5" onClick={(e) => { e.stopPropagation(); setMaterialEmVisualizacao(null); }} role="dialog" aria-modal="true" aria-label={`Visualização de ${materialEmVisualizacao.titulo}`}>
       <section className="flex h-full w-full max-w-5xl flex-col overflow-hidden bg-slate-950 text-white sm:max-h-[92dvh] sm:rounded-2xl sm:border sm:border-white/15 sm:shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <header className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-b border-white/15 px-4 py-2">
-          <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.18em] text-cyan-400">{materialEmVisualizacao.tipo === 'video' ? 'Vídeo' : 'Imagem'}{indiceMaterialVisualizado >= 0 && materiaisAtivos.length > 1 ? ` · ${indiceMaterialVisualizado + 1} de ${materiaisAtivos.length}` : ''}</p><h3 className="truncate text-sm font-black sm:text-base">{materialEmVisualizacao.titulo}</h3></div>
+          <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.18em] text-cyan-400">{rotuloMaterial(materialEmVisualizacao.tipo)}{indiceMaterialVisualizado >= 0 && materiaisAtivos.length > 1 ? ` · ${indiceMaterialVisualizado + 1} de ${materiaisAtivos.length}` : ''}</p><h3 className="truncate text-sm font-black sm:text-base">{materialEmVisualizacao.titulo}</h3></div>
           <button type="button" autoFocus onClick={() => setMaterialEmVisualizacao(null)} aria-label="Fechar visualização" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-2xl font-bold text-white hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400">×</button>
         </header>
         <div className="relative flex min-h-0 flex-1 touch-pan-y select-none items-center justify-center overflow-auto p-2 sm:p-4" onPointerDown={iniciarGestoVisualizacao} onPointerUp={concluirGestoVisualizacao} onPointerCancel={() => { gestoVisualizacao.current = null; }}>
           {materialAnterior && <button type="button" onClick={() => navegarMaterial(-1)} aria-label="Visualizar material anterior" className="absolute left-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-3xl text-white shadow-lg backdrop-blur-sm hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 sm:left-4">‹</button>}
           {materialEmVisualizacao.tipo === 'video'
             ? <video src={materialEmVisualizacao.arquivo_url} controls playsInline preload="metadata" className="max-h-full max-w-full rounded-lg object-contain" />
-            : <img src={materialEmVisualizacao.arquivo_url} alt={materialEmVisualizacao.titulo} draggable={false} className="max-h-full max-w-full rounded-lg object-contain" />}
+            : materialEmVisualizacao.tipo === 'pdf'
+              ? <iframe src={`${materialEmVisualizacao.arquivo_url}#view=FitH`} title={materialEmVisualizacao.titulo} className="h-full w-full rounded-lg bg-white" />
+              : <img src={materialEmVisualizacao.arquivo_url} alt={materialEmVisualizacao.titulo} draggable={false} className="max-h-full max-w-full rounded-lg object-contain" />}
           {proximoMaterial && <button type="button" onClick={() => navegarMaterial(1)} aria-label="Visualizar próximo material" className="absolute right-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-3xl text-white shadow-lg backdrop-blur-sm hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 sm:right-4">›</button>}
         </div>
       </section>

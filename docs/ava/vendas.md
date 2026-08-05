@@ -1,8 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.10 -->
+<!-- ava-version: 1.8.0 -->
 
-> Revisão 1.7.0.10: sem impacto operacional no AvantaVendas.
+> Revisão 1.8.0: em **Divulgação**, PDFs publicados pela empresa aparecem com
+> capa criada no Google Cloud, podem ser abertos para leitura e compartilhados como arquivo PDF.
 
 > Revisão 1.7.0.06: reforço de recuperação aplicado aos acessos da Gestão; sem
 > impacto operacional no AvantaVendas.
