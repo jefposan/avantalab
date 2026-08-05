@@ -9890,15 +9890,7 @@
     else if (perfilAtivo) indiceAtivo = esquerdo === 'perfil' ? 1 : (direito === 'perfil' ? 3 : 0);
     else if (fixasAtivo) indiceAtivo = esquerdo === 'despesasFixas' ? 1 : (direito === 'despesasFixas' ? 3 : 0);
     var indiceAnterior = typeof window._avaNavIndice === 'number' ? window._avaNavIndice : indiceAtivo;
-    var capacitor = window.Capacitor;
-    var nativoCapacitor = Boolean(
-      capacitor
-      && typeof capacitor.isNativePlatform === 'function'
-      && capacitor.isNativePlatform()
-    );
-    var posicaoNavegacao = nativoCapacitor ? 'fixed' : 'absolute';
-
-    return '<nav class="' + posicaoNavegacao + ' inset-x-0 bottom-0 z-[90] border-t ' + (state.darkMode ? 'border-slate-700 bg-slate-900/95' : 'border-slate-200 bg-white/95') + ' shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur-xl" style="padding-bottom:env(safe-area-inset-bottom);" aria-label="Navegacao principal">' +
+    return '<nav class="fixed inset-x-0 bottom-0 z-[90] border-t ' + (state.darkMode ? 'border-slate-700 bg-slate-900/95' : 'border-slate-200 bg-white/95') + ' shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur-xl" style="padding-bottom:env(safe-area-inset-bottom);" aria-label="Navegacao principal">' +
       '<div class="relative mx-auto grid h-[66px] max-w-md grid-cols-5 items-end px-2">' +
         '<span class="pointer-events-none absolute left-2 right-2 top-0 h-0.5 overflow-visible"><span data-nav-indicador data-nav-destino="' + indiceAtivo + '" class="block h-0.5 w-1/5 rounded-full bg-cyan-600 transition-transform duration-300 ease-out" style="transform:translateX(' + (indiceAnterior * 100) + '%)"></span></span>' +
         itemNavegacaoInferiorHtml('nav-home', 'home', 'Início', indiceAtivo === 0) +

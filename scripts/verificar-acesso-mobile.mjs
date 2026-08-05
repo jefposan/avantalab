@@ -187,13 +187,11 @@ const inicioNavegacaoInferior = aplicativo.indexOf('function navegacaoInferiorHt
 const fimNavegacaoInferior = aplicativo.indexOf('\n  function rodapeMobileHtml()', inicioNavegacaoInferior);
 const blocoNavegacaoInferior = aplicativo.slice(inicioNavegacaoInferior, fimNavegacaoInferior);
 exigir(
-  blocoNavegacaoInferior.includes("var posicaoNavegacao = nativoCapacitor ? 'fixed' : 'absolute';") &&
-    blocoNavegacaoInferior.includes("class=\"' + posicaoNavegacao + ' inset-x-0 bottom-0"),
-  'A navegação inferior precisa permanecer fixa no Capacitor e absoluta dentro do shell no navegador.',
+  blocoNavegacaoInferior.includes('return \'<nav class="fixed inset-x-0 bottom-0'),
+  'A navegação inferior precisa permanecer fixa até existir uma solução web validada em dispositivo real.',
 );
 exigir(
-  !aplicativo.includes('sincronizarAreaRolavelMenuNoNavegador') &&
-    !aplicativo.includes('id="navegacao-inferior-mobile"'),
+  !aplicativo.includes('sincronizarAreaRolavelMenuNoNavegador'),
   'O navegador não pode medir a posição visual do rodapé afetado pelo WebKit do iOS 26.',
 );
 exigir(

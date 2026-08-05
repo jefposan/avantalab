@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.18: no navegador, Menu e navegação inferior usam o mesmo shell; no Capacitor, a navegação permanece fixa como antes.
+// Revisado na versão 1.7.0.19: restaurado o posicionamento fixo da navegação inferior após regressão visual no Chrome do iPhone.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

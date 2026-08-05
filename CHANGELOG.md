@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.19 - 2026-08-05
+
+- Gestão Mobile no navegador: restaurado o posicionamento fixo da navegação
+  inferior após a regressão que deixou a barra flutuando sobre os cards. A
+  medição visual ineficaz do rodapé continua removida.
+
 ## 1.7.0.18 - 2026-08-05
 
 - Gestão Mobile no navegador: Menu e navegação inferior passam a compartilhar

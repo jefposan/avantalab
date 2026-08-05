@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.18 -->
+<!-- ava-version: 1.7.0.19 -->
+
+> Revisão 1.7.0.19: restaurado o posicionamento fixo da navegação inferior no
+> navegador após regressão visual. O funcionamento dos botões não muda.
 
 > Revisão 1.7.0.18: no navegador, Menu e navegação inferior compartilham o
 > mesmo shell, mantendo os últimos botões acessíveis mesmo com a barra inferior
