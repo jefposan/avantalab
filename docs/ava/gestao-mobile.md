@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.05 -->
+<!-- ava-version: 1.7.0.28.06 -->
+
+> Revisão 1.7.0.28.06: no card **Controle de ponto**, **Ver controle de ponto**
+> lista todos os funcionários ativos, incluindo quem está **Em dia** ou **Sem
+> jornada hoje**. O corpo resumido do card continua exibindo apenas atrasos,
+> faltas e registros incompletos; tocar em um nome mostra os registros do dia.
 
 > Revisão 1.7.0.28.05: remoção de aviso redundante restrita à edição da
 > Caixinha na Gestão Web; sem impacto operacional na Gestão Mobile.
@@ -1217,7 +1222,10 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Perfil, dados cadastrais, backup e restauração ficam nas áreas de perfil/menu.
 - A senha é da conta AvantaLab e pode afetar outros ambientes autenticados com o
   mesmo login.
-- Controle de Ponto para funcionários é em `/ponto`, não no app financeiro. Sem
+- No card **Controle de ponto** da Gestão Mobile, gestores usam **Ver controle de
+  ponto** para consultar todos os funcionários ativos e abrir os registros do
+  dia de cada pessoa; o resumo do card destaca somente as pendências. O registro
+  de ponto dos funcionários continua em `/ponto`, não no app financeiro. Sem
   dias de trabalho marcados, o funcionário fica em Escala variável: pode bater
   ponto em qualquer dia, mas não entra nos cálculos automáticos de faltas,
   atrasos ou lembretes de ponto. A inativação é feita na Gestão Web e bloqueia

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.28.06 - 2026-08-06
+
+- Gestão Mobile/PWA: **Ver controle de ponto** passa a listar todos os
+  funcionários ativos, inclusive quem está em dia ou sem jornada prevista hoje.
+  O resumo do card continua destacando somente atrasos, faltas e registros
+  incompletos.
+
 ## 1.7.0.28.05 - 2026-08-06
 
 - Gestão Web: removido o aviso redundante **Aporte atualizado** após salvar a

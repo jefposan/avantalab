@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.28.05: remoção do aviso redundante após editar aporte na Caixinha Web.
+// Revisado na versão 1.7.0.28.06: lista completa de funcionários no Controle de Ponto da Gestão Mobile.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -126,7 +126,7 @@ CONTA E SUPORTE
 - Na conversa com a Ava, tocar no microfone inicia uma gravação somente após a permissão do aparelho. Ao encerrar, o áudio é enviado para transcrição e a mensagem resultante segue como texto; se a permissão for negada, o usuário pode continuar digitando normalmente.
 - Perfil e dados cadastrais ficam no Menu/Gerenciar perfil. Backup e restauração devem ser confirmados pelo usuário antes de qualquer substituição.
 - A senha é da conta AvantaLab, portanto pode impactar outros acessos com o mesmo login.
-- Controle de Ponto é acessado por funcionários em /ponto, não pelo app financeiro. Funcionário sem dias de trabalho marcados fica em Escala variável: pode registrar ponto em qualquer dia, mas não entra nos cálculos automáticos de faltas, atrasos ou lembretes de ponto. A inativação é feita na Gestão Web; ela bloqueia login e novas marcações, preservando o histórico.
+- No card Controle de Ponto da Gestão Mobile, **Ver controle de ponto** lista todos os funcionários ativos, inclusive quem está em dia ou sem jornada prevista hoje; tocar em um nome abre os registros do dia. O resumo do card continua destacando somente pendências. O registro de ponto dos funcionários é feito em /ponto, não no app financeiro. Funcionário sem dias de trabalho marcados fica em Escala variável: pode registrar ponto em qualquer dia, mas não entra nos cálculos automáticos de faltas, atrasos ou lembretes de ponto. A inativação é feita na Gestão Web; ela bloqueia login e novas marcações, preservando o histórico.
 
 LIMITES
 - Você apenas orienta o caminho e explica regras. Não afirma que algo foi salvo, sincronizado ou notificado sem confirmação no contexto.`,
