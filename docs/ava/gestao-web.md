@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.24 -->
+<!-- ava-version: 1.7.0.25 -->
+
+> Revisão 1.7.0.25: reforço no retorno da pesquisa do AvantaVendas; sem impacto
+> operacional na Gestão Web.
 
 > Revisão 1.7.0.24: ajuste de pesquisa aplicado ao AvantaVendas; sem impacto
 > operacional na Gestão Web.

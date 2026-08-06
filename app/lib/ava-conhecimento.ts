@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.24: a busca de Clientes no AvantaVendas permanece após lançamentos e só é limpa ao tocar no campo para uma nova pesquisa.
+// Revisado na versão 1.7.0.25: cada lançamento restaura a pesquisa de Clientes que o originou; ela só é limpa ao tocar no campo para uma nova pesquisa.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.24 -->
+<!-- ava-version: 1.7.0.25 -->
+
+> Revisão 1.7.0.25: o pedido ou pagamento guarda a pesquisa de **Clientes**
+> usada para iniciá-lo e a restaura ao fechar o comprovante. O campo só limpa
+> quando a pessoa toca nele para fazer uma nova busca.
 
 > Revisão 1.7.0.24: após pedido, pagamento, edição ou exclusão, a pesquisa em
 > **Clientes** permanece aplicada e mantém o card encontrado em destaque. Para

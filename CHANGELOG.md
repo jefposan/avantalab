@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.25 - 2026-08-05
+
+- AvantaVendas Mobile: cada lançamento de pedido ou pagamento agora leva uma
+  cópia da pesquisa de Clientes que o originou e a restaura ao fechar o
+  comprovante. Assim, o retorno não depende do estado momentâneo do card.
+
 ## 1.7.0.24 - 2026-08-05
 
 - AvantaVendas Mobile: a busca de Clientes permanece aplicada após criar,

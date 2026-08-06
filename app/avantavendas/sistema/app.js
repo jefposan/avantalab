@@ -4077,6 +4077,22 @@ function memorizarPesquisaClientes() {
   buscaClientesAplicadaMemorizada = buscaAplicada || '';
 }
 
+function contextoPesquisaClientesParaLancamento() {
+  if (state.aba !== 'clientes') return null;
+  memorizarPesquisaClientes();
+  return {
+    busca: buscaClientesMemorizada,
+    buscaAplicada: buscaClientesAplicadaMemorizada,
+  };
+}
+
+function restaurarPesquisaClientesDoLancamento(contexto) {
+  if (!contexto) return;
+  state.busca = contexto.busca || '';
+  buscaAplicada = contexto.buscaAplicada || '';
+  memorizarPesquisaClientes();
+}
+
 function restaurarPesquisaClientes() {
   state.busca = buscaClientesMemorizada;
   buscaAplicada = buscaClientesAplicadaMemorizada;
@@ -4281,6 +4297,7 @@ function abrirNovoPedidoCliente(clienteId, permitirSelecao = false) {
     desconto: 0,
     descontoTipo: 'valor',
     descontoPercentual: 0,
+    pesquisaClientesRetorno: contextoPesquisaClientesParaLancamento(),
     itens: [],
   };
   mostrarCardPedidoCliente();
@@ -4671,6 +4688,7 @@ async function finalizarPedidoCliente() {
     }
     pedidoClienteRascunho = null;
     if (!rascunho.editandoId) {
+      restaurarPesquisaClientesDoLancamento(rascunho.pesquisaClientesRetorno);
       state.aba = 'clientes';
       state.menuAberto = false;
     }
@@ -4711,6 +4729,7 @@ function abrirEditarPedido(pedidoId) {
     desconto: Number(venda.desconto || 0),
     descontoTipo: metadados.desconto_tipo === 'percentual' ? 'percentual' : 'valor',
     descontoPercentual: Number(metadados.desconto_percentual || 0),
+    pesquisaClientesRetorno: contextoPesquisaClientesParaLancamento(),
     itens: (venda.itens || []).map((item) => ({
       produto_id: item.produto_id,
       produto_nome: item.produto_nome,
@@ -4758,6 +4777,7 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
     permitirSelecaoCliente: Boolean(permitirSelecao),
     // O comprovante fecha na tela que abriu o lançamento: Pagamentos ou Clientes.
     abaOrigem: state.aba === 'vender' ? 'vender' : 'clientes',
+    pesquisaClientesRetorno: contextoPesquisaClientesParaLancamento(),
   };
   sheet(`
     <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${permitirSelecao ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button type="button" class="close" onclick="fecharSheet(event)">×</button></div>
@@ -4860,6 +4880,7 @@ async function confirmarPagamentoCliente() {
     }
     pagamentoClienteRascunho = null;
     const abaRetorno = rascunho.abaOrigem === 'vender' ? 'vender' : 'clientes';
+    if (abaRetorno === 'clientes') restaurarPesquisaClientesDoLancamento(rascunho.pesquisaClientesRetorno);
     state.aba = abaRetorno;
     state.menuAberto = false;
     await confirmarMutacaoDadosVendas();
