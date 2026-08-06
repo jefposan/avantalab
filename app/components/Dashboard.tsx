@@ -694,8 +694,8 @@ export default function Dashboard({
     return ano && mes && dia ? `${dia}/${mes}/${ano.slice(-2)}` : '—';
   };
 
-  const CampoDataAporte = ({ value, onChange, ariaLabel }: { value: string; onChange: (value: string) => void; ariaLabel: string }) => (
-    <div className={`relative h-10 min-w-0 rounded-xl border transition focus-within:ring-2 focus-within:ring-offset-1 ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100 focus-within:ring-slate-500' : 'border-slate-200 bg-white text-slate-800 focus-within:ring-slate-400'}`}>
+  const CampoDataAporte = ({ value, onChange, ariaLabel, compacto = false }: { value: string; onChange: (value: string) => void; ariaLabel: string; compacto?: boolean }) => (
+    <div className={`relative min-w-0 border transition focus-within:ring-2 focus-within:ring-offset-1 ${compacto ? 'h-8 rounded-md' : 'h-10 rounded-xl'} ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100 focus-within:ring-slate-500' : 'border-slate-200 bg-white text-slate-800 focus-within:ring-slate-400'}`}>
       <input
         type="date"
         value={value}
@@ -703,7 +703,7 @@ export default function Dashboard({
         aria-label={ariaLabel}
         className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
       />
-      <span aria-hidden="true" className="flex h-full items-center justify-center px-3 text-center text-sm font-bold tabular-nums">{formatarDataAporte(value)}</span>
+      <span aria-hidden="true" className={`flex h-full items-center justify-center px-2 text-center font-bold tabular-nums ${compacto ? 'text-xs' : 'text-sm'}`}>{formatarDataAporte(value)}</span>
     </div>
   );
 
@@ -1541,13 +1541,17 @@ const mostrarComparativoResumoDash =
               return (
                 <div key={mov.id} className={`overflow-hidden rounded-lg ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
                   {editando ? (
-                    <div className="grid grid-cols-[96px_minmax(0,1fr)_84px_44px_44px_44px] items-center gap-2 px-2 py-2 max-sm:grid-cols-[88px_minmax(0,1fr)_76px]">
-                      <CampoDataAporte value={caixinhaAporteEditando.data} onChange={(data) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, data })} ariaLabel="Data do aporte" />
-                      <input value={caixinhaAporteEditando.descricao} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, descricao: e.target.value })} className={`h-10 min-w-0 rounded-xl border px-3 text-xs font-bold ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Descrição do aporte" />
-                      <input inputMode="decimal" value={caixinhaAporteEditando.valor} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, valor: e.target.value })} className={`h-10 min-w-0 rounded-xl border px-2 text-right text-xs font-black ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`} aria-label="Valor do aporte" />
-                      <button type="button" onClick={() => void salvarEdicaoAporte()} className="flex h-11 w-11 items-center justify-center rounded-lg text-white" style={{ backgroundColor: corPrimaria }} aria-label="Salvar aporte" title="Salvar aporte"><svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m5 12 4 4L19 6" /></svg></button>
-                      <button type="button" onClick={() => setCaixinhaAporteEditando(null)} className={`flex h-11 w-11 items-center justify-center rounded-lg border ${darkMode ? 'border-slate-600 text-slate-100' : 'border-slate-300 text-slate-700'}`} aria-label="Cancelar edição" title="Cancelar edição"><svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 6 12 12M18 6 6 18" /></svg></button>
-                      <button type="button" onClick={() => onExcluirAporteCaixinha(mov)} className="flex h-11 w-11 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-600 hover:text-white" aria-label="Excluir aporte" title="Excluir aporte"><svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 7h12m-10 0 1 12h6l1-12m-6 0V5h4v2" /></svg></button>
+                    <div className="w-full overflow-x-auto custom-scroll">
+                      <div className="grid min-w-[320px] items-center gap-1 px-1.5 py-1.5" style={{ gridTemplateColumns: '80px minmax(64px, 1fr) 76px 96px' }}>
+                        <CampoDataAporte value={caixinhaAporteEditando.data} onChange={(data) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, data })} ariaLabel="Data do aporte" compacto />
+                        <input value={caixinhaAporteEditando.descricao} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, descricao: e.target.value })} className={`h-8 min-w-0 rounded-md border px-2 text-xs font-bold outline-none ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-800'}`} aria-label="Descrição do aporte" />
+                        <input inputMode="decimal" value={caixinhaAporteEditando.valor} onChange={(e) => setCaixinhaAporteEditando({ ...caixinhaAporteEditando, valor: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void salvarEdicaoAporte(); } else if (e.key === 'Escape') { e.preventDefault(); setCaixinhaAporteEditando(null); } }} className={`h-8 min-w-0 rounded-md border px-2 text-right text-xs font-bold outline-none ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-800'}`} aria-label="Valor do aporte" />
+                        <div className={`sticky right-0 z-10 flex h-8 items-center justify-center gap-1 border-l px-1 ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
+                          <button type="button" onClick={() => void salvarEdicaoAporte()} className="cursor-pointer rounded p-1.5 text-green-500 transition-all hover:bg-green-500/10" aria-label="Salvar aporte" title="Salvar edição">✓</button>
+                          <button type="button" onClick={() => setCaixinhaAporteEditando(null)} className="cursor-pointer rounded p-1.5 text-slate-400 transition-all hover:bg-slate-500/10 hover:text-red-500" aria-label="Cancelar edição" title="Cancelar edição">×</button>
+                          <button type="button" onClick={() => onExcluirAporteCaixinha(mov)} className="cursor-pointer rounded p-1.5 text-red-500 transition-all hover:bg-red-500/10" aria-label="Excluir aporte" title="Excluir aporte"><svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 7h12m-10 0 1 12h6l1-12m-6 0V5h4v2" /></svg></button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <button

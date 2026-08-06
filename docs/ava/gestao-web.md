@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.28.03 -->
+<!-- ava-version: 1.7.0.28.04 -->
+
+> Revisão 1.7.0.28.04: a edição do aporte permanece na própria linha e agora
+> segue a composição compacta dos lançamentos de despesas, sem sobrepor campos
+> nem ocultar as ações. Não houve mudança nas regras de salvar ou excluir.
 
 > Revisão 1.7.0.28.03: em **Caixinha/Reserva financeira → Ver lançamentos**,
 > clicar em um aporte transforma diretamente a própria linha em edição. Nela é

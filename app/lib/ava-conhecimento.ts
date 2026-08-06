@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.28.03: edição dos aportes da Caixinha na linha web e no card da Gestão Mobile.
+// Revisado na versão 1.7.0.28.04: composição visual da edição em linha da Caixinha Web, sem mudança operacional.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

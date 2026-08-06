@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28.03 -->
+<!-- ava-version: 1.7.0.28.04 -->
+
+> Revisão 1.7.0.28.04: refinamento visual restrito à edição da Caixinha na
+> Gestão Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.28.03: edição dos lançamentos da Caixinha ajustada na Gestão
 > Web e Mobile; sem impacto operacional no AvantaVendas.

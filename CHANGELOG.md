@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.28.04 - 2026-08-06
+
+- Gestão Web: a edição em linha dos aportes da Caixinha/Reserva financeira passa
+  a usar a mesma composição compacta dos lançamentos de despesas, com colunas
+  estáveis, campos sem sobreposição e ações agrupadas e sempre visíveis.
+
 ## 1.7.0.28.03 - 2026-08-06
 
 - Gestão Web: clicar em um aporte da Caixinha/Reserva financeira transforma a

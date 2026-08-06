@@ -15,6 +15,9 @@ test('lançamento da Caixinha entra diretamente em edição na própria linha we
   assert.match(dashboard, /aria-label="Cancelar edição"/);
   assert.match(dashboard, /onExcluirAporteCaixinha\(mov\)/);
   assert.match(dashboard, /aria-label="Excluir aporte"/);
+  assert.match(dashboard, /min-w-\[320px\]/);
+  assert.match(dashboard, /gridTemplateColumns: '80px minmax\(64px, 1fr\) 76px 96px'/);
+  assert.match(dashboard, /sticky right-0 z-10 flex h-8/);
 });
 
 test('lançamento da Caixinha abre o card móvel compartilhado de editar e excluir', async () => {
