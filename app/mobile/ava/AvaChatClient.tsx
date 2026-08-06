@@ -284,14 +284,7 @@ export default function AvaChatClient({
 
     if (virtualKeyboard) virtualKeyboard.overlaysContent = true;
 
-    const syncNativeKeyboardInset = () => {
-      // Safari/iOS e navegadores sem a API VirtualKeyboard já reduzem 100dvh
-      // quando o teclado abre. Somar uma segunda altura nesses ambientes faz o
-      // chat oscilar. Só o teclado explicitamente sobreposto recebe este inset.
-      if (!virtualKeyboard) {
-        shell.style.setProperty('--ava-keyboard-inset', '0px');
-        return;
-      }
+    const syncKeyboardInset = () => {
       const messages = messagesRef.current;
       const keepLastMessageVisible = Boolean(messages && (
         messages.scrollHeight - messages.scrollTop - messages.clientHeight < 96
@@ -299,7 +292,13 @@ export default function AvaChatClient({
 
       cancelAnimationFrame(viewportFrame);
       viewportFrame = requestAnimationFrame(() => {
-        const keyboardInset = Math.max(0, virtualKeyboard.boundingRect?.height || 0);
+        const viewport = window.visualViewport;
+        const layoutHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
+        const visibleHeight = viewport?.height || layoutHeight;
+        const nativeKeyboardHeight = virtualKeyboard?.boundingRect?.height || 0;
+        const keyboardInset = nativeKeyboardHeight > 0
+          ? nativeKeyboardHeight
+          : Math.max(0, layoutHeight - visibleHeight);
 
         shell.style.setProperty('--ava-keyboard-inset', `${Math.round(keyboardInset)}px`);
 
@@ -312,13 +311,17 @@ export default function AvaChatClient({
       });
     };
 
-    syncNativeKeyboardInset();
-    virtualKeyboard?.addEventListener('geometrychange', syncNativeKeyboardInset);
+    syncKeyboardInset();
+    virtualKeyboard?.addEventListener('geometrychange', syncKeyboardInset);
+    window.visualViewport?.addEventListener('resize', syncKeyboardInset);
+    window.addEventListener('resize', syncKeyboardInset);
 
     return () => {
       cancelAnimationFrame(viewportFrame);
       cancelAnimationFrame(messageScrollFrame);
-      virtualKeyboard?.removeEventListener('geometrychange', syncNativeKeyboardInset);
+      virtualKeyboard?.removeEventListener('geometrychange', syncKeyboardInset);
+      window.visualViewport?.removeEventListener('resize', syncKeyboardInset);
+      window.removeEventListener('resize', syncKeyboardInset);
       if (virtualKeyboard && previousKeyboardOverlay !== undefined) {
         virtualKeyboard.overlaysContent = previousKeyboardOverlay;
       }
@@ -675,13 +678,12 @@ export default function AvaChatClient({
             ref={textareaRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            onFocus={(event) => {
+            onPointerDown={(event) => {
+              if (document.activeElement === event.currentTarget) return;
+              event.preventDefault();
               const textarea = event.currentTarget;
-              requestAnimationFrame(() => {
-                if (document.activeElement === textarea) {
-                  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-                }
-              });
+              textarea.focus({ preventScroll: true });
+              textarea.setSelectionRange(textarea.value.length, textarea.value.length);
             }}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {

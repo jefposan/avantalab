@@ -1,9 +1,6 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.27 -->
-
-> Revisão 1.7.0.27: compatibilidade de teclado ajustada na Ava; sem impacto
-> operacional na Gestão Web.
+<!-- ava-version: 1.7.0.26 -->
 
 > Revisão 1.7.0.26: a Ava prioriza números disponíveis ao responder perguntas
 > de resultado; sem impacto operacional na Gestão Web.
