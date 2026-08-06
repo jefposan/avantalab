@@ -5597,21 +5597,36 @@ async function compartilharPedido(pedidoId) {
     secundario: `${Number(item.quantidade || 0)} × ${moeda(item.preco || item.preco_unitario)}`,
     valor: moeda(itemPedidoBonificado(item) ? 0 : Number(item.total ?? Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0))),
   }));
-  const canvas = criarCanvasComprovante({
+  const titulo = pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido';
+  const tituloDetalhes = pedidoEhConsignado(venda) ? 'Detalhes do consignado' : 'Detalhes do pedido';
+  const dadosComprovante = {
     empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
-    titulo: pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido',
-    tituloDetalhes: pedidoEhConsignado(venda) ? 'Detalhes do consignado' : 'Detalhes do pedido',
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(venda.criado_em),
-    etiqueta: pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido',
-    linhas,
-    resumo: [
-      { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
-      ...(desconto > 0 ? [{ rotulo: 'Desconto concedido', valor: moeda(desconto) }] : []),
-      { rotulo: 'Pedido', valor: moeda(venda.total), destaque: 'principal', tituloDestaque: 'Pedido registrado' },
-      { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual), destaque: 'saldo' },
-    ],
-  });
+    saldoAnterior: moeda(resumo.saldoAnterior),
+    valorPedido: moeda(venda.total),
+    saldoAtual: moeda(resumo.saldoAtual),
+    desconto: desconto > 0 ? moeda(desconto) : '',
+    titulo,
+    itens: linhas,
+  };
+  // O V2 recebe somente dados já calculados e formatados pela mesma rotina.
+  // O fallback protege o compartilhamento em uma transição de cache do PWA.
+  const canvas = window.OrderReceiptV2?.criarCanvas
+    ? await window.OrderReceiptV2.criarCanvas(dadosComprovante)
+    : criarCanvasComprovante({
+      ...dadosComprovante,
+      titulo,
+      tituloDetalhes,
+      etiqueta: titulo,
+      linhas,
+      resumo: [
+        { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
+        ...(desconto > 0 ? [{ rotulo: 'Desconto concedido', valor: dadosComprovante.desconto }] : []),
+        { rotulo: 'Pedido', valor: dadosComprovante.valorPedido, destaque: 'principal', tituloDestaque: 'Pedido registrado' },
+        { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
+      ],
+    });
   const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, `Comprovante de pedido - ${cliente?.nome || 'Cliente não informado'}`);
   if (compartilhado) fecharSheet();
 }

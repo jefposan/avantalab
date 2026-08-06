@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.28.08 - 2026-08-06
+
+- AvantaVendas: o comprovante de pedido compartilhado passa a usar a mesma
+  composição institucional do comprovante de pagamento, preservando produtos,
+  quantidades, bonificações, descontos, valores, saldos e compartilhamento.
+
 ## 1.7.0.28.07 - 2026-08-06
 
 - AvantaVendas: o comprovante de pagamento compartilhado foi redesenhado com

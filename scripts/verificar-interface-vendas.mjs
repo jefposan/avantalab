@@ -63,7 +63,7 @@ exigir(
   'As ações rápidas devem reutilizar as cores de Pagamento e Pedido do card do cliente.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '29'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '30'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

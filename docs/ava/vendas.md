@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28.07 -->
+<!-- ava-version: 1.7.0.28.08 -->
+
+> Revisão 1.7.0.28.08: ao compartilhar um comprovante de pedido, a imagem usa
+> a mesma composição institucional do pagamento e mantém produtos, quantidades,
+> bonificações, descontos quando houver, valores e saldos do pedido confirmado.
+> Não houve mudança em cálculo, exportação ou compartilhamento.
 
 > Revisão 1.7.0.28.07: ao compartilhar um comprovante de pagamento, a imagem
 > usa a nova composição visual institucional. Empresa, cliente, data, saldos,
