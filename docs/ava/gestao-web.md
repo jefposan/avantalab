@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.28 -->
+<!-- ava-version: 1.7.0.28.01 -->
+
+> Revisão 1.7.0.28.01: correção de foco restrita ao chat da Ava no
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.28: estabilidade do teclado aplicada ao chat mobile da Ava;
 > sem impacto operacional na Gestão Web.

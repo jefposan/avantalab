@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.0.28.01 - 2026-08-06
+
+- Ava no AvantaVendas PWA: o foco passa a ocorrer somente quando o toque no
+  campo termina, evitando que o movimento do teclado durante o próprio gesto
+  faça o campo perder o foco. Os eventos do campo também deixam de alcançar os
+  ouvintes globais do AvantaVendas. A mudança é restrita ao ambiente Vendas; a
+  Ava da Gestão preserva o comportamento anterior.
+
 ## 1.7.0.28 - 2026-08-06
 
 - Ava Mobile e AvantaVendas: o recuo do teclado passa a usar uma referência

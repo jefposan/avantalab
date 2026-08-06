@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28 -->
+<!-- ava-version: 1.7.0.28.01 -->
+
+> Revisão 1.7.0.28.01: correção de foco restrita ao chat da Ava no
+> AvantaVendas; a Ava da Gestão Mobile mantém o comportamento anterior.
 
 > Revisão 1.7.0.28: o chat da Ava mantém o campo de mensagem estável acima do
 > teclado, sem deslocar o cabeçalho ou devolver o campo para baixo durante a

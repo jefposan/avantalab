@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28 -->
+<!-- ava-version: 1.7.0.28.01 -->
+
+> Revisão 1.7.0.28.01: o chat conclui o toque no campo antes de abrir o
+> teclado e impede que eventos da tela do AvantaVendas interrompam o foco. O
+> teclado permanece aberto após o toque sem alterar o fluxo da Ava na Gestão.
 
 > Revisão 1.7.0.28: ao tocar no campo da Ava, o teclado mantém o campo visível
 > sem deslocar o chat inteiro nem fazê-lo retornar durante a digitação. A

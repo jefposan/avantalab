@@ -153,3 +153,24 @@ test('integração preserva shell e foco protegido enquanto usa o cálculo testa
   assert.match(styles, /height:\s*100dvh/);
   assert.match(styles, /padding-bottom:\s*var\(--ava-keyboard-inset\)/);
 });
+
+test('Ava conclui o toque antes de abrir o teclado e isola o gesto do AvantaVendas', async () => {
+  const component = await readFile(
+    new URL('../../app/mobile/ava/AvaChatClient.tsx', import.meta.url),
+    'utf8',
+  );
+  const pointerDown = component.match(/onPointerDown=\{\(event\) => \{([\s\S]*?)\n\s*\}\}\n\s*onPointerUp=/)?.[1] || '';
+  const pointerUp = component.match(/onPointerUp=\{\(event\) => \{([\s\S]*?)\n\s*\}\}\n\s*onClick=/)?.[1] || '';
+
+  assert.match(pointerDown, /initialEnvironment === 'vendas'/);
+  assert.match(pointerDown, /event\.stopPropagation\(\)/);
+  assert.match(pointerDown, /prepareAvaKeyboardViewportForFocus\(/);
+  assert.match(pointerDown, /event\.preventDefault\(\)/);
+  assert.match(pointerDown, /if \(isSalesChat\) return;[\s\S]*textarea\.focus\(/);
+
+  assert.match(pointerUp, /initialEnvironment !== 'vendas'/);
+  assert.match(pointerUp, /event\.stopPropagation\(\)/);
+  assert.match(pointerUp, /event\.preventDefault\(\)/);
+  assert.match(pointerUp, /textarea\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(component, /onClick=\{\(event\) => \{[\s\S]*initialEnvironment === 'vendas'[\s\S]*event\.stopPropagation\(\)/);
+});

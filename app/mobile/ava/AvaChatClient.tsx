@@ -700,6 +700,8 @@ export default function AvaChatClient({
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onPointerDown={(event) => {
+              const isSalesChat = initialEnvironment === 'vendas';
+              if (isSalesChat) event.stopPropagation();
               if (document.activeElement === event.currentTarget) return;
               const viewport = window.visualViewport;
               keyboardViewportRef.current = prepareAvaKeyboardViewportForFocus(
@@ -708,9 +710,22 @@ export default function AvaChatClient({
                 Math.max(window.innerWidth || 0, document.documentElement.clientWidth || 0),
               );
               event.preventDefault();
+              if (isSalesChat) return;
               const textarea = event.currentTarget;
               textarea.focus({ preventScroll: true });
               textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            }}
+            onPointerUp={(event) => {
+              if (initialEnvironment !== 'vendas') return;
+              event.stopPropagation();
+              if (document.activeElement === event.currentTarget) return;
+              event.preventDefault();
+              const textarea = event.currentTarget;
+              textarea.focus({ preventScroll: true });
+              textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            }}
+            onClick={(event) => {
+              if (initialEnvironment === 'vendas') event.stopPropagation();
             }}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
