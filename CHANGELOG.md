@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.0.28 - 2026-08-06
+
+- Ava Mobile e AvantaVendas: o recuo do teclado passa a usar uma referência
+  estável capturada antes do foco. Eventos intermediários do WebKit não zeram
+  mais o recuo nem devolvem o campo para baixo; shell, cabeçalho e CSS do chat
+  permanecem inalterados. A lógica recebeu testes próprios para iOS,
+  Android/VirtualKeyboard, navegador, fechamento e rotação.
+
 ## 1.7.0.26 - 2026-08-05
 
 - Ava no AvantaVendas: perguntas sobre resultados passam a receber primeiro os

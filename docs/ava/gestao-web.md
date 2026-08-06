@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.26 -->
+<!-- ava-version: 1.7.0.28 -->
+
+> Revisão 1.7.0.28: estabilidade do teclado aplicada ao chat mobile da Ava;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.26: a Ava prioriza números disponíveis ao responder perguntas
 > de resultado; sem impacto operacional na Gestão Web.

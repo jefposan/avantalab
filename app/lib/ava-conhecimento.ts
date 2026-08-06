@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.26: no Vendas, a Ava responde resultados com os números do contexto antes de orientar a tela de consulta.
+// Revisado na versão 1.7.0.28: estabilidade do teclado no chat compartilhado, sem mudança nas orientações da Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

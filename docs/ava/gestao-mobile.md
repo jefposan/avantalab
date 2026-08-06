@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.26 -->
+<!-- ava-version: 1.7.0.28 -->
+
+> Revisão 1.7.0.28: o chat da Ava mantém o campo de mensagem estável acima do
+> teclado, sem deslocar o cabeçalho ou devolver o campo para baixo durante a
+> digitação. O mesmo componente é compartilhado com o AvantaVendas.
 
 > Revisão 1.7.0.26: a Ava prioriza números disponíveis ao responder perguntas
 > de resultado; sem impacto operacional na Gestão Mobile.

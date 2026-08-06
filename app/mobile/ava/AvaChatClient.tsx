@@ -5,6 +5,13 @@ import Image from 'next/image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import styles from './ava-chat.module.css';
+import {
+  EMPTY_AVA_KEYBOARD_VIEWPORT_STATE,
+  initializeAvaKeyboardViewport,
+  prepareAvaKeyboardViewportForFocus,
+  synchronizeAvaKeyboardViewport,
+  type AvaKeyboardViewportSample,
+} from './keyboard-viewport';
 
 type ChatRole = 'user' | 'assistant';
 
@@ -248,6 +255,7 @@ export default function AvaChatClient({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const keyboardViewportRef = useRef(EMPTY_AVA_KEYBOARD_VIEWPORT_STATE);
   const sentMessage = messages.some((message) => message.role === 'user');
   const suggestions = initialEnvironment === 'vendas' ? SALES_SUGGESTIONS : SUGGESTIONS;
 
@@ -273,6 +281,19 @@ export default function AvaChatClient({
     const virtualKeyboard = (navigator as NavigatorWithVirtualKeyboard).virtualKeyboard;
     const previousKeyboardOverlay = virtualKeyboard?.overlaysContent;
 
+    const readKeyboardViewport = (): AvaKeyboardViewportSample => {
+      const viewport = window.visualViewport;
+      return {
+        visualHeight: viewport?.height || window.innerHeight || html.clientHeight || 0,
+        layoutHeight: Math.max(window.innerHeight || 0, html.clientHeight || 0),
+        layoutWidth: Math.max(window.innerWidth || 0, html.clientWidth || 0),
+        virtualKeyboardHeight: virtualKeyboard?.boundingRect?.height || 0,
+        textareaFocused: document.activeElement === textareaRef.current,
+        touchCapable: navigator.maxTouchPoints > 0
+          || window.matchMedia('(any-pointer: coarse)').matches,
+      };
+    };
+
     html.style.height = '100%';
     html.style.overflow = 'hidden';
     html.style.overscrollBehavior = 'none';
@@ -283,6 +304,7 @@ export default function AvaChatClient({
     body.style.background = chatBackground;
 
     if (virtualKeyboard) virtualKeyboard.overlaysContent = true;
+    keyboardViewportRef.current = initializeAvaKeyboardViewport(readKeyboardViewport());
 
     const syncKeyboardInset = () => {
       const messages = messagesRef.current;
@@ -292,15 +314,13 @@ export default function AvaChatClient({
 
       cancelAnimationFrame(viewportFrame);
       viewportFrame = requestAnimationFrame(() => {
-        const viewport = window.visualViewport;
-        const layoutHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
-        const visibleHeight = viewport?.height || layoutHeight;
-        const nativeKeyboardHeight = virtualKeyboard?.boundingRect?.height || 0;
-        const keyboardInset = nativeKeyboardHeight > 0
-          ? nativeKeyboardHeight
-          : Math.max(0, layoutHeight - visibleHeight);
+        const viewportState = synchronizeAvaKeyboardViewport(
+          keyboardViewportRef.current,
+          readKeyboardViewport(),
+        );
+        keyboardViewportRef.current = viewportState;
 
-        shell.style.setProperty('--ava-keyboard-inset', `${Math.round(keyboardInset)}px`);
+        shell.style.setProperty('--ava-keyboard-inset', `${viewportState.keyboardInset}px`);
 
         if (keepLastMessageVisible && messages) {
           cancelAnimationFrame(messageScrollFrame);
@@ -325,6 +345,7 @@ export default function AvaChatClient({
       if (virtualKeyboard && previousKeyboardOverlay !== undefined) {
         virtualKeyboard.overlaysContent = previousKeyboardOverlay;
       }
+      keyboardViewportRef.current = EMPTY_AVA_KEYBOARD_VIEWPORT_STATE;
       shell.style.removeProperty('--ava-keyboard-inset');
       html.style.overflow = previous.htmlOverflow;
       html.style.height = previous.htmlHeight;
@@ -680,6 +701,12 @@ export default function AvaChatClient({
             onChange={(event) => setInput(event.target.value)}
             onPointerDown={(event) => {
               if (document.activeElement === event.currentTarget) return;
+              const viewport = window.visualViewport;
+              keyboardViewportRef.current = prepareAvaKeyboardViewportForFocus(
+                keyboardViewportRef.current,
+                viewport?.height || window.innerHeight || 0,
+                Math.max(window.innerWidth || 0, document.documentElement.clientWidth || 0),
+              );
               event.preventDefault();
               const textarea = event.currentTarget;
               textarea.focus({ preventScroll: true });
@@ -692,6 +719,7 @@ export default function AvaChatClient({
               }
             }}
             rows={1}
+            data-ava-chat-input="true"
             placeholder="Como posso ajudar você hoje?"
             aria-label="Mensagem para a Ava"
             disabled={!ready}

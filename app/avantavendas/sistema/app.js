@@ -403,6 +403,7 @@ function dataNascimentoParaIso(valorData) {
 function campoVendasAceitaCursorNoFim(elemento) {
   if (!elemento || elemento.disabled || elemento.readOnly) return false;
   if (!(elemento instanceof HTMLInputElement || elemento instanceof HTMLTextAreaElement)) return false;
+  if (elemento.hasAttribute('data-ava-chat-input')) return false;
   if (elemento instanceof HTMLTextAreaElement) return true;
 
   return [

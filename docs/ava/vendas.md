@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.26 -->
+<!-- ava-version: 1.7.0.28 -->
+
+> Revisão 1.7.0.28: ao tocar no campo da Ava, o teclado mantém o campo visível
+> sem deslocar o chat inteiro nem fazê-lo retornar durante a digitação. A
+> correção preserva o cabeçalho, as mensagens, a área segura e o fechamento.
 
 > Revisão 1.7.0.26: ao perguntar à Ava por total, saldo, resultado ou análise,
 > ela responde primeiro os números disponíveis para o período atual. Perguntas
