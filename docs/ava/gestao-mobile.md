@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.04 -->
+<!-- ava-version: 1.7.0.28.05 -->
+
+> Revisão 1.7.0.28.05: remoção de aviso redundante restrita à edição da
+> Caixinha na Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.7.0.28.04: refinamento visual restrito à edição da Caixinha na
 > Gestão Web; sem impacto operacional na Gestão Mobile.

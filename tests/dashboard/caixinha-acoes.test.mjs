@@ -18,6 +18,7 @@ test('lançamento da Caixinha entra diretamente em edição na própria linha we
   assert.match(dashboard, /min-w-\[320px\]/);
   assert.match(dashboard, /gridTemplateColumns: '80px minmax\(64px, 1fr\) 76px 96px'/);
   assert.match(dashboard, /sticky right-0 z-10 flex h-8/);
+  assert.doesNotMatch(dashboard, /setCaixinhaMensagem\('Aporte atualizado\.'\)/);
 });
 
 test('lançamento da Caixinha abre o card móvel compartilhado de editar e excluir', async () => {

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.28.04 -->
+<!-- ava-version: 1.7.0.28.05 -->
+
+> Revisão 1.7.0.28.05: ao salvar a edição de um aporte, a linha fecha sem exibir
+> o aviso redundante **Aporte atualizado**. Erros continuam sendo informados;
+> sem mudança na gravação ou na exclusão.
 
 > Revisão 1.7.0.28.04: a edição do aporte permanece na própria linha e agora
 > segue a composição compacta dos lançamentos de despesas, sem sobrepor campos

@@ -717,7 +717,7 @@ export default function Dashboard({
     });
     if (resultado.ok) {
       setCaixinhaAporteEditando(null);
-      setCaixinhaMensagem('Aporte atualizado.');
+      setCaixinhaMensagem('');
     } else setCaixinhaMensagem(resultado.mensagem || 'Não foi possível atualizar o aporte.');
   };
 

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.28.04: composição visual da edição em linha da Caixinha Web, sem mudança operacional.
+// Revisado na versão 1.7.0.28.05: remoção do aviso redundante após editar aporte na Caixinha Web.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

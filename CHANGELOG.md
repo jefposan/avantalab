@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.0.28.05 - 2026-08-06
+
+- Gestão Web: removido o aviso redundante **Aporte atualizado** após salvar a
+  edição de um lançamento da Caixinha. Mensagens de erro continuam visíveis.
+
 ## 1.7.0.28.04 - 2026-08-06
 
 - Gestão Web: a edição em linha dos aportes da Caixinha/Reserva financeira passa

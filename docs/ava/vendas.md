@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28.04 -->
+<!-- ava-version: 1.7.0.28.05 -->
+
+> Revisão 1.7.0.28.05: remoção de aviso redundante restrita à Gestão Web; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.28.04: refinamento visual restrito à edição da Caixinha na
 > Gestão Web; sem impacto operacional no AvantaVendas.
