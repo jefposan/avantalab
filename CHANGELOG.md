@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.28.07 - 2026-08-06
+
+- AvantaVendas: o comprovante de pagamento compartilhado foi redesenhado com
+  cabeçalho institucional sólido, cards financeiros com hierarquia visual clara
+  e fundo oficial otimizado e reutilizável. Cálculos, dados, datas, valores,
+  exportação e compartilhamento permanecem inalterados.
+
 ## 1.7.0.28.06 - 2026-08-06
 
 - Gestão Mobile/PWA: **Ver controle de ponto** passa a listar todos os

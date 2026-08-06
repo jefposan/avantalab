@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.28.06 -->
+<!-- ava-version: 1.7.0.28.07 -->
+
+> Revisão 1.7.0.28.07: redesign visual do comprovante compartilhado no
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.28.06: listagem completa de funcionários aplicada ao card de
 > Controle de Ponto da Gestão Mobile; sem impacto operacional na Gestão Web.

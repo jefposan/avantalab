@@ -141,6 +141,7 @@ export default function AvantaVendasBootstrap({
       `${caminhoRecursos}/vendor/supabase.min.js`,
       `${caminhoRecursos}/config.js`,
       `${caminhoRecursos}/supabase-client.js`,
+      `${caminhoRecursos}/payment-receipt-v2.js`,
       `${caminhoRecursos}/app.js`,
     ];
 

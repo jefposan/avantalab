@@ -5623,23 +5623,37 @@ async function compartilharPagamento(pagamentoId) {
   const resumo = resumoComprovantePagamento(pagamento);
   const desconto = Number(pagamento.desconto || 0);
   const abatimento = Number(pagamento.valor || 0) + desconto;
-  const linhas = [{ principal: 'Forma de pagamento', secundario: '', valor: pagamento.forma_pagamento || 'Não informado' }];
-  if (desconto > 0) linhas.push({ principal: 'Desconto concedido', secundario: 'Abatimento aplicado', valor: moeda(desconto) });
-  const canvas = criarCanvasComprovante({
+  const dadosComprovante = {
     empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
-    titulo: 'Comprovante de pagamento',
-    tituloDetalhes: 'Detalhes do pagamento',
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(pagamento.data_pagamento),
-    etiqueta: 'Comprovante de pagamento',
-    temaEtiqueta: 'verde',
-    linhas,
-    resumo: [
-      { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
-      { rotulo: desconto > 0 ? 'Valor pago + desconto' : 'Valor pago', valor: moeda(abatimento), destaque: 'principal', tituloDestaque: 'Pagamento registrado', subtitulo: desconto > 0 ? 'Valor recebido com desconto aplicado' : 'Pagamento confirmado' },
-      { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual), destaque: 'saldo' },
-    ],
-  });
+    saldoAnterior: moeda(resumo.saldoAnterior),
+    valorPago: moeda(abatimento),
+    saldoAtual: moeda(resumo.saldoAtual),
+    formaPagamento: pagamento.forma_pagamento || 'Não informado',
+    desconto: desconto > 0 ? moeda(desconto) : '',
+    rotuloValorPago: desconto > 0 ? 'Valor pago + desconto' : 'Valor pago',
+  };
+  // O V2 só recebe valores já formatados. O fallback preserva a exportação se
+  // o PWA estiver entre as versões de cache durante a atualização.
+  const canvas = window.PaymentReceiptV2?.criarCanvas
+    ? await window.PaymentReceiptV2.criarCanvas(dadosComprovante)
+    : criarCanvasComprovante({
+      ...dadosComprovante,
+      titulo: 'Comprovante de pagamento',
+      tituloDetalhes: 'Detalhes do pagamento',
+      etiqueta: 'Comprovante de pagamento',
+      temaEtiqueta: 'verde',
+      linhas: [
+        { principal: 'Forma de pagamento', secundario: '', valor: dadosComprovante.formaPagamento },
+        ...(desconto > 0 ? [{ principal: 'Desconto concedido', secundario: 'Abatimento aplicado', valor: dadosComprovante.desconto }] : []),
+      ],
+      resumo: [
+        { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
+        { rotulo: dadosComprovante.rotuloValorPago, valor: dadosComprovante.valorPago, destaque: 'principal', tituloDestaque: 'Pagamento registrado', subtitulo: desconto > 0 ? 'Valor recebido com desconto aplicado' : 'Pagamento confirmado' },
+        { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
+      ],
+    });
   const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, `Comprovante de pagamento - ${cliente?.nome || 'Cliente não informado'}`);
   if (compartilhado) fecharSheet();
 }

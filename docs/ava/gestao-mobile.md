@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.06 -->
+<!-- ava-version: 1.7.0.28.07 -->
+
+> Revisão 1.7.0.28.07: redesign visual do comprovante compartilhado no
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.7.0.28.06: no card **Controle de ponto**, **Ver controle de ponto**
 > lista todos os funcionários ativos, incluindo quem está **Em dia** ou **Sem

@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28.06 -->
+<!-- ava-version: 1.7.0.28.07 -->
+
+> Revisão 1.7.0.28.07: ao compartilhar um comprovante de pagamento, a imagem
+> usa a nova composição visual institucional. Empresa, cliente, data, saldos,
+> valor pago, desconto quando houver e forma de pagamento continuam vindo do
+> mesmo lançamento confirmado; não houve mudança em cálculo, exportação ou
+> compartilhamento.
 
 > Revisão 1.7.0.28.06: listagem completa de funcionários aplicada à Gestão
 > Mobile; sem impacto operacional no AvantaVendas.
