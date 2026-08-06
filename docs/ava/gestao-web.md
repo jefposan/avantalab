@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.22 -->
+<!-- ava-version: 1.7.0.23 -->
+
+> Revisão 1.7.0.23: correção do teclado aplicada ao modal do AvantaVendas; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.22: na aba **Facial** do Controle de Ponto, desmarcar um
 > funcionário habilitado revela **Salvar alterações**. A remoção é imediata,

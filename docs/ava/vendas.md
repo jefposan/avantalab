@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.22 -->
+<!-- ava-version: 1.7.0.23 -->
+
+> Revisão 1.7.0.23: em **Novo pedido** e **Novo pagamento**, o teclado move
+> somente o card necessário para manter o campo ativo visível. O fundo do modal
+> continua cobrindo toda a tela e a ação de finalizar permanece no rodapé.
 
 > Revisão 1.7.0.22: correção restrita à administração do reconhecimento facial
 > no Controle de Ponto; sem impacto operacional no AvantaVendas.

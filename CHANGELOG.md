@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.23 - 2026-08-05
+
+- AvantaVendas Mobile: corrigido o modal de novo pedido ou pagamento no iPhone.
+  A transição do teclado não reduz mais o fundo escuro nem antecipa o botão de
+  finalizar; apenas o card é deslocado para manter o campo ativo visível.
+
 ## 1.7.0.22 - 2026-08-05
 
 - Controle de Ponto: ao desmarcar um funcionário que já utiliza reconhecimento

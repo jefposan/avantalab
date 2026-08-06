@@ -6922,6 +6922,24 @@ function campoEditavelSheetTransacao(elemento) {
     || elemento instanceof HTMLSelectElement;
 }
 
+function alturaViewportEstruturalTransacao() {
+  // No iOS, visualViewport diminui quando o teclado aparece. O backdrop, porém,
+  // precisa continuar cobrindo a tela inteira; por isso sua altura vem do
+  // viewport de layout, não da área visível usada para posicionar o campo.
+  const alturas = [window.innerHeight, document.documentElement?.clientHeight]
+    .map((altura) => Math.round(Number(altura) || 0))
+    .filter((altura) => altura > 0);
+  return Math.max(...alturas, Math.round(window.visualViewport?.height || 0), 1);
+}
+
+function atualizarAlturaEstruturalSheetTransacao(wrap) {
+  if (!wrap?.classList.contains('client-transaction-backdrop')) return 0;
+  const altura = alturaViewportEstruturalTransacao();
+  wrap.style.setProperty('--transaction-viewport-height', `${altura}px`);
+  wrap.dataset.transactionBaseHeight = String(altura);
+  return altura;
+}
+
 function ajustarSheetTransacaoAoTeclado(wrap) {
   if (!wrap?.isConnected || !wrap.classList.contains('client-transaction-backdrop')) return;
   const sheetAtual = wrap.querySelector('.sheet');
@@ -6929,7 +6947,7 @@ function ajustarSheetTransacaoAoTeclado(wrap) {
   const viewport = window.visualViewport;
   const alturaVisivel = Math.round(viewport?.height || window.innerHeight);
   const topoVisivel = Math.round(viewport?.offsetTop || 0);
-  const alturaInicial = Number(wrap.dataset.transactionBaseHeight || alturaVisivel);
+  const alturaInicial = atualizarAlturaEstruturalSheetTransacao(wrap) || Number(wrap.dataset.transactionBaseHeight || alturaVisivel);
   const tecladoAberto = alturaInicial - alturaVisivel > 80;
   if (!sheetAtual || !campoAtivo?.isConnected || !tecladoAberto) {
     wrap.style.setProperty('--transaction-sheet-offset', '0px');
@@ -6998,11 +7016,7 @@ function sheet(html, backdropClass = '') {
   wrap.className = `sheet-backdrop ${backdropClass}`;
   wrap.id = 'sheetBackdrop';
   if (backdropClass.includes('client-transaction-backdrop') || backdropClass.includes('consignment-')) {
-    const alturaViewport = Math.round(window.visualViewport?.height || window.innerHeight);
-    if (Number.isFinite(alturaViewport) && alturaViewport > 0) {
-      wrap.style.setProperty('--transaction-viewport-height', `${alturaViewport}px`);
-      wrap.dataset.transactionBaseHeight = String(alturaViewport);
-    }
+    atualizarAlturaEstruturalSheetTransacao(wrap);
   }
   wrap.innerHTML = `<section class="sheet">${html}</section>`;
   wrap.querySelectorAll('button:not([type])').forEach((botao) => {

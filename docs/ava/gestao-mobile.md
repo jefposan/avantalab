@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.22 -->
+<!-- ava-version: 1.7.0.23 -->
+
+> Revisão 1.7.0.23: correção do teclado aplicada ao modal do AvantaVendas; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.7.0.22: na administração do Controle de Ponto, a retirada de um
 > funcionário da seleção facial passa a ser salva diretamente, sem abrir
