@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28.01 -->
+<!-- ava-version: 1.7.0.28.02 -->
+
+> Revisão 1.7.0.28.02: ações dos lançamentos da Caixinha aplicadas à Gestão
+> Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.28.01: o chat conclui o toque no campo antes de abrir o
 > teclado e impede que eventos da tela do AvantaVendas interrompam o foco. O

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.28.02 - 2026-08-06
+
+- Gestão Web: os lançamentos de aporte da Caixinha/Reserva financeira passam a
+  abrir as ações **Editar** e **Excluir** ao serem selecionados. A exclusão pede
+  confirmação e remove tanto o movimento da Caixinha quanto a despesa vinculada,
+  respeitando a permissão de exclusão de lançamentos.
+
 ## 1.7.0.28.01 - 2026-08-06
 
 - Ava no AvantaVendas PWA: o foco passa a ocorrer somente quando o toque no

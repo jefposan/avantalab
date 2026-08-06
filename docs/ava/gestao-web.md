@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.28.01 -->
+<!-- ava-version: 1.7.0.28.02 -->
+
+> Revisão 1.7.0.28.02: em **Caixinha/Reserva financeira → Ver lançamentos**,
+> selecionar um aporte revela as ações **Editar** e **Excluir**. A exclusão pede
+> confirmação e remove também a despesa vinculada ao aporte.
 
 > Revisão 1.7.0.28.01: correção de foco restrita ao chat da Ava no
 > AvantaVendas; sem impacto operacional na Gestão Web.

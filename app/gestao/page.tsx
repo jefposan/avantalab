@@ -3418,6 +3418,60 @@ const editarAporteCaixinha = async ({ id, data, descricao, valorTexto }: { id: s
   return { ok: true };
 };
 
+const solicitarExclusaoAporteCaixinha = (movimento: { id: string; lancamentoId: string | null; descricao: string; valor: number }) => {
+  if (!podeExcluirLancamentos) {
+    abrirAviso('Acesso não permitido', 'Você não tem permissão para excluir lançamentos.');
+    return;
+  }
+  if (!empresaId) {
+    abrirAviso('Perfil não identificado', 'Atualize a página e tente novamente.');
+    return;
+  }
+
+  abrirConfirmacao({
+    titulo: 'Excluir aporte',
+    mensagem: `Deseja excluir o aporte "${movimento.descricao || 'Aporte na caixinha'}" no valor de ${formatarMoeda(movimento.valor)}?\n\nA despesa vinculada também será excluída. Essa ação não poderá ser desfeita.`,
+    textoConfirmar: 'Excluir',
+    acao: async () => {
+      if (movimento.lancamentoId) {
+        const lancamentoExcluido = await apagarLancamento(movimento.lancamentoId);
+        if (!lancamentoExcluido) {
+          abrirAviso('Erro ao excluir aporte', 'Não foi possível excluir a despesa vinculada. Nenhum dado da Caixinha foi removido.');
+          return;
+        }
+      }
+
+      const { error } = await supabase
+        .from('caixinhas_movimentos')
+        .delete()
+        .eq('id', movimento.id)
+        .eq('empresa_id', empresaId)
+        .eq('tipo', 'aporte');
+
+      if (error) {
+        if (movimento.lancamentoId) {
+          setLancamentos((prev) => prev.filter((item) => String(item.id) !== String(movimento.lancamentoId)));
+          setCaixinhaMovimentos((prev) => prev.map((item) => item.id === movimento.id ? { ...item, lancamentoId: null } : item));
+        }
+        abrirAviso(
+          'Exclusão incompleta',
+          movimento.lancamentoId
+            ? 'A despesa vinculada foi excluída, mas o aporte permaneceu na Caixinha. Tente excluí-lo novamente.'
+            : 'Não foi possível excluir o aporte da Caixinha.',
+        );
+        notificarFinanceiroAtualizado();
+        return;
+      }
+
+      setCaixinhaMovimentos((prev) => prev.filter((item) => item.id !== movimento.id));
+      if (movimento.lancamentoId) {
+        setLancamentos((prev) => prev.filter((item) => String(item.id) !== String(movimento.lancamentoId)));
+      }
+      notificarFinanceiroAtualizado();
+    },
+  });
+};
+
 // A partir da data programada, o lançamento permanece no card ate ser
 // confirmado, editado ou excluido. Itens vencidos aparecem como pendentes.
 const despesasAConfirmar = lancamentos.filter(
@@ -10945,6 +10999,7 @@ if (validacaoTelefoneObrigatoria) {
         onDefinirSaldoInicialCaixinha={definirSaldoInicialCaixinha}
         onExcluirSaldoInicialCaixinha={excluirSaldoInicialCaixinha}
         onEditarAporteCaixinha={editarAporteCaixinha}
+        onExcluirAporteCaixinha={solicitarExclusaoAporteCaixinha}
         tipoPerfil={tipoPerfilAtualNormalizado}
         dashboardOrdem={recursoBloqueado('organizar_dashboard') ? ordemDashboardPadrao : dashboardOrdem}
         dashboardOcultos={recursoBloqueado('organizar_dashboard') ? ocultosDashboardPadrao : dashboardOcultos}

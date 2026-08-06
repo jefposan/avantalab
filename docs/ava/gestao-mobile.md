@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.01 -->
+<!-- ava-version: 1.7.0.28.02 -->
+
+> Revisão 1.7.0.28.02: ações dos lançamentos da Caixinha aplicadas à Gestão
+> Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.7.0.28.01: correção de foco restrita ao chat da Ava no
 > AvantaVendas; a Ava da Gestão Mobile mantém o comportamento anterior.
