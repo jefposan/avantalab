@@ -1,9 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.02 -->
+<!-- ava-version: 1.7.0.28.03 -->
 
-> Revisão 1.7.0.28.02: ações dos lançamentos da Caixinha aplicadas à Gestão
-> Web; sem impacto operacional na Gestão Mobile.
+> Revisão 1.7.0.28.03: em **Caixinha → Ver lançamentos**, tocar em um aporte
+> abre o mesmo card de ações usado por receitas e despesas. **Editar** permite
+> alterar data, descrição e valor; **Excluir** pede confirmação. As duas ações
+> mantêm a despesa vinculada sincronizada com o aporte.
 
 > Revisão 1.7.0.28.01: correção de foco restrita ao chat da Ava no
 > AvantaVendas; a Ava da Gestão Mobile mantém o comportamento anterior.

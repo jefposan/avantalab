@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.0.28.03 - 2026-08-06
+
+- Gestão Web: clicar em um aporte da Caixinha/Reserva financeira transforma a
+  própria linha diretamente em edição, com ações de salvar, cancelar e excluir.
+- Gestão Mobile/PWA: tocar em um aporte abre o mesmo card de ações utilizado
+  pelos lançamentos de receitas e despesas. A edição atualiza o aporte e sua
+  despesa vinculada; a exclusão confirmada remove ambos.
+
 ## 1.7.0.28.02 - 2026-08-06
 
 - Gestão Web: os lançamentos de aporte da Caixinha/Reserva financeira passam a

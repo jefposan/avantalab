@@ -8693,9 +8693,12 @@
   }
 
   function abrirAcaoLancamento(tipo, id) {
-    var lista = tipo === 'receita' ? state.entradas : state.lancamentos;
+    var lista = tipo === 'receita'
+      ? state.entradas
+      : (tipo === 'caixinha' ? state.caixinhaMovimentos : state.lancamentos);
     var item = lista.find(function (registro) { return String(registro.id) === String(id); });
     if (!item) return;
+    if (tipo === 'caixinha' && item.tipo !== 'aporte') return;
     if (tipo === 'receita' && ehReceitaSincronizada(item)) return;
 
     state.modalAcao = {
@@ -8726,11 +8729,129 @@
     });
   }
 
+  async function excluirAporteCaixinhaSelecionadoMobile(item) {
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    if (item.lancamentoId) {
+      var lancamentoExcluido = await db
+        .from('lancamentos')
+        .delete()
+        .eq('id', item.lancamentoId)
+        .eq('empresa_id', state.empresa.id);
+      if (lancamentoExcluido.error) {
+        state.carregando = false;
+        setErro(mensagemErro(lancamentoExcluido.error, 'Nao foi possivel excluir a despesa vinculada. Nenhum dado da caixinha foi removido.'));
+        return;
+      }
+    }
+
+    var movimentoExcluido = await db
+      .from('caixinhas_movimentos')
+      .delete()
+      .eq('id', item.id)
+      .eq('empresa_id', state.empresa.id)
+      .eq('tipo', 'aporte');
+    if (movimentoExcluido.error) {
+      state.carregando = false;
+      if (item.lancamentoId && state.modalAcao && state.modalAcao.item) {
+        state.modalAcao.item.lancamentoId = null;
+      }
+      setErro(mensagemErro(movimentoExcluido.error, item.lancamentoId
+        ? 'A despesa vinculada foi excluida, mas o aporte permaneceu na caixinha. Tente exclui-lo novamente.'
+        : 'Nao foi possivel excluir o aporte da caixinha.'));
+      return;
+    }
+
+    state.modalAcao = null;
+    await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
+    mostrarToast('Aporte excluido da caixinha.');
+  }
+
+  async function salvarEdicaoAporteCaixinhaSelecionadoMobile(item) {
+    var dataTexto = campo('editar-caixinha-data');
+    var descricao = campo('editar-caixinha-descricao').trim();
+    var valorTexto = campo('editar-valor');
+    var valor = normalizarValor(valorTexto);
+    var partesData = String(dataTexto || '').split('-').map(Number);
+    var ano = partesData[0];
+    var mesIndice = partesData[1] - 1;
+    var dia = partesData[2];
+    var dataValidada = new Date(ano, mesIndice, dia);
+
+    if (partesData.length !== 3 || !ano || mesIndice < 0 || mesIndice > 11 || !dia || dataValidada.getFullYear() !== ano || dataValidada.getMonth() !== mesIndice || dataValidada.getDate() !== dia || valor <= 0) {
+      setErro('Informe data e valor validos.');
+      return;
+    }
+
+    var descricaoFinal = formatarDescricao(descricao) || 'Aporte na caixinha';
+    var dataMovimento = ano + '-' + String(mesIndice + 1).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
+    var ehFuturo = dataFutura(ano, mesIndice, dia);
+    state.modalAcao.item = Object.assign({}, item, {
+      descricao: descricaoFinal,
+      valor: valor,
+      dataMovimento: dataMovimento,
+    });
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    if (item.lancamentoId) {
+      var lancamentoAtualizado = await db
+        .from('lancamentos')
+        .update({
+          ano: ano,
+          mes: meses[mesIndice],
+          dia: dia,
+          descricao: descricaoFinal,
+          valor: valor,
+          status: ehFuturo ? 'prevista' : null,
+          tipo_obs: ehFuturo ? 'previsto' : null,
+        })
+        .eq('id', item.lancamentoId)
+        .eq('empresa_id', state.empresa.id);
+      if (lancamentoAtualizado.error) {
+        state.carregando = false;
+        setErro(mensagemErro(lancamentoAtualizado.error, 'Nao foi possivel atualizar a despesa vinculada.'));
+        return;
+      }
+    }
+
+    var movimentoAtualizado = await db
+      .from('caixinhas_movimentos')
+      .update({
+        descricao: descricaoFinal,
+        valor: valor,
+        data_movimento: dataMovimento,
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq('id', item.id)
+      .eq('empresa_id', state.empresa.id)
+      .eq('tipo', 'aporte');
+    if (movimentoAtualizado.error) {
+      state.carregando = false;
+      setErro(mensagemErro(movimentoAtualizado.error, 'A despesa vinculada foi atualizada, mas nao foi possivel atualizar o aporte da caixinha.'));
+      return;
+    }
+
+    state.modalAcao = null;
+    await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
+    mostrarToast('Aporte atualizado na caixinha.');
+  }
+
   async function excluirLancamentoSelecionado() {
     if (!state.modalAcao || !state.modalAcao.item || !state.empresa) return;
 
     var tipo = state.modalAcao.tipo;
     var item = state.modalAcao.item;
+
+    if (tipo === 'caixinha') {
+      await excluirAporteCaixinhaSelecionadoMobile(item);
+      return;
+    }
 
     if (tipo === 'receita' && ehReceitaSincronizada(item)) {
       state.modalAcao = null;
@@ -8855,6 +8976,11 @@
 
     var tipo = state.modalAcao.tipo;
     var item = state.modalAcao.item;
+
+    if (tipo === 'caixinha') {
+      await salvarEdicaoAporteCaixinhaSelecionadoMobile(item);
+      return;
+    }
 
     if (tipo === 'receita' && ehReceitaSincronizada(item)) {
       state.modalAcao = null;
@@ -10308,11 +10434,11 @@
     var saldoInicialInput = state.caixinhaSaldoInicialValor || (resumo.saldoInicial > 0 ? dinheiro(resumo.saldoInicial).replace('R$', '').trim() : '');
     var aportesHtml = resumo.aportes.length
       ? resumo.aportes.map(function (mov) {
-          return '<div class="grid grid-cols-[80px_minmax(0,1fr)_auto] items-center gap-2 rounded-xl ' + (escuro ? 'bg-slate-800/60' : 'bg-slate-50') + ' px-3 py-2">' +
+          return '<button type="button" data-tipo-lancamento="caixinha" data-lancamento-id="' + escapeHtml(mov.id) + '" aria-label="Alterar aporte ' + escapeHtml(mov.descricao || 'Aporte na caixinha') + '" class="grid min-h-11 w-full grid-cols-[80px_minmax(0,1fr)_auto] items-center gap-2 rounded-xl ' + (escuro ? 'bg-slate-800/60' : 'bg-slate-50') + ' px-3 py-2 text-left transition active:scale-[0.99]">' +
             '<span class="text-[10px] font-black tabular-nums text-slate-500">' + escapeHtml((function () { var p = String(mov.dataMovimento || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0].slice(-2) : '—'; })()) + '</span>' +
             '<span class="min-w-0 truncate text-xs font-bold text-slate-700">' + escapeHtml(mov.descricao || 'Aporte na caixinha') + '</span>' +
             '<strong class="shrink-0 text-xs font-black text-emerald-600">' + valorFinanceiroCardHtml(mov.valor, cardId) + '</strong>' +
-          '</div>';
+          '</button>';
         }).join('')
       : '<p class="rounded-xl bg-slate-50 px-3 py-2 text-center text-xs font-semibold text-slate-500">Nenhum aporte registrado.</p>';
     var aporteInicialForm = state.caixinhaSaldoInicialAberto
@@ -11160,8 +11286,9 @@
 
     var item = acao.item;
     var receita = acao.tipo === 'receita';
-    var titulo = receita ? item.origem : item.despesa;
-    var detalhe = receita ? 'Receita' : 'Despesa';
+    var caixinha = acao.tipo === 'caixinha';
+    var titulo = caixinha ? (item.descricao || 'Aporte na caixinha') : (receita ? item.origem : item.despesa);
+    var detalhe = caixinha ? 'Aporte da caixinha' : (receita ? 'Receita' : 'Despesa');
 
 	    return (
 	      '<div id="modal-acao-overlay" class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
@@ -11183,10 +11310,14 @@
 
   function modalOpcoesLancamentoHtml(acao) {
     var receita = acao.tipo === 'receita';
+    var caixinha = acao.tipo === 'caixinha';
     var temNota = !receita && acao.item.notaArquivoPath;
+    var resumoData = caixinha
+      ? (function () { var p = String(acao.item.dataMovimento || '').split('-'); return p.length === 3 ? 'Data ' + p[2] + '/' + p[1] + '/' + p[0] : 'Aporte'; })()
+      : 'Dia ' + escapeHtml(acao.item.dia);
     return (
       '<div class="grid gap-2">' +
-        '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">Dia ' + escapeHtml(acao.item.dia) + '</p><strong class="mt-1 block text-lg font-black">' + dinheiro(acao.item.valor) + '</strong></div>' +
+        '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">' + resumoData + '</p><strong class="mt-1 block text-lg font-black">' + dinheiro(acao.item.valor) + '</strong></div>' +
         '<div class="grid ' + (temNota ? 'grid-cols-3' : 'grid-cols-2') + ' gap-2">' +
         (temNota ? '<button id="ver-nota-lancamento" type="button" class="h-11 rounded-xl bg-cyan-600 px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Ver nota</button>' : '') +
         '<button id="editar-lancamento" type="button" class="h-11 rounded-xl bg-[#003E73] px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Editar</button>' +
@@ -11199,8 +11330,9 @@
 	  function modalConfirmarExclusaoLancamentoHtml(acao) {
 	    var item = acao.item;
 	    var receita = acao.tipo === 'receita';
-	    var titulo = receita ? item.origem : item.despesa;
-	    var subtitulo = receita ? 'Receita do mes' : 'Despesa do mes';
+	    var caixinha = acao.tipo === 'caixinha';
+	    var titulo = caixinha ? (item.descricao || 'Aporte na caixinha') : (receita ? item.origem : item.despesa);
+	    var subtitulo = caixinha ? 'Aporte da caixinha' : (receita ? 'Receita do mes' : 'Despesa do mes');
 	    var temaEscuro = state.darkMode;
 	    var fundoAlerta = temaEscuro ? '#172033' : '#fff';
 	    var bordaAlerta = temaEscuro ? 'rgba(248, 113, 113, 0.38)' : '#fee2e2';
@@ -11209,11 +11341,15 @@
 	    var textoPrincipal = temaEscuro ? '#f8fafc' : '#0f172a';
 	    var textoSecundario = temaEscuro ? '#cbd5e1' : '#64748b';
 	    var textoDiscreto = temaEscuro ? '#94a3b8' : '#94a3b8';
-	    var detalhe = 'Dia ' + escapeHtml(item.dia);
+	    var detalhe = caixinha
+	      ? (function () { var p = String(item.dataMovimento || '').split('-'); return p.length === 3 ? 'Data ' + p[2] + '/' + p[1] + '/' + p[0] : 'Aporte'; })()
+	      : 'Dia ' + escapeHtml(item.dia);
 	    if (!receita && item.descricao) detalhe += ' - ' + escapeHtml(item.descricao);
-	    var aviso = receita
+	    var aviso = caixinha
+	      ? 'O aporte sera removido da caixinha e a despesa vinculada tambem sera excluida.'
+	      : (receita
 	      ? 'A receita sera removida dos lancamentos e descontada do total do mes quando ja estiver efetivada.'
-	      : 'A despesa sera removida dos lancamentos deste mes. Despesas fixas mantem a recorrencia original.';
+	      : 'A despesa sera removida dos lancamentos deste mes. Despesas fixas mantem a recorrencia original.');
 
 	    return (
 	      '<div class="grid gap-4">' +
@@ -11252,6 +11388,18 @@
     var escuro = !!state.darkMode;
     var rotuloCampo = escuro ? 'text-slate-300' : 'text-slate-600';
     var selectCampo = escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900';
+    if (acao.tipo === 'caixinha') {
+      return (
+        '<div class="grid gap-3">' +
+          '<label class="grid gap-1 text-xs font-black uppercase tracking-wide ' + rotuloCampo + '">Data' +
+            '<input id="editar-caixinha-data" type="date" value="' + escapeHtml(item.dataMovimento || '') + '" style="font-size:16px" class="h-11 rounded-md border px-3 text-base font-bold normal-case tracking-normal ' + selectCampo + '">' +
+          '</label>' +
+          campoClaro('editar-caixinha-descricao', 'Descricao', 'value="' + escapeHtml(item.descricao || '') + '"') +
+          campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
+          '<button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-cyan-700 px-4 text-sm font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>' +
+        '</div>'
+      );
+    }
     if (acao.tipo === 'receita') {
       return (
         '<div class="grid gap-3">' +
