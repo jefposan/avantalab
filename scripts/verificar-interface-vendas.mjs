@@ -17,6 +17,14 @@ const acaoPagamento = '<button class="secondary quick-action-button quick-action
 const acaoPedido = '<button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">';
 
 exigir(
+  aplicacao.includes('function memorizarPesquisaClientes()')
+    && aplicacao.includes('function restaurarPesquisaClientes()')
+    && aplicacao.includes('if (state.aba === \'clientes\') memorizarPesquisaClientes();')
+    && aplicacao.includes('onclick="prepararNovaBuscaClientes(this)"')
+    && !aplicacao.includes('limparPesquisaClientesAoEntrar()'),
+  'A busca de Clientes deve ser preservada após lançamentos e limpa somente ao iniciar uma nova pesquisa.',
+);
+exigir(
   aplicacao.includes('function ajustarSheetTransacaoAoTeclado(wrap)')
     && aplicacao.includes('function atualizarAlturaEstruturalSheetTransacao(wrap)')
     && aplicacao.includes('const alturas = [window.innerHeight, document.documentElement?.clientHeight]')
@@ -51,7 +59,7 @@ exigir(
   'As ações rápidas devem reutilizar as cores de Pagamento e Pedido do card do cliente.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '22'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '23'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

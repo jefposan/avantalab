@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.23 -->
+<!-- ava-version: 1.7.0.24 -->
+
+> Revisão 1.7.0.24: após pedido, pagamento, edição ou exclusão, a pesquisa em
+> **Clientes** permanece aplicada e mantém o card encontrado em destaque. Para
+> iniciar outra busca, toque no campo: o termo anterior é limpo automaticamente.
 
 > Revisão 1.7.0.23: em **Novo pedido** e **Novo pagamento**, o teclado move
 > somente o card necessário para manter o campo ativo visível. O fundo do modal

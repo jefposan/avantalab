@@ -112,6 +112,8 @@ const usuarioPreferenciasLocaisId = state.usuario?.id || null;
 aplicarPeriodoCompletoMesSelecionado();
 document.documentElement.classList.toggle('dark-theme', Boolean(state.temaEscuro));
 let buscaAplicada = state.busca || '';
+let buscaClientesMemorizada = state.aba === 'clientes' ? state.busca || '' : '';
+let buscaClientesAplicadaMemorizada = state.aba === 'clientes' ? buscaAplicada : '';
 let backendAtivo = Boolean(window.VendasDb?.client);
 let carregandoBackend = backendAtivo;
 let preferenciasServidorCarregadas = false;
@@ -1053,15 +1055,15 @@ function rolarConteudoPrincipalVendas(top = 0, behavior = 'auto') {
 
 function setAba(aba) {
   const entradaClientes = aba === 'clientes'
-    && (state.aba !== 'clientes' || state.menuAberto || Boolean(state.busca) || Boolean(buscaAplicada));
+    && (state.aba !== 'clientes' || state.menuAberto);
   if (aba === state.aba && !state.menuAberto && !document.getElementById('sheetBackdrop')) {
     if (entradaClientes) {
-      limparPesquisaClientesAoEntrar();
+      restaurarPesquisaClientes();
       render();
     }
     return;
   }
-  if (entradaClientes) limparPesquisaClientesAoEntrar();
+  if (state.aba === 'clientes') memorizarPesquisaClientes();
   if (!state.menuAberto) {
     rolagemPorAba[state.aba] = posicaoRolagemPrincipalVendas();
     try { sessionStorage.setItem('avantalab.vendas_mobile.rolagem_abas', JSON.stringify(rolagemPorAba)); } catch { /* armazenamento indisponível */ }
@@ -1071,6 +1073,7 @@ function setAba(aba) {
     state.busca = '';
     buscaAplicada = '';
   }
+  if (entradaClientes) restaurarPesquisaClientes();
   if (aba !== 'agenda') fecharCamadasAgenda();
   if (aba !== 'divulgacao') divulgacaoPastaAtualId = null;
   if (aba === 'vendas' && state.aba !== 'vendas') limitePedidos = 10;
@@ -3973,6 +3976,7 @@ function preencherEnderecoClientePorLocalizacao(clienteId, botao) {
 
 function aplicarBusca() {
   buscaAplicada = state.busca;
+  if (state.aba === 'clientes') memorizarPesquisaClientes();
   if (state.aba === 'vendas') limitePedidos = 10;
   if (state.aba === 'vender') limiteClientesPagamentos = 10;
   render();
@@ -4068,9 +4072,14 @@ function renderClientes() {
   `;
 }
 
-function limparPesquisaClientesAoEntrar() {
-  state.busca = '';
-  buscaAplicada = '';
+function memorizarPesquisaClientes() {
+  buscaClientesMemorizada = state.busca || '';
+  buscaClientesAplicadaMemorizada = buscaAplicada || '';
+}
+
+function restaurarPesquisaClientes() {
+  state.busca = buscaClientesMemorizada;
+  buscaAplicada = buscaClientesAplicadaMemorizada;
 }
 
 function renderBarraBuscaClientes() {
@@ -4081,6 +4090,7 @@ function renderBarraBuscaClientes() {
 
 function atualizarBuscaClientes(valor) {
   state.busca = valor;
+  memorizarPesquisaClientes();
   const temBusca = Boolean(String(valor || '').trim());
   app.querySelector('.client-search-clear')?.classList.toggle('is-hidden', !temBusca);
   if (!temBusca && buscaAplicada) {
@@ -4094,6 +4104,7 @@ function prepararNovaBuscaClientes(campo) {
   if (state.aba !== 'clientes' || (!state.busca && !buscaAplicada)) return;
   state.busca = '';
   buscaAplicada = '';
+  memorizarPesquisaClientes();
   campo.value = '';
   app.querySelector('.clientes-page .client-search-clear')?.classList.add('is-hidden');
 }
@@ -4101,6 +4112,7 @@ function prepararNovaBuscaClientes(campo) {
 function limparBuscaClientes() {
   state.busca = '';
   buscaAplicada = '';
+  memorizarPesquisaClientes();
   render();
   requestAnimationFrame(() => app.querySelector('.clientes-page .client-search-input-wrap input')?.focus());
 }
@@ -4659,7 +4671,6 @@ async function finalizarPedidoCliente() {
     }
     pedidoClienteRascunho = null;
     if (!rascunho.editandoId) {
-      limparPesquisaClientesAoEntrar();
       state.aba = 'clientes';
       state.menuAberto = false;
     }
@@ -4849,7 +4860,6 @@ async function confirmarPagamentoCliente() {
     }
     pagamentoClienteRascunho = null;
     const abaRetorno = rascunho.abaOrigem === 'vender' ? 'vender' : 'clientes';
-    if (abaRetorno === 'clientes') limparPesquisaClientesAoEntrar();
     state.aba = abaRetorno;
     state.menuAberto = false;
     await confirmarMutacaoDadosVendas();

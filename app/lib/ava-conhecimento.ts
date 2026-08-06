@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.23: no AvantaVendas, o teclado move somente o card do pedido ou pagamento e o fundo do modal continua cobrindo toda a tela.
+// Revisado na versão 1.7.0.24: a busca de Clientes no AvantaVendas permanece após lançamentos e só é limpa ao tocar no campo para uma nova pesquisa.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

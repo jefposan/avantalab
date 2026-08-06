@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.24 - 2026-08-05
+
+- AvantaVendas Mobile: a busca de Clientes permanece aplicada após criar,
+  editar ou excluir pedido e pagamento. O termo só é limpo ao tocar no campo
+  para iniciar uma nova busca.
+
 ## 1.7.0.23 - 2026-08-05
 
 - AvantaVendas Mobile: corrigido o modal de novo pedido ou pagamento no iPhone.
