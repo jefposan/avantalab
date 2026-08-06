@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.26 -->
+<!-- ava-version: 1.7.0.27 -->
+
+> Revisão 1.7.0.27: ao digitar para a Ava no Vendas, o teclado mantém o campo
+> estável em iPhone, Android, PWA e navegador compatível, sem deslocamento
+> duplicado ou retorno automático.
 
 > Revisão 1.7.0.26: ao perguntar à Ava por total, saldo, resultado ou análise,
 > ela responde primeiro os números disponíveis para o período atual. Perguntas

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.26: no Vendas, a Ava responde resultados com os números do contexto antes de orientar a tela de consulta.
+// Revisado na versão 1.7.0.27: o teclado da Ava usa viewport dinâmica ou VirtualKeyboard, nunca as duas medições ao mesmo tempo.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

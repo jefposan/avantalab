@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.27 - 2026-08-05
+
+- Ava no AvantaVendas: o campo de mensagem volta a usar o foco nativo e separa
+  o tratamento do teclado por capacidade do navegador. Safari/iOS e PWA usam a
+  viewport dinâmica; a altura manual fica restrita à API VirtualKeyboard.
+
 ## 1.7.0.26 - 2026-08-05
 
 - Ava no AvantaVendas: perguntas sobre resultados passam a receber primeiro os
