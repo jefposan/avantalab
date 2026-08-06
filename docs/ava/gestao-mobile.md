@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.25 -->
+<!-- ava-version: 1.7.0.26 -->
+
+> Revisão 1.7.0.26: a Ava prioriza números disponíveis ao responder perguntas
+> de resultado; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.7.0.25: reforço no retorno da pesquisa do AvantaVendas; sem impacto
 > operacional na Gestão Mobile.

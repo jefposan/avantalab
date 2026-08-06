@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.25 -->
+<!-- ava-version: 1.7.0.26 -->
+
+> Revisão 1.7.0.26: ao perguntar à Ava por total, saldo, resultado ou análise,
+> ela responde primeiro os números disponíveis para o período atual. Perguntas
+> sobre onde ou como consultar continuam recebendo a orientação de caminho.
 
 > Revisão 1.7.0.25: o pedido ou pagamento guarda a pesquisa de **Clientes**
 > usada para iniciá-lo e a restaura ao fechar o comprovante. O campo só limpa

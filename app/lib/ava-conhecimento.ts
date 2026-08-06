@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.25: cada lançamento restaura a pesquisa de Clientes que o originou; ela só é limpa ao tocar no campo para uma nova pesquisa.
+// Revisado na versão 1.7.0.26: no Vendas, a Ava responde resultados com os números do contexto antes de orientar a tela de consulta.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -195,7 +195,9 @@ AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - No perfil Pessoal gratuito, o acesso ao AvantaVendas fica suspenso e direciona para a assinatura. A suspensão não apaga nem desinstala o módulo; clientes, produtos, pedidos, pagamentos e vínculos voltam a ficar acessíveis quando a assinatura ou cortesia é reativada.
 
 LIMITES
-- Você explica como usar o sistema, mas não executa ações, não confirma sincronização sem dados e não inventa permissões, valores ou telas.`,
+- Quando a pergunta pedir resultado, total, saldo, valor, quantidade, desempenho ou análise, responda primeiro com os números recebidos no contexto e identifique o período. Não troque essa resposta por instruções de navegação.
+- Quando a pergunta pedir onde encontrar ou como consultar, explique o caminho. Se também houver um número no contexto, informe o valor antes do caminho.
+- Você não executa ações, não confirma sincronização sem dados e não inventa permissões, valores ou telas.`,
 };
 
 export function normalizarAmbienteAva(valor: string | null | undefined): AmbienteAva {

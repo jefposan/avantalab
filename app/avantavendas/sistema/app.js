@@ -1864,7 +1864,14 @@ function renderMenuMobile() {
 
 function contextoAvaVendas() {
   const totais = totaisPeriodo();
-  const recebido = state.pagamentos.reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
+  const inicioPeriodo = new Date(`${state.filtroInicio}T00:00:00`);
+  const fimPeriodo = new Date(`${state.filtroFim}T23:59:59`);
+  const recebido = state.pagamentos
+    .filter((pagamento) => {
+      const data = new Date(`${pagamento.data_pagamento || String(pagamento.criado_em || '').slice(0, 10)}T12:00:00`);
+      return data >= inicioPeriodo && data <= fimPeriodo;
+    })
+    .reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
   const debitosPendentes = state.clientes.reduce((soma, cliente) => soma + saldoFinanceiroCliente(cliente.id).debito, 0);
   const consignadosAtivos = state.vendas.filter((pedido) => pedidoEhConsignado(pedido) && pedido.status !== 'cancelada');
   const totalConsignado = consignadosAtivos.reduce((soma, pedido) => soma + Number(pedido.total || 0), 0);
@@ -1872,13 +1879,14 @@ function contextoAvaVendas() {
     'Ambiente atual: Vendas AvantaLab',
     'O usuário já está autenticado no Vendas e pode trabalhar com dashboard, clientes, produtos, pacotes, pedidos de venda, consignados, itens bonificados, pagamentos, agenda, metas e relatórios comerciais.',
     'Ao responder, considere as funções e os dados deste ambiente de vendas, sem redirecionar para o sistema Gestão quando a ação existir aqui.',
+    'Quando a pergunta pedir um resultado, total, saldo, valor, quantidade, desempenho ou análise, responda primeiro com os números abaixo e o período. Só indique onde consultar quando a pergunta pedir explicitamente onde ou como encontrar a informação.',
     `Empresa: ${state.acessoVendas?.empresa_nome || 'Perfil atual'}`,
     `Período: ${state.filtroInicio} a ${state.filtroFim}`,
     `Vendas: ${moeda(totais.total)}`,
     `Custo: ${moeda(totais.custo)}`,
     `Margem: ${moeda(totais.margem)}`,
     `Pedidos: ${totais.pedidos}`,
-    `Recebimentos registrados: ${moeda(recebido)}`,
+    `Recebimentos registrados no período: ${moeda(recebido)}`,
     `Débitos pendentes dos clientes: ${moeda(debitosPendentes)}`,
     `Consignados ativos: ${consignadosAtivos.length} (${moeda(totalConsignado)})`,
     `Clientes cadastrados: ${state.clientes.length}`,

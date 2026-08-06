@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0.26 - 2026-08-05
+
+- Ava no AvantaVendas: perguntas sobre resultados passam a receber primeiro os
+  valores disponíveis no contexto, com período e métrica. A orientação de tela
+  fica reservada a perguntas sobre onde ou como consultar.
+
 ## 1.7.0.25 - 2026-08-05
 
 - AvantaVendas Mobile: cada lançamento de pedido ou pagamento agora leva uma
