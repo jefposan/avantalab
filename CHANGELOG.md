@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.1.01 - 2026-08-07
+
+- Perfis empresariais com cortesia vigente agora liberam a instalação e a
+  remoção de todos os módulos sem cobrança, mantendo a seleção explícita pelo
+  Gestor Master ou Administrador.
+
 ## 1.7.1 - 2026-08-07
 
 - AvantaProjetos tornou-se um módulo oficial exclusivo da Web, aberto em tela

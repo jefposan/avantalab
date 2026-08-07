@@ -1,5 +1,12 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.7.0 - 2026-08-07
+
+- Cortesia empresarial vigente passa a equivaler à liberação total dos módulos,
+  sem cobrança e sem instalação automática.
+- Mantida a hierarquia padrão: somente Gestor Master e Administrador instalam ou
+  removem; operadores conservam apenas as permissões internas do módulo.
+
 ## 1.6.0 - 2026-08-07
 
 - Formalizado o contrato comercial e operacional reutilizável de módulos:

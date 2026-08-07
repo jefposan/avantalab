@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { autenticarPerfilCobranca, resolverEstadoAcesso } from '../../../../lib/cobranca-servidor';
-import { assinaturaVigente, COBRANCA_ATIVA } from '../../../../lib/cobranca';
-import { normalizarPlanoComercial } from '../../../../lib/planos-comerciais';
+import {
+  permiteInstalacaoModuloSemCobranca,
+  resolverAcessoComercialModulo,
+} from '../../../../lib/modulos-acesso-comercial';
 
 export const runtime = 'nodejs';
 
@@ -13,11 +15,10 @@ export async function POST(request: Request) {
   if (!empresaId || !moduloId) return NextResponse.json({ erro: true, mensagem: 'Dados inválidos.' }, { status: 400 });
   const acesso = await autenticarPerfilCobranca(request, empresaId, true);
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
-  if (COBRANCA_ATIVA) {
-    const estado = await resolverEstadoAcesso(empresaId);
-    if (!estado || !assinaturaVigente(estado) || normalizarPlanoComercial(estado.plano) !== 'business_pro') {
-      return NextResponse.json({ erro: true, mensagem: 'A instalação sem cobrança está disponível apenas no Business Pro ativo.' }, { status: 409 });
-    }
+  const estado = await resolverEstadoAcesso(empresaId);
+  const acessoComercial = resolverAcessoComercialModulo(estado);
+  if (!permiteInstalacaoModuloSemCobranca(acessoComercial)) {
+    return NextResponse.json({ erro: true, mensagem: 'A instalação sem cobrança está disponível no Business Pro ou em perfis liberados por cortesia.' }, { status: 409 });
   }
   const { data: modulo } = await acesso.db.from('modulos').select('id, disponivel').eq('id', moduloId).maybeSingle();
   if (!modulo?.disponivel) return NextResponse.json({ erro: true, mensagem: 'Módulo indisponível.' }, { status: 404 });
@@ -25,7 +26,11 @@ export async function POST(request: Request) {
     empresa_id: empresaId,
     modulo_id: moduloId,
     ativo: true,
-    origem: COBRANCA_ATIVA ? 'plano_business_pro' : 'avulso',
+    origem: acessoComercial === 'business_pro'
+      ? 'plano_business_pro'
+      : acessoComercial === 'cortesia'
+        ? 'cortesia'
+        : 'avulso',
     expira_em: null,
     atualizado_em: new Date().toISOString(),
   }, { onConflict: 'empresa_id,modulo_id' });

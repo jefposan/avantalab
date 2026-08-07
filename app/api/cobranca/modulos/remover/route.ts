@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { autenticarPerfilCobranca, resolverEstadoAcesso } from '@/app/lib/cobranca-servidor';
-import { normalizarPlanoComercial } from '@/app/lib/planos-comerciais';
+import {
+  permiteInstalacaoModuloSemCobranca,
+  resolverAcessoComercialModulo,
+} from '@/app/lib/modulos-acesso-comercial';
 
 export const runtime = 'nodejs';
 
@@ -14,7 +17,7 @@ export async function POST(request: Request) {
   const acesso = await autenticarPerfilCobranca(request, empresaId, true);
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
   const estado = await resolverEstadoAcesso(empresaId);
-  if (normalizarPlanoComercial(estado?.plano) !== 'business_pro') {
+  if (!permiteInstalacaoModuloSemCobranca(resolverAcessoComercialModulo(estado))) {
     return NextResponse.json({ erro: true, mensagem: 'Use o cancelamento da assinatura para módulos avulsos do Business.' }, { status: 409 });
   }
 

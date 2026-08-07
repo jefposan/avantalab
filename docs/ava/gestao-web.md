@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.1 -->
+<!-- ava-version: 1.7.1.01 -->
+
+> Revisão 1.7.1.01: perfis empresariais com cortesia vigente liberam todos os
+> módulos sem cobrança. Gestor Master ou Administrador ainda escolhe quais
+> módulos instalar ou remover em **Menu > Módulos**.
 
 > Revisão 1.7.1: **Projetos** é um módulo Web instalado em Menu > Módulos.
 > Business contrata por R$ 14,90/mês e Business Pro instala sem cobrança

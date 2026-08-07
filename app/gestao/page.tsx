@@ -59,6 +59,7 @@ import {
 } from '@/app/lib/perfis';
 import { APP_VERSION } from '@/app/lib/version';
 import { modulosPaginaTotalAtivos, obterRegistroModulo } from '@/app/lib/modulos-registro';
+import { resolverAcessoComercialModulo } from '@/app/lib/modulos-acesso-comercial';
 import {
   buscarEmpresaDoUsuario,
   buscarEmpresasDoUsuario,
@@ -2463,8 +2464,8 @@ useEffect(() => {
     if (!empresaId) return;
     setModuloAcaoId(moduloId);
     try {
-      const planoComercial = estadoAcesso?.plano === 'empresa' ? 'business' : estadoAcesso?.plano;
-      if (COBRANCA_ATIVA && planoComercial === 'business') {
+      const acessoComercial = resolverAcessoComercialModulo(estadoAcesso);
+      if (acessoComercial === 'business') {
         const { data: sessao } = await supabase.auth.getSession();
         const token = sessao.session?.access_token;
         if (!token) throw new Error('Sessão indisponível. Entre novamente para contratar o módulo.');
@@ -2486,7 +2487,7 @@ useEffect(() => {
         );
         return;
       }
-      if (COBRANCA_ATIVA && planoComercial === 'business_pro') {
+      if (acessoComercial === 'business_pro' || acessoComercial === 'cortesia') {
         const { data: sessao } = await supabase.auth.getSession();
         const token = sessao.session?.access_token;
         if (!token) throw new Error('Sessão indisponível. Entre novamente para instalar o módulo.');
@@ -2498,10 +2499,17 @@ useEffect(() => {
         const json = await resposta.json();
         if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível instalar o módulo.');
         setModulosAtivos((prev) => (prev.includes(moduloId) ? prev : [...prev, moduloId]));
-        abrirAviso('Módulo ativado', 'Este módulo já está incluído no Business Pro.', undefined, 'sucesso');
+        abrirAviso(
+          'Módulo ativado',
+          acessoComercial === 'cortesia'
+            ? 'Este módulo foi liberado pela cortesia do perfil.'
+            : 'Este módulo já está incluído no Business Pro.',
+          undefined,
+          'sucesso',
+        );
         return;
       }
-      if (COBRANCA_ATIVA) {
+      if (acessoComercial !== 'liberado') {
         throw new Error('Módulos estão disponíveis nos planos Business e Business Pro.');
       }
       if (moduloId === 'vendas_mobile') {
@@ -8057,7 +8065,7 @@ if (validacaoTelefoneObrigatoria) {
   onDesinstalar={desinstalarModulo}
   darkMode={darkMode}
   corPrimaria={corPrimaria}
-  planoComercial={estadoAcesso?.plano === 'empresa' ? 'business' : estadoAcesso?.plano ?? null}
+  acessoComercial={resolverAcessoComercialModulo(estadoAcesso)}
   podeGerenciar={podeGerenciarModulos}
   cancelamentos={modulosCancelamentos}
 />

@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import DraggableModalCard from './DraggableModalCard';
-import { COBRANCA_ATIVA } from '@/app/lib/cobranca';
+import type { AcessoComercialModulo } from '@/app/lib/modulos-acesso-comercial';
 
 export type Modulo = {
   id: string;
@@ -23,7 +23,7 @@ interface ModulosModalProps {
   onDesinstalar: (id: string) => void;
   darkMode: boolean;
   corPrimaria: string;
-  planoComercial: string | null;
+  acessoComercial: AcessoComercialModulo;
   podeGerenciar: boolean;
   cancelamentos: Record<string, string>;
 }
@@ -51,7 +51,7 @@ export default function ModulosModal({
   onDesinstalar,
   darkMode,
   corPrimaria,
-  planoComercial,
+  acessoComercial,
   podeGerenciar,
   cancelamentos,
 }: ModulosModalProps) {
@@ -93,9 +93,11 @@ export default function ModulosModal({
                 const instalado = ativos.includes(m.id);
                 const processando = acaoEmId === m.id;
                 const cancelamentoEm = cancelamentos[m.id];
-                const business = planoComercial === 'business';
-                const businessPro = planoComercial === 'business_pro';
-                const disponivelNoPlano = !COBRANCA_ATIVA || business || businessPro;
+                const business = acessoComercial === 'business';
+                const businessPro = acessoComercial === 'business_pro';
+                const cortesia = acessoComercial === 'cortesia';
+                const liberado = acessoComercial === 'liberado';
+                const disponivelNoPlano = Boolean(acessoComercial);
                 const preco = (m.precoMensal ?? 14.9).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 return (
                   <div key={m.id} className={`flex min-w-0 flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center ${itemBorda}`}>
@@ -109,13 +111,15 @@ export default function ModulosModal({
                       <p className={`mt-1 text-[11px] font-bold ${textMuted}`}>
                         {cancelamentoEm
                           ? `Acesso até ${new Intl.DateTimeFormat('pt-BR').format(new Date(cancelamentoEm))}`
-                          : !COBRANCA_ATIVA
-                            ? 'Disponível para instalação'
-                            : businessPro
-                              ? 'Incluso no Business Pro'
-                              : business
-                                ? `${preco} por mês`
-                                : 'Disponível no Business e Business Pro'}
+                          : cortesia
+                            ? 'Liberado por cortesia'
+                            : liberado
+                              ? 'Disponível para instalação'
+                              : businessPro
+                                ? 'Incluso no Business Pro'
+                                : business
+                                  ? `${preco} por mês`
+                                  : 'Disponível no Business e Business Pro'}
                       </p>
                     </div>
                     {instalado ? (
@@ -132,7 +136,7 @@ export default function ModulosModal({
                         onClick={() => onInstalar(m.id)}
                         className="shrink-0 rounded-xl px-3 py-2 text-xs font-black text-white shadow transition hover:brightness-110 disabled:opacity-50"
                         style={{ backgroundColor: corPrimaria }}
-                      >{processando ? '...' : !COBRANCA_ATIVA ? 'Instalar' : business ? `Assinar ${preco}` : businessPro ? 'Instalar' : 'Indisponível'}</button>
+                      >{processando ? '...' : business ? `Assinar ${preco}` : businessPro || cortesia || liberado ? 'Instalar' : 'Indisponível'}</button>
                     )}
                   </div>
                 );

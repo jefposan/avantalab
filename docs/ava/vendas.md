@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.1 -->
+<!-- ava-version: 1.7.1.01 -->
+
+> Revisão 1.7.1.01: cortesia empresarial passa a liberar módulos na Gestão Web;
+> sem mudança operacional no AvantaVendas.
 
 > Revisão 1.7.1: integração do AvantaProjetos restrita à Gestão Web; sem impacto
 > operacional no AvantaVendas.

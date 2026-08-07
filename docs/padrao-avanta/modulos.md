@@ -40,6 +40,10 @@ O manifesto também declara obrigatoriamente:
   a política inicial estiver vigente, todos usam **R$ 14,90 por mês**.
 - O plano Business permite contratação avulsa. O Business Pro inclui os módulos,
   mas Gestor Master ou Administrador ainda escolhe o que instalar.
+- Uma cortesia empresarial vigente equivale à liberação total do Business Pro
+  para módulos: não gera cobrança adicional e permite instalar ou remover todos
+  os módulos disponíveis. A cortesia não instala módulos automaticamente e não
+  amplia a permissão de Operador Completo ou Operador Simples.
 - Gestor Master e Administrador instalam, removem e controlam a visibilidade.
 - Operador Completo executa todas as operações internas permitidas pelo módulo,
   mas não instala, oculta nem remove o módulo.
