@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.02 -->
+<!-- ava-version: 1.7.2.03 -->
+
+> Revisão 1.7.2.03: cortesia de perfil Empresa passa a equivaler ao **Business
+> Pro**, incluindo todos os módulos e até 10 usuários; cortesia de perfil
+> Pessoal equivale ao **Pessoal Premium**. A mesma regra vale para cupom; sem
+> alterar dados ou usuários existentes. Funcionários do Controle de Ponto não
+> consomem a franquia de usuários da Gestão.
 
 > Revisão 1.7.2.02: correção do catálogo de módulos restrita à Gestão Web; sem
 > mudança operacional na Gestão Mobile.

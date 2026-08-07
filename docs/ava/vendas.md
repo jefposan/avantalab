@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.02 -->
+<!-- ava-version: 1.7.2.03 -->
+
+> Revisão 1.7.2.03: cortesia de perfil Empresa passa a equivaler ao Business
+> Pro e a de perfil Pessoal ao Pessoal Premium; sem mudança de operação no
+> AvantaVendas. Funcionários do Controle de Ponto não entram no limite de
+> usuários da Gestão.
 
 > Revisão 1.7.2.02: correção do catálogo de módulos restrita à Gestão Web; sem
 > impacto no AvantaVendas.

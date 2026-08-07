@@ -65,6 +65,9 @@ export async function POST(request: Request) {
 
   const { data: emp } = await admin.from('empresas').select('tipo_perfil').eq('id', empresaId).maybeSingle();
   const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
+  // Cupons seguem a mesma regra da cortesia concedida pelo painel: o acesso
+  // gratuito é integral no respectivo tipo de perfil.
+  const planoCortesia = tipoPerfil === 'empresa' ? 'business_pro' : 'pessoal_premium';
 
   // 5) Concede a cortesia no perfil.
   const { data: assinExistente } = await admin
@@ -73,6 +76,7 @@ export async function POST(request: Request) {
     empresa_id: empresaId,
     tipo_perfil: tipoPerfil,
     status: 'cortesia',
+    plano: planoCortesia,
     valido_ate: validoAte,
     cupom_id: cupom.id,
     atualizado_em: new Date().toISOString(),

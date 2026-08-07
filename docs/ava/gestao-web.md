@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.02 -->
+<!-- ava-version: 1.7.2.03 -->
+
+> Revisão 1.7.2.03: a cortesia de perfil Empresa equivale ao **Business Pro**:
+> inclui todos os módulos e permite até 10 usuários. A cortesia de perfil
+> Pessoal equivale ao **Pessoal Premium**. A mesma regra é aplicada às
+> cortesias por cupom; funcionários do Controle de Ponto não entram na franquia
+> de usuários da Gestão. Não altera dados ou usuários já existentes.
 
 > Revisão 1.7.2.02: em **Menu > Módulos**, Gestor Master e Administrador ativos
 > visualizam o catálogo mesmo quando foram adicionados posteriormente ao perfil.

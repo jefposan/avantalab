@@ -23,7 +23,10 @@ export async function validarLimiteDeUsuarios(
     .from('usuarios_empresa')
     .select('id', { count: 'exact', head: true })
     .eq('empresa_id', empresaId)
-    .eq('status', 'ativo');
+    .eq('status', 'ativo')
+    // Funcionários do Controle de Ponto usam um vínculo técnico próprio e não
+    // têm acesso à Gestão; portanto não consomem a franquia de usuários.
+    .neq('perfil', 'funcionario_ponto');
   if (error) throw error;
   const limite = PLANOS_COMERCIAIS[plano].limites.usuarios;
   if ((count || 0) < limite) return { permitido: true };

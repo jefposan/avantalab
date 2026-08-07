@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.2.03 - 2026-08-07
+
+- Cortesias passam a equivaler ao plano completo do respectivo perfil: Empresa
+  recebe Business Pro (inclusive limite de 10 usuários e módulos incluídos) e
+  Pessoal recebe Pessoal Premium. A regra vale tanto para a liberação pelo
+  painel administrativo quanto para cupons.
+- Registros de cortesia existentes são normalizados para o plano correspondente,
+  preservando usuários, dados e prazo de validade da cortesia.
+- A franquia de usuários passa a contar apenas acessos à Gestão; funcionários do
+  Controle de Ponto não consomem esse limite.
+
 ## 1.7.2.02 - 2026-08-07
 
 - O catálogo de módulos passa a ser carregado por uma rota protegida do servidor,
