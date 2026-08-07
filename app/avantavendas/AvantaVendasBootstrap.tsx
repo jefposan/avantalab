@@ -8,6 +8,8 @@ type ProgressoVendas = {
   rotulo: string;
 };
 
+type ModuloPdfJs = typeof import('pdfjs-dist');
+
 type JanelaAvantaVendas = Window & typeof globalThis & {
   Capacitor?: {
     getPlatform?: () => string;
@@ -27,6 +29,7 @@ type JanelaAvantaVendas = Window & typeof globalThis & {
     rotulo?: string,
   ) => void;
   __avantalabReiniciarProgressoVendas?: (rotulo?: string) => void;
+  __avantalabCarregarPdfJs?: () => Promise<ModuloPdfJs>;
 };
 
 type AvantaVendasBootstrapProps = {
@@ -135,6 +138,12 @@ export default function AvantaVendasBootstrap({
     janela.VENDAS_MOBILE_CONFIG = {
       supabaseUrl,
       supabaseAnonKey,
+    };
+
+    let carregamentoPdfJs: Promise<ModuloPdfJs> | null = null;
+    janela.__avantalabCarregarPdfJs = () => {
+      carregamentoPdfJs ||= import('pdfjs-dist/webpack.mjs');
+      return carregamentoPdfJs;
     };
 
     const arquivos = [

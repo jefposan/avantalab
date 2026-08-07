@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.1.04 - 2026-08-07
+
+- AvantaVendas/iPhone: a pré-visualização deixa de depender do enquadramento do
+  leitor nativo do Safari. As páginas do PDF agora são renderizadas dentro da
+  área disponível, centralizadas nos dois eixos e carregadas sob demanda para
+  preservar o desempenho; links do documento continuam acessíveis.
+
 ## 1.7.1.03 - 2026-08-07
 
 - AvantaVendas: a pré-visualização de PDF agora enquadra a página inteira e a

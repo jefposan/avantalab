@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.1.03 -->
+<!-- ava-version: 1.7.1.04 -->
+
+> Revisão 1.7.1.04: renderização centralizada de PDF aplicada ao AvantaVendas;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.7.1.03: centralização da pré-visualização de PDF aplicada ao
 > AvantaVendas; sem impacto operacional na Gestão Mobile.

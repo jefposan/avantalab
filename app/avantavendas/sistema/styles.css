@@ -1274,7 +1274,17 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .material-preview-stage { position: relative; display: grid; width: 100%; max-height: calc(100dvh - 260px); place-items: center; overflow: hidden; border-radius: 12px; background: #07111d; touch-action: pan-y; user-select: none; }
 .material-preview { display: grid; width: 100%; max-height: calc(100dvh - 260px); place-items: center; overflow: hidden; border: 0; border-radius: 12px; padding: 0; background: #07111d; }
 .material-preview img,.material-preview video { display: block; width: 100%; max-height: calc(100dvh - 260px); object-fit: contain; }
-.material-preview .material-preview-pdf { width: 100%; height: calc(100dvh - 260px); border: 0; background: #fff; }
+.material-preview-document { height: calc(100dvh - 260px); }
+.material-preview .material-preview-pdf { width: 100%; height: calc(100dvh - 260px); overflow: auto; background: #f5f7f9; scroll-behavior: smooth; scroll-snap-type: y proximity; -webkit-overflow-scrolling: touch; }
+.material-preview-pdf-pages { width: 100%; min-height: 100%; }
+.material-preview-pdf-page { display: grid; width: 100%; height: calc(100dvh - 260px); place-items: center; overflow: hidden; padding: 16px; background: #f5f7f9; scroll-snap-align: start; }
+.material-preview-pdf-page-content { position: relative; flex: 0 0 auto; overflow: hidden; background: #fff; box-shadow: 0 8px 24px rgba(15,23,42,.16); }
+.material-preview-pdf-page canvas { display: block; background: #fff; }
+.material-preview-pdf-status,.material-preview-pdf-error { display: grid; min-height: 100%; place-items: center; padding: 24px; color: #526477; font-size: 11px; font-weight: 750; text-align: center; }
+.material-preview-pdf-error { gap: 12px; }
+.material-preview-pdf-error a { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; border-radius: 12px; padding: 0 18px; color: #fff; background: #1687D9; font-weight: 850; text-decoration: none; }
+.material-preview-pdf-link { position: absolute; z-index: 1; border: 2px solid transparent; border-radius: 4px; }
+.material-preview-pdf-link:focus-visible { border-color: #1687D9; outline: 3px solid rgba(22,135,217,.35); outline-offset: 2px; }
 .material-preview-nav { position: absolute; top: 50%; z-index: 2; display: grid; width: 48px; height: 48px; place-items: center; transform: translateY(-50%); border: 1px solid rgba(255,255,255,.24); border-radius: 999px; padding: 0; color: #fff; background: rgba(2,8,23,.62); box-shadow: 0 8px 22px rgba(0,0,0,.28); backdrop-filter: blur(5px); font-size: 32px; line-height: 1; }
 .material-preview-nav-prev { left: 8px; }.material-preview-nav-next { right: 8px; }
 .material-preview-nav:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }

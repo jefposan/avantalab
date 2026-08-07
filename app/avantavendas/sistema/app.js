@@ -264,6 +264,7 @@ let divulgacaoPastaAtualId = null;
 let divulgacaoMaterialAtualId = null;
 let gestoMaterialDivulgacao = null;
 let ignorarCliqueMaterialDivulgacaoAte = 0;
+let renderizacaoPdfMaterialAtual = 0;
 let navegacaoInferiorBloqueadaAte = 0;
 let estoqueProdutoAtualId = '';
 let estoqueMovimentosAtuais = [];
@@ -3356,11 +3357,146 @@ function conteudoVisualizadorMaterialDivulgacao(materialId) {
   const visualizacao = material.tipo === 'video'
     ? `<video src="${escapeAttr(material.arquivo_url)}" controls playsinline preload="metadata"></video>`
     : material.tipo === 'pdf'
-      ? `<iframe src="${escapeAttr(material.arquivo_url)}#view=Fit" title="${escapeAttr(material.titulo)}" class="material-preview-pdf"></iframe>`
+      ? `<div class="material-preview-pdf" data-pdf-url="${escapeAttr(material.arquivo_url)}" aria-label="${escapeAttr(material.titulo)}"><span class="material-preview-pdf-status">Preparando documento...</span></div>`
       : `<img src="${escapeAttr(material.arquivo_url)}" alt="${escapeAttr(material.titulo)}" draggable="false">`;
   const instrucao = material.tipo === 'pdf' ? 'documento para leitura' : 'toque para ampliar';
   const acaoVisualizacao = material.tipo === 'pdf' ? '' : ' onclick="alternarMaterialExpandido(event)"';
-  return `<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">${material.tipo === 'video' ? 'Vídeo' : material.tipo === 'pdf' ? 'PDF' : 'Imagem'} · ${indice + 1} de ${materiais.length} · ${instrucao}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}<button type="button" class="material-preview"${acaoVisualizacao} aria-label="${material.tipo === 'pdf' ? 'Ler documento' : 'Ampliar material'}">${visualizacao}</button>${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button>`;
+  const preVisualizacao = material.tipo === 'pdf'
+    ? `<div class="material-preview material-preview-document" role="document">${visualizacao}</div>`
+    : `<button type="button" class="material-preview"${acaoVisualizacao} aria-label="Ampliar material">${visualizacao}</button>`;
+  return `<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">${material.tipo === 'video' ? 'Vídeo' : material.tipo === 'pdf' ? 'PDF' : 'Imagem'} · ${indice + 1} de ${materiais.length} · ${instrucao}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}${preVisualizacao}${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button>`;
+}
+
+function encerrarRenderizacaoPdfMaterial(container = document.querySelector('.material-preview-pdf')) {
+  renderizacaoPdfMaterialAtual += 1;
+  container?.__observadorPaginasPdf?.disconnect?.();
+  container?.__documentoPdf?.destroy?.();
+}
+
+function criarLinkPaginaPdf(anotacao, viewport) {
+  const endereco = String(anotacao?.url || anotacao?.unsafeUrl || '');
+  if (!endereco || !Array.isArray(anotacao.rect)) return null;
+  const retangulo = viewport.convertToViewportRectangle(anotacao.rect);
+  const esquerda = Math.min(retangulo[0], retangulo[2]);
+  const topo = Math.min(retangulo[1], retangulo[3]);
+  const link = document.createElement('a');
+  link.className = 'material-preview-pdf-link';
+  link.href = endereco;
+  link.setAttribute('aria-label', 'Abrir link do documento');
+  if (/^https?:/i.test(endereco)) {
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+  }
+  link.style.left = `${esquerda}px`;
+  link.style.top = `${topo}px`;
+  link.style.width = `${Math.abs(retangulo[2] - retangulo[0])}px`;
+  link.style.height = `${Math.abs(retangulo[3] - retangulo[1])}px`;
+  return link;
+}
+
+async function carregarPdfMaterialDivulgacao() {
+  const container = document.querySelector('#sheetBackdrop.material-preview-backdrop .material-preview-pdf');
+  if (!container) return;
+  const endereco = String(container.dataset.pdfUrl || '');
+  const identificador = ++renderizacaoPdfMaterialAtual;
+  const estaAtivo = () => identificador === renderizacaoPdfMaterialAtual && container.isConnected;
+  try {
+    if (typeof window.__avantalabCarregarPdfJs !== 'function') {
+      throw new Error('Visualizador de PDF indisponível.');
+    }
+    const [pdfJs, resposta] = await Promise.all([
+      window.__avantalabCarregarPdfJs(),
+      fetch(endereco),
+    ]);
+    if (!resposta.ok) throw new Error('Não foi possível abrir o documento.');
+    const dados = new Uint8Array(await resposta.arrayBuffer());
+    const tarefa = pdfJs.getDocument({ data: dados });
+    const documento = await tarefa.promise;
+    if (!estaAtivo()) {
+      await documento.destroy();
+      return;
+    }
+    container.__documentoPdf = documento;
+    const paginas = document.createElement('div');
+    paginas.className = 'material-preview-pdf-pages';
+    const fragmento = document.createDocumentFragment();
+    for (let numero = 1; numero <= documento.numPages; numero += 1) {
+      const pagina = document.createElement('section');
+      pagina.className = 'material-preview-pdf-page';
+      pagina.dataset.numeroPagina = String(numero);
+      pagina.dataset.estado = 'pendente';
+      pagina.setAttribute('aria-label', `Página ${numero} de ${documento.numPages}`);
+      pagina.innerHTML = `<span class="material-preview-pdf-status">Página ${numero}</span>`;
+      fragmento.appendChild(pagina);
+    }
+    paginas.appendChild(fragmento);
+    container.replaceChildren(paginas);
+
+    const renderizarPagina = async (paginaContainer) => {
+      if (!estaAtivo() || paginaContainer.dataset.estado !== 'pendente') return;
+      paginaContainer.dataset.estado = 'carregando';
+      const numero = Number(paginaContainer.dataset.numeroPagina);
+      try {
+        const pagina = await documento.getPage(numero);
+        if (!estaAtivo()) return;
+        const viewportBase = pagina.getViewport({ scale: 1 });
+        const larguraDisponivel = Math.max(1, container.clientWidth - 32);
+        const alturaDisponivel = Math.max(1, container.clientHeight - 32);
+        const escalaCss = Math.min(
+          larguraDisponivel / viewportBase.width,
+          alturaDisponivel / viewportBase.height,
+        );
+        const viewportCss = pagina.getViewport({ scale: escalaCss });
+        const densidade = Math.min(Number(window.devicePixelRatio || 1), 1.5);
+        const viewportRender = pagina.getViewport({ scale: escalaCss * densidade });
+        const conteudoPagina = document.createElement('div');
+        conteudoPagina.className = 'material-preview-pdf-page-content';
+        conteudoPagina.style.width = `${viewportCss.width}px`;
+        conteudoPagina.style.height = `${viewportCss.height}px`;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.floor(viewportRender.width));
+        canvas.height = Math.max(1, Math.floor(viewportRender.height));
+        canvas.style.width = `${viewportCss.width}px`;
+        canvas.style.height = `${viewportCss.height}px`;
+        canvas.setAttribute('aria-label', `Página ${numero} de ${documento.numPages}`);
+        conteudoPagina.appendChild(canvas);
+        paginaContainer.replaceChildren(conteudoPagina);
+        const contexto = canvas.getContext('2d', { alpha: false });
+        if (!contexto) throw new Error('Canvas indisponível.');
+        await pagina.render({ canvasContext: contexto, viewport: viewportRender }).promise;
+        if (!estaAtivo()) return;
+        const anotacoes = await pagina.getAnnotations({ intent: 'display' });
+        anotacoes.forEach((anotacao) => {
+          const link = criarLinkPaginaPdf(anotacao, viewportCss);
+          if (link) conteudoPagina.appendChild(link);
+        });
+        paginaContainer.dataset.estado = 'pronto';
+      } catch {
+        if (estaAtivo()) {
+          paginaContainer.dataset.estado = 'erro';
+          paginaContainer.innerHTML = '<span class="material-preview-pdf-status">Não foi possível exibir esta página.</span>';
+        }
+      }
+    };
+
+    const containersPaginas = [...paginas.querySelectorAll('.material-preview-pdf-page')];
+    await renderizarPagina(containersPaginas[0]);
+    if (!estaAtivo() || containersPaginas.length < 2) return;
+    if ('IntersectionObserver' in window) {
+      const observador = new IntersectionObserver((entradas) => {
+        entradas.forEach((entrada) => {
+          if (entrada.isIntersecting) void renderizarPagina(entrada.target);
+        });
+      }, { root: container, rootMargin: '100% 0px', threshold: 0.01 });
+      container.__observadorPaginasPdf = observador;
+      containersPaginas.slice(1).forEach((pagina) => observador.observe(pagina));
+    } else {
+      for (const pagina of containersPaginas.slice(1)) await renderizarPagina(pagina);
+    }
+  } catch {
+    if (!estaAtivo()) return;
+    container.innerHTML = `<div class="material-preview-pdf-error"><span>Não foi possível preparar a visualização centralizada.</span><a href="${escapeAttr(endereco)}" target="_blank" rel="noopener noreferrer">Abrir PDF</a></div>`;
+  }
 }
 
 function abrirMaterialDivulgacao(materialId) {
@@ -3368,6 +3504,7 @@ function abrirMaterialDivulgacao(materialId) {
   if (!conteudo) return;
   divulgacaoMaterialAtualId = materialId;
   sheet(conteudo, 'sheet-backdrop-centered material-preview-backdrop');
+  void carregarPdfMaterialDivulgacao();
 }
 
 function navegarMaterialDivulgacao(direcao) {
@@ -3378,8 +3515,10 @@ function navegarMaterialDivulgacao(direcao) {
   const conteudo = conteudoVisualizadorMaterialDivulgacao(destino.id);
   const painel = document.querySelector('#sheetBackdrop.material-preview-backdrop .sheet');
   if (!conteudo || !painel) return;
+  encerrarRenderizacaoPdfMaterial();
   divulgacaoMaterialAtualId = destino.id;
   painel.innerHTML = conteudo;
+  void carregarPdfMaterialDivulgacao();
 }
 
 function iniciarGestoMaterialDivulgacao(evento) {
@@ -7107,6 +7246,7 @@ function fecharSheet(evento = null) {
   evento?.preventDefault?.();
   evento?.stopPropagation?.();
   const sheetAtual = document.getElementById('sheetBackdrop');
+  if (sheetAtual?.classList.contains('material-preview-backdrop')) encerrarRenderizacaoPdfMaterial();
   const estavaBloqueado = document.body.classList.contains('sheet-open')
     || document.documentElement.classList.contains('sheet-open');
   const topBloqueado = Number.parseInt(document.body.style.top || '0', 10);

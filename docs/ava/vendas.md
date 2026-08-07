@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.1.03 -->
+<!-- ava-version: 1.7.1.04 -->
+
+> Revisão 1.7.1.04: no iPhone e nos demais dispositivos, cada página da
+> pré-visualização de PDF é enquadrada e centralizada nos eixos horizontal e
+> vertical. Documentos com várias páginas podem ser rolados e seus links
+> continuam disponíveis.
 
 > Revisão 1.7.1.03: a pré-visualização de PDF enquadra e centraliza a página
 > inteira nos eixos horizontal e vertical. Imagens, vídeos, navegação e

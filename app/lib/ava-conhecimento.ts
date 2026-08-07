@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.1.03: PDF centralizado e compartilhamentos sem texto automático no AvantaVendas.
+// Revisado na versão 1.7.1.04: páginas de PDF centralizadas pelo AvantaVendas; sem mudança operacional.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
