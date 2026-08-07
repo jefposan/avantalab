@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.03 -->
+<!-- ava-version: 1.7.2.04 -->
+
+> Revisão 1.7.2.04: aprovar uma solicitação feita com o Código Vendas torna a
+> empresa solicitada o vínculo comercial ativo para Catálogo, Divulgação e
+> Novidades. Outros acessos administrativos do usuário não mudam essa escolha.
 
 > Revisão 1.7.2.03: cortesia de perfil Empresa passa a equivaler ao **Business
 > Pro**, incluindo todos os módulos e até 10 usuários; cortesia de perfil

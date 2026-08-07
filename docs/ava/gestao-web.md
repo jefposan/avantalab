@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.03 -->
+<!-- ava-version: 1.7.2.04 -->
+
+> Revisão 1.7.2.04: em **Configurações > Aprovações**, aprovar a solicitação
+> enviada com o Código Vendas torna essa empresa o vínculo comercial ativo do
+> usuário para Catálogo, Divulgação e Novidades. Outros perfis administrados
+> pelo mesmo usuário não substituem a empresa escolhida.
 
 > Revisão 1.7.2.03: a cortesia de perfil Empresa equivale ao **Business Pro**:
 > inclui todos os módulos e permite até 10 usuários. A cortesia de perfil

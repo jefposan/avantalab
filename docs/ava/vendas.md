@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.03 -->
+<!-- ava-version: 1.7.2.04 -->
+
+> Revisão 1.7.2.04: depois que o gestor aprova o Código Vendas, a empresa
+> solicitada passa a fornecer Catálogo, Divulgação e Novidades. Perfis que o
+> usuário também administra não substituem esse vínculo comercial.
 
 > Revisão 1.7.2.03: cortesia de perfil Empresa passa a equivaler ao Business
 > Pro e a de perfil Pessoal ao Pessoal Premium; sem mudança de operação no

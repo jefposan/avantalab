@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.2.04 - 2026-08-07
+
+- AvantaVendas: ao aprovar um código empresarial, a empresa solicitada passa a
+  ser o vínculo comercial ativo para Catálogo, Divulgação e Novidades. Acessos
+  administrativos automáticos a outros perfis não substituem essa escolha.
+- O banco repara aprovações anteriores que ficaram inativas e sem data de
+  desvinculação, preservando os acessos administrativos e todos os dados.
+
 ## 1.7.2.03 - 2026-08-07
 
 - Cortesias passam a equivaler ao plano completo do respectivo perfil: Empresa

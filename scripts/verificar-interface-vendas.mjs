@@ -2,13 +2,14 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, versao, cliente, gestorConteudo, migracaoCapa] = await Promise.all([
+const [aplicacao, estilos, versao, cliente, gestorConteudo, migracaoCapa, migracaoVinculo] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/version.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/supabase-client.js'), 'utf8'),
   readFile(resolve(raiz, 'app/components/NovidadesVendasModal.tsx'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807193000_capa_pasta_divulgacao_vendas_mobile.sql'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/migrations/20260807210000_ativar_vinculo_comercial_aprovado.sql'), 'utf8'),
 ]);
 
 const falhas = [];
@@ -120,6 +121,14 @@ exigir(
     && estilos.includes('.mobile-menu.is-loading-images .mobile-menu-card::before')
     && estilos.includes('@keyframes vendas-button-preloader'),
   'A sala deve manter loadings locais e revelar todos os botões somente depois que as imagens estiverem prontas.',
+);
+exigir(
+  migracaoVinculo.includes("v_deve_ativar := new.papel = 'vendedor'")
+    && migracaoVinculo.includes('and empresa_id <> new.empresa_id')
+    && migracaoVinculo.includes('set ativo = true,')
+    && migracaoVinculo.includes("where solicitacao.status = 'aprovada'")
+    && migracaoVinculo.includes('and vinculo.desvinculado_em is null'),
+  'Uma aprovação por código deve ativar o novo vínculo comercial e reparar aprovações anteriores que ficaram inativas.',
 );
 exigir(
   versao.includes("AVANTAVENDAS_ASSET_REVISION = '34'"),
