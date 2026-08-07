@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2 -->
+<!-- ava-version: 1.7.2.01 -->
+
+> Revisão 1.7.2.01: ajuste visual restrito ao cabeçalho do AvantaProjetos Web;
+> sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.7.2: em **Conteúdo para a equipe > Divulgação**, selecione uma pasta
 > principal e use **Escolher capa**. A capa pode ser escolhida entre as imagens

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2: capas de pastas principais e carregamento conjunto da sala do AvantaVendas.
+// Revisado na versão 1.7.2.01: cabeçalho principal do AvantaProjetos foi compactado; sem mudança operacional.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

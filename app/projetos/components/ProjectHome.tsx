@@ -309,11 +309,14 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
 
   return <div className={styles.home}>
     <header className={styles.homeHeader}>
-      <div><span className={styles.eyebrow}>AvantaProjetos</span><h1>Projetos</h1><p>Transforme ideias em planos visuais, tarefas e entregas.</p></div>
-      {!readOnly && <div className={styles.headerActions}>
-        <label className={styles.secondaryButton} tabIndex={0}><Icon name="upload" size={17} /> Importar<input type="file" accept="application/json,.json" aria-label="Importar projeto" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void importFile(file); event.currentTarget.value = ''; }} /></label>
-        <button type="button" className={styles.primaryButton} onClick={() => setCreateOpen(true)}><Icon name="plus" size={18} /> Novo projeto</button>
-      </div>}
+      <span className={styles.eyebrow}>AvantaProjetos</span>
+      <div className={styles.homeHeaderMain}>
+        <div className={styles.homeTitleLine}><h1>Projetos</h1><p>Transforme ideias em planos visuais, tarefas e entregas.</p></div>
+        {!readOnly && <div className={styles.headerActions}>
+          <label className={`${styles.secondaryButton} ${styles.headerCompactAction} ${styles.headerImportAction}`} tabIndex={0}><Icon name="upload" size={16} /> Importar<input type="file" accept="application/json,.json" aria-label="Importar projeto" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void importFile(file); event.currentTarget.value = ''; }} /></label>
+          <button type="button" className={`${styles.primaryButton} ${styles.headerCompactAction} ${styles.headerCreateAction}`} onClick={() => setCreateOpen(true)}><Icon name="plus" size={17} /> Novo Projeto</button>
+        </div>}
+      </div>
     </header>
 
     <nav className={styles.projectSections} aria-label="Categorias de projetos">

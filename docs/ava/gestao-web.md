@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2 -->
+<!-- ava-version: 1.7.2.01 -->
+
+> Revisão 1.7.2.01: título, descrição, **Importar** e **Novo Projeto** ficam na
+> mesma linha no cabeçalho principal do AvantaProjetos; sem mudança no fluxo
+> operacional.
 
 > Revisão 1.7.2: em **Conteúdo para a equipe > Divulgação**, selecione uma pasta
 > principal e use **Escolher capa**. A capa pode ser escolhida entre as imagens

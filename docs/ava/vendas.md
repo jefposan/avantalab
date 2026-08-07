@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2 -->
+<!-- ava-version: 1.7.2.01 -->
+
+> Revisão 1.7.2.01: ajuste visual restrito ao cabeçalho do AvantaProjetos Web;
+> sem impacto no AvantaVendas.
 
 > Revisão 1.7.2: as pastas principais de Divulgação exibem a capa escolhida pela
 > Gestão entre as imagens de suas subpastas. Na sala, um loading ocupa o local

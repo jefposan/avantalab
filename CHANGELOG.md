@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.2.01 - 2026-08-07
+
+- O cabeçalho principal do AvantaProjetos passa a reunir título, descrição e
+  ações na mesma linha. **Novo Projeto** usa o azul médio oficial e os dois
+  botões têm face visual mais compacta, preservando a área segura de clique.
+
 ## 1.7.2 - 2026-08-07
 
 - Conteúdo para a equipe: pastas principais da Divulgação agora podem usar como
