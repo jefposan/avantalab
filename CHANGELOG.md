@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.2.02 - 2026-08-07
+
+- O catálogo de módulos passa a ser carregado por uma rota protegida do servidor,
+  com validação do vínculo ativo de Gestor Master ou Administrador. Usuários
+  adicionados ao perfil recebem o mesmo catálogo do gestor original.
+- Falhas de consulta deixam de aparecer como catálogo vazio: a tela informa o
+  problema e oferece uma nova tentativa sem alterar instalações ou assinaturas.
+
 ## 1.7.2.01 - 2026-08-07
 
 - O cabeçalho principal do AvantaProjetos passa a reunir título, descrição e

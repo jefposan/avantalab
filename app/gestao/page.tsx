@@ -819,6 +819,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [modulosCatalogo, setModulosCatalogo] = useState<Modulo[]>([]);
   const [modulosAtivos, setModulosAtivos] = useState<string[]>([]);
   const [modulosCarregando, setModulosCarregando] = useState(false);
+  const [modulosErro, setModulosErro] = useState<string | null>(null);
   const [moduloAcaoId, setModuloAcaoId] = useState<string | null>(null);
   const [modulosCancelamentos, setModulosCancelamentos] = useState<Record<string, string>>({});
   const [modalPontoAdmin, setModalPontoAdmin] = useState(false);
@@ -2434,30 +2435,39 @@ useEffect(() => {
   async function carregarModulos() {
     if (!empresaId) return;
     setModulosCarregando(true);
+    setModulosErro(null);
     try {
-      const [catRes, ativosRes, assinaturasRes] = await Promise.all([
-        supabase.from('modulos').select('id, nome, descricao, icone, perfis').eq('disponivel', true).order('ordem', { ascending: true }),
-        supabase.from('empresa_modulos').select('modulo_id, expira_em').eq('empresa_id', empresaId).eq('ativo', true),
-        supabase.from('assinaturas_modulos').select('modulo_id, status, valido_ate').eq('empresa_id', empresaId).eq('status', 'cancelada'),
-      ]);
-      if (!catRes.error && catRes.data) {
-        setModulosCatalogo(catRes.data.map((m: RegistroSupabase) => ({
-          id: String(m.id), nome: textoRegistro(m.nome), descricao: textoRegistro(m.descricao),
-          icone: textoRegistro(m.icone), perfis: Array.isArray(m.perfis) ? m.perfis.map(String) : [],
-          precoMensal: obterRegistroModulo(String(m.id))?.comercial.precoMensal ?? 14.9,
-        })));
-      }
-      if (!ativosRes.error && ativosRes.data) {
-        const agora = new Date();
-        setModulosAtivos(ativosRes.data.filter((r: RegistroSupabase) => !r.expira_em || new Date(String(r.expira_em)) > agora).map((r: RegistroSupabase) => String(r.modulo_id)));
-      }
-      if (!assinaturasRes.error && assinaturasRes.data) {
-        setModulosCancelamentos(Object.fromEntries(assinaturasRes.data
-          .filter((r: RegistroSupabase) => r.valido_ate && new Date(String(r.valido_ate)) > new Date())
-          .map((r: RegistroSupabase) => [String(r.modulo_id), String(r.valido_ate)])));
-      }
-    } catch {}
-    setModulosCarregando(false);
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) throw new Error('Sua sessão não está disponível. Entre novamente para carregar os módulos.');
+
+      const resposta = await fetch(`/api/cobranca/modulos/listar?empresaId=${encodeURIComponent(empresaId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      });
+      const json = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível carregar os módulos.');
+
+      const modulos = Array.isArray(json.modulos) ? json.modulos : [];
+      setModulosCatalogo(modulos.map((m: RegistroSupabase) => ({
+        id: String(m.id), nome: textoRegistro(m.nome), descricao: textoRegistro(m.descricao),
+        icone: textoRegistro(m.icone), perfis: Array.isArray(m.perfis) ? m.perfis.map(String) : [],
+        precoMensal: obterRegistroModulo(String(m.id))?.comercial.precoMensal ?? 14.9,
+      })));
+      setModulosAtivos(Array.isArray(json.ativos) ? json.ativos.map(String) : []);
+      setModulosCancelamentos(
+        json.cancelamentos && typeof json.cancelamentos === 'object'
+          ? Object.fromEntries(Object.entries(json.cancelamentos).map(([id, data]) => [id, String(data)]))
+          : {},
+      );
+    } catch (error) {
+      setModulosCatalogo([]);
+      setModulosAtivos([]);
+      setModulosCancelamentos({});
+      setModulosErro(error instanceof Error ? error.message : 'Não foi possível carregar os módulos.');
+    } finally {
+      setModulosCarregando(false);
+    }
   }
 
   async function instalarModulo(moduloId: string) {
@@ -8060,6 +8070,8 @@ if (validacaoTelefoneObrigatoria) {
   modulos={modulosCatalogo.filter((m) => m.perfis.length === 0 || m.perfis.includes(tipoPerfilAtualNormalizado))}
   ativos={modulosAtivos}
   carregando={modulosCarregando}
+  erro={modulosErro}
+  onTentarNovamente={carregarModulos}
   acaoEmId={moduloAcaoId}
   onInstalar={instalarModulo}
   onDesinstalar={desinstalarModulo}

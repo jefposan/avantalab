@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.01 -->
+<!-- ava-version: 1.7.2.02 -->
+
+> Revisão 1.7.2.02: em **Menu > Módulos**, Gestor Master e Administrador ativos
+> visualizam o catálogo mesmo quando foram adicionados posteriormente ao perfil.
+> Se o carregamento falhar, use **Tentar novamente**; o erro não significa que o
+> perfil ficou sem módulos.
 
 > Revisão 1.7.2.01: título, descrição, **Importar** e **Novo Projeto** ficam na
 > mesma linha no cabeçalho principal do AvantaProjetos; sem mudança no fluxo

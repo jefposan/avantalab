@@ -18,6 +18,8 @@ interface ModulosModalProps {
   modulos: Modulo[]; // já filtrados pelo tipo de perfil
   ativos: string[];
   carregando: boolean;
+  erro: string | null;
+  onTentarNovamente: () => void;
   acaoEmId: string | null; // módulo em processamento (instalando/removendo)
   onInstalar: (id: string) => void;
   onDesinstalar: (id: string) => void;
@@ -46,6 +48,8 @@ export default function ModulosModal({
   modulos,
   ativos,
   carregando,
+  erro,
+  onTentarNovamente,
   acaoEmId,
   onInstalar,
   onDesinstalar,
@@ -85,6 +89,16 @@ export default function ModulosModal({
         <div className="flex-1 overflow-y-auto p-4">
           {carregando && modulos.length === 0 ? (
             <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Carregando módulos...</p>
+          ) : erro ? (
+            <div className="flex flex-col items-center gap-3 py-8 text-center" role="alert">
+              <p className={`max-w-sm text-sm font-semibold ${textMuted}`}>{erro}</p>
+              <button
+                type="button"
+                onClick={onTentarNovamente}
+                className="rounded-xl px-4 py-2 text-xs font-black text-white shadow transition hover:brightness-110"
+                style={{ backgroundColor: corPrimaria }}
+              >Tentar novamente</button>
+            </div>
           ) : modulos.length === 0 ? (
             <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Nenhum módulo disponível para este perfil.</p>
           ) : (

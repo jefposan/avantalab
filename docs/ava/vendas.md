@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.01 -->
+<!-- ava-version: 1.7.2.02 -->
+
+> Revisão 1.7.2.02: correção do catálogo de módulos restrita à Gestão Web; sem
+> impacto no AvantaVendas.
 
 > Revisão 1.7.2.01: ajuste visual restrito ao cabeçalho do AvantaProjetos Web;
 > sem impacto no AvantaVendas.
