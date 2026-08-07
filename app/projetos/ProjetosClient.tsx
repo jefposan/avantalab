@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
@@ -34,7 +35,17 @@ function ProjectApp({ companyId, access }: { companyId: string; access: ModuleAc
   return <main className={`${styles.root} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
     <header className={styles.moduleHeader}>
       <Link href={`/gestao?empresaId=${encodeURIComponent(companyId)}`} className={styles.moduleBack}>← Voltar ao AvantaLab</Link>
-      <div><strong>AvantaProjetos</strong><span>{access.empresa.nome}</span></div>
+      <div className={styles.moduleIdentity}>
+        <Image
+          src="/images/logo-avantalab-oficial.png"
+          alt="AvantaLab — Do zero ao operacional"
+          width={160}
+          height={40}
+          loading="eager"
+          className={styles.moduleLogo}
+        />
+        <span>{access.empresa.nome}</span>
+      </div>
       {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
     </header>
     <div className={styles.moduleContent}>

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.1.02 - 2026-08-07
+
+- O topo do AvantaProjetos agora usa o logo oficial do AvantaLab e apresenta o
+  nome do perfil abaixo da marca, com hierarquia e espaçamento mais claros.
+
 ## 1.7.1.01 - 2026-08-07
 
 - Perfis empresariais com cortesia vigente agora liberam a instalação e a

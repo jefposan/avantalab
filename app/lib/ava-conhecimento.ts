@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.1.01: cortesia empresarial libera módulos sem cobrança na Gestão Web.
+// Revisado na versão 1.7.1.02: topo do AvantaProjetos usa a marca oficial; sem mudança operacional.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

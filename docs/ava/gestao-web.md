@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.1.01 -->
+<!-- ava-version: 1.7.1.02 -->
+
+> Revisão 1.7.1.02: o topo do AvantaProjetos passou a usar o logo oficial do
+> AvantaLab e o nome do perfil logo abaixo; sem mudança no fluxo operacional.
 
 > Revisão 1.7.1.01: perfis empresariais com cortesia vigente liberam todos os
 > módulos sem cobrança. Gestor Master ou Administrador ainda escolhe quais
