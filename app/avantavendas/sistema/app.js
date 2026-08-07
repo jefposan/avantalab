@@ -272,6 +272,7 @@ let arrasteSalaBotoes = null;
 let preparandoRecursosSala = false;
 let recursosSalaBotoesPromise = null;
 const imagensSalaBotoesPrecarregadas = new Map();
+let revisaoPreloaderSalaBotoes = 0;
 let temporizadorReconstrucaoSala = 0;
 let temporizadorGarantiaSala = 0;
 let tentativasGarantiaSala = 0;
@@ -1464,7 +1465,10 @@ function render() {
     });
   }
   assinaturaSalaRenderizada = assinaturaSalaAtual;
-  if (assinaturaSalaAtual) agendarGarantiaSalaBotoes();
+  if (assinaturaSalaAtual) {
+    agendarGarantiaSalaBotoes();
+    requestAnimationFrame(prepararExibicaoSalaBotoesNoDom);
+  }
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
 }
@@ -1713,6 +1717,8 @@ const SALA_BOTOES_PADRAO = [
 
 const RECURSOS_SALA_BOTOES = [
   ...SALA_BOTOES_PADRAO.map(([, arquivo]) => `/avantavendas/recursos/assets/menu/${arquivo}`),
+  '/avantavendas/recursos/assets/menu/13_Configurações.png',
+  '/avantavendas/recursos/assets/menu/14_Sair.png',
   '/avantavendas/recursos/assets/logo-vendas-claro.png',
   '/avantavendas/recursos/assets/logo-vendas-escuro.png',
 ];
@@ -1749,6 +1755,49 @@ function prepararRecursosSalaBotoes() {
     }))).then(() => undefined);
   }
   return recursosSalaBotoesPromise;
+}
+
+function aguardarImagemSalaNoDom(imagem) {
+  return new Promise((resolver) => {
+    let finalizado = false;
+    const concluir = () => {
+      if (finalizado) return;
+      finalizado = true;
+      imagem.removeEventListener('load', carregar);
+      imagem.removeEventListener('error', falhar);
+      resolver();
+    };
+    const decodificar = () => {
+      if (typeof imagem.decode !== 'function') { concluir(); return; }
+      imagem.decode().catch(() => undefined).finally(concluir);
+    };
+    const carregar = () => decodificar();
+    const falhar = () => concluir();
+    if (imagem.complete) decodificar();
+    else {
+      imagem.addEventListener('load', carregar, { once: true });
+      imagem.addEventListener('error', falhar, { once: true });
+    }
+    window.setTimeout(concluir, 7000);
+  });
+}
+
+function prepararExibicaoSalaBotoesNoDom() {
+  const sala = app.querySelector('.mobile-menu');
+  if (!sala) return;
+  const revisao = ++revisaoPreloaderSalaBotoes;
+  sala.classList.add('is-loading-images');
+  sala.classList.remove('images-ready');
+  sala.setAttribute('aria-busy', 'true');
+  const imagens = [...sala.querySelectorAll('.mobile-menu-card img, .mobile-menu-wide img')];
+  Promise.all(imagens.map(aguardarImagemSalaNoDom)).then(() => {
+    requestAnimationFrame(() => {
+      if (revisao !== revisaoPreloaderSalaBotoes || !sala.isConnected) return;
+      sala.classList.remove('is-loading-images');
+      sala.classList.add('images-ready');
+      sala.setAttribute('aria-busy', 'false');
+    });
+  });
 }
 
 function itensSalaBotoesOrdenados() {
@@ -1845,7 +1894,7 @@ function renderMenuMobile() {
   const organizando = state.organizandoSalaBotoes;
   const aniversariantesHoje = aniversariosHojeVendas();
   const agendamentosHoje = agendamentosHojeVendas();
-  return `<section class="mobile-menu" aria-label="Menu principal">
+  return `<section class="mobile-menu is-loading-images" aria-label="Menu principal" aria-busy="true">
     <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Ir para Gestão" title="Ir para Gestão">${iconeTopoTrocaSistemaVendas()}</button>` : ''}</div></header>
     <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" ${organizando ? '' : 'hidden'}>Clique no botão e arraste para a nova posição</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
@@ -1860,7 +1909,7 @@ function renderMenuMobile() {
         <i aria-hidden="true">›</i>
       </button>
     </div>
-    <div class="mobile-menu-bottom"><button class="mobile-menu-wide" onclick="setAba('configuracoes')"><img src="./assets/menu/13_Configurações.png" alt="Configurações" /></button><button class="mobile-menu-wide" onclick="sairMenuMobile()"><img src="./assets/menu/14_Sair.png" alt="Sair" /></button></div>
+    <div class="mobile-menu-bottom"><button class="mobile-menu-wide" onclick="setAba('configuracoes')"><img src="./assets/menu/13_Configurações.png" alt="Configurações" decoding="sync" fetchpriority="high" /></button><button class="mobile-menu-wide" onclick="sairMenuMobile()"><img src="./assets/menu/14_Sair.png" alt="Sair" decoding="sync" fetchpriority="high" /></button></div>
   </section>`;
 }
 
@@ -3305,7 +3354,8 @@ function renderDivulgacao() {
   const cardsPastas = pastas.map((pasta) => {
     const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pasta.id);
     const totalMateriais = contarMateriaisDaPasta(pasta.id);
-    const capa = materiais.find((item) => item.miniatura_url) || materiais[0];
+    const capaEscolhida = (state.divulgacaoMateriais || []).find((item) => item.id === pasta.capa_material_id && item.tipo === 'imagem');
+    const capa = capaEscolhida || materiais.find((item) => item.miniatura_url) || materiais[0];
     const subpastas = (state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === pasta.id).length;
     const resumo = pasta.descricao || `${subpastas ? `${subpastas} ${subpastas === 1 ? 'subpasta' : 'subpastas'} · ` : ''}${totalMateriais} ${totalMateriais === 1 ? 'material' : 'materiais'}`;
     return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capaMaterial(capa, 'pasta')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(resumo)}</small><em>${totalMateriais}</em></span></button>`;

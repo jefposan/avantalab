@@ -6,7 +6,7 @@ import CatalogoProdutosVendas from './CatalogoProdutosVendas';
 import ModalConfirmacao from './ModalConfirmacao';
 
 type Novidade = { id: string; tipo: string; titulo: string; descricao: string; criado_em: string };
-type Pasta = { id: string; pasta_pai_id: string | null; nome: string; descricao: string | null; criado_em: string };
+type Pasta = { id: string; pasta_pai_id: string | null; capa_material_id: string | null; nome: string; descricao: string | null; criado_em: string };
 type Material = {
   id: string; pasta_id: string; titulo: string; tipo: 'imagem' | 'video' | 'pdf'; arquivo_path: string;
   arquivo_url: string; miniatura_path: string | null; miniatura_url: string | null;
@@ -95,6 +95,20 @@ function contarMateriaisNaArvore(pastaId: string, pastas: Pasta[], materiais: Ma
   return materiais.filter((material) => pastasIncluidas.has(material.pasta_id)).length;
 }
 
+function idsSubpastasDaPasta(pastaId: string, pastas: Pasta[]) {
+  const ids = new Set<string>();
+  const pendentes = [pastaId];
+  while (pendentes.length) {
+    const pastaAtual = pendentes.pop();
+    pastas.forEach((pasta) => {
+      if (pasta.pasta_pai_id !== pastaAtual || ids.has(pasta.id)) return;
+      ids.add(pasta.id);
+      pendentes.push(pasta.id);
+    });
+  }
+  return ids;
+}
+
 function pastaDescendeDaSelecionada(pastaId: string, pastaSelecionadaId: string | null, pastas: Pasta[]) {
   if (!pastaSelecionadaId || pastaId === pastaSelecionadaId) return false;
   const pastasPorId = new Map(pastas.map((pasta) => [pasta.id, pasta]));
@@ -179,6 +193,8 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [resultadoEnvio, setResultadoEnvio] = useState<{ tipo: 'sucesso' | 'aviso'; mensagem: string } | null>(null);
   const [exclusaoPendente, setExclusaoPendente] = useState<ExclusaoPendente | null>(null);
   const [materialEmVisualizacao, setMaterialEmVisualizacao] = useState<Material | null>(null);
+  const [pastaCapaEmEdicao, setPastaCapaEmEdicao] = useState<Pasta | null>(null);
+  const [salvandoCapa, setSalvandoCapa] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
   const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; etapa: string; cancelando: boolean } | null>(null);
   const [seletorArquivosAberto, setSeletorArquivosAberto] = useState(false);
@@ -194,7 +210,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     setCarregando(true); setErro('');
     const [novidadesRes, pastasRes, materiaisRes] = await Promise.all([
       supabase.from('vendas_mobile_conteudos').select('id, tipo, titulo, descricao, criado_em').eq('empresa_id', empresaId).eq('pagina', 'novidades').order('criado_em', { ascending: false }),
-      supabase.from('vendas_mobile_divulgacao_pastas').select('id, pasta_pai_id, nome, descricao, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
+      supabase.from('vendas_mobile_divulgacao_pastas').select('id, pasta_pai_id, capa_material_id, nome, descricao, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
       supabase.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
     ]);
     setCarregando(false);
@@ -212,6 +228,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     setPastasExpandidas(new Set());
     setResultadoEnvio(null);
     setMaterialEmVisualizacao(null);
+    setPastaCapaEmEdicao(null);
     void carregar();
   }, [aberto, empresaId]);
 
@@ -262,7 +279,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     if (!empresaId || !novaPasta.trim()) { setErro('Informe o nome da pasta.'); return; }
     const pastaPaiId = pastaPaiNova || null;
     setSalvando(true); setErro('');
-    const { data, error } = await supabase.from('vendas_mobile_divulgacao_pastas').insert({ empresa_id: empresaId, pasta_pai_id: pastaPaiId, nome: formatarNomePasta(novaPasta.trim()), descricao: novaDescricao.trim() || null }).select('id, pasta_pai_id, nome, descricao, criado_em').single();
+    const { data, error } = await supabase.from('vendas_mobile_divulgacao_pastas').insert({ empresa_id: empresaId, pasta_pai_id: pastaPaiId, nome: formatarNomePasta(novaPasta.trim()), descricao: novaDescricao.trim() || null }).select('id, pasta_pai_id, capa_material_id, nome, descricao, criado_em').single();
     setSalvando(false); if (error || !data) { setErro('Não foi possível criar a pasta.'); return; }
     setPastas((atuais) => [data as Pasta, ...atuais]); setPastaAtiva(data.id);
     if (pastaPaiId) setPastasExpandidas((atuais) => new Set([...atuais, pastaPaiId]));
@@ -273,7 +290,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     if (!pastaEmEdicao || !novaPasta.trim()) { setErro('Informe o nome da pasta.'); return; }
     setSalvando(true); setErro('');
     const nome = formatarNomePasta(novaPasta.trim());
-    const { data, error } = await supabase.from('vendas_mobile_divulgacao_pastas').update({ nome }).eq('id', pastaEmEdicao.id).eq('empresa_id', empresaId).select('id, pasta_pai_id, nome, descricao, criado_em').single();
+    const { data, error } = await supabase.from('vendas_mobile_divulgacao_pastas').update({ nome }).eq('id', pastaEmEdicao.id).eq('empresa_id', empresaId).select('id, pasta_pai_id, capa_material_id, nome, descricao, criado_em').single();
     setSalvando(false);
     if (error || !data) { setErro('Não foi possível atualizar o nome da pasta.'); return; }
     setPastas((atuais) => atuais.map((pasta) => pasta.id === data.id ? data as Pasta : pasta));
@@ -470,6 +487,27 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     controladorEnvio.current.abort();
   };
 
+  const salvarCapaPasta = async (materialId: string | null) => {
+    if (!pastaCapaEmEdicao || !empresaId || salvandoCapa) return;
+    setSalvandoCapa(true);
+    setErro('');
+    const { data, error } = await supabase
+      .from('vendas_mobile_divulgacao_pastas')
+      .update({ capa_material_id: materialId })
+      .eq('id', pastaCapaEmEdicao.id)
+      .eq('empresa_id', empresaId)
+      .select('id, pasta_pai_id, capa_material_id, nome, descricao, criado_em')
+      .single();
+    setSalvandoCapa(false);
+    if (error || !data) {
+      setErro('Não foi possível atualizar a capa da pasta.');
+      return;
+    }
+    setPastas((atuais) => atuais.map((pasta) => pasta.id === data.id ? data as Pasta : pasta));
+    setResultadoEnvio({ tipo: 'sucesso', mensagem: materialId ? 'Capa da pasta atualizada.' : 'Capa da pasta removida.' });
+    setPastaCapaEmEdicao(null);
+  };
+
   const executarExclusaoPendente = async () => {
     if (!exclusaoPendente || excluindo) return;
     setExcluindo(true);
@@ -492,6 +530,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         }
         await supabase.storage.from(BUCKET).remove([item.arquivo_path, ...(item.miniatura_path ? [item.miniatura_path] : [])]);
         setMateriais((lista) => lista.filter((i) => i.id !== item.id));
+        setPastas((lista) => lista.map((pasta) => pasta.capa_material_id === item.id ? { ...pasta, capa_material_id: null } : pasta));
         return;
       }
 
@@ -510,13 +549,16 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
       const arquivos = materiais
         .filter((item) => ids.has(item.pasta_id))
         .flatMap((item) => [item.arquivo_path, ...(item.miniatura_path ? [item.miniatura_path] : [])]);
+      const materiaisExcluidos = new Set(materiais.filter((item) => ids.has(item.pasta_id)).map((item) => item.id));
       const { error } = await supabase.from('vendas_mobile_divulgacao_pastas').delete().eq('id', pasta.id).eq('empresa_id', empresaId);
       if (error) {
         setErro('Não foi possível excluir a pasta.');
         return;
       }
       if (arquivos.length) await supabase.storage.from(BUCKET).remove(arquivos);
-      setPastas((lista) => lista.filter((item) => !ids.has(item.id)));
+      setPastas((lista) => lista
+        .filter((item) => !ids.has(item.id))
+        .map((item) => item.capa_material_id && materiaisExcluidos.has(item.capa_material_id) ? { ...item, capa_material_id: null } : item));
       setMateriais((lista) => lista.filter((item) => !ids.has(item.pasta_id)));
       if (pastaAtiva && ids.has(pastaAtiva)) setPastaAtiva(null);
       if (pastaPaiNova && ids.has(pastaPaiNova)) setPastaPaiNova('');
@@ -528,6 +570,12 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
 
   const fundo = darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'; const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900'; const suave = darkMode ? 'text-slate-400' : 'text-slate-500';
   const materiaisAtivos = materiais.filter((item) => item.pasta_id === pastaAtiva);
+  const pastaAtivaObjeto = pastas.find((pasta) => pasta.id === pastaAtiva) || null;
+  const idsSubpastasCapa = pastaCapaEmEdicao ? idsSubpastasDaPasta(pastaCapaEmEdicao.id, pastas) : new Set<string>();
+  const imagensCandidatasCapa = materiais.filter((item) => item.tipo === 'imagem' && idsSubpastasCapa.has(item.pasta_id));
+  const materialCapaAtual = pastaCapaEmEdicao?.capa_material_id
+    ? materiais.find((item) => item.id === pastaCapaEmEdicao.capa_material_id) || null
+    : null;
   const indiceMaterialVisualizado = materialEmVisualizacao ? materiaisAtivos.findIndex((item) => item.id === materialEmVisualizacao.id) : -1;
   const materialAnterior = indiceMaterialVisualizado > 0 ? materiaisAtivos[indiceMaterialVisualizado - 1] : null;
   const proximoMaterial = indiceMaterialVisualizado >= 0 && indiceMaterialVisualizado < materiaisAtivos.length - 1 ? materiaisAtivos[indiceMaterialVisualizado + 1] : null;
@@ -605,6 +653,27 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         <button type="button" onClick={() => setSeletorArquivosAberto(false)} className={`mt-2 min-h-11 w-full rounded-xl text-xs font-black uppercase ${darkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>Cancelar</button>
       </section>
     </div>}
+    {pastaCapaEmEdicao && <div className="fixed inset-0 z-[6150] flex items-end justify-center bg-slate-950/70 p-3 backdrop-blur-sm sm:items-center" onClick={() => { if (!salvandoCapa) setPastaCapaEmEdicao(null); }} role="dialog" aria-modal="true" aria-label={`Escolher capa da pasta ${pastaCapaEmEdicao.nome}`}>
+      <section className={`flex max-h-[86dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border shadow-2xl ${darkMode ? 'border-slate-700 bg-slate-900 text-white' : 'border-white bg-white text-slate-900'}`} onClick={(e) => e.stopPropagation()}>
+        <header className={`flex shrink-0 items-start justify-between gap-3 border-b p-4 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+          <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-cyan-600">Capa da pasta principal</p><h3 className="mt-1 text-lg font-black">{pastaCapaEmEdicao.nome}</h3><p className={`mt-1 text-xs ${suave}`}>Escolha uma imagem publicada dentro de qualquer subpasta.</p></div>
+          <button type="button" onClick={() => setPastaCapaEmEdicao(null)} disabled={salvandoCapa} aria-label="Fechar seleção de capa" className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-black disabled:opacity-50 ${darkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>×</button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          {imagensCandidatasCapa.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {imagensCandidatasCapa.map((item) => {
+              const selecionada = pastaCapaEmEdicao.capa_material_id === item.id;
+              const nomePasta = pastas.find((pasta) => pasta.id === item.pasta_id)?.nome || 'Subpasta';
+              return <button key={item.id} type="button" onClick={() => void salvarCapaPasta(item.id)} disabled={salvandoCapa} aria-pressed={selecionada} className={`overflow-hidden rounded-2xl border-2 text-left transition disabled:opacity-60 ${selecionada ? 'border-cyan-500 ring-2 ring-cyan-500/20' : darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                <span className="relative block aspect-square overflow-hidden bg-slate-950"><img src={item.miniatura_url || item.arquivo_url} alt={item.titulo} className="h-full w-full object-cover" />{selecionada && <span className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-cyan-500 text-lg font-black text-white shadow-lg">✓</span>}</span>
+                <span className="block p-2"><b className="block truncate text-xs">{item.titulo}</b><small className={`mt-0.5 block truncate text-[10px] ${suave}`}>{nomePasta}</small></span>
+              </button>;
+            })}
+          </div> : <div className={`rounded-2xl border border-dashed px-5 py-12 text-center ${darkMode ? 'border-slate-700' : 'border-slate-300'}`}><span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-cyan-500/10 text-cyan-600"><Icone tipo="image" /></span><h4 className="mt-3 text-sm font-black">Nenhuma imagem disponível</h4><p className={`mx-auto mt-1 max-w-sm text-xs leading-relaxed ${suave}`}>Adicione uma imagem em uma subpasta. Vídeos e PDFs não são usados como capa da pasta principal.</p></div>}
+        </div>
+        {materialCapaAtual && <footer className={`shrink-0 border-t p-3 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => void salvarCapaPasta(null)} disabled={salvandoCapa} className="min-h-11 w-full rounded-xl border border-red-300 px-4 text-xs font-black uppercase text-red-600 disabled:opacity-60">{salvandoCapa ? 'Salvando...' : 'Remover capa atual'}</button></footer>}
+      </section>
+    </div>}
     {materialEmVisualizacao && <div className="fixed inset-0 z-[6100] flex items-center justify-center bg-slate-950/95 sm:p-5" onClick={(e) => { e.stopPropagation(); setMaterialEmVisualizacao(null); }} role="dialog" aria-modal="true" aria-label={`Visualização de ${materialEmVisualizacao.titulo}`}>
       <section className="flex h-full w-full max-w-5xl flex-col overflow-hidden bg-slate-950 text-white sm:max-h-[92dvh] sm:rounded-2xl sm:border sm:border-white/15 sm:shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <header className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-b border-white/15 px-4 py-2">
@@ -672,7 +741,17 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
             {!listaPastasVisiveis.length && <p className={`py-3 text-center text-xs ${suave}`}>Nenhuma pasta criada.</p>}
           </div>
         </aside>
-        <section className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1"><div className="flex items-start justify-between gap-3"><div><h3 className="text-base font-black">{pastas.find((p) => p.id === pastaAtiva)?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>{pastaAtiva && <><input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} /><button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="hidden h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-black text-white disabled:opacity-60 lg:flex" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button></>}</div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => setMaterialEmVisualizacao(item)} aria-label={`Visualizar ${item.titulo}`} className="relative block aspect-square w-full bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-cyan-400">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></button><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} aria-label={`Excluir ${item.titulo}`} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div></section>
+        <section className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          <div className="flex items-start justify-between gap-3">
+            <div><h3 className="text-base font-black">{pastaAtivaObjeto?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>
+            {pastaAtivaObjeto && <div className="flex shrink-0 flex-wrap justify-end gap-2">
+              {pastaAtivaObjeto.pasta_pai_id === null && <button type="button" onClick={() => setPastaCapaEmEdicao(pastaAtivaObjeto)} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-xs font-black ${darkMode ? 'border-cyan-700 bg-cyan-950/30 text-cyan-300' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}><Icone tipo="image" className="h-4 w-4" />{pastaAtivaObjeto.capa_material_id ? 'Trocar capa' : 'Escolher capa'}</button>}
+              <input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
+              <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="hidden min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-black text-white disabled:opacity-60 lg:flex" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button>
+            </div>}
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => setMaterialEmVisualizacao(item)} aria-label={`Visualizar ${item.titulo}`} className="relative block aspect-square w-full bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-cyan-400">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></button><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} aria-label={`Excluir ${item.titulo}`} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div>
+        </section>
       </div>}
     </section>
     <ModalConfirmacao

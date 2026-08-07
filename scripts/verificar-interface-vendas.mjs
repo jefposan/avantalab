@@ -2,10 +2,13 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, versao] = await Promise.all([
+const [aplicacao, estilos, versao, cliente, gestorConteudo, migracaoCapa] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/version.ts'), 'utf8'),
+  readFile(resolve(raiz, 'app/avantavendas/sistema/supabase-client.js'), 'utf8'),
+  readFile(resolve(raiz, 'app/components/NovidadesVendasModal.tsx'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/migrations/20260807193000_capa_pasta_divulgacao_vendas_mobile.sql'), 'utf8'),
 ]);
 
 const falhas = [];
@@ -99,7 +102,27 @@ exigir(
   'Os compartilhamentos do AvantaVendas devem enviar somente o arquivo, sem texto ou título automáticos.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '33'"),
+  cliente.includes('pasta_pai_id, capa_material_id, nome')
+    && gestorConteudo.includes(".update({ capa_material_id: materialId })")
+    && gestorConteudo.includes("item.tipo === 'imagem' && idsSubpastasCapa.has(item.pasta_id)")
+    && migracaoCapa.includes('add column if not exists capa_material_id uuid')
+    && migracaoCapa.includes('Somente pastas principais podem receber uma capa personalizada.')
+    && migracaoCapa.includes('A capa precisa estar publicada dentro de uma subpasta desta pasta principal.')
+    && aplicacao.includes("item.id === pasta.capa_material_id && item.tipo === 'imagem'"),
+  'A capa da pasta principal deve ser escolhida na Gestão entre imagens de suas subpastas e exibida no AvantaVendas.',
+);
+exigir(
+  aplicacao.includes('function prepararExibicaoSalaBotoesNoDom()')
+    && aplicacao.includes("sala.classList.add('is-loading-images')")
+    && aplicacao.includes("sala.classList.add('images-ready')")
+    && aplicacao.includes("'/avantavendas/recursos/assets/menu/13_Configurações.png'")
+    && aplicacao.includes("'/avantavendas/recursos/assets/menu/14_Sair.png'")
+    && estilos.includes('.mobile-menu.is-loading-images .mobile-menu-card::before')
+    && estilos.includes('@keyframes vendas-button-preloader'),
+  'A sala deve manter loadings locais e revelar todos os botões somente depois que as imagens estiverem prontas.',
+);
+exigir(
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '34'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

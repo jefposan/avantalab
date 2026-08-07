@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.2 - 2026-08-07
+
+- Conteúdo para a equipe: pastas principais da Divulgação agora podem usar como
+  capa qualquer imagem publicada em suas subpastas. O gestor escolhe, troca ou
+  remove a capa pela própria pasta; vídeos e PDFs não entram nessa seleção.
+- AvantaVendas: a sala reserva o espaço dos botões com um loading local e revela
+  todos eles de uma vez somente após as imagens estarem prontas, tanto na
+  abertura quanto no retorno interno à sala.
+
 ## 1.7.1.04 - 2026-08-07
 
 - AvantaVendas/iPhone: a pré-visualização deixa de depender do enquadramento do

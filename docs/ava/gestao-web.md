@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.1.04 -->
+<!-- ava-version: 1.7.2 -->
+
+> Revisão 1.7.2: em **Conteúdo para a equipe > Divulgação**, selecione uma pasta
+> principal e use **Escolher capa**. A capa pode ser escolhida entre as imagens
+> de qualquer subpasta e pode ser trocada ou removida quando necessário.
 
 > Revisão 1.7.1.04: renderização centralizada de PDF aplicada ao AvantaVendas;
 > sem impacto operacional na Gestão Web.

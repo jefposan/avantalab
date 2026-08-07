@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.1.04 -->
+<!-- ava-version: 1.7.2 -->
+
+> Revisão 1.7.2: as pastas principais de Divulgação exibem a capa escolhida pela
+> Gestão entre as imagens de suas subpastas. Na sala, um loading ocupa o local
+> dos botões até todas as imagens estarem prontas; então o conjunto aparece de
+> uma vez, inclusive ao voltar internamente para a sala.
 
 > Revisão 1.7.1.04: no iPhone e nos demais dispositivos, cada página da
 > pré-visualização de PDF é enquadrada e centralizada nos eixos horizontal e
