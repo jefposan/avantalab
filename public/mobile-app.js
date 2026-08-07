@@ -4710,6 +4710,14 @@
     } catch (e) {}
   }
 
+  function reconciliarBadgeQuandoPonteNativaPronta() {
+    carregarNotificacoesNaoLidas(false);
+  }
+  window.addEventListener('avantalab:badge-nativo-pronto', reconciliarBadgeQuandoPonteNativaPronta);
+  if (typeof window.__avantalabAtualizarBadgeNativo === 'function') {
+    window.setTimeout(reconciliarBadgeQuandoPonteNativaPronta, 0);
+  }
+
   // ── Painel de notificacoes (lista as mensagens do sininho) ──
   async function abrirNotificacoesMobile() {
     if (premiumPessoalBloqueadoMobile()) {

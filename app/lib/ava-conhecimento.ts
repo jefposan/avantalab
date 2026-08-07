@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.28.09: o selo de avisos da Gestão Mobile/iOS é reconciliado com a quantidade real ao iniciar, retomar ou fechar avisos.
+// Revisado na versão 1.7.0.28.10: a Gestão iOS usa o plugin oficial de push para zerar o selo quando o banco confirma que não existem avisos.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -75,7 +75,7 @@ NAVEGAÇÃO E PERFIS
 - No card de cadastro, **Cadastrar com Google** e **Cadastrar com Apple** criam ou acessam a mesma conta-base do cadastro por e-mail. Se ainda faltarem dados do primeiro perfil, a Gestão solicita a conclusão depois da autenticação.
 - Durante o login com Google ou Apple, **Preparando acesso** oferece **Cancelar e voltar ao login**. A ação encerra a tentativa pendente e restaura a tela de login sem manter o botão em Conectando.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
-- Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações e identificam o perfil financeiro de origem. Abrir ou fechar o painel não os remove; eles e o indicador permanecem até usar **Fechar aviso** ou **Fechar todas**. No iPhone, o painel fica abaixo da área segura; quantidade e **Fechar todas** permanecem fixos enquanto os cards rolam. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
+- Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações e identificam o perfil financeiro de origem. Abrir ou fechar o painel não os remove; eles e o indicador permanecem até usar **Fechar aviso** ou **Fechar todas**. No iPhone, quando a Gestão confirma que não existem avisos pendentes, também remove os pushes antigos da Central de Notificações e zera o selo do ícone. O painel fica abaixo da área segura; quantidade e **Fechar todas** permanecem fixos enquanto os cards rolam. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Gestor Master e Administrador recebem no sininho avisos de faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Tocar em um aviso de assinatura abre **Assinatura**; quando as notificações do aparelho estiverem ativas, ele também é entregue por push.
 - Em Menu > Configurações > Backup e restauração, Gestor Master, Administrador e Operador Completo abrem **Pontos de restauração**. Eles preservam o estado completo do perfil, incluindo agenda e preferências; somente Gestor Master restaura ou exclui. O backup por Excel permanece separado e não passa a incluir esses dados.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.

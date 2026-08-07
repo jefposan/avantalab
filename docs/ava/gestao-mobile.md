@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.09 -->
+<!-- ava-version: 1.7.0.28.10 -->
+
+> Revisão 1.7.0.28.10: quando a Gestão confirma que não há avisos pendentes,
+> o app iOS remove também as notificações antigas já entregues pelo sistema e
+> zera o selo do ícone. A conferência é repetida após o registro nativo do push.
 
 > Revisão 1.7.0.28.09: o selo de avisos no ícone do app iOS reflete a
 > quantidade real de avisos disponíveis. A Gestão reconcilia esse número ao

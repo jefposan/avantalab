@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.28.09 -->
+<!-- ava-version: 1.7.0.28.10 -->
+
+> Revisão 1.7.0.28.10: fallback de limpeza do selo aplicado somente ao app
+> iOS da Gestão; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.28.09: sincronização do selo de avisos aplicada somente à
 > Gestão Mobile/iOS; sem impacto operacional na Gestão Web.

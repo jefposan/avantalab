@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.28.10 - 2026-08-06
+
+- Gestão Mobile/iOS: quando o banco confirma que não existem avisos pendentes,
+  o app usa também o plugin oficial de push já instalado para remover as
+  notificações entregues e zerar o selo do ícone. A sincronização é repetida
+  após o registro nativo, sem exigir nova build do Capacitor.
+
 ## 1.7.0.28.09 - 2026-08-06
 
 - Gestão Mobile/iOS: o selo do ícone agora usa a contagem real de avisos

@@ -84,7 +84,13 @@ exigir(
     && mobile.includes('window.addEventListener(\'pageshow\'')
     && mobile.includes('if (!state.usuario || !state.usuario.id) {\n      state.notificacoesNaoLidas = 0;\n      atualizarBadgeApp(0);')
     && ponteNativa.includes("const BADGE_KEY = 'avantalab.mobile.badge'")
-    && ponteNativa.includes('badgePersistido = Number(localStorage.getItem(BADGE_KEY))'),
+    && ponteNativa.includes('badgePersistido = Number(localStorage.getItem(BADGE_KEY))')
+    && ponteNativa.includes('limparEntregues && total === 0')
+    && ponteNativa.includes('PushNotifications.removeAllDeliveredNotifications()')
+    && ponteNativa.includes('badgeConfirmadoPelaGestao !== null')
+    && ponteNativa.includes("window.dispatchEvent(new CustomEvent('avantalab:badge-nativo-pronto'))")
+    && mobile.includes("window.addEventListener('avantalab:badge-nativo-pronto'")
+    && mobile.includes('window.setTimeout(reconciliarBadgeQuandoPonteNativaPronta, 0)'),
   'A Gestão Mobile/iOS deve reconciliar o selo ao iniciar e ao retomar, inclusive quando a ponte nativa carregar depois da página.',
 );
 exigir(

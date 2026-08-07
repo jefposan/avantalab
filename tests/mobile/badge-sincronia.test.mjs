@@ -49,4 +49,10 @@ test('a Gestão sincroniza o selo na retomada e elimina a corrida com a ponte iO
   assert.match(ponteNativa, /const BADGE_KEY = 'avantalab\.mobile\.badge'/);
   assert.match(ponteNativa, /badgePersistido = Number\(localStorage\.getItem\(BADGE_KEY\)\)/);
   assert.match(ponteNativa, /NativeBadge\.set\(\{ count: total \}\)/);
+  assert.match(ponteNativa, /limparEntregues && total === 0/);
+  assert.match(ponteNativa, /PushNotifications\.removeAllDeliveredNotifications\(\)/);
+  assert.match(ponteNativa, /badgeConfirmadoPelaGestao !== null/);
+  assert.match(ponteNativa, /avantalab:badge-nativo-pronto/);
+  assert.match(mobile, /window\.addEventListener\('avantalab:badge-nativo-pronto'/);
+  assert.match(mobile, /carregarNotificacoesNaoLidas\(false\)/);
 });
