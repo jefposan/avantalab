@@ -2511,11 +2511,16 @@ useEffect(() => {
         if (error) throw error;
         if (data !== true) throw new Error('A ativação do Vendas Mobile não foi confirmada.');
       } else {
-        const { error } = await supabase.from('empresa_modulos').upsert(
-          { empresa_id: empresaId, modulo_id: moduloId, ativo: true, origem: 'avulso', atualizado_em: new Date().toISOString() },
-          { onConflict: 'empresa_id,modulo_id' }
-        );
-        if (error) throw error;
+        const { data: sessao } = await supabase.auth.getSession();
+        const token = sessao.session?.access_token;
+        if (!token) throw new Error('Sessão indisponível. Entre novamente para instalar o módulo.');
+        const resposta = await fetch('/api/cobranca/modulos/ativar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ empresaId, moduloId }),
+        });
+        const json = await resposta.json();
+        if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível instalar o módulo.');
       }
 
       const { data: instalacao, error: erroConfirmacao } = await supabase

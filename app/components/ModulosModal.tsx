@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import DraggableModalCard from './DraggableModalCard';
+import { COBRANCA_ATIVA } from '@/app/lib/cobranca';
 
 export type Modulo = {
   id: string;
@@ -94,7 +95,7 @@ export default function ModulosModal({
                 const cancelamentoEm = cancelamentos[m.id];
                 const business = planoComercial === 'business';
                 const businessPro = planoComercial === 'business_pro';
-                const disponivelNoPlano = business || businessPro;
+                const disponivelNoPlano = !COBRANCA_ATIVA || business || businessPro;
                 const preco = (m.precoMensal ?? 14.9).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 return (
                   <div key={m.id} className={`flex min-w-0 flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center ${itemBorda}`}>
@@ -106,7 +107,15 @@ export default function ModulosModal({
                         <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-700">Instalado</span>
                       )}
                       <p className={`mt-1 text-[11px] font-bold ${textMuted}`}>
-                        {cancelamentoEm ? `Acesso até ${new Intl.DateTimeFormat('pt-BR').format(new Date(cancelamentoEm))}` : businessPro ? 'Incluso no Business Pro' : business ? `${preco} por mês` : 'Disponível no Business e Business Pro'}
+                        {cancelamentoEm
+                          ? `Acesso até ${new Intl.DateTimeFormat('pt-BR').format(new Date(cancelamentoEm))}`
+                          : !COBRANCA_ATIVA
+                            ? 'Disponível para instalação'
+                            : businessPro
+                              ? 'Incluso no Business Pro'
+                              : business
+                                ? `${preco} por mês`
+                                : 'Disponível no Business e Business Pro'}
                       </p>
                     </div>
                     {instalado ? (
@@ -123,7 +132,7 @@ export default function ModulosModal({
                         onClick={() => onInstalar(m.id)}
                         className="shrink-0 rounded-xl px-3 py-2 text-xs font-black text-white shadow transition hover:brightness-110 disabled:opacity-50"
                         style={{ backgroundColor: corPrimaria }}
-                      >{processando ? '...' : business ? `Assinar ${preco}` : businessPro ? 'Instalar' : 'Indisponível'}</button>
+                      >{processando ? '...' : !COBRANCA_ATIVA ? 'Instalar' : business ? `Assinar ${preco}` : businessPro ? 'Instalar' : 'Indisponível'}</button>
                     )}
                   </div>
                 );
