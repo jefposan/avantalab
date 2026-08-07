@@ -21,6 +21,8 @@
         },
       })
     : null;
+  let canalAtualizacoesVinculo = null;
+  let usuarioCanalAtualizacoesVinculo = '';
 
   function atualizarProgresso(grupo, concluido, total, rotulo) {
     if (typeof window.__avantalabAtualizarProgressoVendas === 'function') {
@@ -155,8 +157,41 @@
   }
 
   async function signOut() {
+    await cancelarAtualizacoesVinculo();
     const { error } = await requireClient().auth.signOut();
     if (error) throw error;
+  }
+
+  async function cancelarAtualizacoesVinculo() {
+    if (canalAtualizacoesVinculo && client) {
+      await client.removeChannel(canalAtualizacoesVinculo).catch(() => undefined);
+    }
+    canalAtualizacoesVinculo = null;
+    usuarioCanalAtualizacoesVinculo = '';
+  }
+
+  async function assinarAtualizacoesVinculo(aoAtualizar) {
+    const user = await currentUser();
+    if (!user || typeof aoAtualizar !== 'function') {
+      await cancelarAtualizacoesVinculo();
+      return false;
+    }
+    if (canalAtualizacoesVinculo && usuarioCanalAtualizacoesVinculo === user.id) return true;
+    await cancelarAtualizacoesVinculo();
+    usuarioCanalAtualizacoesVinculo = user.id;
+    canalAtualizacoesVinculo = requireClient()
+      .channel(`vendas-vinculo-${user.id}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'vendas_mobile_solicitacoes_acesso', filter: `user_id=eq.${user.id}`,
+      }, aoAtualizar)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'vendas_mobile_acessos', filter: `user_id=eq.${user.id}`,
+      }, aoAtualizar)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'vendas_mobile_vinculos_comerciais', filter: `user_id=eq.${user.id}`,
+      }, aoAtualizar)
+      .subscribe();
+    return true;
   }
 
   async function solicitarAcesso({ codigo, nome, telefone }) {
@@ -811,5 +846,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback };
 })();

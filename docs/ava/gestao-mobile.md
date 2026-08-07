@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.04 -->
+<!-- ava-version: 1.7.2.05 -->
+
+> Revisão 1.7.2.05: depois da aprovação do Código Vendas, o AvantaVendas aberto
+> pelo solicitante atualiza o vínculo e carrega os conteúdos automaticamente,
+> sem reinício ou novo login.
 
 > Revisão 1.7.2.04: aprovar uma solicitação feita com o Código Vendas torna a
 > empresa solicitada o vínculo comercial ativo para Catálogo, Divulgação e

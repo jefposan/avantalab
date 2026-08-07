@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.04 -->
+<!-- ava-version: 1.7.2.05 -->
+
+> Revisão 1.7.2.05: ao aprovar o Código Vendas em **Configurações >
+> Aprovações**, o AvantaVendas aberto pelo solicitante reconhece a liberação e
+> carrega os conteúdos automaticamente; não é necessário pedir que ele reinicie
+> ou faça novo login.
 
 > Revisão 1.7.2.04: em **Configurações > Aprovações**, aprovar a solicitação
 > enviada com o Código Vendas torna essa empresa o vínculo comercial ativo do

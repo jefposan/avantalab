@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, versao, cliente, gestorConteudo, migracaoCapa, migracaoVinculo] = await Promise.all([
+const [aplicacao, estilos, versao, cliente, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/version.ts'), 'utf8'),
@@ -10,6 +10,7 @@ const [aplicacao, estilos, versao, cliente, gestorConteudo, migracaoCapa, migrac
   readFile(resolve(raiz, 'app/components/NovidadesVendasModal.tsx'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807193000_capa_pasta_divulgacao_vendas_mobile.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807210000_ativar_vinculo_comercial_aprovado.sql'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/migrations/20260807223000_vinculo_vendas_mobile_realtime.sql'), 'utf8'),
 ]);
 
 const falhas = [];
@@ -131,7 +132,22 @@ exigir(
   'Uma aprovação por código deve ativar o novo vínculo comercial e reparar aprovações anteriores que ficaram inativas.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '34'"),
+  cliente.includes('async function assinarAtualizacoesVinculo(aoAtualizar)')
+    && cliente.includes("table: 'vendas_mobile_solicitacoes_acesso', filter: `user_id=eq.${user.id}`")
+    && cliente.includes("table: 'vendas_mobile_acessos', filter: `user_id=eq.${user.id}`")
+    && cliente.includes("table: 'vendas_mobile_vinculos_comerciais', filter: `user_id=eq.${user.id}`")
+    && aplicacao.includes('function atualizarVinculoAprovadoAutomaticamente()')
+    && aplicacao.includes('INTERVALO_VERIFICACAO_APROVACAO_MS = 15000')
+    && aplicacao.includes("document.addEventListener('visibilitychange'")
+    && aplicacao.includes('Esta tela será atualizada automaticamente após a aprovação.')
+    && aplicacao.includes('Conteúdos atualizados.')
+    && migracaoRealtime.includes('alter publication supabase_realtime add table public.vendas_mobile_solicitacoes_acesso')
+    && migracaoRealtime.includes('alter publication supabase_realtime add table public.vendas_mobile_acessos')
+    && migracaoRealtime.includes('alter publication supabase_realtime add table public.vendas_mobile_vinculos_comerciais'),
+  'A aprovação deve chegar em tempo real e ter verificação periódica enquanto o usuário aguarda.',
+);
+exigir(
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '35'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

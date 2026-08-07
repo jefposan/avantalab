@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.04 -->
+<!-- ava-version: 1.7.2.05 -->
+
+> Revisão 1.7.2.05: a tela **Aguardando aprovação** reconhece automaticamente
+> quando o gestor libera o Código Vendas e carrega Catálogo, Divulgação e
+> Novidades sem reiniciar o aplicativo. Se a conexão em tempo real oscilar, a
+> tela também reconfirma a situação periodicamente e quando volta ao primeiro
+> plano.
 
 > Revisão 1.7.2.04: depois que o gestor aprova o Código Vendas, a empresa
 > solicitada passa a fornecer Catálogo, Divulgação e Novidades. Perfis que o
@@ -1247,7 +1253,9 @@ função existir ali.
 - Vínculo comercial (catálogo/divulgação/novidades) e destino financeiro são
   independentes. O código empresarial é opcional, exige aprovação do gestor e
   libera somente os conteúdos da equipe; ele não compartilha clientes, pedidos,
-  pagamentos ou dados financeiros.
+  pagamentos ou dados financeiros. Enquanto aguarda, o vendedor pode manter a
+  tela aberta: após a aprovação, o vínculo e os conteúdos são carregados
+  automaticamente, sem reiniciar ou entrar novamente.
 - O vendedor pode usar todos os controles operacionais do Vendas sem destino
   financeiro. Em **Configurações > Integração com Gestão**, o primeiro vínculo
   envia todo o histórico mensal existente ao perfil escolhido.

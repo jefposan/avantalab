@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.2.05 - 2026-08-07
+
+- AvantaVendas: a tela que aguarda a aprovação do Código Vendas agora recebe a
+  liberação em tempo real e carrega automaticamente Catálogo, Divulgação e
+  Novidades, sem exigir que o usuário reinicie ou entre novamente.
+- Uma verificação periódica e a retomada do aplicativo confirmam a aprovação
+  caso a conexão em tempo real oscile, sem interferir no uso normal do sistema.
+
 ## 1.7.2.04 - 2026-08-07
 
 - AvantaVendas: ao aprovar um código empresarial, a empresa solicitada passa a
