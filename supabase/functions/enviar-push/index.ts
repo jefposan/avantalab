@@ -97,14 +97,15 @@ async function enviarParaUsuarios(
 
   const { data: subs } = await db
     .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth, canal, apns_token")
+    .select("id, user_id, endpoint, p256dh, auth, canal, apns_token")
     .in("user_id", userIds)
     .eq("app_origem", "mobile");
 
   let enviados = 0;
+  const cacheBadges = new Map<string, number | null>();
 
   for (const s of subs || []) {
-    if (await enviarPush(db, s, { titulo, corpo, url, perfil })) enviados++;
+    if (await enviarPush(db, s, { titulo, corpo, url, perfil }, cacheBadges)) enviados++;
   }
 
   return json({ ok: true, enviados, total: (subs || []).length });

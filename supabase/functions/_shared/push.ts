@@ -2,6 +2,7 @@ import webpush from 'npm:web-push@3.6.7';
 
 type AssinaturaPush = {
   id: string;
+  user_id?: string | null;
   endpoint: string;
   p256dh: string | null;
   auth: string | null;
@@ -18,6 +19,8 @@ type MensagemPush = {
   perfil?: string;
   badge?: number;
 };
+
+type CacheBadges = Map<string, number | null>;
 
 function base64Url(valor: Uint8Array | string) {
   const bytes = typeof valor === 'string' ? new TextEncoder().encode(valor) : valor;
@@ -53,6 +56,13 @@ async function enviarApns(token: string, mensagem: MensagemPush) {
   const ambiente = Deno.env.get('APNS_ENVIRONMENT') === 'sandbox' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com';
   const titulo = mensagem.titulo || mensagem.title || 'AvantaLab';
   const corpo = mensagem.corpo || mensagem.body || '';
+  const aps: Record<string, unknown> = {
+    alert: { title: titulo, body: corpo },
+    sound: 'default',
+  };
+  if (typeof mensagem.badge === 'number' && Number.isFinite(mensagem.badge)) {
+    aps.badge = Math.max(0, Math.trunc(mensagem.badge));
+  }
   const resposta = await fetch(`https://${ambiente}/3/device/${token}`, {
     method: 'POST',
     headers: {
@@ -62,16 +72,60 @@ async function enviarApns(token: string, mensagem: MensagemPush) {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      aps: { alert: { title: titulo, body: corpo }, badge: Math.max(1, Number(mensagem.badge || 1)), sound: 'default' },
+      aps,
       url: mensagem.url || '/mobile', perfil: mensagem.perfil || '',
     }),
   });
   return { entregue: resposta.ok, expirou: resposta.status === 400 || resposta.status === 410 };
 }
 
-export async function enviarPush(db: any, assinatura: AssinaturaPush, mensagem: MensagemPush) {
+async function contarAvisosPendentes(db: any, userId: string, cache?: CacheBadges) {
+  if (cache?.has(userId)) return cache.get(userId) ?? null;
+
+  try {
+    const { data: vinculos, error: erroVinculos } = await db
+      .from('usuarios_empresa')
+      .select('empresa_id, perfil')
+      .eq('user_id', userId);
+    if (erroVinculos) throw erroVinculos;
+
+    const empresasIds = Array.from(new Set(
+      (vinculos || [])
+        .filter((vinculo: any) => vinculo.perfil !== 'funcionario_ponto')
+        .map((vinculo: any) => vinculo.empresa_id)
+        .filter(Boolean),
+    ));
+    const consultas = [
+      db.from('notificacoes').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+    ];
+    if (empresasIds.length) {
+      consultas.push(
+        db.from('notificacoes').select('id', { count: 'exact', head: true }).is('user_id', null).in('empresa_id', empresasIds),
+      );
+    }
+    const respostas = await Promise.all(consultas);
+    if (respostas.some((resposta: any) => resposta.error)) throw new Error('Não foi possível contar os avisos pendentes.');
+
+    const total = respostas.reduce((soma: number, resposta: any) => soma + Number(resposta.count || 0), 0);
+    cache?.set(userId, total);
+    return total;
+  } catch (_) {
+    // Sem uma contagem confirmada, não alteramos o selo já existente no iPhone.
+    // A Gestão o reconcilia assim que voltar a ter conexão.
+    cache?.set(userId, null);
+    return null;
+  }
+}
+
+export async function enviarPush(db: any, assinatura: AssinaturaPush, mensagem: MensagemPush, cacheBadges?: CacheBadges) {
   if (assinatura.canal === 'apns' && assinatura.apns_token) {
-    const resultado = await enviarApns(assinatura.apns_token, mensagem);
+    const badge = assinatura.user_id
+      ? await contarAvisosPendentes(db, assinatura.user_id, cacheBadges)
+      : null;
+    const resultado = await enviarApns(
+      assinatura.apns_token,
+      badge === null ? mensagem : { ...mensagem, badge },
+    );
     if (resultado.expirou) await db.from('push_subscriptions').delete().eq('id', assinatura.id);
     return resultado.entregue;
   }

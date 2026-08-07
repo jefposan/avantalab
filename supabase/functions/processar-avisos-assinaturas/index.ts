@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
     if (error) throw error;
     let criadas = 0;
     let enviadas = 0;
+    const cacheBadges = new Map<string, number | null>();
     for (const fatura of faturas || []) {
       const marco = marcos[diferencaDias(fatura.vencimento, dataHoje)];
       if (!marco) continue;
@@ -86,9 +87,9 @@ Deno.serve(async (req) => {
         if (!notificacaoId) continue;
         criadas++;
         await db.from('assinatura_avisos').update({ notificacao_id: notificacaoId }).eq('id', aviso.id);
-        const { data: assinaturas } = await db.from('push_subscriptions').select('id, endpoint, p256dh, auth, canal, apns_token').eq('user_id', gestor.user_id).eq('app_origem', 'mobile');
+        const { data: assinaturas } = await db.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth, canal, apns_token').eq('user_id', gestor.user_id).eq('app_origem', 'mobile');
         for (const item of assinaturas || []) {
-          if (await enviarPush(db, item, { titulo: marco.titulo, corpo, url: '/mobile?assinatura=1' })) enviadas++;
+          if (await enviarPush(db, item, { titulo: marco.titulo, corpo, url: '/mobile?assinatura=1' }, cacheBadges)) enviadas++;
         }
       }
     }

@@ -4674,18 +4674,31 @@
   }
 
   // ─── Sininho + badge (avisos pendentes de fechamento) ───────
+  var CHAVE_BADGE_APP_MOBILE = 'avantalab.mobile.badge';
+
   function atualizarBadgeApp(quantidade) {
+    var total = Math.max(0, Math.trunc(Number(quantidade) || 0));
     try {
-      if (typeof window.__avantalabAtualizarBadgeNativo === 'function') window.__avantalabAtualizarBadgeNativo(quantidade);
+      localStorage.setItem(CHAVE_BADGE_APP_MOBILE, String(total));
+    } catch (e) {}
+    try {
+      if (typeof window.__avantalabAtualizarBadgeNativo === 'function') window.__avantalabAtualizarBadgeNativo(total);
       if ('setAppBadge' in navigator) {
-        if (quantidade > 0) navigator.setAppBadge(quantidade);
-        else if ('clearAppBadge' in navigator) navigator.clearAppBadge();
+        var atualizacao = total > 0
+          ? navigator.setAppBadge(total)
+          : ('clearAppBadge' in navigator ? navigator.clearAppBadge() : undefined);
+        if (atualizacao && typeof atualizacao.catch === 'function') atualizacao.catch(function () {});
       }
     } catch (e) {}
   }
 
   async function carregarNotificacoesNaoLidas(renderizar) {
-    if (!state.usuario || !state.usuario.id) return;
+    if (!state.usuario || !state.usuario.id) {
+      state.notificacoesNaoLidas = 0;
+      atualizarBadgeApp(0);
+      if (renderizar !== false) render();
+      return;
+    }
     try {
       var resposta = await db
         .from('notificacoes')
@@ -4795,20 +4808,35 @@
   }
 
   async function excluirNotificacaoMobile(id) {
+    var listaAnterior = state.notificacoesLista || [];
     state.notificacoesLista = (state.notificacoesLista || []).filter(function (n) { return String(n.id) !== String(id); });
     render();
-    try { await db.from('notificacoes').delete().eq('id', id); } catch (e) {}
-    carregarNotificacoesNaoLidas();
+    try {
+      var resposta = await db.from('notificacoes').delete().eq('id', id);
+      if (resposta.error) throw resposta.error;
+      await carregarNotificacoesNaoLidas();
+    } catch (e) {
+      state.notificacoesLista = listaAnterior;
+      await carregarNotificacoesNaoLidas();
+      render();
+    }
   }
 
   async function limparNotificacoesMobile() {
     var ids = (state.notificacoesLista || []).map(function (n) { return n.id; });
     if (!ids.length) return;
+    var listaAnterior = state.notificacoesLista || [];
     state.notificacoesLista = [];
-    state.notificacoesNaoLidas = 0;
-    atualizarBadgeApp(0);
     render();
-    try { await db.from('notificacoes').delete().in('id', ids); } catch (e) {}
+    try {
+      var resposta = await db.from('notificacoes').delete().in('id', ids);
+      if (resposta.error) throw resposta.error;
+      await carregarNotificacoesNaoLidas();
+    } catch (e) {
+      state.notificacoesLista = listaAnterior;
+      await carregarNotificacoesNaoLidas();
+      render();
+    }
   }
 
   async function instalarApp() {
@@ -15787,6 +15815,12 @@
       if (diaVirou && state.autenticado && state.empresa && !ehFuncionarioPontoMobile() && !state.validacaoTelefoneObrigatoria && podeAtualizarDadosAoRetornar()) {
         carregarDados();
       }
+    });
+
+    // O iOS pode restaurar um PWA congelado sem disparar visibilitychange.
+    // Reconsulta a fonte de verdade também nessa retomada para remover selos antigos.
+    window.addEventListener('pageshow', function () {
+      if (!document.hidden) carregarNotificacoesNaoLidas();
     });
 
     // Android: ao focar um campo dentro de qualquer modal/formulario, rola

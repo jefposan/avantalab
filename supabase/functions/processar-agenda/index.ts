@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
 
     let criadas = 0;
     let enviados = 0;
+    const cacheBadges = new Map<string, number | null>();
     const nomesPerfil = new Map<string, string>();
 
     for (const item of devidos) {
@@ -118,7 +119,7 @@ Deno.serve(async (req) => {
 
       const { data: subs } = await db
         .from("push_subscriptions")
-        .select("id, endpoint, p256dh, auth, canal, apns_token")
+        .select("id, user_id, endpoint, p256dh, auth, canal, apns_token")
         .eq("user_id", item.user_id)
         .eq("app_origem", "mobile");
 
@@ -130,7 +131,7 @@ Deno.serve(async (req) => {
       };
 
       for (const s of subs || []) {
-        if (await enviarPush(db, s, payload)) enviados++;
+        if (await enviarPush(db, s, payload, cacheBadges)) enviados++;
       }
     }
 

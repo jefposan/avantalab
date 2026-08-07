@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.08 -->
+<!-- ava-version: 1.7.0.28.09 -->
+
+> Revisão 1.7.0.28.09: o selo de avisos no ícone do app iOS reflete a
+> quantidade real de avisos disponíveis. A Gestão reconcilia esse número ao
+> abrir ou retomar o app; fechar um aviso ou todos atualiza o selo somente após
+> a confirmação da operação.
 
 > Revisão 1.7.0.28.08: redesign visual do comprovante de pedido compartilhado
 > no AvantaVendas; sem impacto operacional na Gestão Mobile.
@@ -1106,10 +1111,11 @@ deve usar os nomes do menu e da barra inferior do celular.
 - A barra inferior possui **Início**, **Lançar** e **Menu**; dois atalhos laterais
   podem ser ajustados em **Menu > Organizar atalhos**.
 - Avisos já recebidos podem ser consultados e apagados em **Menu > Configurações >
-  Avisos e notificações**. No iPhone, o painel respeita a área segura superior;
-  quantidade e **Fechar todas** permanecem fixos enquanto somente os cards
-  rolam. A ativação das notificações do aparelho fica no item **Notificações**,
-  no mesmo submenu.
+  Avisos e notificações**. No iPhone, o selo do ícone e o indicador usam a
+  quantidade real disponível e são conferidos ao abrir ou retomar a Gestão. O
+  painel respeita a área segura superior; quantidade e **Fechar todas**
+  permanecem fixos enquanto somente os cards rolam. A ativação das notificações
+  do aparelho fica no item **Notificações**, no mesmo submenu.
 - **Sobre** apresenta as principais novidades em marcos consolidados, sem listar
   ajustes exclusivamente técnicos.
 - **Assinatura** é o primeiro item do **Menu**. A tela sempre informa a situação

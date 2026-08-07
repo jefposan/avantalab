@@ -7,6 +7,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 type NativeBadge = { set(options: { count: number }): Promise<unknown> };
 const NativeBadge = registerPlugin<NativeBadge>('NativeBadge');
 const TOKEN_KEY = 'avantalab.ios.push-token';
+const BADGE_KEY = 'avantalab.mobile.badge';
 
 declare global {
   interface Window {
@@ -22,6 +23,13 @@ export default function NativePushNotificationsBridge() {
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return;
     let resolverToken: ((token: string) => void) | null = null;
     let rejeitarToken: ((erro: Error) => void) | null = null;
+
+    const normalizarBadge = (quantidade: unknown) => Math.max(0, Math.trunc(Number(quantidade) || 0));
+    const atualizarBadgeNativo = (quantidade: number) => {
+      const total = normalizarBadge(quantidade);
+      try { localStorage.setItem(BADGE_KEY, String(total)); } catch (_) {}
+      void NativeBadge.set({ count: total }).catch(() => undefined);
+    };
 
     const salvarToken = (token: string) => {
       localStorage.setItem(TOKEN_KEY, token);
@@ -66,7 +74,10 @@ export default function NativePushNotificationsBridge() {
         void iniciar(false).catch(() => undefined);
         return Boolean(localStorage.getItem(TOKEN_KEY));
       };
-      window.__avantalabAtualizarBadgeNativo = (quantidade) => { void NativeBadge.set({ count: Math.max(0, quantidade) }).catch(() => undefined); };
+      window.__avantalabAtualizarBadgeNativo = atualizarBadgeNativo;
+      let badgePersistido = 0;
+      try { badgePersistido = Number(localStorage.getItem(BADGE_KEY)); } catch (_) {}
+      atualizarBadgeNativo(badgePersistido);
       void iniciar(false).catch(() => undefined);
     };
     void preparar();

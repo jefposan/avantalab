@@ -74,6 +74,7 @@ Deno.serve(async (request) => {
     let notificadas = 0;
     let pushesEnviados = 0;
     const empresasAfetadas = new Set<string>();
+    const cacheBadges = new Map<string, number | null>();
 
     for (const d of lista) {
       if (!d.empresa_id) continue;
@@ -124,7 +125,7 @@ Deno.serve(async (request) => {
 
       const { data: subs } = await supabase
         .from('push_subscriptions')
-        .select('id, endpoint, p256dh, auth, canal, apns_token')
+        .select('id, user_id, endpoint, p256dh, auth, canal, apns_token')
         .in('user_id', usuariosEmpresa)
         .eq('app_origem', 'mobile');
 
@@ -140,7 +141,7 @@ Deno.serve(async (request) => {
       };
 
       for (const s of subs || []) {
-        if (await enviarPush(supabase, s, payload)) pushesEnviados++;
+        if (await enviarPush(supabase, s, payload, cacheBadges)) pushesEnviados++;
       }
     }
 

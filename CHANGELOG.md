@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.28.09 - 2026-08-06
+
+- Gestão Mobile/iOS: o selo do ícone agora usa a contagem real de avisos
+  disponíveis para cada usuário. A Gestão reconcilia o selo ao iniciar e ao
+  retomar; avisos fechados só alteram a contagem após a confirmação no banco.
+  O envio APNs deixa de forçar o número 1.
+
 ## 1.7.0.28.08 - 2026-08-06
 
 - AvantaVendas: o comprovante de pedido compartilhado passa a usar a mesma

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.28.08: comprovantes de pagamento e pedido do AvantaVendas redesenhados sem alterar dados, cálculos ou compartilhamento.
+// Revisado na versão 1.7.0.28.09: o selo de avisos da Gestão Mobile/iOS é reconciliado com a quantidade real ao iniciar, retomar ou fechar avisos.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

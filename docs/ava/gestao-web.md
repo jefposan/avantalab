@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.28.08 -->
+<!-- ava-version: 1.7.0.28.09 -->
+
+> Revisão 1.7.0.28.09: sincronização do selo de avisos aplicada somente à
+> Gestão Mobile/iOS; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.0.28.08: redesign visual do comprovante de pedido compartilhado
 > no AvantaVendas; sem impacto operacional na Gestão Web.

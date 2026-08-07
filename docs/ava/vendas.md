@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28.08 -->
+<!-- ava-version: 1.7.0.28.09 -->
+
+> Revisão 1.7.0.28.09: sincronização do selo de avisos aplicada somente à
+> Gestão Mobile/iOS; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.28.08: ao compartilhar um comprovante de pedido, a imagem usa
 > a mesma composição institucional do pagamento e mantém produtos, quantidades,

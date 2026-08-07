@@ -2,11 +2,18 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [mobile, web, cabecalho, versao] = await Promise.all([
+const [mobile, web, cabecalho, versao, ponteNativa, push, enviarPush, broadcast, agenda, despesas, assinaturas] = await Promise.all([
   readFile(resolve(raiz, 'public/mobile-app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/gestao/page.tsx'), 'utf8'),
   readFile(resolve(raiz, 'app/components/AppHeader.tsx'), 'utf8'),
   readFile(resolve(raiz, 'app/lib/version.ts'), 'utf8'),
+  readFile(resolve(raiz, 'app/mobile/NativePushNotificationsBridge.tsx'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/functions/_shared/push.ts'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/functions/enviar-push/index.ts'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/functions/broadcast/index.ts'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/functions/processar-agenda/index.ts'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/functions/processar-despesas-dia/index.ts'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/functions/processar-avisos-assinaturas/index.ts'), 'utf8'),
 ]);
 
 const falhas = [];
@@ -56,6 +63,29 @@ exigir(
     && cabecalho.includes('aria-label="Fechar aviso"')
     && cabecalho.includes('Fechar todos'),
   'O fechamento explícito de um ou de todos os avisos deve existir nos dois ambientes.',
+);
+exigir(
+  !push.includes('badge: Math.max(1, Number(mensagem.badge || 1))')
+    && push.includes('async function contarAvisosPendentes')
+    && push.includes(".is('user_id', null).in('empresa_id', empresasIds)")
+    && push.includes('aps.badge = Math.max(0, Math.trunc(mensagem.badge))'),
+  'O APNs deve receber a contagem real de avisos, sem forçar o selo 1.',
+);
+exigir(
+  [enviarPush, broadcast, agenda, despesas, assinaturas].every((funcao) =>
+    funcao.includes('user_id, endpoint, p256dh, auth, canal, apns_token')
+      && funcao.includes('cacheBadges'),
+  ),
+  'Todo envio de push da Gestão deve identificar o usuário da inscrição para calcular o selo correto.',
+);
+exigir(
+  mobile.includes("var CHAVE_BADGE_APP_MOBILE = 'avantalab.mobile.badge'")
+    && mobile.includes('localStorage.setItem(CHAVE_BADGE_APP_MOBILE, String(total))')
+    && mobile.includes('window.addEventListener(\'pageshow\'')
+    && mobile.includes('if (!state.usuario || !state.usuario.id) {\n      state.notificacoesNaoLidas = 0;\n      atualizarBadgeApp(0);')
+    && ponteNativa.includes("const BADGE_KEY = 'avantalab.mobile.badge'")
+    && ponteNativa.includes('badgePersistido = Number(localStorage.getItem(BADGE_KEY))'),
+  'A Gestão Mobile/iOS deve reconciliar o selo ao iniciar e ao retomar, inclusive quando a ponte nativa carregar depois da página.',
 );
 exigir(
   mobile.includes("padding-top:calc(env(safe-area-inset-top,0px) + 12px)")
