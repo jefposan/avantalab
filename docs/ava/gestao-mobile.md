@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.12 -->
+<!-- ava-version: 1.7.1 -->
+
+> Revisão 1.7.1: AvantaProjetos é exclusivo da Gestão Web e não aparece nem
+> pode ser instalado na Gestão Mobile.
 
 > Revisão 1.7.0.28.12: em **Menu > Configurações**, **Excluir este perfil**
 > mantém o login da pessoa. Após digitar **EXCLUIR**, o perfil fica inacessível

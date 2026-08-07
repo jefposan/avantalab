@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Calculadora from '@/app/components/Calculadora';
 import Dashboard from '@/app/components/Dashboard';
 import BalancoGeral from '@/app/components/BalancoGeral';
@@ -57,6 +58,7 @@ import {
   type TipoPerfil,
 } from '@/app/lib/perfis';
 import { APP_VERSION } from '@/app/lib/version';
+import { modulosPaginaTotalAtivos, obterRegistroModulo } from '@/app/lib/modulos-registro';
 import {
   buscarEmpresaDoUsuario,
   buscarEmpresasDoUsuario,
@@ -257,6 +259,7 @@ function tipoPedeConfirmacao(tipo: string | null | undefined): boolean {
 }
 
 export default function AppGestao() {
+  const router = useRouter();
   const [mostrarEditEmpresaSenha, setMostrarEditEmpresaSenha] = useState(false);
   const [mostrarEditUsuarioConfirmarSenha, setMostrarEditUsuarioConfirmarSenha] = useState(false);
 
@@ -816,6 +819,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [modulosAtivos, setModulosAtivos] = useState<string[]>([]);
   const [modulosCarregando, setModulosCarregando] = useState(false);
   const [moduloAcaoId, setModuloAcaoId] = useState<string | null>(null);
+  const [modulosCancelamentos, setModulosCancelamentos] = useState<Record<string, string>>({});
   const [modalPontoAdmin, setModalPontoAdmin] = useState(false);
   const [modalRecebimentos, setModalRecebimentos] = useState(false);
   const [abaInicialPontoAdmin, setAbaInicialPontoAdmin] = useState<AbaPontoAdmin>('lista');
@@ -968,6 +972,9 @@ const podeGerenciarRecebimentos =
   perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
 
 const podeAcessarAjustes =
+  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+
+const podeGerenciarModulos =
   perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
 
 // O Operador Completo pode trabalhar com os conteúdos do Vendas já instalado,
@@ -1706,6 +1713,10 @@ setMensagemCarregamentoSistema('Carregando empresa...');
       const empresasEncontradas = await buscarEmpresasDoUsuario(
         sessaoAtual.session.user.id
       );
+      const empresaSolicitadaId = String(params.get('empresaId') || '').trim();
+      const empresaSolicitada = empresaSolicitadaId
+        ? empresasEncontradas?.find((item) => item?.id === empresaSolicitadaId) || null
+        : null;
 
       if (!empresasEncontradas || empresasEncontradas.length === 0) {
   setCriandoNovaEmpresaLogada(false);
@@ -1733,6 +1744,11 @@ setMensagemCarregamentoSistema('Carregando empresa...');
     empresa = empresaFallback;
     setAcessoNaoConfigurado(false);
   }
+} else if (empresaSolicitada) {
+  empresa = empresaSolicitada;
+  setEmpresasDoUsuario(empresasEncontradas);
+  setAcessoNaoConfigurado(false);
+  setAcessoLiberado(false);
 } else if (empresasEncontradas.length === 1) {
   empresa = empresasEncontradas[0];
   setAcessoNaoConfigurado(false);
@@ -2418,18 +2434,26 @@ useEffect(() => {
     if (!empresaId) return;
     setModulosCarregando(true);
     try {
-      const [catRes, ativosRes] = await Promise.all([
+      const [catRes, ativosRes, assinaturasRes] = await Promise.all([
         supabase.from('modulos').select('id, nome, descricao, icone, perfis').eq('disponivel', true).order('ordem', { ascending: true }),
-        supabase.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true),
+        supabase.from('empresa_modulos').select('modulo_id, expira_em').eq('empresa_id', empresaId).eq('ativo', true),
+        supabase.from('assinaturas_modulos').select('modulo_id, status, valido_ate').eq('empresa_id', empresaId).eq('status', 'cancelada'),
       ]);
       if (!catRes.error && catRes.data) {
         setModulosCatalogo(catRes.data.map((m: RegistroSupabase) => ({
           id: String(m.id), nome: textoRegistro(m.nome), descricao: textoRegistro(m.descricao),
           icone: textoRegistro(m.icone), perfis: Array.isArray(m.perfis) ? m.perfis.map(String) : [],
+          precoMensal: obterRegistroModulo(String(m.id))?.comercial.precoMensal ?? 14.9,
         })));
       }
       if (!ativosRes.error && ativosRes.data) {
-        setModulosAtivos(ativosRes.data.map((r: RegistroSupabase) => String(r.modulo_id)));
+        const agora = new Date();
+        setModulosAtivos(ativosRes.data.filter((r: RegistroSupabase) => !r.expira_em || new Date(String(r.expira_em)) > agora).map((r: RegistroSupabase) => String(r.modulo_id)));
+      }
+      if (!assinaturasRes.error && assinaturasRes.data) {
+        setModulosCancelamentos(Object.fromEntries(assinaturasRes.data
+          .filter((r: RegistroSupabase) => r.valido_ate && new Date(String(r.valido_ate)) > new Date())
+          .map((r: RegistroSupabase) => [String(r.modulo_id), String(r.valido_ate)])));
       }
     } catch {}
     setModulosCarregando(false);
@@ -2522,22 +2546,24 @@ useEffect(() => {
   async function desinstalarModulo(moduloId: string) {
     if (!empresaId) return;
     const nomeModulo = modulosCatalogo.find((m) => m.id === moduloId)?.nome || 'este módulo';
+    const planoComercial = estadoAcesso?.plano === 'empresa' ? 'business' : estadoAcesso?.plano;
+    const assinaturaAvulsa = COBRANCA_ATIVA && planoComercial === 'business';
     const avisoPonto = moduloId === 'ponto'
       ? '\n\nImportante: os funcionários do Controle de Ponto continuam conseguindo fazer login e registrar ponto normalmente, mesmo com o módulo removido daqui.'
       : '';
     abrirConfirmacao({
-      titulo: `Remover ${nomeModulo}?`,
-      mensagem:
-        `O módulo será desativado e sairá do menu deste perfil.\n\nSeus dados NÃO são apagados: ao reinstalar, tudo volta como estava.${avisoPonto}`,
-      textoConfirmar: 'Remover módulo',
+      titulo: assinaturaAvulsa ? `Cancelar assinatura de ${nomeModulo}?` : `Remover ${nomeModulo}?`,
+      mensagem: assinaturaAvulsa
+        ? `A renovação mensal será cancelada. O módulo continuará disponível até o fim do período já pago.\n\nSeus dados NÃO são apagados.${avisoPonto}`
+        : `O módulo será desativado e sairá do menu deste perfil.\n\nSeus dados NÃO são apagados: ao reinstalar, tudo volta como estava.${avisoPonto}`,
+      textoConfirmar: assinaturaAvulsa ? 'Cancelar renovação' : 'Remover módulo',
       acao: async () => {
         setModuloAcaoId(moduloId);
         try {
-          const planoComercial = estadoAcesso?.plano === 'empresa' ? 'business' : estadoAcesso?.plano;
-          if (COBRANCA_ATIVA && planoComercial === 'business') {
-            const { data: sessao } = await supabase.auth.getSession();
-            const token = sessao.session?.access_token;
-            if (!token) throw new Error('Sessão indisponível. Entre novamente para cancelar o módulo.');
+          const { data: sessao } = await supabase.auth.getSession();
+          const token = sessao.session?.access_token;
+          if (!token) throw new Error('Sessão indisponível. Entre novamente para continuar.');
+          if (assinaturaAvulsa) {
             const resposta = await fetch('/api/cobranca/modulos/cancelar', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -2545,16 +2571,25 @@ useEffect(() => {
             });
             const json = await resposta.json();
             if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível cancelar o módulo.');
-            setModulosAtivos((prev) => prev.filter((id) => id !== moduloId));
-            abrirAviso('Módulo removido', 'A assinatura mensal deste módulo foi cancelada.', undefined, 'sucesso');
+            if (json.validoAte) setModulosCancelamentos((atual) => ({ ...atual, [moduloId]: String(json.validoAte) }));
+            const dataFim = json.validoAte ? new Intl.DateTimeFormat('pt-BR').format(new Date(json.validoAte)) : 'o fim do período pago';
+            abrirAviso('Cancelamento agendado', `A renovação foi cancelada. O módulo permanece disponível até ${dataFim}.`, undefined, 'sucesso');
             return;
           }
-          await supabase.from('empresa_modulos')
-            .update({ ativo: false, atualizado_em: new Date().toISOString() })
-            .eq('empresa_id', empresaId).eq('modulo_id', moduloId);
+          const resposta = await fetch('/api/cobranca/modulos/remover', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ empresaId, moduloId }),
+          });
+          const json = await resposta.json();
+          if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível remover o módulo.');
           setModulosAtivos((prev) => prev.filter((id) => id !== moduloId));
-        } catch {}
-        setModuloAcaoId(null);
+          abrirAviso('Módulo removido', 'O acesso foi retirado e todos os dados foram preservados.', undefined, 'sucesso');
+        } catch (error) {
+          abrirAviso('Não foi possível concluir', error instanceof Error ? error.message : 'Tente novamente em instantes.', undefined, 'erro');
+        } finally {
+          setModuloAcaoId(null);
+        }
       },
     });
   }
@@ -8017,6 +8052,9 @@ if (validacaoTelefoneObrigatoria) {
   onDesinstalar={desinstalarModulo}
   darkMode={darkMode}
   corPrimaria={corPrimaria}
+  planoComercial={estadoAcesso?.plano === 'empresa' ? 'business' : estadoAcesso?.plano ?? null}
+  podeGerenciar={podeGerenciarModulos}
+  cancelamentos={modulosCancelamentos}
 />
 
 <PontoAdminModal
@@ -10140,7 +10178,7 @@ if (validacaoTelefoneObrigatoria) {
         </div>
 
         {/* 3. Modulos */}
-        <Tooltip texto="Ative módulos extras (como o Controle de Ponto) para a sua empresa." posicao="right" wrapperClassName="order-20 w-full">
+        {podeGerenciarModulos && <Tooltip texto="Compre, instale ou remova módulos deste perfil." posicao="right" wrapperClassName="order-20 w-full">
           <button
             onClick={() => { setAjustesAberto(false); setModalModulos(true); }}
             className="flex min-h-10 w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-black shadow-md transition-all hover:brightness-110 hover:shadow-lg"
@@ -10156,7 +10194,7 @@ if (validacaoTelefoneObrigatoria) {
             </svg>
             Módulos
           </button>
-        </Tooltip>
+        </Tooltip>}
 
         {/* 3b. Assinatura (só com cobrança ativa, para gestor master / administrador) */}
         {COBRANCA_ATIVA && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador') && (
@@ -10173,6 +10211,26 @@ if (validacaoTelefoneObrigatoria) {
             </button>
           </Tooltip>
         )}
+
+        {modulosPaginaTotalAtivos(modulosAtivos).map((modulo) => (
+          <Tooltip key={modulo.id} texto={`Abrir ${modulo.nome} em tela total.`} posicao="right" wrapperClassName="order-28 w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setAjustesAberto(false);
+                setMenuAjuste(null);
+                router.push(`${modulo.navegacao.rota}?empresaId=${encodeURIComponent(empresaId || '')}`);
+              }}
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h7v6H4V5Zm9 0h7v10h-7V5ZM4 13h7v6H4v-6Zm9 4h7v2h-7v-2Z" />
+              </svg>
+              {modulo.navegacao.rotuloMenu}
+            </button>
+          </Tooltip>
+        ))}
 
         {/* 4. Ponto */}
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (

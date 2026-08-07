@@ -38,6 +38,13 @@ export async function POST(request: Request) {
   if (!modulo?.disponivel) return NextResponse.json({ erro: true, mensagem: 'Módulo indisponível.' }, { status: 404 });
   if (!assinaturaPrincipal?.gateway_customer_id) return NextResponse.json({ erro: true, mensagem: 'Não foi possível localizar o cadastro de cobrança deste perfil.' }, { status: 409 });
 
+  if (existente?.status === 'cancelada') {
+    const { data: cancelada } = await acesso.db.from('assinaturas_modulos').select('valido_ate').eq('empresa_id', empresaId).eq('modulo_id', moduloId).maybeSingle();
+    if (cancelada?.valido_ate && new Date(cancelada.valido_ate) > new Date()) {
+      return NextResponse.json({ erro: true, mensagem: 'O cancelamento já está agendado e o acesso permanece ativo até o fim do período pago.' }, { status: 409 });
+    }
+  }
+
   if (existente?.gateway_subscription_id && existente.status !== 'cancelada') {
     const cobrancas = await listarCobrancasAssinaturaAsaas(existente.gateway_subscription_id);
     const pendente = cobrancas.data?.data?.find((item) => item.invoiceUrl && STATUS_PAGAVEL.has(item.status || ''));

@@ -80,11 +80,21 @@ export async function POST(request: Request) {
     const { data: assinaturaModulo } = assinaturaGw
       ? await db
           .from('assinaturas_modulos')
-          .select('id, empresa_id, modulo_id, status, valido_ate')
+          .select('id, empresa_id, modulo_id, status, valido_ate, cancelamento_solicitado_em')
           .eq('gateway_subscription_id', assinaturaGw)
           .maybeSingle()
       : { data: null };
     if (assinaturaModulo) {
+      const cancelamentoAgendado = assinaturaModulo.status === 'cancelada'
+        && assinaturaModulo.cancelamento_solicitado_em
+        && assinaturaModulo.valido_ate
+        && new Date(assinaturaModulo.valido_ate) > new Date();
+      if (cancelamentoAgendado && ['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED', 'SUBSCRIPTION_INACTIVATED', 'SUBSCRIPTION_DELETED'].includes(evento)) {
+        await db.from('empresa_modulos').update({ ativo: true, expira_em: assinaturaModulo.valido_ate, atualizado_em: new Date().toISOString() })
+          .eq('empresa_id', assinaturaModulo.empresa_id).eq('modulo_id', assinaturaModulo.modulo_id);
+        await db.from('cobranca_webhook_eventos').update({ status: 'processado', erro: null, processado_em: new Date().toISOString() }).eq('id', registroEventoId);
+        return NextResponse.json({ recebido: true, modulo: true, cancelamentoAgendado: true });
+      }
       let novoStatus: 'ativa' | 'inadimplente' | 'cancelada' | null = null;
       let validoAte: string | null = assinaturaModulo.valido_ate || null;
       if (evento === 'PAYMENT_CONFIRMED' || evento === 'PAYMENT_RECEIVED') novoStatus = 'ativa';
@@ -107,6 +117,7 @@ export async function POST(request: Request) {
           modulo_id: assinaturaModulo.modulo_id,
           ativo: novoStatus === 'ativa',
           origem: 'assinatura_modulo',
+          expira_em: novoStatus === 'ativa' ? null : validoAte,
           atualizado_em: new Date().toISOString(),
         }, { onConflict: 'empresa_id,modulo_id' });
       }

@@ -6,7 +6,9 @@ Documento de desenho para o sistema de módulos opcionais (ex.: CRM/Vendas, Cont
 
 ## 1. Princípios
 
-- **Monólito modular.** Um único sistema, com módulos plugáveis. Nada de app/página separada: o módulo injeta suas partes nos pontos certos do sistema base.
+- **Monólito modular.** Um único sistema, com módulos plugáveis. Cada módulo
+  declara se usa pontos integrados da Gestão ou uma página total própria dentro
+  da mesma aplicação e guia.
 - **Ativação por empresa.** Cada perfil financeiro (empresa) tem seu conjunto de módulos ativos. Ativar/desativar é só ligar/desligar um registro — sem deploy.
 - **Contrato explícito.** Cada módulo declara, num "manifesto", tudo o que contribui (menu, cards, dados financeiros, contexto da IA, telas, permissões). O sistema base só conhece o contrato, não os detalhes internos do módulo.
 - **Segurança no servidor.** A ativação nunca é decidida pelo cliente. O navegador só *lê* o que está ativo (via RLS); quem ativa é o servidor (assinatura/admin/checkout).
@@ -79,7 +81,7 @@ O sistema base expõe slots nomeados. Um módulo declara o que injeta em cada um
 |------|------------------------|--------------|
 | `menu` | itens de menu / abas | menu lateral (mobile), nav do header (web) |
 | `dashboardCards` | cards de resumo | dashboard |
-| `telas` | telas/rotas próprias | dentro do app (não página separada) |
+| `telas` | telas/rotas próprias | integrada à Gestão ou em página total na mesma guia |
 | `provedorFinanceiro` | receitas/despesas do período | gráficos, balanço, relatórios |
 | `contextoIA` | resumo textual dos dados do módulo | contexto enviado à Ava |
 | `permissoes` | perfis que podem usar | gating por papel do usuário |
@@ -98,6 +100,14 @@ export interface ModuloAvantaLab {
   nome: string;
   icone: React.ReactNode;
   perfisPermitidos?: PerfilUsuario[]; // controle por papel
+  modoNavegacao: 'integrado' | 'pagina_total';
+  rotaWeb?: string;
+  retornoWeb?: string;
+  superficies: ('web' | 'pwa' | 'android' | 'ios')[];
+  precoMensal: number;
+  vendavelBusiness: boolean;
+  incluidoBusinessPro: boolean;
+  preservarDadosAoRemover: boolean;
 
   // UI injetada
   itensMenu?: () => MenuItem[];

@@ -8,6 +8,7 @@ export type Modulo = {
   descricao: string;
   icone: string;
   perfis: string[];
+  precoMensal?: number;
 };
 
 interface ModulosModalProps {
@@ -21,6 +22,9 @@ interface ModulosModalProps {
   onDesinstalar: (id: string) => void;
   darkMode: boolean;
   corPrimaria: string;
+  planoComercial: string | null;
+  podeGerenciar: boolean;
+  cancelamentos: Record<string, string>;
 }
 
 function iconeModulo(icone: string): string {
@@ -30,6 +34,7 @@ function iconeModulo(icone: string): string {
     recebimentos: '💵',
     crm: '👥',
     custos: '🧮',
+    projetos: '◇',
   };
   return mapa[icone] || '▣';
 }
@@ -45,6 +50,9 @@ export default function ModulosModal({
   onDesinstalar,
   darkMode,
   corPrimaria,
+  planoComercial,
+  podeGerenciar,
+  cancelamentos,
 }: ModulosModalProps) {
   if (!aberto) return null;
 
@@ -83,6 +91,11 @@ export default function ModulosModal({
               {modulos.map((m) => {
                 const instalado = ativos.includes(m.id);
                 const processando = acaoEmId === m.id;
+                const cancelamentoEm = cancelamentos[m.id];
+                const business = planoComercial === 'business';
+                const businessPro = planoComercial === 'business_pro';
+                const disponivelNoPlano = business || businessPro;
+                const preco = (m.precoMensal ?? 14.9).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 return (
                   <div key={m.id} className={`flex min-w-0 flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center ${itemBorda}`}>
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xl">{iconeModulo(m.icone)}</span>
@@ -92,22 +105,25 @@ export default function ModulosModal({
                       {instalado && (
                         <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-700">Instalado</span>
                       )}
+                      <p className={`mt-1 text-[11px] font-bold ${textMuted}`}>
+                        {cancelamentoEm ? `Acesso até ${new Intl.DateTimeFormat('pt-BR').format(new Date(cancelamentoEm))}` : businessPro ? 'Incluso no Business Pro' : business ? `${preco} por mês` : 'Disponível no Business e Business Pro'}
+                      </p>
                     </div>
                     {instalado ? (
                       <button
                         type="button"
-                        disabled={processando}
+                        disabled={processando || !podeGerenciar || Boolean(cancelamentoEm)}
                         onClick={() => onDesinstalar(m.id)}
                         className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-100 disabled:opacity-50"
-                      >{processando ? '...' : 'Remover'}</button>
+                      >{processando ? '...' : cancelamentoEm ? 'Cancelamento agendado' : business ? 'Cancelar assinatura' : 'Remover'}</button>
                     ) : (
                       <button
                         type="button"
-                        disabled={processando}
+                        disabled={processando || !podeGerenciar || !disponivelNoPlano}
                         onClick={() => onInstalar(m.id)}
                         className="shrink-0 rounded-xl px-3 py-2 text-xs font-black text-white shadow transition hover:brightness-110 disabled:opacity-50"
                         style={{ backgroundColor: corPrimaria }}
-                      >{processando ? '...' : 'Instalar'}</button>
+                      >{processando ? '...' : business ? `Assinar ${preco}` : businessPro ? 'Instalar' : 'Indisponível'}</button>
                     )}
                   </div>
                 );

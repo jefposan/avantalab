@@ -24,6 +24,7 @@ export async function POST(request: Request) {
     modulo_id: moduloId,
     ativo: true,
     origem: 'plano_business_pro',
+    expira_em: null,
     atualizado_em: new Date().toISOString(),
   }, { onConflict: 'empresa_id,modulo_id' });
   if (error) return NextResponse.json({ erro: true, mensagem: 'Não foi possível instalar o módulo.' }, { status: 500 });

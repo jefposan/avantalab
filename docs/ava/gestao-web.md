@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.28.12 -->
+<!-- ava-version: 1.7.1 -->
+
+> Revisão 1.7.1: **Projetos** é um módulo Web instalado em Menu > Módulos.
+> Business contrata por R$ 14,90/mês e Business Pro instala sem cobrança
+> adicional. Gestor e Administrador instalam ou removem; Operador Completo opera
+> todo o conteúdo; Operador Simples somente visualiza. O botão Projetos abre uma
+> tela total na mesma guia e **Voltar ao AvantaLab** retorna à Gestão. Cancelar a
+> assinatura mantém o acesso até o fim pago; remover nunca apaga os dados.
 
 > Revisão 1.7.0.28.12: exclusão reversível de perfil aplicada somente à Gestão
 > Mobile; a Gestão Web não exibe essa ação.

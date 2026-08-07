@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.7.1 - 2026-08-07
+
+- AvantaProjetos tornou-se um módulo oficial exclusivo da Web, aberto em tela
+  total na mesma guia e com retorno à Gestão preservando o perfil ativo.
+- Projetos e participantes agora são persistidos por empresa no Supabase. Gestor,
+  Administrador e Operador Completo editam; Operador Simples somente visualiza.
+- O catálogo passa a apresentar módulos por R$ 14,90/mês no Business e como
+  inclusos no Business Pro. Somente Gestor ou Administrador instala e remove.
+- Cancelar um módulo avulso interrompe a renovação, mas mantém o acesso até o fim
+  do período pago. Remoção e expiração preservam os dados.
+- Criado o registro central e o contrato PADRÃO AVANTA 1.6.0 para módulos
+  integrados ou em página total, com plano, superfície, hierarquia e retenção.
+
 ## 1.7.0.28.12 - 2026-08-07
 
 - Gestão Mobile: **Excluir este perfil** substitui a antiga exclusão de conta.

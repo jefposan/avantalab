@@ -1,5 +1,16 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.6.0 - 2026-08-07
+
+- Formalizado o contrato comercial e operacional reutilizável de módulos:
+  ativação por empresa, preço avulso padrão, inclusão por plano, hierarquia,
+  preservação de dados e cancelamento ao fim do período pago.
+- Criados os modos oficiais de navegação `integrado` e `pagina_total`; uma
+  página total permanece na mesma guia, não carrega o menu da Gestão e oferece
+  retorno explícito ao AvantaLab.
+- Instalação, remoção e autorização passam a ser obrigatoriamente validadas no
+  servidor; preferências visuais e rotas não podem conceder acesso.
+
 ## 1.5.0 - 2026-07-31
 
 - Formalizada a composição obrigatória das cenas mobile de acesso: fundo sem

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28.12 -->
+<!-- ava-version: 1.7.1 -->
+
+> Revisão 1.7.1: integração do AvantaProjetos restrita à Gestão Web; sem impacto
+> operacional no AvantaVendas.
 
 > Revisão 1.7.0.28.12: exclusão reversível de perfil aplicada somente à Gestão
 > Mobile; sem impacto operacional no AvantaVendas.
