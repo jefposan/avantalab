@@ -79,7 +79,19 @@ exigir(
   'As ondas da sala devem animar somente propriedades compostas, sem repintar gradientes ou geometria a cada quadro.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '31'"),
+  aplicacao.includes('${escapeAttr(material.arquivo_url)}#view=Fit"')
+    && !aplicacao.includes('#view=FitH'),
+  'A pré-visualização de PDF deve enquadrar a página inteira para centralização horizontal e vertical.',
+);
+exigir(
+  aplicacao.includes('await navigator.share({ files: [arquivo] });')
+    && aplicacao.includes('try { await navigator.share({ files: [arquivo] }); return true; }')
+    && !aplicacao.includes("text: 'Material de divulgação'")
+    && !/navigator\.share\(\{[^}]*\b(?:title|text)\s*:/.test(aplicacao),
+  'Os compartilhamentos do AvantaVendas devem enviar somente o arquivo, sem texto ou título automáticos.',
+);
+exigir(
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '32'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

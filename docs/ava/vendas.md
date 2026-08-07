@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.1.02 -->
+<!-- ava-version: 1.7.1.03 -->
+
+> Revisão 1.7.1.03: a pré-visualização de PDF enquadra e centraliza a página
+> inteira nos eixos horizontal e vertical. Imagens, vídeos, navegação e
+> compartilhamento mantêm o comportamento anterior. Ao compartilhar materiais
+> ou comprovantes, somente o arquivo é enviado; o usuário adiciona uma mensagem
+> no aplicativo de destino caso queira.
 
 > Revisão 1.7.1.02: ajuste visual restrito ao topo do AvantaProjetos Web; sem
 > impacto operacional no AvantaVendas.

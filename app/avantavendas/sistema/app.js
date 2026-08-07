@@ -3356,7 +3356,7 @@ function conteudoVisualizadorMaterialDivulgacao(materialId) {
   const visualizacao = material.tipo === 'video'
     ? `<video src="${escapeAttr(material.arquivo_url)}" controls playsinline preload="metadata"></video>`
     : material.tipo === 'pdf'
-      ? `<iframe src="${escapeAttr(material.arquivo_url)}#view=FitH" title="${escapeAttr(material.titulo)}" class="material-preview-pdf"></iframe>`
+      ? `<iframe src="${escapeAttr(material.arquivo_url)}#view=Fit" title="${escapeAttr(material.titulo)}" class="material-preview-pdf"></iframe>`
       : `<img src="${escapeAttr(material.arquivo_url)}" alt="${escapeAttr(material.titulo)}" draggable="false">`;
   const instrucao = material.tipo === 'pdf' ? 'documento para leitura' : 'toque para ampliar';
   const acaoVisualizacao = material.tipo === 'pdf' ? '' : ' onclick="alternarMaterialExpandido(event)"';
@@ -3431,7 +3431,7 @@ async function compartilharMaterialDivulgacao(materialId) {
     const nome = `${String(material.titulo || 'material').replace(/[^a-zA-Z0-9_-]+/g, '-')}.${extensao}`;
     const arquivo = new File([blob], nome, { type: blob.type });
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) {
-      await navigator.share({ title: material.titulo, text: 'Material de divulgação', files: [arquivo] });
+      await navigator.share({ files: [arquivo] });
       return;
     }
     const url = URL.createObjectURL(blob);
@@ -5570,12 +5570,12 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   return canvas;
 }
 
-async function compartilharCanvasComprovante(canvas, nomeArquivo, titulo) {
+async function compartilharCanvasComprovante(canvas, nomeArquivo) {
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('Não foi possível gerar a imagem do comprovante.');
   const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
   if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) {
-    try { await navigator.share({ title: titulo, text: titulo, files: [arquivo] }); return true; }
+    try { await navigator.share({ files: [arquivo] }); return true; }
     catch (error) { if (error?.name === 'AbortError') return false; }
   }
   const url = URL.createObjectURL(blob);
@@ -5627,7 +5627,7 @@ async function compartilharPedido(pedidoId) {
         { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],
     });
-  const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, `Comprovante de pedido - ${cliente?.nome || 'Cliente não informado'}`);
+  const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`);
   if (compartilhado) fecharSheet();
 }
 
@@ -5669,7 +5669,7 @@ async function compartilharPagamento(pagamentoId) {
         { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],
     });
-  const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, `Comprovante de pagamento - ${cliente?.nome || 'Cliente não informado'}`);
+  const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`);
   if (compartilhado) fecharSheet();
 }
 

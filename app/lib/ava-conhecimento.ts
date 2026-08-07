@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.1.02: topo do AvantaProjetos usa a marca oficial; sem mudança operacional.
+// Revisado na versão 1.7.1.03: PDF centralizado e compartilhamentos sem texto automático no AvantaVendas.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

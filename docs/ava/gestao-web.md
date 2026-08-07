@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.1.02 -->
+<!-- ava-version: 1.7.1.03 -->
+
+> Revisão 1.7.1.03: centralização da pré-visualização de PDF aplicada ao
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.1.02: o topo do AvantaProjetos passou a usar o logo oficial do
 > AvantaLab e o nome do perfil logo abaixo; sem mudança no fluxo operacional.

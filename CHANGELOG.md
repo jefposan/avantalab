@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.1.03 - 2026-08-07
+
+- AvantaVendas: a pré-visualização de PDF agora enquadra a página inteira e a
+  centraliza nos eixos horizontal e vertical. Imagens e vídeos permanecem com
+  o comportamento anterior.
+- AvantaVendas: materiais de divulgação e comprovantes passam a compartilhar
+  somente o arquivo, sem mensagem ou título automáticos. O usuário pode
+  escrever o texto que desejar no aplicativo de destino.
+
 ## 1.7.1.02 - 2026-08-07
 
 - O topo do AvantaProjetos agora usa o logo oficial do AvantaLab e apresenta o
