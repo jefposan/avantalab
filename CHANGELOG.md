@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0.28.11 - 2026-08-07
+
+- AvantaVendas Mobile: as ondas animadas da sala de botões preservam o movimento
+  e a composição visual, mas agora deslocam camadas já renderizadas. O fundo não
+  recalcula gradientes e geometria a cada quadro, reduzindo travamentos em
+  celulares de menor desempenho sem alterar os botões.
+
 ## 1.7.0.28.10 - 2026-08-06
 
 - Gestão Mobile/iOS: quando o banco confirma que não existem avisos pendentes,

@@ -12,6 +12,11 @@ const falhas = [];
 const exigir = (condicao, mensagem) => {
   if (!condicao) falhas.push(mensagem);
 };
+const inicioOndaUm = estilos.indexOf('@keyframes vendas-wave-dance-one');
+const inicioOndaDois = estilos.indexOf('@keyframes vendas-wave-dance-two');
+const fimOndas = estilos.indexOf('@media (prefers-reduced-motion: reduce)', inicioOndaDois);
+const ondaUm = estilos.slice(inicioOndaUm, inicioOndaDois);
+const ondaDois = estilos.slice(inicioOndaDois, fimOndas);
 
 const acaoPagamento = '<button class="secondary quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">';
 const acaoPedido = '<button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">';
@@ -63,7 +68,18 @@ exigir(
   'As ações rápidas devem reutilizar as cores de Pagamento e Pedido do card do cliente.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '30'"),
+  inicioOndaUm >= 0
+    && inicioOndaDois > inicioOndaUm
+    && fimOndas > inicioOndaDois
+    && estilos.includes('will-change: transform, opacity;')
+    && !ondaUm.includes('background-position:')
+    && !ondaUm.includes('border-radius:')
+    && !ondaDois.includes('background-position:')
+    && !ondaDois.includes('border-radius:'),
+  'As ondas da sala devem animar somente propriedades compostas, sem repintar gradientes ou geometria a cada quadro.',
+);
+exigir(
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '31'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

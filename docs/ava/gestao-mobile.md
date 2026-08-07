@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.10 -->
+<!-- ava-version: 1.7.0.28.11 -->
+
+> Revisão 1.7.0.28.11: otimização visual das ondas da sala do AvantaVendas;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.7.0.28.10: quando a Gestão confirma que não há avisos pendentes,
 > o app iOS remove também as notificações antigas já entregues pelo sistema e

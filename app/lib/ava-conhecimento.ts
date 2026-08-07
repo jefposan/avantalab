@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.28.10: a Gestão iOS usa o plugin oficial de push para zerar o selo quando o banco confirma que não existem avisos.
+// Revisado na versão 1.7.0.28.11: a otimização visual das ondas da sala do AvantaVendas não altera a orientação operacional da Ava.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

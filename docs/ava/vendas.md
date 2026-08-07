@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28.10 -->
+<!-- ava-version: 1.7.0.28.11 -->
+
+> Revisão 1.7.0.28.11: as ondas da sala de botões continuam em movimento, com
+> renderização mais leve para celulares de menor desempenho. Sem mudança na
+> navegação ou na operação dos botões.
 
 > Revisão 1.7.0.28.10: fallback de limpeza do selo aplicado somente ao app
 > iOS da Gestão; sem impacto operacional no AvantaVendas.
