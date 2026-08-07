@@ -181,6 +181,7 @@
 
       if (!state.empresa) {
         state.carregando = false;
+        await carregarPerfisExcluidosMobile();
         if (ehContaRevisaoAppAppleMobile(usuario)) {
           var perfilRevisaoCriado = await criarPerfilInicial({
             nome: 'AvantaLab — Conta de teste',
@@ -533,6 +534,8 @@
     modoCriarPerfil: false,
     criarPerfilNome: '',
     criarPerfilTipo: 'empresa',
+    perfisExcluidosDisponiveis: [],
+    restaurandoPerfilExcluido: false,
     recorrencias: [],
     recorrSalvando: false,
     novaRecorrNome: '',
@@ -6407,6 +6410,7 @@
     if (!state.empresa) {
       state.carregando = false;
       state.loginAcao = '';
+      await carregarPerfisExcluidosMobile();
       if (ehContaRevisaoAppAppleMobile(resposta.data.user)) {
         var perfilRevisaoCriado = await criarPerfilInicial({
           nome: 'AvantaLab — Conta de teste',
@@ -7082,9 +7086,17 @@
 
   function telaCriarPerfilInicial() {
     var tipo = normalizarTipoPerfil(state.criarPerfilTipo);
+    var perfisExcluidos = (state.perfisExcluidosDisponiveis || []).map(function (perfil) {
+      var prazo = perfil.restaurar_ate ? new Date(perfil.restaurar_ate).toLocaleDateString('pt-BR') : '';
+      return '<div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-950">' +
+        '<p class="text-xs font-black">Perfil disponível para restauração</p>' +
+        '<p class="mt-1 text-[11px] font-semibold leading-relaxed"><b>' + escapeHtml(perfil.nome_perfil || 'Perfil financeiro') + '</b> foi excluído e seus dados ficam guardados até ' + escapeHtml(prazo) + '.</p>' +
+        '<button data-restaurar-perfil-excluido="' + escapeHtml(perfil.empresa_id || '') + '" type="button" ' + (state.restaurandoPerfilExcluido ? 'disabled ' : '') + 'class="mt-3 h-11 w-full rounded-xl bg-amber-700 px-3 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.restaurandoPerfilExcluido ? 'Restaurando...' : 'Restaurar este perfil') + '</button>' +
+      '</div>';
+    }).join('');
     return (
       '<div class="grid gap-3">' +
-        '<p class="text-sm font-semibold text-slate-600">Bem-vindo! Crie seu primeiro perfil financeiro para comecar.</p>' +
+        (perfisExcluidos ? '<p class="text-sm font-semibold text-slate-600">Você pode restaurar um perfil excluído ou criar um novo perfil financeiro.</p>' + perfisExcluidos + '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Criar novo perfil</p>' : '<p class="text-sm font-semibold text-slate-600">Bem-vindo! Crie seu primeiro perfil financeiro para comecar.</p>') +
         inputHtml('criar-perfil-inicial-nome', rotuloNomePerfil(tipo), 'text', placeholderNomePerfil(tipo), state.criarPerfilNome) +
         '<div>' +
           '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do perfil</p>' +
@@ -7333,17 +7345,53 @@
       var resposta = await fetch('/api/conta', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ confirmacao: 'EXCLUIR' })
+        body: JSON.stringify({ empresaId: state.empresa && state.empresa.id, confirmacao: 'EXCLUIR' })
       });
       var json = await lerResposta(resposta);
-      if (!resposta.ok || !json.ok) throw new Error(json.mensagem || 'Não foi possível excluir a conta.');
-      try { await db.auth.signOut({ scope: 'local' }); } catch (error) {}
-      window.location.replace('/mobile?entrar=1&contaExcluida=1');
+      if (!resposta.ok || !json.ok) throw new Error(json.mensagem || 'Não foi possível excluir este perfil.');
+      window.location.replace('/mobile?entrar=1&perfilExcluido=1');
       return;
     } catch (erroExclusao) {
-      state.erro = erroExclusao && erroExclusao.message ? erroExclusao.message : 'Não foi possível excluir a conta.';
+      state.erro = erroExclusao && erroExclusao.message ? erroExclusao.message : 'Não foi possível excluir este perfil.';
     }
     state.contaExclusaoAcao = false;
+    render();
+  }
+
+  async function carregarPerfisExcluidosMobile() {
+    state.perfisExcluidosDisponiveis = [];
+    if (!state.usuario || !state.usuario.id) return;
+    try {
+      var token = await tokenSessao();
+      if (!token) return;
+      var resposta = await fetch('/api/conta', { headers: { Authorization: 'Bearer ' + token } });
+      var json = await lerResposta(resposta);
+      if (resposta.ok && json.ok && Array.isArray(json.perfis)) state.perfisExcluidosDisponiveis = json.perfis;
+    } catch (erro) {
+      console.warn('Não foi possível consultar perfis disponíveis para restauração:', erro);
+    }
+  }
+
+  async function restaurarPerfilExcluidoMobile(empresaId) {
+    if (!empresaId || state.restaurandoPerfilExcluido) return;
+    state.restaurandoPerfilExcluido = true;
+    state.criarPerfilErro = '';
+    render();
+    try {
+      var token = await tokenSessao();
+      var resposta = await fetch('/api/conta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: empresaId })
+      });
+      var json = await lerResposta(resposta);
+      if (!resposta.ok || !json.ok) throw new Error(json.mensagem || 'Não foi possível restaurar este perfil.');
+      window.location.replace('/mobile?entrar=1&perfilRestaurado=1');
+      return;
+    } catch (erroRestauracao) {
+      state.criarPerfilErro = erroRestauracao && erroRestauracao.message ? erroRestauracao.message : 'Não foi possível restaurar este perfil.';
+    }
+    state.restaurandoPerfilExcluido = false;
     render();
   }
 
@@ -11591,7 +11639,7 @@
           '</div>' +
         '</button>' +
         ((state.empresa && ['gestor_master','administrador','operador_completo'].indexOf(state.empresa.perfil) !== -1) ? '<button id="menu-pontos-restauracao" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:13;' + (dk ? '' : 'background:linear-gradient(90deg,#F3EEFF 0%,#FFFFFF 78%);border-color:#DED0F7;') + '"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E9DDFB;color:#7040A0">' + iconeMenuLateralSvg('menu-restauracao') + '</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Pontos de restaura&ccedil;&atilde;o</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Salvar e recuperar estado completo</span></span></div></button>' : '') +
-        '<button id="menu-excluir-conta" type="button" class="rounded-[12px_24px_24px_24px] border border-rose-200 bg-rose-50 px-2.5 py-1 text-left text-rose-800 shadow-[0_4px_11px_rgba(15,23,42,.05)] transition active:scale-[0.99]" style="order:13;"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">&#9888;</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black leading-none">Excluir minha conta</span><span class="mt-0.5 block truncate text-[9px] font-semibold leading-none text-rose-600">Remover acesso e dados pessoais</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center">' + chevronMenuSvg() + '</span></span></button>' +
+        '<button id="menu-excluir-conta" type="button" class="rounded-[12px_24px_24px_24px] border border-rose-200 bg-rose-50 px-2.5 py-1 text-left text-rose-800 shadow-[0_4px_11px_rgba(15,23,42,.05)] transition active:scale-[0.99]" style="order:13;"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">&#9888;</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black leading-none">Excluir este perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold leading-none text-rose-600">Guardar dados por 30 dias</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center">' + chevronMenuSvg() + '</span></span></button>' +
       '</div>'
     ) : '';
 
@@ -11937,7 +11985,7 @@
       despesasFixas: 'Gerenciar despesas fixas',
       assinatura: 'Assinatura',
       contratarAssinatura: 'Assinar Premium',
-      excluirConta: 'Excluir minha conta',
+      excluirConta: 'Excluir este perfil',
       premium: 'Acesso exclusivo para assinantes',
       sobre: 'Sobre',
       notificacoes: 'Notificações',
@@ -12000,14 +12048,14 @@
   function excluirContaMobileHtml() {
     return '<div class="grid gap-4">' +
       '<div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-900">' +
-        '<p class="text-xs font-black uppercase tracking-wide">Ação permanente</p>' +
-        '<p class="mt-2 text-xs font-semibold leading-relaxed">Sua conta, sessões e dados pessoais serão removidos. Perfis sem outros usuários também serão excluídos. Registros trabalhistas e fiscais sujeitos a retenção legal poderão ser preservados de forma bloqueada e sem acesso à conta.</p>' +
+        '<p class="text-xs font-black uppercase tracking-wide">Exclusão com prazo de restauração</p>' +
+        '<p class="mt-2 text-xs font-semibold leading-relaxed">Você está excluindo apenas o perfil <b>' + escapeHtml(nomeEmpresa(state.empresa)) + '</b>. Seu login continuará ativo. Os dados ficam guardados por 30 dias e podem ser restaurados ao entrar com esta mesma conta. Depois desse prazo, o servidor remove o perfil e seus dados. Perfis com outros usuários ativos não podem ser excluídos por esta tela.</p>' +
       '</div>' +
       (state.erro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.erro) + '</div>' : '') +
       '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Para confirmar, digite EXCLUIR' +
         '<input id="excluir-conta-confirmacao" type="text" autocomplete="off" autocapitalize="characters" style="font-size:16px" class="h-11 rounded-xl border border-rose-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-500" />' +
       '</label>' +
-      '<button id="confirmar-exclusao-conta" type="button" ' + (state.contaExclusaoAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-rose-600 px-4 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.contaExclusaoAcao ? 'Excluindo...' : 'Excluir conta definitivamente') + '</button>' +
+      '<button id="confirmar-exclusao-conta" type="button" ' + (state.contaExclusaoAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-rose-600 px-4 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.contaExclusaoAcao ? 'Excluindo...' : 'Excluir este perfil') + '</button>' +
       '<button id="cancelar-exclusao-conta" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-4 text-xs font-black uppercase text-slate-700">Cancelar</button>' +
     '</div>';
   }
@@ -13694,6 +13742,11 @@
     bind('cadastro-tipo-pessoal', function () { lerCadastroDaTela(); state.cadastroTipoPerfil = 'pessoal'; salvarRascunhoCadastroMobile(); render(); });
     bind('criar-perfil-inicial-submit', criarPerfilInicial);
     bind('sair-criar-perfil', function () { state.modoCriarPerfil = false; sair(); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-restaurar-perfil-excluido]'), function (botao) {
+      botao.addEventListener('click', function () {
+        restaurarPerfilExcluidoMobile(botao.getAttribute('data-restaurar-perfil-excluido') || '');
+      });
+    });
     bind('criar-perfil-empresa', function () { state.criarPerfilTipo = 'empresa'; render(); });
     bind('criar-perfil-pessoal', function () { state.criarPerfilTipo = 'pessoal'; render(); });
     bind('inicio-empresa-trial', function () { state.inicioEmpresaModo = 'trial'; render(); });
@@ -15924,6 +15977,7 @@
           throw erroPerfis;
         }
         if (!state.empresa) {
+          await carregarPerfisExcluidosMobile();
           if (ehContaRevisaoAppAppleMobile(state.usuario)) {
             var perfilRevisaoInicializacao = await criarPerfilInicial({
               nome: 'AvantaLab — Conta de teste',

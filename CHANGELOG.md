@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0.28.12 - 2026-08-07
+
+- Gestão Mobile: **Excluir este perfil** substitui a antiga exclusão de conta.
+  O login permanece ativo; após confirmar, o perfil e seus dados ficam
+  indisponíveis, porém preservados por 30 dias para restauração com o mesmo
+  login. Sem restauração, a rotina diária cancela assinaturas externas do
+  perfil e remove os dados ao fim do prazo. Perfis com outros usuários ativos
+  continuam protegidos contra exclusão por esta tela.
+- Servidor: corrigido o gatilho de proteção do histórico de ponto que podia
+  interromper uma exclusão antes da validação correta do registro.
+
 ## 1.7.0.28.11 - 2026-08-07
 
 - AvantaVendas Mobile: as ondas animadas da sala de botões preservam o movimento

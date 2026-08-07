@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0.28.11 -->
+<!-- ava-version: 1.7.0.28.12 -->
+
+> Revisão 1.7.0.28.12: em **Menu > Configurações**, **Excluir este perfil**
+> mantém o login da pessoa. Após digitar **EXCLUIR**, o perfil fica inacessível
+> e seus dados podem ser restaurados pelo mesmo login por 30 dias; ao entrar,
+> a tela oferece **Restaurar este perfil** ou criar um novo perfil. Passado o
+> prazo, o servidor remove o perfil. A opção não aparece na Gestão Web e não
+> exclui perfis que ainda possuem outros usuários ativos.
 
 > Revisão 1.7.0.28.11: otimização visual das ondas da sala do AvantaVendas;
 > sem impacto operacional na Gestão Mobile.
@@ -1135,8 +1142,11 @@ deve usar os nomes do menu e da barra inferior do celular.
   a contratação a um gestor ou administrador.
 - Em **Configurações**, os controles com chave aparecem primeiro.
   **Gerenciar perfil**, **Usuários** e **Editar dados cadastrais** aparecem em
-  sequência; **Excluir minha conta** é a última opção e exige digitar
-  **EXCLUIR** antes da confirmação.
+  sequência; **Excluir este perfil** é a última opção e exige digitar
+  **EXCLUIR**. O login permanece válido, enquanto o perfil fica inacessível e
+  pode ser restaurado com o mesmo login por 30 dias. Depois desse prazo, o
+  servidor remove o perfil; registros sujeitos a retenção legal permanecem
+  bloqueados pelo prazo obrigatório.
 - Em **Usuários**, criar exige Nome completo, E-mail, Login, Senha inicial e
   Tipo de usuário. Na edição, nome, e-mail, login e tipo continuam obrigatórios,
   mas a nova senha é opcional. E-mail e login acessam a mesma conta; se o e-mail

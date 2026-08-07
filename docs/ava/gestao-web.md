@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0.28.11 -->
+<!-- ava-version: 1.7.0.28.12 -->
+
+> Revisão 1.7.0.28.12: exclusão reversível de perfil aplicada somente à Gestão
+> Mobile; a Gestão Web não exibe essa ação.
 
 > Revisão 1.7.0.28.11: otimização visual das ondas da sala do AvantaVendas;
 > sem impacto operacional na Gestão Web.

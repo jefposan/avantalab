@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.0.28.11: a otimização visual das ondas da sala do AvantaVendas não altera a orientação operacional da Ava.
+// Revisado na versão 1.7.0.28.12: exclusão reversível de perfil aplicada somente à Gestão Mobile.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -86,7 +86,7 @@ NAVEGAÇÃO E PERFIS
 - Na Gestão Web, clicar em um aporte transforma diretamente a própria linha em edição, com ações para salvar, cancelar ou excluir. Salvar atualiza também a despesa vinculada; excluir pede confirmação e remove ambos os registros.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.
 - Em Configurações, os controles com chave aparecem primeiro. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
-- Excluir minha conta fica em Menu > Configurações, como a última opção do grupo, e exige digitar EXCLUIR. A operação remove o acesso e os dados pessoais; registros trabalhistas ou fiscais sujeitos a retenção legal podem permanecer anonimizados e sem acesso à conta.
+- Excluir este perfil fica em Menu > Configurações, como a última opção do grupo, e exige digitar EXCLUIR. A operação nunca apaga o login: ela torna somente o perfil inacessível e mantém seus dados guardados por 30 dias. Ao entrar com o mesmo login nesse prazo, a tela oferece Restaurar este perfil ou criar um novo perfil conforme as regras normais de assinatura e teste. Ao fim do prazo, o servidor remove o perfil; registros trabalhistas ou fiscais sujeitos a retenção legal permanecem bloqueados pelo prazo obrigatório.
 - Em Editar dados cadastrais e na conclusão obrigatória de um perfil Empresa, CNPJ e Buscar ficam lado a lado. A consulta usa o endpoint interno, preenche somente campos compatíveis ainda vazios e informa quantos dados existentes foram preservados. Depois aparecem Razão Social, Nome Fantasia e Tipo de Empresa; Responsável fica em Contato, antes de Site e Instagram. CPF/CNPJ recebe máscara durante a digitação e precisa passar pela validação antes da conclusão.
 - Em cadastros de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos; rascunhos do navegador não incluem senhas, confirmações, códigos SMS nem tokens.
 - Ao tocar em um campo textual editável já preenchido, o cursor vai para o final do conteúdo para permitir apagar da direita para a esquerda. A seleção intencional de um trecho por gesto longo permanece disponível.

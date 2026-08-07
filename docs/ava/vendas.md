@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0.28.11 -->
+<!-- ava-version: 1.7.0.28.12 -->
+
+> Revisão 1.7.0.28.12: exclusão reversível de perfil aplicada somente à Gestão
+> Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.0.28.11: as ondas da sala de botões continuam em movimento, com
 > renderização mais leve para celulares de menor desempenho. Sem mudança na
