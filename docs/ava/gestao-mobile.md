@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.21 -->
+<!-- ava-version: 1.7.2.23 -->
+
+> Revisão 1.7.2.23: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.22: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
 
 > Revisão 1.7.2.21: ajuste exclusivo do AvantaProjetos Web; sem mudança
 > operacional na Gestão Mobile.

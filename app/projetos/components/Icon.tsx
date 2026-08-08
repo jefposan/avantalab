@@ -2,6 +2,7 @@ import type { SVGProps } from 'react';
 
 const paths: Record<string, React.ReactNode> = {
   plus: <><path d="M12 5v14M5 12h14" /></>,
+  people: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0" /><path d="M16 5.5a3 3 0 0 1 0 5.5M18.5 20a5.5 5.5 0 0 0-3.2-5" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
   grid: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></>,
   list: <><path d="M9 6h11M9 12h11M9 18h11" /><circle cx="4" cy="6" r="1" /><circle cx="4" cy="12" r="1" /><circle cx="4" cy="18" r="1" /></>,

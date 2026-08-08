@@ -10,6 +10,7 @@ const mapa = readFileSync('app/projetos/components/MapCanvas.tsx', 'utf8');
 const nodeCard = readFileSync('app/projetos/components/ProjectNodeCard.tsx', 'utf8');
 const estilos = readFileSync('app/projetos/projetos.module.css', 'utf8');
 const ajustes = readFileSync('app/api/modulos/projetos/ajustes/route.ts', 'utf8');
+const inicioProjetos = readFileSync('app/projetos/components/ProjectHome.tsx', 'utf8');
 
 test('AvantaProjetos recebe o tema salvo no perfil, sem depender do sistema operacional', () => {
   assert.match(acesso, /select\('cor_primaria, dark_mode'\)/);
@@ -69,4 +70,9 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(estilos, /\.colorPalette \{ display: flex; align-items: center; gap: 8px;/);
   assert.match(estilos, /\.presetColor, \.presetColorEditor \{[^}]*background: repeating-conic-gradient\([^}]*6px 6px; cursor: pointer;/);
   assert.doesNotMatch(estilos, /\.presetColor, \.presetColorEditor \{[^}]*background:[^}]*!important/);
+  assert.match(inicioProjetos, /Icon name="people" size=\{16\} \/> Participantes/);
+  assert.match(inicioProjetos, /title="Participantes" description="Cadastre pessoas para atribuí-las a projetos e tarefas\."/);
+  assert.match(inicioProjetos, /participantManagerList/);
+  assert.match(inicioProjetos, /id="edit-participant-registration"/);
+  assert.match(inicioProjetos, /if \(editingProject\) setEditForm/);
 });

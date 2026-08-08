@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.21 -->
+<!-- ava-version: 1.7.2.23 -->
+
+> Revisão 1.7.2.23: em **Editar projeto**, a seção **Participantes** também
+> permite cadastrar uma pessoa e incluí-la diretamente no projeto.
+
+> Revisão 1.7.2.22: use **Participantes**, ao lado de **Novo projeto**, para
+> cadastrar ou excluir pessoas antes de associá-las a projetos e tarefas.
 
 > Revisão 1.7.2.21: no mapa, os cards podem ser movidos para cima da origem,
 > além das demais direções disponíveis.

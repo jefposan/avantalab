@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.2.23 - 2026-08-08
+
+- A edição de projeto também permite cadastrar um participante e já selecioná-lo
+  no próprio projeto.
+
+## 1.7.2.22 - 2026-08-08
+
+- A página inicial dos Projetos passa a ter acesso próprio para cadastrar e
+  gerenciar participantes, sem precisar abrir a criação de um projeto.
+
 ## 1.7.2.21 - 2026-08-08
 
 - O mapa do AvantaProjetos agora permite arrastar cards também para cima da

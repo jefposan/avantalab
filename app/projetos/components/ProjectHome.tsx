@@ -131,6 +131,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
   const [display, setDisplay] = useState<'cards' | 'list'>('cards');
   const [section, setSection] = useState<'all' | 'favorites' | 'active' | 'completed' | 'archived'>('all');
   const [createOpen, setCreateOpen] = useState(false);
+  const [participantManagerOpen, setParticipantManagerOpen] = useState(false);
   const [actionProject, setActionProject] = useState<string | null>(null);
   const [confirmProject, setConfirmProject] = useState<Project | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -196,11 +197,12 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
 
     const person = { id: createId('person'), name, initials: participantInitials(name), color: participantDraft.color };
     onChange({ ...collection, people: [...collection.people, person] });
-    setForm((current) => ({ ...current, participants: [...current.participants, person.id] }));
+    if (editingProject) setEditForm((current) => ({ ...current, participants: [...current.participants, person.id] }));
+    else if (!participantManagerOpen) setForm((current) => ({ ...current, participants: [...current.participants, person.id] }));
     setParticipantDraft({ name: '', color: '#1F8A9E' });
     setParticipantError('');
     setParticipantRegistrationOpen(false);
-    onMessage(`${name} foi cadastrado e selecionado.`);
+    onMessage(participantManagerOpen ? `${name} foi cadastrado.` : `${name} foi cadastrado e selecionado.`);
   };
 
   const deleteParticipant = () => {
@@ -314,6 +316,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
         <div className={styles.homeTitleLine}><h1>Projetos</h1><p>Transforme ideias em planos visuais, tarefas e entregas.</p></div>
         {!readOnly && <div className={styles.headerActions}>
           <label className={`${styles.secondaryButton} ${styles.headerCompactAction} ${styles.headerImportAction}`} tabIndex={0}><Icon name="upload" size={16} /> Importar<input type="file" accept="application/json,.json" aria-label="Importar projeto" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void importFile(file); event.currentTarget.value = ''; }} /></label>
+          <button type="button" className={`${styles.secondaryButton} ${styles.headerCompactAction} ${styles.headerImportAction}`} onClick={() => { setParticipantManagerOpen(true); setParticipantRegistrationOpen(true); setParticipantError(''); }}><Icon name="people" size={16} /> Participantes</button>
           <button type="button" className={`${styles.primaryButton} ${styles.headerCompactAction} ${styles.headerCreateAction}`} onClick={() => setCreateOpen(true)}><Icon name="plus" size={17} /> Novo Projeto</button>
         </div>}
       </div>
@@ -391,6 +394,21 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
       </form>
     </Modal>
 
+    <Modal open={participantManagerOpen} onClose={() => { setParticipantManagerOpen(false); setParticipantRegistrationOpen(false); setParticipantError(''); setParticipantToDeleteId(null); }} title="Participantes" description="Cadastre pessoas para atribuí-las a projetos e tarefas.">
+      <section className={styles.participantManager} aria-label="Gerenciar participantes">
+        <div className={styles.participantRegistration} role="group" aria-label="Cadastro de participante">
+          <div className={styles.participantFields}>
+            <label>Nome do participante<input autoFocus maxLength={80} value={participantDraft.name} onChange={(event) => { setParticipantDraft({ ...participantDraft, name: event.target.value }); setParticipantError(''); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addParticipant(); } }} placeholder="Ex.: Maria Silva" aria-invalid={Boolean(participantError)} aria-describedby={participantError ? 'participant-manager-error' : undefined} /></label>
+            <label>Cor<input type="color" value={participantDraft.color} onChange={(event) => setParticipantDraft({ ...participantDraft, color: event.target.value })} /></label>
+            <div className={styles.participantActions}><button type="button" className={styles.primaryButton} onClick={addParticipant}>Adicionar</button></div>
+          </div>
+          {participantError && <p className={styles.fieldError} id="participant-manager-error" role="alert">{participantError}</p>}
+        </div>
+        {participantToDelete && <div className={styles.participantDeleteConfirm} role="group" aria-label={`Confirmar exclusão de ${participantToDelete.name}`}><div><strong>Excluir {participantToDelete.name}?</strong><p>{participantUsage.projects || participantUsage.tasks ? `A pessoa será removida de ${participantUsage.projects} projeto(s) e ${participantUsage.tasks} tarefa(s).` : 'Este participante ainda não está vinculado a projetos ou tarefas.'}</p></div><div><button type="button" className={styles.secondaryButton} onClick={() => setParticipantToDeleteId(null)}>Cancelar</button><button type="button" className={styles.dangerButton} onClick={deleteParticipant}>Excluir</button></div></div>}
+        {collection.people.length ? <div className={styles.participantManagerList}>{collection.people.map((person) => <div key={person.id}><span className={styles.participantAvatar} style={{ background: person.color }}>{person.initials}</span><strong>{person.name}</strong><button type="button" className={`${styles.iconButton} ${styles.participantDeleteButton}`} aria-label={`Excluir participante ${person.name}`} title={`Excluir ${person.name}`} onClick={() => setParticipantToDeleteId(person.id)}><Icon name="trash" size={17} /></button></div>)}</div> : <p className={styles.participantEmpty}>Nenhum participante cadastrado.</p>}
+      </section>
+    </Modal>
+
     <Modal open={Boolean(editingProject)} onClose={() => setEditingProject(null)} title="Editar projeto" description="Atualize os dados gerais sem alterar a estrutura do projeto." wide>
       <form className={styles.projectForm} onSubmit={submitProjectEdit}>
         <div className={styles.formGrid}>
@@ -406,7 +424,18 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
         </div>
         <fieldset>
           <legend>Participantes</legend>
-          <p className={styles.fieldHelp}>Selecione quem participa deste projeto.</p>
+          <div className={styles.participantHeader}>
+            <p>Selecione quem participa deste projeto.</p>
+            <button type="button" className={`${styles.secondaryButton} ${styles.participantAddButton}`} aria-expanded={participantRegistrationOpen} aria-controls="edit-participant-registration" onClick={() => { setParticipantRegistrationOpen((open) => !open); setParticipantError(''); }}><Icon name="plus" size={16} /> Cadastrar participante</button>
+          </div>
+          {participantRegistrationOpen && <div className={styles.participantRegistration} id="edit-participant-registration" role="group" aria-label="Cadastro de participante">
+            <div className={styles.participantFields}>
+              <label>Nome do participante<input autoFocus maxLength={80} value={participantDraft.name} onChange={(event) => { setParticipantDraft({ ...participantDraft, name: event.target.value }); setParticipantError(''); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addParticipant(); } }} placeholder="Ex.: Maria Silva" aria-invalid={Boolean(participantError)} aria-describedby={participantError ? 'edit-participant-error' : undefined} /></label>
+              <label>Cor<input type="color" value={participantDraft.color} onChange={(event) => setParticipantDraft({ ...participantDraft, color: event.target.value })} /></label>
+              <div className={styles.participantActions}><button type="button" className={styles.secondaryButton} onClick={() => { setParticipantRegistrationOpen(false); setParticipantError(''); }}>Cancelar</button><button type="button" className={styles.primaryButton} onClick={addParticipant}>Adicionar</button></div>
+            </div>
+            {participantError && <p className={styles.fieldError} id="edit-participant-error" role="alert">{participantError}</p>}
+          </div>}
           {collection.people.length ? <div className={styles.checkboxGrid}>{collection.people.map((person) => <div className={styles.participantOption} key={person.id}>
             <label><input type="checkbox" checked={editForm.participants.includes(person.id)} onChange={() => setEditForm({ ...editForm, participants: editForm.participants.includes(person.id) ? editForm.participants.filter((id) => id !== person.id) : [...editForm.participants, person.id] })} /><span className={styles.participantAvatar} style={{ background: person.color }}>{person.initials}</span><span className={styles.participantName} title={person.name}>{person.name}</span></label>
           </div>)}</div> : <p className={styles.participantEmpty}>Nenhum participante cadastrado.</p>}

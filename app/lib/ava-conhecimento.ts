@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.21: o mapa permite mover cards livremente também para cima da origem.
+// Revisado na versão 1.7.2.23: editar um projeto também permite cadastrar e associar participantes.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
