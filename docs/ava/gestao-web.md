@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.02 -->
+<!-- ava-version: 1.7.2.03 -->
+
+> Revisão 1.7.2.03: o AvantaProjetos usa somente o modo claro ou escuro salvo
+> em **Menu > Visual** do perfil, nunca a aparência automática do computador.
+> No Mapa de um projeto, **Ocultar cabeçalho** amplia a área de trabalho e
+> **Exibir cabeçalho** permanece flutuante no canto superior direito.
 
 > Revisão 1.7.2.02: em **Menu > Módulos**, Gestor Master e Administrador ativos
 > visualizam o catálogo mesmo quando foram adicionados posteriormente ao perfil.

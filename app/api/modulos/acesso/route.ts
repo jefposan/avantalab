@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   const [{ data: instalacao }, { data: empresa }, { data: configuracao }] = await Promise.all([
     acesso.db.from('empresa_modulos').select('ativo, origem, expira_em').eq('empresa_id', empresaId).eq('modulo_id', moduloId).maybeSingle(),
     acesso.db.from('empresas').select('nome').eq('id', empresaId).maybeSingle(),
-    acesso.db.from('configuracoes').select('cor_primaria').eq('empresa_id', empresaId).maybeSingle(),
+    acesso.db.from('configuracoes').select('cor_primaria, dark_mode').eq('empresa_id', empresaId).maybeSingle(),
   ]);
 
   const instalado = instalacao?.ativo === true && (!instalacao.expira_em || instalacao.expira_em > agora);
@@ -37,7 +37,12 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    empresa: { id: empresaId, nome: empresa?.nome || 'Perfil empresarial', corPrimaria: configuracao?.cor_primaria || '#003E73' },
+    empresa: {
+      id: empresaId,
+      nome: empresa?.nome || 'Perfil empresarial',
+      corPrimaria: configuracao?.cor_primaria || '#003E73',
+      temaEscuro: configuracao?.dark_mode === true,
+    },
     perfil,
     nivel,
     podeEditar: nivel !== 'visualizar',

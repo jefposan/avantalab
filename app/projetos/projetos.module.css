@@ -202,6 +202,12 @@
 .saveIndicator[data-state="saving"] i { background: #d49a21; animation: pulse 1s infinite; }
 .saveIndicator[data-state="error"] i, .saveIndicator[data-state="offline"] i { background: #bc4e4e; }
 .workspaceActions { display: flex; align-items: center; gap: 5px; }
+.mapFocusToggle, .mapFocusToggleFloating { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--border); border-radius: 11px; padding: 8px 10px; color: var(--brand); background: var(--surface); cursor: pointer; font-size: 11px; font-weight: 600; }
+.mapFocusToggle:hover, .mapFocusToggleFloating:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: var(--surface-soft); }
+.mapFocusToggleFloating { position: fixed; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); z-index: 180; box-shadow: 0 10px 28px rgba(4,20,34,.22); }
+.mapFocusMode .moduleHeader { display: none; }
+.mapFocusMode .moduleContent, .mapFocusMode .workspace { min-height: 100dvh; height: 100dvh; }
+.mapFocusMode .workspaceHeader, .mapFocusMode .workspaceToolbar { display: none; }
 .workspaceToolbar { position: relative; z-index: 35; display: flex; min-height: 58px; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); padding: 8px 14px; background: color-mix(in srgb, var(--surface) 94%, transparent); }
 .nodeSearch { position: relative; display: flex; width: min(380px, 34vw); align-items: center; }
 .nodeSearch > svg { position: absolute; left: 12px; color: var(--muted); }
@@ -462,8 +468,10 @@ fieldset.detailSection { padding-top: 8px; }
   .projectIdentity strong { max-width: 160px; }
 }
 
-@media (prefers-color-scheme: dark) {
-  .root {
+/* O tema vem da preferência salva no perfil AvantaLab, nunca do sistema operacional. */
+.darkTheme {
+    --brand: #d5ecff;
+    --accent: #65d4e6;
     --surface: #101b28;
     --surface-soft: #0b1520;
     --surface-raised: #142333;
@@ -471,20 +479,33 @@ fieldset.detailSection { padding-top: 8px; }
     --text: #e5edf2;
     --muted: #9cadb9;
     background: #08131e;
-  }
-  .root { color-scheme: dark; }
-  .demoBanner { color: #b9dde2; background: #102a31; }
-  .projectSections button span, .taskTableHead, .kanbanColumn > header small { background: #1d2b37; }
-  .projectCover { filter: saturate(.85); }
-  .emptyState { background: rgba(14,28,40,.55); }
-  .canvas { background: #0b1722; }
-  .canvasGrid { background-image: radial-gradient(circle, #456070 1px, transparent 1.1px); }
-  .edge text { stroke: #0b1722; fill: #9db0bc; }
-  .nodeBadges span { color: #b7c5cd; background: #263746; }
-  .miniMap, .nodeActionBar, .edgeActionBar { background: rgba(16,27,40,.95); }
-  .mapNode { border-color: #314755; box-shadow: 0 9px 23px rgba(0,0,0,.26); }
-  .filters select, .filters input, .projectForm input, .projectForm select, .detailsPanel input, .detailsPanel select, .detailsPanel textarea, .toolbarButtons select, .filterPanel select { color-scheme: dark; }
+    color-scheme: dark;
 }
+.darkTheme .moduleLogo { filter: brightness(0) invert(1); }
+.darkTheme .moduleBack { color: var(--brand); background: color-mix(in srgb, var(--project-profile-color, var(--accent)) 18%, var(--surface)); }
+.darkTheme .moduleBack:hover { background: color-mix(in srgb, var(--project-profile-color, var(--accent)) 27%, var(--surface)); }
+.darkTheme .readOnlyBadge { color: #b9e9ef; background: #173845; }
+.darkTheme .demoBanner { color: #b9dde2; background: #102a31; }
+.darkTheme .projectSections button span, .darkTheme .taskTableHead, .darkTheme .kanbanColumn > header small { background: #1d2b37; }
+.darkTheme .displayToggle .activeToggle, .darkTheme .progressRow > div, .darkTheme .detailProgress, .darkTheme .kanbanEmpty { background: #1d2b37; }
+.darkTheme .projectCover { filter: saturate(.85); }
+.darkTheme .emptyState { border-color: #3b5261; background: rgba(14,28,40,.55); }
+.darkTheme .emptyState > span { background: #173845; }
+.darkTheme .canvas { background: #0b1722; }
+.darkTheme .canvasGrid { background-image: radial-gradient(circle, #456070 1px, transparent 1.1px); }
+.darkTheme .edgeLine { stroke: #7792a4; }
+.darkTheme .edge text { stroke: #0b1722; fill: #c5d6df; }
+.darkTheme .mapNode { border-color: #314755; box-shadow: 0 9px 23px rgba(0,0,0,.26); }
+.darkTheme .mapNodeSelected { border-color: color-mix(in srgb, var(--node-color) 70%, #dcecff); }
+.darkTheme .nodeBadges span, .darkTheme .tagList button, .darkTheme .tagList span { color: #c5d3db; background: #263746; }
+.darkTheme .nodeBadges [data-status="concluido"] { color: #ace2bd; background: #1b4730; }
+.darkTheme .nodeBadges [data-status="em_andamento"] { color: #aee9f3; background: #174b59; }
+.darkTheme .nodeBadges [data-status="aguardando"] { color: #f6d798; background: #4b3b1c; }
+.darkTheme .nodeBadges [data-priority="alta"], .darkTheme .nodeBadges [data-priority="urgente"], .darkTheme .nodeBadges .lateBadge { color: #f3bec4; background: #4b252c; }
+.darkTheme .miniMap, .darkTheme .nodeActionBar, .darkTheme .edgeActionBar { background: rgba(16,27,40,.95); }
+.darkTheme .colorAction::after { border-color: var(--surface); box-shadow: 0 0 0 1px #426071; }
+.darkTheme .shortcutList kbd { border-color: #3b5363; color: var(--brand); background: #1a2b39; }
+.darkTheme .filters select, .darkTheme .filters input, .darkTheme .projectForm input, .darkTheme .projectForm select, .darkTheme .detailsPanel input, .darkTheme .detailsPanel select, .darkTheme .detailsPanel textarea, .darkTheme .toolbarButtons select, .darkTheme .filterPanel select, .darkTheme .taskTableRow select, .darkTheme .taskTableRow input { color-scheme: dark; }
 
 @media (prefers-reduced-motion: reduce) {
   .root *, .root *::before, .root *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

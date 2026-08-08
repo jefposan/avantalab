@@ -12,7 +12,7 @@ import { ProjectWorkspace } from './components/ProjectWorkspace';
 import type { ProfileRole } from './types';
 
 type ModuleAccess = {
-  empresa: { id: string; nome: string; corPrimaria: string };
+  empresa: { id: string; nome: string; corPrimaria: string; temaEscuro: boolean };
   perfil: ProfileRole;
   podeEditar: boolean;
   expiraEm: string | null;
@@ -22,6 +22,7 @@ function ProjectApp({ companyId, access }: { companyId: string; access: ModuleAc
   const repository = useMemo(() => new SupabaseProjectRepository(), []);
   const { collection, setCollection, loaded, saveState, message, setMessage, undo, redo, canUndo, canRedo } = useProjectCollection(companyId, repository, access.podeEditar);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [mapaEmFoco, setMapaEmFoco] = useState(false);
   const activeProject = collection.projects.find((project) => project.id === activeProjectId) ?? null;
 
   useEffect(() => {
@@ -32,7 +33,12 @@ function ProjectApp({ companyId, access }: { companyId: string; access: ModuleAc
 
   if (!loaded) return <main className={styles.loadingState}><div aria-hidden="true" /><h1>Preparando seus projetos</h1><p>Carregando os dados do perfil com segurança…</p></main>;
 
-  return <main className={`${styles.root} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
+  const voltarParaProjetos = () => {
+    setMapaEmFoco(false);
+    setActiveProjectId(null);
+  };
+
+  return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.darkTheme : ''} ${mapaEmFoco ? styles.mapFocusMode : ''} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
     <header className={styles.moduleHeader}>
       <Link href={`/gestao?empresaId=${encodeURIComponent(companyId)}`} className={styles.moduleBack}>← Voltar ao AvantaLab</Link>
       <div className={styles.moduleIdentity}>
@@ -49,7 +55,7 @@ function ProjectApp({ companyId, access }: { companyId: string; access: ModuleAc
       {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
     </header>
     <div className={styles.moduleContent}>
-      {activeProject ? <ProjectWorkspace readOnly={!access.podeEditar} project={activeProject} people={collection.people} saveState={saveState} onBack={() => setActiveProjectId(null)} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={canUndo} canRedo={canRedo} onMessage={setMessage} /> : <ProjectHome readOnly={!access.podeEditar} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} />}
+      {activeProject ? <ProjectWorkspace readOnly={!access.podeEditar} project={activeProject} people={collection.people} saveState={saveState} onBack={voltarParaProjetos} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={canUndo} canRedo={canRedo} onMessage={setMessage} mapaEmFoco={mapaEmFoco} onMapaEmFocoChange={setMapaEmFoco} /> : <ProjectHome readOnly={!access.podeEditar} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} />}
     </div>
     {message && <div className={styles.toast} role="status" aria-live="polite">{message}</div>}
   </main>;

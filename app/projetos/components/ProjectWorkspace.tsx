@@ -31,7 +31,7 @@ function saveLabel(state: SaveState, readOnly: boolean) {
   return 'Pronto para editar';
 }
 
-export function ProjectWorkspace({ project, people, saveState, onBack, onChange, onUndo, onRedo, canUndo, canRedo, onMessage, readOnly = false }: {
+export function ProjectWorkspace({ project, people, saveState, onBack, onChange, onUndo, onRedo, canUndo, canRedo, onMessage, mapaEmFoco, onMapaEmFocoChange, readOnly = false }: {
   project: Project;
   people: Person[];
   saveState: SaveState;
@@ -42,6 +42,8 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
   canUndo: boolean;
   canRedo: boolean;
   onMessage: (message: string) => void;
+  mapaEmFoco: boolean;
+  onMapaEmFocoChange: (ativo: boolean) => void;
   readOnly?: boolean;
 }) {
   const [view, setView] = useState<ProjectView>('mapa');
@@ -222,13 +224,20 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     if (next) { setDetailsId(next.id); setSelectedIds(new Set([next.id])); }
   };
 
+  const alterarVisualizacao = (proximaVisualizacao: ProjectView) => {
+    setView(proximaVisualizacao);
+    if (proximaVisualizacao !== 'mapa') onMapaEmFocoChange(false);
+  };
+
+  const alternarFocoNoMapa = () => onMapaEmFocoChange(!mapaEmFoco);
+
   return <div className={styles.workspace}>
     <header className={styles.workspaceHeader}>
       <button type="button" className={styles.backButton} onClick={onBack} aria-label="Voltar aos projetos"><Icon name="back" /></button>
       <div className={styles.projectIdentity}><span style={{ background: project.color }}>{project.icon}</span><div><strong>{project.name}</strong><small>{progress}% concluído</small></div></div>
-      <nav className={styles.viewTabs} aria-label="Visualizações do projeto">{([['mapa', 'map', 'Mapa'], ['lista', 'list', 'Lista'], ['kanban', 'board', 'Kanban']] as const).map(([id, icon, label]) => <button type="button" key={id} className={view === id ? styles.activeView : ''} onClick={() => setView(id)}><Icon name={icon} size={17} />{label}</button>)}</nav>
+      <nav className={styles.viewTabs} aria-label="Visualizações do projeto">{([['mapa', 'map', 'Mapa'], ['lista', 'list', 'Lista'], ['kanban', 'board', 'Kanban']] as const).map(([id, icon, label]) => <button type="button" key={id} className={view === id ? styles.activeView : ''} onClick={() => alterarVisualizacao(id)}><Icon name={icon} size={17} />{label}</button>)}</nav>
       <div className={styles.saveIndicator} data-state={saveState} role="status" aria-live="polite"><i />{saveLabel(saveState, readOnly)}</div>
-      <div className={styles.workspaceActions}><button type="button" className={styles.iconButton} onClick={() => setHelpOpen(true)} aria-label="Ajuda e atalhos"><Icon name="help" /></button>{!readOnly && <button type="button" className={styles.secondaryButton} onClick={() => downloadJson(project)}><Icon name="download" size={17} /> Exportar</button>}</div>
+      <div className={styles.workspaceActions}><button type="button" className={styles.iconButton} onClick={() => setHelpOpen(true)} aria-label="Ajuda e atalhos"><Icon name="help" /></button>{!readOnly && <button type="button" className={styles.secondaryButton} onClick={() => downloadJson(project)}><Icon name="download" size={17} /> Exportar</button>}{view === 'mapa' && <button type="button" className={styles.mapFocusToggle} onClick={alternarFocoNoMapa} aria-pressed={mapaEmFoco} title="Ocultar cabeçalho e ampliar o mapa"><Icon name="fit" size={17} /><span>Ocultar cabeçalho</span></button>}</div>
     </header>
 
     <div className={styles.workspaceToolbar}>
@@ -241,6 +250,8 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
       <div className={styles.primaryView}>{view === 'mapa' ? <MapCanvas readOnly={readOnly} project={filteredProject} people={people} selectedIds={selectedIds} selectedEdgeId={selectedEdgeId} direction={direction} searchHighlight={searchHighlight} onSelectionChange={setSelectedIds} onEdgeSelect={setSelectedEdgeId} onMoveNode={(id, position) => updateNode(id, { position })} onRenameNode={(id, title) => updateNode(id, { title })} onUpdateColor={(id, color) => updateNode(id, { color })} onCreateChild={addChild} onCreateSibling={addSibling} onDuplicate={duplicateNode} onOpenDetails={(id) => setDetailsId(id)} onToggleCollapse={(id) => { const node = project.nodes.find((item) => item.id === id); if (node) updateNode(id, { collapsed: !node.collapsed }); }} onDelete={(id) => setDeleteNode(project.nodes.find((node) => node.id === id) ?? null)} onConnect={connect} onReconnect={reconnect} onMessage={onMessage} /> : view === 'lista' ? <ListView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} /> : <KanbanView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} />}</div>
       {detailsNode && <DetailsPanel readOnly={readOnly} key={detailsNode.id} project={project} node={detailsNode} people={people} onUpdate={(update) => updateNode(detailsNode.id, update)} onAddComment={(content) => addComment(detailsNode.id, content)} onClose={() => setDetailsId(null)} onNavigate={navigateDetails} />}
     </main>
+
+    {view === 'mapa' && mapaEmFoco && <button type="button" className={styles.mapFocusToggleFloating} onClick={alternarFocoNoMapa} aria-label="Exibir cabeçalho do mapa" title="Exibir cabeçalho"><Icon name="fit" size={18} /><span>Exibir cabeçalho</span></button>}
 
     <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="Atalhos do Mapa de Projetos" description="Os atalhos são ignorados enquanto você edita um campo.">
       <div className={styles.shortcutList}>{[['Tab', 'Adicionar nó filho'], ['Shift + Tab', 'Adicionar nó irmão'], ['Duplo clique', 'Editar título'], ['Enter', 'Confirmar edição'], ['Esc', 'Cancelar ou fechar'], ['Delete / Backspace', 'Excluir com confirmação'], ['⌘/Ctrl + C', 'Copiar nó'], ['⌘/Ctrl + V', 'Colar nó'], ['⌘/Ctrl + Z', 'Desfazer'], ['⌘/Ctrl + Shift + Z', 'Refazer'], ['Botão direito', 'Abrir menu de ações']].map(([keys, action]) => <div key={keys}><kbd>{keys}</kbd><span>{action}</span></div>)}</div>

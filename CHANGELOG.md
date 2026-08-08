@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.2.03 - 2026-08-07
+
+- AvantaProjetos passa a respeitar exclusivamente o modo visual salvo em
+  **Menu > Visual** do perfil, sem acompanhar o tema automático do computador.
+  O modo escuro aplica contraste institucional a textos, superfícies, campos e
+  à marca oficial.
+- No mapa de um projeto, **Ocultar cabeçalho** libera a tela para a visualização
+  e mantém **Exibir cabeçalho** flutuante no canto superior direito.
+
 ## 1.7.2.02 - 2026-08-07
 
 - O catálogo de módulos passa a ser carregado por uma rota protegida do servidor,

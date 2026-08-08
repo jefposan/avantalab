@@ -1529,7 +1529,7 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
       setCorTemporaria(config.cor_primaria);
     }
 
-    setDarkMode(false);
+    setDarkMode(config.dark_mode === true);
     if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
     setLogoUrl(config.logo_url ?? '');
     if (config.logo_settings) setLogoSettings(config.logo_settings);
@@ -2007,7 +2007,7 @@ useEffect(() => {
     const resultado = await salvarConfiguracoesBanco({
   empresaId,
   corPrimaria,
-  darkMode: false,
+  darkMode,
   duplicadosAtivo,
   logoUrl,
   logoSettings,
