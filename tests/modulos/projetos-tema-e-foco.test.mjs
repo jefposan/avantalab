@@ -81,4 +81,7 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(inicioProjetos, /texto=\{person\.name\} posicao="top" wrapperClassName=\{styles\.avatarTooltip\}/);
   assert.match(nodeCard, /texto=\{person\.name\} posicao="top" wrapperClassName=\{styles\.avatarTooltip\}/);
   assert.match(kanban, /texto=\{person\.name\} posicao="top" wrapperClassName=\{styles\.avatarTooltip\}/);
+  assert.match(mapa, /import Tooltip from '@\/app\/components\/Tooltip';/);
+  assert.match(mapa, /<Tooltip texto="Adicionar filho \(Tab\)" posicao="bottom">/);
+  assert.doesNotMatch(mapa, /title="Adicionar filho \(Tab\)"/);
 });

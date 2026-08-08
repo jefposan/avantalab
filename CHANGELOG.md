@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.27 - 2026-08-08
+
+- O menu flutuante dos cards do mapa usa agora os tooltips do AvantaLab, em vez
+  dos balões nativos do navegador.
+
 ## 1.7.2.26 - 2026-08-08
 
 - O tooltip de participantes agora é exibido também nos avatares dos cards do

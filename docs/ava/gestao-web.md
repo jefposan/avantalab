@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.26 -->
+<!-- ava-version: 1.7.2.27 -->
+
+> Revisão 1.7.2.27: no menu flutuante de um card do mapa, passe o mouse sobre
+> uma ação para ver a dica visual padronizada do AvantaLab.
 
 > Revisão 1.7.2.26: os avatares de participantes mostram o nome completo no
 > tooltip em todas as visualizações de cards: projetos, mapa e kanban.

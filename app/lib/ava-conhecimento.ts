@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.26: avatares exibem o nome do participante nos cards de projetos, mapa e kanban.
+// Revisado na versão 1.7.2.27: o menu flutuante do mapa usa as dicas visuais padrão do AvantaLab.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
