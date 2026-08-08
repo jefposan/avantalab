@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.10: as conexões do mapa acompanham o arraste dos cards sem animação de atraso.
+// Revisado na versão 1.7.2.11: a exclusão de um nó preserva dependentes e permite escolher seu sucessor.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

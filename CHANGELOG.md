@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.11 - 2026-08-07
+
+- A exclusão de um nó do mapa preserva seus dependentes. Quando há mais de um
+  card seguinte, é possível escolher qual assume a posição do nó removido.
+
 ## 1.7.2.10 - 2026-08-07
 
 - As linhas de conexão do mapa agora acompanham o arraste dos cards de forma

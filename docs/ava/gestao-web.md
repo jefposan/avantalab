@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.10 -->
+<!-- ava-version: 1.7.2.11 -->
+
+> Revisão 1.7.2.11: ao excluir um nó, use **Excluir somente este nó**. Os
+> dependentes permanecem; se houver mais de um card seguinte, escolha qual
+> assume a posição na sequência.
 
 > Revisão 1.7.2.10: durante o arraste de um card no mapa, as linhas de conexão
 > acompanham sua posição imediatamente.

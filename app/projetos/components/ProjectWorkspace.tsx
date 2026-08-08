@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import ModalConfirmacao from '../../components/ModalConfirmacao';
-import { calculateProjectProgress, connectHierarchy, createId, exportProject, getDescendantIds, layoutProject, wouldCreateHierarchyCycle } from '../domain/project';
+import { calculateProjectProgress, connectHierarchy, createId, exportProject, layoutProject, wouldCreateHierarchyCycle } from '../domain/project';
 import { NODE_TYPE_LABELS, PRIORITY_LABELS, PRIORITIES, STATUS_LABELS, STATUSES, type ConnectionType, type MapDirection, type Person, type Project, type ProjectNode, type ProjectView, type SaveState } from '../types';
 import styles from '../projetos.module.css';
 import { DetailsPanel } from './DetailsPanel';
@@ -60,11 +59,13 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
   const [searchHighlight, setSearchHighlight] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [deleteNode, setDeleteNode] = useState<ProjectNode | null>(null);
+  const [replacementNodeId, setReplacementNodeId] = useState<string | null>(null);
   const [clipboardNode, setClipboardNode] = useState<ProjectNode | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
   const progress = calculateProjectProgress(project);
   const detailsNode = detailsId ? project.nodes.find((node) => node.id === detailsId) ?? null : null;
+  const deleteNodeChildren = useMemo(() => deleteNode ? project.nodes.filter((node) => node.parentId === deleteNode.id) : [], [deleteNode, project.nodes]);
   const searchResults = useMemo(() => {
     const term = query.trim().toLocaleLowerCase('pt-BR');
     if (!term) return [];
@@ -193,13 +194,28 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     activities: [{ id: createId('activity'), nodeId, action: 'Comentário', detail: content.slice(0, 1000), at: new Date().toISOString() }, ...current.activities].slice(0, 80),
   })), [mutate]);
 
+  const requestDeleteNode = useCallback((node: ProjectNode) => {
+    const children = project.nodes.filter((item) => item.parentId === node.id);
+    setDeleteNode(node);
+    setReplacementNodeId(children[0]?.id ?? null);
+  }, [project.nodes]);
+
   const confirmDelete = useCallback(() => {
     if (!deleteNode) return;
-    const descendants = getDescendantIds(project.nodes, deleteNode.id);
-    const remove = new Set([deleteNode.id, ...descendants]);
-    mutate((current) => ({ ...current, nodes: current.nodes.filter((node) => !remove.has(node.id)), connections: current.connections.filter((edge) => !remove.has(edge.sourceId) && !remove.has(edge.targetId)), activities: [{ id: createId('activity'), nodeId: null, action: 'Nó removido', detail: `${deleteNode.title}${descendants.size ? ` e ${descendants.size} descendente(s)` : ''}.`, at: new Date().toISOString() }, ...current.activities] }));
-    setDeleteNode(null); setSelectedIds(new Set()); setDetailsId(null); onMessage('Nó removido. Use Desfazer para recuperá-lo.');
-  }, [deleteNode, project.nodes, mutate, onMessage]);
+    const successor = deleteNodeChildren.find((node) => node.id === replacementNodeId) ?? null;
+    if (deleteNodeChildren.length && !successor) { onMessage('Escolha o card que assumirá a posição deste nó.'); return; }
+    mutate((current) => {
+      const nodes = current.nodes.filter((node) => node.id !== deleteNode.id).map((node) => {
+        if (successor && node.id === successor.id) return { ...node, parentId: deleteNode.parentId, updatedAt: new Date().toISOString() };
+        if (successor && node.parentId === deleteNode.id) return { ...node, parentId: successor.id, updatedAt: new Date().toISOString() };
+        return node;
+      });
+      const hierarchy = nodes.flatMap((node) => node.parentId ? [current.connections.find((edge) => edge.type === 'hierarquica' && edge.sourceId === node.parentId && edge.targetId === node.id) ?? { id: createId('edge'), sourceId: node.parentId, targetId: node.id, type: 'hierarquica' as const, label: '' }] : []);
+      const freeConnections = current.connections.filter((edge) => edge.type === 'livre' && edge.sourceId !== deleteNode.id && edge.targetId !== deleteNode.id);
+      return { ...current, nodes, connections: [...hierarchy, ...freeConnections], activities: [{ id: createId('activity'), nodeId: null, action: 'Nó removido', detail: successor ? `${deleteNode.title} removido; ${successor.title} assumiu a posição.` : `${deleteNode.title} removido.`, at: new Date().toISOString() }, ...current.activities].slice(0, 80) };
+    });
+    setDeleteNode(null); setReplacementNodeId(null); setSelectedIds(new Set()); setDetailsId(null); onMessage(successor ? 'Nó removido. Os dependentes foram preservados.' : 'Nó removido. Use Desfazer para recuperá-lo.');
+  }, [deleteNode, deleteNodeChildren, replacementNodeId, mutate, onMessage]);
 
   const pasteNode = useCallback(() => {
     if (!clipboardNode) return;
@@ -222,12 +238,12 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
       else if (modifier && event.key.toLowerCase() === 'c' && selected) { event.preventDefault(); setClipboardNode(structuredClone(selected)); onMessage('Nó copiado.'); }
       else if (modifier && event.key.toLowerCase() === 'v') { event.preventDefault(); pasteNode(); }
       else if (event.key === 'Tab' && selected) { event.preventDefault(); if (event.shiftKey) addSibling(selected.id); else addChild(selected.id); }
-      else if ((event.key === 'Delete' || event.key === 'Backspace') && selected) { event.preventDefault(); setDeleteNode(selected); }
+      else if ((event.key === 'Delete' || event.key === 'Backspace') && selected) { event.preventDefault(); requestDeleteNode(selected); }
       else if (event.key === '?' || (event.key === '/' && event.shiftKey)) setHelpOpen(true);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [selectedIds, project.nodes, onUndo, onRedo, addSibling, addChild, pasteNode, onMessage, readOnly]);
+  }, [selectedIds, project.nodes, onUndo, onRedo, addSibling, addChild, pasteNode, onMessage, readOnly, requestDeleteNode]);
 
   const navigateDetails = (directionStep: -1 | 1) => {
     if (!detailsId) return;
@@ -262,7 +278,7 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     </div>
 
     <main className={`${styles.workspaceContent} ${detailsNode ? styles.withDetails : ''}`}>
-      <div className={styles.primaryView}>{view === 'mapa' ? <MapCanvas readOnly={readOnly} project={filteredProject} people={people} selectedIds={selectedIds} selectedEdgeId={selectedEdgeId} direction={direction} searchHighlight={searchHighlight} onSelectionChange={setSelectedIds} onEdgeSelect={setSelectedEdgeId} onMoveNode={(id, position) => updateNode(id, { position })} onRenameNode={(id, title) => updateNode(id, { title })} onUpdateColor={(id, color) => updateNode(id, { color })} onCreateChild={addChild} onCreateSibling={addSibling} onDuplicate={duplicateNode} onOpenDetails={(id) => setDetailsId(id)} onToggleCollapse={(id) => { const node = project.nodes.find((item) => item.id === id); if (node) updateNode(id, { collapsed: !node.collapsed }); }} onDelete={(id) => setDeleteNode(project.nodes.find((node) => node.id === id) ?? null)} onConnect={connect} onReconnect={reconnect} onDeleteConnection={removeConnection} onMessage={onMessage} /> : view === 'lista' ? <ListView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} /> : <KanbanView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} />}</div>
+      <div className={styles.primaryView}>{view === 'mapa' ? <MapCanvas readOnly={readOnly} project={filteredProject} people={people} selectedIds={selectedIds} selectedEdgeId={selectedEdgeId} direction={direction} searchHighlight={searchHighlight} onSelectionChange={setSelectedIds} onEdgeSelect={setSelectedEdgeId} onMoveNode={(id, position) => updateNode(id, { position })} onRenameNode={(id, title) => updateNode(id, { title })} onUpdateColor={(id, color) => updateNode(id, { color })} onCreateChild={addChild} onCreateSibling={addSibling} onDuplicate={duplicateNode} onOpenDetails={(id) => setDetailsId(id)} onToggleCollapse={(id) => { const node = project.nodes.find((item) => item.id === id); if (node) updateNode(id, { collapsed: !node.collapsed }); }} onDelete={(id) => { const node = project.nodes.find((item) => item.id === id); if (node) requestDeleteNode(node); }} onConnect={connect} onReconnect={reconnect} onDeleteConnection={removeConnection} onMessage={onMessage} /> : view === 'lista' ? <ListView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} /> : <KanbanView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} />}</div>
       {detailsNode && <DetailsPanel readOnly={readOnly} key={detailsNode.id} project={project} node={detailsNode} people={people} onUpdate={(update) => updateNode(detailsNode.id, update)} onAddComment={(content) => addComment(detailsNode.id, content)} onClose={() => setDetailsId(null)} onNavigate={navigateDetails} />}
     </main>
 
@@ -272,6 +288,14 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
       <div className={styles.shortcutList}>{[['Tab', 'Adicionar nó filho'], ['Shift + Tab', 'Adicionar nó irmão'], ['Duplo clique', 'Editar título'], ['Enter', 'Confirmar edição'], ['Esc', 'Cancelar ou fechar'], ['Delete / Backspace', 'Excluir com confirmação'], ['⌘/Ctrl + C', 'Copiar nó'], ['⌘/Ctrl + V', 'Colar nó'], ['⌘/Ctrl + Z', 'Desfazer'], ['⌘/Ctrl + Shift + Z', 'Refazer'], ['Botão direito', 'Abrir menu de ações']].map(([keys, action]) => <div key={keys}><kbd>{keys}</kbd><span>{action}</span></div>)}</div>
     </Modal>
 
-    <ModalConfirmacao aberto={Boolean(deleteNode)} titulo="Excluir nó do mapa?" mensagem={deleteNode ? `${deleteNode.title}${getDescendantIds(project.nodes, deleteNode.id).size ? ` possui ${getDescendantIds(project.nodes, deleteNode.id).size} descendente(s), que também serão removidos.` : ''}\n\nVocê poderá usar Desfazer imediatamente após a exclusão.` : ''} textoConfirmar="Excluir nó" aoCancelar={() => setDeleteNode(null)} aoConfirmar={confirmDelete} corPrimaria="#0A1F44" />
+    <Modal open={Boolean(deleteNode)} onClose={() => { setDeleteNode(null); setReplacementNodeId(null); }} title="Excluir somente este nó" description="Os demais cards serão preservados.">
+      {deleteNode && <div className={styles.deleteNodeDialog}>
+        <p>O card <strong>{deleteNode.title}</strong> será removido. {deleteNodeChildren.length ? 'Escolha quem assumirá sua posição na sequência.' : 'Não há dependentes para reorganizar.'}</p>
+        {deleteNodeChildren.length > 1 && <label>Próximo card da sequência<select value={replacementNodeId ?? ''} onChange={(event) => setReplacementNodeId(event.target.value || null)}><option value="">Selecione um card</option>{deleteNodeChildren.map((node) => <option key={node.id} value={node.id}>{node.title}</option>)}</select></label>}
+        {deleteNodeChildren.length === 1 && <p className={styles.deleteNodeSuccessor}><strong>{deleteNodeChildren[0].title}</strong> assumirá esta posição e manterá seus dependentes.</p>}
+        {deleteNodeChildren.length > 1 && replacementNodeId && <p className={styles.deleteNodeSuccessor}>Os demais cards passarão a depender de <strong>{deleteNodeChildren.find((node) => node.id === replacementNodeId)?.title}</strong>.</p>}
+        <div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={() => { setDeleteNode(null); setReplacementNodeId(null); }}>Cancelar</button><button type="button" className={styles.dangerButton} onClick={confirmDelete} disabled={deleteNodeChildren.length > 0 && !replacementNodeId}>Excluir somente este nó</button></div>
+      </div>}
+    </Modal>
   </div>;
 }

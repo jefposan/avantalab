@@ -152,6 +152,11 @@
 .settingsThemeSwitch:disabled { cursor: wait; }
 .settingsThemeSwitch[aria-busy="true"] i { opacity: .62; }
 .modalActions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 8px; }
+.deleteNodeDialog { display: grid; gap: 16px; }
+.deleteNodeDialog > p { margin: 0; color: var(--text); font-size: 13px; line-height: 1.55; }
+.deleteNodeDialog > label { display: grid; gap: 6px; color: var(--text); font-size: 12px; font-weight: 600; }
+.deleteNodeDialog select { width: 100%; }
+.deleteNodeSuccessor { border-radius: 12px; padding: 11px 12px; background: var(--surface-soft); }
 .projectForm { display: grid; gap: 20px; }
 .formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .formGrid label, .projectForm fieldset { color: var(--text); font-size: 12px; font-weight: 600; }
