@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.27: o menu flutuante do mapa usa as dicas visuais padrão do AvantaLab.
+// Revisado na versão 1.7.2.28: ajuste visual no alinhamento do botão de retorno do AvantaProjetos.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

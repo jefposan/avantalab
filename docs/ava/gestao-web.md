@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.27 -->
+<!-- ava-version: 1.7.2.28 -->
+
+> Revisão 1.7.2.28: ajuste visual do botão **‹ Início** no AvantaProjetos Web;
+> sem alteração de operação.
 
 > Revisão 1.7.2.27: no menu flutuante de um card do mapa, passe o mouse sobre
 > uma ação para ver a dica visual padronizada do AvantaLab.

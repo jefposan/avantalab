@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.2.28 - 2026-08-08
+
+- O ícone de retorno do botão **‹ Início** foi alinhado verticalmente ao texto.
+
 ## 1.7.2.27 - 2026-08-08
 
 - O menu flutuante dos cards do mapa usa agora os tooltips do AvantaLab, em vez

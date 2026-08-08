@@ -84,4 +84,5 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(mapa, /import Tooltip from '@\/app\/components\/Tooltip';/);
   assert.match(mapa, /<Tooltip texto="Adicionar filho \(Tab\)" posicao="bottom">/);
   assert.doesNotMatch(mapa, /title="Adicionar filho \(Tab\)"/);
+  assert.match(estilos, /\.moduleExit span \{ display: inline-flex; height: 1em; align-items: center; font-size: 18px; font-weight: 400; line-height: 1; \}/);
 });
