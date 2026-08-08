@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.29: o botão Início usa seta SVG alinhada ao rótulo.
+// Revisado na versão 1.7.2.30: o botão Início usa o azul-marinho de marca no modo claro.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

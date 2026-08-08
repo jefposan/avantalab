@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.30 - 2026-08-08
+
+- O botão **Início** passou a usar o azul-marinho escuro de marca do AvantaLab
+  no modo claro.
+
 ## 1.7.2.29 - 2026-08-08
 
 - O botão **Início** passou a usar a seta SVG do AvantaProjetos, garantindo
