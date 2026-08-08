@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.18 - 2026-08-08
+
+- O mapa passa a oferecer cinco cores pré-definidas configuráveis, aplicáveis ao
+  card selecionado, além da escolha livre já existente.
+
 ## 1.7.2.17 - 2026-08-07
 
 - Cards do mapa passaram a exibir uma linha de descrição quando ela estiver

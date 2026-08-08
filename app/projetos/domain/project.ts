@@ -269,6 +269,7 @@ export function validateProjectImport(value: unknown, companyId: string): Projec
     startDate: new Date().toISOString().slice(0, 10),
     dueDate: typeof raw.dueDate === 'string' ? raw.dueDate.slice(0, 10) : null,
     participantIds: [],
+    colorPresets: Array.isArray(raw.colorPresets) ? raw.colorPresets.slice(0, 5).map((color) => /^#[0-9a-f]{6}$/i.test(String(color)) ? String(color) : '') : ['', '', '', '', ''],
     nodes: nodes.map((node) => ({ ...node, parentId: node.parentId ? byOriginalId.get(node.parentId) ?? null : null })),
     connections,
     activities: [{ id: createId('activity'), nodeId: null, action: 'Projeto importado', detail: 'Arquivo JSON validado e sanitizado.', at: now }],

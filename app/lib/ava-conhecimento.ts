@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.17: descrições preenchidas aparecem diretamente no card correspondente do mapa.
+// Revisado na versão 1.7.2.18: o mapa oferece cinco cores pré-definidas persistidas no projeto e uma cor livre.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

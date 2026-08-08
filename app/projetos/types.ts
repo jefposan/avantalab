@@ -78,6 +78,7 @@ export type Project = {
   startDate: string;
   dueDate: string | null;
   participantIds: string[];
+  colorPresets: string[];
   nodes: ProjectNode[];
   connections: ProjectConnection[];
   activities: Activity[];

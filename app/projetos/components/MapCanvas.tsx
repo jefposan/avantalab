@@ -20,12 +20,13 @@ function isCanvasInteractiveTarget(target: EventTarget | null) {
 }
 
 export function MapCanvas({
-  project, people, selectedIds, selectedEdgeId, direction, searchHighlight,
+  project, people, colorPresets, selectedIds, selectedEdgeId, direction, searchHighlight,
   onSelectionChange, onEdgeSelect, onMoveNode, onRenameNode, onCreateChild, onCreateSibling,
-  onUpdateColor, onDuplicate, onOpenDetails, onToggleCollapse, onDelete, onConnect, onReconnect, onDeleteConnection, onMessage, readOnly = false,
+  onUpdateColor, onColorPresetsChange, onDuplicate, onOpenDetails, onToggleCollapse, onDelete, onConnect, onReconnect, onDeleteConnection, onMessage, readOnly = false,
 }: {
   project: Project;
   people: Person[];
+  colorPresets: string[];
   selectedIds: Set<string>;
   selectedEdgeId: string | null;
   direction: MapDirection;
@@ -35,6 +36,7 @@ export function MapCanvas({
   onMoveNode: (id: string, position: { x: number; y: number }) => void;
   onRenameNode: (id: string, title: string) => void;
   onUpdateColor: (id: string, color: string) => void;
+  onColorPresetsChange: (colors: string[]) => void;
   onCreateChild: (id: string) => void;
   onCreateSibling: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -54,6 +56,7 @@ export function MapCanvas({
   const [dragPosition, setDragPosition] = useState<{ nodeId: string; x: number; y: number } | null>(null);
   const [connectDraft, setConnectDraft] = useState<ConnectDraft>(null);
   const [contextMenu, setContextMenu] = useState<{ nodeId: string; x: number; y: number } | null>(null);
+  const [editingPresets, setEditingPresets] = useState(false);
   const visible = useMemo(() => visibleNodeIds(project.nodes), [project.nodes]);
   const nodes = useMemo(() => project.nodes.filter((node) => visible.has(node.id)).map((node) => dragPosition?.nodeId === node.id ? { ...node, position: { x: dragPosition.x, y: dragPosition.y } } : node), [project.nodes, visible, dragPosition]);
   const nodeMap = useMemo(() => new Map(nodes.map((node) => [node.id, node])), [nodes]);
@@ -185,7 +188,8 @@ export function MapCanvas({
       <button type="button" onClick={() => onCreateSibling(selectedNode.id)} title="Adicionar irmão (Shift+Tab)"><Icon name="sibling" /><span>Irmão</span></button>
       <button type="button" onClick={() => startConnect('hierarquica')} title="Conexão hierárquica"><Icon name="link" /><span>Filho</span></button>
       <button type="button" onClick={() => startConnect('livre')} title="Conexão livre"><Icon name="link" /><span>Relacionar</span></button>
-      <label className={styles.colorAction} title="Alterar cor"><span className={styles.srOnly}>Alterar cor</span><input type="color" value={selectedNode.color} onChange={(event) => onUpdateColor(selectedNode.id, event.target.value)} /></label>
+      <div className={styles.presetColors}><header><span>Cores pré-definidas</span><button type="button" onClick={() => setEditingPresets(!editingPresets)}>{editingPresets ? 'Concluir' : 'Ajustar'}</button></header><div>{Array.from({ length: 5 }, (_, index) => colorPresets[index] ?? '').map((color, index) => editingPresets ? <label key={index} className={styles.presetColorEditor} title={`Definir cor ${index + 1}`}><input type="color" value={color || '#5b7c91'} onChange={(event) => { const next = Array.from({ length: 5 }, (_, item) => colorPresets[item] ?? ''); next[index] = event.target.value; onColorPresetsChange(next); }} /><i style={{ background: color || undefined }} /></label> : <button key={index} type="button" className={styles.presetColor} style={{ background: color || undefined }} disabled={!color} onClick={() => onUpdateColor(selectedNode.id, color)} aria-label={color ? `Aplicar cor pré-definida ${index + 1}` : `Cor pré-definida ${index + 1} não definida`} />)}</div></div>
+      <label className={styles.colorAction} title="Cor livre"><span className={styles.srOnly}>Cor livre</span><input type="color" value={selectedNode.color} onChange={(event) => onUpdateColor(selectedNode.id, event.target.value)} /></label>
       <button type="button" onClick={() => onDuplicate(selectedNode.id)} title="Duplicar"><Icon name="copy" /><span>Duplicar</span></button>
       <button type="button" onClick={() => onOpenDetails(selectedNode.id)} title="Abrir detalhes"><Icon name="chevron" /><span>Detalhes</span></button>
       {project.nodes.some((node) => node.parentId === selectedNode.id) && <button type="button" onClick={() => onToggleCollapse(selectedNode.id)} title={selectedNode.collapsed ? 'Expandir ramificação' : 'Recolher ramificação'}><span>{selectedNode.collapsed ? '⊞' : '⊟'}</span><span>{selectedNode.collapsed ? 'Expandir' : 'Recolher'}</span></button>}

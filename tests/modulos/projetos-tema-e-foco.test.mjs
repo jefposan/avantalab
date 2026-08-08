@@ -63,4 +63,6 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(mapa, /x: drag\.origin\.x \+ \(event\.clientX - drag\.x\) \/ viewport\.scale, y: Math\.max\(0,/);
   assert.match(nodeCard, /node\.description && <p className=\{styles\.nodeDescription\}>\{node\.description\}<\/p>/);
   assert.match(estilos, /\.mapNode \{[^}]*height: 132px/);
+  assert.match(mapa, /Cores pré-definidas/);
+  assert.match(mapa, /onColorPresetsChange/);
 });

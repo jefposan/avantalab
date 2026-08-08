@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.17 -->
+<!-- ava-version: 1.7.2.18 -->
+
+> Revisão 1.7.2.18: com um card selecionado, use **Cores pré-definidas** para
+> aplicar uma cor salva; escolha **Ajustar** para definir as cinco bolinhas.
 
 > Revisão 1.7.2.17: a descrição informada nos detalhes de um card também aparece
 > diretamente no card do mapa.

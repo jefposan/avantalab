@@ -97,6 +97,7 @@ function baseProject(options: Partial<Project> & Pick<Project, 'id' | 'name'>): 
     startDate: '2026-08-07',
     dueDate: null,
     participantIds: ['ana'],
+    colorPresets: ['', '', '', '', ''],
     nodes: [],
     connections: [],
     activities: [],
