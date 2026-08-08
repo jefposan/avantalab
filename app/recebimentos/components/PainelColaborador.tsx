@@ -15,7 +15,7 @@ type Props = {
   recebimentos: Recebimento[];
   onRegistrar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null) => Promise<void> | void;
   // Baixa individual de uma parcela em atraso já existente.
-  onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null) => Promise<void> | void;
+  onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null) => Promise<void> | void;
 };
 
 const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -74,8 +74,8 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
     setComprovante(resumo);
   }
 
-  async function handleReceberCobranca(recebimentoId: string, valor: number, obs: string, formaPagamento: FormaPagamentoRecebimento, arquivo: File | null, resumo: ResumoRecebimento) {
-    await onReceberCobranca(recebimentoId, valor, obs, formaPagamento, arquivo);
+  async function handleReceberCobranca(recebimentoId: string, valor: number, obs: string, formaPagamento: FormaPagamentoRecebimento, arquivo: File | null, resumo: ResumoRecebimento, dataPagamento?: string | null) {
+    await onReceberCobranca(recebimentoId, valor, obs, formaPagamento, arquivo, dataPagamento);
     setFormAberto(false);
     setCorrecaoSelecionada(null);
     setComprovante(resumo);
@@ -103,6 +103,12 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
   function competencia(vencimento: string) {
     const [ano, mes] = vencimento.split('-');
     return `${MESES_CURTOS[Number(mes) - 1] ?? '—'}/${ano.slice(-2)}`;
+  }
+
+  function rotuloBaixado(recebimento: Recebimento) {
+    const referencia = recebimento.baixadoEm ?? recebimento.recebidoEm;
+    if (!referencia) return 'Baixado';
+    return `Baixado · ${competencia(referencia.slice(0, 10))}`;
   }
 
   function mudarMes(delta: number) {
@@ -136,9 +142,11 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
   return (
     <div className={styles.mobileWrap}>
       <div className={styles.heroCard}>
-        <div className={styles.heroNome}>Olá, {colaborador.nome}</div>
-        <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>
-          {hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+        <div className={styles.heroTopo}>
+          <div className={styles.heroNome}>Olá, {colaborador.nome}</div>
+          <time className={styles.heroData}>
+            {hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+          </time>
         </div>
         <div className={styles.heroStatGrid}>
           <div className={styles.heroStat}>
@@ -265,17 +273,18 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
             historico.map((r) => {
               const rot = rotuloSituacao(r.situacao);
               const dif = (r.valorRecebido ?? 0) - r.valorCombinado;
+              const textoSituacao = r.situacao === 'baixado' ? rotuloBaixado(r) : rot.texto;
               return (
                 <div key={r.id} className={styles.histCard}>
                   <div className={styles.histTop}>
                     <div>
                       <div className={styles.histEmpresa}>{nomeEmpresa(r.empresaId)}</div>
-                      <div className={styles.histSub}>{nomeSub(r.subempresaId)}</div>
+                      <div className={`${styles.histSub} ${styles.histSubDestaque}`}>{nomeSub(r.subempresaId)}</div>
                     </div>
-                    <span className={styles.badge} style={{ background: rot.fundo, color: rot.cor }}>{rot.texto}</span>
+                    <span className={styles.badge} style={{ background: rot.fundo, color: rot.cor }}>{textoSituacao}</span>
                   </div>
                   <div className={styles.histValores}>
-                    <span>Combinado: <b>{formatarMoeda(r.valorCombinado)}</b></span>
+                    <span>Contratado: <b>{formatarMoeda(r.valorCombinado)}</b></span>
                     <span>Recebido: <b>{formatarMoeda(r.valorRecebido ?? 0)}</b></span>
                   </div>
                   <div style={{ fontSize: 12, color: dif === 0 ? '#166534' : dif < 0 ? '#b45309' : '#1e40af', marginTop: 4 }}>

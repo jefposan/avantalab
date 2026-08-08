@@ -48,7 +48,7 @@ export interface RecebimentosRepo {
   excluirColaborador(id: string): Promise<void>;
   alternarColaborador(id: string, ativo: boolean): Promise<void>;
   registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null): Promise<void>;
-  receberCobranca(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null): Promise<void>;
+  receberCobranca(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null): Promise<void>;
   obterComprovante(lancamentoId: string): Promise<ComprovanteRecebimento>;
   confirmarBaixa(lancamentoId: string, formaPagamento?: FormaPagamentoRecebimento): Promise<void>;
   devolver(lancamentoId: string, motivo: string): Promise<void>;
@@ -137,10 +137,10 @@ export function criarRepoDemo(): RecebimentosRepo {
         situacao: situacaoPorValor(valorCombinado, valor), baixadoPor: null, baixadoEm: null,
       });
     },
-    async receberCobranca(id, valor, observacao, formaPagamento, comprovante) {
+    async receberCobranca(id, valor, observacao, formaPagamento, comprovante, dataPagamento) {
       const colaborador = colaboradorAtual();
       dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? {
-        ...r, valorRecebido: valor, colaboradorId: colaborador?.id ?? null, recebidoEm: new Date().toISOString(),
+        ...r, valorRecebido: valor, colaboradorId: colaborador?.id ?? null, recebidoEm: dataPagamento ? `${dataPagamento}T12:00:00.000Z` : new Date().toISOString(),
         observacao: observacao.trim() || r.observacao, formaPagamento,
         temComprovante: Boolean(comprovante) || r.temComprovante,
         situacao: situacaoPorValor(r.valorCombinado, valor),
@@ -274,6 +274,7 @@ async function registrarViaApi(
     observacao: string;
     formaPagamento: FormaPagamentoRecebimento;
     comprovante?: File | null;
+    dataPagamento?: string | null;
   },
 ) {
   const form = new FormData();
@@ -284,6 +285,7 @@ async function registrarViaApi(
   form.set('valorRecebido', dados.valor.toFixed(2));
   form.set('observacao', dados.observacao);
   form.set('formaPagamento', dados.formaPagamento);
+  if (dados.dataPagamento) form.set('dataPagamento', dados.dataPagamento);
   if (dados.comprovante) form.set('comprovante', dados.comprovante);
   const resposta = await fetch('/api/recebimentos/registrar', {
     method: 'POST',
@@ -407,7 +409,7 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         comprovante,
       });
     },
-    async receberCobranca(id, valor, observacao, formaPagamento, comprovante) {
+    async receberCobranca(id, valor, observacao, formaPagamento, comprovante, dataPagamento) {
       await registrarViaApi(cliente, {
         empresaId,
         lancamentoId: id,
@@ -415,6 +417,7 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         observacao,
         formaPagamento,
         comprovante,
+        dataPagamento,
       });
     },
     async obterComprovante(id) {
