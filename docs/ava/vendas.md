@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.04 -->
+<!-- ava-version: 1.7.2.05 -->
+
+> Revisão 1.7.2.05: resposta imediata do seletor de modo escuro é exclusiva do
+> AvantaProjetos Web; sem impacto no AvantaVendas.
 
 > Revisão 1.7.2.04: ajustes, carregamento e foco do mapa são exclusivos do
 > AvantaProjetos Web; sem impacto no AvantaVendas.

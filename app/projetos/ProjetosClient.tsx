@@ -46,12 +46,15 @@ function ProjectApp({ companyId, access, onAccessChange }: { companyId: string; 
 
   const alterarTema = async () => {
     if (atualizandoTema || !access.podeGerenciarModulo) return;
+    const temaEscuroAnterior = access.empresa.temaEscuro;
+    const temaEscuro = !temaEscuroAnterior;
+    const proximoAcesso = { ...access, empresa: { ...access.empresa, temaEscuro } };
+    onAccessChange(proximoAcesso);
     setAtualizandoTema(true);
     try {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) throw new Error('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.');
-      const temaEscuro = !access.empresa.temaEscuro;
       const resposta = await fetch('/api/modulos/projetos/ajustes', {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -59,9 +62,9 @@ function ProjectApp({ companyId, access, onAccessChange }: { companyId: string; 
       });
       const json = await resposta.json().catch(() => ({}));
       if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível atualizar o modo visual.');
-      onAccessChange({ ...access, empresa: { ...access.empresa, temaEscuro } });
       setMessage(temaEscuro ? 'Modo escuro ativado para este perfil.' : 'Modo claro ativado para este perfil.');
     } catch (error) {
+      onAccessChange({ ...access, empresa: { ...access.empresa, temaEscuro: temaEscuroAnterior } });
       setMessage(error instanceof Error ? error.message : 'Não foi possível atualizar o modo visual.');
     } finally { setAtualizandoTema(false); }
   };
@@ -91,8 +94,8 @@ function ProjectApp({ companyId, access, onAccessChange }: { companyId: string; 
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes do AvantaProjetos" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">
         <div><strong>Modo escuro</strong><p>Aplica a aparência escura a este perfil no AvantaLab e nos módulos compatíveis.</p></div>
-        <button type="button" className={styles.settingsThemeSwitch} role="switch" aria-checked={access.empresa.temaEscuro} onClick={() => void alterarTema()} disabled={atualizandoTema}>
-          <span>{atualizandoTema ? 'Atualizando…' : access.empresa.temaEscuro ? 'Ativado' : 'Desativado'}</span><i aria-hidden="true" />
+        <button type="button" className={styles.settingsThemeSwitch} role="switch" aria-checked={access.empresa.temaEscuro} aria-busy={atualizandoTema || undefined} onClick={() => void alterarTema()} disabled={atualizandoTema}>
+          <span>{access.empresa.temaEscuro ? 'Ativado' : 'Desativado'}</span><i aria-hidden="true" />
         </button>
       </section>
     </Modal>

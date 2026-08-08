@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.2.05 - 2026-08-07
+
+- O seletor de modo escuro do AvantaProjetos aplica a aparência imediatamente,
+  mantém largura fixa durante a gravação e restaura o estado anterior caso o
+  servidor não confirme a alteração.
+
 ## 1.7.2.04 - 2026-08-07
 
 - AvantaProjetos passa a usar a cena oficial de carregamento do AvantaLab e

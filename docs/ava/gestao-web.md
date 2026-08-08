@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.04 -->
+<!-- ava-version: 1.7.2.05 -->
+
+> Revisão 1.7.2.05: o seletor de modo escuro do AvantaProjetos responde na
+> hora e confirma a gravação em segundo plano; se houver falha, retorna ao
+> estado anterior e informa o ocorrido.
 
 > Revisão 1.7.2.04: AvantaProjetos abre com a tela de carregamento institucional.
 > Gestor Master e Administrador usam o ícone de **Ajustes** para ativar ou

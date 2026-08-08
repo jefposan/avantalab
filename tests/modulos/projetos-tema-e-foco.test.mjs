@@ -20,6 +20,8 @@ test('AvantaProjetos recebe o tema salvo no perfil, sem depender do sistema oper
   assert.match(estilos, /\.darkTheme \.moduleLogo \{ filter: brightness\(0\) invert\(1\)/);
   assert.match(cliente, /TelaCarregandoAcesso/);
   assert.match(cliente, /Ajustes do AvantaProjetos/);
+  assert.match(cliente, /const proximoAcesso = \{ \.\.\.access, empresa: \{ \.\.\.access\.empresa, temaEscuro \} \}/);
+  assert.doesNotMatch(cliente, /Atualizando…/);
   assert.match(ajustes, /autenticarPerfilCobranca\(request, empresaId, true\)/);
   assert.match(ajustes, /update\(\{ dark_mode: temaEscuro \}\)/);
 });
