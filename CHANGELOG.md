@@ -1,31 +1,156 @@
 # Changelog
 
+## 1.7.2.30 - 2026-08-08
+
+- O botão **Início** passou a usar o azul-marinho escuro de marca do AvantaLab
+  no modo claro.
+- A integração desta publicação também equipara cortesias ao plano completo
+  correspondente e atualiza vínculos comerciais aprovados automaticamente.
+
+## 1.7.2.29 - 2026-08-08
+
+- O botão **Início** passou a usar a seta SVG do AvantaProjetos, garantindo
+  alinhamento geométrico com o rótulo.
+
+## 1.7.2.28 - 2026-08-08
+
+- O ícone de retorno do botão **‹ Início** foi alinhado verticalmente ao texto.
+
+## 1.7.2.27 - 2026-08-08
+
+- O menu flutuante dos cards do mapa usa agora os tooltips do AvantaLab, em vez
+  dos balões nativos do navegador.
+
+## 1.7.2.26 - 2026-08-08
+
+- O tooltip de participantes agora é exibido também nos avatares dos cards do
+  mapa e do kanban, além da página inicial.
+
+## 1.7.2.25 - 2026-08-08
+
+- Os avatares de participantes nos cards de projeto agora exibem o nome completo
+  com o tooltip padrão do AvantaLab ao passar o mouse.
+
+## 1.7.2.24 - 2026-08-08
+
+- A seleção de responsáveis nos detalhes do card agora usa o mesmo padrão
+  compacto de participantes, com checkbox, avatar e nome bem alinhados.
+
+## 1.7.2.23 - 2026-08-08
+
+- A edição de projeto também permite cadastrar um participante e já selecioná-lo
+  no próprio projeto.
+
+## 1.7.2.22 - 2026-08-08
+
+- A página inicial dos Projetos passa a ter acesso próprio para cadastrar e
+  gerenciar participantes, sem precisar abrir a criação de um projeto.
+
+## 1.7.2.21 - 2026-08-08
+
+- O mapa do AvantaProjetos agora permite arrastar cards também para cima da
+  origem, sem limitar a organização vertical do projeto.
+
+## 1.7.2.20 - 2026-08-08
+
+- As cores pré-definidas configuradas no mapa agora permanecem visíveis nas
+  bolinhas após concluir o ajuste, preservando também sua aplicação ao card.
+
+## 1.7.2.19 - 2026-08-08
+
+- A paleta do mapa agora reúne cores pré-definidas e cor livre em uma área
+  isolada, com bolinhas centralizadas abaixo do cabeçalho.
+
+## 1.7.2.18 - 2026-08-08
+
+- O mapa passa a oferecer cinco cores pré-definidas configuráveis, aplicáveis ao
+  card selecionado, além da escolha livre já existente.
+
+## 1.7.2.17 - 2026-08-07
+
+- Cards do mapa passaram a exibir uma linha de descrição quando ela estiver
+  preenchida, com conexões e enquadramento ajustados à nova altura.
+
+## 1.7.2.16 - 2026-08-07
+
+- O mapa permite arrastar cards também para a esquerda da origem, mantendo o
+  limite apenas no topo da área de trabalho.
+
+## 1.7.2.15 - 2026-08-07
+
+- Na etapa de escolha do sucessor, a ação final de remoção passa a se chamar
+  apenas **Excluir**.
+
+## 1.7.2.14 - 2026-08-07
+
+- O campo **Card sucessor** passou a ter superfície, borda e foco visíveis para
+  ficar claramente identificado como seletor.
+
+## 1.7.2.13 - 2026-08-07
+
+- Botões destrutivos do AvantaProjetos mantêm texto branco sobre o fundo vermelho
+  também no modo claro.
+
+## 1.7.2.12 - 2026-08-07
+
+- O diálogo de exclusão de nós conectados foi reorganizado: cancelar, excluir
+  somente o nó ou excluir os conectados ficam lado a lado; a escolha do
+  sucessor aparece apenas ao preservar a sequência.
+
+## 1.7.2.11 - 2026-08-07
+
+- A exclusão de um nó do mapa preserva seus dependentes. Quando há mais de um
+  card seguinte, é possível escolher qual assume a posição do nó removido.
+
+## 1.7.2.10 - 2026-08-07
+
+- As linhas de conexão do mapa agora acompanham o arraste dos cards de forma
+  imediata, sem a transição que criava atraso visual.
+
+## 1.7.2.09 - 2026-08-07
+
+- Conexões criadas por **Relacionar** agora exibem **Remover relação** ao serem
+  selecionadas no mapa. A ação mantém os dois cards e pode ser desfeita.
+
+## 1.7.2.08 - 2026-08-07
+
+- O retorno do AvantaProjetos passa a usar o rótulo **‹ Início**, preservando o
+  acesso direto à Gestão do perfil ativo.
+
+## 1.7.2.07 - 2026-08-07
+
+- O seletor de modo escuro retorna à posição lateral no card de Ajustes, agora
+  compacto em **ON/OFF** e com a chave vermelha ou verde conforme o estado.
+
+## 1.7.2.06 - 2026-08-07
+
+- O seletor de modo escuro do AvantaProjetos ocupa uma faixa própria no card
+  de Ajustes, preservando texto e controle dentro do limite visual nos dois
+  estados.
+
 ## 1.7.2.05 - 2026-08-07
 
-- AvantaVendas: a tela que aguarda a aprovação do Código Vendas agora recebe a
-  liberação em tempo real e carrega automaticamente Catálogo, Divulgação e
-  Novidades, sem exigir que o usuário reinicie ou entre novamente.
-- Uma verificação periódica e a retomada do aplicativo confirmam a aprovação
-  caso a conexão em tempo real oscile, sem interferir no uso normal do sistema.
+- O seletor de modo escuro do AvantaProjetos aplica a aparência imediatamente,
+  mantém largura fixa durante a gravação e restaura o estado anterior caso o
+  servidor não confirme a alteração.
 
 ## 1.7.2.04 - 2026-08-07
 
-- AvantaVendas: ao aprovar um código empresarial, a empresa solicitada passa a
-  ser o vínculo comercial ativo para Catálogo, Divulgação e Novidades. Acessos
-  administrativos automáticos a outros perfis não substituem essa escolha.
-- O banco repara aprovações anteriores que ficaram inativas e sem data de
-  desvinculação, preservando os acessos administrativos e todos os dados.
+- AvantaProjetos passa a usar a cena oficial de carregamento do AvantaLab e
+  disponibiliza **Ajustes** para Gestor Master e Administrador alterarem o
+  modo claro/escuro salvo no perfil, aplicado também ao AvantaLab.
+- O retorno do módulo passa a se chamar **Sair** e usar a cor institucional.
+  O foco do mapa agora elimina todas as áreas inativas, preservando navegação
+  em todo o viewport e o controle flutuante de retorno.
 
 ## 1.7.2.03 - 2026-08-07
 
-- Cortesias passam a equivaler ao plano completo do respectivo perfil: Empresa
-  recebe Business Pro (inclusive limite de 10 usuários e módulos incluídos) e
-  Pessoal recebe Pessoal Premium. A regra vale tanto para a liberação pelo
-  painel administrativo quanto para cupons.
-- Registros de cortesia existentes são normalizados para o plano correspondente,
-  preservando usuários, dados e prazo de validade da cortesia.
-- A franquia de usuários passa a contar apenas acessos à Gestão; funcionários do
-  Controle de Ponto não consomem esse limite.
+- AvantaProjetos passa a respeitar exclusivamente o modo visual salvo em
+  **Menu > Visual** do perfil, sem acompanhar o tema automático do computador.
+  O modo escuro aplica contraste institucional a textos, superfícies, campos e
+  à marca oficial.
+- No mapa de um projeto, **Ocultar cabeçalho** libera a tela para a visualização
+  e mantém **Exibir cabeçalho** flutuante no canto superior direito.
 
 ## 1.7.2.02 - 2026-08-07
 

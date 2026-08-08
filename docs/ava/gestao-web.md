@@ -1,22 +1,101 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.05 -->
+<!-- ava-version: 1.7.2.30 -->
 
-> Revisão 1.7.2.05: ao aprovar o Código Vendas em **Configurações >
-> Aprovações**, o AvantaVendas aberto pelo solicitante reconhece a liberação e
-> carrega os conteúdos automaticamente; não é necessário pedir que ele reinicie
-> ou faça novo login.
+> Revisão 1.7.2.30: ajuste visual do botão **Início** para o azul-marinho de
+> marca do AvantaLab no modo claro; sem alteração de operação.
 
-> Revisão 1.7.2.04: em **Configurações > Aprovações**, aprovar a solicitação
-> enviada com o Código Vendas torna essa empresa o vínculo comercial ativo do
-> usuário para Catálogo, Divulgação e Novidades. Outros perfis administrados
-> pelo mesmo usuário não substituem a empresa escolhida.
+> Nesta publicação, cortesias empresariais equivalem ao plano completo
+> correspondente, e aprovações comerciais atualizam o vínculo automaticamente.
 
-> Revisão 1.7.2.03: a cortesia de perfil Empresa equivale ao **Business Pro**:
-> inclui todos os módulos e permite até 10 usuários. A cortesia de perfil
-> Pessoal equivale ao **Pessoal Premium**. A mesma regra é aplicada às
-> cortesias por cupom; funcionários do Controle de Ponto não entram na franquia
-> de usuários da Gestão. Não altera dados ou usuários já existentes.
+> Revisão 1.7.2.29: ajuste visual do ícone SVG no botão **Início** do
+> AvantaProjetos Web; sem alteração de operação.
+
+> Revisão 1.7.2.28: ajuste visual do botão **‹ Início** no AvantaProjetos Web;
+> sem alteração de operação.
+
+> Revisão 1.7.2.27: no menu flutuante de um card do mapa, passe o mouse sobre
+> uma ação para ver a dica visual padronizada do AvantaLab.
+
+> Revisão 1.7.2.26: os avatares de participantes mostram o nome completo no
+> tooltip em todas as visualizações de cards: projetos, mapa e kanban.
+
+> Revisão 1.7.2.25: nos cards de projeto, passe o mouse sobre o avatar de um
+> participante para ver seu nome completo.
+
+> Revisão 1.7.2.24: em **Detalhes** do card, a seleção de **Responsáveis** usa
+> checkboxes compactos, alinhados aos avatares e nomes.
+
+> Revisão 1.7.2.23: em **Editar projeto**, a seção **Participantes** também
+> permite cadastrar uma pessoa e incluí-la diretamente no projeto.
+
+> Revisão 1.7.2.22: use **Participantes**, ao lado de **Novo projeto**, para
+> cadastrar ou excluir pessoas antes de associá-las a projetos e tarefas.
+
+> Revisão 1.7.2.21: no mapa, os cards podem ser movidos para cima da origem,
+> além das demais direções disponíveis.
+
+> Revisão 1.7.2.20: após concluir o ajuste das cores pré-definidas do mapa,
+> cada bolinha mantém a visualização da cor escolhida e pode aplicá-la ao card.
+
+> Revisão 1.7.2.19: a área de cores do card selecionado reúne as pré-definidas
+> e a cor livre no mesmo bloco visual.
+
+> Revisão 1.7.2.18: com um card selecionado, use **Cores pré-definidas** para
+> aplicar uma cor salva; escolha **Ajustar** para definir as cinco bolinhas.
+
+> Revisão 1.7.2.17: a descrição informada nos detalhes de um card também aparece
+> diretamente no card do mapa.
+
+> Revisão 1.7.2.16: no mapa, os cards podem ser arrastados livremente para a
+> esquerda; o limite de posicionamento continua apenas no topo.
+
+> Revisão 1.7.2.15: depois de definir o sucessor, confirme a remoção pelo botão
+> **Excluir**.
+
+> Revisão 1.7.2.14: na escolha de sucessor, use o campo destacado **Card
+> sucessor** para selecionar o nó que herdará a posição.
+
+> Revisão 1.7.2.13: ações de exclusão no AvantaProjetos usam fundo vermelho e
+> texto branco, inclusive no modo claro.
+
+> Revisão 1.7.2.12: ao excluir um nó com conectados, escolha **Excluir somente
+> este nó** para indicar o sucessor na etapa seguinte, ou **Excluir nós
+> conectados** para remover a sequência inteira.
+
+> Revisão 1.7.2.11: ao excluir um nó, use **Excluir somente este nó**. Os
+> dependentes permanecem; se houver mais de um card seguinte, escolha qual
+> assume a posição na sequência.
+
+> Revisão 1.7.2.10: durante o arraste de um card no mapa, as linhas de conexão
+> acompanham sua posição imediatamente.
+
+> Revisão 1.7.2.09: para desfazer uma relação, clique na linha entre os cards
+> e escolha **Remover relação**. Os cards não são apagados; use **Desfazer**
+> caso queira recuperar a conexão.
+
+> Revisão 1.7.2.08: use **‹ Início** para retornar do AvantaProjetos à Gestão
+> do mesmo perfil.
+
+> Revisão 1.7.2.07: o seletor de modo escuro volta à posição lateral no card
+> de **Ajustes**, em formato compacto **ON/OFF** com chave verde ou vermelha.
+
+> Revisão 1.7.2.06: no card de **Ajustes**, o seletor de modo escuro usa uma
+> faixa própria, mantendo o rótulo e o controle visíveis em qualquer estado.
+
+> Revisão 1.7.2.05: o seletor de modo escuro do AvantaProjetos responde na
+> hora e confirma a gravação em segundo plano; se houver falha, retorna ao
+> estado anterior e informa o ocorrido.
+
+> Revisão 1.7.2.04: AvantaProjetos abre com a tela de carregamento institucional.
+> Gestor Master e Administrador usam o ícone de **Ajustes** para ativar ou
+> desativar o modo escuro do perfil; a escolha vale também para o AvantaLab.
+> No foco do Mapa, toda a tela continua disponível para navegação.
+
+> Revisão 1.7.2.03: o AvantaProjetos usa somente o modo claro ou escuro salvo
+> em **Menu > Visual** do perfil, nunca a aparência automática do computador.
+> No Mapa de um projeto, **Ocultar cabeçalho** amplia a área de trabalho e
+> **Exibir cabeçalho** permanece flutuante no canto superior direito.
 
 > Revisão 1.7.2.02: em **Menu > Módulos**, Gestor Master e Administrador ativos
 > visualizam o catálogo mesmo quando foram adicionados posteriormente ao perfil.

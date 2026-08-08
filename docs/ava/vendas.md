@@ -1,21 +1,93 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.05 -->
+<!-- ava-version: 1.7.2.30 -->
 
-> Revisão 1.7.2.05: a tela **Aguardando aprovação** reconhece automaticamente
-> quando o gestor libera o Código Vendas e carrega Catálogo, Divulgação e
-> Novidades sem reiniciar o aplicativo. Se a conexão em tempo real oscilar, a
-> tela também reconfirma a situação periodicamente e quando volta ao primeiro
-> plano.
+> Revisão 1.7.2.30: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
 
-> Revisão 1.7.2.04: depois que o gestor aprova o Código Vendas, a empresa
-> solicitada passa a fornecer Catálogo, Divulgação e Novidades. Perfis que o
-> usuário também administra não substituem esse vínculo comercial.
+> Nesta publicação, a aprovação comercial atualiza automaticamente o vínculo
+> e o conteúdo liberado no AvantaVendas.
 
-> Revisão 1.7.2.03: cortesia de perfil Empresa passa a equivaler ao Business
-> Pro e a de perfil Pessoal ao Pessoal Premium; sem mudança de operação no
-> AvantaVendas. Funcionários do Controle de Ponto não entram no limite de
-> usuários da Gestão.
+> Revisão 1.7.2.29: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.28: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.27: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.26: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.25: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.24: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.23: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.22: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.21: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.20: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.19: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.18: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.17: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.16: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.15: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.14: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.13: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.12: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.11: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.10: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.09: alteração exclusiva do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.08: alteração exclusiva do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
+
+> Revisão 1.7.2.07: o ajuste visual é exclusivo do AvantaProjetos Web; sem
+> impacto no AvantaVendas.
+
+> Revisão 1.7.2.06: o ajuste visual é exclusivo do AvantaProjetos Web; sem
+> impacto no AvantaVendas.
+
+> Revisão 1.7.2.05: resposta imediata do seletor de modo escuro é exclusiva do
+> AvantaProjetos Web; sem impacto no AvantaVendas.
+
+> Revisão 1.7.2.04: ajustes, carregamento e foco do mapa são exclusivos do
+> AvantaProjetos Web; sem impacto no AvantaVendas.
+
+> Revisão 1.7.2.03: modo visual e foco no mapa são ajustes restritos ao
+> AvantaProjetos Web; sem impacto no AvantaVendas.
 
 > Revisão 1.7.2.02: correção do catálogo de módulos restrita à Gestão Web; sem
 > impacto no AvantaVendas.

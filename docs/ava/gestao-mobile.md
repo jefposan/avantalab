@@ -1,20 +1,93 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.05 -->
+<!-- ava-version: 1.7.2.30 -->
 
-> Revisão 1.7.2.05: depois da aprovação do Código Vendas, o AvantaVendas aberto
-> pelo solicitante atualiza o vínculo e carrega os conteúdos automaticamente,
-> sem reinício ou novo login.
+> Revisão 1.7.2.30: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
 
-> Revisão 1.7.2.04: aprovar uma solicitação feita com o Código Vendas torna a
-> empresa solicitada o vínculo comercial ativo para Catálogo, Divulgação e
-> Novidades. Outros acessos administrativos do usuário não mudam essa escolha.
+> Nesta publicação, a liberação comercial aprovada atualiza o vínculo e o
+> conteúdo do AvantaVendas automaticamente.
 
-> Revisão 1.7.2.03: cortesia de perfil Empresa passa a equivaler ao **Business
-> Pro**, incluindo todos os módulos e até 10 usuários; cortesia de perfil
-> Pessoal equivale ao **Pessoal Premium**. A mesma regra vale para cupom; sem
-> alterar dados ou usuários existentes. Funcionários do Controle de Ponto não
-> consomem a franquia de usuários da Gestão.
+> Revisão 1.7.2.29: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.28: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.27: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.26: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.25: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.24: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.23: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.22: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.21: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.20: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.19: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.18: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.17: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.16: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.15: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.14: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.13: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.12: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.11: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.10: ajuste exclusivo do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.09: alteração exclusiva do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.08: alteração exclusiva do AvantaProjetos Web; sem mudança
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.2.07: o ajuste visual é exclusivo do AvantaProjetos Web; sem
+> mudança operacional na Gestão Mobile.
+
+> Revisão 1.7.2.06: o ajuste visual é exclusivo do AvantaProjetos Web; sem
+> mudança operacional na Gestão Mobile.
+
+> Revisão 1.7.2.05: resposta imediata do seletor de modo escuro é exclusiva do
+> AvantaProjetos Web; sem mudança operacional na Gestão Mobile.
+
+> Revisão 1.7.2.04: ajustes, carregamento e foco do mapa são exclusivos do
+> AvantaProjetos Web; sem mudança operacional na Gestão Mobile.
+
+> Revisão 1.7.2.03: modo visual e foco no mapa são ajustes restritos ao
+> AvantaProjetos Web; sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.7.2.02: correção do catálogo de módulos restrita à Gestão Web; sem
 > mudança operacional na Gestão Mobile.

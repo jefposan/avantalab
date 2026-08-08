@@ -9,7 +9,7 @@ marca, DOM, imagens, textos comerciais ou identidade visual do ClickUp.
 - Pasta exclusiva: `app/projetos`.
 - Rota oficial: `/projetos`, em página total na mesma guia.
 - O botão **Projetos** aparece no menu da Gestão quando o módulo está instalado.
-- O botão **Voltar ao AvantaLab** retorna à Gestão preservando o perfil ativo.
+- O botão **‹ Início** retorna à Gestão preservando o perfil ativo.
 - Dados são persistidos no Supabase por `empresa_id` e preservados ao remover.
 - Acesso, instalação, validade e hierarquia são validados no servidor e por RLS.
 - Superfície suportada: somente navegador Web; não integra o mobile.
@@ -49,6 +49,10 @@ uma árvore determinística nas direções horizontal e vertical.
 - Painel lateral com dados, status, prioridade, responsáveis, datas, progresso,
   etiquetas, checklist, comentários, histórico e preparação para anexos.
 - Mapa, lista hierárquica e Kanban usando os mesmos registros.
+- Selecione uma conexão criada por **Relacionar** no mapa para removê-la sem
+  apagar os cards envolvidos.
+- Ao excluir um nó com dependentes, escolha entre preservar a sequência ou
+  removê-la junto; ao preservar, selecione o card sucessor na etapa seguinte.
 - Busca por título, descrição, etiqueta e responsável, com centralização do mapa.
 - Importação JSON validada/sanitizada e exportação JSON versionada.
 - Autosave com debounce e indicador de salvamento no perfil empresarial.

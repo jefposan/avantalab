@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import ModalConfirmacao from '../../components/ModalConfirmacao';
 import { calculateProjectProgress, connectHierarchy, createId, exportProject, getDescendantIds, layoutProject, wouldCreateHierarchyCycle } from '../domain/project';
 import { NODE_TYPE_LABELS, PRIORITY_LABELS, PRIORITIES, STATUS_LABELS, STATUSES, type ConnectionType, type MapDirection, type Person, type Project, type ProjectNode, type ProjectView, type SaveState } from '../types';
 import styles from '../projetos.module.css';
@@ -31,7 +30,7 @@ function saveLabel(state: SaveState, readOnly: boolean) {
   return 'Pronto para editar';
 }
 
-export function ProjectWorkspace({ project, people, saveState, onBack, onChange, onUndo, onRedo, canUndo, canRedo, onMessage, readOnly = false }: {
+export function ProjectWorkspace({ project, people, saveState, onBack, onChange, onUndo, onRedo, canUndo, canRedo, onMessage, mapaEmFoco, onMapaEmFocoChange, readOnly = false }: {
   project: Project;
   people: Person[];
   saveState: SaveState;
@@ -42,6 +41,8 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
   canUndo: boolean;
   canRedo: boolean;
   onMessage: (message: string) => void;
+  mapaEmFoco: boolean;
+  onMapaEmFocoChange: (ativo: boolean) => void;
   readOnly?: boolean;
 }) {
   const [view, setView] = useState<ProjectView>('mapa');
@@ -58,11 +59,14 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
   const [searchHighlight, setSearchHighlight] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [deleteNode, setDeleteNode] = useState<ProjectNode | null>(null);
+  const [replacementNodeId, setReplacementNodeId] = useState<string | null>(null);
+  const [deleteStep, setDeleteStep] = useState<'choice' | 'successor'>('choice');
   const [clipboardNode, setClipboardNode] = useState<ProjectNode | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
   const progress = calculateProjectProgress(project);
   const detailsNode = detailsId ? project.nodes.find((node) => node.id === detailsId) ?? null : null;
+  const deleteNodeChildren = useMemo(() => deleteNode ? project.nodes.filter((node) => node.parentId === deleteNode.id) : [], [deleteNode, project.nodes]);
   const searchResults = useMemo(() => {
     const term = query.trim().toLocaleLowerCase('pt-BR');
     if (!term) return [];
@@ -173,18 +177,54 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Não foi possível reconectar.'); }
   }, [project.connections, project.nodes, mutate, onMessage]);
 
+  const removeConnection = useCallback((edgeId: string) => {
+    const edge = project.connections.find((item) => item.id === edgeId);
+    if (!edge || edge.type !== 'livre') return;
+    mutate((current) => ({
+      ...current,
+      connections: current.connections.filter((item) => item.id !== edgeId),
+      activities: [{ id: createId('activity'), nodeId: null, action: 'Relação removida', detail: 'A conexão livre foi desfeita sem remover os cards.', at: new Date().toISOString() }, ...current.activities].slice(0, 80),
+    }));
+    setSelectedEdgeId(null);
+    onMessage('Relação removida. Os cards foram mantidos.');
+  }, [project.connections, mutate, onMessage]);
+
   const addComment = useCallback((nodeId: string, content: string) => mutate((current) => ({
     ...current,
     nodes: current.nodes.map((node) => node.id === nodeId ? { ...node, comments: node.comments + 1, updatedAt: new Date().toISOString() } : node),
     activities: [{ id: createId('activity'), nodeId, action: 'Comentário', detail: content.slice(0, 1000), at: new Date().toISOString() }, ...current.activities].slice(0, 80),
   })), [mutate]);
 
+  const requestDeleteNode = useCallback((node: ProjectNode) => {
+    const children = project.nodes.filter((item) => item.parentId === node.id);
+    setDeleteNode(node);
+    setReplacementNodeId(children[0]?.id ?? null);
+    setDeleteStep('choice');
+  }, [project.nodes]);
+
   const confirmDelete = useCallback(() => {
+    if (!deleteNode) return;
+    const successor = deleteNodeChildren.find((node) => node.id === replacementNodeId) ?? null;
+    if (deleteNodeChildren.length && !successor) { onMessage('Escolha o card que assumirá a posição deste nó.'); return; }
+    mutate((current) => {
+      const nodes = current.nodes.filter((node) => node.id !== deleteNode.id).map((node) => {
+        if (successor && node.id === successor.id) return { ...node, parentId: deleteNode.parentId, updatedAt: new Date().toISOString() };
+        if (successor && node.parentId === deleteNode.id) return { ...node, parentId: successor.id, updatedAt: new Date().toISOString() };
+        return node;
+      });
+      const hierarchy = nodes.flatMap((node) => node.parentId ? [current.connections.find((edge) => edge.type === 'hierarquica' && edge.sourceId === node.parentId && edge.targetId === node.id) ?? { id: createId('edge'), sourceId: node.parentId, targetId: node.id, type: 'hierarquica' as const, label: '' }] : []);
+      const freeConnections = current.connections.filter((edge) => edge.type === 'livre' && edge.sourceId !== deleteNode.id && edge.targetId !== deleteNode.id);
+      return { ...current, nodes, connections: [...hierarchy, ...freeConnections], activities: [{ id: createId('activity'), nodeId: null, action: 'Nó removido', detail: successor ? `${deleteNode.title} removido; ${successor.title} assumiu a posição.` : `${deleteNode.title} removido.`, at: new Date().toISOString() }, ...current.activities].slice(0, 80) };
+    });
+    setDeleteNode(null); setReplacementNodeId(null); setDeleteStep('choice'); setSelectedIds(new Set()); setDetailsId(null); onMessage(successor ? 'Nó removido. Os dependentes foram preservados.' : 'Nó removido. Use Desfazer para recuperá-lo.');
+  }, [deleteNode, deleteNodeChildren, replacementNodeId, mutate, onMessage]);
+
+  const confirmDeleteConnected = useCallback(() => {
     if (!deleteNode) return;
     const descendants = getDescendantIds(project.nodes, deleteNode.id);
     const remove = new Set([deleteNode.id, ...descendants]);
-    mutate((current) => ({ ...current, nodes: current.nodes.filter((node) => !remove.has(node.id)), connections: current.connections.filter((edge) => !remove.has(edge.sourceId) && !remove.has(edge.targetId)), activities: [{ id: createId('activity'), nodeId: null, action: 'Nó removido', detail: `${deleteNode.title}${descendants.size ? ` e ${descendants.size} descendente(s)` : ''}.`, at: new Date().toISOString() }, ...current.activities] }));
-    setDeleteNode(null); setSelectedIds(new Set()); setDetailsId(null); onMessage('Nó removido. Use Desfazer para recuperá-lo.');
+    mutate((current) => ({ ...current, nodes: current.nodes.filter((node) => !remove.has(node.id)), connections: current.connections.filter((edge) => !remove.has(edge.sourceId) && !remove.has(edge.targetId)), activities: [{ id: createId('activity'), nodeId: null, action: 'Nós conectados removidos', detail: `${deleteNode.title}${descendants.size ? ` e ${descendants.size} dependente(s)` : ''}.`, at: new Date().toISOString() }, ...current.activities].slice(0, 80) }));
+    setDeleteNode(null); setReplacementNodeId(null); setDeleteStep('choice'); setSelectedIds(new Set()); setDetailsId(null); onMessage('Nó e dependentes removidos. Use Desfazer para recuperá-los.');
   }, [deleteNode, project.nodes, mutate, onMessage]);
 
   const pasteNode = useCallback(() => {
@@ -208,12 +248,12 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
       else if (modifier && event.key.toLowerCase() === 'c' && selected) { event.preventDefault(); setClipboardNode(structuredClone(selected)); onMessage('Nó copiado.'); }
       else if (modifier && event.key.toLowerCase() === 'v') { event.preventDefault(); pasteNode(); }
       else if (event.key === 'Tab' && selected) { event.preventDefault(); if (event.shiftKey) addSibling(selected.id); else addChild(selected.id); }
-      else if ((event.key === 'Delete' || event.key === 'Backspace') && selected) { event.preventDefault(); setDeleteNode(selected); }
+      else if ((event.key === 'Delete' || event.key === 'Backspace') && selected) { event.preventDefault(); requestDeleteNode(selected); }
       else if (event.key === '?' || (event.key === '/' && event.shiftKey)) setHelpOpen(true);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [selectedIds, project.nodes, onUndo, onRedo, addSibling, addChild, pasteNode, onMessage, readOnly]);
+  }, [selectedIds, project.nodes, onUndo, onRedo, addSibling, addChild, pasteNode, onMessage, readOnly, requestDeleteNode]);
 
   const navigateDetails = (directionStep: -1 | 1) => {
     if (!detailsId) return;
@@ -222,13 +262,23 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     if (next) { setDetailsId(next.id); setSelectedIds(new Set([next.id])); }
   };
 
+  const alterarVisualizacao = (proximaVisualizacao: ProjectView) => {
+    setView(proximaVisualizacao);
+    if (proximaVisualizacao !== 'mapa') onMapaEmFocoChange(false);
+  };
+
+  const alternarFocoNoMapa = () => {
+    if (!mapaEmFoco) { setDetailsId(null); setFilterOpen(false); }
+    onMapaEmFocoChange(!mapaEmFoco);
+  };
+
   return <div className={styles.workspace}>
     <header className={styles.workspaceHeader}>
       <button type="button" className={styles.backButton} onClick={onBack} aria-label="Voltar aos projetos"><Icon name="back" /></button>
       <div className={styles.projectIdentity}><span style={{ background: project.color }}>{project.icon}</span><div><strong>{project.name}</strong><small>{progress}% concluído</small></div></div>
-      <nav className={styles.viewTabs} aria-label="Visualizações do projeto">{([['mapa', 'map', 'Mapa'], ['lista', 'list', 'Lista'], ['kanban', 'board', 'Kanban']] as const).map(([id, icon, label]) => <button type="button" key={id} className={view === id ? styles.activeView : ''} onClick={() => setView(id)}><Icon name={icon} size={17} />{label}</button>)}</nav>
+      <nav className={styles.viewTabs} aria-label="Visualizações do projeto">{([['mapa', 'map', 'Mapa'], ['lista', 'list', 'Lista'], ['kanban', 'board', 'Kanban']] as const).map(([id, icon, label]) => <button type="button" key={id} className={view === id ? styles.activeView : ''} onClick={() => alterarVisualizacao(id)}><Icon name={icon} size={17} />{label}</button>)}</nav>
       <div className={styles.saveIndicator} data-state={saveState} role="status" aria-live="polite"><i />{saveLabel(saveState, readOnly)}</div>
-      <div className={styles.workspaceActions}><button type="button" className={styles.iconButton} onClick={() => setHelpOpen(true)} aria-label="Ajuda e atalhos"><Icon name="help" /></button>{!readOnly && <button type="button" className={styles.secondaryButton} onClick={() => downloadJson(project)}><Icon name="download" size={17} /> Exportar</button>}</div>
+      <div className={styles.workspaceActions}><button type="button" className={styles.iconButton} onClick={() => setHelpOpen(true)} aria-label="Ajuda e atalhos"><Icon name="help" /></button>{!readOnly && <button type="button" className={styles.secondaryButton} onClick={() => downloadJson(project)}><Icon name="download" size={17} /> Exportar</button>}{view === 'mapa' && <button type="button" className={styles.mapFocusToggle} onClick={alternarFocoNoMapa} aria-pressed={mapaEmFoco} title="Ocultar cabeçalho e ampliar o mapa"><Icon name="fit" size={17} /><span>Ocultar cabeçalho</span></button>}</div>
     </header>
 
     <div className={styles.workspaceToolbar}>
@@ -238,14 +288,28 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     </div>
 
     <main className={`${styles.workspaceContent} ${detailsNode ? styles.withDetails : ''}`}>
-      <div className={styles.primaryView}>{view === 'mapa' ? <MapCanvas readOnly={readOnly} project={filteredProject} people={people} selectedIds={selectedIds} selectedEdgeId={selectedEdgeId} direction={direction} searchHighlight={searchHighlight} onSelectionChange={setSelectedIds} onEdgeSelect={setSelectedEdgeId} onMoveNode={(id, position) => updateNode(id, { position })} onRenameNode={(id, title) => updateNode(id, { title })} onUpdateColor={(id, color) => updateNode(id, { color })} onCreateChild={addChild} onCreateSibling={addSibling} onDuplicate={duplicateNode} onOpenDetails={(id) => setDetailsId(id)} onToggleCollapse={(id) => { const node = project.nodes.find((item) => item.id === id); if (node) updateNode(id, { collapsed: !node.collapsed }); }} onDelete={(id) => setDeleteNode(project.nodes.find((node) => node.id === id) ?? null)} onConnect={connect} onReconnect={reconnect} onMessage={onMessage} /> : view === 'lista' ? <ListView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} /> : <KanbanView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} />}</div>
+      <div className={styles.primaryView}>{view === 'mapa' ? <MapCanvas readOnly={readOnly} project={filteredProject} people={people} colorPresets={project.colorPresets ?? ['', '', '', '', '']} onColorPresetsChange={(colorPresets) => mutate((current) => ({ ...current, colorPresets }))} selectedIds={selectedIds} selectedEdgeId={selectedEdgeId} direction={direction} searchHighlight={searchHighlight} onSelectionChange={setSelectedIds} onEdgeSelect={setSelectedEdgeId} onMoveNode={(id, position) => updateNode(id, { position })} onRenameNode={(id, title) => updateNode(id, { title })} onUpdateColor={(id, color) => updateNode(id, { color })} onCreateChild={addChild} onCreateSibling={addSibling} onDuplicate={duplicateNode} onOpenDetails={(id) => setDetailsId(id)} onToggleCollapse={(id) => { const node = project.nodes.find((item) => item.id === id); if (node) updateNode(id, { collapsed: !node.collapsed }); }} onDelete={(id) => { const node = project.nodes.find((item) => item.id === id); if (node) requestDeleteNode(node); }} onConnect={connect} onReconnect={reconnect} onDeleteConnection={removeConnection} onMessage={onMessage} /> : view === 'lista' ? <ListView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} /> : <KanbanView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} />}</div>
       {detailsNode && <DetailsPanel readOnly={readOnly} key={detailsNode.id} project={project} node={detailsNode} people={people} onUpdate={(update) => updateNode(detailsNode.id, update)} onAddComment={(content) => addComment(detailsNode.id, content)} onClose={() => setDetailsId(null)} onNavigate={navigateDetails} />}
     </main>
+
+    {view === 'mapa' && mapaEmFoco && <button type="button" className={styles.mapFocusToggleFloating} onClick={alternarFocoNoMapa} aria-label="Exibir cabeçalho do mapa" title="Exibir cabeçalho"><Icon name="fit" size={18} /><span>Exibir cabeçalho</span></button>}
 
     <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="Atalhos do Mapa de Projetos" description="Os atalhos são ignorados enquanto você edita um campo.">
       <div className={styles.shortcutList}>{[['Tab', 'Adicionar nó filho'], ['Shift + Tab', 'Adicionar nó irmão'], ['Duplo clique', 'Editar título'], ['Enter', 'Confirmar edição'], ['Esc', 'Cancelar ou fechar'], ['Delete / Backspace', 'Excluir com confirmação'], ['⌘/Ctrl + C', 'Copiar nó'], ['⌘/Ctrl + V', 'Colar nó'], ['⌘/Ctrl + Z', 'Desfazer'], ['⌘/Ctrl + Shift + Z', 'Refazer'], ['Botão direito', 'Abrir menu de ações']].map(([keys, action]) => <div key={keys}><kbd>{keys}</kbd><span>{action}</span></div>)}</div>
     </Modal>
 
-    <ModalConfirmacao aberto={Boolean(deleteNode)} titulo="Excluir nó do mapa?" mensagem={deleteNode ? `${deleteNode.title}${getDescendantIds(project.nodes, deleteNode.id).size ? ` possui ${getDescendantIds(project.nodes, deleteNode.id).size} descendente(s), que também serão removidos.` : ''}\n\nVocê poderá usar Desfazer imediatamente após a exclusão.` : ''} textoConfirmar="Excluir nó" aoCancelar={() => setDeleteNode(null)} aoConfirmar={confirmDelete} corPrimaria="#0A1F44" />
+    <Modal open={Boolean(deleteNode)} onClose={() => { setDeleteNode(null); setReplacementNodeId(null); setDeleteStep('choice'); }} title={deleteStep === 'choice' ? 'Excluir nó' : 'Escolher sucessor'} description={deleteStep === 'choice' ? 'Defina como a sequência deve continuar.' : 'O sucessor assume a posição do nó removido.'}>
+      {deleteNode && <div className={styles.deleteNodeDialog}>
+        {deleteStep === 'choice' ? <>
+          <div className={styles.deleteNodeSummary}><span aria-hidden="true">!</span><p><strong>{deleteNode.title}</strong> será removido. {deleteNodeChildren.length ? `${deleteNodeChildren.length} nó(s) conectado(s) podem ser preservados ou removidos junto.` : 'Este nó não possui dependentes.'}</p></div>
+          <div className={`${styles.deleteNodeActions} ${deleteNodeChildren.length ? styles.deleteNodeActionsConnected : ''}`}><button type="button" className={styles.secondaryButton} onClick={() => { setDeleteNode(null); setReplacementNodeId(null); }}>Cancelar</button>{deleteNodeChildren.length > 0 && <button type="button" className={styles.secondaryButton} onClick={() => setDeleteStep('successor')}>Excluir somente este nó</button>}<button type="button" className={styles.dangerButton} onClick={deleteNodeChildren.length ? confirmDeleteConnected : confirmDelete}>{deleteNodeChildren.length ? 'Excluir nós conectados' : 'Excluir nó'}</button></div>
+        </> : <>
+          <div className={styles.deleteNodeSummary}><span aria-hidden="true">→</span><p>Escolha o card que herdará a posição de <strong>{deleteNode.title}</strong>. Os demais permanecerão conectados a ele.</p></div>
+          <label className={styles.deleteNodeSelect}>Card sucessor<select value={replacementNodeId ?? ''} onChange={(event) => setReplacementNodeId(event.target.value || null)}><option value="">Selecione um card</option>{deleteNodeChildren.map((node) => <option key={node.id} value={node.id}>{node.title}</option>)}</select></label>
+          {replacementNodeId && <p className={styles.deleteNodeSuccessor}><strong>{deleteNodeChildren.find((node) => node.id === replacementNodeId)?.title}</strong> assumirá esta posição.</p>}
+          <div className={styles.deleteNodeActions}><button type="button" className={styles.secondaryButton} onClick={() => setDeleteStep('choice')}>Voltar</button><button type="button" className={styles.dangerButton} onClick={confirmDelete} disabled={!replacementNodeId}>Excluir</button></div>
+        </>}
+      </div>}
+    </Modal>
   </div>;
 }

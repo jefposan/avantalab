@@ -4,6 +4,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { NODE_TYPE_LABELS, PRIORITY_LABELS, STATUS_LABELS, type Person, type ProjectNode } from '../types';
 import { getChildren, nodeOwnProgress } from '../domain/project';
 import styles from '../projetos.module.css';
+import Tooltip from '@/app/components/Tooltip';
 
 export const ProjectNodeCard = memo(function ProjectNodeCard({
   node, allNodes, people, selected, highlighted, onSelect, onPointerDown, onRename, onContextMenu, readOnly = false,
@@ -47,7 +48,8 @@ export const ProjectNodeCard = memo(function ProjectNodeCard({
     <div className={styles.nodeAccent} />
     <header><span className={styles.nodeIcon}>{node.icon || '◇'}</span><span>{NODE_TYPE_LABELS[node.type]}</span>{childrenCount > 0 && <small aria-label={`${childrenCount} nós filhos`}>{node.collapsed ? `+${childrenCount}` : childrenCount}</small>}</header>
     {editing ? <input ref={inputRef} className={styles.nodeTitleInput} value={title} maxLength={180} onChange={(event) => setTitle(event.target.value)} onBlur={finish} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Enter') finish(); if (event.key === 'Escape') { setTitle(node.title); setEditing(false); } }} aria-label="Título do nó" /> : <strong className={styles.nodeTitle}>{node.title}</strong>}
+    {node.description && <p className={styles.nodeDescription}>{node.description}</p>}
     <div className={styles.nodeBadges}><span data-status={node.status}>{STATUS_LABELS[node.status]}</span>{node.priority !== 'sem_prioridade' && <span data-priority={node.priority}>{PRIORITY_LABELS[node.priority]}</span>}{late && <span className={styles.lateBadge}>Atrasado</span>}</div>
-    <footer><div className={styles.avatarStack}>{assignees.map((person) => <span key={person!.id} style={{ background: person!.color }}>{person!.initials}</span>)}{!assignees.length && <span className={styles.emptyAvatar}>—</span>}</div><div className={styles.nodeIndicators}>{node.checklist.length > 0 && <span>☑ {node.checklist.filter((item) => item.completed).length}/{node.checklist.length}</span>}{node.comments > 0 && <span>◌ {node.comments}</span>}{node.attachments > 0 && <span>⌕ {node.attachments}</span>}</div><span className={styles.nodeProgress}>{progress}%</span></footer>
+    <footer><div className={styles.avatarStack}>{assignees.map((person) => person && <Tooltip key={person.id} texto={person.name} posicao="top" wrapperClassName={styles.avatarTooltip}><span style={{ background: person.color }}>{person.initials}</span></Tooltip>)}{!assignees.length && <span className={styles.emptyAvatar}>—</span>}</div><div className={styles.nodeIndicators}>{node.checklist.length > 0 && <span>☑ {node.checklist.filter((item) => item.completed).length}/{node.checklist.length}</span>}{node.comments > 0 && <span>◌ {node.comments}</span>}{node.attachments > 0 && <span>⌕ {node.attachments}</span>}</div><span className={styles.nodeProgress}>{progress}%</span></footer>
   </div>;
 });
