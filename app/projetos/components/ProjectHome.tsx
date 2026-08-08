@@ -7,6 +7,7 @@ import { STATUS_LABELS, type Project, type ProjectCollection, type ProjectStatus
 import styles from '../projetos.module.css';
 import { Icon } from './Icon';
 import { Modal } from './Modal';
+import Tooltip from '@/app/components/Tooltip';
 
 const TEMPLATE_OPTIONS: Array<[ProjectTemplate, string, string]> = [
   ['blank', 'Projeto em branco', 'Comece apenas com o nó principal.'],
@@ -53,8 +54,6 @@ function dateLabel(value: string | null) {
   if (!value) return 'Sem prazo';
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${value.slice(0, 10)}T12:00:00`));
 }
-
-function initials(names: string[]) { return names.slice(0, 3); }
 
 function participantInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -345,7 +344,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
             <span className={styles.projectCardBody}><strong>{project.name}</strong><span>{project.description || 'Projeto sem descrição.'}</span></span>
           </button>
           {!readOnly && <button type="button" className={`${styles.favoriteButton} ${project.favorite ? styles.favoriteActive : ''}`} onClick={() => updateProject(project.id, (item) => ({ ...item, favorite: !item.favorite }))} aria-label={project.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}><Icon name="star" size={17} fill={project.favorite ? 'currentColor' : 'none'} /></button>}
-          <div className={styles.projectMeta}><div className={styles.avatarStack}>{initials(people.map((person) => person!.initials)).map((label, index) => <span key={label} style={{ background: people[index]!.color }}>{label}</span>)}</div><span>{project.nodes.filter((node) => node.type === 'tarefa').length} tarefas</span><span>{dateLabel(project.dueDate)}</span></div>
+          <div className={styles.projectMeta}><div className={styles.avatarStack}>{people.slice(0, 3).map((person) => person && <Tooltip key={person.id} texto={person.name} posicao="top" wrapperClassName={styles.avatarTooltip}><span style={{ background: person.color }}>{person.initials}</span></Tooltip>)}</div><span>{project.nodes.filter((node) => node.type === 'tarefa').length} tarefas</span><span>{dateLabel(project.dueDate)}</span></div>
           <div className={styles.progressRow}><div><i style={{ width: `${progress}%` }} /></div><strong>{progress}%</strong></div>
           <footer className={styles.projectFooter}><small>Alterado {dateLabel(project.updatedAt)}</small></footer>
         </article>;

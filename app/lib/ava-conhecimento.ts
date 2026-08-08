@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.24: responsáveis nos detalhes do card usam seleção compacta e alinhada.
+// Revisado na versão 1.7.2.25: avatares dos cards de projeto mostram o nome do participante ao passar o mouse.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

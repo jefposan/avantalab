@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.24 -->
+<!-- ava-version: 1.7.2.25 -->
+
+> Revisão 1.7.2.25: nos cards de projeto, passe o mouse sobre o avatar de um
+> participante para ver seu nome completo.
 
 > Revisão 1.7.2.24: em **Detalhes** do card, a seleção de **Responsáveis** usa
 > checkboxes compactos, alinhados aos avatares e nomes.

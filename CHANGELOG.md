@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.25 - 2026-08-08
+
+- Os avatares de participantes nos cards de projeto agora exibem o nome completo
+  com o tooltip padrão do AvantaLab ao passar o mouse.
+
 ## 1.7.2.24 - 2026-08-08
 
 - A seleção de responsáveis nos detalhes do card agora usa o mesmo padrão
