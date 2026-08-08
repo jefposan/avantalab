@@ -8,6 +8,7 @@ const cliente = readFileSync('app/projetos/ProjetosClient.tsx', 'utf8');
 const workspace = readFileSync('app/projetos/components/ProjectWorkspace.tsx', 'utf8');
 const mapa = readFileSync('app/projetos/components/MapCanvas.tsx', 'utf8');
 const nodeCard = readFileSync('app/projetos/components/ProjectNodeCard.tsx', 'utf8');
+const kanban = readFileSync('app/projetos/components/KanbanView.tsx', 'utf8');
 const estilos = readFileSync('app/projetos/projetos.module.css', 'utf8');
 const ajustes = readFileSync('app/api/modulos/projetos/ajustes/route.ts', 'utf8');
 const inicioProjetos = readFileSync('app/projetos/components/ProjectHome.tsx', 'utf8');
@@ -78,4 +79,6 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(estilos, /\.peopleChecks input\[type="checkbox"\] \{ width: 16px; height: 16px; min-height: 0; flex: 0 0 16px;/);
   assert.match(inicioProjetos, /import Tooltip from '@\/app\/components\/Tooltip';/);
   assert.match(inicioProjetos, /texto=\{person\.name\} posicao="top" wrapperClassName=\{styles\.avatarTooltip\}/);
+  assert.match(nodeCard, /texto=\{person\.name\} posicao="top" wrapperClassName=\{styles\.avatarTooltip\}/);
+  assert.match(kanban, /texto=\{person\.name\} posicao="top" wrapperClassName=\{styles\.avatarTooltip\}/);
 });

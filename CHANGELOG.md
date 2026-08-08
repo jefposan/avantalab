@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.26 - 2026-08-08
+
+- O tooltip de participantes agora é exibido também nos avatares dos cards do
+  mapa e do kanban, além da página inicial.
+
 ## 1.7.2.25 - 2026-08-08
 
 - Os avatares de participantes nos cards de projeto agora exibem o nome completo

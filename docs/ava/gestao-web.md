@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.25 -->
+<!-- ava-version: 1.7.2.26 -->
+
+> Revisão 1.7.2.26: os avatares de participantes mostram o nome completo no
+> tooltip em todas as visualizações de cards: projetos, mapa e kanban.
 
 > Revisão 1.7.2.25: nos cards de projeto, passe o mouse sobre o avatar de um
 > participante para ver seu nome completo.

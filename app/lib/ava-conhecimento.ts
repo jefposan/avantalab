@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.25: avatares dos cards de projeto mostram o nome do participante ao passar o mouse.
+// Revisado na versão 1.7.2.26: avatares exibem o nome do participante nos cards de projetos, mapa e kanban.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
