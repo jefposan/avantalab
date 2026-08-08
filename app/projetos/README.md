@@ -49,6 +49,8 @@ uma árvore determinística nas direções horizontal e vertical.
 - Painel lateral com dados, status, prioridade, responsáveis, datas, progresso,
   etiquetas, checklist, comentários, histórico e preparação para anexos.
 - Mapa, lista hierárquica e Kanban usando os mesmos registros.
+- Selecione uma conexão criada por **Relacionar** no mapa para removê-la sem
+  apagar os cards envolvidos.
 - Busca por título, descrição, etiqueta e responsável, com centralização do mapa.
 - Importação JSON validada/sanitizada e exportação JSON versionada.
 - Autosave com debounce e indicador de salvamento no perfil empresarial.

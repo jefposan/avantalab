@@ -175,6 +175,18 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Não foi possível reconectar.'); }
   }, [project.connections, project.nodes, mutate, onMessage]);
 
+  const removeConnection = useCallback((edgeId: string) => {
+    const edge = project.connections.find((item) => item.id === edgeId);
+    if (!edge || edge.type !== 'livre') return;
+    mutate((current) => ({
+      ...current,
+      connections: current.connections.filter((item) => item.id !== edgeId),
+      activities: [{ id: createId('activity'), nodeId: null, action: 'Relação removida', detail: 'A conexão livre foi desfeita sem remover os cards.', at: new Date().toISOString() }, ...current.activities].slice(0, 80),
+    }));
+    setSelectedEdgeId(null);
+    onMessage('Relação removida. Os cards foram mantidos.');
+  }, [project.connections, mutate, onMessage]);
+
   const addComment = useCallback((nodeId: string, content: string) => mutate((current) => ({
     ...current,
     nodes: current.nodes.map((node) => node.id === nodeId ? { ...node, comments: node.comments + 1, updatedAt: new Date().toISOString() } : node),
@@ -250,7 +262,7 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     </div>
 
     <main className={`${styles.workspaceContent} ${detailsNode ? styles.withDetails : ''}`}>
-      <div className={styles.primaryView}>{view === 'mapa' ? <MapCanvas readOnly={readOnly} project={filteredProject} people={people} selectedIds={selectedIds} selectedEdgeId={selectedEdgeId} direction={direction} searchHighlight={searchHighlight} onSelectionChange={setSelectedIds} onEdgeSelect={setSelectedEdgeId} onMoveNode={(id, position) => updateNode(id, { position })} onRenameNode={(id, title) => updateNode(id, { title })} onUpdateColor={(id, color) => updateNode(id, { color })} onCreateChild={addChild} onCreateSibling={addSibling} onDuplicate={duplicateNode} onOpenDetails={(id) => setDetailsId(id)} onToggleCollapse={(id) => { const node = project.nodes.find((item) => item.id === id); if (node) updateNode(id, { collapsed: !node.collapsed }); }} onDelete={(id) => setDeleteNode(project.nodes.find((node) => node.id === id) ?? null)} onConnect={connect} onReconnect={reconnect} onMessage={onMessage} /> : view === 'lista' ? <ListView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} /> : <KanbanView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} />}</div>
+      <div className={styles.primaryView}>{view === 'mapa' ? <MapCanvas readOnly={readOnly} project={filteredProject} people={people} selectedIds={selectedIds} selectedEdgeId={selectedEdgeId} direction={direction} searchHighlight={searchHighlight} onSelectionChange={setSelectedIds} onEdgeSelect={setSelectedEdgeId} onMoveNode={(id, position) => updateNode(id, { position })} onRenameNode={(id, title) => updateNode(id, { title })} onUpdateColor={(id, color) => updateNode(id, { color })} onCreateChild={addChild} onCreateSibling={addSibling} onDuplicate={duplicateNode} onOpenDetails={(id) => setDetailsId(id)} onToggleCollapse={(id) => { const node = project.nodes.find((item) => item.id === id); if (node) updateNode(id, { collapsed: !node.collapsed }); }} onDelete={(id) => setDeleteNode(project.nodes.find((node) => node.id === id) ?? null)} onConnect={connect} onReconnect={reconnect} onDeleteConnection={removeConnection} onMessage={onMessage} /> : view === 'lista' ? <ListView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} /> : <KanbanView readOnly={readOnly} project={filteredProject} people={people} query={query} onUpdate={updateNode} onOpen={(id) => { setDetailsId(id); setSelectedIds(new Set([id])); }} />}</div>
       {detailsNode && <DetailsPanel readOnly={readOnly} key={detailsNode.id} project={project} node={detailsNode} people={people} onUpdate={(update) => updateNode(detailsNode.id, update)} onAddComment={(content) => addComment(detailsNode.id, content)} onClose={() => setDetailsId(null)} onNavigate={navigateDetails} />}
     </main>
 

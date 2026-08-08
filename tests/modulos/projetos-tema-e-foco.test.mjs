@@ -36,6 +36,11 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(workspace, /Ocultar cabeçalho/);
   assert.match(workspace, /Exibir cabeçalho do mapa/);
   assert.match(workspace, /proximaVisualizacao !== 'mapa'\) onMapaEmFocoChange\(false\)/);
+  assert.match(workspace, /const removeConnection = useCallback/);
+  assert.match(workspace, /onDeleteConnection=\{removeConnection\}/);
+  assert.match(workspace, /action: 'Relação removida'/);
+  assert.match(workspace, /Os cards foram mantidos/);
+  assert.match(cliente, /Ajustes do AvantaProjetos/);
   assert.match(estilos, /\.mapFocusMode \.moduleHeader \{ display: none/);
   assert.match(estilos, /\.mapFocusMode \.workspaceHeader, \.mapFocusMode \.workspaceToolbar \{ display: none/);
   assert.match(estilos, /\.mapFocusMode \.workspace \{ height: 100dvh; min-height: 0; grid-template-rows: minmax\(0, 1fr\)/);

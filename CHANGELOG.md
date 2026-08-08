@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.09 - 2026-08-07
+
+- Conexões criadas por **Relacionar** agora exibem **Remover relação** ao serem
+  selecionadas no mapa. A ação mantém os dois cards e pode ser desfeita.
+
 ## 1.7.2.08 - 2026-08-07
 
 - O retorno do AvantaProjetos passa a usar o rótulo **‹ Início**, preservando o

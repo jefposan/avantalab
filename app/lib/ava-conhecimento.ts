@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.08: o retorno do AvantaProjetos é identificado como Início e leva à Gestão do perfil ativo.
+// Revisado na versão 1.7.2.09: conexões livres do mapa podem ser removidas sem apagar os cards relacionados.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

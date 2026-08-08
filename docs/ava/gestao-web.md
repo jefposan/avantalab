@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.08 -->
+<!-- ava-version: 1.7.2.09 -->
+
+> Revisão 1.7.2.09: para desfazer uma relação, clique na linha entre os cards
+> e escolha **Remover relação**. Os cards não são apagados; use **Desfazer**
+> caso queira recuperar a conexão.
 
 > Revisão 1.7.2.08: use **‹ Início** para retornar do AvantaProjetos à Gestão
 > do mesmo perfil.

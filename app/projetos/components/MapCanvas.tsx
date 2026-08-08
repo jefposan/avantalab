@@ -22,7 +22,7 @@ function isCanvasInteractiveTarget(target: EventTarget | null) {
 export function MapCanvas({
   project, people, selectedIds, selectedEdgeId, direction, searchHighlight,
   onSelectionChange, onEdgeSelect, onMoveNode, onRenameNode, onCreateChild, onCreateSibling,
-  onUpdateColor, onDuplicate, onOpenDetails, onToggleCollapse, onDelete, onConnect, onReconnect, onMessage, readOnly = false,
+  onUpdateColor, onDuplicate, onOpenDetails, onToggleCollapse, onDelete, onConnect, onReconnect, onDeleteConnection, onMessage, readOnly = false,
 }: {
   project: Project;
   people: Person[];
@@ -43,6 +43,7 @@ export function MapCanvas({
   onDelete: (id: string) => void;
   onConnect: (sourceId: string, targetId: string, type: ConnectionType) => void;
   onReconnect: (edgeId: string, targetId: string) => void;
+  onDeleteConnection: (edgeId: string) => void;
   onMessage: (message: string) => void;
   readOnly?: boolean;
 }) {
@@ -191,7 +192,7 @@ export function MapCanvas({
       <button type="button" className={styles.destructiveAction} onClick={() => onDelete(selectedNode.id)} title="Excluir"><Icon name="trash" /><span>Excluir</span></button>
     </div>}
 
-    {selectedEdgeId && !readOnly && <div className={styles.edgeActionBar} data-canvas-overlay="true"><span>{project.connections.find((edge) => edge.id === selectedEdgeId)?.type === 'livre' ? 'Conexão livre' : 'Conexão hierárquica'}</span><button type="button" onClick={() => { const edge = project.connections.find((item) => item.id === selectedEdgeId); if (edge) setConnectDraft({ sourceId: edge.sourceId, type: edge.type, reconnectEdgeId: edge.id }); }}>Reconectar destino</button></div>}
+    {selectedEdgeId && !readOnly && <div className={styles.edgeActionBar} data-canvas-overlay="true"><span>{project.connections.find((edge) => edge.id === selectedEdgeId)?.type === 'livre' ? 'Conexão livre' : 'Conexão hierárquica'}</span><button type="button" onClick={() => { const edge = project.connections.find((item) => item.id === selectedEdgeId); if (edge) setConnectDraft({ sourceId: edge.sourceId, type: edge.type, reconnectEdgeId: edge.id }); }}>Reconectar destino</button>{project.connections.find((edge) => edge.id === selectedEdgeId)?.type === 'livre' && <button type="button" className={styles.destructiveAction} onClick={() => onDeleteConnection(selectedEdgeId)}>Remover relação</button>}</div>}
 
     {contextMenu && !readOnly && <div className={styles.contextMenu} style={{ left: contextMenu.x, top: contextMenu.y }} onPointerDown={(event) => event.stopPropagation()}><button type="button" onClick={() => { onCreateChild(contextMenu.nodeId); setContextMenu(null); }}>Adicionar filho</button><button type="button" onClick={() => { onCreateSibling(contextMenu.nodeId); setContextMenu(null); }}>Adicionar irmão</button><button type="button" onClick={() => { onOpenDetails(contextMenu.nodeId); setContextMenu(null); }}>Abrir detalhes</button><button type="button" onClick={() => { onDuplicate(contextMenu.nodeId); setContextMenu(null); }}>Duplicar</button><button type="button" className={styles.menuDanger} onClick={() => { onDelete(contextMenu.nodeId); setContextMenu(null); }}>Excluir</button></div>}
   </div>;
