@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.2.12 - 2026-08-07
+
+- O diálogo de exclusão de nós conectados foi reorganizado: cancelar, excluir
+  somente o nó ou excluir os conectados ficam lado a lado; a escolha do
+  sucessor aparece apenas ao preservar a sequência.
+
 ## 1.7.2.11 - 2026-08-07
 
 - A exclusão de um nó do mapa preserva seus dependentes. Quando há mais de um

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.11: a exclusão de um nó preserva dependentes e permite escolher seu sucessor.
+// Revisado na versão 1.7.2.12: a exclusão de nós com dependentes separa a decisão da escolha do sucessor.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

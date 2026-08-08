@@ -51,8 +51,8 @@ uma árvore determinística nas direções horizontal e vertical.
 - Mapa, lista hierárquica e Kanban usando os mesmos registros.
 - Selecione uma conexão criada por **Relacionar** no mapa para removê-la sem
   apagar os cards envolvidos.
-- Ao excluir um nó com dependentes, escolha o card sucessor para preservar toda
-  a sequência sem recriar o projeto.
+- Ao excluir um nó com dependentes, escolha entre preservar a sequência ou
+  removê-la junto; ao preservar, selecione o card sucessor na etapa seguinte.
 - Busca por título, descrição, etiqueta e responsável, com centralização do mapa.
 - Importação JSON validada/sanitizada e exportação JSON versionada.
 - Autosave com debounce e indicador de salvamento no perfil empresarial.

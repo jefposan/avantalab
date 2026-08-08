@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.11 -->
+<!-- ava-version: 1.7.2.12 -->
+
+> Revisão 1.7.2.12: ao excluir um nó com conectados, escolha **Excluir somente
+> este nó** para indicar o sucessor na etapa seguinte, ou **Excluir nós
+> conectados** para remover a sequência inteira.
 
 > Revisão 1.7.2.11: ao excluir um nó, use **Excluir somente este nó**. Os
 > dependentes permanecem; se houver mais de um card seguinte, escolha qual

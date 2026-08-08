@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { calculateProjectProgress, connectHierarchy, createId, exportProject, layoutProject, wouldCreateHierarchyCycle } from '../domain/project';
+import { calculateProjectProgress, connectHierarchy, createId, exportProject, getDescendantIds, layoutProject, wouldCreateHierarchyCycle } from '../domain/project';
 import { NODE_TYPE_LABELS, PRIORITY_LABELS, PRIORITIES, STATUS_LABELS, STATUSES, type ConnectionType, type MapDirection, type Person, type Project, type ProjectNode, type ProjectView, type SaveState } from '../types';
 import styles from '../projetos.module.css';
 import { DetailsPanel } from './DetailsPanel';
@@ -60,6 +60,7 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
   const [helpOpen, setHelpOpen] = useState(false);
   const [deleteNode, setDeleteNode] = useState<ProjectNode | null>(null);
   const [replacementNodeId, setReplacementNodeId] = useState<string | null>(null);
+  const [deleteStep, setDeleteStep] = useState<'choice' | 'successor'>('choice');
   const [clipboardNode, setClipboardNode] = useState<ProjectNode | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -198,6 +199,7 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     const children = project.nodes.filter((item) => item.parentId === node.id);
     setDeleteNode(node);
     setReplacementNodeId(children[0]?.id ?? null);
+    setDeleteStep('choice');
   }, [project.nodes]);
 
   const confirmDelete = useCallback(() => {
@@ -214,8 +216,16 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
       const freeConnections = current.connections.filter((edge) => edge.type === 'livre' && edge.sourceId !== deleteNode.id && edge.targetId !== deleteNode.id);
       return { ...current, nodes, connections: [...hierarchy, ...freeConnections], activities: [{ id: createId('activity'), nodeId: null, action: 'Nó removido', detail: successor ? `${deleteNode.title} removido; ${successor.title} assumiu a posição.` : `${deleteNode.title} removido.`, at: new Date().toISOString() }, ...current.activities].slice(0, 80) };
     });
-    setDeleteNode(null); setReplacementNodeId(null); setSelectedIds(new Set()); setDetailsId(null); onMessage(successor ? 'Nó removido. Os dependentes foram preservados.' : 'Nó removido. Use Desfazer para recuperá-lo.');
+    setDeleteNode(null); setReplacementNodeId(null); setDeleteStep('choice'); setSelectedIds(new Set()); setDetailsId(null); onMessage(successor ? 'Nó removido. Os dependentes foram preservados.' : 'Nó removido. Use Desfazer para recuperá-lo.');
   }, [deleteNode, deleteNodeChildren, replacementNodeId, mutate, onMessage]);
+
+  const confirmDeleteConnected = useCallback(() => {
+    if (!deleteNode) return;
+    const descendants = getDescendantIds(project.nodes, deleteNode.id);
+    const remove = new Set([deleteNode.id, ...descendants]);
+    mutate((current) => ({ ...current, nodes: current.nodes.filter((node) => !remove.has(node.id)), connections: current.connections.filter((edge) => !remove.has(edge.sourceId) && !remove.has(edge.targetId)), activities: [{ id: createId('activity'), nodeId: null, action: 'Nós conectados removidos', detail: `${deleteNode.title}${descendants.size ? ` e ${descendants.size} dependente(s)` : ''}.`, at: new Date().toISOString() }, ...current.activities].slice(0, 80) }));
+    setDeleteNode(null); setReplacementNodeId(null); setDeleteStep('choice'); setSelectedIds(new Set()); setDetailsId(null); onMessage('Nó e dependentes removidos. Use Desfazer para recuperá-los.');
+  }, [deleteNode, project.nodes, mutate, onMessage]);
 
   const pasteNode = useCallback(() => {
     if (!clipboardNode) return;
@@ -288,13 +298,17 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
       <div className={styles.shortcutList}>{[['Tab', 'Adicionar nó filho'], ['Shift + Tab', 'Adicionar nó irmão'], ['Duplo clique', 'Editar título'], ['Enter', 'Confirmar edição'], ['Esc', 'Cancelar ou fechar'], ['Delete / Backspace', 'Excluir com confirmação'], ['⌘/Ctrl + C', 'Copiar nó'], ['⌘/Ctrl + V', 'Colar nó'], ['⌘/Ctrl + Z', 'Desfazer'], ['⌘/Ctrl + Shift + Z', 'Refazer'], ['Botão direito', 'Abrir menu de ações']].map(([keys, action]) => <div key={keys}><kbd>{keys}</kbd><span>{action}</span></div>)}</div>
     </Modal>
 
-    <Modal open={Boolean(deleteNode)} onClose={() => { setDeleteNode(null); setReplacementNodeId(null); }} title="Excluir somente este nó" description="Os demais cards serão preservados.">
+    <Modal open={Boolean(deleteNode)} onClose={() => { setDeleteNode(null); setReplacementNodeId(null); setDeleteStep('choice'); }} title={deleteStep === 'choice' ? 'Excluir nó' : 'Escolher sucessor'} description={deleteStep === 'choice' ? 'Defina como a sequência deve continuar.' : 'O sucessor assume a posição do nó removido.'}>
       {deleteNode && <div className={styles.deleteNodeDialog}>
-        <p>O card <strong>{deleteNode.title}</strong> será removido. {deleteNodeChildren.length ? 'Escolha quem assumirá sua posição na sequência.' : 'Não há dependentes para reorganizar.'}</p>
-        {deleteNodeChildren.length > 1 && <label>Próximo card da sequência<select value={replacementNodeId ?? ''} onChange={(event) => setReplacementNodeId(event.target.value || null)}><option value="">Selecione um card</option>{deleteNodeChildren.map((node) => <option key={node.id} value={node.id}>{node.title}</option>)}</select></label>}
-        {deleteNodeChildren.length === 1 && <p className={styles.deleteNodeSuccessor}><strong>{deleteNodeChildren[0].title}</strong> assumirá esta posição e manterá seus dependentes.</p>}
-        {deleteNodeChildren.length > 1 && replacementNodeId && <p className={styles.deleteNodeSuccessor}>Os demais cards passarão a depender de <strong>{deleteNodeChildren.find((node) => node.id === replacementNodeId)?.title}</strong>.</p>}
-        <div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={() => { setDeleteNode(null); setReplacementNodeId(null); }}>Cancelar</button><button type="button" className={styles.dangerButton} onClick={confirmDelete} disabled={deleteNodeChildren.length > 0 && !replacementNodeId}>Excluir somente este nó</button></div>
+        {deleteStep === 'choice' ? <>
+          <div className={styles.deleteNodeSummary}><span aria-hidden="true">!</span><p><strong>{deleteNode.title}</strong> será removido. {deleteNodeChildren.length ? `${deleteNodeChildren.length} nó(s) conectado(s) podem ser preservados ou removidos junto.` : 'Este nó não possui dependentes.'}</p></div>
+          <div className={`${styles.deleteNodeActions} ${deleteNodeChildren.length ? styles.deleteNodeActionsConnected : ''}`}><button type="button" className={styles.secondaryButton} onClick={() => { setDeleteNode(null); setReplacementNodeId(null); }}>Cancelar</button>{deleteNodeChildren.length > 0 && <button type="button" className={styles.secondaryButton} onClick={() => setDeleteStep('successor')}>Excluir somente este nó</button>}<button type="button" className={styles.dangerButton} onClick={deleteNodeChildren.length ? confirmDeleteConnected : confirmDelete}>{deleteNodeChildren.length ? 'Excluir nós conectados' : 'Excluir nó'}</button></div>
+        </> : <>
+          <div className={styles.deleteNodeSummary}><span aria-hidden="true">→</span><p>Escolha o card que herdará a posição de <strong>{deleteNode.title}</strong>. Os demais permanecerão conectados a ele.</p></div>
+          <label className={styles.deleteNodeSelect}>Card sucessor<select value={replacementNodeId ?? ''} onChange={(event) => setReplacementNodeId(event.target.value || null)}><option value="">Selecione um card</option>{deleteNodeChildren.map((node) => <option key={node.id} value={node.id}>{node.title}</option>)}</select></label>
+          {replacementNodeId && <p className={styles.deleteNodeSuccessor}><strong>{deleteNodeChildren.find((node) => node.id === replacementNodeId)?.title}</strong> assumirá esta posição.</p>}
+          <div className={styles.deleteNodeActions}><button type="button" className={styles.secondaryButton} onClick={() => setDeleteStep('choice')}>Voltar</button><button type="button" className={styles.dangerButton} onClick={confirmDelete} disabled={!replacementNodeId}>Excluir somente este nó</button></div>
+        </>}
       </div>}
     </Modal>
   </div>;

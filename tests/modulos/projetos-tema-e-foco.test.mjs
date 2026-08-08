@@ -37,10 +37,12 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(workspace, /Exibir cabeçalho do mapa/);
   assert.match(workspace, /proximaVisualizacao !== 'mapa'\) onMapaEmFocoChange\(false\)/);
   assert.match(workspace, /const requestDeleteNode = useCallback/);
-  assert.match(workspace, /title="Excluir somente este nó"/);
-  assert.match(workspace, /Escolha quem assumirá sua posição na sequência/);
+  assert.match(workspace, /const \[deleteStep, setDeleteStep\] = useState<'choice' \| 'successor'>\('choice'\)/);
+  assert.match(workspace, /Excluir nós conectados/);
+  assert.match(workspace, /setDeleteStep\('successor'\)/);
+  assert.match(workspace, /const confirmDeleteConnected = useCallback/);
   assert.match(workspace, /action: 'Nó removido'/);
-  assert.doesNotMatch(workspace, /getDescendantIds\(project\.nodes, deleteNode\.id\)/);
+  assert.match(workspace, /getDescendantIds\(project\.nodes, deleteNode\.id\)/);
   assert.match(workspace, /const removeConnection = useCallback/);
   assert.match(workspace, /onDeleteConnection=\{removeConnection\}/);
   assert.match(workspace, /action: 'Relação removida'/);
