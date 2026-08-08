@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.05 -->
+<!-- ava-version: 1.7.2.06 -->
+
+> Revisão 1.7.2.06: no card de **Ajustes**, o seletor de modo escuro usa uma
+> faixa própria, mantendo o rótulo e o controle visíveis em qualquer estado.
 
 > Revisão 1.7.2.05: o seletor de modo escuro do AvantaProjetos responde na
 > hora e confirma a gravação em segundo plano; se houver falha, retorna ao

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.05 -->
+<!-- ava-version: 1.7.2.06 -->
+
+> Revisão 1.7.2.06: o ajuste visual é exclusivo do AvantaProjetos Web; sem
+> mudança operacional na Gestão Mobile.
 
 > Revisão 1.7.2.05: resposta imediata do seletor de modo escuro é exclusiva do
 > AvantaProjetos Web; sem mudança operacional na Gestão Mobile.

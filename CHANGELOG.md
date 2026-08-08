@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.2.06 - 2026-08-07
+
+- O seletor de modo escuro do AvantaProjetos ocupa uma faixa própria no card
+  de Ajustes, preservando texto e controle dentro do limite visual nos dois
+  estados.
+
 ## 1.7.2.05 - 2026-08-07
 
 - O seletor de modo escuro do AvantaProjetos aplica a aparência imediatamente,
