@@ -66,4 +66,6 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(mapa, /Cores pré-definidas/);
   assert.match(mapa, /onColorPresetsChange/);
   assert.match(estilos, /\.colorPalette \{ display: flex; align-items: center; gap: 8px;/);
+  assert.match(estilos, /\.presetColor, \.presetColorEditor \{[^}]*background: repeating-conic-gradient\([^}]*6px 6px; cursor: pointer;/);
+  assert.doesNotMatch(estilos, /\.presetColor, \.presetColorEditor \{[^}]*background:[^}]*!important/);
 });

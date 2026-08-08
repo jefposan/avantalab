@@ -313,7 +313,7 @@
 .presetColors header, .presetColors > div { display: flex; align-items: center; justify-content: center; gap: 4px; }
 .presetColors header span { color: var(--muted); font-size: 7px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .presetColors header button { min-width: 0; min-height: 16px; padding: 0; color: var(--accent); font-size: 7px; }
-.presetColor, .presetColorEditor { display: grid; width: 15px; min-width: 15px !important; height: 15px; min-height: 15px !important; place-items: center; border: 1px solid var(--border) !important; border-radius: 50% !important; padding: 0 !important; background: repeating-conic-gradient(#edf2f4 0 25%, #fff 0 50%) 50% / 6px 6px !important; cursor: pointer; }
+.presetColor, .presetColorEditor { display: grid; width: 15px; min-width: 15px !important; height: 15px; min-height: 15px !important; place-items: center; border: 1px solid var(--border) !important; border-radius: 50% !important; padding: 0 !important; background: repeating-conic-gradient(#edf2f4 0 25%, #fff 0 50%) 50% / 6px 6px; cursor: pointer; }
 .presetColor:not(:disabled):hover { transform: scale(1.15); }
 .presetColor:disabled { opacity: 1; cursor: default; }
 .presetColorEditor { position: relative; overflow: hidden; }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.20 - 2026-08-08
+
+- As cores pré-definidas configuradas no mapa agora permanecem visíveis nas
+  bolinhas após concluir o ajuste, preservando também sua aplicação ao card.
+
 ## 1.7.2.19 - 2026-08-08
 
 - A paleta do mapa agora reúne cores pré-definidas e cor livre em uma área

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.19 -->
+<!-- ava-version: 1.7.2.20 -->
+
+> Revisão 1.7.2.20: após concluir o ajuste das cores pré-definidas do mapa,
+> cada bolinha mantém a visualização da cor escolhida e pode aplicá-la ao card.
 
 > Revisão 1.7.2.19: a área de cores do card selecionado reúne as pré-definidas
 > e a cor livre no mesmo bloco visual.
