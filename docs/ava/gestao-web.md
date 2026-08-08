@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.13 -->
+<!-- ava-version: 1.7.2.14 -->
+
+> Revisão 1.7.2.14: na escolha de sucessor, use o campo destacado **Card
+> sucessor** para selecionar o nó que herdará a posição.
 
 > Revisão 1.7.2.13: ações de exclusão no AvantaProjetos usam fundo vermelho e
 > texto branco, inclusive no modo claro.

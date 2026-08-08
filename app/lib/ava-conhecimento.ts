@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.13: ações destrutivas do AvantaProjetos preservam texto branco sobre fundo vermelho.
+// Revisado na versão 1.7.2.14: o campo de Card sucessor é exibido como seletor com superfície e foco visíveis.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

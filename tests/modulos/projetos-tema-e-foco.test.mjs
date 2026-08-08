@@ -56,4 +56,5 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(estilos, /\.edgeLine \{ fill: none; stroke: #879aa7; stroke-width: 2\.2; \}/);
   assert.doesNotMatch(estilos, /\.edgeLine \{[^}]*transition:/);
   assert.match(estilos, /\.root \.dangerButton \{ color: #fff; background: var\(--danger\); \}/);
+  assert.match(estilos, /\.deleteNodeSelect select \{ width: 100%; min-height: 46px; border: 1px solid var\(--border\);/);
 });

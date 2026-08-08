@@ -157,7 +157,9 @@
 .deleteNodeSummary > span { display: grid; width: 22px; height: 22px; flex: 0 0 22px; place-items: center; border-radius: 50%; color: #fff; background: var(--danger); font-size: 12px; font-weight: 800; }
 .deleteNodeSummary p, .deleteNodeSuccessor { margin: 0; color: var(--text); font-size: 12px; line-height: 1.5; }
 .deleteNodeSelect { display: grid; gap: 6px; color: var(--text); font-size: 12px; font-weight: 600; }
-.deleteNodeSelect select { width: 100%; }
+.deleteNodeSelect select { width: 100%; min-height: 46px; border: 1px solid var(--border); border-radius: 12px; padding: 10px 38px 10px 12px; color: var(--text); background: var(--surface-soft); font: inherit; font-weight: 600; cursor: pointer; }
+.deleteNodeSelect select:hover { border-color: color-mix(in srgb, var(--accent) 58%, var(--border)); background: var(--surface); }
+.deleteNodeSelect select:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 28%, transparent); outline-offset: 2px; }
 .deleteNodeSuccessor { border-radius: 12px; padding: 10px 12px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
 .deleteNodeActions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 2px; }
 .deleteNodeActions button { min-height: 36px; padding: 7px 10px; font-size: 11px; line-height: 1.15; white-space: nowrap; }

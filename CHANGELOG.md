@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.14 - 2026-08-07
+
+- O campo **Card sucessor** passou a ter superfície, borda e foco visíveis para
+  ficar claramente identificado como seletor.
+
 ## 1.7.2.13 - 2026-08-07
 
 - Botões destrutivos do AvantaProjetos mantêm texto branco sobre o fundo vermelho
