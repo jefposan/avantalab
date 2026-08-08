@@ -78,7 +78,7 @@ export function MapCanvas({
     const minX = Math.min(...nodes.map((node) => node.position.x));
     const minY = Math.min(...nodes.map((node) => node.position.y));
     const maxX = Math.max(...nodes.map((node) => node.position.x + 224));
-    const maxY = Math.max(...nodes.map((node) => node.position.y + 112));
+    const maxY = Math.max(...nodes.map((node) => node.position.y + 132));
     const scale = Math.max(0.25, Math.min(1.25, Math.min((rect.width - 96) / (maxX - minX || 1), (rect.height - 96) / (maxY - minY || 1))));
     setViewport({ scale, x: (rect.width - (maxX - minX) * scale) / 2 - minX * scale, y: (rect.height - (maxY - minY) * scale) / 2 - minY * scale });
   }, [nodes]);
@@ -86,7 +86,7 @@ export function MapCanvas({
   const centerNode = useCallback((node: ProjectNode) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    setViewport((current) => ({ ...current, x: rect.width / 2 - (node.position.x + 112) * current.scale, y: rect.height / 2 - (node.position.y + 56) * current.scale }));
+    setViewport((current) => ({ ...current, x: rect.width / 2 - (node.position.x + 112) * current.scale, y: rect.height / 2 - (node.position.y + 66) * current.scale }));
   }, []);
 
   useEffect(() => { if (searchHighlight) { const node = project.nodes.find((item) => item.id === searchHighlight); if (node) centerNode(node); } }, [searchHighlight, project.nodes, centerNode]);
@@ -147,7 +147,7 @@ export function MapCanvas({
     if (!nodes.length) return { minX: 0, minY: 0, width: 1, height: 1 };
     const minX = Math.min(...nodes.map((node) => node.position.x));
     const minY = Math.min(...nodes.map((node) => node.position.y));
-    return { minX, minY, width: Math.max(1, Math.max(...nodes.map((node) => node.position.x + 224)) - minX), height: Math.max(1, Math.max(...nodes.map((node) => node.position.y + 112)) - minY) };
+    return { minX, minY, width: Math.max(1, Math.max(...nodes.map((node) => node.position.x + 224)) - minX), height: Math.max(1, Math.max(...nodes.map((node) => node.position.y + 132)) - minY) };
   }, [nodes]);
 
   return <div ref={containerRef} className={`${styles.canvas} ${pan ? styles.canvasPanning : ''}`} tabIndex={0} aria-label="Mapa visual do projeto" onWheel={(event) => { event.preventDefault(); zoomAt(viewport.scale * (event.deltaY > 0 ? 0.9 : 1.1), event.clientX, event.clientY); }} onPointerDown={(event) => {

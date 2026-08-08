@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.16 -->
+<!-- ava-version: 1.7.2.17 -->
+
+> Revisão 1.7.2.17: a descrição informada nos detalhes de um card também aparece
+> diretamente no card do mapa.
 
 > Revisão 1.7.2.16: no mapa, os cards podem ser arrastados livremente para a
 > esquerda; o limite de posicionamento continua apenas no topo.

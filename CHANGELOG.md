@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.17 - 2026-08-07
+
+- Cards do mapa passaram a exibir uma linha de descrição quando ela estiver
+  preenchida, com conexões e enquadramento ajustados à nova altura.
+
 ## 1.7.2.16 - 2026-08-07
 
 - O mapa permite arrastar cards também para a esquerda da origem, mantendo o

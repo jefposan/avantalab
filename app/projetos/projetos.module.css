@@ -275,7 +275,7 @@
 .edge:hover .edgeLine, .selectedEdge .edgeLine { stroke: var(--accent); stroke-width: 3; }
 .freeEdge .edgeLine { stroke: #5b7c91; stroke-dasharray: 8 6; }
 .edge text { fill: #526b79; stroke: #edf2f4; stroke-width: 4px; paint-order: stroke; font-size: 10px; font-weight: 600; }
-.mapNode { --node-color: #1f8a9e; position: absolute; display: flex; width: 224px; height: 112px; flex-direction: column; overflow: hidden; border: 1px solid #d5e0e6; border-radius: 15px; padding: 10px 12px 9px 15px; color: var(--text); background: var(--surface); box-shadow: 0 8px 22px rgba(17,43,61,.11); cursor: grab; touch-action: none; transition: box-shadow 140ms ease, border-color 140ms ease; }
+.mapNode { --node-color: #1f8a9e; position: absolute; display: flex; width: 224px; height: 132px; flex-direction: column; overflow: hidden; border: 1px solid #d5e0e6; border-radius: 15px; padding: 10px 12px 9px 15px; color: var(--text); background: var(--surface); box-shadow: 0 8px 22px rgba(17,43,61,.11); cursor: grab; touch-action: none; transition: box-shadow 140ms ease, border-color 140ms ease; }
 .mapNode:active { cursor: grabbing; }
 .mapNodeSelected { border-color: color-mix(in srgb, var(--node-color) 75%, #fff); box-shadow: 0 0 0 3px color-mix(in srgb, var(--node-color) 20%, transparent), 0 12px 30px rgba(17,43,61,.16); }
 .mapNodeHighlighted { animation: highlightNode 1.6s ease; }
@@ -285,6 +285,7 @@
 .mapNode header small { display: grid; min-width: 18px; height: 18px; margin-left: auto; place-items: center; border-radius: 999px; color: var(--node-color); background: color-mix(in srgb, var(--node-color) 10%, var(--surface)); font-size: 8px; }
 .nodeIcon { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 7px; color: #fff; background: var(--node-color); font-size: 10px; }
 .nodeTitle { overflow: hidden; margin: 7px 0 5px; color: var(--brand); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.nodeDescription { overflow: hidden; margin: -2px 0 5px; color: var(--muted); font-size: 9px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 .nodeTitleInput { width: 100%; height: 26px; margin: 5px 0 3px; border: 1px solid var(--accent); border-radius: 7px; padding: 3px 6px; outline: 0; font-size: 12px; }
 .nodeBadges { display: flex; min-height: 18px; align-items: center; gap: 4px; overflow: hidden; }
 .nodeBadges span { flex: 0 0 auto; border-radius: 999px; padding: 3px 6px; color: #526a79; background: #edf2f4; font-size: 7px; font-weight: 700; }

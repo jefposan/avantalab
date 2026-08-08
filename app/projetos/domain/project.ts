@@ -12,7 +12,7 @@ import {
 } from '../types';
 
 const NODE_WIDTH = 224;
-const NODE_HEIGHT = 112;
+const NODE_HEIGHT = 132;
 
 export function createId(prefix = 'id') {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;

@@ -7,6 +7,7 @@ const gestao = readFileSync('app/gestao/page.tsx', 'utf8');
 const cliente = readFileSync('app/projetos/ProjetosClient.tsx', 'utf8');
 const workspace = readFileSync('app/projetos/components/ProjectWorkspace.tsx', 'utf8');
 const mapa = readFileSync('app/projetos/components/MapCanvas.tsx', 'utf8');
+const nodeCard = readFileSync('app/projetos/components/ProjectNodeCard.tsx', 'utf8');
 const estilos = readFileSync('app/projetos/projetos.module.css', 'utf8');
 const ajustes = readFileSync('app/api/modulos/projetos/ajustes/route.ts', 'utf8');
 
@@ -60,4 +61,6 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(estilos, /\.root \.dangerButton \{ color: #fff; background: var\(--danger\); \}/);
   assert.match(estilos, /\.deleteNodeSelect select \{ width: 100%; min-height: 46px; border: 1px solid var\(--border\);/);
   assert.match(mapa, /x: drag\.origin\.x \+ \(event\.clientX - drag\.x\) \/ viewport\.scale, y: Math\.max\(0,/);
+  assert.match(nodeCard, /node\.description && <p className=\{styles\.nodeDescription\}>\{node\.description\}<\/p>/);
+  assert.match(estilos, /\.mapNode \{[^}]*height: 132px/);
 });

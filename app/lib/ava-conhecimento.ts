@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.16: cards do mapa podem ser posicionados livremente também à esquerda da origem.
+// Revisado na versão 1.7.2.17: descrições preenchidas aparecem diretamente no card correspondente do mapa.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
