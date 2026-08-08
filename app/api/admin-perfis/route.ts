@@ -181,6 +181,9 @@ export async function PATCH(request: Request) {
     }
 
     const status = acao === 'revogar' ? 'cancelada' : 'cortesia';
+    // Cortesia é uma liberação integral do perfil: Empresa recebe todos os
+    // benefícios do Business Pro e Pessoal recebe o Pessoal Premium.
+    const planoCortesia = tipoPerfil === 'empresa' ? 'business_pro' : 'pessoal_premium';
 
     // Liberar: cortesia vitalícia (sem duração) ou por período (valor + unidade).
     let validoAte: string | null = null;
@@ -201,7 +204,7 @@ export async function PATCH(request: Request) {
       tipo_perfil: tipoPerfil,
       status,
       valido_ate: validoAte,
-      plano: null,
+      plano: acao === 'liberar' ? planoCortesia : null,
       ciclo: null,
       trial_fim: null,
       gateway: null,

@@ -5,6 +5,9 @@
 > Revisão 1.7.2.30: ajuste exclusivo do AvantaProjetos Web; sem mudança
 > operacional na Gestão Mobile.
 
+> Nesta publicação, a liberação comercial aprovada atualiza o vínculo e o
+> conteúdo do AvantaVendas automaticamente.
+
 > Revisão 1.7.2.29: ajuste exclusivo do AvantaProjetos Web; sem mudança
 > operacional na Gestão Mobile.
 

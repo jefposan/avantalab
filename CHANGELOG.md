@@ -4,6 +4,8 @@
 
 - O botão **Início** passou a usar o azul-marinho escuro de marca do AvantaLab
   no modo claro.
+- A integração desta publicação também equipara cortesias ao plano completo
+  correspondente e atualiza vínculos comerciais aprovados automaticamente.
 
 ## 1.7.2.29 - 2026-08-08
 

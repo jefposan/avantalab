@@ -5,6 +5,9 @@
 > Revisão 1.7.2.30: ajuste visual do botão **Início** para o azul-marinho de
 > marca do AvantaLab no modo claro; sem alteração de operação.
 
+> Nesta publicação, cortesias empresariais equivalem ao plano completo
+> correspondente, e aprovações comerciais atualizam o vínculo automaticamente.
+
 > Revisão 1.7.2.29: ajuste visual do ícone SVG no botão **Início** do
 > AvantaProjetos Web; sem alteração de operação.
 

@@ -81,12 +81,18 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
     .maybeSingle();
 
   if (assin) {
+    // Protege perfis antigos cuja cortesia foi gravada antes de o plano ser
+    // persistido. Cortesia sempre representa acesso completo ao plano do tipo
+    // de perfil, sem depender da normalização histórica no banco.
+    const planoCortesia = assin.status === 'cortesia'
+      ? (tipoPerfil === 'empresa' ? 'business_pro' : 'pessoal_premium')
+      : null;
     return {
       tipoPerfil,
       status: assin.status as StatusAssinatura,
       validoAte: assin.valido_ate,
       trialFim: assin.trial_fim,
-      plano: assin.plano ?? null,
+      plano: planoCortesia ?? assin.plano ?? null,
       ciclo: assin.ciclo ?? null,
     };
   }

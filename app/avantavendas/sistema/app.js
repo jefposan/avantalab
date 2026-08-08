@@ -129,6 +129,10 @@ let cadastroRascunho = carregarRascunhoCadastroVendas();
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
+const INTERVALO_VERIFICACAO_APROVACAO_MS = 15000;
+let timerVerificacaoAprovacao = null;
+let timerAtualizacaoVinculo = null;
+let atualizandoVinculoAprovado = false;
 
 function carregarRascunhoCadastroVendas() {
   try {
@@ -2155,6 +2159,10 @@ function abrirAcoesRapidas() {
 
 async function sairSistema() {
   const destinoLogout = origemAcessoVendas() === 'gestao' ? '/?entrar=1' : '/avantavendas?entrar=1';
+  if (timerVerificacaoAprovacao) window.clearInterval(timerVerificacaoAprovacao);
+  if (timerAtualizacaoVinculo) window.clearTimeout(timerAtualizacaoVinculo);
+  timerVerificacaoAprovacao = null;
+  timerAtualizacaoVinculo = null;
   void limparCacheVendas();
   await suspenderSincronizacaoPreferenciasVendas();
   try { if (backendAtivo) await window.VendasDb.signOut(); } catch (error) { console.error(error); }
@@ -2478,7 +2486,7 @@ async function confirmarCadastroSms(event) {
 function renderSolicitarAcesso() {
   const solicitacao = state.solicitacaoAcesso;
   if (solicitacao?.status === 'pendente') {
-    return `<section class="login-screen approval-wait-screen">${renderMarcaAcesso()}<div class="sheet"><div class="sheet-header"><div><h2>Aguardando aprovação</h2><p class="muted small">O gestor do perfil analisará seu acesso. Volte mais tarde e entre novamente.</p></div></div><button class="primary approval-wait-exit" onclick="sairSistema()">Sair</button></div></section>`;
+    return `<section class="login-screen approval-wait-screen">${renderMarcaAcesso()}<div class="sheet"><div class="sheet-header"><div><h2>Aguardando aprovação</h2><p class="muted small">O gestor do perfil analisará seu acesso. Esta tela será atualizada automaticamente após a aprovação.</p></div></div><button class="primary approval-wait-exit" onclick="sairSistema()">Sair</button></div></section>`;
   }
   if (vinculoTelefonePendente) {
     return `<section class="login-screen">${renderMarcaAcesso()}<div class="sheet access-request-card"><div class="sheet-header"><div><h2>Confirme seu celular</h2><p class="muted small">Enviamos um código SMS para validar seu número antes de solicitar o acesso.</p></div></div><div class="grid"><label class="access-request-label">Código recebido<div class="login-field">${svgIcon('lock')}<input id="vinculoCodigoSms" inputmode="numeric" autocomplete="one-time-code" placeholder="Digite o código" required></div></label><div id="solicitacaoErro" class="login-error"></div><button class="primary" onclick="confirmarTelefoneVinculo()">Confirmar e solicitar aprovação</button><button class="forgot-link" type="button" onclick="cancelarTelefoneVinculo()">Alterar telefone</button></div></div></section>`;
@@ -2541,6 +2549,7 @@ async function enviarSolicitacaoComTelefone({ codigo, nome, telefone, erro }) {
   try {
     await window.VendasDb.solicitarAcesso({ codigo, nome, telefone });
     state.solicitacaoAcesso = { status: 'pendente' };
+    sincronizarVerificacaoAprovacao();
     render();
   } catch (error) { if (erro) erro.textContent = traduzErro(error); }
 }
@@ -2774,6 +2783,12 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
       telefone: user.phone || user.user_metadata?.telefone || user.user_metadata?.phone || state.usuario.telefone || '',
     };
   }
+  try {
+    await window.VendasDb.assinarAtualizacoesVinculo?.(agendarAtualizacaoVinculoAprovado);
+  } catch (error) {
+    console.warn('O canal de atualização do vínculo não pôde ser iniciado; a verificação periódica continuará ativa.', error);
+  }
+  sincronizarVerificacaoAprovacao();
   contextoAberturaVendas = user ? { user, acessoVendas } : null;
   if (entradaPelaGestao && acessoVendas.acesso?.empresa_id) {
     try {
@@ -2826,6 +2841,66 @@ async function carregarSistemaVendasCompleto() {
       sincronizarCatalogoAutomaticamente().catch((error) => console.warn('Não foi possível sincronizar o catálogo em segundo plano.', error));
       reenviarPendenciasVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
     }, 160);
+  }
+}
+
+function solicitacaoVendasAguardandoAprovacao() {
+  return state.solicitacaoAcesso?.status === 'pendente' && Boolean(state.usuario?.id);
+}
+
+function sincronizarVerificacaoAprovacao() {
+  if (!solicitacaoVendasAguardandoAprovacao()) {
+    if (timerVerificacaoAprovacao) window.clearInterval(timerVerificacaoAprovacao);
+    timerVerificacaoAprovacao = null;
+    return;
+  }
+  if (timerVerificacaoAprovacao) return;
+  timerVerificacaoAprovacao = window.setInterval(
+    () => agendarAtualizacaoVinculoAprovado('verificacao'),
+    INTERVALO_VERIFICACAO_APROVACAO_MS,
+  );
+}
+
+function agendarAtualizacaoVinculoAprovado() {
+  if (!backendAtivo || !state.usuario?.id) return;
+  if (timerAtualizacaoVinculo) window.clearTimeout(timerAtualizacaoVinculo);
+  timerAtualizacaoVinculo = window.setTimeout(() => {
+    timerAtualizacaoVinculo = null;
+    void atualizarVinculoAprovadoAutomaticamente();
+  }, 450);
+}
+
+async function atualizarVinculoAprovadoAutomaticamente() {
+  if (atualizandoVinculoAprovado || !backendAtivo || !state.usuario?.id) return;
+  if (carregandoBackend || preparandoRecursosSala) {
+    agendarAtualizacaoVinculoAprovado();
+    return;
+  }
+  atualizandoVinculoAprovado = true;
+  const aguardavaAprovacao = solicitacaoVendasAguardandoAprovacao();
+  const empresaAnteriorId = state.vinculoComercialAtivo?.empresa_id || '';
+  try {
+    if (!state.autenticado || state.usuarioSemAcesso) {
+      await prepararSelecaoSistemaAntesDosDadosVendas();
+      if (state.autenticado && state.acessoVendas) {
+        state.usuarioSemAcesso = false;
+        await carregarSistemaVendasCompleto();
+      } else {
+        render();
+      }
+    } else {
+      await carregarDadosBackend(false, false, true);
+    }
+    const empresaAtualId = state.vinculoComercialAtivo?.empresa_id || '';
+    if (state.autenticado && empresaAtualId && (aguardavaAprovacao || empresaAtualId !== empresaAnteriorId)) {
+      const empresaNome = state.vinculoComercialAtivo?.empresa_nome || state.acessoVendas?.empresa_nome || 'empresa';
+      toast(`Vínculo com ${empresaNome} aprovado. Conteúdos atualizados.`);
+    }
+  } catch (error) {
+    console.warn('Não foi possível atualizar o vínculo automaticamente.', error);
+  } finally {
+    atualizandoVinculoAprovado = false;
+    sincronizarVerificacaoAprovacao();
   }
 }
 
@@ -7398,6 +7473,15 @@ if (window.__VENDAS_MOBILE_EMBEDDED__) {
 
 window.addEventListener('online', () => {
   reenviarPendenciasVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
+  if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
+});
+window.addEventListener('focus', () => {
+  if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && solicitacaoVendasAguardandoAprovacao()) {
+    agendarAtualizacaoVinculoAprovado();
+  }
 });
 
 window.setAba = setAba;

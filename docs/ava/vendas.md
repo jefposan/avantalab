@@ -5,6 +5,9 @@
 > Revisão 1.7.2.30: ajuste exclusivo do AvantaProjetos Web; sem impacto no
 > AvantaVendas.
 
+> Nesta publicação, a aprovação comercial atualiza automaticamente o vínculo
+> e o conteúdo liberado no AvantaVendas.
+
 > Revisão 1.7.2.29: ajuste exclusivo do AvantaProjetos Web; sem impacto no
 > AvantaVendas.
 
@@ -1322,7 +1325,9 @@ função existir ali.
 - Vínculo comercial (catálogo/divulgação/novidades) e destino financeiro são
   independentes. O código empresarial é opcional, exige aprovação do gestor e
   libera somente os conteúdos da equipe; ele não compartilha clientes, pedidos,
-  pagamentos ou dados financeiros.
+  pagamentos ou dados financeiros. Enquanto aguarda, o vendedor pode manter a
+  tela aberta: após a aprovação, o vínculo e os conteúdos são carregados
+  automaticamente, sem reiniciar ou entrar novamente.
 - O vendedor pode usar todos os controles operacionais do Vendas sem destino
   financeiro. Em **Configurações > Integração com Gestão**, o primeiro vínculo
   envia todo o histórico mensal existente ao perfil escolhido.
