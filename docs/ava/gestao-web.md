@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.07 -->
+<!-- ava-version: 1.7.2.08 -->
+
+> Revisão 1.7.2.08: use **‹ Início** para retornar do AvantaProjetos à Gestão
+> do mesmo perfil.
 
 > Revisão 1.7.2.07: o seletor de modo escuro volta à posição lateral no card
 > de **Ajustes**, em formato compacto **ON/OFF** com chave verde ou vermelha.

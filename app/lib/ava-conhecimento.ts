@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.07: o seletor de tema do AvantaProjetos usa ON/OFF lateral e permanece contido no card.
+// Revisado na versão 1.7.2.08: o retorno do AvantaProjetos é identificado como Início e leva à Gestão do perfil ativo.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

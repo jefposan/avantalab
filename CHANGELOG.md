@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.08 - 2026-08-07
+
+- O retorno do AvantaProjetos passa a usar o rótulo **‹ Início**, preservando o
+  acesso direto à Gestão do perfil ativo.
+
 ## 1.7.2.07 - 2026-08-07
 
 - O seletor de modo escuro retorna à posição lateral no card de Ajustes, agora

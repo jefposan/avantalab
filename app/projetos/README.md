@@ -9,7 +9,7 @@ marca, DOM, imagens, textos comerciais ou identidade visual do ClickUp.
 - Pasta exclusiva: `app/projetos`.
 - Rota oficial: `/projetos`, em página total na mesma guia.
 - O botão **Projetos** aparece no menu da Gestão quando o módulo está instalado.
-- O botão **Voltar ao AvantaLab** retorna à Gestão preservando o perfil ativo.
+- O botão **‹ Início** retorna à Gestão preservando o perfil ativo.
 - Dados são persistidos no Supabase por `empresa_id` e preservados ao remover.
 - Acesso, instalação, validade e hierarquia são validados no servidor e por RLS.
 - Superfície suportada: somente navegador Web; não integra o mobile.

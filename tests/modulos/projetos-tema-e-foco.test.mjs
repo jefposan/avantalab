@@ -23,6 +23,8 @@ test('AvantaProjetos recebe o tema salvo no perfil, sem depender do sistema oper
   assert.match(estilos, /\.settingsThemeSwitch \{ display: inline-flex; width: 104px; min-width: 104px;/);
   assert.match(cliente, /TelaCarregandoAcesso/);
   assert.match(cliente, /Ajustes do AvantaProjetos/);
+  assert.match(cliente, /Voltar ao início do AvantaLab/);
+  assert.match(cliente, /‹<\/span> Início/);
   assert.match(cliente, /const proximoAcesso = \{ \.\.\.access, empresa: \{ \.\.\.access\.empresa, temaEscuro \} \}/);
   assert.doesNotMatch(cliente, /Atualizando…/);
   assert.match(ajustes, /autenticarPerfilCobranca\(request, empresaId, true\)/);

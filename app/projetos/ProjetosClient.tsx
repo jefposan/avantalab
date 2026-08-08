@@ -71,7 +71,7 @@ function ProjectApp({ companyId, access, onAccessChange }: { companyId: string; 
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.darkTheme : ''} ${mapaEmFoco ? styles.mapFocusMode : ''} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
     <header className={styles.moduleHeader}>
-      <Link href={`/gestao?empresaId=${encodeURIComponent(companyId)}`} className={styles.moduleExit} aria-label="Sair do AvantaProjetos e voltar ao AvantaLab">Sair</Link>
+      <Link href={`/gestao?empresaId=${encodeURIComponent(companyId)}`} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><span aria-hidden="true">‹</span> Início</Link>
       <div className={styles.moduleIdentity}>
         <Image
           src="/images/logo-avantalab-oficial.png"
@@ -124,7 +124,7 @@ export default function ProjetosClient({ companyId }: { companyId: string }) {
     return () => { active = false; };
   }, [companyId]);
 
-  if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>AvantaProjetos</h1><p>{error}</p><Link href="/gestao">Sair</Link></div></main>;
+  if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>AvantaProjetos</h1><p>{error}</p><Link href="/gestao">‹ Início</Link></div></main>;
   if (!access) return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" />;
   return <ProjectApp companyId={companyId} access={access} onAccessChange={setAccess} />;
 }
