@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.06 -->
+<!-- ava-version: 1.7.2.07 -->
+
+> Revisão 1.7.2.07: o seletor de modo escuro volta à posição lateral no card
+> de **Ajustes**, em formato compacto **ON/OFF** com chave verde ou vermelha.
 
 > Revisão 1.7.2.06: no card de **Ajustes**, o seletor de modo escuro usa uma
 > faixa própria, mantendo o rótulo e o controle visíveis em qualquer estado.

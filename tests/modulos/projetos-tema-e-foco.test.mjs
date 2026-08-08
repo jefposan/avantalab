@@ -18,8 +18,9 @@ test('AvantaProjetos recebe o tema salvo no perfil, sem depender do sistema oper
   assert.match(estilos, /\.darkTheme \{[\s\S]*color-scheme: dark/);
   assert.doesNotMatch(estilos, /prefers-color-scheme/);
   assert.match(estilos, /\.darkTheme \.moduleLogo \{ filter: brightness\(0\) invert\(1\)/);
-  assert.match(estilos, /\.settingsSection \{ display: flex; flex-direction: column; align-items: stretch;/);
-  assert.match(estilos, /\.settingsThemeSwitch \{ display: inline-flex; width: 100%; min-width: 0;/);
+  assert.match(cliente, /access\.empresa\.temaEscuro \? 'ON' : 'OFF'/);
+  assert.match(estilos, /\.settingsSection \{ display: flex; align-items: center; justify-content: space-between; gap: 10px;/);
+  assert.match(estilos, /\.settingsThemeSwitch \{ display: inline-flex; width: 104px; min-width: 104px;/);
   assert.match(cliente, /TelaCarregandoAcesso/);
   assert.match(cliente, /Ajustes do AvantaProjetos/);
   assert.match(cliente, /const proximoAcesso = \{ \.\.\.access, empresa: \{ \.\.\.access\.empresa, temaEscuro \} \}/);

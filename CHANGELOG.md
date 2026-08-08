@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.07 - 2026-08-07
+
+- O seletor de modo escuro retorna à posição lateral no card de Ajustes, agora
+  compacto em **ON/OFF** e com a chave vermelha ou verde conforme o estado.
+
 ## 1.7.2.06 - 2026-08-07
 
 - O seletor de modo escuro do AvantaProjetos ocupa uma faixa própria no card

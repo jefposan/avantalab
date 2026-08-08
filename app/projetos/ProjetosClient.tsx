@@ -94,8 +94,8 @@ function ProjectApp({ companyId, access, onAccessChange }: { companyId: string; 
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes do AvantaProjetos" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">
         <div><strong>Modo escuro</strong><p>Aplica a aparência escura a este perfil no AvantaLab e nos módulos compatíveis.</p></div>
-        <button type="button" className={styles.settingsThemeSwitch} role="switch" aria-checked={access.empresa.temaEscuro} aria-busy={atualizandoTema || undefined} onClick={() => void alterarTema()} disabled={atualizandoTema}>
-          <span>{access.empresa.temaEscuro ? 'Ativado' : 'Desativado'}</span><i aria-hidden="true" />
+        <button type="button" className={styles.settingsThemeSwitch} role="switch" aria-label="Modo escuro" aria-checked={access.empresa.temaEscuro} aria-busy={atualizandoTema || undefined} onClick={() => void alterarTema()} disabled={atualizandoTema}>
+          <span>{access.empresa.temaEscuro ? 'ON' : 'OFF'}</span><i aria-hidden="true" />
         </button>
       </section>
     </Modal>

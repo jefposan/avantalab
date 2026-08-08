@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.06: o seletor de tema do AvantaProjetos permanece contido no card de Ajustes.
+// Revisado na versão 1.7.2.07: o seletor de tema do AvantaProjetos usa ON/OFF lateral e permanece contido no card.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
