@@ -4,25 +4,31 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
+import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import { useProjectCollection } from './hooks/useProjectCollection';
 import { SupabaseProjectRepository } from './services/supabase-repository';
 import styles from './projetos.module.css';
 import { ProjectHome } from './components/ProjectHome';
 import { ProjectWorkspace } from './components/ProjectWorkspace';
+import { Icon } from './components/Icon';
+import { Modal } from './components/Modal';
 import type { ProfileRole } from './types';
 
 type ModuleAccess = {
   empresa: { id: string; nome: string; corPrimaria: string; temaEscuro: boolean };
   perfil: ProfileRole;
   podeEditar: boolean;
+  podeGerenciarModulo: boolean;
   expiraEm: string | null;
 };
 
-function ProjectApp({ companyId, access }: { companyId: string; access: ModuleAccess }) {
+function ProjectApp({ companyId, access, onAccessChange }: { companyId: string; access: ModuleAccess; onAccessChange: (next: ModuleAccess) => void }) {
   const repository = useMemo(() => new SupabaseProjectRepository(), []);
   const { collection, setCollection, loaded, saveState, message, setMessage, undo, redo, canUndo, canRedo } = useProjectCollection(companyId, repository, access.podeEditar);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [mapaEmFoco, setMapaEmFoco] = useState(false);
+  const [ajustesAbertos, setAjustesAbertos] = useState(false);
+  const [atualizandoTema, setAtualizandoTema] = useState(false);
   const activeProject = collection.projects.find((project) => project.id === activeProjectId) ?? null;
 
   useEffect(() => {
@@ -31,16 +37,38 @@ function ProjectApp({ companyId, access }: { companyId: string; access: ModuleAc
     return () => window.clearTimeout(timer);
   }, [message, setMessage]);
 
-  if (!loaded) return <main className={styles.loadingState}><div aria-hidden="true" /><h1>Preparando seus projetos</h1><p>Carregando os dados do perfil com segurança…</p></main>;
+  if (!loaded) return <TelaCarregandoAcesso titulo="Preparando projetos" mensagem="Carregando os dados do perfil com segurança…" />;
 
   const voltarParaProjetos = () => {
     setMapaEmFoco(false);
     setActiveProjectId(null);
   };
 
+  const alterarTema = async () => {
+    if (atualizandoTema || !access.podeGerenciarModulo) return;
+    setAtualizandoTema(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.');
+      const temaEscuro = !access.empresa.temaEscuro;
+      const resposta = await fetch('/api/modulos/projetos/ajustes', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empresaId: companyId, temaEscuro }),
+      });
+      const json = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível atualizar o modo visual.');
+      onAccessChange({ ...access, empresa: { ...access.empresa, temaEscuro } });
+      setMessage(temaEscuro ? 'Modo escuro ativado para este perfil.' : 'Modo claro ativado para este perfil.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível atualizar o modo visual.');
+    } finally { setAtualizandoTema(false); }
+  };
+
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.darkTheme : ''} ${mapaEmFoco ? styles.mapFocusMode : ''} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
     <header className={styles.moduleHeader}>
-      <Link href={`/gestao?empresaId=${encodeURIComponent(companyId)}`} className={styles.moduleBack}>← Voltar ao AvantaLab</Link>
+      <Link href={`/gestao?empresaId=${encodeURIComponent(companyId)}`} className={styles.moduleExit} aria-label="Sair do AvantaProjetos e voltar ao AvantaLab">Sair</Link>
       <div className={styles.moduleIdentity}>
         <Image
           src="/images/logo-avantalab-oficial.png"
@@ -52,11 +80,22 @@ function ProjectApp({ companyId, access }: { companyId: string; access: ModuleAc
         />
         <span>{access.empresa.nome}</span>
       </div>
-      {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
+      <div className={styles.moduleHeaderActions}>
+        {access.podeGerenciarModulo && <button type="button" className={styles.moduleSettingsButton} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes do AvantaProjetos" title="Ajustes"><Icon name="settings" size={18} /></button>}
+        {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
+      </div>
     </header>
     <div className={styles.moduleContent}>
       {activeProject ? <ProjectWorkspace readOnly={!access.podeEditar} project={activeProject} people={collection.people} saveState={saveState} onBack={voltarParaProjetos} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={canUndo} canRedo={canRedo} onMessage={setMessage} mapaEmFoco={mapaEmFoco} onMapaEmFocoChange={setMapaEmFoco} /> : <ProjectHome readOnly={!access.podeEditar} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} />}
     </div>
+    <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes do AvantaProjetos" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
+      <section className={styles.settingsSection} aria-label="Ajustes visuais">
+        <div><strong>Modo escuro</strong><p>Aplica a aparência escura a este perfil no AvantaLab e nos módulos compatíveis.</p></div>
+        <button type="button" className={styles.settingsThemeSwitch} role="switch" aria-checked={access.empresa.temaEscuro} onClick={() => void alterarTema()} disabled={atualizandoTema}>
+          <span>{atualizandoTema ? 'Atualizando…' : access.empresa.temaEscuro ? 'Ativado' : 'Desativado'}</span><i aria-hidden="true" />
+        </button>
+      </section>
+    </Modal>
     {message && <div className={styles.toast} role="status" aria-live="polite">{message}</div>}
   </main>;
 }
@@ -82,7 +121,7 @@ export default function ProjetosClient({ companyId }: { companyId: string }) {
     return () => { active = false; };
   }, [companyId]);
 
-  if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>AvantaProjetos</h1><p>{error}</p><Link href="/gestao">Voltar ao AvantaLab</Link></div></main>;
-  if (!access) return <main className={styles.loadingState}><div aria-hidden="true" /><h1>Validando acesso</h1><p>Confirmando o módulo e seu perfil…</p></main>;
-  return <ProjectApp companyId={companyId} access={access} />;
+  if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>AvantaProjetos</h1><p>{error}</p><Link href="/gestao">Sair</Link></div></main>;
+  if (!access) return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" />;
+  return <ProjectApp companyId={companyId} access={access} onAccessChange={setAccess} />;
 }

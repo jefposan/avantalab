@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.03 -->
+<!-- ava-version: 1.7.2.04 -->
+
+> Revisão 1.7.2.04: ajustes, carregamento e foco do mapa são exclusivos do
+> AvantaProjetos Web; sem impacto no AvantaVendas.
 
 > Revisão 1.7.2.03: modo visual e foco no mapa são ajustes restritos ao
 > AvantaProjetos Web; sem impacto no AvantaVendas.

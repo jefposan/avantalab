@@ -229,7 +229,10 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     if (proximaVisualizacao !== 'mapa') onMapaEmFocoChange(false);
   };
 
-  const alternarFocoNoMapa = () => onMapaEmFocoChange(!mapaEmFoco);
+  const alternarFocoNoMapa = () => {
+    if (!mapaEmFoco) { setDetailsId(null); setFilterOpen(false); }
+    onMapaEmFocoChange(!mapaEmFoco);
+  };
 
   return <div className={styles.workspace}>
     <header className={styles.workspaceHeader}>

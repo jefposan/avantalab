@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.03 -->
+<!-- ava-version: 1.7.2.04 -->
+
+> Revisão 1.7.2.04: AvantaProjetos abre com a tela de carregamento institucional.
+> Gestor Master e Administrador usam o ícone de **Ajustes** para ativar ou
+> desativar o modo escuro do perfil; a escolha vale também para o AvantaLab.
+> No foco do Mapa, toda a tela continua disponível para navegação.
 
 > Revisão 1.7.2.03: o AvantaProjetos usa somente o modo claro ou escuro salvo
 > em **Menu > Visual** do perfil, nunca a aparência automática do computador.

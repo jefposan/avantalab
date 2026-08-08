@@ -18,8 +18,11 @@
 .moduleIdentity { display: grid; justify-items: center; gap: 7px; line-height: 1.2; }
 .moduleLogo { display: block; width: clamp(148px, 12vw, 168px); height: auto; }
 .moduleIdentity span { color: var(--muted); font-size: 11px; font-weight: 500; letter-spacing: .01em; line-height: 1.35; }
-.moduleBack { justify-self: start; min-height: 40px; display: inline-flex; align-items: center; border-radius: 11px; padding: 8px 12px; color: var(--brand); background: color-mix(in srgb, var(--project-profile-color, var(--accent)) 9%, white); font-size: 12px; font-weight: 700; text-decoration: none; }
-.moduleBack:hover { background: color-mix(in srgb, var(--project-profile-color, var(--accent)) 16%, white); }
+.moduleExit { justify-self: start; min-height: 40px; display: inline-flex; align-items: center; border-radius: 11px; padding: 8px 15px; color: #fff; background: #003e73; box-shadow: 0 5px 14px rgba(0,62,115,.2); font-size: 12px; font-weight: 700; text-decoration: none; }
+.moduleExit:hover { background: #00508f; }
+.moduleHeaderActions { justify-self: end; display: flex; align-items: center; gap: 7px; }
+.moduleSettingsButton { display: inline-grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--border); border-radius: 11px; color: var(--brand); background: var(--surface); cursor: pointer; }
+.moduleSettingsButton:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: var(--surface-soft); }
 .readOnlyBadge { justify-self: end; border-radius: 999px; padding: 6px 10px; color: #315e67; background: #e5f1f3; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .moduleContent { min-height: calc(100dvh - var(--module-header-height)); }
 .root *, .root *::before, .root *::after { box-sizing: border-box; }
@@ -136,6 +139,15 @@
 .modalHeader h2 { margin: 0; color: var(--brand); font-size: 20px; }
 .modalHeader p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
 .modalBody { max-height: calc(100dvh - 120px); overflow-y: auto; padding: 22px; overscroll-behavior: contain; }
+.settingsSection { display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid var(--border); border-radius: 14px; padding: 15px; background: var(--surface-soft); }
+.settingsSection strong { display: block; color: var(--brand); font-size: 13px; }
+.settingsSection p { max-width: 350px; margin: 4px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.settingsThemeSwitch { display: inline-flex; min-width: 124px; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--border); border-radius: 12px; padding: 7px 9px 7px 12px; color: var(--brand); background: var(--surface); cursor: pointer; font-size: 11px; font-weight: 700; }
+.settingsThemeSwitch i { position: relative; width: 30px; height: 18px; flex: 0 0 30px; border-radius: 999px; background: #a8bac5; transition: background .16s ease; }
+.settingsThemeSwitch i::after { position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.24); content: ''; transition: transform .16s ease; }
+.settingsThemeSwitch[aria-checked="true"] i { background: #1687d9; }
+.settingsThemeSwitch[aria-checked="true"] i::after { transform: translateX(12px); }
+.settingsThemeSwitch:disabled { opacity: .65; cursor: wait; }
 .modalActions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 8px; }
 .projectForm { display: grid; gap: 20px; }
 .formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -205,9 +217,14 @@
 .mapFocusToggle, .mapFocusToggleFloating { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--border); border-radius: 11px; padding: 8px 10px; color: var(--brand); background: var(--surface); cursor: pointer; font-size: 11px; font-weight: 600; }
 .mapFocusToggle:hover, .mapFocusToggleFloating:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: var(--surface-soft); }
 .mapFocusToggleFloating { position: fixed; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); z-index: 180; box-shadow: 0 10px 28px rgba(4,20,34,.22); }
+.mapFocusMode { height: 100dvh; overflow: hidden; }
 .mapFocusMode .moduleHeader { display: none; }
-.mapFocusMode .moduleContent, .mapFocusMode .workspace { min-height: 100dvh; height: 100dvh; }
+.mapFocusMode .moduleContent { height: 100dvh; min-height: 0; }
+.mapFocusMode .workspace { height: 100dvh; min-height: 0; grid-template-rows: minmax(0, 1fr); }
 .mapFocusMode .workspaceHeader, .mapFocusMode .workspaceToolbar { display: none; }
+.mapFocusMode .workspaceContent, .mapFocusMode .primaryView, .mapFocusMode .canvas { height: 100%; min-height: 0; }
+.mapFocusMode .primaryView { padding-bottom: 0; }
+.mapFocusMode .detailsPanel { display: none; }
 .workspaceToolbar { position: relative; z-index: 35; display: flex; min-height: 58px; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); padding: 8px 14px; background: color-mix(in srgb, var(--surface) 94%, transparent); }
 .nodeSearch { position: relative; display: flex; width: min(380px, 34vw); align-items: center; }
 .nodeSearch > svg { position: absolute; left: 12px; color: var(--muted); }
@@ -482,8 +499,8 @@ fieldset.detailSection { padding-top: 8px; }
     color-scheme: dark;
 }
 .darkTheme .moduleLogo { filter: brightness(0) invert(1); }
-.darkTheme .moduleBack { color: var(--brand); background: color-mix(in srgb, var(--project-profile-color, var(--accent)) 18%, var(--surface)); }
-.darkTheme .moduleBack:hover { background: color-mix(in srgb, var(--project-profile-color, var(--accent)) 27%, var(--surface)); }
+.darkTheme .moduleExit { background: #1687d9; box-shadow: 0 5px 14px rgba(22,135,217,.22); }
+.darkTheme .moduleExit:hover { background: #2998e9; }
 .darkTheme .readOnlyBadge { color: #b9e9ef; background: #173845; }
 .darkTheme .demoBanner { color: #b9dde2; background: #102a31; }
 .darkTheme .projectSections button span, .darkTheme .taskTableHead, .darkTheme .kanbanColumn > header small { background: #1d2b37; }

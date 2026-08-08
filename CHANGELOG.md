@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.2.04 - 2026-08-07
+
+- AvantaProjetos passa a usar a cena oficial de carregamento do AvantaLab e
+  disponibiliza **Ajustes** para Gestor Master e Administrador alterarem o
+  modo claro/escuro salvo no perfil, aplicado também ao AvantaLab.
+- O retorno do módulo passa a se chamar **Sair** e usar a cor institucional.
+  O foco do mapa agora elimina todas as áreas inativas, preservando navegação
+  em todo o viewport e o controle flutuante de retorno.
+
 ## 1.7.2.03 - 2026-08-07
 
 - AvantaProjetos passa a respeitar exclusivamente o modo visual salvo em
