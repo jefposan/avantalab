@@ -81,11 +81,17 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
 
   const TOM_BARRA_POSITIVA = '#003E73';
   const cores = [corPrimaria, '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'];
-  const VERDE = TOM_BARRA_POSITIVA, VERMELHO = '#f87171', AZUL = '#7dd3fc';
+  const VERDE = TOM_BARRA_POSITIVA, VERDE_FATURAMENTO = '#00b050', VERMELHO = '#f87171', AZUL = '#7dd3fc';
 
   const [tip, setTip] = useState<Tip>(null);
+  const [pontoDestaque, setPontoDestaque] = useState<string | null>(null);
   const mostrarTip = (e: { clientX: number; clientY: number }, titulo: string, linhas: LinhaTip[]) => setTip({ x: e.clientX, y: e.clientY, titulo, linhas });
   const esconderTip = () => setTip(null);
+  const chavePonto = (grafico: string, mes: string) => `${grafico}:${mes}`;
+  const classePontoDestaque = (grafico: string, mes: string) => pontoDestaque === chavePonto(grafico, mes)
+    ? (darkMode ? 'bg-white/10 ring-1 ring-inset ring-white/15' : 'bg-slate-900/5 ring-1 ring-inset ring-slate-900/10')
+    : '';
+  const limparDestaque = () => { esconderTip(); setPontoDestaque(null); };
 
   // ===== Kanban: ordem / ocultos / expandidos (persistido no navegador) =====
   const catalogo = useMemo(() => {
@@ -393,15 +399,16 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#003E73]"></span>Faturamento</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#94a3b8]"></span>Despesas</span>
       </div>}>
-      <div className="relative mt-2 flex h-[240px] min-w-0 items-end gap-1 overflow-hidden border-b border-slate-200/20 pb-4 sm:h-[285px] sm:gap-2" onMouseLeave={esconderTip}>
+      <div className="relative mt-2 flex h-[240px] min-w-0 items-end gap-1 overflow-hidden border-b border-slate-200/20 pb-4 sm:h-[285px] sm:gap-2" onMouseLeave={limparDestaque}>
         {gradeFundo}
         {dadosAnuais.dados.map((item) => {
           const alturaFat = (item.fat / dadosAnuais.maxValor) * 100;
           const alturaDesp = (item.desp / dadosAnuais.maxValor) * 100;
           return (
-            <div key={item.mes} className="flex-1 flex flex-col items-center justify-end h-full relative"
+            <div key={item.mes} className={`relative flex h-full flex-1 flex-col items-center justify-end rounded-md px-0.5 transition-colors ${classePontoDestaque('comparativo', item.mes)}`}
+              onMouseEnter={() => setPontoDestaque(chavePonto('comparativo', item.mes))}
               onMouseMove={(e) => mostrarTip(e, abrev(item.mes), [
-                { label: 'Faturamento', valor: formatarMoeda(item.fat), cor: VERDE },
+                { label: 'Faturamento', valor: formatarMoeda(item.fat), cor: VERDE_FATURAMENTO },
                 { label: 'Despesas', valor: formatarMoeda(item.desp), cor: VERMELHO },
                 { label: 'Saldo', valor: formatarMoeda(item.fat - item.desp), forte: true, sep: true },
               ])}>
@@ -423,15 +430,16 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TOM_BARRA_POSITIVA }}></span>Lucro</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>Prejuízo</span>
       </div>}>
-      <div className="relative flex h-[240px] items-stretch gap-1 sm:gap-2" onMouseLeave={esconderTip}>
+      <div className="relative flex h-[240px] items-stretch gap-1 sm:gap-2" onMouseLeave={limparDestaque}>
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-slate-400/40 pointer-events-none"></div>
         {porMes.map((m) => {
           const hPct = (Math.abs(m.resultado) / maxAbsResultado) * 100;
           const pos = m.resultado >= 0;
           return (
-            <div key={m.mes} className="flex-1 flex flex-col relative min-w-0"
+            <div key={m.mes} className={`relative flex min-w-0 flex-1 flex-col rounded-md px-0.5 transition-colors ${classePontoDestaque('resultado', m.mes)}`}
+              onMouseEnter={() => setPontoDestaque(chavePonto('resultado', m.mes))}
               onMouseMove={(e) => mostrarTip(e, abrev(m.mes), [
-                { label: 'Faturamento', valor: formatarMoeda(m.fat), cor: VERDE },
+                { label: 'Faturamento', valor: formatarMoeda(m.fat), cor: VERDE_FATURAMENTO },
                 { label: 'Despesas', valor: formatarMoeda(m.desp), cor: VERMELHO },
                 { label: 'Resultado', valor: formatarMoeda(m.resultado), cor: pos ? VERDE : VERMELHO, forte: true, sep: true },
               ])}>
@@ -441,13 +449,13 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
           );
         })}
       </div>
-      <div className="mt-2 flex gap-1 sm:gap-2">{porMes.map((m) => <span key={m.mes} className={`flex-1 text-center text-[10px] font-bold uppercase ${textMuted} truncate`}>{abrev(m.mes)}</span>)}</div>
+      <div className="mt-2 flex gap-1 sm:gap-2">{porMes.map((m) => <span key={m.mes} className={`flex-1 rounded-md px-0.5 text-center text-[10px] font-bold uppercase transition-colors ${textMuted} ${classePontoDestaque('resultado', m.mes)} truncate`}>{abrev(m.mes)}</span>)}</div>
     </CardShell>
   );
 
   cardsById.acumulada = (
     <CardShell id="acumulada" titulo="Evolução Acumulada">
-      <div className="relative w-full" onMouseLeave={esconderTip}>
+      <div className="relative w-full" onMouseLeave={limparDestaque}>
         <svg viewBox={`0 0 ${LW} ${LH}`} className="w-full h-[260px]" preserveAspectRatio="none">
           {[0, 0.25, 0.5, 0.75, 1].map((f, i) => { const y = LP + f * (LH - 2 * LP); return <line key={i} x1={LP} y1={y} x2={LW - LP} y2={y} stroke="currentColor" strokeOpacity="0.08" strokeWidth="1" className={textMuted} />; })}
           {acumulada.min < 0 && <line x1={LP} y1={yOf(0)} x2={LW - LP} y2={yOf(0)} stroke="currentColor" strokeOpacity="0.35" strokeDasharray="4 3" strokeWidth="1" className={textMuted} />}
@@ -457,15 +465,22 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
         </svg>
         <div className="absolute inset-0 flex">
           {acumulada.pts.map((p) => (
-            <div key={p.mes} className="flex-1" onMouseMove={(e) => mostrarTip(e, `${abrev(p.mes)} (acum.)`, [
-              { label: 'Faturamento', valor: formatarMoeda(p.fat), cor: VERDE },
-              { label: 'Despesas', valor: formatarMoeda(p.desp), cor: VERMELHO },
-              { label: 'Saldo', valor: formatarMoeda(p.saldo), cor: AZUL, forte: true, sep: true },
-            ])}></div>
+            <div
+              key={p.mes}
+              className={`flex-1 rounded-md transition-colors ${classePontoDestaque('acumulada', p.mes)}`}
+              onMouseEnter={(e) => {
+                setPontoDestaque(chavePonto('acumulada', p.mes));
+                mostrarTip(e, `${abrev(p.mes)} (acum.)`, [
+                  { label: 'Faturamento', valor: formatarMoeda(p.fat), cor: VERDE_FATURAMENTO },
+                  { label: 'Despesas', valor: formatarMoeda(p.desp), cor: VERMELHO },
+                  { label: 'Saldo', valor: formatarMoeda(p.saldo), cor: AZUL, forte: true, sep: true },
+                ]);
+              }}
+            />
           ))}
         </div>
       </div>
-      <div className="mt-1 flex gap-1">{acumulada.pts.map((p) => <span key={p.mes} className={`flex-1 text-center text-[9px] font-bold uppercase ${textMuted} truncate`}>{abrev(p.mes)}</span>)}</div>
+      <div className="mt-1 flex gap-1">{acumulada.pts.map((p) => <span key={p.mes} className={`flex-1 rounded-md px-0.5 text-center text-[9px] font-bold uppercase transition-colors ${textMuted} ${classePontoDestaque('acumulada', p.mes)} truncate`}>{abrev(p.mes)}</span>)}</div>
       <div className="mt-3 grid grid-cols-3 gap-2 border-t border-slate-200/10 pt-3 text-center">
         <div><span className={`block text-[10px] font-bold uppercase ${textMuted}`}>Faturamento</span><span className="block text-sm font-black text-[#00b050]">{formatarMoeda(acumulada.pts.length ? acumulada.pts[acumulada.pts.length - 1].fat : 0)}</span></div>
         <div><span className={`block text-[10px] font-bold uppercase ${textMuted}`}>Despesas</span><span className="block text-sm font-black text-red-500">{formatarMoeda(acumulada.pts.length ? acumulada.pts[acumulada.pts.length - 1].desp : 0)}</span></div>
@@ -478,20 +493,20 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
     cardsById.ebitda = (
       <CardShell id="ebitda" titulo="EBITDA" extra={<span className={`shrink-0 text-sm font-black ${ebitda.total >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>{formatarMoeda(ebitda.total)}</span>}>
         <p className={`mb-3 text-[11px] font-semibold ${textMuted}`}>Faturamento menos despesas operacionais (exclui amortização, depreciação, despesas financeiras e imposto sobre lucro).</p>
-        <div className="relative flex h-[220px] items-stretch gap-1 sm:gap-2" onMouseLeave={esconderTip}>
+        <div className="relative flex h-[220px] items-stretch gap-1 sm:gap-2" onMouseLeave={limparDestaque}>
           <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-slate-400/40 pointer-events-none"></div>
           {ebitda.pm.map((m) => {
             const hPct = (Math.abs(m.ebitda) / ebitda.maxAbs) * 100;
             const pos = m.ebitda >= 0;
             return (
-              <div key={m.mes} className="flex-1 flex flex-col relative min-w-0" onMouseMove={(e) => mostrarTip(e, abrev(m.mes), [{ label: 'EBITDA', valor: formatarMoeda(m.ebitda), cor: pos ? VERDE : VERMELHO, forte: true }])}>
+              <div key={m.mes} className={`relative flex min-w-0 flex-1 flex-col rounded-md px-0.5 transition-colors ${classePontoDestaque('ebitda', m.mes)}`} onMouseEnter={() => setPontoDestaque(chavePonto('ebitda', m.mes))} onMouseMove={(e) => mostrarTip(e, abrev(m.mes), [{ label: 'EBITDA', valor: formatarMoeda(m.ebitda), cor: pos ? VERDE : VERMELHO, forte: true }])}>
                 <div className="flex-1 flex items-end justify-center">{pos && <div className="w-2/3 rounded-t-sm transition-all duration-500 hover:brightness-110" style={{ height: `${hPct}%`, minHeight: m.ebitda > 0 ? '3px' : '0', backgroundColor: TOM_BARRA_POSITIVA }}></div>}</div>
                 <div className="flex-1 flex items-start justify-center">{!pos && m.ebitda !== 0 && <div className="w-2/3 rounded-b-sm bg-red-500 transition-all duration-500 hover:brightness-110" style={{ height: `${hPct}%`, minHeight: '3px' }}></div>}</div>
               </div>
             );
           })}
         </div>
-        <div className="mt-2 flex gap-1 sm:gap-2">{ebitda.pm.map((m) => <span key={m.mes} className={`flex-1 text-center text-[10px] font-bold uppercase ${textMuted} truncate`}>{abrev(m.mes)}</span>)}</div>
+        <div className="mt-2 flex gap-1 sm:gap-2">{ebitda.pm.map((m) => <span key={m.mes} className={`flex-1 rounded-md px-0.5 text-center text-[10px] font-bold uppercase transition-colors ${textMuted} ${classePontoDestaque('ebitda', m.mes)} truncate`}>{abrev(m.mes)}</span>)}</div>
       </CardShell>
     );
   }
@@ -499,16 +514,17 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
   cardsById.margem = (
     <CardShell id="margem" titulo="Despesa sobre Faturamento">
       <p className={`mb-3 text-[11px] font-semibold ${textMuted}`}>Quanto das receitas foi consumido por despesas em cada mês.</p>
-      <div className="relative flex h-[220px] items-end gap-1 sm:gap-2 border-b border-slate-200/20" onMouseLeave={esconderTip}>
+      <div className="relative flex h-[220px] items-end gap-1 sm:gap-2 border-b border-slate-200/20" onMouseLeave={limparDestaque}>
         {gradeFundo}
         {margem.map((m) => {
           const alt = Math.min(m.pct, 100);
           const cor = m.pct >= 100 ? '#ef4444' : m.pct >= 70 ? '#f59e0b' : TOM_BARRA_POSITIVA;
           const temDados = m.fat > 0 || m.desp > 0;
           return (
-            <div key={m.mes} className="flex-1 flex flex-col items-center justify-end h-full relative min-w-0"
+            <div key={m.mes} className={`relative flex h-full min-w-0 flex-1 flex-col items-center justify-end rounded-md px-0.5 transition-colors ${classePontoDestaque('margem', m.mes)}`}
+              onMouseEnter={() => setPontoDestaque(chavePonto('margem', m.mes))}
               onMouseMove={(e) => mostrarTip(e, abrev(m.mes), [
-                { label: 'Faturamento', valor: formatarMoeda(m.fat), cor: VERDE },
+                { label: 'Faturamento', valor: formatarMoeda(m.fat), cor: VERDE_FATURAMENTO },
                 { label: 'Despesas', valor: formatarMoeda(m.desp), cor: VERMELHO },
                 { label: 'Consumo', valor: temDados ? `${m.pct.toFixed(0)}%` : 's/ dados', forte: true, sep: true },
               ])}>
@@ -517,7 +533,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
           );
         })}
       </div>
-      <div className="mt-2 flex gap-1 sm:gap-2">{margem.map((m) => <span key={m.mes} className={`flex-1 text-center text-[10px] font-bold uppercase ${textMuted} truncate`}>{abrev(m.mes)}</span>)}</div>
+      <div className="mt-2 flex gap-1 sm:gap-2">{margem.map((m) => <span key={m.mes} className={`flex-1 rounded-md px-0.5 text-center text-[10px] font-bold uppercase transition-colors ${textMuted} ${classePontoDestaque('margem', m.mes)} truncate`}>{abrev(m.mes)}</span>)}</div>
     </CardShell>
   );
 
@@ -637,8 +653,11 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
         <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-white/60">{tip.titulo}</p>
         {tip.linhas.map((ln, i) => (
           <div key={i} className={`flex justify-between gap-3 text-[11px] ${ln.forte ? 'font-black' : 'font-bold'} ${ln.sep ? 'mt-1 border-t border-white/15 pt-1' : ''}`}>
-            <span style={ln.cor ? { color: ln.cor } : undefined}>{ln.label}</span>
-            <strong style={ln.cor ? { color: ln.cor } : undefined}>{ln.valor}</strong>
+            <span className="flex min-w-0 items-center gap-1.5 text-slate-100">
+              {ln.cor ? <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ln.cor }} aria-hidden="true" /> : null}
+              {ln.label}
+            </span>
+            <strong className="shrink-0 text-white">{ln.valor}</strong>
           </div>
         ))}
       </div>,

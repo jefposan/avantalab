@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.30 -->
+<!-- ava-version: 1.7.2.31 -->
+
+> Revisão 1.7.2.31: ajustes de navegação, gráficos, balanços e landing são
+> exclusivos da Gestão Web; sem impacto no AvantaVendas.
 
 > Revisão 1.7.2.30: ajuste exclusivo do AvantaProjetos Web; sem impacto no
 > AvantaVendas.

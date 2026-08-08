@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.30 -->
+<!-- ava-version: 1.7.2.31 -->
+
+> Revisão 1.7.2.31: na Gestão Web, o menu também pode ser aberto pela etiqueta
+> **Menu** na lateral esquerda. Em gráficos, passe o mouse sobre um mês para
+> destacá-lo e ler seus valores com mais contraste; sem mudança nas informações
+> ou ações disponíveis.
 
 > Revisão 1.7.2.30: ajuste visual do botão **Início** para o azul-marinho de
 > marca do AvantaLab no modo claro; sem alteração de operação.

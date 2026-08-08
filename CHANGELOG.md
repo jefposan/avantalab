@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.2.31 - 2026-08-08
+
+- A Gestão Web recebeu refinamentos de navegação e leitura: menu lateral com
+  abertura deslizante, destaques por mês em balanços e relatórios, e tooltips
+  de gráficos com contraste e identificação de faturamento aprimorados.
+- A landing passou a apresentar uma grade ampliada de recursos, com ícones SVG
+  relacionados a cada item e o logo oficial da Ava.
+
 ## 1.7.2.30 - 2026-08-08
 
 - O botão **Início** passou a usar o azul-marinho escuro de marca do AvantaLab

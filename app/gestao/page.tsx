@@ -751,8 +751,9 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const ocultosDashboardPadrao = normalizarTipoPerfil(tipoPerfilAtual) === 'empresa' ? ['caixinha'] : [];
   const [dashboardOrdem, setDashboardOrdem] = useState<{ left: string[]; a: string[]; b: string[] }>(ordemDashboardPadrao);
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>(ocultosDashboardPadrao);
-  const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
+const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
 const [ajustesAberto, setAjustesAberto] = useState(false);
+const [alturaHeaderGestao, setAlturaHeaderGestao] = useState(0);
 const [menuAjuste, setMenuAjuste] = useState<null | 'visual' | 'config'>(null);
 const [menuAjusteRect, setMenuAjusteRect] = useState<{ top: number; left: number } | null>(null);
 const [modalSobre, setModalSobre] = useState(false);
@@ -10122,6 +10123,8 @@ if (validacaoTelefoneObrigatoria) {
         onAbrirLogo={abrirModalLogoPeloHeader}
         setModalEmpresasAberto={setModalEmpresasAberto}
         agendaHojeCount={agendaHojeCount}
+        headerId="gestao-app-header"
+        onHeaderHeightChange={setAlturaHeaderGestao}
         onAbrirAgenda={() => {
           const hoje = new Date();
           setAgendaMesAtivo(hoje.getMonth());
@@ -10131,6 +10134,23 @@ if (validacaoTelefoneObrigatoria) {
           setAgendaAberta(true);
         }}
       />
+      </div>
+      <div className="print-ocultar fixed left-0 top-1/2 z-[1180] hidden -translate-y-1/2 lg:block">
+        <button
+          type="button"
+          onClick={() => {
+            setPainelAvisosAberto(false);
+            setAjustesAberto((aberto) => !aberto);
+          }}
+          aria-label={ajustesAberto ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={ajustesAberto}
+          aria-controls="menu-gestao-web"
+          title={ajustesAberto ? 'Fechar menu' : 'Abrir menu'}
+          className="flex min-h-28 w-11 items-center justify-center rounded-r-xl border border-l-0 border-white/25 px-2 py-3 text-xs font-black uppercase tracking-[0.18em] text-white opacity-60 shadow-lg transition-all duration-300 hover:w-12 hover:opacity-100 hover:brightness-110 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+          style={{ backgroundColor: corPrimaria }}
+        >
+          <span className="[writing-mode:vertical-rl] rotate-180">Menu</span>
+        </button>
       </div>
       {emCarencia(estadoAcesso) && (
         <button
@@ -10159,8 +10179,9 @@ if (validacaoTelefoneObrigatoria) {
     />
 
     <div
-      className="print-ocultar fixed bottom-0 left-0 top-[92px] z-[1200] flex w-[296px] max-w-[calc(100vw-18px)] flex-col gap-2 overflow-hidden rounded-r-2xl border border-l-0 border-slate-700 bg-slate-900 p-3 text-white shadow-2xl transition-[transform,opacity] xl:top-[108px]"
-    style={{ borderTopColor: corPrimaria, borderTopWidth: '3px', borderRightColor: corPrimaria }}
+      id="menu-gestao-web"
+      className="av-menu-gestao-entrada print-ocultar fixed bottom-0 left-0 top-[92px] z-[1200] flex w-[296px] max-w-[calc(100vw-18px)] flex-col gap-2 overflow-hidden rounded-r-2xl border border-l-0 border-slate-700 bg-slate-900 p-3 text-white shadow-2xl"
+    style={{ top: alturaHeaderGestao ? `${alturaHeaderGestao}px` : undefined, borderTopColor: corPrimaria, borderTopWidth: '3px', borderRightColor: corPrimaria }}
     onMouseMove={reiniciarTimerAjustes}
     onMouseDown={reiniciarTimerAjustes}
     onKeyDown={reiniciarTimerAjustes}
@@ -10223,11 +10244,10 @@ if (validacaoTelefoneObrigatoria) {
 
         {/* 3b. Assinatura (só com cobrança ativa, para gestor master / administrador) */}
         {COBRANCA_ATIVA && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador') && (
-          <Tooltip texto="Veja a situação da sua assinatura e do plano." posicao="right" wrapperClassName="order-25 w-full">
+          <Tooltip texto="Veja a situação da sua assinatura e do plano." posicao="right" wrapperClassName="order-15 w-full">
             <button
               onClick={() => { setAjustesAberto(false); setModalAssinatura(true); }}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
-              style={{ borderColor: corPrimaria }}
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border border-amber-400 bg-amber-600 px-3 py-2 text-left text-xs font-black text-white shadow-md transition-colors hover:bg-amber-500"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -10238,7 +10258,7 @@ if (validacaoTelefoneObrigatoria) {
         )}
 
         {modulosPaginaTotalAtivos(modulosAtivos).map((modulo) => (
-          <Tooltip key={modulo.id} texto={`Abrir ${modulo.nome} em tela total.`} posicao="right" wrapperClassName="order-28 w-full">
+          <Tooltip key={modulo.id} texto={modulo.id === 'projetos' ? 'Crie e gerencie seus projetos, etapas, tarefas e responsáveis.' : `Abrir ${modulo.nome} em tela total.`} posicao="right" wrapperClassName="order-28 w-full">
             <button
               type="button"
               onClick={() => {

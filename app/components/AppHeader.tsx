@@ -51,6 +51,8 @@ interface AppHeaderProps {
   setModalEmpresasAberto: React.Dispatch<React.SetStateAction<boolean>>;
   agendaHojeCount: number;
   onAbrirAgenda: () => void;
+  headerId?: string;
+  onHeaderHeightChange?: (altura: number) => void;
   // Abas premium bloqueadas no plano grátis (mostram cadeado; o clique é
   // interceptado pelo setAbaAtiva que a página passa).
   abasPremium?: string[];
@@ -74,6 +76,8 @@ export default function AppHeader({
   onAbrirLogo,
   setModalEmpresasAberto,
   agendaHojeCount, onAbrirAgenda,
+  headerId,
+  onHeaderHeightChange,
   abasPremium = [],
 }: AppHeaderProps) {
   const itensMenu = [
@@ -86,6 +90,7 @@ export default function AppHeader({
 
   // Indicador deslizante do menu (a "pilula" que escorrega ate a aba ativa)
   const navRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const [indicador, setIndicador] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -105,6 +110,17 @@ export default function AppHeader({
     window.addEventListener('resize', calcular);
     return () => window.removeEventListener('resize', calcular);
   }, [abaAtiva]);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header || !onHeaderHeightChange) return;
+
+    const atualizarAltura = () => onHeaderHeightChange(Math.ceil(header.getBoundingClientRect().height));
+    atualizarAltura();
+    const observador = new ResizeObserver(atualizarAltura);
+    observador.observe(header);
+    return () => observador.disconnect();
+  }, [onHeaderHeightChange]);
 
   const fecharMenuResponsivo = () => {
     setMenuResponsivoAberto(false);
@@ -277,6 +293,8 @@ export default function AppHeader({
 
       {/* ── HEADER PRINCIPAL ── */}
       <header
+        id={headerId}
+        ref={headerRef}
         className={`print-ocultar ${bgCard} sticky top-0 z-[900] w-full max-w-full overflow-hidden border-b px-3 py-2 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:py-3 relative`}
         style={{ borderBottomColor: darkMode ? '#334155' : 'transparent', borderBottomWidth: '1px' }}
       >

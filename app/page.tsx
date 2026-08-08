@@ -40,14 +40,41 @@ export const metadata: Metadata = {
   },
 };
 
-const recursos = [
-  ['Financeiro sob controle', 'Organize receitas, despesas, pagamentos programados e reservas em uma visão clara do seu dia a dia.'],
-  ['Indicadores que explicam', 'Compare períodos, acompanhe gráficos e descubra cedo o que merece a sua atenção.'],
-  ['Ava, sua assistente', 'Tire dúvidas sobre o sistema e entenda seus números com explicações em linguagem simples.'],
-  ['Equipe no mesmo ritmo', 'Centralize ponto, permissões e rotinas operacionais sem somar mais uma ferramenta.'],
-  ['Controle de Ponto', 'Acompanhe jornada, registros, ajustes e relatórios da equipe em um só lugar.'],
-  ['Importação de despesas', 'Traga despesas de faturas ou extratos para organizar e revisar os lançamentos com mais agilidade.'],
+type RecursoIcone = 'ponto' | 'mapa' | 'vendas' | 'financeiro' | 'empresas' | 'usuarios' | 'extrato' | 'indicadores' | 'insights' | 'backup' | 'visual';
+
+const recursos: readonly [string, string, RecursoIcone | 'ava'][] = [
+  ['Controle de Ponto', 'Acompanhe jornada, registros, ajustes e relatórios da equipe em um só lugar.', 'ponto'],
+  ['Mapa mental', 'Organize ideias, conexões e próximos passos em uma visão visual para dar clareza aos seus projetos.', 'mapa'],
+  ['Ava, sua assistente de IA', 'Tire dúvidas sobre o sistema e entenda seus números com explicações em linguagem simples.', 'ava'],
+  ['Vendas Mobile', 'Leve clientes, produtos, pedidos e pagamentos para a rotina comercial pelo celular.', 'vendas'],
+  ['Financeiro sob controle', 'Organize receitas, despesas, pagamentos programados e reservas em uma visão clara do seu dia a dia.', 'financeiro'],
+  ['Gestão unificada de múltiplas empresas', 'Acompanhe perfis empresariais em um só lugar, com a visão certa para cada operação.', 'empresas'],
+  ['Adicione usuários com acesso gerenciável', 'Inclua pessoas no perfil e defina, como gestor, o que cada uma pode visualizar e administrar.', 'usuarios'],
+  ['Importação de despesas via extrato ou fatura', 'Envie extratos ou faturas para identificar e organizar despesas com mais rapidez.', 'extrato'],
+  ['Indicadores que explicam', 'Compare períodos, acompanhe gráficos e descubra cedo o que merece a sua atenção.', 'indicadores'],
+  ['Insights e dicas financeiras por IA', 'Receba leituras claras sobre a sua rotina financeira para agir com mais contexto.', 'insights'],
+  ['Backup e restauração facilitados', 'Proteja seus dados e recupere informações quando precisar, com mais tranquilidade.', 'backup'],
+  ['Visual ajustável', 'Adapte cores e preferências de visualização para deixar a gestão mais próxima da sua rotina.', 'visual'],
 ];
+
+function IconeRecurso({ nome }: { nome: RecursoIcone }) {
+  const comuns = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  const conteudo = {
+    ponto: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.3 2" /></>,
+    mapa: <><circle cx="5" cy="6" r="2" /><circle cx="19" cy="6" r="2" /><circle cx="12" cy="18" r="2" /><path d="M6.7 7.1 10.4 16M17.3 7.1 13.6 16M7 6h10" /></>,
+    vendas: <><rect x="7.5" y="3.5" width="9" height="17" rx="1.8" /><path d="M10.5 17.5h3M10 6.5h4" /><path d="m4 11 2-2 2 2" /></>,
+    financeiro: <><path d="M4 7.2A2.2 2.2 0 0 1 6.2 5h10.6A2.2 2.2 0 0 1 19 7.2v9.6a2.2 2.2 0 0 1-2.2 2.2H6.2A2.2 2.2 0 0 1 4 16.8Z" /><path d="M4 9h15M15.5 14h1" /></>,
+    empresas: <><path d="M4 20V6.5A1.5 1.5 0 0 1 5.5 5h6A1.5 1.5 0 0 1 13 6.5V20M13 10.5h5.5A1.5 1.5 0 0 1 20 12v8M2.5 20h19M7.5 8.5h2M7.5 12h2M7.5 15.5h2M16 14h1.5M16 17h1.5" /></>,
+    usuarios: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20c.5-4 2.4-6 5.5-6s5 2 5.5 6M16 5.5a2.6 2.6 0 0 1 0 5M18.5 14c1.4.6 2.1 1.8 2.3 3.6" /></>,
+    extrato: <><rect x="4" y="3.5" width="16" height="17" rx="2" /><path d="M8 8h8M8 12h8M8 16h4M6.5 8h.01M6.5 12h.01M6.5 16h.01" /></>,
+    indicadores: <><path d="M4 19.5h16M6.5 17v-5M11 17V8M15.5 17v-8M20 5l-5 4-4-2.5-5 5" /></>,
+    insights: <><path d="M12 3.5a6.2 6.2 0 0 0-3.7 11.2c.8.6 1.2 1.3 1.2 2.3h5c0-1 .4-1.7 1.2-2.3A6.2 6.2 0 0 0 12 3.5Z" /><path d="M10 20.5h4M10.2 17h3.6M18.5 5.5l1-1M5.5 5.5l-1-1M20.5 11h-1.4M4.9 11H3.5" /></>,
+    backup: <><path d="M20 12a8 8 0 1 1-2.3-5.7" /><path d="M20 5v5h-5M12 8v5l3 1.8" /></>,
+    visual: <><path d="M5 6h14M5 12h14M5 18h14" /><circle cx="9" cy="6" r="1.7" /><circle cx="15" cy="12" r="1.7" /><circle cx="11" cy="18" r="1.7" /></>,
+  }[nome];
+
+  return <svg viewBox="0 0 24 24" aria-hidden="true" {...comuns}>{conteudo}</svg>;
+}
 
 const solucoes = [
   ['/gestao-financeira', 'Gestão financeira empresarial', 'Organize receitas, despesas, indicadores e rotinas da empresa em uma única visão.'],
@@ -138,9 +165,9 @@ export default function AvantaLandingPage() {
       <section className={styles.section} id="recursos">
         <div className={styles.wrap} data-scroll-target>
           <p className={styles.kicker}>Feito para a rotina real</p>
-          <h2>Menos planilhas espalhadas. Mais contexto para agir.</h2>
+          <h2 className={styles.resourcesTitle}>Menos planilhas espalhadas. Mais contexto para agir.</h2>
           <p className={styles.sectionLead}>Uma base única para cuidar do financeiro e acompanhar a operação com consistência.</p>
-          <div className={styles.resourceGrid}>{recursos.map(([titulo, texto]) => <article className={styles.resourceCard} key={titulo}>{titulo === 'Ava, sua assistente' ? <span className={avaBadge.logo}><Image src="/images/ava-logo-principal.png" alt="Logo da Ava" width={768} height={420} /></span> : <span aria-hidden="true">↗</span>}<h3>{titulo}</h3><p>{texto}</p></article>)}</div>
+          <div className={styles.resourceGrid}>{recursos.map(([titulo, texto, icone]) => <article className={styles.resourceCard} key={titulo}>{icone === 'ava' ? <span className={avaBadge.logo}><Image src="/images/ava-logo-principal.png" alt="Logo da Ava" width={768} height={420} /></span> : <span><IconeRecurso nome={icone} /></span>}<h3>{titulo}</h3><p>{texto}</p></article>)}</div>
         </div>
       </section>
 

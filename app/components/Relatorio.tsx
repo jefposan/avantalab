@@ -52,6 +52,7 @@ export default function Relatorio({
   const [metricaEvolutiva, setMetricaEvolutiva] = useState<MetricaEvolutiva>('entradas');
   const [lancamentosTodosAnos, setLancamentosTodosAnos] = useState<LancamentoBanco[]>([]);
   const [faturamentosTodosAnos, setFaturamentosTodosAnos] = useState<FaturamentoBanco[]>([]);
+  const [linhaContabilEmDestaque, setLinhaContabilEmDestaque] = useState<string | null>(null);
 
   const getCategoria = (nomeDespesa: string) => {
     const despesa = despesasCadastradas.find((d) => d.nome === nomeDespesa);
@@ -307,13 +308,23 @@ export default function Relatorio({
           {dadosRelatorio.dados.map((linha, index) => {
             const valor = linha[dataKey];
             const isNegative = valor < 0;
+            const chaveLinha = `${dataKey}:${linha.mes}`;
+            const linhaDestacada = linhaContabilEmDestaque === chaveLinha;
 
             return (
               <tr
                 key={linha.mes}
                 className={`border-b ${borderClass} ${
                   index % 2 === 0 ? '' : bgRowAlt
-                } hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors`}
+                } transition-[background-color,box-shadow] duration-150`}
+                onMouseEnter={() => setLinhaContabilEmDestaque(chaveLinha)}
+                onMouseLeave={() => setLinhaContabilEmDestaque(null)}
+                style={linhaDestacada ? {
+                  backgroundColor: darkMode
+                    ? `color-mix(in srgb, ${corPrimaria} 42%, #1e293b)`
+                    : `color-mix(in srgb, ${corPrimaria} 26%, #ffffff)`,
+                  boxShadow: `inset 4px 0 0 ${corPrimaria}`,
+                } : undefined}
               >
                 <td className={`py-1 px-3 text-[10px] font-bold border-r ${borderClass}`}>
                   {linha.mes}
@@ -530,13 +541,23 @@ export default function Relatorio({
                 {dadosRelatorio.dados.map((linha, index) => {
                   const valor = linha[metricaEvolutiva];
                   const isNegative = valor < 0;
+                  const chaveLinha = `evolutiva:${metricaEvolutiva}:${linha.mes}`;
+                  const linhaDestacada = linhaContabilEmDestaque === chaveLinha;
 
                   return (
                     <tr
                       key={linha.mes}
                       className={`border-b ${borderClass} ${
                         index % 2 === 0 ? '' : bgRowAlt
-                      } hover:bg-slate-50/10 transition-colors`}
+                      } transition-[background-color,box-shadow] duration-150`}
+                      onMouseEnter={() => setLinhaContabilEmDestaque(chaveLinha)}
+                      onMouseLeave={() => setLinhaContabilEmDestaque(null)}
+                      style={linhaDestacada ? {
+                        backgroundColor: darkMode
+                          ? `color-mix(in srgb, ${corPrimaria} 42%, #1e293b)`
+                          : `color-mix(in srgb, ${corPrimaria} 26%, #ffffff)`,
+                        boxShadow: `inset 4px 0 0 ${corPrimaria}`,
+                      } : undefined}
                     >
                       <td className="py-1 px-1.5 text-[9px] font-bold uppercase">{linha.mes}</td>
                       <td className={`py-1 px-1.5 text-right text-[10px] font-bold ${isNegative ? 'text-red-500' : ''}`}>

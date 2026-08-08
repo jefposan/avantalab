@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.30 -->
+<!-- ava-version: 1.7.2.31 -->
+
+> Revisão 1.7.2.31: ajustes de navegação, gráficos, balanços e landing são
+> exclusivos da web; sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.7.2.30: ajuste exclusivo do AvantaProjetos Web; sem mudança
 > operacional na Gestão Mobile.

@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { corEhClara } from '../lib/formatters';
 
 interface BalancoGeralProps {
   meses: string[];
@@ -25,6 +26,7 @@ export default function BalancoGeral({
   salvarFaturamentoMes,
   nomeEmpresa,
 }: BalancoGeralProps) {
+  const [mesBalancoEmDestaque, setMesBalancoEmDestaque] = useState<string | null>(null);
 
   const getDespesaMes = (mes: string) => lancamentos.filter(l => l.mes === mes).reduce((acc, l) => acc + l.valor, 0);
   const getFaturamentoMes = (mes: string) => faturamentos[mes] || 0;
@@ -80,6 +82,24 @@ export default function BalancoGeral({
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
+  const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
+  const estiloLinhaBalanco = (mes: string, mostrarMarcador = false) => mesBalancoEmDestaque === mes ? {
+    backgroundColor: darkMode
+      ? `color-mix(in srgb, ${corPrimaria} 42%, #1e293b)`
+      : `color-mix(in srgb, ${corPrimaria} 26%, #ffffff)`,
+    boxShadow: mostrarMarcador ? `inset 4px 0 0 ${corPrimaria}` : undefined,
+  } : undefined;
+
+  const ResumoAnual = ({ titulo, valor, classeValor }: { titulo: string; valor: string; classeValor: string }) => (
+    <div className={`${bgCard} card-radius-avantalab min-w-0 overflow-hidden rounded-2xl border-2 shadow-lg`} style={{ borderColor: corPrimaria }}>
+      <div className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wide" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+        {titulo}
+      </div>
+      <div className="px-3 py-2 text-center">
+        <p className={`text-base font-bold ${classeValor}`}>{valor}</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="w-full print:p-0 print:m-0 text-xs animate-fade-in space-y-5">
@@ -165,40 +185,21 @@ export default function BalancoGeral({
   </button>
 </div>
 
-      {/* BLOCO SUPERIOR: 4 QUADRANTES DE RESUMO ANUAL COM A TARJA FINA */}
+      {/* BLOCO SUPERIOR: 4 RESUMOS ANUAIS NO PADRÃO DO DASHBOARD */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 print-ocultar">
-        
-        {/* Quadrante 1: Despesas */}
-        <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>Total Despesas</h3>
-          <p className="text-base font-bold text-red-500">{formatarMoeda(totaisAnuais.desp)}</p>
-        </div>
-
-        {/* Quadrante 2: Faturamento */}
-        <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>Total Faturamento</h3>
-          <p className="text-base font-bold text-[#00b050]">{formatarMoeda(totaisAnuais.fat)}</p>
-        </div>
-
-        {/* Quadrante 3: A + B */}
-        <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>A + B (Líquido)</h3>
-          <p className={`text-base font-bold ${totaisAnuais.ab >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
-            {formatarMoeda(totaisAnuais.ab)}
-          </p>
-        </div>
-
-        {/* Quadrante 4: Total % */}
-        <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>Margem Total (%)</h3>
-          <p className={`text-base font-bold ${textStrong}`}>{totaisAnuais.perc.toFixed(2)}%</p>
-        </div>
-
+        <ResumoAnual titulo="Total Despesas" valor={formatarMoeda(totaisAnuais.desp)} classeValor="text-red-500" />
+        <ResumoAnual titulo="Total Faturamento" valor={formatarMoeda(totaisAnuais.fat)} classeValor="text-[#00b050]" />
+        <ResumoAnual titulo="A + B (Líquido)" valor={formatarMoeda(totaisAnuais.ab)} classeValor={totaisAnuais.ab >= 0 ? 'text-blue-500' : 'text-red-500'} />
+        <ResumoAnual titulo="Margem Total (%)" valor={`${totaisAnuais.perc.toFixed(2)}%`} classeValor={textStrong} />
       </div>
 
-      {/* MATRIZ MENSAL (ENVOLVIDA NUM QUADRANTE PADRÃO) */}
+      {/* MATRIZ MENSAL NO PADRÃO DO DASHBOARD */}
       <div className="balanco-print-frame">
-      <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border p-4 border-t-2 overflow-hidden`} style={{ borderTopColor: corPrimaria }}>
+      <div className={`${bgCard} card-radius-avantalab overflow-hidden rounded-2xl border-2 shadow-lg`} style={{ borderColor: corPrimaria }}>
+        <div className="px-5 py-3 text-center text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          Balanço por trimestre
+        </div>
+        <div className="p-4">
         <div id="painel-balanco" className="overflow-x-auto pb-2">
           <div className="min-w-[960px] space-y-2 pt-1">
             
@@ -228,7 +229,13 @@ export default function BalancoGeral({
                 
                 <div className={`flex flex-col border rounded-lg overflow-hidden shadow-sm ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`} style={{ borderColor: corPrimaria }}>
                   {trimestre.meses.map((mes, idx) => (
-                    <div key={`desp-${mes}`} className={`flex h-7 items-center bg-transparent ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}>
+                    <div
+                      key={`desp-${mes}`}
+                      className={`flex h-7 items-center bg-transparent transition-[background-color,box-shadow] duration-150 ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}
+                      onMouseEnter={() => setMesBalancoEmDestaque(mes)}
+                      onMouseLeave={() => setMesBalancoEmDestaque(null)}
+                      style={estiloLinhaBalanco(mes, true)}
+                    >
                       <div className="w-20 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-semibold px-1 text-[10px] text-slate-500 dark:text-slate-400 bg-transparent">{mes}</div>
                       <div className={`flex-1 flex items-center justify-end px-2 font-semibold ${textStrong}`}>
                         {getDespesaMes(mes).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -239,7 +246,13 @@ export default function BalancoGeral({
 
                 <div className={`flex flex-col border rounded-lg overflow-hidden shadow-sm`} style={{ borderColor: '#00b050' }}>
                   {trimestre.meses.map((mes, idx) => (
-                    <div key={`fat-${mes}`} className={`flex h-7 items-center bg-[#00b050]/5 dark:bg-[#00b050]/10 ${idx !== 2 ? 'border-b border-[#00b050]/20' : ''}`}>
+                    <div
+                      key={`fat-${mes}`}
+                      className={`flex h-7 items-center bg-[#00b050]/5 transition-[background-color] duration-150 dark:bg-[#00b050]/10 ${idx !== 2 ? 'border-b border-[#00b050]/20' : ''}`}
+                      onMouseEnter={() => setMesBalancoEmDestaque(mes)}
+                      onMouseLeave={() => setMesBalancoEmDestaque(null)}
+                      style={estiloLinhaBalanco(mes)}
+                    >
                       <div className="w-20 border-r border-[#00b050]/20 flex items-center justify-center font-semibold px-1 text-[10px] text-[#00b050] bg-transparent">{mes}</div>
                       <div className="flex-1 flex items-center px-2">
                         <input
@@ -259,7 +272,13 @@ export default function BalancoGeral({
                   {trimestre.meses.map((mes, idx) => {
                     const ab = getAB(mes);
                     return (
-                      <div key={`ab-${mes}`} className={`flex h-7 items-center bg-transparent ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}>
+                      <div
+                        key={`ab-${mes}`}
+                        className={`flex h-7 items-center bg-transparent transition-[background-color] duration-150 ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}
+                        onMouseEnter={() => setMesBalancoEmDestaque(mes)}
+                        onMouseLeave={() => setMesBalancoEmDestaque(null)}
+                        style={estiloLinhaBalanco(mes)}
+                      >
                         <div className="w-20 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-semibold px-1 text-[10px] text-slate-500 bg-transparent">{mes}</div>
                         <div className={`flex-1 flex items-center justify-end px-2 font-semibold ${ab < 0 ? 'text-red-500' : textStrong}`}>
                           {ab < 0 ? `(${Math.abs(ab).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})` : ab.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -273,7 +292,13 @@ export default function BalancoGeral({
                   {trimestre.meses.map((mes, idx) => {
                     const perc = getLucroPerc(mes);
                     return (
-                      <div key={`perc-${mes}`} className={`flex h-7 items-center bg-transparent ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}>
+                      <div
+                        key={`perc-${mes}`}
+                        className={`flex h-7 items-center bg-transparent transition-[background-color] duration-150 ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}
+                        onMouseEnter={() => setMesBalancoEmDestaque(mes)}
+                        onMouseLeave={() => setMesBalancoEmDestaque(null)}
+                        style={estiloLinhaBalanco(mes)}
+                      >
                         <div className="w-20 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-semibold px-1 text-[10px] text-slate-500 bg-transparent">{mes}</div>
                         <div className={`flex-1 flex items-center justify-end px-2 font-semibold ${perc < 0 ? 'text-red-500' : textStrong}`}>
                           {perc.toFixed(2)}%
@@ -291,6 +316,7 @@ export default function BalancoGeral({
             ))}
 
           </div>
+        </div>
         </div>
       </div>
       <div className="balanco-print-rodape hidden">
