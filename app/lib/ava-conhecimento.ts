@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.33: filtros do Dashboard do AvantaVendas ocupam toda a largura disponível.
+// Revisado na versão 1.7.3: evolução de vendas em 12 meses e filtro do Dashboard do AvantaVendas ocupando toda a largura no celular.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

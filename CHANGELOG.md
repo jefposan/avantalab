@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.3 - 2026-08-08
+
+- AvantaVendas: o Dashboard agora apresenta a evolução das vendas nos últimos
+  12 meses, com barras selecionáveis e valor atualizado ao toque.
+- AvantaVendas: a linha de início, fim, filtrar e mês atual passou a ocupar
+  explicitamente toda a largura disponível também na prévia móvel.
+
+## 1.7.2.34 - 2026-08-08
+
+- AvantaVendas: no celular, os quatro controles do filtro do Dashboard agora
+  ocupam igualmente toda a largura da linha.
+
 ## 1.7.2.33 - 2026-08-08
 
 - AvantaVendas: os dois campos de data do filtro do Dashboard foram ampliados,

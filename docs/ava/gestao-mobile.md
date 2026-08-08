@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.33 -->
+<!-- ava-version: 1.7.3 -->
+
+> Revisão 1.7.3: evolução das vendas e ajuste dos filtros são exclusivos do
+> Dashboard do AvantaVendas; sem impacto na Gestão Mobile.
+
+> Revisão 1.7.2.34: ajuste exclusivo da distribuição dos controles do filtro
+> do Dashboard no AvantaVendas; sem impacto na Gestão Mobile.
 
 > Revisão 1.7.2.33: ajuste exclusivo da largura dos filtros do Dashboard no
 > AvantaVendas; sem impacto na Gestão Mobile.

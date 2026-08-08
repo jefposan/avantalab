@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.33 -->
+<!-- ava-version: 1.7.3 -->
+
+> Revisão 1.7.3: o Dashboard exibe a evolução das vendas dos últimos 12 meses.
+> Tocar em uma barra mostra o valor daquele mês, sem alterar o período do
+> Dashboard. Os quatro controles do filtro ocupam toda a largura no celular.
+
+> Revisão 1.7.2.34: no celular, os quatro controles do filtro do Dashboard
+> ocupam igualmente toda a largura da linha; o funcionamento não mudou.
 
 > Revisão 1.7.2.33: o filtro do Dashboard do AvantaVendas usa toda a largura
 > disponível; os campos de início e fim foram ampliados, sem alteração no

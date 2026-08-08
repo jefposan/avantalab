@@ -81,6 +81,7 @@ const estadoInicial = {
   metaMensal: 0,
   dashboardDiasInativos: 30,
   dashboardConsignadosExpandido: false,
+  dashboardEvolucaoMesSelecionado: '',
   temaEscuro: false,
   acessoVendas: null,
   solicitacaoAcesso: null,
@@ -634,6 +635,7 @@ function salvarEstado() {
     metaMensal: state.metaMensal,
     dashboardDiasInativos: state.dashboardDiasInativos,
     dashboardConsignadosExpandido: state.dashboardConsignadosExpandido,
+    dashboardEvolucaoMesSelecionado: state.dashboardEvolucaoMesSelecionado,
     temaEscuro: state.temaEscuro,
     atalhoInferiorEsquerdo: state.atalhoInferiorEsquerdo,
     atalhoInferiorDireito: state.atalhoInferiorDireito,
@@ -1153,6 +1155,39 @@ function totaisPeriodo() {
     itens,
     produtosSemCusto: produtosSemCusto.size,
   };
+}
+
+function evolucaoVendasDashboard() {
+  const referencia = new Date(`${state.mesReferencia}T12:00:00`);
+  const dataReferencia = Number.isNaN(referencia.getTime()) ? new Date() : referencia;
+  const meses = [];
+  for (let indice = 11; indice >= 0; indice -= 1) {
+    const data = new Date(dataReferencia.getFullYear(), dataReferencia.getMonth() - indice, 1);
+    const ano = data.getFullYear();
+    const mes = data.getMonth();
+    const total = state.vendas
+      .filter((venda) => {
+        const dataVenda = new Date(venda.criado_em);
+        return dataVenda.getFullYear() === ano
+          && dataVenda.getMonth() === mes
+          && venda.status !== 'cancelada'
+          && !pedidoEhConsignado(venda)
+          && !pedidoSomenteBonificado(venda);
+      })
+      .reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+    meses.push({
+      chave: `${ano}-${String(mes + 1).padStart(2, '0')}`,
+      rotulo: new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(data).replace('.', '').toUpperCase(),
+      descricao: new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(data).replace(/^./, (letra) => letra.toUpperCase()),
+      total,
+    });
+  }
+  return meses;
+}
+
+function selecionarEvolucaoVendasDashboard(chaveMes) {
+  state.dashboardEvolucaoMesSelecionado = String(chaveMes || '');
+  render();
 }
 
 function aplicarFiltroDashboard() {
@@ -3087,6 +3122,13 @@ function renderDashboard() {
   const margemPercentual = t.total > 0 ? (t.margem / t.total) * 100 : 0;
   const progressoMensal = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
   const metaAtingida = state.metaMensal > 0 && t.total >= state.metaMensal;
+  const evolucaoVendas = evolucaoVendasDashboard();
+  const maiorVendaMensal = Math.max(...evolucaoVendas.map((item) => item.total), 1);
+  const chaveMesAtual = evolucaoVendas[evolucaoVendas.length - 1]?.chave || '';
+  const chaveMesEvolucao = evolucaoVendas.some((item) => item.chave === state.dashboardEvolucaoMesSelecionado)
+    ? state.dashboardEvolucaoMesSelecionado
+    : chaveMesAtual;
+  const vendaMensalSelecionada = evolucaoVendas.find((item) => item.chave === chaveMesEvolucao) || evolucaoVendas[evolucaoVendas.length - 1];
   if (metaAtingida) requestAnimationFrame(() => celebrarMetaAtingida(t.total));
   const tabelaClientes = clientesTop.length ? clientesTop.map((item) => `<tr><td><b>${escapeHtml(item.nome)}</b><small>${item.pedidos} ${item.pedidos === 1 ? 'pedido' : 'pedidos'}</small></td><td>${moeda(item.total)}</td></tr>`).join('') : '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
   const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr class="dashboard-inactive-row" tabindex="0" role="button" onclick="abrirClienteDashboard('${item.id}')" onkeydown="if(event.key==='Enter'||event.key===' ')abrirClienteDashboard('${item.id}')"><td>${escapeHtml(item.nome)}</td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente sem pedido no período selecionado.</td></tr>';
@@ -3111,6 +3153,16 @@ function renderDashboard() {
         ${kpi('Ticket Médio', moeda(t.ticket), '◈')}
         ${kpi('Itens Vendidos', t.itens.toLocaleString('pt-BR'), '◇')}
         ${kpi('Total Consignado', moeda(consignados.total), '◎')}
+      </section>
+      <section class="dashboard-sales-evolution-card" aria-label="Evolução das vendas nos últimos 12 meses">
+        <header><h3>Evolução das vendas</h3><strong aria-live="polite">${moeda(vendaMensalSelecionada?.total || 0)}</strong></header>
+        <div class="dashboard-sales-evolution-bars">
+          ${evolucaoVendas.map((item) => {
+            const selecionado = item.chave === chaveMesEvolucao;
+            const altura = Math.max(8, Math.round(item.total / maiorVendaMensal * 100));
+            return `<button type="button" class="dashboard-sales-evolution-bar ${selecionado ? 'is-selected' : ''}" onclick="selecionarEvolucaoVendasDashboard('${item.chave}')" aria-pressed="${selecionado}" aria-label="${escapeHtml(item.descricao)}: ${escapeHtml(moeda(item.total))}"><span><i style="height:${altura}%"></i></span><b>${escapeHtml(item.rotulo)}</b></button>`;
+          }).join('')}
+        </div>
       </section>
       <section class="dashboard-movement-card"><header><h3>${svgIcon('dollar')} Movimento financeiro</h3><small>${escapeHtml(nomeMesReferencia())}</small></header><div class="dashboard-finance-bars"><div><span>Vendas <b>${moeda(t.total)}</b></span><i><em style="width:${t.total / maiorMovimento * 100}%"></em></i></div><div><span>Recebimentos <b>${moeda(totalRecebido)}</b></span><i><em style="width:${totalRecebido / maiorMovimento * 100}%"></em></i></div></div></section>
       <section class="dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}"><header><div><h3>${svgIcon('package')} Estoque consignado</h3><small>${consignados.pedidos.length} ${consignados.pedidos.length === 1 ? 'consignado ativo' : 'consignados ativos'} · ${consignados.quantidade.toLocaleString('pt-BR')} unidades · ${moeda(consignados.total)}</small></div><button type="button" onclick="alternarConsignadosDashboard()" aria-expanded="${state.dashboardConsignadosExpandido}">${state.dashboardConsignadosExpandido ? 'Recolher' : 'Ver produtos'} ${state.dashboardConsignadosExpandido ? '⌃' : '⌄'}</button></header>${state.dashboardConsignadosExpandido ? `<div class="dashboard-consignment-products">${listaConsignados}</div>` : ''}</section>
@@ -7611,6 +7663,7 @@ window.enviarSolicitacaoAcesso = enviarSolicitacaoAcesso;
 window.confirmarTelefoneVinculo = confirmarTelefoneVinculo;
 window.cancelarTelefoneVinculo = cancelarTelefoneVinculo;
 window.aplicarFiltroDashboard = aplicarFiltroDashboard;
+window.selecionarEvolucaoVendasDashboard = selecionarEvolucaoVendasDashboard;
 window.abrirCalendarioCentralizado = abrirCalendarioCentralizado;
 window.mudarMesCalendario = mudarMesCalendario;
 window.selecionarDataCalendario = selecionarDataCalendario;
