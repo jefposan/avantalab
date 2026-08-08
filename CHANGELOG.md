@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.19 - 2026-08-08
+
+- A paleta do mapa agora reúne cores pré-definidas e cor livre em uma área
+  isolada, com bolinhas centralizadas abaixo do cabeçalho.
+
 ## 1.7.2.18 - 2026-08-08
 
 - O mapa passa a oferecer cinco cores pré-definidas configuráveis, aplicáveis ao

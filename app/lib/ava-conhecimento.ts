@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.18: o mapa oferece cinco cores pré-definidas persistidas no projeto e uma cor livre.
+// Revisado na versão 1.7.2.19: a paleta de cores do mapa agrupa pré-definidas e cor livre em uma área visual única.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

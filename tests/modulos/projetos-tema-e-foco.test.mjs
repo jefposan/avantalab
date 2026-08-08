@@ -65,4 +65,5 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(estilos, /\.mapNode \{[^}]*height: 132px/);
   assert.match(mapa, /Cores pré-definidas/);
   assert.match(mapa, /onColorPresetsChange/);
+  assert.match(estilos, /\.colorPalette \{ display: flex; align-items: center; gap: 8px;/);
 });

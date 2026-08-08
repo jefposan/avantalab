@@ -308,8 +308,9 @@
 .nodeActionBar button { display: grid; min-width: 48px; min-height: 42px; place-items: center; gap: 1px; border: 0; border-radius: 8px; padding: 4px 6px; background: transparent; cursor: pointer; font-size: 7px; white-space: nowrap; }
 .nodeActionBar button:hover { background: var(--surface-soft); }
 .nodeActionBar .destructiveAction { color: var(--danger); }
-.presetColors { display: grid; gap: 3px; padding: 2px 6px; }
-.presetColors header, .presetColors > div { display: flex; align-items: center; gap: 4px; }
+.colorPalette { display: flex; align-items: center; gap: 8px; border-radius: 10px; padding: 5px 7px; background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+.presetColors { display: grid; gap: 4px; justify-items: center; }
+.presetColors header, .presetColors > div { display: flex; align-items: center; justify-content: center; gap: 4px; }
 .presetColors header span { color: var(--muted); font-size: 7px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .presetColors header button { min-width: 0; min-height: 16px; padding: 0; color: var(--accent); font-size: 7px; }
 .presetColor, .presetColorEditor { display: grid; width: 15px; min-width: 15px !important; height: 15px; min-height: 15px !important; place-items: center; border: 1px solid var(--border) !important; border-radius: 50% !important; padding: 0 !important; background: repeating-conic-gradient(#edf2f4 0 25%, #fff 0 50%) 50% / 6px 6px !important; cursor: pointer; }
@@ -318,7 +319,7 @@
 .presetColorEditor { position: relative; overflow: hidden; }
 .presetColorEditor input { position: absolute; inset: -4px; width: 24px; height: 24px; opacity: 0; cursor: pointer; }
 .presetColorEditor i { width: 100%; height: 100%; border-radius: inherit; }
-.colorAction { position: relative; display: grid; width: 48px; height: 42px; place-items: center; cursor: pointer; }
+.colorAction { position: relative; display: grid; width: 30px; height: 30px; place-items: center; cursor: pointer; }
 .colorAction::after { content: ''; width: 22px; height: 22px; border: 3px solid #fff; border-radius: 999px; background: linear-gradient(135deg, #1f8a9e 0 33%, #b67d19 33% 66%, #9a3c5f 66%); box-shadow: 0 0 0 1px #cad6dd; }
 .colorAction input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .edgeActionBar { gap: 10px; padding: 6px 8px 6px 13px; font-size: 10px; }

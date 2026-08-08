@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.18 -->
+<!-- ava-version: 1.7.2.19 -->
+
+> Revisão 1.7.2.19: a área de cores do card selecionado reúne as pré-definidas
+> e a cor livre no mesmo bloco visual.
 
 > Revisão 1.7.2.18: com um card selecionado, use **Cores pré-definidas** para
 > aplicar uma cor salva; escolha **Ajustar** para definir as cinco bolinhas.
