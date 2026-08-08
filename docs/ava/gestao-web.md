@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.15 -->
+<!-- ava-version: 1.7.2.16 -->
+
+> Revisão 1.7.2.16: no mapa, os cards podem ser arrastados livremente para a
+> esquerda; o limite de posicionamento continua apenas no topo.
 
 > Revisão 1.7.2.15: depois de definir o sucessor, confirme a remoção pelo botão
 > **Excluir**.

@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.15: após escolher o sucessor, a confirmação final é identificada apenas como Excluir.
+// Revisado na versão 1.7.2.16: cards do mapa podem ser posicionados livremente também à esquerda da origem.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

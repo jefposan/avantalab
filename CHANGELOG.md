@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.16 - 2026-08-07
+
+- O mapa permite arrastar cards também para a esquerda da origem, mantendo o
+  limite apenas no topo da área de trabalho.
+
 ## 1.7.2.15 - 2026-08-07
 
 - Na etapa de escolha do sucessor, a ação final de remoção passa a se chamar

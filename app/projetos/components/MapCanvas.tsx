@@ -94,7 +94,7 @@ export function MapCanvas({
   useEffect(() => {
     const move = (event: PointerEvent) => {
       if (pan && event.pointerId === pan.pointerId) setViewport({ ...pan.origin, x: pan.origin.x + event.clientX - pan.x, y: pan.origin.y + event.clientY - pan.y });
-      if (drag && event.pointerId === drag.pointerId) setDragPosition({ nodeId: drag.nodeId, x: Math.max(0, drag.origin.x + (event.clientX - drag.x) / viewport.scale), y: Math.max(0, drag.origin.y + (event.clientY - drag.y) / viewport.scale) });
+      if (drag && event.pointerId === drag.pointerId) setDragPosition({ nodeId: drag.nodeId, x: drag.origin.x + (event.clientX - drag.x) / viewport.scale, y: Math.max(0, drag.origin.y + (event.clientY - drag.y) / viewport.scale) });
     };
     const end = (event: PointerEvent) => {
       if (pan?.pointerId === event.pointerId) setPan(null);
