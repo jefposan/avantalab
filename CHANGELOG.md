@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.2.32 - 2026-08-08
+
+- AvantaVendas: no Dashboard, **Mês atual** agora fica junto aos campos de
+  início, fim e **Filtrar**. O seletor de mês ocupa sozinho a linha seguinte,
+  centralizado e com a mesma largura útil anterior.
+
 ## 1.7.2.31 - 2026-08-08
 
 - A Gestão Web recebeu refinamentos de navegação e leitura: menu lateral com

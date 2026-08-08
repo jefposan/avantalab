@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.31 -->
+<!-- ava-version: 1.7.2.32 -->
+
+> Revisão 1.7.2.32: no Dashboard, os campos de início e fim, **Filtrar** e
+> **Mês atual** ficam na mesma linha. O seletor do mês permanece na linha
+> seguinte, centralizado; o funcionamento dos filtros não mudou.
 
 > Revisão 1.7.2.31: ajustes de navegação, gráficos, balanços e landing são
 > exclusivos da Gestão Web; sem impacto no AvantaVendas.

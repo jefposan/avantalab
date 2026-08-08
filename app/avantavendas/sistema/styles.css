@@ -971,15 +971,15 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dashboard-sticky-head .page-heading { display: grid; align-items: stretch; gap: 8px; margin: 0; }
 .dashboard-sticky-head .page-heading h2 { color: #0A1F44; font-size: 25px; letter-spacing: -.03em; }
 .dashboard-sticky-head .page-heading p { margin: 3px 0 0; color: #65758a; font-size: 12px; }
-.dashboard-sticky-head .date-filter { display: grid; width: 100%; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap: 7px; }
+.dashboard-sticky-head .date-filter { display: grid; width: 100%; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto auto; gap: 7px; }
 .dashboard-sticky-head .date-filter label { min-width: 0; }
-.dashboard-sticky-head .date-filter .filter-button { width: var(--dashboard-action-width); min-width: var(--dashboard-action-width); justify-content: center; }
-.dashboard-sticky-head .month-switcher { width: 100%; gap: 7px; margin: 0; border: 0; padding: 0; }
-.dashboard-sticky-head .month-switcher > div { min-width: 250px; min-height: 38px; flex: 1; border: 1px solid #d6e1ea; border-radius: 9px; background: rgba(255,255,255,.9); }
+.dashboard-sticky-head .date-filter .filter-button, .dashboard-sticky-head .date-filter .current-month { width: var(--dashboard-action-width); min-width: var(--dashboard-action-width); justify-content: center; }
+.dashboard-sticky-head .date-filter .current-month { display: inline-flex; align-items: center; gap: 5px; border: 0; border-radius: 9px; color: #fff; background: #1687D9; }
+.dashboard-sticky-head .month-switcher { display: flex; width: 100%; justify-content: center; gap: 7px; margin: 0; border: 0; padding: 0; }
+.dashboard-sticky-head .month-switcher > div { width: calc(100% - var(--dashboard-action-width) - 7px); min-width: 250px; min-height: 38px; flex: 0 1 calc(100% - var(--dashboard-action-width) - 7px); border: 1px solid #d6e1ea; border-radius: 9px; background: rgba(255,255,255,.9); }
 .dashboard-sticky-head .month-switcher button { min-height: 36px; padding: 0 10px; }
 .dashboard-sticky-head .month-switcher > div > button { border: 0; background: transparent; }
 .dashboard-sticky-head .month-switcher strong { min-width: 150px; color: #0A1F44; font-size: 14px; }
-.dashboard-sticky-head .month-switcher .current-month { width: var(--dashboard-action-width); min-width: var(--dashboard-action-width); flex: 0 0 var(--dashboard-action-width); gap: 5px; border: 0; border-radius: 9px; color: #fff; background: #1687D9; }
 .goal-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
 .dashboard-tables { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
 .goal-card, .dashboard-panel { overflow: hidden; border: 1px solid #dbe5ed; border-radius: 13px; padding: 0; background: #fff; box-shadow: 0 3px 9px rgba(15,42,80,.07); }
@@ -2104,17 +2104,16 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
   .dashboard-sticky-head .page-heading { display: grid; align-items: stretch; gap: 7px; margin: 0; }
   .dashboard-sticky-head .page-heading h2 { font-size: 25px; }
   .dashboard-sticky-head .page-heading p { display: none; }
-  .dashboard-sticky-head .page-heading .date-filter { width: 100%; min-width: 0; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; overflow: visible; padding: 0; }
+  .dashboard-sticky-head .page-heading .date-filter { width: 100%; min-width: 0; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto auto; overflow: visible; padding: 0; }
   .dashboard-sticky-head .date-filter label { height: 34px; }
   .dashboard-sticky-head .date-filter input { padding: 0 5px; font-size: 10px; }
-  .dashboard-sticky-head .date-filter .filter-button { width: var(--dashboard-action-width); min-width: var(--dashboard-action-width); min-height: 34px; gap: 4px; padding: 0 8px; font-size: 9px; }
+  .dashboard-sticky-head .date-filter .filter-button, .dashboard-sticky-head .date-filter .current-month { width: var(--dashboard-action-width); min-width: var(--dashboard-action-width); min-height: 34px; gap: 4px; padding: 0 8px; font-size: 9px; }
   .dashboard-sticky-head .date-filter .filter-button span { display: inline; }
   .dashboard-sticky-head .month-switcher { flex-direction: row; gap: 6px; }
-  .dashboard-sticky-head .month-switcher > div { width: auto; min-width: 0; min-height: 34px; flex: 1 1 auto; }
+  .dashboard-sticky-head .month-switcher > div { width: calc(100% - var(--dashboard-action-width) - 6px); min-width: 0; min-height: 34px; flex: 0 1 calc(100% - var(--dashboard-action-width) - 6px); }
   .dashboard-sticky-head .month-switcher > div > button { min-width: 32px; min-height: 32px; padding: 0 5px; }
   .dashboard-sticky-head .month-switcher strong { min-width: 0; flex: 1; font-size: 12px; }
-  .dashboard-sticky-head .month-switcher .current-month { width: var(--dashboard-action-width); min-width: var(--dashboard-action-width); min-height: 34px; flex: 0 0 var(--dashboard-action-width); margin: 0; padding: 0 7px; font-size: 9px; }
-  .dashboard-sticky-head .month-switcher .current-month .svg-icon { width: 15px; height: 15px; }
+  .dashboard-sticky-head .date-filter .current-month .svg-icon { width: 15px; height: 15px; }
   .dashboard-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .dashboard-kpis .kpi { min-height: 68px; padding: 11px; }
   .dashboard-kpis .kpi strong { font-size: 14px; }

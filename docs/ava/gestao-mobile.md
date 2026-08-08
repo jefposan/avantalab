@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.31 -->
+<!-- ava-version: 1.7.2.32 -->
+
+> Revisão 1.7.2.32: ajuste exclusivo da organização visual do Dashboard no
+> AvantaVendas; sem impacto na Gestão Mobile.
 
 > Revisão 1.7.2.31: ajustes de navegação, gráficos, balanços e landing são
 > exclusivos da web; sem mudança operacional na Gestão Mobile.

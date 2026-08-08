@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.31 -->
+<!-- ava-version: 1.7.2.32 -->
+
+> Revisão 1.7.2.32: ajuste exclusivo da organização visual do Dashboard no
+> AvantaVendas; sem impacto na Gestão Web.
 
 > Revisão 1.7.2.31: na Gestão Web, o menu também pode ser aberto pela etiqueta
 > **Menu** na lateral esquerda. Em gráficos, passe o mouse sobre um mês para

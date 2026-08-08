@@ -147,7 +147,16 @@ exigir(
   'A aprovação deve chegar em tempo real e ter verificação periódica enquanto o usuário aguarda.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '35'"),
+  aplicacao.includes('<button class="filter-button" onclick="aplicarFiltroDashboard()">${svgIcon(\'filter\')}<span>Filtrar</span></button><button class="current-month" onclick="irMesAtual()">')
+    && aplicacao.includes('<section class="month-switcher"><div><button aria-label="Mês anterior"')
+    && !aplicacao.includes('</div><button class="current-month" onclick="irMesAtual()">${svgIcon(\'calendar\')}')
+    && estilos.includes('grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto auto;')
+    && estilos.includes('.dashboard-sticky-head .month-switcher { display: flex; width: 100%; justify-content: center;')
+    && estilos.includes('width: calc(100% - var(--dashboard-action-width) - 7px);'),
+  'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
+);
+exigir(
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '36'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 
