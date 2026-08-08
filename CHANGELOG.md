@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.21 - 2026-08-08
+
+- O mapa do AvantaProjetos agora permite arrastar cards também para cima da
+  origem, sem limitar a organização vertical do projeto.
+
 ## 1.7.2.20 - 2026-08-08
 
 - As cores pré-definidas configuradas no mapa agora permanecem visíveis nas

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.20 -->
+<!-- ava-version: 1.7.2.21 -->
+
+> Revisão 1.7.2.21: no mapa, os cards podem ser movidos para cima da origem,
+> além das demais direções disponíveis.
 
 > Revisão 1.7.2.20: após concluir o ajuste das cores pré-definidas do mapa,
 > cada bolinha mantém a visualização da cor escolhida e pode aplicá-la ao card.

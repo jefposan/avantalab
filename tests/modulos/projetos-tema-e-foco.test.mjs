@@ -60,7 +60,8 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.doesNotMatch(estilos, /\.edgeLine \{[^}]*transition:/);
   assert.match(estilos, /\.root \.dangerButton \{ color: #fff; background: var\(--danger\); \}/);
   assert.match(estilos, /\.deleteNodeSelect select \{ width: 100%; min-height: 46px; border: 1px solid var\(--border\);/);
-  assert.match(mapa, /x: drag\.origin\.x \+ \(event\.clientX - drag\.x\) \/ viewport\.scale, y: Math\.max\(0,/);
+  assert.match(mapa, /x: drag\.origin\.x \+ \(event\.clientX - drag\.x\) \/ viewport\.scale, y: drag\.origin\.y \+ \(event\.clientY - drag\.y\) \/ viewport\.scale/);
+  assert.doesNotMatch(mapa, /Math\.max\(0, drag\.origin\.y/);
   assert.match(nodeCard, /node\.description && <p className=\{styles\.nodeDescription\}>\{node\.description\}<\/p>/);
   assert.match(estilos, /\.mapNode \{[^}]*height: 132px/);
   assert.match(mapa, /Cores pré-definidas/);

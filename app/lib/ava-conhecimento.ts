@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.20: as pré-definidas do mapa mostram a cor configurada após concluir o ajuste.
+// Revisado na versão 1.7.2.21: o mapa permite mover cards livremente também para cima da origem.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
