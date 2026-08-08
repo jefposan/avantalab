@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.28 -->
+<!-- ava-version: 1.7.2.29 -->
+
+> Revisão 1.7.2.29: ajuste visual do ícone SVG no botão **Início** do
+> AvantaProjetos Web; sem alteração de operação.
 
 > Revisão 1.7.2.28: ajuste visual do botão **‹ Início** no AvantaProjetos Web;
 > sem alteração de operação.

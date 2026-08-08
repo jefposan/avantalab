@@ -28,7 +28,7 @@ test('AvantaProjetos recebe o tema salvo no perfil, sem depender do sistema oper
   assert.match(cliente, /TelaCarregandoAcesso/);
   assert.match(cliente, /Ajustes do AvantaProjetos/);
   assert.match(cliente, /Voltar ao início do AvantaLab/);
-  assert.match(cliente, /‹<\/span> Início/);
+  assert.match(cliente, /<Icon name="back" size=\{16\} \/> Início/);
   assert.match(cliente, /const proximoAcesso = \{ \.\.\.access, empresa: \{ \.\.\.access\.empresa, temaEscuro \} \}/);
   assert.doesNotMatch(cliente, /Atualizando…/);
   assert.match(ajustes, /autenticarPerfilCobranca\(request, empresaId, true\)/);
@@ -84,5 +84,5 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(mapa, /import Tooltip from '@\/app\/components\/Tooltip';/);
   assert.match(mapa, /<Tooltip texto="Adicionar filho \(Tab\)" posicao="bottom">/);
   assert.doesNotMatch(mapa, /title="Adicionar filho \(Tab\)"/);
-  assert.match(estilos, /\.moduleExit span \{ display: inline-flex; height: 1em; align-items: center; font-size: 18px; font-weight: 400; line-height: 1; \}/);
+  assert.match(estilos, /\.moduleExit svg \{ display: block; flex: 0 0 16px; \}/);
 });

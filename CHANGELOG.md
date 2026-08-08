@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.29 - 2026-08-08
+
+- O botão **Início** passou a usar a seta SVG do AvantaProjetos, garantindo
+  alinhamento geométrico com o rótulo.
+
 ## 1.7.2.28 - 2026-08-08
 
 - O ícone de retorno do botão **‹ Início** foi alinhado verticalmente ao texto.

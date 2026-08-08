@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.28: ajuste visual no alinhamento do botão de retorno do AvantaProjetos.
+// Revisado na versão 1.7.2.29: o botão Início usa seta SVG alinhada ao rótulo.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

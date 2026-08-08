@@ -71,7 +71,7 @@ function ProjectApp({ companyId, access, onAccessChange }: { companyId: string; 
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.darkTheme : ''} ${mapaEmFoco ? styles.mapFocusMode : ''} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
     <header className={styles.moduleHeader}>
-      <Link href={`/gestao?empresaId=${encodeURIComponent(companyId)}`} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><span aria-hidden="true">‹</span> Início</Link>
+      <Link href={`/gestao?empresaId=${encodeURIComponent(companyId)}`} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</Link>
       <div className={styles.moduleIdentity}>
         <Image
           src="/images/logo-avantalab-oficial.png"
