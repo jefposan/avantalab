@@ -258,7 +258,7 @@
 .canvasWorld { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
 .connections { position: absolute; inset: 0; overflow: visible; }
 .edge { cursor: pointer; pointer-events: stroke; }
-.edgeLine { fill: none; stroke: #879aa7; stroke-width: 2.2; transition: 150ms ease; }
+.edgeLine { fill: none; stroke: #879aa7; stroke-width: 2.2; }
 .edgeHit { fill: none; stroke: transparent; stroke-width: 16; }
 .edge:hover .edgeLine, .selectedEdge .edgeLine { stroke: var(--accent); stroke-width: 3; }
 .freeEdge .edgeLine { stroke: #5b7c91; stroke-dasharray: 8 6; }

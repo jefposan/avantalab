@@ -46,4 +46,6 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(estilos, /\.mapFocusMode \.workspace \{ height: 100dvh; min-height: 0; grid-template-rows: minmax\(0, 1fr\)/);
   assert.match(estilos, /\.mapFocusMode \.workspaceContent, \.mapFocusMode \.primaryView, \.mapFocusMode \.canvas \{ height: 100%; min-height: 0/);
   assert.match(estilos, /\.mapFocusToggleFloating \{ position: fixed/);
+  assert.match(estilos, /\.edgeLine \{ fill: none; stroke: #879aa7; stroke-width: 2\.2; \}/);
+  assert.doesNotMatch(estilos, /\.edgeLine \{[^}]*transition:/);
 });

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.10 - 2026-08-07
+
+- As linhas de conexão do mapa agora acompanham o arraste dos cards de forma
+  imediata, sem a transição que criava atraso visual.
+
 ## 1.7.2.09 - 2026-08-07
 
 - Conexões criadas por **Relacionar** agora exibem **Remover relação** ao serem

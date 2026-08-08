@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.09: conexões livres do mapa podem ser removidas sem apagar os cards relacionados.
+// Revisado na versão 1.7.2.10: as conexões do mapa acompanham o arraste dos cards sem animação de atraso.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.09 -->
+<!-- ava-version: 1.7.2.10 -->
+
+> Revisão 1.7.2.10: durante o arraste de um card no mapa, as linhas de conexão
+> acompanham sua posição imediatamente.
 
 > Revisão 1.7.2.09: para desfazer uma relação, clique na linha entre os cards
 > e escolha **Remover relação**. Os cards não são apagados; use **Desfazer**
