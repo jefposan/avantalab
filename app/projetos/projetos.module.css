@@ -39,7 +39,7 @@
 }
 .primaryButton { color: #fff !important; background: var(--brand); box-shadow: 0 8px 18px rgba(10,31,68,.17); }
 .secondaryButton { border-color: var(--border); color: var(--brand); background: var(--surface); }
-.dangerButton { color: #fff; background: var(--danger); }
+.root .dangerButton { color: #fff; background: var(--danger); }
 .primaryButton:hover:not(:disabled), .secondaryButton:hover:not(:disabled), .dangerButton:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 9px 22px rgba(10,31,68,.13); }
 .primaryButton:disabled, .secondaryButton:disabled, .dangerButton:disabled { opacity: .5; cursor: not-allowed; }
 .iconButton { display: inline-grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; border: 0; border-radius: 12px; background: transparent; cursor: pointer; }

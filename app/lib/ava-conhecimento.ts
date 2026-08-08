@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.12: a exclusão de nós com dependentes separa a decisão da escolha do sucessor.
+// Revisado na versão 1.7.2.13: ações destrutivas do AvantaProjetos preservam texto branco sobre fundo vermelho.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

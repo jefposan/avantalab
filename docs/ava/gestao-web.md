@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.12 -->
+<!-- ava-version: 1.7.2.13 -->
+
+> Revisão 1.7.2.13: ações de exclusão no AvantaProjetos usam fundo vermelho e
+> texto branco, inclusive no modo claro.
 
 > Revisão 1.7.2.12: ao excluir um nó com conectados, escolha **Excluir somente
 > este nó** para indicar o sucessor na etapa seguinte, ou **Excluir nós

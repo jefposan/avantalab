@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.13 - 2026-08-07
+
+- Botões destrutivos do AvantaProjetos mantêm texto branco sobre o fundo vermelho
+  também no modo claro.
+
 ## 1.7.2.12 - 2026-08-07
 
 - O diálogo de exclusão de nós conectados foi reorganizado: cancelar, excluir

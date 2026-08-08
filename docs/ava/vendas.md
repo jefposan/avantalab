@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.12 -->
+<!-- ava-version: 1.7.2.13 -->
+
+> Revisão 1.7.2.13: ajuste exclusivo do AvantaProjetos Web; sem impacto no
+> AvantaVendas.
 
 > Revisão 1.7.2.12: ajuste exclusivo do AvantaProjetos Web; sem impacto no
 > AvantaVendas.
