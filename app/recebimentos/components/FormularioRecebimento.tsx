@@ -15,7 +15,7 @@ type Props = {
   // Recebimento avulso (sem cobrança vinculada).
   onConfirmar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante: File | null, resumo: ResumoRecebimento) => Promise<void> | void;
   // Registro de uma cobrança prevista ou em atraso específica (uma a uma).
-  onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante: File | null, resumo: ResumoRecebimento) => Promise<void> | void;
+  onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante: File | null, resumo: ResumoRecebimento, dataPagamento?: string | null) => Promise<void> | void;
   onCancelar: () => void;
 };
 
@@ -42,12 +42,27 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamentoRecebimento | ''>(() => cobrancaCorrecao?.formaPagamento ?? '');
   const [comprovante, setComprovante] = useState<File | null>(null);
   const [observacao, setObservacao] = useState(() => cobrancaCorrecao?.observacao?.split(' · Devolvido:')[0] ?? '');
+  const [mesPagamento, setMesPagamento] = useState(() => (cobrancaCorrecao?.recebidoEm ?? dataLocalIso()).slice(0, 7));
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const comprovanteInput = useRef<HTMLInputElement | null>(null);
 
   const hoje = useMemo(() => new Date(), []);
   const hojeIso = useMemo(() => dataLocalIso(hoje), [hoje]);
+
+  function dataPagamentoDoMes() {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mesPagamento)) return null;
+    const [ano, mes] = mesPagamento.split('-').map(Number);
+    const diaOriginal = Number((cobrancaCorrecao?.recebidoEm ?? hojeIso).slice(8, 10)) || 1;
+    const ultimoDia = new Date(ano, mes, 0).getDate();
+    return `${mesPagamento}-${String(Math.min(diaOriginal, ultimoDia)).padStart(2, '0')}`;
+  }
+
+  const rotuloMesPagamento = useMemo(() => {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mesPagamento)) return '';
+    const [ano, mes] = mesPagamento.split('-').map(Number);
+    return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(ano, mes - 1, 1));
+  }, [mesPagamento]);
 
   const subsDaEmpresa = useMemo(
     () => subempresas
@@ -159,6 +174,9 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
     if (!formaPagamento) return setErro('Selecione a forma de pagamento.');
     if (precisaObs && !observacao.trim())
       return setErro('Há diferença de valor: a observação é obrigatória.');
+    if (cobrancaCorrecao && !dataPagamentoDoMes()) {
+      return setErro('Selecione o mês do pagamento para reenviar a correção.');
+    }
 
     const resumo: ResumoRecebimento = {
       empresaNome: empresa.nome,
@@ -173,7 +191,15 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
     setSalvando(true);
     try {
       if (cobranca) {
-        await onReceberCobranca(cobranca.id, Number(valorRecebido.toFixed(2)), observacao, formaPagamento, comprovante, resumo);
+        await onReceberCobranca(
+          cobranca.id,
+          Number(valorRecebido.toFixed(2)),
+          observacao,
+          formaPagamento,
+          comprovante,
+          resumo,
+          cobrancaCorrecao ? dataPagamentoDoMes() : null,
+        );
       } else if (sub || clienteDireto) {
         await onConfirmar(empresa.id, sub?.id ?? null, Number(valorRecebido.toFixed(2)), observacao, formaPagamento, comprovante, resumo);
       }
@@ -185,7 +211,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   }
 
   return (
-    <div>
+    <div className={cobrancaCorrecao ? styles.formularioCorrecao : undefined}>
       {cobrancaCorrecao ? (
         <div className={`${styles.readonlyBox} ${styles.correcaoDestino}`}>
           <div className={styles.readonlyRow}><span>Empresa</span><span>{empresa?.nome ?? '—'}</span></div>
@@ -260,6 +286,26 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
             <div className={styles.readonlyRow}><span>Recebimento</span><span>{sub ? rotuloFrequenciaRecebimento(sub.frequenciaRecebimento) : empresa?.frequenciaRecebimento ? rotuloFrequenciaRecebimento(empresa.frequenciaRecebimento) : '—'}</span></div>
           )}
           <div className={styles.readonlyRow}><span>Valor contratado</span><span>{formatarMoeda(valorCombinado ?? 0)}</span></div>
+        </div>
+      )}
+
+      {cobrancaCorrecao && (
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="recebimentos-mes-pagamento">Mês do pagamento</label>
+          <div className={styles.campoMesPagamento}>
+            <input
+              id="recebimentos-mes-pagamento"
+              className={`${styles.input} ${styles.inputMesPagamento}`}
+              type="month"
+              value={mesPagamento}
+              onChange={(event) => setMesPagamento(event.target.value)}
+              aria-describedby="recebimentos-mes-pagamento-ajuda"
+            />
+            <span className={styles.campoMesPagamentoValor} aria-hidden="true">{rotuloMesPagamento}</span>
+          </div>
+          <small id="recebimentos-mes-pagamento-ajuda" className={styles.ajudaCampo}>
+            Altera somente o mês do pagamento. O vencimento original permanece o mesmo.
+          </small>
         </div>
       )}
 

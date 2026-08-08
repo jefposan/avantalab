@@ -50,6 +50,7 @@ export async function POST(request: Request) {
     const valorRecebido = Number(campo(form, 'valorRecebido'));
     const observacao = campo(form, 'observacao');
     const formaPagamento = campo(form, 'formaPagamento');
+    const dataPagamento = campo(form, 'dataPagamento') || null;
     const arquivo = form.get('comprovante');
 
     if (!empresaId) return respostaErro('Empresa não informada.');
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
     if (!lancamentoExistenteId && !recebimentoEmpresaId) return respostaErro('Selecione o cliente do recebimento.');
     if (!Number.isFinite(valorRecebido) || valorRecebido < 0) return respostaErro('Informe um valor recebido válido.');
     if (!FORMAS_PAGAMENTO.has(formaPagamento)) return respostaErro('Selecione uma forma de pagamento.');
+    if (dataPagamento && !/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dataPagamento)) {
+      return respostaErro('Informe um mês de pagamento válido.');
+    }
     if (arquivo != null && (!(arquivo instanceof File) || !arquivo.size)) {
       return respostaErro('Não foi possível ler o comprovante selecionado.');
     }
@@ -105,6 +109,7 @@ export async function POST(request: Request) {
       p_comprovante_nome: arquivo instanceof File ? arquivo.name.slice(0, 255) : null,
       p_comprovante_mime: arquivo instanceof File ? arquivo.type : null,
       p_comprovante_tamanho: arquivo instanceof File ? arquivo.size : null,
+      p_data_pagamento: dataPagamento,
     });
     if (error || !data) {
       if (arquivoEnviado) await clientes.admin.storage.from(BUCKET).remove([arquivoEnviado]);
