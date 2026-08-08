@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.23: editar um projeto também permite cadastrar e associar participantes.
+// Revisado na versão 1.7.2.24: responsáveis nos detalhes do card usam seleção compacta e alinhada.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

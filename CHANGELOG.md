@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.24 - 2026-08-08
+
+- A seleção de responsáveis nos detalhes do card agora usa o mesmo padrão
+  compacto de participantes, com checkbox, avatar e nome bem alinhados.
+
 ## 1.7.2.23 - 2026-08-08
 
 - A edição de projeto também permite cadastrar um participante e já selecioná-lo

@@ -362,9 +362,10 @@ fieldset.detailSection { padding-top: 8px; }
 .detailProgress { height: 7px; overflow: hidden; border-radius: 999px; background: #e5ecef; }
 .detailProgress i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
 .peopleChecks { display: grid; gap: 5px; }
-.peopleChecks label { display: flex; min-height: 38px; align-items: center; gap: 8px; border-radius: 8px; padding: 4px; color: var(--text); font-size: 10px; }
+.peopleChecks label { display: flex; min-width: 0; min-height: 38px; align-items: center; gap: 6px; border-radius: 8px; padding: 4px 5px; color: var(--text); font-size: 10px; cursor: pointer; }
 .peopleChecks label:hover { background: var(--surface-soft); }
-.peopleChecks span { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 999px; color: #fff; font-size: 7px; }
+.peopleChecks input[type="checkbox"] { width: 16px; height: 16px; min-height: 0; flex: 0 0 16px; margin: 0; padding: 0; accent-color: var(--accent); }
+.peopleChecks span { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; border-radius: 999px; color: #fff; font-size: 7px; }
 .tagList { display: flex; flex-wrap: wrap; gap: 5px; }
 .tagList button, .tagList span { border: 0; border-radius: 999px; padding: 4px 7px; color: #42616d; background: #e6f0f2; font-size: 8px; }
 .tagList button { cursor: pointer; }

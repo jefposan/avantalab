@@ -75,4 +75,5 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(inicioProjetos, /participantManagerList/);
   assert.match(inicioProjetos, /id="edit-participant-registration"/);
   assert.match(inicioProjetos, /if \(editingProject\) setEditForm/);
+  assert.match(estilos, /\.peopleChecks input\[type="checkbox"\] \{ width: 16px; height: 16px; min-height: 0; flex: 0 0 16px;/);
 });

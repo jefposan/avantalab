@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.23 -->
+<!-- ava-version: 1.7.2.24 -->
+
+> Revisão 1.7.2.24: em **Detalhes** do card, a seleção de **Responsáveis** usa
+> checkboxes compactos, alinhados aos avatares e nomes.
 
 > Revisão 1.7.2.23: em **Editar projeto**, a seção **Participantes** também
 > permite cadastrar uma pessoa e incluí-la diretamente no projeto.
