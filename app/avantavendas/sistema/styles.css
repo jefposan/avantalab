@@ -971,9 +971,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dashboard-sticky-head .page-heading { display: grid; align-items: stretch; gap: 8px; margin: 0; }
 .dashboard-sticky-head .page-heading h2 { color: #0A1F44; font-size: 25px; letter-spacing: -.03em; }
 .dashboard-sticky-head .page-heading p { margin: 3px 0 0; color: #65758a; font-size: 12px; }
-.dashboard-sticky-head .date-filter { display: grid; width: 100%; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto auto; gap: 7px; }
+.dashboard-sticky-head .date-filter { display: grid; width: 100%; grid-template-columns: minmax(0,3fr) minmax(0,3fr) minmax(106px,1.5fr) minmax(112px,1.5fr); gap: 7px; }
 .dashboard-sticky-head .date-filter label { min-width: 0; }
-.dashboard-sticky-head .date-filter .filter-button, .dashboard-sticky-head .date-filter .current-month { width: var(--dashboard-action-width); min-width: var(--dashboard-action-width); justify-content: center; }
+.dashboard-sticky-head .date-filter .filter-button, .dashboard-sticky-head .date-filter .current-month { width: 100%; min-width: 0; justify-content: center; }
 .dashboard-sticky-head .date-filter .current-month { display: inline-flex; align-items: center; gap: 5px; border: 0; border-radius: 9px; color: #fff; background: #1687D9; }
 .dashboard-sticky-head .month-switcher { display: flex; width: 100%; justify-content: center; gap: 7px; margin: 0; border: 0; padding: 0; }
 .dashboard-sticky-head .month-switcher > div { width: calc(100% - var(--dashboard-action-width) - 7px); min-width: 250px; min-height: 38px; flex: 0 1 calc(100% - var(--dashboard-action-width) - 7px); border: 1px solid #d6e1ea; border-radius: 9px; background: rgba(255,255,255,.9); }

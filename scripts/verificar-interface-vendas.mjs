@@ -150,13 +150,14 @@ exigir(
   aplicacao.includes('<button class="filter-button" onclick="aplicarFiltroDashboard()">${svgIcon(\'filter\')}<span>Filtrar</span></button><button class="current-month" onclick="irMesAtual()">')
     && aplicacao.includes('<section class="month-switcher"><div><button aria-label="Mês anterior"')
     && !aplicacao.includes('</div><button class="current-month" onclick="irMesAtual()">${svgIcon(\'calendar\')}')
-    && estilos.includes('grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto auto;')
+    && estilos.includes('grid-template-columns: minmax(0,3fr) minmax(0,3fr) minmax(106px,1.5fr) minmax(112px,1.5fr);')
+    && estilos.includes('.dashboard-sticky-head .date-filter .filter-button, .dashboard-sticky-head .date-filter .current-month { width: 100%; min-width: 0; justify-content: center; }')
     && estilos.includes('.dashboard-sticky-head .month-switcher { display: flex; width: 100%; justify-content: center;')
     && estilos.includes('width: calc(100% - var(--dashboard-action-width) - 7px);'),
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '36'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '37'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

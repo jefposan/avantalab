@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.2.32 -->
+<!-- ava-version: 1.7.2.33 -->
+
+> Revisão 1.7.2.33: o filtro do Dashboard do AvantaVendas usa toda a largura
+> disponível; os campos de início e fim foram ampliados, sem alteração no
+> funcionamento.
 
 > Revisão 1.7.2.32: no Dashboard, os campos de início e fim, **Filtrar** e
 > **Mês atual** ficam na mesma linha. O seletor do mês permanece na linha

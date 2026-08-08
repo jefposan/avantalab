@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.33 - 2026-08-08
+
+- AvantaVendas: os dois campos de data do filtro do Dashboard foram ampliados,
+  e os quatro controles agora distribuem toda a largura disponível da linha.
+
 ## 1.7.2.32 - 2026-08-08
 
 - AvantaVendas: no Dashboard, **Mês atual** agora fica junto aos campos de

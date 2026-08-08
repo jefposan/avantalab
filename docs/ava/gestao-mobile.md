@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.2.32 -->
+<!-- ava-version: 1.7.2.33 -->
+
+> Revisão 1.7.2.33: ajuste exclusivo da largura dos filtros do Dashboard no
+> AvantaVendas; sem impacto na Gestão Mobile.
 
 > Revisão 1.7.2.32: ajuste exclusivo da organização visual do Dashboard no
 > AvantaVendas; sem impacto na Gestão Mobile.
