@@ -41,6 +41,7 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(workspace, /Excluir nós conectados/);
   assert.match(workspace, /setDeleteStep\('successor'\)/);
   assert.match(workspace, /const confirmDeleteConnected = useCallback/);
+  assert.match(workspace, /onClick=\{confirmDelete\} disabled=\{!replacementNodeId\}>Excluir<\/button>/);
   assert.match(workspace, /action: 'Nó removido'/);
   assert.match(workspace, /getDescendantIds\(project\.nodes, deleteNode\.id\)/);
   assert.match(workspace, /const removeConnection = useCallback/);

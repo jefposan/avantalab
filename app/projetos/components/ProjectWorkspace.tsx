@@ -307,7 +307,7 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
           <div className={styles.deleteNodeSummary}><span aria-hidden="true">→</span><p>Escolha o card que herdará a posição de <strong>{deleteNode.title}</strong>. Os demais permanecerão conectados a ele.</p></div>
           <label className={styles.deleteNodeSelect}>Card sucessor<select value={replacementNodeId ?? ''} onChange={(event) => setReplacementNodeId(event.target.value || null)}><option value="">Selecione um card</option>{deleteNodeChildren.map((node) => <option key={node.id} value={node.id}>{node.title}</option>)}</select></label>
           {replacementNodeId && <p className={styles.deleteNodeSuccessor}><strong>{deleteNodeChildren.find((node) => node.id === replacementNodeId)?.title}</strong> assumirá esta posição.</p>}
-          <div className={styles.deleteNodeActions}><button type="button" className={styles.secondaryButton} onClick={() => setDeleteStep('choice')}>Voltar</button><button type="button" className={styles.dangerButton} onClick={confirmDelete} disabled={!replacementNodeId}>Excluir somente este nó</button></div>
+          <div className={styles.deleteNodeActions}><button type="button" className={styles.secondaryButton} onClick={() => setDeleteStep('choice')}>Voltar</button><button type="button" className={styles.dangerButton} onClick={confirmDelete} disabled={!replacementNodeId}>Excluir</button></div>
         </>}
       </div>}
     </Modal>

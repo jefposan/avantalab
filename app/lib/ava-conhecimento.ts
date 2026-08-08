@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.2.14: o campo de Card sucessor é exibido como seletor com superfície e foco visíveis.
+// Revisado na versão 1.7.2.15: após escolher o sucessor, a confirmação final é identificada apenas como Excluir.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

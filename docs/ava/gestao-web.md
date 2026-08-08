@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.2.14 -->
+<!-- ava-version: 1.7.2.15 -->
+
+> Revisão 1.7.2.15: depois de definir o sucessor, confirme a remoção pelo botão
+> **Excluir**.
 
 > Revisão 1.7.2.14: na escolha de sucessor, use o campo destacado **Card
 > sucessor** para selecionar o nó que herdará a posição.

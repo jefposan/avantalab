@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2.15 - 2026-08-07
+
+- Na etapa de escolha do sucessor, a ação final de remoção passa a se chamar
+  apenas **Excluir**.
+
 ## 1.7.2.14 - 2026-08-07
 
 - O campo **Card sucessor** passou a ter superfície, borda e foco visíveis para
