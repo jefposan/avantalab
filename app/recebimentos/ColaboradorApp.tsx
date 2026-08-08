@@ -315,7 +315,7 @@ export default function ColaboradorApp() {
         <PainelColaborador
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
           onRegistrar={(empresaRecebimentoId, subId, valor, obs, forma, arquivo) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs, forma, arquivo))}
-          onReceberCobranca={(id, valor, obs, forma, arquivo) => executar((r) => r.receberCobranca(id, valor, obs, forma, arquivo))}
+          onReceberCobranca={(id, valor, obs, forma, arquivo, dataPagamento) => executar((r) => r.receberCobranca(id, valor, obs, forma, arquivo, dataPagamento))}
         />
       </div>
     </div>
