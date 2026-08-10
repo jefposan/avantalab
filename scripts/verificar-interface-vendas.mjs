@@ -157,7 +157,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '39'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '40'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

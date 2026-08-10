@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3 -->
+<!-- ava-version: 1.7.3.01 -->
+
+> Revisão 1.7.3.01: ajuste exclusivo da edição de pagamentos no AvantaVendas;
+> sem impacto na Gestão Mobile.
 
 > Revisão 1.7.3: evolução das vendas e ajuste dos filtros são exclusivos do
 > Dashboard do AvantaVendas; sem impacto na Gestão Mobile.

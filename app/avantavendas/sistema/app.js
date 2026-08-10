@@ -5274,13 +5274,17 @@ function abrirEditarPagamentoCliente(pagamentoId, pagina = 0, retornoClienteId =
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const saldoAtual = saldoFinanceiroCliente(pagamento.cliente_id);
   const valorFormatado = Number(pagamento.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formaAtual = String(pagamento.forma_pagamento || 'Pix');
+  const formasPagamento = [...new Set([formaAtual, 'Pix', 'Dinheiro', 'Cartão de crédito', 'Cartão de débito', 'Cheque', 'Boleto'])];
+  const opcoesFormaPagamento = formasPagamento.map((forma) => `<option value="${escapeAttr(forma)}" ${forma === formaAtual ? 'selected' : ''}>${escapeHtml(forma)}</option>`).join('');
   sheet(`
     <div class="sheet-header"><div><h2>Editar pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')}</p></div><button class="close" onclick="voltarEdicaoPagamento('${pagamento.cliente_id}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">×</button></div>
     <div class="payment-edit-form">
       <label class="transaction-field"><span>Valor pago</span><input id="editarPagamentoValor" type="text" inputmode="numeric" value="${escapeAttr(valorFormatado)}" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoEdicaoPagamento('${pagamentoId}')"></label>
       ${campoDataCentralizado('editarPagamentoData', pagamento.data_pagamento || isoData(new Date()), 'Data do pagamento')}
+      <label class="transaction-field"><span>Forma de pagamento</span><select id="editarPagamentoForma">${opcoesFormaPagamento}</select></label>
       <section class="payment-edit-summary"><div><span>Saldo atual</span><b>${moeda(saldoAtual.debito)}</b></div><div><span>Crédito atual</span><b>${moeda(saldoAtual.credito)}</b></div><div class="final"><span>Novo saldo</span><b id="editarPagamentoNovoSaldo">${moeda(saldoAtual.debito)}</b></div><div><span>Novo crédito</span><b id="editarPagamentoNovoCredito">${moeda(saldoAtual.credito)}</b></div></section>
-      <p class="payment-edit-note">O desconto e a forma de pagamento permanecem inalterados.</p>
+      <p class="payment-edit-note">O desconto permanece inalterado.</p>
     </div>
     <footer class="payment-edit-footer"><button type="button" class="ghost" onclick="voltarEdicaoPagamento('${pagamento.cliente_id}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Cancelar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Excluir</button><button type="button" class="primary payment-edit-save" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Salvar</button></footer>
   `, 'sheet-backdrop-centered payment-edit-backdrop');
@@ -5306,10 +5310,12 @@ async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0, retornoClie
   if (!pagamentoAtual) return;
   const valorAtualizado = Math.max(0, lerCampoMoeda('editarPagamentoValor'));
   const dataAtualizada = valor('editarPagamentoData');
+  const formaAtualizada = valor('editarPagamentoForma');
   if (valorAtualizado <= 0) { toast('Informe um valor de pagamento maior que zero.'); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataAtualizada)) { toast('Informe uma data válida.'); return; }
   if (dataEhFutura(dataAtualizada)) { toast('Pagamento não pode ter data futura.'); return; }
-  const candidato = { ...pagamentoAtual, valor: valorAtualizado, data_pagamento: dataAtualizada };
+  if (!formaAtualizada) { toast('Selecione a forma de pagamento.'); return; }
+  const candidato = { ...pagamentoAtual, valor: valorAtualizado, data_pagamento: dataAtualizada, forma_pagamento: formaAtualizada };
   const resumo = resumoFinanceiroParaConfirmarPagamento(candidato);
   candidato.saldo_anterior = resumo.saldoAnterior;
   candidato.saldo_final = resumo.saldoAtual;

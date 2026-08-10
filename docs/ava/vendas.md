@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3 -->
+<!-- ava-version: 1.7.3.01 -->
+
+> Revisão 1.7.3.01: em Pagamentos, **Editar pagamento** permite alterar a
+> forma de pagamento logo abaixo da data; salvar atualiza o registro e o
+> comprovante correspondente.
 
 > Revisão 1.7.3: o Dashboard exibe a evolução das vendas dos últimos 12 meses.
 > Tocar em uma barra mostra o valor daquele mês, sem alterar o período do

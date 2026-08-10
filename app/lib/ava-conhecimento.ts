@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.3: evolução de vendas em 12 meses e filtro do Dashboard do AvantaVendas ocupando toda a largura no celular.
+// Revisado na versão 1.7.3.01: edição de pagamentos no AvantaVendas permite alterar a forma de pagamento.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

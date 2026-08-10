@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.3.01 - 2026-08-10
+
+- AvantaVendas: ao editar um pagamento, a forma de pagamento pode ser alterada
+  logo abaixo da data e é atualizada ao salvar.
+
 ## 1.7.3 - 2026-08-08
 
 - AvantaVendas: o Dashboard agora apresenta a evolução das vendas nos últimos
