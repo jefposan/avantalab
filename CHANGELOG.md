@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.3.04 - 2026-08-10
+
+- A limpeza de cortesia também consulta o histórico técnico de cobranças para
+  encerrar assinaturas antigas que já não estejam espelhadas nas faturas locais.
+
 ## 1.7.3.03 - 2026-08-10
 
 - Ao liberar um perfil por cortesia, o sistema encerra cobranças abertas no

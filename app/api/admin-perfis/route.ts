@@ -31,9 +31,19 @@ async function limparCobrancasParaCortesia(
     .select('gateway_payment_id, gateway_subscription_id, status')
     .eq('empresa_id', empresaId);
   if (erroFaturas) throw erroFaturas;
+  const { data: eventos, error: erroEventos } = await db
+    .from('cobranca_webhook_eventos')
+    .select('gateway_subscription_id')
+    .eq('empresa_id', empresaId)
+    .not('gateway_subscription_id', 'is', null);
+  if (erroEventos) throw erroEventos;
 
   const assinaturasAsaas = new Set(
-    [gatewaySubscriptionId, ...(faturas || []).map((fatura) => fatura.gateway_subscription_id)]
+    [
+      gatewaySubscriptionId,
+      ...(faturas || []).map((fatura) => fatura.gateway_subscription_id),
+      ...(eventos || []).map((evento) => evento.gateway_subscription_id),
+    ]
       .filter((id): id is string => Boolean(id)),
   );
 

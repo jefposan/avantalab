@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.03 -->
+<!-- ava-version: 1.7.3.04 -->
+
+> Revisão 1.7.3.04: aprimoramento interno da limpeza de cobrança da cortesia;
+> sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.7.3.03: a limpeza de cobranças ao conceder cortesia é feita na
 > administração web; sem mudança operacional na Gestão Mobile.

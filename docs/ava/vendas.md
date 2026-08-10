@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.03 -->
+<!-- ava-version: 1.7.3.04 -->
+
+> Revisão 1.7.3.04: aprimoramento interno da limpeza de cobrança da cortesia;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.3.03: a limpeza de cobranças ao conceder cortesia é exclusiva da
 > administração da Gestão; sem impacto operacional no AvantaVendas.

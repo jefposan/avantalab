@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.03 -->
+<!-- ava-version: 1.7.3.04 -->
+
+> Revisão 1.7.3.04: a limpeza de cobrança da cortesia também alcança
+> assinaturas antigas registradas no histórico técnico; sem nova ação na tela.
 
 > Revisão 1.7.3.03: ao liberar um perfil por **cortesia**, o sistema encerra
 > cobranças abertas e remove os avisos de assinatura. O cadastro do cliente no
