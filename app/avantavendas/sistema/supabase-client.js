@@ -2,6 +2,7 @@
   const config = window.VENDAS_MOBILE_CONFIG || {};
   const sdk = window.supabase;
   const legacyStorageKey = 'avantalab-vendas-mobile-auth';
+  const contaAtivaStorageKey = 'avantalab.vendas_mobile.conta_ativa.v1';
   const projectRef = (() => {
     try { return new URL(config.supabaseUrl).hostname.split('.')[0]; } catch { return ''; }
   })();
@@ -23,6 +24,24 @@
     : null;
   let canalAtualizacoesVinculo = null;
   let usuarioCanalAtualizacoesVinculo = '';
+
+  function contaAtivaId() { try { return localStorage.getItem(contaAtivaStorageKey) || ''; } catch { return ''; } }
+  function definirContaAtiva(contaId) { try { contaId ? localStorage.setItem(contaAtivaStorageKey, contaId) : localStorage.removeItem(contaAtivaStorageKey); } catch { /* armazenamento indisponível */ } }
+  async function listarContasVendas() {
+    const { data, error } = await requireClient().rpc('minhas_contas_vendas_mobile_rpc');
+    if (error) throw error;
+    return data || [];
+  }
+  async function criarContaVendas(nome, empresaId = null) {
+    const { data, error } = await requireClient().rpc('criar_conta_vendas_mobile_rpc', { p_nome: nome, p_empresa_id: empresaId || null });
+    if (error) throw error;
+    return data;
+  }
+  async function adicionarUsuarioContaVendas(contaId, email, papel) {
+    const { data, error } = await requireClient().rpc('adicionar_usuario_conta_vendas_mobile_rpc', { p_conta_id: contaId, p_email: email, p_papel: papel });
+    if (error) throw error;
+    return data;
+  }
 
   function atualizarProgresso(grupo, concluido, total, rotulo) {
     if (typeof window.__avantalabAtualizarProgressoVendas === 'function') {
@@ -266,9 +285,12 @@
   }
 
   async function listarCatalogoVendas() {
+    const contaId = contaAtivaId();
+    if (!contaId) return { produtos: [], pacotes: [] };
     const { data, error } = await carregarTodasPaginas(() => requireClient()
       .from('vendas_mobile_produtos')
       .select('*')
+      .eq('conta_id', contaId)
       .order('criado_em', { ascending: false })
       .order('id', { ascending: false }));
     if (error) throw error;
@@ -355,6 +377,16 @@
       };
     }
 
+    let contasVendas = await listarContasVendas();
+    if (!contasVendas.length) {
+      await criarContaVendas('Minha conta de vendas');
+      contasVendas = await listarContasVendas();
+    }
+    let contaId = contextoPreparado?.contaId || contaAtivaId();
+    if (!contasVendas.some((conta) => conta.id === contaId)) contaId = contasVendas[0]?.id || '';
+    if (!contaId) throw new Error('Nenhuma conta de vendas está disponível para este acesso.');
+    definirContaAtiva(contaId);
+    const contaVendasAtiva = contasVendas.find((conta) => conta.id === contaId) || null;
     const totalEtapasDados = 12;
     let etapasDadosConcluidas = 0;
     const acompanharEtapaDados = (promessa, rotulo) => Promise.resolve(promessa).then(
@@ -384,19 +416,19 @@
       acompanharEtapaDados(carregarTodasPaginas(() => client
         .from('vendas_mobile_clientes')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('conta_id', contaId)
         .order('nome')
         .order('id')), 'Carregando clientes'),
       acompanharEtapaDados(carregarTodasPaginas(() => client
         .from('vendas_mobile_pedidos')
         .select('*, itens:vendas_mobile_pedido_itens(*)')
-        .eq('user_id', user.id)
+        .eq('conta_id', contaId)
         .order('criado_em', { ascending: false })
         .order('id', { ascending: false })), 'Carregando pedidos'),
       acompanharEtapaDados(carregarTodasPaginas(() => client
         .from('vendas_mobile_pagamentos')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('conta_id', contaId)
         .order('data_pagamento', { ascending: false })
         .order('criado_em', { ascending: false })
         .order('id', { ascending: false })), 'Carregando pagamentos'),
@@ -416,6 +448,8 @@
 
     return {
       user,
+      contasVendas,
+      contaVendasAtiva,
       produtos,
       pacotes,
       clientes: (clientesRes.data || []).map((c) => ({
@@ -444,18 +478,20 @@
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
     if (!clienteId) throw new Error('Cliente não informado.');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const [pedidosRes, pagamentosRes] = await Promise.all([
       carregarTodasPaginas(() => requireClient()
         .from('vendas_mobile_pedidos')
         .select('*, itens:vendas_mobile_pedido_itens(*)')
-        .eq('user_id', user.id)
+        .eq('conta_id', contaId)
         .eq('cliente_id', clienteId)
         .order('criado_em', { ascending: false })
         .order('id', { ascending: false })),
       carregarTodasPaginas(() => requireClient()
         .from('vendas_mobile_pagamentos')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('conta_id', contaId)
         .eq('cliente_id', clienteId)
         .order('data_pagamento', { ascending: false })
         .order('criado_em', { ascending: false })
@@ -478,8 +514,11 @@
   async function saveProduct(product) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const payload = {
       user_id: user.id,
+      conta_id: contaId,
       marca: product.marca || null,
       categoria: product.categoria || null,
       sku: product.sku || null,
@@ -500,7 +539,7 @@
       atualizado_em: new Date().toISOString(),
     };
     const query = product.id && !String(product.id).startsWith('prod_')
-      ? client.from('vendas_mobile_produtos').update(payload).eq('id', product.id)
+      ? client.from('vendas_mobile_produtos').update(payload).eq('id', product.id).eq('conta_id', contaId)
       : client.from('vendas_mobile_produtos').insert(payload);
     const { data, error } = await query.select().single();
     if (error) throw error;
@@ -508,7 +547,7 @@
   }
 
   async function deleteProduct(id) {
-    const { error } = await requireClient().from('vendas_mobile_produtos').delete().eq('id', id);
+    const { error } = await requireClient().from('vendas_mobile_produtos').delete().eq('id', id).eq('conta_id', contaAtivaId());
     if (error) throw error;
   }
 
@@ -543,8 +582,11 @@
   async function saveProductsBulk(products, pacote = null) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const payload = products.map((product) => ({
       user_id: user.id,
+      conta_id: contaId,
       marca: product.marca || null,
       categoria: product.categoria || null,
       sku: product.sku || null,
@@ -564,16 +606,19 @@
   }
 
   async function deletePackage(id) {
-    const { error } = await requireClient().from('vendas_mobile_produtos').delete().contains('metadados', { pacote: { id } });
+    const { error } = await requireClient().from('vendas_mobile_produtos').delete().eq('conta_id', contaAtivaId()).contains('metadados', { pacote: { id } });
     if (error) throw error;
   }
 
   async function saveClient(customer) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const payload = {
       id: customer.id,
       user_id: user.id,
+      conta_id: contaId,
       nome: customer.nome,
       telefone: customer.telefone || null,
       email: customer.email || null,
@@ -599,7 +644,7 @@
   async function deleteClient(id) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
-    const { error } = await requireClient().from('vendas_mobile_clientes').delete().eq('id', id).eq('user_id', user.id);
+    const { error } = await requireClient().from('vendas_mobile_clientes').delete().eq('id', id).eq('conta_id', contaAtivaId());
     if (error) throw error;
   }
 
@@ -615,6 +660,7 @@
 
   function pedidoParaPersistencia(order, incluirId = false) {
     const pedido = {
+      conta_id: contaAtivaId(),
       cliente_id: order.cliente_id || null,
       status: order.status || 'concluida',
       subtotal: Number(order.subtotal || order.total || 0),
@@ -668,7 +714,7 @@
   async function deleteOrder(id) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
-    const { error } = await client.from('vendas_mobile_pedidos').delete().eq('id', id).eq('user_id', user.id);
+    const { error } = await client.from('vendas_mobile_pedidos').delete().eq('id', id).eq('conta_id', contaAtivaId());
     if (error) throw error;
   }
 
@@ -678,6 +724,7 @@
     const payload = {
       id: payment.id,
       user_id: user.id,
+      conta_id: contaAtivaId(),
       cliente_id: payment.cliente_id || null,
       tipo: 'pagamento',
       forma_pagamento: payment.forma_pagamento || 'Pix',
@@ -699,6 +746,7 @@
       const legado = {
         id: payload.id,
         user_id: payload.user_id,
+        conta_id: payload.conta_id,
         cliente_id: payload.cliente_id,
         tipo: payload.tipo,
         forma_pagamento: payload.forma_pagamento,
@@ -740,7 +788,7 @@
       .from('vendas_mobile_pagamentos')
       .update(payload)
       .eq('id', payment.id)
-      .eq('user_id', user.id)
+      .eq('conta_id', contaAtivaId())
       .select()
       .single();
     if (error && /desconto|saldo_anterior|saldo_final|schema cache/i.test(String(error.message || ''))) {
@@ -759,7 +807,7 @@
         .from('vendas_mobile_pagamentos')
         .update(legado)
         .eq('id', payment.id)
-        .eq('user_id', user.id)
+        .eq('conta_id', contaAtivaId())
         .select()
         .single());
     }
@@ -775,7 +823,7 @@
       .from('vendas_mobile_pagamentos')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('conta_id', contaAtivaId());
     if (error) throw error;
   }
 
@@ -846,5 +894,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();

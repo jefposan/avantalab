@@ -93,6 +93,8 @@ const estadoInicial = {
   integracaoGestao: { base_receita: 'recebidos', pode_configurar: false },
   vinculosComerciais: [],
   vinculoComercialAtivo: null,
+  contasVendas: [],
+  contaVendasAtiva: null,
   perfisFinanceiros: [],
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
@@ -662,9 +664,9 @@ function abrirBancoCacheVendas() {
   });
 }
 
-function chaveCacheVendas(usuarioId = state.usuario?.id, empresaId = state.acessoVendas?.empresa_id) {
-  if (!usuarioId || !empresaId) return '';
-  return `${usuarioId}:${empresaId}`;
+function chaveCacheVendas(usuarioId = state.usuario?.id, contaId = state.contaVendasAtiva?.id) {
+  if (!usuarioId || !contaId) return '';
+  return `${usuarioId}:${contaId}`;
 }
 
 async function lerCacheVendas() {
@@ -2753,6 +2755,8 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.integracaoGestao = dados.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
       state.vinculosComerciais = dados.vinculosComerciais || [];
       state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
+      state.contasVendas = dados.contasVendas || [];
+      state.contaVendasAtiva = dados.contaVendasAtiva || null;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
       await salvarCacheVendas();
     }
@@ -3784,9 +3788,12 @@ function renderConfiguracoes() {
     return `<button type="button" class="${ativo ? 'is-on' : ''}" onclick="alternarRecursoVinculoComercial('${vinculo.empresa_id}','${chave}',${!ativo})">${titulo}</button>`;
   };
   const renderVinculo = (vinculo) => `<div class="commercial-link ${vinculo.ativo ? 'is-current' : ''}"><header><b>${escapeHtml(vinculo.empresa_nome || 'Empresa')}</b><span>${vinculo.ativo ? 'Ativa' : 'Histórico'}</span></header><div class="commercial-link-resources">${renderRecurso(vinculo, 'novidades', 'Notícias')}${renderRecurso(vinculo, 'divulgacao', 'Divulgação')}${renderRecurso(vinculo, 'catalogo', 'Catálogo')}</div></div>`;
+  const contaAtiva = state.contaVendasAtiva;
+  const contas = state.contasVendas || [];
   return `<section class="module-page settings-page">
     <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div><button type="button" class="danger settings-header-exit" onclick="abrirConfirmacaoSair()">${svgIcon('log-out')} Sair</button></div></div>
     <div class="settings-grid">
+      <article class="settings-card settings-profile-card settings-sales-account-card"><h3>${svgIcon('users')} Conta de vendas</h3><p>Clientes, pedidos, pagamentos, agenda e permissões são separados por conta.</p><div class="settings-sales-account-field"><label for="contaVendasAtiva">Conta ativa:</label><select id="contaVendasAtiva" onchange="trocarContaVendas(this.value)">${contas.map((conta) => `<option value="${escapeAttr(conta.id)}" ${conta.id === contaAtiva?.id ? 'selected' : ''}>${escapeHtml(conta.nome)}${conta.empresa_nome ? ` · ${escapeHtml(conta.empresa_nome)}` : ''}</option>`).join('')}</select></div><div class="settings-sales-account-role">${contaAtiva?.papel === 'proprietario' ? 'Você é o proprietário desta conta.' : `Seu acesso: ${escapeHtml(contaAtiva?.papel || 'vendedor')}.`}</div><div class="actions"><button class="secondary" onclick="abrirContasVendas()">${svgIcon('users')} Gerenciar contas</button></div></article>
       <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
     <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
     </div>
@@ -3806,6 +3813,59 @@ function salvarMeta() {
   state.metaMensal = Math.max(0, lerCampoMoeda('metaConfig'));
   render();
   toast('Meta mensal salva.');
+}
+
+async function trocarContaVendas(contaId) {
+  if (!contaId || contaId === state.contaVendasAtiva?.id) return;
+  try {
+    window.VendasDb.definirContaAtiva(contaId);
+    await carregarDadosBackend(true, false, true);
+    toast(`Conta ${state.contaVendasAtiva?.nome || 'de vendas'} carregada.`);
+  } catch (error) {
+    toast(traduzErro(error));
+  }
+}
+
+function abrirContasVendas() {
+  const contas = state.contasVendas || [];
+  const ativa = state.contaVendasAtiva;
+  const linhas = contas.map((conta) => `<button type="button" class="secondary ${conta.id === ativa?.id ? 'is-selected' : ''}" onclick="trocarContaVendas('${conta.id}');fecharSheet()"><b>${escapeHtml(conta.nome)}</b><small>${escapeHtml(conta.empresa_nome || 'Conta independente')} · ${escapeHtml(conta.papel || 'vendedor')}</small></button>`).join('');
+  sheet(`<div class="sheet-header"><div><h2>Perfis de vendas</h2><p class="muted small">Escolha uma conta, crie outra ou compartilhe a conta ativa.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid">${linhas}</div><div class="actions"><button class="primary" onclick="abrirCriarContaVendas()">${svgIcon('plus')} Criar perfil de vendas</button>${['proprietario','administrador'].includes(ativa?.papel) ? `<button class="secondary" onclick="abrirCompartilharContaVendas()">${svgIcon('users')} Adicionar usuário</button>` : ''}</div>`, 'sheet-backdrop-centered');
+}
+
+function abrirCriarContaVendas() {
+  const vinculos = (state.vinculosComerciais || []).filter((v) => v.ativo);
+  sheet(`<div class="sheet-header"><div><h2>Novo perfil de vendas</h2><p class="muted small">Cada perfil mantém dados e backups próprios.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid create-sales-profile-form"><div class="field"><label for="novaContaVendasNome">Nome do perfil:</label><input id="novaContaVendasNome" autocomplete="organization" placeholder="Ex.: Nome da empresa"></div><div class="field"><label for="novaContaVendasEmpresa">Empresa vinculada (opcional):</label><select id="novaContaVendasEmpresa"><option value="">Conta independente</option>${vinculos.map((v) => `<option value="${escapeAttr(v.empresa_id)}">${escapeHtml(v.empresa_nome)}</option>`).join('')}</select></div><div class="create-sales-profile-help">Para vincular uma nova empresa, solicite primeiro o acesso pelo código da empresa e aguarde a aprovação.</div><button class="primary" onclick="criarContaVendas()">Criar perfil</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function criarContaVendas() {
+  const nome = valor('novaContaVendasNome').trim();
+  const empresaId = valor('novaContaVendasEmpresa');
+  if (nome.length < 2) { toast('Informe o nome do perfil de vendas.'); return; }
+  try {
+    const conta = await window.VendasDb.criarContaVendas(nome, empresaId || null);
+    window.VendasDb.definirContaAtiva(conta.id);
+    fecharSheet();
+    await carregarDadosBackend(true, false, true);
+    toast('Perfil de vendas criado e selecionado.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirCompartilharContaVendas() {
+  const conta = state.contaVendasAtiva;
+  if (!conta) return;
+  sheet(`<div class="sheet-header"><div><h2>Adicionar usuário</h2><p class="muted small">Conta: ${escapeHtml(conta.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><label>E-mail do usuário<input id="contaVendasUsuarioEmail" type="email" autocomplete="email" placeholder="nome@empresa.com"></label><label>Permissão<select id="contaVendasUsuarioPapel"><option value="vendedor">Vendedor</option><option value="consulta">Consulta</option><option value="administrador">Administrador</option></select></label><small>O usuário passará a ver esta conta no mesmo login, sem acesso às suas outras contas.</small><button class="primary" onclick="adicionarUsuarioContaVendas()">Adicionar acesso</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function adicionarUsuarioContaVendas() {
+  const email = valor('contaVendasUsuarioEmail').trim();
+  const papel = valor('contaVendasUsuarioPapel');
+  if (!email) { toast('Informe o e-mail do usuário.'); return; }
+  try {
+    await window.VendasDb.adicionarUsuarioContaVendas(state.contaVendasAtiva.id, email, papel);
+    fecharSheet();
+    toast('Acesso concedido. A conta aparecerá para este usuário no próximo carregamento.');
+  } catch (error) { toast(traduzErro(error)); }
 }
 
 async function salvarIntegracaoGestao(base) {

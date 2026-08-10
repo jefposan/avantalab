@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.8.0 - 2026-08-10
+
+- AvantaVendas: um mesmo login pode ter várias contas de vendas, alternar entre
+  elas e compartilhar uma conta com outros usuários, mantendo clientes,
+  pedidos, pagamentos, agenda, produtos e backups separados por conta.
+- AvantaVendas: o formulário de novo perfil e o card **Conta de vendas** passaram
+  a apresentar labels, espaçamento, seletores e contornos alinhados ao padrão do
+  sistema.
+- AvantaVendas: todos os cards de Configurações agora usam cabeçalho institucional
+  em degradê, com ícones e títulos padronizados; ações de risco preservam o
+  cabeçalho semântico vermelho.
+
 ## 1.7.3.01 - 2026-08-10
 
 - AvantaVendas: ao editar um pagamento, a forma de pagamento pode ser alterada
