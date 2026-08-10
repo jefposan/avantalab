@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.8.0: um login do AvantaVendas pode alternar entre contas e compartilhar uma conta específica.
+// Revisado na versão 1.7.3.02: um login do AvantaVendas pode alternar entre contas e compartilhar uma conta específica.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.

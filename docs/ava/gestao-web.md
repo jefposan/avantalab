@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.0 -->
+<!-- ava-version: 1.7.3.02 -->
 
-> Revisão 1.8.0: contas compartilháveis e ajuste visual de perfil são
+> Revisão 1.7.3.02: contas compartilháveis e ajuste visual de perfil são
 > exclusivos do AvantaVendas; sem impacto na Gestão Web.
 
 > Revisão 1.7.3.01: ajuste exclusivo da edição de pagamentos no AvantaVendas;

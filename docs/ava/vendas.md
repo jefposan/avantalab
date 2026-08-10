@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.0 -->
+<!-- ava-version: 1.7.3.02 -->
 
-> Revisão 1.8.0: em **Configurações > Conta de vendas**, é possível alternar
+> Revisão 1.7.3.02: em **Configurações > Conta de vendas**, é possível alternar
 > entre contas, criar um novo perfil de vendas e, para proprietário ou
 > administrador, adicionar outro usuário. Clientes, pedidos, pagamentos,
 > agenda, produtos e backups permanecem separados em cada conta.

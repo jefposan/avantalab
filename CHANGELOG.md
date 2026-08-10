@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.8.0 - 2026-08-10
+## 1.7.3.02 - 2026-08-10
 
 - AvantaVendas: um mesmo login pode ter várias contas de vendas, alternar entre
   elas e compartilhar uma conta com outros usuários, mantendo clientes,
