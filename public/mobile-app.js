@@ -683,6 +683,7 @@
   var CHAVE_PROMPT_NOTIF = 'avantalab_mobile_prompt_notif';
   var CHAVE_ATALHOS_INFERIORES = 'avantalab_mobile_atalhos_inferiores';
   var CHAVE_INICIAR_VALORES_OCULTOS = 'avantalab_mobile_iniciar_valores_ocultos';
+  var CHAVE_PREFERENCIAS_CONTA_MOBILE = 'avantalab_mobile_preferencias_v1';
   var TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
   var DEZ_MINUTOS_MS = 10 * 60 * 1000;
   var CARDS_COM_VALORES = ['saldo', 'caixinha', 'totais', 'categorias', 'tipos', 'meusPerfis'];
@@ -2552,6 +2553,7 @@
     try {
       localStorage.setItem('avantalab_mobile_dashboard_ordem', JSON.stringify(state.dashboardOrdem));
     } catch (error) {}
+    salvarPreferenciasMobileNaConta();
   }
 
   function salvarResumoDashboard() {
@@ -2559,6 +2561,7 @@
       localStorage.setItem('avantalab_mobile_dashboard_ordem', JSON.stringify(state.dashboardOrdem));
       localStorage.setItem('avantalab_mobile_dashboard_ocultos', JSON.stringify(state.dashboardOcultos));
     } catch (error) {}
+    salvarPreferenciasMobileNaConta();
   }
 
   function iniciarValoresOcultosAtivo() {
@@ -2577,6 +2580,57 @@
     try {
       localStorage.setItem(CHAVE_INICIAR_VALORES_OCULTOS, iniciarValoresOcultosAtivo() ? '1' : '0');
     } catch (error) {}
+    salvarPreferenciasMobileNaConta();
+  }
+
+  function preferenciasMobileAtuais() {
+    return {
+      darkMode: Boolean(state.darkMode),
+      iniciarValoresOcultos: iniciarValoresOcultosAtivo(),
+      dashboardOrdem: normalizarOrdemDashboard(state.dashboardOrdem),
+      dashboardOcultos: normalizarOcultosDashboard(state.dashboardOcultos),
+      atalhos: {
+        esquerdo: normalizarAtalhoInferior(state.atalhoInferiorEsquerdo, 'perfil'),
+        direito: normalizarAtalhoInferior(state.atalhoInferiorDireito, 'agenda'),
+      },
+    };
+  }
+
+  function aplicarPreferenciasMobileDaConta() {
+    if (!state.usuario || !state.empresa || !state.empresa.id) return false;
+    var todas = state.usuario.user_metadata && state.usuario.user_metadata[CHAVE_PREFERENCIAS_CONTA_MOBILE];
+    var preferencias = todas && todas[String(state.empresa.id)];
+    if (!preferencias || typeof preferencias !== 'object') return false;
+
+    state.darkMode = preferencias.darkMode === true;
+    state.iniciarValoresOcultos = preferencias.iniciarValoresOcultos !== false;
+    state.dashboardOrdem = normalizarOrdemDashboard(preferencias.dashboardOrdem || []);
+    state.dashboardOcultos = normalizarOcultosDashboard(preferencias.dashboardOcultos || []);
+    var atalhos = preferencias.atalhos || {};
+    state.atalhoInferiorEsquerdo = normalizarAtalhoInferior(atalhos.esquerdo, 'perfil');
+    state.atalhoInferiorDireito = normalizarAtalhoInferior(atalhos.direito, 'agenda');
+    if (state.atalhoInferiorEsquerdo !== 'nenhum' && state.atalhoInferiorEsquerdo === state.atalhoInferiorDireito) {
+      state.atalhoInferiorDireito = state.atalhoInferiorEsquerdo === 'agenda' ? 'perfil' : 'agenda';
+    }
+    aplicarPreferenciaInicialValores();
+    return true;
+  }
+
+  function salvarPreferenciasMobileNaConta() {
+    if (!state.usuario || !state.usuario.id || !state.empresa || !state.empresa.id) return;
+    var metadados = state.usuario.user_metadata || {};
+    var todas = metadados[CHAVE_PREFERENCIAS_CONTA_MOBILE];
+    if (!todas || typeof todas !== 'object') todas = {};
+    var atualizadas = Object.assign({}, todas);
+    atualizadas[String(state.empresa.id)] = preferenciasMobileAtuais();
+
+    db.auth.updateUser({ data: { avantalab_mobile_preferencias_v1: atualizadas } })
+      .then(function (resposta) {
+        if (resposta && resposta.data && resposta.data.user) state.usuario = resposta.data.user;
+      })
+      .catch(function () {
+        // A cópia local continua disponível quando a conta estiver offline.
+      });
   }
 
   function alternarInicioValoresOcultos() {
@@ -2875,6 +2929,7 @@
         direito: state.atalhoInferiorDireito,
       }));
     } catch (error) {}
+    salvarPreferenciasMobileNaConta();
   }
 
   function definirAtalhoInferior(lado, valor) {
@@ -4202,6 +4257,7 @@
       try {
         localStorage.setItem('avantalab_mobile_dark', state.darkMode ? '1' : '0');
       } catch (error) {}
+      salvarPreferenciasMobileNaConta();
       render();
       return;
     }
@@ -4331,6 +4387,7 @@
     try {
       localStorage.setItem('avantalab_mobile_dark', state.darkMode ? '1' : '0');
     } catch (error) {}
+    salvarPreferenciasMobileNaConta();
     render();
   }
 
@@ -4603,8 +4660,20 @@
   function fecharTourMobile() {
     state.tourAberto = false;
     try { localStorage.setItem('avantalab_mobile_tour_concluido', '1'); } catch (e) {}
+    registrarConclusaoTourMobileNaConta();
     render();
     avaliarPromptNotificacoes();
+  }
+
+  function registrarConclusaoTourMobileNaConta() {
+    if (!state.usuario || !state.usuario.id) return;
+    db.auth.updateUser({ data: { avantalab_mobile_tour_concluido: true } })
+      .then(function (resposta) {
+        if (resposta && resposta.data && resposta.data.user) state.usuario = resposta.data.user;
+      })
+      .catch(function () {
+        // A cópia local evita nova abertura enquanto a conta estiver offline.
+      });
   }
 
   function tourIr(delta) {
@@ -4615,10 +4684,22 @@
     render();
   }
 
-  function avaliarTourMobile() {
+  async function avaliarTourMobile() {
     try {
       if (!state.usuario || !state.usuario.id) return;
-      if (localStorage.getItem('avantalab_mobile_tour_concluido') === '1') return;
+      var respostaUsuario = await consultaMobileComRetry(function () { return db.auth.getUser(); });
+      if (!respostaUsuario || respostaUsuario.error || !respostaUsuario.data || !respostaUsuario.data.user) return;
+      state.usuario = respostaUsuario.data.user;
+      var concluidoNaConta = state.usuario.user_metadata && state.usuario.user_metadata.avantalab_mobile_tour_concluido === true;
+      var concluidoLocalmente = localStorage.getItem('avantalab_mobile_tour_concluido') === '1';
+      if (concluidoNaConta) {
+        if (!concluidoLocalmente) localStorage.setItem('avantalab_mobile_tour_concluido', '1');
+        return;
+      }
+      if (concluidoLocalmente) {
+        registrarConclusaoTourMobileNaConta();
+        return;
+      }
       setTimeout(function () {
         if (localStorage.getItem('avantalab_mobile_tour_concluido') === '1') return;
         state.tourAberto = true;
@@ -6056,6 +6137,9 @@
     }
     var empresaId = state.empresa.id;
     var ano = Number(state.ano);
+    // Preferências da conta têm prioridade sobre a cópia deste aparelho. A
+    // primeira abertura migra silenciosamente o que já estava salvo localmente.
+    if (!aplicarPreferenciasMobileDaConta()) salvarPreferenciasMobileNaConta();
     await prepararDadosContaRevisaoMobile();
 
     atualizarProgressoAcessoMobile(

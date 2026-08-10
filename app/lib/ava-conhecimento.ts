@@ -1,6 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.3.02: um login do AvantaVendas pode alternar entre contas e compartilhar uma conta específica.
+// Revisado na versão 1.7.3.05: preferências e conclusão de tutorial da Gestão
+// acompanham a conta; a cópia local serve somente como contingência offline.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -29,6 +30,7 @@ NAVEGAÇÃO E PERFIS
 - Em cadastros e edições de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos preenchidos; rascunhos temporários guardam apenas dados não sensíveis e nunca armazenam senhas, confirmações, códigos SMS ou tokens.
 - Em Usuários e Permissões, criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. Editar exige os mesmos dados, mas a nova senha é opcional. O usuário entra com e-mail ou login; se o e-mail já pertencer a uma conta, use Adicionar usuário existente para vinculá-la ao perfil. E-mail e login são conferidos no servidor antes de salvar; em erro, o formulário mantém os valores e o cursor vai ao campo indicado. Funcionários do Controle de Ponto não contam como usuários da Gestão: Empresa em cortesia/Business Pro permite até 10 acessos à Gestão. Ao excluir, uma conta criada internamente só é apagada por completo quando não possui outro perfil, vínculo ou histórico; caso contrário, apenas o acesso atual é removido e a conta continua pesquisável.
 - Ao atualizar a página, sessão inválida, expirada ou de usuário excluído é limpa e retorna ao login; Criar perfil financeiro só aparece para uma conta validada que realmente não possui perfil.
+- A conclusão do Tutorial acompanha a conta. Uma falha temporária para consultar preferências não abre o Tutorial nem substitui a configuração existente por valores padrão.
 
 FINANCEIRO
 - Para lançar receita, despesa, despesa futura, parcelamento ou despesa fixa, use os controles de novo lançamento/cadastro da página. No Gestão Mobile, o cabeçalho do novo lançamento começa no mês vigente e as setas escolhem o mês e ano que receberão o registro, sem mudar o período do painel. Uma despesa programada aparece como Previsto antes da data, A confirmar no dia e Pendente depois do vencimento; somente a confirmação manual a inclui nos totais, gráficos e resultado realizado.
@@ -100,6 +102,7 @@ NAVEGAÇÃO E PERFIS
 - A tela que oferece Gestão e Vendas aparece somente na entrada após o login. Depois que um sistema foi aberto, a navegação exibe apenas o outro destino.
 - Cada usuário possui uma única conta operacional no Vendas. Ativações em diferentes perfis da Gestão apenas autorizam a troca de sistema e nunca criam contas ou perfis adicionais no Vendas. No aplicativo iOS, a troca apenas abre o app de destino, sem transferir perfil ou sessão, e o app de origem permanece na sala atual ao retornar. No PWA/Web, ao vir do Vendas, a Gestão apresenta a lista de perfis, ainda que exista apenas um. Sem perfil financeiro, oferece criar ou ativar um ou continuar no Vendas; o novo perfil nunca é vinculado automaticamente aos resultados.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
+- Tema, ordem e visibilidade do dashboard, atalhos inferiores e a preferência de iniciar valores ocultos acompanham a conta por perfil. O aparelho mantém somente uma cópia local para uso sem conexão.
 - Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. No seletor de troca, o perfil em uso fica identificado e desativado; a troca real usa somente os demais perfis disponíveis.
 - Em Usuários, Gestor Master edita todos; Administrador edita seus próprios dados e os de operadores; Operador Completo edita apenas seus dados; Operador Simples não edita. Criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. E-mail e login acessam a mesma conta; se o e-mail já existir, use Adicionar usuário existente. O servidor verifica a disponibilidade de ambos antes de salvar; se houver erro, os valores permanecem e o cursor vai ao campo indicado. A exclusão total de uma conta interna só ocorre sem outros perfis, vínculos ou histórico; nos demais casos, remove somente o acesso atual e mantém a conta pesquisável.
 - A edição exige Nome completo, E-mail, Login e Tipo de usuário; a nova senha é opcional e, quando informada, deve ser repetida antes de salvar.

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.04 -->
+<!-- ava-version: 1.7.3.05 -->
+
+> Revisão 1.7.3.05: persistência de preferências da Gestão Web e Mobile; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.7.3.04: aprimoramento interno da limpeza de cobrança da cortesia;
 > sem impacto operacional no AvantaVendas.

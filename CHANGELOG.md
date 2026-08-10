@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.3.05 - 2026-08-10
+
+- A Gestão Web não confunde falha temporária de leitura com configuração
+  inexistente e, nesse caso, não grava valores padrão sobre as preferências do
+  perfil.
+- Gestão Mobile: tutorial, tema, ordem/visibilidade do dashboard, atalhos e
+  preferência de valores passam a acompanhar a conta, mantendo a cópia local
+  apenas como contingência offline.
+
 ## 1.7.3.04 - 2026-08-10
 
 - A limpeza de cortesia também consulta o histórico técnico de cobranças para

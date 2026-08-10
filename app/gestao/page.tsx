@@ -1521,7 +1521,8 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
   setLogoUrl('');
   setLogoSettings({ scale: 100, x: 0, y: 0 });
 
-  const config = await buscarConfiguracoes(empresa.id);
+  const resultadoConfiguracoes = await buscarConfiguracoes(empresa.id);
+  const config = resultadoConfiguracoes.configuracao;
   const despesas = await buscarDespesasCadastradas(empresa.id);
 
   if (config) {
@@ -1578,7 +1579,10 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
     setDespesasCadastradas([]);
   }
 
-  setConfiguracoesCarregadas(true);
+  // Só permitimos o salvamento automático depois de uma leitura confiável.
+  // Em uma indisponibilidade momentânea, preservar a configuração já gravada
+  // é mais seguro do que persistir os valores padrão desta renderização.
+  setConfiguracoesCarregadas(!resultadoConfiguracoes.erro);
 setAcessoNaoConfigurado(false);
 setAcessoLiberado(true);
 setModalSelecionarEmpresa(false);
@@ -2290,8 +2294,9 @@ useEffect(() => {
 
   void (async () => {
     const jaConcluidoLocalmente = localStorage.getItem('avantalab_tour_concluido') === 'true';
-    const { data: dadosUsuario } = await supabase.auth.getUser();
-    const jaConcluidoNaConta = dadosUsuario.user?.user_metadata?.avantalab_gestao_tour_concluido === true;
+    const { data: dadosUsuario, error: erroUsuario } = await supabase.auth.getUser();
+    if (erroUsuario || !dadosUsuario.user) return;
+    const jaConcluidoNaConta = dadosUsuario.user.user_metadata?.avantalab_gestao_tour_concluido === true;
     if (cancelado) return;
 
     // Migra silenciosamente a conclusão existente para que uma reinstalação

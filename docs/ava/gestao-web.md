@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.04 -->
+<!-- ava-version: 1.7.3.05 -->
+
+> Revisão 1.7.3.05: preferências do perfil só são salvas depois de uma leitura
+> válida. Em instabilidade, a Gestão preserva o que já está registrado e não
+> trata o perfil como primeiro acesso; a conclusão do Tutorial acompanha a
+> conta.
 
 > Revisão 1.7.3.04: a limpeza de cobrança da cortesia também alcança
 > assinaturas antigas registradas no histórico técnico; sem nova ação na tela.

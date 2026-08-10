@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.04 -->
+<!-- ava-version: 1.7.3.05 -->
+
+> Revisão 1.7.3.05: a conclusão do Tutorial, tema, dashboard, atalhos e a
+> preferência de iniciar valores ocultos acompanham a conta. Uma cópia local
+> continua disponível apenas enquanto o aparelho estiver sem conexão.
 
 > Revisão 1.7.3.04: aprimoramento interno da limpeza de cobrança da cortesia;
 > sem mudança operacional na Gestão Mobile.

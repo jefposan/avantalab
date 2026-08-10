@@ -369,18 +369,29 @@ export async function salvarDashboardOrdemWeb(
 }
 
 export async function buscarConfiguracoes(empresaId: string) {
-  const { data, error } = await supabase
-    .from('configuracoes')
-    .select('*')
-    .eq('empresa_id', empresaId)
-    .single();
+  // A ausência de uma linha é válida para perfis legados e permite criar os
+  // padrões depois. Já uma falha de rede/RLS não pode ser confundida com essa
+  // ausência, pois o salvamento automático poderia sobrescrever preferências.
+  for (let tentativa = 0; tentativa < 2; tentativa += 1) {
+    const { data, error } = await supabase
+      .from('configuracoes')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .maybeSingle();
 
-  if (error) {
+    if (!error) {
+      return { configuracao: data, erro: false };
+    }
+
+    if (tentativa === 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+      continue;
+    }
+
     console.error('Erro ao buscar configurações:', error);
-    return null;
   }
 
-  return data;
+  return { configuracao: null, erro: true };
 }
 
 export async function buscarDespesasCadastradas(empresaId: string) {
