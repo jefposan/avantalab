@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.3.03 - 2026-08-10
+
+- Ao liberar um perfil por cortesia, o sistema encerra cobranças abertas no
+  Asaas, preserva o cadastro do cliente e remove faturas e avisos locais.
+- O processador de avisos de assinatura ignora perfis em cortesia, inclusive se
+  existir algum registro de fatura antigo.
+
 ## 1.7.3.02 - 2026-08-10
 
 - AvantaVendas: um mesmo login pode ter várias contas de vendas, alternar entre

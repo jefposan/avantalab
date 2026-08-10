@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.02 -->
+<!-- ava-version: 1.7.3.03 -->
+
+> Revisão 1.7.3.03: ao liberar um perfil por **cortesia**, o sistema encerra
+> cobranças abertas e remove os avisos de assinatura. O cadastro do cliente no
+> provedor de pagamento é preservado para uma futura contratação.
 
 > Revisão 1.7.3.02: contas compartilháveis e ajuste visual de perfil são
 > exclusivos do AvantaVendas; sem impacto na Gestão Web.

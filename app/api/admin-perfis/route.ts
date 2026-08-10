@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { exigirAdmin } from '../../lib/admin-server';
 import { DATA_LANCAMENTO, assinaturaVigente, type EstadoAcesso, type TipoPerfil, type StatusAssinatura } from '../../lib/cobranca';
+import { removerAssinaturaAsaas, removerCobrancaAsaas } from '../../lib/asaas';
 
 function naoAutorizado() {
   return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
@@ -13,6 +14,51 @@ type OrdemPerfil = 'nome_asc' | 'nome_desc' | 'criado_em_desc' | 'criado_em_asc'
 
 function trialExpirou(trialFim: string | null) {
   return !trialFim || new Date(trialFim) <= new Date();
+}
+
+const STATUS_FATURA_ABERTA = new Set(['PENDING', 'OVERDUE', 'AWAITING_RISK_ANALYSIS']);
+
+// Cortesia não pode manter uma cobrança recorrente ativa. O cliente da Asaas é
+// preservado para uma contratação futura; somente assinaturas e faturas abertas
+// são canceladas. Em seguida, a cópia local e seus avisos são eliminados.
+async function limparCobrancasParaCortesia(
+  db: Awaited<ReturnType<typeof exigirAdmin>>['db'],
+  empresaId: string,
+  gatewaySubscriptionId: string | null | undefined,
+) {
+  const { data: faturas, error: erroFaturas } = await db
+    .from('assinatura_faturas')
+    .select('gateway_payment_id, gateway_subscription_id, status')
+    .eq('empresa_id', empresaId);
+  if (erroFaturas) throw erroFaturas;
+
+  const assinaturasAsaas = new Set(
+    [gatewaySubscriptionId, ...(faturas || []).map((fatura) => fatura.gateway_subscription_id)]
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  for (const assinaturaId of assinaturasAsaas) {
+    const resposta = await removerAssinaturaAsaas(assinaturaId);
+    if (!resposta.ok && resposta.status !== 404) {
+      throw new Error(resposta.erro || 'Não foi possível encerrar a assinatura na Asaas.');
+    }
+  }
+
+  // Faturas avulsas sem uma assinatura identificada também devem desaparecer.
+  for (const fatura of faturas || []) {
+    if (fatura.gateway_subscription_id || !STATUS_FATURA_ABERTA.has(String(fatura.status || '').toUpperCase())) continue;
+    const resposta = await removerCobrancaAsaas(fatura.gateway_payment_id);
+    if (!resposta.ok && resposta.status !== 404) {
+      throw new Error(resposta.erro || 'Não foi possível excluir uma fatura aberta na Asaas.');
+    }
+  }
+
+  const { error: erroAvisos } = await db.from('assinatura_avisos').delete().eq('empresa_id', empresaId);
+  if (erroAvisos) throw erroAvisos;
+  const { error: erroNotificacoes } = await db.from('notificacoes').delete().eq('empresa_id', empresaId).eq('tipo', 'assinatura');
+  if (erroNotificacoes) throw erroNotificacoes;
+  const { error: erroLimpeza } = await db.from('assinatura_faturas').delete().eq('empresa_id', empresaId);
+  if (erroLimpeza) throw erroLimpeza;
 }
 
 // Reproduz a lógica do resolver para o admin ver a situação real de cada perfil.
@@ -174,10 +220,18 @@ export async function PATCH(request: Request) {
     const { data: emp } = await db.from('empresas').select('tipo_perfil, created_at').eq('id', empresaId).maybeSingle();
     const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
 
-    const { data: existe } = await db.from('assinaturas').select('id, status').eq('empresa_id', empresaId).maybeSingle();
+    const { data: existe } = await db
+      .from('assinaturas')
+      .select('id, status, gateway_subscription_id')
+      .eq('empresa_id', empresaId)
+      .maybeSingle();
 
     if (acao === 'revogar' && existe?.status !== 'cortesia') {
       return NextResponse.json({ erro: true, mensagem: 'Só é possível revogar perfis liberados por cortesia ou cupom.' }, { status: 409 });
+    }
+
+    if (acao === 'liberar') {
+      await limparCobrancasParaCortesia(db, empresaId, existe?.gateway_subscription_id);
     }
 
     const status = acao === 'revogar' ? 'cancelada' : 'cortesia';

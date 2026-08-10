@@ -33,10 +33,17 @@ Deno.serve(async (req) => {
     const dataHoje = hoje();
     const { data: faturas, error } = await db.from('assinatura_faturas').select('gateway_payment_id, empresa_id, valor, vencimento, status').in('status', ['PENDING', 'OVERDUE']).not('gateway_payment_id', 'is', null).not('vencimento', 'is', null);
     if (error) throw error;
+    const empresaIds = [...new Set((faturas || []).map((fatura) => fatura.empresa_id).filter(Boolean))];
+    const { data: assinaturas, error: erroAssinaturas } = empresaIds.length
+      ? await db.from('assinaturas').select('empresa_id, status').in('empresa_id', empresaIds)
+      : { data: [], error: null };
+    if (erroAssinaturas) throw erroAssinaturas;
+    const statusPorEmpresa = new Map((assinaturas || []).map((assinatura) => [assinatura.empresa_id, assinatura.status]));
     let criadas = 0;
     let enviadas = 0;
     const cacheBadges = new Map<string, number | null>();
     for (const fatura of faturas || []) {
+      if (statusPorEmpresa.get(fatura.empresa_id) === 'cortesia') continue;
       const marco = marcos[diferencaDias(fatura.vencimento, dataHoje)];
       if (!marco) continue;
       const { data: gestores, error: erroGestores } = await db.from('usuarios_empresa').select('user_id').eq('empresa_id', fatura.empresa_id).eq('status', 'ativo').in('perfil', ['gestor_master', 'administrador']);

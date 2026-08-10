@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.02 -->
+<!-- ava-version: 1.7.3.03 -->
+
+> Revisão 1.7.3.03: a limpeza de cobranças ao conceder cortesia é exclusiva da
+> administração da Gestão; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.7.3.02: em **Configurações > Conta de vendas**, é possível alternar
 > entre contas, criar um novo perfil de vendas e, para proprietário ou

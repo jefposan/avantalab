@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.02 -->
+<!-- ava-version: 1.7.3.03 -->
+
+> Revisão 1.7.3.03: a limpeza de cobranças ao conceder cortesia é feita na
+> administração web; sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.7.3.02: contas compartilháveis e ajuste visual de perfil são
 > exclusivos do AvantaVendas; sem impacto na Gestão Mobile.
