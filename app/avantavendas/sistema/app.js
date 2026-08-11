@@ -517,13 +517,13 @@ document.addEventListener('input', (event) => {
   if (campo?.dataset.phoneField) formatarTelefoneCampo(campo, campo.dataset.ddiTarget);
   if (campo?.id === 'loginContato') loginRascunho.contato = campo.value || '';
   if (campo?.id === 'loginSenha') loginRascunho.senha = campo.value || '';
-  if (campo?.id === 'cadastroNome') cadastroRascunho.nome = campo.value || '';
+  if (campo?.id === 'cadastroNome') normalizarNomeCadastroVendas(campo, true);
   if (campo?.id === 'cadastroEmail') cadastroRascunho.email = campo.value || '';
   if (campo?.id === 'cadastroTelefone') cadastroRascunho.telefone = campo.value || '';
   if (campo?.id === 'cadastroCodigo') cadastroRascunho.codigo = campo.value || '';
   if (campo?.id === 'cadastroSenha') cadastroRascunho.senha = campo.value || '';
   if (campo?.id === 'cadastroConfirmarSenha') cadastroRascunho.confirmarSenha = campo.value || '';
-  if (campo?.id === 'cadastroCodigoSms') cadastroRascunho.codigoSms = campo.value || '';
+  if (campo?.id === 'cadastroCodigoSms') normalizarCodigoSmsCadastro(campo);
   if (['cadastroNome', 'cadastroEmail', 'cadastroTelefone'].includes(campo?.id)) salvarRascunhoCadastroVendas();
 });
 
@@ -1807,7 +1807,7 @@ function renderLogin() {
 function renderCadastroConta() {
   if (cadastroEtapa === 'sms') return renderValidacaoSmsCadastro();
   const paises = PAISES_DDI.map(([nome, ddi, flag]) => `<option value="${ddi}" ${ddi === cadastroRascunho.ddi ? 'selected' : ''}>${flag} +${ddi}</option>`).join('');
-  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form" novalidate onsubmit="criarConta(event)"><label>Nome completo<div class="login-field">${svgIcon('user')}<input id="cadastroNome" autocomplete="name" value="${escapeAttr(cadastroRascunho.nome)}" placeholder="Nome completo"></div></label><label>E-mail<div class="login-field">${svgIcon('mail')}<input id="cadastroEmail" type="email" autocomplete="email" value="${escapeAttr(cadastroRascunho.email)}" placeholder="Digite seu e-mail"></div></label><label>Celular<div class="phone-register-field"><select id="cadastroDdi" aria-label="País (DDI)">${paises}</select><div class="login-field">${svgIcon('phone')}<input id="cadastroTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" value="${escapeAttr(cadastroRascunho.telefone)}" placeholder="DDD + número"></div></div></label><label>Código da empresa (opcional)<div class="login-field">${svgIcon('folder')}<input id="cadastroCodigo" autocomplete="off" autocapitalize="characters" value="${escapeAttr(cadastroRascunho.codigo)}" placeholder="AVA-XXXXXXXX"></div><small>Use apenas para solicitar acesso a Novidades, Divulgação e produtos publicados pela empresa.</small></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroSenha" type="password" autocomplete="new-password" value="${escapeAttr(cadastroRascunho.senha)}" placeholder="Crie sua senha" oninput="atualizarRequisitosSenhaCadastro(this.value)"><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div><small id="requisitosSenhaCadastro" class="password-requirements ${senhaCadastroValida(cadastroRascunho.senha) ? 'valid' : ''}">${senhaCadastroValida(cadastroRascunho.senha) ? '✓ Requisitos de senha atendidos.' : '8+ caracteres, maiúscula, minúscula e número.'}</small></label><label>Confirmar senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroConfirmarSenha" type="password" autocomplete="new-password" value="${escapeAttr(cadastroRascunho.confirmarSenha)}" placeholder="Digite a senha novamente"><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroConfirmarSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><button class="primary login-submit" type="submit">Continuar</button><p class="login-register">Já tem conta? <button type="button" onclick="voltarParaLogin()">Entrar</button></p></form></section>`;
+  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form" novalidate onsubmit="criarConta(event)"><label>Nome completo<div class="login-field">${svgIcon('user')}<input id="cadastroNome" autocomplete="name" autocapitalize="words" value="${escapeAttr(cadastroRascunho.nome)}" placeholder="Nome completo" onblur="normalizarNomeCadastroVendas(this)"></div></label><label>E-mail<div class="login-field">${svgIcon('mail')}<input id="cadastroEmail" type="email" autocomplete="email" value="${escapeAttr(cadastroRascunho.email)}" placeholder="Digite seu e-mail"></div></label><label>Celular<div class="phone-register-field"><select id="cadastroDdi" aria-label="País (DDI)">${paises}</select><div class="login-field">${svgIcon('phone')}<input id="cadastroTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" value="${escapeAttr(cadastroRascunho.telefone)}" placeholder="DDD + número"></div></div></label><label>Código da empresa (opcional)<div class="login-field">${svgIcon('folder')}<input id="cadastroCodigo" autocomplete="off" autocapitalize="characters" value="${escapeAttr(cadastroRascunho.codigo)}" placeholder="AVA-XXXXXXXX"></div><small>Use apenas para solicitar acesso a Novidades, Divulgação e produtos publicados pela empresa.</small></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroSenha" type="password" autocomplete="new-password" value="${escapeAttr(cadastroRascunho.senha)}" placeholder="Crie sua senha" oninput="atualizarRequisitosSenhaCadastro(this.value)"><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div><small id="requisitosSenhaCadastro" class="password-requirements ${senhaCadastroValida(cadastroRascunho.senha) ? 'valid' : ''}">${senhaCadastroValida(cadastroRascunho.senha) ? '✓ Requisitos de senha atendidos.' : '8+ caracteres, maiúscula, minúscula e número.'}</small></label><label>Confirmar senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroConfirmarSenha" type="password" autocomplete="new-password" value="${escapeAttr(cadastroRascunho.confirmarSenha)}" placeholder="Digite a senha novamente"><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroConfirmarSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><button class="primary login-submit" type="submit">Continuar</button><p class="login-register">Já tem conta? <button type="button" onclick="voltarParaLogin()">Entrar</button></p></form></section>`;
 }
 
 function senhaCadastroValida(senha) {
@@ -1828,6 +1828,40 @@ function nomeCompletoValido(nome) {
   }).length >= 2;
 }
 
+function formatarParteNomeCadastro(parte, indice) {
+  const conectivos = new Set(['da', 'das', 'de', 'do', 'dos', 'e']);
+  const minuscula = String(parte || '').toLocaleLowerCase('pt-BR');
+  if (indice > 0 && conectivos.has(minuscula)) return minuscula;
+  return minuscula.replace(/(^|['’\-])(\p{L})/gu, (_trecho, separador, letra) => (
+    `${separador}${letra.toLocaleUpperCase('pt-BR')}`
+  ));
+}
+
+function formatarNomeCompletoCadastro(nome, preservarEspacamento = false) {
+  const texto = String(nome || '').normalize('NFC');
+  let indice = 0;
+  const formatado = texto.split(/(\s+)/).map((parte) => {
+    if (!parte || /^\s+$/.test(parte)) return preservarEspacamento ? parte : ' ';
+    const resultado = formatarParteNomeCadastro(parte, indice);
+    indice += 1;
+    return resultado;
+  }).join('');
+  return preservarEspacamento ? formatado : formatado.trim().replace(/\s+/g, ' ');
+}
+
+function normalizarNomeCadastroVendas(campo, preservarEspacamento = false) {
+  if (!campo) return '';
+  const inicio = Number.isInteger(campo.selectionStart) ? campo.selectionStart : null;
+  const nome = formatarNomeCompletoCadastro(campo.value, preservarEspacamento);
+  campo.value = nome;
+  cadastroRascunho.nome = nome;
+  salvarRascunhoCadastroVendas();
+  if (inicio !== null && preservarEspacamento) {
+    try { campo.setSelectionRange(inicio, inicio); } catch { /* Campo sem Selection API. */ }
+  }
+  return nome;
+}
+
 function atualizarRequisitosSenhaCadastro(senha) {
   const aviso = document.getElementById('requisitosSenhaCadastro');
   if (!aviso) return;
@@ -1838,7 +1872,11 @@ function atualizarRequisitosSenhaCadastro(senha) {
 
 function renderValidacaoSmsCadastro() {
   const telefone = cadastroPendente?.telefone || '';
-  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form sms-confirm-form" novalidate onsubmit="confirmarCadastroSms(event)"><p class="login-card-help">Enviamos um código por SMS para <b>${escapeHtml(telefone)}</b>.</p><label>Código de validação<div class="login-field">${svgIcon('lock')}<input id="cadastroCodigoSms" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" value="${escapeAttr(cadastroRascunho.codigoSms)}" placeholder="Digite o código recebido" autofocus></div></label><button class="primary login-submit" type="submit">Validar e criar conta</button><button id="reenviarSmsCadastro" class="forgot-link sms-resend" type="button" onclick="reenviarSmsCadastro()" disabled>Reenviar código em <span id="smsContador">60</span>s</button><p class="login-register"><button type="button" onclick="voltarDadosCadastro()">Alterar dados</button></p></form></section>`;
+  const aguardandoReenvio = segundosReenvioSmsCadastro > 0;
+  const textoReenvio = aguardandoReenvio
+    ? `Reenviar código em <span id="smsContador">${segundosReenvioSmsCadastro}</span>s`
+    : 'Reenviar código';
+  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form sms-confirm-form" novalidate onsubmit="confirmarCadastroSms(event)"><p class="login-card-help">Enviamos um código por SMS para <b>${escapeHtml(telefone)}</b>.</p><label>Código de validação<div class="login-field">${svgIcon('lock')}<input id="cadastroCodigoSms" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="10" value="${escapeAttr(cadastroRascunho.codigoSms)}" placeholder="Digite o código recebido" onclick="limparCodigoSmsAoEditar(this)" autofocus></div></label><button class="primary login-submit" type="submit">Validar e criar conta</button><button id="reenviarSmsCadastro" class="forgot-link sms-resend ${aguardandoReenvio ? '' : 'is-ready'}" type="button" onclick="reenviarSmsCadastro()" ${aguardandoReenvio ? 'disabled' : ''}>${textoReenvio}</button><p class="login-register"><button type="button" onclick="voltarDadosCadastro()">Alterar dados</button></p></form></section>`;
 }
 
 function trocarTipoLogin(tipo) {
@@ -2599,6 +2637,7 @@ function voltarParaLogin() {
   modoLogin = 'entrar';
   cadastroEtapa = 'dados';
   cadastroPendente = null;
+  limparCodigoSmsCadastro();
   erroAcessoVendas = '';
   pararContadorSmsCadastro();
   render();
@@ -2606,6 +2645,7 @@ function voltarParaLogin() {
 
 function voltarDadosCadastro() {
   cadastroEtapa = 'dados';
+  limparCodigoSmsCadastro();
   erroAcessoVendas = '';
   pararContadorSmsCadastro();
   render();
@@ -2613,7 +2653,10 @@ function voltarDadosCadastro() {
 
 async function criarConta(event) {
   event?.preventDefault();
-  const nome = valor('cadastroNome').trim();
+  const campoNome = document.getElementById('cadastroNome');
+  const nome = campoNome
+    ? normalizarNomeCadastroVendas(campoNome)
+    : formatarNomeCompletoCadastro(valor('cadastroNome'));
   const email = valor('cadastroEmail').trim();
   const senha = valor('cadastroSenha');
   const confirmarSenha = valor('cadastroConfirmarSenha');
@@ -2660,9 +2703,10 @@ async function criarConta(event) {
   try {
     cadastroPendente = { nome, email, senha, codigo, telefone: telefoneCompleto };
     await enviarSmsCadastro(telefoneCompleto);
+    limparCodigoSmsCadastro();
     cadastroEtapa = 'sms';
-    render();
     iniciarContadorSmsCadastro();
+    render();
   } catch (error) {
     abrirAvisoAcessoVendas('Não foi possível continuar', traduzErro(error), 'cadastroTelefone');
   }
@@ -2678,11 +2722,13 @@ async function enviarSmsCadastro(telefone) {
 
 function atualizarContadorSmsCadastro() {
   const botao = document.getElementById('reenviarSmsCadastro');
-  const contador = document.getElementById('smsContador');
-  if (!botao || !contador) return;
-  contador.textContent = String(segundosReenvioSmsCadastro);
-  botao.disabled = segundosReenvioSmsCadastro > 0;
-  botao.textContent = segundosReenvioSmsCadastro > 0 ? `Reenviar código em ${segundosReenvioSmsCadastro}s` : 'Reenviar código';
+  if (!botao) return;
+  const aguardando = segundosReenvioSmsCadastro > 0;
+  botao.disabled = aguardando;
+  botao.classList.toggle('is-ready', !aguardando);
+  botao.innerHTML = aguardando
+    ? `Reenviar código em <span id="smsContador">${segundosReenvioSmsCadastro}</span>s`
+    : 'Reenviar código';
 }
 
 function pararContadorSmsCadastro() {
@@ -2705,6 +2751,7 @@ async function reenviarSmsCadastro() {
   if (!cadastroPendente || segundosReenvioSmsCadastro > 0) return;
   try {
     await enviarSmsCadastro(cadastroPendente.telefone);
+    limparCodigoSmsCadastro();
     iniciarContadorSmsCadastro();
     toast('Enviamos um novo código por SMS.');
   } catch (error) {
@@ -2714,7 +2761,7 @@ async function reenviarSmsCadastro() {
 
 async function confirmarCadastroSms(event) {
   event?.preventDefault();
-  const codigoSms = valor('cadastroCodigoSms').trim();
+  const codigoSms = valor('cadastroCodigoSms').replace(/\D/g, '').slice(0, 10);
   cadastroRascunho.codigoSms = codigoSms;
   if (!cadastroPendente || !codigoSms) {
     abrirAvisoAcessoVendas('Código necessário', 'Digite o código recebido por SMS.', 'cadastroCodigoSms');
@@ -2750,6 +2797,25 @@ async function confirmarCadastroSms(event) {
   } catch (error) {
     abrirAvisoAcessoVendas('Não foi possível criar a conta', traduzErro(error), 'cadastroCodigoSms');
   }
+}
+
+function normalizarCodigoSmsCadastro(campo) {
+  if (!campo) return '';
+  const codigo = String(campo.value || '').replace(/\D/g, '').slice(0, 10);
+  campo.value = codigo;
+  cadastroRascunho.codigoSms = codigo;
+  return codigo;
+}
+
+function limparCodigoSmsCadastro() {
+  cadastroRascunho.codigoSms = '';
+  const campo = document.getElementById('cadastroCodigoSms');
+  if (campo) campo.value = '';
+}
+
+function limparCodigoSmsAoEditar(campo) {
+  if (!campo || !String(campo.value || '').trim()) return;
+  limparCodigoSmsCadastro();
 }
 
 function renderSolicitarAcesso() {
@@ -7908,6 +7974,9 @@ window.voltarDadosCadastro = voltarDadosCadastro;
 window.criarConta = criarConta;
 window.confirmarCadastroSms = confirmarCadastroSms;
 window.reenviarSmsCadastro = reenviarSmsCadastro;
+window.normalizarNomeCadastroVendas = normalizarNomeCadastroVendas;
+window.normalizarCodigoSmsCadastro = normalizarCodigoSmsCadastro;
+window.limparCodigoSmsAoEditar = limparCodigoSmsAoEditar;
 window.atualizarRequisitosSenhaCadastro = atualizarRequisitosSenhaCadastro;
 window.enviarSolicitacaoAcesso = enviarSolicitacaoAcesso;
 window.confirmarTelefoneVinculo = confirmarTelefoneVinculo;

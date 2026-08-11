@@ -2,6 +2,11 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av52: o cadastro formata nome e sobrenome com inicial
+> maiúscula. A validação por SMS mostra contagem regressiva real, libera o
+> reenvio em uma pílula após 60 segundos, descarta o código ao sair ou reenviar
+> e remove formatação automática antes de validar o número recebido.
+>
 > Revisão 1.7.3.05-av51: após excluir a conta, o AvantaVendas encerra a sessão
 > e confirma a conclusão em um aviso acessível. O botão **Voltar para o início**
 > leva diretamente ao login do próprio AvantaVendas, sem oferecer acesso ao

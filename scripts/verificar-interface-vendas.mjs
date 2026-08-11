@@ -2,12 +2,13 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, versao, cliente, rotaExclusao, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
+const [aplicacao, estilos, versao, cliente, rotaExclusao, rotaVerificacaoSms, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/version.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/supabase-client.js'), 'utf8'),
   readFile(resolve(raiz, 'app/api/vendas/conta/route.ts'), 'utf8'),
+  readFile(resolve(raiz, 'app/api/sms/verificar-codigo/route.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/components/NovidadesVendasModal.tsx'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807193000_capa_pasta_divulgacao_vendas_mobile.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807210000_ativar_vinculo_comercial_aprovado.sql'), 'utf8'),
@@ -40,6 +41,22 @@ exigir(
     && !aplicacao.includes("erro.textContent = 'As senhas não coincidem.'")
     && estilos.includes('.login-screen > form { max-height: none; overflow: hidden; }'),
   'Login e cadastro devem usar avisos modais, preservar valores e devolver o foco sem criar rolagem no formulário.',
+);
+exigir(
+  aplicacao.includes('autocapitalize="words"')
+    && aplicacao.includes('function formatarNomeCompletoCadastro(nome, preservarEspacamento = false)')
+    && aplicacao.includes("toLocaleUpperCase('pt-BR')")
+    && aplicacao.includes('onblur="normalizarNomeCadastroVendas(this)"')
+    && aplicacao.includes('const nome = campoNome\n    ? normalizarNomeCadastroVendas(campoNome)')
+    && aplicacao.includes('function limparCodigoSmsCadastro()')
+    && aplicacao.includes('onclick="limparCodigoSmsAoEditar(this)"')
+    && aplicacao.includes("valor('cadastroCodigoSms').replace(/\\D/g, '').slice(0, 10)")
+    && aplicacao.includes("botao.classList.toggle('is-ready', !aguardando)")
+    && aplicacao.includes('Reenviar código em <span id="smsContador">${segundosReenvioSmsCadastro}</span>s')
+    && estilos.includes('.sms-confirm-form .sms-resend.is-ready')
+    && rotaVerificacaoSms.includes("String(codigo || '').replace(/\\D/g, '').slice(0, 10)")
+    && rotaVerificacaoSms.includes('Code: codigoNormalizado'),
+  'Cadastro deve capitalizar o nome e o SMS deve contar 60 segundos, limpar códigos antigos, liberar a pílula e validar somente dígitos.',
 );
 exigir(
   aplicacao.includes('settings-delete-account-card')
@@ -283,7 +300,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '51'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '52'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

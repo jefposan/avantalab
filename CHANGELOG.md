@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.3.05-av52 - 2026-08-11
+
+- AvantaVendas: o nome completo do cadastro passa a aplicar inicial maiúscula
+  em nome e sobrenomes, preservando conectivos usuais em português.
+- AvantaVendas: o reenvio do código SMS agora exibe a contagem regressiva real
+  de 60 segundos e se transforma em uma pílula acionável ao chegar a zero.
+- AvantaVendas: códigos SMS antigos são limpos ao sair da validação, ao solicitar
+  um novo código e ao tocar em um campo preenchido; caracteres de formatação
+  adicionados pelo preenchimento automático também são removidos antes da
+  verificação no servidor.
+
 ## 1.7.3.05-av51 - 2026-08-11
 
 - AvantaVendas: a exclusão concluída agora exibe um aviso de sucesso após o

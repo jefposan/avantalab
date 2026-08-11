@@ -12,9 +12,11 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!codigo) {
+    const codigoNormalizado = String(codigo || '').replace(/\D/g, '').slice(0, 10);
+
+    if (!/^\d{4,10}$/.test(codigoNormalizado)) {
       return NextResponse.json(
-        { erro: true, mensagem: 'Informe o código recebido por SMS.' },
+        { erro: true, mensagem: 'Informe o código numérico recebido por SMS.' },
         { status: 400 }
       );
     }
@@ -44,7 +46,7 @@ export async function POST(request: Request) {
         },
         body: new URLSearchParams({
           To: telefoneFormatado,
-          Code: String(codigo).trim(),
+          Code: codigoNormalizado,
         }),
       }
     );
