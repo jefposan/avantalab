@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.7.3.05-av57 - 2026-08-11
+
+- AvantaVendas: a recuperação de senha consulta o diretório central de contas
+  no servidor, sem depender de vínculo comercial, e, quando
+  o e-mail não pertence a uma conta, exibe **Usuário não localizado** em um
+  aviso acessível. O endereço digitado é preservado e recebe novamente o foco
+  para correção.
+
+## 1.7.3.05-av56 - 2026-08-11
+
+- AvantaVendas: o cadastro de um e-mail já existente deixa de exibir a mensagem
+  técnica em inglês e apresenta **Conta já cadastrada**, com ações diretas para
+  entrar no login ou recuperar a senha, preservando o e-mail informado.
+
 ## 1.7.3.05-av55 - 2026-08-11
 
 - AvantaVendas: a confirmação de exclusão foi condensada em uma descrição

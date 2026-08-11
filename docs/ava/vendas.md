@@ -2,6 +2,17 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av57: na recuperação de senha, o AvantaVendas consulta o
+> diretório central de contas no servidor antes de enviar o SMS, sem depender
+> de vínculo comercial. Se o e-mail não estiver vinculado a
+> uma conta, informa **Usuário não localizado**, preserva o endereço digitado e
+> devolve o foco ao campo para correção.
+
+> Revisão 1.7.3.05-av56: ao tentar cadastrar um e-mail já existente, o
+> AvantaVendas informa **Conta já cadastrada** em português e oferece **Ir para
+> o login** ou **Recuperar senha**, mantendo o e-mail informado para facilitar
+> a continuidade do acesso.
+
 > Revisão 1.7.3.05-av55: a confirmação de exclusão apresenta uma descrição
 > única e objetiva, mantendo explícitos o caráter permanente, a preservação de
 > outros serviços AvantaLab e a impossibilidade de recuperar os dados removidos.

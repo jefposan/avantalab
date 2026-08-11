@@ -6,13 +6,11 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-async function localizarAcesso(email: string) {
+async function localizarConta(email: string) {
   const { data, error } = await supabaseAdmin
-    .from('vendas_mobile_solicitacoes_acesso')
-    .select('user_id, telefone, status')
+    .from('usuarios_contas')
+    .select('user_id')
     .eq('email', email)
-    .in('status', ['pendente', 'aprovada'])
-    .order('atualizado_em', { ascending: false })
     .limit(1)
     .maybeSingle();
   if (error) throw error;
@@ -28,9 +26,8 @@ function mascararTelefone(telefone: string) {
   return `${numeros.slice(0, Math.min(3, numeros.length))}••••${numeros.slice(-4)}`;
 }
 
-async function telefoneDoAcesso(acesso: { user_id: string; telefone: string | null }) {
-  if (acesso.telefone) return acesso.telefone;
-  const { data, error } = await supabaseAdmin.auth.admin.getUserById(acesso.user_id);
+async function telefoneDaConta(conta: { user_id: string }) {
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(conta.user_id);
   if (error) throw error;
   return String(data.user?.user_metadata?.telefone || data.user?.phone || '');
 }
@@ -43,11 +40,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ erro: true, mensagem: 'Informe um e-mail válido.' }, { status: 400 });
     }
 
-    const acesso = await localizarAcesso(emailLimpo);
-    if (!acesso?.user_id) {
-      return NextResponse.json({ erro: true, mensagem: 'Não encontramos um acesso do Vendas com este e-mail.' }, { status: 404 });
+    const conta = await localizarConta(emailLimpo);
+    if (!conta?.user_id) {
+      return NextResponse.json({ erro: true, mensagem: 'Usuário não localizado. Confirme o e-mail digitado.' }, { status: 404 });
     }
-    const telefone = (await telefoneDoAcesso(acesso)).trim();
+    const telefone = (await telefoneDaConta(conta)).trim();
     if (!telefone) {
       return NextResponse.json({ erro: true, mensagem: 'Este acesso não possui celular confirmado. Entre com Google e crie uma senha em Configurações.' }, { status: 400 });
     }

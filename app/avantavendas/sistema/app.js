@@ -130,6 +130,7 @@ let cadastroPendente = null;
 let loginRascunho = { contato: '', senha: '', lembrar: true };
 let cadastroRascunho = carregarRascunhoCadastroVendas();
 let campoRetornoAvisoAcessoVendas = '';
+let retomarRecuperacaoSenhaAposAviso = false;
 let avisoExclusaoContaPendente = new URLSearchParams(window.location.search).get(AVISO_EXCLUSAO_CONCLUIDA_PARAM) === '1';
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
@@ -1773,10 +1774,60 @@ function abrirAvisoAcessoVendas(titulo, mensagem, campoId = '') {
   requestAnimationFrame(() => document.getElementById('accessValidationClose')?.focus());
 }
 
+function abrirAvisoRecuperacaoSenhaVendas(titulo, mensagem) {
+  retomarRecuperacaoSenhaAposAviso = true;
+  abrirAvisoAcessoVendas(titulo, mensagem);
+  document.getElementById('sheetBackdrop')?.classList.add('sheet-backdrop-static');
+}
+
+function emailContaJaCadastradaVendas() {
+  return String(cadastroPendente?.email || cadastroRascunho.email || '').trim().toLowerCase();
+}
+
+function prepararLoginContaJaCadastradaVendas() {
+  const email = emailContaJaCadastradaVendas();
+  loginTipo = 'email';
+  loginRascunho = { contato: email, senha: '', lembrar: true };
+  cadastroRascunho = { ...cadastroRascunho, senha: '', confirmarSenha: '', codigoSms: '' };
+  voltarParaLogin();
+  return email;
+}
+
+function irParaLoginContaJaCadastradaVendas() {
+  fecharSheet();
+  prepararLoginContaJaCadastradaVendas();
+  requestAnimationFrame(() => document.getElementById('loginSenha')?.focus({ preventScroll: true }));
+}
+
+function recuperarSenhaContaJaCadastradaVendas() {
+  fecharSheet();
+  const email = prepararLoginContaJaCadastradaVendas();
+  recuperacaoSenhaVendas = { email, codigoEnviado: false };
+  renderRecuperacaoSenhaVendas();
+}
+
+function abrirAvisoContaJaCadastradaVendas() {
+  sheet(`<div class="access-validation-dialog account-already-registered-dialog" role="alertdialog" aria-modal="true" aria-labelledby="accountAlreadyRegisteredTitle" aria-describedby="accountAlreadyRegisteredMessage"><div class="access-validation-icon" aria-hidden="true">${svgIcon('warning')}</div><h2 id="accountAlreadyRegisteredTitle">Conta já cadastrada</h2><p id="accountAlreadyRegisteredMessage">Este e-mail já está vinculado a uma conta. Entre com sua senha ou recupere o acesso.</p><div class="access-validation-actions"><button id="accountAlreadyRegisteredLogin" type="button" class="primary" onclick="irParaLoginContaJaCadastradaVendas()">Ir para o login</button><button type="button" class="secondary" onclick="recuperarSenhaContaJaCadastradaVendas()">Recuperar senha</button></div></div>`, 'sheet-backdrop-centered access-validation-backdrop');
+  requestAnimationFrame(() => document.getElementById('accountAlreadyRegisteredLogin')?.focus());
+}
+
 function fecharAvisoAcessoVendas() {
   const campoId = campoRetornoAvisoAcessoVendas;
+  const deveRetomarRecuperacao = retomarRecuperacaoSenhaAposAviso;
   campoRetornoAvisoAcessoVendas = '';
+  retomarRecuperacaoSenhaAposAviso = false;
   fecharSheet();
+  if (deveRetomarRecuperacao) {
+    renderRecuperacaoSenhaVendas();
+    requestAnimationFrame(() => {
+      const campo = document.getElementById('recuperarEmail');
+      if (!(campo instanceof HTMLInputElement)) return;
+      campo.focus({ preventScroll: true });
+      const fim = String(campo.value || '').length;
+      try { campo.setSelectionRange(fim, fim); } catch { /* tipo sem Selection API */ }
+    });
+    return;
+  }
   if (!campoId) return;
   requestAnimationFrame(() => {
     const campo = document.getElementById(campoId);
@@ -2587,17 +2638,27 @@ function abrirRecuperacaoSenha() {
 
 async function enviarRecuperacaoSenha() {
   const email = (valor('recuperarEmail').trim() || recuperacaoSenhaVendas?.email || '').toLowerCase();
-  if (!email || !emailValido(email)) { toast('Informe um e-mail válido.'); return; }
+  recuperacaoSenhaVendas = { email, codigoEnviado: false };
+  if (!email || !emailValido(email)) {
+    abrirAvisoRecuperacaoSenhaVendas('E-mail inválido', 'Confira o e-mail digitado.');
+    return;
+  }
   try {
     const resposta = await fetch('/api/vendas/senha/enviar-codigo', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
     });
     const resultado = await resposta.json().catch(() => ({}));
+    if (resposta.status === 404) {
+      abrirAvisoRecuperacaoSenhaVendas('Usuário não localizado', 'Confirme o e-mail digitado.');
+      return;
+    }
     if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Não foi possível enviar o código por SMS.');
     recuperacaoSenhaVendas = { email, codigoEnviado: true, telefoneMascarado: resultado.telefoneMascarado || 'seu celular confirmado' };
     renderRecuperacaoSenhaVendas();
     toast('Código enviado por SMS.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    abrirAvisoRecuperacaoSenhaVendas('Não foi possível continuar', traduzErro(error));
+  }
 }
 
 function renderRecuperacaoSenhaVendas() {
@@ -2820,7 +2881,8 @@ async function confirmarCadastroSms(event) {
       ? 'Conta criada. Confirme seu e-mail; a solicitação de conteúdo será enviada no primeiro acesso.'
       : 'Conta criada. Confirme seu e-mail para começar a usar o Vendas.');
   } catch (error) {
-    abrirAvisoAcessoVendas('Não foi possível criar a conta', traduzErro(error), 'cadastroCodigoSms');
+    if (ehErroContaJaCadastradaVendas(error)) abrirAvisoContaJaCadastradaVendas();
+    else abrirAvisoAcessoVendas('Não foi possível criar a conta', traduzErro(error), 'cadastroCodigoSms');
   } finally {
     confirmandoCadastroSms = false;
     const botaoAtual = document.getElementById('confirmarSmsCadastro');
@@ -2933,8 +2995,14 @@ function traduzErro(error) {
   if (error?.persistenciaLocalIndisponivel) return 'Não foi possível confirmar no servidor nem proteger a alteração no aparelho. Mantenha esta tela aberta e tente novamente.';
   const texto = String(error?.message || error || 'Erro inesperado.');
   if (/invalid login credentials/i.test(texto)) return 'E-mail ou senha incorretos.';
+  if (ehErroContaJaCadastradaVendas(texto)) return 'Este e-mail já está vinculado a uma conta.';
   if (/relation .* does not exist/i.test(texto)) return 'O banco do Vendas Mobile ainda não foi instalado.';
   return texto;
+}
+
+function ehErroContaJaCadastradaVendas(error) {
+  const texto = String(error?.message || error || '').trim();
+  return /user already registered|already registered|user already exists|email.*already.*registered/i.test(texto);
 }
 
 function atualizarRegistroPersistido(lista, salvo) {

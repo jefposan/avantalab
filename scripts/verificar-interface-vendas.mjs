@@ -2,13 +2,15 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, versao, cliente, rotaExclusao, rotaVerificacaoSms, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
+const [aplicacao, estilos, versao, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/version.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/supabase-client.js'), 'utf8'),
   readFile(resolve(raiz, 'app/api/vendas/conta/route.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/api/sms/verificar-codigo/route.ts'), 'utf8'),
+  readFile(resolve(raiz, 'app/api/vendas/senha/enviar-codigo/route.ts'), 'utf8'),
+  readFile(resolve(raiz, 'app/api/vendas/senha/redefinir/route.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/components/NovidadesVendasModal.tsx'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807193000_capa_pasta_divulgacao_vendas_mobile.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807210000_ativar_vinculo_comercial_aprovado.sql'), 'utf8'),
@@ -41,6 +43,16 @@ exigir(
     && !aplicacao.includes("erro.textContent = 'As senhas não coincidem.'")
     && estilos.includes('.login-screen > form { max-height: none; overflow: hidden; }'),
   'Login e cadastro devem usar avisos modais, preservar valores e devolver o foco sem criar rolagem no formulário.',
+);
+exigir(
+  aplicacao.includes("abrirAvisoRecuperacaoSenhaVendas('Usuário não localizado', 'Confirme o e-mail digitado.')")
+    && aplicacao.includes('retomarRecuperacaoSenhaAposAviso')
+    && aplicacao.includes("document.getElementById('recuperarEmail')")
+    && rotaRecuperacaoSenha.includes(".from('usuarios_contas')")
+    && rotaRecuperacaoSenha.includes("mensagem: 'Usuário não localizado. Confirme o e-mail digitado.'")
+    && rotaRedefinicaoSenha.includes(".from('usuarios_contas')")
+    && rotaRedefinicaoSenha.includes('updateUserById(conta.user_id'),
+  'A recuperação de senha deve consultar o diretório central, avisar quando o usuário não existe e devolver o foco ao e-mail preservado.',
 );
 exigir(
   aplicacao.includes('autocapitalize="words"')
