@@ -6,6 +6,3 @@ android/
 **/*.apk
 **/*.ipa
 **/*.xcarchive
-
-# Migrações são publicadas diretamente no Supabase, não no Vercel.
-supabase/
