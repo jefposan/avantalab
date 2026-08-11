@@ -101,6 +101,18 @@ exigir(
   'Google e Apple devem compartilhar o fluxo OAuth nativo seguro, com deep link validado, retorno PKCE/tokens e cancelamento recuperável.',
 );
 exigir(
+  aplicacao.includes('function prepararAlturaPreparacao()')
+    && aplicacao.includes("campoAtivo.closest('.login-screen')")
+    && aplicacao.includes('campoAtivo.blur()')
+    && aplicacao.includes("document.documentElement.style.removeProperty('--vendas-preparing-height')")
+    && aplicacao.includes('sessionStorage.removeItem(PREPARING_VIEWPORT_HEIGHT_KEY_LEGACY)')
+    && !aplicacao.includes("style.setProperty('--vendas-preparing-height'")
+    && !aplicacao.includes('window.visualViewport?.height || window.innerHeight')
+    && estilos.includes('.login-screen.preparing-access-screen {\n  --access-scene-height: var(--vendas-viewport-height);\n  position: fixed;\n  inset: 0;')
+    && estilos.includes('height: auto;\n  min-height: 0;\n  flex: none;'),
+  'Preparando acesso deve cobrir toda a viewport e nunca congelar a altura reduzida pelo teclado.',
+);
+exigir(
   aplicacao.includes("const URL_APP_GESTAO = 'br.com.avantalab.app://auth/callback?origem=vendas'")
     && aplicacao.includes("const URL_WEB_GESTAO = 'https://app.avantalab.com.br/mobile?origem=vendas'")
     && aplicacao.includes('AppLauncher.canOpenUrl({ url: URL_APP_GESTAO })')
@@ -258,7 +270,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '46'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '47'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

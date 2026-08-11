@@ -1588,8 +1588,13 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
   }
 }
 .login-screen.preparing-access-screen {
-  --access-scene-height: var(--vendas-preparing-height, var(--vendas-viewport-height));
+  --access-scene-height: var(--vendas-viewport-height);
+  position: fixed;
+  inset: 0;
   width: 100%;
+  height: auto;
+  min-height: 0;
+  flex: none;
   justify-content: normal;
   padding: 0 max(16px, var(--vendas-safe-right)) 0 max(16px, var(--vendas-safe-left));
 }

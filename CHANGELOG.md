@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.3.05-av47 - 2026-08-11
+
+- AvantaVendas: a tela **Preparando acesso** agora ocupa permanentemente toda a
+  área útil após o login. A altura transitória reduzida pelo teclado deixou de
+  ser congelada, eliminando a lacuna branca inferior em iOS, Android, PWA e
+  navegador.
+
 ## 1.7.3.05-av46 - 2026-08-11
 
 - AvantaVendas: o primeiro espaço de vendas agora é preparado automaticamente

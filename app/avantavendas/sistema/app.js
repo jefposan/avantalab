@@ -8,7 +8,7 @@ const SESSAO_TEMPORARIA_KEY = 'avantalab.vendas_mobile.sessao_temporaria';
 const OAUTH_TEMPORARIO_ATE_KEY = 'avantalab.vendas_mobile.oauth_temporario_ate';
 const TRINTA_DIAS_MS = 1000 * 60 * 60 * 24 * 30;
 const DEZ_MINUTOS_MS = 1000 * 60 * 10;
-const PREPARING_VIEWPORT_HEIGHT_KEY = 'avantalab.vendas_mobile.preparing_viewport_height';
+const PREPARING_VIEWPORT_HEIGHT_KEY_LEGACY = 'avantalab.vendas_mobile.preparing_viewport_height';
 const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
 const ORIGEM_ACESSO_VENDAS_KEY = 'avantalab_mobile_origem_acesso';
 const RASCUNHO_CADASTRO_VENDAS_KEY = 'avantalab:rascunho:v1:vendas:cadastro-conta';
@@ -374,16 +374,18 @@ const UFS_BRASIL = [
 
 const app = document.getElementById('app');
 
-function fixarAlturaPreparacao() {
-  const altura = Math.round(window.visualViewport?.height || window.innerHeight);
-  if (!Number.isFinite(altura) || altura < 1) return;
-  document.documentElement.style.setProperty('--vendas-preparing-height', `${altura}px`);
-  try { sessionStorage.setItem(PREPARING_VIEWPORT_HEIGHT_KEY, String(altura)); } catch { /* armazenamento indisponível */ }
+function prepararAlturaPreparacao() {
+  // O teclado reduz visualViewport durante o envio do formulário. A cena de
+  // preparação não pode herdar nem congelar essa altura transitória: 100dvh
+  // (ou 100svh no WKWebView) acompanha novamente a tela quando o teclado fecha.
+  const campoAtivo = document.activeElement;
+  if (campoAtivo instanceof HTMLElement && campoAtivo.closest('.login-screen')) campoAtivo.blur();
+  liberarAlturaPreparacao();
 }
 
 function liberarAlturaPreparacao() {
   document.documentElement.style.removeProperty('--vendas-preparing-height');
-  try { sessionStorage.removeItem(PREPARING_VIEWPORT_HEIGHT_KEY); } catch { /* armazenamento indisponível */ }
+  try { sessionStorage.removeItem(PREPARING_VIEWPORT_HEIGHT_KEY_LEGACY); } catch { /* armazenamento indisponível */ }
 }
 
 function cancelarLoginSocialVendas() {
@@ -2355,7 +2357,7 @@ async function entrarSistema(event) {
     abrirAvisoAcessoVendas('Senha necessária', 'Digite sua senha para continuar.', 'loginSenha');
     return;
   }
-  fixarAlturaPreparacao();
+  prepararAlturaPreparacao();
   window.__avantalabReiniciarProgressoVendas?.('Autenticando seu acesso');
   carregandoBackend = true;
   render();
@@ -2487,7 +2489,7 @@ async function entrarComProvedorSocialVendas(provedor) {
   if (loginSocialPendente) return;
   const lembrar = document.getElementById('loginLembrar')?.checked === true;
   document.activeElement?.blur();
-  fixarAlturaPreparacao();
+  prepararAlturaPreparacao();
   salvarLoginSocialPendenteVendas(provedor);
   registrarPreferenciaSessaoVendas(lembrar, true);
   window.__avantalabReiniciarProgressoVendas?.(`Conectando com ${provedor === 'apple' ? 'Apple' : 'Google'}`);

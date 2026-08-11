@@ -2,6 +2,10 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av47: a tela **Preparando acesso** acompanha a altura útil
+> completa depois que o teclado fecha e não deixa uma lacuna branca inferior;
+> sem alteração no fluxo operacional do AvantaVendas.
+
 > Revisão 1.7.3.05-av46: após autenticar, o primeiro espaço do AvantaVendas é
 > preparado automaticamente e o usuário entra direto na sala de botões. A tela
 > intermediária **Crie seu espaço de vendas** foi removida; perfis adicionais
