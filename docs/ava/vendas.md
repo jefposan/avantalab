@@ -2,6 +2,10 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av45: os nove botões da sala principal permanecem quadrados
+> em celulares Android estreitos, sem deformar as imagens; sem alteração no
+> funcionamento das opções.
+
 > Revisão 1.7.3.05: persistência de preferências da Gestão Web e Mobile; sem
 > impacto operacional no AvantaVendas.
 

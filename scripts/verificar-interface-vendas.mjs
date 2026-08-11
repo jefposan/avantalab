@@ -200,6 +200,13 @@ exigir(
   'A sala deve manter loadings locais e revelar todos os botões somente depois que as imagens estiverem prontas.',
 );
 exigir(
+  estilos.includes('.mobile-menu-card { width: 90%; min-height: 0; justify-self: center; overflow: visible; aspect-ratio: 1 / 1;')
+    && estilos.includes('.mobile-menu-card img { object-fit: contain;')
+    && estilos.includes('.mobile-menu-card { height: auto; min-height: 0; aspect-ratio: 1 / 1;')
+    && !estilos.includes('.mobile-menu-card { min-height: 123px;'),
+  'Os botões da sala devem permanecer quadrados em telas Android estreitas, sem altura mínima ou imagem deformada.',
+);
+exigir(
   migracaoVinculo.includes("v_deve_ativar := new.papel = 'vendedor'")
     && migracaoVinculo.includes('and empresa_id <> new.empresa_id')
     && migracaoVinculo.includes('set ativo = true,')
@@ -233,7 +240,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '44'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '45'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

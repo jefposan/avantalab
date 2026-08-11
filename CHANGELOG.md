@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.05-av45 - 2026-08-11
+
+- AvantaVendas: os botões da sala principal agora preservam a proporção quadrada
+  também em telas Android de até 460 px, removendo a altura mínima conflitante e
+  impedindo a deformação das imagens.
+
 ## 1.7.3.05-av44 - 2026-08-11
 
 - AvantaVendas: Google e Apple agora compartilham no aplicativo nativo o mesmo
