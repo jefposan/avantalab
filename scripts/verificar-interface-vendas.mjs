@@ -114,7 +114,8 @@ exigir(
     && aplicacao.includes("'user-x': '<path")
     && aplicacao.includes("settings-reset-card\"><h3>${svgIconEstavel('rotate-ccw')} Resetar sistema")
     && aplicacao.includes("settings-delete-account-card\"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas")
-    && aplicacao.includes('A exclusão é restrita ao AvantaVendas.')
+    && aplicacao.includes('Todos os dados da sua conta no AvantaVendas serão excluídos permanentemente.')
+    && aplicacao.includes('os dados excluídos não poderão ser recuperados.')
     && !aplicacao.includes("${svgIcon('warning')} Resetar sistema")
     && !aplicacao.includes("${svgIcon('warning')} Excluir conta do Vendas"),
   'Os cards destrutivos devem exibir SVGs estáveis e específicos, sem contêiner de ícone vazio.',
@@ -315,7 +316,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '54'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '55'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

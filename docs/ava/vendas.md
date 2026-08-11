@@ -2,6 +2,10 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av55: a confirmação de exclusão apresenta uma descrição
+> única e objetiva, mantendo explícitos o caráter permanente, a preservação de
+> outros serviços AvantaLab e a impossibilidade de recuperar os dados removidos.
+>
 > Revisão 1.7.3.05-av54: Vendas e Gestão compartilham somente a identidade
 > AvantaLab no servidor e mantêm sessões locais independentes. A troca de app
 > não transfere autenticação: o destino abre a sessão que já possui ou solicita

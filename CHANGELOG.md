@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.05-av55 - 2026-08-11
+
+- AvantaVendas: a confirmação de exclusão foi condensada em uma descrição
+  direta sobre os dados removidos, a preservação de outros serviços AvantaLab
+  e o início vazio caso o usuário volte a utilizar o Vendas.
+
 ## 1.7.3.05-av54 - 2026-08-11
 
 - AvantaVendas: a sessão local passa a usar armazenamento exclusivo. Abrir o
