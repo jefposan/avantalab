@@ -2,6 +2,11 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av53: a validação SMS bloqueia submissões simultâneas e
+> desativa imediatamente os botões de validar e reenviar. Se o código já foi
+> aprovado, mas a criação da conta falhar por conexão, a nova tentativa retoma
+> a criação sem conferir novamente uma verificação já encerrada pelo Twilio.
+>
 > Revisão 1.7.3.05-av52: o cadastro formata nome e sobrenome com inicial
 > maiúscula. A validação por SMS mostra contagem regressiva real, libera o
 > reenvio em uma pílula após 60 segundos, descarta o código ao sair ou reenviar

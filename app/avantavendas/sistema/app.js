@@ -133,6 +133,9 @@ let campoRetornoAvisoAcessoVendas = '';
 let avisoExclusaoContaPendente = new URLSearchParams(window.location.search).get(AVISO_EXCLUSAO_CONCLUIDA_PARAM) === '1';
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
+let confirmandoCadastroSms = false;
+let reenviandoSmsCadastro = false;
+let cadastroSmsValidado = false;
 let loginSocialPendente = lerLoginSocialPendenteVendas();
 let provedorOAuthNativoPendente = loginSocialPendente;
 let appVendasInicializado = false;
@@ -1876,7 +1879,7 @@ function renderValidacaoSmsCadastro() {
   const textoReenvio = aguardandoReenvio
     ? `Reenviar código em <span id="smsContador">${segundosReenvioSmsCadastro}</span>s`
     : 'Reenviar código';
-  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form sms-confirm-form" novalidate onsubmit="confirmarCadastroSms(event)"><p class="login-card-help">Enviamos um código por SMS para <b>${escapeHtml(telefone)}</b>.</p><label>Código de validação<div class="login-field">${svgIcon('lock')}<input id="cadastroCodigoSms" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="10" value="${escapeAttr(cadastroRascunho.codigoSms)}" placeholder="Digite o código recebido" onclick="limparCodigoSmsAoEditar(this)" autofocus></div></label><button class="primary login-submit" type="submit">Validar e criar conta</button><button id="reenviarSmsCadastro" class="forgot-link sms-resend ${aguardandoReenvio ? '' : 'is-ready'}" type="button" onclick="reenviarSmsCadastro()" ${aguardandoReenvio ? 'disabled' : ''}>${textoReenvio}</button><p class="login-register"><button type="button" onclick="voltarDadosCadastro()">Alterar dados</button></p></form></section>`;
+  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form sms-confirm-form" novalidate onsubmit="confirmarCadastroSms(event)"><p class="login-card-help">Enviamos um código por SMS para <b>${escapeHtml(telefone)}</b>.</p><label>Código de validação<div class="login-field">${svgIcon('lock')}<input id="cadastroCodigoSms" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="10" value="${escapeAttr(cadastroRascunho.codigoSms)}" placeholder="Digite o código recebido" onclick="limparCodigoSmsAoEditar(this)" autofocus></div></label><button id="confirmarSmsCadastro" class="primary login-submit" type="submit">Validar e criar conta</button><button id="reenviarSmsCadastro" class="forgot-link sms-resend ${aguardandoReenvio ? '' : 'is-ready'}" type="button" onclick="reenviarSmsCadastro()" ${aguardandoReenvio ? 'disabled' : ''}>${textoReenvio}</button><p class="login-register"><button type="button" onclick="voltarDadosCadastro()">Alterar dados</button></p></form></section>`;
 }
 
 function trocarTipoLogin(tipo) {
@@ -2637,6 +2640,9 @@ function voltarParaLogin() {
   modoLogin = 'entrar';
   cadastroEtapa = 'dados';
   cadastroPendente = null;
+  confirmandoCadastroSms = false;
+  reenviandoSmsCadastro = false;
+  cadastroSmsValidado = false;
   limparCodigoSmsCadastro();
   erroAcessoVendas = '';
   pararContadorSmsCadastro();
@@ -2645,6 +2651,9 @@ function voltarParaLogin() {
 
 function voltarDadosCadastro() {
   cadastroEtapa = 'dados';
+  confirmandoCadastroSms = false;
+  reenviandoSmsCadastro = false;
+  cadastroSmsValidado = false;
   limparCodigoSmsCadastro();
   erroAcessoVendas = '';
   pararContadorSmsCadastro();
@@ -2702,6 +2711,7 @@ async function criarConta(event) {
   }
   try {
     cadastroPendente = { nome, email, senha, codigo, telefone: telefoneCompleto };
+    cadastroSmsValidado = false;
     await enviarSmsCadastro(telefoneCompleto);
     limparCodigoSmsCadastro();
     cadastroEtapa = 'sms';
@@ -2748,19 +2758,27 @@ function iniciarContadorSmsCadastro() {
 }
 
 async function reenviarSmsCadastro() {
-  if (!cadastroPendente || segundosReenvioSmsCadastro > 0) return;
+  if (!cadastroPendente || segundosReenvioSmsCadastro > 0 || reenviandoSmsCadastro) return;
+  reenviandoSmsCadastro = true;
+  const botao = document.getElementById('reenviarSmsCadastro');
+  if (botao) { botao.disabled = true; botao.textContent = 'Reenviando...'; }
   try {
     await enviarSmsCadastro(cadastroPendente.telefone);
+    cadastroSmsValidado = false;
     limparCodigoSmsCadastro();
     iniciarContadorSmsCadastro();
     toast('Enviamos um novo código por SMS.');
   } catch (error) {
     abrirAvisoAcessoVendas('Não foi possível reenviar', traduzErro(error), 'cadastroCodigoSms');
+  } finally {
+    reenviandoSmsCadastro = false;
+    atualizarContadorSmsCadastro();
   }
 }
 
 async function confirmarCadastroSms(event) {
   event?.preventDefault();
+  if (confirmandoCadastroSms) return;
   const codigoSms = valor('cadastroCodigoSms').replace(/\D/g, '').slice(0, 10);
   cadastroRascunho.codigoSms = codigoSms;
   if (!cadastroPendente || !codigoSms) {
@@ -2771,13 +2789,19 @@ async function confirmarCadastroSms(event) {
     abrirAvisoAcessoVendas('Nome incompleto', 'Volte e informe seu nome completo, com nome e sobrenome.', 'cadastroCodigoSms');
     return;
   }
+  confirmandoCadastroSms = true;
+  const botao = document.getElementById('confirmarSmsCadastro');
+  if (botao) { botao.disabled = true; botao.textContent = 'Validando...'; }
   try {
-    const resposta = await fetch('/api/sms/verificar-codigo', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telefone: cadastroPendente.telefone, codigo: codigoSms }),
-    });
-    const resultado = await resposta.json().catch(() => ({}));
-    if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Código inválido ou expirado.');
+    if (!cadastroSmsValidado) {
+      const resposta = await fetch('/api/sms/verificar-codigo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telefone: cadastroPendente.telefone, codigo: codigoSms }),
+      });
+      const resultado = await resposta.json().catch(() => ({}));
+      if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Código inválido ou expirado.');
+      cadastroSmsValidado = true;
+    }
     const dados = cadastroPendente;
     if (dados.codigo) {
       localStorage.setItem('avantalab.vendas_mobile.solicitacao_pendente', JSON.stringify({ nome: dados.nome, codigo: dados.codigo, telefone: dados.telefone }));
@@ -2787,6 +2811,7 @@ async function confirmarCadastroSms(event) {
     await window.VendasDb.signUp({ nome: dados.nome, email: dados.email, password: dados.senha, telefone: dados.telefone });
     pararContadorSmsCadastro();
     cadastroPendente = null;
+    cadastroSmsValidado = false;
     limparRascunhoCadastroVendas();
     cadastroEtapa = 'dados';
     modoLogin = 'entrar';
@@ -2796,6 +2821,13 @@ async function confirmarCadastroSms(event) {
       : 'Conta criada. Confirme seu e-mail para começar a usar o Vendas.');
   } catch (error) {
     abrirAvisoAcessoVendas('Não foi possível criar a conta', traduzErro(error), 'cadastroCodigoSms');
+  } finally {
+    confirmandoCadastroSms = false;
+    const botaoAtual = document.getElementById('confirmarSmsCadastro');
+    if (botaoAtual) {
+      botaoAtual.disabled = false;
+      botaoAtual.textContent = cadastroSmsValidado ? 'Concluir criação da conta' : 'Validar e criar conta';
+    }
   }
 }
 

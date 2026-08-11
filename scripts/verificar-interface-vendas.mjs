@@ -52,6 +52,11 @@ exigir(
     && aplicacao.includes('onclick="limparCodigoSmsAoEditar(this)"')
     && aplicacao.includes("valor('cadastroCodigoSms').replace(/\\D/g, '').slice(0, 10)")
     && aplicacao.includes("botao.classList.toggle('is-ready', !aguardando)")
+    && aplicacao.includes('if (confirmandoCadastroSms) return;')
+    && aplicacao.includes("botao.disabled = true; botao.textContent = 'Validando...'")
+    && aplicacao.includes('if (!cadastroSmsValidado) {')
+    && aplicacao.includes('cadastroSmsValidado = true;')
+    && aplicacao.includes('if (!cadastroPendente || segundosReenvioSmsCadastro > 0 || reenviandoSmsCadastro) return;')
     && aplicacao.includes('Reenviar código em <span id="smsContador">${segundosReenvioSmsCadastro}</span>s')
     && estilos.includes('.sms-confirm-form .sms-resend.is-ready')
     && rotaVerificacaoSms.includes("String(codigo || '').replace(/\\D/g, '').slice(0, 10)")
@@ -300,7 +305,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '52'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '53'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

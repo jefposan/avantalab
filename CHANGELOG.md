@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.3.05-av53 - 2026-08-11
+
+- AvantaVendas: a validação SMS passa a bloquear chamadas simultâneas e a
+  desativar o botão no primeiro toque, evitando que uma segunda requisição
+  tente reutilizar uma verificação que o Twilio já aprovou e encerrou.
+- AvantaVendas: após a aprovação do SMS, uma falha posterior na criação da
+  conta pode ser retomada sem consumir ou conferir novamente o mesmo código.
+- AvantaVendas: o reenvio de SMS também recebe trava contra toques duplicados.
+
 ## 1.7.3.05-av52 - 2026-08-11
 
 - AvantaVendas: o nome completo do cadastro passa a aplicar inicial maiúscula
