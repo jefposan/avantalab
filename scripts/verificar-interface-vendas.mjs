@@ -83,6 +83,11 @@ exigir(
     && rotaExclusao.includes(".from('vendas-produtos')")
     && rotaExclusao.includes('.remove(uploads.slice(inicio, inicio + 100))')
     && cliente.includes("rpc('garantir_conta_vendas_mobile_rpc')")
+    && cliente.includes("const vendasStorageKey = 'avantalab-vendas-mobile-auth'")
+    && cliente.includes('storageKey: vendasStorageKey')
+    && cliente.includes("auth.signOut({ scope: 'local' })")
+    && !cliente.includes('sharedStorageKey')
+    && !cliente.includes('projectRef')
     && cliente.includes('emailRedirectTo: retornoCadastroVendas()')
     && cliente.includes('const contaInicial = await garantirContaVendas();')
     && !cliente.includes('contaVendasAusente: true')
@@ -90,21 +95,26 @@ exigir(
     && migracaoContaAutomatica.includes('pg_advisory_xact_lock')
     && migracaoContaAutomatica.includes('grant execute on function public.garantir_conta_vendas_mobile_rpc() to authenticated')
     && migracaoExclusao.includes('create or replace function public.excluir_conta_avantavendas_rpc')
-    && migracaoExclusao.includes('historico_financeiro_preservado')
-    && migracaoExclusao.includes('login_avantalab_preservado')
     && migracaoExclusao.includes("'uploads_para_excluir', v_uploads_para_excluir")
     && migracaoExclusao.includes("to_regclass('public.feedbacks')")
     && migracaoExclusao.includes("to_regclass('public.vendas_mobile_instalacoes')")
     && migracaoExclusao.includes("to_regclass('public.vendas_mobile_publicacoes')")
     && migracaoExclusao.includes("delete from public.vendas_mobile_pacotes")
-    && migracaoExclusao.includes('perform public.desvincular_receitas_vendas_mobile_usuario(v_user_id, v_empresa_id, false)'),
-  'A exclusão deve remover somente o perfil do Vendas; um novo login prepara a conta técnica automaticamente, preservando login, Gestão e histórico financeiro.',
+    && migracaoExclusao.includes('perform public.desvincular_receitas_vendas_mobile_usuario(v_user_id, v_empresa_id, false)')
+    && migracaoExclusao.includes('historico_financeiro_preservado')
+    && migracaoExclusao.includes('login_avantalab_preservado')
+    && rotaExclusao.includes('loginAvantaLabPreservado')
+    && rotaExclusao.includes('gestaoPreservado')
+    && !rotaExclusao.includes('admin.auth.admin.deleteUser')
+    && !rotaExclusao.includes('identidadeExcluida'),
+  'Vendas e Gestão devem manter sessões locais separadas; a exclusão remove somente a conta do Vendas e preserva os demais serviços.',
 );
 exigir(
   aplicacao.includes("'rotate-ccw': '<path")
     && aplicacao.includes("'user-x': '<path")
     && aplicacao.includes("settings-reset-card\"><h3>${svgIconEstavel('rotate-ccw')} Resetar sistema")
     && aplicacao.includes("settings-delete-account-card\"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas")
+    && aplicacao.includes('A exclusão é restrita ao AvantaVendas.')
     && !aplicacao.includes("${svgIcon('warning')} Resetar sistema")
     && !aplicacao.includes("${svgIcon('warning')} Excluir conta do Vendas"),
   'Os cards destrutivos devem exibir SVGs estáveis e específicos, sem contêiner de ícone vazio.',
@@ -305,7 +315,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '53'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '54'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

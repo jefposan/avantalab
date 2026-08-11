@@ -1,21 +1,15 @@
 (function () {
   const config = window.VENDAS_MOBILE_CONFIG || {};
   const sdk = window.supabase;
-  const legacyStorageKey = 'avantalab-vendas-mobile-auth';
+  // O Vendas compartilha a identidade AvantaLab no servidor, mas mantém sua
+  // própria sessão neste aparelho. O Gestão usa outra chave e não autentica o
+  // Vendas silenciosamente ao abrir ou trocar de aplicativo.
+  const vendasStorageKey = 'avantalab-vendas-mobile-auth';
   const contaAtivaStorageKey = 'avantalab.vendas_mobile.conta_ativa.v1';
-  const projectRef = (() => {
-    try { return new URL(config.supabaseUrl).hostname.split('.')[0]; } catch { return ''; }
-  })();
-  const sharedStorageKey = projectRef ? `sb-${projectRef}-auth-token` : legacyStorageKey;
-  try {
-    const legacySession = localStorage.getItem(legacyStorageKey);
-    if (legacySession && !localStorage.getItem(sharedStorageKey)) localStorage.setItem(sharedStorageKey, legacySession);
-    if (sharedStorageKey !== legacyStorageKey) localStorage.removeItem(legacyStorageKey);
-  } catch { /* armazenamento indisponível */ }
   const client = sdk && config.supabaseUrl && config.supabaseAnonKey
     ? sdk.createClient(config.supabaseUrl, config.supabaseAnonKey, {
         auth: {
-          storageKey: sharedStorageKey,
+          storageKey: vendasStorageKey,
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
@@ -220,7 +214,9 @@
 
   async function signOut() {
     await cancelarAtualizacoesVinculo();
-    const { error } = await requireClient().auth.signOut();
+    // Revoga somente a sessão armazenada pelo AvantaVendas neste aparelho.
+    // O mesmo usuário pode manter uma sessão independente no Gestão.
+    const { error } = await requireClient().auth.signOut({ scope: 'local' });
     if (error) throw error;
   }
 

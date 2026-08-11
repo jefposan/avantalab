@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.7.3.05-av54 - 2026-08-11
+
+- AvantaVendas: a sessão local passa a usar armazenamento exclusivo. Abrir o
+  Vendas não reutiliza silenciosamente a sessão do Gestão, e sair de um app não
+  encerra a sessão do outro.
+- AvantaVendas: a troca de sistema apenas abre o aplicativo de destino; sem uma
+  sessão própria naquele app, o usuário informa o mesmo login AvantaLab.
+- AvantaVendas: **Excluir conta do Vendas** remove somente a conta e os dados
+  deste serviço, encerra sua sessão local e preserva outros serviços AvantaLab.
+  Um retorno ao Vendas exige novo login explícito e começa com dados vazios.
+- AvantaVendas: vínculos de catálogo e financeiro continuam no servidor e não
+  dependem do compartilhamento de sessão entre os aplicativos.
+
 ## 1.7.3.05-av53 - 2026-08-11
 
 - AvantaVendas: a validação SMS passa a bloquear chamadas simultâneas e a

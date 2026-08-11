@@ -2,6 +2,14 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av54: Vendas e Gestão compartilham somente a identidade
+> AvantaLab no servidor e mantêm sessões locais independentes. A troca de app
+> não transfere autenticação: o destino abre a sessão que já possui ou solicita
+> o mesmo login. **Excluir conta do Vendas** remove somente a conta e os dados
+> deste serviço, encerra a sessão local e preserva outros serviços AvantaLab.
+> Catálogo e destino financeiro continuam vinculados no servidor, sem depender
+> de sessão compartilhada.
+>
 > Revisão 1.7.3.05-av53: a validação SMS bloqueia submissões simultâneas e
 > desativa imediatamente os botões de validar e reenviar. Se o código já foi
 > aprovado, mas a criação da conta falhar por conexão, a nova tentativa retoma
@@ -67,9 +75,8 @@
 > Revisão 1.7.3.03: a limpeza de cobranças ao conceder cortesia é exclusiva da
 > administração da Gestão; sem impacto operacional no AvantaVendas.
 
-> Revisão 1.7.3.02-av41: login e cadastro exibem erros em cards sem perder os dados
-> preenchidos; em **Configurações**, o usuário pode excluir definitivamente o
-> perfil do Vendas sem apagar o login AvantaLab nem os perfis do Gestão.
+> Revisão 1.7.3.02-av41: login e cadastro exibem erros em cards sem perder os
+> dados preenchidos; a exclusão remove somente o perfil do Vendas.
 
 > Revisão 1.7.3.01: em Pagamentos, **Editar pagamento** permite alterar a
 > forma de pagamento logo abaixo da data; salvar atualiza o registro e o
@@ -1404,13 +1411,13 @@ função existir ali.
   exclusão do perfil do Vendas.
 - **Excluir conta do Vendas** exige digitar `EXCLUIR`. A operação remove os
   dados específicos deste aplicativo, inclusive uploads particulares, e o
-  acesso às contas compartilhadas. Se a
-  conta também possui outros participantes, sua propriedade e os registros da
-  equipe são transferidos com segurança; o login AvantaLab e os perfis do
-  Gestão continuam ativos.
-- Resultados financeiros já enviados ao Gestão são preservados como histórico
-  desvinculado. Depois da exclusão, um novo acesso ao Vendas prepara uma conta
-  operacional vazia automaticamente; os dados excluídos não são restaurados.
+  acesso às contas compartilhadas. Se a conta também possui outros
+  participantes, sua propriedade e os registros da equipe são transferidos com
+  segurança. Outros serviços AvantaLab usados separadamente permanecem ativos.
+- Resultados financeiros já enviados são preservados como histórico
+  desvinculado. A exclusão encerra somente a sessão local do Vendas. Para voltar
+  ao serviço, o usuário precisa fazer um novo login explícito; uma nova conta do
+  Vendas começa vazia e não restaura os dados excluídos.
 - Ao atingir a meta mensal, o Dashboard celebra a conquista uma vez para aquela
   meta e mês e também mostra a situação **Meta atingida!** no card.
 - Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta
