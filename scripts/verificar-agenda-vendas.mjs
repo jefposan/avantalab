@@ -53,7 +53,7 @@ exigir(
   'O cabeçalho precisa exibir o sininho acessível com o contador da agenda de hoje.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '45'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '46'"),
   'A revisão dos arquivos estáticos do AvantaVendas precisa invalidar o cache anterior.',
 );
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.3.05-av46 - 2026-08-11
+
+- AvantaVendas: o primeiro espaço de vendas agora é preparado automaticamente
+  após a autenticação, sem tela intermediária ou segundo clique; o usuário entra
+  direto na sala de botões e a operação é protegida contra contas duplicadas.
+- AvantaVendas: a confirmação do cadastro por e-mail retorna ao próprio Vendas,
+  preservando a origem do acesso em vez de encaminhar ao Gestão.
+- AvantaVendas: **Ir para Gestão** deixou de consultar perfis financeiros e de
+  incorporar a Gestão dentro do Vendas. Agora abre o aplicativo Gestão quando
+  instalado e usa a Gestão Mobile no navegador como contingência, sem transferir
+  perfil ou sessão; ambos continuam aceitando o mesmo login e senha.
+
 ## 1.7.3.05-av45 - 2026-08-11
 
 - AvantaVendas: os botões da sala principal agora preservam a proporção quadrada

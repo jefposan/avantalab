@@ -82,19 +82,29 @@ export default function OAuthNativoMobileBridge() {
 
     const concluirRetorno = async (url: string) => {
       const callbackUrl = new URL(url);
-      if (callbackUrl.protocol !== 'br.com.avantalab.app:') return;
+      if (
+        callbackUrl.protocol !== 'br.com.avantalab.app:'
+        || callbackUrl.hostname !== 'auth'
+        || callbackUrl.pathname !== '/callback'
+      ) return;
+
+      const erroOAuth = lerParametroOAuth(callbackUrl, 'error_description')
+        ?? lerParametroOAuth(callbackUrl, 'error');
+      const codigo = lerParametroOAuth(callbackUrl, 'code');
+      let accessToken = lerParametroOAuth(callbackUrl, 'access_token');
+      let refreshToken = lerParametroOAuth(callbackUrl, 'refresh_token');
+      const aberturaPelaTrocaDeApp = callbackUrl.searchParams.get('origem') === 'vendas'
+        && !erroOAuth
+        && !codigo
+        && !accessToken
+        && !refreshToken;
+      if (aberturaPelaTrocaDeApp) return;
 
       const provedor = provedorPendenteRef.current ?? undefined;
       provedorPendenteRef.current = null;
 
       try {
-        const erroOAuth = lerParametroOAuth(callbackUrl, 'error_description')
-          ?? lerParametroOAuth(callbackUrl, 'error');
         if (erroOAuth) throw new Error(erroOAuth);
-
-        const codigo = lerParametroOAuth(callbackUrl, 'code');
-        let accessToken = lerParametroOAuth(callbackUrl, 'access_token');
-        let refreshToken = lerParametroOAuth(callbackUrl, 'refresh_token');
 
         if (codigo) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(codigo);

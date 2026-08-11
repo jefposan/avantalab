@@ -28,10 +28,11 @@ O AvantaVendas usa a mesma autenticação e o mesmo projeto Supabase do AvantaLa
 As tabelas mantêm o prefixo histórico `vendas_mobile_`; esse nome pertence ao
 banco e não representa uma segunda cópia do aplicativo.
 
-O subdomínio é resolvido pelo `proxy.ts`. As trocas de sistema na Gestão e no
-Vendas apontam para `/avantavendas`. O retorno à Gestão usa
-`/avantavendas/gestao`, que renderiza a tela oficial de `/mobile` dentro do
-escopo instalado do AvantaVendas e evita a abertura da interface do navegador.
+O subdomínio é resolvido pelo `proxy.ts`. Gestão e Vendas são aplicativos
+independentes e compartilham somente a identidade de autenticação. Dentro do
+AvantaVendas, **Ir para Gestão** tenta abrir o aplicativo Gestão instalado; se
+ele não estiver disponível, abre `https://app.avantalab.com.br/mobile` no
+navegador. A troca não seleciona perfil nem transfere sessão ou dados.
 
 ## Desenvolvimento
 

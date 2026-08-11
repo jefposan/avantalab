@@ -37,6 +37,12 @@
     if (error) throw error;
     return data;
   }
+  async function garantirContaVendas() {
+    const { data, error } = await requireClient().rpc('garantir_conta_vendas_mobile_rpc');
+    if (error) throw error;
+    if (!data?.id) throw new Error('Não foi possível preparar sua conta de vendas.');
+    return data;
+  }
   async function adicionarUsuarioContaVendas(contaId, email, papel) {
     const { data, error } = await requireClient().rpc('adicionar_usuario_conta_vendas_mobile_rpc', { p_conta_id: contaId, p_email: email, p_papel: papel });
     if (error) throw error;
@@ -192,12 +198,21 @@
     if (error) throw error;
   }
 
+  function retornoCadastroVendas() {
+    const retorno = new URL('/avantavendas', window.location.origin);
+    if (window.location.hostname === 'vendas.avantalab.com.br') retorno.pathname = '/';
+    return retorno.toString();
+  }
+
   async function signUp({ email, password, nome, telefone }) {
     const { data, error } = await requireClient().auth.signUp({
       email,
       password,
       phone: telefone || undefined,
-      options: { data: { nome } },
+      options: {
+        data: { nome },
+        emailRedirectTo: retornoCadastroVendas(),
+      },
     });
     if (error) throw error;
     return data.user;
@@ -405,23 +420,13 @@
       };
     }
 
-    const contasVendas = await listarContasVendas();
+    let contasVendas = await listarContasVendas();
     if (!contasVendas.length) {
-      definirContaAtiva('');
-      atualizarProgresso('data', 1, 1, 'Conta do Vendas pronta para ativação');
-      return {
-        user,
-        contasVendas: [],
-        contaVendasAtiva: null,
-        contaVendasAusente: true,
-        produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [],
-        conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [],
-        moduloAtivo: acessoVendas.moduloAtivo !== false,
-        integracaoGestao: { base_receita: 'recebidos', pode_configurar: false },
-        vinculosComerciais: [], vinculoComercialAtivo: null, perfisFinanceiros: [],
-        preferencias: null, preferenciasVersao: null, preferenciasServidorDisponivel: true,
-        ...acessoVendas,
-      };
+      atualizarProgresso('data', 0, 1, 'Preparando sua conta de vendas');
+      const contaInicial = await garantirContaVendas();
+      definirContaAtiva(contaInicial.id);
+      contasVendas = [contaInicial];
+      atualizarProgresso('data', 1, 1, 'Conta de vendas pronta');
     }
     let contaId = contextoPreparado?.contaId || contaAtivaId();
     if (!contasVendas.some((conta) => conta.id === contaId)) contaId = contasVendas[0]?.id || '';
@@ -544,12 +549,6 @@
       vendas: (pedidosRes.data || []).map((pedido) => ({ ...pedido, itens: pedido.itens || [] })),
       pagamentos: (pagamentosRes.data || []).map(normalizarPagamentoServidor),
     };
-  }
-
-  async function listarPerfisGestaoParaTroca() {
-    const { data, error } = await requireClient().rpc('meus_perfis_gestao_para_troca_rpc');
-    if (error) throw error;
-    return data || [];
   }
 
   async function saveProduct(product) {
@@ -949,5 +948,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();

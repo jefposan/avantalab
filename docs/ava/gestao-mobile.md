@@ -2,6 +2,10 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av46: a abertura iniciada pelo botão **Ir para Gestão** do
+> AvantaVendas apenas traz o aplicativo Gestão para frente. Ela não é tratada
+> como retorno de login social, não seleciona perfil e não transfere sessão.
+
 > Revisão 1.7.3.05: a conclusão do Tutorial, tema, dashboard, atalhos e a
 > preferência de iniciar valores ocultos acompanham a conta. Uma cópia local
 > continua disponível apenas enquanto o aparelho estiver sem conexão.

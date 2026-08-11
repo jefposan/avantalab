@@ -98,17 +98,11 @@ const estadoInicial = {
   vinculoComercialAtivo: null,
   contasVendas: [],
   contaVendasAtiva: null,
-  contaVendasAusente: false,
   perfisFinanceiros: [],
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
   ordemSalaBotoes: [],
   organizandoSalaBotoes: false,
-  seletorPerfilGestaoAberto: false,
-  perfisGestaoTroca: [],
-  perfisGestaoTrocaCarregando: false,
-  perfisGestaoTrocaErro: '',
-  perfilGestaoConfirmacao: null,
 };
 
 let state = carregarEstado();
@@ -1480,8 +1474,7 @@ function podePreservarSalaBotoes(assinatura) {
     salaEmLayoutCompacto &&
     state.menuAberto &&
     salaBotoesEstaCompleta() &&
-    assinaturaSalaRenderizada === assinatura &&
-    !state.seletorPerfilGestaoAberto
+    assinaturaSalaRenderizada === assinatura
   );
 }
 
@@ -1501,7 +1494,6 @@ function render() {
     && !carregandoBackend
     && !loginSocialPendente
     && !preparandoRecursosSala
-    && !state.seletorPerfilGestaoAberto
     && !state.premiumVendasBloqueado
     && state.moduloVendasAtivo
   );
@@ -1521,12 +1513,6 @@ function render() {
     renderPreparandoAcessoEstavel();
     return;
   }
-  if (state.seletorPerfilGestaoAberto) {
-    limparDestaqueClientes();
-    removerNavegacaoInferior();
-    app.innerHTML = renderSeletorPerfilGestaoVendas();
-    return;
-  }
   if (!state.autenticado) {
     limparDestaqueClientes();
     removerNavegacaoInferior();
@@ -1539,12 +1525,6 @@ function render() {
     limparDestaqueClientes();
     removerNavegacaoInferior();
     app.innerHTML = renderContaVendasExcluida();
-    return;
-  }
-  if (state.contaVendasAusente) {
-    limparDestaqueClientes();
-    removerNavegacaoInferior();
-    app.innerHTML = renderAtivacaoContaVendas();
     return;
   }
   if (state.premiumVendasBloqueado) {
@@ -1670,30 +1650,12 @@ function renderModuloVendasDesativado() {
   </section>`;
 }
 
-function renderAtivacaoContaVendas() {
-  return `<section class="sales-account-onboarding-screen">${renderMarcaAcesso()}<article class="sales-account-onboarding-card"><span class="sales-account-onboarding-icon" aria-hidden="true">${svgIcon('shopping-cart')}</span><p>AvantaVendas</p><h1>Crie seu espaço de vendas</h1><div>Seu login AvantaLab está ativo. Crie um perfil somente quando quiser usar clientes, produtos, pedidos e pagamentos neste aplicativo.</div><button type="button" class="primary" onclick="ativarContaVendas()">Começar no Vendas</button><button type="button" class="ghost" onclick="abrirGestaoAposExclusaoVendas()">Abrir AvantaLab Gestão</button></article></section>`;
-}
-
-async function ativarContaVendas() {
-  const botao = document.querySelector('.sales-account-onboarding-card .primary');
-  if (botao) { botao.disabled = true; botao.textContent = 'Criando seu espaço...'; }
-  try {
-    const conta = await window.VendasDb.criarContaVendas('Minha conta de vendas');
-    window.VendasDb.definirContaAtiva(conta.id);
-    state.contaVendasAusente = false;
-    await carregarDadosBackend(true);
-  } catch (error) {
-    if (botao) { botao.disabled = false; botao.textContent = 'Começar no Vendas'; }
-    abrirAvisoAcessoVendas('Não foi possível criar o perfil', traduzErro(error));
-  }
-}
-
 function renderContaVendasExcluida() {
   return `<section class="deleted-sales-account-screen">${renderMarcaAcesso()}<article class="deleted-sales-account-card" role="status" aria-live="polite"><header><h1>Conta do Vendas excluída</h1><p>Os dados deste aplicativo foram removidos.</p></header><div class="deleted-sales-account-content"><p>Seu login AvantaLab e os seus perfis no Gestão continuam preservados. Os registros financeiros já enviados para o Gestão permanecem somente como histórico desvinculado.</p><button type="button" class="primary deleted-account-management-button" onclick="abrirGestaoAposExclusaoVendas()">Abrir AvantaLab Gestão</button></div></article></section>`;
 }
 
 function abrirGestaoAposExclusaoVendas() {
-  window.location.assign('/avantavendas/gestao?origem=vendas');
+  void abrirGestaoMobileVendas();
 }
 
 function configurarDestaqueClientes() {
@@ -2085,7 +2047,7 @@ function renderMenuMobile() {
   const aniversariantesHoje = aniversariosHojeVendas();
   const agendamentosHoje = agendamentosHojeVendas();
   return `<section class="mobile-menu is-loading-images" aria-label="Menu principal" aria-busy="true">
-    <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Ir para Gestão" title="Ir para Gestão">${iconeTopoTrocaSistemaVendas()}</button>` : ''}</div></header>
+    <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirGestaoMobileVendas()" aria-label="Abrir o aplicativo Gestão" title="Abrir Gestão">${iconeTopoTrocaSistemaVendas()}</button>` : ''}</div></header>
     <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" ${organizando ? '' : 'hidden'}>Clique no botão e arraste para a nova posição</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
@@ -2187,7 +2149,7 @@ const ATALHOS_INFERIORES_VENDAS = [
 ];
 
 function podeTrocarParaGestaoVendas() {
-  return Boolean(state.acessoVendas);
+  return Boolean(state.autenticado);
 }
 
 function atalhosInferioresVendasDisponiveis() {
@@ -2318,7 +2280,7 @@ function acionarNavegacaoInferior(event, destino) {
     fecharCamadasNavegacao();
     if (destino === 'configuracoes') setAba('configuracoes');
     else if (destino === 'tema') alternarTema(!state.temaEscuro);
-    else if (destino === 'gestao') abrirSeletorPerfilGestaoVendas();
+    else if (destino === 'gestao') void abrirGestaoMobileVendas();
     else if (destino === 'novo') { render(); abrirAcoesRapidas(); }
     else if (['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao'].includes(destino)) setAba(destino);
     else if (destino === 'inicio') abrirSalaBotoes();
@@ -2370,9 +2332,6 @@ async function sairSistema() {
   state.usuarioSemAcesso = false;
   state.premiumVendasBloqueado = false;
   state.estadoAssinaturaVendas = null;
-  state.seletorPerfilGestaoAberto = false;
-  state.perfisGestaoTroca = [];
-  state.perfilGestaoConfirmacao = null;
   try { sessionStorage.removeItem(ORIGEM_ACESSO_VENDAS_KEY); } catch { /* armazenamento indisponível */ }
   render();
   window.location.replace(destinoLogout);
@@ -3024,7 +2983,6 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
       state.contasVendas = dados.contasVendas || [];
       state.contaVendasAtiva = dados.contaVendasAtiva || null;
-      state.contaVendasAusente = dados.contaVendasAusente === true;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
       await salvarCacheVendas();
     }
@@ -4351,7 +4309,6 @@ async function confirmarExclusaoContaVendas() {
     cadastroPendente = null;
     limparRascunhoCadastroVendas();
     contaVendasExcluidaNestaSessao = true;
-    state.contaVendasAusente = true;
     state.contasVendas = [];
     state.contaVendasAtiva = null;
     state.produtos = [];
@@ -7472,118 +7429,39 @@ async function salvarMovimentacaoEstoque() {
   } catch (error) { toast(traduzErro(error)); }
 }
 
-function abrirGestao(perfilEmpresaId = '') {
-  if (!podeTrocarParaGestaoVendas()) {
-    toast('A troca de sistemas não está disponível para este usuário.');
-    return;
-  }
-  const empresaId = perfilEmpresaId || state.acessoVendas?.empresa_id || '';
-  try {
-    localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({ empresaId, sistema: 'gestao', atualizadoEm: new Date().toISOString() }));
-    if (empresaId) sessionStorage.setItem(`avantalab_mobile_sistema_sessao_${empresaId}`, 'gestao');
-    if (empresaId) localStorage.setItem('avantalab_mobile_ultimo_perfil_id', empresaId);
-  } catch { /* navegação continua sem preferência local */ }
-  window.location.assign('/avantavendas/gestao?origem=vendas');
-}
+const URL_APP_GESTAO = 'br.com.avantalab.app://auth/callback?origem=vendas';
+const URL_WEB_GESTAO = 'https://app.avantalab.com.br/mobile?origem=vendas';
 
-function abrirGestaoParaCriarPrimeiroPerfilVendas() {
+async function abrirGestaoMobileVendas() {
   if (!podeTrocarParaGestaoVendas()) {
-    toast('A troca de sistemas não está disponível para este usuário.');
+    toast('Entre no Vendas antes de abrir o aplicativo Gestão.');
     return;
   }
-  try {
-    localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({
-      empresaId: '',
-      sistema: 'gestao',
-      atualizadoEm: new Date().toISOString(),
-    }));
-    localStorage.removeItem('avantalab_mobile_ultimo_perfil_id');
-  } catch { /* navegação continua sem preferência local */ }
-  window.location.assign('/avantavendas/gestao?origem=vendas&criarPerfil=1');
-}
 
-async function abrirSeletorPerfilGestaoVendas() {
-  if (!podeTrocarParaGestaoVendas()) {
-    toast('A troca de sistemas não está disponível para este usuário.');
+  if (!ehCapacitorNativoVendas()) {
+    window.location.assign(URL_WEB_GESTAO);
     return;
   }
-  state.seletorPerfilGestaoAberto = true;
-  state.perfisGestaoTrocaCarregando = true;
-  state.perfisGestaoTrocaErro = '';
-  state.perfilGestaoConfirmacao = null;
-  render();
+
+  const AppLauncher = window.Capacitor?.Plugins?.AppLauncher;
   try {
-    state.perfisGestaoTroca = await window.VendasDb.listarPerfisGestaoParaTroca();
-    if (!state.perfisGestaoTroca.length) {
-      state.perfisGestaoTrocaCarregando = false;
-      render();
-      return;
+    if (AppLauncher?.canOpenUrl && AppLauncher?.openUrl) {
+      const disponivel = await AppLauncher.canOpenUrl({ url: URL_APP_GESTAO });
+      if (disponivel?.value) {
+        const abertura = await AppLauncher.openUrl({ url: URL_APP_GESTAO });
+        if (abertura?.completed !== false) return;
+      }
     }
   } catch (error) {
-    state.perfisGestaoTroca = [];
-    state.perfisGestaoTrocaErro = traduzErro(error);
-  } finally {
-    state.perfisGestaoTrocaCarregando = false;
-    render();
+    console.warn('O aplicativo Gestão não pôde ser aberto; usando o navegador.', error);
   }
-}
 
-function fecharSeletorPerfilGestaoVendas() {
-  state.seletorPerfilGestaoAberto = false;
-  state.perfilGestaoConfirmacao = null;
-  render();
-}
-
-function selecionarPerfilGestaoVendas(empresaId) {
-  const perfil = (state.perfisGestaoTroca || []).find((item) => item.empresa_id === empresaId);
-  if (!perfil) return;
-  state.perfilGestaoConfirmacao = perfil;
-  render();
-}
-
-function voltarListaPerfisGestaoVendas() {
-  state.perfilGestaoConfirmacao = null;
-  render();
-}
-
-function confirmarPerfilGestaoVendas() {
-  const perfil = state.perfilGestaoConfirmacao;
-  if (!perfil?.empresa_id) return;
-  state.seletorPerfilGestaoAberto = false;
-  state.perfilGestaoConfirmacao = null;
-  carregandoBackend = true;
-  render();
-  window.setTimeout(() => abrirGestao(perfil.empresa_id), 60);
-}
-
-function confirmarCriacaoPerfilGestaoVendas() {
-  state.seletorPerfilGestaoAberto = false;
-  render();
-  window.setTimeout(abrirGestaoParaCriarPrimeiroPerfilVendas, 60);
-}
-
-function rotuloPapelPerfilGestaoVendas(perfil) {
-  return {
-    gestor_master: 'Gestor Master',
-    administrador: 'Administrador',
-    operador_completo: 'Operador completo',
-    operador_simples: 'Operador simples',
-  }[perfil] || 'Usuário';
-}
-
-function renderSeletorPerfilGestaoVendas() {
-  const confirmacao = state.perfilGestaoConfirmacao;
-  if (confirmacao) {
-    return `<section class="login-screen management-profile-selector-screen">${renderMarcaAcesso()}<article class="management-profile-selector-card"><header><small>Troca de sistema</small><h2>Confirmar perfil</h2><p>A Gestão será aberta no perfil selecionado.</p></header><div class="management-profile-confirmation"><span>${svgIconEstavel(confirmacao.tipo_perfil === 'pessoal' ? 'user' : 'folder')}</span><h3>${escapeHtml(confirmacao.empresa_nome || 'Perfil')}</h3><p>${escapeHtml(rotuloPapelPerfilGestaoVendas(confirmacao.perfil))}</p><button class="secondary" type="button" onclick="voltarListaPerfisGestaoVendas()">Voltar aos perfis</button><button class="primary management-profile-confirmation-open" type="button" onclick="confirmarPerfilGestaoVendas()">Abrir Gestão Mobile</button></div></article></section>`;
+  const Browser = window.Capacitor?.Plugins?.Browser;
+  if (Browser?.open) {
+    await Browser.open({ url: URL_WEB_GESTAO, presentationStyle: 'fullscreen' });
+    return;
   }
-  const conteudo = state.perfisGestaoTrocaCarregando
-    ? `<div class="management-profile-loading"><span class="loader"></span><b>Carregando perfis...</b></div>`
-    : state.perfisGestaoTrocaErro
-      ? `<div class="management-profile-empty"><p>${escapeHtml(state.perfisGestaoTrocaErro)}</p><button class="secondary" type="button" onclick="abrirSeletorPerfilGestaoVendas()">Tentar novamente</button></div>`
-      : (state.perfisGestaoTroca || []).length
-        ? `<div class="management-profile-list">${state.perfisGestaoTroca.map((perfil) => `<button type="button" onclick="selecionarPerfilGestaoVendas('${escapeAttr(perfil.empresa_id)}')"><span>${svgIconEstavel(perfil.tipo_perfil === 'pessoal' ? 'user' : 'folder')}</span><b>${escapeHtml(perfil.empresa_nome || 'Perfil')}<small>${escapeHtml(rotuloPapelPerfilGestaoVendas(perfil.perfil))}</small></b><i>›</i></button>`).join('')}</div>`
-        : `<div class="management-profile-empty"><h3>Nenhum perfil financeiro encontrado</h3><p>Seu Vendas continuará funcionando normalmente. Para acessar a Gestão, primeiro é necessário criar e concluir um perfil financeiro.</p><button class="primary" type="button" onclick="confirmarCriacaoPerfilGestaoVendas()">Criar ou ativar perfil na Gestão</button><button class="secondary" type="button" onclick="fecharSeletorPerfilGestaoVendas()">Continuar somente no Vendas</button></div>`;
-  return `<section class="login-screen management-profile-selector-screen">${renderMarcaAcesso()}<article class="management-profile-selector-card"><header><div><small>Gestão Mobile</small><h2>Selecione o perfil</h2><p>Escolha em qual perfil deseja entrar.</p></div><button type="button" onclick="fecharSeletorPerfilGestaoVendas()" aria-label="Voltar ao Vendas">×</button></header>${conteudo}</article></section>`;
+  window.location.assign(URL_WEB_GESTAO);
 }
 
 function abrirConfiguracoes() {
@@ -7917,14 +7795,8 @@ document.addEventListener('visibilitychange', () => {
 
 window.setAba = setAba;
 window.state = state;
-window.abrirGestao = abrirGestao;
+window.abrirGestaoMobileVendas = abrirGestaoMobileVendas;
 window.abrirAssinaturaGestaoVendas = abrirAssinaturaGestaoVendas;
-window.abrirSeletorPerfilGestaoVendas = abrirSeletorPerfilGestaoVendas;
-window.fecharSeletorPerfilGestaoVendas = fecharSeletorPerfilGestaoVendas;
-window.selecionarPerfilGestaoVendas = selecionarPerfilGestaoVendas;
-window.voltarListaPerfisGestaoVendas = voltarListaPerfisGestaoVendas;
-window.confirmarPerfilGestaoVendas = confirmarPerfilGestaoVendas;
-window.confirmarCriacaoPerfilGestaoVendas = confirmarCriacaoPerfilGestaoVendas;
 window.abrirConfiguracoes = abrirConfiguracoes;
 window.abrirConfirmacaoSair = abrirConfirmacaoSair;
 window.salvarConfiguracoes = salvarConfiguracoes;
@@ -8091,7 +7963,6 @@ window.confirmarResetSistemaVendas = confirmarResetSistemaVendas;
 window.abrirExclusaoContaVendas = abrirExclusaoContaVendas;
 window.atualizarConfirmacaoExclusaoContaVendas = atualizarConfirmacaoExclusaoContaVendas;
 window.confirmarExclusaoContaVendas = confirmarExclusaoContaVendas;
-window.ativarContaVendas = ativarContaVendas;
 window.abrirGestaoAposExclusaoVendas = abrirGestaoAposExclusaoVendas;
 window.confirmarResetDadosLocais = confirmarResetDadosLocais;
 window.formatarCampoMoeda = formatarCampoMoeda;

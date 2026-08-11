@@ -2,6 +2,14 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av46: após autenticar, o primeiro espaço do AvantaVendas é
+> preparado automaticamente e o usuário entra direto na sala de botões. A tela
+> intermediária **Crie seu espaço de vendas** foi removida; perfis adicionais
+> continuam disponíveis em **Configurações**. **Ir para Gestão** não consulta
+> nem seleciona perfis: abre o aplicativo Gestão instalado e, quando ele não
+> está disponível, abre a Gestão Mobile no navegador. Cada app mantém sua
+> própria sessão, embora usem o mesmo login e senha.
+
 > Revisão 1.7.3.05-av45: os nove botões da sala principal permanecem quadrados
 > em celulares Android estreitos, sem deformar as imagens; sem alteração no
 > funcionamento das opções.
@@ -1216,29 +1224,26 @@ função existir ali.
   Organizar atalhos**; o lápis da sala muda a ordem dos cards. Enquanto a
   organização está ativa, a instrução **Clique no botão e arraste para a nova
   posição** aparece ao lado do lápis.
-- Para gestores habilitados, a primeira tela após o login permite escolher Gestão
-  ou Vendas antes de carregar os dados. Depois da escolha aparece **Preparando acesso**.
+- Após autenticar, o usuário entra diretamente na sala do AvantaVendas. A conta
+  operacional inicial é preparada silenciosamente, sem escolha de sistema e sem
+  criar ou selecionar perfil financeiro da Gestão.
 - Todo usuário autenticado no Vendas pode usar **Ir para Gestão** no canto
   direito do header fixo da sala de botões ou adicionar **Ir para Gestão** a um
-  atalho configurável.
-  No aplicativo iOS, o toque apenas abre o app Gestão, sem lista ou transferência
-  de perfil; ao retornar, o Vendas continua na sala de botões. No PWA e no
-  navegador, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
-  mesmo quando existe apenas um, a seleção e a confirmação são obrigatórias. Se
-  a conta ainda não possuir perfil na Gestão, a tela avisa e oferece criar ou
-  ativar um perfil, ou continuar somente no Vendas. Criar um perfil não o define
-  automaticamente como destino financeiro. O aviso de aniversário permanece ao
-  lado do botão quando ambos estão visíveis. No PWA instalado, a Gestão abre na
-  mesma janela em modo aplicativo, sem barras do navegador.
-- Cada login possui uma única conta operacional no Vendas. Instalações e
-  permissões em perfis da Gestão apenas autorizam a troca entre os sistemas e não
-  criam contas adicionais ou um seletor de perfis dentro do Vendas.
+  atalho configurável. No aplicativo iOS ou Android, o toque abre o app Gestão
+  instalado; sem ele, abre `https://app.avantalab.com.br/mobile` no navegador.
+  No PWA e no navegador, abre diretamente o mesmo endereço Web. A troca não
+  seleciona perfil e não transfere sessão, perfil ou dados. O aviso de
+  aniversário permanece ao lado do botão quando ambos estão visíveis.
+- Cada login possui uma única conta operacional inicial no Vendas. Gestão e
+  Vendas são aplicativos independentes e compartilham somente as credenciais da
+  conta AvantaLab; cada aplicativo autentica e preserva sua própria sessão.
 - O destino financeiro é opcional e só pode ser definido ou alterado manualmente
   em **Configurações > Integração com
   Gestão**.
-- No iOS, cada aplicativo restaura apenas sua própria sessão e seu próprio
-  perfil; se o destino não estiver autenticado, apresenta o login. No PWA, a
-  sessão e o perfil escolhidos são preservados na navegação. Usuários sem
+- No iOS e Android, cada aplicativo restaura apenas sua própria sessão e seu
+  próprio perfil; se o destino não estiver autenticado, apresenta o login. No
+  navegador, o destino usa apenas a sessão Web que já existir naquele domínio.
+  Usuários sem
   permissão financeira não recebem acesso aos dados de perfis empresariais de
   terceiros.
 - A entrada permite **Continuar com Apple** além de e-mail, telefone e Google.
@@ -1372,8 +1377,8 @@ função existir ali.
   equipe são transferidos com segurança; o login AvantaLab e os perfis do
   Gestão continuam ativos.
 - Resultados financeiros já enviados ao Gestão são preservados como histórico
-  desvinculado. Depois da exclusão, o Vendas não cria outro perfil sozinho: o
-  usuário precisa escolher explicitamente **Começar no Vendas** para reativar.
+  desvinculado. Depois da exclusão, um novo acesso ao Vendas prepara uma conta
+  operacional vazia automaticamente; os dados excluídos não são restaurados.
 - Ao atingir a meta mensal, o Dashboard celebra a conquista uma vez para aquela
   meta e mês e também mostra a situação **Meta atingida!** no card.
 - Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta

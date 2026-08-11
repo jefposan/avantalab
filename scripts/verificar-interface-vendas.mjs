@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, versao, cliente, rotaExclusao, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao] = await Promise.all([
+const [aplicacao, estilos, versao, cliente, rotaExclusao, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/version.ts'), 'utf8'),
@@ -13,6 +13,7 @@ const [aplicacao, estilos, versao, cliente, rotaExclusao, gestorConteudo, migrac
   readFile(resolve(raiz, 'supabase/migrations/20260807210000_ativar_vinculo_comercial_aprovado.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807223000_vinculo_vendas_mobile_realtime.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260810183000_exclusao_conta_avantavendas.sql'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/migrations/20260811120000_conta_inicial_automatica_vendas.sql'), 'utf8'),
 ]);
 
 const falhas = [];
@@ -47,13 +48,18 @@ exigir(
     && aplicacao.includes('contaVendasExcluidaNestaSessao = true')
     && aplicacao.includes('await limparTodosCachesVendasUsuario();')
     && aplicacao.includes('function renderContaVendasExcluida()')
-    && aplicacao.includes('function renderAtivacaoContaVendas()')
+    && !aplicacao.includes('function renderAtivacaoContaVendas()')
     && cliente.includes("fetch('/api/vendas/conta'")
     && rotaExclusao.includes("rpc('excluir_conta_avantavendas_rpc'")
     && rotaExclusao.includes(".from('vendas-produtos')")
     && rotaExclusao.includes('.remove(uploads.slice(inicio, inicio + 100))')
-    && cliente.includes('contaVendasAusente: true')
-    && !cliente.includes("await criarContaVendas('Minha conta de vendas');")
+    && cliente.includes("rpc('garantir_conta_vendas_mobile_rpc')")
+    && cliente.includes('emailRedirectTo: retornoCadastroVendas()')
+    && cliente.includes('const contaInicial = await garantirContaVendas();')
+    && !cliente.includes('contaVendasAusente: true')
+    && migracaoContaAutomatica.includes('create or replace function public.garantir_conta_vendas_mobile_rpc()')
+    && migracaoContaAutomatica.includes('pg_advisory_xact_lock')
+    && migracaoContaAutomatica.includes('grant execute on function public.garantir_conta_vendas_mobile_rpc() to authenticated')
     && migracaoExclusao.includes('create or replace function public.excluir_conta_avantavendas_rpc')
     && migracaoExclusao.includes('historico_financeiro_preservado')
     && migracaoExclusao.includes('login_avantalab_preservado')
@@ -63,7 +69,7 @@ exigir(
     && migracaoExclusao.includes("to_regclass('public.vendas_mobile_publicacoes')")
     && migracaoExclusao.includes("delete from public.vendas_mobile_pacotes")
     && migracaoExclusao.includes('perform public.desvincular_receitas_vendas_mobile_usuario(v_user_id, v_empresa_id, false)'),
-  'A exclusão deve ser explícita, remover somente o perfil do Vendas e preservar login, Gestão e histórico financeiro.',
+  'A exclusão deve remover somente o perfil do Vendas; um novo login prepara a conta técnica automaticamente, preservando login, Gestão e histórico financeiro.',
 );
 exigir(
   aplicacao.includes("'rotate-ccw': '<path")
@@ -93,6 +99,18 @@ exigir(
     && cliente.includes('requireClient().auth.exchangeCodeForSession(code)')
     && cliente.includes('requireClient().auth.setSession({'),
   'Google e Apple devem compartilhar o fluxo OAuth nativo seguro, com deep link validado, retorno PKCE/tokens e cancelamento recuperável.',
+);
+exigir(
+  aplicacao.includes("const URL_APP_GESTAO = 'br.com.avantalab.app://auth/callback?origem=vendas'")
+    && aplicacao.includes("const URL_WEB_GESTAO = 'https://app.avantalab.com.br/mobile?origem=vendas'")
+    && aplicacao.includes('AppLauncher.canOpenUrl({ url: URL_APP_GESTAO })')
+    && aplicacao.includes('AppLauncher.openUrl({ url: URL_APP_GESTAO })')
+    && aplicacao.includes("Browser.open({ url: URL_WEB_GESTAO, presentationStyle: 'fullscreen' })")
+    && aplicacao.includes('onclick="abrirGestaoMobileVendas()"')
+    && !aplicacao.includes('function renderSeletorPerfilGestaoVendas()')
+    && !aplicacao.includes("window.location.assign('/avantavendas/gestao?origem=vendas')")
+    && !cliente.includes("rpc('meus_perfis_gestao_para_troca_rpc')"),
+  'A troca para a Gestão deve apenas abrir o app independente e usar o navegador como contingência, sem selecionar perfis ou incorporar a Gestão no Vendas.',
 );
 exigir(
   estilos.includes(".settings-sales-account-field select { width: 100%;")
@@ -240,7 +258,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '45'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '46'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 
