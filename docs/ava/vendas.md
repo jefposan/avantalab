@@ -11,10 +11,9 @@
 > Revisão 1.7.3.03: a limpeza de cobranças ao conceder cortesia é exclusiva da
 > administração da Gestão; sem impacto operacional no AvantaVendas.
 
-> Revisão 1.7.3.02: em **Configurações > Conta de vendas**, é possível alternar
-> entre contas, criar um novo perfil de vendas e, para proprietário ou
-> administrador, adicionar outro usuário. Clientes, pedidos, pagamentos,
-> agenda, produtos e backups permanecem separados em cada conta.
+> Revisão 1.7.3.02-av41: login e cadastro exibem erros em cards sem perder os dados
+> preenchidos; em **Configurações**, o usuário pode excluir definitivamente o
+> perfil do Vendas sem apagar o login AvantaLab nem os perfis do Gestão.
 
 > Revisão 1.7.3.01: em Pagamentos, **Editar pagamento** permite alterar a
 > forma de pagamento logo abaixo da data; salvar atualiza o registro e o
@@ -1348,7 +1347,17 @@ função existir ali.
   no visualizador ampliado, arrastar horizontalmente ou usar as setas alterna
   entre o arquivo anterior e o próximo da pasta.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
-  estoque, vínculos comerciais, destino financeiro, PWA, backup e reset.
+  estoque, vínculos comerciais, destino financeiro, PWA, backup, reset e
+  exclusão do perfil do Vendas.
+- **Excluir conta do Vendas** exige digitar `EXCLUIR`. A operação remove os
+  dados específicos deste aplicativo, inclusive uploads particulares, e o
+  acesso às contas compartilhadas. Se a
+  conta também possui outros participantes, sua propriedade e os registros da
+  equipe são transferidos com segurança; o login AvantaLab e os perfis do
+  Gestão continuam ativos.
+- Resultados financeiros já enviados ao Gestão são preservados como histórico
+  desvinculado. Depois da exclusão, o Vendas não cria outro perfil sozinho: o
+  usuário precisa escolher explicitamente **Começar no Vendas** para reativar.
 - Ao atingir a meta mensal, o Dashboard celebra a conquista uma vez para aquela
   meta e mês e também mostra a situação **Meta atingida!** no card.
 - Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta

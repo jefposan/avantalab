@@ -2,15 +2,17 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, versao, cliente, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime] = await Promise.all([
+const [aplicacao, estilos, versao, cliente, rotaExclusao, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/version.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/supabase-client.js'), 'utf8'),
+  readFile(resolve(raiz, 'app/api/vendas/conta/route.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/components/NovidadesVendasModal.tsx'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807193000_capa_pasta_divulgacao_vendas_mobile.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807210000_ativar_vinculo_comercial_aprovado.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807223000_vinculo_vendas_mobile_realtime.sql'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/migrations/20260810183000_exclusao_conta_avantavendas.sql'), 'utf8'),
 ]);
 
 const falhas = [];
@@ -26,6 +28,43 @@ const ondaDois = estilos.slice(inicioOndaDois, fimOndas);
 const acaoPagamento = '<button class="secondary quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">';
 const acaoPedido = '<button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">';
 
+exigir(
+  aplicacao.includes('function abrirAvisoAcessoVendas(titulo, mensagem, campoId = \'\')')
+    && aplicacao.includes('role="alertdialog" aria-modal="true"')
+    && aplicacao.includes('campo.focus({ preventScroll: true })')
+    && aplicacao.includes('<form novalidate onsubmit="entrarSistema(event)"')
+    && aplicacao.includes('class="login-register-form" novalidate onsubmit="criarConta(event)"')
+    && aplicacao.includes('value="${escapeAttr(loginRascunho.senha)}"')
+    && aplicacao.includes('value="${escapeAttr(cadastroRascunho.confirmarSenha)}"')
+    && !aplicacao.includes("erro.textContent = 'As senhas não coincidem.'")
+    && estilos.includes('.login-screen > form { max-height: none; overflow: hidden; }'),
+  'Login e cadastro devem usar avisos modais, preservar valores e devolver o foco sem criar rolagem no formulário.',
+);
+exigir(
+  aplicacao.includes('settings-delete-account-card')
+    && aplicacao.includes('function abrirExclusaoContaVendas()')
+    && aplicacao.includes("String(valorConfirmacao || '').trim().toUpperCase() !== 'EXCLUIR'")
+    && aplicacao.includes('contaVendasExcluidaNestaSessao = true')
+    && aplicacao.includes('await limparTodosCachesVendasUsuario();')
+    && aplicacao.includes('function renderContaVendasExcluida()')
+    && aplicacao.includes('function renderAtivacaoContaVendas()')
+    && cliente.includes("fetch('/api/vendas/conta'")
+    && rotaExclusao.includes("rpc('excluir_conta_avantavendas_rpc'")
+    && rotaExclusao.includes(".from('vendas-produtos')")
+    && rotaExclusao.includes('.remove(uploads.slice(inicio, inicio + 100))')
+    && cliente.includes('contaVendasAusente: true')
+    && !cliente.includes("await criarContaVendas('Minha conta de vendas');")
+    && migracaoExclusao.includes('create or replace function public.excluir_conta_avantavendas_rpc')
+    && migracaoExclusao.includes('historico_financeiro_preservado')
+    && migracaoExclusao.includes('login_avantalab_preservado')
+    && migracaoExclusao.includes("'uploads_para_excluir', v_uploads_para_excluir")
+    && migracaoExclusao.includes("to_regclass('public.feedbacks')")
+    && migracaoExclusao.includes("to_regclass('public.vendas_mobile_instalacoes')")
+    && migracaoExclusao.includes("to_regclass('public.vendas_mobile_publicacoes')")
+    && migracaoExclusao.includes("delete from public.vendas_mobile_pacotes")
+    && migracaoExclusao.includes('perform public.desvincular_receitas_vendas_mobile_usuario(v_user_id, v_empresa_id, false)'),
+  'A exclusão deve ser explícita, remover somente o perfil do Vendas e preservar login, Gestão e histórico financeiro.',
+);
 exigir(
   aplicacao.includes('function memorizarPesquisaClientes()')
     && aplicacao.includes('function restaurarPesquisaClientes()')
@@ -157,7 +196,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '40'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '41'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

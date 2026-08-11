@@ -1369,7 +1369,8 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .settings-card > h3 { margin: -17px -17px 16px; border: 0; padding: 13px 17px; color: #fff; background: linear-gradient(135deg,#0A1F44 0%,#1168a7 58%,#1687D9 100%); box-shadow: 0 5px 14px rgba(10,31,68,.14); font-weight: 800; letter-spacing: -.01em; }
 .settings-card > h3 .svg-icon { width: 29px; height: 29px; border: 1px solid rgba(255,255,255,.25); color: #fff; background: rgba(255,255,255,.14); }
 .settings-exit-card > h3,
-.settings-reset-card > h3 { background: linear-gradient(135deg,#7f1d1d 0%,#b4232c 58%,#dc3545 100%); box-shadow: 0 5px 14px rgba(127,29,29,.16); }
+.settings-reset-card > h3,
+.settings-delete-account-card > h3 { background: linear-gradient(135deg,#7f1d1d 0%,#b4232c 58%,#dc3545 100%); box-shadow: 0 5px 14px rgba(127,29,29,.16); }
 .settings-card p { margin: 10px 0 0; color: #6b7785; font-size: 12px; line-height: 1.5; }
 .settings-card dl { display: grid; grid-template-columns: minmax(0,.9fr) minmax(0,1.1fr); margin: 0; }
 .settings-card dt, .settings-card dd { margin: 0; border-bottom: 1px solid #edf1f4; padding: 9px 0; }
@@ -1423,9 +1424,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .commercial-link-resources button { min-height: 28px; border: 1px solid #d4dce5; border-radius: 999px; padding: 0 9px; color: #94a3b8; background: #eef2f5; font-size: 9px; font-weight: 850; }
 .commercial-link-resources button.is-on { border-color: #a8d9f4; color: #075985; background: #e8f6fe; }
 .settings-commercial-links .actions { margin-top: 13px; }
-.settings-reset-card { border-color: #fecaca; background: #fffafb; }.settings-reset-card > h3 { color: #fff; }.settings-reset-card > h3 .svg-icon { border-color: rgba(255,255,255,.25); color: #fff; background: rgba(255,255,255,.14); }
-.settings-stock-card .actions, .settings-exit-card .danger, .settings-reset-card .danger { margin-top: 15px; }
-.settings-reset-card .danger { width: 100%; }
+.settings-reset-card, .settings-delete-account-card { border-color: #fecaca; background: #fffafb; }.settings-reset-card > h3, .settings-delete-account-card > h3 { color: #fff; }.settings-reset-card > h3 .svg-icon, .settings-delete-account-card > h3 .svg-icon { border-color: rgba(255,255,255,.25); color: #fff; background: rgba(255,255,255,.14); }
+.settings-stock-card .actions, .settings-exit-card .danger, .settings-reset-card .danger, .settings-delete-account-card .danger { margin-top: 15px; }
+.settings-reset-card .danger, .settings-delete-account-card .danger { width: 100%; }
 .settings-goals-form { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; }
 .settings-goals-form label { display: grid; gap: 5px; color: #64748b; font-size: 10px; font-weight: 800; }
 .settings-goals-form input { width: 100%; }
@@ -1442,6 +1443,14 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .settings-card > small { display: block; margin-top: 10px; color: #838a91; font-size: 11px; line-height: 1.45; }
 .settings-exit-card { border-color: #fecaca; background: linear-gradient(135deg, #fff 0%, #fff7f7 100%); }
 .settings-exit-card .danger { width: 100%; }
+.delete-sales-account-warning { display: grid; gap: 14px; }
+.delete-sales-account-warning p { margin: 0; color: #475569; font-size: 13px; line-height: 1.55; }
+.delete-sales-account-warning label { display: grid; gap: 6px; color: #7f1d1d; font-size: 13px; font-weight: 800; }
+.delete-sales-account-warning input { width: 100%; min-height: 44px; border: 2px solid #fecaca; border-radius: 11px; padding: 0 12px; color: #7f1d1d; background: #fffafa; font-size: 16px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.delete-sales-account-warning input:focus { border-color: #dc2626; outline: 3px solid rgba(220,38,38,.14); }
+.delete-sales-account-warning .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.delete-sales-account-warning .actions button { min-height: 42px; }
+.delete-sales-account-warning .danger:disabled { cursor: not-allowed; opacity: .48; }
 .logout-screen { display: grid; min-height: var(--vendas-viewport-height); place-items: center; padding: calc(24px + var(--vendas-safe-top)) 24px calc(24px + var(--vendas-safe-bottom)); background: #f7f9fb; text-align: center; }
 .logout-screen > img { position: fixed; top: calc(22px + var(--vendas-safe-top)); left: 24px; width: 180px; }
 .logout-screen > div { width: min(100%,380px); border: 1px solid #e1e5e8; border-radius: 16px; padding: 38px; background: #fff; box-shadow: 0 12px 35px rgba(0,0,0,.08); }
@@ -1579,6 +1588,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+.login-screen > form { max-height: none; overflow: hidden; }
 @media (max-height: 620px) {
   .access-brand-zone img {
     width: auto;
@@ -1620,6 +1630,29 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .sms-confirm-form { min-height: 206px; justify-content: center; }
 .sms-confirm-form .login-card-help { margin: 0 0 4px; color: #5d6872; font-size: 11px; line-height: 1.4; text-align: center; }
 .sms-confirm-form .sms-resend { margin: 1px auto 0; font-size: 11px; }
+.access-validation-backdrop .sheet { width: min(90vw, 390px); overflow: visible; border-radius: 20px; padding: 22px; }
+.access-validation-dialog { display: grid; justify-items: center; gap: 10px; text-align: center; }
+.access-validation-icon { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 999px; color: #b4232c; background: #fee2e2; }
+.access-validation-icon .svg-icon { width: 24px; height: 24px; }
+.access-validation-dialog h2 { margin: 0; color: #0A1F44; font-size: 20px; line-height: 1.2; }
+.access-validation-dialog p { margin: 0; color: #526174; font-size: 14px; line-height: 1.5; }
+.access-validation-dialog .primary { min-width: 132px; min-height: 40px; margin-top: 4px; border-radius: 999px; }
+.sales-account-onboarding-screen, .deleted-sales-account-screen { position: relative; isolation: isolate; display: grid; min-height: var(--vendas-viewport-height); grid-template-rows: minmax(90px,1fr) auto minmax(30px,.55fr); justify-items: center; overflow: hidden; padding: 0 max(18px,var(--vendas-safe-right)) var(--vendas-safe-bottom) max(18px,var(--vendas-safe-left)); }
+.sales-account-onboarding-screen::before, .deleted-sales-account-screen::before { position: absolute; z-index: -1; inset: 0; background: #eef6fb url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') center/cover no-repeat; content: ''; }
+.sales-account-onboarding-screen .access-brand-zone, .deleted-sales-account-screen .access-brand-zone { grid-row: 1; }
+.sales-account-onboarding-card, .deleted-sales-account-card { grid-row: 2; width: min(100%, 440px); overflow: hidden; border: 1px solid #d7e4ee; border-radius: 20px; background: #fff; box-shadow: 0 18px 42px rgba(10,31,68,.18); }
+.sales-account-onboarding-card { display: grid; justify-items: center; gap: 11px; padding: 24px; text-align: center; }
+.sales-account-onboarding-icon { display: grid; width: 50px; height: 50px; place-items: center; border-radius: 16px; color: #fff; background: linear-gradient(135deg,#0A1F44,#1687D9); }
+.sales-account-onboarding-card > p { margin: 0; color: #1687D9; font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.sales-account-onboarding-card h1 { margin: 0; color: #0A1F44; font-size: 24px; }
+.sales-account-onboarding-card > div { color: #526174; font-size: 14px; line-height: 1.5; }
+.sales-account-onboarding-card button { min-height: 42px; border-radius: 999px; padding-inline: 22px; }
+.deleted-sales-account-card header { padding: 22px 24px; color: #fff; background: linear-gradient(135deg,#0A1F44,#1687D9); }
+.deleted-sales-account-card header h1 { margin: 0; font-size: 24px; }
+.deleted-sales-account-card header p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+.deleted-sales-account-content { display: grid; justify-items: center; gap: 22px; padding: 24px; }
+.deleted-sales-account-content p { margin: 0; color: #334155; font-size: 15px; line-height: 1.6; }
+.deleted-account-management-button { width: fit-content; min-width: 0; min-height: 40px; border-radius: 999px; padding: 8px 20px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
 @media (max-width: 850px) {
   .login-screen input,
   .login-screen select,
@@ -2387,7 +2420,8 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dark-theme .suggestions-sales-backdrop .sheet { border: 1px solid rgba(224,242,254,.88); box-shadow: 0 0 0 1px rgba(186,230,253,.24), 0 0 22px rgba(56,189,248,.28), 0 18px 42px rgba(2,8,23,.48); }
 .dark-theme .settings-card h3 { border-color: #334155; }.dark-theme .settings-card h3 .svg-icon { color: #67e8f9; background: #102838; }.dark-theme .settings-card > h3 { border-color: transparent; color: #fff; background: linear-gradient(135deg,#07162f 0%,#0b4f7d 58%,#0d72b8 100%); }.dark-theme .settings-card > h3 .svg-icon { border-color: rgba(255,255,255,.22); color: #fff; background: rgba(255,255,255,.12); }.dark-theme .settings-card dt, .dark-theme .settings-card dd { border-color: #29384d; }.dark-theme .switch-line { border-color: #3b4b63; color: #e2e8f0; background: #111b2d; }.dark-theme .settings-exit-card { border-color: #5b2631; background: #251922; }
 .dark-theme .settings-exit-card > h3,
-.dark-theme .settings-reset-card > h3 { background: linear-gradient(135deg,#50151c 0%,#7f1d2d 58%,#b42339 100%); }
+.dark-theme .settings-reset-card > h3,
+.dark-theme .settings-delete-account-card > h3 { background: linear-gradient(135deg,#50151c 0%,#7f1d2d 58%,#b42339 100%); }
 .dark-theme .settings-sales-account-field label { color: #e2e8f0; }
 .dark-theme .settings-sales-account-field select { border-color: #475569; color: #f8fafc; background: #111b2d; }
 .dark-theme .settings-sales-account-field select:focus-visible { border-color: #67e8f9; background: #111b2d; box-shadow: 0 0 0 3px rgba(103,232,249,.2); }
@@ -2395,7 +2429,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dark-theme .settings-integration { border-color: #334155; }.dark-theme .settings-integration > span { color: #cbd5e1; }.dark-theme .settings-segmented { border-color: #3b4b63; background: #111b2d; }.dark-theme .settings-segmented button { color: #94a3b8; }.dark-theme .settings-segmented button.is-selected { color: #fff; background: #1687D9; }
 .dark-theme .settings-financial-schedule { color: #bae6fd; background: #0c4a6e; }
 .dark-theme .management-profile-empty { color: #cbd5e1; background: #172033; }
-.dark-theme .commercial-link { border-color: #3b4b63; background: #111b2d; }.dark-theme .commercial-link.is-current { border-color: #155e75; background: #102838; }.dark-theme .commercial-link header { color: #e2e8f0; }.dark-theme .commercial-link header span { color: #cbd5e1; background: #263449; }.dark-theme .commercial-link.is-current header span { color: #7dd3fc; background: #164e63; }.dark-theme .commercial-link-resources button { border-color: #3b4b63; color: #94a3b8; background: #1e293b; }.dark-theme .commercial-link-resources button.is-on { border-color: #155e75; color: #7dd3fc; background: #102838; }.dark-theme .settings-reset-card { border-color: #7f1d1d; background: #2a1820; }.dark-theme .settings-reset-card > h3 { color: #fff; }.dark-theme .settings-reset-card > h3 .svg-icon { border-color: rgba(255,255,255,.22); color: #fff; background: rgba(255,255,255,.12); }
+.dark-theme .commercial-link { border-color: #3b4b63; background: #111b2d; }.dark-theme .commercial-link.is-current { border-color: #155e75; background: #102838; }.dark-theme .commercial-link header { color: #e2e8f0; }.dark-theme .commercial-link header span { color: #cbd5e1; background: #263449; }.dark-theme .commercial-link.is-current header span { color: #7dd3fc; background: #164e63; }.dark-theme .commercial-link-resources button { border-color: #3b4b63; color: #94a3b8; background: #1e293b; }.dark-theme .commercial-link-resources button.is-on { border-color: #155e75; color: #7dd3fc; background: #102838; }.dark-theme .settings-reset-card, .dark-theme .settings-delete-account-card { border-color: #7f1d1d; background: #2a1820; }.dark-theme .settings-reset-card > h3, .dark-theme .settings-delete-account-card > h3 { color: #fff; }.dark-theme .settings-reset-card > h3 .svg-icon, .dark-theme .settings-delete-account-card > h3 .svg-icon { border-color: rgba(255,255,255,.22); color: #fff; background: rgba(255,255,255,.12); }
 .dark-theme .commercial-links-hint { border-color: #155e75; color: #bae6fd; background: #102838; }
 .dark-theme .agenda-date-input-shell .agenda-date-value { color: #f8fafc; }
 .dark-theme .agenda-form-fields .agenda-date-step { border-color: #3b4b63; color: #e2e8f0; background: #111b2d; }

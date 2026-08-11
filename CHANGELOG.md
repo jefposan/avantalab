@@ -21,6 +21,18 @@
 - O processador de avisos de assinatura ignora perfis em cortesia, inclusive se
   existir algum registro de fatura antigo.
 
+## 1.7.3.02-av41 - 2026-08-10
+
+- AvantaVendas: login e cadastro passaram a exibir validações em cards acessíveis,
+  preservando os campos preenchidos e devolvendo o foco ao campo que precisa de
+  correção, sem criar rolagem no formulário.
+- AvantaVendas: Configurações agora oferece a exclusão definitiva do perfil e
+  dos dados específicos do Vendas, com confirmação forte, preservando o login
+  AvantaLab, os perfis do Gestão e o histórico financeiro já desvinculado; os
+  uploads particulares do Vendas também são removidos do armazenamento.
+- AvantaVendas: um perfil excluído não é recriado automaticamente; a reativação
+  do Vendas depende de uma ação explícita do usuário.
+
 ## 1.7.3.02 - 2026-08-10
 
 - AvantaVendas: um mesmo login pode ter várias contas de vendas, alternar entre

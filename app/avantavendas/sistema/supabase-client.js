@@ -377,10 +377,23 @@
       };
     }
 
-    let contasVendas = await listarContasVendas();
+    const contasVendas = await listarContasVendas();
     if (!contasVendas.length) {
-      await criarContaVendas('Minha conta de vendas');
-      contasVendas = await listarContasVendas();
+      definirContaAtiva('');
+      atualizarProgresso('data', 1, 1, 'Conta do Vendas pronta para ativação');
+      return {
+        user,
+        contasVendas: [],
+        contaVendasAtiva: null,
+        contaVendasAusente: true,
+        produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [],
+        conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [],
+        moduloAtivo: acessoVendas.moduloAtivo !== false,
+        integracaoGestao: { base_receita: 'recebidos', pode_configurar: false },
+        vinculosComerciais: [], vinculoComercialAtivo: null, perfisFinanceiros: [],
+        preferencias: null, preferenciasVersao: null, preferenciasServidorDisponivel: true,
+        ...acessoVendas,
+      };
     }
     let contaId = contextoPreparado?.contaId || contaAtivaId();
     if (!contasVendas.some((conta) => conta.id === contaId)) contaId = contasVendas[0]?.id || '';
@@ -849,6 +862,20 @@
     return data;
   }
 
+  async function excluirContaVendas() {
+    const token = await getAccessToken();
+    if (!token) throw new Error('Sua sessão expirou. Entre novamente.');
+    const resposta = await fetch('/api/vendas/conta', {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmacao: 'EXCLUIR' }),
+    });
+    const data = await resposta.json().catch(() => ({}));
+    if (!resposta.ok) throw new Error(data?.mensagem || 'Não foi possível excluir a conta do Vendas.');
+    definirContaAtiva('');
+    return data;
+  }
+
   async function definirPerfilFinanceiro(empresaId, periodo = 'todo_historico', historicoAnterior = 'manter') {
     const { data, error } = await requireClient().rpc('definir_perfil_financeiro_vendas_mobile_rpc', {
       p_empresa_id: empresaId,
@@ -894,5 +921,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();

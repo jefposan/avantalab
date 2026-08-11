@@ -1,0 +1,11 @@
+# Projetos e artefatos nativos permanecem somente no computador local.
+native/
+ios/
+android/
+**/*.aab
+**/*.apk
+**/*.ipa
+**/*.xcarchive
+
+# Migrações são publicadas diretamente no Supabase, não no Vercel.
+supabase/

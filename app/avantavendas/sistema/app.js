@@ -95,6 +95,7 @@ const estadoInicial = {
   vinculoComercialAtivo: null,
   contasVendas: [],
   contaVendasAtiva: null,
+  contaVendasAusente: false,
   perfisFinanceiros: [],
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
@@ -128,7 +129,10 @@ let loginTipo = 'email';
 let modoLogin = 'entrar';
 let cadastroEtapa = 'dados';
 let cadastroPendente = null;
+let loginRascunho = { contato: '', senha: '', lembrar: true };
 let cadastroRascunho = carregarRascunhoCadastroVendas();
+let campoRetornoAvisoAcessoVendas = '';
+let contaVendasExcluidaNestaSessao = false;
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
@@ -142,16 +146,20 @@ function carregarRascunhoCadastroVendas() {
     const salvo = JSON.parse(sessionStorage.getItem(RASCUNHO_CADASTRO_VENDAS_KEY) || 'null');
     if (!salvo || Number(salvo.expiraEm || 0) <= Date.now()) {
       sessionStorage.removeItem(RASCUNHO_CADASTRO_VENDAS_KEY);
-      return { nome: '', email: '', telefone: '', ddi: '55' };
+      return { nome: '', email: '', telefone: '', ddi: '55', codigo: '', senha: '', confirmarSenha: '', codigoSms: '' };
     }
     return {
       nome: String(salvo.nome || ''),
       email: String(salvo.email || ''),
       telefone: String(salvo.telefone || ''),
       ddi: String(salvo.ddi || '55').replace(/\D/g, '') || '55',
+      codigo: '',
+      senha: '',
+      confirmarSenha: '',
+      codigoSms: '',
     };
   } catch {
-    return { nome: '', email: '', telefone: '', ddi: '55' };
+    return { nome: '', email: '', telefone: '', ddi: '55', codigo: '', senha: '', confirmarSenha: '', codigoSms: '' };
   }
 }
 
@@ -160,13 +168,16 @@ function salvarRascunhoCadastroVendas() {
     sessionStorage.setItem(RASCUNHO_CADASTRO_VENDAS_KEY, JSON.stringify({
       versao: 1,
       expiraEm: Date.now() + 24 * 60 * 60 * 1000,
-      ...cadastroRascunho,
+      nome: cadastroRascunho.nome,
+      email: cadastroRascunho.email,
+      telefone: cadastroRascunho.telefone,
+      ddi: cadastroRascunho.ddi,
     }));
   } catch { /* armazenamento indisponível */ }
 }
 
 function limparRascunhoCadastroVendas() {
-  cadastroRascunho = { nome: '', email: '', telefone: '', ddi: '55' };
+  cadastroRascunho = { nome: '', email: '', telefone: '', ddi: '55', codigo: '', senha: '', confirmarSenha: '', codigoSms: '' };
   try { sessionStorage.removeItem(RASCUNHO_CADASTRO_VENDAS_KEY); } catch { /* armazenamento indisponível */ }
 }
 
@@ -458,13 +469,20 @@ document.addEventListener('input', (event) => {
   const campo = event.target;
   if (campo?.id === 'cadastroTelefone') formatarTelefoneCadastro(campo);
   if (campo?.dataset.phoneField) formatarTelefoneCampo(campo, campo.dataset.ddiTarget);
+  if (campo?.id === 'loginContato') loginRascunho.contato = campo.value || '';
+  if (campo?.id === 'loginSenha') loginRascunho.senha = campo.value || '';
   if (campo?.id === 'cadastroNome') cadastroRascunho.nome = campo.value || '';
   if (campo?.id === 'cadastroEmail') cadastroRascunho.email = campo.value || '';
   if (campo?.id === 'cadastroTelefone') cadastroRascunho.telefone = campo.value || '';
+  if (campo?.id === 'cadastroCodigo') cadastroRascunho.codigo = campo.value || '';
+  if (campo?.id === 'cadastroSenha') cadastroRascunho.senha = campo.value || '';
+  if (campo?.id === 'cadastroConfirmarSenha') cadastroRascunho.confirmarSenha = campo.value || '';
+  if (campo?.id === 'cadastroCodigoSms') cadastroRascunho.codigoSms = campo.value || '';
   if (['cadastroNome', 'cadastroEmail', 'cadastroTelefone'].includes(campo?.id)) salvarRascunhoCadastroVendas();
 });
 
 document.addEventListener('change', (event) => {
+  if (event.target?.id === 'loginLembrar') loginRascunho.lembrar = event.target.checked === true;
   if (event.target?.id === 'cadastroDdi') {
     const telefone = document.getElementById('cadastroTelefone');
     if (telefone) formatarTelefoneCadastro(telefone);
@@ -859,6 +877,26 @@ async function limparCacheVendas(usuarioId = state.usuario?.id, empresaId = stat
     }
     banco.close();
   } catch { /* o logout continua mesmo sem acesso ao cache */ }
+}
+
+async function limparTodosCachesVendasUsuario(usuarioId = state.usuario?.id) {
+  if (!usuarioId) return;
+  try {
+    const banco = await abrirBancoCacheVendas();
+    for (const nomeStore of [CACHE_VENDAS_STORE, CACHE_VENDAS_PENDENCIAS_STORE]) {
+      await new Promise((resolver, rejeitar) => {
+        const pedido = banco.transaction(nomeStore, 'readwrite').objectStore(nomeStore).openCursor();
+        pedido.onsuccess = () => {
+          const cursor = pedido.result;
+          if (!cursor) { resolver(); return; }
+          if (String(cursor.key || '').startsWith(`${usuarioId}:`)) cursor.delete();
+          cursor.continue();
+        };
+        pedido.onerror = () => rejeitar(pedido.error);
+      });
+    }
+    banco.close();
+  } catch { /* a exclusão no servidor continua sendo a fonte oficial */ }
 }
 
 function restaurarCacheVendas(cache) {
@@ -1446,6 +1484,18 @@ function render() {
     requestAnimationFrame(limparFocoInicialLogin);
     return;
   }
+  if (contaVendasExcluidaNestaSessao) {
+    limparDestaqueClientes();
+    removerNavegacaoInferior();
+    app.innerHTML = renderContaVendasExcluida();
+    return;
+  }
+  if (state.contaVendasAusente) {
+    limparDestaqueClientes();
+    removerNavegacaoInferior();
+    app.innerHTML = renderAtivacaoContaVendas();
+    return;
+  }
   if (state.premiumVendasBloqueado) {
     limparDestaqueClientes();
     removerNavegacaoInferior();
@@ -1569,6 +1619,32 @@ function renderModuloVendasDesativado() {
   </section>`;
 }
 
+function renderAtivacaoContaVendas() {
+  return `<section class="sales-account-onboarding-screen">${renderMarcaAcesso()}<article class="sales-account-onboarding-card"><span class="sales-account-onboarding-icon" aria-hidden="true">${svgIcon('shopping-cart')}</span><p>AvantaVendas</p><h1>Crie seu espaço de vendas</h1><div>Seu login AvantaLab está ativo. Crie um perfil somente quando quiser usar clientes, produtos, pedidos e pagamentos neste aplicativo.</div><button type="button" class="primary" onclick="ativarContaVendas()">Começar no Vendas</button><button type="button" class="ghost" onclick="abrirGestaoAposExclusaoVendas()">Abrir AvantaLab Gestão</button></article></section>`;
+}
+
+async function ativarContaVendas() {
+  const botao = document.querySelector('.sales-account-onboarding-card .primary');
+  if (botao) { botao.disabled = true; botao.textContent = 'Criando seu espaço...'; }
+  try {
+    const conta = await window.VendasDb.criarContaVendas('Minha conta de vendas');
+    window.VendasDb.definirContaAtiva(conta.id);
+    state.contaVendasAusente = false;
+    await carregarDadosBackend(true);
+  } catch (error) {
+    if (botao) { botao.disabled = false; botao.textContent = 'Começar no Vendas'; }
+    abrirAvisoAcessoVendas('Não foi possível criar o perfil', traduzErro(error));
+  }
+}
+
+function renderContaVendasExcluida() {
+  return `<section class="deleted-sales-account-screen">${renderMarcaAcesso()}<article class="deleted-sales-account-card" role="status" aria-live="polite"><header><h1>Conta do Vendas excluída</h1><p>Os dados deste aplicativo foram removidos.</p></header><div class="deleted-sales-account-content"><p>Seu login AvantaLab e os seus perfis no Gestão continuam preservados. Os registros financeiros já enviados para o Gestão permanecem somente como histórico desvinculado.</p><button type="button" class="primary deleted-account-management-button" onclick="abrirGestaoAposExclusaoVendas()">Abrir AvantaLab Gestão</button></div></article></section>`;
+}
+
+function abrirGestaoAposExclusaoVendas() {
+  window.location.assign('/avantavendas/gestao?origem=vendas');
+}
+
 function configurarDestaqueClientes() {
   if (
     !window.matchMedia('(max-width: 850px)').matches ||
@@ -1682,16 +1758,38 @@ function limparFocoInicialLogin() {
   }
 }
 
+function abrirAvisoAcessoVendas(titulo, mensagem, campoId = '') {
+  campoRetornoAvisoAcessoVendas = campoId;
+  sheet(`<div class="access-validation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="accessValidationTitle" aria-describedby="accessValidationMessage"><div class="access-validation-icon" aria-hidden="true">${svgIcon('warning')}</div><h2 id="accessValidationTitle">${escapeHtml(titulo)}</h2><p id="accessValidationMessage">${escapeHtml(mensagem)}</p><button id="accessValidationClose" type="button" class="primary" onclick="fecharAvisoAcessoVendas()">Entendi</button></div>`, 'sheet-backdrop-centered access-validation-backdrop');
+  requestAnimationFrame(() => document.getElementById('accessValidationClose')?.focus());
+}
+
+function fecharAvisoAcessoVendas() {
+  const campoId = campoRetornoAvisoAcessoVendas;
+  campoRetornoAvisoAcessoVendas = '';
+  fecharSheet();
+  if (!campoId) return;
+  requestAnimationFrame(() => {
+    const campo = document.getElementById(campoId);
+    if (!(campo instanceof HTMLInputElement || campo instanceof HTMLSelectElement || campo instanceof HTMLTextAreaElement)) return;
+    campo.focus({ preventScroll: true });
+    if (campo instanceof HTMLInputElement || campo instanceof HTMLTextAreaElement) {
+      const fim = String(campo.value || '').length;
+      try { campo.setSelectionRange(fim, fim); } catch { /* tipo sem Selection API */ }
+    }
+  });
+}
+
 function renderLogin() {
   if (modoLogin === 'cadastro') return renderCadastroConta();
   const emailAtivo = loginTipo === 'email';
-  return `<section class="login-screen">${renderMarcaAcesso()}<form onsubmit="entrarSistema(event)"><div class="access-login-heading"><h1>Gestão de Vendas</h1><p>Entre para registrar suas vendas, acompanhar clientes e resultados.</p></div><div class="login-methods"><button type="button" class="${emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('email')">${svgIcon('mail')} E-mail</button><button type="button" class="${!emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('telefone')">${svgIcon('phone')} Telefone</button></div><label>${emailAtivo ? 'E-mail' : 'Telefone'}<div class="login-field">${svgIcon(emailAtivo ? 'mail' : 'phone')}<input id="loginContato" type="${emailAtivo ? 'email' : 'tel'}" inputmode="${emailAtivo ? 'email' : 'tel'}" autocomplete="${emailAtivo ? 'email' : 'tel'}" placeholder="${emailAtivo ? 'Digite seu e-mail' : 'Digite seu telefone'}" required></div></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="loginSenha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="password-toggle" onclick="alternarSenhaLogin()" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div class="login-options"><label class="remember-option"><input id="loginLembrar" type="checkbox" checked><span></span>Lembrar-me</label><button type="button" class="forgot-link" onclick="abrirRecuperacaoSenha()">Esqueceu a senha?</button></div><div id="loginErro" class="login-error">${escapeHtml(erroAcessoVendas)}</div><button class="primary login-submit" type="submit">Entrar</button><p class="login-register">Não tem conta? <button type="button" onclick="abrirCadastroConta()">Cadastre-se</button></p></form></section>`;
+  return `<section class="login-screen">${renderMarcaAcesso()}<form novalidate onsubmit="entrarSistema(event)"><div class="access-login-heading"><h1>Gestão de Vendas</h1><p>Entre para registrar suas vendas, acompanhar clientes e resultados.</p></div><div class="login-methods"><button type="button" class="${emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('email')">${svgIcon('mail')} E-mail</button><button type="button" class="${!emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('telefone')">${svgIcon('phone')} Telefone</button></div><label>${emailAtivo ? 'E-mail' : 'Telefone'}<div class="login-field">${svgIcon(emailAtivo ? 'mail' : 'phone')}<input id="loginContato" type="${emailAtivo ? 'email' : 'tel'}" inputmode="${emailAtivo ? 'email' : 'tel'}" autocomplete="${emailAtivo ? 'email' : 'tel'}" value="${escapeAttr(loginRascunho.contato)}" placeholder="${emailAtivo ? 'Digite seu e-mail' : 'Digite seu telefone'}"></div></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="loginSenha" type="password" autocomplete="current-password" value="${escapeAttr(loginRascunho.senha)}" placeholder="Digite sua senha"><button type="button" class="password-toggle" onclick="alternarSenhaLogin()" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div class="login-options"><label class="remember-option"><input id="loginLembrar" type="checkbox" ${loginRascunho.lembrar ? 'checked' : ''}><span></span>Lembrar-me</label><button type="button" class="forgot-link" onclick="abrirRecuperacaoSenha()">Esqueceu a senha?</button></div><button class="primary login-submit" type="submit">Entrar</button><p class="login-register">Não tem conta? <button type="button" onclick="abrirCadastroConta()">Cadastre-se</button></p></form></section>`;
 }
 
 function renderCadastroConta() {
   if (cadastroEtapa === 'sms') return renderValidacaoSmsCadastro();
   const paises = PAISES_DDI.map(([nome, ddi, flag]) => `<option value="${ddi}" ${ddi === cadastroRascunho.ddi ? 'selected' : ''}>${flag} +${ddi}</option>`).join('');
-  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form" onsubmit="criarConta(event)"><label>Nome completo<div class="login-field">${svgIcon('user')}<input id="cadastroNome" autocomplete="name" value="${escapeAttr(cadastroRascunho.nome)}" placeholder="Nome completo" required></div></label><label>E-mail<div class="login-field">${svgIcon('mail')}<input id="cadastroEmail" type="email" autocomplete="email" value="${escapeAttr(cadastroRascunho.email)}" placeholder="Digite seu e-mail" required></div></label><label>Celular<div class="phone-register-field"><select id="cadastroDdi" aria-label="País (DDI)">${paises}</select><div class="login-field">${svgIcon('phone')}<input id="cadastroTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" value="${escapeAttr(cadastroRascunho.telefone)}" placeholder="DDD + número" required></div></div></label><label>Código da empresa (opcional)<div class="login-field">${svgIcon('folder')}<input id="cadastroCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX"></div><small>Use apenas para solicitar acesso a Novidades, Divulgação e produtos publicados pela empresa.</small></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroSenha" type="password" autocomplete="new-password" placeholder="Crie sua senha" oninput="atualizarRequisitosSenhaCadastro(this.value)" required><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div><small id="requisitosSenhaCadastro" class="password-requirements">8+ caracteres, maiúscula, minúscula e número.</small></label><label>Confirmar senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroConfirmarSenha" type="password" autocomplete="new-password" placeholder="Digite a senha novamente" required><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroConfirmarSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div id="cadastroErro" class="login-error"></div><button class="primary login-submit" type="submit">Continuar</button><p class="login-register">Já tem conta? <button type="button" onclick="voltarParaLogin()">Entrar</button></p></form></section>`;
+  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form" novalidate onsubmit="criarConta(event)"><label>Nome completo<div class="login-field">${svgIcon('user')}<input id="cadastroNome" autocomplete="name" value="${escapeAttr(cadastroRascunho.nome)}" placeholder="Nome completo"></div></label><label>E-mail<div class="login-field">${svgIcon('mail')}<input id="cadastroEmail" type="email" autocomplete="email" value="${escapeAttr(cadastroRascunho.email)}" placeholder="Digite seu e-mail"></div></label><label>Celular<div class="phone-register-field"><select id="cadastroDdi" aria-label="País (DDI)">${paises}</select><div class="login-field">${svgIcon('phone')}<input id="cadastroTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" value="${escapeAttr(cadastroRascunho.telefone)}" placeholder="DDD + número"></div></div></label><label>Código da empresa (opcional)<div class="login-field">${svgIcon('folder')}<input id="cadastroCodigo" autocomplete="off" autocapitalize="characters" value="${escapeAttr(cadastroRascunho.codigo)}" placeholder="AVA-XXXXXXXX"></div><small>Use apenas para solicitar acesso a Novidades, Divulgação e produtos publicados pela empresa.</small></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroSenha" type="password" autocomplete="new-password" value="${escapeAttr(cadastroRascunho.senha)}" placeholder="Crie sua senha" oninput="atualizarRequisitosSenhaCadastro(this.value)"><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div><small id="requisitosSenhaCadastro" class="password-requirements ${senhaCadastroValida(cadastroRascunho.senha) ? 'valid' : ''}">${senhaCadastroValida(cadastroRascunho.senha) ? '✓ Requisitos de senha atendidos.' : '8+ caracteres, maiúscula, minúscula e número.'}</small></label><label>Confirmar senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroConfirmarSenha" type="password" autocomplete="new-password" value="${escapeAttr(cadastroRascunho.confirmarSenha)}" placeholder="Digite a senha novamente"><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroConfirmarSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><button class="primary login-submit" type="submit">Continuar</button><p class="login-register">Já tem conta? <button type="button" onclick="voltarParaLogin()">Entrar</button></p></form></section>`;
 }
 
 function senhaCadastroValida(senha) {
@@ -1722,7 +1820,7 @@ function atualizarRequisitosSenhaCadastro(senha) {
 
 function renderValidacaoSmsCadastro() {
   const telefone = cadastroPendente?.telefone || '';
-  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form sms-confirm-form" onsubmit="confirmarCadastroSms(event)"><p class="login-card-help">Enviamos um código por SMS para <b>${escapeHtml(telefone)}</b>.</p><label>Código de validação<div class="login-field">${svgIcon('lock')}<input id="cadastroCodigoSms" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Digite o código recebido" autofocus required></div></label><div id="cadastroErro" class="login-error"></div><button class="primary login-submit" type="submit">Validar e criar conta</button><button id="reenviarSmsCadastro" class="forgot-link sms-resend" type="button" onclick="reenviarSmsCadastro()" disabled>Reenviar código em <span id="smsContador">60</span>s</button><p class="login-register"><button type="button" onclick="voltarDadosCadastro()">Alterar dados</button></p></form></section>`;
+  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form sms-confirm-form" novalidate onsubmit="confirmarCadastroSms(event)"><p class="login-card-help">Enviamos um código por SMS para <b>${escapeHtml(telefone)}</b>.</p><label>Código de validação<div class="login-field">${svgIcon('lock')}<input id="cadastroCodigoSms" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" value="${escapeAttr(cadastroRascunho.codigoSms)}" placeholder="Digite o código recebido" autofocus></div></label><button class="primary login-submit" type="submit">Validar e criar conta</button><button id="reenviarSmsCadastro" class="forgot-link sms-resend" type="button" onclick="reenviarSmsCadastro()" disabled>Reenviar código em <span id="smsContador">60</span>s</button><p class="login-register"><button type="button" onclick="voltarDadosCadastro()">Alterar dados</button></p></form></section>`;
 }
 
 function trocarTipoLogin(tipo) {
@@ -2234,6 +2332,19 @@ async function entrarSistema(event) {
   const contato = valor('loginContato').trim();
   const senha = valor('loginSenha');
   const lembrar = document.getElementById('loginLembrar')?.checked ? '1' : '0';
+  loginRascunho = { contato, senha, lembrar: lembrar === '1' };
+  if (!contato) {
+    abrirAvisoAcessoVendas('Confira seus dados', `Informe ${loginTipo === 'email' ? 'seu e-mail' : 'seu telefone'} para entrar.`, 'loginContato');
+    return;
+  }
+  if (loginTipo === 'email' && !emailValido(contato)) {
+    abrirAvisoAcessoVendas('E-mail inválido', 'Confira o endereço de e-mail informado.', 'loginContato');
+    return;
+  }
+  if (!senha) {
+    abrirAvisoAcessoVendas('Senha necessária', 'Digite sua senha para continuar.', 'loginSenha');
+    return;
+  }
   fixarAlturaPreparacao();
   window.__avantalabReiniciarProgressoVendas?.('Autenticando seu acesso');
   carregandoBackend = true;
@@ -2256,6 +2367,7 @@ async function entrarSistema(event) {
     carregandoBackend = false;
     erroAcessoVendas = traduzErro(error);
     render();
+    abrirAvisoAcessoVendas('Não foi possível entrar', erroAcessoVendas, 'loginSenha');
   }
 }
 
@@ -2275,9 +2387,9 @@ async function entrarComGoogle() {
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     liberarAlturaPreparacao();
-    render();
     erroAcessoVendas = traduzErro(error);
     render();
+    abrirAvisoAcessoVendas('Não foi possível continuar com Google', erroAcessoVendas);
   }
 }
 
@@ -2297,9 +2409,9 @@ async function entrarComApple() {
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     liberarAlturaPreparacao();
-    render();
     erroAcessoVendas = traduzErro(error);
     render();
+    abrirAvisoAcessoVendas('Não foi possível continuar com Apple', erroAcessoVendas);
   }
 }
 
@@ -2391,8 +2503,6 @@ function voltarDadosCadastro() {
 
 async function criarConta(event) {
   event?.preventDefault();
-  const erro = document.getElementById('cadastroErro');
-  if (erro) erro.textContent = '';
   const nome = valor('cadastroNome').trim();
   const email = valor('cadastroEmail').trim();
   const senha = valor('cadastroSenha');
@@ -2407,22 +2517,34 @@ async function criarConta(event) {
     email,
     telefone: valor('cadastroTelefone'),
     ddi,
+    codigo,
+    senha,
+    confirmarSenha,
+    codigoSms: cadastroRascunho.codigoSms || '',
   };
   salvarRascunhoCadastroVendas();
   if (!nomeCompletoValido(nome)) {
-    if (erro) erro.textContent = 'Informe o nome completo, com nome e sobrenome.';
+    abrirAvisoAcessoVendas('Nome incompleto', 'Informe o nome completo, com nome e sobrenome.', 'cadastroNome');
     return;
   }
-  if (!nome || !email || !telefone || !senhaCadastroValida(senha)) {
-    if (erro) erro.textContent = 'A senha deve ter 8 caracteres, ao menos uma letra maiúscula, uma minúscula e um número.';
+  if (!email || !emailValido(email)) {
+    abrirAvisoAcessoVendas('E-mail inválido', 'Informe um endereço de e-mail válido.', 'cadastroEmail');
+    return;
+  }
+  if (!telefone) {
+    abrirAvisoAcessoVendas('Celular necessário', 'Informe seu número de celular.', 'cadastroTelefone');
+    return;
+  }
+  if (!senhaCadastroValida(senha)) {
+    abrirAvisoAcessoVendas('Senha fora do padrão', 'A senha deve ter 8 caracteres, ao menos uma letra maiúscula, uma minúscula e um número.', 'cadastroSenha');
     return;
   }
   if (ehBrasil ? (telefone.length < 10 || telefone.length > 11) : (telefone.length < 6 || telefone.length > 15)) {
-    if (erro) erro.textContent = ehBrasil ? 'Informe um celular válido com DDD.' : 'Informe um número de celular válido para o país selecionado.';
+    abrirAvisoAcessoVendas('Celular inválido', ehBrasil ? 'Informe um celular válido com DDD.' : 'Informe um número de celular válido para o país selecionado.', 'cadastroTelefone');
     return;
   }
   if (senha !== confirmarSenha) {
-    if (erro) erro.textContent = 'As senhas não coincidem.';
+    abrirAvisoAcessoVendas('Senhas diferentes', 'As duas senhas precisam ser iguais.', 'cadastroConfirmarSenha');
     return;
   }
   try {
@@ -2432,7 +2554,7 @@ async function criarConta(event) {
     render();
     iniciarContadorSmsCadastro();
   } catch (error) {
-    if (erro) erro.textContent = traduzErro(error);
+    abrirAvisoAcessoVendas('Não foi possível continuar', traduzErro(error), 'cadastroTelefone');
   }
 }
 
@@ -2471,25 +2593,25 @@ function iniciarContadorSmsCadastro() {
 
 async function reenviarSmsCadastro() {
   if (!cadastroPendente || segundosReenvioSmsCadastro > 0) return;
-  const erro = document.getElementById('cadastroErro');
-  if (erro) erro.textContent = '';
   try {
     await enviarSmsCadastro(cadastroPendente.telefone);
     iniciarContadorSmsCadastro();
     toast('Enviamos um novo código por SMS.');
   } catch (error) {
-    if (erro) erro.textContent = traduzErro(error);
+    abrirAvisoAcessoVendas('Não foi possível reenviar', traduzErro(error), 'cadastroCodigoSms');
   }
 }
 
 async function confirmarCadastroSms(event) {
   event?.preventDefault();
-  const erro = document.getElementById('cadastroErro');
-  if (erro) erro.textContent = '';
   const codigoSms = valor('cadastroCodigoSms').trim();
-  if (!cadastroPendente || !codigoSms) { if (erro) erro.textContent = 'Digite o código recebido por SMS.'; return; }
+  cadastroRascunho.codigoSms = codigoSms;
+  if (!cadastroPendente || !codigoSms) {
+    abrirAvisoAcessoVendas('Código necessário', 'Digite o código recebido por SMS.', 'cadastroCodigoSms');
+    return;
+  }
   if (!nomeCompletoValido(cadastroPendente.nome)) {
-    if (erro) erro.textContent = 'Informe o nome completo, com nome e sobrenome.';
+    abrirAvisoAcessoVendas('Nome incompleto', 'Volte e informe seu nome completo, com nome e sobrenome.', 'cadastroCodigoSms');
     return;
   }
   try {
@@ -2516,7 +2638,7 @@ async function confirmarCadastroSms(event) {
       ? 'Conta criada. Confirme seu e-mail; a solicitação de conteúdo será enviada no primeiro acesso.'
       : 'Conta criada. Confirme seu e-mail para começar a usar o Vendas.');
   } catch (error) {
-    if (erro) erro.textContent = traduzErro(error);
+    abrirAvisoAcessoVendas('Não foi possível criar a conta', traduzErro(error), 'cadastroCodigoSms');
   }
 }
 
@@ -2757,6 +2879,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
       state.contasVendas = dados.contasVendas || [];
       state.contaVendasAtiva = dados.contaVendasAtiva || null;
+      state.contaVendasAusente = dados.contaVendasAusente === true;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
       await salvarCacheVendas();
     }
@@ -3806,6 +3929,7 @@ function renderConfiguracoes() {
     <article class="settings-card settings-pwa-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
     <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
     <article class="settings-card settings-reset-card"><h3>${svgIcon('warning')} Resetar sistema</h3><p>Gera um backup automático e apaga lançamentos, clientes, agenda, produtos e preferências deste Vendas.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIcon('warning')} Resetar Vendas Mobile</button></article>
+    <article class="settings-card settings-delete-account-card"><h3>${svgIcon('warning')} Excluir conta do Vendas</h3><p>Remove definitivamente seu perfil e os dados deste aplicativo. Seu login AvantaLab e os perfis do Gestão serão preservados.</p><button class="danger" onclick="abrirExclusaoContaVendas()">${svgIcon('warning')} Excluir conta do Vendas</button></article>
   </section>`;
 }
 
@@ -4044,7 +4168,7 @@ async function confirmarResetSistemaVendas() {
     await exportarBackupVendasExcel();
     sincronizacaoPreferenciasSuspensa = await suspenderSincronizacaoPreferenciasVendas();
     await window.VendasDb.resetarSistemaVendas();
-    await limparCacheVendas(undefined, undefined, true);
+    await limparTodosCachesVendasUsuario();
     localStorage.removeItem(STORAGE_KEY);
     aplicarPreferenciasVendas(estadoInicial);
     fecharSheet();
@@ -4053,6 +4177,50 @@ async function confirmarResetSistemaVendas() {
   } catch (error) {
     if (sincronizacaoPreferenciasSuspensa) preferenciasServidorCarregadas = true;
     toast(traduzErro(error));
+  }
+}
+
+function abrirExclusaoContaVendas() {
+  sheet(`<div class="sheet-header"><div><h2>Excluir conta do Vendas?</h2><p class="muted small">Esta ação é permanente e não pode ser desfeita.</p></div><button class="close" aria-label="Fechar" onclick="fecharSheet()">×</button></div><div class="delete-sales-account-warning"><p>Serão removidos os dados do AvantaVendas, incluindo clientes, produtos, pedidos, pagamentos, agenda, preferências e vínculos de conteúdo.</p><p><b>Seu login AvantaLab e os perfis do Gestão não serão excluídos.</b> Resultados financeiros já enviados ao Gestão permanecerão como histórico desvinculado.</p><label for="confirmacaoExcluirContaVendas">Digite <b>EXCLUIR</b> para confirmar:</label><input id="confirmacaoExcluirContaVendas" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="atualizarConfirmacaoExclusaoContaVendas(this.value)"><div class="actions"><button type="button" class="secondary" onclick="fecharSheet()">Cancelar</button><button id="confirmarExclusaoContaVendas" type="button" class="danger" onclick="confirmarExclusaoContaVendas()" disabled>Excluir definitivamente</button></div></div>`, 'sheet-backdrop-centered delete-sales-account-backdrop');
+  requestAnimationFrame(() => document.getElementById('confirmacaoExcluirContaVendas')?.focus());
+}
+
+function atualizarConfirmacaoExclusaoContaVendas(valorConfirmacao) {
+  const botao = document.getElementById('confirmarExclusaoContaVendas');
+  if (botao) botao.disabled = String(valorConfirmacao || '').trim().toUpperCase() !== 'EXCLUIR';
+}
+
+async function confirmarExclusaoContaVendas() {
+  const confirmacao = valor('confirmacaoExcluirContaVendas').trim().toUpperCase();
+  const botao = document.getElementById('confirmarExclusaoContaVendas');
+  if (confirmacao !== 'EXCLUIR' || botao?.disabled) return;
+  botao.disabled = true;
+  botao.textContent = 'Excluindo com segurança...';
+  let sincronizacaoPreferenciasSuspensa = false;
+  try {
+    sincronizacaoPreferenciasSuspensa = await suspenderSincronizacaoPreferenciasVendas();
+    await window.VendasDb.excluirContaVendas();
+    await limparTodosCachesVendasUsuario();
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('avantalab.vendas_mobile.solicitacao_pendente');
+    cadastroPendente = null;
+    limparRascunhoCadastroVendas();
+    contaVendasExcluidaNestaSessao = true;
+    state.contaVendasAusente = true;
+    state.contasVendas = [];
+    state.contaVendasAtiva = null;
+    state.produtos = [];
+    state.clientes = [];
+    state.vendas = [];
+    state.pagamentos = [];
+    state.vinculosComerciais = [];
+    state.perfisFinanceiros = [];
+    fecharSheet();
+    render();
+  } catch (error) {
+    if (sincronizacaoPreferenciasSuspensa) preferenciasServidorCarregadas = true;
+    if (botao) { botao.disabled = false; botao.textContent = 'Excluir definitivamente'; }
+    abrirAvisoAcessoVendas('Não foi possível excluir a conta', traduzErro(error), 'confirmacaoExcluirContaVendas');
   }
 }
 
@@ -7715,6 +7883,7 @@ window.cancelarLoginSocialVendas = cancelarLoginSocialVendas;
 window.trocarTipoLogin = trocarTipoLogin;
 window.alternarSenhaLogin = alternarSenhaLogin;
 window.alternarSenhaCampoVendas = alternarSenhaCampoVendas;
+window.fecharAvisoAcessoVendas = fecharAvisoAcessoVendas;
 window.abrirRecuperacaoSenha = abrirRecuperacaoSenha;
 window.enviarRecuperacaoSenha = enviarRecuperacaoSenha;
 window.redefinirSenhaVendas = redefinirSenhaVendas;
@@ -7774,6 +7943,11 @@ window.abrirNovoVinculoComercial = abrirNovoVinculoComercial;
 window.solicitarNovoVinculoComercial = solicitarNovoVinculoComercial;
 window.abrirResetSistemaVendas = abrirResetSistemaVendas;
 window.confirmarResetSistemaVendas = confirmarResetSistemaVendas;
+window.abrirExclusaoContaVendas = abrirExclusaoContaVendas;
+window.atualizarConfirmacaoExclusaoContaVendas = atualizarConfirmacaoExclusaoContaVendas;
+window.confirmarExclusaoContaVendas = confirmarExclusaoContaVendas;
+window.ativarContaVendas = ativarContaVendas;
+window.abrirGestaoAposExclusaoVendas = abrirGestaoAposExclusaoVendas;
 window.confirmarResetDadosLocais = confirmarResetDadosLocais;
 window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;
