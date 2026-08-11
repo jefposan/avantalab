@@ -12,6 +12,7 @@ const PREPARING_VIEWPORT_HEIGHT_KEY_LEGACY = 'avantalab.vendas_mobile.preparing_
 const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
 const ORIGEM_ACESSO_VENDAS_KEY = 'avantalab_mobile_origem_acesso';
 const RASCUNHO_CADASTRO_VENDAS_KEY = 'avantalab:rascunho:v1:vendas:cadastro-conta';
+const AVISO_EXCLUSAO_CONCLUIDA_PARAM = 'conta_excluida';
 const CACHE_VENDAS_DB = 'avantalab.vendas_mobile.cache';
 const CACHE_VENDAS_STORE = 'sessoes';
 const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
@@ -129,6 +130,7 @@ let cadastroPendente = null;
 let loginRascunho = { contato: '', senha: '', lembrar: true };
 let cadastroRascunho = carregarRascunhoCadastroVendas();
 let campoRetornoAvisoAcessoVendas = '';
+let avisoExclusaoContaPendente = new URLSearchParams(window.location.search).get(AVISO_EXCLUSAO_CONCLUIDA_PARAM) === '1';
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let loginSocialPendente = lerLoginSocialPendenteVendas();
@@ -1084,6 +1086,7 @@ const ICONES_SVG_ESTAVEIS = {
   home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/>',
   'rotate-ccw': '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
   'user-x': '<path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/>',
+  'check-circle': '<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/>',
   'message-circle': '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A8 8 0 1 1 21 15Z"/>',
 };
 
@@ -1519,6 +1522,9 @@ function render() {
     removerNavegacaoInferior();
     app.innerHTML = state.usuarioSemAcesso ? renderSolicitarAcesso() : renderLogin();
     if (!state.usuarioSemAcesso) adicionarBotoesGoogle();
+    if (!state.usuarioSemAcesso && avisoExclusaoContaPendente) {
+      requestAnimationFrame(abrirAvisoExclusaoContaConcluida);
+    }
     requestAnimationFrame(limparFocoInicialLogin);
     return;
   }
@@ -1778,6 +1784,18 @@ function fecharAvisoAcessoVendas() {
       try { campo.setSelectionRange(fim, fim); } catch { /* tipo sem Selection API */ }
     }
   });
+}
+
+function abrirAvisoExclusaoContaConcluida() {
+  if (!avisoExclusaoContaPendente || document.getElementById('deletedAccountSuccessAction')) return;
+  sheet(`<div class="access-validation-dialog access-success-dialog" role="alertdialog" aria-modal="true" aria-labelledby="deletedAccountSuccessTitle" aria-describedby="deletedAccountSuccessMessage"><div class="access-validation-icon is-success" aria-hidden="true">${svgIconEstavel('check-circle')}</div><h2 id="deletedAccountSuccessTitle">Conta excluída com sucesso</h2><p id="deletedAccountSuccessMessage">Os dados da sua conta do AvantaVendas foram removidos.</p><button id="deletedAccountSuccessAction" type="button" class="primary" onclick="voltarInicioAposExclusaoVendas()">Voltar para o início</button></div>`, 'sheet-backdrop-centered access-validation-backdrop access-success-backdrop sheet-backdrop-static');
+  requestAnimationFrame(() => document.getElementById('deletedAccountSuccessAction')?.focus());
+}
+
+function voltarInicioAposExclusaoVendas() {
+  avisoExclusaoContaPendente = false;
+  fecharSheet();
+  window.location.replace('/avantavendas?entrar=1');
 }
 
 function renderLogin() {
@@ -4297,7 +4315,7 @@ async function confirmarExclusaoContaVendas() {
     cadastroPendente = null;
     limparRascunhoCadastroVendas();
     fecharSheet();
-    await sairSistema('/avantavendas?entrar=1');
+    await sairSistema(`/avantavendas?${AVISO_EXCLUSAO_CONCLUIDA_PARAM}=1`);
   } catch (error) {
     if (sincronizacaoPreferenciasSuspensa) preferenciasServidorCarregadas = true;
     if (botao) { botao.disabled = false; botao.textContent = 'Excluir definitivamente'; }
@@ -7644,7 +7662,7 @@ function sheet(html, backdropClass = '') {
     botao.type = 'button';
   });
   wrap.addEventListener('click', (event) => {
-    if (event.target === wrap) fecharSheet(event);
+    if (event.target === wrap && !wrap.classList.contains('sheet-backdrop-static')) fecharSheet(event);
   });
   document.body.appendChild(wrap);
   document.body.classList.add('sheet-open');
@@ -7880,6 +7898,7 @@ window.trocarTipoLogin = trocarTipoLogin;
 window.alternarSenhaLogin = alternarSenhaLogin;
 window.alternarSenhaCampoVendas = alternarSenhaCampoVendas;
 window.fecharAvisoAcessoVendas = fecharAvisoAcessoVendas;
+window.voltarInicioAposExclusaoVendas = voltarInicioAposExclusaoVendas;
 window.abrirRecuperacaoSenha = abrirRecuperacaoSenha;
 window.enviarRecuperacaoSenha = enviarRecuperacaoSenha;
 window.redefinirSenhaVendas = redefinirSenhaVendas;

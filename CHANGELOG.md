@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.05-av51 - 2026-08-11
+
+- AvantaVendas: a exclusão concluída agora exibe um aviso de sucesso após o
+  encerramento da sessão, com a única ação **Voltar para o início**, que retorna
+  ao login do Vendas sem direcionamento para o Gestão.
+
 ## 1.7.3.05-av50 - 2026-08-11
 
 - AvantaVendas: ao concluir a exclusão da conta, o aplicativo encerra a sessão

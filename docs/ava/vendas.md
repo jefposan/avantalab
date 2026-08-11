@@ -2,6 +2,11 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av51: após excluir a conta, o AvantaVendas encerra a sessão
+> e confirma a conclusão em um aviso acessível. O botão **Voltar para o início**
+> leva diretamente ao login do próprio AvantaVendas, sem oferecer acesso ao
+> Gestão nesse fluxo.
+
 > Revisão 1.7.3.05-av50: após confirmar **Excluir conta do Vendas**, o
 > aplicativo encerra a sessão e retorna diretamente ao login do AvantaVendas.
 > A tela intermediária sobre o Gestão foi removida.
