@@ -113,6 +113,12 @@ exigir(
   'Preparando acesso deve cobrir toda a viewport e nunca congelar a altura reduzida pelo teclado.',
 );
 exigir(
+  estilos.includes('.dark-theme .settings-sales-account-field select')
+    && estilos.includes("stroke='%23f8fafc'")
+    && estilos.includes('background-repeat: no-repeat; background-position: right 14px center; background-size: 14px 16px;'),
+  'O seletor de conta ativa no tema escuro deve exibir uma única seta branca alinhada à direita.',
+);
+exigir(
   aplicacao.includes("const URL_APP_GESTAO = 'br.com.avantalab.app://auth/callback?origem=vendas'")
     && aplicacao.includes("const URL_WEB_GESTAO = 'https://app.avantalab.com.br/mobile?origem=vendas'")
     && aplicacao.includes('AppLauncher.canOpenUrl({ url: URL_APP_GESTAO })')
@@ -270,7 +276,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '47'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '48'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

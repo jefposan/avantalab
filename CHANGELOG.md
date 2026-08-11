@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.3.05-av48 - 2026-08-11
+
+- AvantaVendas: o seletor de conta ativa no modo escuro agora exibe uma única
+  seta branca, alinhada à direita, sem repetir o ícone sobre o conteúdo.
+
 ## 1.7.3.05-av47 - 2026-08-11
 
 - AvantaVendas: a tela **Preparando acesso** agora ocupa permanentemente toda a

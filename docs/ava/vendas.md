@@ -2,6 +2,9 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av48: o seletor de conta ativa no modo escuro mantém uma
+> única seta branca alinhada à direita; sem alteração no fluxo operacional.
+
 > Revisão 1.7.3.05-av47: a tela **Preparando acesso** acompanha a altura útil
 > completa depois que o teclado fecha e não deixa uma lacuna branca inferior;
 > sem alteração no fluxo operacional do AvantaVendas.
