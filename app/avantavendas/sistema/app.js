@@ -1,5 +1,8 @@
 const STORAGE_KEY = 'avantalab.vendas_mobile.v1';
-const GOOGLE_CONNECTING_KEY = 'avantalab.vendas_mobile.google_connecting';
+const LOGIN_SOCIAL_PENDENTE_KEY = 'avantalab.vendas_mobile.login_social_pendente';
+const LOGIN_SOCIAL_PENDENTE_ATE_KEY = 'avantalab.vendas_mobile.login_social_pendente_ate';
+const GOOGLE_CONNECTING_KEY_ANTIGA = 'avantalab.vendas_mobile.google_connecting';
+const REDIRECT_OAUTH_NATIVO_VENDAS = 'br.com.avantalab.vendas://auth/callback';
 const LEMBRAR_CONECTADO_ATE_KEY = 'avantalab.vendas_mobile.lembrar_conectado_ate';
 const SESSAO_TEMPORARIA_KEY = 'avantalab.vendas_mobile.sessao_temporaria';
 const OAUTH_TEMPORARIO_ATE_KEY = 'avantalab.vendas_mobile.oauth_temporario_ate';
@@ -135,7 +138,10 @@ let campoRetornoAvisoAcessoVendas = '';
 let contaVendasExcluidaNestaSessao = false;
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
-let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
+let loginSocialPendente = lerLoginSocialPendenteVendas();
+let provedorOAuthNativoPendente = loginSocialPendente;
+let appVendasInicializado = false;
+let concluindoOAuthNativoVendas = false;
 const INTERVALO_VERIFICACAO_APROVACAO_MS = 15000;
 let timerVerificacaoAprovacao = null;
 let timerAtualizacaoVinculo = null;
@@ -179,6 +185,44 @@ function salvarRascunhoCadastroVendas() {
 function limparRascunhoCadastroVendas() {
   cadastroRascunho = { nome: '', email: '', telefone: '', ddi: '55', codigo: '', senha: '', confirmarSenha: '', codigoSms: '' };
   try { sessionStorage.removeItem(RASCUNHO_CADASTRO_VENDAS_KEY); } catch { /* armazenamento indisponível */ }
+}
+
+function lerLoginSocialPendenteVendas() {
+  try {
+    const provedorSessao = sessionStorage.getItem(LOGIN_SOCIAL_PENDENTE_KEY);
+    const validadeLocal = Number(localStorage.getItem(LOGIN_SOCIAL_PENDENTE_ATE_KEY) || 0);
+    const provedorLocal = validadeLocal > Date.now() ? localStorage.getItem(LOGIN_SOCIAL_PENDENTE_KEY) : '';
+    const provedor = provedorSessao || provedorLocal;
+    if (provedor === 'google' || provedor === 'apple') return provedor;
+    localStorage.removeItem(LOGIN_SOCIAL_PENDENTE_KEY);
+    localStorage.removeItem(LOGIN_SOCIAL_PENDENTE_ATE_KEY);
+    if (sessionStorage.getItem(GOOGLE_CONNECTING_KEY_ANTIGA) === '1') {
+      sessionStorage.setItem(LOGIN_SOCIAL_PENDENTE_KEY, 'google');
+      sessionStorage.removeItem(GOOGLE_CONNECTING_KEY_ANTIGA);
+      return 'google';
+    }
+  } catch { /* armazenamento indisponível */ }
+  return '';
+}
+
+function salvarLoginSocialPendenteVendas(provedor) {
+  loginSocialPendente = provedor === 'apple' ? 'apple' : 'google';
+  try {
+    sessionStorage.setItem(LOGIN_SOCIAL_PENDENTE_KEY, loginSocialPendente);
+    localStorage.setItem(LOGIN_SOCIAL_PENDENTE_KEY, loginSocialPendente);
+    localStorage.setItem(LOGIN_SOCIAL_PENDENTE_ATE_KEY, String(Date.now() + DEZ_MINUTOS_MS));
+    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY_ANTIGA);
+  } catch { /* armazenamento indisponível */ }
+}
+
+function limparLoginSocialPendenteVendas() {
+  loginSocialPendente = '';
+  try {
+    sessionStorage.removeItem(LOGIN_SOCIAL_PENDENTE_KEY);
+    localStorage.removeItem(LOGIN_SOCIAL_PENDENTE_KEY);
+    localStorage.removeItem(LOGIN_SOCIAL_PENDENTE_ATE_KEY);
+    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY_ANTIGA);
+  } catch { /* armazenamento indisponível */ }
 }
 
 function prepararOrigemAcessoVendas() {
@@ -349,13 +393,18 @@ function liberarAlturaPreparacao() {
 }
 
 function cancelarLoginSocialVendas() {
-  conectandoGoogle = false;
+  provedorOAuthNativoPendente = '';
   carregandoBackend = false;
   preparandoRecursosSala = false;
   erroAcessoVendas = '';
-  try { sessionStorage.removeItem(GOOGLE_CONNECTING_KEY); } catch { /* armazenamento indisponível */ }
+  limparLoginSocialPendenteVendas();
+  limparPreferenciaSessaoVendas();
   liberarAlturaPreparacao();
   render();
+  const Browser = window.Capacitor?.Plugins?.Browser;
+  if (ehAplicativoNativoVendas() && Browser?.close) {
+    Promise.resolve(Browser.close()).catch(() => undefined);
+  }
 }
 
 function reconstruirSalaAposRotacao() {
@@ -363,7 +412,7 @@ function reconstruirSalaAposRotacao() {
   temporizadorReconstrucaoSala = window.setTimeout(() => {
     const novoLayoutCompacto = window.matchMedia('(max-width: 850px)').matches;
     salaEmLayoutCompacto = novoLayoutCompacto;
-    if (!state.autenticado || !state.menuAberto || carregandoBackend || conectandoGoogle || preparandoRecursosSala) return;
+    if (!state.autenticado || !state.menuAberto || carregandoBackend || loginSocialPendente || preparandoRecursosSala) return;
     arrasteSalaBotoes = null;
     state.organizandoSalaBotoes = false;
     render();
@@ -1038,6 +1087,8 @@ const ICONES_SVG_ESTAVEIS = {
   bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
   cake: '<path d="M4 11h16v9H4zM3 20h18"/><path d="M7 11V8M12 11V6M17 11V8M7 5h0M12 3h0M17 5h0"/><path d="M4 14h16"/>',
   home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/>',
+  'rotate-ccw': '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
+  'user-x': '<path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/>',
   'message-circle': '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A8 8 0 1 1 21 15Z"/>',
 };
 
@@ -1400,13 +1451,13 @@ function cancelarGarantiaSalaBotoes() {
 
 function agendarGarantiaSalaBotoes() {
   window.clearTimeout(temporizadorGarantiaSala);
-  if (!state.autenticado || !state.menuAberto || !salaEmLayoutCompacto || carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
+  if (!state.autenticado || !state.menuAberto || !salaEmLayoutCompacto || carregandoBackend || loginSocialPendente || preparandoRecursosSala) {
     tentativasGarantiaSala = 0;
     return;
   }
   temporizadorGarantiaSala = window.setTimeout(() => {
     temporizadorGarantiaSala = 0;
-    if (!state.autenticado || !state.menuAberto || !salaEmLayoutCompacto || carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
+    if (!state.autenticado || !state.menuAberto || !salaEmLayoutCompacto || carregandoBackend || loginSocialPendente || preparandoRecursosSala) {
       tentativasGarantiaSala = 0;
       return;
     }
@@ -1443,12 +1494,12 @@ function render() {
   const rolagemConteudoAnterior = preservarRolagemConteudo
     ? areaPrincipalAnterior.querySelector('.content-area')?.scrollTop || 0
     : 0;
-  const agendaAtiva = Boolean(state.autenticado && state.aba === 'agenda' && !carregandoBackend && !conectandoGoogle && !preparandoRecursosSala);
-  const formularioAgendaAberto = Boolean(state.autenticado && state.agendaFormAberto && !carregandoBackend && !conectandoGoogle && !preparandoRecursosSala);
+  const agendaAtiva = Boolean(state.autenticado && state.aba === 'agenda' && !carregandoBackend && !loginSocialPendente && !preparandoRecursosSala);
+  const formularioAgendaAberto = Boolean(state.autenticado && state.agendaFormAberto && !carregandoBackend && !loginSocialPendente && !preparandoRecursosSala);
   const shellSistemaAtivo = Boolean(
     state.autenticado
     && !carregandoBackend
-    && !conectandoGoogle
+    && !loginSocialPendente
     && !preparandoRecursosSala
     && !state.seletorPerfilGestaoAberto
     && !state.premiumVendasBloqueado
@@ -1461,10 +1512,10 @@ function render() {
   document.documentElement.classList.toggle('agenda-form-open', formularioAgendaAberto);
   document.body.classList.toggle('agenda-form-open', formularioAgendaAberto);
   salvarEstado();
-  if (!state.autenticado || !state.menuAberto || !salaEmLayoutCompacto || carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
+  if (!state.autenticado || !state.menuAberto || !salaEmLayoutCompacto || carregandoBackend || loginSocialPendente || preparandoRecursosSala) {
     cancelarGarantiaSalaBotoes();
   }
-  if (carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
+  if (carregandoBackend || loginSocialPendente || preparandoRecursosSala) {
     limparDestaqueClientes();
     removerNavegacaoInferior();
     renderPreparandoAcessoEstavel();
@@ -1730,7 +1781,7 @@ function renderMarcaAcesso() {
 
 function renderPreparandoAcesso() {
   const progresso = window.__AVANTALAB_VENDAS_PROGRESSO__ || { valor: 5, rotulo: 'Preparando recursos do aplicativo' };
-  const acaoCancelar = conectandoGoogle
+  const acaoCancelar = loginSocialPendente
     ? '<button type="button" class="preparing-access-cancel" onclick="cancelarLoginSocialVendas()">Cancelar e voltar ao login</button>'
     : '';
   return `<section class="login-screen preparing-access-screen">${renderMarcaAcesso()}<div class="preparing-access-card"><p>AvantaLab</p><span class="loader"></span><h1>Preparando acesso</h1><small id="accessProgressLabel">${escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo')}</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:${Number(progresso.valor || 5)}%"></i></div><b id="accessProgressValue" class="access-progress-value">${Number(progresso.valor || 5)}%</b>${acaoCancelar}</div></section>`;
@@ -2371,58 +2422,152 @@ async function entrarSistema(event) {
   }
 }
 
-async function entrarComGoogle() {
-  if (conectandoGoogle) return;
-  const lembrar = document.getElementById('loginLembrar')?.checked === true;
-  document.activeElement?.blur();
-  fixarAlturaPreparacao();
-  conectandoGoogle = true;
-  sessionStorage.setItem(GOOGLE_CONNECTING_KEY, '1');
-  registrarPreferenciaSessaoVendas(lembrar, true);
-  render();
+function ehAplicativoNativoVendas() {
+  return Boolean(window.Capacitor?.isNativePlatform?.());
+}
+
+function lerParametroOAuthVendas(url, nome) {
+  return url.searchParams.get(nome) ?? new URLSearchParams(url.hash.replace(/^#/, '')).get(nome);
+}
+
+function ehCancelamentoOAuthVendas(mensagem) {
+  const normalizada = String(mensagem || '').trim().toLowerCase();
+  return ['access_denied', 'access denied', 'user cancelled', 'user canceled', 'cancelado', 'cancelled', 'canceled', 'auth session missing']
+    .some((trecho) => normalizada.includes(trecho));
+}
+
+async function fecharNavegadorOAuthVendas() {
+  try { await window.Capacitor?.Plugins?.Browser?.close?.(); } catch { /* navegador já fechado */ }
+}
+
+async function continuarLoginSocialNativoVendas() {
+  if (concluindoOAuthNativoVendas || !appVendasInicializado) return;
+  concluindoOAuthNativoVendas = true;
   try {
-    const origem = origemAcessoVendas();
-    await window.VendasDb.signInWithGoogle(`${window.location.origin}/avantavendas${origem === 'gestao' ? '?origem=gestao' : ''}`);
+    if (!await window.VendasDb.hasSession()) throw new Error('A sessão social não pôde ser confirmada.');
+    atualizarProgressoPreparacao('auth', 1, 1, 'Sessão autenticada');
+    renovarSessaoPersistenteVendas();
+    carregandoBackend = true;
+    state.autenticado = false;
+    render();
+    const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
+    carregandoBackend = false;
+    if (aguardandoEscolha) {
+      render();
+      liberarAlturaPreparacao();
+      return;
+    }
+    await carregarSistemaVendasCompleto();
   } catch (error) {
-    conectandoGoogle = false;
-    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+    carregandoBackend = false;
+    preparandoRecursosSala = false;
+    state.autenticado = false;
+    limparPreferenciaSessaoVendas();
     liberarAlturaPreparacao();
     erroAcessoVendas = traduzErro(error);
     render();
-    abrirAvisoAcessoVendas('Não foi possível continuar com Google', erroAcessoVendas);
+    abrirAvisoAcessoVendas('Não foi possível concluir o login social', erroAcessoVendas);
+  } finally {
+    concluindoOAuthNativoVendas = false;
   }
 }
 
-async function entrarComApple() {
-  if (conectandoGoogle) return;
+async function processarRetornoOAuthNativoVendas(urlRecebida) {
+  let callbackUrl;
+  try { callbackUrl = new URL(urlRecebida); } catch { return false; }
+  if (callbackUrl.protocol !== 'br.com.avantalab.vendas:' || callbackUrl.hostname !== 'auth' || callbackUrl.pathname !== '/callback') return false;
+
+  const provedor = provedorOAuthNativoPendente || loginSocialPendente;
+  provedorOAuthNativoPendente = '';
+  try {
+    const erroOAuth = lerParametroOAuthVendas(callbackUrl, 'error_description') ?? lerParametroOAuthVendas(callbackUrl, 'error');
+    if (erroOAuth) throw new Error(erroOAuth);
+    const codigo = lerParametroOAuthVendas(callbackUrl, 'code');
+    const accessToken = lerParametroOAuthVendas(callbackUrl, 'access_token');
+    const refreshToken = lerParametroOAuthVendas(callbackUrl, 'refresh_token');
+    if (codigo) await window.VendasDb.exchangeCodeForSession(codigo);
+    else if (accessToken && refreshToken) await window.VendasDb.setSession(accessToken, refreshToken);
+    else throw new Error('O provedor não retornou os dados necessários para concluir o login.');
+
+    limparLoginSocialPendenteVendas();
+    await fecharNavegadorOAuthVendas();
+    await continuarLoginSocialNativoVendas();
+  } catch (error) {
+    const cancelado = ehCancelamentoOAuthVendas(error?.message);
+    limparLoginSocialPendenteVendas();
+    limparPreferenciaSessaoVendas();
+    carregandoBackend = false;
+    liberarAlturaPreparacao();
+    render();
+    if (!cancelado) {
+      const nomeProvedor = provedor === 'apple' ? 'Apple' : 'Google';
+      abrirAvisoAcessoVendas(`Não foi possível continuar com ${nomeProvedor}`, 'Tente novamente em alguns instantes.');
+    }
+    await fecharNavegadorOAuthVendas();
+  }
+  return true;
+}
+
+async function prepararOAuthNativoVendas() {
+  if (!ehAplicativoNativoVendas()) return;
+  const App = window.Capacitor?.Plugins?.App;
+  const Browser = window.Capacitor?.Plugins?.Browser;
+  if (!App?.addListener || !Browser?.addListener) return;
+
+  await App.addListener('appUrlOpen', ({ url }) => { void processarRetornoOAuthNativoVendas(url); });
+  await Browser.addListener('browserFinished', () => {
+    if (!provedorOAuthNativoPendente && !loginSocialPendente) return;
+    provedorOAuthNativoPendente = '';
+    cancelarLoginSocialVendas();
+  });
+  const aberturaInicial = await App.getLaunchUrl?.();
+  if (aberturaInicial?.url) await processarRetornoOAuthNativoVendas(aberturaInicial.url);
+}
+
+async function entrarComProvedorSocialVendas(provedor) {
+  if (loginSocialPendente) return;
   const lembrar = document.getElementById('loginLembrar')?.checked === true;
   document.activeElement?.blur();
   fixarAlturaPreparacao();
-  conectandoGoogle = true;
-  sessionStorage.setItem(GOOGLE_CONNECTING_KEY, '1');
+  salvarLoginSocialPendenteVendas(provedor);
   registrarPreferenciaSessaoVendas(lembrar, true);
+  window.__avantalabReiniciarProgressoVendas?.(`Conectando com ${provedor === 'apple' ? 'Apple' : 'Google'}`);
   render();
   try {
+    if (ehAplicativoNativoVendas()) {
+      const Browser = window.Capacitor?.Plugins?.Browser;
+      if (!Browser?.open) throw new Error('O navegador seguro não está disponível.');
+      provedorOAuthNativoPendente = provedor;
+      const url = await window.VendasDb.iniciarOAuthNativo(provedor, REDIRECT_OAUTH_NATIVO_VENDAS);
+      await Browser.open({ url, presentationStyle: 'fullscreen' });
+      return;
+    }
     const origem = origemAcessoVendas();
-    await window.VendasDb.signInWithApple(`${window.location.origin}/avantavendas${origem === 'gestao' ? '?origem=gestao' : ''}`);
+    const redirectTo = `${window.location.origin}/avantavendas${origem === 'gestao' ? '?origem=gestao' : ''}`;
+    if (provedor === 'apple') await window.VendasDb.signInWithApple(redirectTo);
+    else await window.VendasDb.signInWithGoogle(redirectTo);
   } catch (error) {
-    conectandoGoogle = false;
-    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+    provedorOAuthNativoPendente = '';
+    limparLoginSocialPendenteVendas();
+    limparPreferenciaSessaoVendas();
     liberarAlturaPreparacao();
     erroAcessoVendas = traduzErro(error);
     render();
-    abrirAvisoAcessoVendas('Não foi possível continuar com Apple', erroAcessoVendas);
+    abrirAvisoAcessoVendas(`Não foi possível continuar com ${provedor === 'apple' ? 'Apple' : 'Google'}`, erroAcessoVendas);
   }
 }
+
+function entrarComGoogle() { return entrarComProvedorSocialVendas('google'); }
+function entrarComApple() { return entrarComProvedorSocialVendas('apple'); }
 
 function adicionarBotoesGoogle() {
   const form = app.querySelector('.login-screen form');
   const rodape = form?.querySelector('.login-register');
   if (!form || !rodape || form.querySelector('.google-login-button') || cadastroEtapa === 'sms') return;
-  const texto = conectandoGoogle ? 'Conectando...' : (modoLogin === 'cadastro' ? 'Cadastrar com Google' : 'Continuar com Google');
-  const textoApple = conectandoGoogle ? 'Conectando...' : (modoLogin === 'cadastro' ? 'Cadastrar com Apple' : 'Continuar com Apple');
+  const texto = loginSocialPendente === 'google' ? 'Conectando...' : (modoLogin === 'cadastro' ? 'Cadastrar com Google' : 'Continuar com Google');
+  const textoApple = loginSocialPendente === 'apple' ? 'Conectando...' : (modoLogin === 'cadastro' ? 'Cadastrar com Apple' : 'Continuar com Apple');
   rodape.insertAdjacentHTML('beforebegin', `<button type="button" class="google-login-button" onclick="entrarComGoogle()"><span class="google-login-mark" aria-hidden="true">G</span>${texto}</button><button type="button" class="apple-login-button" onclick="entrarComApple()"><span aria-hidden="true"></span>${textoApple}</button>`);
-  if (conectandoGoogle) {
+  if (loginSocialPendente) {
     form.classList.add('google-connecting');
     form.querySelectorAll('input, select, button').forEach((controle) => { controle.disabled = true; });
   }
@@ -2891,8 +3036,8 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
     }
   } finally {
     carregandoBackend = false;
-    conectandoGoogle = false;
-    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+    provedorOAuthNativoPendente = '';
+    limparLoginSocialPendenteVendas();
     render();
     if (!manterPreparacaoAteRecursos) liberarAlturaPreparacao();
     if (state.erroBackend) { toast(state.erroBackend); state.erroBackend = '';
@@ -3097,14 +3242,14 @@ async function inicializarApp() {
       liberarAlturaPreparacao();
       return;
     }
-    const sessaoAtiva = conectandoGoogle
-      ? await comLimiteDeTempo(aguardarSessaoGoogle(), 'Não foi possível concluir o login social.', 12000)
+    const sessaoAtiva = loginSocialPendente
+      ? await comLimiteDeTempo(aguardarSessaoSocialVendas(), 'Não foi possível concluir o login social.', 12000)
       : await comLimiteDeTempo(window.VendasDb.hasSession(), 'Não foi possível restaurar sua sessão.', 10000);
     atualizarProgressoPreparacao('auth', 1, 1, sessaoAtiva ? 'Sessão restaurada' : 'Sessão não encontrada');
     if (!sessaoAtiva) {
       carregandoBackend = false;
-      conectandoGoogle = false;
-      sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+      provedorOAuthNativoPendente = '';
+      limparLoginSocialPendenteVendas();
       render();
       liberarAlturaPreparacao();
       return;
@@ -3122,17 +3267,17 @@ async function inicializarApp() {
     console.error('Falha ao inicializar o Vendas Mobile.', error);
     carregandoBackend = false;
     preparandoRecursosSala = false;
-    conectandoGoogle = false;
+    provedorOAuthNativoPendente = '';
     state.autenticado = false;
     state.usuarioSemAcesso = false;
-    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+    limparLoginSocialPendenteVendas();
     render();
     liberarAlturaPreparacao();
     toast(`${traduzErro(error)} Atualize a página e tente novamente.`);
   }
 }
 
-async function aguardarSessaoGoogle() {
+async function aguardarSessaoSocialVendas() {
   const limite = Date.now() + 10000;
   while (Date.now() < limite) {
     if (await window.VendasDb.hasSession()) return true;
@@ -3928,8 +4073,8 @@ function renderConfiguracoes() {
     <article class="settings-card settings-stock-card"><h3>${svgIcon('package')} Controle de estoque</h3><p>${state.produtos.filter((produto) => produto.estoque_controlado).length} produto(s) com estoque acompanhado neste aparelho.</p><div class="actions"><button class="primary" onclick="abrirAtualizarEstoque()">${svgIcon('plus')} Atualizar estoque</button></div><small>Entrada soma ao saldo atual. Ajuste define o saldo físico contado.</small></article>
     <article class="settings-card settings-pwa-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
     <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
-    <article class="settings-card settings-reset-card"><h3>${svgIcon('warning')} Resetar sistema</h3><p>Gera um backup automático e apaga lançamentos, clientes, agenda, produtos e preferências deste Vendas.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIcon('warning')} Resetar Vendas Mobile</button></article>
-    <article class="settings-card settings-delete-account-card"><h3>${svgIcon('warning')} Excluir conta do Vendas</h3><p>Remove definitivamente seu perfil e os dados deste aplicativo. Seu login AvantaLab e os perfis do Gestão serão preservados.</p><button class="danger" onclick="abrirExclusaoContaVendas()">${svgIcon('warning')} Excluir conta do Vendas</button></article>
+    <article class="settings-card settings-reset-card"><h3>${svgIconEstavel('rotate-ccw')} Resetar sistema</h3><p>Gera um backup automático e apaga lançamentos, clientes, agenda, produtos e preferências deste Vendas.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIconEstavel('rotate-ccw')} Resetar Vendas Mobile</button></article>
+    <article class="settings-card settings-delete-account-card"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas</h3><p>Remove definitivamente seu perfil e os dados deste aplicativo. Seu login AvantaLab e os perfis do Gestão serão preservados.</p><button class="danger" onclick="abrirExclusaoContaVendas()">${svgIconEstavel('user-x')} Excluir conta do Vendas</button></article>
   </section>`;
 }
 
@@ -8005,4 +8150,13 @@ document.addEventListener('keyup', (event) => {
 });
 
 prepararSpriteIconesEstavel();
-inicializarApp();
+prepararOAuthNativoVendas()
+  .catch((error) => {
+    console.error('Não foi possível preparar o retorno OAuth nativo do AvantaVendas.', error);
+    provedorOAuthNativoPendente = '';
+    limparLoginSocialPendenteVendas();
+  })
+  .finally(() => {
+    appVendasInicializado = true;
+    void inicializarApp();
+  });

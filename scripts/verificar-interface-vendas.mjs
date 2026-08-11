@@ -66,6 +66,43 @@ exigir(
   'A exclusão deve ser explícita, remover somente o perfil do Vendas e preservar login, Gestão e histórico financeiro.',
 );
 exigir(
+  aplicacao.includes("'rotate-ccw': '<path")
+    && aplicacao.includes("'user-x': '<path")
+    && aplicacao.includes("settings-reset-card\"><h3>${svgIconEstavel('rotate-ccw')} Resetar sistema")
+    && aplicacao.includes("settings-delete-account-card\"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas")
+    && !aplicacao.includes("${svgIcon('warning')} Resetar sistema")
+    && !aplicacao.includes("${svgIcon('warning')} Excluir conta do Vendas"),
+  'Os cards destrutivos devem exibir SVGs estáveis e específicos, sem contêiner de ícone vazio.',
+);
+exigir(
+  aplicacao.includes("const REDIRECT_OAUTH_NATIVO_VENDAS = 'br.com.avantalab.vendas://auth/callback'")
+    && aplicacao.includes("let loginSocialPendente = lerLoginSocialPendenteVendas()")
+    && aplicacao.includes("window.Capacitor?.isNativePlatform?.()")
+    && aplicacao.includes("App.addListener('appUrlOpen'")
+    && aplicacao.includes("Browser.addListener('browserFinished'")
+    && aplicacao.includes("callbackUrl.protocol !== 'br.com.avantalab.vendas:'")
+    && aplicacao.includes("callbackUrl.hostname !== 'auth'")
+    && aplicacao.includes("callbackUrl.pathname !== '/callback'")
+    && aplicacao.includes("window.VendasDb.exchangeCodeForSession(codigo)")
+    && aplicacao.includes("window.VendasDb.setSession(accessToken, refreshToken)")
+    && aplicacao.includes("window.VendasDb.iniciarOAuthNativo(provedor, REDIRECT_OAUTH_NATIVO_VENDAS)")
+    && aplicacao.includes("function entrarComApple() { return entrarComProvedorSocialVendas('apple'); }")
+    && aplicacao.includes('Cancelar e voltar ao login')
+    && !aplicacao.includes('let conectandoGoogle =')
+    && cliente.includes('options: { redirectTo, skipBrowserRedirect: true }')
+    && cliente.includes('requireClient().auth.exchangeCodeForSession(code)')
+    && cliente.includes('requireClient().auth.setSession({'),
+  'Google e Apple devem compartilhar o fluxo OAuth nativo seguro, com deep link validado, retorno PKCE/tokens e cancelamento recuperável.',
+);
+exigir(
+  estilos.includes(".settings-sales-account-field select { width: 100%;")
+    && estilos.includes("stroke='%23132b45'")
+    && estilos.includes("appearance: none; -webkit-appearance: none;")
+    && estilos.includes(".dark-theme .settings-sales-account-field select {")
+    && estilos.includes("stroke='%23f8fafc'"),
+  'O seletor de conta deve usar setas SVG legíveis nos temas claro e escuro.',
+);
+exigir(
   aplicacao.includes('function memorizarPesquisaClientes()')
     && aplicacao.includes('function restaurarPesquisaClientes()')
     && aplicacao.includes('function contextoPesquisaClientesParaLancamento()')
@@ -196,7 +233,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '41'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '44'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

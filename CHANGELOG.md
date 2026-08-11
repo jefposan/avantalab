@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.7.3.05-av44 - 2026-08-11
+
+- AvantaVendas: Google e Apple agora compartilham no aplicativo nativo o mesmo
+  fluxo seguro já usado pela Gestão Mobile, com navegador do sistema, deep link
+  próprio, retorno PKCE ou por tokens, cancelamento recuperável e continuidade
+  da sessão dentro do app; o redirecionamento Web/PWA permanece inalterado.
+
+## 1.7.3.05-av43 - 2026-08-11
+
+- AvantaVendas: o seletor de conta ativa agora usa setas SVG próprias, escuras
+  no tema claro e brancas no tema escuro, inclusive em navegadores móveis.
+
+## 1.7.3.05-av42 - 2026-08-11
+
+- AvantaVendas: os cards de **Resetar sistema** e **Excluir conta do Vendas**
+  agora exibem ícones SVG próprios e reconhecíveis nos cabeçalhos e nas ações,
+  sem alterar o funcionamento dessas opções.
+
 ## 1.7.3.05 - 2026-08-10
 
 - A Gestão Web não confunde falha temporária de leitura com configuração

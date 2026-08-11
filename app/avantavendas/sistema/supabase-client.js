@@ -149,6 +149,34 @@
     if (error) throw error;
   }
 
+  async function iniciarOAuthNativo(provider, redirectTo) {
+    if (provider !== 'google' && provider !== 'apple') throw new Error('Provedor de acesso inválido.');
+    const { data, error } = await requireClient().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+    if (error) throw error;
+    if (!data?.url) throw new Error('Não foi possível abrir o login social.');
+    return data.url;
+  }
+
+  async function exchangeCodeForSession(code) {
+    const { data, error } = await requireClient().auth.exchangeCodeForSession(code);
+    if (error) throw error;
+    if (!data?.session) throw new Error('O provedor não retornou uma sessão válida.');
+    return data.session;
+  }
+
+  async function setSession(accessToken, refreshToken) {
+    const { data, error } = await requireClient().auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (error) throw error;
+    if (!data?.session) throw new Error('Não foi possível restaurar a sessão social.');
+    return data.session;
+  }
+
   async function resetPassword(email, redirectTo) {
     const { error } = await requireClient().auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw error;
@@ -921,5 +949,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();

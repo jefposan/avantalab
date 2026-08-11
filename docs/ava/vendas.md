@@ -5,6 +5,18 @@
 > Revisão 1.7.3.05: persistência de preferências da Gestão Web e Mobile; sem
 > impacto operacional no AvantaVendas.
 
+> Revisão 1.7.3.05-av42: os cabeçalhos e botões de **Resetar sistema** e
+> **Excluir conta do Vendas** receberam ícones próprios; sem alteração no fluxo
+> das ações.
+
+> Revisão 1.7.3.05-av43: o seletor de conta ativa recebeu setas legíveis nos
+> temas claro e escuro; sem alteração no funcionamento.
+
+> Revisão 1.7.3.05-av44: no aplicativo nativo, **Continuar com Apple** e
+> **Continuar com Google** abrem o navegador seguro e retornam ao AvantaVendas
+> pelo deep link próprio. Cancelar restaura um login limpo; Web e PWA continuam
+> usando o redirecionamento HTTPS normal.
+
 > Revisão 1.7.3.04: aprimoramento interno da limpeza de cobrança da cortesia;
 > sem impacto operacional no AvantaVendas.
 
