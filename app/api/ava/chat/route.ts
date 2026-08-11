@@ -70,6 +70,38 @@ async function avaLiberadaParaPerfil(userId: string, empresaId: string): Promise
   }
 }
 
+async function usuarioPodeUsarContaVendas(userId: string, contaId: string): Promise<boolean> {
+  if (!contaId) return false;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  if (!supabaseUrl || !serviceRole) return false;
+
+  try {
+    const db = createClient(supabaseUrl, serviceRole);
+    const [{ data: membro, error: membroError }, { data: conta, error: contaError }] = await Promise.all([
+      db
+        .from('vendas_mobile_contas_usuarios')
+        .select('conta_id')
+        .eq('conta_id', contaId)
+        .eq('user_id', userId)
+        .eq('status', 'ativo')
+        .limit(1)
+        .maybeSingle(),
+      db
+        .from('vendas_mobile_contas')
+        .select('id')
+        .eq('id', contaId)
+        .is('arquivada_em', null)
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    return !membroError && !contaError && Boolean(membro && conta);
+  } catch {
+    return false;
+  }
+}
+
 function mensagensValidas(messages: unknown) {
   if (!Array.isArray(messages)) return [];
 
@@ -204,7 +236,15 @@ export async function POST(request: Request) {
     const messages = mensagensValidas(payload?.messages);
     const contexto = String(payload?.contexto || '').trim();
     const empresaId = String(payload?.empresaId || '').trim();
+    const profileId = String(payload?.profileId || '').trim();
     const ambiente = String(payload?.ambiente || '').trim().toLowerCase();
+
+    if (ambiente === 'vendas' && !(await usuarioPodeUsarContaVendas(userId, profileId))) {
+      return NextResponse.json(
+        { erro: true, mensagem: 'Não foi possível validar sua conta do Vendas.' },
+        { status: 403 }
+      );
+    }
 
     if (!(await avaLiberadaParaPerfil(userId, empresaId))) {
       return NextResponse.json(

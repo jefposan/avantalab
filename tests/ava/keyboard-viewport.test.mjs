@@ -174,3 +174,22 @@ test('Ava conclui o toque antes de abrir o teclado e isola o gesto do AvantaVend
   assert.match(pointerUp, /textarea\.focus\(\{ preventScroll: true \}\)/);
   assert.match(component, /onClick=\{\(event\) => \{[\s\S]*initialEnvironment === 'vendas'[\s\S]*event\.stopPropagation\(\)/);
 });
+
+test('Ava do Vendas usa a conta ativa sem exigir perfil financeiro do Gestão', async () => {
+  const [component, bridge, vendas, route] = await Promise.all([
+    readFile(new URL('../../app/mobile/ava/AvaChatClient.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/mobile/AvaMobileBridge.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/sistema/app.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/ava/chat/route.ts', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(vendas, /profileId: state\.contaVendasAtiva\?\.id \|\| state\.acessoVendas\?\.empresa_id \|\| ''/);
+  assert.match(vendas, /Perfil de vendas: \$\{state\.contaVendasAtiva\?\.nome/);
+  assert.match(bridge, /initialProfileId=\{request\.profileId\}/);
+  assert.match(component, /const initialContextId = initialProfileId \|\| initialCompanyId \|\| ''/);
+  assert.match(component, /setCompanyId\(initialCompanyId \|\| ''\)/);
+  assert.match(component, /profileId: initialProfileId \|\| undefined/);
+  assert.match(route, /usuarioPodeUsarContaVendas\(userId, profileId\)/);
+  assert.match(route, /from\('vendas_mobile_contas_usuarios'\)/);
+  assert.match(route, /eq\('status', 'ativo'\)/);
+});

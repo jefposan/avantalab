@@ -2,6 +2,12 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av49: a Ava identifica diretamente a conta ativa do
+> AvantaVendas. Contas de vendas independentes podem conversar normalmente sem
+> exigir ou procurar um perfil financeiro no Gestão. O servidor continua
+> exigindo login válido e confirma que o usuário possui acesso ativo à conta de
+> vendas informada antes de responder.
+
 > Revisão 1.7.3.05-av48: o seletor de conta ativa no modo escuro mantém uma
 > única seta branca alinhada à direita; sem alteração no fluxo operacional.
 

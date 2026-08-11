@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.3.05-av49 - 2026-08-11
+
+- AvantaVendas: a Ava passa a usar a conta de vendas ativa como contexto da
+  conversa, eliminando o falso erro de perfil selecionado em contas
+  independentes, sem criar dependência com perfis financeiros do Gestão. O
+  servidor valida a sessão e a participação ativa do usuário nessa conta.
+
 ## 1.7.3.05-av48 - 2026-08-11
 
 - AvantaVendas: o seletor de conta ativa no modo escuro agora exibe uma única

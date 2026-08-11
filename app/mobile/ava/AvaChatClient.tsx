@@ -41,6 +41,7 @@ type AvaChatClientProps = {
   initialMonth?: string;
   initialCompanyId?: string;
   initialCompanyName?: string;
+  initialProfileId?: string;
   initialContext?: string;
   initialDarkMode?: boolean;
   initialAccessToken?: string;
@@ -228,6 +229,7 @@ export default function AvaChatClient({
   initialMonth,
   initialCompanyId,
   initialCompanyName,
+  initialProfileId,
   initialContext,
   initialDarkMode,
   initialAccessToken,
@@ -362,8 +364,9 @@ export default function AvaChatClient({
     let active = true;
 
     async function loadContext() {
-      if (initialCompanyId && initialAccessToken) {
-        const chatStorageKey = `${CHAT_STORAGE_PREFIX}:${initialEnvironment || 'gestao'}:${initialUserId || 'usuario'}:${initialCompanyId}`;
+      const initialContextId = initialProfileId || initialCompanyId || '';
+      if (initialContextId && initialAccessToken) {
+        const chatStorageKey = `${CHAT_STORAGE_PREFIX}:${initialEnvironment || 'gestao'}:${initialUserId || 'usuario'}:${initialContextId}`;
         try {
           const saved = JSON.parse(sessionStorage.getItem(chatStorageKey) || '[]');
           if (Array.isArray(saved)) {
@@ -375,7 +378,7 @@ export default function AvaChatClient({
         setContext(String(initialContext || `Empresa: ${initialCompanyName || 'Perfil atual'}`));
         setUserName(firstName(String(initialUserName || '')));
         setStorageKey(chatStorageKey);
-        setCompanyId(initialCompanyId);
+        setCompanyId(initialCompanyId || '');
         setReady(true);
         return;
       }
@@ -471,7 +474,7 @@ export default function AvaChatClient({
     return () => {
       active = false;
     };
-  }, [db, initialAccessToken, initialCompanyId, initialCompanyName, initialContext, initialEnvironment, initialMonth, initialUserId, initialUserName, initialYear]);
+  }, [db, initialAccessToken, initialCompanyId, initialCompanyName, initialContext, initialEnvironment, initialMonth, initialProfileId, initialUserId, initialUserName, initialYear]);
 
   useEffect(() => {
     if (!storageKey) return;
@@ -520,7 +523,13 @@ export default function AvaChatClient({
           'Content-Type': 'application/json',
           ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
         },
-        body: JSON.stringify({ messages: outbound, contexto: context, empresaId: companyId || undefined, ambiente: initialEnvironment || 'gestao-mobile' }),
+        body: JSON.stringify({
+          messages: outbound,
+          contexto: context,
+          empresaId: companyId || undefined,
+          profileId: initialProfileId || undefined,
+          ambiente: initialEnvironment || 'gestao-mobile',
+        }),
       });
 
       if (!response.ok || !response.body) {
@@ -568,7 +577,7 @@ export default function AvaChatClient({
     } finally {
       setSending(false);
     }
-  }, [companyId, context, initialAccessToken, initialEnvironment, input, messages, ready, sending]);
+  }, [companyId, context, initialAccessToken, initialEnvironment, initialProfileId, input, messages, ready, sending]);
 
   const toggleRecording = useCallback(async () => {
     if (transcribing || sending) return;

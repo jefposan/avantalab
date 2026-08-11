@@ -9,6 +9,7 @@ type AvaOpenRequest = {
   mes?: string;
   empresaId?: string;
   empresaNome?: string;
+  profileId?: string;
   contexto?: string;
   darkMode?: boolean;
   accessToken?: string;
@@ -29,6 +30,7 @@ export default function AvaMobileBridge() {
         mes: detail.mes,
         empresaId: detail.empresaId,
         empresaNome: detail.empresaNome,
+        profileId: detail.profileId,
         contexto: detail.contexto,
         darkMode: detail.darkMode,
         accessToken: detail.accessToken,
@@ -54,6 +56,7 @@ export default function AvaMobileBridge() {
       initialMonth={request.mes}
       initialCompanyId={request.empresaId}
       initialCompanyName={request.empresaNome}
+      initialProfileId={request.profileId}
       initialContext={request.contexto}
       initialDarkMode={request.darkMode}
       initialAccessToken={request.accessToken}
