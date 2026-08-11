@@ -45,9 +45,11 @@ exigir(
   aplicacao.includes('settings-delete-account-card')
     && aplicacao.includes('function abrirExclusaoContaVendas()')
     && aplicacao.includes("String(valorConfirmacao || '').trim().toUpperCase() !== 'EXCLUIR'")
-    && aplicacao.includes('contaVendasExcluidaNestaSessao = true')
     && aplicacao.includes('await limparTodosCachesVendasUsuario();')
-    && aplicacao.includes('function renderContaVendasExcluida()')
+    && aplicacao.includes("await sairSistema('/avantavendas?entrar=1')")
+    && !aplicacao.includes('function renderContaVendasExcluida()')
+    && !aplicacao.includes('abrirGestaoAposExclusaoVendas')
+    && !estilos.includes('.deleted-sales-account-screen')
     && !aplicacao.includes('function renderAtivacaoContaVendas()')
     && cliente.includes("fetch('/api/vendas/conta'")
     && rotaExclusao.includes("rpc('excluir_conta_avantavendas_rpc'")
@@ -276,7 +278,7 @@ exigir(
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
 exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '49'"),
+  versao.includes("AVANTAVENDAS_ASSET_REVISION = '50'"),
   'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
 );
 

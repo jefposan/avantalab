@@ -129,7 +129,6 @@ let cadastroPendente = null;
 let loginRascunho = { contato: '', senha: '', lembrar: true };
 let cadastroRascunho = carregarRascunhoCadastroVendas();
 let campoRetornoAvisoAcessoVendas = '';
-let contaVendasExcluidaNestaSessao = false;
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let loginSocialPendente = lerLoginSocialPendenteVendas();
@@ -1523,12 +1522,6 @@ function render() {
     requestAnimationFrame(limparFocoInicialLogin);
     return;
   }
-  if (contaVendasExcluidaNestaSessao) {
-    limparDestaqueClientes();
-    removerNavegacaoInferior();
-    app.innerHTML = renderContaVendasExcluida();
-    return;
-  }
   if (state.premiumVendasBloqueado) {
     limparDestaqueClientes();
     removerNavegacaoInferior();
@@ -1650,14 +1643,6 @@ function renderModuloVendasDesativado() {
       <button class="ghost module-logout-button" type="button" onclick="sairSistema()">${svgIcon('log-out')} Sair</button>
     </article>
   </section>`;
-}
-
-function renderContaVendasExcluida() {
-  return `<section class="deleted-sales-account-screen">${renderMarcaAcesso()}<article class="deleted-sales-account-card" role="status" aria-live="polite"><header><h1>Conta do Vendas excluída</h1><p>Os dados deste aplicativo foram removidos.</p></header><div class="deleted-sales-account-content"><p>Seu login AvantaLab e os seus perfis no Gestão continuam preservados. Os registros financeiros já enviados para o Gestão permanecem somente como histórico desvinculado.</p><button type="button" class="primary deleted-account-management-button" onclick="abrirGestaoAposExclusaoVendas()">Abrir AvantaLab Gestão</button></div></article></section>`;
-}
-
-function abrirGestaoAposExclusaoVendas() {
-  void abrirGestaoMobileVendas();
 }
 
 function configurarDestaqueClientes() {
@@ -2308,8 +2293,8 @@ function abrirAcoesRapidas() {
   sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="secondary quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">${svgIcon('credit-card')}<span>Lançar pagamento</span></button><button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button></div>`, 'sheet-backdrop-centered');
 }
 
-async function sairSistema() {
-  const destinoLogout = origemAcessoVendas() === 'gestao' ? '/?entrar=1' : '/avantavendas?entrar=1';
+async function sairSistema(destinoForcado = '') {
+  const destinoLogout = destinoForcado || (origemAcessoVendas() === 'gestao' ? '/?entrar=1' : '/avantavendas?entrar=1');
   if (timerVerificacaoAprovacao) window.clearInterval(timerVerificacaoAprovacao);
   if (timerAtualizacaoVinculo) window.clearTimeout(timerAtualizacaoVinculo);
   timerVerificacaoAprovacao = null;
@@ -4311,17 +4296,8 @@ async function confirmarExclusaoContaVendas() {
     localStorage.removeItem('avantalab.vendas_mobile.solicitacao_pendente');
     cadastroPendente = null;
     limparRascunhoCadastroVendas();
-    contaVendasExcluidaNestaSessao = true;
-    state.contasVendas = [];
-    state.contaVendasAtiva = null;
-    state.produtos = [];
-    state.clientes = [];
-    state.vendas = [];
-    state.pagamentos = [];
-    state.vinculosComerciais = [];
-    state.perfisFinanceiros = [];
     fecharSheet();
-    render();
+    await sairSistema('/avantavendas?entrar=1');
   } catch (error) {
     if (sincronizacaoPreferenciasSuspensa) preferenciasServidorCarregadas = true;
     if (botao) { botao.disabled = false; botao.textContent = 'Excluir definitivamente'; }
@@ -7966,7 +7942,6 @@ window.confirmarResetSistemaVendas = confirmarResetSistemaVendas;
 window.abrirExclusaoContaVendas = abrirExclusaoContaVendas;
 window.atualizarConfirmacaoExclusaoContaVendas = atualizarConfirmacaoExclusaoContaVendas;
 window.confirmarExclusaoContaVendas = confirmarExclusaoContaVendas;
-window.abrirGestaoAposExclusaoVendas = abrirGestaoAposExclusaoVendas;
 window.confirmarResetDadosLocais = confirmarResetDadosLocais;
 window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;

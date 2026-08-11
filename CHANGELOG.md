@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.05-av50 - 2026-08-11
+
+- AvantaVendas: ao concluir a exclusão da conta, o aplicativo encerra a sessão
+  e retorna diretamente ao login. A tela intermediária e o direcionamento para
+  o Gestão foram removidos desse fluxo.
+
 ## 1.7.3.05-av49 - 2026-08-11
 
 - AvantaVendas: a Ava passa a usar a conta de vendas ativa como contexto da

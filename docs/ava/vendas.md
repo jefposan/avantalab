@@ -2,6 +2,10 @@
 
 <!-- ava-version: 1.7.3.05 -->
 
+> Revisão 1.7.3.05-av50: após confirmar **Excluir conta do Vendas**, o
+> aplicativo encerra a sessão e retorna diretamente ao login do AvantaVendas.
+> A tela intermediária sobre o Gestão foi removida.
+
 > Revisão 1.7.3.05-av49: a Ava identifica diretamente a conta ativa do
 > AvantaVendas. Contas de vendas independentes podem conversar normalmente sem
 > exigir ou procurar um perfil financeiro no Gestão. O servidor continua

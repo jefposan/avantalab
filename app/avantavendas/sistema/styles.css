@@ -1632,16 +1632,6 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .access-validation-dialog h2 { margin: 0; color: #0A1F44; font-size: 20px; line-height: 1.2; }
 .access-validation-dialog p { margin: 0; color: #526174; font-size: 14px; line-height: 1.5; }
 .access-validation-dialog .primary { min-width: 132px; min-height: 40px; margin-top: 4px; border-radius: 999px; }
-.deleted-sales-account-screen { position: relative; isolation: isolate; display: grid; min-height: var(--vendas-viewport-height); grid-template-rows: minmax(90px,1fr) auto minmax(30px,.55fr); justify-items: center; overflow: hidden; padding: 0 max(18px,var(--vendas-safe-right)) var(--vendas-safe-bottom) max(18px,var(--vendas-safe-left)); }
-.deleted-sales-account-screen::before { position: absolute; z-index: -1; inset: 0; background: #eef6fb url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') center/cover no-repeat; content: ''; }
-.deleted-sales-account-screen .access-brand-zone { grid-row: 1; }
-.deleted-sales-account-card { grid-row: 2; width: min(100%, 440px); overflow: hidden; border: 1px solid #d7e4ee; border-radius: 20px; background: #fff; box-shadow: 0 18px 42px rgba(10,31,68,.18); }
-.deleted-sales-account-card header { padding: 22px 24px; color: #fff; background: linear-gradient(135deg,#0A1F44,#1687D9); }
-.deleted-sales-account-card header h1 { margin: 0; font-size: 24px; }
-.deleted-sales-account-card header p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
-.deleted-sales-account-content { display: grid; justify-items: center; gap: 22px; padding: 24px; }
-.deleted-sales-account-content p { margin: 0; color: #334155; font-size: 15px; line-height: 1.6; }
-.deleted-account-management-button { width: fit-content; min-width: 0; min-height: 40px; border-radius: 999px; padding: 8px 20px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
 @media (max-width: 850px) {
   .login-screen input,
   .login-screen select,
