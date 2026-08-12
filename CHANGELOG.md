@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.3.05-av59 - 2026-08-11
+
+- AvantaVendas: o rodapé da imagem compartilhada do pedido agora mantém título
+  e cliente dentro de uma pílula branca opaca, com largura adaptável e limite
+  seguro para textos extensos, preservando a leitura sobre toda a arte de fundo.
+  O nome da cliente usa somente a primeira palavra no cabeçalho e no rodapé,
+  evitando que observações registradas depois do nome apareçam no comprovante.
+- AvantaVendas: o campo de e-mail do acesso e do cadastro passa a aproveitar
+  toda a largura interna disponível, exibindo endereços longos mais perto da
+  borda direita sem retirar o espaço reservado ao botão dos campos de senha.
+
 ## 1.7.3.05-av58 - 2026-08-11
 
 - AvantaVendas: a revisão própria dos recursos avança para `av58`, criando URLs

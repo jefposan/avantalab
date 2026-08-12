@@ -2,9 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
+const [aplicacao, estilos, comprovantePedido, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
+  readFile(resolve(raiz, 'app/avantavendas/sistema/order-receipt-v2.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/supabase-client.js'), 'utf8'),
   readFile(resolve(raiz, 'app/api/vendas/conta/route.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/api/sms/verificar-codigo/route.ts'), 'utf8'),
@@ -40,8 +41,12 @@ exigir(
     && aplicacao.includes('value="${escapeAttr(loginRascunho.senha)}"')
     && aplicacao.includes('value="${escapeAttr(cadastroRascunho.confirmarSenha)}"')
     && !aplicacao.includes("erro.textContent = 'As senhas não coincidem.'")
-    && estilos.includes('.login-screen > form { max-height: none; overflow: hidden; }'),
-  'Login e cadastro devem usar avisos modais, preservar valores e devolver o foco sem criar rolagem no formulário.',
+    && estilos.includes('.login-screen > form { max-height: none; overflow: hidden; }')
+    && estilos.includes('.login-field { position: relative; display: flex; width: 100%; min-width: 0; align-items: center; }')
+    && estilos.includes('min-width: 0; height: 44px; flex: 1 1 auto;')
+    && estilos.includes('padding: 0 14px 0 40px;')
+    && estilos.includes('.login-field.password-field input { padding-right: 44px; }'),
+  'Login e cadastro devem usar avisos modais, preservar valores, devolver o foco e aproveitar toda a largura dos campos sem criar rolagem no formulário.',
 );
 exigir(
   aplicacao.includes("abrirAvisoRecuperacaoSenhaVendas('Usuário não localizado', 'Confirme o e-mail digitado.')")
@@ -285,6 +290,19 @@ exigir(
     && !aplicacao.includes("text: 'Material de divulgação'")
     && !/navigator\.share\(\{[^}]*\b(?:title|text)\s*:/.test(aplicacao),
   'Os compartilhamentos do AvantaVendas devem enviar somente o arquivo, sem texto ou título automáticos.',
+);
+exigir(
+  comprovantePedido.includes('function desenharRodapeEmPilula(ctx, conteudo, y)')
+    && comprovantePedido.includes("retangulo(ctx, xPilula, y - 47, larguraPilula, 72, 36, '#FFFFFF', '#DCE6F0')")
+    && comprovantePedido.includes('desenharRodapeEmPilula(ctx, `${titulo} • ${clienteExibido}`, yRodape)')
+    && !comprovantePedido.includes('yRodape + 35')
+    && aplicacao.includes('const larguraPilulaRodape = Math.min(936')
+    && aplicacao.includes("ctx.fillStyle = '#FFFFFF'; ctx.fill(); ctx.strokeStyle = '#DCE6F0'")
+    && comprovantePedido.includes('function primeiroNomeClienteComprovante(nome)')
+    && comprovantePedido.includes('const clienteExibido = primeiroNomeClienteComprovante(cliente)')
+    && aplicacao.includes('function primeiroNomeClienteComprovante(nome)')
+    && aplicacao.includes("const clienteExibido = /pedido/i.test(String(titulo || ''))"),
+  'O comprovante de pedido deve usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
 );
 exigir(
   cliente.includes('pasta_pai_id, capa_material_id, nome')

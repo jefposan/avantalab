@@ -73,8 +73,18 @@
   function blocoIcone(ctx, nome, x, y, cor = '#126ED1') { ctx.beginPath(); ctx.arc(x, y, 42, 0, Math.PI * 2); ctx.fillStyle = '#EDF5FF'; ctx.fill(); icone(ctx, nome, x, y, 43, cor); }
   function card(ctx, y, altura, nomeIcone, titulo) { retangulo(ctx, 44, y, 992, altura, 34, '#FFFFFF', '#E4ECF4'); blocoIcone(ctx, nomeIcone, 105, y + 64); texto(ctx, titulo, 172, y + 76, { tamanho: 28, peso: 800, cor: '#0A2F6B' }); }
   function fundoDeValor(ctx, y, altura, cor) { retangulo(ctx, 146, y, 810, altura, 26, cor); }
+  function primeiroNomeClienteComprovante(nome) { return String(nome || '').trim().split(/\s+/)[0] || 'Cliente'; }
+  function desenharRodapeEmPilula(ctx, conteudo, y) {
+    ctx.font = `700 28px ${FONTE}`;
+    const conteudoLimitado = textoLimitado(ctx, conteudo, 820);
+    const larguraPilula = Math.min(936, Math.max(360, Math.ceil(ctx.measureText(conteudoLimitado).width) + 88));
+    const xPilula = (LARGURA - larguraPilula) / 2;
+    retangulo(ctx, xPilula, y - 47, larguraPilula, 72, 36, '#FFFFFF', '#DCE6F0');
+    texto(ctx, conteudoLimitado, LARGURA / 2, y, { tamanho: 28, peso: 700, cor: '#0A2F6B', alinhamento: 'center' });
+  }
 
   async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', valorPedido = 'R$ 0,00', saldoAtual = 'R$ 0,00', desconto = '', titulo = 'Comprovante de pedido', itens = [] } = {}) {
+    const clienteExibido = primeiroNomeClienteComprovante(cliente);
     const itensExibidos = itens.slice(0, 44);
     if (itens.length > itensExibidos.length) itensExibidos.push({ principal: `+ ${itens.length - itensExibidos.length} itens adicionais`, secundario: '', valor: '' });
     const temDesconto = Boolean(desconto);
@@ -95,7 +105,7 @@
     retangulo(ctx, 44, 42, 992, 304, 36, '#063B72');
     ctx.beginPath(); ctx.arc(132, 134, 58, 0, Math.PI * 2); ctx.fillStyle = '#0B5EAA'; ctx.fill(); icone(ctx, 'documento', 132, 134, 64, '#FFFFFF');
     const nomeEmpresa = String(empresa || 'AvantaLab').toUpperCase(); texto(ctx, nomeEmpresa, 575, 157, { tamanho: nomeEmpresa.length > 31 ? 38 : nomeEmpresa.length > 23 ? 44 : 51, peso: 800, cor: '#FFFFFF', alinhamento: 'center', largura: 730 });
-    icone(ctx, 'usuario', 93, 255, 41, '#3FE3E8'); texto(ctx, `Cliente: ${cliente}`, 125, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', largura: 510 }); linha(ctx, 654, 213, 654, 288, 'rgba(255,255,255,.68)', 2); icone(ctx, 'calendario', 714, 255, 40, '#3FE3E8'); texto(ctx, data, 1000, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
+    icone(ctx, 'usuario', 93, 255, 41, '#3FE3E8'); texto(ctx, `Cliente: ${clienteExibido}`, 125, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', largura: 510 }); linha(ctx, 654, 213, 654, 288, 'rgba(255,255,255,.68)', 2); icone(ctx, 'calendario', 714, 255, 40, '#3FE3E8'); texto(ctx, data, 1000, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
 
     retangulo(ctx, 216, 385, 648, 118, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 269, 444, 54, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', 320, 432, { tamanho: 25, peso: 800, cor: '#16773F', largura: 500 }); texto(ctx, 'Seu pedido foi confirmado no sistema.', 320, 471, { tamanho: 20, peso: 500, cor: '#31567F', largura: 500 });
 
@@ -116,7 +126,7 @@
       texto(ctx, item.valor || '', 922, yItem + 8, { tamanho: 25, peso: 800, cor: '#126ED1', alinhamento: 'right', largura: 260 });
       yItem += 82;
     });
-    texto(ctx, `${titulo} • ${cliente}`, LARGURA / 2, yRodape, { tamanho: 28, peso: 700, cor: '#0A2F6B', alinhamento: 'center', largura: 890 }); linha(ctx, 486, yRodape + 35, 594, yRodape + 35, '#126ED1', 6);
+    desenharRodapeEmPilula(ctx, `${titulo} • ${clienteExibido}`, yRodape);
     return canvas;
   }
 

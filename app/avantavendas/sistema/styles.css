@@ -1457,9 +1457,10 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .login-methods button { display: inline-flex; min-height: 34px; flex: 1; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 9px; color: #6d7680; background: transparent; font-size: 13px; font-weight: 700; }
 .login-methods button.active { color: #fff; background: #1687D9; box-shadow: 0 2px 5px rgba(22,135,217,.28); }
 .login-screen form > label { display: grid; gap: 4px; color: #3d454d; font-size: 12px; font-weight: 800; }
-.login-field { position: relative; display: flex; align-items: center; }
+.login-field { position: relative; display: flex; width: 100%; min-width: 0; align-items: center; }
 .login-field > .svg-icon { position: absolute; left: 12px; color: #88919a; }
-.login-field input { width: 100%; height: 44px; border: 1px solid #d9e0e4; border-radius: 12px; padding: 0 40px; color: #2d353b; font: inherit; outline-color: #55b9b1; }
+.login-field input { display: block; width: 100%; min-width: 0; height: 44px; flex: 1 1 auto; border: 1px solid #d9e0e4; border-radius: 12px; padding: 0 14px 0 40px; color: #2d353b; font: inherit; outline-color: #55b9b1; }
+.login-field.password-field input { padding-right: 44px; }
 .password-toggle { position: absolute; top: 50%; right: 4px; display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 8px; color: #717b84; background: transparent; transform: translateY(-50%); }
 .password-control { position: relative; display: flex; width: 100%; align-items: center; }
 .password-control input { width: 100%; padding-right: 44px !important; }

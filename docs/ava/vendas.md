@@ -1,7 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.05 -->
-<!-- avantavendas-asset-revision: 58 -->
+<!-- avantavendas-asset-revision: 59 -->
+
+> Revisão 1.7.3.05-av59: na imagem compartilhada do pedido, a identificação
+> final do comprovante e da cliente aparece dentro de uma pílula branca opaca,
+> mantendo o texto legível mesmo quando ele é extenso ou coincide com a área
+> azul escura do fundo. No cabeçalho e nessa pílula, a cliente é identificada
+> somente pela primeira palavra do nome; observações posteriores não aparecem.
+> Os campos de e-mail do acesso e do cadastro agora usam toda a largura interna
+> disponível, facilitando a conferência de endereços longos antes de continuar.
 
 > Revisão 1.7.3.05-av58: os recursos públicos do AvantaVendas passam a usar
 > URLs novas, invalidando o cache imutável anterior e ativando as correções de

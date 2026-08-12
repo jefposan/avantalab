@@ -6290,6 +6290,9 @@ function textoCanvasLimitado(ctx, texto, larguraMaxima) {
 }
 
 function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalhes', cliente, data, etiqueta = '', temaEtiqueta = 'azul', linhas = [], resumo = [] }) {
+  const clienteExibido = /pedido/i.test(String(titulo || ''))
+    ? primeiroNomeClienteComprovante(cliente)
+    : String(cliente || 'Cliente não informado');
   const linhasExibidas = linhas.slice(0, 44);
   if (linhas.length > linhasExibidas.length) linhasExibidas.push({ principal: `+ ${linhas.length - linhasExibidas.length} itens adicionais`, secundario: '', valor: '' });
   const linhasRegulares = resumo.filter((linha) => !linha.destaque);
@@ -6309,7 +6312,7 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   ctx.fillStyle = gradiente; ctx.fillRect(0, 0, largura, 260);
   const nomeEmpresa = String(empresa || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
   ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 36 : nomeEmpresa.length > 20 ? 42 : 50}px Arial, sans-serif`; ctx.textAlign = 'center'; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 900), largura / 2, 92); ctx.textAlign = 'left';
-  ctx.font = '700 34px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${cliente}`, 640), 64, 198);
+  ctx.font = '700 34px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${clienteExibido}`, 640), 64, 198);
   ctx.textAlign = 'right'; ctx.fillText(data, 1016, 198); ctx.textAlign = 'left';
   let y = 318;
   if (etiqueta) {
@@ -6380,8 +6383,13 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     ctx.fillStyle = '#1687D9'; ctx.textAlign = 'right'; ctx.font = '850 30px Arial, sans-serif'; ctx.fillText(linha.valor || '', 1002, y + 10); ctx.textAlign = 'left'; ctx.font = '750 28px Arial, sans-serif';
     y += 90;
   });
-  const rodape = textoCanvasLimitado(ctx, `${titulo} - ${cliente}`, 900);
-  ctx.fillStyle = '#64748b'; ctx.font = '600 20px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(rodape, largura / 2, altura - 54); ctx.textAlign = 'left';
+  ctx.font = '700 20px Arial, sans-serif';
+  const rodape = textoCanvasLimitado(ctx, `${titulo} - ${clienteExibido}`, 820);
+  const larguraPilulaRodape = Math.min(936, Math.max(320, Math.ceil(ctx.measureText(rodape).width) + 72));
+  const xPilulaRodape = (largura - larguraPilulaRodape) / 2;
+  caminhoRetanguloArredondado(ctx, xPilulaRodape, altura - 91, larguraPilulaRodape, 58, 29);
+  ctx.fillStyle = '#FFFFFF'; ctx.fill(); ctx.strokeStyle = '#DCE6F0'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#0A2F6B'; ctx.textAlign = 'center'; ctx.fillText(rodape, largura / 2, altura - 54); ctx.textAlign = 'left';
   return canvas;
 }
 
@@ -6398,6 +6406,10 @@ async function compartilharCanvasComprovante(canvas, nomeArquivo) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1500);
   toast('Imagem do comprovante gerada.');
   return true;
+}
+
+function primeiroNomeClienteComprovante(nome) {
+  return String(nome || '').trim().split(/\s+/)[0] || 'Cliente';
 }
 
 async function compartilharPedido(pedidoId) {
