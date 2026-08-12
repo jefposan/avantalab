@@ -2,6 +2,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
 // Revisado na versão 1.7.3.12: Divulgação abre diretamente o seletor do aparelho
 // para fotos, vídeos e PDFs, sem o menu intermediário.
+// Revisado na versão 1.7.3.12: em Divulgação, Voltar e Pasta atual ficam fixos
+// acima dos arquivos; busca e filtro continuam no cabeçalho.
 // Revisado na versão 1.7.3.11: avisos dos cards de perfis e compartilhamento
 // aparecem sobre o formulário, preservam os dados e devolvem o foco.
 // Revisado na versão 1.7.3.10: Perfis de vendas separa nome, vínculo e

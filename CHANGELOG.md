@@ -6,6 +6,12 @@
   materiais abre diretamente o seletor do aparelho. O menu intermediário com
   opções repetidas foi removido, e a mesma seleção aceita fotos, vídeos e PDFs.
 
+## 1.7.3.12-av68 - 2026-08-12
+
+- AvantaVendas: em **Divulgação**, a barra da pasta atual agora fica fixa com
+  **Voltar** durante a rolagem dos arquivos. O formato compacto mostra
+  “Pasta atual: nome da pasta” em uma linha e mantém busca e filtro no cabeçalho.
+
 ## 1.7.3.11-av67 - 2026-08-12
 
 - AvantaVendas: os avisos dos cards de perfis e compartilhamento agora usam a

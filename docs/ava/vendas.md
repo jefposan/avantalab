@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.12 -->
-<!-- avantavendas-asset-revision: 67 -->
+<!-- avantavendas-asset-revision: 68 -->
+
+> Revisão 1.7.3.12-av68: ao abrir uma pasta em **Divulgação**, a navegação
+> fica fixa acima dos arquivos. Ela reúne **Voltar** e **Pasta atual: nome da
+> pasta** em uma linha compacta; busca e filtro continuam disponíveis no
+> cabeçalho.
 
 > Revisão 1.7.3.12: a Gestão abre diretamente o seletor do aparelho ao enviar
 > fotos, vídeos ou PDFs para a Divulgação. A consulta e o compartilhamento dos

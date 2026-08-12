@@ -1125,7 +1125,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .clientes-page, .produtos-page { padding-top: 146px; }
 .pagamentos-page { padding-top: 208px; }
 .clientes-page { padding-top: 158px; }
-.divulgacao-page { padding-top: 200px; }
+.divulgacao-page { padding-top: 252px; }
 .publicacoes-page { padding-top: 110px; }
 .publicacoes-page .updates-feed, .publicacoes-page .information-grid { margin-top: 10px; }
 .clientes-page .module-sticky-head, .produtos-page .module-sticky-head, .pedidos-page .module-sticky-head, .pagamentos-page .module-sticky-head, .settings-page .module-sticky-head, .publicacoes-page .module-sticky-head, .divulgacao-page .module-sticky-head { position: fixed; top: var(--vendas-system-header-height); right: 0; left: 255px; z-index: 40; display: grid; gap: 12px; border-bottom: 1px solid #d6e5f1; padding: 16px max(16px, calc((100% - 1180px) / 2 + 56px)) 14px; background: linear-gradient(135deg, #f2f8fc 0%, #f8fbfe 100%); box-shadow: inset 0 4px 0 #1687D9, 0 8px 14px -14px rgba(15,23,42,.45); }
@@ -1315,14 +1315,11 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .divulgacao-page .search-compact-always { padding-top: 10px; padding-bottom: 10px; }
 .divulgacao-page .search-compact-always button { height: 30px; min-height: 30px; padding: 0 11px; font-size: 10px; }
 .divulgacao-page .search-compact-always button .svg-icon { width: 13px; height: 13px; }
-.material-page-location { display: flex; min-height: 58px; align-items: center; gap: 12px; overflow: hidden; border: 1px solid #cfe0ec; border-radius: 14px; padding: 9px 13px; background: linear-gradient(135deg,#f2f8fc,#fff); box-shadow: 0 6px 18px rgba(15,42,80,.07); }
-.material-page-back { display: inline-flex; min-height: 34px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 4px; border: 1px solid #b9d7e9; border-radius: 999px; padding: 0 12px; color: #0874a8; background: #eaf7fd; font-size: 10px; font-weight: 850; }
+.material-page-location { display: flex; min-height: 42px; align-items: center; gap: 9px; overflow: hidden; border: 1px solid #cfe0ec; border-radius: 12px; padding: 5px 8px; background: linear-gradient(135deg,#f2f8fc,#fff); box-shadow: 0 4px 12px rgba(15,42,80,.06); }
+.material-page-back { display: inline-flex; min-height: 30px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 4px; border: 1px solid #b9d7e9; border-radius: 999px; padding: 0 10px; color: #0874a8; background: #eaf7fd; font-size: 10px; font-weight: 850; }
 .material-page-back .svg-icon { width: 14px; height: 14px; }
-.material-page-location > div { min-width: 0; }
-.material-page-location small,.material-page-location b,.material-page-location span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.material-page-location small { color: #718096; font-size: 8px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
-.material-page-location b { margin-top: 2px; color: #0A1F44; font-size: 14px; }
-.material-page-location span { margin-top: 2px; color: #718096; font-size: 9px; }
+.material-page-location p { min-width: 0; overflow: hidden; margin: 0; color: #526477; font-size: 11px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.material-page-location b { color: #0A1F44; font-size: 12px; font-weight: 900; }
 .material-page-content { display: grid; gap: 22px; }
 .material-page-section { display: grid; gap: 8px; }
 .material-page-section > h3 { margin: 0; color: #526477; font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
@@ -2193,7 +2190,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
   .feedback-sales-form > div { align-items: stretch; flex-direction: column; }
   .feedback-sales-form button { width: 100%; }
   .publicacoes-page { padding-top: 110px; }
-  .divulgacao-page { padding-top: 244px; }
+  .divulgacao-page { padding-top: 296px; }
   .settings-page { padding-top: 122px; }
   .clientes-page .module-sticky-head, .produtos-page .module-sticky-head, .pedidos-page .module-sticky-head, .pagamentos-page .module-sticky-head, .settings-page .module-sticky-head, .publicacoes-page .module-sticky-head, .divulgacao-page .module-sticky-head { left: 0; padding: 14px 16px 12px; }
   .clientes-page .module-sticky-head { gap: 8px; padding-top: 10px; padding-bottom: 9px; }

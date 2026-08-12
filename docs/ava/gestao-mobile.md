@@ -7,6 +7,9 @@
 > intermediário. A mesma seleção aceita fotos, vídeos e PDFs; no iPhone, as
 > opções de origem e seu idioma são apresentados pelo próprio iOS.
 
+> Revisão 1.7.3.12: ajuste de navegação exclusivo da Divulgação no
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
+
 > Revisão 1.7.3.11: avisos de validação exclusivos do AvantaVendas; sem
 > impacto operacional na Gestão Mobile.
 

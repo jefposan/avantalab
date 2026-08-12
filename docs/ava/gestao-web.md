@@ -6,6 +6,9 @@
 > diretamente o seletor de arquivos do computador ou aparelho, sem o menu
 > intermediário. A mesma seleção aceita fotos, vídeos e PDFs.
 
+> Revisão 1.7.3.12: ajuste de navegação exclusivo da Divulgação no
+> AvantaVendas; sem impacto operacional na Gestão Web.
+
 > Revisão 1.7.3.11: avisos de validação exclusivos do AvantaVendas; sem
 > impacto operacional na Gestão Web.
 
