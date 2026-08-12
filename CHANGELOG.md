@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.3.16 - 2026-08-12
+
+- Gestão Web e Mobile: o Balanço Geral permanece somente para consulta. As
+  receitas continuam sendo criadas exclusivamente como entradas individuais no
+  mês ou no card **Registrar entradas** do Dashboard.
+- Banco de dados: normalização dos resumos históricos de receita para que cada
+  total seja igual à soma das entradas efetivadas. Diferenças antigas são
+  preservadas como **Receita registrada anteriormente**, sem apagar registros.
+
 ## 1.7.3.15-av70 - 2026-08-12
 
 - Gestão Mobile: o texto **Uso diário** foi removido do topo do Menu. A lista

@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.16: o Balanço Geral é somente de consulta; receitas
+// são entradas individuais com dia, origem e valor, e referências históricas
+// sem entrada são preservadas como Receita registrada anteriormente.
 // Revisado na versão 1.7.3.15-av70: o Menu da Gestão Mobile começa diretamente
 // em Assinatura e plano, sem o título Uso diário; no AvantaVendas, Divulgação
 // atualiza silenciosamente ao entrar e aceita o gesto somente no cabeçalho fixo.

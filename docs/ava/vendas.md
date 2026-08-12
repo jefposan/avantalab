@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.15 -->
+<!-- ava-version: 1.7.3.16 -->
 <!-- avantavendas-asset-revision: 70 -->
+
+> Revisão 1.7.3.16: normalização das receitas históricas e uso exclusivo do
+> Balanço Geral da Gestão Web; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.7.3.15-av70: ao entrar em **Divulgação**, a releitura de pastas e
 > materiais ocorre silenciosamente. No celular, o gesto começa somente ao

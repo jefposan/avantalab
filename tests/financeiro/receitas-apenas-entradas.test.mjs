@@ -11,6 +11,10 @@ const migracao = readFileSync(
   'supabase/migrations/20260812090000_receitas_somente_por_entradas.sql',
   'utf8',
 );
+const migracaoNormalizacao = readFileSync(
+  'supabase/migrations/20260812170000_normalizar_receitas_por_entradas.sql',
+  'utf8',
+);
 
 test('Gestão Web oferece somente o lançamento individual de receitas', () => {
   assert.doesNotMatch(dashboard, /Definir total do mês|Excluir total do mês/);
@@ -34,4 +38,13 @@ test('valores manuais antigos viram entradas comuns sem apagar receitas', () => 
   assert.match(migracao, /set referencia_total_mensal = false/);
   assert.doesNotMatch(migracao, /delete from public\.faturamentos_entradas/);
   assert.match(banco, /referencia_total_mensal: false/);
+});
+
+test('resumos históricos divergentes são normalizados pela soma das entradas', () => {
+  assert.match(migracaoNormalizacao, /insert into public\.faturamentos_entradas/);
+  assert.match(migracaoNormalizacao, /f\.valor - coalesce\(entradas\.total, 0\) > 0\.009/);
+  assert.match(migracaoNormalizacao, /update public\.faturamentos f/);
+  assert.match(migracaoNormalizacao, /valor = coalesce\(\(\s*select sum\(e\.valor\)/);
+  assert.match(migracaoNormalizacao, /coalesce\(e\.status, ''\) <> 'prevista'/);
+  assert.match(migracaoNormalizacao, /referencia_total_mensal = false/);
 });

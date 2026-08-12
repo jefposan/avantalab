@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.15 -->
+<!-- ava-version: 1.7.3.16 -->
+
+> Revisão 1.7.3.16: o Balanço Geral é exclusivo da Gestão Web. As receitas da
+> Gestão Mobile permanecem entradas individuais, com dia, origem e valor; a
+> normalização de referências históricas mantém a lista e os totais coerentes.
 
 > Revisão 1.7.3.15: o Menu começa diretamente por **Assinatura e plano**. O
 > título **Uso diário** foi retirado, sem alterar a ordem ou o funcionamento dos

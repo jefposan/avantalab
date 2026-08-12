@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.15 -->
+<!-- ava-version: 1.7.3.16 -->
+
+> Revisão 1.7.3.16: o **Balanço Geral** é somente de consulta. Para registrar
+> uma receita, abra o mês ou use **Registrar entradas** no Dashboard; dia,
+> origem e valor são obrigatórios. Referências históricas sem lançamento são
+> preservadas como **Receita registrada anteriormente**.
 
 > Revisão 1.7.3.15: remoção de texto exclusiva do Menu da Gestão Mobile; sem
 > impacto operacional na Gestão Web. O ajuste do gesto de atualização da
