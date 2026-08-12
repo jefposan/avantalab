@@ -6320,7 +6320,7 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     const xEtiqueta = (largura - larguraEtiqueta) / 2;
     caminhoRetanguloArredondado(ctx, xEtiqueta, y - 39, larguraEtiqueta, 72, 36);
     ctx.fillStyle = temaEtiqueta === 'verde' ? '#dcfce7' : '#dff4ff'; ctx.fill();
-    ctx.fillStyle = temaEtiqueta === 'verde' ? '#166534' : '#075985'; ctx.textAlign = 'center'; ctx.fillText(etiqueta, largura / 2, y + 11); ctx.textAlign = 'left'; y += 142;
+    ctx.fillStyle = temaEtiqueta === 'verde' ? '#166534' : '#075985'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(etiqueta, largura / 2, y - 3); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; y += 142;
   }
 
   if (linhasRegulares.length) {
@@ -6338,7 +6338,7 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     y += 52;
   }
   if (linhaPrincipal) {
-    ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', 64, y);
+    ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     y += 26;
     caminhoRetanguloArredondado(ctx, 48, y, 984, 136, 26);
     const destaqueGradiente = ctx.createLinearGradient(48, y, 1032, y + 136);
@@ -6351,7 +6351,7 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     y += 202;
   }
   if (linhaSaldo) {
-    ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.fillText('Situação após o lançamento', 64, y);
+    ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Situação após o lançamento', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     y += 26;
     caminhoRetanguloArredondado(ctx, 48, y, 984, 148, 26);
     ctx.fillStyle = '#073555'; ctx.fill(); ctx.strokeStyle = '#5ed7ff'; ctx.lineWidth = 4; ctx.stroke();
@@ -6452,7 +6452,8 @@ async function compartilharPedido(pedidoId) {
       ...dadosComprovante,
       titulo,
       tituloDetalhes,
-      etiqueta: titulo,
+      etiqueta: 'Pedido registrado com sucesso!',
+      temaEtiqueta: 'verde',
       linhas,
       resumo: [
         { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
@@ -7908,7 +7909,8 @@ function escapeAttr(v) {
 
 function botaoTemAcaoVisual(botao) {
   if (!(botao instanceof HTMLButtonElement) || botao.disabled) return false;
-  if (botao.matches('.icon-button, .close, .password-toggle, .search-clear, .client-more, .home-button, .system-brand, .menu-toggle, .vendas-nav-item, .vendas-nav-add, .mobile-menu button')) return false;
+  if (botao.matches('.icon-button, .close, .password-toggle, .search-clear, .client-more, .home-button, .system-brand, .menu-toggle, .vendas-nav-item, .vendas-nav-add')) return false;
+  if (botao.closest('.mobile-menu') && !botao.matches('.mobile-menu-card:not(.is-organizable)')) return false;
   const texto = (botao.textContent || '').replace(/[×⋮+＋]/g, '').trim();
   return Boolean(texto);
 }

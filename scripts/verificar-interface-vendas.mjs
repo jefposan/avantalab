@@ -309,10 +309,11 @@ exigir(
     && aplicacao.includes('secundario: detalheQuantidadeItemComprovante(item)')
     && comprovantePedido.includes("'Valor do pedido', 276, yPedido + 160")
     && comprovantePedido.includes("'Saldo atual', 276, ySaldo + 160")
-    && comprovantePedido.includes("'Pedido registrado com sucesso!', 320, 453")
+    && comprovantePedido.includes("'Pedido registrado com sucesso!', LARGURA / 2, 444")
+    && comprovantePedido.includes("alinhamento: 'center', largura: 500, linhaBase: 'middle'")
     && comprovantePedido.includes("card(ctx, yPedido, 251, '', 'PEDIDO REGISTRADO')")
     && comprovantePedido.includes("card(ctx, ySaldo, 251, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
-    && comprovantePedido.includes('if (nomeIcone) blocoIcone(ctx, nomeIcone, 105, y + 64)')
+    && comprovantePedido.includes("texto(ctx, titulo, LARGURA / 2, y + 43, { tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' })")
     && comprovantePedido.includes("icone(ctx, 'confirmado', 208, yPedido + 151")
     && comprovantePedido.includes("icone(ctx, 'grafico', 208, ySaldo + 151")
     && !comprovantePedido.includes("texto(ctx, 'Pedido confirmado'")
@@ -320,9 +321,12 @@ exigir(
     && !comprovantePedido.includes("texto(ctx, 'Seu pedido foi confirmado no sistema.'")
     && aplicacao.includes('const temSubtituloPrincipal = Boolean(linhaPrincipal.subtitulo)')
     && aplicacao.includes('const temSubtituloSaldo = Boolean(linhaSaldo.subtitulo)')
+    && aplicacao.includes("etiqueta: 'Pedido registrado com sucesso!'")
+    && aplicacao.includes("ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', largura / 2, y + 13)")
+    && aplicacao.includes("ctx.fillText('Situação após o lançamento', largura / 2, y + 13)")
     && !aplicacao.includes("linhaSaldo.subtitulo || 'Valor que permanece em aberto'")
     && aplicacao.includes("const clienteExibido = /pedido/i.test(String(titulo || ''))"),
-  'O comprovante de pedido deve omitir ícones e textos redundantes, manter os ícones nos campos de valor, ocultar quantidade unitária, centralizar os rótulos únicos, usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
+  'O comprovante de pedido deve omitir ícones e textos redundantes, manter os ícones nos campos de valor, ocultar quantidade unitária, centralizar a mensagem de sucesso e os títulos dos cards nos dois eixos, usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
 );
 exigir(
   cliente.includes('pasta_pai_id, capa_material_id, nome')
@@ -350,6 +354,12 @@ exigir(
     && estilos.includes('.mobile-menu-card { height: auto; min-height: 0; aspect-ratio: 1 / 1;')
     && !estilos.includes('.mobile-menu-card { min-height: 123px;'),
   'Os botões da sala devem permanecer quadrados em telas Android estreitas, sem altura mínima ou imagem deformada.',
+);
+exigir(
+  aplicacao.includes("botao.closest('.mobile-menu') && !botao.matches('.mobile-menu-card:not(.is-organizable)')")
+    && estilos.includes('.mobile-menu-card.button-pressed:not(.is-organizable) { transform: translateY(4px) scale(.94) !important;')
+    && estilos.includes('@media (prefers-reduced-motion: reduce) { .mobile-menu-card.button-pressed:not(.is-organizable) { transition: none !important; }'),
+  'Os nove botões principais da sala devem afundar ao toque, sem interferir no modo de reorganização e respeitando movimento reduzido.',
 );
 exigir(
   migracaoVinculo.includes("v_deve_ativar := new.papel = 'vendedor'")

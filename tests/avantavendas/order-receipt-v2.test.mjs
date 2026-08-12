@@ -44,10 +44,11 @@ test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', as
   for (const textoRemovido of ['Pedido confirmado', 'Valor que permanece em aberto', 'Seu pedido foi confirmado no sistema.']) assert.ok(!textos.includes(textoRemovido), `não deveria exibir ${textoRemovido}`);
   assert.match(codigo, /'Valor do pedido', 276, yPedido \+ 160/);
   assert.match(codigo, /'Saldo atual', 276, ySaldo \+ 160/);
-  assert.match(codigo, /'Pedido registrado com sucesso!', 320, 453/);
+  assert.match(codigo, /'Pedido registrado com sucesso!', LARGURA \/ 2, 444/);
+  assert.match(codigo, /alinhamento: 'center', largura: 500, linhaBase: 'middle'/);
   assert.match(codigo, /card\(ctx, yPedido, 251, '', 'PEDIDO REGISTRADO'\)/);
   assert.match(codigo, /card\(ctx, ySaldo, 251, '', 'SITUAÇÃO APÓS O LANÇAMENTO'\)/);
-  assert.match(codigo, /if \(nomeIcone\) blocoIcone/);
+  assert.match(codigo, /texto\(ctx, titulo, LARGURA \/ 2, y \+ 43, \{ tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' \}\)/);
   assert.match(codigo, /function primeiroNomeClienteComprovante/);
   assert.match(codigo, /function desenharRodapeEmPilula/);
   assert.match(codigo, /'#FFFFFF', '#DCE6F0'/);

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.3.05-av61 - 2026-08-11
+
+- AvantaVendas: no comprovante de pedido, **Pedido registrado com sucesso!**
+  fica centralizado horizontal e verticalmente na pílula de confirmação. Os
+  títulos **Pedido registrado** e **Situação após o lançamento** também ficam
+  centralizados na faixa entre o topo do card e o respectivo campo colorido de
+  valor, inclusive no renderizador alternativo usado durante transições de
+  cache.
+- AvantaVendas: os nove cards principais da sala de botões voltam a afundar
+  visualmente durante o toque, sem alterar a navegação nem o gesto usado para
+  reorganizá-los.
+
 ## 1.7.3.05-av60 - 2026-08-11
 
 - AvantaVendas: no comprovante de pedido, produtos com somente uma unidade não

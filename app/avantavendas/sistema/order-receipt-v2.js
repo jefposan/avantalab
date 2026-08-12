@@ -39,9 +39,9 @@
     return `${reduzido}…`;
   }
 
-  function texto(ctx, valor, x, y, { tamanho = 28, peso = 600, cor = '#0A1F44', alinhamento = 'left', largura = 0 } = {}) {
-    ctx.fillStyle = cor; ctx.font = `${peso} ${tamanho}px ${FONTE}`; ctx.textAlign = alinhamento;
-    ctx.fillText(largura ? textoLimitado(ctx, valor, largura) : String(valor || ''), x, y); ctx.textAlign = 'left';
+  function texto(ctx, valor, x, y, { tamanho = 28, peso = 600, cor = '#0A1F44', alinhamento = 'left', largura = 0, linhaBase = 'alphabetic' } = {}) {
+    ctx.fillStyle = cor; ctx.font = `${peso} ${tamanho}px ${FONTE}`; ctx.textAlign = alinhamento; ctx.textBaseline = linhaBase;
+    ctx.fillText(largura ? textoLimitado(ctx, valor, largura) : String(valor || ''), x, y); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   }
 
   function linha(ctx, x1, y1, x2, y2, cor, largura = 4) {
@@ -71,7 +71,15 @@
   }
 
   function blocoIcone(ctx, nome, x, y, cor = '#126ED1') { ctx.beginPath(); ctx.arc(x, y, 42, 0, Math.PI * 2); ctx.fillStyle = '#EDF5FF'; ctx.fill(); icone(ctx, nome, x, y, 43, cor); }
-  function card(ctx, y, altura, nomeIcone, titulo) { retangulo(ctx, 44, y, 992, altura, 34, '#FFFFFF', '#E4ECF4'); if (nomeIcone) blocoIcone(ctx, nomeIcone, 105, y + 64); texto(ctx, titulo, nomeIcone ? 172 : 76, y + 76, { tamanho: 28, peso: 800, cor: '#0A2F6B' }); }
+  function card(ctx, y, altura, nomeIcone, titulo) {
+    retangulo(ctx, 44, y, 992, altura, 34, '#FFFFFF', '#E4ECF4');
+    if (nomeIcone) {
+      blocoIcone(ctx, nomeIcone, 105, y + 64);
+      texto(ctx, titulo, 172, y + 76, { tamanho: 28, peso: 800, cor: '#0A2F6B' });
+      return;
+    }
+    texto(ctx, titulo, LARGURA / 2, y + 43, { tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' });
+  }
   function fundoDeValor(ctx, y, altura, cor) { retangulo(ctx, 146, y, 810, altura, 26, cor); }
   function primeiroNomeClienteComprovante(nome) { return String(nome || '').trim().split(/\s+/)[0] || 'Cliente'; }
   function desenharRodapeEmPilula(ctx, conteudo, y) {
@@ -107,7 +115,7 @@
     const nomeEmpresa = String(empresa || 'AvantaLab').toUpperCase(); texto(ctx, nomeEmpresa, 575, 157, { tamanho: nomeEmpresa.length > 31 ? 38 : nomeEmpresa.length > 23 ? 44 : 51, peso: 800, cor: '#FFFFFF', alinhamento: 'center', largura: 730 });
     icone(ctx, 'usuario', 93, 255, 41, '#3FE3E8'); texto(ctx, `Cliente: ${clienteExibido}`, 125, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', largura: 510 }); linha(ctx, 654, 213, 654, 288, 'rgba(255,255,255,.68)', 2); icone(ctx, 'calendario', 714, 255, 40, '#3FE3E8'); texto(ctx, data, 1000, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
 
-    retangulo(ctx, 216, 385, 648, 118, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 269, 444, 54, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', 320, 453, { tamanho: 25, peso: 800, cor: '#16773F', largura: 500 });
+    retangulo(ctx, 216, 385, 648, 118, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 269, 444, 54, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', LARGURA / 2, 444, { tamanho: 25, peso: 800, cor: '#16773F', alinhamento: 'center', largura: 500, linhaBase: 'middle' });
 
     card(ctx, 548, alturaResumo, 'carteira', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, 660, temDesconto ? 136 : 68, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, 704, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, 704, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
     if (temDesconto) { linha(ctx, 180, 728, 928, 728, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, 772, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 928, 772, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }

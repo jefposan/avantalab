@@ -1,7 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.05 -->
-<!-- avantavendas-asset-revision: 60 -->
+<!-- avantavendas-asset-revision: 61 -->
+
+> Revisão 1.7.3.05-av61: na imagem compartilhada do pedido, **Pedido registrado
+> com sucesso!** fica centralizado horizontal e verticalmente na confirmação.
+> Os títulos **Pedido registrado** e **Situação após o lançamento** ficam
+> centralizados na faixa branca entre o topo do card e o campo colorido de
+> valor. Os nove cards principais da sala voltam a afundar visualmente durante
+> o toque; o modo de reorganização continua reservado ao gesto de arrastar. Sem
+> impacto nos cálculos, saldos ou dados do pedido.
 
 > Revisão 1.7.3.05-av60: no comprovante de pedido, um produto com quantidade 1
 > mostra somente o nome e o valor total. A linha com quantidade e valor unitário
