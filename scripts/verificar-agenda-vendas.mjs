@@ -2,10 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, versao] = await Promise.all([
+const [aplicacao, estilos] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
-  readFile(resolve(raiz, 'app/avantavendas/version.ts'), 'utf8'),
 ]);
 
 const falhas = [];
@@ -52,11 +51,6 @@ exigir(
     && estilos.includes('.agenda-header-button'),
   'O cabeçalho precisa exibir o sininho acessível com o contador da agenda de hoje.',
 );
-exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '55'"),
-  'A revisão dos arquivos estáticos do AvantaVendas precisa invalidar o cache anterior.',
-);
-
 if (falhas.length) {
   throw new Error(`Agendamento do AvantaVendas inválido:\n- ${falhas.join('\n- ')}`);
 }

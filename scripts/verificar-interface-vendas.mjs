@@ -2,10 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, versao, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
+const [aplicacao, estilos, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
-  readFile(resolve(raiz, 'app/avantavendas/version.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/supabase-client.js'), 'utf8'),
   readFile(resolve(raiz, 'app/api/vendas/conta/route.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/api/sms/verificar-codigo/route.ts'), 'utf8'),
@@ -53,6 +52,26 @@ exigir(
     && rotaRedefinicaoSenha.includes(".from('usuarios_contas')")
     && rotaRedefinicaoSenha.includes('updateUserById(conta.user_id'),
   'A recuperação de senha deve consultar o diretório central, avisar quando o usuário não existe e devolver o foco ao e-mail preservado.',
+);
+exigir(
+  aplicacao.includes('function abrirAvisoContaJaCadastradaVendas()')
+    && aplicacao.includes('id="accountAlreadyRegisteredTitle">Conta já cadastrada</h2>')
+    && aplicacao.includes('>Ir para o login</button>')
+    && aplicacao.includes('>Recuperar senha</button>')
+    && aplicacao.includes('if (ehErroContaJaCadastradaVendas(error)) abrirAvisoContaJaCadastradaVendas();')
+    && aplicacao.includes('/user already registered|already registered|user already exists|email.*already.*registered/i'),
+  'Conta existente deve abrir o aviso em português com ações para login e recuperação de senha.',
+);
+exigir(
+  aplicacao.includes('Código da empresa (opcional)')
+    && aplicacao.includes('Use apenas para solicitar acesso a Novidades, Divulgação e produtos publicados pela empresa.')
+    && cliente.includes("empresa_id: null,\n          empresa_nome: 'Conta independente'")
+    && cliente.includes('autonomo: true')
+    && cliente.includes('const contaInicial = await garantirContaVendas();')
+    && cliente.includes("rpc('garantir_conta_vendas_mobile_rpc')")
+    && migracaoContaAutomatica.includes("values ('Minha conta de vendas', v_user_id)")
+    && migracaoContaAutomatica.includes("values (v_conta.id, v_user_id, 'proprietario')"),
+  'Login comum deve aceitar conta independente, preparar a conta operacional automaticamente e manter o código empresarial opcional.',
 );
 exigir(
   aplicacao.includes('autocapitalize="words"')
@@ -327,11 +346,6 @@ exigir(
     && estilos.includes('width: calc(100% - var(--dashboard-action-width) - 7px);'),
   'O filtro do Dashboard deve manter início, fim, Filtrar e Mês atual na primeira linha, com o seletor mensal centralizado abaixo.',
 );
-exigir(
-  versao.includes("AVANTAVENDAS_ASSET_REVISION = '55'"),
-  'A revisão estática do AvantaVendas deve invalidar o cache da interface anterior.',
-);
-
 if (falhas.length) {
   throw new Error(`Interface do AvantaVendas inválida:\n- ${falhas.join('\n- ')}`);
 }

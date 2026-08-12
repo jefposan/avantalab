@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.05 -->
+<!-- avantavendas-asset-revision: 58 -->
+
+> Revisão 1.7.3.05-av58: os recursos públicos do AvantaVendas passam a usar
+> URLs novas, invalidando o cache imutável anterior e ativando as correções de
+> cadastro, login independente de empresa, preparação automática da conta e
+> recuperação de senha. Após a publicação, basta fechar completamente e reabrir
+> o aplicativo; limpar dados ou reinstalar é contingência apenas se ele ainda
+> permanecer em uma revisão anterior depois da nova abertura.
 
 > Revisão 1.7.3.05-av57: na recuperação de senha, o AvantaVendas consulta o
 > diretório central de contas no servidor antes de enviar o SMS, sem depender

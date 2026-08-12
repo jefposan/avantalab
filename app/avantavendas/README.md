@@ -39,3 +39,10 @@ navegador. A troca não seleciona perfil nem transfere sessão ou dados.
 O build usa diretamente os arquivos de `app/avantavendas/sistema`. Não existe
 mais sincronização para `public/vendas-mobile` nem projeto separado em
 `vendas_mobile`.
+
+Os recursos recebem a versão definida em `version.ts` e são publicados com
+cache imutável. Toda alteração funcional nesses arquivos exige incrementar
+`AVANTAVENDAS_ASSET_REVISION` e registrar a mesma revisão no marcador
+`avantavendas-asset-revision` de `docs/ava/vendas.md` e no `CHANGELOG.md`.
+O build executa `verificar-revisao-avantavendas.mjs` e falha se a revisão
+executável divergir da revisão operacional mais recente documentada.

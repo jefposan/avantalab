@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.3.05-av58 - 2026-08-11
+
+- AvantaVendas: a revisão própria dos recursos avança para `av58`, criando URLs
+  novas para o JavaScript corrigido e um novo cache do service worker. Assim,
+  cadastro, login sem empresa, preparação automática da conta e recuperação de
+  senha deixam de reutilizar os arquivos imutáveis de `av55`.
+- Entrega: o build agora compara a revisão executável do AvantaVendas com a
+  revisão operacional mais recente do manual e do changelog, impedindo nova
+  publicação quando esses números divergirem.
+
 ## 1.7.3.05-av57 - 2026-08-11
 
 - AvantaVendas: a recuperação de senha consulta o diretório central de contas
