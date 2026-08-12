@@ -197,11 +197,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [salvandoCapa, setSalvandoCapa] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
   const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; etapa: string; cancelando: boolean } | null>(null);
-  const [seletorArquivosAberto, setSeletorArquivosAberto] = useState(false);
   const inputArquivos = useRef<HTMLInputElement>(null);
-  const inputFotosVideos = useRef<HTMLInputElement>(null);
-  const inputCamera = useRef<HTMLInputElement>(null);
-  const inputPdf = useRef<HTMLInputElement>(null);
   const controladorEnvio = useRef<AbortController | null>(null);
   const gestoVisualizacao = useRef<{ x: number; y: number; pointerId: number } | null>(null);
 
@@ -240,17 +236,6 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     window.addEventListener('keydown', fecharComEsc);
     return () => window.removeEventListener('keydown', fecharComEsc);
   }, [materialEmVisualizacao]);
-
-  useEffect(() => {
-    const input = inputArquivos.current;
-    if (!input || !pastaAtiva) return;
-    const abrirSeletor = (evento: MouseEvent) => {
-      evento.preventDefault();
-      setSeletorArquivosAberto(true);
-    };
-    input.addEventListener('click', abrirSeletor);
-    return () => input.removeEventListener('click', abrirSeletor);
-  }, [pastaAtiva]);
 
   useEffect(() => {
     if (!aberto || !empresaId) return;
@@ -475,9 +460,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     } finally {
       controladorEnvio.current = null;
       setEnvioAtivo(null); setSalvando(false);
-      [inputArquivos, inputFotosVideos, inputCamera, inputPdf].forEach((referencia) => {
-        if (referencia.current) referencia.current.value = '';
-      });
+      if (inputArquivos.current) inputArquivos.current.value = '';
     }
   };
 
@@ -629,30 +612,9 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     : exclusaoPendente
       ? `“${exclusaoPendente.item.titulo}” será excluído definitivamente.`
       : '';
-  const abrirSeletorArquivos = () => setSeletorArquivosAberto(true);
-  const selecionarArquivos = (referencia: React.RefObject<HTMLInputElement | null>) => {
-    setSeletorArquivosAberto(false);
-    referencia.current?.click();
-  };
-
   return <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/65 px-3 py-5" onClick={(evento) => {
     if (evento.target === evento.currentTarget) onFechar();
   }}>
-    <input ref={inputFotosVideos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
-    <input ref={inputCamera} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
-    <input ref={inputPdf} type="file" accept="application/pdf,.pdf" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
-    {seletorArquivosAberto && <div className="fixed inset-0 z-[6150] flex items-end justify-center bg-slate-950/55 p-3 sm:items-center" onClick={() => setSeletorArquivosAberto(false)} role="dialog" aria-modal="true" aria-label="Adicionar materiais">
-      <section className={`w-full max-w-sm rounded-3xl border p-3 shadow-2xl ${darkMode ? 'border-slate-700 bg-slate-900 text-white' : 'border-white bg-white text-slate-900'}`} onClick={(e) => e.stopPropagation()}>
-        <h3 className="px-2 pt-1 text-base font-black">Adicionar materiais</h3>
-        <p className={`px-2 pt-1 text-xs ${suave}`}>Escolha como deseja incluir o material nesta pasta.</p>
-        <div className="mt-3 grid gap-2">
-          <button type="button" onClick={() => selecionarArquivos(inputFotosVideos)} className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-left text-sm font-black ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><Icone tipo="image" className="h-5 w-5 text-cyan-600" /><span>Selecionar fotos e vídeos</span></button>
-          <button type="button" onClick={() => selecionarArquivos(inputCamera)} className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-left text-sm font-black ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><Icone tipo="image" className="h-5 w-5 text-cyan-600" /><span>Tirar foto</span></button>
-          <button type="button" onClick={() => selecionarArquivos(inputPdf)} className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-left text-sm font-black ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><Icone tipo="pdf" className="h-5 w-5 text-red-600" /><span>Selecionar arquivos PDF</span></button>
-        </div>
-        <button type="button" onClick={() => setSeletorArquivosAberto(false)} className={`mt-2 min-h-11 w-full rounded-xl text-xs font-black uppercase ${darkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>Cancelar</button>
-      </section>
-    </div>}
     {pastaCapaEmEdicao && <div className="fixed inset-0 z-[6150] flex items-end justify-center bg-slate-950/70 p-3 backdrop-blur-sm sm:items-center" onClick={() => { if (!salvandoCapa) setPastaCapaEmEdicao(null); }} role="dialog" aria-modal="true" aria-label={`Escolher capa da pasta ${pastaCapaEmEdicao.nome}`}>
       <section className={`flex max-h-[86dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border shadow-2xl ${darkMode ? 'border-slate-700 bg-slate-900 text-white' : 'border-white bg-white text-slate-900'}`} onClick={(e) => e.stopPropagation()}>
         <header className={`flex shrink-0 items-start justify-between gap-3 border-b p-4 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
@@ -743,10 +705,10 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         </aside>
         <section className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           <div className="flex items-start justify-between gap-3">
-            <div><h3 className="text-base font-black">{pastaAtivaObjeto?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>
+            <div><h3 className="text-base font-black">{pastaAtivaObjeto?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos, vídeos ou PDFs para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>
             {pastaAtivaObjeto && <div className="flex shrink-0 flex-wrap justify-end gap-2">
               {pastaAtivaObjeto.pasta_pai_id === null && <button type="button" onClick={() => setPastaCapaEmEdicao(pastaAtivaObjeto)} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-xs font-black ${darkMode ? 'border-cyan-700 bg-cyan-950/30 text-cyan-300' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}><Icone tipo="image" className="h-4 w-4" />{pastaAtivaObjeto.capa_material_id ? 'Trocar capa' : 'Escolher capa'}</button>}
-              <input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
+              <input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,application/pdf,.pdf" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
               <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="hidden min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-black text-white disabled:opacity-60 lg:flex" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button>
             </div>}
           </div>

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.11 -->
+<!-- ava-version: 1.7.3.12 -->
+
+> Revisão 1.7.3.12: em **Conteúdo do Vendas > Divulgação**, **Adicionar** abre
+> diretamente o seletor de arquivos do computador ou aparelho, sem o menu
+> intermediário. A mesma seleção aceita fotos, vídeos e PDFs.
 
 > Revisão 1.7.3.11: avisos de validação exclusivos do AvantaVendas; sem
 > impacto operacional na Gestão Web.

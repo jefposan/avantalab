@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.11 -->
+<!-- ava-version: 1.7.3.12 -->
 <!-- avantavendas-asset-revision: 67 -->
+
+> Revisão 1.7.3.12: a Gestão abre diretamente o seletor do aparelho ao enviar
+> fotos, vídeos ou PDFs para a Divulgação. A consulta e o compartilhamento dos
+> materiais publicados no AvantaVendas não mudaram.
 
 > Revisão 1.7.3.11-av67: os avisos de validação e erro em **Novo perfil de
 > vendas** e **Adicionar usuário** aparecem sobre o card. **Voltar** mantém os

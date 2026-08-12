@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.12 - 2026-08-12
+
+- Gestão Web e Mobile: em **Conteúdo do Vendas > Divulgação**, o envio de
+  materiais abre diretamente o seletor do aparelho. O menu intermediário com
+  opções repetidas foi removido, e a mesma seleção aceita fotos, vídeos e PDFs.
+
 ## 1.7.3.11-av67 - 2026-08-12
 
 - AvantaVendas: os avisos dos cards de perfis e compartilhamento agora usam a

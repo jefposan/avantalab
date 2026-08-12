@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.11 -->
+<!-- ava-version: 1.7.3.12 -->
+
+> Revisão 1.7.3.12: em **Conteúdo do Vendas > Divulgação**, **Enviar arquivos
+> para esta pasta** abre diretamente o seletor do aparelho, sem o menu
+> intermediário. A mesma seleção aceita fotos, vídeos e PDFs; no iPhone, as
+> opções de origem e seu idioma são apresentados pelo próprio iOS.
 
 > Revisão 1.7.3.11: avisos de validação exclusivos do AvantaVendas; sem
 > impacto operacional na Gestão Mobile.
