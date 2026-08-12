@@ -1,9 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.05 -->
+<!-- ava-version: 1.7.3.06 -->
 <!-- avantavendas-asset-revision: 64 -->
 
-> Revisão 1.7.3.05-av64: a imagem do comprovante de pedido ficou mais baixa.
+> Revisão 1.7.3.06: a remoção do total mensal manual ocorre somente na Gestão
+> Web e Mobile. O AvantaVendas continua enviando receitas consolidadas pela
+> integração financeira, sem mudança operacional em sua interface.
+
+> Revisão 1.7.3.06-av64: a imagem do comprovante de pedido ficou mais baixa.
 > O cabeçalho, a confirmação verde e os cards de valor e saldo usam menos
 > espaço vertical; **Detalhes do pedido** passa a ser centralizado, sem ícone.
 > O conteúdo, os valores e a legibilidade dos itens permanecem preservados.

@@ -131,13 +131,6 @@ interface DashboardProps {
   totalDespesasMes: number;
   maiorGasto: { despesa: string; valor: number };
   lucroOperacional: number;
-  inputFaturamento: string;
-  setInputFaturamento: (val: string) => void;
-  placeholderFaturamento: string;
-  solicitarFaturamentoDashboard: () => void;
-  excluirTotalMes: () => void;
-  faturamentoDoMes: number;
-
   entradaFaturamentoDia: string;
   setEntradaFaturamentoDia: (val: string) => void;
   entradaFaturamentoOrigem: string;
@@ -196,10 +189,6 @@ interface DashboardProps {
 export default function Dashboard({
   meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], mesPerfis, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode, iniciarValoresOcultos,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
-  inputFaturamento, setInputFaturamento, placeholderFaturamento,
-  solicitarFaturamentoDashboard,
-  excluirTotalMes,
-  faturamentoDoMes,
   entradaFaturamentoDia,
   setEntradaFaturamentoDia,
   entradaFaturamentoOrigem,
@@ -583,22 +572,6 @@ export default function Dashboard({
     };
   }, [empresaId, evolucaoAno, anoSelecionado, lancamentos, faturamentos]);
 
-  // Função local para formatar o faturamento enquanto digita
-  const handleInputFaturamento = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "");
-    if (!value) {
-      setInputFaturamento("");
-      return;
-    }
-    const numericValue = parseInt(value, 10) / 100;
-    const formatado = new Intl.NumberFormat('pt-BR', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
-    }).format(numericValue);
-    
-    setInputFaturamento(formatado);
-  };
-
   const handleCaixinhaValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
     if (!value) {
@@ -952,7 +925,7 @@ const mostrarComparativoResumoDash =
     { id: 'meusPerfis', titulo: 'Meus perfis', descricao: 'Resumo dos perfis financeiros vinculados ao usuário.' },
     { id: 'resumoFinanceiro', titulo: 'Resumo financeiro', descricao: 'Despesas, maior gasto e lucro operacional.' },
     { id: 'evolucaoMensal', titulo: 'Evolução mensal', descricao: 'Gráfico mensal de receitas e despesas.' },
-    { id: 'registrarEntradas', titulo: 'Registrar entradas', descricao: 'Lançamento de receitas e total mensal.' },
+    { id: 'registrarEntradas', titulo: 'Registrar entradas', descricao: 'Lançamento individual de receitas.' },
     ...(pontoDisponivel ? [{ id: 'controlePonto', titulo: 'Controle de ponto', descricao: 'Pendências dos funcionários no dia atual.' }] : []),
   ];
   const ocultosSet = new Set(dashboardOcultos || []);
@@ -1968,7 +1941,7 @@ const mostrarComparativoResumoDash =
             <BotaoOpcoesCard id="registrarEntradas" tone="light" />
           </div>
         </div>
-        <div className="p-5 space-y-3">
+        <div className="p-5">
           <section className={(darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}>
             <div className="mb-2 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -1984,21 +1957,6 @@ const mostrarComparativoResumoDash =
               </div>
               <button onClick={solicitarEntradaFaturamentoDashboard} className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none" style={{ color: '#ffffff', backgroundColor: '#059669', borderColor: '#047857' }}>Lançar</button>
             </div>
-          </section>
-          <section className={(darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: corPrimaria }} />
-              <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>Definir total do mês</p>
-            </div>
-            <div className="flex gap-2">
-              <div className="relative w-full">
-                <input type="text" value={inputFaturamento} onChange={handleInputFaturamento} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); solicitarFaturamentoDashboard(); } }} placeholder={placeholderFaturamento || '0,00'} className="w-full px-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right" />
-              </div>
-              <button onClick={solicitarFaturamentoDashboard} className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none" style={{ color: textoSobreCorPrimaria, backgroundColor: corPrimaria, borderColor: corPrimaria }}>Definir</button>
-            </div>
-            {faturamentoDoMes > 0 && (
-              <button type="button" onClick={excluirTotalMes} className={"mt-2 w-full rounded-lg border px-3 py-1.5 text-xs font-black transition cursor-pointer " + (darkMode ? "border-red-800/50 bg-red-950/30 text-red-400 hover:bg-red-900/40" : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100")}>Excluir total do mês</button>
-            )}
           </section>
         </div>
       </div>

@@ -1,6 +1,15 @@
 # Changelog
 
-## 1.7.3.05-av64 - 2026-08-12
+## 1.7.3.06 - 2026-08-12
+
+- Gestão Web e Mobile: receitas passam a ser registradas somente como entradas
+  individuais. A opção **Definir total do mês**, seus avisos de substituição e
+  a edição direta do faturamento no Balanço Geral foram removidos.
+- Dados: referências mensais antigas são preservadas como uma entrada comum,
+  identificada como **Receita registrada anteriormente**, sem apagar as demais
+  receitas do período.
+
+## 1.7.3.06-av64 - 2026-08-12
 
 - AvantaVendas: a imagem do comprovante de pedido ficou mais compacta. O
   cabeçalho e a confirmação de sucesso agora usam menos espaço; os cards de

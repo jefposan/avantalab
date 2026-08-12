@@ -345,7 +345,6 @@
     mes: meses[new Date().getMonth()],
     ano: String(new Date().getFullYear()),
     faturamentos: {},
-    referenciasTotaisMensais: {},
     lancamentos: [],
     notaArquivoPendente: null,
     notaLendo: false,
@@ -432,7 +431,6 @@
     tipoLancamento: 'despesa',
     lancamentoMesIndice: null,
     lancamentoAno: null,
-    modoReceita: 'entrada',
     despesaDia: '',
     despesaDiaAutoHoje: false,
     despesaNome: '',
@@ -442,7 +440,6 @@
     entradaDiaAutoHoje: false,
     entradaOrigem: '',
     entradaValor: '',
-    receitaTotal: '',
     menuAberto: false,
     menuConfigAberto: false,
     menuConfigAnimacao: '',
@@ -578,8 +575,6 @@
     avisoAssinanteTitulo: '',
     avisoAssinanteMensagem: '',
     duplicadoConfirmacaoAberta: false,
-    confirmacaoTotalReceitaAberta: false,
-    confirmacaoExclusaoTotalMes: null,
     dialogoSistemaMobile: null,
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
@@ -1972,62 +1967,6 @@
             '<div id="dialogo-sistema-mobile-descricao" class="whitespace-pre-line rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">' + escapeHtml(dialogo.mensagem) + '</div>' +
           '</div>' +
           '<footer class="grid shrink-0 ' + grade + ' gap-2 border-t p-3 ' + (state.darkMode ? 'border-slate-700' : 'border-slate-200') + '">' + acoes + '</footer>' +
-        '</section>' +
-      '</div>'
-    );
-  }
-
-  function confirmacaoTotalReceitaMobileHtml() {
-    if (!state.confirmacaoTotalReceitaAberta) return '';
-    var card = state.darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900';
-    var detalhe = state.darkMode
-      ? 'border-amber-400/35 bg-amber-400/10 text-amber-50'
-      : 'border-amber-200 bg-amber-50 text-amber-950';
-    return (
-      '<div id="confirmacao-total-receita-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950/90 px-4" style="z-index:13015" role="dialog" aria-modal="true" aria-labelledby="confirmacao-total-receita-titulo" aria-describedby="confirmacao-total-receita-descricao">' +
-        '<section class="w-full max-w-sm overflow-hidden rounded-3xl border shadow-2xl ' + card + '">' +
-          '<header class="flex items-center gap-3 bg-[#003E73] px-4 py-3 text-white">' +
-            '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black" aria-hidden="true">!</span>' +
-            '<div><p class="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">Conferência de lançamento</p><h2 id="confirmacao-total-receita-titulo" class="text-base font-black">Receitas já lançadas</h2></div>' +
-          '</header>' +
-          '<div class="p-4">' +
-            '<div id="confirmacao-total-receita-descricao" class="rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">' +
-              '<p>Este mês já possui receitas avulsas lançadas.</p>' +
-              '<p class="mt-3"><strong>OK:</strong> apagar todos os lançamentos de receita do mês e manter somente este total.</p>' +
-              '<p class="mt-1"><strong>Cancelar:</strong> manter as receitas avulsas e somar este total a elas.</p>' +
-            '</div>' +
-          '</div>' +
-          '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3 ' + (state.darkMode ? 'border-slate-700' : '') + '">' +
-            '<button id="cancelar-total-receita" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Cancelar</button>' +
-            '<button id="confirmar-total-receita" type="button" class="h-11 rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">OK</button>' +
-          '</footer>' +
-        '</section>' +
-      '</div>'
-    );
-  }
-
-  function confirmacaoExclusaoTotalMesMobileHtml() {
-    if (!state.confirmacaoExclusaoTotalMes) return '';
-    var card = state.darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900';
-    var detalhe = state.darkMode
-      ? 'border-amber-400/35 bg-amber-400/10 text-amber-50'
-      : 'border-amber-200 bg-amber-50 text-amber-950';
-    return (
-      '<div id="confirmacao-exclusao-total-mes-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950/90 px-4" style="z-index:13015" role="dialog" aria-modal="true" aria-labelledby="confirmacao-exclusao-total-mes-titulo" aria-describedby="confirmacao-exclusao-total-mes-descricao">' +
-        '<section class="w-full max-w-sm overflow-hidden rounded-3xl border shadow-2xl ' + card + '">' +
-          '<header class="flex items-center gap-3 bg-[#003E73] px-4 py-3 text-white">' +
-            '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black" aria-hidden="true">!</span>' +
-            '<div><p class="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">Conferência de lançamento</p><h2 id="confirmacao-exclusao-total-mes-titulo" class="text-base font-black">Excluir total do mês</h2></div>' +
-          '</header>' +
-          '<div class="p-4">' +
-            '<div id="confirmacao-exclusao-total-mes-descricao" class="rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">' +
-              escapeHtml(state.confirmacaoExclusaoTotalMes.mensagem) +
-            '</div>' +
-          '</div>' +
-          '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3 ' + (state.darkMode ? 'border-slate-700' : '') + '">' +
-            '<button id="cancelar-exclusao-total-mes" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Cancelar</button>' +
-            '<button id="confirmar-exclusao-total-mes" type="button" class="h-11 rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">OK</button>' +
-          '</footer>' +
         '</section>' +
       '</div>'
     );
@@ -3763,32 +3702,7 @@
   }
 
   function entradasReceitaVisiveis(atual) {
-    var mes = atual && atual.mes ? atual.mes : state.mes;
-    var entradas = (atual && atual.entradas ? atual.entradas : []).slice();
-    var temTotalDefinido = !!state.referenciasTotaisMensais[mes];
-    var totalMensal = Number(state.faturamentos[mes] || 0);
-    var totalEntradasRealizadas = entradas.reduce(function (acc, item) {
-      return item.status === 'prevista' ? acc : acc + Number(item.valor || 0);
-    }, 0);
-    var totalBase = Math.max(0, totalMensal - totalEntradasRealizadas);
-    var totalNaoRepresentado = temTotalDefinido;
-
-    if (!totalNaoRepresentado) return entradas;
-
-    return [{
-      id: '__total_mensal__-' + mes,
-      mes: mes,
-      dia: 0,
-      origem: 'Total mensal',
-      valor: totalBase,
-      status: 'total_mensal',
-      tipo: 'total_mensal',
-      totalMensal: true,
-    }].concat(entradas);
-  }
-
-  function temTotalMensalReferencia(mes) {
-    return !!state.referenciasTotaisMensais[mes];
+    return (atual && atual.entradas ? atual.entradas : []).slice();
   }
 
   function insightDespesasHtml(atual, anterior) {
@@ -3964,7 +3878,6 @@
     state.entradaDiaAutoHoje = false;
     state.entradaOrigem = '';
     state.entradaValor = '';
-    state.receitaTotal = '';
   }
 
   function bind(id, fn) {
@@ -6255,13 +6168,11 @@
     state.receitaVendasOcultaPorMes = receitaVendasOcultaPorMes;
 
     state.faturamentos = {};
-    state.referenciasTotaisMensais = {};
     (resultados[1].data || []).forEach(function (item) {
       state.faturamentos[item.mes] = Math.max(
         0,
         Number(item.valor || 0) - Number(receitaVendasOcultaPorMes[item.mes] || 0)
       );
-      state.referenciasTotaisMensais[item.mes] = !!item.referencia_total_mensal;
     });
 
     state.entradas = (resultados[2].data || []).filter(function (item) {
@@ -7851,7 +7762,6 @@
     limparRascunhoLancamentoMobile();
     state.modalLancamento = false;
     state.tipoLancamento = 'despesa';
-    state.modoReceita = 'entrada';
     state.erro = '';
     await carregarDados();
     notificarFinanceiroAtualizadoMobile();
@@ -8199,6 +8109,7 @@
             ano: periodo.ano,
             mes: periodo.mes,
             valor: totalAtual + valor,
+            referencia_total_mensal: false,
           },
           { onConflict: 'empresa_id,ano,mes' }
         )
@@ -8214,177 +8125,11 @@
 
     state.modalLancamento = false;
     state.tipoLancamento = 'despesa';
-    state.modoReceita = 'entrada';
     limparRascunhoLancamentoMobile();
     state.erro = '';
     await carregarDados();
     notificarFinanceiroAtualizadoMobile();
     mostrarToast('Entrada lancada.');
-  }
-
-  async function salvarTotalReceita(decisaoReceitasAvulsas) {
-    if (!state.empresa) return;
-
-    var periodo = periodoLancamentoMobile();
-    var valorTexto = campo('receita-total');
-    var valor = normalizarValor(valorTexto);
-    state.receitaTotal = valorTexto;
-
-    if (valor < 0) {
-      setErro('Informe um total valido.');
-      return;
-    }
-
-    var entradasResposta = await db
-      .from('faturamentos_entradas')
-      .select('id, valor, status')
-      .eq('empresa_id', state.empresa.id)
-      .eq('ano', periodo.ano)
-      .eq('mes', periodo.mes);
-    if (entradasResposta.error) {
-      setErro('Nao foi possivel consultar as receitas deste mes.');
-      return;
-    }
-    var entradasAvulsas = entradasResposta.data || [];
-    var totalEntradasRealizadas = entradasAvulsas.reduce(function (acc, e) {
-      return e.status === 'prevista' ? acc : acc + Number(e.valor || 0);
-    }, 0);
-    if (entradasAvulsas.length > 0 && typeof decisaoReceitasAvulsas !== 'boolean') {
-      state.confirmacaoTotalReceitaAberta = true;
-      render();
-      window.requestAnimationFrame(function () {
-        var botaoInicial = document.getElementById('cancelar-total-receita');
-        if (!botaoInicial) return;
-        try { botaoInicial.focus({ preventScroll: true }); }
-        catch (e) { botaoInicial.focus(); }
-      });
-      return;
-    }
-    var apagarAvulsas = entradasAvulsas.length > 0 && decisaoReceitasAvulsas === true;
-    state.confirmacaoTotalReceitaAberta = false;
-
-    state.carregando = true;
-    state.erro = '';
-    render();
-
-    if (apagarAvulsas) {
-      var exclusaoEntradas = await db
-        .from('faturamentos_entradas')
-        .delete()
-        .eq('empresa_id', state.empresa.id)
-        .eq('ano', periodo.ano)
-        .eq('mes', periodo.mes);
-
-      if (exclusaoEntradas.error) {
-        state.carregando = false;
-        setErro('Nao foi possivel apagar as receitas avulsas deste mes.');
-        return;
-      }
-    }
-
-    var resposta = await db
-      .from('faturamentos')
-      .upsert(
-        {
-          empresa_id: state.empresa.id,
-          ano: periodo.ano,
-          mes: periodo.mes,
-          valor: apagarAvulsas ? valor : valor + totalEntradasRealizadas,
-          referencia_total_mensal: true,
-        },
-        { onConflict: 'empresa_id,ano,mes' }
-      )
-      .select()
-      .single();
-
-    if (resposta.error) {
-      state.carregando = false;
-      setErro('Nao foi possivel definir o total do mes.');
-      return;
-    }
-
-    state.modalLancamento = false;
-    state.tipoLancamento = 'despesa';
-    state.modoReceita = 'entrada';
-    limparRascunhoLancamentoMobile();
-    state.erro = '';
-    await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast('Total do mes atualizado.');
-  }
-
-  function abrirConfirmacaoExclusaoTotalMesMobile() {
-    state.confirmacaoExclusaoTotalMes = {
-      mensagem: 'A referência Total mensal do período selecionado será removida. As receitas lançadas serão mantidas.',
-    };
-    render();
-  }
-
-  async function excluirTotalMesMobile() {
-    if (!state.empresa || !state.confirmacaoExclusaoTotalMes) return;
-
-    var periodo = periodoLancamentoMobile();
-    state.confirmacaoExclusaoTotalMes = null;
-    var entradasResposta = await db
-      .from('faturamentos_entradas')
-      .select('valor, status')
-      .eq('empresa_id', state.empresa.id)
-      .eq('ano', periodo.ano)
-      .eq('mes', periodo.mes);
-    if (entradasResposta.error) {
-      setErro('Nao foi possivel consultar as receitas deste mes.');
-      return;
-    }
-    var totalEntradas = (entradasResposta.data || []).reduce(function (acc, e) {
-      return e.status === 'prevista' ? acc : acc + Number(e.valor || 0);
-    }, 0);
-
-    state.carregando = true;
-    state.erro = '';
-    render();
-
-    if (totalEntradas > 0) {
-      var resp = await db
-        .from('faturamentos')
-        .upsert(
-          {
-            empresa_id: state.empresa.id,
-            ano: periodo.ano,
-            mes: periodo.mes,
-            valor: totalEntradas,
-            referencia_total_mensal: false,
-          },
-          { onConflict: 'empresa_id,ano,mes' }
-        )
-        .select()
-        .single();
-
-      if (resp.error) {
-        state.carregando = false;
-        setErro('Nao foi possivel excluir o total definido.');
-        return;
-      }
-
-    } else {
-      var del = await db
-        .from('faturamentos')
-        .delete()
-        .eq('empresa_id', state.empresa.id)
-        .eq('ano', periodo.ano)
-        .eq('mes', periodo.mes);
-
-      if (del.error) {
-        state.carregando = false;
-        setErro('Nao foi possivel excluir o total do mes.');
-        return;
-      }
-
-    }
-
-    state.carregando = false;
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast('Total do mes excluido.');
-    render();
   }
 
   async function salvarCategoriaDespesa() {
@@ -11154,11 +10899,7 @@
   }
 
 	  function ultimasReceitasHtml(entradas) {
-	    var todos = entradas.slice().sort(function (a, b) {
-	      if (a.totalMensal) return -1;
-	      if (b.totalMensal) return 1;
-	      return b.dia - a.dia;
-	    });
+	    var todos = entradas.slice().sort(function (a, b) { return b.dia - a.dia; });
     var pesquisando = state.ultimasReceitasBuscaAberta;
     var itens = pesquisando ? todos : (state.ultimasReceitasExpandido ? todos : todos.slice(0, 3));
 
@@ -11169,17 +10910,14 @@
         '<div class="grid gap-1 p-4" id="ultimas-receitas-lista">' +
 	          (itens.length ? itens.map(function (item) {
 	            var valor = dinheiro(item.valor);
-	            var totalMensal = item.totalMensal === true;
 	            var receitaSincronizada = ehReceitaSincronizada(item);
-	            var buscaItem = textoBusca([item.origem, item.descricao, totalMensal ? 'total mensal receita total' : '', valor, item.valor].join(' '));
-	            var tag = totalMensal || receitaSincronizada ? 'div' : 'button';
-	            var acao = totalMensal || receitaSincronizada ? '' : ' type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '"';
-	            var selo = totalMensal
-	              ? ' <span class="ml-1 inline-block rounded-full bg-cyan-100 px-1.5 align-middle text-[10px] font-black text-cyan-700">Total mensal</span>'
-	              : (receitaSincronizada
-	                ? ' <span class="ml-1 inline-block rounded-full bg-slate-100 px-1.5 align-middle text-[10px] font-black text-slate-500">Sincronizada</span>'
-	                : seloTipoHtml(item));
-	            var detalhe = totalMensal ? 'Total do mes' : 'Dia ' + item.dia;
+	            var buscaItem = textoBusca([item.origem, item.descricao, valor, item.valor].join(' '));
+	            var tag = receitaSincronizada ? 'div' : 'button';
+	            var acao = receitaSincronizada ? '' : ' type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '"';
+	            var selo = receitaSincronizada
+	              ? ' <span class="ml-1 inline-block rounded-full bg-slate-100 px-1.5 align-middle text-[10px] font-black text-slate-500">Sincronizada</span>'
+	              : seloTipoHtml(item);
+	            var detalhe = 'Dia ' + item.dia;
 	            return '<' + tag + acao + ' data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '"' + (receitaSincronizada ? ' aria-disabled="true"' : '') + ' class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0' + (receitaSincronizada ? ' cursor-default opacity-80' : '') + '">' +
 	              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + selo + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(detalhe) + '</p></div>' +
 	              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + valor + '</strong>' +
@@ -11253,15 +10991,13 @@
 	    var tipo = state.visao;
 	    var itens = tipo === 'receitas'
 	      ? entradasReceitaVisiveis(atual).map(function (item) {
-	          var totalMensal = item.totalMensal === true;
 	          return {
 	            id: item.id,
 	            tipo: 'receita',
 	            titulo: item.origem,
-	            detalhe: totalMensal ? 'Total do mes' : 'Dia ' + item.dia,
+	            detalhe: 'Dia ' + item.dia,
 	            valor: item.valor,
-	            dia: totalMensal ? 999 : item.dia,
-	            totalMensal: totalMensal,
+	            dia: item.dia,
 	          };
 	        })
 	      : atual.lancamentos.map(function (item) {
@@ -11275,16 +11011,12 @@
           };
         });
 
-	    itens = itens.sort(function (a, b) {
-	      if (a.totalMensal) return -1;
-	      if (b.totalMensal) return 1;
-	      return b.dia - a.dia;
-	    });
+	    itens = itens.sort(function (a, b) { return b.dia - a.dia; });
 
 	    return itens.length ? itens.map(function (item) {
 	      var buscaItem = String(item.titulo + ' ' + item.detalhe + ' ' + item.valor).toLowerCase();
-	      var tag = item.totalMensal ? 'div' : 'button';
-	      var acao = item.totalMensal ? '' : ' type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '"';
+	      var tag = 'button';
+	      var acao = ' type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '"';
 	      return '<' + tag + acao + ' data-busca-lancamento="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 text-left last:border-b-0">' +
 	        '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.titulo) + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(item.detalhe) + '</p></div>' +
 	        '<strong class="shrink-0 text-sm font-black ' + (tipo === 'receitas' ? 'text-emerald-600' : 'text-red-600') + '">' + dinheiro(item.valor) + '</strong>' +
@@ -11443,36 +11175,15 @@
   }
 
   function modalReceitaCamposHtml() {
-    var entradaAtiva = state.modoReceita !== 'total';
     var periodo = periodoLancamentoMobile();
-    var escuro = !!state.darkMode;
-    var abas = escuro ? 'border border-slate-700 bg-slate-800/80' : 'bg-slate-100';
-    var abaAtiva = escuro ? 'border border-slate-500 bg-slate-700 text-emerald-300 shadow-sm' : 'bg-white text-emerald-600 shadow-sm';
-    var abaTotalAtiva = escuro ? 'border border-cyan-400/60 bg-slate-700 text-cyan-300 shadow-sm' : 'bg-white text-cyan-700 shadow-sm';
-    var abaInativa = escuro ? 'text-slate-300' : 'text-slate-500';
     return (
       '<div class="grid gap-3">' +
-        '<div class="grid grid-cols-2 gap-2 rounded-xl ' + abas + ' p-1">' +
-          '<button id="modo-receita-entrada" type="button" class="h-9 rounded-lg text-xs font-black ' + (entradaAtiva ? abaAtiva : abaInativa) + '">Adicionar entrada</button>' +
-          '<button id="modo-receita-total" type="button" class="h-9 rounded-lg text-xs font-black ' + (!entradaAtiva ? abaTotalAtiva : abaInativa) + '">Definir total</button>' +
+        '<div class="flex items-end gap-6">' +
+          '<div class="w-20 shrink-0">' + campoClaro('entrada-dia', 'Dia', 'type="number" min="1" max="' + maxDias(periodo.mes, periodo.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"', state.entradaDia) + '</div>' +
+          '<div class="min-w-0 flex-1">' + campoClaro('entrada-origem', 'Origem', '', state.entradaOrigem) + '</div>' +
         '</div>' +
-        (entradaAtiva
-          ? '<div class="grid gap-3">' +
-              '<div class="flex items-end gap-6">' +
-                '<div class="w-20 shrink-0">' + campoClaro('entrada-dia', 'Dia', 'type="number" min="1" max="' + maxDias(periodo.mes, periodo.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"', state.entradaDia) + '</div>' +
-                '<div class="min-w-0 flex-1">' + campoClaro('entrada-origem', 'Origem', '', state.entradaOrigem) + '</div>' +
-              '</div>' +
-              campoValor('entrada-valor', 'Valor', state.entradaValor) +
-              '<button id="salvar-entrada" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar receita') + '</button>' +
-            '</div>'
-          : '<div class="grid gap-3">' +
-              '<p class="rounded-xl border px-3 py-2 text-xs font-semibold ' + (escuro ? 'border-cyan-400/40 bg-cyan-950/35 text-cyan-100' : 'border-cyan-100 bg-cyan-50 text-cyan-900') + '">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
-              campoValor('receita-total', 'Total do mes', state.receitaTotal) +
-              (String(state.ano) === String(periodo.ano) && temTotalMensalReferencia(periodo.mes)
-                ? '<button id="excluir-total-receita" type="button" class="h-10 rounded-xl border px-4 text-xs font-black uppercase tracking-wide ' + (escuro ? 'border-red-400/50 bg-red-950/35 text-red-300' : 'border-red-200 bg-red-50 text-red-600') + '">' + (state.carregando ? 'Excluindo...' : 'Excluir total do mes') + '</button>'
-                : '') +
-              '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
-            '</div>') +
+        campoValor('entrada-valor', 'Valor', state.entradaValor) +
+        '<button id="salvar-entrada" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar receita') + '</button>' +
       '</div>'
     );
   }
@@ -13631,7 +13342,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + confirmacaoTotalReceitaMobileHtml() + confirmacaoExclusaoTotalMesMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
     window.dispatchEvent(new CustomEvent('avantalab:theme-changed', {
       detail: { dark: Boolean(state.autenticado && state.darkMode) }
     }));
@@ -14306,71 +14017,6 @@
       state.duplicadoConfirmacaoAberta = false;
       salvarDespesa(true);
     });
-    bind('cancelar-total-receita', function () {
-      state.confirmacaoTotalReceitaAberta = false;
-      salvarTotalReceita(false);
-    });
-    bind('confirmar-total-receita', function () {
-      state.confirmacaoTotalReceitaAberta = false;
-      salvarTotalReceita(true);
-    });
-    var confirmacaoTotalReceitaOverlay = document.getElementById('confirmacao-total-receita-overlay');
-    if (confirmacaoTotalReceitaOverlay) {
-      Array.prototype.forEach.call(root.children, function (elemento) {
-        if (elemento === confirmacaoTotalReceitaOverlay) return;
-        elemento.setAttribute('aria-hidden', 'true');
-        elemento.setAttribute('inert', '');
-      });
-      confirmacaoTotalReceitaOverlay.addEventListener('keydown', function (evento) {
-        var primeiro = document.getElementById('cancelar-total-receita');
-        var ultimo = document.getElementById('confirmar-total-receita');
-        if (evento.key === 'Escape') {
-          evento.preventDefault();
-          primeiro && primeiro.focus();
-          return;
-        }
-        if (evento.key !== 'Tab' || !primeiro || !ultimo) return;
-        if (evento.shiftKey && document.activeElement === primeiro) {
-          evento.preventDefault();
-          ultimo.focus();
-        } else if (!evento.shiftKey && document.activeElement === ultimo) {
-          evento.preventDefault();
-          primeiro.focus();
-        }
-      });
-    }
-    bind('cancelar-exclusao-total-mes', function () {
-      state.confirmacaoExclusaoTotalMes = null;
-      render();
-    });
-    bind('confirmar-exclusao-total-mes', excluirTotalMesMobile);
-    var confirmacaoExclusaoTotalMesOverlay = document.getElementById('confirmacao-exclusao-total-mes-overlay');
-    if (confirmacaoExclusaoTotalMesOverlay) {
-      Array.prototype.forEach.call(root.children, function (elemento) {
-        if (elemento === confirmacaoExclusaoTotalMesOverlay) return;
-        elemento.setAttribute('aria-hidden', 'true');
-        elemento.setAttribute('inert', '');
-      });
-      confirmacaoExclusaoTotalMesOverlay.addEventListener('keydown', function (evento) {
-        var primeiro = document.getElementById('cancelar-exclusao-total-mes');
-        var ultimo = document.getElementById('confirmar-exclusao-total-mes');
-        if (evento.key === 'Escape') {
-          evento.preventDefault();
-          if (primeiro) primeiro.click();
-          return;
-        }
-        if (evento.key !== 'Tab' || !primeiro || !ultimo) return;
-        if (evento.shiftKey && document.activeElement === primeiro) {
-          evento.preventDefault();
-          ultimo.focus();
-        } else if (!evento.shiftKey && document.activeElement === ultimo) {
-          evento.preventDefault();
-          primeiro.focus();
-        }
-      });
-      var cancelarExclusaoTotalMes = document.getElementById('cancelar-exclusao-total-mes');
-      if (cancelarExclusaoTotalMes) cancelarExclusaoTotalMes.focus();
-    }
     var dialogoSistemaOverlay = document.getElementById('dialogo-sistema-mobile-overlay');
     if (dialogoSistemaOverlay && state.dialogoSistemaMobile) {
       Array.prototype.forEach.call(root.children, function (elemento) {
@@ -14547,12 +14193,6 @@
       item.value = formatarMoedaDigitada(item.value);
       state.entradaValor = item.value;
     });
-    bindInput('receita-total', function () {
-      var item = document.getElementById('receita-total');
-      if (!item) return;
-      item.value = formatarMoedaDigitada(item.value);
-      state.receitaTotal = item.value;
-    });
     // Interceptar outros campos quando dia tem erro
     ['despesa-nome', 'despesa-descricao', 'despesa-valor'].forEach(function(fid) {
       var fel = document.getElementById(fid);
@@ -14611,8 +14251,6 @@
       var v = document.getElementById('despesa-valor'); if (v) v.value = valorVal;
     });
     bind('salvar-entrada', salvarEntrada);
-    bind('salvar-total-receita', function () { salvarTotalReceita(); });
-    bind('excluir-total-receita', abrirConfirmacaoExclusaoTotalMesMobile);
     bind('toggle-valores-saldo', function () { alternarVisibilidadeValoresCard('saldo'); });
     bind('toggle-valores-caixinha', function () { alternarVisibilidadeValoresCard('caixinha'); });
     bind('toggle-valores-totais', function () { alternarVisibilidadeValoresCard('totais'); });
@@ -14789,16 +14427,6 @@
       render();
     });
     bind('salvar-nova-despesa', salvarNovaDespesaInline);
-    bind('modo-receita-entrada', function () {
-      state.modoReceita = 'entrada';
-      state.erro = '';
-      render();
-    });
-    bind('modo-receita-total', function () {
-      state.modoReceita = 'total';
-      state.erro = '';
-      render();
-    });
     bind('fechar-acao-lancamento', fecharAcaoLancamento);
     bind('ver-nota-lancamento', function () { if (state.modalAcao && state.modalAcao.item) abrirNotaLancamentoMobile(state.modalAcao.item.id); });
     bind('fechar-nota-lancamento', function () { state.notaVisualizandoUrl = ''; render(); });
@@ -14850,7 +14478,7 @@
 	    });
 	    bind('confirmar-exclusao-lancamento', excluirLancamentoSelecionado);
 	    bind('salvar-edicao-lancamento', salvarEdicaoLancamentoSelecionado);
-    ['despesa-valor', 'entrada-valor', 'receita-total', 'editar-valor'].forEach(function (id) {
+    ['despesa-valor', 'entrada-valor', 'editar-valor'].forEach(function (id) {
       bindInput(id, function () {
         var item = document.getElementById(id);
         if (item) item.value = formatarMoedaDigitada(item.value);
@@ -15918,7 +15546,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v297';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v298';
               })
               .map(function (key) {
                 return caches.delete(key);

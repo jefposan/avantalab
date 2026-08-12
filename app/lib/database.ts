@@ -951,6 +951,7 @@ export async function salvarFaturamentoBanco({
         ano,
         mes,
         valor,
+        referencia_total_mensal: false,
       },
       {
         onConflict: 'empresa_id,ano,mes',

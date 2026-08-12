@@ -52,7 +52,7 @@ const PASSOS: Passo[] = [
     localizacao: 'Início → clique em um mês',
     titulo: 'Receitas e despesas',
     descricao:
-      'Abra um mês para registrar receitas, total mensal e despesas. Você pode editar ou excluir lançamentos e pesquisar itens. Web e mobile compartilham os mesmos dados.',
+      'Abra um mês para registrar receitas e despesas. Você pode editar ou excluir lançamentos e pesquisar itens. Web e mobile compartilham os mesmos dados.',
   },
   {
     icone: '🔁',

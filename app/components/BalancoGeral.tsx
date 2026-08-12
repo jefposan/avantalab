@@ -5,12 +5,9 @@ interface BalancoGeralProps {
   meses: string[];
   lancamentos: any[];
   faturamentos: Record<string, number>;
-  setFaturamentos: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   corPrimaria: string;
   darkMode: boolean;
   formatarMoeda: (valor: number) => string;
-  anoSelecionado: string;
-  salvarFaturamentoMes: (mes: string, valor: number) => Promise<void>;
   nomeEmpresa: string;
 }
 
@@ -18,12 +15,9 @@ export default function BalancoGeral({
   meses,
   lancamentos,
   faturamentos,
-  setFaturamentos,
   corPrimaria,
   darkMode,
   formatarMoeda,
-  anoSelecionado,
-  salvarFaturamentoMes,
   nomeEmpresa,
 }: BalancoGeralProps) {
   const [mesBalancoEmDestaque, setMesBalancoEmDestaque] = useState<string | null>(null);
@@ -57,31 +51,9 @@ export default function BalancoGeral({
     return fatTotal > 0 ? (abTotal / fatTotal) * 100 : 0;
   };
 
-  const handleFaturamentoChange = (mes: string, value: string) => {
-    const numericValue = parseFloat(value.replace(/\D/g, "")) / 100;
-    if (!isNaN(numericValue)) {
-      setFaturamentos(prev => ({ ...prev, [mes]: numericValue }));
-    } else if (value === '') {
-      const novosFaturamentos = { ...faturamentos };
-      delete novosFaturamentos[mes];
-      setFaturamentos(novosFaturamentos);
-    }
-  };
-
-  const handleFaturamentoBlur = async (mes: string) => {
-  const valor = faturamentos[mes] || 0;
-  await salvarFaturamentoMes(mes, valor);
-};
-
-  const formatarInputFat = (mes: string) => {
-    const valor = faturamentos[mes];
-    return valor ? valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
-  };
-
   // --- CLASSES DE TEMA ---
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
-  const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
   const estiloLinhaBalanco = (mes: string, mostrarMarcador = false) => mesBalancoEmDestaque === mes ? {
     backgroundColor: darkMode
@@ -254,15 +226,11 @@ export default function BalancoGeral({
                       style={estiloLinhaBalanco(mes)}
                     >
                       <div className="w-20 border-r border-[#00b050]/20 flex items-center justify-center font-semibold px-1 text-[10px] text-[#00b050] bg-transparent">{mes}</div>
-                      <div className="flex-1 flex items-center px-2">
-                        <input
-  type="text"
-  value={formatarInputFat(mes)}
-  onChange={(e) => handleFaturamentoChange(mes, e.target.value)}
-  onBlur={() => handleFaturamentoBlur(mes)}
-  className="w-full bg-transparent outline-none font-semibold text-right text-[#00b050] dark:text-[#2dd4bf]"
-  placeholder="0,00"
-/>
+                      <div className="flex-1 px-2 text-right font-semibold text-[#00b050] dark:text-[#2dd4bf]">
+                        {getFaturamentoMes(mes).toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </div>
                     </div>
                   ))}

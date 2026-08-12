@@ -82,7 +82,6 @@ import {
   definirStatusLancamento,
   salvarDashboardOrdemWeb,
   salvarFaturamentoBanco,
-  excluirFaturamentoBanco,
   salvarFaturamentoEntrada,
   atualizarFaturamentoEntrada,
   apagarFaturamentoEntrada,
@@ -883,7 +882,6 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   // Dados Financeiros
 const [mesFaturamento, setMesFaturamento] = useState('JANEIRO');
 const [faturamentos, setFaturamentos] = useState<Record<string, number>>({});
-const [inputFaturamento, setInputFaturamento] = useState('');
 const [mesResumoDash, setMesResumoDash] = useState('JANEIRO');
 
 const [faturamentosEntradas, setFaturamentosEntradas] = useState<EntradaFaturamento[]>([]);
@@ -895,8 +893,6 @@ const [entradaFaturamentoValorNumerico, setEntradaFaturamentoValorNumerico] = us
 const [entradaFaturamentoSalvando, setEntradaFaturamentoSalvando] = useState(false);
 const [modalReceitaDashboardAberto, setModalReceitaDashboardAberto] = useState(false);
 const [mesReceitaDashboard, setMesReceitaDashboard] = useState('JANEIRO');
-const [tipoReceitaDashboard, setTipoReceitaDashboard] = useState<'entrada' | 'total'>('entrada');
-const [valorReceitaDashboardConfirmacao, setValorReceitaDashboardConfirmacao] = useState(0);
 const [entradaFaturamentoEditandoId, setEntradaFaturamentoEditandoId] = useState<string | null>(null);
 const [editEntradaFaturamentoDia, setEditEntradaFaturamentoDia] = useState('');
 const [editEntradaFaturamentoOrigem, setEditEntradaFaturamentoOrigem] = useState('');
@@ -2129,8 +2125,6 @@ useEffect(() => {
     setEntradaFaturamentoOrigem('');
     setEntradaFaturamentoValor('');
     setEntradaFaturamentoValorNumerico(0);
-    setInputFaturamento('');
-    setValorReceitaDashboardConfirmacao(0);
 
     setEntradaFaturamentoEditandoId(null);
     setEditEntradaFaturamentoDia('');
@@ -3663,11 +3657,6 @@ const entradasFaturamentoDoMes = useMemo(() => {
   });
 }, [buscaEntradaFaturamento, entradasFaturamentoOrdenadasDoMes]);
 
-const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
-  (acc, entrada) => entrada.status === 'prevista' ? acc : acc + Number(entrada.valor || 0),
-  0
-);
-
   const maiorGasto = lancamentosRealizadosDoMes.length > 0 ? lancamentosRealizadosDoMes.reduce((prev, curr) => (curr.valor > prev.valor ? curr : prev), { despesa: '', valor: 0 }) : { despesa: 'Nenhuma despesa', valor: 0 };
   const receitasTotais = Object.values(faturamentos).reduce((a, b) => a + b, 0);
   const despesasTotais = lancamentosRealizadosAno.reduce((a, b) => a + b.valor, 0);
@@ -3677,174 +3666,6 @@ const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-
-  const getEntradasPorMes = (mes: string) =>
-    faturamentosEntradas.filter((entrada) => entrada.mes === mes);
-
-  const getTotalEntradasPorMes = (mes: string) =>
-    getEntradasPorMes(mes)
-      .filter((entrada) => entrada.status !== 'prevista')
-      .reduce((acc, entrada) => acc + Number(entrada.valor || 0), 0);
-
-  const excluirEntradasFaturamentoDoMes = async (mes: string) => {
-    if (!empresaId) return false;
-
-    const { error } = await supabase
-      .from('faturamentos_entradas')
-      .delete()
-      .eq('empresa_id', empresaId)
-      .eq('ano', Number(anoSelecionado))
-      .eq('mes', mes);
-
-    if (error) {
-      console.error('Erro ao apagar entradas de faturamento do mês:', error);
-      return false;
-    }
-
-    setFaturamentosEntradas((prev) => prev.filter((entrada) => entrada.mes !== mes));
-    return true;
-  };
-
-  const salvarFaturamentoMes = async (mes: string, valor: number) => {
-  if (!empresaId) {
-    abrirAviso(
-      'Empresa não carregada',
-      'Tente atualizar a página e acessar novamente.'
-    );
-    return;
-  }
-
-  if (!mes) {
-    abrirAviso(
-      'Mês obrigatório',
-      'Selecione o mês do faturamento antes de salvar.'
-    );
-    return;
-  }
-
-  if (valor < 0) {
-  abrirAviso(
-    'Valor inválido',
-    'O faturamento não pode ser negativo.'
-  );
-  return;
-}
-
-  const salvo = await salvarFaturamentoBanco({
-    empresaId,
-    ano: Number(anoSelecionado),
-    mes,
-    valor,
-  });
-
-  if (!salvo) {
-    abrirAviso(
-      'Erro ao salvar faturamento',
-      'Não foi possível salvar o faturamento no banco.'
-    );
-    return;
-  }
-
-  setFaturamentos((prev) => ({
-    ...prev,
-    [mes]: valor,
-  }));
-  notificarFinanceiroAtualizado();
-};
-
-const salvarFaturamento = async (
-  modoAvulsas: 'perguntar' | 'somar' | 'substituir' = 'perguntar',
-  mesInformado?: string,
-  valorInformado?: number
-) => {
-  if (!empresaId) {
-    abrirAviso(
-      'Empresa não carregada',
-      'Tente atualizar a página e acessar novamente.'
-    );
-    return;
-  }
-
-  const mesSelecionado = mesInformado || mesFaturamento;
-
-  if (!mesSelecionado) {
-    abrirAviso(
-      'Mês obrigatório',
-      'Selecione o mês do faturamento antes de salvar.'
-    );
-    return;
-  }
-
-  const valorLimpo =
-    typeof valorInformado === 'number'
-      ? valorInformado
-      : parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
-
-  if (valorLimpo < 0) {
-  abrirAviso(
-    'Valor inválido',
-    'O faturamento não pode ser negativo.'
-  );
-  return;
-}
-
-  const entradasMes = getEntradasPorMes(mesSelecionado);
-  const totalEntradasMes = getTotalEntradasPorMes(mesSelecionado);
-  const possuiEntradasAvulsas = entradasMes.length > 0;
-  const valorFinal = modoAvulsas === 'somar' && totalEntradasMes > 0
-    ? totalEntradasMes + valorLimpo
-    : valorLimpo;
-
-  if (possuiEntradasAvulsas && modoAvulsas === 'perguntar') {
-    abrirConfirmacao({
-      titulo: 'Receitas avulsas existentes',
-      mensagem:
-        `Este mês já possui ${entradasMes.length} receita(s) avulsa(s) lançada(s).\n\nDeseja apagar esses lançamentos e manter somente o novo total de ${formatarMoeda(valorLimpo)}?\n\nSe escolher manter, o novo total será somado às receitas avulsas efetivadas e o total final de ${mesSelecionado} ficará em ${formatarMoeda(totalEntradasMes + valorLimpo)}.`,
-      textoConfirmar: 'Apagar avulsas',
-      textoCancelar: 'Manter e somar',
-      acao: async () => {
-        await salvarFaturamento('substituir', mesSelecionado, valorLimpo);
-      },
-      acaoCancelar: async () => {
-        await salvarFaturamento('somar', mesSelecionado, valorLimpo);
-      },
-    });
-    return;
-  }
-
-  if (modoAvulsas === 'substituir' && possuiEntradasAvulsas) {
-    const entradasApagadas = await excluirEntradasFaturamentoDoMes(mesSelecionado);
-    if (!entradasApagadas) {
-      abrirAviso(
-        'Erro ao apagar receitas',
-        'Não foi possível apagar as receitas avulsas deste mês. O total não foi alterado.'
-      );
-      return;
-    }
-  }
-
-  const salvo = await salvarFaturamentoBanco({
-    empresaId,
-    ano: Number(anoSelecionado),
-    mes: mesSelecionado,
-    valor: valorFinal,
-  });
-
-  if (salvo) {
-    setFaturamentos((prev) => ({
-      ...prev,
-      [mesSelecionado]: valorFinal,
-    }));
-
-    setInputFaturamento('');
-    notificarFinanceiroAtualizado();
-  } else {
-    abrirAviso(
-      'Erro ao salvar faturamento',
-      'Não foi possível salvar o faturamento no banco.'
-    );
-  }
-};
 
 const adicionarEntradaFaturamento = async (mesInformado?: string) => {
   if (entradaFaturamentoSalvando) return;
@@ -3968,18 +3789,11 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
   }
 };
 
-const limparCamposReceitaDashboard = (tipo = tipoReceitaDashboard) => {
-  if (tipo === 'entrada') {
-    setEntradaFaturamentoDia('');
-    setEntradaFaturamentoOrigem('');
-    setEntradaFaturamentoValor('');
-    setEntradaFaturamentoValorNumerico(0);
-    setValorReceitaDashboardConfirmacao(0);
-    return;
-  }
-
-  setInputFaturamento('');
-  setValorReceitaDashboardConfirmacao(0);
+const limparCamposReceitaDashboard = () => {
+  setEntradaFaturamentoDia('');
+  setEntradaFaturamentoOrigem('');
+  setEntradaFaturamentoValor('');
+  setEntradaFaturamentoValorNumerico(0);
 };
 
 const fecharModalReceitaDashboard = () => {
@@ -3996,26 +3810,6 @@ const solicitarEntradaFaturamentoDashboard = () => {
     return;
   }
 
-  setTipoReceitaDashboard('entrada');
-  setMesReceitaDashboard(mesAtivo || mesFaturamento || meses[new Date().getMonth()]);
-  setModalReceitaDashboardAberto(true);
-};
-
-const solicitarFaturamentoDashboard = () => {
-  const valorLimpo =
-    parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
-
-  if (valorLimpo <= 0) {
-    abrirAviso(
-      'Valor obrigatorio',
-      'Informe o valor da receita antes de continuar.'
-    );
-    return;
-  }
-
-  setTipoReceitaDashboard('total');
-  setValorReceitaDashboardConfirmacao(valorLimpo);
-  setInputFaturamento('');
   setMesReceitaDashboard(mesAtivo || mesFaturamento || meses[new Date().getMonth()]);
   setModalReceitaDashboardAberto(true);
 };
@@ -4241,49 +4035,6 @@ const solicitarFaturamentoDashboard = () => {
     });
   };
 
-const excluirTotalMes = async () => {
-  if (!empresaId) return;
-
-  const mes = mesAtivo || mesFaturamento;
-  if (!mes) {
-    abrirAviso('Mês não identificado', 'Selecione o mês antes de excluir o total.');
-    return;
-  }
-
-  const totalEntradas = getTotalEntradasPorMes(mes);
-
-  abrirConfirmacao({
-    titulo: 'Excluir total do mês',
-    mensagem: totalEntradas > 0
-      ? `O total definido manualmente será removido. As receitas lançadas (${formatarMoeda(totalEntradas)}) serão mantidas.`
-      : `Não há receitas lançadas neste mês. O total do mês será zerado.`,
-    textoConfirmar: 'Excluir total',
-    acao: async () => {
-      if (totalEntradas > 0) {
-        await salvarFaturamentoBanco({
-          empresaId,
-          ano: Number(anoSelecionado),
-          mes,
-          valor: totalEntradas,
-        });
-        setFaturamentos((prev) => ({ ...prev, [mes]: totalEntradas }));
-      } else {
-        await excluirFaturamentoBanco({
-          empresaId,
-          ano: Number(anoSelecionado),
-          mes,
-        });
-        setFaturamentos((prev) => {
-          const next = { ...prev };
-          delete next[mes];
-          return next;
-        });
-      }
-      notificarFinanceiroAtualizado();
-    },
-  });
-};
-
 const confirmarEntradaFaturamentoDashboard = async () => {
   const mesSelecionado = mesReceitaDashboard || mesFaturamento || mesAtivo;
 
@@ -4296,14 +4047,8 @@ const confirmarEntradaFaturamentoDashboard = async () => {
   }
 
   setModalReceitaDashboardAberto(false);
-  if (tipoReceitaDashboard === 'entrada') {
-    await adicionarEntradaFaturamento(mesSelecionado);
-    limparCamposReceitaDashboard('entrada');
-    return;
-  }
-
-  await salvarFaturamento('perguntar', mesSelecionado, valorReceitaDashboardConfirmacao);
-  limparCamposReceitaDashboard('total');
+  await adicionarEntradaFaturamento(mesSelecionado);
+  limparCamposReceitaDashboard();
 };
 
 const adicionarDespesaBase = async () => {
@@ -8433,20 +8178,11 @@ if (validacaoTelefoneObrigatoria) {
           }`}
         >
           <p className={`text-xs font-black uppercase tracking-wide ${textMuted}`}>
-            {tipoReceitaDashboard === 'entrada' ? 'Valor da receita' : 'Total informado'}
+            Valor da receita
           </p>
           <p className={`mt-1 text-lg font-black ${textStrong}`}>
-            {formatarMoeda(
-              tipoReceitaDashboard === 'entrada'
-                ? entradaFaturamentoValorNumerico
-                : valorReceitaDashboardConfirmacao
-            )}
+            {formatarMoeda(entradaFaturamentoValorNumerico)}
           </p>
-          {tipoReceitaDashboard === 'total' && getEntradasPorMes(mesReceitaDashboard).length > 0 && (
-            <p className={`mt-2 text-xs font-semibold leading-relaxed ${textMuted}`}>
-              Este mês já possui {getEntradasPorMes(mesReceitaDashboard).length} receita(s) avulsa(s). Ao confirmar, escolha se deseja apagar esses lançamentos ou manter e somar.
-            </p>
-          )}
         </div>
       </div>
 
@@ -10769,14 +10505,11 @@ if (validacaoTelefoneObrigatoria) {
   handleEntradaFaturamentoValorChange={handleEntradaFaturamentoValorChange}
   adicionarEntradaFaturamento={adicionarEntradaFaturamento}
   entradaFaturamentoSalvando={entradaFaturamentoSalvando}
-  faturamentoDoMes={faturamentos[mesAtivo || ''] || 0}
-  totalEntradasFaturamentoDoMes={totalEntradasFaturamentoDoMes}
   ordemEntradasFaturamento={ordemEntradasFaturamento}
   setOrdemEntradasFaturamento={setOrdemEntradasFaturamento}
   buscaEntradaFaturamento={buscaEntradaFaturamento}
   setBuscaEntradaFaturamento={setBuscaEntradaFaturamento}
   getMaxDias={getMaxDias}
-  formatarMoeda={formatarMoeda}
   corPrimaria={corPrimaria}
   darkMode={darkMode}
   bgCard={bgCard}
@@ -10989,12 +10722,9 @@ if (validacaoTelefoneObrigatoria) {
       meses={meses}
       lancamentos={lancamentos}
       faturamentos={faturamentos}
-      setFaturamentos={setFaturamentos}
       corPrimaria={corPrimaria}
       darkMode={darkMode}
       formatarMoeda={formatarMoeda}
-      anoSelecionado={anoSelecionado}
-      salvarFaturamentoMes={salvarFaturamentoMes}
       nomeEmpresa={nomeEmpresaAtual}
     />
   </div>
@@ -11069,12 +10799,6 @@ if (validacaoTelefoneObrigatoria) {
         totalDespesasMes={totalDespesasMes}
         maiorGasto={maiorGasto}
         lucroOperacional={lucroOperacional}
-  inputFaturamento={inputFaturamento}
-  setInputFaturamento={setInputFaturamento}
-  placeholderFaturamento="0,00"
-  solicitarFaturamentoDashboard={solicitarFaturamentoDashboard}
-  excluirTotalMes={excluirTotalMes}
-  faturamentoDoMes={faturamentoDoMesAtual}
         entradaFaturamentoDia={entradaFaturamentoDia}
         setEntradaFaturamentoDia={setEntradaFaturamentoDia}
         entradaFaturamentoOrigem={entradaFaturamentoOrigem}

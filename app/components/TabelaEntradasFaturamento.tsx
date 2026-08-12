@@ -12,7 +12,6 @@ export type EntradaFaturamento = {
   status?: string | null;
   tipo?: string | null;
   etiquetaOrigem?: string | null;
-  totalMensal?: boolean;
 };
 
 type TabelaEntradasFaturamentoProps = {
@@ -81,7 +80,6 @@ export default function TabelaEntradasFaturamento({
         <table className="w-full min-w-[560px] text-left border-collapse">
           <tbody>
             {entradas.map((entrada) => {
-            const ehTotalMensal = entrada.totalMensal === true;
             const ehRecebimentos = entrada.tipo === 'recebimentos_sistema';
             const ehProtegida = ehRecebimentos || entrada.tipo === 'vendas_mobile_sistema';
 
@@ -90,7 +88,7 @@ export default function TabelaEntradasFaturamento({
               key={entrada.id}
               className="border-b border-dotted border-slate-300/40"
             >
-              {entradaEditandoId === entrada.id && !ehTotalMensal && !ehProtegida ? (
+              {entradaEditandoId === entrada.id && !ehProtegida ? (
                 <>
                   <td className="py-1.5 px-1.5 w-16 text-center">
                     <input
@@ -156,23 +154,12 @@ export default function TabelaEntradasFaturamento({
               ) : (
                 <>
                   <td className="py-2 px-4 w-24 text-center text-xs font-bold">
-                    {ehTotalMensal ? (
-                      <span className="inline-flex rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">
-                        Mes
-                      </span>
-                    ) : (
-                      String(entrada.dia).padStart(2, '0')
-                    )}
+                    {String(entrada.dia).padStart(2, '0')}
                   </td>
 
                   <td className="max-w-[240px] break-words py-2 px-4 text-xs font-semibold">
                     <span className="inline-flex flex-wrap items-center gap-1.5">
                       <span>{entrada.origem || '-'}</span>
-                      {ehTotalMensal && (
-                        <span className="inline-flex items-center rounded-full bg-cyan-100 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-700">
-                          Total mensal
-                        </span>
-                      )}
                       {entrada.status === 'prevista' && (
                         <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-emerald-700">
                           Previsto
@@ -191,11 +178,7 @@ export default function TabelaEntradasFaturamento({
                   </td>
 
                   <td className="py-2 px-4 w-24 text-center">
-                    {ehTotalMensal ? (
-                      <span className="text-[10px] font-black uppercase text-slate-400">
-                        Total
-                      </span>
-                    ) : ehProtegida ? (
+                    {ehProtegida ? (
                       <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-slate-500">
                         Protegida
                       </span>
