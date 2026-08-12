@@ -1,7 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.09 -->
-<!-- avantavendas-asset-revision: 65 -->
+<!-- ava-version: 1.7.3.10 -->
+<!-- avantavendas-asset-revision: 66 -->
+
+> Revisão 1.7.3.10-av66: em **Configurações > Gerenciar contas**, cada perfil
+> separa nome, vínculo e permissão para facilitar a leitura. Em **Adicionar
+> usuário**, o e-mail e a permissão aparecem em campos identificados; quando o
+> e-mail não possui conta AvantaLab, o aviso **Usuário não encontrado** fica
+> sobre o formulário e **Voltar** preserva o e-mail para correção.
 
 > Revisão 1.7.3.09: refinamento visual exclusivo do Menu da Gestão Mobile; sem
 > impacto operacional no AvantaVendas.

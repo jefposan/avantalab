@@ -4212,8 +4212,8 @@ async function trocarContaVendas(contaId) {
 function abrirContasVendas() {
   const contas = state.contasVendas || [];
   const ativa = state.contaVendasAtiva;
-  const linhas = contas.map((conta) => `<button type="button" class="secondary ${conta.id === ativa?.id ? 'is-selected' : ''}" onclick="trocarContaVendas('${conta.id}');fecharSheet()"><b>${escapeHtml(conta.nome)}</b><small>${escapeHtml(conta.empresa_nome || 'Conta independente')} · ${escapeHtml(conta.papel || 'vendedor')}</small></button>`).join('');
-  sheet(`<div class="sheet-header"><div><h2>Perfis de vendas</h2><p class="muted small">Escolha uma conta, crie outra ou compartilhe a conta ativa.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid">${linhas}</div><div class="actions"><button class="primary" onclick="abrirCriarContaVendas()">${svgIcon('plus')} Criar perfil de vendas</button>${['proprietario','administrador'].includes(ativa?.papel) ? `<button class="secondary" onclick="abrirCompartilharContaVendas()">${svgIcon('users')} Adicionar usuário</button>` : ''}</div>`, 'sheet-backdrop-centered');
+  const linhas = contas.map((conta) => `<button type="button" class="sales-account-choice secondary ${conta.id === ativa?.id ? 'is-selected' : ''}" onclick="trocarContaVendas('${conta.id}');fecharSheet()"><b>${escapeHtml(conta.nome)}</b><span><small>${escapeHtml(conta.empresa_nome || 'Conta independente')}</small><small>${escapeHtml(conta.papel || 'vendedor')}</small></span></button>`).join('');
+  sheet(`<div class="sheet-header"><div><h2>Perfis de vendas</h2><p class="muted small">Escolha uma conta, crie outra ou compartilhe a conta ativa.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid sales-account-choice-list">${linhas}</div><div class="actions"><button class="primary" onclick="abrirCriarContaVendas()">${svgIcon('plus')} Criar perfil de vendas</button>${['proprietario','administrador'].includes(ativa?.papel) ? `<button class="secondary" onclick="abrirCompartilharContaVendas()">${svgIcon('users')} Adicionar usuário</button>` : ''}</div>`, 'sheet-backdrop-centered');
 }
 
 function abrirCriarContaVendas() {
@@ -4237,7 +4237,22 @@ async function criarContaVendas() {
 function abrirCompartilharContaVendas() {
   const conta = state.contaVendasAtiva;
   if (!conta) return;
-  sheet(`<div class="sheet-header"><div><h2>Adicionar usuário</h2><p class="muted small">Conta: ${escapeHtml(conta.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><label>E-mail do usuário<input id="contaVendasUsuarioEmail" type="email" autocomplete="email" placeholder="nome@empresa.com"></label><label>Permissão<select id="contaVendasUsuarioPapel"><option value="vendedor">Vendedor</option><option value="consulta">Consulta</option><option value="administrador">Administrador</option></select></label><small>O usuário passará a ver esta conta no mesmo login, sem acesso às suas outras contas.</small><button class="primary" onclick="adicionarUsuarioContaVendas()">Adicionar acesso</button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>Adicionar usuário</h2><p class="muted small">Conta: ${escapeHtml(conta.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid create-sales-profile-form share-sales-account-form"><div class="field"><label for="contaVendasUsuarioEmail">E-mail do usuário:</label><input id="contaVendasUsuarioEmail" type="email" autocomplete="email" inputmode="email" placeholder="nome@empresa.com"></div><div class="field"><label for="contaVendasUsuarioPapel">Permissão:</label><select id="contaVendasUsuarioPapel"><option value="vendedor">Vendedor</option><option value="consulta">Consulta</option><option value="administrador">Administrador</option></select></div><div class="create-sales-profile-help">O usuário passará a ver esta conta no mesmo login, sem acesso às suas outras contas.</div><button class="primary" onclick="adicionarUsuarioContaVendas()">Adicionar acesso</button></div>`, 'sheet-backdrop-centered');
+}
+
+function abrirAvisoUsuarioContaVendasNaoEncontrado() {
+  if (document.getElementById('accountUserNotFoundBackdrop')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'accountUserNotFoundBackdrop';
+  wrap.className = 'account-user-alert-backdrop';
+  wrap.innerHTML = `<section class="sheet account-user-alert-card"><div class="access-validation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="accountUserNotFoundTitle" aria-describedby="accountUserNotFoundMessage"><div class="access-validation-icon" aria-hidden="true">${svgIcon('warning')}</div><h2 id="accountUserNotFoundTitle">Usuário não encontrado</h2><p id="accountUserNotFoundMessage">Nenhuma conta AvantaLab foi encontrada para este e-mail.</p><button id="accountUserNotFoundBack" type="button" class="primary" onclick="fecharAvisoUsuarioContaVendasNaoEncontrado()">Voltar</button></div></section>`;
+  document.body.appendChild(wrap);
+  requestAnimationFrame(() => document.getElementById('accountUserNotFoundBack')?.focus());
+}
+
+function fecharAvisoUsuarioContaVendasNaoEncontrado() {
+  document.getElementById('accountUserNotFoundBackdrop')?.remove();
+  requestAnimationFrame(() => document.getElementById('contaVendasUsuarioEmail')?.focus({ preventScroll: true }));
 }
 
 async function adicionarUsuarioContaVendas() {
@@ -4248,7 +4263,14 @@ async function adicionarUsuarioContaVendas() {
     await window.VendasDb.adicionarUsuarioContaVendas(state.contaVendasAtiva.id, email, papel);
     fecharSheet();
     toast('Acesso concedido. A conta aparecerá para este usuário no próximo carregamento.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    const mensagem = traduzErro(error);
+    if (/Nenhuma conta AvantaLab foi encontrada para este e-mail/i.test(mensagem)) {
+      abrirAvisoUsuarioContaVendasNaoEncontrado();
+      return;
+    }
+    toast(mensagem);
+  }
 }
 
 async function salvarIntegracaoGestao(base) {
@@ -8039,6 +8061,7 @@ window.trocarTipoLogin = trocarTipoLogin;
 window.alternarSenhaLogin = alternarSenhaLogin;
 window.alternarSenhaCampoVendas = alternarSenhaCampoVendas;
 window.fecharAvisoAcessoVendas = fecharAvisoAcessoVendas;
+window.fecharAvisoUsuarioContaVendasNaoEncontrado = fecharAvisoUsuarioContaVendasNaoEncontrado;
 window.voltarInicioAposExclusaoVendas = voltarInicioAposExclusaoVendas;
 window.abrirRecuperacaoSenha = abrirRecuperacaoSenha;
 window.enviarRecuperacaoSenha = enviarRecuperacaoSenha;

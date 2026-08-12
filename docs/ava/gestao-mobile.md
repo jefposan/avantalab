@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.09 -->
+<!-- ava-version: 1.7.3.10 -->
+
+> Revisão 1.7.3.10: ajustes de perfis e compartilhamento exclusivos do
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.7.3.09: **Sugestões** e **Sair** permanecem visíveis no rodapé do
 > Menu, acima da navegação inferior. Preferências mantém o aviso de lançamentos

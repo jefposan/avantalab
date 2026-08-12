@@ -785,6 +785,62 @@ body.sheet-open {
 .dark-theme .create-sales-profile-form .field input:focus-visible,
 .dark-theme .create-sales-profile-form .field select:focus-visible { border-color: #67e8f9; box-shadow: 0 0 0 3px rgba(103,232,249,.2); }
 .dark-theme .create-sales-profile-help { border-left-color: #38bdf8; color: #bae6fd; background: #102838; }
+.sales-account-choice-list { gap: 10px; }
+.sales-account-choice {
+  display: grid;
+  width: 100%;
+  min-height: 70px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #c7e2f0;
+  border-radius: 16px;
+  padding: 13px 15px;
+  color: #0874c5;
+  background: #edf8fc;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.sales-account-choice > b {
+  overflow: hidden;
+  color: #0874c5;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sales-account-choice > span { display: grid; justify-items: end; gap: 4px; }
+.sales-account-choice small { color: #47718f; font-size: 10px; font-weight: 800; letter-spacing: .055em; line-height: 1.2; text-align: right; text-transform: uppercase; }
+.sales-account-choice small:last-child { color: #0874c5; }
+.sales-account-choice.is-selected { border-color: #1687D9; background: linear-gradient(135deg, #e7f6fd, #f5fbfe); box-shadow: inset 4px 0 0 #1687D9; }
+.sales-account-choice:focus-visible { outline: 3px solid rgba(22,135,217,.35); outline-offset: 2px; }
+.dark-theme .sales-account-choice { border-color: #1e4b68; color: #7dd3fc; background: #102838; }
+.dark-theme .sales-account-choice > b, .dark-theme .sales-account-choice small:last-child { color: #7dd3fc; }
+.dark-theme .sales-account-choice small { color: #b5d6e9; }
+.dark-theme .sales-account-choice.is-selected { border-color: #38bdf8; background: #12324a; box-shadow: inset 4px 0 0 #38bdf8; }
+.account-user-alert-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--vendas-layer-modal) + 10);
+  display: grid;
+  place-items: center;
+  padding: max(18px, var(--vendas-safe-top)) 18px calc(18px + var(--vendas-safe-bottom));
+  background: rgba(2, 8, 23, .58);
+  backdrop-filter: blur(2px);
+}
+.account-user-alert-card {
+  width: min(88vw, 360px);
+  overflow: visible;
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 24px 60px rgba(2, 8, 23, .34);
+}
+.account-user-alert-card .primary { min-width: 150px; }
+.dark-theme .account-user-alert-card { border-color: #334155; background: #172033; }
+.dark-theme .account-user-alert-card .access-validation-dialog h2 { color: #f8fafc; }
+.dark-theme .account-user-alert-card .access-validation-dialog p { color: #cbd5e1; }
 .cliente-sheet-backdrop .sheet > .sheet-header { margin: -12px -12px 10px; padding: 12px; }
 .cliente-sheet-backdrop .client-birth-field { width: 100%; max-width: 100%; overflow: hidden; }
 .cliente-sheet-backdrop .client-birth-field > label { display: inline-flex; width: fit-content; align-items: center; gap: 5px; }

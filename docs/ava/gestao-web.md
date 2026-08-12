@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.09 -->
+<!-- ava-version: 1.7.3.10 -->
+
+> Revisão 1.7.3.10: ajustes de perfis e compartilhamento exclusivos do
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.3.09: refinamento visual exclusivo do Menu da Gestão Mobile; sem
 > impacto operacional na Gestão Web.

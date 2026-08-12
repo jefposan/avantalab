@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.3.10-av66 - 2026-08-12
+
+- AvantaVendas: os cartões de criação e compartilhamento de perfis seguem os
+  campos padronizados, com rótulos, contornos e espaçamento adequados. Quando
+  o e-mail informado não possuir conta AvantaLab, um aviso sobre o formulário
+  explica a situação e permite voltar sem perder o preenchimento.
+- AvantaVendas: a lista em **Perfis de vendas** separa nome, vínculo e
+  permissão em áreas próprias, evitando sobreposição de textos em telas móveis.
+
 ## 1.7.3.09 - 2026-08-12
 
 - Gestão Mobile: o rodapé encaixado com **Sugestões** e **Sair** passa a ficar
