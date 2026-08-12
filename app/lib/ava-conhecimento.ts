@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.15-av70: o Menu da Gestão Mobile começa diretamente
+// em Assinatura e plano, sem o título Uso diário; no AvantaVendas, Divulgação
+// atualiza silenciosamente ao entrar e aceita o gesto somente no cabeçalho fixo.
 // Revisado na versão 1.7.3.14: ao entrar em Divulgação ou puxar a página no
 // topo, o AvantaVendas relê as pastas e os materiais publicados.
 // Revisado na versão 1.7.3.13: alterações de receitas e despesas bloqueiam a
@@ -17,7 +20,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Revisado na versão 1.7.3.08: o Menu da Gestão Mobile mantém Conteúdo do Vendas
 // sempre visível em Sistemas e informa quando o acesso está indisponível.
 // Revisado na versão 1.7.3.07: o Menu da Gestão Mobile foi reorganizado por
-// uso diário, tela inicial, sistemas, configurações e ações de sessão.
+// botões principais, tela inicial, sistemas, configurações e ações de sessão.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -95,6 +98,7 @@ NAVEGAÇÃO E PERFIS
 - No card de cadastro, **Cadastrar com Google** e **Cadastrar com Apple** criam ou acessam a mesma conta-base do cadastro por e-mail. Se ainda faltarem dados do primeiro perfil, a Gestão solicita a conclusão depois da autenticação.
 - Durante o login com Google ou Apple, **Preparando acesso** oferece **Cancelar e voltar ao login**. A ação encerra a tentativa pendente e restaura a tela de login sem manter o botão em Conectando.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar tela inicial > Organizar atalhos inferiores; o mesmo grupo permite mostrar, ocultar e ordenar cards.
+- O Menu começa diretamente por Assinatura e plano, seguido dos demais botões principais; não há o título Uso diário acima dessa lista.
 - Avisos já recebidos ficam em Menu > Central de avisos e identificam o perfil financeiro de origem. Abrir ou fechar o painel não os remove; eles e o indicador permanecem até usar **Fechar aviso** ou **Fechar todas**. No iPhone, quando a Gestão confirma que não existem avisos pendentes, também remove os pushes antigos da Central de Notificações e zera o selo do ícone. O painel fica abaixo da área segura; quantidade e **Fechar todas** permanecem fixos enquanto os cards rolam. A ativação das notificações do aparelho fica em Menu > Configurações > Preferências > Receber notificações.
 - Gestor Master e Administrador recebem no sininho avisos de faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Tocar em um aviso de assinatura abre **Assinatura**; quando as notificações do aparelho estiverem ativas, ele também é entregue por push.
 - Em Menu > Configurações > Dados e segurança, Gestor Master, Administrador e Operador Completo abrem **Pontos de restauração**. Eles preservam o estado completo do perfil, incluindo agenda e preferências; somente Gestor Master restaura ou exclui. O backup por Excel permanece separado e não passa a incluir esses dados.
@@ -215,7 +219,7 @@ CATÁLOGO, PEDIDOS E PAGAMENTOS
 AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Agenda cria lembretes de visita, entrega e recebimento; pode expandir a visualização e mover a data de um item. Quando existem itens no dia atual, inclusive aniversários, o sininho do cabeçalho mostra a quantidade e abre diretamente a agenda de hoje; o bolo permanece como atalho específico dos aniversários.
 - Gestor Master, Administrador e Operador Completo podem publicar, editar ou excluir novidades, pastas, subpastas, imagens, vídeos e PDFs da Divulgação quando o módulo estiver ativo. Em uma pasta principal, podem escolher, trocar ou remover a capa usando uma imagem de qualquer subpasta. Operador Completo não instala módulos nem aprova acessos.
-- Novidades são publicações da empresa vinculada. Divulgação navega por pastas/subpastas, exibe nas pastas principais a capa definida pela Gestão e abre fotos, vídeos e PDFs para visualizar e compartilhar; ao entrar novamente em Divulgação, o aplicativo relê pastas e materiais. No celular, puxar a página para baixo a partir do topo e soltar após a indicação também atualiza o conteúdo e preserva a pasta aberta quando ela ainda existe. No visualizador ampliado, arrastar horizontalmente ou usar as setas alterna entre o arquivo anterior e o próximo da pasta.
+- Novidades são publicações da empresa vinculada. Divulgação navega por pastas/subpastas, exibe nas pastas principais a capa definida pela Gestão e abre fotos, vídeos e PDFs para visualizar e compartilhar; ao entrar novamente em Divulgação, o aplicativo relê pastas e materiais silenciosamente, sem mostrar aviso de atualização. No celular, puxar para baixo somente sobre o cabeçalho fixo da página mostra o fundo escuro, o círculo de progresso e o texto Puxe para atualizar usados pela Gestão; ao soltar depois de completar o círculo, o conteúdo é relido e a pasta aberta é preservada quando ainda existe. Arrastar a lista de pastas ou materiais não inicia a atualização. No visualizador ampliado, arrastar horizontalmente ou usar as setas alterna entre o arquivo anterior e o próximo da pasta.
 - Em Configurações há dados da conta, celular com validação SMS, senha AvantaLab, aparência, metas, catálogo, estoque, vínculos comerciais, destino financeiro, PWA, backup e reset. A ação Sair aparece somente no cabeçalho, sem repetição no fim da página. Resetar gera backup e apaga os dados locais do Vendas após confirmação. Ao atingir a meta mensal, o Dashboard celebra uma vez para aquela meta e mês e o card Meta do período informa “Meta atingida, parabéns!”.
 - Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta mensal e período de clientes inativos acompanham a conta pelo servidor. Na primeira abertura após a atualização, as preferências válidas deste aparelho são migradas automaticamente; a cópia local permanece apenas como contingência offline.
 - O vínculo comercial (notícias, divulgação e catálogo) pode ser diferente do destino financeiro pessoal (receitas no Gestão). A integração gera uma receita consolidada por mês e a atualiza no acesso. Não confunda os dois.

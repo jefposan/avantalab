@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.3.15-av70 - 2026-08-12
+
+- Gestão Mobile: o texto **Uso diário** foi removido do topo do Menu. A lista
+  passa a começar diretamente por **Assinatura e plano**, sem alterar a ordem
+  ou o funcionamento dos botões.
+- AvantaVendas: a releitura automática de **Divulgação** ao entrar na página
+  agora ocorre silenciosamente, sem exibir um aviso de atualização.
+- AvantaVendas: no celular, o gesto de puxar para atualizar começa somente no
+  cabeçalho fixo de **Divulgação**. Fundo escuro, círculo de progresso e textos
+  seguem exatamente o mesmo retorno visual usado na Gestão Mobile.
+
 ## 1.7.3.14-av69 - 2026-08-12
 
 - AvantaVendas: ao entrar novamente em **Divulgação**, o aplicativo relê

@@ -11489,7 +11489,6 @@
           '</div>' +
           '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;">' +
           '<div class="grid gap-1.5">' +
-            '<p class="px-1 pb-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Uso diário</p>' +
             ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios())
               ? menuBotaoHtml(
                   'menu-assinatura',

@@ -5,8 +5,8 @@ import { test } from 'node:test';
 const mobile = readFileSync('public/mobile-app.js', 'utf8');
 const mobilePage = readFileSync('app/mobile/page.tsx', 'utf8');
 
-test('menu mobile mantém a ordem definida para o uso diário', () => {
-  const inicio = mobile.indexOf("'<p class=\"px-1 pb-0.5");
+test('menu mobile começa pelos botões diários sem título redundante', () => {
+  const inicio = mobile.indexOf("'<div class=\"grid gap-1.5\">'");
   const fim = mobile.indexOf("'<button id=\"menu-organizacao-toggle\"", inicio);
   const usoDiario = mobile.slice(inicio, fim);
   const itens = [
@@ -25,6 +25,7 @@ test('menu mobile mantém a ordem definida para o uso diário', () => {
   }, -1);
   assert.match(usoDiario, /Assinatura e plano/);
   assert.match(usoDiario, /Central de avisos/);
+  assert.doesNotMatch(usoDiario, /Uso diário/);
 });
 
 test('organização, sistemas e configurações são grupos expansíveis', () => {

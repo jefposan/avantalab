@@ -1,7 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.14 -->
-<!-- avantavendas-asset-revision: 69 -->
+<!-- ava-version: 1.7.3.15 -->
+<!-- avantavendas-asset-revision: 70 -->
+
+> Revisão 1.7.3.15-av70: ao entrar em **Divulgação**, a releitura de pastas e
+> materiais ocorre silenciosamente. No celular, o gesto começa somente ao
+> puxar o cabeçalho fixo da página e apresenta o mesmo fundo escuro, círculo de
+> progresso e textos da atualização da Gestão Mobile. A remoção do título
+> **Uso diário** continua exclusiva do Menu da Gestão Mobile.
 
 > Revisão 1.7.3.14-av69: ao abrir novamente **Divulgação**, as pastas e os
 > materiais publicados são relidos. No celular, também é possível puxar a

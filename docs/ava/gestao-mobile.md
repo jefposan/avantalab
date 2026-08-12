@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.14 -->
+<!-- ava-version: 1.7.3.15 -->
+
+> Revisão 1.7.3.15: o Menu começa diretamente por **Assinatura e plano**. O
+> título **Uso diário** foi retirado, sem alterar a ordem ou o funcionamento dos
+> botões. O novo comportamento de atualização da Divulgação é exclusivo do
+> AvantaVendas e reutiliza o retorno visual já existente nesta Gestão.
 
 > Revisão 1.7.3.14: releitura de materiais exclusiva da interface do
 > AvantaVendas; sem impacto operacional na Gestão Mobile.

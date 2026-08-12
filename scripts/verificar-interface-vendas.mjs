@@ -389,14 +389,22 @@ exigir(
     && aplicacao.includes("if (entradaDivulgacao) void atualizarDivulgacao('entrada');")
     && aplicacao.includes("if (aba === 'divulgacao') void atualizarDivulgacao('atalho');")
     && aplicacao.includes("function iniciarGestoAtualizacaoDivulgacao(evento)")
-    && aplicacao.includes("posicaoRolagemPrincipalVendas() > 0")
+    && aplicacao.includes("const LIMIAR_ATUALIZACAO_DIVULGACAO = 280;")
+    && aplicacao.includes("alvo?.closest('.divulgacao-page .module-sticky-head')")
     && aplicacao.includes("void atualizarDivulgacao('gesto')")
-    && aplicacao.includes("toast('Materiais atualizados.')")
-    && estilos.includes('.divulgacao-refresh-indicator.is-pulling { opacity: 1; }')
-    && estilos.includes('.divulgacao-refresh-indicator.is-refreshing { opacity: 1;')
+    && aplicacao.includes("if (origem !== 'entrada') toast('Não foi possível atualizar os materiais neste momento.');")
+    && aplicacao.includes("background:#020617;opacity:0;will-change:opacity;")
+    && aplicacao.includes('data-pull-progress')
+    && aplicacao.includes('Puxe para atualizar')
+    && aplicacao.includes("? 'Recarregando...'\n    : (distancia >= LIMIAR_ATUALIZACAO_DIVULGACAO ? 'Recarregar' : 'Puxe para atualizar');")
+    && aplicacao.includes("camada.style.pointerEvents = 'auto';")
+    && !aplicacao.includes('divulgacao-refresh-indicator')
+    && estilos.includes('@keyframes pullRefreshSpin { to { transform: rotate(270deg); } }')
+    && estilos.includes('@keyframes pullRefreshReady')
     && estilos.includes('@media (prefers-reduced-motion: reduce)')
-    && estilos.includes('.divulgacao-refresh-indicator.is-refreshing .svg-icon { animation: none; }'),
-  'Divulgação deve reler apenas pastas e materiais ao entrar novamente e permitir puxar para atualizar somente no topo, com retorno visual e movimento reduzido.',
+    && estilos.includes('#divulgacao-pull-refresh-indicator [data-pull-ring]')
+    && !estilos.includes('.divulgacao-refresh-indicator'),
+  'Divulgação deve reler os materiais silenciosamente ao entrar e permitir o gesto somente no cabeçalho fixo, com a mesma camada visual do Gestão e movimento reduzido.',
 );
 exigir(
   aplicacao.includes('function prepararExibicaoSalaBotoesNoDom()')

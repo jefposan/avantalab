@@ -325,7 +325,15 @@ let divulgacaoPastaAtualId = null;
 let divulgacaoMaterialAtualId = null;
 let divulgacaoAtualizando = false;
 let gestoAtualizacaoDivulgacao = null;
-const LIMIAR_ATUALIZACAO_DIVULGACAO = 64;
+let indicadorAtualizacaoDivulgacaoEl = null;
+let camadaAtualizacaoDivulgacaoEl = null;
+let opacidadeAtualizacaoDivulgacaoAtual = 0;
+let opacidadeAtualizacaoDivulgacaoDestino = 0;
+let frameOpacidadeAtualizacaoDivulgacao = null;
+let ultimoFrameOpacidadeAtualizacaoDivulgacao = 0;
+const LIMIAR_ATUALIZACAO_DIVULGACAO = 280;
+const EXIBIR_ATUALIZACAO_DIVULGACAO_APOS = 20;
+const OPACIDADE_ATUALIZACAO_DIVULGACAO_EM = 56;
 let gestoMaterialDivulgacao = null;
 let ignorarCliqueMaterialDivulgacaoAte = 0;
 let renderizacaoPdfMaterialAtual = 0;
@@ -1183,7 +1191,10 @@ function setAba(aba) {
   }
   if (entradaClientes) restaurarPesquisaClientes();
   if (aba !== 'agenda') fecharCamadasAgenda();
-  if (aba !== 'divulgacao') divulgacaoPastaAtualId = null;
+  if (aba !== 'divulgacao') {
+    divulgacaoPastaAtualId = null;
+    cancelarGestoAtualizacaoDivulgacao();
+  }
   if (aba === 'vendas' && state.aba !== 'vendas') limitePedidos = 10;
   if (aba === 'vender' && state.aba !== 'vender') limiteClientesPagamentos = 10;
   if (aba === 'informacoes' && state.aba !== 'informacoes') {
@@ -3847,17 +3858,24 @@ function renderizarDivulgacaoPreservandoRolagem(posicao) {
 async function atualizarDivulgacao(origem = 'entrada') {
   if (divulgacaoAtualizando) return;
   if (!backendAtivo || !window.VendasDb?.carregarDivulgacao) {
-    toast('Não foi possível atualizar os materiais neste momento.');
+    if (origem !== 'entrada') toast('Não foi possível atualizar os materiais neste momento.');
+    if (origem === 'gesto') esconderIndicadorGestoDivulgacao();
     return;
   }
   if (!navigator.onLine) {
-    toast('Conecte-se à internet para atualizar os materiais.');
+    if (origem !== 'entrada') toast('Conecte-se à internet para atualizar os materiais.');
+    if (origem === 'gesto') esconderIndicadorGestoDivulgacao();
     return;
   }
   const posicaoAnterior = posicaoRolagemPrincipalVendas();
+  const iniciadoEm = Date.now();
   divulgacaoAtualizando = true;
   gestoAtualizacaoDivulgacao = null;
-  renderizarDivulgacaoPreservandoRolagem(posicaoAnterior);
+  if (origem === 'gesto') {
+    atualizarIndicadorGestoDivulgacao(LIMIAR_ATUALIZACAO_DIVULGACAO, true);
+    const camada = camadaAtualizacaoDivulgacao();
+    camada.style.pointerEvents = 'auto';
+  }
   try {
     const dados = await window.VendasDb.carregarDivulgacao();
     state.divulgacaoPastas = dados.divulgacaoPastas || [];
@@ -3866,40 +3884,151 @@ async function atualizarDivulgacao(origem = 'entrada') {
       divulgacaoPastaAtualId = null;
     }
     await salvarCacheVendas();
-    if (origem === 'gesto' || origem === 'atalho') toast('Materiais atualizados.');
+    if (origem === 'atalho') toast('Materiais atualizados.');
   } catch (error) {
     console.warn('Não foi possível atualizar a Divulgação.', error);
-    toast(`${traduzErro(error)} Os materiais anteriores continuam disponíveis.`);
+    if (origem !== 'entrada') toast(`${traduzErro(error)} Os materiais anteriores continuam disponíveis.`);
   } finally {
+    if (origem === 'gesto') {
+      const espera = Math.max(0, 750 - (Date.now() - iniciadoEm));
+      if (espera) await new Promise((resolve) => window.setTimeout(resolve, espera));
+    }
     divulgacaoAtualizando = false;
     renderizarDivulgacaoPreservandoRolagem(posicaoAnterior);
+    if (origem === 'gesto') esconderIndicadorGestoDivulgacao();
   }
 }
 
+function posicionarIndicadorAtualizacaoDivulgacao() {
+  if (!indicadorAtualizacaoDivulgacaoEl) return;
+  const cabecalho = document.querySelector('.system-header');
+  const topo = cabecalho ? Math.round(cabecalho.getBoundingClientRect().bottom + 64) : 72;
+  indicadorAtualizacaoDivulgacaoEl.style.top = `${topo}px`;
+}
+
+function camadaAtualizacaoDivulgacao() {
+  if (camadaAtualizacaoDivulgacaoEl) return camadaAtualizacaoDivulgacaoEl;
+  camadaAtualizacaoDivulgacaoEl = document.createElement('div');
+  camadaAtualizacaoDivulgacaoEl.id = 'divulgacao-pull-refresh-backdrop';
+  camadaAtualizacaoDivulgacaoEl.style.cssText = 'position:fixed;inset:0;z-index:9998;pointer-events:none;background:#020617;opacity:0;will-change:opacity;';
+  document.body.appendChild(camadaAtualizacaoDivulgacaoEl);
+  return camadaAtualizacaoDivulgacaoEl;
+}
+
+function animarOpacidadeAtualizacaoDivulgacao(destino) {
+  camadaAtualizacaoDivulgacao();
+  opacidadeAtualizacaoDivulgacaoDestino = Math.max(0, Math.min(Number(destino) || 0, 0.86));
+  if (frameOpacidadeAtualizacaoDivulgacao !== null) return;
+
+  ultimoFrameOpacidadeAtualizacaoDivulgacao = 0;
+  const renderizarFrame = (timestamp) => {
+    const agora = Number(timestamp) || Date.now();
+    const intervalo = ultimoFrameOpacidadeAtualizacaoDivulgacao
+      ? Math.min(40, Math.max(1, agora - ultimoFrameOpacidadeAtualizacaoDivulgacao))
+      : 16;
+    ultimoFrameOpacidadeAtualizacaoDivulgacao = agora;
+    const fator = 1 - Math.exp(-intervalo / 48);
+    opacidadeAtualizacaoDivulgacaoAtual += (opacidadeAtualizacaoDivulgacaoDestino - opacidadeAtualizacaoDivulgacaoAtual) * fator;
+
+    if (Math.abs(opacidadeAtualizacaoDivulgacaoDestino - opacidadeAtualizacaoDivulgacaoAtual) < 0.003) {
+      opacidadeAtualizacaoDivulgacaoAtual = opacidadeAtualizacaoDivulgacaoDestino;
+    }
+    if (camadaAtualizacaoDivulgacaoEl) {
+      camadaAtualizacaoDivulgacaoEl.style.opacity = opacidadeAtualizacaoDivulgacaoAtual.toFixed(3);
+    }
+
+    if (opacidadeAtualizacaoDivulgacaoAtual !== opacidadeAtualizacaoDivulgacaoDestino) {
+      frameOpacidadeAtualizacaoDivulgacao = window.requestAnimationFrame(renderizarFrame);
+    } else {
+      frameOpacidadeAtualizacaoDivulgacao = null;
+      ultimoFrameOpacidadeAtualizacaoDivulgacao = 0;
+    }
+  };
+
+  frameOpacidadeAtualizacaoDivulgacao = window.requestAnimationFrame(renderizarFrame);
+}
+
 function indicadorAtualizacaoDivulgacao() {
-  return document.querySelector('.divulgacao-refresh-indicator');
+  if (indicadorAtualizacaoDivulgacaoEl) return indicadorAtualizacaoDivulgacaoEl;
+  indicadorAtualizacaoDivulgacaoEl = document.createElement('div');
+  indicadorAtualizacaoDivulgacaoEl.id = 'divulgacao-pull-refresh-indicator';
+  indicadorAtualizacaoDivulgacaoEl.setAttribute('role', 'status');
+  indicadorAtualizacaoDivulgacaoEl.setAttribute('aria-live', 'polite');
+  indicadorAtualizacaoDivulgacaoEl.style.cssText = 'position:fixed;left:50%;top:0;z-index:9999;display:flex;width:220px;flex-direction:column;align-items:center;pointer-events:none;opacity:0;transform:translateX(-50%);transform-origin:top center;transition:opacity .12s ease;';
+  indicadorAtualizacaoDivulgacaoEl.innerHTML =
+    '<span data-pull-ring style="position:relative;display:flex;width:88px;height:88px;align-items:center;justify-content:center;border-radius:999px;background:rgba(2,6,23,.58);box-shadow:0 12px 28px rgba(2,6,23,.26);backdrop-filter:blur(8px);transform:scale(.84);will-change:transform;">' +
+      '<svg data-pull-svg width="88" height="88" viewBox="0 0 88 88" fill="none" style="position:absolute;inset:0;transform:rotate(-90deg);transform-origin:center;will-change:transform;">' +
+        '<circle cx="44" cy="44" r="36" stroke="rgba(255,255,255,.22)" stroke-width="9"></circle>' +
+        '<circle data-pull-progress cx="44" cy="44" r="36" stroke="#38bdf8" stroke-width="9" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2" style="will-change:stroke-dashoffset;"></circle>' +
+      '</svg>' +
+      '<span data-pull-symbol style="position:relative;color:#e0f2fe;font-size:33px;font-weight:900;line-height:1;will-change:transform;">&#8635;</span>' +
+    '</span>' +
+    '<span data-pull-text style="margin-top:12px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(2,6,23,.62);padding:8px 15px;color:#fff;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:0 10px 24px rgba(2,6,23,.22);opacity:0;white-space:nowrap;transition:opacity .12s ease;">Puxe para atualizar</span>';
+  document.body.appendChild(indicadorAtualizacaoDivulgacaoEl);
+  posicionarIndicadorAtualizacaoDivulgacao();
+  return indicadorAtualizacaoDivulgacaoEl;
 }
 
-function atualizarIndicadorGestoDivulgacao(deslocamento) {
+function atualizarIndicadorGestoDivulgacao(distancia, soltou = false) {
   const indicador = indicadorAtualizacaoDivulgacao();
-  if (!indicador) return;
-  const pronto = deslocamento >= LIMIAR_ATUALIZACAO_DIVULGACAO;
-  indicador.classList.add('is-pulling');
-  indicador.classList.toggle('is-ready', pronto);
-  indicador.style.setProperty('--divulgacao-pull-distance', `${Math.round(deslocamento)}px`);
   indicador.setAttribute('aria-hidden', 'false');
-  const texto = indicador.querySelector('b');
-  if (texto) texto.textContent = pronto ? 'Solte para atualizar' : 'Puxe para atualizar';
+  const progresso = Math.max(0, Math.min(distancia / LIMIAR_ATUALIZACAO_DIVULGACAO, 1));
+  const progressoAviso = Math.max(0, Math.min(
+    (distancia - EXIBIR_ATUALIZACAO_DIVULGACAO_APOS)
+      / (OPACIDADE_ATUALIZACAO_DIVULGACAO_EM - EXIBIR_ATUALIZACAO_DIVULGACAO_APOS),
+    1,
+  ));
+  const progressoEscurecimentoRapido = Math.max(0, Math.min(
+    distancia / OPACIDADE_ATUALIZACAO_DIVULGACAO_EM,
+    1,
+  ));
+  const visivel = distancia >= EXIBIR_ATUALIZACAO_DIVULGACAO_APOS;
+  const texto = indicador.querySelector('[data-pull-text]');
+  const anel = indicador.querySelector('[data-pull-ring]');
+  const svg = indicador.querySelector('[data-pull-svg]');
+  const progressoCirculo = indicador.querySelector('[data-pull-progress]');
+  const simbolo = indicador.querySelector('[data-pull-symbol]');
+  const circunferencia = 226.2;
+
+  posicionarIndicadorAtualizacaoDivulgacao();
+  const opacidadeFundo = distancia > 0
+    ? 0.16 + (0.42 * progressoEscurecimentoRapido) + (0.18 * progresso)
+    : 0;
+  animarOpacidadeAtualizacaoDivulgacao(soltou ? 0.84 : opacidadeFundo);
+  indicador.style.opacity = distancia > 2 ? String(Math.max(0.28, Math.min(distancia / 36, 1))) : '0';
+  indicador.style.transform = `translate(-50%, ${Math.round(96 * progresso)}px)`;
+  if (texto) texto.textContent = soltou
+    ? 'Recarregando...'
+    : (distancia >= LIMIAR_ATUALIZACAO_DIVULGACAO ? 'Recarregar' : 'Puxe para atualizar');
+  if (texto) texto.style.opacity = soltou ? '1' : (visivel ? String(Math.max(0.35, progressoAviso)) : '0');
+  if (anel) {
+    anel.style.transform = `scale(${(0.84 + (0.16 * progressoAviso)).toFixed(3)})`;
+    anel.style.animation = !soltou && distancia >= LIMIAR_ATUALIZACAO_DIVULGACAO
+      ? 'pullRefreshReady .8s ease-in-out infinite'
+      : 'none';
+  }
+  if (progressoCirculo) {
+    if (soltou) {
+      progressoCirculo.setAttribute('stroke-dasharray', '63 163.2');
+      progressoCirculo.setAttribute('stroke-dashoffset', '0');
+    } else {
+      progressoCirculo.setAttribute('stroke-dasharray', String(circunferencia));
+      progressoCirculo.setAttribute('stroke-dashoffset', (circunferencia * (1 - progresso)).toFixed(2));
+    }
+  }
+  if (svg) svg.style.animation = soltou ? 'pullRefreshSpin .72s linear infinite' : 'none';
+  if (simbolo) simbolo.style.transform = `rotate(${Math.round(260 * progresso)}deg)`;
 }
 
-function limparIndicadorGestoDivulgacao() {
-  const indicador = indicadorAtualizacaoDivulgacao();
-  if (!indicador || divulgacaoAtualizando) return;
-  indicador.classList.remove('is-pulling', 'is-ready');
-  indicador.style.removeProperty('--divulgacao-pull-distance');
-  indicador.setAttribute('aria-hidden', 'true');
-  const texto = indicador.querySelector('b');
-  if (texto) texto.textContent = 'Puxe para atualizar';
+function esconderIndicadorGestoDivulgacao() {
+  if (!indicadorAtualizacaoDivulgacaoEl && !camadaAtualizacaoDivulgacaoEl) return;
+  if (indicadorAtualizacaoDivulgacaoEl) {
+    indicadorAtualizacaoDivulgacaoEl.style.opacity = '0';
+    indicadorAtualizacaoDivulgacaoEl.style.transform = 'translate(-50%, 0)';
+    indicadorAtualizacaoDivulgacaoEl.setAttribute('aria-hidden', 'true');
+  }
+  if (camadaAtualizacaoDivulgacaoEl) camadaAtualizacaoDivulgacaoEl.style.pointerEvents = 'none';
+  animarOpacidadeAtualizacaoDivulgacao(0);
 }
 
 function iniciarGestoAtualizacaoDivulgacao(evento) {
@@ -3911,11 +4040,7 @@ function iniciarGestoAtualizacaoDivulgacao(evento) {
     || document.getElementById('sheetBackdrop')
   ) return;
   const alvo = evento.target instanceof Element ? evento.target : null;
-  if (
-    !alvo?.closest('.divulgacao-page')
-    || alvo.closest('.module-sticky-head, input, a, video, [contenteditable="true"]')
-    || posicaoRolagemPrincipalVendas() > 0
-  ) return;
+  if (!alvo?.closest('.divulgacao-page .module-sticky-head')) return;
   const toque = evento.touches[0];
   gestoAtualizacaoDivulgacao = {
     inicioX: toque.clientX,
@@ -3933,16 +4058,16 @@ function moverGestoAtualizacaoDivulgacao(evento) {
   const deltaY = toque.clientY - gesto.inicioY;
   if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 8) {
     gesto.cancelado = true;
-    limparIndicadorGestoDivulgacao();
+    esconderIndicadorGestoDivulgacao();
     return;
   }
-  if (deltaY <= 0 || posicaoRolagemPrincipalVendas() > 0) {
+  if (deltaY <= 0) {
     gesto.deslocamento = 0;
-    limparIndicadorGestoDivulgacao();
+    esconderIndicadorGestoDivulgacao();
     return;
   }
-  if (deltaY > 6) evento.preventDefault();
-  gesto.deslocamento = Math.min(92, deltaY * 0.48);
+  if (evento.cancelable) evento.preventDefault();
+  gesto.deslocamento = deltaY;
   atualizarIndicadorGestoDivulgacao(gesto.deslocamento);
 }
 
@@ -3953,13 +4078,17 @@ function concluirGestoAtualizacaoDivulgacao() {
     && gestoAtualizacaoDivulgacao.deslocamento >= LIMIAR_ATUALIZACAO_DIVULGACAO
   );
   gestoAtualizacaoDivulgacao = null;
-  limparIndicadorGestoDivulgacao();
-  if (deveAtualizar) void atualizarDivulgacao('gesto');
+  if (deveAtualizar) {
+    atualizarIndicadorGestoDivulgacao(LIMIAR_ATUALIZACAO_DIVULGACAO, true);
+    void atualizarDivulgacao('gesto');
+  } else {
+    esconderIndicadorGestoDivulgacao();
+  }
 }
 
 function cancelarGestoAtualizacaoDivulgacao() {
   gestoAtualizacaoDivulgacao = null;
-  limparIndicadorGestoDivulgacao();
+  if (!divulgacaoAtualizando) esconderIndicadorGestoDivulgacao();
 }
 
 function renderDivulgacao() {
@@ -4013,8 +4142,7 @@ function renderDivulgacao() {
   const conteudo = cardsPastas || cardsMateriais
     ? `${cardsPastas ? `<section class="material-page-section"><h3>${pastaAtual ? 'Subpastas' : 'Pastas'}</h3><div class="materials-grid">${cardsPastas}</div></section>` : ''}${cardsMateriais ? `<section class="material-page-section"><h3>Materiais</h3><div class="material-page-files">${cardsMateriais}</div></section>` : ''}`
     : `<article class="publication-empty"><span>${svgIcon(pastaAtual ? 'package' : 'folder')}</span><h3>${pesquisa ? 'Nenhum material encontrado' : pastaAtual ? 'Esta pasta está vazia' : 'Nenhum material publicado'}</h3><p>${pesquisa ? 'Revise a pesquisa e tente novamente.' : pastaAtual ? 'Não há subpastas, fotos ou vídeos nesta pasta.' : 'Quando sua empresa publicar fotos ou vídeos, as pastas aparecerão aqui.'}</p></article>`;
-  const atualizacao = `<div class="divulgacao-refresh-indicator ${divulgacaoAtualizando ? 'is-refreshing' : ''}" role="status" aria-live="polite" aria-atomic="true" aria-hidden="${divulgacaoAtualizando ? 'false' : 'true'}"><span>${svgIconEstavel('rotate-ccw')}</span><b>${divulgacaoAtualizando ? 'Atualizando materiais' : 'Puxe para atualizar'}</b></div>`;
-  return `<section class="module-page materials-page divulgacao-page">${atualizacao}<div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true)}${navegacao}</div><div class="material-page-content">${conteudo}</div></section>`;
+  return `<section class="module-page materials-page divulgacao-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true)}${navegacao}</div><div class="material-page-content">${conteudo}</div></section>`;
 }
 
 function abrirPastaDivulgacao(pastaId) {

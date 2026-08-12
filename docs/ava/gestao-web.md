@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.14 -->
+<!-- ava-version: 1.7.3.15 -->
+
+> Revisão 1.7.3.15: remoção de texto exclusiva do Menu da Gestão Mobile; sem
+> impacto operacional na Gestão Web. O ajuste do gesto de atualização da
+> Divulgação também é exclusivo do AvantaVendas.
 
 > Revisão 1.7.3.14: releitura de materiais exclusiva da interface do
 > AvantaVendas; sem impacto operacional na Gestão Web.
