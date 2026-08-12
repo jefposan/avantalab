@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.11-av67 - 2026-08-12
+
+- AvantaVendas: os avisos dos cards de perfis e compartilhamento agora usam a
+  mesma camada acima do formulário. Campos obrigatórios e erros preservam o
+  preenchimento, oferecem **Voltar** e devolvem o foco ao ponto de correção.
+
 ## 1.7.3.10-av66 - 2026-08-12
 
 - AvantaVendas: os cartões de criação e compartilhamento de perfis seguem os

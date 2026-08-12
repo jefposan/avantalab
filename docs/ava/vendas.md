@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.10 -->
-<!-- avantavendas-asset-revision: 66 -->
+<!-- ava-version: 1.7.3.11 -->
+<!-- avantavendas-asset-revision: 67 -->
+
+> Revisão 1.7.3.11-av67: os avisos de validação e erro em **Novo perfil de
+> vendas** e **Adicionar usuário** aparecem sobre o card. **Voltar** mantém os
+> dados digitados e devolve o foco ao campo correspondente; para usuário não
+> localizado, a orientação é conferir o email/usuário e tentar novamente.
 
 > Revisão 1.7.3.10-av66: em **Configurações > Gerenciar contas**, cada perfil
 > separa nome, vínculo e permissão para facilitar a leitura. Em **Adicionar

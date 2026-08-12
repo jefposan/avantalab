@@ -838,6 +838,7 @@ body.sheet-open {
   box-shadow: 0 24px 60px rgba(2, 8, 23, .34);
 }
 .account-user-alert-card .primary { min-width: 150px; }
+.account-user-alert-card .account-user-alert-instruction { color: #36516d; font-weight: 750; }
 .dark-theme .account-user-alert-card { border-color: #334155; background: #172033; }
 .dark-theme .account-user-alert-card .access-validation-dialog h2 { color: #f8fafc; }
 .dark-theme .account-user-alert-card .access-validation-dialog p { color: #cbd5e1; }

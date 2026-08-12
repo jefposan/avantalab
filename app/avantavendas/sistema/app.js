@@ -4224,14 +4224,14 @@ function abrirCriarContaVendas() {
 async function criarContaVendas() {
   const nome = valor('novaContaVendasNome').trim();
   const empresaId = valor('novaContaVendasEmpresa');
-  if (nome.length < 2) { toast('Informe o nome do perfil de vendas.'); return; }
+  if (nome.length < 2) { abrirAvisoSobreSheetVendas('Nome do perfil necessário', 'Informe o nome do perfil de vendas.', 'novaContaVendasNome'); return; }
   try {
     const conta = await window.VendasDb.criarContaVendas(nome, empresaId || null);
     window.VendasDb.definirContaAtiva(conta.id);
     fecharSheet();
     await carregarDadosBackend(true, false, true);
     toast('Perfil de vendas criado e selecionado.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { abrirAvisoSobreSheetVendas('Não foi possível criar o perfil', traduzErro(error), 'novaContaVendasNome'); }
 }
 
 function abrirCompartilharContaVendas() {
@@ -4241,24 +4241,36 @@ function abrirCompartilharContaVendas() {
 }
 
 function abrirAvisoUsuarioContaVendasNaoEncontrado() {
-  if (document.getElementById('accountUserNotFoundBackdrop')) return;
+  abrirAvisoSobreSheetVendas('Usuário não encontrado', 'Confira o email/usuário e tente novamente.', 'contaVendasUsuarioEmail');
+}
+
+function abrirAvisoSobreSheetVendas(titulo, mensagem, campoId = '') {
+  if (document.getElementById('salesSheetAlertBackdrop')) return;
   const wrap = document.createElement('div');
-  wrap.id = 'accountUserNotFoundBackdrop';
+  wrap.id = 'salesSheetAlertBackdrop';
   wrap.className = 'account-user-alert-backdrop';
-  wrap.innerHTML = `<section class="sheet account-user-alert-card"><div class="access-validation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="accountUserNotFoundTitle" aria-describedby="accountUserNotFoundMessage"><div class="access-validation-icon" aria-hidden="true">${svgIcon('warning')}</div><h2 id="accountUserNotFoundTitle">Usuário não encontrado</h2><p id="accountUserNotFoundMessage">Nenhuma conta AvantaLab foi encontrada para este e-mail.</p><button id="accountUserNotFoundBack" type="button" class="primary" onclick="fecharAvisoUsuarioContaVendasNaoEncontrado()">Voltar</button></div></section>`;
+  wrap.__campoRetorno = campoId;
+  wrap.innerHTML = `<section class="sheet account-user-alert-card"><div class="access-validation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="salesSheetAlertTitle" aria-describedby="salesSheetAlertMessage"><div class="access-validation-icon" aria-hidden="true">${svgIcon('warning')}</div><h2 id="salesSheetAlertTitle">${escapeHtml(titulo)}</h2><p id="salesSheetAlertMessage" class="account-user-alert-instruction">${escapeHtml(mensagem)}</p><button id="salesSheetAlertBack" type="button" class="primary" onclick="fecharAvisoSobreSheetVendas()">Voltar</button></div></section>`;
   document.body.appendChild(wrap);
-  requestAnimationFrame(() => document.getElementById('accountUserNotFoundBack')?.focus());
+  requestAnimationFrame(() => document.getElementById('salesSheetAlertBack')?.focus());
 }
 
 function fecharAvisoUsuarioContaVendasNaoEncontrado() {
-  document.getElementById('accountUserNotFoundBackdrop')?.remove();
-  requestAnimationFrame(() => document.getElementById('contaVendasUsuarioEmail')?.focus({ preventScroll: true }));
+  fecharAvisoSobreSheetVendas();
+}
+
+function fecharAvisoSobreSheetVendas() {
+  const aviso = document.getElementById('salesSheetAlertBackdrop');
+  const campoId = aviso?.__campoRetorno || '';
+  aviso?.remove();
+  if (!campoId) return;
+  requestAnimationFrame(() => document.getElementById(campoId)?.focus({ preventScroll: true }));
 }
 
 async function adicionarUsuarioContaVendas() {
   const email = valor('contaVendasUsuarioEmail').trim();
   const papel = valor('contaVendasUsuarioPapel');
-  if (!email) { toast('Informe o e-mail do usuário.'); return; }
+  if (!email) { abrirAvisoSobreSheetVendas('E-mail necessário', 'Informe o e-mail do usuário.', 'contaVendasUsuarioEmail'); return; }
   try {
     await window.VendasDb.adicionarUsuarioContaVendas(state.contaVendasAtiva.id, email, papel);
     fecharSheet();
@@ -4269,7 +4281,7 @@ async function adicionarUsuarioContaVendas() {
       abrirAvisoUsuarioContaVendasNaoEncontrado();
       return;
     }
-    toast(mensagem);
+    abrirAvisoSobreSheetVendas('Não foi possível adicionar o usuário', mensagem, 'contaVendasUsuarioEmail');
   }
 }
 
@@ -8062,6 +8074,7 @@ window.alternarSenhaLogin = alternarSenhaLogin;
 window.alternarSenhaCampoVendas = alternarSenhaCampoVendas;
 window.fecharAvisoAcessoVendas = fecharAvisoAcessoVendas;
 window.fecharAvisoUsuarioContaVendasNaoEncontrado = fecharAvisoUsuarioContaVendasNaoEncontrado;
+window.fecharAvisoSobreSheetVendas = fecharAvisoSobreSheetVendas;
 window.voltarInicioAposExclusaoVendas = voltarInicioAposExclusaoVendas;
 window.abrirRecuperacaoSenha = abrirRecuperacaoSenha;
 window.enviarRecuperacaoSenha = enviarRecuperacaoSenha;

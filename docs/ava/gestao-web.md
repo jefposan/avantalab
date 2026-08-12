@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.10 -->
+<!-- ava-version: 1.7.3.11 -->
+
+> Revisão 1.7.3.11: avisos de validação exclusivos do AvantaVendas; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.7.3.10: ajustes de perfis e compartilhamento exclusivos do
 > AvantaVendas; sem impacto operacional na Gestão Web.

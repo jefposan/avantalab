@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.11: avisos dos cards de perfis e compartilhamento
+// aparecem sobre o formulário, preservam os dados e devolvem o foco.
 // Revisado na versão 1.7.3.10: Perfis de vendas separa nome, vínculo e
 // permissão; o aviso de e-mail não encontrado permite voltar ao formulário.
 // Revisado na versão 1.7.3.09: o rodapé Sugestões/Sair fica sempre visível e os
@@ -168,7 +170,7 @@ SALA E NAVEGAÇÃO
 - Se o e-mail informado no cadastro do Vendas já possuir conta, o aviso **Conta já cadastrada** oferece **Ir para o login** ou **Recuperar senha** e mantém o e-mail preenchido para continuar com segurança.
 - Depois de uma atualização publicada do Vendas, fechar completamente e reabrir o aplicativo atualiza os recursos e remove o cache anterior. Limpar dados ou reinstalar é apenas contingência se a revisão antiga persistir após essa nova abertura.
 - Em **Recuperar senha**, o e-mail é consultado no diretório central de contas do servidor antes do envio do SMS, sem depender de vínculo comercial. Quando não existe uma conta vinculada, o aplicativo informa **Usuário não localizado**, mantém o endereço preenchido e devolve o foco ao campo para correção.
-- Em Configurações, **Gerenciar contas** abre os Perfis de vendas, em que cada conta separa visualmente nome, vínculo e permissão. Em **Adicionar usuário**, informe o e-mail já cadastrado no AvantaLab e escolha a permissão; quando o e-mail não for encontrado, o aviso **Usuário não encontrado** aparece sobre o formulário e **Voltar** preserva o e-mail para correção. **Excluir conta do Vendas** exige digitar EXCLUIR e remove os dados específicos deste aplicativo, encerra somente a sessão local do Vendas e preserva outros serviços AvantaLab usados separadamente. Resultados financeiros já enviados permanecem como histórico desvinculado. Um retorno ao Vendas exige novo login explícito e cria um espaço vazio, sem restaurar dados excluídos.
+- Em Configurações, **Gerenciar contas** abre os Perfis de vendas, em que cada conta separa visualmente nome, vínculo e permissão. Em **Novo perfil de vendas** e **Adicionar usuário**, avisos de validação ou erro aparecem sobre o formulário; **Voltar** preserva os dados e devolve o foco ao campo correspondente. Para usuário não localizado, o aviso orienta conferir o email/usuário e tentar novamente. **Excluir conta do Vendas** exige digitar EXCLUIR e remove os dados específicos deste aplicativo, encerra somente a sessão local do Vendas e preserva outros serviços AvantaLab usados separadamente. Resultados financeiros já enviados permanecem como histórico desvinculado. Um retorno ao Vendas exige novo login explícito e cria um espaço vazio, sem restaurar dados excluídos.
 - Ao tocar em um campo textual editável já preenchido, o cursor vai para o final do conteúdo para permitir apagar da direita para a esquerda. A seleção intencional de um trecho por gesto longo permanece disponível.
 
 CLIENTES
