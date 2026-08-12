@@ -37,17 +37,21 @@ test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', as
     ],
   });
   assert.equal(resultado, canvas);
-  assert.ok(canvas.height >= 1920);
+  assert.ok(canvas.height >= 1700 && canvas.height < 1920, 'o comprovante compacto deve ser menor que a altura anterior de 1920 px');
   for (const valor of ['TRIDIUM COSMÉTICOS', 'Cliente: Isa', 'R$ 1.283,50', 'R$ 10,00', 'R$ 100,00', 'R$ 1.383,50', 'Shampoo', '2 × R$ 30,00', 'Brinde', 'BONIFICADO', 'Comprovante de pedido • Isa']) assert.ok(textos.some((texto) => texto.includes(valor)), `deveria manter ${valor}`);
   assert.ok(textos.every((texto) => !texto.includes('(mitsutani)')), 'observações posteriores ao primeiro nome não devem aparecer no comprovante');
   assert.ok(textos.every((texto) => !texto.includes('1 ×')), 'um item com quantidade 1 não deve exibir a linha de quantidade');
   for (const textoRemovido of ['Pedido confirmado', 'Valor que permanece em aberto', 'Seu pedido foi confirmado no sistema.']) assert.ok(!textos.includes(textoRemovido), `não deveria exibir ${textoRemovido}`);
-  assert.match(codigo, /'Valor do pedido', 276, yPedido \+ 160/);
-  assert.match(codigo, /'Saldo atual', 276, ySaldo \+ 160/);
-  assert.match(codigo, /'Pedido registrado com sucesso!', LARGURA \/ 2, 444/);
-  assert.match(codigo, /alinhamento: 'center', largura: 500, linhaBase: 'middle'/);
-  assert.match(codigo, /card\(ctx, yPedido, 251, '', 'PEDIDO REGISTRADO'\)/);
-  assert.match(codigo, /card\(ctx, ySaldo, 251, '', 'SITUAÇÃO APÓS O LANÇAMENTO'\)/);
+  assert.match(codigo, /retangulo\(ctx, 44, 42, 992, 260, 36/);
+  assert.match(codigo, /retangulo\(ctx, 236, 326, 608, 82, 26/);
+  assert.match(codigo, /'Pedido registrado com sucesso!', 570, 367/);
+  assert.match(codigo, /alinhamento: 'center', largura: 460, linhaBase: 'middle'/);
+  assert.match(codigo, /'Valor do pedido', 276, yPedido \+ 137/);
+  assert.match(codigo, /'Saldo atual', 276, ySaldo \+ 137/);
+  assert.match(codigo, /card\(ctx, yPedido, alturaCardValor, '', 'PEDIDO REGISTRADO'\)/);
+  assert.match(codigo, /card\(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO'\)/);
+  assert.match(codigo, /card\(ctx, yDetalhes, alturaDetalhes, '', titulo === 'Pedido consignado' \? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO'\)/);
+  assert.doesNotMatch(codigo, /icone\(ctx, 'itens',/);
   assert.match(codigo, /texto\(ctx, titulo, LARGURA \/ 2, y \+ 43, \{ tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' \}\)/);
   assert.match(codigo, /function primeiroNomeClienteComprovante/);
   assert.match(codigo, /function desenharRodapeEmPilula/);

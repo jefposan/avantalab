@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.3.05-av64 - 2026-08-12
+
+- AvantaVendas: a imagem do comprovante de pedido ficou mais compacta. O
+  cabeçalho e a confirmação de sucesso agora usam menos espaço; os cards de
+  valor do pedido e saldo atual também foram reduzidos. **Detalhes do pedido**
+  ficou centralizado e não repete mais o ícone, diminuindo a altura total sem
+  alterar itens, cálculos ou valores.
+
 ## 1.7.3.05-av63 - 2026-08-11
 
 - AvantaVendas: o toque nos nove cards principais da sala agora reduz o botão

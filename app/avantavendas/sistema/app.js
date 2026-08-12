@@ -6285,27 +6285,27 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   const largura = 1080;
   const alturaResumoRegular = linhasRegulares.length ? 38 + linhasRegulares.length * 82 : 0;
   const alturaResumo = alturaResumoRegular + (linhaPrincipal ? 162 : 0) + (linhaSaldo ? 176 : 0);
-  const altura = Math.min(5400, Math.max(1700, 960 + alturaResumo + linhasExibidas.length * 90));
+  const altura = Math.min(5400, Math.max(1600, 820 + alturaResumo + linhasExibidas.length * 90));
   const canvas = document.createElement('canvas');
   canvas.width = largura; canvas.height = altura;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Não foi possível gerar o comprovante.');
   ctx.fillStyle = '#f3f7fb'; ctx.fillRect(0, 0, largura, altura);
-  const gradiente = ctx.createLinearGradient(0, 0, largura, 260);
+  const gradiente = ctx.createLinearGradient(0, 0, largura, 228);
   gradiente.addColorStop(0, '#0A1F44'); gradiente.addColorStop(1, '#1687D9');
-  ctx.fillStyle = gradiente; ctx.fillRect(0, 0, largura, 260);
+  ctx.fillStyle = gradiente; ctx.fillRect(0, 0, largura, 228);
   const nomeEmpresa = String(empresa || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
-  ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 36 : nomeEmpresa.length > 20 ? 42 : 50}px Arial, sans-serif`; ctx.textAlign = 'center'; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 900), largura / 2, 92); ctx.textAlign = 'left';
-  ctx.font = '700 34px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${clienteExibido}`, 640), 64, 198);
-  ctx.textAlign = 'right'; ctx.fillText(data, 1016, 198); ctx.textAlign = 'left';
-  let y = 318;
+  ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 36 : nomeEmpresa.length > 20 ? 42 : 50}px Arial, sans-serif`; ctx.textAlign = 'center'; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 900), largura / 2, 82); ctx.textAlign = 'left';
+  ctx.font = '700 31px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${clienteExibido}`, 640), 64, 174);
+  ctx.textAlign = 'right'; ctx.fillText(data, 1016, 174); ctx.textAlign = 'left';
+  let y = 278;
   if (etiqueta) {
     ctx.font = '900 33px Arial, sans-serif';
-    const larguraEtiqueta = ctx.measureText(etiqueta).width + 82;
+    const larguraEtiqueta = ctx.measureText(etiqueta).width + 66;
     const xEtiqueta = (largura - larguraEtiqueta) / 2;
-    caminhoRetanguloArredondado(ctx, xEtiqueta, y - 39, larguraEtiqueta, 72, 36);
+    caminhoRetanguloArredondado(ctx, xEtiqueta, y - 33, larguraEtiqueta, 62, 31);
     ctx.fillStyle = temaEtiqueta === 'verde' ? '#dcfce7' : '#dff4ff'; ctx.fill();
-    ctx.fillStyle = temaEtiqueta === 'verde' ? '#166534' : '#075985'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(etiqueta, largura / 2, y - 3); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; y += 142;
+    ctx.fillStyle = temaEtiqueta === 'verde' ? '#166534' : '#075985'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(etiqueta, largura / 2, y - 2); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; y += 116;
   }
 
   if (linhasRegulares.length) {
@@ -6324,32 +6324,32 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   }
   if (linhaPrincipal) {
     ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    y += 26;
-    caminhoRetanguloArredondado(ctx, 48, y, 984, 136, 26);
-    const destaqueGradiente = ctx.createLinearGradient(48, y, 1032, y + 136);
+    y += 22;
+    caminhoRetanguloArredondado(ctx, 48, y, 984, 116, 26);
+    const destaqueGradiente = ctx.createLinearGradient(48, y, 1032, y + 116);
     destaqueGradiente.addColorStop(0, '#075985'); destaqueGradiente.addColorStop(1, '#1687D9');
     ctx.fillStyle = destaqueGradiente; ctx.fill(); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.stroke();
     const temSubtituloPrincipal = Boolean(linhaPrincipal.subtitulo);
-    ctx.fillStyle = '#dff5ff'; ctx.font = '800 29px Arial, sans-serif'; ctx.fillText(linhaPrincipal.rotulo, 84, y + (temSubtituloPrincipal ? 52 : 82));
-    if (linhaPrincipal.subtitulo) { ctx.fillStyle = '#bae6fd'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linhaPrincipal.subtitulo, 470), 84, y + 95); }
-    ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText(linhaPrincipal.valor, 996, y + 81); ctx.textAlign = 'left';
-    y += 202;
+    ctx.fillStyle = '#dff5ff'; ctx.font = '800 29px Arial, sans-serif'; ctx.fillText(linhaPrincipal.rotulo, 84, y + (temSubtituloPrincipal ? 45 : 70));
+    if (linhaPrincipal.subtitulo) { ctx.fillStyle = '#bae6fd'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linhaPrincipal.subtitulo, 470), 84, y + 81); }
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText(linhaPrincipal.valor, 996, y + 70); ctx.textAlign = 'left';
+    y += 158;
   }
   if (linhaSaldo) {
     ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Situação após o lançamento', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    y += 26;
-    caminhoRetanguloArredondado(ctx, 48, y, 984, 148, 26);
+    y += 22;
+    caminhoRetanguloArredondado(ctx, 48, y, 984, 124, 26);
     ctx.fillStyle = '#073555'; ctx.fill(); ctx.strokeStyle = '#5ed7ff'; ctx.lineWidth = 4; ctx.stroke();
     const temSubtituloSaldo = Boolean(linhaSaldo.subtitulo);
-    ctx.fillStyle = '#e4f7ff'; ctx.font = '850 33px Arial, sans-serif'; ctx.fillText(linhaSaldo.rotulo, 84, y + (temSubtituloSaldo ? 57 : 86));
-    if (temSubtituloSaldo) { ctx.fillStyle = '#bdeaff'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(linhaSaldo.subtitulo, 84, y + 101); }
-    ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText(linhaSaldo.valor, 996, y + 84); ctx.textAlign = 'left';
-    y += 222;
+    ctx.fillStyle = '#e4f7ff'; ctx.font = '850 33px Arial, sans-serif'; ctx.fillText(linhaSaldo.rotulo, 84, y + (temSubtituloSaldo ? 49 : 72));
+    if (temSubtituloSaldo) { ctx.fillStyle = '#bdeaff'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(linhaSaldo.subtitulo, 84, y + 86); }
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText(linhaSaldo.valor, 996, y + 72); ctx.textAlign = 'left';
+    y += 170;
   }
 
-  ctx.fillStyle = '#0A1F44'; ctx.font = '900 32px Arial, sans-serif'; ctx.fillText(linhasExibidas.length ? tituloDetalhes : 'Informações', 64, y);
-  y += 24;
-  const alturaDetalhes = Math.max(120, 34 + linhasExibidas.length * 90);
+  ctx.fillStyle = '#0A1F44'; ctx.font = '900 32px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(linhasExibidas.length ? tituloDetalhes : 'Informações', largura / 2, y + 10); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  y += 22;
+  const alturaDetalhes = Math.max(112, 26 + linhasExibidas.length * 90);
   caminhoRetanguloArredondado(ctx, 48, y, 984, alturaDetalhes, 26);
   ctx.fillStyle = '#fff'; ctx.fill();
   y += 54;

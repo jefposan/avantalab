@@ -306,15 +306,19 @@ exigir(
     && aplicacao.includes('function detalheQuantidadeItemComprovante(item)')
     && aplicacao.includes("if (!Number.isFinite(quantidade) || quantidade < 2) return '';")
     && aplicacao.includes('secundario: detalheQuantidadeItemComprovante(item)')
-    && comprovantePedido.includes("'Valor do pedido', 276, yPedido + 160")
-    && comprovantePedido.includes("'Saldo atual', 276, ySaldo + 160")
-    && comprovantePedido.includes("'Pedido registrado com sucesso!', LARGURA / 2, 444")
-    && comprovantePedido.includes("alinhamento: 'center', largura: 500, linhaBase: 'middle'")
-    && comprovantePedido.includes("card(ctx, yPedido, 251, '', 'PEDIDO REGISTRADO')")
-    && comprovantePedido.includes("card(ctx, ySaldo, 251, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
+    && comprovantePedido.includes("retangulo(ctx, 44, 42, 992, 260, 36, '#063B72')")
+    && comprovantePedido.includes("retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3')")
+    && comprovantePedido.includes("'Valor do pedido', 276, yPedido + 137")
+    && comprovantePedido.includes("'Saldo atual', 276, ySaldo + 137")
+    && comprovantePedido.includes("'Pedido registrado com sucesso!', 570, 367")
+    && comprovantePedido.includes("alinhamento: 'center', largura: 460, linhaBase: 'middle'")
+    && comprovantePedido.includes("card(ctx, yPedido, alturaCardValor, '', 'PEDIDO REGISTRADO')")
+    && comprovantePedido.includes("card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
+    && comprovantePedido.includes("card(ctx, yDetalhes, alturaDetalhes, '', titulo === 'Pedido consignado' ? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO')")
     && comprovantePedido.includes("texto(ctx, titulo, LARGURA / 2, y + 43, { tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' })")
-    && comprovantePedido.includes("icone(ctx, 'confirmado', 208, yPedido + 151")
-    && comprovantePedido.includes("icone(ctx, 'grafico', 208, ySaldo + 151")
+    && comprovantePedido.includes("icone(ctx, 'confirmado', 208, yPedido + 128")
+    && comprovantePedido.includes("icone(ctx, 'grafico', 208, ySaldo + 128")
+    && !comprovantePedido.includes("icone(ctx, 'itens',")
     && !comprovantePedido.includes("texto(ctx, 'Pedido confirmado'")
     && !comprovantePedido.includes("texto(ctx, 'Valor que permanece em aberto'")
     && !comprovantePedido.includes("texto(ctx, 'Seu pedido foi confirmado no sistema.'")
@@ -325,7 +329,7 @@ exigir(
     && aplicacao.includes("ctx.fillText('Situação após o lançamento', largura / 2, y + 13)")
     && !aplicacao.includes("linhaSaldo.subtitulo || 'Valor que permanece em aberto'")
     && aplicacao.includes("const clienteExibido = /pedido/i.test(String(titulo || ''))"),
-  'O comprovante de pedido deve omitir ícones e textos redundantes, manter os ícones nos campos de valor, ocultar quantidade unitária, centralizar a mensagem de sucesso e os títulos dos cards nos dois eixos, usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
+  'O comprovante de pedido deve permanecer compacto, omitir ícones e textos redundantes, manter os ícones somente nos campos de valor, ocultar quantidade unitária, centralizar a mensagem de sucesso e os títulos dos cards nos dois eixos, usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
 );
 exigir(
   cliente.includes('pasta_pai_id, capa_material_id, nome')

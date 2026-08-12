@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.05 -->
-<!-- avantavendas-asset-revision: 63 -->
+<!-- avantavendas-asset-revision: 64 -->
+
+> Revisão 1.7.3.05-av64: a imagem do comprovante de pedido ficou mais baixa.
+> O cabeçalho, a confirmação verde e os cards de valor e saldo usam menos
+> espaço vertical; **Detalhes do pedido** passa a ser centralizado, sem ícone.
+> O conteúdo, os valores e a legibilidade dos itens permanecem preservados.
 
 > Revisão 1.7.3.05-av63: ao tocar um dos nove cards da sala, ele reduz de modo
 > uniforme em direção ao centro, inclusive na borda inferior. O efeito não o

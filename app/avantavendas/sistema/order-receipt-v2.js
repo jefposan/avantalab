@@ -97,35 +97,38 @@
     if (itens.length > itensExibidos.length) itensExibidos.push({ principal: `+ ${itens.length - itensExibidos.length} itens adicionais`, secundario: '', valor: '' });
     const temDesconto = Boolean(desconto);
     const alturaResumo = temDesconto ? 273 : 205;
-    const yPedido = 548 + alturaResumo + 31;
-    const ySaldo = yPedido + 282;
-    const yDetalhes = ySaldo + 282;
+    const yResumo = 440;
+    const alturaCardValor = 218;
+    const espacoEntreCards = 24;
+    const yPedido = yResumo + alturaResumo + espacoEntreCards;
+    const ySaldo = yPedido + alturaCardValor + espacoEntreCards;
+    const yDetalhes = ySaldo + alturaCardValor + espacoEntreCards;
     const alturaItens = Math.max(82, 26 + itensExibidos.length * 82);
-    const alturaDetalhes = 106 + alturaItens;
-    const yRodape = yDetalhes + alturaDetalhes + 92;
-    const altura = Math.min(5400, Math.max(1920, yRodape + 78));
+    const alturaDetalhes = 88 + alturaItens;
+    const yRodape = yDetalhes + alturaDetalhes + 70;
+    const altura = Math.min(5400, Math.max(1700, yRodape + 78));
     const canvas = document.createElement('canvas'); canvas.width = LARGURA; canvas.height = altura;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Não foi possível gerar o comprovante.');
     ctx.fillStyle = '#F4F8FC'; ctx.fillRect(0, 0, LARGURA, altura);
     const fundo = await carregarFundo(); if (fundo) ctx.drawImage(fundo, 0, 0, LARGURA, altura);
 
-    retangulo(ctx, 44, 42, 992, 304, 36, '#063B72');
-    ctx.beginPath(); ctx.arc(132, 134, 58, 0, Math.PI * 2); ctx.fillStyle = '#0B5EAA'; ctx.fill(); icone(ctx, 'documento', 132, 134, 64, '#FFFFFF');
-    const nomeEmpresa = String(empresa || 'AvantaLab').toUpperCase(); texto(ctx, nomeEmpresa, 575, 157, { tamanho: nomeEmpresa.length > 31 ? 38 : nomeEmpresa.length > 23 ? 44 : 51, peso: 800, cor: '#FFFFFF', alinhamento: 'center', largura: 730 });
-    icone(ctx, 'usuario', 93, 255, 41, '#3FE3E8'); texto(ctx, `Cliente: ${clienteExibido}`, 125, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', largura: 510 }); linha(ctx, 654, 213, 654, 288, 'rgba(255,255,255,.68)', 2); icone(ctx, 'calendario', 714, 255, 40, '#3FE3E8'); texto(ctx, data, 1000, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
+    retangulo(ctx, 44, 42, 992, 260, 36, '#063B72');
+    ctx.beginPath(); ctx.arc(132, 122, 54, 0, Math.PI * 2); ctx.fillStyle = '#0B5EAA'; ctx.fill(); icone(ctx, 'documento', 132, 122, 60, '#FFFFFF');
+    const nomeEmpresa = String(empresa || 'AvantaLab').toUpperCase(); texto(ctx, nomeEmpresa, 575, 145, { tamanho: nomeEmpresa.length > 31 ? 38 : nomeEmpresa.length > 23 ? 44 : 51, peso: 800, cor: '#FFFFFF', alinhamento: 'center', largura: 730 });
+    icone(ctx, 'usuario', 93, 235, 38, '#3FE3E8'); texto(ctx, `Cliente: ${clienteExibido}`, 125, 248, { tamanho: 29, peso: 700, cor: '#FFFFFF', largura: 510 }); linha(ctx, 654, 194, 654, 266, 'rgba(255,255,255,.68)', 2); icone(ctx, 'calendario', 714, 235, 38, '#3FE3E8'); texto(ctx, data, 1000, 248, { tamanho: 29, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
 
-    retangulo(ctx, 216, 385, 648, 118, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 269, 444, 54, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', LARGURA / 2, 444, { tamanho: 25, peso: 800, cor: '#16773F', alinhamento: 'center', largura: 500, linhaBase: 'middle' });
+    retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 288, 367, 44, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', 570, 367, { tamanho: 24, peso: 800, cor: '#16773F', alinhamento: 'center', largura: 460, linhaBase: 'middle' });
 
-    card(ctx, 548, alturaResumo, 'carteira', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, 660, temDesconto ? 136 : 68, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, 704, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, 704, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
-    if (temDesconto) { linha(ctx, 180, 728, 928, 728, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, 772, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 928, 772, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }
+    card(ctx, yResumo, alturaResumo, 'carteira', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, yResumo + 112, temDesconto ? 136 : 68, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, yResumo + 156, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, yResumo + 156, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
+    if (temDesconto) { linha(ctx, 180, yResumo + 180, 928, yResumo + 180, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, yResumo + 224, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 928, yResumo + 224, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }
 
-    card(ctx, yPedido, 251, '', 'PEDIDO REGISTRADO'); fundoDeValor(ctx, yPedido + 86, 130, '#1674D1'); icone(ctx, 'confirmado', 208, yPedido + 151, 66, '#FFFFFF'); texto(ctx, titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', 276, yPedido + 160, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPedido, 922, yPedido + 164, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    card(ctx, yPedido, alturaCardValor, '', 'PEDIDO REGISTRADO'); fundoDeValor(ctx, yPedido + 72, 112, '#1674D1'); icone(ctx, 'confirmado', 208, yPedido + 128, 58, '#FFFFFF'); texto(ctx, titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', 276, yPedido + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPedido, 922, yPedido + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
 
-    card(ctx, ySaldo, 251, '', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 86, 130, '#0A2F6B'); icone(ctx, 'grafico', 208, ySaldo + 151, 63, '#46B7FF'); texto(ctx, 'Saldo atual', 276, ySaldo + 160, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, saldoAtual, 922, ySaldo + 164, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 72, 112, '#0A2F6B'); icone(ctx, 'grafico', 208, ySaldo + 128, 56, '#46B7FF'); texto(ctx, 'Saldo atual', 276, ySaldo + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, saldoAtual, 922, ySaldo + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
 
-    card(ctx, yDetalhes, alturaDetalhes, 'itens', titulo === 'Pedido consignado' ? 'ITENS DO CONSIGNADO' : 'DETALHES DO PEDIDO'); fundoDeValor(ctx, yDetalhes + 86, alturaItens, '#F3F7FC');
-    let yItem = yDetalhes + 126;
+    card(ctx, yDetalhes, alturaDetalhes, '', titulo === 'Pedido consignado' ? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO'); fundoDeValor(ctx, yDetalhes + 70, alturaItens, '#F3F7FC');
+    let yItem = yDetalhes + 110;
     itensExibidos.forEach((item, indice) => {
       if (indice) linha(ctx, 180, yItem - 30, 922, yItem - 30, '#DCE6F0', 2);
       texto(ctx, item.principal || 'Produto', 180, yItem, { tamanho: 24, peso: 700, cor: '#223858', largura: item.bonificado ? 365 : 500 });
