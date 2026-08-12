@@ -4202,7 +4202,6 @@ function renderConfiguracoes() {
     <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Os novos produtos da empresa chegam automaticamente. Se recebeu um pacote, importe o arquivo ZIP completo.</p><div class="actions"><button class="primary" onclick="abrirImportacaoPacoteZip()">${svgIcon('package')} Importar pacote ZIP</button><button class="secondary" onclick="mostrarSincronizacaoCatalogo()">${svgIcon('save')} Situação da sincronização</button></div></article>
     <article class="settings-card settings-stock-card"><h3>${svgIcon('package')} Controle de estoque</h3><p>${state.produtos.filter((produto) => produto.estoque_controlado).length} produto(s) com estoque acompanhado neste aparelho.</p><div class="actions"><button class="primary" onclick="abrirAtualizarEstoque()">${svgIcon('plus')} Atualizar estoque</button></div><small>Entrada soma ao saldo atual. Ajuste define o saldo físico contado.</small></article>
     <article class="settings-card settings-pwa-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
-    <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
     <article class="settings-card settings-reset-card"><h3>${svgIconEstavel('rotate-ccw')} Resetar sistema</h3><p>Gera um backup automático e apaga lançamentos, clientes, agenda, produtos e preferências deste Vendas.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIconEstavel('rotate-ccw')} Resetar Vendas Mobile</button></article>
     <article class="settings-card settings-delete-account-card"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas</h3><p>Remove definitivamente sua conta e os dados deste aplicativo. Outros serviços AvantaLab, quando utilizados separadamente, não serão alterados.</p><button class="danger" onclick="abrirExclusaoContaVendas()">${svgIconEstavel('user-x')} Excluir conta do Vendas</button></article>
   </section>`;
@@ -6345,7 +6344,8 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     const destaqueGradiente = ctx.createLinearGradient(48, y, 1032, y + 136);
     destaqueGradiente.addColorStop(0, '#075985'); destaqueGradiente.addColorStop(1, '#1687D9');
     ctx.fillStyle = destaqueGradiente; ctx.fill(); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = '#dff5ff'; ctx.font = '800 29px Arial, sans-serif'; ctx.fillText(linhaPrincipal.rotulo, 84, y + 52);
+    const temSubtituloPrincipal = Boolean(linhaPrincipal.subtitulo);
+    ctx.fillStyle = '#dff5ff'; ctx.font = '800 29px Arial, sans-serif'; ctx.fillText(linhaPrincipal.rotulo, 84, y + (temSubtituloPrincipal ? 52 : 82));
     if (linhaPrincipal.subtitulo) { ctx.fillStyle = '#bae6fd'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linhaPrincipal.subtitulo, 470), 84, y + 95); }
     ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText(linhaPrincipal.valor, 996, y + 81); ctx.textAlign = 'left';
     y += 202;
@@ -6355,8 +6355,9 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     y += 26;
     caminhoRetanguloArredondado(ctx, 48, y, 984, 148, 26);
     ctx.fillStyle = '#073555'; ctx.fill(); ctx.strokeStyle = '#5ed7ff'; ctx.lineWidth = 4; ctx.stroke();
-    ctx.fillStyle = '#e4f7ff'; ctx.font = '850 33px Arial, sans-serif'; ctx.fillText(linhaSaldo.rotulo, 84, y + 57);
-    ctx.fillStyle = '#bdeaff'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(linhaSaldo.subtitulo || 'Valor que permanece em aberto', 84, y + 101);
+    const temSubtituloSaldo = Boolean(linhaSaldo.subtitulo);
+    ctx.fillStyle = '#e4f7ff'; ctx.font = '850 33px Arial, sans-serif'; ctx.fillText(linhaSaldo.rotulo, 84, y + (temSubtituloSaldo ? 57 : 86));
+    if (temSubtituloSaldo) { ctx.fillStyle = '#bdeaff'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(linhaSaldo.subtitulo, 84, y + 101); }
     ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText(linhaSaldo.valor, 996, y + 84); ctx.textAlign = 'left';
     y += 222;
   }
@@ -6412,6 +6413,12 @@ function primeiroNomeClienteComprovante(nome) {
   return String(nome || '').trim().split(/\s+/)[0] || 'Cliente';
 }
 
+function detalheQuantidadeItemComprovante(item) {
+  const quantidade = Number(item?.quantidade || 0);
+  if (!Number.isFinite(quantidade) || quantidade < 2) return '';
+  return `${quantidade} × ${moeda(item.preco || item.preco_unitario)}`;
+}
+
 async function compartilharPedido(pedidoId) {
   const venda = state.vendas.find((item) => item.id === pedidoId);
   if (!venda) return;
@@ -6421,7 +6428,7 @@ async function compartilharPedido(pedidoId) {
   const linhas = (venda.itens || []).map((item) => ({
     principal: item.produto_nome || 'Produto',
     bonificado: itemPedidoBonificado(item),
-    secundario: `${Number(item.quantidade || 0)} × ${moeda(item.preco || item.preco_unitario)}`,
+    secundario: detalheQuantidadeItemComprovante(item),
     valor: moeda(itemPedidoBonificado(item) ? 0 : Number(item.total ?? Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0))),
   }));
   const titulo = pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido';
@@ -6450,7 +6457,7 @@ async function compartilharPedido(pedidoId) {
       resumo: [
         { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
         ...(desconto > 0 ? [{ rotulo: 'Desconto concedido', valor: dadosComprovante.desconto }] : []),
-        { rotulo: 'Pedido', valor: dadosComprovante.valorPedido, destaque: 'principal', tituloDestaque: 'Pedido registrado' },
+        { rotulo: titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', valor: dadosComprovante.valorPedido, destaque: 'principal', tituloDestaque: 'Pedido registrado' },
         { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],
     });
@@ -6493,7 +6500,7 @@ async function compartilharPagamento(pagamentoId) {
       resumo: [
         { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
         { rotulo: dadosComprovante.rotuloValorPago, valor: dadosComprovante.valorPago, destaque: 'principal', tituloDestaque: 'Pagamento registrado', subtitulo: desconto > 0 ? 'Valor recebido com desconto aplicado' : 'Pagamento confirmado' },
-        { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
+        { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo', subtitulo: 'Valor que permanece em aberto' },
       ],
     });
   const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`);

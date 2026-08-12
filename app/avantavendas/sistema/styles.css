@@ -1358,7 +1358,6 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .settings-card h3 .svg-icon { width: 27px; height: 27px; border-radius: 8px; padding: 5px; color: #1687D9; background: #edf7fd; }
 .settings-card > h3 { margin: -17px -17px 16px; border: 0; padding: 13px 17px; color: #fff; background: linear-gradient(135deg,#0A1F44 0%,#1168a7 58%,#1687D9 100%); box-shadow: 0 5px 14px rgba(10,31,68,.14); font-weight: 800; letter-spacing: -.01em; }
 .settings-card > h3 .svg-icon { width: 29px; height: 29px; border: 1px solid rgba(255,255,255,.25); color: #fff; background: rgba(255,255,255,.14); }
-.settings-exit-card > h3,
 .settings-reset-card > h3,
 .settings-delete-account-card > h3 { background: linear-gradient(135deg,#7f1d1d 0%,#b4232c 58%,#dc3545 100%); box-shadow: 0 5px 14px rgba(127,29,29,.16); }
 .settings-card p { margin: 10px 0 0; color: #6b7785; font-size: 12px; line-height: 1.5; }
@@ -1415,7 +1414,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .commercial-link-resources button.is-on { border-color: #a8d9f4; color: #075985; background: #e8f6fe; }
 .settings-commercial-links .actions { margin-top: 13px; }
 .settings-reset-card, .settings-delete-account-card { border-color: #fecaca; background: #fffafb; }.settings-reset-card > h3, .settings-delete-account-card > h3 { color: #fff; }.settings-reset-card > h3 .svg-icon, .settings-delete-account-card > h3 .svg-icon { border-color: rgba(255,255,255,.25); color: #fff; background: rgba(255,255,255,.14); }
-.settings-stock-card .actions, .settings-exit-card .danger, .settings-reset-card .danger, .settings-delete-account-card .danger { margin-top: 15px; }
+.settings-stock-card .actions, .settings-reset-card .danger, .settings-delete-account-card .danger { margin-top: 15px; }
 .settings-reset-card .danger, .settings-delete-account-card .danger { width: 100%; }
 .settings-goals-form { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; }
 .settings-goals-form label { display: grid; gap: 5px; color: #64748b; font-size: 10px; font-weight: 800; }
@@ -1431,8 +1430,6 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .shortcut-organizer { display: grid; gap: 10px; }.shortcut-organizer-group { overflow: hidden; border: 1px solid #dce7ef; border-radius: 12px; background: #f8fbfd; }.shortcut-organizer-group h3 { margin: 0; padding: 9px 12px; color: #fff; background: #003E73; font-size: 10px; font-weight: 900; text-align: center; text-transform: uppercase; }.shortcut-organizer-group > div { display: grid; max-height: 185px; gap: 5px; overflow-y: auto; padding: 7px; overscroll-behavior: contain; }.shortcut-organizer-group button { display: flex; min-height: 35px; align-items: center; gap: 8px; border: 1px solid #dce7ef; border-radius: 9px; padding: 5px 8px; color: #425264; background: #fff; text-align: left; }.shortcut-organizer-group button.selected { border-color: #67c8ef; background: #eaf8fe; }.shortcut-organizer-group button > span { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; border-radius: 7px; color: #64748b; background: #eef4f8; }.shortcut-organizer-group button.selected > span { color: #fff; background: #1687D9; }.shortcut-organizer-group button b { min-width: 0; flex: 1; font-size: 11px; font-weight: 850; }.shortcut-organizer-group button small { color: #1687D9; font-size: 9px; font-weight: 800; }.shortcut-organizer-reset { min-height: 36px; border-color: #cbd5e1; border-radius: 10px; font-size: 10px; font-weight: 900; text-transform: uppercase; }
 .settings-pwa-card { text-align: left; }.settings-pwa-card .install-button { display: flex; width: fit-content; margin: 15px auto 0; }
 .settings-card > small { display: block; margin-top: 10px; color: #838a91; font-size: 11px; line-height: 1.45; }
-.settings-exit-card { border-color: #fecaca; background: linear-gradient(135deg, #fff 0%, #fff7f7 100%); }
-.settings-exit-card .danger { width: 100%; }
 .delete-sales-account-warning { display: grid; gap: 14px; }
 .delete-sales-account-warning p { margin: 0; color: #475569; font-size: 13px; line-height: 1.55; }
 .delete-sales-account-warning label { display: grid; gap: 6px; color: #7f1d1d; font-size: 13px; font-weight: 800; }
@@ -2421,8 +2418,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dark-theme .cliente-sheet-backdrop .client-birth-field > label .svg-icon { color: #fda4af; }
 .dark-theme .system-switch-header-button { background: transparent; }
 .dark-theme .suggestions-sales-backdrop .sheet { border: 1px solid rgba(224,242,254,.88); box-shadow: 0 0 0 1px rgba(186,230,253,.24), 0 0 22px rgba(56,189,248,.28), 0 18px 42px rgba(2,8,23,.48); }
-.dark-theme .settings-card h3 { border-color: #334155; }.dark-theme .settings-card h3 .svg-icon { color: #67e8f9; background: #102838; }.dark-theme .settings-card > h3 { border-color: transparent; color: #fff; background: linear-gradient(135deg,#07162f 0%,#0b4f7d 58%,#0d72b8 100%); }.dark-theme .settings-card > h3 .svg-icon { border-color: rgba(255,255,255,.22); color: #fff; background: rgba(255,255,255,.12); }.dark-theme .settings-card dt, .dark-theme .settings-card dd { border-color: #29384d; }.dark-theme .switch-line { border-color: #3b4b63; color: #e2e8f0; background: #111b2d; }.dark-theme .settings-exit-card { border-color: #5b2631; background: #251922; }
-.dark-theme .settings-exit-card > h3,
+.dark-theme .settings-card h3 { border-color: #334155; }.dark-theme .settings-card h3 .svg-icon { color: #67e8f9; background: #102838; }.dark-theme .settings-card > h3 { border-color: transparent; color: #fff; background: linear-gradient(135deg,#07162f 0%,#0b4f7d 58%,#0d72b8 100%); }.dark-theme .settings-card > h3 .svg-icon { border-color: rgba(255,255,255,.22); color: #fff; background: rgba(255,255,255,.12); }.dark-theme .settings-card dt, .dark-theme .settings-card dd { border-color: #29384d; }.dark-theme .switch-line { border-color: #3b4b63; color: #e2e8f0; background: #111b2d; }
 .dark-theme .settings-reset-card > h3,
 .dark-theme .settings-delete-account-card > h3 { background: linear-gradient(135deg,#50151c 0%,#7f1d2d 58%,#b42339 100%); }
 .dark-theme .settings-sales-account-field label { color: #e2e8f0; }

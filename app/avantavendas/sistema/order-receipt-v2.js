@@ -71,7 +71,7 @@
   }
 
   function blocoIcone(ctx, nome, x, y, cor = '#126ED1') { ctx.beginPath(); ctx.arc(x, y, 42, 0, Math.PI * 2); ctx.fillStyle = '#EDF5FF'; ctx.fill(); icone(ctx, nome, x, y, 43, cor); }
-  function card(ctx, y, altura, nomeIcone, titulo) { retangulo(ctx, 44, y, 992, altura, 34, '#FFFFFF', '#E4ECF4'); blocoIcone(ctx, nomeIcone, 105, y + 64); texto(ctx, titulo, 172, y + 76, { tamanho: 28, peso: 800, cor: '#0A2F6B' }); }
+  function card(ctx, y, altura, nomeIcone, titulo) { retangulo(ctx, 44, y, 992, altura, 34, '#FFFFFF', '#E4ECF4'); if (nomeIcone) blocoIcone(ctx, nomeIcone, 105, y + 64); texto(ctx, titulo, nomeIcone ? 172 : 76, y + 76, { tamanho: 28, peso: 800, cor: '#0A2F6B' }); }
   function fundoDeValor(ctx, y, altura, cor) { retangulo(ctx, 146, y, 810, altura, 26, cor); }
   function primeiroNomeClienteComprovante(nome) { return String(nome || '').trim().split(/\s+/)[0] || 'Cliente'; }
   function desenharRodapeEmPilula(ctx, conteudo, y) {
@@ -107,14 +107,14 @@
     const nomeEmpresa = String(empresa || 'AvantaLab').toUpperCase(); texto(ctx, nomeEmpresa, 575, 157, { tamanho: nomeEmpresa.length > 31 ? 38 : nomeEmpresa.length > 23 ? 44 : 51, peso: 800, cor: '#FFFFFF', alinhamento: 'center', largura: 730 });
     icone(ctx, 'usuario', 93, 255, 41, '#3FE3E8'); texto(ctx, `Cliente: ${clienteExibido}`, 125, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', largura: 510 }); linha(ctx, 654, 213, 654, 288, 'rgba(255,255,255,.68)', 2); icone(ctx, 'calendario', 714, 255, 40, '#3FE3E8'); texto(ctx, data, 1000, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
 
-    retangulo(ctx, 216, 385, 648, 118, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 269, 444, 54, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', 320, 432, { tamanho: 25, peso: 800, cor: '#16773F', largura: 500 }); texto(ctx, 'Seu pedido foi confirmado no sistema.', 320, 471, { tamanho: 20, peso: 500, cor: '#31567F', largura: 500 });
+    retangulo(ctx, 216, 385, 648, 118, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 269, 444, 54, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', 320, 453, { tamanho: 25, peso: 800, cor: '#16773F', largura: 500 });
 
     card(ctx, 548, alturaResumo, 'carteira', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, 660, temDesconto ? 136 : 68, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, 704, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, 704, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
     if (temDesconto) { linha(ctx, 180, 728, 928, 728, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, 772, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 928, 772, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }
 
-    card(ctx, yPedido, 251, 'confirmado', 'PEDIDO REGISTRADO'); fundoDeValor(ctx, yPedido + 86, 130, '#1674D1'); icone(ctx, 'confirmado', 208, yPedido + 151, 66, '#FFFFFF'); texto(ctx, titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', 276, yPedido + 142, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, 'Pedido confirmado', 276, yPedido + 182, { tamanho: 19, peso: 500, cor: '#E5F3FF', largura: 370 }); texto(ctx, valorPedido, 922, yPedido + 164, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    card(ctx, yPedido, 251, '', 'PEDIDO REGISTRADO'); fundoDeValor(ctx, yPedido + 86, 130, '#1674D1'); icone(ctx, 'confirmado', 208, yPedido + 151, 66, '#FFFFFF'); texto(ctx, titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', 276, yPedido + 160, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPedido, 922, yPedido + 164, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
 
-    card(ctx, ySaldo, 251, 'grafico', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 86, 130, '#0A2F6B'); icone(ctx, 'grafico', 208, ySaldo + 151, 63, '#46B7FF'); texto(ctx, 'Saldo atual', 276, ySaldo + 142, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, 'Valor que permanece em aberto', 276, ySaldo + 182, { tamanho: 19, peso: 500, cor: '#D6EDFF', largura: 370 }); texto(ctx, saldoAtual, 922, ySaldo + 164, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    card(ctx, ySaldo, 251, '', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 86, 130, '#0A2F6B'); icone(ctx, 'grafico', 208, ySaldo + 151, 63, '#46B7FF'); texto(ctx, 'Saldo atual', 276, ySaldo + 160, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, saldoAtual, 922, ySaldo + 164, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
 
     card(ctx, yDetalhes, alturaDetalhes, 'itens', titulo === 'Pedido consignado' ? 'ITENS DO CONSIGNADO' : 'DETALHES DO PEDIDO'); fundoDeValor(ctx, yDetalhes + 86, alturaItens, '#F3F7FC');
     let yItem = yDetalhes + 126;

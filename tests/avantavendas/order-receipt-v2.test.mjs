@@ -33,13 +33,21 @@ test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', as
     empresa: 'Tridium Cosméticos', cliente: 'Isa (mitsutani)', data: '06/08/2026', saldoAnterior: 'R$ 1.283,50', valorPedido: 'R$ 100,00', saldoAtual: 'R$ 1.383,50', desconto: 'R$ 10,00',
     itens: [
       { principal: 'Shampoo', secundario: '2 × R$ 30,00', valor: 'R$ 60,00' },
-      { principal: 'Brinde', secundario: '1 × R$ 0,00', valor: 'R$ 0,00', bonificado: true },
+      { principal: 'Brinde', secundario: '', valor: 'R$ 0,00', bonificado: true },
     ],
   });
   assert.equal(resultado, canvas);
   assert.ok(canvas.height >= 1920);
   for (const valor of ['TRIDIUM COSMÉTICOS', 'Cliente: Isa', 'R$ 1.283,50', 'R$ 10,00', 'R$ 100,00', 'R$ 1.383,50', 'Shampoo', '2 × R$ 30,00', 'Brinde', 'BONIFICADO', 'Comprovante de pedido • Isa']) assert.ok(textos.some((texto) => texto.includes(valor)), `deveria manter ${valor}`);
   assert.ok(textos.every((texto) => !texto.includes('(mitsutani)')), 'observações posteriores ao primeiro nome não devem aparecer no comprovante');
+  assert.ok(textos.every((texto) => !texto.includes('1 ×')), 'um item com quantidade 1 não deve exibir a linha de quantidade');
+  for (const textoRemovido of ['Pedido confirmado', 'Valor que permanece em aberto', 'Seu pedido foi confirmado no sistema.']) assert.ok(!textos.includes(textoRemovido), `não deveria exibir ${textoRemovido}`);
+  assert.match(codigo, /'Valor do pedido', 276, yPedido \+ 160/);
+  assert.match(codigo, /'Saldo atual', 276, ySaldo \+ 160/);
+  assert.match(codigo, /'Pedido registrado com sucesso!', 320, 453/);
+  assert.match(codigo, /card\(ctx, yPedido, 251, '', 'PEDIDO REGISTRADO'\)/);
+  assert.match(codigo, /card\(ctx, ySaldo, 251, '', 'SITUAÇÃO APÓS O LANÇAMENTO'\)/);
+  assert.match(codigo, /if \(nomeIcone\) blocoIcone/);
   assert.match(codigo, /function primeiroNomeClienteComprovante/);
   assert.match(codigo, /function desenharRodapeEmPilula/);
   assert.match(codigo, /'#FFFFFF', '#DCE6F0'/);

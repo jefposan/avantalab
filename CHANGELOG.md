@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.7.3.05-av60 - 2026-08-11
+
+- AvantaVendas: no comprovante de pedido, produtos com somente uma unidade não
+  repetem a quantidade abaixo do nome. A linha “quantidade × valor unitário”
+  permanece visível a partir de duas unidades, reduzindo a poluição visual sem
+  alterar o valor total do item.
+- AvantaVendas: Configurações mantém a ação Sair somente no cabeçalho, sem o
+  card repetido no fim da página. No comprovante de pedido, os textos auxiliares
+  do aviso de sucesso, do valor do pedido e do saldo atual foram removidos; os
+  rótulos restantes ficam centralizados nos respectivos cards. Os ícones
+  repetidos nos cabeçalhos de Pedido registrado e Situação após o lançamento
+  foram retirados, permanecendo somente dentro dos campos coloridos de valor.
+
 ## 1.7.3.05-av59 - 2026-08-11
 
 - AvantaVendas: o rodapé da imagem compartilhada do pedido agora mantém título

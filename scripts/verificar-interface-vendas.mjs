@@ -101,6 +101,9 @@ exigir(
 );
 exigir(
   aplicacao.includes('settings-delete-account-card')
+    && aplicacao.includes('class="danger settings-header-exit" onclick="abrirConfirmacaoSair()"')
+    && !aplicacao.includes('settings-card settings-exit-card')
+    && !estilos.includes('.settings-exit-card')
     && aplicacao.includes('function abrirExclusaoContaVendas()')
     && aplicacao.includes("String(valorConfirmacao || '').trim().toUpperCase() !== 'EXCLUIR'")
     && aplicacao.includes('await limparTodosCachesVendasUsuario();')
@@ -301,8 +304,25 @@ exigir(
     && comprovantePedido.includes('function primeiroNomeClienteComprovante(nome)')
     && comprovantePedido.includes('const clienteExibido = primeiroNomeClienteComprovante(cliente)')
     && aplicacao.includes('function primeiroNomeClienteComprovante(nome)')
+    && aplicacao.includes('function detalheQuantidadeItemComprovante(item)')
+    && aplicacao.includes("if (!Number.isFinite(quantidade) || quantidade < 2) return '';")
+    && aplicacao.includes('secundario: detalheQuantidadeItemComprovante(item)')
+    && comprovantePedido.includes("'Valor do pedido', 276, yPedido + 160")
+    && comprovantePedido.includes("'Saldo atual', 276, ySaldo + 160")
+    && comprovantePedido.includes("'Pedido registrado com sucesso!', 320, 453")
+    && comprovantePedido.includes("card(ctx, yPedido, 251, '', 'PEDIDO REGISTRADO')")
+    && comprovantePedido.includes("card(ctx, ySaldo, 251, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
+    && comprovantePedido.includes('if (nomeIcone) blocoIcone(ctx, nomeIcone, 105, y + 64)')
+    && comprovantePedido.includes("icone(ctx, 'confirmado', 208, yPedido + 151")
+    && comprovantePedido.includes("icone(ctx, 'grafico', 208, ySaldo + 151")
+    && !comprovantePedido.includes("texto(ctx, 'Pedido confirmado'")
+    && !comprovantePedido.includes("texto(ctx, 'Valor que permanece em aberto'")
+    && !comprovantePedido.includes("texto(ctx, 'Seu pedido foi confirmado no sistema.'")
+    && aplicacao.includes('const temSubtituloPrincipal = Boolean(linhaPrincipal.subtitulo)')
+    && aplicacao.includes('const temSubtituloSaldo = Boolean(linhaSaldo.subtitulo)')
+    && !aplicacao.includes("linhaSaldo.subtitulo || 'Valor que permanece em aberto'")
     && aplicacao.includes("const clienteExibido = /pedido/i.test(String(titulo || ''))"),
-  'O comprovante de pedido deve usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
+  'O comprovante de pedido deve omitir ícones e textos redundantes, manter os ícones nos campos de valor, ocultar quantidade unitária, centralizar os rótulos únicos, usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
 );
 exigir(
   cliente.includes('pasta_pai_id, capa_material_id, nome')

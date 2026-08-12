@@ -1,7 +1,16 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.05 -->
-<!-- avantavendas-asset-revision: 59 -->
+<!-- avantavendas-asset-revision: 60 -->
+
+> Revisão 1.7.3.05-av60: no comprovante de pedido, um produto com quantidade 1
+> mostra somente o nome e o valor total. A linha com quantidade e valor unitário
+> aparece a partir de 2 unidades, deixando a lista mais limpa sem mudar cálculos.
+> O comprovante também remove os subtítulos redundantes do aviso de sucesso, do
+> valor do pedido e do saldo atual, centralizando os rótulos que permanecem. Em
+> Pedido registrado e Situação após o lançamento, o ícone aparece somente no
+> campo colorido de valor, sem repetição no cabeçalho externo. Em Configurações,
+> **Sair** fica somente no cabeçalho; o card inferior foi removido.
 
 > Revisão 1.7.3.05-av59: na imagem compartilhada do pedido, a identificação
 > final do comprovante e da cliente aparece dentro de uma pílula branca opaca,
