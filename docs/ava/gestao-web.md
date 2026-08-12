@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.12 -->
+<!-- ava-version: 1.7.3.14 -->
+
+> Revisão 1.7.3.14: releitura de materiais exclusiva da interface do
+> AvantaVendas; sem impacto operacional na Gestão Web.
+
+> Revisão 1.7.3.13: inclusões, edições, exclusões e confirmações de receitas ou
+> despesas exibem uma camada bloqueante com a operação em andamento até a
+> resposta do servidor, impedindo solicitações repetidas.
 
 > Revisão 1.7.3.12: em **Conteúdo do Vendas > Divulgação**, **Adicionar** abre
 > diretamente o seletor de arquivos do computador ou aparelho, sem o menu

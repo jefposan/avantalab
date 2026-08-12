@@ -380,6 +380,25 @@ exigir(
   'A capa da pasta principal deve ser escolhida na Gestão entre imagens de suas subpastas e exibida no AvantaVendas.',
 );
 exigir(
+  cliente.includes('async function carregarDivulgacao()')
+    && cliente.includes("rpc('meus_vinculos_comerciais_vendas_mobile_rpc')")
+    && cliente.includes("from('vendas_mobile_divulgacao_pastas')")
+    && cliente.includes("from('vendas_mobile_divulgacao_materiais')")
+    && cliente.includes('pastasPermitidas.has(material.pasta_id)')
+    && cliente.includes('loadAll, carregarDivulgacao, loadClientFinancial')
+    && aplicacao.includes("if (entradaDivulgacao) void atualizarDivulgacao('entrada');")
+    && aplicacao.includes("if (aba === 'divulgacao') void atualizarDivulgacao('atalho');")
+    && aplicacao.includes("function iniciarGestoAtualizacaoDivulgacao(evento)")
+    && aplicacao.includes("posicaoRolagemPrincipalVendas() > 0")
+    && aplicacao.includes("void atualizarDivulgacao('gesto')")
+    && aplicacao.includes("toast('Materiais atualizados.')")
+    && estilos.includes('.divulgacao-refresh-indicator.is-pulling { opacity: 1; }')
+    && estilos.includes('.divulgacao-refresh-indicator.is-refreshing { opacity: 1;')
+    && estilos.includes('@media (prefers-reduced-motion: reduce)')
+    && estilos.includes('.divulgacao-refresh-indicator.is-refreshing .svg-icon { animation: none; }'),
+  'Divulgação deve reler apenas pastas e materiais ao entrar novamente e permitir puxar para atualizar somente no topo, com retorno visual e movimento reduzido.',
+);
+exigir(
   aplicacao.includes('function prepararExibicaoSalaBotoesNoDom()')
     && aplicacao.includes("sala.classList.add('is-loading-images')")
     && aplicacao.includes("sala.classList.add('images-ready')")

@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.12 -->
+<!-- ava-version: 1.7.3.14 -->
+
+> Revisão 1.7.3.14: releitura de materiais exclusiva da interface do
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.7.3.13: ao incluir, editar, excluir ou confirmar uma receita ou
+> despesa, a tela fica bloqueada por um fundo escuro e informa a operação em
+> andamento até o servidor responder. Aguarde o indicador desaparecer antes de
+> iniciar outra ação.
 
 > Revisão 1.7.3.12: em **Conteúdo do Vendas > Divulgação**, **Enviar arquivos
 > para esta pasta** abre diretamente o seletor do aparelho, sem o menu

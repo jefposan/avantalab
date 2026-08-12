@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.7.3.14-av69 - 2026-08-12
+
+- AvantaVendas: ao entrar novamente em **Divulgação**, o aplicativo relê
+  somente as pastas e os materiais publicados, sem exigir que o usuário feche
+  o aplicativo ou saia da conta.
+- AvantaVendas: no celular, puxar para baixo a partir do topo da página de
+  **Divulgação** também atualiza os materiais. O gesto não interfere na
+  rolagem normal, preserva a pasta aberta quando ela ainda existe e informa
+  carregamento, sucesso, indisponibilidade de conexão e erro.
+
+## 1.7.3.13 - 2026-08-12
+
+- Gestão Web e Mobile: inclusão, edição, exclusão e confirmação de receitas e
+  despesas agora bloqueiam a tela com fundo escuro e indicador de processamento
+  até a resposta do servidor, evitando solicitações repetidas.
+
 ## 1.7.3.12 - 2026-08-12
 
 - Gestão Web e Mobile: em **Conteúdo do Vendas > Divulgação**, o envio de

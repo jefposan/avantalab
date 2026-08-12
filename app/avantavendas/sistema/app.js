@@ -323,6 +323,9 @@ let feedbackVendasEnviado = false;
 let produtoImagemUploadPendente = null;
 let divulgacaoPastaAtualId = null;
 let divulgacaoMaterialAtualId = null;
+let divulgacaoAtualizando = false;
+let gestoAtualizacaoDivulgacao = null;
+const LIMIAR_ATUALIZACAO_DIVULGACAO = 64;
 let gestoMaterialDivulgacao = null;
 let ignorarCliqueMaterialDivulgacaoAte = 0;
 let renderizacaoPdfMaterialAtual = 0;
@@ -1158,11 +1161,14 @@ function rolarConteudoPrincipalVendas(top = 0, behavior = 'auto') {
 function setAba(aba) {
   const entradaClientes = aba === 'clientes'
     && (state.aba !== 'clientes' || state.menuAberto);
+  const entradaDivulgacao = aba === 'divulgacao'
+    && (state.aba !== 'divulgacao' || state.menuAberto);
   if (aba === state.aba && !state.menuAberto && !document.getElementById('sheetBackdrop')) {
     if (entradaClientes) {
       restaurarPesquisaClientes();
       render();
     }
+    if (aba === 'divulgacao') void atualizarDivulgacao('atalho');
     return;
   }
   if (state.aba === 'clientes') memorizarPesquisaClientes();
@@ -1189,7 +1195,10 @@ function setAba(aba) {
   revisaoNavegacaoManual += 1;
   render();
   const rolagemSalva = Math.max(0, Number(rolagemPorAba[aba] || 0));
-  requestAnimationFrame(() => rolarConteudoPrincipalVendas(rolagemSalva));
+  requestAnimationFrame(() => {
+    rolarConteudoPrincipalVendas(rolagemSalva);
+    if (entradaDivulgacao) void atualizarDivulgacao('entrada');
+  });
 }
 
 function alternarMenu() {
@@ -3829,6 +3838,130 @@ function novaSugestaoVendas() {
   abrirSugestoesVendas();
 }
 
+function renderizarDivulgacaoPreservandoRolagem(posicao) {
+  if (state.aba !== 'divulgacao' || state.menuAberto) return;
+  render();
+  requestAnimationFrame(() => rolarConteudoPrincipalVendas(posicao));
+}
+
+async function atualizarDivulgacao(origem = 'entrada') {
+  if (divulgacaoAtualizando) return;
+  if (!backendAtivo || !window.VendasDb?.carregarDivulgacao) {
+    toast('Não foi possível atualizar os materiais neste momento.');
+    return;
+  }
+  if (!navigator.onLine) {
+    toast('Conecte-se à internet para atualizar os materiais.');
+    return;
+  }
+  const posicaoAnterior = posicaoRolagemPrincipalVendas();
+  divulgacaoAtualizando = true;
+  gestoAtualizacaoDivulgacao = null;
+  renderizarDivulgacaoPreservandoRolagem(posicaoAnterior);
+  try {
+    const dados = await window.VendasDb.carregarDivulgacao();
+    state.divulgacaoPastas = dados.divulgacaoPastas || [];
+    state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
+    if (divulgacaoPastaAtualId && !state.divulgacaoPastas.some((pasta) => pasta.id === divulgacaoPastaAtualId)) {
+      divulgacaoPastaAtualId = null;
+    }
+    await salvarCacheVendas();
+    if (origem === 'gesto' || origem === 'atalho') toast('Materiais atualizados.');
+  } catch (error) {
+    console.warn('Não foi possível atualizar a Divulgação.', error);
+    toast(`${traduzErro(error)} Os materiais anteriores continuam disponíveis.`);
+  } finally {
+    divulgacaoAtualizando = false;
+    renderizarDivulgacaoPreservandoRolagem(posicaoAnterior);
+  }
+}
+
+function indicadorAtualizacaoDivulgacao() {
+  return document.querySelector('.divulgacao-refresh-indicator');
+}
+
+function atualizarIndicadorGestoDivulgacao(deslocamento) {
+  const indicador = indicadorAtualizacaoDivulgacao();
+  if (!indicador) return;
+  const pronto = deslocamento >= LIMIAR_ATUALIZACAO_DIVULGACAO;
+  indicador.classList.add('is-pulling');
+  indicador.classList.toggle('is-ready', pronto);
+  indicador.style.setProperty('--divulgacao-pull-distance', `${Math.round(deslocamento)}px`);
+  indicador.setAttribute('aria-hidden', 'false');
+  const texto = indicador.querySelector('b');
+  if (texto) texto.textContent = pronto ? 'Solte para atualizar' : 'Puxe para atualizar';
+}
+
+function limparIndicadorGestoDivulgacao() {
+  const indicador = indicadorAtualizacaoDivulgacao();
+  if (!indicador || divulgacaoAtualizando) return;
+  indicador.classList.remove('is-pulling', 'is-ready');
+  indicador.style.removeProperty('--divulgacao-pull-distance');
+  indicador.setAttribute('aria-hidden', 'true');
+  const texto = indicador.querySelector('b');
+  if (texto) texto.textContent = 'Puxe para atualizar';
+}
+
+function iniciarGestoAtualizacaoDivulgacao(evento) {
+  if (
+    state.aba !== 'divulgacao'
+    || state.menuAberto
+    || divulgacaoAtualizando
+    || evento.touches?.length !== 1
+    || document.getElementById('sheetBackdrop')
+  ) return;
+  const alvo = evento.target instanceof Element ? evento.target : null;
+  if (
+    !alvo?.closest('.divulgacao-page')
+    || alvo.closest('.module-sticky-head, input, a, video, [contenteditable="true"]')
+    || posicaoRolagemPrincipalVendas() > 0
+  ) return;
+  const toque = evento.touches[0];
+  gestoAtualizacaoDivulgacao = {
+    inicioX: toque.clientX,
+    inicioY: toque.clientY,
+    deslocamento: 0,
+    cancelado: false,
+  };
+}
+
+function moverGestoAtualizacaoDivulgacao(evento) {
+  const gesto = gestoAtualizacaoDivulgacao;
+  if (!gesto || gesto.cancelado || divulgacaoAtualizando || evento.touches?.length !== 1) return;
+  const toque = evento.touches[0];
+  const deltaX = toque.clientX - gesto.inicioX;
+  const deltaY = toque.clientY - gesto.inicioY;
+  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 8) {
+    gesto.cancelado = true;
+    limparIndicadorGestoDivulgacao();
+    return;
+  }
+  if (deltaY <= 0 || posicaoRolagemPrincipalVendas() > 0) {
+    gesto.deslocamento = 0;
+    limparIndicadorGestoDivulgacao();
+    return;
+  }
+  if (deltaY > 6) evento.preventDefault();
+  gesto.deslocamento = Math.min(92, deltaY * 0.48);
+  atualizarIndicadorGestoDivulgacao(gesto.deslocamento);
+}
+
+function concluirGestoAtualizacaoDivulgacao() {
+  const deveAtualizar = Boolean(
+    gestoAtualizacaoDivulgacao
+    && !gestoAtualizacaoDivulgacao.cancelado
+    && gestoAtualizacaoDivulgacao.deslocamento >= LIMIAR_ATUALIZACAO_DIVULGACAO
+  );
+  gestoAtualizacaoDivulgacao = null;
+  limparIndicadorGestoDivulgacao();
+  if (deveAtualizar) void atualizarDivulgacao('gesto');
+}
+
+function cancelarGestoAtualizacaoDivulgacao() {
+  gestoAtualizacaoDivulgacao = null;
+  limparIndicadorGestoDivulgacao();
+}
+
 function renderDivulgacao() {
   const pesquisa = normalizar(buscaAplicada);
   const pastaAtual = (state.divulgacaoPastas || []).find((pasta) => pasta.id === divulgacaoPastaAtualId) || null;
@@ -3880,7 +4013,8 @@ function renderDivulgacao() {
   const conteudo = cardsPastas || cardsMateriais
     ? `${cardsPastas ? `<section class="material-page-section"><h3>${pastaAtual ? 'Subpastas' : 'Pastas'}</h3><div class="materials-grid">${cardsPastas}</div></section>` : ''}${cardsMateriais ? `<section class="material-page-section"><h3>Materiais</h3><div class="material-page-files">${cardsMateriais}</div></section>` : ''}`
     : `<article class="publication-empty"><span>${svgIcon(pastaAtual ? 'package' : 'folder')}</span><h3>${pesquisa ? 'Nenhum material encontrado' : pastaAtual ? 'Esta pasta está vazia' : 'Nenhum material publicado'}</h3><p>${pesquisa ? 'Revise a pesquisa e tente novamente.' : pastaAtual ? 'Não há subpastas, fotos ou vídeos nesta pasta.' : 'Quando sua empresa publicar fotos ou vídeos, as pastas aparecerão aqui.'}</p></article>`;
-  return `<section class="module-page materials-page divulgacao-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true)}${navegacao}</div><div class="material-page-content">${conteudo}</div></section>`;
+  const atualizacao = `<div class="divulgacao-refresh-indicator ${divulgacaoAtualizando ? 'is-refreshing' : ''}" role="status" aria-live="polite" aria-atomic="true" aria-hidden="${divulgacaoAtualizando ? 'false' : 'true'}"><span>${svgIconEstavel('rotate-ccw')}</span><b>${divulgacaoAtualizando ? 'Atualizando materiais' : 'Puxe para atualizar'}</b></div>`;
+  return `<section class="module-page materials-page divulgacao-page">${atualizacao}<div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true)}${navegacao}</div><div class="material-page-content">${conteudo}</div></section>`;
 }
 
 function abrirPastaDivulgacao(pastaId) {
@@ -8175,6 +8309,10 @@ window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
 app.addEventListener('scroll', agendarDestaqueClientes, { passive: true, capture: true });
+app.addEventListener('touchstart', iniciarGestoAtualizacaoDivulgacao, { passive: true });
+app.addEventListener('touchmove', moverGestoAtualizacaoDivulgacao, { passive: false });
+app.addEventListener('touchend', concluirGestoAtualizacaoDivulgacao, { passive: true });
+app.addEventListener('touchcancel', cancelarGestoAtualizacaoDivulgacao, { passive: true });
 window.addEventListener('resize', () => {
   agendarDestaqueClientes();
   sincronizarSalaAoMudarLargura();

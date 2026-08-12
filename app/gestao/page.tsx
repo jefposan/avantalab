@@ -26,6 +26,7 @@ import type { EntradaFaturamento as TabelaEntradaFaturamento } from '@/app/compo
 import TabelaLancamentosDespesa, { type LancamentoDespesa as TabelaLancamentoDespesa } from '@/app/components/TabelaLancamentosDespesa';
 import ModalNotaLancamento from '@/app/components/ModalNotaLancamento';
 import ProcessandoImagemModal from '@/app/components/ProcessandoImagemModal';
+import ProcessandoModal from '@/app/components/ProcessandoModal';
 import ImportadorDespesasModal, { existeRascunhoImportador } from '@/app/modules/importador-despesas/components/ImportadorDespesasModal';
 import TourPrimeiroAcesso from '@/app/components/TourPrimeiroAcesso';
 import PaywallEmpresa from '@/app/components/PaywallEmpresa';
@@ -934,6 +935,20 @@ const [ordemLancamentos, setOrdemLancamentos] = useState<'desc' | 'asc'>('desc')
 const [ordemEntradasFaturamento, setOrdemEntradasFaturamento] = useState<'desc' | 'asc'>('desc');
 const [buscaLancamento, setBuscaLancamento] = useState('');
 const [buscaEntradaFaturamento, setBuscaEntradaFaturamento] = useState('');
+const [processamentoLancamento, setProcessamentoLancamento] = useState<string | null>(null);
+const processamentoLancamentoRef = useRef(false);
+
+const iniciarProcessamentoLancamento = (titulo: string) => {
+  if (processamentoLancamentoRef.current) return false;
+  processamentoLancamentoRef.current = true;
+  setProcessamentoLancamento(titulo);
+  return true;
+};
+
+const finalizarProcessamentoLancamento = () => {
+  processamentoLancamentoRef.current = false;
+  setProcessamentoLancamento(null);
+};
 
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
   const TEMPO_LIMITE_INATIVIDADE = 60 * 60 * 1000; // 60 minutos
@@ -3715,6 +3730,8 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
     return;
   }
 
+  if (!iniciarProcessamentoLancamento('Salvando receita')) return;
+
   try {
     setEntradaFaturamentoSalvando(true);
 
@@ -3786,6 +3803,7 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
     setEntradaFaturamentoValorNumerico(0);
   } finally {
     setEntradaFaturamentoSalvando(false);
+    finalizarProcessamentoLancamento();
   }
 };
 
@@ -4198,56 +4216,60 @@ const apagarDespesaBase = async (nome: string) => {
 };
 
 const adicionarDespesa = async () => {
-  if (salvandoDespesa) return;
+  if (salvandoDespesa || processamentoLancamentoRef.current) return;
+  if (!podeInserirLancamentos) {
+    abrirAviso('Acesso não permitido', 'Você não tem permissão para inserir lançamentos.');
+    return;
+  }
+
+  if (!empresaId) {
+    abrirAviso('Empresa não carregada', 'Tente atualizar a página e acessar novamente.');
+    return;
+  }
+
+  if (!mesAtivo) {
+    abrirAviso('Mês não selecionado', 'Selecione um mês antes de lançar a despesa.');
+    return;
+  }
+
+  if (!formDia || !formDespesa || valorNumericoRaw <= 0) {
+    abrirAviso('Campos obrigatórios', 'Preencha dia, despesa e valor antes de salvar.');
+    return;
+  }
+
+  if (duplicadosAtivo) {
+    const existeIgual = lancamentosDoMes.some(
+      (l) => l.despesa === formDespesa && l.valor === valorNumericoRaw
+    );
+
+    if (existeIgual) {
+      abrirConfirmacao({
+        titulo: 'Despesa duplicada',
+        mensagem:
+          'Já existe uma despesa com o mesmo nome e valor neste mês.\n\nDeseja adicionar mesmo assim?',
+        textoConfirmar: 'Adicionar mesmo assim',
+        acao: async () => {
+          if (!iniciarProcessamentoLancamento('Salvando despesa')) return;
+          setSalvandoDespesa(true);
+          try {
+            await executarParcelamento();
+          } finally {
+            setSalvandoDespesa(false);
+            finalizarProcessamentoLancamento();
+          }
+        },
+      });
+      return;
+    }
+  }
+
+  if (!iniciarProcessamentoLancamento('Salvando despesa')) return;
   setSalvandoDespesa(true);
-
   try {
-    if (!podeInserirLancamentos) {
-      abrirAviso('Acesso não permitido', 'Você não tem permissão para inserir lançamentos.');
-      return;
-    }
-
-    if (!empresaId) {
-      abrirAviso('Empresa não carregada', 'Tente atualizar a página e acessar novamente.');
-      return;
-    }
-
-    if (!mesAtivo) {
-      abrirAviso('Mês não selecionado', 'Selecione um mês antes de lançar a despesa.');
-      return;
-    }
-
-    if (!formDia || !formDespesa || valorNumericoRaw <= 0) {
-      abrirAviso('Campos obrigatórios', 'Preencha dia, despesa e valor antes de salvar.');
-      return;
-    }
-
-    if (duplicadosAtivo) {
-      const existeIgual = lancamentosDoMes.some(
-        (l) => l.despesa === formDespesa && l.valor === valorNumericoRaw
-      );
-
-      if (existeIgual) {
-        abrirConfirmacao({
-          titulo: 'Despesa duplicada',
-          mensagem:
-            'Já existe uma despesa com o mesmo nome e valor neste mês.\n\nDeseja adicionar mesmo assim?',
-          textoConfirmar: 'Adicionar mesmo assim',
-          acao: async () => {
-            try {
-              await executarParcelamento();
-            } finally {
-              setSalvandoDespesa(false);
-            }
-          },
-        });
-        return; // aguarda confirmação do usuário; finally liberará o flag após ação
-      }
-    }
-
     await executarParcelamento();
   } finally {
     setSalvandoDespesa(false);
+    finalizarProcessamentoLancamento();
   }
 };
 
@@ -4397,60 +4419,75 @@ const executarParcelamento = async () => {
 };
 
 const apagarDespesa = async (id: string) => {
-  const apagou = await apagarLancamento(id);
+  if (!iniciarProcessamentoLancamento('Excluindo despesa')) return;
+  try {
+    const apagou = await apagarLancamento(id);
 
-  if (apagou) {
-    // O Supabase pode entregar o ID como número e a ação o recebe como texto.
-    // Normalizar a comparação remove a linha no mesmo instante da confirmação.
-    setLancamentos((prev) => prev.filter((l) => String(l.id) !== String(id)));
-    notificarFinanceiroAtualizado();
-  } else {
-    abrirAviso(
-      'Erro ao apagar lançamento',
-      'Não foi possível apagar o lançamento no banco.'
-    );
+    if (apagou) {
+      // O Supabase pode entregar o ID como número e a ação o recebe como texto.
+      // Normalizar a comparação remove a linha no mesmo instante da confirmação.
+      setLancamentos((prev) => prev.filter((l) => String(l.id) !== String(id)));
+      notificarFinanceiroAtualizado();
+    } else {
+      abrirAviso(
+        'Erro ao apagar lançamento',
+        'Não foi possível apagar o lançamento no banco.'
+      );
+    }
+  } finally {
+    finalizarProcessamentoLancamento();
   }
 };
 
 const cancelarDespesaFixaDoMes = async (lanc: LancamentoFinanceiro | TabelaLancamentoDespesa) => {
   if (!empresaId) return;
+  if (!iniciarProcessamentoLancamento('Excluindo despesa')) return;
 
-  if (!(await removerNotaLancamento(lanc.id))) {
-    abrirAviso('Erro ao apagar nota', 'Não foi possível remover a nota deste lançamento.');
-    return;
+  try {
+    if (!(await removerNotaLancamento(lanc.id))) {
+      abrirAviso('Erro ao apagar nota', 'Não foi possível remover a nota deste lançamento.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('lancamentos')
+      .update({ status: 'cancelada', updated_at: new Date().toISOString() })
+      .eq('id', lanc.id)
+      .eq('empresa_id', empresaId);
+
+    if (error) {
+      abrirAviso('Erro ao apagar lançamento', 'Não foi possível apagar a despesa fixa deste mês.');
+      return;
+    }
+
+    setLancamentos((prev) => prev.filter((l) => String(l.id) !== String(lanc.id)));
+    notificarFinanceiroAtualizado();
+  } finally {
+    finalizarProcessamentoLancamento();
   }
-
-  const { error } = await supabase
-    .from('lancamentos')
-    .update({ status: 'cancelada', updated_at: new Date().toISOString() })
-    .eq('id', lanc.id)
-    .eq('empresa_id', empresaId);
-
-  if (error) {
-    abrirAviso('Erro ao apagar lançamento', 'Não foi possível apagar a despesa fixa deste mês.');
-    return;
-  }
-
-  setLancamentos((prev) => prev.filter((l) => String(l.id) !== String(lanc.id)));
-  notificarFinanceiroAtualizado();
 };
 
 const confirmarDespesaPrevista = async (id: string | number) => {
   if (!empresaId) return;
+  if (!iniciarProcessamentoLancamento('Confirmando despesa')) return;
   const lancamento = lancamentos.find((item) => String(item.id) === String(id));
   const tipoAposConfirmacao = lancamento?.tipo === 'previsto'
     ? null
     : lancamento?.tipo;
-  const ok = await definirStatusLancamento(id, empresaId, 'confirmada', tipoAposConfirmacao);
-  if (ok) {
-    setLancamentos((prev) =>
-      prev.map((l) => (String(l.id) === String(id)
-        ? { ...l, status: 'confirmada', tipo: l.tipo === 'previsto' ? null : l.tipo }
-        : l))
-    );
-    notificarFinanceiroAtualizado();
-  } else {
-    abrirAviso('Erro', 'Não foi possível confirmar a despesa.');
+  try {
+    const ok = await definirStatusLancamento(id, empresaId, 'confirmada', tipoAposConfirmacao);
+    if (ok) {
+      setLancamentos((prev) =>
+        prev.map((l) => (String(l.id) === String(id)
+          ? { ...l, status: 'confirmada', tipo: l.tipo === 'previsto' ? null : l.tipo }
+          : l))
+      );
+      notificarFinanceiroAtualizado();
+    } else {
+      abrirAviso('Erro', 'Não foi possível confirmar a despesa.');
+    }
+  } finally {
+    finalizarProcessamentoLancamento();
   }
 };
 
@@ -4482,51 +4519,56 @@ const confirmarReceitaPrevista = async (id: string | number) => {
     abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser alterada no Gestão.');
     return;
   }
+  if (!iniciarProcessamentoLancamento('Confirmando receita')) return;
 
-  const mesEntrada = entrada.mes;
-  const valorEntrada = Number(entrada.valor || 0);
+  try {
+    const mesEntrada = entrada.mes;
+    const valorEntrada = Number(entrada.valor || 0);
 
-  const resultado = await atualizarFaturamentoEntrada({
-    id: id as string,
-    empresaId,
-    ano: Number(anoSelecionado),
-    mes: mesEntrada,
-    dia: Number(entrada.dia),
-    origem: entrada.origem,
-    valor: valorEntrada,
-    status: 'confirmada',
-    tipoObs: null,
-  });
+    const resultado = await atualizarFaturamentoEntrada({
+      id: id as string,
+      empresaId,
+      ano: Number(anoSelecionado),
+      mes: mesEntrada,
+      dia: Number(entrada.dia),
+      origem: entrada.origem,
+      valor: valorEntrada,
+      status: 'confirmada',
+      tipoObs: null,
+    });
 
-  if (resultado.erro) {
-    abrirAviso('Erro', resultado.mensagem || 'Não foi possível confirmar a receita.');
-    return;
-  }
+    if (resultado.erro) {
+      abrirAviso('Erro', resultado.mensagem || 'Não foi possível confirmar a receita.');
+      return;
+    }
 
-  // Ao confirmar, a receita passa a integrar o total efetivado do mes.
-  const totalAtual = faturamentos[mesEntrada] || 0;
-  const novoTotal = totalAtual + valorEntrada;
+    // Ao confirmar, a receita passa a integrar o total efetivado do mes.
+    const totalAtual = faturamentos[mesEntrada] || 0;
+    const novoTotal = totalAtual + valorEntrada;
 
-  const faturamentoSalvo = await salvarFaturamentoBanco({
-    empresaId,
-    ano: Number(anoSelecionado),
-    mes: mesEntrada,
-    valor: novoTotal,
-  });
+    const faturamentoSalvo = await salvarFaturamentoBanco({
+      empresaId,
+      ano: Number(anoSelecionado),
+      mes: mesEntrada,
+      valor: novoTotal,
+    });
 
-  if (!faturamentoSalvo) {
-    abrirAviso(
-      'Receita confirmada parcialmente',
-      'A receita foi confirmada, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
+    if (!faturamentoSalvo) {
+      abrirAviso(
+        'Receita confirmada parcialmente',
+        'A receita foi confirmada, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
+      );
+      return;
+    }
+
+    setFaturamentosEntradas((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, status: 'confirmada', tipo: null } : e))
     );
-    return;
+    setFaturamentos((prev) => ({ ...prev, [mesEntrada]: novoTotal }));
+    notificarFinanceiroAtualizado();
+  } finally {
+    finalizarProcessamentoLancamento();
   }
-
-  setFaturamentosEntradas((prev) =>
-    prev.map((e) => (e.id === id ? { ...e, status: 'confirmada', tipo: null } : e))
-  );
-  setFaturamentos((prev) => ({ ...prev, [mesEntrada]: novoTotal }));
-  notificarFinanceiroAtualizado();
 };
 
 const excluirReceitaPrevista = (id: string | number) => {
@@ -4638,11 +4680,16 @@ Deseja excluir TODAS as parcelas ou apenas esta?`,
         textoConfirmar: `Excluir todas (${parcelasGrupo.length})`,
         textoCancelar: 'Só esta',
         acao: async () => {
-          for (const p of parcelasGrupo) {
-            await apagarLancamento(String(p.id));
+          if (!iniciarProcessamentoLancamento('Excluindo despesas')) return;
+          try {
+            for (const p of parcelasGrupo) {
+              await apagarLancamento(String(p.id));
+            }
+            setLancamentos((prev) => prev.filter((l) => !parcelasGrupo.some((p) => p.id === l.id)));
+            notificarFinanceiroAtualizado();
+          } finally {
+            finalizarProcessamentoLancamento();
           }
-          setLancamentos((prev) => prev.filter((l) => !parcelasGrupo.some((p) => p.id === l.id)));
-          notificarFinanceiroAtualizado();
         },
         acaoCancelar: () => apagarDespesa(String(lanc.id)),
       });
@@ -4708,54 +4755,59 @@ const excluirEntradaFaturamento = async (entrada: TabelaEntradaFaturamento) => {
       : `Deseja excluir a entrada "${entrada.origem}" no valor de ${formatarMoeda(Number(entrada.valor || 0))}?\n\nO valor será descontado do faturamento total do mês.`,
     textoConfirmar: 'Excluir',
     acao: async () => {
-      const resultado = await apagarFaturamentoEntrada(String(entrada.id));
+      if (!iniciarProcessamentoLancamento('Excluindo receita')) return;
+      try {
+        const resultado = await apagarFaturamentoEntrada(String(entrada.id));
 
-      if (resultado.erro) {
-        abrirAviso(
-          'Erro ao excluir entrada',
-          resultado.mensagem || 'Não foi possível excluir a entrada.'
-        );
-        return;
-      }
+        if (resultado.erro) {
+          abrirAviso(
+            'Erro ao excluir entrada',
+            resultado.mensagem || 'Não foi possível excluir a entrada.'
+          );
+          return;
+        }
 
-      // Receita prevista nunca entrou no total efetivado -> nao mexe no faturamento.
-      if (entradaPrevista) {
+        // Receita prevista nunca entrou no total efetivado -> nao mexe no faturamento.
+        if (entradaPrevista) {
+          setFaturamentosEntradas((prev) =>
+            prev.filter((item) => item.id !== entrada.id)
+          );
+          notificarFinanceiroAtualizado();
+          return;
+        }
+
+        const mesEntrada = entrada.mes || mesAtivo || mesFaturamento;
+        const valorEntrada = Number(entrada.valor || 0);
+        const totalAtual = faturamentos[mesEntrada] || 0;
+        const novoTotal = Math.max(0, totalAtual - valorEntrada);
+
+        const faturamentoSalvo = await salvarFaturamentoBanco({
+          empresaId,
+          ano: Number(anoSelecionado),
+          mes: mesEntrada,
+          valor: novoTotal,
+        });
+
+        if (!faturamentoSalvo) {
+          abrirAviso(
+            'Entrada excluída parcialmente',
+            'A entrada foi removida, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
+          );
+          return;
+        }
+
         setFaturamentosEntradas((prev) =>
           prev.filter((item) => item.id !== entrada.id)
         );
+
+        setFaturamentos((prev) => ({
+          ...prev,
+          [mesEntrada]: novoTotal,
+        }));
         notificarFinanceiroAtualizado();
-        return;
+      } finally {
+        finalizarProcessamentoLancamento();
       }
-
-      const mesEntrada = entrada.mes || mesAtivo || mesFaturamento;
-      const valorEntrada = Number(entrada.valor || 0);
-      const totalAtual = faturamentos[mesEntrada] || 0;
-      const novoTotal = Math.max(0, totalAtual - valorEntrada);
-
-      const faturamentoSalvo = await salvarFaturamentoBanco({
-        empresaId,
-        ano: Number(anoSelecionado),
-        mes: mesEntrada,
-        valor: novoTotal,
-      });
-
-      if (!faturamentoSalvo) {
-        abrirAviso(
-          'Entrada excluída parcialmente',
-          'A entrada foi removida, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
-        );
-        return;
-      }
-
-      setFaturamentosEntradas((prev) =>
-        prev.filter((item) => item.id !== entrada.id)
-      );
-
-      setFaturamentos((prev) => ({
-        ...prev,
-        [mesEntrada]: novoTotal,
-      }));
-      notificarFinanceiroAtualizado();
     },
   });
 };
@@ -4957,19 +5009,21 @@ const salvarEdicaoEntradaFaturamento = async () => {
     return;
   }
 
-  const eraPrevista = entradaOriginal.status === 'prevista';
+  if (!iniciarProcessamentoLancamento('Atualizando receita')) return;
+  try {
+    const eraPrevista = entradaOriginal.status === 'prevista';
 
-  const resultado = await atualizarFaturamentoEntrada({
-    id: entradaFaturamentoEditandoId,
-    empresaId,
-    ano: Number(anoSelecionado),
-    mes: mesEntrada,
-    dia: diaNumerico,
-    origem: origemLimpa,
-    valor: editEntradaFaturamentoValorNumerico,
-    // Prevista continua prevista ate a confirmacao (status/tipo preservados).
-    ...(eraPrevista ? { status: 'prevista', tipoObs: 'previsto' } : {}),
-  });
+    const resultado = await atualizarFaturamentoEntrada({
+      id: entradaFaturamentoEditandoId,
+      empresaId,
+      ano: Number(anoSelecionado),
+      mes: mesEntrada,
+      dia: diaNumerico,
+      origem: origemLimpa,
+      valor: editEntradaFaturamentoValorNumerico,
+      // Prevista continua prevista ate a confirmacao (status/tipo preservados).
+      ...(eraPrevista ? { status: 'prevista', tipoObs: 'previsto' } : {}),
+    });
 
   if (resultado.erro || !resultado.data) {
     abrirAviso(
@@ -5040,8 +5094,11 @@ const salvarEdicaoEntradaFaturamento = async () => {
     [mesEntrada]: novoTotal,
   }));
 
-  cancelarEdicaoEntradaFaturamento();
-  notificarFinanceiroAtualizado();
+    cancelarEdicaoEntradaFaturamento();
+    notificarFinanceiroAtualizado();
+  } finally {
+    finalizarProcessamentoLancamento();
+  }
 };
 
 const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -5127,45 +5184,50 @@ const salvarEdicaoLancamento = async () => {
       ? 'prevista'
       : null;
 
-  const salvo = await atualizarLancamento({
-    id: lancamentoEditandoId,
-    empresaId,
-    ano: Number(anoSelecionado),
-    mes: mesAtivo,
-    dia: diaNumerico,
-    despesaNome: editDespesa,
-    descricao: formatarDescricao(editDescricao),
-    valor: editValorNumerico,
-    status: statusEditado,
-    tipoObs: tipoEditado,
-  });
+  if (!iniciarProcessamentoLancamento('Atualizando despesa')) return;
+  try {
+    const salvo = await atualizarLancamento({
+      id: lancamentoEditandoId,
+      empresaId,
+      ano: Number(anoSelecionado),
+      mes: mesAtivo,
+      dia: diaNumerico,
+      despesaNome: editDespesa,
+      descricao: formatarDescricao(editDescricao),
+      valor: editValorNumerico,
+      status: statusEditado,
+      tipoObs: tipoEditado,
+    });
 
-  if (!salvo.erro && salvo.data) {
-    setLancamentos((prev) =>
-      prev.map((l) =>
-        l.id === lancamentoEditandoId
-          ? {
-              ...l,
-              mes: salvo.data.mes,
-              dia: salvo.data.dia,
-              despesa: salvo.data.despesa_nome,
-              descricao: salvo.data.descricao || '',
-              valor: Number(salvo.data.valor),
-              status: salvo.data.status || null,
-              tipo: salvo.data.tipo_obs || null,
-            }
-          : l
-      )
-    );
+    if (!salvo.erro && salvo.data) {
+      setLancamentos((prev) =>
+        prev.map((l) =>
+          l.id === lancamentoEditandoId
+            ? {
+                ...l,
+                mes: salvo.data.mes,
+                dia: salvo.data.dia,
+                despesa: salvo.data.despesa_nome,
+                descricao: salvo.data.descricao || '',
+                valor: Number(salvo.data.valor),
+                status: salvo.data.status || null,
+                tipo: salvo.data.tipo_obs || null,
+              }
+            : l
+        )
+      );
 
-    cancelarEdicaoLancamento();
-    notificarFinanceiroAtualizado();
-  } else {
-  abrirAviso(
-    'Erro ao atualizar lançamento',
-    salvo.mensagem || 'Não foi possível atualizar o lançamento.'
-  );
-}
+      cancelarEdicaoLancamento();
+      notificarFinanceiroAtualizado();
+    } else {
+      abrirAviso(
+        'Erro ao atualizar lançamento',
+        salvo.mensagem || 'Não foi possível atualizar o lançamento.'
+      );
+    }
+  } finally {
+    finalizarProcessamentoLancamento();
+  }
 };
 
 const abrirModalLogoPeloHeader = () => {
@@ -7919,6 +7981,14 @@ if (validacaoTelefoneObrigatoria) {
   onAssinar={() => setModalAssinatura(true)}
   onResgatarCupom={resgatarCupom}
   darkMode={darkMode}
+  corPrimaria={corPrimaria}
+/>
+
+<ProcessandoModal
+  aberto={Boolean(processamentoLancamento)}
+  darkMode={darkMode}
+  titulo={processamentoLancamento || 'Processando lançamento'}
+  mensagem="Aguarde enquanto aplicamos a alteração."
   corPrimaria={corPrimaria}
 />
 

@@ -1,7 +1,16 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.12 -->
-<!-- avantavendas-asset-revision: 68 -->
+<!-- ava-version: 1.7.3.14 -->
+<!-- avantavendas-asset-revision: 69 -->
+
+> Revisão 1.7.3.14-av69: ao abrir novamente **Divulgação**, as pastas e os
+> materiais publicados são relidos. No celular, também é possível puxar a
+> página para baixo quando ela estiver no topo e soltar após a indicação para
+> atualizar. A pasta aberta é preservada quando ainda existir.
+
+> Revisão 1.7.3.13: a nova proteção visual durante alterações de receitas e
+> despesas pertence à Gestão Web e Mobile; sem mudança operacional no
+> AvantaVendas.
 
 > Revisão 1.7.3.12-av68: ao abrir uma pasta em **Divulgação**, a navegação
 > fica fixa acima dos arquivos. Ela reúne **Voltar** e **Pasta atual: nome da

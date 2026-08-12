@@ -386,6 +386,37 @@
     };
   }
 
+  async function carregarDivulgacao() {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const [vinculosRes, pastasRes, materiaisRes] = await Promise.all([
+      requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'),
+      requireClient()
+        .from('vendas_mobile_divulgacao_pastas')
+        .select('id, empresa_id, pasta_pai_id, capa_material_id, nome, descricao, ordem, criado_em')
+        .eq('ativo', true)
+        .order('ordem')
+        .order('criado_em', { ascending: false }),
+      requireClient()
+        .from('vendas_mobile_divulgacao_materiais')
+        .select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em')
+        .eq('ativo', true)
+        .order('ordem')
+        .order('criado_em', { ascending: false }),
+    ]);
+    const error = vinculosRes.error || pastasRes.error || materiaisRes.error;
+    if (error) throw error;
+    const empresasComDivulgacao = new Set((vinculosRes.data || [])
+      .filter((vinculo) => vinculo.divulgacao_ativa)
+      .map((vinculo) => vinculo.empresa_id));
+    const pastas = (pastasRes.data || []).filter((pasta) => empresasComDivulgacao.has(pasta.empresa_id));
+    const pastasPermitidas = new Set(pastas.map((pasta) => pasta.id));
+    return {
+      divulgacaoPastas: pastas,
+      divulgacaoMateriais: (materiaisRes.data || []).filter((material) => pastasPermitidas.has(material.pasta_id)),
+    };
+  }
+
   async function loadAll(contextoPreparado = null) {
     const user = contextoPreparado?.user || await currentUser();
     if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true };
@@ -944,5 +975,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, carregarDivulgacao, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();
