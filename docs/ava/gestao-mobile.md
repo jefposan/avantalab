@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.05 -->
+<!-- ava-version: 1.7.3.06 -->
+
+> Revisão 1.7.3.06: o lançamento de receita mantém somente dia, origem e valor.
+> A opção **Definir total** e os avisos que podiam substituir receitas existentes
+> foram removidos. Valores manuais antigos são preservados como uma entrada
+> comum chamada **Receita registrada anteriormente**.
 
 > Revisão 1.7.3.05-av46: a abertura iniciada pelo botão **Ir para Gestão** do
 > AvantaVendas apenas traz o aplicativo Gestão para frente. Ela não é tratada
@@ -1370,12 +1375,9 @@ deve usar os nomes do menu e da barra inferior do celular.
   fixas. Previsto só se torna lançamento confirmado após a ação do usuário.
 - Durante o preenchimento de um lançamento, atualizações secundárias aguardam o
   fim da edição para atualizar a tela sem fechar o teclado ou apagar o conteúdo.
-- Ao usar **Receita > Definir total** em um mês com receitas avulsas,
-  **Cancelar** preserva essas receitas e soma o total informado; **OK** apaga
-  as receitas avulsas e mantém somente o total.
-- Ao excluir o total definido do mês, **Cancelar** não altera os dados; **OK**
-  preserva as receitas avulsas existentes ou zera o mês quando não houver
-  receitas lançadas.
+- Em **Receita**, informe dia, origem e valor para salvar uma entrada comum. O
+  total do período é consolidado a partir dessas entradas e não possui ação
+  própria para definir, substituir ou excluir.
 - Os avisos e confirmações aparecem em cards do sistema. Fechar, tocar fora,
   pressionar Esc ou escolher **Voltar sem excluir** cancela sem remover dados.
   Em parcelas, a exclusão distingue **somente esta** e **todas**. Em despesa

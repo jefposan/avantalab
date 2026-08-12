@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.05 -->
+<!-- ava-version: 1.7.3.06 -->
+
+> Revisão 1.7.3.06: receitas passam a ser cadastradas somente como entradas
+> individuais. O Balanço Geral exibe o faturamento consolidado sem permitir a
+> edição direta de um total mensal. Valores manuais antigos são preservados
+> como **Receita registrada anteriormente**.
 
 > Revisão 1.7.3.05: preferências do perfil só são salvas depois de uma leitura
 > válida. Em instabilidade, a Gestão preserva o que já está registrado e não

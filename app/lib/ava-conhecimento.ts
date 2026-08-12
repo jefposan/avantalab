@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.7.3.05: preferências e conclusão de tutorial da Gestão
-// acompanham a conta; a cópia local serve somente como contingência offline.
+// Revisado na versão 1.7.3.06: a Gestão Web e Mobile registram receitas somente
+// como entradas individuais; referências mensais antigas viram entradas comuns.
 
 /*
  * Fonte executável do conhecimento operacional da Ava.
@@ -58,7 +58,7 @@ AGENDA, AVISOS E MÓDULOS
 - Na listagem web de Recebimentos Presenciais, o popup aproveita a largura disponível e reorganiza cada lançamento quando o card fica estreito. Datas usam ano com dois dígitos, o valor contratado aparece como Valor e não existe coluna redundante de tipo. Gestor e Administrador podem estornar qualquer recebimento efetivamente lançado, inclusive antes da conferência; o motivo é obrigatório e a cobrança volta a Previsto ou Em atraso conforme o vencimento.
 - Na Conferência de Recebimentos Presenciais, Valor contratado, Valor declarado, Diferença, Forma de pagamento e Comprovante ocupam uma única faixa no desktop e se reorganizam quando o card fica estreito; observações e ações permanecem abaixo.
 - Vendas Mobile, quando instalado, possui catálogo, divulgação e novidades próprios. No Web, Gestor Master, Administrador e Operador Completo acessam esse botão; somente Gestor Master e Administrador instalam ou removem o módulo. O código empresarial do vendedor autoriza somente conteúdos da equipe após aprovação; a empresa solicitada torna-se o vínculo comercial ativo, e acessos administrativos automáticos a outros perfis não substituem essa escolha. O AvantaVendas aberto reconhece a aprovação e carrega os conteúdos automaticamente, sem reinício ou novo login. Resultados só entram na Gestão quando o usuário escolhe manualmente um destino financeiro e aparecem consolidados por usuário e mês. Ao trocar ou desvincular, os lançamentos anteriores podem ser apagados ou mantidos sem proteção para edição e exclusão; o histórico operacional permanece no Vendas.
-- Em Gestão Mobile > Receitas > Definir total, a etiqueta Total mensal identifica o total definido manualmente. Excluir total do mês aparece apenas enquanto essa referência existir; a exclusão remove somente o Total mensal e preserva as receitas avulsas.
+- Na Gestão Web e Mobile, receitas são registradas somente como entradas individuais, com dia, origem e valor. O Balanço Geral apenas consulta o faturamento consolidado e não permite editar um total mensal diretamente. Referências mensais antigas aparecem preservadas como uma entrada comum chamada Receita registrada anteriormente.
 
 LIMITES
 - Você explica e orienta; não salva, altera ou exclui registros. Para números, use apenas os dados fornecidos no contexto atual.`,
@@ -117,8 +117,7 @@ LANÇAMENTOS E RESULTADOS
 - Na edição de uma despesa fixa, o campo Valor usa o padrão monetário do sistema e exibe reais com duas casas decimais.
 - Durante o preenchimento de um lançamento, atualizações de notificações, assinatura, ponto ou sincronização financeira aguardam o fim da edição para atualizar a tela, sem fechar o teclado ou apagar o conteúdo digitado.
 - Em Menu > Cadastrar despesas e no cadastro inline do lançamento, novos tipos entram imediatamente em ordem alfabética nas listas e seletores. Inclusões, edições e exclusões do catálogo atualizam também a Gestão Web aberta no mesmo perfil.
-- Ao usar Receita > Definir total em um mês com receitas avulsas, Cancelar preserva essas receitas e soma o total informado; OK apaga as avulsas e mantém somente o total.
-- Ao excluir o total definido do mês, Cancelar não altera os dados; OK preserva as receitas avulsas existentes ou zera o mês quando não houver receitas lançadas.
+- Em Receita, o usuário informa dia, origem e valor e salva uma entrada comum. Não existe opção para definir, substituir ou excluir o total do mês; o consolidado é calculado a partir das entradas preservadas.
 - Confirmações operacionais aparecem em cards do sistema. Fechar, tocar fora, pressionar Esc ou escolher Voltar sem excluir não remove dados. Em despesa parcelada, escolha Excluir somente esta ou Excluir todas; em despesa fixa, escolha Excluir somente este mês ou Abrir despesas fixas.
 - Nos cards Despesas do mês e Receitas do mês, tocar na lupa abre o campo de busca já focado e pronto para digitação; enquanto a busca estiver aberta, a ação Recolher permanece disponível e fecha a busca para retornar à lista compacta.
 - Para cadastrar ou revisar despesas e categorias: Menu > Cadastrar despesas. Despesas fixas devem ser gerenciadas na área própria para afetar a recorrência completa.
