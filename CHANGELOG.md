@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.05-av63 - 2026-08-11
+
+- AvantaVendas: o toque nos nove cards principais da sala agora reduz o botão
+  uniformemente para o centro, sem manter a borda inferior fixa nem deslocar o
+  card para baixo.
+
 ## 1.7.3.05-av62 - 2026-08-11
 
 - AvantaVendas: o acesso direto ao aplicativo Gestão foi removido do cabeçalho

@@ -356,9 +356,9 @@ exigir(
 );
 exigir(
   aplicacao.includes("botao.closest('.mobile-menu') && !botao.matches('.mobile-menu-card:not(.is-organizable)')")
-    && estilos.includes('.mobile-menu-card.button-pressed:not(.is-organizable) { transform: translateY(4px) scale(.94) !important;')
+    && estilos.includes('.mobile-menu-card.button-pressed:not(.is-organizable) { transform: scale(.94) !important; transform-origin: center center;')
     && estilos.includes('@media (prefers-reduced-motion: reduce) { .mobile-menu-card.button-pressed:not(.is-organizable) { transition: none !important; }'),
-  'Os nove botões principais da sala devem afundar ao toque, sem interferir no modo de reorganização e respeitando movimento reduzido.',
+  'Os nove botões principais da sala devem reduzir para o centro ao toque, sem deslocamento vertical, sem interferir no modo de reorganização e respeitando movimento reduzido.',
 );
 exigir(
   migracaoVinculo.includes("v_deve_ativar := new.papel = 'vendedor'")

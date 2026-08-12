@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.05 -->
-<!-- avantavendas-asset-revision: 62 -->
+<!-- avantavendas-asset-revision: 63 -->
+
+> Revisão 1.7.3.05-av63: ao tocar um dos nove cards da sala, ele reduz de modo
+> uniforme em direção ao centro, inclusive na borda inferior. O efeito não o
+> desloca para baixo e continua indisponível durante a reorganização por
+> arrastar.
 
 > Revisão 1.7.3.05-av62: o acesso direto ao aplicativo Gestão foi retirado do
 > cabeçalho e das opções de atalhos inferiores do AvantaVendas. Os aplicativos
