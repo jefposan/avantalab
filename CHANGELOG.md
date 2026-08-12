@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.3.06-av65 - 2026-08-12
+
+- AvantaVendas: a imagem do comprovante de pagamento passou a usar a mesma
+  composição compacta do pedido. Cabeçalho, confirmação e cards de valores
+  ficaram menores; **Resumo financeiro** também foi reduzido e, junto de
+  **Detalhes do pagamento**, é centralizado sem ícone. O rodapé usa pílula
+  branca com o primeiro nome da cliente. A altura agora acompanha o conteúdo:
+  o rodapé fica sempre à mesma distância da base e listas maiores de pedido
+  ampliam a imagem antes dele, sem espaço vazio no final. A arte de fundo fica
+  ancorada no rodapé, com corte superior quando necessário; os cards brancos
+  passam a ter contorno azul suave para melhor separação visual.
+
 ## 1.7.3.06 - 2026-08-12
 
 - Gestão Web e Mobile: receitas passam a ser registradas somente como entradas

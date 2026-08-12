@@ -37,7 +37,7 @@ test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', as
     ],
   });
   assert.equal(resultado, canvas);
-  assert.ok(canvas.height >= 1700 && canvas.height < 1920, 'o comprovante compacto deve ser menor que a altura anterior de 1920 px');
+  assert.equal(canvas.height, 1620, 'a altura deve terminar logo após a margem fixa do rodapé');
   for (const valor of ['TRIDIUM COSMÉTICOS', 'Cliente: Isa', 'R$ 1.283,50', 'R$ 10,00', 'R$ 100,00', 'R$ 1.383,50', 'Shampoo', '2 × R$ 30,00', 'Brinde', 'BONIFICADO', 'Comprovante de pedido • Isa']) assert.ok(textos.some((texto) => texto.includes(valor)), `deveria manter ${valor}`);
   assert.ok(textos.every((texto) => !texto.includes('(mitsutani)')), 'observações posteriores ao primeiro nome não devem aparecer no comprovante');
   assert.ok(textos.every((texto) => !texto.includes('1 ×')), 'um item com quantidade 1 não deve exibir a linha de quantidade');
@@ -50,13 +50,27 @@ test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', as
   assert.match(codigo, /'Saldo atual', 276, ySaldo \+ 137/);
   assert.match(codigo, /card\(ctx, yPedido, alturaCardValor, '', 'PEDIDO REGISTRADO'\)/);
   assert.match(codigo, /card\(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO'\)/);
+  assert.match(codigo, /card\(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'\)/);
+  assert.match(codigo, /const alturaResumo = temDesconto \? 246 : 184/);
   assert.match(codigo, /card\(ctx, yDetalhes, alturaDetalhes, '', titulo === 'Pedido consignado' \? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO'\)/);
   assert.doesNotMatch(codigo, /icone\(ctx, 'itens',/);
+  assert.doesNotMatch(codigo, /card\(ctx, yResumo, alturaResumo, 'carteira'/);
   assert.match(codigo, /texto\(ctx, titulo, LARGURA \/ 2, y \+ 43, \{ tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' \}\)/);
   assert.match(codigo, /function primeiroNomeClienteComprovante/);
   assert.match(codigo, /function desenharRodapeEmPilula/);
   assert.match(codigo, /'#FFFFFF', '#DCE6F0'/);
   assert.doesNotMatch(codigo, /yRodape \+ 35/);
+  assert.match(codigo, /const altura = yRodape \+ MARGEM_INFERIOR_RODAPE/);
+  assert.doesNotMatch(codigo, /itens\.slice\(0, 44\)/);
+  assert.match(codigo, /function desenharFundoAncoradoNoRodape/);
+  assert.match(codigo, /alturaFonte - alturaVisivel/);
+  assert.match(codigo, /const COR_BORDA_CARD = '#C7D8E8'/);
+  assert.match(codigo, /'#FFFFFF', COR_BORDA_CARD/);
+  await janela.OrderReceiptV2.criarCanvas({
+    itens: Array.from({ length: 46 }, (_, indice) => ({ principal: `Produto ${indice + 1}`, valor: 'R$ 10,00' })),
+  });
+  assert.equal(canvas.height, 5166, 'pedidos longos devem ampliar a imagem e manter o rodapé ancorado na base');
+  assert.ok(textos.some((texto) => texto.includes('Produto 46')), 'a lista longa deve manter também o último produto');
   const pilula = preenchimentos.find(({ cor, caminho }) => (
     cor === '#FFFFFF'
     && caminho.some(([comando, , , , altura, raio]) => comando === 'arcTo' && altura - caminho[0][2] === 72 && raio === 36)

@@ -2,10 +2,11 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, comprovantePedido, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
+const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/order-receipt-v2.js'), 'utf8'),
+  readFile(resolve(raiz, 'app/avantavendas/sistema/payment-receipt-v2.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/supabase-client.js'), 'utf8'),
   readFile(resolve(raiz, 'app/api/vendas/conta/route.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/api/sms/verificar-codigo/route.ts'), 'utf8'),
@@ -47,6 +48,32 @@ exigir(
     && estilos.includes('padding: 0 14px 0 40px;')
     && estilos.includes('.login-field.password-field input { padding-right: 44px; }'),
   'Login e cadastro devem usar avisos modais, preservar valores, devolver o foco e aproveitar toda a largura dos campos sem criar rolagem no formulário.',
+);
+exigir(
+  comprovantePagamento.includes('const MARGEM_INFERIOR_RODAPE = 78;')
+    && comprovantePagamento.includes('const altura = yRodape + MARGEM_INFERIOR_RODAPE;')
+    && comprovantePagamento.includes('function desenharFundoAncoradoNoRodape(ctx, fundo, altura)')
+    && comprovantePagamento.includes('alturaFonte - alturaVisivel')
+    && comprovantePagamento.includes("const COR_BORDA_CARD = '#C7D8E8';")
+    && comprovantePagamento.includes("retangulo(ctx, 44, 42, 992, 260, 36, '#063B72')")
+    && comprovantePagamento.includes("retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3')")
+    && comprovantePagamento.includes("'Pagamento registrado com sucesso!', 570, 367")
+    && comprovantePagamento.includes("card(ctx, yPagamento, alturaCardValor, '', 'PAGAMENTO REGISTRADO')")
+    && comprovantePagamento.includes("card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
+    && comprovantePagamento.includes("const alturaResumo = 184")
+    && comprovantePagamento.includes("card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO')")
+    && comprovantePagamento.includes("card(ctx, yDetalhes, alturaDetalhes, '', 'DETALHES DO PAGAMENTO')")
+    && comprovantePagamento.includes('function desenharRodapeEmPilula(ctx, conteudo, y)')
+    && comprovantePagamento.includes('const clienteExibido = primeiroNomeClienteComprovante(cliente)')
+    && !comprovantePagamento.includes("'Seu pagamento foi confirmado no sistema.'")
+    && !comprovantePagamento.includes("'Pagamento confirmado'")
+    && !comprovantePagamento.includes("'Valor que permanece em aberto'")
+    && !comprovantePagamento.includes("icone(ctx, 'detalhes',")
+    && !comprovantePagamento.includes("card(ctx, yResumo, alturaResumo, 'carteira'")
+    && aplicacao.includes("etiqueta: 'Pagamento registrado com sucesso!'")
+    && !aplicacao.includes("tituloDestaque: 'Pagamento registrado', subtitulo:")
+    && aplicacao.includes('const clienteExibido = primeiroNomeClienteComprovante(cliente);'),
+  'O comprovante de pagamento deve usar a mesma composição compacta do pedido, sem textos ou ícone redundantes, com detalhes centralizados e pílula no rodapé.',
 );
 exigir(
   aplicacao.includes("abrirAvisoRecuperacaoSenhaVendas('Usuário não localizado', 'Confirme o e-mail digitado.')")
@@ -314,11 +341,19 @@ exigir(
     && comprovantePedido.includes("alinhamento: 'center', largura: 460, linhaBase: 'middle'")
     && comprovantePedido.includes("card(ctx, yPedido, alturaCardValor, '', 'PEDIDO REGISTRADO')")
     && comprovantePedido.includes("card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
+    && comprovantePedido.includes("card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO')")
+    && comprovantePedido.includes('const alturaResumo = temDesconto ? 246 : 184')
+    && comprovantePedido.includes('const altura = yRodape + MARGEM_INFERIOR_RODAPE;')
+    && !comprovantePedido.includes('itens.slice(0, 44)')
+    && comprovantePedido.includes('function desenharFundoAncoradoNoRodape(ctx, fundo, altura)')
+    && comprovantePedido.includes('alturaFonte - alturaVisivel')
+    && comprovantePedido.includes("const COR_BORDA_CARD = '#C7D8E8';")
     && comprovantePedido.includes("card(ctx, yDetalhes, alturaDetalhes, '', titulo === 'Pedido consignado' ? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO')")
     && comprovantePedido.includes("texto(ctx, titulo, LARGURA / 2, y + 43, { tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' })")
     && comprovantePedido.includes("icone(ctx, 'confirmado', 208, yPedido + 128")
     && comprovantePedido.includes("icone(ctx, 'grafico', 208, ySaldo + 128")
     && !comprovantePedido.includes("icone(ctx, 'itens',")
+    && !comprovantePedido.includes("card(ctx, yResumo, alturaResumo, 'carteira'")
     && !comprovantePedido.includes("texto(ctx, 'Pedido confirmado'")
     && !comprovantePedido.includes("texto(ctx, 'Valor que permanece em aberto'")
     && !comprovantePedido.includes("texto(ctx, 'Seu pedido foi confirmado no sistema.'")
@@ -327,8 +362,11 @@ exigir(
     && aplicacao.includes("etiqueta: 'Pedido registrado com sucesso!'")
     && aplicacao.includes("ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', largura / 2, y + 13)")
     && aplicacao.includes("ctx.fillText('Situação após o lançamento', largura / 2, y + 13)")
+    && aplicacao.includes("ctx.fillText('Resumo financeiro', largura / 2, y + 13)")
+    && aplicacao.includes('const yRodape = yDetalhes + alturaDetalhes + 70;')
+    && aplicacao.includes('const altura = yRodape + 78;')
     && !aplicacao.includes("linhaSaldo.subtitulo || 'Valor que permanece em aberto'")
-    && aplicacao.includes("const clienteExibido = /pedido/i.test(String(titulo || ''))"),
+    && aplicacao.includes('const clienteExibido = primeiroNomeClienteComprovante(cliente);'),
   'O comprovante de pedido deve permanecer compacto, omitir ícones e textos redundantes, manter os ícones somente nos campos de valor, ocultar quantidade unitária, centralizar a mensagem de sucesso e os títulos dos cards nos dois eixos, usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
 );
 exigir(

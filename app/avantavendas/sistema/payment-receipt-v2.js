@@ -3,7 +3,8 @@
   'use strict';
 
   const LARGURA = 1080;
-  const ALTURA = 1920;
+  const MARGEM_INFERIOR_RODAPE = 78;
+  const COR_BORDA_CARD = '#C7D8E8';
   const FONTE = 'Inter, Arial, sans-serif';
   const FUNDO_URL = './assets/receipts/avantalab-receipt-bg.webp';
   let carregamentoFundo;
@@ -18,6 +19,15 @@
       imagem.src = `${FUNDO_URL}?v=${encodeURIComponent(window.__VENDAS_MOBILE_VERSION__ || '')}`;
     });
     return carregamentoFundo;
+  }
+
+  function desenharFundoAncoradoNoRodape(ctx, fundo, altura) {
+    const larguraFonte = Number(fundo.naturalWidth || fundo.width) || LARGURA;
+    const alturaFonte = Number(fundo.naturalHeight || fundo.height) || 1920;
+    const alturaVisivel = Math.min(alturaFonte, altura);
+    // Quando o comprovante é menor, o corte vem do topo. Em listas longas,
+    // a arte mantém o rodapé e a área nova nasce acima dela.
+    ctx.drawImage(fundo, 0, alturaFonte - alturaVisivel, larguraFonte, alturaVisivel, 0, altura - alturaVisivel, LARGURA, alturaVisivel);
   }
 
   function caminhoArredondado(ctx, x, y, largura, altura, raio) {
@@ -46,12 +56,12 @@
     return `${reduzido}…`;
   }
 
-  function texto(ctx, valor, x, y, { tamanho = 28, peso = 600, cor = '#0A1F44', alinhamento = 'left', largura = 0 } = {}) {
+  function texto(ctx, valor, x, y, { tamanho = 28, peso = 600, cor = '#0A1F44', alinhamento = 'left', largura = 0, linhaBase = 'alphabetic' } = {}) {
     ctx.fillStyle = cor;
     ctx.font = `${peso} ${tamanho}px ${FONTE}`;
-    ctx.textAlign = alinhamento;
+    ctx.textAlign = alinhamento; ctx.textBaseline = linhaBase;
     ctx.fillText(largura ? textoLimitado(ctx, valor, largura) : String(valor || ''), x, y);
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   }
 
   function linha(ctx, x1, y1, x2, y2, cor, largura = 4) {
@@ -92,50 +102,75 @@
   }
 
   function card(ctx, y, altura, nomeIcone, titulo) {
-    retangulo(ctx, 44, y, 992, altura, 34, '#FFFFFF', '#E4ECF4');
-    blocoIcone(ctx, nomeIcone, 105, y + 64);
-    texto(ctx, titulo, 172, y + 76, { tamanho: 28, peso: 800, cor: '#0A2F6B' });
+    retangulo(ctx, 44, y, 992, altura, 34, '#FFFFFF', COR_BORDA_CARD);
+    if (nomeIcone) {
+      blocoIcone(ctx, nomeIcone, 105, y + 64);
+      texto(ctx, titulo, 172, y + 76, { tamanho: 28, peso: 800, cor: '#0A2F6B' });
+      return;
+    }
+    texto(ctx, titulo, LARGURA / 2, y + 43, { tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' });
   }
 
   function fundoDeValor(ctx, y, altura, cor) { retangulo(ctx, 146, y, 810, altura, 26, cor); }
+  function primeiroNomeClienteComprovante(nome) { return String(nome || '').trim().split(/\s+/)[0] || 'Cliente'; }
+  function desenharRodapeEmPilula(ctx, conteudo, y) {
+    ctx.font = `700 28px ${FONTE}`;
+    const conteudoLimitado = textoLimitado(ctx, conteudo, 820);
+    const larguraPilula = Math.min(936, Math.max(360, Math.ceil(ctx.measureText(conteudoLimitado).width) + 88));
+    const xPilula = (LARGURA - larguraPilula) / 2;
+    retangulo(ctx, xPilula, y - 47, larguraPilula, 72, 36, '#FFFFFF', '#DCE6F0');
+    texto(ctx, conteudoLimitado, LARGURA / 2, y, { tamanho: 28, peso: 700, cor: '#0A2F6B', alinhamento: 'center' });
+  }
 
   async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', valorPago = 'R$ 0,00', saldoAtual = 'R$ 0,00', formaPagamento = 'Não informado', desconto = '', rotuloValorPago = 'Valor pago' } = {}) {
+    const clienteExibido = primeiroNomeClienteComprovante(cliente);
+    const yResumo = 440;
+    const alturaCardValor = 218;
+    const espacoEntreCards = 24;
+    const alturaResumo = 184;
+    const yPagamento = yResumo + alturaResumo + espacoEntreCards;
+    const ySaldo = yPagamento + alturaCardValor + espacoEntreCards;
+    const yDetalhes = ySaldo + alturaCardValor + espacoEntreCards;
+    const temDesconto = Boolean(desconto);
+    const alturaDetalhes = temDesconto ? 235 : 167;
+    const yRodape = yDetalhes + alturaDetalhes + 70;
+    // A base acompanha o rodapé: não há sobra em pagamentos curtos e a
+    // distância inferior continua estável em qualquer composição.
+    const altura = yRodape + MARGEM_INFERIOR_RODAPE;
     const canvas = document.createElement('canvas');
-    canvas.width = LARGURA; canvas.height = ALTURA;
+    canvas.width = LARGURA; canvas.height = altura;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Não foi possível gerar o comprovante.');
-    ctx.fillStyle = '#F4F8FC'; ctx.fillRect(0, 0, LARGURA, ALTURA);
+    ctx.fillStyle = '#F4F8FC'; ctx.fillRect(0, 0, LARGURA, altura);
     const fundo = await carregarFundo();
-    if (fundo) ctx.drawImage(fundo, 0, 0, LARGURA, ALTURA);
+    if (fundo) desenharFundoAncoradoNoRodape(ctx, fundo, altura);
 
     // Cabeçalho sólido: sem textura ou gradiente para garantir leitura.
-    retangulo(ctx, 44, 42, 992, 304, 36, '#063B72');
-    ctx.beginPath(); ctx.arc(132, 134, 58, 0, Math.PI * 2); ctx.fillStyle = '#0B5EAA'; ctx.fill(); icone(ctx, 'documento', 132, 134, 64, '#FFFFFF');
+    retangulo(ctx, 44, 42, 992, 260, 36, '#063B72');
+    ctx.beginPath(); ctx.arc(132, 122, 54, 0, Math.PI * 2); ctx.fillStyle = '#0B5EAA'; ctx.fill(); icone(ctx, 'documento', 132, 122, 60, '#FFFFFF');
     const nomeEmpresa = String(empresa || 'AvantaLab').toUpperCase();
-    texto(ctx, nomeEmpresa, 575, 157, { tamanho: nomeEmpresa.length > 31 ? 38 : nomeEmpresa.length > 23 ? 44 : 51, peso: 800, cor: '#FFFFFF', alinhamento: 'center', largura: 730 });
-    icone(ctx, 'usuario', 93, 255, 41, '#3FE3E8'); texto(ctx, `Cliente: ${cliente}`, 125, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', largura: 510 });
-    linha(ctx, 654, 213, 654, 288, 'rgba(255,255,255,.68)', 2);
-    icone(ctx, 'calendario', 714, 255, 40, '#3FE3E8'); texto(ctx, data, 1000, 269, { tamanho: 31, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
+    texto(ctx, nomeEmpresa, 575, 145, { tamanho: nomeEmpresa.length > 31 ? 38 : nomeEmpresa.length > 23 ? 44 : 51, peso: 800, cor: '#FFFFFF', alinhamento: 'center', largura: 730 });
+    icone(ctx, 'usuario', 93, 235, 38, '#3FE3E8'); texto(ctx, `Cliente: ${clienteExibido}`, 125, 248, { tamanho: 29, peso: 700, cor: '#FFFFFF', largura: 510 });
+    linha(ctx, 654, 194, 654, 266, 'rgba(255,255,255,.68)', 2);
+    icone(ctx, 'calendario', 714, 235, 38, '#3FE3E8'); texto(ctx, data, 1000, 248, { tamanho: 29, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
 
     // É o status de confirmação do pagamento; o aviso de autenticação não existe no V2.
-    retangulo(ctx, 216, 385, 648, 118, 26, '#F1FBF5', '#BDEBD3');
-    icone(ctx, 'confirmado', 269, 444, 54, '#168448'); texto(ctx, 'Pagamento registrado com sucesso!', 320, 432, { tamanho: 25, peso: 800, cor: '#16773F', largura: 500 }); texto(ctx, 'Seu pagamento foi confirmado no sistema.', 320, 471, { tamanho: 20, peso: 500, cor: '#31567F', largura: 500 });
+    retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3');
+    icone(ctx, 'confirmado', 288, 367, 44, '#168448'); texto(ctx, 'Pagamento registrado com sucesso!', 570, 367, { tamanho: 24, peso: 800, cor: '#16773F', alinhamento: 'center', largura: 460, linhaBase: 'middle' });
 
-    card(ctx, 548, 205, 'carteira', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, 660, 68, '#F3F7FC');
-    texto(ctx, 'Saldo anterior', 180, 704, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, 704, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
+    card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, yResumo + 72, 86, '#F3F7FC');
+    texto(ctx, 'Saldo anterior', 180, yResumo + 125, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, yResumo + 125, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
 
-    card(ctx, 784, 251, 'confirmado', 'PAGAMENTO REGISTRADO'); fundoDeValor(ctx, 870, 130, '#1674D1');
-    icone(ctx, 'confirmado', 208, 935, 66, '#FFFFFF'); texto(ctx, rotuloValorPago, 276, 926, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, 'Pagamento confirmado', 276, 966, { tamanho: 19, peso: 500, cor: '#E5F3FF', largura: 370 }); texto(ctx, valorPago, 922, 948, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    card(ctx, yPagamento, alturaCardValor, '', 'PAGAMENTO REGISTRADO'); fundoDeValor(ctx, yPagamento + 72, 112, '#1674D1');
+    icone(ctx, 'confirmado', 208, yPagamento + 128, 58, '#FFFFFF'); texto(ctx, rotuloValorPago, 276, yPagamento + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPago, 922, yPagamento + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
 
-    card(ctx, 1066, 251, 'grafico', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, 1152, 130, '#0A2F6B');
-    icone(ctx, 'grafico', 208, 1217, 63, '#46B7FF'); texto(ctx, 'Saldo atual', 276, 1208, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, 'Valor que permanece em aberto', 276, 1248, { tamanho: 19, peso: 500, cor: '#D6EDFF', largura: 370 }); texto(ctx, saldoAtual, 922, 1230, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 72, 112, '#0A2F6B');
+    icone(ctx, 'grafico', 208, ySaldo + 128, 56, '#46B7FF'); texto(ctx, 'Saldo atual', 276, ySaldo + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, saldoAtual, 922, ySaldo + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
 
-    const temDesconto = Boolean(desconto); const alturaDetalhes = temDesconto ? 255 : 187;
-    card(ctx, 1348, alturaDetalhes, 'detalhes', 'DETALHES DO PAGAMENTO'); fundoDeValor(ctx, 1434, temDesconto ? 136 : 68, '#F3F7FC');
-    texto(ctx, 'Forma de pagamento', 180, 1478, { tamanho: 25, peso: 600, cor: '#425675' }); texto(ctx, formaPagamento, 922, 1478, { tamanho: 30, peso: 800, cor: '#126ED1', alinhamento: 'right', largura: 330 });
-    if (temDesconto) { linha(ctx, 180, 1502, 922, 1502, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, 1545, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 922, 1545, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }
-    const yRodape = temDesconto ? 1715 : 1648;
-    texto(ctx, `Comprovante de pagamento • ${cliente}`, LARGURA / 2, yRodape, { tamanho: 28, peso: 700, cor: '#0A2F6B', alinhamento: 'center', largura: 890 }); linha(ctx, 486, yRodape + 35, 594, yRodape + 35, '#126ED1', 6);
+    card(ctx, yDetalhes, alturaDetalhes, '', 'DETALHES DO PAGAMENTO'); fundoDeValor(ctx, yDetalhes + 70, temDesconto ? 116 : 58, '#F3F7FC');
+    texto(ctx, 'Forma de pagamento', 180, yDetalhes + 114, { tamanho: 25, peso: 600, cor: '#425675' }); texto(ctx, formaPagamento, 922, yDetalhes + 114, { tamanho: 30, peso: 800, cor: '#126ED1', alinhamento: 'right', largura: 330 });
+    if (temDesconto) { linha(ctx, 180, yDetalhes + 138, 922, yDetalhes + 138, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, yDetalhes + 181, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 922, yDetalhes + 181, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }
+    desenharRodapeEmPilula(ctx, `Comprovante de pagamento • ${clienteExibido}`, yRodape);
     return canvas;
   }
 

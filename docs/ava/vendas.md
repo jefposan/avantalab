@@ -1,7 +1,17 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.06 -->
-<!-- avantavendas-asset-revision: 64 -->
+<!-- avantavendas-asset-revision: 65 -->
+
+> Revisão 1.7.3.06-av65: a imagem do comprovante de pagamento agora usa o
+> mesmo formato compacto do pedido: cabeçalho, confirmação e cards de valores
+> menores. **Resumo financeiro** também foi reduzido e, junto de **Detalhes do
+> pagamento**, fica centralizado sem ícone; rodapé em pílula branca e somente o
+> primeiro nome da cliente. Valores, forma de pagamento e desconto continuam
+> exibidos normalmente. A imagem termina logo após a margem fixa do rodapé e,
+> quando um pedido tiver muitos produtos, cresce antes dele para acomodar toda
+> a lista sem deixar uma faixa vazia ao final. A arte de fundo preserva o
+> rodapé e é recortada pelo topo; os cards brancos possuem contorno azul suave.
 
 > Revisão 1.7.3.06: a remoção do total mensal manual ocorre somente na Gestão
 > Web e Mobile. O AvantaVendas continua enviando receitas consolidadas pela

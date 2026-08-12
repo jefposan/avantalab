@@ -6274,18 +6274,24 @@ function textoCanvasLimitado(ctx, texto, larguraMaxima) {
 }
 
 function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalhes', cliente, data, etiqueta = '', temaEtiqueta = 'azul', linhas = [], resumo = [] }) {
-  const clienteExibido = /pedido/i.test(String(titulo || ''))
-    ? primeiroNomeClienteComprovante(cliente)
-    : String(cliente || 'Cliente não informado');
+  const clienteExibido = primeiroNomeClienteComprovante(cliente);
   const linhasExibidas = linhas.slice(0, 44);
   if (linhas.length > linhasExibidas.length) linhasExibidas.push({ principal: `+ ${linhas.length - linhasExibidas.length} itens adicionais`, secundario: '', valor: '' });
   const linhasRegulares = resumo.filter((linha) => !linha.destaque);
   const linhaPrincipal = resumo.find((linha) => linha.destaque === 'principal');
   const linhaSaldo = resumo.find((linha) => linha.destaque === 'saldo');
   const largura = 1080;
-  const alturaResumoRegular = linhasRegulares.length ? 38 + linhasRegulares.length * 82 : 0;
+  const alturaResumoRegular = linhasRegulares.length ? 26 + linhasRegulares.length * 72 : 0;
   const alturaResumo = alturaResumoRegular + (linhaPrincipal ? 162 : 0) + (linhaSaldo ? 176 : 0);
-  const altura = Math.min(5400, Math.max(1600, 820 + alturaResumo + linhasExibidas.length * 90));
+  const yAntesDosDetalhes = 278
+    + (etiqueta ? 116 : 0)
+    + (linhasRegulares.length ? 97 + linhasRegulares.length * 72 : 0)
+    + (linhaPrincipal ? 180 : 0)
+    + (linhaSaldo ? 192 : 0);
+  const yDetalhes = yAntesDosDetalhes + 22;
+  const alturaDetalhes = Math.max(112, 26 + linhasExibidas.length * 90);
+  const yRodape = yDetalhes + alturaDetalhes + 70;
+  const altura = yRodape + 78;
   const canvas = document.createElement('canvas');
   canvas.width = largura; canvas.height = altura;
   const ctx = canvas.getContext('2d');
@@ -6309,18 +6315,18 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   }
 
   if (linhasRegulares.length) {
-    ctx.fillStyle = '#0A1F44'; ctx.font = '900 29px Arial, sans-serif'; ctx.fillText('Resumo financeiro', 64, y);
-    y += 26;
+    ctx.fillStyle = '#0A1F44'; ctx.font = '900 29px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Resumo financeiro', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    y += 22;
     caminhoRetanguloArredondado(ctx, 48, y, 984, alturaResumoRegular, 26);
     ctx.fillStyle = '#fff'; ctx.fill();
-    y += 53;
+    y += 45;
     linhasRegulares.forEach((linha, indice) => {
       if (indice) { ctx.strokeStyle = '#e1e9f0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(78, y - 27); ctx.lineTo(1002, y - 27); ctx.stroke(); }
       ctx.fillStyle = '#526477'; ctx.font = '750 30px Arial, sans-serif'; ctx.fillText(linha.rotulo, 88, y + 14);
       ctx.fillStyle = '#0A1F44'; ctx.textAlign = 'right'; ctx.font = '850 36px Arial, sans-serif'; ctx.fillText(linha.valor, 992, y + 15); ctx.textAlign = 'left';
-      y += 82;
+      y += 72;
     });
-    y += 52;
+    y += 30;
   }
   if (linhaPrincipal) {
     ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
@@ -6349,7 +6355,6 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
 
   ctx.fillStyle = '#0A1F44'; ctx.font = '900 32px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(linhasExibidas.length ? tituloDetalhes : 'Informações', largura / 2, y + 10); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   y += 22;
-  const alturaDetalhes = Math.max(112, 26 + linhasExibidas.length * 90);
   caminhoRetanguloArredondado(ctx, 48, y, 984, alturaDetalhes, 26);
   ctx.fillStyle = '#fff'; ctx.fill();
   y += 54;
@@ -6373,9 +6378,9 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   const rodape = textoCanvasLimitado(ctx, `${titulo} - ${clienteExibido}`, 820);
   const larguraPilulaRodape = Math.min(936, Math.max(320, Math.ceil(ctx.measureText(rodape).width) + 72));
   const xPilulaRodape = (largura - larguraPilulaRodape) / 2;
-  caminhoRetanguloArredondado(ctx, xPilulaRodape, altura - 91, larguraPilulaRodape, 58, 29);
+  caminhoRetanguloArredondado(ctx, xPilulaRodape, yRodape - 47, larguraPilulaRodape, 72, 36);
   ctx.fillStyle = '#FFFFFF'; ctx.fill(); ctx.strokeStyle = '#DCE6F0'; ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = '#0A2F6B'; ctx.textAlign = 'center'; ctx.fillText(rodape, largura / 2, altura - 54); ctx.textAlign = 'left';
+  ctx.fillStyle = '#0A2F6B'; ctx.textAlign = 'center'; ctx.fillText(rodape, largura / 2, yRodape); ctx.textAlign = 'left';
   return canvas;
 }
 
@@ -6477,7 +6482,7 @@ async function compartilharPagamento(pagamentoId) {
       ...dadosComprovante,
       titulo: 'Comprovante de pagamento',
       tituloDetalhes: 'Detalhes do pagamento',
-      etiqueta: 'Comprovante de pagamento',
+      etiqueta: 'Pagamento registrado com sucesso!',
       temaEtiqueta: 'verde',
       linhas: [
         { principal: 'Forma de pagamento', secundario: '', valor: dadosComprovante.formaPagamento },
@@ -6485,8 +6490,8 @@ async function compartilharPagamento(pagamentoId) {
       ],
       resumo: [
         { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
-        { rotulo: dadosComprovante.rotuloValorPago, valor: dadosComprovante.valorPago, destaque: 'principal', tituloDestaque: 'Pagamento registrado', subtitulo: desconto > 0 ? 'Valor recebido com desconto aplicado' : 'Pagamento confirmado' },
-        { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo', subtitulo: 'Valor que permanece em aberto' },
+        { rotulo: dadosComprovante.rotuloValorPago, valor: dadosComprovante.valorPago, destaque: 'principal', tituloDestaque: 'Pagamento registrado' },
+        { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],
     });
   const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`);

@@ -3,6 +3,8 @@
   'use strict';
 
   const LARGURA = 1080;
+  const MARGEM_INFERIOR_RODAPE = 78;
+  const COR_BORDA_CARD = '#C7D8E8';
   const FONTE = 'Inter, Arial, sans-serif';
   const FUNDO_URL = './assets/receipts/avantalab-receipt-bg.webp';
   let carregamentoFundo;
@@ -17,6 +19,15 @@
       imagem.src = `${FUNDO_URL}?v=${encodeURIComponent(window.__VENDAS_MOBILE_VERSION__ || '')}`;
     });
     return carregamentoFundo;
+  }
+
+  function desenharFundoAncoradoNoRodape(ctx, fundo, altura) {
+    const larguraFonte = Number(fundo.naturalWidth || fundo.width) || LARGURA;
+    const alturaFonte = Number(fundo.naturalHeight || fundo.height) || 1920;
+    const alturaVisivel = Math.min(alturaFonte, altura);
+    // Quando o comprovante é menor, o corte vem do topo. Em listas longas,
+    // a arte mantém o rodapé e a área nova nasce acima dela.
+    ctx.drawImage(fundo, 0, alturaFonte - alturaVisivel, larguraFonte, alturaVisivel, 0, altura - alturaVisivel, LARGURA, alturaVisivel);
   }
 
   function caminhoArredondado(ctx, x, y, largura, altura, raio) {
@@ -72,7 +83,7 @@
 
   function blocoIcone(ctx, nome, x, y, cor = '#126ED1') { ctx.beginPath(); ctx.arc(x, y, 42, 0, Math.PI * 2); ctx.fillStyle = '#EDF5FF'; ctx.fill(); icone(ctx, nome, x, y, 43, cor); }
   function card(ctx, y, altura, nomeIcone, titulo) {
-    retangulo(ctx, 44, y, 992, altura, 34, '#FFFFFF', '#E4ECF4');
+    retangulo(ctx, 44, y, 992, altura, 34, '#FFFFFF', COR_BORDA_CARD);
     if (nomeIcone) {
       blocoIcone(ctx, nomeIcone, 105, y + 64);
       texto(ctx, titulo, 172, y + 76, { tamanho: 28, peso: 800, cor: '#0A2F6B' });
@@ -93,10 +104,9 @@
 
   async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', valorPedido = 'R$ 0,00', saldoAtual = 'R$ 0,00', desconto = '', titulo = 'Comprovante de pedido', itens = [] } = {}) {
     const clienteExibido = primeiroNomeClienteComprovante(cliente);
-    const itensExibidos = itens.slice(0, 44);
-    if (itens.length > itensExibidos.length) itensExibidos.push({ principal: `+ ${itens.length - itensExibidos.length} itens adicionais`, secundario: '', valor: '' });
+    const itensExibidos = Array.isArray(itens) ? itens : [];
     const temDesconto = Boolean(desconto);
-    const alturaResumo = temDesconto ? 273 : 205;
+    const alturaResumo = temDesconto ? 246 : 184;
     const yResumo = 440;
     const alturaCardValor = 218;
     const espacoEntreCards = 24;
@@ -106,12 +116,14 @@
     const alturaItens = Math.max(82, 26 + itensExibidos.length * 82);
     const alturaDetalhes = 88 + alturaItens;
     const yRodape = yDetalhes + alturaDetalhes + 70;
-    const altura = Math.min(5400, Math.max(1700, yRodape + 78));
+    // O rodapé mantém a mesma distância da base; listas maiores estendem a
+    // imagem somente no trecho acima dele, sem deixar área vazia ao final.
+    const altura = yRodape + MARGEM_INFERIOR_RODAPE;
     const canvas = document.createElement('canvas'); canvas.width = LARGURA; canvas.height = altura;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Não foi possível gerar o comprovante.');
     ctx.fillStyle = '#F4F8FC'; ctx.fillRect(0, 0, LARGURA, altura);
-    const fundo = await carregarFundo(); if (fundo) ctx.drawImage(fundo, 0, 0, LARGURA, altura);
+    const fundo = await carregarFundo(); if (fundo) desenharFundoAncoradoNoRodape(ctx, fundo, altura);
 
     retangulo(ctx, 44, 42, 992, 260, 36, '#063B72');
     ctx.beginPath(); ctx.arc(132, 122, 54, 0, Math.PI * 2); ctx.fillStyle = '#0B5EAA'; ctx.fill(); icone(ctx, 'documento', 132, 122, 60, '#FFFFFF');
@@ -120,8 +132,8 @@
 
     retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 288, 367, 44, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', 570, 367, { tamanho: 24, peso: 800, cor: '#16773F', alinhamento: 'center', largura: 460, linhaBase: 'middle' });
 
-    card(ctx, yResumo, alturaResumo, 'carteira', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, yResumo + 112, temDesconto ? 136 : 68, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, yResumo + 156, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, yResumo + 156, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
-    if (temDesconto) { linha(ctx, 180, yResumo + 180, 928, yResumo + 180, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, yResumo + 224, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 928, yResumo + 224, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }
+    card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, yResumo + 72, temDesconto ? 140 : 86, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, yResumo + 125, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, yResumo + 125, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
+    if (temDesconto) { linha(ctx, 180, yResumo + 140, 928, yResumo + 140, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, yResumo + 184, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 928, yResumo + 184, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }
 
     card(ctx, yPedido, alturaCardValor, '', 'PEDIDO REGISTRADO'); fundoDeValor(ctx, yPedido + 72, 112, '#1674D1'); icone(ctx, 'confirmado', 208, yPedido + 128, 58, '#FFFFFF'); texto(ctx, titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', 276, yPedido + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPedido, 922, yPedido + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
 
