@@ -1,9 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.06 -->
+<!-- ava-version: 1.7.3.08 -->
 <!-- avantavendas-asset-revision: 65 -->
 
-> Revisão 1.7.3.06-av65: a imagem do comprovante de pagamento agora usa o
+> Revisão 1.7.3.08: o acesso a Conteúdo do Vendas permanece listado em Sistemas
+> na Gestão Mobile; sem alteração funcional no AvantaVendas.
+
+> Revisão 1.7.3.07: reorganização exclusiva do Menu da Gestão Mobile; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.7.3.07-av65: a imagem do comprovante de pagamento agora usa o
 > mesmo formato compacto do pedido: cabeçalho, confirmação e cards de valores
 > menores. **Resumo financeiro** também foi reduzido e, junto de **Detalhes do
 > pagamento**, fica centralizado sem ícone; rodapé em pílula branca e somente o

@@ -441,6 +441,10 @@
     entradaOrigem: '',
     entradaValor: '',
     menuAberto: false,
+    menuOrganizacaoAberto: false,
+    menuOrganizacaoAnimacao: '',
+    menuSistemasAberto: false,
+    menuSistemasAnimacao: '',
     menuConfigAberto: false,
     menuConfigAnimacao: '',
     menuAnimacao: '',
@@ -3008,6 +3012,10 @@
     state.agendaFormAberto = false;
     state.visao = 'agenda';
     state.menuAberto = false;
+    state.menuOrganizacaoAberto = false;
+    state.menuOrganizacaoAnimacao = '';
+    state.menuSistemasAberto = false;
+    state.menuSistemasAnimacao = '';
     state.menuConfigAberto = false;
     state.menuConfigAnimacao = '';
     state.busca = '';
@@ -4059,6 +4067,10 @@
     state.modalMenu = '';
     state.modalMenuRetorno = '';
     state.menuAberto = false;
+    state.menuOrganizacaoAberto = false;
+    state.menuOrganizacaoAnimacao = '';
+    state.menuSistemasAberto = false;
+    state.menuSistemasAnimacao = '';
     state.menuConfigAberto = false;
     state.menuConfigAnimacao = '';
     state.modalLancamento = false;
@@ -4130,6 +4142,10 @@
     render();
     setTimeout(function () {
       state.menuAberto = false;
+      state.menuOrganizacaoAberto = false;
+      state.menuOrganizacaoAnimacao = '';
+      state.menuSistemasAberto = false;
+      state.menuSistemasAnimacao = '';
       state.menuConfigAberto = false;
       state.menuConfigAnimacao = '';
       state.menuAnimacao = '';
@@ -11344,12 +11360,21 @@
     var dk = state.darkMode;
     var premiumInativo = premiumPessoalBloqueadoMobile();
     var bordaBase = dk ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white';
+    var bordaDivisorConfig = dk ? 'border-slate-700' : 'border-slate-200';
+    var organizacaoAberto = !!state.menuOrganizacaoAberto;
+    var sistemasAberto = !!state.menuSistemasAberto;
     var configAberto = !!state.menuConfigAberto;
-    var configAnimacao = state.menuConfigAnimacao === 'sair'
+    var conteudoVendasDisponivel = !!(state.vendasMobileModuloAtivo && podeGerenciarConteudoVendas());
+    function animacaoSubgrupoMenu(valor) {
+      return valor === 'sair'
       ? 'animation:configSubOut .22s ease-in forwards;transform-origin:top;'
-      : (state.menuConfigAnimacao === 'entrar'
+      : (valor === 'entrar'
         ? 'animation:configSubIn .26s cubic-bezier(.22,1,.36,1) both;transform-origin:top;'
         : '');
+    }
+    var organizacaoAnimacao = animacaoSubgrupoMenu(state.menuOrganizacaoAnimacao);
+    var sistemasAnimacao = animacaoSubgrupoMenu(state.menuSistemasAnimacao);
+    var configAnimacao = animacaoSubgrupoMenu(state.menuConfigAnimacao);
     var saindo = state.menuAnimacao === 'sair';
     var entrando = state.menuAnimacao === 'entrar';
     var animacaoOverlay = saindo ? 'animation:menuOverlayOut .28s ease forwards;' : (entrando ? 'animation:menuOverlayIn .24s ease both;' : '');
@@ -11360,81 +11385,92 @@
       ? 'margin-top:env(safe-area-inset-top,0px);height:calc(100% - env(safe-area-inset-top,0px));'
       : '';
 
+    var organizacaoSubItens = organizacaoAberto ? (
+      '<div id="menu-organizacao-conteudo" class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-xl border p-1.5 pl-3 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-sky-100 bg-sky-50/50') + '" style="' + organizacaoAnimacao + '">' +
+        menuBotaoHtml('menu-configurar-resumo', 'Mostrar ou ocultar cards', 'Escolher os blocos da tela inicial', false, premiumInativo) +
+        menuBotaoHtml('menu-organizar-dashboard', 'Alterar a ordem dos cards', 'Definir a sequência dos blocos', false, premiumInativo) +
+        menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos inferiores', 'Personalizar a barra inferior', false, premiumInativo) +
+      '</div>'
+    ) : '';
+
+    var sistemasSubItens = sistemasAberto ? (
+      '<div id="menu-sistemas-conteudo" class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-xl border p-1.5 pl-3 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-cyan-100 bg-cyan-50/50') + '" style="' + sistemasAnimacao + '">' +
+        menuBotaoHtml('menu-trocar-sistema', 'Vendas Mobile', state.vendasMobileModuloAtivo ? (podeTrocarSistemaMobile() ? 'Abrir o Vendas Mobile' : 'Indisponível para operadores') : (podeGerenciarUsuarios() ? 'Ativar e abrir o Vendas Mobile' : 'Indisponível para operadores'), !podeGerenciarUsuarios(), premiumInativo) +
+        menuBotaoHtml(
+          'menu-vendas-mobile',
+          'Conteúdo do Vendas',
+          conteudoVendasDisponivel ? 'Novidades e divulgação' : (state.vendasMobileModuloAtivo ? 'Indisponível para este perfil' : 'Ative o Vendas Mobile para acessar'),
+          !conteudoVendasDisponivel,
+          false
+        ) +
+      '</div>'
+    ) : '';
+
     var configSubItens = configAberto ? (
-      '<div class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-[12px_24px_24px_24px] border p-1.5 pl-5 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-cyan-100') + '" style="' + configAnimacao + (dk ? '' : 'background:#FCFFFF;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);') + '">' +
-        '<button id="menu-duplicados" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:2;' + (dk ? '' : 'background:linear-gradient(90deg,#EAFBF3 0%,#FFFFFF 78%);border-color:#BFE8D5;') + '">' +
+      '<div id="menu-config-conteudo" class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-xl border p-1.5 pl-3 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200') + '" style="' + configAnimacao + (dk ? '' : 'background:#FCFFFF;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);') + '">' +
+        '<p class="px-2 pb-0.5 pt-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500" style="order:1">Preferências</p>' +
+        '<button id="menu-duplicados" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:2;' + (dk ? '' : 'background:linear-gradient(90deg,#EAFBF3 0%,#FFFFFF 78%);border-color:#BFE8D5;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DDF7EB;color:#0F8A6A">' + iconeMenuLateralSvg('menu-duplicados') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Duplicados</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Avisar sobre lançamentos duplicados</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Aviso ativo' : 'Aviso inativo') + '</span></span>' +
             chaveMenuHtml(state.duplicadosAtivo) +
           '</div>' +
         '</button>' +
-        '<button id="menu-avisos" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:6;' + (dk ? '' : 'background:linear-gradient(90deg,#E8F4FF 0%,#FFFFFF 78%);border-color:#C9E3FA;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
-          '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:linear-gradient(135deg,#7DD3FC,#2563EB);color:#FFFFFF">' + iconeMenuLateralSvg('menu-avisos') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Avisos e notificacoes</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Ver e apagar seus avisos</span></span>' +
-            '<span class="flex h-6 w-6 shrink-0 items-center justify-center text-slate-500">' + chevronMenuSvg() + '</span>' +
-          '</div>' +
-        '</button>' +
-        '<button id="menu-gerenciar" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:8;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF6FF 0%,#FFFFFF 78%);border-color:#C8E4F6;') + '">' +
+        '<p class="mt-1 border-t ' + bordaDivisorConfig + ' px-2 pb-0.5 pt-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500" style="order:7">Conta e equipe</p>' +
+        '<button id="menu-gerenciar" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:8;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF6FF 0%,#FFFFFF 78%);border-color:#C8E4F6;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DDF0FF;color:#1783C7">' + iconeMenuLateralSvg('menu-gerenciar') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Gerenciar perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Editar, criar ou excluir perfil</span></span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Gerenciar perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Criar, editar ou trocar perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-cadastro-perfil" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:10;' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
+        '<button id="menu-cadastro-perfil" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:10;' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F1FC;color:#0878AD">' + iconeMenuLateralSvg('menu-cadastro-perfil') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Editar dados cadastrais</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Cadastro completo do perfil</span></span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Dados cadastrais</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Cadastro completo do perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-tema" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:3;' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
+        '<button id="menu-tema" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:3;' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E4E6FF;color:#2946A8">' + iconeMenuLateralSvg('menu-tema') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (dk ? 'Ativo' : 'Inativo') + '</span></span>' +
             chaveMenuHtml(dk) +
           '</div>' +
         '</button>' +
-        '<button id="menu-inicio-valores-ocultos" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:4;' + (dk ? '' : 'background:linear-gradient(90deg,#F0F9FF 0%,#FFFFFF 78%);border-color:#C9E9F7;') + '">' +
+        '<button id="menu-inicio-valores-ocultos" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:4;' + (dk ? '' : 'background:linear-gradient(90deg,#F0F9FF 0%,#FFFFFF 78%);border-color:#C9E9F7;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DCF4FF;color:#0369A1">' + iconeVisibilidadeValoresHtml(!iniciarValoresOcultosAtivo()) + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Iniciar valores ocultos</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (iniciarValoresOcultosAtivo() ? 'Privacidade ativa ao abrir' : 'Valores visiveis ao abrir') + '</span></span>' +
             chaveMenuHtml(iniciarValoresOcultosAtivo()) +
           '</div>' +
         '</button>' +
-        '<button id="menu-notificacoes" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:5;' + (dk ? '' : 'background:linear-gradient(90deg,#E8F9FD 0%,#FFFFFF 78%);border-color:#C4EAF4;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
+        '<button id="menu-notificacoes" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:5;' + (dk ? '' : 'background:linear-gradient(90deg,#E8F9FD 0%,#FFFFFF 78%);border-color:#C4EAF4;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F2F8;color:#167FA0">' + iconeMenuLateralSvg('menu-notificacoes') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Notificacoes</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.notificacoesAtivas ? 'Ativas neste aparelho' : 'Inativas neste aparelho') + '</span></span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Receber notificações neste aparelho</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.notificacoesAtivas ? 'Ativas' : 'Inativas') + '</span></span>' +
             chaveMenuHtml(state.notificacoesAtivas) +
           '</div>' +
         '</button>' +
-        '<button id="menu-organizar-dashboard" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:7;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF4FF 0%,#FFFFFF 78%);border-color:#C9DEF6;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
-          '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E0EEFF;color:#2383F0">' + iconeMenuLateralSvg('menu-organizar-dashboard') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Organizar Dashboard</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Definir a ordem dos cards</span></span>' +
-          '</div>' +
-        '</button>' +
-        '<button id="menu-usuario" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:9;' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
+        '<button id="menu-usuario" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:9;' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D5F3EF;color:#0F8A8C">' + iconeMenuLateralSvg('menu-usuario') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Usuarios</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</span></span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Usuários</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-backup" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:11;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF3FF 0%,#FFFFFF 78%);border-color:#C8DCF5;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
+        '<p class="mt-1 border-t ' + bordaDivisorConfig + ' px-2 pb-0.5 pt-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500" style="order:11">Dados e segurança</p>' +
+        '<button id="menu-backup" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:12;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF3FF 0%,#FFFFFF 78%);border-color:#C8DCF5;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DFECFF;color:#2580E8">' + iconeMenuLateralSvg('menu-backup') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Backup</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Exportar os dados do perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-restauracao" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:12;' + (dk ? '' : 'background:linear-gradient(90deg,#EEEEFF 0%,#FFFFFF 78%);border-color:#D2D2F1;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
+        '<button id="menu-restauracao" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:13;' + (dk ? '' : 'background:linear-gradient(90deg,#EEEEFF 0%,#FFFFFF 78%);border-color:#D2D2F1;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E3E7FF;color:#1480A1">' + iconeMenuLateralSvg('menu-restauracao') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Restauracao</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Importar um backup do AvantaLab</span></span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Restaurar backup</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Importar um backup do AvantaLab</span></span>' +
           '</div>' +
         '</button>' +
-        ((state.empresa && ['gestor_master','administrador','operador_completo'].indexOf(state.empresa.perfil) !== -1) ? '<button id="menu-pontos-restauracao" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:13;' + (dk ? '' : 'background:linear-gradient(90deg,#F3EEFF 0%,#FFFFFF 78%);border-color:#DED0F7;') + '"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E9DDFB;color:#7040A0">' + iconeMenuLateralSvg('menu-restauracao') + '</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Pontos de restaura&ccedil;&atilde;o</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Salvar e recuperar estado completo</span></span></div></button>' : '') +
-        '<button id="menu-excluir-conta" type="button" class="rounded-[12px_24px_24px_24px] border border-rose-200 bg-rose-50 px-2.5 py-1 text-left text-rose-800 shadow-[0_4px_11px_rgba(15,23,42,.05)] transition active:scale-[0.99]" style="order:13;"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">&#9888;</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black leading-none">Excluir este perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold leading-none text-rose-600">Guardar dados por 30 dias</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center">' + chevronMenuSvg() + '</span></span></button>' +
+        ((state.empresa && ['gestor_master','administrador','operador_completo'].indexOf(state.empresa.perfil) !== -1) ? '<button id="menu-pontos-restauracao" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:14;' + (dk ? '' : 'background:linear-gradient(90deg,#F3EEFF 0%,#FFFFFF 78%);border-color:#DED0F7;') + '"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E9DDFB;color:#7040A0">' + iconeMenuLateralSvg('menu-restauracao') + '</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Pontos de restaura&ccedil;&atilde;o</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Salvar e recuperar estado completo</span></span></div></button>' : '') +
+        '<button id="menu-excluir-conta" type="button" class="mt-1 min-h-11 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-2 text-left text-rose-800 shadow-[0_4px_11px_rgba(15,23,42,.05)] transition active:scale-[0.99]" style="order:15;"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">&#9888;</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black leading-none">Excluir este perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold leading-none text-rose-600">Guardar dados por 30 dias</span></span></span></button>' +
       '</div>'
     ) : '';
 
@@ -11448,37 +11484,56 @@
               '<button id="fechar-menu" type="button" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white shadow-sm backdrop-blur active:scale-95" aria-label="Fechar menu">' + iconeFecharGeometricoMobile() + '</button>' +
             '</div>' +
           '</div>' +
-          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 120px);-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;">' +
+          '<div id="menu-botoes-scroll" data-preserve-scroll class="mobile-menu-buttons-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;">' +
           '<div class="grid gap-1.5">' +
+            '<p class="px-1 pb-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Uso diário</p>' +
             ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios())
               ? menuBotaoHtml(
                   'menu-assinatura',
-                  'Assinatura',
+                  'Assinatura e plano',
                   (state.paywallEstado && !assinaturaVigenteMobile(state.paywallEstado))
                     ? 'Conheça e assine o Premium'
                     : 'Plano, faturas e renovação'
                 )
               : '') +
             menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', false, premiumInativo) +
-            menuBotaoHtml('menu-configurar-resumo', 'Mostrar/ocultar cards', 'Exibir ou remover blocos', false, premiumInativo) +
-            menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos', 'Personalizar a barra inferior', false, premiumInativo) +
+            menuBotaoHtml('menu-avisos', 'Central de avisos', 'Consultar e apagar avisos recebidos', false, premiumInativo) +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa') +
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais') +
-            menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab') +
-            menuBotaoHtml('menu-trocar-sistema', 'Ir para Vendas', state.vendasMobileModuloAtivo ? (podeTrocarSistemaMobile() ? 'Abrir o Vendas Mobile' : 'Indisponível para operadores') : (podeGerenciarUsuarios() ? 'Ativar e abrir o Vendas Mobile' : 'Indisponível para operadores'), !podeGerenciarUsuarios(), premiumInativo) +
-            ((state.vendasMobileModuloAtivo && podeGerenciarConteudoVendas()) ? menuBotaoHtml('menu-vendas-mobile', 'Conteúdo do Vendas', 'Novidades e divulgacao') : '') +
-            '<button id="menu-config-toggle" type="button" class="mobile-config-main-btn rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
+            '<button id="menu-organizacao-toggle" type="button" aria-expanded="' + (organizacaoAberto ? 'true' : 'false') + '" aria-controls="menu-organizacao-conteudo" class="mt-1 min-h-11 rounded-xl border border-sky-200 px-2.5 py-2 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99]" style="background:' + (dk ? '#0F172A' : 'linear-gradient(90deg,#E8F3FF 0%,#FAFCFF 100%)') + '">' +
+              '<div class="flex items-center gap-2">' +
+                '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-white shadow-sm">' + iconeMenuLateralSvg('menu-organizar-dashboard') + '</span>' +
+                '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">Organizar tela inicial</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">Cards e atalhos inferiores</span></span>' +
+                '<span class="ml-auto flex h-6 w-6 shrink-0 items-center justify-center text-slate-500">' + chevronExpansaoMenuSvg(organizacaoAberto) + '</span>' +
+              '</div>' +
+            '</button>' +
+            organizacaoSubItens +
+            '<button id="menu-sistemas-toggle" type="button" aria-expanded="' + (sistemasAberto ? 'true' : 'false') + '" aria-controls="menu-sistemas-conteudo" class="mt-1 min-h-11 rounded-xl border border-cyan-200 px-2.5 py-2 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99]" style="background:' + (dk ? '#0F172A' : 'linear-gradient(90deg,#E1F7FC 0%,#F8FDFF 100%)') + '">' +
+              '<div class="flex items-center gap-2">' +
+                '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-700 text-white shadow-sm">' + iconeMenuLateralSvg('menu-trocar-sistema') + '</span>' +
+                '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">Sistemas</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">Vendas Mobile e conteúdos</span></span>' +
+                '<span class="ml-auto flex h-6 w-6 shrink-0 items-center justify-center text-slate-500">' + chevronExpansaoMenuSvg(sistemasAberto) + '</span>' +
+              '</div>' +
+            '</button>' +
+            sistemasSubItens +
+            '<button id="menu-config-toggle" type="button" aria-expanded="' + (configAberto ? 'true' : 'false') + '" aria-controls="menu-config-conteudo" class="mobile-config-main-btn mt-1 min-h-11 rounded-xl border border-slate-300 px-2.5 py-2 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
                 '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-slate-800 text-white shadow-sm">' + iconeMenuLateralSvg('menu-config-toggle') + '</span>' +
-                '<span class="min-w-0 flex-1"><span class="mobile-config-main-title block text-xs font-black leading-none text-slate-800">Configuracoes</span><span class="mobile-config-main-subtitle mt-1 block truncate text-[10px] font-semibold leading-none text-slate-600">Perfil, tema e preferencias</span></span>' +
-                '<span class="flex h-6 w-6 items-center justify-center text-slate-600 transition-transform ' + (configAberto ? 'rotate-90' : '') + '">' + chevronMenuSvg() + '</span>' +
+                '<span class="min-w-0 flex-1"><span class="mobile-config-main-title block text-xs font-black leading-none text-slate-800">Configurações</span><span class="mobile-config-main-subtitle mt-1 block truncate text-[10px] font-semibold leading-none text-slate-600">Preferências, conta e segurança</span></span>' +
+                '<span class="ml-auto flex h-6 w-6 shrink-0 items-center justify-center text-slate-600">' + chevronExpansaoMenuSvg(configAberto) + '</span>' +
               '</div>' +
             '</button>' +
             configSubItens +
-            '<button id="menu-feedback" type="button" class="rounded-[14px_26px_26px_26px] border border-cyan-300 px-2.5 py-2 text-left shadow-[0_6px_15px_rgba(8,145,178,.13)] transition active:scale-[0.99]" style="background:radial-gradient(circle at 90% 50%,rgba(20,184,166,.18),transparent 28%),linear-gradient(135deg,#E6FFFB 0%,#CFFAFE 100%)"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm" style="background:linear-gradient(135deg,#06B6D4,#0891B2)">' + iconeMenuLateralSvg('menu-feedback') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none text-sky-900">Duvidas e Sugestoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-cyan-700">Ajude a melhorar o AvantaLab</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/75 text-cyan-700 shadow-sm">' + chevronMenuSvg() + '</span></div></button>' +
-            '<button id="sair" type="button" class="rounded-[14px_26px_26px_26px] border border-rose-100 px-2.5 py-2 text-left text-xs font-black text-rose-700 shadow-sm transition active:scale-[0.99]" style="background:linear-gradient(90deg,#FFF1F2 0%,#FFFFFF 72%)"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center text-rose-600">' + iconeMenuLateralSvg('sair') + '</span><span>Sair</span></span></button>' +
           '</div>' +
+          '</div>' +
+          '<div class="mt-2 flex shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-[0_5px_14px_rgba(15,23,42,.08)]" style="margin-bottom:env(safe-area-inset-bottom,0px)">' +
+            '<button id="menu-feedback" type="button" aria-label="Abrir dúvidas e sugestões" class="flex h-12 min-w-0 flex-[3] items-center justify-center gap-2 rounded-l-2xl rounded-r-none border-r border-cyan-300 bg-cyan-50 px-3 text-xs font-black text-cyan-800 transition active:scale-[0.99]">' +
+              '<span class="flex h-7 w-7 items-center justify-center text-cyan-700">' + iconeMenuLateralSvg('menu-feedback') + '</span><span>Sugestões</span>' +
+            '</button>' +
+            '<button id="sair" type="button" class="flex h-12 min-w-0 flex-[2] items-center justify-center gap-2 rounded-l-none rounded-r-2xl bg-rose-50 px-3 text-xs font-black text-rose-700 transition active:scale-[0.99]">' +
+              '<span class="flex h-7 w-7 items-center justify-center text-rose-600">' + iconeMenuLateralSvg('sair') + '</span><span>Sair</span>' +
+            '</button>' +
           '</div>' +
         '</aside>' +
       '</div>'
@@ -11699,8 +11754,9 @@
   }
 
 
-  function chevronMenuSvg() {
-    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function chevronExpansaoMenuSvg(aberto) {
+    var caminho = aberto ? 'm5 15 7-7 7 7' : 'm5 9 7 7 7-7';
+    return '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="' + caminho + '" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
   function chaveMenuHtml(ativa) {
@@ -11757,7 +11813,6 @@
       '<div class="flex items-center gap-2">' +
         '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm" style="background:' + visual[2] + ';color:' + visual[3] + '">' + iconeMenuLateralSvg(id) + '</span>' +
         '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">' + escapeHtml(titulo) + '</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">' + escapeHtml(subtitulo || '') + '</span></span>' +
-        '<span class="flex h-6 w-6 shrink-0 items-center justify-center text-slate-500">' + chevronMenuSvg() + '</span>' +
       '</div>' +
     '</button>';
   }
@@ -11801,12 +11856,15 @@
     var classeConteudo = painelNotificacoes
       ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-4'
       : 'min-h-0 flex-1 overflow-y-auto p-4 overscroll-contain';
+    var ajudaCategoriasCabecalho = state.modalMenu === 'categorias'
+      ? '<button id="menu-ajuda-categorias" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white transition active:scale-95" aria-label="Abrir instruções sobre categorias" title="Instruções sobre categorias"><span class="flex h-6 w-6 items-center justify-center rounded-full border border-white/70 text-xs font-black">i</span></button>'
+      : '';
     return (
       '<div id="modal-menu-overlay" class="fixed inset-0 ' + camadaModal + ' flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="' + estiloOverlay + '">' +
         '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' shadow-2xl" style="' + estiloPainel + '">' +
           '<div class="shrink-0 flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
-            '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button>' +
+            '<div class="flex items-center gap-1.5">' + ajudaCategoriasCabecalho + '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button></div>' +
           '</div>' +
           '<div id="modal-menu-scroll"' + (painelNotificacoes ? '' : ' data-preserve-scroll') + ' class="' + classeConteudo + '">' + conteudoModalMenuHtml() + '</div>' +
         '</section>' +
@@ -13658,7 +13716,10 @@
     bind('tour-proximo', function () { tourIr(1); });
     bind('menu-categorias', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('categorias'); }); });
     bind('menu-despesas-fixas', function () { fecharMenuLateralAnimado(abrirModalMenuDespesasFixas); });
-    bind('menu-ajuda-categorias', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('ajudaCategorias'); }); });
+    bind('menu-ajuda-categorias', function () {
+      if (state.modalMenu === 'categorias') state.modalMenuRetorno = 'categorias';
+      fecharMenuLateralAnimado(function () { abrirModalMenu('ajudaCategorias'); });
+    });
     bind('menu-vendas-mobile', function () {
       fecharMenuLateralAnimado(function () {
         if (!state.empresa || !state.empresa.id || !podeGerenciarConteudoVendas()) return;
@@ -13707,33 +13768,58 @@
     bind('menu-backup', function () { acionarBackupMobile('backup'); });
     bind('menu-restauracao', function () { acionarBackupMobile('restauracao'); });
     bind('menu-pontos-restauracao', function () { acionarBackupMobile('pontos'); });
-    bind('menu-config-toggle', function () {
-      if (state.menuConfigAberto) {
-        if (state.menuConfigAnimacao === 'sair') return;
-        state.menuConfigAnimacao = 'sair';
+    function alternarGrupoMenuMobile(grupo) {
+      var grupos = {
+        organizacao: { aberto: 'menuOrganizacaoAberto', animacao: 'menuOrganizacaoAnimacao', conteudo: 'menu-organizacao-conteudo', botao: 'menu-organizacao-toggle' },
+        sistemas: { aberto: 'menuSistemasAberto', animacao: 'menuSistemasAnimacao', conteudo: 'menu-sistemas-conteudo', botao: 'menu-sistemas-toggle' },
+        configuracoes: { aberto: 'menuConfigAberto', animacao: 'menuConfigAnimacao', conteudo: 'menu-config-conteudo', botao: 'menu-config-toggle' },
+      };
+      var atual = grupos[grupo];
+      if (!atual) return;
+      if (state[atual.aberto]) {
+        if (state[atual.animacao] === 'sair') return;
+        state[atual.animacao] = 'sair';
         render();
         setTimeout(function () {
-          state.menuConfigAberto = false;
-          state.menuConfigAnimacao = '';
+          state[atual.aberto] = false;
+          state[atual.animacao] = '';
           render();
-        }, 225);
-      } else {
-        state.menuConfigAberto = true;
-        state.menuConfigAnimacao = 'entrar';
-        render();
-        setTimeout(function () {
-          if (state.menuConfigAberto && state.menuConfigAnimacao === 'entrar') state.menuConfigAnimacao = '';
-        }, 270);
-        setTimeout(function () {
-          var listaMenu = document.getElementById('menu-botoes-scroll');
-          if (!listaMenu || !state.menuConfigAberto) return;
           window.requestAnimationFrame(function () {
-            var limite = Math.max(0, listaMenu.scrollHeight - listaMenu.clientHeight);
-            listaMenu.scrollTo({ top: limite, behavior: 'smooth' });
+            var botaoFechado = document.getElementById(atual.botao);
+            if (botaoFechado) {
+              try { botaoFechado.focus({ preventScroll: true }); }
+              catch (e) { botaoFechado.focus(); }
+            }
           });
-        }, 285);
+        }, 225);
+        return;
       }
-    });
+
+      Object.keys(grupos).forEach(function (chave) {
+        state[grupos[chave].aberto] = false;
+        state[grupos[chave].animacao] = '';
+      });
+      state[atual.aberto] = true;
+      state[atual.animacao] = 'entrar';
+      render();
+      window.requestAnimationFrame(function () {
+        var botaoAberto = document.getElementById(atual.botao);
+        if (botaoAberto) {
+          try { botaoAberto.focus({ preventScroll: true }); }
+          catch (e) { botaoAberto.focus(); }
+        }
+      });
+      setTimeout(function () {
+        if (state[atual.aberto] && state[atual.animacao] === 'entrar') state[atual.animacao] = '';
+      }, 270);
+      setTimeout(function () {
+        var conteudo = document.getElementById(atual.conteudo);
+        if (conteudo) conteudo.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }, 285);
+    }
+    bind('menu-organizacao-toggle', function () { alternarGrupoMenuMobile('organizacao'); });
+    bind('menu-sistemas-toggle', function () { alternarGrupoMenuMobile('sistemas'); });
+    bind('menu-config-toggle', function () { alternarGrupoMenuMobile('configuracoes'); });
     bind('menu-feedback', function () { fecharMenuLateralAnimado(abrirFeedbackMobile); });
     bind('menu-excluir-conta', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('excluirConta'); }); });
     bind('fechar-modal-menu', fecharModalMenu);
@@ -15546,7 +15632,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v298';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v300';
               })
               .map(function (key) {
                 return caches.delete(key);

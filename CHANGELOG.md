@@ -1,6 +1,22 @@
 # Changelog
 
-## 1.7.3.06-av65 - 2026-08-12
+## 1.7.3.08 - 2026-08-12
+
+- Gestão Mobile: **Conteúdo do Vendas** permanece visível dentro de **Sistemas**
+  para todos os perfis. Quando o módulo ainda não estiver ativo ou o usuário não
+  possuir permissão, o próprio botão informa a indisponibilidade sem desaparecer.
+
+## 1.7.3.07 - 2026-08-12
+
+- Gestão Mobile: o Menu foi reorganizado por uso diário, organização da tela
+  inicial, sistemas e configurações. Preferências, conta e equipe, dados e
+  segurança agora possuem agrupamentos próprios; **Excluir este perfil** fica
+  após **Pontos de restauração**.
+- Gestão Mobile: **Instruções sobre categorias** saiu da lista principal e
+  passou para o ícone de informação em **Cadastrar despesas**. **Sugestões** e
+  **Sair** compartilham um rodapé encaixado e fixo, reduzindo a altura do menu.
+
+## 1.7.3.07-av65 - 2026-08-12
 
 - AvantaVendas: a imagem do comprovante de pagamento passou a usar a mesma
   composição compacta do pedido. Cabeçalho, confirmação e cards de valores

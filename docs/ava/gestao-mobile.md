@@ -1,6 +1,18 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.06 -->
+<!-- ava-version: 1.7.3.08 -->
+
+> Revisão 1.7.3.08: **Conteúdo do Vendas** permanece visível dentro de
+> **Sistemas**. Sem módulo ativo ou permissão compatível, o botão informa por que
+> o acesso está indisponível em vez de desaparecer.
+
+> Revisão 1.7.3.07: o Menu foi reorganizado. Assinatura e plano, Agenda,
+> Central de avisos, Cadastrar despesas, Despesas fixas e Tutorial ficam no uso
+> diário. Organização da tela inicial, Sistemas e Configurações são expansíveis.
+> Configurações separa Preferências, Conta e equipe e Dados e segurança; Excluir
+> este perfil aparece após Pontos de restauração. Sugestões e Sair dividem o
+> rodapé. As instruções sobre categorias abrem pelo ícone **i** em Cadastrar
+> despesas.
 
 > Revisão 1.7.3.06: o lançamento de receita mantém somente dia, origem e valor.
 > A opção **Definir total** e os avisos que podiam substituir receitas existentes
@@ -1129,7 +1141,8 @@
 
 > Revisão 1.6.0.84.100: no perfil Pessoal gratuito, recursos Premium aparecem
 > sem cor e levam ao aviso de assinatura. Agenda e Ir para Vendas também exigem
-> Premium; Conteúdo do Vendas aparece somente em perfil Empresa autorizado.
+> Premium; Conteúdo do Vendas permanece listado em Sistemas e só habilita o
+> acesso em perfil Empresa autorizado.
 
 > Revisão 1.6.0.84.99: remoção do preview legado e ajustes visuais em
 > Recebimentos; sem impacto operacional na Gestão Mobile.
@@ -1275,16 +1288,18 @@ deve usar os nomes do menu e da barra inferior do celular.
 ## Navegação e perfil
 
 - A barra inferior possui **Início**, **Lançar** e **Menu**; dois atalhos laterais
-  podem ser ajustados em **Menu > Organizar atalhos**.
-- Avisos já recebidos podem ser consultados e apagados em **Menu > Configurações >
-  Avisos e notificações**. No iPhone, o selo do ícone e o indicador usam a
+  podem ser ajustados em **Menu > Organizar tela inicial > Organizar atalhos
+  inferiores**.
+- Avisos já recebidos podem ser consultados e apagados em **Menu > Central de
+  avisos**. No iPhone, o selo do ícone e o indicador usam a
   quantidade real disponível e são conferidos ao abrir ou retomar a Gestão. O
   painel respeita a área segura superior; quantidade e **Fechar todas**
   permanecem fixos enquanto somente os cards rolam. A ativação das notificações
-  do aparelho fica no item **Notificações**, no mesmo submenu.
+  do aparelho fica em **Menu > Configurações > Preferências > Receber
+  notificações**.
 - **Sobre** apresenta as principais novidades em marcos consolidados, sem listar
   ajustes exclusivamente técnicos.
-- **Assinatura** é o primeiro item do **Menu**. A tela sempre informa a situação
+- **Assinatura e plano** é o primeiro item do **Menu**. A tela sempre informa a situação
   e o tipo do plano. Valor contratado, próximo vencimento e faturas são
   exclusivos de uma assinatura recorrente; cortesia, cupom, teste, teste
   expirado e perfis sem contrato não exibem dados financeiros. Durante uma
@@ -1292,9 +1307,10 @@ deve usar os nomes do menu e da barra inferior do celular.
   Nos demais casos sem contrato, a tela oferece **Assinatura Pessoal** ou
   **Assinatura Empresa** conforme o perfil. Usuários sem permissão devem solicitar
   a contratação a um gestor ou administrador.
-- Em **Configurações**, os controles com chave aparecem primeiro.
-  **Gerenciar perfil**, **Usuários** e **Editar dados cadastrais** aparecem em
-  sequência; **Excluir este perfil** é a última opção e exige digitar
+- Em **Configurações**, **Preferências** reúne os controles com chave; **Conta e
+  equipe** reúne Gerenciar perfil, Dados cadastrais e Usuários; **Dados e
+  segurança** reúne Backup, Restaurar backup e Pontos de restauração.
+  **Excluir este perfil** aparece logo após Pontos de restauração e exige digitar
   **EXCLUIR**. O login permanece válido, enquanto o perfil fica inacessível e
   pode ser restaurado com o mesmo login por 30 dias. Depois desse prazo, o
   servidor remove o perfil; registros sujeitos a retenção legal permanecem
@@ -1315,8 +1331,8 @@ deve usar os nomes do menu e da barra inferior do celular.
   foram preservados. Razão Social, Nome Fantasia e Tipo de Empresa aparecem
   depois do documento; Responsável fica em Contato, antes de Site e Instagram.
 - Depois do login, a rota da Gestão abre diretamente a própria Gestão. Com o
-  módulo Vendas Mobile ativo e permissão, **Menu > Ir para Vendas** e o atalho
-  de mesmo nome abrem o outro sistema.
+  módulo Vendas Mobile ativo e permissão, **Menu > Sistemas > Vendas Mobile** e
+  o atalho de mesmo nome abrem o outro sistema.
 - Em **Preparando acesso**, a etapa **Acesso pronto** e os 100% somente são
   concluídos depois que a tela principal estiver montada. A verificação do
   Vendas e as sincronizações complementares continuam em segundo plano, sem
@@ -1325,7 +1341,7 @@ deve usar os nomes do menu e da barra inferior do celular.
   ainda é atual. Se a preparação ficar sem progresso por tempo anormal, realiza
   uma única reconexão automática; persistindo a falha, exibe **Tentar novamente**
   sem entrar em ciclo de recargas.
-- Dentro da Gestão, **Menu > Ir para Vendas** consulta o estado atual do módulo
+- Dentro da Gestão, **Menu > Sistemas > Vendas Mobile** consulta o estado atual do módulo
   no servidor para não solicitar uma ativação que já tenha sido concluída.
 - Quando a Gestão é aberta pelo AvantaVendas instalado, a troca permanece na
   mesma janela em modo aplicativo, sem barras de endereço ou atalhos do
@@ -1344,8 +1360,10 @@ deve usar os nomes do menu e da barra inferior do celular.
   mostra primeiro a contratação; a lista completa fica recolhida em **Veja os
   recursos adicionais**. **Agenda** e **Ir para Vendas** exigem Premium ou
   cortesia vigente.
-- **Conteúdo do Vendas** aparece somente em perfil Empresa com o módulo ativo e
-  permissão de Gestor Master, Administrador ou Operador Completo.
+- **Conteúdo do Vendas** permanece listado em **Sistemas** para todos os perfis.
+  O acesso é habilitado somente em perfil Empresa com o módulo ativo e permissão
+  de Gestor Master, Administrador ou Operador Completo; fora dessas condições, o
+  botão explica a indisponibilidade.
 - A instalação é salva separadamente em cada perfil da Gestão. Depois de ativada,
   não volta a ser solicitada enquanto o módulo permanecer instalado. Essas
   permissões não criam outras contas no Vendas: cada usuário possui uma única
@@ -1356,8 +1374,8 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Ao escolher Vendas, a conta única do usuário abre diretamente. O destino
   financeiro pode ser confirmado na criação do primeiro perfil vindo do Vendas
   e continua configurável em **Configurações > Integração com Gestão**.
-- A ordem/visibilidade dos cards do dashboard é ajustada em **Menu > Organizar
-  resumo** ou **Organizar dashboard**.
+- A ordem e a visibilidade dos cards do dashboard são ajustadas em **Menu >
+  Organizar tela inicial**, junto da organização dos atalhos inferiores.
 - Em **Gerenciar perfil**, o usuário pode administrar seus perfis conforme a
   permissão. Tocar em um perfil pode apenas destacá-lo; a troca efetiva usa o
   controle de troca já exibido no app.
@@ -1366,6 +1384,8 @@ deve usar os nomes do menu e da barra inferior do celular.
 ## Lançamentos e agenda
 
 - Para cadastrar ou revisar despesas e categorias: **Menu > Cadastrar despesas**.
+  O ícone **i** no cabeçalho abre as instruções sobre categorias e, ao fechar,
+  retorna ao cadastro.
 - Novos tipos de despesa entram imediatamente em ordem alfabética nas listas e
   seletores. Alterações feitas no Mobile atualizam a Gestão Web aberta no mesmo
   perfil, e as alterações da Web atualizam o Mobile.

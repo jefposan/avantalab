@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.06 -->
+<!-- ava-version: 1.7.3.08 -->
+
+> Revisão 1.7.3.08: ajuste de visibilidade exclusivo do Menu da Gestão Mobile;
+> sem impacto operacional na Gestão Web.
+
+> Revisão 1.7.3.07: reorganização exclusiva do Menu da Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.7.3.06: receitas passam a ser cadastradas somente como entradas
 > individuais. O Balanço Geral exibe o faturamento consolidado sem permitir a
