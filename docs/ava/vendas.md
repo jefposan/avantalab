@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.08 -->
+<!-- ava-version: 1.7.3.09 -->
 <!-- avantavendas-asset-revision: 65 -->
+
+> Revisão 1.7.3.09: refinamento visual exclusivo do Menu da Gestão Mobile; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.7.3.08: o acesso a Conteúdo do Vendas permanece listado em Sistemas
 > na Gestão Mobile; sem alteração funcional no AvantaVendas.

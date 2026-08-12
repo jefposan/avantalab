@@ -11375,6 +11375,9 @@
     var organizacaoAnimacao = animacaoSubgrupoMenu(state.menuOrganizacaoAnimacao);
     var sistemasAnimacao = animacaoSubgrupoMenu(state.menuSistemasAnimacao);
     var configAnimacao = animacaoSubgrupoMenu(state.menuConfigAnimacao);
+    function overflowSubgrupoMenu(valor) {
+      return valor ? 'overflow-hidden' : 'overflow-visible';
+    }
     var saindo = state.menuAnimacao === 'sair';
     var entrando = state.menuAnimacao === 'entrar';
     var animacaoOverlay = saindo ? 'animation:menuOverlayOut .28s ease forwards;' : (entrando ? 'animation:menuOverlayIn .24s ease both;' : '');
@@ -11386,7 +11389,7 @@
       : '';
 
     var organizacaoSubItens = organizacaoAberto ? (
-      '<div id="menu-organizacao-conteudo" class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-xl border p-1.5 pl-3 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-sky-100 bg-sky-50/50') + '" style="' + organizacaoAnimacao + '">' +
+      '<div id="menu-organizacao-conteudo" class="cfg-sub-group mx-0.5 mt-1 grid gap-1 rounded-xl border p-2 ' + overflowSubgrupoMenu(state.menuOrganizacaoAnimacao) + ' ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-sky-100 bg-sky-50/50') + '" style="' + organizacaoAnimacao + '">' +
         menuBotaoHtml('menu-configurar-resumo', 'Mostrar ou ocultar cards', 'Escolher os blocos da tela inicial', false, premiumInativo) +
         menuBotaoHtml('menu-organizar-dashboard', 'Alterar a ordem dos cards', 'Definir a sequência dos blocos', false, premiumInativo) +
         menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos inferiores', 'Personalizar a barra inferior', false, premiumInativo) +
@@ -11394,7 +11397,7 @@
     ) : '';
 
     var sistemasSubItens = sistemasAberto ? (
-      '<div id="menu-sistemas-conteudo" class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-xl border p-1.5 pl-3 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-cyan-100 bg-cyan-50/50') + '" style="' + sistemasAnimacao + '">' +
+      '<div id="menu-sistemas-conteudo" class="cfg-sub-group mx-0.5 mt-1 grid gap-1 rounded-xl border p-2 ' + overflowSubgrupoMenu(state.menuSistemasAnimacao) + ' ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-cyan-100 bg-cyan-50/50') + '" style="' + sistemasAnimacao + '">' +
         menuBotaoHtml('menu-trocar-sistema', 'Vendas Mobile', state.vendasMobileModuloAtivo ? (podeTrocarSistemaMobile() ? 'Abrir o Vendas Mobile' : 'Indisponível para operadores') : (podeGerenciarUsuarios() ? 'Ativar e abrir o Vendas Mobile' : 'Indisponível para operadores'), !podeGerenciarUsuarios(), premiumInativo) +
         menuBotaoHtml(
           'menu-vendas-mobile',
@@ -11407,9 +11410,9 @@
     ) : '';
 
     var configSubItens = configAberto ? (
-      '<div id="menu-config-conteudo" class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-xl border p-1.5 pl-3 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200') + '" style="' + configAnimacao + (dk ? '' : 'background:#FCFFFF;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);') + '">' +
+      '<div id="menu-config-conteudo" class="cfg-sub-group mx-0.5 mt-1 grid gap-1 rounded-xl border p-2 ' + overflowSubgrupoMenu(state.menuConfigAnimacao) + ' ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200') + '" style="' + configAnimacao + (dk ? '' : 'background:#FCFFFF;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);') + '">' +
         '<p class="px-2 pb-0.5 pt-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500" style="order:1">Preferências</p>' +
-        '<button id="menu-duplicados" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:2;' + (dk ? '' : 'background:linear-gradient(90deg,#EAFBF3 0%,#FFFFFF 78%);border-color:#BFE8D5;') + '">' +
+        '<button id="menu-duplicados" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:4;' + (dk ? '' : 'background:linear-gradient(90deg,#EAFBF3 0%,#FFFFFF 78%);border-color:#BFE8D5;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DDF7EB;color:#0F8A6A">' + iconeMenuLateralSvg('menu-duplicados') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Avisar sobre lançamentos duplicados</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Aviso ativo' : 'Aviso inativo') + '</span></span>' +
@@ -11423,20 +11426,20 @@
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Gerenciar perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Criar, editar ou trocar perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-cadastro-perfil" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:10;' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
+        '<button id="menu-cadastro-perfil" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:9;' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F1FC;color:#0878AD">' + iconeMenuLateralSvg('menu-cadastro-perfil') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Dados cadastrais</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Cadastro completo do perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-tema" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:3;' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
+        '<button id="menu-tema" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:2;' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E4E6FF;color:#2946A8">' + iconeMenuLateralSvg('menu-tema') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (dk ? 'Ativo' : 'Inativo') + '</span></span>' +
             chaveMenuHtml(dk) +
           '</div>' +
         '</button>' +
-        '<button id="menu-inicio-valores-ocultos" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:4;' + (dk ? '' : 'background:linear-gradient(90deg,#F0F9FF 0%,#FFFFFF 78%);border-color:#C9E9F7;') + '">' +
+        '<button id="menu-inicio-valores-ocultos" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:3;' + (dk ? '' : 'background:linear-gradient(90deg,#F0F9FF 0%,#FFFFFF 78%);border-color:#C9E9F7;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DCF4FF;color:#0369A1">' + iconeVisibilidadeValoresHtml(!iniciarValoresOcultosAtivo()) + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Iniciar valores ocultos</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (iniciarValoresOcultosAtivo() ? 'Privacidade ativa ao abrir' : 'Valores visiveis ao abrir') + '</span></span>' +
@@ -11450,7 +11453,7 @@
             chaveMenuHtml(state.notificacoesAtivas) +
           '</div>' +
         '</button>' +
-        '<button id="menu-usuario" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:9;' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
+        '<button id="menu-usuario" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:10;' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D5F3EF;color:#0F8A8C">' + iconeMenuLateralSvg('menu-usuario') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Usuários</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</span></span>' +
@@ -11475,8 +11478,8 @@
     ) : '';
 
     return (
-      '<div id="menu-overlay" class="absolute inset-0 z-50 bg-slate-950/75" style="will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
-        '<aside id="menu-aside" class="flex h-full w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + limiteTopoMenuIos + animacaoPainel + '">' +
+      '<div id="menu-overlay" class="fixed inset-0 z-[100] bg-slate-950/75" style="height:100dvh;will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
+        '<aside id="menu-aside" class="flex h-full w-[84vw] max-w-[348px] flex-col overflow-hidden rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';backface-visibility:hidden;-webkit-backface-visibility:hidden;' + limiteTopoMenuIos + animacaoPainel + '">' +
           '<div class="relative mb-4 shrink-0 overflow-hidden rounded-[16px_32px_32px_32px] p-4 text-white" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +
             '<div class="flex items-start justify-between gap-3">' +
@@ -11527,7 +11530,7 @@
             configSubItens +
           '</div>' +
           '</div>' +
-          '<div class="mt-2 flex shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-[0_5px_14px_rgba(15,23,42,.08)]" style="margin-bottom:env(safe-area-inset-bottom,0px)">' +
+          '<div id="menu-acoes-fixas" class="mt-2 flex shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-[0_5px_14px_rgba(15,23,42,.08)]" style="margin-bottom:env(safe-area-inset-bottom,0px)">' +
             '<button id="menu-feedback" type="button" aria-label="Abrir dúvidas e sugestões" class="flex h-12 min-w-0 flex-[3] items-center justify-center gap-2 rounded-l-2xl rounded-r-none border-r border-cyan-300 bg-cyan-50 px-3 text-xs font-black text-cyan-800 transition active:scale-[0.99]">' +
               '<span class="flex h-7 w-7 items-center justify-center text-cyan-700">' + iconeMenuLateralSvg('menu-feedback') + '</span><span>Sugestões</span>' +
             '</button>' +
@@ -15632,7 +15635,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v300';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v301';
               })
               .map(function (key) {
                 return caches.delete(key);

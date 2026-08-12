@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.08 -->
+<!-- ava-version: 1.7.3.09 -->
+
+> Revisão 1.7.3.09: **Sugestões** e **Sair** permanecem visíveis no rodapé do
+> Menu, acima da navegação inferior. Preferências mantém o aviso de lançamentos
+> duplicados na ordem definida, e os conteúdos expansíveis não recortam bordas
+> ou sombras dos botões internos nem exibem marcadores laterais antigos.
 
 > Revisão 1.7.3.08: **Conteúdo do Vendas** permanece visível dentro de
 > **Sistemas**. Sem módulo ativo ou permissão compatível, o botão informa por que

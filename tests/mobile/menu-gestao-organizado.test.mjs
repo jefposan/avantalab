@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const mobile = readFileSync('public/mobile-app.js', 'utf8');
+const mobilePage = readFileSync('app/mobile/page.tsx', 'utf8');
 
 test('menu mobile mantém a ordem definida para o uso diário', () => {
   const inicio = mobile.indexOf("'<p class=\"px-1 pb-0.5");
@@ -43,6 +44,12 @@ test('organização, sistemas e configurações são grupos expansíveis', () =>
   assert.match(mobile, /Conta e equipe/);
   assert.match(mobile, /Dados e segurança/);
   assert.match(mobile, /Avisar sobre lançamentos duplicados/);
+  assert.match(mobile, /id="menu-tema"[\s\S]*?style="order:2;/);
+  assert.match(mobile, /id="menu-inicio-valores-ocultos"[\s\S]*?style="order:3;/);
+  assert.match(mobile, /id="menu-duplicados"[\s\S]*?style="order:4;/);
+  assert.match(mobile, /id="menu-gerenciar"[\s\S]*?style="order:8;/);
+  assert.match(mobile, /id="menu-cadastro-perfil"[\s\S]*?style="order:9;/);
+  assert.match(mobile, /id="menu-usuario"[\s\S]*?style="order:10;/);
   assert.match(mobile, /Receber notificações neste aparelho/);
   assert.match(mobile, /Restaurar backup/);
 });
@@ -63,4 +70,10 @@ test('ajuda de categorias é contextual e rodapé encaixa sugestões e sair', ()
   assert.match(mobile, /id="menu-feedback"[\s\S]*flex-\[3\][\s\S]*id="sair"[\s\S]*flex-\[2\]/);
   assert.match(mobile, /rounded-l-2xl rounded-r-none/);
   assert.match(mobile, /rounded-l-none rounded-r-2xl/);
+  assert.match(mobile, /id="menu-overlay" class="fixed inset-0 z-\[100\]/);
+  assert.match(mobile, /id="menu-acoes-fixas"/);
+  assert.match(mobile, /function overflowSubgrupoMenu\(valor\)/);
+  assert.match(mobile, /valor \? 'overflow-hidden' : 'overflow-visible'/);
+  assert.doesNotMatch(mobilePage, /\.cfg-sub-group > button::before/);
+  assert.doesNotMatch(mobile, /cfg-sub-group[^\n]+pl-3/);
 });

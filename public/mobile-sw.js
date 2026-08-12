@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'avantalab-mobile-';
-const CACHE_NAME = 'avantalab-mobile-v300';
+const CACHE_NAME = 'avantalab-mobile-v301';
 const APP_SHELL = [
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',

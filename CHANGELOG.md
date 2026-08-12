@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.3.09 - 2026-08-12
+
+- Gestão Mobile: o rodapé encaixado com **Sugestões** e **Sair** passa a ficar
+  sempre visível acima da navegação inferior. O aviso de lançamentos duplicados
+  permanece em Preferências, agora na ordem definida após modo escuro e valores
+  ocultos.
+- Gestão Mobile: grupos expansíveis preservam integralmente bordas, raios e
+  sombras quando abertos, sem recorte pelos limites internos do menu e sem os
+  marcadores laterais antigos.
+
 ## 1.7.3.08 - 2026-08-12
 
 - Gestão Mobile: **Conteúdo do Vendas** permanece visível dentro de **Sistemas**

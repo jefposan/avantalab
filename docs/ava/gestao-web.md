@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.08 -->
+<!-- ava-version: 1.7.3.09 -->
+
+> Revisão 1.7.3.09: refinamento visual exclusivo do Menu da Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.7.3.08: ajuste de visibilidade exclusivo do Menu da Gestão Mobile;
 > sem impacto operacional na Gestão Web.

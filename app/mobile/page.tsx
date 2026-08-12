@@ -571,24 +571,6 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
 
             .avanta-mobile-geometric-plus::after { transform: translate(-50%, -50%) rotate(90deg); }
 
-            /* Sub-botoes de Configuracoes: aparencia de sub-itens com bolinha */
-            .cfg-sub-group > button {
-              position: relative;
-            }
-            .cfg-sub-group > button::before {
-              content: '\\2022';
-              position: absolute;
-              left: -13px;
-              top: 50%;
-              transform: translateY(-50%);
-              color: #0f172a;
-              font-weight: 900;
-              font-size: 14px;
-              line-height: 1;
-            }
-            .mobile-dark .cfg-sub-group > button::before {
-              color: #cbd5e1;
-            }
           `,
         }}
       />
