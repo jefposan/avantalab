@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.05-av62 - 2026-08-11
+
+- AvantaVendas: o acesso direto ao aplicativo Gestão foi removido do cabeçalho
+  da sala e das opções de atalhos inferiores. A integração financeira opcional
+  permanece disponível somente em Configurações, sem alterar dados ou sessões.
+
 ## 1.7.3.05-av61 - 2026-08-11
 
 - AvantaVendas: no comprovante de pedido, **Pedido registrado com sucesso!**

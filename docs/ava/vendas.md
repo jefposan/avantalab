@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.05 -->
-<!-- avantavendas-asset-revision: 61 -->
+<!-- avantavendas-asset-revision: 62 -->
+
+> Revisão 1.7.3.05-av62: o acesso direto ao aplicativo Gestão foi retirado do
+> cabeçalho e das opções de atalhos inferiores do AvantaVendas. Os aplicativos
+> permanecem independentes; a integração financeira opcional continua
+> disponível somente em **Configurações > Integração com Gestão**.
 
 > Revisão 1.7.3.05-av61: na imagem compartilhada do pedido, **Pedido registrado
 > com sucesso!** fica centralizado horizontal e verticalmente na confirmação.
@@ -1314,13 +1319,9 @@ função existir ali.
 - Após autenticar, o usuário entra diretamente na sala do AvantaVendas. A conta
   operacional inicial é preparada silenciosamente, sem escolha de sistema e sem
   criar ou selecionar perfil financeiro da Gestão.
-- Todo usuário autenticado no Vendas pode usar **Ir para Gestão** no canto
-  direito do header fixo da sala de botões ou adicionar **Ir para Gestão** a um
-  atalho configurável. No aplicativo iOS ou Android, o toque abre o app Gestão
-  instalado; sem ele, abre `https://app.avantalab.com.br/mobile` no navegador.
-  No PWA e no navegador, abre diretamente o mesmo endereço Web. A troca não
-  seleciona perfil e não transfere sessão, perfil ou dados. O aviso de
-  aniversário permanece ao lado do botão quando ambos estão visíveis.
+- O cabeçalho e os atalhos inferiores do AvantaVendas não oferecem acesso
+  direto ao aplicativo Gestão. O aviso de aniversário e as demais ações do
+  topo permanecem disponíveis normalmente.
 - Cada login possui uma única conta operacional inicial no Vendas. Gestão e
   Vendas são aplicativos independentes e compartilham somente as credenciais da
   conta AvantaLab; cada aplicativo autentica e preserva sua própria sessão.
@@ -1328,11 +1329,8 @@ função existir ali.
   em **Configurações > Integração com
   Gestão**.
 - No iOS e Android, cada aplicativo restaura apenas sua própria sessão e seu
-  próprio perfil; se o destino não estiver autenticado, apresenta o login. No
-  navegador, o destino usa apenas a sessão Web que já existir naquele domínio.
-  Usuários sem
-  permissão financeira não recebem acesso aos dados de perfis empresariais de
-  terceiros.
+  próprio perfil. Usuários sem permissão financeira não recebem acesso aos
+  dados de perfis empresariais de terceiros.
 - A entrada permite **Continuar com Apple** além de e-mail, telefone e Google.
   Depois da autenticação, o usuário retorna à própria sala do Vendas.
 

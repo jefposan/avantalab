@@ -198,16 +198,15 @@ exigir(
   'O seletor de conta ativa no tema escuro deve exibir uma única seta branca alinhada à direita.',
 );
 exigir(
-  aplicacao.includes("const URL_APP_GESTAO = 'br.com.avantalab.app://auth/callback?origem=vendas'")
-    && aplicacao.includes("const URL_WEB_GESTAO = 'https://app.avantalab.com.br/mobile?origem=vendas'")
-    && aplicacao.includes('AppLauncher.canOpenUrl({ url: URL_APP_GESTAO })')
-    && aplicacao.includes('AppLauncher.openUrl({ url: URL_APP_GESTAO })')
-    && aplicacao.includes("Browser.open({ url: URL_WEB_GESTAO, presentationStyle: 'fullscreen' })")
-    && aplicacao.includes('onclick="abrirGestaoMobileVendas()"')
+  !aplicacao.includes('URL_APP_GESTAO')
+    && !aplicacao.includes('URL_WEB_GESTAO')
+    && !aplicacao.includes('abrirGestaoMobileVendas')
+    && !aplicacao.includes("['gestao', 'Ir para Gestão', 'gestao']")
+    && !estilos.includes('.system-switch-header-button')
     && !aplicacao.includes('function renderSeletorPerfilGestaoVendas()')
     && !aplicacao.includes("window.location.assign('/avantavendas/gestao?origem=vendas')")
     && !cliente.includes("rpc('meus_perfis_gestao_para_troca_rpc')"),
-  'A troca para a Gestão deve apenas abrir o app independente e usar o navegador como contingência, sem selecionar perfis ou incorporar a Gestão no Vendas.',
+  'O AvantaVendas não deve oferecer acesso direto ao aplicativo Gestão no cabeçalho nem nos atalhos inferiores.',
 );
 exigir(
   estilos.includes(".settings-sales-account-field select { width: 100%;")

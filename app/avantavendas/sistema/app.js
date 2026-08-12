@@ -20,7 +20,7 @@ const CACHE_VENDAS_VERSAO = 5;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
 const PREFERENCIAS_VENDAS_VERSAO = 1;
 const META_CELEBRADA_PREFIX = 'avantalab.vendas_mobile.meta_celebrada';
-const IDS_ATALHOS_PREFERENCIAS_VENDAS = new Set(['tema', 'dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao', 'gestao']);
+const IDS_ATALHOS_PREFERENCIAS_VENDAS = new Set(['tema', 'dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao']);
 const IDS_SALA_PREFERENCIAS_VENDAS = new Set(['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'novidades', 'divulgacao', 'informacoes']);
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
@@ -2144,7 +2144,7 @@ function renderMenuMobile() {
   const aniversariantesHoje = aniversariosHojeVendas();
   const agendamentosHoje = agendamentosHojeVendas();
   return `<section class="mobile-menu is-loading-images" aria-label="Menu principal" aria-busy="true">
-    <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirGestaoMobileVendas()" aria-label="Abrir o aplicativo Gestão" title="Abrir Gestão">${iconeTopoTrocaSistemaVendas()}</button>` : ''}</div></header>
+    <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}</div></header>
     <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" ${organizando ? '' : 'hidden'}>Clique no botão e arraste para a nova posição</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
@@ -2243,15 +2243,10 @@ const ATALHOS_INFERIORES_VENDAS = [
   ['tema', 'Modo escuro', 'tema'], ['dashboard', 'Dashboard', 'home'], ['clientes', 'Clientes', 'users'],
   ['produtos', 'Produtos', 'package'], ['vendas', 'Pedidos', 'shopping-cart'], ['vender', 'Pagamentos', 'dollar'],
   ['agenda', 'Agenda', 'calendar'], ['divulgacao', 'Divulgação', 'megaphone'],
-  ['gestao', 'Ir para Gestão', 'gestao'],
 ];
 
-function podeTrocarParaGestaoVendas() {
-  return Boolean(state.autenticado);
-}
-
 function atalhosInferioresVendasDisponiveis() {
-  return ATALHOS_INFERIORES_VENDAS.filter(([id]) => id !== 'gestao' || podeTrocarParaGestaoVendas());
+  return ATALHOS_INFERIORES_VENDAS;
 }
 
 function atalhoInferiorVendasValido(valor, padrao) {
@@ -2304,16 +2299,7 @@ function abrirOrganizarAtalhosVendas(rolagens = {}) {
 
 function iconeNavegacaoInferior(tipo) {
   if (tipo === 'tema') return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
-  if (tipo === 'gestao') return iconeTrocaSistemaVendas();
   return svgIconEstavel(tipo);
-}
-
-function iconeTrocaSistemaVendas() {
-  return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/><path d="M15 7h4a2 2 0 0 1 2 2v1M9 17H5a2 2 0 0 1-2-2v-1M18 7l-2-2m2 2-2 2M6 17l2-2m-2 2 2 2"/></svg>';
-}
-
-function iconeTopoTrocaSistemaVendas() {
-  return '<img src="./assets/icone-troca-gestao.png" alt="" aria-hidden="true" />';
 }
 
 function itemNavegacaoInferior(id, tipo, rotulo, acao) {
@@ -2378,7 +2364,6 @@ function acionarNavegacaoInferior(event, destino) {
     fecharCamadasNavegacao();
     if (destino === 'configuracoes') setAba('configuracoes');
     else if (destino === 'tema') alternarTema(!state.temaEscuro);
-    else if (destino === 'gestao') void abrirGestaoMobileVendas();
     else if (destino === 'novo') { render(); abrirAcoesRapidas(); }
     else if (['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao'].includes(destino)) setAba(destino);
     else if (destino === 'inicio') abrirSalaBotoes();
@@ -7612,41 +7597,6 @@ async function salvarMovimentacaoEstoque() {
   } catch (error) { toast(traduzErro(error)); }
 }
 
-const URL_APP_GESTAO = 'br.com.avantalab.app://auth/callback?origem=vendas';
-const URL_WEB_GESTAO = 'https://app.avantalab.com.br/mobile?origem=vendas';
-
-async function abrirGestaoMobileVendas() {
-  if (!podeTrocarParaGestaoVendas()) {
-    toast('Entre no Vendas antes de abrir o aplicativo Gestão.');
-    return;
-  }
-
-  if (!ehCapacitorNativoVendas()) {
-    window.location.assign(URL_WEB_GESTAO);
-    return;
-  }
-
-  const AppLauncher = window.Capacitor?.Plugins?.AppLauncher;
-  try {
-    if (AppLauncher?.canOpenUrl && AppLauncher?.openUrl) {
-      const disponivel = await AppLauncher.canOpenUrl({ url: URL_APP_GESTAO });
-      if (disponivel?.value) {
-        const abertura = await AppLauncher.openUrl({ url: URL_APP_GESTAO });
-        if (abertura?.completed !== false) return;
-      }
-    }
-  } catch (error) {
-    console.warn('O aplicativo Gestão não pôde ser aberto; usando o navegador.', error);
-  }
-
-  const Browser = window.Capacitor?.Plugins?.Browser;
-  if (Browser?.open) {
-    await Browser.open({ url: URL_WEB_GESTAO, presentationStyle: 'fullscreen' });
-    return;
-  }
-  window.location.assign(URL_WEB_GESTAO);
-}
-
 function abrirConfiguracoes() {
   sheet(`
     <div class="sheet-header">
@@ -7979,7 +7929,6 @@ document.addEventListener('visibilitychange', () => {
 
 window.setAba = setAba;
 window.state = state;
-window.abrirGestaoMobileVendas = abrirGestaoMobileVendas;
 window.abrirAssinaturaGestaoVendas = abrirAssinaturaGestaoVendas;
 window.abrirConfiguracoes = abrirConfiguracoes;
 window.abrirConfirmacaoSair = abrirConfirmacaoSair;

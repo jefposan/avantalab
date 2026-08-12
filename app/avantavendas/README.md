@@ -30,9 +30,9 @@ banco e não representa uma segunda cópia do aplicativo.
 
 O subdomínio é resolvido pelo `proxy.ts`. Gestão e Vendas são aplicativos
 independentes e compartilham somente a identidade de autenticação. Dentro do
-AvantaVendas, **Ir para Gestão** tenta abrir o aplicativo Gestão instalado; se
-ele não estiver disponível, abre `https://app.avantalab.com.br/mobile` no
-navegador. A troca não seleciona perfil nem transfere sessão ou dados.
+AvantaVendas não existe acesso direto ao aplicativo Gestão no cabeçalho nem nos
+atalhos inferiores. O vínculo financeiro opcional continua disponível somente
+em Configurações e não transfere sessão ou dados operacionais entre aplicativos.
 
 ## Desenvolvimento
 
