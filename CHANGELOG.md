@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.7.3.23 - 2026-08-13
+## 1.7.3.23-av75 - 2026-08-13
 
 - AvantaProjetos passa a permitir compartilhamento seguro por projeto: verifica
   contas existentes, gera convite copiável para novos acessos e permite revogar
