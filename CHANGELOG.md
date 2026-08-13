@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.3.26 - 2026-08-13
+
+- AvantaProjetos aplica o cabeçalho institucional colorido ao modal de
+  compartilhamento de acesso, preservando legibilidade em temas claro e escuro.
+
 ## 1.7.3.25 - 2026-08-13
 
 - AvantaProjetos exibe, no próprio compartilhamento, as pessoas que receberam

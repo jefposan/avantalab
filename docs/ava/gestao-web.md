@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.25 -->
+<!-- ava-version: 1.7.3.26 -->
+
+> Revisão 1.7.3.26: o modal **Compartilhar acesso** passou a usar o cabeçalho
+> institucional colorido do AvantaLab; o fluxo operacional não mudou.
 
 > Revisão 1.7.3.25: em **Compartilhar acesso**, a seção **Pessoas com acesso**
 > mostra quem recebeu o projeto, o tipo de acesso e permite revogá-lo após

@@ -140,6 +140,10 @@
 .modalHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); padding: 20px 22px; }
 .modalHeader h2 { margin: 0; color: var(--brand); font-size: 20px; }
 .modalHeader p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.modalHeaderAccent { border-bottom-color: transparent; color: #fff; background: linear-gradient(125deg, #003e73, color-mix(in srgb, #003e73 72%, var(--accent))); }
+.modalHeaderAccent h2, .modalHeaderAccent p { color: #fff; }
+.modalHeaderAccent .iconButton { color: #fff; background: rgba(255,255,255,.12); }
+.modalHeaderAccent .iconButton:hover { background: rgba(255,255,255,.2); }
 .modalBody { max-height: calc(100dvh - 120px); overflow-y: auto; padding: 22px; overscroll-behavior: contain; }
 .settingsSection { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid var(--border); border-radius: 14px; padding: 15px; background: var(--surface-soft); }
 .settingsSection > div { min-width: 0; }
