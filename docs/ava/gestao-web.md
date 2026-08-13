@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.28 -->
+<!-- ava-version: 1.7.3.29 -->
+
+> Revisão 1.7.3.29: **Copiar link** só confirma a cópia após uma operação bem
+> sucedida; o sistema prioriza a compatibilidade com o navegador em uso.
 
 > Revisão 1.7.3.28: ao usar **Copiar link**, o modal confirma **Conteúdo
 > copiado** e mantém uma orientação visível para o envio do link.
