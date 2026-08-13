@@ -330,25 +330,23 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
   const copyShareLink = async () => {
     if (!shareState?.link) return;
     try {
-      let copied = false;
-      if (navigator.clipboard?.writeText) {
-        try {
-          await navigator.clipboard.writeText(shareState.link);
-          copied = true;
-        } catch { /* Alguns navegadores bloqueiam a API moderna; usar o recurso compatível abaixo. */ }
+      const fallback = document.createElement('textarea');
+      fallback.value = shareState.link;
+      fallback.setAttribute('readonly', '');
+      fallback.style.position = 'fixed';
+      fallback.style.top = '0';
+      fallback.style.left = '0';
+      fallback.style.opacity = '0';
+      document.body.append(fallback);
+      fallback.focus();
+      fallback.select();
+      let copied = document.execCommand('copy');
+      fallback.remove();
+      if (!copied && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareState.link);
+        copied = true;
       }
-      if (!copied) {
-        const fallback = document.createElement('textarea');
-        fallback.value = shareState.link;
-        fallback.setAttribute('readonly', '');
-        fallback.style.position = 'fixed';
-        fallback.style.opacity = '0';
-        document.body.append(fallback);
-        fallback.select();
-        copied = document.execCommand('copy');
-        fallback.remove();
-        if (!copied) throw new Error('Cópia indisponível.');
-      }
+      if (!copied) throw new Error('Cópia indisponível.');
       setShareCopyStatus('copied');
       onMessage('Conteúdo copiado.');
     } catch { setShareCopyStatus('manual'); onMessage('Não foi possível copiar o link automaticamente.'); }

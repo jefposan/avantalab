@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.29 - 2026-08-13
+
+- AvantaProjetos executa primeiro a cópia compatível com seleção direta antes
+  de recorrer à área de transferência moderna, impedindo confirmação sem uma
+  operação de cópia bem-sucedida.
+
 ## 1.7.3.28 - 2026-08-13
 
 - AvantaProjetos confirma de forma persistente **Conteúdo copiado** ao copiar
