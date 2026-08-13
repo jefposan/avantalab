@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.23 -->
+<!-- ava-version: 1.7.3.24 -->
+
+> Revisão 1.7.3.24: ao copiar um link de compartilhamento de Projeto, o botão
+> confirma **Link copiado** e informa que ele está pronto para encaminhar.
 
 > Revisão 1.7.3.23: em Projetos, use **Compartilhar acesso** no menu de um
 > projeto. O sistema verifica o e-mail, libera contas existentes ou gera um
