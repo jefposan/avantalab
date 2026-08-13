@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.19 -->
+<!-- ava-version: 1.7.3.20 -->
+
+> Revisão 1.7.3.20: ajuste visual exclusivo do card de cliente no
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.7.3.19: ajuste do formulário de cliente exclusivo do
 > AvantaVendas; sem impacto operacional na Gestão Mobile.

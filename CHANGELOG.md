@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.20-av72 - 2026-08-13
+
+- AvantaVendas: **Localização** no card principal de cliente sem endereço
+  recebe contraste reforçado no tema claro. Em Editar cliente, CEP, Buscar e
+  Apagar foram distribuídos igualmente pela largura da linha.
+
 ## 1.7.3.19-av71 - 2026-08-12
 
 - AvantaVendas: no card de cliente, o CEP agora reúne **Buscar** e **Apagar**.

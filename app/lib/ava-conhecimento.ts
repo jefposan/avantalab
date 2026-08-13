@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.20-av72: Localização no card principal tem contraste
+// reforçado e CEP, Buscar e Apagar dividem a mesma linha ao editar.
 // Revisado na versão 1.7.3.19-av71: o endereço do cliente pode ser apagado
 // com confirmação para nova inclusão; o botão Localização tem mais contraste.
 // Revisado na versão 1.7.3.18: perfis criados dentro da quota Business ou

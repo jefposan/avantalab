@@ -668,17 +668,17 @@ body.sheet-open {
 .cliente-sheet-backdrop .field textarea { min-height: 32px; border-radius: 9px; padding: 5px 9px; font-size: 13px; }
 .cliente-sheet-backdrop .field textarea { min-height: 56px; }
 .cliente-sheet-backdrop .actions { gap: 7px; margin-top: 1px; }.cliente-sheet-backdrop .actions button { min-height: 34px; padding: 0 11px; font-size: 11px; }
-.phone-system-field, .cep-system-field, .client-address-system-field { display: flex; gap: 7px; }
+.phone-system-field, .client-address-system-field { display: flex; gap: 7px; }
+.cep-system-field { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
 .phone-system-field select { width: 112px; flex: 0 0 112px; }
 .phone-system-field input, .cep-system-field input, .client-address-system-field input { min-width: 0; flex: 1; }
 .cep-system-field button, .client-address-system-field button { min-height: 34px; padding: 6px 10px; }
-.cep-system-field input { flex: 0 1 128px; }
+.cep-system-field input { width: 100%; flex: 0 0 auto; }
+.cep-system-field button { display: inline-flex; min-width: 0; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
 .cep-system-field .client-address-clear-button { flex: 0 0 auto; border: 1px solid #f1a7b3; color: #a61e3c; background: #fff0f2; }
 .cep-system-field .client-address-clear-button .svg-icon { width: 14px; height: 14px; }
 .client-address-system-field button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
 .client-address-system-field button .svg-icon { width: 14px; height: 14px; }
-.client-address-system-field .client-address-location-button { border: 1px solid #7ac9ed; color: #075985; background: #dff4ff; box-shadow: 0 2px 7px rgba(14,116,144,.12); }
-.client-address-system-field .client-address-location-button:focus-visible { outline: 3px solid rgba(22,135,217,.28); outline-offset: 2px; }
 .client-address-system-field button.is-loading { opacity: .72; cursor: wait; }
 .client-address-field small { color: #64748b; font-size: 10px; line-height: 1.25; }
 .client-city-state { grid-template-columns: minmax(0, 1fr) 100px; }
@@ -1907,7 +1907,8 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .client-address-empty { border-color: #e2e8f0; color: #718096; background: #f5f7f9; box-shadow: none; font-weight: 650; }
 .client-address-empty .svg-icon { color: #94a3b8; }
 .client-address-empty { position: relative; padding-right: 112px; }
-.client-address-insert { position: absolute; top: 0; right: 4px; bottom: 0; display: inline-flex; height: 20px; min-height: 20px; align-items: center; justify-content: center; gap: 3px; margin-block: auto; border-radius: 6px; padding: 2px 5px; font-size: 8px; white-space: nowrap; }
+.client-address-insert { position: absolute; top: 0; right: 4px; bottom: 0; display: inline-flex; height: 20px; min-height: 20px; align-items: center; justify-content: center; gap: 3px; margin-block: auto; border: 1px solid #5ab9e5; border-radius: 6px; padding: 2px 5px; color: #075985; background: #dff4ff; box-shadow: 0 2px 6px rgba(14,116,144,.14); font-size: 8px; white-space: nowrap; }
+.client-address-empty .client-address-insert .svg-icon { color: currentColor; }
 .client-address-insert .svg-icon { width: 10px; height: 10px; flex: 0 0 10px; color: currentColor; }
 .client-address-insert.is-loading { opacity: .72; cursor: wait; }
 .client-values { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 0 14px; }

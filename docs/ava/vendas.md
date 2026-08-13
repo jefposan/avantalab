@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.19 -->
-<!-- avantavendas-asset-revision: 71 -->
+<!-- ava-version: 1.7.3.20 -->
+<!-- avantavendas-asset-revision: 72 -->
+
+> Revisão 1.7.3.20-av72: no card principal do cliente sem endereço, o botão
+> **Localização** tem contraste reforçado no tema claro. Ao editar, CEP,
+> **Buscar** e **Apagar** ocupam igualmente a linha inteira.
 
 > Revisão 1.7.3.19-av71: ao editar um cliente, **Buscar** e **Apagar** ficam
 > ao lado do CEP. **Apagar** pede confirmação e limpa somente os campos de
