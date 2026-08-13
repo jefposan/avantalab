@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.19-av71: o endereço do cliente pode ser apagado
+// com confirmação para nova inclusão; o botão Localização tem mais contraste.
 // Revisado na versão 1.7.3.18: perfis criados dentro da quota Business ou
 // Business Pro herdam a assinatura da conta, sem novo teste ou contratação;
 // somente o perfil assinante pode usar as vagas para criar outros perfis.

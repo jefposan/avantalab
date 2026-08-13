@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.18 -->
+<!-- ava-version: 1.7.3.19 -->
+
+> Revisão 1.7.3.19: ajuste do formulário de cliente exclusivo do
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.3.18: em **Meus perfis > Criar novo perfil**, quem possui vaga
 > em uma assinatura Business ou Business Pro cria o perfil usando o mesmo plano

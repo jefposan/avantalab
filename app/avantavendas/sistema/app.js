@@ -4950,7 +4950,7 @@ function campoTelefone(idCampo, label, telefone = '') {
 function campoCepCliente(cep = '') {
   const numeros = String(cep || '').replace(/\D/g, '').slice(0, 8);
   const formatado = numeros.length > 5 ? `${numeros.slice(0, 5)}-${numeros.slice(5)}` : numeros;
-  return `<div class="field"><label>CEP</label><div class="cep-system-field"><input id="cliCep" inputmode="numeric" autocomplete="postal-code" value="${escapeAttr(formatado)}" maxlength="9" placeholder="00000-000" oninput="this.value=this.value.replace(/\\D/g,'').replace(/(\\d{5})(\\d)/,'$1-$2')"><button type="button" class="secondary" onclick="buscarCepCliente()">${svgIcon('search')} Buscar</button></div></div>`;
+  return `<div class="field"><label>CEP</label><div class="cep-system-field"><input id="cliCep" inputmode="numeric" autocomplete="postal-code" value="${escapeAttr(formatado)}" maxlength="9" placeholder="00000-000" oninput="this.value=this.value.replace(/\\D/g,'').replace(/(\\d{5})(\\d)/,'$1-$2')"><button type="button" class="secondary" onclick="buscarCepCliente()">${svgIcon('search')} Buscar</button><button type="button" class="danger client-address-clear-button" onclick="confirmarLimpezaEnderecoCliente()" aria-label="Apagar todos os campos de endereço">${svgIcon('x')} Apagar</button></div></div>`;
 }
 
 function emailValido(email) {
@@ -5006,6 +5006,38 @@ function preencherEnderecoPorLocalizacao() {
     finalizar();
     toast(erro.code === 1 ? 'Permita a localização para preencher o endereço.' : 'Não foi possível obter sua localização.');
   }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+}
+
+function confirmarLimpezaEnderecoCliente() {
+  const campos = ['cliCep', 'cliEndereco', 'cliNumero', 'cliComplemento', 'cliCidade', 'cliEstado'];
+  if (!campos.some((campoId) => valor(campoId).trim())) {
+    toast('Não há endereço para apagar.');
+    return;
+  }
+  document.getElementById('clientAddressClearWarning')?.remove();
+  const sheetAtual = document.querySelector('#sheetBackdrop .sheet');
+  if (!sheetAtual) return;
+  const aviso = document.createElement('div');
+  aviso.id = 'clientAddressClearWarning';
+  aviso.className = 'client-incomplete-warning client-address-clear-warning';
+  aviso.innerHTML = `<section role="alertdialog" aria-modal="true" aria-labelledby="clientAddressClearTitle" aria-describedby="clientAddressClearMessage"><span aria-hidden="true">${svgIcon('x')}</span><h3 id="clientAddressClearTitle">Apagar endereço?</h3><p id="clientAddressClearMessage">CEP, endereço, número, complemento, cidade e UF serão limpos. Você poderá inserir um novo endereço antes de salvar.</p><div><button type="button" class="ghost" onclick="fecharConfirmacaoLimpezaEnderecoCliente()">Voltar</button><button id="clientAddressClearConfirm" type="button" class="danger" onclick="limparEnderecoCliente()">Apagar endereço</button></div></section>`;
+  sheetAtual.appendChild(aviso);
+  requestAnimationFrame(() => document.getElementById('clientAddressClearConfirm')?.focus());
+}
+
+function fecharConfirmacaoLimpezaEnderecoCliente() {
+  document.getElementById('clientAddressClearWarning')?.remove();
+  document.getElementById('cliCep')?.focus();
+}
+
+function limparEnderecoCliente() {
+  ['cliCep', 'cliEndereco', 'cliNumero', 'cliComplemento', 'cliCidade', 'cliEstado'].forEach((campoId) => {
+    const campo = document.getElementById(campoId);
+    if (campo) campo.value = '';
+  });
+  document.getElementById('clientAddressClearWarning')?.remove();
+  document.getElementById('cliCep')?.focus();
+  toast('Endereço apagado.');
 }
 
 async function buscarEnderecoPorGeolocalizacao(posicao) {
@@ -7547,7 +7579,7 @@ function abrirCliente(clienteId = '') {
       ${campo('cliEmail', 'E-mail', c.email || '', 'email')}
       <div class="field client-birth-field"><label for="cliNascimento">${svgIconEstavel('cake')}<span>Data de Aniversário</span></label><div class="client-birth-control"><input id="cliNascimento" type="text" inputmode="numeric" maxlength="5" autocomplete="bday" placeholder="dd/mm" value="${escapeAttr(dataNascimentoParaCampo(c.data_nascimento))}" oninput="formatarDataNascimentoCampo(this)"></div></div>
       ${campoCepCliente(c.cep || '')}
-      <div class="field client-address-field"><label>Endereço</label><div class="client-address-system-field"><input id="cliEndereco" type="text" autocomplete="street-address" value="${escapeAttr(c.endereco || '')}"><button id="cliBuscarLocalizacao" type="button" class="secondary" onclick="preencherEnderecoPorLocalizacao()" aria-label="Usar minha localização para preencher o endereço">${svgIcon('map-pin')}<span>Localização</span></button></div><small>Usa a localização do aparelho; revise o endereço antes de salvar.</small></div>
+      <div class="field client-address-field"><label>Endereço</label><div class="client-address-system-field"><input id="cliEndereco" type="text" autocomplete="street-address" value="${escapeAttr(c.endereco || '')}"><button id="cliBuscarLocalizacao" type="button" class="secondary client-address-location-button" onclick="preencherEnderecoPorLocalizacao()" aria-label="Usar minha localização para preencher o endereço">${svgIcon('map-pin')}<span>Localização</span></button></div><small>Usa a localização do aparelho; revise o endereço antes de salvar.</small></div>
       <div class="grid-2 client-address-extra">
         ${campo('cliNumero', 'Número', c.numero || '')}
         ${campo('cliComplemento', 'Complemento', c.complemento || '')}
@@ -8274,6 +8306,9 @@ window.sairMenuMobile = sairMenuMobile;
 window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.acionarNavegacaoInferior = acionarNavegacaoInferior;
 window.buscarCepCliente = buscarCepCliente;
+window.confirmarLimpezaEnderecoCliente = confirmarLimpezaEnderecoCliente;
+window.fecharConfirmacaoLimpezaEnderecoCliente = fecharConfirmacaoLimpezaEnderecoCliente;
+window.limparEnderecoCliente = limparEnderecoCliente;
 window.preencherEnderecoPorLocalizacao = preencherEnderecoPorLocalizacao;
 window.preencherEnderecoClientePorLocalizacao = preencherEnderecoClientePorLocalizacao;
 window.abrirMenuCliente = abrirMenuCliente;

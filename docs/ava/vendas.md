@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.18 -->
-<!-- avantavendas-asset-revision: 70 -->
+<!-- ava-version: 1.7.3.19 -->
+<!-- avantavendas-asset-revision: 71 -->
+
+> Revisão 1.7.3.19-av71: ao editar um cliente, **Buscar** e **Apagar** ficam
+> ao lado do CEP. **Apagar** pede confirmação e limpa somente os campos de
+> endereço, preservando os demais dados do cliente para a inclusão de um novo
+> endereço. O botão **Localização** tem contraste reforçado no tema claro.
 
 > Revisão 1.7.3.18: compartilhamento da assinatura por quota é uma regra da
 > Gestão; sem alteração operacional no AvantaVendas.

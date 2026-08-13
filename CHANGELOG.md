@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.3.19-av71 - 2026-08-12
+
+- AvantaVendas: no card de cliente, o CEP agora reúne **Buscar** e **Apagar**.
+  A remoção pede confirmação, limpa apenas os campos de endereço e mantém os
+  demais dados para o cadastro de um novo endereço. **Localização** recebeu
+  contraste reforçado no tema claro.
+
 ## 1.7.3.18 - 2026-08-12
 
 - Gestão Web e Mobile: o perfil que contratou Business ou Business Pro informa
