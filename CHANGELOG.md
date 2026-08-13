@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.28 - 2026-08-13
+
+- AvantaProjetos confirma de forma persistente **Conteúdo copiado** ao copiar
+  links e usa uma alternativa compatível quando a área de transferência do
+  navegador estiver bloqueada.
+
 ## 1.7.3.27 - 2026-08-13
 
 - AvantaProjetos mantém o acesso aos links na lista de compartilhamentos:

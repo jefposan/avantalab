@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.27 -->
+<!-- ava-version: 1.7.3.28 -->
+
+> Revisão 1.7.3.28: ao usar **Copiar link**, o modal confirma **Conteúdo
+> copiado** e mantém uma orientação visível para o envio do link.
 
 > Revisão 1.7.3.27: em **Pessoas com acesso**, use **Ver link** para membros
 > autorizados ou **Novo link** para um convite pendente. Um novo convite
