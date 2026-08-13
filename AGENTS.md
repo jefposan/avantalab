@@ -52,3 +52,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
   PLATÔ (~25%, só controles: pontinhos 2×3 e menu "..."). Cores sempre
   derivadas da corPrimaria via color-mix; sem bordas de 1px internas.
 - Demo de referência: `/avanta-card-demo`.
+
+## Padrão de reordenação — AvantaKanban
+
+- Antes de criar ou alterar grade, lista ou quadro com cards reordenáveis, ler
+  integralmente `planejamento/padrao-avanta-kanban.md`.
+- Reutilizar o núcleo testável de `app/lib/dnd.ts`: encaixes fixos, histerese,
+  mudança de ordem única e valores oficiais de animação.
+- A Sala de Botões do AvantaVendas é a implementação visual aprovada. Não voltar
+  a decidir o destino por `document.elementFromPoint()` nem reordenar o DOM em
+  cada movimento do ponteiro.
+- Preservar teclado, foco, cancelamento e `prefers-reduced-motion` em toda nova
+  aplicação do padrão.
