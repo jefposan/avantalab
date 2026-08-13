@@ -5,6 +5,18 @@
 - AvantaProjetos passa a permitir compartilhamento seguro por projeto: verifica
   contas existentes, gera convite copiável para novos acessos e permite revogar
   o vínculo. Convidados veem e editam somente projetos compartilhados.
+- AvantaVendas: backups e pontos de restauração passam ao esquema 2 e agora
+  preservam também o nome e a empresa do perfil, participantes e permissões
+  internas, preferências, opções de Notícias/Divulgação/Catálogo e os vínculos
+  dos produtos recebidos.
+- AvantaVendas: catálogo, preferências e estado dos recursos comerciais ficam
+  isolados pela conta ativa; dois perfis do mesmo login não compartilham mais
+  essas configurações nem bloqueiam o recebimento do mesmo produto.
+- AvantaVendas: produtos cadastrados ou importados pelo usuário continuam no
+  snapshot completo. Se o item mestre ou um pacote antigo não existir mais, a
+  cópia restaurada é preservada como produto independente.
+- Segurança: uma restauração nunca reativa autorização empresarial revogada
+  pelo gestor. Backups e pontos antigos do esquema 1 continuam compatíveis.
 
 ## 1.7.3.22-av74 - 2026-08-13
 

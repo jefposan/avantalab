@@ -4946,6 +4946,11 @@ function mostrarProcessandoDadosVendas(titulo, mensagem) {
 function resumoSnapshotVendas(snapshot) {
   const dados = snapshot?.dados || {};
   return [
+    ['Perfil de vendas', dados.conta ? [dados.conta] : []],
+    ['Usuários e permissões', dados.conta_usuarios],
+    ['Configuração do catálogo', dados.recursos_conta ? [dados.recursos_conta] : []],
+    ['Preferências do perfil', dados.preferencias_conta ? [dados.preferencias_conta] : []],
+    ['Vínculos dos produtos', dados.catalogo_recebimentos],
     ['Clientes', dados.clientes],
     ['Produtos', dados.produtos],
     ['Pedidos', dados.pedidos],
@@ -5015,7 +5020,7 @@ async function lerBackupContaVendas(arquivo) {
     if (!manifestArquivo || !dadosArquivo) throw new Error('Este arquivo não é um backup válido do AvantaVendas.');
     const manifest = JSON.parse(await manifestArquivo.async('string'));
     const snapshot = JSON.parse(await dadosArquivo.async('string'));
-    if (manifest.formato !== 'avantavendas-backup' || snapshot.produto !== 'AvantaVendas' || Number(snapshot.schema_versao) !== 1) {
+    if (manifest.formato !== 'avantavendas-backup' || snapshot.produto !== 'AvantaVendas' || ![1, 2].includes(Number(snapshot.schema_versao))) {
       throw new Error('Este backup é inválido ou pertence a uma versão incompatível.');
     }
     if (String(snapshot.conta_origem?.id || '') !== String(state.contaVendasAtiva?.id || '')) {

@@ -3,7 +3,8 @@
 <!-- ava-version: 1.7.3.23 -->
 
 > Revisão 1.7.3.23: compartilhamento do AvantaProjetos é exclusivo da Gestão
-> Web; sem alteração operacional na Gestão Mobile.
+> Web, e a ampliação de backup é exclusiva do AvantaVendas; sem alteração
+> operacional na Gestão Mobile.
 
 > Revisão 1.7.3.22: backup e pontos de restauração por perfil são exclusivos
 > do AvantaVendas; sem impacto operacional na Gestão Mobile.

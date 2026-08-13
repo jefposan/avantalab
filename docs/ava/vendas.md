@@ -1,10 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.23 -->
+<!-- avantavendas-asset-revision: 75 -->
 
-> Revisão 1.7.3.23: compartilhamento do AvantaProjetos não altera o
-> funcionamento do AvantaVendas.
-<!-- avantavendas-asset-revision: 74 -->
+> Revisão 1.7.3.23-av75: backups e pontos de restauração preservam o estado
+> completo do perfil de vendas: identificação e empresa conectada, usuários e
+> permissões internas, preferências, recursos comerciais, produtos próprios ou
+> recebidos, clientes, estoque, pedidos, pagamentos e agenda. Ao restaurar, o
+> catálogo volta sem nova conexão enquanto a autorização empresarial continuar
+> ativa. Uma autorização revogada pelo gestor nunca é reativada pelo backup.
+> Arquivos e pontos do esquema anterior continuam compatíveis.
 
 > Revisão 1.7.3.22-av74: em **Configurações > Dados e segurança**, proprietário
 > e administrador podem baixar o backup completo da conta ativa e criar pontos
@@ -1554,8 +1559,11 @@ função existir ali.
   estoque, vínculos comerciais, destino financeiro, PWA e exclusão do perfil.
   Em **Dados e segurança**, proprietário e administrador podem fazer o backup
   completo da conta ativa e criar pontos de restauração; somente o proprietário
-  restaura, exclui pontos ou reseta esse perfil. Um ponto de segurança é criado
-  automaticamente antes de restaurar ou resetar.
+  restaura, exclui pontos ou reseta esse perfil. O snapshot inclui perfil,
+  participantes, permissões internas, preferências, conexão comercial,
+  catálogo, produtos próprios, clientes, estoque, pedidos, pagamentos e agenda.
+  Um ponto de segurança é criado automaticamente antes de restaurar ou resetar.
+  A restauração não contorna uma autorização revogada pela empresa.
 - **Excluir conta do Vendas** exige digitar `EXCLUIR`. A operação remove os
   dados específicos deste aplicativo, inclusive uploads particulares, e o
   acesso às contas compartilhadas. Se a conta também possui outros
