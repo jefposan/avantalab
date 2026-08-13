@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.26 -->
+<!-- ava-version: 1.7.3.27 -->
+
+> Revisão 1.7.3.27: links renováveis de Projetos não alteram o funcionamento
+> do AvantaVendas.
 
 > Revisão 1.7.3.26: ajuste visual do modal do AvantaProjetos não altera o
 > funcionamento do AvantaVendas.

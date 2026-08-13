@@ -160,6 +160,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
   const [projectSharesState, setProjectSharesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [shareToRevoke, setShareToRevoke] = useState<ProjectShare | null>(null);
   const [revokingShare, setRevokingShare] = useState(false);
+  const [regeneratingShareId, setRegeneratingShareId] = useState<string | null>(null);
 
   const participantToDelete = collection.people.find((person) => person.id === participantToDeleteId) ?? null;
 
@@ -330,6 +331,34 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     if (!shareState?.link) return;
     try { await navigator.clipboard.writeText(shareState.link); setShareCopyStatus('copied'); onMessage('Link copiado para compartilhar.'); }
     catch { setShareCopyStatus('manual'); onMessage('Não foi possível copiar o link automaticamente.'); }
+  };
+
+  const showProjectLink = (person: ProjectShare) => {
+    if (!shareProject) return;
+    const link = `${window.location.origin}/projetos?empresaId=${encodeURIComponent(collection.companyId)}&projetoId=${encodeURIComponent(shareProject.id)}`;
+    setShareCopyStatus('idle');
+    setShareState({ found: true, link, message: `Link de acesso de ${person.nome} pronto para copiar. Ele só funcionará para pessoas já autorizadas neste projeto.` });
+  };
+
+  const regenerateInviteLink = async (person: ProjectShare) => {
+    if (regeneratingShareId) return;
+    setRegeneratingShareId(person.id);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error('Sua sessão expirou. Entre novamente para gerar o convite.');
+      const response = await fetch('/api/modulos/projetos/compartilhamentos', {
+        method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empresaId: collection.companyId, id: person.id, acao: 'renovar_convite' }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.mensagem || 'Não foi possível gerar um novo link.');
+      setShareCopyStatus('idle');
+      setShareState({ found: false, link: json.link, message: json.mensagem });
+      onMessage('Novo link de convite gerado.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Não foi possível gerar um novo link.');
+    } finally { setRegeneratingShareId(null); }
   };
 
   const revokeShare = async () => {
@@ -560,7 +589,11 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
             <span className={styles.sharePersonAvatar} aria-hidden="true">{participantInitials(person.nome)}</span>
             <span className={styles.sharePersonInfo}><strong>{person.nome}</strong><small>{person.email}</small></span>
             <span className={`${styles.shareStatus} ${person.situacao === 'pendente' ? styles.shareStatusPending : ''}`}>{person.situacao === 'pendente' ? 'Convite pendente' : person.acesso === 'editor' ? 'Pode editar' : 'Visualiza'}</span>
-            <button type="button" className={styles.shareRevokeButton} onClick={() => setShareToRevoke(person)}>Revogar</button>
+            <span className={styles.sharePersonActions}>{person.situacao === 'pendente'
+              ? <button type="button" className={styles.shareLinkButton} disabled={regeneratingShareId === person.id} onClick={() => void regenerateInviteLink(person)}>{regeneratingShareId === person.id ? 'Gerando…' : 'Novo link'}</button>
+              : <button type="button" className={styles.shareLinkButton} onClick={() => showProjectLink(person)}>Ver link</button>}
+              <button type="button" className={styles.shareRevokeButton} onClick={() => setShareToRevoke(person)}>Revogar</button>
+            </span>
           </div>)}</div>}
         </section>
         <div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={() => setShareProject(null)}>Fechar</button><button type="submit" className={styles.primaryButton} disabled={sharing}>{sharing ? 'Verificando…' : 'Verificar e adicionar'}</button></div>

@@ -12,6 +12,17 @@ function resposta(mensagem: string, status = 400) {
   return NextResponse.json({ erro: true, mensagem }, { status });
 }
 
+async function criarTokenConvite() {
+  const token = crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '');
+  const tokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)).then((bytes) => Array.from(new Uint8Array(bytes)).map((item) => item.toString(16).padStart(2, '0')).join(''));
+  return { token, tokenHash };
+}
+
+function linkDoProjeto(request: Request, empresaId: string, projetoId: string, token?: string) {
+  const origem = new URL(request.url).origin;
+  return `${origem}/projetos?empresaId=${encodeURIComponent(empresaId)}&projetoId=${encodeURIComponent(projetoId)}${token ? `&convite=${token}` : ''}`;
+}
+
 async function localizarConta(db: SupabaseClient, email: string) {
   const { data, error } = await db.from('usuarios_contas').select('user_id,nome,email').eq('email', email).maybeSingle();
   if (error) throw new Error('Não foi possível consultar o cadastro.');
@@ -44,18 +55,16 @@ export async function POST(request: Request) {
   try {
     const conta = await localizarConta(acesso.db, email);
     const agora = new Date();
-    const token = crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '');
-    const tokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)).then((bytes) => Array.from(new Uint8Array(bytes)).map((item) => item.toString(16).padStart(2, '0')).join(''));
+    const convite = await criarTokenConvite();
     const registro = {
       empresa_id: empresaId, projeto_id: projetoId, nome, email, acesso: acessoSelecionado,
       user_id: conta?.user_id || null, situacao: conta ? 'ativo' : 'pendente',
-      token_hash: conta ? null : tokenHash, expira_em: conta ? null : new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      token_hash: conta ? null : convite.tokenHash, expira_em: conta ? null : new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       criado_por: acesso.usuario.id, revogado_em: null,
     };
     const { data, error } = await acesso.db.from('projetos_compartilhamentos').upsert(registro, { onConflict: 'empresa_id,projeto_id,email' }).select('id,nome,email,acesso,situacao,user_id,expira_em').single();
     if (error) throw error;
-    const origem = new URL(request.url).origin;
-    const link = `${origem}/projetos?empresaId=${encodeURIComponent(empresaId)}&projetoId=${encodeURIComponent(projetoId)}${conta ? '' : `&convite=${token}`}`;
+    const link = linkDoProjeto(request, empresaId, projetoId, conta ? undefined : convite.token);
     return NextResponse.json({ ok: true, encontrado: Boolean(conta), compartilhamento: data, link, mensagem: conta ? 'Acesso liberado. Compartilhe o link para a pessoa entrar com o login e senha dela.' : 'Convite criado. Copie o link e encaminhe para a pessoa criar o acesso.' });
   } catch (error) {
     return resposta(error instanceof Error ? error.message : 'Não foi possível criar o compartilhamento.', 500);
@@ -66,8 +75,19 @@ export async function PATCH(request: Request) {
   const corpo = await request.json().catch(() => ({}));
   const empresaId = String(corpo.empresaId || '').trim();
   const id = String(corpo.id || '').trim();
+  const acao = String(corpo.acao || '').trim();
   const acesso = await autenticarPerfilCobranca(request, empresaId);
   if (!acesso || !id || !PAPEIS_DE_GESTAO.includes(acesso.vinculo.perfil || '')) return resposta('Você não tem permissão para revogar este acesso.', 403);
+  if (acao === 'renovar_convite') {
+    const { data: compartilhamento, error: erroConsulta } = await acesso.db.from('projetos_compartilhamentos')
+      .select('id,projeto_id,situacao').eq('id', id).eq('empresa_id', empresaId).maybeSingle();
+    if (erroConsulta || !compartilhamento || compartilhamento.situacao !== 'pendente') return resposta('Este convite não está mais pendente.', 400);
+    const convite = await criarTokenConvite();
+    const expiraEm = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { error } = await acesso.db.from('projetos_compartilhamentos').update({ token_hash: convite.tokenHash, expira_em: expiraEm }).eq('id', id).eq('empresa_id', empresaId);
+    if (error) return resposta('Não foi possível gerar um novo link de convite.', 500);
+    return NextResponse.json({ ok: true, link: linkDoProjeto(request, empresaId, compartilhamento.projeto_id, convite.token), mensagem: 'Novo link de convite gerado. O anterior deixou de valer.' });
+  }
   const { error } = await acesso.db.from('projetos_compartilhamentos').update({ situacao: 'revogado', revogado_em: new Date().toISOString(), token_hash: null }).eq('id', id).eq('empresa_id', empresaId);
   if (error) return resposta('Não foi possível revogar o acesso.', 500);
   return NextResponse.json({ ok: true });

@@ -209,7 +209,12 @@
 .sharePersonInfo small { color: var(--muted); font-size: 10px; }
 .shareStatus { flex: 0 0 auto; border-radius: 999px; padding: 4px 7px; color: #216943; background: #e4f4e9; font-size: 9px; font-weight: 700; white-space: nowrap; }
 .shareStatusPending { color: #805900; background: #fff1ce; }
-.shareRevokeButton { min-height: 36px; flex: 0 0 auto; border: 0; border-radius: 9px; padding: 7px 9px; color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); cursor: pointer; font-size: 11px; font-weight: 700; }
+.sharePersonActions { display: flex; flex: 0 0 auto; align-items: center; gap: 5px; }
+.shareLinkButton, .shareRevokeButton { min-height: 36px; flex: 0 0 auto; border: 0; border-radius: 9px; padding: 7px 9px; cursor: pointer; font-size: 11px; font-weight: 700; }
+.shareLinkButton { color: var(--brand); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.shareLinkButton:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+.shareLinkButton:disabled { opacity: .58; cursor: wait; }
+.shareRevokeButton { color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); }
 .shareRevokeButton:hover { background: color-mix(in srgb, var(--danger) 15%, var(--surface)); }
 .participantManagerList { display: grid; gap: 6px; }
 .participantManagerList > div { display: flex; min-height: 48px; align-items: center; gap: 9px; border: 1px solid var(--border); border-radius: 11px; padding: 5px 7px; background: var(--surface); }
