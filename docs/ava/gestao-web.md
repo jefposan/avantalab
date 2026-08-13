@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.30 -->
+<!-- ava-version: 1.7.3.31 -->
+
+> Revisão 1.7.3.31: **Copiar link** usa a seleção visível do campo e o comando
+> nativo validado no Chrome, evitando bloqueio sem retorno da área de
+> transferência assíncrona.
 
 > Revisão 1.7.3.30: o aviso de cópia só aparece após o sistema confirmar o
 > conteúdo da área de transferência. Sem confirmação, o link é selecionado

@@ -331,9 +331,11 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     if (!shareState?.link) return;
     const linkInput = document.getElementById('share-link-input') as HTMLInputElement | null;
     try {
-      if (!navigator.clipboard?.writeText || !navigator.clipboard.readText) throw new Error('Cópia indisponível.');
-      await navigator.clipboard.writeText(shareState.link);
-      if (await navigator.clipboard.readText() !== shareState.link) throw new Error('A cópia não foi confirmada.');
+      if (!linkInput) throw new Error('Link indisponível.');
+      linkInput.focus();
+      linkInput.select();
+      linkInput.setSelectionRange(0, linkInput.value.length);
+      if (!document.execCommand('copy')) throw new Error('Cópia indisponível.');
       setShareCopyStatus('copied');
       onMessage('Conteúdo copiado.');
     } catch {

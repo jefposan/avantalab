@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.30 -->
+<!-- ava-version: 1.7.3.31 -->
+
+> Revisão 1.7.3.31: correção de cópia nativa exclusiva do AvantaProjetos Web;
+> sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.7.3.30: verificação de cópia de links exclusiva do AvantaProjetos
 > Web; sem alteração operacional na Gestão Mobile.
