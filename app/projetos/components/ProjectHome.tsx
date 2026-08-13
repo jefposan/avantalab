@@ -153,7 +153,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
   const [participantToDeleteId, setParticipantToDeleteId] = useState<string | null>(null);
   const [shareProject, setShareProject] = useState<Project | null>(null);
   const [shareForm, setShareForm] = useState({ name: '', email: '', access: 'editor' });
-  const [shareState, setShareState] = useState<{ message: string; link: string; found: boolean } | null>(null);
+  const [shareState, setShareState] = useState<{ message: string; link: string; found: boolean; duplicate?: boolean } | null>(null);
   const [shareCopyStatus, setShareCopyStatus] = useState<'idle' | 'copied' | 'manual'>('idle');
   const [sharing, setSharing] = useState(false);
   const [projectShares, setProjectShares] = useState<ProjectShare[]>([]);
@@ -303,6 +303,16 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
   const createShare = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!shareProject || sharing) return;
+    const email = shareForm.email.trim().toLocaleLowerCase('pt-BR');
+    const existingShare = projectShares.find((person) => person.email.toLocaleLowerCase('pt-BR') === email && person.situacao !== 'revogado');
+    if (existingShare) {
+      const duplicateMessage = `${existingShare.nome} já possui acesso a este projeto. Nenhum novo cadastro foi criado.`;
+      setShareCopyStatus('idle');
+      setShareState({ message: duplicateMessage, link: '', found: true, duplicate: true });
+      setProjectShares((current) => [existingShare, ...current.filter((item) => item.id !== existingShare.id)]);
+      onMessage('Este usuário já possui acesso a este projeto.');
+      return;
+    }
     setSharing(true);
     setShareState(null);
     setShareCopyStatus('idle');
@@ -315,6 +325,14 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
         body: JSON.stringify({ empresaId: collection.companyId, projetoId: shareProject.id, nome: shareForm.name, email: shareForm.email, acesso: shareForm.access }),
       });
       const json = await response.json().catch(() => ({}));
+      if (response.status === 409 && json.codigo === 'acesso_existente' && json.compartilhamento) {
+        const existing = json.compartilhamento as ProjectShare;
+        setProjectShares((current) => [existing, ...current.filter((item) => item.id !== existing.id)]);
+        setProjectSharesState('ready');
+        setShareState({ message: json.mensagem, link: '', found: true, duplicate: true });
+        onMessage('Este usuário já possui acesso a este projeto.');
+        return;
+      }
       if (!response.ok) throw new Error(json.mensagem || 'Não foi possível compartilhar este projeto.');
       setShareState({ message: json.mensagem, link: json.link, found: json.encontrado === true });
       if (json.compartilhamento) {
@@ -610,9 +628,9 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
           </div>
         </div>
         <p className={`${styles.participantEmpty} ${styles.shareHelp}`}>Se a pessoa já tiver conta AvantaLab, o acesso será liberado na hora. Caso contrário, você receberá um link de convite para encaminhar manualmente.</p>
-        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input id="share-link-input" readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink()} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Conteúdo copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">A cópia não foi confirmada. O link foi selecionado: pressione ⌘C ou Ctrl+C para copiar.</small>}</section>}
+        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.duplicate ? 'Acesso já existente' : shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input id="share-link-input" readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink()} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Conteúdo copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">A cópia não foi confirmada. O link foi selecionado: pressione ⌘C ou Ctrl+C para copiar.</small>}</section>}
         <section className={styles.sharePeople} aria-labelledby="share-people-title">
-          <div><h3 id="share-people-title">Pessoas com acesso</h3><p>Gerencie quem pode abrir este projeto.</p></div>
+          <div><h3 id="share-people-title">Pessoas com acesso a “{shareProject?.name}”</h3><p>Esta lista pertence somente a este projeto.</p></div>
           {projectSharesState === 'loading' && <p className={styles.sharePeopleEmpty}>Carregando acessos…</p>}
           {projectSharesState === 'error' && <p className={styles.sharePeopleEmpty} role="alert">Não foi possível carregar os acessos agora.</p>}
           {projectSharesState === 'ready' && projectShares.length === 0 && <p className={styles.sharePeopleEmpty}>Nenhuma pessoa recebeu acesso a este projeto.</p>}

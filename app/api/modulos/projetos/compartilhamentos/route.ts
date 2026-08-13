@@ -53,6 +53,18 @@ export async function POST(request: Request) {
   const acesso = await autenticarPerfilCobranca(request, empresaId);
   if (!acesso || !PAPEIS_DE_GESTAO.includes(acesso.vinculo.perfil || '')) return resposta('Você não tem permissão para compartilhar este projeto.', 403);
   try {
+    const { data: existente, error: erroExistente } = await acesso.db.from('projetos_compartilhamentos')
+      .select('id,nome,email,acesso,situacao,user_id,expira_em')
+      .eq('empresa_id', empresaId).eq('projeto_id', projetoId).eq('email', email).maybeSingle();
+    if (erroExistente) throw new Error('Não foi possível verificar os acessos deste projeto.');
+    if (existente && existente.situacao !== 'revogado') {
+      return NextResponse.json({
+        erro: true,
+        codigo: 'acesso_existente',
+        mensagem: `${existente.nome} já possui acesso a este projeto. Nenhum novo cadastro foi criado.`,
+        compartilhamento: existente,
+      }, { status: 409 });
+    }
     const conta = await localizarConta(acesso.db, email);
     const agora = new Date();
     const convite = await criarTokenConvite();

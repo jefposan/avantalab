@@ -12,6 +12,7 @@ const kanban = readFileSync('app/projetos/components/KanbanView.tsx', 'utf8');
 const estilos = readFileSync('app/projetos/projetos.module.css', 'utf8');
 const ajustes = readFileSync('app/api/modulos/projetos/ajustes/route.ts', 'utf8');
 const inicioProjetos = readFileSync('app/projetos/components/ProjectHome.tsx', 'utf8');
+const compartilhamentosProjetos = readFileSync('app/api/modulos/projetos/compartilhamentos/route.ts', 'utf8');
 
 test('AvantaProjetos recebe o tema salvo no perfil, sem depender do sistema operacional', () => {
   assert.match(acesso, /select\('cor_primaria, dark_mode'\)/);
@@ -102,4 +103,14 @@ test('modal de compartilhamento é compacto e concentra a ação junto ao acesso
   assert.doesNotMatch(inicioProjetos, />Fechar<\/button>/);
   assert.match(estilos, /\.shareAccessRow \{ grid-column: 1 \/ -1; display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);
   assert.match(estilos, /\.sharePeopleList > div \{[^}]*min-height: 46px;/);
+});
+
+test('compartilhamento bloqueia duplicidade no mesmo projeto e recupera o acesso existente', () => {
+  assert.match(compartilhamentosProjetos, /\.eq\('empresa_id', empresaId\)\.eq\('projeto_id', projetoId\)\.eq\('email', email\)\.maybeSingle\(\)/);
+  assert.match(compartilhamentosProjetos, /codigo: 'acesso_existente'/);
+  assert.match(compartilhamentosProjetos, /\{ status: 409 \}/);
+  assert.match(inicioProjetos, /response\.status === 409 && json\.codigo === 'acesso_existente'/);
+  assert.match(inicioProjetos, /Acesso já existente/);
+  assert.match(inicioProjetos, /Pessoas com acesso a “\{shareProject\?\.name\}”/);
+  assert.match(inicioProjetos, /Esta lista pertence somente a este projeto\./);
 });

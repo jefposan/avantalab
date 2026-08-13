@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.3.35 - 2026-08-13
+
+- AvantaProjetos bloqueia um segundo cadastro do mesmo e-mail no mesmo projeto.
+  Quando o vínculo já existe, nenhum dado é alterado e a pessoa reaparece na
+  lista com uma mensagem objetiva.
+- O compartilhamento identifica no título a qual projeto pertence a lista de
+  acessos. A mesma pessoa continua podendo receber acesso a projetos diferentes.
+
 ## 1.7.3.34-av77 - 2026-08-13
 
 - AvantaVendas: **Dados do usuário** volta a exibir a empresa fornecedora de
