@@ -329,8 +329,29 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
 
   const copyShareLink = async () => {
     if (!shareState?.link) return;
-    try { await navigator.clipboard.writeText(shareState.link); setShareCopyStatus('copied'); onMessage('Link copiado para compartilhar.'); }
-    catch { setShareCopyStatus('manual'); onMessage('Não foi possível copiar o link automaticamente.'); }
+    try {
+      let copied = false;
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(shareState.link);
+          copied = true;
+        } catch { /* Alguns navegadores bloqueiam a API moderna; usar o recurso compatível abaixo. */ }
+      }
+      if (!copied) {
+        const fallback = document.createElement('textarea');
+        fallback.value = shareState.link;
+        fallback.setAttribute('readonly', '');
+        fallback.style.position = 'fixed';
+        fallback.style.opacity = '0';
+        document.body.append(fallback);
+        fallback.select();
+        copied = document.execCommand('copy');
+        fallback.remove();
+        if (!copied) throw new Error('Cópia indisponível.');
+      }
+      setShareCopyStatus('copied');
+      onMessage('Conteúdo copiado.');
+    } catch { setShareCopyStatus('manual'); onMessage('Não foi possível copiar o link automaticamente.'); }
   };
 
   const showProjectLink = (person: ProjectShare) => {
@@ -579,7 +600,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
           <label>Acesso<select value={shareForm.access} onChange={(event) => setShareForm({ ...shareForm, access: event.target.value })}><option value="editor">Pode editar o projeto</option><option value="observador">Somente visualizar</option></select></label>
         </div>
         <p className={styles.participantEmpty}>Se a pessoa já tiver conta AvantaLab, o acesso será liberado na hora. Caso contrário, você receberá um link de convite para encaminhar manualmente.</p>
-        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Link copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'copied' && <small className={styles.shareCopyMessage}>O link está na área de transferência e pode ser enviado por WhatsApp, e-mail ou mensagem.</small>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">Não foi possível copiar automaticamente. Selecione o link acima para copiar manualmente.</small>}</section>}
+        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Conteúdo copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'copied' && <small className={styles.shareCopyMessage} role="status">Conteúdo copiado. O link está pronto para enviar por WhatsApp, e-mail ou mensagem.</small>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">Não foi possível copiar automaticamente. Selecione o link acima para copiar manualmente.</small>}</section>}
         <section className={styles.sharePeople} aria-labelledby="share-people-title">
           <div><h3 id="share-people-title">Pessoas com acesso</h3><p>Gerencie quem pode abrir este projeto.</p></div>
           {projectSharesState === 'loading' && <p className={styles.sharePeopleEmpty}>Carregando acessos…</p>}

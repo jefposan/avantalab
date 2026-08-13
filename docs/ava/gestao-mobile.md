@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.27 -->
+<!-- ava-version: 1.7.3.28 -->
+
+> Revisão 1.7.3.28: confirmação de cópia de links é exclusiva do
+> AvantaProjetos Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.7.3.27: links renováveis de Projetos são exclusivos da Gestão Web;
 > sem alteração operacional na Gestão Mobile.
