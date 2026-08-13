@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.3.34 - 2026-08-13
+
+- AvantaProjetos compacta o modal de compartilhamento, posiciona **Verificar e
+  adicionar** ao lado do tipo de acesso, remove a ação redundante **Fechar** e
+  mantém somente o X para descartar o formulário.
+- A confirmação extensa abaixo do link copiado foi removida; o próprio botão
+  continua confirmando **Conteúdo copiado**.
+
 ## 1.7.3.33-av76 - 2026-08-13
 
 - AvantaVendas: separa definitivamente a empresa financeira do perfil e a

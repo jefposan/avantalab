@@ -327,6 +327,15 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     } finally { setSharing(false); }
   };
 
+  const closeShareModal = () => {
+    setShareProject(null);
+    setShareForm({ name: '', email: '', access: 'editor' });
+    setShareState(null);
+    setShareCopyStatus('idle');
+    setProjectShares([]);
+    setProjectSharesState('idle');
+  };
+
   const copyShareLink = async () => {
     if (!shareState?.link) return;
     const linkInput = document.getElementById('share-link-input') as HTMLInputElement | null;
@@ -590,15 +599,18 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
       </form>
     </Modal>
 
-    <Modal open={Boolean(shareProject)} onClose={() => setShareProject(null)} title="Compartilhar acesso" description={shareProject ? `Convide uma pessoa para trabalhar somente em “${shareProject.name}”.` : ''} headerTone="accent">
-      <form className={styles.projectForm} onSubmit={createShare}>
-        <div className={styles.formGrid}>
+    <Modal open={Boolean(shareProject)} onClose={closeShareModal} title="Compartilhar acesso" description={shareProject ? `Convide uma pessoa para trabalhar somente em “${shareProject.name}”.` : ''} headerTone="accent" compact>
+      <form className={`${styles.projectForm} ${styles.shareForm}`} onSubmit={createShare}>
+        <div className={`${styles.formGrid} ${styles.shareFormGrid}`}>
           <label>Nome completo<input required maxLength={120} autoFocus value={shareForm.name} onChange={(event) => setShareForm({ ...shareForm, name: event.target.value })} placeholder="Ex.: Maria Silva" /></label>
           <label>E-mail<input required type="email" autoCapitalize="none" value={shareForm.email} onChange={(event) => setShareForm({ ...shareForm, email: event.target.value })} placeholder="nome@empresa.com" /></label>
-          <label>Acesso<select value={shareForm.access} onChange={(event) => setShareForm({ ...shareForm, access: event.target.value })}><option value="editor">Pode editar o projeto</option><option value="observador">Somente visualizar</option></select></label>
+          <div className={styles.shareAccessRow}>
+            <label>Acesso<select value={shareForm.access} onChange={(event) => setShareForm({ ...shareForm, access: event.target.value })}><option value="editor">Pode editar o projeto</option><option value="observador">Somente visualizar</option></select></label>
+            <button type="submit" className={`${styles.primaryButton} ${styles.shareVerifyButton}`} disabled={sharing}>{sharing ? 'Verificando…' : 'Verificar e adicionar'}</button>
+          </div>
         </div>
-        <p className={styles.participantEmpty}>Se a pessoa já tiver conta AvantaLab, o acesso será liberado na hora. Caso contrário, você receberá um link de convite para encaminhar manualmente.</p>
-        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input id="share-link-input" readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink()} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Conteúdo copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'copied' && <small className={styles.shareCopyMessage} role="status">Conteúdo copiado e confirmado. O link está pronto para enviar por WhatsApp, e-mail ou mensagem.</small>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">A cópia não foi confirmada. O link foi selecionado: pressione ⌘C ou Ctrl+C para copiar.</small>}</section>}
+        <p className={`${styles.participantEmpty} ${styles.shareHelp}`}>Se a pessoa já tiver conta AvantaLab, o acesso será liberado na hora. Caso contrário, você receberá um link de convite para encaminhar manualmente.</p>
+        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input id="share-link-input" readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink()} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Conteúdo copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">A cópia não foi confirmada. O link foi selecionado: pressione ⌘C ou Ctrl+C para copiar.</small>}</section>}
         <section className={styles.sharePeople} aria-labelledby="share-people-title">
           <div><h3 id="share-people-title">Pessoas com acesso</h3><p>Gerencie quem pode abrir este projeto.</p></div>
           {projectSharesState === 'loading' && <p className={styles.sharePeopleEmpty}>Carregando acessos…</p>}
@@ -615,7 +627,6 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
             </span>
           </div>)}</div>}
         </section>
-        <div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={() => setShareProject(null)}>Fechar</button><button type="submit" className={styles.primaryButton} disabled={sharing}>{sharing ? 'Verificando…' : 'Verificar e adicionar'}</button></div>
       </form>
     </Modal>
 

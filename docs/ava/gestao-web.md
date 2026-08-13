@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.33 -->
+<!-- ava-version: 1.7.3.34 -->
+
+> Revisão 1.7.3.34: em **Compartilhar acesso**, a verificação fica ao lado do
+> tipo de acesso, o X fecha e descarta o formulário, e campos, avisos e pessoas
+> listadas usam uma composição mais compacta. A cópia é confirmada no botão.
 
 > Revisão 1.7.3.33: **Copiar link** usa a área de transferência nativa do
 > Chrome com limite de tempo e não confirma o método legado que podia retornar

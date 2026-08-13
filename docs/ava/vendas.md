@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.33 -->
+<!-- ava-version: 1.7.3.34 -->
 <!-- avantavendas-asset-revision: 76 -->
+
+> Revisão 1.7.3.34: compactação do modal de compartilhamento do
+> AvantaProjetos não altera o funcionamento do AvantaVendas.
 
 > Revisão 1.7.3.33-av76: o vínculo de Catálogo, Notícias e Divulgação passa a
 > pertencer ao perfil de vendas ativo e fica separado da empresa financeira da

@@ -4,13 +4,14 @@ import { useEffect, useId, useRef, type ReactNode } from 'react';
 import styles from '../projetos.module.css';
 import { Icon } from './Icon';
 
-export function Modal({ open, title, description, children, onClose, wide = false, headerTone = 'default' }: {
+export function Modal({ open, title, description, children, onClose, wide = false, compact = false, headerTone = 'default' }: {
   open: boolean;
   title: string;
   description?: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  compact?: boolean;
   headerTone?: 'default' | 'accent';
 }) {
   const titleId = useId();
@@ -41,7 +42,7 @@ export function Modal({ open, title, description, children, onClose, wide = fals
 
   if (!open) return null;
   return <div className={styles.modalBackdrop} onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <div ref={dialogRef} className={`${styles.modal} ${wide ? styles.modalWide : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} tabIndex={-1}>
+    <div ref={dialogRef} className={`${styles.modal} ${wide ? styles.modalWide : ''} ${compact ? styles.modalCompact : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} tabIndex={-1}>
       <header className={`${styles.modalHeader} ${headerTone === 'accent' ? styles.modalHeaderAccent : ''}`}>
         <div><h2 id={titleId}>{title}</h2>{description && <p id={descriptionId}>{description}</p>}</div>
         <button type="button" className={styles.iconButton} onClick={onClose} aria-label="Fechar"><Icon name="close" /></button>
