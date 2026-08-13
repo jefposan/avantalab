@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.22 -->
+<!-- ava-version: 1.7.3.23 -->
+
+> Revisão 1.7.3.23: ampliação do backup e isolamento de catálogo exclusivos
+> do AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.7.3.22: backup e pontos de restauração por perfil são exclusivos
 > do AvantaVendas; sem impacto operacional na Gestão Web.

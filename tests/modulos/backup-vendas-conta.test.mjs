@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const ler = (arquivo) => readFileSync(new URL(arquivo, import.meta.url), 'utf8');
-const migracao = ler('../../supabase/migrations/20260813123000_backup_restauracao_contas_vendas.sql');
+const migracaoInicial = ler('../../supabase/migrations/20260813123000_backup_restauracao_contas_vendas.sql');
+const migracaoCompleta = ler('../../supabase/migrations/20260813183000_backup_completo_conta_vendas.sql');
+const migracao = `${migracaoInicial}\n${migracaoCompleta}`;
 const aplicacao = ler('../../app/avantavendas/sistema/app.js');
 const cliente = ler('../../app/avantavendas/sistema/supabase-client.js');
 const apiBackup = ler('../../app/api/vendas/backup/route.ts');
@@ -15,6 +17,33 @@ test('snapshot reúne somente os registros da conta solicitada', () => {
   }
   assert.match(migracao, /join public\.vendas_mobile_pedidos p on p\.id = i\.pedido_id\s+where p\.conta_id = p_conta_id/);
   assert.match(migracao, /join public\.vendas_mobile_produtos p on p\.id = m\.produto_id\s+where p\.conta_id = p_conta_id/);
+});
+
+test('snapshot completo preserva perfil, participantes e estado do catálogo', () => {
+  assert.match(migracaoCompleta, /'schema_versao', 2/);
+  assert.match(migracaoCompleta, /'conta', to_jsonb\(v_conta\)/);
+  assert.match(migracaoCompleta, /'conta_usuarios'/);
+  assert.match(migracaoCompleta, /'recursos_conta'/);
+  assert.match(migracaoCompleta, /'preferencias_conta'/);
+  assert.match(migracaoCompleta, /'catalogo_recebimentos'/);
+  assert.match(migracaoCompleta, /vendas_mobile_produtos t where t\.conta_id = p_conta_id/);
+});
+
+test('catálogo e recursos ficam isolados pela conta ativa', () => {
+  assert.match(migracaoCompleta, /vendas_mobile_contas_recursos/);
+  assert.match(migracaoCompleta, /sincronizar_catalogo_vendas_mobile_rpc\(p_conta_id uuid\)/);
+  assert.match(migracaoCompleta, /p\.conta_id = p_conta_id and p\.catalogo_produto_origem_id/);
+  assert.match(cliente, /sincronizar_catalogo_vendas_mobile_rpc', \{ p_conta_id: contaId \}/);
+  assert.match(cliente, /atualizar_recurso_vinculo_comercial_vendas_mobile_rpc/);
+  assert.match(cliente, /p_conta_id: contaId, p_empresa_id: empresaId/);
+  assert.match(cliente, /from\('vendas_mobile_contas_preferencias'\)/);
+});
+
+test('restauração completa não contorna revogação feita pela empresa', () => {
+  assert.match(migracaoCompleta, /A empresa deste backup revogou o acesso/);
+  assert.match(migracaoCompleta, /vendas_mobile_acessos a where a\.user_id = p_criado_por/);
+  assert.match(migracaoCompleta, /usuarios_empresa u where u\.user_id = p_criado_por/);
+  assert.match(migracaoCompleta, /values \(p_conta_id, p_criado_por, 'proprietario', 'ativo'\)/);
 });
 
 test('restauração e reset exigem proprietário e criam ponto anterior', () => {
@@ -32,6 +61,7 @@ test('APIs validam vínculo, papel e confirmação destrutiva', () => {
   assert.match(apiBackup, /contexto\.papel !== 'proprietario'/);
   assert.match(apiBackup, /SUBSTITUIR/);
   assert.match(apiBackup, /backup pertence a outra conta de vendas/);
+  assert.match(apiBackup, /\[1, 2\]\.includes/);
   assert.match(apiPontos, /podeGerirBackup/);
   assert.match(apiPontos, /contexto\.papel !== 'proprietario'/);
   assert.match(apiPontos, /RESTAURAR/);

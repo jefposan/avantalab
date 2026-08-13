@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     return erro('Digite SUBSTITUIR para confirmar a restauração.', 400);
   }
   const snapshot = corpo.snapshot;
-  if (!snapshot || snapshot.produto !== 'AvantaVendas' || Number(snapshot.schema_versao) !== 1) {
+  if (!snapshot || snapshot.produto !== 'AvantaVendas' || ![1, 2].includes(Number(snapshot.schema_versao))) {
     return erro('Arquivo de backup inválido ou incompatível.', 400);
   }
   if (String(snapshot.conta_origem?.id || '') !== contaId) {
@@ -69,4 +69,3 @@ export async function POST(request: Request) {
   if (error) return erro(error.message || 'Não foi possível restaurar o backup.', 500);
   return NextResponse.json({ ok: true, pontoSegurancaId });
 }
-

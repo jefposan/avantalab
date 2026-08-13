@@ -287,7 +287,13 @@
     try {
       empresaContexto = JSON.parse(localStorage.getItem('avantalab_mobile_sistema_contexto') || 'null')?.empresaId || '';
     } catch { /* preferência inválida */ }
-    const candidatos = [...acessosAtivos].sort((a, b) => Number(b.empresa_id === empresaContexto) - Number(a.empresa_id === empresaContexto));
+    const contasDisponiveis = await listarContasVendas().catch(() => []);
+    const contaContexto = contasDisponiveis.find((conta) => conta.id === contaAtivaId()) || contasDisponiveis[0] || null;
+    const empresaContaAtiva = contaContexto?.empresa_id || '';
+    const contaIndependenteAtiva = Boolean(contaContexto && !contaContexto.empresa_id);
+    const candidatos = [...acessosAtivos].sort((a, b) =>
+      Number(b.empresa_id === empresaContaAtiva) - Number(a.empresa_id === empresaContaAtiva)
+      || Number(b.empresa_id === empresaContexto) - Number(a.empresa_id === empresaContexto));
     const modulos = await Promise.all(candidatos.map((item) => requireClient().rpc('modulo_vendas_mobile_ativo_rpc', {
       p_empresa_id: item.empresa_id,
     })));
@@ -295,13 +301,15 @@
     atualizarProgresso('access', 4, 4, 'Acesso ao Vendas confirmado');
     const moduloAtivo = acessosComModulo.length > 0;
     const vinculoComercialAtivoId = (vinculosRes.data || []).find((item) => item.ativo)?.empresa_id || '';
-    // Os dados do Vendas pertencem ao usuário, não a perfis operacionais
-    // separados. Havendo mais de uma permissão empresarial, escolhemos apenas
-    // o contexto da conta única, sem apresentar ou criar múltiplas contas.
-    const acessoBase = acessosComModulo.find((item) => item.empresa_id === vinculoComercialAtivoId)
+    // A conta ativa define o contexto comercial. Um perfil independente nao
+    // herda assinatura nem catalogo de outro perfil do mesmo login.
+    const acessoBase = contaIndependenteAtiva ? null : (
+      acessosComModulo.find((item) => item.empresa_id === empresaContaAtiva)
+      || acessosComModulo.find((item) => item.empresa_id === vinculoComercialAtivoId)
       || acessosComModulo.find((item) => item.empresa_id === empresaContexto)
       || acessosComModulo[0]
-      || null;
+      || null
+    );
     const acesso = acessoBase
       ? { ...acessoBase, papel: candidatos.some((item) => item.papel === 'gestor') ? 'gestor' : acessoBase.papel }
       : {
@@ -347,7 +355,9 @@
   }
 
   async function sincronizarCatalogoVendas() {
-    const { data, error } = await requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
+    const { data, error } = await requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc', { p_conta_id: contaId });
     if (error) throw error;
     return data || { adicionados: 0, ja_recebidos: 0 };
   }
@@ -355,14 +365,17 @@
   async function salvarPreferencias(preferencias, versao = 1) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient()
-      .from('vendas_mobile_preferencias')
+      .from('vendas_mobile_contas_preferencias')
       .upsert({
-        user_id: user.id,
+        conta_id: contaId,
         versao: Math.max(1, Number(versao) || 1),
         preferencias: preferencias && typeof preferencias === 'object' ? preferencias : {},
+        atualizado_por: user.id,
         atualizado_em: new Date().toISOString(),
-      }, { onConflict: 'user_id' })
+      }, { onConflict: 'conta_id' })
       .select('versao, preferencias, atualizado_em')
       .single();
     if (error) throw error;
@@ -390,7 +403,7 @@
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
     const [vinculosRes, pastasRes, materiaisRes] = await Promise.all([
-      requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'),
+      requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc', { p_conta_id: contaAtivaId() }),
       requireClient()
         .from('vendas_mobile_divulgacao_pastas')
         .select('id, empresa_id, pasta_pai_id, capa_material_id, nome, descricao, ordem, criado_em')
@@ -477,7 +490,7 @@
 
     const moduloAtivo = acessoVendas.moduloAtivo === true;
     const [vinculosRes, perfisFinanceirosRes] = await Promise.all([
-      acompanharEtapaDados(requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'), 'Carregando vínculos comerciais'),
+      acompanharEtapaDados(requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc', { p_conta_id: contaId }), 'Carregando vínculos comerciais'),
       acompanharEtapaDados(requireClient().rpc('meus_perfis_financeiros_vendas_mobile_rpc'), 'Carregando perfis financeiros'),
     ]);
     if (vinculosRes.error) throw vinculosRes.error;
@@ -509,7 +522,7 @@
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, capa_material_id, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
       acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc'), 'Carregando integração financeira'),
-      acompanharEtapaDados(client.from('vendas_mobile_preferencias').select('versao, preferencias, atualizado_em').eq('user_id', user.id).maybeSingle(), 'Carregando preferências'),
+      acompanharEtapaDados(client.from('vendas_mobile_contas_preferencias').select('versao, preferencias, atualizado_em').eq('conta_id', contaId).maybeSingle(), 'Carregando preferências'),
     ]);
     const error = clientesRes.error || pedidosRes.error || pagamentosRes.error || integracaoRes.error;
     if (error) throw error;
@@ -903,8 +916,10 @@
   }
 
   async function atualizarRecursoVinculoComercial(empresaId, recurso, ativo, removerCatalogo = false) {
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient().rpc('atualizar_recurso_vinculo_comercial_vendas_mobile_rpc', {
-      p_empresa_id: empresaId, p_recurso: recurso, p_ativo: ativo, p_remover_catalogo: removerCatalogo,
+      p_conta_id: contaId, p_empresa_id: empresaId, p_recurso: recurso, p_ativo: ativo, p_remover_catalogo: removerCatalogo,
     });
     if (error) throw error;
     return data || [];
