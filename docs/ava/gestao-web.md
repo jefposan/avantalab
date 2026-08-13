@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.31 -->
+<!-- ava-version: 1.7.3.32 -->
+
+> Revisão 1.7.3.32: corrigida a chamada do botão **Copiar link**, que agora
+> executa a cópia e apresenta o retorno correspondente no próprio modal.
 
 > Revisão 1.7.3.31: **Copiar link** usa a seleção visível do campo e o comando
 > nativo validado no Chrome, evitando bloqueio sem retorno da área de

@@ -87,3 +87,9 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(estilos, /\.moduleExit svg \{ display: block; flex: 0 0 16px; \}/);
   assert.match(estilos, /\.moduleExit \{[^}]*background: var\(--brand\);/);
 });
+
+test('botão de compartilhamento executa a função de cópia', () => {
+  assert.match(inicioProjetos, /const copyShareLink = \(\) => \{/);
+  assert.match(inicioProjetos, /onClick=\{copyShareLink\}/);
+  assert.doesNotMatch(inicioProjetos, /onClick=\{\(\) => void copyShareLink\}/);
+});

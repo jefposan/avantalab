@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.32: Copiar link executa efetivamente a função de
+// cópia e apresenta o retorno no modal.
 // Revisado na versão 1.7.3.31: copiar link usa a seleção visível e o comando
 // nativo validado no Chrome, sem depender da API assíncrona bloqueada.
 // Revisado na versão 1.7.3.30: a cópia só é confirmada após verificar a área
