@@ -1099,6 +1099,8 @@ const ICONES_SVG_ESTAVEIS = {
   bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
   cake: '<path d="M4 11h16v9H4zM3 20h18"/><path d="M7 11V8M12 11V6M17 11V8M7 5h0M12 3h0M17 5h0"/><path d="M4 14h16"/>',
   home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/>',
+  database: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
+  download: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
   'rotate-ccw': '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
   'user-x': '<path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/>',
   'check-circle': '<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/>',
@@ -4620,11 +4622,14 @@ function renderConfiguracoes() {
   const renderVinculo = (vinculo) => `<div class="commercial-link ${vinculo.ativo ? 'is-current' : ''}"><header><b>${escapeHtml(vinculo.empresa_nome || 'Empresa')}</b><span>${vinculo.ativo ? 'Ativa' : 'Histórico'}</span></header><div class="commercial-link-resources">${renderRecurso(vinculo, 'novidades', 'Notícias')}${renderRecurso(vinculo, 'divulgacao', 'Divulgação')}${renderRecurso(vinculo, 'catalogo', 'Catálogo')}</div></div>`;
   const contaAtiva = state.contaVendasAtiva;
   const contas = state.contasVendas || [];
+  const podeGerirDadosConta = ['proprietario', 'administrador'].includes(contaAtiva?.papel);
+  const podeRestaurarDadosConta = contaAtiva?.papel === 'proprietario';
   return `<section class="module-page settings-page">
     <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div><button type="button" class="danger settings-header-exit" onclick="abrirConfirmacaoSair()">${svgIcon('log-out')} Sair</button></div></div>
     <div class="settings-grid">
       <article class="settings-card settings-profile-card settings-sales-account-card"><h3>${svgIcon('users')} Conta de vendas</h3><p>Clientes, pedidos, pagamentos, agenda e permissões são separados por conta.</p><div class="settings-sales-account-field"><label for="contaVendasAtiva">Conta ativa:</label><select id="contaVendasAtiva" onchange="trocarContaVendas(this.value)">${contas.map((conta) => `<option value="${escapeAttr(conta.id)}" ${conta.id === contaAtiva?.id ? 'selected' : ''}>${escapeHtml(conta.nome)}${conta.empresa_nome ? ` · ${escapeHtml(conta.empresa_nome)}` : ''}</option>`).join('')}</select></div><div class="settings-sales-account-role">${contaAtiva?.papel === 'proprietario' ? 'Você é o proprietário desta conta.' : `Seu acesso: ${escapeHtml(contaAtiva?.papel || 'vendedor')}.`}</div><div class="actions"><button class="secondary" onclick="abrirContasVendas()">${svgIcon('users')} Gerenciar contas</button></div></article>
       <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
+      ${podeGerirDadosConta ? `<article class="settings-card settings-data-security-card"><h3>${svgIconEstavel('database')} Dados e segurança</h3><p>Backups e pontos de restauração pertencem somente ao perfil <b>${escapeHtml(contaAtiva?.nome || 'ativo')}</b>.</p><div class="settings-data-security-actions"><button class="primary" type="button" onclick="baixarBackupContaVendas()">${svgIconEstavel('download')} Fazer backup</button><button class="secondary" type="button" onclick="selecionarBackupContaVendas()" ${podeRestaurarDadosConta ? '' : 'disabled'}>${svgIconEstavel('rotate-ccw')} Restaurar backup</button><button class="secondary" type="button" onclick="abrirPontosRestauracaoVendas()">${svgIconEstavel('clock')} Pontos de restauração</button></div>${podeRestaurarDadosConta ? '<small>Uma cópia de segurança é criada automaticamente antes de cada restauração.</small>' : '<small>Administradores podem criar backups e pontos. A restauração é exclusiva do proprietário.</small>'}</article>` : ''}
     <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>${metaAtingida ? '<b>Meta atingida, parabéns!</b>' : `Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.`}</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
@@ -4634,7 +4639,7 @@ function renderConfiguracoes() {
     <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Os novos produtos da empresa chegam automaticamente. Se recebeu um pacote, importe o arquivo ZIP completo.</p><div class="actions"><button class="primary" onclick="abrirImportacaoPacoteZip()">${svgIcon('package')} Importar pacote ZIP</button><button class="secondary" onclick="mostrarSincronizacaoCatalogo()">${svgIcon('save')} Situação da sincronização</button></div></article>
     <article class="settings-card settings-stock-card"><h3>${svgIcon('package')} Controle de estoque</h3><p>${state.produtos.filter((produto) => produto.estoque_controlado).length} produto(s) com estoque acompanhado neste aparelho.</p><div class="actions"><button class="primary" onclick="abrirAtualizarEstoque()">${svgIcon('plus')} Atualizar estoque</button></div><small>Entrada soma ao saldo atual. Ajuste define o saldo físico contado.</small></article>
     <article class="settings-card settings-pwa-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
-    <article class="settings-card settings-reset-card"><h3>${svgIconEstavel('rotate-ccw')} Resetar sistema</h3><p>Gera um backup automático e apaga lançamentos, clientes, agenda, produtos e preferências deste Vendas.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIconEstavel('rotate-ccw')} Resetar Vendas Mobile</button></article>
+    ${podeRestaurarDadosConta ? `<article class="settings-card settings-reset-card"><h3>${svgIconEstavel('rotate-ccw')} Resetar perfil de vendas</h3><p>Cria um ponto de segurança e apaga lançamentos, clientes, agenda e produtos somente do perfil ativo.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIconEstavel('rotate-ccw')} Resetar perfil ativo</button></article>` : ''}
     <article class="settings-card settings-delete-account-card"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas</h3><p>Remove definitivamente sua conta e os dados deste aplicativo. Outros serviços AvantaLab, quando utilizados separadamente, não serão alterados.</p><button class="danger" onclick="abrirExclusaoContaVendas()">${svgIconEstavel('user-x')} Excluir conta do Vendas</button></article>
   </section>`;
 }
@@ -4897,15 +4902,256 @@ async function solicitarNovoVinculoComercial() {
   } catch (error) { toast(traduzErro(error)); }
 }
 
+let backupContaVendasPendente = null;
+
+async function requisicaoDadosContaVendas(caminho, opcoes = {}) {
+  const token = await comLimiteDeTempo(
+    window.VendasDb.getAccessToken(),
+    'Sua sessão demorou para responder. Atualize a página e tente novamente.',
+    10000,
+  );
+  if (!token) throw new Error('Sua sessão expirou. Entre novamente.');
+  const resposta = await comLimiteDeTempo(fetch(caminho, {
+    ...opcoes,
+    headers: {
+      ...(opcoes.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(opcoes.headers || {}),
+      Authorization: `Bearer ${token}`,
+    },
+  }), 'A operação demorou mais que o esperado. Tente novamente.', 45000);
+  const resultado = await resposta.json().catch(() => ({}));
+  if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Não foi possível concluir a operação.');
+  return resultado;
+}
+
+function nomeSeguroArquivoVendas(nome) {
+  return String(nome || 'conta-vendas').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'conta-vendas';
+}
+
+function baixarArquivoGeradoVendas(blob, nome) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nome;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function mostrarProcessandoDadosVendas(titulo, mensagem) {
+  sheet(`<div class="backup-processing" role="status" aria-live="polite"><span class="local-loader" aria-hidden="true"></span><h2>${escapeHtml(titulo)}</h2><p>${escapeHtml(mensagem)}</p></div>`, 'sheet-backdrop-centered sheet-backdrop-static backup-processing-backdrop');
+}
+
+function resumoSnapshotVendas(snapshot) {
+  const dados = snapshot?.dados || {};
+  return [
+    ['Clientes', dados.clientes],
+    ['Produtos', dados.produtos],
+    ['Pedidos', dados.pedidos],
+    ['Itens dos pedidos', dados.pedido_itens],
+    ['Pagamentos', dados.pagamentos],
+    ['Agenda', dados.agenda],
+    ['Movimentos de estoque', dados.estoque_movimentos],
+  ].map(([tipo, registros]) => ({ Tipo: tipo, Registros: Array.isArray(registros) ? registros.length : 0 }));
+}
+
+async function baixarBackupContaVendas() {
+  const conta = state.contaVendasAtiva;
+  if (!conta?.id) return;
+  mostrarProcessandoDadosVendas('Preparando backup', `Reunindo os dados de ${conta.nome || 'sua conta'} com segurança.`);
+  try {
+    const [pacote] = await Promise.all([
+      requisicaoDadosContaVendas(`/api/vendas/backup?contaId=${encodeURIComponent(conta.id)}`),
+      carregarBibliotecaZip(),
+      carregarBibliotecaExcel(),
+    ]);
+    const zip = new window.JSZip();
+    zip.file('manifest.json', JSON.stringify(pacote.manifest, null, 2));
+    zip.file('dados.json', JSON.stringify(pacote.snapshot));
+    const livro = window.XLSX.utils.book_new();
+    const aba = window.XLSX.utils.json_to_sheet(resumoSnapshotVendas(pacote.snapshot));
+    aba['!cols'] = [{ wch: 28 }, { wch: 14 }];
+    window.XLSX.utils.book_append_sheet(livro, aba, 'Resumo');
+    zip.file('resumo.xlsx', window.XLSX.write(livro, { bookType: 'xlsx', type: 'array' }));
+    const arquivo = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    const data = new Date().toISOString().slice(0, 10);
+    baixarArquivoGeradoVendas(arquivo, `${nomeSeguroArquivoVendas(conta.nome)}-${data}.avantavendas`);
+    fecharSheet();
+    toast('Backup da conta gerado com sucesso.');
+    return true;
+  } catch (error) {
+    fecharSheet();
+    abrirAvisoSobreSheetVendas('Não foi possível fazer o backup', traduzErro(error));
+    return false;
+  }
+}
+
+function selecionarBackupContaVendas() {
+  if (state.contaVendasAtiva?.papel !== 'proprietario') {
+    abrirAvisoSobreSheetVendas('Restauração protegida', 'Somente o proprietário da conta pode restaurar um backup.');
+    return;
+  }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.avantavendas,.zip';
+  input.hidden = true;
+  input.addEventListener('change', () => {
+    const arquivo = input.files?.[0];
+    input.remove();
+    if (arquivo) lerBackupContaVendas(arquivo);
+  }, { once: true });
+  document.body.appendChild(input);
+  input.click();
+}
+
+async function lerBackupContaVendas(arquivo) {
+  mostrarProcessandoDadosVendas('Verificando backup', 'Conferindo o arquivo antes de liberar a restauração.');
+  try {
+    const JSZip = await carregarBibliotecaZip();
+    const zip = await JSZip.loadAsync(arquivo);
+    const manifestArquivo = zip.file('manifest.json');
+    const dadosArquivo = zip.file('dados.json');
+    if (!manifestArquivo || !dadosArquivo) throw new Error('Este arquivo não é um backup válido do AvantaVendas.');
+    const manifest = JSON.parse(await manifestArquivo.async('string'));
+    const snapshot = JSON.parse(await dadosArquivo.async('string'));
+    if (manifest.formato !== 'avantavendas-backup' || snapshot.produto !== 'AvantaVendas' || Number(snapshot.schema_versao) !== 1) {
+      throw new Error('Este backup é inválido ou pertence a uma versão incompatível.');
+    }
+    if (String(snapshot.conta_origem?.id || '') !== String(state.contaVendasAtiva?.id || '')) {
+      throw new Error('Este backup pertence a outra conta de vendas.');
+    }
+    backupContaVendasPendente = { manifest, snapshot, nomeArquivo: arquivo.name };
+    const totais = resumoSnapshotVendas(snapshot);
+    const totalRegistros = totais.reduce((soma, item) => soma + Number(item.Registros || 0), 0);
+    sheet(`<div class="sheet-header"><div><h2>Restaurar backup</h2><p class="muted small">Perfil: ${escapeHtml(state.contaVendasAtiva?.nome || 'Conta ativa')}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="backup-restore-preview"><div class="backup-file-summary"><b>${escapeHtml(arquivo.name)}</b><span>${totalRegistros} registro${totalRegistros === 1 ? '' : 's'} no pacote</span><small>Gerado em ${escapeHtml(dataBackup(manifest.gerado_em))}</small></div><p>Os dados atuais desta conta serão substituídos. Antes disso, criaremos automaticamente um ponto de segurança para desfazer a operação.</p><label for="confirmacaoRestaurarBackupVendas">Digite <b>SUBSTITUIR</b> para confirmar:</label><input id="confirmacaoRestaurarBackupVendas" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="atualizarConfirmacaoRestaurarBackupVendas(this.value)"><div class="actions"><button class="secondary" type="button" onclick="fecharSheet()">Cancelar</button><button id="confirmarRestaurarBackupVendas" class="danger" type="button" onclick="confirmarRestauracaoBackupVendas()" disabled>Restaurar backup</button></div></div>`, 'sheet-backdrop-centered backup-restore-backdrop');
+  } catch (error) {
+    backupContaVendasPendente = null;
+    fecharSheet();
+    abrirAvisoSobreSheetVendas('Backup não reconhecido', traduzErro(error));
+  }
+}
+
+function atualizarConfirmacaoRestaurarBackupVendas(confirmacao) {
+  const botao = document.getElementById('confirmarRestaurarBackupVendas');
+  if (botao) botao.disabled = String(confirmacao || '').trim().toUpperCase() !== 'SUBSTITUIR';
+}
+
+async function confirmarRestauracaoBackupVendas() {
+  const pacote = backupContaVendasPendente;
+  const contaId = state.contaVendasAtiva?.id;
+  if (!pacote || !contaId) return;
+  if (valor('confirmacaoRestaurarBackupVendas').trim().toUpperCase() !== 'SUBSTITUIR') return;
+  mostrarProcessandoDadosVendas('Restaurando dados', 'Mantenha esta tela aberta. Seus dados serão recarregados ao concluir.');
+  try {
+    await requisicaoDadosContaVendas('/api/vendas/backup', {
+      method: 'POST',
+      body: JSON.stringify({ contaId, snapshot: pacote.snapshot, checksum: pacote.manifest.checksum_sha256, confirmacao: 'SUBSTITUIR' }),
+    });
+    backupContaVendasPendente = null;
+    await carregarDadosBackend(true, false, true);
+    fecharSheet();
+    render();
+    toast('Backup restaurado. A conta já foi atualizada.');
+  } catch (error) {
+    fecharSheet();
+    abrirAvisoSobreSheetVendas('Não foi possível restaurar', traduzErro(error));
+  }
+}
+
+function formatarTamanhoBackupVendas(bytes) {
+  const tamanho = Number(bytes || 0);
+  if (tamanho < 1024) return `${tamanho} B`;
+  if (tamanho < 1024 * 1024) return `${(tamanho / 1024).toFixed(1).replace('.', ',')} KB`;
+  return `${(tamanho / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
+}
+
+function rotuloOrigemPontoVendas(origem) {
+  return ({ manual: 'Manual', automatico_diario: 'Automático', pre_restauracao: 'Antes de restaurar', pre_reset: 'Antes de resetar' })[origem] || 'Segurança';
+}
+
+async function abrirPontosRestauracaoVendas() {
+  const conta = state.contaVendasAtiva;
+  if (!conta?.id) return;
+  mostrarProcessandoDadosVendas('Pontos de restauração', 'Carregando o histórico desta conta.');
+  try {
+    const resultado = await requisicaoDadosContaVendas(`/api/vendas/pontos-restauracao?contaId=${encodeURIComponent(conta.id)}`);
+    const proprietario = resultado.papel === 'proprietario';
+    const linhas = (resultado.pontos || []).map((ponto) => `<article class="restore-point-item"><div><b>${escapeHtml(ponto.nome || rotuloOrigemPontoVendas(ponto.origem))}</b><span>${escapeHtml(new Date(ponto.criado_em).toLocaleString('pt-BR'))} · ${formatarTamanhoBackupVendas(ponto.tamanho_bytes)}</span><small>${escapeHtml(rotuloOrigemPontoVendas(ponto.origem))}</small></div>${proprietario ? `<div class="restore-point-actions"><button class="secondary" type="button" onclick="confirmarPontoRestauracaoVendas('${ponto.id}')">Restaurar</button><button class="ghost" type="button" onclick="confirmarExclusaoPontoVendas('${ponto.id}')" aria-label="Excluir ponto">${svgIconEstavel('user-x')}</button></div>` : ''}</article>`).join('');
+    sheet(`<div class="sheet-header"><div><h2>Pontos de restauração</h2><p class="muted small">Conta: ${escapeHtml(conta.nome || 'Conta ativa')}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="restore-points-toolbar"><p>O sistema mantém pontos automáticos quando existem alterações. Você também pode criar um ponto agora.</p><button class="primary" type="button" onclick="criarPontoRestauracaoVendas()">${svgIcon('plus')} Criar ponto agora</button></div><div class="restore-points-list">${linhas || '<div class="empty">Nenhum ponto criado até o momento.</div>'}</div>`, 'sheet-backdrop-centered restore-points-backdrop');
+  } catch (error) {
+    fecharSheet();
+    abrirAvisoSobreSheetVendas('Não foi possível carregar os pontos', traduzErro(error));
+  }
+}
+
+async function criarPontoRestauracaoVendas() {
+  const contaId = state.contaVendasAtiva?.id;
+  if (!contaId) return;
+  mostrarProcessandoDadosVendas('Criando ponto', 'Salvando o estado atual desta conta.');
+  try {
+    await requisicaoDadosContaVendas('/api/vendas/pontos-restauracao', {
+      method: 'POST', body: JSON.stringify({ acao: 'criar', contaId, nome: 'Ponto manual' }),
+    });
+    toast('Ponto de restauração criado.');
+    await abrirPontosRestauracaoVendas();
+  } catch (error) {
+    fecharSheet();
+    abrirAvisoSobreSheetVendas('Não foi possível criar o ponto', traduzErro(error));
+  }
+}
+
+function confirmarPontoRestauracaoVendas(pontoId) {
+  sheet(`<div class="sheet-header"><div><h2>Restaurar este ponto?</h2><p class="muted small">Somente a conta ativa será alterada.</p></div><button class="close" onclick="abrirPontosRestauracaoVendas()">×</button></div><div class="backup-restore-preview"><p>Os dados atuais serão substituídos. Um novo ponto de segurança será criado antes da restauração.</p><label for="confirmacaoPontoRestauracaoVendas">Digite <b>RESTAURAR</b> para confirmar:</label><input id="confirmacaoPontoRestauracaoVendas" autocomplete="off" autocapitalize="characters" spellcheck="false"><div class="actions"><button class="secondary" type="button" onclick="abrirPontosRestauracaoVendas()">Voltar</button><button class="danger" type="button" onclick="restaurarPontoVendas('${pontoId}')">Restaurar</button></div></div>`, 'sheet-backdrop-centered backup-restore-backdrop');
+}
+
+async function restaurarPontoVendas(pontoId) {
+  if (valor('confirmacaoPontoRestauracaoVendas').trim().toUpperCase() !== 'RESTAURAR') {
+    abrirAvisoSobreSheetVendas('Confirmação necessária', 'Digite RESTAURAR para continuar.', 'confirmacaoPontoRestauracaoVendas');
+    return;
+  }
+  const contaId = state.contaVendasAtiva?.id;
+  mostrarProcessandoDadosVendas('Restaurando ponto', 'Mantenha esta tela aberta durante a recuperação dos dados.');
+  try {
+    await requisicaoDadosContaVendas('/api/vendas/pontos-restauracao', {
+      method: 'POST', body: JSON.stringify({ acao: 'restaurar', contaId, pontoId, confirmacao: 'RESTAURAR' }),
+    });
+    await carregarDadosBackend(true, false, true);
+    fecharSheet();
+    render();
+    toast('Ponto restaurado. A conta já foi atualizada.');
+  } catch (error) {
+    fecharSheet();
+    abrirAvisoSobreSheetVendas('Não foi possível restaurar o ponto', traduzErro(error));
+  }
+}
+
+function confirmarExclusaoPontoVendas(pontoId) {
+  sheet(`<div class="sheet-header"><div><h2>Excluir ponto?</h2><p class="muted small">Os dados atuais da conta não serão alterados.</p></div><button class="close" onclick="abrirPontosRestauracaoVendas()">×</button></div><p>Este ponto de restauração será removido definitivamente.</p><div class="actions"><button class="secondary" type="button" onclick="abrirPontosRestauracaoVendas()">Cancelar</button><button class="danger" type="button" onclick="excluirPontoRestauracaoVendas('${pontoId}')">Excluir ponto</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function excluirPontoRestauracaoVendas(pontoId) {
+  const contaId = state.contaVendasAtiva?.id;
+  try {
+    await requisicaoDadosContaVendas(`/api/vendas/pontos-restauracao?contaId=${encodeURIComponent(contaId)}&pontoId=${encodeURIComponent(pontoId)}`, { method: 'DELETE' });
+    toast('Ponto de restauração excluído.');
+    await abrirPontosRestauracaoVendas();
+  } catch (error) {
+    fecharSheet();
+    abrirAvisoSobreSheetVendas('Não foi possível excluir o ponto', traduzErro(error));
+  }
+}
+
 function abrirResetSistemaVendas() {
-  sheet(`<div class="sheet-header"><div><h2>Resetar Vendas Mobile</h2><p class="muted small">Esta ação é permanente.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Antes de apagar, o sistema cria um backup automático e também baixa uma cópia Excel. Digite <b>RESETAR</b> para confirmar.</p><label>Confirmação<input id="confirmacaoResetVendas" autocomplete="off" autocapitalize="characters"></label><div class="grid"><button class="secondary" onclick="fecharSheet()">Cancelar</button><button class="danger" onclick="confirmarResetSistemaVendas()">Resetar definitivamente</button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>Resetar perfil de vendas</h2><p class="muted small">Perfil: ${escapeHtml(state.contaVendasAtiva?.nome || 'Conta ativa')}</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Antes de apagar, o sistema cria um ponto de segurança e também baixa uma cópia. As outras contas deste login não serão alteradas. Digite <b>RESETAR</b> para confirmar.</p><label>Confirmação<input id="confirmacaoResetVendas" autocomplete="off" autocapitalize="characters"></label><div class="grid"><button class="secondary" onclick="fecharSheet()">Cancelar</button><button class="danger" onclick="confirmarResetSistemaVendas()">Resetar perfil ativo</button></div>`, 'sheet-backdrop-centered');
 }
 
 async function confirmarResetSistemaVendas() {
   if (valor('confirmacaoResetVendas').trim().toUpperCase() !== 'RESETAR') { toast('Digite RESETAR para confirmar.'); return; }
   let sincronizacaoPreferenciasSuspensa = false;
   try {
-    await exportarBackupVendasExcel();
+    const backupGerado = await baixarBackupContaVendas();
+    if (!backupGerado) return;
     sincronizacaoPreferenciasSuspensa = await suspenderSincronizacaoPreferenciasVendas();
     await window.VendasDb.resetarSistemaVendas();
     await limparTodosCachesVendasUsuario();
@@ -8464,6 +8710,16 @@ window.excluirPacoteProdutos = excluirPacoteProdutos;
 window.confirmarExclusaoPacoteProdutos = confirmarExclusaoPacoteProdutos;
 window.exportarProdutosExcel = exportarProdutosExcel;
 window.exportarBackupVendasExcel = exportarBackupVendasExcel;
+window.baixarBackupContaVendas = baixarBackupContaVendas;
+window.selecionarBackupContaVendas = selecionarBackupContaVendas;
+window.atualizarConfirmacaoRestaurarBackupVendas = atualizarConfirmacaoRestaurarBackupVendas;
+window.confirmarRestauracaoBackupVendas = confirmarRestauracaoBackupVendas;
+window.abrirPontosRestauracaoVendas = abrirPontosRestauracaoVendas;
+window.criarPontoRestauracaoVendas = criarPontoRestauracaoVendas;
+window.confirmarPontoRestauracaoVendas = confirmarPontoRestauracaoVendas;
+window.restaurarPontoVendas = restaurarPontoVendas;
+window.confirmarExclusaoPontoVendas = confirmarExclusaoPontoVendas;
+window.excluirPontoRestauracaoVendas = excluirPontoRestauracaoVendas;
 window.abrirProduto = abrirProduto;
 window.salvarProduto = salvarProduto;
 window.removerProduto = removerProduto;

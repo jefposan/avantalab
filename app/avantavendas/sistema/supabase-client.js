@@ -911,7 +911,12 @@
   }
 
   async function resetarSistemaVendas() {
-    const { data, error } = await requireClient().rpc('resetar_vendas_mobile_rpc', { p_confirmacao: 'RESETAR' });
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
+    const { data, error } = await requireClient().rpc('resetar_conta_vendas_mobile_rpc', {
+      p_conta_id: contaId,
+      p_confirmacao: 'RESETAR',
+    });
     if (error) throw error;
     return data;
   }

@@ -178,7 +178,7 @@ exigir(
 exigir(
   aplicacao.includes("'rotate-ccw': '<path")
     && aplicacao.includes("'user-x': '<path")
-    && aplicacao.includes("settings-reset-card\"><h3>${svgIconEstavel('rotate-ccw')} Resetar sistema")
+    && aplicacao.includes("settings-reset-card\"><h3>${svgIconEstavel('rotate-ccw')} Resetar perfil de vendas")
     && aplicacao.includes("settings-delete-account-card\"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas")
     && aplicacao.includes('Todos os dados da sua conta no AvantaVendas serão excluídos permanentemente.')
     && aplicacao.includes('os dados excluídos não poderão ser recuperados.')
