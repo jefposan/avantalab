@@ -5,7 +5,8 @@ import { test } from 'node:test';
 const ler = (arquivo) => readFileSync(new URL(arquivo, import.meta.url), 'utf8');
 const migracaoInicial = ler('../../supabase/migrations/20260813123000_backup_restauracao_contas_vendas.sql');
 const migracaoCompleta = ler('../../supabase/migrations/20260813183000_backup_completo_conta_vendas.sql');
-const migracao = `${migracaoInicial}\n${migracaoCompleta}`;
+const migracaoVinculoConta = ler('../../supabase/migrations/20260813220000_vinculo_catalogo_por_conta_vendas.sql');
+const migracao = `${migracaoInicial}\n${migracaoCompleta}\n${migracaoVinculoConta}`;
 const aplicacao = ler('../../app/avantavendas/sistema/app.js');
 const cliente = ler('../../app/avantavendas/sistema/supabase-client.js');
 const apiBackup = ler('../../app/api/vendas/backup/route.ts');
@@ -37,6 +38,23 @@ test('catálogo e recursos ficam isolados pela conta ativa', () => {
   assert.match(cliente, /atualizar_recurso_vinculo_comercial_vendas_mobile_rpc/);
   assert.match(cliente, /p_conta_id: contaId, p_empresa_id: empresaId/);
   assert.match(cliente, /from\('vendas_mobile_contas_preferencias'\)/);
+});
+
+test('empresa financeira e fornecedor do catálogo permanecem separados', () => {
+  assert.match(migracaoVinculoConta, /vendas_mobile_contas_vinculos_comerciais/);
+  assert.match(migracaoVinculoConta, /join public\.vendas_mobile_catalogos catalogo on catalogo\.id = p\.catalogo_empresa_id/);
+  assert.match(migracaoVinculoConta, /public\.vendas_mobile_vinculo_conta_valido\(v\.conta_id, v\.empresa_id\)/);
+  assert.match(migracaoVinculoConta, /p_conta_id uuid/);
+  assert.match(cliente, /p_conta_id: contaAtivaId\(\) \|\| null/);
+});
+
+test('migração do vínculo protege todos os dados operacionais', () => {
+  assert.match(migracaoVinculoConta, /create temporary table av_vendas_preservacao_migracao/);
+  for (const tabela of ['produtos', 'clientes', 'pedidos', 'pagamentos']) {
+    assert.match(migracaoVinculoConta, new RegExp(`select count\\(\\*\\) from public\\.vendas_mobile_${tabela}`));
+  }
+  assert.match(migracaoVinculoConta, /Protecao de dados: a migracao alterou registros operacionais e foi cancelada/);
+  assert.match(migracaoVinculoConta, /Protecao de catalogo: uma conta com produtos recebidos ficou sem vinculo/);
 });
 
 test('restauração completa não contorna revogação feita pela empresa', () => {

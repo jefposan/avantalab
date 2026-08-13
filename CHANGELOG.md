@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.3.33-av76 - 2026-08-13
+
+- AvantaVendas: separa definitivamente a empresa financeira do perfil e a
+  empresa fornecedora de Catálogo, Notícias e Divulgação.
+- AvantaVendas: migra os vínculos existentes por conta usando primeiro os
+  produtos já recebidos, sem excluir ou recriar produtos, pedidos ou clientes.
+- AvantaVendas: novas solicitações ficam vinculadas ao perfil de vendas ativo;
+  participantes da mesma conta recebem o conteúdo autorizado para ela.
+
 ## 1.7.3.33 - 2026-08-13
 
 - AvantaProjetos usa a área de transferência nativa do Chrome com chamada

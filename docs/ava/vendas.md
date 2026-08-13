@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.33 -->
+<!-- avantavendas-asset-revision: 76 -->
+
+> Revisão 1.7.3.33-av76: o vínculo de Catálogo, Notícias e Divulgação passa a
+> pertencer ao perfil de vendas ativo e fica separado da empresa financeira da
+> conta. Os vínculos anteriores são migrados a partir dos produtos já recebidos,
+> sem remover dados. Novas solicitações são associadas ao perfil selecionado.
 
 > Revisão 1.7.3.33: ajuste da área de transferência do AvantaProjetos não
 > altera o funcionamento do AvantaVendas.
@@ -31,7 +37,6 @@
 
 > Revisão 1.7.3.24: confirmação da cópia de link no AvantaProjetos não altera
 > o funcionamento do AvantaVendas.
-<!-- avantavendas-asset-revision: 75 -->
 
 > Revisão 1.7.3.23-av75: backups e pontos de restauração preservam o estado
 > completo do perfil de vendas: identificação e empresa conectada, usuários e

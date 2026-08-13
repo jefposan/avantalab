@@ -257,6 +257,7 @@
       p_codigo_empresa: codigo,
       p_nome: nome,
       p_telefone: telefone || null,
+      p_conta_id: contaAtivaId() || null,
     });
     if (error) throw error;
     return data;
