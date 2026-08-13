@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.34 -->
-<!-- avantavendas-asset-revision: 77 -->
+<!-- avantavendas-asset-revision: 78 -->
+
+> Revisão 1.7.3.34-av78: em **Configurações > Conta de vendas**, proprietário
+> ou administrador pode definir o **Nome nos comprovantes** daquele perfil. O
+> nome aparece em comprovantes de pedidos e pagamentos; se ficar vazio, o
+> sistema usa o nome do perfil de vendas ativo.
 
 > Revisão 1.7.3.34-av77: **Dados do usuário** mostra a empresa de conteúdo do
 > perfil ativo. Notícias, Divulgação e Catálogo preservam as opções do vínculo

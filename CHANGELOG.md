@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.3.34-av78 - 2026-08-13
+
+- AvantaVendas: cada perfil passa a ter um **Nome nos comprovantes** próprio em
+  Configurações > Conta de vendas, independente do catálogo e do Gestão.
+- AvantaVendas: comprovantes de pedidos e pagamentos usam o nome configurado;
+  quando vazio, utilizam o nome do perfil de vendas ativo.
+
 ## 1.7.3.34-av77 - 2026-08-13
 
 - AvantaVendas: **Dados do usuário** volta a exibir a empresa fornecedora de

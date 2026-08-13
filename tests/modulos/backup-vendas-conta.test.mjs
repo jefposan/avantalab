@@ -102,3 +102,11 @@ test('Configurações expõem Dados e segurança conforme o papel da conta', () 
   assert.match(aplicacao, /abrirPontosRestauracaoVendas/);
   assert.match(aplicacao, /Uma cópia de segurança é criada automaticamente antes de cada restauração/);
 });
+
+test('nome dos comprovantes pertence às preferências da conta ativa', () => {
+  assert.match(aplicacao, /nomeEmpresaComprovantes: String\(origem\.nomeEmpresaComprovantes/);
+  assert.match(aplicacao, /id="nomeEmpresaComprovantes"/);
+  assert.match(aplicacao, /function salvarNomeEmpresaComprovantes\(\)/);
+  assert.match(aplicacao, /state\.nomeEmpresaComprovantes \|\| state\.contaVendasAtiva\?\.nome/);
+  assert.equal((aplicacao.match(/empresa: nomeEmpresaParaComprovantes\(\)/g) || []).length, 2);
+});
