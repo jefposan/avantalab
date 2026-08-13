@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.3.32 - 2026-08-13
+
+- Corrige a ação do botão **Copiar link** no AvantaProjetos: o clique agora
+  executa efetivamente a função de cópia, em vez de apenas referenciá-la.
+
 ## 1.7.3.31 - 2026-08-13
 
 - AvantaProjetos copia o link pela seleção visível do próprio campo, usando o
