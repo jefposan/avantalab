@@ -542,7 +542,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
       </form>
     </Modal>
 
-    <Modal open={Boolean(shareProject)} onClose={() => setShareProject(null)} title="Compartilhar acesso" description={shareProject ? `Convide uma pessoa para trabalhar somente em “${shareProject.name}”.` : ''}>
+    <Modal open={Boolean(shareProject)} onClose={() => setShareProject(null)} title="Compartilhar acesso" description={shareProject ? `Convide uma pessoa para trabalhar somente em “${shareProject.name}”.` : ''} headerTone="accent">
       <form className={styles.projectForm} onSubmit={createShare}>
         <div className={styles.formGrid}>
           <label>Nome completo<input required maxLength={120} autoFocus value={shareForm.name} onChange={(event) => setShareForm({ ...shareForm, name: event.target.value })} placeholder="Ex.: Maria Silva" /></label>

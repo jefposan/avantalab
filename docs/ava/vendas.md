@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.25 -->
+<!-- ava-version: 1.7.3.26 -->
+
+> Revisão 1.7.3.26: ajuste visual do modal do AvantaProjetos não altera o
+> funcionamento do AvantaVendas.
 
 > Revisão 1.7.3.25: a lista e revogação de acessos do AvantaProjetos não
 > alteram o funcionamento do AvantaVendas.
