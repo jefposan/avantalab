@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.23 -->
+<!-- ava-version: 1.7.3.24 -->
+
+> Revisão 1.7.3.24: confirmação da cópia de link no AvantaProjetos não altera
+> o funcionamento do AvantaVendas.
 <!-- avantavendas-asset-revision: 75 -->
 
 > Revisão 1.7.3.23-av75: backups e pontos de restauração preservam o estado

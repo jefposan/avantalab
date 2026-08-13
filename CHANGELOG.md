@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.3.24 - 2026-08-13
+
+- AvantaProjetos confirma visualmente a cópia de links de compartilhamento no
+  próprio convite, com rótulo e orientação imediatos.
+
 ## 1.7.3.23-av75 - 2026-08-13
 
 - AvantaProjetos passa a permitir compartilhamento seguro por projeto: verifica

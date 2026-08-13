@@ -145,6 +145,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
   const [shareProject, setShareProject] = useState<Project | null>(null);
   const [shareForm, setShareForm] = useState({ name: '', email: '', access: 'editor' });
   const [shareState, setShareState] = useState<{ message: string; link: string; found: boolean } | null>(null);
+  const [shareCopyStatus, setShareCopyStatus] = useState<'idle' | 'copied' | 'manual'>('idle');
   const [sharing, setSharing] = useState(false);
 
   const participantToDelete = collection.people.find((person) => person.id === participantToDeleteId) ?? null;
@@ -265,6 +266,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     if (!shareProject || sharing) return;
     setSharing(true);
     setShareState(null);
+    setShareCopyStatus('idle');
     try {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
@@ -284,8 +286,8 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
 
   const copyShareLink = async () => {
     if (!shareState?.link) return;
-    try { await navigator.clipboard.writeText(shareState.link); onMessage('Link copiado para compartilhar.'); }
-    catch { onMessage('Não foi possível copiar o link automaticamente.'); }
+    try { await navigator.clipboard.writeText(shareState.link); setShareCopyStatus('copied'); onMessage('Link copiado para compartilhar.'); }
+    catch { setShareCopyStatus('manual'); onMessage('Não foi possível copiar o link automaticamente.'); }
   };
 
   const submitProject = (event: React.FormEvent) => {
@@ -334,7 +336,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     {actionProject === project.id && <div className={`${styles.cardMenu} ${list ? styles.listCardMenu : styles.topCardMenu}`}>
       <button type="button" onClick={() => { setActionProject(null); onOpen(project.id); }}>Abrir projeto</button>
       <button type="button" onClick={() => openProjectEditor(project)}>Editar projeto</button>
-      <button type="button" onClick={() => { setShareProject(project); setShareForm({ name: '', email: '', access: 'editor' }); setShareState(null); setActionProject(null); }}>Compartilhar acesso</button>
+      <button type="button" onClick={() => { setShareProject(project); setShareForm({ name: '', email: '', access: 'editor' }); setShareState(null); setShareCopyStatus('idle'); setActionProject(null); }}>Compartilhar acesso</button>
       <button type="button" onClick={() => { duplicate(project); setActionProject(null); }}>Duplicar</button>
       <button type="button" onClick={() => { updateProject(project.id, (item) => ({ ...item, favorite: !item.favorite })); setActionProject(null); }}>{project.favorite ? 'Desfavoritar' : 'Favoritar'}</button>
       <button type="button" onClick={() => { setConfirmProject(project); setActionProject(null); }}>{project.archivedAt ? 'Restaurar' : 'Arquivar'}</button>
@@ -485,7 +487,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
           <label>Acesso<select value={shareForm.access} onChange={(event) => setShareForm({ ...shareForm, access: event.target.value })}><option value="editor">Pode editar o projeto</option><option value="observador">Somente visualizar</option></select></label>
         </div>
         <p className={styles.participantEmpty}>Se a pessoa já tiver conta AvantaLab, o acesso será liberado na hora. Caso contrário, você receberá um link de convite para encaminhar manualmente.</p>
-        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={styles.secondaryButton} onClick={() => void copyShareLink}>Copiar link</button></div>}</section>}
+        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Link copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'copied' && <small className={styles.shareCopyMessage}>O link está na área de transferência e pode ser enviado por WhatsApp, e-mail ou mensagem.</small>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">Não foi possível copiar automaticamente. Selecione o link acima para copiar manualmente.</small>}</section>}
         <div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={() => setShareProject(null)}>Fechar</button><button type="submit" className={styles.primaryButton} disabled={sharing}>{sharing ? 'Verificando…' : 'Verificar e adicionar'}</button></div>
       </form>
     </Modal>

@@ -190,6 +190,8 @@
 .shareResult p { margin: 0; font-size: 13px; line-height: 1.45; }
 .shareResult > div { display: flex; gap: 8px; align-items: center; }
 .shareResult input { min-width: 0; flex: 1; height: 40px; border: 1px solid var(--border); border-radius: 10px; padding: 0 10px; background: var(--surface); color: var(--text); font-size: 12px; }
+.shareResult .shareCopyConfirmed { border-color: color-mix(in srgb, var(--accent) 52%, var(--border)); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: color-mix(in srgb, var(--accent) 80%, var(--text)); }
+.shareCopyMessage { color: color-mix(in srgb, var(--text) 74%, var(--accent)); font-size: 12px; line-height: 1.4; }
 .participantManagerList { display: grid; gap: 6px; }
 .participantManagerList > div { display: flex; min-height: 48px; align-items: center; gap: 9px; border: 1px solid var(--border); border-radius: 11px; padding: 5px 7px; background: var(--surface); }
 .participantManagerList .participantAvatar { display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; border-radius: 50%; color: #fff; font-size: 8px; }

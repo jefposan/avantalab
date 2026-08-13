@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.24: a cópia do link de Projetos confirma o sucesso
+// no próprio convite para deixar claro que está pronto para encaminhar.
 // Revisado na versão 1.7.3.23: Projetos permite compartilhar um único projeto
 // por link, sem conceder acesso à Gestão ou aos demais projetos do perfil.
 // Revisado na versão 1.7.3.23-av75: snapshot completo do AvantaVendas, com
