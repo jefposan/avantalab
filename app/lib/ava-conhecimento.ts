@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.33: Copiar link usa a área de transferência nativa
+// do Chrome com limite de tempo e sem falso sucesso do método legado.
 // Revisado na versão 1.7.3.32: Copiar link executa efetivamente a função de
 // cópia e apresenta o retorno no modal.
 // Revisado na versão 1.7.3.31: copiar link usa a seleção visível e o comando

@@ -89,7 +89,7 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
 });
 
 test('botão de compartilhamento executa a função de cópia', () => {
-  assert.match(inicioProjetos, /const copyShareLink = \(\) => \{/);
-  assert.match(inicioProjetos, /onClick=\{copyShareLink\}/);
+  assert.match(inicioProjetos, /const copyShareLink = async \(\) => \{/);
+  assert.match(inicioProjetos, /onClick=\{\(\) => void copyShareLink\(\)\}/);
   assert.doesNotMatch(inicioProjetos, /onClick=\{\(\) => void copyShareLink\}/);
 });

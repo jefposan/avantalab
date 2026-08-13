@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.32 -->
+<!-- ava-version: 1.7.3.33 -->
+
+> Revisão 1.7.3.33: **Copiar link** usa a área de transferência nativa do
+> Chrome com limite de tempo e não confirma o método legado que podia retornar
+> sucesso sem copiar.
 
 > Revisão 1.7.3.32: corrigida a chamada do botão **Copiar link**, que agora
 > executa a cópia e apresenta o retorno correspondente no próprio modal.
