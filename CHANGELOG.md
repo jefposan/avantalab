@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.7.3.22-av74 - 2026-08-13
+
+- AvantaVendas: **Configurações > Dados e segurança** passa a reunir backup
+  completo da conta ativa, restauração de arquivo e pontos de restauração
+  manuais e automáticos.
+- AvantaVendas: backups, pontos e reset são isolados pelo perfil de vendas.
+  Proprietário e administrador podem criar cópias; somente o proprietário
+  restaura, exclui pontos ou reseta o perfil. Antes de restaurar ou resetar, o
+  sistema cria automaticamente um ponto de segurança.
+- AvantaVendas: o backup baixado usa o pacote `.avantavendas`, com manifesto,
+  dados completos e resumo em Excel. A restauração rejeita arquivos de outra
+  conta e recarrega os dados após a confirmação.
+
 ## 1.7.3.21-av73 - 2026-08-13
 
 - AvantaVendas: a organização da sala de botões passa a usar encaixes fixos e

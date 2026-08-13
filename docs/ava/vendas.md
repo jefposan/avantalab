@@ -1,7 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.21 -->
-<!-- avantavendas-asset-revision: 73 -->
+<!-- ava-version: 1.7.3.22 -->
+<!-- avantavendas-asset-revision: 74 -->
+
+> Revisão 1.7.3.22-av74: em **Configurações > Dados e segurança**, proprietário
+> e administrador podem baixar o backup completo da conta ativa e criar pontos
+> de restauração. Somente o proprietário restaura arquivos ou pontos, exclui
+> pontos e reseta o perfil. Restaurar exige confirmação e cria antes um ponto
+> automático de segurança. O pacote `.avantavendas` não pode ser restaurado em
+> outra conta de vendas.
 
 > Revisão 1.7.3.21-av73: ao ativar o lápis da sala, segure e arraste um card.
 > Os demais deslizam entre posições fixas e a ordem é salva ao soltar. As setas
@@ -1541,8 +1548,11 @@ função existir ali.
   no visualizador ampliado, arrastar horizontalmente ou usar as setas alterna
   entre o arquivo anterior e o próximo da pasta.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
-  estoque, vínculos comerciais, destino financeiro, PWA, backup, reset e
-  exclusão do perfil do Vendas.
+  estoque, vínculos comerciais, destino financeiro, PWA e exclusão do perfil.
+  Em **Dados e segurança**, proprietário e administrador podem fazer o backup
+  completo da conta ativa e criar pontos de restauração; somente o proprietário
+  restaura, exclui pontos ou reseta esse perfil. Um ponto de segurança é criado
+  automaticamente antes de restaurar ou resetar.
 - **Excluir conta do Vendas** exige digitar `EXCLUIR`. A operação remove os
   dados específicos deste aplicativo, inclusive uploads particulares, e o
   acesso às contas compartilhadas. Se a conta também possui outros
