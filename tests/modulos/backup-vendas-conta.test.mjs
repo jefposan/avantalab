@@ -6,7 +6,8 @@ const ler = (arquivo) => readFileSync(new URL(arquivo, import.meta.url), 'utf8')
 const migracaoInicial = ler('../../supabase/migrations/20260813123000_backup_restauracao_contas_vendas.sql');
 const migracaoCompleta = ler('../../supabase/migrations/20260813183000_backup_completo_conta_vendas.sql');
 const migracaoVinculoConta = ler('../../supabase/migrations/20260813220000_vinculo_catalogo_por_conta_vendas.sql');
-const migracao = `${migracaoInicial}\n${migracaoCompleta}\n${migracaoVinculoConta}`;
+const migracaoRecursosVinculo = ler('../../supabase/migrations/20260813224500_corrigir_recursos_vinculo_migrado_vendas.sql');
+const migracao = `${migracaoInicial}\n${migracaoCompleta}\n${migracaoVinculoConta}\n${migracaoRecursosVinculo}`;
 const aplicacao = ler('../../app/avantavendas/sistema/app.js');
 const cliente = ler('../../app/avantavendas/sistema/supabase-client.js');
 const apiBackup = ler('../../app/api/vendas/backup/route.ts');
@@ -55,6 +56,14 @@ test('migração do vínculo protege todos os dados operacionais', () => {
   }
   assert.match(migracaoVinculoConta, /Protecao de dados: a migracao alterou registros operacionais e foi cancelada/);
   assert.match(migracaoVinculoConta, /Protecao de catalogo: uma conta com produtos recebidos ficou sem vinculo/);
+});
+
+test('empresa exibida e recursos migrados usam o vínculo comercial ativo', () => {
+  assert.match(aplicacao, /state\.vinculoComercialAtivo\?\.empresa_nome \|\| state\.acessoVendas\?\.empresa_nome/);
+  assert.match(migracaoRecursosVinculo, /novidades_ativas = legado\.novidades_ativas/);
+  assert.match(migracaoRecursosVinculo, /divulgacao_ativa = legado\.divulgacao_ativa/);
+  assert.match(migracaoRecursosVinculo, /catalogo_ativo = legado\.catalogo_ativo/);
+  assert.match(migracaoRecursosVinculo, /Protecao de dados: a correcao de recursos alterou registros operacionais/);
 });
 
 test('restauração completa não contorna revogação feita pela empresa', () => {

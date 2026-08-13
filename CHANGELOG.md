@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.3.34-av77 - 2026-08-13
+
+- AvantaVendas: **Dados do usuário** volta a exibir a empresa fornecedora de
+  conteúdo vinculada ao perfil ativo, sem confundi-la com o destino financeiro.
+- AvantaVendas: corrige globalmente as preferências de Notícias, Divulgação e
+  Catálogo migradas de uma empresa diferente, sem alterar dados operacionais.
+
 ## 1.7.3.34 - 2026-08-13
 
 - AvantaProjetos compacta o modal de compartilhamento, posiciona **Verificar e

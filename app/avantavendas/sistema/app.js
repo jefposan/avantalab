@@ -4602,7 +4602,7 @@ function renderConfiguracoes() {
   const progresso = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
   const metaAtingida = state.metaMensal > 0 && t.total >= state.metaMensal;
   const telefone = String(state.usuario?.telefone || '');
-  const empresa = String(state.acessoVendas?.empresa_nome || 'Não informada');
+  const empresa = String(state.vinculoComercialAtivo?.empresa_nome || state.acessoVendas?.empresa_nome || 'Não informada');
   const integracao = state.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
   const vinculos = state.vinculosComerciais || [];
   const perfilFinanceiroAtual = (state.perfisFinanceiros || []).find((perfil) => perfil.empresa_id === integracao.empresa_id);

@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.7.3.34 -->
-<!-- avantavendas-asset-revision: 76 -->
+<!-- avantavendas-asset-revision: 77 -->
+
+> Revisão 1.7.3.34-av77: **Dados do usuário** mostra a empresa de conteúdo do
+> perfil ativo. Notícias, Divulgação e Catálogo preservam as opções do vínculo
+> comercial correto após a migração, sem alterar produtos ou lançamentos.
 
 > Revisão 1.7.3.34: compactação do modal de compartilhamento do
 > AvantaProjetos não altera o funcionamento do AvantaVendas.
