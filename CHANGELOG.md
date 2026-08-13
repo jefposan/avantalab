@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.3.21-av73 - 2026-08-13
+
+- AvantaVendas: a organização da sala de botões passa a usar encaixes fixos e
+  tolerância contra oscilações, mantendo o card arrastado estável mesmo em
+  movimentos rápidos ou diagonais.
+- AvantaVendas: o card em movimento preserva o recorte da imagem, os demais
+  cards deslizam suavemente até a nova posição e a ordem é salva somente ao
+  concluir o gesto. Também é possível reorganizar pelos direcionais do teclado.
+
 ## 1.7.3.20-av72 - 2026-08-13
 
 - AvantaVendas: **Localização** no card principal de cliente sem endereço

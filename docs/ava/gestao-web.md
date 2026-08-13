@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.20 -->
+<!-- ava-version: 1.7.3.21 -->
+
+> Revisão 1.7.3.21: reorganização da sala exclusiva do AvantaVendas; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.7.3.20: ajuste visual exclusivo do card de cliente no
 > AvantaVendas; sem impacto operacional na Gestão Web.

@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.21-av73: a sala usa encaixes fixos no arraste,
+// preserva o recorte do card e também permite reorganização pelo teclado.
 // Revisado na versão 1.7.3.20-av72: Localização no card principal tem contraste
 // reforçado e CEP, Buscar e Apagar dividem a mesma linha ao editar.
 // Revisado na versão 1.7.3.19-av71: o endereço do cliente pode ser apagado
@@ -183,7 +185,7 @@ SALA E NAVEGAÇÃO
   entre eles.
 - Na entrada do Vendas Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto.
 - A sala de botões é a tela inicial obrigatória de cada abertura, inclusive quando os dados são restaurados pelo cache; pesquisas de Clientes, Produtos, Pedidos e Pagamentos começam limpas: Dashboard, Clientes, Produtos, Pedidos, Pagamentos, Agenda, Novidades, Divulgação e Informações. Durante carregamentos internos, um loading permanece no local dos botões e o conjunto só aparece quando todas as imagens estiverem prontas. Ao tocar, cada um dos nove cards principais reduz uniformemente em direção ao centro antes de abrir a área escolhida, sem deslocar para baixo.
-- O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards. Enquanto a organização está ativa, a instrução "Clique no botão e arraste para a nova posição" aparece ao lado do lápis.
+- O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards por arraste ou pelas setas do teclado. Enquanto a organização está ativa, a instrução "Segure e arraste. As setas também movem." aparece ao lado do lápis.
 - O topo e o menu inferior permanecem ancorados às bordas da tela; apenas o conteúdo central rola. Eles não se deslocam ao trocar de página, entrar em Configurações ou abrir e fechar um modal.
 - O menu inferior permanece visível acima da sala, Dashboard e demais telas comuns. Modais e confirmações aparecem acima dele enquanto estiverem abertos.
 - Depois de carregada, a sala mantém seus cards estáveis. As imagens dos nove botões permanecem pré-carregadas para o retorno imediato ao Início; tocar novamente em Início não recarrega a grade, e a organização reposiciona os próprios cards sem recarregar as imagens.

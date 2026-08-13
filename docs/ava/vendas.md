@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.20 -->
-<!-- avantavendas-asset-revision: 72 -->
+<!-- ava-version: 1.7.3.21 -->
+<!-- avantavendas-asset-revision: 73 -->
+
+> Revisão 1.7.3.21-av73: ao ativar o lápis da sala, segure e arraste um card.
+> Os demais deslizam entre posições fixas e a ordem é salva ao soltar. As setas
+> do teclado também movem o card selecionado. A instrução exibida é **Segure e
+> arraste. As setas também movem.**
 
 > Revisão 1.7.3.20-av72: no card principal do cliente sem endereço, o botão
 > **Localização** tem contraste reforçado no tema claro. Ao editar, CEP,
@@ -1396,9 +1401,9 @@ função existir ali.
   trocar de página ou abrir e fechar um modal.
 - O menu inferior tem Configurações, dois atalhos configuráveis, **+ Novo
   lançamento** e Início. Os atalhos são configurados em **Configurações >
-  Organizar atalhos**; o lápis da sala muda a ordem dos cards. Enquanto a
-  organização está ativa, a instrução **Clique no botão e arraste para a nova
-  posição** aparece ao lado do lápis.
+  Organizar atalhos**; o lápis da sala muda a ordem dos cards por arraste ou
+  pelas setas do teclado. Enquanto a organização está ativa, a instrução
+  **Segure e arraste. As setas também movem.** aparece ao lado do lápis.
 - Após autenticar, o usuário entra diretamente na sala do AvantaVendas. A conta
   operacional inicial é preparada silenciosamente, sem escolha de sistema e sem
   criar ou selecionar perfil financeiro da Gestão.
