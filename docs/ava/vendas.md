@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.22 -->
+<!-- ava-version: 1.7.3.23 -->
+
+> Revisão 1.7.3.23: compartilhamento do AvantaProjetos não altera o
+> funcionamento do AvantaVendas.
 <!-- avantavendas-asset-revision: 74 -->
 
 > Revisão 1.7.3.22-av74: em **Configurações > Dados e segurança**, proprietário

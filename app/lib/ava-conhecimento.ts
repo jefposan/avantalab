@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.23: Projetos permite compartilhar um único projeto
+// por link, sem conceder acesso à Gestão ou aos demais projetos do perfil.
 // Revisado na versão 1.7.3.22-av74: backup, restauração, pontos e reset do
 // AvantaVendas operam exclusivamente sobre a conta de vendas ativa.
 // Revisado na versão 1.7.3.21-av73: a sala usa encaixes fixos no arraste,

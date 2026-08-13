@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.23 - 2026-08-13
+
+- AvantaProjetos passa a permitir compartilhamento seguro por projeto: verifica
+  contas existentes, gera convite copiável para novos acessos e permite revogar
+  o vínculo. Convidados veem e editam somente projetos compartilhados.
+
 ## 1.7.3.22-av74 - 2026-08-13
 
 - AvantaVendas: **Configurações > Dados e segurança** passa a reunir backup

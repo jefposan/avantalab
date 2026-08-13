@@ -20,6 +20,7 @@ type ModuleAccess = {
   podeEditar: boolean;
   podeGerenciarModulo: boolean;
   expiraEm: string | null;
+  compartilhado?: boolean;
 };
 
 function ProjectApp({ companyId, access, onAccessChange }: { companyId: string; access: ModuleAccess; onAccessChange: (next: ModuleAccess) => void }) {
@@ -89,7 +90,7 @@ function ProjectApp({ companyId, access, onAccessChange }: { companyId: string; 
       </div>
     </header>
     <div className={styles.moduleContent}>
-      {activeProject ? <ProjectWorkspace readOnly={!access.podeEditar} project={activeProject} people={collection.people} saveState={saveState} onBack={voltarParaProjetos} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={canUndo} canRedo={canRedo} onMessage={setMessage} mapaEmFoco={mapaEmFoco} onMapaEmFocoChange={setMapaEmFoco} /> : <ProjectHome readOnly={!access.podeEditar} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} />}
+      {activeProject ? <ProjectWorkspace readOnly={!access.podeEditar} project={activeProject} people={collection.people} saveState={saveState} onBack={voltarParaProjetos} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={canUndo} canRedo={canRedo} onMessage={setMessage} mapaEmFoco={mapaEmFoco} onMapaEmFocoChange={setMapaEmFoco} /> : <ProjectHome readOnly={!access.podeEditar || access.compartilhado === true} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} />}
     </div>
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes do AvantaProjetos" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">

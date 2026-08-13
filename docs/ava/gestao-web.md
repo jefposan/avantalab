@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.22 -->
+<!-- ava-version: 1.7.3.23 -->
+
+> Revisão 1.7.3.23: em Projetos, use **Compartilhar acesso** no menu de um
+> projeto. O sistema verifica o e-mail, libera contas existentes ou gera um
+> link copiável; o gestor pode revogar o acesso a qualquer momento.
 
 > Revisão 1.7.3.22: backup e pontos de restauração por perfil são exclusivos
 > do AvantaVendas; sem impacto operacional na Gestão Web.
