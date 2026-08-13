@@ -194,12 +194,14 @@
 .participantAddButton { flex: 0 0 auto; min-height: 40px; padding-block: 7px; }
 .participantRegistration { margin: 5px 0 12px; border-radius: 12px; padding: 13px; background: var(--surface-soft); }
 .participantManager { display: grid; gap: 12px; }
-.shareForm { gap: 12px; }
-.shareFormGrid { gap: 9px 12px; }
-.shareFormGrid label { gap: 4px; }
-.shareAccessRow { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px; }
+.shareForm { gap: 10px; }
+.shareFormGrid { gap: 7px 12px; }
+.shareFormGrid label { gap: 3px; line-height: 1.2; }
+.shareFormGrid input, .shareFormGrid select { height: 34px; min-height: 34px; border-radius: 10px; padding: 5px 10px; font-size: 12px; }
+.shareAccessRow { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; }
 .shareAccessRow label { min-width: 0; }
-.shareVerifyButton { min-height: 44px; padding-inline: 14px; white-space: nowrap; }
+.shareVerifyButton { position: relative; min-height: 34px; border-radius: 10px; padding: 6px 12px; font-size: 12px; line-height: 1.15; white-space: nowrap; }
+.shareVerifyButton::after { position: absolute; inset: -5px 0; content: ''; }
 .shareHelp { padding: 9px 11px; }
 .shareResult { display: grid; gap: 6px; border-radius: 11px; padding: 10px 12px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--text); }
 .shareResult p { margin: 0; font-size: 11px; line-height: 1.4; }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.36 - 2026-08-13
+
+- AvantaProjetos reduz em aproximadamente 25% a altura visual dos campos e do
+  botão de verificação em **Compartilhar acesso**, preservando o alvo interativo
+  ampliado e o alinhamento entre seletor e ação.
+
 ## 1.7.3.35 - 2026-08-13
 
 - AvantaProjetos bloqueia um segundo cadastro do mesmo e-mail no mesmo projeto.

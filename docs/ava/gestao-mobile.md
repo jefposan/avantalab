@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.35 -->
+<!-- ava-version: 1.7.3.36 -->
+
+> Revisão 1.7.3.36: compactação visual do compartilhamento exclusiva do
+> AvantaProjetos Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.7.3.35: bloqueio de acessos duplicados é exclusivo do
 > AvantaProjetos Web; sem alteração operacional na Gestão Mobile.

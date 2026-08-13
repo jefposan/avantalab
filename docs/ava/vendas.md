@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.35 -->
+<!-- ava-version: 1.7.3.36 -->
 <!-- avantavendas-asset-revision: 77 -->
+
+> Revisão 1.7.3.36: compactação visual do compartilhamento do AvantaProjetos
+> não altera o funcionamento do AvantaVendas.
 
 > Revisão 1.7.3.35: bloqueio de acessos duplicados do AvantaProjetos não
 > altera o funcionamento do AvantaVendas.

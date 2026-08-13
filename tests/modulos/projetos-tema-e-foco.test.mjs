@@ -102,6 +102,9 @@ test('modal de compartilhamento é compacto e concentra a ação junto ao acesso
   assert.doesNotMatch(inicioProjetos, /Conteúdo copiado e confirmado\. O link está pronto/);
   assert.doesNotMatch(inicioProjetos, />Fechar<\/button>/);
   assert.match(estilos, /\.shareAccessRow \{ grid-column: 1 \/ -1; display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);
+  assert.match(estilos, /\.shareFormGrid input, \.shareFormGrid select \{[^}]*height: 34px;[^}]*min-height: 34px;/);
+  assert.match(estilos, /\.shareVerifyButton \{[^}]*min-height: 34px;/);
+  assert.match(estilos, /\.shareVerifyButton::after \{[^}]*inset: -5px 0;/);
   assert.match(estilos, /\.sharePeopleList > div \{[^}]*min-height: 46px;/);
 });
 

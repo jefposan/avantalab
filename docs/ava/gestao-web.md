@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.35 -->
+<!-- ava-version: 1.7.3.36 -->
+
+> Revisão 1.7.3.36: os campos e a ação de **Compartilhar acesso** ficaram cerca
+> de 25% mais baixos visualmente, preservando alinhamento e área interativa.
 
 > Revisão 1.7.3.35: **Compartilhar acesso** identifica o projeto da lista e
 > bloqueia novo cadastro do mesmo e-mail naquele projeto. Se o vínculo já
