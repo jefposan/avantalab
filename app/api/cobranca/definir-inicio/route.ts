@@ -47,9 +47,12 @@ export async function POST(request: Request) {
 
   // 3) Só perfis EMPRESA entram nesse fluxo (pessoal tem núcleo grátis).
   const { data: emp } = await admin
-    .from('empresas').select('tipo_perfil').eq('id', empresaId).maybeSingle();
+    .from('empresas').select('tipo_perfil, assinatura_origem_empresa_id').eq('id', empresaId).maybeSingle();
   const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
   if (tipoPerfil !== 'empresa') return NextResponse.json({ ok: true, ignorado: true });
+  if (emp?.assinatura_origem_empresa_id) {
+    return NextResponse.json({ ok: true, ignorado: true, compartilhado: true });
+  }
 
   // 4) Assinar agora é apenas uma intenção de navegação, nunca um bloqueio
   // persistido. A assinatura passa a existir somente após a contratação.

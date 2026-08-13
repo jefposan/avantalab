@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.16 -->
+<!-- ava-version: 1.7.3.18 -->
+
+> Revisão 1.7.3.18: em **Meus perfis > Criar novo perfil**, quem possui vaga
+> em uma assinatura Business ou Business Pro cria o perfil usando o mesmo plano
+> imediatamente, sem novo teste ou contratação. A tela informa as vagas que
+> restarão; ao atingir o limite, orienta a contratação ou upgrade. Um perfil
+> que recebeu uma vaga não pode criar outra pela mesma assinatura.
 
 > Revisão 1.7.3.16: o **Balanço Geral** é somente de consulta. Para registrar
 > uma receita, abra o mês ou use **Registrar entradas** no Dashboard; dia,

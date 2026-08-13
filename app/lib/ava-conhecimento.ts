@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.18: perfis criados dentro da quota Business ou
+// Business Pro herdam a assinatura da conta, sem novo teste ou contratação;
+// somente o perfil assinante pode usar as vagas para criar outros perfis.
 // Revisado na versão 1.7.3.16: o Balanço Geral é somente de consulta; receitas
 // são entradas individuais com dia, origem e valor, e referências históricas
 // sem entrada são preservadas como Receita registrada anteriormente.
@@ -44,6 +47,7 @@ NAVEGAÇÃO E PERFIS
 - Menu reúne perfil, usuários, visual, categorias/despesas, despesas fixas, backup/restauração, módulos e configurações do perfil. No Web, ele abre como gaveta lateral esquerda; Visual e Configurações expandem seus próprios subbotões.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
 - Um login pode ter vários perfis Empresa ou Pessoal. Em Meus perfis, o usuário pode selecionar/destacar um perfil; a troca efetiva usa os controles próprios de troca de perfil.
+- Em Meus perfis > Criar novo perfil, uma vaga disponível no Business ou Business Pro usa imediatamente a assinatura já contratada; não inicie novo teste nem nova assinatura. A tela informa as vagas restantes. O perfil que recebeu uma vaga não cria outros perfis pela mesma quota: nele, a criação oferece teste ou contratação. Quando não houver vaga ou plano elegível, ela também oferece teste ou contratação.
 - No perfil Pessoal, Caixinha inicia visível. No perfil Empresa, ela se chama Reserva financeira, inicia oculta e pode ser exibida em Organizar blocos; os aportes continuam registrados como despesa.
 - Gestor Master e Administrador possuem ações administrativas; não prometa acesso a um recurso sem confirmar a permissão.
 - Em Menu > Configurações > Backup e restauração, Gestor Master, Administrador e Operador Completo consultam e criam Pontos de restauração. Somente Gestor Master restaura ou exclui; restaurar exige digitar RESTAURAR e cria antes um ponto de segurança. O Excel continua somente como backup baixável.

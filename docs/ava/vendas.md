@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.16 -->
+<!-- ava-version: 1.7.3.18 -->
 <!-- avantavendas-asset-revision: 70 -->
+
+> Revisão 1.7.3.18: compartilhamento da assinatura por quota é uma regra da
+> Gestão; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.7.3.16: normalização das receitas históricas e uso exclusivo do
 > Balanço Geral da Gestão Web; sem alteração operacional no AvantaVendas.

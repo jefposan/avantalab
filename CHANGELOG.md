@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.3.18 - 2026-08-12
+
+- Gestão Web e Mobile: o perfil que contratou Business ou Business Pro informa
+  as vagas disponíveis e pode criar perfis que usam o mesmo plano
+  imediatamente, sem teste nem nova assinatura. Um perfil que recebeu uma vaga
+  não cria uma nova cadeia: nele, a criação segue o fluxo de teste ou assinatura.
+- Cobrança: a assinatura de origem é compartilhada com os perfis criados na
+  franquia. Assim, qualquer alteração de vigência é refletida também no novo
+  perfil e na equipe, sem duplicar cobrança ou período de teste.
+- Gestão Web: a criação de perfil informa quantas vagas do plano restarão. Sem
+  vagas ou sem assinatura elegível, mantém as opções de teste e contratação.
+
 ## 1.7.3.16 - 2026-08-12
 
 - Gestão Web e Mobile: o Balanço Geral permanece somente para consulta. As

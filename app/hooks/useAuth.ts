@@ -48,6 +48,7 @@ type OpcoesCriacaoPerfilInicial = {
   inicioEmpresaModo?: 'trial' | 'assinar';
   limparMetadataCadastro?: boolean;
   somentePrimeiroCadastro?: boolean;
+  empresaOrigemId?: string;
 };
 
 function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | undefined) {
@@ -1063,7 +1064,7 @@ export function useAuth(deps: UseAuthDeps) {
     try {
       resultado = opcoes?.somentePrimeiroCadastro
         ? await criarPrimeiroPerfilCadastro(nomeLimpo, tipoPerfil)
-        : await criarEmpresaInicial(nomeLimpo, tipoPerfil);
+        : await criarEmpresaInicial(nomeLimpo, tipoPerfil, false, opcoes?.empresaOrigemId);
       // A conta exclusiva de revisão também funciona em projetos Supabase
       // antigos onde a RPC idempotente ainda não foi aplicada.
       if (resultado.erro && opcoes?.somentePrimeiroCadastro && ehContaRevisaoAppApple((await supabase.auth.getUser()).data.user?.email)) {

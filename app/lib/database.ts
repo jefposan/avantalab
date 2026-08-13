@@ -1610,14 +1610,14 @@ export async function excluirUsuarioEmpresa(acessoId: string) {
     },
   };
 }
-export async function criarEmpresaInicial(nomeEmpresa: string, tipoPerfil: 'empresa' | 'pessoal' = 'empresa', somentePrimeiro = false) {
+export async function criarEmpresaInicial(nomeEmpresa: string, tipoPerfil: 'empresa' | 'pessoal' = 'empresa', somentePrimeiro = false, empresaOrigemId?: string) {
   const { data: sessao } = await supabase.auth.getSession();
   const token = sessao.session?.access_token;
   if (!token) return { erro: true, mensagem: 'Sessão não encontrada. Faça login novamente.', data: null, criado: false };
   const resposta = await fetch('/api/criar-perfil', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ nome: nomeEmpresa, tipoPerfil, somentePrimeiro }),
+    body: JSON.stringify({ nome: nomeEmpresa, tipoPerfil, somentePrimeiro, empresaOrigemId }),
   });
   const resultado = await resposta.json().catch(() => ({}));
   return {

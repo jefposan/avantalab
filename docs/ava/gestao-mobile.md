@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.16 -->
+<!-- ava-version: 1.7.3.18 -->
+
+> Revisão 1.7.3.18: perfis criados dentro da vaga disponível no Business ou
+> Business Pro usam a assinatura já existente, sem novo teste ou contratação.
+> A vigência do plano principal também vale para esses perfis e suas equipes;
+> esses perfis compartilhados não criam novos perfis pela quota recebida.
 
 > Revisão 1.7.3.16: o Balanço Geral é exclusivo da Gestão Web. As receitas da
 > Gestão Mobile permanecem entradas individuais, com dia, origem e valor; a

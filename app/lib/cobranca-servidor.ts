@@ -19,11 +19,72 @@ import {
   type TipoPerfil,
 } from './cobranca';
 import { EMAIL_CONTA_REVISAO_APPLE } from './conta-revisao';
+import { normalizarPlanoComercial, PLANOS_COMERCIAIS, type PlanoComercial } from './planos-comerciais';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 function servico() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
   return createClient(url, key);
+}
+
+function assinaturaComercialVigente(assinatura: { status: string | null; trial_fim: string | null; valido_ate: string | null }, agora = new Date()) {
+  return assinatura.status === 'ativa'
+    || (assinatura.status === 'trial' && !!assinatura.trial_fim && new Date(assinatura.trial_fim) > agora)
+    || ((assinatura.status === 'cancelada' || assinatura.status === 'inadimplente') && !!assinatura.valido_ate && new Date(assinatura.valido_ate) > agora);
+}
+
+export type DireitoDePerfis = {
+  plano: PlanoComercial | 'free';
+  usados: number;
+  limite: number;
+  origemEmpresaId: string | null;
+};
+
+// A franquia pertence exclusivamente ao perfil que contratou o plano. Um
+// perfil que recebeu esse acesso por quota pode usar o sistema, mas não cria
+// uma nova cadeia de perfis usando a mesma assinatura.
+export async function resolverDireitoDePerfisDoPerfil(
+  db: SupabaseClient,
+  userId: string,
+  empresaOrigemId: string | null | undefined,
+): Promise<DireitoDePerfis> {
+  if (!empresaOrigemId) return { plano: 'free', usados: 0, limite: PLANOS_COMERCIAIS.free.limites.perfis, origemEmpresaId: null };
+  const { data: vinculo } = await db
+    .from('usuarios_empresa')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('empresa_id', empresaOrigemId)
+    .eq('status', 'ativo');
+  if (!vinculo) return { plano: 'free', usados: 0, limite: PLANOS_COMERCIAIS.free.limites.perfis, origemEmpresaId: null };
+
+  const [{ data: empresa }, { data: assinatura }] = await Promise.all([
+    db.from('empresas').select('id, tipo_perfil, assinatura_origem_empresa_id').eq('id', empresaOrigemId).maybeSingle(),
+    db.from('assinaturas').select('empresa_id, plano, status, trial_fim, valido_ate').eq('empresa_id', empresaOrigemId).maybeSingle(),
+  ]);
+  // O perfil compartilhado nunca se torna nova origem, mesmo que o mesmo
+  // login também possua o perfil assinante em outra aba.
+  if (!empresa || empresa.assinatura_origem_empresa_id || !assinatura) {
+    return { plano: 'free', usados: 0, limite: PLANOS_COMERCIAIS.free.limites.perfis, origemEmpresaId: null };
+  }
+  const agora = new Date();
+  if (!assinaturaComercialVigente(assinatura, agora)) {
+    return { plano: 'free', usados: 0, limite: PLANOS_COMERCIAIS.free.limites.perfis, origemEmpresaId: null };
+  }
+  const planoAssinatura = normalizarPlanoComercial(assinatura.plano);
+  const plano: PlanoComercial = empresa.tipo_perfil === 'empresa'
+    ? (planoAssinatura === 'business_pro' ? 'business_pro' : 'business')
+    : planoAssinatura === 'pessoal_premium' ? 'pessoal_premium' : 'free';
+  const { count } = await db
+    .from('empresas')
+    .select('id', { count: 'exact', head: true })
+    .or(`id.eq.${empresaOrigemId},assinatura_origem_empresa_id.eq.${empresaOrigemId}`);
+  return {
+    plano,
+    usados: count || 1,
+    limite: PLANOS_COMERCIAIS[plano].limites.perfis,
+    origemEmpresaId: plano === 'free' ? null : empresaOrigemId,
+  };
 }
 
 export async function autenticarPerfilCobranca(
@@ -65,7 +126,7 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
   // a coluna tipo_perfil da assinatura pode estar desatualizada/errada.
   const { data: emp } = await db
     .from('empresas')
-    .select('tipo_perfil, created_at')
+    .select('tipo_perfil, created_at, assinatura_origem_empresa_id')
     .eq('id', empresaId)
     .maybeSingle();
 
@@ -95,6 +156,30 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
       plano: planoCortesia ?? assin.plano ?? null,
       ciclo: assin.ciclo ?? null,
     };
+  }
+
+  // Perfil criado dentro da quota: usa o estado da assinatura de origem. A
+  // assinatura continua existindo uma única vez e qualquer alteração nela é
+  // refletida imediatamente em todos os perfis que a compartilham.
+  if (emp.assinatura_origem_empresa_id) {
+    const { data: assinaturaOrigem } = await db
+      .from('assinaturas')
+      .select('status, valido_ate, trial_fim, plano, ciclo')
+      .eq('empresa_id', emp.assinatura_origem_empresa_id)
+      .maybeSingle();
+    if (assinaturaOrigem) {
+      const planoOrigem = normalizarPlanoComercial(assinaturaOrigem.plano);
+      return {
+        tipoPerfil,
+        status: assinaturaOrigem.status as StatusAssinatura,
+        validoAte: assinaturaOrigem.valido_ate,
+        trialFim: assinaturaOrigem.trial_fim,
+        plano: tipoPerfil === 'pessoal' && (planoOrigem === 'business' || planoOrigem === 'business_pro')
+          ? 'pessoal_premium'
+          : assinaturaOrigem.plano ?? null,
+        ciclo: assinaturaOrigem.ciclo ?? null,
+      };
+    }
   }
 
   // 2) Sem assinatura → derivar do próprio perfil.
