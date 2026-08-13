@@ -93,3 +93,13 @@ test('botão de compartilhamento executa a função de cópia', () => {
   assert.match(inicioProjetos, /onClick=\{\(\) => void copyShareLink\(\)\}/);
   assert.doesNotMatch(inicioProjetos, /onClick=\{\(\) => void copyShareLink\}/);
 });
+
+test('modal de compartilhamento é compacto e concentra a ação junto ao acesso', () => {
+  assert.match(inicioProjetos, /className=\{styles\.shareAccessRow\}/);
+  assert.match(inicioProjetos, /onClose=\{closeShareModal\}/);
+  assert.match(inicioProjetos, /headerTone="accent" compact/);
+  assert.doesNotMatch(inicioProjetos, /Conteúdo copiado e confirmado\. O link está pronto/);
+  assert.doesNotMatch(inicioProjetos, />Fechar<\/button>/);
+  assert.match(estilos, /\.shareAccessRow \{ grid-column: 1 \/ -1; display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);
+  assert.match(estilos, /\.sharePeopleList > div \{[^}]*min-height: 46px;/);
+});

@@ -145,6 +145,10 @@
 .modalHeaderAccent .iconButton { color: #fff; background: rgba(255,255,255,.12); }
 .modalHeaderAccent .iconButton:hover { background: rgba(255,255,255,.2); }
 .modalBody { max-height: calc(100dvh - 120px); overflow-y: auto; padding: 22px; overscroll-behavior: contain; }
+.modalCompact .modalHeader { padding: 14px 18px; }
+.modalCompact .modalHeader h2 { font-size: 18px; }
+.modalCompact .modalHeader p { margin-top: 3px; }
+.modalCompact .modalBody { padding: 14px 18px 16px; }
 .settingsSection { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid var(--border); border-radius: 14px; padding: 15px; background: var(--surface-soft); }
 .settingsSection > div { min-width: 0; }
 .settingsSection strong { display: block; color: var(--brand); font-size: 13px; }
@@ -190,19 +194,26 @@
 .participantAddButton { flex: 0 0 auto; min-height: 40px; padding-block: 7px; }
 .participantRegistration { margin: 5px 0 12px; border-radius: 12px; padding: 13px; background: var(--surface-soft); }
 .participantManager { display: grid; gap: 12px; }
-.shareResult { display: grid; gap: 8px; border-radius: 12px; padding: 14px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--text); }
-.shareResult p { margin: 0; font-size: 13px; line-height: 1.45; }
+.shareForm { gap: 12px; }
+.shareFormGrid { gap: 9px 12px; }
+.shareFormGrid label { gap: 4px; }
+.shareAccessRow { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px; }
+.shareAccessRow label { min-width: 0; }
+.shareVerifyButton { min-height: 44px; padding-inline: 14px; white-space: nowrap; }
+.shareHelp { padding: 9px 11px; }
+.shareResult { display: grid; gap: 6px; border-radius: 11px; padding: 10px 12px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--text); }
+.shareResult p { margin: 0; font-size: 11px; line-height: 1.4; }
 .shareResult > div { display: flex; gap: 8px; align-items: center; }
-.shareResult input { min-width: 0; flex: 1; height: 40px; border: 1px solid var(--border); border-radius: 10px; padding: 0 10px; background: var(--surface); color: var(--text); font-size: 12px; }
+.shareResult input { min-width: 0; flex: 1; height: 38px; min-height: 38px; border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; background: var(--surface); color: var(--text); font-size: 11px; }
 .shareResult .shareCopyConfirmed { border-color: color-mix(in srgb, var(--accent) 52%, var(--border)); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: color-mix(in srgb, var(--accent) 80%, var(--text)); }
 .shareCopyMessage { color: color-mix(in srgb, var(--text) 74%, var(--accent)); font-size: 12px; line-height: 1.4; }
-.sharePeople { display: grid; gap: 10px; border-top: 1px solid var(--border); padding-top: 18px; }
+.sharePeople { display: grid; gap: 7px; border-top: 1px solid var(--border); padding-top: 11px; }
 .sharePeople h3 { margin: 0; color: var(--brand); font-size: 14px; }
-.sharePeople > div:first-child p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
-.sharePeopleEmpty { margin: 0; border-radius: 11px; padding: 12px; color: var(--muted); background: var(--surface-soft); text-align: center; font-size: 11px; }
-.sharePeopleList { display: grid; gap: 7px; }
-.sharePeopleList > div { display: flex; min-width: 0; min-height: 54px; align-items: center; gap: 9px; border: 1px solid var(--border); border-radius: 12px; padding: 7px 8px; background: var(--surface-soft); }
-.sharePersonAvatar { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 999px; color: #fff; background: var(--accent); font-size: 9px; font-weight: 800; }
+.sharePeople > div:first-child p { margin: 2px 0 0; color: var(--muted); font-size: 10px; }
+.sharePeopleEmpty { margin: 0; border-radius: 10px; padding: 9px 10px; color: var(--muted); background: var(--surface-soft); text-align: center; font-size: 10px; }
+.sharePeopleList { display: grid; gap: 5px; }
+.sharePeopleList > div { display: flex; min-width: 0; min-height: 46px; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 10px; padding: 5px 7px; background: var(--surface-soft); }
+.sharePersonAvatar { display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; border-radius: 999px; color: #fff; background: var(--accent); font-size: 8px; font-weight: 800; }
 .sharePersonInfo { display: grid; min-width: 0; flex: 1; gap: 2px; }
 .sharePersonInfo strong, .sharePersonInfo small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sharePersonInfo strong { color: var(--text); font-size: 12px; }
@@ -210,7 +221,7 @@
 .shareStatus { flex: 0 0 auto; border-radius: 999px; padding: 4px 7px; color: #216943; background: #e4f4e9; font-size: 9px; font-weight: 700; white-space: nowrap; }
 .shareStatusPending { color: #805900; background: #fff1ce; }
 .sharePersonActions { display: flex; flex: 0 0 auto; align-items: center; gap: 5px; }
-.shareLinkButton, .shareRevokeButton { min-height: 36px; flex: 0 0 auto; border: 0; border-radius: 9px; padding: 7px 9px; cursor: pointer; font-size: 11px; font-weight: 700; }
+.shareLinkButton, .shareRevokeButton { min-height: 34px; flex: 0 0 auto; border: 0; border-radius: 8px; padding: 6px 8px; cursor: pointer; font-size: 10px; font-weight: 700; }
 .shareLinkButton { color: var(--brand); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
 .shareLinkButton:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
 .shareLinkButton:disabled { opacity: .58; cursor: wait; }
