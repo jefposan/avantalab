@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.31 - 2026-08-13
+
+- AvantaProjetos copia o link pela seleção visível do próprio campo, usando o
+  comando nativo que foi validado no Chrome, sem aguardar a API assíncrona que
+  permanecia bloqueada nesse navegador.
+
 ## 1.7.3.30 - 2026-08-13
 
 - AvantaProjetos verifica o conteúdo da área de transferência antes de confirmar

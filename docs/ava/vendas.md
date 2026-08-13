@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.30 -->
+<!-- ava-version: 1.7.3.31 -->
+
+> Revisão 1.7.3.31: correção de cópia nativa no AvantaProjetos não altera o
+> funcionamento do AvantaVendas.
 
 > Revisão 1.7.3.30: verificação de cópia de links no AvantaProjetos não altera
 > o funcionamento do AvantaVendas.
