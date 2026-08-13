@@ -8,6 +8,7 @@ import styles from '../projetos.module.css';
 import { Icon } from './Icon';
 import { Modal } from './Modal';
 import Tooltip from '@/app/components/Tooltip';
+import { supabase } from '@/app/lib/supabase';
 
 const TEMPLATE_OPTIONS: Array<[ProjectTemplate, string, string]> = [
   ['blank', 'Projeto em branco', 'Comece apenas com o nó principal.'],
@@ -141,6 +142,10 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
   const [participantDraft, setParticipantDraft] = useState({ name: '', color: '#1F8A9E' });
   const [participantError, setParticipantError] = useState('');
   const [participantToDeleteId, setParticipantToDeleteId] = useState<string | null>(null);
+  const [shareProject, setShareProject] = useState<Project | null>(null);
+  const [shareForm, setShareForm] = useState({ name: '', email: '', access: 'editor' });
+  const [shareState, setShareState] = useState<{ message: string; link: string; found: boolean } | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   const participantToDelete = collection.people.find((person) => person.id === participantToDeleteId) ?? null;
   const participantUsage = useMemo(() => {
@@ -255,6 +260,34 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     onMessage('Projeto excluído definitivamente.');
   };
 
+  const createShare = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!shareProject || sharing) return;
+    setSharing(true);
+    setShareState(null);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error('Sua sessão expirou. Entre novamente para compartilhar o projeto.');
+      const response = await fetch('/api/modulos/projetos/compartilhamentos', {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empresaId: collection.companyId, projetoId: shareProject.id, nome: shareForm.name, email: shareForm.email, acesso: shareForm.access }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.mensagem || 'Não foi possível compartilhar este projeto.');
+      setShareState({ message: json.mensagem, link: json.link, found: json.encontrado === true });
+      onMessage(json.encontrado ? 'Acesso ao projeto liberado.' : 'Convite de acesso criado.');
+    } catch (error) {
+      setShareState({ message: error instanceof Error ? error.message : 'Não foi possível compartilhar este projeto.', link: '', found: false });
+    } finally { setSharing(false); }
+  };
+
+  const copyShareLink = async () => {
+    if (!shareState?.link) return;
+    try { await navigator.clipboard.writeText(shareState.link); onMessage('Link copiado para compartilhar.'); }
+    catch { onMessage('Não foi possível copiar o link automaticamente.'); }
+  };
+
   const submitProject = (event: React.FormEvent) => {
     event.preventDefault();
     if (!form.name.trim()) return;
@@ -301,6 +334,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     {actionProject === project.id && <div className={`${styles.cardMenu} ${list ? styles.listCardMenu : styles.topCardMenu}`}>
       <button type="button" onClick={() => { setActionProject(null); onOpen(project.id); }}>Abrir projeto</button>
       <button type="button" onClick={() => openProjectEditor(project)}>Editar projeto</button>
+      <button type="button" onClick={() => { setShareProject(project); setShareForm({ name: '', email: '', access: 'editor' }); setShareState(null); setActionProject(null); }}>Compartilhar acesso</button>
       <button type="button" onClick={() => { duplicate(project); setActionProject(null); }}>Duplicar</button>
       <button type="button" onClick={() => { updateProject(project.id, (item) => ({ ...item, favorite: !item.favorite })); setActionProject(null); }}>{project.favorite ? 'Desfavoritar' : 'Favoritar'}</button>
       <button type="button" onClick={() => { setConfirmProject(project); setActionProject(null); }}>{project.archivedAt ? 'Restaurar' : 'Arquivar'}</button>
@@ -440,6 +474,19 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
           </div>)}</div> : <p className={styles.participantEmpty}>Nenhum participante cadastrado.</p>}
         </fieldset>
         <div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={() => setEditingProject(null)}>Cancelar</button><button type="submit" className={styles.primaryButton}>Salvar alterações</button></div>
+      </form>
+    </Modal>
+
+    <Modal open={Boolean(shareProject)} onClose={() => setShareProject(null)} title="Compartilhar acesso" description={shareProject ? `Convide uma pessoa para trabalhar somente em “${shareProject.name}”.` : ''}>
+      <form className={styles.projectForm} onSubmit={createShare}>
+        <div className={styles.formGrid}>
+          <label>Nome completo<input required maxLength={120} autoFocus value={shareForm.name} onChange={(event) => setShareForm({ ...shareForm, name: event.target.value })} placeholder="Ex.: Maria Silva" /></label>
+          <label>E-mail<input required type="email" autoCapitalize="none" value={shareForm.email} onChange={(event) => setShareForm({ ...shareForm, email: event.target.value })} placeholder="nome@empresa.com" /></label>
+          <label>Acesso<select value={shareForm.access} onChange={(event) => setShareForm({ ...shareForm, access: event.target.value })}><option value="editor">Pode editar o projeto</option><option value="observador">Somente visualizar</option></select></label>
+        </div>
+        <p className={styles.participantEmpty}>Se a pessoa já tiver conta AvantaLab, o acesso será liberado na hora. Caso contrário, você receberá um link de convite para encaminhar manualmente.</p>
+        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={styles.secondaryButton} onClick={() => void copyShareLink}>Copiar link</button></div>}</section>}
+        <div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={() => setShareProject(null)}>Fechar</button><button type="submit" className={styles.primaryButton} disabled={sharing}>{sharing ? 'Verificando…' : 'Verificar e adicionar'}</button></div>
       </form>
     </Modal>
 

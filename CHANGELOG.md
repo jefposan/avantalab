@@ -2,6 +2,9 @@
 
 ## 1.7.3.23-av75 - 2026-08-13
 
+- AvantaProjetos passa a permitir compartilhamento seguro por projeto: verifica
+  contas existentes, gera convite copiável para novos acessos e permite revogar
+  o vínculo. Convidados veem e editam somente projetos compartilhados.
 - AvantaVendas: backups e pontos de restauração passam ao esquema 2 e agora
   preservam também o nome e a empresa do perfil, participantes e permissões
   internas, preferências, opções de Notícias/Divulgação/Catálogo e os vínculos

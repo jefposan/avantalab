@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { COBRANCA_ATIVA, assinaturaVigente } from '@/app/lib/cobranca';
 import { autenticarPerfilCobranca, resolverEstadoAcesso } from '@/app/lib/cobranca-servidor';
 import { obterRegistroModulo } from '@/app/lib/modulos-registro';
+import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 
@@ -12,7 +13,17 @@ export async function GET(request: Request) {
   const manifesto = obterRegistroModulo(moduloId);
   if (!empresaId || !manifesto) return NextResponse.json({ erro: true, mensagem: 'Módulo ou perfil inválido.' }, { status: 400 });
 
-  const acesso = await autenticarPerfilCobranca(request, empresaId);
+  let acesso: Awaited<ReturnType<typeof autenticarPerfilCobranca>> = await autenticarPerfilCobranca(request, empresaId);
+  let compartilhado = false;
+  let compartilhamentoEdita = false;
+  if (!acesso && moduloId === 'projetos') {
+    const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+    const cliente = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
+    const { data: auth } = await cliente.auth.getUser(token);
+    const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '');
+    const { data: vinculo } = auth.user ? await db.from('projetos_compartilhamentos').select('id,acesso').eq('empresa_id', empresaId).eq('user_id', auth.user.id).eq('situacao', 'ativo').limit(1).maybeSingle() : { data: null };
+    if (vinculo && auth.user) { acesso = { db, usuario: auth.user, vinculo: { id: vinculo.id, perfil: 'operador_simples', status: 'ativo' }, podeGerenciar: false }; compartilhado = true; compartilhamentoEdita = vinculo.acesso === 'editor'; }
+  }
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
   if (COBRANCA_ATIVA) {
     const estado = await resolverEstadoAcesso(empresaId);
@@ -45,7 +56,8 @@ export async function GET(request: Request) {
     },
     perfil,
     nivel,
-    podeEditar: nivel !== 'visualizar',
+    podeEditar: compartilhado ? compartilhamentoEdita : nivel !== 'visualizar',
+    compartilhado,
     podeGerenciarModulo: acesso.podeGerenciar,
     expiraEm: instalacao.expira_em || null,
   });
