@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.25 - 2026-08-13
+
+- AvantaProjetos exibe, no próprio compartilhamento, as pessoas que receberam
+  acesso ao projeto, seu nível de permissão, convites pendentes e a revogação
+  confirmada do acesso.
+
 ## 1.7.3.24 - 2026-08-13
 
 - AvantaProjetos confirma visualmente a cópia de links de compartilhamento no

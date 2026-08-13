@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.24 -->
+<!-- ava-version: 1.7.3.25 -->
+
+> Revisão 1.7.3.25: em **Compartilhar acesso**, a seção **Pessoas com acesso**
+> mostra quem recebeu o projeto, o tipo de acesso e permite revogá-lo após
+> confirmação.
 
 > Revisão 1.7.3.24: ao copiar um link de compartilhamento de Projeto, o botão
 > confirma **Link copiado** e informa que ele está pronto para encaminhar.
