@@ -2093,6 +2093,7 @@ function atualizarOrganizacaoSalaNoDom() {
   botaoOrganizar.innerHTML = iconeOrganizarSala(organizando);
   botaoOrganizar.setAttribute('aria-label', organizando ? 'Concluir organização da sala' : 'Organizar sala de botões');
   botaoOrganizar.setAttribute('title', organizando ? 'Concluir' : 'Organizar sala');
+  if (!organizando) cancelarArrasteSalaBotoes(true);
   app.querySelectorAll('[data-sala-botao]').forEach((card) => {
     const idAba = card.dataset.salaBotao;
     card.classList.toggle('is-organizable', organizando);
@@ -2102,6 +2103,14 @@ function atualizarOrganizacaoSalaNoDom() {
     card.onpointermove = organizando ? moverArrasteSalaBotoes : null;
     card.onpointerup = organizando ? finalizarArrasteSalaBotoes : null;
     card.onpointercancel = organizando ? finalizarArrasteSalaBotoes : null;
+    card.onkeydown = organizando ? (event) => moverSalaBotoesTeclado(event, idAba) : null;
+    if (organizando) {
+      card.setAttribute('aria-roledescription', 'item reordenável');
+      card.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown');
+    } else {
+      card.removeAttribute('aria-roledescription');
+      card.removeAttribute('aria-keyshortcuts');
+    }
     if (!organizando) card.onclick = () => setAba(idAba);
   });
   assinaturaSalaRenderizada = assinaturaVisualSalaBotoes();
@@ -2109,53 +2118,229 @@ function atualizarOrganizacaoSalaNoDom() {
 }
 
 function alternarOrganizacaoSalaBotoes() {
+  cancelarArrasteSalaBotoes(true);
   state.organizandoSalaBotoes = !state.organizandoSalaBotoes;
-  arrasteSalaBotoes = null;
   salvarEstado();
   if (!atualizarOrganizacaoSalaNoDom()) render();
 }
 
+function ordemMovidaSalaBotoes(ordem, origemIndice, destinoIndice) {
+  const proxima = [...ordem];
+  if (origemIndice < 0 || destinoIndice < 0 || origemIndice === destinoIndice) return proxima;
+  const [movido] = proxima.splice(origemIndice, 1);
+  proxima.splice(destinoIndice, 0, movido);
+  return proxima;
+}
+
+function reduzirMovimentoSalaBotoes() {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+}
+
+function transformarCardSalaBotoes(card, x, y, animar = true) {
+  card.style.setProperty('transition', animar && !reduzirMovimentoSalaBotoes() ? 'transform 170ms cubic-bezier(.2,.8,.2,1)' : 'none', 'important');
+  card.style.setProperty('transform', `translate3d(${x}px,${y}px,0)`, 'important');
+}
+
+function limparTransformacaoCardSalaBotoes(card) {
+  card.style.removeProperty('transition');
+  card.style.removeProperty('transform');
+}
+
+function criarFlutuanteSalaBotoes(card, retangulo) {
+  const flutuante = document.createElement('div');
+  flutuante.className = `sala-kanban-overlay${card.classList.contains('image-failed') ? ' image-failed' : ''}`;
+  flutuante.setAttribute('aria-hidden', 'true');
+  flutuante.style.width = `${retangulo.width}px`;
+  flutuante.style.height = `${retangulo.height}px`;
+  flutuante.innerHTML = card.innerHTML;
+  document.body.appendChild(flutuante);
+  return flutuante;
+}
+
+function posicionarFlutuanteSalaBotoes(arraste, esquerda, topo, escala = 1.035) {
+  arraste.flutuante.style.transform = `translate3d(${esquerda}px,${topo}px,0) scale(${escala})`;
+  arraste.flutuanteEsquerda = esquerda;
+  arraste.flutuanteTopo = topo;
+}
+
+function ordemVisualSalaBotoes(arraste, destinoIndice = arraste.destinoIndice) {
+  return ordemMovidaSalaBotoes(arraste.ordemInicial, arraste.origemIndice, destinoIndice);
+}
+
+function aplicarDeslocamentoSalaBotoes(arraste) {
+  const ordemVisual = ordemVisualSalaBotoes(arraste);
+  ordemVisual.forEach((idAba, indiceVisual) => {
+    const card = arraste.cards.get(idAba);
+    if (!card || idAba === arraste.idAba) return;
+    const indiceOriginal = arraste.ordemInicial.indexOf(idAba);
+    const origem = arraste.posicoes[indiceOriginal];
+    const destino = arraste.posicoes[indiceVisual];
+    transformarCardSalaBotoes(card, destino.left - origem.left, destino.top - origem.top);
+  });
+}
+
+function indiceMaisProximoSalaBotoes(arraste, centroX, centroY) {
+  let indice = arraste.destinoIndice;
+  let menorDistancia = Number.POSITIVE_INFINITY;
+  arraste.posicoes.forEach((retangulo, atual) => {
+    const distancia = Math.hypot(centroX - (retangulo.left + retangulo.width / 2), centroY - (retangulo.top + retangulo.height / 2));
+    if (distancia < menorDistancia) {
+      menorDistancia = distancia;
+      indice = atual;
+    }
+  });
+  if (indice === arraste.destinoIndice) return indice;
+  const atual = arraste.posicoes[arraste.destinoIndice];
+  const distanciaAtual = Math.hypot(centroX - (atual.left + atual.width / 2), centroY - (atual.top + atual.height / 2));
+  const tolerancia = Math.min(atual.width, atual.height) * .07;
+  return menorDistancia + tolerancia < distanciaAtual ? indice : arraste.destinoIndice;
+}
+
+function concluirVisualArrasteSalaBotoes(arraste, ordemFinal = null) {
+  window.clearTimeout(arraste.tempoConclusao);
+  if (ordemFinal?.length && arraste.grid?.isConnected) {
+    ordemFinal.forEach((idAba) => {
+      const card = arraste.cards.get(idAba);
+      if (card) arraste.grid.appendChild(card);
+    });
+  }
+  arraste.cards.forEach((card) => {
+    limparTransformacaoCardSalaBotoes(card);
+    card.classList.remove('is-dragging', 'is-drop-target');
+  });
+  arraste.flutuante?.remove();
+  document.body.classList.remove('sala-kanban-arrastando');
+  if (arrasteSalaBotoes === arraste) arrasteSalaBotoes = null;
+  assinaturaSalaRenderizada = assinaturaVisualSalaBotoes();
+  requestAnimationFrame(() => arraste.cards.get(arraste.idAba)?.focus?.({ preventScroll: true }));
+}
+
+function cancelarArrasteSalaBotoes(imediato = false) {
+  const arraste = arrasteSalaBotoes;
+  if (!arraste) return;
+  window.clearTimeout(arraste.tempoConclusao);
+  if (!imediato && arraste.flutuante && arraste.posicoes[arraste.origemIndice]) {
+    const origem = arraste.posicoes[arraste.origemIndice];
+    arraste.flutuante.style.transition = reduzirMovimentoSalaBotoes() ? 'none' : 'transform 170ms cubic-bezier(.2,.8,.2,1)';
+    posicionarFlutuanteSalaBotoes(arraste, origem.left, origem.top, 1);
+    arraste.tempoConclusao = window.setTimeout(() => concluirVisualArrasteSalaBotoes(arraste), reduzirMovimentoSalaBotoes() ? 0 : 175);
+    return;
+  }
+  concluirVisualArrasteSalaBotoes(arraste, arraste.ordemFinal);
+}
+
 function iniciarArrasteSalaBotoes(event, idAba) {
-  if (!state.organizandoSalaBotoes) return;
+  if (!state.organizandoSalaBotoes || arrasteSalaBotoes || (Number.isFinite(event.button) && event.button !== 0)) return;
   event.preventDefault();
-  arrasteSalaBotoes = { idAba, destino: idAba };
-  event.currentTarget?.setPointerCapture?.(event.pointerId);
-  event.currentTarget?.classList.add('is-dragging');
+  const card = event.currentTarget;
+  const grid = card?.closest('.mobile-menu-grid');
+  if (!card || !grid) return;
+  const cardsLista = [...grid.querySelectorAll(':scope > [data-sala-botao]')];
+  const ordemInicial = cardsLista.map((item) => item.dataset.salaBotao || '');
+  const origemIndice = ordemInicial.indexOf(idAba);
+  if (origemIndice < 0) return;
+  const posicoes = cardsLista.map((item) => item.getBoundingClientRect());
+  const retangulo = posicoes[origemIndice];
+  const cards = new Map(cardsLista.map((item) => [item.dataset.salaBotao || '', item]));
+  const flutuante = criarFlutuanteSalaBotoes(card, retangulo);
+  arrasteSalaBotoes = {
+    idAba,
+    pointerId: event.pointerId,
+    card,
+    grid,
+    cards,
+    ordemInicial,
+    origemIndice,
+    destinoIndice: origemIndice,
+    posicoes,
+    largura: retangulo.width,
+    altura: retangulo.height,
+    deslocamentoX: event.clientX - retangulo.left,
+    deslocamentoY: event.clientY - retangulo.top,
+    flutuante,
+    flutuanteEsquerda: retangulo.left,
+    flutuanteTopo: retangulo.top,
+    encerrando: false,
+    ordemFinal: null,
+    tempoConclusao: 0,
+  };
+  posicionarFlutuanteSalaBotoes(arrasteSalaBotoes, retangulo.left, retangulo.top);
+  document.body.classList.add('sala-kanban-arrastando');
+  card.setPointerCapture?.(event.pointerId);
+  card.classList.add('is-dragging');
+  try { navigator.vibrate?.(12); } catch { /* vibração indisponível */ }
 }
 
 function moverArrasteSalaBotoes(event) {
-  if (!arrasteSalaBotoes) return;
+  const arraste = arrasteSalaBotoes;
+  if (!arraste || arraste.encerrando || event.pointerId !== arraste.pointerId) return;
   event.preventDefault();
-  const destino = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-sala-botao]');
-  document.querySelectorAll('[data-sala-botao]').forEach((item) => item.classList.remove('is-drop-target'));
-  if (!destino || destino.dataset.salaBotao === arrasteSalaBotoes.idAba) return;
-  arrasteSalaBotoes.destino = destino.dataset.salaBotao;
-  destino.classList.add('is-drop-target');
+  const esquerda = event.clientX - arraste.deslocamentoX;
+  const topo = event.clientY - arraste.deslocamentoY;
+  posicionarFlutuanteSalaBotoes(arraste, esquerda, topo);
+  const centroX = esquerda + arraste.largura / 2;
+  const centroY = topo + arraste.altura / 2;
+  const destinoIndice = indiceMaisProximoSalaBotoes(arraste, centroX, centroY);
+  if (destinoIndice === arraste.destinoIndice) return;
+  arraste.destinoIndice = destinoIndice;
+  aplicarDeslocamentoSalaBotoes(arraste);
 }
 
 function finalizarArrasteSalaBotoes(event) {
-  if (!arrasteSalaBotoes) return;
+  const arraste = arrasteSalaBotoes;
+  if (!arraste || arraste.encerrando || event.pointerId !== arraste.pointerId) return;
   event.preventDefault();
-  const { idAba, destino } = arrasteSalaBotoes;
-  arrasteSalaBotoes = null;
+  arraste.encerrando = true;
+  if (arraste.card?.hasPointerCapture?.(event.pointerId)) arraste.card.releasePointerCapture(event.pointerId);
+  if (event.type === 'pointercancel') {
+    cancelarArrasteSalaBotoes();
+    return;
+  }
+  const ordemFinal = ordemVisualSalaBotoes(arraste);
+  arraste.ordemFinal = ordemFinal;
+  if (arraste.origemIndice !== arraste.destinoIndice) {
+    state.ordemSalaBotoes = ordemFinal;
+    salvarEstado();
+  }
+  const destino = arraste.posicoes[arraste.destinoIndice];
+  arraste.flutuante.style.transition = reduzirMovimentoSalaBotoes() ? 'none' : 'transform 170ms cubic-bezier(.2,.8,.2,1)';
+  posicionarFlutuanteSalaBotoes(arraste, destino.left, destino.top, 1);
+  arraste.tempoConclusao = window.setTimeout(
+    () => concluirVisualArrasteSalaBotoes(arraste, ordemFinal),
+    reduzirMovimentoSalaBotoes() ? 0 : 175,
+  );
+}
+
+function moverSalaBotoesTeclado(event, idAba) {
+  if (!state.organizandoSalaBotoes || arrasteSalaBotoes) return;
+  const deslocamento = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : event.key === 'ArrowUp' ? -3 : event.key === 'ArrowDown' ? 3 : 0;
+  if (!deslocamento) return;
   const ordem = itensSalaBotoesOrdenados().map(([id]) => id);
   const origemIndice = ordem.indexOf(idAba);
-  const destinoIndice = ordem.indexOf(destino);
-  if (origemIndice >= 0 && destinoIndice >= 0 && origemIndice !== destinoIndice) {
-    ordem.splice(origemIndice, 1);
-    ordem.splice(destinoIndice, 0, idAba);
-    state.ordemSalaBotoes = ordem;
-    salvarEstado();
-    const grid = app.querySelector('.mobile-menu-grid');
-    if (grid) {
-      ordem.forEach((id) => {
-        const card = grid.querySelector(`[data-sala-botao="${id}"]`);
-        if (card) grid.appendChild(card);
-      });
-    }
-  }
-  app.querySelectorAll('[data-sala-botao]').forEach((item) => item.classList.remove('is-dragging', 'is-drop-target'));
+  const destinoIndice = Math.max(0, Math.min(ordem.length - 1, origemIndice + deslocamento));
+  if (origemIndice < 0 || origemIndice === destinoIndice) return;
+  event.preventDefault();
+  const grid = event.currentTarget?.closest('.mobile-menu-grid');
+  if (!grid) return;
+  const posicoesAnteriores = new Map([...grid.querySelectorAll(':scope > [data-sala-botao]')].map((card) => [card.dataset.salaBotao || '', card.getBoundingClientRect()]));
+  const ordemFinal = ordemMovidaSalaBotoes(ordem, origemIndice, destinoIndice);
+  ordemFinal.forEach((id) => {
+    const card = grid.querySelector(`[data-sala-botao="${id}"]`);
+    if (card) grid.appendChild(card);
+  });
+  [...grid.querySelectorAll(':scope > [data-sala-botao]')].forEach((card) => {
+    const anterior = posicoesAnteriores.get(card.dataset.salaBotao || '');
+    const atual = card.getBoundingClientRect();
+    if (!anterior) return;
+    transformarCardSalaBotoes(card, anterior.left - atual.left, anterior.top - atual.top, false);
+    requestAnimationFrame(() => requestAnimationFrame(() => transformarCardSalaBotoes(card, 0, 0)));
+    window.setTimeout(() => limparTransformacaoCardSalaBotoes(card), reduzirMovimentoSalaBotoes() ? 0 : 180);
+  });
+  state.ordemSalaBotoes = ordemFinal;
+  salvarEstado();
   assinaturaSalaRenderizada = assinaturaVisualSalaBotoes();
+  const cardMovido = grid.querySelector(`[data-sala-botao="${idAba}"]`);
+  requestAnimationFrame(() => cardMovido?.focus?.({ preventScroll: true }));
 }
 
 function renderMenuMobile() {
@@ -2165,7 +2350,7 @@ function renderMenuMobile() {
   const agendamentosHoje = agendamentosHojeVendas();
   return `<section class="mobile-menu is-loading-images" aria-label="Menu principal" aria-busy="true">
     <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}</div></header>
-    <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" ${organizando ? '' : 'hidden'}>Clique no botão e arraste para a nova posição</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
+    <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" aria-live="polite" ${organizando ? '' : 'hidden'}>Segure e arraste. As setas também movem.</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `aria-roledescription="item reordenável" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown" onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)" onkeydown="moverSalaBotoesTeclado(event,'${idAba}')"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
         <span class="mobile-ava-logo" role="img" aria-label="Ava"></span>

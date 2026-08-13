@@ -417,6 +417,21 @@ exigir(
   'A sala deve manter loadings locais e revelar todos os botões somente depois que as imagens estiverem prontas.',
 );
 exigir(
+  aplicacao.includes('function indiceMaisProximoSalaBotoes(')
+    && aplicacao.includes('const posicoes = cardsLista.map((item) => item.getBoundingClientRect())')
+    && aplicacao.includes('const tolerancia = Math.min(atual.width, atual.height) * .07;')
+    && aplicacao.includes('function moverSalaBotoesTeclado(')
+    && aplicacao.includes('Segure e arraste. As setas também movem.')
+    && !aplicacao.slice(
+      aplicacao.indexOf('function moverArrasteSalaBotoes('),
+      aplicacao.indexOf('function finalizarArrasteSalaBotoes('),
+    ).includes('document.elementFromPoint')
+    && estilos.includes('.mobile-menu-card.is-organizable.is-dragging { opacity: 0; }')
+    && estilos.includes('.sala-kanban-overlay')
+    && estilos.includes('clip-path: inset(2.4% round 18%);'),
+  'A reorganização da sala deve usar posições fixas, tolerância contra oscilações, flutuante recortado e suporte ao teclado.',
+);
+exigir(
   estilos.includes('.mobile-menu-card { width: 90%; min-height: 0; justify-self: center; overflow: visible; aspect-ratio: 1 / 1;')
     && estilos.includes('.mobile-menu-card img { object-fit: contain;')
     && estilos.includes('.mobile-menu-card { height: auto; min-height: 0; aspect-ratio: 1 / 1;')
