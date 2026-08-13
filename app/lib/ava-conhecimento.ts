@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.30: a cópia só é confirmada após verificar a área
+// de transferência; sem confirmação, o link é selecionado para cópia manual.
 // Revisado na versão 1.7.3.29: a cópia prioriza seleção direta compatível e só
 // confirma o conteúdo após uma operação de cópia bem-sucedida.
 // Revisado na versão 1.7.3.28: copiar links confirma Conteúdo copiado no modal

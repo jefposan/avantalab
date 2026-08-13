@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.30 - 2026-08-13
+
+- AvantaProjetos verifica o conteúdo da área de transferência antes de confirmar
+  a cópia do link. Sem confirmação, o link é selecionado para cópia manual e o
+  sistema não exibe sucesso indevido.
+
 ## 1.7.3.29 - 2026-08-13
 
 - AvantaProjetos executa primeiro a cópia compatível com seleção direta antes
