@@ -5,6 +5,7 @@ import { autenticarPerfilCobranca } from '@/app/lib/cobranca-servidor';
 export const runtime = 'nodejs';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PAPEIS_DE_GESTAO = ['gestor_master', 'administrador', 'operador_completo'];
 const normalizarEmail = (valor: unknown) => String(valor || '').trim().toLocaleLowerCase('pt-BR');
 
 function resposta(mensagem: string, status = 400) {
@@ -22,10 +23,10 @@ export async function GET(request: Request) {
   const empresaId = String(url.searchParams.get('empresaId') || '').trim();
   const projetoId = String(url.searchParams.get('projetoId') || '').trim();
   const acesso = await autenticarPerfilCobranca(request, empresaId);
-  if (!acesso || !projetoId) return resposta('Acesso não autorizado.', 403);
+  if (!acesso || !projetoId || !PAPEIS_DE_GESTAO.includes(acesso.vinculo.perfil || '')) return resposta('Você não tem permissão para consultar os acessos deste projeto.', 403);
   const { data, error } = await acesso.db.from('projetos_compartilhamentos')
     .select('id,nome,email,acesso,situacao,user_id,criado_em,revogado_em')
-    .eq('empresa_id', empresaId).eq('projeto_id', projetoId).order('criado_em');
+    .eq('empresa_id', empresaId).eq('projeto_id', projetoId).neq('situacao', 'revogado').order('criado_em');
   if (error) return resposta('Não foi possível carregar os acessos do projeto.', 500);
   return NextResponse.json({ compartilhamentos: data || [] });
 }
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
   const acessoSelecionado = corpo.acesso === 'observador' ? 'observador' : 'editor';
   if (!empresaId || !projetoId || nome.length < 2 || !EMAIL.test(email)) return resposta('Informe nome e e-mail válidos.');
   const acesso = await autenticarPerfilCobranca(request, empresaId);
-  if (!acesso || !['gestor_master', 'administrador', 'operador_completo'].includes(acesso.vinculo.perfil || '')) return resposta('Você não tem permissão para compartilhar este projeto.', 403);
+  if (!acesso || !PAPEIS_DE_GESTAO.includes(acesso.vinculo.perfil || '')) return resposta('Você não tem permissão para compartilhar este projeto.', 403);
   try {
     const conta = await localizarConta(acesso.db, email);
     const agora = new Date();
@@ -66,7 +67,7 @@ export async function PATCH(request: Request) {
   const empresaId = String(corpo.empresaId || '').trim();
   const id = String(corpo.id || '').trim();
   const acesso = await autenticarPerfilCobranca(request, empresaId);
-  if (!acesso || !id) return resposta('Acesso não autorizado.', 403);
+  if (!acesso || !id || !PAPEIS_DE_GESTAO.includes(acesso.vinculo.perfil || '')) return resposta('Você não tem permissão para revogar este acesso.', 403);
   const { error } = await acesso.db.from('projetos_compartilhamentos').update({ situacao: 'revogado', revogado_em: new Date().toISOString(), token_hash: null }).eq('id', id).eq('empresa_id', empresaId);
   if (error) return resposta('Não foi possível revogar o acesso.', 500);
   return NextResponse.json({ ok: true });

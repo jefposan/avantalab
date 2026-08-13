@@ -192,6 +192,21 @@
 .shareResult input { min-width: 0; flex: 1; height: 40px; border: 1px solid var(--border); border-radius: 10px; padding: 0 10px; background: var(--surface); color: var(--text); font-size: 12px; }
 .shareResult .shareCopyConfirmed { border-color: color-mix(in srgb, var(--accent) 52%, var(--border)); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: color-mix(in srgb, var(--accent) 80%, var(--text)); }
 .shareCopyMessage { color: color-mix(in srgb, var(--text) 74%, var(--accent)); font-size: 12px; line-height: 1.4; }
+.sharePeople { display: grid; gap: 10px; border-top: 1px solid var(--border); padding-top: 18px; }
+.sharePeople h3 { margin: 0; color: var(--brand); font-size: 14px; }
+.sharePeople > div:first-child p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+.sharePeopleEmpty { margin: 0; border-radius: 11px; padding: 12px; color: var(--muted); background: var(--surface-soft); text-align: center; font-size: 11px; }
+.sharePeopleList { display: grid; gap: 7px; }
+.sharePeopleList > div { display: flex; min-width: 0; min-height: 54px; align-items: center; gap: 9px; border: 1px solid var(--border); border-radius: 12px; padding: 7px 8px; background: var(--surface-soft); }
+.sharePersonAvatar { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 999px; color: #fff; background: var(--accent); font-size: 9px; font-weight: 800; }
+.sharePersonInfo { display: grid; min-width: 0; flex: 1; gap: 2px; }
+.sharePersonInfo strong, .sharePersonInfo small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sharePersonInfo strong { color: var(--text); font-size: 12px; }
+.sharePersonInfo small { color: var(--muted); font-size: 10px; }
+.shareStatus { flex: 0 0 auto; border-radius: 999px; padding: 4px 7px; color: #216943; background: #e4f4e9; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.shareStatusPending { color: #805900; background: #fff1ce; }
+.shareRevokeButton { min-height: 36px; flex: 0 0 auto; border: 0; border-radius: 9px; padding: 7px 9px; color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); cursor: pointer; font-size: 11px; font-weight: 700; }
+.shareRevokeButton:hover { background: color-mix(in srgb, var(--danger) 15%, var(--surface)); }
 .participantManagerList { display: grid; gap: 6px; }
 .participantManagerList > div { display: flex; min-height: 48px; align-items: center; gap: 9px; border: 1px solid var(--border); border-radius: 11px; padding: 5px 7px; background: var(--surface); }
 .participantManagerList .participantAvatar { display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; border-radius: 50%; color: #fff; font-size: 8px; }

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.24 -->
+<!-- ava-version: 1.7.3.25 -->
+
+> Revisão 1.7.3.25: a lista e revogação de acessos são exclusivas do
+> AvantaProjetos Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.7.3.24: confirmação da cópia de link é exclusiva do
 > AvantaProjetos Web; sem alteração operacional na Gestão Mobile.

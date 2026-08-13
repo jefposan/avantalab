@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.25: Compartilhar acesso lista as pessoas convidadas
+// por projeto e permite revogar o acesso com confirmação.
 // Revisado na versão 1.7.3.24: a cópia do link de Projetos confirma o sucesso
 // no próprio convite para deixar claro que está pronto para encaminhar.
 // Revisado na versão 1.7.3.23: Projetos permite compartilhar um único projeto

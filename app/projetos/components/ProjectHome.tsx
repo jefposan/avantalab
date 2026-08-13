@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { calculateProjectProgress, createId, removeParticipantFromCollection, removeProjectFromCollection, validateProjectImport } from '../domain/project';
 import { createProjectFromTemplate } from '../data/demo';
 import { STATUS_LABELS, type Project, type ProjectCollection, type ProjectStatus, type ProjectTemplate } from '../types';
@@ -50,6 +50,15 @@ const PROJECT_ICON_OPTIONS = [
   ['♥', 'Pessoas'],
   ['∞', 'Continuidade'],
 ] as const;
+
+type ProjectShare = {
+  id: string;
+  nome: string;
+  email: string;
+  acesso: 'editor' | 'observador';
+  situacao: 'ativo' | 'pendente' | 'revogado';
+  criado_em?: string;
+};
 
 function dateLabel(value: string | null) {
   if (!value) return 'Sem prazo';
@@ -147,8 +156,37 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
   const [shareState, setShareState] = useState<{ message: string; link: string; found: boolean } | null>(null);
   const [shareCopyStatus, setShareCopyStatus] = useState<'idle' | 'copied' | 'manual'>('idle');
   const [sharing, setSharing] = useState(false);
+  const [projectShares, setProjectShares] = useState<ProjectShare[]>([]);
+  const [projectSharesState, setProjectSharesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [shareToRevoke, setShareToRevoke] = useState<ProjectShare | null>(null);
+  const [revokingShare, setRevokingShare] = useState(false);
 
   const participantToDelete = collection.people.find((person) => person.id === participantToDeleteId) ?? null;
+
+  useEffect(() => {
+    const projectId = shareProject?.id;
+    if (!projectId) return;
+    let cancelled = false;
+    const loadShares = async () => {
+      setProjectSharesState('loading');
+      try {
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) throw new Error('Sua sessão expirou.');
+        const response = await fetch(`/api/modulos/projetos/compartilhamentos?empresaId=${encodeURIComponent(collection.companyId)}&projetoId=${encodeURIComponent(projectId)}`, { headers: { Authorization: `Bearer ${token}` } });
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(json.mensagem || 'Não foi possível carregar os acessos.');
+        if (!cancelled) {
+          setProjectShares(Array.isArray(json.compartilhamentos) ? json.compartilhamentos : []);
+          setProjectSharesState('ready');
+        }
+      } catch {
+        if (!cancelled) setProjectSharesState('error');
+      }
+    };
+    void loadShares();
+    return () => { cancelled = true; };
+  }, [collection.companyId, shareProject?.id]);
   const participantUsage = useMemo(() => {
     if (!participantToDeleteId) return { projects: 0, tasks: 0 };
     return {
@@ -278,6 +316,10 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
       const json = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(json.mensagem || 'Não foi possível compartilhar este projeto.');
       setShareState({ message: json.mensagem, link: json.link, found: json.encontrado === true });
+      if (json.compartilhamento) {
+        setProjectShares((current) => [json.compartilhamento as ProjectShare, ...current.filter((item) => item.id !== json.compartilhamento.id)]);
+        setProjectSharesState('ready');
+      }
       onMessage(json.encontrado ? 'Acesso ao projeto liberado.' : 'Convite de acesso criado.');
     } catch (error) {
       setShareState({ message: error instanceof Error ? error.message : 'Não foi possível compartilhar este projeto.', link: '', found: false });
@@ -288,6 +330,27 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     if (!shareState?.link) return;
     try { await navigator.clipboard.writeText(shareState.link); setShareCopyStatus('copied'); onMessage('Link copiado para compartilhar.'); }
     catch { setShareCopyStatus('manual'); onMessage('Não foi possível copiar o link automaticamente.'); }
+  };
+
+  const revokeShare = async () => {
+    if (!shareToRevoke || revokingShare) return;
+    setRevokingShare(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error('Sua sessão expirou. Entre novamente para revogar o acesso.');
+      const response = await fetch('/api/modulos/projetos/compartilhamentos', {
+        method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empresaId: collection.companyId, id: shareToRevoke.id }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.mensagem || 'Não foi possível revogar o acesso.');
+      setProjectShares((current) => current.filter((item) => item.id !== shareToRevoke.id));
+      setShareToRevoke(null);
+      onMessage(`Acesso de ${shareToRevoke.nome} revogado.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Não foi possível revogar o acesso.');
+    } finally { setRevokingShare(false); }
   };
 
   const submitProject = (event: React.FormEvent) => {
@@ -336,7 +399,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     {actionProject === project.id && <div className={`${styles.cardMenu} ${list ? styles.listCardMenu : styles.topCardMenu}`}>
       <button type="button" onClick={() => { setActionProject(null); onOpen(project.id); }}>Abrir projeto</button>
       <button type="button" onClick={() => openProjectEditor(project)}>Editar projeto</button>
-      <button type="button" onClick={() => { setShareProject(project); setShareForm({ name: '', email: '', access: 'editor' }); setShareState(null); setShareCopyStatus('idle'); setActionProject(null); }}>Compartilhar acesso</button>
+      <button type="button" onClick={() => { setShareProject(project); setShareForm({ name: '', email: '', access: 'editor' }); setShareState(null); setShareCopyStatus('idle'); setProjectShares([]); setProjectSharesState('loading'); setActionProject(null); }}>Compartilhar acesso</button>
       <button type="button" onClick={() => { duplicate(project); setActionProject(null); }}>Duplicar</button>
       <button type="button" onClick={() => { updateProject(project.id, (item) => ({ ...item, favorite: !item.favorite })); setActionProject(null); }}>{project.favorite ? 'Desfavoritar' : 'Favoritar'}</button>
       <button type="button" onClick={() => { setConfirmProject(project); setActionProject(null); }}>{project.archivedAt ? 'Restaurar' : 'Arquivar'}</button>
@@ -488,8 +551,24 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
         </div>
         <p className={styles.participantEmpty}>Se a pessoa já tiver conta AvantaLab, o acesso será liberado na hora. Caso contrário, você receberá um link de convite para encaminhar manualmente.</p>
         {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Link copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'copied' && <small className={styles.shareCopyMessage}>O link está na área de transferência e pode ser enviado por WhatsApp, e-mail ou mensagem.</small>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">Não foi possível copiar automaticamente. Selecione o link acima para copiar manualmente.</small>}</section>}
+        <section className={styles.sharePeople} aria-labelledby="share-people-title">
+          <div><h3 id="share-people-title">Pessoas com acesso</h3><p>Gerencie quem pode abrir este projeto.</p></div>
+          {projectSharesState === 'loading' && <p className={styles.sharePeopleEmpty}>Carregando acessos…</p>}
+          {projectSharesState === 'error' && <p className={styles.sharePeopleEmpty} role="alert">Não foi possível carregar os acessos agora.</p>}
+          {projectSharesState === 'ready' && projectShares.length === 0 && <p className={styles.sharePeopleEmpty}>Nenhuma pessoa recebeu acesso a este projeto.</p>}
+          {projectShares.length > 0 && <div className={styles.sharePeopleList}>{projectShares.map((person) => <div key={person.id}>
+            <span className={styles.sharePersonAvatar} aria-hidden="true">{participantInitials(person.nome)}</span>
+            <span className={styles.sharePersonInfo}><strong>{person.nome}</strong><small>{person.email}</small></span>
+            <span className={`${styles.shareStatus} ${person.situacao === 'pendente' ? styles.shareStatusPending : ''}`}>{person.situacao === 'pendente' ? 'Convite pendente' : person.acesso === 'editor' ? 'Pode editar' : 'Visualiza'}</span>
+            <button type="button" className={styles.shareRevokeButton} onClick={() => setShareToRevoke(person)}>Revogar</button>
+          </div>)}</div>}
+        </section>
         <div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={() => setShareProject(null)}>Fechar</button><button type="submit" className={styles.primaryButton} disabled={sharing}>{sharing ? 'Verificando…' : 'Verificar e adicionar'}</button></div>
       </form>
+    </Modal>
+
+    <Modal open={Boolean(shareToRevoke)} onClose={() => { if (!revokingShare) setShareToRevoke(null); }} title="Revogar acesso?" description="A pessoa perderá o acesso a este projeto imediatamente.">
+      <div className={styles.confirmContent}><p><strong>{shareToRevoke?.nome}</strong> não poderá mais abrir nem alterar este projeto.</p><div className={styles.modalActions}><button type="button" className={styles.secondaryButton} disabled={revokingShare} onClick={() => setShareToRevoke(null)}>Cancelar</button><button type="button" className={styles.dangerButton} disabled={revokingShare} onClick={() => void revokeShare()}>{revokingShare ? 'Revogando…' : 'Revogar acesso'}</button></div></div>
     </Modal>
 
     <Modal open={Boolean(confirmProject)} onClose={() => setConfirmProject(null)} title={confirmProject?.archivedAt ? 'Restaurar projeto?' : 'Arquivar projeto?'} description={confirmProject?.archivedAt ? 'O projeto voltará para a lista de ativos.' : 'O projeto poderá ser restaurado depois.'}>
