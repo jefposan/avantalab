@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.29 -->
+<!-- ava-version: 1.7.3.30 -->
+
+> Revisão 1.7.3.30: o aviso de cópia só aparece após o sistema confirmar o
+> conteúdo da área de transferência. Sem confirmação, o link é selecionado
+> para cópia manual com **⌘C** ou **Ctrl+C**.
 
 > Revisão 1.7.3.29: **Copiar link** só confirma a cópia após uma operação bem
 > sucedida; o sistema prioriza a compatibilidade com o navegador em uso.

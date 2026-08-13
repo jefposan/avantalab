@@ -329,27 +329,19 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
 
   const copyShareLink = async () => {
     if (!shareState?.link) return;
+    const linkInput = document.getElementById('share-link-input') as HTMLInputElement | null;
     try {
-      const fallback = document.createElement('textarea');
-      fallback.value = shareState.link;
-      fallback.setAttribute('readonly', '');
-      fallback.style.position = 'fixed';
-      fallback.style.top = '0';
-      fallback.style.left = '0';
-      fallback.style.opacity = '0';
-      document.body.append(fallback);
-      fallback.focus();
-      fallback.select();
-      let copied = document.execCommand('copy');
-      fallback.remove();
-      if (!copied && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareState.link);
-        copied = true;
-      }
-      if (!copied) throw new Error('Cópia indisponível.');
+      if (!navigator.clipboard?.writeText || !navigator.clipboard.readText) throw new Error('Cópia indisponível.');
+      await navigator.clipboard.writeText(shareState.link);
+      if (await navigator.clipboard.readText() !== shareState.link) throw new Error('A cópia não foi confirmada.');
       setShareCopyStatus('copied');
       onMessage('Conteúdo copiado.');
-    } catch { setShareCopyStatus('manual'); onMessage('Não foi possível copiar o link automaticamente.'); }
+    } catch {
+      linkInput?.focus();
+      linkInput?.select();
+      setShareCopyStatus('manual');
+      onMessage('A cópia não foi confirmada. O link foi selecionado para você copiar manualmente.');
+    }
   };
 
   const showProjectLink = (person: ProjectShare) => {
@@ -598,7 +590,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
           <label>Acesso<select value={shareForm.access} onChange={(event) => setShareForm({ ...shareForm, access: event.target.value })}><option value="editor">Pode editar o projeto</option><option value="observador">Somente visualizar</option></select></label>
         </div>
         <p className={styles.participantEmpty}>Se a pessoa já tiver conta AvantaLab, o acesso será liberado na hora. Caso contrário, você receberá um link de convite para encaminhar manualmente.</p>
-        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Conteúdo copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'copied' && <small className={styles.shareCopyMessage} role="status">Conteúdo copiado. O link está pronto para enviar por WhatsApp, e-mail ou mensagem.</small>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">Não foi possível copiar automaticamente. Selecione o link acima para copiar manualmente.</small>}</section>}
+        {shareState && <section className={styles.shareResult} role="status"><strong>{shareState.found ? 'Conta encontrada' : 'Convite criado'}</strong><p>{shareState.message}</p>{shareState.link && <div><input id="share-link-input" readOnly value={shareState.link} aria-label="Link para compartilhar" /><button type="button" className={`${styles.secondaryButton} ${shareCopyStatus === 'copied' ? styles.shareCopyConfirmed : ''}`} onClick={() => void copyShareLink} aria-live="polite">{shareCopyStatus === 'copied' ? '✓ Conteúdo copiado' : 'Copiar link'}</button></div>}{shareCopyStatus === 'copied' && <small className={styles.shareCopyMessage} role="status">Conteúdo copiado e confirmado. O link está pronto para enviar por WhatsApp, e-mail ou mensagem.</small>}{shareCopyStatus === 'manual' && <small className={styles.shareCopyMessage} role="alert">A cópia não foi confirmada. O link foi selecionado: pressione ⌘C ou Ctrl+C para copiar.</small>}</section>}
         <section className={styles.sharePeople} aria-labelledby="share-people-title">
           <div><h3 id="share-people-title">Pessoas com acesso</h3><p>Gerencie quem pode abrir este projeto.</p></div>
           {projectSharesState === 'loading' && <p className={styles.sharePeopleEmpty}>Carregando acessos…</p>}
