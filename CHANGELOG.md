@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.33 - 2026-08-13
+
+- AvantaProjetos usa a área de transferência nativa do Chrome com chamada
+  efetiva e limite de tempo; o método legado que retornava sucesso sem copiar
+  foi removido do fluxo.
+
 ## 1.7.3.32 - 2026-08-13
 
 - Corrige a ação do botão **Copiar link** no AvantaProjetos: o clique agora
