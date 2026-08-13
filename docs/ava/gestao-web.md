@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.26 -->
+<!-- ava-version: 1.7.3.27 -->
+
+> Revisão 1.7.3.27: em **Pessoas com acesso**, use **Ver link** para membros
+> autorizados ou **Novo link** para um convite pendente. Um novo convite
+> invalida o link pendente anterior.
 
 > Revisão 1.7.3.26: o modal **Compartilhar acesso** passou a usar o cabeçalho
 > institucional colorido do AvantaLab; o fluxo operacional não mudou.

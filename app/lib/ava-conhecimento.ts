@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.27: a lista de acessos permite recuperar o link do
+// projeto ou gerar novo convite individual, invalidando o anterior.
 // Revisado na versão 1.7.3.26: Compartilhar acesso usa cabeçalho institucional
 // colorido, sem alterar permissões ou os passos do compartilhamento.
 // Revisado na versão 1.7.3.25: Compartilhar acesso lista as pessoas convidadas

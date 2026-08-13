@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.27 - 2026-08-13
+
+- AvantaProjetos mantém o acesso aos links na lista de compartilhamentos:
+  membros autorizados podem abrir o link do projeto e convites pendentes podem
+  gerar um novo link individual, invalidando o anterior.
+
 ## 1.7.3.26 - 2026-08-13
 
 - AvantaProjetos aplica o cabeçalho institucional colorido ao modal de
