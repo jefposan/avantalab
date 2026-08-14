@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.0.02 - 2026-08-14
+
+- O aviso **Acesso já existente** do AvantaProjetos ganhou destaque leve com
+  borda e superfície vermelhas, ícone e título reforçado, mantendo contraste nos
+  temas claro e escuro e anúncio acessível como alerta.
+
 ## 1.8.0.01 - 2026-08-14
 
 - AvantaProjetos impede compartilhar um projeto com alguém que já participa da

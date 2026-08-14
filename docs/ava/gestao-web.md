@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.0.01 -->
+<!-- ava-version: 1.8.0.02 -->
+
+> Revisão 1.8.0.02: o aviso de acesso já existente recebeu destaque visual; o
+> fluxo e a orientação funcional de compartilhamento permanecem os mesmos.
 
 > Revisão 1.8.0.01: projetos compartilhados por diferentes contas aparecem no
 > mesmo painel de **Projetos**, com empresa de origem e permissão no card. Quem

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.0.01 -->
+<!-- ava-version: 1.8.0.02 -->
+
+> Revisão 1.8.0.02: destaque visual do compartilhamento exclusivo do
+> AvantaProjetos Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.8.0.01: centralização de projetos compartilhados exclusiva do
 > AvantaProjetos Web; sem alteração operacional na Gestão Mobile.

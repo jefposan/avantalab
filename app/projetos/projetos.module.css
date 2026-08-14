@@ -215,6 +215,11 @@
 .shareVerifyButton::after { position: absolute; inset: -5px 0; content: ''; }
 .shareHelp { padding: 9px 11px; }
 .shareResult { display: grid; gap: 6px; border-radius: 11px; padding: 10px 12px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--text); }
+.shareResultHeading { display: flex; align-items: center; gap: 7px; }
+.shareResultHeading > span { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; border-radius: 999px; background: var(--danger); color: #fff; font-size: 12px; font-weight: 850; line-height: 1; }
+.shareResultWarning { border: 1px solid color-mix(in srgb, var(--danger) 52%, var(--border)); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); box-shadow: inset 3px 0 0 color-mix(in srgb, var(--danger) 78%, transparent); }
+.shareResultWarning .shareResultHeading strong { color: color-mix(in srgb, var(--danger) 78%, var(--text)); font-size: 13px; font-weight: 800; }
+.shareResultWarning p { color: color-mix(in srgb, var(--danger) 42%, var(--text)); font-weight: 550; }
 .shareResult p { margin: 0; font-size: 11px; line-height: 1.4; }
 .shareResult > div { display: flex; gap: 8px; align-items: center; }
 .shareResult input { min-width: 0; flex: 1; height: 38px; min-height: 38px; border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; background: var(--surface); color: var(--text); font-size: 11px; }

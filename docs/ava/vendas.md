@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.0.01 -->
+<!-- ava-version: 1.8.0.02 -->
 <!-- avantavendas-asset-revision: 77 -->
+
+> Revisão 1.8.0.02: destaque visual do compartilhamento do AvantaProjetos não
+> altera o funcionamento do AvantaVendas.
 
 > Revisão 1.8.0.01: centralização de projetos compartilhados do AvantaProjetos
 > não altera o funcionamento do AvantaVendas.

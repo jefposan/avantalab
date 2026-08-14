@@ -111,6 +111,9 @@ test('modal de compartilhamento é compacto e concentra a ação junto ao acesso
   assert.match(estilos, /\.shareVerifyButton \{[^}]*min-height: 34px;/);
   assert.match(estilos, /\.shareVerifyButton::after \{[^}]*inset: -5px 0;/);
   assert.match(estilos, /\.sharePeopleList > div \{[^}]*min-height: 46px;/);
+  assert.match(inicioProjetos, /shareState\.duplicate \? styles\.shareResultWarning : ''/);
+  assert.match(inicioProjetos, /role=\{shareState\.duplicate \? 'alert' : 'status'\}/);
+  assert.match(estilos, /\.shareResultWarning \{[^}]*border: 1px solid color-mix\(in srgb, var\(--danger\) 52%, var\(--border\)\);[^}]*background: color-mix\(in srgb, var\(--danger\) 8%, var\(--surface\)\);/);
 });
 
 test('compartilhamento bloqueia duplicidade no mesmo projeto e recupera o acesso existente', () => {
