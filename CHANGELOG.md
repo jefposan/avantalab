@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.3.35 - 2026-08-14
+
+- Organização interna: telas e protótipos em desenvolvimento foram retirados
+  da publicação e preservados no repositório local **AvantaLab Projetos**.
+  Controle de Ponto, Recebimentos, Projetos e AvantaVendas permanecem ativos
+  sem alteração.
+
 ## 1.7.3.34-av78 - 2026-08-13
 
 - AvantaVendas: cada perfil passa a ter um **Nome nos comprovantes** próprio em

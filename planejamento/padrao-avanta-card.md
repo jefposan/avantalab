@@ -3,7 +3,7 @@
 Nome do padrão: **AvantaShell** ("concha" em duas camadas).
 Componente: `app/components/AvantaCard.tsx` + `AvantaCard.module.css`.
 Preset aprovado: `criarAvantaShellPreset({ corPrimaria, darkMode })`.
-Demo: `/avanta-card-demo`.
+Demo preservada fora da publicação: `/Users/JEFF/AvantaLab Projetos/prototipos/avanta-card-demo/origem-app/page.tsx`.
 
 Regra central: **AvantaShell não é paleta visual.** Ele fornece somente a
 modelagem estrutural do header/recorte. Fundos, textos, bordas, sombras,

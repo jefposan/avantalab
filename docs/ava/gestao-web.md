@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.34 -->
+<!-- ava-version: 1.7.3.35 -->
+
+> Revisão 1.7.3.35: organização interna de módulos e protótipos em
+> desenvolvimento; sem alteração operacional na Gestão Web.
 
 > Revisão 1.7.3.34: em **Compartilhar acesso**, a verificação fica ao lado do
 > tipo de acesso, o X fecha e descarta o formulário, e campos, avisos e pessoas

@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.35: módulos e protótipos em desenvolvimento foram
+// isolados fora do build oficial, sem mudança na orientação operacional.
 // Revisado na versão 1.7.3.34: Compartilhar acesso usa composição compacta,
 // mantém a verificação junto ao acesso e descarta o rascunho pelo X.
 // Revisado na versão 1.7.3.33: Copiar link usa a área de transferência nativa

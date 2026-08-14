@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { supabase } from '@/app/lib/supabase';
 import { formatarCentavos, VALORES_RECARGA_CENTAVOS } from '@/app/lib/carteira';
 import styles from './carteira.module.css';
@@ -59,7 +58,7 @@ export default function CarteiraCreditos() {
   }
 
   return <section className={styles.card} aria-labelledby="carteira-titulo">
-    <header className={styles.header}><div><span>Conta AvantaLab</span><h1 id="carteira-titulo">Meus créditos</h1><p>Adicione saldo à sua carteira. Neste momento, os créditos podem ser usados nas consultas disponíveis.</p></div><Link href="/consulta">Ir para consultas</Link></header>
+    <header className={styles.header}><div><span>Conta AvantaLab</span><h1 id="carteira-titulo">Meus créditos</h1><p>Adicione saldo à sua carteira. Os créditos ficam disponíveis quando as consultas forem integradas ao produto.</p></div></header>
     {empresas.length > 1 && <label className={styles.seletor}>Perfil<select value={empresaId} onChange={(e) => { setEmpresaId(e.target.value); setCarregando(true); void carregarEstado(e.target.value); }}>{empresas.map((empresa) => <option value={empresa.id} key={empresa.id}>{empresa.nome}</option>)}</select></label>}
     {carregando ? <p className={styles.estado} aria-live="polite">Carregando carteira…</p> : mensagem && !empresaId ? <p className={styles.aviso}>{mensagem}</p> : <>
       <div className={styles.saldo}><span>Saldo disponível</span><strong>{formatarCentavos(saldo)}</strong><small>Créditos não expiram.</small></div>

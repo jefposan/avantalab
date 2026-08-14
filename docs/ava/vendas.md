@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.34 -->
+<!-- ava-version: 1.7.3.35 -->
 <!-- avantavendas-asset-revision: 78 -->
+
+> Revisão 1.7.3.35: organização interna de módulos e protótipos em
+> desenvolvimento; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.7.3.34-av78: em **Configurações > Conta de vendas**, proprietário
 > ou administrador pode definir o **Nome nos comprovantes** daquele perfil. O
