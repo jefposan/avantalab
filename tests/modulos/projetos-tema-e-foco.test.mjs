@@ -13,6 +13,11 @@ const estilos = readFileSync('app/projetos/projetos.module.css', 'utf8');
 const ajustes = readFileSync('app/api/modulos/projetos/ajustes/route.ts', 'utf8');
 const inicioProjetos = readFileSync('app/projetos/components/ProjectHome.tsx', 'utf8');
 const compartilhamentosProjetos = readFileSync('app/api/modulos/projetos/compartilhamentos/route.ts', 'utf8');
+const compartilhadosProjetos = readFileSync('app/api/modulos/projetos/compartilhados/route.ts', 'utf8');
+const indiceCompartilhados = readFileSync('app/lib/projetos-compartilhados-servidor.ts', 'utf8');
+const documentoProjetos = readFileSync('app/api/modulos/projetos/documento/route.ts', 'utf8');
+const listarModulos = readFileSync('app/api/cobranca/modulos/listar/route.ts', 'utf8');
+const paginaProjetos = readFileSync('app/projetos/page.tsx', 'utf8');
 
 test('AvantaProjetos recebe o tema salvo no perfil, sem depender do sistema operacional', () => {
   assert.match(acesso, /select\('cor_primaria, dark_mode'\)/);
@@ -116,4 +121,32 @@ test('compartilhamento bloqueia duplicidade no mesmo projeto e recupera o acesso
   assert.match(inicioProjetos, /Acesso já existente/);
   assert.match(inicioProjetos, /Pessoas com acesso a “\{shareProject\?\.name\}”/);
   assert.match(inicioProjetos, /Esta lista pertence somente a este projeto\./);
+});
+
+test('conta reúne projetos compartilhados de empresas diferentes sem liberar o módulo completo', () => {
+  assert.match(indiceCompartilhados, /\.eq\('user_id', userId\)[\s\S]*\.eq\('situacao', 'ativo'\)/);
+  assert.match(indiceCompartilhados, /empresa_modulos/);
+  assert.match(indiceCompartilhados, /projetos_documentos/);
+  assert.match(indiceCompartilhados, /companyName: companies\.get\(share\.empresa_id\)/);
+  assert.match(indiceCompartilhados, /access: share\.acesso/);
+  assert.match(compartilhadosProjetos, /listarProjetosCompartilhados\(db, auth\.user\.id\)/);
+  assert.match(listarModulos, /projetosCompartilhados = \(await listarProjetosCompartilhados\(acesso\.db, acesso\.usuario\.id\)\)\.length/);
+  assert.match(gestao, /!modulosAtivos\.includes\('projetos'\) && projetosCompartilhados > 0/);
+  assert.match(gestao, />Compartilhado<\/span>/);
+  assert.match(cliente, /if \(!accessResponse\.ok && projects\.length > 0\) \{ setSharedOnly\(true\); return; \}/);
+  assert.match(cliente, /sharedAccessOnly/);
+  assert.match(inicioProjetos, /shared:\$\{project\.companyId\}:\$\{project\.projectId\}/);
+  assert.match(inicioProjetos, /project\.companyName/);
+});
+
+test('link abre o projeto exato e aplica a permissão individual de cada compartilhamento', () => {
+  assert.match(paginaProjetos, /initialProjectId=\{String\(projetoId \|\| ''\)\.trim\(\)\}/);
+  assert.match(cliente, /projetoId=\$\{encodeURIComponent\(project\.projectId\)\}/);
+  assert.match(cliente, /access\.compartilhamentos\?\.find\(\(item\) => item\.projetoId === activeProjectId\)\?\.acesso/);
+  assert.match(cliente, /activeSharedAccess !== 'editor'/);
+  assert.match(acesso, /compartilhamentos = vinculos\.map/);
+  assert.match(documentoProjetos, /const compartilhados = new Set/);
+  assert.match(documentoProjetos, /const editaveis = new Set/);
+  assert.match(documentoProjetos, /Um projeto de somente visualização não pode ser alterado\./);
+  assert.match(documentoProjetos, /editaveis\.has\(project\.id\) \? recebidos\.get\(project\.id\) : null/);
 });

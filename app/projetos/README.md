@@ -8,7 +8,11 @@ marca, DOM, imagens, textos comerciais ou identidade visual do ClickUp.
 
 - Pasta exclusiva: `app/projetos`.
 - Rota oficial: `/projetos`, em página total na mesma guia.
-- O botão **Projetos** aparece no menu da Gestão quando o módulo está instalado.
+- O botão **Projetos** aparece no menu da Gestão quando o módulo está instalado
+  ou quando a conta autenticada possui ao menos um projeto compartilhado ativo.
+- Sem instalação, o botão recebe o selo **Compartilhado** e abre somente os
+  projetos recebidos; instalar o módulo transforma o mesmo acesso no modo
+  completo, sem criar um segundo botão.
 - O botão **‹ Início** retorna à Gestão preservando o perfil ativo.
 - Dados são persistidos no Supabase por `empresa_id` e preservados ao remover.
 - Acesso, instalação, validade e hierarquia são validados no servidor e por RLS.
@@ -56,6 +60,9 @@ uma árvore determinística nas direções horizontal e vertical.
 - Busca por título, descrição, etiqueta e responsável, com centralização do mapa.
 - Importação JSON validada/sanitizada e exportação JSON versionada.
 - Autosave com debounce e indicador de salvamento no perfil empresarial.
+- Projetos compartilhados por diferentes contas aparecem junto aos projetos
+  próprios, identificando origem e permissão. Convidados não assinantes abrem
+  somente o conteúdo recebido e não criam, importam ou administram projetos.
 - Layout responsivo, navegação por teclado, alvos de toque e movimento reduzido.
 
 ## Regra de progresso

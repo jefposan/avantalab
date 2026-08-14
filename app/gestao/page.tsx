@@ -849,6 +849,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [modulosErro, setModulosErro] = useState<string | null>(null);
   const [moduloAcaoId, setModuloAcaoId] = useState<string | null>(null);
   const [modulosCancelamentos, setModulosCancelamentos] = useState<Record<string, string>>({});
+  const [projetosCompartilhados, setProjetosCompartilhados] = useState(0);
   const [modalPontoAdmin, setModalPontoAdmin] = useState(false);
   const [modalRecebimentos, setModalRecebimentos] = useState(false);
   const [abaInicialPontoAdmin, setAbaInicialPontoAdmin] = useState<AbaPontoAdmin>('lista');
@@ -2496,6 +2497,7 @@ useEffect(() => {
         precoMensal: obterRegistroModulo(String(m.id))?.comercial.precoMensal ?? 14.9,
       })));
       setModulosAtivos(Array.isArray(json.ativos) ? json.ativos.map(String) : []);
+      setProjetosCompartilhados(Number.isFinite(Number(json.projetosCompartilhados)) ? Math.max(0, Number(json.projetosCompartilhados)) : 0);
       setModulosCancelamentos(
         json.cancelamentos && typeof json.cancelamentos === 'object'
           ? Object.fromEntries(Object.entries(json.cancelamentos).map(([id, data]) => [id, String(data)]))
@@ -2504,6 +2506,7 @@ useEffect(() => {
     } catch (error) {
       setModulosCatalogo([]);
       setModulosAtivos([]);
+      setProjetosCompartilhados(0);
       setModulosCancelamentos({});
       setModulosErro(error instanceof Error ? error.message : 'Não foi possível carregar os módulos.');
     } finally {
@@ -10115,9 +10118,31 @@ if (validacaoTelefoneObrigatoria) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h7v6H4V5Zm9 0h7v10h-7V5ZM4 13h7v6H4v-6Zm9 4h7v2h-7v-2Z" />
               </svg>
               {modulo.navegacao.rotuloMenu}
+              {modulo.id === 'projetos' && projetosCompartilhados > 0 && <span className="ml-auto rounded-full bg-cyan-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-900">{projetosCompartilhados} compartilhado{projetosCompartilhados === 1 ? '' : 's'}</span>}
             </button>
           </Tooltip>
         ))}
+
+        {!modulosAtivos.includes('projetos') && projetosCompartilhados > 0 && (
+          <Tooltip texto={`${projetosCompartilhados} projeto${projetosCompartilhados === 1 ? '' : 's'} compartilhado${projetosCompartilhados === 1 ? '' : 's'} com você.`} posicao="right" wrapperClassName="order-28 w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setAjustesAberto(false);
+                setMenuAjuste(null);
+                router.push(`/projetos?empresaId=${encodeURIComponent(empresaId || '')}`);
+              }}
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h7v6H4V5Zm9 0h7v10h-7V5ZM4 13h7v6H4v-6Zm9 4h7v2h-7v-2Z" />
+              </svg>
+              Projetos
+              <span className="ml-auto rounded-full bg-cyan-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-900">Compartilhado</span>
+            </button>
+          </Tooltip>
+        )}
 
         {/* 4. Ponto */}
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (

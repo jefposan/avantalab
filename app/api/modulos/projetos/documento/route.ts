@@ -48,14 +48,24 @@ export async function PUT(request: Request) {
   const { data: auth } = await createClient(url, anon).auth.getUser(token);
   if (!auth.user) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
   const db = createClient(url, service);
-  const { data: acessos } = await db.from('projetos_compartilhamentos').select('projeto_id').eq('empresa_id', empresaId).eq('user_id', auth.user.id).eq('situacao', 'ativo').eq('acesso', 'editor');
-  const permitidos = new Set((acessos || []).map((item) => item.projeto_id));
-  if (!permitidos.size || documento.projects.some((project) => !permitidos.has(project.id))) return NextResponse.json({ erro: true, mensagem: 'Você só pode alterar projetos compartilhados com você.' }, { status: 403 });
+  const { data: acessos } = await db.from('projetos_compartilhamentos').select('projeto_id,acesso').eq('empresa_id', empresaId).eq('user_id', auth.user.id).eq('situacao', 'ativo');
+  const compartilhados = new Set((acessos || []).map((item) => item.projeto_id));
+  const editaveis = new Set((acessos || []).filter((item) => item.acesso === 'editor').map((item) => item.projeto_id));
+  if (!editaveis.size || documento.projects.some((project) => !compartilhados.has(project.id))) return NextResponse.json({ erro: true, mensagem: 'Você só pode alterar projetos compartilhados com você.' }, { status: 403 });
   const { data: atual, error: leituraErro } = await db.from('projetos_documentos').select('documento').eq('empresa_id', empresaId).maybeSingle();
   if (leituraErro || !atual?.documento) return NextResponse.json({ erro: true, mensagem: 'Não foi possível salvar os projetos.' }, { status: 500 });
   const original = atual.documento as Documento;
   const recebidos = new Map(documento.projects.map((project) => [project.id, project]));
-  const projects = (original.projects || []).map((project) => recebidos.get(project.id) || project);
+  const visualizacaoAlterada = (original.projects || []).some((project) => {
+    if (!compartilhados.has(project.id) || editaveis.has(project.id)) return false;
+    const recebido = recebidos.get(project.id);
+    return recebido ? JSON.stringify(recebido) !== JSON.stringify(project) : false;
+  });
+  if (visualizacaoAlterada) return NextResponse.json({ erro: true, mensagem: 'Um projeto de somente visualização não pode ser alterado.' }, { status: 403 });
+  const projects = (original.projects || []).map((project) => {
+    const recebido = editaveis.has(project.id) ? recebidos.get(project.id) : null;
+    return recebido ? { ...recebido, id: project.id, companyId: empresaId } : project;
+  });
   const { error } = await db.from('projetos_documentos').update({ documento: { ...original, projects }, atualizado_por: auth.user.id, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId);
   if (error) return NextResponse.json({ erro: true, mensagem: 'Não foi possível salvar os projetos.' }, { status: 500 });
   return NextResponse.json({ ok: true });

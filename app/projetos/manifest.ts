@@ -5,7 +5,7 @@ export const projetosManifest = {
   technicalName: 'projetos',
   commercialName: 'AvantaProjetos',
   featureName: 'Mapa de Projetos',
-  version: '1.0.0',
+  version: '1.1.0',
   experimental: false,
   audience: ['assinantes-avantalab', 'equipes-empresariais'],
   route: '/projetos',

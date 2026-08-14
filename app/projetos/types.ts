@@ -93,6 +93,25 @@ export type ProjectCollection = {
   projects: Project[];
 };
 
+export type SharedProjectSummary = {
+  shareId: string;
+  companyId: string;
+  companyName: string;
+  companyColor: string;
+  projectId: string;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+  status: ProjectStatus;
+  archivedAt: string | null;
+  dueDate: string | null;
+  updatedAt: string;
+  taskCount: number;
+  progress: number;
+  access: 'editor' | 'observador';
+};
+
 export type ProjectExport = {
   kind: 'avantalab-project-map';
   version: typeof PROJECT_FILE_VERSION;

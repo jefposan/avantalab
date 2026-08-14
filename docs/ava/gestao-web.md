@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.36 -->
+<!-- ava-version: 1.8.0 -->
+
+> Revisão 1.8.0: projetos compartilhados por diferentes contas aparecem no
+> mesmo painel de **Projetos**, com empresa de origem e permissão no card. Quem
+> não instalou o módulo vê um único botão **Projetos** com o selo
+> **Compartilhado** e acessa somente o conteúdo recebido; não pode criar,
+> importar ou administrar projetos. Ao instalar, o mesmo botão assume o modo
+> completo e mantém os cards compartilhados. O link abre o projeto exato e o
+> retorno preserva o perfil do convidado.
 
 > Revisão 1.7.3.36: os campos e a ação de **Compartilhar acesso** ficaram cerca
 > de 25% mais baixos visualmente, preservando alinhamento e área interativa.

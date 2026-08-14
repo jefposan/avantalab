@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { calculateProjectProgress, createId, removeParticipantFromCollection, removeProjectFromCollection, validateProjectImport } from '../domain/project';
 import { createProjectFromTemplate } from '../data/demo';
-import { STATUS_LABELS, type Project, type ProjectCollection, type ProjectStatus, type ProjectTemplate } from '../types';
+import { STATUS_LABELS, type Project, type ProjectCollection, type ProjectStatus, type ProjectTemplate, type SharedProjectSummary } from '../types';
 import styles from '../projetos.module.css';
 import { Icon } from './Icon';
 import { Modal } from './Modal';
@@ -126,12 +126,16 @@ function ProjectIconPicker({ value, onChange }: { value: string; onChange: (valu
   </div>;
 }
 
-export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly = false }: {
+export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly = false, sharedProjects = [], sharedProjectsState = 'ready', onOpenShared, sharedAccessOnly = false }: {
   collection: ProjectCollection;
   onChange: (next: ProjectCollection) => void;
   onOpen: (projectId: string) => void;
   onMessage: (message: string) => void;
   readOnly?: boolean;
+  sharedProjects?: SharedProjectSummary[];
+  sharedProjectsState?: 'loading' | 'ready' | 'error';
+  onOpenShared?: (project: SharedProjectSummary) => void;
+  sharedAccessOnly?: boolean;
 }) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<ProjectStatus | 'todos'>('todos');
@@ -196,13 +200,18 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     };
   }, [collection.projects, participantToDeleteId]);
 
+  const externalSharedProjects = useMemo(() => {
+    const localKeys = new Set(collection.projects.map((project) => `${project.companyId}:${project.id}`));
+    return sharedProjects.filter((project) => !localKeys.has(`${project.companyId}:${project.projectId}`));
+  }, [collection.projects, sharedProjects]);
+
   const counts = useMemo(() => ({
-    all: collection.projects.length,
+    all: collection.projects.filter((project) => !project.archivedAt).length + externalSharedProjects.filter((project) => !project.archivedAt).length,
     favorites: collection.projects.filter((project) => project.favorite && !project.archivedAt).length,
-    active: collection.projects.filter((project) => ['ideia', 'planejado', 'em_andamento', 'aguardando'].includes(project.status) && !project.archivedAt).length,
-    completed: collection.projects.filter((project) => project.status === 'concluido' && !project.archivedAt).length,
-    archived: collection.projects.filter((project) => project.archivedAt).length,
-  }), [collection.projects]);
+    active: collection.projects.filter((project) => ['ideia', 'planejado', 'em_andamento', 'aguardando'].includes(project.status) && !project.archivedAt).length + externalSharedProjects.filter((project) => ['ideia', 'planejado', 'em_andamento', 'aguardando'].includes(project.status) && !project.archivedAt).length,
+    completed: collection.projects.filter((project) => project.status === 'concluido' && !project.archivedAt).length + externalSharedProjects.filter((project) => project.status === 'concluido' && !project.archivedAt).length,
+    archived: collection.projects.filter((project) => project.archivedAt).length + externalSharedProjects.filter((project) => project.archivedAt).length,
+  }), [collection.projects, externalSharedProjects]);
 
   const projects = useMemo(() => collection.projects.filter((project) => {
     const normalized = `${project.name} ${project.description}`.toLocaleLowerCase('pt-BR');
@@ -215,6 +224,18 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     return inSection && (!query || normalized.includes(query.toLocaleLowerCase('pt-BR'))) && (status === 'todos' || project.status === status)
       && (assignee === 'todos' || project.participantIds.includes(assignee)) && dueMatches;
   }), [collection.projects, section, query, status, assignee, dateFilter]);
+
+  const filteredSharedProjects = useMemo(() => externalSharedProjects.filter((project) => {
+    const normalized = `${project.name} ${project.description} ${project.companyName}`.toLocaleLowerCase('pt-BR');
+    const inSection = section === 'all' ? !project.archivedAt
+      : section === 'favorites' ? false
+      : section === 'active' ? ['ideia', 'planejado', 'em_andamento', 'aguardando'].includes(project.status) && !project.archivedAt
+      : section === 'completed' ? project.status === 'concluido' && !project.archivedAt
+      : Boolean(project.archivedAt);
+    const dueMatches = dateFilter === 'todos' || (dateFilter === 'com_prazo' ? Boolean(project.dueDate) : !project.dueDate);
+    return inSection && (!query || normalized.includes(query.toLocaleLowerCase('pt-BR'))) && (status === 'todos' || project.status === status)
+      && assignee === 'todos' && dueMatches;
+  }), [externalSharedProjects, section, query, status, assignee, dateFilter]);
 
   const updateProject = (id: string, update: (project: Project) => Project) => onChange({
     ...collection,
@@ -482,6 +503,21 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     </div>}
   </div>;
 
+  const renderSharedProjectCard = (project: SharedProjectSummary) => <article key={`shared:${project.companyId}:${project.projectId}`} className={`${styles.projectCard} ${styles.sharedProjectCard}`}>
+    <span className={styles.sharedProjectBadge}>Compartilhado</span>
+    <button type="button" className={styles.projectCardMain} onClick={() => onOpenShared?.(project)} aria-label={`Abrir projeto compartilhado ${project.name}, de ${project.companyName}`}>
+      <span className={styles.projectCover} style={{ background: project.color }}><span>{project.icon}</span><small>{project.archivedAt ? 'Arquivado' : STATUS_LABELS[project.status]}</small></span>
+      <span className={styles.projectCardBody}><strong>{project.name}</strong><span>{project.description || 'Projeto sem descrição.'}</span><small className={styles.sharedProjectOrigin}>{project.companyName}</small></span>
+    </button>
+    <div className={styles.projectMeta}><span>{project.access === 'editor' ? 'Pode editar' : 'Somente visualizar'}</span><span>{project.taskCount} tarefas</span><span>{dateLabel(project.dueDate)}</span></div>
+    <div className={styles.progressRow}><div><i style={{ width: `${project.progress}%` }} /></div><strong>{project.progress}%</strong></div>
+    <footer className={styles.projectFooter}><small>Alterado {dateLabel(project.updatedAt)}</small></footer>
+  </article>;
+
+  const renderSharedProjectListRow = (project: SharedProjectSummary) => <div className={`${styles.projectListRow} ${styles.sharedProjectListRow}`} role="row" key={`shared:${project.companyId}:${project.projectId}`}><button type="button" onClick={() => onOpenShared?.(project)}><i style={{ background: project.color }}>{project.icon}</i><span><strong>{project.name}</strong><small>{project.companyName} · Compartilhado</small></span></button><span>{STATUS_LABELS[project.status]}</span><span>{project.taskCount}</span><span>{project.progress}%</span><span>{dateLabel(project.dueDate)}</span><span className={styles.sharedListAccess}>{project.access === 'editor' ? 'Pode editar' : 'Visualiza'}</span></div>;
+
+  const hasVisibleProjects = projects.length > 0 || filteredSharedProjects.length > 0;
+
   return <div className={styles.home}>
     <header className={styles.homeHeader}>
       <span className={styles.eyebrow}>AvantaProjetos</span>
@@ -495,6 +531,8 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
       </div>
     </header>
 
+    {sharedAccessOnly && <section className={styles.sharedAccessBanner} aria-label="Acesso compartilhado"><strong>Acesso compartilhado</strong><span>Você pode trabalhar nos projetos recebidos. Para criar projetos próprios, instale o AvantaProjetos no seu perfil.</span></section>}
+
     <nav className={styles.projectSections} aria-label="Categorias de projetos">
       {([['all', 'Recentes'], ['favorites', 'Favoritos'], ['active', 'Ativos'], ['completed', 'Concluídos'], ['archived', 'Arquivados']] as const).map(([id, label]) => <button type="button" key={id} className={section === id ? styles.activeSection : ''} onClick={() => setSection(id)}>{label}<span>{counts[id]}</span></button>)}
     </nav>
@@ -507,7 +545,9 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
       <div className={styles.displayToggle} aria-label="Tipo de visualização"><button type="button" className={display === 'cards' ? styles.activeToggle : ''} onClick={() => setDisplay('cards')} aria-label="Exibir em cards"><Icon name="grid" size={18} /></button><button type="button" className={display === 'list' ? styles.activeToggle : ''} onClick={() => setDisplay('list')} aria-label="Exibir em lista"><Icon name="list" size={18} /></button></div>
     </section>
 
-    {!projects.length ? <div className={styles.emptyState}><span>◇</span><h2>Nenhum projeto encontrado</h2><p>{readOnly ? 'Ainda não há projetos disponíveis neste perfil.' : 'Ajuste os filtros ou crie um novo projeto para começar.'}</p>{!readOnly && <button type="button" className={styles.primaryButton} onClick={() => setCreateOpen(true)}>Novo projeto</button>}</div>
+    {sharedProjectsState === 'loading' && !hasVisibleProjects ? <div className={styles.emptyState}><span>◇</span><h2>Carregando projetos compartilhados</h2><p>Reunindo os acessos recebidos por esta conta…</p></div>
+      : sharedProjectsState === 'error' && !hasVisibleProjects ? <div className={styles.emptyState} role="alert"><span>!</span><h2>Não foi possível carregar os compartilhamentos</h2><p>Tente abrir Projetos novamente.</p></div>
+      : !hasVisibleProjects ? <div className={styles.emptyState}><span>◇</span><h2>Nenhum projeto encontrado</h2><p>{readOnly ? 'Ainda não há projetos compartilhados disponíveis para esta conta.' : 'Ajuste os filtros ou crie um novo projeto para começar.'}</p>{!readOnly && <button type="button" className={styles.primaryButton} onClick={() => setCreateOpen(true)}>Novo projeto</button>}</div>
       : display === 'cards' ? <div className={styles.projectGrid}>{projects.map((project) => {
         const progress = calculateProjectProgress(project);
         const people = project.participantIds.map((id) => collection.people.find((person) => person.id === id)).filter(Boolean);
@@ -522,7 +562,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
           <div className={styles.progressRow}><div><i style={{ width: `${progress}%` }} /></div><strong>{progress}%</strong></div>
           <footer className={styles.projectFooter}><small>Alterado {dateLabel(project.updatedAt)}</small></footer>
         </article>;
-      })}</div> : <div className={styles.projectList} role="table"><div className={styles.projectListHead} role="row"><span>Projeto</span><span>Status</span><span>Tarefas</span><span>Progresso</span><span>Prazo</span><span>Ações</span></div>{projects.map((project) => <div className={styles.projectListRow} role="row" key={project.id}><button type="button" onClick={() => onOpen(project.id)}><i style={{ background: project.color }}>{project.icon}</i><span><strong>{project.name}</strong><small>{project.description || 'Sem descrição'}</small></span></button><span>{STATUS_LABELS[project.status]}</span><span>{project.nodes.filter((node) => node.type === 'tarefa').length}</span><span>{calculateProjectProgress(project)}%</span><span>{dateLabel(project.dueDate)}</span>{renderProjectActions(project, true)}</div>)}</div>}
+      })}{filteredSharedProjects.map(renderSharedProjectCard)}</div> : <div className={styles.projectList} role="table"><div className={styles.projectListHead} role="row"><span>Projeto</span><span>Status</span><span>Tarefas</span><span>Progresso</span><span>Prazo</span><span>Ações</span></div>{projects.map((project) => <div className={styles.projectListRow} role="row" key={project.id}><button type="button" onClick={() => onOpen(project.id)}><i style={{ background: project.color }}>{project.icon}</i><span><strong>{project.name}</strong><small>{project.description || 'Sem descrição'}</small></span></button><span>{STATUS_LABELS[project.status]}</span><span>{project.nodes.filter((node) => node.type === 'tarefa').length}</span><span>{calculateProjectProgress(project)}%</span><span>{dateLabel(project.dueDate)}</span>{renderProjectActions(project, true)}</div>)}{filteredSharedProjects.map(renderSharedProjectListRow)}</div>}
 
     <Modal open={createOpen} onClose={closeCreateProject} title="Novo projeto" description="Escolha um modelo editável ou comece em branco." wide>
       <form className={styles.projectForm} onSubmit={submitProject}>

@@ -7,8 +7,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true },
 };
 
-export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ empresaId?: string | string[] }> }) {
+export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ empresaId?: string | string[]; projetoId?: string | string[]; retornoEmpresaId?: string | string[] }> }) {
   const params = await searchParams;
   const empresaId = Array.isArray(params.empresaId) ? params.empresaId[0] : params.empresaId;
-  return <ProjetosClient companyId={String(empresaId || '').trim()} />;
+  const projetoId = Array.isArray(params.projetoId) ? params.projetoId[0] : params.projetoId;
+  const retornoEmpresaId = Array.isArray(params.retornoEmpresaId) ? params.retornoEmpresaId[0] : params.retornoEmpresaId;
+  return <ProjetosClient companyId={String(empresaId || '').trim()} initialProjectId={String(projetoId || '').trim()} returnCompanyId={String(retornoEmpresaId || '').trim()} />;
 }

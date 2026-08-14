@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { autenticarPerfilCobranca } from '@/app/lib/cobranca-servidor';
+import { listarProjetosCompartilhados } from '@/app/lib/projetos-compartilhados-servidor';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,11 +66,19 @@ export async function GET(request: Request) {
     ? catalogo.data || []
     : (catalogo.data || []).filter((modulo) => ativos.includes(String(modulo.id)));
 
+  let projetosCompartilhados = 0;
+  try {
+    projetosCompartilhados = (await listarProjetosCompartilhados(acesso.db, acesso.usuario.id)).length;
+  } catch (error) {
+    console.error('Falha ao consultar projetos compartilhados no menu.', error);
+  }
+
   return NextResponse.json(
     {
       modulos: modulosVisiveis,
       ativos,
       cancelamentos: acesso.podeGerenciar ? cancelamentos : {},
+      projetosCompartilhados,
     },
     { headers: { 'Cache-Control': 'private, no-store' } },
   );

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.8.0 - 2026-08-14
+
+- AvantaProjetos reúne, na mesma página, projetos próprios e projetos
+  compartilhados por diferentes contas. Cada card recebido identifica a empresa
+  de origem e se a permissão permite editar ou somente visualizar.
+- Contas sem assinatura ou sem o módulo instalado recebem um único botão
+  **Projetos** com o selo **Compartilhado**. Esse acesso não libera criação,
+  importação ou administração do módulo; ao instalar, o mesmo botão assume o
+  estado normal e preserva os cards recebidos.
+- Links abrem diretamente o projeto autorizado e o retorno preserva o perfil do
+  convidado. Permissões são aplicadas individualmente quando a mesma empresa
+  compartilha projetos editáveis e projetos de somente visualização.
+
 ## 1.7.3.36 - 2026-08-13
 
 - AvantaProjetos reduz em aproximadamente 25% a altura visual dos campos e do

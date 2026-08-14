@@ -16,13 +16,23 @@ export async function GET(request: Request) {
   let acesso: Awaited<ReturnType<typeof autenticarPerfilCobranca>> = await autenticarPerfilCobranca(request, empresaId);
   let compartilhado = false;
   let compartilhamentoEdita = false;
+  let compartilhamentos: Array<{ projetoId: string; acesso: 'editor' | 'observador' }> = [];
+  let retornoEmpresaId: string | null = null;
   if (!acesso && moduloId === 'projetos') {
     const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
     const cliente = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
     const { data: auth } = await cliente.auth.getUser(token);
     const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '');
-    const { data: vinculo } = auth.user ? await db.from('projetos_compartilhamentos').select('id,acesso').eq('empresa_id', empresaId).eq('user_id', auth.user.id).eq('situacao', 'ativo').limit(1).maybeSingle() : { data: null };
-    if (vinculo && auth.user) { acesso = { db, usuario: auth.user, vinculo: { id: vinculo.id, perfil: 'operador_simples', status: 'ativo' }, podeGerenciar: false }; compartilhado = true; compartilhamentoEdita = vinculo.acesso === 'editor'; }
+    const { data: vinculos } = auth.user ? await db.from('projetos_compartilhamentos').select('id,projeto_id,acesso').eq('empresa_id', empresaId).eq('user_id', auth.user.id).eq('situacao', 'ativo').order('criado_em') : { data: null };
+    const primeiroVinculo = vinculos?.[0];
+    if (primeiroVinculo && auth.user) {
+      compartilhamentos = vinculos.map((item) => ({ projetoId: String(item.projeto_id), acesso: item.acesso === 'editor' ? 'editor' : 'observador' }));
+      compartilhamentoEdita = compartilhamentos.some((item) => item.acesso === 'editor');
+      const { data: retorno } = await db.from('usuarios_empresa').select('empresa_id').eq('user_id', auth.user.id).eq('status', 'ativo').neq('empresa_id', empresaId).limit(1).maybeSingle();
+      retornoEmpresaId = retorno?.empresa_id || null;
+      acesso = { db, usuario: auth.user, vinculo: { id: primeiroVinculo.id, perfil: 'operador_simples', status: 'ativo' }, podeGerenciar: false };
+      compartilhado = true;
+    }
   }
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
   if (COBRANCA_ATIVA) {
@@ -58,6 +68,8 @@ export async function GET(request: Request) {
     nivel,
     podeEditar: compartilhado ? compartilhamentoEdita : nivel !== 'visualizar',
     compartilhado,
+    compartilhamentos,
+    retornoEmpresaId,
     podeGerenciarModulo: acesso.podeGerenciar,
     expiraEm: instalacao.expira_em || null,
   });
