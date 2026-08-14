@@ -63,6 +63,8 @@ uma árvore determinística nas direções horizontal e vertical.
 - Projetos compartilhados por diferentes contas aparecem junto aos projetos
   próprios, identificando origem e permissão. Convidados não assinantes abrem
   somente o conteúdo recebido e não criam, importam ou administram projetos.
+- Membros ativos da própria empresa não recebem compartilhamentos redundantes;
+  nesse caso, o acesso segue exclusivamente a hierarquia da equipe.
 - Layout responsivo, navegação por teclado, alvos de toque e movimento reduzido.
 
 ## Regra de progresso

@@ -123,6 +123,14 @@ test('compartilhamento bloqueia duplicidade no mesmo projeto e recupera o acesso
   assert.match(inicioProjetos, /Esta lista pertence somente a este projeto\./);
 });
 
+test('compartilhamento interno respeita a hierarquia do perfil e não cria acesso redundante', () => {
+  assert.match(compartilhamentosProjetos, /codigo: 'usuario_ja_vinculado_ao_perfil'/);
+  assert.match(compartilhamentosProjetos, /Este usuário já participa deste perfil\. O acesso aos projetos deve seguir a hierarquia definida na equipe\./);
+  assert.match(compartilhamentosProjetos, /\.from\('usuarios_empresa'\)[\s\S]*\.eq\('empresa_id', empresaId\)[\s\S]*\.eq\('user_id', conta\.user_id\)[\s\S]*\.eq\('status', 'ativo'\)/);
+  assert.match(indiceCompartilhados, /const externalShares = sharedRows\.filter\(\(item\) => !ownCompanyIds\.has\(item\.empresa_id\)\)/);
+  assert.match(inicioProjetos, /json\.codigo === 'usuario_ja_vinculado_ao_perfil'/);
+});
+
 test('conta reúne projetos compartilhados de empresas diferentes sem liberar o módulo completo', () => {
   assert.match(indiceCompartilhados, /\.eq\('user_id', userId\)[\s\S]*\.eq\('situacao', 'ativo'\)/);
   assert.match(indiceCompartilhados, /empresa_modulos/);

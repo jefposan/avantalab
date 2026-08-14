@@ -39,7 +39,13 @@ export async function GET(request: Request) {
     .select('id,nome,email,acesso,situacao,user_id,criado_em,revogado_em')
     .eq('empresa_id', empresaId).eq('projeto_id', projetoId).neq('situacao', 'revogado').order('criado_em');
   if (error) return resposta('Não foi possível carregar os acessos do projeto.', 500);
-  return NextResponse.json({ compartilhamentos: data || [] });
+  const userIds = [...new Set((data || []).map((item) => item.user_id).filter((item): item is string => Boolean(item)))];
+  const { data: membrosInternos, error: erroMembrosInternos } = userIds.length
+    ? await acesso.db.from('usuarios_empresa').select('user_id').eq('empresa_id', empresaId).eq('status', 'ativo').in('user_id', userIds)
+    : { data: [], error: null };
+  if (erroMembrosInternos) return resposta('Não foi possível validar os acessos internos deste projeto.', 500);
+  const usuariosInternos = new Set((membrosInternos || []).map((item) => String(item.user_id)));
+  return NextResponse.json({ compartilhamentos: (data || []).filter((item) => !item.user_id || !usuariosInternos.has(String(item.user_id))) });
 }
 
 export async function POST(request: Request) {
@@ -53,6 +59,24 @@ export async function POST(request: Request) {
   const acesso = await autenticarPerfilCobranca(request, empresaId);
   if (!acesso || !PAPEIS_DE_GESTAO.includes(acesso.vinculo.perfil || '')) return resposta('Você não tem permissão para compartilhar este projeto.', 403);
   try {
+    const conta = await localizarConta(acesso.db, email);
+    if (conta?.user_id) {
+      const { data: membroInterno, error: erroMembroInterno } = await acesso.db.from('usuarios_empresa')
+        .select('id')
+        .eq('empresa_id', empresaId)
+        .eq('user_id', conta.user_id)
+        .eq('status', 'ativo')
+        .limit(1)
+        .maybeSingle();
+      if (erroMembroInterno) throw new Error('Não foi possível validar o vínculo deste usuário.');
+      if (membroInterno) {
+        return NextResponse.json({
+          erro: true,
+          codigo: 'usuario_ja_vinculado_ao_perfil',
+          mensagem: 'Este usuário já participa deste perfil. O acesso aos projetos deve seguir a hierarquia definida na equipe.',
+        }, { status: 409 });
+      }
+    }
     const { data: existente, error: erroExistente } = await acesso.db.from('projetos_compartilhamentos')
       .select('id,nome,email,acesso,situacao,user_id,expira_em')
       .eq('empresa_id', empresaId).eq('projeto_id', projetoId).eq('email', email).maybeSingle();
@@ -65,7 +89,6 @@ export async function POST(request: Request) {
         compartilhamento: existente,
       }, { status: 409 });
     }
-    const conta = await localizarConta(acesso.db, email);
     const agora = new Date();
     const convite = await criarTokenConvite();
     const registro = {

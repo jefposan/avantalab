@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.0.01 - 2026-08-14
+
+- AvantaProjetos impede compartilhar um projeto com alguém que já participa da
+  própria empresa de origem. Nesse caso, o acesso continua seguindo a hierarquia
+  da equipe e nenhum vínculo redundante é criado.
+- Compartilhamentos internos antigos deixam de gerar card ou botão
+  **Compartilhado** enquanto o usuário mantiver vínculo ativo com a empresa.
+
 ## 1.8.0 - 2026-08-14
 
 - AvantaProjetos reúne, na mesma página, projetos próprios e projetos

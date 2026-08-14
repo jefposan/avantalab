@@ -354,6 +354,11 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
         onMessage('Este usuário já possui acesso a este projeto.');
         return;
       }
+      if (response.status === 409 && json.codigo === 'usuario_ja_vinculado_ao_perfil') {
+        setShareState({ message: json.mensagem, link: '', found: true, duplicate: true });
+        onMessage('Este usuário já participa deste perfil.');
+        return;
+      }
       if (!response.ok) throw new Error(json.mensagem || 'Não foi possível compartilhar este projeto.');
       setShareState({ message: json.mensagem, link: json.link, found: json.encontrado === true });
       if (json.compartilhamento) {

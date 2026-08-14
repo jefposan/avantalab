@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.8.0: um único acesso a Projetos reúne cards próprios e
+// Revisado na versão 1.8.0.01: um único acesso a Projetos reúne cards próprios e
 // compartilhados de diferentes contas, inclusive para convidados sem licença.
 // Revisado na versão 1.7.3.36: os controles de Compartilhar acesso ficaram
 // visualmente mais compactos, sem alterar o fluxo operacional.

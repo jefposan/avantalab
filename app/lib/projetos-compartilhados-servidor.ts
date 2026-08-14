@@ -25,7 +25,19 @@ export async function listarProjetosCompartilhados(db: SupabaseClient, userId: s
   if (sharesError) throw new Error('Não foi possível consultar os projetos compartilhados.');
   if (!shares?.length) return [];
 
-  const companyIds = [...new Set((shares as ShareRow[]).map((item) => item.empresa_id))];
+  const sharedRows = shares as ShareRow[];
+  const sharedCompanyIds = [...new Set(sharedRows.map((item) => item.empresa_id))];
+  const { data: ownMemberships, error: ownMembershipsError } = await db.from('usuarios_empresa')
+    .select('empresa_id')
+    .eq('user_id', userId)
+    .eq('status', 'ativo')
+    .in('empresa_id', sharedCompanyIds);
+  if (ownMembershipsError) throw new Error('Não foi possível validar a origem dos projetos compartilhados.');
+  const ownCompanyIds = new Set((ownMemberships || []).map((item) => String(item.empresa_id)));
+  const externalShares = sharedRows.filter((item) => !ownCompanyIds.has(item.empresa_id));
+  if (!externalShares.length) return [];
+
+  const companyIds = [...new Set(externalShares.map((item) => item.empresa_id))];
   const [companiesResult, configsResult, modulesResult, documentsResult] = await Promise.all([
     db.from('empresas').select('id,nome').in('id', companyIds),
     db.from('configuracoes').select('empresa_id,cor_primaria,dark_mode').in('empresa_id', companyIds),
@@ -53,7 +65,7 @@ export async function listarProjetosCompartilhados(db: SupabaseClient, userId: s
   const configs = new Map((configsResult.data || []).map((item) => [String(item.empresa_id), String(item.cor_primaria || '#003E73')]));
   const documents = new Map((documentsResult.data || []).map((item) => [String(item.empresa_id), item.documento as ProjectCollection | null]));
 
-  return (shares as ShareRow[]).flatMap((share) => {
+  return externalShares.flatMap((share) => {
     if (!installedCompanies.has(share.empresa_id)) return [];
     const collection = documents.get(share.empresa_id);
     const project = collection?.projects?.find((item) => item.id === share.projeto_id) as Project | undefined;
