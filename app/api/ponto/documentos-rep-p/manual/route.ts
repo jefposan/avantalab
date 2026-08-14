@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { createHash, randomUUID } from 'node:crypto';
 import { APP_VERSION } from '@/app/lib/version';
-import { autorizarEmpresa } from '../route';
+import { autorizarEmpresa } from '../autorizacao';
 
 export const runtime = 'nodejs';
 const erro = (mensagem: string, status = 400) => NextResponse.json({ erro: true, mensagem }, { status });

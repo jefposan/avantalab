@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.36 -->
+<!-- ava-version: 1.7.3.37 -->
+
+> Revisão 1.7.3.37: correção técnica nas rotas do Controle de Ponto, sem
+> alteração operacional na Gestão Mobile.
 
 > Revisão 1.7.3.36: correção da troca de perfil exclusiva da Gestão Web; sem
 > alteração operacional na Gestão Mobile.

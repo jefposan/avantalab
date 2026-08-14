@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import { descriptografarSegredoRepP } from '@/app/lib/rep-p-cofre';
 import { assinarCadesDestacado, gerarAfdRepP } from '@/app/lib/rep-p-afd';
 import { createHash, randomUUID } from 'node:crypto';
-import { autorizarEmpresa } from '@/app/api/ponto/documentos-rep-p/route';
+import { autorizarEmpresa } from '@/app/api/ponto/documentos-rep-p/autorizacao';
 
 export const runtime = 'nodejs';
 const erro = (mensagem: string, status = 400) => NextResponse.json({ erro: true, mensagem }, { status });
