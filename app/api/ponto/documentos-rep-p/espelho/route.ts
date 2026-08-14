@@ -5,7 +5,7 @@ import signpdf from '@signpdf/signpdf';
 import { P12Signer } from '@signpdf/signer-p12';
 import { createHash, randomUUID } from 'node:crypto';
 import { descriptografarSegredoRepP } from '@/app/lib/rep-p-cofre';
-import { autorizarEmpresa } from '../route';
+import { autorizarEmpresa } from '../autorizacao';
 
 export const runtime = 'nodejs';
 const erro = (mensagem: string, status = 400) => NextResponse.json({ erro: true, mensagem }, { status });

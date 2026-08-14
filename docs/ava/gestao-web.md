@@ -2,6 +2,9 @@
 
 <!-- ava-version: 1.8.0.02 -->
 
+> Revisão 1.7.3.37: correção técnica nas rotas do Controle de Ponto, sem
+> alteração operacional na Gestão Web.
+
 > Revisão 1.8.0.02: o aviso de acesso já existente recebeu destaque visual; o
 > fluxo e a orientação funcional de compartilhamento permanecem os mesmos.
 

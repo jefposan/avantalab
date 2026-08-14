@@ -6,6 +6,9 @@
 > Revisão 1.8.0.02: destaque visual do compartilhamento do AvantaProjetos não
 > altera o funcionamento do AvantaVendas.
 
+> Revisão 1.7.3.37: correção técnica nas rotas do Controle de Ponto, sem
+> alteração operacional no AvantaVendas.
+
 > Revisão 1.8.0.01: centralização de projetos compartilhados do AvantaProjetos
 > não altera o funcionamento do AvantaVendas.
 

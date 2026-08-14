@@ -2,6 +2,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
 // Revisado na versão 1.8.0.02: um único acesso a Projetos reúne cards próprios e
 // compartilhados de diferentes contas, inclusive para convidados sem licença.
+// Revisado na versão 1.7.3.37: a rota de documentos do Controle de Ponto usa
+// um helper interno, sem mudança operacional ou de permissões.
 // Revisado na versão 1.7.3.36: os controles de Compartilhar acesso ficaram
 // visualmente mais compactos e a seleção da troca de perfil permanece estável.
 // Revisado na versão 1.7.3.35: o compartilhamento bloqueia duplicidade dentro

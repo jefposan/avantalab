@@ -2,6 +2,9 @@
 
 <!-- ava-version: 1.8.0.02 -->
 
+> Revisão 1.7.3.37: correção técnica nas rotas do Controle de Ponto, sem
+> alteração operacional na Gestão Mobile.
+
 > Revisão 1.8.0.02: destaque visual do compartilhamento exclusivo do
 > AvantaProjetos Web; sem alteração operacional na Gestão Mobile.
 

@@ -27,6 +27,12 @@
   convidado. Permissões são aplicadas individualmente quando a mesma empresa
   compartilha projetos editáveis e projetos de somente visualização.
 
+## 1.7.3.37 - 2026-08-14
+
+- Corrige a estrutura técnica das rotas de documentos do Controle de Ponto,
+  permitindo que a compilação de produção seja concluída sem alterar as
+  permissões ou o funcionamento do módulo.
+
 ## 1.7.3.36 - 2026-08-14
 
 - Gestão Web: ao trocar de perfil, a atualização da lista não substitui mais
