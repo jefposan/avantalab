@@ -1,7 +1,7 @@
 # Ava — Manual do Vendas Mobile
 
 <!-- ava-version: 1.8.0.02 -->
-<!-- avantavendas-asset-revision: 77 -->
+<!-- avantavendas-asset-revision: 78 -->
 
 > Revisão 1.8.0.02: destaque visual do compartilhamento do AvantaProjetos não
 > altera o funcionamento do AvantaVendas.
@@ -9,11 +9,16 @@
 > Revisão 1.8.0.01: centralização de projetos compartilhados do AvantaProjetos
 > não altera o funcionamento do AvantaVendas.
 
-> Revisão 1.7.3.36: compactação visual do compartilhamento do AvantaProjetos
-> não altera o funcionamento do AvantaVendas.
+> Revisão 1.7.3.36: compactação visual do compartilhamento no AvantaProjetos e
+> correção da troca de perfil na Gestão Web não alteram o AvantaVendas.
 
 > Revisão 1.7.3.35: bloqueio de acessos duplicados do AvantaProjetos não
-> altera o funcionamento do AvantaVendas.
+> altera o AvantaVendas. Módulos em desenvolvimento foram isolados do build.
+
+> Revisão 1.7.3.34-av78: em **Configurações > Conta de vendas**, proprietário
+> ou administrador pode definir o **Nome nos comprovantes** daquele perfil. O
+> nome aparece em comprovantes de pedidos e pagamentos; se ficar vazio, o
+> sistema usa o nome do perfil de vendas ativo.
 
 > Revisão 1.7.3.34-av77: **Dados do usuário** mostra a empresa de conteúdo do
 > perfil ativo. Notícias, Divulgação e Catálogo preservam as opções do vínculo

@@ -27,19 +27,33 @@
   convidado. Permissões são aplicadas individualmente quando a mesma empresa
   compartilha projetos editáveis e projetos de somente visualização.
 
-## 1.7.3.36 - 2026-08-13
+## 1.7.3.36 - 2026-08-14
 
+- Gestão Web: ao trocar de perfil, a atualização da lista não substitui mais
+  a escolha feita no seletor. Um único clique mantém o perfil de destino até a
+  confirmação do acesso.
 - AvantaProjetos reduz em aproximadamente 25% a altura visual dos campos e do
   botão de verificação em **Compartilhar acesso**, preservando o alvo interativo
   ampliado e o alinhamento entre seletor e ação.
 
-## 1.7.3.35 - 2026-08-13
+## 1.7.3.35 - 2026-08-14
 
+- Organização interna: telas e protótipos em desenvolvimento foram retirados
+  da publicação e preservados no repositório local **AvantaLab Projetos**.
+  Controle de Ponto, Recebimentos, Projetos e AvantaVendas permanecem ativos
+  sem alteração.
 - AvantaProjetos bloqueia um segundo cadastro do mesmo e-mail no mesmo projeto.
   Quando o vínculo já existe, nenhum dado é alterado e a pessoa reaparece na
   lista com uma mensagem objetiva.
 - O compartilhamento identifica no título a qual projeto pertence a lista de
   acessos. A mesma pessoa continua podendo receber acesso a projetos diferentes.
+
+## 1.7.3.34-av78 - 2026-08-13
+
+- AvantaVendas: cada perfil passa a ter um **Nome nos comprovantes** próprio em
+  Configurações > Conta de vendas, independente do catálogo e do Gestão.
+- AvantaVendas: comprovantes de pedidos e pagamentos usam o nome configurado;
+  quando vazio, utilizam o nome do perfil de vendas ativo.
 
 ## 1.7.3.34-av77 - 2026-08-13
 

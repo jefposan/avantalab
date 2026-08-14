@@ -6133,9 +6133,19 @@ const abrirTrocaEmpresa = () => {
       return;
     }
 
-    setEmpresaParaSelecionar(
-      empresasAtualizadas.find((empresa) => empresa.id !== empresaId) || null
-    );
+    // A lista em memória abre o seletor sem espera. Quando a atualização da
+    // rede termina, ela não pode desfazer uma escolha já feita pelo usuário.
+    setEmpresaParaSelecionar((selecaoAtual: EmpresaUsuarioResumo | null) => {
+      const escolhaAindaDisponivel = selecaoAtual
+        ? empresasAtualizadas.find((empresa) => empresa.id === selecaoAtual.id)
+        : null;
+
+      if (escolhaAindaDisponivel && escolhaAindaDisponivel.id !== empresaId) {
+        return escolhaAindaDisponivel;
+      }
+
+      return empresasAtualizadas.find((empresa) => empresa.id !== empresaId) || null;
+    });
     setModalSelecionarEmpresa(true);
   })();
 };

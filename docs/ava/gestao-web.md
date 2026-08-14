@@ -15,12 +15,14 @@
 > não recebe compartilhamento redundante; prevalece a hierarquia da equipe.
 
 > Revisão 1.7.3.36: os campos e a ação de **Compartilhar acesso** ficaram cerca
-> de 25% mais baixos visualmente, preservando alinhamento e área interativa.
+> de 25% mais baixos visualmente, preservando alinhamento e área interativa. Em
+> **Trocar perfil**, a atualização da lista também não altera mais a escolha.
 
 > Revisão 1.7.3.35: **Compartilhar acesso** identifica o projeto da lista e
 > bloqueia novo cadastro do mesmo e-mail naquele projeto. Se o vínculo já
 > existir, ele é reapresentado sem alteração; a mesma pessoa pode participar de
-> outros projetos normalmente.
+> outros projetos normalmente. Módulos e protótipos em desenvolvimento foram
+> isolados do build oficial, sem alterar os módulos ativos.
 
 > Revisão 1.7.3.34: em **Compartilhar acesso**, a verificação fica ao lado do
 > tipo de acesso, o X fecha e descarta o formulário, e campos, avisos e pessoas

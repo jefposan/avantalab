@@ -8,11 +8,13 @@
 > Revisão 1.8.0.01: centralização de projetos compartilhados exclusiva do
 > AvantaProjetos Web; sem alteração operacional na Gestão Mobile.
 
-> Revisão 1.7.3.36: compactação visual do compartilhamento exclusiva do
-> AvantaProjetos Web; sem alteração operacional na Gestão Mobile.
+> Revisão 1.7.3.36: compactação visual do compartilhamento no AvantaProjetos e
+> correção da troca de perfil na Gestão Web; sem alteração operacional na
+> Gestão Mobile.
 
 > Revisão 1.7.3.35: bloqueio de acessos duplicados é exclusivo do
-> AvantaProjetos Web; sem alteração operacional na Gestão Mobile.
+> AvantaProjetos Web. Módulos em desenvolvimento também foram isolados do build;
+> sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.7.3.34: compactação do compartilhamento exclusiva do
 > AvantaProjetos Web; sem alteração operacional na Gestão Mobile.

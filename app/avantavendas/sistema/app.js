@@ -18,7 +18,7 @@ const CACHE_VENDAS_STORE = 'sessoes';
 const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
 const CACHE_VENDAS_VERSAO = 5;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
-const PREFERENCIAS_VENDAS_VERSAO = 1;
+const PREFERENCIAS_VENDAS_VERSAO = 2;
 const META_CELEBRADA_PREFIX = 'avantalab.vendas_mobile.meta_celebrada';
 const IDS_ATALHOS_PREFERENCIAS_VENDAS = new Set(['tema', 'dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao']);
 const IDS_SALA_PREFERENCIAS_VENDAS = new Set(['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'novidades', 'divulgacao', 'informacoes']);
@@ -103,6 +103,7 @@ const estadoInicial = {
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
   ordemSalaBotoes: [],
+  nomeEmpresaComprovantes: '',
   organizandoSalaBotoes: false,
 };
 
@@ -602,6 +603,7 @@ function normalizarPreferenciasVendas(origem = {}) {
     atalhoInferiorEsquerdo: atalhoEsquerdo,
     atalhoInferiorDireito: atalhoDireito,
     ordemSalaBotoes,
+    nomeEmpresaComprovantes: String(origem.nomeEmpresaComprovantes || '').trim().slice(0, 80),
     agendaAlertaAniversarioDias: limitarNumeroPreferenciaVendas(origem.agendaAlertaAniversarioDias, 0, 30, estadoInicial.agendaAlertaAniversarioDias),
     metaMensal: limitarNumeroPreferenciaVendas(origem.metaMensal, 0, Number.MAX_SAFE_INTEGER, estadoInicial.metaMensal),
     dashboardDiasInativos: limitarNumeroPreferenciaVendas(origem.dashboardDiasInativos, 1, 365, estadoInicial.dashboardDiasInativos),
@@ -721,6 +723,7 @@ function salvarEstado() {
     atalhoInferiorEsquerdo: state.atalhoInferiorEsquerdo,
     atalhoInferiorDireito: state.atalhoInferiorDireito,
     ordemSalaBotoes: state.ordemSalaBotoes,
+    nomeEmpresaComprovantes: state.nomeEmpresaComprovantes,
   } : { ...state, carrinho: [] };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persistente));
@@ -4627,7 +4630,7 @@ function renderConfiguracoes() {
   return `<section class="module-page settings-page">
     <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div><button type="button" class="danger settings-header-exit" onclick="abrirConfirmacaoSair()">${svgIcon('log-out')} Sair</button></div></div>
     <div class="settings-grid">
-      <article class="settings-card settings-profile-card settings-sales-account-card"><h3>${svgIcon('users')} Conta de vendas</h3><p>Clientes, pedidos, pagamentos, agenda e permissões são separados por conta.</p><div class="settings-sales-account-field"><label for="contaVendasAtiva">Conta ativa:</label><select id="contaVendasAtiva" onchange="trocarContaVendas(this.value)">${contas.map((conta) => `<option value="${escapeAttr(conta.id)}" ${conta.id === contaAtiva?.id ? 'selected' : ''}>${escapeHtml(conta.nome)}${conta.empresa_nome ? ` · ${escapeHtml(conta.empresa_nome)}` : ''}</option>`).join('')}</select></div><div class="settings-sales-account-role">${contaAtiva?.papel === 'proprietario' ? 'Você é o proprietário desta conta.' : `Seu acesso: ${escapeHtml(contaAtiva?.papel || 'vendedor')}.`}</div><div class="actions"><button class="secondary" onclick="abrirContasVendas()">${svgIcon('users')} Gerenciar contas</button></div></article>
+      <article class="settings-card settings-profile-card settings-sales-account-card"><h3>${svgIcon('users')} Conta de vendas</h3><p>Clientes, pedidos, pagamentos, agenda e permissões são separados por conta.</p><div class="settings-sales-account-field"><label for="contaVendasAtiva">Conta ativa:</label><select id="contaVendasAtiva" onchange="trocarContaVendas(this.value)">${contas.map((conta) => `<option value="${escapeAttr(conta.id)}" ${conta.id === contaAtiva?.id ? 'selected' : ''}>${escapeHtml(conta.nome)}${conta.empresa_nome ? ` · ${escapeHtml(conta.empresa_nome)}` : ''}</option>`).join('')}</select></div><div class="settings-receipt-name-field"><label for="nomeEmpresaComprovantes">Nome nos comprovantes:</label><div><input id="nomeEmpresaComprovantes" maxlength="80" autocomplete="organization" value="${escapeAttr(state.nomeEmpresaComprovantes || '')}" placeholder="${escapeAttr(contaAtiva?.nome || 'Nome da empresa')}" ${podeGerirDadosConta ? '' : 'disabled'}><button type="button" class="primary" onclick="salvarNomeEmpresaComprovantes()" ${podeGerirDadosConta ? '' : 'disabled'}>${svgIcon('save')} Salvar</button></div><small>Usado somente nos comprovantes deste perfil.</small></div><div class="settings-sales-account-role">${contaAtiva?.papel === 'proprietario' ? 'Você é o proprietário desta conta.' : `Seu acesso: ${escapeHtml(contaAtiva?.papel || 'vendedor')}.`}</div><div class="actions"><button class="secondary" onclick="abrirContasVendas()">${svgIcon('users')} Gerenciar contas</button></div></article>
       <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
       ${podeGerirDadosConta ? `<article class="settings-card settings-data-security-card"><h3>${svgIconEstavel('database')} Dados e segurança</h3><p>Backups e pontos de restauração pertencem somente ao perfil <b>${escapeHtml(contaAtiva?.nome || 'ativo')}</b>.</p><div class="settings-data-security-actions"><button class="primary" type="button" onclick="baixarBackupContaVendas()">${svgIconEstavel('download')} Fazer backup</button><button class="secondary" type="button" onclick="selecionarBackupContaVendas()" ${podeRestaurarDadosConta ? '' : 'disabled'}>${svgIconEstavel('rotate-ccw')} Restaurar backup</button><button class="secondary" type="button" onclick="abrirPontosRestauracaoVendas()">${svgIconEstavel('clock')} Pontos de restauração</button></div>${podeRestaurarDadosConta ? '<small>Uma cópia de segurança é criada automaticamente antes de cada restauração.</small>' : '<small>Administradores podem criar backups e pontos. A restauração é exclusiva do proprietário.</small>'}</article>` : ''}
     <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
@@ -4648,6 +4651,21 @@ function salvarMeta() {
   state.metaMensal = Math.max(0, lerCampoMoeda('metaConfig'));
   render();
   toast('Meta mensal salva.');
+}
+
+function nomeEmpresaParaComprovantes() {
+  return String(state.nomeEmpresaComprovantes || state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
+}
+
+function salvarNomeEmpresaComprovantes() {
+  if (!['proprietario', 'administrador'].includes(state.contaVendasAtiva?.papel)) {
+    toast('Somente proprietário ou administrador pode alterar este nome.');
+    return;
+  }
+  state.nomeEmpresaComprovantes = valor('nomeEmpresaComprovantes').trim().slice(0, 80);
+  salvarEstado();
+  render();
+  toast(state.nomeEmpresaComprovantes ? 'Nome dos comprovantes salvo.' : 'Os comprovantes usarão o nome do perfil.');
 }
 
 async function trocarContaVendas(contaId) {
@@ -7188,7 +7206,7 @@ async function compartilharPedido(pedidoId) {
   const titulo = pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido';
   const tituloDetalhes = pedidoEhConsignado(venda) ? 'Detalhes do consignado' : 'Detalhes do pedido';
   const dadosComprovante = {
-    empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
+    empresa: nomeEmpresaParaComprovantes(),
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(venda.criado_em),
     saldoAnterior: moeda(resumo.saldoAnterior),
@@ -7228,7 +7246,7 @@ async function compartilharPagamento(pagamentoId) {
   const desconto = Number(pagamento.desconto || 0);
   const abatimento = Number(pagamento.valor || 0) + desconto;
   const dadosComprovante = {
-    empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
+    empresa: nomeEmpresaParaComprovantes(),
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(pagamento.data_pagamento),
     saldoAnterior: moeda(resumo.saldoAnterior),
@@ -8873,6 +8891,7 @@ window.abrirDestinoHistoricoAnteriorVendas = abrirDestinoHistoricoAnteriorVendas
 window.confirmarExclusaoHistoricoTrocaVendas = confirmarExclusaoHistoricoTrocaVendas;
 window.salvarPerfilFinanceiroVendas = salvarPerfilFinanceiroVendas;
 window.abrirDesvincularPerfilFinanceiroVendas = abrirDesvincularPerfilFinanceiroVendas;
+window.salvarNomeEmpresaComprovantes = salvarNomeEmpresaComprovantes;
 window.confirmarExclusaoDesvinculoFinanceiroVendas = confirmarExclusaoDesvinculoFinanceiroVendas;
 window.desvincularPerfilFinanceiroVendas = desvincularPerfilFinanceiroVendas;
 window.alternarRecursoVinculoComercial = alternarRecursoVinculoComercial;
