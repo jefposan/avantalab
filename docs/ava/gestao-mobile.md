@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.35 -->
+<!-- ava-version: 1.7.3.36 -->
+
+> Revisão 1.7.3.36: correção da troca de perfil exclusiva da Gestão Web; sem
+> alteração operacional na Gestão Mobile.
 
 > Revisão 1.7.3.35: organização interna de módulos e protótipos em
 > desenvolvimento; sem alteração operacional na Gestão Mobile.

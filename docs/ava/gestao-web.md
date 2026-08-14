@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.35 -->
+<!-- ava-version: 1.7.3.36 -->
+
+> Revisão 1.7.3.36: em **Trocar perfil**, toque uma vez no perfil de destino
+> e confirme o acesso; a atualização da lista não altera mais a escolha.
 
 > Revisão 1.7.3.35: organização interna de módulos e protótipos em
 > desenvolvimento; sem alteração operacional na Gestão Web.

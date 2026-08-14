@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.35 -->
+<!-- ava-version: 1.7.3.36 -->
 <!-- avantavendas-asset-revision: 78 -->
+
+> Revisão 1.7.3.36: correção da troca de perfil exclusiva da Gestão Web; sem
+> alteração operacional no AvantaVendas.
 
 > Revisão 1.7.3.35: organização interna de módulos e protótipos em
 > desenvolvimento; sem alteração operacional no AvantaVendas.

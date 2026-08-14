@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3.36 - 2026-08-14
+
+- Gestão Web: ao trocar de perfil, a atualização da lista não substitui mais
+  a escolha feita no seletor. Um único clique mantém o perfil de destino até a
+  confirmação do acesso.
+
 ## 1.7.3.35 - 2026-08-14
 
 - Organização interna: telas e protótipos em desenvolvimento foram retirados

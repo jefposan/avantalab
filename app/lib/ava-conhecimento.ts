@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.7.3.36: no seletor de troca da Gestão Web, a escolha
+// do destino permanece estável enquanto a lista vinculada é atualizada.
 // Revisado na versão 1.7.3.35: módulos e protótipos em desenvolvimento foram
 // isolados fora do build oficial, sem mudança na orientação operacional.
 // Revisado na versão 1.7.3.34: Compartilhar acesso usa composição compacta,
