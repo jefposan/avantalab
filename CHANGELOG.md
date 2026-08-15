@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.8.0.05 - 2026-08-15
+
+- A página e as APIs ainda experimentais de créditos, carteira, recargas e
+  consultas de crédito foram retiradas da publicação oficial e preservadas
+  integralmente em **AvantaLab Projetos**, junto com testes e migrações para
+  retomada após a contratação da empresa fornecedora.
+- A consulta de CNPJ usada no cadastro de perfis permanece ativa e inalterada.
+  O histórico vazio das migrações da carteira foi mantido no banco, sem rota ou
+  interface disponível, evitando uma reversão desnecessária.
+
 ## 1.8.0.04 - 2026-08-15
 
 - Removida a rota pública e sem uso que enviava sugestões por SMS para um

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.0.04 -->
+<!-- ava-version: 1.8.0.05 -->
+
+> Revisão 1.8.0.05: isolamento interno do módulo ainda experimental de
+> créditos e consultas; sem alteração operacional na Gestão Mobile. A consulta
+> de CNPJ utilizada na criação de perfis permanece ativa.
 
 > Revisão 1.8.0.04: retirada apenas uma antiga notificação administrativa de
 > feedback por SMS; validação de telefone e envio ao `/admin` permanecem ativos.

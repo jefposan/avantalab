@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.0.04 -->
+<!-- ava-version: 1.8.0.05 -->
 <!-- avantavendas-asset-revision: 78 -->
+
+> Revisão 1.8.0.05: o isolamento do módulo experimental de créditos e
+> consultas da Gestão não altera o funcionamento do AvantaVendas.
 
 > Revisão 1.8.0.04: a retirada da antiga notificação administrativa de feedback
 > por SMS não altera a validação de telefone nem o funcionamento do AvantaVendas.

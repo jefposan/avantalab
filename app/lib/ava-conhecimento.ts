@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.8.0.05: créditos e consultas experimentais foram
+// isolados da publicação; a consulta de CNPJ do cadastro permanece ativa.
 // Revisado na versão 1.8.0.04: feedbacks permanecem no /admin; foi retirada
 // somente a antiga notificação administrativa por SMS, sem afetar o Verify.
 // Revisado na versão 1.8.0.03: Recebimentos Presenciais usa somente o

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.0.04 -->
+<!-- ava-version: 1.8.0.05 -->
+
+> Revisão 1.8.0.05: a página experimental de créditos e suas operações de
+> carteira e consulta foram retiradas da publicação. A busca de CNPJ usada na
+> criação de perfis continua disponível e sem alteração operacional.
 
 > Revisão 1.8.0.04: sugestões e dúvidas continuam registradas e acompanhadas
 > pelo painel `/admin`. Foi retirada somente uma antiga notificação interna por
