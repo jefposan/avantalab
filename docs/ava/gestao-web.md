@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.0.02 -->
+<!-- ava-version: 1.8.0.03 -->
+
+> Revisão 1.8.0.03: Recebimentos Presenciais usa exclusivamente os dados reais
+> e persistidos do perfil. A retirada interna do antigo modo demonstrativo não
+> altera cadastros, lançamentos, comprovantes nem o fluxo operacional.
 
 > Revisão 1.7.3.37: correção técnica nas rotas do Controle de Ponto, sem
 > alteração operacional na Gestão Web.

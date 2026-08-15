@@ -1,8 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase as supabasePrincipal } from '@/app/lib/supabase';
 import type { Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, SituacaoRecebimento, Subempresa } from '../components/types';
-import { colaboradoresDemo, empresasDemo, recebimentosDemo, subempresasDemo } from '../components/dadosDemo';
-import { situacaoPorValor } from '../components/helpers';
 import { validarNomeCompleto } from '@/app/lib/nome-pessoa';
 
 export type DadosRecebimentos = {
@@ -60,121 +58,12 @@ export interface RecebimentosRepo {
   assinarAtualizacoes?(callback: () => void): () => void;
 }
 
-function copia<T>(valor: T): T {
-  return JSON.parse(JSON.stringify(valor)) as T;
-}
-
-function hojeIso() {
-  const agora = new Date();
-  return new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-}
-
 function exigirResponsavelValido(valor: string) {
   if (valor.trim() && !validarNomeCompleto(valor)) {
     throw new Error('Informe o nome completo do responsável, com nome e sobrenome.');
   }
 }
 
-export function criarRepoDemo(): RecebimentosRepo {
-  const dados: DadosRecebimentos = {
-    empresas: copia(empresasDemo),
-    subempresas: copia(subempresasDemo),
-    colaboradores: copia(colaboradoresDemo),
-    recebimentos: copia(recebimentosDemo),
-  };
-  let integracaoAtiva = true;
-  let nomeEntradaIntegracao = 'Recebimentos em campo';
-  let tituloEtiquetaIntegracao = 'Recebimentos';
-  const valorIntegrado = (ano: number, mes: number) => {
-    if (!integracaoAtiva) return 0;
-    const chave = `${ano}-${String(mes).padStart(2, '0')}`;
-    return dados.recebimentos.reduce((total, recebimento) => {
-      const dataBaixa = recebimento.baixadoEm ?? recebimento.recebidoEm ?? '';
-      return recebimento.situacao === 'baixado' && dataBaixa.slice(0, 7) === chave
-        ? total + (recebimento.valorRecebido ?? 0)
-        : total;
-    }, 0);
-  };
-  const colaboradorAtual = () => dados.colaboradores[0];
-  return {
-    async carregar() { return copia(dados); },
-    async salvarEmpresa(valor) { exigirResponsavelValido(valor.responsavel); dados.empresas.push({ ...valor, id: `e-${Date.now()}` }); },
-    async editarEmpresa(id, valor) { exigirResponsavelValido(valor.responsavel); dados.empresas = dados.empresas.map((e) => e.id === id ? { ...e, ...valor } : e); },
-    async excluirEmpresa(id) {
-      const subs = new Set(dados.subempresas.filter((s) => s.empresaId === id).map((s) => s.id));
-      dados.recebimentos = dados.recebimentos.filter((r) => r.empresaId !== id && (!r.subempresaId || !subs.has(r.subempresaId)));
-      dados.subempresas = dados.subempresas.filter((s) => s.empresaId !== id);
-      dados.empresas = dados.empresas.filter((e) => e.id !== id);
-    },
-    async alternarEmpresa(id, ativo) { dados.empresas = dados.empresas.map((e) => e.id === id ? { ...e, ativo } : e); },
-    async salvarSubempresa(valor) { exigirResponsavelValido(valor.responsavel); dados.subempresas.push({ ...valor, id: `s-${Date.now()}` }); },
-    async editarSubempresa(id, valor) { exigirResponsavelValido(valor.responsavel); dados.subempresas = dados.subempresas.map((s) => s.id === id ? { ...s, ...valor } : s); },
-    async excluirSubempresa(id) {
-      dados.recebimentos = dados.recebimentos.filter((r) => r.subempresaId !== id);
-      dados.subempresas = dados.subempresas.filter((s) => s.id !== id);
-    },
-    async alternarSubempresa(id, ativo) { dados.subempresas = dados.subempresas.map((s) => s.id === id ? { ...s, ativo } : s); },
-    async criarColaborador(valor) { dados.colaboradores.push({ ...valor, id: `c-${Date.now()}` }); },
-    async editarColaborador(id, valor) { dados.colaboradores = dados.colaboradores.map((c) => c.id === id ? { ...c, ...valor } : c); },
-    async excluirColaborador(id) {
-      dados.recebimentos = dados.recebimentos.map((r) => r.colaboradorId === id ? { ...r, colaboradorId: null } : r);
-      dados.colaboradores = dados.colaboradores.filter((c) => c.id !== id);
-    },
-    async alternarColaborador(id, ativo) { dados.colaboradores = dados.colaboradores.map((c) => c.id === id ? { ...c, ativo } : c); },
-    async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante) {
-      const sub = subempresaId ? dados.subempresas.find((s) => s.id === subempresaId) : null;
-      const empresa = dados.empresas.find((item) => item.id === empresaRecebimentoId);
-      const colaborador = colaboradorAtual();
-      if ((!sub && (!empresa || empresa.tipoCadastro !== 'cliente_direto')) || !colaborador) throw new Error('Cliente ou colaborador não encontrado.');
-      const valorCombinado = sub?.valorCombinado ?? empresa?.valorCombinado ?? 0;
-      const agora = new Date();
-      dados.recebimentos.unshift({
-        id: `r-${Date.now()}`, empresaId: sub?.empresaId ?? empresaRecebimentoId, subempresaId: sub?.id ?? null,
-        vencimento: hojeIso(),
-        valorCombinado, valorRecebido: valor, colaboradorId: colaborador.id,
-        recebidoEm: agora.toISOString(), observacao: observacao.trim() || null,
-        formaPagamento, temComprovante: Boolean(comprovante),
-        situacao: situacaoPorValor(valorCombinado, valor), baixadoPor: null, baixadoEm: null,
-      });
-    },
-    async receberCobranca(id, valor, observacao, formaPagamento, comprovante, dataPagamento) {
-      const colaborador = colaboradorAtual();
-      dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? {
-        ...r, valorRecebido: valor, colaboradorId: colaborador?.id ?? null, recebidoEm: dataPagamento ? `${dataPagamento}T12:00:00.000Z` : new Date().toISOString(),
-        observacao: observacao.trim() || r.observacao, formaPagamento,
-        temComprovante: Boolean(comprovante) || r.temComprovante,
-        situacao: situacaoPorValor(r.valorCombinado, valor),
-      } : r);
-    },
-    async obterComprovante() { throw new Error('Comprovante indisponível no modo de demonstração.'); },
-    async confirmarBaixa(id, formaPagamento) {
-      dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? {
-        ...r,
-        valorRecebido: r.valorRecebido ?? r.valorCombinado,
-        recebidoEm: r.recebidoEm ?? new Date().toISOString(),
-        formaPagamento: formaPagamento ?? r.formaPagamento ?? null,
-        situacao: 'baixado',
-        baixadoPor: 'Gestor (demo)',
-        baixadoEm: new Date().toISOString(),
-      } : r);
-    },
-    async devolver(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: 'devolvido_para_correcao', observacao: `${r.observacao ? `${r.observacao} · ` : ''}Devolvido: ${motivo}` } : r); },
-    async divergencia(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: 'baixado', baixadoPor: 'Gestor (demo)', baixadoEm: new Date().toISOString(), observacao: `${r.observacao ? `${r.observacao} · ` : ''}Divergência: ${motivo}` } : r); },
-    async estornar(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: r.vencimento < hojeIso() ? 'em_atraso' : 'previsto', valorRecebido: null, colaboradorId: null, recebidoEm: null, formaPagamento: null, baixadoPor: null, baixadoEm: null, observacao: `Estornado: ${motivo}` } : r); },
-    async obterIntegracaoFinanceira(ano, mes) {
-      return copia({ nomeEntrada: nomeEntradaIntegracao, tituloEtiqueta: tituloEtiquetaIntegracao, integrado: integracaoAtiva, valorSincronizado: valorIntegrado(ano, mes) });
-    },
-    async atualizarTitulosFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta) {
-      nomeEntradaIntegracao = nomeEntrada.trim();
-      tituloEtiquetaIntegracao = tituloEtiqueta.trim();
-      return copia({ nomeEntrada: nomeEntradaIntegracao, tituloEtiqueta: tituloEtiquetaIntegracao, integrado: integracaoAtiva, valorSincronizado: valorIntegrado(ano, mes) });
-    },
-    async definirIntegracaoFinanceira(ano, mes, ativa) {
-      integracaoAtiva = ativa;
-      return copia({ nomeEntrada: nomeEntradaIntegracao, tituloEtiqueta: tituloEtiquetaIntegracao, integrado: integracaoAtiva, valorSincronizado: valorIntegrado(ano, mes) });
-    },
-  };
-}
 
 type Linha = Record<string, unknown>;
 const texto = (v: unknown) => String(v ?? '');

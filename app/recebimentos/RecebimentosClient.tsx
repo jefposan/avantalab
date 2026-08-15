@@ -1,17 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import styles from './recebimentos.module.css';
 import { corEhClara } from '@/app/lib/formatters';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
 import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Subempresa } from './components/types';
 import PainelAdministrativo from './components/PainelAdministrativo';
-import { criarRepoDemo, type IntegracaoFinanceiraRecebimentos, type RecebimentosRepo } from './data/repo';
+import type { IntegracaoFinanceiraRecebimentos, RecebimentosRepo } from './data/repo';
 
 const PERFIS: Array<[Perfil, string]> = [['gestor', 'Gestor'], ['administrador', 'Administrador']];
 
 type Props = {
-  repo?: RecebimentosRepo;
+  repo: RecebimentosRepo;
   integrado?: boolean;
   perfilInicial?: Extract<Perfil, 'gestor' | 'administrador'>;
   darkMode?: boolean;
@@ -35,7 +35,7 @@ export default function RecebimentosClient({
   onConfirmacao,
   onFinanceiroAtualizado,
 }: Props) {
-  const repoAtual = useMemo(() => repo ?? criarRepoDemo(), [repo]);
+  const repoAtual = repo;
   const [perfil, setPerfil] = useState<Perfil>(perfilInicial);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [subempresas, setSubempresas] = useState<Subempresa[]>([]);

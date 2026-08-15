@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.8.0.03: Recebimentos Presenciais usa somente o
+// repositório persistido do perfil; o modo demonstrativo interno foi removido.
 // Revisado na versão 1.8.0.02: um único acesso a Projetos reúne cards próprios e
 // compartilhados de diferentes contas, inclusive para convidados sem licença.
 // Revisado na versão 1.7.3.37: a rota de documentos do Controle de Ponto usa

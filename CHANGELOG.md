@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.0.03 - 2026-08-15
+
+- Recebimentos Presenciais passa a exigir a conexão real do perfil com o
+  Supabase. O antigo repositório demonstrativo em memória e seus registros
+  fictícios foram retirados do pacote publicado, sem alterar cadastros,
+  lançamentos, comprovantes ou integrações existentes.
+
 ## 1.8.0.02 - 2026-08-14
 
 - O aviso **Acesso já existente** do AvantaProjetos ganhou destaque leve com

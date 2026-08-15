@@ -1,5 +1,7 @@
-// Funções utilitárias do estudo "Recebimentos em Campo".
+// Funções utilitárias do módulo Recebimentos Presenciais.
 import { FORMAS_PAGAMENTO_RECEBIMENTO, type DiferencaTipo, type FormaPagamentoRecebimento, type FrequenciaRecebimento, type LabelSituacao, type Recebimento, type SituacaoRecebimento } from './types';
+
+export const COR_PRIMARIA = '#003E73';
 
 export function dataLocalIso(referencia = new Date()): string {
   const local = new Date(referencia.getTime() - referencia.getTimezoneOffset() * 60000);

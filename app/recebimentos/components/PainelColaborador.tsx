@@ -4,8 +4,7 @@ import { useMemo, useState } from 'react';
 import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
-import { COR_PRIMARIA } from './dadosDemo';
-import { aguardandoConferencia, formatarDataHora, formatarMoeda, mesmoDia, rotuloFormaPagamento, rotuloSituacao } from './helpers';
+import { COR_PRIMARIA, aguardandoConferencia, formatarDataHora, formatarMoeda, mesmoDia, rotuloFormaPagamento, rotuloSituacao } from './helpers';
 import FormularioRecebimento, { type ResumoRecebimento } from './FormularioRecebimento';
 
 type Props = {

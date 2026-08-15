@@ -3,8 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Recebimento } from './types';
-import { COR_PRIMARIA } from './dadosDemo';
-import { dataLocalIso, formatarMoeda } from './helpers';
+import { COR_PRIMARIA, dataLocalIso, formatarMoeda } from './helpers';
 
 type Props = { chaveMes: string; recebimentos: Recebimento[] };
 

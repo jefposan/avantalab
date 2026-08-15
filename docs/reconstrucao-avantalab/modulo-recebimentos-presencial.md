@@ -80,8 +80,8 @@ após o vencimento, sem atualização manual.
 
 ## 0. O que já existe (não recriar)
 
-- Front-end de gestão (demo, em memória): `app/recebimentos/` — `RecebimentosClient.tsx`, `components/PainelAdministrativo.tsx`, `ListaEmpresas`, `ListaColaboradores`, `ListaRecebimentos`, `PainelConferencia`, `ListaInadimplentes`, `GraficoResultados`, `FormularioRecebimento`, `helpers.ts`, `types.ts`, `dadosDemo.ts`, `recebimentos.module.css`.
-- App do colaborador (demo): `app/recebimentos/ColaboradorApp.tsx` + `app/recebimentos/colaborador/page.tsx` (casca com metadata/manifest).
+- Front-end de gestão ativo: `app/recebimentos/` — `RecebimentosClient.tsx`, `components/PainelAdministrativo.tsx`, `ListaEmpresas`, `ListaColaboradores`, `ListaRecebimentos`, `PainelConferencia`, `ListaInadimplentes`, `GraficoResultados`, `FormularioRecebimento`, `helpers.ts`, `types.ts` e `recebimentos.module.css`.
+- App do colaborador ativo: `app/recebimentos/ColaboradorApp.tsx` + `app/recebimentos/colaborador/page.tsx` (casca com metadata/manifest).
 - PWA já provisionado: `public/recebimentos-manifest.json`, `public/recebimentos-sw.js`, `public/images/recebimentos-icon-180/192/512.png` (ícone provisório — substituir depois).
 
 O trabalho é **plugar** esse front no sistema (módulo + banco + auth) mantendo o
@@ -277,8 +277,9 @@ export interface RecebimentosRepo {
   confirmarBaixa / devolver / divergencia / estornar; // via RPC
 }
 ```
-- `repoDemo` = comportamento atual (in-memory, `dadosDemo`) — mantém `/recebimentos` funcionando standalone sem login (útil para dev/preview).
-- `repoSupabase(empresaId)` = usa `supabase` (browser client) para SELECT/insert/update e as RPCs; ações de colaborador (CRUD) chamam as rotas `/api/recebimentos/*`.
+- `repoSupabase(empresaId)` = implementação oficial e obrigatória; usa `supabase` (browser client) para SELECT/insert/update e as RPCs; ações de colaborador (CRUD) chamam as rotas `/api/recebimentos/*`.
+- O antigo `repoDemo` em memória foi removido na versão 1.8.0.03 para impedir
+  dados fictícios ou não persistidos no pacote oficial.
 
 Refatorar `RecebimentosClient.tsx` e `ColaboradorApp.tsx` para receber o repo (prop) em vez de mutar estado local diretamente. Manter os mesmos tipos de `types.ts` (mapear colunas snake_case do banco ↔ camelCase do front no repo).
 

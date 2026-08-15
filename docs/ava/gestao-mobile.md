@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.0.02 -->
+<!-- ava-version: 1.8.0.03 -->
+
+> Revisão 1.8.0.03: retirada interna do modo demonstrativo de Recebimentos
+> Presenciais; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.7.3.37: correção técnica nas rotas do Controle de Ponto, sem
 > alteração operacional na Gestão Mobile.
