@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.0.03 -->
+<!-- ava-version: 1.8.0.04 -->
 <!-- avantavendas-asset-revision: 78 -->
+
+> Revisão 1.8.0.04: a retirada da antiga notificação administrativa de feedback
+> por SMS não altera a validação de telefone nem o funcionamento do AvantaVendas.
 
 > Revisão 1.8.0.03: a retirada interna do modo demonstrativo de Recebimentos
 > Presenciais não altera o funcionamento do AvantaVendas.

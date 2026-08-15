@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.0.03 -->
+<!-- ava-version: 1.8.0.04 -->
+
+> Revisão 1.8.0.04: retirada apenas uma antiga notificação administrativa de
+> feedback por SMS; validação de telefone e envio ao `/admin` permanecem ativos.
 
 > Revisão 1.8.0.03: retirada interna do modo demonstrativo de Recebimentos
 > Presenciais; sem alteração operacional na Gestão Mobile.

@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.8.0.04: feedbacks permanecem no /admin; foi retirada
+// somente a antiga notificação administrativa por SMS, sem afetar o Verify.
 // Revisado na versão 1.8.0.03: Recebimentos Presenciais usa somente o
 // repositório persistido do perfil; o modo demonstrativo interno foi removido.
 // Revisado na versão 1.8.0.02: um único acesso a Projetos reúne cards próprios e

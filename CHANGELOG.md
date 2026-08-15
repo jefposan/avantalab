@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.0.04 - 2026-08-15
+
+- Removida a rota pública e sem uso que enviava sugestões por SMS para um
+  telefone administrativo. Sugestões continuam salvas e administradas pelo
+  `/admin`; os serviços Twilio Verify de cadastro, validação de telefone e
+  recuperação de senha permanecem ativos e inalterados.
+
 ## 1.8.0.03 - 2026-08-15
 
 - Recebimentos Presenciais passa a exigir a conexão real do perfil com o

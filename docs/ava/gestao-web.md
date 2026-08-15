@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.0.03 -->
+<!-- ava-version: 1.8.0.04 -->
+
+> Revisão 1.8.0.04: sugestões e dúvidas continuam registradas e acompanhadas
+> pelo painel `/admin`. Foi retirada somente uma antiga notificação interna por
+> SMS, sem alterar validação de telefone, cadastro ou recuperação de senha.
 
 > Revisão 1.8.0.03: Recebimentos Presenciais usa exclusivamente os dados reais
 > e persistidos do perfil. A retirada interna do antigo modo demonstrativo não
