@@ -59,6 +59,11 @@ import {
   type TipoPerfil,
 } from '@/app/lib/perfis';
 import { APP_VERSION } from '@/app/lib/version';
+import {
+  ehCriacaoDePerfilAdicional,
+  resolverEmpresaOrigemDaCriacao,
+  type SubAcaoGerenciarPerfil,
+} from '@/app/lib/perfis-quota';
 import { modulosPaginaTotalAtivos, obterRegistroModulo } from '@/app/lib/modulos-registro';
 import { resolverAcessoComercialModulo } from '@/app/lib/modulos-acesso-comercial';
 import {
@@ -515,6 +520,15 @@ const [segundosReenvioTelefoneObrigatorio, setSegundosReenvioTelefoneObrigatorio
 const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useState(false);
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
+  const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<SubAcaoGerenciarPerfil>(null);
+  const criandoPerfilAdicional = ehCriacaoDePerfilAdicional(
+    criandoNovaEmpresaLogada,
+    subAcaoGerenciar,
+  );
+  const empresaOrigemCriacao = resolverEmpresaOrigemDaCriacao(
+    empresaId,
+    criandoPerfilAdicional,
+  );
   // Cobrança: estado de acesso do perfil (só é buscado quando COBRANCA_ATIVA=true).
   const [estadoAcesso, setEstadoAcesso] = useState<EstadoAcesso | null>(null);
   const [quotaPerfis, setQuotaPerfis] = useState<{
@@ -522,8 +536,11 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     usados: number;
     limite: number;
     disponiveis: number;
+    possuiAssinaturaOrigem: boolean;
     compartilhaAcesso: boolean;
   } | null>(null);
+  const [quotaPerfisCarregando, setQuotaPerfisCarregando] = useState(false);
+  const [quotaPerfisErro, setQuotaPerfisErro] = useState('');
   const [faturaPendenteUrl, setFaturaPendenteUrl] = useState<string | null>(null);
   const [cadastroPerfilStatus, setCadastroPerfilStatus] = useState<StatusCadastroPerfil | null>(null);
   const [cadastroPerfilCarregado, setCadastroPerfilCarregado] = useState(false);
@@ -544,23 +561,39 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const recursoBloqueado = (recurso: Recurso) => precisaUpgradePessoal(recurso, estadoAcesso);
 
   useEffect(() => {
-    if (!COBRANCA_ATIVA || !criandoNovaEmpresaLogada) {
-      setQuotaPerfis(null);
+    if (!COBRANCA_ATIVA || !criandoPerfilAdicional) {
       return;
     }
     let ativo = true;
     void (async () => {
+      setQuotaPerfis(null);
+      setQuotaPerfisCarregando(true);
+      setQuotaPerfisErro('');
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
-      if (!token) return;
+      if (!token) {
+        if (ativo) {
+          setQuotaPerfisErro('Sua sessão expirou. Entre novamente para verificar o plano.');
+          setQuotaPerfisCarregando(false);
+        }
+        return;
+      }
       const resposta = await fetch(`/api/cobranca/quota-perfis?empresaId=${encodeURIComponent(empresaId || '')}`, {
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => null);
       const dados = await resposta?.json().catch(() => null);
-      if (ativo && resposta?.ok && dados?.ativo) setQuotaPerfis(dados);
+      if (!ativo) return;
+      if (resposta?.ok && dados?.ativo) {
+        setQuotaPerfis(dados);
+      } else {
+        setQuotaPerfisErro(
+          String(dados?.mensagem || 'Não foi possível verificar o plano e as vagas disponíveis.'),
+        );
+      }
+      setQuotaPerfisCarregando(false);
     })();
     return () => { ativo = false; };
-  }, [criandoNovaEmpresaLogada, empresaId]);
+  }, [criandoPerfilAdicional, empresaId]);
 
   useEffect(() => {
     if (!COBRANCA_ATIVA || !empresaId || (estadoAcesso?.plano !== 'business' && estadoAcesso?.plano !== 'empresa')) return;
@@ -805,7 +838,6 @@ const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(n
 const painelAjustesRef = useRef<HTMLDivElement | null>(null);
 const financeiroRealtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
-const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
 const [perfilCadastroEdicaoId, setPerfilCadastroEdicaoId] = useState<string | null>(null);
 const [codigoVinculoEmpresa, setCodigoVinculoEmpresa] = useState<string | null>(null);
 const [codigoVinculoCarregando, setCodigoVinculoCarregando] = useState(false);
@@ -1277,11 +1309,63 @@ const criarPerfilPessoalBloqueado = (): boolean => {
 
 // Envolve a criação de perfil com o gate do Premium (só bloqueia perfil pessoal extra).
 const handleCriarEmpresaInicialComGate = () => {
-  if (criandoNovaEmpresaLogada && tipoPerfilInicialNormalizado === 'pessoal' && criarPerfilPessoalBloqueado()) {
+  if (criandoPerfilAdicional && tipoPerfilInicialNormalizado === 'pessoal' && criarPerfilPessoalBloqueado()) {
     abrirPremium('multiplos_perfis');
     return;
   }
-  handleCriarEmpresaInicial({ empresaOrigemId: criandoNovaEmpresaLogada ? empresaId || undefined : undefined });
+  handleCriarEmpresaInicial({ empresaOrigemId: empresaOrigemCriacao });
+};
+
+const renderizarOpcoesInicioPerfilEmpresa = () => {
+  if (quotaPerfisCarregando) {
+    return (
+      <p role="status" aria-live="polite" className="text-xs font-bold leading-snug text-sky-900">
+        Verificando seu plano e as vagas disponíveis...
+      </p>
+    );
+  }
+
+  if (quotaPerfis?.compartilhaAcesso) {
+    const restantes = Math.max(0, quotaPerfis.disponiveis - 1);
+    return (
+      <p className="text-xs font-bold leading-snug text-sky-900">
+        Este perfil usará sua assinatura <b>{quotaPerfis.plano === 'business_pro' ? 'Business Pro' : 'Business'}</b>. Após criá-lo, você terá {restantes} {restantes === 1 ? 'vaga restante' : 'vagas restantes'} de {quotaPerfis.limite} perfis.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      {quotaPerfisErro && (
+        <p role="alert" className="mb-2 text-xs font-bold leading-snug text-red-700">
+          {quotaPerfisErro}
+        </p>
+      )}
+      {quotaPerfis?.possuiAssinaturaOrigem && quotaPerfis.disponiveis === 0 && (
+        <p className="mb-2 text-xs font-bold leading-snug text-amber-800">
+          Sua assinatura já utiliza as {quotaPerfis.limite} vagas. Este novo perfil empresarial terá uma assinatura independente.
+        </p>
+      )}
+      <p className="text-xs font-bold leading-snug text-sky-900">
+        Escolha entre testar o <b>Business Pro por 7 dias grátis</b> ou assinar agora e selecionar o plano após criar o perfil.
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        {(['trial', 'assinar'] as const).map((modo) => {
+          const ativo = inicioEmpresaModo === modo;
+          return (
+            <button
+              key={modo}
+              type="button"
+              onClick={() => setInicioEmpresaModo(modo)}
+              className={`rounded-lg px-2 py-2 text-[11px] font-black uppercase tracking-wide transition ${ativo ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600 hover:bg-sky-100'}`}
+            >
+              {modo === 'trial' ? 'Usar 7 dias grátis' : 'Assinar agora'}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
 };
 
 const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
@@ -6921,7 +7005,7 @@ if (acessoNaoConfigurado) {
           }`}
         >
           {rotuloTipoPerfil(tipo)}
-          {tipo === 'pessoal' && criandoNovaEmpresaLogada && criarPerfilPessoalBloqueado() && <span className="ml-1 text-xs" title="Recurso Premium">🔒</span>}
+          {tipo === 'pessoal' && criandoPerfilAdicional && criarPerfilPessoalBloqueado() && <span className="ml-1 text-xs" title="Recurso Premium">🔒</span>}
         </button>
       );
     })}
@@ -6929,27 +7013,7 @@ if (acessoNaoConfigurado) {
 
   {COBRANCA_ATIVA && tipoPerfilInicialNormalizado === 'empresa' && (
     <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-3">
-      {quotaPerfis?.compartilhaAcesso ? (
-        <p className="text-xs font-bold leading-snug text-sky-900">
-          Este perfil usará sua assinatura <b>{quotaPerfis.plano === 'business_pro' ? 'Business Pro' : 'Business'}</b>. Após criá-lo, você terá {quotaPerfis.disponiveis - 1} {quotaPerfis.disponiveis - 1 === 1 ? 'vaga restante' : 'vagas restantes'} de {quotaPerfis.limite} perfis.
-        </p>
-      ) : (
-        <>
-          <p className="text-xs font-bold leading-snug text-sky-900">
-            Escolha entre testar o <b>Business Pro por 7 dias grátis</b> ou assinar agora e selecionar o plano após criar o perfil.
-          </p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {(['trial', 'assinar'] as const).map((m) => {
-              const ativo = inicioEmpresaModo === m;
-              return (
-                <button key={m} type="button" onClick={() => setInicioEmpresaModo(m)} className={`rounded-lg px-2 py-2 text-[11px] font-black uppercase tracking-wide transition ${ativo ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600 hover:bg-sky-100'}`}>
-                  {m === 'trial' ? 'Usar 7 dias grátis' : 'Assinar agora'}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
+      {renderizarOpcoesInicioPerfilEmpresa()}
     </div>
   )}
 </div>
@@ -6970,10 +7034,10 @@ if (acessoNaoConfigurado) {
   <button
     type="button"
     onClick={handleCriarEmpresaInicialComGate}
-    disabled={criandoEmpresaInicial}
+    disabled={criandoEmpresaInicial || quotaPerfisCarregando}
     className="h-13 rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
   >
-    {criandoEmpresaInicial ? 'Criando ambiente...' : 'Concluir'}
+    {quotaPerfisCarregando ? 'Verificando plano...' : criandoEmpresaInicial ? 'Criando ambiente...' : 'Concluir'}
   </button>
 
   <button
@@ -9001,7 +9065,7 @@ if (validacaoTelefoneObrigatoria) {
                       style={ativo ? estiloTemaPrimario : undefined}
                     >
                       {rotuloTipoPerfil(tipo)}
-                      {tipo === 'pessoal' && criandoNovaEmpresaLogada && criarPerfilPessoalBloqueado() && <span className="ml-1 text-xs" title="Recurso Premium">🔒</span>}
+                      {tipo === 'pessoal' && criandoPerfilAdicional && criarPerfilPessoalBloqueado() && <span className="ml-1 text-xs" title="Recurso Premium">🔒</span>}
                     </button>
                   );
                 })}
@@ -9010,27 +9074,7 @@ if (validacaoTelefoneObrigatoria) {
 
             {COBRANCA_ATIVA && tipoPerfilInicialNormalizado === 'empresa' && (
               <div className="rounded-xl border border-sky-200 bg-sky-50 p-3">
-                {quotaPerfis?.compartilhaAcesso ? (
-                  <p className="text-xs font-bold leading-snug text-sky-900">
-                    Este perfil usará sua assinatura <b>{quotaPerfis.plano === 'business_pro' ? 'Business Pro' : 'Business'}</b>. Após criá-lo, você terá {quotaPerfis.disponiveis - 1} {quotaPerfis.disponiveis - 1 === 1 ? 'vaga restante' : 'vagas restantes'} de {quotaPerfis.limite} perfis.
-                  </p>
-                ) : (
-                  <>
-                    <p className="text-xs font-bold leading-snug text-sky-900">
-                      Escolha entre testar o <b>Business Pro por 7 dias grátis</b> ou assinar agora e selecionar o plano após criar o perfil.
-                    </p>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      {(['trial', 'assinar'] as const).map((m) => {
-                        const ativo = inicioEmpresaModo === m;
-                        return (
-                          <button key={m} type="button" onClick={() => setInicioEmpresaModo(m)} className={`rounded-lg px-2 py-2 text-[11px] font-black uppercase tracking-wide transition ${ativo ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600 hover:bg-sky-100'}`}>
-                            {m === 'trial' ? 'Usar 7 dias grátis' : 'Assinar agora'}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
+                {renderizarOpcoesInicioPerfilEmpresa()}
               </div>
             )}
 
@@ -9059,11 +9103,11 @@ if (validacaoTelefoneObrigatoria) {
               <button
                 type="button"
                 onClick={handleCriarEmpresaInicialComGate}
-                disabled={criandoEmpresaInicial}
+                disabled={criandoEmpresaInicial || quotaPerfisCarregando}
                 className="rounded-xl px-4 py-3 text-xs font-black uppercase text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                 style={estiloTemaPrimario}
               >
-                {criandoEmpresaInicial ? 'Criando...' : 'Criar perfil'}
+                {quotaPerfisCarregando ? 'Verificando...' : criandoEmpresaInicial ? 'Criando...' : 'Criar perfil'}
               </button>
             </div>
           </div>

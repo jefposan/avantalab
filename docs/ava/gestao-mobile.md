@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.0.05 -->
+<!-- ava-version: 1.8.1 -->
+
+> Revisão 1.8.1: perfis anteriores do mesmo Gestor Master, sem cobrança própria,
+> podem passar a usar as vagas de uma assinatura Business paga. A correção da
+> tela de criação é exclusiva da Gestão Web; o acesso compartilhado resultante
+> também é reconhecido normalmente pela Gestão Mobile.
 
 > Revisão 1.8.0.05: isolamento interno do módulo ainda experimental de
 > créditos e consultas; sem alteração operacional na Gestão Mobile. A consulta

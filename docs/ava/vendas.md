@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.0.05 -->
+<!-- ava-version: 1.8.1 -->
 <!-- avantavendas-asset-revision: 78 -->
+
+> Revisão 1.8.1: a correção da quota de criação de perfis da Gestão e a
+> reconciliação de assinaturas não alteram contas, dados nem exclusões do
+> AvantaVendas.
 
 > Revisão 1.8.0.05: o isolamento do módulo experimental de créditos e
 > consultas da Gestão não altera o funcionamento do AvantaVendas.

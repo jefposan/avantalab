@@ -1090,6 +1090,9 @@ export function useAuth(deps: UseAuthDeps) {
       : resultado.data;
 
     const empresaCriadaId = empresaCriada?.id || empresaCriada?.empresa_id;
+    const perfilCriadoComAssinaturaCompartilhada = Boolean(
+      empresaCriada?.assinatura_origem_empresa_id,
+    );
     const perfilCriadoAgora = !opcoes?.somentePrimeiroCadastro || (
       'criado' in resultado && resultado.criado === true
     );
@@ -1166,7 +1169,15 @@ export function useAuth(deps: UseAuthDeps) {
     // O teste é ativado de imediato. Já "Assinar agora" não cria uma
     // assinatura expirada: após o cadastro, o paywall apresenta os planos e
     // somente a contratação efetiva grava a cobrança.
-    if (empresaCriadaId && perfilCriadoAgora && COBRANCA_ATIVA && tipoPerfil === 'empresa' && !cupomCriacao && modoInicioEmpresa === 'trial') {
+    if (
+      empresaCriadaId
+      && perfilCriadoAgora
+      && COBRANCA_ATIVA
+      && tipoPerfil === 'empresa'
+      && !perfilCriadoComAssinaturaCompartilhada
+      && !cupomCriacao
+      && modoInicioEmpresa === 'trial'
+    ) {
       try {
         const tokenSessao = sessaoAtual.session?.access_token;
         if (tokenSessao) {

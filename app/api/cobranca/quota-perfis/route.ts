@@ -26,6 +26,7 @@ export async function GET(request: Request) {
     usados: direito.usados,
     limite: direito.limite,
     disponiveis,
+    possuiAssinaturaOrigem: direito.origemEmpresaId !== null,
     compartilhaAcesso: direito.origemEmpresaId !== null && disponiveis > 0,
   });
 }

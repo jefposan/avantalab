@@ -71,6 +71,7 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   if (assinatura?.gateway_subscription_id) {
+    let assinaturaAtivaAposConciliacao = assinatura.status === 'ativa';
     const [assinaturaGw, cobrancas] = await Promise.all([
       obterAssinaturaAsaas(assinatura.gateway_subscription_id),
       listarCobrancasAssinaturaAsaas(assinatura.gateway_subscription_id),
@@ -125,6 +126,16 @@ export async function GET(request: Request) {
           ...(ciclo ? { ciclo } : {}),
           atualizado_em: new Date().toISOString(),
         }).eq('id', assinatura.id);
+      }
+      if (novoStatus) assinaturaAtivaAposConciliacao = novoStatus === 'ativa';
+    }
+
+    if (assinaturaAtivaAposConciliacao) {
+      const { error: erroReconciliacao } = await admin.rpc('reconciliar_perfis_quota', {
+        p_origem_empresa_id: empresaId,
+      });
+      if (erroReconciliacao) {
+        console.error('Erro ao reconciliar perfis da assinatura ativa:', erroReconciliacao.message);
       }
     }
 

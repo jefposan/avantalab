@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.8.1 - 2026-08-17
+
+- Corrigida a criação de perfis pelo painel **Gerenciar perfis**: esse caminho
+  agora consulta e envia a quota do perfil assinante, igual ao fluxo completo.
+- Business e Business Pro informam a quantidade de vagas antes da confirmação e
+  vinculam o novo perfil à assinatura existente sem iniciar outro teste.
+- Perfis empresariais criados sem uma quota elegível continuam independentes e
+  podem escolher entre o teste do Business Pro e uma assinatura própria.
+- Ao ativar uma assinatura Business paga, perfis anteriores do mesmo Gestor
+  Master em teste, cortesia ou sem assinatura podem ser incorporados às vagas
+  disponíveis. Assinaturas pagas próprias e seu histórico são preservados.
+- O servidor restringe o consumo de vagas aos papéis Gestor Master e
+  Administrador e mantém a decisão final de quota fora da interface.
+
 ## 1.8.0.05 - 2026-08-15
 
 - A página e as APIs ainda experimentais de créditos, carteira, recargas e

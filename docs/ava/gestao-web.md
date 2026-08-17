@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.0.05 -->
+<!-- ava-version: 1.8.1 -->
+
+> Revisão 1.8.1: em **Gerenciar perfis > Criar novo perfil**, a Gestão verifica
+> o plano e mostra as vagas disponíveis. Business e Business Pro usam uma vaga
+> da assinatura do perfil atual sem abrir outro teste; somente Gestor Master e
+> Administrador podem consumir essa quota. Se não houver assinatura elegível ou
+> a quota estiver cheia, um novo perfil Empresa segue independente e oferece
+> teste ou contratação própria. Perfis anteriores sem cobrança própria podem ser
+> reconciliados nas vagas do mesmo Gestor Master, preservando o histórico.
 
 > Revisão 1.8.0.05: a página experimental de créditos e suas operações de
 > carteira e consulta foram retiradas da publicação. A busca de CNPJ usada na

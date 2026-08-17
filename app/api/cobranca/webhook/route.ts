@@ -179,6 +179,14 @@ export async function POST(request: Request) {
           valido_ate: validoAte,
           atualizado_em: new Date().toISOString(),
         }).eq('id', assinaturaAtual.id);
+        if (novoStatus === 'ativa') {
+          const { error: erroReconciliacao } = await db.rpc('reconciliar_perfis_quota', {
+            p_origem_empresa_id: assinaturaAtual.empresa_id,
+          });
+          if (erroReconciliacao) {
+            console.error('Erro ao reconciliar perfis da assinatura ativada:', erroReconciliacao.message);
+          }
+        }
       } else if (evento === 'SUBSCRIPTION_UPDATED') {
         const ciclo = assinaturaPayload.cycle === 'YEARLY' ? 'anual' : assinaturaPayload.cycle === 'MONTHLY' ? 'mensal' : null;
         if (ciclo) await db.from('assinaturas').update({ ciclo, atualizado_em: new Date().toISOString() }).eq('id', assinaturaAtual.id);

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA } from '../../lib/cobranca';
 import { PLANOS_COMERCIAIS } from '../../lib/planos-comerciais';
 import { resolverDireitoDePerfisDoPerfil } from '../../lib/cobranca-servidor';
+import { avaliarQuotaParaCriacao } from '../../lib/perfis-quota';
 
 function erro(mensagem: string, status = 400) {
   return NextResponse.json({ erro: true, mensagem }, { status });
@@ -36,14 +37,25 @@ export async function POST(request: Request) {
   }
 
   let direitoPerfis: Awaited<ReturnType<typeof resolverDireitoDePerfisDoPerfil>> | null = null;
+  let assinaturaOrigemEmpresaId: string | null = null;
   if (COBRANCA_ATIVA && ids.length) {
     direitoPerfis = await resolverDireitoDePerfisDoPerfil(db, auth.user.id, empresaOrigemId);
     const plano = direitoPerfis.plano;
     const limites = PLANOS_COMERCIAIS[plano].limites;
-    if (!limites.tiposDePerfilPermitidos.includes(tipoPerfil)) {
-      return erro('Seu plano atual permite apenas perfis pessoais. Assine Business para criar um perfil empresarial.', 409);
+    const quota = avaliarQuotaParaCriacao(
+      direitoPerfis,
+      tipoPerfil,
+      limites.tiposDePerfilPermitidos,
+    );
+    assinaturaOrigemEmpresaId = quota.compartilhaAssinatura ? direitoPerfis.origemEmpresaId : null;
+
+    // Um perfil empresarial sem vaga compartilhada continua podendo iniciar
+    // uma assinatura própria. Perfis pessoais extras permanecem protegidos
+    // pelos limites do plano atual.
+    if (tipoPerfil === 'pessoal' && !quota.tipoPermitido) {
+      return erro('Seu plano atual não permite criar outro perfil pessoal. Faça upgrade para continuar.', 409);
     }
-    if (direitoPerfis.usados >= limites.perfis) {
+    if (tipoPerfil === 'pessoal' && !quota.temVaga) {
       const sugestao = plano === 'free' ? 'Pessoal Premium' : plano === 'pessoal_premium' || plano === 'business' ? 'Business Pro' : 'um plano superior';
       return erro(`Este plano permite até ${limites.perfis} ${limites.perfis === 1 ? 'perfil' : 'perfis'}. Faça upgrade para o ${sugestao} para continuar.`, 409);
     }
@@ -51,7 +63,6 @@ export async function POST(request: Request) {
 
   const email = String(auth.user.email || '').toLowerCase();
   const nomeUsuario = String(auth.user.user_metadata?.nome || email.split('@')[0] || 'Usuário').trim();
-  const assinaturaOrigemEmpresaId = direitoPerfis?.origemEmpresaId || null;
   const { data: empresa, error: empresaErro } = await db.from('empresas').insert({
     nome,
     tipo_perfil: tipoPerfil,
