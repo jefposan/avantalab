@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { atualizarAssinaturaAsaas } from '../../../lib/asaas';
+import { atualizarAssinaturaAsaas, listarCobrancasAssinaturaAsaas } from '../../../lib/asaas';
+import { calcularFimCarencia, calcularFimPeriodoPago } from '../../../lib/cobranca-fluxo';
 import { fimDaCarencia, somarUmMesData } from '../../../lib/ponto-facial-cobranca-servidor';
 
 export const runtime = 'nodejs';
@@ -102,30 +103,38 @@ export async function POST(request: Request) {
       else if (evento === 'PAYMENT_REFUNDED' || evento === 'PAYMENT_CHARGEBACK_REQUESTED' || evento === 'SUBSCRIPTION_INACTIVATED' || evento === 'SUBSCRIPTION_DELETED') novoStatus = 'cancelada';
 
       if (novoStatus === 'inadimplente') {
-        const fim = new Date();
-        fim.setDate(fim.getDate() + 3);
-        validoAte = fim.toISOString();
+        validoAte = calcularFimCarencia();
       } else if (novoStatus === 'cancelada') {
-        validoAte = new Date().toISOString();
+        const encerramentoExterno = evento === 'SUBSCRIPTION_INACTIVATED' || evento === 'SUBSCRIPTION_DELETED';
+        if (encerramentoExterno && assinaturaGw) {
+          const cobrancas = await listarCobrancasAssinaturaAsaas(assinaturaGw);
+          if (!cobrancas.ok) throw new Error('Não foi possível confirmar o período pago do módulo encerrado.');
+          validoAte = calcularFimPeriodoPago(cobrancas.data?.data || [], 'mensal', assinaturaModulo.valido_ate)
+            || new Date().toISOString();
+        } else {
+          validoAte = new Date().toISOString();
+        }
       } else if (novoStatus === 'ativa') {
         validoAte = null;
       }
       if (novoStatus) {
-        await db.from('assinaturas_modulos').update({ status: novoStatus, valido_ate: validoAte, atualizado_em: new Date().toISOString() }).eq('id', assinaturaModulo.id);
-        await db.from('empresa_modulos').upsert({
+        const { error: erroAssinaturaModulo } = await db.from('assinaturas_modulos').update({ status: novoStatus, valido_ate: validoAte, atualizado_em: new Date().toISOString() }).eq('id', assinaturaModulo.id);
+        if (erroAssinaturaModulo) throw erroAssinaturaModulo;
+        const { error: erroInstalacaoModulo } = await db.from('empresa_modulos').upsert({
           empresa_id: assinaturaModulo.empresa_id,
           modulo_id: assinaturaModulo.modulo_id,
-          ativo: novoStatus === 'ativa',
+          ativo: novoStatus === 'ativa' || (novoStatus === 'cancelada' && !!validoAte && new Date(validoAte) > new Date()),
           origem: 'assinatura_modulo',
           expira_em: novoStatus === 'ativa' ? null : validoAte,
           atualizado_em: new Date().toISOString(),
         }, { onConflict: 'empresa_id,modulo_id' });
+        if (erroInstalacaoModulo) throw erroInstalacaoModulo;
       }
       await db.from('cobranca_webhook_eventos').update({ status: 'processado', erro: null, processado_em: new Date().toISOString() }).eq('id', registroEventoId);
       return NextResponse.json({ recebido: true, modulo: true });
     }
 
-    let consulta = db.from('assinaturas').select('id, empresa_id, status, valido_ate');
+    let consulta = db.from('assinaturas').select('id, empresa_id, status, ciclo, trial_fim, valido_ate');
     if (empresaId && assinaturaGw) consulta = consulta.eq('empresa_id', empresaId).eq('gateway_subscription_id', assinaturaGw);
     else if (empresaId) consulta = consulta.eq('empresa_id', empresaId);
     else if (assinaturaGw) consulta = consulta.eq('gateway_subscription_id', assinaturaGw);
@@ -155,6 +164,7 @@ export async function POST(request: Request) {
     if (assinaturaAtual && assinaturaAtual.status !== 'cortesia') {
       let novoStatus: string | null = null;
       let validoAte: string | null = null;
+      let limparCheckoutTrial = false;
       if (evento === 'PAYMENT_CONFIRMED' || evento === 'PAYMENT_RECEIVED') novoStatus = 'ativa';
       else if (evento === 'PAYMENT_OVERDUE') novoStatus = 'inadimplente';
       else if (evento === 'PAYMENT_REFUNDED' || evento === 'PAYMENT_CHARGEBACK_REQUESTED') novoStatus = 'cancelada';
@@ -165,20 +175,42 @@ export async function POST(request: Request) {
         if (assinaturaAtual.status === 'inadimplente' && assinaturaAtual.valido_ate) {
           validoAte = assinaturaAtual.valido_ate;
         } else {
-          const fimCarencia = new Date();
-          fimCarencia.setDate(fimCarencia.getDate() + 3);
-          validoAte = fimCarencia.toISOString();
+          validoAte = calcularFimCarencia(new Date(), assinaturaAtual.trial_fim);
         }
       } else if (novoStatus === 'cancelada') {
-        validoAte = new Date().toISOString();
+        const encerramentoExterno = evento === 'SUBSCRIPTION_INACTIVATED' || evento === 'SUBSCRIPTION_DELETED';
+        const trialVigente = encerramentoExterno
+          && assinaturaAtual.status === 'trial'
+          && !!assinaturaAtual.trial_fim
+          && new Date(assinaturaAtual.trial_fim) > new Date();
+        if (trialVigente) {
+          novoStatus = 'trial';
+          validoAte = null;
+          limparCheckoutTrial = true;
+        } else if (encerramentoExterno && assinaturaGw) {
+          const cobrancas = await listarCobrancasAssinaturaAsaas(assinaturaGw);
+          if (!cobrancas.ok) throw new Error('Não foi possível confirmar o período pago da assinatura encerrada.');
+          validoAte = calcularFimPeriodoPago(
+            cobrancas.data?.data || [],
+            assinaturaAtual.ciclo === 'anual' ? 'anual' : 'mensal',
+            assinaturaAtual.valido_ate,
+          ) || new Date().toISOString();
+        } else {
+          // Estorno e chargeback suspendem o acesso imediatamente.
+          validoAte = new Date().toISOString();
+        }
+      } else if (novoStatus === 'ativa') {
+        validoAte = null;
       }
 
       if (novoStatus) {
-        await db.from('assinaturas').update({
+        const { error: erroAtualizacaoAssinatura } = await db.from('assinaturas').update({
           status: novoStatus,
           valido_ate: validoAte,
+          ...(limparCheckoutTrial ? { gateway_subscription_id: null } : {}),
           atualizado_em: new Date().toISOString(),
         }).eq('id', assinaturaAtual.id);
+        if (erroAtualizacaoAssinatura) throw erroAtualizacaoAssinatura;
         if (novoStatus === 'ativa') {
           const { error: erroReconciliacao } = await db.rpc('reconciliar_perfis_quota', {
             p_origem_empresa_id: assinaturaAtual.empresa_id,

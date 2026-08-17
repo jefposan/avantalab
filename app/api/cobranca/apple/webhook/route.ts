@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { criarSupabaseAdmin } from '../../../../lib/admin-server';
 import {
   consultarAssinanteRevenueCat,
-  REVENUECAT_ENTITLEMENT_PESSOAL,
   salvarEstadoRevenueCat,
 } from '../../../../lib/revenuecat-servidor';
 
@@ -40,14 +39,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, duplicado: true });
   }
 
-  const relevante = Boolean(
-    userId
-    && (
-      (evento.entitlement_ids || []).includes(REVENUECAT_ENTITLEMENT_PESSOAL)
-      || String(evento.product_id || '').includes('pessoalpremium')
-    )
-  );
-  await db.from('revenuecat_webhook_eventos').upsert({
+  // Alguns eventos de cancelamento/expiração não repetem entitlement_ids.
+  // Havendo usuário, consulte sempre a fonte de verdade na RevenueCat; eventos
+  // sem usuário continuam ignorados e nunca alteram acesso.
+  const relevante = Boolean(userId);
+  const { error: erroRegistro } = await db.from('revenuecat_webhook_eventos').upsert({
     revenuecat_event_id: eventoId,
     evento: evento.type || 'UNKNOWN',
     user_id: userId || null,
@@ -56,6 +52,9 @@ export async function POST(request: Request) {
     status: relevante ? 'pendente' : 'ignorado',
     processado_em: relevante ? null : new Date().toISOString(),
   }, { onConflict: 'revenuecat_event_id' });
+  if (erroRegistro) {
+    return NextResponse.json({ erro: true, mensagem: 'Não foi possível registrar o evento.' }, { status: 500 });
+  }
   if (!relevante) return NextResponse.json({ ok: true, ignorado: true });
 
   try {
@@ -63,11 +62,12 @@ export async function POST(request: Request) {
     // sempre derivada da API da RevenueCat, nunca do payload recebido.
     const estado = await consultarAssinanteRevenueCat(userId);
     await salvarEstadoRevenueCat(db, userId, estado);
-    await db.from('revenuecat_webhook_eventos').update({
+    const { error: erroProcessamento } = await db.from('revenuecat_webhook_eventos').update({
       status: 'processado',
       erro: null,
       processado_em: new Date().toISOString(),
     }).eq('revenuecat_event_id', eventoId);
+    if (erroProcessamento) throw erroProcessamento;
     return NextResponse.json({ ok: true });
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : String(erro);

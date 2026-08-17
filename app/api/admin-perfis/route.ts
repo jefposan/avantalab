@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { exigirAdmin } from '../../lib/admin-server';
 import { DATA_LANCAMENTO, assinaturaVigente, type EstadoAcesso, type TipoPerfil, type StatusAssinatura } from '../../lib/cobranca';
+import { normalizarStatusTemporal } from '../../lib/cobranca-fluxo';
 import { removerAssinaturaAsaas, removerCobrancaAsaas } from '../../lib/asaas';
 
 function naoAutorizado() {
@@ -11,10 +12,6 @@ type AssinaturaRow = { empresa_id: string; status: string; plano: string | null;
 type FiltroPerfil = 'todos' | 'com_acesso' | 'sem_acesso' | StatusAssinatura;
 type FiltroTipoPerfil = 'todos' | TipoPerfil;
 type OrdemPerfil = 'nome_asc' | 'nome_desc' | 'criado_em_desc' | 'criado_em_asc';
-
-function trialExpirou(trialFim: string | null) {
-  return !trialFim || new Date(trialFim) <= new Date();
-}
 
 const STATUS_FATURA_ABERTA = new Set(['PENDING', 'OVERDUE', 'AWAITING_RISK_ANALYSIS']);
 
@@ -31,18 +28,19 @@ async function limparCobrancasParaCortesia(
     .select('gateway_payment_id, gateway_subscription_id, status')
     .eq('empresa_id', empresaId);
   if (erroFaturas) throw erroFaturas;
-  const { data: eventos, error: erroEventos } = await db
-    .from('cobranca_webhook_eventos')
-    .select('gateway_subscription_id')
+  const { data: assinaturasModulos, error: erroAssinaturasModulos } = await db
+    .from('assinaturas_modulos')
+    .select('id, gateway_subscription_id')
     .eq('empresa_id', empresaId)
-    .not('gateway_subscription_id', 'is', null);
-  if (erroEventos) throw erroEventos;
+    .not('gateway_subscription_id', 'is', null)
+    .neq('status', 'cancelada');
+  if (erroAssinaturasModulos) throw erroAssinaturasModulos;
 
   const assinaturasAsaas = new Set(
     [
       gatewaySubscriptionId,
       ...(faturas || []).map((fatura) => fatura.gateway_subscription_id),
-      ...(eventos || []).map((evento) => evento.gateway_subscription_id),
+      ...(assinaturasModulos || []).map((assinatura) => assinatura.gateway_subscription_id),
     ]
       .filter((id): id is string => Boolean(id)),
   );
@@ -69,15 +67,36 @@ async function limparCobrancasParaCortesia(
   if (erroNotificacoes) throw erroNotificacoes;
   const { error: erroLimpeza } = await db.from('assinatura_faturas').delete().eq('empresa_id', empresaId);
   if (erroLimpeza) throw erroLimpeza;
+  if ((assinaturasModulos || []).length > 0) {
+    const agora = new Date().toISOString();
+    const { error: erroModulos } = await db.from('assinaturas_modulos').update({
+      status: 'cancelada',
+      valido_ate: agora,
+      cancelamento_solicitado_em: agora,
+      atualizado_em: agora,
+    }).in('id', assinaturasModulos.map((assinatura) => assinatura.id));
+    if (erroModulos) throw erroModulos;
+    const { error: erroInstalacoes } = await db.from('empresa_modulos').update({
+      origem: 'cortesia',
+      expira_em: null,
+      atualizado_em: agora,
+    }).eq('empresa_id', empresaId).eq('ativo', true);
+    if (erroInstalacoes) throw erroInstalacoes;
+  }
 }
 
 // Reproduz a lógica do resolver para o admin ver a situação real de cada perfil.
 function estadoDoPerfil(tipoPerfil: TipoPerfil, criadoEmISO: string | null, row: AssinaturaRow | undefined): EstadoAcesso & { plano: string | null; ciclo: string | null } {
   if (row) {
-    const status = row.status === 'trial' && trialExpirou(row.trial_fim)
-      ? 'expirada'
-      : row.status as StatusAssinatura;
-    return { tipoPerfil, status, validoAte: row.valido_ate, trialFim: row.trial_fim, plano: row.plano, ciclo: row.ciclo };
+    const status = normalizarStatusTemporal(
+      row.status as StatusAssinatura,
+      row.trial_fim,
+      row.valido_ate,
+    );
+    const plano = row.status === 'cortesia'
+      ? (tipoPerfil === 'empresa' ? 'business_pro' : 'pessoal_premium')
+      : row.plano;
+    return { tipoPerfil, status, validoAte: row.valido_ate, trialFim: row.trial_fim, plano, ciclo: row.ciclo };
   }
   const criadoEm = criadoEmISO ? new Date(criadoEmISO) : null;
   const anteriorAoLancamento = !criadoEm || criadoEm < new Date(DATA_LANCAMENTO);
@@ -111,7 +130,7 @@ export async function GET(request: Request) {
     const ate = de + porPagina - 1;
 
     let query = db.from('empresas')
-      .select('id, nome, tipo_perfil, created_at')
+      .select('id, nome, tipo_perfil, created_at, assinatura_origem_empresa_id')
       .order('nome', { ascending: true });
     if (q) query = query.ilike('nome', `%${q}%`);
     if (tipo !== 'todos') query = query.eq('tipo_perfil', tipo);
@@ -120,14 +139,21 @@ export async function GET(request: Request) {
     if (error) throw error;
 
     const ids = (empresas || []).map((e) => e.id);
-    const assinaturas: AssinaturaRow[] = ids.length
-      ? (await db.from('assinaturas').select('empresa_id, status, plano, ciclo, valido_ate, trial_fim, cupom_id').in('empresa_id', ids)).data || []
+    const idsAssinaturas = Array.from(new Set([
+      ...ids,
+      ...(empresas || []).map((empresa) => empresa.assinatura_origem_empresa_id).filter(Boolean),
+    ]));
+    const assinaturas: AssinaturaRow[] = idsAssinaturas.length
+      ? (await db.from('assinaturas').select('empresa_id, status, plano, ciclo, valido_ate, trial_fim, cupom_id').in('empresa_id', idsAssinaturas)).data || []
       : [];
     const mapa = new Map(assinaturas.map((a) => [a.empresa_id, a]));
 
     const perfisCompletos = (empresas || []).map((e) => {
       const tipoPerfil: TipoPerfil = e.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
-      const estado = estadoDoPerfil(tipoPerfil, e.created_at, mapa.get(e.id));
+      const assinaturaEfetiva = e.assinatura_origem_empresa_id
+        ? mapa.get(e.assinatura_origem_empresa_id)
+        : mapa.get(e.id);
+      const estado = estadoDoPerfil(tipoPerfil, e.created_at, assinaturaEfetiva);
       return {
         id: e.id,
         nome: e.nome,
@@ -138,9 +164,11 @@ export async function GET(request: Request) {
         ciclo: estado.ciclo,
         valido_ate: estado.validoAte,
         trial_fim: estado.trialFim,
-        cupom_id: mapa.get(e.id)?.cupom_id || null,
+        cupom_id: assinaturaEfetiva?.cupom_id || null,
         tem_acesso: assinaturaVigente(estado),
-        tem_registro: Boolean(mapa.get(e.id)),
+        tem_registro: Boolean(assinaturaEfetiva),
+        assinatura_compartilhada: Boolean(e.assinatura_origem_empresa_id),
+        assinatura_origem_empresa_id: e.assinatura_origem_empresa_id || null,
       };
     });
     const perfisFiltrados = perfisCompletos.filter((perfil) => {
@@ -227,12 +255,18 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ erro: true, mensagem: 'Dados inválidos.' }, { status: 400 });
     }
 
-    const { data: emp } = await db.from('empresas').select('tipo_perfil, created_at').eq('id', empresaId).maybeSingle();
+    const { data: emp } = await db.from('empresas').select('tipo_perfil, created_at, assinatura_origem_empresa_id').eq('id', empresaId).maybeSingle();
+    if (emp?.assinatura_origem_empresa_id) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: 'Este perfil utiliza uma assinatura compartilhada. Gerencie o benefício no perfil assinante.',
+      }, { status: 409 });
+    }
     const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
 
     const { data: existe } = await db
       .from('assinaturas')
-      .select('id, status, gateway_subscription_id')
+      .select('id, status, gateway_customer_id, gateway_subscription_id')
       .eq('empresa_id', empresaId)
       .maybeSingle();
 
@@ -272,14 +306,16 @@ export async function PATCH(request: Request) {
       ciclo: null,
       trial_fim: null,
       gateway: null,
-      gateway_customer_id: null,
+      gateway_customer_id: existe?.gateway_customer_id || null,
       gateway_subscription_id: null,
       cupom_id: null,
       atualizado_em: new Date().toISOString(),
     };
 
-    if (existe) await db.from('assinaturas').update(base).eq('empresa_id', empresaId);
-    else await db.from('assinaturas').insert(base);
+    const persistencia = existe
+      ? await db.from('assinaturas').update(base).eq('empresa_id', empresaId)
+      : await db.from('assinaturas').insert(base);
+    if (persistencia.error) throw persistencia.error;
 
     return NextResponse.json({ erro: false, status, validoAte, trialFim: null, cupomId: null, temAcesso: acao === 'liberar', temRegistro: true });
   } catch (error) {

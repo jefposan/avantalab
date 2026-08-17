@@ -14,7 +14,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ erro: true, mensagem: 'Perfil inválido.' }, { status: 400 });
   }
 
-  const acesso = await autenticarPerfilCobranca(request, empresaId, true);
+  // A compra pertence ao login da App Store/RevenueCat. Qualquer usuário com
+  // vínculo ativo pode sincronizar a própria compra; a operação nunca altera a
+  // assinatura de outro usuário nem exige papel administrativo no perfil.
+  const acesso = await autenticarPerfilCobranca(request, empresaId);
   if (!acesso) {
     return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
   }

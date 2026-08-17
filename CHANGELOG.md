@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.8.2 - 2026-08-17
+
+- Auditado o ciclo completo de assinaturas Web e Apple: contratação repetida
+  reutiliza a cobrança pendente e nunca substitui silenciosamente uma
+  assinatura ou um período já pago.
+- O teste Business Pro continua disponível até a data original mesmo quando o
+  usuário inicia ou cancela um checkout antes do primeiro pagamento.
+- Criação de perfil e consumo de quota agora são confirmados em uma transação
+  no banco, impedindo dupla utilização da última vaga e o repasse de quota por
+  um perfil que apenas recebeu acesso compartilhado.
+- A quota do Pessoal Premium comprado pela App Store passa a reconhecer até
+  três perfis pessoais do próprio login, com validação final no servidor.
+- Perfis compartilhados identificam claramente a origem do plano e não podem
+  contratar, alterar, cancelar ou receber cupom como se fossem o assinante.
+- Resgates de cupom ficaram atômicos, limitados a gestores, protegidos contra
+  uso simultâneo e impedidos de substituir cobranças Asaas ou App Store.
+- Cancelamentos preservam somente o período efetivamente pago; carência não
+  encurta teste vigente e a conciliação automática também cobre módulos.
+- Ao elevar Business para Business Pro, renovações avulsas de módulos são
+  encerradas antes da mudança para evitar cobrança duplicada.
+- Cortesias administrativas não alcançam a cobrança independente do
+  reconhecimento facial e preservam o cadastro do cliente na Asaas.
+- Edição de perfil preserva o tipo quando ele não é enviado e bloqueia troca
+  incompatível com assinatura vigente.
+
 ## 1.8.1 - 2026-08-17
 
 - Corrigida a criação de perfis pelo painel **Gerenciar perfis**: esse caminho

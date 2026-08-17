@@ -1292,12 +1292,11 @@ const labelNomePerfilInicial = rotuloNomePerfil(tipoPerfilInicialNormalizado);
 const placeholderPerfilInicial = placeholderNomePerfil(tipoPerfilInicialNormalizado);
 const labelNomePerfilEdicao = rotuloNomePerfil(editTipoPerfilNormalizado);
 
-// Premium Pessoal — múltiplos perfis: no grátis o usuário tem direito a 1
-// perfil pessoal. Criar perfil EMPRESA continua sempre livre (tem trial
-// próprio); e quem assina a Empresa ganha o Premium no pessoal (o servidor
-// devolve o estado como cortesia nesse caso).
+// A quota exibida vem da mesma origem usada pelo servidor. Isso é essencial em
+// perfis compartilhados: eles usam o plano, mas não podem repassar a assinatura.
 const criarPerfilPessoalBloqueado = (): boolean => {
   if (!COBRANCA_ATIVA || !estadoAcesso) return false;
+  if (quotaPerfis) return quotaPerfis.disponiveis <= 0;
   const jaTemPessoal = empresasDoUsuario.some(
     (empresa: { tipo_perfil?: string | null }) => normalizarTipoPerfil(empresa.tipo_perfil) === 'pessoal'
   );

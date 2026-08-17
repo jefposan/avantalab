@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.1 -->
+<!-- ava-version: 1.8.2 -->
+
+> Revisão 1.8.2: criação de perfil e consumo de vaga são confirmados juntos no
+> servidor. Um perfil que apenas recebeu assinatura compartilhada não repassa a
+> quota nem gerencia o plano de origem; a tela de Assinatura orienta a acessar o
+> perfil assinante. O Pessoal Premium da App Store reconhece até três perfis
+> pessoais do próprio login. Repetir uma contratação reutiliza a cobrança
+> pendente e não gera assinatura duplicada. Teste vigente não é encurtado ao
+> iniciar ou cancelar o checkout. Cupons não substituem assinatura recorrente.
+> Ao migrar Business para Business Pro, módulos avulsos deixam de renovar para
+> evitar cobrança duplicada.
 
 > Revisão 1.8.1: em **Gerenciar perfis > Criar novo perfil**, a Gestão verifica
 > o plano e mostra as vagas disponíveis. Business e Business Pro usam uma vaga

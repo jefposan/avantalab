@@ -5,6 +5,18 @@ type Assinatura = {
   empresa_id: string;
   status: string;
   valido_ate: string | null;
+  trial_fim: string | null;
+  ciclo: string | null;
+  plano: string | null;
+  gateway_subscription_id: string;
+};
+
+type AssinaturaModulo = {
+  id: string;
+  empresa_id: string;
+  modulo_id: string;
+  status: string;
+  valido_ate: string | null;
   gateway_subscription_id: string;
 };
 
@@ -37,6 +49,49 @@ async function asaas(path: string, init: RequestInit = {}) {
   return response.json();
 }
 
+async function asaasOuAusente(path: string) {
+  try {
+    return await asaas(path);
+  } catch (error) {
+    if (String(error).includes('Asaas 404:')) return null;
+    throw error;
+  }
+}
+
+const STATUS_PAGOS = new Set(['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']);
+
+function fimCarencia(trialFim: string | null) {
+  const carencia = new Date();
+  carencia.setDate(carencia.getDate() + 3);
+  const trial = trialFim ? new Date(trialFim) : null;
+  return trial && !Number.isNaN(trial.getTime()) && trial > carencia
+    ? trial.toISOString()
+    : carencia.toISOString();
+}
+
+function fimPeriodoPago(
+  pagamentos: Array<{ dueDate?: string; status?: string }>,
+  ciclo: string | null,
+  fallback: string | null,
+) {
+  const agora = new Date();
+  const candidatos: Date[] = [];
+  if (fallback) {
+    const data = new Date(fallback);
+    if (!Number.isNaN(data.getTime())) candidatos.push(data);
+  }
+  for (const pagamento of pagamentos) {
+    if (!pagamento.dueDate || !STATUS_PAGOS.has(pagamento.status || '')) continue;
+    const fim = new Date(`${pagamento.dueDate}T23:59:59-03:00`);
+    if (Number.isNaN(fim.getTime())) continue;
+    if (ciclo === 'anual') fim.setFullYear(fim.getFullYear() + 1);
+    else fim.setMonth(fim.getMonth() + 1);
+    candidatos.push(fim);
+  }
+  const resultado = candidatos.sort((a, b) => b.getTime() - a.getTime())[0];
+  return resultado && resultado > agora ? resultado.toISOString() : null;
+}
+
 Deno.serve(async () => {
   const db = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -46,7 +101,7 @@ Deno.serve(async () => {
   try {
     const { data, error } = await db
       .from('assinaturas')
-      .select('id, empresa_id, status, valido_ate, gateway_subscription_id')
+      .select('id, empresa_id, status, valido_ate, trial_fim, ciclo, plano, gateway_subscription_id')
       .not('gateway_subscription_id', 'is', null);
     if (error) throw error;
 
@@ -60,8 +115,8 @@ Deno.serve(async () => {
       verificadas++;
       try {
         const [detalhe, pagamentosResposta] = await Promise.all([
-          asaas(`/subscriptions/${assinatura.gateway_subscription_id}`),
-          asaas(`/subscriptions/${assinatura.gateway_subscription_id}/payments`),
+          asaasOuAusente(`/subscriptions/${assinatura.gateway_subscription_id}`),
+          asaasOuAusente(`/subscriptions/${assinatura.gateway_subscription_id}/payments`),
         ]);
         const pagamentos = Array.isArray(pagamentosResposta?.data) ? pagamentosResposta.data : [];
 
@@ -88,15 +143,20 @@ Deno.serve(async () => {
         const temPaga = pagamentos.some((item: { status?: string }) => ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(item.status || ''));
         let status = assinatura.status;
         let validoAte = assinatura.valido_ate;
-        if (detalhe?.status === 'INACTIVE' || detalhe?.status === 'EXPIRED') {
-          status = 'cancelada';
-          validoAte = new Date().toISOString();
+        let limparCheckoutTrial = false;
+        if (!detalhe || detalhe.status === 'INACTIVE' || detalhe.status === 'EXPIRED') {
+          const trialVigente = assinatura.status === 'trial'
+            && !!assinatura.trial_fim
+            && new Date(assinatura.trial_fim) > new Date();
+          status = trialVigente ? 'trial' : 'cancelada';
+          validoAte = trialVigente
+            ? null
+            : fimPeriodoPago(pagamentos, assinatura.ciclo, assinatura.valido_ate) || new Date().toISOString();
+          limparCheckoutTrial = trialVigente;
         } else if (temVencida) {
           status = 'inadimplente';
           if (assinatura.status !== 'inadimplente' || !assinatura.valido_ate) {
-            const carencia = new Date();
-            carencia.setDate(carencia.getDate() + 3);
-            validoAte = carencia.toISOString();
+            validoAte = fimCarencia(assinatura.trial_fim);
           }
         } else if (temPaga) {
           status = 'ativa';
@@ -105,16 +165,76 @@ Deno.serve(async () => {
 
         const ciclo = detalhe?.cycle === 'YEARLY' ? 'anual' : detalhe?.cycle === 'MONTHLY' ? 'mensal' : null;
         if (status !== assinatura.status || validoAte !== assinatura.valido_ate || ciclo) {
-          await db.from('assinaturas').update({
+          const { error: erroAtualizacao } = await db.from('assinaturas').update({
             status,
             valido_ate: validoAte,
+            ...(limparCheckoutTrial ? { gateway_subscription_id: null } : {}),
             ...(ciclo ? { ciclo } : {}),
             atualizado_em: new Date().toISOString(),
           }).eq('id', assinatura.id);
+          if (erroAtualizacao) throw erroAtualizacao;
           atualizadas++;
+        }
+        if (status === 'ativa') {
+          const { error: erroQuota } = await db.rpc('reconciliar_perfis_quota', {
+            p_origem_empresa_id: assinatura.empresa_id,
+          });
+          if (erroQuota) throw erroQuota;
         }
       } catch (error) {
         falhas.push({ empresaId: assinatura.empresa_id, erro: String(error) });
+      }
+    }
+
+    const { data: assinaturasModulos, error: erroModulos } = await db
+      .from('assinaturas_modulos')
+      .select('id, empresa_id, modulo_id, status, valido_ate, gateway_subscription_id')
+      .not('gateway_subscription_id', 'is', null)
+      .neq('status', 'cancelada');
+    if (erroModulos) throw erroModulos;
+    let modulosVerificados = 0;
+    let modulosAtualizados = 0;
+    for (const assinatura of (assinaturasModulos || []) as AssinaturaModulo[]) {
+      modulosVerificados++;
+      try {
+        const [detalhe, pagamentosResposta] = await Promise.all([
+          asaasOuAusente(`/subscriptions/${assinatura.gateway_subscription_id}`),
+          asaasOuAusente(`/subscriptions/${assinatura.gateway_subscription_id}/payments`),
+        ]);
+        const pagamentos = Array.isArray(pagamentosResposta?.data) ? pagamentosResposta.data : [];
+        const temVencida = pagamentos.some((item: { status?: string }) => item.status === 'OVERDUE');
+        const temPaga = pagamentos.some((item: { status?: string }) => STATUS_PAGOS.has(item.status || ''));
+        let status = assinatura.status;
+        let validoAte = assinatura.valido_ate;
+        if (!detalhe || detalhe.status === 'INACTIVE' || detalhe.status === 'EXPIRED') {
+          status = 'cancelada';
+          validoAte = fimPeriodoPago(pagamentos, 'mensal', assinatura.valido_ate) || new Date().toISOString();
+        } else if (temVencida) {
+          status = 'inadimplente';
+          if (assinatura.status !== 'inadimplente' || !assinatura.valido_ate) validoAte = fimCarencia(null);
+        } else if (temPaga) {
+          status = 'ativa';
+          validoAte = null;
+        }
+        if (status !== assinatura.status || validoAte !== assinatura.valido_ate) {
+          const agora = new Date().toISOString();
+          const ativo = status === 'ativa' || (status === 'cancelada' && !!validoAte && new Date(validoAte) > new Date());
+          const [registro, instalacao] = await Promise.all([
+            db.from('assinaturas_modulos').update({ status, valido_ate: validoAte, atualizado_em: agora }).eq('id', assinatura.id),
+            db.from('empresa_modulos').upsert({
+              empresa_id: assinatura.empresa_id,
+              modulo_id: assinatura.modulo_id,
+              ativo,
+              origem: 'assinatura_modulo',
+              expira_em: status === 'ativa' ? null : validoAte,
+              atualizado_em: agora,
+            }, { onConflict: 'empresa_id,modulo_id' }),
+          ]);
+          if (registro.error || instalacao.error) throw registro.error || instalacao.error;
+          modulosAtualizados++;
+        }
+      } catch (error) {
+        falhas.push({ empresaId: assinatura.empresa_id, erro: `Módulo ${assinatura.modulo_id}: ${String(error)}` });
       }
     }
 
@@ -227,7 +347,7 @@ Deno.serve(async () => {
       }
     }
 
-    return resposta({ ok: true, verificadas, atualizadas, faturasSincronizadas, faciaisVerificadas, faciaisAtualizadas, falhas });
+    return resposta({ ok: true, verificadas, atualizadas, faturasSincronizadas, modulosVerificados, modulosAtualizados, faciaisVerificadas, faciaisAtualizadas, falhas });
   } catch (error) {
     return resposta({ ok: false, erro: String(error) }, 500);
   }

@@ -36,6 +36,7 @@ type DetalhesAssinatura = {
   faturas: Fatura[];
   viaCupom?: boolean; // cortesia concedida por cupom
   podeGerenciar: boolean;
+  perfilCompartilhado?: boolean;
 };
 
 interface AssinaturaModalProps {
@@ -288,6 +289,7 @@ export default function AssinaturaModal({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
           {erro && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
           {carregando && !detalhes ? <div className="py-14 text-center text-sm font-medium text-slate-500">Carregando assinatura...</div> : <>
+            {detalhes?.perfilCompartilhado && <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900"><strong>Assinatura compartilhada.</strong> Este perfil usa uma vaga do plano de outro perfil. Contratação, alteração e cancelamento devem ser feitos no perfil assinante.</div>}
             {carencia && <div className="mb-4 w-full rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900"><strong>Pagamento pendente.</strong> Regularize até {formatarData(estadoAtual?.validoAte || null)} para evitar o bloqueio do perfil.</div>}
             {canceladaNoFim && <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900"><strong>Renovação cancelada.</strong> O acesso permanece disponível até {formatarData(estadoAtual?.validoAte || null)}.</div>}
 

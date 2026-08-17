@@ -7,6 +7,7 @@ import {
   type CobrancaAssinaturaAsaas,
 } from '../../../lib/asaas';
 import { PRECOS, type Ciclo, type PlanoPago } from '../../../lib/cobranca';
+import { calcularFimPeriodoPago } from '../../../lib/cobranca-fluxo';
 import { normalizarPlanoComercial } from '../../../lib/planos-comerciais';
 import { autenticarPerfilCobranca, resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
 
@@ -35,6 +36,26 @@ export async function GET(request: Request) {
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 
   const estado = await resolverEstadoAcessoParaUsuario(empresaId, acesso.usuario.id);
+  const { data: perfil } = await acesso.db
+    .from('empresas')
+    .select('assinatura_origem_empresa_id')
+    .eq('id', empresaId)
+    .maybeSingle();
+  if (perfil?.assinatura_origem_empresa_id) {
+    return NextResponse.json({
+      ok: true,
+      estado,
+      assinatura: null,
+      temAssinatura: false,
+      valorContratado: null,
+      proximoVencimento: null,
+      faturas: [],
+      viaCupom: false,
+      podeGerenciar: false,
+      origemAssinatura: 'perfil_compartilhado',
+      perfilCompartilhado: true,
+    });
+  }
   const { data: local } = await acesso.db
     .from('assinaturas')
     .select('id, status, plano, ciclo, gateway_subscription_id, cupom_id')
@@ -94,7 +115,7 @@ export async function GET(request: Request) {
   // benefícios gratuitos com valor, renovação e histórico financeiro.
   const temAssinaturaAsaas = Boolean(
     local?.gateway_subscription_id
-    && STATUS_COM_ASSINATURA.has(estado?.status || local.status || ''),
+    && STATUS_COM_ASSINATURA.has(local.status || ''),
   );
   const temAssinaturaApple = Boolean(
     estado?.tipoPerfil === 'pessoal'
@@ -166,6 +187,18 @@ export async function PATCH(request: Request) {
   const acesso = await autenticarPerfilCobranca(request, empresaId, true);
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
 
+  const { data: perfil } = await acesso.db
+    .from('empresas')
+    .select('assinatura_origem_empresa_id')
+    .eq('id', empresaId)
+    .maybeSingle();
+  if (perfil?.assinatura_origem_empresa_id) {
+    return NextResponse.json({
+      erro: true,
+      mensagem: 'Este perfil utiliza uma assinatura compartilhada. Altere o plano no perfil assinante.',
+    }, { status: 409 });
+  }
+
   const { data: local } = await acesso.db
     .from('assinaturas')
     .select('status, plano, gateway_subscription_id')
@@ -194,6 +227,32 @@ export async function PATCH(request: Request) {
     plano = 'business_pro';
   }
 
+  // O Business Pro já inclui todos os módulos. Antes de elevar a assinatura
+  // principal, encerra renovações avulsas para que o cliente nunca seja cobrado
+  // duas vezes pelo mesmo acesso.
+  const modulosIncluidos: Array<{ id: string; modulo_id: string; gateway_subscription_id: string | null }> = [];
+  if (planoAtual === 'business' && plano === 'business_pro') {
+    const { data: assinaturasModulos, error: erroConsultaModulos } = await acesso.db
+      .from('assinaturas_modulos')
+      .select('id, modulo_id, gateway_subscription_id')
+      .eq('empresa_id', empresaId)
+      .in('status', ['expirada', 'ativa', 'inadimplente']);
+    if (erroConsultaModulos) {
+      return NextResponse.json({ erro: true, mensagem: 'Não foi possível conferir as assinaturas dos módulos.' }, { status: 500 });
+    }
+    modulosIncluidos.push(...(assinaturasModulos || []));
+    for (const assinaturaModulo of modulosIncluidos) {
+      if (!assinaturaModulo.gateway_subscription_id) continue;
+      const removida = await removerAssinaturaAsaas(assinaturaModulo.gateway_subscription_id);
+      if (!removida.ok && removida.status !== 404) {
+        return NextResponse.json({
+          erro: true,
+          mensagem: 'Não foi possível encerrar uma cobrança de módulo. O plano não foi alterado para evitar cobrança duplicada.',
+        }, { status: 502 });
+      }
+    }
+  }
+
   const atualizada = await atualizarAssinaturaAsaas(local.gateway_subscription_id, {
     value: PRECOS[plano][ciclo],
     cycle: ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
@@ -206,11 +265,45 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ erro: true, mensagem: atualizada.erro || 'Não foi possível alterar o plano.' }, { status: 502 });
   }
 
-  await acesso.db.from('assinaturas').update({
+  const { error: erroPersistencia } = await acesso.db.from('assinaturas').update({
     plano,
     ciclo,
     atualizado_em: new Date().toISOString(),
   }).eq('empresa_id', empresaId);
+  if (erroPersistencia) {
+    return NextResponse.json({
+      erro: true,
+      mensagem: 'A alteração foi enviada à cobrança, mas não pôde ser registrada. Tente novamente.',
+    }, { status: 500 });
+  }
+
+  if (modulosIncluidos.length) {
+    const agora = new Date().toISOString();
+    const ids = modulosIncluidos.map((item) => item.id);
+    const modulosIds = modulosIncluidos.map((item) => item.modulo_id);
+    const [assinaturasAtualizadas, instalacoesAtualizadas] = await Promise.all([
+      acesso.db.from('assinaturas_modulos').update({
+        status: 'cancelada',
+        valido_ate: null,
+        cancelamento_solicitado_em: agora,
+        atualizado_em: agora,
+      }).in('id', ids),
+      acesso.db.from('empresa_modulos').update({
+        ativo: true,
+        origem: 'plano_business_pro',
+        expira_em: null,
+        atualizado_em: agora,
+      }).eq('empresa_id', empresaId).in('modulo_id', modulosIds),
+    ]);
+    if (assinaturasAtualizadas.error || instalacoesAtualizadas.error) {
+      return NextResponse.json({
+        ok: true,
+        ciclo,
+        plano,
+        aviso: 'O plano foi alterado e as cobranças avulsas foram encerradas, mas a identificação local dos módulos será conciliada automaticamente.',
+      });
+    }
+  }
   return NextResponse.json({ ok: true, ciclo, plano });
 }
 
@@ -221,28 +314,45 @@ export async function DELETE(request: Request) {
   const acesso = await autenticarPerfilCobranca(request, empresaId, true);
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
 
+  const { data: perfil } = await acesso.db
+    .from('empresas')
+    .select('assinatura_origem_empresa_id')
+    .eq('id', empresaId)
+    .maybeSingle();
+  if (perfil?.assinatura_origem_empresa_id) {
+    return NextResponse.json({
+      erro: true,
+      mensagem: 'Este perfil utiliza uma assinatura compartilhada. Cancele somente pelo perfil assinante.',
+    }, { status: 409 });
+  }
+
   const { data: local } = await acesso.db
     .from('assinaturas')
-    .select('status, ciclo, gateway_subscription_id')
+    .select('status, ciclo, trial_fim, valido_ate, gateway_subscription_id')
     .eq('empresa_id', empresaId)
     .maybeSingle();
   if (!local) return NextResponse.json({ erro: true, mensagem: 'Assinatura não encontrada.' }, { status: 404 });
   if (local.status === 'cancelada') return NextResponse.json({ ok: true, jaCancelada: true });
+  if (!local.gateway_subscription_id) {
+    return NextResponse.json({ erro: true, mensagem: 'Não existe uma renovação paga para cancelar.' }, { status: 409 });
+  }
 
   let acessoAte: string | null = null;
   if (local.gateway_subscription_id) {
     const cobrancas = await listarCobrancasAssinaturaAsaas(local.gateway_subscription_id);
     const preservarPeriodoPago = ['ativa', 'inadimplente'].includes(local.status);
-    if (preservarPeriodoPago && cobrancas.ok) {
-      const paga = (cobrancas.data?.data || [])
-        .filter((item) => ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(item.status || '') && item.dueDate)
-        .sort((a, b) => String(b.dueDate).localeCompare(String(a.dueDate)))[0];
-      if (paga?.dueDate) {
-        const fim = new Date(`${paga.dueDate}T23:59:59-03:00`);
-        if (local.ciclo === 'anual') fim.setFullYear(fim.getFullYear() + 1);
-        else fim.setMonth(fim.getMonth() + 1);
-        if (fim > new Date()) acessoAte = fim.toISOString();
-      }
+    if (preservarPeriodoPago && !cobrancas.ok) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: 'Não foi possível confirmar o período já pago. Nenhum cancelamento foi realizado.',
+      }, { status: 502 });
+    }
+    if (preservarPeriodoPago) {
+      acessoAte = calcularFimPeriodoPago(
+        cobrancas.data?.data || [],
+        local.ciclo === 'anual' ? 'anual' : 'mensal',
+        local.valido_ate,
+      );
     }
 
     const removida = await removerAssinaturaAsaas(local.gateway_subscription_id);
@@ -251,10 +361,20 @@ export async function DELETE(request: Request) {
     }
   }
 
-  await acesso.db.from('assinaturas').update({
-    status: 'cancelada',
-    valido_ate: acessoAte || new Date().toISOString(),
+  const trialVigente = local.status === 'trial'
+    && !!local.trial_fim
+    && new Date(local.trial_fim) > new Date();
+  const { error: erroPersistencia } = await acesso.db.from('assinaturas').update({
+    status: trialVigente ? 'trial' : 'cancelada',
+    valido_ate: trialVigente ? null : acessoAte || new Date().toISOString(),
+    ...(trialVigente ? { gateway_subscription_id: null } : {}),
     atualizado_em: new Date().toISOString(),
   }).eq('empresa_id', empresaId);
-  return NextResponse.json({ ok: true, acessoAte });
+  if (erroPersistencia) {
+    return NextResponse.json({
+      erro: true,
+      mensagem: 'A renovação foi cancelada, mas o estado local não pôde ser atualizado. Tente novamente.',
+    }, { status: 500 });
+  }
+  return NextResponse.json({ ok: true, acessoAte: trialVigente ? local.trial_fim : acessoAte, trialPreservado: trialVigente });
 }

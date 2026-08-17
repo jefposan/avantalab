@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.1 -->
+<!-- ava-version: 1.8.2 -->
+
+> Revisão 1.8.2: a Gestão Mobile reconhece o estado conciliado de assinatura,
+> incluindo teste preservado, carência, cancelamento até o fim pago, assinatura
+> compartilhada e Pessoal Premium validado pela App Store. Repetir uma tentativa
+> de contratação não cria cobrança recorrente duplicada. As decisões de quota,
+> cupom e troca de tipo continuam validadas no servidor.
 
 > Revisão 1.8.1: perfis anteriores do mesmo Gestor Master, sem cobrança própria,
 > podem passar a usar as vagas de uma assinatura Business paga. A correção da

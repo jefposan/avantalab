@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.1 -->
+<!-- ava-version: 1.8.2 -->
 <!-- avantavendas-asset-revision: 78 -->
+
+> Revisão 1.8.2: a auditoria de assinaturas, quotas, cupons e módulos da Gestão
+> não altera contas, assinaturas nem exclusões próprias do AvantaVendas. O
+> Vendas continua consultando apenas o acesso vigente do perfil autorizado.
 
 > Revisão 1.8.1: a correção da quota de criação de perfis da Gestão e a
 > reconciliação de assinaturas não alteram contas, dados nem exclusões do

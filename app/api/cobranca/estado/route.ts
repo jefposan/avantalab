@@ -3,10 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import { resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
 import { precisaPaywallEmpresa, precisaUpgradePessoal, PRECOS } from '../../../lib/cobranca';
 import { listarCobrancasAssinaturaAsaas, obterAssinaturaAsaas } from '../../../lib/asaas';
+import { calcularFimCarencia, calcularFimPeriodoPago, STATUS_FATURA_PAGA, STATUS_FATURA_PAGAVEL } from '../../../lib/cobranca-fluxo';
 
 export const runtime = 'nodejs';
-const STATUS_FATURA_PAGAVEL = new Set(['PENDING', 'OVERDUE']);
-const STATUS_FATURA_PAGA = new Set(['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']);
 
 // Informa ao app o estado de acesso (trial/ativa/expirada...) de um perfil.
 // Exige usuário autenticado e vínculo ativo na Gestão ou no Vendas.
@@ -66,7 +65,7 @@ export async function GET(request: Request) {
   let faturaPendente: { invoiceUrl: string; valor: number | null; vencimento: string | null; status: string | null } | null = null;
   const { data: assinatura } = await admin
     .from('assinaturas')
-    .select('id, gateway_subscription_id, status, valido_ate')
+    .select('id, gateway_subscription_id, status, ciclo, trial_fim, valido_ate')
     .eq('empresa_id', empresaId)
     .maybeSingle();
 
@@ -101,15 +100,26 @@ export async function GET(request: Request) {
       const temVencida = pagamentos.some((item) => item.status === 'OVERDUE');
       let novoStatus: string | null = null;
       let validoAte: string | null = assinatura.valido_ate || null;
-      if (assinaturaGw.ok && (assinaturaGw.data?.status === 'INACTIVE' || assinaturaGw.data?.status === 'EXPIRED')) {
-        novoStatus = 'cancelada';
-        validoAte = new Date().toISOString();
+      let limparCheckoutTrial = false;
+      const assinaturaRemotaEncerrada = assinaturaGw.status === 404
+        || (assinaturaGw.ok && (assinaturaGw.data?.status === 'INACTIVE' || assinaturaGw.data?.status === 'EXPIRED'));
+      if (assinaturaRemotaEncerrada) {
+        const trialVigente = assinatura.status === 'trial'
+          && !!assinatura.trial_fim
+          && new Date(assinatura.trial_fim) > new Date();
+        novoStatus = trialVigente ? 'trial' : 'cancelada';
+        validoAte = trialVigente
+          ? null
+          : calcularFimPeriodoPago(
+            pagamentos,
+            assinatura.ciclo === 'anual' ? 'anual' : 'mensal',
+            assinatura.valido_ate,
+          ) || new Date().toISOString();
+        limparCheckoutTrial = trialVigente;
       } else if (temVencida) {
         novoStatus = 'inadimplente';
         if (assinatura.status !== 'inadimplente' || !assinatura.valido_ate) {
-          const fimCarencia = new Date();
-          fimCarencia.setDate(fimCarencia.getDate() + 3);
-          validoAte = fimCarencia.toISOString();
+          validoAte = calcularFimCarencia(new Date(), assinatura.trial_fim);
         }
       } else if (temPaga) {
         novoStatus = 'ativa';
@@ -121,11 +131,15 @@ export async function GET(request: Request) {
           ? 'mensal'
           : null;
       if (novoStatus || ciclo) {
-        await admin.from('assinaturas').update({
+        const { error: erroAtualizacao } = await admin.from('assinaturas').update({
           ...(novoStatus ? { status: novoStatus, valido_ate: validoAte } : {}),
+          ...(limparCheckoutTrial ? { gateway_subscription_id: null } : {}),
           ...(ciclo ? { ciclo } : {}),
           atualizado_em: new Date().toISOString(),
         }).eq('id', assinatura.id);
+        if (erroAtualizacao) {
+          console.error('Erro ao persistir conciliação da assinatura:', erroAtualizacao.message);
+        }
       }
       if (novoStatus) assinaturaAtivaAposConciliacao = novoStatus === 'ativa';
     }

@@ -37,7 +37,6 @@ export async function POST(request: Request) {
   }
 
   let direitoPerfis: Awaited<ReturnType<typeof resolverDireitoDePerfisDoPerfil>> | null = null;
-  let assinaturaOrigemEmpresaId: string | null = null;
   if (COBRANCA_ATIVA && ids.length) {
     direitoPerfis = await resolverDireitoDePerfisDoPerfil(db, auth.user.id, empresaOrigemId);
     const plano = direitoPerfis.plano;
@@ -47,8 +46,6 @@ export async function POST(request: Request) {
       tipoPerfil,
       limites.tiposDePerfilPermitidos,
     );
-    assinaturaOrigemEmpresaId = quota.compartilhaAssinatura ? direitoPerfis.origemEmpresaId : null;
-
     // Um perfil empresarial sem vaga compartilhada continua podendo iniciar
     // uma assinatura própria. Perfis pessoais extras permanecem protegidos
     // pelos limites do plano atual.
@@ -63,17 +60,29 @@ export async function POST(request: Request) {
 
   const email = String(auth.user.email || '').toLowerCase();
   const nomeUsuario = String(auth.user.user_metadata?.nome || email.split('@')[0] || 'Usuário').trim();
-  const { data: empresa, error: empresaErro } = await db.from('empresas').insert({
-    nome,
-    tipo_perfil: tipoPerfil,
-    ...(assinaturaOrigemEmpresaId ? { assinatura_origem_empresa_id: assinaturaOrigemEmpresaId } : {}),
-  }).select().single();
-  if (empresaErro || !empresa) return erro(empresaErro?.message || 'Não foi possível criar o perfil.', 500);
-  const { error: vinculoErro } = await db.from('usuarios_empresa').insert({ empresa_id: empresa.id, user_id: auth.user.id, nome: nomeUsuario, email, perfil: 'gestor_master', status: 'ativo' });
-  if (vinculoErro) {
-    await db.from('empresas').delete().eq('id', empresa.id);
-    return erro('Não foi possível concluir o vínculo do perfil.', 500);
+  const { data: criacao, error: criacaoErro } = await db.rpc('criar_perfil_financeiro_seguro', {
+    p_user_id: auth.user.id,
+    p_nome: nome,
+    p_tipo_perfil: tipoPerfil,
+    p_origem_empresa_id: empresaOrigemId,
+    p_nome_usuario: nomeUsuario,
+    p_email: email,
+  });
+  if (criacaoErro) return erro('Não foi possível criar o perfil com segurança.', 500);
+  const resultado = criacao && typeof criacao === 'object' ? criacao as Record<string, unknown> : {};
+  if (resultado.ok !== true) {
+    const codigo = String(resultado.codigo || '');
+    if (codigo === 'limite_pessoal') {
+      return erro('Seu plano atual não possui vaga para outro perfil pessoal. Faça upgrade para continuar.', 409);
+    }
+    if (codigo === 'origem_sem_permissao') {
+      return erro('Você não possui permissão para usar a assinatura deste perfil.', 403);
+    }
+    return erro('Não foi possível validar a criação deste perfil.', 400);
   }
-  await db.from('configuracoes').upsert({ empresa_id: empresa.id, duplicados_ativo: true }, { onConflict: 'empresa_id' });
+  const empresa = resultado.empresa && typeof resultado.empresa === 'object'
+    ? resultado.empresa as Record<string, unknown>
+    : null;
+  if (!empresa?.id) return erro('O perfil foi criado sem um identificador válido.', 500);
   return NextResponse.json({ erro: false, empresa, criado: true });
 }

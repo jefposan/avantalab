@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { atualizarClienteAsaas, criarClienteAsaas, criarAssinaturaAsaas, listarCobrancasAssinaturaAsaas, removerAssinaturaAsaas } from '../../../lib/asaas';
-import { PRECOS, type PlanoPago, type Ciclo } from '../../../lib/cobranca';
+import { atualizarClienteAsaas, criarClienteAsaas, criarAssinaturaAsaas, listarCobrancasAssinaturaAsaas, obterAssinaturaAsaas, removerAssinaturaAsaas } from '../../../lib/asaas';
+import { COBRANCA_ATIVA, PRECOS, type PlanoPago, type Ciclo, type StatusAssinatura } from '../../../lib/cobranca';
+import { assinaturaBloqueiaNovoCheckout, STATUS_FATURA_PAGA, STATUS_FATURA_PAGAVEL } from '../../../lib/cobranca-fluxo';
 import { normalizarPlanoComercial } from '../../../lib/planos-comerciais';
 
 export const runtime = 'nodejs';
-const STATUS_FATURA_PAGAVEL = new Set(['PENDING', 'OVERDUE']);
 
 function hojeSaoPaulo(): string {
   return new Intl.DateTimeFormat('en-CA', {
@@ -20,6 +20,9 @@ function limparTexto(valor: unknown) {
 // Inicia a assinatura: cria (ou reaproveita) o cliente na Asaas, cria a
 // assinatura recorrente e devolve o link de pagamento (invoiceUrl).
 export async function POST(request: Request) {
+  if (!COBRANCA_ATIVA) {
+    return NextResponse.json({ erro: true, mensagem: 'A contratação está temporariamente indisponível.' }, { status: 409 });
+  }
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -112,7 +115,13 @@ export async function POST(request: Request) {
   };
 
   const { data: emp } = await admin
-    .from('empresas').select('nome, tipo_perfil').eq('id', empresaId).maybeSingle();
+    .from('empresas').select('nome, tipo_perfil, assinatura_origem_empresa_id').eq('id', empresaId).maybeSingle();
+  if (emp?.assinatura_origem_empresa_id) {
+    return NextResponse.json({
+      erro: true,
+      mensagem: 'Este perfil já utiliza a assinatura de outro perfil. Gerencie o plano no perfil assinante.',
+    }, { status: 409 });
+  }
   const nomePerfil = emp?.nome || 'Cliente AvantaLab';
   const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
   const planoPermitido = tipoPerfil === 'pessoal'
@@ -125,39 +134,70 @@ export async function POST(request: Request) {
   // 3) Reaproveita o cliente Asaas se já houver; senão cria.
   const { data: assinExistente } = await admin
     .from('assinaturas')
-    .select('status, plano, ciclo, gateway_customer_id, gateway_subscription_id')
+    .select('status, plano, ciclo, trial_fim, valido_ate, gateway_customer_id, gateway_subscription_id')
     .eq('empresa_id', empresaId)
     .maybeSingle();
+
+  if (assinExistente && assinaturaBloqueiaNovoCheckout(
+    assinExistente.status as StatusAssinatura,
+    assinExistente.valido_ate,
+  )) {
+    return NextResponse.json({
+      erro: true,
+      mensagem: assinExistente.status === 'cancelada'
+        ? 'Esta assinatura ainda mantém um período pago. Aguarde o término ou gerencie o plano atual.'
+        : 'Este perfil já possui acesso vigente. Use a área de gerenciamento da assinatura.',
+    }, { status: 409 });
+  }
 
   // Um segundo clique (ou uma repetição de rede) deve reutilizar a cobrança já
   // criada, nunca abrir outra assinatura recorrente para o mesmo perfil.
   if (
     assinExistente?.gateway_subscription_id
-    && assinExistente.status !== 'cancelada'
   ) {
-    const existentes = await listarCobrancasAssinaturaAsaas(assinExistente.gateway_subscription_id);
+    const [assinaturaRemota, existentes] = await Promise.all([
+      obterAssinaturaAsaas(assinExistente.gateway_subscription_id),
+      listarCobrancasAssinaturaAsaas(assinExistente.gateway_subscription_id),
+    ]);
+    const assinaturaRemotaAusente = assinaturaRemota.status === 404 && existentes.status === 404;
+    if ((!existentes.ok || !assinaturaRemota.ok) && !assinaturaRemotaAusente) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: existentes.erro || 'Não foi possível verificar a cobrança já existente. Tente novamente.',
+      }, { status: 502 });
+    }
+    const possuiPagamento = (existentes.data?.data || []).some((item) => STATUS_FATURA_PAGA.has(item.status || ''));
+    const assinaturaRemotaEncerrada = assinaturaRemotaAusente
+      || ['INACTIVE', 'EXPIRED'].includes(assinaturaRemota.data?.status || '');
+    if (possuiPagamento && !assinaturaRemotaEncerrada) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: 'Já existe uma assinatura com pagamento neste perfil. Atualize a página e gerencie o plano atual.',
+      }, { status: 409 });
+    }
     const cobranca = existentes.data?.data?.find((item) => item.invoiceUrl && STATUS_FATURA_PAGAVEL.has(item.status || ''));
-    if (existentes.ok && cobranca?.invoiceUrl) {
-      if (assinExistente.plano !== plano || assinExistente.ciclo !== ciclo) {
-        await removerAssinaturaAsaas(assinExistente.gateway_subscription_id).catch(() => null);
-        await admin.from('assinaturas').update({
-          gateway_subscription_id: null,
-          atualizado_em: new Date().toISOString(),
-        }).eq('empresa_id', empresaId);
-      } else {
-        return NextResponse.json({
-          ok: true,
-          reutilizada: true,
-          invoiceUrl: cobranca.invoiceUrl,
-          assinaturaId: assinExistente.gateway_subscription_id,
-        });
-      }
-    } else {
-      await removerAssinaturaAsaas(assinExistente.gateway_subscription_id).catch(() => null);
-      await admin.from('assinaturas').update({
-        gateway_subscription_id: null,
-        atualizado_em: new Date().toISOString(),
-      }).eq('empresa_id', empresaId);
+    if (cobranca?.invoiceUrl && !assinaturaRemotaEncerrada && assinExistente.plano === plano && assinExistente.ciclo === ciclo) {
+      return NextResponse.json({
+        ok: true,
+        reutilizada: true,
+        invoiceUrl: cobranca.invoiceUrl,
+        assinaturaId: assinExistente.gateway_subscription_id,
+      });
+    }
+
+    const removida = await removerAssinaturaAsaas(assinExistente.gateway_subscription_id);
+    if (!removida.ok && removida.status !== 404) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: removida.erro || 'Não foi possível substituir a cobrança anterior com segurança.',
+      }, { status: 502 });
+    }
+    const { error: erroLimpeza } = await admin.from('assinaturas').update({
+      gateway_subscription_id: null,
+      atualizado_em: new Date().toISOString(),
+    }).eq('empresa_id', empresaId);
+    if (erroLimpeza) {
+      return NextResponse.json({ erro: true, mensagem: 'Não foi possível preparar a nova contratação.' }, { status: 500 });
     }
   }
 
@@ -210,17 +250,23 @@ export async function POST(request: Request) {
     cobranca_telefone: telefoneCobranca,
     atualizado_em: new Date().toISOString(),
   };
-  if (assinExistente) {
-    await admin.from('assinaturas').update({
+  const trialAindaVigente = assinExistente?.status === 'trial'
+    && !!assinExistente.trial_fim
+    && new Date(assinExistente.trial_fim) > new Date();
+  const persistencia = assinExistente
+    ? await admin.from('assinaturas').update({
       ...base,
-      status: 'expirada',
+      status: trialAindaVigente ? 'trial' : 'expirada',
       valido_ate: null,
-      trial_fim: null,
-    }).eq('empresa_id', empresaId);
-  } else {
-    // Novo registro aguardando pagamento (bloqueado até o webhook confirmar).
-    await admin.from('assinaturas').insert({ ...base, status: 'expirada' });
+      trial_fim: trialAindaVigente ? assinExistente.trial_fim : null,
+    }).eq('empresa_id', empresaId)
+    : await admin.from('assinaturas').insert({ ...base, status: 'expirada' });
+  if (persistencia.error) {
+    await removerAssinaturaAsaas(assinaturaGwId).catch(() => null);
+    return NextResponse.json({
+      erro: true,
+      mensagem: 'A cobrança foi desfeita porque não foi possível registrar a assinatura. Tente novamente.',
+    }, { status: 500 });
   }
-
   return NextResponse.json({ ok: true, invoiceUrl, assinaturaId: assinaturaGwId });
 }

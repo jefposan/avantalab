@@ -75,3 +75,22 @@ test('reconciliação preserva assinaturas e restringe execução ao servidor', 
   assert.match(sql, /grant execute on function public\.reconciliar_perfis_quota\(uuid\) to service_role/);
   assert.doesNotMatch(sql, /delete\s+from\s+public\.assinaturas/i);
 });
+
+test('criação e cupom são transacionais e restritos ao servidor', async () => {
+  const [sql, rotaCriacao] = await Promise.all([
+    readFile(
+      new URL('../../supabase/migrations/20260817210000_auditoria_fluxo_assinaturas.sql', import.meta.url),
+      'utf8',
+    ),
+    readFile(new URL('../../app/api/criar-perfil/route.ts', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(sql, /pg_advisory_xact_lock\(hashtextextended\(p_user_id::text, 0\)\)/);
+  assert.match(sql, /create or replace function public\.criar_perfil_financeiro_seguro/);
+  assert.match(sql, /create or replace function public\.resgatar_cupom_perfil/);
+  assert.match(sql, /select \* into v_cupom[\s\S]*for update/);
+  assert.match(sql, /revoke all on function public\.criar_perfil_financeiro_seguro[\s\S]*from authenticated/);
+  assert.match(sql, /grant execute on function public\.criar_perfil_financeiro_seguro[\s\S]*to service_role/);
+  assert.match(rotaCriacao, /rpc\('criar_perfil_financeiro_seguro'/);
+  assert.doesNotMatch(rotaCriacao, /from\('empresas'\)\.insert/);
+});

@@ -42,8 +42,17 @@ export async function POST(request: Request) {
 
   // 2) Confirma o vínculo do usuário com o perfil.
   const { data: vinculo } = await admin
-    .from('usuarios_empresa').select('id').eq('user_id', userId).eq('empresa_id', empresaId).limit(1).maybeSingle();
+    .from('usuarios_empresa')
+    .select('id, perfil')
+    .eq('user_id', userId)
+    .eq('empresa_id', empresaId)
+    .eq('status', 'ativo')
+    .limit(1)
+    .maybeSingle();
   if (!vinculo) return NextResponse.json({ erro: true, mensagem: 'sem acesso a este perfil' }, { status: 403 });
+  if (!['gestor_master', 'administrador'].includes(vinculo.perfil || '')) {
+    return NextResponse.json({ erro: true, mensagem: 'Somente gestores e administradores podem iniciar o teste.' }, { status: 403 });
+  }
 
   // 3) Só perfis EMPRESA entram nesse fluxo (pessoal tem núcleo grátis).
   const { data: emp } = await admin

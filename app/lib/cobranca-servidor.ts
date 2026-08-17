@@ -19,6 +19,7 @@ import {
   type TipoPerfil,
 } from './cobranca';
 import { EMAIL_CONTA_REVISAO_APPLE } from './conta-revisao';
+import { normalizarStatusTemporal } from './cobranca-fluxo';
 import { normalizarPlanoComercial, PLANOS_COMERCIAIS, type PlanoComercial } from './planos-comerciais';
 import { papelPodeConsumirQuotaDePerfis } from './perfis-quota';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -31,7 +32,7 @@ function servico() {
 
 function assinaturaComercialVigente(assinatura: { status: string | null; trial_fim: string | null; valido_ate: string | null }, agora = new Date()) {
   return assinatura.status === 'ativa'
-    || (assinatura.status === 'trial' && !!assinatura.trial_fim && new Date(assinatura.trial_fim) > agora)
+    || (assinatura.status === 'cortesia' && (!assinatura.valido_ate || new Date(assinatura.valido_ate) > agora))
     || ((assinatura.status === 'cancelada' || assinatura.status === 'inadimplente') && !!assinatura.valido_ate && new Date(assinatura.valido_ate) > agora);
 }
 
@@ -42,6 +43,42 @@ export type DireitoDePerfis = {
   origemEmpresaId: string | null;
 };
 
+async function direitoFreeDaConta(db: SupabaseClient, userId: string): Promise<DireitoDePerfis> {
+  const [{ data: vinculos }, { data: assinaturaLoja }] = await Promise.all([
+    db
+    .from('usuarios_empresa')
+    .select('empresa_id')
+    .eq('user_id', userId)
+    .eq('status', 'ativo')
+    .eq('perfil', 'gestor_master'),
+    db
+      .from('assinaturas_loja')
+      .select('status, valido_ate')
+      .eq('user_id', userId)
+      .eq('loja', 'apple_app_store')
+      .eq('entitlement_id', 'pessoal_premium')
+      .maybeSingle(),
+  ]);
+  const ids = Array.from(new Set((vinculos || []).map((item) => item.empresa_id).filter(Boolean)));
+  const { count } = ids.length
+    ? await db
+      .from('empresas')
+      .select('id', { count: 'exact', head: true })
+      .in('id', ids)
+      .eq('tipo_perfil', 'pessoal')
+    : { count: 0 };
+  const lojaVigente = !!assinaturaLoja?.valido_ate
+    && ['ativa', 'cancelada', 'inadimplente'].includes(assinaturaLoja.status || '')
+    && new Date(assinaturaLoja.valido_ate) > new Date();
+  const plano = lojaVigente ? 'pessoal_premium' : 'free';
+  return {
+    plano,
+    usados: count || 0,
+    limite: PLANOS_COMERCIAIS[plano].limites.perfis,
+    origemEmpresaId: null,
+  };
+}
+
 // A franquia pertence exclusivamente ao perfil que contratou o plano. Um
 // perfil que recebeu esse acesso por quota pode usar o sistema, mas não cria
 // uma nova cadeia de perfis usando a mesma assinatura.
@@ -50,7 +87,7 @@ export async function resolverDireitoDePerfisDoPerfil(
   userId: string,
   empresaOrigemId: string | null | undefined,
 ): Promise<DireitoDePerfis> {
-  if (!empresaOrigemId) return { plano: 'free', usados: 0, limite: PLANOS_COMERCIAIS.free.limites.perfis, origemEmpresaId: null };
+  if (!empresaOrigemId) return direitoFreeDaConta(db, userId);
   const { data: vinculo } = await db
     .from('usuarios_empresa')
     .select('id, perfil')
@@ -60,7 +97,7 @@ export async function resolverDireitoDePerfisDoPerfil(
     .limit(1)
     .maybeSingle();
   if (!vinculo || !papelPodeConsumirQuotaDePerfis(vinculo.perfil)) {
-    return { plano: 'free', usados: 0, limite: PLANOS_COMERCIAIS.free.limites.perfis, origemEmpresaId: null };
+    return direitoFreeDaConta(db, userId);
   }
 
   const [{ data: empresa }, { data: assinatura }] = await Promise.all([
@@ -70,11 +107,11 @@ export async function resolverDireitoDePerfisDoPerfil(
   // O perfil compartilhado nunca se torna nova origem, mesmo que o mesmo
   // login também possua o perfil assinante em outra aba.
   if (!empresa || empresa.assinatura_origem_empresa_id || !assinatura) {
-    return { plano: 'free', usados: 0, limite: PLANOS_COMERCIAIS.free.limites.perfis, origemEmpresaId: null };
+    return direitoFreeDaConta(db, userId);
   }
   const agora = new Date();
   if (!assinaturaComercialVigente(assinatura, agora)) {
-    return { plano: 'free', usados: 0, limite: PLANOS_COMERCIAIS.free.limites.perfis, origemEmpresaId: null };
+    return direitoFreeDaConta(db, userId);
   }
   const planoAssinatura = normalizarPlanoComercial(assinatura.plano);
   const plano: PlanoComercial = empresa.tipo_perfil === 'empresa'
@@ -150,9 +187,14 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
       .maybeSingle();
     if (assinaturaOrigem) {
       const planoOrigem = normalizarPlanoComercial(assinaturaOrigem.plano);
+      const statusOrigem = normalizarStatusTemporal(
+        assinaturaOrigem.status as StatusAssinatura,
+        assinaturaOrigem.trial_fim,
+        assinaturaOrigem.valido_ate,
+      );
       return {
         tipoPerfil,
-        status: assinaturaOrigem.status as StatusAssinatura,
+        status: statusOrigem,
         validoAte: assinaturaOrigem.valido_ate,
         trialFim: assinaturaOrigem.trial_fim,
         plano: tipoPerfil === 'pessoal' && (planoOrigem === 'business' || planoOrigem === 'business_pro')
@@ -177,9 +219,14 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
     const planoCortesia = assin.status === 'cortesia'
       ? (tipoPerfil === 'empresa' ? 'business_pro' : 'pessoal_premium')
       : null;
+    const status = normalizarStatusTemporal(
+      assin.status as StatusAssinatura,
+      assin.trial_fim,
+      assin.valido_ate,
+    );
     return {
       tipoPerfil,
-      status: assin.status as StatusAssinatura,
+      status,
       validoAte: assin.valido_ate,
       trialFim: assin.trial_fim,
       plano: planoCortesia ?? assin.plano ?? null,
@@ -218,11 +265,18 @@ export async function usuarioTemEmpresaAssinante(userId: string): Promise<boolea
   if (!ids.length) return false;
   const { data: assinaturas } = await db
     .from('assinaturas')
-    .select('empresa_id, tipo_perfil, status, valido_ate')
+    .select('empresa_id')
     .in('empresa_id', ids)
-    .eq('tipo_perfil', 'empresa')
     .eq('status', 'ativa');
-  return (assinaturas || []).length > 0;
+  const empresasAssinantes = (assinaturas || []).map((assinatura) => assinatura.empresa_id).filter(Boolean);
+  if (!empresasAssinantes.length) return false;
+  const { count } = await db
+    .from('empresas')
+    .select('id', { count: 'exact', head: true })
+    .in('id', empresasAssinantes)
+    .eq('tipo_perfil', 'empresa')
+    .is('assinatura_origem_empresa_id', null);
+  return (count || 0) > 0;
 }
 
 // Resolve o estado de acesso já aplicando o benefício cruzado do usuário:
