@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.2 -->
+<!-- ava-version: 1.8.3 -->
+
+> Revisão 1.8.3: em **Assinatura**, um perfil que consome a vaga de outro pode
+> escolher **Criar assinatura própria**. A confirmação abre os planos sem
+> interromper o acesso compartilhado; a desvinculação e a devolução da vaga só
+> acontecem após o pagamento confirmado. Checkout abandonado mantém o vínculo.
+> Perfis em cortesia exigem revogação administrativa, e módulos avulsos ainda
+> cobrados no plano de origem precisam ter a renovação cancelada antes.
 
 > Revisão 1.8.2: criação de perfil e consumo de vaga são confirmados juntos no
 > servidor. Um perfil que apenas recebeu assinatura compartilhada não repassa a

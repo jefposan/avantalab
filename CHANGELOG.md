@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.8.3 - 2026-08-17
+
+- Perfis que usam uma vaga de outra assinatura agora podem iniciar uma
+  assinatura própria pelo painel **Assinatura**, com confirmação clara da
+  mudança comercial.
+- O acesso compartilhado e a ocupação da vaga são preservados durante todo o
+  checkout. Somente o pagamento confirmado ativa o plano próprio, remove o
+  vínculo anterior e devolve a vaga ao perfil de origem em uma transação.
+- Checkout abandonado ou recusado não interrompe o acesso existente. Perfis em
+  cortesia continuam sem contratação disponível até a revogação administrativa.
+- A transição bloqueia renovações avulsas ainda cobradas pelo plano de origem e
+  suspende apenas benefícios de módulos que não façam parte do novo plano,
+  preservando os dados cadastrados.
+- Webhook, consulta de estado e conciliação automática aplicam a mesma regra,
+  permitindo recuperação segura caso uma confirmação seja processada com atraso.
+
 ## 1.8.2 - 2026-08-17
 
 - Auditado o ciclo completo de assinaturas Web e Apple: contratação repetida

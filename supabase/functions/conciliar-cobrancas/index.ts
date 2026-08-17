@@ -164,7 +164,17 @@ Deno.serve(async () => {
         }
 
         const ciclo = detalhe?.cycle === 'YEARLY' ? 'anual' : detalhe?.cycle === 'MONTHLY' ? 'mensal' : null;
-        if (status !== assinatura.status || validoAte !== assinatura.valido_ate || ciclo) {
+        if (status === 'ativa') {
+          const { data: ativacao, error: erroAtivacao } = await db.rpc('ativar_assinatura_propria_perfil', {
+            p_empresa_id: assinatura.empresa_id,
+            p_gateway_subscription_id: assinatura.gateway_subscription_id,
+            p_ciclo: ciclo,
+          });
+          if (erroAtivacao || ativacao?.ok === false) {
+            throw erroAtivacao || new Error(`Falha ao ativar assinatura própria: ${ativacao?.codigo || 'erro desconhecido'}`);
+          }
+          if (status !== assinatura.status || validoAte !== assinatura.valido_ate || ciclo) atualizadas++;
+        } else if (status !== assinatura.status || validoAte !== assinatura.valido_ate || ciclo) {
           const { error: erroAtualizacao } = await db.from('assinaturas').update({
             status,
             valido_ate: validoAte,

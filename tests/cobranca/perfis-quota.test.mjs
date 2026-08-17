@@ -94,3 +94,31 @@ test('criação e cupom são transacionais e restritos ao servidor', async () =>
   assert.match(rotaCriacao, /rpc\('criar_perfil_financeiro_seguro'/);
   assert.doesNotMatch(rotaCriacao, /from\('empresas'\)\.insert/);
 });
+
+test('assinatura própria só libera a vaga depois do pagamento confirmado', async () => {
+  const [sql, rotaAssinar, webhook, conciliacao, modal] = await Promise.all([
+    readFile(
+      new URL('../../supabase/migrations/20260817220000_assinatura_propria_perfil_compartilhado.sql', import.meta.url),
+      'utf8',
+    ),
+    readFile(new URL('../../app/api/cobranca/assinar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/cobranca/webhook/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../supabase/functions/conciliar-cobrancas/index.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/components/AssinaturaModal.tsx', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(sql, /select \* into v_empresa[\s\S]*for update/);
+  assert.match(sql, /select \* into v_assinatura[\s\S]*for update/);
+  assert.match(sql, /status = 'ativa'[\s\S]*assinatura_origem_empresa_id = null/);
+  assert.match(sql, /assinatura_origem_anterior_empresa_id = v_origem_empresa_id/);
+  assert.match(sql, /revoke all on function public\.ativar_assinatura_propria_perfil[\s\S]*from authenticated/);
+  assert.match(sql, /grant execute on function public\.ativar_assinatura_propria_perfil[\s\S]*to service_role/);
+  assert.doesNotMatch(rotaAssinar, /assinatura_origem_empresa_id:\s*null/);
+  assert.match(rotaAssinar, /assinaturaPropriaSolicitada/);
+  assert.match(rotaAssinar, /cortesiaVigente/);
+  assert.match(rotaAssinar, /Cancele primeiro a renovação dos módulos avulsos/);
+  assert.match(webhook, /rpc\('ativar_assinatura_propria_perfil'/);
+  assert.match(conciliacao, /rpc\('ativar_assinatura_propria_perfil'/);
+  assert.match(modal, /Criar assinatura própria/);
+  assert.match(modal, /será mantido até a confirmação do pagamento/);
+});

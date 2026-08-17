@@ -130,7 +130,19 @@ export async function GET(request: Request) {
         : assinaturaGw.ok && assinaturaGw.data?.cycle === 'MONTHLY'
           ? 'mensal'
           : null;
-      if (novoStatus || ciclo) {
+      if (novoStatus === 'ativa') {
+        const { data: ativacao, error: erroAtivacao } = await admin.rpc('ativar_assinatura_propria_perfil', {
+          p_empresa_id: empresaId,
+          p_gateway_subscription_id: assinatura.gateway_subscription_id,
+          p_ciclo: ciclo,
+        });
+        if (erroAtivacao || ativacao?.ok === false) {
+          console.error('Erro ao ativar assinatura própria:', erroAtivacao?.message || ativacao?.codigo);
+          assinaturaAtivaAposConciliacao = false;
+        } else {
+          assinaturaAtivaAposConciliacao = true;
+        }
+      } else if (novoStatus || ciclo) {
         const { error: erroAtualizacao } = await admin.from('assinaturas').update({
           ...(novoStatus ? { status: novoStatus, valido_ate: validoAte } : {}),
           ...(limparCheckoutTrial ? { gateway_subscription_id: null } : {}),
@@ -140,8 +152,8 @@ export async function GET(request: Request) {
         if (erroAtualizacao) {
           console.error('Erro ao persistir conciliação da assinatura:', erroAtualizacao.message);
         }
+        if (novoStatus) assinaturaAtivaAposConciliacao = false;
       }
-      if (novoStatus) assinaturaAtivaAposConciliacao = novoStatus === 'ativa';
     }
 
     if (assinaturaAtivaAposConciliacao) {

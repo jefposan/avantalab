@@ -42,6 +42,7 @@ export async function GET(request: Request) {
     .eq('id', empresaId)
     .maybeSingle();
   if (perfil?.assinatura_origem_empresa_id) {
+    const cortesiaCompartilhada = estado?.status === 'cortesia';
     return NextResponse.json({
       ok: true,
       estado,
@@ -51,9 +52,11 @@ export async function GET(request: Request) {
       proximoVencimento: null,
       faturas: [],
       viaCupom: false,
-      podeGerenciar: false,
+      podeGerenciar: acesso.podeGerenciar,
+      podeCriarAssinaturaPropria: acesso.podeGerenciar && !cortesiaCompartilhada,
       origemAssinatura: 'perfil_compartilhado',
       perfilCompartilhado: true,
+      cortesiaCompartilhada,
     });
   }
   const { data: local } = await acesso.db

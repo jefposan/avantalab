@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.2 -->
+<!-- ava-version: 1.8.3 -->
 <!-- avantavendas-asset-revision: 78 -->
+
+> Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
+> Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
+> Vendas apenas acompanha o direito vigente do perfil após a confirmação.
 
 > Revisão 1.8.2: a auditoria de assinaturas, quotas, cupons e módulos da Gestão
 > não altera contas, assinaturas nem exclusões próprias do AvantaVendas. O

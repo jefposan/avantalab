@@ -34,6 +34,7 @@ export async function POST(request: Request) {
   const planoNormalizado = normalizarPlanoComercial(planoRecebido);
   const plano = (planoNormalizado || planoRecebido) as PlanoPago;
   const ciclo = String(corpo.ciclo || '') as Ciclo;
+  const assinaturaPropriaSolicitada = corpo.assinaturaPropria === true;
   const dadosCobranca = corpo.cobranca && typeof corpo.cobranca === 'object' ? corpo.cobranca : {};
   let nomeCobranca = limparTexto(dadosCobranca.nome || corpo.nomeCobranca);
   let emailCobranca = limparTexto(dadosCobranca.email || corpo.emailCobranca).toLowerCase();
@@ -116,11 +117,46 @@ export async function POST(request: Request) {
 
   const { data: emp } = await admin
     .from('empresas').select('nome, tipo_perfil, assinatura_origem_empresa_id').eq('id', empresaId).maybeSingle();
-  if (emp?.assinatura_origem_empresa_id) {
+  if (!emp) {
+    return NextResponse.json({ erro: true, mensagem: 'Perfil não encontrado.' }, { status: 404 });
+  }
+  const perfilCompartilhado = Boolean(emp.assinatura_origem_empresa_id);
+  if (perfilCompartilhado && !assinaturaPropriaSolicitada) {
     return NextResponse.json({
       erro: true,
-      mensagem: 'Este perfil já utiliza a assinatura de outro perfil. Gerencie o plano no perfil assinante.',
+      mensagem: 'Este perfil usa uma assinatura compartilhada. Escolha Criar assinatura própria para continuar.',
     }, { status: 409 });
+  }
+  if (perfilCompartilhado) {
+    const [{ data: assinaturaOrigem }, { data: moduloRecorrente }] = await Promise.all([
+      admin
+        .from('assinaturas')
+        .select('status, valido_ate')
+        .eq('empresa_id', emp.assinatura_origem_empresa_id)
+        .maybeSingle(),
+      admin
+        .from('assinaturas_modulos')
+        .select('id')
+        .eq('empresa_id', empresaId)
+        .not('gateway_subscription_id', 'is', null)
+        .neq('status', 'cancelada')
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    const cortesiaVigente = assinaturaOrigem?.status === 'cortesia'
+      && (!assinaturaOrigem.valido_ate || new Date(assinaturaOrigem.valido_ate) > new Date());
+    if (cortesiaVigente) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: 'Este perfil recebe uma cortesia. Solicite ao administrador do AvantaLab a revogação antes de contratar.',
+      }, { status: 409 });
+    }
+    if (moduloRecorrente) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: 'Cancele primeiro a renovação dos módulos avulsos deste perfil para evitar cobranças no plano de origem.',
+      }, { status: 409 });
+    }
   }
   const nomePerfil = emp?.nome || 'Cliente AvantaLab';
   const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
@@ -138,7 +174,7 @@ export async function POST(request: Request) {
     .eq('empresa_id', empresaId)
     .maybeSingle();
 
-  if (assinExistente && assinaturaBloqueiaNovoCheckout(
+  if (!perfilCompartilhado && assinExistente && assinaturaBloqueiaNovoCheckout(
     assinExistente.status as StatusAssinatura,
     assinExistente.valido_ate,
   )) {
@@ -250,7 +286,8 @@ export async function POST(request: Request) {
     cobranca_telefone: telefoneCobranca,
     atualizado_em: new Date().toISOString(),
   };
-  const trialAindaVigente = assinExistente?.status === 'trial'
+  const trialAindaVigente = !perfilCompartilhado
+    && assinExistente?.status === 'trial'
     && !!assinExistente.trial_fim
     && new Date(assinExistente.trial_fim) > new Date();
   const persistencia = assinExistente
@@ -268,5 +305,10 @@ export async function POST(request: Request) {
       mensagem: 'A cobrança foi desfeita porque não foi possível registrar a assinatura. Tente novamente.',
     }, { status: 500 });
   }
-  return NextResponse.json({ ok: true, invoiceUrl, assinaturaId: assinaturaGwId });
+  return NextResponse.json({
+    ok: true,
+    invoiceUrl,
+    assinaturaId: assinaturaGwId,
+    assinaturaPropriaPendente: perfilCompartilhado,
+  });
 }

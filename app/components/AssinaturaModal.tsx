@@ -1,6 +1,7 @@
 'use client';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import DraggableModalCard from './DraggableModalCard';
+import ModalConfirmacao from './ModalConfirmacao';
 import { supabase } from '../lib/supabase';
 import {
   cancelamentoProgramado,
@@ -37,6 +38,8 @@ type DetalhesAssinatura = {
   viaCupom?: boolean; // cortesia concedida por cupom
   podeGerenciar: boolean;
   perfilCompartilhado?: boolean;
+  podeCriarAssinaturaPropria?: boolean;
+  cortesiaCompartilhada?: boolean;
 };
 
 interface AssinaturaModalProps {
@@ -104,6 +107,8 @@ export default function AssinaturaModal({
   const [emailCobranca, setEmailCobranca] = useState(emailPadrao);
   const [telefoneCobranca, setTelefoneCobranca] = useState(telefonePadrao);
   const [confirmarCancelamento, setConfirmarCancelamento] = useState(false);
+  const [confirmarAssinaturaPropria, setConfirmarAssinaturaPropria] = useState(false);
+  const [modoAssinaturaPropria, setModoAssinaturaPropria] = useState(false);
   const [planoEmpresa, setPlanoEmpresa] = useState<'business' | 'business_pro'>('business');
   const requisicaoRef = useRef(false);
 
@@ -146,6 +151,8 @@ export default function AssinaturaModal({
 
   const fechar = () => {
     setConfirmarCancelamento(false);
+    setConfirmarAssinaturaPropria(false);
+    setModoAssinaturaPropria(false);
     onFechar();
   };
 
@@ -204,7 +211,13 @@ export default function AssinaturaModal({
     setErro('');
     try {
       const plano = tipoPessoal ? 'pessoal_premium' : planoEmpresa;
-      const resultado = await onAssinar?.(plano, ciclo, { nome, cpfCnpj: documento, email, telefone });
+      const resultado = await onAssinar?.(plano, ciclo, {
+        nome,
+        cpfCnpj: documento,
+        email,
+        telefone,
+        assinaturaPropria: Boolean(detalhes?.perfilCompartilhado && modoAssinaturaPropria),
+      });
       if (resultado && resultado.ok && resultado.url) {
         if (janela) janela.location.href = resultado.url;
         else window.open(resultado.url, '_blank');
@@ -261,8 +274,11 @@ export default function AssinaturaModal({
     : planoPago ? formatarData(assinatura?.proximoVencimento || null)
     : '—';
   const podeContratar = !assinatura && (
-    estadoAtual?.status === 'trial'
-    || (tipoPessoal && estadoAtual?.status === 'expirada')
+    (Boolean(detalhes?.perfilCompartilhado) && modoAssinaturaPropria)
+    || (!detalhes?.perfilCompartilhado && (
+      estadoAtual?.status === 'trial'
+      || estadoAtual?.status === 'expirada'
+    ))
   );
   const planoParaContratacao: PlanoContratavel = tipoPessoal ? 'pessoal_premium' : planoEmpresa;
   const precoMensal = dinheiro(PLANOS_COMERCIAIS[planoParaContratacao].precos.mensal ?? 0);
@@ -270,9 +286,15 @@ export default function AssinaturaModal({
   const card = darkMode ? 'bg-slate-900 text-slate-100 border-slate-700' : 'bg-white text-slate-900 border-slate-200';
   const muted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
+  const painelCompartilhado = darkMode
+    ? 'border-sky-400/35 bg-sky-400/10 text-sky-50'
+    : 'border-sky-200 bg-sky-50 text-sky-950';
+  const botaoCompartilhado = darkMode
+    ? 'border-sky-300/50 bg-slate-900 text-sky-100 hover:bg-slate-800 focus-visible:ring-sky-300'
+    : 'border-sky-300 bg-white text-sky-800 hover:bg-sky-100 focus-visible:ring-sky-700';
   const planoAtualEmpresa = estadoAtual?.plano === 'business_pro' ? 'business_pro' : 'business';
 
-  return (
+  return <>
     <div className="fixed inset-0 z-[5600] flex items-center justify-center bg-black/60 px-4 py-5" onClick={fechar}>
       <DraggableModalCard
         className={`flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[16px_32px_32px_32px] border shadow-2xl ${card}`}
@@ -289,7 +311,22 @@ export default function AssinaturaModal({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
           {erro && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
           {carregando && !detalhes ? <div className="py-14 text-center text-sm font-medium text-slate-500">Carregando assinatura...</div> : <>
-            {detalhes?.perfilCompartilhado && <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900"><strong>Assinatura compartilhada.</strong> Este perfil usa uma vaga do plano de outro perfil. Contratação, alteração e cancelamento devem ser feitos no perfil assinante.</div>}
+            {detalhes?.perfilCompartilhado && <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${painelCompartilhado}`}>
+              <strong>Assinatura compartilhada.</strong>{' '}
+              {detalhes.cortesiaCompartilhada
+                ? 'Este perfil recebe uma cortesia. Para contratar um plano, solicite primeiro a revogação ao administrador do AvantaLab.'
+                : 'Este perfil usa uma vaga do plano de outro perfil.'}
+              {detalhes.podeCriarAssinaturaPropria && !modoAssinaturaPropria && <button
+                type="button"
+                onClick={() => setConfirmarAssinaturaPropria(true)}
+                className={`mt-3 min-h-11 w-full rounded-xl border px-4 text-xs font-bold uppercase transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${botaoCompartilhado}`}
+              >
+                Criar assinatura própria
+              </button>}
+              {modoAssinaturaPropria && <p role="status" className={`mt-2 text-xs font-semibold leading-relaxed ${darkMode ? 'text-sky-100' : 'text-sky-800'}`}>
+                Escolha o novo plano. O acesso compartilhado será mantido até a confirmação do pagamento.
+              </p>}
+            </div>}
             {carencia && <div className="mb-4 w-full rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900"><strong>Pagamento pendente.</strong> Regularize até {formatarData(estadoAtual?.validoAte || null)} para evitar o bloqueio do perfil.</div>}
             {canceladaNoFim && <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900"><strong>Renovação cancelada.</strong> O acesso permanece disponível até {formatarData(estadoAtual?.validoAte || null)}.</div>}
 
@@ -302,7 +339,13 @@ export default function AssinaturaModal({
 
             {podeGerenciar && podeContratar && <section className="mt-5">
               <h3 className="text-sm font-semibold">Contratar assinatura</h3>
-              <p className={`mt-1 text-xs ${muted}`}>Você pode contratar agora sem perder os dias restantes do período de teste.</p>
+              <p className={`mt-1 text-xs ${muted}`}>
+                {detalhes?.perfilCompartilhado
+                  ? 'A desvinculação e a liberação da vaga ocorrerão somente após o pagamento confirmado.'
+                  : estadoAtual?.status === 'trial'
+                    ? 'Você pode contratar agora sem perder os dias restantes do período de teste.'
+                    : 'Escolha o plano e o ciclo de cobrança.'}
+              </p>
               {!tipoPessoal && <fieldset className="mt-3 grid grid-cols-2 gap-2" aria-label="Plano empresarial">
                 <legend className="sr-only">Plano empresarial</legend>
                 {([
@@ -366,5 +409,20 @@ export default function AssinaturaModal({
         </div>
       </DraggableModalCard>
     </div>
-  );
+    <ModalConfirmacao
+      aberto={confirmarAssinaturaPropria}
+      titulo="Criar assinatura própria?"
+      mensagem={'Este perfil usa uma assinatura compartilhada. Ao concluir uma assinatura própria, ele será desvinculado e liberará uma vaga no plano de origem.'}
+      textoCancelar="Cancelar"
+      textoConfirmar="Escolher plano"
+      variante="alerta"
+      corPrimaria={corPrimaria}
+      darkMode={darkMode}
+      aoCancelar={() => setConfirmarAssinaturaPropria(false)}
+      aoConfirmar={() => {
+        setConfirmarAssinaturaPropria(false);
+        setModoAssinaturaPropria(true);
+      }}
+    />
+  </>;
 }

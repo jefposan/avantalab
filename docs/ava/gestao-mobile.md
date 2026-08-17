@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.2 -->
+<!-- ava-version: 1.8.3 -->
+
+> Revisão 1.8.3: o painel **Assinatura** também permite ao gestor de um perfil
+> compartilhado iniciar um plano próprio. O acesso atual permanece durante a
+> contratação, e somente o pagamento confirmado desvincula o perfil e libera a
+> vaga anterior. Cortesia e módulos com renovação vinculada continuam
+> protegidos pelas mesmas regras da Gestão Web.
 
 > Revisão 1.8.2: a Gestão Mobile reconhece o estado conciliado de assinatura,
 > incluindo teste preservado, carência, cancelamento até o fim pago, assinatura

@@ -204,20 +204,32 @@ export async function POST(request: Request) {
       }
 
       if (novoStatus) {
-        const { error: erroAtualizacaoAssinatura } = await db.from('assinaturas').update({
-          status: novoStatus,
-          valido_ate: validoAte,
-          ...(limparCheckoutTrial ? { gateway_subscription_id: null } : {}),
-          atualizado_em: new Date().toISOString(),
-        }).eq('id', assinaturaAtual.id);
-        if (erroAtualizacaoAssinatura) throw erroAtualizacaoAssinatura;
         if (novoStatus === 'ativa') {
+          const cicloConfirmado = assinaturaPayload.cycle === 'YEARLY'
+            ? 'anual'
+            : assinaturaPayload.cycle === 'MONTHLY' ? 'mensal' : null;
+          const { data: ativacao, error: erroAtivacao } = await db.rpc('ativar_assinatura_propria_perfil', {
+            p_empresa_id: assinaturaAtual.empresa_id,
+            p_gateway_subscription_id: assinaturaGw,
+            p_ciclo: cicloConfirmado,
+          });
+          if (erroAtivacao || ativacao?.ok === false) {
+            throw erroAtivacao || new Error(`Não foi possível ativar a assinatura: ${ativacao?.codigo || 'erro desconhecido'}`);
+          }
           const { error: erroReconciliacao } = await db.rpc('reconciliar_perfis_quota', {
             p_origem_empresa_id: assinaturaAtual.empresa_id,
           });
           if (erroReconciliacao) {
             console.error('Erro ao reconciliar perfis da assinatura ativada:', erroReconciliacao.message);
           }
+        } else {
+          const { error: erroAtualizacaoAssinatura } = await db.from('assinaturas').update({
+            status: novoStatus,
+            valido_ate: validoAte,
+            ...(limparCheckoutTrial ? { gateway_subscription_id: null } : {}),
+            atualizado_em: new Date().toISOString(),
+          }).eq('id', assinaturaAtual.id);
+          if (erroAtualizacaoAssinatura) throw erroAtualizacaoAssinatura;
         }
       } else if (evento === 'SUBSCRIPTION_UPDATED') {
         const ciclo = assinaturaPayload.cycle === 'YEARLY' ? 'anual' : assinaturaPayload.cycle === 'MONTHLY' ? 'mensal' : null;

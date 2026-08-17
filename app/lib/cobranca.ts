@@ -62,6 +62,9 @@ export type DadosCobrancaAssinatura = {
   cpfCnpj: string;
   email: string;
   telefone: string;
+  // Identifica a contratação iniciada por um perfil que ainda consome a quota
+  // de outro. O vínculo só será removido depois da confirmação do pagamento.
+  assinaturaPropria?: boolean;
 };
 
 // Rótulo amigável do status, para exibir ao usuário.

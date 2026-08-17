@@ -757,7 +757,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     dadosCobranca: DadosCobrancaAssinatura,
     cadastroConfirmado = false,
   ): Promise<{ ok: boolean; url?: string; mensagem?: string }> => {
-    if (!cadastroConfirmado && cadastroPerfilStatus && !cadastroPerfilStatus.completo) {
+    if (!dadosCobranca.assinaturaPropria && !cadastroConfirmado && cadastroPerfilStatus && !cadastroPerfilStatus.completo) {
       setModalAssinatura(false);
       setCicloCadastroPaywall(ciclo);
       setPlanoCadastroPaywall(plano);
@@ -775,6 +775,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
           plano: tipoPerfilAtual === 'pessoal' ? 'pessoal_premium' : plano,
           ciclo,
           cobranca: dadosCobranca,
+          assinaturaPropria: dadosCobranca.assinaturaPropria === true,
         }),
       });
       const json = await resp.json();
