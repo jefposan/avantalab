@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.4 -->
+<!-- ava-version: 1.8.4.01 -->
+
+> Revisão 1.8.4.01: a seção pública **Nossos apps** passou a mostrar a captura
+> real do dashboard do AvantaVendas; sem alteração operacional no aplicativo.
 
 > Revisão 1.8.4: a landing pública passou a apresentar e direcionar para o
 > AvantaVendas na App Store. O Google Play permanece identificado como

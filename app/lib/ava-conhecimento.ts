@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.8.4.01: Nossos apps usa capturas reais dos dashboards,
+// sem mudança nos fluxos de Gestão ou AvantaVendas.
 // Revisado na versão 1.8.4: a landing pública apresenta Gestão e AvantaVendas
 // em Nossos apps, com links oficiais da App Store e Google Play em breve.
 // Revisado na versão 1.8.3: perfil compartilhado mantém o acesso durante o

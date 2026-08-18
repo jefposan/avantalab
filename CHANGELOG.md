@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.4.01 - 2026-08-18
+
+- Landing pública: os celulares da seção **Nossos apps** agora exibem as
+  capturas originais dos dashboards do AvantaLab Gestão e do AvantaVendas,
+  preservadas por inteiro dentro das molduras responsivas.
+
 ## 1.8.4 - 2026-08-18
 
 - Landing pública: adicionada a seção **Nossos apps**, com apresentação do

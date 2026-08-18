@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.4 -->
+<!-- ava-version: 1.8.4.01 -->
+
+> Revisão 1.8.4.01: a seção pública **Nossos apps** passou a mostrar capturas
+> reais dos dashboards dos aplicativos; sem alteração de orientação operacional.
 
 > Revisão 1.8.4: a landing pública ganhou **Nossos apps**, com os aplicativos
 > AvantaLab Gestão e AvantaVendas, links oficiais da App Store e indicação de
