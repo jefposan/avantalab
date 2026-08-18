@@ -8,6 +8,7 @@ import AcessoPublicoLink from './components/AcessoPublicoLink';
 import RedirecionamentoPosOAuth from './components/RedirecionamentoPosOAuth';
 import LinkRolagemPublica from './components/LinkRolagemPublica';
 import AvaPlansPreview from './components/AvaPlansPreview';
+import LandingAppsSection from './components/LandingAppsSection';
 import styles from './styles/landing/landing.module.css';
 import effects from './styles/landing/landing-effects.module.css';
 import avaBadge from './styles/landing/ava-badge.module.css';
@@ -16,7 +17,7 @@ import anchorOffset from './styles/landing/anchor-offset.module.css';
 import solutionsStyles from './styles/landing/landing-solutions.module.css';
 
 const siteUrl = 'https://avantalab.com.br';
-const destinosProximaRolagem = ['recursos', 'como-funciona', 'ia-ava', 'planos', 'calculadoras', 'perguntas', 'proximo-passo', 'rodape'] as const;
+const destinosProximaRolagem = ['recursos', 'nossos-apps', 'como-funciona', 'ia-ava', 'planos', 'calculadoras', 'perguntas', 'proximo-passo', 'rodape'] as const;
 
 export const metadata: Metadata = {
   title: 'Gestão financeira, operação e equipe | AvantaLab',
@@ -103,6 +104,8 @@ const dadosEstruturados = {
     { '@type': 'Organization', name: 'AvantaLab', url: siteUrl, logo: `${siteUrl}/images/landing/logo-avantalab.png`, contactPoint: { '@type': 'ContactPoint', email: 'contato@avantalab.com.br', contactType: 'customer support', availableLanguage: 'Portuguese' } },
     { '@type': 'WebSite', name: 'AvantaLab', url: siteUrl, inLanguage: 'pt-BR' },
     { '@type': 'SoftwareApplication', name: 'AvantaLab Gestão', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url: siteUrl, description: 'Plataforma de gestão financeira e operacional com indicadores, rotinas de equipe e assistência por IA.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL', description: 'Plano Free gratuito para uso pessoal, sem cartão de crédito' } },
+    { '@type': 'MobileApplication', name: 'AvantaLab', applicationCategory: 'FinanceApplication', operatingSystem: 'iOS', url: 'https://apps.apple.com/br/app/avantalab/id6793744930', downloadUrl: 'https://apps.apple.com/br/app/avantalab/id6793744930', description: 'Aplicativo oficial de gestão financeira e operacional do AvantaLab.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' } },
+    { '@type': 'MobileApplication', name: 'AvantaVendas', applicationCategory: 'BusinessApplication', operatingSystem: 'iOS', url: 'https://apps.apple.com/br/app/avantavendas/id6797617650', downloadUrl: 'https://apps.apple.com/br/app/avantavendas/id6797617650', description: 'Aplicativo oficial para organizar clientes, produtos, pedidos, pagamentos e divulgação.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' } },
     {
       '@type': 'OfferCatalog',
       name: 'Planos AvantaLab',
@@ -181,6 +184,8 @@ export default function AvantaLandingPage() {
           </div>
         </div>
       </section>
+
+      <LandingAppsSection />
 
       <section className={`${styles.section} ${styles.flow}`} id="como-funciona" data-flow-section data-full-section>
         <div className={styles.wrap} data-scroll-target>

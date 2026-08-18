@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.8.3.01 -->
+<!-- ava-version: 1.8.4 -->
+
+> Revisão 1.8.4: a landing pública ganhou **Nossos apps**, com os aplicativos
+> AvantaLab Gestão e AvantaVendas, links oficiais da App Store e indicação de
+> Google Play em breve. A seção também pode ser aberta pelo menu superior.
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.

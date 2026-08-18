@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.3.01 -->
+<!-- ava-version: 1.8.4 -->
+
+> Revisão 1.8.4: a landing pública passou a apresentar e direcionar para o
+> aplicativo AvantaLab Gestão na App Store. O Google Play permanece identificado
+> como disponibilidade futura, sem alterar o funcionamento da Gestão Mobile.
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.

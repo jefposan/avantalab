@@ -13,10 +13,10 @@ export default function LandingHeader() {
   const [menuAberto, setMenuAberto] = useState(false);
   const itensMenu = [
     ['#recursos', 'Recursos'],
+    ['#nossos-apps', 'Nossos apps'],
     ['#como-funciona', 'Como funciona'],
     ['#ia-ava', 'IA Ava'],
     ['#planos', 'Planos'],
-    ['#calculadoras', 'Calculadoras'],
     ['#perguntas', 'Dúvidas'],
   ] as const;
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.4 - 2026-08-18
+
+- Landing pública: adicionada a seção **Nossos apps**, com apresentação do
+  AvantaLab Gestão e do AvantaVendas, benefícios resumidos e links oficiais
+  para baixar cada aplicativo na App Store.
+- A disponibilidade futura no Google Play é informada sem oferecer um link
+  inativo. O menu principal e a rolagem assistida agora levam diretamente à
+  nova seção em desktop e celular.
+
 ## 1.8.3.01 - 2026-08-18
 
 - Controle de Ponto: o estado final do botão central apresenta **Jornada
