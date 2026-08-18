@@ -9,6 +9,7 @@ import RedirecionamentoPosOAuth from './components/RedirecionamentoPosOAuth';
 import LinkRolagemPublica from './components/LinkRolagemPublica';
 import AvaPlansPreview from './components/AvaPlansPreview';
 import LandingAppsSection from './components/LandingAppsSection';
+import LandingBrandLabSection from './components/LandingBrandLabSection';
 import styles from './styles/landing/landing.module.css';
 import effects from './styles/landing/landing-effects.module.css';
 import avaBadge from './styles/landing/ava-badge.module.css';
@@ -17,16 +18,16 @@ import anchorOffset from './styles/landing/anchor-offset.module.css';
 import solutionsStyles from './styles/landing/landing-solutions.module.css';
 
 const siteUrl = 'https://avantalab.com.br';
-const destinosProximaRolagem = ['recursos', 'nossos-apps', 'como-funciona', 'ia-ava', 'planos', 'calculadoras', 'perguntas', 'proximo-passo', 'rodape'] as const;
+const destinosProximaRolagem = ['laboratorio-de-marcas', 'recursos', 'nossos-apps', 'como-funciona', 'ia-ava', 'planos', 'calculadoras', 'perguntas', 'proximo-passo', 'rodape'] as const;
 
 export const metadata: Metadata = {
-  title: 'Gestão financeira, operação e equipe | AvantaLab',
-  description: 'Organize o financeiro, acompanhe a operação e conte com a IA Ava para decidir melhor. Comece pelo plano Free, gratuito para uso pessoal.',
+  title: 'Laboratório de marcas e gestão financeira | AvantaLab',
+  description: 'Do zero ao operacional: transformamos ideias em marcas e organizamos a gestão financeira para empresas avançarem com clareza.',
   alternates: { canonical: siteUrl },
   robots: { index: true, follow: true },
   openGraph: {
-    title: 'AvantaLab | Seu negócio organizado para decidir melhor',
-    description: 'Financeiro, indicadores, equipe e IA em uma plataforma simples de operar.',
+    title: 'AvantaLab | Do zero ao operacional',
+    description: 'Laboratório de marcas e gestão financeira para transformar ideias em negócios prontos para avançar.',
     url: siteUrl,
     siteName: 'AvantaLab',
     locale: 'pt_BR',
@@ -35,8 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AvantaLab | Gestão financeira e operacional',
-    description: 'Organize seu negócio e decida melhor com apoio da IA Ava.',
+    title: 'AvantaLab | Do zero ao operacional',
+    description: 'Laboratório de marcas e gestão financeira para empresas avançarem com clareza.',
     images: ['/images/avantalab-share-meta-safe-center-v2.jpg'],
   },
 };
@@ -133,24 +134,24 @@ export default function AvantaLandingPage() {
       <section className={styles.hero} id="conteudo" data-public-hero>
         <div className={styles.wrap}>
           <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}><span aria-hidden="true" />Gestão financeira e operacional</p>
-            <h1>Seu negócio organizado para <em>decidir melhor.</em></h1>
-            <p className={styles.lead}>O AvantaLab reúne financeiro, indicadores, rotinas da equipe e a Ava em uma plataforma simples de operar — do primeiro lançamento à visão completa da operação.</p>
+            <p className={styles.eyebrow}><span aria-hidden="true" />Laboratório de marcas e gestão financeira</p>
+            <h1>Da ideia ao negócio <em>pronto para operar.</em></h1>
+            <p className={styles.lead}>O AvantaLab ajuda a transformar uma visão em marca, presença e estrutura — e oferece a gestão financeira para acompanhar o negócio depois que ele começa a avançar.</p>
             <div className={styles.heroActions}>
-              <AcessoPublicoLink className={styles.primaryButton} modo="cadastro">Começar grátis <span aria-hidden="true">→</span></AcessoPublicoLink>
-              <LinkRolagemPublica className={styles.secondaryButton} href="#recursos">Conhecer a plataforma</LinkRolagemPublica>
+              <LinkRolagemPublica className={styles.primaryButton} href="#laboratorio-de-marcas">Explorar o laboratório <span aria-hidden="true">→</span></LinkRolagemPublica>
+              <LinkRolagemPublica className={styles.secondaryButton} href="#recursos">Conhecer gestão financeira</LinkRolagemPublica>
             </div>
-            <ul className={styles.trustList} aria-label="Destaques da plataforma">
-              <li>Free sem cartão de crédito</li>
-              <li>Planos pessoais e empresariais</li>
-              <li>Web e mobile</li>
+            <ul className={styles.trustList} aria-label="Destaques do AvantaLab">
+              <li>Direção para a sua ideia</li>
+              <li>Marca pronta para avançar</li>
+              <li>Gestão financeira para operar</li>
             </ul>
           </div>
 
-          <div className={styles.productPreview} aria-label="Visão ilustrativa do painel AvantaLab" data-product-preview>
+          <div className={styles.productPreview} aria-label="Visão ilustrativa da gestão financeira AvantaLab" data-product-preview>
             <div className={styles.browserBar}><span /><span /><span /><b>avantalab.com.br/gestao</b></div>
             <div className={styles.dashboard}>
-              <p>Visão do mês</p>
+              <p>Gestão financeira</p>
               <div className={styles.metricGrid}>
                 <article><small>Saldo previsto</small><strong>R$ 18.240</strong><i>+ 12% no mês</i></article>
                 <article><small>Receitas</small><strong>R$ 42.900</strong><i>Em dia</i></article>
@@ -163,7 +164,9 @@ export default function AvantaLandingPage() {
         </div>
       </section>
 
-      <section className={styles.proof} aria-label="Destaques do AvantaLab" data-proof-bar><div className={styles.wrap}><span>Financeiro, operação e equipe no mesmo lugar</span><span>Informações organizadas para o dia a dia</span><span>Ajuda contextual com a IA Ava</span></div></section>
+      <section className={styles.proof} aria-label="Destaques do AvantaLab" data-proof-bar><div className={styles.wrap}><span>Uma ideia com direção</span><span>Uma marca com presença</span><span>Uma empresa pronta para operar</span></div></section>
+
+      <LandingBrandLabSection />
 
       <section className={styles.section} id="recursos">
         <div className={styles.wrap} data-scroll-target>

@@ -1,6 +1,55 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.4.01 -->
+<!-- ava-version: 1.8.5.15 -->
+
+> Revisão 1.8.5.15: o painel visual do Laboratório de Marcas foi ampliado para
+> acomodar arcos mais altos; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.14: os arcos visuais do Laboratório de Marcas foram
+> reposicionados acima dos marcos; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.13: os arcos visuais do Laboratório de Marcas foram afastados
+> dos marcos e dos textos; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.12: a trajetória visual do Laboratório de Marcas passou a
+> percorrer o espaço abaixo dos marcos; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.11: a trajetória visual do Laboratório de Marcas foi vinculada
+> à grade dos quatro marcos; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.10: a trajetória visual do Laboratório de Marcas foi alinhada
+> à base de cada marco; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.09: a explicação e a trilha visual do Laboratório de Marcas
+> foram unificadas em quatro etapas; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.08: a progressão visual dos saltos do Laboratório de Marcas
+> foi suavizada; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.07: as setas da trilha visual do Laboratório de Marcas foram
+> centralizadas nos saltos; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.06: as setas da trilha visual do Laboratório de Marcas foram
+> reforçadas; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.05: os saltos tracejados do Laboratório de Marcas foram
+> refinados; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.04: as setas da trilha visual do Laboratório de Marcas foram
+> reposicionadas; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.03: a trilha visual do Laboratório de Marcas passou a usar
+> saltos curvos decorativos; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.02: a trilha visual do Laboratório de Marcas foi refinada;
+> sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5.01: a trilha visual do Laboratório de Marcas foi reorganizada;
+> sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.5: a landing pública passou a apresentar o Laboratório de Marcas
+> e a Gestão Financeira como frentes distintas; sem alteração operacional no
+> AvantaVendas.
 
 > Revisão 1.8.4.01: a seção pública **Nossos apps** passou a mostrar a captura
 > real do dashboard do AvantaVendas; sem alteração operacional no aplicativo.

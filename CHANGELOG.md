@@ -1,5 +1,106 @@
 # Changelog
 
+## 1.8.5.15 - 2026-08-18
+
+- Landing pública: o painel da evolução de marcas foi ampliado e seus marcos
+  foram reposicionados para criar uma área superior dedicada aos arcos mais
+  altos da trajetória.
+
+## 1.8.5.14 - 2026-08-18
+
+- Landing pública: a trajetória da evolução de marcas voltou à composição
+  compacta e passou a usar arcos leves acima dos quatro círculos, mantendo uma
+  distância visual entre a linha e cada marco.
+
+## 1.8.5.13 - 2026-08-18
+
+- Landing pública: os arcos da evolução de marcas ganharam uma descida maior
+  após cada círculo e uma área própria antes dos textos, reforçando a leitura
+  do percurso sem sobreposição.
+
+## 1.8.5.12 - 2026-08-18
+
+- Landing pública: os arcos entre as etapas passaram a percorrer somente o
+  espaço abaixo dos círculos, saindo e retornando pela base central de cada
+  marco, sem sobreposição.
+
+## 1.8.5.11 - 2026-08-18
+
+- Landing pública: a largura da trajetória foi vinculada à grade dos quatro
+  marcos. Cada arco agora começa e termina no eixo central dos respectivos
+  círculos.
+
+## 1.8.5.10 - 2026-08-18
+
+- Landing pública: a trajetória da evolução de marcas agora parte e chega
+  exatamente na base de cada círculo, com os quatro marcos distribuídos na
+  mesma grade para tornar a conexão contínua e harmônica.
+
+## 1.8.5.09 - 2026-08-18
+
+- Landing pública: a explicação e a trilha do Laboratório de Marcas foram
+  unificadas em quatro etapas equivalentes — Ideia, Direção, Identidade e
+  Operação. O tracejado agora é um percurso único, contínuo e geometricamente
+  alinhado aos círculos de cada etapa.
+
+## 1.8.5.08 - 2026-08-18
+
+- Landing pública: os três saltos da trilha do Laboratório de Marcas agora
+  evoluem em alturas progressivas e mais suaves, preservando a mesma distância
+  horizontal entre etapas.
+
+## 1.8.5.07 - 2026-08-18
+
+- Landing pública: as setas dos saltos do Laboratório de Marcas foram movidas
+  para o centro de cada arco, acompanhando a altura crescente da evolução.
+
+## 1.8.5.06 - 2026-08-18
+
+- Landing pública: as setas de chegada dos saltos do Laboratório de Marcas
+  passaram a usar elementos visuais próprios para permanecerem nítidas sobre a
+  trilha em qualquer navegador.
+
+## 1.8.5.05 - 2026-08-18
+
+- Landing pública: os saltos tracejados do Laboratório de Marcas agora deixam
+  uma distância visual antes de cada marco, destacando as setas de avanço.
+
+## 1.8.5.04 - 2026-08-18
+
+- Landing pública: as setas dos saltos da trilha do Laboratório de Marcas foram
+  deslocadas para antes do próximo marco, deixando cada avanço visível.
+
+## 1.8.5.03 - 2026-08-18
+
+- Landing pública: a trilha do Laboratório de Marcas passou a usar três saltos
+  curvos tracejados, cada um com seta de avanço e arco maior no passo final.
+  O movimento é decorativo, discreto e respeita a preferência por redução de
+  movimento.
+
+## 1.8.5.02 - 2026-08-18
+
+- Landing pública: a trilha do Laboratório de Marcas agora conecta cada etapa
+  individualmente por um trecho pontilhado e uma seta, sem linha antes de
+  **Ideia** ou após **Operação**.
+
+## 1.8.5.01 - 2026-08-18
+
+- Landing pública: a evolução visual do Laboratório de Marcas foi reorganizada
+  como uma trilha reta e ordenada, com quatro marcos, tracejado e setas entre
+  ideia, direção, identidade e operação.
+
+## 1.8.5 - 2026-08-18
+
+- Landing pública: a AvantaLab passa a apresentar as duas frentes da empresa,
+  **Laboratório de marcas** e **Gestão financeira**, sob a proposta “Do zero ao
+  operacional”.
+- Foi criada a seção do Laboratório de Marcas, com narrativa visual sobre a
+  transformação de uma ideia em negócio pronto para operar, sem publicar um
+  canal de contato ainda não definido.
+- A navegação foi simplificada: **Laboratório de marcas** leva à nova frente e
+  **Gestão financeira** agrupa os conteúdos atuais do sistema em um menu
+  expansível acessível em desktop e celular.
+
 ## 1.8.4.01 - 2026-08-18
 
 - Landing pública: os celulares da seção **Nossos apps** agora exibem as

@@ -1,0 +1,254 @@
+.section {
+  position: relative;
+  overflow: hidden;
+  padding: 7rem 0;
+  background:
+    radial-gradient(circle at 8% 24%, rgb(24 167 200 / 16%), transparent 24rem),
+    radial-gradient(circle at 86% 82%, rgb(126 93 220 / 12%), transparent 25rem),
+    linear-gradient(140deg, #f7fcfd, #fff 52%, #f4fbfc);
+}
+
+.section::before,
+.section::after {
+  position: absolute;
+  border: 1px solid rgb(20 126 209 / 12%);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.section::before {
+  top: -15rem;
+  right: -10rem;
+  width: 34rem;
+  height: 34rem;
+  box-shadow: 0 0 0 3.5rem rgb(24 167 200 / 3%), 0 0 0 7rem rgb(24 167 200 / 2%);
+}
+
+.section::after {
+  bottom: -22rem;
+  left: 23%;
+  width: 42rem;
+  height: 42rem;
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, .96fr) minmax(340px, .8fr);
+  gap: 3.5rem 5rem;
+  width: min(1120px, calc(100% - 2.5rem));
+  margin-inline: auto;
+}
+
+.copy {
+  max-width: 610px;
+}
+
+.kicker {
+  margin: 0 0 .85rem;
+  color: #147ed1;
+  font-size: .77rem;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.copy h2 {
+  margin: 0;
+  color: #13263b;
+  font-size: clamp(2.1rem, 4.2vw, 3.7rem);
+  font-weight: 700;
+  letter-spacing: -.045em;
+  line-height: 1.04;
+}
+
+.copy h2 em {
+  font-style: normal;
+  background: linear-gradient(110deg, #147ed1, #18a7c8 62%, #7e5ddc);
+  background-clip: text;
+  color: transparent;
+}
+
+.lead {
+  margin: 1.4rem 0 0;
+  color: #435d73;
+  font-size: 1.12rem;
+  line-height: 1.55;
+}
+
+.support {
+  max-width: 500px;
+  margin: 1rem 0 0;
+  color: #65798a;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .8rem;
+  align-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps li {
+  position: relative;
+  min-height: 142px;
+  padding: 1.15rem 1.2rem 1.1rem 4.5rem;
+  border: 1px solid #d8e8ef;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 80%);
+  box-shadow: 0 12px 28px rgb(0 62 115 / 6%);
+}
+
+.steps span {
+  position: absolute;
+  top: 1.18rem;
+  left: 1.2rem;
+  color: #147ed1;
+  font-size: .72rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+}
+
+.steps li::before {
+  position: absolute;
+  top: 1.15rem;
+  bottom: 1.15rem;
+  left: 3.25rem;
+  width: 1px;
+  background: linear-gradient(#18a7c8, rgb(24 167 200 / 5%));
+  content: '';
+}
+
+.steps h3 {
+  margin: 0 0 .32rem;
+  color: #003e73;
+  font-size: 1.05rem;
+  letter-spacing: -.02em;
+}
+
+.steps p {
+  margin: 0;
+  color: #5b6b7d;
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.canvas {
+  grid-column: 1 / -1;
+  position: relative;
+  min-height: 212px;
+  padding: 2rem 2.2rem;
+  border: 1px solid rgb(20 126 209 / 13%);
+  border-radius: 24px;
+  background-color: rgb(255 255 255 / 46%);
+  background-image:
+    linear-gradient(rgb(20 126 209 / 6%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(20 126 209 / 6%) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.timeline {
+  position: absolute;
+  inset: 4rem 2.2rem 2rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  align-items: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trajectory {
+  position: absolute;
+  top: .6rem;
+  left: 2.2rem;
+  z-index: 0;
+  width: calc(100% - 4.4rem);
+  height: 110px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.trajectoryPath {
+  fill: none;
+  stroke: #147ed1;
+  stroke-width: 2.25;
+  stroke-dasharray: 6 7;
+  stroke-linecap: round;
+  animation: tracejarTrajetoria 4s linear infinite;
+}
+
+.trajectoryArrow circle { fill: #fafdfe; }
+.trajectoryArrow text { fill: #147ed1; font-size: 18px; font-style: normal; font-weight: 850; text-anchor: middle; dominant-baseline: central; }
+
+.timeline li {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  padding: 0 .4rem;
+  text-align: center;
+}
+
+.timeline li > span {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  margin: 0 auto .85rem;
+  border: 2px solid #8ed6e3;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 5px 14px rgb(0 62 115 / 9%);
+  color: #087c9a;
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .04em;
+}
+
+.timeline li:last-child > span {
+  border-color: transparent;
+  background: linear-gradient(135deg, #003e73, #147ed1 65%, #18a7c8);
+  color: #fff;
+}
+
+.timeline h3 {
+  margin: 0;
+  color: #003e73;
+  font-size: 1rem;
+  letter-spacing: -.02em;
+}
+
+.timeline p {
+  margin: .28rem 0 0;
+  color: #5b6b7d;
+  font-size: .79rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 760px) {
+  .section { padding: 4.75rem 0; }
+  .wrap { grid-template-columns: 1fr; gap: 2.3rem; width: min(100% - 2rem, 1120px); }
+  .canvas { grid-column: auto; min-height: 0; padding: 1.35rem; }
+  .steps { grid-template-columns: 1fr; }
+  .timeline { position: relative; inset: auto; grid-template-columns: 1fr; gap: 1.1rem; }
+  .trajectory { display: none; }
+  .timeline li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: .95rem; padding: 0; text-align: left; }
+  .timeline li > span { margin: 0; }
+  .timeline li:not(:last-child)::after { position: absolute; top: 44px; bottom: -1.1rem; left: 21px; width: 2px; background: repeating-linear-gradient(#82cbdc 0 7px, transparent 7px 13px); content: ''; }
+  .timeline li:not(:last-child)::before { position: absolute; bottom: -1.25rem; left: 10px; z-index: 1; display: grid; width: 24px; height: 20px; place-items: center; border-radius: 50%; background: #fafdfe; color: #147ed1; content: '↓'; font-size: .95rem; font-weight: 800; }
+  .timeline p { margin-top: .18rem; }
+}
+
+@keyframes tracejarTrajetoria {
+  to { stroke-dashoffset: -26; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trajectoryPath { animation: none; }
+}

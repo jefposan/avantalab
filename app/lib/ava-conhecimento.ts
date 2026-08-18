@@ -1,5 +1,37 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.8.5.15: o painel visual do Laboratório de Marcas foi
+// ampliado para acomodar arcos mais altos, sem alterar os aplicativos.
+// Revisado na versão 1.8.5.14: os arcos visuais do Laboratório de Marcas foram
+// reposicionados acima dos marcos, sem alterar os aplicativos.
+// Revisado na versão 1.8.5.13: os arcos visuais do Laboratório de Marcas foram
+// afastados dos marcos e dos textos, sem alterar os aplicativos.
+// Revisado na versão 1.8.5.12: a trajetória visual do Laboratório de Marcas
+// passou a percorrer o espaço abaixo dos marcos, sem alterar os aplicativos.
+// Revisado na versão 1.8.5.11: a trajetória visual do Laboratório de Marcas
+// foi vinculada à grade dos quatro marcos, sem alterar os aplicativos.
+// Revisado na versão 1.8.5.10: a trajetória visual do Laboratório de Marcas
+// foi alinhada à base de cada marco, sem alterar os aplicativos.
+// Revisado na versão 1.8.5.09: a explicação e a trilha visual do Laboratório
+// de Marcas foram unificadas em quatro etapas, sem alterar os aplicativos.
+// Revisado na versão 1.8.5.08: a progressão visual dos saltos foi suavizada,
+// sem alterar os fluxos dos aplicativos.
+// Revisado na versão 1.8.5.07: as setas da trilha visual foram centralizadas
+// nos saltos, sem alterar os fluxos dos aplicativos.
+// Revisado na versão 1.8.5.06: as setas da trilha visual foram reforçadas,
+// sem alterar os fluxos dos aplicativos.
+// Revisado na versão 1.8.5.05: os saltos tracejados da trilha foram refinados,
+// sem alterar os fluxos dos aplicativos.
+// Revisado na versão 1.8.5.04: as setas da trilha visual foram reposicionadas,
+// sem alterar os fluxos dos aplicativos.
+// Revisado na versão 1.8.5.03: a trilha visual do Laboratório de Marcas usa
+// saltos curvos decorativos, sem alterar os fluxos dos aplicativos.
+// Revisado na versão 1.8.5.02: a trilha visual do Laboratório de Marcas conecta
+// cada etapa de forma individual, sem alterar os fluxos dos aplicativos.
+// Revisado na versão 1.8.5.01: a trilha visual do Laboratório de Marcas foi
+// reorganizada, sem alterar os fluxos dos aplicativos.
+// Revisado na versão 1.8.5: a landing pública apresenta Laboratório de Marcas
+// e Gestão Financeira como frentes distintas, sem alterar os fluxos dos apps.
 // Revisado na versão 1.8.4.01: Nossos apps usa capturas reais dos dashboards,
 // sem mudança nos fluxos de Gestão ou AvantaVendas.
 // Revisado na versão 1.8.4: a landing pública apresenta Gestão e AvantaVendas
