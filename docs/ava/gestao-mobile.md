@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.3 -->
+<!-- ava-version: 1.8.3.01 -->
+
+> Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
+> central do Controle de Ponto; sem impacto operacional.
 
 > Revisão 1.8.3: o painel **Assinatura** também permite ao gestor de um perfil
 > compartilhado iniciar um plano próprio. O acesso atual permanece durante a

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.8.3 -->
+<!-- ava-version: 1.8.3.01 -->
+
+> Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
+> central do Controle de Ponto; sem impacto operacional.
 <!-- avantavendas-asset-revision: 78 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da

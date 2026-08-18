@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.3.01 - 2026-08-18
+
+- Controle de Ponto: o estado final do botão central apresenta **Jornada
+  Concluída** em uma escala menor e centralizada, preservando o tamanho e a
+  posição do botão durante toda a jornada.
+
 ## 1.8.3 - 2026-08-17
 
 - Perfis que usam uma vaga de outra assinatura agora podem iniciar uma
