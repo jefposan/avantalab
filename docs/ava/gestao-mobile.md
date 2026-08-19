@@ -1,6 +1,36 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.8.5.15 -->
+<!-- ava-version: 1.9.0.09 -->
+
+> Revisão 1.9.0.09: os atalhos públicos de cadastro voltaram ao rótulo
+> “Começar grátis”; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.9.0.08: a composição aprovada do cabeçalho público de planos foi
+> aplicada; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.9.0.07: a landing ganhou um modo local de ajuste dos planos; sem
+> alteração operacional na Gestão Mobile.
+
+> Revisão 1.9.0.06: o cabeçalho público de planos foi realinhado; sem alteração
+> operacional na Gestão Mobile.
+
+> Revisão 1.9.0.05: a faixa pública de planos teve sua leitura em linha
+> refinada; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.9.0.04: a área pública de planos foi condensada; sem alteração
+> operacional na Gestão Mobile.
+
+> Revisão 1.9.0.03: o cabeçalho público de planos foi reorganizado; sem
+> alteração operacional na Gestão Mobile.
+
+> Revisão 1.9.0.02: a faixa pública da Gestão Financeira foi compactada
+> visualmente; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.9.0.01: a navegação pública da Gestão Financeira foi reorganizada
+> horizontalmente; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.9.0: a landing pública foi separada entre Laboratório de Marcas e
+> Gestão Financeira; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.8.5.15: o painel visual do Laboratório de Marcas foi ampliado para
 > acomodar arcos mais altos; sem alteração operacional na Gestão Mobile.

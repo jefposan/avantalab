@@ -1,26 +1,26 @@
 /* Âncoras da landing SEO oficial. */
 .root :global(section[id]) {
-  scroll-margin-top: 92px;
+  scroll-margin-top: 148px;
 }
 
 .root :global([data-scroll-target]) {
-  scroll-margin-top: 90px;
+  scroll-margin-top: 146px;
 }
 
 .root :global([data-full-section]) {
-  min-height: calc(100svh - 74px);
+  min-height: calc(100svh - 126px);
 }
 
 @media (max-width: 640px) {
   .root :global(section[id]) {
-    scroll-margin-top: 78px;
+    scroll-margin-top: 128px;
   }
 
   .root :global([data-scroll-target]) {
-    scroll-margin-top: 80px;
+    scroll-margin-top: 126px;
   }
 
   .root :global([data-full-section]) {
-    min-height: calc(100svh - 64px);
+    min-height: calc(100svh - 112px);
   }
 }

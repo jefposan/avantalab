@@ -1,13 +1,63 @@
+.plans {
+  padding-top: calc(6rem - 19px);
+}
+
 .plansHeading {
-  max-width: 1000px;
+  position: relative;
+  min-height: 132px;
+  max-width: none;
+  margin: 0 0 1.4rem;
+  text-align: left;
+}
+
+.plansHeading > p:first-child {
+  position: absolute;
+  top: 19px;
+  left: 21px;
+  margin: 0;
 }
 
 .plansHeading h2 {
+  position: absolute;
+  top: 43px;
+  left: 19px;
+  min-width: 0;
+  font-size: clamp(1.95rem, 3.5vw, 3rem);
   white-space: nowrap;
 }
 
+.plansHeading .periodToggle {
+  position: absolute;
+  top: 28px;
+  right: 20px;
+  margin: 0;
+}
+
 @media (max-width: 980px) {
+  .plans {
+    padding-top: 4.25rem;
+  }
+
+  .plansHeading {
+    display: block;
+    min-height: 0;
+    max-width: 700px;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .plansHeading > p:first-child {
+    position: static;
+    margin: 0 0 .8rem;
+  }
+
   .plansHeading h2 {
+    position: static;
     white-space: normal;
+  }
+
+  .plansHeading .periodToggle {
+    position: static;
+    margin: 1.25rem auto 0;
   }
 }

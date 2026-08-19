@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import AcessoPublicoLink from './AcessoPublicoLink';
 import { useState } from 'react';
 import styles from './AvaPlansPreview.module.css';
@@ -57,8 +56,17 @@ function Check() {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>;
 }
 
+type Periodo = keyof typeof precos;
+
+function SeletorPeriodo({ periodo, onChange }: { periodo: Periodo; onChange: (periodo: Periodo) => void }) {
+  return <div className={`${styles.toggle} ${refinements.periodToggle}`} role="tablist" aria-label="Periodicidade de cobrança">
+    <button type="button" role="tab" aria-selected={periodo === 'anual'} className={periodo === 'anual' ? styles.selected : ''} onClick={() => onChange('anual')}>Anual <span>economize no ano</span></button>
+    <button type="button" role="tab" aria-selected={periodo === 'mensal'} className={periodo === 'mensal' ? styles.selected : ''} onClick={() => onChange('mensal')}>Mensal</button>
+  </div>;
+}
+
 export default function AvaPlansPreview() {
-  const [periodo, setPeriodo] = useState<keyof typeof precos>('anual');
+  const [periodo, setPeriodo] = useState<Periodo>('anual');
   const preco = precos[periodo];
 
   return (
@@ -86,16 +94,12 @@ export default function AvaPlansPreview() {
         </div>
       </section>
 
-      <section className={styles.plans} id="planos" aria-labelledby="planos-titulo">
+      <section className={`${styles.plans} ${refinements.plans}`} id="planos" aria-labelledby="planos-titulo">
         <div className={styles.plansWrap}>
-          <div className={`${styles.plansHeading} ${refinements.plansHeading}`} data-scroll-target>
-            <p className={styles.plansKicker}>Planos e preços</p>
+          <div className={`${styles.plansHeading} ${refinements.plansHeading}`}>
+            <p className={styles.plansKicker} data-scroll-target>Planos e preços</p>
             <h2 id="planos-titulo">Planos para cada fase da sua gestão.</h2>
-            <p>Planos pessoais para organizar sua vida financeira e planos empresariais para montar a operação que o seu negócio precisa.</p>
-          </div>
-          <div className={styles.toggle} role="tablist" aria-label="Periodicidade de cobrança">
-            <button type="button" role="tab" aria-selected={periodo === 'anual'} className={periodo === 'anual' ? styles.selected : ''} onClick={() => setPeriodo('anual')}>Anual <span>economize no ano</span></button>
-            <button type="button" role="tab" aria-selected={periodo === 'mensal'} className={periodo === 'mensal' ? styles.selected : ''} onClick={() => setPeriodo('mensal')}>Mensal</button>
+            <SeletorPeriodo periodo={periodo} onChange={setPeriodo} />
           </div>
           <div className={commerce.grid}>
             <article className={commerce.plan}>

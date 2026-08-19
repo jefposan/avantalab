@@ -18,16 +18,16 @@ import anchorOffset from './styles/landing/anchor-offset.module.css';
 import solutionsStyles from './styles/landing/landing-solutions.module.css';
 
 const siteUrl = 'https://avantalab.com.br';
-const destinosProximaRolagem = ['laboratorio-de-marcas', 'recursos', 'nossos-apps', 'como-funciona', 'ia-ava', 'planos', 'calculadoras', 'perguntas', 'proximo-passo', 'rodape'] as const;
+const destinosProximaRolagem = ['recursos', 'nossos-apps', 'como-funciona', 'ia-ava', 'planos', 'calculadoras', 'perguntas', 'proximo-passo', 'rodape'] as const;
 
 export const metadata: Metadata = {
-  title: 'Laboratório de marcas e gestão financeira | AvantaLab',
-  description: 'Do zero ao operacional: transformamos ideias em marcas e organizamos a gestão financeira para empresas avançarem com clareza.',
+  title: 'Laboratório de Marcas | AvantaLab',
+  description: 'Do zero ao operacional: transformamos ideias em marcas prontas para entrar no mercado.',
   alternates: { canonical: siteUrl },
   robots: { index: true, follow: true },
   openGraph: {
     title: 'AvantaLab | Do zero ao operacional',
-    description: 'Laboratório de marcas e gestão financeira para transformar ideias em negócios prontos para avançar.',
+    description: 'Transformamos ideias em marcas prontas para avançar.',
     url: siteUrl,
     siteName: 'AvantaLab',
     locale: 'pt_BR',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'AvantaLab | Do zero ao operacional',
-    description: 'Laboratório de marcas e gestão financeira para empresas avançarem com clareza.',
+    description: 'Transformamos ideias em marcas prontas para avançar.',
     images: ['/images/avantalab-share-meta-safe-center-v2.jpg'],
   },
 };
@@ -121,30 +121,31 @@ const dadosEstruturados = {
   ],
 };
 
-export default function AvantaLandingPage() {
+export function AvantaLandingPage({ contexto = 'laboratorio' }: { contexto?: 'laboratorio' | 'gestao' }) {
   return (
     <>
       <RedirecionamentoPosOAuth />
       <main className={`${styles.page} ${effects.root} ${anchorOffset.root}`}>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosEstruturados) }} />
+        {contexto === 'gestao' && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosEstruturados) }} />}
         <a className={styles.skipLink} href="#conteudo">Pular para o conteúdo</a>
 
-      <LandingHeader />
+      <LandingHeader contexto={contexto} />
 
+      {contexto === 'gestao' ? <>
       <section className={styles.hero} id="conteudo" data-public-hero>
         <div className={styles.wrap}>
           <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}><span aria-hidden="true" />Laboratório de marcas e gestão financeira</p>
-            <h1>Da ideia ao negócio <em>pronto para operar.</em></h1>
-            <p className={styles.lead}>O AvantaLab ajuda a transformar uma visão em marca, presença e estrutura — e oferece a gestão financeira para acompanhar o negócio depois que ele começa a avançar.</p>
+            <p className={styles.eyebrow}><span aria-hidden="true" />Gestão financeira</p>
+            <h1>Números claros para a empresa <em>avançar.</em></h1>
+            <p className={styles.lead}>Organize receitas, despesas, equipe e indicadores em uma visão única para acompanhar a operação e decidir com mais segurança.</p>
             <div className={styles.heroActions}>
-              <LinkRolagemPublica className={styles.primaryButton} href="#laboratorio-de-marcas">Explorar o laboratório <span aria-hidden="true">→</span></LinkRolagemPublica>
-              <LinkRolagemPublica className={styles.secondaryButton} href="#recursos">Conhecer gestão financeira</LinkRolagemPublica>
+              <AcessoPublicoLink className={styles.primaryButton} modo="cadastro">Começar grátis <span aria-hidden="true">→</span></AcessoPublicoLink>
+              <LinkRolagemPublica className={styles.secondaryButton} href="#recursos">Conhecer recursos</LinkRolagemPublica>
             </div>
             <ul className={styles.trustList} aria-label="Destaques do AvantaLab">
-              <li>Direção para a sua ideia</li>
-              <li>Marca pronta para avançar</li>
-              <li>Gestão financeira para operar</li>
+              <li>Financeiro e operação conectados</li>
+              <li>Indicadores para decidir</li>
+              <li>Web e mobile sincronizados</li>
             </ul>
           </div>
 
@@ -164,9 +165,7 @@ export default function AvantaLandingPage() {
         </div>
       </section>
 
-      <section className={styles.proof} aria-label="Destaques do AvantaLab" data-proof-bar><div className={styles.wrap}><span>Uma ideia com direção</span><span>Uma marca com presença</span><span>Uma empresa pronta para operar</span></div></section>
-
-      <LandingBrandLabSection />
+      <section className={styles.proof} aria-label="Destaques da Gestão Financeira" data-proof-bar><div className={styles.wrap}><span>Financeiro em contexto</span><span>Rotina organizada</span><span>Decisões com clareza</span></div></section>
 
       <section className={styles.section} id="recursos">
         <div className={styles.wrap} data-scroll-target>
@@ -215,7 +214,17 @@ export default function AvantaLandingPage() {
 
       <footer className={styles.footer} id="rodape"><div className={styles.wrap}><Image src="/images/landing/logo-avantalab.png" alt="AvantaLab" width={154} height={40} /><div><Link href="/suporte">Suporte</Link><Link href="/termos">Termos de Uso</Link><Link href="/privacidade">Política de Privacidade</Link><Link href="/cookies">Cookies</Link></div><small>© 2026 AvantaLab. Todos os direitos reservados.</small></div></footer>
       <BotaoProximoScroll destinos={destinosProximaRolagem} distanciaInferior={22} ariaLabel="Avançar para a próxima seção" title="Próxima seção" />
+      </> : <>
+      <section id="conteudo">
+        <LandingBrandLabSection />
+      </section>
+      <footer className={styles.footer} id="rodape"><div className={styles.wrap}><Image src="/images/landing/logo-avantalab.png" alt="AvantaLab" width={154} height={40} /><div><Link href="/suporte">Suporte</Link><Link href="/termos">Termos de Uso</Link><Link href="/privacidade">Política de Privacidade</Link><Link href="/cookies">Cookies</Link></div><small>© 2026 AvantaLab. Todos os direitos reservados.</small></div></footer>
+      </>}
       </main>
     </>
   );
+}
+
+export default function LaboratorioDeMarcasPage() {
+  return <AvantaLandingPage />;
 }

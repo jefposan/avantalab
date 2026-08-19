@@ -5,7 +5,7 @@ export function rolarParaSecaoPublica(href: string) {
 
   const movimentoReduzido = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const alvoVisual = destino.querySelector<HTMLElement>('[data-scroll-target]') ?? destino;
-  const margemDeLeitura = 16;
+  const margemDeLeitura = 28;
   const topo = alvoVisual.getBoundingClientRect().top + window.scrollY
     - (cabecalho?.offsetHeight ?? 74) - margemDeLeitura;
 

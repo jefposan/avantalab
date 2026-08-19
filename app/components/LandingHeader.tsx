@@ -8,7 +8,9 @@ import { rolarParaSecaoPublica } from '../lib/rolagem-publica';
 import landingStyles from '../styles/landing/landing.module.css';
 import styles from './LandingHeader.module.css';
 
-export default function LandingHeader() {
+type ContextoLanding = 'laboratorio' | 'gestao';
+
+export default function LandingHeader({ contexto }: { contexto: ContextoLanding }) {
   const [rolado, setRolado] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
   const itensGestao = [
@@ -51,36 +53,30 @@ export default function LandingHeader() {
   };
 
   return (
-    <header data-public-header className={`${landingStyles.header} ${styles.header} ${rolado ? styles.rolado : ''}`}>
-      <nav className={landingStyles.nav} aria-label="Navegação principal">
+    <header data-public-header data-contexto={contexto} className={`${landingStyles.header} ${styles.header} ${rolado ? styles.rolado : ''}`}>
+      <nav className={`${landingStyles.nav} ${styles.nav}`} aria-label="Navegação principal">
         <Link className={landingStyles.brand} href="/" aria-label="AvantaLab — voltar ao início" onClick={voltarAoInicio}>
           <Image src="/images/landing/logo-avantalab.png" alt="AvantaLab" width={154} height={40} priority />
         </Link>
-        <div className={landingStyles.navLinks}>
-          <a href="#laboratorio-de-marcas" onClick={(event) => rolarParaSecao(event, '#laboratorio-de-marcas')}>Laboratório de marcas</a>
-          <details className={styles.gestaoMenu}>
-            <summary>Gestão financeira <span aria-hidden="true">⌄</span></summary>
-            <div className={styles.gestaoLista}>
-              {itensGestao.map(([href, texto]) => <a key={href} href={href} onClick={(event) => rolarParaSecao(event, href)}>{texto}</a>)}
-            </div>
-          </details>
+        <div className={styles.contextSwitcher} aria-label="Área do site">
+          <Link href="/" aria-current={contexto === 'laboratorio' ? 'page' : undefined}>Laboratório de marcas</Link>
+          <Link href="/gestao-financeira" aria-current={contexto === 'gestao' ? 'page' : undefined}>Gestão financeira</Link>
         </div>
-        <button type="button" className={styles.menuButton} aria-expanded={menuAberto} aria-controls="menu-publico-mobile" aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuAberto((aberto) => !aberto)}><span /><span /><span /></button>
-        <div className={landingStyles.navActions}>
+        {contexto === 'gestao' && <button type="button" className={styles.menuButton} aria-expanded={menuAberto} aria-controls="menu-publico-mobile" aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuAberto((aberto) => !aberto)}><span /><span /><span /></button>}
+        {contexto === 'gestao' && <div className={`${landingStyles.navActions} ${styles.gestaoActions}`}>
           <AcessoPublicoLink className={`${landingStyles.entrar} ${styles.mobileEntrar}`} modo="entrar">Entrar</AcessoPublicoLink>
           <AcessoPublicoLink className={landingStyles.primaryButton} modo="cadastro">Começar grátis <span aria-hidden="true">→</span></AcessoPublicoLink>
-        </div>
+        </div>}
       </nav>
-      <div id="menu-publico-mobile" className={`${styles.mobileMenu} ${menuAberto ? styles.mobileMenuAberto : ''}`} aria-hidden={!menuAberto}>
-        <a href="#laboratorio-de-marcas" tabIndex={menuAberto ? 0 : -1} onClick={(event) => rolarParaSecao(event, '#laboratorio-de-marcas')}>Laboratório de marcas</a>
-        <details className={styles.mobileGestaoMenu}>
-          <summary tabIndex={menuAberto ? 0 : -1}>Gestão financeira <span aria-hidden="true">⌄</span></summary>
-          <div>
-            {itensGestao.map(([href, texto]) => <a key={href} href={href} tabIndex={menuAberto ? 0 : -1} onClick={(event) => rolarParaSecao(event, href)}>{texto}</a>)}
-          </div>
-        </details>
+      {contexto === 'gestao' && <nav className={styles.gestaoSubnav} aria-label="Navegação da Gestão Financeira">
+        <div>
+          {itensGestao.map(([href, texto]) => <a key={href} href={href} onClick={(event) => rolarParaSecao(event, href)}>{texto}</a>)}
+        </div>
+      </nav>}
+      {contexto === 'gestao' && <div id="menu-publico-mobile" className={`${styles.mobileMenu} ${menuAberto ? styles.mobileMenuAberto : ''}`} aria-hidden={!menuAberto}>
         <AcessoPublicoLink modo="entrar" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Entrar no sistema</AcessoPublicoLink>
-      </div>
+        <AcessoPublicoLink modo="cadastro" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Começar grátis</AcessoPublicoLink>
+      </div>}
     </header>
   );
 }

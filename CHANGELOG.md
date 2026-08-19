@@ -1,5 +1,64 @@
 # Changelog
 
+## 1.9.0.09 - 2026-08-18
+
+- Gestão Financeira: os botões públicos de cadastro voltaram ao texto mais
+  direto “Começar grátis”.
+
+## 1.9.0.08 - 2026-08-18
+
+- Gestão Financeira: a composição aprovada do cabeçalho de planos foi aplicada
+  definitivamente, com texto à esquerda e seletor Anual/Mensal à direita. O
+  modo temporário de arrastar foi removido da landing.
+
+## 1.9.0.07 - 2026-08-18
+
+- Gestão Financeira: foi incluído um modo local de ajuste para a área de
+  planos. Com `?editar-planos=1`, os três elementos do cabeçalho podem ser
+  arrastados para definir a composição antes de aplicá-la definitivamente.
+
+## 1.9.0.06 - 2026-08-18
+
+- Gestão Financeira: o identificador e o título da área de planos voltaram a
+  formar um bloco alinhado à esquerda, com espaçamento curto entre eles e o
+  seletor de período mantido à direita.
+
+## 1.9.0.05 - 2026-08-18
+
+- Gestão Financeira: o título da faixa de planos foi ajustado para manter a
+  leitura em uma linha sem competir com o seletor Anual/Mensal.
+
+## 1.9.0.04 - 2026-08-18
+
+- Gestão Financeira: a área de planos agora reúne identificador, título e
+  seletor de período em uma única faixa. O texto repetido foi removido e os
+  cards começaram mais próximos do cabeçalho.
+
+## 1.9.0.03 - 2026-08-18
+
+- Gestão Financeira: o cabeçalho da área de planos passou a posicionar “Planos
+  e preços” à esquerda e o título principal à direita na mesma linha, abrindo
+  mais espaço vertical para os planos.
+
+## 1.9.0.02 - 2026-08-18
+
+- Gestão Financeira: a faixa horizontal de opções foi compactada, com botões e
+  espaçamentos visuais menores, preservando a navegação e a área de leitura.
+
+## 1.9.0.01 - 2026-08-18
+
+- Gestão Financeira: as opções de exploração passaram a formar uma faixa
+  horizontal permanente abaixo do seletor principal. A rolagem por essas opções
+  agora preserva uma área de leitura maior abaixo do cabeçalho.
+
+## 1.9.0 - 2026-08-18
+
+- Landing pública reorganizada em duas frentes internas: o Laboratório de
+  Marcas abre como página principal e a Gestão Financeira possui rota e
+  navegação próprias, mantendo a identidade AvantaLab.
+- O seletor em pílula permite alternar entre as duas frentes. Menus, entrada e
+  período de teste aparecem somente no contexto de Gestão Financeira.
+
 ## 1.8.5.15 - 2026-08-18
 
 - Landing pública: o painel da evolução de marcas foi ampliado e seus marcos
