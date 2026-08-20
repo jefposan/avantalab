@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0.10-av79 - 2026-08-20
+
+- AvantaVendas: o cabeçalho da sala de botões voltou a exibir o botão visual de
+  troca, agora conectado aos perfis de vendas e com o nome do perfil ativo logo
+  abaixo para identificação rápida.
+
 ## 1.9.0.09 - 2026-08-18
 
 - Gestão Financeira: os botões públicos de cadastro voltaram ao texto mais

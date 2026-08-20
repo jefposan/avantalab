@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.9.0.09 -->
+<!-- ava-version: 1.9.0.10 -->
+
+> Revisão 1.9.0.10-av79: o topo da sala de botões passou a exibir o perfil de
+> vendas ativo sob o botão de troca. O botão abre o seletor já existente,
+> permitindo mudar de perfil sem entrar em Configurações.
 
 > Revisão 1.9.0.09: os atalhos públicos de cadastro voltaram ao rótulo
 > “Começar grátis”; sem alteração operacional no Vendas Mobile.
@@ -90,7 +94,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 78 -->
+<!-- avantavendas-asset-revision: 79 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.9.0.09 -->
+<!-- ava-version: 1.9.0.10 -->
+
+> Revisão 1.9.0.10: o cabeçalho do Dashboard do AvantaVendas ganhou acesso
+> rápido à troca de perfil; sem alteração operacional na Gestão Web.
 
 > Revisão 1.9.0.09: os atalhos públicos de cadastro voltaram ao rótulo
 > “Começar grátis”; sem alteração operacional na Gestão Web.

@@ -225,6 +225,19 @@ exigir(
   'O seletor de conta ativa no tema escuro deve exibir uma única seta branca alinhada à direita.',
 );
 exigir(
+  aplicacao.includes('function botaoTrocaPerfilVendas()')
+    && aplicacao.includes('class="sales-profile-header-button" onclick="abrirContasVendas()"')
+    && aplicacao.includes('Trocar perfil de vendas. Perfil atual:')
+    && aplicacao.includes('acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, true)')
+    && !aplicacao.includes("const mostrarTrocaPerfil = state.aba === 'dashboard';")
+    && aplicacao.includes('icone-troca-gestao.png')
+    && estilos.includes('.sales-profile-header-button {')
+    && estilos.includes('.sales-profile-header-button span {')
+    && estilos.includes('.sales-profile-header-button:focus-visible')
+    && estilos.includes('.dark-theme .sales-profile-header-button'),
+  'A sala de botões deve reutilizar o botão visual de troca para abrir os perfis de vendas e identificar o perfil ativo abaixo do ícone.',
+);
+exigir(
   !aplicacao.includes('URL_APP_GESTAO')
     && !aplicacao.includes('URL_WEB_GESTAO')
     && !aplicacao.includes('abrirGestaoMobileVendas')

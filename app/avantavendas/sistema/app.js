@@ -1131,8 +1131,13 @@ function botaoAniversariosHojeVendas(aniversariantesHoje) {
   return `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${quantidade} aniversário${quantidade === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${quantidade}</i></button>`;
 }
 
-function acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje) {
-  return `${botaoAgendamentosHojeVendas(agendamentosHoje)}${botaoAniversariosHojeVendas(aniversariantesHoje)}`;
+function botaoTrocaPerfilVendas() {
+  const nomePerfil = String(state.contaVendasAtiva?.nome || 'Perfil de vendas').trim() || 'Perfil de vendas';
+  return `<button type="button" class="sales-profile-header-button" onclick="abrirContasVendas()" aria-label="Trocar perfil de vendas. Perfil atual: ${escapeAttr(nomePerfil)}" title="Trocar perfil de vendas"><img src="./assets/icone-troca-gestao.png" alt="" aria-hidden="true"><span title="${escapeAttr(nomePerfil)}">${escapeHtml(nomePerfil)}</span></button>`;
+}
+
+function acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, mostrarTrocaPerfil = false) {
+  return `${botaoAgendamentosHojeVendas(agendamentosHoje)}${botaoAniversariosHojeVendas(aniversariantesHoje)}${mostrarTrocaPerfil ? botaoTrocaPerfilVendas() : ''}`;
 }
 
 function preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje, agendamentosHoje) {
@@ -2354,7 +2359,7 @@ function renderMenuMobile() {
   const aniversariantesHoje = aniversariosHojeVendas();
   const agendamentosHoje = agendamentosHojeVendas();
   return `<section class="mobile-menu is-loading-images" aria-label="Menu principal" aria-busy="true">
-    <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}</div></header>
+    <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, true)}</div></header>
     <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" aria-live="polite" ${organizando ? '' : 'hidden'}>Segure e arraste. As setas também movem.</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `aria-roledescription="item reordenável" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown" onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)" onkeydown="moverSalaBotoesTeclado(event,'${idAba}')"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
