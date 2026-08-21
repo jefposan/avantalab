@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.9.0.10 -->
+<!-- ava-version: 1.9.0.11 -->
+
+> Revisão 1.9.0.11: em **Conteúdo do Vendas > Divulgação**, fotos, vídeos e
+> PDFs podem ser arrastados para a pasta ativa. A imagem adicionada apenas como
+> capa fica restrita à pasta e não aparece como material no AvantaVendas.
 
 > Revisão 1.9.0.10: o cabeçalho do Dashboard do AvantaVendas ganhou acesso
 > rápido à troca de perfil; sem alteração operacional na Gestão Web.

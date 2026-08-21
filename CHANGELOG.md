@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0.11 - 2026-08-21
+
+- Conteúdo do Vendas: fotos, vídeos e PDFs podem ser arrastados para a pasta
+  ativa na Gestão Web. Uma imagem enviada exclusivamente como capa fica ligada
+  à pasta e não aparece como material na galeria do AvantaVendas.
+
 ## 1.9.0.10-av79 - 2026-08-20
 
 - AvantaVendas: o cabeçalho da sala de botões voltou a exibir o botão visual de

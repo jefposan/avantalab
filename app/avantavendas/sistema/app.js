@@ -4326,7 +4326,8 @@ function renderDivulgacao() {
     const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pasta.id);
     const totalMateriais = contarMateriaisDaPasta(pasta.id);
     const capaEscolhida = (state.divulgacaoMateriais || []).find((item) => item.id === pasta.capa_material_id && item.tipo === 'imagem');
-    const capa = capaEscolhida || materiais.find((item) => item.miniatura_url) || materiais[0];
+    const capaExterna = pasta.capa_arquivo_url ? { tipo: 'imagem', arquivo_url: pasta.capa_arquivo_url, miniatura_url: pasta.capa_arquivo_url } : null;
+    const capa = capaExterna || capaEscolhida || materiais.find((item) => item.miniatura_url) || materiais[0];
     const subpastas = (state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === pasta.id).length;
     const resumo = pasta.descricao || `${subpastas ? `${subpastas} ${subpastas === 1 ? 'subpasta' : 'subpastas'} · ` : ''}${totalMateriais} ${totalMateriais === 1 ? 'material' : 'materiais'}`;
     return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capaMaterial(capa, 'pasta')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(resumo)}</small><em>${totalMateriais}</em></span></button>`;

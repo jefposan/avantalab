@@ -407,7 +407,7 @@
       requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc', { p_conta_id: contaAtivaId() }),
       requireClient()
         .from('vendas_mobile_divulgacao_pastas')
-        .select('id, empresa_id, pasta_pai_id, capa_material_id, nome, descricao, ordem, criado_em')
+        .select('id, empresa_id, pasta_pai_id, capa_material_id, capa_arquivo_url, nome, descricao, ordem, criado_em')
         .eq('ativo', true)
         .order('ordem')
         .order('criado_em', { ascending: false }),
@@ -520,7 +520,7 @@
         .order('criado_em', { ascending: false })
         .order('id', { ascending: false })), 'Carregando pagamentos'),
       acompanharEtapaDados(client.from('vendas_mobile_conteudos').select('id, empresa_id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }), 'Carregando novidades'),
-      acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, capa_material_id, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
+      acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, capa_material_id, capa_arquivo_url, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
       acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc'), 'Carregando integração financeira'),
       acompanharEtapaDados(client.from('vendas_mobile_contas_preferencias').select('versao, preferencias, atualizado_em').eq('conta_id', contaId).maybeSingle(), 'Carregando preferências'),

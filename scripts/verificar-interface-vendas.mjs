@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
+const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoCapaExterna, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/order-receipt-v2.js'), 'utf8'),
@@ -14,6 +14,7 @@ const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rot
   readFile(resolve(raiz, 'app/api/vendas/senha/redefinir/route.ts'), 'utf8'),
   readFile(resolve(raiz, 'app/components/NovidadesVendasModal.tsx'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807193000_capa_pasta_divulgacao_vendas_mobile.sql'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/migrations/20260820160000_capa_externa_divulgacao_vendas_mobile.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807210000_ativar_vinculo_comercial_aprovado.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260807223000_vinculo_vendas_mobile_realtime.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260810183000_exclusao_conta_avantavendas.sql'), 'utf8'),
@@ -383,14 +384,15 @@ exigir(
   'O comprovante de pedido deve permanecer compacto, omitir ícones e textos redundantes, manter os ícones somente nos campos de valor, ocultar quantidade unitária, centralizar a mensagem de sucesso e os títulos dos cards nos dois eixos, usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
 );
 exigir(
-  cliente.includes('pasta_pai_id, capa_material_id, nome')
-    && gestorConteudo.includes(".update({ capa_material_id: materialId })")
+  cliente.includes('pasta_pai_id, capa_material_id, capa_arquivo_url, nome')
+    && gestorConteudo.includes('capa_arquivo_path: caminho, capa_arquivo_url: capaArquivoUrl')
+    && gestorConteudo.includes('não aparecerá como material no AvantaVendas')
     && gestorConteudo.includes("item.tipo === 'imagem' && idsSubpastasCapa.has(item.pasta_id)")
     && migracaoCapa.includes('add column if not exists capa_material_id uuid')
-    && migracaoCapa.includes('Somente pastas principais podem receber uma capa personalizada.')
-    && migracaoCapa.includes('A capa precisa estar publicada dentro de uma subpasta desta pasta principal.')
-    && aplicacao.includes("item.id === pasta.capa_material_id && item.tipo === 'imagem'"),
-  'A capa da pasta principal deve ser escolhida na Gestão entre imagens de suas subpastas e exibida no AvantaVendas.',
+    && migracaoCapaExterna.includes('add column if not exists capa_arquivo_path text')
+    && migracaoCapaExterna.includes('A pasta deve usar uma capa por vez.')
+    && aplicacao.includes('const capaExterna = pasta.capa_arquivo_url'),
+  'A capa externa deve ficar restrita à pasta e ser exibida no AvantaVendas sem entrar na galeria de materiais.',
 );
 exigir(
   cliente.includes('async function carregarDivulgacao()')

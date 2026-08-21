@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.9.0.10 -->
+<!-- ava-version: 1.9.0.11 -->
+
+> Revisão 1.9.0.11: uma imagem externa usada exclusivamente como capa é
+> exibida no cartão da pasta, sem entrar na galeria de materiais do
+> AvantaVendas.
 
 > Revisão 1.9.0.10-av79: o topo da sala de botões passou a exibir o perfil de
 > vendas ativo sob o botão de troca. O botão abre o seletor já existente,
