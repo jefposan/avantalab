@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.9.0.11 -->
+<!-- ava-version: 1.9.0.12 -->
+
+> Revisão 1.9.0.12: diferenciação de capa e proporção 16:10 são recursos da
+> Gestão Web e do AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.9.0.11: envio por arraste e capa externa são recursos da Gestão
 > Web; sem alteração operacional na Gestão Mobile.

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.9.0.11 -->
+<!-- ava-version: 1.9.0.12 -->
+
+> Revisão 1.9.0.12: a capa privada aparece somente no cartão da pasta. Imagens
+> já publicadas continuam na galeria e as capas usam a proporção 16:10.
 
 > Revisão 1.9.0.11: uma imagem externa usada exclusivamente como capa é
 > exibida no cartão da pasta, sem entrar na galeria de materiais do

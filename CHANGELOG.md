@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0.12 - 2026-08-21
+
+- Conteúdo do Vendas: a escolha de capa diferencia a imagem privada enviada
+  diretamente da imagem já publicada. As capas das pastas usam agora proporção
+  fixa de 16:10, evitando cortes inesperados em qualquer tela.
+
 ## 1.9.0.11 - 2026-08-21
 
 - Conteúdo do Vendas: fotos, vídeos e PDFs podem ser arrastados para a pasta

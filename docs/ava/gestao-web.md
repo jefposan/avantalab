@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.9.0.11 -->
+<!-- ava-version: 1.9.0.12 -->
+
+> Revisão 1.9.0.12: em **Escolher capa**, **Enviar capa privada** não publica o
+> arquivo no AvantaVendas; **Imagens já publicadas** continuam disponíveis aos
+> vendedores. A capa da pasta usa proporção 16:10.
 
 > Revisão 1.9.0.11: em **Conteúdo do Vendas > Divulgação**, fotos, vídeos e
 > PDFs podem ser arrastados para a pasta ativa. A imagem adicionada apenas como

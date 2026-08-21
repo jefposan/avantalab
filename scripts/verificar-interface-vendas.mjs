@@ -386,12 +386,13 @@ exigir(
 exigir(
   cliente.includes('pasta_pai_id, capa_material_id, capa_arquivo_url, nome')
     && gestorConteudo.includes('capa_arquivo_path: caminho, capa_arquivo_url: capaArquivoUrl')
-    && gestorConteudo.includes('não aparecerá como material no AvantaVendas')
+    && gestorConteudo.includes('não fica disponível para vendedores')
     && gestorConteudo.includes("item.tipo === 'imagem' && idsSubpastasCapa.has(item.pasta_id)")
     && migracaoCapa.includes('add column if not exists capa_material_id uuid')
     && migracaoCapaExterna.includes('add column if not exists capa_arquivo_path text')
     && migracaoCapaExterna.includes('A pasta deve usar uma capa por vez.')
-    && aplicacao.includes('const capaExterna = pasta.capa_arquivo_url'),
+    && aplicacao.includes('const capaExterna = pasta.capa_arquivo_url')
+    && estilos.includes('aspect-ratio: 16 / 10;'),
   'A capa externa deve ficar restrita à pasta e ser exibida no AvantaVendas sem entrar na galeria de materiais.',
 );
 exigir(
