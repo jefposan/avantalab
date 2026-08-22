@@ -1,10 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.9.0.15 -->
+<!-- ava-version: 1.10.0 -->
 
+> Revisão 1.10.0: aprovações do Vendas Mobile também ficaram disponíveis na
+> Gestão Mobile; sem alteração operacional na Gestão Web.
+>
 > Revisão 1.9.0.15: espaçamento no seletor de perfis é um ajuste visual do
 > AvantaVendas; sem alteração operacional na Gestão Web.
-
+>
 > Revisão 1.9.0.14: mensagem pronta no compartilhamento de comprovantes é um
 > ajuste do AvantaVendas; sem alteração operacional na Gestão Web.
 

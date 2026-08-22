@@ -1,10 +1,16 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.9.0.15 -->
+<!-- ava-version: 1.10.0 -->
 
+> Revisão 1.10.0: em **Menu > Configurações > Conta e equipe > Aprovações do
+> Vendas**, Gestor Master e Administrador analisam pedidos enviados com o código
+> do perfil. A área mostra pendências e acessos aprovados; permite aprovar,
+> rejeitar, revogar, reativar ou excluir vínculo, sempre com confirmação. O
+> contador é atualizado em tempo real e operadores não veem essa opção.
+>
 > Revisão 1.9.0.15: espaçamento no seletor de perfis é um ajuste visual do
 > AvantaVendas; sem alteração operacional na Gestão Mobile.
-
+>
 > Revisão 1.9.0.14: mensagem pronta no compartilhamento de comprovantes é um
 > ajuste do AvantaVendas; sem alteração operacional na Gestão Mobile.
 
@@ -1574,6 +1580,10 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Depois do login, a rota da Gestão abre diretamente a própria Gestão. Com o
   módulo Vendas Mobile ativo e permissão, **Menu > Sistemas > Vendas Mobile** e
   o atalho de mesmo nome abrem o outro sistema.
+- Em **Menu > Configurações > Conta e equipe > Aprovações do Vendas**, somente
+  Gestor Master e Administrador aprovam ou rejeitam as solicitações feitas com
+  o código de conexão do perfil. A mesma área mostra acessos já aprovados para
+  revogar, reativar ou excluir; todas as ações pedem confirmação.
 - Em **Preparando acesso**, a etapa **Acesso pronto** e os 100% somente são
   concluídos depois que a tela principal estiver montada. A verificação do
   Vendas e as sincronizações complementares continuam em segundo plano, sem

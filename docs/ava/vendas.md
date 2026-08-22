@@ -1,10 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.9.0.15 -->
+<!-- ava-version: 1.10.0 -->
 
+> Revisão 1.10.0: Gestor Master e Administrador também podem analisar, na Gestão
+> Mobile, solicitações enviadas ao informar o código do perfil; sem alteração no
+> fluxo de solicitação do AvantaVendas.
+>
 > Revisão 1.9.0.15: no seletor de **Perfis de vendas**, as ações de criar
 > perfil e adicionar usuário ficam visualmente separadas da lista de contas.
-
+>
 > Revisão 1.9.0.14: ao compartilhar um comprovante, a imagem segue com o
 > texto pronto **Comprovante de pedido** ou **Comprovante de pagamento**,
 > conforme o lançamento.

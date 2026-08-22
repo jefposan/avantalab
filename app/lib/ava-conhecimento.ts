@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.10.0: Gestor Master e Administrador analisam pedidos de
+// acesso ao Vendas também na Gestão Mobile, em Configurações > Conta e equipe
+// > Aprovações do Vendas; operadores não veem essa opção.
 // Revisado na versão 1.9.0.15: ações do seletor de perfis do Vendas ficam
 // visualmente separadas da lista de contas.
 // Revisado na versão 1.9.0.14: comprovantes enviados pelo Vendas incluem a
@@ -175,6 +178,7 @@ NAVEGAÇÃO E PERFIS
 - Cada aviso recebido pelo sininho identifica o perfil financeiro de origem. Abrir ou fechar o painel não remove avisos; eles e o indicador do sininho permanecem até usar **Fechar aviso** ou **Fechar todos**.
 - Em cadastros e edições de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos preenchidos; rascunhos temporários guardam apenas dados não sensíveis e nunca armazenam senhas, confirmações, códigos SMS ou tokens.
 - Em Usuários e Permissões, criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. Editar exige os mesmos dados, mas a nova senha é opcional. O usuário entra com e-mail ou login; se o e-mail já pertencer a uma conta, use Adicionar usuário existente para vinculá-la ao perfil. E-mail e login são conferidos no servidor antes de salvar; em erro, o formulário mantém os valores e o cursor vai ao campo indicado. Funcionários do Controle de Ponto não contam como usuários da Gestão: Empresa em cortesia/Business Pro permite até 10 acessos à Gestão. Ao excluir, uma conta criada internamente só é apagada por completo quando não possui outro perfil, vínculo ou histórico; caso contrário, apenas o acesso atual é removido e a conta continua pesquisável.
+- Quando alguém informa o código de um perfil para pedir acesso ao Vendas Mobile, Gestor Master e Administrador podem analisar o pedido na Gestão Mobile em Menu > Configurações > Conta e equipe > Aprovações do Vendas. A tela separa Pendentes e Aprovados, permite aprovar, rejeitar, revogar, reativar ou excluir o vínculo com confirmação. Operadores não veem nem podem executar essas ações.
 - Ao atualizar a página, sessão inválida, expirada ou de usuário excluído é limpa e retorna ao login; Criar perfil financeiro só aparece para uma conta validada que realmente não possui perfil.
 - A conclusão do Tutorial acompanha a conta. Uma falha temporária para consultar preferências não abre o Tutorial nem substitui a configuração existente por valores padrão.
 

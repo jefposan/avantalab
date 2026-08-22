@@ -493,6 +493,12 @@
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     vendasMobileModuloAtivo: false,
+    aprovacoesVendasPendentes: [],
+    aprovacoesVendasAcessos: [],
+    aprovacoesVendasAba: 'pendentes',
+    aprovacoesVendasCarregando: false,
+    aprovacoesVendasErro: '',
+    aprovacoesVendasProcessandoId: '',
     vendasMobileModuloVerificando: false,
     seletorSistemaAberto: false,
     seletorSistemaInicialBloqueante: false,
@@ -3223,6 +3229,38 @@
     } catch (e) {}
   }
 
+  function configurarRealtimeAprovacoesVendasMobile() {
+    try {
+      var empresaId = state.empresa && state.empresa.id;
+      if (!empresaId || !podeGerenciarAprovacoesVendasMobile()) {
+        if (window._avaRealtimeAprovacoesVendas) db.removeChannel(window._avaRealtimeAprovacoesVendas);
+        if (window._avaIntervaloAprovacoesVendas) window.clearInterval(window._avaIntervaloAprovacoesVendas);
+        window._avaRealtimeAprovacoesVendas = null;
+        window._avaRealtimeAprovacoesVendasEmpresaId = '';
+        window._avaIntervaloAprovacoesVendas = null;
+        limparAprovacoesVendasMobile();
+        return;
+      }
+      if (window._avaRealtimeAprovacoesVendasEmpresaId === empresaId) return;
+      if (window._avaRealtimeAprovacoesVendas) db.removeChannel(window._avaRealtimeAprovacoesVendas);
+      if (window._avaIntervaloAprovacoesVendas) window.clearInterval(window._avaIntervaloAprovacoesVendas);
+
+      window._avaRealtimeAprovacoesVendasEmpresaId = empresaId;
+      window._avaRealtimeAprovacoesVendas = db
+        .channel('vendas_mobile_aprovacoes_mobile_' + empresaId)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'vendas_mobile_solicitacoes_acesso', filter: 'empresa_id=eq.' + empresaId },
+          function () { carregarAprovacoesVendasMobile(); })
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'vendas_mobile_acessos', filter: 'empresa_id=eq.' + empresaId },
+          function () { carregarAprovacoesVendasMobile(); })
+        .subscribe();
+      window._avaIntervaloAprovacoesVendas = window.setInterval(function () {
+        carregarAprovacoesVendasMobile(false);
+      }, 30000);
+    } catch (e) {}
+  }
+
   function dataHoraPontoMobile() {
     var agora = new Date();
     var dataPartes = new Intl.DateTimeFormat('pt-BR', {
@@ -4881,6 +4919,170 @@
     return state.empresa && (state.empresa.perfil === 'gestor_master' || state.empresa.perfil === 'administrador');
   }
 
+  function podeGerenciarAprovacoesVendasMobile() {
+    return podeGerenciarUsuarios();
+  }
+
+  function formatarDataHoraAprovacaoMobile(valor) {
+    var data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return 'Agora';
+    return data.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  }
+
+  function limparAprovacoesVendasMobile() {
+    state.aprovacoesVendasPendentes = [];
+    state.aprovacoesVendasAcessos = [];
+    state.aprovacoesVendasCarregando = false;
+    state.aprovacoesVendasErro = '';
+    state.aprovacoesVendasProcessandoId = '';
+    state.aprovacoesVendasAba = 'pendentes';
+  }
+
+  async function carregarAprovacoesVendasMobile(renderizar) {
+    if (!state.empresa || !state.empresa.id || !podeGerenciarAprovacoesVendasMobile()) {
+      limparAprovacoesVendasMobile();
+      if (renderizar !== false) render();
+      return;
+    }
+
+    state.aprovacoesVendasCarregando = true;
+    state.aprovacoesVendasErro = '';
+    if (renderizar !== false) render();
+
+    try {
+      var respostas = await Promise.all([
+        db.from('vendas_mobile_solicitacoes_acesso')
+          .select('id, user_id, nome, email, telefone, solicitado_em, status')
+          .eq('empresa_id', state.empresa.id)
+          .order('solicitado_em', { ascending: false }),
+        db.from('vendas_mobile_acessos')
+          .select('id, user_id, papel, status, aprovado_em')
+          .eq('empresa_id', state.empresa.id)
+          .order('aprovado_em', { ascending: false }),
+      ]);
+      var solicitacoesResposta = respostas[0];
+      var acessosResposta = respostas[1];
+      if (solicitacoesResposta.error) throw solicitacoesResposta.error;
+      if (acessosResposta.error) throw acessosResposta.error;
+
+      var solicitacoes = solicitacoesResposta.data || [];
+      state.aprovacoesVendasPendentes = solicitacoes.filter(function (item) {
+        return item.status === 'pendente';
+      }).map(function (item) {
+        return {
+          id: String(item.id),
+          userId: String(item.user_id || ''),
+          nome: String(item.nome || 'Solicitante'),
+          email: String(item.email || 'E-mail não informado'),
+          telefone: item.telefone ? String(item.telefone) : '',
+          solicitadoEm: String(item.solicitado_em || ''),
+        };
+      });
+      state.aprovacoesVendasAcessos = (acessosResposta.data || []).map(function (acesso) {
+        var solicitacao = solicitacoes.find(function (item) { return String(item.user_id) === String(acesso.user_id); });
+        return {
+          id: String(acesso.id),
+          nome: String((solicitacao && solicitacao.nome) || 'Usuário aprovado'),
+          email: String((solicitacao && solicitacao.email) || 'E-mail não informado'),
+          telefone: solicitacao && solicitacao.telefone ? String(solicitacao.telefone) : '',
+          aprovadoEm: String(acesso.aprovado_em || ''),
+          papel: String(acesso.papel || 'vendedor'),
+          status: acesso.status === 'bloqueado' ? 'bloqueado' : 'ativo',
+        };
+      });
+    } catch (erro) {
+      state.aprovacoesVendasPendentes = [];
+      state.aprovacoesVendasAcessos = [];
+      state.aprovacoesVendasErro = mensagemErro(erro, 'Não foi possível carregar as aprovações. Tente novamente.');
+    } finally {
+      state.aprovacoesVendasCarregando = false;
+      if (renderizar !== false || state.menuAberto || state.modalMenu === 'aprovacoesVendas') render();
+    }
+  }
+
+  async function abrirAprovacoesVendasMobile() {
+    if (!podeGerenciarAprovacoesVendasMobile()) {
+      await mostrarAvisoSistemaMobile('Acesso não permitido', 'Somente Gestor Master ou Administrador pode analisar aprovações.');
+      return;
+    }
+    state.aprovacoesVendasAba = 'pendentes';
+    abrirModalMenu('aprovacoesVendas');
+    await carregarAprovacoesVendasMobile();
+  }
+
+  async function analisarSolicitacaoVendasMobile(solicitacao, aprovar) {
+    if (!solicitacao || state.aprovacoesVendasProcessandoId) return;
+    var escolha = await solicitarDialogoSistemaMobile({
+      titulo: aprovar ? 'Aprovar acesso?' : 'Rejeitar solicitação?',
+      rotulo: 'Vendas Mobile',
+      mensagem: aprovar
+        ? solicitacao.nome + ' terá acesso ao Vendas Mobile neste perfil.'
+        : solicitacao.nome + ' não terá acesso ao Vendas Mobile neste perfil.',
+      variante: aprovar ? 'alerta' : 'destrutiva',
+      acoes: [
+        { valor: 'cancelar', rotulo: 'Cancelar', estilo: 'secundaria' },
+        { valor: 'confirmar', rotulo: aprovar ? 'Aprovar acesso' : 'Rejeitar', estilo: aprovar ? 'primaria' : 'perigosa' },
+      ],
+    });
+    if (escolha !== 'confirmar') return;
+
+    state.aprovacoesVendasProcessandoId = solicitacao.id;
+    state.aprovacoesVendasErro = '';
+    render();
+    try {
+      var resposta = await db.rpc('analisar_solicitacao_vendas_mobile_rpc', {
+        p_solicitacao_id: solicitacao.id,
+        p_aprovar: !!aprovar,
+        p_observacao: null,
+      });
+      if (resposta.error) throw resposta.error;
+      await carregarAprovacoesVendasMobile(false);
+      mostrarToast(aprovar ? 'Acesso aprovado para o Vendas Mobile.' : 'Solicitação rejeitada.');
+    } catch (erro) {
+      state.aprovacoesVendasErro = mensagemErro(erro, 'Não foi possível concluir a solicitação. Tente novamente.');
+    } finally {
+      state.aprovacoesVendasProcessandoId = '';
+      render();
+    }
+  }
+
+  async function gerenciarAcessoVendasMobile(acesso, acao) {
+    if (!acesso || state.aprovacoesVendasProcessandoId) return;
+    var textos = {
+      revogar: { titulo: 'Revogar acesso?', confirmacao: 'Revogar acesso', mensagem: acesso.nome + ' perderá o acesso ao Vendas Mobile deste perfil.', estilo: 'perigosa' },
+      reativar: { titulo: 'Reativar acesso?', confirmacao: 'Reativar acesso', mensagem: acesso.nome + ' voltará a acessar o Vendas Mobile deste perfil.', estilo: 'primaria' },
+      excluir: { titulo: 'Excluir vínculo?', confirmacao: 'Excluir vínculo', mensagem: 'O vínculo de ' + acesso.nome + ' será apagado. Para voltar, a pessoa precisará informar o código e solicitar nova aprovação.', estilo: 'perigosa' },
+    };
+    var texto = textos[acao];
+    if (!texto) return;
+    var escolha = await solicitarDialogoSistemaMobile({
+      titulo: texto.titulo,
+      rotulo: 'Vendas Mobile',
+      mensagem: texto.mensagem,
+      variante: acao === 'reativar' ? 'alerta' : 'destrutiva',
+      acoes: [
+        { valor: 'cancelar', rotulo: 'Cancelar', estilo: 'secundaria' },
+        { valor: 'confirmar', rotulo: texto.confirmacao, estilo: texto.estilo },
+      ],
+    });
+    if (escolha !== 'confirmar') return;
+
+    state.aprovacoesVendasProcessandoId = acesso.id;
+    state.aprovacoesVendasErro = '';
+    render();
+    try {
+      var resposta = await db.rpc('gerenciar_acesso_vendas_mobile_rpc', { p_acesso_id: acesso.id, p_acao: acao });
+      if (resposta.error) throw resposta.error;
+      await carregarAprovacoesVendasMobile(false);
+      mostrarToast(acao === 'revogar' ? 'Acesso revogado.' : acao === 'reativar' ? 'Acesso reativado.' : 'Vínculo excluído.');
+    } catch (erro) {
+      state.aprovacoesVendasErro = mensagemErro(erro, 'Não foi possível atualizar o acesso. Tente novamente.');
+    } finally {
+      state.aprovacoesVendasProcessandoId = '';
+      render();
+    }
+  }
+
   function podeGerenciarConteudoVendas() {
     return state.empresa
       && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'empresa'
@@ -6312,6 +6514,10 @@
       executarSegundoPlano('Falha ao iniciar agenda em tempo real', configurarRealtimeAgendaMobile);
       executarSegundoPlano('Falha ao iniciar financeiro em tempo real', configurarRealtimeFinanceiroMobile);
       executarSegundoPlano('Falha ao iniciar notificações em tempo real', configurarRealtimeNotificacoesMobile);
+      executarSegundoPlano('Falha ao carregar aprovações do Vendas', function () {
+        return carregarAprovacoesVendasMobile(false);
+      });
+      executarSegundoPlano('Falha ao iniciar aprovações do Vendas em tempo real', configurarRealtimeAprovacoesVendasMobile);
       executarSegundoPlano('Falha ao iniciar ponto em tempo real', configurarRealtimePontoMobile);
       executarSegundoPlano('Falha ao carregar resumo do ponto', function () {
         return carregarResumoPontoMobile(false).then(function () {
@@ -11420,13 +11626,16 @@
           '</div>' +
         '</button>' +
         '<p class="mt-1 border-t ' + bordaDivisorConfig + ' px-2 pb-0.5 pt-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500" style="order:7">Conta e equipe</p>' +
-        '<button id="menu-gerenciar" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:8;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF6FF 0%,#FFFFFF 78%);border-color:#C8E4F6;') + '">' +
+        (podeGerenciarAprovacoesVendasMobile()
+          ? '<button id="menu-aprovacoes-vendas" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:8;' + (dk ? '' : 'background:linear-gradient(90deg,#FFF8E6 0%,#FFFFFF 78%);border-color:#F6D88E;') + '"><span class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#FFF0C2;color:#A16207">' + iconeMenuLateralSvg('menu-aprovacoes-vendas') + '</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Aprovações do Vendas</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Pedidos de acesso ao perfil</span></span>' + (state.aprovacoesVendasPendentes.length > 0 ? '<span class="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-black text-slate-950">' + (state.aprovacoesVendasPendentes.length > 99 ? '99+' : state.aprovacoesVendasPendentes.length) + '</span>' : '') + '</span></button>'
+          : '') +
+        '<button id="menu-gerenciar" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:9;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF6FF 0%,#FFFFFF 78%);border-color:#C8E4F6;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DDF0FF;color:#1783C7">' + iconeMenuLateralSvg('menu-gerenciar') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Gerenciar perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Criar, editar ou trocar perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-cadastro-perfil" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:9;' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
+        '<button id="menu-cadastro-perfil" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:10;' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F1FC;color:#0878AD">' + iconeMenuLateralSvg('menu-cadastro-perfil') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Dados cadastrais</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Cadastro completo do perfil</span></span>' +
@@ -11777,6 +11986,7 @@
       'menu-ajuda-categorias': '<circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 3.3 2.37c-.9.36-.9 1.13-.9 1.63M12 17h.01"/>',
       'menu-tutorial': '<path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 12.5V17c3 2 7 2 10 0v-4.5M21 10v6"/>',
       'menu-vendas-mobile': '<path d="m3 11 18-5v12L3 14zM11.5 16.5 13 21H8l-1.5-6"/><path d="M7 8.8v6.4"/>',
+      'menu-aprovacoes-vendas': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm7 1 2 2 4-4"/>',
       'menu-trocar-sistema': '<rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/><path d="M15 7h4a2 2 0 0 1 2 2v1M9 17H5a2 2 0 0 1-2-2v-1M18 7l-2-2m2 2-2 2M6 17l2-2m-2 2 2 2"/>',
       'menu-config-toggle': '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.1h-4V21a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.1v-4H3a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.1h4V3a1.7 1.7 0 0 0 1.1 1.6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.14.37.36.7.6 1 .27.28.62.4 1 .4h.1v4H21a1.7 1.7 0 0 0-1.6.6Z"/>',
       'menu-duplicados': '<rect x="4" y="4" width="12" height="12" rx="2"/><path d="M8 8h12v12H8z"/>',
@@ -11824,6 +12034,7 @@
       usuario: 'Usuario',
       empresa: 'Trocar perfil',
       gerenciar: 'Gerenciar perfil',
+      aprovacoesVendas: 'Aprovações do Vendas',
       configurarResumo: 'Mostrar/ocultar cards',
       organizarDashboard: 'Ordenar cards',
       organizarAtalhos: 'Organizar atalhos',
@@ -11878,6 +12089,7 @@
     if (state.modalMenu === 'usuario') return usuarioHtml();
     if (state.modalMenu === 'empresa') return trocarEmpresaHtml();
     if (state.modalMenu === 'gerenciar') return gerenciarEmpresaHtml();
+    if (state.modalMenu === 'aprovacoesVendas') return aprovacoesVendasMobileHtml();
     if (state.modalMenu === 'configurarResumo') return configurarResumoHtml();
     if (state.modalMenu === 'organizarDashboard') return organizarDashboardHtml();
     if (state.modalMenu === 'organizarAtalhos') return organizarAtalhosHtml();
@@ -12252,6 +12464,53 @@
         }).join('') +
       '</div>'
     );
+  }
+
+  function aprovacoesVendasMobileHtml() {
+    var escuro = !!state.darkMode;
+    var pendentes = state.aprovacoesVendasPendentes || [];
+    var acessos = state.aprovacoesVendasAcessos || [];
+    var abaPendentes = state.aprovacoesVendasAba !== 'aprovados';
+    var textoSuave = escuro ? 'text-slate-400' : 'text-slate-500';
+    var superficie = escuro ? 'border-slate-700 bg-slate-800/65' : 'border-slate-200 bg-slate-50/80';
+    var interno = escuro ? 'border-slate-700 bg-slate-900/60' : 'border-slate-200 bg-white';
+    var conteudo = '';
+
+    if (state.aprovacoesVendasCarregando) {
+      conteudo = '<div class="rounded-2xl border p-5 text-center text-sm font-semibold ' + superficie + ' ' + textoSuave + '">Carregando aprovações…</div>';
+    } else if (state.aprovacoesVendasErro) {
+      conteudo = '<div class="grid gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-900"><p class="text-sm font-black">Não foi possível carregar</p><p class="text-xs font-semibold leading-relaxed">' + escapeHtml(state.aprovacoesVendasErro) + '</p><button id="recarregar-aprovacoes-vendas" type="button" class="h-11 rounded-xl bg-red-600 px-4 text-xs font-black uppercase tracking-wide text-white">Tentar novamente</button></div>';
+    } else if (abaPendentes && pendentes.length === 0) {
+      conteudo = '<div class="rounded-2xl border p-6 text-center ' + superficie + '"><div class="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-600"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg></div><h3 class="mt-3 text-sm font-black">Nenhuma aprovação pendente</h3><p class="mt-1 text-xs font-semibold leading-relaxed ' + textoSuave + '">Quando alguém informar o código deste perfil e solicitar acesso, o pedido aparecerá aqui.</p></div>';
+    } else if (!abaPendentes && acessos.length === 0) {
+      conteudo = '<div class="rounded-2xl border p-6 text-center ' + superficie + '"><h3 class="text-sm font-black">Nenhum acesso aprovado</h3><p class="mt-1 text-xs font-semibold leading-relaxed ' + textoSuave + '">As pessoas aprovadas para o Vendas Mobile aparecerão aqui.</p></div>';
+    } else if (abaPendentes) {
+      conteudo = '<div class="grid gap-3">' + pendentes.map(function (solicitacao) {
+        var processando = state.aprovacoesVendasProcessandoId === solicitacao.id;
+        return '<article class="rounded-2xl border p-4 ' + superficie + '">' +
+          '<div class="flex items-start justify-between gap-3"><div class="min-w-0"><h3 class="truncate text-sm font-black">' + escapeHtml(solicitacao.nome) + '</h3><p class="mt-0.5 truncate text-xs font-semibold ' + textoSuave + '">' + escapeHtml(solicitacao.email) + '</p></div><span class="shrink-0 rounded-full bg-amber-400/15 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-amber-700">Pendente</span></div>' +
+          '<div class="mt-3 rounded-xl border p-2.5 text-xs ' + interno + '"><span class="block text-[9px] font-black uppercase tracking-wide ' + textoSuave + '">Perfil</span><strong class="mt-0.5 block truncate">' + escapeHtml(nomeEmpresa(state.empresa)) + '</strong></div>' +
+          '<div class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold ' + textoSuave + '">' +
+            (solicitacao.telefone ? '<span>' + escapeHtml(solicitacao.telefone) + '</span>' : '') +
+            '<span>Solicitado em ' + escapeHtml(formatarDataHoraAprovacaoMobile(solicitacao.solicitadoEm)) + '</span>' +
+          '</div>' +
+          '<div class="mt-4 grid grid-cols-2 gap-2"><button type="button" data-rejeitar-solicitacao-vendas="' + escapeHtml(solicitacao.id) + '"' + (processando ? ' disabled' : '') + ' class="min-h-11 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600 disabled:opacity-60">Rejeitar</button><button type="button" data-aprovar-solicitacao-vendas="' + escapeHtml(solicitacao.id) + '"' + (processando ? ' disabled' : '') + ' class="min-h-11 rounded-xl bg-[#003E73] px-3 py-2 text-xs font-black text-white disabled:opacity-60">' + (processando ? 'Salvando…' : 'Aprovar') + '</button></div>' +
+        '</article>';
+      }).join('') + '</div>';
+    } else {
+      conteudo = '<div class="grid gap-3">' + acessos.map(function (acesso) {
+        var processando = state.aprovacoesVendasProcessandoId === acesso.id;
+        var ativo = acesso.status === 'ativo';
+        return '<article class="rounded-2xl border p-4 ' + superficie + '">' +
+          '<div class="flex items-start justify-between gap-3"><div class="min-w-0"><h3 class="truncate text-sm font-black">' + escapeHtml(acesso.nome) + '</h3><p class="mt-0.5 truncate text-xs font-semibold ' + textoSuave + '">' + escapeHtml(acesso.email) + '</p></div><span class="shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ' + (ativo ? 'bg-emerald-500/15 text-emerald-600' : 'bg-red-500/15 text-red-600') + '">' + (ativo ? 'Ativo' : 'Revogado') + '</span></div>' +
+          '<div class="mt-3 grid grid-cols-2 gap-2 rounded-xl border p-2.5 text-xs ' + interno + '"><div class="min-w-0"><span class="block text-[9px] font-black uppercase tracking-wide ' + textoSuave + '">Perfil</span><strong class="mt-0.5 block truncate">' + escapeHtml(nomeEmpresa(state.empresa)) + '</strong></div><div class="min-w-0"><span class="block text-[9px] font-black uppercase tracking-wide ' + textoSuave + '">Papel</span><strong class="mt-0.5 block truncate capitalize">' + escapeHtml(acesso.papel) + '</strong></div></div>' +
+          '<div class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold ' + textoSuave + '">' + (acesso.telefone ? '<span>' + escapeHtml(acesso.telefone) + '</span>' : '') + '<span>Aprovado em ' + escapeHtml(formatarDataHoraAprovacaoMobile(acesso.aprovadoEm)) + '</span></div>' +
+          '<div class="mt-4 grid grid-cols-2 gap-2"><button type="button" data-gerenciar-acesso-vendas="' + escapeHtml(acesso.id) + '" data-acao-acesso-vendas="' + (ativo ? 'revogar' : 'reativar') + '"' + (processando ? ' disabled' : '') + ' class="min-h-11 rounded-xl border px-3 py-2 text-xs font-black disabled:opacity-60 ' + (ativo ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700') + '">' + (processando ? 'Salvando…' : ativo ? 'Revogar' : 'Reativar') + '</button><button type="button" data-gerenciar-acesso-vendas="' + escapeHtml(acesso.id) + '" data-acao-acesso-vendas="excluir"' + (processando ? ' disabled' : '') + ' class="min-h-11 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600 disabled:opacity-60">Excluir</button></div>' +
+        '</article>';
+      }).join('') + '</div>';
+    }
+
+    return '<div class="grid gap-4"><div class="rounded-2xl border border-cyan-100 bg-cyan-50/70 p-4"><p class="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-800">Acesso ao perfil</p><p class="mt-1 text-sm font-black text-slate-900">Analise solicitações do Vendas Mobile</p><p class="mt-1 text-xs font-semibold leading-relaxed text-slate-600">Apenas gestores autorizados podem aprovar, recusar ou gerenciar acessos.</p></div><div class="grid grid-cols-2 gap-1 rounded-xl border p-1 ' + (escuro ? 'border-slate-700 bg-slate-950/50' : 'border-slate-200 bg-slate-100') + '"><button id="aba-aprovacoes-vendas-pendentes" type="button" class="min-h-11 rounded-lg px-3 text-xs font-black ' + (abaPendentes ? 'bg-[#003E73] text-white shadow-sm' : textoSuave) + '">Pendentes (' + pendentes.length + ')</button><button id="aba-aprovacoes-vendas-acessos" type="button" class="min-h-11 rounded-lg px-3 text-xs font-black ' + (!abaPendentes ? 'bg-[#003E73] text-white shadow-sm' : textoSuave) + '">Aprovados (' + acessos.length + ')</button></div>' + conteudo + '</div>';
   }
 
   function gerenciarEmpresaHtml() {
@@ -13652,6 +13911,7 @@
     bind('menu-configurar-resumo', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('configurarResumo'); }); });
     bind('menu-usuario', function () { fecharMenuLateralAnimado(abrirUsuariosMobile); });
     bind('menu-gerenciar', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('gerenciar'); }); });
+    bind('menu-aprovacoes-vendas', function () { fecharMenuLateralAnimado(abrirAprovacoesVendasMobile); });
     bind('menu-cadastro-perfil', function () { fecharMenuLateralAnimado(function () { abrirEdicaoCadastroPerfilMobile(false); }); });
     bind('menu-assinatura', function () { fecharMenuLateralAnimado(abrirAssinaturaPeloMenuMobile); });
     bind('menu-organizar-dashboard', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('organizarDashboard'); }); });
@@ -13733,6 +13993,31 @@
             corPrimaria: '#003E73'
           }
         }));
+      });
+    });
+    bind('aba-aprovacoes-vendas-pendentes', function () { state.aprovacoesVendasAba = 'pendentes'; render(); });
+    bind('aba-aprovacoes-vendas-acessos', function () { state.aprovacoesVendasAba = 'aprovados'; render(); });
+    bind('recarregar-aprovacoes-vendas', function () { carregarAprovacoesVendasMobile(); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-aprovar-solicitacao-vendas]'), function (botao) {
+      botao.addEventListener('click', function () {
+        var id = botao.getAttribute('data-aprovar-solicitacao-vendas');
+        var solicitacao = (state.aprovacoesVendasPendentes || []).find(function (item) { return item.id === id; });
+        analisarSolicitacaoVendasMobile(solicitacao, true);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-rejeitar-solicitacao-vendas]'), function (botao) {
+      botao.addEventListener('click', function () {
+        var id = botao.getAttribute('data-rejeitar-solicitacao-vendas');
+        var solicitacao = (state.aprovacoesVendasPendentes || []).find(function (item) { return item.id === id; });
+        analisarSolicitacaoVendasMobile(solicitacao, false);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-gerenciar-acesso-vendas]'), function (botao) {
+      botao.addEventListener('click', function () {
+        var id = botao.getAttribute('data-gerenciar-acesso-vendas');
+        var acao = botao.getAttribute('data-acao-acesso-vendas');
+        var acesso = (state.aprovacoesVendasAcessos || []).find(function (item) { return item.id === id; });
+        gerenciarAcessoVendasMobile(acesso, acao);
       });
     });
     bind('menu-instalar', function () { fecharMenuLateralAnimado(instalarApp); });

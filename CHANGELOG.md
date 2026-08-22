@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.10.0 - 2026-08-22
+
+- Gestão Mobile: Gestor Master e Administrador podem analisar pedidos de acesso
+  ao **Vendas Mobile** em **Menu > Configurações > Conta e equipe > Aprovações
+  do Vendas**. A tela mostra pendências e acessos aprovados, permite aprovar,
+  rejeitar, revogar, reativar ou excluir vínculos com confirmação e atualiza o
+  contador em tempo real, reutilizando as mesmas permissões e RPCs da Gestão Web.
+
 ## 1.9.0.15 - 2026-08-22
 
 - AvantaVendas: o seletor de perfis ganhou espaçamento adicional antes de
