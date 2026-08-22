@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.0.15 - 2026-08-22
+
+- AvantaVendas: o seletor de perfis ganhou espaçamento adicional antes de
+  **Criar perfil de vendas**, distinguindo claramente as contas das ações.
+
 ## 1.9.0.14 - 2026-08-22
 
 - AvantaVendas: ao compartilhar um comprovante, a imagem agora segue com a

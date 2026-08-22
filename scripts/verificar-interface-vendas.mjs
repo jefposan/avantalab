@@ -352,6 +352,10 @@ exigir(
   'Comprovantes devem compartilhar imagem e mensagem pronta correspondente; materiais de Divulgação continuam sem mensagem automática.',
 );
 exigir(
+  estilos.includes('.sales-account-choice-list + .actions { margin-top: 14px; }'),
+  'O seletor de perfis de vendas deve separar visualmente a lista de perfis das ações de criação e compartilhamento.',
+);
+exigir(
   comprovantePedido.includes('function desenharRodapeEmPilula(ctx, conteudo, y)')
     && comprovantePedido.includes("retangulo(ctx, xPilula, y - 47, larguraPilula, 72, 36, '#FFFFFF', '#DCE6F0')")
     && comprovantePedido.includes('desenharRodapeEmPilula(ctx, `${titulo} • ${clienteExibido}`, yRodape)')

@@ -803,6 +803,7 @@ body.sheet-open {
 .dark-theme .create-sales-profile-form .field select:focus-visible { border-color: #67e8f9; box-shadow: 0 0 0 3px rgba(103,232,249,.2); }
 .dark-theme .create-sales-profile-help { border-left-color: #38bdf8; color: #bae6fd; background: #102838; }
 .sales-account-choice-list { gap: 10px; }
+.sales-account-choice-list + .actions { margin-top: 14px; }
 .sales-account-choice {
   display: grid;
   width: 100%;

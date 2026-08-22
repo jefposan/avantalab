@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.9.0.14 -->
+<!-- ava-version: 1.9.0.15 -->
+
+> Revisão 1.9.0.15: espaçamento no seletor de perfis é um ajuste visual do
+> AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.9.0.14: mensagem pronta no compartilhamento de comprovantes é um
 > ajuste do AvantaVendas; sem alteração operacional na Gestão Mobile.
