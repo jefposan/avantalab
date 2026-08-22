@@ -7172,12 +7172,12 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   return canvas;
 }
 
-async function compartilharCanvasComprovante(canvas, nomeArquivo) {
+async function compartilharCanvasComprovante(canvas, nomeArquivo, mensagem) {
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('Não foi possível gerar a imagem do comprovante.');
   const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
   if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) {
-    try { await navigator.share({ files: [arquivo] }); return true; }
+    try { await navigator.share({ files: [arquivo], title: mensagem, text: mensagem }); return true; }
     catch (error) { if (error?.name === 'AbortError') return false; }
   }
   const url = URL.createObjectURL(blob);
@@ -7240,7 +7240,7 @@ async function compartilharPedido(pedidoId) {
         { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],
     });
-  const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`);
+  const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido');
   if (compartilhado) fecharSheet();
 }
 
@@ -7282,7 +7282,7 @@ async function compartilharPagamento(pagamentoId) {
         { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],
     });
-  const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`);
+  const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento');
   if (compartilhado) fecharSheet();
 }
 

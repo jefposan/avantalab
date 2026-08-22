@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.9.0.13 -->
+<!-- ava-version: 1.9.0.14 -->
+
+> Revisão 1.9.0.14: ao compartilhar um comprovante, a imagem segue com o
+> texto pronto **Comprovante de pedido** ou **Comprovante de pagamento**,
+> conforme o lançamento.
 
 > Revisão 1.9.0.13: clientes, produtos, pedidos e pagamentos permanecem no
 > perfil de vendas ativo. Um pedido não pode usar cliente ou produto de outro

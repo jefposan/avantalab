@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0.14 - 2026-08-22
+
+- AvantaVendas: ao compartilhar um comprovante, a imagem agora segue com a
+  mensagem pronta correspondente: **Comprovante de pedido** ou **Comprovante
+  de pagamento**.
+
 ## 1.9.0.13 - 2026-08-22
 
 - AvantaVendas: pedidos agora são gravados obrigatoriamente no perfil de vendas

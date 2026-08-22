@@ -31,6 +31,9 @@ const inicioOndaDois = estilos.indexOf('@keyframes vendas-wave-dance-two');
 const fimOndas = estilos.indexOf('@media (prefers-reduced-motion: reduce)', inicioOndaDois);
 const ondaUm = estilos.slice(inicioOndaUm, inicioOndaDois);
 const ondaDois = estilos.slice(inicioOndaDois, fimOndas);
+const inicioCompartilhamentoMaterial = aplicacao.indexOf('async function compartilharMaterialDivulgacao(');
+const fimCompartilhamentoMaterial = aplicacao.indexOf('\nasync function ', inicioCompartilhamentoMaterial + 1);
+const compartilhamentoMaterial = aplicacao.slice(inicioCompartilhamentoMaterial, fimCompartilhamentoMaterial);
 
 const acaoPagamento = '<button class="secondary quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">';
 const acaoPedido = '<button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">';
@@ -340,11 +343,13 @@ exigir(
   'A pré-visualização de PDF deve renderizar páginas centralizadas sem depender do leitor nativo do navegador.',
 );
 exigir(
-  aplicacao.includes('await navigator.share({ files: [arquivo] });')
-    && aplicacao.includes('try { await navigator.share({ files: [arquivo] }); return true; }')
-    && !aplicacao.includes("text: 'Material de divulgação'")
-    && !/navigator\.share\(\{[^}]*\b(?:title|text)\s*:/.test(aplicacao),
-  'Os compartilhamentos do AvantaVendas devem enviar somente o arquivo, sem texto ou título automáticos.',
+  aplicacao.includes('function compartilharCanvasComprovante(canvas, nomeArquivo, mensagem)')
+    && aplicacao.includes('await navigator.share({ files: [arquivo], title: mensagem, text: mensagem });')
+    && aplicacao.includes("compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido')")
+    && aplicacao.includes("compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento')")
+    && compartilhamentoMaterial.includes('navigator.share({ files: [arquivo] })')
+    && !/navigator\.share\(\{[^}]*\b(?:title|text)\s*:/.test(compartilhamentoMaterial),
+  'Comprovantes devem compartilhar imagem e mensagem pronta correspondente; materiais de Divulgação continuam sem mensagem automática.',
 );
 exigir(
   comprovantePedido.includes('function desenharRodapeEmPilula(ctx, conteudo, y)')

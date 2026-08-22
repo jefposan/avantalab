@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.9.0.13 -->
+<!-- ava-version: 1.9.0.14 -->
+
+> Revisão 1.9.0.14: mensagem pronta no compartilhamento de comprovantes é um
+> ajuste do AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.9.0.13: a proteção de lançamentos por perfil ativo pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Mobile.
