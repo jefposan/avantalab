@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.10.1 -->
+<!-- ava-version: 1.10.1.01 -->
+
+> Revisão 1.10.1.01: em **Gerenciar perfil**, o resumo do perfil ativo também
+> exibe o Código AVA para conexão com o Vendas.
 
 > Revisão 1.10.1: novo pedido de conteúdo do Vendas cria aviso no sininho e
 > push para gestores e administradores que permitirem notificações.

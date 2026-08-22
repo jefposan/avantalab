@@ -1,6 +1,6 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.10.1 -->
+<!-- ava-version: 1.10.1.01 -->
 
 > Revisão 1.10.1: solicitações pendentes de conteúdo avisam Gestor Master e
 > Administrador pelo sininho e push permitido; o uso do Vendas continua independente.

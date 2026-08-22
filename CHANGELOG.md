@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.1.01 - 2026-08-22
+
+- Gestão Mobile: **Gerenciar perfil** exibe o Código AVA do perfil ativo junto
+  dos dados resumidos do perfil.
+
 ## 1.10.1 - 2026-08-22
 
 - Gestão Web e Mobile: vínculos de conteúdo do Vendas usam a mesma fonte por

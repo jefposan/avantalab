@@ -1,5 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.10.1.01: Gerenciar perfil no Mobile exibe o Código AVA.
 // Revisado na versão 1.10.1: novos pedidos de conteúdo do Vendas avisam Gestor
 // Master e Administrador pelo sininho e push permitido. Aprovações no Mobile identifica os
 // vínculos de conteúdo pela conta de vendas conectada ao perfil fornecedor,

@@ -499,6 +499,8 @@
     aprovacoesVendasCarregando: false,
     aprovacoesVendasErro: '',
     aprovacoesVendasProcessandoId: '',
+    codigoAvaPerfil: '',
+    codigoAvaPerfilCarregando: false,
     vendasMobileModuloVerificando: false,
     seletorSistemaAberto: false,
     seletorSistemaInicialBloqueante: false,
@@ -3954,6 +3956,22 @@
     state.modalMenu = nome;
     if (nome === 'gerenciar') state.empresaExclusaoAberta = false;
     render();
+    if (nome === 'gerenciar') carregarCodigoAvaPerfilMobile();
+  }
+
+  async function carregarCodigoAvaPerfilMobile() {
+    if (!state.empresa || !state.empresa.id) return;
+    state.codigoAvaPerfilCarregando = true;
+    render();
+    try {
+      var resposta = await db.from('codigos_vinculo_empresa').select('codigo').eq('empresa_id', state.empresa.id).eq('ativo', true).maybeSingle();
+      state.codigoAvaPerfil = resposta.error || !resposta.data || !resposta.data.codigo ? '' : String(resposta.data.codigo);
+    } catch (erro) {
+      state.codigoAvaPerfil = '';
+    } finally {
+      state.codigoAvaPerfilCarregando = false;
+      if (state.modalMenu === 'gerenciar') render();
+    }
   }
 
   function abrirSobreMobile() {
@@ -12490,6 +12508,7 @@
         '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil atual</p>' +
         '<p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
         '<p class="mt-1 text-xs font-semibold text-slate-500">Tipo: ' + escapeHtml(rotuloTipoPerfil(tipoAtual)) + ' &middot; Acesso: ' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p>' +
+        '<div class="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"><span class="text-[10px] font-black uppercase tracking-wide text-slate-400">Código AVA</span><strong class="font-mono text-xs font-black tracking-[0.12em] text-slate-700">' + escapeHtml(state.codigoAvaPerfilCarregando ? 'Carregando…' : (state.codigoAvaPerfil || 'Indisponível')) + '</strong></div>' +
       '</div>'
     );
 
