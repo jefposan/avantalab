@@ -1,6 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.10.1.02: correção de tipagem da publicação do Vendas.
+// Revisado na versão 1.10.1.03: Código AVA do perfil pode ser copiado no Mobile.
 // Revisado na versão 1.10.1.01: Gerenciar perfil no Mobile exibe o Código AVA.
 // Revisado na versão 1.10.1: novos pedidos de conteúdo do Vendas avisam Gestor
 // Master e Administrador pelo sininho e push permitido. Aprovações no Mobile identifica os

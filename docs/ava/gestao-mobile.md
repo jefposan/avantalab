@@ -1,6 +1,6 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.10.1.02 -->
+<!-- ava-version: 1.10.1.03 -->
 
 > Revisão 1.10.1.01: em **Gerenciar perfil**, o resumo do perfil ativo também
 > exibe o Código AVA para conexão com o Vendas.

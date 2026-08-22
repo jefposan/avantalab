@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.1.03 - 2026-08-22
+
+- Gestão Mobile: o Código AVA em **Gerenciar perfil** ganhou ação de cópia.
+
 ## 1.10.1.02 - 2026-08-22
 
 - Corrigida a tipagem da consulta de vínculos do Vendas na Gestão Web para

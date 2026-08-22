@@ -3974,6 +3974,16 @@
     }
   }
 
+  async function copiarCodigoAvaPerfilMobile() {
+    if (!state.codigoAvaPerfil) return;
+    try {
+      await navigator.clipboard.writeText(state.codigoAvaPerfil);
+      mostrarToast('Código AVA copiado.');
+    } catch (erro) {
+      mostrarToast('Não foi possível copiar o código AVA.');
+    }
+  }
+
   function abrirSobreMobile() {
     state.menuAberto = false;
     state.modalMenu = 'sobre';
@@ -12508,7 +12518,7 @@
         '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil atual</p>' +
         '<p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
         '<p class="mt-1 text-xs font-semibold text-slate-500">Tipo: ' + escapeHtml(rotuloTipoPerfil(tipoAtual)) + ' &middot; Acesso: ' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p>' +
-        '<div class="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"><span class="text-[10px] font-black uppercase tracking-wide text-slate-400">Código AVA</span><strong class="font-mono text-xs font-black tracking-[0.12em] text-slate-700">' + escapeHtml(state.codigoAvaPerfilCarregando ? 'Carregando…' : (state.codigoAvaPerfil || 'Indisponível')) + '</strong></div>' +
+        '<div class="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"><span class="text-[10px] font-black uppercase tracking-wide text-slate-400">Código AVA</span><span class="flex items-center gap-2"><strong class="font-mono text-xs font-black tracking-[0.12em] text-slate-700">' + escapeHtml(state.codigoAvaPerfilCarregando ? 'Carregando…' : (state.codigoAvaPerfil || 'Indisponível')) + '</strong><button id="copiar-codigo-ava-perfil" type="button"' + (state.codigoAvaPerfil ? '' : ' disabled') + ' class="min-h-9 rounded-lg bg-[#003E73] px-2.5 text-[10px] font-black uppercase tracking-wide text-white disabled:opacity-40">Copiar</button></span></div>' +
       '</div>'
     );
 
@@ -13893,6 +13903,7 @@
     bind('menu-configurar-resumo', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('configurarResumo'); }); });
     bind('menu-usuario', function () { fecharMenuLateralAnimado(abrirUsuariosMobile); });
     bind('menu-gerenciar', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('gerenciar'); }); });
+    bind('copiar-codigo-ava-perfil', copiarCodigoAvaPerfilMobile);
     bind('menu-aprovacoes-vendas', function () { fecharMenuLateralAnimado(abrirAprovacoesVendasMobile); });
     bind('menu-cadastro-perfil', function () { fecharMenuLateralAnimado(function () { abrirEdicaoCadastroPerfilMobile(false); }); });
     bind('menu-assinatura', function () { fecharMenuLateralAnimado(abrirAssinaturaPeloMenuMobile); });
