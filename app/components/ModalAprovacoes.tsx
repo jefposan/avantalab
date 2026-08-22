@@ -67,14 +67,14 @@ export default function ModalAprovacoes({
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-75">Configurações</p>
             <h2 className="mt-1 text-xl font-black">Aprovações</h2>
-            <p className="mt-1 text-xs font-semibold opacity-85">Acessos aguardando análise dos gestores do perfil.</p>
+            <p className="mt-1 text-xs font-semibold opacity-85">Pedidos de conteúdo aguardando análise dos gestores.</p>
           </div>
           <button type="button" onClick={onFechar} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-lg font-black transition hover:bg-white/25" aria-label="Fechar aprovações">×</button>
         </header>
 
         <div className={`grid grid-cols-2 gap-1 border-b p-1 ${darkMode ? 'border-slate-700 bg-slate-950/50' : 'border-slate-200 bg-slate-100'}`}>
           <button type="button" onClick={() => setAba('pendentes')} className={`rounded-xl px-3 py-2.5 text-xs font-black transition ${aba === 'pendentes' ? 'text-white shadow-sm' : textoSuave}`} style={aba === 'pendentes' ? { backgroundColor: corPrimaria } : undefined}>Pendentes ({solicitacoes.length})</button>
-          <button type="button" onClick={() => setAba('aprovados')} className={`rounded-xl px-3 py-2.5 text-xs font-black transition ${aba === 'aprovados' ? 'text-white shadow-sm' : textoSuave}`} style={aba === 'aprovados' ? { backgroundColor: corPrimaria } : undefined}>Aprovados ({acessosAprovados.length})</button>
+          <button type="button" onClick={() => setAba('aprovados')} className={`rounded-xl px-3 py-2.5 text-xs font-black transition ${aba === 'aprovados' ? 'text-white shadow-sm' : textoSuave}`} style={aba === 'aprovados' ? { backgroundColor: corPrimaria } : undefined}>Vínculos ({acessosAprovados.length})</button>
         </div>
 
         <div className="overflow-y-auto p-4">
@@ -122,8 +122,8 @@ export default function ModalAprovacoes({
             </div>
           ) : acessosAprovados.length === 0 ? (
             <div className={`rounded-2xl border p-6 text-center ${darkMode ? 'border-slate-700 bg-slate-800/70' : 'border-slate-200 bg-slate-50'}`}>
-              <h3 className="text-sm font-black">Nenhum acesso aprovado</h3>
-              <p className={`mt-1 text-xs leading-relaxed ${textoSuave}`}>Os usuários aprovados para o Vendas Mobile aparecerão aqui.</p>
+              <h3 className="text-sm font-black">Nenhum vínculo de conteúdo</h3>
+              <p className={`mt-1 text-xs leading-relaxed ${textoSuave}`}>Contas conectadas para receber Notícias, Divulgação ou Catálogo aparecerão aqui.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -141,15 +141,11 @@ export default function ModalAprovacoes({
                     </div>
                     <div className={`mt-3 grid grid-cols-2 gap-2 rounded-xl border p-2.5 text-xs ${darkMode ? 'border-slate-700 bg-slate-900/60' : 'border-slate-200 bg-white'}`}>
                       <div className="min-w-0"><span className={`block text-[9px] font-black uppercase tracking-wide ${textoSuave}`}>Perfil</span><strong className="mt-0.5 block truncate">{acesso.perfilNome}</strong></div>
-                      <div className="min-w-0"><span className={`block text-[9px] font-black uppercase tracking-wide ${textoSuave}`}>Papel</span><strong className="mt-0.5 block truncate capitalize">{acesso.papel}</strong></div>
+                      <div className="min-w-0"><span className={`block text-[9px] font-black uppercase tracking-wide ${textoSuave}`}>Conteúdos</span><strong className="mt-0.5 block truncate">{acesso.papel}</strong></div>
                     </div>
                     <div className={`mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold ${textoSuave}`}>
                       {acesso.telefone && <span>{acesso.telefone}</span>}
-                      <span>Aprovado em {formatarData(acesso.aprovadoEm)}</span>
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <button type="button" disabled={processando} onClick={() => ativo ? onRevogar(acesso) : onReativar(acesso)} className={`rounded-xl border px-3 py-2.5 text-xs font-black transition disabled:opacity-60 ${ativo ? (darkMode ? 'border-amber-800/60 bg-amber-950/30 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700') : (darkMode ? 'border-emerald-800/60 bg-emerald-950/30 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')}`}>{processando ? 'Salvando…' : ativo ? 'Revogar' : 'Reativar'}</button>
-                      <button type="button" disabled={processando} onClick={() => onExcluir(acesso)} className={`rounded-xl border px-3 py-2.5 text-xs font-black transition disabled:opacity-60 ${darkMode ? 'border-red-800/60 bg-red-950/30 text-red-300' : 'border-red-200 bg-red-50 text-red-600'}`}>Excluir</button>
+                      <span>Atualizado em {formatarData(acesso.aprovadoEm)}</span>
                     </div>
                   </article>
                 );

@@ -1,6 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.10.0.03: Aprovações do Vendas no Mobile identifica os
+// Revisado na versão 1.10.1: novos pedidos de conteúdo do Vendas avisam Gestor
+// Master e Administrador pelo sininho e push permitido. Aprovações no Mobile identifica os
 // vínculos de conteúdo pela conta de vendas conectada ao perfil fornecedor,
 // inclusive contas migradas sem acesso legado. A listagem não trata isso como
 // acesso ao AvantaVendas nem altera permissões, que permanecem independentes.

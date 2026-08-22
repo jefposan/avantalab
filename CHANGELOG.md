@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.1 - 2026-08-22
+
+- Gestão Web e Mobile: vínculos de conteúdo do Vendas usam a mesma fonte por
+  conta de vendas. Novas solicitações pendentes geram aviso individual no
+  sininho e push para Gestor Master e Administrador quando notificações estão
+  permitidas no dispositivo.
+
 ## 1.10.0.03 - 2026-08-22
 
 - Gestão Mobile: **Vínculos de conteúdo** não esconde mais uma conta de

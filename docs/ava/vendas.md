@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.10.0.03 -->
+<!-- ava-version: 1.10.1 -->
+
+> Revisão 1.10.1: solicitações pendentes de conteúdo avisam Gestor Master e
+> Administrador pelo sininho e push permitido; o uso do Vendas continua independente.
 
 > Revisão 1.10.0.03: contas de vendas conectadas continuam visíveis na Gestão
 > Mobile mesmo sem acesso legado, sem alterar catálogo ou permissões do

@@ -1077,12 +1077,12 @@ const carregarSolicitacoesAprovacao = useCallback(async () => {
 
   setAprovacoesCarregando(true);
   try {
-    const [solicitacoesRes, acessosRes] = await Promise.all([
+    const [solicitacoesRes, vinculosRes] = await Promise.all([
       supabase.from('vendas_mobile_solicitacoes_acesso').select('id, user_id, nome, email, telefone, solicitado_em, status').eq('empresa_id', empresaId).order('solicitado_em', { ascending: false }),
-      supabase.from('vendas_mobile_acessos').select('id, user_id, papel, status, aprovado_em').eq('empresa_id', empresaId).order('aprovado_em', { ascending: false }),
+      supabase.rpc('listar_vinculos_comerciais_vendas_mobile_rpc', { p_empresa_id: empresaId }),
     ]);
 
-    if (solicitacoesRes.error || acessosRes.error) {
+    if (solicitacoesRes.error || vinculosRes.error) {
       setSolicitacoesAprovacao([]);
       setAcessosVendasAprovados([]);
       return;
@@ -1098,18 +1098,17 @@ const carregarSolicitacoesAprovacao = useCallback(async () => {
       perfilNome: nomeEmpresaAtual || 'Perfil atual',
       sistema: 'Vendas Mobile',
     })));
-    setAcessosVendasAprovados((acessosRes.data || []).map((acesso) => {
-      const solicitacao = solicitacoes.find((item) => item.user_id === acesso.user_id);
+    setAcessosVendasAprovados((vinculosRes.data || []).map((vinculo) => {
       return {
-        id: String(acesso.id),
-        nome: String(solicitacao?.nome || 'Usuário aprovado'),
-        email: String(solicitacao?.email || 'E-mail não informado'),
-        telefone: solicitacao?.telefone ? String(solicitacao.telefone) : null,
-        aprovadoEm: String(acesso.aprovado_em || new Date().toISOString()),
+        id: String(vinculo.id),
+        nome: String(vinculo.nome || 'Conta de vendas'),
+        email: String(vinculo.email || 'E-mail não informado'),
+        telefone: vinculo.telefone ? String(vinculo.telefone) : null,
+        aprovadoEm: String(vinculo.atualizado_em || vinculo.criado_em || new Date().toISOString()),
         perfilNome: nomeEmpresaAtual || 'Perfil atual',
         sistema: 'Vendas Mobile',
-        papel: String(acesso.papel || 'vendedor'),
-        status: acesso.status === 'bloqueado' ? 'bloqueado' : 'ativo',
+        papel: [vinculo.novidades_ativas !== false && 'Notícias', vinculo.divulgacao_ativa !== false && 'Divulgação', vinculo.catalogo_ativo !== false && 'Catálogo'].filter(Boolean).join(' • ') || 'Nenhum conteúdo ativo',
+        status: 'ativo',
       };
     }));
   } finally {
@@ -1197,7 +1196,7 @@ useEffect(() => {
   const canal = supabase
     .channel(`vendas_mobile_aprovacoes_${empresaId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_solicitacoes_acesso', filter: `empresa_id=eq.${empresaId}` }, carregarSolicitacoesAprovacao)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_acessos', filter: `empresa_id=eq.${empresaId}` }, carregarSolicitacoesAprovacao)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_contas_vinculos_comerciais', filter: `empresa_id=eq.${empresaId}` }, carregarSolicitacoesAprovacao)
     .subscribe();
 
   return () => {

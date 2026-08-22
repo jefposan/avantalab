@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.10.0.03 -->
+<!-- ava-version: 1.10.1 -->
+
+> Revisão 1.10.1: Aprovações do Vendas no Web usa os vínculos por conta de
+> vendas e pedidos novos avisam gestores pelo sininho e push permitido.
 
 > Revisão 1.10.0.03: a visibilidade de vínculos de conteúdo migrados pertence
 > à Gestão Mobile; sem alteração operacional na Gestão Web.
