@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.10.0.01 -->
+<!-- ava-version: 1.10.0.03 -->
+
+> Revisão 1.10.0.03: **Vínculos** não oculta uma conta de vendas conectada
+> quando o acesso legado anterior já não existe. A listagem é informativa e
+> não altera o catálogo, os conteúdos ou as permissões da conta.
+
+> Revisão 1.10.0.02: a aba **Vínculos** em Aprovações do Vendas consulta a
+> conta de vendas efetivamente conectada ao perfil que fornece o conteúdo.
+> Por isso, cada vendedor aparece na empresa de seu Catálogo, Notícias e
+> Divulgação, sem que o uso independente do AvantaVendas seja alterado.
 
 > Revisão 1.10.0.01: em **Aprovações do Vendas**, a aba **Vínculos** mostra a
 > fonte oficial de conteúdos conectados, com pessoa, contato e os estados de
@@ -1587,8 +1596,9 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Em **Menu > Configurações > Conta e equipe > Aprovações do Vendas**, somente
   Gestor Master e Administrador aprovam ou rejeitam as solicitações feitas com
   o código de conexão do perfil. A mesma área mostra os vínculos de conteúdo
-  existentes e os recursos ativos: Notícias, Divulgação e Catálogo. Isso não
-  interfere no uso independente do AvantaVendas.
+  existentes pela conta de vendas conectada e os recursos ativos: Notícias,
+  Divulgação e Catálogo. Isso não interfere no uso independente do
+  AvantaVendas.
 - Em **Preparando acesso**, a etapa **Acesso pronto** e os 100% somente são
   concluídos depois que a tela principal estiver montada. A verificação do
   Vendas e as sincronizações complementares continuam em segundo plano, sem

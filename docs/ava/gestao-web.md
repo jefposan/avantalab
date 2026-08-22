@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.10.0.01 -->
+<!-- ava-version: 1.10.0.03 -->
+
+> Revisão 1.10.0.03: a visibilidade de vínculos de conteúdo migrados pertence
+> à Gestão Mobile; sem alteração operacional na Gestão Web.
+
+> Revisão 1.10.0.02: a consulta dos vínculos de conteúdo por conta de vendas
+> pertence à Gestão Mobile; sem alteração operacional na Gestão Web.
 
 > Revisão 1.10.0.01: a correção da lista de vínculos de conteúdo pertence à
 > Gestão Mobile; sem alteração operacional na Gestão Web.

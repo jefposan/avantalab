@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.10.0.03 - 2026-08-22
+
+- Gestão Mobile: **Vínculos de conteúdo** não esconde mais uma conta de
+  vendas ativa apenas porque seu antigo acesso legado foi removido. A lista é
+  informativa e não altera permissões, catálogo ou conexões existentes.
+
+## 1.10.0.02 - 2026-08-22
+
+- Gestão Mobile: a lista de **Vínculos de conteúdo** em Aprovações do Vendas
+  agora consulta a conexão efetiva de cada **conta de vendas** com o perfil.
+  Assim, vendedores como William aparecem no perfil que fornece seu catálogo,
+  Notícias e Divulgação, sem confundir esse vínculo com acesso ao app Vendas.
+
 ## 1.10.0.01 - 2026-08-22
 
 - Gestão Mobile: **Aprovações do Vendas** agora separa corretamente as

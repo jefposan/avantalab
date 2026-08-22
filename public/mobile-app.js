@@ -3252,7 +3252,7 @@
           { event: '*', schema: 'public', table: 'vendas_mobile_solicitacoes_acesso', filter: 'empresa_id=eq.' + empresaId },
           function () { carregarAprovacoesVendasMobile(); })
         .on('postgres_changes',
-          { event: '*', schema: 'public', table: 'vendas_mobile_vinculos_comerciais', filter: 'empresa_id=eq.' + empresaId },
+          { event: '*', schema: 'public', table: 'vendas_mobile_contas_vinculos_comerciais', filter: 'empresa_id=eq.' + empresaId },
           function () { carregarAprovacoesVendasMobile(); })
         .subscribe();
       window._avaIntervaloAprovacoesVendas = window.setInterval(function () {

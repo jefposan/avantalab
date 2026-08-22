@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.10.0.01 -->
+<!-- ava-version: 1.10.0.03 -->
+
+> Revisão 1.10.0.03: contas de vendas conectadas continuam visíveis na Gestão
+> Mobile mesmo sem acesso legado, sem alterar catálogo ou permissões do
+> AvantaVendas.
+
+> Revisão 1.10.0.02: a Gestão Mobile identifica os vínculos de conteúdo pela
+> conta de vendas conectada à empresa fornecedora, preservando o funcionamento
+> independente do AvantaVendas.
 
 > Revisão 1.10.0.01: a Gestão Mobile passou a identificar os vínculos de
 > conteúdo pela fonte oficial, sem confundi-los com acesso ao AvantaVendas.
