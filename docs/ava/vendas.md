@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.10.0 -->
+<!-- ava-version: 1.10.0.01 -->
 
+> Revisão 1.10.0.01: a Gestão Mobile passou a identificar os vínculos de
+> conteúdo pela fonte oficial, sem confundi-los com acesso ao AvantaVendas.
+>
 > Revisão 1.10.0: Gestor Master e Administrador também podem analisar, na Gestão
 > Mobile, solicitações enviadas ao informar o código do perfil; sem alteração no
 > fluxo de solicitação do AvantaVendas.

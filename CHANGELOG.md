@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.10.0.01 - 2026-08-22
+
+- Gestão Mobile: **Aprovações do Vendas** agora separa corretamente as
+  solicitações de vínculo por código dos **Vínculos de conteúdo** existentes.
+  A lista usa a fonte oficial de Notícias, Divulgação e Catálogo, incluindo
+  vínculos históricos e ativos, sem tratar o AvantaVendas independente como um
+  acesso aprovado nem oferecer ações que possam bloquear o aplicativo.
+
 ## 1.10.0 - 2026-08-22
 
 - Gestão Mobile: Gestor Master e Administrador podem analisar pedidos de acesso

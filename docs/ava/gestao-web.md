@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.10.0 -->
+<!-- ava-version: 1.10.0.01 -->
 
+> Revisão 1.10.0.01: a correção da lista de vínculos de conteúdo pertence à
+> Gestão Mobile; sem alteração operacional na Gestão Web.
+>
 > Revisão 1.10.0: aprovações do Vendas Mobile também ficaram disponíveis na
 > Gestão Mobile; sem alteração operacional na Gestão Web.
 >
