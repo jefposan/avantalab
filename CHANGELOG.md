@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.1.02 - 2026-08-22
+
+- Corrigida a tipagem da consulta de vínculos do Vendas na Gestão Web para
+  permitir a publicação da versão atual.
+
 ## 1.10.1.01 - 2026-08-22
 
 - Gestão Mobile: **Gerenciar perfil** exibe o Código AVA do perfil ativo junto

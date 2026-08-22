@@ -1098,7 +1098,7 @@ const carregarSolicitacoesAprovacao = useCallback(async () => {
       perfilNome: nomeEmpresaAtual || 'Perfil atual',
       sistema: 'Vendas Mobile',
     })));
-    setAcessosVendasAprovados((vinculosRes.data || []).map((vinculo) => {
+    setAcessosVendasAprovados((vinculosRes.data || []).map((vinculo: Record<string, unknown>) => {
       return {
         id: String(vinculo.id),
         nome: String(vinculo.nome || 'Conta de vendas'),
