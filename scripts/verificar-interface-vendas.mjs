@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoCapaExterna, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
+const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoCapaExterna, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica, migracaoPedidosContaAtiva] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/order-receipt-v2.js'), 'utf8'),
@@ -19,6 +19,7 @@ const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rot
   readFile(resolve(raiz, 'supabase/migrations/20260807223000_vinculo_vendas_mobile_realtime.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260810183000_exclusao_conta_avantavendas.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260811120000_conta_inicial_automatica_vendas.sql'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/migrations/20260822120000_pedidos_respeitam_conta_ativa_vendas.sql'), 'utf8'),
 ]);
 
 const falhas = [];
@@ -105,6 +106,17 @@ exigir(
     && migracaoContaAutomatica.includes("values ('Minha conta de vendas', v_user_id)")
     && migracaoContaAutomatica.includes("values (v_conta.id, v_user_id, 'proprietario')"),
   'Login comum deve aceitar conta independente, preparar a conta operacional automaticamente e manter o código empresarial opcional.',
+);
+exigir(
+  cliente.includes("p_pedido: payload.pedido,\n      p_itens: payload.itens,\n      p_novo: !incluirId")
+    && cliente.includes("conta_id: contaAtivaId(),\n      cliente_id: order.cliente_id || null")
+    && migracaoPedidosContaAtiva.includes("v_conta_id := (p_pedido ->> 'conta_id')::uuid")
+    && migracaoPedidosContaAtiva.includes('vendas_mobile_pode_operar_conta(v_conta_id)')
+    && migracaoPedidosContaAtiva.includes('cliente.conta_id = v_conta_id')
+    && migracaoPedidosContaAtiva.includes('produto.conta_id = v_conta_id')
+    && migracaoPedidosContaAtiva.includes('id, user_id, conta_id, cliente_id')
+    && migracaoPedidosContaAtiva.includes('pedido.conta_id is distinct from cliente.conta_id'),
+  'Pedidos precisam usar a conta ativa, validar cliente/produtos da mesma conta e reparar apenas registros que ficaram em conta diferente da cliente.',
 );
 exigir(
   aplicacao.includes('autocapitalize="words"')

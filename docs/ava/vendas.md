@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.9.0.12 -->
+<!-- ava-version: 1.9.0.13 -->
+
+> Revisão 1.9.0.13: clientes, produtos, pedidos e pagamentos permanecem no
+> perfil de vendas ativo. Um pedido não pode usar cliente ou produto de outro
+> perfil, mesmo quando o mesmo login participa de mais de uma conta.
 
 > Revisão 1.9.0.12: a capa privada aparece somente no cartão da pasta. Imagens
 > já publicadas continuam na galeria e as capas usam a proporção 16:10.

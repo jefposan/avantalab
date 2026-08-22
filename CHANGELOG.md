@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.0.13 - 2026-08-22
+
+- AvantaVendas: pedidos agora são gravados obrigatoriamente no perfil de vendas
+  ativo. Cliente e produtos precisam pertencer ao mesmo perfil, impedindo que
+  um lançamento seja desviado para outra conta do mesmo login ou da equipe.
+- AvantaVendas: lançamentos históricos que ficaram em perfil diferente do
+  cliente foram reparados sem recalcular receitas financeiras.
+
 ## 1.9.0.12 - 2026-08-21
 
 - Conteúdo do Vendas: a escolha de capa diferencia a imagem privada enviada

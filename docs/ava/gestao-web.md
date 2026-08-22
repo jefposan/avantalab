@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.9.0.12 -->
+<!-- ava-version: 1.9.0.13 -->
+
+> Revisão 1.9.0.13: a proteção de lançamentos por perfil ativo pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.9.0.12: em **Escolher capa**, **Enviar capa privada** não publica o
 > arquivo no AvantaVendas; **Imagens já publicadas** continuam disponíveis aos

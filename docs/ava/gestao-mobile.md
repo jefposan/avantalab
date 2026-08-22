@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.9.0.12 -->
+<!-- ava-version: 1.9.0.13 -->
+
+> Revisão 1.9.0.13: a proteção de lançamentos por perfil ativo pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.9.0.12: diferenciação de capa e proporção 16:10 são recursos da
 > Gestão Web e do AvantaVendas; sem alteração operacional na Gestão Mobile.
