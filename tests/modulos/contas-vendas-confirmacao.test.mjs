@@ -28,3 +28,12 @@ test('aviso rápido permanece acessível acima das camadas modais', () => {
   assert.match(aplicacao, /el\.setAttribute\('aria-live', 'assertive'\)/);
   assert.match(estilos, /\.toast \{[\s\S]*z-index: calc\(var\(--vendas-layer-modal\) \+ 30\);/);
 });
+
+test('troca de tema preserva a estrutura do menu inferior fixo', () => {
+  const inicio = aplicacao.indexOf('function alternarTema(ativo)');
+  const fim = aplicacao.indexOf('\n}\n', inicio) + 2;
+  const funcao = aplicacao.slice(inicio, fim);
+  assert.match(funcao, /classList\.toggle\('dark-theme', state\.temaEscuro\)/);
+  assert.match(funcao, /salvarEstado\(\)/);
+  assert.doesNotMatch(funcao, /render\(\)/);
+});

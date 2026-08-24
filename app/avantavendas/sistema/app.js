@@ -5312,7 +5312,9 @@ async function confirmarExclusaoContaVendas() {
 function alternarTema(ativo) {
   state.temaEscuro = Boolean(ativo);
   document.documentElement.classList.toggle('dark-theme', state.temaEscuro);
-  render();
+  // O tema altera apenas tokens visuais; preservar o DOM mantém a grade e a
+  // ancoragem do menu inferior durante a interação em navegadores móveis.
+  salvarEstado();
 }
 
 async function alterarSenha() {

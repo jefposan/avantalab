@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.11.0-av85 - 2026-08-24
+
+- AvantaVendas: alternar o modo escuro não reconstrói mais a aplicação nem o
+  menu inferior fixo. A troca passa a atualizar somente o tema e sua
+  preferência, preservando a grade, a posição e a interação da navegação.
+
 ## 1.11.0-av84 - 2026-08-24
 
 - AvantaVendas: recuperação construída sobre a versão oficial atual, preservando
