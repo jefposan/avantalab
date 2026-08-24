@@ -823,8 +823,14 @@
   async function deleteOrder(id) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
-    const { error } = await client.from('vendas_mobile_pedidos').delete().eq('id', id).eq('conta_id', contaAtivaId());
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
+    const { data, error } = await client.rpc('excluir_pedido_vendas_mobile_rpc', {
+      p_conta_id: contaId,
+      p_pedido_id: id,
+    });
     if (error) throw error;
+    return data || { pedido_id: id, estoques_atualizados: [] };
   }
 
   async function savePayment(payment) {

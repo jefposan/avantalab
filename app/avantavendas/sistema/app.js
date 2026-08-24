@@ -18,10 +18,25 @@ const CACHE_VENDAS_STORE = 'sessoes';
 const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
 const CACHE_VENDAS_VERSAO = 5;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
-const PREFERENCIAS_VENDAS_VERSAO = 2;
+const PREFERENCIAS_VENDAS_VERSAO = 3;
 const META_CELEBRADA_PREFIX = 'avantalab.vendas_mobile.meta_celebrada';
 const IDS_ATALHOS_PREFERENCIAS_VENDAS = new Set(['tema', 'dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao']);
 const IDS_SALA_PREFERENCIAS_VENDAS = new Set(['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'novidades', 'divulgacao', 'informacoes']);
+const IDS_CARDS_CONFIGURACOES_VENDAS = new Set([
+  'conta-vendas',
+  'dados-usuario',
+  'dados-seguranca',
+  'aparencia',
+  'meta-periodo',
+  'integracao-gestao',
+  'empresas-conteudos',
+  'senha-conta',
+  'catalogo-produtos',
+  'controle-estoque',
+  'aplicativo-web',
+  'resetar-perfil',
+  'excluir-conta',
+]);
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
 const FIM_MES = new Date(HOJE.getFullYear(), HOJE.getMonth() + 1, 0);
@@ -84,6 +99,7 @@ const estadoInicial = {
   agendaAlertaAniversarioDias: 7,
   metaMensal: 0,
   dashboardDiasInativos: 30,
+  dashboardClientesInativosOrdem: 'mais-antiga',
   dashboardConsignadosExpandido: false,
   dashboardEvolucaoMesSelecionado: '',
   dashboardEstoqueExpandido: false,
@@ -106,8 +122,10 @@ const estadoInicial = {
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
   ordemSalaBotoes: [],
+  ordemCardsConfiguracoes: [],
   nomeEmpresaComprovantes: '',
   organizandoSalaBotoes: false,
+  organizandoCardsConfiguracoes: false,
 };
 
 let state = carregarEstado();
@@ -345,6 +363,7 @@ let navegacaoInferiorBloqueadaAte = 0;
 let estoqueProdutoAtualId = '';
 let estoqueMovimentosAtuais = [];
 let arrasteSalaBotoes = null;
+let arrasteCardsConfiguracoes = null;
 let preparandoRecursosSala = false;
 let recursosSalaBotoesPromise = null;
 const imagensSalaBotoesPrecarregadas = new Map();
@@ -576,7 +595,15 @@ function carregarEstado() {
     // Pesquisas são contexto temporário: jamais são restauradas junto com a
     // sala de botões em uma nova abertura.
     if (!salvo) return { ...estadoInicial };
-    const estadoLocal = { ...estadoInicial, ...salvo, carrinho: [], busca: '', menuAberto: true };
+    const estadoLocal = {
+      ...estadoInicial,
+      ...salvo,
+      carrinho: [],
+      busca: '',
+      menuAberto: true,
+      organizandoSalaBotoes: false,
+      organizandoCardsConfiguracoes: false,
+    };
     return { ...estadoLocal, ...normalizarPreferenciasVendas(estadoLocal) };
   } catch {
     return { ...estadoInicial };
@@ -600,16 +627,21 @@ function normalizarPreferenciasVendas(origem = {}) {
   const ordemSalaBotoes = Array.isArray(origem.ordemSalaBotoes)
     ? [...new Set(origem.ordemSalaBotoes.filter((id) => IDS_SALA_PREFERENCIAS_VENDAS.has(id)))]
     : [];
+  const ordemCardsConfiguracoes = Array.isArray(origem.ordemCardsConfiguracoes)
+    ? [...new Set(origem.ordemCardsConfiguracoes.filter((id) => IDS_CARDS_CONFIGURACOES_VENDAS.has(id)))]
+    : [];
   return {
     versao: PREFERENCIAS_VENDAS_VERSAO,
     temaEscuro: Boolean(origem.temaEscuro),
     atalhoInferiorEsquerdo: atalhoEsquerdo,
     atalhoInferiorDireito: atalhoDireito,
     ordemSalaBotoes,
+    ordemCardsConfiguracoes,
     nomeEmpresaComprovantes: String(origem.nomeEmpresaComprovantes || '').trim().slice(0, 80),
     agendaAlertaAniversarioDias: limitarNumeroPreferenciaVendas(origem.agendaAlertaAniversarioDias, 0, 30, estadoInicial.agendaAlertaAniversarioDias),
     metaMensal: limitarNumeroPreferenciaVendas(origem.metaMensal, 0, Number.MAX_SAFE_INTEGER, estadoInicial.metaMensal),
     dashboardDiasInativos: limitarNumeroPreferenciaVendas(origem.dashboardDiasInativos, 1, 365, estadoInicial.dashboardDiasInativos),
+    dashboardClientesInativosOrdem: origem.dashboardClientesInativosOrdem === 'mais-recente' ? 'mais-recente' : 'mais-antiga',
   };
 }
 
@@ -720,14 +752,16 @@ function salvarEstado() {
     agendaAlertaAniversarioDias: state.agendaAlertaAniversarioDias,
     metaMensal: state.metaMensal,
     dashboardDiasInativos: state.dashboardDiasInativos,
+    dashboardClientesInativosOrdem: state.dashboardClientesInativosOrdem,
     dashboardConsignadosExpandido: state.dashboardConsignadosExpandido,
     dashboardEvolucaoMesSelecionado: state.dashboardEvolucaoMesSelecionado,
     temaEscuro: state.temaEscuro,
     atalhoInferiorEsquerdo: state.atalhoInferiorEsquerdo,
     atalhoInferiorDireito: state.atalhoInferiorDireito,
     ordemSalaBotoes: state.ordemSalaBotoes,
+    ordemCardsConfiguracoes: state.ordemCardsConfiguracoes,
     nomeEmpresaComprovantes: state.nomeEmpresaComprovantes,
-  } : { ...state, carrinho: [] };
+  } : { ...state, carrinho: [], organizandoSalaBotoes: false, organizandoCardsConfiguracoes: false };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persistente));
   } catch (error) {
@@ -1182,6 +1216,7 @@ function rolarConteudoPrincipalVendas(top = 0, behavior = 'auto') {
 }
 
 function setAba(aba) {
+  if (state.aba === 'configuracoes' && aba !== 'configuracoes') cancelarArrasteCardsConfiguracoes(true);
   const entradaClientes = aba === 'clientes'
     && (state.aba !== 'clientes' || state.menuAberto);
   const entradaDivulgacao = aba === 'divulgacao'
@@ -3220,6 +3255,21 @@ function atualizarRegistroPersistido(lista, salvo) {
     : [salvo, ...atual];
 }
 
+// O servidor devolve os saldos confirmados na mesma transação do pedido. Isso
+// mantém o card Estoque atual sincronizado sem esperar uma nova abertura da
+// aplicação e sem repetir no navegador a regra financeira do banco.
+function aplicarEstoquesConfirmadosPedido(resposta) {
+  const atualizados = Array.isArray(resposta?.estoques_atualizados)
+    ? resposta.estoques_atualizados
+    : [];
+  if (!atualizados.length) return;
+  const porProduto = new Map(atualizados.map((item) => [String(item.produto_id || ''), Number(item.estoque || 0)]));
+  state.produtos = (state.produtos || []).map((produto) => porProduto.has(String(produto.id))
+    ? { ...produto, estoque: porProduto.get(String(produto.id)) }
+    : produto);
+  revisaoDadosOperacionais += 1;
+}
+
 // O Dashboard não mantém totais próprios: ele sempre é calculado a partir de
 // vendas e pagamentos confirmados. Esta etapa concentra a atualização após um
 // lançamento para que cache e uma eventual tela de Dashboard aberta usem a
@@ -3283,9 +3333,11 @@ async function reenviarPendenciasVendas() {
           const salvo = pendencia.payload.novo
             ? await window.VendasDb.saveOrder(pendencia.payload.pedido)
             : await window.VendasDb.updateOrder(pendencia.payload.pedido);
+          aplicarEstoquesConfirmadosPedido(salvo);
           state.vendas = atualizarRegistroPersistido(state.vendas, salvo);
         } else if (pendencia.tipo === 'pedido_excluir') {
-          await window.VendasDb.deleteOrder(pendencia.payload.id);
+          const exclusao = await window.VendasDb.deleteOrder(pendencia.payload.id);
+          aplicarEstoquesConfirmadosPedido(exclusao);
           state.vendas = state.vendas.filter((item) => item.id !== pendencia.payload.id);
         } else if (pendencia.tipo === 'pagamento_salvar') {
           const salvo = await window.VendasDb.savePayment(pendencia.payload);
@@ -3743,6 +3795,14 @@ function ajustarDiasInativosDashboard(delta) {
   render();
 }
 
+function alternarOrdemClientesInativosDashboard() {
+  state.dashboardClientesInativosOrdem = state.dashboardClientesInativosOrdem === 'mais-recente'
+    ? 'mais-antiga'
+    : 'mais-recente';
+  salvarEstado();
+  render();
+}
+
 function abrirClienteDashboard(clienteId) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
@@ -3766,7 +3826,14 @@ function clientesInativosDashboard() {
     const dias = ultima ? Math.floor((fim.getTime() - new Date(ultima.criado_em).getTime()) / 86400000) : null;
     return { id: cliente.id, nome: cliente.nome, ultima, dias, houveCompraNoPeriodo };
   }).filter((item) => !item.houveCompraNoPeriodo)
-    .sort((a, b) => (b.dias ?? Number.MAX_SAFE_INTEGER) - (a.dias ?? Number.MAX_SAFE_INTEGER));
+    .sort((a, b) => {
+      const maisRecentesPrimeiro = state.dashboardClientesInativosOrdem === 'mais-recente';
+      if (!a.ultima && !b.ultima) return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
+      if (!a.ultima) return maisRecentesPrimeiro ? 1 : -1;
+      if (!b.ultima) return maisRecentesPrimeiro ? -1 : 1;
+      const diferenca = new Date(a.ultima.criado_em).getTime() - new Date(b.ultima.criado_em).getTime();
+      return maisRecentesPrimeiro ? -diferenca : diferenca;
+    });
 }
 
 function renderDashboard() {
@@ -3812,6 +3879,9 @@ function renderDashboard() {
     }).join('')
     : '<tr><td colspan="2">Nenhum produto com controle de estoque ativo.</td></tr>';
   const limiteInativos = Math.max(1, Number(state.dashboardDiasInativos || 30));
+  const inativosMaisRecentesPrimeiro = state.dashboardClientesInativosOrdem === 'mais-recente';
+  const rotuloOrdemInativos = inativosMaisRecentesPrimeiro ? 'Recentes primeiro' : 'Antigas primeiro';
+  const proximaOrdemInativos = inativosMaisRecentesPrimeiro ? 'mais antigas primeiro' : 'mais recentes primeiro';
   return `
     <section class="dashboard-page">
       <div class="dashboard-sticky-head">
@@ -3842,7 +3912,7 @@ function renderDashboard() {
         </div>
       </section>
       <section class="dashboard-movement-card"><header><h3>${svgIcon('dollar')} Movimento financeiro</h3><small>${escapeHtml(nomeMesReferencia())}</small></header><div class="dashboard-finance-bars"><div><span>Vendas <b>${moeda(t.total)}</b></span><i><em style="width:${t.total / maiorMovimento * 100}%"></em></i></div><div><span>Recebimentos <b>${moeda(totalRecebido)}</b></span><i><em style="width:${totalRecebido / maiorMovimento * 100}%"></em></i></div></div></section>
-      <section class="dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}"><header><div><h3>${svgIcon('package')} Estoque consignado</h3><small>${consignados.pedidos.length} ${consignados.pedidos.length === 1 ? 'consignado ativo' : 'consignados ativos'} · ${consignados.quantidade.toLocaleString('pt-BR')} unidades · ${moeda(consignados.total)}</small></div><button type="button" onclick="alternarConsignadosDashboard()" aria-expanded="${state.dashboardConsignadosExpandido}">${state.dashboardConsignadosExpandido ? 'Recolher' : 'Ver produtos'} ${state.dashboardConsignadosExpandido ? '⌃' : '⌄'}</button></header>${state.dashboardConsignadosExpandido ? `<div class="dashboard-consignment-products">${listaConsignados}</div>` : ''}</section>
+      <article class="dashboard-panel dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}"><h3 class="dashboard-consignment-header"><span class="dashboard-consignment-heading"><span class="dashboard-consignment-title">${svgIcon('package')}<span>Estoque consignado</span></span><small>${consignados.pedidos.length} ${consignados.pedidos.length === 1 ? 'consignado ativo' : 'consignados ativos'} · ${consignados.quantidade.toLocaleString('pt-BR')} unidades · ${moeda(consignados.total)}</small></span><button type="button" class="dashboard-consignment-toggle" onclick="alternarConsignadosDashboard()" aria-expanded="${state.dashboardConsignadosExpandido}" aria-label="${state.dashboardConsignadosExpandido ? 'Recolher estoque consignado' : 'Expandir estoque consignado'}"><span>${state.dashboardConsignadosExpandido ? 'Recolher' : 'Expandir'}</span>${svgIcon(state.dashboardConsignadosExpandido ? 'chevron-up' : 'chevron-down')}</button></h3>${state.dashboardConsignadosExpandido ? `<div class="dashboard-consignment-products">${listaConsignados}</div>` : ''}</article>
       <section class="dashboard-tables">
         <article class="dashboard-panel dashboard-stock-panel ${estoqueExpandido ? 'is-expanded' : ''}">
           <h3>${svgIcon('package')}<span>Estoque atual</span><span class="dashboard-stock-actions">${estoqueExpandido && produtosEstoque.length > 3 ? `<button type="button" class="dashboard-stock-collapse" onclick="alternarEstoqueDashboard()" aria-expanded="true">Recolher</button>` : ''}<button type="button" class="dashboard-stock-search-toggle" onclick="alternarBuscaEstoqueDashboard()" aria-label="${estoquePesquisando ? 'Fechar busca de produtos' : 'Buscar produto no estoque'}" aria-expanded="${estoquePesquisando}" ${produtosEstoque.length ? '' : 'disabled'}>${svgIcon(estoquePesquisando ? 'x' : 'search')}</button></span></h3>
@@ -3850,7 +3920,7 @@ function renderDashboard() {
           <div class="dashboard-panel-body"><table><thead><tr><th>Produto</th><th>Estoque atual</th></tr></thead><tbody>${linhasEstoque}</tbody></table><p id="dashboardEstoqueBuscaVazia" class="dashboard-stock-empty" hidden>Nenhum produto encontrado.</p>${!estoquePesquisando && !estoqueExpandido && produtosEstoque.length > 3 ? `<button type="button" class="dashboard-stock-expand" onclick="alternarEstoqueDashboard()" aria-expanded="false">Expandir estoque</button>` : ''}</div>
         </article>
         <article class="dashboard-panel dashboard-top-clients"><h3>${svgIcon('users')} Top 10 Clientes</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Total comprado</th></tr></thead><tbody>${tabelaClientes}</tbody></table></div></article>
-        <article class="dashboard-panel dashboard-inactive-panel"><h3>${svgIcon('calendar')}<span>Clientes sem compra</span><span class="dashboard-days-control"><button type="button" onclick="ajustarDiasInativosDashboard(-5)" aria-label="Diminuir dias">−</button><b>${limiteInativos} dias</b><button type="button" onclick="ajustarDiasInativosDashboard(5)" aria-label="Aumentar dias">+</button></span></h3><p class="dashboard-inactive-help">Sem pedidos nos últimos ${limiteInativos} dias.</p><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
+        <article class="dashboard-panel dashboard-inactive-panel"><h3>${svgIcon('calendar')}<span>Clientes sem compra</span><span class="dashboard-inactive-actions"><button type="button" class="dashboard-inactive-sort" onclick="alternarOrdemClientesInativosDashboard()" aria-label="Ordenar última compra: ${proximaOrdemInativos}" title="${rotuloOrdemInativos}">${svgIcon(inativosMaisRecentesPrimeiro ? 'chevron-up' : 'chevron-down')}<span>${rotuloOrdemInativos}</span></button><span class="dashboard-days-control"><button type="button" onclick="ajustarDiasInativosDashboard(-5)" aria-label="Diminuir dias">−</button><b>${limiteInativos} dias</b><button type="button" onclick="ajustarDiasInativosDashboard(5)" aria-label="Aumentar dias">+</button></span></span></h3><p class="dashboard-inactive-help">Sem pedidos nos últimos ${limiteInativos} dias.</p><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
         <article class="dashboard-panel"><h3>${svgIcon('package')} Top 10 Produtos</h3><div class="dashboard-panel-body dashboard-product-chart">${graficoProdutos}</div></article>
         <article class="dashboard-panel"><h3>${svgIcon('target')} Rentabilidade</h3><div class="dashboard-panel-body profitability-report"><div><span>Receita de vendas</span><b>${moeda(t.total)}</b></div><div><span>Custo dos produtos</span><b>${moeda(t.custo)}</b></div><div class="highlight"><span>Margem de contribuição</span><b>${moeda(t.margem)}</b></div><div><span>Margem sobre vendas</span><b>${margemPercentual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</b></div><div class="${t.produtosSemCusto ? 'cost-warning' : 'cost-complete'}"><span>Cadastro de custos</span><b>${t.produtosSemCusto ? `${t.produtosSemCusto} ${t.produtosSemCusto === 1 ? 'produto sem custo' : 'produtos sem custo'}` : 'Completo no período'}</b></div></div></article>
       </section>
@@ -4686,6 +4756,269 @@ async function compartilharMaterialDivulgacao(materialId) {
   }
 }
 
+const CONFIGURACOES_CARD_ID_POR_TITULO = new Map([
+  ['Conta de vendas', 'conta-vendas'],
+  ['Dados do usuário', 'dados-usuario'],
+  ['Dados e segurança', 'dados-seguranca'],
+  ['Aparência', 'aparencia'],
+  ['Meta do período', 'meta-periodo'],
+  ['Integração com Gestão', 'integracao-gestao'],
+  ['Empresas e conteúdos', 'empresas-conteudos'],
+  ['Senha da conta AvantaLab', 'senha-conta'],
+  ['Catálogo de produtos', 'catalogo-produtos'],
+  ['Controle de estoque', 'controle-estoque'],
+  ['Aplicativo Web (PWA)', 'aplicativo-web'],
+  ['Resetar perfil de vendas', 'resetar-perfil'],
+  ['Excluir conta do Vendas', 'excluir-conta'],
+]);
+
+function prepararKanbanCardsConfiguracoes(markup) {
+  const template = document.createElement('template');
+  template.innerHTML = markup.trim();
+  const pagina = template.content.firstElementChild;
+  const grid = pagina?.querySelector('.settings-grid');
+  if (!pagina || !grid) return markup;
+
+  const cards = [...pagina.querySelectorAll('.settings-card')];
+  const cardsPorId = new Map();
+  cards.forEach((card) => {
+    const titulo = card.querySelector(':scope > h3')?.textContent?.trim() || '';
+    const id = CONFIGURACOES_CARD_ID_POR_TITULO.get(titulo);
+    if (!id) return;
+    card.dataset.settingsCard = id;
+    card.dataset.settingsCardLabel = titulo;
+    cardsPorId.set(id, card);
+  });
+  const ordem = [
+    ...(Array.isArray(state.ordemCardsConfiguracoes) ? state.ordemCardsConfiguracoes : []),
+    ...cardsPorId.keys(),
+  ].filter((id, indice, lista) => cardsPorId.has(id) && lista.indexOf(id) === indice);
+  grid.classList.add('settings-cards-kanban');
+  grid.classList.toggle('is-organizing', Boolean(state.organizandoCardsConfiguracoes));
+  grid.setAttribute('aria-label', 'Cards de configurações');
+  ordem.forEach((id) => grid.appendChild(cardsPorId.get(id)));
+
+  if (state.organizandoCardsConfiguracoes) {
+    cardsPorId.forEach((card, id) => {
+      const titulo = card.dataset.settingsCardLabel || 'Configuração';
+      card.classList.add('is-organizable');
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `Mover card ${titulo}`);
+      card.setAttribute('aria-roledescription', 'item reordenável');
+      card.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown');
+      card.setAttribute('onpointerdown', `iniciarArrasteCardsConfiguracoes(event,'${id}')`);
+      card.setAttribute('onpointermove', 'moverArrasteCardsConfiguracoes(event)');
+      card.setAttribute('onpointerup', 'finalizarArrasteCardsConfiguracoes(event)');
+      card.setAttribute('onpointercancel', 'finalizarArrasteCardsConfiguracoes(event)');
+      card.setAttribute('onkeydown', `moverCardsConfiguracoesTeclado(event,'${id}')`);
+    });
+  }
+
+  const cabecalho = pagina.querySelector('.module-sticky-head');
+  if (cabecalho) {
+    const barraOrganizar = document.createElement('div');
+    barraOrganizar.className = `settings-organize-toolbar${state.organizandoCardsConfiguracoes ? ' is-active' : ''}`;
+    const apresentacao = document.createElement('div');
+    apresentacao.className = 'settings-organize-copy';
+    apresentacao.innerHTML = `<strong>Organizar cards</strong><small>${state.organizandoCardsConfiguracoes ? 'Segure e arraste. As setas também movem.' : 'Altere a posição dos cards desta tela.'}</small>`;
+    const botaoOrganizar = document.createElement('button');
+    botaoOrganizar.type = 'button';
+    botaoOrganizar.className = `secondary settings-organize-toggle${state.organizandoCardsConfiguracoes ? ' is-active' : ''}`;
+    botaoOrganizar.setAttribute('onclick', 'alternarOrganizacaoCardsConfiguracoes()');
+    botaoOrganizar.setAttribute('aria-pressed', String(Boolean(state.organizandoCardsConfiguracoes)));
+    botaoOrganizar.setAttribute('aria-label', state.organizandoCardsConfiguracoes ? 'Concluir organização dos cards' : 'Organizar cards de configurações');
+    botaoOrganizar.innerHTML = `${iconeOrganizarSala(Boolean(state.organizandoCardsConfiguracoes))}<span>${state.organizandoCardsConfiguracoes ? 'Concluir organização' : 'Organizar cards'}</span>`;
+    barraOrganizar.setAttribute('aria-live', 'polite');
+    barraOrganizar.append(apresentacao, botaoOrganizar);
+    cabecalho.insertAdjacentElement('afterend', barraOrganizar);
+  }
+  return template.innerHTML;
+}
+
+function alternarOrganizacaoCardsConfiguracoes() {
+  cancelarArrasteCardsConfiguracoes(true);
+  state.organizandoCardsConfiguracoes = !state.organizandoCardsConfiguracoes;
+  render();
+}
+
+function criarFlutuanteCardsConfiguracoes(card, retangulo) {
+  const flutuante = card.cloneNode(true);
+  flutuante.classList.remove('is-organizable', 'is-dragging');
+  flutuante.classList.add('settings-kanban-overlay');
+  flutuante.removeAttribute('data-settings-card');
+  flutuante.removeAttribute('tabindex');
+  flutuante.removeAttribute('role');
+  flutuante.setAttribute('aria-hidden', 'true');
+  [flutuante, ...flutuante.querySelectorAll('*')].forEach((elemento) => {
+    elemento.removeAttribute?.('id');
+    [...(elemento.attributes || [])].forEach((atributo) => {
+      if (atributo.name.startsWith('on')) elemento.removeAttribute(atributo.name);
+    });
+  });
+  flutuante.style.width = `${retangulo.width}px`;
+  flutuante.style.height = `${retangulo.height}px`;
+  document.body.appendChild(flutuante);
+  return flutuante;
+}
+
+function ordemVisualCardsConfiguracoes(arraste, destinoIndice = arraste.destinoIndice) {
+  return ordemMovidaSalaBotoes(arraste.ordemInicial, arraste.origemIndice, destinoIndice);
+}
+
+function aplicarDeslocamentoCardsConfiguracoes(arraste) {
+  const ordemVisual = ordemVisualCardsConfiguracoes(arraste);
+  ordemVisual.forEach((id, indiceVisual) => {
+    const card = arraste.cards.get(id);
+    if (!card || id === arraste.id) return;
+    const indiceOriginal = arraste.ordemInicial.indexOf(id);
+    const origem = arraste.posicoes[indiceOriginal];
+    const destino = arraste.posicoes[indiceVisual];
+    transformarCardSalaBotoes(card, destino.left - origem.left, destino.top - origem.top);
+  });
+}
+
+function concluirVisualArrasteCardsConfiguracoes(arraste, ordemFinal = null) {
+  window.clearTimeout(arraste.tempoConclusao);
+  if (ordemFinal?.length && arraste.grid?.isConnected) {
+    ordemFinal.forEach((id) => {
+      const card = arraste.cards.get(id);
+      if (card) arraste.grid.appendChild(card);
+    });
+  }
+  arraste.cards.forEach((card) => {
+    limparTransformacaoCardSalaBotoes(card);
+    card.classList.remove('is-dragging');
+  });
+  arraste.flutuante?.remove();
+  document.body.classList.remove('settings-kanban-arrastando');
+  if (arrasteCardsConfiguracoes === arraste) arrasteCardsConfiguracoes = null;
+  requestAnimationFrame(() => arraste.cards.get(arraste.id)?.focus?.({ preventScroll: true }));
+}
+
+function cancelarArrasteCardsConfiguracoes(imediato = false) {
+  const arraste = arrasteCardsConfiguracoes;
+  if (!arraste) return;
+  window.clearTimeout(arraste.tempoConclusao);
+  if (!imediato && arraste.flutuante && arraste.posicoes[arraste.origemIndice]) {
+    const origem = arraste.posicoes[arraste.origemIndice];
+    arraste.flutuante.style.transition = reduzirMovimentoSalaBotoes() ? 'none' : 'transform 170ms cubic-bezier(.2,.8,.2,1)';
+    posicionarFlutuanteSalaBotoes(arraste, origem.left, origem.top, 1);
+    arraste.tempoConclusao = window.setTimeout(() => concluirVisualArrasteCardsConfiguracoes(arraste), reduzirMovimentoSalaBotoes() ? 0 : 175);
+    return;
+  }
+  concluirVisualArrasteCardsConfiguracoes(arraste, arraste.ordemFinal);
+}
+
+function iniciarArrasteCardsConfiguracoes(event, id) {
+  if (!state.organizandoCardsConfiguracoes || arrasteCardsConfiguracoes || (Number.isFinite(event.button) && event.button !== 0)) return;
+  event.preventDefault();
+  const card = event.currentTarget;
+  const grid = card?.closest('.settings-cards-kanban');
+  if (!card || !grid) return;
+  const cardsLista = [...grid.querySelectorAll(':scope > [data-settings-card]')];
+  const ordemInicial = cardsLista.map((item) => item.dataset.settingsCard || '');
+  const origemIndice = ordemInicial.indexOf(id);
+  if (origemIndice < 0) return;
+  const posicoes = cardsLista.map((item) => item.getBoundingClientRect());
+  const retangulo = posicoes[origemIndice];
+  const cards = new Map(cardsLista.map((item) => [item.dataset.settingsCard || '', item]));
+  const flutuante = criarFlutuanteCardsConfiguracoes(card, retangulo);
+  arrasteCardsConfiguracoes = {
+    id,
+    pointerId: event.pointerId,
+    card,
+    grid,
+    cards,
+    ordemInicial,
+    origemIndice,
+    destinoIndice: origemIndice,
+    posicoes,
+    largura: retangulo.width,
+    altura: retangulo.height,
+    deslocamentoX: event.clientX - retangulo.left,
+    deslocamentoY: event.clientY - retangulo.top,
+    flutuante,
+    encerrando: false,
+    ordemFinal: null,
+    tempoConclusao: 0,
+  };
+  posicionarFlutuanteSalaBotoes(arrasteCardsConfiguracoes, retangulo.left, retangulo.top);
+  document.body.classList.add('settings-kanban-arrastando');
+  card.setPointerCapture?.(event.pointerId);
+  card.classList.add('is-dragging');
+  try { navigator.vibrate?.(12); } catch { /* vibração indisponível */ }
+}
+
+function moverArrasteCardsConfiguracoes(event) {
+  const arraste = arrasteCardsConfiguracoes;
+  if (!arraste || arraste.encerrando || event.pointerId !== arraste.pointerId) return;
+  event.preventDefault();
+  const esquerda = event.clientX - arraste.deslocamentoX;
+  const topo = event.clientY - arraste.deslocamentoY;
+  posicionarFlutuanteSalaBotoes(arraste, esquerda, topo);
+  const destinoIndice = indiceMaisProximoSalaBotoes(arraste, esquerda + arraste.largura / 2, topo + arraste.altura / 2);
+  if (destinoIndice === arraste.destinoIndice) return;
+  arraste.destinoIndice = destinoIndice;
+  aplicarDeslocamentoCardsConfiguracoes(arraste);
+}
+
+function finalizarArrasteCardsConfiguracoes(event) {
+  const arraste = arrasteCardsConfiguracoes;
+  if (!arraste || arraste.encerrando || event.pointerId !== arraste.pointerId) return;
+  event.preventDefault();
+  arraste.encerrando = true;
+  if (arraste.card?.hasPointerCapture?.(event.pointerId)) arraste.card.releasePointerCapture(event.pointerId);
+  if (event.type === 'pointercancel') {
+    cancelarArrasteCardsConfiguracoes();
+    return;
+  }
+  const ordemFinal = ordemVisualCardsConfiguracoes(arraste);
+  arraste.ordemFinal = ordemFinal;
+  if (arraste.origemIndice !== arraste.destinoIndice) {
+    state.ordemCardsConfiguracoes = ordemFinal;
+    salvarEstado();
+  }
+  const destino = arraste.posicoes[arraste.destinoIndice];
+  arraste.flutuante.style.transition = reduzirMovimentoSalaBotoes() ? 'none' : 'transform 170ms cubic-bezier(.2,.8,.2,1)';
+  posicionarFlutuanteSalaBotoes(arraste, destino.left, destino.top, 1);
+  arraste.tempoConclusao = window.setTimeout(
+    () => concluirVisualArrasteCardsConfiguracoes(arraste, ordemFinal),
+    reduzirMovimentoSalaBotoes() ? 0 : 175,
+  );
+}
+
+function moverCardsConfiguracoesTeclado(event, id) {
+  if (!state.organizandoCardsConfiguracoes || arrasteCardsConfiguracoes) return;
+  const grid = event.currentTarget?.closest('.settings-cards-kanban');
+  if (!grid) return;
+  const colunas = Math.max(1, getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length);
+  const deslocamento = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : event.key === 'ArrowUp' ? -colunas : event.key === 'ArrowDown' ? colunas : 0;
+  if (!deslocamento) return;
+  const ordem = [...grid.querySelectorAll(':scope > [data-settings-card]')].map((card) => card.dataset.settingsCard || '');
+  const origemIndice = ordem.indexOf(id);
+  const destinoIndice = Math.max(0, Math.min(ordem.length - 1, origemIndice + deslocamento));
+  if (origemIndice < 0 || origemIndice === destinoIndice) return;
+  event.preventDefault();
+  const posicoesAnteriores = new Map([...grid.querySelectorAll(':scope > [data-settings-card]')].map((card) => [card.dataset.settingsCard || '', card.getBoundingClientRect()]));
+  const ordemFinal = ordemMovidaSalaBotoes(ordem, origemIndice, destinoIndice);
+  ordemFinal.forEach((cardId) => {
+    const card = grid.querySelector(`[data-settings-card="${cardId}"]`);
+    if (card) grid.appendChild(card);
+  });
+  [...grid.querySelectorAll(':scope > [data-settings-card]')].forEach((card) => {
+    const anterior = posicoesAnteriores.get(card.dataset.settingsCard || '');
+    const atual = card.getBoundingClientRect();
+    if (!anterior) return;
+    transformarCardSalaBotoes(card, anterior.left - atual.left, anterior.top - atual.top, false);
+    requestAnimationFrame(() => requestAnimationFrame(() => transformarCardSalaBotoes(card, 0, 0)));
+    window.setTimeout(() => limparTransformacaoCardSalaBotoes(card), reduzirMovimentoSalaBotoes() ? 0 : 180);
+  });
+  state.ordemCardsConfiguracoes = ordemFinal;
+  salvarEstado();
+  requestAnimationFrame(() => grid.querySelector(`[data-settings-card="${id}"]`)?.focus?.({ preventScroll: true }));
+}
+
 function renderConfiguracoes() {
   const t = totaisPeriodo();
   const progresso = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
@@ -4713,7 +5046,7 @@ function renderConfiguracoes() {
   const contas = state.contasVendas || [];
   const podeGerirDadosConta = ['proprietario', 'administrador'].includes(contaAtiva?.papel);
   const podeRestaurarDadosConta = contaAtiva?.papel === 'proprietario';
-  return `<section class="module-page settings-page">
+  const markup = `<section class="module-page settings-page">
     <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div><button type="button" class="danger settings-header-exit" onclick="abrirConfirmacaoSair()">${svgIcon('log-out')} Sair</button></div></div>
     <div class="settings-grid">
       <article class="settings-card settings-profile-card settings-sales-account-card"><h3>${svgIcon('users')} Conta de vendas</h3><p>Clientes, pedidos, pagamentos, agenda e permissões são separados por conta.</p><div class="settings-sales-account-field"><label for="contaVendasAtiva">Conta ativa:</label><select id="contaVendasAtiva" onchange="trocarContaVendas(this.value)">${contas.map((conta) => `<option value="${escapeAttr(conta.id)}" ${conta.id === contaAtiva?.id ? 'selected' : ''}>${escapeHtml(conta.nome)}${conta.empresa_nome ? ` · ${escapeHtml(conta.empresa_nome)}` : ''}</option>`).join('')}</select></div><div class="settings-receipt-name-field"><label for="nomeEmpresaComprovantes">Nome nos comprovantes:</label><div><input id="nomeEmpresaComprovantes" maxlength="80" autocomplete="organization" value="${escapeAttr(state.nomeEmpresaComprovantes || '')}" placeholder="${escapeAttr(contaAtiva?.nome || 'Nome da empresa')}" ${podeGerirDadosConta ? '' : 'disabled'}><button type="button" class="primary" onclick="salvarNomeEmpresaComprovantes()" ${podeGerirDadosConta ? '' : 'disabled'}>${svgIcon('save')} Salvar</button></div><small>Usado somente nos comprovantes deste perfil.</small></div><div class="settings-sales-account-role">${contaAtiva?.papel === 'proprietario' ? 'Você é o proprietário desta conta.' : `Seu acesso: ${escapeHtml(contaAtiva?.papel || 'vendedor')}.`}</div><div class="actions"><button class="secondary" onclick="abrirContasVendas()">${svgIcon('users')} Gerenciar contas</button></div></article>
@@ -4731,6 +5064,7 @@ function renderConfiguracoes() {
     ${podeRestaurarDadosConta ? `<article class="settings-card settings-reset-card"><h3>${svgIconEstavel('rotate-ccw')} Resetar perfil de vendas</h3><p>Cria um ponto de segurança e apaga lançamentos, clientes, agenda e produtos somente do perfil ativo.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIconEstavel('rotate-ccw')} Resetar perfil ativo</button></article>` : ''}
     <article class="settings-card settings-delete-account-card"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas</h3><p>Remove definitivamente sua conta e os dados deste aplicativo. Outros serviços AvantaLab, quando utilizados separadamente, não serão alterados.</p><button class="danger" onclick="abrirExclusaoContaVendas()">${svgIconEstavel('user-x')} Excluir conta do Vendas</button></article>
   </section>`;
+  return prepararKanbanCardsConfiguracoes(markup);
 }
 
 function salvarMeta() {
@@ -6348,6 +6682,7 @@ async function finalizarPedidoCliente() {
           () => rascunho.editandoId ? window.VendasDb.updateOrder(venda) : window.VendasDb.saveOrder(venda),
         )
       : venda;
+    aplicarEstoquesConfirmadosPedido(salvo);
     state.vendas = rascunho.editandoId
       ? state.vendas.map((item) => item.id === salvo.id ? salvo : item)
       : [salvo, ...state.vendas];
@@ -6963,7 +7298,8 @@ async function excluirPedido(pedidoId, retornoClienteId = '', retornoAba = '', r
   iniciarMutacaoDadosVendas();
   try {
     if (backendAtivo) {
-      await executarMutacaoGarantidaVendas('pedido_excluir', pedidoId, { id: pedidoId }, () => window.VendasDb.deleteOrder(pedidoId));
+      const exclusao = await executarMutacaoGarantidaVendas('pedido_excluir', pedidoId, { id: pedidoId }, () => window.VendasDb.deleteOrder(pedidoId));
+      aplicarEstoquesConfirmadosPedido(exclusao);
     }
     state.vendas = state.vendas.filter((item) => item.id !== pedidoId);
     pedidoClienteRascunho = null; conversaoConsignadoRascunho = null;
@@ -7033,10 +7369,14 @@ async function gerarPedidoDoConsignado(pedidoId) {
     let salvoConsignado = consignadoAtualizado;
     if (backendAtivo) {
       salvoPedido = await window.VendasDb.saveOrder(pedido);
+      aplicarEstoquesConfirmadosPedido(salvoPedido);
       try {
         salvoConsignado = await window.VendasDb.updateOrder(consignadoAtualizado);
+        aplicarEstoquesConfirmadosPedido(salvoConsignado);
       } catch (error) {
-        await window.VendasDb.deleteOrder(salvoPedido.id).catch(() => {});
+        await window.VendasDb.deleteOrder(salvoPedido.id)
+          .then(aplicarEstoquesConfirmadosPedido)
+          .catch(() => {});
         throw error;
       }
     }
@@ -8347,6 +8687,7 @@ async function finalizarVenda() {
     const salva = backendAtivo
       ? await executarMutacaoGarantidaVendas('pedido_salvar', venda.id, { novo: true, pedido: venda }, () => window.VendasDb.saveOrder(venda))
       : venda;
+    aplicarEstoquesConfirmadosPedido(salva);
     state.vendas.unshift(salva);
     state.carrinho = [];
     await confirmarMutacaoDadosVendas();

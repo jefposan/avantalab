@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.11.0-av90 - 2026-08-24
+
+- AvantaVendas: **Estoque consignado** recupera sua largura integral, o resumo
+  no cabeçalho e a lista original em duas colunas no desktop e uma no celular.
+  O cabeçalho segue o padrão azul dos cards do Dashboard e mantém o controle
+  Expandir/Recolher com setas direcionais.
+
+## 1.11.0-av89 - 2026-08-24
+
+- AvantaVendas: o acesso ao Kanban de Configurações ganhou uma faixa própria e
+  um botão sempre identificado como **Organizar cards**, inclusive no celular.
+  O comando deixa de ficar reduzido a um ícone e passa a explicar o arraste.
+
+## 1.11.0-av88 - 2026-08-24
+
+- AvantaVendas: o estoque acompanhado passa a ser movimentado na mesma
+  transação dos pedidos. Venda, consignado e item bonificado abatem o saldo;
+  edição, cancelamento e exclusão devolvem somente a diferença necessária.
+- AvantaVendas: a conversão de consignado em venda preserva o saldo já abatido,
+  sem saída duplicada, e o Dashboard recebe imediatamente o estoque confirmado.
+- AvantaVendas: uma reconciliação única incorpora as saídas registradas após o
+  início do controle de cada produto, respeitando ajustes físicos posteriores.
+
+## 1.11.0-av87 - 2026-08-24
+
+- AvantaVendas: os cards de Configurações agora podem ser organizados com o
+  Kanban estável do Projeto Avanta, por arraste ou teclado. A ordem acompanha o
+  perfil e permanece igual nos próximos acessos.
+- AvantaVendas: **Estoque consignado** passa a usar o mesmo card institucional
+  dos demais indicadores do Dashboard, preservando expansão e recolhimento.
+- AvantaVendas: **Clientes sem compra** ganhou ordenação pela data da última
+  compra, alternando entre as mais antigas e as mais recentes.
+
 ## 1.11.0-av86 - 2026-08-24
 
 - AvantaVendas: a casca móvel deixa de aceitar rolagem programática oculta ao

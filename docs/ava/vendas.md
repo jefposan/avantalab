@@ -2,6 +2,24 @@
 
 <!-- ava-version: 1.11.0 -->
 
+> Revisão 1.11.0-av90: Estoque consignado preserva o card largo, o resumo no
+> cabeçalho e a lista original, agora com o cabeçalho institucional do Dashboard
+> e o controle Expandir/Recolher acompanhado por seta para cima ou para baixo.
+
+> Revisão 1.11.0-av89: Configurações exibe uma faixa própria e um botão
+> **Organizar cards** sempre identificado, inclusive no celular, para ativar o
+> Kanban e reorganizar os cards por arraste ou teclado.
+
+> Revisão 1.11.0-av88: vendas, consignados e itens bonificados atualizam o
+> estoque acompanhado na mesma transação do pedido. Edições e exclusões aplicam
+> somente a diferença, a conversão de consignado não duplica a saída e o
+> Dashboard recebe imediatamente o saldo confirmado pelo servidor.
+
+> Revisão 1.11.0-av87: os cards de Configurações podem ser reorganizados pelo
+> Kanban estável e mantêm a ordem no perfil. No Dashboard, Estoque consignado
+> segue o padrão institucional e Clientes sem compra alterna entre datas mais
+> antigas e mais recentes.
+
 > Revisão 1.11.0-av86: a casca móvel não se desloca mais ao focar e alternar o
 > tema em Configurações; o menu inferior permanece ancorado nos dois modos.
 
@@ -154,7 +172,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 86 -->
+<!-- avantavendas-asset-revision: 90 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
@@ -1705,6 +1723,10 @@ função existir ali.
   posição da rolagem, até chegar ao fim do histórico.
 - Em **Clientes sem compra**, o seletor define o intervalo sem pedidos e todos os
   clientes enquadrados são exibidos; o cabeçalho permanece visível durante a rolagem.
+- No Dashboard, **Estoque consignado** ocupa a largura integral, mantém o resumo
+  no cabeçalho e lista os produtos com o nome à esquerda e a quantidade à
+  direita. **Expandir** e **Recolher** alternam a lista e mostram a seta
+  correspondente.
 - Ao fechar um comprovante aberto pelas listas, o retorno esperado é a mesma lista
   anterior. Aniversário cadastrado entra na agenda e pode aparecer no aviso do
   cabeçalho no dia correspondente.
@@ -1795,6 +1817,8 @@ função existir ali.
   entre o arquivo anterior e o próximo da pasta.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
   estoque, vínculos comerciais, destino financeiro, PWA e exclusão do perfil.
+  A faixa **Organizar cards** fica visível também no celular e ativa o Kanban
+  para mudar a posição dos cards por arraste ou pelas setas do teclado.
   Em **Dados e segurança**, proprietário e administrador podem fazer o backup
   completo da conta ativa e criar pontos de restauração; somente o proprietário
   restaura, exclui pontos ou reseta esse perfil. O snapshot inclui perfil,
