@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.2.01-av81 - 2026-08-24
+
+- AvantaVendas: a data da movimentação de estoque passou a usar máscara fixa
+  `dd/mm/aaaa`, independente do navegador, com conteúdo centralizado no campo.
+
 ## 1.10.2-av80 - 2026-08-24
 
 - AvantaVendas: o formulário de estoque passou a registrar a data própria da

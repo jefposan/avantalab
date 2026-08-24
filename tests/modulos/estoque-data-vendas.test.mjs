@@ -13,13 +13,19 @@ const migracao = ler('supabase/migrations/20260824120000_data_movimentacao_estoq
 test('quantidade e data compartilham a linha da movimentação de estoque', () => {
   assert.match(aplicacao, /class="stock-movement-fields"/);
   assert.match(aplicacao, /id="estoqueQuantidade"/);
-  assert.match(aplicacao, /id="estoqueData" type="date"/);
+  assert.match(aplicacao, /id="estoqueData" type="text"/);
+  assert.match(aplicacao, /placeholder="dd\/mm\/aaaa"/);
+  assert.match(aplicacao, /oninput="formatarDataEstoqueInput\(this\)"/);
+  assert.match(aplicacao, /dataAtualEstoqueBR\(\)/);
   assert.match(aplicacao, /Data de entrada/);
   assert.match(aplicacao, /Data do ajuste/);
   assert.match(estilos, /\.stock-movement-fields \{ display: grid; grid-template-columns: minmax\(0,\.72fr\) minmax\(0,1\.28fr\);/);
+  assert.match(estilos, /\.stock-date-field label, \.stock-date-field input \{ text-align: center; \}/);
 });
 
 test('data informada é validada, enviada e usada no histórico', () => {
+  assert.match(aplicacao, /dataEstoqueBRparaISO\(dataInformada\)/);
+  assert.match(aplicacao, /Informe uma data válida no formato dd\/mm\/aaaa\./);
   assert.match(aplicacao, /dataMovimentacao > dataAtualEstoqueISO\(\)/);
   assert.match(aplicacao, /dataMovimentacaoEstoqueBR\(movimento\)/);
   assert.match(cliente, /p_data: dataMovimentacao/);

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.10.2 -->
+<!-- ava-version: 1.10.2.01 -->
+
+> Revisão 1.10.2.01: o formato visual da data de estoque foi refinado no
+> AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.10.2: o AvantaVendas passou a registrar a data própria das
 > movimentações de estoque; sem alteração operacional na Gestão Mobile.

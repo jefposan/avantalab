@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.10.2 -->
+<!-- ava-version: 1.10.2.01 -->
+
+> Revisão 1.10.2.01-av81: a data da entrada ou ajuste de estoque é digitada
+> no formato fixo **dd/mm/aaaa** e aparece centralizada no campo.
 
 > Revisão 1.10.2-av80: em **Configurações > Controle de estoque**, quantidade
 > e data ficam na mesma linha. A data informada identifica a entrada ou o
@@ -134,7 +137,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 80 -->
+<!-- avantavendas-asset-revision: 81 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
