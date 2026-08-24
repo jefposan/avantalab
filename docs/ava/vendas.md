@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.10.2.02 -->
+<!-- ava-version: 1.11.0 -->
+
+> Revisão 1.11.0-av83: o Dashboard exibe o card **Estoque atual** com produtos
+> acompanhados, saldo, expansão/recolhimento e busca pela lupa.
 
 > Revisão 1.10.2.02-av82: tocar na data da entrada ou ajuste abre o calendário
 > centralizado padrão do sistema, mantendo a apresentação **dd/mm/aaaa**.
@@ -140,7 +143,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 82 -->
+<!-- avantavendas-asset-revision: 83 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

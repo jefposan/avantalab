@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.10.2.02 -->
+<!-- ava-version: 1.11.0 -->
+
+> Revisão 1.11.0: o card de estoque foi adicionado ao Dashboard do
+> AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.10.2.02: o seletor de data do estoque foi padronizado no
 > AvantaVendas; sem alteração operacional na Gestão Mobile.

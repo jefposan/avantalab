@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.0-av83 - 2026-08-24
+
+- AvantaVendas: o Dashboard ganhou o card **Estoque atual**, com nome do produto
+  à esquerda, saldo à direita, expansão/recolhimento e pesquisa aberta pela lupa.
+
 ## 1.10.2.02-av82 - 2026-08-24
 
 - AvantaVendas: tocar na data da movimentação de estoque agora abre o mesmo

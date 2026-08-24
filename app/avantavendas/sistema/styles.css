@@ -1122,6 +1122,24 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dashboard-top-clients td { padding-top: 10px; padding-bottom: 10px; font-size: 13px; }
 .dashboard-top-clients td:first-child b { color: #334155; font-size: 15px; line-height: 1.2; }
 .dashboard-top-clients td small { margin-top: 4px; font-size: 11px; }
+.dashboard-stock-panel h3 > span:first-of-type { min-width: 0; }
+.dashboard-stock-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 7px; margin-left: auto; }
+.dashboard-stock-actions button { display: inline-flex; min-height: 30px; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; color: #fff; background: rgba(255,255,255,.12); font: inherit; font-size: 10px; font-weight: 800; }
+.dashboard-stock-actions button:focus-visible { outline: 3px solid rgba(255,255,255,.55); outline-offset: 2px; }
+.dashboard-stock-collapse { padding: 0 11px; }
+.dashboard-stock-actions .dashboard-stock-search-toggle { width: 30px; padding: 0; }
+.dashboard-stock-search-toggle .svg-icon { width: 15px !important; height: 15px !important; }
+.dashboard-stock-actions button:disabled { cursor: not-allowed; opacity: .45; }
+.dashboard-stock-search { padding: 10px 12px 0; }
+.dashboard-stock-search > div { display: flex; height: 40px; align-items: center; gap: 8px; border: 1px solid #cfe1ed; border-radius: 12px; padding: 0 8px 0 11px; background: #f5fbff; }
+.dashboard-stock-search .svg-icon { width: 16px; height: 16px; flex: 0 0 auto; color: #1687D9; }
+.dashboard-stock-search input { min-width: 0; height: 38px; flex: 1; border: 0; outline: 0; color: #334155; background: transparent; font: inherit; font-size: 16px; font-weight: 650; }
+.dashboard-stock-search button { display: grid; width: 27px; height: 27px; flex: 0 0 27px; place-items: center; border: 0; border-radius: 999px; padding: 0; color: #1687D9; background: #fff; font-size: 18px; font-weight: 900; }
+.dashboard-stock-panel td { padding-top: 10px; padding-bottom: 10px; font-size: 12px; }
+.dashboard-stock-panel td:first-child b { color: #334155; font-size: 13px; }
+.dashboard-stock-panel td:last-child b { color: #0874a8; font-size: 13px; white-space: nowrap; }
+.dashboard-stock-expand { min-height: 34px; border: 0; padding: 8px 0 0; color: #0874a8; background: transparent; font: inherit; font-size: 11px; font-weight: 850; text-align: left; }
+.dashboard-stock-empty { margin: 10px 0 2px; color: #64748b; font-size: 11px; }
 .dashboard-product-chart { display: grid; gap: 9px; }.dashboard-bar-row { display: grid; grid-template-columns: minmax(100px,.8fr) 1.2fr; align-items: center; gap: 10px; }.dashboard-bar-row span { min-width: 0; }.dashboard-bar-row b, .dashboard-bar-row small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.dashboard-bar-row b { color: #334155; font-size: 10px; }.dashboard-bar-row small { margin-top: 2px; color: #94a3b8; font-size: 8px; }.dashboard-bar-row i { margin: 0; }
 .profitability-report { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }.profitability-report > div { display: grid; gap: 3px; border-radius: 9px; padding: 9px; color: #64748b; background: #f4f7fa; font-size: 9px; }.profitability-report b { color: #0A1F44; font-size: 13px; }.profitability-report .highlight { border: 1px solid #8fd4cf; background: #eaf9f7; }.profitability-report .highlight b { color: #167f8c; }
 .empty-module { max-width: 640px; }
@@ -2627,6 +2645,11 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dark-theme .dashboard-kpis .kpi strong, .dark-theme .dashboard-finance-bars span b, .dark-theme .dashboard-bar-row b, .dark-theme .profitability-report b { color: #f8fafc; }
 .dark-theme .dashboard-panel th, .dark-theme .dashboard-panel td { border-color: #334155; color: #cbd5e1; }
 .dark-theme .dashboard-panel-body, .dark-theme .dashboard-product-chart { background: #172033; }
+.dark-theme .dashboard-stock-search > div { border-color: #31536d; background: #102838; }
+.dark-theme .dashboard-stock-search input { color: #f8fafc; }
+.dark-theme .dashboard-stock-search button { color: #67e8f9; background: #172033; }
+.dark-theme .dashboard-stock-panel td:first-child b { color: #f8fafc; }
+.dark-theme .dashboard-stock-panel td:last-child b, .dark-theme .dashboard-stock-expand { color: #67e8f9; }
 .dark-theme .dashboard-inactive-panel thead { background: #172033; box-shadow: 0 1px 0 #334155; }
 .dark-theme .profitability-report > div { color: #cbd5e1; background: #111d2f; }
 .dark-theme .profitability-report .highlight { border-color: #155e75; background: #102838; }

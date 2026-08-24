@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.10.2.02: entradas e ajustes de estoque do Vendas usam o
-// calendário centralizado e exibem dd/mm/aaaa, sem substituir a auditoria.
+// Revisado na versão 1.11.0: o Dashboard do Vendas mostra estoque atual com
+// expansão, recolhimento e busca; lançamentos usam o calendário centralizado.
 // Revisado na versão 1.10.1.03: Código AVA do perfil pode ser copiado no Mobile.
 // Revisado na versão 1.10.1.01: Gerenciar perfil no Mobile exibe o Código AVA.
 // Revisado na versão 1.10.1: novos pedidos de conteúdo do Vendas avisam Gestor
@@ -340,6 +340,7 @@ CLIENTES
 - A abertura do Vendas reaproveita a validação já concluída do perfil e libera a tela antes da sincronização automática do catálogo. A opção Verificar agora atualiza apenas o catálogo, sem recarregar todo o sistema.
 - Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas e exibem 10 registros por vez; Carregar mais acrescenta o próximo lote sem perder a posição. Abrir um pagamento mostra o comprovante e permite editar ou excluir o registro.
 - Depois da confirmação no servidor de um pedido ou pagamento, o Dashboard recalcula seus totais, recebimentos, ranking e indicadores com a mesma revisão salva no cache local. Ao abrir o Dashboard, o lançamento confirmado já faz parte do período correspondente.
+- O card **Estoque atual** do Dashboard lista produtos ativos acompanhados, com nome à esquerda e saldo à direita. Ele mostra três itens inicialmente, pode expandir/recolher toda a lista e abre a pesquisa interna pela lupa.
 - Ao tocar em Pagamento no card da cliente, o foco ocorre no mesmo toque: o formulário permanece fixo, o campo Valor pago fica selecionado e o teclado numérico abre pronto para digitação.
 - Em novos pedidos e pagamentos, a lista de clientes mostra somente os nomes em fonte maior, embora a pesquisa também aceite telefone e e-mail.
 - Datas de pedidos, pagamentos e demais registros são exibidas apenas com dia, mês e ano, sem horário.

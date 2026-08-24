@@ -86,6 +86,9 @@ const estadoInicial = {
   dashboardDiasInativos: 30,
   dashboardConsignadosExpandido: false,
   dashboardEvolucaoMesSelecionado: '',
+  dashboardEstoqueExpandido: false,
+  dashboardEstoqueBuscaAberta: false,
+  dashboardEstoqueBusca: '',
   temaEscuro: false,
   acessoVendas: null,
   solicitacaoAcesso: null,
@@ -3680,6 +3683,46 @@ function alternarConsignadosDashboard() {
   render();
 }
 
+function alternarEstoqueDashboard() {
+  state.dashboardEstoqueExpandido = !state.dashboardEstoqueExpandido;
+  if (!state.dashboardEstoqueExpandido) {
+    state.dashboardEstoqueBuscaAberta = false;
+    state.dashboardEstoqueBusca = '';
+  }
+  render();
+}
+
+function alternarBuscaEstoqueDashboard() {
+  state.dashboardEstoqueBuscaAberta = !state.dashboardEstoqueBuscaAberta;
+  if (state.dashboardEstoqueBuscaAberta) state.dashboardEstoqueExpandido = true;
+  else state.dashboardEstoqueBusca = '';
+  const deveFocar = state.dashboardEstoqueBuscaAberta;
+  render();
+  if (deveFocar) requestAnimationFrame(() => document.getElementById('dashboardEstoqueBusca')?.focus());
+}
+
+function atualizarBuscaEstoqueDashboard(valorBusca) {
+  state.dashboardEstoqueBusca = String(valorBusca || '');
+  const termo = normalizar(state.dashboardEstoqueBusca.trim());
+  const linhas = [...document.querySelectorAll('[data-dashboard-estoque-busca]')];
+  let encontrados = 0;
+  linhas.forEach((linha) => {
+    const corresponde = !termo || String(linha.dataset.dashboardEstoqueBusca || '').includes(termo);
+    linha.hidden = !corresponde;
+    if (corresponde) encontrados += 1;
+  });
+  const vazio = document.getElementById('dashboardEstoqueBuscaVazia');
+  if (vazio) vazio.hidden = encontrados > 0;
+}
+
+function limparBuscaEstoqueDashboard() {
+  state.dashboardEstoqueBusca = '';
+  const campo = document.getElementById('dashboardEstoqueBusca');
+  if (campo) campo.value = '';
+  atualizarBuscaEstoqueDashboard('');
+  campo?.focus();
+}
+
 function ajustarDiasInativosDashboard(delta) {
   state.dashboardDiasInativos = Math.max(1, Math.min(365, Number(state.dashboardDiasInativos || 30) + Number(delta || 0)));
   render();
@@ -3739,6 +3782,20 @@ function renderDashboard() {
   const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr class="dashboard-inactive-row" tabindex="0" role="button" onclick="abrirClienteDashboard('${item.id}')" onkeydown="if(event.key==='Enter'||event.key===' ')abrirClienteDashboard('${item.id}')"><td>${escapeHtml(item.nome)}</td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente sem pedido no período selecionado.</td></tr>';
   const graficoProdutos = produtosTop.length ? produtosTop.map((item) => `<div class="dashboard-bar-row"><span><b>${escapeHtml(item.nome)}</b><small>${item.qtd} un. · ${moeda(item.total)}</small></span><i><em style="width:${Math.max(4, item.qtd / produtosTop[0].qtd * 100)}%"></em></i></div>`).join('') : '<p>Sem vendas de produtos no período.</p>';
   const listaConsignados = consignados.produtos.length ? consignados.produtos.map((item) => `<div><span>${escapeHtml(item.nome)}</span><b>${item.quantidade.toLocaleString('pt-BR')} un.</b></div>`).join('') : '<p>Nenhum produto consignado ativo.</p>';
+  const produtosEstoque = state.produtos
+    .filter((produto) => produto.ativo !== false && produto.estoque_controlado)
+    .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
+  const estoquePesquisando = Boolean(state.dashboardEstoqueBuscaAberta);
+  const estoqueExpandido = Boolean(state.dashboardEstoqueExpandido);
+  const produtosEstoqueVisiveis = estoquePesquisando || estoqueExpandido ? produtosEstoque : produtosEstoque.slice(0, 3);
+  const linhasEstoque = produtosEstoqueVisiveis.length
+    ? produtosEstoqueVisiveis.map((produto) => {
+      const saldoEstoque = Number(produto.estoque || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
+      const unidadeEstoque = String(produto.unidade || 'un').trim() || 'un';
+      const buscaEstoque = normalizar([produto.nome, produto.sku, produto.codigo].filter(Boolean).join(' '));
+      return `<tr data-dashboard-estoque-busca="${escapeAttr(buscaEstoque)}"><td><b>${escapeHtml(produto.nome || 'Produto')}</b></td><td><b>${saldoEstoque} ${escapeHtml(unidadeEstoque)}</b></td></tr>`;
+    }).join('')
+    : '<tr><td colspan="2">Nenhum produto com controle de estoque ativo.</td></tr>';
   const limiteInativos = Math.max(1, Number(state.dashboardDiasInativos || 30));
   return `
     <section class="dashboard-page">
@@ -3772,6 +3829,11 @@ function renderDashboard() {
       <section class="dashboard-movement-card"><header><h3>${svgIcon('dollar')} Movimento financeiro</h3><small>${escapeHtml(nomeMesReferencia())}</small></header><div class="dashboard-finance-bars"><div><span>Vendas <b>${moeda(t.total)}</b></span><i><em style="width:${t.total / maiorMovimento * 100}%"></em></i></div><div><span>Recebimentos <b>${moeda(totalRecebido)}</b></span><i><em style="width:${totalRecebido / maiorMovimento * 100}%"></em></i></div></div></section>
       <section class="dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}"><header><div><h3>${svgIcon('package')} Estoque consignado</h3><small>${consignados.pedidos.length} ${consignados.pedidos.length === 1 ? 'consignado ativo' : 'consignados ativos'} · ${consignados.quantidade.toLocaleString('pt-BR')} unidades · ${moeda(consignados.total)}</small></div><button type="button" onclick="alternarConsignadosDashboard()" aria-expanded="${state.dashboardConsignadosExpandido}">${state.dashboardConsignadosExpandido ? 'Recolher' : 'Ver produtos'} ${state.dashboardConsignadosExpandido ? '⌃' : '⌄'}</button></header>${state.dashboardConsignadosExpandido ? `<div class="dashboard-consignment-products">${listaConsignados}</div>` : ''}</section>
       <section class="dashboard-tables">
+        <article class="dashboard-panel dashboard-stock-panel ${estoqueExpandido ? 'is-expanded' : ''}">
+          <h3>${svgIcon('package')}<span>Estoque atual</span><span class="dashboard-stock-actions">${estoqueExpandido && produtosEstoque.length > 3 ? `<button type="button" class="dashboard-stock-collapse" onclick="alternarEstoqueDashboard()" aria-expanded="true">Recolher</button>` : ''}<button type="button" class="dashboard-stock-search-toggle" onclick="alternarBuscaEstoqueDashboard()" aria-label="${estoquePesquisando ? 'Fechar busca de produtos' : 'Buscar produto no estoque'}" aria-expanded="${estoquePesquisando}" ${produtosEstoque.length ? '' : 'disabled'}>${svgIcon(estoquePesquisando ? 'x' : 'search')}</button></span></h3>
+          ${estoquePesquisando ? `<div class="dashboard-stock-search"><div>${svgIcon('search')}<input id="dashboardEstoqueBusca" type="search" autocomplete="off" enterkeyhint="search" value="${escapeAttr(state.dashboardEstoqueBusca)}" placeholder="Buscar produto" oninput="atualizarBuscaEstoqueDashboard(this.value)"><button type="button" onclick="limparBuscaEstoqueDashboard()" aria-label="Limpar busca">×</button></div></div>` : ''}
+          <div class="dashboard-panel-body"><table><thead><tr><th>Produto</th><th>Estoque atual</th></tr></thead><tbody>${linhasEstoque}</tbody></table><p id="dashboardEstoqueBuscaVazia" class="dashboard-stock-empty" hidden>Nenhum produto encontrado.</p>${!estoquePesquisando && !estoqueExpandido && produtosEstoque.length > 3 ? `<button type="button" class="dashboard-stock-expand" onclick="alternarEstoqueDashboard()" aria-expanded="false">Expandir estoque</button>` : ''}</div>
+        </article>
         <article class="dashboard-panel dashboard-top-clients"><h3>${svgIcon('users')} Top 10 Clientes</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Total comprado</th></tr></thead><tbody>${tabelaClientes}</tbody></table></div></article>
         <article class="dashboard-panel dashboard-inactive-panel"><h3>${svgIcon('calendar')}<span>Clientes sem compra</span><span class="dashboard-days-control"><button type="button" onclick="ajustarDiasInativosDashboard(-5)" aria-label="Diminuir dias">−</button><b>${limiteInativos} dias</b><button type="button" onclick="ajustarDiasInativosDashboard(5)" aria-label="Aumentar dias">+</button></span></h3><p class="dashboard-inactive-help">Sem pedidos nos últimos ${limiteInativos} dias.</p><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
         <article class="dashboard-panel"><h3>${svgIcon('package')} Top 10 Produtos</h3><div class="dashboard-panel-body dashboard-product-chart">${graficoProdutos}</div></article>
@@ -8888,6 +8950,10 @@ window.confirmarTelefoneVinculo = confirmarTelefoneVinculo;
 window.cancelarTelefoneVinculo = cancelarTelefoneVinculo;
 window.aplicarFiltroDashboard = aplicarFiltroDashboard;
 window.selecionarEvolucaoVendasDashboard = selecionarEvolucaoVendasDashboard;
+window.alternarEstoqueDashboard = alternarEstoqueDashboard;
+window.alternarBuscaEstoqueDashboard = alternarBuscaEstoqueDashboard;
+window.atualizarBuscaEstoqueDashboard = atualizarBuscaEstoqueDashboard;
+window.limparBuscaEstoqueDashboard = limparBuscaEstoqueDashboard;
 window.abrirCalendarioCentralizado = abrirCalendarioCentralizado;
 window.mudarMesCalendario = mudarMesCalendario;
 window.selecionarDataCalendario = selecionarDataCalendario;
