@@ -363,6 +363,8 @@ let estoqueProdutoAtualId = '';
 let estoqueMovimentosAtuais = [];
 let arrasteSalaBotoes = null;
 let arrasteCardsConfiguracoes = null;
+const FAIXA_ROLAGEM_AUTOMATICA_CONFIGURACOES = 96;
+const VELOCIDADE_MAXIMA_ROLAGEM_CONFIGURACOES = 1200;
 let preparandoRecursosSala = false;
 let recursosSalaBotoesPromise = null;
 const imagensSalaBotoesPrecarregadas = new Map();
@@ -4859,8 +4861,92 @@ function aplicarDeslocamentoCardsConfiguracoes(arraste) {
   });
 }
 
+function deslocamentoRolagemCardsConfiguracoes(arraste) {
+  return posicaoRolagemPrincipalVendas(arraste.rolagemElemento) - arraste.rolagemInicial;
+}
+
+function limitesRolagemAutomaticaCardsConfiguracoes(elemento) {
+  const alturaJanela = window.innerHeight || document.documentElement.clientHeight || 0;
+  if (!elemento || elemento === document.documentElement || elemento === document.body) {
+    return { top: 0, bottom: alturaJanela };
+  }
+  const retangulo = elemento.getBoundingClientRect();
+  return {
+    top: Math.max(0, retangulo.top),
+    bottom: Math.min(alturaJanela, retangulo.bottom),
+  };
+}
+
+function velocidadeRolagemAutomaticaCardsConfiguracoes(arraste) {
+  const limites = limitesRolagemAutomaticaCardsConfiguracoes(arraste.rolagemElemento);
+  const alturaVisivel = Math.max(0, limites.bottom - limites.top);
+  const faixa = Math.min(FAIXA_ROLAGEM_AUTOMATICA_CONFIGURACOES, alturaVisivel / 3);
+  if (!faixa) return 0;
+  if (arraste.ponteiroY < limites.top + faixa) {
+    const intensidade = Math.min(1, (limites.top + faixa - arraste.ponteiroY) / faixa);
+    return -VELOCIDADE_MAXIMA_ROLAGEM_CONFIGURACOES * intensidade * intensidade;
+  }
+  if (arraste.ponteiroY > limites.bottom - faixa) {
+    const intensidade = Math.min(1, (arraste.ponteiroY - (limites.bottom - faixa)) / faixa);
+    return VELOCIDADE_MAXIMA_ROLAGEM_CONFIGURACOES * intensidade * intensidade;
+  }
+  return 0;
+}
+
+function atualizarPosicaoArrasteCardsConfiguracoes(arraste) {
+  const esquerda = arraste.ponteiroX - arraste.deslocamentoX;
+  const topo = arraste.ponteiroY - arraste.deslocamentoY;
+  posicionarFlutuanteSalaBotoes(arraste, esquerda, topo);
+  const centroY = topo + arraste.altura / 2 + deslocamentoRolagemCardsConfiguracoes(arraste);
+  const destinoIndice = indiceMaisProximoSalaBotoes(arraste, esquerda + arraste.largura / 2, centroY);
+  if (destinoIndice === arraste.destinoIndice) return;
+  arraste.destinoIndice = destinoIndice;
+  aplicarDeslocamentoCardsConfiguracoes(arraste);
+}
+
+function pararRolagemAutomaticaCardsConfiguracoes(arraste) {
+  if (arraste?.quadroRolagem) cancelAnimationFrame(arraste.quadroRolagem);
+  if (arraste) {
+    arraste.quadroRolagem = 0;
+    arraste.ultimoFrameRolagem = 0;
+  }
+}
+
+function avancarRolagemAutomaticaCardsConfiguracoes(tempo) {
+  const arraste = arrasteCardsConfiguracoes;
+  if (!arraste || arraste.encerrando) return;
+  arraste.quadroRolagem = 0;
+  const velocidade = velocidadeRolagemAutomaticaCardsConfiguracoes(arraste);
+  if (!velocidade) {
+    arraste.ultimoFrameRolagem = 0;
+    return;
+  }
+  const intervalo = arraste.ultimoFrameRolagem ? Math.min(34, tempo - arraste.ultimoFrameRolagem) : 16;
+  arraste.ultimoFrameRolagem = tempo;
+  const antes = posicaoRolagemPrincipalVendas(arraste.rolagemElemento);
+  const passo = velocidade * intervalo / 1000;
+  if (!arraste.rolagemElemento || arraste.rolagemElemento === document.documentElement || arraste.rolagemElemento === document.body) {
+    window.scrollBy({ top: passo, left: 0, behavior: 'auto' });
+  } else {
+    arraste.rolagemElemento.scrollTop += passo;
+  }
+  const depois = posicaoRolagemPrincipalVendas(arraste.rolagemElemento);
+  if (Math.abs(depois - antes) < .1) {
+    arraste.ultimoFrameRolagem = 0;
+    return;
+  }
+  atualizarPosicaoArrasteCardsConfiguracoes(arraste);
+  arraste.quadroRolagem = requestAnimationFrame(avancarRolagemAutomaticaCardsConfiguracoes);
+}
+
+function agendarRolagemAutomaticaCardsConfiguracoes(arraste) {
+  if (arraste.quadroRolagem || !velocidadeRolagemAutomaticaCardsConfiguracoes(arraste)) return;
+  arraste.quadroRolagem = requestAnimationFrame(avancarRolagemAutomaticaCardsConfiguracoes);
+}
+
 function concluirVisualArrasteCardsConfiguracoes(arraste, ordemFinal = null) {
   window.clearTimeout(arraste.tempoConclusao);
+  pararRolagemAutomaticaCardsConfiguracoes(arraste);
   if (ordemFinal?.length && arraste.grid?.isConnected) {
     ordemFinal.forEach((id) => {
       const card = arraste.cards.get(id);
@@ -4881,10 +4967,11 @@ function cancelarArrasteCardsConfiguracoes(imediato = false) {
   const arraste = arrasteCardsConfiguracoes;
   if (!arraste) return;
   window.clearTimeout(arraste.tempoConclusao);
+  pararRolagemAutomaticaCardsConfiguracoes(arraste);
   if (!imediato && arraste.flutuante && arraste.posicoes[arraste.origemIndice]) {
     const origem = arraste.posicoes[arraste.origemIndice];
     arraste.flutuante.style.transition = reduzirMovimentoSalaBotoes() ? 'none' : 'transform 170ms cubic-bezier(.2,.8,.2,1)';
-    posicionarFlutuanteSalaBotoes(arraste, origem.left, origem.top, 1);
+    posicionarFlutuanteSalaBotoes(arraste, origem.left, origem.top - deslocamentoRolagemCardsConfiguracoes(arraste), 1);
     arraste.tempoConclusao = window.setTimeout(() => concluirVisualArrasteCardsConfiguracoes(arraste), reduzirMovimentoSalaBotoes() ? 0 : 175);
     return;
   }
@@ -4906,6 +4993,7 @@ function iniciarArrasteCardsConfiguracoes(event, id) {
   const retangulo = posicoes[origemIndice];
   const cards = new Map(cardsLista.map((item) => [item.dataset.settingsCard || '', item]));
   const flutuante = criarFlutuanteCardsConfiguracoes(card, retangulo);
+  const rolagemElemento = elementoRolagemPrincipalVendas();
   arrasteCardsConfiguracoes = {
     id,
     pointerId: event.pointerId,
@@ -4921,6 +5009,12 @@ function iniciarArrasteCardsConfiguracoes(event, id) {
     altura: retangulo.height,
     deslocamentoX: event.clientX - retangulo.left,
     deslocamentoY: event.clientY - retangulo.top,
+    ponteiroX: event.clientX,
+    ponteiroY: event.clientY,
+    rolagemElemento,
+    rolagemInicial: posicaoRolagemPrincipalVendas(rolagemElemento),
+    quadroRolagem: 0,
+    ultimoFrameRolagem: 0,
     flutuante,
     encerrando: false,
     ordemFinal: null,
@@ -4937,13 +5031,10 @@ function moverArrasteCardsConfiguracoes(event) {
   const arraste = arrasteCardsConfiguracoes;
   if (!arraste || arraste.encerrando || event.pointerId !== arraste.pointerId) return;
   event.preventDefault();
-  const esquerda = event.clientX - arraste.deslocamentoX;
-  const topo = event.clientY - arraste.deslocamentoY;
-  posicionarFlutuanteSalaBotoes(arraste, esquerda, topo);
-  const destinoIndice = indiceMaisProximoSalaBotoes(arraste, esquerda + arraste.largura / 2, topo + arraste.altura / 2);
-  if (destinoIndice === arraste.destinoIndice) return;
-  arraste.destinoIndice = destinoIndice;
-  aplicarDeslocamentoCardsConfiguracoes(arraste);
+  arraste.ponteiroX = event.clientX;
+  arraste.ponteiroY = event.clientY;
+  atualizarPosicaoArrasteCardsConfiguracoes(arraste);
+  agendarRolagemAutomaticaCardsConfiguracoes(arraste);
 }
 
 function finalizarArrasteCardsConfiguracoes(event) {
@@ -4951,6 +5042,7 @@ function finalizarArrasteCardsConfiguracoes(event) {
   if (!arraste || arraste.encerrando || event.pointerId !== arraste.pointerId) return;
   event.preventDefault();
   arraste.encerrando = true;
+  pararRolagemAutomaticaCardsConfiguracoes(arraste);
   if (arraste.handle?.hasPointerCapture?.(event.pointerId)) arraste.handle.releasePointerCapture(event.pointerId);
   if (event.type === 'pointercancel') {
     cancelarArrasteCardsConfiguracoes();
@@ -4964,7 +5056,7 @@ function finalizarArrasteCardsConfiguracoes(event) {
   }
   const destino = arraste.posicoes[arraste.destinoIndice];
   arraste.flutuante.style.transition = reduzirMovimentoSalaBotoes() ? 'none' : 'transform 170ms cubic-bezier(.2,.8,.2,1)';
-  posicionarFlutuanteSalaBotoes(arraste, destino.left, destino.top, 1);
+  posicionarFlutuanteSalaBotoes(arraste, destino.left, destino.top - deslocamentoRolagemCardsConfiguracoes(arraste), 1);
   arraste.tempoConclusao = window.setTimeout(
     () => concluirVisualArrasteCardsConfiguracoes(arraste, ordemFinal),
     reduzirMovimentoSalaBotoes() ? 0 : 175,

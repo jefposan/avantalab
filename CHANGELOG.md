@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.11.0-av93 - 2026-08-24
+
+- AvantaVendas: ao arrastar um card de Configurações até o topo ou a base da
+  área visível, a página agora rola continuamente e com velocidade progressiva.
+  Assim, qualquer card pode alcançar o primeiro ou o último encaixe em um único
+  gesto, sem perder a flutuação e a estabilidade do Kanban.
+
 ## 1.11.0-av92 - 2026-08-24
 
 - AvantaVendas: o card arrastado em Configurações volta a usar a mesma camada

@@ -2,6 +2,10 @@
 
 <!-- ava-version: 1.11.0 -->
 
+> Revisão 1.11.0-av93: durante a organização dos cards de Configurações, manter
+> o puxador próximo ao topo ou à base faz a página rolar automaticamente. O card
+> pode ser levado ao primeiro ou ao último encaixe sem interromper o gesto.
+
 > Revisão 1.11.0-av92: ao arrastar um card de Configurações pelo puxador, ele
 > levanta e flutua com o mesmo recorte, sombra e encaixe do Kanban da Sala de
 > Botões. A posição original permanece reservada até a conclusão do movimento.
@@ -180,7 +184,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 92 -->
+<!-- avantavendas-asset-revision: 93 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

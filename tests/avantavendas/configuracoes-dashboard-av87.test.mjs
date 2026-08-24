@@ -33,6 +33,11 @@ test('Configurações usa o Kanban estável e persiste a ordem por perfil', asyn
   assert.match(trecho, /document\.createElement\('div'\)/);
   assert.match(trecho, /settings-kanban-overlay-card/);
   assert.match(trecho, /flutuante\.appendChild\(copia\)/);
+  assert.match(trecho, /function avancarRolagemAutomaticaCardsConfiguracoes/);
+  assert.match(trecho, /VELOCIDADE_MAXIMA_ROLAGEM_CONFIGURACOES/);
+  assert.match(trecho, /rolagemElemento\.scrollTop \+= passo/);
+  assert.match(trecho, /centroY = topo \+ arraste\.altura \/ 2 \+ deslocamentoRolagemCardsConfiguracoes/);
+  assert.match(trecho, /cancelAnimationFrame\(arraste\.quadroRolagem\)/);
   assert.doesNotMatch(trecho, /elementFromPoint/);
   assert.match(css, /\.settings-kanban-overlay[^}]*background: transparent/);
   assert.match(css, /\.settings-kanban-overlay[^}]*filter: drop-shadow/);
