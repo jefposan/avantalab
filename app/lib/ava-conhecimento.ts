@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.10.2.01: entradas e ajustes de estoque do Vendas usam
-// data própria no formato dd/mm/aaaa, sem substituir o horário de auditoria.
+// Revisado na versão 1.10.2.02: entradas e ajustes de estoque do Vendas usam o
+// calendário centralizado e exibem dd/mm/aaaa, sem substituir a auditoria.
 // Revisado na versão 1.10.1.03: Código AVA do perfil pode ser copiado no Mobile.
 // Revisado na versão 1.10.1.01: Gerenciar perfil no Mobile exibe o Código AVA.
 // Revisado na versão 1.10.1: novos pedidos de conteúdo do Vendas avisam Gestor
@@ -348,7 +348,7 @@ CLIENTES
 - O campo Data de Aniversário, identificado pelo ícone de bolo, recebe dia e mês em dd/mm. O aniversário cadastrado entra na agenda e pode aparecer no aviso do cabeçalho no dia correspondente.
 
 CATÁLOGO, PEDIDOS E PAGAMENTOS
-- Produtos permite cadastrar, editar, ativar/desativar, buscar, trabalhar com pacotes e imagens. Custo e preço de venda são usados para rentabilidade; estoque é opcional e pode ser ajustado em Configurações > Controle de estoque. Ao registrar entrada ou ajuste, Quantidade e Data ficam na mesma linha; a data usa o formato dd/mm/aaaa, aparece no histórico, aceita lançamento anterior e não pode estar no futuro.
+- Produtos permite cadastrar, editar, ativar/desativar, buscar, trabalhar com pacotes e imagens. Custo e preço de venda são usados para rentabilidade; estoque é opcional e pode ser ajustado em Configurações > Controle de estoque. Ao registrar entrada ou ajuste, Quantidade e Data ficam na mesma linha; tocar na data abre o calendário centralizado, a exibição usa dd/mm/aaaa, aceita lançamento anterior e não permite dia futuro.
 - Pedido e itens são salvos na mesma transação: se alguma parte falhar, o pedido anterior permanece intacto.
 - Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar. No celular, abrir o teclado desloca somente o card uma única vez, após o teclado estabilizar, para manter o campo ativo visível, inclusive o desconto; o fundo do modal continua cobrindo toda a tela. Fechar o teclado devolve o card à posição original sem apagar o preenchimento.
 - Ao iniciar um pedido ou pagamento sem cliente predefinido, o foco e o teclado abrem diretamente na busca. Digite nome, telefone ou e-mail e toque em um resultado; o primeiro cliente não é selecionado automaticamente.

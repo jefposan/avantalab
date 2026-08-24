@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.2.02-av82 - 2026-08-24
+
+- AvantaVendas: tocar na data da movimentação de estoque agora abre o mesmo
+  calendário centralizado usado nos demais lançamentos, mantendo a exibição
+  `dd/mm/aaaa` e bloqueando dias futuros.
+
 ## 1.10.2.01-av81 - 2026-08-24
 
 - AvantaVendas: a data da movimentação de estoque passou a usar máscara fixa
