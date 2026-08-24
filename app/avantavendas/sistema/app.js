@@ -4821,14 +4821,16 @@ function prepararKanbanCardsConfiguracoes(markup) {
 }
 
 function criarFlutuanteCardsConfiguracoes(card, retangulo) {
-  const flutuante = card.cloneNode(true);
-  flutuante.classList.remove('is-dragging');
-  flutuante.classList.add('settings-kanban-overlay');
-  flutuante.removeAttribute('data-settings-card');
-  flutuante.removeAttribute('tabindex');
-  flutuante.removeAttribute('role');
+  const flutuante = document.createElement('div');
+  const copia = card.cloneNode(true);
+  flutuante.className = 'settings-kanban-overlay';
   flutuante.setAttribute('aria-hidden', 'true');
-  [flutuante, ...flutuante.querySelectorAll('*')].forEach((elemento) => {
+  copia.classList.remove('is-dragging');
+  copia.classList.add('settings-kanban-overlay-card');
+  copia.removeAttribute('data-settings-card');
+  copia.removeAttribute('tabindex');
+  copia.removeAttribute('role');
+  [copia, ...copia.querySelectorAll('*')].forEach((elemento) => {
     elemento.removeAttribute?.('id');
     [...(elemento.attributes || [])].forEach((atributo) => {
       if (atributo.name.startsWith('on')) elemento.removeAttribute(atributo.name);
@@ -4836,6 +4838,7 @@ function criarFlutuanteCardsConfiguracoes(card, retangulo) {
   });
   flutuante.style.width = `${retangulo.width}px`;
   flutuante.style.height = `${retangulo.height}px`;
+  flutuante.appendChild(copia);
   document.body.appendChild(flutuante);
   return flutuante;
 }

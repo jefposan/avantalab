@@ -1461,7 +1461,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .settings-card-drag-handle:active { cursor: grabbing; }
 .settings-card-drag-handle:focus-visible { outline: 3px solid #7dd3fc; outline-offset: -3px; }
 .settings-card.is-dragging { opacity: 0; }
-.settings-kanban-overlay { position: fixed; z-index: calc(var(--vendas-layer-modal) + 30); top: 0; left: 0; box-sizing: border-box; margin: 0; pointer-events: none; transform-origin: center; will-change: transform; cursor: grabbing; box-shadow: 0 20px 45px rgba(2,8,23,.28); }
+.settings-kanban-overlay { position: fixed; z-index: calc(var(--vendas-layer-navigation) + 1); top: 0; left: 0; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; filter: drop-shadow(10px 17px 18px rgba(15,42,80,.30)); pointer-events: none; transform-origin: center; will-change: transform; cursor: grabbing; }
+.settings-kanban-overlay-card { width: 100%; height: 100%; box-sizing: border-box; margin: 0; filter: none; pointer-events: none; }
+.settings-kanban-overlay-card .settings-card-drag-handle { cursor: grabbing; }
 body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-user-select: none; }
 @media (prefers-reduced-motion: reduce) {
   .settings-card.is-organizable, .settings-kanban-overlay { transition: none !important; }

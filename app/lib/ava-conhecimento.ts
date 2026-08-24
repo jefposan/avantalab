@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.11.0-av92: o arraste de Configurações replica a camada
+// flutuante visível, o recorte e o encaixe do Kanban oficial da Sala de Botões.
 // Revisado na versão 1.11.0-av91: o Kanban de Configurações fica sempre
 // disponível e arrasta somente pelo puxador de três traços de cada card.
 // Revisado na versão 1.11.0-av90: Estoque consignado preserva o card largo e a

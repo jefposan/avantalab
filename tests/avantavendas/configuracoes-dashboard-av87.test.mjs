@@ -30,8 +30,13 @@ test('Configurações usa o Kanban estável e persiste a ordem por perfil', asyn
   assert.match(trecho, /ArrowLeft ArrowRight ArrowUp ArrowDown/);
   assert.match(trecho, /indiceMaisProximoSalaBotoes/);
   assert.match(trecho, /170ms cubic-bezier\(\.2,\.8,\.2,1\)/);
+  assert.match(trecho, /document\.createElement\('div'\)/);
+  assert.match(trecho, /settings-kanban-overlay-card/);
+  assert.match(trecho, /flutuante\.appendChild\(copia\)/);
   assert.doesNotMatch(trecho, /elementFromPoint/);
-  assert.match(css, /\.settings-kanban-overlay/);
+  assert.match(css, /\.settings-kanban-overlay[^}]*background: transparent/);
+  assert.match(css, /\.settings-kanban-overlay[^}]*filter: drop-shadow/);
+  assert.match(css, /\.settings-kanban-overlay-card/);
   assert.match(css, /\.settings-card\.is-organizable/);
   assert.match(css, /\.settings-card-drag-handle[^}]*touch-action: none/);
   assert.doesNotMatch(css, /\.settings-card\.is-organizable[^}]*touch-action: none/);

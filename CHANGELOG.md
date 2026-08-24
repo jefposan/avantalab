@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.11.0-av92 - 2026-08-24
+
+- AvantaVendas: o card arrastado em Configurações volta a usar a mesma camada
+  flutuante transparente da Sala de Botões. A cópia permanece visível, elevada,
+  recortada e fluida enquanto o espaço original fica reservado para o encaixe.
+- AvantaVendas: somente o puxador de três traços inicia o movimento; rolagem,
+  botões e campos continuam livres fora dele.
+
 ## 1.11.0-av91 - 2026-08-24
 
 - AvantaVendas: o Kanban de Configurações permanece disponível sem ativar um
