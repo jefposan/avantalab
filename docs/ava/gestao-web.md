@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.10.1.03 -->
+<!-- ava-version: 1.10.2 -->
+
+> Revisão 1.10.2: o AvantaVendas passou a registrar a data própria das
+> movimentações de estoque; sem alteração operacional na Gestão Web.
 
 > Revisão 1.10.1: Aprovações do Vendas no Web usa os vínculos por conta de
 > vendas e pedidos novos avisam gestores pelo sininho e push permitido.

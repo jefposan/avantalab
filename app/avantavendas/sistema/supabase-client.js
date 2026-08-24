@@ -632,12 +632,13 @@
     if (error) throw error;
   }
 
-  async function movimentarEstoque({ produtoId, tipo, quantidade, observacao = '' }) {
+  async function movimentarEstoque({ produtoId, tipo, quantidade, observacao = '', dataMovimentacao }) {
     const { data, error } = await requireClient().rpc('movimentar_estoque_vendas_mobile_rpc', {
       p_produto_id: produtoId,
       p_tipo: tipo,
       p_quantidade: Number(quantidade),
       p_observacao: observacao || null,
+      p_data: dataMovimentacao,
     });
     if (error) throw error;
     return data;
@@ -645,8 +646,11 @@
 
   async function listarMovimentosEstoque(produtoId) {
     const { data, error } = await requireClient().from('vendas_mobile_estoque_movimentos')
-      .select('id,tipo,quantidade,saldo_anterior,saldo_final,observacao,criado_em')
-      .eq('produto_id', produtoId).order('criado_em', { ascending: false }).limit(40);
+      .select('id,tipo,quantidade,saldo_anterior,saldo_final,observacao,data_movimentacao,criado_em')
+      .eq('produto_id', produtoId)
+      .order('data_movimentacao', { ascending: false })
+      .order('criado_em', { ascending: false })
+      .limit(40);
     if (error) throw error;
     return data || [];
   }

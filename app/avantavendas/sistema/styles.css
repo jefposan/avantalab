@@ -1852,6 +1852,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 /* Controle de estoque pessoal do vendedor. */
 .settings-stock-card small { display: block; margin-top: 9px; color: #64748b; font-size: 9px; line-height: 1.45; }
 .stock-update-form { gap: 11px; }
+.stock-movement-fields { display: grid; grid-template-columns: minmax(0,.72fr) minmax(0,1.28fr); gap: 10px; }
+.stock-movement-fields .field { min-width: 0; }
+.stock-movement-fields input { width: 100%; min-width: 0; }
 .stock-current { display: flex; align-items: center; justify-content: space-between; border: 1px solid #b9d9ee; border-radius: 12px; padding: 10px 12px; background: linear-gradient(135deg,#eff9ff,#f5fbff); }
 .stock-current span { color: #547085; font-size: 10px; font-weight: 800; }.stock-current b { color: #0A1F44; font-size: 16px; }
 .stock-control-note { border: 1px solid #bae6fd; border-radius: 12px; padding: 12px; background: #f0f9ff; }.stock-control-note b { color: #075985; font-size: 12px; }.stock-control-note p { margin: 5px 0 10px; color: #4b687d; font-size: 10px; line-height: 1.45; }.stock-control-note button { width: 100%; }

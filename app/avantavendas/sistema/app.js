@@ -8350,6 +8350,25 @@ function selecionarProdutoEstoque(produtoId) {
   void carregarMovimentosEstoque();
 }
 
+function dataAtualEstoqueISO() {
+  const agora = new Date();
+  const local = new Date(agora.getTime() - (agora.getTimezoneOffset() * 60000));
+  return local.toISOString().slice(0, 10);
+}
+
+function dataMovimentacaoEstoqueBR(movimento) {
+  const data = String(movimento?.data_movimentacao || '').trim();
+  return dataCurtaBR(/^\d{4}-\d{2}-\d{2}$/.test(data) ? `${data}T12:00:00` : movimento?.criado_em);
+}
+
+function atualizarRotuloDataEstoque(tipo) {
+  const rotulo = document.getElementById('estoqueDataLabel');
+  const campo = document.getElementById('estoqueData');
+  const texto = tipo === 'ajuste' ? 'Data do ajuste' : 'Data de entrada';
+  if (rotulo) rotulo.textContent = texto;
+  if (campo) campo.setAttribute('aria-label', texto);
+}
+
 function renderAtualizarEstoque() {
   const produto = state.produtos.find((item) => item.id === estoqueProdutoAtualId) || state.produtos[0];
   if (!produto) return;
@@ -8357,9 +8376,10 @@ function renderAtualizarEstoque() {
   const opcoes = [...state.produtos].sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'))
     .map((item) => `<option value="${escapeAttr(item.id)}" ${item.id === produto.id ? 'selected' : ''}>${escapeHtml(item.nome)} · ${Number(item.estoque || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} ${escapeHtml(item.unidade || 'un')}</option>`).join('');
   const historico = estoqueMovimentosAtuais.length
-    ? estoqueMovimentosAtuais.map((movimento) => `<li><b>${escapeHtml(String(movimento.tipo || '').replace('_', ' '))}</b><span>${Number(movimento.quantidade || 0) > 0 ? '+' : ''}${Number(movimento.quantidade || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} · saldo ${Number(movimento.saldo_final || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 })}</span><small>${dataCurtaBR(movimento.criado_em)}</small></li>`).join('')
+    ? estoqueMovimentosAtuais.map((movimento) => `<li><b>${escapeHtml(String(movimento.tipo || '').replace('_', ' '))}</b><span>${Number(movimento.quantidade || 0) > 0 ? '+' : ''}${Number(movimento.quantidade || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} · saldo ${Number(movimento.saldo_final || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 })}</span><small>${dataMovimentacaoEstoqueBR(movimento)}</small></li>`).join('')
     : '<p class="muted small">Nenhuma movimentação registrada para este produto.</p>';
-  sheet(`<div class="sheet-header"><div><h2>Atualizar estoque</h2><p class="muted small">Entrada soma ao saldo. Ajuste informa a contagem física final.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid stock-update-form"><div class="field"><label>Produto</label><select onchange="selecionarProdutoEstoque(this.value)">${opcoes}</select></div><article class="stock-current"><span>Saldo atual</span><b>${saldo.toLocaleString('pt-BR', { maximumFractionDigits: 3 })} ${escapeHtml(produto.unidade || 'un')}</b></article>${produto.estoque_controlado ? `<div class="field"><label>Operação</label><select id="estoqueTipo"><option value="entrada">Entrada de estoque</option><option value="ajuste">Ajustar saldo físico</option></select></div><div class="field"><label>Quantidade</label><input id="estoqueQuantidade" type="number" min="0" step="0.001" inputmode="decimal" placeholder="0"></div><div class="field"><label>Observação (opcional)</label><input id="estoqueObservacao" maxlength="160" placeholder="Ex.: reposição do fornecedor"></div><button class="primary" onclick="salvarMovimentacaoEstoque()">${svgIcon('save')} Salvar movimentação</button>` : `<article class="stock-control-note"><b>Controle de estoque desativado</b><p>Ative para registrar entradas e ajustes deste produto. O saldo inicial será ${saldo.toLocaleString('pt-BR', { maximumFractionDigits: 3 })}.</p><button class="primary" onclick="ativarControleEstoque('${escapeAttr(produto.id)}')">Ativar controle deste produto</button></article>`}<section class="stock-history"><h3>Últimas movimentações</h3><ul>${historico}</ul></section></div>`, 'sheet-backdrop-centered');
+  const hoje = dataAtualEstoqueISO();
+  sheet(`<div class="sheet-header"><div><h2>Atualizar estoque</h2><p class="muted small">Entrada soma ao saldo. Ajuste informa a contagem física final.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid stock-update-form"><div class="field"><label>Produto</label><select onchange="selecionarProdutoEstoque(this.value)">${opcoes}</select></div><article class="stock-current"><span>Saldo atual</span><b>${saldo.toLocaleString('pt-BR', { maximumFractionDigits: 3 })} ${escapeHtml(produto.unidade || 'un')}</b></article>${produto.estoque_controlado ? `<div class="field"><label>Operação</label><select id="estoqueTipo" onchange="atualizarRotuloDataEstoque(this.value)"><option value="entrada">Entrada de estoque</option><option value="ajuste">Ajustar saldo físico</option></select></div><div class="stock-movement-fields"><div class="field"><label for="estoqueQuantidade">Quantidade</label><input id="estoqueQuantidade" type="number" min="0" step="0.001" inputmode="decimal" placeholder="0"></div><div class="field"><label id="estoqueDataLabel" for="estoqueData">Data de entrada</label><input id="estoqueData" type="date" value="${hoje}" max="${hoje}" aria-label="Data de entrada"></div></div><div class="field"><label>Observação (opcional)</label><input id="estoqueObservacao" maxlength="160" placeholder="Ex.: reposição do fornecedor"></div><button class="primary" onclick="salvarMovimentacaoEstoque()">${svgIcon('save')} Salvar movimentação</button>` : `<article class="stock-control-note"><b>Controle de estoque desativado</b><p>Ative para registrar entradas e ajustes deste produto. O saldo inicial será ${saldo.toLocaleString('pt-BR', { maximumFractionDigits: 3 })}.</p><button class="primary" onclick="ativarControleEstoque('${escapeAttr(produto.id)}')">Ativar controle deste produto</button></article>`}<section class="stock-history"><h3>Últimas movimentações</h3><ul>${historico}</ul></section></div>`, 'sheet-backdrop-centered');
 }
 
 async function ativarControleEstoque(produtoId) {
@@ -8377,10 +8397,13 @@ async function salvarMovimentacaoEstoque() {
   if (!produto || !produto.estoque_controlado) return;
   const tipo = valor('estoqueTipo');
   const quantidade = Number(String(valor('estoqueQuantidade')).replace(',', '.'));
+  const dataMovimentacao = valor('estoqueData');
   if (!Number.isFinite(quantidade) || (tipo === 'entrada' ? quantidade <= 0 : quantidade < 0)) { toast(tipo === 'entrada' ? 'Informe uma entrada maior que zero.' : 'Informe o saldo físico final.'); return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataMovimentacao)) { toast(tipo === 'entrada' ? 'Informe a data de entrada.' : 'Informe a data do ajuste.'); return; }
+  if (dataMovimentacao > dataAtualEstoqueISO()) { toast('A data da movimentação não pode estar no futuro.'); return; }
   try {
     const resultado = backendAtivo
-      ? await window.VendasDb.movimentarEstoque({ produtoId: produto.id, tipo, quantidade, observacao: valor('estoqueObservacao').trim() })
+      ? await window.VendasDb.movimentarEstoque({ produtoId: produto.id, tipo, quantidade, observacao: valor('estoqueObservacao').trim(), dataMovimentacao })
       : { saldo_final: tipo === 'entrada' ? Number(produto.estoque || 0) + quantidade : quantidade };
     state.produtos = state.produtos.map((item) => item.id === produto.id ? { ...item, estoque: Number(resultado.saldo_final) } : item);
     salvarEstado(); toast(tipo === 'entrada' ? 'Entrada de estoque registrada.' : 'Saldo de estoque ajustado.');
@@ -8769,6 +8792,7 @@ window.abrirAtualizarEstoque = abrirAtualizarEstoque;
 window.selecionarProdutoEstoque = selecionarProdutoEstoque;
 window.ativarControleEstoque = ativarControleEstoque;
 window.salvarMovimentacaoEstoque = salvarMovimentacaoEstoque;
+window.atualizarRotuloDataEstoque = atualizarRotuloDataEstoque;
 window.fecharSheet = fecharSheet;
 window.alternarMenu = alternarMenu;
 window.abrirSalaBotoes = abrirSalaBotoes;

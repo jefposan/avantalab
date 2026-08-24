@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.2-av80 - 2026-08-24
+
+- AvantaVendas: o formulário de estoque passou a registrar a data própria da
+  entrada ou do ajuste. Quantidade e data ficam na mesma linha, o histórico é
+  ordenado pela data informada e o horário de criação permanece preservado para
+  auditoria.
+
 ## 1.10.1.03 - 2026-08-22
 
 - Gestão Mobile: o Código AVA em **Gerenciar perfil** ganhou ação de cópia.

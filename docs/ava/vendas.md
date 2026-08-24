@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.10.1.03 -->
+<!-- ava-version: 1.10.2 -->
+
+> Revisão 1.10.2-av80: em **Configurações > Controle de estoque**, quantidade
+> e data ficam na mesma linha. A data informada identifica a entrada ou o
+> ajuste e organiza o histórico de movimentações.
 
 > Revisão 1.10.1: solicitações pendentes de conteúdo avisam Gestor Master e
 > Administrador pelo sininho e push permitido; o uso do Vendas continua independente.
@@ -130,7 +134,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 79 -->
+<!-- avantavendas-asset-revision: 80 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
@@ -1697,7 +1701,9 @@ função existir ali.
 
 - Produtos permite cadastrar, editar, ativar/desativar, usar imagens e pacotes.
   Custo e preço de venda alimentam rentabilidade; estoque é opcional e é ajustado
-  em **Configurações > Controle de estoque**.
+  em **Configurações > Controle de estoque**. Ao registrar uma entrada ou ajuste,
+  informe quantidade e data da movimentação; o histórico usa essa data e pode
+  receber lançamentos anteriores, mas não aceita datas futuras.
 - Pedido e itens são salvos na mesma transação; se alguma parte falhar, o pedido
   anterior permanece intacto.
 - Novo pedido abre pelo cliente ou por **Pedidos > Novo pedido**. Há Venda e
