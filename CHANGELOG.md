@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.11.0-av94 - 2026-08-24
+
+- AvantaVendas: o controle **Recolher/Expandir** do Estoque consignado usa
+  setas internas e estáveis, mantendo a direção visível nos dois estados.
+- AvantaVendas: a reconciliação do Estoque atual passa a considerar a data real
+  das entradas retroativas e aplica somente saídas de pedidos, consignados e
+  bonificações ainda não refletidas, sem duplicar movimentações já processadas.
+
 ## 1.11.0-av93 - 2026-08-24
 
 - AvantaVendas: ao arrastar um card de Configurações até o topo ou a base da

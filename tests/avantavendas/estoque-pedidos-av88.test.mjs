@@ -45,6 +45,26 @@ test('Dashboard aplica o saldo servidor em gravações, reenvios e conversão de
   assert.match(app, /\.then\(aplicarEstoquesConfirmadosPedido\)/);
 });
 
+test('av94 reconcilia apenas saídas ainda não refletidas e preserva ajustes físicos', async () => {
+  const migracao = await ler('supabase/migrations/20260824203000_reconciliar_saldo_estoque_pedidos_vendas.sql');
+
+  assert.match(migracao, /quantidade_esperada/);
+  assert.match(migracao, /quantidade_refletida/);
+  assert.match(migracao, /quantidade_esperada - quantidade_refletida/);
+  assert.match(migracao, /movimento\.tipo = 'ajuste'/);
+  assert.match(migracao, /pedido\.atualizado_em > referencia\.ajuste_criado_em/);
+  assert.match(migracao, /'venda', 'consignacao', 'retorno_consignacao', 'cancelamento'/);
+  assert.match(migracao, /where abs\(quantidade_esperada - quantidade_refletida\) > 0\.0005/);
+});
+
+test('Estoque consignado usa setas estáveis nos estados expandido e recolhido', async () => {
+  const app = await ler('app/avantavendas/sistema/app.js');
+
+  assert.match(app, /'chevron-up': '<path d="m6 15 6-6 6 6"\/>/);
+  assert.match(app, /'chevron-down': '<path d="m6 9 6 6 6-6"\/>/);
+  assert.match(app, /svgIconEstavel\(state\.dashboardConsignadosExpandido \? 'chevron-up' : 'chevron-down'\)/);
+});
+
 test('revisão av88 documenta a atualização automática do estoque', async () => {
   const [versao, changelog, manual] = await Promise.all([
     ler('app/avantavendas/version.ts'),

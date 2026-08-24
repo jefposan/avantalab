@@ -2,6 +2,10 @@
 
 <!-- ava-version: 1.11.0 -->
 
+> Revisão 1.11.0-av94: o Estoque consignado mantém a seta direcional visível ao
+> expandir ou recolher. O Estoque atual reconcilia entradas retroativas pela data
+> informada e desconta somente saídas de pedidos ainda não refletidas no saldo.
+
 > Revisão 1.11.0-av93: durante a organização dos cards de Configurações, manter
 > o puxador próximo ao topo ou à base faz a página rolar automaticamente. O card
 > pode ser levado ao primeiro ou ao último encaixe sem interromper o gesto.
@@ -184,7 +188,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 93 -->
+<!-- avantavendas-asset-revision: 94 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

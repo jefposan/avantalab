@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.11.0-av94: o Estoque consignado preserva a seta de
+// expansão/recolhimento e o Estoque atual reconcilia saídas históricas pela
+// data real das entradas, aplicando apenas a diferença ainda não refletida.
 // Revisado na versão 1.11.0-av93: o Kanban de Configurações rola a página nas
 // bordas para levar um card ao primeiro ou ao último encaixe no mesmo gesto.
 // Revisado na versão 1.11.0-av92: o arraste de Configurações replica a camada
