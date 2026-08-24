@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.11.0-av91 - 2026-08-24
+
+- AvantaVendas: o Kanban de Configurações permanece disponível sem ativar um
+  modo separado. O arraste começa exclusivamente pelo puxador de três traços no
+  cabeçalho de cada card, preservando a rolagem e todos os controles do card.
+- AvantaVendas: o puxador possui alvo de toque acessível e também aceita as
+  setas do teclado, mantendo o encaixe estável e a ordem salva por perfil.
+
 ## 1.11.0-av90 - 2026-08-24
 
 - AvantaVendas: **Estoque consignado** recupera sua largura integral, o resumo

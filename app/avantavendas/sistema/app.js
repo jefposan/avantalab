@@ -125,7 +125,6 @@ const estadoInicial = {
   ordemCardsConfiguracoes: [],
   nomeEmpresaComprovantes: '',
   organizandoSalaBotoes: false,
-  organizandoCardsConfiguracoes: false,
 };
 
 let state = carregarEstado();
@@ -602,7 +601,6 @@ function carregarEstado() {
       busca: '',
       menuAberto: true,
       organizandoSalaBotoes: false,
-      organizandoCardsConfiguracoes: false,
     };
     return { ...estadoLocal, ...normalizarPreferenciasVendas(estadoLocal) };
   } catch {
@@ -761,7 +759,7 @@ function salvarEstado() {
     ordemSalaBotoes: state.ordemSalaBotoes,
     ordemCardsConfiguracoes: state.ordemCardsConfiguracoes,
     nomeEmpresaComprovantes: state.nomeEmpresaComprovantes,
-  } : { ...state, carrinho: [], organizandoSalaBotoes: false, organizandoCardsConfiguracoes: false };
+  } : { ...state, carrinho: [], organizandoSalaBotoes: false };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persistente));
   } catch (error) {
@@ -4794,57 +4792,37 @@ function prepararKanbanCardsConfiguracoes(markup) {
     ...cardsPorId.keys(),
   ].filter((id, indice, lista) => cardsPorId.has(id) && lista.indexOf(id) === indice);
   grid.classList.add('settings-cards-kanban');
-  grid.classList.toggle('is-organizing', Boolean(state.organizandoCardsConfiguracoes));
+  grid.setAttribute('role', 'list');
   grid.setAttribute('aria-label', 'Cards de configurações');
   ordem.forEach((id) => grid.appendChild(cardsPorId.get(id)));
 
-  if (state.organizandoCardsConfiguracoes) {
-    cardsPorId.forEach((card, id) => {
-      const titulo = card.dataset.settingsCardLabel || 'Configuração';
-      card.classList.add('is-organizable');
-      card.tabIndex = 0;
-      card.setAttribute('role', 'button');
-      card.setAttribute('aria-label', `Mover card ${titulo}`);
-      card.setAttribute('aria-roledescription', 'item reordenável');
-      card.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown');
-      card.setAttribute('onpointerdown', `iniciarArrasteCardsConfiguracoes(event,'${id}')`);
-      card.setAttribute('onpointermove', 'moverArrasteCardsConfiguracoes(event)');
-      card.setAttribute('onpointerup', 'finalizarArrasteCardsConfiguracoes(event)');
-      card.setAttribute('onpointercancel', 'finalizarArrasteCardsConfiguracoes(event)');
-      card.setAttribute('onkeydown', `moverCardsConfiguracoesTeclado(event,'${id}')`);
-    });
-  }
-
-  const cabecalho = pagina.querySelector('.module-sticky-head');
-  if (cabecalho) {
-    const barraOrganizar = document.createElement('div');
-    barraOrganizar.className = `settings-organize-toolbar${state.organizandoCardsConfiguracoes ? ' is-active' : ''}`;
-    const apresentacao = document.createElement('div');
-    apresentacao.className = 'settings-organize-copy';
-    apresentacao.innerHTML = `<strong>Organizar cards</strong><small>${state.organizandoCardsConfiguracoes ? 'Segure e arraste. As setas também movem.' : 'Altere a posição dos cards desta tela.'}</small>`;
-    const botaoOrganizar = document.createElement('button');
-    botaoOrganizar.type = 'button';
-    botaoOrganizar.className = `secondary settings-organize-toggle${state.organizandoCardsConfiguracoes ? ' is-active' : ''}`;
-    botaoOrganizar.setAttribute('onclick', 'alternarOrganizacaoCardsConfiguracoes()');
-    botaoOrganizar.setAttribute('aria-pressed', String(Boolean(state.organizandoCardsConfiguracoes)));
-    botaoOrganizar.setAttribute('aria-label', state.organizandoCardsConfiguracoes ? 'Concluir organização dos cards' : 'Organizar cards de configurações');
-    botaoOrganizar.innerHTML = `${iconeOrganizarSala(Boolean(state.organizandoCardsConfiguracoes))}<span>${state.organizandoCardsConfiguracoes ? 'Concluir organização' : 'Organizar cards'}</span>`;
-    barraOrganizar.setAttribute('aria-live', 'polite');
-    barraOrganizar.append(apresentacao, botaoOrganizar);
-    cabecalho.insertAdjacentElement('afterend', barraOrganizar);
-  }
+  cardsPorId.forEach((card, id) => {
+    const titulo = card.dataset.settingsCardLabel || 'Configuração';
+    const cabecalhoCard = card.querySelector(':scope > h3');
+    if (!cabecalhoCard) return;
+    card.classList.add('is-organizable');
+    card.setAttribute('role', 'listitem');
+    const puxador = document.createElement('button');
+    puxador.type = 'button';
+    puxador.className = 'settings-card-drag-handle';
+    puxador.setAttribute('aria-label', `Mover card ${titulo}`);
+    puxador.setAttribute('aria-roledescription', 'item reordenável');
+    puxador.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown');
+    puxador.setAttribute('title', 'Segure e arraste para reorganizar');
+    puxador.setAttribute('onpointerdown', `iniciarArrasteCardsConfiguracoes(event,'${id}')`);
+    puxador.setAttribute('onpointermove', 'moverArrasteCardsConfiguracoes(event)');
+    puxador.setAttribute('onpointerup', 'finalizarArrasteCardsConfiguracoes(event)');
+    puxador.setAttribute('onpointercancel', 'finalizarArrasteCardsConfiguracoes(event)');
+    puxador.setAttribute('onkeydown', `moverCardsConfiguracoesTeclado(event,'${id}')`);
+    puxador.innerHTML = '<span aria-hidden="true"><i></i><i></i><i></i></span>';
+    cabecalhoCard.appendChild(puxador);
+  });
   return template.innerHTML;
-}
-
-function alternarOrganizacaoCardsConfiguracoes() {
-  cancelarArrasteCardsConfiguracoes(true);
-  state.organizandoCardsConfiguracoes = !state.organizandoCardsConfiguracoes;
-  render();
 }
 
 function criarFlutuanteCardsConfiguracoes(card, retangulo) {
   const flutuante = card.cloneNode(true);
-  flutuante.classList.remove('is-organizable', 'is-dragging');
+  flutuante.classList.remove('is-dragging');
   flutuante.classList.add('settings-kanban-overlay');
   flutuante.removeAttribute('data-settings-card');
   flutuante.removeAttribute('tabindex');
@@ -4893,7 +4871,7 @@ function concluirVisualArrasteCardsConfiguracoes(arraste, ordemFinal = null) {
   arraste.flutuante?.remove();
   document.body.classList.remove('settings-kanban-arrastando');
   if (arrasteCardsConfiguracoes === arraste) arrasteCardsConfiguracoes = null;
-  requestAnimationFrame(() => arraste.cards.get(arraste.id)?.focus?.({ preventScroll: true }));
+  requestAnimationFrame(() => arraste.handle?.focus?.({ preventScroll: true }));
 }
 
 function cancelarArrasteCardsConfiguracoes(imediato = false) {
@@ -4911,11 +4889,12 @@ function cancelarArrasteCardsConfiguracoes(imediato = false) {
 }
 
 function iniciarArrasteCardsConfiguracoes(event, id) {
-  if (!state.organizandoCardsConfiguracoes || arrasteCardsConfiguracoes || (Number.isFinite(event.button) && event.button !== 0)) return;
+  if (arrasteCardsConfiguracoes || (Number.isFinite(event.button) && event.button !== 0)) return;
   event.preventDefault();
-  const card = event.currentTarget;
+  const handle = event.currentTarget;
+  const card = handle?.closest('[data-settings-card]');
   const grid = card?.closest('.settings-cards-kanban');
-  if (!card || !grid) return;
+  if (!handle || !card || !grid) return;
   const cardsLista = [...grid.querySelectorAll(':scope > [data-settings-card]')];
   const ordemInicial = cardsLista.map((item) => item.dataset.settingsCard || '');
   const origemIndice = ordemInicial.indexOf(id);
@@ -4927,6 +4906,7 @@ function iniciarArrasteCardsConfiguracoes(event, id) {
   arrasteCardsConfiguracoes = {
     id,
     pointerId: event.pointerId,
+    handle,
     card,
     grid,
     cards,
@@ -4945,7 +4925,7 @@ function iniciarArrasteCardsConfiguracoes(event, id) {
   };
   posicionarFlutuanteSalaBotoes(arrasteCardsConfiguracoes, retangulo.left, retangulo.top);
   document.body.classList.add('settings-kanban-arrastando');
-  card.setPointerCapture?.(event.pointerId);
+  handle.setPointerCapture?.(event.pointerId);
   card.classList.add('is-dragging');
   try { navigator.vibrate?.(12); } catch { /* vibração indisponível */ }
 }
@@ -4968,7 +4948,7 @@ function finalizarArrasteCardsConfiguracoes(event) {
   if (!arraste || arraste.encerrando || event.pointerId !== arraste.pointerId) return;
   event.preventDefault();
   arraste.encerrando = true;
-  if (arraste.card?.hasPointerCapture?.(event.pointerId)) arraste.card.releasePointerCapture(event.pointerId);
+  if (arraste.handle?.hasPointerCapture?.(event.pointerId)) arraste.handle.releasePointerCapture(event.pointerId);
   if (event.type === 'pointercancel') {
     cancelarArrasteCardsConfiguracoes();
     return;
@@ -4989,7 +4969,7 @@ function finalizarArrasteCardsConfiguracoes(event) {
 }
 
 function moverCardsConfiguracoesTeclado(event, id) {
-  if (!state.organizandoCardsConfiguracoes || arrasteCardsConfiguracoes) return;
+  if (arrasteCardsConfiguracoes) return;
   const grid = event.currentTarget?.closest('.settings-cards-kanban');
   if (!grid) return;
   const colunas = Math.max(1, getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length);
@@ -5016,7 +4996,7 @@ function moverCardsConfiguracoesTeclado(event, id) {
   });
   state.ordemCardsConfiguracoes = ordemFinal;
   salvarEstado();
-  requestAnimationFrame(() => grid.querySelector(`[data-settings-card="${id}"]`)?.focus?.({ preventScroll: true }));
+  requestAnimationFrame(() => grid.querySelector(`[data-settings-card="${id}"] .settings-card-drag-handle`)?.focus?.({ preventScroll: true }));
 }
 
 function renderConfiguracoes() {

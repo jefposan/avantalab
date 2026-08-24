@@ -2,6 +2,10 @@
 
 <!-- ava-version: 1.11.0 -->
 
+> Revisão 1.11.0-av91: o Kanban dos cards de Configurações fica sempre
+> disponível, sem botão Organizar. Segure o puxador de três traços no cabeçalho
+> para mover um card; o restante da tela continua livre para rolagem e uso.
+
 > Revisão 1.11.0-av90: Estoque consignado preserva o card largo, o resumo no
 > cabeçalho e a lista original, agora com o cabeçalho institucional do Dashboard
 > e o controle Expandir/Recolher acompanhado por seta para cima ou para baixo.
@@ -172,7 +176,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 90 -->
+<!-- avantavendas-asset-revision: 91 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
@@ -1817,8 +1821,9 @@ função existir ali.
   entre o arquivo anterior e o próximo da pasta.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
   estoque, vínculos comerciais, destino financeiro, PWA e exclusão do perfil.
-  A faixa **Organizar cards** fica visível também no celular e ativa o Kanban
-  para mudar a posição dos cards por arraste ou pelas setas do teclado.
+  O Kanban permanece disponível: segure o puxador de três traços no cabeçalho
+  para mover um card, ou focalize esse puxador e use as setas do teclado. Fora
+  do puxador, a página rola normalmente e os controles continuam ativos.
   Em **Dados e segurança**, proprietário e administrador podem fazer o backup
   completo da conta ativa e criar pontos de restauração; somente o proprietário
   restaura, exclui pontos ou reseta esse perfil. O snapshot inclui perfil,

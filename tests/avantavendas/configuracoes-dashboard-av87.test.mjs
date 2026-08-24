@@ -21,18 +21,21 @@ test('Configurações usa o Kanban estável e persiste a ordem por perfil', asyn
   assert.match(app, /ordemCardsConfiguracoes = Array\.isArray/);
   assert.match(app, /ordemCardsConfiguracoes: state\.ordemCardsConfiguracoes/);
   assert.match(trecho, /settings-cards-kanban/);
-  assert.match(trecho, /Segure e arraste\. As setas também movem\./);
-  assert.match(trecho, /settings-organize-toolbar/);
-  assert.match(trecho, /Organizar cards/);
-  assert.match(trecho, /Concluir organização/);
+  assert.match(trecho, /settings-card-drag-handle/);
+  assert.match(trecho, /Segure e arraste para reorganizar/);
+  assert.match(trecho, /handle\?\.closest\('\[data-settings-card\]'\)/);
+  assert.doesNotMatch(trecho, /settings-organize-toolbar/);
+  assert.doesNotMatch(trecho, /alternarOrganizacaoCardsConfiguracoes/);
+  assert.doesNotMatch(trecho, /state\.organizandoCardsConfiguracoes/);
   assert.match(trecho, /ArrowLeft ArrowRight ArrowUp ArrowDown/);
   assert.match(trecho, /indiceMaisProximoSalaBotoes/);
   assert.match(trecho, /170ms cubic-bezier\(\.2,\.8,\.2,1\)/);
   assert.doesNotMatch(trecho, /elementFromPoint/);
   assert.match(css, /\.settings-kanban-overlay/);
   assert.match(css, /\.settings-card\.is-organizable/);
-  assert.match(css, /\.settings-organize-toggle \{ width: 100%; min-width: 0; \}/);
-  assert.doesNotMatch(css, /\.settings-organize-toggle span \{ display: none; \}/);
+  assert.match(css, /\.settings-card-drag-handle[^}]*touch-action: none/);
+  assert.doesNotMatch(css, /\.settings-card\.is-organizable[^}]*touch-action: none/);
+  assert.doesNotMatch(css, /\.settings-card\.is-organizable > \* \{ pointer-events: none/);
   assert.match(css, /prefers-reduced-motion/);
 });
 
