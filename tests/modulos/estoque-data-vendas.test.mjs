@@ -9,6 +9,7 @@ const aplicacao = ler('app/avantavendas/sistema/app.js');
 const cliente = ler('app/avantavendas/sistema/supabase-client.js');
 const estilos = ler('app/avantavendas/sistema/styles.css');
 const migracao = ler('supabase/migrations/20260824120000_data_movimentacao_estoque_vendas.sql');
+const migracaoPorConta = ler('supabase/migrations/20260824150000_estoque_por_conta_com_data.sql');
 
 test('quantidade e data compartilham a linha da movimentação de estoque', () => {
   assert.match(aplicacao, /class="stock-movement-fields"/);
@@ -28,8 +29,21 @@ test('data informada é validada, enviada e usada no histórico', () => {
   assert.match(aplicacao, /dataMovimentacao > dataAtualEstoqueISO\(\)/);
   assert.match(aplicacao, /dataMovimentacaoEstoqueBR\(movimento\)/);
   assert.match(cliente, /p_data: dataMovimentacao/);
+  assert.match(cliente, /p_conta_id: contaId/);
+  assert.match(cliente, /error\.code === 'PGRST202'/);
+  assert.match(cliente, /Outros erros nunca são ocultados/);
   assert.match(cliente, /data_movimentacao,criado_em/);
+  assert.match(cliente, /\.eq\('conta_id', contaId\)/);
   assert.match(cliente, /order\('data_movimentacao', \{ ascending: false \}\)/);
+});
+
+test('movimentação de estoque pertence integralmente ao perfil ativo', () => {
+  assert.match(migracaoPorConta, /p_conta_id uuid/);
+  assert.match(migracaoPorConta, /p_data date/);
+  assert.match(migracaoPorConta, /vendas_mobile_pode_operar_conta\(p_conta_id\)/);
+  assert.match(migracaoPorConta, /and conta_id = p_conta_id/);
+  assert.match(migracaoPorConta, /user_id, conta_id, produto_id/);
+  assert.match(migracaoPorConta, /data_movimentacao\)/);
 });
 
 test('banco preserva auditoria e grava uma data própria da movimentação', () => {

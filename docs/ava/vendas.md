@@ -2,6 +2,11 @@
 
 <!-- ava-version: 1.11.0 -->
 
+> Revisão 1.11.0-av84: a recuperação preserva o Kanban oficial da sala e todos
+> os recursos posteriores. Pedidos e pagamentos mantêm a resposta já confirmada
+> enquanto a consulta financeira atualiza, o estoque combina conta ativa e data
+> da movimentação, e os avisos aparecem acima dos cards.
+
 > Revisão 1.11.0-av83: o Dashboard exibe o card **Estoque atual** com produtos
 > acompanhados, saldo, expansão/recolhimento e busca pela lupa.
 
@@ -143,7 +148,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 83 -->
+<!-- avantavendas-asset-revision: 84 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

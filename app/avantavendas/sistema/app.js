@@ -1041,6 +1041,8 @@ function toast(msg) {
   if (atual) atual.remove();
   const el = document.createElement('div');
   el.className = 'toast';
+  el.setAttribute('role', 'alert');
+  el.setAttribute('aria-live', 'assertive');
   el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2800);
@@ -3228,18 +3230,31 @@ async function atualizarDashboardAposLancamento() {
   if (state.aba === 'dashboard' && !state.menuAberto) render();
 }
 
-async function reconciliarFinanceiroCliente(clienteId) {
+async function reconciliarFinanceiroCliente(clienteId, confirmados = {}) {
   if (!backendAtivo || !clienteId) return;
   const dados = await window.VendasDb.loadClientFinancial(clienteId);
+  // A réplica de leitura pode levar alguns instantes para devolver uma gravação
+  // já confirmada pela RPC. Preservamos exatamente a resposta confirmada para
+  // não transformar essa pequena latência em um falso erro financeiro.
+  const vendasConfirmadas = confirmados.pedido
+    ? atualizarRegistroPersistido(dados.vendas || [], confirmados.pedido)
+    : (dados.vendas || []);
+  const pagamentosConfirmados = confirmados.pagamento
+    ? atualizarRegistroPersistido(dados.pagamentos || [], confirmados.pagamento)
+    : (dados.pagamentos || []);
   state.vendas = [
-    ...(dados.vendas || []),
+    ...vendasConfirmadas,
     ...(state.vendas || []).filter((item) => item.cliente_id !== clienteId),
   ];
   state.pagamentos = [
-    ...(dados.pagamentos || []),
+    ...pagamentosConfirmados,
     ...(state.pagamentos || []).filter((item) => item.cliente_id !== clienteId),
   ];
   revisaoDadosOperacionais += 1;
+}
+
+function valoresMonetariosConferem(valorA, valorB) {
+  return Math.round(Number(valorA || 0) * 100) === Math.round(Number(valorB || 0) * 100);
 }
 
 // O cache acelera a abertura, mas nunca é a fonte para gravar saldo financeiro.
@@ -6335,9 +6350,9 @@ async function finalizarPedidoCliente() {
       ? state.vendas.map((item) => item.id === salvo.id ? salvo : item)
       : [salvo, ...state.vendas];
     if (backendAtivo) {
-      await reconciliarFinanceiroCliente(salvo.cliente_id);
+      await reconciliarFinanceiroCliente(salvo.cliente_id, { pedido: salvo });
       const confirmado = (state.vendas || []).find((item) => item.id === salvo.id);
-      if (!confirmado || Number(confirmado.total || 0) !== Number(venda.total || 0)) {
+      if (!confirmado || !valoresMonetariosConferem(confirmado.total, venda.total)) {
         throw new Error('O pedido foi enviado, mas a conferência financeira não foi concluída.');
       }
     }
@@ -6527,9 +6542,9 @@ async function confirmarPagamentoCliente() {
       : pagamento;
     state.pagamentos = atualizarRegistroPersistido(state.pagamentos, salvo);
     if (backendAtivo) {
-      await reconciliarFinanceiroCliente(pagamento.cliente_id);
+      await reconciliarFinanceiroCliente(pagamento.cliente_id, { pagamento: salvo });
       const confirmado = (state.pagamentos || []).find((item) => item.id === salvo.id);
-      if (!confirmado || Number(confirmado.valor || 0) !== Number(pagamento.valor || 0)) {
+      if (!confirmado || !valoresMonetariosConferem(confirmado.valor, pagamento.valor)) {
         throw new Error('O pagamento foi enviado, mas a conferência do saldo não foi concluída.');
       }
     }

@@ -633,20 +633,39 @@
   }
 
   async function movimentarEstoque({ produtoId, tipo, quantidade, observacao = '', dataMovimentacao }) {
-    const { data, error } = await requireClient().rpc('movimentar_estoque_vendas_mobile_rpc', {
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
+    const parametros = {
+      p_conta_id: contaId,
       p_produto_id: produtoId,
       p_tipo: tipo,
       p_quantidade: Number(quantidade),
       p_observacao: observacao || null,
       p_data: dataMovimentacao,
-    });
+    };
+    let { data, error } = await requireClient().rpc('movimentar_estoque_vendas_mobile_rpc', parametros);
+    // Compatibilidade de implantação: enquanto a assinatura por conta ainda
+    // não chegou ao banco, a versão oficial anterior continua registrando a
+    // data e validando o proprietário. Outros erros nunca são ocultados.
+    if (error && (error.code === 'PGRST202' || /function .* was not found|schema cache/i.test(String(error.message || '')))) {
+      ({ data, error } = await requireClient().rpc('movimentar_estoque_vendas_mobile_rpc', {
+        p_produto_id: produtoId,
+        p_tipo: tipo,
+        p_quantidade: Number(quantidade),
+        p_observacao: observacao || null,
+        p_data: dataMovimentacao,
+      }));
+    }
     if (error) throw error;
     return data;
   }
 
   async function listarMovimentosEstoque(produtoId) {
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient().from('vendas_mobile_estoque_movimentos')
       .select('id,tipo,quantidade,saldo_anterior,saldo_final,observacao,data_movimentacao,criado_em')
+      .eq('conta_id', contaId)
       .eq('produto_id', produtoId)
       .order('data_movimentacao', { ascending: false })
       .order('criado_em', { ascending: false })
@@ -777,6 +796,8 @@
   async function persistOrder(order, incluirId = false) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const payload = pedidoParaPersistencia(order, incluirId);
     const { data, error } = await client.rpc('salvar_pedido_vendas_mobile_rpc', {
       p_pedido: payload.pedido,
@@ -785,6 +806,9 @@
     });
     if (error) throw error;
     if (!data?.id || !Array.isArray(data.itens)) throw new Error('O pedido não foi confirmado integralmente pelo servidor.');
+    if (String(data.conta_id || '') !== String(contaId)) {
+      throw new Error('O pedido não foi confirmado no perfil de vendas ativo. Atualize a página e tente novamente.');
+    }
     return data;
   }
 

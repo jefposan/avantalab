@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.11.0-av84 - 2026-08-24
+
+- AvantaVendas: recuperação construída sobre a versão oficial atual, preservando
+  o Kanban fluido e todos os recursos posteriores. A confirmação financeira de
+  pedidos e pagamentos deixa de acusar falso erro enquanto a leitura do servidor
+  atualiza, sem deixar de conferir o perfil e os valores confirmados.
+- AvantaVendas: movimentações de estoque passam a combinar perfil ativo e data
+  informada na mesma operação, permitindo que contas compartilhadas funcionem
+  com o mesmo isolamento e segurança das contas criadas inicialmente.
+- AvantaVendas: avisos rápidos são exibidos acima de qualquer card ou camada
+  escura e anunciados corretamente por leitores de tela.
+
 ## 1.11.0-av83 - 2026-08-24
 
 - AvantaVendas: o Dashboard ganhou o card **Estoque atual**, com nome do produto
