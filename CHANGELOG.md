@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.11.0-av86 - 2026-08-24
+
+- AvantaVendas: a casca móvel deixa de aceitar rolagem programática oculta ao
+  focar o controle de tema em Configurações. Cabeçalho, conteúdo e navegação
+  inferior permanecem ancorados ao alternar entre os modos claro e escuro.
+
 ## 1.11.0-av85 - 2026-08-24
 
 - AvantaVendas: alternar o modo escuro não reconstrói mais a aplicação nem o

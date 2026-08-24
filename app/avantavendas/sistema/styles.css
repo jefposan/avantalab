@@ -2991,6 +2991,10 @@ html.dark-theme:has(.login-screen) body {
     height: 100%;
     min-height: 0;
     overflow: hidden;
+    /* `hidden` ainda permite rolagem programática ao focar controles. Ao
+       alternar o tema dentro de Configurações, o navegador rolava esta casca
+       inteira e levava cabeçalho, conteúdo e menu inferior para fora da tela. */
+    overflow: clip;
   }
 
   .vendas-shell-active .main-area {

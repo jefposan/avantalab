@@ -36,4 +36,5 @@ test('troca de tema preserva a estrutura do menu inferior fixo', () => {
   assert.match(funcao, /classList\.toggle\('dark-theme', state\.temaEscuro\)/);
   assert.match(funcao, /salvarEstado\(\)/);
   assert.doesNotMatch(funcao, /render\(\)/);
+  assert.match(estilos, /\.vendas-shell-active #app\.app-shell \{[\s\S]*overflow: clip;/);
 });
