@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
 import { diferencaDiasIso, diasEmAtraso, formatarData, formatarMoeda } from './helpers';
+import IdentificacaoCliente from './IdentificacaoCliente';
 
 type Props = {
   titulo: string;
@@ -104,10 +105,9 @@ export default function TabelaVencimentos({
         </div>
 
         <div className={styles.tableWrap}>
-          <table className={`${styles.table} ${styles.tabelaVencimentos}`}>
+          <table className={`${styles.table} ${styles.tabelaVencimentos} ${podeBaixar ? styles.tabelaVencimentosComAcao : ''}`}>
             <colgroup>
-              <col className={styles.tabelaVencimentosEmpresa} />
-              <col className={styles.tabelaVencimentosSubempresa} />
+              <col className={styles.tabelaVencimentosCliente} />
               <col className={styles.tabelaVencimentosData} />
               <col className={styles.tabelaVencimentosValor} />
               <col className={styles.tabelaVencimentosPrazo} />
@@ -115,7 +115,6 @@ export default function TabelaVencimentos({
             </colgroup>
             <thead>
               <tr>
-                <th>Empresa/local</th>
                 <th>Cliente</th>
                 <th>Vencimento</th>
                 <th>Valor esperado</th>
@@ -125,7 +124,7 @@ export default function TabelaVencimentos({
             </thead>
             <tbody>
               {recebimentosFiltrados.length === 0 ? (
-                <tr><td colSpan={podeBaixar ? 6 : 5} className={styles.muted} style={{ padding: 16 }}>{busca ? 'Nenhum resultado encontrado.' : vazio}</td></tr>
+                <tr><td colSpan={podeBaixar ? 5 : 4} className={styles.muted} style={{ padding: 16 }}>{busca ? 'Nenhum resultado encontrado.' : vazio}</td></tr>
               ) : recebimentosFiltrados.map((recebimento) => {
                 const dias = variante === 'inadimplente'
                   ? diasEmAtraso(recebimento.vencimento, hoje)
@@ -135,8 +134,7 @@ export default function TabelaVencimentos({
                   : dias === 0 ? 'Vence hoje' : `Em ${dias} dia(s)`;
                 return (
                   <tr key={recebimento.id}>
-                    <td style={{ fontWeight: 700 }}>{nomeEmpresa(recebimento.empresaId)}</td>
-                    <td>{nomeSubempresa(recebimento.subempresaId)}</td>
+                    <td><IdentificacaoCliente recebimento={recebimento} empresas={empresas} subempresas={subempresas} /></td>
                     <td>{formatarData(recebimento.vencimento)}</td>
                     <td>{formatarMoeda(recebimento.valorCombinado)}</td>
                     <td className={variante === 'inadimplente' ? styles.prazoInadimplente : styles.prazoProximo}>{indicador}</td>
@@ -153,7 +151,7 @@ export default function TabelaVencimentos({
         <div className={styles.overlay} role="presentation" onClick={() => !baixando && setBaixaPendente(null)}>
           <div className={styles.comprovante} role="dialog" aria-modal="true" aria-labelledby="baixa-direta-titulo" onClick={(event) => event.stopPropagation()}>
             <h3 id="baixa-direta-titulo" style={{ fontWeight: 800, fontSize: 17, margin: 0 }}>Confirmar baixa</h3>
-            <p className={styles.muted} style={{ margin: '6px 0 14px' }}>{nomeEmpresa(baixaPendente.empresaId)} · {nomeSubempresa(baixaPendente.subempresaId)}</p>
+            <div className={styles.baixaCliente}><IdentificacaoCliente recebimento={baixaPendente} empresas={empresas} subempresas={subempresas} /></div>
             <div className={styles.readonlyBox} style={{ textAlign: 'left', marginBottom: 12 }}>
               <div className={styles.readonlyRow}><span>Valor</span><span>{formatarMoeda(baixaPendente.valorCombinado)}</span></div>
               <div className={styles.readonlyRow}><span>Vencimento</span><span>{formatarData(baixaPendente.vencimento)}</span></div>

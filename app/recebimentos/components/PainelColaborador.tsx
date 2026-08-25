@@ -7,6 +7,7 @@ import type { Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, Sube
 import { COR_PRIMARIA } from './dadosDemo';
 import { aguardandoConferencia, formatarDataHora, formatarMoeda, mesmoDia, rotuloFormaPagamento, rotuloSituacao } from './helpers';
 import FormularioRecebimento, { type ResumoRecebimento } from './FormularioRecebimento';
+import IdentificacaoCliente from './IdentificacaoCliente';
 
 type Props = {
   colaborador: Colaborador;
@@ -198,8 +199,8 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
                 <button key={r.id} type="button" className={styles.correcaoItem} onClick={() => abrirCorrecao(r)}>
                   <span className={styles.correcaoItemTopo}>
                     <span>
-                      <strong>{nomeEmpresa(r.empresaId)}</strong>
-                      <small>{nomeSub(r.subempresaId)} · Competência {competencia(r.vencimento)}</small>
+                      <IdentificacaoCliente recebimento={r} empresas={empresas} subempresas={subempresas} />
+                      <small>Competência {competencia(r.vencimento)}</small>
                     </span>
                     <span className={styles.correcaoAcao}>Corrigir</span>
                   </span>
@@ -278,8 +279,7 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
                 <div key={r.id} className={styles.histCard}>
                   <div className={styles.histTop}>
                     <div>
-                      <div className={styles.histEmpresa}>{nomeEmpresa(r.empresaId)}</div>
-                      <div className={`${styles.histSub} ${styles.histSubDestaque}`}>{nomeSub(r.subempresaId)}</div>
+                      <IdentificacaoCliente recebimento={r} empresas={empresas} subempresas={subempresas} />
                     </div>
                     <span className={styles.badge} style={{ background: rot.fundo, color: rot.cor }}>{textoSituacao}</span>
                   </div>

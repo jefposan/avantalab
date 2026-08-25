@@ -686,7 +686,7 @@
   overflow-wrap: normal;
   word-break: normal;
 }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(1) { width: 14%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(1) { width: 17%; }
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(2) { width: 9%; }
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(3),
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(4),
@@ -696,7 +696,7 @@
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(8) { width: 9%; }
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(9) { width: 11%; }
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(10) { width: 8%; }
-.tabelaRecebimentosComAcao th:nth-child(1) { width: 11%; }
+.tabelaRecebimentosComAcao th:nth-child(1) { width: 14%; }
 .tabelaRecebimentosComAcao th:nth-child(2) { width: 8%; }
 .tabelaRecebimentosComAcao th:nth-child(3),
 .tabelaRecebimentosComAcao th:nth-child(4),
@@ -859,21 +859,24 @@
   .listaRecebimentos .filtroData .filterSelect { width: 100%; }
 }
 .tabelaVencimentos {
-  min-width: 810px;
+  min-width: 680px;
   table-layout: fixed;
 }
-.tabelaVencimentosEmpresa { width: 23%; }
-.tabelaVencimentosSubempresa { width: 20%; }
-.tabelaVencimentosData { width: 14%; }
-.tabelaVencimentosValor { width: 16%; }
-.tabelaVencimentosPrazo { width: 14%; }
-.tabelaVencimentosAcao { width: 13%; }
+.tabelaVencimentosCliente { width: 40%; }
+.tabelaVencimentosData { width: 18%; }
+.tabelaVencimentosValor { width: 20%; }
+.tabelaVencimentosPrazo { width: 22%; }
+.tabelaVencimentosComAcao .tabelaVencimentosCliente { width: 33%; }
+.tabelaVencimentosComAcao .tabelaVencimentosData { width: 15%; }
+.tabelaVencimentosComAcao .tabelaVencimentosValor { width: 17%; }
+.tabelaVencimentosComAcao .tabelaVencimentosPrazo { width: 20%; }
+.tabelaVencimentosAcao { width: 15%; }
+.tabelaVencimentos th:nth-child(3),
+.tabelaVencimentos td:nth-child(3) { text-align: right; }
 .tabelaVencimentos th:nth-child(4),
-.tabelaVencimentos td:nth-child(4) { text-align: right; }
+.tabelaVencimentos td:nth-child(4) { text-align: center; }
 .tabelaVencimentos th:nth-child(5),
 .tabelaVencimentos td:nth-child(5) { text-align: center; }
-.tabelaVencimentos th:nth-child(6),
-.tabelaVencimentos td:nth-child(6) { text-align: center; }
 .prazoInadimplente,
 .prazoProximo { font-weight: 800; }
 .prazoInadimplente { color: #b91c1c; }
@@ -1137,6 +1140,16 @@
   min-width: 0;
   flex-wrap: wrap;
 }
+.clienteIdentificacao {
+  display: inline-flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+.clientePrincipal { color: #0f172a; font-size: 13px; font-weight: 800; }
+.clienteLocal { color: #64748b; font-size: 11px; font-weight: 600; }
+.baixaCliente { margin: 6px 0 14px; }
 .competenciaPill {
   display: inline-flex;
   align-items: center;
@@ -2114,6 +2127,8 @@
 .darkScope .subMeta,
 .darkScope .filtroData { color: #94a3b8; }
 .darkScope .histSubDestaque { background: color-mix(in srgb, var(--cp) 22%, #0f172a); color: #bae6fd; }
+.darkScope .clientePrincipal { color: #e2e8f0; }
+.darkScope .clienteLocal { color: #94a3b8; }
 .darkScope .statAzul { --sc-bg: #102338; --sc-border: #28445f; --sc-label: #9ac6e8; --sc-value: #bfdbfe; }
 .darkScope .statCiano { --sc-bg: #0e2b32; --sc-border: #24515a; --sc-label: #99d5dd; --sc-value: #a5f3fc; }
 .darkScope .statArdosia { --sc-bg: #1a2432; --sc-border: #334155; --sc-label: #aebdce; --sc-value: #e2e8f0; }
