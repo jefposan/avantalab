@@ -8,6 +8,7 @@ import type { Colaborador, Empresa, Recebimento, SituacaoRecebimento, Subempresa
 import { formatarMoeda, limitesDoMes, rotuloFormaPagamento, rotuloSituacao } from './helpers';
 import type { ComprovanteRecebimento } from '../data/repo';
 import BotaoComprovante from './BotaoComprovante';
+import IdentificacaoCliente from './IdentificacaoCliente';
 
 type Props = {
   chaveMes: string;
@@ -181,7 +182,7 @@ export default function ListaRecebimentos({ chaveMes, todosMeses = false, empres
         <table className={`${styles.table} ${styles.tabelaRecebimentos} ${podeEstornar ? styles.tabelaRecebimentosComAcao : ''}`}>
           <thead>
             <tr>
-              <th>Empresa/local</th><th>Vencimento</th><th>Valor</th><th>Recebido</th>
+              <th>Cliente</th><th>Vencimento</th><th>Valor</th><th>Recebido</th>
               <th>Diferença</th><th>Recebido em</th><th>Recebido por</th><th>Pagamento</th><th>Situação</th><th>Comprovante</th>{podeEstornar && <th>Ação</th>}
             </tr>
           </thead>
@@ -194,7 +195,7 @@ export default function ListaRecebimentos({ chaveMes, todosMeses = false, empres
               const recebimentoPodeSerEstornado = r.valorRecebido != null && r.recebidoEm != null;
               return (
                 <tr key={r.id}>
-                  <td data-label="Empresa/local" style={{ fontWeight: 700 }}>{nomeEmpresa(r.empresaId)}</td>
+                  <td data-label="Cliente"><IdentificacaoCliente recebimento={r} empresas={empresas} subempresas={subempresas} /></td>
                   <td data-label="Vencimento">{formatarDataCurta(r.vencimento)}</td>
                   <td data-label="Valor">{formatarMoeda(r.valorCombinado)}</td>
                   <td data-label="Recebido">{r.valorRecebido == null ? '—' : formatarMoeda(r.valorRecebido)}</td>
@@ -220,7 +221,7 @@ export default function ListaRecebimentos({ chaveMes, todosMeses = false, empres
           <h3 id="estorno-titulo" style={{ fontWeight: 800, fontSize: 17, margin: 0 }}>Estornar recebimento?</h3>
           <p className={styles.muted} style={{ margin: '6px 0 14px' }}>O recebimento será desfeito e a cobrança voltará para a situação aberta correspondente.</p>
           <div className={styles.readonlyBox} style={{ textAlign: 'left', marginBottom: 12 }}>
-            <div className={styles.readonlyRow}><span>Cliente</span><span>{nomeSub(estornoPendente.subempresaId)}</span></div>
+            <div className={styles.readonlyRow}><span>Cliente</span><IdentificacaoCliente recebimento={estornoPendente} empresas={empresas} subempresas={subempresas} /></div>
             <div className={styles.readonlyRow}><span>Valor</span><span>{formatarMoeda(estornoPendente.valorRecebido ?? estornoPendente.valorCombinado)}</span></div>
           </div>
           <label className={styles.label} htmlFor="recebimentos-motivo-estorno">Motivo do estorno</label>

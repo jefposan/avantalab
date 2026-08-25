@@ -8,6 +8,7 @@ import { aguardandoConferencia, formatarDataHora, formatarMoeda, rotuloFormaPaga
 import type { ComprovanteRecebimento } from '../data/repo';
 import BotaoComprovante from './BotaoComprovante';
 import FiltroCompetencia from './FiltroCompetencia';
+import IdentificacaoCliente from './IdentificacaoCliente';
 
 const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
@@ -119,7 +120,7 @@ export default function PainelConferencia({
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                 <div>
                   <div className={styles.conferenciaIdentificacao}>
-                    <div className={styles.subNome}>{nomeEmpresa(r.empresaId)} · {nomeSub(r.subempresaId)}</div>
+                    <IdentificacaoCliente recebimento={r} empresas={empresas} subempresas={subempresas} />
                     <span className={styles.competenciaPill}>{rotuloCompetencia(r.vencimento)}</span>
                   </div>
                   <div className={styles.subMeta}>Colaborador: {nomeColab(r.colaboradorId)} · {formatarDataHora(r.recebidoEm)}</div>
