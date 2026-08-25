@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.11.0 -->
+<!-- ava-version: 1.11.0.01 -->
+
+> Revisão 1.11.0.01: ao editar um lançamento previsto para hoje ou uma data
+> passada, escolha **Salvar previsto** ou **Confirmar nesta data**. Confirmar
+> efetiva somente aquela ocorrência; despesas fixas e recorrentes continuam
+> programadas nos próximos períodos.
 
 > Revisão 1.11.0: o card de estoque foi adicionado ao Dashboard do
 > AvantaVendas; sem alteração operacional na Gestão Web.

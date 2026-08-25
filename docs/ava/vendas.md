@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.11.0 -->
+<!-- ava-version: 1.11.0.01 -->
+
+> Revisão 1.11.0.01: confirmação antecipada de lançamentos pertence à Gestão;
+> sem alteração operacional no AvantaVendas.
 
 > Revisão 1.11.0-av94: o Estoque consignado mantém a seta direcional visível ao
 > expandir ou recolher. O Estoque atual reconcilia entradas retroativas pela data

@@ -39,7 +39,7 @@ type CardEntradaFaturamentoProps = {
   editEntradaValor: string;
   handleEditEntradaValorChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onIniciarEdicaoEntrada: (entrada: EntradaFaturamento) => void;
-  onSalvarEdicaoEntrada: () => void | Promise<void>;
+  onSalvarEdicaoEntrada: (confirmarPrevista?: boolean) => void | Promise<void>;
   onCancelarEdicaoEntrada: () => void;
   onExcluirEntrada: (entrada: EntradaFaturamento) => void | Promise<void>;
   onFocoReceita: () => void;
@@ -288,6 +288,8 @@ export default function CardEntradaFaturamento({
 
       <TabelaEntradasFaturamento
         entradas={entradas}
+        mesAtivo={mesAtivo}
+        anoSelecionado={anoSelecionado}
         podeEditarEntradas={podeEditarEntradas}
         entradaEditandoId={entradaEditandoId}
         editEntradaDia={editEntradaDia}

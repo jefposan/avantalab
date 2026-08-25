@@ -5068,7 +5068,7 @@ const handleEditEntradaFaturamentoValorChange = (
   setEditEntradaFaturamentoValor(formatarValorCampo(numericValue));
 };
 
-const salvarEdicaoEntradaFaturamento = async () => {
+const salvarEdicaoEntradaFaturamento = async (confirmarPrevista = false) => {
   if (!empresaId) {
     abrirAviso(
       'Empresa não carregada',
@@ -5121,10 +5121,17 @@ const salvarEdicaoEntradaFaturamento = async () => {
     return;
   }
 
-  if (!iniciarProcessamentoLancamento('Atualizando receita')) return;
-  try {
-    const eraPrevista = entradaOriginal.status === 'prevista';
+  const eraPrevista = entradaOriginal.status === 'prevista';
+  const dataEditadaEhFutura = dataFutura(Number(anoSelecionado), meses.indexOf(mesEntrada), diaNumerico);
+  const confirmarAgora = eraPrevista && confirmarPrevista;
 
+  if (confirmarAgora && dataEditadaEhFutura) {
+    abrirAviso('Data ainda futura', 'Para confirmar agora, informe hoje ou uma data anterior.');
+    return;
+  }
+
+  if (!iniciarProcessamentoLancamento(confirmarAgora ? 'Confirmando receita' : 'Atualizando receita')) return;
+  try {
     const resultado = await atualizarFaturamentoEntrada({
       id: entradaFaturamentoEditandoId,
       empresaId,
@@ -5133,8 +5140,11 @@ const salvarEdicaoEntradaFaturamento = async () => {
       dia: diaNumerico,
       origem: origemLimpa,
       valor: editEntradaFaturamentoValorNumerico,
-      // Prevista continua prevista ate a confirmacao (status/tipo preservados).
-      ...(eraPrevista ? { status: 'prevista', tipoObs: 'previsto' } : {}),
+      ...(confirmarAgora
+        ? { status: 'confirmada', tipoObs: null }
+        : eraPrevista
+          ? { status: 'prevista', tipoObs: 'previsto' }
+          : {}),
     });
 
   if (resultado.erro || !resultado.data) {
@@ -5146,7 +5156,7 @@ const salvarEdicaoEntradaFaturamento = async () => {
   }
 
   // Receita prevista nao integra o total efetivado -> nao recalcula faturamento.
-  if (eraPrevista) {
+  if (eraPrevista && !confirmarAgora) {
     setFaturamentosEntradas((prev) =>
       prev.map((entrada) =>
         entrada.id === entradaFaturamentoEditandoId
@@ -5166,7 +5176,7 @@ const salvarEdicaoEntradaFaturamento = async () => {
     return;
   }
 
-  const valorAnterior = Number(entradaOriginal.valor || 0);
+  const valorAnterior = eraPrevista ? 0 : Number(entradaOriginal.valor || 0);
   const totalAtual = faturamentos[mesEntrada] || 0;
   const novoTotal = Math.max(
     0,
@@ -5196,6 +5206,8 @@ const salvarEdicaoEntradaFaturamento = async () => {
             dia: diaNumerico,
             origem: origemLimpa,
             valor: editEntradaFaturamentoValorNumerico,
+            status: confirmarAgora ? 'confirmada' : entrada.status,
+            tipo: confirmarAgora ? null : entrada.tipo,
           }
         : entrada
     )
@@ -5242,7 +5254,7 @@ const handleEditValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   setEditValor(formatarValorCampo(numericValue));
 };
 
-const salvarEdicaoLancamento = async () => {
+const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
   if (!empresaId) {
   abrirAviso(
     'Empresa não carregada',
@@ -5283,20 +5295,31 @@ const salvarEdicaoLancamento = async () => {
   const ehParcelaEditada = lancamentoAtual?.tipo === 'parcela';
   const ehFuturaEditada = dataFutura(Number(anoSelecionado), meses.indexOf(mesAtivo), diaNumerico);
   const continuavaPrevista = lancamentoAtual?.status === 'prevista';
-  const tipoEditado = ehFixaEditada
+  const confirmarAgora = Boolean(confirmarPrevista && continuavaPrevista);
+
+  if (confirmarAgora && ehFuturaEditada) {
+    abrirAviso('Data ainda futura', 'Para confirmar agora, informe hoje ou uma data anterior.');
+    return;
+  }
+
+  const tipoEditado = confirmarAgora
+    ? (lancamentoAtual?.tipo === 'previsto' ? null : lancamentoAtual?.tipo || null)
+    : ehFixaEditada
     ? 'fixa'
     : ehParcelaEditada
       ? 'parcela'
       : ehFuturaEditada || (continuavaPrevista && lancamentoAtual?.tipo === 'previsto')
         ? 'previsto'
         : null;
-  const statusEditado = ehParcelaEditada
+  const statusEditado = confirmarAgora
+    ? 'confirmada'
+    : ehParcelaEditada
     ? (lancamentoAtual?.status || null)
     : ehFuturaEditada || continuavaPrevista
       ? 'prevista'
       : null;
 
-  if (!iniciarProcessamentoLancamento('Atualizando despesa')) return;
+  if (!iniciarProcessamentoLancamento(confirmarAgora ? 'Confirmando despesa' : 'Atualizando despesa')) return;
   try {
     const salvo = await atualizarLancamento({
       id: lancamentoEditandoId,

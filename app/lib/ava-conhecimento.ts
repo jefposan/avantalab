@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.11.0.01: ao antecipar a data de um lançamento previsto
+// para hoje ou antes, a Gestão permite manter previsto ou confirmar naquela data.
+// Em recorrências, somente a ocorrência atual é efetivada.
 // Revisado na versão 1.11.0-av94: o Estoque consignado preserva a seta de
 // expansão/recolhimento e o Estoque atual reconcilia saídas históricas pela
 // data real das entradas, aplicando apenas a diferença ainda não refletida.

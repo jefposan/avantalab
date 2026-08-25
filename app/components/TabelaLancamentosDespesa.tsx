@@ -115,7 +115,7 @@ type TabelaLancamentosDespesaProps = {
   setEditDescricao: (valor: string) => void;
   editValor: string;
   handleEditValorChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  salvarEdicaoLancamento: () => void | Promise<void>;
+  salvarEdicaoLancamento: (confirmarPrevista?: boolean) => void | Promise<void>;
   cancelarEdicaoLancamento: () => void;
   iniciarEdicaoLancamento: (lancamento: LancamentoDespesa) => void;
   onSolicitarExclusaoLancamento: (lancamento: LancamentoDespesa) => void;
@@ -454,10 +454,25 @@ export default function TabelaLancamentosDespesa({
                           />
                         </td>
 
-                        <td className={`sticky right-0 z-10 w-28 border-l py-1.5 px-1.5 text-center ${
+                        <td className={`sticky right-0 z-10 w-36 border-l py-1.5 px-1.5 text-center ${
                           darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-white'
                         }`}>
                           <div className="flex items-center justify-center gap-1">
+                            {lanc.status === 'prevista' && (() => {
+                              const diaEditado = Number(editDia);
+                              const mesIndice = MESES_TAB.indexOf(String(lanc.mes || mesAtivo || '').toUpperCase());
+                              const podeConfirmar = diaEditado >= 1 && mesIndice >= 0 && !dataFuturaTab(Number(anoSelecionado), mesIndice, diaEditado);
+                              return podeConfirmar ? (
+                                <button
+                                  type="button"
+                                  onClick={() => salvarEdicaoLancamento(true)}
+                                  className="rounded-md bg-emerald-600 px-2 py-1.5 text-[10px] font-black text-white transition hover:bg-emerald-700"
+                                  title={`Confirmar como realizada no dia ${String(diaEditado).padStart(2, '0')}`}
+                                >
+                                  Confirmar
+                                </button>
+                              ) : null;
+                            })()}
                             {lanc.notaArquivoPath && (
                               <button
                                 onClick={() => onVerNota(lanc)}
@@ -468,7 +483,7 @@ export default function TabelaLancamentosDespesa({
                               </button>
                             )}
                             <button
-                              onClick={salvarEdicaoLancamento}
+                              onClick={() => salvarEdicaoLancamento()}
                               className="text-green-500 hover:bg-green-500/10 p-1.5 rounded transition-all cursor-pointer"
                               title="Salvar edição"
                             >

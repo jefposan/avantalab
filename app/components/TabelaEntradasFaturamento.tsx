@@ -16,6 +16,8 @@ export type EntradaFaturamento = {
 
 type TabelaEntradasFaturamentoProps = {
   entradas: EntradaFaturamento[];
+  mesAtivo: string | null;
+  anoSelecionado: string;
   podeEditarEntradas: boolean;
   entradaEditandoId: string | null;
   editEntradaDia: string;
@@ -25,7 +27,7 @@ type TabelaEntradasFaturamentoProps = {
   editEntradaValor: string;
   handleEditEntradaValorChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onIniciarEdicaoEntrada: (entrada: EntradaFaturamento) => void;
-  onSalvarEdicaoEntrada: () => void | Promise<void>;
+  onSalvarEdicaoEntrada: (confirmarPrevista?: boolean) => void | Promise<void>;
   onCancelarEdicaoEntrada: () => void;
   onExcluirEntrada: (entrada: EntradaFaturamento) => void | Promise<void>;
   expandidoPopup?: boolean;
@@ -40,8 +42,20 @@ function formatarMoedaLocal(valor: number | string | null) {
   });
 }
 
+function dataFuturaEntrada(ano: number, mes: string, dia: number) {
+  const indiceMes = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'].indexOf(mes.toUpperCase());
+  const hoje = new Date();
+  if (indiceMes < 0 || ano > hoje.getFullYear()) return true;
+  if (ano < hoje.getFullYear()) return false;
+  if (indiceMes > hoje.getMonth()) return true;
+  if (indiceMes < hoje.getMonth()) return false;
+  return dia > hoje.getDate();
+}
+
 export default function TabelaEntradasFaturamento({
   entradas,
+  mesAtivo,
+  anoSelecionado,
   podeEditarEntradas,
   entradaEditandoId,
   editEntradaDia,
@@ -129,11 +143,26 @@ export default function TabelaEntradasFaturamento({
                     />
                   </td>
 
-                  <td className="py-1.5 px-1.5 w-20 text-center">
+                  <td className="py-1.5 px-1.5 w-36 text-center">
                     <div className="flex items-center justify-center gap-1">
+                      {entrada.status === 'prevista' && (() => {
+                        const diaEditado = Number(editEntradaDia);
+                        const mesEntrada = String(entrada.mes || mesAtivo || '');
+                        const podeConfirmar = diaEditado >= 1 && mesEntrada && !dataFuturaEntrada(Number(anoSelecionado), mesEntrada, diaEditado);
+                        return podeConfirmar ? (
+                          <button
+                            type="button"
+                            onClick={() => onSalvarEdicaoEntrada(true)}
+                            className="rounded-md bg-emerald-600 px-2 py-1.5 text-[10px] font-black text-white transition hover:bg-emerald-700"
+                            title={`Confirmar como recebida no dia ${String(diaEditado).padStart(2, '0')}`}
+                          >
+                            Confirmar
+                          </button>
+                        ) : null;
+                      })()}
                       <button
                         type="button"
-                        onClick={onSalvarEdicaoEntrada}
+                        onClick={() => onSalvarEdicaoEntrada()}
                         className="text-green-500 hover:bg-green-500/10 p-1.5 rounded transition-all cursor-pointer"
                         title="Salvar edição"
                       >

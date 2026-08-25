@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.11.0.01 - 2026-08-25
+
+- Gestão Web e Mobile: ao editar uma receita ou despesa prevista para hoje ou
+  uma data passada, agora é possível escolher entre manter a previsão ou
+  **Confirmar nesta data**. A confirmação efetiva somente aquela ocorrência;
+  despesas fixas e recorrentes preservam os próximos lançamentos.
+
 ## 1.11.0-av94 - 2026-08-24
 
 - AvantaVendas: o controle **Recolher/Expandir** do Estoque consignado usa
