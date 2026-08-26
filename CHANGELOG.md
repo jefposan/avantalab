@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.12.1.01 - 2026-08-26
+
+- AvantaVendas: no primeiro vínculo financeiro, agora é possível escolher
+  **Todo o histórico**, **A partir do mês vigente** ou **A partir do mês
+  seguinte**. Assim, uma conta pode ser conectada sem mover lançamentos já
+  existentes.
+
+## 1.12.1-av96 - 2026-08-26
+
+- AvantaVendas: a primeira escolha de destino financeiro oferece explicitamente
+  a opção de não transferir o histórico.
+
 ## 1.12.1 - 2026-08-26
 
 - AvantaVendas: o destino financeiro e a base de receita passam a pertencer à

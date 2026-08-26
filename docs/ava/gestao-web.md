@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1 -->
+<!-- ava-version: 1.12.1.01 -->
+
+> Revisão 1.12.1.01: a primeira vinculação financeira do AvantaVendas pode
+> começar no período escolhido; sem outra alteração operacional na Gestão Web.
 
 > Revisão 1.12.1: os resultados recebidos do AvantaVendas são identificados
 > pela conta de vendas de origem; sem outra alteração operacional na Gestão Web.

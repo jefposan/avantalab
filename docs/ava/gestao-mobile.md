@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1 -->
+<!-- ava-version: 1.12.1.01 -->
+
+> Revisão 1.12.1.01: a primeira vinculação financeira do AvantaVendas pode
+> começar no período escolhido; sem outra alteração operacional na Gestão Mobile.
 
 > Revisão 1.12.1: os resultados recebidos do AvantaVendas passam a respeitar a
 > conta de vendas de origem; sem outra alteração operacional na Gestão Mobile.

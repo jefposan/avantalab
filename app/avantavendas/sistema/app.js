@@ -5285,10 +5285,15 @@ function selecionarPerfilFinanceiroVendas(empresaId) {
     return;
   }
   if (!integracao.vinculado) {
-    sheet(`<div class="sheet-header"><div><h2>Vincular perfil financeiro</h2><p class="muted small">Esta escolha é opcional e não altera seus conteúdos.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Todos os meses existentes no Vendas serão enviados para <b>${escapeHtml(empresaNome)}</b>. Depois disso, os lançamentos sincronizados ficarão protegidos contra edição manual.</p><div class="grid"><button class="secondary" onclick="abrirPerfilFinanceiroVendas()">Voltar</button><button class="primary" onclick="salvarPerfilFinanceiroVendas('${empresaId}','todo_historico','manter')">Vincular todo o histórico</button></div>`, 'sheet-backdrop-centered');
+    abrirPeriodoNovoPerfilFinanceiroVendas(empresaId);
     return;
   }
   abrirPeriodoTrocaPerfilFinanceiroVendas(empresaId);
+}
+
+function abrirPeriodoNovoPerfilFinanceiroVendas(empresaId) {
+  const empresaNome = nomePerfilFinanceiroVendas(empresaId);
+  sheet(`<div class="sheet-header"><div><h2>Quando começar a enviar?</h2><p class="muted small">Destino: ${escapeHtml(empresaNome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Escolha o período que esta conta de vendas deve enviar à Gestão. Nenhum lançamento é transferido até sua confirmação.</p><div class="grid"><button class="secondary financial-flow-option" onclick="salvarPerfilFinanceiroVendas('${empresaId}','todo_historico','manter')"><b>Todo o histórico</b><small>Transfere os meses já existentes e os próximos.</small></button><button class="secondary financial-flow-option" onclick="salvarPerfilFinanceiroVendas('${empresaId}','mes_atual','manter')"><b>A partir do mês vigente</b><small>Preserva os meses anteriores onde já estão.</small></button><button class="primary financial-flow-option" onclick="salvarPerfilFinanceiroVendas('${empresaId}','mes_seguinte','manter')"><b>A partir do mês seguinte</b><small>Não altera os lançamentos já existentes.</small></button><button class="ghost" onclick="abrirPerfilFinanceiroVendas()">Voltar</button></div>`, 'sheet-backdrop-centered');
 }
 
 function abrirPeriodoTrocaPerfilFinanceiroVendas(empresaId) {
@@ -9420,6 +9425,7 @@ window.abrirAgendaAniversariantes = abrirAgendaAniversariantes;
 window.abrirAgendaHojeVendas = abrirAgendaHojeVendas;
 window.abrirPerfilFinanceiroVendas = abrirPerfilFinanceiroVendas;
 window.selecionarPerfilFinanceiroVendas = selecionarPerfilFinanceiroVendas;
+window.abrirPeriodoNovoPerfilFinanceiroVendas = abrirPeriodoNovoPerfilFinanceiroVendas;
 window.abrirPeriodoTrocaPerfilFinanceiroVendas = abrirPeriodoTrocaPerfilFinanceiroVendas;
 window.abrirDestinoHistoricoAnteriorVendas = abrirDestinoHistoricoAnteriorVendas;
 window.confirmarExclusaoHistoricoTrocaVendas = confirmarExclusaoHistoricoTrocaVendas;

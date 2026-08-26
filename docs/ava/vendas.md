@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1 -->
+<!-- ava-version: 1.12.1.01 -->
+
+> Revisão 1.12.1.01: ao definir o primeiro destino financeiro de um perfil de
+> vendas, escolha **Todo o histórico**, **A partir do mês vigente** ou **A
+> partir do mês seguinte**. As duas últimas opções preservam os lançamentos
+> anteriores no destino em que já estão.
+
+> Revisão 1.12.1-av96: a primeira vinculação financeira permite começar no
+> próximo mês sem alterar qualquer lançamento histórico.
 
 > Revisão 1.12.1: cada **Perfil de vendas** escolhe seu próprio destino
 > financeiro na Gestão. Perfis diferentes podem apontar para empresas
@@ -206,7 +214,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 95 -->
+<!-- avantavendas-asset-revision: 96 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
