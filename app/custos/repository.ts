@@ -19,16 +19,22 @@ const mapearProduto = (linha: Record<string, unknown>): ProdutoCustos => ({
   aliquota_iss: Number(linha.aliquota_iss) || 0, atualizado_em: texto(linha.atualizado_em),
 });
 
-export async function carregarCustos(empresaId: string) {
+export async function carregarCustos(empresaId: string, podeEditar: boolean) {
   let { data: catalogo, error: erroCatalogo } = await supabase.from('vendas_mobile_catalogos')
     .select('id').eq('empresa_id', empresaId).eq('ativo', true).order('criado_em').limit(1).maybeSingle();
-  if (!catalogo && !erroCatalogo) {
+  if (!catalogo && !erroCatalogo && podeEditar) {
     const criado = await supabase.from('vendas_mobile_catalogos')
       .insert({ empresa_id: empresaId, nome: 'Catálogo principal', codigo: 'PRINCIPAL' }).select('id').single();
     catalogo = criado.data;
     erroCatalogo = criado.error;
   }
-  if (erroCatalogo || !catalogo) throw new Error('Não foi possível preparar o cadastro mestre desta empresa.');
+  if (erroCatalogo) throw new Error('Não foi possível preparar o cadastro mestre desta empresa.');
+
+  if (!catalogo) {
+    const documentoResultado = await supabase.from('custos_documentos').select('documento,revisao').eq('empresa_id', empresaId).maybeSingle();
+    if (documentoResultado.error) throw new Error('Não foi possível carregar composições e simulações.');
+    return { catalogoId: '', produtos: [], documento: normalizarDocumento(documentoResultado.data?.documento), revisao: Number(documentoResultado.data?.revisao) || 0 };
+  }
 
   const [produtosResultado, documentoResultado] = await Promise.all([
     supabase.from('vendas_mobile_catalogo_produtos').select(CAMPOS_PRODUTO).eq('catalogo_id', catalogo.id).order('nome'),
@@ -38,23 +44,32 @@ export async function carregarCustos(empresaId: string) {
   if (documentoResultado.error) throw new Error('Não foi possível carregar composições e simulações.');
 
   let documento = normalizarDocumento(documentoResultado.data?.documento);
-  if (!documentoResultado.data) {
+  let revisao = Number(documentoResultado.data?.revisao) || 0;
+  if (!documentoResultado.data && podeEditar) {
     const vazio = documentoVazio();
-    const criado = await supabase.from('custos_documentos').insert({ empresa_id: empresaId, documento: vazio }).select('documento').single();
+    const criado = await supabase.from('custos_documentos').insert({ empresa_id: empresaId, documento: vazio }).select('documento,revisao').single();
     if (criado.error) throw new Error('Não foi possível iniciar os dados de custos desta empresa.');
     documento = normalizarDocumento(criado.data?.documento);
+    revisao = Number(criado.data?.revisao) || 1;
   }
   return {
     catalogoId: String(catalogo.id),
     produtos: ((produtosResultado.data || []) as unknown as Record<string, unknown>[]).map(mapearProduto),
     documento,
+    revisao,
   };
 }
 
-export async function salvarDocumentoCustos(empresaId: string, documento: DocumentoCustos) {
-  const { error } = await supabase.from('custos_documentos')
-    .upsert({ empresa_id: empresaId, documento, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id' });
+export async function salvarDocumentoCustos(empresaId: string, documento: DocumentoCustos, revisaoEsperada: number) {
+  const { data, error } = await supabase.from('custos_documentos')
+    .update({ documento })
+    .eq('empresa_id', empresaId)
+    .eq('revisao', revisaoEsperada)
+    .select('revisao')
+    .maybeSingle();
   if (error) throw new Error('Não foi possível salvar os dados de custos.');
+  if (!data) throw new Error('Os dados foram atualizados por outra pessoa. Recarregue a página antes de salvar novamente.');
+  return Number(data.revisao);
 }
 
 export async function salvarProdutoCustos(produto: ProdutoCustos) {

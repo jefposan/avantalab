@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.11.0.01 -->
+<!-- ava-version: 1.12.0 -->
+
+> Revisão 1.12.0: instalação e uso de Custos e Precificação são exclusivos da
+> Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.11.0.01: ao editar um lançamento previsto para hoje ou uma data
 > passada, escolha **Salvar previsto** ou **Confirmar nesta data**. Confirmar

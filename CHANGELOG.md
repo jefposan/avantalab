@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.12.0 - 2026-08-26
+
+- Novo módulo Web **Custos e Precificação**, instalado por Gestor Master ou
+  Administrador em **Menu > Módulos**. Business pode contratar por R$ 14,90 ao
+  mês; Business Pro e cortesia empresarial vigente instalam sem cobrança extra.
+- Produtos e serviços passam a compartilhar a mesma base do Catálogo. Novos
+  cadastros começam **Em estudo** e só aparecem para divulgação quando forem
+  marcados como disponíveis; alterações e inativações refletem nos dois locais.
+- O módulo reúne cadastro fiscal, imagem opcional, códigos próprios com apoio de
+  sequência, insumos e recursos, composição de custos, formação de preço,
+  simulações independentes e histórico de versões.
+- Segurança: acesso, instalação, plano e hierarquia são validados no servidor e
+  por RLS. Operador Completo edita, Operador Simples visualiza e a remoção do
+  módulo não apaga cadastros, composições, simulações nem históricos.
+- Interface: o catálogo de Módulos usa um card principal amplo com subcards
+  quadrados responsivos, preservando modo escuro e a cor do perfil.
+- Produção: os dados demonstrativos locais foram removidos; atualizações de
+  custos usam controle de revisão para impedir sobrescrita silenciosa entre
+  usuários e registram a autoria da última alteração.
+
 ## 1.11.0.01 - 2026-08-25
 
 - Gestão Web e Mobile: ao editar uma receita ou despesa prevista para hoje ou

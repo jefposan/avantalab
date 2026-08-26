@@ -6,7 +6,6 @@ import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
 import { supabase } from '@/app/lib/supabase';
 import type { CustosAccess } from './CustosClient';
-import { dadosDemonstracao } from './demo';
 import { carregarCustos, enviarImagemProduto, salvarDocumentoCustos, salvarProdutoCustos } from './repository';
 import {
   calcularComposicao, composicaoVazia, documentoVazio, novoProduto, proximoCodigo,
@@ -27,9 +26,7 @@ const navegacao: Array<{ id: Aba; rotulo: string; icone: string }> = [
 
 const erroTexto = (erro: unknown) => erro instanceof Error ? erro.message : 'Não foi possível concluir a operação.';
 
-const DEMO_STORAGE = 'avantalab:custos:demo-local:v1';
-
-export default function CustosWorkspace({ companyId, access, demonstracao = false }: { companyId: string; access: CustosAccess; demonstracao?: boolean }) {
+export default function CustosWorkspace({ companyId, access }: { companyId: string; access: CustosAccess }) {
   const [aba, setAba] = useState<Aba>('visao');
   const [catalogoId, setCatalogoId] = useState('');
   const [produtos, setProdutos] = useState<ProdutoCustos[]>([]);
@@ -39,57 +36,44 @@ export default function CustosWorkspace({ companyId, access, demonstracao = fals
   const [mensagem, setMensagem] = useState('');
   const [erro, setErro] = useState('');
   const carregamentoRef = useRef(0);
+  const revisaoRef = useRef(0);
 
   const recarregar = useCallback(async (silencioso = false) => {
     const chamada = ++carregamentoRef.current;
     if (!silencioso) setCarregando(true);
     setErro('');
     try {
-      let dados = demonstracao ? dadosDemonstracao() : await carregarCustos(companyId);
-      if (demonstracao) {
-        try {
-          const salvo = window.localStorage.getItem(DEMO_STORAGE);
-          if (salvo) dados = JSON.parse(salvo) as ReturnType<typeof dadosDemonstracao>;
-        } catch { window.localStorage.removeItem(DEMO_STORAGE); }
-      }
+      const dados = await carregarCustos(companyId, access.podeEditar);
       if (chamada !== carregamentoRef.current) return;
       setCatalogoId(dados.catalogoId);
       setProdutos(dados.produtos);
       setDocumento(dados.documento);
+      revisaoRef.current = dados.revisao;
       setProdutoAtivoId((atual) => dados.produtos.some((produto) => produto.id === atual) ? atual : dados.produtos[0]?.id || '');
     } catch (falha) { setErro(erroTexto(falha)); }
     finally { if (chamada === carregamentoRef.current && !silencioso) setCarregando(false); }
-  }, [companyId, demonstracao]);
+  }, [access.podeEditar, companyId]);
 
   useEffect(() => { const timer = window.setTimeout(() => void recarregar(), 0); return () => window.clearTimeout(timer); }, [recarregar]);
   useEffect(() => {
-    if (!catalogoId || demonstracao) return;
+    if (!catalogoId) return;
     const canal = supabase.channel(`custos-produtos-${catalogoId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_catalogo_produtos', filter: `catalogo_id=eq.${catalogoId}` }, () => void recarregar(true))
       .subscribe();
     return () => { void supabase.removeChannel(canal); };
-  }, [catalogoId, demonstracao, recarregar]);
-  useEffect(() => {
-    if (!demonstracao || carregando || !catalogoId) return;
-    const timer = window.setTimeout(() => window.localStorage.setItem(DEMO_STORAGE, JSON.stringify({ catalogoId, produtos, documento })), 0);
-    return () => window.clearTimeout(timer);
-  }, [catalogoId, carregando, demonstracao, documento, produtos]);
+  }, [catalogoId, recarregar]);
   useEffect(() => { if (!mensagem) return; const timer = window.setTimeout(() => setMensagem(''), 4500); return () => window.clearTimeout(timer); }, [mensagem]);
 
   const salvarDocumento = async (proximo: DocumentoCustos, retorno: string) => {
     setDocumento(proximo);
-    try { if (!demonstracao) await salvarDocumentoCustos(companyId, proximo); setMensagem(retorno); }
+    try {
+      revisaoRef.current = await salvarDocumentoCustos(companyId, proximo, revisaoRef.current);
+      setMensagem(retorno);
+    }
     catch (falha) { setErro(erroTexto(falha)); void recarregar(true); throw falha; }
   };
-  const salvarProduto = async (produto: ProdutoCustos) => {
-    if (!demonstracao) return salvarProdutoCustos(produto);
-    return { ...produto, id: produto.id || crypto.randomUUID(), catalogo_id: catalogoId, sku: produto.sku.trim().toUpperCase(), nome: produto.nome.trim(), atualizado_em: new Date().toISOString() };
-  };
-  const enviarImagem = async (arquivo: File) => {
-    if (!demonstracao) return enviarImagemProduto(companyId, arquivo);
-    if (!arquivo.type.startsWith('image/') || arquivo.size > 1.5 * 1024 * 1024) throw new Error('No teste local, use uma imagem JPG, PNG ou WebP de até 1,5 MB.');
-    return await new Promise<string>((resolve, reject) => { const leitor = new FileReader(); leitor.onload = () => resolve(String(leitor.result)); leitor.onerror = () => reject(new Error('Não foi possível ler a imagem.')); leitor.readAsDataURL(arquivo); });
-  };
+  const salvarProduto = (produto: ProdutoCustos) => salvarProdutoCustos(produto);
+  const enviarImagem = (arquivo: File) => enviarImagemProduto(companyId, arquivo);
   const selecionarProduto = (id: string) => setProdutoAtivoId(id);
   const produtoAtivo = produtos.find((produto) => produto.id === produtoAtivoId) || produtos[0];
 

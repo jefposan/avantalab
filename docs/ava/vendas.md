@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.11.0.01 -->
+<!-- ava-version: 1.12.0 -->
+
+> Revisão 1.12.0: o Catálogo empresarial compartilha o cadastro mestre com
+> Custos e Precificação. Somente itens ativos e disponibilizados no Catálogo
+> entram na divulgação; itens Em estudo e inativos não são oferecidos.
 
 > Revisão 1.11.0.01: confirmação antecipada de lançamentos pertence à Gestão;
 > sem alteração operacional no AvantaVendas.

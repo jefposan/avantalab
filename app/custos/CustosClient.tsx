@@ -18,11 +18,7 @@ export type CustosAccess = {
 };
 
 export default function CustosClient({ companyId }: { companyId: string }) {
-  const demonstracao = process.env.NODE_ENV === 'development' && !companyId;
-  const [access, setAccess] = useState<CustosAccess | null>(() => demonstracao ? {
-    empresa: { id: 'demo-local', nome: 'Demonstração local', corPrimaria: '#003E73', temaEscuro: false },
-    perfil: 'gestor_master', podeEditar: true, podeGerenciarModulo: true,
-  } : null);
+  const [access, setAccess] = useState<CustosAccess | null>(null);
   const [error, setError] = useState('');
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
   const [atualizandoTema, setAtualizandoTema] = useState(false);
@@ -31,7 +27,6 @@ export default function CustosClient({ companyId }: { companyId: string }) {
   useEffect(() => {
     let ativo = true;
     const verificar = async () => {
-      if (demonstracao) return;
       if (!companyId) { setError('Selecione um perfil empresarial na Gestão antes de abrir Custos e Precificação.'); return; }
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
@@ -44,16 +39,7 @@ export default function CustosClient({ companyId }: { companyId: string }) {
     };
     void verificar();
     return () => { ativo = false; };
-  }, [companyId, demonstracao]);
-
-  useEffect(() => {
-    if (!demonstracao) return;
-    const timer = window.setTimeout(() => {
-      const temaEscuro = window.localStorage.getItem('avantalab:custos:aparencia:v1') === 'escuro';
-      if (temaEscuro) setAccess((atual) => atual ? { ...atual, empresa: { ...atual.empresa, temaEscuro: true } } : atual);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [demonstracao]);
+  }, [companyId]);
 
   useEffect(() => {
     if (!mensagem) return;
@@ -71,20 +57,16 @@ export default function CustosClient({ companyId }: { companyId: string }) {
     setAccess({ ...access, empresa: { ...access.empresa, temaEscuro } });
     setAtualizandoTema(true);
     try {
-      if (demonstracao) {
-        window.localStorage.setItem('avantalab:custos:aparencia:v1', temaEscuro ? 'escuro' : 'claro');
-      } else {
-        const { data } = await supabase.auth.getSession();
-        const token = data.session?.access_token;
-        if (!token) throw new Error('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.');
-        const resposta = await fetch('/api/modulos/custos/ajustes', {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ empresaId: companyId, temaEscuro }),
-        });
-        const json = await resposta.json().catch(() => ({}));
-        if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível atualizar o modo visual.');
-      }
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.');
+      const resposta = await fetch('/api/modulos/custos/ajustes', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empresaId: companyId, temaEscuro }),
+      });
+      const json = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível atualizar o modo visual.');
       setMensagem(temaEscuro ? 'Modo escuro ativado para este perfil.' : 'Modo claro ativado para este perfil.');
     } catch (falha) {
       setAccess({ ...access, empresa: { ...access.empresa, temaEscuro: temaEscuroAnterior } });
@@ -101,10 +83,10 @@ export default function CustosClient({ companyId }: { companyId: string }) {
       </div>
       <div className={styles.moduleHeaderActions}>
         {access.podeGerenciarModulo && <button type="button" className={styles.moduleSettingsButton} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Custos e Precificação" title="Ajustes"><Icon name="settings" size={18} /></button>}
-        {demonstracao ? <span className={styles.readOnlyBadge}>Teste local</span> : !access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
+        {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
       </div>
     </header>
-    <CustosWorkspace companyId={companyId || 'demo-local'} access={access} demonstracao={demonstracao} />
+    <CustosWorkspace companyId={companyId} access={access} />
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes de Custos e Precificação" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">
         <div><strong>Modo escuro</strong><p>Aplica a aparência escura a este perfil no AvantaLab e nos módulos compatíveis.</p></div>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { formatarDescricao } from '../lib/formatters';
 import { supabase } from '../lib/supabase';
@@ -34,7 +35,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
   const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['unidade', 'Unidade'], ['preco_custo', 'Preço de custo'], ['preco_venda', 'Preço de venda'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
 
-  const carregar = async () => {
+  const carregar = useCallback(async () => {
     if (!empresaId) return;
     setCarregando(true);
     setErro('');
@@ -54,9 +55,9 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     if (error) setErro('Não foi possível carregar os produtos.');
     else setProdutos((data || []) as Produto[]);
     setCarregando(false);
-  };
+  }, [empresaId]);
 
-  useEffect(() => { const timer = window.setTimeout(() => void carregar(), 0); return () => window.clearTimeout(timer); }, [empresaId]);
+  useEffect(() => { const timer = window.setTimeout(() => void carregar(), 0); return () => window.clearTimeout(timer); }, [carregar]);
   const mudar = (nome: string, valor: string | boolean) => setFormulario((atual) => ({ ...atual, [nome]: valor }));
   const editar = (produto: Produto) => setFormulario({ ...vazio, ...produto, preco_custo: Number(produto.preco_custo).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), preco_venda: Number(produto.preco_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || '', descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
 
@@ -172,13 +173,13 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
         <div className="mt-1.5 flex items-end gap-2">
           <label className="min-w-0 flex-1 text-[9px] font-black uppercase opacity-70">Link da imagem<input value={String(formulario.imagem_url || '')} onChange={(e) => mudar('imagem_url', e.target.value)} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs normal-case ${campo}`} /></label>
           <input ref={arquivoRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => void enviarImagem(e.target.files?.[0])} />
-          {formulario.imagem_url && <a href={String(formulario.imagem_url)} target="_blank" rel="noreferrer" title="Abrir pré-visualização"><img src={String(formulario.imagem_url)} alt="Pré-visualização do produto" className="h-8 w-8 shrink-0 rounded-md border border-cyan-300 object-cover" /></a>}
+          {formulario.imagem_url && <a href={String(formulario.imagem_url)} target="_blank" rel="noreferrer" title="Abrir pré-visualização"><Image src={String(formulario.imagem_url)} alt="Pré-visualização do produto" width={32} height={32} unoptimized className="h-8 w-8 shrink-0 rounded-md border border-cyan-300 object-cover" /></a>}
           <button type="button" onClick={() => arquivoRef.current?.click()} disabled={salvando} className="h-8 shrink-0 rounded-md border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700">Enviar imagem</button>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2"><label className="mr-auto flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo</label><div className="flex items-center gap-2">{formulario.id && formulario.ativo !== false && <button type="button" onClick={solicitarExclusaoProduto} disabled={salvando} className="h-8 rounded-md border border-amber-300 bg-amber-50 px-2.5 text-[10px] font-black uppercase text-amber-800 disabled:opacity-60">Inativar</button>}<button type="button" onClick={() => void salvar()} disabled={salvando} className="h-8 rounded-md px-3 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Salvando...' : 'Salvar produto'}</button>{formulario.id && <button type="button" onClick={() => setFormulario(vazio)} disabled={salvando} className="h-8 rounded-md border px-2.5 text-[10px] font-black disabled:opacity-60">Cancelar</button>}</div></div>
       </section>
       </div>
-      <section className="xl:flex xl:min-h-0 xl:flex-col"><h4 className="shrink-0 text-sm font-black">Produtos do pacote</h4><div className="mt-2 overflow-x-auto rounded-xl border xl:min-h-0 xl:flex-1 xl:overflow-auto"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Custo</th><th className="px-3 py-2">Venda</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={5} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_custo).toFixed(2)}</td><td className="px-3 py-2">R$ {Number(produto.preco_venda).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><img src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={5} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
+      <section className="xl:flex xl:min-h-0 xl:flex-col"><h4 className="shrink-0 text-sm font-black">Produtos do pacote</h4><div className="mt-2 overflow-x-auto rounded-xl border xl:min-h-0 xl:flex-1 xl:overflow-auto"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Custo</th><th className="px-3 py-2">Venda</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={5} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_custo).toFixed(2)}</td><td className="px-3 py-2">R$ {Number(produto.preco_venda).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={5} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
     </div>
     {erro && <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
     <ModalConfirmacao

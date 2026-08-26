@@ -18,6 +18,7 @@ const acesso = readFileSync('app/api/modulos/acesso/route.ts', 'utf8');
 const webhook = readFileSync('app/api/cobranca/webhook/route.ts', 'utf8');
 const migracao = readFileSync('supabase/migrations/20260825103000_custos_precificacao_base_compartilhada.sql', 'utf8');
 const migracaoDescricao = readFileSync('supabase/migrations/20260826150000_atualizar_descricao_modulo_custos.sql', 'utf8');
+const migracaoEndurecimento = readFileSync('supabase/migrations/20260826152000_endurecer_documentos_custos.sql', 'utf8');
 const migracaoPublicacao = readFileSync('supabase/migrations/20260826153000_publicar_modulo_custos.sql', 'utf8');
 const manifesto = readFileSync('app/custos/manifest.ts', 'utf8');
 
@@ -27,6 +28,7 @@ test('Custos usa página total e exige o acesso oficial do módulo', () => {
   assert.match(registro, /rota: '\/custos'/);
   assert.match(cliente, /moduloId=custos/);
   assert.match(cliente, /Somente visualização/);
+  assert.doesNotMatch(cliente, /Demonstração local|Teste local/);
 });
 
 test('Custos participa do catálogo comercial e da navegação oficial da Gestão', () => {
@@ -65,7 +67,7 @@ test('Instalação, contratação, remoção e liberação financeira usam o flu
 
 test('Hierarquia e vigência são reconfirmadas no servidor e no banco', () => {
   assert.match(acesso, /const perfil = acesso\.vinculo\.perfil as keyof typeof manifesto\.permissoes/);
-  assert.match(acesso, /podeEditar: nivel !== 'visualizar'/);
+  assert.match(acesso, /podeEditar: compartilhado \? compartilhamentoEdita : nivel !== 'visualizar'/);
   assert.match(acesso, /podeGerenciarModulo: acesso\.podeGerenciar/);
   assert.match(migracao, /public\.modulo_ativo_para_empresa\(p_empresa_id, 'custos'\)/);
   assert.match(migracao, /acesso\.perfil in \('gestor_master', 'administrador', 'operador_completo'\)/);
@@ -100,4 +102,8 @@ test('Dados próprios preservam composições, simulações e histórico', () =>
   assert.match(migracao, /public\.custos_pode_acessar_empresa/);
   assert.match(migracao, /public\.modulo_ativo_para_empresa\(p_empresa_id, 'custos'\)/);
   assert.match(migracao, /disponivel_catalogo = true/);
+  assert.match(repositorio, /carregarCustos\(empresaId: string, podeEditar: boolean\)/);
+  assert.match(repositorio, /eq\('revisao', revisaoEsperada\)/);
+  assert.match(migracaoEndurecimento, /new\.atualizado_por := auth\.uid\(\)/);
+  assert.match(migracaoEndurecimento, /revoke delete on public\.custos_documentos from authenticated/);
 });

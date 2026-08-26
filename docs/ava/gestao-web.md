@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.11.0.01 -->
+<!-- ava-version: 1.12.0 -->
+
+> Revisão 1.12.0: **Custos e Precificação** está disponível em **Menu >
+> Módulos** para perfis Empresa. Gestor Master ou Administrador instala sem
+> cobrança no Business Pro ou em cortesia vigente; no Business, contrata por
+> R$ 14,90 ao mês. O módulo abre em página própria e reúne Produtos e serviços,
+> Insumos e recursos, Simulações e Histórico de custos. O cadastro de produtos
+> e serviços é o mesmo do Catálogo: itens novos começam Em estudo, só aparecem
+> para divulgação quando forem disponibilizados e a inativação vale nos dois
+> locais. Operador Completo edita e Operador Simples somente visualiza. Remover
+> ou cancelar o módulo preserva todos os cadastros e históricos.
 
 > Revisão 1.11.0.01: ao editar um lançamento previsto para hoje ou uma data
 > passada, escolha **Salvar previsto** ou **Confirmar nesta data**. Confirmar
