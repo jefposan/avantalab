@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.12.1.05 - 2026-08-26
+
+- AvantaVendas: corrigido o gatilho financeiro que tentava consultar o campo
+  `data_pagamento` ao salvar um pedido. Pedidos e pagamentos voltam a usar seus
+  respectivos campos de data sem interferência entre as tabelas.
+- Incluído teste de regressão para impedir que os campos exclusivos voltem a
+  ser avaliados no mesmo ramo do gatilho.
+
 ## 1.12.1.04 - 2026-08-26
 
 - AvantaProjetos: a interface passa a consumir a cor primária do perfil nos

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.04 -->
+<!-- ava-version: 1.12.1.05 -->
+
+> Revisão 1.12.1.05: a correção da gravação de pedidos pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.12.1.04: a padronização visual do AvantaProjetos é exclusiva da
 > Gestão Web; sem impacto operacional na Gestão Mobile.

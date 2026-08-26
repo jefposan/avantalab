@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.04 -->
+<!-- ava-version: 1.12.1.05 -->
+
+> Revisão 1.12.1.05: pedidos voltam a ser salvos normalmente. O gatilho do
+> vínculo financeiro agora consulta `data_pagamento` somente para pagamentos e
+> usa a data de criação para pedidos, sem misturar campos das duas tabelas.
 
 > Revisão 1.12.1.04: a padronização visual do AvantaProjetos pertence à Gestão
 > Web; sem impacto operacional no AvantaVendas.

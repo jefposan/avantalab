@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.05: pedidos voltam a ser gravados normalmente após
+// separar os campos exclusivos de pedidos e pagamentos no gatilho financeiro.
 // Revisado na versão 1.12.1.04: Projetos aplica a cor primária do perfil e a
 // geometria oficial dos quadrantes; sem alteração no fluxo operacional.
 // Revisado na versão 1.12.1.03: criar, trocar ou apagar um vínculo financeiro

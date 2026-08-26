@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.04 -->
+<!-- ava-version: 1.12.1.05 -->
+
+> Revisão 1.12.1.05: a correção da gravação de pedidos pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.12.1.04: o AvantaProjetos passa a refletir a cor primária do perfil
 > e a geometria oficial dos quadrantes. É um ajuste visual, sem alteração no
