@@ -988,7 +988,7 @@
     return data;
   }
 
-  async function definirPerfilFinanceiro(empresaId, periodo = 'todo_historico', historicoAnterior = 'manter') {
+  async function definirPerfilFinanceiro(empresaId, periodo = 'todo_historico', historicoAnterior = 'manter', baseReceita = 'recebidos') {
     const contaId = contaAtivaId();
     if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient().rpc('definir_perfil_financeiro_vendas_mobile_rpc', {
@@ -996,6 +996,7 @@
       p_empresa_id: empresaId,
       p_periodo: periodo,
       p_historico_anterior: historicoAnterior,
+      p_base_receita: baseReceita === 'vendidos' ? 'vendidos' : 'recebidos',
     });
     if (error) throw error;
     return data;

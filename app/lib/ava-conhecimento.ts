@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.02: o vínculo financeiro confirma histórico e base
+// (recebidos/vendidos) na mesma operação e inclui lançamentos legados da conta.
 // Revisado na versão 1.12.1.01: a primeira vinculação financeira permite
 // começar no mês vigente ou seguinte sem mover o histórico já existente.
 // Revisado na versão 1.12.1: cada conta do AvantaVendas define um destino

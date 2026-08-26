@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.01 -->
+<!-- ava-version: 1.12.1.02 -->
+
+> Revisão 1.12.1.02: a correção do vínculo financeiro pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.12.1.01: a primeira vinculação financeira do AvantaVendas pode
 > começar no período escolhido; sem outra alteração operacional na Gestão Mobile.

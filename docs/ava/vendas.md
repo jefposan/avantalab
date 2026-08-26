@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.01 -->
+<!-- ava-version: 1.12.1.02 -->
+
+> Revisão 1.12.1.02: ao criar ou trocar o destino financeiro, confirme na
+> mesma tela se a Gestão receberá os valores **Recebidos** ou **Vendidos** e se
+> os lançamentos anteriores devem permanecer ou ser apagados. A sincronização
+> considera todos os dados do perfil de vendas, inclusive registros que ainda
+> possuam a marcação legada de outro destino.
+
+> Revisão 1.12.1-av97: o vínculo financeiro processa integralmente a conta
+> ativa, respeita a base selecionada e restaura a decisão sobre o histórico.
 
 > Revisão 1.12.1.01: ao definir o primeiro destino financeiro de um perfil de
 > vendas, escolha **Todo o histórico**, **A partir do mês vigente** ou **A
@@ -214,7 +223,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 96 -->
+<!-- avantavendas-asset-revision: 97 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
@@ -1894,14 +1903,15 @@ função existir ali.
   tela aberta: após a aprovação, o vínculo e os conteúdos são carregados
   automaticamente, sem reiniciar ou entrar novamente.
 - O vendedor pode usar todos os controles operacionais do Vendas sem destino
-  financeiro. Em **Configurações > Integração com Gestão**, o primeiro vínculo
-  envia todo o histórico mensal existente ao perfil escolhido.
-- Ao trocar o destino financeiro, o usuário escolhe enviar todo o histórico,
-  começar no mês vigente ou começar no mês seguinte. Depois escolhe se todos os
-  lançamentos do Vendas no perfil anterior serão mantidos ou apagados. Mantidos,
-  eles perdem a proteção e podem ser editados ou excluídos na Gestão; apagados,
-  saem somente da Gestão. O histórico de clientes, pedidos e pagamentos nunca é
-  removido do Vendas por essa decisão.
+  financeiro. Em **Configurações > Integração com Gestão**, tanto o primeiro
+  vínculo quanto uma troca permitem enviar todo o histórico, começar no mês
+  vigente ou começar no mês seguinte.
+- Antes de concluir o vínculo, o usuário confirma se o resultado enviado será
+  formado pelos valores **Recebidos** ou **Vendidos**. Depois escolhe entre
+  somente adicionar os dados ao novo destino, mantendo os lançamentos
+  anteriores na Gestão, ou apagar o histórico financeiro anterior originado
+  por aquela conta. Clientes, pedidos, pagamentos, produtos e demais dados
+  operacionais nunca são removidos do Vendas por essa decisão.
 - Ao desvincular sem escolher outro destino, a mesma decisão entre manter e
   apagar é obrigatória. Um novo perfil criado na Gestão apenas aparece na lista
   de destinos possíveis e nunca é vinculado automaticamente.

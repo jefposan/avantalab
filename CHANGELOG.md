@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.12.1.02 - 2026-08-26
+
+- AvantaVendas: o vínculo financeiro volta a perguntar se os lançamentos
+  anteriores devem permanecer na Gestão ou ser apagados antes do recálculo.
+- A escolha entre valores **Recebidos** e **Vendidos** passa a ser gravada na
+  mesma operação do vínculo, eliminando a sincronização inicial com base
+  diferente da selecionada.
+- A transferência considera todos os lançamentos da conta ativa, inclusive os
+  que ainda carregam o destino financeiro legado do login. Trocas agendadas
+  aplicam o mesmo processamento ao entrarem em vigor.
+
+## 1.12.1-av97 - 2026-08-26
+
+- AvantaVendas: revisão estática do fluxo completo de vínculo financeiro por
+  conta, com confirmação do histórico e da base de receita.
+
 ## 1.12.1.01 - 2026-08-26
 
 - AvantaVendas: no primeiro vínculo financeiro, agora é possível escolher
