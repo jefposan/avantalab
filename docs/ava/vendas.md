@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.02 -->
+<!-- ava-version: 1.12.1.03 -->
+
+> Revisão 1.12.1.03: ao criar, trocar ou apagar um vínculo financeiro, uma tela
+> de processamento permanece visível até a sincronização e a atualização da
+> conta terminarem. Novos cliques ficam bloqueados durante a operação e, se
+> houver falha, o formulário anterior é restaurado para nova tentativa.
+
+> Revisão 1.12.1-av98: estado visual de processamento no fluxo completo de
+> vínculo financeiro.
 
 > Revisão 1.12.1.02: ao criar ou trocar o destino financeiro, confirme na
 > mesma tela se a Gestão receberá os valores **Recebidos** ou **Vendidos** e se
@@ -223,7 +231,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 97 -->
+<!-- avantavendas-asset-revision: 98 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

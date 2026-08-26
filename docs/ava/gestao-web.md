@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.02 -->
+<!-- ava-version: 1.12.1.03 -->
+
+> Revisão 1.12.1.03: o AvantaVendas passa a sinalizar visualmente o
+> processamento do vínculo financeiro; sem outra alteração operacional na
+> Gestão Web.
 
 > Revisão 1.12.1.02: o AvantaVendas passa a enviar integralmente os valores
 > recebidos ou vendidos conforme a escolha da conta; sem outra alteração

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.02 -->
+<!-- ava-version: 1.12.1.03 -->
+
+> Revisão 1.12.1.03: o estado de processamento do vínculo financeiro pertence
+> ao AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.12.1.02: a correção do vínculo financeiro pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Mobile.

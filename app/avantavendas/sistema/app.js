@@ -5324,19 +5324,33 @@ function confirmarExclusaoHistoricoTrocaVendas(empresaId, periodo, baseReceita =
   sheet(`<div class="sheet-header"><div><h2>Apagar histórico anterior?</h2><p class="muted small">Ação destrutiva somente na Gestão.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Serão removidos da Gestão apenas os lançamentos financeiros anteriores originados por esta conta do Vendas. Clientes, pedidos, pagamentos e produtos continuarão preservados no Vendas. Depois, os valores <b>${base === 'vendidos' ? 'vendidos' : 'recebidos'}</b> ${escapeHtml(periodoRotulo)} serão enviados para <b>${escapeHtml(empresaNome)}</b>.</p><div class="grid"><button class="secondary" onclick="abrirDestinoHistoricoAnteriorVendas('${empresaId}','${periodo}','${base}','${origemFluxo}')">Voltar sem apagar</button><button class="danger" onclick="salvarPerfilFinanceiroVendas('${empresaId}','${periodo}','apagar','${base}')">Apagar e concluir vínculo</button></div>`, 'sheet-backdrop-centered');
 }
 
+function mostrarProcessandoVinculoFinanceiroVendas(titulo, mensagem) {
+  sheet(`<div class="backup-processing financial-link-processing" role="status" aria-live="polite" aria-busy="true"><span class="local-loader" aria-hidden="true"></span><h2>${escapeHtml(titulo)}</h2><p>${escapeHtml(mensagem)}</p></div>`, 'sheet-backdrop-centered sheet-backdrop-static financial-link-processing-backdrop');
+}
+
 async function salvarPerfilFinanceiroVendas(empresaId, periodo, historicoAnterior, baseReceita = 'recebidos') {
   if (alterandoPerfilFinanceiroVendas) return;
   alterandoPerfilFinanceiroVendas = true;
+  const base = baseReceita === 'vendidos' ? 'vendidos' : 'recebidos';
+  const origemFluxo = state.integracaoGestao?.vinculado ? 'troca' : 'novo';
+  const acaoHistorico = historicoAnterior === 'apagar'
+    ? 'Removendo o histórico anterior'
+    : 'Mantendo o histórico anterior';
+  mostrarProcessandoVinculoFinanceiroVendas(
+    'Atualizando vínculo financeiro',
+    `${acaoHistorico} e sincronizando os valores ${base}. Aguarde a conclusão.`,
+  );
   try {
-    const base = baseReceita === 'vendidos' ? 'vendidos' : 'recebidos';
     const resposta = await window.VendasDb.definirPerfilFinanceiro(empresaId, periodo, historicoAnterior, base);
-    fecharSheet();
     await carregarDadosBackend(false);
+    fecharSheet();
     toast(resposta?.troca_pendente
       ? 'Troca agendada para o mês seguinte.'
       : `Destino atualizado com os valores ${base === 'vendidos' ? 'vendidos' : 'recebidos'}.`);
   } catch (error) {
-    toast(traduzErro(error));
+    const mensagemErro = traduzErro(error);
+    abrirDestinoHistoricoAnteriorVendas(empresaId, periodo, base, origemFluxo);
+    toast(mensagemErro);
   } finally {
     alterandoPerfilFinanceiroVendas = false;
   }
@@ -5353,15 +5367,23 @@ function confirmarExclusaoDesvinculoFinanceiroVendas() {
 async function desvincularPerfilFinanceiroVendas(historicoAnterior) {
   if (alterandoPerfilFinanceiroVendas) return;
   alterandoPerfilFinanceiroVendas = true;
+  mostrarProcessandoVinculoFinanceiroVendas(
+    'Desvinculando perfil financeiro',
+    historicoAnterior === 'apagar'
+      ? 'Removendo os lançamentos financeiros da Gestão e concluindo o desligamento. Aguarde.'
+      : 'Mantendo os lançamentos existentes na Gestão e concluindo o desligamento. Aguarde.',
+  );
   try {
     await window.VendasDb.desvincularPerfilFinanceiro(historicoAnterior);
-    fecharSheet();
     await carregarDadosBackend(false);
+    fecharSheet();
     toast(historicoAnterior === 'apagar'
       ? 'Perfil desvinculado e lançamentos removidos da Gestão.'
       : 'Perfil desvinculado. Os lançamentos mantidos agora podem ser editados.');
   } catch (error) {
-    toast(traduzErro(error));
+    const mensagemErro = traduzErro(error);
+    abrirDesvincularPerfilFinanceiroVendas();
+    toast(mensagemErro);
   } finally {
     alterandoPerfilFinanceiroVendas = false;
   }

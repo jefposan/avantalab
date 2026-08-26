@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.03: criar, trocar ou apagar um vínculo financeiro
+// exibe o processamento até a sincronização integral da conta ser concluída.
 // Revisado na versão 1.12.1.02: o vínculo financeiro confirma histórico e base
 // (recebidos/vendidos) na mesma operação e inclui lançamentos legados da conta.
 // Revisado na versão 1.12.1.01: a primeira vinculação financeira permite

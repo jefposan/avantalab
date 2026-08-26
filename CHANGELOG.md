@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.12.1.03 - 2026-08-26
+
+- AvantaVendas: criar, trocar ou apagar um vínculo financeiro agora exibe um
+  indicador de processamento até a sincronização e a atualização da conta
+  terminarem, bloqueando envios duplicados.
+- Se a operação falhar, o formulário anterior é restaurado com os dados
+  selecionados para permitir uma nova tentativa.
+
+## 1.12.1-av98 - 2026-08-26
+
+- AvantaVendas: revisão visual do estado de espera no fluxo completo de vínculo
+  financeiro.
+
 ## 1.12.1.02 - 2026-08-26
 
 - AvantaVendas: o vínculo financeiro volta a perguntar se os lançamentos
