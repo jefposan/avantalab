@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.03 -->
+<!-- ava-version: 1.12.1.04 -->
+
+> Revisão 1.12.1.04: o AvantaProjetos passa a refletir a cor primária do perfil
+> e a geometria oficial dos quadrantes. É um ajuste visual, sem alteração no
+> cadastro, compartilhamento ou operação dos projetos.
 
 > Revisão 1.12.1.03: o AvantaVendas passa a sinalizar visualmente o
 > processamento do vínculo financeiro; sem outra alteração operacional na

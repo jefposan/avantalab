@@ -25,6 +25,14 @@ test('AvantaProjetos recebe o tema salvo no perfil, sem depender do sistema oper
   assert.match(gestao, /setDarkMode\(config\.dark_mode === true\)/);
   assert.match(gestao, /darkMode,\n\s*duplicadosAtivo,/);
   assert.match(cliente, /access\.empresa\.temaEscuro \? styles\.darkTheme/);
+  assert.match(cliente, /'--project-profile-color': access\.empresa\.corPrimaria/);
+  assert.match(estilos, /--brand: var\(--project-profile-color, #003e73\);/);
+  assert.match(estilos, /--accent: color-mix\(in srgb, var\(--brand\) 55%, #22c5d8\);/);
+  assert.match(estilos, /--quadrant-radius: 8px 18px 18px 18px;/);
+  assert.match(estilos, /--quadrant-small-radius: 6px 13px 13px 13px;/);
+  assert.match(estilos, /\.projectCard \{[^}]*border-radius: var\(--quadrant-radius\);/);
+  assert.match(estilos, /\.projectCover \{[^}]*border-radius: 7px 17px 0 0;/);
+  assert.match(estilos, /\.kanbanColumn article \{[^}]*border-radius: var\(--quadrant-small-radius\);/);
   assert.match(estilos, /\.darkTheme \{[\s\S]*color-scheme: dark/);
   assert.doesNotMatch(estilos, /prefers-color-scheme/);
   assert.match(estilos, /\.darkTheme \.moduleLogo \{ filter: brightness\(0\) invert\(1\)/);

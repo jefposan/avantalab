@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.04: Projetos aplica a cor primária do perfil e a
+// geometria oficial dos quadrantes; sem alteração no fluxo operacional.
 // Revisado na versão 1.12.1.03: criar, trocar ou apagar um vínculo financeiro
 // exibe o processamento até a sincronização integral da conta ser concluída.
 // Revisado na versão 1.12.1.02: o vínculo financeiro confirma histórico e base

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.03 -->
+<!-- ava-version: 1.12.1.04 -->
+
+> Revisão 1.12.1.04: a padronização visual do AvantaProjetos pertence à Gestão
+> Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.12.1.03: ao criar, trocar ou apagar um vínculo financeiro, uma tela
 > de processamento permanece visível até a sincronização e a atualização da

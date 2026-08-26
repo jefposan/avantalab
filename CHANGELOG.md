@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.12.1.04 - 2026-08-26
+
+- AvantaProjetos: a interface passa a consumir a cor primária do perfil nos
+  títulos, ações, estados e detalhes visuais, eliminando a paleta fixa anterior.
+- Cards de projetos, listas, mapa, detalhes e Kanban adotam a geometria de
+  quadrantes validada em Custos e Precificação, com o canto superior esquerdo
+  mais fechado e os demais cantos arredondados.
+- As cores próprias escolhidas para identificar cada projeto e tarefa foram
+  preservadas, assim como os modos claro e escuro.
+
 ## 1.12.1.03 - 2026-08-26
 
 - AvantaVendas: criar, trocar ou apagar um vínculo financeiro agora exibe um
