@@ -1,10 +1,57 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.3.18 -->
-<!-- avantavendas-asset-revision: 70 -->
+<!-- ava-version: 1.9.0.02 -->
+
+> Revisão 1.9.0.02: ajuste textual exclusivo do catálogo de Módulos na Gestão
+> Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.9.0.01: reorganização visual exclusiva do catálogo de Módulos na
+> Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.9.0: instalação e cobrança de Custos e Precificação são exclusivas
+> da Gestão Web; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.8.0.02: ajuste visual exclusivo de Custos e Precificação na Gestão
+> Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.8.0.01: refinamento visual exclusivo de Custos e Precificação na
+> Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.8.0: o Catálogo empresarial compartilha o cadastro mestre com
+> Custos e Precificação. Somente itens ativos e marcados como disponíveis são
+> oferecidos para divulgação; a inativação preserva o cadastro e o histórico.
+
+> Revisão 1.7.3.25-av72: cada perfil de vendas é uma conta operacional completa.
+> Clientes, pedidos, pagamentos, produtos, catálogo, estoque, preferências,
+> backup e reset usam obrigatoriamente a conta ativa. Uma conta criada depois
+> possui as mesmas regras da conta inicial e nunca herda dados de outra conta.
+
+> Revisão 1.7.3.24-av71: pedidos e pagamentos preservam a resposta já
+> confirmada pelo servidor durante a conferência financeira. Avisos aparecem
+> acima do card aberto, inclusive no mobile.
+
+> Revisão 1.7.3.23: uma imagem externa usada exclusivamente como capa continua
+> visível na pasta, mas não entra na galeria de materiais do AvantaVendas.
+
+> Revisão 1.7.3.22: a Gestão Web pode publicar materiais por arraste e definir
+> capa externa de uma pasta principal; o AvantaVendas recebe a capa atualizada
+> normalmente.
+
+> Revisão 1.7.3.21: refinamento visual do texto **Jornada Concluída** no botão
+> central do Controle de Ponto; sem impacto operacional.
+<!-- avantavendas-asset-revision: 72 -->
+
+> Revisão 1.7.3.20: organização interna de módulos e protótipos em
+> desenvolvimento; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.7.3.19: exclusões de acesso ou conta na Gestão não alteram contas,
+> acessos ou conteúdos deste sistema.
 
 > Revisão 1.7.3.18: compartilhamento da assinatura por quota é uma regra da
 > Gestão; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.7.3.17: preparação do aplicativo Android nativo da Gestão Mobile;
+> sem alteração operacional no AvantaVendas.
 
 > Revisão 1.7.3.16: normalização das receitas históricas e uso exclusivo do
 > Balanço Geral da Gestão Web; sem alteração operacional no AvantaVendas.

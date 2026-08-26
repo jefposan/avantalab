@@ -30,8 +30,7 @@ const VALIDADE_RASCUNHO_USUARIO_MS = 24 * 60 * 60 * 1000;
 export type UseEmpresasDeps = {
   abrirAviso: AbrirAvisoFn;
   abrirConfirmacao: AbrirConfirmacaoFn;
-  /** Logout completo — definido em page.tsx */
-  handleLogout: () => Promise<void>;
+  abrirFluxoExclusaoProprioAcesso: () => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -39,7 +38,7 @@ export type UseEmpresasDeps = {
 // ---------------------------------------------------------------------------
 
 export function useEmpresas(deps: UseEmpresasDeps) {
-  const { abrirAviso, abrirConfirmacao, handleLogout } = deps;
+  const { abrirAviso, abrirConfirmacao, abrirFluxoExclusaoProprioAcesso } = deps;
 
   // --- Empresa atual ---
   const [empresaId, setEmpresaId] = useState<string | null>(null);
@@ -549,30 +548,22 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   const excluirAcessoUsuario = async (acessoId: string) => {
     const excluindoProprioAcesso = acessoId === acessoUsuarioAtualId;
 
+    if (excluindoProprioAcesso) {
+      abrirFluxoExclusaoProprioAcesso();
+      return;
+    }
+
     abrirConfirmacao({
-      titulo: excluindoProprioAcesso ? 'Excluir minha conta' : 'Excluir usuário',
-      mensagem: excluindoProprioAcesso
-        ? 'Você está prestes a excluir o seu próprio acesso a esta empresa.\n\nApós a exclusão, você será desconectado e voltará para a tela de login.\n\nDeseja continuar?'
-        : 'Deseja excluir este usuário?\n\nEle perderá o acesso a esta empresa. Se esta conta tiver sido criada neste perfil e não possuir outros vínculos ou histórico, o login também será excluído definitivamente. Caso contrário, somente este acesso será removido.',
-      textoConfirmar: 'Excluir',
+      titulo: 'Remover acesso do usuário',
+      mensagem: 'Deseja remover este usuário deste perfil?\n\nEle perderá somente o acesso a este perfil. A conta da Gestão será preservada.',
+      textoConfirmar: 'Remover acesso',
       acao: async () => {
         const resultado = await excluirUsuarioEmpresa(acessoId);
         if (resultado.erro) { abrirAviso('Erro ao excluir usuário', resultado.mensagem); return; }
 
-        if (excluindoProprioAcesso) {
-          setModalUsuarios(false);
-          setUsuarioEditandoId(null);
-          setAcessoUsuarioAtualId(null);
-          await handleLogout();
-          window.location.href = window.location.origin + window.location.pathname;
-          return;
-        }
-
         await carregarUsuariosEmpresa();
         abrirAviso(
-          resultado.data?.exclusaoTotal
-            ? 'Usuário excluído definitivamente'
-            : 'Acesso removido',
+          'Acesso removido',
           resultado.mensagem,
           undefined,
           'sucesso'

@@ -1,5 +1,131 @@
 # Changelog
 
+## 1.9.0.02 - 2026-08-26
+
+- Custos e Precificação: a descrição apresentada no catálogo de Módulos passa
+  a usar “Cadastro de produtos”, deixando mais clara a finalidade do módulo.
+
+## 1.9.0.01 - 2026-08-26
+
+- Módulos: o catálogo passa a usar um card principal mais amplo, com cada
+  módulo apresentado em um subcard quadrado e responsivo. Situação, condição
+  comercial e ação de instalação ou remoção permanecem reunidas no mesmo
+  quadrado, com alvos de interação acessíveis e suporte ao modo escuro.
+
+## 1.9.0 - 2026-08-26
+
+- Módulos: **Custos e Precificação** passa a integrar o catálogo oficial para
+  perfis Empresa, com instalação opcional pelo Gestor Master ou Administrador.
+- Comercial: Business pode contratar o módulo avulso pelo valor mensal padrão;
+  Business Pro e cortesia empresarial vigente podem instalá-lo sem cobrança
+  adicional. A confirmação do pagamento avulso continua sendo feita pelo
+  webhook central antes da liberação.
+- Acesso: Operador Completo pode trabalhar nos cadastros e composições, enquanto
+  Operador Simples permanece em visualização. Instalação, remoção e ajustes do
+  módulo continuam restritos aos gestores autorizados.
+- Segurança: rota, instalação, vigência do plano e vínculo ativo são validados
+  pelo servidor e pelas políticas do banco. Remover ou cancelar o módulo nunca
+  apaga produtos, composições, simulações ou histórico.
+- Homologação: a estrutura de banco foi aplicada sem publicar o módulo no
+  ambiente oficial. Durante os testes, somente o servidor em desenvolvimento
+  inclui Custos no catálogo de Módulos; a publicação geral exige uma liberação
+  posterior e explícita.
+
+## 1.8.0.02 - 2026-08-26
+
+- Custos e Precificação: o popup de Ajustes passa a usar exatamente a mesma
+  composição visual de Projetos, incluindo card da preferência, dimensões,
+  espaçamentos e interruptor de modo escuro.
+
+## 1.8.0.01 - 2026-08-25
+
+- Custos e Precificação: cabeçalho alinhado ao módulo Projetos, com retorno
+  direto ao Dashboard, logotipo central, nome do perfil e Ajustes à direita.
+- Ajustes do módulo passa a oferecer modo escuro por perfil, com troca de
+  contraste do logotipo e persistência na configuração oficial do sistema.
+- Interface: menus deixam de usar a borda lateral de seleção; cores, estados e
+  detalhes passam a derivar da `corPrimaria` do perfil. Cards e quadrantes
+  recebem cantos assimétricos, com curvatura mais fechada no canto superior
+  esquerdo.
+
+## 1.8.0 - 2026-08-25
+
+- Gestão Web: implantação local do módulo **Custos e Precificação** em página
+  total, com visão geral, produtos e serviços, insumos, simulações e histórico.
+- Catálogo e Custos passam a usar o mesmo cadastro mestre. Alterações de
+  identificação e a inativação refletem nos dois caminhos sem duplicar dados.
+- Produtos Tridium existentes permanecem publicados e aparecem no módulo para
+  complemento dos campos ausentes. Novos cadastros iniciam **Em estudo** e só
+  entram no Catálogo quando forem marcados como disponíveis.
+- Composições, recursos, cenários e versões de custo ficam vinculados ao produto
+  e são preservados quando o cadastro ou o módulo for inativado.
+- Banco de dados: preparada migração com permissões por perfil e isolamento por
+  empresa, sem aplicação automática no ambiente remoto.
+
+## 1.7.3.25-av72 - 2026-08-24
+
+- AvantaVendas: perfis criados posteriormente passam a ser contas operacionais
+  completas, com o mesmo tratamento da conta inicial.
+- Supabase: removida a escolha automática da primeira conta quando um registro
+  não informa `conta_id`; a conta ativa agora é obrigatória e validada.
+- Catálogo, estoque, preferências, backup e reset passam a pertencer à conta,
+  inclusive quando ela é compartilhada com outros usuários.
+- Novidades, divulgação e nome exibido nos comprovantes acompanham o perfil de
+  vendas ativo, sem misturar empresas acessíveis pelo mesmo login.
+- O reset cria o backup e apaga somente o perfil selecionado; as demais contas
+  permanecem intocadas.
+- Revisão dos arquivos executáveis do AvantaVendas atualizada para **av72**.
+
+## 1.7.3.24-av71 - 2026-08-24
+
+- AvantaVendas: pedidos e pagamentos mantêm a resposta já confirmada pelo
+  Supabase durante a releitura financeira, evitando o falso aviso de que a
+  conferência não foi concluída após uma gravação bem-sucedida.
+- AvantaVendas: a confirmação compara valores em centavos e bloqueia respostas
+  vinculadas a outro perfil de vendas.
+- Interface: avisos temporários passam a ficar acima de cards e fundos escuros,
+  com anúncio acessível para leitores de tela.
+- Revisão dos arquivos executáveis do AvantaVendas atualizada para **av71**.
+
+## 1.7.3.23 - 2026-08-20
+
+- Conteúdo do Vendas: uma imagem enviada exclusivamente para a capa é guardada
+  como capa da pasta, sem virar material publicado nem aparecer na galeria do
+  AvantaVendas. Capas continuam aceitando somente imagens; vídeos e PDFs seguem
+  disponíveis apenas como materiais de divulgação.
+
+## 1.7.3.22 - 2026-08-20
+
+- Conteúdo do Vendas na Gestão Web: a área de Divulgação passou a aceitar
+  fotos, vídeos e PDFs arrastados para a pasta ativa, além da seleção pelo
+  botão. Na escolha de capa, uma imagem externa pode ser adicionada ou
+  arrastada, ficando automaticamente definida como capa da pasta principal.
+
+## 1.7.3.21 - 2026-08-17
+
+- Controle de Ponto: o estado final do botão central apresenta **Jornada
+  Concluída** em uma escala menor e centralizada, preservando o tamanho e a
+  posição do botão durante toda a jornada.
+
+## 1.7.3.20 - 2026-08-13
+
+- Organização interna: rotas e demonstrações experimentais foram retiradas do
+  build da Gestão e preservadas no repositório local **AvantaLab Projetos**.
+  Controle de Ponto, Recebimentos, Projetos e AvantaVendas permanecem no
+  produto oficial sem alteração.
+
+## 1.7.3.19 - 2026-08-12
+
+- Gestão Web e Mobile: em **Usuários**, excluir outra pessoa remove somente o
+  acesso dela ao perfil atual; a conta da Gestão não é mais apagada por uma
+  ação administrativa.
+- Gestão Web: ao excluir o próprio acesso, a pessoa escolhe entre sair apenas
+  do perfil atual ou remover todos os seus acessos da Gestão. A segunda opção
+  exige digitar **EXCLUIR MINHA CONTA** e bloqueia a ação até transferir perfis
+  nos quais a pessoa é Gestor Master ou único administrador.
+- A remoção de conta pela Gestão não altera a conta, acessos ou conteúdos do
+  AvantaVendas, que permanece um sistema independente.
+
 ## 1.7.3.18 - 2026-08-12
 
 - Gestão Web e Mobile: o perfil que contratou Business ou Business Pro informa
@@ -11,6 +137,22 @@
   perfil e na equipe, sem duplicar cobrança ou período de teste.
 - Gestão Web: a criação de perfil informa quantas vagas do plano restarão. Sem
   vagas ou sem assinatura elegível, mantém as opções de teste e contratação.
+
+## 1.7.3.17 - 2026-08-12
+
+- Gestão Mobile Android: primeira entrega nativa preparada a partir da versão
+  atual do sistema. O aplicativo abre diretamente em **/mobile**, usa o
+  identificador `br.com.avantalab.app`, API Android 36 e versão nativa
+  `1.7.3.17`.
+- Gestão Mobile Android: notificações passam a ter suporte nativo via Firebase
+  Cloud Messaging, com canal próprio e consentimento do Android. A ativação
+  efetiva depende das credenciais seguras do projeto Firebase no ambiente de
+  release.
+- Gestão Mobile Android: Pessoal Premium passa a usar a compra nativa do
+  Google Play, com validação no servidor via RevenueCat. Planos empresariais
+  continuam apenas para acesso de assinaturas já contratadas.
+- Release Android: adicionadas verificações para impedir AAB com rota, versão
+  ou plugins nativos fora de sincronia com a Gestão Mobile.
 
 ## 1.7.3.16 - 2026-08-12
 

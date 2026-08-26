@@ -73,7 +73,7 @@ exigir(
 );
 exigir(
   [enviarPush, broadcast, agenda, despesas, assinaturas].every((funcao) =>
-    funcao.includes('user_id, endpoint, p256dh, auth, canal, apns_token')
+    funcao.includes('user_id, endpoint, p256dh, auth, canal, apns_token, fcm_token')
       && funcao.includes('cacheBadges'),
   ),
   'Todo envio de push da Gestão deve identificar o usuário da inscrição para calcular o selo correto.',

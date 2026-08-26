@@ -36,6 +36,8 @@ export type EstadoRevenueCat = {
   customerId: string;
 };
 
+export type LojaNativa = 'apple_app_store' | 'google_play';
+
 function cicloDoProduto(produtoId: string | null): 'mensal' | 'anual' | null {
   if (produtoId === REVENUECAT_PRODUTO_MENSAL) return 'mensal';
   if (produtoId === REVENUECAT_PRODUTO_ANUAL) return 'anual';
@@ -84,14 +86,21 @@ export async function consultarAssinanteRevenueCat(userId: string): Promise<Esta
   };
 }
 
+export function lojaDoEstadoRevenueCat(estado: EstadoRevenueCat): LojaNativa {
+  return /play/i.test(String(estado.ambiente || ''))
+    ? 'google_play'
+    : 'apple_app_store';
+}
+
 export async function salvarEstadoRevenueCat(
   db: SupabaseClient,
   userId: string,
   estado: EstadoRevenueCat,
 ) {
+  const loja = lojaDoEstadoRevenueCat(estado);
   const { error } = await db.from('assinaturas_loja').upsert({
     user_id: userId,
-    loja: 'apple_app_store',
+    loja,
     produto_id: estado.produtoId,
     entitlement_id: REVENUECAT_ENTITLEMENT_PESSOAL,
     status: estado.status,

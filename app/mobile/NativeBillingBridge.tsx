@@ -7,17 +7,18 @@ const PRODUTO_MENSAL = 'br.com.avantalab.app.pessoalpremium.monthly';
 const PRODUTO_ANUAL = 'br.com.avantalab.app.pessoalpremium.yearly';
 const ENTITLEMENT = 'pessoal_premium';
 
-type AcaoIosBilling = 'status' | 'purchase' | 'restore' | 'manage';
+type AcaoBilling = 'status' | 'purchase' | 'restore' | 'manage';
+type PlataformaLoja = 'ios' | 'android';
 
-type PedidoIosBilling = {
-  action: AcaoIosBilling;
+type PedidoBilling = {
+  action: AcaoBilling;
   userId: string;
   empresaId: string;
   accessToken: string;
   ciclo?: 'mensal' | 'anual';
 };
 
-type RespostaIosBilling = {
+type RespostaBilling = {
   ok: boolean;
   cancelado?: boolean;
   mensagem?: string;
@@ -31,7 +32,7 @@ type RespostaIosBilling = {
 
 declare global {
   interface Window {
-    __avantalabIosBilling?: (pedido: PedidoIosBilling) => Promise<RespostaIosBilling>;
+    __avantalabBillingNativoMobile?: (pedido: PedidoBilling) => Promise<RespostaBilling>;
   }
 }
 
@@ -43,7 +44,7 @@ function mensagemErro(erro: unknown) {
   if (erro && typeof erro === 'object' && 'message' in erro) {
     return String((erro as { message?: unknown }).message || '');
   }
-  return String(erro || 'Não foi possível concluir a operação na App Store.');
+  return String(erro || 'Não foi possível concluir a operação na loja.');
 }
 
 function compraCancelada(erro: unknown) {
@@ -56,13 +57,29 @@ function compraCancelada(erro: unknown) {
   );
 }
 
-export default function IosBillingBridge({ apiKey }: { apiKey: string }) {
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return;
+function plataformaNativa(): PlataformaLoja | null {
+  if (!Capacitor.isNativePlatform()) return null;
+  const plataforma = Capacitor.getPlatform();
+  return plataforma === 'ios' || plataforma === 'android' ? plataforma : null;
+}
 
-    window.__avantalabIosBilling = async (pedido) => {
+export default function NativeBillingBridge({
+  iosApiKey,
+  androidApiKey,
+}: {
+  iosApiKey: string;
+  androidApiKey: string;
+}) {
+  useEffect(() => {
+    const plataforma = plataformaNativa();
+    if (!plataforma) return;
+
+    const apiKey = plataforma === 'ios' ? iosApiKey : androidApiKey;
+    const nomeLoja = plataforma === 'ios' ? 'App Store' : 'Google Play';
+
+    window.__avantalabBillingNativoMobile = async (pedido) => {
       if (!apiKey) {
-        return { ok: false, mensagem: 'Compras da App Store ainda não foram configuradas.' };
+        return { ok: false, mensagem: `Compras da ${nomeLoja} ainda não foram configuradas.` };
       }
       if (!pedido.userId || !pedido.empresaId || !pedido.accessToken) {
         return { ok: false, mensagem: 'Sessão inválida. Entre novamente e tente outra vez.' };
@@ -96,7 +113,7 @@ export default function IosBillingBridge({ apiKey }: { apiKey: string }) {
         let customerInfo;
         if (pedido.action === 'purchase') {
           const produto = pedido.ciclo === 'anual' ? anual : mensal;
-          if (!produto) throw new Error('Plano indisponível na App Store neste momento.');
+          if (!produto) throw new Error(`Plano indisponível na ${nomeLoja} neste momento.`);
           customerInfo = (await Purchases.purchaseStoreProduct({ product: produto })).customerInfo;
         } else if (pedido.action === 'restore') {
           customerInfo = (await Purchases.restorePurchases()).customerInfo;
@@ -107,15 +124,18 @@ export default function IosBillingBridge({ apiKey }: { apiKey: string }) {
         const entitlement = customerInfo.entitlements.all[ENTITLEMENT];
         const managementUrl = customerInfo.managementURL || null;
         if (pedido.action === 'manage') {
+          const destinoPadrao = plataforma === 'ios'
+            ? 'https://apps.apple.com/account/subscriptions'
+            : 'https://play.google.com/store/account/subscriptions';
           await Browser.open({
-            url: managementUrl || 'https://apps.apple.com/account/subscriptions',
+            url: managementUrl || destinoPadrao,
             presentationStyle: 'popover',
           });
         }
 
-        // O servidor consulta a RevenueCat novamente. O cliente jamais concede
-        // acesso com base apenas no recibo recebido pelo WebView.
-        const sincronizacao = await fetch('/api/cobranca/apple/sincronizar', {
+        // A permissão é sempre calculada no servidor a partir da loja. O
+        // WebView nunca libera recursos apenas pelo recibo que recebeu.
+        const sincronizacao = await fetch('/api/cobranca/loja/sincronizar', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -139,15 +159,15 @@ export default function IosBillingBridge({ apiKey }: { apiKey: string }) {
         };
       } catch (erro) {
         if (compraCancelada(erro)) return { ok: false, cancelado: true };
-        console.error('Falha no fluxo de assinatura Apple:', erro);
+        console.error(`Falha no fluxo de assinatura ${nomeLoja}:`, erro);
         return { ok: false, mensagem: mensagemErro(erro) };
       }
     };
 
     return () => {
-      delete window.__avantalabIosBilling;
+      delete window.__avantalabBillingNativoMobile;
     };
-  }, [apiKey]);
+  }, [androidApiKey, iosApiKey]);
 
   return null;
 }

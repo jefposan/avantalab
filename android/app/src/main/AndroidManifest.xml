@@ -14,7 +14,7 @@
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
-            android:hardwareAccelerated="false"
+            android:hardwareAccelerated="true"
             android:launchMode="singleTask"
             android:exported="true">
 
@@ -51,4 +51,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Pedido somente quando a pessoa ativa avisos no Android 13 ou superior. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- A Ava só usa o microfone após ação explícita para transcrever um áudio. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 </manifest>

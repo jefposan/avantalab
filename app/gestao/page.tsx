@@ -20,6 +20,7 @@ import type { EstadoCobrancaFacial } from '@/app/lib/ponto-facial-cobranca';
 import RecebimentosAdminModal from '@/app/components/RecebimentosAdminModal';
 import SobreModal from '@/app/components/SobreModal';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
+import ExcluirContaGestaoModal from '@/app/components/ExcluirContaGestaoModal';
 import DraggableModalCard from '@/app/components/DraggableModalCard';
 import CardEntradaFaturamento from '@/app/components/CardEntradaFaturamento';
 import type { EntradaFaturamento as TabelaEntradaFaturamento } from '@/app/components/TabelaEntradasFaturamento';
@@ -319,10 +320,11 @@ export default function AppGestao() {
     registrarConclusaoTour();
   }, [pularTour, registrarConclusaoTour]);
 
+  const [modalExcluirContaGestao, setModalExcluirContaGestao] = useState(false);
   const empresas = useEmpresas({
     abrirAviso,
     abrirConfirmacao,
-    handleLogout: () => handleLogout(),
+    abrirFluxoExclusaoProprioAcesso: () => setModalExcluirContaGestao(true),
   });
   const {
     empresaId, setEmpresaId,
@@ -6169,6 +6171,34 @@ const confirmarExclusaoEmpresaAtual = () => {
 });
 };
 
+const sairDoPerfilAtual = async () => {
+  if (!acessoUsuarioAtualId) throw new Error('Acesso atual não encontrado.');
+  const resultado = await excluirUsuarioEmpresa(acessoUsuarioAtualId);
+  if (resultado.erro) throw new Error(resultado.mensagem);
+  setModalExcluirContaGestao(false);
+  await handleLogout();
+  window.location.href = window.location.origin + window.location.pathname;
+};
+
+const excluirContaDaGestao = async (confirmacao: string) => {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return { erro: true, mensagem: 'Sua sessão expirou. Entre novamente para continuar.' };
+  const resposta = await fetch('/api/conta/excluir-gestao', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ confirmacao }),
+  }).catch(() => null);
+  const resultado = await resposta?.json().catch(() => null);
+  if (!resposta?.ok || resultado?.erro) {
+    return { erro: true, mensagem: resultado?.mensagem || 'Não foi possível excluir sua conta da Gestão.', bloqueios: resultado?.bloqueios || [] };
+  }
+  setModalExcluirContaGestao(false);
+  await handleLogout();
+  window.location.href = window.location.origin + window.location.pathname;
+  return { erro: false, mensagem: resultado?.mensagem };
+};
+
 const executarExclusaoEmpresaAtual = async () => {
   if (!empresaId || !nomeEmpresaAtual) {
     abrirAviso(
@@ -9924,6 +9954,14 @@ if (validacaoTelefoneObrigatoria) {
     </DraggableModalCard>
   </div>
 )}
+
+<ExcluirContaGestaoModal
+  aberto={modalExcluirContaGestao}
+  darkMode={darkMode}
+  aoFechar={() => setModalExcluirContaGestao(false)}
+  aoSairPerfil={sairDoPerfilAtual}
+  aoExcluirConta={excluirContaDaGestao}
+/>
 
       {calcAberta && (
         <Calculadora onClose={() => setCalcAberta(false)} corPrimaria={corPrimaria} darkMode={darkMode} />

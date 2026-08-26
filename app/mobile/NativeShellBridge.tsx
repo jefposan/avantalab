@@ -7,7 +7,7 @@ type TemaNativo = { dark?: boolean };
 
 export default function NativeShellBridge() {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return;
+    if (!Capacitor.isNativePlatform()) return;
 
     let ativo = true;
     const aplicar = async (dark: boolean) => {

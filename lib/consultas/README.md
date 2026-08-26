@@ -1,10 +1,11 @@
 # Central de Consultas
 
-Camada isolada da rota pública `/consulta`.
+Camada de serviços cadastrais usada pelo AvantaLab oficial. As telas
+experimentais da Central de Consultas foram movidas para `AvantaLab Projetos`.
 
 ## Fluxo atual
 
-`/consulta` → `POST /api/consultas/cnpj` → `providers/cnpjws.ts` →
+Cadastro de perfil → `POST /api/consultas/cnpj` → `providers/cnpjws.ts` →
 `normalizers/cnpj.ts` → `EmpresaConsultada`.
 
 A interface consome apenas `EmpresaConsultada` e nunca conhece o JSON original
@@ -18,10 +19,8 @@ do provedor. Validação e sanitização ficam centralizadas em
 - Não há cache. Se necessário futuramente, ele deve entrar em uma camada de
   serviço server-side entre a rota e o provider, com chave pelo documento
   normalizado, TTL curto e sem cache público compartilhado.
-- Não há persistência. A página principal mantém a empresa ativa apenas em
-  estado React, sem contrato compartilhado com esta rota pública. Como um
-  usuário pode possuir múltiplas empresas, esta versão não escolhe uma empresa
-  implicitamente e não cria tabela ou política RLS.
+- Não há persistência própria. A consulta cadastral apenas devolve dados
+  normalizados para o fluxo que a solicitou e não cria tabela ou política RLS.
 
 ## Evolução segura
 

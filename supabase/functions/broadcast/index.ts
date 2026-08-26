@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     // Push para todas as inscricoes
     const { data: subs } = await db
       .from("push_subscriptions")
-      .select("id, user_id, endpoint, p256dh, auth, canal, apns_token")
+      .select("id, user_id, endpoint, p256dh, auth, canal, apns_token, fcm_token")
       .eq("app_origem", "mobile");
 
     let enviados = 0;

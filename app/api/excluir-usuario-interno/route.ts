@@ -121,73 +121,6 @@ export async function POST(request: Request) {
       }
     }
 
-    const { data: contaGlobal, error: erroContaGlobal } = usuarioAlvo.user_id
-      ? await supabaseAdmin
-          .from('usuarios_contas')
-          .select('origem')
-          .eq('user_id', usuarioAlvo.user_id)
-          .maybeSingle()
-      : { data: null, error: null };
-
-    if (erroContaGlobal) {
-      console.error('Erro ao consultar a conta global:', erroContaGlobal);
-      return respostaErro(
-        'Não foi possível verificar os outros vínculos deste usuário.',
-        500
-      );
-    }
-
-    let auditoria = {
-      pode_excluir_total: false,
-      bloqueios: [] as Array<{ origem?: string; quantidade?: number }>,
-    };
-
-    if (usuarioAlvo.user_id) {
-      const { data, error: erroAuditoria } = await supabaseAdmin.rpc(
-        'auditar_exclusao_total_usuario_rpc',
-        {
-          p_user_id: usuarioAlvo.user_id,
-          p_acesso_ignorado: acessoId,
-        }
-      );
-
-      if (erroAuditoria) {
-        console.error('Erro ao auditar vínculos do usuário:', erroAuditoria);
-        return respostaErro(
-          'Não foi possível verificar todos os vínculos deste usuário. Nenhuma alteração foi realizada.',
-          500
-        );
-      }
-
-      auditoria = data || auditoria;
-    }
-
-    const contaCriadaInternamente =
-      contaGlobal?.origem === 'usuario_interno';
-    const podeExcluirTotal =
-      Boolean(usuarioAlvo.user_id) &&
-      contaCriadaInternamente &&
-      auditoria.pode_excluir_total === true;
-
-    if (podeExcluirTotal && usuarioAlvo.user_id) {
-      const { error: erroExcluirAuth } =
-        await supabaseAdmin.auth.admin.deleteUser(usuarioAlvo.user_id);
-
-      if (!erroExcluirAuth) {
-        return NextResponse.json({
-          erro: false,
-          exclusaoTotal: true,
-          mensagem:
-            'Usuário e login excluídos definitivamente. O e-mail e o login estão livres para novo cadastro.',
-        });
-      }
-
-      console.error(
-        'Erro ao excluir conta global; preservando o login:',
-        erroExcluirAuth
-      );
-    }
-
     const { error: erroExcluirVinculo } = await supabaseAdmin
       .from('usuarios_empresa')
       .delete()
@@ -200,9 +133,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       erro: false,
-      exclusaoTotal: false,
-      mensagem:
-        'Acesso removido deste perfil. A conta foi preservada porque possui outros vínculos, perfil próprio ou histórico no sistema.',
+      mensagem: 'Acesso removido deste perfil. A conta da Gestão foi preservada.',
     });
   } catch (error) {
     console.error('Erro inesperado ao excluir usuário interno:', error);

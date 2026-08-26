@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const raiz = resolve(import.meta.dirname, '..');
-const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica] = await Promise.all([
+const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rotaExclusao, rotaVerificacaoSms, rotaRecuperacaoSenha, rotaRedefinicaoSenha, gestorConteudo, migracaoCapa, migracaoVinculo, migracaoRealtime, migracaoExclusao, migracaoContaAutomatica, migracaoPedidosContaAtiva, migracaoContasPrimeiraClasse] = await Promise.all([
   readFile(resolve(raiz, 'app/avantavendas/sistema/app.js'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/styles.css'), 'utf8'),
   readFile(resolve(raiz, 'app/avantavendas/sistema/order-receipt-v2.js'), 'utf8'),
@@ -18,6 +18,8 @@ const [aplicacao, estilos, comprovantePedido, comprovantePagamento, cliente, rot
   readFile(resolve(raiz, 'supabase/migrations/20260807223000_vinculo_vendas_mobile_realtime.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260810183000_exclusao_conta_avantavendas.sql'), 'utf8'),
   readFile(resolve(raiz, 'supabase/migrations/20260811120000_conta_inicial_automatica_vendas.sql'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/migrations/20260822120000_pedidos_respeitam_conta_ativa_vendas.sql'), 'utf8'),
+  readFile(resolve(raiz, 'supabase/migrations/20260824143000_contas_vendas_primeira_classe.sql'), 'utf8'),
 ]);
 
 const falhas = [];
@@ -106,6 +108,17 @@ exigir(
   'Login comum deve aceitar conta independente, preparar a conta operacional automaticamente e manter o código empresarial opcional.',
 );
 exigir(
+  cliente.includes("p_pedido: payload.pedido,\n      p_itens: payload.itens,\n      p_novo: !incluirId")
+    && cliente.includes("conta_id: contaAtivaId(),\n      cliente_id: order.cliente_id || null")
+    && migracaoPedidosContaAtiva.includes("v_conta_id := (p_pedido ->> 'conta_id')::uuid")
+    && migracaoPedidosContaAtiva.includes('vendas_mobile_pode_operar_conta(v_conta_id)')
+    && migracaoPedidosContaAtiva.includes('cliente.conta_id = v_conta_id')
+    && migracaoPedidosContaAtiva.includes('produto.conta_id = v_conta_id')
+    && migracaoPedidosContaAtiva.includes('conta_id,\n      cliente_id,')
+    && migracaoPedidosContaAtiva.includes('pedido.conta_id is distinct from cliente.conta_id'),
+  'Pedidos precisam usar a conta ativa, validar cliente/produtos da mesma conta e reparar apenas registros que ficaram em conta diferente da cliente.',
+);
+exigir(
   aplicacao.includes('autocapitalize="words"')
     && aplicacao.includes('function formatarNomeCompletoCadastro(nome, preservarEspacamento = false)')
     && aplicacao.includes("toLocaleUpperCase('pt-BR')")
@@ -178,7 +191,7 @@ exigir(
 exigir(
   aplicacao.includes("'rotate-ccw': '<path")
     && aplicacao.includes("'user-x': '<path")
-    && aplicacao.includes("settings-reset-card\"><h3>${svgIconEstavel('rotate-ccw')} Resetar sistema")
+    && aplicacao.includes("settings-reset-card\"><h3>${svgIconEstavel('rotate-ccw')} Resetar perfil")
     && aplicacao.includes("settings-delete-account-card\"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas")
     && aplicacao.includes('Todos os dados da sua conta no AvantaVendas serão excluídos permanentemente.')
     && aplicacao.includes('os dados excluídos não poderão ser recuperados.')
@@ -370,14 +383,41 @@ exigir(
   'O comprovante de pedido deve permanecer compacto, omitir ícones e textos redundantes, manter os ícones somente nos campos de valor, ocultar quantidade unitária, centralizar a mensagem de sucesso e os títulos dos cards nos dois eixos, usar somente o primeiro nome da cliente e manter o rodapé dentro de uma pílula branca opaca, inclusive no fallback.',
 );
 exigir(
-  cliente.includes('pasta_pai_id, capa_material_id, nome')
-    && gestorConteudo.includes(".update({ capa_material_id: materialId })")
+  (cliente.includes('pasta_pai_id, capa_material_id, nome')
+    || cliente.includes('pasta_pai_id, capa_material_id, capa_arquivo_url, nome'))
+    && (gestorConteudo.includes(".update({ capa_material_id: materialId })")
+      || gestorConteudo.includes(".update({ capa_material_id: materialId, capa_arquivo_path: null, capa_arquivo_url: null })"))
     && gestorConteudo.includes("item.tipo === 'imagem' && idsSubpastasCapa.has(item.pasta_id)")
     && migracaoCapa.includes('add column if not exists capa_material_id uuid')
     && migracaoCapa.includes('Somente pastas principais podem receber uma capa personalizada.')
     && migracaoCapa.includes('A capa precisa estar publicada dentro de uma subpasta desta pasta principal.')
     && aplicacao.includes("item.id === pasta.capa_material_id && item.tipo === 'imagem'"),
   'A capa da pasta principal deve ser escolhida na Gestão entre imagens de suas subpastas e exibida no AvantaVendas.',
+);
+exigir(
+  aplicacao.includes('async function reconciliarFinanceiroCliente(clienteId, confirmados = {})')
+    && aplicacao.includes('atualizarRegistroPersistido(dados.vendas || [], confirmados.pedido)')
+    && aplicacao.includes('atualizarRegistroPersistido(dados.pagamentos || [], confirmados.pagamento)')
+    && aplicacao.includes('valoresMonetariosConferem(confirmado.total, venda.total)')
+    && aplicacao.includes('valoresMonetariosConferem(confirmado.valor, pagamento.valor)')
+    && cliente.includes("String(data.conta_id || '') !== String(contaId)")
+    && estilos.includes('z-index: calc(var(--vendas-layer-modal) + 30);'),
+  'Pedidos e pagamentos confirmados devem sobreviver à releitura financeira, validar a conta ativa e exibir avisos acima dos cards.',
+);
+exigir(
+  cliente.includes("rpc('sincronizar_catalogo_vendas_mobile_rpc', {")
+    && cliente.includes('p_conta_id: contaId')
+    && cliente.includes("onConflict: 'conta_id'")
+    && cliente.includes(".eq('conta_id', contaId).maybeSingle()")
+    && cliente.includes("rpc('movimentar_estoque_vendas_mobile_rpc', {")
+    && cliente.includes("rpc('resetar_vendas_mobile_rpc', {")
+    && migracaoContasPrimeiraClasse.includes("raise exception 'Selecione uma conta de vendas antes de continuar.'")
+    && migracaoContasPrimeiraClasse.includes('create or replace function public.sincronizar_catalogo_vendas_mobile_rpc(p_conta_id uuid)')
+    && migracaoContasPrimeiraClasse.includes('create or replace function public.resetar_vendas_mobile_rpc(')
+    && migracaoContasPrimeiraClasse.includes('delete from public.vendas_mobile_pagamentos where conta_id = p_conta_id;')
+    && migracaoContasPrimeiraClasse.includes('revoke all on function public.resetar_vendas_mobile_rpc(text) from authenticated;')
+    && aplicacao.includes("state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'AvantaLab'"),
+  'Todas as contas de vendas devem operar como unidades de primeira classe, sem fallback para a primeira conta do usuário.',
 );
 exigir(
   cliente.includes('async function carregarDivulgacao()')

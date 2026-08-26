@@ -51,4 +51,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
   (frente; topo reto no vale, subida ao platô em diagonal "S" contínua) +
   PLATÔ (~25%, só controles: pontinhos 2×3 e menu "..."). Cores sempre
   derivadas da corPrimaria via color-mix; sem bordas de 1px internas.
-- Demo de referência: `/avanta-card-demo`.
+- Demo de referência preservada: `/Users/JEFF/AvantaLab Projetos/prototipos/avanta-card-demo/origem-app/page.tsx`.

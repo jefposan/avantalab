@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
       const { data: subs } = await db
         .from("push_subscriptions")
-        .select("id, user_id, endpoint, p256dh, auth, canal, apns_token")
+        .select("id, user_id, endpoint, p256dh, auth, canal, apns_token, fcm_token")
         .eq("user_id", item.user_id)
         .eq("app_origem", "mobile");
 

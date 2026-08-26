@@ -16,6 +16,9 @@
     "verificar:interface-vendas": "node scripts/verificar-interface-vendas.mjs",
     "verificar:revisao-avantavendas": "node scripts/verificar-revisao-avantavendas.mjs",
     "verificar:notificacoes-perfil": "node scripts/verificar-notificacoes-perfil.mjs",
+    "verificar:android-gestao": "node scripts/verificar-android-gestao.mjs",
+    "android:sincronizar": "npx cap sync android",
+    "android:bundle": "npm run android:sincronizar && npm run verificar:android-gestao && cd android && ./gradlew bundleRelease",
     "start": "next start",
     "lint": "eslint"
   },

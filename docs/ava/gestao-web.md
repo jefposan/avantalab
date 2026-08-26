@@ -1,12 +1,73 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.3.18 -->
+<!-- ava-version: 1.9.0.02 -->
+
+> Revisão 1.9.0.02: a descrição do módulo **Custos e Precificação** no catálogo
+> passa a informar “Cadastro de produtos”; sem alteração operacional.
+
+> Revisão 1.9.0.01: o catálogo de **Módulos** foi reorganizado visualmente em
+> subcards quadrados dentro de um card principal maior; sem alteração no fluxo
+> de instalação, contratação, cancelamento ou remoção.
+
+> Revisão 1.9.0: **Custos e Precificação** integra o catálogo em **Módulos**
+> para perfis Empresa. Gestor Master ou Administrador instala sem cobrança no
+> Business Pro ou em cortesia vigente; no Business, contrata a mensalidade
+> avulsa e aguarda a confirmação do pagamento. Operador Completo trabalha no
+> módulo instalado e Operador Simples somente visualiza. Remover ou cancelar
+> preserva todos os dados. Durante a homologação, esta disponibilidade fica
+> restrita ao servidor local e ainda não deve ser orientada como publicada.
+
+> Revisão 1.8.0.02: o popup de Ajustes de **Custos e Precificação** foi
+> alinhado visualmente ao de Projetos; sem mudança na operação do modo escuro.
+
+> Revisão 1.8.0.01: em **Custos e Precificação**, **Início** retorna ao
+> Dashboard do perfil. O ícone de Ajustes oferece o modo escuro; a preferência
+> é salva para o perfil e o logotipo adapta seu contraste ao tema.
+
+> Revisão 1.8.0: **Custos e Precificação** passa a ser um módulo Web em página
+> total. Catálogo e Custos usam o mesmo cadastro de produto ou serviço; a
+> inativação vale nos dois caminhos. Produtos Tridium existentes permanecem
+> publicados, enquanto novos itens podem ficar **Em estudo** até a liberação
+> para o Catálogo. Composições, simulações e histórico são dados próprios do
+> módulo e permanecem preservados.
+
+> Revisão 1.7.3.25: contas do AvantaVendas passam a ser unidades operacionais
+> independentes; sem alteração operacional na Gestão Web.
+
+> Revisão 1.7.3.24: correção da confirmação financeira no AvantaVendas; sem
+> alteração operacional na Gestão Web.
+
+> Revisão 1.7.3.23: em **Conteúdo do Vendas > Divulgação**, a imagem adicionada
+> por seleção ou arraste para ser capa fica restrita à pasta e não aparece como
+> material no AvantaVendas. Para capa, são aceitas somente imagens; PDFs e
+> vídeos continuam disponíveis apenas como materiais de divulgação.
+
+> Revisão 1.7.3.22: em **Conteúdo do Vendas > Divulgação**, a Gestão Web aceita
+> fotos, vídeos e PDFs arrastados para a pasta ativa. Em uma pasta principal,
+> a capa também pode receber uma imagem externa por seleção ou arraste, definida
+> automaticamente como capa sem ser adicionada à galeria de materiais.
+
+> Revisão 1.7.3.21: refinamento visual do texto **Jornada Concluída** no botão
+> central do Controle de Ponto; sem impacto operacional.
+
+> Revisão 1.7.3.20: organização interna de módulos e protótipos em
+> desenvolvimento; sem alteração operacional na Gestão Web.
+
+> Revisão 1.7.3.19: em **Usuários**, excluir outra pessoa remove somente seu
+> acesso ao perfil atual. Ao excluir o próprio acesso, escolha **Sair deste
+> perfil** ou **Excluir minha conta da Gestão**. A segunda opção remove todos
+> os acessos da Gestão e exige digitar **EXCLUIR MINHA CONTA**; se a pessoa for
+> Gestor Master ou único administrador, deve transferir a responsabilidade
+> antes. O AvantaVendas não é alterado por esse procedimento.
 
 > Revisão 1.7.3.18: em **Meus perfis > Criar novo perfil**, quem possui vaga
 > em uma assinatura Business ou Business Pro cria o perfil usando o mesmo plano
 > imediatamente, sem novo teste ou contratação. A tela informa as vagas que
 > restarão; ao atingir o limite, orienta a contratação ou upgrade. Um perfil
 > que recebeu uma vaga não pode criar outra pela mesma assinatura.
+
+> Revisão 1.7.3.17: preparação do aplicativo Android nativo da Gestão Mobile;
+> sem alteração operacional na Gestão Web.
 
 > Revisão 1.7.3.16: o **Balanço Geral** é somente de consulta. Para registrar
 > uma receita, abra o mês ou use **Registrar entradas** no Dashboard; dia,

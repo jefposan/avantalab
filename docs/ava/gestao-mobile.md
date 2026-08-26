@@ -1,11 +1,62 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.3.18 -->
+<!-- ava-version: 1.9.0.02 -->
+
+> Revisão 1.9.0.02: ajuste textual exclusivo do catálogo de Módulos na Gestão
+> Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.9.0.01: reorganização visual exclusiva do catálogo de Módulos na
+> Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.9.0: instalação e uso de Custos e Precificação são exclusivos da
+> Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.8.0.02: ajuste visual exclusivo de Custos e Precificação na Gestão
+> Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.8.0.01: refinamento visual exclusivo de Custos e Precificação na
+> Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.8.0: Custos e Precificação é exclusivo da Gestão Web; sem alteração
+> operacional na Gestão Mobile.
+
+> Revisão 1.7.3.25: contas do AvantaVendas passam a ser unidades operacionais
+> independentes; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.7.3.24: correção da confirmação financeira no AvantaVendas; sem
+> alteração operacional na Gestão Mobile.
+
+> Revisão 1.7.3.23: a imagem externa de capa, exclusiva da Gestão Web, não é
+> publicada como material no AvantaVendas; sem alteração operacional na Gestão
+> Mobile.
+
+> Revisão 1.7.3.22: o envio por arrastar e a capa externa são recursos da
+> Gestão Web; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.7.3.21: refinamento visual do texto **Jornada Concluída** no botão
+> central do Controle de Ponto; sem impacto operacional.
+
+> Revisão 1.7.3.20: organização interna de módulos e protótipos em
+> desenvolvimento; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.7.3.19: em **Usuários**, excluir outra pessoa retira apenas o
+> acesso ao perfil atual. Para o próprio acesso, escolha sair só deste perfil
+> ou excluir a conta da Gestão; a exclusão exige a frase **EXCLUIR MINHA
+> CONTA** e pode exigir transferir perfis sob responsabilidade. O AvantaVendas
+> continua separado e não é afetado.
 
 > Revisão 1.7.3.18: perfis criados dentro da vaga disponível no Business ou
 > Business Pro usam a assinatura já existente, sem novo teste ou contratação.
 > A vigência do plano principal também vale para esses perfis e suas equipes;
 > esses perfis compartilhados não criam novos perfis pela quota recebida.
+
+> Revisão 1.7.3.17: a Gestão Mobile também possui aplicativo Android nativo.
+> Ele abre diretamente no sistema, preserva o login e usa as permissões do
+> aparelho somente quando necessárias. No Android, Pessoal Premium é adquirido
+> pela Google Play; planos empresariais apenas acessam contratação já existente.
+> **Excluir este perfil** continua removendo somente o perfil atual com prazo
+> de restauração. Em **Usuários**, a exclusão remove o acesso da pessoa e só
+> apaga o login interno se ele não possuir outros vínculos ou histórico.
 
 > Revisão 1.7.3.16: o Balanço Geral é exclusivo da Gestão Web. As receitas da
 > Gestão Mobile permanecem entradas individuais, com dia, origem e valor; a

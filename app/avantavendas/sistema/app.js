@@ -1035,6 +1035,8 @@ function toast(msg) {
   if (atual) atual.remove();
   const el = document.createElement('div');
   el.className = 'toast';
+  el.setAttribute('role', 'alert');
+  el.setAttribute('aria-live', 'assertive');
   el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2800);
@@ -3027,18 +3029,28 @@ async function atualizarDashboardAposLancamento() {
   if (state.aba === 'dashboard' && !state.menuAberto) render();
 }
 
-async function reconciliarFinanceiroCliente(clienteId) {
+async function reconciliarFinanceiroCliente(clienteId, confirmados = {}) {
   if (!backendAtivo || !clienteId) return;
   const dados = await window.VendasDb.loadClientFinancial(clienteId);
+  const vendasConfirmadas = confirmados.pedido
+    ? atualizarRegistroPersistido(dados.vendas || [], confirmados.pedido)
+    : (dados.vendas || []);
+  const pagamentosConfirmados = confirmados.pagamento
+    ? atualizarRegistroPersistido(dados.pagamentos || [], confirmados.pagamento)
+    : (dados.pagamentos || []);
   state.vendas = [
-    ...(dados.vendas || []),
+    ...vendasConfirmadas,
     ...(state.vendas || []).filter((item) => item.cliente_id !== clienteId),
   ];
   state.pagamentos = [
-    ...(dados.pagamentos || []),
+    ...pagamentosConfirmados,
     ...(state.pagamentos || []).filter((item) => item.cliente_id !== clienteId),
   ];
   revisaoDadosOperacionais += 1;
+}
+
+function valoresMonetariosConferem(valorA, valorB) {
+  return Math.round(Number(valorA || 0) * 100) === Math.round(Number(valorB || 0) * 100);
 }
 
 // O cache acelera a abertura, mas nunca é a fonte para gravar saldo financeiro.
@@ -4131,7 +4143,8 @@ function renderDivulgacao() {
     const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pasta.id);
     const totalMateriais = contarMateriaisDaPasta(pasta.id);
     const capaEscolhida = (state.divulgacaoMateriais || []).find((item) => item.id === pasta.capa_material_id && item.tipo === 'imagem');
-    const capa = capaEscolhida || materiais.find((item) => item.miniatura_url) || materiais[0];
+    const capaExterna = pasta.capa_arquivo_url ? { tipo: 'imagem', arquivo_url: pasta.capa_arquivo_url, miniatura_url: pasta.capa_arquivo_url } : null;
+    const capa = capaExterna || capaEscolhida || materiais.find((item) => item.miniatura_url) || materiais[0];
     const subpastas = (state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === pasta.id).length;
     const resumo = pasta.descricao || `${subpastas ? `${subpastas} ${subpastas === 1 ? 'subpasta' : 'subpastas'} · ` : ''}${totalMateriais} ${totalMateriais === 1 ? 'material' : 'materiais'}`;
     return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capaMaterial(capa, 'pasta')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(resumo)}</small><em>${totalMateriais}</em></span></button>`;
@@ -4449,7 +4462,7 @@ function renderConfiguracoes() {
     <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Os novos produtos da empresa chegam automaticamente. Se recebeu um pacote, importe o arquivo ZIP completo.</p><div class="actions"><button class="primary" onclick="abrirImportacaoPacoteZip()">${svgIcon('package')} Importar pacote ZIP</button><button class="secondary" onclick="mostrarSincronizacaoCatalogo()">${svgIcon('save')} Situação da sincronização</button></div></article>
     <article class="settings-card settings-stock-card"><h3>${svgIcon('package')} Controle de estoque</h3><p>${state.produtos.filter((produto) => produto.estoque_controlado).length} produto(s) com estoque acompanhado neste aparelho.</p><div class="actions"><button class="primary" onclick="abrirAtualizarEstoque()">${svgIcon('plus')} Atualizar estoque</button></div><small>Entrada soma ao saldo atual. Ajuste define o saldo físico contado.</small></article>
     <article class="settings-card settings-pwa-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
-    <article class="settings-card settings-reset-card"><h3>${svgIconEstavel('rotate-ccw')} Resetar sistema</h3><p>Gera um backup automático e apaga lançamentos, clientes, agenda, produtos e preferências deste Vendas.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIconEstavel('rotate-ccw')} Resetar Vendas Mobile</button></article>
+    <article class="settings-card settings-reset-card"><h3>${svgIconEstavel('rotate-ccw')} Resetar perfil</h3><p>Gera um backup automático e apaga somente os dados do perfil de vendas ativo.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIconEstavel('rotate-ccw')} Resetar perfil atual</button></article>
     <article class="settings-card settings-delete-account-card"><h3>${svgIconEstavel('user-x')} Excluir conta do Vendas</h3><p>Remove definitivamente sua conta e os dados deste aplicativo. Outros serviços AvantaLab, quando utilizados separadamente, não serão alterados.</p><button class="danger" onclick="abrirExclusaoContaVendas()">${svgIconEstavel('user-x')} Excluir conta do Vendas</button></article>
   </section>`;
 }
@@ -4713,7 +4726,7 @@ async function solicitarNovoVinculoComercial() {
 }
 
 function abrirResetSistemaVendas() {
-  sheet(`<div class="sheet-header"><div><h2>Resetar Vendas Mobile</h2><p class="muted small">Esta ação é permanente.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Antes de apagar, o sistema cria um backup automático e também baixa uma cópia Excel. Digite <b>RESETAR</b> para confirmar.</p><label>Confirmação<input id="confirmacaoResetVendas" autocomplete="off" autocapitalize="characters"></label><div class="grid"><button class="secondary" onclick="fecharSheet()">Cancelar</button><button class="danger" onclick="confirmarResetSistemaVendas()">Resetar definitivamente</button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>Resetar perfil de vendas</h2><p class="muted small">Perfil: ${escapeHtml(state.contaVendasAtiva?.nome || 'atual')}</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Antes de apagar, o sistema cria um backup automático e também baixa uma cópia Excel. Nenhuma outra conta será alterada. Digite <b>RESETAR</b> para confirmar.</p><label>Confirmação<input id="confirmacaoResetVendas" autocomplete="off" autocapitalize="characters"></label><div class="grid"><button class="secondary" onclick="fecharSheet()">Cancelar</button><button class="danger" onclick="confirmarResetSistemaVendas()">Resetar perfil</button></div>`, 'sheet-backdrop-centered');
 }
 
 async function confirmarResetSistemaVendas() {
@@ -4728,7 +4741,7 @@ async function confirmarResetSistemaVendas() {
     aplicarPreferenciasVendas(estadoInicial);
     fecharSheet();
     await carregarDadosBackend(false);
-    toast('Sistema resetado. O backup foi gerado antes da limpeza.');
+    toast('Perfil resetado. O backup foi gerado antes da limpeza.');
   } catch (error) {
     if (sincronizacaoPreferenciasSuspensa) preferenciasServidorCarregadas = true;
     toast(traduzErro(error));
@@ -5778,9 +5791,9 @@ async function finalizarPedidoCliente() {
       ? state.vendas.map((item) => item.id === salvo.id ? salvo : item)
       : [salvo, ...state.vendas];
     if (backendAtivo) {
-      await reconciliarFinanceiroCliente(salvo.cliente_id);
+      await reconciliarFinanceiroCliente(salvo.cliente_id, { pedido: salvo });
       const confirmado = (state.vendas || []).find((item) => item.id === salvo.id);
-      if (!confirmado || Number(confirmado.total || 0) !== Number(venda.total || 0)) {
+      if (!confirmado || !valoresMonetariosConferem(confirmado.total, venda.total)) {
         throw new Error('O pedido foi enviado, mas a conferência financeira não foi concluída.');
       }
     }
@@ -5970,9 +5983,9 @@ async function confirmarPagamentoCliente() {
       : pagamento;
     state.pagamentos = atualizarRegistroPersistido(state.pagamentos, salvo);
     if (backendAtivo) {
-      await reconciliarFinanceiroCliente(pagamento.cliente_id);
+      await reconciliarFinanceiroCliente(pagamento.cliente_id, { pagamento: salvo });
       const confirmado = (state.pagamentos || []).find((item) => item.id === salvo.id);
-      if (!confirmado || Number(confirmado.valor || 0) !== Number(pagamento.valor || 0)) {
+      if (!confirmado || !valoresMonetariosConferem(confirmado.valor, pagamento.valor)) {
         throw new Error('O pagamento foi enviado, mas a conferência do saldo não foi concluída.');
       }
     }
@@ -6596,7 +6609,7 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   const gradiente = ctx.createLinearGradient(0, 0, largura, 228);
   gradiente.addColorStop(0, '#0A1F44'); gradiente.addColorStop(1, '#1687D9');
   ctx.fillStyle = gradiente; ctx.fillRect(0, 0, largura, 228);
-  const nomeEmpresa = String(empresa || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
+  const nomeEmpresa = String(empresa || state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
   ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 36 : nomeEmpresa.length > 20 ? 42 : 50}px Arial, sans-serif`; ctx.textAlign = 'center'; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 900), largura / 2, 82); ctx.textAlign = 'left';
   ctx.font = '700 31px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${clienteExibido}`, 640), 64, 174);
   ctx.textAlign = 'right'; ctx.fillText(data, 1016, 174); ctx.textAlign = 'left';
@@ -6720,7 +6733,7 @@ async function compartilharPedido(pedidoId) {
   const titulo = pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido';
   const tituloDetalhes = pedidoEhConsignado(venda) ? 'Detalhes do consignado' : 'Detalhes do pedido';
   const dadosComprovante = {
-    empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
+    empresa: state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'AvantaLab',
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(venda.criado_em),
     saldoAnterior: moeda(resumo.saldoAnterior),
@@ -6760,7 +6773,7 @@ async function compartilharPagamento(pagamentoId) {
   const desconto = Number(pagamento.desconto || 0);
   const abatimento = Number(pagamento.valor || 0) + desconto;
   const dadosComprovante = {
-    empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
+    empresa: state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'AvantaLab',
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(pagamento.data_pagamento),
     saldoAnterior: moeda(resumo.saldoAnterior),

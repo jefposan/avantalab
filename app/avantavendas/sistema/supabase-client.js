@@ -347,7 +347,11 @@
   }
 
   async function sincronizarCatalogoVendas() {
-    const { data, error } = await requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
+    const { data, error } = await requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc', {
+      p_conta_id: contaId,
+    });
     if (error) throw error;
     return data || { adicionados: 0, ja_recebidos: 0 };
   }
@@ -355,14 +359,17 @@
   async function salvarPreferencias(preferencias, versao = 1) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient()
-      .from('vendas_mobile_preferencias')
+      .from('vendas_mobile_contas_preferencias')
       .upsert({
-        user_id: user.id,
+        conta_id: contaId,
+        atualizado_por: user.id,
         versao: Math.max(1, Number(versao) || 1),
         preferencias: preferencias && typeof preferencias === 'object' ? preferencias : {},
         atualizado_em: new Date().toISOString(),
-      }, { onConflict: 'user_id' })
+      }, { onConflict: 'conta_id' })
       .select('versao, preferencias, atualizado_em')
       .single();
     if (error) throw error;
@@ -393,7 +400,7 @@
       requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'),
       requireClient()
         .from('vendas_mobile_divulgacao_pastas')
-        .select('id, empresa_id, pasta_pai_id, capa_material_id, nome, descricao, ordem, criado_em')
+        .select('id, empresa_id, pasta_pai_id, capa_material_id, capa_arquivo_url, nome, descricao, ordem, criado_em')
         .eq('ativo', true)
         .order('ordem')
         .order('criado_em', { ascending: false }),
@@ -483,7 +490,13 @@
     if (vinculosRes.error) throw vinculosRes.error;
     if (perfisFinanceirosRes.error) throw perfisFinanceirosRes.error;
     const vinculosComerciais = vinculosRes.data || [];
-    const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
+    const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo && vinculo.empresa_id === contaVendasAtiva?.empresa_id) || null;
+    const acessoContaAtiva = {
+      ...(acessoVendas.acesso || {}),
+      empresa_id: contaVendasAtiva?.empresa_id || null,
+      empresa_nome: contaVendasAtiva?.empresa_nome || contaVendasAtiva?.nome || 'Conta independente',
+      autonomo: !contaVendasAtiva?.empresa_id,
+    };
     const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes, preferenciasRes] = await Promise.all([
       acompanharEtapaDados(listarCatalogoVendas(), 'Carregando produtos'),
       acompanharEtapaDados(carregarTodasPaginas(() => client
@@ -506,10 +519,10 @@
         .order('criado_em', { ascending: false })
         .order('id', { ascending: false })), 'Carregando pagamentos'),
       acompanharEtapaDados(client.from('vendas_mobile_conteudos').select('id, empresa_id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }), 'Carregando novidades'),
-      acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, capa_material_id, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
+      acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, capa_material_id, capa_arquivo_url, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
       acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc'), 'Carregando integração financeira'),
-      acompanharEtapaDados(client.from('vendas_mobile_preferencias').select('versao, preferencias, atualizado_em').eq('user_id', user.id).maybeSingle(), 'Carregando preferências'),
+      acompanharEtapaDados(client.from('vendas_mobile_contas_preferencias').select('versao, preferencias, atualizado_em').eq('conta_id', contaId).maybeSingle(), 'Carregando preferências'),
     ]);
     const error = clientesRes.error || pedidosRes.error || pagamentosRes.error || integracaoRes.error;
     if (error) throw error;
@@ -532,8 +545,8 @@
       vendas: (pedidosRes.data || []).map((p) => ({ ...p, itens: p.itens || [] })),
       pagamentos: (pagamentosRes.data || []).map(normalizarPagamentoServidor),
       integracaoGestao: integracaoRes.data || { base_receita: 'recebidos', pode_configurar: false },
-      conteudos: conteudosRes.error ? null : (conteudosRes.data || []).filter((conteudo) => conteudo.pagina === 'informacoes' || vinculosComerciais.some((vinculo) => vinculo.empresa_id === conteudo.empresa_id && vinculo.novidades_ativas)),
-      divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []).filter((pasta) => vinculosComerciais.some((vinculo) => vinculo.empresa_id === pasta.empresa_id && vinculo.divulgacao_ativa)),
+      conteudos: conteudosRes.error ? null : (conteudosRes.data || []).filter((conteudo) => conteudo.pagina === 'informacoes' || (vinculoAtivo?.novidades_ativas && conteudo.empresa_id === contaVendasAtiva?.empresa_id)),
+      divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []).filter((pasta) => vinculoAtivo?.divulgacao_ativa && pasta.empresa_id === contaVendasAtiva?.empresa_id),
       divulgacaoMateriais: materiaisRes.error ? [] : (materiaisRes.data || []),
       moduloAtivo,
       sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
@@ -544,6 +557,7 @@
       preferenciasVersao: preferenciasRes.error ? null : preferenciasRes.data?.versao || null,
       preferenciasServidorDisponivel: !preferenciasRes.error,
       ...acessoVendas,
+      acesso: acessoContaAtiva,
     };
   }
 
@@ -619,7 +633,10 @@
   }
 
   async function movimentarEstoque({ produtoId, tipo, quantidade, observacao = '' }) {
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient().rpc('movimentar_estoque_vendas_mobile_rpc', {
+      p_conta_id: contaId,
       p_produto_id: produtoId,
       p_tipo: tipo,
       p_quantidade: Number(quantidade),
@@ -632,7 +649,7 @@
   async function listarMovimentosEstoque(produtoId) {
     const { data, error } = await requireClient().from('vendas_mobile_estoque_movimentos')
       .select('id,tipo,quantidade,saldo_anterior,saldo_final,observacao,criado_em')
-      .eq('produto_id', produtoId).order('criado_em', { ascending: false }).limit(40);
+      .eq('conta_id', contaAtivaId()).eq('produto_id', produtoId).order('criado_em', { ascending: false }).limit(40);
     if (error) throw error;
     return data || [];
   }
@@ -759,6 +776,8 @@
   async function persistOrder(order, incluirId = false) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const payload = pedidoParaPersistencia(order, incluirId);
     const { data, error } = await client.rpc('salvar_pedido_vendas_mobile_rpc', {
       p_pedido: payload.pedido,
@@ -767,6 +786,9 @@
     });
     if (error) throw error;
     if (!data?.id || !Array.isArray(data.itens)) throw new Error('O pedido não foi confirmado integralmente pelo servidor.');
+    if (String(data.conta_id || '') !== String(contaId)) {
+      throw new Error('O pedido não foi confirmado no perfil de vendas ativo. Atualize a página e tente novamente.');
+    }
     return data;
   }
 
@@ -911,7 +933,12 @@
   }
 
   async function resetarSistemaVendas() {
-    const { data, error } = await requireClient().rpc('resetar_vendas_mobile_rpc', { p_confirmacao: 'RESETAR' });
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
+    const { data, error } = await requireClient().rpc('resetar_vendas_mobile_rpc', {
+      p_confirmacao: 'RESETAR',
+      p_conta_id: contaId,
+    });
     if (error) throw error;
     return data;
   }

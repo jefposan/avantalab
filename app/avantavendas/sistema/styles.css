@@ -894,8 +894,9 @@ body.sheet-open {
   position: fixed;
   left: 50%;
   bottom: calc(86px + env(safe-area-inset-bottom));
-  z-index: 80;
+  z-index: calc(var(--vendas-layer-modal) + 30);
   width: min(calc(100% - 28px), 480px);
+  pointer-events: none;
   transform: translateX(-50%);
   border-radius: 16px;
   padding: 12px 14px;

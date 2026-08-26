@@ -125,7 +125,7 @@ Deno.serve(async (request) => {
 
       const { data: subs } = await supabase
         .from('push_subscriptions')
-        .select('id, user_id, endpoint, p256dh, auth, canal, apns_token')
+        .select('id, user_id, endpoint, p256dh, auth, canal, apns_token, fcm_token')
         .in('user_id', usuariosEmpresa)
         .eq('app_origem', 'mobile');
 

@@ -270,8 +270,10 @@ export async function resolverEstadoAcessoParaUsuario(
     .from('assinaturas_loja')
     .select('status, ciclo, valido_ate')
     .eq('user_id', userId)
-    .eq('loja', 'apple_app_store')
+    .in('loja', ['apple_app_store', 'google_play'])
     .eq('entitlement_id', 'pessoal_premium')
+    .order('valido_ate', { ascending: false, nullsFirst: false })
+    .limit(1)
     .maybeSingle();
   if (!erroLoja && assinaturaLoja) {
     const validaAte = assinaturaLoja.valido_ate ? new Date(assinaturaLoja.valido_ate) : null;

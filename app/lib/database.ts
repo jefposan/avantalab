@@ -1606,7 +1606,7 @@ export async function excluirUsuarioEmpresa(acessoId: string) {
     erro: false,
     mensagem: resultado.mensagem || 'Usuário excluído com sucesso.',
     data: {
-      exclusaoTotal: resultado.exclusaoTotal === true,
+      exclusaoTotal: false,
     },
   };
 }

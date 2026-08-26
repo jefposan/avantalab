@@ -14,11 +14,11 @@ Diagnóstico realizado em 07/08/2026 antes da criação do módulo.
 
 ## Precedentes analisados
 
-- `custos`: preservado no branch `codex/wip-modulos-20260731`, em `app/custos`,
-  com rota e arquivos locais de protótipo, `AGENTS.md`, armazenamento local e
-  ausência de integração com banco/menu.
-- Central de Consultas: separada entre `app/consulta`, `components/consultas` e
-  `lib/consultas`, com rota não indexável e contratos de fornecedor isolados.
+- `custos`: posteriormente movido para o repositório local **AvantaLab
+  Projetos**, preservando o protótipo sem integração com banco ou menu.
+- Central de Consultas: as telas experimentais foram movidas para **AvantaLab
+  Projetos**. `lib/consultas` continua no produto por apoiar o cadastro de
+  perfil, com contratos de fornecedor isolados.
 - Módulo oficial existente: `app/modules/importador-despesas`, usado para
   conferir manifesto e separação entre telas, componentes, tipos e domínio.
 

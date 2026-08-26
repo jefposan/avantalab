@@ -6,7 +6,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 
 type NativeBadge = { set(options: { count: number }): Promise<unknown> };
 const NativeBadge = registerPlugin<NativeBadge>('NativeBadge');
-const TOKEN_KEY = 'avantalab.ios.push-token';
+const TOKEN_KEY = 'avantalab.native.push-token';
 const BADGE_KEY = 'avantalab.mobile.badge';
 
 declare global {
@@ -15,12 +15,17 @@ declare global {
     __avantalabDesativarPushNativoMobile?: () => Promise<string | null>;
     __avantalabEstadoPushNativoMobile?: () => Promise<boolean>;
     __avantalabAtualizarBadgeNativo?: (quantidade: number) => void;
+    __avantalabCanalPushNativoMobile?: () => 'apns' | 'fcm';
   }
 }
 
 export default function NativePushNotificationsBridge() {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return;
+    if (!Capacitor.isNativePlatform()) return;
+    const plataforma = Capacitor.getPlatform();
+    if (plataforma !== 'ios' && plataforma !== 'android') return;
+    const canal = plataforma === 'ios' ? 'apns' : 'fcm';
+    const nomeAparelho = plataforma === 'ios' ? 'iPhone' : 'Android';
     let resolverToken: ((token: string) => void) | null = null;
     let rejeitarToken: ((erro: Error) => void) | null = null;
     let badgeConfirmadoPelaGestao: number | null = null;
@@ -57,13 +62,23 @@ export default function NativePushNotificationsBridge() {
       const espera = new Promise<string>((resolve, reject) => {
         resolverToken = resolve;
         rejeitarToken = reject;
-        window.setTimeout(() => reject(new Error('O iPhone demorou para registrar as notificações.')), 12000);
+        window.setTimeout(() => reject(new Error(`O ${nomeAparelho} demorou para registrar as notificações.`)), 12000);
       });
       await PushNotifications.register();
       return tokenAtual || espera;
     };
 
     const preparar = async () => {
+      if (plataforma === 'android') {
+        await PushNotifications.createChannel({
+          id: 'avantalab_avisos',
+          name: 'Avisos do AvantaLab',
+          description: 'Lembretes, pagamentos e avisos importantes.',
+          importance: 4,
+          visibility: 1,
+          vibration: true,
+        }).catch(() => undefined);
+      }
       await PushNotifications.addListener('registration', ({ value }) => salvarToken(value));
       await PushNotifications.addListener('registrationError', ({ error }) => {
         rejeitarToken?.(new Error(error)); resolverToken = null; rejeitarToken = null;
@@ -83,6 +98,7 @@ export default function NativePushNotificationsBridge() {
         void iniciar(false).catch(() => undefined);
         return Boolean(localStorage.getItem(TOKEN_KEY));
       };
+      window.__avantalabCanalPushNativoMobile = () => canal;
       window.__avantalabAtualizarBadgeNativo = atualizarBadgeNativo;
       let badgePersistido = 0;
       try { badgePersistido = Number(localStorage.getItem(BADGE_KEY)); } catch (_) {}
@@ -91,7 +107,7 @@ export default function NativePushNotificationsBridge() {
       void iniciar(false).catch(() => undefined);
     };
     void preparar();
-    return () => { delete window.__avantalabAtivarPushNativoMobile; delete window.__avantalabDesativarPushNativoMobile; delete window.__avantalabEstadoPushNativoMobile; delete window.__avantalabAtualizarBadgeNativo; void PushNotifications.removeAllListeners(); };
+    return () => { delete window.__avantalabAtivarPushNativoMobile; delete window.__avantalabDesativarPushNativoMobile; delete window.__avantalabEstadoPushNativoMobile; delete window.__avantalabAtualizarBadgeNativo; delete window.__avantalabCanalPushNativoMobile; void PushNotifications.removeAllListeners(); };
   }, []);
   return null;
 }

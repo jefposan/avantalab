@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'br.com.avantalab.app',
-  appName: 'AvantaLab',
+  appName: 'AvantaLab Gestão',
   webDir: 'public',
 
   server: {
