@@ -1,0 +1,16 @@
+export const custosManifest = {
+  id: 'custos',
+  technicalName: 'custos',
+  commercialName: 'Custos e Precificação',
+  featureName: 'Cadastro, custos e preços',
+  version: '1.0.0',
+  experimental: false,
+  route: '/custos',
+  navigationMode: 'full-page',
+  supportedSurfaces: ['web'],
+  sharedProductSource: 'public.vendas_mobile_catalogo_produtos',
+  ownDataSource: 'public.custos_documentos',
+  permissions: ['cost.read', 'cost.write', 'product.write', 'simulation.write', 'history.read'],
+  profiles: ['gestor_master', 'administrador', 'operador_completo', 'operador_simples'],
+  dataRetention: 'preserve-on-module-removal',
+} as const;

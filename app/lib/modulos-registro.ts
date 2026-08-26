@@ -85,6 +85,18 @@ export const REGISTRO_MODULOS: readonly RegistroModulo[] = [
     dados: { escopo: 'empresa', preservarAoRemover: true },
     permissoes: permissoesOperacionais,
   },
+  {
+    id: 'custos',
+    nome: 'Custos e Precificação',
+    descricao: 'Cadastro de produtos, composição de custos, histórico e simulações de preço.',
+    icone: 'custos',
+    ordem: 5,
+    superficies: ['web'],
+    navegacao: { modo: 'pagina_total', rotuloMenu: 'Custos e precificação', rota: '/custos', retorno: '/gestao' },
+    comercial: { precoMensal: VALOR_MODULO_AVULSO_MENSAL, vendavelNoBusiness: true, incluidoNoBusinessPro: true },
+    dados: { escopo: 'empresa', preservarAoRemover: true },
+    permissoes: permissoesOperacionais,
+  },
 ] as const;
 
 export function obterRegistroModulo(id: string) {
