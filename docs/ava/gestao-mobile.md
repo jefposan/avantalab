@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.0 -->
+<!-- ava-version: 1.12.1 -->
+
+> Revisão 1.12.1: os resultados recebidos do AvantaVendas passam a respeitar a
+> conta de vendas de origem; sem outra alteração operacional na Gestão Mobile.
 
 > Revisão 1.12.0: instalação e uso de Custos e Precificação são exclusivos da
 > Gestão Web; sem impacto operacional na Gestão Mobile.

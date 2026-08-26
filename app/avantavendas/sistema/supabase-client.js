@@ -522,7 +522,7 @@
       acompanharEtapaDados(client.from('vendas_mobile_conteudos').select('id, empresa_id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }), 'Carregando novidades'),
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, capa_material_id, capa_arquivo_url, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
-      acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc'), 'Carregando integração financeira'),
+      acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc', { p_conta_id: contaId }), 'Carregando integração financeira'),
       acompanharEtapaDados(client.from('vendas_mobile_contas_preferencias').select('versao, preferencias, atualizado_em').eq('conta_id', contaId).maybeSingle(), 'Carregando preferências'),
     ]);
     const error = clientesRes.error || pedidosRes.error || pagamentosRes.error || integracaoRes.error;
@@ -943,7 +943,10 @@
   }
 
   async function configurarIntegracaoGestao(baseReceita) {
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient().rpc('configurar_integracao_gestao_vendas_mobile_rpc', {
+      p_conta_id: contaId,
       p_base_receita: baseReceita,
     });
     if (error) throw error;
@@ -986,7 +989,10 @@
   }
 
   async function definirPerfilFinanceiro(empresaId, periodo = 'todo_historico', historicoAnterior = 'manter') {
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient().rpc('definir_perfil_financeiro_vendas_mobile_rpc', {
+      p_conta_id: contaId,
       p_empresa_id: empresaId,
       p_periodo: periodo,
       p_historico_anterior: historicoAnterior,
@@ -996,7 +1002,10 @@
   }
 
   async function desvincularPerfilFinanceiro(historicoAnterior = 'manter') {
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient().rpc('desvincular_perfil_financeiro_vendas_mobile_rpc', {
+      p_conta_id: contaId,
       p_historico_anterior: historicoAnterior,
     });
     if (error) throw error;

@@ -1,6 +1,17 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.0 -->
+<!-- ava-version: 1.12.1 -->
+
+> Revisão 1.12.1: cada **Perfil de vendas** escolhe seu próprio destino
+> financeiro na Gestão. Perfis diferentes podem apontar para empresas
+> diferentes ou para a mesma empresa, sem herdar o vínculo do login. A primeira
+> conta preserva seu histórico anterior; contas adicionais começam sem destino
+> até uma escolha manual.
+
+> Revisão 1.12.1-av95: a integração financeira usa o perfil de vendas ativo
+> como origem. Dois perfis podem apontar para a mesma Gestão sem se misturar;
+> os lançamentos anteriores só são transferidos quando o usuário confirma essa
+> escolha no próprio perfil.
 
 > Revisão 1.12.0: o Catálogo empresarial compartilha o cadastro mestre com
 > Custos e Precificação. Somente itens ativos e disponibilizados no Catálogo
@@ -195,7 +206,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 94 -->
+<!-- avantavendas-asset-revision: 95 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

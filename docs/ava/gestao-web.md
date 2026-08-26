@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.0 -->
+<!-- ava-version: 1.12.1 -->
+
+> Revisão 1.12.1: os resultados recebidos do AvantaVendas são identificados
+> pela conta de vendas de origem; sem outra alteração operacional na Gestão Web.
 
 > Revisão 1.12.0: **Custos e Precificação** está disponível em **Menu >
 > Módulos** para perfis Empresa. Gestor Master ou Administrador instala sem

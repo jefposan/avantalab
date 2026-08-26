@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.12.1 - 2026-08-26
+
+- AvantaVendas: o destino financeiro e a base de receita passam a pertencer à
+  conta de vendas ativa, não ao login. Contas diferentes podem enviar seus
+  resultados para perfis diferentes da Gestão ou para o mesmo perfil, por
+  escolha explícita do proprietário ou administrador da conta.
+- Segurança de migração: os vínculos e as receitas históricas já existentes
+  foram preservados sem mover pedidos, pagamentos ou lançamentos financeiros.
+  Contas adicionais não herdam o destino da conta inicial.
+
+## 1.12.1-av95 - 2026-08-26
+
+- AvantaVendas: a escolha de destino financeiro, sua base de receita e a
+  sincronização passam a usar a conta de vendas ativa como origem.
+
 ## 1.12.0 - 2026-08-26
 
 - Novo módulo Web **Custos e Precificação**, instalado por Gestor Master ou
