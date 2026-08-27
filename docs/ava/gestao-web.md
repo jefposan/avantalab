@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.05 -->
+<!-- ava-version: 1.12.1.06 -->
+
+> Revisão 1.12.1.06: a adaptação do card **Novo lançamento** ao teclado Android
+> é exclusiva da Gestão Mobile; sem alteração operacional na Gestão Web.
 
 > Revisão 1.12.1.05: a correção da gravação de pedidos pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Web.

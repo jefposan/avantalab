@@ -4403,6 +4403,179 @@
     return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto);
   }
 
+  var ALTURA_MINIMA_TECLADO_LANCAMENTO = 96;
+  var alturaBaseLancamentoMobile = 0;
+  var larguraBaseLancamentoMobile = 0;
+  var campoAtivoLancamentoMobile = null;
+  var focoLancamentoMobileEm = 0;
+  var temporizadoresLancamentoMobile = [];
+  var quadroLancamentoMobile = 0;
+  var sobreposicaoTecladoLancamentoAnterior;
+
+  function campoEditavelLancamentoMobile(elemento) {
+    return Boolean(
+      elemento &&
+      elemento.matches &&
+      elemento.matches('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea') &&
+      elemento.closest &&
+      elemento.closest('#modal-lancamento-overlay')
+    );
+  }
+
+  function elementosViewportLancamentoMobile() {
+    var overlay = document.getElementById('modal-lancamento-overlay');
+    if (!overlay) return null;
+    var painel = document.getElementById('modal-lancamento-painel');
+    var rolagem = document.getElementById('modal-lancamento-scroll');
+    if (!painel || !rolagem) return null;
+    return { overlay: overlay, painel: painel, rolagem: rolagem };
+  }
+
+  function dimensaoPositivaLancamentoMobile(valor) {
+    valor = Math.round(Number(valor) || 0);
+    return valor > 0 ? valor : 0;
+  }
+
+  function alturaEstruturalLancamentoMobile() {
+    var viewport = window.visualViewport;
+    return Math.max(
+      dimensaoPositivaLancamentoMobile(window.innerHeight),
+      dimensaoPositivaLancamentoMobile(document.documentElement && document.documentElement.clientHeight),
+      dimensaoPositivaLancamentoMobile(viewport && viewport.height),
+      1
+    );
+  }
+
+  function restaurarSobreposicaoTecladoLancamentoMobile() {
+    var tecladoVirtual = navigator.virtualKeyboard;
+    if (tecladoVirtual && typeof sobreposicaoTecladoLancamentoAnterior === 'boolean') {
+      try { tecladoVirtual.overlaysContent = sobreposicaoTecladoLancamentoAnterior; } catch (erro) {}
+    }
+    sobreposicaoTecladoLancamentoAnterior = undefined;
+  }
+
+  function prepararGeometriaTecladoLancamentoMobile() {
+    var tecladoVirtual = navigator.virtualKeyboard;
+    if (!tecladoVirtual || typeof tecladoVirtual.overlaysContent !== 'boolean') return;
+    if (typeof sobreposicaoTecladoLancamentoAnterior !== 'boolean') {
+      sobreposicaoTecladoLancamentoAnterior = tecladoVirtual.overlaysContent;
+    }
+    try { tecladoVirtual.overlaysContent = true; } catch (erro) {}
+  }
+
+  function limparViewportLancamentoMobile(elementos, restaurarTeclado) {
+    if (elementos && elementos.overlay) {
+      elementos.overlay.style.top = '';
+      elementos.overlay.style.bottom = '';
+      elementos.overlay.style.height = '';
+      elementos.overlay.style.removeProperty('--avanta-lancamento-padding-bottom');
+      elementos.overlay.style.removeProperty('--avanta-lancamento-card-max-height');
+    }
+    if (restaurarTeclado !== false) restaurarSobreposicaoTecladoLancamentoMobile();
+  }
+
+  function manterCampoLancamentoVisivelMobile(elementos, campo, topoVisivel, alturaVisivel) {
+    if (!elementos || !campo || !campo.isConnected || !elementos.rolagem.contains(campo)) return;
+    var alvo = campo.closest('label') || campo;
+    var retangulo = alvo.getBoundingClientRect();
+    var limiteSuperior = topoVisivel + 12;
+    var limiteInferior = topoVisivel + alturaVisivel - 18;
+    var deslocamento = 0;
+    if (retangulo.bottom > limiteInferior) deslocamento = retangulo.bottom - limiteInferior;
+    else if (retangulo.top < limiteSuperior) deslocamento = retangulo.top - limiteSuperior;
+    if (Math.abs(deslocamento) < 1) return;
+    elementos.rolagem.scrollTop += Math.round(deslocamento);
+  }
+
+  function sincronizarViewportLancamentoMobile() {
+    var elementos = elementosViewportLancamentoMobile();
+    if (!elementos) {
+      alturaBaseLancamentoMobile = 0;
+      larguraBaseLancamentoMobile = 0;
+      campoAtivoLancamentoMobile = null;
+      focoLancamentoMobileEm = 0;
+      restaurarSobreposicaoTecladoLancamentoMobile();
+      return;
+    }
+
+    var viewport = window.visualViewport;
+    var larguraAtual = Math.max(
+      dimensaoPositivaLancamentoMobile(window.innerWidth),
+      dimensaoPositivaLancamentoMobile(document.documentElement && document.documentElement.clientWidth),
+      1
+    );
+    var alturaEstrutural = alturaEstruturalLancamentoMobile();
+    var campoAtivo = campoEditavelLancamentoMobile(document.activeElement)
+      ? document.activeElement
+      : (campoAtivoLancamentoMobile && campoAtivoLancamentoMobile.isConnected ? campoAtivoLancamentoMobile : null);
+    var mudouOrientacao = larguraBaseLancamentoMobile > 0 && Math.abs(larguraAtual - larguraBaseLancamentoMobile) > 1;
+
+    if (!alturaBaseLancamentoMobile || mudouOrientacao || !campoAtivo) {
+      alturaBaseLancamentoMobile = alturaEstrutural;
+      larguraBaseLancamentoMobile = larguraAtual;
+    }
+
+    if (!campoAtivo || state.isIos) {
+      limparViewportLancamentoMobile(elementos, true);
+      return;
+    }
+
+    prepararGeometriaTecladoLancamentoMobile();
+    var tecladoVirtual = navigator.virtualKeyboard;
+    var alturaTecladoNativa = dimensaoPositivaLancamentoMobile(tecladoVirtual && tecladoVirtual.boundingRect && tecladoVirtual.boundingRect.height);
+    var alturaVisual = dimensaoPositivaLancamentoMobile(viewport && viewport.height) || alturaEstrutural;
+    var topoVisual = dimensaoPositivaLancamentoMobile(viewport && viewport.offsetTop);
+    var recuoInferido = Math.max(0, alturaBaseLancamentoMobile - alturaVisual);
+    var alturaTeclado = alturaTecladoNativa >= ALTURA_MINIMA_TECLADO_LANCAMENTO
+      ? alturaTecladoNativa
+      : (recuoInferido >= ALTURA_MINIMA_TECLADO_LANCAMENTO ? recuoInferido : 0);
+
+    // Alguns WebViews Android antigos obedecem overlays-content, mas não
+    // informam a geometria do teclado. Após a animação, reserva uma área segura
+    // apenas enquanto um campo deste modal estiver efetivamente focado.
+    if (
+      alturaTeclado < ALTURA_MINIMA_TECLADO_LANCAMENTO &&
+      /android/i.test(navigator.userAgent || '') &&
+      Date.now() - focoLancamentoMobileEm >= 360
+    ) {
+      alturaTeclado = Math.round(alturaBaseLancamentoMobile * 0.44);
+    }
+
+    if (alturaTeclado < ALTURA_MINIMA_TECLADO_LANCAMENTO) {
+      limparViewportLancamentoMobile(elementos, false);
+      return;
+    }
+
+    var alturaPelaGeometria = Math.max(1, alturaBaseLancamentoMobile - alturaTeclado);
+    var alturaDisponivel = Math.max(1, Math.min(alturaVisual, alturaPelaGeometria));
+    var alturaCard = Math.max(1, alturaDisponivel - 28);
+    elementos.overlay.style.top = topoVisual + 'px';
+    elementos.overlay.style.bottom = 'auto';
+    elementos.overlay.style.height = alturaDisponivel + 'px';
+    elementos.overlay.style.setProperty('--avanta-lancamento-padding-bottom', '12px');
+    elementos.overlay.style.setProperty('--avanta-lancamento-card-max-height', alturaCard + 'px');
+
+    window.cancelAnimationFrame(quadroLancamentoMobile);
+    quadroLancamentoMobile = window.requestAnimationFrame(function () {
+      manterCampoLancamentoVisivelMobile(elementos, campoAtivo, topoVisual, alturaDisponivel);
+      window.requestAnimationFrame(function () {
+        manterCampoLancamentoVisivelMobile(elementos, campoAtivo, topoVisual, alturaDisponivel);
+      });
+    });
+  }
+
+  function agendarViewportLancamentoMobile(campo) {
+    if (campoEditavelLancamentoMobile(campo)) {
+      campoAtivoLancamentoMobile = campo;
+      focoLancamentoMobileEm = Date.now();
+      prepararGeometriaTecladoLancamentoMobile();
+    }
+    temporizadoresLancamentoMobile.forEach(function (temporizador) { window.clearTimeout(temporizador); });
+    temporizadoresLancamentoMobile = [0, 120, 280, 480].map(function (atraso) {
+      return window.setTimeout(sincronizarViewportLancamentoMobile, atraso);
+    });
+  }
+
   function podeAtualizarDadosAoRetornar() {
     var ativo = document.activeElement;
     if (ativo && ativo.matches && ativo.matches('input, select, textarea, [contenteditable="true"]')) return false;
@@ -11284,9 +11457,9 @@
     var abaReceitaAtiva = campoEscuro ? 'border border-emerald-400/60 bg-emerald-600 text-white shadow-sm' : 'bg-emerald-600 text-white shadow-sm';
 
     return (
-      '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
-        '<section class="mx-auto w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
-          '<div class="max-h-[inherit] overflow-y-auto overscroll-contain">' +
+      '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:var(--avanta-lancamento-padding-bottom, calc(env(safe-area-inset-bottom) + 78px))">' +
+        '<section id="modal-lancamento-painel" class="mx-auto w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl" style="max-height:var(--avanta-lancamento-card-max-height, calc(100dvh - env(safe-area-inset-bottom) - 102px))">' +
+          '<div id="modal-lancamento-scroll" class="max-h-[inherit] overflow-y-auto overscroll-contain">' +
           (novaAberta
             ? '<div class="flex items-center gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
                 '<button id="fechar-nova-despesa" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black text-white">&larr;</button>' +
@@ -13683,6 +13856,7 @@
       });
     }
     atualizarScrollBloqueado(_scrollPrevio);
+    sincronizarViewportLancamentoMobile();
     // Restaura o scrollTop dos containers internos preservados.
     for (var _id in _scrollContainers) {
       var _alvo = document.getElementById(_id);
@@ -15969,9 +16143,9 @@
       if (!document.hidden) carregarNotificacoesNaoLidas();
     });
 
-    // Android: ao focar um campo dentro de qualquer modal/formulario, rola
-    // ate ele ficar visivel acima do teclado (cobre todos os cards de uma vez).
-    // A Ava controla o teclado e o viewport de forma independente.
+    // Android: o modal de lancamento acompanha toda a animacao do teclado e
+    // reduz somente o proprio card. Os demais formularios preservam o ajuste
+    // simples anterior; a Ava controla o viewport de forma independente.
     document.addEventListener('focusin', function (e) {
       // No iOS o Safari ja rola o campo sozinho; nao mexemos pra nao conflitar.
       if (state.isIos) return;
@@ -15979,11 +16153,31 @@
       if (!el || typeof el.matches !== 'function') return;
       if (!el.matches('input, select, textarea')) return;
       if (el.id === 'chat-ia-input') return;
+      if (campoEditavelLancamentoMobile(el)) {
+        agendarViewportLancamentoMobile(el);
+        return;
+      }
       if (!(deveBloquearScroll() || state.agendaFormAberto)) return;
       setTimeout(function () {
         try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}
       }, 300);
     });
+
+    if (!window._avantaLancamentoViewportBound) {
+      window._avantaLancamentoViewportBound = true;
+      var acompanharViewportLancamento = function () {
+        if (!campoEditavelLancamentoMobile(document.activeElement)) return;
+        sincronizarViewportLancamentoMobile();
+      };
+      window.addEventListener('resize', acompanharViewportLancamento);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', acompanharViewportLancamento);
+        window.visualViewport.addEventListener('scroll', acompanharViewportLancamento);
+      }
+      if (navigator.virtualKeyboard && navigator.virtualKeyboard.addEventListener) {
+        navigator.virtualKeyboard.addEventListener('geometrychange', acompanharViewportLancamento);
+      }
+    }
 
     // No navegador comum, o teclado reduz a área visível depois do foco. A
     // página acompanha o campo ativo; o card de cadastro não é um container
@@ -16009,6 +16203,18 @@
     }
 
     document.addEventListener('focusout', function (e) {
+      var origemLancamento = e.target;
+      if (campoEditavelLancamentoMobile(origemLancamento)) {
+        window.setTimeout(function () {
+          if (campoEditavelLancamentoMobile(document.activeElement)) {
+            agendarViewportLancamentoMobile(document.activeElement);
+            return;
+          }
+          campoAtivoLancamentoMobile = null;
+          focoLancamentoMobileEm = 0;
+          sincronizarViewportLancamentoMobile();
+        }, 180);
+      }
       if (!window._avaRenderLancamentoPendente) return;
       var origem = e.target;
       if (!origem || !origem.closest || !origem.closest('#modal-lancamento-overlay')) return;

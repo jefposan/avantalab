@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.05 -->
+<!-- ava-version: 1.12.1.06 -->
+
+> Revisão 1.12.1.06: a adaptação do card **Novo lançamento** ao teclado Android
+> pertence à Gestão Mobile; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.12.1.05: pedidos voltam a ser salvos normalmente. O gatilho do
 > vínculo financeiro agora consulta `data_pagamento` somente para pagamentos e

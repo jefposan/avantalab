@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.06: Novo lançamento acompanha o teclado Android e
+// mantém descrição, origem e valor visíveis no card rolável.
 // Revisado na versão 1.12.1.05: pedidos voltam a ser gravados normalmente após
 // separar os campos exclusivos de pedidos e pagamentos no gatilho financeiro.
 // Revisado na versão 1.12.1.04: Projetos aplica a cor primária do perfil e a

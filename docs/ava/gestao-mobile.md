@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.05 -->
+<!-- ava-version: 1.12.1.06 -->
+
+> Revisão 1.12.1.06: em **Novo lançamento**, os campos de descrição, origem e
+> valor permanecem visíveis acima do teclado no Android. O card acompanha a
+> abertura do teclado e pode ser rolado normalmente até a ação de salvar.
 
 > Revisão 1.12.1.05: a correção da gravação de pedidos pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Mobile.

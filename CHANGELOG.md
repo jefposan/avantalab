@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.12.1.06 - 2026-08-27
+
+- Gestão Mobile: o card **Novo lançamento** volta a acompanhar o teclado no
+  Android. Descrição, origem e valor permanecem visíveis enquanto o teclado abre
+  e o conteúdo interno continua rolável até as ações de salvar.
+- O ajuste usa a geometria nativa do teclado, acompanha as mudanças do viewport
+  e possui uma área segura alternativa para WebViews Android antigos, sem mudar
+  o comportamento do iOS, da Ava ou dos demais modais.
+
 ## 1.12.1.05 - 2026-08-26
 
 - AvantaVendas: corrigido o gatilho financeiro que tentava consultar o campo
