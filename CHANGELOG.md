@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.12.1.07 - 2026-08-28
+
+- Conteúdo do Vendas: ao selecionar uma pasta em Divulgação, a galeria de
+  materiais publicados passa a abrir antes da lista de pastas no celular.
+  Subpastas, visualização, retorno à pasta anterior e a ação de adicionar
+  arquivos ficam acessíveis na própria visão da pasta.
+- O envio, as permissões, o armazenamento, a proteção contra duplicidades e o
+  conteúdo disponível aos vendedores foram preservados.
+
 ## 1.12.1.06 - 2026-08-27
 
 - Gestão Mobile: o card **Novo lançamento** volta a acompanhar o teclado no

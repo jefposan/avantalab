@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.07: em Conteúdo do Vendas > Divulgação, a pasta
+// selecionada abre sua galeria de materiais e subpastas antes da lista completa
+// de pastas no celular. Voltar sobe um nível e Adicionar preserva o envio atual.
 // Revisado na versão 1.12.1.06: Novo lançamento acompanha o teclado Android e
 // mantém descrição, origem e valor visíveis no card rolável.
 // Revisado na versão 1.12.1.05: pedidos voltam a ser gravados normalmente após

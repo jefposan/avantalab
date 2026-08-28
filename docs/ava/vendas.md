@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.06 -->
+<!-- ava-version: 1.12.1.07 -->
+
+> Revisão 1.12.1.07: a mudança é exclusiva da administração de conteúdos na
+> Gestão; não altera os materiais, o acesso ou a navegação do AvantaVendas.
 
 > Revisão 1.12.1.06: a adaptação do card **Novo lançamento** ao teclado Android
 > pertence à Gestão Mobile; sem alteração operacional no AvantaVendas.

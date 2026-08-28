@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.06 -->
+<!-- ava-version: 1.12.1.07 -->
+
+> Revisão 1.12.1.07: em **Sistemas > Conteúdo do Vendas > Divulgação**, ao
+> abrir uma pasta, os materiais já publicados e as subpastas aparecem na
+> própria visão da pasta. Use **Voltar** para subir um nível; **Adicionar**
+> mantém o mesmo envio de fotos, vídeos e PDFs já utilizado anteriormente.
 
 > Revisão 1.12.1.06: a adaptação do card **Novo lançamento** ao teclado Android
 > é exclusiva da Gestão Mobile; sem alteração operacional na Gestão Web.

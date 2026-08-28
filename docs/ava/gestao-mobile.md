@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.06 -->
+<!-- ava-version: 1.12.1.07 -->
+
+> Revisão 1.12.1.07: em **Sistemas > Conteúdo do Vendas > Divulgação**, a
+> pasta aberta mostra seus materiais publicados e subpastas antes da relação
+> completa de pastas. **Voltar** sobe um nível e **Adicionar** preserva o envio
+> atual de fotos, vídeos e PDFs.
 
 > Revisão 1.12.1.06: em **Novo lançamento**, os campos de descrição, origem e
 > valor permanecem visíveis acima do teclado no Android. O card acompanha a

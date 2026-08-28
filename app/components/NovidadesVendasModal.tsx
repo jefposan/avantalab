@@ -95,6 +95,15 @@ function contarMateriaisNaArvore(pastaId: string, pastas: Pasta[], materiais: Ma
   return materiais.filter((material) => pastasIncluidas.has(material.pasta_id)).length;
 }
 
+function urlCapaDaPasta(pasta: Pasta, pastas: Pasta[], materiais: Material[]) {
+  if (pasta.capa_arquivo_url) return pasta.capa_arquivo_url;
+  const materialDaCapa = pasta.capa_material_id ? materiais.find((material) => material.id === pasta.capa_material_id) : null;
+  if (materialDaCapa) return materialDaCapa.miniatura_url || materialDaCapa.arquivo_url;
+  const idsDaPasta = new Set([pasta.id, ...idsSubpastasDaPasta(pasta.id, pastas)]);
+  const primeiraImagem = materiais.find((material) => idsDaPasta.has(material.pasta_id) && material.tipo === 'imagem');
+  return primeiraImagem?.miniatura_url || primeiraImagem?.arquivo_url || null;
+}
+
 function idsSubpastasDaPasta(pastaId: string, pastas: Pasta[]) {
   const ids = new Set<string>();
   const pendentes = [pastaId];
@@ -618,6 +627,14 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const fundo = darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'; const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900'; const suave = darkMode ? 'text-slate-400' : 'text-slate-500';
   const materiaisAtivos = materiais.filter((item) => item.pasta_id === pastaAtiva);
   const pastaAtivaObjeto = pastas.find((pasta) => pasta.id === pastaAtiva) || null;
+  const subpastasAtivas = pastaAtiva
+    ? pastas
+      .filter((pasta) => pasta.pasta_pai_id === pastaAtiva)
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+    : [];
+  const pastasPrincipais = pastas
+    .filter((pasta) => pasta.pasta_pai_id === null)
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   const idsSubpastasCapa = pastaCapaEmEdicao
     ? new Set([pastaCapaEmEdicao.id, ...idsSubpastasDaPasta(pastaCapaEmEdicao.id, pastas)])
     : new Set<string>();
@@ -660,14 +677,35 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const iniciarEdicaoPasta = (pasta: Pasta) => {
     setPastaEmEdicao(pasta); setPastaPaiNova(pasta.pasta_pai_id || ''); setNovaPasta(pasta.nome); setNovaDescricao(pasta.descricao || ''); setCriacaoPastaAberta(true);
   };
+  const focarDetalheDaPastaNoMobile = () => {
+    if (!window.matchMedia('(max-width: 1023px)').matches) return;
+    window.requestAnimationFrame(() => {
+      const detalhe = document.getElementById('detalhe-divulgacao-vendas');
+      detalhe?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      detalhe?.focus({ preventScroll: true });
+    });
+  };
   const selecionarPasta = (pasta: Pasta, temFilhos: boolean) => {
     setPastaAtiva(pasta.id);
-    if (!temFilhos) return;
+    if (!temFilhos) {
+      focarDetalheDaPastaNoMobile();
+      return;
+    }
     setPastasExpandidas((atuais) => {
       const proximas = new Set(atuais);
       if (proximas.has(pasta.id)) proximas.delete(pasta.id); else proximas.add(pasta.id);
       return proximas;
     });
+    focarDetalheDaPastaNoMobile();
+  };
+  const abrirPastaPeloConteudo = (pasta: Pasta) => {
+    setPastaAtiva(pasta.id);
+    if (pasta.pasta_pai_id) setPastasExpandidas((atuais) => new Set([...atuais, pasta.pasta_pai_id as string]));
+    focarDetalheDaPastaNoMobile();
+  };
+  const voltarPastaPeloConteudo = () => {
+    setPastaAtiva(pastaAtivaObjeto?.pasta_pai_id || null);
+    focarDetalheDaPastaNoMobile();
   };
   const tituloExclusao = exclusaoPendente?.tipo === 'pasta'
     ? 'Excluir pasta e conteúdo'
@@ -750,7 +788,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         <div className={`self-start rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><h3 className="text-base font-black">Nova publicação</h3><p className={`mt-1 text-xs ${suave}`}>Aparece somente para vendedores vinculados a este perfil.</p><label className="mt-4 block text-[10px] font-black uppercase opacity-60">Tipo</label><select value={tipo} onChange={(e) => setTipo(e.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`}>{TIPOS.map(([v, n]) => <option key={v} value={v}>{n}</option>)}</select><label className="mt-3 block text-[10px] font-black uppercase opacity-60">Título</label><input value={titulo} onChange={(e) => setTitulo(e.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`} /><label className="mt-3 block text-[10px] font-black uppercase opacity-60">Descrição</label><textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={5} className={`mt-1 w-full rounded-lg border p-3 text-sm ${campo}`} /><button type="button" onClick={() => void publicar()} disabled={salvando} className="mt-3 h-11 w-full rounded-xl text-xs font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Publicando...' : 'Publicar novidade'}</button></div>
         <div><h3 className="text-base font-black">Histórico</h3><p className={`text-xs ${suave}`}>Publicações mais recentes primeiro.</p><div className="mt-3 grid gap-2">{carregando ? <p className="py-8 text-center text-sm opacity-60">Carregando...</p> : novidades.length ? novidades.map((item) => <article key={item.id} className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200'}`}><div className="flex gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white" style={{ backgroundColor: corPrimaria }}><Icone tipo={item.tipo} className="h-4 w-4" /></span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><div><span className="text-[8px] font-black uppercase" style={{ color: corPrimaria }}>{rotuloTipo(item.tipo)}</span><h4 className="text-sm font-black">{item.titulo}</h4></div><button type="button" onClick={() => setExclusaoPendente({ tipo: 'novidade', item })} className="h-8 w-8 shrink-0 rounded-lg border border-red-300 text-red-600">×</button></div><p className={`mt-1 whitespace-pre-wrap text-xs ${suave}`}>{item.descricao}</p></div></div></article>) : <p className="py-8 text-center text-sm opacity-60">Nenhuma novidade publicada.</p>}</div></div>
       </div> : aba === 'produtos' ? <CatalogoProdutosVendas empresaId={empresaId || ''} darkMode={darkMode} corPrimaria={corPrimaria} /> : <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-[340px_minmax(0,1fr)] lg:overflow-hidden">
-        <aside className={`self-start rounded-xl border p-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
+        <aside className={`order-2 self-start rounded-xl border p-3 lg:order-1 lg:flex lg:h-full lg:min-h-0 lg:flex-col ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
           <button type="button" onClick={alternarCriacaoPasta} className="flex h-9 w-full items-center justify-between rounded-lg px-3 text-xs font-black uppercase text-white" style={{ backgroundColor: corPrimaria }}><span>{criacaoPastaAberta ? pastaEmEdicao ? 'Cancelar edição' : 'Recolher criação' : 'Criar pasta'}</span><span className={`text-lg leading-none transition-transform ${criacaoPastaAberta ? 'rotate-45' : ''}`}>+</span></button>
           {criacaoPastaAberta && <div className={`mt-2 rounded-lg border p-2.5 ${darkMode ? 'border-slate-700 bg-slate-900/50' : 'border-slate-200 bg-white'}`}>
             {!pastaEmEdicao && <><label className={`block text-[9px] font-black uppercase ${suave}`}>Criar dentro de</label><select value={pastaPaiNova} onChange={(e) => setPastaPaiNova(e.target.value)} className={`mt-1 h-9 w-full rounded-lg border px-2.5 text-xs font-bold ${campo}`}><option value="">Pastas principais</option>{pastasOrdenadas.map(({ pasta, nivel }) => <option key={pasta.id} value={pasta.id}>{`${'— '.repeat(nivel + 1)}${pasta.nome}`}</option>)}</select></>}
@@ -774,19 +812,26 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
             {!listaPastasVisiveis.length && <p className={`py-3 text-center text-xs ${suave}`}>Nenhuma pasta criada.</p>}
           </div>
         </aside>
-        <section className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+        <section id="detalhe-divulgacao-vendas" tabIndex={-1} className="order-1 min-w-0 scroll-mt-3 focus:outline-none lg:order-2 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           <div className="flex items-start justify-between gap-3">
-            <div><h3 className="text-base font-black">{pastaAtivaObjeto?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos, vídeos ou PDFs para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>
+            <div className="min-w-0">
+              {pastaAtivaObjeto && <button type="button" onClick={voltarPastaPeloConteudo} className={`mb-2 inline-flex min-h-11 items-center gap-1 rounded-xl border px-3 text-xs font-black ${darkMode ? 'border-slate-700 bg-slate-800 text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}><span aria-hidden="true">‹</span> Voltar</button>}
+              <p className={`text-[9px] font-black uppercase tracking-[.14em] ${suave}`}>{pastaAtivaObjeto ? 'Pasta atual' : 'Divulgação'}</p>
+              <h3 className="mt-1 text-base font-black">{pastaAtivaObjeto?.nome || 'Materiais de divulgação'}</h3>
+              <p className={`mt-1 text-xs ${suave}`}>{pastaAtiva ? 'Veja os materiais publicados e adicione novos arquivos nesta pasta.' : 'Selecione uma pasta abaixo para ver os materiais já publicados.'}</p>
+            </div>
             {pastaAtivaObjeto && <div className="flex shrink-0 flex-wrap justify-end gap-2">
               {pastaAtivaObjeto.pasta_pai_id === null && <button type="button" onClick={() => setPastaCapaEmEdicao(pastaAtivaObjeto)} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-xs font-black ${darkMode ? 'border-cyan-700 bg-cyan-950/30 text-cyan-300' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}><Icone tipo="image" className="h-4 w-4" />{pastaAtivaObjeto.capa_material_id || pastaAtivaObjeto.capa_arquivo_url ? 'Trocar capa' : 'Escolher capa'}</button>}
               <input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,application/pdf,.pdf" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
-              <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="hidden min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-black text-white disabled:opacity-60 lg:flex" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button>
+              <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-black text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button>
             </div>}
           </div>
           {pastaAtivaObjeto && <button type="button" onClick={() => inputArquivos.current?.click()} onDragEnter={(e) => iniciarArrasteDeArquivo(e, 'materiais')} onDragOver={(e) => iniciarArrasteDeArquivo(e, 'materiais')} onDragLeave={(e) => sairDoArrasteDeArquivo(e, 'materiais')} onDrop={(e) => { e.preventDefault(); setArrastandoMateriais(false); void enviarArquivos(e.dataTransfer.files); }} disabled={salvando} className={`mt-4 hidden min-h-28 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 text-center transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 disabled:cursor-not-allowed disabled:opacity-60 lg:flex ${arrastandoMateriais ? 'border-cyan-500 bg-cyan-500/10 text-cyan-700' : darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-200 hover:border-cyan-500/70' : 'border-cyan-200 bg-cyan-50/60 text-cyan-800 hover:border-cyan-500'}`}>
             <Icone tipo="upload" className="h-6 w-6" /><b className="mt-2 text-xs font-black">Adicionar materiais a esta pasta</b><span className={`mt-1 text-[11px] ${suave}`}>Arraste fotos, vídeos ou PDFs aqui ou clique para selecionar.</span>
           </button>}
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => setMaterialEmVisualizacao(item)} aria-label={`Visualizar ${item.titulo}`} className="relative block aspect-square w-full bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-cyan-400">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></button><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} aria-label={`Excluir ${item.titulo}`} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div>
+          {!pastaAtiva && <section className="mt-5" aria-labelledby="pastas-de-divulgacao"><div className="mb-2 flex items-center justify-between gap-3"><h4 id="pastas-de-divulgacao" className="text-xs font-black uppercase tracking-[.12em]">Pastas de divulgação</h4><span className={`text-[10px] font-bold ${suave}`}>{pastasPrincipais.length} {pastasPrincipais.length === 1 ? 'pasta' : 'pastas'}</span></div>{pastasPrincipais.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{pastasPrincipais.map((pasta) => { const capa = urlCapaDaPasta(pasta, pastas, materiais); const quantidade = contarMateriaisNaArvore(pasta.id, pastas, materiais); const subpastas = pastas.filter((item) => item.pasta_pai_id === pasta.id).length; return <button key={pasta.id} type="button" onClick={() => abrirPastaPeloConteudo(pasta)} className={`overflow-hidden rounded-xl border text-left transition hover:border-cyan-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 hover:bg-slate-800/70' : 'border-slate-200 bg-white hover:bg-cyan-50/50'}`}>{capa ? <img src={capa} alt="" className="aspect-[16/10] w-full object-cover" /> : <span className={`flex aspect-[16/10] items-center justify-center ${darkMode ? 'bg-slate-950 text-amber-400' : 'bg-amber-50 text-amber-600'}`}><Icone tipo="folder" className="h-9 w-9" /></span>}<span className="block p-3"><b className="block truncate text-xs">{pasta.nome}</b><span className={`mt-1 block text-[10px] ${suave}`}>{quantidade} {quantidade === 1 ? 'material' : 'materiais'} · {subpastas} {subpastas === 1 ? 'subpasta' : 'subpastas'}</span></span></button>; })}</div> : <p className={`rounded-xl border border-dashed px-4 py-10 text-center text-sm ${suave}`}>Crie a primeira pasta para começar a publicar materiais.</p>}</section>}
+          {pastaAtivaObjeto && subpastasAtivas.length > 0 && <section className="mt-5" aria-labelledby="subpastas-da-pasta"><div className="mb-2 flex items-center justify-between gap-3"><h4 id="subpastas-da-pasta" className="text-xs font-black uppercase tracking-[.12em]">Subpastas</h4><span className={`text-[10px] font-bold ${suave}`}>{subpastasAtivas.length} {subpastasAtivas.length === 1 ? 'subpasta' : 'subpastas'}</span></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{subpastasAtivas.map((pasta) => { const quantidade = contarMateriaisNaArvore(pasta.id, pastas, materiais); return <button key={pasta.id} type="button" onClick={() => abrirPastaPeloConteudo(pasta)} className={`min-h-24 rounded-xl border p-3 text-left transition hover:border-cyan-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 hover:bg-slate-800/70' : 'border-slate-200 bg-white hover:bg-cyan-50/50'}`}><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600"><Icone tipo="folder" className="h-4 w-4" /></span><b className="mt-2 block truncate text-xs">{pasta.nome}</b><span className={`mt-1 block text-[10px] ${suave}`}>{quantidade} {quantidade === 1 ? 'material' : 'materiais'}</span></button>; })}</div></section>}
+          {pastaAtivaObjeto && <section className="mt-5" aria-labelledby="materiais-publicados"><div className="mb-2 flex items-center justify-between gap-3"><h4 id="materiais-publicados" className="text-xs font-black uppercase tracking-[.12em]">Materiais publicados</h4><span className={`text-[10px] font-bold ${suave}`}>{materiaisAtivos.length} {materiaisAtivos.length === 1 ? 'material' : 'materiais'}</span></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => setMaterialEmVisualizacao(item)} aria-label={`Visualizar ${item.titulo}`} className="relative block aspect-square w-full bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-cyan-400">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></button><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} aria-label={`Excluir ${item.titulo}`} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{!materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda não possui materiais publicados.</p>}</div></section>}
         </section>
       </div>}
     </section>
