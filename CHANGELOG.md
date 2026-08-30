@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.12.1.09 - 2026-08-30
+
+- AvantaVendas: Divulgação permite selecionar até dez arquivos da pasta atual e
+  enviá-los juntos pelo compartilhamento nativo, sem texto automático.
+- O visualizador recebeu **Selecionar mais**, a galeria mostra os itens marcados
+  e uma barra fixa acompanha a quantidade e o preparo sequencial dos arquivos.
+- Navegadores sem compartilhamento múltiplo recebem os materiais em um pacote
+  ZIP; o compartilhamento individual permanece disponível.
+
+## 1.12.1-av100 - 2026-08-30
+
+- AvantaVendas: revisão visual e funcional da seleção múltipla em Divulgação.
+
 ## 1.12.1.08 - 2026-08-30
 
 - Gestão Mobile: removidos os atalhos que levavam diretamente ao AvantaVendas

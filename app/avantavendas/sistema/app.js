@@ -344,6 +344,13 @@ let feedbackVendasEnviado = false;
 let produtoImagemUploadPendente = null;
 let divulgacaoPastaAtualId = null;
 let divulgacaoMaterialAtualId = null;
+let divulgacaoSelecaoAtiva = false;
+let divulgacaoSelecaoPastaId = null;
+const divulgacaoMateriaisSelecionados = new Set();
+let divulgacaoCompartilhamentoMultiploEmAndamento = false;
+let divulgacaoCompartilhamentoStatus = '';
+let divulgacaoCompartilhamentoAbortController = null;
+const LIMITE_SELECAO_MATERIAIS_DIVULGACAO = 10;
 let divulgacaoAtualizando = false;
 let gestoAtualizacaoDivulgacao = null;
 let indicadorAtualizacaoDivulgacaoEl = null;
@@ -1245,6 +1252,7 @@ function setAba(aba) {
   if (aba !== 'agenda') fecharCamadasAgenda();
   if (aba !== 'divulgacao') {
     divulgacaoPastaAtualId = null;
+    limparSelecaoMateriaisDivulgacao(false);
     cancelarGestoAtualizacaoDivulgacao();
   }
   if (aba === 'vendas' && state.aba !== 'vendas') limitePedidos = 10;
@@ -4438,6 +4446,57 @@ function cancelarGestoAtualizacaoDivulgacao() {
   if (!divulgacaoAtualizando) esconderIndicadorGestoDivulgacao();
 }
 
+function limparSelecaoMateriaisDivulgacao(renderizar = true) {
+  divulgacaoCompartilhamentoAbortController?.abort();
+  divulgacaoCompartilhamentoAbortController = null;
+  divulgacaoCompartilhamentoMultiploEmAndamento = false;
+  divulgacaoCompartilhamentoStatus = '';
+  divulgacaoSelecaoAtiva = false;
+  divulgacaoSelecaoPastaId = null;
+  divulgacaoMateriaisSelecionados.clear();
+  if (renderizar) render();
+}
+
+function ativarSelecaoMateriaisDivulgacao(materialId = '') {
+  if (!divulgacaoPastaAtualId || divulgacaoCompartilhamentoMultiploEmAndamento) return;
+  const materialInicial = materialId
+    ? (state.divulgacaoMateriais || []).find((item) => item.id === materialId && item.pasta_id === divulgacaoPastaAtualId)
+    : null;
+  divulgacaoSelecaoAtiva = true;
+  divulgacaoSelecaoPastaId = divulgacaoPastaAtualId;
+  divulgacaoMateriaisSelecionados.clear();
+  if (materialInicial) divulgacaoMateriaisSelecionados.add(materialInicial.id);
+  render();
+}
+
+function alternarSelecaoMaterialDivulgacao(materialId) {
+  if (!divulgacaoSelecaoAtiva || divulgacaoCompartilhamentoMultiploEmAndamento) return;
+  const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
+  if (!material || material.pasta_id !== divulgacaoSelecaoPastaId) return;
+  if (divulgacaoMateriaisSelecionados.has(materialId)) {
+    divulgacaoMateriaisSelecionados.delete(materialId);
+  } else if (divulgacaoMateriaisSelecionados.size >= LIMITE_SELECAO_MATERIAIS_DIVULGACAO) {
+    toast(`Selecione no máximo ${LIMITE_SELECAO_MATERIAIS_DIVULGACAO} arquivos por vez.`);
+    return;
+  } else {
+    divulgacaoMateriaisSelecionados.add(materialId);
+  }
+  render();
+}
+
+function renderBarraSelecaoMateriaisDivulgacao() {
+  if (!divulgacaoSelecaoAtiva) return '';
+  const quantidade = divulgacaoMateriaisSelecionados.size;
+  const status = divulgacaoCompartilhamentoMultiploEmAndamento
+    ? divulgacaoCompartilhamentoStatus || 'Preparando arquivos...'
+    : `${quantidade} ${quantidade === 1 ? 'arquivo selecionado' : 'arquivos selecionados'}`;
+  const rotuloCancelar = divulgacaoCompartilhamentoMultiploEmAndamento ? 'Cancelar preparo' : 'Cancelar';
+  const rotuloCompartilhar = divulgacaoCompartilhamentoMultiploEmAndamento
+    ? 'Preparando...'
+    : `Compartilhar${quantidade ? ` ${quantidade}` : ''}`;
+  return `<aside class="material-selection-bar${divulgacaoCompartilhamentoMultiploEmAndamento ? ' is-busy' : ''}" aria-live="polite"><div><b id="materialSelectionStatus">${escapeHtml(status)}</b><small>Selecione até ${LIMITE_SELECAO_MATERIAIS_DIVULGACAO} arquivos desta pasta.</small></div><div><button type="button" class="ghost" onclick="limparSelecaoMateriaisDivulgacao()">${escapeHtml(rotuloCancelar)}</button><button id="materialSelectionShare" type="button" class="primary" onclick="compartilharMateriaisSelecionadosDivulgacao()" ${!quantidade || divulgacaoCompartilhamentoMultiploEmAndamento ? 'disabled' : ''}>${svgIcon('save')} ${escapeHtml(rotuloCompartilhar)}</button></div></aside>`;
+}
+
 function renderDivulgacao() {
   const pesquisa = normalizar(buscaAplicada);
   const pastaAtual = (state.divulgacaoPastas || []).find((pasta) => pasta.id === divulgacaoPastaAtualId) || null;
@@ -4454,6 +4513,15 @@ function renderDivulgacao() {
     .filter((material) => material.pasta_id === pastaAtual.id)
     .filter((material) => !pesquisa || normalizar(material.titulo).includes(pesquisa))
     .sort(ordenarTexto) : [];
+  if (divulgacaoSelecaoAtiva && divulgacaoSelecaoPastaId !== pastaAtual?.id) {
+    limparSelecaoMateriaisDivulgacao(false);
+  }
+  const idsMateriaisPasta = new Set((state.divulgacaoMateriais || [])
+    .filter((material) => material.pasta_id === pastaAtual?.id)
+    .map((material) => material.id));
+  [...divulgacaoMateriaisSelecionados].forEach((id) => {
+    if (!idsMateriaisPasta.has(id)) divulgacaoMateriaisSelecionados.delete(id);
+  });
   const contarMateriaisDaPasta = (pastaId) => {
     const visitadas = new Set([pastaId]);
     const pendentes = [pastaId];
@@ -4484,17 +4552,30 @@ function renderDivulgacao() {
     const resumo = pasta.descricao || `${subpastas ? `${subpastas} ${subpastas === 1 ? 'subpasta' : 'subpastas'} · ` : ''}${totalMateriais} ${totalMateriais === 1 ? 'material' : 'materiais'}`;
     return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capaMaterial(capa, 'pasta')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(resumo)}</small><em>${totalMateriais}</em></span></button>`;
   }).join('');
-  const cardsMateriais = materiais.map((item) => `<button type="button" class="material-thumb" onclick="abrirMaterialDivulgacao('${item.id}')"><span>${capaMaterial(item)}</span><b>${escapeHtml(item.titulo)}</b><small>${rotuloMaterial(item)}</small></button>`).join('');
+  const cardsMateriais = materiais.map((item) => {
+    const selecionado = divulgacaoMateriaisSelecionados.has(item.id);
+    const acao = divulgacaoSelecaoAtiva
+      ? `alternarSelecaoMaterialDivulgacao('${item.id}')`
+      : `abrirMaterialDivulgacao('${item.id}')`;
+    const atributosSelecao = divulgacaoSelecaoAtiva
+      ? ` aria-pressed="${selecionado}" aria-label="${selecionado ? 'Remover' : 'Selecionar'} ${escapeAttr(item.titulo)}"`
+      : '';
+    return `<button type="button" class="material-thumb${divulgacaoSelecaoAtiva ? ' is-selectable' : ''}${selecionado ? ' is-selected' : ''}" onclick="${acao}"${atributosSelecao}>${divulgacaoSelecaoAtiva ? `<i class="material-selection-marker" aria-hidden="true">${selecionado ? svgIcon('check-circle') : ''}</i>` : ''}<span>${capaMaterial(item)}</span><b>${escapeHtml(item.titulo)}</b><small>${rotuloMaterial(item)}</small></button>`;
+  }).join('');
   const voltarId = pastaAtual?.pasta_pai_id || '';
   const navegacao = pastaAtual ? `<div class="material-page-location"><button type="button" class="material-page-back" onclick="voltarPastaDivulgacao('${voltarId}')">${svgIcon('chevron-left')} Voltar</button><p>Pasta atual: <b>${escapeHtml(pastaAtual.nome)}</b></p></div>` : '';
   const conteudo = cardsPastas || cardsMateriais
     ? `${cardsPastas ? `<section class="material-page-section"><h3>${pastaAtual ? 'Subpastas' : 'Pastas'}</h3><div class="materials-grid">${cardsPastas}</div></section>` : ''}${cardsMateriais ? `<section class="material-page-section"><h3>Materiais</h3><div class="material-page-files">${cardsMateriais}</div></section>` : ''}`
     : `<article class="publication-empty"><span>${svgIcon(pastaAtual ? 'package' : 'folder')}</span><h3>${pesquisa ? 'Nenhum material encontrado' : pastaAtual ? 'Esta pasta está vazia' : 'Nenhum material publicado'}</h3><p>${pesquisa ? 'Revise a pesquisa e tente novamente.' : pastaAtual ? 'Não há subpastas, fotos ou vídeos nesta pasta.' : 'Quando sua empresa publicar fotos ou vídeos, as pastas aparecerão aqui.'}</p></article>`;
-  return `<section class="module-page materials-page divulgacao-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true)}${navegacao}</div><div class="material-page-content">${conteudo}</div></section>`;
+  const acaoSelecao = pastaAtual && materiais.length
+    ? `<button type="button" class="secondary material-select-mode${divulgacaoSelecaoAtiva ? ' is-active' : ''}" onclick="${divulgacaoSelecaoAtiva ? 'limparSelecaoMateriaisDivulgacao()' : 'ativarSelecaoMateriaisDivulgacao()'}" ${divulgacaoCompartilhamentoMultiploEmAndamento ? 'disabled' : ''}>${svgIcon('check-circle')} ${divulgacaoSelecaoAtiva ? 'Cancelar' : 'Selecionar'}</button>`
+    : '';
+  return `<section class="module-page materials-page divulgacao-page${divulgacaoSelecaoAtiva ? ' is-selecting' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true, acaoSelecao)}${navegacao}</div><div class="material-page-content">${conteudo}</div>${renderBarraSelecaoMateriaisDivulgacao()}</section>`;
 }
 
 function abrirPastaDivulgacao(pastaId) {
   if (!(state.divulgacaoPastas || []).some((item) => item.id === pastaId)) return;
+  limparSelecaoMateriaisDivulgacao(false);
   divulgacaoPastaAtualId = pastaId;
   state.busca = '';
   buscaAplicada = '';
@@ -4503,6 +4584,7 @@ function abrirPastaDivulgacao(pastaId) {
 }
 
 function voltarPastaDivulgacao(pastaId = '') {
+  limparSelecaoMateriaisDivulgacao(false);
   divulgacaoPastaAtualId = pastaId || null;
   state.busca = '';
   buscaAplicada = '';
@@ -4538,7 +4620,7 @@ function conteudoVisualizadorMaterialDivulgacao(materialId) {
   const preVisualizacao = material.tipo === 'pdf'
     ? `<div class="material-preview material-preview-document" role="document">${visualizacao}</div>`
     : `<button type="button" class="material-preview"${acaoVisualizacao} aria-label="Ampliar material">${visualizacao}</button>`;
-  return `<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">${material.tipo === 'video' ? 'Vídeo' : material.tipo === 'pdf' ? 'PDF' : 'Imagem'} · ${indice + 1} de ${materiais.length} · ${instrucao}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}${preVisualizacao}${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button>`;
+  return `<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">${material.tipo === 'video' ? 'Vídeo' : material.tipo === 'pdf' ? 'PDF' : 'Imagem'} · ${indice + 1} de ${materiais.length} · ${instrucao}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}${preVisualizacao}${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><div class="material-share-actions"><button type="button" class="secondary" onclick="fecharSheet();ativarSelecaoMateriaisDivulgacao('${material.id}')">${svgIcon('check-circle')} Selecionar mais</button><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button></div>`;
 }
 
 function encerrarRenderizacaoPdfMaterial(container = document.querySelector('.material-preview-pdf')) {
@@ -4731,25 +4813,119 @@ function alternarMaterialExpandido(evento = null) {
   document.getElementById('sheetBackdrop')?.classList.toggle('material-expanded');
 }
 
+function nomeArquivoMaterialDivulgacao(material, blob, nomesUsados = null) {
+  const tipoBlob = String(blob.type || '').split(';')[0].toLowerCase();
+  const subtipo = tipoBlob.split('/')[1] || '';
+  const extensao = tipoBlob === 'application/pdf' || material.tipo === 'pdf'
+    ? 'pdf'
+    : subtipo.replace('jpeg', 'jpg').replace('quicktime', 'mov') || (material.tipo === 'video' ? 'mp4' : 'jpg');
+  const base = String(material.titulo || 'material')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'material';
+  if (!nomesUsados) return `${base}.${extensao}`;
+  const chave = `${base.toLowerCase()}.${extensao}`;
+  const ocorrencia = (nomesUsados.get(chave) || 0) + 1;
+  nomesUsados.set(chave, ocorrencia);
+  return `${base}${ocorrencia > 1 ? `-${ocorrencia}` : ''}.${extensao}`;
+}
+
+async function prepararArquivoMaterialDivulgacao(material, opcoes = {}) {
+  const resposta = await fetch(material.arquivo_url, { signal: opcoes.signal });
+  if (!resposta.ok) throw new Error(`Não foi possível baixar “${material.titulo || 'material'}”.`);
+  const blob = await resposta.blob();
+  return new File(
+    [blob],
+    nomeArquivoMaterialDivulgacao(material, blob, opcoes.nomesUsados),
+    { type: blob.type || 'application/octet-stream' },
+  );
+}
+
+function podeCompartilharArquivosDivulgacao(arquivos) {
+  if (!navigator.share) return false;
+  try {
+    return !navigator.canShare || navigator.canShare({ files: arquivos });
+  } catch {
+    return false;
+  }
+}
+
+function atualizarStatusCompartilhamentoMultiploDivulgacao(mensagem) {
+  divulgacaoCompartilhamentoStatus = mensagem;
+  const status = document.getElementById('materialSelectionStatus');
+  if (status) status.textContent = mensagem;
+}
+
+async function compartilharMateriaisSelecionadosDivulgacao() {
+  if (divulgacaoCompartilhamentoMultiploEmAndamento) return;
+  const materiais = [...divulgacaoMateriaisSelecionados]
+    .map((id) => (state.divulgacaoMateriais || []).find((item) => item.id === id))
+    .filter((item) => item && item.pasta_id === divulgacaoSelecaoPastaId)
+    .slice(0, LIMITE_SELECAO_MATERIAIS_DIVULGACAO);
+  if (!materiais.length) {
+    toast('Selecione pelo menos um arquivo para compartilhar.');
+    return;
+  }
+
+  divulgacaoCompartilhamentoMultiploEmAndamento = true;
+  divulgacaoCompartilhamentoStatus = `Preparando arquivo 1 de ${materiais.length}...`;
+  const controlador = new AbortController();
+  divulgacaoCompartilhamentoAbortController = controlador;
+  render();
+  let compartilhamentoConcluido = false;
+  try {
+    const arquivos = [];
+    const nomesUsados = new Map();
+    for (let indice = 0; indice < materiais.length; indice += 1) {
+      atualizarStatusCompartilhamentoMultiploDivulgacao(`Preparando arquivo ${indice + 1} de ${materiais.length}...`);
+      arquivos.push(await prepararArquivoMaterialDivulgacao(materiais[indice], {
+        signal: controlador.signal,
+        nomesUsados,
+      }));
+    }
+
+    if (podeCompartilharArquivosDivulgacao(arquivos)) {
+      atualizarStatusCompartilhamentoMultiploDivulgacao('Abrindo opções de compartilhamento...');
+      await navigator.share({ files: arquivos });
+    } else if (arquivos.length === 1) {
+      baixarArquivoGeradoVendas(arquivos[0], arquivos[0].name);
+      toast('Arquivo baixado para compartilhar.');
+    } else {
+      atualizarStatusCompartilhamentoMultiploDivulgacao('Organizando arquivos para download...');
+      const JSZip = await carregarBibliotecaZip();
+      const zip = new JSZip();
+      arquivos.forEach((arquivo) => zip.file(arquivo.name, arquivo));
+      const pacote = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+      baixarArquivoGeradoVendas(pacote, 'materiais-avantalab.zip');
+      toast('Arquivos reunidos em um pacote para compartilhar.');
+    }
+    compartilhamentoConcluido = true;
+  } catch (error) {
+    if (error?.name !== 'AbortError') toast(traduzErro(error));
+  } finally {
+    divulgacaoCompartilhamentoAbortController = null;
+    divulgacaoCompartilhamentoMultiploEmAndamento = false;
+    divulgacaoCompartilhamentoStatus = '';
+    if (compartilhamentoConcluido) {
+      limparSelecaoMateriaisDivulgacao(false);
+    }
+    render();
+  }
+}
+
 async function compartilharMaterialDivulgacao(materialId) {
   const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
   if (!material) return;
   const botao = document.querySelector('.material-share');
   if (botao) { botao.disabled = true; botao.textContent = 'Preparando material...'; }
   try {
-    const resposta = await fetch(material.arquivo_url);
-    if (!resposta.ok) throw new Error('Não foi possível baixar o material.');
-    const blob = await resposta.blob();
-    const extensao = blob.type === 'application/pdf' || material.tipo === 'pdf' ? 'pdf' : blob.type.split('/')[1]?.replace('quicktime', 'mov') || (material.tipo === 'video' ? 'mp4' : 'jpg');
-    const nome = `${String(material.titulo || 'material').replace(/[^a-zA-Z0-9_-]+/g, '-')}.${extensao}`;
-    const arquivo = new File([blob], nome, { type: blob.type });
-    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) {
+    const arquivo = await prepararArquivoMaterialDivulgacao(material);
+    if (podeCompartilharArquivosDivulgacao([arquivo])) {
       await navigator.share({ files: [arquivo] });
       return;
     }
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a'); link.href = url; link.download = nome; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    baixarArquivoGeradoVendas(arquivo, arquivo.name);
     toast('Material baixado para compartilhar.');
   } catch (error) {
     if (error?.name !== 'AbortError') toast(traduzErro(error));
@@ -5858,11 +6034,11 @@ function renderBusca(placeholder) {
   `;
 }
 
-function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética', acoesSempreVisiveis = false) {
+function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética', acoesSempreVisiveis = false, acaoExtra = '') {
   const temBusca = Boolean(String(state.busca || '').trim());
   const filtroAlfabetico = normalizar(filtro).includes('ordem alfabetica');
   const rotuloFiltro = filtroAlfabetico ? `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}` : filtro;
-  return `<article class="tridium-search-card${acoesSempreVisiveis ? ' search-compact-always' : ''}"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button></div><div class="search-actions${acoesSempreVisiveis ? ' always-visible' : temBusca ? '' : ' is-hidden'}"><button type="button" class="search-filter" ${filtroAlfabetico ? 'onclick="alternarOrdemAlfabetica()"' : ''}>${svgIcon('filter')}${escapeHtml(rotuloFiltro)}${filtroAlfabetico ? svgIcon('chevron-down') : ''}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></div></article>`;
+  return `<article class="tridium-search-card${acoesSempreVisiveis ? ' search-compact-always' : ''}"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button></div><div class="search-actions${acoesSempreVisiveis ? ' always-visible' : temBusca ? '' : ' is-hidden'}"><button type="button" class="search-filter" ${filtroAlfabetico ? 'onclick="alternarOrdemAlfabetica()"' : ''}>${svgIcon('filter')}${escapeHtml(rotuloFiltro)}${filtroAlfabetico ? svgIcon('chevron-down') : ''}</button>${acaoExtra}<button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></div></article>`;
 }
 
 function alternarOrdemAlfabetica() {
@@ -9495,6 +9671,10 @@ window.enviarSugestaoVendas = enviarSugestaoVendas;
 window.novaSugestaoVendas = novaSugestaoVendas;
 window.abrirPastaDivulgacao = abrirPastaDivulgacao;
 window.voltarPastaDivulgacao = voltarPastaDivulgacao;
+window.ativarSelecaoMateriaisDivulgacao = ativarSelecaoMateriaisDivulgacao;
+window.alternarSelecaoMaterialDivulgacao = alternarSelecaoMaterialDivulgacao;
+window.limparSelecaoMateriaisDivulgacao = limparSelecaoMateriaisDivulgacao;
+window.compartilharMateriaisSelecionadosDivulgacao = compartilharMateriaisSelecionadosDivulgacao;
 window.abrirMaterialDivulgacao = abrirMaterialDivulgacao;
 window.navegarMaterialDivulgacao = navegarMaterialDivulgacao;
 window.iniciarGestoMaterialDivulgacao = iniciarGestoMaterialDivulgacao;

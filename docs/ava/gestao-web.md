@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.08 -->
+<!-- ava-version: 1.12.1.09 -->
+
+> Revisão 1.12.1.09: a seleção múltipla de materiais pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.12.1.08: a retirada da troca direta entre aplicativos pertence à
 > Gestão Mobile e ao AvantaVendas; sem alteração operacional na Gestão Web.

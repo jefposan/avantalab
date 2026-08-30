@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.08 -->
+<!-- ava-version: 1.12.1.09 -->
+
+> Revisão 1.12.1.09: a seleção múltipla de materiais pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.12.1.08: removida a troca direta de aplicativo. O cabeçalho e os
 > atalhos inferiores não abrem o AvantaVendas; em **Sistemas**, o módulo fica

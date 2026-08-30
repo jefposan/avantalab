@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.08 -->
+<!-- ava-version: 1.12.1.09 -->
+
+> Revisão 1.12.1.09: em **Divulgação**, use **Selecionar** para marcar até dez
+> arquivos da pasta atual e compartilhá-los juntos. No visualizador,
+> **Selecionar mais** já marca o material aberto. O preparo informa o progresso
+> arquivo por arquivo e não adiciona texto automático ao compartilhamento.
+
+> Revisão 1.12.1-av100: seleção múltipla e compartilhamento conjunto de
+> materiais publicados.
 
 > Revisão 1.12.1.08: não há mais troca direta entre Gestão e AvantaVendas.
 > **Perfis de vendas** continua abrindo somente as contas de vendas do próprio
@@ -251,7 +259,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 99 -->
+<!-- avantavendas-asset-revision: 100 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
