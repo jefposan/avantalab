@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.11 -->
+<!-- ava-version: 1.12.1.12 -->
+
+> Revisão 1.12.1.12: a correção do tom da seleção múltipla pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.12.1.11: o refinamento visual da seleção múltipla pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Web.

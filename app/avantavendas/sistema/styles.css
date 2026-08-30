@@ -1366,7 +1366,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .material-page-back .svg-icon { width: 14px; height: 14px; }
 .material-page-location p { min-width: 0; flex: 1 1 auto; overflow: hidden; margin: 0; color: #526477; font-size: 11px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 .material-page-location b { color: #0A1F44; font-size: 12px; font-weight: 900; }
-.material-page-location .material-select-mode { display: grid; min-width: 106px; min-height: 30px; flex: 0 0 auto; place-items: center; border: 1px solid #003E73; border-radius: 999px; padding: 0 12px; color: #fff; background: #003E73; box-shadow: 0 4px 10px rgba(0,62,115,.18); font-size: 10px; font-weight: 850; line-height: 1; text-align: center; }
+.material-page-location .material-select-mode { display: grid; min-width: 106px; min-height: 30px; flex: 0 0 auto; place-items: center; border: 1px solid #1687D9; border-radius: 999px; padding: 0 12px; color: #fff; background: #1687D9; box-shadow: 0 4px 10px rgba(22,135,217,.22); font-size: 10px; font-weight: 850; line-height: 1; text-align: center; }
 .material-page-location .material-select-mode .svg-icon { display: none; }
 .material-page-content { display: grid; gap: 22px; }
 .material-page-section { display: grid; gap: 8px; }
@@ -1395,7 +1395,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .material-selection-marker { position: absolute; z-index: 3; top: 8px; right: 8px; display: grid; width: 30px; height: 30px; place-items: center; border: 2px solid rgba(255,255,255,.96); border-radius: 999px; color: #fff; background: rgba(15,31,52,.64); box-shadow: 0 3px 10px rgba(15,23,42,.28); pointer-events: none; }
 .material-selection-marker .svg-icon { width: 19px; height: 19px; }
 .material-thumb.is-selected .material-selection-marker { background: #1687D9; }
-.material-select-mode.is-active { border-color: #003E73; color: #fff; background: #003E73; }
+.material-select-mode.is-active { border-color: #1687D9; color: #fff; background: #1687D9; }
 .divulgacao-page.is-selecting .material-page-content { padding-bottom: 116px; }
 .material-selection-bar { position: fixed; z-index: 115; bottom: 18px; left: calc(255px + (100% - 255px) / 2); display: grid; width: min(calc(100% - 295px),720px); grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 14px; transform: translateX(-50%); border: 1px solid #c8dce9; border-radius: 18px; padding: 12px 14px; background: rgba(255,255,255,.97); box-shadow: 0 18px 40px rgba(15,42,80,.24); backdrop-filter: blur(14px); }
 .material-selection-bar > div:first-child { min-width: 0; }
@@ -1444,7 +1444,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dark-theme .material-folder-cover { background: linear-gradient(145deg,#1e293b,#102838); }.dark-theme .material-folder-info small,.dark-theme .material-thumb small { color: #94a3b8; }
 .dark-theme .material-cover-processing { color: #67e8f9; background: linear-gradient(145deg,#17283b,#102838); }.dark-theme .material-cover-processing small { color: #cbd5e1; }
 .dark-theme .material-page-location { border-color: #334155; background: linear-gradient(135deg,#17283b,#172033); }.dark-theme .material-page-location b { color: #f8fafc; }.dark-theme .material-page-location small,.dark-theme .material-page-location span,.dark-theme .material-page-section > h3 { color: #94a3b8; }.dark-theme .material-page-back { border-color: #155e75; color: #67e8f9; background: #102838; }
-.dark-theme .material-page-location .material-select-mode { border-color: #1687D9; color: #fff; background: #003E73; }
+.dark-theme .material-page-location .material-select-mode { border-color: #1687D9; color: #fff; background: #1687D9; }
 .dark-theme .material-subfolder { border-color: #334155; color: #f8fafc; background: #172033; }.dark-theme .material-subfolder > span { background: #102838; }.dark-theme .material-subfolder small,.dark-theme .material-subfolders > h3,.dark-theme .material-files > h3 { color: #94a3b8; }
 .payment-search { display: flex; align-items: center; gap: 12px; border: 1px solid #e2e3e6; border-radius: 12px; padding: 16px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.05); }
 .payment-search > .svg-icon { color: #858c94; }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.12.1.12 - 2026-08-30
+
+- AvantaVendas: a pílula **Selecionar/Cancelar** em Divulgação passou ao azul
+  claro `#1687D9`, igual às ações **Novo cliente** e **Novo pedido**.
+
+## 1.12.1-av103 - 2026-08-30
+
+- AvantaVendas: correção do tom visual da seleção múltipla.
+
 ## 1.12.1.11 - 2026-08-30
 
 - AvantaVendas: a pílula **Selecionar/Cancelar** em Divulgação passou a usar o

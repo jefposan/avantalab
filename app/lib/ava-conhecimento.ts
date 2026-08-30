@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.12: a pílula Selecionar usa o azul claro #1687D9,
+// igual às ações principais Novo cliente e Novo pedido do AvantaVendas.
 // Revisado na versão 1.12.1.11: a pílula Selecionar da Divulgação usa o azul
 // institucional AvantaLab e mantém o rótulo centralizado nos dois estados.
 // Revisado na versão 1.12.1.10: o botão Selecionar da Divulgação fica na linha
