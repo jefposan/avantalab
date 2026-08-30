@@ -160,6 +160,7 @@ type EmpresaUsuarioResumo = RegistroSupabase & {
   telefone_confirmado_em?: string;
   cor_primaria?: string | null;
   tipo_perfil?: string;
+  assinatura_origem_empresa_id?: string | null;
   perfil?: PerfilAcessoUsuario;
   acessoId?: string;
   acesso_id?: string;
@@ -7141,6 +7142,7 @@ if (modalSelecionarEmpresa) {
                 : '#003E73';
               const corFundoTextoPerfil = corComFundo(corPerfil, darkMode ? '#0f172a' : '#ffffff', 0.64);
               const textoPerfil = corEhClara(corFundoTextoPerfil) ? '#0f172a' : '#ffffff';
+              const perfilDependente = Boolean(empresa.assinatura_origem_empresa_id);
 
               return (
                 <div
@@ -7187,6 +7189,11 @@ if (modalSelecionarEmpresa) {
                                   ? 'Operador Simples'
                                   : 'Não definido'}
                         </p>
+                        {perfilDependente && (
+                          <p className="mt-1 text-[10px] font-black uppercase tracking-wide opacity-90">
+                            Perfil vinculado
+                          </p>
+                        )}
                       </div>
 
                       {perfilAtualInativo ? (
@@ -8539,6 +8546,14 @@ if (validacaoTelefoneObrigatoria) {
       </div>
 
       <div className="space-y-3">
+        {Boolean((empresasDoUsuario.find((perfil) => perfil.id === empresaId) || {}).assinatura_origem_empresa_id) && (
+          <div className={`rounded-xl border px-3 py-3 text-xs font-semibold leading-relaxed ${
+            darkMode ? 'border-cyan-900 bg-cyan-950/40 text-cyan-100' : 'border-cyan-200 bg-cyan-50 text-cyan-950'
+          }`}>
+            <strong className="block text-[10px] font-black uppercase tracking-wide">Perfil vinculado</strong>
+            <span className="mt-1 block">Este perfil utiliza a assinatura compartilhada de outro perfil. A gestão do plano e das vagas é feita no perfil assinante.</span>
+          </div>
+        )}
         <div>
           <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
             {labelNomePerfilEdicao}
@@ -8757,6 +8772,11 @@ if (validacaoTelefoneObrigatoria) {
                 <strong className="mt-0.5 block truncate text-xs font-black">{rotuloTipoPerfilAtual}</strong>
               </div>
             </div>
+            {Boolean((empresasDoUsuario.find((perfil) => perfil.id === empresaId) || {}).assinatura_origem_empresa_id) && (
+              <p className="mt-2 border-t border-white/20 pt-2 text-[10px] font-bold leading-relaxed text-white/90">
+                Perfil vinculado · utiliza a assinatura compartilhada de outro perfil. A gestão do plano e das vagas é feita no perfil assinante.
+              </p>
+            )}
             {podeAcessarAjustes && (
               <div className="mt-2 border-t border-white/20 pt-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -8803,6 +8823,7 @@ if (validacaoTelefoneObrigatoria) {
                 {empresasDoUsuario.map((perfil) => {
                   const podeEditarPerfil = perfil.perfil === 'gestor_master' || perfil.perfil === 'administrador';
                   const perfilAtivo = perfil.id === empresaId;
+                  const perfilDependente = Boolean(perfil.assinatura_origem_empresa_id);
                   return (
                     <button
                       key={perfil.id}
@@ -8827,7 +8848,7 @@ if (validacaoTelefoneObrigatoria) {
                           {String(perfil.nome || perfil.empresa_nome || 'Perfil')}
                         </strong>
                         <span className={`mt-0.5 block text-[10px] font-bold ${textMuted}`}>
-                          {rotuloTipoPerfil(perfil.tipo_perfil)}{perfilAtivo ? ' · Perfil ativo' : ''}
+                          {rotuloTipoPerfil(perfil.tipo_perfil)}{perfilAtivo ? ' · Perfil ativo' : ''}{perfilDependente ? ' · Perfil vinculado' : ''}
                         </span>
                       </span>
                       <span className={`shrink-0 text-[10px] font-black uppercase ${podeEditarPerfil ? 'text-sky-600' : textMuted}`}>
@@ -8935,6 +8956,14 @@ if (validacaoTelefoneObrigatoria) {
         {/* ── VISTA: editar dados inline ── */}
         {subAcaoGerenciar === 'editar' && (
           <div className="space-y-4">
+            {Boolean((empresasDoUsuario.find((perfil) => perfil.id === empresaId) || {}).assinatura_origem_empresa_id) && (
+              <div className={`rounded-xl border px-3 py-3 text-xs font-semibold leading-relaxed ${
+                darkMode ? 'border-cyan-900 bg-cyan-950/40 text-cyan-100' : 'border-cyan-200 bg-cyan-50 text-cyan-950'
+              }`}>
+                <strong className="block text-[10px] font-black uppercase tracking-wide">Perfil vinculado</strong>
+                <span className="mt-1 block">Este perfil utiliza a assinatura compartilhada de outro perfil. A gestão do plano e das vagas é feita no perfil assinante.</span>
+              </div>
+            )}
             <div>
               <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
                 {labelNomePerfilEdicao}

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.13 -->
+<!-- ava-version: 1.12.1.14 -->
+
+> Revisão 1.12.1.14: em **Gerenciar perfil** e no seletor de perfil, quem usa
+> uma vaga de assinatura de outro perfil aparece como **Perfil vinculado**.
+> O aviso informa que plano e vagas são administrados pelo perfil assinante,
+> sem modificar o vínculo existente.
 
 > Revisão 1.12.1.13: a retirada dos avisos redundantes de sucesso pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Web.

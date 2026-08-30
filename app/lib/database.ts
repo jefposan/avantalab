@@ -142,7 +142,7 @@ function tratarErroSupabase(error: any) {
 
   const { data: empresa, error: erroEmpresa } = await supabase
     .from('empresas')
-    .select('id, nome, tipo_perfil')
+    .select('id, nome, tipo_perfil, assinatura_origem_empresa_id')
     .eq('id', vinculo.empresa_id)
     .maybeSingle();
 
@@ -291,7 +291,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   for (let tentativa = 0; tentativa < 3; tentativa++) {
     const resposta = await supabase
       .from('empresas')
-      .select('id, nome, tipo_perfil')
+      .select('id, nome, tipo_perfil, assinatura_origem_empresa_id')
       .in('id', empresasIds);
     empresas = resposta.data;
     erroEmpresas = resposta.error;
@@ -325,6 +325,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   id: empresa.id,
   nome: empresa.nome,
   tipo_perfil: normalizarTipoPerfil(empresa.tipo_perfil),
+  assinatura_origem_empresa_id: empresa.assinatura_origem_empresa_id || null,
   empresa_id: empresa.id,
   empresa_nome: empresa.nome,
   perfil: vinculo.perfil,

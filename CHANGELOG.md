@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.12.1.14 - 2026-08-30
+
+- Perfis que utilizam a vaga de uma assinatura de outro perfil agora são
+  identificados como **Perfil vinculado** nos seletores e nas informações de
+  **Gerenciar perfil** da Gestão Web e Mobile. O aviso esclarece que plano e
+  vagas são administrados pelo perfil assinante.
+- Em `/admin`, a lista de perfis passa a informar a vinculação e identifica o
+  perfil de origem para a administração do AvantaLab. O vínculo, a quota e as
+  regras de contratação existentes não foram alterados.
+
 ## 1.12.1.13 - 2026-08-30
 
 - AvantaVendas: novos pedidos e pagamentos deixam de exibir uma confirmação

@@ -5930,7 +5930,7 @@
 
     var ids = vinculos.data.map(function (vinculo) { return vinculo.empresa_id; }).filter(Boolean);
     var empresas = await consultaMobileComRetry(function () {
-      return db.from('empresas').select('id, nome, tipo_perfil').in('id', ids);
+      return db.from('empresas').select('id, nome, tipo_perfil, assinatura_origem_empresa_id').in('id', ids);
     });
 
     if (!empresas || empresas.error || !empresas.data) {
@@ -5948,6 +5948,7 @@
           nome: empresa.nome,
           empresa_nome: empresa.nome,
           tipo_perfil: normalizarTipoPerfil(empresa.tipo_perfil),
+          assinatura_origem_empresa_id: empresa.assinatura_origem_empresa_id || null,
           usuario_nome: vinculo.nome || '',
           email: vinculo.email || '',
           login: vinculo.login || '',
@@ -6223,6 +6224,7 @@
         id: perfil.id,
         nome: nomeEmpresa(perfil),
         tipoPerfil: normalizarTipoPerfil(perfil.tipo_perfil),
+        assinaturaCompartilhada: Boolean(perfil.assinatura_origem_empresa_id),
         receitas: totalReceitas,
         despesas: totalDespesas,
         resultado: totalReceitas - totalDespesas,
@@ -10328,7 +10330,7 @@
             var destacado = perfil.id === destaqueId;
             var positivo = Number(perfil.resultado || 0) >= 0;
             return '<button type="button" data-meu-perfil-id="' + escapeHtml(perfil.id) + '" aria-pressed="' + (destacado ? 'true' : 'false') + '" class="w-full rounded-xl border-2 px-3 py-2 text-left shadow-sm transition active:scale-[0.98] ' + fundoLinha + ' ' + (destacado ? 'border-cyan-500 shadow-[inset_0_0_0_1px_rgba(6,182,212,.18)]' : (escuro ? 'border-slate-700' : 'border-slate-200')) + '">' +
-              '<div class="flex items-center justify-between gap-3"><div class="min-w-0 flex-1"><p class="truncate text-xs font-black">' + escapeHtml(perfil.nome) + '</p><p class="mt-0.5 truncate text-[9px] font-semibold ' + textoSecundario + '">' + (atual ? 'Perfil atual · ' : '') + escapeHtml(rotuloTipoPerfil(perfil.tipoPerfil)) + '</p></div>' +
+              '<div class="flex items-center justify-between gap-3"><div class="min-w-0 flex-1"><p class="truncate text-xs font-black">' + escapeHtml(perfil.nome) + '</p><p class="mt-0.5 truncate text-[9px] font-semibold ' + textoSecundario + '">' + (atual ? 'Perfil atual · ' : '') + escapeHtml(rotuloTipoPerfil(perfil.tipoPerfil)) + (perfil.assinaturaCompartilhada ? ' · Perfil vinculado' : '') + '</p></div>' +
               '<strong class="shrink-0 text-xs font-black ' + (positivo ? 'text-emerald-500' : 'text-red-500') + '">' + valorPerfilHtml(perfil.resultado, perfil.id) + '</strong></div>' +
               '<div class="mt-1.5 grid grid-cols-2 gap-2 text-[9px] font-bold ' + textoSecundario + '"><span class="truncate">Receitas <b class="text-emerald-500">' + valorPerfilHtml(perfil.receitas, perfil.id) + '</b></span><span class="truncate text-right">Despesas <b class="text-red-500">' + valorPerfilHtml(perfil.despesas, perfil.id) + '</b></span></div>' +
             '</button>';
@@ -12503,7 +12505,7 @@
           var status = carregando
             ? '<span class="shrink-0 text-[10px] font-black uppercase tracking-wide text-blue-700">Carregando perfil...</span>'
             : (perfilAtual ? '<span class="shrink-0 text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil em uso</span>' : '');
-          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (carregando ? 'true' : 'false') + '" aria-current="' + (perfilAtual ? 'page' : 'false') + '"' + (bloqueado ? ' disabled' : '') + ' class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.98] active:translate-y-px disabled:active:translate-y-0 disabled:active:scale-100 ' + classeVisual + '"><span class="flex items-center justify-between gap-3"><span class="min-w-0 truncate text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span>' + status + '</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
+          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (carregando ? 'true' : 'false') + '" aria-current="' + (perfilAtual ? 'page' : 'false') + '"' + (bloqueado ? ' disabled' : '') + ' class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.98] active:translate-y-px disabled:active:translate-y-0 disabled:active:scale-100 ' + classeVisual + '"><span class="flex items-center justify-between gap-3"><span class="min-w-0 truncate text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span>' + status + '</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + (empresa.assinatura_origem_empresa_id ? ' &middot; Perfil vinculado' : '') + '</span></button>';
         }).join('') +
       '</div>'
     );
@@ -12587,6 +12589,7 @@
         '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil atual</p>' +
         '<p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
         '<p class="mt-1 text-xs font-semibold text-slate-500">Tipo: ' + escapeHtml(rotuloTipoPerfil(tipoAtual)) + ' &middot; Acesso: ' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p>' +
+        (state.empresa && state.empresa.assinatura_origem_empresa_id ? '<p class="mt-2 rounded-xl border border-cyan-100 bg-cyan-50 px-3 py-2 text-[10px] font-bold leading-relaxed text-cyan-900">Perfil vinculado · utiliza a assinatura compartilhada de outro perfil. A gestão do plano e das vagas é feita no perfil assinante.</p>' : '') +
         '<div class="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"><span class="text-[10px] font-black uppercase tracking-wide text-slate-400">Código AVA</span><span class="flex items-center gap-2"><strong class="font-mono text-xs font-black tracking-[0.12em] text-slate-700">' + escapeHtml(state.codigoAvaPerfilCarregando ? 'Carregando…' : (state.codigoAvaPerfil || 'Indisponível')) + '</strong><button id="copiar-codigo-ava-perfil" type="button"' + (state.codigoAvaPerfil ? '' : ' disabled') + ' class="min-h-9 rounded-lg bg-[#003E73] px-2.5 text-[10px] font-black uppercase tracking-wide text-white disabled:opacity-40">Copiar</button></span></div>' +
       '</div>'
     );

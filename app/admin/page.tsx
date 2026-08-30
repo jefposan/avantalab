@@ -94,6 +94,9 @@ type Perfil = {
   cupom_id: string | null;
   tem_acesso: boolean;
   tem_registro: boolean;
+  assinatura_compartilhada?: boolean;
+  assinatura_origem_empresa_id?: string | null;
+  assinatura_origem_nome?: string | null;
 };
 type PerfilFiltro = 'todos' | 'com_acesso' | 'sem_acesso' | 'trial' | 'ativa' | 'cortesia' | 'inadimplente' | 'cancelada' | 'expirada';
 type PerfilTipoFiltro = 'todos' | 'empresa' | 'pessoal';
@@ -1059,6 +1062,9 @@ export default function AdminPage() {
                       <div><dt className="inline text-slate-400">Tipo: </dt><dd className="inline text-slate-700">{tipoTxt}</dd></div>
                       <div><dt className="inline text-slate-400">Situação: </dt><dd className={`inline ${perfil.tem_acesso ? 'text-emerald-700' : 'text-red-600'}`}>{situacaoPerfil(perfil)}</dd></div>
                       <div className="sm:col-span-3"><dt className="inline text-slate-400">Acesso: </dt><dd className="inline text-slate-700">{detalheAcesso(perfil)}</dd></div>
+                      {perfil.assinatura_compartilhada && (
+                        <div className="sm:col-span-3"><dt className="inline text-slate-400">Vinculação: </dt><dd className="inline font-black text-cyan-800">Perfil vinculado · assinatura compartilhada{perfil.assinatura_origem_nome ? ` de ${perfil.assinatura_origem_nome}` : ''}</dd></div>
+                      )}
                       <div className="sm:col-span-3"><dt className="inline text-slate-400">Criado em: </dt><dd className="inline text-slate-700">{formatDateOnly(perfil.criado_em)}</dd></div>
                       <div className="sm:col-span-3"><dt className="inline text-slate-400">Último acesso: </dt><dd className="inline text-slate-700">{formatDateOnly(perfil.ultimo_acesso)}</dd></div>
                     </dl>

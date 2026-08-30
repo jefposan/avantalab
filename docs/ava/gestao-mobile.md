@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.13 -->
+<!-- ava-version: 1.12.1.14 -->
+
+> Revisão 1.12.1.14: quando um perfil usa a vaga de assinatura de outro,
+> **Gerenciar perfil**, a troca de perfil e o card **Meus perfis** o identificam
+> como **Perfil vinculado**. O aviso explica que plano e vagas são administrados
+> pelo perfil assinante; nenhum vínculo ou acesso é alterado por essa identificação.
 
 > Revisão 1.12.1.13: a retirada dos avisos redundantes de sucesso pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Mobile.

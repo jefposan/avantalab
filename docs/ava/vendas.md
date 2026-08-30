@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.13 -->
+<!-- ava-version: 1.12.1.14 -->
+
+> Revisão 1.12.1.14: a identificação de perfil vinculado pertence à Gestão e
+> ao painel administrativo; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.12.1.13: ao concluir um novo pedido ou pagamento, o comprovante
 > aberto já confirma o registro e não é mais sobreposto por um aviso rápido de

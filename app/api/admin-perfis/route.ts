@@ -143,6 +143,14 @@ export async function GET(request: Request) {
       ...ids,
       ...(empresas || []).map((empresa) => empresa.assinatura_origem_empresa_id).filter(Boolean),
     ]));
+    const origensIds = Array.from(new Set(
+      (empresas || []).map((empresa) => empresa.assinatura_origem_empresa_id).filter(Boolean),
+    )) as string[];
+    const { data: origens, error: erroOrigens } = origensIds.length
+      ? await db.from('empresas').select('id, nome').in('id', origensIds)
+      : { data: [] as Array<{ id: string; nome: string }>, error: null };
+    if (erroOrigens) throw erroOrigens;
+    const nomesOrigem = new Map((origens || []).map((origem) => [origem.id, origem.nome]));
     const assinaturas: AssinaturaRow[] = idsAssinaturas.length
       ? (await db.from('assinaturas').select('empresa_id, status, plano, ciclo, valido_ate, trial_fim, cupom_id').in('empresa_id', idsAssinaturas)).data || []
       : [];
@@ -169,6 +177,9 @@ export async function GET(request: Request) {
         tem_registro: Boolean(assinaturaEfetiva),
         assinatura_compartilhada: Boolean(e.assinatura_origem_empresa_id),
         assinatura_origem_empresa_id: e.assinatura_origem_empresa_id || null,
+        assinatura_origem_nome: e.assinatura_origem_empresa_id
+          ? nomesOrigem.get(e.assinatura_origem_empresa_id) || null
+          : null,
       };
     });
     const perfisFiltrados = perfisCompletos.filter((perfil) => {
