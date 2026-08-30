@@ -1174,7 +1174,7 @@ function botaoAniversariosHojeVendas(aniversariantesHoje) {
 
 function botaoTrocaPerfilVendas() {
   const nomePerfil = String(state.contaVendasAtiva?.nome || 'Perfil de vendas').trim() || 'Perfil de vendas';
-  return `<button type="button" class="sales-profile-header-button" onclick="abrirContasVendas()" aria-label="Trocar perfil de vendas. Perfil atual: ${escapeAttr(nomePerfil)}" title="Trocar perfil de vendas"><img src="./assets/icone-troca-gestao.png" alt="" aria-hidden="true"><span title="${escapeAttr(nomePerfil)}">${escapeHtml(nomePerfil)}</span></button>`;
+  return `<button type="button" class="sales-profile-header-button" onclick="abrirContasVendas()" aria-label="Perfis de vendas. Perfil atual: ${escapeAttr(nomePerfil)}" title="Perfis de vendas">${svgIcon('users')}<span title="${escapeAttr(nomePerfil)}">${escapeHtml(nomePerfil)}</span></button>`;
 }
 
 function acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, mostrarTrocaPerfil = false) {

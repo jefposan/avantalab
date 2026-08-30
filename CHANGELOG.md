@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.12.1.08 - 2026-08-30
+
+- Gestão Mobile: removidos os atalhos que levavam diretamente ao AvantaVendas
+  pelo cabeçalho e pela barra inferior. Em **Sistemas**, o módulo Vendas Mobile
+  permanece disponível apenas para consulta e ativação por quem tem permissão,
+  sem abrir outro aplicativo ao concluir.
+- AvantaVendas: o controle de contas passou a se identificar como **Perfis de
+  vendas** e recebeu ícone de usuários, deixando claro que ele troca apenas o
+  perfil de vendas, não o aplicativo.
+
+## 1.12.1-av99 - 2026-08-30
+
+- AvantaVendas: revisão dos recursos publicados para retirar qualquer aparência
+  de troca entre aplicativos do controle de perfis de vendas.
+
 ## 1.12.1.07 - 2026-08-28
 
 - Conteúdo do Vendas: ao selecionar uma pasta em Divulgação, a galeria de

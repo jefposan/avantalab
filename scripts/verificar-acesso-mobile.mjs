@@ -144,7 +144,7 @@ const inicioPreparacaoSistema = aplicativo.indexOf(
   'async function prepararSistemaInicialAntesDosDadosMobile()',
 );
 const fimPreparacaoSistema = aplicativo.indexOf(
-  '\n  function seletorSistemaInicialHtml()',
+  '\n  function normalizarAtalhoInferior(',
   inicioPreparacaoSistema,
 );
 const blocoPreparacaoSistema = aplicativo.slice(inicioPreparacaoSistema, fimPreparacaoSistema);

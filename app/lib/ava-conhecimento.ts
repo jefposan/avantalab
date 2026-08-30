@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.08: Gestão e AvantaVendas não trocam mais de
+// aplicativo diretamente. Sistemas administra somente o módulo; Perfis de
+// vendas alterna apenas contas de vendas do próprio usuário.
 // Revisado na versão 1.12.1.07: em Conteúdo do Vendas > Divulgação, a pasta
 // selecionada abre sua galeria de materiais e subpastas antes da lista completa
 // de pastas no celular. Voltar sobe um nível e Adicionar preserva o envio atual.
@@ -270,8 +273,8 @@ Você atende no app/PWA Gestão Mobile (/mobile). Não confunda este ambiente co
 NAVEGAÇÃO E PERFIS
 - Na landing pública, **Nossos apps** apresenta o AvantaLab Gestão e abre sua página oficial na App Store. Google Play aparece apenas como disponibilidade futura.
 - Após sair do aplicativo Gestão Mobile, a entrada aceita **E-mail** (também aceita o login já cadastrado) ou **Telefone** brasileiro com DDD. O telefone precisa estar vinculado à conta; a senha é a mesma.
-- A rota da Gestão abre sempre a própria Gestão. O Vendas só é aberto pelo
-  comando específico de troca de sistema.
+- A rota da Gestão abre sempre a própria Gestão. Gestão e AvantaVendas são
+  abertos separadamente pelo usuário; não existe troca direta entre aplicativos.
 - As telas de acesso exibem **Gestão Financeira** para identificar este
   aplicativo.
 - Ao chegar à Gestão pelo Vendas, sair retorna ao login do Vendas. Quem iniciou
@@ -296,13 +299,23 @@ NAVEGAÇÃO E PERFIS
 - Em Editar dados cadastrais e na conclusão obrigatória de um perfil Empresa, CNPJ e Buscar ficam lado a lado. A consulta usa o endpoint interno, preenche somente campos compatíveis ainda vazios e informa quantos dados existentes foram preservados. Depois aparecem Razão Social, Nome Fantasia e Tipo de Empresa; Responsável fica em Contato, antes de Site e Instagram. CPF/CNPJ recebe máscara durante a digitação e precisa passar pela validação antes da conclusão.
 - Em cadastros de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos; rascunhos do navegador não incluem senhas, confirmações, códigos SMS nem tokens.
 - Ao tocar em um campo textual editável já preenchido, o cursor vai para o final do conteúdo para permitir apagar da direita para a esquerda. A seleção intencional de um trecho por gesto longo permanece disponível.
-- Depois do login, a rota da Gestão abre diretamente a própria Gestão. Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, Menu > Sistemas > Vendas Mobile e o atalho de mesmo nome abrem o outro sistema.
+- Depois do login, a rota da Gestão abre diretamente a própria Gestão. Em
+  **Menu > Sistemas**, Gestor Master e Administrador consultam ou ativam o
+  módulo Vendas Mobile; essa ação não abre o AvantaVendas.
 - Em Preparando acesso, a Gestão mantém uma única tela estável e mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros. Assinatura, cadastro e dados financeiros são carregados em paralelo; a verificação opcional do Vendas e as sincronizações complementares continuam em segundo plano. A etapa Acesso pronto e os 100% somente são concluídos depois que a tela principal estiver montada. Ao voltar de uma suspensão do PWA ou recuperar a conexão, o aplicativo retoma a abertura e verifica se a versão ainda é atual antes de oferecer a recuperação. O resumo comparativo dos demais perfis é atualizado logo após a entrada, sem atrasar os dados do perfil aberto.
-- Em perfil sem o módulo Vendas, Ir para Vendas continua ativo para Gestor Master ou Administrador. Ao tocar, a Gestão confirma diretamente a instalação salva no perfil; somente quando ela realmente não existe, solicita a ativação. Depois de ativado, não pergunta novamente enquanto o módulo permanecer instalado. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
-- No perfil Pessoal gratuito, os recursos Premium aparecem sem cor e, ao toque, mostram Acesso exclusivo para assinantes com Ir para assinatura. A contratação aparece primeiro; Veja os recursos adicionais abre a lista completa. Agenda e Ir para Vendas exigem Premium ou cortesia vigente.
+- Em perfil sem o módulo Vendas, Gestor Master ou Administrador pode ativá-lo
+  em **Sistemas**. A Gestão confirma o estado salvo no perfil antes de oferecer
+  a ativação. Depois de ativado, não pergunta novamente enquanto o módulo
+  permanecer instalado. Perfil pessoal gratuito precisa do Premium. Operadores
+  não podem ativar o módulo.
+- No perfil Pessoal gratuito, os recursos Premium aparecem sem cor e, ao toque,
+  mostram Acesso exclusivo para assinantes com Ir para assinatura. A contratação
+  aparece primeiro; Veja os recursos adicionais abre a lista completa. Agenda e
+  a ativação do módulo Vendas exigem Premium ou cortesia vigente.
 - Se o Premium Pessoal deixar de estar vigente, o Vendas fica inacessível sem ser desinstalado: módulo, vínculos e dados permanecem preservados. A receita consolidada do Vendas deixa de compor a Gestão durante o bloqueio e retorna, com o mesmo histórico, após a reativação.
 - Conteúdo do Vendas fica sempre listado em Menu > Sistemas. O acesso é habilitado em perfil Empresa com módulo ativo e permissão de Gestor Master, Administrador ou Operador Completo; nos demais casos, o botão informa a indisponibilidade. Em Divulgação, ao selecionar uma pasta, suas subpastas recebem uma variação do mesmo destaque para evidenciar o ramo ativo. Na Gestão Web, fotos, vídeos e PDFs podem ser selecionados ou arrastados para a pasta ativa; no iPhone, as opções de origem e seu idioma pertencem ao próprio iOS. Em uma pasta principal, Escolher capa separa **Enviar capa privada**, que aparece somente no cartão da pasta e não fica disponível aos vendedores, de **Imagens já publicadas**, que continuam disponíveis mesmo quando usadas como capa. Para capa, somente imagens são aceitas. Os cartões usam a proporção 16:10. Trocar capa ou Remover capa atual atualizam a apresentação no AvantaVendas. Ao confirmar a seleção de arquivos, o card Preparando arquivos para envio aparece antes do processamento e mantém percentual, arquivo atual e cancelamento até terminar. Tocar na miniatura abre a imagem, o vídeo ou o PDF original em um visualizador amplo; arrastar horizontalmente ou usar as setas alterna entre os materiais da pasta. A quantidade exibida em cada pasta soma os materiais próprios e os de todas as subpastas. Após o envio, o resumo mostra somente as quantidades enviadas e ignoradas por duplicidade, sem listar nomes.
-- A tela que oferece Gestão e Vendas aparece somente na entrada após o login. Depois que um sistema foi aberto, a navegação exibe apenas o outro destino.
+- Não há tela nem atalho de troca entre Gestão e Vendas. Os aplicativos usam a
+  mesma identidade de acesso, mas são abertos de forma independente.
 - Cada usuário possui uma única conta operacional inicial no Vendas, preparada automaticamente no primeiro acesso; perfis adicionais só são criados em Configurações. O Vendas e a Gestão são aplicativos independentes e compartilham apenas a identidade de autenticação. O AvantaVendas não oferece acesso direto à Gestão no cabeçalho nem nos atalhos inferiores; o mesmo login e senha podem ser usados separadamente nos dois aplicativos.
 - O dashboard organiza ordem e visibilidade dos cards em Menu > Organizar tela inicial. Instruções sobre categorias abrem pelo ícone i no cabeçalho de Cadastrar despesas e retornam ao cadastro ao fechar.
 - Tema, ordem e visibilidade do dashboard, atalhos inferiores e a preferência de iniciar valores ocultos acompanham a conta por perfil. O aparelho mantém somente uma cópia local para uso sem conexão.

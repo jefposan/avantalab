@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.07 -->
+<!-- ava-version: 1.12.1.08 -->
+
+> Revisão 1.12.1.08: removida a troca direta de aplicativo. O cabeçalho e os
+> atalhos inferiores não abrem o AvantaVendas; em **Sistemas**, o módulo fica
+> somente para consulta e ativação por gestores. Cada aplicativo é aberto pelo
+> usuário de forma independente.
 
 > Revisão 1.12.1.07: em **Sistemas > Conteúdo do Vendas > Divulgação**, a
 > pasta aberta mostra seus materiais publicados e subpastas antes da relação
@@ -1643,9 +1648,9 @@ deve usar os nomes do menu e da barra inferior do celular.
   campos compatíveis que estiverem vazios e informa quantos dados existentes
   foram preservados. Razão Social, Nome Fantasia e Tipo de Empresa aparecem
   depois do documento; Responsável fica em Contato, antes de Site e Instagram.
-- Depois do login, a rota da Gestão abre diretamente a própria Gestão. Com o
-  módulo Vendas Mobile ativo e permissão, **Menu > Sistemas > Vendas Mobile** e
-  o atalho de mesmo nome abrem o outro sistema.
+- Depois do login, a rota da Gestão abre diretamente a própria Gestão. Em
+  **Menu > Sistemas**, gestores consultam ou ativam o módulo Vendas Mobile;
+  essa ação não abre o outro aplicativo.
 - Em **Menu > Configurações > Conta e equipe > Aprovações do Vendas**, somente
   Gestor Master e Administrador aprovam ou rejeitam as solicitações feitas com
   o código de conexão do perfil. A mesma área mostra os vínculos de conteúdo
@@ -1660,25 +1665,23 @@ deve usar os nomes do menu e da barra inferior do celular.
   ainda é atual. Se a preparação ficar sem progresso por tempo anormal, realiza
   uma única reconexão automática; persistindo a falha, exibe **Tentar novamente**
   sem entrar em ciclo de recargas.
-- Dentro da Gestão, **Menu > Sistemas > Vendas Mobile** consulta o estado atual do módulo
-  no servidor para não solicitar uma ativação que já tenha sido concluída.
-- Quando a Gestão é aberta pelo AvantaVendas instalado, a troca permanece na
-  mesma janela em modo aplicativo, sem barras de endereço ou atalhos do
-  navegador.
+- Dentro da Gestão, **Menu > Sistemas > Módulo Vendas Mobile** consulta o
+  estado atual no servidor para não solicitar uma ativação que já tenha sido
+  concluída. Nenhuma ação do módulo abre o aplicativo AvantaVendas.
 - Se o usuário chegar pelo AvantaVendas sem nenhum perfil financeiro, a Gestão
   abre a criação do primeiro perfil. Depois de criá-lo, solicita confirmação
   para usá-lo como destino financeiro do AvantaVendas; confirmando, o vínculo é
   salvo no servidor. Recusar não apaga o perfil e permite configurar o destino
   depois no Vendas.
-- Em um perfil sem o módulo instalado, **Ir para Vendas** continua disponível para
-  Gestor Master ou Administrador. Ao tocar, o sistema solicita a ativação, confirma
-  o salvamento no servidor e segue para o Vendas. Em perfil pessoal gratuito, a
-  ativação exige primeiro o Premium.
+- Em um perfil sem o módulo instalado, Gestor Master ou Administrador pode
+  ativá-lo em **Sistemas**. O sistema solicita a confirmação, salva no servidor
+  e permanece na Gestão. Em perfil pessoal gratuito, a ativação exige primeiro
+  o Premium.
 - No perfil Pessoal gratuito, os recursos Premium aparecem sem cor, mas continuam
   tocáveis para explicar o bloqueio e oferecer **Ir para assinatura**. O aviso
   mostra primeiro a contratação; a lista completa fica recolhida em **Veja os
-  recursos adicionais**. **Agenda** e **Ir para Vendas** exigem Premium ou
-  cortesia vigente.
+  recursos adicionais**. **Agenda** e a ativação do módulo Vendas exigem
+  Premium ou cortesia vigente.
 - **Conteúdo do Vendas** permanece listado em **Sistemas** para todos os perfis.
   O acesso é habilitado somente em perfil Empresa com o módulo ativo e permissão
   de Gestor Master, Administrador ou Operador Completo; fora dessas condições, o
@@ -1687,12 +1690,9 @@ deve usar os nomes do menu e da barra inferior do celular.
   não volta a ser solicitada enquanto o módulo permanecer instalado. Essas
   permissões não criam outras contas no Vendas: cada usuário possui uma única
   conta operacional.
-- **Ir para Vendas** também pode ocupar um dos atalhos configuráveis da barra
-  inferior, inclusive antes da ativação. Operadores veem o botão lateral inativo e
-  não recebem permissão para ativar ou trocar de sistema.
-- Ao escolher Vendas, a conta única do usuário abre diretamente. O destino
-  financeiro pode ser confirmado na criação do primeiro perfil vindo do Vendas
-  e continua configurável em **Configurações > Integração com Gestão**.
+- A barra inferior não oferece atalho para outro aplicativo. Operadores não
+  recebem permissão para ativar o módulo. O destino financeiro da conta de
+  vendas continua configurável em **Configurações > Integração com Gestão**.
 - A ordem e a visibilidade dos cards do dashboard são ajustadas em **Menu >
   Organizar tela inicial**, junto da organização dos atalhos inferiores.
 - Em **Gerenciar perfil**, o usuário pode administrar seus perfis conforme a

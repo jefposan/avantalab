@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.07 -->
+<!-- ava-version: 1.12.1.08 -->
+
+> Revisão 1.12.1.08: não há mais troca direta entre Gestão e AvantaVendas.
+> **Perfis de vendas** continua abrindo somente as contas de vendas do próprio
+> usuário, identificado agora pelo ícone de usuários.
+
+> Revisão 1.12.1-av99: os recursos do AvantaVendas foram revisados para que o
+> controle de perfis não se pareça com uma troca de aplicativo.
 
 > Revisão 1.12.1.07: a mudança é exclusiva da administração de conteúdos na
 > Gestão; não altera os materiais, o acesso ou a navegação do AvantaVendas.
@@ -244,7 +251,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 98 -->
+<!-- avantavendas-asset-revision: 99 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

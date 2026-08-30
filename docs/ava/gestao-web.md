@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.07 -->
+<!-- ava-version: 1.12.1.08 -->
+
+> Revisão 1.12.1.08: a retirada da troca direta entre aplicativos pertence à
+> Gestão Mobile e ao AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.12.1.07: em **Sistemas > Conteúdo do Vendas > Divulgação**, ao
 > abrir uma pasta, os materiais já publicados e as subpastas aparecem na
