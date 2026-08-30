@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.13: ao criar pedido ou pagamento, o comprovante
+// aberto confirma a gravação sem repetir um aviso rápido de sucesso. Loadings,
+// bloqueio de envio duplicado e mensagens de erro continuam ativos.
 // Revisado na versão 1.12.1.12: a pílula Selecionar usa o azul claro #1687D9,
 // igual às ações principais Novo cliente e Novo pedido do AvantaVendas.
 // Revisado na versão 1.12.1.11: a pílula Selecionar da Divulgação usa o azul

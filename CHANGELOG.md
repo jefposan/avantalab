@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.12.1.13 - 2026-08-30
+
+- AvantaVendas: novos pedidos e pagamentos deixam de exibir uma confirmação
+  rápida redundante, pois o comprovante aberto já confirma o registro.
+- O loading, o bloqueio contra envio duplicado e todos os avisos de erro foram
+  preservados.
+
+## 1.12.1-av104 - 2026-08-30
+
+- AvantaVendas: revisão do retorno visual após pedidos e pagamentos.
+
 ## 1.12.1.12 - 2026-08-30
 
 - AvantaVendas: a pílula **Selecionar/Cancelar** em Divulgação passou ao azul

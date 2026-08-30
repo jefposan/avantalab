@@ -23,6 +23,22 @@ test('pedido é confirmado obrigatoriamente no perfil ativo', () => {
   assert.match(cliente, /O pedido não foi confirmado no perfil de vendas ativo/);
 });
 
+test('novo pedido e novo pagamento abrem o comprovante sem aviso redundante', () => {
+  const inicioPedido = aplicacao.indexOf('async function finalizarPedidoCliente()');
+  const fimPedido = aplicacao.indexOf('function abrirEditarPedido(', inicioPedido);
+  const fluxoPedido = aplicacao.slice(inicioPedido, fimPedido);
+  const inicioPagamento = aplicacao.indexOf('async function confirmarPagamentoCliente()');
+  const fimPagamento = aplicacao.indexOf('function abrirEditarPagamentoCliente(', inicioPagamento);
+  const fluxoPagamento = aplicacao.slice(inicioPagamento, fimPagamento);
+
+  assert.match(fluxoPedido, /abrirPedidoCliente\(salvo\.id\);/);
+  assert.match(fluxoPagamento, /abrirPagamentoClienteDetalhe\(salvo\.id\);/);
+  assert.doesNotMatch(fluxoPedido, /Pedido registrado\. O comprovante está pronto para compartilhar\./);
+  assert.doesNotMatch(fluxoPagamento, /Recebimento confirmado\. Saldo conferido com o servidor\./);
+  assert.match(fluxoPedido, /toast\(traduzErro\(error\)\)/);
+  assert.match(fluxoPagamento, /toast\(traduzErro\(error\)\)/);
+});
+
 test('aviso rápido permanece acessível acima das camadas modais', () => {
   assert.match(aplicacao, /el\.setAttribute\('role', 'alert'\)/);
   assert.match(aplicacao, /el\.setAttribute\('aria-live', 'assertive'\)/);

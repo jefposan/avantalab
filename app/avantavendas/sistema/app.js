@@ -6991,7 +6991,7 @@ async function finalizarPedidoCliente() {
     await atualizarDashboardAposLancamento();
     render();
     abrirPedidoCliente(salvo.id);
-    toast(rascunho.editandoId ? 'Pedido atualizado.' : 'Pedido registrado. O comprovante está pronto para compartilhar.');
+    if (rascunho.editandoId) toast('Pedido atualizado.');
   } catch (error) {
     toast(traduzErro(error));
   } finally {
@@ -7182,7 +7182,6 @@ async function confirmarPagamentoCliente() {
     await atualizarDashboardAposLancamento();
     render();
     abrirPagamentoClienteDetalhe(salvo.id);
-    toast('Recebimento confirmado. Saldo conferido com o servidor.');
   } catch (error) {
     toast(traduzErro(error));
   } finally {

@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.12 -->
+<!-- ava-version: 1.12.1.13 -->
+
+> Revisão 1.12.1.13: ao concluir um novo pedido ou pagamento, o comprovante
+> aberto já confirma o registro e não é mais sobreposto por um aviso rápido de
+> sucesso. O processamento, a proteção contra duplicidade e os erros continuam
+> sendo exibidos normalmente.
+
+> Revisão 1.12.1-av104: retorno visual de pedidos e pagamentos sem confirmação
+> rápida redundante sobre o comprovante.
 
 > Revisão 1.12.1.12: a pílula **Selecionar/Cancelar** usa o azul claro de ação
 > principal do AvantaVendas, o mesmo padrão de **Novo cliente** e **Novo pedido**.
@@ -276,7 +284,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 103 -->
+<!-- avantavendas-asset-revision: 104 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
