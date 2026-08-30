@@ -12,6 +12,9 @@ const [aplicacao, estilos] = await Promise.all([
 const inicioCompartilhamento = aplicacao.indexOf('async function compartilharMateriaisSelecionadosDivulgacao()');
 const fimCompartilhamento = aplicacao.indexOf('\nasync function compartilharMaterialDivulgacao(', inicioCompartilhamento);
 const compartilhamentoMultiplo = aplicacao.slice(inicioCompartilhamento, fimCompartilhamento);
+const inicioDivulgacao = aplicacao.indexOf('function renderDivulgacao()');
+const fimDivulgacao = aplicacao.indexOf('\nfunction abrirPastaDivulgacao(', inicioDivulgacao);
+const renderizacaoDivulgacao = aplicacao.slice(inicioDivulgacao, fimDivulgacao);
 
 test('Divulgação permite selecionar até dez arquivos da pasta atual', () => {
   assert.match(aplicacao, /const LIMITE_SELECAO_MATERIAIS_DIVULGACAO = 10;/);
@@ -20,6 +23,14 @@ test('Divulgação permite selecionar até dez arquivos da pasta atual', () => {
   assert.match(aplicacao, /Selecionar mais/);
   assert.match(estilos, /\.material-thumb\.is-selected/);
   assert.match(estilos, /\.material-selection-bar \{ position: fixed;/);
+});
+
+test('Selecionar fica na linha da pasta e somente aparece com mais de um arquivo', () => {
+  assert.match(renderizacaoDivulgacao, /const materiaisDaPasta = pastaAtual/);
+  assert.match(renderizacaoDivulgacao, /const acaoSelecao = pastaAtual && materiaisDaPasta\.length > 1/);
+  assert.match(renderizacaoDivulgacao, /Pasta atual: <b>\$\{escapeHtml\(pastaAtual\.nome\)\}<\/b><\/p>\$\{acaoSelecao\}<\/div>/);
+  assert.match(renderizacaoDivulgacao, /renderBarraBusca\('Pesquisar pastas ou materiais', 'Ordem Alfabética', true\)\}\$\{navegacao\}/);
+  assert.doesNotMatch(renderizacaoDivulgacao, /renderBarraBusca\([^\n]+acaoSelecao/);
 });
 
 test('arquivos são preparados em sequência e compartilhados sem texto automático', () => {

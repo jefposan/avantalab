@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.12.1.10 - 2026-08-30
+
+- AvantaVendas: o botão **Selecionar** saiu da barra de busca e passou para o
+  lado direito da linha da pasta atual, ao lado de **Voltar**.
+- A ação aparece somente quando a pasta contém pelo menos dois arquivos; a
+  linha de **Ordem A/Z** e **Buscar** recuperou a distribuição anterior.
+
+## 1.12.1-av101 - 2026-08-30
+
+- AvantaVendas: revisão visual da posição do seletor múltiplo em Divulgação.
+
 ## 1.12.1.09 - 2026-08-30
 
 - AvantaVendas: Divulgação permite selecionar até dez arquivos da pasta atual e

@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.10: o botão Selecionar da Divulgação fica na linha
+// da pasta atual e aparece somente quando a pasta contém mais de um arquivo.
 // Revisado na versão 1.12.1.09: Divulgação permite selecionar até dez arquivos
 // da pasta atual e compartilhá-los juntos, sem mensagem de texto automática.
 // Revisado na versão 1.12.1.08: Gestão e AvantaVendas não trocam mais de

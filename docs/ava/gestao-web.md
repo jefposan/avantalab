@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.09 -->
+<!-- ava-version: 1.12.1.10 -->
+
+> Revisão 1.12.1.10: o reposicionamento do botão de seleção múltipla pertence
+> ao AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.12.1.09: a seleção múltipla de materiais pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Web.

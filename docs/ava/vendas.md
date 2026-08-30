@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.09 -->
+<!-- ava-version: 1.12.1.10 -->
+
+> Revisão 1.12.1.10: em **Divulgação**, o botão **Selecionar** fica à direita
+> da linha **Pasta atual**, ao lado de **Voltar**, e aparece somente em pastas
+> com pelo menos dois arquivos. Os controles **Ordem A/Z** e **Buscar** voltaram
+> à sua distribuição anterior.
+
+> Revisão 1.12.1-av101: posição e regra de exibição do botão de seleção múltipla.
 
 > Revisão 1.12.1.09: em **Divulgação**, use **Selecionar** para marcar até dez
 > arquivos da pasta atual e compartilhá-los juntos. No visualizador,
@@ -259,7 +266,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 100 -->
+<!-- avantavendas-asset-revision: 101 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

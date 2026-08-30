@@ -4509,10 +4509,11 @@ function renderDivulgacao() {
     .filter((pasta) => (pasta.pasta_pai_id || null) === pastaPaiId)
     .filter((pasta) => !pesquisa || [pasta.nome, pasta.descricao].some((valor) => normalizar(valor).includes(pesquisa)))
     .sort(ordenarTexto);
-  const materiais = pastaAtual ? (state.divulgacaoMateriais || [])
-    .filter((material) => material.pasta_id === pastaAtual.id)
+  const materiaisDaPasta = pastaAtual ? (state.divulgacaoMateriais || [])
+    .filter((material) => material.pasta_id === pastaAtual.id) : [];
+  const materiais = materiaisDaPasta
     .filter((material) => !pesquisa || normalizar(material.titulo).includes(pesquisa))
-    .sort(ordenarTexto) : [];
+    .sort(ordenarTexto);
   if (divulgacaoSelecaoAtiva && divulgacaoSelecaoPastaId !== pastaAtual?.id) {
     limparSelecaoMateriaisDivulgacao(false);
   }
@@ -4562,15 +4563,15 @@ function renderDivulgacao() {
       : '';
     return `<button type="button" class="material-thumb${divulgacaoSelecaoAtiva ? ' is-selectable' : ''}${selecionado ? ' is-selected' : ''}" onclick="${acao}"${atributosSelecao}>${divulgacaoSelecaoAtiva ? `<i class="material-selection-marker" aria-hidden="true">${selecionado ? svgIcon('check-circle') : ''}</i>` : ''}<span>${capaMaterial(item)}</span><b>${escapeHtml(item.titulo)}</b><small>${rotuloMaterial(item)}</small></button>`;
   }).join('');
+  const acaoSelecao = pastaAtual && materiaisDaPasta.length > 1
+    ? `<button type="button" class="secondary material-select-mode${divulgacaoSelecaoAtiva ? ' is-active' : ''}" onclick="${divulgacaoSelecaoAtiva ? 'limparSelecaoMateriaisDivulgacao()' : 'ativarSelecaoMateriaisDivulgacao()'}" ${divulgacaoCompartilhamentoMultiploEmAndamento ? 'disabled' : ''}>${svgIcon('check-circle')} ${divulgacaoSelecaoAtiva ? 'Cancelar' : 'Selecionar'}</button>`
+    : '';
   const voltarId = pastaAtual?.pasta_pai_id || '';
-  const navegacao = pastaAtual ? `<div class="material-page-location"><button type="button" class="material-page-back" onclick="voltarPastaDivulgacao('${voltarId}')">${svgIcon('chevron-left')} Voltar</button><p>Pasta atual: <b>${escapeHtml(pastaAtual.nome)}</b></p></div>` : '';
+  const navegacao = pastaAtual ? `<div class="material-page-location"><button type="button" class="material-page-back" onclick="voltarPastaDivulgacao('${voltarId}')">${svgIcon('chevron-left')} Voltar</button><p>Pasta atual: <b>${escapeHtml(pastaAtual.nome)}</b></p>${acaoSelecao}</div>` : '';
   const conteudo = cardsPastas || cardsMateriais
     ? `${cardsPastas ? `<section class="material-page-section"><h3>${pastaAtual ? 'Subpastas' : 'Pastas'}</h3><div class="materials-grid">${cardsPastas}</div></section>` : ''}${cardsMateriais ? `<section class="material-page-section"><h3>Materiais</h3><div class="material-page-files">${cardsMateriais}</div></section>` : ''}`
     : `<article class="publication-empty"><span>${svgIcon(pastaAtual ? 'package' : 'folder')}</span><h3>${pesquisa ? 'Nenhum material encontrado' : pastaAtual ? 'Esta pasta está vazia' : 'Nenhum material publicado'}</h3><p>${pesquisa ? 'Revise a pesquisa e tente novamente.' : pastaAtual ? 'Não há subpastas, fotos ou vídeos nesta pasta.' : 'Quando sua empresa publicar fotos ou vídeos, as pastas aparecerão aqui.'}</p></article>`;
-  const acaoSelecao = pastaAtual && materiais.length
-    ? `<button type="button" class="secondary material-select-mode${divulgacaoSelecaoAtiva ? ' is-active' : ''}" onclick="${divulgacaoSelecaoAtiva ? 'limparSelecaoMateriaisDivulgacao()' : 'ativarSelecaoMateriaisDivulgacao()'}" ${divulgacaoCompartilhamentoMultiploEmAndamento ? 'disabled' : ''}>${svgIcon('check-circle')} ${divulgacaoSelecaoAtiva ? 'Cancelar' : 'Selecionar'}</button>`
-    : '';
-  return `<section class="module-page materials-page divulgacao-page${divulgacaoSelecaoAtiva ? ' is-selecting' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true, acaoSelecao)}${navegacao}</div><div class="material-page-content">${conteudo}</div>${renderBarraSelecaoMateriaisDivulgacao()}</section>`;
+  return `<section class="module-page materials-page divulgacao-page${divulgacaoSelecaoAtiva ? ' is-selecting' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true)}${navegacao}</div><div class="material-page-content">${conteudo}</div>${renderBarraSelecaoMateriaisDivulgacao()}</section>`;
 }
 
 function abrirPastaDivulgacao(pastaId) {
@@ -6034,11 +6035,11 @@ function renderBusca(placeholder) {
   `;
 }
 
-function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética', acoesSempreVisiveis = false, acaoExtra = '') {
+function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética', acoesSempreVisiveis = false) {
   const temBusca = Boolean(String(state.busca || '').trim());
   const filtroAlfabetico = normalizar(filtro).includes('ordem alfabetica');
   const rotuloFiltro = filtroAlfabetico ? `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}` : filtro;
-  return `<article class="tridium-search-card${acoesSempreVisiveis ? ' search-compact-always' : ''}"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button></div><div class="search-actions${acoesSempreVisiveis ? ' always-visible' : temBusca ? '' : ' is-hidden'}"><button type="button" class="search-filter" ${filtroAlfabetico ? 'onclick="alternarOrdemAlfabetica()"' : ''}>${svgIcon('filter')}${escapeHtml(rotuloFiltro)}${filtroAlfabetico ? svgIcon('chevron-down') : ''}</button>${acaoExtra}<button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></div></article>`;
+  return `<article class="tridium-search-card${acoesSempreVisiveis ? ' search-compact-always' : ''}"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button></div><div class="search-actions${acoesSempreVisiveis ? ' always-visible' : temBusca ? '' : ' is-hidden'}"><button type="button" class="search-filter" ${filtroAlfabetico ? 'onclick="alternarOrdemAlfabetica()"' : ''}>${svgIcon('filter')}${escapeHtml(rotuloFiltro)}${filtroAlfabetico ? svgIcon('chevron-down') : ''}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></div></article>`;
 }
 
 function alternarOrdemAlfabetica() {
