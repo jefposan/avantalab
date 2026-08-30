@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.10 -->
+<!-- ava-version: 1.12.1.11 -->
+
+> Revisão 1.12.1.11: o refinamento visual da seleção múltipla pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.12.1.10: o reposicionamento do botão de seleção múltipla pertence
 > ao AvantaVendas; sem alteração operacional na Gestão Web.

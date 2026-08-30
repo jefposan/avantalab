@@ -31,6 +31,8 @@ test('Selecionar fica na linha da pasta e somente aparece com mais de um arquivo
   assert.match(renderizacaoDivulgacao, /Pasta atual: <b>\$\{escapeHtml\(pastaAtual\.nome\)\}<\/b><\/p>\$\{acaoSelecao\}<\/div>/);
   assert.match(renderizacaoDivulgacao, /renderBarraBusca\('Pesquisar pastas ou materiais', 'Ordem Alfabética', true\)\}\$\{navegacao\}/);
   assert.doesNotMatch(renderizacaoDivulgacao, /renderBarraBusca\([^\n]+acaoSelecao/);
+  assert.match(estilos, /\.material-page-location \.material-select-mode \{ display: grid;[^}]+place-items: center;[^}]+background: #003E73;[^}]+text-align: center;/);
+  assert.match(estilos, /\.material-page-location \.material-select-mode \.svg-icon \{ display: none; \}/);
 });
 
 test('arquivos são preparados em sequência e compartilhados sem texto automático', () => {

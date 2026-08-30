@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.10 -->
+<!-- ava-version: 1.12.1.11 -->
+
+> Revisão 1.12.1.11: a pílula **Selecionar/Cancelar** da linha **Pasta atual**
+> usa o azul institucional AvantaLab, texto branco e alinhamento central.
+
+> Revisão 1.12.1-av102: refinamento visual da ação de seleção múltipla.
 
 > Revisão 1.12.1.10: em **Divulgação**, o botão **Selecionar** fica à direita
 > da linha **Pasta atual**, ao lado de **Voltar**, e aparece somente em pastas
@@ -266,7 +271,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 101 -->
+<!-- avantavendas-asset-revision: 102 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

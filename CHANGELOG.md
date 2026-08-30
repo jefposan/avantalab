@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.12.1.11 - 2026-08-30
+
+- AvantaVendas: a pílula **Selecionar/Cancelar** em Divulgação passou a usar o
+  azul institucional AvantaLab, com texto branco centralizado.
+
+## 1.12.1-av102 - 2026-08-30
+
+- AvantaVendas: revisão visual da ação de seleção múltipla na pasta atual.
+
 ## 1.12.1.10 - 2026-08-30
 
 - AvantaVendas: o botão **Selecionar** saiu da barra de busca e passou para o
