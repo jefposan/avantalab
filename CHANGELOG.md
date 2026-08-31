@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.13.0 - 2026-08-31
+
+- Custos e Precificação recebeu **Tabelas de preços**, com uma tabela padrão e
+  políticas adicionais para atacado, revenda ou negociações específicas.
+- O cadastro completo de produtos e todos os preços podem ser exportados em
+  Excel, ajustados localmente e reimportados. Antes de aplicar, o sistema mostra
+  quantos produtos serão criados ou atualizados e quantos preços serão
+  processados; IDs e datas de revisão evitam duplicidades e sobrescritas.
+- No AvantaVendas, cada cliente pode ser vinculado a uma tabela. Novos pedidos
+  identificam a política automaticamente, apresentam o preço correspondente e
+  gravam a tabela e o valor unitário utilizados, preservando o histórico mesmo
+  depois de futuros reajustes.
+- Segurança: tabelas pertencem ao perfil empresarial, vendedores recebem apenas
+  os preços do vínculo comercial ativo e o banco rejeita tabelas de outra
+  empresa. Alterações manuais e importações alimentam histórico de preços.
+
+## 1.13.0-av105 - 2026-08-31
+
+- AvantaVendas: vínculo de tabela por cliente e aplicação automática dos preços
+  no pedido, com identificação visível e preço histórico preservado.
+
 ## 1.12.1.18 - 2026-08-31
 
 - Gestão Mobile: editar, excluir ou confirmar um lançamento agora mostra uma

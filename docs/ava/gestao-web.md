@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.18 -->
+<!-- ava-version: 1.13.0 -->
+
+> Revisão 1.13.0: em **Custos e Precificação > Tabelas de preços**, a tabela
+> padrão acompanha o preço principal do produto. Use **Nova tabela** para criar
+> políticas comerciais adicionais. **Exportar Excel** baixa Produtos e Tabelas
+> de preços; depois dos ajustes, **Importar Excel** mostra uma prévia com novos
+> produtos, atualizações e preços antes da confirmação. Não altere IDs nem datas
+> técnicas da planilha. Se um produto mudou após a exportação, gere um arquivo
+> novo para não sobrescrever trabalho mais recente.
 
 > Revisão 1.12.1.18: o indicador durante alterações de lançamentos pertence à
 > Gestão Mobile; sem alteração operacional na Gestão Web.

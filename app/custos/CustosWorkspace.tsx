@@ -6,19 +6,21 @@ import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
 import { supabase } from '@/app/lib/supabase';
 import type { CustosAccess } from './CustosClient';
+import TabelasPrecosView from './TabelasPrecosView';
 import { carregarCustos, enviarImagemProduto, salvarDocumentoCustos, salvarProdutoCustos } from './repository';
 import {
   calcularComposicao, composicaoVazia, documentoVazio, novoProduto, proximoCodigo,
   type CampoCenario, type CenarioPreco, type ComposicaoCusto, type DocumentoCustos,
-  type ProdutoCustos, type RecursoCusto, type TipoItem,
+  type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
 } from './types';
 import styles from './custos.module.css';
 
-type Aba = 'visao' | 'produtos' | 'recursos' | 'simulacoes' | 'historico';
+type Aba = 'visao' | 'produtos' | 'precos' | 'recursos' | 'simulacoes' | 'historico';
 
 const navegacao: Array<{ id: Aba; rotulo: string; icone: string }> = [
   { id: 'visao', rotulo: 'Visão geral', icone: '▦' },
   { id: 'produtos', rotulo: 'Produtos e serviços', icone: '≡' },
+  { id: 'precos', rotulo: 'Tabelas de preços', icone: 'R$' },
   { id: 'recursos', rotulo: 'Insumos e recursos', icone: '◇' },
   { id: 'simulacoes', rotulo: 'Simulações', icone: '%' },
   { id: 'historico', rotulo: 'Histórico de custos', icone: '↺' },
@@ -30,6 +32,8 @@ export default function CustosWorkspace({ companyId, access }: { companyId: stri
   const [aba, setAba] = useState<Aba>('visao');
   const [catalogoId, setCatalogoId] = useState('');
   const [produtos, setProdutos] = useState<ProdutoCustos[]>([]);
+  const [tabelasPreco, setTabelasPreco] = useState<TabelaPreco[]>([]);
+  const [precosTabela, setPrecosTabela] = useState<PrecoTabelaItem[]>([]);
   const [documento, setDocumento] = useState<DocumentoCustos>(documentoVazio);
   const [produtoAtivoId, setProdutoAtivoId] = useState('');
   const [carregando, setCarregando] = useState(true);
@@ -47,6 +51,8 @@ export default function CustosWorkspace({ companyId, access }: { companyId: stri
       if (chamada !== carregamentoRef.current) return;
       setCatalogoId(dados.catalogoId);
       setProdutos(dados.produtos);
+      setTabelasPreco(dados.tabelasPreco);
+      setPrecosTabela(dados.precosTabela);
       setDocumento(dados.documento);
       revisaoRef.current = dados.revisao;
       setProdutoAtivoId((atual) => dados.produtos.some((produto) => produto.id === atual) ? atual : dados.produtos[0]?.id || '');
@@ -62,6 +68,13 @@ export default function CustosWorkspace({ companyId, access }: { companyId: stri
       .subscribe();
     return () => { void supabase.removeChannel(canal); };
   }, [catalogoId, recarregar]);
+  useEffect(() => {
+    const canal = supabase.channel(`custos-precos-${companyId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'custos_tabelas_preco', filter: `empresa_id=eq.${companyId}` }, () => void recarregar(true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'custos_tabela_preco_itens' }, () => void recarregar(true))
+      .subscribe();
+    return () => { void supabase.removeChannel(canal); };
+  }, [companyId, recarregar]);
   useEffect(() => { if (!mensagem) return; const timer = window.setTimeout(() => setMensagem(''), 4500); return () => window.clearTimeout(timer); }, [mensagem]);
 
   const salvarDocumento = async (proximo: DocumentoCustos, retorno: string) => {
@@ -91,6 +104,7 @@ export default function CustosWorkspace({ companyId, access }: { companyId: stri
       </div>
       {aba === 'visao' && <VisaoGeral produtos={produtos} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => setAba('produtos')} onAtualizar={() => void recarregar()} />}
       {aba === 'produtos' && <ProdutosView key={`${produtoAtivoId}:${produtoAtivo?.atualizado_em || 'novo'}`} catalogoId={catalogoId} produtos={produtos} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onMensagem={setMensagem} onErro={setErro} />}
+      {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'recursos' && <RecursosView documento={documento} produtos={produtos} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
       {aba === 'historico' && <HistoricoView produtos={produtos} documento={documento} produtoAtivoId={produtoAtivoId} onSelecionar={selecionarProduto} />}

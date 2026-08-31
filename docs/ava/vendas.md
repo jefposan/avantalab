@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.18 -->
+<!-- ava-version: 1.13.0 -->
+
+> Revisão 1.13.0: no cadastro da cliente, **Tabela de preços** define a política
+> usada nos próximos pedidos. Sem vínculo específico, vale a Tabela padrão. O
+> pedido mostra a tabela escolhida e preenche o preço do produto automaticamente;
+> o valor gravado não muda quando houver reajustes posteriores.
+
+> Revisão 1.13.0-av105: aplicação automática da tabela vinculada à cliente e
+> preservação da tabela e dos preços utilizados em cada pedido.
 
 > Revisão 1.12.1.18: o indicador durante alterações de lançamentos pertence à
 > Gestão Mobile; sem impacto operacional no AvantaVendas.
@@ -299,7 +307,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 104 -->
+<!-- avantavendas-asset-revision: 105 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

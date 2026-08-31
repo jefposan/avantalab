@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.18 -->
+<!-- ava-version: 1.13.0 -->
+
+> Revisão 1.13.0: tabelas de preços e importação de produtos pertencem à Gestão
+> Web e ao AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.12.1.18: ao editar, excluir ou confirmar um lançamento, a Gestão
 > Mobile escurece levemente a tela e mostra um indicador circular central até

@@ -119,6 +119,8 @@ const estadoInicial = {
   contasVendas: [],
   contaVendasAtiva: null,
   perfisFinanceiros: [],
+  tabelasPreco: [],
+  precosTabela: [],
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
   ordemSalaBotoes: [],
@@ -3439,6 +3441,8 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.contasVendas = dados.contasVendas || [];
       state.contaVendasAtiva = dados.contaVendasAtiva || null;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
+      state.tabelasPreco = dados.tabelasPreco || [];
+      state.precosTabela = dados.precosTabela || [];
       await salvarCacheVendas();
     }
   } catch (error) {
@@ -6482,11 +6486,12 @@ function renderCliente(c, resumoFinanceiro = null, aniversarianteHoje = false) {
   const temEndereco = Boolean(enderecoPrincipal);
   const local = enderecoResumidoCliente(c, enderecoPrincipal);
   const temTelefone = Boolean(String(c.telefone || '').replace(/\D/g, ''));
+  const tabelaCliente = tabelaPrecoDoCliente(c.id);
   return `
     <article class="client-card ${c.ativo === false ? 'inactive' : ''} ${aniversarianteHoje ? 'client-birthday-today' : ''}" data-cliente-id="${escapeAttr(c.id)}">
       <header class="client-card-header">
         <div class="client-avatar">${escapeHtml(iniciais)}</div>
-        <div class="client-identity"><h3>${escapeHtml(c.nome)}</h3></div>
+        <div class="client-identity"><h3>${escapeHtml(c.nome)}</h3><small>${escapeHtml(tabelaCliente?.nome || 'Preço do produto')}</small></div>
         ${c.ativo === false ? '<span class="client-inactive">Inativo</span>' : ''}
         <button class="client-more" aria-label="Opções do cliente" onclick="abrirMenuCliente('${c.id}')">⋮</button>
       </header>
@@ -6537,6 +6542,24 @@ function clientesDisponiveisPedido() {
     .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' }));
 }
 
+function tabelaPrecoPadrao() {
+  return (state.tabelasPreco || []).find((tabela) => tabela.padrao && tabela.ativo !== false) || null;
+}
+
+function tabelaPrecoDoCliente(clienteId) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  const vinculada = (state.tabelasPreco || []).find((tabela) => tabela.id === cliente?.tabela_preco_id && tabela.ativo !== false);
+  return vinculada || tabelaPrecoPadrao();
+}
+
+function precoProdutoNaTabela(produto, tabelaId = '') {
+  if (!produto) return 0;
+  const tabela = (state.tabelasPreco || []).find((item) => item.id === tabelaId && item.ativo !== false) || tabelaPrecoPadrao();
+  const produtoMestreId = produto.catalogo_produto_origem_id || produto.metadados?.catalogo_empresa?.produto_id || '';
+  const registro = (state.precosTabela || []).find((item) => item.tabela_id === tabela?.id && item.produto_id === produtoMestreId);
+  return Number(registro?.preco ?? produto.preco ?? 0);
+}
+
 function clientesFiltradosLancamento(termo = '') {
   const palavras = normalizar(termo).trim().split(/\s+/).filter(Boolean);
   const clientes = clientesDisponiveisPedido();
@@ -6576,11 +6599,14 @@ function abrirNovoPedidoGeral() {
 function abrirNovoPedidoCliente(clienteId, permitirSelecao = false) {
   const cliente = state.clientes.find((item) => item.id === clienteId) || (permitirSelecao ? clientesDisponiveisPedido()[0] : null);
   if (!cliente) return;
+  const tabela = permitirSelecao ? null : tabelaPrecoDoCliente(clienteId);
   pedidoClienteRascunho = {
     idPersistencia: uuidPersistenciaVendas(),
     clienteId: permitirSelecao ? '' : clienteId,
     clienteBusca: '',
     permitirSelecaoCliente: Boolean(permitirSelecao),
+    tabelaPrecoId: tabela?.id || '',
+    tabelaPrecoNome: tabela?.nome || '',
     tipo: 'venda',
     data: isoData(new Date()),
     produtoId: '',
@@ -6605,6 +6631,7 @@ function mostrarCardPedidoCliente() {
   const totais = totaisPedidoClienteRascunho();
   const produtoSelecionado = produtos.find((produto) => produto.id === rascunho.produtoId);
   const produtoBusca = produtoSelecionado?.nome || rascunho.produtoBusca || '';
+  const tabelaPedido = (state.tabelasPreco || []).find((tabela) => tabela.id === rascunho.tabelaPrecoId) || tabelaPrecoDoCliente(rascunho.clienteId);
   const itensHtml = rascunho.itens.length
     ? rascunho.itens.map((item, indice) => `<article id="pedidoItemRascunho${indice}" class="${item.bonificado ? 'order-draft-bonus' : ''}"><div><b>${escapeHtml(item.produto_nome)}</b><small><span id="pedidoItemResumo${indice}">${item.quantidade} × ${moeda(item.preco)}</span> ${item.bonificado ? '<em>Bonificado</em>' : ''}</small></div><div class="order-draft-quantity"><button type="button" onclick="ajustarItemPedidoCliente(${indice},-1)" aria-label="Diminuir quantidade de ${escapeAttr(item.produto_nome)}">−</button><strong id="pedidoItemQuantidade${indice}">${item.quantidade}</strong><button type="button" onclick="ajustarItemPedidoCliente(${indice},1)" aria-label="Aumentar quantidade de ${escapeAttr(item.produto_nome)}">+</button></div><strong id="pedidoItemTotal${indice}">${item.bonificado ? moeda(0) : moeda(item.quantidade * item.preco)}</strong><button type="button" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
     : '<p class="transaction-empty">Nenhum item inserido.</p>';
@@ -6614,10 +6641,10 @@ function mostrarCardPedidoCliente() {
       <div class="order-transaction-fixed">
         ${rascunho.permitirSelecaoCliente ? campoBuscaClienteLancamento('pedido', rascunho.clienteId, rascunho.clienteBusca) : ''}
         <div class="transaction-type-switch"><button type="button" class="${rascunho.tipo === 'venda' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('venda')">Venda</button><button type="button" class="${rascunho.tipo === 'consignado' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('consignado')">Consignado</button></div>
-        ${campoDataCentralizado('pedidoClienteData', rascunho.data, 'Data do pedido')}
+        <div class="order-context-row">${campoDataCentralizado('pedidoClienteData', rascunho.data, 'Data do pedido')}<div class="order-price-table"><span>Tabela de preços</span><strong>${escapeHtml(tabelaPedido?.nome || 'Preço do produto')}</strong></div></div>
       <article class="order-product-entry">
         ${produtos.length ? `<div class="transaction-field order-product-search-field"><span>Produto</span><div class="order-product-combobox"><input id="pedidoClienteProdutoBusca" type="text" value="${escapeAttr(produtoBusca)}" placeholder="Digite o nome ou código do produto" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Buscar produto" aria-autocomplete="list" aria-controls="pedidoClienteProdutoOpcoes" aria-expanded="false" onfocus="abrirBuscaProdutoPedidoCliente()" oninput="filtrarProdutosPedidoCliente(this.value)" onkeydown="if(event.key==='Escape'){fecharBuscaProdutoPedidoCliente();this.blur();}"><div id="pedidoClienteProdutoOpcoes" class="order-product-options" role="listbox" hidden></div></div></div>
-        <div class="order-item-fields"><label class="transaction-field"><span>Quantidade</span><div class="quantity-stepper"><button type="button" onclick="ajustarQuantidadePedidoCliente(-1)">−</button><input id="pedidoClienteQuantidade" type="number" min="1" step="1" inputmode="numeric" value="${escapeAttr(rascunho.quantidade)}" onfocus="if(this.value==='1')this.value=''" oninput="sincronizarQuantidadePedidoCliente(this.value)" onblur="normalizarQuantidadePedidoCliente()"><button type="button" onclick="ajustarQuantidadePedidoCliente(1)">+</button></div></label><label class="transaction-field"><span>Preço</span><input id="pedidoClientePreco" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(rascunho.preco)}" onfocus="this.select()" oninput="pedidoClienteRascunho.preco=formatarCampoMoeda(this)"></label></div>
+        <div class="order-item-fields"><label class="transaction-field"><span>Quantidade</span><div class="quantity-stepper"><button type="button" onclick="ajustarQuantidadePedidoCliente(-1)">−</button><input id="pedidoClienteQuantidade" type="number" min="1" step="1" inputmode="numeric" value="${escapeAttr(rascunho.quantidade)}" onfocus="if(this.value==='1')this.value=''" oninput="sincronizarQuantidadePedidoCliente(this.value)" onblur="normalizarQuantidadePedidoCliente()"><button type="button" onclick="ajustarQuantidadePedidoCliente(1)">+</button></div></label><label class="transaction-field"><span>Preço da tabela</span><input id="pedidoClientePreco" type="text" value="${numeroParaCampoMoeda(rascunho.preco)}" readonly></label></div>
         <div class="order-product-action-row">
           <label class="order-bonus-toggle"><input type="checkbox" ${rascunho.bonificado ? 'checked' : ''} onchange="pedidoClienteRascunho.bonificado=this.checked"><span></span><span class="order-bonus-copy"><b>Bonificado</b><small>O item entra no pedido sem valor.</small></span></label>
           <button type="button" class="primary order-insert-item" onclick="inserirItemPedidoCliente()">Inserir item</button>
@@ -6645,6 +6672,12 @@ function selecionarTipoPedidoCliente(tipo) {
 function selecionarClientePedido(clienteId) {
   if (!pedidoClienteRascunho || !clientesDisponiveisPedido().some((cliente) => cliente.id === clienteId)) return;
   pedidoClienteRascunho.clienteId = clienteId;
+  const tabela = tabelaPrecoDoCliente(clienteId);
+  pedidoClienteRascunho.tabelaPrecoId = tabela?.id || '';
+  pedidoClienteRascunho.tabelaPrecoNome = tabela?.nome || '';
+  pedidoClienteRascunho.produtoId = '';
+  pedidoClienteRascunho.produtoBusca = '';
+  pedidoClienteRascunho.preco = 0;
 }
 
 function contextoBuscaClienteLancamento(tipo) {
@@ -6756,7 +6789,7 @@ function renderizarOpcoesProdutoPedidoCliente() {
   lista.innerHTML = produtosVisiveis.length
     ? `${produtosVisiveis.map((produto) => {
       const detalhes = [produto.sku, produto.marca, produto.categoria].filter(Boolean).join(' · ');
-      return `<button type="button" role="option" data-produto-id="${escapeAttr(produto.id)}" class="${produto.id === pedidoClienteRascunho.produtoId ? 'selected' : ''}" onclick="selecionarProdutoPedidoCliente(this.dataset.produtoId)"><span><b>${escapeHtml(produto.nome)}</b>${detalhes ? `<small>${escapeHtml(detalhes)}</small>` : ''}</span><strong>${moeda(produto.preco || 0)}</strong></button>`;
+      return `<button type="button" role="option" data-produto-id="${escapeAttr(produto.id)}" class="${produto.id === pedidoClienteRascunho.produtoId ? 'selected' : ''}" onclick="selecionarProdutoPedidoCliente(this.dataset.produtoId)"><span><b>${escapeHtml(produto.nome)}</b>${detalhes ? `<small>${escapeHtml(detalhes)}</small>` : ''}</span><strong>${moeda(precoProdutoNaTabela(produto, pedidoClienteRascunho.tabelaPrecoId))}</strong></button>`;
     }).join('')}${produtos.length > limite ? `<p class="order-product-options-status">Mostrando os primeiros ${limite} produtos. Continue digitando para refinar.</p>` : ''}`
     : '<p class="order-product-options-empty">Nenhum produto encontrado.</p>';
 }
@@ -6801,7 +6834,7 @@ function selecionarProdutoPedidoCliente(produtoId) {
   if (!produto) return;
   pedidoClienteRascunho.produtoId = produto.id;
   pedidoClienteRascunho.produtoBusca = produto.nome || '';
-  pedidoClienteRascunho.preco = Number(produto?.preco || 0);
+  pedidoClienteRascunho.preco = precoProdutoNaTabela(produto, pedidoClienteRascunho.tabelaPrecoId);
   const campoProduto = document.getElementById('pedidoClienteProdutoBusca');
   const campoPreco = document.getElementById('pedidoClientePreco');
   if (campoProduto) campoProduto.value = produto.nome || '';
@@ -6932,6 +6965,8 @@ async function finalizarPedidoCliente() {
   const venda = {
     id: rascunho.editandoId || rascunho.idPersistencia || uuidPersistenciaVendas(),
     cliente_id: rascunho.clienteId,
+    tabela_preco_id: rascunho.tabelaPrecoId || null,
+    tabela_preco_nome: rascunho.tabelaPrecoNome || null,
     status: rascunho.status || 'concluida',
     subtotal: totais.subtotal,
     desconto: totais.desconto,
@@ -6947,6 +6982,8 @@ async function finalizarPedidoCliente() {
       desconto_percentual: rascunho.descontoTipo === 'percentual' ? Number(rascunho.descontoPercentual || 0) : 0,
       saldo_anterior: financeiroAnterior.debito,
       saldo_final: saldoAtual,
+      tabela_preco_id: rascunho.tabelaPrecoId || null,
+      tabela_preco_nome: rascunho.tabelaPrecoNome || null,
     }),
     itens: rascunho.itens.map((item) => {
       const produto = state.produtos.find((registro) => registro.id === item.produto_id);
@@ -7012,6 +7049,8 @@ function abrirEditarPedido(pedidoId) {
   pedidoClienteRascunho = {
     editandoId: venda.id,
     clienteId: venda.cliente_id,
+    tabelaPrecoId: venda.tabela_preco_id || tabelaPrecoDoCliente(venda.cliente_id)?.id || '',
+    tabelaPrecoNome: venda.tabela_preco_nome || tabelaPrecoDoCliente(venda.cliente_id)?.nome || '',
     permitirSelecaoCliente: false,
     tipo: pedidoEhConsignado(venda) ? 'consignado' : 'venda',
     status: venda.status || 'concluida',
@@ -8733,6 +8772,7 @@ async function confirmarRemocaoProduto(produtoId) {
 
 function abrirCliente(clienteId = '') {
   const c = state.clientes.find((item) => item.id === clienteId) || {};
+  const tabelasCliente = (state.tabelasPreco || []).filter((tabela) => tabela.ativo !== false && !tabela.padrao);
   clientePersistenciaIdAtual = clienteId || uuidPersistenciaVendas();
   sheet(`
     <div class="sheet-header">
@@ -8746,6 +8786,7 @@ function abrirCliente(clienteId = '') {
       ${campo('cliNome', 'Nome', c.nome || '')}
       ${campoTelefone('cliTelefone', 'Telefone / WhatsApp', c.telefone || '')}
       ${campo('cliEmail', 'E-mail', c.email || '', 'email')}
+      <div class="field"><label for="cliTabelaPreco">Tabela de preços</label><select id="cliTabelaPreco"><option value="">Tabela padrão (automática)</option>${tabelasCliente.map((tabela) => `<option value="${escapeAttr(tabela.id)}" ${c.tabela_preco_id === tabela.id ? 'selected' : ''}>${escapeHtml(tabela.nome)} · ${escapeHtml(tabela.codigo)}</option>`).join('')}</select><small>Novos pedidos desta cliente usarão esta tabela automaticamente.</small></div>
       <div class="field client-birth-field"><label for="cliNascimento">${svgIconEstavel('cake')}<span>Data de Aniversário</span></label><div class="client-birth-control"><input id="cliNascimento" type="text" inputmode="numeric" maxlength="5" autocomplete="bday" placeholder="dd/mm" value="${escapeAttr(dataNascimentoParaCampo(c.data_nascimento))}" oninput="formatarDataNascimentoCampo(this)"></div></div>
       ${campoCepCliente(c.cep || '')}
       <div class="field client-address-field"><label>Endereço</label><div class="client-address-system-field"><input id="cliEndereco" type="text" autocomplete="street-address" value="${escapeAttr(c.endereco || '')}"><button id="cliBuscarLocalizacao" type="button" class="secondary" onclick="preencherEnderecoPorLocalizacao()" aria-label="Usar minha localização para preencher o endereço">${svgIcon('map-pin')}<span>Localização</span></button></div><small>Usa a localização do aparelho; revise o endereço antes de salvar.</small></div>
@@ -8800,6 +8841,7 @@ async function salvarCliente(clienteId, ignorarAviso = false) {
     estado: valor('cliEstado').trim(),
     cep: valor('cliCep').trim(),
     observacoes: valor('cliObs').trim(),
+    tabela_preco_id: valor('cliTabelaPreco') || null,
   };
   if (!dados.nome) {
     toast('Informe o nome do cliente.');

@@ -84,6 +84,36 @@ export type VersaoCusto = {
   criadoEm: string;
 };
 
+export type TabelaPreco = {
+  id: string;
+  empresa_id: string;
+  codigo: string;
+  nome: string;
+  descricao: string;
+  padrao: boolean;
+  ativo: boolean;
+  atualizado_em: string;
+};
+
+export type PrecoTabelaItem = {
+  tabela_preco_id: string;
+  produto_id: string;
+  preco: number;
+  atualizado_em: string;
+};
+
+export type ResumoImportacaoCadastro = {
+  produtos_criados: number;
+  produtos_atualizados: number;
+  precos_atualizados: number;
+  aplicado: boolean;
+};
+
+export function precoEfetivoTabela(tabela: TabelaPreco | undefined, produto: ProdutoCustos, precos: PrecoTabelaItem[]) {
+  if (!tabela || tabela.padrao) return produto.preco_venda;
+  return precos.find((item) => item.tabela_preco_id === tabela.id && item.produto_id === produto.id)?.preco ?? produto.preco_venda;
+}
+
 export type DocumentoCustos = {
   version: 1;
   recursos: RecursoCusto[];
