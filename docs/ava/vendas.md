@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.17 -->
+<!-- ava-version: 1.12.1.18 -->
+
+> Revisão 1.12.1.18: o indicador durante alterações de lançamentos pertence à
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.12.1.17: a hierarquia das linhas do card de Despesas pertence à
 > Gestão Mobile; sem impacto operacional no AvantaVendas.

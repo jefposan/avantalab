@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.12.1.18 - 2026-08-31
+
+- Gestão Mobile: editar, excluir ou confirmar um lançamento agora mostra uma
+  tela levemente escurecida com indicador circular central enquanto a alteração
+  é gravada e o Dashboard é atualizado. O indicador desaparece antes do aviso
+  final de sucesso ou do erro recuperável.
+
 ## 1.12.1.17 - 2026-08-31
 
 - Gestão Mobile: a lista de **Despesas** passou a seguir a mesma hierarquia de

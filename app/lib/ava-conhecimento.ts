@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.18: ao editar, excluir ou confirmar lançamento na
+// Gestão Mobile, a tela escurece levemente e mostra um círculo central até
+// gravar e atualizar o Dashboard. O resultado aparece somente depois.
 // Revisado na versão 1.12.1.17: no Dashboard da Gestão Mobile, Despesas segue
 // a mesma leitura de Receitas: nome, observação e Dia em linhas separadas. A
 // observação pode ocupar duas linhas e o valor permanece visível à direita.

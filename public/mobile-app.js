@@ -423,6 +423,7 @@
     busca: '',
     modalLancamento: false,
     modalAcao: null,
+    aplicacaoLancamento: false,
     exclusaoRecorrencia: null,
     caixinhaResetConfirmacao: false,
     tipoLancamento: 'despesa',
@@ -3368,6 +3369,25 @@
     } catch (e) {}
   }
 
+  function iniciarAplicacaoLancamentoMobile() {
+    state.aplicacaoLancamento = true;
+    state.carregando = true;
+    state.erro = '';
+    render();
+  }
+
+  function falharAplicacaoLancamentoMobile(mensagem) {
+    state.aplicacaoLancamento = false;
+    state.carregando = false;
+    setErro(mensagem);
+  }
+
+  function concluirAplicacaoLancamentoMobile(mensagem) {
+    state.aplicacaoLancamento = false;
+    notificarFinanceiroAtualizadoMobile();
+    mostrarToast(mensagem);
+  }
+
   function ordenarDespesasAlfabeticamenteMobile(despesas) {
     return (despesas || []).slice().sort(function (a, b) {
       return String(a && a.nome || '').localeCompare(String(b && b.nome || ''), 'pt-BR', {
@@ -4297,7 +4317,7 @@
   }
 
   function deveBloquearScroll() {
-    return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto);
+    return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.aplicacaoLancamento || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto);
   }
 
   var ALTURA_MINIMA_TECLADO_LANCAMENTO = 96;
@@ -4477,7 +4497,7 @@
     var ativo = document.activeElement;
     if (ativo && ativo.matches && ativo.matches('input, select, textarea, [contenteditable="true"]')) return false;
     if (state.carregando || state.lancandoDespesa || state.recorrSalvando || state.recorrEditandoSalvandoId || state.empresaAcao || state.assinaturaAcao) return false;
-    if (state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto) return false;
+    if (state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.aplicacaoLancamento || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto) return false;
     if (state.agendaFormAberto || state.empresaEdicaoAberta || state.empresaCriarAberta || state.empresaExclusaoAberta) return false;
     return true;
   }
@@ -5302,6 +5322,13 @@
       '<section class="w-full max-w-xs overflow-hidden rounded-3xl bg-white shadow-2xl">' +
       '<div class="flex items-center gap-3 px-4 py-3 text-white" style="background:#003E73"><span class="flex h-8 w-8 items-center justify-center rounded-full bg-white/15"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="animation:avaSpin 1s linear infinite"><path d="M12 3a9 9 0 1 1-6.36 2.64" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><div><p class="text-sm font-black">' + (state.notaBaixando ? 'Baixando imagem' : 'Processando imagem') + '</p><p class="text-[11px] font-semibold text-cyan-100/80">Aguarde um instante.</p></div></div>' +
       '</section></div>';
+  }
+
+  function aplicacaoLancamentoHtml() {
+    if (!state.aplicacaoLancamento) return '';
+    return '<div class="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/25" role="status" aria-label="Aplicando alteracao" aria-live="polite">' +
+      '<span class="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-cyan-700 shadow-2xl"><svg class="h-7 w-7 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.36 2.64" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>' +
+    '</div>';
   }
 
   function salvarNotaVisualizadaMobile() {
@@ -8942,9 +8969,7 @@
   }
 
   async function excluirAporteCaixinhaSelecionadoMobile(item) {
-    state.carregando = true;
-    state.erro = '';
-    render();
+    iniciarAplicacaoLancamentoMobile();
 
     if (item.lancamentoId) {
       var lancamentoExcluido = await db
@@ -8953,8 +8978,7 @@
         .eq('id', item.lancamentoId)
         .eq('empresa_id', state.empresa.id);
       if (lancamentoExcluido.error) {
-        state.carregando = false;
-        setErro(mensagemErro(lancamentoExcluido.error, 'Nao foi possivel excluir a despesa vinculada. Nenhum dado da caixinha foi removido.'));
+        falharAplicacaoLancamentoMobile(mensagemErro(lancamentoExcluido.error, 'Nao foi possivel excluir a despesa vinculada. Nenhum dado da caixinha foi removido.'));
         return;
       }
     }
@@ -8966,11 +8990,10 @@
       .eq('empresa_id', state.empresa.id)
       .eq('tipo', 'aporte');
     if (movimentoExcluido.error) {
-      state.carregando = false;
       if (item.lancamentoId && state.modalAcao && state.modalAcao.item) {
         state.modalAcao.item.lancamentoId = null;
       }
-      setErro(mensagemErro(movimentoExcluido.error, item.lancamentoId
+      falharAplicacaoLancamentoMobile(mensagemErro(movimentoExcluido.error, item.lancamentoId
         ? 'A despesa vinculada foi excluida, mas o aporte permaneceu na caixinha. Tente exclui-lo novamente.'
         : 'Nao foi possivel excluir o aporte da caixinha.'));
       return;
@@ -8978,8 +9001,7 @@
 
     state.modalAcao = null;
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast('Aporte excluido da caixinha.');
+    concluirAplicacaoLancamentoMobile('Aporte excluido da caixinha.');
   }
 
   async function salvarEdicaoAporteCaixinhaSelecionadoMobile(item) {
@@ -9006,9 +9028,7 @@
       valor: valor,
       dataMovimento: dataMovimento,
     });
-    state.carregando = true;
-    state.erro = '';
-    render();
+    iniciarAplicacaoLancamentoMobile();
 
     if (item.lancamentoId) {
       var lancamentoAtualizado = await db
@@ -9025,8 +9045,7 @@
         .eq('id', item.lancamentoId)
         .eq('empresa_id', state.empresa.id);
       if (lancamentoAtualizado.error) {
-        state.carregando = false;
-        setErro(mensagemErro(lancamentoAtualizado.error, 'Nao foi possivel atualizar a despesa vinculada.'));
+        falharAplicacaoLancamentoMobile(mensagemErro(lancamentoAtualizado.error, 'Nao foi possivel atualizar a despesa vinculada.'));
         return;
       }
     }
@@ -9043,15 +9062,13 @@
       .eq('empresa_id', state.empresa.id)
       .eq('tipo', 'aporte');
     if (movimentoAtualizado.error) {
-      state.carregando = false;
-      setErro(mensagemErro(movimentoAtualizado.error, 'A despesa vinculada foi atualizada, mas nao foi possivel atualizar o aporte da caixinha.'));
+      falharAplicacaoLancamentoMobile(mensagemErro(movimentoAtualizado.error, 'A despesa vinculada foi atualizada, mas nao foi possivel atualizar o aporte da caixinha.'));
       return;
     }
 
     state.modalAcao = null;
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast('Aporte atualizado na caixinha.');
+    concluirAplicacaoLancamentoMobile('Aporte atualizado na caixinha.');
   }
 
   async function excluirLancamentoSelecionado() {
@@ -9097,28 +9114,23 @@
             ],
           });
           if (resp === 'cancelar') return;
-          state.carregando = true;
-          state.erro = '';
-          render();
+          iniciarAplicacaoLancamentoMobile();
           var parcelasParaExcluir = resp === 'todas' ? parcelasGrupo : [item];
           for (var i = 0; i < parcelasParaExcluir.length; i++) {
             var parcela = parcelasParaExcluir[i];
             if (!(await removerNotaLancamentoMobile(parcela.id))) {
-              state.carregando = false;
-              setErro('Nao foi possivel remover a nota da despesa.');
+              falharAplicacaoLancamentoMobile('Nao foi possivel remover a nota da despesa.');
               return;
             }
             var exclusaoParcela = await db.from('lancamentos').delete().eq('id', parcela.id).eq('empresa_id', state.empresa.id);
             if (exclusaoParcela.error) {
-              state.carregando = false;
-              setErro('Nao foi possivel excluir a despesa.');
+              falharAplicacaoLancamentoMobile('Nao foi possivel excluir a despesa.');
               return;
             }
           }
           state.modalAcao = null;
           await carregarDados();
-          notificarFinanceiroAtualizadoMobile();
-          mostrarToast(resp === 'todas' ? 'Parcelas excluidas.' : 'Despesa excluida.');
+          concluirAplicacaoLancamentoMobile(resp === 'todas' ? 'Parcelas excluidas.' : 'Despesa excluida.');
           return;
         }
       }
@@ -9135,15 +9147,12 @@
       }
     }
 
-    state.carregando = true;
-    state.erro = '';
-    render();
+    iniciarAplicacaoLancamentoMobile();
 
     if (tipo === 'receita') {
       var apagada = await db.from('faturamentos_entradas').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
       if (apagada.error) {
-        state.carregando = false;
-        setErro('Nao foi possivel excluir a receita.');
+        falharAplicacaoLancamentoMobile('Nao foi possivel excluir a receita.');
         return;
       }
 
@@ -9171,16 +9180,14 @@
           ? await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id)
           : { error: { message: 'Nao foi possivel remover a nota.' } });
       if (removida.error) {
-        state.carregando = false;
-        setErro('Nao foi possivel excluir a despesa.');
+        falharAplicacaoLancamentoMobile('Nao foi possivel excluir a despesa.');
         return;
       }
     }
 
     state.modalAcao = null;
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast(tipo === 'receita' ? 'Receita excluida.' : 'Despesa excluida.');
+    concluirAplicacaoLancamentoMobile(tipo === 'receita' ? 'Receita excluida.' : 'Despesa excluida.');
   }
 
   async function salvarEdicaoLancamentoSelecionado(confirmarPrevista) {
@@ -9239,9 +9246,7 @@
           descricao: formatarDescricao(descricao),
           valor: valor,
         });
-    state.carregando = true;
-    state.erro = '';
-    render();
+    iniciarAplicacaoLancamentoMobile();
 
     if (tipo === 'receita') {
       // Receita prevista nao entra no total efetivado; entao ao editar uma prevista
@@ -9262,8 +9267,7 @@
         .single();
 
       if (receita.error) {
-        state.carregando = false;
-        setErro('Nao foi possivel editar a receita.');
+        falharAplicacaoLancamentoMobile('Nao foi possivel editar a receita.');
         return;
       }
 
@@ -9315,34 +9319,29 @@
         .single();
 
       if (despesa.error) {
-        state.carregando = false;
-        setErro('Nao foi possivel editar a despesa: ' + (despesa.error.message || despesa.error.code || 'erro'));
+        falharAplicacaoLancamentoMobile('Nao foi possivel editar a despesa: ' + (despesa.error.message || despesa.error.code || 'erro'));
         return;
       }
     }
 
     state.modalAcao = null;
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast(confirmarAgora ? (tipo === 'receita' ? 'Receita confirmada.' : 'Despesa confirmada.') : (tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.'));
+    concluirAplicacaoLancamentoMobile(confirmarAgora ? (tipo === 'receita' ? 'Receita confirmada.' : 'Despesa confirmada.') : (tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.'));
   }
 
   async function confirmarDespesaPrevista(id) {
     if (!state.empresa) return;
-    state.carregando = true;
-    render();
+    iniciarAplicacaoLancamentoMobile();
     var lancamento = (state.lancamentos || []).find(function (item) { return String(item.id) === String(id); });
     var atualizacao = { status: 'confirmada' };
     if (lancamento && lancamento.tipo === 'previsto') atualizacao.tipo_obs = null;
     var resp = await db.from('lancamentos').update(atualizacao).eq('id', id).eq('empresa_id', state.empresa.id);
     if (resp.error) {
-      state.carregando = false;
-      setErro('Nao foi possivel confirmar a despesa.');
+      falharAplicacaoLancamentoMobile('Nao foi possivel confirmar a despesa.');
       return;
     }
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast('Despesa confirmada.');
+    concluirAplicacaoLancamentoMobile('Despesa confirmada.');
   }
 
   async function excluirDespesaPrevista(id) {
@@ -9369,8 +9368,7 @@
       });
       if (escolhaPrevista !== 'confirmar') return;
     }
-    state.carregando = true;
-    render();
+    iniciarAplicacaoLancamentoMobile();
     var resp = ehFixaPrevista
       ? (await removerNotaLancamentoMobile(id)
         ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', id).eq('empresa_id', state.empresa.id)
@@ -9379,13 +9377,11 @@
         ? await db.from('lancamentos').delete().eq('id', id).eq('empresa_id', state.empresa.id)
         : { error: { message: 'Nao foi possivel remover a nota.' } });
     if (resp.error) {
-      state.carregando = false;
-      setErro('Nao foi possivel excluir a despesa.');
+      falharAplicacaoLancamentoMobile('Nao foi possivel excluir a despesa.');
       return;
     }
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast('Despesa excluida.');
+    concluirAplicacaoLancamentoMobile('Despesa excluida.');
   }
 
   function ajustarDespesaPrevista(id) {
@@ -9399,12 +9395,10 @@
     var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
     if (!entrada) return;
     if (ehReceitaSincronizada(entrada)) return;
-    state.carregando = true;
-    render();
+    iniciarAplicacaoLancamentoMobile();
     var resp = await db.from('faturamentos_entradas').update({ status: 'confirmada', tipo_obs: null }).eq('id', id).eq('empresa_id', state.empresa.id);
     if (resp.error) {
-      state.carregando = false;
-      setErro('Nao foi possivel confirmar a receita.');
+      falharAplicacaoLancamentoMobile('Nao foi possivel confirmar a receita.');
       return;
     }
     // Efetiva a receita: soma no total do mes.
@@ -9414,8 +9408,7 @@
       { onConflict: 'empresa_id,ano,mes' }
     );
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast('Receita confirmada.');
+    concluirAplicacaoLancamentoMobile('Receita confirmada.');
   }
 
   async function excluirReceitaPrevista(id) {
@@ -9433,17 +9426,14 @@
       ],
     });
     if (escolha !== 'confirmar') return;
-    state.carregando = true;
-    render();
+    iniciarAplicacaoLancamentoMobile();
     var resp = await db.from('faturamentos_entradas').delete().eq('id', id).eq('empresa_id', state.empresa.id);
     if (resp.error) {
-      state.carregando = false;
-      setErro('Nao foi possivel excluir a receita.');
+      falharAplicacaoLancamentoMobile('Nao foi possivel excluir a receita.');
       return;
     }
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast('Receita excluida.');
+    concluirAplicacaoLancamentoMobile('Receita excluida.');
   }
 
   function editarReceitaPrevista(id) {
@@ -10061,6 +10051,7 @@
           (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
           notaVisualizacaoHtml() +
           processandoNotaHtml() +
+          aplicacaoLancamentoHtml() +
           navegacaoInferiorHtml() +
           toastHtml() +
         '</div>'
@@ -10116,6 +10107,7 @@
         (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
         notaVisualizacaoHtml() +
         processandoNotaHtml() +
+        aplicacaoLancamentoHtml() +
         navegacaoInferiorHtml() +
         toastHtml() +
       '</div>'

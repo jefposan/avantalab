@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.17 -->
+<!-- ava-version: 1.12.1.18 -->
+
+> Revisão 1.12.1.18: ao editar, excluir ou confirmar um lançamento, a Gestão
+> Mobile escurece levemente a tela e mostra um indicador circular central até
+> concluir a gravação e atualizar o Dashboard. Depois, mostra o resultado; em
+> caso de falha, mantém o lançamento disponível para nova tentativa.
 
 > Revisão 1.12.1.17: em **Despesas**, o card do Dashboard usa a mesma leitura
 > de **Receitas**: nome, observação e **Dia** em linhas separadas. A observação
