@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.17: no Dashboard da Gestão Mobile, Despesas segue
+// a mesma leitura de Receitas: nome, observação e Dia em linhas separadas. A
+// observação pode ocupar duas linhas e o valor permanece visível à direita.
 // Revisado na versão 1.12.1.16: no Dashboard da Gestão Mobile, nome e
 // observação das listas de receitas e despesas têm área própria e usam até duas
 // linhas. Os valores seguem visíveis à direita, sem mudança em dados ou ações.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.12.1.17 - 2026-08-31
+
+- Gestão Mobile: a lista de **Despesas** passou a seguir a mesma hierarquia de
+  **Receitas**: nome, observação e **Dia** em linhas separadas. Observações
+  longas usam até duas linhas sem disputar espaço com o valor.
+
 ## 1.12.1.16 - 2026-08-31
 
 - Gestão Mobile: a segunda linha das listas de **Despesas** e **Receitas** do

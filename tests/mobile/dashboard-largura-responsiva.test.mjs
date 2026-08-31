@@ -28,5 +28,10 @@ test('dashboard móvel usa uma única coluna que não cresce com o conteúdo', a
     /<div class="min-w-0 flex-1"><p class="line-clamp-2 break-words text-sm font-bold leading-tight text-slate-800">[\s\S]*?<p class="line-clamp-2 break-words text-xs leading-tight text-slate-500">/,
     'nome e observação devem compartilhar a área flexível, sem disputar o valor',
   );
+  assert.match(
+    mobile,
+    /var detalhe = item\.descricao \|\| '';[\s\S]*?\(detalhe \? '<p class="line-clamp-2 break-words text-xs leading-tight text-slate-500">' \+ escapeHtml\(detalhe\) \+ '<\/p>' : ''\) \+[\s\S]*?<p class="text-xs leading-tight text-slate-500">Dia ' \+ item\.dia/,
+    'Despesas deve manter nome, observação e dia em linhas separadas como Receitas',
+  );
   assert.match(mobile, /<strong class="shrink-0 text-sm font-black text-emerald-600">/);
 });

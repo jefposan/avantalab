@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.16 -->
+<!-- ava-version: 1.12.1.17 -->
+
+> Revisão 1.12.1.17: a hierarquia das linhas do card de Despesas pertence à
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.12.1.16: o ajuste das duas linhas nas listas financeiras pertence à
 > Gestão Mobile; sem impacto operacional no AvantaVendas.

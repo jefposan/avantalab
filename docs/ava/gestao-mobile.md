@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.16 -->
+<!-- ava-version: 1.12.1.17 -->
+
+> Revisão 1.12.1.17: em **Despesas**, o card do Dashboard usa a mesma leitura
+> de **Receitas**: nome, observação e **Dia** em linhas separadas. A observação
+> pode ocupar até duas linhas, enquanto o valor continua visível à direita.
 
 > Revisão 1.12.1.16: nas listas de **Despesas** e **Receitas** do Dashboard,
 > nome e observação têm área própria e podem ocupar até duas linhas. O valor do
