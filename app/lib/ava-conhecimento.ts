@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.15: no Dashboard da Gestão Mobile, os cards ficam
+// contidos na largura útil da tela. Nomes longos ocupam até duas linhas antes
+// das reticências e etiquetas de situação não escondem valores à direita, no
+// Android ou iPhone, sem mudar dados ou ações.
 // Revisado na versão 1.12.1.14: perfis que usam a vaga de assinatura de outro
 // perfil são identificados como Perfil vinculado em Gerenciar perfil, seletores
 // e Meus perfis. Plano e vagas seguem sob a administração do perfil assinante;

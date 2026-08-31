@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.14 -->
+<!-- ava-version: 1.12.1.15 -->
+
+> Revisão 1.12.1.15: a contenção de largura dos cards pertence à Gestão Mobile;
+> sem alteração operacional na Gestão Web.
 
 > Revisão 1.12.1.14: em **Gerenciar perfil** e no seletor de perfil, quem usa
 > uma vaga de assinatura de outro perfil aparece como **Perfil vinculado**.

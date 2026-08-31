@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.12.1.15 - 2026-08-31
+
+- Gestão Mobile: os cards do Dashboard passam a ocupar apenas a largura útil da
+  tela. Listas de receitas com nomes longos ou etiquetas de situação não
+  expandem mais a coluna nem ocultam os valores à direita, inclusive no PWA
+  Android. Nomes de lançamentos passam a ocupar até duas linhas antes de usar
+  reticências; a mesma contenção responsiva é aplicada no iPhone, sem mudar os
+  dados, a navegação ou as ações dos cards.
+
 ## 1.12.1.14 - 2026-08-30
 
 - Perfis que utilizam a vaga de uma assinatura de outro perfil agora são

@@ -10101,7 +10101,7 @@
           ? '<button type="button" data-dashboard-fechar-opcoes="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed inset-0 cursor-default bg-slate-950/90 backdrop-blur-[1px]" style="z-index:9000;" aria-label="Fechar opcoes do card"></button>'
           : '') +
         '<div id="mobile-main-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
-        '<div class="mx-auto grid w-full min-w-0 max-w-md gap-3 px-3 pt-11 sm:px-4">' +
+        '<div class="mx-auto grid w-full min-w-0 max-w-md grid-cols-1 gap-3 px-3 pt-11 sm:px-4">' +
           avisoCarenciaMobileHtml() +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
@@ -10468,7 +10468,7 @@
       .map(function (id) {
         if (!cards[id]) return '';
         var menuDisponivel = id !== 'ia';
-        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
+        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative min-w-0 max-w-full pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
           cards[id] +
           (menuDisponivel ? '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 right-12 z-40 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' : '') +
           (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 z-40 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-600" aria-label="Mover card">&vellip;&vellip;</button>') +
@@ -11166,7 +11166,7 @@
             var selo = seloTipoHtml(item);
             var buscaItem = textoBusca([item.descricao, item.despesa, valor, item.valor].join(' '));
             return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-despesas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
-              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + selo + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
+              '<div class="min-w-0"><p class="line-clamp-2 break-words text-sm font-bold leading-tight text-slate-800">' + escapeHtml(item.despesa) + selo + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-red-600">' + valor + '</strong>' +
             '</button>';
           }).join('') + '<p id="ultimas-despesas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma despesa encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma despesa neste mes.</p>') +
@@ -11197,7 +11197,7 @@
 	              : seloTipoHtml(item);
 	            var detalhe = 'Dia ' + item.dia;
 	            return '<' + tag + acao + ' data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '"' + (receitaSincronizada ? ' aria-disabled="true"' : '') + ' class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0' + (receitaSincronizada ? ' cursor-default opacity-80' : '') + '">' +
-	              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + selo + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(detalhe) + '</p></div>' +
+              '<div class="min-w-0"><p class="line-clamp-2 break-words text-sm font-bold leading-tight text-slate-800">' + escapeHtml(item.origem) + selo + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(detalhe) + '</p></div>' +
 	              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + valor + '</strong>' +
 	            '</' + tag + '>';
 	          }).join('') + '<p id="ultimas-receitas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma receita encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +

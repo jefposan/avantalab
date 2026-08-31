@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.12.1.14 -->
+<!-- ava-version: 1.12.1.15 -->
+
+> Revisão 1.12.1.15: a contenção de largura dos cards pertence à Gestão Mobile;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.12.1.14: a identificação de perfil vinculado pertence à Gestão e
 > ao painel administrativo; sem impacto operacional no AvantaVendas.

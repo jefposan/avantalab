@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.14 -->
+<!-- ava-version: 1.12.1.15 -->
+
+> Revisão 1.12.1.15: no Dashboard, cards de receitas e demais blocos mantêm a
+> largura útil da tela mesmo com descrições longas ou etiquetas de situação.
+> Nomes de lançamentos podem ocupar até duas linhas antes das reticências e os
+> valores continuam visíveis à direita no Android e no iPhone; os dados e as
+> ações dos lançamentos não mudam.
 
 > Revisão 1.12.1.14: quando um perfil usa a vaga de assinatura de outro,
 > **Gerenciar perfil**, a troca de perfil e o card **Meus perfis** o identificam
