@@ -11166,7 +11166,7 @@
             var selo = seloTipoHtml(item);
             var buscaItem = textoBusca([item.descricao, item.despesa, valor, item.valor].join(' '));
             return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-despesas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
-              '<div class="min-w-0"><p class="line-clamp-2 break-words text-sm font-bold leading-tight text-slate-800">' + escapeHtml(item.despesa) + selo + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
+              '<div class="min-w-0 flex-1"><p class="line-clamp-2 break-words text-sm font-bold leading-tight text-slate-800">' + escapeHtml(item.despesa) + selo + '</p><p class="line-clamp-2 break-words text-xs leading-tight text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-red-600">' + valor + '</strong>' +
             '</button>';
           }).join('') + '<p id="ultimas-despesas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma despesa encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma despesa neste mes.</p>') +
@@ -11197,7 +11197,7 @@
 	              : seloTipoHtml(item);
 	            var detalhe = 'Dia ' + item.dia;
 	            return '<' + tag + acao + ' data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '"' + (receitaSincronizada ? ' aria-disabled="true"' : '') + ' class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0' + (receitaSincronizada ? ' cursor-default opacity-80' : '') + '">' +
-              '<div class="min-w-0"><p class="line-clamp-2 break-words text-sm font-bold leading-tight text-slate-800">' + escapeHtml(item.origem) + selo + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(detalhe) + '</p></div>' +
+              '<div class="min-w-0 flex-1"><p class="line-clamp-2 break-words text-sm font-bold leading-tight text-slate-800">' + escapeHtml(item.origem) + selo + '</p><p class="line-clamp-2 break-words text-xs leading-tight text-slate-500">' + escapeHtml(detalhe) + '</p></div>' +
 	              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + valor + '</strong>' +
 	            '</' + tag + '>';
 	          }).join('') + '<p id="ultimas-receitas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma receita encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +

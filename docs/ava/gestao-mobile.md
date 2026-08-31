@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.12.1.15 -->
+<!-- ava-version: 1.12.1.16 -->
+
+> Revisão 1.12.1.16: nas listas de **Despesas** e **Receitas** do Dashboard,
+> nome e observação têm área própria e podem ocupar até duas linhas. O valor do
+> lançamento permanece visível à direita, sem alterar dados ou ações.
 
 > Revisão 1.12.1.15: no Dashboard, cards de receitas e demais blocos mantêm a
 > largura útil da tela mesmo com descrições longas ou etiquetas de situação.

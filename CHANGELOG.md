@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.12.1.16 - 2026-08-31
+
+- Gestão Mobile: a segunda linha das listas de **Despesas** e **Receitas** do
+  Dashboard também passou a ter área de texto própria e até duas linhas. Uma
+  observação longa não empurra nem corta o valor do lançamento.
+
 ## 1.12.1.15 - 2026-08-31
 
 - Gestão Mobile: os cards do Dashboard passam a ocupar apenas a largura útil da

@@ -25,8 +25,8 @@ test('dashboard móvel usa uma única coluna que não cresce com o conteúdo', a
   );
   assert.match(
     mobile,
-    /<div class="min-w-0"><p class="line-clamp-2 break-words text-sm font-bold leading-tight text-slate-800">/,
-    'nomes longos devem ocupar até duas linhas antes de usar reticências',
+    /<div class="min-w-0 flex-1"><p class="line-clamp-2 break-words text-sm font-bold leading-tight text-slate-800">[\s\S]*?<p class="line-clamp-2 break-words text-xs leading-tight text-slate-500">/,
+    'nome e observação devem compartilhar a área flexível, sem disputar o valor',
   );
   assert.match(mobile, /<strong class="shrink-0 text-sm font-black text-emerald-600">/);
 });

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.12.1.15 -->
+<!-- ava-version: 1.12.1.16 -->
+
+> Revisão 1.12.1.16: o ajuste das duas linhas nas listas financeiras pertence à
+> Gestão Mobile; sem alteração operacional na Gestão Web.
 
 > Revisão 1.12.1.15: a contenção de largura dos cards pertence à Gestão Mobile;
 > sem alteração operacional na Gestão Web.

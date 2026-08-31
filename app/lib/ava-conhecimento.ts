@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.12.1.16: no Dashboard da Gestão Mobile, nome e
+// observação das listas de receitas e despesas têm área própria e usam até duas
+// linhas. Os valores seguem visíveis à direita, sem mudança em dados ou ações.
 // Revisado na versão 1.12.1.15: no Dashboard da Gestão Mobile, os cards ficam
 // contidos na largura útil da tela. Nomes longos ocupam até duas linhas antes
 // das reticências e etiquetas de situação não escondem valores à direita, no
