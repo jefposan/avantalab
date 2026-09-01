@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.06 -->
+<!-- ava-version: 1.13.0.07 -->
+
+> Revisão 1.13.0.07: o destaque do mês atual no Balanço pertence à Gestão Web;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.13.0.06: a compactação do card Estoque consignado pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Mobile.

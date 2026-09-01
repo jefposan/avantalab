@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.06 -->
+<!-- ava-version: 1.13.0.07 -->
+
+> Revisão 1.13.0.07: no **Balanço**, o mês atual do ano em exibição recebe um
+> realce discreto e permanente em Despesas, Faturamento, A + B e Total em %.
+> Passar o mouse sobre outro mês continua mostrando o destaque temporário; nos
+> demais anos não há mês atual destacado.
 
 > Revisão 1.13.0.06: a compactação do card Estoque consignado pertence ao
 > AvantaVendas; sem alteração operacional na Gestão Web.

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.06 -->
+<!-- ava-version: 1.13.0.07 -->
+
+> Revisão 1.13.0.07: o destaque do mês atual no Balanço pertence à Gestão Web;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.13.0.06: ao recolher **Estoque consignado** no Dashboard, o card
 > exibe somente o cabeçalho com título, resumo e botão **Expandir**, sem manter

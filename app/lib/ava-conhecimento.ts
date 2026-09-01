@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.07: no Balanço da Gestão Web, o mês atual do ano
+// exibido recebe um realce discreto contínuo em todas as colunas financeiras.
+// O hover dos demais meses permanece disponível; anos fora do atual não têm
+// uma linha corrente destacada.
 // Revisado na versão 1.13.0.06: Estoque consignado recolhido mostra somente o
 // cabeçalho compacto; expandir restaura a lista de produtos normalmente.
 // Revisado na versão 1.13.0.05: avisos rápidos do AvantaVendas possuem hierarquia
@@ -7,7 +11,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Revisado na versão 1.13.0.04: Divulgação possui atualização manual localizada,
 // sem reiniciar o AvantaVendas ou reler os demais dados operacionais.
 // Revisado na versão 1.13.0.03: o preço interno de venda da empresa e o preço
-// sugerido de revenda da divulgação possuem campos independentes. Ao incluir, editar, confirmar ou excluir uma
+// sugerido de revenda da divulgação possuem campos independentes.
+// Revisado na versão 1.13.0.01: ao incluir, editar, confirmar ou excluir uma
 // receita ou despesa na Gestão Mobile, a tela fica bloqueada com fundo escuro,
 // loading e texto da ação até o Dashboard terminar de atualizar. Falhas mantêm
 // o formulário ou lançamento para nova tentativa.

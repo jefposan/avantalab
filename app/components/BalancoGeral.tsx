@@ -7,6 +7,7 @@ interface BalancoGeralProps {
   faturamentos: Record<string, number>;
   corPrimaria: string;
   darkMode: boolean;
+  anoSelecionado: string;
   formatarMoeda: (valor: number) => string;
   nomeEmpresa: string;
 }
@@ -17,10 +18,14 @@ export default function BalancoGeral({
   faturamentos,
   corPrimaria,
   darkMode,
+  anoSelecionado,
   formatarMoeda,
   nomeEmpresa,
 }: BalancoGeralProps) {
   const [mesBalancoEmDestaque, setMesBalancoEmDestaque] = useState<string | null>(null);
+  const dataAtual = new Date();
+  const mesCorrente = meses[dataAtual.getMonth()] || '';
+  const exibeMesCorrente = Number(anoSelecionado) === dataAtual.getFullYear();
 
   const getDespesaMes = (mes: string) => lancamentos.filter(l => l.mes === mes).reduce((acc, l) => acc + l.valor, 0);
   const getFaturamentoMes = (mes: string) => faturamentos[mes] || 0;
@@ -55,12 +60,22 @@ export default function BalancoGeral({
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
   const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
-  const estiloLinhaBalanco = (mes: string, mostrarMarcador = false) => mesBalancoEmDestaque === mes ? {
-    backgroundColor: darkMode
-      ? `color-mix(in srgb, ${corPrimaria} 42%, #1e293b)`
-      : `color-mix(in srgb, ${corPrimaria} 26%, #ffffff)`,
-    boxShadow: mostrarMarcador ? `inset 4px 0 0 ${corPrimaria}` : undefined,
-  } : undefined;
+  const estiloLinhaBalanco = (mes: string) => {
+    const emHover = mesBalancoEmDestaque === mes;
+    const ehMesCorrente = exibeMesCorrente && mes === mesCorrente;
+
+    if (!emHover && !ehMesCorrente) return undefined;
+
+    const intensidade = emHover ? 32 : 13;
+    const fundoBase = darkMode ? '#0f172a' : '#ffffff';
+    const linha = `color-mix(in srgb, ${corPrimaria} ${emHover ? 56 : 38}%, transparent)`;
+
+    return {
+      backgroundColor: `color-mix(in srgb, ${corPrimaria} ${intensidade}%, ${fundoBase})`,
+      boxShadow: `inset 0 1px 0 ${linha}, inset 0 -1px 0 ${linha}`,
+    };
+  };
+  const ehMesCorrente = (mes: string) => exibeMesCorrente && mes === mesCorrente;
 
   const ResumoAnual = ({ titulo, valor, classeValor }: { titulo: string; valor: string; classeValor: string }) => (
     <div className={`${bgCard} card-radius-avantalab min-w-0 overflow-hidden rounded-2xl border-2 shadow-lg`} style={{ borderColor: corPrimaria }}>
@@ -206,7 +221,9 @@ export default function BalancoGeral({
                       className={`flex h-7 items-center bg-transparent transition-[background-color,box-shadow] duration-150 ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}
                       onMouseEnter={() => setMesBalancoEmDestaque(mes)}
                       onMouseLeave={() => setMesBalancoEmDestaque(null)}
-                      style={estiloLinhaBalanco(mes, true)}
+                      style={estiloLinhaBalanco(mes)}
+                      title={ehMesCorrente(mes) ? 'Mês atual' : undefined}
+                      aria-current={ehMesCorrente(mes) ? 'date' : undefined}
                     >
                       <div className="w-20 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-semibold px-1 text-[10px] text-slate-500 dark:text-slate-400 bg-transparent">{mes}</div>
                       <div className={`flex-1 flex items-center justify-end px-2 font-semibold ${textStrong}`}>
@@ -224,6 +241,8 @@ export default function BalancoGeral({
                       onMouseEnter={() => setMesBalancoEmDestaque(mes)}
                       onMouseLeave={() => setMesBalancoEmDestaque(null)}
                       style={estiloLinhaBalanco(mes)}
+                      title={ehMesCorrente(mes) ? 'Mês atual' : undefined}
+                      aria-current={ehMesCorrente(mes) ? 'date' : undefined}
                     >
                       <div className="w-20 border-r border-[#00b050]/20 flex items-center justify-center font-semibold px-1 text-[10px] text-[#00b050] bg-transparent">{mes}</div>
                       <div className="flex-1 px-2 text-right font-semibold text-[#00b050] dark:text-[#2dd4bf]">
@@ -246,6 +265,8 @@ export default function BalancoGeral({
                         onMouseEnter={() => setMesBalancoEmDestaque(mes)}
                         onMouseLeave={() => setMesBalancoEmDestaque(null)}
                         style={estiloLinhaBalanco(mes)}
+                        title={ehMesCorrente(mes) ? 'Mês atual' : undefined}
+                        aria-current={ehMesCorrente(mes) ? 'date' : undefined}
                       >
                         <div className="w-20 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-semibold px-1 text-[10px] text-slate-500 bg-transparent">{mes}</div>
                         <div className={`flex-1 flex items-center justify-end px-2 font-semibold ${ab < 0 ? 'text-red-500' : textStrong}`}>
@@ -266,6 +287,8 @@ export default function BalancoGeral({
                         onMouseEnter={() => setMesBalancoEmDestaque(mes)}
                         onMouseLeave={() => setMesBalancoEmDestaque(null)}
                         style={estiloLinhaBalanco(mes)}
+                        title={ehMesCorrente(mes) ? 'Mês atual' : undefined}
+                        aria-current={ehMesCorrente(mes) ? 'date' : undefined}
                       >
                         <div className="w-20 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-semibold px-1 text-[10px] text-slate-500 bg-transparent">{mes}</div>
                         <div className={`flex-1 flex items-center justify-end px-2 font-semibold ${perc < 0 ? 'text-red-500' : textStrong}`}>

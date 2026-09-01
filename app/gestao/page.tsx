@@ -10955,6 +10955,7 @@ if (validacaoTelefoneObrigatoria) {
       faturamentos={faturamentos}
       corPrimaria={corPrimaria}
       darkMode={darkMode}
+      anoSelecionado={anoSelecionado}
       formatarMoeda={formatarMoeda}
       nomeEmpresa={nomeEmpresaAtual}
     />

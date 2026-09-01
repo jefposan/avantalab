@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.13.0.07 - 2026-09-01
+
+- Gestão Web: no **Balanço**, a linha do mês corrente recebe um destaque
+  permanente e sutil nas colunas Despesas, Faturamento, A + B e Total em %.
+  O hover continua destacando temporariamente qualquer outro mês, e o contraste
+  foi ajustado também para o modo noturno.
+
 ## 1.13.0.06 - 2026-09-01
 
 - O card **Estoque consignado** do Dashboard passa a ficar somente com o
