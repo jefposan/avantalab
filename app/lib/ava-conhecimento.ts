@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.06: Estoque consignado recolhido mostra somente o
+// cabeçalho compacto; expandir restaura a lista de produtos normalmente.
 // Revisado na versão 1.13.0.05: avisos rápidos do AvantaVendas possuem hierarquia
 // visual, ícone e tratamento semântico de sucesso, informação, atenção e erro.
 // Revisado na versão 1.13.0.04: Divulgação possui atualização manual localizada,

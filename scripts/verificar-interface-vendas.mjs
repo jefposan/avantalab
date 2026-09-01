@@ -55,6 +55,12 @@ exigir(
     && estilos.includes('.toast, .toast-progress { animation: none !important; }'),
   'Avisos rápidos devem usar o cartão semântico acessível, ficar acima dos modais e respeitar tema escuro e movimento reduzido.',
 );
+exigir(
+  aplicacao.includes("dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}")
+    && aplicacao.includes("state.dashboardConsignadosExpandido ? `<div class=\"dashboard-consignment-products\">")
+    && estilos.includes('.dashboard-consignment-card:not(.expanded) { min-height: 0; }'),
+  'Estoque consignado recolhido deve remover o corpo e ficar somente com o cabeçalho compacto.',
+);
 
 exigir(
   aplicacao.includes('function abrirAvisoAcessoVendas(titulo, mensagem, campoId = \'\')')

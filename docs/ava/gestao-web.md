@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.05 -->
+<!-- ava-version: 1.13.0.06 -->
+
+> Revisão 1.13.0.06: a compactação do card Estoque consignado pertence ao
+> AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.13.0.05: o novo padrão de avisos rápidos pertence ao AvantaVendas;
 > sem alteração operacional na Gestão Web.

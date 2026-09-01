@@ -1923,6 +1923,7 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 
 /* Dashboard financeiro, consignados e controles de desconto. */
 .dashboard-consignment-card { display: flex; flex-direction: column; }
+.dashboard-consignment-card:not(.expanded) { min-height: 0; }
 .dashboard-panel .dashboard-consignment-header { min-height: 58px; justify-content: space-between; gap: 12px; padding: 9px 12px; }
 .dashboard-consignment-heading { display: grid; min-width: 0; gap: 3px; }
 .dashboard-consignment-title { display: flex; min-width: 0; align-items: center; gap: 7px; }

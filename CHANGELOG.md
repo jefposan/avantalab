@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.06 - 2026-09-01
+
+- O card **Estoque consignado** do Dashboard passa a ficar somente com o
+  cabeçalho azul quando recolhido, eliminando a área branca vazia e preservando
+  título, resumo, botão Expandir e a lista completa no estado aberto.
+
 ## 1.13.0.05 - 2026-09-01
 
 - Todos os avisos rápidos do AvantaVendas passam a usar um cartão compacto com

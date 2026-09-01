@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.05 -->
+<!-- ava-version: 1.13.0.06 -->
+
+> Revisão 1.13.0.06: ao recolher **Estoque consignado** no Dashboard, o card
+> exibe somente o cabeçalho com título, resumo e botão **Expandir**, sem manter
+> uma área branca vazia. Ao expandir, a lista de produtos reaparece normalmente.
 
 > Revisão 1.13.0.05: os avisos rápidos do AvantaVendas usam um cartão compacto
 > com ícone e cores semânticas para sucesso, informação, atenção e erro. O texto
