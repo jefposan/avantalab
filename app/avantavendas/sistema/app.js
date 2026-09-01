@@ -344,6 +344,8 @@ let feedbackVendasEnviado = false;
 let produtoImagemUploadPendente = null;
 let divulgacaoPastaAtualId = null;
 let divulgacaoMaterialAtualId = null;
+let arquivoMaterialDivulgacaoPreparado = null;
+let revisaoPreparacaoArquivoMaterialDivulgacao = 0;
 let divulgacaoSelecaoAtiva = false;
 let divulgacaoSelecaoPastaId = null;
 const divulgacaoMateriaisSelecionados = new Set();
@@ -3294,10 +3296,33 @@ function traduzErro(error) {
   if (error?.persistenciaPendente) return 'Sem confirmação do servidor. A alteração ficou protegida neste aparelho e será reenviada automaticamente quando a conexão estabilizar.';
   if (error?.persistenciaLocalIndisponivel) return 'Não foi possível confirmar no servidor nem proteger a alteração no aparelho. Mantenha esta tela aberta e tente novamente.';
   const texto = String(error?.message || error || 'Erro inesperado.');
+  const nome = String(error?.name || '');
   if (/invalid login credentials/i.test(texto)) return 'E-mail ou senha incorretos.';
   if (ehErroContaJaCadastradaVendas(texto)) return 'Este e-mail já está vinculado a uma conta.';
   if (/relation .* does not exist/i.test(texto)) return 'O banco do Vendas Mobile ainda não foi instalado.';
+  if (/notallowederror/i.test(nome) || /request is not allowed|user denied permission|permission denied/i.test(texto)) return 'Não foi possível concluir a operação. Tente novamente.';
+  if (/notsupportederror/i.test(nome) || /not supported|is not supported/i.test(texto)) return 'Este recurso não é compatível com este aparelho ou navegador.';
+  if (/networkerror/i.test(nome) || /failed to fetch|network request failed|load failed/i.test(texto)) return 'Não foi possível conectar ao servidor. Confira sua internet e tente novamente.';
+  if (/record .* has no field|failed to execute|schema cache|row-level security|duplicate key|foreign key|violat|unauthor|forbidden|\b(?:the|this|request|user agent|platform|current context|permission)\b/i.test(texto)) return 'Não foi possível concluir a operação. Tente novamente em instantes.';
+  const parecePortugues = /[áàâãéêíóôõúç]|\b(?:nao|não|possivel|possível|erro|falha|arquivo|usuario|usuário|conta|pedido|pagamento|cliente|produto|saldo|estoque|empresa|email|e-mail|senha|acesso|dados|cadastro|valor|data|campo|perfil|material|conexao|conexão|tente|voce|você|este|esta|nenhum|nenhuma|informe|selecione|operação)\b/i.test(texto);
+  if (/[a-z]/i.test(texto) && !parecePortugues) return 'Não foi possível concluir a operação. Tente novamente em instantes.';
   return texto;
+}
+
+function traduzErroCompartilhamento(error) {
+  const nome = String(error?.name || '');
+  const texto = String(error?.message || error || '');
+  if (/aborterror/i.test(nome)) return '';
+  if (/notallowederror/i.test(nome) || /request is not allowed|user denied permission|permission denied/i.test(texto)) {
+    return 'Tente novamente.';
+  }
+  if (/notsupportederror|dataerror/i.test(nome) || /not supported|cannot share|can.?share|failed to execute ['"]?share/i.test(texto)) {
+    return 'Este arquivo não pode ser compartilhado diretamente neste aparelho. Tente baixá-lo e enviar pelo aplicativo desejado.';
+  }
+  if (/networkerror/i.test(nome) || /failed to fetch|network request failed|load failed/i.test(texto)) {
+    return 'Não foi possível preparar o arquivo. Confira sua internet e tente novamente.';
+  }
+  return traduzErro(error);
 }
 
 function ehErroContaJaCadastradaVendas(error) {
@@ -4678,7 +4703,7 @@ function conteudoVisualizadorMaterialDivulgacao(materialId) {
   const preVisualizacao = material.tipo === 'pdf'
     ? `<div class="material-preview material-preview-document" role="document">${visualizacao}</div>`
     : `<button type="button" class="material-preview"${acaoVisualizacao} aria-label="Ampliar material">${visualizacao}</button>`;
-  return `<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">${material.tipo === 'video' ? 'Vídeo' : material.tipo === 'pdf' ? 'PDF' : 'Imagem'} · ${indice + 1} de ${materiais.length} · ${instrucao}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}${preVisualizacao}${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><div class="material-share-actions"><button type="button" class="secondary" onclick="fecharSheet();ativarSelecaoMateriaisDivulgacao('${material.id}')">${svgIcon('check-circle')} Selecionar mais</button><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button></div>`;
+  return `<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">${material.tipo === 'video' ? 'Vídeo' : material.tipo === 'pdf' ? 'PDF' : 'Imagem'} · ${indice + 1} de ${materiais.length} · ${instrucao}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}${preVisualizacao}${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><div class="material-share-actions"><button type="button" class="secondary" onclick="fecharSheet();ativarSelecaoMateriaisDivulgacao('${material.id}')">${svgIcon('check-circle')} Selecionar mais</button><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')" aria-busy="true" disabled>${svgIcon('save')} Preparando material...</button></div>`;
 }
 
 function encerrarRenderizacaoPdfMaterial(container = document.querySelector('.material-preview-pdf')) {
@@ -4819,6 +4844,7 @@ function abrirMaterialDivulgacao(materialId) {
   divulgacaoMaterialAtualId = materialId;
   sheet(conteudo, 'sheet-backdrop-centered material-preview-backdrop');
   void carregarPdfMaterialDivulgacao();
+  void prepararCompartilhamentoMaterialDivulgacao(materialId);
 }
 
 function navegarMaterialDivulgacao(direcao) {
@@ -4833,6 +4859,7 @@ function navegarMaterialDivulgacao(direcao) {
   divulgacaoMaterialAtualId = destino.id;
   painel.innerHTML = conteudo;
   void carregarPdfMaterialDivulgacao();
+  void prepararCompartilhamentoMaterialDivulgacao(destino.id);
 }
 
 function iniciarGestoMaterialDivulgacao(evento) {
@@ -4900,6 +4927,40 @@ async function prepararArquivoMaterialDivulgacao(material, opcoes = {}) {
   );
 }
 
+async function prepararCompartilhamentoMaterialDivulgacao(materialId) {
+  const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
+  if (!material) return;
+  const revisao = ++revisaoPreparacaoArquivoMaterialDivulgacao;
+  arquivoMaterialDivulgacaoPreparado = null;
+  const botao = document.querySelector('.material-share');
+  if (botao) {
+    botao.disabled = true;
+    botao.setAttribute('aria-busy', 'true');
+    botao.innerHTML = `${svgIcon('save')} Preparando material...`;
+  }
+  try {
+    const arquivo = await prepararArquivoMaterialDivulgacao(material);
+    if (revisao !== revisaoPreparacaoArquivoMaterialDivulgacao || divulgacaoMaterialAtualId !== materialId) return;
+    arquivoMaterialDivulgacaoPreparado = { materialId, arquivo };
+    const botaoAtual = document.querySelector('.material-share');
+    if (botaoAtual) {
+      botaoAtual.disabled = false;
+      botaoAtual.setAttribute('aria-busy', 'false');
+      botaoAtual.innerHTML = `${svgIcon('save')} Compartilhar material`;
+    }
+  } catch (error) {
+    if (revisao !== revisaoPreparacaoArquivoMaterialDivulgacao || divulgacaoMaterialAtualId !== materialId) return;
+    const botaoAtual = document.querySelector('.material-share');
+    if (botaoAtual) {
+      botaoAtual.disabled = false;
+      botaoAtual.setAttribute('aria-busy', 'false');
+      botaoAtual.innerHTML = `${svgIcon('rotate-ccw')} Tentar preparar novamente`;
+    }
+    const mensagem = traduzErroCompartilhamento(error);
+    if (mensagem) toast(mensagem, { tipo: 'erro', titulo: 'Não foi possível enviar o arquivo' });
+  }
+}
+
 function podeCompartilharArquivosDivulgacao(arquivos) {
   if (!navigator.share) return false;
   try {
@@ -4960,7 +5021,8 @@ async function compartilharMateriaisSelecionadosDivulgacao() {
     }
     compartilhamentoConcluido = true;
   } catch (error) {
-    if (error?.name !== 'AbortError') toast(traduzErro(error));
+    const mensagem = traduzErroCompartilhamento(error);
+    if (mensagem) toast(mensagem, { tipo: 'erro', titulo: 'Não foi possível enviar o arquivo' });
   } finally {
     divulgacaoCompartilhamentoAbortController = null;
     divulgacaoCompartilhamentoMultiploEmAndamento = false;
@@ -4976,9 +5038,16 @@ async function compartilharMaterialDivulgacao(materialId) {
   const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
   if (!material) return;
   const botao = document.querySelector('.material-share');
-  if (botao) { botao.disabled = true; botao.textContent = 'Preparando material...'; }
+  const preparado = arquivoMaterialDivulgacaoPreparado?.materialId === materialId
+    ? arquivoMaterialDivulgacaoPreparado.arquivo
+    : null;
+  if (!preparado) {
+    void prepararCompartilhamentoMaterialDivulgacao(materialId);
+    return;
+  }
+  if (botao) { botao.disabled = true; botao.setAttribute('aria-busy', 'true'); botao.textContent = 'Abrindo compartilhamento...'; }
   try {
-    const arquivo = await prepararArquivoMaterialDivulgacao(material);
+    const arquivo = preparado;
     if (podeCompartilharArquivosDivulgacao([arquivo])) {
       await navigator.share({ files: [arquivo] });
       return;
@@ -4986,9 +5055,10 @@ async function compartilharMaterialDivulgacao(materialId) {
     baixarArquivoGeradoVendas(arquivo, arquivo.name);
     toast('Material baixado para compartilhar.');
   } catch (error) {
-    if (error?.name !== 'AbortError') toast(traduzErro(error));
+    const mensagem = traduzErroCompartilhamento(error);
+    if (mensagem) toast(mensagem, { tipo: 'erro', titulo: 'Não foi possível enviar o arquivo' });
   } finally {
-    if (botao) { botao.disabled = false; botao.innerHTML = `${svgIcon('save')} Compartilhar material`; }
+    if (botao) { botao.disabled = false; botao.setAttribute('aria-busy', 'false'); botao.innerHTML = `${svgIcon('save')} Compartilhar material`; }
   }
 }
 

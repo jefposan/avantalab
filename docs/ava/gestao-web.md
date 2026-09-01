@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.07 -->
+<!-- ava-version: 1.13.0.08 -->
+
+> Revisão 1.13.0.08: o preparo e a tradução de falhas no compartilhamento de
+> materiais pertencem ao AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.13.0.07: no **Balanço**, o mês atual do ano em exibição recebe um
 > realce discreto e permanente em Despesas, Faturamento, A + B e Total em %.

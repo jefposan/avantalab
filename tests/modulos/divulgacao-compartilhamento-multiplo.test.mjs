@@ -12,6 +12,12 @@ const [aplicacao, estilos] = await Promise.all([
 const inicioCompartilhamento = aplicacao.indexOf('async function compartilharMateriaisSelecionadosDivulgacao()');
 const fimCompartilhamento = aplicacao.indexOf('\nasync function compartilharMaterialDivulgacao(', inicioCompartilhamento);
 const compartilhamentoMultiplo = aplicacao.slice(inicioCompartilhamento, fimCompartilhamento);
+const inicioCompartilhamentoUnico = fimCompartilhamento + 1;
+const fimCompartilhamentoUnico = aplicacao.indexOf('\nconst CONFIGURACOES_CARD_ID_POR_TITULO', inicioCompartilhamentoUnico);
+const compartilhamentoUnico = aplicacao.slice(inicioCompartilhamentoUnico, fimCompartilhamentoUnico);
+const inicioPreparoUnico = aplicacao.indexOf('async function prepararCompartilhamentoMaterialDivulgacao(');
+const fimPreparoUnico = aplicacao.indexOf('\nfunction podeCompartilharArquivosDivulgacao(', inicioPreparoUnico);
+const preparoUnico = aplicacao.slice(inicioPreparoUnico, fimPreparoUnico);
 const inicioDivulgacao = aplicacao.indexOf('function renderDivulgacao()');
 const fimDivulgacao = aplicacao.indexOf('\nfunction abrirPastaDivulgacao(', inicioDivulgacao);
 const renderizacaoDivulgacao = aplicacao.slice(inicioDivulgacao, fimDivulgacao);
@@ -45,6 +51,28 @@ test('arquivos são preparados em sequência e compartilhados sem texto automát
   assert.doesNotMatch(compartilhamentoMultiplo, /navigator\.share\(\{[^}]*\b(?:text|title|url)\s*:/);
   assert.match(compartilhamentoMultiplo, /zip\.generateAsync\(\{ type: 'blob', compression: 'STORE' \}\)/);
   assert.match(compartilhamentoMultiplo, /materiais-avantalab\.zip/);
+});
+
+test('vídeo é preparado antes do toque que abre o compartilhamento no iPhone', () => {
+  assert.match(aplicacao, /let arquivoMaterialDivulgacaoPreparado = null;/);
+  assert.match(aplicacao, /aria-busy="true" disabled>\$\{svgIcon\('save'\)\} Preparando material/);
+  assert.match(aplicacao, /void prepararCompartilhamentoMaterialDivulgacao\(materialId\);/);
+  assert.match(preparoUnico, /arquivoMaterialDivulgacaoPreparado = \{ materialId, arquivo \};/);
+  assert.match(preparoUnico, /botaoAtual\.setAttribute\('aria-busy', 'false'\)/);
+  assert.match(compartilhamentoUnico, /const preparado = arquivoMaterialDivulgacaoPreparado\?\.materialId === materialId/);
+  assert.doesNotMatch(compartilhamentoUnico, /await prepararArquivoMaterialDivulgacao/);
+  assert.match(compartilhamentoUnico, /await navigator\.share\(\{ files: \[arquivo\] \}\)/);
+});
+
+test('falhas do compartilhamento nunca exibem a mensagem técnica em inglês', () => {
+  assert.match(aplicacao, /function traduzErroCompartilhamento\(error\)/);
+  assert.match(aplicacao, /request is not allowed\|user denied permission\|permission denied/);
+  assert.match(aplicacao, /return 'Tente novamente\.';/);
+  assert.match(aplicacao, /titulo: 'Não foi possível enviar o arquivo'/);
+  assert.match(aplicacao, /const parecePortugues = \/\[áàâãéêíóôõúç\]/);
+  assert.match(aplicacao, /!parecePortugues\) return 'Não foi possível concluir a operação/);
+  assert.doesNotMatch(compartilhamentoUnico, /toast\(traduzErro\(error\)\)/);
+  assert.doesNotMatch(compartilhamentoMultiplo, /toast\(traduzErro\(error\)\)/);
 });
 
 test('botão Atualizar relê somente o conteúdo da Divulgação', () => {

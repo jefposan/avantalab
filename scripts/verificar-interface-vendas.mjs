@@ -56,6 +56,16 @@ exigir(
   'Avisos rápidos devem usar o cartão semântico acessível, ficar acima dos modais e respeitar tema escuro e movimento reduzido.',
 );
 exigir(
+  aplicacao.includes('function traduzErroCompartilhamento(error)')
+    && aplicacao.includes("return 'Tente novamente.';")
+    && aplicacao.includes("titulo: 'Não foi possível enviar o arquivo'")
+    && aplicacao.includes('let arquivoMaterialDivulgacaoPreparado = null;')
+    && aplicacao.includes('void prepararCompartilhamentoMaterialDivulgacao(materialId);')
+    && compartilhamentoMaterial.includes('const preparado = arquivoMaterialDivulgacaoPreparado?.materialId === materialId')
+    && !compartilhamentoMaterial.includes('await prepararArquivoMaterialDivulgacao(material)'),
+  'Compartilhamento deve preparar o arquivo antes do toque final e nunca expor a mensagem técnica do navegador em inglês.',
+);
+exigir(
   aplicacao.includes("dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}")
     && aplicacao.includes("state.dashboardConsignadosExpandido ? `<div class=\"dashboard-consignment-products\">")
     && estilos.includes('.dashboard-consignment-card:not(.expanded) { min-height: 0; }'),

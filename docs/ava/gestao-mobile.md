@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.07 -->
+<!-- ava-version: 1.13.0.08 -->
+
+> Revisão 1.13.0.08: o preparo e a tradução de falhas no compartilhamento de
+> materiais pertencem ao AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.13.0.07: o destaque do mês atual no Balanço pertence à Gestão Web;
 > sem impacto operacional na Gestão Mobile.

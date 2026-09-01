@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.07 -->
+<!-- ava-version: 1.13.0.08 -->
+
+> Revisão 1.13.0.08: ao abrir um material na Divulgação, o arquivo é preparado
+> antes de liberar **Compartilhar material**. Falhas ao enviar exibem somente
+> **Não foi possível enviar o arquivo — Tente novamente**, sempre em português.
 
 > Revisão 1.13.0.07: o destaque do mês atual no Balanço pertence à Gestão Web;
 > sem impacto operacional no AvantaVendas.

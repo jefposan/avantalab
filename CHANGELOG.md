@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.13.0.08 - 2026-09-01
+
+- AvantaVendas: vídeos e demais materiais da Divulgação são preparados antes de
+  liberar o botão de compartilhamento, preservando o toque exigido pelo iPhone.
+- Falhas ao enviar um material agora usam somente o aviso em português
+  **Não foi possível enviar o arquivo — Tente novamente**, sem expor mensagens
+  técnicas do navegador.
+
 ## 1.13.0.07 - 2026-09-01
 
 - Gestão Web: no **Balanço**, a linha do mês corrente recebe um destaque
