@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.01 -->
+<!-- ava-version: 1.13.0.02 -->
+
+> Revisão 1.13.0.02: o AvantaVendas não carrega nem aplica as tabelas de
+> **Custos e Precificação** da Gestão nos clientes ou pedidos. Ao selecionar um
+> produto, o pedido começa com o preço sugerido recebido no catálogo, e o
+> vendedor pode editar esse preço manualmente antes de inserir o item.
+
+> Revisão 1.13.0-av106: restauração do preço sugerido e editável no pedido, sem
+> carregar, mostrar ou gravar tabelas internas de precificação da empresa.
 
 > Revisão 1.13.0.01: o reforço visual do processamento de lançamentos pertence
 > à Gestão Mobile; sem impacto operacional no AvantaVendas.
@@ -310,7 +318,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 105 -->
+<!-- avantavendas-asset-revision: 106 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

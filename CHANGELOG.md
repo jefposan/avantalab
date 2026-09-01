@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.13.0.02 - 2026-08-31
+
+- AvantaVendas voltou a iniciar o pedido com o preço sugerido recebido no seu
+  catálogo. O vendedor pode editar o preço no pedido, como antes.
+- Tabelas de preços de **Custos e Precificação** continuam disponíveis somente
+  na Gestão e deixam de ser carregadas, exibidas ou gravadas em clientes e
+  pedidos do AvantaVendas.
+- O desligamento no banco remove apenas automações e permissões do acoplamento;
+  pedidos, itens, clientes, produtos e valores históricos são preservados.
+
+## 1.13.0-av106 - 2026-08-31
+
+- AvantaVendas: pedido sem aplicação direta das tabelas internas da Gestão,
+  com preço sugerido do catálogo recebido e edição manual.
+
 ## 1.13.0.01 - 2026-08-31
 
 - Gestão Mobile: incluir despesa ou receita agora bloqueia a tela inteira com

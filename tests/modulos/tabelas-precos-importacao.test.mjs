@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const migracao = readFileSync('supabase/migrations/20260831130000_tabelas_precos_produtos_importacao.sql', 'utf8');
+const desvinculo = readFileSync('supabase/migrations/20260831220000_desvincular_precificacao_avantavendas.sql', 'utf8');
 const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const tabelas = readFileSync('app/custos/TabelasPrecosView.tsx', 'utf8');
 const repositorio = readFileSync('app/custos/repository.ts', 'utf8');
@@ -14,7 +15,7 @@ test('tabelas de preços pertencem à empresa e possuem uma única tabela padrã
   assert.match(migracao, /unique index if not exists custos_tabelas_preco_empresa_padrao_uidx/);
   assert.match(migracao, /where padrao/);
   assert.match(migracao, /public\.custos_pode_acessar_empresa\(empresa_id, true\)/);
-  assert.match(migracao, /vendas_mobile_usuario_tem_vinculo_conta_empresa\(empresa_id, 'catalogo'\)/);
+  assert.doesNotMatch(migracao, /vendas_mobile_usuario_tem_vinculo_conta_empresa\(empresa_id, 'catalogo'\)/);
 });
 
 test('cadastro exporta e importa produtos e preços com prévia e proteção concorrente', () => {
@@ -30,22 +31,31 @@ test('cadastro exporta e importa produtos e preços com prévia e proteção con
   assert.match(migracao, /custos_importacoes_produtos_precos/);
 });
 
-test('cliente escolhe a tabela e o pedido preserva preço e origem usados', () => {
-  assert.match(migracao, /alter table public\.vendas_mobile_clientes[\s\S]*tabela_preco_id/);
-  assert.match(migracao, /alter table public\.vendas_mobile_pedidos[\s\S]*tabela_preco_nome/);
-  assert.match(migracao, /alter table public\.vendas_mobile_pedido_itens[\s\S]*preco_tabela/);
-  assert.match(migracao, /preco_alterado_manual/);
-  assert.match(migracao, /preencher_tabela_preco_pedido_vendas_mobile/);
-  assert.match(vendasDb, /vendas_mobile_listar_precos_rpc/);
-  assert.match(vendasDb, /tabela_preco_id: customer\.tabela_preco_id \|\| null/);
-  assert.match(vendas, /id="cliTabelaPreco"/);
-  assert.match(vendas, /function precoProdutoNaTabela/);
-  assert.match(vendas, /Preço da tabela/);
-  assert.match(vendas, /tabela_preco_id: rascunho\.tabelaPrecoId \|\| null/);
+test('precificação da Gestão não se conecta a clientes e pedidos do AvantaVendas', () => {
+  assert.doesNotMatch(migracao, /alter table public\.vendas_mobile_clientes[\s\S]*tabela_preco_id/);
+  assert.doesNotMatch(migracao, /alter table public\.vendas_mobile_pedidos[\s\S]*tabela_preco_nome/);
+  assert.doesNotMatch(migracao, /preencher_tabela_preco_pedido_vendas_mobile/);
+  assert.doesNotMatch(migracao, /vendas_mobile_listar_precos_rpc/);
+  assert.doesNotMatch(vendasDb, /vendas_mobile_listar_precos_rpc/);
+  assert.doesNotMatch(vendasDb, /tabela_preco_id/);
+  assert.doesNotMatch(vendas, /id="cliTabelaPreco"/);
+  assert.doesNotMatch(vendas, /function precoProdutoNaTabela/);
+  assert.doesNotMatch(vendas, /Preço da tabela/);
+  assert.doesNotMatch(vendas, /tabela_preco_id/);
 });
 
-test('preço histórico do pedido não depende de alterações futuras da tabela', () => {
-  assert.match(migracao, /create trigger vendas_mobile_pedido_itens_preco_referencia before insert or update/);
-  assert.match(migracao, /new\.preco_tabela := v_preco/);
-  assert.doesNotMatch(migracao, /update public\.vendas_mobile_pedido_itens[\s\S]*custos_tabela_preco_itens/);
+test('pedido usa o preço sugerido do catálogo de divulgação e permite edição manual', () => {
+  assert.match(vendas, /moeda\(produto\.preco \|\| 0\)/);
+  assert.match(vendas, /pedidoClienteRascunho\.preco = Number\(produto\?\.preco \|\| 0\)/);
+  assert.match(vendas, /<span>Preço<\/span><input id="pedidoClientePreco" type="text" inputmode="numeric"/);
+  assert.match(vendas, /oninput="pedidoClienteRascunho\.preco=formatarCampoMoeda\(this\)"/);
+  assert.doesNotMatch(vendas, /id="pedidoClientePreco"[^>]*readonly/);
+});
+
+test('migração de compatibilidade desativa automações sem apagar dados históricos', () => {
+  assert.match(desvinculo, /drop trigger if exists vendas_mobile_pedidos_tabela_preco/);
+  assert.match(desvinculo, /drop function if exists public\.vendas_mobile_listar_precos_rpc\(uuid\)/);
+  assert.match(desvinculo, /custos_pode_acessar_empresa\(empresa_id, false\)/);
+  assert.doesNotMatch(desvinculo, /drop column/i);
+  assert.doesNotMatch(desvinculo, /delete from/i);
 });

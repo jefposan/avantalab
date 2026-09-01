@@ -1,5 +1,6 @@
--- Tabelas de preços, vínculo comercial por cliente e importação segura do
--- cadastro mestre. O preço utilizado no pedido permanece congelado no item.
+-- Tabelas de preços e importação segura do cadastro mestre para a Gestão.
+-- Esta precificação é interna da empresa e não se conecta ao catálogo de
+-- divulgação nem aos clientes e pedidos do AvantaVendas.
 begin;
 
 create table if not exists public.custos_tabelas_preco (
@@ -62,17 +63,6 @@ create table if not exists public.custos_importacoes_produtos_precos (
   criado_em timestamptz not null default now()
 );
 
-alter table public.vendas_mobile_clientes
-  add column if not exists tabela_preco_id uuid references public.custos_tabelas_preco(id) on delete set null;
-alter table public.vendas_mobile_pedidos
-  add column if not exists tabela_preco_id uuid references public.custos_tabelas_preco(id) on delete set null,
-  add column if not exists tabela_preco_nome text;
-alter table public.vendas_mobile_pedido_itens
-  add column if not exists preco_tabela numeric(12,2),
-  add column if not exists preco_alterado_manual boolean not null default false;
-create index if not exists vendas_mobile_clientes_tabela_preco_idx
-  on public.vendas_mobile_clientes (tabela_preco_id) where tabela_preco_id is not null;
-
 insert into public.custos_tabelas_preco (empresa_id, codigo, nome, descricao, padrao, ativo)
 select distinct catalogo.empresa_id, 'PADRAO', 'Tabela padrão',
        'Preço de venda principal do cadastro de produtos.', true, true
@@ -127,20 +117,16 @@ alter table public.custos_tabela_preco_itens enable row level security;
 alter table public.custos_tabela_preco_historico enable row level security;
 alter table public.custos_importacoes_produtos_precos enable row level security;
 
-create policy custos_tabelas_preco_leitura on public.custos_tabelas_preco for select to authenticated using (
-  public.custos_pode_acessar_empresa(empresa_id, false)
-  or public.vendas_mobile_usuario_tem_vinculo_conta_empresa(empresa_id, 'catalogo')
-);
+create policy custos_tabelas_preco_leitura on public.custos_tabelas_preco for select to authenticated
+  using (public.custos_pode_acessar_empresa(empresa_id, false));
 create policy custos_tabelas_preco_gestao on public.custos_tabelas_preco for all to authenticated
   using (public.custos_pode_acessar_empresa(empresa_id, true))
   with check (public.custos_pode_acessar_empresa(empresa_id, true));
 create policy custos_tabela_preco_itens_leitura on public.custos_tabela_preco_itens for select to authenticated using (
   exists (
     select 1 from public.custos_tabelas_preco tabela
-     where tabela.id = tabela_preco_id and (
-       public.custos_pode_acessar_empresa(tabela.empresa_id, false)
-       or public.vendas_mobile_usuario_tem_vinculo_conta_empresa(tabela.empresa_id, 'catalogo')
-     )
+     where tabela.id = tabela_preco_id
+       and public.custos_pode_acessar_empresa(tabela.empresa_id, false)
   )
 );
 create policy custos_tabela_preco_itens_gestao on public.custos_tabela_preco_itens for all to authenticated
@@ -386,132 +372,13 @@ exception when unique_violation then
 end;
 $$;
 
-create or replace function public.vendas_mobile_listar_precos_rpc(p_conta_id uuid)
-returns jsonb language plpgsql stable security definer set search_path = public as $$
-declare v_empresa_id uuid;
-begin
-  if auth.uid() is null or not public.vendas_mobile_pode_ler_conta(p_conta_id) then raise exception 'Conta de vendas inválida ou sem permissão.'; end if;
-  select vinculo.empresa_id into v_empresa_id
-    from public.vendas_mobile_contas_vinculos_comerciais vinculo
-    join public.vendas_mobile_contas_recursos recursos on recursos.conta_id = vinculo.conta_id and recursos.catalogo_ativo = true
-   where vinculo.conta_id = p_conta_id and vinculo.ativo = true
-     and public.vendas_mobile_vinculo_conta_valido(vinculo.conta_id, vinculo.empresa_id)
-   order by vinculo.atualizado_em desc limit 1;
-  if v_empresa_id is null then return jsonb_build_object('empresa_id', null, 'tabelas', '[]'::jsonb, 'precos', '[]'::jsonb); end if;
-  return jsonb_build_object(
-    'empresa_id', v_empresa_id,
-    'tabelas', coalesce((
-      select jsonb_agg(jsonb_build_object('id', tabela.id, 'codigo', tabela.codigo, 'nome', tabela.nome, 'padrao', tabela.padrao, 'ativo', tabela.ativo) order by tabela.padrao desc, tabela.nome)
-      from public.custos_tabelas_preco tabela where tabela.empresa_id = v_empresa_id
-    ), '[]'::jsonb),
-    'precos', coalesce((
-      select jsonb_agg(jsonb_build_object(
-        'tabela_id', tabela.id, 'produto_id', produto.id,
-        'preco', case when tabela.padrao then produto.preco_venda else coalesce(item.preco, produto.preco_venda) end
-      ) order by tabela.id, produto.id)
-      from public.custos_tabelas_preco tabela
-      join public.vendas_mobile_catalogos catalogo on catalogo.empresa_id = tabela.empresa_id and catalogo.ativo = true
-      join public.vendas_mobile_catalogo_produtos produto on produto.catalogo_id = catalogo.id and produto.ativo = true and produto.disponivel_catalogo = true
-      left join public.custos_tabela_preco_itens item on item.tabela_preco_id = tabela.id and item.produto_id = produto.id
-      where tabela.empresa_id = v_empresa_id and tabela.ativo = true
-    ), '[]'::jsonb)
-  );
-end;
-$$;
-
-create or replace function public.validar_tabela_preco_cliente_vendas_mobile()
-returns trigger language plpgsql security definer set search_path = public as $$
-declare v_empresa_id uuid;
-begin
-  if new.tabela_preco_id is null then return new; end if;
-  select vinculo.empresa_id into v_empresa_id
-    from public.vendas_mobile_contas_vinculos_comerciais vinculo
-   where vinculo.conta_id = new.conta_id and vinculo.ativo = true
-     and public.vendas_mobile_vinculo_conta_valido(vinculo.conta_id, vinculo.empresa_id)
-   order by vinculo.atualizado_em desc limit 1;
-  if not exists (
-    select 1 from public.custos_tabelas_preco tabela
-     where tabela.id = new.tabela_preco_id and tabela.empresa_id = v_empresa_id and tabela.ativo = true
-  ) then raise exception 'A tabela de preço selecionada não pertence ao vínculo comercial desta conta.'; end if;
-  return new;
-end;
-$$;
-drop trigger if exists vendas_mobile_clientes_validar_tabela_preco on public.vendas_mobile_clientes;
-create trigger vendas_mobile_clientes_validar_tabela_preco before insert or update of tabela_preco_id, conta_id
-on public.vendas_mobile_clientes for each row execute function public.validar_tabela_preco_cliente_vendas_mobile();
-
-create or replace function public.preencher_tabela_preco_pedido_vendas_mobile()
-returns trigger language plpgsql security definer set search_path = public as $$
-declare v_empresa_id uuid; v_tabela public.custos_tabelas_preco;
-begin
-  select vinculo.empresa_id into v_empresa_id
-    from public.vendas_mobile_contas_vinculos_comerciais vinculo
-   where vinculo.conta_id = new.conta_id and vinculo.ativo = true
-     and public.vendas_mobile_vinculo_conta_valido(vinculo.conta_id, vinculo.empresa_id)
-   order by vinculo.atualizado_em desc limit 1;
-  if new.cliente_id is not null then
-    select tabela.* into v_tabela
-      from public.vendas_mobile_clientes cliente
-      join public.custos_tabelas_preco tabela on tabela.id = cliente.tabela_preco_id and tabela.ativo = true
-     where cliente.id = new.cliente_id and cliente.conta_id = new.conta_id and tabela.empresa_id = v_empresa_id;
-  end if;
-  if v_tabela.id is null then
-    select * into v_tabela from public.custos_tabelas_preco
-     where empresa_id = v_empresa_id and padrao = true and ativo = true limit 1;
-  end if;
-  new.tabela_preco_id := v_tabela.id;
-  new.tabela_preco_nome := v_tabela.nome;
-  return new;
-end;
-$$;
-drop trigger if exists vendas_mobile_pedidos_tabela_preco on public.vendas_mobile_pedidos;
-create trigger vendas_mobile_pedidos_tabela_preco before insert or update of cliente_id, conta_id
-on public.vendas_mobile_pedidos for each row execute function public.preencher_tabela_preco_pedido_vendas_mobile();
-
-create or replace function public.preencher_preco_referencia_item_vendas_mobile()
-returns trigger language plpgsql security definer set search_path = public as $$
-declare
-  v_tabela public.custos_tabelas_preco;
-  v_produto_mestre public.vendas_mobile_catalogo_produtos;
-  v_preco numeric(12,2);
-begin
-  select tabela.* into v_tabela
-    from public.vendas_mobile_pedidos pedido
-    join public.custos_tabelas_preco tabela on tabela.id = pedido.tabela_preco_id
-   where pedido.id = new.pedido_id;
-  select mestre.* into v_produto_mestre
-    from public.vendas_mobile_produtos produto
-    join public.vendas_mobile_catalogo_produtos mestre on mestre.id = produto.catalogo_produto_origem_id
-   where produto.id = new.produto_id;
-  if v_tabela.id is not null and v_produto_mestre.id is not null then
-    if v_tabela.padrao then v_preco := v_produto_mestre.preco_venda;
-    else
-      select preco into v_preco from public.custos_tabela_preco_itens
-       where tabela_preco_id = v_tabela.id and produto_id = v_produto_mestre.id;
-      v_preco := coalesce(v_preco, v_produto_mestre.preco_venda);
-    end if;
-    new.preco_tabela := v_preco;
-    new.preco_alterado_manual := round(coalesce(new.preco_unitario, 0), 2) is distinct from round(v_preco, 2);
-  else
-    new.preco_tabela := new.preco_unitario;
-    new.preco_alterado_manual := false;
-  end if;
-  return new;
-end;
-$$;
-drop trigger if exists vendas_mobile_pedido_itens_preco_referencia on public.vendas_mobile_pedido_itens;
-create trigger vendas_mobile_pedido_itens_preco_referencia before insert or update of produto_id, preco_unitario
-on public.vendas_mobile_pedido_itens for each row execute function public.preencher_preco_referencia_item_vendas_mobile();
-
 revoke all on function public.custos_garantir_tabela_padrao_rpc(uuid) from public, anon;
 revoke all on function public.custos_salvar_tabela_preco_rpc(uuid, uuid, text, text, text, boolean) from public, anon;
 revoke all on function public.custos_salvar_preco_tabela_rpc(uuid, uuid, uuid, numeric) from public, anon;
 revoke all on function public.custos_importar_produtos_precos_rpc(uuid, uuid, text, timestamptz, jsonb, jsonb, boolean) from public, anon;
-revoke all on function public.vendas_mobile_listar_precos_rpc(uuid) from public, anon;
 grant execute on function public.custos_garantir_tabela_padrao_rpc(uuid) to authenticated;
 grant execute on function public.custos_salvar_tabela_preco_rpc(uuid, uuid, text, text, text, boolean) to authenticated;
 grant execute on function public.custos_salvar_preco_tabela_rpc(uuid, uuid, uuid, numeric) to authenticated;
 grant execute on function public.custos_importar_produtos_precos_rpc(uuid, uuid, text, timestamptz, jsonb, jsonb, boolean) to authenticated;
-grant execute on function public.vendas_mobile_listar_precos_rpc(uuid) to authenticated;
 
 commit;

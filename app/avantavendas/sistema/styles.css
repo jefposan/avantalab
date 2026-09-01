@@ -679,7 +679,6 @@ body.sheet-open {
 .cliente-sheet-backdrop .field select,
 .cliente-sheet-backdrop .field textarea { min-height: 32px; border-radius: 9px; padding: 5px 9px; font-size: 13px; }
 .cliente-sheet-backdrop .field textarea { min-height: 56px; }
-.cliente-sheet-backdrop .field > small { color: #64748b; font-size: 9px; line-height: 1.25; }
 .cliente-sheet-backdrop .actions { gap: 7px; margin-top: 1px; }.cliente-sheet-backdrop .actions button { min-height: 34px; padding: 0 11px; font-size: 11px; }
 .phone-system-field, .client-address-system-field { display: flex; gap: 7px; }
 .cep-system-field { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
@@ -2016,7 +2015,6 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .client-avatar { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border-radius: 999px; color: #0A1F44; background: #fff; font-size: 12px; font-weight: 900; }
 .client-identity { min-width: 0; flex: 1; }
 .client-identity h3 { overflow: hidden; margin: 0; color: #fff; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
-.client-identity small { display: block; overflow: hidden; margin-top: 2px; color: rgba(255,255,255,.72); font-size: 9px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 .client-identity p { margin: 0; color: #80858d; font-size: 13px; }
 .client-more { width: 30px; height: 30px; border: 0; border-radius: 7px; color: #fff; background: rgba(255,255,255,.12); font-size: 22px; line-height: 1; }
 .client-more:hover { background: rgba(255,255,255,.24); }
@@ -2078,10 +2076,6 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .payment-transaction-backdrop .sheet { position: relative; }
 .order-transaction-layout { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; gap: 8px; padding: 0 1px 54px; overflow: hidden; }
 .order-transaction-fixed { display: grid; flex: 0 0 auto; gap: 7px; }
-.order-context-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(132px, .56fr); align-items: stretch; gap: 7px; }
-.order-price-table { display: grid; align-content: center; gap: 2px; border: 1px solid #b9d9ee; border-radius: 10px; padding: 5px 10px; color: #126fae; background: #edf7fd; }
-.order-price-table span { font-size: 8px; font-weight: 800; text-transform: uppercase; }
-.order-price-table strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .transaction-type-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; border-radius: 12px; padding: 4px; background: #edf3f7; }
 .transaction-type-switch button { min-height: 38px; border: 0; border-radius: 9px; color: #64748b; background: transparent; font-size: 12px; font-weight: 850; }
 .order-transaction-layout .transaction-type-switch button { min-height: 30px; border-radius: 8px; font-size: 11px; }
@@ -2730,7 +2724,6 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .dark-theme .order-product-options > button:active, .dark-theme .order-product-options > button.selected { color: #7dd3fc; background: #102838; }
 .dark-theme .order-product-options > button small, .dark-theme .order-product-options-empty, .dark-theme .order-product-options-status { color: #94a3b8; }
 .dark-theme .transaction-date-field { border-color: #31536d; color: #7dd3fc; background: #102838; }
-.dark-theme .order-price-table { border-color: #31536d; color: #bae6fd; background: #102838; }
 .dark-theme .transaction-date-field > span,
 .dark-theme .transaction-date-field input,
 .dark-theme .transaction-date-field .date-picker-button { color: #bae6fd !important; }

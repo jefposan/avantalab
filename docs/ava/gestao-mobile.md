@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.01 -->
+<!-- ava-version: 1.13.0.02 -->
+
+> Revisão 1.13.0.02: a separação entre a precificação da Gestão e o catálogo de
+> divulgação do AvantaVendas não altera o funcionamento da Gestão Mobile.
 
 > Revisão 1.13.0.01: ao incluir, editar, confirmar ou excluir uma receita ou
 > despesa, a Gestão Mobile bloqueia a tela com fundo escuro, loading e a ação
@@ -9,7 +12,7 @@
 > o formulário ou lançamento continua disponível para nova tentativa.
 
 > Revisão 1.13.0: tabelas de preços e importação de produtos pertencem à Gestão
-> Web e ao AvantaVendas; sem alteração operacional na Gestão Mobile.
+> Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.12.1.18: ao editar, excluir ou confirmar um lançamento, a Gestão
 > Mobile escurece levemente a tela e mostra um indicador circular central até

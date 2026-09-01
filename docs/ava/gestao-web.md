@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.01 -->
+<!-- ava-version: 1.13.0.02 -->
+
+> Revisão 1.13.0.02: **Custos e Precificação > Tabelas de preços** permanece
+> exclusivo da Gestão. O AvantaVendas não consulta essas tabelas nem as grava em
+> clientes e pedidos; o pedido usa o preço sugerido recebido no catálogo e
+> permite edição manual.
 
 > Revisão 1.13.0.01: o reforço visual do processamento de lançamentos pertence
 > à Gestão Mobile; sem alteração operacional na Gestão Web.

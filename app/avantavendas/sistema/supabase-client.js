@@ -474,7 +474,7 @@
     if (!contaId) throw new Error('Nenhuma conta de vendas está disponível para este acesso.');
     definirContaAtiva(contaId);
     const contaVendasAtiva = contasVendas.find((conta) => conta.id === contaId) || null;
-    const totalEtapasDados = 13;
+    const totalEtapasDados = 12;
     let etapasDadosConcluidas = 0;
     const acompanharEtapaDados = (promessa, rotulo) => Promise.resolve(promessa).then(
       (resultado) => {
@@ -498,7 +498,7 @@
     if (perfisFinanceirosRes.error) throw perfisFinanceirosRes.error;
     const vinculosComerciais = vinculosRes.data || [];
     const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
-    const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes, preferenciasRes, precosRes] = await Promise.all([
+    const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes, preferenciasRes] = await Promise.all([
       acompanharEtapaDados(listarCatalogoVendas(), 'Carregando produtos'),
       acompanharEtapaDados(carregarTodasPaginas(() => client
         .from('vendas_mobile_clientes')
@@ -524,7 +524,6 @@
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
       acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc', { p_conta_id: contaId }), 'Carregando integração financeira'),
       acompanharEtapaDados(client.from('vendas_mobile_contas_preferencias').select('versao, preferencias, atualizado_em').eq('conta_id', contaId).maybeSingle(), 'Carregando preferências'),
-      acompanharEtapaDados(client.rpc('vendas_mobile_listar_precos_rpc', { p_conta_id: contaId }), 'Carregando tabelas de preços'),
     ]);
     const error = clientesRes.error || pedidosRes.error || pagamentosRes.error || integracaoRes.error;
     if (error) throw error;
@@ -558,8 +557,6 @@
       preferencias: preferenciasRes.error ? null : preferenciasRes.data?.preferencias || null,
       preferenciasVersao: preferenciasRes.error ? null : preferenciasRes.data?.versao || null,
       preferenciasServidorDisponivel: !preferenciasRes.error,
-      tabelasPreco: precosRes.error ? [] : (precosRes.data?.tabelas || []),
-      precosTabela: precosRes.error ? [] : (precosRes.data?.precos || []),
       ...acessoVendas,
     };
   }
@@ -735,7 +732,6 @@
         estado: customer.estado || '', cep: customer.cep || '', numero: customer.numero || '', complemento: customer.complemento || '',
       },
       observacoes: customer.observacoes || null,
-      tabela_preco_id: customer.tabela_preco_id || null,
       ativo: customer.ativo !== false,
       atualizado_em: new Date().toISOString(),
     };
@@ -776,8 +772,6 @@
       total: Number(order.total || 0),
       forma_pagamento: order.forma_pagamento || null,
       observacoes: order.observacoes || null,
-      tabela_preco_id: order.tabela_preco_id || null,
-      tabela_preco_nome: order.tabela_preco_nome || null,
       criado_em: order.criado_em || new Date().toISOString(),
     };
     if (order.id) pedido.id = order.id;
