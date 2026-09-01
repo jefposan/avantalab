@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.03 -->
+<!-- ava-version: 1.13.0.04 -->
+
+> Revisão 1.13.0.04: em **Divulgação**, **Atualizar** fica à direita do título
+> e relê somente vínculos de conteúdo, pastas e materiais. A ação mantém a
+> pasta aberta, não reinicia o sistema e preserva o conteúdo anterior em caso
+> de falha. Enquanto consulta, o botão mostra **Atualizando...**.
+
+> Revisão 1.13.0-av108: botão de atualização manual e localizada da Divulgação.
 
 > Revisão 1.13.0.03: o preço recebido no catálogo é o **Preço sugerido de
 > revenda**, administrado em **Conteúdo do Vendas > Catálogo**. Ele não usa o
@@ -327,7 +334,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 107 -->
+<!-- avantavendas-asset-revision: 108 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

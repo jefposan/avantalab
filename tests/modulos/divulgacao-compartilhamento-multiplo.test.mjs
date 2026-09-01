@@ -15,6 +15,9 @@ const compartilhamentoMultiplo = aplicacao.slice(inicioCompartilhamento, fimComp
 const inicioDivulgacao = aplicacao.indexOf('function renderDivulgacao()');
 const fimDivulgacao = aplicacao.indexOf('\nfunction abrirPastaDivulgacao(', inicioDivulgacao);
 const renderizacaoDivulgacao = aplicacao.slice(inicioDivulgacao, fimDivulgacao);
+const inicioAtualizacao = aplicacao.indexOf('async function atualizarDivulgacao(');
+const fimAtualizacao = aplicacao.indexOf('\nfunction posicionarIndicadorAtualizacaoDivulgacao(', inicioAtualizacao);
+const atualizacaoDivulgacao = aplicacao.slice(inicioAtualizacao, fimAtualizacao);
 
 test('Divulgação permite selecionar até dez arquivos da pasta atual', () => {
   assert.match(aplicacao, /const LIMITE_SELECAO_MATERIAIS_DIVULGACAO = 10;/);
@@ -42,4 +45,16 @@ test('arquivos são preparados em sequência e compartilhados sem texto automát
   assert.doesNotMatch(compartilhamentoMultiplo, /navigator\.share\(\{[^}]*\b(?:text|title|url)\s*:/);
   assert.match(compartilhamentoMultiplo, /zip\.generateAsync\(\{ type: 'blob', compression: 'STORE' \}\)/);
   assert.match(compartilhamentoMultiplo, /materiais-avantalab\.zip/);
+});
+
+test('botão Atualizar relê somente o conteúdo da Divulgação', () => {
+  assert.match(renderizacaoDivulgacao, /id="divulgacaoAtualizar"[^>]+onclick="atualizarDivulgacao\('botao'\)"/);
+  assert.match(renderizacaoDivulgacao, /<div class="module-title"><div><h2>Divulgação<\/h2>/);
+  assert.match(atualizacaoDivulgacao, /window\.VendasDb\.carregarDivulgacao\(\)/);
+  assert.match(atualizacaoDivulgacao, /state\.divulgacaoPastas = dados\.divulgacaoPastas/);
+  assert.match(atualizacaoDivulgacao, /state\.divulgacaoMateriais = dados\.divulgacaoMateriais/);
+  assert.doesNotMatch(atualizacaoDivulgacao, /loadAll|carregarDadosBackend|location\.reload/);
+  assert.match(atualizacaoDivulgacao, /botao\.disabled = divulgacaoAtualizando/);
+  assert.match(atualizacaoDivulgacao, /aria-busy/);
+  assert.match(estilos, /\.divulgacao-refresh-button \{[^}]+min-height: 44px;[^}]+background: #1687D9;/);
 });

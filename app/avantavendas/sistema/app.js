@@ -4226,6 +4226,7 @@ async function atualizarDivulgacao(origem = 'entrada') {
   const iniciadoEm = Date.now();
   divulgacaoAtualizando = true;
   gestoAtualizacaoDivulgacao = null;
+  sincronizarBotaoAtualizacaoDivulgacao();
   if (origem === 'gesto') {
     atualizarIndicadorGestoDivulgacao(LIMIAR_ATUALIZACAO_DIVULGACAO, true);
     const camada = camadaAtualizacaoDivulgacao();
@@ -4239,7 +4240,7 @@ async function atualizarDivulgacao(origem = 'entrada') {
       divulgacaoPastaAtualId = null;
     }
     await salvarCacheVendas();
-    if (origem === 'atalho') toast('Materiais atualizados.');
+    if (origem === 'atalho' || origem === 'botao') toast('Materiais atualizados.');
   } catch (error) {
     console.warn('Não foi possível atualizar a Divulgação.', error);
     if (origem !== 'entrada') toast(`${traduzErro(error)} Os materiais anteriores continuam disponíveis.`);
@@ -4252,6 +4253,14 @@ async function atualizarDivulgacao(origem = 'entrada') {
     renderizarDivulgacaoPreservandoRolagem(posicaoAnterior);
     if (origem === 'gesto') esconderIndicadorGestoDivulgacao();
   }
+}
+
+function sincronizarBotaoAtualizacaoDivulgacao() {
+  const botao = document.getElementById('divulgacaoAtualizar');
+  if (!botao) return;
+  botao.disabled = divulgacaoAtualizando;
+  botao.setAttribute('aria-busy', String(divulgacaoAtualizando));
+  botao.innerHTML = `${svgIconEstavel('rotate-ccw', divulgacaoAtualizando ? 'is-spinning' : '')}<span>${divulgacaoAtualizando ? 'Atualizando...' : 'Atualizar'}</span>`;
 }
 
 function posicionarIndicadorAtualizacaoDivulgacao() {
@@ -4571,7 +4580,8 @@ function renderDivulgacao() {
   const conteudo = cardsPastas || cardsMateriais
     ? `${cardsPastas ? `<section class="material-page-section"><h3>${pastaAtual ? 'Subpastas' : 'Pastas'}</h3><div class="materials-grid">${cardsPastas}</div></section>` : ''}${cardsMateriais ? `<section class="material-page-section"><h3>Materiais</h3><div class="material-page-files">${cardsMateriais}</div></section>` : ''}`
     : `<article class="publication-empty"><span>${svgIcon(pastaAtual ? 'package' : 'folder')}</span><h3>${pesquisa ? 'Nenhum material encontrado' : pastaAtual ? 'Esta pasta está vazia' : 'Nenhum material publicado'}</h3><p>${pesquisa ? 'Revise a pesquisa e tente novamente.' : pastaAtual ? 'Não há subpastas, fotos ou vídeos nesta pasta.' : 'Quando sua empresa publicar fotos ou vídeos, as pastas aparecerão aqui.'}</p></article>`;
-  return `<section class="module-page materials-page divulgacao-page${divulgacaoSelecaoAtiva ? ' is-selecting' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true)}${navegacao}</div><div class="material-page-content">${conteudo}</div>${renderBarraSelecaoMateriaisDivulgacao()}</section>`;
+  const botaoAtualizar = `<button id="divulgacaoAtualizar" type="button" class="divulgacao-refresh-button" onclick="atualizarDivulgacao('botao')" aria-busy="${divulgacaoAtualizando}" ${divulgacaoAtualizando ? 'disabled' : ''}>${svgIconEstavel('rotate-ccw', divulgacaoAtualizando ? 'is-spinning' : '')}<span>${divulgacaoAtualizando ? 'Atualizando...' : 'Atualizar'}</span></button>`;
+  return `<section class="module-page materials-page divulgacao-page${divulgacaoSelecaoAtiva ? ' is-selecting' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div>${botaoAtualizar}</div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true)}${navegacao}</div><div class="material-page-content">${conteudo}</div>${renderBarraSelecaoMateriaisDivulgacao()}</section>`;
 }
 
 function abrirPastaDivulgacao(pastaId) {
@@ -9669,6 +9679,7 @@ window.mostrarSincronizacaoCatalogo = mostrarSincronizacaoCatalogo;
 window.sincronizarCatalogoAgora = sincronizarCatalogoAgora;
 window.enviarSugestaoVendas = enviarSugestaoVendas;
 window.novaSugestaoVendas = novaSugestaoVendas;
+window.atualizarDivulgacao = atualizarDivulgacao;
 window.abrirPastaDivulgacao = abrirPastaDivulgacao;
 window.voltarPastaDivulgacao = voltarPastaDivulgacao;
 window.ativarSelecaoMateriaisDivulgacao = ativarSelecaoMateriaisDivulgacao;

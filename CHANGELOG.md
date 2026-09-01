@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.13.0.04 - 2026-09-01
+
+- **Divulgação** recebe um botão **Atualizar** à direita do título. A ação relê
+  somente os vínculos de conteúdo, pastas e materiais, sem reiniciar o
+  AvantaVendas nem recarregar clientes, produtos, pedidos ou pagamentos.
+- Durante a consulta, o próprio botão informa **Atualizando...** e bloqueia
+  novos toques. A pasta aberta e os materiais anteriores são preservados se a
+  rede ou o servidor não responderem.
+
+## 1.13.0-av108 - 2026-09-01
+
+- AvantaVendas: atualização manual e localizada dos materiais da Divulgação.
+
 ## 1.13.0.03 - 2026-09-01
 
 - O preço de venda formado em **Custos e Precificação** passa a ser tratado

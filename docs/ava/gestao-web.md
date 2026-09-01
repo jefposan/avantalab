@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.03 -->
+<!-- ava-version: 1.13.0.04 -->
+
+> Revisão 1.13.0.04: o botão de atualização localizada da Divulgação pertence
+> ao AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.13.0.03: o preço de venda em **Custos e Precificação** pertence à
 > operação interna da empresa. Em **Conteúdo do Vendas > Catálogo**, **Preço

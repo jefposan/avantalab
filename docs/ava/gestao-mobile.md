@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.03 -->
+<!-- ava-version: 1.13.0.04 -->
+
+> Revisão 1.13.0.04: o botão de atualização localizada da Divulgação pertence
+> ao AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.13.0.03: a separação entre preço interno de venda e preço sugerido
 > de revenda pertence à Gestão Web e ao AvantaVendas; sem alteração operacional
