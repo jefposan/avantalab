@@ -1077,16 +1077,61 @@ function normalizar(texto) {
   return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
-function toast(msg) {
+function dadosToast(msg, opcoes = {}) {
+  const mensagem = String(msg || '').trim();
+  const texto = normalizar(mensagem);
+  const configuracao = typeof opcoes === 'string' ? { tipo: opcoes } : (opcoes || {});
+  let tipo = configuracao.tipo;
+
+  if (!['sucesso', 'informacao', 'atencao', 'erro'].includes(tipo)) {
+    if (/nao foi possivel|erro|falha|indisponivel|expirou|nao responde|nao encontrado|nao localizada|nao localizado|incorret|invalido|record "|column |relation |violat|duplicat|network|fetch|timeout|unauthor|permission|jwt|token/.test(texto)) tipo = 'erro';
+    else if (/informe|selecione|digite|confirme|conecte-se|permita|cadastre|adicione|somente|nao ha|nao possui|nenhum|ja e|no maximo|nao pode|deve ter|deixe o campo|use uma|use a opcao/.test(texto)) tipo = 'atencao';
+    else if (/salv|atualiz|adicion|registr|confirm|enviad|gerad|criad|restaur|exclu|removid|ativad|desativad|carregad|aplicad|preenchid|importad|baixad|aprovad|reagendad|agendad|resetad|concedid|inserid/.test(texto)) tipo = 'sucesso';
+    else tipo = 'informacao';
+  }
+
+  const padroes = {
+    sucesso: { titulo: 'Tudo certo', icone: 'check-circle', duracao: 4200 },
+    informacao: { titulo: 'Aviso', icone: 'info', duracao: 4600 },
+    atencao: { titulo: 'Confira as informações', icone: 'warning', duracao: 5200 },
+    erro: { titulo: 'Não foi possível concluir', icone: 'alert-circle', duracao: 6500 },
+  };
+  const padrao = padroes[tipo];
+
+  if (texto === 'materiais atualizados.' || texto === 'materiais atualizados') {
+    return {
+      tipo: 'sucesso',
+      titulo: 'Materiais atualizados',
+      mensagem: 'Pastas e arquivos estão sincronizados.',
+      icone: 'check-circle',
+      duracao: padroes.sucesso.duracao,
+    };
+  }
+
+  return {
+    tipo,
+    titulo: String(configuracao.titulo || padrao.titulo),
+    mensagem,
+    icone: String(configuracao.icone || padrao.icone),
+    duracao: Math.max(2800, Number(configuracao.duracao || padrao.duracao)),
+  };
+}
+
+function toast(msg, opcoes = {}) {
   const atual = document.querySelector('.toast');
   if (atual) atual.remove();
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.setAttribute('role', 'alert');
-  el.setAttribute('aria-live', 'assertive');
-  el.textContent = msg;
+
+  const dados = dadosToast(msg, opcoes);
+  const el = document.createElement('section');
+  el.className = `toast toast-${dados.tipo}`;
+  el.setAttribute('role', dados.tipo === 'erro' ? 'alert' : 'status');
+  el.setAttribute('aria-live', dados.tipo === 'erro' ? 'assertive' : 'polite');
+  el.setAttribute('aria-atomic', 'true');
+  el.style.setProperty('--toast-duration', `${dados.duracao}ms`);
+  el.innerHTML = `<span class="toast-icon" aria-hidden="true">${svgIconEstavel(dados.icone)}</span><span class="toast-copy"><strong>${escapeHtml(dados.titulo)}</strong><span>${escapeHtml(dados.mensagem)}</span></span><button class="toast-close" type="button" aria-label="Fechar aviso">${svgIcon('x')}</button><i class="toast-progress" aria-hidden="true"></i>`;
+  el.querySelector('.toast-close')?.addEventListener('click', () => el.remove());
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2800);
+  setTimeout(() => el.remove(), dados.duracao);
 }
 
 function chaveMetaCelebrada(meta) {
@@ -1153,6 +1198,8 @@ const ICONES_SVG_ESTAVEIS = {
   'rotate-ccw': '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
   'user-x': '<path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/>',
   'check-circle': '<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/>',
+  warning: '<path d="M10.3 3.6 2.5 17.1A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.9L13.7 3.6a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>',
+  'alert-circle': '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 17h.01"/>',
   'message-circle': '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A8 8 0 1 1 21 15Z"/>',
   'chevron-up': '<path d="m6 15 6-6 6 6"/>',
   'chevron-down': '<path d="m6 9 6 6 6-6"/>',

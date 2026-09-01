@@ -39,6 +39,24 @@ const acaoPagamento = '<button class="secondary quick-action-button quick-action
 const acaoPedido = '<button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">';
 
 exigir(
+  aplicacao.includes('function dadosToast(msg, opcoes = {})')
+    && aplicacao.includes("['sucesso', 'informacao', 'atencao', 'erro']")
+    && aplicacao.includes("el.className = `toast toast-${dados.tipo}`")
+    && aplicacao.includes("el.setAttribute('role', dados.tipo === 'erro' ? 'alert' : 'status')")
+    && aplicacao.includes('aria-atomic')
+    && aplicacao.includes('aria-label="Fechar aviso"')
+    && estilos.includes('.toast-icon')
+    && estilos.includes('.toast-copy')
+    && estilos.includes('.toast-progress')
+    && estilos.includes('.toast-sucesso')
+    && estilos.includes('.toast-atencao')
+    && estilos.includes('.toast-erro')
+    && estilos.includes('.dark-theme .toast')
+    && estilos.includes('.toast, .toast-progress { animation: none !important; }'),
+  'Avisos rápidos devem usar o cartão semântico acessível, ficar acima dos modais e respeitar tema escuro e movimento reduzido.',
+);
+
+exigir(
   aplicacao.includes('function abrirAvisoAcessoVendas(titulo, mensagem, campoId = \'\')')
     && aplicacao.includes('role="alertdialog" aria-modal="true"')
     && aplicacao.includes('campo.focus({ preventScroll: true })')

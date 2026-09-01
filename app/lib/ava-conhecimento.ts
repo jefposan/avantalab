@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.05: avisos rápidos do AvantaVendas possuem hierarquia
+// visual, ícone e tratamento semântico de sucesso, informação, atenção e erro.
 // Revisado na versão 1.13.0.04: Divulgação possui atualização manual localizada,
 // sem reiniciar o AvantaVendas ou reler os demais dados operacionais.
 // Revisado na versão 1.13.0.03: o preço interno de venda da empresa e o preço

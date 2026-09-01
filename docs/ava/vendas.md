@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.04 -->
+<!-- ava-version: 1.13.0.05 -->
+
+> Revisão 1.13.0.05: os avisos rápidos do AvantaVendas usam um cartão compacto
+> com ícone e cores semânticas para sucesso, informação, atenção e erro. O texto
+> permanece legível, o aviso fica acima dos modais e pode ser fechado pelo X.
 
 > Revisão 1.13.0.04: em **Divulgação**, **Atualizar** fica à direita do título
 > e relê somente vínculos de conteúdo, pastas e materiais. A ação mantém a

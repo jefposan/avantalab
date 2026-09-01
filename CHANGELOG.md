@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.13.0.05 - 2026-09-01
+
+- Todos os avisos rápidos do AvantaVendas passam a usar um cartão compacto com
+  ícone, título, mensagem e cor semântica para sucesso, informação, atenção e
+  erro, mantendo contraste nos temas claro e escuro.
+- O aviso fica acima de cards e modais, possui fechamento manual, tempo de
+  leitura adequado e respeita a preferência de movimento reduzido.
+
 ## 1.13.0.04 - 2026-09-01
 
 - **Divulgação** recebe um botão **Atualizar** à direita do título. A ação relê

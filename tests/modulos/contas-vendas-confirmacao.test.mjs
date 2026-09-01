@@ -40,9 +40,10 @@ test('novo pedido e novo pagamento abrem o comprovante sem aviso redundante', ()
 });
 
 test('aviso rápido permanece acessível acima das camadas modais', () => {
-  assert.match(aplicacao, /el\.setAttribute\('role', 'alert'\)/);
-  assert.match(aplicacao, /el\.setAttribute\('aria-live', 'assertive'\)/);
-  assert.match(estilos, /\.toast \{[\s\S]*z-index: calc\(var\(--vendas-layer-modal\) \+ 30\);/);
+  assert.match(aplicacao, /el\.setAttribute\('role', dados\.tipo === 'erro' \? 'alert' : 'status'\)/);
+  assert.match(aplicacao, /el\.setAttribute\('aria-live', dados\.tipo === 'erro' \? 'assertive' : 'polite'\)/);
+  assert.match(aplicacao, /el\.setAttribute\('aria-atomic', 'true'\)/);
+  assert.match(estilos, /\.toast \{[\s\S]*z-index: calc\(var\(--vendas-layer-modal\) \+ 40\);/);
 });
 
 test('troca de tema preserva a estrutura do menu inferior fixo', () => {
