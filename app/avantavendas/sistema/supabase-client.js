@@ -360,7 +360,7 @@
     if (!contaId) throw new Error('Selecione uma conta de vendas.');
     const { data, error } = await requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc', { p_conta_id: contaId });
     if (error) throw error;
-    return data || { adicionados: 0, ja_recebidos: 0 };
+    return data || { adicionados: 0, ja_recebidos: 0, sem_preco: 0 };
   }
 
   async function salvarPreferencias(preferencias, versao = 1) {
@@ -550,7 +550,7 @@
       divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []).filter((pasta) => vinculosComerciais.some((vinculo) => vinculo.empresa_id === pasta.empresa_id && vinculo.divulgacao_ativa)),
       divulgacaoMateriais: materiaisRes.error ? [] : (materiaisRes.data || []),
       moduloAtivo,
-      sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
+      sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0, sem_preco: 0 },
       vinculosComerciais,
       vinculoComercialAtivo: vinculoAtivo,
       perfisFinanceiros: perfisFinanceirosRes.data || [],

@@ -4,9 +4,11 @@ import { test } from 'node:test';
 
 const migracao = readFileSync('supabase/migrations/20260831130000_tabelas_precos_produtos_importacao.sql', 'utf8');
 const desvinculo = readFileSync('supabase/migrations/20260831220000_desvincular_precificacao_avantavendas.sql', 'utf8');
+const separacaoDivulgacao = readFileSync('supabase/migrations/20260901100000_separar_preco_divulgacao_precificacao.sql', 'utf8');
 const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const tabelas = readFileSync('app/custos/TabelasPrecosView.tsx', 'utf8');
 const repositorio = readFileSync('app/custos/repository.ts', 'utf8');
+const catalogoDivulgacao = readFileSync('app/components/CatalogoProdutosVendas.tsx', 'utf8');
 const vendas = readFileSync('app/avantavendas/sistema/app.js', 'utf8');
 const vendasDb = readFileSync('app/avantavendas/sistema/supabase-client.js', 'utf8');
 
@@ -50,6 +52,21 @@ test('pedido usa o preço sugerido do catálogo de divulgação e permite ediç�
   assert.match(vendas, /<span>Preço<\/span><input id="pedidoClientePreco" type="text" inputmode="numeric"/);
   assert.match(vendas, /oninput="pedidoClienteRascunho\.preco=formatarCampoMoeda\(this\)"/);
   assert.doesNotMatch(vendas, /id="pedidoClientePreco"[^>]*readonly/);
+});
+
+test('preço de revenda da divulgação é independente da venda interna da Gestão', () => {
+  assert.match(separacaoDivulgacao, /add column if not exists preco_divulgacao numeric\(12,2\)/);
+  assert.match(separacaoDivulgacao, /historico\.preco_anterior/);
+  assert.match(separacaoDivulgacao, /nullif\(produto\.preco_venda, 0\)/);
+  assert.match(separacaoDivulgacao, /v_produto\.preco_divulgacao, 0/);
+  assert.doesNotMatch(separacaoDivulgacao, /coalesce\(v_produto\.preco_divulgacao, v_produto\.preco_venda\)/);
+  assert.match(catalogoDivulgacao, /Preço sugerido de revenda/);
+  assert.match(catalogoDivulgacao, /preco_divulgacao: revenda/);
+  assert.match(catalogoDivulgacao, /insert\(\{ \.\.\.payload, preco_custo: 0, preco_venda: 0 \}\)/);
+  assert.match(catalogoDivulgacao, /preco_custo: 0, preco_venda: Number\(produto\.preco_divulgacao \|\| 0\)/);
+  assert.doesNotMatch(catalogoDivulgacao, /preco_custo: custo/);
+  assert.doesNotMatch(repositorio, /preco_divulgacao/);
+  assert.match(repositorio, /preco_venda: produto\.preco_venda/);
 });
 
 test('migração de compatibilidade desativa automações sem apagar dados históricos', () => {

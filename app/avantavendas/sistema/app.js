@@ -112,7 +112,7 @@ const estadoInicial = {
   moduloVendasAtivo: true,
   premiumVendasBloqueado: false,
   estadoAssinaturaVendas: null,
-  sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
+  sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0, sem_preco: 0 },
   integracaoGestao: { base_receita: 'recebidos', pode_configurar: false },
   vinculosComerciais: [],
   vinculoComercialAtivo: null,
@@ -1018,7 +1018,7 @@ function restaurarCacheVendas(cache) {
   state.conteudosVendas = dados.conteudosVendas || null;
   state.divulgacaoPastas = dados.divulgacaoPastas || [];
   state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
-  state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
+  state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0, sem_preco: 0 };
   state.integracaoGestao = dados.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
   state.vinculosComerciais = dados.vinculosComerciais || [];
   state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
@@ -3432,7 +3432,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.moduloVendasAtivo = dados.moduloAtivo !== false;
       state.premiumVendasBloqueado = dados.premiumBloqueado === true;
       state.estadoAssinaturaVendas = dados.estadoAssinatura || null;
-      state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
+      state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0, sem_preco: 0 };
       state.integracaoGestao = dados.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
       state.vinculosComerciais = dados.vinculosComerciais || [];
       state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
@@ -3463,7 +3463,7 @@ async function sincronizarCatalogoAutomaticamente(atualizarTela = false) {
   sincronizacaoCatalogoEmAndamento = true;
   try {
     const sincronizacao = await window.VendasDb.sincronizarCatalogoVendas();
-    state.sincronizacaoCatalogo = sincronizacao || { adicionados: 0, ja_recebidos: 0 };
+    state.sincronizacaoCatalogo = sincronizacao || { adicionados: 0, ja_recebidos: 0, sem_preco: 0 };
     if (Number(state.sincronizacaoCatalogo.adicionados || 0) > 0) {
       const catalogo = await window.VendasDb.listarCatalogoVendas();
       state.produtos = catalogo.produtos;
@@ -8269,8 +8269,8 @@ function carregarBibliotecaZip() {
 }
 
 function mostrarSincronizacaoCatalogo() {
-  const sincronizacao = state.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
-  sheet(`<div class="sheet-header"><div><h2>Sincronização do catálogo</h2><p class="muted small">Os produtos publicados pela empresa são verificados em segundo plano após a abertura.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><article class="stock-current"><span>Novos produtos recebidos nesta abertura</span><b>${Number(sincronizacao.adicionados || 0)}</b></article><article class="stock-current"><span>Produtos já recebidos anteriormente</span><b>${Number(sincronizacao.ja_recebidos || 0)}</b></article><p class="muted small">Produtos que você já alterou — inclusive preços e custos — não são sobrescritos pela atualização automática.</p><button class="primary" onclick="sincronizarCatalogoAgora()">${svgIcon('save')} Verificar agora</button></div>`, 'sheet-backdrop-centered');
+  const sincronizacao = state.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0, sem_preco: 0 };
+  sheet(`<div class="sheet-header"><div><h2>Sincronização do catálogo</h2><p class="muted small">Os produtos publicados pela empresa são verificados em segundo plano após a abertura.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><article class="stock-current"><span>Novos produtos recebidos nesta abertura</span><b>${Number(sincronizacao.adicionados || 0)}</b></article><article class="stock-current"><span>Produtos já recebidos anteriormente</span><b>${Number(sincronizacao.ja_recebidos || 0)}</b></article><article class="stock-current"><span>Produtos aguardando preço sugerido de revenda</span><b>${Number(sincronizacao.sem_preco || 0)}</b></article><p class="muted small">Produtos que você já alterou — inclusive preços e custos — não são sobrescritos pela atualização automática.</p><button class="primary" onclick="sincronizarCatalogoAgora()">${svgIcon('save')} Verificar agora</button></div>`, 'sheet-backdrop-centered');
 }
 
 async function sincronizarCatalogoAgora() {

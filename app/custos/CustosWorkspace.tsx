@@ -133,7 +133,7 @@ function ProductStrip({ produtos, ativoId, documento, onSelecionar }: { produtos
           <strong>{produto.sku || 'Sem código'} · {produto.nome}</strong>
           <small>{produto.tipo_item === 'produto' ? 'Produto' : 'Serviço'} · {documento.composicoes[produto.id]?.itens.length || 0} componentes</small>
           <span>Custo atual <b>{formatarMoeda(calculo.total || produto.preco_custo)}</b></span>
-          <span>Venda <b>{formatarMoeda(produto.preco_venda)}</b></span>
+          <span>Venda interna <b>{formatarMoeda(produto.preco_venda)}</b></span>
         </button>;
       })}
       {!filtrados.length && <div className={styles.emptyStrip}>Nenhum cadastro encontrado.</div>}
@@ -160,7 +160,7 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
         <Metric label="Custos diretos" value={formatarMoeda(calculo.direto)} detail={`${calculo.linhas.length} componentes`} />
         <Metric label="Custos indiretos" value={formatarMoeda(calculo.indireto)} detail={`${(documento.composicoes[produtoAtivo.id]?.indiretos || 0).toFixed(2)}% sobre os diretos`} />
         <Metric accent label="Custo unitário" value={formatarMoeda(calculo.total)} detail="Composição vigente" />
-        <Metric label="Preço sugerido" value={calculo.valido ? formatarMoeda(calculo.preco) : 'Revisar percentuais'} detail={`Venda atual: ${formatarMoeda(produtoAtivo.preco_venda)}`} />
+        <Metric label="Venda interna calculada" value={calculo.valido ? formatarMoeda(calculo.preco) : 'Revisar percentuais'} detail={`Venda interna atual: ${formatarMoeda(produtoAtivo.preco_venda)}`} />
       </section>
       <section className={styles.twoColumns}><article className={styles.panel}><div className={styles.panelTitle}><div><h2>Composição de {produtoAtivo.nome}</h2><p>Participação dos principais componentes no custo.</p></div><button type="button" className={styles.linkButton} onClick={onAbrir}>Abrir cadastro</button></div>
         <div className={styles.costBars}>{calculo.linhas.sort((a, b) => b.custo - a.custo).slice(0, 8).map((linha) => <div key={linha.item.id}><span>{linha.recurso?.nome || 'Recurso não localizado'}<b>{formatarMoeda(linha.custo)}</b></span><i><em style={{ width: `${calculo.total ? Math.max(3, linha.custo / calculo.total * 100) : 3}%` }} /></i></div>)}{!calculo.linhas.length && <p className={styles.empty}>Ainda não há componentes neste cadastro.</p>}</div>
@@ -251,7 +251,7 @@ function ProdutosView({ catalogoId, produtos, setProdutos, documento, produtoAti
             <Field label="Categoria"><input value={rascunho.categoria} onChange={(e) => alterar('categoria', e.target.value)} /></Field>
             <Field label="Marca"><input value={rascunho.marca} onChange={(e) => alterar('marca', e.target.value)} /></Field>
             <Field label="Unidade"><input value={rascunho.unidade} onChange={(e) => alterar('unidade', e.target.value)} /></Field>
-            <Field label="Preço de venda"><MoneyInput value={rascunho.preco_venda} onChange={(valor) => alterar('preco_venda', valor)} label="Preço de venda" /></Field>
+            <Field label="Preço de venda da empresa"><MoneyInput value={rascunho.preco_venda} onChange={(valor) => alterar('preco_venda', valor)} label="Preço de venda da empresa" /></Field>
             <Field label="Descrição" wide><textarea rows={2} value={rascunho.descricao} onChange={(e) => alterar('descricao', e.target.value)} /></Field>
           </div>
         </div>
@@ -273,7 +273,7 @@ function ProdutosView({ catalogoId, produtos, setProdutos, documento, produtoAti
       </section>
 
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Formação do preço</h2><p>Percentuais próprios deste produto ou serviço.</p></div></div><div className={styles.priceParams}><Field label="Custos indiretos"><PercentInput value={composicao.indiretos} onChange={(valor) => setComposicao({ ...composicao, indiretos: valor })} /></Field><Field label="Impostos"><PercentInput value={composicao.impostos} onChange={(valor) => setComposicao({ ...composicao, impostos: valor })} /></Field><Field label="Taxas e comissões"><PercentInput value={composicao.taxas} onChange={(valor) => setComposicao({ ...composicao, taxas: valor })} /></Field><Field label="Margem desejada"><PercentInput value={composicao.margem} onChange={(valor) => setComposicao({ ...composicao, margem: valor })} /></Field></div>
-        <div className={styles.priceResults}><div><span>Custo direto</span><b>{formatarMoeda(calculo.direto)}</b></div><div><span>Custo total</span><b>{formatarMoeda(calculo.total)}</b></div><div className={styles.priceHighlight}><span>Preço sugerido</span><strong>{calculo.valido ? formatarMoeda(calculo.preco) : 'Revisar percentuais'}</strong></div><div><span>Preço no catálogo</span><b>{formatarMoeda(rascunho.preco_venda)}</b><button type="button" className={styles.linkButton} disabled={!calculo.valido} onClick={() => alterar('preco_venda', calculo.preco)}>Aplicar sugerido</button></div></div>
+        <div className={styles.priceResults}><div><span>Custo direto</span><b>{formatarMoeda(calculo.direto)}</b></div><div><span>Custo total</span><b>{formatarMoeda(calculo.total)}</b></div><div className={styles.priceHighlight}><span>Venda interna calculada</span><strong>{calculo.valido ? formatarMoeda(calculo.preco) : 'Revisar percentuais'}</strong></div><div><span>Preço de venda da empresa</span><b>{formatarMoeda(rascunho.preco_venda)}</b><button type="button" className={styles.linkButton} disabled={!calculo.valido} onClick={() => alterar('preco_venda', calculo.preco)}>Usar preço calculado</button></div></div>
       </section>
       <footer className={styles.saveBar}>{rascunho.id && rascunho.ativo ? <button type="button" className={styles.dangerLink} onClick={() => setConfirmarInativacao(true)}>Inativar cadastro</button> : <span />}
         <div><small>Salvar composição registra uma nova versão apenas quando os valores mudarem.</small><button type="button" className={styles.secondaryButton} onClick={() => void salvarCadastro()}>Salvar cadastro</button><button type="button" className={styles.primaryButton} onClick={() => void salvarComposicao()}>Salvar composição</button></div></footer>

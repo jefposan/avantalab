@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.02 -->
+<!-- ava-version: 1.13.0.03 -->
+
+> Revisão 1.13.0.03: o preço de venda em **Custos e Precificação** pertence à
+> operação interna da empresa. Em **Conteúdo do Vendas > Catálogo**, **Preço
+> sugerido de revenda** é preenchido separadamente e define somente a sugestão
+> enviada ao distribuidor no AvantaVendas. Alterar um não modifica o outro, e
+> o custo interno da empresa não é exibido nem enviado nessa divulgação.
 
 > Revisão 1.13.0.02: **Custos e Precificação > Tabelas de preços** permanece
 > exclusivo da Gestão. O AvantaVendas não consulta essas tabelas nem as grava em

@@ -7,10 +7,10 @@ import { formatarDescricao } from '../lib/formatters';
 import { supabase } from '../lib/supabase';
 import ModalConfirmacao from './ModalConfirmacao';
 
-type Produto = { id: string; sku: string | null; nome: string; marca: string | null; categoria: string | null; descricao: string | null; preco_custo: number; preco_venda: number; unidade: string; imagem_url: string | null; ncm: string | null; codigo_barras: string | null; ativo: boolean; atualizado_em: string };
+type Produto = { id: string; sku: string | null; nome: string; marca: string | null; categoria: string | null; descricao: string | null; preco_divulgacao: number | null; unidade: string; imagem_url: string | null; ncm: string | null; codigo_barras: string | null; ativo: boolean; atualizado_em: string };
 type Props = { empresaId: string; darkMode: boolean; corPrimaria: string };
 
-const vazio = { id: '', sku: '', nome: '', marca: '', categoria: '', descricao: '', preco_custo: '', preco_venda: '', unidade: 'un', imagem_url: '', ncm: '', codigo_barras: '', ativo: true };
+const vazio = { id: '', sku: '', nome: '', marca: '', categoria: '', descricao: '', preco_divulgacao: '', unidade: 'un', imagem_url: '', ncm: '', codigo_barras: '', ativo: true };
 const textoNumero = (valor: string) => {
   const texto = String(valor || '').replace(/R\$|\s/g, '');
   return Number(texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto);
@@ -33,7 +33,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const arquivoRef = useRef<HTMLInputElement>(null);
   const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
-  const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['unidade', 'Unidade'], ['preco_custo', 'Preço de custo'], ['preco_venda', 'Preço de venda'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
+  const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['unidade', 'Unidade'], ['preco_divulgacao', 'Preço sugerido de revenda'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
 
   const carregar = useCallback(async () => {
     if (!empresaId) return;
@@ -51,7 +51,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
       return;
     }
     setCatalogoId(catalogo.id);
-    const { data, error } = await supabase.from('vendas_mobile_catalogo_produtos').select('id,sku,nome,marca,categoria,descricao,preco_custo,preco_venda,unidade,imagem_url,ncm,codigo_barras,ativo,atualizado_em').eq('catalogo_id', catalogo.id).eq('disponivel_catalogo', true).order('nome');
+    const { data, error } = await supabase.from('vendas_mobile_catalogo_produtos').select('id,sku,nome,marca,categoria,descricao,preco_divulgacao,unidade,imagem_url,ncm,codigo_barras,ativo,atualizado_em').eq('catalogo_id', catalogo.id).eq('disponivel_catalogo', true).order('nome');
     if (error) setErro('Não foi possível carregar os produtos.');
     else setProdutos((data || []) as Produto[]);
     setCarregando(false);
@@ -59,21 +59,25 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
 
   useEffect(() => { const timer = window.setTimeout(() => void carregar(), 0); return () => window.clearTimeout(timer); }, [carregar]);
   const mudar = (nome: string, valor: string | boolean) => setFormulario((atual) => ({ ...atual, [nome]: valor }));
-  const editar = (produto: Produto) => setFormulario({ ...vazio, ...produto, preco_custo: Number(produto.preco_custo).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), preco_venda: Number(produto.preco_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || '', descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
+  const editar = (produto: Produto) => setFormulario({ ...vazio, ...produto, preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || '', descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
 
   const salvar = async () => {
     const nome = formatarDescricao(String(formulario.nome || ''));
-    const custo = textoNumero(String(formulario.preco_custo || ''));
-    const venda = textoNumero(String(formulario.preco_venda || ''));
+    const revenda = textoNumero(String(formulario.preco_divulgacao || ''));
     const sku = String(formulario.sku || '').trim().toUpperCase();
-    if (!sku || !nome || !Number.isFinite(custo) || custo < 0 || !Number.isFinite(venda) || venda <= 0) {
-      setErro('Código, nome, preço de custo e preço de venda são obrigatórios.');
+    if (!sku || !nome || !Number.isFinite(revenda) || revenda <= 0) {
+      setErro('Código, nome e preço sugerido de revenda são obrigatórios.');
       return;
     }
     setSalvando(true);
     setErro('');
-    const payload = { catalogo_id: catalogoId, sku, tipo_item: 'produto', disponivel_catalogo: true, codigo_barras: String(formulario.codigo_barras || '').trim() || null, marca: String(formulario.marca || '').trim() || null, categoria: String(formulario.categoria || '').trim() || null, nome, descricao: String(formulario.descricao || '').trim() || null, preco_custo: custo, preco_venda: venda, unidade: String(formulario.unidade || 'un').trim() || 'un', imagem_url: String(formulario.imagem_url || '').trim() || null, ncm: String(formulario.ncm || '').trim() || null, ativo: formulario.ativo !== false, atualizado_em: new Date().toISOString() };
-    const query = formulario.id ? supabase.from('vendas_mobile_catalogo_produtos').update(payload).eq('id', formulario.id) : supabase.from('vendas_mobile_catalogo_produtos').insert(payload);
+    const payload = { catalogo_id: catalogoId, sku, tipo_item: 'produto', disponivel_catalogo: true, codigo_barras: String(formulario.codigo_barras || '').trim() || null, marca: String(formulario.marca || '').trim() || null, categoria: String(formulario.categoria || '').trim() || null, nome, descricao: String(formulario.descricao || '').trim() || null, preco_divulgacao: revenda, unidade: String(formulario.unidade || 'un').trim() || 'un', imagem_url: String(formulario.imagem_url || '').trim() || null, ncm: String(formulario.ncm || '').trim() || null, ativo: formulario.ativo !== false, atualizado_em: new Date().toISOString() };
+    // A tabela ainda guarda os campos financeiros internos da Gestão. Em uma
+    // criação feita pela Divulgação eles nascem zerados apenas por
+    // compatibilidade estrutural e nunca recebem o preço de revenda.
+    const query = formulario.id
+      ? supabase.from('vendas_mobile_catalogo_produtos').update(payload).eq('id', formulario.id)
+      : supabase.from('vendas_mobile_catalogo_produtos').insert({ ...payload, preco_custo: 0, preco_venda: 0 });
     const { error } = await query;
     setSalvando(false);
     if (error) {
@@ -121,7 +125,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
             }
           } catch { /* o produto ainda é exportado, apenas sem a cópia da imagem */ }
         }
-        return { ...produto, imagem_arquivo };
+        return { ...produto, preco_custo: 0, preco_venda: Number(produto.preco_divulgacao || 0), imagem_arquivo };
       }));
       zip.file('catalogo-vendas-mobile.json', JSON.stringify({ versao: 1, criado_em: new Date().toISOString(), produtos: itens }, null, 2));
       const arquivo = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
@@ -165,7 +169,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     <div className="grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
       <div className="xl:flex xl:min-h-0 xl:items-center">
       <section className={`rounded-xl border p-3 xl:max-h-full xl:w-full xl:overflow-y-auto ${painel}`}>
-        <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ backgroundColor: corPrimaria }}>{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: código, nome, custo e preço de venda.</p></div>
+        <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ backgroundColor: corPrimaria }}>{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: código, nome e preço sugerido de revenda.</p></div>
         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
           {campos.map(([chave, rotulo]) => <label key={chave} className="text-[9px] font-black uppercase opacity-70">{rotulo}<input value={String(formulario[chave] || '')} onChange={(e) => mudar(chave, chave.startsWith('preco') ? formatarMoedaDigitada(e.target.value) : e.target.value)} onBlur={chave === 'nome' ? () => mudar('nome', formatarDescricao(String(formulario.nome || ''))) : undefined} inputMode={chave.startsWith('preco') ? 'numeric' : undefined} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} /></label>)}
         </div>
@@ -179,7 +183,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
         <div className="mt-2 flex flex-wrap items-center gap-2"><label className="mr-auto flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo</label><div className="flex items-center gap-2">{formulario.id && formulario.ativo !== false && <button type="button" onClick={solicitarExclusaoProduto} disabled={salvando} className="h-8 rounded-md border border-amber-300 bg-amber-50 px-2.5 text-[10px] font-black uppercase text-amber-800 disabled:opacity-60">Inativar</button>}<button type="button" onClick={() => void salvar()} disabled={salvando} className="h-8 rounded-md px-3 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Salvando...' : 'Salvar produto'}</button>{formulario.id && <button type="button" onClick={() => setFormulario(vazio)} disabled={salvando} className="h-8 rounded-md border px-2.5 text-[10px] font-black disabled:opacity-60">Cancelar</button>}</div></div>
       </section>
       </div>
-      <section className="xl:flex xl:min-h-0 xl:flex-col"><h4 className="shrink-0 text-sm font-black">Produtos do pacote</h4><div className="mt-2 overflow-x-auto rounded-xl border xl:min-h-0 xl:flex-1 xl:overflow-auto"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Custo</th><th className="px-3 py-2">Venda</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={5} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_custo).toFixed(2)}</td><td className="px-3 py-2">R$ {Number(produto.preco_venda).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={5} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
+      <section className="xl:flex xl:min-h-0 xl:flex-col"><h4 className="shrink-0 text-sm font-black">Produtos do pacote</h4><div className="mt-2 overflow-x-auto rounded-xl border xl:min-h-0 xl:flex-1 xl:overflow-auto"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Revenda sugerida</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={4} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_divulgacao || 0).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={4} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
     </div>
     {erro && <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
     <ModalConfirmacao

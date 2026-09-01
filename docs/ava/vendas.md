@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.02 -->
+<!-- ava-version: 1.13.0.03 -->
+
+> Revisão 1.13.0.03: o preço recebido no catálogo é o **Preço sugerido de
+> revenda**, administrado em **Conteúdo do Vendas > Catálogo**. Ele não usa o
+> preço de venda interno formado em Custos e Precificação. Produtos publicados
+> sem essa sugestão aguardam o preenchimento antes da primeira sincronização.
+> O custo interno da empresa não é enviado pelo catálogo de divulgação.
+
+> Revisão 1.13.0-av107: sincronização exclusiva do preço de divulgação e
+> indicação dos produtos que aguardam uma sugestão de revenda.
 
 > Revisão 1.13.0.02: o AvantaVendas não carrega nem aplica as tabelas de
 > **Custos e Precificação** da Gestão nos clientes ou pedidos. Ao selecionar um
@@ -318,7 +327,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 106 -->
+<!-- avantavendas-asset-revision: 107 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

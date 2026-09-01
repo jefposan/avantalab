@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.13.0.03 - 2026-09-01
+
+- O preço de venda formado em **Custos e Precificação** passa a ser tratado
+  exclusivamente como preço interno da empresa.
+- **Conteúdo do Vendas > Catálogo** ganha o campo próprio **Preço sugerido de
+  revenda**. Esse é o único valor enviado como sugestão aos novos produtos do
+  AvantaVendas e continua editável pelo vendedor em cada pedido.
+- Os preços anteriormente divulgados são preservados no novo campo durante a
+  migração. Quando a precificação interna já os alterou, o primeiro valor
+  anterior auditado é recuperado; alterações futuras na Gestão não modificam a
+  sugestão de revenda.
+- A situação da sincronização informa produtos publicados que ainda aguardam
+  um preço sugerido de revenda, sem publicar o preço interno por substituição.
+- O catálogo de divulgação deixa de expor ou enviar o custo interno da empresa
+  aos perfis de distribuição já na primeira sincronização.
+
+## 1.13.0-av107 - 2026-09-01
+
+- AvantaVendas: sincronização passa a receber somente o preço próprio da
+  divulgação, mantendo o valor sugerido editável no pedido.
+
 ## 1.13.0.02 - 2026-08-31
 
 - AvantaVendas voltou a iniciar o pedido com o preço sugerido recebido no seu

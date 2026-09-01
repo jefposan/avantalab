@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.02 -->
+<!-- ava-version: 1.13.0.03 -->
+
+> Revisão 1.13.0.03: a separação entre preço interno de venda e preço sugerido
+> de revenda pertence à Gestão Web e ao AvantaVendas; sem alteração operacional
+> na Gestão Mobile.
 
 > Revisão 1.13.0.02: a separação entre a precificação da Gestão e o catálogo de
 > divulgação do AvantaVendas não altera o funcionamento da Gestão Mobile.
