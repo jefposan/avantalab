@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0 -->
+<!-- ava-version: 1.13.0.01 -->
+
+> Revisão 1.13.0.01: o reforço visual do processamento de lançamentos pertence
+> à Gestão Mobile; sem alteração operacional na Gestão Web.
 
 > Revisão 1.13.0: em **Custos e Precificação > Tabelas de preços**, a tabela
 > padrão acompanha o preço principal do produto. Use **Nova tabela** para criar

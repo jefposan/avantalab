@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0 -->
+<!-- ava-version: 1.13.0.01 -->
+
+> Revisão 1.13.0.01: o reforço visual do processamento de lançamentos pertence
+> à Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.13.0: no cadastro da cliente, **Tabela de preços** define a política
 > usada nos próximos pedidos. Sem vínculo específico, vale a Tabela padrão. O

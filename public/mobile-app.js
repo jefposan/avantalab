@@ -424,6 +424,7 @@
     modalLancamento: false,
     modalAcao: null,
     aplicacaoLancamento: false,
+    aplicacaoLancamentoMensagem: '',
     exclusaoRecorrencia: null,
     caixinhaResetConfirmacao: false,
     tipoLancamento: 'despesa',
@@ -3369,21 +3370,27 @@
     } catch (e) {}
   }
 
-  function iniciarAplicacaoLancamentoMobile() {
+  function iniciarAplicacaoLancamentoMobile(mensagem) {
+    if (state.aplicacaoLancamento) return false;
     state.aplicacaoLancamento = true;
+    state.aplicacaoLancamentoMensagem = mensagem || 'Aplicando alteração';
     state.carregando = true;
     state.erro = '';
     render();
+    return true;
   }
 
   function falharAplicacaoLancamentoMobile(mensagem) {
     state.aplicacaoLancamento = false;
+    state.aplicacaoLancamentoMensagem = '';
     state.carregando = false;
     setErro(mensagem);
   }
 
   function concluirAplicacaoLancamentoMobile(mensagem) {
     state.aplicacaoLancamento = false;
+    state.aplicacaoLancamentoMensagem = '';
+    state.carregando = false;
     notificarFinanceiroAtualizadoMobile();
     mostrarToast(mensagem);
   }
@@ -5326,8 +5333,14 @@
 
   function aplicacaoLancamentoHtml() {
     if (!state.aplicacaoLancamento) return '';
-    return '<div class="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/25" role="status" aria-label="Aplicando alteracao" aria-live="polite">' +
-      '<span class="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-cyan-700 shadow-2xl"><svg class="h-7 w-7 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.36 2.64" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>' +
+    var titulo = escapeHtml(state.aplicacaoLancamentoMensagem || 'Aplicando alteração');
+    return '<div class="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/85 px-4" role="dialog" aria-modal="true" aria-busy="true" aria-label="' + titulo + '">' +
+      '<section class="w-full max-w-xs overflow-hidden rounded-2xl border border-white/80 bg-white text-slate-900 shadow-2xl">' +
+        '<div class="flex items-center gap-3 bg-[#003E73] px-4 py-4 text-white" role="status" aria-live="assertive" aria-atomic="true">' +
+          '<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15"><svg class="h-5 w-5 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.36 2.64" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>' +
+          '<div><p class="text-sm font-black">' + titulo + '</p><p class="mt-0.5 text-[11px] font-semibold text-cyan-100">Aguarde enquanto aplicamos a alteração.</p></div>' +
+        '</div>' +
+      '</section>' +
     '</div>';
   }
 
@@ -7957,7 +7970,7 @@
   }
 
   async function salvarDespesa(ignorarAvisoDuplicado) {
-    if (!state.empresa || state.lancandoDespesa) return;
+    if (!state.empresa || state.lancandoDespesa || state.aplicacaoLancamento) return;
 
     var periodo = periodoLancamentoMobile();
     var dia = Number(campo('despesa-dia'));
@@ -8002,10 +8015,8 @@
       }
     }
 
+    if (!iniciarAplicacaoLancamentoMobile('Salvando despesa')) return;
     state.lancandoDespesa = true;
-    state.carregando = true;
-    state.erro = '';
-    render();
 
     var totalParcelas = (state.formParcelar && state.formParcelas >= 2) ? state.formParcelas : 1;
     var mesIndex = periodo.indice;
@@ -8048,8 +8059,7 @@
       if (resposta.error) {
         ok = false;
         state.lancandoDespesa = false;
-        state.carregando = false;
-        setErro('Nao foi possivel salvar a despesa.');
+        falharAplicacaoLancamentoMobile('Nao foi possivel salvar a despesa.');
         return;
       }
       if (!primeiroLancamentoId && resposta.data) primeiroLancamentoId = resposta.data.id;
@@ -8069,8 +8079,7 @@
     state.tipoLancamento = 'despesa';
     state.erro = '';
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast(totalParcelas > 1 ? 'Despesa parcelada em ' + totalParcelas + 'x.' : 'Despesa lancada.');
+    concluirAplicacaoLancamentoMobile(totalParcelas > 1 ? 'Despesa parcelada em ' + totalParcelas + 'x.' : 'Despesa lancada.');
   }
 
   async function salvarAporteCaixinhaMobile() {
@@ -8344,7 +8353,7 @@
   }
 
   async function salvarEntrada() {
-    if (!state.empresa) return;
+    if (!state.empresa || state.aplicacaoLancamento) return;
 
     var periodo = periodoLancamentoMobile();
     var dia = Number(campo('entrada-dia'));
@@ -8362,9 +8371,7 @@
       return;
     }
 
-    state.carregando = true;
-    state.erro = '';
-    render();
+    if (!iniciarAplicacaoLancamentoMobile('Salvando receita')) return;
 
     // Receita com data futura -> "prevista": nao entra no total efetivado agora
     // (entra so na previsao). Ao confirmar, e somada ao total do mes.
@@ -8387,8 +8394,7 @@
       .single();
 
     if (resposta.error) {
-      state.carregando = false;
-      setErro('Nao foi possivel salvar a entrada.');
+      falharAplicacaoLancamentoMobile('Nao foi possivel salvar a receita.');
       return;
     }
 
@@ -8401,8 +8407,7 @@
         .eq('mes', periodo.mes)
         .maybeSingle();
       if (totalExistente.error) {
-        state.carregando = false;
-        setErro('Entrada salva, mas o total do mes nao pode ser atualizado agora.');
+        falharAplicacaoLancamentoMobile('Receita salva, mas o total do mês não pode ser atualizado agora.');
         return;
       }
       var totalAtual = totalExistente.data ? Number(totalExistente.data.valor || 0) : 0;
@@ -8422,8 +8427,7 @@
         .single();
 
       if (total.error) {
-        state.carregando = false;
-        setErro('Entrada salva, mas o total do mes nao foi atualizado.');
+        falharAplicacaoLancamentoMobile('Receita salva, mas o total do mês não foi atualizado.');
         return;
       }
     }
@@ -8433,8 +8437,7 @@
     limparRascunhoLancamentoMobile();
     state.erro = '';
     await carregarDados();
-    notificarFinanceiroAtualizadoMobile();
-    mostrarToast('Entrada lancada.');
+    concluirAplicacaoLancamentoMobile('Receita lançada.');
   }
 
   async function salvarCategoriaDespesa() {

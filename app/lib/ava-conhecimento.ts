@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.01: ao incluir, editar, confirmar ou excluir uma
+// receita ou despesa na Gestão Mobile, a tela fica bloqueada com fundo escuro,
+// loading e texto da ação até o Dashboard terminar de atualizar. Falhas mantêm
+// o formulário ou lançamento para nova tentativa.
 // Revisado na versão 1.13.0: Custos e Precificação administra tabelas de preços,
 // exporta/importa produtos e valores por Excel com prévia e proteção contra
 // sobrescrita. O AvantaVendas aplica a tabela vinculada à cliente e preserva a

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.13.0.01 - 2026-08-31
+
+- Gestão Mobile: incluir despesa ou receita agora bloqueia a tela inteira com
+  fundo escuro, indicador de carregamento e mensagem da operação até o servidor
+  confirmar e o Dashboard ser atualizado. A mesma camada, antes discreta,
+  também passa a deixar explícitas as edições, confirmações e exclusões de
+  lançamentos, evitando solicitações duplicadas.
+
 ## 1.13.0 - 2026-08-31
 
 - Custos e Precificação recebeu **Tabelas de preços**, com uma tabela padrão e
