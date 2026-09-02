@@ -275,10 +275,11 @@
     const acessoGestorRes = await requireClient().rpc('garantir_acessos_gestor_vendas_mobile_rpc');
     if (acessoGestorRes.error) throw acessoGestorRes.error;
     atualizarProgresso('access', 2, 4, 'Conferindo permissões');
-    const [acessosRes, solicitacaoRes, vinculosRes] = await Promise.all([
+    const [acessosRes, solicitacaoRes, vinculosRes, contasDisponiveis] = await Promise.all([
       requireClient().rpc('meus_acessos_vendas_mobile_rpc'),
       requireClient().from('vendas_mobile_solicitacoes_acesso').select('*').eq('user_id', user.id).order('atualizado_em', { ascending: false }).limit(1).maybeSingle(),
       requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'),
+      listarContasVendas().catch(() => []),
     ]);
     if (acessosRes.error) throw acessosRes.error;
     if (solicitacaoRes.error) throw solicitacaoRes.error;
@@ -288,7 +289,6 @@
     try {
       empresaContexto = JSON.parse(localStorage.getItem('avantalab_mobile_sistema_contexto') || 'null')?.empresaId || '';
     } catch { /* preferência inválida */ }
-    const contasDisponiveis = await listarContasVendas().catch(() => []);
     const contaContexto = contasDisponiveis.find((conta) => conta.id === contaAtivaId()) || contasDisponiveis[0] || null;
     const empresaContaAtiva = contaContexto?.empresa_id || '';
     const contaIndependenteAtiva = Boolean(contaContexto && !contaContexto.empresa_id);
@@ -329,6 +329,8 @@
       premiumBloqueado: premium.bloqueado,
       estadoAssinatura: premium.estado,
       solicitacao: solicitacaoRes.data || null,
+      contasVendas: contasDisponiveis,
+      contaVendasAtiva: contaContexto,
     };
   }
 
@@ -431,6 +433,48 @@
     };
   }
 
+  async function carregarConteudosSecundarios() {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const [vinculosRes, conteudosRes, pastasRes, materiaisRes] = await Promise.all([
+      requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc', { p_conta_id: contaAtivaId() }),
+      requireClient()
+        .from('vendas_mobile_conteudos')
+        .select('id, empresa_id, pagina, tipo, titulo, descricao, criado_em')
+        .eq('ativo', true)
+        .order('criado_em', { ascending: false }),
+      requireClient()
+        .from('vendas_mobile_divulgacao_pastas')
+        .select('id, empresa_id, pasta_pai_id, capa_material_id, capa_arquivo_url, nome, descricao, ordem, criado_em')
+        .eq('ativo', true)
+        .order('ordem')
+        .order('criado_em', { ascending: false }),
+      requireClient()
+        .from('vendas_mobile_divulgacao_materiais')
+        .select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em')
+        .eq('ativo', true)
+        .order('ordem')
+        .order('criado_em', { ascending: false }),
+    ]);
+    const error = vinculosRes.error || conteudosRes.error || pastasRes.error || materiaisRes.error;
+    if (error) throw error;
+    const vinculos = vinculosRes.data || [];
+    const empresasComNovidades = new Set(vinculos
+      .filter((vinculo) => vinculo.novidades_ativas)
+      .map((vinculo) => vinculo.empresa_id));
+    const empresasComDivulgacao = new Set(vinculos
+      .filter((vinculo) => vinculo.divulgacao_ativa)
+      .map((vinculo) => vinculo.empresa_id));
+    const pastas = (pastasRes.data || []).filter((pasta) => empresasComDivulgacao.has(pasta.empresa_id));
+    const pastasPermitidas = new Set(pastas.map((pasta) => pasta.id));
+    return {
+      conteudos: (conteudosRes.data || []).filter((conteudo) =>
+        conteudo.pagina === 'informacoes' || empresasComNovidades.has(conteudo.empresa_id)),
+      divulgacaoPastas: pastas,
+      divulgacaoMateriais: (materiaisRes.data || []).filter((material) => pastasPermitidas.has(material.pasta_id)),
+    };
+  }
+
   async function loadAll(contextoPreparado = null) {
     const user = contextoPreparado?.user || await currentUser();
     if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true };
@@ -461,7 +505,9 @@
       };
     }
 
-    let contasVendas = await listarContasVendas();
+    let contasVendas = Array.isArray(contextoPreparado?.contasVendas)
+      ? contextoPreparado.contasVendas
+      : await listarContasVendas();
     if (!contasVendas.length) {
       atualizarProgresso('data', 0, 1, 'Preparando sua conta de vendas');
       const contaInicial = await garantirContaVendas();
@@ -474,7 +520,9 @@
     if (!contaId) throw new Error('Nenhuma conta de vendas está disponível para este acesso.');
     definirContaAtiva(contaId);
     const contaVendasAtiva = contasVendas.find((conta) => conta.id === contaId) || null;
-    const totalEtapasDados = 12;
+    // Novidades e Divulgação são carregadas depois que a interface é liberada.
+    // Elas não podem atrasar produtos, clientes e o acesso à Sala de Botões.
+    const totalEtapasDados = 9;
     let etapasDadosConcluidas = 0;
     const acompanharEtapaDados = (promessa, rotulo) => Promise.resolve(promessa).then(
       (resultado) => {
@@ -498,7 +546,7 @@
     if (perfisFinanceirosRes.error) throw perfisFinanceirosRes.error;
     const vinculosComerciais = vinculosRes.data || [];
     const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
-    const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes, preferenciasRes] = await Promise.all([
+    const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, integracaoRes, preferenciasRes] = await Promise.all([
       acompanharEtapaDados(listarCatalogoVendas(), 'Carregando produtos'),
       acompanharEtapaDados(carregarTodasPaginas(() => client
         .from('vendas_mobile_clientes')
@@ -519,9 +567,6 @@
         .order('data_pagamento', { ascending: false })
         .order('criado_em', { ascending: false })
         .order('id', { ascending: false })), 'Carregando pagamentos'),
-      acompanharEtapaDados(client.from('vendas_mobile_conteudos').select('id, empresa_id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }), 'Carregando novidades'),
-      acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, capa_material_id, capa_arquivo_url, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
-      acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
       acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc', { p_conta_id: contaId }), 'Carregando integração financeira'),
       acompanharEtapaDados(client.from('vendas_mobile_contas_preferencias').select('versao, preferencias, atualizado_em').eq('conta_id', contaId).maybeSingle(), 'Carregando preferências'),
     ]);
@@ -546,9 +591,11 @@
       vendas: (pedidosRes.data || []).map((p) => ({ ...p, itens: p.itens || [] })),
       pagamentos: (pagamentosRes.data || []).map(normalizarPagamentoServidor),
       integracaoGestao: integracaoRes.data || { base_receita: 'recebidos', pode_configurar: false },
-      conteudos: conteudosRes.error ? null : (conteudosRes.data || []).filter((conteudo) => conteudo.pagina === 'informacoes' || vinculosComerciais.some((vinculo) => vinculo.empresa_id === conteudo.empresa_id && vinculo.novidades_ativas)),
-      divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []).filter((pasta) => vinculosComerciais.some((vinculo) => vinculo.empresa_id === pasta.empresa_id && vinculo.divulgacao_ativa)),
-      divulgacaoMateriais: materiaisRes.error ? [] : (materiaisRes.data || []),
+      // Conteúdo secundário ausente significa "preservar o cache atual". A
+      // atualização em segundo plano preencherá estas três coleções.
+      conteudos: undefined,
+      divulgacaoPastas: undefined,
+      divulgacaoMateriais: undefined,
       moduloAtivo,
       sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0, sem_preco: 0 },
       vinculosComerciais,
@@ -1040,5 +1087,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, carregarDivulgacao, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();

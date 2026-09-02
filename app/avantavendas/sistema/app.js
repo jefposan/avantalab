@@ -355,6 +355,8 @@ let divulgacaoCompartilhamentoStatus = '';
 let divulgacaoCompartilhamentoAbortController = null;
 const LIMITE_SELECAO_MATERIAIS_DIVULGACAO = 10;
 let divulgacaoAtualizando = false;
+let conteudosSecundariosCarregando = false;
+let conteudosSecundariosCarregados = false;
 let gestoAtualizacaoDivulgacao = null;
 let indicadorAtualizacaoDivulgacaoEl = null;
 let camadaAtualizacaoDivulgacaoEl = null;
@@ -387,6 +389,7 @@ let assinaturaSalaRenderizada = '';
 let rolagemPorAba = {};
 let contextoAberturaVendas = null;
 let sincronizacaoCatalogoEmAndamento = false;
+let dadosOperacionaisCarregando = false;
 let revisaoDadosOperacionais = 0;
 let revisaoNavegacaoManual = 0;
 let mutacoesDadosEmAndamento = 0;
@@ -831,6 +834,7 @@ async function salvarCacheVendas() {
       conteudosVendas: state.conteudosVendas,
       divulgacaoPastas: state.divulgacaoPastas,
       divulgacaoMateriais: state.divulgacaoMateriais,
+      conteudosSecundariosCarregados,
       sincronizacaoCatalogo: state.sincronizacaoCatalogo,
       integracaoGestao: state.integracaoGestao,
       vinculosComerciais: state.vinculosComerciais,
@@ -1021,6 +1025,9 @@ function restaurarCacheVendas(cache) {
   state.conteudosVendas = dados.conteudosVendas || null;
   state.divulgacaoPastas = dados.divulgacaoPastas || [];
   state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
+  conteudosSecundariosCarregados = Object.prototype.hasOwnProperty.call(dados, 'conteudosSecundariosCarregados')
+    ? dados.conteudosSecundariosCarregados === true
+    : Object.prototype.hasOwnProperty.call(dados, 'divulgacaoMateriais');
   state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0, sem_preco: 0 };
   state.integracaoGestao = dados.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
   state.vinculosComerciais = dados.vinculosComerciais || [];
@@ -1314,11 +1321,15 @@ function setAba(aba) {
   state.aba = aba;
   state.menuAberto = false;
   revisaoNavegacaoManual += 1;
+  if (aba === 'novidades' && !conteudosSecundariosCarregados) void carregarConteudosSecundariosVendas(true);
   render();
   const rolagemSalva = Math.max(0, Number(rolagemPorAba[aba] || 0));
   requestAnimationFrame(() => {
     rolarConteudoPrincipalVendas(rolagemSalva);
-    if (entradaDivulgacao) void atualizarDivulgacao('entrada');
+    if (entradaDivulgacao) {
+      if (!conteudosSecundariosCarregados || conteudosSecundariosCarregando) void carregarConteudosSecundariosVendas(true);
+      else void atualizarDivulgacao('entrada');
+    }
   });
 }
 
@@ -3487,17 +3498,17 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
         telefone: dados.user.phone || dados.user.user_metadata?.telefone || dados.user.user_metadata?.phone || state.usuario.telefone || '',
       };
       await inicializarPreferenciasVendasServidor(dados);
-      state.produtos = dados.produtos;
-      state.pacotesProdutos = dados.pacotes || [];
       const houveAlteracaoDuranteCarga = revisaoDadosOperacionais !== revisaoAoIniciar;
       if (!houveAlteracaoDuranteCarga) {
+        state.produtos = dados.produtos;
+        state.pacotesProdutos = dados.pacotes || [];
         state.clientes = dados.clientes;
         state.vendas = dados.vendas;
         state.pagamentos = dados.pagamentos || [];
       }
-      state.conteudosVendas = dados.conteudos;
-      state.divulgacaoPastas = dados.divulgacaoPastas || [];
-      state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
+      if (dados.conteudos !== undefined) state.conteudosVendas = dados.conteudos;
+      if (dados.divulgacaoPastas !== undefined) state.divulgacaoPastas = dados.divulgacaoPastas || [];
+      if (dados.divulgacaoMateriais !== undefined) state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
       if (!preservarTelaAtual) state.menuAberto = true;
       state.acessoVendas = dados.acesso || null;
       state.solicitacaoAcesso = dados.solicitacao || null;
@@ -3516,10 +3527,8 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
     }
   } catch (error) {
     console.error(error);
-    if (!preservarTelaAtual) {
-      state.autenticado = false;
-      state.erroBackend = traduzErro(error);
-    }
+    if (!preservarTelaAtual) state.autenticado = false;
+    state.erroBackend = traduzErro(error);
   } finally {
     carregandoBackend = false;
     provedorOAuthNativoPendente = '';
@@ -3528,6 +3537,33 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
     if (!manterPreparacaoAteRecursos) liberarAlturaPreparacao();
     if (state.erroBackend) { toast(state.erroBackend); state.erroBackend = '';
     }
+  }
+}
+
+async function carregarConteudosSecundariosVendas(renderizar = true) {
+  if (
+    conteudosSecundariosCarregando
+    || !backendAtivo
+    || !state.autenticado
+    || !state.acessoVendas
+    || state.moduloVendasAtivo === false
+    || state.premiumVendasBloqueado
+    || !window.VendasDb?.carregarConteudosSecundarios
+  ) return;
+  conteudosSecundariosCarregando = true;
+  if (renderizar && !conteudosSecundariosCarregados && ['divulgacao', 'informacoes', 'novidades'].includes(state.aba)) render();
+  try {
+    const dados = await window.VendasDb.carregarConteudosSecundarios();
+    state.conteudosVendas = dados.conteudos || [];
+    state.divulgacaoPastas = dados.divulgacaoPastas || [];
+    state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
+    conteudosSecundariosCarregados = true;
+    await salvarCacheVendas();
+  } catch (error) {
+    console.warn('Não foi possível atualizar novidades e Divulgação em segundo plano.', error);
+  } finally {
+    conteudosSecundariosCarregando = false;
+    if (renderizar && ['divulgacao', 'informacoes', 'novidades'].includes(state.aba) && !state.menuAberto) render();
   }
 }
 
@@ -3567,6 +3603,8 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
   state.moduloVendasAtivo = acessoVendas.moduloAtivo !== false;
   state.premiumVendasBloqueado = acessoVendas.premiumBloqueado === true;
   state.estadoAssinaturaVendas = acessoVendas.estadoAssinatura || null;
+  state.contasVendas = acessoVendas.contasVendas || [];
+  state.contaVendasAtiva = acessoVendas.contaVendasAtiva || null;
   if (user) {
     state.usuario = {
       ...state.usuario,
@@ -3582,7 +3620,12 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
     console.warn('O canal de atualização do vínculo não pôde ser iniciado; a verificação periódica continuará ativa.', error);
   }
   sincronizarVerificacaoAprovacao();
-  contextoAberturaVendas = user ? { user, acessoVendas } : null;
+  contextoAberturaVendas = user ? {
+    user,
+    acessoVendas,
+    contasVendas: state.contasVendas,
+    contaId: state.contaVendasAtiva?.id || '',
+  } : null;
   if (entradaPelaGestao && acessoVendas.acesso?.empresa_id) {
     try {
       sessionStorage.setItem(`avantalab_mobile_sistema_sessao_${acessoVendas.acesso.empresa_id}`, 'vendas');
@@ -3604,14 +3647,25 @@ async function carregarSistemaVendasCompleto() {
     const cache = await lerCacheVendas();
     const restauradoDoCache = restaurarCacheVendas(cache);
     if (restauradoDoCache) {
+      dadosOperacionaisCarregando = false;
       carregandoBackend = false;
       preparandoRecursosSala = false;
       render();
       liberarAlturaPreparacao();
       await Promise.all([carregarDadosBackend(false, true, true), recursosSala]);
     } else {
-      await carregarDadosBackend(false, true);
+      // Primeira abertura: a Sala de Botões depende apenas das imagens locais.
+      // Os dados operacionais continuam sendo sincronizados sem bloquear toda
+      // a aplicação; cada módulo informa sua própria espera se for aberto.
+      dadosOperacionaisCarregando = true;
       await recursosSala;
+      carregandoBackend = false;
+      preparandoRecursosSala = false;
+      render();
+      liberarAlturaPreparacao();
+      await carregarDadosBackend(false, true, true);
+      dadosOperacionaisCarregando = false;
+      render();
     }
     carregamentoConcluido = true;
   } finally {
@@ -3631,6 +3685,7 @@ async function carregarSistemaVendasCompleto() {
     render();
     liberarAlturaPreparacao();
     window.setTimeout(() => {
+      carregarConteudosSecundariosVendas(false).catch((error) => console.warn('Não foi possível carregar conteúdos secundários.', error));
       sincronizarCatalogoAutomaticamente().catch((error) => console.warn('Não foi possível sincronizar o catálogo em segundo plano.', error));
       reenviarPendenciasVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
     }, 160);
@@ -3773,6 +3828,9 @@ async function aguardarSessaoSocialVendas() {
 }
 
 function renderConteudo() {
+  if (dadosOperacionaisCarregando && ['dashboard', 'produtos', 'clientes', 'vender', 'novo-pedido', 'vendas', 'importar', 'configuracoes'].includes(state.aba)) {
+    return `<section class="module-page module-local-loading" role="status" aria-live="polite" aria-busy="true"><div class="publication-empty material-local-loading"><span class="loader" aria-hidden="true"></span><h3>Carregando informações</h3><p>Os dados deste perfil aparecerão juntos assim que a sincronização terminar.</p></div></section>`;
+  }
   if (state.aba === 'dashboard') return renderDashboard();
   if (state.aba === 'produtos') return renderProdutos();
   if (state.aba === 'clientes') return renderClientes();
@@ -4232,6 +4290,9 @@ function conteudosPaginaVendas(pagina) {
 
 function renderPublicacoes(tipo) {
   if (tipo === 'informacoes') return renderInformacoesVendas();
+  if (!conteudosSecundariosCarregados && conteudosSecundariosCarregando) {
+    return `<section class="module-page publicacoes-page novidades-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Novidades</h2><p>Lançamentos, eventos e comunicados da sua empresa.</p></div></div></div><article class="publication-empty material-local-loading" role="status" aria-live="polite"><span class="loader" aria-hidden="true"></span><h3>Carregando novidades</h3><p>As publicações aparecerão juntas assim que a atualização terminar.</p></article></section>`;
+  }
   const novidades = conteudosPaginaVendas('novidades');
   const cards = novidades.map((item, indice) => { const apresentacao = apresentacaoTipoConteudoVendas(item.tipo); return `<article class="update-card${indice === 0 ? ' featured' : ''}"><header><span>${svgIcon(apresentacao.icon)}</span><div><small>${escapeHtml(apresentacao.label)}</small><h3>${escapeHtml(item.titulo)}</h3></div><time>${dataCurtaBR(item.criado_em)}</time></header><p>${escapeHtml(item.descricao)}</p></article>`; }).join('');
   const vazio = '<article class="publication-empty"><span>' + svgIcon('bell') + '</span><h3>Nenhuma novidade publicada</h3><p>As próximas atualizações aparecerão aqui.</p></article>';
@@ -4300,6 +4361,7 @@ async function atualizarDivulgacao(origem = 'entrada') {
   divulgacaoAtualizando = true;
   gestoAtualizacaoDivulgacao = null;
   sincronizarBotaoAtualizacaoDivulgacao();
+  if (!conteudosSecundariosCarregados) renderizarDivulgacaoPreservandoRolagem(posicaoAnterior);
   if (origem === 'gesto') {
     atualizarIndicadorGestoDivulgacao(LIMIAR_ATUALIZACAO_DIVULGACAO, true);
     const camada = camadaAtualizacaoDivulgacao();
@@ -4650,7 +4712,11 @@ function renderDivulgacao() {
     : '';
   const voltarId = pastaAtual?.pasta_pai_id || '';
   const navegacao = pastaAtual ? `<div class="material-page-location"><button type="button" class="material-page-back" onclick="voltarPastaDivulgacao('${voltarId}')">${svgIcon('chevron-left')} Voltar</button><p>Pasta atual: <b>${escapeHtml(pastaAtual.nome)}</b></p>${acaoSelecao}</div>` : '';
-  const conteudo = cardsPastas || cardsMateriais
+  const aguardandoPrimeiraCarga = !conteudosSecundariosCarregados
+    && (conteudosSecundariosCarregando || divulgacaoAtualizando);
+  const conteudo = aguardandoPrimeiraCarga
+    ? `<article class="publication-empty material-local-loading" role="status" aria-live="polite"><span class="loader" aria-hidden="true"></span><h3>Carregando materiais</h3><p>As pastas aparecerão juntas assim que a atualização terminar.</p></article>`
+    : cardsPastas || cardsMateriais
     ? `${cardsPastas ? `<section class="material-page-section"><h3>${pastaAtual ? 'Subpastas' : 'Pastas'}</h3><div class="materials-grid">${cardsPastas}</div></section>` : ''}${cardsMateriais ? `<section class="material-page-section"><h3>Materiais</h3><div class="material-page-files">${cardsMateriais}</div></section>` : ''}`
     : `<article class="publication-empty"><span>${svgIcon(pastaAtual ? 'package' : 'folder')}</span><h3>${pesquisa ? 'Nenhum material encontrado' : pastaAtual ? 'Esta pasta está vazia' : 'Nenhum material publicado'}</h3><p>${pesquisa ? 'Revise a pesquisa e tente novamente.' : pastaAtual ? 'Não há subpastas, fotos ou vídeos nesta pasta.' : 'Quando sua empresa publicar fotos ou vídeos, as pastas aparecerão aqui.'}</p></article>`;
   const botaoAtualizar = `<button id="divulgacaoAtualizar" type="button" class="divulgacao-refresh-button" onclick="atualizarDivulgacao('botao')" aria-busy="${divulgacaoAtualizando}" ${divulgacaoAtualizando ? 'disabled' : ''}>${svgIconEstavel('rotate-ccw', divulgacaoAtualizando ? 'is-spinning' : '')}<span>${divulgacaoAtualizando ? 'Atualizando...' : 'Atualizar'}</span></button>`;

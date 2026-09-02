@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.13 -->
+<!-- ava-version: 1.13.0.14 -->
+
+> Revisão 1.13.0.14: depois de validar sessão, acesso, assinatura e cadastro, a
+> Gestão pode mostrar imediatamente a última fotografia segura do mesmo usuário,
+> perfil e ano. O servidor atualiza os dados oficiais em segundo plano e troca o
+> conteúdo somente quando o conjunto estiver completo. Na primeira carga, as
+> consultas de convites e vínculos também são executadas em paralelo.
 
 > Revisão 1.13.0.13: o card **Preparando acesso** segue o mesmo padrão do
 > AvantaVendas, com spinner, título, etapa, barra e percentual, sem repetir a

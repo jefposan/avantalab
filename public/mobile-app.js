@@ -77,6 +77,105 @@
     },
   });
 
+  var CACHE_GESTAO_MOBILE_DB = 'avantalab.gestao_mobile.cache';
+  var CACHE_GESTAO_MOBILE_STORE = 'perfis';
+  var CACHE_GESTAO_MOBILE_VERSAO = 1;
+  var CACHE_GESTAO_MOBILE_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
+
+  function abrirCacheGestaoMobile() {
+    return new Promise(function (resolver, rejeitar) {
+      if (!('indexedDB' in window)) { rejeitar(new Error('Cache local indisponível.')); return; }
+      var pedido = window.indexedDB.open(CACHE_GESTAO_MOBILE_DB, CACHE_GESTAO_MOBILE_VERSAO);
+      pedido.onupgradeneeded = function () {
+        if (!pedido.result.objectStoreNames.contains(CACHE_GESTAO_MOBILE_STORE)) {
+          pedido.result.createObjectStore(CACHE_GESTAO_MOBILE_STORE);
+        }
+      };
+      pedido.onsuccess = function () { resolver(pedido.result); };
+      pedido.onerror = function () { rejeitar(pedido.error || new Error('Não foi possível abrir o cache local.')); };
+    });
+  }
+
+  function chaveCacheGestaoMobile(empresaId, ano) {
+    var usuarioId = state && state.usuario && state.usuario.id;
+    return usuarioId && empresaId ? String(usuarioId) + ':' + String(empresaId) + ':' + String(ano) : '';
+  }
+
+  async function lerCacheGestaoMobile(empresaId, ano) {
+    var chave = chaveCacheGestaoMobile(empresaId, ano);
+    if (!chave) return null;
+    try {
+      var banco = await abrirCacheGestaoMobile();
+      var cache = await new Promise(function (resolver, rejeitar) {
+        var pedido = banco.transaction(CACHE_GESTAO_MOBILE_STORE, 'readonly')
+          .objectStore(CACHE_GESTAO_MOBILE_STORE)
+          .get(chave);
+        pedido.onsuccess = function () { resolver(pedido.result || null); };
+        pedido.onerror = function () { rejeitar(pedido.error); };
+      });
+      banco.close();
+      if (!cache || cache.versao !== CACHE_GESTAO_MOBILE_VERSAO) return null;
+      if (Date.now() - Number(cache.atualizadoEm || 0) > CACHE_GESTAO_MOBILE_VALIDADE_MS) return null;
+      return cache;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function restaurarCacheGestaoMobile(cache) {
+    var dados = cache && cache.dados;
+    if (!dados || !Array.isArray(dados.lancamentos) || !Array.isArray(dados.entradas) || !Array.isArray(dados.despesas)) return false;
+    state.lancamentos = dados.lancamentos;
+    state.faturamentos = dados.faturamentos || {};
+    state.entradas = dados.entradas;
+    state.despesas = dados.despesas;
+    state.duplicadosAtivo = dados.duplicadosAtivo !== false;
+    state.pontoModuloAtivo = dados.pontoModuloAtivo === true;
+    state.vendasMobileModuloAtivo = dados.vendasMobileModuloAtivo === true;
+    state.caixinhaMovimentos = dados.caixinhaMovimentos || [];
+    state.receitaVendasOcultaPorMes = dados.receitaVendasOcultaPorMes || {};
+    return true;
+  }
+
+  async function salvarCacheGestaoMobile(empresaId, ano) {
+    var chave = chaveCacheGestaoMobile(empresaId, ano);
+    if (!chave || !state.autenticado || !state.empresa || state.empresa.id !== empresaId) return;
+    var cacheAtual = {
+      versao: CACHE_GESTAO_MOBILE_VERSAO,
+      atualizadoEm: Date.now(),
+      dados: {
+        lancamentos: state.lancamentos || [],
+        faturamentos: state.faturamentos || {},
+        entradas: state.entradas || [],
+        despesas: state.despesas || [],
+        duplicadosAtivo: state.duplicadosAtivo !== false,
+        pontoModuloAtivo: state.pontoModuloAtivo === true,
+        vendasMobileModuloAtivo: state.vendasMobileModuloAtivo === true,
+        caixinhaMovimentos: state.caixinhaMovimentos || [],
+        receitaVendasOcultaPorMes: state.receitaVendasOcultaPorMes || {},
+      },
+    };
+    var cache;
+    try {
+      cache = typeof structuredClone === 'function'
+        ? structuredClone(cacheAtual)
+        : JSON.parse(JSON.stringify(cacheAtual));
+    } catch (error) {
+      return;
+    }
+    try {
+      var banco = await abrirCacheGestaoMobile();
+      await new Promise(function (resolver, rejeitar) {
+        var pedido = banco.transaction(CACHE_GESTAO_MOBILE_STORE, 'readwrite')
+          .objectStore(CACHE_GESTAO_MOBILE_STORE)
+          .put(cache, chave);
+        pedido.onsuccess = function () { resolver(); };
+        pedido.onerror = function () { rejeitar(pedido.error); };
+      });
+      banco.close();
+    } catch (error) {}
+  }
+
   // O bridge React só é usado dentro do Capacitor. O PWA mantém o OAuth por
   // redirecionamento https normal. A sessão é aplicada neste cliente para que
   // toda a Gestão Mobile continue usando a mesma instância de autenticação.
@@ -5872,58 +5971,69 @@
     atualizarProgressoAcessoMobile('profiles', 1, 5, 'Identificando seus perfis');
     var emailUsuario = (usuarioAtual.data.user && usuarioAtual.data.user.email || '').toLowerCase();
 
-    if (emailUsuario) {
-      var convites = await db
-        .from('usuarios_empresa')
+    // Convites e vínculos são independentes na abertura comum. Consultá-los
+    // juntos economiza uma ida completa ao servidor; somente quando existe um
+    // convite pendente fazemos a atualização e repetimos a lista de perfis.
+    var convitesPromise = emailUsuario
+      ? db.from('usuarios_empresa')
         .select('id')
         .eq('email', emailUsuario)
         .is('user_id', null)
-        .in('status', ['pendente', 'ativo']);
-
-      if (!convites.error && convites.data && convites.data.length) {
-        await db
-          .from('usuarios_empresa')
-          .update({
-            user_id: usuarioId,
-            status: 'ativo',
-            atualizado_em: new Date().toISOString(),
-          })
-          .in('id', convites.data.map(function (convite) { return convite.id; }));
-      }
-
-      // A conta exclusiva de revisão pode ter sido criada manualmente no
-      // Supabase antes do vínculo com o usuário Auth atual.
-      if (emailUsuario === EMAIL_CONTA_REVISAO_APPLE) {
-        var perfilRevisao = await db
-          .from('usuarios_empresa')
-          .select('id, user_id, status')
-          .ilike('email', emailUsuario)
-          .in('status', ['pendente', 'ativo'])
-          .order('id', { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        if (!perfilRevisao.error && perfilRevisao.data && perfilRevisao.data.user_id !== usuarioId) {
-          await db
-            .from('usuarios_empresa')
-            .update({
-              user_id: usuarioId,
-              status: 'ativo',
-              atualizado_em: new Date().toISOString(),
-            })
-            .eq('id', perfilRevisao.data.id);
-        }
-      }
-    }
-    atualizarProgressoAcessoMobile('profiles', 2, 5, 'Conferindo convites e vínculos');
-
-    var vinculos = await consultaMobileComRetry(function () {
+        .in('status', ['pendente', 'ativo'])
+      : Promise.resolve({ data: [], error: null });
+    var consultarVinculosAtivos = function () {
       return db
         .from('usuarios_empresa')
         .select('id, empresa_id, nome, email, login, perfil, status, telefone, telefone_confirmado')
         .eq('user_id', usuarioId)
         .eq('status', 'ativo')
         .order('nome', { ascending: true });
-    });
+    };
+    var perfisIniciais = await Promise.all([
+      convitesPromise,
+      consultaMobileComRetry(consultarVinculosAtivos),
+    ]);
+    var convites = perfisIniciais[0];
+    var vinculos = perfisIniciais[1];
+    var precisaReconsultarVinculos = false;
+
+    if (!convites.error && convites.data && convites.data.length) {
+      var ativacaoConvites = await db
+        .from('usuarios_empresa')
+        .update({
+          user_id: usuarioId,
+          status: 'ativo',
+          atualizado_em: new Date().toISOString(),
+        })
+        .in('id', convites.data.map(function (convite) { return convite.id; }));
+      precisaReconsultarVinculos = !ativacaoConvites.error;
+    }
+
+    // A conta exclusiva de revisão pode ter sido criada manualmente no
+    // Supabase antes do vínculo com o usuário Auth atual.
+    if (emailUsuario === EMAIL_CONTA_REVISAO_APPLE) {
+      var perfilRevisao = await db
+        .from('usuarios_empresa')
+        .select('id, user_id, status')
+        .ilike('email', emailUsuario)
+        .in('status', ['pendente', 'ativo'])
+        .order('id', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (!perfilRevisao.error && perfilRevisao.data && perfilRevisao.data.user_id !== usuarioId) {
+        var ativacaoRevisao = await db
+          .from('usuarios_empresa')
+          .update({
+            user_id: usuarioId,
+            status: 'ativo',
+            atualizado_em: new Date().toISOString(),
+          })
+          .eq('id', perfilRevisao.data.id);
+        precisaReconsultarVinculos = precisaReconsultarVinculos || !ativacaoRevisao.error;
+      }
+    }
+    if (precisaReconsultarVinculos) vinculos = await consultaMobileComRetry(consultarVinculosAtivos);
+    atualizarProgressoAcessoMobile('profiles', 2, 5, 'Conferindo convites e vínculos');
 
     if (!vinculos || vinculos.error) {
       console.error('Falha ao carregar perfis apos novas tentativas:', vinculos && vinculos.error);
@@ -6282,7 +6392,7 @@
     while (true) {
       var resposta = await db
         .from('lancamentos')
-        .select('*')
+        .select('id, mes, dia, despesa_nome, descricao, valor, status, tipo_obs, recorrencia_id, nota_arquivo_path')
         .eq('empresa_id', empresaId)
         .eq('ano', ano)
         .order('dia', { ascending: true })
@@ -6369,10 +6479,15 @@
     }
     var empresaId = state.empresa.id;
     var ano = Number(state.ano);
+    // A leitura local começa junto com as demais preparações. O cache nunca
+    // libera a interface antes de sessão, perfil, assinatura e cadastro serem
+    // confirmados para o usuário atual.
+    var cacheGestaoPromise = lerCacheGestaoMobile(empresaId, ano);
     // Preferências da conta têm prioridade sobre a cópia deste aparelho. A
     // primeira abertura migra silenciosamente o que já estava salvo localmente.
     if (!aplicarPreferenciasMobileDaConta()) salvarPreferenciasMobileNaConta();
     await prepararDadosContaRevisaoMobile();
+    var cacheGestaoRestaurado = restaurarCacheGestaoMobile(await cacheGestaoPromise);
 
     atualizarProgressoAcessoMobile(
       'data',
@@ -6411,26 +6526,61 @@
 
     var resultadosPromise = Promise.all([
       acompanharEtapaDados(buscarLancamentosAnoMobile(empresaId, ano), 'Carregando despesas e lançamentos'),
-      acompanharEtapaDados(db.from('faturamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
-      acompanharEtapaDados(db.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
-      acompanharEtapaDados(db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }), 'Carregando categorias de despesas'),
+      acompanharEtapaDados(db.from('faturamentos').select('mes, valor').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
+      acompanharEtapaDados(db.from('faturamentos_entradas').select('id, mes, dia, origem, valor, status, tipo_obs').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
+      acompanharEtapaDados(db.from('despesas_cadastradas').select('id, nome, categoria').eq('empresa_id', empresaId).order('nome', { ascending: true }), 'Carregando categorias de despesas'),
       acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
       acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
-      acompanharEtapaDados(db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando caixinhas'),
+      acompanharEtapaDados(db.from('caixinhas_movimentos').select('id, lancamento_id, tipo, descricao, valor, data_movimento, criado_em').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando caixinhas'),
     ]);
 
-    var cargaCritica;
+    var verificacoesPerfil;
+    var resultados;
+    var acessoLiberadoComCache = false;
     try {
-      cargaCritica = await promessaMobileComPrazo(
-        Promise.all([
-          verificacoesPerfilPromise,
+      if (cacheGestaoRestaurado) {
+        verificacoesPerfil = await verificacoesPerfilPromise;
+        var cadastroCacheOk = verificacoesPerfil[1];
+        if (!cadastroCacheOk && !state.paywallAtivo) {
+          state.carregando = false;
+          state.pronto = true;
+          render();
+          return;
+        }
+        // O painel já possui uma fotografia válida deste mesmo usuário,
+        // perfil e ano. Libera a navegação enquanto o servidor revalida os
+        // números oficiais em segundo plano.
+        state.dadosCriticosProntos = true;
+        state.pronto = true;
+        state.carregando = false;
+        render();
+        acessoLiberadoComCache = true;
+        if (!telaPreparacaoAcessoMobileVisivel() && typeof window.__avantalabConfirmarAcessoMobile === 'function') {
+          window.__avantalabConfirmarAcessoMobile();
+        }
+        resultados = await promessaMobileComPrazo(
           resultadosPromise,
-        ]),
-        28000,
-        'A carga das informações do perfil demorou mais que o esperado.'
-      );
+          28000,
+          'A atualização das informações do perfil demorou mais que o esperado.'
+        );
+      } else {
+        var cargaCritica = await promessaMobileComPrazo(
+          Promise.all([
+            verificacoesPerfilPromise,
+            resultadosPromise,
+          ]),
+          28000,
+          'A carga das informações do perfil demorou mais que o esperado.'
+        );
+        verificacoesPerfil = cargaCritica[0];
+        resultados = cargaCritica[1];
+      }
     } catch (error) {
       state.carregando = false;
+      if (acessoLiberadoComCache) {
+        console.warn('Os dados locais foram mantidos porque a atualização em segundo plano não respondeu.', error);
+        return;
+      }
       if (
         error && error.codigo === 'AVANTALAB_TIMEOUT' &&
         typeof window.__avantalabRecuperarAcessoMobile === 'function' &&
@@ -6445,7 +6595,6 @@
       return;
     }
 
-    var verificacoesPerfil = cargaCritica[0];
     var cadastroPerfilOk = verificacoesPerfil[1];
     if (!cadastroPerfilOk && !state.paywallAtivo) {
       state.carregando = false;
@@ -6453,8 +6602,6 @@
       render();
       return;
     }
-    var resultados = cargaCritica[1];
-
     // Guarda o dia da carga (São Paulo) — usado para só recarregar ao voltar
     // ao app quando o dia virou (despesas previstas do novo dia).
     try { state.diaUltimoCarregamento = dataHoraPontoMobile().data; } catch (e) {}
@@ -6543,13 +6690,17 @@
       state.pontoResumoCarregando = false;
     }
 
+    // A fotografia é substituída somente após todas as consultas oficiais
+    // terminarem e o estado completo do perfil estar coerente.
+    void salvarCacheGestaoMobile(empresaId, ano);
+
     // O resumo compara todos os perfis do usuário e pode ser bem maior que
     // os dados do perfil aberto. A tela principal é liberada primeiro; o
     // card recebe o resumo logo em seguida, sem bloquear o acesso.
     state.resumoPerfisCarregando = true;
     // A última etapa só é concluída depois que a interface principal estiver
     // montada. Assim, 100% nunca representa apenas consultas concluídas.
-    await aguardarPinturaProgressoMobile(180);
+    if (!acessoLiberadoComCache) await aguardarPinturaProgressoMobile(180);
     state.dadosCriticosProntos = true;
     state.pronto = true;
     state.carregando = false;

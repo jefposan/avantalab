@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.13 -->
+<!-- ava-version: 1.13.0.14 -->
+
+> Revisão 1.13.0.14: após confirmar sessão, conta e permissão, a Sala de Botões
+> abre sem esperar o histórico operacional ou os materiais. Produtos, clientes,
+> pedidos e pagamentos continuam sincronizando em segundo plano; ao entrar num
+> módulo ainda em atualização, o carregamento aparece somente naquela página.
+> Novidades e Divulgação também são atualizadas depois da abertura e preservam
+> o último conteúdo seguro salvo para a mesma conta.
 
 > Revisão 1.13.0.13: o card **Preparando acesso** mantém somente spinner,
 > título, etapa, barra e percentual, sem repetir a marca exibida acima. Os

@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.13.0.14 - 2026-09-02
+
+- AvantaVendas: a Sala de Botões é liberada após sessão, conta e permissão,
+  sem aguardar produtos, clientes, pedidos, pagamentos ou materiais. O cache
+  passa a usar corretamente a conta ativa e módulos abertos durante a primeira
+  sincronização exibem um loading localizado.
+- Novidades e Divulgação deixam a preparação bloqueante e são atualizadas em
+  segundo plano. Ao entrar antes da primeira resposta, a Divulgação informa a
+  espera dentro da própria página e substitui o estado de uma só vez.
+- Gestão Mobile: uma fotografia local isolada por usuário, perfil e ano é
+  liberada somente após validar sessão, acesso, assinatura e cadastro. Os dados
+  oficiais continuam sendo revalidados em segundo plano; consultas de convites
+  e vínculos foram paralelizadas e os campos financeiros transferidos foram
+  reduzidos ao necessário.
+
 ## 1.13.0.13 - 2026-09-02
 
 - Gestão Mobile e AvantaVendas passam a usar o mesmo card de preparação, sem a

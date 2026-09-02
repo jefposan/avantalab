@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.13 -->
+<!-- ava-version: 1.13.0.14 -->
+
+> Revisão 1.13.0.14: a abertura progressiva e o cache por perfil pertencem aos
+> aplicativos Gestão Mobile e AvantaVendas; sem impacto operacional na Gestão
+> Web.
 
 > Revisão 1.13.0.13: a padronização e a antecipação do carregamento pertencem
 > à Gestão Mobile e ao AvantaVendas; sem impacto operacional na Gestão Web.

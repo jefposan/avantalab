@@ -9,6 +9,7 @@ const paginaGestao = ler('app/mobile/page.tsx');
 const appGestao = ler('public/mobile-app.js');
 const paginaVendas = ler('app/avantavendas/page.tsx');
 const appVendas = ler('app/avantavendas/sistema/app.js');
+const bancoVendas = ler('app/avantavendas/sistema/supabase-client.js');
 
 test('Gestão e Vendas usam o mesmo conteúdo essencial no card de preparação', () => {
   const inicioGestao = appGestao.indexOf('function telaCarregandoMobile()');
@@ -52,4 +53,27 @@ test('Gestão inicia no DOM pronto e Vendas antecipa os scripts críticos', () =
     assert.ok(paginaVendas.includes(`'${arquivo}'`), `preload ausente para ${arquivo}`);
   }
   assert.match(paginaVendas, /rel="preload"[\s\S]*as="script"/);
+});
+
+test('Vendas restaura o cache da conta ativa e não bloqueia a Sala com Divulgação', () => {
+  assert.match(bancoVendas, /contasVendas: contasDisponiveis/);
+  assert.match(bancoVendas, /contaVendasAtiva: contaContexto/);
+  assert.match(appVendas, /state\.contaVendasAtiva = acessoVendas\.contaVendasAtiva \|\| null/);
+  assert.match(appVendas, /const cache = await lerCacheVendas\(\)/);
+  assert.match(appVendas, /dadosOperacionaisCarregando = true;[\s\S]*await recursosSala;[\s\S]*await carregarDadosBackend\(false, true, true\)/);
+  assert.match(appVendas, /carregarConteudosSecundariosVendas\(false\)/);
+
+  const inicioCargaPrincipal = bancoVendas.indexOf('async function loadAll(');
+  const fimCargaPrincipal = bancoVendas.indexOf('async function loadClientFinancial(', inicioCargaPrincipal);
+  const cargaPrincipal = bancoVendas.slice(inicioCargaPrincipal, fimCargaPrincipal);
+  assert.doesNotMatch(cargaPrincipal, /Carregando materiais|Carregando pastas de divulgação|Carregando novidades/);
+});
+
+test('Gestão usa cache isolado por usuário, perfil e ano após validar o acesso', () => {
+  assert.match(appGestao, /CACHE_GESTAO_MOBILE_DB = 'avantalab\.gestao_mobile\.cache'/);
+  assert.match(appGestao, /String\(usuarioId\) \+ ':' \+ String\(empresaId\) \+ ':' \+ String\(ano\)/);
+  assert.match(appGestao, /var cacheGestaoPromise = lerCacheGestaoMobile\(empresaId, ano\)/);
+  assert.match(appGestao, /verificacoesPerfil = await verificacoesPerfilPromise;[\s\S]*state\.dadosCriticosProntos = true;[\s\S]*resultados = await promessaMobileComPrazo/);
+  assert.match(appGestao, /void salvarCacheGestaoMobile\(empresaId, ano\)/);
+  assert.match(appGestao, /Promise\.all\(\[[\s\S]*convitesPromise,[\s\S]*consultaMobileComRetry\(consultarVinculosAtivos\)/);
 });
