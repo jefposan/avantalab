@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.13: Gestão Mobile e AvantaVendas compartilham a
+// composição de preparação e antecipam somente recursos seguros da abertura.
 // Revisado na versão 1.13.0.12: confirmação imediata de pedidos e recebimentos
 // pertence ao AvantaVendas; sem mudança de orientação na Gestão.
 // Revisado na versão 1.13.0.11: tabelas de preços recebem código técnico

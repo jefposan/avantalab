@@ -9576,12 +9576,12 @@
       : '';
     return (
       cenaAcessoGestaoMobile(
-        '<div class="gestao-login-form text-center">' +
-          '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
-          '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
-          '<p id="mobileAccessProgressLabel" class="mt-2 text-sm font-semibold text-slate-600">' + escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo') + '</p>' +
-          '<div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso"><i id="mobileAccessProgressBar" class="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 transition-[width] duration-200" style="width:' + Number(progresso.valor || 5) + '%"></i></div>' +
-          '<b id="mobileAccessProgressValue" class="mt-1 block text-[11px] font-black text-cyan-700">' + Number(progresso.valor || 5) + '%</b>' +
+        '<div class="gestao-access-card" role="status" aria-live="polite" aria-busy="true">' +
+          '<span class="gestao-access-loader" aria-hidden="true"></span>' +
+          '<h1>Preparando acesso</h1>' +
+          '<p><span id="mobileAccessProgressLabel">' + escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo') + '</span></p>' +
+          '<div class="gestao-access-progress" aria-label="Carregando acesso"><i id="mobileAccessProgressBar" style="width:' + Number(progresso.valor || 5) + '%"></i></div>' +
+          '<b id="mobileAccessProgressValue" class="gestao-access-progress-value">' + Number(progresso.valor || 5) + '%</b>' +
           '<button id="mobileAccessContinueButton" type="button" onclick="window.__avantalabConcluirAcessoMobile && window.__avantalabConcluirAcessoMobile()" class="mt-3 hidden h-10 w-full rounded-xl bg-cyan-700 px-4 text-xs font-black uppercase tracking-wide text-white">Continuar</button>' +
           acaoCancelarLoginSocial +
         '</div>'
@@ -16222,10 +16222,10 @@
       });
     };
 
-    if (document.readyState === 'complete') {
+    if (document.readyState !== 'loading') {
       iniciarAposRenderInicial();
     } else {
-      window.addEventListener('load', iniciarAposRenderInicial, { once: true });
+      document.addEventListener('DOMContentLoaded', iniciarAposRenderInicial, { once: true });
     }
   }
 

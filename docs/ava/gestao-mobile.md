@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.12 -->
+<!-- ava-version: 1.13.0.13 -->
+
+> Revisão 1.13.0.13: o card **Preparando acesso** segue o mesmo padrão do
+> AvantaVendas, com spinner, título, etapa, barra e percentual, sem repetir a
+> marca exibida acima. A inicialização começa quando o DOM está pronto e não
+> aguarda o carregamento completo de imagens e recursos secundários.
 
 > Revisão 1.13.0.12: a confirmação imediata no botão de pedidos e recebimentos
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.

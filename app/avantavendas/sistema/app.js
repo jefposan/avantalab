@@ -1876,7 +1876,7 @@ function renderPreparandoAcesso() {
   const acaoCancelar = loginSocialPendente
     ? '<button type="button" class="preparing-access-cancel" onclick="cancelarLoginSocialVendas()">Cancelar e voltar ao login</button>'
     : '';
-  return `<section class="login-screen preparing-access-screen">${renderMarcaAcesso()}<div class="preparing-access-card"><p>AvantaLab</p><span class="loader"></span><h1>Preparando acesso</h1><small id="accessProgressLabel">${escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo')}</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:${Number(progresso.valor || 5)}%"></i></div><b id="accessProgressValue" class="access-progress-value">${Number(progresso.valor || 5)}%</b>${acaoCancelar}</div></section>`;
+  return `<section class="login-screen preparing-access-screen">${renderMarcaAcesso()}<div class="preparing-access-card" role="status" aria-live="polite" aria-busy="true"><span class="loader" aria-hidden="true"></span><h1>Preparando acesso</h1><small id="accessProgressLabel">${escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo')}</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:${Number(progresso.valor || 5)}%"></i></div><b id="accessProgressValue" class="access-progress-value">${Number(progresso.valor || 5)}%</b>${acaoCancelar}</div></section>`;
 }
 
 function atualizarProgressoPreparacao(grupo, concluido, total, rotulo) {

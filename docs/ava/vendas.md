@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.12 -->
+<!-- ava-version: 1.13.0.13 -->
+
+> Revisão 1.13.0.13: o card **Preparando acesso** mantém somente spinner,
+> título, etapa, barra e percentual, sem repetir a marca exibida acima. Os
+> scripts críticos começam a ser baixados antecipadamente, preservando a ordem
+> segura de execução e as validações de sessão, conta e dados.
 
 > Revisão 1.13.0.12: ao confirmar um pedido ou recebimento, o botão muda
 > imediatamente para **Confirmando...** e permanece bloqueado enquanto o saldo

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.12 -->
+<!-- ava-version: 1.13.0.13 -->
+
+> Revisão 1.13.0.13: a padronização e a antecipação do carregamento pertencem
+> à Gestão Mobile e ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.13.0.12: a confirmação imediata no botão de pedidos e recebimentos
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Web.

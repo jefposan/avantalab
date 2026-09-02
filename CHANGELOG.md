@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.13.0.13 - 2026-09-02
+
+- Gestão Mobile e AvantaVendas passam a usar o mesmo card de preparação, sem a
+  marca AvantaLab duplicada dentro do card e com spinner, etapa, barra e
+  percentual alinhados na mesma hierarquia visual.
+- A Gestão inicia assim que o DOM está pronto, sem aguardar imagens e recursos
+  secundários do evento de carregamento completo. No AvantaVendas, os scripts
+  críticos começam a ser baixados antecipadamente e continuam sendo executados
+  na ordem segura já existente.
+
 ## 1.13.0.12 - 2026-09-02
 
 - AvantaVendas: ao confirmar pedido ou recebimento, o botão muda imediatamente

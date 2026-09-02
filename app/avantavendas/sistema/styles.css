@@ -566,15 +566,6 @@ body.sheet-open {
   text-align: center;
 }
 
-.preparing-access-card > p {
-  margin: 0;
-  color: #1F8A9E;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: .2em;
-  text-transform: uppercase;
-}
-
 .preparing-access-card .loader {
   width: 34px;
   height: 34px;
@@ -606,6 +597,10 @@ body.sheet-open {
 .access-progress { width: min(100%, 238px); height: 8px; overflow: hidden; border-radius: 999px; background: rgba(10,31,68,.14); box-shadow: inset 0 1px 2px rgba(10,31,68,.1); }
 .access-progress > i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#1687D9,#1F8A9E); box-shadow: 0 2px 8px rgba(22,135,217,.34); transition: width .24s ease; }
 .access-progress-value { margin-top: -7px; color: #0874a8; font-size: 11px; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  .preparing-access-card .loader { animation-duration: 1.6s; }
+  .access-progress > i { transition: none; }
+}
 
 .secondary {
   color: var(--primary-hover);

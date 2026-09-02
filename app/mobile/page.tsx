@@ -212,7 +212,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
         var etapa = document.getElementById('mobileAccessProgressLabel');
         if (etapa) etapa.textContent = 'A conexão demorou. Tente novamente.';
         if (!document.getElementById('mobileAccessRetryButton')) {
-          var card = etapa && etapa.parentElement;
+          var card = etapa && etapa.closest('.gestao-access-card');
           var botao = document.createElement('button');
           botao.id = 'mobileAccessRetryButton';
           botao.type = 'button';
@@ -374,9 +374,74 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
               object-fit: contain;
             }
             .gestao-access-card {
+              display: grid;
               grid-row: 2;
+              width: min(100%, 320px);
               align-self: center;
               justify-self: center;
+              justify-items: center;
+              gap: 12px;
+              border: 1px solid rgba(255, 255, 255, .4);
+              border-radius: 24px;
+              padding: 24px 20px;
+              color: #0A1F44;
+              background: rgba(255, 255, 255, .38);
+              box-shadow: 0 20px 42px rgba(0, 31, 60, .18);
+              -webkit-backdrop-filter: blur(18px);
+              backdrop-filter: blur(18px);
+              text-align: center;
+            }
+            .gestao-access-loader {
+              width: 34px;
+              height: 34px;
+              border: 4px solid rgba(0, 62, 115, .16);
+              border-top-color: #003E73;
+              border-radius: 999px;
+              animation: gestaoAccessSpin .8s linear infinite;
+            }
+            .gestao-access-card h1 {
+              margin: 0;
+              color: #0A1F44;
+              font-size: 20px;
+              font-weight: 900;
+              letter-spacing: -.03em;
+              line-height: 1.2;
+            }
+            .gestao-access-card > p {
+              margin: 0;
+              color: #526477;
+              font-size: 13px;
+              font-weight: 650;
+              line-height: 1.45;
+            }
+            .gestao-access-progress {
+              width: min(100%, 238px);
+              height: 8px;
+              overflow: hidden;
+              border-radius: 999px;
+              background: rgba(10, 31, 68, .14);
+              box-shadow: inset 0 1px 2px rgba(10, 31, 68, .1);
+            }
+            .gestao-access-progress > i {
+              display: block;
+              height: 100%;
+              border-radius: inherit;
+              background: linear-gradient(90deg, #1687D9, #1F8A9E);
+              box-shadow: 0 2px 8px rgba(22, 135, 217, .34);
+              transition: width .24s ease;
+            }
+            .gestao-access-progress-value {
+              margin-top: -7px;
+              color: #0874a8;
+              font-size: 11px;
+              font-variant-numeric: tabular-nums;
+            }
+            @keyframes gestaoAccessSpin {
+              to { transform: rotate(360deg); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .gestao-access-loader { animation-duration: 1.6s; }
+              .gestao-access-progress > i { transition: none; }
             }
             .gestao-login-heading h1 {
               margin: 0;
@@ -611,22 +676,16 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
               alt="AvantaLab — Do zero ao operacional"
               className="gestao-access-brand pointer-events-none"
             />
-            <div
-              className="gestao-access-card w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl"
-            >
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">
-                AvantaLab
-              </p>
-              <h1 className="mt-2 text-xl font-black">
-                Preparando acesso
-              </h1>
-              <p className="mt-2 text-sm font-semibold text-slate-600">
+            <div className="gestao-access-card" role="status" aria-live="polite" aria-busy="true">
+              <span className="gestao-access-loader" aria-hidden="true" />
+              <h1>Preparando acesso</h1>
+              <p>
                 <span id="mobileAccessProgressLabel">Iniciando a Gestão Mobile</span>
               </p>
-              <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso">
-                <i id="mobileAccessProgressBar" className="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 transition-[width] duration-200" style={{ width: '5%' }} />
+              <div className="gestao-access-progress" aria-label="Carregando acesso">
+                <i id="mobileAccessProgressBar" style={{ width: '5%' }} />
               </div>
-              <b id="mobileAccessProgressValue" className="mt-1 block text-[11px] font-black text-cyan-700">5%</b>
+              <b id="mobileAccessProgressValue" className="gestao-access-progress-value">5%</b>
             </div>
           </section>
         )}

@@ -60,6 +60,21 @@ export default function AvantaVendasPage() {
         rel="stylesheet"
         href={`${caminhoRecursos}/styles.css?v=${assetVersion}`}
       />
+      {[
+        'vendor/supabase.min.js',
+        'config.js',
+        'supabase-client.js',
+        'payment-receipt-v2.js',
+        'order-receipt-v2.js',
+        'app.js',
+      ].map((arquivo) => (
+        <link
+          key={arquivo}
+          rel="preload"
+          href={`${caminhoRecursos}/${arquivo}?v=${assetVersion}`}
+          as="script"
+        />
+      ))}
       <div id="app" className="app-shell">
         <section className="login-screen preparing-access-screen">
           <div className="access-brand-zone">
@@ -68,9 +83,8 @@ export default function AvantaVendasPage() {
               alt="AvantaLab — Do zero ao operacional"
             />
           </div>
-          <div className="preparing-access-card">
-            <p>AvantaLab</p>
-            <span className="loader" />
+          <div className="preparing-access-card" role="status" aria-live="polite" aria-busy="true">
+            <span className="loader" aria-hidden="true" />
             <h1>Preparando acesso</h1>
             <small id="accessProgressLabel">Iniciando o AvantaVendas</small>
             <div className="access-progress" aria-label="Carregando acesso">
