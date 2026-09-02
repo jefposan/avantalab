@@ -452,6 +452,16 @@ exigir(
   'A capa externa deve ficar restrita à pasta e ser exibida no AvantaVendas sem entrar na galeria de materiais.',
 );
 exigir(
+  gestorConteudo.includes('const LIMITE_ARQUIVO_DIVULGACAO_BYTES = 100 * 1024 * 1024;')
+    && gestorConteudo.includes('function mensagemErroEnvioMaterial(erro: unknown)')
+    && gestorConteudo.includes('exceeded the maximum allowed size|maximum allowed size|payload too large')
+    && gestorConteudo.includes('if (file.size > LIMITE_ARQUIVO_DIVULGACAO_BYTES)')
+    && gestorConteudo.includes('O arquivo excede o limite permitido de ${LIMITE_ARQUIVO_DIVULGACAO_MB} MB.')
+    && gestorConteudo.includes('reject(new Error(mensagemErroEnvioMaterial(mensagem)))')
+    && !gestorConteudo.includes("falhas.push(`${file.name}: ${e instanceof Error ? e.message : 'falha no envio'}`)"),
+  'A publicação de materiais deve validar 100 MB antes do envio e nunca expor erros técnicos do armazenamento em inglês.',
+);
+exigir(
   cliente.includes('async function carregarDivulgacao()')
     && cliente.includes("rpc('meus_vinculos_comerciais_vendas_mobile_rpc')")
     && cliente.includes("from('vendas_mobile_divulgacao_pastas')")

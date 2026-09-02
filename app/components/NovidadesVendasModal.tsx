@@ -21,6 +21,8 @@ type ExclusaoPendente =
 
 const TIPOS = [['lancamento', 'Lançamento'], ['evento', 'Evento'], ['campanha', 'Campanha'], ['promocao', 'Promoção'], ['comunicado', 'Comunicado'], ['aviso', 'Aviso']] as const;
 const BUCKET = 'vendas-divulgacao';
+const LIMITE_ARQUIVO_DIVULGACAO_BYTES = 100 * 1024 * 1024;
+const LIMITE_ARQUIVO_DIVULGACAO_MB = 100;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
@@ -39,6 +41,23 @@ async function calcularHashSha256(arquivo: Blob) {
 }
 function erroDeArquivoDuplicado(erro: unknown) {
   return Boolean(erro && typeof erro === 'object' && 'code' in erro && erro.code === '23505');
+}
+function mensagemErroEnvioMaterial(erro: unknown) {
+  const mensagem = String(erro instanceof Error ? erro.message : erro || '').trim();
+  if (/exceeded the maximum allowed size|maximum allowed size|payload too large|entity too large|file(?: size)? limit/i.test(mensagem)) {
+    return `O arquivo excede o limite permitido de ${LIMITE_ARQUIVO_DIVULGACAO_MB} MB.`;
+  }
+  if (/mime type|content type|unsupported media|not allowed/i.test(mensagem)) {
+    return 'O formato deste arquivo não é permitido.';
+  }
+  if (/network|failed to fetch|load failed|conexão/i.test(mensagem)) {
+    return 'Falha de conexão durante o envio. Tente novamente.';
+  }
+  if (/sessão expirou|session|jwt|unauthor/i.test(mensagem)) {
+    return 'Sua sessão expirou. Entre novamente para enviar materiais.';
+  }
+  const parecePortugues = /[áàâãéêíóôõúç]|\b(?:nao|não|possivel|possível|erro|falha|arquivo|envio|sessao|sessão|formato|conexao|conexão|material|tente)\b/i.test(mensagem);
+  return parecePortugues ? mensagem : 'Não foi possível enviar o arquivo. Tente novamente.';
 }
 function resumirNomesArquivos(nomes: string[]) {
   const limite = 3;
@@ -173,12 +192,12 @@ async function uploadCancelavel(caminho: string, arquivo: Blob, nomeArquivo: str
     };
     requisicao.onload = () => concluir(() => {
       if (requisicao.status >= 200 && requisicao.status < 300) { resolve(); return; }
-      let mensagem = 'Não foi possível enviar o arquivo.';
+      let mensagem: unknown = 'Não foi possível enviar o arquivo.';
       try {
         const detalhe = JSON.parse(requisicao.responseText);
-        mensagem = String(detalhe?.message || detalhe?.error || mensagem);
+        mensagem = detalhe?.message || detalhe?.error || mensagem;
       } catch { /* resposta sem JSON */ }
-      reject(new Error(mensagem));
+      reject(new Error(mensagemErroEnvioMaterial(mensagem)));
     });
     requisicao.onerror = () => concluir(() => reject(new Error('Falha de conexão durante o envio.')));
     requisicao.onabort = () => concluir(() => reject(new DOMException('Envio cancelado.', 'AbortError')));
@@ -343,6 +362,11 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
           bytesConcluidos += file.size;
           continue;
         }
+        if (file.size > LIMITE_ARQUIVO_DIVULGACAO_BYTES) {
+          falhas.push(`${file.name}: excede o limite permitido de ${LIMITE_ARQUIVO_DIVULGACAO_MB} MB`);
+          bytesConcluidos += file.size;
+          continue;
+        }
 
         let arquivoHash = '';
         try {
@@ -423,7 +447,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
             });
           }
           if (controlador.signal.aborted) throw e;
-          falhas.push(`${file.name}: ${e instanceof Error ? e.message : 'falha no envio'}`);
+          falhas.push(`${file.name}: ${mensagemErroEnvioMaterial(e)}`);
           bytesConcluidos += file.size;
           continue;
         }
@@ -473,7 +497,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         if (caminhosCriados.length) await supabase.storage.from(BUCKET).remove([...new Set(caminhosCriados)]);
         if (ids.length) setMateriais((atuais) => atuais.filter((item) => !ids.includes(item.id)));
         setErro('Envio cancelado. Nenhum arquivo deste envio foi mantido.');
-      } else setErro(e instanceof Error ? e.message : 'Não foi possível enviar os materiais.');
+      } else setErro(mensagemErroEnvioMaterial(e));
     } finally {
       controladorEnvio.current = null;
       setEnvioAtivo(null); setSalvando(false);

@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.09: publicação de materiais valida 100 MB antes do
+// upload e converte falhas técnicas do armazenamento para avisos em português.
 // Revisado na versão 1.13.0.08: Divulgação prepara o arquivo antes do toque de
 // compartilhamento e exibe falhas de envio somente em português.
 // Revisado na versão 1.13.0.07: no Balanço da Gestão Web, o mês atual do ano

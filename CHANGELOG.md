@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.13.0.09 - 2026-09-01
+
+- Gestão Web e Mobile: a publicação de materiais na Divulgação valida o limite
+  de 100 MB antes do upload e informa a recusa inteiramente em português.
+- Respostas técnicas do armazenamento, incluindo **maximum allowed size**, não
+  são mais exibidas ao usuário; erros desconhecidos recebem uma mensagem segura.
+
 ## 1.13.0.08 - 2026-09-01
 
 - AvantaVendas: vídeos e demais materiais da Divulgação são preparados antes de

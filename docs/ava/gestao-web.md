@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.08 -->
+<!-- ava-version: 1.13.0.09 -->
+
+> Revisão 1.13.0.09: ao publicar materiais para a equipe, cada arquivo é
+> validado antes do envio. Arquivos maiores que 100 MB são recusados com aviso
+> em português, sem expor a resposta técnica do armazenamento.
 
 > Revisão 1.13.0.08: o preparo e a tradução de falhas no compartilhamento de
 > materiais pertencem ao AvantaVendas; sem alteração operacional na Gestão Web.
