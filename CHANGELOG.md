@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.13.0.11 - 2026-09-01
+
+- Custos e Precificação: criar uma tabela solicita somente o nome; o código
+  técnico estável é gerado automaticamente e permanece oculto na interface.
+- A exportação reúne **Preço padrão** e uma coluna para cada tabela existente
+  na mesma linha do produto. A importação atualiza valores preenchidos,
+  preserva células vazias e tabelas ausentes e continua aceitando o formato
+  anterior com uma aba separada de preços.
+- Os botões **Importar Excel** e **Exportar Excel** receberam ícones SVG,
+  hierarquia interna e espaçamento tipográfico revisados no padrão do módulo.
+
 ## 1.13.0.10 - 2026-09-01
 
 - Gestão Web: **Menu > Visual** ganhou **Restaurar visual padrão**. Após a

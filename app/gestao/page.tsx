@@ -1709,6 +1709,11 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
 setAcessoNaoConfigurado(false);
 setAcessoLiberado(true);
 setModalSelecionarEmpresa(false);
+
+  const moduloSolicitado = new URLSearchParams(window.location.search).get('abrirModulo');
+  if (moduloSolicitado === 'custos') {
+    router.replace(`/custos?empresaId=${encodeURIComponent(empresa.id)}`);
+  }
 };
 
   // --- LOCAL STORAGE (LÓGICA SEPARADA POR ANO E CONFIGURAÇÕES) ---

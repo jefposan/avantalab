@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.10 -->
+<!-- ava-version: 1.13.0.11 -->
+
+> Revisão 1.13.0.11: em **Custos e Precificação > Tabelas de preços**, criar
+> uma tabela solicita somente o nome. **Exportar Excel** gera uma linha por
+> produto com **Preço padrão** e uma coluna para cada tabela existente. Na
+> importação, somente valores preenchidos são atualizados; células vazias e
+> tabelas ausentes ficam preservadas. O formato anterior continua aceito.
 
 > Revisão 1.13.0.10: em **Menu > Visual**, quem pode alterar a aparência pode
 > usar **Restaurar visual padrão**. Após confirmar, a logo personalizada é

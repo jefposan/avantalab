@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { colunasExportacaoTabelasPreco, gerarCodigoTecnicoTabelaPreco } from '../../app/custos/types.ts';
 
 const migracao = readFileSync('supabase/migrations/20260831130000_tabelas_precos_produtos_importacao.sql', 'utf8');
 const desvinculo = readFileSync('supabase/migrations/20260831220000_desvincular_precificacao_avantavendas.sql', 'utf8');
 const separacaoDivulgacao = readFileSync('supabase/migrations/20260901100000_separar_preco_divulgacao_precificacao.sql', 'utf8');
+const migracaoCodigoAutomatico = readFileSync('supabase/migrations/20260901150000_codigo_automatico_tabela_preco.sql', 'utf8');
 const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const tabelas = readFileSync('app/custos/TabelasPrecosView.tsx', 'utf8');
 const repositorio = readFileSync('app/custos/repository.ts', 'utf8');
@@ -20,11 +22,40 @@ test('tabelas de preços pertencem à empresa e possuem uma única tabela padrã
   assert.doesNotMatch(migracao, /vendas_mobile_usuario_tem_vinculo_conta_empresa\(empresa_id, 'catalogo'\)/);
 });
 
+test('nova tabela pede somente o nome e recebe código técnico automático', () => {
+  assert.match(tabelas, /Informe somente um nome para identificar a nova tabela\./);
+  assert.doesNotMatch(tabelas, /<label>Código<input/);
+  assert.match(migracaoCodigoAutomatico, /v_codigo_base := upper\(regexp_replace/);
+  assert.match(migracaoCodigoAutomatico, /exception when unique_violation/);
+  assert.doesNotMatch(migracaoCodigoAutomatico, /set codigo =/);
+  assert.equal(gerarCodigoTecnicoTabelaPreco('Preço Atacado', []), 'PRECO-ATACADO');
+  assert.equal(gerarCodigoTecnicoTabelaPreco('Preço Atacado', ['PRECO-ATACADO']), 'PRECO-ATACADO-2');
+});
+
+test('exportação cria uma coluna identificável para cada tabela adicional', () => {
+  assert.deepEqual(colunasExportacaoTabelasPreco([
+    { codigo: 'PADRAO', nome: 'Padrão', padrao: true },
+    { codigo: 'ATACADO', nome: 'Atacado', padrao: false },
+    { codigo: 'REVENDA', nome: 'Revenda', padrao: false },
+    { codigo: 'ATACADO-2', nome: 'Atacado', padrao: false },
+  ]), [
+    { codigo: 'ATACADO', nome: 'Atacado', cabecalho: 'Preço · Atacado' },
+    { codigo: 'REVENDA', nome: 'Revenda', cabecalho: 'Preço · Revenda' },
+    { codigo: 'ATACADO-2', nome: 'Atacado', cabecalho: 'Preço · Atacado (2)' },
+  ]);
+});
+
 test('cadastro exporta e importa produtos e preços com prévia e proteção concorrente', () => {
   assert.match(workspace, /id: 'precos', rotulo: 'Tabelas de preços'/);
   assert.match(tabelas, /Exportar Excel/);
   assert.match(tabelas, /Importar Excel/);
   assert.match(tabelas, /Revisar importação/);
+  assert.match(tabelas, /<Icon name="upload" size=\{17\} \/>/);
+  assert.match(tabelas, /<Icon name="download" size=\{17\} \/>/);
+  assert.match(tabelas, /AVANTALAB-CUSTOS-2/);
+  assert.match(tabelas, /precosLegados/);
+  assert.match(tabelas, /Células vazias não alteram o preço já cadastrado/);
+  assert.doesNotMatch(tabelas, /book_append_sheet\(livro, planilhaPrecos, 'Tabelas de preços'\)/);
   assert.match(tabelas, /ID interno \(não alterar\)/);
   assert.match(tabelas, /Atualizado em \(não alterar\)/);
   assert.match(repositorio, /custos_importar_produtos_precos_rpc/);

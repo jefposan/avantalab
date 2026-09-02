@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Icon } from '@/app/projetos/components/Icon';
 import { Modal } from '@/app/projetos/components/Modal';
 import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
 import {
   importarCadastroProdutosPrecos, salvarPrecoTabela, salvarTabelaPreco,
 } from './repository';
 import {
-  precoEfetivoTabela, type PrecoTabelaItem, type ProdutoCustos,
+  colunasExportacaoTabelasPreco, gerarCodigoTecnicoTabelaPreco, precoEfetivoTabela, type PrecoTabelaItem, type ProdutoCustos,
   type ResumoImportacaoCadastro, type TabelaPreco,
 } from './types';
 import styles from './custos.module.css';
@@ -28,8 +29,6 @@ const cabecalhosProdutos = [
   'Código tributação nacional', 'Código tributação municipal', 'NBS', 'Item LC 116',
   'Município da prestação', 'Alíquota ISS', 'Atualizado em (não alterar)',
 ] as const;
-const cabecalhosPrecos = ['Código do produto', 'Código da tabela', 'Tabela', 'Preço'] as const;
-
 const simNao = (valor: boolean) => valor ? 'Sim' : 'Não';
 const booleanoPlanilha = (valor: unknown, padrao: boolean) => {
   const texto = String(valor ?? '').trim().toLocaleLowerCase('pt-BR');
@@ -45,6 +44,18 @@ const numeroPlanilha = (valor: unknown) => {
   const normalizado = texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto;
   const numero = Number(normalizado);
   return Number.isFinite(numero) ? numero : 0;
+};
+const numeroPlanilhaOpcional = (valor: unknown, contexto: string) => {
+  if (valor === null || valor === undefined || String(valor).trim() === '') return null;
+  if (typeof valor === 'number') {
+    if (Number.isFinite(valor)) return valor;
+    throw new Error(`Valor inválido em ${contexto}.`);
+  }
+  const texto = String(valor).trim().replace(/R\$/gi, '').replace(/\s/g, '');
+  const normalizado = texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto;
+  const numero = Number(normalizado);
+  if (!Number.isFinite(numero)) throw new Error(`Valor inválido em ${contexto}.`);
+  return numero;
 };
 const valorLinha = (linha: Record<string, unknown>, cabecalho: string) => linha[cabecalho];
 
@@ -80,52 +91,66 @@ export default function TabelasPrecosView({
       const XLSX = await import('xlsx');
       const agora = new Date().toISOString();
       const livro = XLSX.utils.book_new();
+      const colunasPrecos = colunasExportacaoTabelasPreco(tabelas);
+      const indicePrecoPadrao = cabecalhosProdutos.indexOf('Preço padrão');
+      const cabecalhosPlanilhaProdutos = [
+        ...cabecalhosProdutos.slice(0, indicePrecoPadrao + 1),
+        ...colunasPrecos.map((coluna) => coluna.cabecalho),
+        ...cabecalhosProdutos.slice(indicePrecoPadrao + 1),
+      ];
       const instrucoes = XLSX.utils.aoa_to_sheet([
         ['Cadastro de produtos e tabelas de preços — AvantaLab'],
         ['Como usar'],
-        ['1. Edite somente as planilhas Produtos e Tabelas de preços.'],
+        ['1. Edite os produtos e seus preços somente na planilha Produtos.'],
         ['2. Não altere IDs internos nem datas de atualização. Eles evitam duplicidades e sobrescritas.'],
         ['3. Para cadastrar um produto, crie uma linha com ID em branco e um Código ainda não utilizado.'],
         ['4. Tipo aceita Produto ou Serviço. Ativo e Disponível no catálogo aceitam Sim ou Não.'],
-        ['5. Para adicionar preço a um produto novo, repita seu Código na planilha Tabelas de preços.'],
-        ['6. Não renomeie as planilhas nem os cabeçalhos. Importe o arquivo e revise a prévia antes de confirmar.'],
+        ['5. Cada tabela existente aparece em uma coluna “Preço · Nome da tabela”. Células vazias não alteram o preço já cadastrado.'],
+        ['6. Não renomeie a planilha nem os cabeçalhos. Importe o arquivo e revise a prévia antes de confirmar.'],
       ]);
       instrucoes['!cols'] = [{ wch: 105 }];
       XLSX.utils.book_append_sheet(livro, instrucoes, 'Instruções');
 
-      const linhasProdutos = produtos.map((produto) => [
-        produto.id, produto.sku, produto.tipo_item === 'servico' ? 'Serviço' : 'Produto', produto.nome,
+      const linhasProdutos = produtos.map((produto) => {
+        const linha = [
+          produto.id, produto.sku, produto.tipo_item === 'servico' ? 'Serviço' : 'Produto', produto.nome,
         produto.marca, produto.categoria, produto.descricao, produto.preco_custo, produto.preco_venda,
         produto.unidade, produto.codigo_barras, simNao(produto.ativo), simNao(produto.disponivel_catalogo),
         produto.ncm, produto.cest, produto.origem_mercadoria, produto.unidade_tributavel, produto.cfop_padrao,
         produto.cst, produto.csosn, produto.cst_pis, produto.cst_cofins, produto.cst_ibs_cbs,
         produto.classificacao_ibs_cbs, produto.codigo_tributacao_nacional, produto.codigo_tributacao_municipal,
-        produto.nbs, produto.item_lc116, produto.municipio_prestacao, produto.aliquota_iss, produto.atualizado_em,
-      ]);
-      const planilhaProdutos = XLSX.utils.aoa_to_sheet([[...cabecalhosProdutos], ...linhasProdutos]);
-      planilhaProdutos['!autofilter'] = { ref: `A1:AE${Math.max(2, linhasProdutos.length + 1)}` };
+          produto.nbs, produto.item_lc116, produto.municipio_prestacao, produto.aliquota_iss, produto.atualizado_em,
+        ];
+        linha.splice(indicePrecoPadrao + 1, 0, ...colunasPrecos.map((coluna) => {
+          const tabela = tabelas.find((item) => item.codigo === coluna.codigo);
+          return precoEfetivoTabela(tabela, produto, precos);
+        }));
+        return linha;
+      });
+      const planilhaProdutos = XLSX.utils.aoa_to_sheet([cabecalhosPlanilhaProdutos, ...linhasProdutos]);
+      const ultimaColuna = XLSX.utils.encode_col(cabecalhosPlanilhaProdutos.length - 1);
+      planilhaProdutos['!autofilter'] = { ref: `A1:${ultimaColuna}${Math.max(2, linhasProdutos.length + 1)}` };
       planilhaProdutos['!freeze'] = { xSplit: 2, ySplit: 1 };
-      planilhaProdutos['!cols'] = cabecalhosProdutos.map((cabecalho, indice) => ({
-        wch: indice === 0 || indice === 30 ? 16 : Math.min(34, Math.max(12, cabecalho.length + 2)),
-        hidden: indice === 0 || indice === 30,
+      planilhaProdutos['!cols'] = cabecalhosPlanilhaProdutos.map((cabecalho) => ({
+        wch: cabecalho.startsWith('Preço ·') ? Math.min(30, Math.max(18, cabecalho.length + 2)) : Math.min(34, Math.max(12, cabecalho.length + 2)),
+        hidden: cabecalho === 'ID interno (não alterar)' || cabecalho === 'Atualizado em (não alterar)',
       }));
+      const colunasMoeda = cabecalhosPlanilhaProdutos
+        .map((cabecalho, indice) => cabecalho === 'Custo' || cabecalho === 'Preço padrão' || cabecalho.startsWith('Preço ·') ? XLSX.utils.encode_col(indice) : null)
+        .filter((coluna): coluna is string => Boolean(coluna));
+      const colunaAliquotaIss = XLSX.utils.encode_col(cabecalhosPlanilhaProdutos.indexOf('Alíquota ISS'));
       for (let linha = 2; linha <= linhasProdutos.length + 1; linha += 1) {
-        for (const coluna of ['H', 'I']) if (planilhaProdutos[`${coluna}${linha}`]) planilhaProdutos[`${coluna}${linha}`].z = 'R$ #,##0.00';
-        if (planilhaProdutos[`AD${linha}`]) planilhaProdutos[`AD${linha}`].z = '0.00';
+        for (const coluna of colunasMoeda) if (planilhaProdutos[`${coluna}${linha}`]) planilhaProdutos[`${coluna}${linha}`].z = 'R$ #,##0.00';
+        if (planilhaProdutos[`${colunaAliquotaIss}${linha}`]) planilhaProdutos[`${colunaAliquotaIss}${linha}`].z = '0.00';
       }
       XLSX.utils.book_append_sheet(livro, planilhaProdutos, 'Produtos');
 
-      const linhasPrecos = tabelas.flatMap((tabela) => produtos.map((produto) => [
-        produto.sku, tabela.codigo, tabela.nome, precoEfetivoTabela(tabela, produto, precos),
-      ]));
-      const planilhaPrecos = XLSX.utils.aoa_to_sheet([[...cabecalhosPrecos], ...linhasPrecos]);
-      planilhaPrecos['!autofilter'] = { ref: `A1:D${Math.max(2, linhasPrecos.length + 1)}` };
-      planilhaPrecos['!freeze'] = { ySplit: 1 };
-      planilhaPrecos['!cols'] = [{ wch: 22 }, { wch: 20 }, { wch: 30 }, { wch: 18 }];
-      for (let linha = 2; linha <= linhasPrecos.length + 1; linha += 1) if (planilhaPrecos[`D${linha}`]) planilhaPrecos[`D${linha}`].z = 'R$ #,##0.00';
-      XLSX.utils.book_append_sheet(livro, planilhaPrecos, 'Tabelas de preços');
-
-      const metadados = XLSX.utils.aoa_to_sheet([['chave', 'valor'], ['formato', 'AVANTALAB-CUSTOS-1'], ['exportado_em', agora]]);
+      const metadados = XLSX.utils.aoa_to_sheet([
+        ['chave', 'valor', 'nome', 'cabecalho'],
+        ['formato', 'AVANTALAB-CUSTOS-2', '', ''],
+        ['exportado_em', agora, '', ''],
+        ...colunasPrecos.map((coluna) => ['tabela_preco', coluna.codigo, coluna.nome, coluna.cabecalho]),
+      ]);
       XLSX.utils.book_append_sheet(livro, metadados, 'Metadados');
       if (livro.Workbook?.Sheets) livro.Workbook.Sheets.find((item) => item.name === 'Metadados')!.Hidden = 2;
       XLSX.writeFile(livro, `avantalab-produtos-precos-${agora.slice(0, 10)}.xlsx`, { compression: true });
@@ -140,10 +165,14 @@ export default function TabelasPrecosView({
       const XLSX = await import('xlsx');
       const livro = XLSX.read(await arquivo.arrayBuffer(), { type: 'array', cellDates: true });
       const abaProdutos = livro.Sheets['Produtos'];
-      const abaPrecos = livro.Sheets['Tabelas de preços'];
-      if (!abaProdutos || !abaPrecos) throw new Error('Use uma planilha exportada pelo AvantaLab, com as abas Produtos e Tabelas de preços.');
+      if (!abaProdutos) throw new Error('Use uma planilha exportada pelo AvantaLab, com a aba Produtos.');
       const linhasProdutos = XLSX.utils.sheet_to_json<Record<string, unknown>>(abaProdutos, { defval: '' });
-      const linhasPrecos = XLSX.utils.sheet_to_json<Record<string, unknown>>(abaPrecos, { defval: '' });
+      const abaMetadados = livro.Sheets['Metadados'];
+      const linhasMetadados = abaMetadados ? XLSX.utils.sheet_to_json<Array<unknown>>(abaMetadados, { header: 1, defval: '' }) : [];
+      const colunasPrecosMetadados = linhasMetadados.filter((linha) => String(linha[0]).trim() === 'tabela_preco').map((linha) => ({
+        codigo: String(linha[1] || '').trim().toUpperCase(),
+        cabecalho: String(linha[3] || '').trim(),
+      })).filter((coluna) => coluna.codigo && coluna.cabecalho);
       const produtosImportados = linhasProdutos.filter((linha) => String(valorLinha(linha, 'Código')).trim()).map((linha) => ({
         id: String(valorLinha(linha, 'ID interno (não alterar)') || '').trim(),
         sku: String(valorLinha(linha, 'Código') || '').trim().toUpperCase(),
@@ -167,14 +196,26 @@ export default function TabelasPrecosView({
         aliquota_iss: numeroPlanilha(valorLinha(linha, 'Alíquota ISS')),
         atualizado_em: String(valorLinha(linha, 'Atualizado em (não alterar)') || '').trim(),
       }));
-      const precosImportados = linhasPrecos.filter((linha) => String(valorLinha(linha, 'Código do produto')).trim()).map((linha) => ({
+      const precosColunas = linhasProdutos.flatMap((linha) => {
+        const sku = String(valorLinha(linha, 'Código') || '').trim().toUpperCase();
+        if (!sku) return [];
+        return colunasPrecosMetadados.flatMap((coluna) => {
+          if (!Object.prototype.hasOwnProperty.call(linha, coluna.cabecalho)) return [];
+          const preco = numeroPlanilhaOpcional(valorLinha(linha, coluna.cabecalho), `${coluna.cabecalho}, produto ${sku}`);
+          return preco === null ? [] : [{ sku, tabela_codigo: coluna.codigo, preco }];
+        });
+      });
+      const abaPrecosLegados = livro.Sheets['Tabelas de preços'];
+      const linhasPrecosLegados = abaPrecosLegados
+        ? XLSX.utils.sheet_to_json<Record<string, unknown>>(abaPrecosLegados, { defval: '' })
+        : [];
+      const precosLegados = linhasPrecosLegados.filter((linha) => String(valorLinha(linha, 'Código do produto')).trim()).map((linha) => ({
         sku: String(valorLinha(linha, 'Código do produto') || '').trim().toUpperCase(),
         tabela_codigo: String(valorLinha(linha, 'Código da tabela') || '').trim().toUpperCase(),
         preco: numeroPlanilha(valorLinha(linha, 'Preço')),
       }));
+      const precosImportados = colunasPrecosMetadados.length ? precosColunas : precosLegados;
       if (!produtosImportados.length) throw new Error('A planilha não contém produtos para validar.');
-      const abaMetadados = livro.Sheets['Metadados'];
-      const linhasMetadados = abaMetadados ? XLSX.utils.sheet_to_json<Array<unknown>>(abaMetadados, { header: 1, defval: '' }) : [];
       const exportadoEm = String(linhasMetadados.find((linha) => linha[0] === 'exportado_em')?.[1] || '').trim() || null;
       const resumo = await importarCadastroProdutosPrecos(companyId, catalogoId, arquivo.name, exportadoEm, produtosImportados, precosImportados, false);
       setImportacao({ arquivoNome: arquivo.name, exportadoEm, produtos: produtosImportados, precos: precosImportados, resumo });
@@ -198,7 +239,12 @@ export default function TabelasPrecosView({
     if (!editandoTabela) return;
     setProcessando(true); onErro('');
     try {
-      const salva = await salvarTabelaPreco(companyId, editandoTabela);
+      const salva = await salvarTabelaPreco(companyId, {
+        ...editandoTabela,
+        codigo: editandoTabela.id
+          ? editandoTabela.codigo
+          : gerarCodigoTecnicoTabelaPreco(editandoTabela.nome || '', tabelas.map((tabela) => tabela.codigo)),
+      });
       setTabelaAtivaId(salva.id); setEditandoTabela(null);
       await onRecarregar(); onMensagem('Tabela de preços salva.');
     } catch (falha) { onErro(falha instanceof Error ? falha.message : 'Não foi possível salvar a tabela.'); }
@@ -208,16 +254,16 @@ export default function TabelasPrecosView({
   return <>
     <header className={styles.pageHeader}><div><span>Custos e precificação</span><h1>Tabelas de preços</h1><p>Organize políticas comerciais, atualize o cadastro por Excel e mantenha o preço negociado de cada cliente.</p></div><div className={styles.headerActions}>
       <input ref={inputArquivo} type="file" accept=".xlsx,.xls" hidden onChange={(evento) => { const arquivo = evento.target.files?.[0]; if (arquivo) void lerArquivo(arquivo); }} />
-      <button type="button" className={styles.secondaryButton} disabled={!podeEditar || processando} onClick={() => inputArquivo.current?.click()}>Importar Excel</button>
-      <button type="button" className={styles.secondaryButton} disabled={processando} onClick={() => void exportar()}>Exportar Excel</button>
-      <button type="button" className={styles.primaryButton} disabled={!podeEditar || processando} onClick={() => setEditandoTabela({ codigo: '', nome: '', descricao: '', ativo: true })}>Nova tabela</button>
+      <button type="button" aria-label="Importar Excel" className={`${styles.secondaryButton} ${styles.spreadsheetAction}`} disabled={!podeEditar || processando} onClick={() => inputArquivo.current?.click()}><span className={styles.spreadsheetActionIcon}><Icon name="upload" size={17} /></span><span className={styles.spreadsheetActionText}><strong>Importar</strong><small>Excel</small></span></button>
+      <button type="button" aria-label="Exportar Excel" className={`${styles.secondaryButton} ${styles.spreadsheetAction}`} disabled={processando} onClick={() => void exportar()}><span className={styles.spreadsheetActionIcon}><Icon name="download" size={17} /></span><span className={styles.spreadsheetActionText}><strong>Exportar</strong><small>Excel</small></span></button>
+      <button type="button" className={styles.primaryButton} disabled={!podeEditar || processando} onClick={() => setEditandoTabela({ nome: '', ativo: true })}>Nova tabela</button>
     </div></header>
 
     <section className={styles.panel}>
       <div className={styles.panelTitle}><div><h2>Políticas comerciais</h2><p>A tabela padrão é usada quando a cliente não possui vínculo específico.</p></div></div>
       <div className={styles.priceTableCards} role="list">
         {tabelas.map((tabela) => <button type="button" role="listitem" key={tabela.id} className={`${styles.priceTableCard} ${tabela.id === tabelaAtiva?.id ? styles.priceTableCardActive : ''}`} onClick={() => setTabelaAtivaId(tabela.id)}>
-          <span>{tabela.padrao ? 'Padrão' : tabela.ativo ? 'Ativa' : 'Inativa'}</span><strong>{tabela.nome}</strong><small>{tabela.codigo}</small>
+          <span>{tabela.padrao ? 'Padrão' : tabela.ativo ? 'Ativa' : 'Inativa'}</span><strong>{tabela.nome}</strong>{tabela.descricao && <small>{tabela.descricao}</small>}
         </button>)}
       </div>
     </section>
@@ -235,8 +281,8 @@ export default function TabelasPrecosView({
 
     <section className={styles.importSafety}><strong>Importação protegida</strong><p>O arquivo é validado antes de qualquer alteração. IDs impedem duplicidades e a data de atualização bloqueia a substituição de um produto alterado após a exportação.</p></section>
 
-    <Modal open={Boolean(editandoTabela)} onClose={() => !processando && setEditandoTabela(null)} title={editandoTabela?.id ? 'Ajustar tabela de preços' : 'Nova tabela de preços'} description="Use um código curto e estável, como ATACADO, REVENDA ou CLIENTE-A.">
-      {editandoTabela && <div className={styles.priceTableForm}><label>Código<input value={editandoTabela.codigo || ''} maxLength={30} disabled={Boolean(editandoTabela.padrao)} onChange={(evento) => setEditandoTabela({ ...editandoTabela, codigo: evento.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '') })} /></label><label>Nome<input value={editandoTabela.nome || ''} maxLength={80} onChange={(evento) => setEditandoTabela({ ...editandoTabela, nome: evento.target.value })} /></label><label>Descrição<textarea rows={3} value={editandoTabela.descricao || ''} onChange={(evento) => setEditandoTabela({ ...editandoTabela, descricao: evento.target.value })} /></label>{editandoTabela.id && !editandoTabela.padrao && <label className={styles.checkboxLine}><input type="checkbox" checked={editandoTabela.ativo !== false} onChange={(evento) => setEditandoTabela({ ...editandoTabela, ativo: evento.target.checked })} />Tabela ativa</label>}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} onClick={() => setEditandoTabela(null)} disabled={processando}>Cancelar</button><button type="button" className={styles.primaryButton} onClick={() => void gravarTabela()} disabled={processando || !editandoTabela.codigo?.trim() || !editandoTabela.nome?.trim()}>Salvar tabela</button></div></div>}
+    <Modal open={Boolean(editandoTabela)} onClose={() => !processando && setEditandoTabela(null)} title={editandoTabela?.id ? 'Ajustar tabela de preços' : 'Nova tabela de preços'} description={editandoTabela?.id ? 'Altere o nome, a descrição ou a disponibilidade desta tabela.' : 'Informe somente um nome para identificar a nova tabela.'}>
+      {editandoTabela && <div className={styles.priceTableForm}><label>Nome<input autoFocus minLength={2} value={editandoTabela.nome || ''} maxLength={80} onChange={(evento) => setEditandoTabela({ ...editandoTabela, nome: evento.target.value })} /></label>{editandoTabela.id && <label>Descrição<textarea rows={3} value={editandoTabela.descricao || ''} onChange={(evento) => setEditandoTabela({ ...editandoTabela, descricao: evento.target.value })} /></label>}{editandoTabela.id && !editandoTabela.padrao && <label className={styles.checkboxLine}><input type="checkbox" checked={editandoTabela.ativo !== false} onChange={(evento) => setEditandoTabela({ ...editandoTabela, ativo: evento.target.checked })} />Tabela ativa</label>}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} onClick={() => setEditandoTabela(null)} disabled={processando}>Cancelar</button><button type="button" className={styles.primaryButton} onClick={() => void gravarTabela()} disabled={processando || (editandoTabela.nome?.trim().length || 0) < 2}>Salvar tabela</button></div></div>}
     </Modal>
 
     <Modal open={Boolean(importacao)} onClose={() => !processando && setImportacao(null)} title="Revisar importação" description={importacao?.arquivoNome || ''}>

@@ -31,6 +31,14 @@ test('Custos usa página total e exige o acesso oficial do módulo', () => {
   assert.doesNotMatch(cliente, /Demonstração local|Teste local/);
 });
 
+test('Acesso direto a Custos seleciona o perfil e retorna ao módulo na mesma origem', () => {
+  assert.match(cliente, /router\.replace\('\/gestao\?abrirModulo=custos'\)/);
+  assert.match(gestao, /new URLSearchParams\(window\.location\.search\)\.get\('abrirModulo'\)/);
+  assert.match(gestao, /moduloSolicitado === 'custos'/);
+  assert.match(gestao, /router\.replace\(`\/custos\?empresaId=\$\{encodeURIComponent\(empresa\.id\)\}`\)/);
+  assert.doesNotMatch(cliente, /https?:\/\/[^'"`]*\/gestao/);
+});
+
 test('Custos participa do catálogo comercial e da navegação oficial da Gestão', () => {
   assert.match(registro, /id: 'custos'[\s\S]*ordem: 5/);
   assert.match(registro, /id: 'custos'[\s\S]*superficies: \['web'\]/);

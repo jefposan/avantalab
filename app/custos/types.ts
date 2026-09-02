@@ -102,6 +102,26 @@ export type PrecoTabelaItem = {
   atualizado_em: string;
 };
 
+export type ColunaExportacaoTabelaPreco = {
+  codigo: string;
+  nome: string;
+  cabecalho: string;
+};
+
+export function colunasExportacaoTabelasPreco(tabelas: Array<Pick<TabelaPreco, 'codigo' | 'nome' | 'padrao'>>) {
+  const ocorrencias = new Map<string, number>();
+  return tabelas.filter((tabela) => !tabela.padrao).map((tabela): ColunaExportacaoTabelaPreco => {
+    const base = `Preço · ${tabela.nome.trim() || tabela.codigo}`;
+    const ocorrencia = (ocorrencias.get(base) || 0) + 1;
+    ocorrencias.set(base, ocorrencia);
+    return {
+      codigo: tabela.codigo,
+      nome: tabela.nome,
+      cabecalho: ocorrencia === 1 ? base : `${base} (${ocorrencia})`,
+    };
+  });
+}
+
 export type ResumoImportacaoCadastro = {
   produtos_criados: number;
   produtos_atualizados: number;
@@ -184,4 +204,18 @@ export function proximoCodigo(prefixoInformado: string, codigos: string[]) {
   const largura = Math.max(3, ...numeros.map((numero) => numero.length));
   const maior = numeros.reduce((maximo, numero) => Math.max(maximo, Number(numero)), 0);
   return `${prefixo}${String(maior + 1).padStart(largura, '0')}`;
+}
+
+export function gerarCodigoTecnicoTabelaPreco(nome: string, codigos: string[]) {
+  const normalizado = nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const codigoNormalizado = normalizado.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30);
+  const base = codigoNormalizado.length >= 2 ? codigoNormalizado : 'TABELA';
+  const usados = new Set(codigos.map((codigo) => codigo.trim().toUpperCase()));
+  if (!usados.has(base)) return base;
+  for (let sufixo = 2; sufixo <= 9999; sufixo += 1) {
+    const final = `-${sufixo}`;
+    const candidato = `${base.slice(0, 30 - final.length)}${final}`;
+    if (!usados.has(candidato)) return candidato;
+  }
+  return `TABELA-${Date.now().toString(36).toUpperCase()}`.slice(0, 30);
 }

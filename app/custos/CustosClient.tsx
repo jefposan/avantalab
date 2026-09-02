@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import { supabase } from '@/app/lib/supabase';
@@ -18,6 +19,7 @@ export type CustosAccess = {
 };
 
 export default function CustosClient({ companyId }: { companyId: string }) {
+  const router = useRouter();
   const [access, setAccess] = useState<CustosAccess | null>(null);
   const [error, setError] = useState('');
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
@@ -27,7 +29,10 @@ export default function CustosClient({ companyId }: { companyId: string }) {
   useEffect(() => {
     let ativo = true;
     const verificar = async () => {
-      if (!companyId) { setError('Selecione um perfil empresarial na Gestão antes de abrir Custos e Precificação.'); return; }
+      if (!companyId) {
+        router.replace('/gestao?abrirModulo=custos');
+        return;
+      }
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) { setError('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.'); return; }
@@ -39,7 +44,7 @@ export default function CustosClient({ companyId }: { companyId: string }) {
     };
     void verificar();
     return () => { ativo = false; };
-  }, [companyId]);
+  }, [companyId, router]);
 
   useEffect(() => {
     if (!mensagem) return;

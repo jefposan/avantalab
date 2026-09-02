@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.10 -->
+<!-- ava-version: 1.13.0.11 -->
+
+> Revisão 1.13.0.11: a geração automática de códigos e a planilha conjunta de
+> tabelas pertencem à Gestão Web. As tabelas internas continuam sem conexão com
+> clientes ou pedidos do AvantaVendas.
 
 > Revisão 1.13.0.10: a restauração da aparência e o contraste da coluna
 > Faturamento pertencem à Gestão Web; sem impacto operacional no AvantaVendas.
