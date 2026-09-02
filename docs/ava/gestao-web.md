@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.11 -->
+<!-- ava-version: 1.13.0.12 -->
+
+> Revisão 1.13.0.12: a confirmação imediata no botão de pedidos e recebimentos
+> pertence ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.13.0.11: em **Custos e Precificação > Tabelas de preços**, criar
 > uma tabela solicita somente o nome. **Exportar Excel** gera uma linha por

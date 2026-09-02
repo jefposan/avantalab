@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.11 -->
+<!-- ava-version: 1.13.0.12 -->
+
+> Revisão 1.13.0.12: ao confirmar um pedido ou recebimento, o botão muda
+> imediatamente para **Confirmando...** e permanece bloqueado enquanto o saldo
+> é conferido e o lançamento é salvo. Se ocorrer uma falha, o botão volta ao
+> estado normal para nova tentativa.
 
 > Revisão 1.13.0.11: a geração automática de códigos e a planilha conjunta de
 > tabelas pertencem à Gestão Web. As tabelas internas continuam sem conexão com

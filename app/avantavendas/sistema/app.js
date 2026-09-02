@@ -334,6 +334,7 @@ let limitePedidos = 10;
 let limiteClientesPagamentos = 10;
 const ITENS_POR_LOTE_HISTORICO = 10;
 let pedidoClienteRascunho = null;
+let pedidoClienteSalvando = false;
 let conversaoConsignadoRascunho = null;
 let pagamentoClienteRascunho = null;
 let pagamentoClienteSalvando = false;
@@ -7036,59 +7037,64 @@ function atualizarTotaisPedidoClienteNoDom() {
 
 async function finalizarPedidoCliente() {
   const rascunho = pedidoClienteRascunho;
+  if (!rascunho || pedidoClienteSalvando) return;
   if (!state.clientes.some((cliente) => cliente.id === rascunho?.clienteId)) { toast('Selecione o cliente do pedido.'); return; }
   if (!rascunho?.itens.length) { toast('Insira ao menos um item no pedido.'); return; }
   const totais = totaisPedidoClienteRascunho();
   const dataPedido = valor('pedidoClienteData') || rascunho.data;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPedido)) { toast('Informe uma data válida.'); return; }
-  let financeiroAnterior;
-  try {
-    financeiroAnterior = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId, rascunho.editandoId || '');
-  } catch (error) {
-    toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
-    return;
-  }
-  const saldoLiquidoAnterior = financeiroAnterior.debito - financeiroAnterior.credito;
-  const saldoAtual = rascunho.tipo === 'consignado'
-    ? financeiroAnterior.debito
-    : Math.max(0, saldoLiquidoAnterior + totais.total);
-  const custoTotalPedido = rascunho.itens.reduce((soma, item) => {
-    const produto = state.produtos.find((registro) => registro.id === item.produto_id);
-    return soma + Number(item.quantidade || 0) * Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
-  }, 0);
-  const venda = {
-    id: rascunho.editandoId || rascunho.idPersistencia || uuidPersistenciaVendas(),
-    cliente_id: rascunho.clienteId,
-    status: rascunho.status || 'concluida',
-    subtotal: totais.subtotal,
-    desconto: totais.desconto,
-    total: totais.total,
-    forma_pagamento: rascunho.tipo === 'consignado' ? 'Consignado' : 'Venda',
-    observacoes: JSON.stringify({
-      avantalab_pedido: true,
-      tipo: rascunho.tipo,
-      descricao: rascunho.tipo === 'consignado' ? 'Pedido consignado' : 'Pedido de venda',
-      tem_bonificacao: rascunho.itens.some((item) => item.bonificado),
-      custo_total: custoTotalPedido,
-      desconto_tipo: rascunho.descontoTipo || 'valor',
-      desconto_percentual: rascunho.descontoTipo === 'percentual' ? Number(rascunho.descontoPercentual || 0) : 0,
-      saldo_anterior: financeiroAnterior.debito,
-      saldo_final: saldoAtual,
-    }),
-    itens: rascunho.itens.map((item) => {
-      const produto = state.produtos.find((registro) => registro.id === item.produto_id);
-      return { ...item, preco_custo: Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0), desconto: item.bonificado ? item.quantidade * item.preco : 0, total: item.bonificado ? 0 : item.quantidade * item.preco };
-    }),
-    criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
-  };
+  pedidoClienteSalvando = true;
   const botaoFinalizar = document.getElementById('finalizarPedidoClienteBotao');
   if (botaoFinalizar) {
     botaoFinalizar.disabled = true;
     botaoFinalizar.classList.add('is-confirming');
-    botaoFinalizar.textContent = rascunho.editandoId ? 'Salvando pedido...' : 'Finalizando pedido...';
+    botaoFinalizar.setAttribute('aria-busy', 'true');
+    botaoFinalizar.textContent = 'Confirmando...';
   }
-  iniciarMutacaoDadosVendas();
+  let mutacaoIniciada = false;
   try {
+    let financeiroAnterior;
+    try {
+      financeiroAnterior = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId, rascunho.editandoId || '');
+    } catch {
+      toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
+      return;
+    }
+    const saldoLiquidoAnterior = financeiroAnterior.debito - financeiroAnterior.credito;
+    const saldoAtual = rascunho.tipo === 'consignado'
+      ? financeiroAnterior.debito
+      : Math.max(0, saldoLiquidoAnterior + totais.total);
+    const custoTotalPedido = rascunho.itens.reduce((soma, item) => {
+      const produto = state.produtos.find((registro) => registro.id === item.produto_id);
+      return soma + Number(item.quantidade || 0) * Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
+    }, 0);
+    const venda = {
+      id: rascunho.editandoId || rascunho.idPersistencia || uuidPersistenciaVendas(),
+      cliente_id: rascunho.clienteId,
+      status: rascunho.status || 'concluida',
+      subtotal: totais.subtotal,
+      desconto: totais.desconto,
+      total: totais.total,
+      forma_pagamento: rascunho.tipo === 'consignado' ? 'Consignado' : 'Venda',
+      observacoes: JSON.stringify({
+        avantalab_pedido: true,
+        tipo: rascunho.tipo,
+        descricao: rascunho.tipo === 'consignado' ? 'Pedido consignado' : 'Pedido de venda',
+        tem_bonificacao: rascunho.itens.some((item) => item.bonificado),
+        custo_total: custoTotalPedido,
+        desconto_tipo: rascunho.descontoTipo || 'valor',
+        desconto_percentual: rascunho.descontoTipo === 'percentual' ? Number(rascunho.descontoPercentual || 0) : 0,
+        saldo_anterior: financeiroAnterior.debito,
+        saldo_final: saldoAtual,
+      }),
+      itens: rascunho.itens.map((item) => {
+        const produto = state.produtos.find((registro) => registro.id === item.produto_id);
+        return { ...item, preco_custo: Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0), desconto: item.bonificado ? item.quantidade * item.preco : 0, total: item.bonificado ? 0 : item.quantidade * item.preco };
+      }),
+      criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
+    };
+    iniciarMutacaoDadosVendas();
+    mutacaoIniciada = true;
     const salvo = backendAtivo
       ? await executarMutacaoGarantidaVendas(
           'pedido_salvar',
@@ -7122,13 +7128,15 @@ async function finalizarPedidoCliente() {
   } catch (error) {
     toast(traduzErro(error));
   } finally {
+    pedidoClienteSalvando = false;
     const botaoAtual = document.getElementById('finalizarPedidoClienteBotao');
     if (botaoAtual) {
       botaoAtual.disabled = false;
       botaoAtual.classList.remove('is-confirming');
+      botaoAtual.removeAttribute('aria-busy');
       botaoAtual.innerHTML = `${rascunho.editandoId ? 'Salvar pedido' : 'Finalizar pedido'} <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b>`;
     }
-    finalizarMutacaoDadosVendas();
+    if (mutacaoIniciada) finalizarMutacaoDadosVendas();
   }
 }
 
@@ -7261,34 +7269,37 @@ async function confirmarPagamentoCliente() {
   if (resumo.abatimento <= 0) { toast('Informe o valor pago ou o desconto.'); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPagamento)) { toast('Informe uma data válida.'); return; }
   if (dataEhFutura(dataPagamento)) { toast('Pagamento não pode ter data futura.'); return; }
-  try {
-    const saldoConfirmado = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId);
-    rascunho.saldoAnterior = saldoConfirmado.debito;
-    resumo = resumoPagamentoCliente();
-  } catch (error) {
-    toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
-    return;
-  }
-  const pagamento = {
-    id: rascunho.idPersistencia || uuidPersistenciaVendas(),
-    cliente_id: rascunho.clienteId,
-    valor: resumo.valorPago,
-    desconto: resumo.desconto,
-    saldo_anterior: resumo.saldoAnterior,
-    saldo_final: resumo.saldoFinal,
-    data_pagamento: dataPagamento,
-    forma_pagamento: valor('pagamentoClienteForma') || 'Pix',
-    criado_em: new Date().toISOString(),
-  };
   pagamentoClienteSalvando = true;
   const botaoConfirmar = document.getElementById('confirmarPagamentoClienteBotao');
   if (botaoConfirmar) {
     botaoConfirmar.disabled = true;
     botaoConfirmar.classList.add('is-confirming');
-    botaoConfirmar.textContent = 'Confirmando recebimento...';
+    botaoConfirmar.setAttribute('aria-busy', 'true');
+    botaoConfirmar.textContent = 'Confirmando...';
   }
-  iniciarMutacaoDadosVendas();
+  let mutacaoIniciada = false;
   try {
+    try {
+      const saldoConfirmado = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId);
+      rascunho.saldoAnterior = saldoConfirmado.debito;
+      resumo = resumoPagamentoCliente();
+    } catch {
+      toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
+      return;
+    }
+    const pagamento = {
+      id: rascunho.idPersistencia || uuidPersistenciaVendas(),
+      cliente_id: rascunho.clienteId,
+      valor: resumo.valorPago,
+      desconto: resumo.desconto,
+      saldo_anterior: resumo.saldoAnterior,
+      saldo_final: resumo.saldoFinal,
+      data_pagamento: dataPagamento,
+      forma_pagamento: valor('pagamentoClienteForma') || 'Pix',
+      criado_em: new Date().toISOString(),
+    };
+    iniciarMutacaoDadosVendas();
+    mutacaoIniciada = true;
     const salvo = backendAtivo
       ? await executarMutacaoGarantidaVendas('pagamento_salvar', pagamento.id, pagamento, () => window.VendasDb.savePayment(pagamento))
       : pagamento;
@@ -7317,9 +7328,10 @@ async function confirmarPagamentoCliente() {
     if (botaoAtual) {
       botaoAtual.disabled = false;
       botaoAtual.classList.remove('is-confirming');
+      botaoAtual.removeAttribute('aria-busy');
       botaoAtual.textContent = 'Confirmar recebimento';
     }
-    finalizarMutacaoDadosVendas();
+    if (mutacaoIniciada) finalizarMutacaoDadosVendas();
   }
 }
 

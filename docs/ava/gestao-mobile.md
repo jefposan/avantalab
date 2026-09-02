@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.11 -->
+<!-- ava-version: 1.13.0.12 -->
+
+> Revisão 1.13.0.12: a confirmação imediata no botão de pedidos e recebimentos
+> pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.13.0.11: a geração automática de códigos e a planilha conjunta de
 > tabelas de preços pertencem à Gestão Web; sem impacto operacional na Gestão

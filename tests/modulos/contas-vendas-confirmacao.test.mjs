@@ -39,6 +39,22 @@ test('novo pedido e novo pagamento abrem o comprovante sem aviso redundante', ()
   assert.match(fluxoPagamento, /toast\(traduzErro\(error\)\)/);
 });
 
+test('pedido e pagamento exibem confirmação antes da sincronização financeira', () => {
+  const inicioPedido = aplicacao.indexOf('async function finalizarPedidoCliente()');
+  const fimPedido = aplicacao.indexOf('function abrirEditarPedido(', inicioPedido);
+  const fluxoPedido = aplicacao.slice(inicioPedido, fimPedido);
+  const inicioPagamento = aplicacao.indexOf('async function confirmarPagamentoCliente()');
+  const fimPagamento = aplicacao.indexOf('function listaPagamentosPaginaHtml(', inicioPagamento);
+  const fluxoPagamento = aplicacao.slice(inicioPagamento, fimPagamento);
+
+  assert.ok(fluxoPedido.indexOf("textContent = 'Confirmando...'") < fluxoPedido.indexOf('await saldoFinanceiroConfirmadoCliente('));
+  assert.ok(fluxoPagamento.indexOf("textContent = 'Confirmando...'") < fluxoPagamento.indexOf('await saldoFinanceiroConfirmadoCliente('));
+  assert.match(fluxoPedido, /if \(!rascunho \|\| pedidoClienteSalvando\) return;/);
+  assert.match(fluxoPagamento, /if \(!rascunho \|\| pagamentoClienteSalvando\) return;/);
+  assert.match(fluxoPedido, /setAttribute\('aria-busy', 'true'\)/);
+  assert.match(fluxoPagamento, /setAttribute\('aria-busy', 'true'\)/);
+});
+
 test('aviso rápido permanece acessível acima das camadas modais', () => {
   assert.match(aplicacao, /el\.setAttribute\('role', dados\.tipo === 'erro' \? 'alert' : 'status'\)/);
   assert.match(aplicacao, /el\.setAttribute\('aria-live', dados\.tipo === 'erro' \? 'assertive' : 'polite'\)/);

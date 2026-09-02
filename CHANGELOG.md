@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.12 - 2026-09-02
+
+- AvantaVendas: ao confirmar pedido ou recebimento, o botão muda imediatamente
+  para **Confirmando...**, antes da conferência financeira no servidor, e fica
+  bloqueado durante todo o processamento para evitar envios duplicados.
+
 ## 1.13.0.11 - 2026-09-01
 
 - Custos e Precificação: criar uma tabela solicita somente o nome; o código
