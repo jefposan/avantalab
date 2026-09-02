@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.09 -->
+<!-- ava-version: 1.13.0.10 -->
+
+> Revisão 1.13.0.10: a restauração da aparência e o contraste da coluna
+> Faturamento pertencem à Gestão Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.13.0.09: a validação do limite de 100 MB ocorre no painel que
 > publica os materiais da Divulgação; sem mudança no consumo dos arquivos pelo

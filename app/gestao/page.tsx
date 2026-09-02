@@ -283,6 +283,7 @@ export default function AppGestao() {
     abrirConfirmacao, fecharConfirmacao, confirmarAcao,
     modalConfirmacaoAberto, setModalConfirmacaoAberto,
     tituloConfirmacao, mensagemConfirmacao, textoConfirmarConfirmacao,
+    varianteConfirmacao,
     acaoConfirmacao, confirmacaoCarregando,
     textoCancelarConfirmacao, acaoCancelarConfirmacao,
     chatFeedbackAberto, setChatFeedbackAberto,
@@ -2165,6 +2166,7 @@ useEffect(() => {
   };
 }, [
   corPrimaria,
+  darkMode,
   duplicadosAtivo,
   logoUrl,
   logoSettings,
@@ -5415,6 +5417,49 @@ const ocultarLogo = async () => {
   setModalLogo(false);
 };
 
+const solicitarRestauracaoVisualPadrao = () => {
+  if (!podeAcessarAjustes) {
+    abrirAviso('Acesso não permitido', 'Você não tem permissão para restaurar a aparência deste perfil.');
+    return;
+  }
+
+  if (!empresaId) {
+    abrirAviso('Perfil não identificado', 'Atualize a página e tente novamente.');
+    return;
+  }
+
+  abrirConfirmacao({
+    titulo: 'Restaurar visual padrão?',
+    mensagem: 'A logo personalizada será removida, a cor voltará ao azul AvantaLab e o modo claro será ativado. Seus dados e a organização dos cards não serão alterados.',
+    textoConfirmar: 'Restaurar visual',
+    variante: 'alerta',
+    acao: async () => {
+      const logoSettingsPadrao = { scale: 100, x: 0, y: 0 };
+      const salvo = await salvarConfiguracoesBanco({
+        empresaId,
+        corPrimaria: '#003E73',
+        darkMode: false,
+        duplicadosAtivo,
+        logoUrl: '',
+        logoSettings: logoSettingsPadrao,
+      });
+
+      if (!salvo) {
+        abrirAviso('Não foi possível restaurar', 'A aparência atual foi preservada. Tente novamente em instantes.', undefined, 'erro');
+        return;
+      }
+
+      setLogoUrl('');
+      setLogoSettings(logoSettingsPadrao);
+      setCorPrimaria('#003E73');
+      setCorTemporaria('#003E73');
+      setDarkMode(false);
+      setMenuAjuste(null);
+      abrirAviso('Visual restaurado', 'A aparência padrão do AvantaLab foi aplicada a este perfil.', undefined, 'sucesso');
+    },
+  });
+};
+
 const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
 
@@ -8130,6 +8175,7 @@ if (validacaoTelefoneObrigatoria) {
   titulo={tituloConfirmacao}
   mensagem={mensagemConfirmacao}
   textoConfirmar={textoConfirmarConfirmacao}
+  variante={varianteConfirmacao}
   carregando={confirmacaoCarregando}
   textoCancelar={textoCancelarConfirmacao}
   corPrimaria={corPrimaria}
@@ -10383,6 +10429,17 @@ if (validacaoTelefoneObrigatoria) {
               <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${darkMode ? 'translate-x-3.5' : ''}`} style={{ backgroundColor: darkMode && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }} />
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={solicitarRestauracaoVisualPadrao}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-slate-200 transition-colors hover:bg-slate-700 hover:text-white"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m14.836 2A7.5 7.5 0 005.582 9M4.582 9H9m11 11v-5h-.581m0 0A7.5 7.5 0 014.582 15M20 15h-4.418" />
+            </svg>
+            Restaurar visual padrão
+          </button>
         </div>
     )}
 

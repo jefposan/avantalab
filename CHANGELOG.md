@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.13.0.10 - 2026-09-01
+
+- Gestão Web: **Menu > Visual** ganhou **Restaurar visual padrão**. Após a
+  confirmação, a logo personalizada é removida, a cor volta ao azul AvantaLab e
+  o modo claro é ativado, sem alterar dados ou a organização dos cards.
+- Gestão Web: a coluna **Faturamento** do Balanço preserva o verde sobre verde,
+  agora com contraste reforçado para mês e valor, inclusive no modo noturno.
+
 ## 1.13.0.09 - 2026-09-01
 
 - Gestão Web e Mobile: a publicação de materiais na Divulgação valida o limite

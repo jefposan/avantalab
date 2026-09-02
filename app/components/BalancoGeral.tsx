@@ -60,6 +60,9 @@ export default function BalancoGeral({
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
   const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
+  const corFaturamentoLegivel = darkMode
+    ? 'color-mix(in srgb, #00b050 62%, #ffffff)'
+    : 'color-mix(in srgb, #00b050 64%, #0f172a)';
   const estiloLinhaBalanco = (mes: string) => {
     const emHover = mesBalancoEmDestaque === mes;
     const ehMesCorrente = exibeMesCorrente && mes === mesCorrente;
@@ -244,8 +247,16 @@ export default function BalancoGeral({
                       title={ehMesCorrente(mes) ? 'Mês atual' : undefined}
                       aria-current={ehMesCorrente(mes) ? 'date' : undefined}
                     >
-                      <div className="w-20 border-r border-[#00b050]/20 flex items-center justify-center font-semibold px-1 text-[10px] text-[#00b050] bg-transparent">{mes}</div>
-                      <div className="flex-1 px-2 text-right font-semibold text-[#00b050] dark:text-[#2dd4bf]">
+                      <div
+                        className="w-20 border-r border-[#00b050]/20 flex items-center justify-center bg-transparent px-1 text-[10px] font-semibold"
+                        style={{ color: corFaturamentoLegivel }}
+                      >
+                        {mes}
+                      </div>
+                      <div
+                        className="flex-1 px-2 text-right font-semibold"
+                        style={{ color: corFaturamentoLegivel }}
+                      >
                         {getFaturamentoMes(mes).toLocaleString('pt-BR', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,

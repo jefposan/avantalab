@@ -17,6 +17,7 @@ export type AbrirConfirmacaoFn = (params: {
   mensagem: string;
   textoConfirmar?: string;
   textoCancelar?: string;
+  variante?: 'destrutiva' | 'primaria' | 'alerta';
   acao: () => Promise<void> | void;
   acaoCancelar?: () => Promise<void> | void;
 }) => void;
@@ -38,6 +39,7 @@ export function useUI() {
   const [tituloConfirmacao, setTituloConfirmacao] = useState('');
   const [mensagemConfirmacao, setMensagemConfirmacao] = useState('');
   const [textoConfirmarConfirmacao, setTextoConfirmarConfirmacao] = useState('Confirmar');
+  const [varianteConfirmacao, setVarianteConfirmacao] = useState<'destrutiva' | 'primaria' | 'alerta'>('destrutiva');
   const [acaoConfirmacao, setAcaoConfirmacao] = useState<
     (() => Promise<void> | void) | null
   >(null);
@@ -97,12 +99,14 @@ export function useUI() {
     mensagem,
     textoConfirmar = 'Confirmar',
     textoCancelar = 'Cancelar',
+    variante = 'destrutiva',
     acao,
     acaoCancelar,
   }) => {
     setTituloConfirmacao(titulo);
     setMensagemConfirmacao(mensagem);
     setTextoConfirmarConfirmacao(textoConfirmar);
+    setVarianteConfirmacao(variante);
     setTextoCancelarConfirmacao(textoCancelar);
     setAcaoConfirmacao(() => acao);
     setAcaoCancelarConfirmacao(acaoCancelar ? () => acaoCancelar : null);
@@ -114,6 +118,7 @@ export function useUI() {
     setModalConfirmacaoAberto(false);
     setTituloConfirmacao('');
     setMensagemConfirmacao('');
+    setVarianteConfirmacao('destrutiva');
     setAcaoConfirmacao(null);
     setTextoCancelarConfirmacao('Cancelar');
     setAcaoCancelarConfirmacao(null);
@@ -198,6 +203,7 @@ export function useUI() {
     tituloConfirmacao,
     mensagemConfirmacao,
     textoConfirmarConfirmacao,
+    varianteConfirmacao,
     acaoConfirmacao,
     confirmacaoCarregando,
     textoCancelarConfirmacao,

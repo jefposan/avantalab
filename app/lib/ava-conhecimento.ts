@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.10: Menu > Visual da Gestão Web permite restaurar
+// logo, azul institucional e modo claro após confirmação, sem alterar dados ou
+// organização dos cards. No Balanço, Faturamento mantém o verde sobre verde com
+// contraste reforçado para mês e valor, inclusive no modo noturno.
 // Revisado na versão 1.13.0.09: publicação de materiais valida 100 MB antes do
 // upload e converte falhas técnicas do armazenamento para avisos em português.
 // Revisado na versão 1.13.0.08: Divulgação prepara o arquivo antes do toque de

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.09 -->
+<!-- ava-version: 1.13.0.10 -->
+
+> Revisão 1.13.0.10: a restauração da aparência e o contraste da coluna
+> Faturamento pertencem à Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.13.0.09: ao publicar materiais para a equipe, cada arquivo é
 > validado antes do envio. Arquivos maiores que 100 MB são recusados com aviso

@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.09 -->
+<!-- ava-version: 1.13.0.10 -->
+
+> Revisão 1.13.0.10: em **Menu > Visual**, quem pode alterar a aparência pode
+> usar **Restaurar visual padrão**. Após confirmar, a logo personalizada é
+> removida, a cor retorna ao azul AvantaLab e o modo claro é ativado. Dados e a
+> organização dos cards não são modificados. No **Balanço**, a coluna
+> **Faturamento** mantém o verde sobre verde com contraste reforçado para mês e
+> valor, também no modo noturno.
 
 > Revisão 1.13.0.09: ao publicar materiais para a equipe, cada arquivo é
 > validado antes do envio. Arquivos maiores que 100 MB são recusados com aviso
