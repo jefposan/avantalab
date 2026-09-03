@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.16 -->
+<!-- ava-version: 1.13.0.17 -->
+
+> Revisão 1.13.0.17: **Consignados** mostra somente registros ativos com saldo
+> de produtos. Consignações canceladas ou totalmente convertidas continuam no
+> histórico do banco, mas não aparecem nas listas operacionais nem em **Todos**.
+> Cada consignação permanece separada, mesmo para o mesmo cliente, e apresenta
+> somente a etiqueta **Consignado**. Conversões parciais exibem o saldo restante.
 
 > Revisão 1.13.0.16: ao abrir um **PDF** na Divulgação, o botão de expansão ao
 > lado do fechamento ativa a leitura em tela cheia. O cabeçalho mostra a página

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.16 -->
+<!-- ava-version: 1.13.0.17 -->
+
+> Revisão 1.13.0.17: a filtragem de consignações ativas pertence ao
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.13.0.16: a leitura de PDFs em tela cheia pertence à Divulgação do
 > AvantaVendas; sem impacto operacional na Gestão Mobile.

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.13.0.17 - 2026-09-03
+
+- AvantaVendas: o filtro **Consignados** e o histórico do cliente mostram
+  somente consignações ativas, com quantidade remanescente. Registros
+  cancelados ou integralmente convertidos permanecem preservados no banco,
+  mas deixam as listas operacionais e o filtro **Todos**.
+- Cada consignação continua em um card independente, inclusive quando o mesmo
+  cliente possui mais de uma, e o card ativo exibe apenas a identificação
+  **Consignado**, sem o estado genérico **Concluída**.
+- Conversões parciais mantêm apenas o saldo restante no consignado; a conversão
+  integral encerra o consignado e mantém o pedido gerado como registro separado.
+
 ## 1.13.0.16 - 2026-09-03
 
 - AvantaVendas: PDFs da Divulgação recebem visualização em tela cheia dentro do

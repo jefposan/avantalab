@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.17: AvantaVendas mantém nas listas somente
+// consignações ativas, separadas por lançamento e com o saldo remanescente.
 // Revisado na versão 1.13.0.16: PDFs da Divulgação abrem em tela cheia com
 // página atual, retorno, compartilhamento e links externos ou internos ativos.
 // Revisado na versão 1.13.0.15: a Divulgação do AvantaVendas oculta o nome

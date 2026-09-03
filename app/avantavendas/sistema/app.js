@@ -2504,7 +2504,7 @@ function contextoAvaVendas() {
     })
     .reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
   const debitosPendentes = state.clientes.reduce((soma, cliente) => soma + saldoFinanceiroCliente(cliente.id).debito, 0);
-  const consignadosAtivos = state.vendas.filter((pedido) => pedidoEhConsignado(pedido) && pedido.status !== 'cancelada');
+  const consignadosAtivos = state.vendas.filter(pedidoConsignadoAtivo);
   const totalConsignado = consignadosAtivos.reduce((soma, pedido) => soma + Number(pedido.total || 0), 0);
   return [
     'Ambiente atual: Vendas AvantaLab',
@@ -3870,7 +3870,7 @@ function rankingProdutosDashboard(vendas) {
 }
 
 function resumoConsignadosDashboard() {
-  const pedidos = state.vendas.filter((venda) => pedidoEhConsignado(venda) && !['cancelada', 'convertida'].includes(String(venda.status || '').toLowerCase()));
+  const pedidos = state.vendas.filter(pedidoConsignadoAtivo);
   const produtos = new Map();
   pedidos.forEach((pedido) => (pedido.itens || []).forEach((item) => {
     if (itemPedidoBonificado(item)) return;
@@ -6641,7 +6641,7 @@ function resumosFinanceirosListaClientes() {
     if (!venda.cliente_id || venda.status === 'cancelada') return;
     const resumo = obterResumo(venda.cliente_id);
     if (pedidoEhConsignado(venda)) {
-      resumo.consignado += Number(venda.total || 0);
+      if (pedidoConsignadoAtivo(venda)) resumo.consignado += Number(venda.total || 0);
       return;
     }
     if (pedidoGeraDebito(venda)) resumo.totalDebitos += Number(venda.total || 0);
@@ -6757,7 +6757,7 @@ function pagamentosDoCliente(clienteId) {
 function saldoFinanceiroCliente(clienteId, pedidoIgnoradoId = '') {
   const pedidos = pedidosDoCliente(clienteId).filter((venda) => venda.status !== 'cancelada' && venda.id !== pedidoIgnoradoId);
   const totalDebitos = pedidos.filter(pedidoGeraDebito).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
-  const consignado = pedidos.filter(pedidoEhConsignado).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const consignado = pedidos.filter(pedidoConsignadoAtivo).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
   const abatimentos = pagamentosDoCliente(clienteId).reduce((soma, pagamento) => soma + Number(pagamento.valor || 0) + Number(pagamento.desconto || 0), 0);
   return {
     totalDebitos,
@@ -7743,6 +7743,13 @@ function pedidoEhConsignado(venda) {
   return normalizar(venda.forma_pagamento).includes('consign');
 }
 
+function pedidoConsignadoAtivo(venda) {
+  if (!pedidoEhConsignado(venda)) return false;
+  const status = normalizar(venda.status);
+  if (['cancelada', 'convertida'].includes(status)) return false;
+  return (venda.itens || []).some((item) => Number(item.quantidade || 0) > 0);
+}
+
 function listaPedidosClienteHtml(pedidos, pagina, vazio, aba) {
   const limite = (pagina + 1) * ITENS_POR_LOTE_HISTORICO;
   const itens = pedidos.slice(0, limite);
@@ -7765,7 +7772,7 @@ function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0, rolagemCont
   if (!cliente) return;
   window.currentClientDetailTab = aba;
   const todosPedidos = pedidosDoCliente(clienteId);
-  const consignados = todosPedidos.filter((venda) => venda.status !== 'cancelada' && pedidoEhConsignado(venda));
+  const consignados = todosPedidos.filter(pedidoConsignadoAtivo);
   const pedidos = todosPedidos.filter((venda) => !pedidoEhConsignado(venda));
   const pagamentos = pagamentosDoCliente(clienteId);
   const saldo = saldoFinanceiroCliente(clienteId);
@@ -8497,6 +8504,7 @@ function textoPesquisaPedido(venda) {
 function pedidosFiltrados() {
   const pesquisa = normalizar(buscaAplicada);
   return [...state.vendas]
+    .filter((venda) => !pedidoEhConsignado(venda) || pedidoConsignadoAtivo(venda))
     .filter((venda) => filtroPedidos === 'todos' || tipoPedido(venda) === filtroPedidos)
     .filter((venda) => !pesquisa || textoPesquisaPedido(venda).includes(pesquisa))
     .sort((a, b) => {
@@ -8526,11 +8534,12 @@ function carregarMaisPedidos() {
 function renderVenda(v) {
   const cliente = state.clientes.find((c) => c.id === v.cliente_id);
   const tipo = tipoPedido(v);
+  const consignado = tipo === 'consignados';
   const rotuloTipo = tipo === 'consignados' ? 'Consignado' : tipo === 'bonificacoes' ? 'Bonificação' : 'Pedido';
   return `
     <button type="button" class="order-list-card order-type-${tipo} ${v.status === 'cancelada' ? 'is-cancelled' : ''}" onclick="abrirPedidoCliente('${v.id}')">
       <header><span>${escapeHtml(rotuloTipo)}</span><time>${dataBR(v.criado_em)}</time></header>
-      <div><h3>${escapeHtml(cliente?.nome || 'Cliente não informado')}</h3><span class="status-pill ${v.status === 'cancelada' ? 'warn' : 'ok'}">${escapeHtml(v.status || 'registrado')}</span></div>
+      <div><h3>${escapeHtml(cliente?.nome || 'Cliente não informado')}</h3>${consignado ? '' : `<span class="status-pill ${v.status === 'cancelada' ? 'warn' : 'ok'}">${escapeHtml(v.status || 'registrado')}</span>`}</div>
       <footer><span>${(v.itens || []).length} ${(v.itens || []).length === 1 ? 'item' : 'itens'}</span><b>${moeda(v.total)}</b></footer>
     </button>
   `;
