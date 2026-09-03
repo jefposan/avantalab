@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.13.0.16 - 2026-09-03
+
+- AvantaVendas: PDFs da Divulgação recebem visualização em tela cheia dentro do
+  próprio sistema, com retorno à prévia, indicador da página atual e ação de
+  compartilhamento disponível no cabeçalho.
+- O documento continua sendo renderizado como PDF: links seguros para web,
+  WhatsApp, telefone, SMS e e-mail permanecem ativos, e destinos internos
+  passam a navegar diretamente até a página correspondente.
+- A visualização é recalculada ao entrar, sair, redimensionar ou girar o aparelho,
+  preservando a página atual e mantendo carregamento localizado.
+
 ## 1.13.0.15 - 2026-09-02
 
 - AvantaVendas: a Divulgação deixa de exibir o nome técnico dos arquivos nos

@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.15 -->
+<!-- ava-version: 1.13.0.16 -->
+
+> Revisão 1.13.0.16: ao abrir um **PDF** na Divulgação, o botão de expansão ao
+> lado do fechamento ativa a leitura em tela cheia. O cabeçalho mostra a página
+> atual, permite voltar à prévia e mantém o compartilhamento. Links de web,
+> WhatsApp, telefone, SMS e e-mail continuam ativos; links internos levam à
+> página correspondente do documento.
 
 > Revisão 1.13.0.15: a Divulgação não mostra o nome técnico do arquivo nos
 > cards nem no visualizador. Cada material é identificado visualmente apenas

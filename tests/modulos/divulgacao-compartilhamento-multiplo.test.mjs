@@ -24,6 +24,9 @@ const renderizacaoDivulgacao = aplicacao.slice(inicioDivulgacao, fimDivulgacao);
 const inicioVisualizador = aplicacao.indexOf('function conteudoVisualizadorMaterialDivulgacao(');
 const fimVisualizador = aplicacao.indexOf('\nfunction encerrarRenderizacaoPdfMaterial(', inicioVisualizador);
 const visualizadorDivulgacao = aplicacao.slice(inicioVisualizador, fimVisualizador);
+const inicioPdf = fimVisualizador + 1;
+const fimPdf = aplicacao.indexOf('\nfunction abrirMaterialDivulgacao(', inicioPdf);
+const visualizadorPdf = aplicacao.slice(inicioPdf, fimPdf);
 const inicioAtualizacao = aplicacao.indexOf('async function atualizarDivulgacao(');
 const fimAtualizacao = aplicacao.indexOf('\nfunction posicionarIndicadorAtualizacaoDivulgacao(', inicioAtualizacao);
 const atualizacaoDivulgacao = aplicacao.slice(inicioAtualizacao, fimAtualizacao);
@@ -56,6 +59,20 @@ test('nome técnico do material fica oculto na listagem e no visualizador', () =
   assert.doesNotMatch(visualizadorDivulgacao, /escapeHtml\(material\.titulo\)|escapeAttr\(material\.titulo\)/);
 });
 
+test('PDF possui tela cheia com links externos e navegação interna preservados', () => {
+  assert.match(visualizadorDivulgacao, /class="material-pdf-fullscreen-toggle" onclick="alternarPdfTelaCheia\(\)"/);
+  assert.match(visualizadorDivulgacao, /id="materialPdfPageStatus"/);
+  assert.match(visualizadorDivulgacao, /material-pdf-fullscreen-share/);
+  assert.match(visualizadorPdf, /function alternarPdfTelaCheia\(ativar = null\)/);
+  assert.match(visualizadorPdf, /function numeroPaginaDestinoPdf\(/);
+  assert.match(visualizadorPdf, /\^\(https\?:\|mailto:\|tel:\|sms:\|whatsapp:\)/);
+  assert.match(visualizadorPdf, /documento\.getDestination\(destino\)/);
+  assert.match(visualizadorPdf, /documento\.getPageIndex\(referencia\)/);
+  assert.match(visualizadorPdf, /container\.scrollTo\(\{/);
+  assert.match(estilos, /\.material-preview-backdrop\.material-pdf-fullscreen \{/);
+  assert.match(estilos, /touch-action: pan-x pan-y pinch-zoom/);
+});
+
 test('arquivos são preparados em sequência e compartilhados sem texto automático', () => {
   assert.ok(inicioCompartilhamento >= 0 && fimCompartilhamento > inicioCompartilhamento);
   assert.match(compartilhamentoMultiplo, /for \(let indice = 0; indice < materiais\.length; indice \+= 1\)/);
@@ -67,10 +84,11 @@ test('arquivos são preparados em sequência e compartilhados sem texto automát
 
 test('vídeo é preparado antes do toque que abre o compartilhamento no iPhone', () => {
   assert.match(aplicacao, /let arquivoMaterialDivulgacaoPreparado = null;/);
-  assert.match(aplicacao, /aria-busy="true" disabled>\$\{svgIcon\('save'\)\} Preparando material/);
+  assert.match(aplicacao, /aria-busy="true" disabled>\$\{svgIcon\('save'\)\}<span>Preparando material/);
   assert.match(aplicacao, /void prepararCompartilhamentoMaterialDivulgacao\(materialId\);/);
   assert.match(preparoUnico, /arquivoMaterialDivulgacaoPreparado = \{ materialId, arquivo \};/);
-  assert.match(preparoUnico, /botaoAtual\.setAttribute\('aria-busy', 'false'\)/);
+  assert.match(aplicacao, /document\.querySelectorAll\('\.material-share'\)/);
+  assert.match(preparoUnico, /atualizarBotoesCompartilharMaterial\(\{ desabilitado: false, ocupado: false, rotulo: 'Compartilhar material' \}\)/);
   assert.match(compartilhamentoUnico, /const preparado = arquivoMaterialDivulgacaoPreparado\?\.materialId === materialId/);
   assert.doesNotMatch(compartilhamentoUnico, /await prepararArquivoMaterialDivulgacao/);
   assert.match(compartilhamentoUnico, /await navigator\.share\(\{ files: \[arquivo\] \}\)/);
