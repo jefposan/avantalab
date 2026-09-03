@@ -8,6 +8,7 @@ type AppAvanta = {
   icone: string;
   tela: string;
   appStoreUrl: string;
+  googlePlayUrl?: string;
   recursos: readonly string[];
 };
 
@@ -28,6 +29,7 @@ const aplicativos: readonly AppAvanta[] = [
     icone: '/images/avanta-vendas-pwa-512.png',
     tela: '/images/landing/avantavendas-dashboard.jpg',
     appStoreUrl: 'https://apps.apple.com/br/app/avantavendas/id6797617650',
+    googlePlayUrl: 'https://play.google.com/store/apps/details?id=br.com.avantalab.vendas',
     recursos: ['Clientes e produtos', 'Pedidos e pagamentos', 'Conteúdos de divulgação'],
   },
 ];
@@ -87,10 +89,23 @@ export default function LandingAppsSection() {
                     <IconeDownload />
                     <span><small>Baixar na</small><strong>App Store</strong></span>
                   </a>
-                  <span className={styles.googlePlaySoon} aria-label="Google Play: em breve">
-                    <IconeGooglePlay />
-                    <span><small>Em breve na</small><strong>Google Play</strong></span>
-                  </span>
+                  {aplicativo.googlePlayUrl ? (
+                    <a
+                      className={styles.googlePlayButton}
+                      href={aplicativo.googlePlayUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Baixar ${aplicativo.nome} na Google Play (abre em nova aba)`}
+                    >
+                      <IconeGooglePlay />
+                      <span><small>Disponível na</small><strong>Google Play</strong></span>
+                    </a>
+                  ) : (
+                    <span className={styles.googlePlaySoon} aria-label="Google Play: em breve">
+                      <IconeGooglePlay />
+                      <span><small>Em breve na</small><strong>Google Play</strong></span>
+                    </span>
+                  )}
                 </div>
               </div>
               <div className={styles.preview} aria-hidden="true">

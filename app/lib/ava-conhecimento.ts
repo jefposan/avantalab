@@ -172,6 +172,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // de Marcas foram unificadas em quatro etapas, sem alterar os aplicativos.
 // Revisado na versão 1.8.5.08: a progressão visual dos saltos foi suavizada,
 // sem alterar os fluxos dos aplicativos.
+// Revisado na versão 1.13.0.19: a landing pública oferece o link oficial da
+// Google Play no card do AvantaVendas, sem mudar os fluxos dos aplicativos.
 // Revisado na versão 1.8.5.07: as setas da trilha visual foram centralizadas
 // nos saltos, sem alterar os fluxos dos aplicativos.
 // Revisado na versão 1.8.5.06: as setas da trilha visual foram reforçadas,
@@ -285,7 +287,7 @@ const GUIAS: Record<AmbienteAva, string> = {
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
 
 NAVEGAÇÃO E PERFIS
-- Na landing pública, **Nossos apps** apresenta AvantaLab Gestão e AvantaVendas. Cada card abre a página oficial correspondente na App Store; Google Play aparece apenas como disponibilidade futura.
+- Na landing pública, **Nossos apps** apresenta AvantaLab Gestão e AvantaVendas. Ambos têm página oficial na App Store; o card do AvantaVendas também abre sua página oficial na Google Play, enquanto a Gestão permanece identificada como disponibilidade futura no Android.
 - Depois que o acesso Web é iniciado, a landing não reaparece durante o retorno de Google/Apple nem na retomada de uma sessão ativa. Preparando acesso permanece visível até a Gestão abrir; se a confirmação falhar, o sistema retorna ao login com uma mensagem clara.
 - O perfil Pessoal gratuito usa a Gestão Mobile. Ao tentar entrar na Gestão Web, ele vê a página de assinatura do Premium Pessoal; assinatura vigente ou cortesia libera o mesmo perfil também no Web.
 - O dashboard é a página inicial. Os cards podem ser organizados pelo lápis: mostrar, ocultar, mover entre colunas, expandir, reduzir ou remover da visão.
@@ -342,7 +344,7 @@ LIMITES
 Você atende no app/PWA Gestão Mobile (/mobile). Não confunda este ambiente com Vendas Mobile ou com a Gestão Web.
 
 NAVEGAÇÃO E PERFIS
-- Na landing pública, **Nossos apps** apresenta o AvantaLab Gestão e abre sua página oficial na App Store. Google Play aparece apenas como disponibilidade futura.
+- Na landing pública, **Nossos apps** apresenta o AvantaLab Gestão e abre sua página oficial na App Store. A Google Play da Gestão permanece identificada como disponibilidade futura; o card do AvantaVendas já direciona para sua página oficial na Google Play.
 - Após sair do aplicativo Gestão Mobile, a entrada aceita **E-mail** (também aceita o login já cadastrado) ou **Telefone** brasileiro com DDD. O telefone precisa estar vinculado à conta; a senha é a mesma.
 - A rota da Gestão abre sempre a própria Gestão. Gestão e AvantaVendas são
   abertos separadamente pelo usuário; não existe troca direta entre aplicativos.
@@ -429,7 +431,7 @@ o AvantaVendas atual. Priorize funções deste aplicativo e não redirecione par
 Gestão quando a ação existir no Vendas.
 
 SALA E NAVEGAÇÃO
-- Na landing pública, **Nossos apps** apresenta o AvantaVendas e abre sua página oficial na App Store. Google Play aparece apenas como disponibilidade futura.
+- Na landing pública, **Nossos apps** apresenta o AvantaVendas e abre suas páginas oficiais na App Store e na Google Play.
 - Após autenticar, o Vendas Mobile abre sempre na própria sala e não oferece
   acesso direto ao aplicativo Gestão.
 - As telas de acesso exibem **Gestão de Vendas** para identificar este

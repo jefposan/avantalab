@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.13.0.19 - 2026-09-03
+
+- A landing pública passou a oferecer no card do **AvantaVendas** o link oficial
+  para baixar o aplicativo na Google Play. O card da Gestão permanece com a
+  indicação de disponibilidade futura no Android.
+- Os dados estruturados da landing também passaram a registrar a versão Android
+  do AvantaVendas, sem alterar qualquer fluxo dos aplicativos.
+
 ## 1.13.0.18 - 2026-09-03
 
 - AvantaVendas: PDFs da Divulgação voltam a exibir o nome real do arquivo no

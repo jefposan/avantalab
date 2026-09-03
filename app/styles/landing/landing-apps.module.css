@@ -160,7 +160,8 @@
 }
 
 .appStoreButton,
-.googlePlaySoon {
+.googlePlaySoon,
+.googlePlayButton {
   display: flex;
   min-height: 52px;
   align-items: center;
@@ -192,8 +193,29 @@
   color: #526578;
 }
 
+.googlePlayButton {
+  border: 1px solid #d4e4ef;
+  background: #fff;
+  color: #003e73;
+  box-shadow: 0 5px 14px rgb(0 62 115 / 7%);
+  text-decoration: none;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.googlePlayButton:hover {
+  border-color: #18a7c8;
+  box-shadow: 0 10px 22px rgb(0 62 115 / 14%);
+  transform: translateY(-2px);
+}
+
+.googlePlayButton:focus-visible {
+  outline: 3px solid rgb(24 167 200 / 50%);
+  outline-offset: 3px;
+}
+
 .appStoreButton svg,
-.googlePlaySoon svg {
+.googlePlaySoon svg,
+.googlePlayButton svg {
   width: 24px;
   height: 24px;
   flex: 0 0 24px;
@@ -205,19 +227,22 @@
 }
 
 .appStoreButton span,
-.googlePlaySoon span {
+.googlePlaySoon span,
+.googlePlayButton span {
   display: grid;
   line-height: 1.05;
 }
 
 .appStoreButton small,
-.googlePlaySoon small {
+.googlePlaySoon small,
+.googlePlayButton small {
   font-size: .62rem;
   font-weight: 600;
 }
 
 .appStoreButton strong,
-.googlePlaySoon strong {
+.googlePlaySoon strong,
+.googlePlayButton strong {
   margin-top: .16rem;
   font-size: .92rem;
   font-weight: 750;

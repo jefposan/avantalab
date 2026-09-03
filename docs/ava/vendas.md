@@ -1,6 +1,6 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.18 -->
+<!-- ava-version: 1.13.0.19 -->
 
 > Revisão 1.13.0.18: na Divulgação, PDFs exibem o nome real do arquivo no card,
 > na pré-visualização e na leitura completa para facilitar a identificação dos
@@ -378,6 +378,9 @@
 
 > Revisão 1.8.5.03: a trilha visual do Laboratório de Marcas passou a usar
 > saltos curvos decorativos; sem alteração operacional no AvantaVendas.
+
+> Revisão 1.13.0.19: na landing pública, o card do AvantaVendas também oferece
+> o link oficial da Google Play; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.8.5.02: a trilha visual do Laboratório de Marcas foi refinada;
 > sem alteração operacional no AvantaVendas.

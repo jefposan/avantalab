@@ -1,6 +1,6 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.18 -->
+<!-- ava-version: 1.13.0.19 -->
 
 > Revisão 1.13.0.18: a exibição do nome real dos catálogos em PDF pertence à
 > Divulgação do AvantaVendas; sem impacto operacional na Gestão Mobile.
@@ -272,6 +272,9 @@
 
 > Revisão 1.8.5.03: a trilha visual do Laboratório de Marcas passou a usar
 > saltos curvos decorativos; sem alteração operacional no aplicativo.
+
+> Revisão 1.13.0.19: na landing pública, o card do AvantaVendas também oferece
+> o link oficial da Google Play; sem alteração operacional no aplicativo.
 
 > Revisão 1.8.5.02: a trilha visual do Laboratório de Marcas foi refinada;
 > sem alteração operacional no aplicativo.
