@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.17 -->
+<!-- ava-version: 1.13.0.18 -->
+
+> Revisão 1.13.0.18: a exibição do nome real dos catálogos em PDF pertence à
+> Divulgação do AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.13.0.17: a filtragem de consignações ativas pertence ao
 > AvantaVendas; sem impacto operacional na Gestão Web.

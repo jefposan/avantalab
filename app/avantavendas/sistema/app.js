@@ -4703,13 +4703,15 @@ function renderDivulgacao() {
     const selecionado = divulgacaoMateriaisSelecionados.has(item.id);
     const rotulo = rotuloMaterial(item);
     const posicao = `${indiceMaterial + 1} de ${materiais.length}`;
+    const nomeCatalogo = item.tipo === 'pdf' ? String(item.titulo || 'Catálogo') : '';
+    const identificacaoAcessivel = nomeCatalogo || `${rotulo} ${posicao}`;
     const acao = divulgacaoSelecaoAtiva
       ? `alternarSelecaoMaterialDivulgacao('${item.id}')`
       : `abrirMaterialDivulgacao('${item.id}')`;
     const atributosSelecao = divulgacaoSelecaoAtiva
-      ? ` aria-pressed="${selecionado}" aria-label="${selecionado ? 'Remover' : 'Selecionar'} ${rotulo.toLocaleLowerCase('pt-BR')} ${posicao}"`
-      : ` aria-label="Abrir ${rotulo.toLocaleLowerCase('pt-BR')} ${posicao}"`;
-    return `<button type="button" class="material-thumb${divulgacaoSelecaoAtiva ? ' is-selectable' : ''}${selecionado ? ' is-selected' : ''}" onclick="${acao}"${atributosSelecao}>${divulgacaoSelecaoAtiva ? `<i class="material-selection-marker" aria-hidden="true">${selecionado ? svgIcon('check-circle') : ''}</i>` : ''}<span>${capaMaterial(item)}</span><small>${rotulo}</small></button>`;
+      ? ` aria-pressed="${selecionado}" aria-label="${selecionado ? 'Remover' : 'Selecionar'} ${escapeAttr(identificacaoAcessivel)}"`
+      : ` aria-label="Abrir ${escapeAttr(identificacaoAcessivel)}"`;
+    return `<button type="button" class="material-thumb${divulgacaoSelecaoAtiva ? ' is-selectable' : ''}${selecionado ? ' is-selected' : ''}" onclick="${acao}"${atributosSelecao}>${divulgacaoSelecaoAtiva ? `<i class="material-selection-marker" aria-hidden="true">${selecionado ? svgIcon('check-circle') : ''}</i>` : ''}<span>${capaMaterial(item)}</span>${nomeCatalogo ? `<b title="${escapeAttr(nomeCatalogo)}">${escapeHtml(nomeCatalogo)}</b>` : ''}<small>${rotulo}</small></button>`;
   }).join('');
   const acaoSelecao = pastaAtual && materiaisDaPasta.length > 1
     ? `<button type="button" class="secondary material-select-mode${divulgacaoSelecaoAtiva ? ' is-active' : ''}" onclick="${divulgacaoSelecaoAtiva ? 'limparSelecaoMateriaisDivulgacao()' : 'ativarSelecaoMateriaisDivulgacao()'}" ${divulgacaoCompartilhamentoMultiploEmAndamento ? 'disabled' : ''}>${svgIcon('check-circle')} ${divulgacaoSelecaoAtiva ? 'Cancelar' : 'Selecionar'}</button>`
@@ -4765,12 +4767,14 @@ function conteudoVisualizadorMaterialDivulgacao(materialId) {
   const anterior = materiais[indice - 1] || null;
   const proximo = materiais[indice + 1] || null;
   const rotulo = material.tipo === 'video' ? 'Vídeo' : material.tipo === 'pdf' ? 'PDF' : 'Imagem';
-  const descricaoAcessivel = `${rotulo} ${indice + 1} de ${materiais.length}`;
+  const nomeCatalogo = material.tipo === 'pdf' ? String(material.titulo || 'Catálogo') : '';
+  const tituloCabecalho = nomeCatalogo || rotulo;
+  const descricaoAcessivel = nomeCatalogo ? `PDF ${nomeCatalogo}` : `${rotulo} ${indice + 1} de ${materiais.length}`;
   const visualizacao = material.tipo === 'video'
-    ? `<video src="${escapeAttr(material.arquivo_url)}" controls playsinline preload="metadata" aria-label="${descricaoAcessivel}"></video>`
+    ? `<video src="${escapeAttr(material.arquivo_url)}" controls playsinline preload="metadata" aria-label="${escapeAttr(descricaoAcessivel)}"></video>`
     : material.tipo === 'pdf'
-      ? `<div class="material-preview-pdf" data-pdf-url="${escapeAttr(material.arquivo_url)}" aria-label="${descricaoAcessivel}"><span class="material-preview-pdf-status">Preparando documento...</span></div>`
-      : `<img src="${escapeAttr(material.arquivo_url)}" alt="${descricaoAcessivel}" draggable="false">`;
+      ? `<div class="material-preview-pdf" data-pdf-url="${escapeAttr(material.arquivo_url)}" aria-label="${escapeAttr(descricaoAcessivel)}"><span class="material-preview-pdf-status">Preparando documento...</span></div>`
+      : `<img src="${escapeAttr(material.arquivo_url)}" alt="${escapeAttr(descricaoAcessivel)}" draggable="false">`;
   const instrucao = material.tipo === 'pdf' ? 'documento para leitura' : 'toque para ampliar';
   const acaoVisualizacao = material.tipo === 'pdf' ? '' : ' onclick="alternarMaterialExpandido(event)"';
   const preVisualizacao = material.tipo === 'pdf'
@@ -4779,7 +4783,7 @@ function conteudoVisualizadorMaterialDivulgacao(materialId) {
   const acoesPdf = material.tipo === 'pdf'
     ? `<button type="button" class="material-pdf-fullscreen-toggle" onclick="alternarPdfTelaCheia()" aria-label="Visualizar PDF em tela cheia"><span class="material-pdf-enter-icon">${svgIconEstavel('maximize')}</span><span class="material-pdf-exit-label">${svgIcon('chevron-left')} Voltar</span></button><button type="button" class="primary material-share material-pdf-fullscreen-share" onclick="compartilharMaterialDivulgacao('${material.id}')" aria-busy="true" disabled>${svgIcon('save')}<span>Preparando...</span></button>`
     : '';
-  return `<div class="sheet-header${material.tipo === 'pdf' ? ' material-pdf-header' : ''}"><div><h2>${rotulo}</h2><p class="muted small"><span class="material-preview-summary">${indice + 1} de ${materiais.length} · ${instrucao}</span>${material.tipo === 'pdf' ? '<span id="materialPdfPageStatus" class="material-pdf-page-status" aria-live="polite">Preparando páginas...</span>' : ''}</p></div><div class="material-preview-header-actions">${acoesPdf}<button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}${preVisualizacao}${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><div class="material-share-actions"><button type="button" class="secondary" onclick="fecharSheet();ativarSelecaoMateriaisDivulgacao('${material.id}')">${svgIcon('check-circle')} Selecionar mais</button><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')" aria-busy="true" disabled>${svgIcon('save')}<span>Preparando material...</span></button></div>`;
+  return `<div class="sheet-header${material.tipo === 'pdf' ? ' material-pdf-header' : ''}"><div><h2 title="${escapeAttr(tituloCabecalho)}">${escapeHtml(tituloCabecalho)}</h2><p class="muted small"><span class="material-preview-summary">${material.tipo === 'pdf' ? 'PDF · ' : ''}${indice + 1} de ${materiais.length} · ${instrucao}</span>${material.tipo === 'pdf' ? '<span id="materialPdfPageStatus" class="material-pdf-page-status" aria-live="polite">Preparando páginas...</span>' : ''}</p></div><div class="material-preview-header-actions">${acoesPdf}<button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}${preVisualizacao}${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><div class="material-share-actions"><button type="button" class="secondary" onclick="fecharSheet();ativarSelecaoMateriaisDivulgacao('${material.id}')">${svgIcon('check-circle')} Selecionar mais</button><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')" aria-busy="true" disabled>${svgIcon('save')}<span>Preparando material...</span></button></div>`;
 }
 
 function encerrarRenderizacaoPdfMaterial(container = document.querySelector('.material-preview-pdf')) {

@@ -50,13 +50,13 @@ test('Selecionar fica na linha da pasta e somente aparece com mais de um arquivo
   assert.match(estilos, /\.material-page-location \.material-select-mode \.svg-icon \{ display: none; \}/);
 });
 
-test('nome técnico do material fica oculto na listagem e no visualizador', () => {
-  assert.match(renderizacaoDivulgacao, /<small>\$\{rotulo\}<\/small>/);
-  assert.doesNotMatch(renderizacaoDivulgacao, /<b>\$\{escapeHtml\(item\.titulo\)\}<\/b>/);
-  assert.match(renderizacaoDivulgacao, /aria-label="Abrir \$\{rotulo\.toLocaleLowerCase\('pt-BR'\)\} \$\{posicao\}"/);
-  assert.match(visualizadorDivulgacao, /<h2>\$\{rotulo\}<\/h2>/);
-  assert.match(visualizadorDivulgacao, /alt="\$\{descricaoAcessivel\}"/);
-  assert.doesNotMatch(visualizadorDivulgacao, /escapeHtml\(material\.titulo\)|escapeAttr\(material\.titulo\)/);
+test('nome real aparece somente nos PDFs da listagem e do visualizador', () => {
+  assert.match(renderizacaoDivulgacao, /const nomeCatalogo = item\.tipo === 'pdf' \? String\(item\.titulo \|\| 'Catálogo'\) : '';/);
+  assert.match(renderizacaoDivulgacao, /\$\{nomeCatalogo \? `<b title="\$\{escapeAttr\(nomeCatalogo\)\}">\$\{escapeHtml\(nomeCatalogo\)\}<\/b>` : ''\}<small>\$\{rotulo\}<\/small>/);
+  assert.match(visualizadorDivulgacao, /const nomeCatalogo = material\.tipo === 'pdf' \? String\(material\.titulo \|\| 'Catálogo'\) : '';/);
+  assert.match(visualizadorDivulgacao, /const tituloCabecalho = nomeCatalogo \|\| rotulo;/);
+  assert.match(visualizadorDivulgacao, /<h2 title="\$\{escapeAttr\(tituloCabecalho\)\}">\$\{escapeHtml\(tituloCabecalho\)\}<\/h2>/);
+  assert.match(estilos, /\.material-thumb b \{[^}]+-webkit-line-clamp: 2;/);
 });
 
 test('PDF possui tela cheia com links externos e navegação interna preservados', () => {

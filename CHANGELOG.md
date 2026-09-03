@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.13.0.18 - 2026-09-03
+
+- AvantaVendas: PDFs da Divulgação voltam a exibir o nome real do arquivo no
+  card, na pré-visualização e na leitura em tela cheia, facilitando a
+  identificação dos catálogos.
+- Imagens e vídeos continuam sem o nome técnico gerado pelo sistema. Seleção,
+  busca, ordenação, visualização e compartilhamento permanecem inalterados.
+
 ## 1.13.0.17 - 2026-09-03
 
 - AvantaVendas: o filtro **Consignados** e o histórico do cliente mostram

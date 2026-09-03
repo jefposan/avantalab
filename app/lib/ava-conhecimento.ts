@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.18: PDFs da Divulgação exibem o nome real do
+// arquivo; imagens e vídeos continuam sem o nome técnico do armazenamento.
 // Revisado na versão 1.13.0.17: AvantaVendas mantém nas listas somente
 // consignações ativas, separadas por lançamento e com o saldo remanescente.
 // Revisado na versão 1.13.0.16: PDFs da Divulgação abrem em tela cheia com

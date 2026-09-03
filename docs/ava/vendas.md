@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.17 -->
+<!-- ava-version: 1.13.0.18 -->
+
+> Revisão 1.13.0.18: na Divulgação, PDFs exibem o nome real do arquivo no card,
+> na pré-visualização e na leitura completa para facilitar a identificação dos
+> catálogos. Imagens e vídeos permanecem sem o nome técnico criado pelo sistema.
 
 > Revisão 1.13.0.17: **Consignados** mostra somente registros ativos com saldo
 > de produtos. Consignações canceladas ou totalmente convertidas continuam no
