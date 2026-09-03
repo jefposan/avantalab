@@ -1468,8 +1468,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .material-thumb { position: relative; overflow: hidden; border: 1px solid #d9e3eb; border-radius: 12px; padding: 0 0 9px; color: #253344; background: #fff; text-align: left; }
 .material-thumb > span { display: grid; width: 100%; aspect-ratio: 1; place-items: center; overflow: hidden; color: #789; background: #e9eef3; }
 .material-thumb img,.material-thumb video { width: 100%; height: 100%; object-fit: cover; }
-.material-thumb b,.material-thumb small { display: block; overflow: hidden; margin: 7px 10px 0; text-overflow: ellipsis; white-space: nowrap; }
-.material-thumb b { font-size: 11px; }.material-thumb small { margin-top: 2px; color: #718096; font-size: 9px; }
+.material-thumb small { display: block; overflow: hidden; margin: 8px 10px 0; color: #718096; font-size: 9px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 .material-thumb.is-selectable { cursor: pointer; }
 .material-thumb.is-selected { border-color: #1687D9; background: #eef8ff; box-shadow: 0 0 0 2px rgba(22,135,217,.22), 0 10px 22px rgba(15,42,80,.14); }
 .material-selection-marker { position: absolute; z-index: 3; top: 8px; right: 8px; display: grid; width: 30px; height: 30px; place-items: center; border: 2px solid rgba(255,255,255,.96); border-radius: 999px; color: #fff; background: rgba(15,31,52,.64); box-shadow: 0 3px 10px rgba(15,23,42,.28); pointer-events: none; }

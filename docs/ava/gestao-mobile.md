@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.14 -->
+<!-- ava-version: 1.13.0.15 -->
+
+> Revisão 1.13.0.15: a ocultação do nome técnico dos arquivos pertence à
+> Divulgação do AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.13.0.14: depois de validar sessão, acesso, assinatura e cadastro, a
 > Gestão pode mostrar imediatamente a última fotografia segura do mesmo usuário,

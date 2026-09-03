@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.15: a Divulgação do AvantaVendas oculta o nome
+// técnico do arquivo nos cards e no visualizador, sem mudar compartilhamento.
 // Revisado na versão 1.13.0.14: Gestão Mobile e AvantaVendas liberam a
 // interface com cache seguro e atualizam conjuntos pesados em segundo plano.
 // Revisado na versão 1.13.0.12: confirmação imediata de pedidos e recebimentos

@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.14 -->
+<!-- ava-version: 1.13.0.15 -->
+
+> Revisão 1.13.0.15: a Divulgação não mostra o nome técnico do arquivo nos
+> cards nem no visualizador. Cada material é identificado visualmente apenas
+> como **Imagem**, **Vídeo** ou **PDF**, com sua posição quando aberto. Busca,
+> ordenação, seleção e compartilhamento continuam funcionando normalmente.
 
 > Revisão 1.13.0.14: após confirmar sessão, conta e permissão, a Sala de Botões
 > abre sem esperar o histórico operacional ou os materiais. Produtos, clientes,

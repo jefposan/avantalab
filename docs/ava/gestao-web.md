@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.14 -->
+<!-- ava-version: 1.13.0.15 -->
+
+> Revisão 1.13.0.15: a ocultação do nome técnico dos arquivos pertence à
+> Divulgação do AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.13.0.14: a abertura progressiva e o cache por perfil pertencem aos
 > aplicativos Gestão Mobile e AvantaVendas; sem impacto operacional na Gestão

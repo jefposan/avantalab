@@ -21,6 +21,9 @@ const preparoUnico = aplicacao.slice(inicioPreparoUnico, fimPreparoUnico);
 const inicioDivulgacao = aplicacao.indexOf('function renderDivulgacao()');
 const fimDivulgacao = aplicacao.indexOf('\nfunction abrirPastaDivulgacao(', inicioDivulgacao);
 const renderizacaoDivulgacao = aplicacao.slice(inicioDivulgacao, fimDivulgacao);
+const inicioVisualizador = aplicacao.indexOf('function conteudoVisualizadorMaterialDivulgacao(');
+const fimVisualizador = aplicacao.indexOf('\nfunction encerrarRenderizacaoPdfMaterial(', inicioVisualizador);
+const visualizadorDivulgacao = aplicacao.slice(inicioVisualizador, fimVisualizador);
 const inicioAtualizacao = aplicacao.indexOf('async function atualizarDivulgacao(');
 const fimAtualizacao = aplicacao.indexOf('\nfunction posicionarIndicadorAtualizacaoDivulgacao(', inicioAtualizacao);
 const atualizacaoDivulgacao = aplicacao.slice(inicioAtualizacao, fimAtualizacao);
@@ -42,6 +45,15 @@ test('Selecionar fica na linha da pasta e somente aparece com mais de um arquivo
   assert.doesNotMatch(renderizacaoDivulgacao, /renderBarraBusca\([^\n]+acaoSelecao/);
   assert.match(estilos, /\.material-page-location \.material-select-mode \{ display: grid;[^}]+place-items: center;[^}]+background: #1687D9;[^}]+text-align: center;/);
   assert.match(estilos, /\.material-page-location \.material-select-mode \.svg-icon \{ display: none; \}/);
+});
+
+test('nome técnico do material fica oculto na listagem e no visualizador', () => {
+  assert.match(renderizacaoDivulgacao, /<small>\$\{rotulo\}<\/small>/);
+  assert.doesNotMatch(renderizacaoDivulgacao, /<b>\$\{escapeHtml\(item\.titulo\)\}<\/b>/);
+  assert.match(renderizacaoDivulgacao, /aria-label="Abrir \$\{rotulo\.toLocaleLowerCase\('pt-BR'\)\} \$\{posicao\}"/);
+  assert.match(visualizadorDivulgacao, /<h2>\$\{rotulo\}<\/h2>/);
+  assert.match(visualizadorDivulgacao, /alt="\$\{descricaoAcessivel\}"/);
+  assert.doesNotMatch(visualizadorDivulgacao, /escapeHtml\(material\.titulo\)|escapeAttr\(material\.titulo\)/);
 });
 
 test('arquivos são preparados em sequência e compartilhados sem texto automático', () => {

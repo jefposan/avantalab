@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.13.0.15 - 2026-09-02
+
+- AvantaVendas: a Divulgação deixa de exibir o nome técnico dos arquivos nos
+  cards, na pré-visualização e na visualização ampliada. A interface mostra
+  apenas o tipo do material e sua posição na pasta, mantendo busca, ordenação,
+  seleção, upload e compartilhamento inalterados.
+
 ## 1.13.0.14 - 2026-09-02
 
 - AvantaVendas: a Sala de Botões é liberada após sessão, conta e permissão,
