@@ -55,7 +55,7 @@
   text-transform: uppercase;
 }
 
-.copy h2 {
+.copy h1 {
   margin: 0;
   color: #13263b;
   font-size: clamp(2.1rem, 4.2vw, 3.7rem);
@@ -64,7 +64,7 @@
   line-height: 1.04;
 }
 
-.copy h2 em {
+.copy h1 em {
   font-style: normal;
   background: linear-gradient(110deg, #147ed1, #18a7c8 62%, #7e5ddc);
   background-clip: text;

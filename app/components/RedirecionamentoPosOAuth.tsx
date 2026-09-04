@@ -139,6 +139,7 @@ export default function RedirecionamentoPosOAuth() {
       <TelaCarregandoAcesso
         titulo="Preparando acesso"
         mensagem="Verificando sua sessão..."
+        nivelTitulo="h2"
       />
     </div>
   );
