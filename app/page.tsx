@@ -11,6 +11,7 @@ import AvaPlansPreview from './components/AvaPlansPreview';
 import LandingAppsSection from './components/LandingAppsSection';
 import LandingBrandLabSection from './components/LandingBrandLabSection';
 import styles from './styles/landing/landing.module.css';
+import mobileSpacing from './styles/landing/landing-mobile-gestao.module.css';
 import effects from './styles/landing/landing-effects.module.css';
 import avaBadge from './styles/landing/ava-badge.module.css';
 import dashboardChart from './styles/landing/dashboard-chart.module.css';
@@ -133,7 +134,7 @@ export function AvantaLandingPage({ contexto = 'laboratorio' }: { contexto?: 'la
       <LandingHeader contexto={contexto} />
 
       {contexto === 'gestao' ? <>
-      <section className={styles.hero} id="conteudo" data-public-hero>
+      <section className={`${styles.hero} ${mobileSpacing.gestaoHero}`} id="conteudo" data-public-hero>
         <div className={styles.wrap}>
           <div className={styles.heroCopy}>
             <p className={styles.eyebrow}><span aria-hidden="true" />Gestão financeira</p>

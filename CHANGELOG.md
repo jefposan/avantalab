@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.0.22 - 2026-09-04
+
+- Na landing de **Gestão Financeira**, o mobile ganhou o mesmo respiro visual do
+  desktop entre o menu horizontal e o título inicial, sem alterar a navegação.
+
 ## 1.13.0.21 - 2026-09-04
 
 - Nas **Calculadoras** da landing, o cartão selecionado mantém título e resumo

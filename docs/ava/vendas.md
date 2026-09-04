@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.21 -->
+<!-- ava-version: 1.13.0.22 -->
+
+> Revisão 1.13.0.22: a landing da **Gestão Financeira** ganhou no mobile o
+> respiro entre o menu horizontal e o início do conteúdo; sem alteração
+> operacional no AvantaVendas.
 
 > Revisão 1.13.0.21: os cartões das **Calculadoras** da landing preservam título
 > e resumo na mesma posição ao serem selecionados; sem alteração operacional no
