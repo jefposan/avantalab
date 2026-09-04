@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.0.23 - 2026-09-04
+
+- Ao abrir o menu móvel da landing de **Gestão Financeira**, o conteúdo ao fundo
+  recebe uma sobreposição escura. Tocar fora das ações fecha o menu.
+
 ## 1.13.0.22 - 2026-09-04
 
 - Na landing de **Gestão Financeira**, o mobile ganhou o mesmo respiro visual do

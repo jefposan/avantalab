@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.22 -->
+<!-- ava-version: 1.13.0.23 -->
+
+> Revisão 1.13.0.23: o menu móvel da landing de **Gestão Financeira** escurece o
+> conteúdo ao fundo e fecha ao tocar fora das ações; sem alteração operacional
+> na Gestão Mobile.
 
 > Revisão 1.13.0.22: a landing da **Gestão Financeira** ganhou no mobile o
 > respiro entre o menu horizontal e o início do conteúdo; sem alteração
