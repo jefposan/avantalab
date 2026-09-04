@@ -20,7 +20,7 @@ export default function LandingBrandLabSection() {
       <div className={styles.wrap} data-scroll-target>
         <div className={styles.copy}>
           <p className={styles.kicker}>Laboratório de marcas</p>
-          <h2 id="titulo-laboratorio">Do zero ao <em>operacional.</em></h2>
+          <h1 id="titulo-laboratorio">Do zero ao <em>operacional.</em></h1>
           <p className={styles.lead}>O AvantaLab transforma ideias em marcas com direção, identidade, presença e estrutura para começar a operar.</p>
           <p className={styles.support}>Você traz a visão. Nós ajudamos a construir o caminho para ela ganhar forma e entrar no mercado.</p>
         </div>

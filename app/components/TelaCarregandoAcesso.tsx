@@ -5,6 +5,7 @@
 type TelaCarregandoAcessoProps = {
   mensagem: string;
   titulo?: string;
+  nivelTitulo?: 'h1' | 'h2';
   onCancelar?: () => void;
 };
 
@@ -26,8 +27,11 @@ export function FundoAcessoResponsivo() {
 export default function TelaCarregandoAcesso({
   mensagem,
   titulo = 'Carregando...',
+  nivelTitulo = 'h1',
   onCancelar,
 }: TelaCarregandoAcessoProps) {
+  const Titulo = nivelTitulo;
+
   return (
     <main
       className="avanta-access-scene relative overflow-hidden font-sans"
@@ -53,7 +57,7 @@ export default function TelaCarregandoAcesso({
             AvantaLab Gestão
           </p>
 
-          <h1 className="text-xl font-black text-slate-900">{titulo}</h1>
+          <Titulo className="text-xl font-black text-slate-900">{titulo}</Titulo>
 
           <p className="text-sm font-semibold text-slate-500" aria-live="polite">
             {mensagem}

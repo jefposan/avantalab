@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     siteName: 'AvantaLab',
     locale: 'pt_BR',
     type: 'website',
-    images: [{ url: '/images/avantalab-share-meta-safe-center-v2.jpg', width: 1200, height: 628, alt: 'AvantaLab Gestão' }],
+    images: [{ url: '/images/avantalab-share-meta-safe-center-v2.jpg', width: 1200, height: 628, alt: 'AvantaLab — Laboratório de Marcas' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -121,12 +121,45 @@ const dadosEstruturados = {
   ],
 };
 
+const dadosEstruturadosLaboratorio = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      name: 'AvantaLab',
+      url: siteUrl,
+      logo: `${siteUrl}/images/landing/logo-avantalab.png`,
+      contactPoint: {
+        '@type': 'ContactPoint',
+        email: 'contato@avantalab.com.br',
+        contactType: 'customer support',
+        availableLanguage: 'Portuguese',
+      },
+    },
+    { '@type': 'WebSite', name: 'AvantaLab', url: siteUrl, inLanguage: 'pt-BR' },
+    {
+      '@type': 'WebPage',
+      name: 'Laboratório de Marcas | AvantaLab',
+      description: 'Do zero ao operacional: transformamos ideias em marcas prontas para entrar no mercado.',
+      url: siteUrl,
+      inLanguage: 'pt-BR',
+      isPartOf: { '@type': 'WebSite', name: 'AvantaLab', url: siteUrl },
+      mainEntity: {
+        '@type': 'Service',
+        name: 'Laboratório de Marcas',
+        description: 'Direção, identidade, presença e estrutura para transformar uma ideia em marca pronta para operar.',
+        provider: { '@type': 'Organization', name: 'AvantaLab', url: siteUrl },
+      },
+    },
+  ],
+};
+
 export function AvantaLandingPage({ contexto = 'laboratorio' }: { contexto?: 'laboratorio' | 'gestao' }) {
   return (
     <>
       <RedirecionamentoPosOAuth />
       <main className={`${styles.page} ${effects.root} ${anchorOffset.root}`}>
-        {contexto === 'gestao' && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosEstruturados) }} />}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(contexto === 'gestao' ? dadosEstruturados : dadosEstruturadosLaboratorio) }} />
         <a className={styles.skipLink} href="#conteudo">Pular para o conteúdo</a>
 
       <LandingHeader contexto={contexto} />
@@ -217,6 +250,16 @@ export function AvantaLandingPage({ contexto = 'laboratorio' }: { contexto?: 'la
       </> : <>
       <section id="conteudo">
         <LandingBrandLabSection />
+      </section>
+      <section className={`${styles.section} ${solutionsStyles.section}`} aria-labelledby="titulo-solucoes-avantalab">
+        <div className={styles.wrap}>
+          <p className={styles.kicker}>Soluções digitais AvantaLab</p>
+          <h2 id="titulo-solucoes-avantalab">Tecnologia para organizar a operação depois que a marca começa a avançar.</h2>
+          <p className={styles.sectionLead}>Conheça as soluções para o financeiro, a equipe e a rotina comercial da sua empresa.</p>
+          <div className={solutionsStyles.grid}>
+            {solucoes.map(([href, titulo, texto]) => <Link className={solutionsStyles.card} href={href} key={href}><span className={solutionsStyles.icon} aria-hidden="true">↗</span><h3>{titulo}</h3><p>{texto}</p><b>Conhecer solução <i aria-hidden="true">→</i></b></Link>)}
+          </div>
+        </div>
       </section>
       <footer className={styles.footer} id="rodape"><div className={styles.wrap}><Image src="/images/landing/logo-avantalab.png" alt="AvantaLab" width={154} height={40} /><div><Link href="/suporte">Suporte</Link><Link href="/termos">Termos de Uso</Link><Link href="/privacidade">Política de Privacidade</Link><Link href="/cookies">Cookies</Link></div><small>© 2026 AvantaLab. Todos os direitos reservados.</small></div></footer>
       </>}
