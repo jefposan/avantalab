@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.19 -->
+<!-- ava-version: 1.13.0.20 -->
+
+> Revisão 1.13.0.20: na landing pública da **Gestão Financeira**, o menu voltou
+> a incluir **Calculadoras**, levando às simulações financeiras abertas na mesma
+> página; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.13.0.18: na Divulgação, PDFs exibem o nome real do arquivo no card,
 > na pré-visualização e na leitura completa para facilitar a identificação dos

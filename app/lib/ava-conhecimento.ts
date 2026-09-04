@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.20: o menu público da Gestão Financeira volta a
+// incluir Calculadoras e leva às simulações abertas na mesma landing.
 // Revisado na versão 1.13.0.18: PDFs da Divulgação exibem o nome real do
 // arquivo; imagens e vídeos continuam sem o nome técnico do armazenamento.
 // Revisado na versão 1.13.0.17: AvantaVendas mantém nas listas somente

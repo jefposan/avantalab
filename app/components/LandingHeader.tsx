@@ -19,6 +19,7 @@ export default function LandingHeader({ contexto }: { contexto: ContextoLanding 
     ['#como-funciona', 'Como funciona'],
     ['#ia-ava', 'IA Ava'],
     ['#planos', 'Planos'],
+    ['#calculadoras', 'Calculadoras'],
     ['#perguntas', 'Dúvidas'],
   ] as const;
 

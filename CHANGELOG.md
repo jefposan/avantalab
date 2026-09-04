@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.20 - 2026-09-04
+
+- A navegação da área **Gestão Financeira** na landing pública volta a oferecer
+  **Calculadoras**, levando diretamente às simulações financeiras já disponíveis
+  na própria página.
+
 ## 1.13.0.19 - 2026-09-03
 
 - A landing pública passou a oferecer no card do **AvantaVendas** o link oficial
