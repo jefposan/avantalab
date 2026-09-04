@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.24 - 2026-09-04
+
+- No mobile, as seções da landing de **Gestão Financeira** saíram da faixa com
+  rolagem lateral e passaram para o menu ☰. O desktop mantém a navegação em linha.
+- O fundo escurecido do menu continua clicável para fechar a sobreposição.
+
 ## 1.13.0.23 - 2026-09-04
 
 - Ao abrir o menu móvel da landing de **Gestão Financeira**, o conteúdo ao fundo

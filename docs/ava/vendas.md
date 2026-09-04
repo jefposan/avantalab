@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.23 -->
+<!-- ava-version: 1.13.0.24 -->
+
+> Revisão 1.13.0.24: no mobile, as seções da landing de **Gestão Financeira**
+> ficam no menu ☰; no desktop, a navegação em linha permanece. Sem alteração
+> operacional no AvantaVendas.
 
 > Revisão 1.13.0.23: o menu móvel da landing de **Gestão Financeira** escurece o
 > conteúdo ao fundo e fecha ao tocar fora das ações; sem alteração operacional

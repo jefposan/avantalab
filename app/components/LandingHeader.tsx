@@ -70,15 +70,20 @@ export default function LandingHeader({ contexto }: { contexto: ContextoLanding 
           <AcessoPublicoLink className={landingStyles.primaryButton} modo="cadastro">Começar grátis <span aria-hidden="true">→</span></AcessoPublicoLink>
         </div>}
       </nav>
-      {contexto === 'gestao' && <nav className={`${styles.gestaoSubnav} ${menuAberto ? menuStyles.foreground : ''}`} aria-label="Navegação da Gestão Financeira">
+      {contexto === 'gestao' && <nav className={`${styles.gestaoSubnav} ${menuStyles.subnav} ${menuAberto ? menuStyles.foreground : ''}`} aria-label="Navegação da Gestão Financeira">
         <div>
           {itensGestao.map(([href, texto]) => <a key={href} href={href} onClick={(event) => rolarParaSecao(event, href)}>{texto}</a>)}
         </div>
       </nav>}
       {contexto === 'gestao' && menuAberto && <button type="button" tabIndex={-1} className={menuStyles.backdrop} aria-label="Fechar menu" onClick={() => setMenuAberto(false)} />}
       {contexto === 'gestao' && <div id="menu-publico-mobile" className={`${styles.mobileMenu} ${menuAberto ? styles.mobileMenuAberto : ''}`} aria-hidden={!menuAberto}>
-        <AcessoPublicoLink modo="entrar" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Entrar no sistema</AcessoPublicoLink>
-        <AcessoPublicoLink modo="cadastro" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Começar grátis</AcessoPublicoLink>
+        <nav className={menuStyles.navigation} aria-label="Seções da Gestão Financeira">
+          {itensGestao.map(([href, texto]) => <a key={href} href={href} tabIndex={menuAberto ? 0 : -1} onClick={(event) => rolarParaSecao(event, href)}>{texto}</a>)}
+        </nav>
+        <div className={menuStyles.accessActions}>
+          <AcessoPublicoLink modo="entrar" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Entrar no sistema</AcessoPublicoLink>
+          <AcessoPublicoLink modo="cadastro" tabIndex={menuAberto ? 0 : -1} onClick={() => setMenuAberto(false)}>Começar grátis</AcessoPublicoLink>
+        </div>
       </div>}
     </header>
   );

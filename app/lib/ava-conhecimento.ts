@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.24: no mobile, as seções públicas da Gestão ficam
+// no menu ☰; no desktop, a navegação horizontal permanece inalterada.
 // Revisado na versão 1.13.0.23: o menu móvel da landing escurece o conteúdo ao
 // fundo e pode ser fechado ao tocar fora das ações.
 // Revisado na versão 1.13.0.22: a landing da Gestão Financeira preserva no
