@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.27 -->
+<!-- ava-version: 1.13.0.28 -->
+
+> Revisão 1.13.0.28: a separação de funcionários ativos e inativos do
+> **Controle de Ponto** pertence à Gestão Web; sem alteração operacional no
+> AvantaVendas.
 
 > Revisão 1.13.0.27: o ajuste do desligamento no **Controle de Ponto** pertence
 > à Gestão Web; sem alteração operacional no AvantaVendas.

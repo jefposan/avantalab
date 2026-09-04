@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.13.0.28 - 2026-09-04
+
+- Em **Controle de Ponto > Funcionários**, a lista passou a separar
+  **Funcionários ativos** e **Funcionários inativos**. Ao inativar ou reativar,
+  a pessoa é levada automaticamente para a aba correspondente; relatórios e
+  exportações continuam incluindo o histórico dos desligados.
+
 ## 1.13.0.27 - 2026-09-04
 
 - A inativação de funcionário do **Controle de Ponto** deixa de alterar o

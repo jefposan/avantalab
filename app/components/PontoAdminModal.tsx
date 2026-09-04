@@ -244,6 +244,7 @@ export default function PontoAdminModal({
   const [verEditSenha, setVerEditSenha] = useState(false);
   const [salvandoSenha, setSalvandoSenha] = useState(false);
   const [msgSenha, setMsgSenha] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const [filtroFuncionarios, setFiltroFuncionarios] = useState<'ativos' | 'inativos'>('ativos');
   const cardEditRef = useRef<HTMLDivElement | null>(null);
 
   const dataRelatorioInicial = relatorioInicial?.data || '';
@@ -439,7 +440,10 @@ export default function PontoAdminModal({
     });
     setSalvandoEdit(false);
     if (r.erro) setMsgEdit(r.mensagem || 'Não foi possível salvar.');
-    else setEditId(null);
+    else {
+      setFiltroFuncionarios(editAtivo ? 'ativos' : 'inativos');
+      setEditId(null);
+    }
   };
 
   const salvarSenha = async (userId: string) => {
@@ -511,6 +515,10 @@ export default function PontoAdminModal({
   }, [aberto, cobrancaFacial?.status, cobrancaFacial?.valorPendenteCentavos, onAtualizarCobrancaFacial]);
 
   if (!aberto) return null;
+
+  const funcionariosAtivos = funcionarios.filter((funcionario) => funcionario.ativo);
+  const funcionariosInativos = funcionarios.filter((funcionario) => !funcionario.ativo);
+  const funcionariosDaLista = filtroFuncionarios === 'ativos' ? funcionariosAtivos : funcionariosInativos;
 
   type DiaRel = { dia: string; entrada?: string; saidaAlmoco?: string; entradaAlmoco?: string; saida?: string; distancia: number | null; statusEntrada: 'pontual' | 'atraso' | 'adiantado' | 'falta' | 'sem' };
   const funcSel = funcionarios.find((f) => f.user_id === relFuncId) || null;
@@ -911,13 +919,42 @@ export default function PontoAdminModal({
                 </div>
                 <button type="button" onClick={copiarLinkPonto} className="shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide text-white" style={{ backgroundColor: corSistema }}>{linkCopiado ? 'Copiado!' : 'Copiar'}</button>
               </div>
+              <div className={`grid grid-cols-2 rounded-xl border p-1 ${itemBorda}`} role="tablist" aria-label="Situação dos funcionários">
+                {([
+                  ['ativos', 'Funcionários ativos', funcionariosAtivos.length],
+                  ['inativos', 'Funcionários inativos', funcionariosInativos.length],
+                ] as const).map(([filtro, titulo, quantidade]) => {
+                  const selecionado = filtroFuncionarios === filtro;
+                  return (
+                    <button
+                      key={filtro}
+                      id={`ponto-lista-${filtro}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={selecionado}
+                      aria-controls="ponto-lista-funcionarios"
+                      onClick={() => {
+                        setFiltroFuncionarios(filtro);
+                        setEditId(null);
+                        setMsgEdit(null);
+                      }}
+                      className={`min-h-11 rounded-lg px-2 text-[10px] font-black uppercase tracking-wide transition ${selecionado ? 'text-white shadow-sm' : darkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}
+                      style={selecionado ? { backgroundColor: corSistema } : undefined}
+                    >
+                      {titulo} ({quantidade})
+                    </button>
+                  );
+                })}
+              </div>
               {carregando ? (
                 <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Carregando...</p>
-              ) : funcionarios.length === 0 ? (
-                <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Nenhum funcionário cadastrado. Use a aba "Novo".</p>
+              ) : funcionariosDaLista.length === 0 ? (
+                <p id="ponto-lista-funcionarios" role="tabpanel" aria-labelledby={`ponto-lista-${filtroFuncionarios}`} className={`py-8 text-center text-sm font-semibold ${textMuted}`}>
+                  {filtroFuncionarios === 'ativos' ? 'Nenhum funcionário ativo. Use a aba "Novo".' : 'Nenhum funcionário inativo.'}
+                </p>
               ) : (
-              <div className="grid gap-2">
-                {funcionarios.map((f) => (
+              <div id="ponto-lista-funcionarios" role="tabpanel" aria-labelledby={`ponto-lista-${filtroFuncionarios}`} className="grid gap-2">
+                {funcionariosDaLista.map((f) => (
                   <div
                     key={f.id}
                     ref={editId === f.id ? cardEditRef : undefined}
@@ -931,7 +968,7 @@ export default function PontoAdminModal({
                         <p className={`truncate text-xs ${textMuted}`}>{formatarCpf(f.cpf || f.login)}{f.cargo ? ' · ' + f.cargo : ''}{f.hora_entrada ? ' · ' + f.hora_entrada.slice(0, 5) + (f.hora_saida ? '–' + f.hora_saida.slice(0, 5) : '') : ''}</p>
                         <p className={`truncate text-[10px] ${textMuted}`}>{resumoDias(f.dias_trabalho)}</p>
                       </div>
-                      {!f.ativo && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>Inativo</span>}
+                      {!f.ativo && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>Desligado</span>}
                       <button type="button" onClick={() => (editId === f.id ? setEditId(null) : abrirEdicao(f))} className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-black uppercase tracking-wide" style={{ color: corSistema }}>{editId === f.id ? 'Fechar' : 'Editar'}</button>
                     </div>
 

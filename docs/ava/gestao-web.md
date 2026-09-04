@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.27 -->
+<!-- ava-version: 1.13.0.28 -->
+
+> Revisão 1.13.0.28: em **Controle de Ponto > Funcionários**, as abas separam
+> ativos e inativos. O desligamento leva a pessoa à lista de inativos e os
+> relatórios e exportações continuam disponíveis para consultar seu histórico.
 
 > Revisão 1.13.0.27: o desligamento no **Controle de Ponto** é decidido pelo
 > cadastro próprio do funcionário. O vínculo técnico e o histórico ficam
