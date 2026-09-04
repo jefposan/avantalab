@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.20 -->
+<!-- ava-version: 1.13.0.21 -->
+
+> Revisão 1.13.0.21: os cartões das **Calculadoras** da landing preservam título
+> e resumo na mesma posição ao serem selecionados; sem alteração operacional no
+> AvantaVendas.
 
 > Revisão 1.13.0.20: na landing pública da **Gestão Financeira**, o menu voltou
 > a incluir **Calculadoras**, levando às simulações financeiras abertas na mesma

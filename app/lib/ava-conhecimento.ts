@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.21: os cartões das Calculadoras preservam a mesma
+// hierarquia de texto quando selecionados; somente a cor do estado muda.
 // Revisado na versão 1.13.0.20: o menu público da Gestão Financeira volta a
 // incluir Calculadoras e leva às simulações abertas na mesma landing.
 // Revisado na versão 1.13.0.18: PDFs da Divulgação exibem o nome real do

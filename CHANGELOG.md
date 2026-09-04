@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.0.21 - 2026-09-04
+
+- Nas **Calculadoras** da landing, o cartão selecionado mantém título e resumo
+  na mesma posição dos demais. A seleção agora altera somente as cores do card.
+
 ## 1.13.0.20 - 2026-09-04
 
 - A navegação da área **Gestão Financeira** na landing pública volta a oferecer
