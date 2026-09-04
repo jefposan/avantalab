@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.28 -->
+<!-- ava-version: 1.13.0.29 -->
+
+> Revisão 1.13.0.29: em **Controle de Ponto > Conformidade REP-P**, o Espelho
+> e o comprovante baixado como PDF exibem um selo institucional de assinatura
+> digital e orientam a validação em `validar.iti.gov.br`, sem expor o titular
+> do certificado no texto visível. A impressão simples continua sem assinatura;
+> o AFD traz no ZIP a orientação para validar o arquivo `.txt` com o `.p7s`.
 
 > Revisão 1.13.0.28: em **Controle de Ponto > Funcionários**, as abas separam
 > ativos e inativos. O desligamento leva a pessoa à lista de inativos e os

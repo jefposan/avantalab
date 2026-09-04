@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.13.0.29 - 2026-09-04
+
+- Os comprovantes e Espelhos de Ponto assinados passaram a exibir um selo
+  institucional discreto com emissão, indicação da assinatura ICP-Brasil e o
+  endereço oficial `validar.iti.gov.br`, sem expor nome ou CPF do titular no
+  layout do documento.
+- O AFD agora inclui no ZIP um guia de validação para o par `.txt` e `.p7s`;
+  a versão simples para impressão informa claramente que não substitui o PDF
+  assinado.
+- A Gestão passa a informar corretamente quando o certificado de produção está
+  ativo e assinando PDFs, sem confundir essa condição com a conformidade
+  regulatória completa do REP-P.
+
 ## 1.13.0.28 - 2026-09-04
 
 - Em **Controle de Ponto > Funcionários**, a lista passou a separar

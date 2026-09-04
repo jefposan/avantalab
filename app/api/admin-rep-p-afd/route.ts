@@ -9,6 +9,7 @@ export const runtime = 'nodejs';
 const erro = (mensagem: string, status = 400) => NextResponse.json({ erro: true, mensagem }, { status });
 const dataValida = (valor: string | null) => Boolean(valor && /^\d{4}-\d{2}-\d{2}$/.test(valor));
 const coletor = (dispositivo: unknown) => /android|iphone|ipad|mobile/i.test(String(dispositivo || '')) ? '01' : '02';
+const dataHoraBrasil = (data: Date) => data.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
 
 export async function GET(request: Request) {
   try {
@@ -39,6 +40,14 @@ export async function GET(request: Request) {
     const p7s = assinarCadesDestacado(arquivo, descriptografarSegredoRepP(certificado.arquivo_criptografado), descriptografarSegredoRepP(certificado.senha_criptografada).toString('utf8'));
     const prefixo = certificado.modo === 'homologacao' ? 'HOMOLOGACAO-' : ''; const nome = `${prefixo}AFD${configuracao.registro_inpi.replace(/\D/g, '')}${perfil.documento}REP_P.txt`;
     const zip = new JSZip(); zip.file(nome, arquivo); zip.file(`${nome}.p7s`, p7s);
+    zip.file('LEIA-ME-VALIDACAO.txt', [
+      'DOCUMENTO ELETRÔNICO — AvantaLab Controle de Ponto',
+      '',
+      `O arquivo ${nome} foi emitido em ${dataHoraBrasil(new Date())} (horário de Brasília).`,
+      'A assinatura digital ICP-Brasil está no arquivo .p7s de mesmo nome.',
+      'Para conferir autoria e integridade, envie juntos o AFD e o .p7s para validar.iti.gov.br.',
+      'A identificação do titular do certificado é exibida somente no processo de validação oficial.',
+    ].join('\n'));
     const conteudo = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
     const arquivoNome = `${nome.replace(/\.txt$/, '')}.zip`; const documentoId = randomUUID(); const storagePath = `${empresaId}/${documentoId}/${arquivoNome}`; const sha256 = createHash('sha256').update(conteudo).digest('hex');
     const { error: erroUpload } = await db.storage.from('rep-p-documentos').upload(storagePath, conteudo, { contentType: 'application/zip', upsert: false });

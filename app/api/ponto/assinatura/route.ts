@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     const vencido = new Date(certificado.validade_fim) < new Date();
     const assinatura = vencido
       ? { modo: certificado.modo, certificadoConfigurado: true, senhaConfigurada: true, emissaoLegalPermitida: false, situacao: certificado.modo === 'homologacao' ? 'homologacao' : 'certificado_vencido', validadeCertificado: certificado.validade_fim, mensagem: certificado.modo === 'homologacao' ? 'Certificado vencido guardado para homologação. A emissão legal permanece bloqueada.' : 'Certificado vencido. A emissão legal está bloqueada.' }
-      : { modo: certificado.modo, certificadoConfigurado: true, senhaConfigurada: true, emissaoLegalPermitida: false, situacao: certificado.modo === 'homologacao' ? 'homologacao' : 'aguardando_validacao', validadeCertificado: certificado.validade_fim, mensagem: certificado.modo === 'homologacao' ? 'Certificado guardado para homologação. A emissão legal permanece bloqueada.' : 'Certificado vigente guardado, aguardando a etapa de assinatura criptográfica.' };
+      : { modo: certificado.modo, certificadoConfigurado: true, senhaConfigurada: true, emissaoLegalPermitida: false, situacao: certificado.modo === 'homologacao' ? 'homologacao' : 'assinatura_ativa', validadeCertificado: certificado.validade_fim, mensagem: certificado.modo === 'homologacao' ? 'Certificado guardado para homologação. A emissão legal permanece bloqueada.' : 'Certificado de produção ativo. Os PDFs REP-P são assinados digitalmente; valide o arquivo em validar.iti.gov.br.' };
     return NextResponse.json({ erro: false, assinatura });
   } catch (error) {
     console.error('Erro ao consultar a assinatura do REP-P:', error);

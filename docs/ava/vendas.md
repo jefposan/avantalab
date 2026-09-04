@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.28 -->
+<!-- ava-version: 1.13.0.29 -->
+
+> Revisão 1.13.0.29: a identificação visual e a validação de documentos
+> assinados do **Controle de Ponto** pertencem à Gestão Web; sem alteração
+> operacional no AvantaVendas.
 
 > Revisão 1.13.0.28: a separação de funcionários ativos e inativos do
 > **Controle de Ponto** pertence à Gestão Web; sem alteração operacional no

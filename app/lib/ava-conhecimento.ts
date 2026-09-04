@@ -1,5 +1,10 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.29: no Controle de Ponto Web, comprovantes e
+// Espelhos assinados mostram selo institucional com emissão e endereço do
+// validador oficial, sem expor o titular do certificado no conteúdo visível.
+// A impressão simples é explicitamente não assinada e o AFD inclui a orientação
+// para validar o par .txt/.p7s.
 // Revisado na versão 1.13.0.28: a lista de funcionários do ponto separa ativos
 // e inativos; o histórico dos desligados permanece acessível em Relatórios.
 // Revisado na versão 1.13.0.27: o acesso ao ponto consulta o cadastro próprio

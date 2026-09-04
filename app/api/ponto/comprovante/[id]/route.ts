@@ -5,6 +5,7 @@ import { pdflibAddPlaceholder } from '@signpdf/placeholder-pdf-lib';
 import signpdf from '@signpdf/signpdf';
 import { P12Signer } from '@signpdf/signer-p12';
 import { descriptografarSegredoRepP } from '@/app/lib/rep-p-cofre';
+import { desenharSeloAssinaturaRepP } from '@/app/lib/rep-p-pdf';
 
 export const runtime = 'nodejs';
 
@@ -34,6 +35,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const vencido = new Date(certificado.validade_fim) < new Date();
     if (certificado.modo === 'producao' && vencido) return erro('O certificado de produção está vencido.', 409);
     const pdf = await PDFDocument.create();
+    const emitidoEm = new Date();
     const pagina = pdf.addPage([595.28, 841.89]);
     const fonte = await pdf.embedFont(StandardFonts.Helvetica);
     const negrito = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -45,7 +47,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     ];
     let y = 710;
     for (const [rotulo, valor] of linhas) { pagina.drawText(`${rotulo}:`, { x: 48, y, size: 10, font: negrito }); pagina.drawText(valor, { x: 180, y, size: 10, font: fonte }); y -= 30; }
-    pagina.drawText('Assinatura eletrônica PAdES do desenvolvedor REP-P.', { x: 48, y: 120, size: 9, font: fonte, color: rgb(0.3, 0.3, 0.3) });
+    desenharSeloAssinaturaRepP(pagina, fonte, negrito, emitidoEm, { x: 48, y: 120, largura: 455 });
     pdflibAddPlaceholder({ pdfDoc: pdf, pdfPage: pagina, reason: 'Comprovante de registro de ponto REP-P', contactInfo: 'AvantaLab', name: 'AvantaLab REP-P', location: 'Brasil', signatureLength: 30000, widgetRect: [48, 45, 300, 95], appName: 'AvantaLab REP-P' });
     const comPlaceholder = Buffer.from(await pdf.save({ useObjectStreams: false }));
     const pfx = descriptografarSegredoRepP(certificado.arquivo_criptografado);
