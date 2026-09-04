@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.24 -->
+<!-- ava-version: 1.13.0.25 -->
+
+> Revisão 1.13.0.25: o popup de administração do **Controle de Ponto** foi
+> ampliado no web para expor todas as abas do menu em telas amplas; em telas
+> menores, ele continua adaptado à área visível.
 
 > Revisão 1.13.0.24: no mobile, as seções da landing de **Gestão Financeira**
 > ficam no menu ☰; no desktop, a navegação em linha permanece. Sem alteração

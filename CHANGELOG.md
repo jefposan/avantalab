@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.25 - 2026-09-04
+
+- O popup de administração do **Controle de Ponto** foi ampliado no web para
+  exibir todas as abas do menu de uma vez em telas amplas. Em telas menores, a
+  largura continua respeitando a área visível e a navegação permanece acessível.
+
 ## 1.13.0.24 - 2026-09-04
 
 - No mobile, as seções da landing de **Gestão Financeira** saíram da faixa com

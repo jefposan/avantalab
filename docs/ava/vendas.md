@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.24 -->
+<!-- ava-version: 1.13.0.25 -->
+
+> Revisão 1.13.0.25: a ampliação do popup de administração do **Controle de
+> Ponto** pertence à Gestão Web; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.13.0.24: no mobile, as seções da landing de **Gestão Financeira**
 > ficam no menu ☰; no desktop, a navegação em linha permanece. Sem alteração
