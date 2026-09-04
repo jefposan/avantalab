@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.26: a inativação de funcionário do ponto bloqueia
+// acesso e novas marcações pelos vínculos internos antes do Auth complementar.
 // Revisado na versão 1.13.0.25: no web, o popup de administração do Controle
 // de Ponto comporta todas as abas visíveis em telas amplas e continua responsivo.
 // Revisado na versão 1.13.0.24: no mobile, as seções públicas da Gestão ficam

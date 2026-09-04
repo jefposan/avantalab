@@ -121,16 +121,18 @@ export async function POST(request: Request) {
     };
     if (cpfMudou) { atualizacao.cpf = cpf; atualizacao.login = cpf; }
 
-    // A inativação bloqueia o login no Auth e mantém os vínculos e registros.
-    // A reativação desfaz o bloqueio sem recriar a identidade do funcionário.
+    // O vínculo e a tabela de ponto são a barreira definitiva: juntos, eles
+    // impedem autenticação no Controle de Ponto e novas marcações. O banimento
+    // no Auth é uma camada complementar. Não podemos deixar uma indisponibilidade
+    // pontual dessa camada impedir o desligamento seguro do funcionário.
     const mudouAtivo = atual.ativo !== ativo;
-    if (mudouAtivo) {
+    if (mudouAtivo && ativo) {
       const { error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
-        ban_duration: ativo ? 'none' : '876000h',
+        ban_duration: 'none',
       });
       if (erroAuth) {
-        console.error('Erro ao atualizar o acesso do funcionário de ponto:', erroAuth);
-        return respostaErro('Não foi possível atualizar o acesso do funcionário.', 500);
+        console.error('Erro ao reativar o acesso do funcionário de ponto:', erroAuth);
+        return respostaErro('Não foi possível reativar o acesso do funcionário.', 500);
       }
     }
 
@@ -140,9 +142,9 @@ export async function POST(request: Request) {
       .eq('empresa_id', empresaId)
       .eq('user_id', funcionarioUserId);
     if (erroFunc) {
-      if (mudouAtivo) {
+      if (mudouAtivo && ativo) {
         await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
-          ban_duration: atual.ativo ? 'none' : '876000h',
+          ban_duration: '876000h',
         });
       }
       console.error('Erro ao atualizar funcionário de ponto:', erroFunc);
@@ -170,13 +172,28 @@ export async function POST(request: Request) {
       .eq('perfil', 'funcionario_ponto');
     if (erroVinculo) {
       await supabaseAdmin.from('ponto_funcionarios').update({ ativo: atual.ativo }).eq('id', atual.id);
-      if (mudouAtivo) {
+      if (mudouAtivo && ativo) {
         await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
-          ban_duration: atual.ativo ? 'none' : '876000h',
+          ban_duration: '876000h',
         });
       }
       console.error('Erro ao atualizar o vínculo do funcionário de ponto:', erroVinculo);
       return respostaErro('Não foi possível atualizar o acesso do funcionário.', 500);
+    }
+
+    // Depois que o vínculo já está inativo, tenta também bloquear no Auth. Caso
+    // o provedor recuse a chamada, o acesso ao Controle de Ponto segue encerrado:
+    // ponto_funcionarios.ativo, usuarios_empresa.status e o gatilho de marcação
+    // são verificados no servidor e não dependem desta chamada complementar.
+    let bloqueioAuthPendente = false;
+    if (mudouAtivo && !ativo) {
+      const { error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
+        ban_duration: '876000h',
+      });
+      if (erroAuth) {
+        bloqueioAuthPendente = true;
+        console.error('Bloqueio complementar no Auth não concluído; o acesso de ponto já foi encerrado pelo vínculo:', erroAuth);
+      }
     }
 
     if (mudouAtivo) {
@@ -186,8 +203,13 @@ export async function POST(request: Request) {
         ator_user_id: user.id,
         evento: ativo ? 'funcionario_reativado' : 'funcionario_inativado',
         origem: 'gestao_web',
-        motivo: ativo ? 'Acesso reativado pelo gestor.' : 'Acesso inativado pelo gestor.',
-        dados: { ativo_anterior: atual.ativo, ativo_novo: ativo, ator_nome: user.user_metadata?.nome || user.email || user.id },
+        motivo: ativo ? 'Acesso reativado pelo gestor.' : 'Acesso encerrado pelo gestor; histórico preservado.',
+        dados: {
+          ativo_anterior: atual.ativo,
+          ativo_novo: ativo,
+          ator_nome: user.user_metadata?.nome || user.email || user.id,
+          bloqueio_auth_pendente: bloqueioAuthPendente,
+        },
       });
       if (erroAuditoria) {
         console.error('Erro ao registrar auditoria do funcionário:', erroAuditoria);
@@ -195,7 +217,10 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ erro: false });
+    return NextResponse.json({
+      erro: false,
+      ...(bloqueioAuthPendente ? { mensagem: 'Funcionário inativado. O acesso e novas marcações já foram bloqueados pelo Controle de Ponto.' } : {}),
+    });
   } catch (error) {
     console.error('Erro ao atualizar funcionário de ponto:', error);
     return respostaErro('Erro inesperado ao salvar.', 500);

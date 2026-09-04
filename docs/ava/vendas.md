@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.25 -->
+<!-- ava-version: 1.13.0.26 -->
+
+> Revisão 1.13.0.26: o reforço da inativação de funcionários do **Controle de
+> Ponto** pertence à Gestão Web; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.13.0.25: a ampliação do popup de administração do **Controle de
 > Ponto** pertence à Gestão Web; sem alteração operacional no AvantaVendas.

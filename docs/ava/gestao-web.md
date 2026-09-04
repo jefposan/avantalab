@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.25 -->
+<!-- ava-version: 1.13.0.26 -->
+
+> Revisão 1.13.0.26: ao inativar um funcionário do **Controle de Ponto**, o
+> acesso e as novas marcações são encerrados primeiro pelos vínculos internos;
+> o histórico permanece preservado mesmo se o bloqueio complementar do login
+> estiver indisponível.
 
 > Revisão 1.13.0.25: o popup de administração do **Controle de Ponto** foi
 > ampliado no web para expor todas as abas do menu em telas amplas; em telas

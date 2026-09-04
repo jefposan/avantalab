@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.13.0.26 - 2026-09-04
+
+- A inativação de funcionário do **Controle de Ponto** não depende mais do
+  bloqueio complementar no provedor de autenticação. O vínculo interno e o
+  gatilho de marcações passam a encerrar o acesso de forma definitiva primeiro,
+  preservando o histórico mesmo se a camada complementar estiver indisponível.
+
 ## 1.13.0.25 - 2026-09-04
 
 - O popup de administração do **Controle de Ponto** foi ampliado no web para
