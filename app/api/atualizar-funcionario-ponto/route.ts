@@ -155,9 +155,13 @@ export async function POST(request: Request) {
       return respostaErro('Não foi possível salvar as alterações.', 500);
     }
 
+    // O ciclo de vida do funcionário é controlado exclusivamente em
+    // ponto_funcionarios.usuarios_empresa é o vínculo técnico que permite
+    // localizar seu login e não deve depender de um status genérico para
+    // concluir o desligamento. A tentativa de usar "inativo" nesse vínculo
+    // vinha abortando a operação antes de o bloqueio de ponto ser concluído.
     const atualizacaoVinculo: Record<string, unknown> = {
       nome,
-      status: ativo ? 'ativo' : 'inativo',
       atualizado_em: new Date().toISOString(),
     };
     if (cpfMudou) {

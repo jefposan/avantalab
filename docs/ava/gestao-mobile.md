@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.26 -->
+<!-- ava-version: 1.13.0.27 -->
+
+> Revisão 1.13.0.27: o ajuste do desligamento no **Controle de Ponto** pertence
+> à Gestão Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.13.0.26: o reforço da inativação de funcionários do **Controle de
 > Ponto** pertence à Gestão Web; sem alteração operacional na Gestão Mobile.

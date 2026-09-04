@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.27: o acesso ao ponto consulta o cadastro próprio
+// do funcionário; o vínculo técnico continua preservado ao desligá-lo.
 // Revisado na versão 1.13.0.26: a inativação de funcionário do ponto bloqueia
 // acesso e novas marcações pelos vínculos internos antes do Auth complementar.
 // Revisado na versão 1.13.0.25: no web, o popup de administração do Controle

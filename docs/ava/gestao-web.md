@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.26 -->
+<!-- ava-version: 1.13.0.27 -->
+
+> Revisão 1.13.0.27: o desligamento no **Controle de Ponto** é decidido pelo
+> cadastro próprio do funcionário. O vínculo técnico e o histórico ficam
+> preservados, mas o CPF deixa de permitir novo acesso ao ponto.
 
 > Revisão 1.13.0.26: ao inativar um funcionário do **Controle de Ponto**, o
 > acesso e as novas marcações são encerrados primeiro pelos vínculos internos;

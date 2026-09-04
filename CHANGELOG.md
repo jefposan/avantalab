@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.13.0.27 - 2026-09-04
+
+- A inativação de funcionário do **Controle de Ponto** deixa de alterar o
+  status genérico do vínculo técnico, que podia interromper o salvamento. O
+  acesso passa a ser decidido pelo cadastro próprio do ponto, preservando o
+  vínculo e todo o histórico necessário para consulta e exportação.
+
 ## 1.13.0.26 - 2026-09-04
 
 - A inativação de funcionário do **Controle de Ponto** não depende mais do

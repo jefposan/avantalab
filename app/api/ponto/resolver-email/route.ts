@@ -27,15 +27,29 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabaseAdmin
       .from('usuarios_empresa')
-      .select('email, empresa_id')
+      .select('email, empresa_id, user_id, status')
       .eq('login', cpf)
       .eq('perfil', 'funcionario_ponto')
-      .eq('status', 'ativo')
       .limit(1)
       .maybeSingle();
 
     // Resposta genérica para não vazar se um CPF existe ou não.
-    if (error || !data || !data.email) {
+    if (error || !data || !data.email || data.status !== 'ativo') {
+      return NextResponse.json({ erro: true, mensagem: 'CPF ou senha inválidos.' }, { status: 404 });
+    }
+
+    // O vínculo acima localiza a identidade. A permissão de fato para registrar
+    // fica no cadastro próprio do ponto: um funcionário desligado pode manter
+    // seus dados por exigência de histórico, mas não volta a receber o e-mail de
+    // login, mesmo que o vínculo técnico continue preservado.
+    const { data: funcionario, error: erroFuncionario } = await supabaseAdmin
+      .from('ponto_funcionarios')
+      .select('id')
+      .eq('empresa_id', data.empresa_id)
+      .eq('user_id', data.user_id)
+      .eq('ativo', true)
+      .maybeSingle();
+    if (erroFuncionario || !funcionario) {
       return NextResponse.json({ erro: true, mensagem: 'CPF ou senha inválidos.' }, { status: 404 });
     }
 
@@ -45,7 +59,7 @@ export async function POST(request: Request) {
       const { data: modulo, error: erroModulo } = await supabaseAdmin
         .from('empresa_modulos')
         .select('id')
-        .eq('empresa_id', data.empresa_id)
+      .eq('empresa_id', data.empresa_id)
         .eq('modulo_id', 'ponto')
         .eq('ativo', true)
         .limit(1)
