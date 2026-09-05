@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.29 -->
+<!-- ava-version: 1.13.0.30 -->
+
+> Revisão 1.13.0.30: a página pública **Excluir conta da Gestão** explica como
+> solicitar a exclusão definitiva da conta ou somente de dados específicos. No
+> app, a remoção de um perfil continua acessível em **Menu → Configurações →
+> Excluir este perfil** e não exclui o login.
 
 > Revisão 1.13.0.29: a identificação visual e a validação de documentos
 > assinados do **Controle de Ponto** pertencem à Gestão Web; sem alteração

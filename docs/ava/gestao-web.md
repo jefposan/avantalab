@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.29 -->
+<!-- ava-version: 1.13.0.30 -->
+
+> Revisão 1.13.0.30: a página pública **Excluir conta da Gestão** explica como
+> solicitar a exclusão definitiva da conta ou somente de dados específicos. A
+> exclusão de apenas um perfil permanece disponível no app e preserva o login.
 
 > Revisão 1.13.0.29: em **Controle de Ponto > Conformidade REP-P**, o Espelho
 > e o comprovante baixado como PDF exibem um selo institucional de assinatura

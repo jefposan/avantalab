@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.13.0.30 - 2026-09-05
+
+- A página pública de exclusão da **Gestão** passou a orientar, em português,
+  tanto a remoção definitiva da conta quanto a solicitação de exclusão de dados
+  específicos sem encerrar o acesso. Ela informa o escopo, a confirmação de
+  identidade, a restauração limitada de perfil e a retenção legal aplicável.
+
 ## 1.13.0.29 - 2026-09-04
 
 - Os comprovantes e Espelhos de Ponto assinados passaram a exibir um selo

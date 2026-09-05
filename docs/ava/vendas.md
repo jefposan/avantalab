@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.29 -->
+<!-- ava-version: 1.13.0.30 -->
+
+> Revisão 1.13.0.30: a página pública de exclusão da Gestão é específica desse
+> produto e não altera o processo próprio de exclusão de conta do AvantaVendas.
+
 
 > Revisão 1.13.0.29: a identificação visual e a validação de documentos
 > assinados do **Controle de Ponto** pertencem à Gestão Web; sem alteração
