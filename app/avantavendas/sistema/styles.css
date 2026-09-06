@@ -2229,15 +2229,19 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .order-insert-item { min-width: 106px; min-height: 38px; border-radius: 9px; padding: 0 12px; font-size: 11px; }
 .order-draft-scroll { min-height: 54px; flex: 1 1 auto; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; scrollbar-gutter: stable; }
 .order-draft-items { display: grid; gap: 7px; }
-.order-draft-items article { display: grid; grid-template-columns: minmax(0,1fr) auto auto 30px; align-items: center; gap: 8px; border: 1px solid #dbe5ed; border-radius: 11px; padding: 9px; background: #fff; }
+.order-draft-heading { display: flex; min-height: 25px; align-items: center; justify-content: space-between; gap: 10px; padding: 0 2px; }
+.order-draft-heading > span { display: inline-flex; min-height: 22px; align-items: center; justify-content: center; border: 1px solid #c9e3f3; border-radius: 999px; padding: 2px 9px; color: #126fae; background: #eaf6fd; font-size: 8px; font-weight: 900; white-space: nowrap; }
+.order-draft-items article { position: relative; display: grid; overflow: hidden; grid-template-columns: minmax(0,1fr) auto auto 30px; align-items: center; gap: 8px; border: 1px solid #c9e3f3; border-radius: 11px; padding: 10px 9px 10px 14px; background: #f2f9fd; box-shadow: 0 3px 10px rgba(15,42,80,.06); }
+.order-draft-items article::before { position: absolute; top: 0; bottom: 0; left: 0; width: 4px; background: #1687D9; content: ''; }
 .order-draft-items article:focus-within { border-color: #1687D9; box-shadow: 0 0 0 2px rgba(22,135,217,.12); }
 .order-draft-items article > div { display: grid; min-width: 0; gap: 3px; }
 .order-draft-items article b { overflow: hidden; color: #0A1F44; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .order-draft-items article small { color: #718096; font-size: 9px; }
-.order-draft-items article small em, .order-view-items em { display: inline-flex; margin-left: 5px; border-radius: 999px; padding: 2px 5px; color: #9a3412; background: #ffedd5; font-size: 7px; font-style: normal; font-weight: 900; text-transform: uppercase; }.order-draft-items article.order-draft-bonus { border-color: #fdba74; background: #fffaf3; }
+.order-draft-items article small em, .order-view-items em { display: inline-flex; margin-left: 5px; border-radius: 999px; padding: 2px 5px; color: #9a3412; background: #ffedd5; font-size: 7px; font-style: normal; font-weight: 900; text-transform: uppercase; }.order-draft-items article.order-draft-bonus { border-color: #fdba74; background: #fffaf3; }.order-draft-items article.order-draft-bonus::before { background: #f59e0b; }
 .order-draft-quantity { display: grid; grid-template-columns: 22px auto 22px; align-items: center; gap: 3px; }.order-draft-quantity button { width: 22px !important; height: 22px !important; color: #1687D9 !important; background: #eef8ff !important; font-size: 14px !important; }.order-draft-quantity strong { min-width: 18px; color: #0A1F44 !important; text-align: center; }
 .order-draft-items article strong { color: #1687D9; font-size: 11px; white-space: nowrap; }
 .order-draft-items article button { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 999px; color: #e11d48; background: #fff1f2; font-size: 17px; }
+.order-draft-remove { justify-self: end; }
 .transaction-empty { margin: 0; border: 1px dashed #cbdce8; border-radius: 11px; padding: 14px; color: #718096; font-size: 11px; text-align: center; }
 .transaction-totals, .payment-balance-summary { display: grid; gap: 8px; border: 1px solid #cfe0ec; border-radius: 14px; padding: 12px; background: #f5f9fc; }
 .transaction-totals > div, .transaction-totals > label, .payment-balance-summary > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #526477; font-size: 11px; font-weight: 800; }
@@ -2779,7 +2783,7 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .dark-theme .orders-panel td { border-color: #334155; color: #e2e8f0; }
 .dark-theme .orders-panel td b { color: #f8fafc; }
 .dark-theme .order-list-card { border-color: #334155; color: #f8fafc; background: #172033; }.dark-theme .order-list-card > footer { color: #94a3b8; }.dark-theme .order-list-card > footer b, .dark-theme .order-list-card h3 { color: #f8fafc; }.dark-theme .orders-empty { border-color: #475569; background: #172033; }
-.dark-theme .order-bonus-toggle, .dark-theme .order-draft-items article { border-color: #475569; color: #e2e8f0; background: #172033; }.dark-theme .receipt-order-table { border-color: #334155; background: #172033; }.dark-theme .receipt-order-table > header { color: #cbd5e1; background: #111d2f; }.dark-theme .receipt-order-row { border-color: #334155; color: #cbd5e1; }.dark-theme .receipt-order-product b, .dark-theme .receipt-order-total { color: #f8fafc; }.dark-theme .receipt-order-quantity, .dark-theme .receipt-order-price { color: #cbd5e1; }.dark-theme .receipt-order-row.is-bonus .receipt-order-total { color: #fdba74; }.dark-theme .order-bonus-toggle small { color: #94a3b8; }
+.dark-theme .order-bonus-toggle, .dark-theme .order-draft-items article { border-color: #31536d; color: #e2e8f0; background: #122438; }.dark-theme .order-draft-heading > span { border-color: #31536d; color: #7dd3fc; background: #102838; }.dark-theme .receipt-order-table { border-color: #334155; background: #172033; }.dark-theme .receipt-order-table > header { color: #cbd5e1; background: #111d2f; }.dark-theme .receipt-order-row { border-color: #334155; color: #cbd5e1; }.dark-theme .receipt-order-product b, .dark-theme .receipt-order-total { color: #f8fafc; }.dark-theme .receipt-order-quantity, .dark-theme .receipt-order-price { color: #cbd5e1; }.dark-theme .receipt-order-row.is-bonus .receipt-order-total { color: #fdba74; }.dark-theme .order-bonus-toggle small { color: #94a3b8; }
 .dark-theme .order-draft-items article.order-draft-bonus,
 .dark-theme .order-view-items .receipt-order-row.is-bonus { border-color: #9a5b2e; background: #33251d; }
 .dark-theme .consignment-product-table, .dark-theme .consignment-conversion-row { border-color: #334155; background: #172033; }
@@ -2835,7 +2839,7 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .dark-theme .transaction-date-field .date-picker-button { color: #bae6fd !important; }
 .dark-theme .transaction-date-field input,
 .dark-theme .transaction-date-field .date-picker-button { border-left-color: #31536d !important; }
-.dark-theme .quantity-stepper button, .dark-theme .order-draft-items article, .dark-theme .payment-client-list > button, .dark-theme .payment-client-empty, .dark-theme .payment-edit-summary, .dark-theme .payment-edit-summary > div { border-color: #334155; color: #e2e8f0; background: #172033; }
+.dark-theme .quantity-stepper button, .dark-theme .payment-client-list > button, .dark-theme .payment-client-empty, .dark-theme .payment-edit-summary, .dark-theme .payment-edit-summary > div { border-color: #334155; color: #e2e8f0; background: #172033; }
 .dark-theme .order-product-entry h3, .dark-theme .order-draft-items h3, .dark-theme .order-draft-items article b, .dark-theme .transaction-totals b, .dark-theme .payment-balance-summary b, .dark-theme .payment-detail-summary b { color: #f8fafc; }
 .dark-theme .order-draft-items article small, .dark-theme .payment-client-list > button small, .dark-theme .payment-edit-summary span, .dark-theme .payment-edit-note { color: #94a3b8; }
 .dark-theme .debt-card { border-color: #334155; background: #172033; }

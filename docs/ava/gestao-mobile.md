@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.02 -->
+<!-- ava-version: 1.13.0.31.03 -->
+
+> Revisão 1.13.0.31.03: a organização visual dos produtos inseridos no pedido
+> pertence somente ao AvantaVendas; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.13.0.31.02: em **Perfil > Trocar perfil**, o gradiente dos perfis
 > disponíveis não apresenta mais a faixa escura na lateral direita. A forma de

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.31.03 - 2026-09-06
+
+- A lista de produtos do pedido no **AvantaVendas** ganhou cabeçalho com
+  contagem, fundo azul suave e destaque lateral institucional. Quantidade,
+  total e exclusão permanecem nas mesmas ações, agora com leitura mais clara.
+
 ## 1.13.0.31.02 - 2026-09-06
 
 - Os cards disponíveis no seletor de perfis da Gestão Mobile passaram a usar

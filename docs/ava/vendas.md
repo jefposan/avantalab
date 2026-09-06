@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.31.02 -->
+<!-- ava-version: 1.13.0.31.03 -->
+
+> Revisão 1.13.0.31.03: em **Novo pedido**, os produtos adicionados aparecem
+> agrupados em cards azul-claro com faixa lateral, cabeçalho e contagem. Os
+> controles de quantidade, valor e exclusão mantêm o funcionamento anterior.
 
 > Revisão 1.13.0.31.02: a correção do recorte dos perfis disponíveis pertence
 > somente à Gestão Mobile; sem alteração operacional no AvantaVendas.

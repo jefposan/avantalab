@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.31.02 -->
+<!-- ava-version: 1.13.0.31.03 -->
+
+> Revisão 1.13.0.31.03: a organização visual dos produtos inseridos no pedido
+> pertence somente ao AvantaVendas; sem alteração operacional na Gestão Web.
 
 > Revisão 1.13.0.31.02: a correção do recorte dos perfis disponíveis pertence
 > somente à Gestão Mobile; sem alteração operacional na Gestão Web.
