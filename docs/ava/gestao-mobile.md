@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31 -->
+<!-- ava-version: 1.13.0.31.01 -->
+
+> Revisão 1.13.0.31.01: a sombra dos perfis disponíveis em **Perfil > Trocar
+> perfil** ficou neutra e discreta, sem alterar a seleção ou os dados.
 
 > Revisão 1.13.0.31: em **Perfil > Trocar perfil**, os perfis disponíveis usam
 > gradiente azul institucional e indicam continuidade pela seta. O perfil já em

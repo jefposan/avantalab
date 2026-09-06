@@ -12650,7 +12650,7 @@
             ? 'border-blue-600 bg-cyan-50 text-cyan-800 shadow-sm'
             : (perfilAtual
               ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500'
-              : 'border-transparent bg-gradient-to-r from-[#003E73] via-[#075B98] to-[#1687D9] text-white shadow-[0_10px_22px_rgba(0,62,115,0.22)] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1687D9] focus-visible:ring-offset-2');
+              : 'border-transparent bg-gradient-to-r from-[#003E73] via-[#075B98] to-[#1687D9] text-white shadow-sm hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1687D9] focus-visible:ring-offset-2');
           var status = carregando
             ? '<span class="shrink-0 text-[10px] font-black uppercase tracking-wide text-blue-700">Carregando perfil...</span>'
             : (perfilAtual

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.31.01 - 2026-09-06
+
+- O seletor de perfis da Gestão Mobile trocou a sombra azul profunda por uma
+  sombra neutra e discreta, removendo a tarja escura visível no lado direito
+  dos cards em alguns aparelhos.
+
 ## 1.13.0.31 - 2026-09-05
 
 - O seletor de perfis da Gestão Mobile passou a destacar as opções disponíveis

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.31 -->
+<!-- ava-version: 1.13.0.31.01 -->
+
+> Revisão 1.13.0.31.01: o refinamento da sombra dos perfis disponíveis pertence
+> somente à Gestão Mobile; sem alteração operacional na Gestão Web.
 
 > Revisão 1.13.0.31: a revisão visual do seletor de perfis pertence somente à
 > Gestão Mobile; sem alteração operacional na Gestão Web.
