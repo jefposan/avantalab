@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.30 -->
+<!-- ava-version: 1.13.0.31 -->
+
+> Revisão 1.13.0.31: em **Perfil > Trocar perfil**, os perfis disponíveis usam
+> gradiente azul institucional e indicam continuidade pela seta. O perfil já em
+> uso permanece cinza, identificado e desabilitado para impedir nova seleção.
 
 > Revisão 1.13.0.30: a página pública **Excluir conta da Gestão** explica como
 > solicitar a exclusão definitiva da conta ou somente de dados específicos. No

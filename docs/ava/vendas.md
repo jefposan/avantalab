@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.30 -->
+<!-- ava-version: 1.13.0.31 -->
+
+> Revisão 1.13.0.31: a revisão visual do seletor de perfis pertence somente à
+> Gestão Mobile; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.13.0.30: a página pública de exclusão da Gestão é específica desse
 > produto e não altera o processo próprio de exclusão de conta do AvantaVendas.

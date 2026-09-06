@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.31 - 2026-09-05
+
+- O seletor de perfis da Gestão Mobile passou a destacar as opções disponíveis
+  com gradiente institucional AvantaLab e uma seta de continuidade. O perfil
+  em uso permanece neutro, identificado e sem ação, evitando trocas acidentais.
+
 ## 1.13.0.30 - 2026-09-05
 
 - A página pública de exclusão da **Gestão** passou a orientar, em português,
