@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.05 -->
+<!-- ava-version: 1.13.0.31.06 -->
+
+> Revisão 1.13.0.31.06: a mudança é exclusiva do favicon do navegador. Os
+> ícones do PWA e do app Gestão Mobile não foram alterados.
 
 > Revisão 1.13.0.31.05: a remoção do rótulo redundante no menu lateral pertence
 > somente à Gestão Web; sem alteração operacional na Gestão Mobile.

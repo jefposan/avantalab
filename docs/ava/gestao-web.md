@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.31.05 -->
+<!-- ava-version: 1.13.0.31.06 -->
+
+> Revisão 1.13.0.31.06: a identidade da aba do navegador passou a usar apenas
+> o A oficial transparente. Não há alteração no uso da Gestão Web.
 
 > Revisão 1.13.0.31.05: no menu lateral da Gestão Web, o título agora é
 > somente **Menu**. As ações, permissões e ordem dos itens não foram alteradas.

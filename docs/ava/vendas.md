@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.31.05 -->
+<!-- ava-version: 1.13.0.31.06 -->
+
+> Revisão 1.13.0.31.06: a mudança é exclusiva do favicon do navegador. Os
+> ícones do PWA e do AvantaVendas não foram alterados.
 
 > Revisão 1.13.0.31.05: o ajuste de título do menu lateral pertence somente à
 > Gestão Web; sem alteração operacional no AvantaVendas.

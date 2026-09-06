@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.31.06: o favicon do navegador usa apenas o A
+// oficial transparente; ícones instaláveis e nativos permanecem os mesmos.
 // Revisado na versão 1.13.0.31.05: o menu lateral da Gestão Web apresenta
 // apenas o título Menu; as opções e permissões permanecem as mesmas.
 // Revisado na versão 1.13.0.31.04: o Laboratório de Marcas oferece somente a

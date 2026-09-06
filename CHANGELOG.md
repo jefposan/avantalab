@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.31.06 - 2026-09-06
+
+- O favicon do site agora usa somente o **A oficial AvantaLab** em fundo
+  transparente, nos tamanhos 16, 32 e 48 px. Ícones de PWA, iPhone e Android
+  permanecem inalterados.
+
 ## 1.13.0.31.05 - 2026-09-06
 
 - O menu lateral da Gestão Web passou a exibir apenas o título **Menu**, sem o
