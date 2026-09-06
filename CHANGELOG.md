@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.31.02 - 2026-09-06
+
+- Os cards disponíveis no seletor de perfis da Gestão Mobile passaram a usar
+  gradiente e borda aplicados diretamente no botão. Isso elimina a faixa azul
+  escura que alguns WebViews exibiam no recorte direito arredondado.
+
 ## 1.13.0.31.01 - 2026-09-06
 
 - O seletor de perfis da Gestão Mobile trocou a sombra azul profunda por uma

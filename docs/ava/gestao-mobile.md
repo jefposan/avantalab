@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.01 -->
+<!-- ava-version: 1.13.0.31.02 -->
+
+> Revisão 1.13.0.31.02: em **Perfil > Trocar perfil**, o gradiente dos perfis
+> disponíveis não apresenta mais a faixa escura na lateral direita. A forma de
+> selecionar e o perfil em uso permanecem iguais.
 
 > Revisão 1.13.0.31.01: a sombra dos perfis disponíveis em **Perfil > Trocar
 > perfil** ficou neutra e discreta, sem alterar a seleção ou os dados.

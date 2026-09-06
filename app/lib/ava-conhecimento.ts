@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.31.02: o gradiente dos perfis disponíveis no
+// seletor mobile é renderizado diretamente no botão, sem faixa escura lateral.
 // Revisado na versão 1.13.0.31.01: os perfis disponíveis no seletor mobile
 // usam sombra neutra e discreta, evitando faixa escura no lado direito.
 // Revisado na versão 1.13.0.31: em Perfil > Trocar perfil da Gestão Mobile,

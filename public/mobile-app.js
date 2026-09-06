@@ -12646,18 +12646,24 @@
           var carregando = state.perfilSelecionandoId === empresa.id;
           var perfilAtual = !carregando && !!(state.empresa && empresa.id === state.empresa.id);
           var bloqueado = perfilAtual || !!state.perfilSelecionandoId;
+          // O gradiente e a borda ficam explícitos no próprio botão. Em alguns
+          // WebViews, a combinação de gradiente utilitário e borda transparente
+          // deixava uma faixa escura no recorte arredondado à direita.
+          var estiloDisponivel = !carregando && !perfilAtual
+            ? ' style="background:linear-gradient(135deg,#003E73 0%,#1687D9 100%);border-color:#0C78B8;box-shadow:none;background-clip:padding-box"'
+            : '';
           var classeVisual = carregando
             ? 'border-blue-600 bg-cyan-50 text-cyan-800 shadow-sm'
             : (perfilAtual
               ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500'
-              : 'border-transparent bg-gradient-to-r from-[#003E73] via-[#075B98] to-[#1687D9] text-white shadow-sm hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1687D9] focus-visible:ring-offset-2');
+              : 'text-white hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1687D9] focus-visible:ring-offset-2');
           var status = carregando
             ? '<span class="shrink-0 text-[10px] font-black uppercase tracking-wide text-blue-700">Carregando perfil...</span>'
             : (perfilAtual
               ? '<span class="shrink-0 rounded-full bg-slate-200 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-slate-600">Perfil em uso</span>'
               : '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/35 bg-white/15 text-white" aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="m9 18 6-6-6-6"/></svg></span>');
           var classeDetalhe = carregando ? 'text-cyan-700' : (perfilAtual ? 'text-slate-500' : 'text-white/80');
-          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (carregando ? 'true' : 'false') + '" aria-current="' + (perfilAtual ? 'page' : 'false') + '"' + (bloqueado ? ' disabled' : '') + ' class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition duration-200 active:scale-[0.98] active:translate-y-px disabled:active:translate-y-0 disabled:active:scale-100 ' + classeVisual + '"><span class="flex items-center justify-between gap-3"><span class="min-w-0 truncate text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span>' + status + '</span><span class="mt-0.5 block text-xs font-semibold ' + classeDetalhe + '">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + (empresa.assinatura_origem_empresa_id ? ' &middot; Perfil vinculado' : '') + '</span></button>';
+          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (carregando ? 'true' : 'false') + '" aria-current="' + (perfilAtual ? 'page' : 'false') + '"' + (bloqueado ? ' disabled' : '') + estiloDisponivel + ' class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition duration-200 active:scale-[0.98] active:translate-y-px disabled:active:translate-y-0 disabled:active:scale-100 ' + classeVisual + '"><span class="flex items-center justify-between gap-3"><span class="min-w-0 truncate text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span>' + status + '</span><span class="mt-0.5 block text-xs font-semibold ' + classeDetalhe + '">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + (empresa.assinatura_origem_empresa_id ? ' &middot; Perfil vinculado' : '') + '</span></button>';
         }).join('') +
       '</div>'
     );

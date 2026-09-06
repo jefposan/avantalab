@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.31.01 -->
+<!-- ava-version: 1.13.0.31.02 -->
+
+> Revisão 1.13.0.31.02: a correção do recorte dos perfis disponíveis pertence
+> somente à Gestão Mobile; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.13.0.31.01: o refinamento da sombra dos perfis disponíveis pertence
 > somente à Gestão Mobile; sem alteração operacional no AvantaVendas.
