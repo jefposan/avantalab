@@ -10189,7 +10189,7 @@ if (validacaoTelefoneObrigatoria) {
     onFocus={reiniciarTimerAjustes}
   >
     <div className="mb-2 flex shrink-0 items-center justify-between border-b border-slate-700 pb-3">
-      <div><p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">AvantaLab</p><h2 className="mt-1 text-base font-black">Menu</h2></div>
+      <div><h2 className="text-base font-black">Menu</h2></div>
       <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); }} className="grid h-9 w-9 place-items-center rounded-xl border border-slate-700 text-lg text-slate-300 transition hover:bg-slate-800 hover:text-white" aria-label="Fechar menu">×</button>
     </div>
     <div ref={painelAjustesRef} className="custom-scroll flex min-h-0 w-full flex-1 flex-col gap-2 overflow-y-auto pr-1">

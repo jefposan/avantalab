@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.0.31.05 - 2026-09-06
+
+- O menu lateral da Gestão Web passou a exibir apenas o título **Menu**, sem o
+  rótulo institucional redundante no topo.
+
 ## 1.13.0.31.04 - 2026-09-06
 
 - O cabeçalho do **Laboratório de Marcas** agora apresenta somente a ação

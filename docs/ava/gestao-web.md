@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.31.04 -->
+<!-- ava-version: 1.13.0.31.05 -->
+
+> Revisão 1.13.0.31.05: no menu lateral da Gestão Web, o título agora é
+> somente **Menu**. As ações, permissões e ordem dos itens não foram alteradas.
 
 > Revisão 1.13.0.31.04: o Laboratório de Marcas ganhou apenas a ação pública
 > **Entrar**, que conduz à Gestão; o fluxo operacional da Gestão Web não muda.

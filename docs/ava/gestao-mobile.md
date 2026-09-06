@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.04 -->
+<!-- ava-version: 1.13.0.31.05 -->
+
+> Revisão 1.13.0.31.05: a remoção do rótulo redundante no menu lateral pertence
+> somente à Gestão Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.13.0.31.04: o Laboratório de Marcas ganhou apenas a ação pública
 > **Entrar**, que conduz à Gestão Mobile; o uso do app não muda.
