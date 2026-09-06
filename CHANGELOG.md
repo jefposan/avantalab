@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.31.04 - 2026-09-06
+
+- O cabeçalho do **Laboratório de Marcas** agora apresenta somente a ação
+  **Entrar**, com o mesmo destino de acesso da Gestão e sem sugerir teste ou
+  plano gratuito para esse serviço.
+
 ## 1.13.0.31.03 - 2026-09-06
 
 - A lista de produtos do pedido no **AvantaVendas** ganhou cabeçalho com

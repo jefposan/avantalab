@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.03 -->
+<!-- ava-version: 1.13.0.31.04 -->
+
+> Revisão 1.13.0.31.04: o Laboratório de Marcas ganhou apenas a ação pública
+> **Entrar**, que conduz à Gestão Mobile; o uso do app não muda.
 
 > Revisão 1.13.0.31.03: a organização visual dos produtos inseridos no pedido
 > pertence somente ao AvantaVendas; sem alteração operacional na Gestão Mobile.

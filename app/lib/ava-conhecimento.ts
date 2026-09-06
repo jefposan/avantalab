@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.31.04: o Laboratório de Marcas oferece somente a
+// ação Entrar, levando ao acesso correspondente da Gestão em cada dispositivo.
 // Revisado na versão 1.13.0.31.03: em Novo pedido do AvantaVendas, a lista de
 // produtos usa cards azul-claro com faixa lateral, cabeçalho e contagem.
 // Revisado na versão 1.13.0.31.02: o gradiente dos perfis disponíveis no

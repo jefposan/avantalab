@@ -64,6 +64,9 @@ export default function LandingHeader({ contexto }: { contexto: ContextoLanding 
           <Link href="/" aria-current={contexto === 'laboratorio' ? 'page' : undefined}>Laboratório de marcas</Link>
           <Link href="/gestao-financeira" aria-current={contexto === 'gestao' ? 'page' : undefined}>Gestão financeira</Link>
         </div>
+        {contexto === 'laboratorio' && <div className={`${landingStyles.navActions} ${styles.laboratorioActions}`}>
+          <AcessoPublicoLink className={`${landingStyles.entrar} ${styles.laboratorioEntrar}`} modo="entrar">Entrar</AcessoPublicoLink>
+        </div>}
         {contexto === 'gestao' && <button type="button" className={styles.menuButton} aria-expanded={menuAberto} aria-controls="menu-publico-mobile" aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuAberto((aberto) => !aberto)}><span /><span /><span /></button>}
         {contexto === 'gestao' && <div className={`${landingStyles.navActions} ${styles.gestaoActions}`}>
           <AcessoPublicoLink className={`${landingStyles.entrar} ${styles.mobileEntrar}`} modo="entrar">Entrar</AcessoPublicoLink>

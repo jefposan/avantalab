@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.31.03 -->
+<!-- ava-version: 1.13.0.31.04 -->
+
+> Revisão 1.13.0.31.04: a ação **Entrar** adicionada ao Laboratório de Marcas
+> conduz à Gestão e não altera nenhum fluxo do AvantaVendas.
 
 > Revisão 1.13.0.31.03: em **Novo pedido**, os produtos adicionados aparecem
 > agrupados em cards azul-claro com faixa lateral, cabeçalho e contagem. Os
