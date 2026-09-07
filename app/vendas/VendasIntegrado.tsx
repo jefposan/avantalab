@@ -45,6 +45,8 @@ const ACCESS_READY_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_READY_V1';
 const ACCESS_SNAPSHOT_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_SNAPSHOT_V1';
 const ACCESS_SAVE_REQUEST_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_SAVE_REQUEST_V1';
 const ACCESS_SAVE_RESPONSE_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_SAVE_RESPONSE_V1';
+const COMPANY_PROFILE_SAVE_REQUEST_TYPE = 'AVANTALAB_VENDAS_COMPANY_PROFILE_SAVE_REQUEST_V1';
+const COMPANY_PROFILE_SAVE_RESPONSE_TYPE = 'AVANTALAB_VENDAS_COMPANY_PROFILE_SAVE_RESPONSE_V1';
 const ESCRITA_PERMISSOES_HABILITADA = true;
 const PERFIS_MODULO = ['gestor_master', 'administrador', 'operador_completo', 'operador_simples'] as const;
 const PERMISSOES_VENDAS = new Set(CODIGOS_PERMISSOES_VENDAS);
@@ -63,6 +65,46 @@ async function aguardarComLimite<T>(promise: PromiseLike<T>, timeoutMs: number, 
 
 function requestIdValido(value: unknown) {
   return typeof value === 'string' && /^[A-Za-z0-9:_-]{8,120}$/.test(value);
+}
+
+function perfilComDadosDaEmpresa(perfil: Record<string, unknown>, company: Record<string, unknown>) {
+  const cityWithState = String(company.city || '').trim();
+  const cityMatch = cityWithState.match(/^(.*?)(?:\/([A-Z]{2}))?$/i);
+  const stateRegistration = String(company.stateRegistration || '').trim();
+  const municipalRegistration = String(company.municipalRegistration || '').trim();
+  const taxRegimeLabel = String(company.taxRegime || '').trim();
+  const taxRegime = ({
+    'MEI / SIMEI': 'mei_simei',
+    'Simples Nacional': 'simples_nacional',
+    'Lucro Presumido': 'lucro_presumido',
+    'Lucro Real': 'lucro_real',
+    'Lucro Arbitrado': 'lucro_arbitrado',
+    Imune: 'imune',
+    Isenta: 'isenta',
+    'Não se aplica': 'nao_aplicavel',
+    Outro: 'outro',
+  } as Record<string, string>)[taxRegimeLabel] || taxRegimeLabel;
+  return {
+    ...perfil,
+    nome_fantasia: String(company.name || '').trim(),
+    razao_social: String(company.legalName || '').trim(),
+    tipo_documento: 'cnpj',
+    documento: String(company.document || '').replace(/\D/g, '').slice(0, 14),
+    cep: String(company.cep || '').replace(/\D/g, '').slice(0, 8),
+    rua: String(company.street || '').trim(),
+    numero: String(company.number || '').trim(),
+    complemento: String(company.complement || '').trim(),
+    bairro: String(company.district || '').trim(),
+    cidade: String(cityMatch?.[1] || '').trim(),
+    estado: String(cityMatch?.[2] || '').toUpperCase(),
+    telefone: String(company.phone || '').replace(/\D/g, '').slice(0, 13),
+    email_empresa: String(company.email || '').trim().toLowerCase(),
+    inscricao_estadual: /^isento$/i.test(stateRegistration) ? '' : stateRegistration,
+    inscricao_estadual_isento: /^isento$/i.test(stateRegistration),
+    inscricao_municipal: /^isento$/i.test(municipalRegistration) ? '' : municipalRegistration,
+    inscricao_municipal_isento: /^isento$/i.test(municipalRegistration),
+    regime_tributario: taxRegime,
+  };
 }
 
 function clienteParaTela(customer: Record<string, any>) {
@@ -439,6 +481,38 @@ export default function VendasIntegrado() {
       if (event.data?.type === CUSTOMER_READY_TYPE) { void carregarClientes(empresaId); return; }
       if (event.data?.type === SUPPLIER_READY_TYPE) { void carregarFornecedores(empresaId); return; }
       if (event.data?.type === OPERATION_READY_TYPE) { void carregarOperacoes(empresaId); return; }
+      if (event.data?.type === COMPANY_PROFILE_SAVE_REQUEST_TYPE) {
+        const responsePort = event.ports[0];
+        const requestId = String(event.data.requestId || '');
+        const company = event.data.company && typeof event.data.company === 'object' ? event.data.company as Record<string, unknown> : null;
+        if (!responsePort || !requestIdValido(requestId) || !company || !UUID_PATTERN.test(empresaId)) return;
+        const deliver = (ok: boolean, message: string) => responsePort.postMessage({ type: COMPANY_PROFILE_SAVE_RESPONSE_TYPE, requestId, ok, message });
+        const saveCompanyProfile = async () => {
+          try {
+            const { data } = await supabase.auth.getSession();
+            const token = data.session?.access_token;
+            if (!token) { deliver(false, 'Confirme novamente sua sessão na Gestão.'); return; }
+            if (!perfilCadastro) { deliver(false, 'O cadastro atual do perfil ainda não foi carregado.'); return; }
+            const response = await fetch('/api/perfil-cadastro', {
+              method: 'PUT',
+              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ empresaId, dados: perfilComDadosDaEmpresa(perfilCadastro, company), concluir: false }),
+              cache: 'no-store',
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.ok !== true || !payload.cadastro) {
+              deliver(false, payload.mensagem || 'Não foi possível atualizar o perfil empresarial.');
+              return;
+            }
+            setPerfilCadastro(payload.cadastro);
+            deliver(true, 'Dados do emitente atualizados no perfil empresarial.');
+          } catch {
+            deliver(false, 'A conexão com o cadastro empresarial foi interrompida. Tente novamente.');
+          }
+        };
+        void saveCompanyProfile();
+        return;
+      }
       if ([SERVICE_ATTACHMENT_UPLOAD_REQUEST_TYPE, SERVICE_ATTACHMENT_OPEN_REQUEST_TYPE].includes(event.data?.type)) {
         const destination = iframeRef.current?.contentWindow;
         const responsePort = event.ports[0];
@@ -929,7 +1003,7 @@ export default function VendasIntegrado() {
     };
     window.addEventListener('message', receber);
     return () => window.removeEventListener('message', receber);
-  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, empresaId, origemPrototipo]);
+  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, empresaId, origemPrototipo, perfilCadastro]);
 
   const perfilPronto = Boolean(empresaId && perfilCadastro);
 

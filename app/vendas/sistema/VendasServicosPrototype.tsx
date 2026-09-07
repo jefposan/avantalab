@@ -91,6 +91,12 @@ import { CUSTOMER_READY_TYPE, CUSTOMER_SAVE_REQUEST_TYPE, CUSTOMER_SAVE_RESPONSE
 import { COMMERCIAL_PROFILE_PERMISSIONS } from '../lib/commercial-permissions.mjs';
 import { ACCESS_READY_MESSAGE_TYPE, createAccessSaveRequest, parseAccessSaveResponse, parseAccessSnapshotMessage, type AccessBridgeSnapshot } from '../lib/access-settings-bridge.mjs';
 import { FISCAL_RULES_READY_TYPE, createFiscalRulesSaveRequest, parseFiscalRulesSaveResponse, parseFiscalRulesSnapshot, type FiscalRulesBridgeSnapshot } from '../lib/fiscal-rules-bridge.mjs';
+import { mapearCnpjParaCadastro } from '@/lib/consultas/mappers/cadastro-perfil';
+import type { ConsultaCnpjResponse } from '@/lib/consultas/types';
+import { validarCnpj as validarCnpjConsultado } from '@/lib/consultas/validators/cnpj';
+
+const COMPANY_PROFILE_SAVE_REQUEST_TYPE = 'AVANTALAB_VENDAS_COMPANY_PROFILE_SAVE_REQUEST_V1';
+const COMPANY_PROFILE_SAVE_RESPONSE_TYPE = 'AVANTALAB_VENDAS_COMPANY_PROFILE_SAVE_RESPONSE_V1';
 
 type View = 'painel' | 'vendas' | 'novo_pedido' | 'novo_orcamento' | 'nova_ordem_servico' | 'servicos' | 'clientes' | 'catalogo' | 'estoque' | 'fiscal' | 'recebimentos' | 'relatorios' | 'configuracoes';
 type IconName = 'home' | 'sale' | 'service' | 'users' | 'box' | 'stock' | 'fiscal' | 'money' | 'chart' | 'settings' | 'plus' | 'search' | 'menu' | 'close' | 'chevron' | 'warning' | 'check' | 'clock' | 'document' | 'calendar' | 'arrow' | 'back' | 'copy' | 'print' | 'mail' | 'whatsapp' | 'tag' | 'edit' | 'image';
@@ -4541,12 +4547,13 @@ function splitTeam(value: string) {
   return [...new Set(value.split(/[\n,;]/).map((item) => item.trim()).filter(Boolean))];
 }
 
-function SettingsDialog({ section, settings, onClose, onSave }: { section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => void }) {
+function SettingsDialog({ section, settings, onClose, onSave }: { section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => Promise<ConfirmedSave> }) {
   const [draft, setDraft] = useState(settings);
   const [error, setError] = useState('');
   const [lookup, setLookup] = useState<{ kind: 'cnpj' | 'cep'; message: string; tone: 'success' | 'error' } | null>(null);
   const [searching, setSearching] = useState<'cnpj' | 'cep' | null>(null);
-  useEffect(() => { setDraft(settings); setError(''); setLookup(null); setSearching(null); }, [section, settings]);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { setDraft(settings); setError(''); setLookup(null); setSearching(null); setSaving(false); }, [section, settings]);
   if (!section) return null;
   const titles: Record<SettingsSection, [string, string]> = {
     empresa: ['Dados da empresa ativa', 'Estas informações identificam o emitente e aparecem nos novos PDFs do módulo.'],
@@ -4563,39 +4570,69 @@ function SettingsDialog({ section, settings, onClose, onSave }: { section: Setti
     }
     return { ...current, company };
   });
-  const searchCompanyCnpj = () => {
-    const document = draft.company.document.replace(/\D/g, '');
-    if (document.length !== 14) { setLookup({ kind: 'cnpj', message: 'Informe os 14 dígitos do CNPJ.', tone: 'error' }); return; }
+  const searchCompanyCnpj = async () => {
+    if (searching === 'cnpj') return;
+    const validation = validarCnpjConsultado(draft.company.document);
+    if (!validation.valido) { setLookup({ kind: 'cnpj', message: 'Informe um CNPJ válido para continuar.', tone: 'error' }); return; }
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12_000);
     setSearching('cnpj');
     setLookup(null);
-    window.setTimeout(() => {
-      const found = demoCnpjDirectory[document] ?? clients.find((item) => item.document.replace(/\D/g, '') === document);
-      setSearching(null);
-      if (!found) { setLookup({ kind: 'cnpj', message: 'CNPJ não encontrado na base local. Você pode preencher os dados manualmente.', tone: 'error' }); return; }
+    try {
+      const response = await fetch('/api/consultas/cnpj', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cnpj: validation.documento }),
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      const payload = (await response.json().catch(() => null)) as ConsultaCnpjResponse | null;
+      if (!response.ok || !payload || !payload.success) {
+        throw new Error(payload && !payload.success ? payload.error.message : 'O serviço de consulta está temporariamente indisponível.');
+      }
+      const found = mapearCnpjParaCadastro(payload.data);
+      if (!Object.keys(found).length) throw new Error('A empresa foi localizada, mas a fonte não retornou dados compatíveis com este cadastro.');
       setDraft((current) => {
-        const cityName = found.cityName ?? current.company.city.replace(/\/[A-Z]{2}$/, '');
-        const state = found.state ?? current.company.city.match(/\/([A-Z]{2})$/)?.[1] ?? '';
+        const cityName = found.cidade ?? current.company.city.replace(/\/[A-Z]{2}$/, '');
+        const state = found.estado ?? current.company.city.match(/\/([A-Z]{2})$/)?.[1] ?? '';
         const cep = found.cep ?? current.company.cep;
+        const taxRegime = found.regime_tributario === 'mei_simei'
+          ? 'MEI / SIMEI'
+          : found.regime_tributario === 'simples_nacional'
+            ? 'Simples Nacional'
+            : current.company.taxRegime;
         return { ...current, company: {
           ...current.company,
-          document: formatCnpj(found.document ?? current.company.document),
-          legalName: found.legalName ?? current.company.legalName,
-          name: found.tradeName ?? found.name ?? current.company.name,
-          stateRegistration: found.stateRegistration ?? current.company.stateRegistration,
-          municipalRegistration: found.municipalRegistration ?? current.company.municipalRegistration,
-          email: found.email ?? current.company.email,
-          phone: found.phone ?? current.company.phone,
+          document: formatCnpj(found.documento ?? current.company.document),
+          legalName: found.razao_social ?? current.company.legalName,
+          name: found.nome_fantasia ?? current.company.name,
+          stateRegistration: found.inscricao_estadual ?? current.company.stateRegistration,
+          taxRegime,
+          email: found.email_empresa ?? current.company.email,
+          phone: found.telefone ? formatPhone(found.telefone) : current.company.phone,
           cep: formatCep(cep),
-          street: found.street ?? current.company.street,
-          number: found.number ?? current.company.number,
-          complement: found.complement ?? current.company.complement,
-          district: found.district ?? current.company.district,
+          street: found.rua ?? current.company.street,
+          number: found.numero ?? current.company.number,
+          complement: found.complemento ?? current.company.complement,
+          district: found.bairro ?? current.company.district,
           city: cityName && state ? `${cityName}/${state}` : current.company.city,
-          cityCode: found.cityCode ?? resolveMunicipalityCode({ city: cityName, uf: state, cep, currentCode: current.company.cityCode }),
+          cityCode: resolveMunicipalityCode({ city: cityName, uf: state, cep, currentCode: current.company.cityCode }),
         } };
       });
-      setLookup({ kind: 'cnpj', message: 'Dados cadastrais preenchidos. Revise as informações antes de salvar.', tone: 'success' });
-    }, 320);
+      setLookup({ kind: 'cnpj', message: 'Dados consultados online e preenchidos. Revise as informações antes de salvar.', tone: 'success' });
+    } catch (failure) {
+      const timedOut = controller.signal.aborted || (failure instanceof DOMException && failure.name === 'AbortError');
+      setLookup({
+        kind: 'cnpj',
+        message: timedOut
+          ? 'O serviço demorou mais que o esperado para responder. Tente novamente.'
+          : failure instanceof Error ? failure.message : 'O serviço de consulta está temporariamente indisponível.',
+        tone: 'error',
+      });
+    } finally {
+      window.clearTimeout(timeout);
+      setSearching(null);
+    }
   };
   const searchCompanyCep = () => {
     const cep = draft.company.cep.replace(/\D/g, '');
@@ -4630,11 +4667,21 @@ function SettingsDialog({ section, settings, onClose, onSave }: { section: Setti
       : current.commercial.defaultFiscalDocument;
     return { ...current, commercial: { ...current.commercial, defaultFiscalDocument }, fiscal: { ...current.fiscal, documentScope } };
   });
-  const save = () => {
+  const save = async () => {
+    if (saving) return;
     const normalized = normalizeModuleSettings(draft, defaultModuleSettings) as ModuleSettings;
     const validation = validateModuleSettings(normalized);
     if (!validation.ready) { setError(validation.errors[0]); return; }
-    onSave(normalized);
+    setSaving(true);
+    setError('');
+    try {
+      const result = await onSave(normalized);
+      if (!result.ok) setError(result.message);
+    } catch {
+      setError('Não foi possível confirmar as configurações. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   };
   return <Dialog open title={titles[section][0]} description={titles[section][1]} onClose={onClose}>
     <div className="dialog-body settings-dialog-body">
@@ -4644,7 +4691,7 @@ function SettingsDialog({ section, settings, onClose, onSave }: { section: Setti
           <label className="field field-wide"><span>Razão social *</span><input value={draft.company.legalName} onChange={(event) => updateCompany('legalName', event.target.value)} maxLength={120}/></label>
           <label className="field"><span>Nome de exibição *</span><input value={draft.company.name} onChange={(event) => updateCompany('name', event.target.value)} maxLength={80}/></label>
           <label className="field"><span>Iniciais do perfil</span><input value={draft.company.logoInitials} onChange={(event) => updateCompany('logoInitials', event.target.value.toLocaleUpperCase('pt-BR').slice(0, 4))} maxLength={4}/></label>
-          <label className="field"><span>Regime tributário *</span><select value={draft.company.taxRegime} onChange={(event) => updateCompany('taxRegime', event.target.value)}><option>Simples Nacional</option><option>Lucro Presumido</option><option>Lucro Real</option></select></label>
+          <label className="field"><span>Regime tributário *</span><select value={draft.company.taxRegime} onChange={(event) => updateCompany('taxRegime', event.target.value)}><option>MEI / SIMEI</option><option>Simples Nacional</option><option>Lucro Presumido</option><option>Lucro Real</option><option>Lucro Arbitrado</option><option>Imune</option><option>Isenta</option><option>Outro</option></select></label>
           <label className="field"><span>Inscrição estadual</span><input value={draft.company.stateRegistration} onChange={(event) => updateCompany('stateRegistration', event.target.value)} maxLength={30}/></label>
           <label className="field"><span>Inscrição municipal</span><input value={draft.company.municipalRegistration} onChange={(event) => updateCompany('municipalRegistration', event.target.value)} maxLength={30}/></label>
           <label className="field"><span>E-mail comercial</span><input type="email" value={draft.company.email} onChange={(event) => updateCompany('email', event.target.value)} maxLength={120}/></label>
@@ -4720,7 +4767,7 @@ function SettingsDialog({ section, settings, onClose, onSave }: { section: Setti
       </div>}
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button><button type="button" className="button primary" onClick={save}>Salvar configurações</button></footer>
+    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose} disabled={saving}>Cancelar</button><button type="button" className="button primary" onClick={() => void save()} disabled={saving}>{saving ? 'Salvando…' : 'Salvar configurações'}</button></footer>
   </Dialog>;
 }
 
@@ -5112,7 +5159,7 @@ type SettingsTarget = SettingsSection | 'acessos' | 'matriz' | 'certificado' | n
 type SettingsGroupId = 'empresa-notas' | 'operacao' | 'equipe-acessos' | 'integracoes';
 type SettingsItem = { title: string; description: string; icon: IconName; status: string; target: SettingsTarget };
 
-function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate }: { settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => void; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void }) {
+function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate }: { settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => Promise<ConfirmedSave>; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void }) {
   const [section, setSection] = useState<SettingsSection | null>(null);
   const [accessOpen, setAccessOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
@@ -5170,7 +5217,7 @@ function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAc
         return <button type="button" key={title} onClick={() => openTarget(target)} disabled={unavailable} title={!target ? 'Disponível quando a integração for conectada' : unavailable ? 'Seu perfil não permite alterar este ajuste' : undefined}><span><Icon name={icon}/></span><div><strong>{title}</strong><small>{description}</small><Badge tone={unavailable ? 'neutral' : attention ? 'warning' : 'neutral'}>{unavailable && target ? 'Sem acesso' : status}</Badge></div><Icon name={!unavailable ? 'chevron' : 'clock'} size={17}/></button>;
       })}</div>
     </section>
-    <SettingsDialog section={section} settings={settings} onClose={() => setSection(null)} onSave={(next) => { onSave(next); setSection(null); }}/>
+    <SettingsDialog section={section} settings={settings} onClose={() => setSection(null)} onSave={async (next) => { const result = await onSave(next); if (result.ok) setSection(null); return result; }}/>
     <FiscalMatrixDialog open={matrixOpen} matrix={settings.fiscal.matrix} documentScope={settings.fiscal.documentScope} taxReviewConfirmed={settings.fiscal.taxReviewConfirmed} taxReformReviewConfirmed={settings.fiscal.taxReformReviewConfirmed} bridge={fiscalRulesBridge} readOnly={!canConfigureFiscal || (fiscalRulesBridge.integrated && !fiscalRulesBridge.writable)} onClose={() => setMatrixOpen(false)} onSave={onSaveFiscalMatrix}/>
     <AccessSettingsDialog open={accessOpen} settings={settings} bridge={accessBridge} readOnly={!canManageAccess || (accessBridge.integrated && !accessBridge.writable)} onClose={() => setAccessOpen(false)} onSave={(next) => { onSaveAccess(next); setAccessOpen(false); }}/>
   </>;
@@ -5996,18 +6043,44 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     setToast(message);
     return true;
   };
-  const saveModuleSettings = (next: ModuleSettings) => {
-    if (!authorize('settings.edit', 'editar as configurações do sistema')) return false;
+  const saveIntegratedCompanyProfile = (company: CompanyProfile) => new Promise<ConfirmedSave>((resolve) => {
+    if (!managementBridgeOrigin || window.parent === window) {
+      resolve({ ok: false, message: 'Abra Vendas pela Gestão para atualizar o perfil empresarial.' });
+      return;
+    }
+    const requestId = `company-profile:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
+    const channel = new MessageChannel();
+    let settled = false;
+    const finish = (result: ConfirmedSave) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      channel.port1.close();
+      resolve(result);
+    };
+    const timer = window.setTimeout(() => finish({ ok: false, message: 'A Gestão não confirmou a atualização do perfil no tempo esperado.' }), 20_000);
+    channel.port1.onmessage = (event) => {
+      const response = event.data;
+      if (!response || response.type !== COMPANY_PROFILE_SAVE_RESPONSE_TYPE || response.requestId !== requestId) return;
+      finish({ ok: response.ok === true, message: String(response.message || (response.ok === true ? 'Perfil empresarial atualizado.' : 'Não foi possível atualizar o perfil empresarial.')) });
+    };
+    window.parent.postMessage({ type: COMPANY_PROFILE_SAVE_REQUEST_TYPE, requestId, company }, managementBridgeOrigin, [channel.port2]);
+  });
+  const saveModuleSettings = async (next: ModuleSettings): Promise<ConfirmedSave> => {
+    if (!authorize('settings.edit', 'editar as configurações do sistema')) return { ok: false, message: 'Seu perfil não permite editar estas configurações.' };
     const candidate = normalizeModuleSettings(next, defaultModuleSettings) as ModuleSettings;
-    // No acesso integrado, o cadastro do perfil é a única fonte do emitente.
-    // Alterações locais jamais podem substituir razão social, CNPJ ou endereço.
-    const normalized = managementBridgeOrigin
-      ? { ...candidate, company: moduleSettings.company }
-      : candidate;
+    if (managementBridgeOrigin && window.parent !== window && JSON.stringify(candidate.company) !== JSON.stringify(moduleSettings.company)) {
+      const result = await saveIntegratedCompanyProfile(candidate.company);
+      if (!result.ok) { setToast(result.message); return result; }
+    }
+    const normalized = candidate;
     setModuleSettings(normalized);
     writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: normalized.company.document.replace(/\D/g, ''), module: 'vendas-servicos', settings: normalized }));
-    setToast('Configurações do módulo salvas e aplicadas aos novos lançamentos.');
-    return true;
+    const message = managementBridgeOrigin
+      ? 'Configurações salvas. Os dados do emitente foram vinculados ao perfil empresarial.'
+      : 'Configurações do módulo salvas e aplicadas aos novos lançamentos.';
+    setToast(message);
+    return { ok: true, message };
   };
   const saveFiscalMatrix = ({ matrix, taxReviewConfirmed, taxReformReviewConfirmed }: FiscalMatrixSaveInput) => {
     if (!authorize('fiscal.configure', 'configurar a matriz fiscal')) return;
@@ -7290,7 +7363,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     <CertificateDigitalDialog open={certificateOpen} company={moduleSettings.company} bridge={fiscalCertificateBridgeState} onClose={() => setCertificateOpen(false)} onRequestCompanyRegistration={() => { setCertificateOpen(false); setCompanyRegistrationOpen(true); }} onInstall={installProtectedCertificate} onActivate={activateProtectedCertificate}/>
     <ClientFormDialog open={clientCreateOpen} client={null} clientRecords={clientRecords} sellers={moduleSettings.commercial.sellers} defaultSeller={moduleSettings.commercial.defaultSeller} connected={Boolean(managementCatalogBridge)} onClose={() => setClientCreateOpen(false)} onSave={saveClient}/>
     <SupplierFormDialog open={supplierCreateOpen} suppliers={supplierRecords} onClose={() => setSupplierCreateOpen(false)} onSave={saveSupplier}/>
-    <SettingsDialog section={companyRegistrationOpen ? 'empresa' : null} settings={moduleSettings} onClose={() => { setCompanyRegistrationOpen(false); setCertificateOpen(true); }} onSave={(next) => { if (!saveModuleSettings(next)) return; setCompanyRegistrationOpen(false); setCertificateOpen(true); }}/>
+    <SettingsDialog section={companyRegistrationOpen ? 'empresa' : null} settings={moduleSettings} onClose={() => { setCompanyRegistrationOpen(false); setCertificateOpen(true); }} onSave={async (next) => { const result = await saveModuleSettings(next); if (result.ok) { setCompanyRegistrationOpen(false); setCertificateOpen(true); } return result; }}/>
     {toast && <div className="toast" role="status"><Icon name="check" size={18}/><span>{toast}</span><button type="button" onClick={() => setToast('')} aria-label="Fechar mensagem"><Icon name="close" size={16}/></button></div>}
   </div></PermissionContext.Provider>;
 }

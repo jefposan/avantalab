@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.14.3.16.04 - 2026-09-07
+
+- **Ajustes > Empresa e notas > Dados da empresa** passou a consultar o CNPJ
+  pela mesma fonte online usada no cadastro oficial do AvantaLab, com validação,
+  limite de espera e mensagens de indisponibilidade, sem recorrer à base local.
+- Ao salvar no Vendas integrado, os dados do emitente são atualizados pela API
+  protegida do perfil empresarial selecionado. A sessão permanece na Gestão e
+  os demais campos cadastrais do perfil são preservados.
+- Códigos de regime tributário vindos do cadastro central agora são apresentados
+  com rótulos legíveis e retornam corretamente ao perfil ao salvar.
+
 ## 1.14.3.16.03 - 2026-09-07
 
 - O modal do certificado A1 agora apresenta explicitamente a mensagem da última

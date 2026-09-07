@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.14.3.16.03 -->
+<!-- ava-version: 1.14.3.16.04 -->
+
+> Revisão 1.14.3.16.04: consulta e gravação dos dados do emitente ajustadas
+> somente em Vendas e Serviços Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.14.3.16.03: retorno visual da verificação fiscal ajustado somente em
 > Vendas e Serviços Web; sem impacto operacional na Gestão Mobile.

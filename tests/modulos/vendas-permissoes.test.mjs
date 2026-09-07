@@ -62,9 +62,10 @@ test('perfil empresarial chega ao módulo mesmo quando o catálogo ainda está i
     catalogoDisponivel: false,
     mensagem: 'Catálogo em preparação.',
     catalogo: { versao: 1, origem: 'custos_precificacao', somenteLeitura: true, estoqueIntegrado: false, empresaId: companyId, itens: [] },
-    perfil: { empresa_id: companyId, nome_fantasia: 'Tridium', razao_social: 'Tridium Ltda.', documento: '16978862000123', cidade: 'São Paulo', estado: 'SP' },
+    perfil: { empresa_id: companyId, nome_fantasia: 'Tridium', razao_social: 'Tridium Ltda.', documento: '16978862000123', cidade: 'São Paulo', estado: 'SP', regime_tributario: 'simples_nacional' },
   });
   assert.equal(bridge?.company?.name, 'Tridium');
+  assert.equal(bridge?.company?.taxRegime, 'Simples Nacional');
   assert.equal(bridge?.companyId, companyId);
   assert.equal(bridge?.catalogAvailable, false);
   assert.equal(bridge?.message, 'Catálogo em preparação.');

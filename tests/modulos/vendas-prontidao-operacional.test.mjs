@@ -246,6 +246,32 @@ test('cadastro empresarial consulta CNPJ e CEP reais e preserva o formulário at
   assert.match(cepRoute, /codigoIbge: String\(dados\.ibge/);
 });
 
+test('dados do emitente consultam CNPJ online e só persistem pelo perfil empresarial autenticado', async () => {
+  const [moduleSource, integratedSource] = await Promise.all([
+    readFile(new URL('../../app/vendas/sistema/VendasServicosPrototype.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/vendas/VendasIntegrado.tsx', import.meta.url), 'utf8'),
+  ]);
+  const settingsStart = moduleSource.indexOf('function SettingsDialog');
+  const settingsEnd = moduleSource.indexOf('const fiscalDocumentLabels', settingsStart);
+  const settingsDialog = moduleSource.slice(settingsStart, settingsEnd);
+  const cnpjStart = settingsDialog.indexOf('const searchCompanyCnpj');
+  const cnpjEnd = settingsDialog.indexOf('const searchCompanyCep', cnpjStart);
+  const cnpjLookup = settingsDialog.slice(cnpjStart, cnpjEnd);
+  assert.match(cnpjLookup, /validarCnpjConsultado\(draft\.company\.document\)/);
+  assert.match(cnpjLookup, /fetch\('\/api\/consultas\/cnpj'/);
+  assert.match(cnpjLookup, /cache: 'no-store'/);
+  assert.match(cnpjLookup, /AbortController/);
+  assert.doesNotMatch(cnpjLookup, /demoCnpjDirectory|clients\.find/);
+  assert.match(moduleSource, /AVANTALAB_VENDAS_COMPANY_PROFILE_SAVE_REQUEST_V1/);
+  assert.match(moduleSource, /new MessageChannel\(\)/);
+  assert.match(integratedSource, /AVANTALAB_VENDAS_COMPANY_PROFILE_SAVE_REQUEST_V1/);
+  assert.match(integratedSource, /fetch\('\/api\/perfil-cadastro'/);
+  assert.match(integratedSource, /Authorization: `Bearer \$\{token\}`/);
+  assert.match(integratedSource, /concluir: false/);
+  assert.match(integratedSource, /setPerfilCadastro\(payload\.cadastro\)/);
+  assert.doesNotMatch(moduleSource, /postMessage\(\{[^}]*\b(?:token|access_token|certificatePassword|privateKey)\b[^}]*\}/s);
+});
+
 test('cliente usa operações e recebimentos do perfil, sem relatório demonstrativo', async () => {
   const source = await readFile(new URL('../../app/vendas/sistema/VendasServicosPrototype.tsx', import.meta.url), 'utf8');
   const start = source.indexOf('function ClientReportDialog');

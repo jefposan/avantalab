@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.14.3.16.03 -->
+<!-- ava-version: 1.14.3.16.04 -->
+
+> Revisão 1.14.3.16.04: os dados do emitente podem ser preenchidos em **Vendas
+> e Serviços > Ajustes > Empresa e notas > Dados da empresa**. **Buscar** consulta
+> o CNPJ online pela mesma fonte do cadastro AvantaLab; **Salvar configurações**
+> persiste a alteração no perfil empresarial ativo, conforme a permissão do
+> usuário, sem usar cadastros locais como fonte.
 
 > Revisão 1.14.3.16.03: o modal do certificado passou a informar explicitamente
 > o resultado da última verificação de conexão, sem alterar o estado do A1 quando

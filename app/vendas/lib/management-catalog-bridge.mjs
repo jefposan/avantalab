@@ -6,6 +6,20 @@ const READY_TYPE = 'AVANTALAB_VENDAS_CATALOGO_READY_V1';
 function text(value) { return typeof value === 'string' ? value.trim() : String(value ?? '').trim(); }
 function number(value) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : 0; }
 function color(value) { const normalized = text(value); return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized.toLowerCase() : '#003e73'; }
+function taxRegime(value) {
+  const normalized = text(value);
+  return ({
+    mei_simei: 'MEI / SIMEI',
+    simples_nacional: 'Simples Nacional',
+    lucro_presumido: 'Lucro Presumido',
+    lucro_real: 'Lucro Real',
+    lucro_arbitrado: 'Lucro Arbitrado',
+    imune: 'Imune',
+    isenta: 'Isenta',
+    nao_aplicavel: 'Não se aplica',
+    outro: 'Outro',
+  })[normalized] || normalized;
+}
 
 export function isAllowedLocalManagementOrigin(origin, currentOrigin = '') {
   try {
@@ -24,7 +38,7 @@ function mapCompanyProfile(profile, companyId) {
     document: text(profile.documento).replace(/\D/g, ''),
     stateRegistration: profile.inscricao_estadual_isento === true ? 'ISENTO' : text(profile.inscricao_estadual),
     municipalRegistration: profile.inscricao_municipal_isento === true ? 'ISENTO' : text(profile.inscricao_municipal),
-    taxRegime: text(profile.regime_tributario),
+    taxRegime: taxRegime(profile.regime_tributario),
     cityCode: resolveMunicipalityCode({ city: text(profile.cidade), uf: text(profile.estado), cep: text(profile.cep) }),
     cep: text(profile.cep),
     street: text(profile.rua),

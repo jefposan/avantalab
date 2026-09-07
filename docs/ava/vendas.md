@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.14.3.16.03 -->
+<!-- ava-version: 1.14.3.16.04 -->
+
+> Revisão 1.14.3.16.04: em **Ajustes > Empresa e notas > Dados da empresa**,
+> informe um CNPJ válido e use **Buscar** para consultar a fonte online oficial
+> já usada pelo cadastro AvantaLab. Revise os dados preenchidos e escolha
+> **Salvar configurações**; no acesso integrado, a confirmação atualiza o perfil
+> empresarial ativo e preserva os demais dados cadastrais. A consulta não usa
+> clientes nem a base demonstrativa como fonte.
 
 > Revisão 1.14.3.16.03: depois de **Verificar conexão**, o modal do certificado
 > mostra claramente a resposta da tentativa, inclusive quando a homologação não
