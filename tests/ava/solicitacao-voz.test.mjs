@@ -110,6 +110,9 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.doesNotMatch(voiceModule, /restoreSession\(/);
   assert.match(voiceModule, /Cancelar envio da solicitação/);
   assert.match(voiceModule, /Transcrevendo sua fala…/);
+  assert.doesNotMatch(voiceModule, /Nova solicitação/);
+  assert.match(voiceModule, /border:1px solid rgba\(219,229,239,.95\);border-radius:18px;background:#fff/);
+  assert.match(voiceModule, /\.primary\{border:1px solid #1687D9;background:#1687D9/);
   assert.match(voiceModule, /voice-status-action', 'Toque para cancelar/);
   assert.match(voiceModule, /processing-ring/);
   assert.match(officialApp, /const signalExterno = payload\?\.signal/);

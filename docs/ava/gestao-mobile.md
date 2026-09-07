@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.15.0.07 -->
+<!-- ava-version: 1.15.0.08 -->
+
+> Revisão 1.15.0.08: organização visual dos cards da Solicitação por Voz
+> aplicada somente ao AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.15.0.07: o ícone de sugestões da Sala de Botões foi refinado no
 > AvantaVendas; sem impacto operacional na Gestão Mobile.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.15.0.08 - 2026-09-07
+- Os cards de confirmação, dúvida e resultado da Solicitação por Voz passaram a usar a superfície, bordas, raios e ações do AvantaVendas. O resultado não apresenta mais a ação redundante **Nova solicitação**.
+
+## 1.15.0.08-av131 - 2026-09-07
+- Recursos do AvantaVendas atualizados com a organização dos cards e ações de resultado da Solicitação por Voz.
+
 ## 1.15.0.07 - 2026-09-07
 
 - O card **Deixe aqui suas sugestões** ganhou uma lâmpada de contorno maior e

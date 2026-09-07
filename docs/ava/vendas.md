@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.15.0.07 -->
+<!-- ava-version: 1.15.0.08 -->
+
+> Revisão 1.15.0.08: os cards de confirmação, dúvidas e resultados da voz usam
+> uma única superfície alinhada ao AvantaVendas. Após concluir, há apenas
+> **Fechar** e, quando houver lançamento, **Compartilhar comprovante**.
+> Revisão 1.15.0.08-av131: recursos de voz renovados com a organização visual
+> dos cards e ações do resultado.
 
 > Revisão 1.15.0.07: o card **Deixe aqui suas sugestões** usa uma lâmpada de
 > contorno maior e legível, em vez do balão de conversa da Ava.
@@ -1145,7 +1151,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 130 -->
+<!-- avantavendas-asset-revision: 131 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
