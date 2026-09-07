@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.31.06 -->
+<!-- ava-version: 1.13.0.31.07 -->
+
+> Revisão 1.13.0.31.07: a preservação da despesa escolhida ao criar uma
+> recorrência pertence somente à Gestão Mobile; sem alteração operacional na
+> Gestão Web.
 
 > Revisão 1.13.0.31.06: a identidade da aba do navegador passou a usar apenas
 > o A oficial transparente. Não há alteração no uso da Gestão Web.

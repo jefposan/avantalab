@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.31.07 - 2026-09-06
+
+- Ao criar uma despesa fixa na Gestão Mobile, a despesa escolhida permanece no
+  seletor durante atualizações do modal. O formulário é limpo somente depois
+  de salvar com sucesso ou ao fechá-lo.
+
 ## 1.13.0.31.06 - 2026-09-06
 
 - O favicon do site agora usa somente o **A oficial AvantaLab** em fundo

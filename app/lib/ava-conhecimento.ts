@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.31.07: ao criar despesa fixa na Gestão Mobile, a
+// seleção permanece no formulário até salvar ou fechá-lo.
 // Revisado na versão 1.13.0.31.06: o favicon do navegador usa apenas o A
 // oficial transparente; ícones instaláveis e nativos permanecem os mesmos.
 // Revisado na versão 1.13.0.31.05: o menu lateral da Gestão Web apresenta

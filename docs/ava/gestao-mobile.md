@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.06 -->
+<!-- ava-version: 1.13.0.31.07 -->
+
+> Revisão 1.13.0.31.07: em **Menu → Despesas fixas**, a despesa escolhida na
+> nova recorrência continua selecionada durante atualizações do modal. Ao
+> salvar ou fechar, o formulário volta ao estado inicial.
 
 > Revisão 1.13.0.31.06: a mudança é exclusiva do favicon do navegador. Os
 > ícones do PWA e do app Gestão Mobile não foram alterados.

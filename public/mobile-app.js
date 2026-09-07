@@ -4026,7 +4026,7 @@
   }
 
   function fecharModalMenu() {
-    if (state.modalMenu === 'despesasFixas' && state.recorrEditandoSalvandoId) return;
+    if (state.modalMenu === 'despesasFixas' && (state.recorrEditandoSalvandoId || state.recorrSalvando)) return;
     if (state.modalMenu === 'gerenciar') {
       if (state.empresaEdicaoAberta) { cancelarEdicaoEmpresaMobile(); return; }
       if (state.empresaCriarAberta) { cancelarCriarEmpresaMobile(); return; }
@@ -4046,6 +4046,9 @@
     if (state.modalMenu === 'categorias') {
       state.categoriaEditandoId = '';
       state.categoriaAcoesId = '';
+    }
+    if (state.modalMenu === 'despesasFixas') {
+      limparNovaRecorrenciaMobile();
     }
     if (state.modalMenu === 'feedback') {
       limparFeedbackMobile();
@@ -4168,6 +4171,7 @@
     state.exclusaoRecorrencia = null;
     state.agendaFormAberto = false;
     state.novaDespesaAberta = false;
+    limparNovaRecorrenciaMobile();
     state.empresaExclusaoAberta = false;
     state.empresaEdicaoAberta = false;
     state.empresaCriarAberta = false;
@@ -4281,9 +4285,7 @@
       return;
     }
     if (tipo === 'despesasFixas') {
-      state.modalMenu = 'despesasFixas';
-      render();
-      await carregarRecorrencias();
+      await abrirModalMenuDespesasFixas();
       return;
     }
   }
@@ -13194,6 +13196,16 @@
 
   // ── Despesas Fixas Mobile ──────────────────────────────────────────────
 
+  function limparNovaRecorrenciaMobile() {
+    state.novaRecorrNome = '';
+    state.novaRecorrDia = '';
+    state.novaRecorrDescricao = '';
+    state.novaRecorrValor = '';
+    state.novaRecorrValorNumerico = 0;
+    state.novaRecorrLancarAgora = false;
+    state.novaRecorrMesesFrente = 1;
+  }
+
   function formatarValorRecorrMobile(str) {
     var digits = str.replace(/\D/g, '');
     if (!digits) return '';
@@ -13203,6 +13215,7 @@
   }
 
   async function abrirModalMenuDespesasFixas() {
+    limparNovaRecorrenciaMobile();
     abrirModalMenu('despesasFixas');
     await carregarRecorrencias();
   }
@@ -13312,13 +13325,7 @@
       }).concat(state.lancamentos || []);
     }
     state.recorrSalvando = false;
-    state.novaRecorrNome = '';
-    state.novaRecorrDia = '';
-    state.novaRecorrDescricao = '';
-    state.novaRecorrValor = '';
-    state.novaRecorrValorNumerico = 0;
-    state.novaRecorrLancarAgora = false;
-    state.novaRecorrMesesFrente = 1;
+    limparNovaRecorrenciaMobile();
     state.mensagem = 'Despesa fixa adicionada!';
     notificarFinanceiroAtualizadoMobile();
     render();
@@ -13538,9 +13545,10 @@
     var mesesNomes = { Jan: 'Janeiro', Fev: 'Fevereiro', Mar: 'Março', Abr: 'Abril', Mai: 'Maio', Jun: 'Junho', Jul: 'Julho', Ago: 'Agosto', Set: 'Setembro', Out: 'Outubro', Nov: 'Novembro', Dez: 'Dezembro' };
     var mesLabel = mesesNomes[state.mes] || state.mes;
 
-    var despesaOptions = '<option value="">Selecione a despesa</option>' +
+    var nomeSelecionado = state.novaRecorrNome || '';
+    var despesaOptions = '<option value=""' + (!nomeSelecionado ? ' selected' : '') + '>Selecione a despesa</option>' +
       (state.despesas || []).map(function(d) {
-        return '<option value="' + escapeHtml(d.nome) + '">' + escapeHtml(d.nome) + '</option>';
+        return '<option value="' + escapeHtml(d.nome) + '"' + (d.nome === nomeSelecionado ? ' selected' : '') + '>' + escapeHtml(d.nome) + '</option>';
       }).join('');
 
     var msgHtml = state.mensagem ? '<p class="rounded-lg bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700">' + escapeHtml(state.mensagem) + '</p>' : '';

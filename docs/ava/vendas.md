@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.31.06 -->
+<!-- ava-version: 1.13.0.31.07 -->
+
+> Revisão 1.13.0.31.07: a preservação da despesa escolhida em recorrências
+> pertence somente à Gestão Mobile; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.13.0.31.06: a mudança é exclusiva do favicon do navegador. Os
 > ícones do PWA e do AvantaVendas não foram alterados.
