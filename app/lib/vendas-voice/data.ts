@@ -217,6 +217,13 @@ function formatDate(value: unknown) {
   return Number.isNaN(date.getTime()) ? 'data não informada' : new Intl.DateTimeFormat('pt-BR').format(date);
 }
 
+function formatAppointmentDate(value: string, time: string | null) {
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day, 12);
+  const label = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).format(date);
+  return time ? `${label}, ${time}` : label;
+}
+
 function customerFields(customer: CustomerRow) {
   const address = customer.endereco && typeof customer.endereco === 'object' ? customer.endereco : {};
   return [customer.nome, customer.telefone, customer.email, visibleCustomerNote(customer.observacoes), customer.endereco, ...Object.values(address)];
@@ -476,6 +483,23 @@ export async function buildVoiceResponse(args: {
       paymentDate: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
     };
     return { kind: 'confirmation', title: 'Registrar pagamento', message: `Cliente: ${customer.nome}\nValor: ${formatMoney(draft.amount)}\nForma: ${draft.paymentMethod}\nSaldo anterior: ${formatMoney(financial.balance)}\nSaldo após pagamento: ${formatMoney(Math.max(0, financial.balance - draft.amount))}`, action, selections, draft, transcription, metrics };
+  }
+
+  if (draft.intent === 'create_appointment') {
+    if (!draft.scheduledDate) return clarification(draft, transcription, metrics, `Para qual dia devemos agendar ${customer.nome}?`, [], null, selections);
+    const appointmentType = draft.appointmentType || 'Visita';
+    const action: VoiceConfirmationAction = {
+      operationId: crypto.randomUUID(), intent: 'create_appointment', accountId,
+      customerId: customer.id, customerName: customer.nome, items: [], amount: null,
+      expectedTotal: null, expectedBalance: null, paymentMethod: '', paymentDate: null,
+      scheduledDate: draft.scheduledDate, scheduledTime: draft.scheduledTime,
+      appointmentType, appointmentNotes: draft.appointmentNotes,
+    };
+    return {
+      kind: 'confirmation', title: `Agendar ${appointmentType.toLocaleLowerCase('pt-BR')}`,
+      message: `Cliente: ${customer.nome}\nQuando: ${formatAppointmentDate(draft.scheduledDate, draft.scheduledTime)}${draft.appointmentNotes ? `\nNotas: ${draft.appointmentNotes}` : ''}`,
+      action, selections, draft, transcription, metrics,
+    };
   }
 
   if (!draft.items.length) return clarification(draft, transcription, metrics, `Quais produtos e quantidades entram no ${draft.intent === 'create_consignment' ? 'consignado' : 'pedido'} de ${customer.nome}?`, [], null, selections);

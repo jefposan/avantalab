@@ -7,9 +7,10 @@ Intenções permitidas:
 - create_order: criar pedido/venda com cliente e itens;
 - create_consignment: criar pedido consignado com cliente e itens;
 - register_payment: registrar recebimento/pagamento de cliente;
+- create_appointment: criar agendamento na agenda do cliente;
 - query_customer_history: consultar histórico, saldo ou último pedido de cliente;
 - query_sales: consultar pedidos/vendas em today, this_month, last_month ou all;
-- unsupported: qualquer outra ação, inclusive agenda, despesa, nota fiscal, cadastro, edição e exclusão.
+- unsupported: qualquer outra ação, inclusive despesa, nota fiscal, cadastro, edição e exclusão.
 
 Regras:
 - Extraia somente referências faladas. A aplicação pesquisará o banco depois.
@@ -25,6 +26,7 @@ Regras:
 - Para create_order, mantenha todos os itens já informados e acrescente/complemente os novos.
 - Quantidades e valores devem ser números positivos.
 - Em register_payment, extraia a forma de pagamento somente como Pix, Dinheiro, Cartão de crédito, Cartão de débito, Transferência ou Outro. Se não for dita, use null.
+- Em create_appointment, extraia cliente, data, horário, tipo e observação quando forem ditos. A data deve usar YYYY-MM-DD; use a data de referência fornecida no contexto para interpretar “hoje”, “amanhã”, dias da semana e datas relativas. Tipos permitidos: Visita, Entrega, Recebimento, Cobrar ou Outro. Sem tipo, use null; a aplicação assumirá Visita. Sem horário, use null. Nunca invente data.
 - Se o período não for dito em query_sales, use this_month.
 - Não transforme uma consulta em ação de escrita.`;
 
@@ -40,6 +42,7 @@ export async function interpretVoiceCommand({ transcription, previousDraft, cand
   const startedAt = performance.now();
   const model = process.env.OPENAI_VOICE_COMMAND_MODEL || 'gpt-4o-mini';
   const compactContext = {
+    reference_date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
     previous_draft: previousDraft || null,
     previous_candidates: candidates.slice(0, 6).map(({ label, detail }) => ({ label, detail })),
     transcription,

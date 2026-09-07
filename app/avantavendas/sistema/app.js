@@ -766,7 +766,6 @@ function salvarEstado() {
     agendaAno: state.agendaAno,
     agendaMes: state.agendaMes,
     agendaDiaSelecionado: state.agendaDiaSelecionado,
-    agendaItens: state.agendaItens,
     agendaAlertaAniversarioDias: state.agendaAlertaAniversarioDias,
     metaMensal: state.metaMensal,
     dashboardDiasInativos: state.dashboardDiasInativos,
@@ -3684,11 +3683,16 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       await inicializarPreferenciasVendasServidor(dados);
       const houveAlteracaoDuranteCarga = revisaoDadosOperacionais !== revisaoAoIniciar;
       if (!houveAlteracaoDuranteCarga) {
+        const agendaLocalLegada = [...(state.agendaItens || [])];
         state.produtos = dados.produtos;
         state.pacotesProdutos = dados.pacotes || [];
         state.clientes = dados.clientes;
         state.vendas = dados.vendas;
         state.pagamentos = dados.pagamentos || [];
+        state.agendaItens = normalizarAgendaItensServidor(dados.agenda || []);
+        if (!state.agendaItens.length && agendaLocalLegada.length && backendAtivo && window.VendasDb?.saveAgendaItem) {
+          await migrarAgendaLocalLegadaParaServidor(agendaLocalLegada);
+        }
       }
       if (dados.conteudos !== undefined) state.conteudosVendas = dados.conteudos;
       if (dados.divulgacaoPastas !== undefined) state.divulgacaoPastas = dados.divulgacaoPastas || [];
@@ -4343,6 +4347,55 @@ function itensAgendaVendas() {
   return [...itensManuais, ...aniversarios];
 }
 
+function normalizarItemAgendaServidor(item) {
+  const data = String(item?.data || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return null;
+  const [ano, mes, dia] = data.split('-').map(Number);
+  return {
+    id: item.id,
+    clienteId: item.cliente_id || null,
+    titulo: item.cliente_nome || 'Compromisso',
+    tipo: item.tipo || 'Visita',
+    descricao: item.observacoes || '',
+    horario: item.horario || '',
+    ano, mes: mes - 1, dia,
+    repetir: false, repeticao: '', criadoEm: item.criado_em || new Date().toISOString(),
+  };
+}
+
+function normalizarAgendaItensServidor(itens) {
+  return (Array.isArray(itens) ? itens : []).map(normalizarItemAgendaServidor).filter(Boolean);
+}
+
+function dadosAgendaParaServidor(item) {
+  const data = `${String(item.ano).padStart(4, '0')}-${String(Number(item.mes) + 1).padStart(2, '0')}-${String(item.dia).padStart(2, '0')}`;
+  const cliente = state.clientes.find((c) => String(c.nome || '').trim().toLocaleLowerCase('pt-BR') === String(item.titulo || '').trim().toLocaleLowerCase('pt-BR'));
+  return {
+    id: item.id,
+    cliente_id: item.clienteId || cliente?.id || null,
+    cliente_nome: item.titulo,
+    tipo: item.tipo || 'Visita',
+    data,
+    horario: item.horario || null,
+    observacoes: item.descricao || null,
+    status: 'pendente',
+  };
+}
+
+async function migrarAgendaLocalLegadaParaServidor(itens) {
+  const migrados = [];
+  for (const item of itens.filter((item) => !item?.automatico && item?.titulo)) {
+    try {
+      const salvo = await window.VendasDb.saveAgendaItem(dadosAgendaParaServidor(item));
+      const normalizado = normalizarItemAgendaServidor(salvo);
+      if (normalizado) migrados.push(normalizado);
+    } catch (error) {
+      console.warn('Não foi possível migrar um agendamento local para a Agenda oficial.', error);
+    }
+  }
+  if (migrados.length) state.agendaItens = migrados;
+}
+
 function itensAgendaDoDiaVendas(ano, mes, dia) {
   const alvo = new Date(ano, mes, dia); alvo.setHours(0, 0, 0, 0);
   return itensAgendaVendas().filter((item) => {
@@ -4384,7 +4437,7 @@ function renderItemAgendaVendas(item) {
   const acoes = item.automatico
     ? `<button type="button" class="agenda-birthday-client" onclick="abrirClienteDashboard('${escapeAttr(item.clienteId)}')">Ver cliente</button>`
     : `<button type="button" class="agenda-mobile-move" onclick="abrirMoverAgendaVendas('${escapeAttr(item.id)}')" aria-label="Alterar data">↗</button><button type="button" class="agenda-mobile-delete" onclick="excluirItemAgendaVendas('${escapeAttr(item.id)}')" aria-label="Excluir agendamento">×</button>`;
-  return `<article class="agenda-mobile-item ${item.automatico ? 'agenda-birthday-item' : ''}"><div><b>${escapeHtml(item.titulo)}</b><small class="agenda-tag ${String(etiqueta).toLowerCase()}">${escapeHtml(etiqueta)}</small>${state.agendaExpandida && item.descricao ? `<p>${escapeHtml(item.descricao)}</p>` : ''}</div><div class="agenda-mobile-item-actions">${acoes}</div></article>`;
+  return `<article class="agenda-mobile-item ${item.automatico ? 'agenda-birthday-item' : ''}"><div><b>${escapeHtml(item.titulo)}</b><small class="agenda-tag ${String(etiqueta).toLowerCase()}">${escapeHtml(etiqueta)}${item.horario ? ` · ${escapeHtml(item.horario)}` : ''}</small>${state.agendaExpandida && item.descricao ? `<p>${escapeHtml(item.descricao)}</p>` : ''}</div><div class="agenda-mobile-item-actions">${acoes}</div></article>`;
 }
 
 function selecionarDiaAgenda(dia) { state.agendaDiaSelecionado = dia; state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = ''; state.agendaExpandida = false; render(); }
@@ -4433,22 +4486,34 @@ function renderFormularioAgendaVendas() {
   const campoData = vemDoCliente ? `<div class="agenda-date-row"><label class="agenda-date-field" for="agendaDataVendas"><span>Dia do agendamento</span><span class="agenda-date-input-shell"><span id="agendaDataVisualVendas" class="agenda-date-value" aria-hidden="true">${formatarDataCurtaAgendaVendas(data)}</span><input id="agendaDataVendas" type="date" value="${escapeAttr(data)}" aria-label="Data do agendamento" onchange="sincronizarDataAgendaVendas(this.value)"></span></label><div class="agenda-date-stepper" role="group" aria-label="Alterar dia do agendamento"><button type="button" class="agenda-date-step" onclick="ajustarDiaAgendaVendas(-1)" aria-label="Dia anterior">&lt;</button><button type="button" class="agenda-date-step" onclick="ajustarDiaAgendaVendas(1)" aria-label="Próximo dia">&gt;</button></div></div>` : '';
   return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarFormularioAgendaVendas()"><section class="agenda-form-card"><header><div><small>Novo agendamento</small><h3>${vemDoCliente ? 'Agende para a data desejada' : dataAgendaPorExtenso(data)}</h3></div><button type="button" class="close" onclick="cancelarFormularioAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaClienteVendas" placeholder="Nome do cliente" autocomplete="off" value="${escapeAttr(state.agendaClientePreselecionado)}">${campoData}<select id="agendaEtiquetaVendas"><option value="Visita">Visita</option><option value="Entrega">Entrega</option><option value="Recebimento">Recebimento</option><option value="Cobrar">Cobrar</option></select><textarea id="agendaDescricaoVendas" placeholder="Notas"></textarea><div><button type="button" class="ghost" onclick="cancelarFormularioAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarItemAgendaVendas()">Salvar</button></div></div></section></div>`;
 }
-function salvarItemAgendaVendas() {
+async function salvarItemAgendaVendas() {
   const titulo = valor('agendaClienteVendas').trim();
   if (!titulo) { toast('Informe o nome do cliente.'); return; }
   const data = state.agendaClientePreselecionado ? valor('agendaDataVendas') : dataFormularioAgenda();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { toast('Selecione um dia válido.'); return; }
   const [ano, mes, dia] = data.split('-').map(Number);
-  state.agendaItens = [...itensAgendaVendas(), { id: id('agenda'), titulo, tipo: valor('agendaEtiquetaVendas') || 'Visita', descricao: valor('agendaDescricaoVendas').trim(), ano, mes: mes - 1, dia, repetir: false, repeticao: '', criadoEm: new Date().toISOString() }];
-  state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia;
-  state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = '';
-  salvarEstado(); render(); toast('Cliente agendado.');
+  const novo = { id: id('agenda'), titulo, tipo: valor('agendaEtiquetaVendas') || 'Visita', descricao: valor('agendaDescricaoVendas').trim(), ano, mes: mes - 1, dia, repetir: false, repeticao: '', criadoEm: new Date().toISOString() };
+  try {
+    if (backendAtivo && window.VendasDb?.saveAgendaItem) {
+      const salvo = await window.VendasDb.saveAgendaItem(dadosAgendaParaServidor(novo));
+      const normalizado = normalizarItemAgendaServidor(salvo);
+      state.agendaItens = [...state.agendaItens.filter((item) => String(item.id) !== String(normalizado.id)), normalizado];
+    } else state.agendaItens = [...itensAgendaVendas(), novo];
+    state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia;
+    state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = '';
+    salvarEstado(); render(); toast('Cliente agendado.');
+  } catch (error) { toast(traduzErro(error)); }
 }
-function excluirItemAgendaVendas(itemId) { state.agendaItens = itensAgendaVendas().filter((item) => String(item.id) !== String(itemId)); salvarEstado(); render(); toast('Lembrete excluído.'); }
+async function excluirItemAgendaVendas(itemId) {
+  try {
+    if (backendAtivo && window.VendasDb?.deleteAgendaItem) await window.VendasDb.deleteAgendaItem(itemId);
+    state.agendaItens = itensAgendaVendas().filter((item) => String(item.id) !== String(itemId)); salvarEstado(); render(); toast('Lembrete excluído.');
+  } catch (error) { toast(traduzErro(error)); }
+}
 function abrirMoverAgendaVendas(itemId) { state.agendaItemMovendo = itensAgendaVendas().find((item) => String(item.id) === String(itemId)) || null; render(); }
 function cancelarMoverAgendaVendas() { state.agendaItemMovendo = null; render(); }
 function renderMoverAgendaVendas() { const item = state.agendaItemMovendo; if (!item) return ''; const data = `${String(item.ano).padStart(4, '0')}-${String(Number(item.mes) + 1).padStart(2, '0')}-${String(item.dia).padStart(2, '0')}`; return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarMoverAgendaVendas()"><section class="agenda-form-card"><header><div><small>Reagendar cliente</small><h3>${escapeHtml(item.titulo)}</h3></div><button type="button" class="close" onclick="cancelarMoverAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaNovaDataVendas" type="date" value="${data}"><div><button type="button" class="ghost" onclick="cancelarMoverAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarNovaDataAgendaVendas()">Reagendar</button></div></div></section></div>`; }
-function salvarNovaDataAgendaVendas() { const data = valor('agendaNovaDataVendas'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { toast('Informe uma data válida.'); return; } const [ano, mes, dia] = data.split('-').map(Number); const idItem = state.agendaItemMovendo?.id; state.agendaItens = itensAgendaVendas().map((item) => String(item.id) === String(idItem) ? { ...item, ano, mes: mes - 1, dia } : item); state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia; state.agendaItemMovendo = null; salvarEstado(); render(); toast('Agendamento reagendado.'); }
+async function salvarNovaDataAgendaVendas() { const data = valor('agendaNovaDataVendas'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { toast('Informe uma data válida.'); return; } const [ano, mes, dia] = data.split('-').map(Number); const idItem = state.agendaItemMovendo?.id; const atualizado = itensAgendaVendas().find((item) => String(item.id) === String(idItem)); if (!atualizado) return; try { const proximo = { ...atualizado, ano, mes: mes - 1, dia }; if (backendAtivo && window.VendasDb?.saveAgendaItem) { const salvo = await window.VendasDb.saveAgendaItem(dadosAgendaParaServidor(proximo)); const normalizado = normalizarItemAgendaServidor(salvo); state.agendaItens = state.agendaItens.map((item) => String(item.id) === String(idItem) ? normalizado : item); } else state.agendaItens = itensAgendaVendas().map((item) => String(item.id) === String(idItem) ? proximo : item); state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia; state.agendaItemMovendo = null; salvarEstado(); render(); toast('Agendamento reagendado.'); } catch (error) { toast(traduzErro(error)); } }
 
 const CONTEUDOS_INICIAIS_VENDAS = [
   { id: 'local-i1', pagina: 'informacoes', tipo: 'versao', titulo: 'Vendas AvantaLab', descricao: 'Aplicativo web progressivo com atualização contínua. As novas versões são disponibilizadas sem necessidade de reinstalar o aplicativo.', criado_em: '2026-07-13T17:00:00-03:00' },

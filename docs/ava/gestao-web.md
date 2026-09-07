@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.15.0.08 -->
+<!-- ava-version: 1.16.0 -->
+
+> Revisão 1.16.0: agendamento pela Solicitação por Voz aplicado somente ao
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.15.0.08: organização visual dos cards da Solicitação por Voz
 > aplicada somente ao AvantaVendas; sem impacto operacional na Gestão Web.

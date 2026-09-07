@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.16.0 - 2026-09-07
+- A Solicitação por Voz agora cria agendamentos de visita, entrega, recebimento ou cobrança. Ela resolve o cliente na conta ativa, pede somente a data ausente, exige confirmação e relê o registro salvo.
+- A Agenda do AvantaVendas passou a usar a tabela operacional por conta, compartilhada com a voz, preservando os agendamentos nos backups e entre dispositivos.
+
+## 1.16.0-av132 - 2026-09-07
+- Recursos do AvantaVendas atualizados para o agendamento por voz e a Agenda oficial por conta.
+
 ## 1.15.0.08 - 2026-09-07
 - Os cards de confirmação, dúvida e resultado da Solicitação por Voz passaram a usar a superfície, bordas, raios e ações do AvantaVendas. O resultado não apresenta mais a ação redundante **Nova solicitação**.
 

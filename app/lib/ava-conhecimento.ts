@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.16.0: a Solicitação por Voz cria agendamentos confirmados
+// para a conta ativa; Agenda e voz leem o mesmo registro operacional.
 // Revisado na versão 1.15.0.08: confirmação, dúvidas e resultado de voz seguem
 // a superfície e ações dos cards do Vendas; não há Nova solicitação ao concluir.
 // Revisado na versão 1.15.0.07: o card de sugestões usa uma lâmpada de contorno

@@ -9,15 +9,31 @@ export const dynamic = 'force-dynamic';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const moneyCents = (value: unknown) => Math.round(Number(value || 0) * 100);
+const APPOINTMENT_TYPES = new Set(['Visita', 'Entrega', 'Recebimento', 'Cobrar', 'Outro']);
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const CLOCK_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+function validIsoDate(value: unknown) {
+  const text = String(value || '');
+  if (!ISO_DATE.test(text)) return false;
+  const [year, month, day] = text.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
 
 function validateAction(value: unknown): VoiceConfirmationAction | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const action = value as VoiceConfirmationAction;
-  if (!['create_order', 'create_consignment', 'register_payment'].includes(action.intent)) return null;
+  if (!['create_order', 'create_consignment', 'register_payment', 'create_appointment'].includes(action.intent)) return null;
   if (![action.operationId, action.accountId, action.customerId].every((id) => UUID.test(String(id || '')))) return null;
   if (!Array.isArray(action.items) || action.items.length > 20) return null;
   if (['create_order', 'create_consignment'].includes(action.intent) && (!action.items.length || action.items.some((item) => !UUID.test(String(item.productId || '')) || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))) return null;
   if (action.intent === 'register_payment' && (!Number.isFinite(Number(action.amount)) || Number(action.amount) <= 0)) return null;
+  if (action.intent === 'create_appointment') {
+    if (!validIsoDate(action.scheduledDate)) return null;
+    if (action.scheduledTime && !CLOCK_TIME.test(String(action.scheduledTime))) return null;
+    if (!APPOINTMENT_TYPES.has(String(action.appointmentType || ''))) return null;
+  }
   return action;
 }
 
@@ -39,6 +55,53 @@ export async function POST(request: Request) {
     const { data: customer, error: customerError } = await context.db.from('vendas_mobile_clientes')
       .select('id,nome,ativo').eq('conta_id', accountId).eq('id', action.customerId).eq('ativo', true).maybeSingle();
     if (customerError || !customer) return NextResponse.json({ message: 'O cliente não está mais disponível. Prepare a solicitação novamente.' }, { status: 409 });
+
+    if (action.intent === 'create_appointment') {
+      const appointmentType = String(action.appointmentType);
+      const appointmentDate = String(action.scheduledDate);
+      const appointmentTime = action.scheduledTime ? String(action.scheduledTime) : null;
+      const notes = String(action.appointmentNotes || '').trim().slice(0, 1000) || null;
+      const { data, error } = await context.db.from('vendas_mobile_agenda').insert({
+        id: action.operationId,
+        user_id: context.userId,
+        conta_id: accountId,
+        cliente_id: customer.id,
+        cliente_nome: customer.nome,
+        tipo: appointmentType,
+        data: appointmentDate,
+        horario: appointmentTime,
+        observacoes: notes,
+        status: 'pendente',
+      }).select('id,conta_id,cliente_id,cliente_nome,tipo,data,horario,observacoes,status,criado_em').single();
+      if (error) throw new Error(error.message || 'O agendamento não pôde ser criado.');
+      if (!data?.id || data.cliente_id !== customer.id || data.conta_id !== accountId || data.data !== appointmentDate) {
+        throw new Error('O servidor não confirmou o agendamento integralmente.');
+      }
+      const { data: verifiedAppointment, error: verificationError } = await context.db.from('vendas_mobile_agenda')
+        .select('id,conta_id,cliente_id,cliente_nome,tipo,data,horario,observacoes,status,criado_em')
+        .eq('conta_id', accountId).eq('id', data.id).maybeSingle();
+      if (verificationError || !verifiedAppointment
+        || verifiedAppointment.cliente_id !== customer.id
+        || verifiedAppointment.data !== appointmentDate
+        || verifiedAppointment.tipo !== appointmentType) {
+        throw new Error('O agendamento foi enviado, mas o servidor não conseguiu conferir sua gravação. Consulte a Agenda antes de tentar novamente.');
+      }
+      logVoiceLab({ event: 'executed', userId, accountId, intent, confirmed: true, success: true });
+      return NextResponse.json({
+        title: 'Agendamento criado com sucesso',
+        message: `${appointmentType} para ${customer.nome} em ${new Intl.DateTimeFormat('pt-BR').format(new Date(`${appointmentDate}T12:00:00`))}${appointmentTime ? `, às ${appointmentTime}` : ''}.`,
+        recordId: verifiedAppointment.id,
+        evidence: {
+          recordId: verifiedAppointment.id,
+          recordType: 'Agendamento',
+          customerName: customer.nome,
+          status: 'Pendente',
+          createdAt: verifiedAppointment.criado_em,
+          verifiedAt: new Date().toISOString(),
+          verification: 'Registro relido do banco após a gravação',
+        },
+      }, { headers: { 'Cache-Control': 'no-store, private' } });
+    }
 
     if (['create_order', 'create_consignment'].includes(action.intent)) {
       const consignment = action.intent === 'create_consignment';

@@ -2,6 +2,7 @@ export const VOICE_INTENTS = [
   'create_order',
   'create_consignment',
   'register_payment',
+  'create_appointment',
   'query_customer_history',
   'query_sales',
   'unsupported',
@@ -20,6 +21,10 @@ export type VoiceIntentPayload = {
   items: VoiceIntentItem[];
   amount: number | null;
   paymentMethod: string | null;
+  scheduledDate: string | null;
+  scheduledTime: string | null;
+  appointmentType: 'Visita' | 'Entrega' | 'Recebimento' | 'Cobrar' | 'Outro' | null;
+  appointmentNotes: string | null;
   period: 'today' | 'this_month' | 'last_month' | 'all' | null;
   unsupportedReason: string | null;
 };
@@ -47,7 +52,7 @@ export type VoiceResolvedItem = {
 
 export type VoiceConfirmationAction = {
   operationId: string;
-  intent: 'create_order' | 'create_consignment' | 'register_payment';
+  intent: 'create_order' | 'create_consignment' | 'register_payment' | 'create_appointment';
   accountId: string;
   customerId: string;
   customerName: string;
@@ -57,6 +62,10 @@ export type VoiceConfirmationAction = {
   expectedBalance: number | null;
   paymentMethod: string;
   paymentDate: string | null;
+  scheduledDate?: string | null;
+  scheduledTime?: string | null;
+  appointmentType?: 'Visita' | 'Entrega' | 'Recebimento' | 'Cobrar' | 'Outro' | null;
+  appointmentNotes?: string | null;
 };
 
 export type VoiceProcessResponse =
@@ -103,6 +112,10 @@ export const EMPTY_VOICE_INTENT: VoiceIntentPayload = {
   items: [],
   amount: null,
   paymentMethod: null,
+  scheduledDate: null,
+  scheduledTime: null,
+  appointmentType: null,
+  appointmentNotes: null,
   period: null,
   unsupportedReason: null,
 };

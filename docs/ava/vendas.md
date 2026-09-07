@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.15.0.08 -->
+<!-- ava-version: 1.16.0 -->
+
+> Revisão 1.16.0: a Solicitação por Voz também agenda **Visita**, **Entrega**,
+> **Recebimento** ou **Cobrar**. Ela confirma o cliente, pergunta somente a
+> data ausente e mostra a confirmação antes de gravar. A Agenda normal e a voz
+> usam o mesmo registro da conta ativa, por isso o item aparece na Agenda e nos
+> backups imediatamente após a confirmação.
+
+> Revisão 1.16.0-av132: recursos de voz e Agenda renovados com o agendamento
+> oficial por conta.
 
 > Revisão 1.15.0.08: os cards de confirmação, dúvidas e resultados da voz usam
 > uma única superfície alinhada ao AvantaVendas. Após concluir, há apenas
@@ -1151,7 +1160,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 131 -->
+<!-- avantavendas-asset-revision: 132 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

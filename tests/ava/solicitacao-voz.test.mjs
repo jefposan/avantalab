@@ -50,6 +50,14 @@ test('schema de voz aceita somente intenções e valores previstos', () => {
   assert.equal(valid?.items[0].quantity, 5);
   assert.equal(validateVoiceIntent({ ...valid, intent: 'run_sql' }), null);
   assert.equal(validateVoiceIntent({ ...valid, items: [{ productReference: 'Overliss', quantity: -1 }] }), null);
+  const appointment = validateVoiceIntent({
+    intent: 'create_appointment', customer_reference: 'Fernanda influencer', items: [], amount: null,
+    payment_method: null, scheduled_date: '2026-09-08', scheduled_time: '14:00',
+    appointment_type: 'Visita', appointment_notes: 'Levar catálogo', period: null, unsupported_reason: null,
+  });
+  assert.equal(appointment?.scheduledDate, '2026-09-08');
+  assert.equal(appointment?.scheduledTime, '14:00');
+  assert.equal(validateVoiceIntent({ ...appointment, scheduled_date: '08/09/2026' }), null);
 });
 
 test('busca de voz ignora acentos sem perder as referências humanas', () => {
@@ -279,6 +287,45 @@ test('pedido consignado usa o mesmo fluxo oficial com estoque e confirmação', 
   assert.equal(result.action.intent, 'create_consignment');
   assert.equal(result.action.paymentMethod, 'Consignado');
   assert.equal(result.action.items[0].productId, UUIDS.influencerLitro);
+});
+
+test('agendamento por voz resolve cliente, exige data e prepara confirmação segura', async () => {
+  const common = {
+    db: voiceResolverDb(), accountId: 'conta', transcription: 'agenda uma visita para Fernanda influencer amanhã às duas',
+    metrics: { interpretationMs: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+    draft: {
+      intent: 'create_appointment', customerReference: 'Fernanda influencer', items: [], amount: null,
+      paymentMethod: null, scheduledDate: null, scheduledTime: null, appointmentType: null, appointmentNotes: null,
+      period: null, unsupportedReason: null,
+    },
+  };
+  const missingDate = await buildVoiceResponse(common);
+  assert.equal(missingDate.kind, 'clarification');
+  assert.match(missingDate.question, /qual dia/i);
+  const confirmation = await buildVoiceResponse({
+    ...common,
+    draft: { ...common.draft, scheduledDate: '2026-09-08', scheduledTime: '14:00', appointmentType: 'Visita', appointmentNotes: 'Levar catálogo' },
+  });
+  assert.equal(confirmation.kind, 'confirmation');
+  assert.equal(confirmation.action.intent, 'create_appointment');
+  assert.equal(confirmation.action.scheduledTime, '14:00');
+  assert.match(confirmation.message, /Levar catálogo/);
+});
+
+test('agenda e executor reutilizam a fonte oficial por conta', async () => {
+  const [client, app, executor, interpreter] = await Promise.all([
+    readFile(new URL('../../app/avantavendas/sistema/supabase-client.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/sistema/app.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/teste/solicitacao-voz/executar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/lib/vendas-voice/interpreter.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(client, /from\('vendas_mobile_agenda'\)/);
+  assert.match(client, /saveAgendaItem/);
+  assert.match(app, /normalizarAgendaItensServidor\(dados\.agenda/);
+  assert.match(app, /migrarAgendaLocalLegadaParaServidor/);
+  assert.match(executor, /action\.intent === 'create_appointment'/);
+  assert.match(executor, /Registro relido do banco após a gravação/);
+  assert.match(interpreter, /create_appointment: criar agendamento/);
 });
 
 test('transcrição de voz usa modelo especializado sem enviar o catálogo da conta', async () => {

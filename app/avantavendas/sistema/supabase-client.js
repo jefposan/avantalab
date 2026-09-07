@@ -477,12 +477,12 @@
 
   async function loadAll(contextoPreparado = null) {
     const user = contextoPreparado?.user || await currentUser();
-    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true };
+    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], agenda: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true };
 
     const acessoVendas = contextoPreparado?.acessoVendas || await buscarAcessoVendas();
     if (!acessoVendas.acesso) {
       atualizarProgresso('data', 1, 1, 'Conta do Vendas não liberada');
-      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true, ...acessoVendas };
+      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], agenda: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true, ...acessoVendas };
     }
     if (acessoVendas.premiumBloqueado === true) {
       atualizarProgresso('data', 1, 1, 'Assinatura necessária');
@@ -493,6 +493,7 @@
         clientes: [],
         vendas: [],
         pagamentos: [],
+        agenda: [],
         conteudos: null,
         divulgacaoPastas: [],
         divulgacaoMateriais: [],
@@ -522,7 +523,7 @@
     const contaVendasAtiva = contasVendas.find((conta) => conta.id === contaId) || null;
     // Novidades e Divulgação são carregadas depois que a interface é liberada.
     // Elas não podem atrasar produtos, clientes e o acesso à Sala de Botões.
-    const totalEtapasDados = 9;
+    const totalEtapasDados = 10;
     let etapasDadosConcluidas = 0;
     const acompanharEtapaDados = (promessa, rotulo) => Promise.resolve(promessa).then(
       (resultado) => {
@@ -546,7 +547,7 @@
     if (perfisFinanceirosRes.error) throw perfisFinanceirosRes.error;
     const vinculosComerciais = vinculosRes.data || [];
     const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
-    const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, integracaoRes, preferenciasRes] = await Promise.all([
+    const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, agendaRes, integracaoRes, preferenciasRes] = await Promise.all([
       acompanharEtapaDados(listarCatalogoVendas(), 'Carregando produtos'),
       acompanharEtapaDados(carregarTodasPaginas(() => client
         .from('vendas_mobile_clientes')
@@ -567,10 +568,18 @@
         .order('data_pagamento', { ascending: false })
         .order('criado_em', { ascending: false })
         .order('id', { ascending: false })), 'Carregando pagamentos'),
+      acompanharEtapaDados(carregarTodasPaginas(() => client
+        .from('vendas_mobile_agenda')
+        .select('id,cliente_id,cliente_nome,tipo,data,horario,observacoes,status,criado_em,atualizado_em')
+        .eq('conta_id', contaId)
+        .neq('status', 'cancelado')
+        .order('data')
+        .order('horario')
+        .order('criado_em')), 'Carregando agenda'),
       acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc', { p_conta_id: contaId }), 'Carregando integração financeira'),
       acompanharEtapaDados(client.from('vendas_mobile_contas_preferencias').select('versao, preferencias, atualizado_em').eq('conta_id', contaId).maybeSingle(), 'Carregando preferências'),
     ]);
-    const error = clientesRes.error || pedidosRes.error || pagamentosRes.error || integracaoRes.error;
+    const error = clientesRes.error || pedidosRes.error || pagamentosRes.error || agendaRes.error || integracaoRes.error;
     if (error) throw error;
 
     const produtos = catalogoRes.produtos;
@@ -590,6 +599,7 @@
       })),
       vendas: (pedidosRes.data || []).map((p) => ({ ...p, itens: p.itens || [] })),
       pagamentos: (pagamentosRes.data || []).map(normalizarPagamentoServidor),
+      agenda: agendaRes.data || [],
       integracaoGestao: integracaoRes.data || { base_receita: 'recebidos', pode_configurar: false },
       // Conteúdo secundário ausente significa "preservar o cache atual". A
       // atualização em segundo plano preencherá estas três coleções.
@@ -796,6 +806,39 @@
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
     const { error } = await requireClient().from('vendas_mobile_clientes').delete().eq('id', id).eq('conta_id', contaAtivaId());
+    if (error) throw error;
+  }
+
+  async function saveAgendaItem(item) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
+    const payload = {
+      user_id: user.id,
+      conta_id: contaId,
+      cliente_id: item.cliente_id || null,
+      cliente_nome: String(item.cliente_nome || '').trim() || null,
+      tipo: String(item.tipo || 'Visita').trim().slice(0, 40) || 'Visita',
+      data: item.data,
+      horario: item.horario || null,
+      observacoes: String(item.observacoes || '').trim() || null,
+      status: item.status || 'pendente',
+      atualizado_em: new Date().toISOString(),
+    };
+    const query = item.id && !String(item.id).startsWith('agenda_')
+      ? client.from('vendas_mobile_agenda').update(payload).eq('id', item.id).eq('conta_id', contaId)
+      : client.from('vendas_mobile_agenda').insert(payload);
+    const { data, error } = await query.select('id,cliente_id,cliente_nome,tipo,data,horario,observacoes,status,criado_em,atualizado_em').single();
+    if (error) throw error;
+    if (!data?.id || String(data.data || '') !== String(payload.data)) throw new Error('O agendamento não foi confirmado pelo servidor.');
+    return data;
+  }
+
+  async function deleteAgendaItem(id) {
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
+    const { error } = await requireClient().from('vendas_mobile_agenda').delete().eq('id', id).eq('conta_id', contaId);
     if (error) throw error;
   }
 
@@ -1087,5 +1130,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveAgendaItem, deleteAgendaItem, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();
