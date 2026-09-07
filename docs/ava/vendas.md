@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.31.09 -->
+<!-- ava-version: 1.13.0.31.10 -->
+
+> Revisão 1.13.0.31.10: o refinamento visual dos botões Sugestões e Sair
+> pertence somente à Gestão Mobile; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.13.0.31.09: o retorno visual dos botões Sugestões e Sair pertence
 > somente à Gestão Mobile; sem alteração operacional no AvantaVendas.

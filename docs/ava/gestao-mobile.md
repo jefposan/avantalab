@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.09 -->
+<!-- ava-version: 1.13.0.31.10 -->
+
+> Revisão 1.13.0.31.10: ao tocar em **Sugestões** ou **Sair**, o botão preserva
+> sua posição e confirma a ação por realce interno e ícone; os fluxos seguem
+> iguais.
 
 > Revisão 1.13.0.31.09: os botões **Sugestões** e **Sair** confirmam o toque
 > visualmente antes de continuar para a central ou para a confirmação de saída.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0.31.10 - 2026-09-06
+
+- O retorno ao toque de **Sugestões** e **Sair** na Gestão Mobile não desloca
+  mais os botões. Agora ele usa realce interno contextual e uma breve expansão
+  do ícone, preservando a geometria do rodapé.
+
 ## 1.13.0.31.09 - 2026-09-06
 
 - Os botões **Sugestões** e **Sair** no rodapé do menu da Gestão Mobile agora

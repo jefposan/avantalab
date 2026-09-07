@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.13.0.31.09: Sugestões e Sair no Menu da Gestão Mobile
-// respondem ao toque com pressão visual antes de abrir a ação correspondente.
+// Revisado na versão 1.13.0.31.10: Sugestões e Sair no Menu da Gestão Mobile
+// respondem ao toque com realce interno e ícone, sem deslocar o botão.
 // Revisado na versão 1.13.0.31.08: no rodapé do Menu da Gestão Mobile,
 // Sugestões abre a central de feedback e Sair pede confirmação antes de
 // encerrar a sessão deste aparelho.

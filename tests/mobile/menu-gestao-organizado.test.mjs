@@ -4,6 +4,7 @@ import { test } from 'node:test';
 
 const mobile = readFileSync('public/mobile-app.js', 'utf8');
 const mobilePage = readFileSync('app/mobile/page.tsx', 'utf8');
+const estilosGlobais = readFileSync('app/globals.css', 'utf8');
 
 test('menu mobile começa pelos botões diários sem título redundante', () => {
   const inicio = mobile.indexOf("'<div class=\"grid gap-1.5\">'");
@@ -86,4 +87,6 @@ test('ações fixas do menu conduzem ao feedback e confirmam a saída', () => {
   assert.match(mobile, /function confirmarSaidaPeloMenuMobile\(evento\)[\s\S]*titulo: 'Sair da conta'[\s\S]*valor: 'cancelar'[\s\S]*valor: 'sair'[\s\S]*if \(resposta === 'sair'\) sair\(\);/);
   assert.match(mobile, /bind\('sair', confirmarSaidaPeloMenuMobile\);/);
   assert.match(mobile, /id="menu-feedback"[\s\S]*?menu-rodape-acao/);
+  assert.match(estilosGlobais, /\.menu-rodape-acao\[data-pressionado='true'\] > span:first-child/);
+  assert.doesNotMatch(estilosGlobais, /\.menu-rodape-acao\[data-pressionado='true'\] \{\s*transform:/);
 });
