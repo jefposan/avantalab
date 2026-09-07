@@ -1,5 +1,10 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.31.09: Sugestões e Sair no Menu da Gestão Mobile
+// respondem ao toque com pressão visual antes de abrir a ação correspondente.
+// Revisado na versão 1.13.0.31.08: no rodapé do Menu da Gestão Mobile,
+// Sugestões abre a central de feedback e Sair pede confirmação antes de
+// encerrar a sessão deste aparelho.
 // Revisado na versão 1.13.0.31.07: ao criar despesa fixa na Gestão Mobile, a
 // seleção permanece no formulário até salvar ou fechá-lo.
 // Revisado na versão 1.13.0.31.06: o favicon do navegador usa apenas o A

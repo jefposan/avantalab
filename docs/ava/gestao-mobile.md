@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.07 -->
+<!-- ava-version: 1.13.0.31.09 -->
+
+> Revisão 1.13.0.31.09: os botões **Sugestões** e **Sair** confirmam o toque
+> visualmente antes de continuar para a central ou para a confirmação de saída.
+
+> Revisão 1.13.0.31.08: no rodapé de **Menu**, **Sugestões** abre a central de
+> dúvidas e sugestões. Em **Sair**, confirme a ação para encerrar a sessão
+> deste aparelho; para voltar, entre novamente com a conta.
 
 > Revisão 1.13.0.31.07: em **Menu → Despesas fixas**, a despesa escolhida na
 > nova recorrência continua selecionada durante atualizações do modal. Ao

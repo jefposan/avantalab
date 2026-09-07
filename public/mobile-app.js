@@ -7791,9 +7791,56 @@
 
   async function sair() {
     var destinoLogout = destinoLogoutMobile();
-    await db.auth.signOut({ scope: 'local' });
+    try {
+      await db.auth.signOut({ scope: 'local' });
+    } catch (erro) {
+      // A limpeza local ainda deve acontecer para que o botão Sair nunca deixe
+      // a pessoa presa na sessão caso a rede caia durante a revogação remota.
+      console.warn('Não foi possível encerrar a sessão remotamente:', erro);
+    }
     limparPreferenciaSessaoMobile();
     window.location.replace(destinoLogout);
+  }
+
+  function executarAcaoRodapeMenuMobile(evento, acao) {
+    var botao = evento && evento.currentTarget;
+    if (botao && botao.disabled) return;
+
+    // Mantém a resposta visual por um instante antes de iniciar a transição do
+    // menu. Sem esse intervalo, o re-render do fechamento substituía o botão
+    // antes de a pessoa perceber o toque.
+    if (botao) {
+      botao.disabled = true;
+      botao.setAttribute('data-pressionado', 'true');
+    }
+    window.setTimeout(function () {
+      if (typeof acao === 'function') acao();
+    }, 110);
+  }
+
+  function abrirFeedbackPeloMenuMobile(evento) {
+    executarAcaoRodapeMenuMobile(evento, function () {
+      fecharMenuLateralAnimado(abrirFeedbackMobile);
+    });
+  }
+
+  function confirmarSaidaPeloMenuMobile(evento) {
+    executarAcaoRodapeMenuMobile(evento, function () {
+      fecharMenuLateralAnimado(function () {
+        solicitarDialogoSistemaMobile({
+          titulo: 'Sair da conta',
+          rotulo: 'Encerrar sessão',
+          mensagem: 'Deseja sair do AvantaLab neste aparelho? Para acessar novamente, será necessário entrar com sua conta.',
+          variante: 'alerta',
+          acoes: [
+            { valor: 'cancelar', rotulo: 'Cancelar', estilo: 'secundaria' },
+            { valor: 'sair', rotulo: 'Sair', estilo: 'perigosa' },
+          ],
+        }).then(function (resposta) {
+          if (resposta === 'sair') sair();
+        });
+      });
+    });
   }
 
   async function excluirContaMobile() {
@@ -11950,10 +11997,10 @@
           '</div>' +
           '</div>' +
           '<div id="menu-acoes-fixas" class="mt-2 flex shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-[0_5px_14px_rgba(15,23,42,.08)]" style="margin-bottom:env(safe-area-inset-bottom,0px)">' +
-            '<button id="menu-feedback" type="button" aria-label="Abrir dúvidas e sugestões" class="flex h-12 min-w-0 flex-[3] items-center justify-center gap-2 rounded-l-2xl rounded-r-none border-r border-cyan-300 bg-cyan-50 px-3 text-xs font-black text-cyan-800 transition active:scale-[0.99]">' +
+            '<button id="menu-feedback" type="button" aria-label="Abrir dúvidas e sugestões" class="menu-rodape-acao flex h-12 min-w-0 flex-[3] items-center justify-center gap-2 rounded-l-2xl rounded-r-none border-r border-cyan-300 bg-cyan-50 px-3 text-xs font-black text-cyan-800">' +
               '<span class="flex h-7 w-7 items-center justify-center text-cyan-700">' + iconeMenuLateralSvg('menu-feedback') + '</span><span>Sugestões</span>' +
             '</button>' +
-            '<button id="sair" type="button" class="flex h-12 min-w-0 flex-[2] items-center justify-center gap-2 rounded-l-none rounded-r-2xl bg-rose-50 px-3 text-xs font-black text-rose-700 transition active:scale-[0.99]">' +
+            '<button id="sair" type="button" class="menu-rodape-acao flex h-12 min-w-0 flex-[2] items-center justify-center gap-2 rounded-l-none rounded-r-2xl bg-rose-50 px-3 text-xs font-black text-rose-700">' +
               '<span class="flex h-7 w-7 items-center justify-center text-rose-600">' + iconeMenuLateralSvg('sair') + '</span><span>Sair</span>' +
             '</button>' +
           '</div>' +
@@ -14123,7 +14170,7 @@
     });
     bind('redefinir-senha', redefinirSenha);
     bind('reenviar-senha', enviarCodigoSenha);
-    bind('sair', sair);
+    bind('sair', confirmarSaidaPeloMenuMobile);
 
     bind('fechar-menu', fecharMenuLateralAnimado);
     var menuOverlay = document.getElementById('menu-overlay');
@@ -14326,7 +14373,7 @@
     bind('menu-organizacao-toggle', function () { alternarGrupoMenuMobile('organizacao'); });
     bind('menu-sistemas-toggle', function () { alternarGrupoMenuMobile('sistemas'); });
     bind('menu-config-toggle', function () { alternarGrupoMenuMobile('configuracoes'); });
-    bind('menu-feedback', function () { fecharMenuLateralAnimado(abrirFeedbackMobile); });
+    bind('menu-feedback', abrirFeedbackPeloMenuMobile);
     bind('menu-excluir-conta', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('excluirConta'); }); });
     bind('fechar-modal-menu', fecharModalMenu);
     bind('aviso-carencia-assinatura', abrirAssinaturaMobile);

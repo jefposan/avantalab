@@ -48,8 +48,8 @@ test('organização, sistemas e configurações são grupos expansíveis', () =>
   assert.match(mobile, /id="menu-tema"[\s\S]*?style="order:2;/);
   assert.match(mobile, /id="menu-inicio-valores-ocultos"[\s\S]*?style="order:3;/);
   assert.match(mobile, /id="menu-duplicados"[\s\S]*?style="order:4;/);
-  assert.match(mobile, /id="menu-gerenciar"[\s\S]*?style="order:8;/);
-  assert.match(mobile, /id="menu-cadastro-perfil"[\s\S]*?style="order:9;/);
+  assert.match(mobile, /id="menu-gerenciar"[\s\S]*?style="order:9;/);
+  assert.match(mobile, /id="menu-cadastro-perfil"[\s\S]*?style="order:10;/);
   assert.match(mobile, /id="menu-usuario"[\s\S]*?style="order:10;/);
   assert.match(mobile, /Receber notificações neste aparelho/);
   assert.match(mobile, /Restaurar backup/);
@@ -77,4 +77,13 @@ test('ajuda de categorias é contextual e rodapé encaixa sugestões e sair', ()
   assert.match(mobile, /valor \? 'overflow-hidden' : 'overflow-visible'/);
   assert.doesNotMatch(mobilePage, /\.cfg-sub-group > button::before/);
   assert.doesNotMatch(mobile, /cfg-sub-group[^\n]+pl-3/);
+});
+
+test('ações fixas do menu conduzem ao feedback e confirmam a saída', () => {
+  assert.match(mobile, /function executarAcaoRodapeMenuMobile\(evento, acao\)[\s\S]*data-pressionado/);
+  assert.match(mobile, /function abrirFeedbackPeloMenuMobile\(evento\)[\s\S]*executarAcaoRodapeMenuMobile\(evento/);
+  assert.match(mobile, /bind\('menu-feedback', abrirFeedbackPeloMenuMobile\);/);
+  assert.match(mobile, /function confirmarSaidaPeloMenuMobile\(evento\)[\s\S]*titulo: 'Sair da conta'[\s\S]*valor: 'cancelar'[\s\S]*valor: 'sair'[\s\S]*if \(resposta === 'sair'\) sair\(\);/);
+  assert.match(mobile, /bind\('sair', confirmarSaidaPeloMenuMobile\);/);
+  assert.match(mobile, /id="menu-feedback"[\s\S]*?menu-rodape-acao/);
 });

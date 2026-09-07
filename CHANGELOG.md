@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.13.0.31.09 - 2026-09-06
+
+- Os botões **Sugestões** e **Sair** no rodapé do menu da Gestão Mobile agora
+  exibem uma pressão breve e perceptível antes de abrir a respectiva ação.
+  A animação respeita a preferência do aparelho por reduzir movimento.
+
+## 1.13.0.31.08 - 2026-09-06
+
+- No rodapé do menu da Gestão Mobile, **Sugestões** abre a central de dúvidas
+  e sugestões após fechar o menu. **Sair** agora pede confirmação antes de
+  encerrar a sessão e conclui a limpeza local mesmo em uma falha temporária de
+  rede.
+
 ## 1.13.0.31.07 - 2026-09-06
 
 - Ao criar uma despesa fixa na Gestão Mobile, a despesa escolhida permanece no
