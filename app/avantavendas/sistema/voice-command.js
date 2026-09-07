@@ -22,8 +22,8 @@
        um limite quadrado, mesmo em uma fala mais alta. */
     /* O host ocupa somente a faixa livre da Sala. O grupo inteiro (botão e
        legenda) é centralizado nela, sem depender de coordenadas da viewport. */
-    :host{position:absolute;inset:0;display:block;width:auto;height:auto;container-type:size}.dock{position:absolute;inset:0;display:grid;width:auto;height:auto;align-content:center;justify-items:center;gap:8px;overflow:visible;text-align:center}.dock>.capture{position:relative;top:auto;left:auto;width:90px;height:90px;margin:0;transform:none}.dock>.voice-status{position:relative;top:auto;left:auto;z-index:2;width:min(84vw,310px);display:grid;gap:3px;white-space:normal;transform:none;text-align:center}.voice-status-main{font-weight:800}.voice-status-action{font-size:11px;font-weight:700}.visualizer{inset:-96px;width:calc(100% + 192px);height:calc(100% + 192px)}.overlay{display:flex;min-height:100svh;align-items:center;justify-content:center}.panel{margin:auto}
-    @container (max-height:150px){.dock{gap:3px}.dock>.capture{width:76px;height:76px}.dock .voice{width:68px;height:68px}.dock .mic,.dock .cancel-icon{width:30px;height:30px}.dock>.voice-status{gap:1px;font-size:11px}.voice-status-action{font-size:10px}.visualizer{transform:scale(.86)}}@container (max-height:112px){.dock>.voice-status{display:none}.visualizer{transform:scale(.78)}}
+    :host{position:absolute;inset:0;display:block;width:auto;height:auto;container-type:size}.dock{position:absolute;inset:0;display:grid;width:auto;height:auto;place-items:center;overflow:visible;text-align:center}.dock>.voice-body{display:grid;max-width:100%;align-content:center;justify-items:center;gap:8px}.dock>.voice-body>.capture{position:relative;top:auto;left:auto;width:90px;height:90px;margin:0;transform:none}.dock .voice-status{position:relative;top:auto;left:auto;z-index:2;width:min(84vw,310px);display:grid;gap:3px;white-space:normal;transform:none;text-align:center}.voice-status-main{font-weight:800}.voice-status-action{font-size:11px;font-weight:700}.visualizer{inset:-96px;width:calc(100% + 192px);height:calc(100% + 192px)}.overlay{display:flex;min-height:100svh;align-items:center;justify-content:center}.panel{margin:auto}
+    @container (max-height:150px){.dock>.voice-body{gap:3px}.dock>.voice-body>.capture{width:76px;height:76px}.dock .voice{width:68px;height:68px}.dock .mic,.dock .cancel-icon{width:30px;height:30px}.dock .voice-status{gap:1px;font-size:11px}.voice-status-action{font-size:10px}.visualizer{transform:scale(.86)}}@container (max-height:112px){.dock .voice-status{display:none}.visualizer{transform:scale(.78)}}
   `;
 
   function el(tag, className, text) {
@@ -192,8 +192,10 @@
     state.root.replaceChildren();
     if (['idle', 'recording', 'transcribing', 'processing'].includes(state.phase)) {
       const dock = el('section', 'dock');
+      const body = el('div', 'voice-body');
       dock.setAttribute('aria-live', 'polite');
-      dock.append(voiceControl(), dockStatus());
+      body.append(voiceControl(), dockStatus());
+      dock.append(body);
       state.root.append(dock);
       return;
     }

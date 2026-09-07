@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.15.0.05 - 2026-09-07
+
+- O botão de voz e sua mensagem agora são um único bloco, centralizado pela
+  altura real na faixa entre sugestões e navegação. A margem negativa que
+  desequilibrava a área foi removida.
+
+## 1.15.0.05-av128 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com a composição única e responsiva do
+  comando por voz.
+
 ## 1.15.0.04 - 2026-09-07
 
 - O comando por voz passou a centralizar o conjunto de botão e legenda dentro

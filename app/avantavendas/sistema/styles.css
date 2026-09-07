@@ -2669,7 +2669,7 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .dark-theme .mobile-menu-organize-instruction { color: #cbd5e1; }
   @media (prefers-reduced-motion: reduce) { .sala-kanban-overlay { filter: drop-shadow(6px 10px 12px rgba(15,42,80,.22)); } }
   .mobile-menu-assistance { display: grid; width: min(664px, calc(100% - 96px)); gap: 10px; margin: 24px auto 0; }
-  .mobile-menu-assistance.has-voice-command { min-height: 0; flex: 1; grid-template-rows: auto auto minmax(0,1fr); margin-bottom: -31px; }
+  .mobile-menu-assistance.has-voice-command { min-height: 0; flex: 1; grid-template-rows: auto auto minmax(0,1fr); margin-bottom: 0; }
   .mobile-ava-card, .mobile-suggestions-card { width: 100%; transform: translateZ(0); backface-visibility: hidden; }
   .mobile-ava-card { display: flex; min-height: 52px; align-items: center; gap: 8px; border: 1px solid #e2e8f0; border-radius: 999px; padding: 8px 12px; color: #94a3b8; background: #fff; box-shadow: 0 1px 3px rgba(15,23,42,.10); text-align: left; }
   .mobile-ava-logo { display: block; width: 88px; height: 36px; flex: 0 0 88px; background: url('/images/ava-logo-fundo-claro.png') center/contain no-repeat; }
@@ -2683,12 +2683,12 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .mobile-suggestions-card small { overflow: hidden; color: #0e7490; font-size: 10px; font-weight: 700; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
   .mobile-suggestions-card > i { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; border-radius: 999px; color: #0e7490; background: rgba(255,255,255,.75); font-size: 21px; font-style: normal; line-height: 1; box-shadow: 0 1px 3px rgba(15,23,42,.10); }
   .mobile-voice-command-slot { position: relative; display: grid; min-height: 0; overflow: visible; place-items: center; }
-  .mobile-voice-command-trigger { position: absolute; top: calc(50% - 5px); left: 50%; display: grid; width: 84px; height: 84px; place-items: center; transform: translate(-50%,-50%); border: 0; border-radius: 999px; color: #fff; background: radial-gradient(circle at 36% 30%,#2498de,#07518b 72%); box-shadow: 0 12px 27px rgba(4,70,123,.30); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .mobile-voice-command-body { position: absolute; inset: 0; display: grid; max-width: 100%; align-content: center; justify-items: center; gap: 8px; }
+  .mobile-voice-command-trigger { position: relative; top: auto; left: auto; display: grid; width: 84px; height: 84px; place-items: center; transform: none; border: 0; border-radius: 999px; color: #fff; background: radial-gradient(circle at 36% 30%,#2498de,#07518b 72%); box-shadow: 0 12px 27px rgba(4,70,123,.30); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .mobile-voice-command-trigger:disabled { opacity: .72; cursor: wait; }
   .mobile-voice-command-trigger svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-  .mobile-voice-command-label { position: absolute; top: calc(50% + 44px); right: 0; left: 0; color: #35536c; font-size: 11px; font-weight: 900; line-height: 1.15; text-align: center; }
-  .mobile-voice-command-slot.is-active > .mobile-voice-command-trigger,
-  .mobile-voice-command-slot.is-active > .mobile-voice-command-label { display: none; }
+  .mobile-voice-command-label { position: relative; top: auto; right: auto; left: auto; color: #35536c; font-size: 11px; font-weight: 900; line-height: 1.15; text-align: center; }
+  .mobile-voice-command-slot.is-active > .mobile-voice-command-body { display: none; }
   .dark-theme .mobile-ava-card { border-color: #334155; color: #f8fafc; background: #071a2b; }
   .dark-theme .mobile-ava-logo { background-image: url('/images/ava-logo-fundo-escuro.png'); }
 .dark-theme .mobile-suggestions-card { border-color: #155e75; color: #ecfeff; background: radial-gradient(circle at 90% 50%,rgba(20,184,166,.16),transparent 28%),linear-gradient(135deg,#123042,#0e293a); }

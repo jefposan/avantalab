@@ -2501,10 +2501,12 @@ function renderMenuMobile() {
         <i aria-hidden="true">›</i>
       </button>
       ${state.solicitacaoVozAtiva ? `<div class="mobile-voice-command-slot" id="voiceCommandSalaMount">
-        <button type="button" class="mobile-voice-command-trigger" onclick="abrirSolicitacaoVozVendas(this)" aria-label="Iniciar solicitação por voz">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.4a3.9 3.9 0 0 0 3.9-3.9V6.4a3.9 3.9 0 1 0-7.8 0v5.1a3.9 3.9 0 0 0 3.9 3.9Z"/><path d="M5.7 10.9v.7a6.3 6.3 0 0 0 12.6 0v-.7M12 17.9V21M9.2 21h5.6"/></svg>
-        </button>
-        <span class="mobile-voice-command-label">Solicitação por Voz</span>
+        <div class="mobile-voice-command-body">
+          <button type="button" class="mobile-voice-command-trigger" onclick="abrirSolicitacaoVozVendas(this)" aria-label="Iniciar solicitação por voz">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.4a3.9 3.9 0 0 0 3.9-3.9V6.4a3.9 3.9 0 1 0-7.8 0v5.1a3.9 3.9 0 0 0 3.9 3.9Z"/><path d="M5.7 10.9v.7a6.3 6.3 0 0 0 12.6 0v-.7M12 17.9V21M9.2 21h5.6"/></svg>
+          </button>
+          <span class="mobile-voice-command-label">Solicitação por Voz</span>
+        </div>
       </div>` : ''}
     </div>
     <div class="mobile-menu-bottom"><button class="mobile-menu-wide" onclick="setAba('configuracoes')"><img src="./assets/menu/13_Configurações.png" alt="Configurações" decoding="sync" fetchpriority="high" /></button><button class="mobile-menu-wide" onclick="sairMenuMobile()"><img src="./assets/menu/14_Sair.png" alt="Sair" decoding="sync" fetchpriority="high" /></button></div>

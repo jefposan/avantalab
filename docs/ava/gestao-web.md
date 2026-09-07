@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.15.0.04 -->
+<!-- ava-version: 1.15.0.05 -->
+
+> Revisão 1.15.0.05: agrupamento visual do comando por voz aplicado somente à
+> Sala de Botões do AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.15.0.04: distribuição responsiva do comando por voz aplicada
 > somente à Sala de Botões do AvantaVendas; sem impacto operacional na Gestão

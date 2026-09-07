@@ -170,16 +170,24 @@ test('interpretação mantém qualificadores no nome do cliente e não os transf
 });
 
 test('onda de voz usa área ampliada sem recorte e amplitude moderada', async () => {
-  const voiceModule = await readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8');
+  const [voiceModule, styles] = await Promise.all([
+    readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/sistema/styles.css', import.meta.url), 'utf8'),
+  ]);
   assert.match(voiceModule, /\.visualizer\{inset:-96px;width:calc\(100% \+ 192px\)/);
   assert.match(voiceModule, /overflow:visible/);
   assert.match(voiceModule, /const strength = 3 \+ activity \* 8/);
   assert.match(voiceModule, /for \(let ring = 0; ring < 3; ring \+= 1\)/);
   assert.match(voiceModule, /\.overlay\{display:flex;min-height:100svh;align-items:center;justify-content:center\}/);
-  assert.match(voiceModule, /\.dock>\.voice-status\{position:relative;top:auto;left:auto/);
+  assert.match(voiceModule, /const body = el\('div', 'voice-body'\)/);
+  assert.match(voiceModule, /body\.append\(voiceControl\(\), dockStatus\(\)\)/);
+  assert.match(voiceModule, /\.dock \.voice-status\{position:relative;top:auto;left:auto/);
   assert.match(voiceModule, /:host\{position:absolute;inset:0;display:block;width:auto;height:auto;container-type:size\}/);
-  assert.match(voiceModule, /\.dock\{position:absolute;inset:0;display:grid;width:auto;height:auto;align-content:center;justify-items:center/);
-  assert.match(voiceModule, /\.dock>\.capture\{position:relative;top:auto;left:auto;width:90px;height:90px/);
+  assert.match(voiceModule, /\.dock\{position:absolute;inset:0;display:grid;width:auto;height:auto;place-items:center/);
+  assert.match(voiceModule, /\.dock>\.voice-body\{display:grid;max-width:100%;align-content:center;justify-items:center/);
+  assert.match(voiceModule, /\.dock>\.voice-body>\.capture\{position:relative;top:auto;left:auto;width:90px;height:90px/);
+  assert.match(styles, /\.mobile-menu-assistance\.has-voice-command \{[^}]*margin-bottom: 0;/);
+  assert.match(styles, /\.mobile-voice-command-body \{[^}]*align-content: center;[^}]*justify-items: center;/);
   assert.match(voiceModule, /@container \(max-height:150px\)/);
   assert.match(voiceModule, /@container \(max-height:112px\)/);
   assert.match(voiceModule, /\.dock \.voice\{width:84px;height:84px\}/);

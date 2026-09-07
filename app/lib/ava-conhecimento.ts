@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.15.0.05: botão e mensagem de voz formam um só corpo,
+// centralizado pela altura real na faixa livre da Sala, sem margem negativa.
 // Revisado na versão 1.15.0.04: voz usa somente a faixa livre da Sala; o grupo
 // reduz em telas baixas e nunca deixa a legenda alcançar a navegação inferior.
 // Revisado na versão 1.15.0.03: o aviso de processamento da voz é centralizado

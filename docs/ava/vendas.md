@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.15.0.04 -->
+<!-- ava-version: 1.15.0.05 -->
+
+> Revisão 1.15.0.05: botão e mensagem agora formam um corpo único, cuja altura
+> real é centralizada exclusivamente na faixa livre entre as sugestões e a
+> navegação inferior. Não há margem negativa deslocando essa área.
+
+> Revisão 1.15.0.05-av128: recursos de voz renovados com a composição única
+> do controle e da mensagem.
 
 > Revisão 1.15.0.04: botão e mensagem da Solicitação por Voz ocupam apenas a
 > faixa entre as sugestões e a navegação inferior. O conjunto é centralizado
@@ -1125,7 +1132,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 127 -->
+<!-- avantavendas-asset-revision: 128 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
