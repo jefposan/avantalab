@@ -6,6 +6,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+const TRANSCRIPTION_CONTEXT = 'Transcrição de uma solicitação comercial em português do Brasil para o Avanta Vendas.';
+const TRANSCRIPTION_KEYWORDS = ['pedido', 'consignado', 'consignação', 'pagamento', 'Pix', 'transferência', 'cartão', 'dinheiro', 'cliente', 'produto', 'quantidade'];
 
 export async function POST(request: Request) {
   try {
@@ -23,8 +25,12 @@ export async function POST(request: Request) {
     if (!apiKey) return NextResponse.json({ message: 'A transcrição ainda não está configurada no servidor.' }, { status: 503 });
     const transcriptionForm = new FormData();
     transcriptionForm.append('file', audio, audio.name || 'solicitacao-voz.webm');
-    transcriptionForm.append('model', 'whisper-1');
+    // Modelo especializado de alta precisão. O contexto é curto e restrito ao
+    // domínio: não envia clientes ou catálogo da conta à OpenAI.
+    transcriptionForm.append('model', process.env.OPENAI_VOICE_TRANSCRIPTION_MODEL || 'gpt-transcribe');
     transcriptionForm.append('language', 'pt');
+    transcriptionForm.append('prompt', process.env.OPENAI_VOICE_TRANSCRIPTION_CONTEXT || TRANSCRIPTION_CONTEXT);
+    TRANSCRIPTION_KEYWORDS.forEach((keyword) => transcriptionForm.append('keywords[]', keyword));
     const startedAt = performance.now();
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -39,7 +45,15 @@ export async function POST(request: Request) {
     const transcription = String(result?.text || '').trim().slice(0, 1000);
     if (!transcription) return NextResponse.json({ message: 'Não identificamos fala no áudio.' }, { status: 400 });
     const transcriptionMs = Math.round(performance.now() - startedAt);
-    logVoiceLab({ event: 'transcribed', userId: context.userId, accountId, transcription, success: true });
+    const usage = result?.usage || {};
+    logVoiceLab({
+      event: 'transcribed', userId: context.userId, accountId, transcription, success: true,
+      interpretationMs: transcriptionMs,
+      inputTokens: Number.isFinite(usage.input_tokens) ? usage.input_tokens : null,
+      outputTokens: Number.isFinite(usage.output_tokens) ? usage.output_tokens : null,
+      totalTokens: Number.isFinite(usage.total_tokens) ? usage.total_tokens : null,
+      audioSeconds: Number.isFinite(usage.seconds) ? usage.seconds : null,
+    });
     return NextResponse.json({ transcription, transcriptionMs }, { headers: { 'Cache-Control': 'no-store, private' } });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro inesperado ao transcrever o áudio.';

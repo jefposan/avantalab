@@ -1,5 +1,6 @@
 export const VOICE_INTENTS = [
   'create_order',
+  'create_consignment',
   'register_payment',
   'query_customer_history',
   'query_sales',
@@ -46,7 +47,7 @@ export type VoiceResolvedItem = {
 
 export type VoiceConfirmationAction = {
   operationId: string;
-  intent: 'create_order' | 'register_payment';
+  intent: 'create_order' | 'create_consignment' | 'register_payment';
   accountId: string;
   customerId: string;
   customerName: string;
@@ -64,6 +65,7 @@ export type VoiceProcessResponse =
       question: string;
       candidates: VoiceEntityCandidate[];
       entity: Omit<VoiceEntitySelection, 'id'> | null;
+      selections: VoiceEntitySelection[];
       draft: VoiceIntentPayload;
       transcription: string;
       metrics: VoiceMetrics;
@@ -73,6 +75,7 @@ export type VoiceProcessResponse =
       title: string;
       message: string;
       action: VoiceConfirmationAction;
+      selections: VoiceEntitySelection[];
       draft: VoiceIntentPayload;
       transcription: string;
       metrics: VoiceMetrics;
@@ -81,6 +84,7 @@ export type VoiceProcessResponse =
       kind: 'answer' | 'unsupported';
       title: string;
       message: string;
+      selections: VoiceEntitySelection[];
       draft: VoiceIntentPayload;
       transcription: string;
       metrics: VoiceMetrics;

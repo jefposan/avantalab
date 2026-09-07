@@ -33,6 +33,12 @@ type ProductRow = {
 };
 
 const STOP_WORDS = new Set(['a', 'o', 'as', 'os', 'da', 'de', 'do', 'das', 'dos', 'para', 'um', 'uma', 'cliente', 'produto']);
+const LEGACY_CUSTOMER_NOTE = /^Importado de tridium_mysql_20260715; cliente legado #\d+(?:; profissão: .+)?\.$/i;
+
+function visibleCustomerNote(value: unknown) {
+  const note = String(value || '').trim();
+  return note && !LEGACY_CUSTOMER_NOTE.test(note) ? note.slice(0, 70) : '';
+}
 
 function searchTokens(reference: string) {
   return normalizeVoiceSearch(reference).split(' ').filter((token) => token.length >= 2 && !STOP_WORDS.has(token));
@@ -43,6 +49,37 @@ function safeSearchToken(reference: string, preferLongest = false) {
   const meaningful = tokens.filter((token) => token.length >= 2 && !STOP_WORDS.has(normalizeVoiceSearch(token)));
   const selected = preferLongest ? [...meaningful].sort((a, b) => b.length - a.length)[0] : meaningful[0];
   return String(selected || '').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 48);
+}
+
+function safeSearchTokens(reference: string, maximum = 4) {
+  const tokens = String(reference || '').toLocaleLowerCase('pt-BR').match(/[\p{L}\p{N}]+/gu) || [];
+  return [...new Set(tokens
+    .map((token) => token.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 48))
+    .filter((token) => token.length >= 2 && !STOP_WORDS.has(normalizeVoiceSearch(token))))]
+    .slice(0, maximum);
+}
+
+function phoneticVoiceToken(value: string) {
+  return normalizeVoiceSearch(value)
+    .replace(/ph/g, 'f')
+    .replace(/([a-z])\1+/g, '$1');
+}
+
+// A consulta ao banco também precisa sobreviver a pequenas trocas de dicção da
+// transcrição. As variantes continuam sendo apenas filtros para obter poucos
+// candidatos reais; a escolha final passa pelo score e, quando necessário,
+// pela confirmação da pessoa.
+function productSearchVariants(reference: string) {
+  const variants = new Set<string>();
+  for (const token of safeSearchTokens(reference, 5)) {
+    const normalized = normalizeVoiceSearch(token);
+    const phonetic = phoneticVoiceToken(token);
+    [normalized, phonetic].filter((value) => value.length >= 3).forEach((value) => variants.add(value));
+    // Prefixo curto absorve letras duplicadas comuns em marcas (Paladin /
+    // Palladium). Ele só amplia a busca de candidatos; nunca confirma sozinho.
+    if (phonetic.length >= 5) variants.add(phonetic.slice(0, 3));
+  }
+  return [...variants].slice(0, 8);
 }
 
 function score(reference: string, fields: unknown[]) {
@@ -58,6 +95,93 @@ function score(reference: string, fields: unknown[]) {
   return covered ? Math.round((covered / Math.max(1, tokens.length)) * 70) : 0;
 }
 
+function editDistance(left: string, right: string) {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let row = 1; row <= left.length; row += 1) {
+    let diagonal = previous[0];
+    previous[0] = row;
+    for (let column = 1; column <= right.length; column += 1) {
+      const above = previous[column];
+      previous[column] = Math.min(
+        previous[column] + 1,
+        previous[column - 1] + 1,
+        diagonal + (left[row - 1] === right[column - 1] ? 0 : 1),
+      );
+      diagonal = above;
+    }
+  }
+  return previous[right.length];
+}
+
+function tokenSimilarity(left: string, right: string) {
+  const longest = Math.max(left.length, right.length);
+  return longest ? 1 - editDistance(left, right) / longest : 0;
+}
+
+// A transcrição de voz costuma preservar o início do nome comercial, mas pode
+// trocar ou omitir parte do final (por exemplo, "Paladin" por "Palladium").
+// Jaro-Winkler valoriza esse prefixo comum sem transformar a referência falada
+// em uma resposta da IA nem escolher um produto fora do catálogo da conta.
+function jaroWinklerSimilarity(left: string, right: string) {
+  if (left === right) return 1;
+  if (!left || !right) return 0;
+  const distance = Math.max(Math.floor(Math.max(left.length, right.length) / 2) - 1, 0);
+  const leftMatches = new Array(left.length).fill(false);
+  const rightMatches = new Array(right.length).fill(false);
+  let matches = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    const start = Math.max(0, index - distance);
+    const end = Math.min(index + distance + 1, right.length);
+    for (let candidate = start; candidate < end; candidate += 1) {
+      if (!rightMatches[candidate] && left[index] === right[candidate]) {
+        leftMatches[index] = true; rightMatches[candidate] = true; matches += 1; break;
+      }
+    }
+  }
+  if (!matches) return 0;
+  let transpositions = 0;
+  for (let leftIndex = 0, rightIndex = 0; leftIndex < left.length; leftIndex += 1) {
+    if (!leftMatches[leftIndex]) continue;
+    while (!rightMatches[rightIndex]) rightIndex += 1;
+    if (left[leftIndex] !== right[rightIndex]) transpositions += 1;
+    rightIndex += 1;
+  }
+  const jaro = (matches / left.length + matches / right.length + (matches - transpositions / 2) / matches) / 3;
+  let prefix = 0;
+  while (prefix < Math.min(4, left.length, right.length) && left[prefix] === right[prefix]) prefix += 1;
+  return jaro + prefix * .1 * (1 - jaro);
+}
+
+function voiceTokenSimilarity(left: string, right: string) {
+  return Math.max(tokenSimilarity(left, right), jaroWinklerSimilarity(left, right));
+}
+
+function productScore(reference: string, product: ProductRow) {
+  const fields = [product.nome, product.sku, product.marca, product.categoria, product.descricao];
+  const base = score(reference, fields);
+  const queryTokens = searchTokens(reference).filter((token) => token.length >= 4);
+  const normalizedName = normalizeVoiceSearch(product.nome);
+  const nameTokens = searchTokens(product.nome);
+  const fieldTokens = fields.flatMap((field) => searchTokens(String(field || '')));
+  if (queryTokens.includes(normalizedName)) return Math.max(base, 116);
+  const exactNameMatches = queryTokens.filter((token) => nameTokens.includes(token)).length;
+  const exactNameScore = exactNameMatches
+    ? 70 + Math.round(exactNameMatches / Math.max(1, queryTokens.length) * 20)
+    : 0;
+  const similarities = queryTokens.map((queryToken) => fieldTokens
+    .reduce((best, fieldToken) => Math.max(best, voiceTokenSimilarity(queryToken, fieldToken)), 0));
+  const strongMatches = similarities.filter((similarity) => similarity >= .72).length;
+  const averageSimilarity = similarities.length
+    ? similarities.reduce((sum, similarity) => sum + similarity, 0) / similarities.length
+    : 0;
+  const fuzzyScore = strongMatches === queryTokens.length && queryTokens.length
+    ? Math.round(96 + averageSimilarity * 12)
+    : strongMatches
+      ? Math.round(38 + averageSimilarity * 42)
+      : 0;
+  return Math.max(base, exactNameScore, fuzzyScore);
+}
+
 function formatMoney(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
@@ -69,7 +193,7 @@ function formatDate(value: unknown) {
 
 function customerFields(customer: CustomerRow) {
   const address = customer.endereco && typeof customer.endereco === 'object' ? customer.endereco : {};
-  return [customer.nome, customer.telefone, customer.email, customer.observacoes, customer.endereco, ...Object.values(address)];
+  return [customer.nome, customer.telefone, customer.email, visibleCustomerNote(customer.observacoes), customer.endereco, ...Object.values(address)];
 }
 
 async function customerLastOrders(db: SupabaseClient, accountId: string, customerIds: string[]) {
@@ -109,7 +233,7 @@ export async function resolveCustomer(db: SupabaseClient, accountId: string, ref
     const lastOrder = lastOrders.get(row.id);
     const details = [
       place,
-      row.observacoes ? String(row.observacoes).slice(0, 70) : '',
+      visibleCustomerNote(row.observacoes),
       lastOrder ? `Último pedido: ${formatDate(lastOrder.criado_em)} · ${formatMoney(Number(lastOrder.total || 0))}` : 'Sem pedido anterior',
     ].filter(Boolean);
     return { id: row.id, label: row.nome, detail: details.join(' · ') };
@@ -127,17 +251,29 @@ export async function resolveCustomer(db: SupabaseClient, accountId: string, ref
 }
 
 export async function resolveProduct(db: SupabaseClient, accountId: string, reference: string, selectedId = '') {
-  const token = safeSearchToken(reference, true);
-  if (!token) return { status: 'missing' as const, candidates: [] as VoiceEntityCandidate[] };
-  const { data, error } = await db.from('vendas_mobile_produtos')
+  const variants = productSearchVariants(reference);
+  if (!variants.length) return { status: 'missing' as const, candidates: [] as VoiceEntityCandidate[] };
+  const fields = ['nome', 'sku', 'marca', 'categoria', 'descricao'];
+  const expression = variants.flatMap((token) => fields.map((field) => `${field}.ilike.%${token}%`)).join(',');
+  let { data, error } = await db.from('vendas_mobile_produtos')
     .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
     .eq('conta_id', accountId)
     .eq('ativo', true)
-    .or(`nome.ilike.%${token}%,sku.ilike.%${token}%,marca.ilike.%${token}%,categoria.ilike.%${token}%,descricao.ilike.%${token}%`)
-    .limit(16);
+    .or(expression)
+    .limit(24);
   if (error) throw new Error('Não foi possível pesquisar produtos.');
+  if (!data?.length) {
+    const fallback = await db.from('vendas_mobile_produtos')
+      .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
+      .eq('conta_id', accountId)
+      .eq('ativo', true)
+      .limit(1000);
+    data = fallback.data;
+    error = fallback.error;
+    if (error) throw new Error('Não foi possível pesquisar sugestões no catálogo.');
+  }
   const ranked = (data as ProductRow[] || [])
-    .map((row) => ({ row, score: score(reference, [row.nome, row.sku, row.marca, row.categoria, row.descricao]) }))
+    .map((row) => ({ row, score: productScore(reference, row) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score || a.row.nome.localeCompare(b.row.nome, 'pt-BR'));
   const candidates = ranked.slice(0, 5).map(({ row }) => ({
@@ -210,8 +346,15 @@ function clarification(
   question: string,
   candidates: VoiceEntityCandidate[] = [],
   entity: Omit<VoiceEntitySelection, 'id'> | null = null,
+  selections: VoiceEntitySelection[] = [],
 ): VoiceProcessResponse {
-  return { kind: 'clarification', question, candidates, entity, draft, transcription, metrics };
+  return { kind: 'clarification', question, candidates, entity, selections, draft, transcription, metrics };
+}
+
+function selectedEntityId(selections: VoiceEntitySelection[], type: VoiceEntitySelection['type'], reference: string) {
+  const normalizedReference = normalizeVoiceSearch(reference);
+  return selections.find((selection) => selection.type === type
+    && normalizeVoiceSearch(selection.reference) === normalizedReference)?.id || '';
 }
 
 async function resolveRequiredCustomer(
@@ -220,16 +363,14 @@ async function resolveRequiredCustomer(
   draft: VoiceIntentPayload,
   transcription: string,
   metrics: VoiceMetrics,
-  selection: VoiceEntitySelection | null,
+  selections: VoiceEntitySelection[],
 ) {
-  if (!draft.customerReference) return { response: clarification(draft, transcription, metrics, 'Para qual cliente?') };
-  const selectedId = selection?.type === 'customer'
-    && normalizeVoiceSearch(selection.reference) === normalizeVoiceSearch(draft.customerReference)
-    ? selection.id : '';
+  if (!draft.customerReference) return { response: clarification(draft, transcription, metrics, 'Para qual cliente?', [], null, selections) };
+  const selectedId = selectedEntityId(selections, 'customer', draft.customerReference);
   const result = await resolveCustomer(db, accountId, draft.customerReference, selectedId);
   const entity = { type: 'customer' as const, reference: draft.customerReference };
-  if (result.status === 'missing') return { response: clarification(draft, transcription, metrics, `Não encontrei “${draft.customerReference}”. Pode dizer o nome de outra forma?`, [], entity) };
-  if (result.status === 'ambiguous') return { response: clarification(draft, transcription, metrics, `Encontrei mais de um cliente para “${draft.customerReference}”. Qual deles?`, result.candidates, entity) };
+  if (result.status === 'missing') return { response: clarification(draft, transcription, metrics, `Não encontrei “${draft.customerReference}”. Pode dizer o nome de outra forma?`, [], entity, selections) };
+  if (result.status === 'ambiguous') return { response: clarification(draft, transcription, metrics, `Encontrei mais de um cliente para “${draft.customerReference}”. Qual deles?`, result.candidates, entity, selections) };
   return { customer: result.customer };
 }
 
@@ -250,11 +391,11 @@ export async function buildVoiceResponse(args: {
   draft: VoiceIntentPayload;
   transcription: string;
   metrics: VoiceMetrics;
-  selection?: VoiceEntitySelection | null;
+  selections?: VoiceEntitySelection[];
 }): Promise<VoiceProcessResponse> {
-  const { db, accountId, draft, transcription, metrics, selection = null } = args;
+  const { db, accountId, draft, transcription, metrics, selections = [] } = args;
   if (draft.intent === 'unsupported') {
-    return { kind: 'unsupported', title: 'Comando ainda não disponível', message: draft.unsupportedReason || 'Essa ação ainda não está disponível por voz neste laboratório.', draft, transcription, metrics };
+    return { kind: 'unsupported', title: 'Comando ainda não disponível', message: draft.unsupportedReason || 'Essa ação ainda não está disponível por voz neste laboratório.', selections, draft, transcription, metrics };
   }
 
   if (draft.intent === 'query_sales') {
@@ -267,10 +408,10 @@ export async function buildVoiceResponse(args: {
     const sales = (data || []).filter((order) => order.status !== 'cancelada' && !normalizeVoiceSearch(order.forma_pagamento).includes('consign') && Number(order.total || 0) > 0);
     const total = sales.reduce((sum, order) => sum + Number(order.total || 0), 0);
     const labels = { today: 'hoje', this_month: 'neste mês', last_month: 'no mês passado', all: 'em todo o histórico' } as const;
-    return { kind: 'answer', title: 'Consulta concluída', message: `Você registrou ${sales.length} pedido${sales.length === 1 ? '' : 's'} ${labels[period]}, totalizando ${formatMoney(total)}.`, draft, transcription, metrics };
+    return { kind: 'answer', title: 'Consulta concluída', message: `Você registrou ${sales.length} pedido${sales.length === 1 ? '' : 's'} ${labels[period]}, totalizando ${formatMoney(total)}.`, selections, draft, transcription, metrics };
   }
 
-  const customerResult = await resolveRequiredCustomer(db, accountId, draft, transcription, metrics, selection);
+  const customerResult = await resolveRequiredCustomer(db, accountId, draft, transcription, metrics, selections);
   if (customerResult.response) return customerResult.response;
   const customer = customerResult.customer as CustomerRow;
 
@@ -284,18 +425,20 @@ export async function buildVoiceResponse(args: {
       ? `Último pedido em ${formatDate(lastOrder.criado_em)}, no valor de ${formatMoney(Number(lastOrder.total || 0))}${itemNames ? ` (${itemNames})` : ''}.`
       : 'Não há pedidos registrados para este cliente.';
     const balanceText = financial.credit > 0 ? `Crédito atual: ${formatMoney(financial.credit)}.` : `Saldo pendente: ${formatMoney(financial.balance)}.`;
-    return { kind: 'answer', title: customer.nome, message: `${lastOrderText} ${balanceText}`, draft, transcription, metrics };
+    return { kind: 'answer', title: customer.nome, message: `${lastOrderText} ${balanceText}`, selections, draft, transcription, metrics };
   }
 
   if (draft.intent === 'register_payment') {
-    if (!draft.amount) return clarification(draft, transcription, metrics, `Qual é o valor do pagamento de ${customer.nome}?`);
+    if (!draft.amount) return clarification(draft, transcription, metrics, `Qual é o valor do pagamento de ${customer.nome}?`, [], null, selections);
     if (!draft.paymentMethod) return clarification(
       draft,
       transcription,
       metrics,
-      `Selecione a forma de pagamento de ${customer.nome}.`,
+      'Confirme a forma de pagamento.',
       ['Pix', 'Dinheiro', 'Cartão de crédito', 'Cartão de débito', 'Transferência', 'Outro']
         .map((label) => ({ id: '', label, detail: '' })),
+      null,
+      selections,
     );
     const financial = await customerBalance(db, accountId, customer.id);
     const action: VoiceConfirmationAction = {
@@ -304,29 +447,38 @@ export async function buildVoiceResponse(args: {
       expectedTotal: null, expectedBalance: financial.balance, paymentMethod: draft.paymentMethod,
       paymentDate: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
     };
-    return { kind: 'confirmation', title: 'Registrar pagamento', message: `Cliente: ${customer.nome}\nValor: ${formatMoney(draft.amount)}\nForma: ${draft.paymentMethod}\nSaldo anterior: ${formatMoney(financial.balance)}\nSaldo após pagamento: ${formatMoney(Math.max(0, financial.balance - draft.amount))}`, action, draft, transcription, metrics };
+    return { kind: 'confirmation', title: 'Registrar pagamento', message: `Cliente: ${customer.nome}\nValor: ${formatMoney(draft.amount)}\nForma: ${draft.paymentMethod}\nSaldo anterior: ${formatMoney(financial.balance)}\nSaldo após pagamento: ${formatMoney(Math.max(0, financial.balance - draft.amount))}`, action, selections, draft, transcription, metrics };
   }
 
-  if (!draft.items.length) return clarification(draft, transcription, metrics, `Quais produtos e quantidades entram no pedido de ${customer.nome}?`);
+  if (!draft.items.length) return clarification(draft, transcription, metrics, `Quais produtos e quantidades entram no ${draft.intent === 'create_consignment' ? 'consignado' : 'pedido'} de ${customer.nome}?`, [], null, selections);
   const resolvedItems: VoiceResolvedItem[] = [];
   for (const item of draft.items) {
-    const selectedId = selection?.type === 'product'
-      && normalizeVoiceSearch(selection.reference) === normalizeVoiceSearch(item.productReference)
-      ? selection.id : '';
+    const selectedId = selectedEntityId(selections, 'product', item.productReference);
     const result = await resolveProduct(db, accountId, item.productReference, selectedId);
     const entity = { type: 'product' as const, reference: item.productReference };
-    if (result.status === 'missing') return clarification(draft, transcription, metrics, `Não encontrei “${item.productReference}”. Pode dizer o produto de outra forma?`, [], entity);
-    if (result.status === 'ambiguous') return clarification(draft, transcription, metrics, `Encontrei mais de um produto para “${item.productReference}”. Qual deles?`, result.candidates, entity);
+    if (result.status === 'missing') return clarification(
+      draft,
+      transcription,
+      metrics,
+      result.candidates.length
+        ? `Não encontrei uma correspondência exata para “${item.productReference}”. Você quis dizer algum destes produtos?`
+        : `Não encontrei “${item.productReference}”. Pode dizer o produto de outra forma?`,
+      result.candidates,
+      entity,
+      selections,
+    );
+    if (result.status === 'ambiguous') return clarification(draft, transcription, metrics, `Encontrei mais de um produto para “${item.productReference}”. Qual deles?`, result.candidates, entity, selections);
     const product = result.product;
     const unitPrice = Number(product.preco || 0);
     resolvedItems.push({ productId: product.id, name: product.nome, sku: product.sku || null, quantity: item.quantity, unitPrice, lineTotal: Math.round(unitPrice * item.quantity * 100) / 100 });
   }
   const total = Math.round(resolvedItems.reduce((sum, item) => sum + item.lineTotal, 0) * 100) / 100;
   const action: VoiceConfirmationAction = {
-    operationId: crypto.randomUUID(), intent: 'create_order', accountId,
+    operationId: crypto.randomUUID(), intent: draft.intent === 'create_consignment' ? 'create_consignment' : 'create_order', accountId,
     customerId: customer.id, customerName: customer.nome, items: resolvedItems,
     amount: null, expectedTotal: total, expectedBalance: null,
-    paymentMethod: 'Não informado', paymentDate: null,
+    paymentMethod: draft.intent === 'create_consignment' ? 'Consignado' : 'Venda', paymentDate: null,
   };
-  return { kind: 'confirmation', title: 'Criar pedido', message: `Cliente: ${customer.nome}\n${resolvedItems.map((item) => `${item.name} — ${item.quantity} × ${formatMoney(item.unitPrice)}`).join('\n')}\nTotal: ${formatMoney(total)}`, action, draft, transcription, metrics };
+  const consignment = draft.intent === 'create_consignment';
+  return { kind: 'confirmation', title: consignment ? 'Criar consignado' : 'Criar pedido', message: `Cliente: ${customer.nome}\n${resolvedItems.map((item) => `${item.name} — ${item.quantity} × ${formatMoney(item.unitPrice)}`).join('\n')}\n${consignment ? 'Total consignado' : 'Total'}: ${formatMoney(total)}`, action, selections, draft, transcription, metrics };
 }

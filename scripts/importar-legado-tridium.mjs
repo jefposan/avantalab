@@ -475,7 +475,8 @@ async function importarRepresentante(db, empresaId, empresaFinanceiraId, catalog
         cidade: cliente.city || null,
         estado: cliente.state || null,
       },
-      observacoes: `Importado de ${ORIGEM}; cliente legado #${cliente.id}${cliente.profession ? `; profissão: ${cliente.profession}` : ''}.`,
+      // Metadados técnicos da migração não pertencem às observações visíveis do cliente.
+      observacoes: null,
       ativo: String(cliente.status || 'Ativo').toLocaleLowerCase('pt-BR') !== 'inativo',
       criado_em: dataIsoLegada(cliente.created_at),
       atualizado_em: dataIsoLegada(cliente.created_at),

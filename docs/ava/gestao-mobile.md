@@ -1,6 +1,54 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.14.3.15 -->
+<!-- ava-version: 1.15.0 -->
+
+> Revisão 1.15.0: auditoria e interpretação ampliada da Solicitação por Voz
+> aplicadas somente à Sala de Botões do AvantaVendas; sem impacto operacional na
+> Gestão Mobile.
+
+> Revisão 1.15.0-av124: recursos do AvantaVendas atualizados; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.14.3.27: central de pendências da Solicitação por Voz aplicada
+> somente à Sala de Botões do AvantaVendas; sem impacto operacional na Gestão
+> Mobile.
+
+> Revisão 1.14.3.26: pílula Salvar para depois aplicada somente à Sala de
+> Botões do AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.25: ajuste de texto do comando de voz aplicado somente à Sala
+> de Botões do AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.24: simplificação visual dos painéis de voz aplicada somente
+> à Sala de Botões do AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.23: indicador de processamento e busca fonética do comando
+> de voz aplicados somente à Sala de Botões do AvantaVendas; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.14.3.22: cancelamento direto no círculo durante o envio de voz
+> aplicado somente à Sala de Botões do AvantaVendas; sem impacto operacional na
+> Gestão Mobile.
+
+> Revisão 1.14.3.21: confirmação explícita do envio de áudio e centralização
+> dos avisos aplicadas somente na Sala de Botões do AvantaVendas; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.14.3.20: âncora do microfone corrigida somente na Sala de Botões do
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.19: diâmetro do microfone estabilizado somente na Sala de
+> Botões do AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.18: microfone imóvel e busca ampliada de produtos aplicados ao
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.17: correções da Solicitação por Voz e limpeza restrita de
+> metadados de importação aplicadas ao AvantaVendas; sem impacto operacional na
+> Gestão Mobile.
+
+> Revisão 1.14.3.16: centralização responsiva aplicada somente ao microfone da
+> Sala de Botões do AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.14.3.15: ajuste fino de posição aplicado somente ao microfone da
 > Sala de Botões do AvantaVendas; sem impacto operacional na Gestão Mobile.

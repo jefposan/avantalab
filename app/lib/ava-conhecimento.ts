@@ -1,5 +1,21 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.15.0: a voz diferencia pedido, consignado e pagamento,
+// usa transcrição especializada e resolve nomes aproximados no catálogo da conta.
+// Revisado na versão 1.14.3.27: novas gravações e pendências de voz são separadas.
+// Revisado na versão 1.14.3.26: Salvar para depois é uma pílula no fluxo de voz.
+// Revisado na versão 1.14.3.25: forma de pagamento pede confirmação curta.
+// Revisado na versão 1.14.3.24: painéis de voz mostram somente a ação necessária.
+// Revisado na versão 1.14.3.23: o botão de cancelar mostra processamento e o
+// catálogo reconhece aproximações fonéticas da transcrição de voz.
+// Revisado na versão 1.14.3.22: o botão circular cancela envio/transcrição sem card intermediário.
+// Revisado na versão 1.14.3.21: gravação aguarda envio explícito e avisos são centralizados.
+// Revisado na versão 1.14.3.20: microfone ativo usa a mesma âncora absoluta do acionador.
+// Revisado na versão 1.14.3.19: microfone preserva o mesmo diâmetro em todos os estados.
+// Revisado na versão 1.14.3.18: microfone imóvel e catálogo por múltiplos termos.
+// Revisado na versão 1.14.3.17: desambiguação de voz preserva cliente e produtos
+// já escolhidos; complementos de nome são tratados como referência do cliente.
+// Revisado na versão 1.14.3.16: microfone centralizado no espaço útil da Sala.
 // Revisado na versão 1.14.3.15: ajuste visual do microfone na Sala, sem mudança operacional.
 // Revisado na versão 1.14.3.14: o microfone de Solicitação por Voz inicia a
 // gravação na própria Sala e usa sobreposições compactas para dúvidas e confirmação.
@@ -744,7 +760,7 @@ SALA E NAVEGAÇÃO
   entre eles.
 - Na entrada do Vendas Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto.
 - A sala de botões é a tela inicial obrigatória de cada abertura, inclusive quando os dados são restaurados pelo cache; pesquisas de Clientes, Produtos, Pedidos e Pagamentos começam limpas: Dashboard, Clientes, Produtos, Pedidos, Pagamentos, Agenda, Novidades, Divulgação e Informações. Durante carregamentos internos, um loading permanece no local dos botões e o conjunto só aparece quando todas as imagens estiverem prontas. Ao tocar, cada um dos nove cards principais reduz uniformemente em direção ao centro antes de abrir a área escolhida, sem deslocar para baixo.
-- O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards por arraste ou pelas setas do teclado. Enquanto a organização está ativa, a instrução "Segure e arraste. As setas também movem." aparece ao lado do lápis. Em Configurações > Funções, **Solicitação por Voz** mostra ou oculta o microfone circular centralizado abaixo de **Dúvidas e Sugestões**, fora da grade reordenável. O primeiro toque já inicia a gravação na própria Sala e o toque seguinte encerra; a transcrição não aparece. Dúvidas, opções, confirmação e resultado abrem sobre a Sala, sem navegar para outra página. Pedidos e pagamentos confirmados são conferidos no banco e podem compartilhar o comprovante; **Salvar para depois** preserva a solicitação incompleta no perfil.
+- O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards por arraste ou pelas setas do teclado. Enquanto a organização está ativa, a instrução "Segure e arraste. As setas também movem." aparece ao lado do lápis. Em Configurações > Funções, **Solicitação por Voz** mostra ou oculta o microfone circular centralizado abaixo de **Dúvidas e Sugestões**, fora da grade reordenável. O primeiro toque já inicia a gravação na própria Sala e o toque seguinte encerra; a transcrição não aparece. Dúvidas, opções, confirmação e resultado abrem sobre a Sala, sem navegar para outra página. A voz diferencia pedido, consignado e pagamento; aproximações de dicção são buscadas apenas no catálogo e nos clientes da conta ativa, sem enviar a base inteira à IA. Pedidos, consignados e pagamentos confirmados são conferidos no banco e podem compartilhar o comprovante; **Salvar para depois** preserva a solicitação incompleta no perfil.
 - O topo e o menu inferior permanecem ancorados às bordas da tela; apenas o conteúdo central rola. Eles não se deslocam ao trocar de página, entrar em Configurações ou abrir e fechar um modal.
 - O menu inferior permanece visível acima da sala, Dashboard e demais telas comuns. Modais e confirmações aparecem acima dele enquanto estiverem abertos.
 - Depois de carregada, a sala mantém seus cards estáveis. As imagens dos nove botões permanecem pré-carregadas para o retorno imediato ao Início; tocar novamente em Início não recarrega a grade, e a organização reposiciona os próprios cards sem recarregar as imagens.

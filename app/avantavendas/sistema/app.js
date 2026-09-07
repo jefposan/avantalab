@@ -20,6 +20,7 @@ const CACHE_VENDAS_VERSAO = 5;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
 const PREFERENCIAS_VENDAS_VERSAO = 4;
 const META_CELEBRADA_PREFIX = 'avantalab.vendas_mobile.meta_celebrada';
+const SOLICITACOES_VOZ_PENDENTES_PREFIX = 'avantalab.vendas.voice_command.official.v1';
 const IDS_ATALHOS_PREFERENCIAS_VENDAS = new Set(['tema', 'dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao']);
 const IDS_SALA_PREFERENCIAS_VENDAS = new Set(['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'novidades', 'divulgacao', 'informacoes']);
 const IDS_CARDS_CONFIGURACOES_VENDAS = new Set([
@@ -1579,6 +1580,7 @@ function assinaturaVisualSalaBotoes() {
     agendaHoje: agendamentosHojeVendas().map((item) => String(item.id)).sort(),
     acesso: `${state.acessoVendas?.empresa_id || ''}:${state.acessoVendas?.papel || ''}`,
     atalhos: [state.atalhoInferiorEsquerdo, state.atalhoInferiorDireito],
+    solicitacoesVozPendentes: solicitacoesVozPendentes().map((item) => item.id),
   });
 }
 
@@ -2480,10 +2482,14 @@ function renderMenuMobile() {
   const organizando = state.organizandoSalaBotoes;
   const aniversariantesHoje = aniversariosHojeVendas();
   const agendamentosHoje = agendamentosHojeVendas();
+  const pendenciasVoz = solicitacoesVozPendentes();
   return `<section class="mobile-menu is-loading-images" aria-label="Menu principal" aria-busy="true">
     <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, true)}</div></header>
+    ${pendenciasVoz.length ? `<button type="button" class="mobile-voice-pending-notice" onclick="abrirPendenciasSolicitacaoVoz()" aria-label="${pendenciasVoz.length} solicitação${pendenciasVoz.length === 1 ? '' : 'ões'} por voz pendente${pendenciasVoz.length === 1 ? '' : 's'}">
+      <span class="mobile-voice-pending-icon">${svgIconEstavel('mic')}</span><span><b>${pendenciasVoz.length} solicitação${pendenciasVoz.length === 1 ? '' : 'ões'} pendente${pendenciasVoz.length === 1 ? '' : 's'}</b><small>Toque para concluir ou cancelar</small></span><i aria-hidden="true">${pendenciasVoz.length}</i>
+    </button>` : ''}
     <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" aria-live="polite" ${organizando ? '' : 'hidden'}>Segure e arraste. As setas também movem.</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `aria-roledescription="item reordenável" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown" onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)" onkeydown="moverSalaBotoesTeclado(event,'${idAba}')"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
-    <div class="mobile-menu-assistance">
+    <div class="mobile-menu-assistance${state.solicitacaoVozAtiva ? ' has-voice-command' : ''}">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
         <span class="mobile-ava-logo" role="img" aria-label="Ava"></span>
         <span>Pergunte para a Ava...</span>
@@ -2506,6 +2512,63 @@ function renderMenuMobile() {
 }
 
 let carregamentoSolicitacaoVozVendas = null;
+
+function chaveSolicitacoesVozPendentes() {
+  const contaId = state.contaVendasAtiva?.id || window.VendasDb?.contaAtivaId?.() || '';
+  return contaId ? `${SOLICITACOES_VOZ_PENDENTES_PREFIX}:${contaId}` : '';
+}
+
+function solicitacoesVozPendentes() {
+  const chave = chaveSolicitacoesVozPendentes();
+  if (!chave) return [];
+  try {
+    const salvo = JSON.parse(localStorage.getItem(chave) || 'null');
+    const itens = Array.isArray(salvo?.pendencias)
+      ? salvo.pendencias
+      : salvo?.current ? [{ id: 'legado', current: salvo.current, savedAt: salvo.savedAt || new Date().toISOString() }] : [];
+    return itens.filter((item) => item?.id && ['clarification', 'confirmation'].includes(item?.current?.kind));
+  } catch { return []; }
+}
+
+function salvarSolicitacoesVozPendentes(itens) {
+  const chave = chaveSolicitacoesVozPendentes();
+  if (!chave) return;
+  try {
+    if (itens.length) localStorage.setItem(chave, JSON.stringify({ pendencias: itens }));
+    else localStorage.removeItem(chave);
+  } catch { /* armazenamento indisponível */ }
+}
+
+function resumoSolicitacaoVozPendente(item) {
+  const atual = item?.current || {};
+  return atual.kind === 'confirmation'
+    ? String(atual.title || 'Lançamento aguardando confirmação')
+    : String(atual.question || 'Solicitação aguardando informações');
+}
+
+function dataSolicitacaoVozPendente(item) {
+  const data = new Date(String(item?.updatedAt || item?.savedAt || ''));
+  return Number.isNaN(data.getTime()) ? '' : new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(data);
+}
+
+function atualizarPendenciasSolicitacaoVoz() {
+  if (state.menuAberto) render();
+}
+
+function abrirPendenciasSolicitacaoVoz() {
+  const pendencias = solicitacoesVozPendentes();
+  if (!pendencias.length) { atualizarPendenciasSolicitacaoVoz(); return; }
+  const itens = pendencias.map((item) => `<article class="voice-pending-item"><div><b>${escapeHtml(resumoSolicitacaoVozPendente(item))}</b><small>${escapeHtml(dataSolicitacaoVozPendente(item))}</small></div><div class="voice-pending-actions"><button type="button" class="secondary" onclick="cancelarSolicitacaoVozPendente('${escapeAttr(item.id)}')">Cancelar</button><button type="button" class="primary" onclick="retomarSolicitacaoVozPendente('${escapeAttr(item.id)}')">Concluir</button></div></article>`).join('');
+  sheet(`<div class="sheet-header"><div><h2>Solicitações salvas</h2></div><button class="close" onclick="fecharSheet()">×</button></div><div class="voice-pending-list">${itens}</div>`, 'sheet-backdrop-centered voice-pending-backdrop');
+}
+
+function cancelarSolicitacaoVozPendente(id) {
+  const restantes = solicitacoesVozPendentes().filter((item) => item.id !== id);
+  salvarSolicitacoesVozPendentes(restantes);
+  fecharSheet();
+  atualizarPendenciasSolicitacaoVoz();
+  if (restantes.length) window.setTimeout(abrirPendenciasSolicitacaoVoz, 0);
+}
 
 function carregarModuloSolicitacaoVozVendas() {
   if (window.AvantaVoiceCommand?.open) return Promise.resolve(window.AvantaVoiceCommand);
@@ -2533,6 +2596,10 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
   if (!contaId || !token) throw new Error('Sua sessão do Avanta Vendas expirou. Entre novamente.');
   const endpoint = `/api/vendas/solicitacao-voz/${operacao === 'transcribe' ? 'transcrever' : operacao === 'process' ? 'processar' : operacao === 'execute' ? 'executar' : 'log'}`;
   const controller = new AbortController();
+  const signalExterno = payload?.signal;
+  const abortarPorCancelamento = () => controller.abort();
+  if (signalExterno?.aborted) abortarPorCancelamento();
+  else signalExterno?.addEventListener?.('abort', abortarPorCancelamento, { once: true });
   const timeout = window.setTimeout(() => controller.abort(), 50000);
   try {
     let init;
@@ -2547,7 +2614,7 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
       init = {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...(payload || {}), accountId: contaId }),
+        body: JSON.stringify({ ...Object.fromEntries(Object.entries(payload || {}).filter(([chave]) => chave !== 'signal')), accountId: contaId }),
         signal: controller.signal,
       };
     }
@@ -2556,14 +2623,16 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
     if (!resposta.ok) throw new Error(resultado?.message || 'Não foi possível concluir a solicitação.');
     return resultado;
   } catch (error) {
+    if (error?.name === 'AbortError' && signalExterno?.aborted) throw error;
     if (error?.name === 'AbortError') throw new Error('A solicitação demorou mais que o esperado. Tente novamente.');
     throw error;
   } finally {
     window.clearTimeout(timeout);
+    signalExterno?.removeEventListener?.('abort', abortarPorCancelamento);
   }
 }
 
-async function abrirSolicitacaoVozVendas(acionador = null) {
+async function abrirSolicitacaoVozVendas(acionador = null, pendenciaId = '') {
   if (!state.solicitacaoVozAtiva) {
     toast('Ative a Solicitação por Voz em Configurações.');
     return;
@@ -2576,15 +2645,17 @@ async function abrirSolicitacaoVozVendas(acionador = null) {
     modulo.open({
       mount,
       mountId: 'voiceCommandSalaMount',
-      autoStart: true,
+      autoStart: !pendenciaId,
+      pendingId: pendenciaId,
       account: {
         id: state.contaVendasAtiva?.id || window.VendasDb?.contaAtivaId?.() || '',
         label: state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'Conta ativa',
       },
       request: requisitarSolicitacaoVozVendas,
       afterExecute: async () => carregarDadosBackend(false),
+      onPendingChange: atualizarPendenciasSolicitacaoVoz,
       shareReceipt: async (recordId, intent) => {
-        if (intent === 'create_order') return compartilharPedido(recordId);
+        if (intent === 'create_order' || intent === 'create_consignment') return compartilharPedido(recordId);
         if (intent === 'register_payment') return compartilharPagamento(recordId);
         return false;
       },
@@ -2594,6 +2665,11 @@ async function abrirSolicitacaoVozVendas(acionador = null) {
   } finally {
     if (acionador?.isConnected) acionador.disabled = false;
   }
+}
+
+function retomarSolicitacaoVozPendente(id) {
+  fecharSheet();
+  void abrirSolicitacaoVozVendas(null, id);
 }
 
 function contextoAvaVendas() {

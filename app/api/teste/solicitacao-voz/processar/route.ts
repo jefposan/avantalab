@@ -32,6 +32,26 @@ function validSelection(value: unknown): VoiceEntitySelection | null {
   return { type: type as VoiceEntitySelection['type'], reference, id };
 }
 
+function validSelections(value: unknown): VoiceEntitySelection[] {
+  if (!Array.isArray(value)) return [];
+  const unique = new Map<string, VoiceEntitySelection>();
+  for (const candidate of value.slice(0, 12)) {
+    const selection = validSelection(candidate);
+    if (selection) unique.set(`${selection.type}:${selection.reference.toLocaleLowerCase('pt-BR')}`, selection);
+  }
+  return [...unique.values()];
+}
+
+function mergeSelection(selections: VoiceEntitySelection[], current: VoiceEntitySelection | null) {
+  if (!current) return selections;
+  const reference = current.reference.toLocaleLowerCase('pt-BR');
+  return [
+    ...selections.filter((selection) => selection.type !== current.type
+      || selection.reference.toLocaleLowerCase('pt-BR') !== reference),
+    current,
+  ].slice(-12);
+}
+
 export async function POST(request: Request) {
   let userId = '';
   let accountId = '';
@@ -47,6 +67,7 @@ export async function POST(request: Request) {
     userId = context.userId;
     const previousDraft = body?.previousDraft ? validateVoiceIntentPayload(body.previousDraft) : null;
     const selection = validSelection(body?.selection);
+    const selections = mergeSelection(validSelections(body?.selections), selection);
     let intent: VoiceIntentPayload;
     let metrics: VoiceMetrics;
     if (selection && previousDraft) {
@@ -61,7 +82,7 @@ export async function POST(request: Request) {
       intent = interpreted.intent;
       metrics = interpreted.metrics;
     }
-    const result = await buildVoiceResponse({ db: context.db, accountId, draft: intent, transcription, metrics, selection });
+    const result = await buildVoiceResponse({ db: context.db, accountId, draft: intent, transcription, metrics, selections });
     logVoiceLab({
       event: 'interpreted', userId, accountId, transcription, intent: intent.intent,
       interpretationMs: metrics.interpretationMs, disambiguation: result.kind === 'clarification',

@@ -3,6 +3,38 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import { normalizeVoiceSearch, validateVoiceIntent } from '../../app/lib/vendas-voice/validation.mjs';
+import { buildVoiceResponse, resolveProduct } from '../../app/lib/vendas-voice/data.ts';
+
+const UUIDS = {
+  fernandaInfluencer: '11111111-1111-4111-8111-111111111111',
+  fernandaSilva: '22222222-2222-4222-8222-222222222222',
+  influencerLitro: '33333333-3333-4333-8333-333333333333',
+  influencerCemMl: '44444444-4444-4444-8444-444444444444',
+};
+
+function voiceResolverDb(products = null) {
+  const tables = {
+    vendas_mobile_clientes: [
+      { id: UUIDS.fernandaInfluencer, nome: 'Fernanda (influencer)', ativo: true, observacoes: 'observação manual útil' },
+      { id: UUIDS.fernandaSilva, nome: 'Fernanda Silva', ativo: true, observacoes: null },
+    ],
+    vendas_mobile_produtos: products || [
+      { id: UUIDS.influencerLitro, nome: 'Influencer 1 litro', ativo: true, preco: 120 },
+      { id: UUIDS.influencerCemMl, nome: 'Influencer 100 ml', ativo: true, preco: 25 },
+    ],
+    vendas_mobile_pedidos: [],
+  };
+  return {
+    from(table) {
+      const query = {
+        select() { return query; }, eq() { return query; }, or() { return query; }, in() { return query; },
+        neq() { return query; }, order() { return query; },
+        async limit(limit) { return { data: (tables[table] || []).slice(0, limit), error: null }; },
+      };
+      return query;
+    },
+  };
+}
 
 test('schema de voz aceita somente intenções e valores previstos', () => {
   const valid = validateVoiceIntent({
@@ -29,6 +61,8 @@ test('executor usa o RPC oficial e não aceita SQL gerado pela IA', async () => 
   assert.match(source, /salvar_pedido_vendas_mobile_rpc/);
   assert.match(source, /getVoiceSalesContext/);
   assert.match(source, /expectedTotal/);
+  assert.match(source, /create_consignment/);
+  assert.match(source, /forma_pagamento: consignment \? 'Consignado' : 'Venda'/);
   assert.doesNotMatch(source, /request[^\n]*sql|body[^\n]*query/i);
 });
 
@@ -65,7 +99,30 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(voiceModule, /options\.mount\.append\(host\)/);
   assert.match(voiceModule, /options\.autoStart && state\.phase === 'idle'/);
   assert.match(voiceModule, /const dock = el\('section', 'dock'\)/);
+  assert.match(voiceModule, /function cancelSending\(\)/);
+  assert.match(voiceModule, /state\.requestAbort\?\.abort\(\)/);
+  assert.match(voiceModule, /function restorePending\(id\)/);
+  assert.match(voiceModule, /pendencias: entries\.slice\(0, 30\)/);
+  assert.doesNotMatch(voiceModule, /restoreSession\(/);
+  assert.match(voiceModule, /Cancelar envio da solicitação/);
+  assert.match(voiceModule, /Transcrevendo sua fala… Toque para cancelar/);
+  assert.match(voiceModule, /processing-ring/);
+  assert.match(officialApp, /const signalExterno = payload\?\.signal/);
+  assert.match(officialApp, /signalExterno\?\.aborted/);
+  assert.match(officialApp, /function solicitacoesVozPendentes\(\)/);
+  assert.match(officialApp, /function abrirPendenciasSolicitacaoVoz\(\)/);
+  assert.match(officialApp, /autoStart: !pendenciaId/);
+  assert.match(officialApp, /pendingId: pendenciaId/);
+  assert.doesNotMatch(voiceModule, /Áudio pronto|sendPendingAudio|discardPendingAudio/);
+  assert.match(voiceModule, /\.overlay\{place-items:center/);
   assert.doesNotMatch(voiceModule, /lastTranscription[^\n]*textContent|transcription[^\n]*append/i);
+  assert.doesNotMatch(voiceModule, /Experimental/);
+  assert.doesNotMatch(voiceModule, /A IA interpreta; as funções seguras/);
+  assert.doesNotMatch(voiceModule, /O lançamento só será gravado depois da sua confirmação/);
+  assert.doesNotMatch(voiceModule, /Preciso confirmar uma informação|Confirmação obrigatória/);
+  assert.doesNotMatch(voiceModule, /Conferência no banco|Verificado agora|Ou responda por voz/);
+  assert.match(voiceModule, /\.save-later\{[^}]*border-radius:999px/);
+  assert.match(voiceModule, /button\('Salvar para depois', 'save-later', saveForLater\)/);
 });
 
 test('backend recusa comandos quando a função está desligada', async () => {
@@ -84,16 +141,123 @@ test('backend recusa comandos quando a função está desligada', async () => {
 test('pagamento sem forma escolhida pede esclarecimento antes da confirmação', async () => {
   const resolver = await readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8');
   assert.match(resolver, /if \(!draft\.paymentMethod\) return clarification/);
+  assert.match(resolver, /'Confirme a forma de pagamento\.'/);
   assert.match(resolver, /Cartão de crédito/);
   assert.match(resolver, /paymentMethod: draft\.paymentMethod/);
 });
 
 test('clique de desambiguação usa candidato validado sem reinterpretar pela IA', async () => {
-  const [route, resolver] = await Promise.all([
+  const [route, resolver, voiceModule] = await Promise.all([
     readFile(new URL('../../app/api/teste/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8'),
   ]);
   assert.match(route, /if \(selection && previousDraft\)/);
-  assert.match(route, /buildVoiceResponse\(\{[^}]*selection/s);
+  assert.match(route, /const selections = mergeSelection/);
+  assert.match(route, /buildVoiceResponse\(\{[^}]*selections/s);
   assert.match(resolver, /candidates\.some\(\(candidate\) => candidate\.id === selectedId\)/);
+  assert.match(resolver, /selectedEntityId\(selections, 'customer'/);
+  assert.match(resolver, /selectedEntityId\(selections, 'product'/);
+  assert.match(voiceModule, /selections: previous\?\.selections \|\| \[\]/);
+});
+
+test('interpretação mantém qualificadores no nome do cliente e não os transforma em produto', async () => {
+  const interpreter = await readFile(new URL('../../app/lib/vendas-voice/interpreter.ts', import.meta.url), 'utf8');
+  assert.match(interpreter, /“Fernanda influencer”/);
+  assert.match(interpreter, /Um qualificativo logo após o nome do cliente não é item de pedido/);
+});
+
+test('onda de voz usa área ampliada sem recorte e amplitude moderada', async () => {
+  const voiceModule = await readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8');
+  assert.match(voiceModule, /\.visualizer\{position:absolute;inset:-45px/);
+  assert.match(voiceModule, /overflow:visible/);
+  assert.match(voiceModule, /const strength = 8 \+ activity \* 16/);
+  assert.match(voiceModule, /:host\{all:initial;position:absolute;top:calc\(50% - 5px\);left:50%;display:block;width:0;height:0/);
+  assert.match(voiceModule, /\.dock\{position:static;width:0;height:0/);
+  assert.match(voiceModule, /\.dock>\.capture\{position:absolute;top:0;left:0/);
+  assert.doesNotMatch(voiceModule, /:host\{[^}]*inset:0/);
+  assert.match(voiceModule, /\.dock \.voice\{width:84px;height:84px\}/);
+  assert.match(voiceModule, /@media\(max-width:520px\).*\.dock \.voice\{width:80px;height:80px\}/);
+});
+
+test('desambiguação oculta observação técnica e preserva a manual', async () => {
+  const resolver = await readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8');
+  assert.match(resolver, /LEGACY_CUSTOMER_NOTE/);
+  assert.match(resolver, /visibleCustomerNote\(row\.observacoes\)/);
+  assert.match(resolver, /observacoes\.ilike/);
+});
+
+test('cliente e produto escolhidos permanecem resolvidos até a confirmação', async () => {
+  const db = voiceResolverDb();
+  const draft = {
+    intent: 'create_order', customerReference: 'Fernanda',
+    items: [{ productReference: 'Influencer', quantity: 1 }], amount: null,
+    paymentMethod: null, period: null, unsupportedReason: null,
+  };
+  const common = { db, accountId: 'conta', draft, transcription: 'teste', metrics: { interpretationMs: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0 } };
+  const customerQuestion = await buildVoiceResponse(common);
+  assert.equal(customerQuestion.kind, 'clarification');
+  assert.equal(customerQuestion.entity?.type, 'customer');
+  assert.match(customerQuestion.candidates.find(({ id }) => id === UUIDS.fernandaInfluencer).detail, /observação manual útil/);
+
+  const customerSelection = { type: 'customer', reference: 'Fernanda', id: UUIDS.fernandaInfluencer };
+  const productQuestion = await buildVoiceResponse({ ...common, selections: [customerSelection] });
+  assert.equal(productQuestion.kind, 'clarification');
+  assert.equal(productQuestion.entity?.type, 'product');
+  assert.deepEqual(productQuestion.selections, [customerSelection]);
+
+  const productSelection = { type: 'product', reference: 'Influencer', id: UUIDS.influencerCemMl };
+  const confirmation = await buildVoiceResponse({ ...common, selections: [customerSelection, productSelection] });
+  assert.equal(confirmation.kind, 'confirmation');
+  assert.equal(confirmation.action.customerId, UUIDS.fernandaInfluencer);
+  assert.equal(confirmation.action.items[0].productId, UUIDS.influencerCemMl);
+});
+
+test('catálogo reconhece produto pelo nome humano composto e sugere por aproximação', async () => {
+  const paladium = { id: UUIDS.influencerLitro, nome: 'Progressiva Palladium', ativo: true, preco: 180 };
+  const outra = { id: UUIDS.influencerCemMl, nome: 'Progressiva Natural', ativo: true, preco: 150 };
+  const exact = await resolveProduct(voiceResolverDb([paladium, outra]), 'conta', 'Progressiva Paladium');
+  assert.equal(exact.status, 'resolved');
+  assert.equal(exact.product.id, paladium.id);
+
+  const approximate = await resolveProduct(voiceResolverDb([
+    paladium,
+    outra,
+  ]), 'conta', 'Paladium');
+  assert.ok(['resolved', 'ambiguous'].includes(approximate.status));
+  assert.equal(approximate.candidates[0].id, paladium.id);
+
+  const phoneticApproximate = await resolveProduct(voiceResolverDb([
+    paladium,
+    outra,
+  ]), 'conta', 'Paladin');
+  assert.ok(['resolved', 'ambiguous'].includes(phoneticApproximate.status));
+  assert.equal(phoneticApproximate.candidates[0].id, paladium.id);
+});
+
+test('pedido consignado usa o mesmo fluxo oficial com estoque e confirmação', async () => {
+  const db = voiceResolverDb([{ id: UUIDS.influencerLitro, nome: 'Palladium', ativo: true, preco: 180 }]);
+  const result = await buildVoiceResponse({
+    db, accountId: 'conta', transcription: 'deixa duas Palladium em consignação para Fernanda influencer',
+    metrics: { interpretationMs: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+    draft: {
+      intent: 'create_consignment', customerReference: 'Fernanda influencer',
+      items: [{ productReference: 'Progressiva Paladin', quantity: 2 }], amount: null,
+      paymentMethod: null, period: null, unsupportedReason: null,
+    },
+  });
+  assert.equal(result.kind, 'confirmation');
+  assert.equal(result.title, 'Criar consignado');
+  assert.equal(result.action.intent, 'create_consignment');
+  assert.equal(result.action.paymentMethod, 'Consignado');
+  assert.equal(result.action.items[0].productId, UUIDS.influencerLitro);
+});
+
+test('transcrição de voz usa modelo especializado sem enviar o catálogo da conta', async () => {
+  const source = await readFile(new URL('../../app/api/teste/solicitacao-voz/transcrever/route.ts', import.meta.url), 'utf8');
+  assert.match(source, /OPENAI_VOICE_TRANSCRIPTION_MODEL \|\| 'gpt-transcribe'/);
+  assert.match(source, /OPENAI_VOICE_TRANSCRIPTION_CONTEXT/);
+  assert.match(source, /keywords\[\]/);
+  assert.match(source, /audioSeconds/);
+  assert.doesNotMatch(source, /vendas_mobile_produtos/);
 });

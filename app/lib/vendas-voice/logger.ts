@@ -11,6 +11,7 @@ type VoiceLabLog = {
   inputTokens?: number | null;
   outputTokens?: number | null;
   totalTokens?: number | null;
+  audioSeconds?: number | null;
   error?: string;
 };
 
@@ -24,4 +25,3 @@ export function logVoiceLab(entry: VoiceLabLog) {
   };
   console.info('[voice-command-lab]', JSON.stringify(safeEntry));
 }
-

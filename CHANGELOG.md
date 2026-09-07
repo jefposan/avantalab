@@ -1,5 +1,178 @@
 # Changelog
 
+## 1.15.0 - 2026-09-07
+
+- A Solicitação por Voz passou por auditoria e agora entende pedido de venda,
+  pedido consignado e pagamento como intenções distintas, sempre confirmadas
+  antes da escrita e executadas pela mesma rotina oficial do AvantaVendas.
+- A transcrição usa o modelo especializado de alta precisão da OpenAI com
+  contexto comercial curto. O catálogo e os clientes continuam somente no
+  banco da conta; a busca tolera dicção próxima, letras duplicadas e descrições
+  humanas antes de sugerir uma opção segura.
+- Todos os avisos do fluxo foram reduzidos ao necessário. Resultado e erro não
+  repetem selo, conta, detalhes técnicos ou explicações; a confirmação no
+  servidor e a geração de comprovante permanecem preservadas.
+- Corrigido o pedido comum criado por voz para usar a forma oficial **Venda**,
+  mantendo seu reflexo no saldo do cliente; consignados usam **Consignado** e
+  seguem a atualização oficial de estoque.
+
+## 1.15.0-av124 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com auditoria e interpretação ampliada
+  da Solicitação por Voz.
+
+## 1.14.3.27 - 2026-09-07
+
+- O microfone da Sala de Botões sempre inicia uma nova solicitação, sem
+  reabrir automaticamente o último rascunho salvo.
+- Solicitações por voz salvas ficam separadas por conta e aparecem em um aviso
+  com contagem no topo da Sala. A lista permite concluir ou cancelar cada uma.
+
+## 1.14.3.27-av123 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com a central de solicitações de voz
+  pendentes.
+
+## 1.14.3.26 - 2026-09-07
+
+- **Salvar para depois** da Solicitação por Voz agora é uma pílula tátil e
+  centralizada, preservando Cancelar e Confirmar como as ações principais.
+- A confirmação continua exibindo apenas os dados do lançamento e suas ações,
+  sem marca, usuário, selo experimental ou textos redundantes.
+
+## 1.14.3.26-av122 - 2026-09-07
+
+- Recursos do AvantaVendas renovados com a pílula de salvamento do comando de
+  voz.
+
+## 1.14.3.25 - 2026-09-07
+
+- A pergunta de esclarecimento sobre pagamento foi reduzida para **Confirme a
+  forma de pagamento.**, sem repetir o nome da cliente ou informações já
+  visíveis nas opções.
+
+## 1.14.3.25-av121 - 2026-09-07
+
+- Recursos do AvantaVendas renovados para aplicar os painéis compactos da voz
+  mesmo em instalações com cache anterior.
+
+## 1.14.3.24 - 2026-09-07
+
+- Os painéis da Solicitação por Voz foram reduzidos ao essencial: pergunta,
+  opções, resultado, comprovante e ações. Marca, selo experimental, conta,
+  explicações redundantes e rodapé técnico não aparecem mais durante o fluxo.
+
+## 1.14.3.24-av120 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com os painéis compactos do comando de
+  voz.
+
+## 1.14.3.23 - 2026-09-07
+
+- Durante transcrição e interpretação, o botão circular de voz continua
+  cancelável e exibe um anel de processamento com a etapa atual, evitando a
+  impressão de que a solicitação travou.
+- A resolução do catálogo passou a reconhecer melhor variações fonéticas de
+  transcrição, como **Paladin** para **Palladium**, sem alterar o produto fora
+  do catálogo nem dispensar a escolha quando houver ambiguidade.
+
+## 1.14.3.23-av119 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com feedback de processamento e busca
+  fonética de produtos no comando de voz.
+
+## 1.14.3.22 - 2026-09-07
+
+- O áudio volta a ser enviado assim que a gravação termina, sem etapa extra de
+  confirmação. Durante a transcrição e a interpretação, o próprio botão de voz
+  passa a ser um botão de cancelar e interrompe a solicitação em andamento.
+
+## 1.14.3.22-av118 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados para o cancelamento direto no controle
+  circular de voz.
+
+## 1.14.3.21 - 2026-09-07
+
+- Ao encerrar uma gravação por voz, o áudio permanece no aparelho até a pessoa
+  escolher **Enviar áudio**. A nova etapa oferece **Cancelar envio**, que
+  descarta a gravação sem chamar a transcrição.
+- Os cards de dúvidas, confirmação, resultado, erro e preparação de envio da
+  Solicitação por Voz agora se centralizam na tela também no celular.
+
+## 1.14.3.21-av117 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados para o envio explícito do áudio e para a
+  posição central dos avisos do comando de voz.
+
+## 1.14.3.20 - 2026-09-07
+
+- Corrigida a causa real do salto do microfone ao iniciar a gravação: o
+  componente ativo agora é ancorado diretamente no mesmo ponto central do
+  acionador azul, sem depender da altura calculada dentro do Shadow DOM.
+
+## 1.14.3.20-av116 - 2026-09-07
+
+- Recursos do AvantaVendas renovados para carregar a âncora única do botão de
+  voz antes, durante e depois da captura.
+
+## 1.14.3.19 - 2026-09-07
+
+- O botão de voz da Sala de Botões agora preserva também o mesmo diâmetro em
+  todos os estados. No mobile, o círculo azul, o círculo vermelho de gravação e
+  o estado de processamento permanecem com 80 px, sem deslocamento aparente da
+  borda superior ao iniciar ou encerrar o áudio.
+
+## 1.14.3.19-av115 - 2026-09-07
+
+- Recursos do AvantaVendas revisados com geometria idêntica do microfone antes,
+  durante e depois da gravação.
+
+## 1.14.3.18 - 2026-09-07
+
+- O microfone permanece no mesmo ponto da Sala de Botões antes, durante e
+  depois da gravação; o componente ativo usa exatamente a área do acionador.
+- A resolução de produtos agora cruza todos os termos falados com nome, SKU,
+  marca, categoria e descrição do catálogo real. Expressões como “Progressiva
+  Paladium” localizam **Paladium**, e pequenas variações ortográficas geram
+  sugestões próximas em vez de encerrar a busca imediatamente.
+
+## 1.14.3.18-av114 - 2026-09-07
+
+- Recursos do AvantaVendas revisados com microfone imóvel e busca de catálogo
+  por múltiplos termos e similaridade.
+
+## 1.14.3.17 - 2026-09-07
+
+- A Solicitação por Voz agora preserva, na mesma sessão, todos os clientes e
+  produtos já escolhidos, eliminando o ciclo de pedir novamente a Fernanda e o
+  produto após cada desambiguação.
+- A interpretação passou a reconhecer complementos de nome, apelidos, vínculo,
+  profissão e local como parte da referência do cliente — por exemplo,
+  “Fernanda influencer” — sem confundi-los automaticamente com produtos.
+- As ondas do microfone ficaram menores e mais leves, mas passaram a usar uma
+  área transparente ampliada para não revelar nem sofrer recorte quadrado.
+- A apresentação das opções de cliente deixou de pesquisar e exibir metadados
+  técnicos, mas continua usando observações manuais úteis à identificação. As
+  330 anotações estritamente técnicas da importação MySQL foram removidas do
+  banco, preservando as 55 observações restantes.
+
+## 1.14.3.17-av113 - 2026-09-07
+
+- Recursos do AvantaVendas revisados com sessão de desambiguação cumulativa,
+  ondas sem recorte e opções de cliente sem metadados técnicos.
+
+## 1.14.3.16 - 2026-09-07
+
+- O microfone da Solicitação por Voz agora ocupa o centro vertical real entre
+  **Dúvidas e Sugestões** e o botão “+” do menu inferior, adaptando-se à altura
+  disponível em vez de depender de uma margem fixa.
+
+## 1.14.3.16-av112 - 2026-09-07
+
+- Recursos da Sala de Botões revisados com a faixa flexível de centralização do
+  comando de voz, inclusive durante gravação e processamento.
+
 ## 1.14.3.15 - 2026-09-07
 
 - Aumentado o respiro acima do microfone da Solicitação por Voz para posicioná-lo

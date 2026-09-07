@@ -1,4 +1,4 @@
-const VOICE_INTENTS = new Set(['create_order', 'register_payment', 'query_customer_history', 'query_sales', 'unsupported']);
+const VOICE_INTENTS = new Set(['create_order', 'create_consignment', 'register_payment', 'query_customer_history', 'query_sales', 'unsupported']);
 const MAX_REFERENCE_LENGTH = 160;
 const PAYMENT_METHODS = new Set(['Pix', 'Dinheiro', 'Cartão de crédito', 'Cartão de débito', 'Transferência', 'Outro']);
 

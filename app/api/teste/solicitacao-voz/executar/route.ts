@@ -13,10 +13,10 @@ const moneyCents = (value: unknown) => Math.round(Number(value || 0) * 100);
 function validateAction(value: unknown): VoiceConfirmationAction | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const action = value as VoiceConfirmationAction;
-  if (!['create_order', 'register_payment'].includes(action.intent)) return null;
+  if (!['create_order', 'create_consignment', 'register_payment'].includes(action.intent)) return null;
   if (![action.operationId, action.accountId, action.customerId].every((id) => UUID.test(String(id || '')))) return null;
   if (!Array.isArray(action.items) || action.items.length > 20) return null;
-  if (action.intent === 'create_order' && (!action.items.length || action.items.some((item) => !UUID.test(String(item.productId || '')) || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))) return null;
+  if (['create_order', 'create_consignment'].includes(action.intent) && (!action.items.length || action.items.some((item) => !UUID.test(String(item.productId || '')) || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))) return null;
   if (action.intent === 'register_payment' && (!Number.isFinite(Number(action.amount)) || Number(action.amount) <= 0)) return null;
   return action;
 }
@@ -40,7 +40,8 @@ export async function POST(request: Request) {
       .select('id,nome,ativo').eq('conta_id', accountId).eq('id', action.customerId).eq('ativo', true).maybeSingle();
     if (customerError || !customer) return NextResponse.json({ message: 'O cliente não está mais disponível. Prepare a solicitação novamente.' }, { status: 409 });
 
-    if (action.intent === 'create_order') {
+    if (['create_order', 'create_consignment'].includes(action.intent)) {
+      const consignment = action.intent === 'create_consignment';
       const productIds = [...new Set(action.items.map((item) => item.productId))];
       const { data: products, error: productsError } = await context.db.from('vendas_mobile_produtos')
         .select('id,nome,sku,preco,preco_custo,ativo').eq('conta_id', accountId).in('id', productIds).eq('ativo', true);
@@ -61,8 +62,8 @@ export async function POST(request: Request) {
       if (moneyCents(total) !== moneyCents(action.expectedTotal)) return NextResponse.json({ message: 'O preço de um produto mudou. Revise e confirme o pedido novamente.' }, { status: 409 });
       const order = {
         id: action.operationId, conta_id: accountId, cliente_id: customer.id, status: 'concluida',
-        subtotal: total, desconto: 0, total, forma_pagamento: action.paymentMethod || 'Não informado',
-        observacoes: 'Criado pelo laboratório de solicitação por voz.', criado_em: new Date().toISOString(),
+        subtotal: total, desconto: 0, total, forma_pagamento: consignment ? 'Consignado' : 'Venda',
+        observacoes: JSON.stringify({ avantalab_pedido: true, tipo: consignment ? 'consignado' : 'venda', descricao: consignment ? 'Pedido consignado' : 'Pedido de venda', origem: 'solicitacao_por_voz' }), criado_em: new Date().toISOString(),
       };
       const { data, error } = await context.db.rpc('salvar_pedido_vendas_mobile_rpc', { p_pedido: order, p_itens: items, p_novo: true });
       if (error) throw new Error(error.message || 'O pedido não pôde ser criado.');
@@ -79,12 +80,12 @@ export async function POST(request: Request) {
       }
       logVoiceLab({ event: 'executed', userId, accountId, intent, confirmed: true, success: true });
       return NextResponse.json({
-        title: 'Pedido criado com sucesso',
-        message: `Pedido de ${customer.nome} confirmado no valor de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}.`,
+        title: consignment ? 'Consignado criado com sucesso' : 'Pedido criado com sucesso',
+        message: `${consignment ? 'Consignado' : 'Pedido'} de ${customer.nome} confirmado no valor de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}.`,
         recordId: verifiedOrder.id,
         evidence: {
           recordId: verifiedOrder.id,
-          recordType: 'Pedido',
+          recordType: consignment ? 'Consignado' : 'Pedido',
           customerName: customer.nome,
           amount: Number(verifiedOrder.total),
           status: verifiedOrder.status === 'concluida' ? 'Concluído' : String(verifiedOrder.status || 'Gravado'),

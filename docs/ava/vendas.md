@@ -1,6 +1,103 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.14.3.15 -->
+<!-- ava-version: 1.15.0 -->
+
+> Revisão 1.15.0: a **Solicitação por Voz** entende pedido, consignado e
+> pagamento como operações separadas. A fala é transcrita com modelo
+> especializado e vocabulário comercial curto; cliente e catálogo são sempre
+> resolvidos localmente na conta ativa, aceitando aproximações seguras e pedindo
+> escolha quando necessário. O painel mostra apenas a pergunta ou os dados da
+> ação; o resultado continua conferido no servidor antes do comprovante.
+
+> Revisão 1.15.0-av124: auditoria e interpretação ampliada incorporadas à Sala
+> de Botões.
+
+> Revisão 1.14.3.27: tocar no microfone da Sala de Botões sempre inicia uma
+> nova gravação. Solicitações salvas ficam no aviso de pendências no topo da
+> Sala; toque nele para concluir ou cancelar cada solicitação individualmente.
+
+> Revisão 1.14.3.27-av123: central de pendências do comando de voz incorporada.
+
+> Revisão 1.14.3.26: **Salvar para depois** aparece como pílula centralizada
+> nos esclarecimentos e confirmações da Solicitação por Voz. Os painéis de
+> confirmação exibem somente os dados e as ações essenciais.
+
+> Revisão 1.14.3.26-av122: pílula de salvamento incorporada ao comando de voz.
+
+> Revisão 1.14.3.25: quando faltar somente a forma de pagamento, a
+> Solicitação por Voz pergunta apenas **Confirme a forma de pagamento.** e
+> apresenta as opções disponíveis.
+
+> Revisão 1.14.3.25-av121: recursos de voz renovados para substituir painéis
+> em cache pela versão compacta.
+
+> Revisão 1.14.3.24: os painéis da Solicitação por Voz mostram somente a
+> pergunta, opções, resultado e ações necessárias. A marca, o selo de teste,
+> a conta ativa e explicações repetidas não ocupam o fluxo.
+
+> Revisão 1.14.3.24-av120: painéis compactos incorporados ao comando de voz.
+
+> Revisão 1.14.3.23: enquanto a Solicitação por Voz transcreve ou interpreta,
+> o círculo com **X** mostra um anel de processamento e informa a etapa atual;
+> ele continua cancelando o envio ao toque. A busca de produtos também aceita
+> aproximações fonéticas da transcrição, como “Paladin” para **Palladium**, e
+> só pede escolha quando houver mais de uma alternativa segura.
+
+> Revisão 1.14.3.23-av119: indicador de processamento e aproximação fonética
+> incorporados ao comando de voz.
+
+> Revisão 1.14.3.22: ao encerrar a gravação, o áudio é enviado diretamente.
+> Enquanto a Solicitação por Voz transcreve ou entende a fala, o mesmo círculo
+> vermelho vira **Cancelar**; toque nele para interromper o envio, sem card
+> intermediário.
+
+> Revisão 1.14.3.22-av118: cancelamento direto incorporado ao botão circular.
+
+> Revisão 1.14.3.21: ao tocar para encerrar a gravação, o áudio ainda não é
+> transmitido. Use **Enviar áudio** para interpretar ou **Cancelar envio** para
+> descartá-lo. Os avisos da Solicitação por Voz ficam centralizados na tela,
+> inclusive no celular.
+
+> Revisão 1.14.3.21-av117: envio de voz exige decisão explícita e os cards de
+> aviso foram centralizados.
+
+> Revisão 1.14.3.20: o estado ativo do microfone usa a mesma âncora absoluta do
+> acionador azul. A posição não depende mais do tamanho interno do componente,
+> eliminando o deslocamento vertical ao começar a ouvir.
+
+> Revisão 1.14.3.20-av116: recursos de voz atualizados com uma única referência
+> de posição em todos os estados.
+
+> Revisão 1.14.3.19: o microfone da Sala mantém o mesmo centro e o mesmo
+> diâmetro antes, durante e depois da gravação. No celular, todos os estados
+> usam um círculo de 80 px, eliminando o salto visual ao trocar de azul para
+> vermelho ou para processamento.
+
+> Revisão 1.14.3.19-av115: geometria do botão de voz estabilizada em todos os
+> estados da captura.
+
+> Revisão 1.14.3.18: o botão de voz não muda de posição ao iniciar ou encerrar
+> a gravação. A busca usa todos os termos falados no catálogo real e reconhece
+> descrições humanas como “Progressiva Paladium”, oferecendo produtos próximos
+> quando não houver correspondência literal.
+
+> Revisão 1.14.3.18-av114: microfone ancorado e resolução de produtos por nome,
+> SKU, marca, categoria, descrição e similaridade.
+
+> Revisão 1.14.3.17: a Solicitação por Voz preserva cada cliente e produto já
+> selecionado até concluir a operação, entende complementos como “Fernanda
+> influencer” dentro do nome e mostra ondas menores sem recorte. As opções de
+> cliente não exibem observações técnicas de importação.
+
+> Revisão 1.14.3.17-av113: fluxo de desambiguação cumulativo e visual do
+> microfone refinado na Sala de Botões.
+
+> Revisão 1.14.3.16: o microfone da Solicitação por Voz se centraliza
+> automaticamente no espaço entre **Dúvidas e Sugestões** e o botão “+” do menu
+> inferior, inclusive enquanto estiver ouvindo ou processando.
+
+> Revisão 1.14.3.16-av112: a posição do comando passou a usar o espaço vertical
+> disponível da Sala, sem margem fixa.
 
 > Revisão 1.14.3.15: o microfone da Solicitação por Voz ganhou mais espaço
 > acima e fica um pouco mais abaixo de **Dúvidas e Sugestões**, sem mudar o
@@ -1000,7 +1097,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 111 -->
+<!-- avantavendas-asset-revision: 124 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
