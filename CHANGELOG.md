@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.14.3.16.01 - 2026-09-07
+
+- O certificado A1 ativo agora permite repetir explicitamente a consulta segura
+  de disponibilidade da SEFAZ-SP em homologação, sem anexar XML, reservar
+  número ou transmitir nota.
+- O resultado público dessa consulta fica preservado no registro protegido da
+  empresa e reaparece após recarregar a página; nenhum segredo do certificado
+  é incluído no estado ou no evento de auditoria.
+
 ## 1.14.3.16 - 2026-09-07
 
 - A conexão privada de Vendas e Serviços passou a aceitar host, usuário e porta

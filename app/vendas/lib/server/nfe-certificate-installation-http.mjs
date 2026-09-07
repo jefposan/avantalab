@@ -80,8 +80,12 @@ export async function handleNfeCertificateActivationRequest({ request, runtime, 
   return reply(200, {
     ok: true,
     certificate: result.result,
-    message: result.result?.certificateActive
-      ? 'Certificado ativado com segurança.'
+    message: result.result?.certificateActive && result.result?.fiscalConnectionAvailable
+      ? 'Certificado ativo e conexão de homologação confirmada.'
+      : result.result?.certificateActive && result.result?.fiscalConnectionChecked
+        ? 'Certificado ativo. A SEFAZ respondeu, mas o serviço de homologação está indisponível.'
+        : result.result?.certificateActive
+          ? 'Certificado ativo. Não foi possível confirmar a conexão de homologação neste momento.'
       : 'A validação foi concluída, mas ainda existem verificações pendentes.',
   });
 }

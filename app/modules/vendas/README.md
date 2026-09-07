@@ -25,6 +25,11 @@ desligados. Somente a custódia/validação protegida do certificado A1 e o
 `NfeStatusServico` da SEFAZ-SP em homologação podem ser ativados pelas travas de
 ambiente documentadas no runtime.
 
+Com o A1 ativo, **Verificar conexão** repete exclusivamente o
+`NfeStatusServico` em homologação. O resultado público é persistido na evidência
+protegida da empresa e pode ser relido sem reabrir o arquivo nem informar a
+senha; a ação não recebe XML e não participa da emissão.
+
 As seções seguintes preservam o histórico das validações realizadas antes da
 incorporação ao sistema principal.
 

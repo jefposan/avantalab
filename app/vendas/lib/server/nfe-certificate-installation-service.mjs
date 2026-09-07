@@ -18,6 +18,7 @@ function accessError(context) {
 function publicSummary(summary, connection = null) {
   const active = summary?.status === 'active';
   const installed = active || summary?.status === 'pending_validation';
+  const connectionProvided = connection && typeof connection === 'object';
   return Object.freeze({
     status: active ? 'active' : installed ? 'pending_validation' : 'unavailable',
     mode: summary?.mode === 'a1' ? 'Certificado A1' : '',
@@ -31,8 +32,8 @@ function publicSummary(summary, connection = null) {
     validationChecked: Boolean(summary?.validationCheckedAt),
     validationCheckedAt: clean(summary?.validationCheckedAt),
     blockers: Object.freeze(Array.isArray(summary?.blockers) ? summary.blockers.map(clean).filter(Boolean).slice(0, 12) : []),
-    fiscalConnectionChecked: connection?.fiscalConnectionChecked === true,
-    fiscalConnectionAvailable: connection?.fiscalConnectionAvailable === true,
+    fiscalConnectionChecked: connectionProvided ? connection.fiscalConnectionChecked === true : summary?.fiscalConnectionChecked === true,
+    fiscalConnectionAvailable: connectionProvided ? connection.fiscalConnectionAvailable === true : summary?.fiscalConnectionAvailable === true,
     sensitiveMaterialReturned: false,
   });
 }

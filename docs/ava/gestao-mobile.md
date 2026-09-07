@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.14.3.16 -->
+<!-- ava-version: 1.14.3.16.01 -->
+
+> Revisão 1.14.3.16.01: verificação da conexão fiscal alterada somente em
+> Vendas e Serviços Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.14.3.16: correção restrita à conexão privada de Vendas e Serviços
 > Web; sem impacto operacional na Gestão Mobile.

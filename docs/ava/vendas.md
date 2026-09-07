@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.14.3.16 -->
+<!-- ava-version: 1.14.3.16.01 -->
+
+> Revisão 1.14.3.16.01: com o A1 ativo, **Ver certificado > Verificar conexão**
+> consulta somente a disponibilidade da SEFAZ-SP em homologação. A consulta não
+> envia XML, não reserva número e não gera nota. O resultado pertence ao perfil
+> empresarial e continua visível depois de recarregar a página.
 
 > Revisão 1.14.3.16: a instalação do certificado A1 em **Ajustes > Certificado
 > digital** voltou a gravar no cofre do perfil empresarial. O arquivo, a senha e

@@ -23,7 +23,7 @@ function pendingResult(summary, diagnostic = null) {
   });
 }
 
-function activationEvidence(diagnostic, checkedAt) {
+function activationEvidence(diagnostic, checkedAt, connection = fiscalConnectionStatus(null)) {
   return Object.freeze({
     checkedAt: checkedAt.toISOString(),
     ownerVerified: diagnostic.ownerVerified === true,
@@ -37,6 +37,9 @@ function activationEvidence(diagnostic, checkedAt) {
     keyType: clean(diagnostic.keyType).slice(0, 20),
     keyBits: Number.isSafeInteger(diagnostic.keyBits) ? diagnostic.keyBits : 0,
     fingerprint: clean(diagnostic.certificateFingerprint).replace(/[^a-f0-9]/gi, '').toLowerCase(),
+    fiscalConnectionChecked: connection.fiscalConnectionChecked === true,
+    fiscalConnectionAvailable: connection.fiscalConnectionAvailable === true,
+    fiscalConnectionCheckedAt: connection.fiscalConnectionChecked ? checkedAt.toISOString() : '',
     blockers: Object.freeze((diagnostic?.errors || []).map((item) => clean(item?.code)).filter(Boolean).slice(0, 12)),
   });
 }
@@ -62,7 +65,7 @@ export function createNfeCertificateActivationService({ repository, issuerResolv
         const expectedDocument = digits(issuer?.document);
         if (expectedDocument.length !== 14) return { ok: false, errors: [issue('AV-NFE-CERTIFICATE-COMPANY', 'company', 'Complete o CNPJ da empresa antes de validar o certificado.')] };
         const binding = await repository.getPendingBinding({ companyId: context.companyId, certificateId: clean(certificateId) || undefined });
-        if (!binding) return { ok: false, errors: [issue('AV-NFE-CERTIFICATE-PENDING', 'certificate', 'Nenhum certificado instalado aguarda validação.')] };
+        if (!binding) return { ok: false, errors: [issue('AV-NFE-CERTIFICATE-PENDING', 'certificate', 'Nenhum certificado instalado está disponível para verificação.')] };
         const checkedAt = now();
         const diagnostic = await certificateAdapter.inspectBinding({
           secureReference: binding.secureReference,
@@ -78,12 +81,6 @@ export function createNfeCertificateActivationService({ repository, issuerResolv
             : null;
           return { ok: true, result: pendingResult(recorded?.summary || binding.summary, diagnostic), errors: [] };
         }
-        const activated = await repository.activate({
-          companyId: context.companyId,
-          certificateId: binding.certificateId,
-          actorId: context.actorId,
-          evidence: activationEvidence(diagnostic, checkedAt),
-        });
         let connection = fiscalConnectionStatus(null);
         if (availabilityService?.checkAvailability) {
           try {
@@ -95,6 +92,12 @@ export function createNfeCertificateActivationService({ repository, issuerResolv
             connection = fiscalConnectionStatus(availability);
           } catch { /* indisponibilidade do autorizador não invalida o certificado */ }
         }
+        const activated = await repository.activate({
+          companyId: context.companyId,
+          certificateId: binding.certificateId,
+          actorId: context.actorId,
+          evidence: activationEvidence(diagnostic, checkedAt, connection),
+        });
         return {
           ok: true,
           result: Object.freeze({
@@ -109,7 +112,7 @@ export function createNfeCertificateActivationService({ repository, issuerResolv
           errors: [],
         };
       } catch {
-        return { ok: false, errors: [issue('AV-NFE-CERTIFICATE-ACTIVATION', 'certificate', 'Não foi possível concluir a validação do certificado. Ele continuará instalado e inativo.')] };
+        return { ok: false, errors: [issue('AV-NFE-CERTIFICATE-ACTIVATION', 'certificate', 'Não foi possível concluir a verificação. O certificado continuará protegido sem alterar seu estado.')] };
       }
     },
   });

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.14.3.16 -->
+<!-- ava-version: 1.14.3.16.01 -->
+
+> Revisão 1.14.3.16.01: em Vendas e Serviços, um A1 ativo sem conexão fiscal
+> confirmada oferece **Verificar conexão**. A ação consulta apenas o status da
+> SEFAZ-SP em homologação e preserva o resultado no perfil empresarial; nenhuma
+> nota, XML ou numeração fiscal é gerada.
 
 > Revisão 1.14.3.16: corrigida a conexão privada de Vendas e Serviços com o
 > banco do perfil empresarial. O certificado A1 continua sendo instalado em

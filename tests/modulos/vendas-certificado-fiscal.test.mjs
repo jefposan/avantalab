@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { createNfeCertificateActivationService } from '../../app/vendas/lib/server/nfe-certificate-activation-service.mjs';
+import { createNfeCertificateInstallationService } from '../../app/vendas/lib/server/nfe-certificate-installation-service.mjs';
 import {
   createFiscalCertificateActivateRequest,
   parseFiscalCertificateActivateResponse,
@@ -99,6 +100,93 @@ test('revalidação reutiliza o certificado protegido e devolve somente diagnós
   assert.equal('pkcs12' in recorded || 'passphrase' in recorded, false);
 });
 
+test('verificação do certificado ativo registra a disponibilidade da homologação sem transmitir nota', async () => {
+  const companyId = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e';
+  const actorId = '16978fc9-125f-4aa8-a14e-275b4c4ca14d';
+  const certificateId = '48a4ca59-acde-4da2-9019-3ca62254033d';
+  let activationInput = null;
+  let availabilityInput = null;
+  const service = createNfeCertificateActivationService({
+    repository: {
+      async getPendingBinding() {
+        return {
+          certificateId,
+          secureReference: `fiscal-certificate:${companyId}:${certificateId}`,
+          expectedMode: 'Certificado A1',
+          summary: { id: certificateId, status: 'active' },
+        };
+      },
+      async activate(input) {
+        activationInput = input;
+        return { summary: { id: certificateId, status: 'active', fiscalConnectionChecked: true, fiscalConnectionAvailable: true }, reused: true };
+      },
+    },
+    issuerResolver: async () => ({ document: '12345678000195' }),
+    certificateAdapter: {
+      inspectBinding: async () => ({
+        valid: true,
+        realCertificateInspected: true,
+        readyForXmlSignature: true,
+        readyForMutualTls: true,
+        ownerVerified: true,
+        validityVerified: true,
+        keyUsageVerified: true,
+        chainVerified: true,
+        rootPinned: true,
+        revocationVerified: true,
+        signingAvailable: true,
+        mutualTlsAvailable: true,
+        keyType: 'RSA',
+        keyBits: 2048,
+        certificateFingerprint: 'a'.repeat(64),
+        errors: [],
+      }),
+    },
+    availabilityService: {
+      async checkAvailability(input) {
+        availabilityInput = input;
+        return { valid: true, responseReceived: true, serviceOperational: true, transmissionAttempted: false };
+      },
+    },
+    now: () => new Date('2026-09-07T17:30:00.000Z'),
+  });
+  const result = await service.activate({ context: { companyId, actorId, moduleId: 'vendas', active: true, moduleActive: true, effectivePermissions: { 'fiscal.configure': true } } });
+  assert.equal(result.ok, true);
+  assert.equal(result.result.certificateActive, true);
+  assert.equal(result.result.fiscalConnectionChecked, true);
+  assert.equal(result.result.fiscalConnectionAvailable, true);
+  assert.equal(availabilityInput.secureReference, `fiscal-certificate:${companyId}:${certificateId}`);
+  assert.equal(activationInput.evidence.fiscalConnectionChecked, true);
+  assert.equal(activationInput.evidence.fiscalConnectionAvailable, true);
+  assert.equal(activationInput.evidence.fiscalConnectionCheckedAt, '2026-09-07T17:30:00.000Z');
+  assert.equal('xml' in availabilityInput || 'document' in availabilityInput, false);
+});
+
+test('consulta posterior recupera o estado persistido da conexão fiscal', async () => {
+  const companyId = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e';
+  const actorId = '16978fc9-125f-4aa8-a14e-275b4c4ca14d';
+  const service = createNfeCertificateInstallationService({
+    repository: {
+      install: async () => { throw new Error('não deve instalar'); },
+      getActiveSummary: async () => ({
+        status: 'active',
+        mode: 'a1',
+        subjectDocument: '12345678000195',
+        fiscalConnectionChecked: true,
+        fiscalConnectionAvailable: true,
+      }),
+    },
+    issuerResolver: async () => ({ document: '12345678000195' }),
+    prepareForStorage: async () => ({ ok: false }),
+  });
+  const result = await service.status({ context: { companyId, actorId, moduleId: 'vendas', active: true, moduleActive: true, effectivePermissions: { 'fiscal.configure': true } } });
+  assert.equal(result.ok, true);
+  assert.equal(result.result.certificateActive, true);
+  assert.equal(result.result.fiscalConnectionChecked, true);
+  assert.equal(result.result.fiscalConnectionAvailable, true);
+  assert.equal(result.result.sensitiveMaterialReturned, false);
+});
+
 test('ponte de revalidação rejeita segredos e normaliza somente bloqueios públicos', () => {
   const request = createFiscalCertificateActivateRequest({ requestId: 'certificate-activate:12345678' });
   assert.deepEqual(request, {
@@ -126,6 +214,8 @@ test('ponte de revalidação rejeita segredos e normaliza somente bloqueios púb
 test('interface oferece revalidação sem reabrir automaticamente o formulário de arquivo', async () => {
   const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
   assert.match(source, /Verificar novamente/);
+  assert.match(source, /Verificar conexão/);
+  assert.match(source, /!persistedCertificate\?\.fiscalConnectionAvailable/);
   assert.match(source, /companyRegistration\.ready && !certificateInstalled/);
   assert.match(source, /createFiscalCertificateActivateRequest/);
   assert.match(source, /parseFiscalCertificateActivateResponse/);
@@ -163,11 +253,12 @@ test('preparação do banco local inclui custódia e revisões fiscais imutávei
 });
 
 test('runtime fiscal usa as âncoras ICP-Brasil oficiais sem expor configuração na tela', async () => {
-  const [runtime, interfaceSource, crlChecker, vault] = await Promise.all([
+  const [runtime, interfaceSource, crlChecker, vault, protectedStorage] = await Promise.all([
     readFile('app/vendas/lib/server/fiscal-status-runtime.mjs', 'utf8'),
     readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8'),
     readFile('app/vendas/lib/server/icp-brasil-crl-checker.mjs', 'utf8'),
     readFile('app/vendas/lib/server/nfe-certificate-vault.mjs', 'utf8'),
+    readFile('app/vendas/lib/server/nfe-certificate-protected-storage.mjs', 'utf8'),
   ]);
   assert.match(runtime, /resolveIcpBrasilTrustedRootFingerprints/);
   assert.match(runtime, /createIcpBrasilCrlRevocationChecker/);
@@ -201,7 +292,9 @@ test('runtime fiscal usa as âncoras ICP-Brasil oficiais sem expor configuraçã
   assert.match(crlChecker, /asn1\.offset !== der\.byteLength/);
   assert.doesNotMatch(crlChecker, /CertificateRevocationList\.fromBER\(crlDer\(body\)\)/);
   assert.match(vault, /checkedAt\.getTime\(\) <= now\.getTime\(\) \+ REVOCATION_CLOCK_SKEW_MS/);
-  assert.match(interfaceSource, /A conexão fiscal será confirmada automaticamente ao emitir/);
+  assert.match(interfaceSource, /Verifique a conexão segura antes de iniciar a homologação/);
+  assert.match(protectedStorage, /certificate\.connection_checked/);
+  assert.match(protectedStorage, /fiscalConnectionAvailable/);
   assert.doesNotMatch(interfaceSource, /FISCAL_ICP_BRASIL_TRUSTED_ROOT_FINGERPRINTS|âncora de confiança|fingerprint da raiz|pacote oficial.*ICP-Brasil|SHA-512/i);
 });
 

@@ -136,6 +136,9 @@ function mapSummary(row) {
     installedAt: row.installed_at instanceof Date ? row.installed_at.toISOString() : String(row.installed_at || ''),
     activatedAt: row.activated_at instanceof Date ? row.activated_at.toISOString() : String(row.activated_at || ''),
     validationCheckedAt: row.validation_checked_at instanceof Date ? row.validation_checked_at.toISOString() : String(row.validation_checked_at || ''),
+    fiscalConnectionChecked: validationEvidence?.fiscalConnectionChecked === true,
+    fiscalConnectionAvailable: validationEvidence?.fiscalConnectionAvailable === true,
+    fiscalConnectionCheckedAt: clean(validationEvidence?.fiscalConnectionCheckedAt),
     blockers: Object.freeze(Array.isArray(validationEvidence?.blockers)
       ? validationEvidence.blockers.map(clean).filter(Boolean).slice(0, 12)
       : []),
@@ -207,7 +210,7 @@ export function createPostgresNfeCertificateProtectedRepository({ pool, cipher }
       if (certificateId) values.push(certificateId);
       const result = await pool.query(`
         select id,company_id,document_type,mode,status,secure_reference,fingerprint_sha256,subject_document,valid_from,valid_to,installed_at,activated_at,validation_checked_at,validation_evidence
-        from fiscal_private.certificates where company_id=$1 ${certificateFilter} and document_type='nfe' and status='pending_validation'
+        from fiscal_private.certificates where company_id=$1 ${certificateFilter} and document_type='nfe' and status in ('pending_validation','active')
         order by installed_at desc limit 1
       `, values);
       const row = result.rows?.[0];
@@ -225,6 +228,9 @@ export function createPostgresNfeCertificateProtectedRepository({ pool, cipher }
         keyUsageVerified: true, chainVerified: true, rootPinned: true, revocationVerified: true,
         signingAvailable: true, mutualTlsAvailable: true, keyType: clean(evidence.keyType).slice(0, 20),
         keyBits: Number.isSafeInteger(evidence.keyBits) ? evidence.keyBits : 0, fingerprint,
+        fiscalConnectionChecked: evidence?.fiscalConnectionChecked === true,
+        fiscalConnectionAvailable: evidence?.fiscalConnectionAvailable === true,
+        fiscalConnectionCheckedAt: evidence?.fiscalConnectionChecked === true ? clean(evidence.fiscalConnectionCheckedAt) : '',
       };
       const client = typeof pool.connect === 'function' ? await pool.connect() : pool;
       try {
@@ -236,8 +242,22 @@ export function createPostgresNfeCertificateProtectedRepository({ pool, cipher }
         const row = current.rows?.[0];
         if (!row || !['pending_validation', 'active'].includes(row.status) || clean(row.fingerprint_sha256) !== fingerprint) throw new Error('O certificado pendente mudou durante a validação.');
         if (row.status === 'active') {
+          const updated = await client.query(`
+            update fiscal_private.certificates set validation_checked_at=$3,validation_evidence=$4::jsonb
+            where company_id=$1 and id=$2 and document_type='nfe' and status='active'
+            returning id,company_id,document_type,mode,status,fingerprint_sha256,subject_document,valid_from,valid_to,installed_at,activated_at,validation_checked_at,validation_evidence
+          `, [companyId, certificateId, publicEvidence.checkedAt, JSON.stringify(publicEvidence)]);
+          if (updated.rowCount !== 1) throw new Error('O certificado ativo mudou durante a verificação.');
+          await client.query(`
+            insert into fiscal_private.certificate_events (company_id,certificate_id,event_type,actor_id,public_payload)
+            values ($1,$2,'certificate.connection_checked',$3,$4::jsonb)
+          `, [companyId, certificateId, actorId, JSON.stringify({
+            checkedAt: publicEvidence.checkedAt,
+            fiscalConnectionChecked: publicEvidence.fiscalConnectionChecked,
+            fiscalConnectionAvailable: publicEvidence.fiscalConnectionAvailable,
+          })]);
           await client.query('commit');
-          return { summary: mapSummary(row), reused: true };
+          return { summary: mapSummary(updated.rows[0]), reused: true };
         }
         const updated = await client.query(`
           update fiscal_private.certificates set status='active',validation_checked_at=$3,activated_at=$3,validation_evidence=$4::jsonb
