@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.15.0 -->
+<!-- ava-version: 1.15.0.01 -->
+
+> Revisão 1.15.0.01: limpeza de metadados técnicos de clientes aplicada somente
+> ao banco do AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.15.0: auditoria e interpretação ampliada da Solicitação por Voz
 > aplicadas somente à Sala de Botões do AvantaVendas; sem impacto operacional na

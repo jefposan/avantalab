@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.15.0.01 - 2026-09-07
+
+- Concluída no Supabase a limpeza restrita das observações técnicas da
+  importação MySQL legada. Observações manuais e todos os demais dados dos
+  clientes foram preservados.
+
 ## 1.15.0 - 2026-09-07
 
 - A Solicitação por Voz passou por auditoria e agora entende pedido de venda,

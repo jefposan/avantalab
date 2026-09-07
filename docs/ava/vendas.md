@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.15.0 -->
+<!-- ava-version: 1.15.0.01 -->
+
+> Revisão 1.15.0.01: observações técnicas deixadas pelo importador MySQL legado
+> foram removidas do cadastro de clientes. Anotações manuais permanecem e são as
+> únicas observações mostradas como apoio na desambiguação por voz.
 
 > Revisão 1.15.0: a **Solicitação por Voz** entende pedido, consignado e
 > pagamento como operações separadas. A fala é transcrita com modelo

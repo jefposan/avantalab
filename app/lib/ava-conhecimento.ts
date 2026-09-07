@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.15.0.01: observações técnicas de importação foram limpas;
+// somente notas manuais podem apoiar a identificação de clientes por voz.
 // Revisado na versão 1.15.0: a voz diferencia pedido, consignado e pagamento,
 // usa transcrição especializada e resolve nomes aproximados no catálogo da conta.
 // Revisado na versão 1.14.3.27: novas gravações e pendências de voz são separadas.
