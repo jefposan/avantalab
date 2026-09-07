@@ -1,0 +1,25 @@
+export type FiscalDocumentType = 'nfe' | 'nfce' | 'nfse';
+export type FiscalMatrixRule = {
+  id: string;
+  name: string;
+  documentType: FiscalDocumentType;
+  priority: number;
+  operation: string;
+  destination: string;
+  recipientProfile: string;
+  presence: string;
+  issuePurpose: string;
+  operationNature: string;
+  cfopOverride: string;
+  serviceIncidenceMode: string;
+  requiresStateRegistration: boolean;
+  requiresMunicipalIncidence: boolean;
+  active: boolean;
+  reviewed: boolean;
+};
+export type FiscalMatrix = { version: string; reviewedAt: string; reviewedBy: string; rules: FiscalMatrixRule[] };
+export const FISCAL_MATRIX_REFERENCE: '2026.08';
+export function createDefaultFiscalMatrix(): FiscalMatrix;
+export function normalizeFiscalMatrix(input: unknown): FiscalMatrix;
+export function validateFiscalMatrix(input: unknown, documentScope?: FiscalDocumentType[]): { matrix: FiscalMatrix; ready: boolean; errors: string[]; warnings: string[]; activeCount: number; reviewedCount: number; documentScope: FiscalDocumentType[] };
+export function resolveFiscalMatrixRule(input: { matrix: unknown; documentType: FiscalDocumentType; operation: string; destination: string; recipientProfile: string; presence: string }): { matrixReference: string; context: { operation: string; destination: string; recipientProfile: string; presence: string }; matched: boolean; reviewed: boolean; rule: FiscalMatrixRule | null; reason: string };

@@ -17,8 +17,12 @@ const semCachePwa = [
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  turbopack: {
+    root: process.cwd(),
+  },
   outputFileTracingIncludes: {
     "/avantavendas/recursos/*": ["./app/avantavendas/sistema/**/*"],
+    "/api/modulos/vendas/**/*": ["./schemas/nfe/**/*"],
   },
   async redirects() {
     return [

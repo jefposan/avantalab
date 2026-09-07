@@ -4,6 +4,7 @@ import { calcularFimPeriodoPago, STATUS_FATURA_PAGA } from '../../../../lib/cobr
 import { autenticarPerfilCobranca, resolverEstadoAcesso } from '../../../../lib/cobranca-servidor';
 import { assinaturaVigente } from '../../../../lib/cobranca';
 import { normalizarPlanoComercial, VALOR_MODULO_AVULSO_MENSAL } from '../../../../lib/planos-comerciais';
+import { MENSAGEM_MODULO_EM_FINALIZACAO, moduloDisponivelParaEmpresa } from '../../../../lib/modulos-disponibilidade';
 
 export const runtime = 'nodejs';
 
@@ -25,6 +26,9 @@ export async function POST(request: Request) {
 
   const acesso = await autenticarPerfilCobranca(request, empresaId, true);
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
+  if (!moduloDisponivelParaEmpresa(moduloId, empresaId)) {
+    return NextResponse.json({ erro: true, mensagem: MENSAGEM_MODULO_EM_FINALIZACAO }, { status: 404 });
+  }
 
   const estado = await resolverEstadoAcesso(empresaId);
   if (!estado || !assinaturaVigente(estado) || normalizarPlanoComercial(estado.plano) !== 'business') {
@@ -34,12 +38,24 @@ export async function POST(request: Request) {
   const { data: perfil } = await acesso.db.from('empresas')
     .select('assinatura_origem_empresa_id').eq('id', empresaId).maybeSingle();
   const empresaCobrancaId = perfil?.assinatura_origem_empresa_id || empresaId;
-  const [{ data: modulo }, { data: assinaturaPrincipal }, { data: existente }] = await Promise.all([
-    acesso.db.from('modulos').select('id, nome, disponivel').eq('id', moduloId).maybeSingle(),
+  const [{ data: modulo }, { data: empresa }, { data: custos }, { data: assinaturaPrincipal }, { data: existente }] = await Promise.all([
+    acesso.db.from('modulos').select('id, nome, disponivel, perfis').eq('id', moduloId).maybeSingle(),
+    acesso.db.from('empresas').select('tipo_perfil').eq('id', empresaId).maybeSingle(),
+    moduloId === 'vendas'
+      ? acesso.db.from('empresa_modulos').select('ativo,expira_em').eq('empresa_id', empresaId).eq('modulo_id', 'custos').maybeSingle()
+      : Promise.resolve({ data: null }),
     acesso.db.from('assinaturas').select('gateway_customer_id').eq('empresa_id', empresaCobrancaId).maybeSingle(),
     acesso.db.from('assinaturas_modulos').select('status, gateway_subscription_id, valido_ate').eq('empresa_id', empresaId).eq('modulo_id', moduloId).maybeSingle(),
   ]);
   if (!modulo?.disponivel) return NextResponse.json({ erro: true, mensagem: 'Módulo indisponível.' }, { status: 404 });
+  const tipoPerfil = empresa?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
+  if (!Array.isArray(modulo.perfis) || !modulo.perfis.includes(tipoPerfil)) {
+    return NextResponse.json({ erro: true, mensagem: 'Módulo indisponível para este tipo de perfil.' }, { status: 404 });
+  }
+  const custosExpirado = custos?.expira_em && new Date(custos.expira_em) <= new Date();
+  if (moduloId === 'vendas' && (custos?.ativo !== true || custosExpirado)) {
+    return NextResponse.json({ erro: true, mensagem: 'Instale primeiro o módulo Custos e Precificação neste perfil.' }, { status: 409 });
+  }
   if (!assinaturaPrincipal?.gateway_customer_id) return NextResponse.json({ erro: true, mensagem: 'Não foi possível localizar o cadastro de cobrança deste perfil.' }, { status: 409 });
 
   if (existente?.status === 'ativa' || existente?.status === 'inadimplente') {

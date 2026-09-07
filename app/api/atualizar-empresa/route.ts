@@ -101,20 +101,20 @@ export async function POST(request: Request) {
             .from('assinaturas_loja')
             .select('status, valido_ate')
             .eq('user_id', user.id)
-            .eq('loja', 'apple_app_store')
+            .in('loja', ['apple_app_store', 'google_play'])
             .eq('entitlement_id', 'pessoal_premium')
-            .maybeSingle(),
+            .order('atualizado_em', { ascending: false }),
         ]);
         const acessoLocalVigente = assinatura?.status === 'ativa'
           || (assinatura?.status === 'trial' && !!assinatura.trial_fim && new Date(assinatura.trial_fim) > agora)
           || (assinatura?.status === 'cortesia' && (!assinatura.valido_ate || new Date(assinatura.valido_ate) > agora))
           || ((assinatura?.status === 'cancelada' || assinatura?.status === 'inadimplente')
             && !!assinatura.valido_ate && new Date(assinatura.valido_ate) > agora);
-        const acessoAppleVigente = empresaAtual.tipo_perfil === 'pessoal'
-          && !!assinaturaLoja?.valido_ate
-          && ['ativa', 'cancelada', 'inadimplente'].includes(assinaturaLoja.status || '')
-          && new Date(assinaturaLoja.valido_ate) > agora;
-        if (acessoLocalVigente || acessoAppleVigente || assinatura?.gateway_subscription_id) {
+        const acessoLojaVigente = empresaAtual.tipo_perfil === 'pessoal'
+          && (assinaturaLoja || []).some((item) => !!item.valido_ate
+            && ['ativa', 'cancelada', 'inadimplente'].includes(item.status || '')
+            && new Date(item.valido_ate) > agora);
+        if (acessoLocalVigente || acessoLojaVigente || assinatura?.gateway_subscription_id) {
           return respostaErro('O tipo do perfil nao pode ser alterado enquanto houver uma assinatura vigente ou vinculada.', 409);
         }
       }

@@ -1,6 +1,300 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.11 -->
+<!-- ava-version: 1.14.3.14 -->
+
+> Revisão 1.14.3.14: comando circular incorporado à Sala de Botões do
+> AvantaVendas, sem navegação para outra página; sem impacto operacional na
+> Gestão Mobile.
+
+> Revisão 1.14.3.13: ativação da Solicitação por Voz aplicada somente ao
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.12: confirmação de cadastros, recebimentos, estoque e relatório
+> real do cliente ajustados somente em Vendas e Serviços Web; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.14.3.11: comprovação de gravação aplicada somente ao laboratório
+> Web de voz; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.10: isolamento de perfil, contadores e prontidão fiscal
+> ajustado somente no módulo Web Vendas e Serviços; sem impacto operacional na
+> Gestão Mobile.
+
+> Revisão 1.14.3.09: reforço visual das ondas do microfone aplicado somente ao
+> laboratório Web de voz; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.08: ondas reativas ao sinal real do microfone aplicadas
+> somente ao laboratório Web de voz; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.07: correção da escolha de clientes e produtos ambíguos
+> aplicada somente ao laboratório Web de voz; sem impacto operacional na Gestão
+> Mobile.
+
+> Revisão 1.14.3.06: tratamento da indisponibilidade do laboratório externo
+> aplicado somente à rota experimental Web; sem impacto operacional na Gestão
+> Mobile.
+
+> Revisão 1.14.3.05: isolamento externo da interface experimental de voz e
+> ponte autenticada aplicados somente à rota de laboratório; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.14.3.04: revalidação e persistência da chave do certificado fiscal
+> aplicadas somente ao módulo Web Vendas e Serviços; sem impacto operacional na
+> Gestão Mobile.
+
+> Revisão 1.14.3.03: laboratório oculto de solicitação por voz criado para o
+> Avanta Vendas, sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.02: correção da sessão e das permissões no módulo Web Vendas e
+> Serviços; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3.01: saneamento de lint do módulo Web Vendas e Serviços; sem
+> impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.3: persistência completa e anexos privados de ordens de serviço
+> aplicados somente ao módulo Web Vendas e Serviços; sem impacto operacional na
+> Gestão Mobile.
+
+> Revisão 1.14.2: estornos integrados de pedidos e serviços aplicados somente ao
+> módulo Web Vendas e Serviços; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.1: ciclo transacional de ordens de serviço aplicado somente ao
+> módulo Web Vendas e Serviços; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.14.0: integração operacional e financeira do módulo Web Vendas e
+> Serviços concluída sem alterar os fluxos da Gestão Mobile ou do Conteúdo
+> AvantaVendas.
+
+> Revisão 1.13.0.92: retorno contextual entre Vendas e Custos e camada visual do
+> menu Novo aplicados somente à experiência Web local; sem impacto operacional
+> na Gestão Mobile.
+
+> Revisão 1.13.0.91: aplicação da cor primária na página Web local de Vendas e
+> Serviços; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.90: novos atalhos de cadastro no menu da página Web local de
+> Vendas e Serviços; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.89: simplificação do cabeçalho de Vendas e Serviços aplicada
+> somente à página Web local; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.88: em **Menu > Sistemas**, o botão agora se chama **Conteúdo
+> AvantaVendas**. O controle de instalação aparece como **Módulo Conteúdo
+> AvantaVendas** e libera a publicação de novidades, catálogo e divulgação.
+
+> Revisão 1.13.0.87: a área empresarial usada para publicar novidades,
+> catálogo e materiais de divulgação passa a se chamar **Conteúdo
+> AvantaVendas**. O nome separa essa função do módulo Web **Vendas e Serviços**;
+> rotas, permissões e dados foram preservados.
+
+> Revisão 1.13.0.86: o botão **Acessar** após a instalação de módulos de página
+> total é exclusivo da Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.85: Vendas e Serviços foi introduzido somente na Gestão Web,
+> com piloto restrito ao perfil empresarial Tridium; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.84: a nova ordem de CNPJ e CEP foi aplicada somente ao
+> protótipo do futuro Vendas Web; sem impacto operacional na Gestão Mobile ou
+> no AvantaVendas.
+
+> Revisão 1.13.0.83: o conector interno de cancelamento foi preparado somente
+> para a futura NF-e Web; sem impacto operacional na Gestão Mobile ou no
+> AvantaVendas.
+
+> Revisão 1.13.0.82: interação e adaptação móvel da Constelação Avanta
+> refinadas no protótipo isolado; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.81: brilho e profundidade do protótipo Constelação Avanta
+> refinados; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.80: o cancelamento de NF-e autorizada foi estruturado somente
+> no futuro Vendas Web; sem impacto operacional na Gestão Mobile ou no
+> AvantaVendas.
+
+> Revisão 1.13.0.79: marca completa e movimento das estrelas no protótipo
+> Constelação Avanta; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.78: o refinamento do protótipo isolado da Constelação Avanta
+> não altera fluxos ou orientações da Gestão Mobile.
+
+> Revisão 1.13.0.77: o cenário local demonstrativo de rejeição 778 foi criado
+> somente no protótipo do futuro Vendas Web; sem impacto operacional na Gestão
+> Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.76: o protótipo público e isolado da Constelação Avanta não
+> altera fluxos ou orientações operacionais da Gestão Mobile.
+
+> Revisão 1.13.0.75: a revisão objetiva de rejeição fiscal foi conectada apenas
+> ao futuro Vendas Web; sem impacto operacional na Gestão Mobile ou no
+> AvantaVendas.
+
+> Revisão 1.13.0.74: o fluxo versionado de correção de NF-e rejeitada foi
+> preparado apenas no backend local do futuro Vendas Web; sem impacto
+> operacional na Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.73: a orientação de rejeição e fila fiscal esgotada foi
+> corrigida somente no futuro Vendas Web; sem impacto operacional na Gestão
+> Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.72: os ensaios de resiliência fiscal ocorreram somente no
+> backend local do futuro Vendas Web; sem impacto operacional na Gestão Mobile
+> ou no AvantaVendas.
+
+> Revisão 1.13.0.71: o ensaio integral da NF-e ocorreu somente no backend local
+> do futuro Vendas Web, sem certificado real ou rede; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.70: o orquestrador fiscal bloqueado foi preparado somente no
+> backend local do futuro Vendas Web; sem impacto operacional na Gestão Mobile
+> ou no AvantaVendas.
+
+> Revisão 1.13.0.69: os transportes de recibo e protocolo foram preparados
+> somente no backend local do futuro Vendas Web; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.68: o transporte de autorização em homologação foi preparado
+> somente no backend local do futuro Vendas Web; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.67: a conferência automática da conexão fiscal foi ligada
+> somente ao fluxo de certificado do laboratório Web do futuro Vendas; sem
+> impacto operacional na Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.66: o transporte mTLS de diagnóstico foi preparado somente no
+> backend do laboratório Web do futuro Vendas; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.65: o assinador protegido foi conectado somente ao backend do
+> laboratório Web do futuro Vendas; sem impacto operacional na Gestão Mobile ou
+> no AvantaVendas.
+
+> Revisão 1.13.0.64: a reconstrução automática da cadeia pública do A1 foi
+> adicionada somente ao backend do laboratório Web do futuro Vendas; sem
+> impacto operacional na Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.63: a validação automática de LCR foi adicionada somente ao
+> backend do laboratório Web do futuro Vendas; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.62: as âncoras oficiais ICP-Brasil foram incorporadas somente
+> ao backend do laboratório Web do futuro Vendas; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.61: a ativação protegida do certificado foi preparada somente
+> no backend do laboratório Web do futuro Vendas; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.60: a instalação autenticada do certificado foi conectada
+> somente ao laboratório Web do futuro Vendas; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.59: a custódia protegida do certificado foi preparada somente
+> para o laboratório Web do futuro Vendas; sem impacto operacional na Gestão
+> Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.58: o fluxo automático de certificado, assinatura e transmissão
+> foi ajustado somente no laboratório Web do futuro Vendas; sem impacto
+> operacional na Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.57: o comando protegido de assinatura foi ligado somente ao
+> laboratório Web do futuro Vendas; sem impacto operacional na Gestão Mobile
+> ou no AvantaVendas.
+
+> Revisão 1.13.0.56: a conferência do documento definitivo foi adicionada
+> somente ao laboratório Web do futuro Vendas; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.55: a confirmação local de série e número da futura NF-e foi
+> adicionada somente ao laboratório Web de Vendas; sem impacto operacional na
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.54: o fluxo comercial e a validação da NF-e foram comprovados
+> somente no laboratório Web local; sem impacto operacional na Gestão Mobile ou
+> no AvantaVendas.
+
+> Revisão 1.13.0.53: a organização e a publicação das regras fiscais foram
+> ajustadas somente no laboratório Web do futuro Vendas; sem impacto
+> operacional na Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.52: a validação autenticada das regras fiscais ocorreu somente
+> no laboratório Web local; sem impacto operacional na Gestão Mobile ou no
+> AvantaVendas.
+
+> Revisão 1.13.0.51: a publicação protegida das regras fiscais pertence somente
+> ao laboratório Web do futuro Vendas; sem impacto operacional na Gestão Mobile
+> ou no AvantaVendas.
+
+> Revisão 1.13.0.50: o repositório local de regras fiscais pertence somente ao
+> laboratório Web do futuro Vendas; sem impacto operacional no aplicativo
+> Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.49: a separação entre abertura e validação da futura NF-e
+> pertence somente ao laboratório Web de Vendas; sem impacto operacional no
+> aplicativo Gestão Mobile ou no AvantaVendas.
+
+> Revisão 1.13.0.48: a ponte protegida de permissões pertence somente ao
+> laboratório Web do futuro Vendas e não altera telas, dados ou comportamento
+> da Gestão Mobile.
+
+> Revisão 1.13.0.47: a unificação das permissões do futuro Vendas pertence ao
+> laboratório Web e não altera telas, dados ou comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.46: a persistência candidata do pedido pertence somente ao
+> laboratório Web do futuro Vendas e não altera telas, dados ou comportamento
+> da Gestão Mobile.
+
+> Revisão 1.13.0.45: a preparação autenticada da futura NF-e pertence somente
+> ao laboratório Web e não altera telas, dados ou comportamento da Gestão
+> Mobile.
+
+> Revisão 1.13.0.44: no app Android, a assinatura **Pessoal Premium** é feita,
+> restaurada e gerenciada pelo Google Play. Planos Business e Business Pro não
+> são vendidos no aplicativo: contas empresariais já contratadas continuam
+> acessíveis. Em **Menu > Configurações**, **Excluir este perfil** mantém o
+> login e oferece restauração por 30 dias; **Excluir conta AvantaLab** abre a
+> solicitação de exclusão definitiva da Gestão.
+
+> Revisão 1.13.0.43: a listagem persistida da futura Central Fiscal pertence
+> somente ao laboratório Web e não altera telas, dados ou comportamento da
+> Gestão Mobile.
+
+> Revisão 1.13.0.42: a ponte visual autenticada pertence somente ao laboratório
+> Web do futuro Vendas e não altera telas, dados ou comportamento da Gestão
+> Mobile.
+
+> Revisão 1.13.0.41: a nova borda autenticada pertence ao futuro Vendas Web e
+> não altera telas, dados ou comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.40: a conclusão local do XML autorizado e do DANFE da futura
+> NF-e Web não altera telas, dados ou comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.39: o ensaio local de envio controlado da futura NF-e Web não
+> altera telas, dados ou comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.38: a assinatura protegida da futura NF-e Web foi exercitada
+> somente no laboratório local e não altera telas, dados ou comportamento da
+> Gestão Mobile.
+
+> Revisão 1.13.0.37: a prova local do XML e da assinatura da futura NF-e Web
+> não altera telas, dados ou comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.36: a reserva transacional de número da futura NF-e Web foi
+> exercitada somente no laboratório local e não altera telas, dados ou
+> comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.35: a validação local de pré-XML da futura NF-e Web não altera
+> telas, dados ou comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.34: a nova ponte fiscal existe somente no laboratório Web
+> local do futuro Vendas e não altera telas, dados ou comportamento da Gestão
+> Mobile.
+
+> Revisão 1.13.0.33: o faturamento transacional candidato pertence ao futuro
+> Vendas Web e não altera dados, telas ou comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.32: o novo ciclo local de confirmação e reserva de pedidos
+> pertence ao futuro Vendas Web e não altera a Gestão Mobile.
 
 > Revisão 1.13.0.31.11: o card **Saldo do mês** usa o azul escuro
 > institucional. Os valores e a forma de consultar Inicial, Final e Previsto
@@ -112,6 +406,81 @@
 > Revisão 1.13.0.12: a confirmação imediata no botão de pedidos e recebimentos
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.
 
+> Revisão 1.13.0.31: a prova local de estoque dos materiais da futura Ordem de
+> Serviço Web não altera telas, dados ou comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.30: a nova prova de Ordem de Serviço pertence ao futuro módulo
+> Web e não altera telas, dados ou comportamento da Gestão Mobile.
+
+> Revisão 1.13.0.29: a persistência de orçamentos e pedidos pertence ao futuro
+> módulo Web e foi exercitada somente no PostgreSQL local. Não houve mudança de
+> dados, telas ou comportamento na Gestão Mobile.
+
+> Revisão 1.13.0.28: a gravação server-side de clientes foi validada somente no
+> laboratório Web local do futuro Vendas. Não houve mudança de tela, dados ou
+> comportamento na Gestão Mobile.
+
+> Revisão 1.13.0.27: o novo rascunho comercial pertence ao futuro módulo Web
+> Vendas e Serviços e foi testado apenas no Supabase local descartável. Não houve
+> mudança de dados, telas ou comportamento na Gestão Mobile.
+
+> Revisão 1.13.0.26: a ponte somente leitura entre Custos e Precificação e o
+> protótipo de Vendas existe apenas no laboratório Web local. Não houve tela,
+> menu, catálogo, estoque ou mudança operacional na Gestão Mobile.
+
+> Revisão 1.13.0.25: o contrato e a matriz granular do futuro Vendas e Serviços
+> foram incorporados somente à estrutura server-side da Gestão. Não houve item
+> de menu, tela, migração remota ou mudança operacional na Gestão Mobile.
+
+> Revisão 1.13.0.24: sessão, empresa ativa e exceções de acesso do futuro Vendas
+> foram validadas somente no laboratório separado. Não houve mudança operacional
+> nem conexão remota na Gestão Mobile publicada.
+
+> Revisão 1.13.0.23: armazenamento, acesso e restauração fiscal privados foram
+> validados apenas no laboratório local do protótipo separado. A Gestão Mobile
+> não ganhou download fiscal nem conexão remota e segue sem impacto operacional.
+
+> Revisão 1.13.0.22: retenção, backup e acesso auditado aos futuros arquivos
+> fiscais foram estruturados apenas no protótipo separado, sem impacto
+> operacional na Gestão Mobile e sem conexão remota.
+
+> Revisão 1.13.0.21: a reconciliação da guarda fiscal foi validada apenas no
+> laboratório do protótipo separado, sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.20: a guarda privada de XML e DANFE foi validada somente no
+> laboratório do protótipo separado, sem mudança operacional na Gestão Mobile.
+
+> Revisão 1.13.0.19: backup, restauração e concorrência do laboratório fiscal
+> foram validados no protótipo separado, sem acesso ao banco remoto e sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.13.0.18: o laboratório fiscal do protótipo separado foi executado em
+> PostgreSQL/Supabase local, sem vínculo remoto e sem impacto operacional na
+> Gestão Mobile.
+
+> Revisão 1.13.0.17: o adaptador transacional e a fila de recuperação fiscal
+> foram preparados no protótipo separado de Vendas e Serviços, sem aplicar
+> migração e sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.16: o ciclo transacional e o rascunho privado de banco fiscal
+> foram estruturados no protótipo separado de Vendas e Serviços, sem aplicar
+> migração e sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.15: o DANFE A4 foi estruturado e validado no protótipo separado
+> de Vendas e Serviços; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.13.0.14: consulta de recibo/protocolo e montagem segura do `procNFe`
+> foram estruturadas no protótipo separado de Vendas e Serviços; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.13.0.13: a preparação server-side da tentativa de NF-e foi
+> estruturada no protótipo separado de Vendas e Serviços; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.13.0.12: o controle de séries, próximo número e inutilização foi
+> estruturado no protótipo separado de Vendas e Serviços; sem impacto
+> operacional na Gestão Mobile.
+
 > Revisão 1.13.0.11: a geração automática de códigos e a planilha conjunta de
 > tabelas de preços pertencem à Gestão Web; sem impacto operacional na Gestão
 > Mobile.
@@ -198,7 +567,7 @@
 > somente para consulta e ativação por gestores. Cada aplicativo é aberto pelo
 > usuário de forma independente.
 
-> Revisão 1.12.1.07: em **Sistemas > Conteúdo do Vendas > Divulgação**, a
+> Revisão 1.12.1.07: em **Sistemas > Conteúdo AvantaVendas > Divulgação**, a
 > pasta aberta mostra seus materiais publicados e subpastas antes da relação
 > completa de pastas. **Voltar** sobe um nível e **Adicionar** preserva o envio
 > atual de fotos, vídeos e PDFs.
@@ -357,9 +726,6 @@
 > Revisão 1.8.5.03: a trilha visual do Laboratório de Marcas passou a usar
 > saltos curvos decorativos; sem alteração operacional no aplicativo.
 
-> Revisão 1.13.0.19: na landing pública, o card do AvantaVendas também oferece
-> o link oficial da Google Play; sem alteração operacional no aplicativo.
-
 > Revisão 1.8.5.02: a trilha visual do Laboratório de Marcas foi refinada;
 > sem alteração operacional no aplicativo.
 
@@ -495,7 +861,7 @@
 > andamento até o servidor responder. Aguarde o indicador desaparecer antes de
 > iniciar outra ação.
 
-> Revisão 1.7.3.12: em **Conteúdo do Vendas > Divulgação**, **Enviar arquivos
+> Revisão 1.7.3.12: em **Conteúdo AvantaVendas > Divulgação**, **Enviar arquivos
 > para esta pasta** abre diretamente o seletor do aparelho, sem o menu
 > intermediário. A mesma seleção aceita fotos, vídeos e PDFs; no iPhone, as
 > opções de origem e seu idioma são apresentados pelo próprio iOS.
@@ -514,7 +880,7 @@
 > duplicados na ordem definida, e os conteúdos expansíveis não recortam bordas
 > ou sombras dos botões internos nem exibem marcadores laterais antigos.
 
-> Revisão 1.7.3.08: **Conteúdo do Vendas** permanece visível dentro de
+> Revisão 1.7.3.08: **Conteúdo AvantaVendas** permanece visível dentro de
 > **Sistemas**. Sem módulo ativo ou permissão compatível, o botão informa por que
 > o acesso está indisponível em vez de desaparecer.
 
@@ -1532,10 +1898,10 @@
 > Revisão 1.6.1.03: o resumo do envio de materiais informa somente quantos
 > arquivos foram enviados e quantos foram ignorados por duplicidade.
 
-> Revisão 1.6.1.02: as pastas de Conteúdo do Vendas > Divulgação mostram a
+> Revisão 1.6.1.02: as pastas de Conteúdo AvantaVendas > Divulgação mostram a
 > quantidade total de materiais armazenados nelas e em todas as subpastas.
 
-> Revisão 1.6.1.01: em Conteúdo do Vendas > Divulgação, selecionar uma pasta
+> Revisão 1.6.1.01: em Conteúdo AvantaVendas > Divulgação, selecionar uma pasta
 > exibe junto dela a ação Enviar arquivos para esta pasta, que aceita fotos e
 > vídeos nos mesmos formatos disponíveis na Gestão Web.
 
@@ -1653,7 +2019,7 @@
 
 > Revisão 1.6.0.84.100: no perfil Pessoal gratuito, recursos Premium aparecem
 > sem cor e levam ao aviso de assinatura. Agenda e Ir para Vendas também exigem
-> Premium; Conteúdo do Vendas permanece listado em Sistemas e só habilita o
+> Premium; Conteúdo AvantaVendas permanece listado em Sistemas e só habilita o
 > acesso em perfil Empresa autorizado.
 
 > Revisão 1.6.0.84.99: remoção do preview legado e ajustes visuais em
@@ -1876,7 +2242,7 @@ deve usar os nomes do menu e da barra inferior do celular.
   mostra primeiro a contratação; a lista completa fica recolhida em **Veja os
   recursos adicionais**. **Agenda** e a ativação do módulo Vendas exigem
   Premium ou cortesia vigente.
-- **Conteúdo do Vendas** permanece listado em **Sistemas** para todos os perfis.
+- **Conteúdo AvantaVendas** permanece listado em **Sistemas** para todos os perfis.
   O acesso é habilitado somente em perfil Empresa com o módulo ativo e permissão
   de Gestor Master, Administrador ou Operador Completo; fora dessas condições, o
   botão explica a indisponibilidade.

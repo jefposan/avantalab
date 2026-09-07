@@ -2582,11 +2582,17 @@ useEffect(() => {
       if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível carregar os módulos.');
 
       const modulos = Array.isArray(json.modulos) ? json.modulos : [];
-      setModulosCatalogo(modulos.map((m: RegistroSupabase) => ({
-        id: String(m.id), nome: textoRegistro(m.nome), descricao: textoRegistro(m.descricao),
-        icone: textoRegistro(m.icone), perfis: Array.isArray(m.perfis) ? m.perfis.map(String) : [],
-        precoMensal: obterRegistroModulo(String(m.id))?.comercial.precoMensal ?? 14.9,
-      })));
+      setModulosCatalogo(modulos.map((m: RegistroSupabase) => {
+        const registro = obterRegistroModulo(String(m.id));
+        return {
+          id: String(m.id),
+          nome: registro?.nome ?? textoRegistro(m.nome),
+          descricao: registro?.descricao ?? textoRegistro(m.descricao),
+          icone: textoRegistro(m.icone),
+          perfis: Array.isArray(m.perfis) ? m.perfis.map(String) : [],
+          precoMensal: registro?.comercial.precoMensal ?? 14.9,
+        };
+      }));
       setModulosAtivos(Array.isArray(json.ativos) ? json.ativos.map(String) : []);
       setProjetosCompartilhados(Number.isFinite(Number(json.projetosCompartilhados)) ? Math.max(0, Number(json.projetosCompartilhados)) : 0);
       setModulosCancelamentos(
@@ -2662,7 +2668,7 @@ useEffect(() => {
           p_empresa_id: empresaId,
         });
         if (error) throw error;
-        if (data !== true) throw new Error('A ativação do Vendas Mobile não foi confirmada.');
+        if (data !== true) throw new Error('A ativação do Conteúdo AvantaVendas não foi confirmada.');
       } else {
         const { data: sessao } = await supabase.auth.getSession();
         const token = sessao.session?.access_token;
@@ -2689,7 +2695,7 @@ useEffect(() => {
 
       setModulosAtivos((prev) => (prev.includes(moduloId) ? prev : [...prev, moduloId]));
       if (moduloId === 'vendas_mobile') {
-        abrirAviso('Vendas Mobile ativado', 'O módulo foi instalado neste perfil e o acesso do gestor foi liberado.', undefined, 'sucesso');
+        abrirAviso('Conteúdo AvantaVendas ativado', 'O módulo de publicação foi instalado neste perfil e o acesso do gestor foi liberado.', undefined, 'sucesso');
       }
     } catch (error) {
       const mensagem = error instanceof Error
@@ -2699,6 +2705,16 @@ useEffect(() => {
     } finally {
       setModuloAcaoId(null);
     }
+  }
+
+  function acessarModuloInstalado(moduloId: string) {
+    const modulo = obterRegistroModulo(moduloId);
+    if (!empresaId || modulo?.navegacao.modo !== 'pagina_total' || !modulo.navegacao.rota) {
+      abrirAviso('Acesso indisponível', 'Não foi possível localizar a página deste módulo.', undefined, 'erro');
+      return;
+    }
+    setModalModulos(false);
+    router.push(`${modulo.navegacao.rota}?empresaId=${encodeURIComponent(empresaId)}`);
   }
 
   async function desinstalarModulo(moduloId: string) {
@@ -8070,6 +8086,7 @@ if (validacaoTelefoneObrigatoria) {
   onTentarNovamente={carregarModulos}
   acaoEmId={moduloAcaoId}
   onInstalar={instalarModulo}
+  onAcessar={acessarModuloInstalado}
   onDesinstalar={desinstalarModulo}
   darkMode={darkMode}
   corPrimaria={corPrimaria}
@@ -10332,16 +10349,16 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
         )}
 
-        {/* 4b. Vendas Mobile */}
+        {/* 4b. Conteúdo AvantaVendas */}
         {modulosAtivos.includes('vendas_mobile') && podeAcessarVendasMobileWeb && (
-          <Tooltip texto="Publique novidades e organize fotos e vídeos para a equipe do Vendas Mobile." posicao="right" wrapperClassName="order-50 w-full">
+          <Tooltip texto="Publique novidades, catálogo, fotos, vídeos e PDFs para a equipe do AvantaVendas." posicao="right" wrapperClassName="order-50 w-full">
             <button
               onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setModalNovidadesVendas(true); }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
               <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m3 11 18-5v12L3 14zM11.6 16.4 13 21H8l-1.5-6" /></svg>
-              Vendas Mobile
+              Conteúdo AvantaVendas
             </button>
           </Tooltip>
         )}

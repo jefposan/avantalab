@@ -18,7 +18,7 @@ const CACHE_VENDAS_STORE = 'sessoes';
 const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
 const CACHE_VENDAS_VERSAO = 5;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
-const PREFERENCIAS_VENDAS_VERSAO = 3;
+const PREFERENCIAS_VENDAS_VERSAO = 4;
 const META_CELEBRADA_PREFIX = 'avantalab.vendas_mobile.meta_celebrada';
 const IDS_ATALHOS_PREFERENCIAS_VENDAS = new Set(['tema', 'dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao']);
 const IDS_SALA_PREFERENCIAS_VENDAS = new Set(['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'novidades', 'divulgacao', 'informacoes']);
@@ -27,6 +27,7 @@ const IDS_CARDS_CONFIGURACOES_VENDAS = new Set([
   'dados-usuario',
   'dados-seguranca',
   'aparencia',
+  'funcoes',
   'meta-periodo',
   'integracao-gestao',
   'empresas-conteudos',
@@ -123,6 +124,7 @@ const estadoInicial = {
   atalhoInferiorDireito: 'agenda',
   ordemSalaBotoes: [],
   ordemCardsConfiguracoes: [],
+  solicitacaoVozAtiva: false,
   nomeEmpresaComprovantes: '',
   organizandoSalaBotoes: false,
 };
@@ -651,6 +653,7 @@ function normalizarPreferenciasVendas(origem = {}) {
     atalhoInferiorDireito: atalhoDireito,
     ordemSalaBotoes,
     ordemCardsConfiguracoes,
+    solicitacaoVozAtiva: origem.solicitacaoVozAtiva === true,
     nomeEmpresaComprovantes: String(origem.nomeEmpresaComprovantes || '').trim().slice(0, 80),
     agendaAlertaAniversarioDias: limitarNumeroPreferenciaVendas(origem.agendaAlertaAniversarioDias, 0, 30, estadoInicial.agendaAlertaAniversarioDias),
     metaMensal: limitarNumeroPreferenciaVendas(origem.metaMensal, 0, Number.MAX_SAFE_INTEGER, estadoInicial.metaMensal),
@@ -774,6 +777,7 @@ function salvarEstado() {
     atalhoInferiorDireito: state.atalhoInferiorDireito,
     ordemSalaBotoes: state.ordemSalaBotoes,
     ordemCardsConfiguracoes: state.ordemCardsConfiguracoes,
+    solicitacaoVozAtiva: state.solicitacaoVozAtiva,
     nomeEmpresaComprovantes: state.nomeEmpresaComprovantes,
   } : { ...state, carrinho: [], organizandoSalaBotoes: false };
   try {
@@ -1764,7 +1768,7 @@ function renderPremiumVendasBloqueado() {
   return `<section class="module-suspended-screen">
     <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div></header>
     <div class="module-suspended-preview" aria-hidden="true">
-      <div class="mobile-menu-grid">${SALA_BOTOES_PADRAO.map(([, arquivo, label]) => `<div class="mobile-menu-card"><img src="./assets/menu/${arquivo}" alt="${label}"></div>`).join('')}</div>
+      <div class="mobile-menu-grid">${itensSalaBotoesOrdenados().map(([, arquivo, label]) => `<div class="mobile-menu-card"><img src="./assets/menu/${arquivo}" alt="${label}"></div>`).join('')}</div>
     </div>
     <div class="module-suspended-shade"></div>
     <article class="module-suspended-card" role="alert" aria-live="assertive">
@@ -2199,7 +2203,9 @@ function itensSalaBotoesOrdenados() {
   const ids = new Set(SALA_BOTOES_PADRAO.map(([idAba]) => idAba));
   const ordemSalva = Array.isArray(state.ordemSalaBotoes) ? state.ordemSalaBotoes.filter((idAba) => ids.has(idAba)) : [];
   const ordem = [...new Set([...ordemSalva, ...SALA_BOTOES_PADRAO.map(([idAba]) => idAba)])];
-  return ordem.map((idAba) => SALA_BOTOES_PADRAO.find(([id]) => id === idAba)).filter(Boolean);
+  return ordem
+    .map((idAba) => SALA_BOTOES_PADRAO.find(([id]) => id === idAba))
+    .filter(Boolean);
 }
 
 function iconeOrganizarSala(concluir = false) {
@@ -2488,9 +2494,106 @@ function renderMenuMobile() {
         <span><b>Dúvidas e Sugestões</b><small>Ajude a melhorar o AvantaLab</small></span>
         <i aria-hidden="true">›</i>
       </button>
+      ${state.solicitacaoVozAtiva ? `<div class="mobile-voice-command-slot" id="voiceCommandSalaMount">
+        <button type="button" class="mobile-voice-command-trigger" onclick="abrirSolicitacaoVozVendas(this)" aria-label="Iniciar solicitação por voz">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.4a3.9 3.9 0 0 0 3.9-3.9V6.4a3.9 3.9 0 1 0-7.8 0v5.1a3.9 3.9 0 0 0 3.9 3.9Z"/><path d="M5.7 10.9v.7a6.3 6.3 0 0 0 12.6 0v-.7M12 17.9V21M9.2 21h5.6"/></svg>
+        </button>
+        <span class="mobile-voice-command-label">Solicitação por Voz</span>
+      </div>` : ''}
     </div>
     <div class="mobile-menu-bottom"><button class="mobile-menu-wide" onclick="setAba('configuracoes')"><img src="./assets/menu/13_Configurações.png" alt="Configurações" decoding="sync" fetchpriority="high" /></button><button class="mobile-menu-wide" onclick="sairMenuMobile()"><img src="./assets/menu/14_Sair.png" alt="Sair" decoding="sync" fetchpriority="high" /></button></div>
   </section>`;
+}
+
+let carregamentoSolicitacaoVozVendas = null;
+
+function carregarModuloSolicitacaoVozVendas() {
+  if (window.AvantaVoiceCommand?.open) return Promise.resolve(window.AvantaVoiceCommand);
+  if (carregamentoSolicitacaoVozVendas) return carregamentoSolicitacaoVozVendas;
+  carregamentoSolicitacaoVozVendas = new Promise((resolver, rejeitar) => {
+    const script = document.createElement('script');
+    const versao = encodeURIComponent(window.__VENDAS_MOBILE_VERSION__ || Date.now());
+    script.src = `/avantavendas/recursos/voice-command.js?v=${versao}`;
+    script.async = true;
+    script.onload = () => window.AvantaVoiceCommand?.open
+      ? resolver(window.AvantaVoiceCommand)
+      : rejeitar(new Error('O módulo de voz não iniciou corretamente.'));
+    script.onerror = () => rejeitar(new Error('Não foi possível carregar a solicitação por voz.'));
+    document.body.appendChild(script);
+  }).catch((error) => {
+    carregamentoSolicitacaoVozVendas = null;
+    throw error;
+  });
+  return carregamentoSolicitacaoVozVendas;
+}
+
+async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
+  const contaId = state.contaVendasAtiva?.id || window.VendasDb?.contaAtivaId?.() || '';
+  const token = await window.VendasDb?.getAccessToken?.();
+  if (!contaId || !token) throw new Error('Sua sessão do Avanta Vendas expirou. Entre novamente.');
+  const endpoint = `/api/vendas/solicitacao-voz/${operacao === 'transcribe' ? 'transcrever' : operacao === 'process' ? 'processar' : operacao === 'execute' ? 'executar' : 'log'}`;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 50000);
+  try {
+    let init;
+    if (operacao === 'transcribe') {
+      const audio = payload.audio;
+      if (!(audio instanceof Blob) || !audio.size) throw new Error('Não identificamos áudio. Tente novamente.');
+      const form = new FormData();
+      form.append('accountId', contaId);
+      form.append('audio', audio, `solicitacao-voz.${payload.extension === 'mp4' ? 'mp4' : 'webm'}`);
+      init = { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'X-Avanta-Vendas-Account': contaId }, body: form, signal: controller.signal };
+    } else {
+      init = {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...(payload || {}), accountId: contaId }),
+        signal: controller.signal,
+      };
+    }
+    const resposta = await fetch(endpoint, init);
+    const resultado = await resposta.json().catch(() => ({ message: 'O servidor retornou uma resposta inválida.' }));
+    if (!resposta.ok) throw new Error(resultado?.message || 'Não foi possível concluir a solicitação.');
+    return resultado;
+  } catch (error) {
+    if (error?.name === 'AbortError') throw new Error('A solicitação demorou mais que o esperado. Tente novamente.');
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+async function abrirSolicitacaoVozVendas(acionador = null) {
+  if (!state.solicitacaoVozAtiva) {
+    toast('Ative a Solicitação por Voz em Configurações.');
+    return;
+  }
+  try {
+    const mount = acionador?.closest?.('.mobile-voice-command-slot') || document.getElementById('voiceCommandSalaMount');
+    if (!mount) throw new Error('O controle de voz só pode ser iniciado na Sala de Botões.');
+    if (acionador) acionador.disabled = true;
+    const modulo = await carregarModuloSolicitacaoVozVendas();
+    modulo.open({
+      mount,
+      mountId: 'voiceCommandSalaMount',
+      autoStart: true,
+      account: {
+        id: state.contaVendasAtiva?.id || window.VendasDb?.contaAtivaId?.() || '',
+        label: state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'Conta ativa',
+      },
+      request: requisitarSolicitacaoVozVendas,
+      afterExecute: async () => carregarDadosBackend(false),
+      shareReceipt: async (recordId, intent) => {
+        if (intent === 'create_order') return compartilharPedido(recordId);
+        if (intent === 'register_payment') return compartilharPagamento(recordId);
+        return false;
+      },
+    });
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    if (acionador?.isConnected) acionador.disabled = false;
+  }
 }
 
 function contextoAvaVendas() {
@@ -5257,6 +5360,7 @@ const CONFIGURACOES_CARD_ID_POR_TITULO = new Map([
   ['Dados do usuário', 'dados-usuario'],
   ['Dados e segurança', 'dados-seguranca'],
   ['Aparência', 'aparencia'],
+  ['Funções', 'funcoes'],
   ['Meta do período', 'meta-periodo'],
   ['Integração com Gestão', 'integracao-gestao'],
   ['Empresas e conteúdos', 'empresas-conteudos'],
@@ -5624,6 +5728,7 @@ function renderConfiguracoes() {
       <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
       ${podeGerirDadosConta ? `<article class="settings-card settings-data-security-card"><h3>${svgIconEstavel('database')} Dados e segurança</h3><p>Backups e pontos de restauração pertencem somente ao perfil <b>${escapeHtml(contaAtiva?.nome || 'ativo')}</b>.</p><div class="settings-data-security-actions"><button class="primary" type="button" onclick="baixarBackupContaVendas()">${svgIconEstavel('download')} Fazer backup</button><button class="secondary" type="button" onclick="selecionarBackupContaVendas()" ${podeRestaurarDadosConta ? '' : 'disabled'}>${svgIconEstavel('rotate-ccw')} Restaurar backup</button><button class="secondary" type="button" onclick="abrirPontosRestauracaoVendas()">${svgIconEstavel('clock')} Pontos de restauração</button></div>${podeRestaurarDadosConta ? '<small>Uma cópia de segurança é criada automaticamente antes de cada restauração.</small>' : '<small>Administradores podem criar backups e pontos. A restauração é exclusiva do proprietário.</small>'}</article>` : ''}
     <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
+    <article class="settings-card settings-functions-card"><h3>${svgIconEstavel('mic')} Funções</h3><label class="switch-line"><span><b>Solicitação por Voz</b><small>Mostra o botão de comandos por voz na Sala de Botões.</small></span><input type="checkbox" ${state.solicitacaoVozAtiva ? 'checked' : ''} onchange="alternarSolicitacaoVozVendas(this.checked,this)"><i></i></label><p>Recurso experimental. Toda inclusão exige sua confirmação e utiliza somente a conta de vendas ativa.</p></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>${metaAtingida ? '<b>Meta atingida, parabéns!</b>' : `Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.`}</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
     <article class="settings-card"><h3>${svgIcon('settings')} Integração com Gestão</h3><p>O vínculo financeiro é opcional. Sem ele, clientes, pedidos, pagamentos e todo o histórico continuam funcionando normalmente apenas no Vendas.</p><div class="settings-integration"><span>Destino financeiro</span><button class="secondary" onclick="abrirPerfilFinanceiroVendas()">${svgIcon('settings')} ${escapeHtml(resumoDestinoFinanceiro)}</button><span>Enviar para o Gestão</span><div class="settings-segmented ${integracao.pode_configurar ? '' : 'is-disabled'}" role="group" aria-label="Base de receita enviada ao Gestão"><button type="button" class="${integracao.base_receita === 'recebidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('recebidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Recebidos</button><button type="button" class="${integracao.base_receita === 'vendidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('vendidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Vendidos</button></div></div>${avisoTrocaFinanceira}${integracao.vinculado ? '<div class="actions settings-financial-unlink"><button class="danger" onclick="abrirDesvincularPerfilFinanceiroVendas()">Desvincular perfil financeiro</button></div>' : '<small>Vincule apenas se quiser enviar seus resultados para um perfil da Gestão.</small>'}<small>Lançamentos sincronizados ficam protegidos. Se o perfil for desvinculado e o histórico mantido, eles voltam a ser editáveis e podem ser excluídos.</small></article>
@@ -6254,6 +6359,38 @@ function alternarTema(ativo) {
   // O tema altera apenas tokens visuais; preservar o DOM mantém a grade e a
   // ancoragem do menu inferior durante a interação em navegadores móveis.
   salvarEstado();
+}
+
+async function alternarSolicitacaoVozVendas(ativo, campo) {
+  const valorAnterior = state.solicitacaoVozAtiva;
+  state.solicitacaoVozAtiva = Boolean(ativo);
+  if (campo) campo.disabled = true;
+  try {
+    if (preferenciasServidorCarregadas && backendAtivo && window.VendasDb?.salvarPreferencias) {
+      if (timerPreferenciasServidor) {
+        window.clearTimeout(timerPreferenciasServidor);
+        timerPreferenciasServidor = null;
+      }
+      if (salvamentoPreferenciasServidor) await salvamentoPreferenciasServidor;
+      const preferencias = extrairPreferenciasVendas();
+      salvamentoPreferenciasServidor = window.VendasDb.salvarPreferencias(preferencias, PREFERENCIAS_VENDAS_VERSAO);
+      await salvamentoPreferenciasServidor;
+      assinaturaPreferenciasServidor = assinaturaPreferenciasVendas(preferencias);
+      assinaturaPreferenciasAgendada = '';
+      salvamentoPreferenciasServidor = null;
+    }
+    salvarEstado();
+    render();
+    toast(state.solicitacaoVozAtiva
+      ? 'Solicitação por Voz ativada na Sala de Botões.'
+      : 'Solicitação por Voz removida da Sala de Botões.');
+  } catch (error) {
+    salvamentoPreferenciasServidor = null;
+    state.solicitacaoVozAtiva = valorAnterior;
+    salvarEstado();
+    render();
+    toast(traduzErro(error));
+  }
 }
 
 async function alterarSenha() {
@@ -8243,7 +8380,7 @@ function detalheQuantidadeItemComprovante(item) {
 
 async function compartilharPedido(pedidoId) {
   const venda = state.vendas.find((item) => item.id === pedidoId);
-  if (!venda) return;
+  if (!venda) return false;
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
   const resumo = resumoComprovantePedido(venda);
   const desconto = Math.max(0, Number(venda.desconto || 0));
@@ -8286,11 +8423,12 @@ async function compartilharPedido(pedidoId) {
     });
   const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido');
   if (compartilhado) fecharSheet();
+  return compartilhado;
 }
 
 async function compartilharPagamento(pagamentoId) {
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
-  if (!pagamento) return;
+  if (!pagamento) return false;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
   const desconto = Number(pagamento.desconto || 0);
@@ -8328,6 +8466,7 @@ async function compartilharPagamento(pagamentoId) {
     });
   const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento');
   if (compartilhado) fecharSheet();
+  return compartilhado;
 }
 
 function clientesPagamentosFiltrados() {
@@ -9988,6 +10127,8 @@ window.confirmarExclusaoContaVendas = confirmarExclusaoContaVendas;
 window.confirmarResetDadosLocais = confirmarResetDadosLocais;
 window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;
+window.alternarSolicitacaoVozVendas = alternarSolicitacaoVozVendas;
+window.abrirSolicitacaoVozVendas = abrirSolicitacaoVozVendas;
 window.alternarOrganizacaoSalaBotoes = alternarOrganizacaoSalaBotoes;
 window.iniciarArrasteSalaBotoes = iniciarArrasteSalaBotoes;
 window.moverArrasteSalaBotoes = moverArrasteSalaBotoes;

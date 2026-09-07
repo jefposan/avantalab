@@ -1,0 +1,1 @@
+export function handleFiscalDocumentDownloadRequest(input?: { request: Request; artifactId: string; runtime: null | { configured: boolean; accessResolver: null | { resolve(request: Request, input: { companyId: string }): Promise<object> }; downloadService: null | { authorize(input: object): Promise<object> } } }): Promise<Response>;

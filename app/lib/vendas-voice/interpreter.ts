@@ -1,0 +1,78 @@
+import { VOICE_INTENT_JSON_SCHEMA, validateVoiceIntentPayload } from './schema';
+import type { VoiceEntityCandidate, VoiceIntentPayload, VoiceMetrics } from './types';
+
+const SYSTEM_PROMPT = `Você interpreta comandos de voz em português do Brasil para o Avanta Vendas.
+Retorne somente o objeto exigido pelo schema. Nunca invente IDs, clientes, produtos, preços ou execuções.
+Intenções permitidas:
+- create_order: criar pedido/venda com cliente e itens;
+- register_payment: registrar recebimento/pagamento de cliente;
+- query_customer_history: consultar histórico, saldo ou último pedido de cliente;
+- query_sales: consultar pedidos/vendas em today, this_month, last_month ou all;
+- unsupported: qualquer outra ação, inclusive agenda, despesa, nota fiscal, cadastro, edição e exclusão.
+
+Regras:
+- Extraia somente referências faladas. A aplicação pesquisará o banco depois.
+- Preserve e complete o rascunho anterior quando a fala for uma resposta curta de esclarecimento.
+- Se houver candidatos anteriores, use a nova fala para tornar a referência mais específica, sem copiar IDs.
+- Para create_order, mantenha todos os itens já informados e acrescente/complemente os novos.
+- Quantidades e valores devem ser números positivos.
+- Em register_payment, extraia a forma de pagamento somente como Pix, Dinheiro, Cartão de crédito, Cartão de débito, Transferência ou Outro. Se não for dita, use null.
+- Se o período não for dito em query_sales, use this_month.
+- Não transforme uma consulta em ação de escrita.`;
+
+type InterpretVoiceInput = {
+  transcription: string;
+  previousDraft?: VoiceIntentPayload | null;
+  candidates?: VoiceEntityCandidate[];
+};
+
+export async function interpretVoiceCommand({ transcription, previousDraft, candidates = [] }: InterpretVoiceInput) {
+  const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_AVA || '';
+  if (!apiKey) throw new Error('A integração da OpenAI não está configurada no servidor.');
+  const startedAt = performance.now();
+  const model = process.env.OPENAI_VOICE_COMMAND_MODEL || 'gpt-4o-mini';
+  const compactContext = {
+    previous_draft: previousDraft || null,
+    previous_candidates: candidates.slice(0, 6).map(({ label, detail }) => ({ label, detail })),
+    transcription,
+  };
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0,
+      max_tokens: 500,
+      response_format: { type: 'json_schema', json_schema: VOICE_INTENT_JSON_SCHEMA },
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: JSON.stringify(compactContext) },
+      ],
+    }),
+  });
+  const result = await response.json().catch(() => null);
+  if (!response.ok) {
+    console.error('Erro OpenAI no laboratório de voz:', result?.error?.message || response.status);
+    throw new Error('Não foi possível entender sua solicitação agora.');
+  }
+  const content = result?.choices?.[0]?.message?.content;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(String(content || ''));
+  } catch {
+    throw new Error('A interpretação retornou um formato inválido. Tente falar novamente.');
+  }
+  const intent = validateVoiceIntentPayload(parsed);
+  if (!intent) throw new Error('A interpretação não passou pela validação de segurança. Tente novamente.');
+  const metrics: VoiceMetrics = {
+    interpretationMs: Math.round(performance.now() - startedAt),
+    inputTokens: Number.isFinite(result?.usage?.prompt_tokens) ? result.usage.prompt_tokens : null,
+    outputTokens: Number.isFinite(result?.usage?.completion_tokens) ? result.usage.completion_tokens : null,
+    totalTokens: Number.isFinite(result?.usage?.total_tokens) ? result.usage.total_tokens : null,
+  };
+  return { intent, metrics, model };
+}

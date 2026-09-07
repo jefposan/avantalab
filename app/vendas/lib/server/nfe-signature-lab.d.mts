@@ -1,0 +1,12 @@
+export type NfeSignatureLabError = { code: string; field: string; message: string };
+export const NFE_XMLDSIG_CANONICALIZATION: string;
+export const NFE_XMLDSIG_SIGNATURE_METHOD: string;
+export const NFE_XMLDSIG_DIGEST_METHOD: string;
+export const NFE_XMLDSIG_ENVELOPED_TRANSFORM: string;
+export const NFE_XMLDSIG_NAMESPACE: string;
+export const NFE_SIGNATURE_LAB_REFERENCE: string;
+export function createProtectedSignedNfeXml(input?: { unsignedXml?: string; certificatePem?: string; signCanonicalized?: (canonicalSignedInfo: string) => Promise<string> | string }): Promise<{ signedXml: string; accessKey: string; digestValue: string; signatureValue: string; certificateFingerprint: string; certificateValidFrom: string; certificateValidTo: string; keyBits: number }>;
+export function createEphemeralLabSignedNfeXml(unsignedXml: string, now?: Date): Promise<{ signedXml: string; accessKey: string; digestValue: string; signatureValue: string; certificateFingerprint: string; certificateValidFrom: string; certificateValidTo: string; keyBits: number }>;
+export function verifyProtectedSignedNfeXml(signedXml: string, expectedIssuerDocument?: string): Promise<{ valid: boolean; accessKey: string; referenceVerified: boolean; digestVerified: boolean; signatureVerified: boolean; certificateSelfSignatureVerified: boolean; issuerDocumentBoundToReference: boolean; signedXsdValid: boolean; schemaValidationExecuted: boolean; schemaPackage: string; certificateFingerprint: string; certificateValidFrom: string; certificateValidTo: string; keyBits: number; errors: NfeSignatureLabError[] }>;
+export function verifyLabSignedNfeXml(signedXml: string, expectedIssuerDocument?: string): Promise<{ valid: boolean; accessKey: string; referenceVerified: boolean; digestVerified: boolean; signatureVerified: boolean; certificateSelfSignatureVerified: boolean; issuerDocumentBoundToReference: boolean; signedXsdValid: boolean; schemaValidationExecuted: boolean; schemaPackage: string; certificateFingerprint: string; certificateValidFrom: string; certificateValidTo: string; keyBits: number; errors: NfeSignatureLabError[] }>;
+export function runNfeSignatureLab(unsignedXml: string, expectedIssuerDocument: string, now?: Date): Promise<Record<string, any>>;

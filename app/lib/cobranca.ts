@@ -118,7 +118,7 @@ export const RECURSOS_PREMIUM_PESSOAL: { recurso: Recurso; icone: string; titulo
   { recurso: 'multiplos_perfis', icone: '👥', titulo: 'Múltiplos perfis pessoais', descricao: 'Crie até 3 perfis pessoais. Perfis empresariais exigem um plano Business.' },
   { recurso: 'notificacoes', icone: '🔔', titulo: 'Notificações', descricao: 'Lembretes e avisos de pagamentos.' },
   { recurso: 'agenda', icone: '📅', titulo: 'Agenda', descricao: 'Organize lembretes, compromissos e lançamentos futuros.' },
-  { recurso: 'vendas_mobile', icone: '🛍️', titulo: 'Vendas Mobile', descricao: 'Acesse clientes, produtos, pedidos e pagamentos integrados à Gestão.' },
+  { recurso: 'vendas_mobile', icone: '🛍️', titulo: 'Conteúdo AvantaVendas', descricao: 'Publique novidades, catálogo e materiais de divulgação para a equipe comercial.' },
   { recurso: 'organizar_dashboard', icone: '🧩', titulo: 'Organizar dashboard', descricao: 'Reordene os cards do seu jeito.' },
   { recurso: 'organizar_atalhos', icone: '↔️', titulo: 'Organizar atalhos', descricao: 'Personalize os atalhos do app.' },
   { recurso: 'usuarios_internos', icone: '🧑‍💼', titulo: 'Usuários internos', descricao: 'Convide outras pessoas para o perfil.' },

@@ -60,6 +60,9 @@ test('Catálogo de módulos usa um card principal com módulos quadrados respons
   assert.match(modalModulos, /md:grid-cols-3 lg:grid-cols-4/);
   assert.match(modalModulos, /<article[\s\S]*aspect-square/);
   assert.match(modalModulos, /min-h-11 w-full/);
+  assert.match(modalModulos, /possuiPagina/);
+  assert.match(modalModulos, />Acessar<\/button>/);
+  assert.match(gestao, /onAcessar=\{acessarModuloInstalado\}/);
 });
 
 test('Instalação, contratação, remoção e liberação financeira usam o fluxo central', () => {

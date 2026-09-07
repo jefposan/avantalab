@@ -1,0 +1,15 @@
+export const NFE_RETURN_REFERENCE: string;
+export const NFE_RECEIPT_ENDPOINT: string;
+export const NFE_RECEIPT_ACTION: string;
+export const NFE_PROTOCOL_ENDPOINT: string;
+export const NFE_PROTOCOL_ACTION: string;
+export const NFE_RETURN_TIMEOUT_MS: number;
+export const NFE_RETURN_RESPONSE_LIMIT: number;
+export function validateNfeReceiptEndpoint(endpoint: string): { valid: boolean; error: string };
+export function validateNfeProtocolEndpoint(endpoint: string): { valid: boolean; error: string };
+export function buildNfeReceiptQuerySoapRequest(options?: { receiptNumber?: string | number }): Record<string, any>;
+export function buildNfeProtocolQuerySoapRequest(options?: { accessKey?: string }): Record<string, any>;
+export function parseNfeReceiptQuerySoapResponse(value: unknown): Record<string, any>;
+export function parseNfeProtocolQuerySoapResponse(value: unknown): Record<string, any>;
+export function createDisabledNfeReturnTransport(): { id: string; configured: false; postSoap(): Promise<never> };
+export function createNfeReturnAdapter(options?: { certificateAdapter?: any; transport?: any; receiptEndpoint?: string; protocolEndpoint?: string }): { id: string; queryReceipt(options?: Record<string, any>): Promise<Record<string, any>>; queryReceiptProtected(options?: Record<string, any>): Promise<Record<string, any>>; queryProtocol(options?: Record<string, any>): Promise<Record<string, any>>; queryProtocolProtected(options?: Record<string, any>): Promise<Record<string, any>> };

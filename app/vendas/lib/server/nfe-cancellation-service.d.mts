@@ -1,0 +1,12 @@
+export const NFE_CANCELLATION_SERVICE_REFERENCE: string;
+export const NFE_CANCELLATION_ENDPOINT: string;
+export const NFE_CANCELLATION_ACTION: string;
+export const NFE_CANCELLATION_CONTENT_TYPE: string;
+export const NFE_CANCELLATION_TIMEOUT_MS: number;
+export const NFE_CANCELLATION_RESPONSE_LIMIT: number;
+export function validateNfeCancellationEndpoint(endpoint: string): { valid: boolean; error: string };
+export function buildNfeCancellationEvent(input?: Record<string, any>): Record<string, any>;
+export function buildNfeCancellationSoapRequest(input?: Record<string, any>): Record<string, any>;
+export function parseNfeCancellationSoapResponse(value: unknown, expected?: Record<string, any>): Record<string, any>;
+export function createDisabledNfeCancellationTransport(): { id: string; configured: false; postSoap(): Promise<never> };
+export function createNfeCancellationAdapter(options?: Record<string, any>): { id: string; configured: boolean; cancel(input?: Record<string, any>): Promise<Record<string, any>>; cancelProtected(input?: Record<string, any>): Promise<Record<string, any>> };

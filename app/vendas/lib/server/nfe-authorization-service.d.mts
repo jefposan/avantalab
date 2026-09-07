@@ -1,0 +1,12 @@
+export const NFE_AUTHORIZATION_REFERENCE: string;
+export const NFE_AUTHORIZATION_ENDPOINT: string;
+export const NFE_AUTHORIZATION_ACTION: string;
+export const NFE_AUTHORIZATION_CONTENT_TYPE: string;
+export const NFE_AUTHORIZATION_TIMEOUT_MS: number;
+export const NFE_AUTHORIZATION_RESPONSE_LIMIT: number;
+export function validateNfeAuthorizationEndpoint(endpoint: string): { valid: boolean; error: string };
+export function validateSignedNfeForAuthorization(value: unknown): { valid: boolean; xml: string; nfeBlock: string; accessKey: string; errors: Array<{ code: string; field: string; message: string }> };
+export function buildNfeAuthorizationSoapRequest(options?: { signedXml?: string; lotId?: string | number; synchronous?: boolean }): Record<string, any>;
+export function parseNfeAuthorizationSoapResponse(value: unknown): Record<string, any>;
+export function createDisabledNfeAuthorizationTransport(): { id: string; configured: false; postSoap(): Promise<never> };
+export function createNfeAuthorizationAdapter(options?: { certificateAdapter?: any; statusAdapter?: any; transport?: any; endpoint?: string }): { id: string; authorize(options?: Record<string, any>): Promise<Record<string, any>>; authorizeProtected(options?: Record<string, any>): Promise<Record<string, any>> };

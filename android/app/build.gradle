@@ -8,7 +8,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,9 +16,29 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    def keystoreProperties = new Properties()
+    def keystorePropertiesFile = rootProject.file('keystore.properties')
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+    }
+    def releaseStorePath = keystoreProperties['storeFile'] ?: System.getenv('AVANTALAB_ANDROID_UPLOAD_STORE_FILE')
+    def releaseStorePassword = keystoreProperties['storePassword'] ?: System.getenv('AVANTALAB_ANDROID_UPLOAD_STORE_PASSWORD')
+    def releaseKeyAlias = keystoreProperties['keyAlias'] ?: System.getenv('AVANTALAB_ANDROID_UPLOAD_KEY_ALIAS')
+    def releaseKeyPassword = keystoreProperties['keyPassword'] ?: System.getenv('AVANTALAB_ANDROID_UPLOAD_KEY_PASSWORD')
+    signingConfigs {
+        release {
+            if (releaseStorePath && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                storeFile rootProject.file(releaseStorePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

@@ -1,5 +1,196 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.14.3.14: o microfone de Solicitação por Voz inicia a
+// gravação na própria Sala e usa sobreposições compactas para dúvidas e confirmação.
+// Revisado na versão 1.14.3.13: Solicitação por Voz pode ser ativada por conta
+// nas Configurações do AvantaVendas e aparece somente então na Sala de Botões.
+// Revisado na versão 1.14.3.12: Vendas e Serviços usa consultas reais de CNPJ e
+// CEP, espera confirmação do servidor em cadastros/recebimentos/estoque, monta
+// a carteira do cliente somente com registros do perfil empresarial e mantém a
+// operação oculta durante a reconfirmação entre Custos e Vendas.
+// Revisado na versão 1.14.3.11: pedidos e pagamentos do laboratório de voz são
+// relidos do banco e exibem evidência verificável do registro real.
+// Revisado na versão 1.14.3.10: Vendas integrado não usa fallback demonstrativo;
+// perfil, permissões, equipe, emitente, contadores e certificado pertencem à
+// empresa acessada e precisam estar confirmados antes de liberar a operação.
+// Revisado na versão 1.14.3.09: ondas reais do microfone ficaram mais amplas e
+// contrastantes, preservando imobilidade no silêncio.
+// Revisado na versão 1.14.3.08: ondas do laboratório de voz refletem o sinal
+// real do microfone e ficam estáticas durante o silêncio.
+// Revisado na versão 1.14.3.07: seleção ambígua no laboratório de voz avança
+// pelo identificador validado sem repetir a pergunta ou reinterpretar pela IA.
+// Revisado na versão 1.14.3.06: indisponibilidade do servidor externo de voz
+// deixa de produzir carregamento infinito e passa a oferecer nova tentativa.
+// Revisado na versão 1.14.3.05: interface do laboratório de voz isolada em
+// projeto externo, com a autenticação e a execução preservadas no AvantaLab.
+// Revisado na versão 1.14.3.04: certificado A1 instalado pode ser verificado novamente sem novo arquivo ou senha; bloqueios pertencem ao perfil empresarial.
+// Revisado na versão 1.14.3.03: laboratório oculto de voz do Avanta Vendas sem impacto na orientação operacional da Ava.
+// Revisado na versão 1.14.3.01: saneamento técnico de lint sem impacto operacional.
+// Revisado na versão 1.14.3: documentos comerciais são recompostos na recarga e
+// anexos de ordens de serviço ficam privados, auditados e ligados à empresa.
+// Revisado na versão 1.14.2: devoluções faturadas e estornos de serviços
+// concluídos coordenam estoque, parcelas e rascunho fiscal; recebimentos ou
+// emissão ativa precisam ser regularizados antes.
+// Revisado na versão 1.14.1: ordens de serviço persistidas coordenam início,
+// materiais, conclusão, parcelas e rascunho de NFS-e na empresa ativa.
+// Revisado na versão 1.14.0: a operação de Vendas e Serviços é persistida por
+// perfil empresarial; estoque começa zerado e receitas entram por recebimento.
+// Emissão externa segue bloqueada até credenciais e homologação fiscal.
+// Revisado na versão 1.13.0.92: Novo > Produto volta de Custos diretamente para
+// Vendas; o menu Novo escurece a tela e fecha por clique externo ou Escape.
+// Revisado na versão 1.13.0.91: Vendas e Serviços deriva sua identidade visual
+// da cor primária do perfil empresarial, com fallback institucional.
+// Revisado na versão 1.13.0.90: Novo em Vendas e Serviços inclui Cliente,
+// Fornecedor e Produto; os rótulos fiscais omitem os números técnicos do modelo.
+// Revisado na versão 1.13.0.89: o cabeçalho local de Vendas e Serviços mantém
+// Início, marca e Ajustes; perfil e tabela são resolvidos pelo acesso da Gestão.
+// Revisado na versão 1.13.0.88: a Gestão Mobile também usa Conteúdo
+// AvantaVendas no menu e no controle de ativação do módulo.
+// Revisado na versão 1.13.0.87: o módulo integrado de publicação passou a se
+// chamar Conteúdo AvantaVendas, distinguindo-o de Vendas e Serviços.
+// Revisado na versão 1.13.0.86: módulos Web instalados oferecem Acessar no
+// próprio catálogo; Vendas abre com o perfil empresarial ativo.
+// Revisado na versão 1.13.0.85: Vendas e Serviços foi incorporado à Gestão Web
+// como módulo empresarial, com piloto exclusivo do perfil Tridium. Business Pro
+// instala; Business contrata; perfil pessoal não exibe. Emitente, A1 e artefatos
+// pertencem sempre à empresa ativa; o usuário é apenas autorização e auditoria.
+// Revisado na versão 1.13.0.84: no futuro Vendas Web, CNPJ abre os cadastros
+// empresariais e CEP abre os endereços, ambos com Buscar e complemento manual.
+// Revisado na versão 1.13.0.83: o cancelamento da NF-e paulista possui evento
+// 110111, assinatura A1, XSD oficial e mTLS, bloqueados até o ensaio controlado.
+// Revisado na versão 1.13.0.82: movimento interno, fundo interativo e símbolo
+// adaptativo no protótipo Constelação; sem impacto operacional nos produtos.
+// Revisado na versão 1.13.0.81: brilho e profundidade da Constelação Avanta
+// refinados no protótipo isolado; sem impacto operacional nos produtos.
+// Revisado na versão 1.13.0.80: cancelamento de NF-e autorizada exige motivo e
+// confirmação, preserva o histórico original e possui demonstração sem transmissão.
+// Revisado na versão 1.13.0.79: constelação com marca completa e dispersão
+// interativa no protótipo isolado; sem impacto operacional nos produtos.
+// Revisado na versão 1.13.0.78: refinamento visual e interativo do protótipo
+// isolado da Constelação Avanta; sem impacto operacional nos produtos.
+// Revisado na versão 1.13.0.77: cenário local de rejeição 778 permite revisar
+// somente o NCM sem assinar ou transmitir e é removido em sessão autenticada.
+// Revisado na versão 1.13.0.76: protótipo público e isolado da Constelação
+// Avanta; sem impacto operacional na Gestão, no Mobile ou no Vendas.
+// Revisado na versão 1.13.0.75: a Central Fiscal separa a rejeição da emissão;
+// a rejeição 778 libera somente o NCM e salvar não assina nem transmite a NF-e.
+// Revisado na versão 1.13.0.74: a NF-e rejeitada pode ser preparada novamente
+// com a mesma numeração e histórico imutável, sem assinatura ou reenvio automático.
+// Revisado na versão 1.13.0.73: rejeição e fila esgotada agora orientam revisão
+// manual verdadeira e segura, sem retransmitir a NF-e ou expor falha interna.
+// Revisado na versão 1.13.0.72: timeout, recibo pendente e duplicidade foram
+// reconciliados no laboratório sem retransmissão, certificado real ou rede.
+// Revisado na versão 1.13.0.71: o ensaio sintético integral do orquestrador
+// fiscal chegou a DANFE pronto sem certificado real, rede ou ação de usuário.
+// Revisado na versão 1.13.0.70: o orquestrador fiscal local compõe todas as
+// etapas atrás de trava múltipla, sem rota ou emissão disponível na interface.
+// Revisado na versão 1.13.0.69: recibo e protocolo da NF-e possuem transportes
+// mTLS isolados no runtime local, ainda sem rota, fila ou emissão automática.
+// Revisado na versão 1.13.0.68: o transporte separado de autorização da NF-e
+// paulista existe só no runtime local, sem rota ou ligação com Emitir NF-e.
+// Revisado na versão 1.13.0.67: após ativar o A1, o backend confere o status
+// fiscal automaticamente; indisponibilidade não desativa o certificado.
+// Revisado na versão 1.13.0.66: o laboratório possui mTLS exclusivo para status
+// da SEFAZ-SP em homologação, sem rota pública ou capacidade de transmitir nota.
+// Revisado na versão 1.13.0.65: o laboratório Web liga o A1 ativo ao assinador
+// protegido e guarda o XML imutável; transmissão continua desabilitada.
+// Revisado na versão 1.13.0.64: o backend completa cadeia pública ausente do A1
+// somente pelo pacote oficial ICP-Brasil validado; falhas mantêm Instalado.
+// Revisado na versão 1.13.0.63: o backend consulta e valida a LCR apenas depois
+// da cadeia ICP-Brasil; sem evidência válida, o A1 permanece Instalado.
+// Revisado na versão 1.13.0.62: o backend fiscal fixa as raízes de assinatura
+// vigentes publicadas pela AC-Raiz/ITI. Sem LCR ou OCSP, o A1 fica Instalado.
+// Revisado na versão 1.13.0.61: a ativação automática do A1 exige todas as
+// evidências no servidor e persiste estado e auditoria na mesma transação.
+// Qualquer pendência mantém Instalado; nenhum teste real foi executado.
+// Revisado na versão 1.13.0.60: Ajustes > Certificado digital do futuro Vendas
+// consulta e instala o A1 pela Gestão autenticada. A tela mostra somente a
+// situação operacional; senha, custódia e conexão fiscal permanecem no backend.
+// Revisado na versão 1.13.0.59: a custódia A1 do futuro Vendas usa envelope
+// autenticado no servidor, descarta a senha digitada e separa instalado de ativo.
+// A infraestrutura continua desligada até migração e chave mestra locais.
+// Revisado na versão 1.13.0.58: o certificado do futuro Vendas é configurado uma
+// vez na empresa. Continuar emissão confere, assina e transmite automaticamente;
+// certificado ausente bloqueia e orienta Ajustes, sem pedir o arquivo na nota.
+// Revisado na versão 1.13.0.57: a futura Central Fiscal separa a conferência,
+// a ativação do certificado e a assinatura. A assinatura é protegida no
+// servidor, não entrega conteúdo sensível ao navegador e não envia à SEFAZ.
+// Revisado na versão 1.13.0.56: a ação Continuar emissão confere a NF-e numerada
+// no servidor e orienta a ativação do certificado, sem assinar ou transmitir.
+// Revisado na versão 1.13.0.55: a futura Central Fiscal Web confirma série e
+// número de uma NF-e preparada pela ação Emitir NF-e. O ensaio permaneceu local,
+// sem certificado, assinatura, transmissão ou alteração no AvantaVendas.
+// Revisado na versão 1.13.0.54: o laboratório Web concluiu pedido, separação,
+// faturamento e validação da NF-e com regra publicada e XSD. Série e número
+// permaneceram candidatos; não houve certificado, assinatura ou transmissão.
+// Revisado na versão 1.13.0.53: no laboratório Web, Regras fiscais reúne
+// responsável, data e confirmações no mesmo fluxo e mantém os Ajustes acessíveis
+// mesmo sem catálogo de Custos. A versão 1 foi publicada apenas no banco local.
+// Revisado na versão 1.13.0.52: a publicação de regras fiscais foi validada com
+// JWT real do Supabase local, empresa ativa e bloqueios 401/403. Sem impacto nas
+// telas e sem acesso remoto.
+// Revisado na versão 1.13.0.51: no laboratório Web, Regras fiscais consulta e
+// publica pela Gestão autenticada, informa a versão ativa e falha fechado sem
+// runtime. A integração permanece local e não altera o AvantaVendas.
+// Revisado na versão 1.13.0.50: o futuro Vendas possui contrato local para
+// publicar a matriz fiscal revisada por empresa. A preparação usa somente essa
+// versão e os dados fiscais congelados; tela remota, certificado e SEFAZ seguem
+// fora desta entrega.
+// Revisado na versão 1.13.0.49: a futura Central Fiscal separa abrir a emissão
+// privada de validar regra, pré-XML e XSD. A validação bloqueia sem matriz fiscal
+// publicada e não reserva número, usa certificado, assina ou transmite.
+// Revisado na versão 1.13.0.48: permissões do futuro Vendas podem ser
+// consultadas pela API protegida da Gestão sem expor token ao protótipo. A
+// escrita remota segue desligada e o ensaio de decisões ocorreu só no banco local.
+// Revisado na versão 1.13.0.47: o futuro Vendas usa uma matriz única de 45
+// permissões. O Operador simples pode criar rascunhos, mas ações de ciclo,
+// estoque e fiscal dependem de liberações específicas feitas pela gestão.
+// Revisado na versão 1.13.0.46: o pedido do futuro Vendas pode persistir e
+// avançar no laboratório Web após autenticação. Cliente e catálogo são relidos
+// no servidor; estoque não é integrado e a nota permanece como rascunho.
+// Revisado na versão 1.13.0.45: a futura Central Fiscal Web prepara ou
+// reencontra uma NF-e persistida após autenticação e fiscal.prepare. O ciclo
+// permanece em homologação, sem número, certificado, assinatura ou transmissão.
+// Revisado na versão 1.13.0.44: no Android nativo, Pessoal Premium usa Google
+// Play para compra, restauração e gerenciamento. Business não é vendido no app.
+// Excluir perfil continua reversível por 30 dias; a exclusão definitiva da
+// conta da Gestão é solicitada na página pública própria.
+// Revisado na versão 1.13.0.43: a Central Fiscal do laboratório lista o
+// rascunho comercial persistido e a emissão de mesma identidade, autenticada
+// pela Gestão. Não expõe XML, certificado, armazenamento ou fila ao protótipo.
+// Revisado na versão 1.13.0.42: a futura Central Fiscal Web consulta a situação
+// autenticada pela Gestão e só oferece XML/DANFE confirmados pelo backend. O
+// token não entra no protótipo e a fila permanece sem comando no navegador.
+// Revisado na versão 1.13.0.41: a futura Central Fiscal tem contrato autenticado
+// de consulta e entrada interna da fila, ainda desligados da tela e da SEFAZ.
+// Não houve migração publicada, conector real ou alteração no AvantaVendas.
+// Revisado na versão 1.13.0.40: o futuro Vendas recupera recibo ou protocolo
+// sem retransmitir, forma procNFe e gera DANFE somente no laboratório local.
+// Não houve SEFAZ real, certificado da Tridium, API ou migração publicada.
+// Revisado na versão 1.13.0.39: lote, tentativa e retorno da NF-e assinada do
+// futuro Vendas são tratados somente no laboratório com transporte em memória.
+// A SEFAZ real e o certificado da Tridium não foram acessados.
+// Revisado na versão 1.13.0.38: a NF-e numerada do futuro Vendas passa para
+// signed somente após assinatura protegida e guarda imutável no laboratório.
+// Usa credencial sintética; não acessa o A1 real nem transmite para a SEFAZ.
+// Revisado na versão 1.13.0.37: a NF-e numerada do futuro Vendas monta e valida
+// o XML definitivo e prova a assinatura somente com credencial efêmera local.
+// Não usa A1 real, não persiste assinatura e não transmite para a SEFAZ.
+// Revisado na versão 1.13.0.36: a NF-e preparada do futuro Vendas reserva série
+// e número atomicamente no laboratório local e chega a number_reserved. Ainda
+// não usa certificado, não assina, não transmite e não conecta com a SEFAZ.
+// Revisado na versão 1.13.0.35: a NF-e privada do futuro Vendas pode chegar a
+// prepared após regra tributária, pré-XML e XSD no laboratório local. Série e
+// número seguem sem reserva; certificado, assinatura e transmissão não ocorrem.
+// Revisado na versão 1.13.0.34: a ponte interna do futuro Vendas abre somente
+// a emissão NF-e privada em estado rascunho, após conferir permissão, origem e
+// integridade no banco local. Não reserva número, assina, transmite ou publica.
+// Revisado na versão 1.13.0.33: o faturamento candidato do futuro pedido Web
+// baixa estoque, gera parcelas e congela rascunho fiscal só no banco local.
+// Rascunho não é nota emitida; nenhuma tela, API ou migração foi publicada.
+// Revisado na versão 1.13.0.32: o futuro pedido Web ganhou confirmação com
+// reserva atômica, separação e cancelamento com liberação somente no banco
+// local; nenhuma tela, API, migração ou operação publicada foi alterada.
 // Revisado na versão 1.13.0.31.11: o card Saldo do mês da Gestão Mobile usa o
 // azul institucional AvantaLab, mantendo a leitura dos valores.
 // Revisado na versão 1.13.0.31.10: Sugestões e Sair no Menu da Gestão Mobile
@@ -59,6 +250,71 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // interface com cache seguro e atualizam conjuntos pesados em segundo plano.
 // Revisado na versão 1.13.0.12: confirmação imediata de pedidos e recebimentos
 // pertence ao AvantaVendas; sem mudança de orientação na Gestão.
+
+// Revisado na versão 1.13.0.31: materiais da futura OS Web ganharam reserva,
+// baixa pelo consumo real, liberação da sobra e estorno somente no banco local;
+// não há tela, API, migração nem impacto operacional nos sistemas publicados.
+// Revisado na versão 1.13.0.30: o ciclo local de Ordem de Serviço cobre
+// conversão, agenda, execução, custos e aceite, sem tela, API ou migração.
+// Revisado na versão 1.13.0.29: orçamentos e pedidos do futuro Vendas ganharam
+// persistência transacional validada só no banco local, com retratos, número,
+// idempotência e conversão única. Nenhuma tela, API ou migração foi publicada.
+// Revisado na versão 1.13.0.28: clientes do futuro Vendas ganharam serviço e
+// repositório server-side exercitados somente no PostgreSQL local, com CNPJ,
+// empresa, permissão, versão e auditoria. Nenhuma tela ou migração foi publicada.
+// Revisado na versão 1.13.0.27: o núcleo comercial do futuro Vendas foi
+// estruturado em 18 tabelas server-side e validado com rollback no Supabase
+// local descartável. Não há migração, menu ou mudança operacional publicada.
+// Revisado na versão 1.13.0.26: um laboratório Web local e oculto recebe, em
+// modo somente leitura, o catálogo publicado por Custos e Precificação. Custos
+// internos e estoque não atravessam a ponte; não há menu ou mudança publicada.
+// Revisado na versão 1.13.0.25: o futuro Vendas e Serviços ganhou contrato
+// oficial, identificador próprio, matriz granular e API administrativa
+// server-side. O SQL segue não aplicado e não há nova tela ou menu publicado.
+// Revisado na versão 1.13.0.24: sessão Supabase, empresa, vínculo, módulo e
+// exceção individual foram validados no laboratório do futuro Vendas. A rota
+// segue desligada e nenhum banco ou sistema publicado recebeu a alteração.
+// Revisado na versão 1.13.0.23: guarda privada, acesso assinado e restauração de
+// cópia fiscal criptografada foram validados apenas no laboratório local. A rota
+// segue fechada até autenticação real; nenhum sistema publicado ou remoto mudou.
+// Revisado na versão 1.13.0.22: o protótipo separado definiu armazenamento
+// fiscal durável privado, criptografado, imutável, com retenção, restauração e
+// acesso auditado por empresa e permissão efetiva. Nenhuma conexão remota foi
+// realizada e os sistemas publicados não mudaram operacionalmente.
+// Revisado na versão 1.13.0.21: a fila do laboratório fiscal separado reconcilia
+// metadados, regenera DANFE derivável e falha fechada se o procNFe desaparecer.
+// Não há alteração operacional nem transmissão externa nos sistemas publicados.
+// Revisado na versão 1.13.0.20: o laboratório fiscal separado validou guarda
+// imutável de procNFe e DANFE sintéticos, integridade SHA-256 e metadados no
+// PostgreSQL. Não há mudança operacional ou conexão externa nos sistemas.
+// Revisado na versão 1.13.0.19: o laboratório fiscal separado comprovou backup,
+// restauração, conflito otimista e distribuição concorrente da fila PostgreSQL.
+// O Next.js do protótipo foi atualizado; nenhum sistema publicado foi alterado.
+// Revisado na versão 1.13.0.18: Docker e Supabase CLI sustentam um laboratório
+// fiscal exclusivamente local, testado com dados fictícios e sem vínculo remoto.
+// Nenhum sistema publicado ou banco de produção foi alterado.
+// Revisado na versão 1.13.0.17: o protótipo separado de Vendas e Serviços tem
+// adaptador PostgreSQL transacional e fila fiscal com lease, espera progressiva
+// e dead letter. Nenhuma migração foi aplicada aos sistemas publicados.
+// Revisado na versão 1.13.0.16: o protótipo separado de Vendas e Serviços tem
+// máquina de estados fiscal idempotente e rascunho privado de PostgreSQL/Supabase.
+// Nenhuma migração foi aplicada e os sistemas publicados seguem sem alteração.
+// Revisado na versão 1.13.0.15: o protótipo separado de Vendas e Serviços gera
+// DANFE A4 somente de procNFe validado, autorizado e com chave correspondente.
+// A amostra é sintética e sem valor fiscal; não há mudança operacional publicada.
+// Revisado na versão 1.13.0.14: o protótipo separado de Vendas e Serviços
+// valida respostas de recibo e protocolo e só forma procNFe quando a situação
+// 100 pertence à mesma chave do XML assinado. Transporte e guarda durável
+// permanecem desabilitados, sem mudança nos sistemas publicados.
+// Revisado na versão 1.13.0.13: o protótipo separado de Vendas e Serviços
+// prepara no servidor a tentativa idempotente de NF-e paulista, calcula chave e
+// valida o pré-XML sem reservar numeração, assinar ou transmitir. O contrato
+// interno de autorização SOAP 1.2 permanece com transporte desligado. Os
+// sistemas publicados continuam sem alteração operacional.
+// Revisado na versão 1.13.0.12: o protótipo separado de Vendas e Serviços
+// controla séries, próximo número, reserva idempotente e solicitações locais de
+// inutilização sem transmitir ou simular protocolo governamental. A operação
+// publicada da Gestão e do AvantaVendas permanece inalterada.
 // Revisado na versão 1.13.0.11: tabelas de preços recebem código técnico
 // automático; a planilha reúne Preço padrão e uma coluna por tabela, preserva
 // vazios na importação e mantém compatibilidade com o formato anterior.
@@ -121,7 +377,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Revisado na versão 1.12.1.08: Gestão e AvantaVendas não trocam mais de
 // aplicativo diretamente. Sistemas administra somente o módulo; Perfis de
 // vendas alterna apenas contas de vendas do próprio usuário.
-// Revisado na versão 1.12.1.07: em Conteúdo do Vendas > Divulgação, a pasta
+// Revisado na versão 1.12.1.07: em Conteúdo AvantaVendas > Divulgação, a pasta
 // selecionada abre sua galeria de materiais e subpastas antes da lista completa
 // de pastas no celular. Voltar sobe um nível e Adicionar preserva o envio atual.
 // Revisado na versão 1.12.1.06: Novo lançamento acompanha o teclado Android e
@@ -219,8 +475,6 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // de Marcas foram unificadas em quatro etapas, sem alterar os aplicativos.
 // Revisado na versão 1.8.5.08: a progressão visual dos saltos foi suavizada,
 // sem alterar os fluxos dos aplicativos.
-// Revisado na versão 1.13.0.19: a landing pública oferece o link oficial da
-// Google Play no card do AvantaVendas, sem mudar os fluxos dos aplicativos.
 // Revisado na versão 1.8.5.07: as setas da trilha visual foram centralizadas
 // nos saltos, sem alterar os fluxos dos aplicativos.
 // Revisado na versão 1.8.5.06: as setas da trilha visual foram reforçadas,
@@ -316,7 +570,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // permissão; o aviso de e-mail não encontrado permite voltar ao formulário.
 // Revisado na versão 1.7.3.09: o rodapé Sugestões/Sair fica sempre visível e os
 // grupos expansíveis não recortam os controles internos.
-// Revisado na versão 1.7.3.08: o Menu da Gestão Mobile mantém Conteúdo do Vendas
+// Revisado na versão 1.7.3.08: o Menu da Gestão Mobile mantém Conteúdo AvantaVendas
 // sempre visível em Sistemas e informa quando o acesso está indisponível.
 // Revisado na versão 1.7.3.07: o Menu da Gestão Mobile foi reorganizado por
 // botões principais, tela inicial, sistemas, configurações e ações de sessão.
@@ -334,7 +588,7 @@ const GUIAS: Record<AmbienteAva, string> = {
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
 
 NAVEGAÇÃO E PERFIS
-- Na landing pública, **Nossos apps** apresenta AvantaLab Gestão e AvantaVendas. Ambos têm página oficial na App Store; o card do AvantaVendas também abre sua página oficial na Google Play, enquanto a Gestão permanece identificada como disponibilidade futura no Android.
+- Na landing pública, **Nossos apps** apresenta AvantaLab Gestão e AvantaVendas. Cada card abre a página oficial correspondente na App Store; Google Play aparece apenas como disponibilidade futura.
 - Depois que o acesso Web é iniciado, a landing não reaparece durante o retorno de Google/Apple nem na retomada de uma sessão ativa. Preparando acesso permanece visível até a Gestão abrir; se a confirmação falhar, o sistema retorna ao login com uma mensagem clara.
 - O perfil Pessoal gratuito usa a Gestão Mobile. Ao tentar entrar na Gestão Web, ele vê a página de assinatura do Premium Pessoal; assinatura vigente ou cortesia libera o mesmo perfil também no Web.
 - O dashboard é a página inicial. Os cards podem ser organizados pelo lápis: mostrar, ocultar, mover entre colunas, expandir, reduzir ou remover da visão.
@@ -368,7 +622,8 @@ FINANCEIRO
 AGENDA, AVISOS E MÓDULOS
 - Agenda reúne lembretes e despesas previstas/fixas/parcelas. Lembretes podem repetir em diferentes frequências.
 - Projetos é um módulo exclusivo da Gestão Web. Gestor Master ou Administrador ativo, inclusive quando adicionado posteriormente ao perfil, visualiza o catálogo e instala em Menu > Módulos: no Business custa R$ 14,90 por mês, no Business Pro está incluso e uma cortesia empresarial vigente libera todos os módulos sem cobrança. Se o catálogo não carregar, a tela informa a falha e oferece Tentar novamente; não interprete esse estado como ausência de módulos. Quando instalado, o botão Projetos abre uma tela total na mesma guia; **Sair** retorna à Gestão e preserva o perfil ativo. Uma conta sem assinatura ou sem instalação também vê um único botão **Projetos** com o selo **Compartilhado** quando recebeu algum projeto: esse modo não libera criação, importação ou administração. Ao instalar, o mesmo botão assume o modo completo. Na página, cards próprios e recebidos de diferentes contas aparecem juntos; cada recebido identifica a empresa de origem e a permissão, e nomes iguais continuam separados pela origem. O link abre o projeto exato, enquanto **Início** retorna ao perfil do convidado. O módulo usa exclusivamente o modo claro ou escuro salvo em Ajustes do perfil, nunca a configuração automática do computador; Gestor Master e Administrador podem alterná-lo no ícone de Ajustes do próprio módulo. A mudança visual ocorre imediatamente enquanto a confirmação é salva em segundo plano; se a gravação falhar, o estado anterior é restaurado e a tela informa o erro. No Mapa de um projeto, Ocultar cabeçalho amplia a área de trabalho navegável em toda a tela e Exibir cabeçalho permanece flutuante no canto superior direito. Gestor Master, Administrador e Operador Completo criam e alteram todo o conteúdo; Operador Simples somente visualiza. Em **Compartilhar acesso**, informe nome e e-mail nos campos compactos, escolha o acesso e use **Verificar e adicionar** na mesma linha; a lista identifica o projeto atual e o mesmo e-mail não pode ser cadastrado duas vezes nele. Se o vínculo já existir, ele é reapresentado sem alteração; a mesma pessoa pode receber acesso a outros projetos. O X fecha sem salvar o rascunho, e **Copiar link** confirma a cópia no próprio botão. Somente Gestor Master ou Administrador instala, oculta ou remove o módulo. Cancelar uma assinatura mantém o acesso até o fim do período pago, e remover nunca apaga projetos ou participantes.
-- Custos e Precificação é um módulo exclusivo da Gestão Web. Gestor Master ou Administrador instala em Menu > Módulos: no Business custa R$ 14,90 por mês; no Business Pro ou em cortesia empresarial vigente, a instalação não gera cobrança extra. O botão **Custos e precificação** abre uma página total com Visão geral, Produtos e serviços, Tabelas de preços, Insumos e recursos, Simulações e Histórico de custos. Ao abrir Custos diretamente sem um perfil identificado, a Gestão pede a seleção e retorna ao módulo na mesma origem. Produtos e serviços usam exatamente o mesmo cadastro-base do Catálogo: itens novos começam Em estudo, só entram na divulgação quando **Disponível no catálogo** estiver marcado e a inativação feita em qualquer um dos locais se reflete no outro, preservando composição e histórico. Os preços, porém, são independentes: **Preço de venda da empresa** e as tabelas comerciais pertencem à Gestão; **Preço sugerido de revenda** é preenchido em Conteúdo do Vendas > Catálogo e é o único valor financeiro enviado ao distribuidor. O custo interno da empresa não é exibido nem enviado pela divulgação. O cadastro aceita imagem opcional, código interno obrigatório com apoio para a próxima sequência, dados fiscais, preço interno de venda e composição por insumos. Em Tabelas de preços, a Tabela padrão acompanha o preço interno principal e políticas adicionais podem ter valores próprios; ao criar uma tabela, informe somente o nome, pois o identificador técnico é gerado automaticamente. Essas tabelas não são carregadas, exibidas nem gravadas nos pedidos do AvantaVendas. Exportar Excel baixa uma linha por produto com Preço padrão e uma coluna para cada tabela existente. Importar Excel valida o arquivo, atualiza preços preenchidos, preserva células vazias e tabelas ausentes, mostra a prévia e só aplica após confirmação; o formato antigo com aba separada também é aceito. IDs, datas técnicas e cabeçalhos não devem ser editados; se um produto mudou após a exportação, é preciso gerar um arquivo novo. Simulações são estudos independentes e o histórico registra versões quando custo ou preço sugerido interno mudam. Gestor Master, Administrador e Operador Completo editam; Operador Simples somente visualiza. Remover ou cancelar o módulo nunca apaga produtos, composições, cenários ou histórico.
+- Custos e Precificação é um módulo exclusivo da Gestão Web. Gestor Master ou Administrador instala em Menu > Módulos: no Business custa R$ 14,90 por mês; no Business Pro ou em cortesia empresarial vigente, a instalação não gera cobrança extra. O botão **Custos e precificação** abre uma página total com Visão geral, Produtos e serviços, Tabelas de preços, Insumos e recursos, Simulações e Histórico de custos. Ao abrir Custos diretamente sem um perfil identificado, a Gestão pede a seleção e retorna ao módulo na mesma origem. Produtos e serviços usam exatamente o mesmo cadastro-base do Catálogo: itens novos começam Em estudo, só entram na divulgação quando **Disponível no catálogo** estiver marcado e a inativação feita em qualquer um dos locais se reflete no outro, preservando composição e histórico. Os preços, porém, são independentes: **Preço de venda da empresa** e as tabelas comerciais pertencem à Gestão; **Preço sugerido de revenda** é preenchido em Conteúdo AvantaVendas > Catálogo e é o único valor financeiro enviado ao distribuidor. O custo interno da empresa não é exibido nem enviado pela divulgação. O cadastro aceita imagem opcional, código interno obrigatório com apoio para a próxima sequência, dados fiscais, preço interno de venda e composição por insumos. Em Tabelas de preços, a Tabela padrão acompanha o preço interno principal e políticas adicionais podem ter valores próprios; ao criar uma tabela, informe somente o nome, pois o identificador técnico é gerado automaticamente. Essas tabelas não são carregadas, exibidas nem gravadas nos pedidos do AvantaVendas. Exportar Excel baixa uma linha por produto com Preço padrão e uma coluna para cada tabela existente. Importar Excel valida o arquivo, atualiza preços preenchidos, preserva células vazias e tabelas ausentes, mostra a prévia e só aplica após confirmação; o formato antigo com aba separada também é aceito. IDs, datas técnicas e cabeçalhos não devem ser editados; se um produto mudou após a exportação, é preciso gerar um arquivo novo. Simulações são estudos independentes e o histórico registra versões quando custo ou preço sugerido interno mudam. Gestor Master, Administrador e Operador Completo editam; Operador Simples somente visualiza. Remover ou cancelar o módulo nunca apaga produtos, composições, cenários ou histórico.
+- Vendas e Serviços é um módulo exclusivo da Gestão Web e depende de Custos e Precificação. Durante a finalização, aparece em Menu > Módulos somente no perfil empresarial Tridium. No Business Pro, Gestor Master ou Administrador usa **Instalar**; no Business, usa **Assinar** por R$ 14,90 mensais. Depois da instalação, **Acessar** aparece no próprio card do catálogo e **Vendas e serviços** também aparece no menu, abrindo a página total na mesma guia. O cabeçalho contém **Início**, a marca AvantaLab e **Ajustes**; o perfil empresarial já vem do acesso pela Gestão e a tabela padrão é carregada internamente, sem seletores no topo. A página usa a cor primária desse perfil em seus botões, navegação e destaques, com azul institucional quando a cor não estiver disponível. No menu esquerdo, **Novo** oferece Cliente, Fornecedor e Produto além das operações comerciais: Cliente abre o formulário próprio, Fornecedor grava o parceiro do perfil para uso nas entradas de estoque e Produto abre o cadastro mestre em Custos e Precificação. Enquanto Novo está aberto, a tela fica escurecida; clique fora ou Escape fecha a seleção. Quando Produto foi aberto por esse atalho, ou quando **Produtos e serviços > Abrir origem em Custos** é usado, Custos mostra **Voltar** e retorna diretamente ao Vendas do mesmo perfil; ao abrir Custos diretamente pela Gestão, o cabeçalho continua mostrando **Início**. As descrições de NF-e e NFC-e não mostram os números técnicos dos modelos ao usuário. Perfis pessoais não exibem nem instalam o módulo. A liberação pertence ao perfil empresarial, independentemente de qual usuário autorizado o acessa. Os dados do emitente vêm de Dados cadastrais do perfil ativo; certificado A1, clientes, operações e referências de XML/DANFE permanecem vinculados à mesma empresa. O login é usado somente para conferir vínculo, permissão e autoria da auditoria. Ao abrir o módulo, aguarde o nome do perfil e os contadores reais: se perfil, permissões ou catálogo ainda não forem confirmados, os dados ficam ocultos e nunca são substituídos por exemplos. No retorno de Custos, a mesma proteção permanece ativa; se a confirmação demorar demais, use **Tentar novamente**. Vendedores e responsáveis técnicos vêm dos usuários ativos do perfil. No cadastro do cliente, **Buscar CNPJ** e **Buscar CEP** consultam fontes reais e identificam o código municipal; revise os dados retornados. Cliente, fornecedor, recebimento e estoque só fecham após a confirmação da Gestão; em falha, o preenchimento permanece aberto. A carteira e o relatório do cliente usam apenas operações e parcelas persistidas do perfil. Na Central Fiscal, **Certificado ativo** confirma apenas o A1; revisão fiscal e conexão com o autorizador continuam aparecendo separadamente até serem concluídas. Nesta etapa, emissão, numeração, assinatura, transmissão e cancelamento fiscal permanecem bloqueados; não oriente o usuário a emitir documento real.
 - O sino mostra avisos e lembretes. Push depende de permissão do aparelho e da infraestrutura; nunca confirme entrega sem evidência.
 - No card Saldo do mês, passar o mouse ou focar as linhas Inicial, Final e Previsto mostra como cada valor é calculado.
 - Controle de Ponto é módulo opcional. Funcionários acessam /ponto; somente Gestor Master e Administrador vinculados à empresa configuram e administram o módulo — operadores não o enxergam. A tela do funcionário mantém **Bater ponto** como ação central e mostra Entrada, Saída para refeição, Retorno e Saída ao redor, com estados concluído, próximo e pendente; localização, facial, registros, ajustes, ajuda e saída ficam em cards e atalhos compactos. Funcionário sem dias de trabalho marcados fica em Escala variável: pode registrar ponto em qualquer dia, mas faltas, atrasos e lembretes automáticos dependem de escala fixa programada. A aba Facial prepara o adicional de reconhecimento facial: o gestor seleciona os funcionários e confirma que eles serão informados sobre o uso dos dados faciais e que a empresa disponibilizará procedimento alternativo quando a validação não puder ser concluída. O preço é R$ 14,90 por funcionário ao mês, com referência de até 120 verificações. Apenas o funcionário individualmente habilitado vê o cadastro facial e, depois de ativo, confirma a identidade antes de marcar; os demais seguem a marcação comum sem bloqueio facial. Essa separação também é preservada se o aparelho estiver com uma versão anterior do PWA em cache. A validação facial orienta o funcionário antes de abrir a câmera, mantém a captura dentro do oval e, após a aprovação, aguarda **Continuar** para concluir o cadastro facial ou registrar a batida pendente; falhas permitem preparar uma nova tentativa e Cancelar retorna sem registrar. Somente a imagem de referência do cadastro permanece no armazenamento privado; as capturas das batidas são comparadas em memória e descartadas, mantendo no histórico apenas o resultado técnico da validação. Em Relatórios, o seletor recebe borda institucional e fundo azul sutil ao escolher funcionário específico; De, Até e Buscar registros ficam na mesma linha em telas amplas e usam controles compactos. No seletor de ano, o rótulo ANO fica centralizado abaixo do número. Ao buscar um funcionário, cada dia de trabalho sem entrada aparece como Falta, com borda e etiqueta vermelhas; as exportações Excel e PDF usam a mesma informação. As linhas de dia dos relatórios ganham destaque cinza claro ao passar o mouse. O card Pontualidade na entrada informa Pontuais, Atrasos, Adiantados e o total de dias avaliados, centralizados junto do horário previsto; Faltas no período aparece logo abaixo. Para encerrar o acesso, o gestor desmarca Funcionário ativo e salva: login e novas marcações são bloqueados, mas o histórico permanece disponível nos relatórios; o mesmo controle reativa o acesso. A aba Auditoria registra marcações, cadastros e mudanças de acesso e pode ser consultada por gestores. Após cada marcação, o funcionário vê um comprovante com código persistido e pode imprimi-lo. Em Conformidade REP-P, gestores baixam AFDs, disponibilizam o manual e geram o Espelho de Ponto Eletrônico do funcionário selecionado na aba Relatórios; o /admin mantém somente certificado e registro INPI. A saída legal só é válida em produção com certificado ICP-Brasil vigente.
@@ -381,7 +636,7 @@ AGENDA, AVISOS E MÓDULOS
 - Recebimentos Presenciais é módulo opcional e invisível para operadores. Gestor Master e Administrador instalam em Menu > Módulos e administram em Menu > Recebimentos: empresas atendidas, pontos de cobrança, colaboradores, conferência, devolução, divergência e estorno. No cadastro de clientes, CEP preenche rua, bairro, cidade e UF; número e complemento são concluídos manualmente. Nome, Valor contratado e vencimento são os únicos campos obrigatórios; responsável, contato, e-mail e endereço são opcionais. O valor é exibido como Valor contratado. Clientes usam Recebimento para indicar uma única frequência e regra: dias da semana; dia-base quinzenal (a cada 15 dias); dia mensal; ou mês inicial e dia para ciclos trimestral, semestral e anual. Trocar a frequência substitui somente previsões automáticas futuras ainda não recebidas e preserva atrasos, pagamentos e histórico. A partir do cadastro, o sistema gera parcelas previstas somente para o horizonte móvel dos próximos 12 meses e, após o vencimento, passa automaticamente as não recebidas para Em atraso. Empresas, Colaboradores, Conferência, Próximo a vencer e Inadimplentes não usam competência mensal. Conferência reúne todos os recebimentos aguardando confirmação; Inadimplentes reúne todos os atrasos abertos e nunca inclui situação Previsto; Próximo a vencer mostra todas as cobranças previstas para os próximos 30 dias; essas duas últimas tabelas não repetem coluna de situação. As consultas carregam todos os lotes de lançamentos, inclusive quando o perfil ultrapassa mil registros. Previsões futuras alimentam o total dos próximos meses sem expor a composição detalhada; nesses meses, Visão geral e Resultados mostram somente o total Previsto. Colaboradores acessam /recebimentos/colaborador com CPF e senha próprios; esse login não é o do Ponto nem o da Gestão. Todos os campos de senha do módulo possuem ícone de olho para exibir ou ocultar o conteúdo. No header desse PWA, a empresa gestora que criou o vínculo aparece como título principal e Recebimentos Presenciais como linha secundária. O login mantém o fundo padrão com a marca; após autenticar, o mesmo fundo aparece sem o logotipo AvantaLab, e Preparando acesso usa o card oficial de carregamento. Ao lançar pagamento, a fila mostra todos os vencidos e somente o próximo vencimento futuro; enquanto houver item programado, exige selecionar empresa e título antes de habilitar a confirmação, não oferece lançamento avulso e formata o valor recebido em moeda brasileira com duas casas. A forma de pagamento é obrigatória e aparece ao lado do valor, em ordem alfabética. O colaborador pode anexar uma imagem JPG, PNG ou WebP de até 6 MB; ela permanece privada e vinculada ao lançamento durante conferência, baixa, devolução, divergência e estorno. Gestores e administradores abrem o arquivo por acesso temporário em Conferência ou no histórico de Recebimentos. Registros antigos sem forma de pagamento exigem a escolha na conferência antes da baixa. Recebido hoje usa recorte diário; Aguardando mantém o saldo acumulado até todas as confirmações pendentes serem concluídas. Fora do modo instalado, o login mostra Instalar: usa o prompt nativo quando disponível ou orienta Compartilhar > Adicionar à Tela de Início. Remover o módulo bloqueia o PWA sem apagar dados. A integração com Receitas é ativada junto com o módulo e sincroniza automaticamente valor e data no mesmo mês após confirmação, alteração ou estorno. No card Total recebido e confirmado, Atualizar títulos muda apenas o nome da entrada e da etiqueta, atualiza imediatamente as entradas vinculadas e recarrega a tela de Receitas; Retirar das receitas exclui os lançamentos vinculados e interrompe a sincronização sem apagar recebimentos, e Adicionar às receitas pode reativá-la. O card não repete no topo o valor já exibido como Total recebido e confirmado.
 - Na listagem web de Recebimentos Presenciais, o popup aproveita a largura disponível e reorganiza cada lançamento quando o card fica estreito. Datas usam ano com dois dígitos, o valor contratado aparece como Valor e não existe coluna redundante de tipo. Gestor e Administrador podem estornar qualquer recebimento efetivamente lançado, inclusive antes da conferência; o motivo é obrigatório e a cobrança volta a Previsto ou Em atraso conforme o vencimento.
 - Na Conferência de Recebimentos Presenciais, Valor contratado, Valor declarado, Diferença, Forma de pagamento e Comprovante ocupam uma única faixa no desktop e se reorganizam quando o card fica estreito; observações e ações permanecem abaixo.
-- Vendas Mobile, quando instalado, possui catálogo, divulgação e novidades próprios. No Web, Gestor Master, Administrador e Operador Completo acessam esse botão; somente Gestor Master e Administrador instalam ou removem o módulo. O código empresarial do vendedor autoriza somente conteúdos da equipe após aprovação; a empresa solicitada torna-se o vínculo comercial ativo, e acessos administrativos automáticos a outros perfis não substituem essa escolha. O AvantaVendas aberto reconhece a aprovação e carrega os conteúdos automaticamente, sem reinício ou novo login. Resultados só entram na Gestão quando o usuário escolhe manualmente um destino financeiro e aparecem consolidados por usuário e mês. Ao trocar ou desvincular, os lançamentos anteriores podem ser apagados ou mantidos sem proteção para edição e exclusão; o histórico operacional permanece no Vendas.
+- Conteúdo AvantaVendas, quando instalado, reúne catálogo, divulgação e novidades para publicação. No Web, Gestor Master, Administrador e Operador Completo acessam esse botão; somente Gestor Master e Administrador instalam ou removem o módulo. Não confunda essa área de conteúdo com Vendas e Serviços, que executa a operação comercial Web. O código empresarial do vendedor autoriza somente conteúdos da equipe após aprovação; a empresa solicitada torna-se o vínculo comercial ativo, e acessos administrativos automáticos a outros perfis não substituem essa escolha. O AvantaVendas aberto reconhece a aprovação e carrega os conteúdos automaticamente, sem reinício ou novo login. Resultados só entram na Gestão quando o usuário escolhe manualmente um destino financeiro e aparecem consolidados por usuário e mês. Ao trocar ou desvincular, os lançamentos anteriores podem ser apagados ou mantidos sem proteção para edição e exclusão; o histórico operacional permanece no Vendas.
 - Na Gestão Web e Mobile, receitas são registradas somente como entradas individuais, com dia, origem e valor. O Balanço Geral apenas consulta o faturamento consolidado e não permite editar um total mensal diretamente. Referências mensais antigas aparecem preservadas como uma entrada comum chamada Receita registrada anteriormente.
 
 LIMITES
@@ -391,7 +646,7 @@ LIMITES
 Você atende no app/PWA Gestão Mobile (/mobile). Não confunda este ambiente com Vendas Mobile ou com a Gestão Web.
 
 NAVEGAÇÃO E PERFIS
-- Na landing pública, **Nossos apps** apresenta o AvantaLab Gestão e abre sua página oficial na App Store. A Google Play da Gestão permanece identificada como disponibilidade futura; o card do AvantaVendas já direciona para sua página oficial na Google Play.
+- Na landing pública, **Nossos apps** apresenta o AvantaLab Gestão e abre sua página oficial na App Store. Google Play aparece apenas como disponibilidade futura.
 - Após sair do aplicativo Gestão Mobile, a entrada aceita **E-mail** (também aceita o login já cadastrado) ou **Telefone** brasileiro com DDD. O telefone precisa estar vinculado à conta; a senha é a mesma.
 - A rota da Gestão abre sempre a própria Gestão. Gestão e AvantaVendas são
   abertos separadamente pelo usuário; não existe troca direta entre aplicativos.
@@ -421,7 +676,7 @@ NAVEGAÇÃO E PERFIS
 - Ao tocar em um campo textual editável já preenchido, o cursor vai para o final do conteúdo para permitir apagar da direita para a esquerda. A seleção intencional de um trecho por gesto longo permanece disponível.
 - Depois do login, a rota da Gestão abre diretamente a própria Gestão. Em
   **Menu > Sistemas**, Gestor Master e Administrador consultam ou ativam o
-  módulo Vendas Mobile; essa ação não abre o AvantaVendas.
+  módulo Conteúdo AvantaVendas; essa ação não abre o aplicativo AvantaVendas.
 - Em Preparando acesso, a Gestão mantém uma única tela estável e mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros. Assinatura, cadastro e dados financeiros são carregados em paralelo; a verificação opcional do Vendas e as sincronizações complementares continuam em segundo plano. A etapa Acesso pronto e os 100% somente são concluídos depois que a tela principal estiver montada. Ao voltar de uma suspensão do PWA ou recuperar a conexão, o aplicativo retoma a abertura e verifica se a versão ainda é atual antes de oferecer a recuperação. O resumo comparativo dos demais perfis é atualizado logo após a entrada, sem atrasar os dados do perfil aberto.
 - Em perfil sem o módulo Vendas, Gestor Master ou Administrador pode ativá-lo
   em **Sistemas**. A Gestão confirma o estado salvo no perfil antes de oferecer
@@ -433,7 +688,7 @@ NAVEGAÇÃO E PERFIS
   aparece primeiro; Veja os recursos adicionais abre a lista completa. Agenda e
   a ativação do módulo Vendas exigem Premium ou cortesia vigente.
 - Se o Premium Pessoal deixar de estar vigente, o Vendas fica inacessível sem ser desinstalado: módulo, vínculos e dados permanecem preservados. A receita consolidada do Vendas deixa de compor a Gestão durante o bloqueio e retorna, com o mesmo histórico, após a reativação.
-- Conteúdo do Vendas fica sempre listado em Menu > Sistemas. O acesso é habilitado em perfil Empresa com módulo ativo e permissão de Gestor Master, Administrador ou Operador Completo; nos demais casos, o botão informa a indisponibilidade. Em Divulgação, ao selecionar uma pasta, suas subpastas recebem uma variação do mesmo destaque para evidenciar o ramo ativo. Na Gestão Web, fotos, vídeos e PDFs podem ser selecionados ou arrastados para a pasta ativa; no iPhone, as opções de origem e seu idioma pertencem ao próprio iOS. Em uma pasta principal, Escolher capa separa **Enviar capa privada**, que aparece somente no cartão da pasta e não fica disponível aos vendedores, de **Imagens já publicadas**, que continuam disponíveis mesmo quando usadas como capa. Para capa, somente imagens são aceitas. Os cartões usam a proporção 16:10. Trocar capa ou Remover capa atual atualizam a apresentação no AvantaVendas. Ao confirmar a seleção de arquivos, o card Preparando arquivos para envio aparece antes do processamento e mantém percentual, arquivo atual e cancelamento até terminar. Tocar na miniatura abre a imagem, o vídeo ou o PDF original em um visualizador amplo; arrastar horizontalmente ou usar as setas alterna entre os materiais da pasta. A quantidade exibida em cada pasta soma os materiais próprios e os de todas as subpastas. Após o envio, o resumo mostra somente as quantidades enviadas e ignoradas por duplicidade, sem listar nomes.
+- Conteúdo AvantaVendas fica sempre listado em Menu > Sistemas. O acesso é habilitado em perfil Empresa com módulo ativo e permissão de Gestor Master, Administrador ou Operador Completo; nos demais casos, o botão informa a indisponibilidade. Em Divulgação, ao selecionar uma pasta, suas subpastas recebem uma variação do mesmo destaque para evidenciar o ramo ativo. Na Gestão Web, fotos, vídeos e PDFs podem ser selecionados ou arrastados para a pasta ativa; no iPhone, as opções de origem e seu idioma pertencem ao próprio iOS. Em uma pasta principal, Escolher capa separa **Enviar capa privada**, que aparece somente no cartão da pasta e não fica disponível aos vendedores, de **Imagens já publicadas**, que continuam disponíveis mesmo quando usadas como capa. Para capa, somente imagens são aceitas. Os cartões usam a proporção 16:10. Trocar capa ou Remover capa atual atualizam a apresentação no AvantaVendas. Ao confirmar a seleção de arquivos, o card Preparando arquivos para envio aparece antes do processamento e mantém percentual, arquivo atual e cancelamento até terminar. Tocar na miniatura abre a imagem, o vídeo ou o PDF original em um visualizador amplo; arrastar horizontalmente ou usar as setas alterna entre os materiais da pasta. A quantidade exibida em cada pasta soma os materiais próprios e os de todas as subpastas. Após o envio, o resumo mostra somente as quantidades enviadas e ignoradas por duplicidade, sem listar nomes.
 - Não há tela nem atalho de troca entre Gestão e Vendas. Os aplicativos usam a
   mesma identidade de acesso, mas são abertos de forma independente.
 - Cada usuário possui uma única conta operacional inicial no Vendas, preparada automaticamente no primeiro acesso; perfis adicionais só são criados em Configurações. O Vendas e a Gestão são aplicativos independentes e compartilham apenas a identidade de autenticação. O AvantaVendas não oferece acesso direto à Gestão no cabeçalho nem nos atalhos inferiores; o mesmo login e senha podem ser usados separadamente nos dois aplicativos.
@@ -478,7 +733,7 @@ o AvantaVendas atual. Priorize funções deste aplicativo e não redirecione par
 Gestão quando a ação existir no Vendas.
 
 SALA E NAVEGAÇÃO
-- Na landing pública, **Nossos apps** apresenta o AvantaVendas e abre suas páginas oficiais na App Store e na Google Play.
+- Na landing pública, **Nossos apps** apresenta o AvantaVendas e abre sua página oficial na App Store. Google Play aparece apenas como disponibilidade futura.
 - Após autenticar, o Vendas Mobile abre sempre na própria sala e não oferece
   acesso direto ao aplicativo Gestão.
 - As telas de acesso exibem **Gestão de Vendas** para identificar este
@@ -488,7 +743,7 @@ SALA E NAVEGAÇÃO
   entre eles.
 - Na entrada do Vendas Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto.
 - A sala de botões é a tela inicial obrigatória de cada abertura, inclusive quando os dados são restaurados pelo cache; pesquisas de Clientes, Produtos, Pedidos e Pagamentos começam limpas: Dashboard, Clientes, Produtos, Pedidos, Pagamentos, Agenda, Novidades, Divulgação e Informações. Durante carregamentos internos, um loading permanece no local dos botões e o conjunto só aparece quando todas as imagens estiverem prontas. Ao tocar, cada um dos nove cards principais reduz uniformemente em direção ao centro antes de abrir a área escolhida, sem deslocar para baixo.
-- O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards por arraste ou pelas setas do teclado. Enquanto a organização está ativa, a instrução "Segure e arraste. As setas também movem." aparece ao lado do lápis.
+- O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards por arraste ou pelas setas do teclado. Enquanto a organização está ativa, a instrução "Segure e arraste. As setas também movem." aparece ao lado do lápis. Em Configurações > Funções, **Solicitação por Voz** mostra ou oculta o microfone circular centralizado abaixo de **Dúvidas e Sugestões**, fora da grade reordenável. O primeiro toque já inicia a gravação na própria Sala e o toque seguinte encerra; a transcrição não aparece. Dúvidas, opções, confirmação e resultado abrem sobre a Sala, sem navegar para outra página. Pedidos e pagamentos confirmados são conferidos no banco e podem compartilhar o comprovante; **Salvar para depois** preserva a solicitação incompleta no perfil.
 - O topo e o menu inferior permanecem ancorados às bordas da tela; apenas o conteúdo central rola. Eles não se deslocam ao trocar de página, entrar em Configurações ou abrir e fechar um modal.
 - O menu inferior permanece visível acima da sala, Dashboard e demais telas comuns. Modais e confirmações aparecem acima dele enquanto estiverem abertos.
 - Depois de carregada, a sala mantém seus cards estáveis. As imagens dos nove botões permanecem pré-carregadas para o retorno imediato ao Início; tocar novamente em Início não recarrega a grade, e a organização reposiciona os próprios cards sem recarregar as imagens.
@@ -526,7 +781,7 @@ CLIENTES
 CATÁLOGO, PEDIDOS E PAGAMENTOS
 - Produtos permite cadastrar, editar, ativar/desativar, buscar, trabalhar com pacotes e imagens. Custo e preço de venda são usados para rentabilidade; estoque é opcional e pode ser ajustado em Configurações > Controle de estoque. Ao registrar entrada ou ajuste, Quantidade e Data ficam na mesma linha; tocar na data abre o calendário centralizado, a exibição usa dd/mm/aaaa, aceita lançamento anterior e não permite dia futuro. Depois de ativado, o estoque é abatido por vendas, consignados e itens bonificados; editar, cancelar ou excluir devolve somente a diferença necessária, e converter consignado em pedido não gera uma segunda saída.
 - Pedido e itens são salvos na mesma transação: se alguma parte falhar, o pedido anterior permanece intacto.
-- Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Ao selecionar um produto, o pedido começa com o **Preço sugerido de revenda** publicado em Conteúdo do Vendas > Catálogo e o vendedor pode editar esse valor manualmente antes de inserir o item. O preço de venda interno e as tabelas de Custos e Precificação não interferem neste fluxo. Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar. No celular, abrir o teclado desloca somente o card uma única vez, após o teclado estabilizar, para manter o campo ativo visível, inclusive o desconto; o fundo do modal continua cobrindo toda a tela. Fechar o teclado devolve o card à posição original sem apagar o preenchimento.
+- Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Ao selecionar um produto, o pedido começa com o **Preço sugerido de revenda** publicado em Conteúdo AvantaVendas > Catálogo e o vendedor pode editar esse valor manualmente antes de inserir o item. O preço de venda interno e as tabelas de Custos e Precificação não interferem neste fluxo. Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar. No celular, abrir o teclado desloca somente o card uma única vez, após o teclado estabilizar, para manter o campo ativo visível, inclusive o desconto; o fundo do modal continua cobrindo toda a tela. Fechar o teclado devolve o card à posição original sem apagar o preenchimento.
 - Ao iniciar um pedido ou pagamento sem cliente predefinido, o foco e o teclado abrem diretamente na busca. Digite nome, telefone ou e-mail e toque em um resultado; o primeiro cliente não é selecionado automaticamente.
 - Em Produtos, os indicadores de produtos cadastrados, pacotes ativos e o botão Gerenciar permanecem fixos com o cabeçalho enquanto a lista rola abaixo. No campo Produto, digite nome, código, marca ou categoria para filtrar imediatamente a lista; toque no resultado para selecionar o produto e preencher seu preço.
 - Consignado não entra como venda/recebimento até ser convertido em pedido. Ao abrir um consignado, são exibidos somente produtos e quantidades; apenas a lista rola, mantendo cabeçalho, resumo e ações fixos. O botão Gerar pedido fica disponível sempre que houver quantidade restante; nele, informe com + e − quanto foi vendido de cada item, respeitando o limite disponível destacado em cada produto, e confirme: o pedido entra no histórico da cliente e as quantidades são abatidas do consignado. Conversões parciais mantêm o consignado disponível para novos pedidos até zerar os produtos. Na edição, os controles de quantidade mantêm o produto tocado e a posição da lista em foco. Não trate consignado como receita realizada.
@@ -538,7 +793,7 @@ AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Agenda cria lembretes de visita, entrega e recebimento; pode expandir a visualização e mover a data de um item. Quando existem itens no dia atual, inclusive aniversários, o sininho do cabeçalho mostra a quantidade e abre diretamente a agenda de hoje; o bolo permanece como atalho específico dos aniversários.
 - Gestor Master, Administrador e Operador Completo podem publicar, editar ou excluir novidades, pastas, subpastas, imagens, vídeos e PDFs da Divulgação quando o módulo estiver ativo. Em uma pasta principal, podem escolher, trocar ou remover a capa usando uma imagem de qualquer subpasta. Operador Completo não instala módulos nem aprova acessos.
 - Novidades são publicações da empresa vinculada. Divulgação navega por pastas/subpastas, exibe nas pastas principais a capa definida pela Gestão e abre fotos, vídeos e PDFs para visualizar e compartilhar; **Atualizar**, à direita do título, relê somente vínculos de conteúdo, pastas e materiais, mantém a pasta aberta e preserva o conteúdo anterior se houver falha, sem reiniciar o sistema. Ao entrar novamente em Divulgação, o aplicativo também relê pastas e materiais silenciosamente. No celular, puxar para baixo somente sobre o cabeçalho fixo da página mostra o fundo escuro, o círculo de progresso e o texto Puxe para atualizar usados pela Gestão; ao soltar depois de completar o círculo, o conteúdo é relido e a pasta aberta é preservada quando ainda existe. Arrastar a lista de pastas ou materiais não inicia a atualização. No visualizador ampliado, arrastar horizontalmente ou usar as setas alterna entre o arquivo anterior e o próximo da pasta.
-- Em Configurações há dados da conta, celular com validação SMS, senha AvantaLab, aparência, metas, catálogo, estoque, vínculos comerciais, destino financeiro e PWA. O Kanban dos cards fica sempre disponível: segure o puxador de três traços no cabeçalho para mover o card, ou focalize o puxador e use as setas do teclado. Fora do puxador, a página rola normalmente e todos os controles permanecem ativos. Em **Dados e segurança**, proprietário e administrador podem baixar o backup completo da conta ativa e criar pontos; somente o proprietário restaura arquivos ou pontos, exclui pontos e reseta o perfil. O snapshot inclui identificação e empresa do perfil, participantes e permissões internas, preferências, recursos comerciais, produtos próprios ou recebidos, clientes, estoque, pedidos, pagamentos e agenda. A restauração recupera o catálogo sem nova conexão enquanto a autorização empresarial estiver ativa, mas nunca reativa uma autorização revogada pelo gestor. Antes de restaurar ou resetar, o sistema cria um ponto de segurança. A ação Sair aparece somente no cabeçalho, sem repetição no fim da página. Ao atingir a meta mensal, o Dashboard celebra uma vez para aquela meta e mês e o card Meta do período informa “Meta atingida, parabéns!”.
+- Em Configurações há dados da conta, celular com validação SMS, senha AvantaLab, aparência, funções, metas, catálogo, estoque, vínculos comerciais, destino financeiro e PWA. O Kanban dos cards fica sempre disponível: segure o puxador de três traços no cabeçalho para mover o card, ou focalize o puxador e use as setas do teclado. Fora do puxador, a página rola normalmente e todos os controles permanecem ativos. Em **Dados e segurança**, proprietário e administrador podem baixar o backup completo da conta ativa e criar pontos; somente o proprietário restaura arquivos ou pontos, exclui pontos e reseta o perfil. O snapshot inclui identificação e empresa do perfil, participantes e permissões internas, preferências, recursos comerciais, produtos próprios ou recebidos, clientes, estoque, pedidos, pagamentos e agenda. A restauração recupera o catálogo sem nova conexão enquanto a autorização empresarial estiver ativa, mas nunca reativa uma autorização revogada pelo gestor. Antes de restaurar ou resetar, o sistema cria um ponto de segurança. A ação Sair aparece somente no cabeçalho, sem repetição no fim da página. Ao atingir a meta mensal, o Dashboard celebra uma vez para aquela meta e mês e o card Meta do período informa “Meta atingida, parabéns!”.
 - Aparência, atalhos inferiores, ordem da sala, ordem dos cards de Configurações, ordem dos clientes inativos, alerta de aniversário, meta mensal e período de clientes inativos acompanham a conta pelo servidor. Na primeira abertura após a atualização, as preferências válidas deste aparelho são migradas automaticamente; a cópia local permanece apenas como contingência offline.
 - O vínculo comercial (notícias, divulgação e catálogo) pode ser diferente do destino financeiro pessoal (receitas no Gestão). O destino financeiro é escolhido por **Perfil de vendas**, não pelo login: perfis diferentes podem enviar seus resultados para a mesma conta da Gestão ou para contas distintas. No primeiro vínculo, escolha entre todo o histórico, mês vigente ou mês seguinte; contas novas começam sem destino e nada anterior é transferido sem essa confirmação. A integração gera uma receita consolidada por mês e a atualiza no acesso. Não confunda os dois.
 - No perfil Pessoal gratuito, o acesso ao AvantaVendas fica suspenso e direciona para a assinatura. A suspensão não apaga nem desinstala o módulo; clientes, produtos, pedidos, pagamentos e vínculos voltam a ficar acessíveis quando a assinatura ou cortesia é reativada.

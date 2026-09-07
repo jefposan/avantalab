@@ -23,6 +23,24 @@
     }
   }
 
+  function ehAndroidNativoMobile() {
+    try {
+      return Boolean(
+        window.Capacitor
+        && window.Capacitor.isNativePlatform
+        && window.Capacitor.isNativePlatform()
+        && window.Capacitor.getPlatform
+        && window.Capacitor.getPlatform() === 'android'
+      );
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function ehLojaNativaMobile() {
+    return ehIosNativoMobile() || ehAndroidNativoMobile();
+  }
+
   function ehChromeIosNavegadorMobile() {
     try {
       // Chrome no iPhone continua usando WebKit. A identificação por CriOS
@@ -436,6 +454,10 @@
     assinaturaApplePrecoAnual: 'R$ 99,90',
     assinaturaAppleAtiva: false,
     assinaturaAppleManagementUrl: '',
+    assinaturaGooglePrecoMensal: 'R$ 9,90',
+    assinaturaGooglePrecoAnual: 'R$ 99,90',
+    assinaturaGoogleAtiva: false,
+    assinaturaGoogleManagementUrl: '',
     assinaturaCicloSelecionado: '',
     contaExclusaoAcao: false,
     mes: meses[new Date().getMonth()],
@@ -2270,11 +2292,12 @@
     state.assinaturaCicloSelecionado = '';
     render();
     if (
-      ehIosNativoMobile()
+      ehLojaNativaMobile()
       && state.empresa
       && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal'
     ) {
-      executarAssinaturaAppleMobile('status');
+      if (ehIosNativoMobile()) executarAssinaturaAppleMobile('status');
+      else executarAssinaturaGoogleMobile('status');
     }
   }
 
@@ -2285,7 +2308,8 @@
   function contratacaoAssinaturaMobileHtml() {
     var pessoal = state.empresa && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal';
     var iosNativo = ehIosNativoMobile();
-    if (iosNativo && !pessoal) {
+    var androidNativo = ehAndroidNativoMobile();
+    if ((iosNativo || androidNativo) && !pessoal) {
       return '<div class="grid gap-3">' +
         '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
           '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Plano empresarial</p>' +
@@ -2319,6 +2343,7 @@
         '<p class="text-center text-[10px] font-bold text-slate-500"><a href="/termos" class="text-sky-700 underline">Termos de Uso</a> · <a href="/privacidade" class="text-sky-700 underline">Política de Privacidade</a></p>' +
       '</div>';
     }
+    if (androidNativo && pessoal) return contratacaoAssinaturaGoogleMobileHtml();
     return '<div class="grid gap-3">' +
       '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
         '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Contratação</p>' +
@@ -2338,6 +2363,29 @@
       '</div>' +
       '<button id="assinatura-continuar-asaas" type="button" ' + (!state.assinaturaCicloSelecionado || state.assinaturaAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-[#003E73] px-4 text-[10px] font-black uppercase text-white disabled:opacity-50">' + (state.assinaturaAcao ? 'Abrindo checkout...' : 'Continuar para pagamento seguro') + '</button>' +
       '<p class="text-center text-[10px] font-semibold leading-relaxed text-slate-500">O pagamento será aberto em uma página segura. Seus dados permanecem preservados durante a contratação.</p>' +
+    '</div>';
+  }
+
+  function contratacaoAssinaturaGoogleMobileHtml() {
+    var precoMensal = state.assinaturaGooglePrecoMensal || 'R$ 9,90';
+    var precoAnual = state.assinaturaGooglePrecoAnual || 'R$ 99,90';
+    var carregandoPlanos = state.assinaturaAcao === 'google-status';
+    return '<div class="grid gap-3">' +
+      '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+        '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Assinatura pessoal</p>' +
+        '<h3 class="mt-1 text-lg font-black">Pessoal Premium</h3>' +
+        '<p class="mt-1 text-xs font-semibold leading-relaxed text-white/85">Escolha o ciclo e confirme a compra com sua conta do Google Play.</p>' +
+      '</div>' +
+      (state.assinaturaErro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.assinaturaErro) + '</div>' : '') +
+      (carregandoPlanos ? '<div role="status" aria-live="polite" aria-busy="true" class="flex items-center gap-3 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-sky-800"><span aria-hidden="true" class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-sky-200 border-t-sky-700 motion-reduce:animate-none"></span><span class="text-[11px] font-bold leading-snug">Carregando planos do Google Play...<small class="mt-0.5 block text-[9px] font-semibold text-sky-700">Isso pode levar alguns segundos.</small></span></div>' : '') +
+      '<div class="grid grid-cols-2 gap-2">' +
+        '<button id="assinatura-selecionar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'mensal' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Mensal · ' + escapeHtml(precoMensal) + '</button>' +
+        '<button id="assinatura-selecionar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'anual' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Anual · ' + escapeHtml(precoAnual) + '</button>' +
+      '</div>' +
+      '<button id="assinatura-confirmar-google" type="button" ' + (!state.assinaturaCicloSelecionado || state.assinaturaAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-[#003E73] px-4 text-[10px] font-black uppercase text-white disabled:opacity-50">' + ((state.assinaturaAcao === 'google-mensal' || state.assinaturaAcao === 'google-anual') ? 'Abrindo Google Play...' : 'Assinar com Google Play') + '</button>' +
+      '<button id="assinatura-restaurar-google" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl border border-slate-300 bg-white text-[10px] font-black uppercase text-slate-700 disabled:opacity-60">' + (state.assinaturaAcao === 'google-restaurar' ? 'Restaurando...' : 'Restaurar compras') + '</button>' +
+      '<p class="text-[10px] font-semibold leading-relaxed text-slate-500">O pagamento será cobrado na sua conta do Google Play. A assinatura é renovada automaticamente, salvo cancelamento antes do fim do período. Você pode administrar ou cancelar nas assinaturas do Google Play.</p>' +
+      '<p class="text-center text-[10px] font-bold text-slate-500"><a href="/termos" class="text-sky-700 underline">Termos de Uso</a> · <a href="/privacidade" class="text-sky-700 underline">Política de Privacidade</a></p>' +
     '</div>';
   }
 
@@ -2392,6 +2440,57 @@
     render();
   }
 
+  async function executarAssinaturaGoogleMobile(acao, ciclo) {
+    if (!ehAndroidNativoMobile() || !state.empresa || state.assinaturaAcao) return;
+    if (normalizarTipoPerfil(state.empresa.tipo_perfil) !== 'pessoal') {
+      state.assinaturaErro = 'Planos empresariais não são vendidos neste aplicativo.';
+      render();
+      return;
+    }
+    if (typeof window.__avantalabAndroidBilling !== 'function') {
+      state.assinaturaErro = 'O Google Play ainda não está disponível. Feche e abra o aplicativo novamente.';
+      render();
+      return;
+    }
+    state.assinaturaAcao = acao === 'purchase'
+      ? 'google-' + ciclo
+      : (acao === 'restore' ? 'google-restaurar' : 'google-status');
+    state.assinaturaErro = '';
+    render();
+    try {
+      var token = await _avaPaywallToken();
+      var resposta = await window.__avantalabAndroidBilling({
+        action: acao,
+        ciclo: ciclo,
+        userId: state.usuario && state.usuario.id || '',
+        empresaId: state.empresa.id,
+        accessToken: token
+      });
+      if (!resposta || !resposta.ok) {
+        if (!resposta || !resposta.cancelado) {
+          throw new Error(resposta && resposta.mensagem || 'Não foi possível concluir a operação no Google Play.');
+        }
+        state.assinaturaAcao = '';
+        render();
+        return;
+      }
+      state.assinaturaGooglePrecoMensal = resposta.precoMensal || state.assinaturaGooglePrecoMensal;
+      state.assinaturaGooglePrecoAnual = resposta.precoAnual || state.assinaturaGooglePrecoAnual;
+      state.assinaturaGoogleAtiva = Boolean(resposta.ativo);
+      state.assinaturaGoogleManagementUrl = resposta.managementUrl || '';
+      state.assinaturaAcao = '';
+      if (acao === 'purchase' || acao === 'restore') {
+        await carregarAssinaturaMobile();
+        mostrarToast(resposta.ativo ? 'Assinatura do Google Play validada.' : 'Nenhuma assinatura ativa foi encontrada.');
+        return;
+      }
+    } catch (erro) {
+      state.assinaturaErro = erro && erro.message ? erro.message : 'Não foi possível acessar o Google Play.';
+    }
+    state.assinaturaAcao = '';
+    render();
+  }
+
   async function alterarAssinaturaMobile(ciclo) {
     if (!state.empresa || state.assinaturaAcao) return;
     state.assinaturaAcao = ciclo;
@@ -2421,6 +2520,10 @@
     if (!state.empresa || state.assinaturaAcao) return;
     if (ehIosNativoMobile()) {
       await executarAssinaturaAppleMobile('purchase', ciclo === 'anual' ? 'anual' : 'mensal');
+      return;
+    }
+    if (ehAndroidNativoMobile()) {
+      await executarAssinaturaGoogleMobile('purchase', ciclo === 'anual' ? 'anual' : 'mensal');
       return;
     }
     state.assinaturaNome = campo('assinatura-nome').trim().replace(/\s+/g, ' ');
@@ -11862,11 +11965,11 @@
 
     var sistemasSubItens = sistemasAberto ? (
       '<div id="menu-sistemas-conteudo" class="cfg-sub-group mx-0.5 mt-1 grid gap-1 rounded-xl border p-2 ' + overflowSubgrupoMenu(state.menuSistemasAnimacao) + ' ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-cyan-100 bg-cyan-50/50') + '" style="' + sistemasAnimacao + '">' +
-        menuBotaoHtml('menu-gerenciar-modulo-vendas', 'Módulo Vendas Mobile', state.vendasMobileModuloAtivo ? 'Ativo neste perfil' : (podeGerenciarUsuarios() ? 'Ativar para clientes, pedidos e pagamentos' : 'Somente gestores podem ativar'), !podeGerenciarUsuarios() || state.vendasMobileModuloAtivo, premiumInativo) +
+        menuBotaoHtml('menu-gerenciar-modulo-vendas', 'Módulo Conteúdo AvantaVendas', state.vendasMobileModuloAtivo ? 'Ativo neste perfil' : (podeGerenciarUsuarios() ? 'Ativar publicação para a equipe' : 'Somente gestores podem ativar'), !podeGerenciarUsuarios() || state.vendasMobileModuloAtivo, premiumInativo) +
         menuBotaoHtml(
           'menu-vendas-mobile',
-          'Conteúdo do Vendas',
-          conteudoVendasDisponivel ? 'Novidades e divulgação' : (state.vendasMobileModuloAtivo ? 'Indisponível para este perfil' : 'Ative o Vendas Mobile para acessar'),
+          'Conteúdo AvantaVendas',
+          conteudoVendasDisponivel ? 'Novidades, catálogo e divulgação' : (state.vendasMobileModuloAtivo ? 'Indisponível para este perfil' : 'Ative Conteúdo AvantaVendas para acessar'),
           !conteudoVendasDisponivel,
           false
         ) +
@@ -11941,6 +12044,7 @@
         '</button>' +
         ((state.empresa && ['gestor_master','administrador','operador_completo'].indexOf(state.empresa.perfil) !== -1) ? '<button id="menu-pontos-restauracao" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:14;' + (dk ? '' : 'background:linear-gradient(90deg,#F3EEFF 0%,#FFFFFF 78%);border-color:#DED0F7;') + '"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E9DDFB;color:#7040A0">' + iconeMenuLateralSvg('menu-restauracao') + '</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Pontos de restaura&ccedil;&atilde;o</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Salvar e recuperar estado completo</span></span></div></button>' : '') +
         '<button id="menu-excluir-conta" type="button" class="mt-1 min-h-11 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-2 text-left text-rose-800 shadow-[0_4px_11px_rgba(15,23,42,.05)] transition active:scale-[0.99]" style="order:15;"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">&#9888;</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black leading-none">Excluir este perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold leading-none text-rose-600">Guardar dados por 30 dias</span></span></span></button>' +
+        '<a href="/excluir-conta-gestao" class="mt-1 min-h-11 rounded-xl border border-rose-300 bg-white px-2.5 py-2 text-left text-rose-800 shadow-[0_4px_11px_rgba(15,23,42,.05)] transition active:scale-[0.99]" style="order:16;"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">&#10005;</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black leading-none">Excluir conta AvantaLab</span><span class="mt-0.5 block truncate text-[9px] font-semibold leading-none text-rose-600">Solicitar exclusão definitiva</span></span></span></a>' +
       '</div>'
     ) : '';
 
@@ -12381,6 +12485,7 @@
         '<input id="excluir-conta-confirmacao" type="text" autocomplete="off" autocapitalize="characters" style="font-size:16px" class="h-11 rounded-xl border border-rose-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-500" />' +
       '</label>' +
       '<button id="confirmar-exclusao-conta" type="button" ' + (state.contaExclusaoAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-rose-600 px-4 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.contaExclusaoAcao ? 'Excluindo...' : 'Excluir este perfil') + '</button>' +
+      '<a href="/excluir-conta-gestao" class="text-center text-xs font-black text-rose-700 underline underline-offset-4">Excluir definitivamente a conta AvantaLab</a>' +
       '<button id="cancelar-exclusao-conta" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-4 text-xs font-black uppercase text-slate-700">Cancelar</button>' +
     '</div>';
   }
@@ -12915,7 +13020,7 @@
           '<div class="rounded-xl border border-sky-200 bg-white px-2 py-2.5"><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Mensal</p><strong class="mt-1 block text-xs text-slate-900">' + valorMensal + '</strong></div>' +
           '<div class="rounded-xl border border-sky-200 bg-white px-2 py-2.5"><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Anual</p><strong class="mt-1 block text-xs text-slate-900">' + valorAnual + '</strong></div>' +
         '</div>' +
-        (iosNativo && !pessoal
+        (ehLojaNativaMobile() && !pessoal
           ? '<p class="mt-3 rounded-xl border border-sky-200 bg-white px-3 py-2 text-center text-[11px] font-semibold leading-relaxed text-slate-600">Planos empresariais não são vendidos neste aplicativo. Assinaturas existentes continuam acessíveis normalmente.</p>'
           : (podeGerenciar
           ? '<button id="assinatura-abrir-contratacao" type="button" class="mt-3 h-11 w-full rounded-xl bg-[#003E73] px-4 text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">Ver opções de assinatura</button>'
@@ -12942,7 +13047,10 @@
       ? normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal'
       : estado.tipoPerfil === 'pessoal';
     var assinaturaApple = !!(detalhes && detalhes.origemAssinatura === 'apple_app_store');
+    var assinaturaGoogle = !!(detalhes && detalhes.origemAssinatura === 'google_play');
     var iosNativo = ehIosNativoMobile();
+    var androidNativo = ehAndroidNativoMobile();
+    var assinaturaLojaNativa = (iosNativo && assinaturaApple) || (androidNativo && assinaturaGoogle);
     var modoRevisao = Boolean(estado.modoRevisao || ehContaRevisaoAppAppleMobile(state.usuario));
     var trialExpirado = estado.status === 'expirada'
       && !!estado.trialFim
@@ -13029,15 +13137,16 @@
         (mostrarValor ? '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Valor contratado</p><strong class="mt-1 block text-xs text-slate-900">' + dinheiro(valorContratado) + '</strong></div>' : '') +
         (temAssinatura ? '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Próximo vencimento</p><strong class="mt-1 block text-xs text-slate-900">' + vencimentoExibido + '</strong></div>' : '') +
       '</div>' +
-      (temAssinatura && !(iosNativo && assinaturaApple)
+      (temAssinatura && !assinaturaLojaNativa
         ? '<div><div class="flex items-center justify-between"><h3 class="text-xs font-black text-slate-900">Faturas recentes</h3><button id="assinatura-atualizar" type="button" ' + (state.assinaturaCarregando ? 'disabled ' : '') + 'class="rounded-lg border border-sky-300 bg-sky-50 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wide text-sky-700 active:scale-[0.98] disabled:opacity-60">' + (state.assinaturaCarregando ? 'Atualizando...' : 'Atualizar') + '</button></div><div class="mt-2 grid gap-1.5">' + (listaFaturas || '<p class="rounded-xl border border-dashed border-slate-300 px-3 py-5 text-center text-xs font-semibold text-slate-400">Nenhuma fatura disponível.</p>') + '</div></div>'
         : (cortesiaAtiva ? '' : sugestaoAssinaturaMobileHtml(pessoal, podeGerenciar))) +
       (iosNativo && assinaturaApple && temAssinatura ? '<div class="grid gap-2"><button id="assinatura-gerenciar-apple" type="button" class="h-10 rounded-xl bg-[#003E73] px-4 text-[10px] font-black uppercase text-white">Gerenciar na App Store</button><button id="assinatura-restaurar-apple" type="button" class="h-10 rounded-xl border border-slate-300 bg-white text-[10px] font-black uppercase text-slate-700">Restaurar compras</button></div>' : '') +
-      (podeGerenciar && temAssinatura && assinatura && !iosNativo && !canceladaNoFim && !cortesiaAtiva ? '<div><h3 class="text-xs font-black text-slate-900">Ciclo de cobranca</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">A mudanca vale para a proxima renovacao.</p><div class="mt-2 grid grid-cols-2 gap-2">' +
+      (androidNativo && assinaturaGoogle && temAssinatura ? '<div class="grid gap-2"><button id="assinatura-gerenciar-google" type="button" class="h-10 rounded-xl bg-[#003E73] px-4 text-[10px] font-black uppercase text-white">Gerenciar no Google Play</button><button id="assinatura-restaurar-google" type="button" class="h-10 rounded-xl border border-slate-300 bg-white text-[10px] font-black uppercase text-slate-700">Restaurar compras</button></div>' : '') +
+      (podeGerenciar && temAssinatura && assinatura && !ehLojaNativaMobile() && !canceladaNoFim && !cortesiaAtiva ? '<div><h3 class="text-xs font-black text-slate-900">Ciclo de cobranca</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">A mudanca vale para a proxima renovacao.</p><div class="mt-2 grid grid-cols-2 gap-2">' +
         '<button id="assinatura-mensal" type="button" ' + (state.assinaturaAcao || ciclo === 'mensal' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'mensal' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'mensal' ? 'Alterando...' : 'Mensal') + '</button>' +
         '<button id="assinatura-anual" type="button" ' + (state.assinaturaAcao || ciclo === 'anual' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'anual' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'anual' ? 'Alterando...' : 'Anual') + '</button>' +
       '</div></div>' : '') +
-      (podeGerenciar && temAssinatura && assinatura && !iosNativo && !canceladaNoFim && !cortesiaAtiva ? (!state.assinaturaConfirmarCancelamento
+      (podeGerenciar && temAssinatura && assinatura && !ehLojaNativaMobile() && !canceladaNoFim && !cortesiaAtiva ? (!state.assinaturaConfirmarCancelamento
         ? '<button id="assinatura-abrir-cancelamento" type="button" class="h-10 rounded-xl border border-red-200 bg-red-50 text-[10px] font-black uppercase text-red-600">Cancelar renovacao</button>'
         : '<div class="rounded-xl border border-red-200 bg-red-50 p-3"><p class="text-[10px] font-semibold leading-relaxed text-red-800">A renovacao sera interrompida. O acesso continua ate o fim do periodo pago.</p><div class="mt-2 grid grid-cols-2 gap-2"><button id="assinatura-voltar-cancelamento" type="button" class="h-9 rounded-lg border border-slate-300 bg-white text-[10px] font-black text-slate-600">Voltar</button><button id="assinatura-confirmar-cancelamento" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-9 rounded-lg bg-red-600 text-[10px] font-black text-white disabled:opacity-60">' + (state.assinaturaAcao === 'cancelar' ? 'Cancelando...' : 'Confirmar') + '</button></div></div>') : '') +
     '</div>';
@@ -14384,9 +14493,12 @@
     bind('assinatura-selecionar-mensal', function () { state.assinaturaCicloSelecionado = 'mensal'; state.assinaturaErro = ''; render(); });
     bind('assinatura-selecionar-anual', function () { state.assinaturaCicloSelecionado = 'anual'; state.assinaturaErro = ''; render(); });
     bind('assinatura-confirmar-apple', function () { assinarPeloPainelMobile(state.assinaturaCicloSelecionado); });
+    bind('assinatura-confirmar-google', function () { assinarPeloPainelMobile(state.assinaturaCicloSelecionado); });
     bind('assinatura-continuar-asaas', function () { assinarPeloPainelMobile(state.assinaturaCicloSelecionado); });
     bind('assinatura-restaurar-apple', function () { executarAssinaturaAppleMobile('restore'); });
     bind('assinatura-gerenciar-apple', function () { executarAssinaturaAppleMobile('manage'); });
+    bind('assinatura-restaurar-google', function () { executarAssinaturaGoogleMobile('restore'); });
+    bind('assinatura-gerenciar-google', function () { executarAssinaturaGoogleMobile('manage'); });
     bind('assinatura-abrir-cancelamento', function () { state.assinaturaConfirmarCancelamento = true; render(); });
     bind('assinatura-voltar-cancelamento', function () { state.assinaturaConfirmarCancelamento = false; render(); });
     bind('assinatura-confirmar-cancelamento', cancelarAssinaturaMobile);

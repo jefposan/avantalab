@@ -18,7 +18,7 @@ import {
   type StatusAssinatura,
   type TipoPerfil,
 } from './cobranca';
-import { EMAIL_CONTA_REVISAO_APPLE } from './conta-revisao';
+import { emailsContaRevisaoLojas } from './conta-revisao';
 import { normalizarStatusTemporal } from './cobranca-fluxo';
 import { normalizarPlanoComercial, PLANOS_COMERCIAIS, type PlanoComercial } from './planos-comerciais';
 import { papelPodeConsumirQuotaDePerfis } from './perfis-quota';
@@ -55,9 +55,9 @@ async function direitoFreeDaConta(db: SupabaseClient, userId: string): Promise<D
       .from('assinaturas_loja')
       .select('status, valido_ate')
       .eq('user_id', userId)
-      .eq('loja', 'apple_app_store')
+      .in('loja', ['apple_app_store', 'google_play'])
       .eq('entitlement_id', 'pessoal_premium')
-      .maybeSingle(),
+      .order('atualizado_em', { ascending: false }),
   ]);
   const ids = Array.from(new Set((vinculos || []).map((item) => item.empresa_id).filter(Boolean)));
   const { count } = ids.length
@@ -67,9 +67,9 @@ async function direitoFreeDaConta(db: SupabaseClient, userId: string): Promise<D
       .in('id', ids)
       .eq('tipo_perfil', 'pessoal')
     : { count: 0 };
-  const lojaVigente = !!assinaturaLoja?.valido_ate
-    && ['ativa', 'cancelada', 'inadimplente'].includes(assinaturaLoja.status || '')
-    && new Date(assinaturaLoja.valido_ate) > new Date();
+  const lojaVigente = (assinaturaLoja || []).some((item) => !!item.valido_ate
+    && ['ativa', 'cancelada', 'inadimplente'].includes(item.status || '')
+    && new Date(item.valido_ate) > new Date());
   const plano = lojaVigente ? 'pessoal_premium' : 'free';
   return {
     plano,
@@ -296,7 +296,7 @@ export async function resolverEstadoAcessoParaUsuario(
     .eq('empresa_id', empresaId)
     .eq('user_id', userId)
     .eq('status', 'ativo')
-    .ilike('email', EMAIL_CONTA_REVISAO_APPLE)
+    .in('email', emailsContaRevisaoLojas())
     .limit(1)
     .maybeSingle();
 
@@ -322,29 +322,29 @@ export async function resolverEstadoAcessoParaUsuario(
     || ((estado.status === 'inadimplente' || estado.status === 'cancelada') && !!estado.validoAte && new Date(estado.validoAte) > new Date());
   if (vigente) return estado;
 
-  // O Pessoal Premium contratado pela App Store pertence ao login. Assim, a
-  // mesma compra libera os perfis pessoais permitidos pelo plano sem apagar
-  // ou substituir uma eventual assinatura web vinculada a um perfil.
-  const { data: assinaturaLoja, error: erroLoja } = await db
+  // O Pessoal Premium comprado em uma loja pertence ao login. Assim, a mesma
+  // compra libera os perfis pessoais permitidos pelo plano sem substituir uma
+  // eventual assinatura web vinculada a um perfil.
+  const { data: assinaturasLoja, error: erroLoja } = await db
     .from('assinaturas_loja')
     .select('status, ciclo, valido_ate')
     .eq('user_id', userId)
-    .eq('loja', 'apple_app_store')
+    .in('loja', ['apple_app_store', 'google_play'])
     .eq('entitlement_id', 'pessoal_premium')
-    .maybeSingle();
-  if (!erroLoja && assinaturaLoja) {
-    const validaAte = assinaturaLoja.valido_ate ? new Date(assinaturaLoja.valido_ate) : null;
-    const vigenteNaLoja = ['ativa', 'cancelada', 'inadimplente'].includes(assinaturaLoja.status)
+    .order('atualizado_em', { ascending: false });
+  const assinaturaLoja = (assinaturasLoja || []).find((item) => {
+    const validaAte = item.valido_ate ? new Date(item.valido_ate) : null;
+    return ['ativa', 'cancelada', 'inadimplente'].includes(item.status)
       && Boolean(validaAte && validaAte > new Date());
-    if (vigenteNaLoja) {
-      return {
-        ...estado,
-        status: assinaturaLoja.status as StatusAssinatura,
-        validoAte: assinaturaLoja.valido_ate,
-        plano: 'pessoal_premium',
-        ciclo: assinaturaLoja.ciclo,
-      };
-    }
+  });
+  if (!erroLoja && assinaturaLoja) {
+    return {
+      ...estado,
+      status: assinaturaLoja.status as StatusAssinatura,
+      validoAte: assinaturaLoja.valido_ate,
+      plano: 'pessoal_premium',
+      ciclo: assinaturaLoja.ciclo,
+    };
   }
 
   if (await usuarioTemEmpresaAssinante(userId)) {

@@ -1,0 +1,13 @@
+export type NfeSpXmlValidationMessage = { code: string; field: string; message: string };
+export type NfeSpXmlInput = Record<string, any>;
+export const NFE_SP_XML_REFERENCE: string;
+export const NFE_SP_SCHEMA_PACKAGE: string;
+export const NFE_SP_SCHEMA_VERSION: '4.00';
+export const NFE_NAMESPACE: string;
+export const HOMOLOGATION_RECIPIENT_NAME: string;
+export function normalizeNfeSpXmlInput(value: unknown): NfeSpXmlInput;
+export function calculateNfeAccessKeyCheckDigit(base43: string): string;
+export function buildNfeAccessKey(input: unknown): string;
+export function validateNfeSpXmlInput(input: unknown): { input: NfeSpXmlInput; valid: boolean; errors: NfeSpXmlValidationMessage[]; warnings: string[]; accessKey: string; schemaValidationExecuted: false; schemaPackage: string };
+export function buildUnsignedNfeSpXml(input: unknown): ReturnType<typeof validateNfeSpXmlInput> & { xml: string };
+export function prototypeDraftToNfeSpXmlInput(value: { draft?: Record<string, any>; client?: Record<string, any>; config?: Record<string, any>; issuedAt?: string }): NfeSpXmlInput;

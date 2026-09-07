@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { autenticarPerfilCobranca } from '../../../../lib/cobranca-servidor';
 import {
   consultarAssinanteRevenueCat,
+  lojaDaRevenueCat,
   salvarEstadoRevenueCat,
 } from '../../../../lib/revenuecat-servidor';
 
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
 
   try {
     const estado = await consultarAssinanteRevenueCat(acesso.usuario.id);
-    await salvarEstadoRevenueCat(acesso.db, acesso.usuario.id, estado);
+    await salvarEstadoRevenueCat(acesso.db, acesso.usuario.id, estado, lojaDaRevenueCat(estado.ambiente, 'apple_app_store'));
     return NextResponse.json({ ok: true, estado });
   } catch (erro) {
     console.error('Falha ao sincronizar assinatura Apple:', erro);

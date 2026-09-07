@@ -1,0 +1,14 @@
+export const CUSTOMER_READY_TYPE: string;
+export const CUSTOMER_SNAPSHOT_TYPE: string;
+export const CUSTOMER_SAVE_REQUEST_TYPE: string;
+export const CUSTOMER_SAVE_RESPONSE_TYPE: string;
+export const SUPPLIER_READY_TYPE: string;
+export const SUPPLIER_SNAPSHOT_TYPE: string;
+export const SUPPLIER_SAVE_REQUEST_TYPE: string;
+export const SUPPLIER_SAVE_RESPONSE_TYPE: string;
+export const OPERATION_SAVE_REQUEST_TYPE: string;
+export const OPERATION_SAVE_RESPONSE_TYPE: string;
+export const OPERATION_READY_TYPE: string;
+export const OPERATION_SNAPSHOT_TYPE: string;
+export function parsePartySnapshot(data: unknown, type: string, key: string): any;
+export function parsePartySaveResponse(data: unknown, type: string): any;

@@ -9,7 +9,7 @@ import {
   validarCpf,
   validarNomeCompleto,
 } from '../../lib/cadastro-perfil';
-import { ehContaRevisaoApple } from '../../lib/conta-revisao';
+import { ehContaRevisaoLoja } from '../../lib/conta-revisao';
 
 export const runtime = 'nodejs';
 
@@ -97,10 +97,11 @@ export async function GET(request: Request) {
   const ctx = await contexto(request, empresaId);
   if (!ctx) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
 
-  const [{ data: empresa }, { data: assinatura }, { data: cadastroAtual }] = await Promise.all([
+  const [{ data: empresa }, { data: assinatura }, { data: cadastroAtual }, { data: configuracao }] = await Promise.all([
     ctx.admin.from('empresas').select('id, nome, tipo_perfil').eq('id', empresaId).maybeSingle(),
     ctx.admin.from('assinaturas').select('cobranca_nome, cobranca_documento, cobranca_email, cobranca_telefone').eq('empresa_id', empresaId).maybeSingle(),
     ctx.admin.from('cadastros_perfil').select('*').eq('empresa_id', empresaId).maybeSingle(),
+    ctx.admin.from('configuracoes').select('cor_primaria').eq('empresa_id', empresaId).maybeSingle(),
   ]);
   if (!empresa) return NextResponse.json({ erro: true, mensagem: 'Perfil não encontrado.' }, { status: 404 });
 
@@ -130,7 +131,7 @@ export async function GET(request: Request) {
     email_empresa: cadastro.email_empresa || assinatura?.cobranca_email || ctx.vinculo.email || ctx.usuario.email || '',
   };
 
-  if (ehContaRevisaoApple(ctx.usuario.email)) {
+  if (ehContaRevisaoLoja(ctx.usuario.email)) {
     return NextResponse.json({
       ok: true,
       ...statusCadastro(preenchido, 'pessoal', true),
@@ -138,12 +139,14 @@ export async function GET(request: Request) {
       obrigatorio: false,
       diasRestantes: 0,
       modoRevisao: true,
+      corPrimaria: /^#[0-9a-f]{6}$/i.test(texto(configuracao?.cor_primaria, 7)) ? texto(configuracao?.cor_primaria, 7) : '#003E73',
     });
   }
 
   return NextResponse.json({
     ok: true,
     ...statusCadastro(preenchido, tipoPerfil, ['gestor_master', 'administrador'].includes(ctx.vinculo.perfil || '')),
+    corPrimaria: /^#[0-9a-f]{6}$/i.test(texto(configuracao?.cor_primaria, 7)) ? texto(configuracao?.cor_primaria, 7) : '#003E73',
   });
 }
 

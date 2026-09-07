@@ -18,7 +18,7 @@ export type CustosAccess = {
   podeGerenciarModulo: boolean;
 };
 
-export default function CustosClient({ companyId }: { companyId: string }) {
+export default function CustosClient({ companyId, initialNewType, returnTo }: { companyId: string; initialNewType?: 'produto'; returnTo?: 'vendas' }) {
   const router = useRouter();
   const [access, setAccess] = useState<CustosAccess | null>(null);
   const [error, setError] = useState('');
@@ -78,10 +78,13 @@ export default function CustosClient({ companyId }: { companyId: string }) {
       setMensagem(falha instanceof Error ? falha.message : 'Não foi possível atualizar o modo visual.');
     } finally { setAtualizandoTema(false); }
   };
+  const returnHref = returnTo === 'vendas' && companyId ? `/vendas?empresaId=${encodeURIComponent(companyId)}` : companyId ? `/gestao?empresaId=${encodeURIComponent(companyId)}` : '/gestao';
+  const returnLabel = returnTo === 'vendas' ? 'Voltar' : 'Início';
+  const returnAriaLabel = returnTo === 'vendas' ? 'Voltar para Vendas e Serviços' : 'Voltar ao Dashboard do AvantaLab';
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>
     <header className={styles.moduleHeader}>
-      <Link href={companyId ? `/gestao?empresaId=${encodeURIComponent(companyId)}` : '/gestao'} className={styles.moduleExit} aria-label="Voltar ao Dashboard do AvantaLab"><Icon name="back" size={16} /> Início</Link>
+      <Link href={returnHref} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</Link>
       <div className={styles.moduleIdentity}>
         <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={160} height={40} loading="eager" className={styles.moduleLogo} />
         <span>{access.empresa.nome}</span>
@@ -91,7 +94,7 @@ export default function CustosClient({ companyId }: { companyId: string }) {
         {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
       </div>
     </header>
-    <CustosWorkspace companyId={companyId} access={access} />
+    <CustosWorkspace companyId={companyId} access={access} initialNewType={initialNewType} />
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes de Custos e Precificação" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">
         <div><strong>Modo escuro</strong><p>Aplica a aparência escura a este perfil no AvantaLab e nos módulos compatíveis.</p></div>

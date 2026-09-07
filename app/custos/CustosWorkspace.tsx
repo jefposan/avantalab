@@ -28,8 +28,8 @@ const navegacao: Array<{ id: Aba; rotulo: string; icone: string }> = [
 
 const erroTexto = (erro: unknown) => erro instanceof Error ? erro.message : 'Não foi possível concluir a operação.';
 
-export default function CustosWorkspace({ companyId, access }: { companyId: string; access: CustosAccess }) {
-  const [aba, setAba] = useState<Aba>('visao');
+export default function CustosWorkspace({ companyId, access, initialNewType }: { companyId: string; access: CustosAccess; initialNewType?: 'produto' }) {
+  const [aba, setAba] = useState<Aba>(initialNewType ? 'produtos' : 'visao');
   const [catalogoId, setCatalogoId] = useState('');
   const [produtos, setProdutos] = useState<ProdutoCustos[]>([]);
   const [tabelasPreco, setTabelasPreco] = useState<TabelaPreco[]>([]);
@@ -103,7 +103,7 @@ export default function CustosWorkspace({ companyId, access }: { companyId: stri
         {mensagem && <div className={styles.success}>{mensagem}</div>}
       </div>
       {aba === 'visao' && <VisaoGeral produtos={produtos} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => setAba('produtos')} onAtualizar={() => void recarregar()} />}
-      {aba === 'produtos' && <ProdutosView key={`${produtoAtivoId}:${produtoAtivo?.atualizado_em || 'novo'}`} catalogoId={catalogoId} produtos={produtos} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onMensagem={setMensagem} onErro={setErro} />}
+      {aba === 'produtos' && <ProdutosView key={`${produtoAtivoId}:${produtoAtivo?.atualizado_em || 'novo'}`} catalogoId={catalogoId} produtos={produtos} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'recursos' && <RecursosView documento={documento} produtos={produtos} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
@@ -169,9 +169,9 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
   </>;
 }
 
-function ProdutosView({ catalogoId, produtos, setProdutos, documento, produtoAtivoId, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onMensagem, onErro }: {
+function ProdutosView({ catalogoId, produtos, setProdutos, documento, produtoAtivoId, initialNewType, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onMensagem, onErro }: {
   catalogoId: string; produtos: ProdutoCustos[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
-  documento: DocumentoCustos; produtoAtivoId: string; onSelecionar: (id: string) => void;
+  documento: DocumentoCustos; produtoAtivoId: string; initialNewType?: 'produto'; onSelecionar: (id: string) => void;
   onDocumento: (proximo: DocumentoCustos, retorno: string) => Promise<void>; podeEditar: boolean;
   onSalvarProduto: (produto: ProdutoCustos) => Promise<ProdutoCustos>; onEnviarImagem: (arquivo: File) => Promise<string>;
   onMensagem: (texto: string) => void; onErro: (texto: string) => void;
@@ -182,6 +182,7 @@ function ProdutosView({ catalogoId, produtos, setProdutos, documento, produtoAti
   const [salvando, setSalvando] = useState(false);
   const [confirmarInativacao, setConfirmarInativacao] = useState(false);
   const arquivoRef = useRef<HTMLInputElement>(null);
+  const initialNewAppliedRef = useRef(false);
 
   const calculo = calcularComposicao(composicao, documento.recursos);
   const codigos = produtos.filter((produto) => produto.id !== rascunho.id).map((produto) => produto.sku).filter(Boolean);
@@ -190,6 +191,11 @@ function ProdutosView({ catalogoId, produtos, setProdutos, documento, produtoAti
   const alterar = <K extends keyof ProdutoCustos>(campo: K, valor: ProdutoCustos[K]) => setRascunho((atual) => ({ ...atual, [campo]: valor }));
 
   const iniciar = (tipo: TipoItem) => { const novo = novoProduto(tipo, catalogoId); setRascunho(novo); setComposicao(composicaoVazia()); onSelecionar(''); };
+  useEffect(() => {
+    if (!initialNewType || !catalogoId || initialNewAppliedRef.current) return;
+    initialNewAppliedRef.current = true;
+    iniciar(initialNewType);
+  }, [catalogoId, initialNewType]);
   const validar = () => {
     if (!rascunho.sku.trim() || !rascunho.nome.trim()) return 'Código e nome são obrigatórios.';
     if (codigos.some((codigo) => codigo.toUpperCase() === rascunho.sku.trim().toUpperCase())) return 'Este código já está sendo usado.';

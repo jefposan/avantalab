@@ -2,6 +2,7 @@
 import React from 'react';
 import DraggableModalCard from './DraggableModalCard';
 import type { AcessoComercialModulo } from '@/app/lib/modulos-acesso-comercial';
+import { obterRegistroModulo } from '@/app/lib/modulos-registro';
 
 export type Modulo = {
   id: string;
@@ -22,6 +23,7 @@ interface ModulosModalProps {
   onTentarNovamente: () => void;
   acaoEmId: string | null; // módulo em processamento (instalando/removendo)
   onInstalar: (id: string) => void;
+  onAcessar: (id: string) => void;
   onDesinstalar: (id: string) => void;
   darkMode: boolean;
   corPrimaria: string;
@@ -52,6 +54,7 @@ export default function ModulosModal({
   onTentarNovamente,
   acaoEmId,
   onInstalar,
+  onAcessar,
   onDesinstalar,
   darkMode,
   corPrimaria,
@@ -112,6 +115,8 @@ export default function ModulosModal({
                 const cortesia = acessoComercial === 'cortesia';
                 const liberado = acessoComercial === 'liberado';
                 const disponivelNoPlano = Boolean(acessoComercial);
+                const registro = obterRegistroModulo(m.id);
+                const possuiPagina = registro?.navegacao.modo === 'pagina_total' && Boolean(registro.navegacao.rota);
                 const preco = (m.precoMensal ?? 14.9).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 return (
                   <article
@@ -161,12 +166,23 @@ export default function ModulosModal({
                                   : 'Disponível no Business e Business Pro'}
                       </p>
                       {instalado ? (
-                        <button
-                          type="button"
-                          disabled={processando || !podeGerenciar || Boolean(cancelamentoEm)}
-                          onClick={() => onDesinstalar(m.id)}
-                          className="min-h-11 w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:opacity-50"
-                        >{processando ? '...' : cancelamentoEm ? 'Cancelamento agendado' : business ? 'Cancelar assinatura' : 'Remover'}</button>
+                        <div className={`grid gap-2 ${possuiPagina ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                          {possuiPagina && (
+                            <button
+                              type="button"
+                              disabled={processando}
+                              onClick={() => onAcessar(m.id)}
+                              className="min-h-11 rounded-xl px-3 py-2 text-xs font-black text-white shadow transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
+                              style={{ backgroundColor: corPrimaria, outlineColor: corPrimaria }}
+                            >Acessar</button>
+                          )}
+                          <button
+                            type="button"
+                            disabled={processando || !podeGerenciar || Boolean(cancelamentoEm)}
+                            onClick={() => onDesinstalar(m.id)}
+                            className="min-h-11 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:opacity-50"
+                          >{processando ? '...' : cancelamentoEm ? 'Cancelamento agendado' : business ? 'Cancelar assinatura' : 'Remover'}</button>
+                        </div>
                       ) : (
                         <button
                           type="button"

@@ -1,0 +1,1 @@
+export const STOCK_READY_TYPE:string;export const STOCK_SNAPSHOT_TYPE:string;export const STOCK_MOVE_REQUEST_TYPE:string;export const STOCK_MOVE_RESPONSE_TYPE:string;export function parseStockSnapshot(data:unknown):any;export function createStockMoveRequest(input?:Record<string,any>):Readonly<Record<string,any>>|null;export function parseStockMoveResponse(data:unknown):any;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { autenticarPerfilCobranca } from '@/app/lib/cobranca-servidor';
 import { listarProjetosCompartilhados } from '@/app/lib/projetos-compartilhados-servidor';
+import { filtrarModulosDisponiveisParaEmpresa } from '@/app/lib/modulos-disponibilidade';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,7 +23,12 @@ export async function GET(request: Request) {
     );
   }
 
-  const [catalogo, instalacoes, assinaturasCanceladas] = await Promise.all([
+  const [perfil, catalogo, instalacoes, assinaturasCanceladas] = await Promise.all([
+    acesso.db
+      .from('empresas')
+      .select('tipo_perfil')
+      .eq('id', empresaId)
+      .maybeSingle(),
     acesso.db
       .from('modulos')
       .select('id, nome, descricao, icone, perfis')
@@ -40,7 +46,7 @@ export async function GET(request: Request) {
       .eq('status', 'cancelada'),
   ]);
 
-  if (catalogo.error || instalacoes.error || assinaturasCanceladas.error) {
+  if (perfil.error || catalogo.error || instalacoes.error || assinaturasCanceladas.error) {
     console.error('Falha ao carregar módulos do perfil.', {
       catalogo: catalogo.error?.code,
       instalacoes: instalacoes.error?.code,
@@ -62,9 +68,14 @@ export async function GET(request: Request) {
       .map((item) => [String(item.modulo_id), String(item.valido_ate)]),
   );
 
+  const tipoPerfil = perfil.data?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
+  const catalogoDoPerfil = (catalogo.data || []).filter((modulo) =>
+    Array.isArray(modulo.perfis) && modulo.perfis.includes(tipoPerfil)
+  );
+  const catalogoDaEmpresa = filtrarModulosDisponiveisParaEmpresa(catalogoDoPerfil, empresaId);
   const modulosVisiveis = acesso.podeGerenciar
-    ? catalogo.data || []
-    : (catalogo.data || []).filter((modulo) => ativos.includes(String(modulo.id)));
+    ? catalogoDaEmpresa
+    : catalogoDaEmpresa.filter((modulo) => ativos.includes(String(modulo.id)));
 
   let projetosCompartilhados = 0;
   try {

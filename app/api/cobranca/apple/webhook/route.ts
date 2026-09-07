@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { criarSupabaseAdmin } from '../../../../lib/admin-server';
 import {
   consultarAssinanteRevenueCat,
+  lojaDaRevenueCat,
   salvarEstadoRevenueCat,
 } from '../../../../lib/revenuecat-servidor';
 
@@ -14,6 +15,7 @@ type EventoRevenueCat = {
   original_app_user_id?: string;
   product_id?: string;
   entitlement_ids?: string[];
+  store?: string;
 };
 
 export async function POST(request: Request) {
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
     // A notificação autenticada desperta a conciliação, mas a permissão é
     // sempre derivada da API da RevenueCat, nunca do payload recebido.
     const estado = await consultarAssinanteRevenueCat(userId);
-    await salvarEstadoRevenueCat(db, userId, estado);
+    await salvarEstadoRevenueCat(db, userId, estado, lojaDaRevenueCat(evento.store || estado.ambiente, 'apple_app_store'));
     const { error: erroProcessamento } = await db.from('revenuecat_webhook_eventos').update({
       status: 'processado',
       erro: null,

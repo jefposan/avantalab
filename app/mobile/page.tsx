@@ -5,6 +5,7 @@ import BackupMobileBridge from './BackupMobileBridge';
 import OAuthNativoMobileBridge from './OAuthNativoMobileBridge';
 import VendasMobileConteudoBridge from './VendasMobileConteudoBridge';
 import IosBillingBridge from './IosBillingBridge';
+import AndroidBillingBridge from './AndroidBillingBridge';
 import NativeShellBridge from './NativeShellBridge';
 import NativePushNotificationsBridge from './NativePushNotificationsBridge';
 import { APP_VERSION } from '../lib/version';
@@ -80,6 +81,9 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
   const revenueCatIosApiKey = process.env.NEXT_PUBLIC_REVENUECAT_IOS_API_KEY || '';
+  const revenueCatAndroidApiKey = process.env.NEXT_PUBLIC_REVENUECAT_ANDROID_API_KEY || '';
+  const revenueCatAndroidProdutoMensal = process.env.NEXT_PUBLIC_REVENUECAT_ANDROID_PRODUTO_MENSAL || '';
+  const revenueCatAndroidProdutoAnual = process.env.NEXT_PUBLIC_REVENUECAT_ANDROID_PRODUTO_ANUAL || '';
   const mobileAssetVersion = APP_VERSION;
   const bootstrapCarregamento = `
     (function () {
@@ -695,6 +699,11 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
       <OAuthNativoMobileBridge />
       <VendasMobileConteudoBridge />
       <IosBillingBridge apiKey={revenueCatIosApiKey} />
+      <AndroidBillingBridge
+        apiKey={revenueCatAndroidApiKey}
+        produtoMensal={revenueCatAndroidProdutoMensal}
+        produtoAnual={revenueCatAndroidProdutoAnual}
+      />
       <NativeShellBridge />
       <NativePushNotificationsBridge />
 

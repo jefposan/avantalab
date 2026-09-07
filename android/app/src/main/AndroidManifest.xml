@@ -51,4 +51,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Avisos enviados pelo app; o Android 13+ pede a autorização em tempo de uso. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Recursos acionados pelo usuário: comprovantes e conversa por voz com a Ava. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 </manifest>

@@ -1,6 +1,414 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.13.0.31.11 -->
+<!-- ava-version: 1.14.3.14 -->
+
+> Revisão 1.14.3.14: a **Solicitação por Voz** não é mais um card da grade. O
+> microfone circular fica centralizado abaixo de **Dúvidas e Sugestões** e o
+> primeiro toque já inicia a gravação na própria Sala de Botões. Dúvidas,
+> opções, confirmação e resultado aparecem sobre a Sala, sem abrir outra
+> página. Ao fechar ou compartilhar o comprovante, a Sala continua aberta.
+
+> Revisão 1.14.3.14-av110: o controle circular passou a ocupar o bloco de
+> assistência, sem participar da organização dos nove cards da Sala.
+
+> Revisão 1.14.3.13: em **Configurações > Funções**, ative ou desative
+> **Solicitação por Voz**. Ativada, ela aparece como botão na Sala de Botões;
+> desativada, o botão some. Toque uma vez para ouvir e novamente para encerrar.
+> A tela não exibe a transcrição: mostra somente dúvidas, opções e a confirmação
+> obrigatória. Pedidos e pagamentos confirmados são conferidos no banco e podem
+> compartilhar o comprovante oficial. Se fechar uma solicitação incompleta com
+> **Salvar para depois**, ela volta na próxima abertura daquele perfil. Sem
+> forma de pagamento, escolha uma das opções apresentadas antes de confirmar.
+
+> Revisão 1.14.3.13-av109: a Sala de Botões e as Configurações carregam a
+> Solicitação por Voz somente quando ela está ativada para o perfil atual.
+
+> Revisão 1.14.3.12: em Vendas e Serviços, a consulta de CNPJ e CEP do cliente
+> usa as fontes integradas e identifica o código do município. Ao salvar
+> cliente, fornecedor, recebimento ou estoque, aguarde **Salvando…** ou
+> **Confirmando…**: a janela fecha somente depois da confirmação da Gestão. Se
+> houver falha, os dados permanecem preenchidos para nova tentativa. A carteira
+> e o relatório do cliente usam somente operações e parcelas do perfil ativo.
+> Em **Produtos e serviços**, **Abrir origem em Custos** leva ao catálogo do
+> mesmo perfil e apresenta **Voltar** para retornar diretamente a Vendas.
+> Durante a reconfirmação do perfil, a operação fica oculta; nenhum dado de
+> demonstração aparece entre a saída de Custos e o retorno ao módulo. Se a
+> confirmação exceder o limite seguro, use **Tentar novamente**.
+
+> Revisão 1.14.3.11: após confirmar um pedido ou pagamento por voz, o servidor
+> relê o registro gravado. A tela mostra **Gravado e conferido**, a conta, o
+> cliente, o valor, a situação, os horários e o código integral do lançamento.
+> O laboratório é experimental, mas essas confirmações alteram os dados reais
+> da conta ativa.
+
+> Revisão 1.14.3.10: ao abrir **Vendas e Serviços** pela Gestão, aguarde o nome
+> do perfil empresarial e os contadores reais aparecerem. A tela não usa dados
+> demonstrativos se catálogo, perfil ou permissões demorarem ou falharem. O
+> certificado ativo aparece na Central Fiscal; revisão fiscal e conexão com o
+> autorizador continuam como pendências separadas. Vendedores, responsáveis
+> técnicos e emitente vêm do perfil acessado.
+
+> Revisão 1.14.3.09: as ondas reais do microfone ficaram maiores, mais fortes e
+> contrastantes para facilitar a percepção da captação. No silêncio continuam
+> sem movimento.
+
+> Revisão 1.14.3.08: enquanto o laboratório está ouvindo, ondas ao redor do
+> botão respondem à intensidade captada pelo microfone. No silêncio elas ficam
+> paradas, indicando que não há voz sendo detectada.
+
+> Revisão 1.14.3.07: ao aparecer mais de um cliente ou produto no laboratório
+> de voz, tocar na opção correta conclui aquela escolha e continua a solicitação.
+> A lista não se repete depois do toque; a confirmação final permanece
+> obrigatória para qualquer gravação.
+
+> Revisão 1.14.3.06: se o servidor local da interface de voz estiver
+> desligado, a rota deixa de permanecer carregando e informa como iniciar o
+> laboratório ou tentar novamente. Com a conexão ativa, o fluxo não muda.
+
+> Revisão 1.14.3.05: a interface visual do laboratório de voz fica em um
+> projeto externo isolado. A mesma rota oculta continua sendo usada, e a
+> autenticação, os dados e a execução permanecem protegidos no AvantaLab. Sem
+> mudança no modo de tocar, falar, confirmar e concluir uma solicitação.
+
+> Revisão 1.14.3.04: em **Ajustes > Certificado digital**, um certificado A1
+> instalado e ainda inativo pode ser verificado novamente sem selecionar o
+> arquivo ou informar a senha. A tela explica a pendência em linguagem simples;
+> o certificado continua protegido e vinculado ao perfil empresarial ativo. A
+> consulta de revogação aceita LCRs oficiais grandes sem afrouxar a verificação.
+
+> Revisão 1.14.3.03: a rota experimental e oculta
+> `/teste/solicitacao-voz` permite tocar, falar, esclarecer ambiguidades e
+> confirmar pedidos ou pagamentos usando a conta ativa do Avanta Vendas.
+> Consultas de vendas e histórico respondem sem gravação. A página exige uma
+> sessão já autenticada, não aparece nos menus e não altera a Sala de Botões.
+
+> Revisão 1.14.3.02: ao abrir Vendas e Serviços pela Gestão, as permissões são
+> sempre as do login autenticado. Uma escolha de usuário feita anteriormente no
+> laboratório não pode mais bloquear ou liberar Ajustes e certificado digital.
+> Os dados comerciais e fiscais continuam pertencendo ao perfil empresarial.
+
+> Revisão 1.14.3.01: ajustes internos de lint e nomenclatura dos auxiliares do
+> servidor, sem mudança no uso operacional de Vendas e Serviços.
+
+> Revisão 1.14.3: ao concluir uma ordem integrada, fotos JPG, PNG ou WEBP e
+> arquivos PDF selecionados são validados e guardados de forma privada no
+> perfil empresarial. Cada ordem aceita até cinco anexos de 10 MB. Os anexos
+> reaparecem após recarregar a página e são abertos por acesso temporário.
+
+> Revisão 1.14.2: a devolução total de pedido faturado e o estorno de uma ordem
+> concluída restauram estoque e encerram parcelas e rascunho fiscal em uma única
+> transação. Se houver valor recebido, estorne-o primeiro em Recebimentos. Se a
+> nota já entrou no ciclo fiscal, cancele-a primeiro na Central Fiscal. O
+> rascunho original permanece preservado para auditoria.
+
+> Revisão 1.14.1: ordens persistidas podem iniciar e cancelar o atendimento e
+> concluir a execução. Na conclusão, materiais, estoque, parcelas, checklist e
+> rascunho de NFS-e são gravados juntos no perfil empresarial. Se qualquer etapa
+> falhar, nada é concluído parcialmente. Cancelamento após a conclusão continua
+> bloqueado e exige o futuro fluxo fiscal e financeiro de estorno. Pedidos
+> confirmados ou em separação podem ser cancelados com liberação da reserva.
+
+> Revisão 1.14.0: clientes, fornecedores, orçamentos, pedidos, ordens de
+> serviço, recebimentos e estoque agora pertencem ao perfil empresarial e são
+> gravados no servidor. Produtos publicados começam com saldo zero; registre
+> uma entrada ou inventário antes da primeira venda. A receita da Gestão é
+> atualizada quando há recebimento ou estorno, não apenas pelo faturamento. A
+> emissão de notas continua bloqueada enquanto certificado, credenciais e
+> homologação fiscal não estiverem completos.
+
+> Revisão 1.13.0.92: ao abrir **Novo > Produto** por Vendas e Serviços, Custos e
+> Precificação mostra **Voltar** e retorna diretamente ao Vendas do mesmo perfil.
+> Quando Custos é aberto diretamente pela Gestão, o botão continua sendo
+> **Início**. O menu Novo escurece o restante da tela e fecha ao clicar fora ou
+> pressionar Escape.
+
+> Revisão 1.13.0.91: a página local de **Vendas e Serviços** usa a cor primária
+> do perfil empresarial em botões, navegação e destaques, como Custos e
+> Precificação. Quando não há cor válida, aplica o azul institucional.
+
+> Revisão 1.13.0.90: no menu esquerdo de **Vendas e Serviços**, **Novo** também
+> permite cadastrar Cliente e Fornecedor ou abrir um novo Produto em Custos e
+> Precificação. Fornecedores cadastrados ficam disponíveis nas entradas de
+> estoque do perfil. As notas aparecem como NF-e e NFC-e, sem os números
+> técnicos dos modelos nas descrições do menu.
+
+> Revisão 1.13.0.89: na página local de Vendas e Serviços, perfil empresarial
+> e tabela de preços não aparecem mais como seletores no topo. O perfil vem da
+> Gestão e a tabela padrão é carregada internamente. O cabeçalho mostra somente
+> **Início**, a marca AvantaLab e **Ajustes**; sem impacto no AvantaVendas.
+
+> Revisão 1.13.0.88: a Gestão Mobile agora apresenta o botão **Conteúdo
+> AvantaVendas** em Sistemas, com o mesmo nome já adotado na Gestão Web. O
+> funcionamento do aplicativo AvantaVendas não mudou.
+
+> Revisão 1.13.0.87: na Gestão, a área que abastece o aplicativo agora se chama
+> **Conteúdo AvantaVendas**. É nela que gestores publicam novidades, catálogo e
+> materiais de divulgação. **Vendas e Serviços** é outro módulo, destinado à
+> operação comercial Web. Nenhum vínculo, acesso ou dado foi alterado.
+
+> Revisão 1.13.0.86: após instalar Vendas e Serviços no perfil Tridium, use
+> **Acessar** no próprio card do catálogo de Módulos. A página abre vinculada ao
+> perfil empresarial selecionado; o login continua somente como autorização.
+
+> Revisão 1.13.0.85: o novo módulo Web **Vendas e Serviços** é separado do
+> AvantaVendas. Durante a finalização, aparece para instalação somente no perfil
+> empresarial Tridium. Todos os dados comerciais e fiscais usam o perfil ativo
+> como proprietário; o login serve apenas para autorizar e auditar. O
+> AvantaVendas não mudou.
+
+> Revisão 1.13.0.84: no futuro Vendas Web, CNPJ é o primeiro campo dos
+> cadastros empresariais e CEP é o primeiro campo de cada endereço; ambos têm
+> **Buscar**. A busca de CNPJ preenche inclusive o endereço disponível e o CEP
+> completa o que faltar. Os dados devem ser revisados antes de salvar. O
+> AvantaVendas não mudou.
+
+> Revisão 1.13.0.83: ao usar **Ações > Cancelar NF-e**, o futuro backend prepara
+> e assina automaticamente o evento com o certificado ativo. Não há seleção
+> manual de certificado na nota. Os XSDs oficiais são conferidos, mas a conexão
+> real permanece bloqueada até o ensaio controlado; o AvantaVendas não mudou.
+
+> Revisão 1.13.0.82: interação e adaptação móvel da Constelação Avanta
+> refinadas no protótipo isolado; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.13.0.81: brilho e profundidade do protótipo Constelação Avanta
+> refinados; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.13.0.80: na Central Fiscal do futuro Vendas Web, use **Ações >
+> Cancelar NF-e** apenas em nota autorizada. Informe a justificativa solicitada e
+> marque a confirmação. O evento de cancelamento fica separado do encerramento
+> de rascunho e preserva a autorização original. No acesso local, o documento
+> marcado como **Demonstração** permite testar sem transmissão ou valor fiscal.
+
+> Revisão 1.13.0.79: marca completa e movimento das estrelas no protótipo
+> Constelação Avanta; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.13.0.78: o refinamento do protótipo isolado da Constelação Avanta
+> não altera fluxos ou orientações do AvantaVendas.
+
+> Revisão 1.13.0.77: no acesso local, a Central Fiscal apresenta uma NF-e
+> fictícia marcada como **Demonstração**. Em **Ações > Revisar dados fiscais**,
+> substitua o NCM `00000000` por um NCM válido de oito dígitos e selecione
+> **Salvar revisão fiscal**. Nenhuma nota é assinada ou transmitida; recarregue
+> a página para repetir. O cenário desaparece ao acessar pela Gestão autenticada.
+
+> Revisão 1.13.0.76: o protótipo público e isolado da Constelação Avanta não
+> altera fluxos ou orientações operacionais do AvantaVendas.
+
+> Revisão 1.13.0.75: na Central Fiscal do futuro Vendas Web, uma NF-e rejeitada
+> abre **Revisar dados fiscais**. Na rejeição 778, informe o NCM correto de cada
+> produto e selecione **Salvar revisão fiscal**. A série, o número e o histórico
+> são mantidos; salvar não usa certificado e não envia a nota. Depois disso, a
+> situação volta a **Número reservado** e a nova emissão exige ação separada.
+
+> Revisão 1.13.0.74: no futuro Vendas Web, a revisão de uma NF-e rejeitada
+> mantém série, número e histórico, cria novo retrato fiscal e exige um novo XML
+> assinado. O comando não acessa o certificado nem retransmite automaticamente;
+> o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.73: no futuro Vendas Web, uma NF-e rejeitada orienta **Revisar
+> dados fiscais**. Se as oito consultas automáticas terminarem sem confirmação,
+> a orientação será **Revisar emissão**. Nenhum dos estados retransmite a nota
+> automaticamente, e o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.72: o laboratório da futura NF-e Web comprovou a retomada de
+> timeout e de recibo pendente sem retransmitir. As consultas sintéticas
+> reconciliaram lote, duplicidade e protocolo até o DANFE pronto, sem certificado
+> real, rede externa ou mudança no AvantaVendas.
+
+> Revisão 1.13.0.71: o caminho interno completo da futura NF-e Web foi aprovado
+> num ensaio sintético repetível até o DANFE pronto. Não houve certificado real,
+> chamada externa ou nova ação na interface; o serviço de transmissão usado
+> pelo Vendas continua desligado e o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.70: o futuro Vendas Web já possui um orquestrador fiscal
+> interno que reúne assinatura, autorização, retorno e documentos. Ele nasce
+> bloqueado, não possui rota e continua desconectado de **Emitir NF-e**; nenhuma
+> ação foi criada na interface e o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.69: o futuro Vendas Web possui transportes internos separados
+> para consultar recibo e protocolo da NF-e paulista em homologação. Eles ainda
+> não têm rota nem ligação com a fila ou com **Emitir NF-e**; nenhuma ação foi
+> criada na interface e o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.68: o futuro Vendas Web possui agora um transporte interno
+> separado para autorização da NF-e paulista em homologação. Ele continua sem
+> rota e desconectado da emissão; nenhuma ação foi criada na interface e o
+> AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.67: o futuro Vendas Web agora confere automaticamente a
+> disponibilidade da conexão fiscal depois de ativar um A1 válido. Não existe
+> ação técnica adicional para o usuário, a indisponibilidade da SEFAZ não
+> desativa o certificado e nenhuma nota é transmitida nessa consulta. O
+> AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.66: o futuro Vendas Web ganhou um transporte mTLS restrito à
+> consulta de disponibilidade da SEFAZ-SP em homologação. Ele ainda não é
+> acionado pela interface e é incapaz de transmitir NF-e ou eventos. O
+> AvantaVendas não foi alterado. Se necessário, a cadeia pública do A1 é
+> reconstruída somente numa cópia temporária apagada depois da conexão.
+
+> Revisão 1.13.0.65: o futuro Vendas Web já conecta o A1 ativo ao assinador no
+> backend local. O uso permanece automático, sem botão ou senha dentro da nota;
+> o XML assinado é validado e guardado antes de mudar a situação. A transmissão
+> continua desligada e o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.64: se o A1 do futuro Vendas não trouxer toda a cadeia
+> pública, o backend tenta completá-la automaticamente pelo pacote oficial da
+> ICP-Brasil, com integridade confirmada. Não há campo novo para o usuário; uma
+> falha mantém **Instalado** e bloqueia a emissão. O AvantaVendas não foi
+> alterado.
+
+> Revisão 1.13.0.63: o futuro Vendas Web consulta a LCR somente depois de
+> aprovar a cadeia e a raiz ICP-Brasil. A operação é automática no backend e
+> falha com segurança: sem prova vigente de não revogação, permanece
+> **Instalado**. O AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.62: o futuro Vendas Web agora valida a raiz do certificado
+> contra as âncoras de assinatura vigentes publicadas pela AC-Raiz/ITI. Essa
+> configuração permanece no backend e não altera o AvantaVendas. Sem LCR ou
+> OCSP válido, o A1 permanece **Instalado**.
+
+> Revisão 1.13.0.61: no futuro Vendas Web, a ativação do certificado será
+> automática no servidor e exige todas as evidências fiscais e criptográficas.
+> Uma pendência mantém **Instalado** e nunca produz **Certificado ativo** por
+> simulação. O laboratório não acessou certificado real ou órgão fiscal.
+
+> Revisão 1.13.0.60: no futuro Vendas Web, **Ajustes > Empresa e notas >
+> Certificado digital** agora consulta a situação persistida e pode encaminhar
+> o A1 pela Gestão autenticada. O usuário vê somente **Não configurado**,
+> **Instalado** ou **Certificado ativo**; a parte técnica permanece no backend.
+> O recurso está ativo apenas no laboratório local e não altera o AvantaVendas.
+
+> Revisão 1.13.0.59: o futuro Vendas ganhou o contrato protegido para instalar
+> o A1 uma vez por empresa, descartar a senha digitada e manter o arquivo cifrado
+> fora do acesso do navegador. A instalação permanece desligada até a migração
+> local e a chave mestra serem habilitadas; o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.58: no futuro Vendas Web, o certificado é instalado uma vez na
+> empresa e usado automaticamente por **Continuar emissão** para conferir,
+> assinar e transmitir. A nota não possui botões separados para adicionar o A1
+> ou assinar. O AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.57: no futuro Vendas Web, a NF-e conferida passa a orientar
+> **Adicionar certificado** ou **Assinar NF-e**. A assinatura ocorre somente no
+> servidor, não devolve conteúdo fiscal sensível e não transmite à SEFAZ. O
+> AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.56: no futuro Vendas Web, a ação **Continuar emissão** confere
+> no servidor a NF-e já numerada e orienta a ativação do certificado. O estado
+> permanece **Número reservado**, sem assinatura ou transmissão, e o
+> AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.55: o futuro Vendas Web passou a apresentar **Emitir NF-e**
+> nas ações de uma nota preparada. A confirmação reserva série e número somente
+> no servidor local, sem acessar certificado, assinar ou transmitir, e não
+> altera o AvantaVendas.
+
+> Revisão 1.13.0.54: o futuro Vendas Web concluiu no laboratório o caminho do
+> pedido à NF-e preparada, com regra publicada e XSD. Série e número continuam
+> apenas candidatos; o AvantaVendas não foi alterado e não houve transmissão.
+
+> Revisão 1.13.0.53: no futuro Vendas Web, a revisão da matriz reúne responsável,
+> data e confirmações obrigatórias na mesma tela. A versão 1 foi publicada e
+> auditada no laboratório local; o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.52: a rota de regras fiscais foi comprovada com sessão real do
+> Supabase local, empresa ativa e permissões server-side. O ensaio não altera o
+> AvantaVendas nem acessa ambiente remoto.
+
+> Revisão 1.13.0.51: no futuro Vendas Web, **Regras fiscais** mostra a versão
+> publicada e só solicita nova publicação pela Gestão autenticada. Ausência de
+> runtime ou conflito mantém a ação bloqueada; o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.50: a futura NF-e Web passa a consultar exclusivamente a
+> matriz fiscal revisada e publicada da empresa, com versão e auditoria. Os
+> dados fiscais do produto são congelados no pedido; esta estrutura permanece
+> apenas no laboratório e não altera o AvantaVendas.
+
+> Revisão 1.13.0.49: a futura Central Fiscal diferencia **Abrir emissão fiscal**
+> de **Validar dados fiscais**. A segunda ação só avança para `prepared` após
+> regra revisada e XSD e bloqueia enquanto essa regra não estiver publicada no
+> servidor; não reserva número, acessa certificado, assina ou transmite e não
+> altera o AvantaVendas.
+
+> Revisão 1.13.0.48: a configuração de usuários e permissões do futuro Vendas
+> pode consultar a API protegida da Gestão sem receber token ou credenciais. O
+> modo integrado informa quando está somente para consulta; gravações remotas
+> continuam desligadas e o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.47: os perfis do futuro Vendas foram alinhados entre interface
+> e servidor em 45/45/35/10 permissões. Operador simples cria e salva
+> rascunhos, mas só confirma, separa, fatura ou movimenta estoque quando receber
+> uma liberação explícita do Gestor ou Administrador.
+
+> Revisão 1.13.0.46: o pedido Web do futuro Vendas ganhou uma ponte autenticada
+> para persistir cliente, itens e ciclo comercial no laboratório local. Ao
+> faturar, parcelas e rascunho fiscal são criados sem estoque integrado e sem
+> transmissão; o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.45: a futura Central Fiscal Web e as ações da operação comercial
+> ganharam **Preparar emissão** para NF-e persistida e pronta. O comando é
+> autenticado, idempotente e restrito à homologação; não reserva número, acessa
+> certificado, assina, transmite ou altera o AvantaVendas.
+
+> Revisão 1.13.0.44: a compra nativa do Pessoal Premium e a página de exclusão
+> de conta pertencem somente à Gestão; o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.43: a futura Central Fiscal Web passou a listar o rascunho
+> comercial persistido e sua emissão pelo mesmo identificador, sem duplicar
+> documentos. A integração continua somente local, sem certificado real,
+> transmissão à SEFAZ ou alteração no AvantaVendas.
+
+> Revisão 1.13.0.42: a futura Central Fiscal Web mostra a situação confirmada
+> da emissão e disponibiliza XML e DANFE pelas ações somente quando o backend
+> liberar cada arquivo. Rascunhos locais continuam demonstrativos; a fila não é
+> executada pela tela e o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.41: a futura Central Fiscal ganhou contrato autenticado para
+> consultar a emissão e uma entrada interna, desligada, para o agendador da
+> fila. Não houve mudança na interface ou no AvantaVendas.
+
+> Revisão 1.13.0.40: o futuro Vendas recupera recibo ou protocolo sem repetir
+> o envio e forma o XML autorizado e o DANFE apenas no laboratório local. Não
+> houve SEFAZ real, certificado da Tridium ou alteração no AvantaVendas.
+
+> Revisão 1.13.0.39: o futuro Vendas registra lote e tentativa da NF-e
+> assinada, trata autorização, recibo pendente e rejeição somente no laboratório
+> local. O transporte foi simulado em memória; a SEFAZ real e o certificado da
+> Tridium não foram acessados e o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.38: a futura NF-e numerada passou pelo fluxo protegido de
+> assinatura e guarda imutável somente no laboratório local, usando credencial
+> sintética. O certificado da Tridium não foi acessado e não houve transmissão,
+> conexão governamental, mudança de tela ou alteração no AvantaVendas.
+
+> Revisão 1.13.0.37: a futura NF-e numerada monta o XML definitivo e comprova
+> seu encaixe na assinatura XMLDSig com credencial efêmera somente no
+> laboratório. Não usa certificado A1 real, não persiste assinatura, não
+> transmite e não altera o AvantaVendas.
+
+> Revisão 1.13.0.36: a NF-e preparada do futuro Vendas agora reserva série e
+> número atomicamente no laboratório local, chegando a `number_reserved` sem
+> certificado, assinatura, transmissão, conexão governamental ou mudança no
+> AvantaVendas.
+
+> Revisão 1.13.0.35: a NF-e candidata do futuro Vendas passou por regra
+> tributária, pré-XML e XSD no laboratório local e chegou somente ao estado
+> `prepared`. A numeração não foi consumida e não houve certificado, assinatura,
+> transmissão, conexão governamental ou mudança no AvantaVendas.
+
+> Revisão 1.13.0.34: o rascunho comercial pronto de NF-e agora abre uma única
+> emissão privada em homologação no banco local. Ainda não existe reserva de
+> número, XML, certificado, assinatura, transmissão ou conexão governamental;
+> NFC-e e NFS-e permanecem fora deste piloto e o AvantaVendas não foi alterado.
+
+> Revisão 1.13.0.33: estoque, parcelas e rascunho fiscal do futuro pedido Web
+> foram validados somente no banco local. Nada foi faturado, emitido ou alterado
+> no AvantaVendas.
+
+> Revisão 1.13.0.32: confirmação, reserva, separação e cancelamento do futuro
+> pedido Web foram validados no banco local, sem alterar pedidos ou estoque do
+> AvantaVendas.
 
 > Revisão 1.13.0.31.11: a cor do card Saldo do mês foi ajustada somente na
 > Gestão Mobile; sem alteração operacional no AvantaVendas.
@@ -118,6 +526,115 @@
 > é conferido e o lançamento é salvo. Se ocorrer uma falha, o botão volta ao
 > estado normal para nova tentativa.
 
+> Revisão 1.13.0.31: o estoque de materiais da futura Ordem de Serviço Web foi
+> validado no PostgreSQL local e permanece completamente separado dos saldos e
+> operações do AvantaVendas.
+
+> Revisão 1.13.0.30: a Ordem de Serviço do futuro Vendas Web foi validada no
+> PostgreSQL local e permanece completamente separada do AvantaVendas.
+
+> Revisão 1.13.0.29: o futuro Vendas e Serviços Web validou orçamentos e pedidos
+> transacionais no banco local, separados do AvantaVendas. Nenhuma operação,
+> cliente, pedido ou catálogo do `vendas_mobile` foi alterado.
+
+> Revisão 1.13.0.28: o futuro Vendas e Serviços Web validou a primeira gravação
+> server-side de clientes no PostgreSQL local. Nenhuma API, migração ou tela foi
+> publicada e o cadastro de clientes do AvantaVendas permanece inalterado.
+
+> Revisão 1.13.0.27: o futuro Vendas e Serviços Web ganhou um rascunho local de
+> persistência comercial com 18 tabelas isoladas por empresa. A estrutura não foi
+> aplicada remotamente e não altera clientes, produtos, pedidos, pagamentos ou
+> estoque do AvantaVendas (`vendas_mobile`).
+
+> Revisão 1.13.0.26: o futuro módulo Web Vendas e Serviços passou a receber no
+> laboratório local o catálogo publicado por Custos e Precificação, sem custos
+> internos, estoque ou escrita. Essa ponte não altera o catálogo independente do
+> AvantaVendas (`vendas_mobile`) e não está disponível em produção.
+
+> Revisão 1.13.0.25: o futuro **Vendas e Serviços** passou a usar oficialmente o
+> identificador `vendas` e ganhou contrato, 44 permissões e API administrativa
+> server-side na Gestão. O AvantaVendas continua sendo o módulo independente
+> `vendas_mobile`; nenhum item de menu, migração ou recurso publicado mudou.
+
+> Revisão 1.13.0.24: o protótipo separado validou token Supabase local, empresa,
+> vínculo, instalação e exceção individual antes da rota fiscal. O novo rascunho
+> geral de permissões não foi aplicado, a rota permanece desligada e o
+> AvantaVendas publicado não mudou.
+
+> Revisão 1.13.0.23: o protótipo separado validou um bucket Supabase local,
+> privado e restrito a XML/PDF, com gravação imutável, SHA-256, bloqueio da URL
+> pública, acesso assinado curto e restauração de uma cópia AES-256-GCM após
+> perda simulada. A rota de download permanece fechada até a autenticação
+> oficial; o AvantaVendas publicado não foi alterado.
+
+> Revisão 1.13.0.22: o protótipo separado definiu as proteções obrigatórias do
+> futuro armazenamento durável e o acesso server-side ao XML autorizado e ao
+> DANFE por empresa e permissão efetiva. Retenção, auditoria e restauração foram
+> validadas no PostgreSQL descartável; nenhum recurso chegou ao AvantaVendas
+> publicado e nenhuma conexão remota foi feita.
+
+> Revisão 1.13.0.21: a fila do laboratório fiscal separado passou a completar
+> metadados pendentes, regenerar DANFE a partir do `procNFe` íntegro e sinalizar
+> XML autorizado ausente sem avançar a emissão. O recurso não está disponível
+> no AvantaVendas publicado e não realiza transmissão externa.
+
+> Revisão 1.13.0.20: o laboratório do protótipo separado passou a guardar
+> `procNFe` e DANFE sintéticos de forma imutável, conferir SHA-256 e registrar
+> apenas referências no PostgreSQL. Os arquivos temporários ficam privados e
+> são removidos ao fim do ensaio. Nada foi disponibilizado no AvantaVendas e
+> nenhuma conexão fiscal externa foi realizada.
+
+> Revisão 1.13.0.19: o laboratório do protótipo separado restaurou um backup
+> fiscal em banco temporário e aprovou concorrência real entre duas conexões. Uma
+> única transição venceu a disputa e a fila entregou itens diferentes aos dois
+> trabalhadores. O Next.js foi atualizado para `16.3.4`, sem alterar o
+> AvantaVendas publicado e sem conectar ao Supabase remoto.
+
+> Revisão 1.13.0.18: o laboratório PostgreSQL/Supabase do protótipo separado de
+> **Vendas e Serviços** foi instalado e validado localmente, sem login ou vínculo
+> remoto. Os testes usaram somente dados fictícios e não alteraram o AvantaVendas
+> nem o Supabase publicado.
+
+> Revisão 1.13.0.17: o protótipo separado de **Vendas e Serviços** ganhou o
+> adaptador transacional PostgreSQL e a fila interna de recuperação fiscal. A
+> fila consulta situações e recompõe artefatos com retentativa controlada, sem
+> retransmitir NF-e automaticamente. As migrações não foram aplicadas e não há
+> mudança operacional no AvantaVendas publicado.
+
+> Revisão 1.13.0.16: o protótipo separado de **Vendas e Serviços** ganhou a
+> máquina de estados persistível da NF-e, com idempotência, versão concorrente e
+> eventos imutáveis. O desenho PostgreSQL/Supabase está apenas em rascunho e não
+> foi aplicado; não existe mudança operacional no AvantaVendas publicado.
+
+> Revisão 1.13.0.15: o protótipo separado de **Vendas e Serviços** gera DANFE
+> A4 no servidor somente após validar um `procNFe` de homologação com assinatura,
+> protocolo de situação 100 e a mesma chave. A amostra visual é sintética e está
+> marcada como sem valor fiscal; o recurso ainda não está disponível no
+> AvantaVendas publicado.
+
+> Revisão 1.13.0.14: o protótipo separado de **Vendas e Serviços** passou a
+> reconhecer o retorno de recibo e a consulta de protocolo da NF-e paulista em
+> homologação. O backend só monta `procNFe` quando XML assinado e protocolo de
+> situação 100 possuem a mesma chave. Transporte e armazenamento real seguem
+> desligados; não existe mudança operacional no AvantaVendas publicado.
+
+> Revisão 1.13.0.13: o protótipo separado de **Vendas e Serviços** prepara no
+> servidor a tentativa de NF-e paulista: consulta o próximo candidato sem
+> reservar, calcula cNF e chave, monta o pré-XML e valida no XSD. A operação é
+> idempotente, reutiliza eventual reserva do mesmo rascunho e falha antes de
+> abrir rede quando encontra cancelamento, outro modelo, produção ou numeração
+> em inutilização. O contrato interno de autorização SOAP 1.2 já reconhece lote,
+> recibo e protocolo, mas o transporte permanece desligado e não recebe XML
+> assinado do navegador. Não há mudança operacional no AvantaVendas publicado.
+
+> Revisão 1.13.0.12: no protótipo separado de **Vendas e Serviços**, a Central
+> Fiscal mostra a série e o próximo número de NF-e, NFC-e e NFS-e. Consultar ou
+> revisar uma nota não consome número. Gestor e administrador podem ajustar a
+> sequência e registrar uma solicitação local de inutilização; ela permanece
+> pendente até existir envio e protocolo real do órgão autorizador. A reserva
+> preparada para a futura emissão é idempotente e impede números duplicados.
+> Esta estrutura ainda não altera o AvantaVendas publicado.
+
 > Revisão 1.13.0.11: a geração automática de códigos e a planilha conjunta de
 > tabelas pertencem à Gestão Web. As tabelas internas continuam sem conexão com
 > clientes ou pedidos do AvantaVendas.
@@ -152,7 +669,7 @@
 > Revisão 1.13.0-av108: botão de atualização manual e localizada da Divulgação.
 
 > Revisão 1.13.0.03: o preço recebido no catálogo é o **Preço sugerido de
-> revenda**, administrado em **Conteúdo do Vendas > Catálogo**. Ele não usa o
+> revenda**, administrado em **Conteúdo AvantaVendas > Catálogo**. Ele não usa o
 > preço de venda interno formado em Custos e Precificação. Produtos publicados
 > sem essa sugestão aguardam o preenchimento antes da primeira sincronização.
 > O custo interno da empresa não é enviado pelo catálogo de divulgação.
@@ -457,9 +974,6 @@
 > Revisão 1.8.5.03: a trilha visual do Laboratório de Marcas passou a usar
 > saltos curvos decorativos; sem alteração operacional no AvantaVendas.
 
-> Revisão 1.13.0.19: na landing pública, o card do AvantaVendas também oferece
-> o link oficial da Google Play; sem alteração operacional no AvantaVendas.
-
 > Revisão 1.8.5.02: a trilha visual do Laboratório de Marcas foi refinada;
 > sem alteração operacional no AvantaVendas.
 
@@ -479,7 +993,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 108 -->
+<!-- avantavendas-asset-revision: 110 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o
@@ -637,7 +1151,7 @@
 > Revisão 1.7.3.09: refinamento visual exclusivo do Menu da Gestão Mobile; sem
 > impacto operacional no AvantaVendas.
 
-> Revisão 1.7.3.08: o acesso a Conteúdo do Vendas permanece listado em Sistemas
+> Revisão 1.7.3.08: o acesso a Conteúdo AvantaVendas permanece listado em Sistemas
 > na Gestão Mobile; sem alteração funcional no AvantaVendas.
 
 > Revisão 1.7.3.07: reorganização exclusiva do Menu da Gestão Mobile; sem
@@ -1711,7 +2225,7 @@
 > no AvantaVendas, que já utilizava essa soma.
 
 > Revisão 1.6.1.01: a Gestão Mobile agora exibe a ação de envio junto da pasta
-> selecionada em Conteúdo do Vendas > Divulgação; sem mudança operacional no
+> selecionada em Conteúdo AvantaVendas > Divulgação; sem mudança operacional no
 > AvantaVendas.
 
 > Revisão 1.6.1: a conta do AvantaVendas funciona sem código empresarial e sem

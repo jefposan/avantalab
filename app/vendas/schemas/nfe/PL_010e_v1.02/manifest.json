@@ -1,0 +1,19 @@
+{
+  "package": "PL_010e_v1.02",
+  "layout": "4.00",
+  "publishedAt": "2026-07-10",
+  "officialCatalog": "https://www.nfe.fazenda.gov.br/portal/listaConteudo.aspx?tipoConteudo=BMPFMBoln3w=",
+  "retrievalMirror": {
+    "repository": "https://github.com/MirrorProjetoACBr/ACBr",
+    "commit": "130702c8d9a790db9c84b746b48cea0e239c79f6",
+    "retrievedAt": "2026-08-31"
+  },
+  "root": "nfe_v4.00.xsd",
+  "files": {
+    "DFeTiposBasicos_v1.00.xsd": "e94c7e5eb8af3341dc278c6f2dc2f4a42bda41f3c61699a3652f6abefd9866f0",
+    "leiauteNFe_v4.00.xsd": "598c71780cbc6b54f170464bd6d5538c2d01a99d987a1666b662d4e166b84bf7",
+    "nfe_v4.00.xsd": "adce3646c13ceb54922ec3142fc1dc45bd4fb839ac35ad583e86c733c07d27df",
+    "tiposBasico_v4.00.xsd": "62ab340c27c2edfc2a90b32333a1ee1470bf7e44e88c1e16c64f1679c1f6b00a",
+    "xmldsig-core-schema_v1.01.xsd": "f56744a5f51c03f027de13f39f869307091781a9ef1d91b1ebe14719ce28e1ac"
+  }
+}

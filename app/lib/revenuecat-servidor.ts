@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const REVENUECAT_ENTITLEMENT_PESSOAL = 'pessoal_premium';
 export const REVENUECAT_PRODUTO_MENSAL = 'br.com.avantalab.app.pessoalpremium.monthly';
 export const REVENUECAT_PRODUTO_ANUAL = 'br.com.avantalab.app.pessoalpremium.yearly';
+export type LojaAssinaturaNativa = 'apple_app_store' | 'google_play';
 
 type EntitlementRevenueCat = {
   expires_date?: string | null;
@@ -39,7 +40,19 @@ export type EstadoRevenueCat = {
 function cicloDoProduto(produtoId: string | null): 'mensal' | 'anual' | null {
   if (produtoId === REVENUECAT_PRODUTO_MENSAL) return 'mensal';
   if (produtoId === REVENUECAT_PRODUTO_ANUAL) return 'anual';
+  if (/(yearly|annual|anual)$/i.test(produtoId || '')) return 'anual';
+  if (/(monthly|month|mensal)$/i.test(produtoId || '')) return 'mensal';
   return null;
+}
+
+export function lojaDaRevenueCat(
+  ambiente: string | null | undefined,
+  alternativa: LojaAssinaturaNativa,
+): LojaAssinaturaNativa {
+  const valor = String(ambiente || '').trim().toLowerCase();
+  if (valor.includes('play') || valor.includes('google')) return 'google_play';
+  if (valor.includes('app_store') || valor.includes('apple')) return 'apple_app_store';
+  return alternativa;
 }
 
 export async function consultarAssinanteRevenueCat(userId: string): Promise<EstadoRevenueCat> {
@@ -88,10 +101,11 @@ export async function salvarEstadoRevenueCat(
   db: SupabaseClient,
   userId: string,
   estado: EstadoRevenueCat,
+  loja: LojaAssinaturaNativa,
 ) {
   const { error } = await db.from('assinaturas_loja').upsert({
     user_id: userId,
-    loja: 'apple_app_store',
+    loja,
     produto_id: estado.produtoId,
     entitlement_id: REVENUECAT_ENTITLEMENT_PESSOAL,
     status: estado.status,

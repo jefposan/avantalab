@@ -1,0 +1,21 @@
+export type AccessBoundarySource = 'demo' | 'authenticated';
+export type AccessDecisionReason = 'allowed' | 'session_required' | 'user_missing' | 'company_missing' | 'company_inactive' | 'module_inactive' | 'membership_inactive' | 'permission_denied';
+export type AccessBoundary = {
+  version: 1;
+  source: AccessBoundarySource;
+  authenticated: boolean;
+  userId: string;
+  companyId: string;
+  moduleId: string;
+  userActive: boolean;
+  membershipActive: boolean;
+  companyActive: boolean;
+  moduleActive: boolean;
+};
+export type AccessDecision = { allowed: boolean; reason: AccessDecisionReason; session: AccessBoundary };
+export const SALES_MODULE_ID: 'vendas';
+export const ACCESS_SESSION_VERSION: 1;
+export const coreProfileByModuleRole: Readonly<Record<'gestor' | 'administrador' | 'operador_completo' | 'operador_simples', 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples'>>;
+export function normalizeAccessBoundary(input?: Partial<AccessBoundary>): AccessBoundary;
+export function evaluateAccessDecision(input: { boundary: Partial<AccessBoundary>; effectivePermissions: Record<string, boolean>; permission: string }): AccessDecision;
+export function accessDecisionMessage(reason: AccessDecisionReason): string;

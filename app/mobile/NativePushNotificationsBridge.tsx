@@ -6,7 +6,8 @@ import { PushNotifications } from '@capacitor/push-notifications';
 
 type NativeBadge = { set(options: { count: number }): Promise<unknown> };
 const NativeBadge = registerPlugin<NativeBadge>('NativeBadge');
-const TOKEN_KEY = 'avantalab.ios.push-token';
+const TOKEN_KEY = 'avantalab.nativo.push-token';
+const TOKEN_KEY_IOS_ANTERIOR = 'avantalab.ios.push-token';
 const BADGE_KEY = 'avantalab.mobile.badge';
 
 declare global {
@@ -20,7 +21,7 @@ declare global {
 
 export default function NativePushNotificationsBridge() {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return;
+    if (!Capacitor.isNativePlatform()) return;
     let resolverToken: ((token: string) => void) | null = null;
     let rejeitarToken: ((erro: Error) => void) | null = null;
     let badgeConfirmadoPelaGestao: number | null = null;
@@ -41,6 +42,7 @@ export default function NativePushNotificationsBridge() {
 
     const salvarToken = (token: string) => {
       localStorage.setItem(TOKEN_KEY, token);
+      localStorage.removeItem(TOKEN_KEY_IOS_ANTERIOR);
       resolverToken?.(token);
       resolverToken = null;
       rejeitarToken = null;
@@ -53,11 +55,11 @@ export default function NativePushNotificationsBridge() {
         ? await PushNotifications.requestPermissions()
         : await PushNotifications.checkPermissions();
       if (permissao.receive !== 'granted') throw new Error('Permissão de notificações não concedida.');
-      const tokenAtual = localStorage.getItem(TOKEN_KEY);
+      const tokenAtual = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_IOS_ANTERIOR);
       const espera = new Promise<string>((resolve, reject) => {
         resolverToken = resolve;
         rejeitarToken = reject;
-        window.setTimeout(() => reject(new Error('O iPhone demorou para registrar as notificações.')), 12000);
+        window.setTimeout(() => reject(new Error('O aparelho demorou para registrar as notificações.')), 12000);
       });
       await PushNotifications.register();
       return tokenAtual || espera;
@@ -74,14 +76,14 @@ export default function NativePushNotificationsBridge() {
       });
       window.__avantalabAtivarPushNativoMobile = () => iniciar(true);
       window.__avantalabDesativarPushNativoMobile = async () => {
-        const token = localStorage.getItem(TOKEN_KEY);
-        await PushNotifications.unregister(); localStorage.removeItem(TOKEN_KEY); return token;
+        const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_IOS_ANTERIOR);
+        await PushNotifications.unregister(); localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY_IOS_ANTERIOR); return token;
       };
       window.__avantalabEstadoPushNativoMobile = async () => {
         const permissao = await PushNotifications.checkPermissions();
         if (permissao.receive !== 'granted') return false;
         void iniciar(false).catch(() => undefined);
-        return Boolean(localStorage.getItem(TOKEN_KEY));
+        return Boolean(localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_IOS_ANTERIOR));
       };
       window.__avantalabAtualizarBadgeNativo = atualizarBadgeNativo;
       let badgePersistido = 0;

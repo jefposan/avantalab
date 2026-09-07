@@ -1,0 +1,5 @@
+export const FISCAL_EMISSION_LIFECYCLE_REFERENCE: string;
+export const FISCAL_EMISSION_STATES: readonly string[];
+export function createDisabledFiscalLifecycleRepository(): { id: string; configured: false; runInTransaction(): Promise<never> };
+export function createFiscalEmissionLifecycleService(options?: { repository?: any; clock?: () => string }): { id: string; create(input?: Record<string, any>): Promise<Record<string, any>>; transition(input?: Record<string, any>): Promise<Record<string, any>>; commitSignature(input?: Record<string, any>): Promise<Record<string, any>>; beginSubmission(input?: Record<string, any>): Promise<Record<string, any>>; commitAuthorization(input?: Record<string, any>): Promise<Record<string, any>>; commitProcessedArtifact(input?: Record<string, any>): Promise<Record<string, any>>; commitDanfeArtifact(input?: Record<string, any>): Promise<Record<string, any>>; commitCancellation(input?: Record<string, any>): Promise<Record<string, any>>; reserveNumber(input?: Record<string, any>): Promise<Record<string, any>> };
+export function describeFiscalEmissionTransitions(): Record<string, string[]>;

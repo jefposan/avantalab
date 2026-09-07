@@ -27,6 +27,7 @@ export async function GET(request: Request) {
       bairro: dados.bairro || '',
       cidade: dados.localidade || '',
       estado: dados.uf || '',
+      codigoIbge: String(dados.ibge || '').replace(/\D/g, '').slice(0, 7),
     });
   } catch {
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível consultar o CEP. Preencha o endereço manualmente.' }, { status: 502 });

@@ -1,0 +1,52 @@
+export type ItemCatalogoVendas = {
+  id: string;
+  sku: string;
+  tipo: 'produto' | 'servico';
+  nome: string;
+  descricao: string;
+  categoria: string;
+  unidade: string;
+  preco: number;
+  controlaEstoque: boolean;
+  saldoFisico: number;
+  saldoReservado: number;
+  estoqueMinimo: number;
+  permiteNegativo: boolean;
+  localEstoqueId: string;
+  imagemUrl: string;
+  codigoBarras: string;
+  situacaoFiscal: 'Completo' | 'Revisar cadastro fiscal';
+  fiscal: {
+    ncm: string;
+    cest: string;
+    origemMercadoria: string;
+    unidadeTributavel: string;
+    cfopPadrao: string;
+    cst: string;
+    csosn: string;
+    cstPis: string;
+    cstCofins: string;
+    cstIbsCbs: string;
+    classificacaoIbsCbs: string;
+    codigoTributacaoNacional: string;
+    codigoTributacaoMunicipal: string;
+    nbs: string;
+    itemLc116: string;
+    municipioPrestacao: string;
+    aliquotaIss: number;
+  };
+  atualizadoEm: string;
+};
+
+export type CatalogoVendasDTO = {
+  versao: 1;
+  origem: 'custos_precificacao';
+  somenteLeitura: true;
+  estoqueIntegrado: boolean;
+  empresaId: string;
+  catalogoId: string;
+  tabelaPreco: { id: string; nome: string; padrao: boolean } | null;
+  tabelasDisponiveis: Array<{ id: string; nome: string; padrao: boolean }>;
+  itens: ItemCatalogoVendas[];
+  geradoEm: string;
+};

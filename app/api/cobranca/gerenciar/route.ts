@@ -64,13 +64,14 @@ export async function GET(request: Request) {
     .select('id, status, plano, ciclo, gateway_subscription_id, cupom_id')
     .eq('empresa_id', empresaId)
     .maybeSingle();
-  const { data: assinaturaLoja } = await acesso.db
+  const { data: assinaturasLoja } = await acesso.db
     .from('assinaturas_loja')
     .select('id, status, ciclo, valido_ate, produto_id, loja')
     .eq('user_id', acesso.usuario.id)
-    .eq('loja', 'apple_app_store')
+    .in('loja', ['apple_app_store', 'google_play'])
     .eq('entitlement_id', 'pessoal_premium')
-    .maybeSingle();
+    .order('atualizado_em', { ascending: false });
+  const assinaturaLoja = (assinaturasLoja || []).find((item) => STATUS_COM_ASSINATURA.has(item.status || '')) || null;
 
   let assinatura = null;
   let faturas: ReturnType<typeof faturaPublica>[] = [];
@@ -120,23 +121,23 @@ export async function GET(request: Request) {
     local?.gateway_subscription_id
     && STATUS_COM_ASSINATURA.has(local.status || ''),
   );
-  const temAssinaturaApple = Boolean(
+  const temAssinaturaLoja = Boolean(
     estado?.tipoPerfil === 'pessoal'
     && assinaturaLoja
     && STATUS_COM_ASSINATURA.has(assinaturaLoja.status || ''),
   );
-  const temAssinatura = temAssinaturaAsaas || temAssinaturaApple;
-  const origemAssinatura = temAssinaturaApple && !temAssinaturaAsaas
-    ? 'apple_app_store'
+  const temAssinatura = temAssinaturaAsaas || temAssinaturaLoja;
+  const origemAssinatura = temAssinaturaLoja && !temAssinaturaAsaas
+    ? assinaturaLoja?.loja || null
     : (temAssinaturaAsaas ? 'asaas' : null);
-  if (origemAssinatura === 'apple_app_store') {
+  if (origemAssinatura === 'apple_app_store' || origemAssinatura === 'google_play') {
     assinatura = {
       id: assinaturaLoja?.id || null,
       status: assinaturaLoja?.status || null,
       valor: null,
       ciclo: assinaturaLoja?.ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
       proximoVencimento: assinaturaLoja?.valido_ate || null,
-      formaPagamento: 'APP_STORE',
+      formaPagamento: origemAssinatura === 'google_play' ? 'GOOGLE_PLAY' : 'APP_STORE',
       produtoId: assinaturaLoja?.produto_id || null,
     };
   }

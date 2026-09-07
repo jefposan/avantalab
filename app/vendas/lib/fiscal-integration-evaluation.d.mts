@@ -1,0 +1,12 @@
+export type FiscalIntegrationDocument = 'nfe' | 'nfce' | 'nfse';
+export type FiscalIntegrationMode = 'Provedor fiscal' | 'Integração direta' | 'PAA';
+export type FiscalIntegrationCriterion = { id: string; name: string; description: string; weight: number; mandatory: boolean };
+export type FiscalIntegrationCandidate = { id: string; name: string; mode: FiscalIntegrationMode; documents: FiscalIntegrationDocument[]; municipalityCoverage: string; testEnvironment: boolean; apiDocumentationReviewed: boolean; certificateModel: string; supportModel: string; contingencyModel: string; storageYears: number; setupFee: number; monthlyFee: number; perDocumentFee: number; implementationDays: number; slaPercent: number; contractTermMonths: number; exitPlan: string; notes: string; ratings: Record<string, number> };
+export type FiscalIntegrationEvaluation = { version: 1; reference: string; monthlyDocumentVolume: number; requiredDocuments: FiscalIntegrationDocument[]; criteria: FiscalIntegrationCriterion[]; candidates: FiscalIntegrationCandidate[]; decision: { status: 'Sem decisão' | 'Pré-selecionado' | 'Aprovado para homologação'; candidateId: string; decidedBy: string; decidedAt: string; justification: string } };
+export const FISCAL_INTEGRATION_EVALUATION_REFERENCE: string;
+export const FISCAL_INTEGRATION_MODES: FiscalIntegrationMode[];
+export const FISCAL_INTEGRATION_DECISION_STATUSES: FiscalIntegrationEvaluation['decision']['status'][];
+export function createDefaultFiscalIntegrationEvaluation(): FiscalIntegrationEvaluation;
+export function normalizeFiscalIntegrationEvaluation(value: unknown): FiscalIntegrationEvaluation;
+export function evaluateFiscalIntegrationOptions(value: unknown): { evaluation: FiscalIntegrationEvaluation; candidates: Array<FiscalIntegrationCandidate & { weightedScore: number; monthlyCost: number; mandatoryGaps: string[]; complete: boolean }>; criteriaWeight: number; recommendedCandidateId: string };
+export function validateFiscalIntegrationEvaluation(value: unknown): ReturnType<typeof evaluateFiscalIntegrationOptions> & { valid: boolean; errors: string[]; warnings: string[]; approvedForHomologation: boolean };

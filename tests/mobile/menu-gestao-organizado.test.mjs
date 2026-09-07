@@ -39,9 +39,11 @@ test('organização, sistemas e configurações são grupos expansíveis', () =>
   assert.match(mobile, /Mostrar ou ocultar cards/);
   assert.match(mobile, /Alterar a ordem dos cards/);
   assert.match(mobile, /Organizar atalhos inferiores/);
-  assert.match(mobile, /menuBotaoHtml\(\s*'menu-vendas-mobile',\s*'Conteúdo do Vendas'/);
+  assert.match(mobile, /menuBotaoHtml\(\s*'menu-vendas-mobile',\s*'Conteúdo AvantaVendas'/);
+  assert.match(mobile, /'menu-gerenciar-modulo-vendas', 'Módulo Conteúdo AvantaVendas'/);
   assert.doesNotMatch(mobile, /\? menuBotaoHtml\('menu-vendas-mobile'/);
-  assert.match(mobile, /Ative o Vendas Mobile para acessar/);
+  assert.match(mobile, /Ative Conteúdo AvantaVendas para acessar/);
+  assert.doesNotMatch(mobile, /Conteúdo do Vendas/);
   assert.match(mobile, /Preferências/);
   assert.match(mobile, /Conta e equipe/);
   assert.match(mobile, /Dados e segurança/);

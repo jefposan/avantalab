@@ -1,5 +1,1005 @@
 # Changelog
 
+## 1.14.3.14 - 2026-09-07
+
+- A Solicitação por Voz deixou de ocupar um card na grade reordenável da Sala
+  de Botões. O próprio botão circular do microfone agora fica centralizado logo
+  abaixo de **Dúvidas e Sugestões**.
+- O primeiro toque inicia a gravação no próprio local, sem navegar ou abrir uma
+  segunda página. Dúvidas, escolhas, confirmação e resultado aparecem em uma
+  sobreposição compacta, mantendo a Sala de Botões visível ao fundo.
+- Encerrar, cancelar ou compartilhar o comprovante devolve o usuário à mesma
+  Sala. A ativação em **Configurações > Funções** continua mostrando ou
+  ocultando todo o controle de voz.
+
+## 1.14.3.14-av110 - 2026-09-07
+
+- Recursos oficiais do AvantaVendas revisados para incorporar o microfone no
+  bloco de assistência da Sala, sem alterar a ordem dos nove cards oficiais.
+
+## 1.14.3.13 - 2026-09-07
+
+- A Solicitação por Voz pode ser ativada em **Configurações > Funções**. Quando
+  ligada, seu botão aparece na Sala de Botões e pode ser reorganizado; quando
+  desligada, desaparece da navegação normal.
+- O fluxo oficial é carregado somente no primeiro toque, mantém a interface
+  isolada, não mostra a transcrição e apresenta apenas dúvidas, escolhas e a
+  confirmação obrigatória antes de pedidos ou pagamentos reais.
+- A captura exibe ondas proporcionais ao sinal efetivamente recebido pelo
+  microfone, preserva solicitações incompletas ao fechar e reutiliza os
+  comprovantes oficiais após a conferência do lançamento no banco.
+- A preferência pertence à conta ativa e também é validada pelo servidor. Um
+  pagamento sem forma informada oferece Pix, Dinheiro, cartões, Transferência
+  ou Outro antes de preparar a confirmação.
+
+## 1.14.3.13-av109 - 2026-09-07
+
+- Recursos oficiais do AvantaVendas revisados para carregar sob demanda a
+  Solicitação por Voz e refletir sua ativação por conta na Sala de Botões.
+
+## 1.14.3.12 - 2026-09-07
+
+- O cadastro empresarial de clientes passou a consultar CNPJ e CEP pelas rotas
+  reais do AvantaLab, incluindo o código IBGE necessário aos documentos
+  fiscais, sem usar a base demonstrativa no perfil conectado.
+- Clientes, fornecedores, recebimentos e movimentos de estoque agora mantêm o
+  formulário aberto, bloqueiam envio duplicado e só informam sucesso depois da
+  confirmação do servidor.
+- A carteira e o relatório do cliente passaram a calcular operações,
+  faturamento e valores em aberto exclusivamente pelos registros do perfil.
+  Registros comerciais que falham antes da persistência não permanecem na tela
+  nem são gravados no armazenamento local do modo integrado.
+- O atalho **Produtos e serviços > Abrir origem em Custos** passou a abrir o
+  catálogo do mesmo perfil empresarial e preservar o retorno direto a Vendas.
+- A tela integrada agora só monta a operação comercial depois de confirmar o
+  cadastro e as permissões do perfil, impedindo que dados demonstrativos sejam
+  exibidos durante a abertura ou no retorno de Custos. A ponte também retoma a
+  própria origem segura quando o navegador omite a referência da página pai, e
+  a identidade validada deixa de aguardar listagens duplicadas ou as demais
+  consultas operacionais. A cor primária acompanha a resposta protegida do
+  cadastro empresarial; tempos excessivos encerram com opção de nova tentativa.
+- Os aliases públicos da solicitação por voz agora declaram `runtime` e
+  renderização dinâmica de forma estática, como exigido pelo Next 16, sem mudar
+  os mesmos handlers protegidos de `POST`.
+
+## 1.14.3.11 - 2026-09-07
+
+- Pedidos e pagamentos executados pelo laboratório de voz agora são relidos do
+  banco antes da resposta de sucesso, conferindo empresa, cliente, valor e itens.
+- A conclusão passou a exibir uma evidência verificável com conta, tipo, cliente,
+  valor, situação, horários de gravação e conferência e identificador integral.
+- A confirmação e o rodapé deixam explícito que o laboratório é experimental,
+  mas as ações confirmadas gravam dados reais na conta ativa.
+
+## 1.14.3.10 - 2026-09-07
+
+- Vendas e Serviços passou a refletir o certificado A1 ativo na prontidão da
+  Central Fiscal e na preparação das notas, sem simular conexão com o
+  autorizador antes da confirmação segura.
+- O acesso integrado agora carrega o perfil empresarial mesmo quando o catálogo
+  de Custos está indisponível e oculta toda informação comercial até confirmar
+  perfil e permissões; dados demonstrativos não são mais usados como fallback.
+- Contadores, indicadores, equipe comercial, responsáveis técnicos e
+  estabelecimento emissor passaram a derivar exclusivamente dos registros e
+  usuários ativos do perfil acessado. Atalhos ainda demonstrativos foram
+  removidos do modo integrado.
+
+## 1.14.3.09 - 2026-09-07
+
+- Ampliada a leitura visual do microfone no laboratório de voz com quatro ondas,
+  maior deslocamento, contraste e brilho proporcionais ao sinal captado.
+- A forma da onda continua derivada das amostras reais e permanece estática
+  abaixo do limiar de voz, sem animação decorativa no silêncio.
+
+## 1.14.3.08 - 2026-09-07
+
+- O laboratório de voz passou a desenhar ondas ao redor do botão a partir das
+  amostras reais do microfone, usando nível RMS e limiar adaptativo de ruído.
+- A pulsação decorativa automática foi removida: durante silêncio as ondas
+  permanecem estáticas e só respondem quando o sinal de voz supera o ruído
+  ambiente, inclusive no modo de movimento reduzido.
+
+## 1.14.3.07 - 2026-09-07
+
+- Corrigido o ciclo de desambiguação de clientes e produtos no laboratório de
+  voz: tocar em uma opção agora preserva seu identificador validado em vez de
+  reinterpretar o mesmo nome pela IA.
+- O backend recompõe os candidatos na conta ativa e aceita a escolha somente
+  quando o identificador ainda pertence ao resultado daquela referência. A
+  seleção não consome tokens e continua sujeita à confirmação final.
+
+## 1.14.3.06 - 2026-09-07
+
+- Corrigido o carregamento infinito da rota de solicitação por voz quando o
+  servidor externo da porta 3021 não está ativo.
+- Após seis segundos sem conexão, a página informa o comando necessário e
+  oferece nova tentativa; com o servidor iniciado, a ponte volta a carregar
+  automaticamente o estado autenticado do Avanta Vendas.
+
+## 1.14.3.05 - 2026-09-07
+
+- A interface descartável do laboratório de solicitação por voz foi isolada em
+  `AvantaLab Projetos/prototipos/solicitacao-voz`, evitando concentrar código
+  experimental no repositório oficial.
+- A rota oculta `/teste/solicitacao-voz` passou a funcionar como uma ponte
+  autenticada: o laboratório externo não recebe token, chave OpenAI ou acesso
+  direto ao banco, e somente pode solicitar as quatro operações tipadas.
+- APIs, schemas e adaptadores de clientes, produtos, pedidos e pagamentos
+  permanecem no AvantaLab como núcleo reutilizável e revalidam toda ação no
+  contexto da conta ativa antes de executar.
+
+## 1.14.3.04 - 2026-09-07
+
+- Certificados A1 já instalados podem ser verificados novamente sem novo
+  arquivo ou senha; o resultado e os bloqueios técnicos ficam vinculados ao
+  perfil empresarial e aparecem em linguagem operacional na interface.
+- A ativação pendente agora registra evidências públicas de validação e evento
+  de auditoria, sem retornar nem persistir a senha original do certificado.
+- A leitura de LCRs oficiais grandes passou a usar limites ASN.1 explícitos e
+  tolerância de relógio controlada, corrigindo a falsa pendência de revogação
+  sem reduzir as validações de assinatura, vigência ou cadeia ICP-Brasil.
+- A inicialização fiscal local passou a recuperar a mesma chave mestra do cofre
+  do macOS, evitando perder o acesso ao certificado protegido após reiniciar o
+  servidor de desenvolvimento.
+
+## 1.14.3.03 - 2026-09-07
+
+- Criado o laboratório oculto `/teste/solicitacao-voz`, com captura de áudio
+  compatível com navegadores móveis, transcrição server-side e interpretação
+  estruturada de comandos do Avanta Vendas.
+- Pedidos por voz reutilizam o RPC oficial e pagamentos reutilizam o fluxo
+  protegido por conta e RLS; toda escrita exige confirmação e relê clientes,
+  produtos, preços, saldo e permissões antes de executar.
+- Clientes e produtos ambíguos passam por desambiguação contextual, sem enviar
+  catálogos completos à IA. Consultas de vendas e histórico não exigem
+  confirmação, e comandos ainda não suportados não simulam execução.
+- Métricas técnicas do laboratório ficam restritas ao desenvolvimento e à
+  sessão do navegador, sem criação de tabela ou exposição de credenciais.
+
+## 1.14.3.02 - 2026-09-07
+
+- Vendas e Serviços integrado passou a calcular permissões exclusivamente para
+  o usuário autenticado na Gestão, ignorando qualquer usuário de teste salvo
+  anteriormente no navegador.
+- Ajustes fiscais, certificado digital e administração agora respeitam o login
+  real no perfil empresarial ativo, sem alterar a propriedade empresarial de
+  cadastros, XML, DANFE ou documentos comerciais.
+
+## 1.14.3.01 - 2026-09-06
+
+- O lint passou a ignorar somente caches, builds, cópias nativas e bibliotecas
+  minificadas, evitando milhões de ocorrências em artefatos que não são fonte.
+- O escopo completo de Vendas agora passa no ESLint sem erros; padrões antigos
+  de inicialização do protótipo e contratos JSON dinâmicos permanecem visíveis
+  como avisos restritos aos dois componentes legados.
+- Auxiliares PostgreSQL foram renomeados de `useClient` para `withClient`,
+  eliminando a interpretação incorreta como React Hooks.
+
+## 1.14.3 - 2026-09-06
+
+- A recarga das operações comerciais agora recompõe itens e, nas ordens de
+  serviço, agenda, execução, checklist, materiais, custos, aceite e anexos.
+- Evidências de serviço passaram a ser arquivos privados do perfil empresarial,
+  com validação de assinatura, limite transacional de cinco arquivos, checksum
+  SHA-256, evento de auditoria e abertura por URL temporária.
+- Textos de confirmação agora distinguem corretamente a persistência integrada
+  do modo demonstrativo local, sem prometer armazenamento inexistente.
+
+## 1.14.2 - 2026-09-06
+
+- Devoluções totais de pedidos faturados agora restauram o estoque, cancelam
+  parcelas abertas e encerram o rascunho fiscal na mesma transação.
+- Conclusões de ordens de serviço podem ser estornadas com devolução dos
+  materiais e cancelamento das parcelas e do rascunho de NFS-e.
+- Estornos são bloqueados quando ainda existe recebimento líquido ou documento
+  dentro do ciclo fiscal; nesses casos o sistema orienta a estornar o valor ou
+  cancelar a emissão antes de repetir a operação.
+- Rascunhos fiscais continuam imutáveis. O encerramento passa a ser registrado
+  em marcador imutável próprio, com empresa, operação, motivo, autor e chave de
+  idempotência.
+- A Central Fiscal passou a reconhecer esses marcadores e corrigiu o vínculo da
+  emissão pelo identificador do rascunho e da operação.
+
+## 1.14.1 - 2026-09-06
+
+- Ordens de serviço persistidas passaram a iniciar, concluir e cancelar por uma
+  rota protegida e idempotente, sem criar estado somente no navegador.
+- A conclusão reúne na mesma transação o apontamento, checklist, materiais,
+  baixa de estoque, parcelas e rascunho de NFS-e; qualquer falha desfaz o
+  conjunto integralmente.
+- Materiais adicionados durante a execução são validados novamente contra o
+  catálogo e o saldo do perfil; custos de catálogo vêm do cadastro mestre.
+- O documento fiscal previsto da ordem de serviço agora é preservado desde a
+  conversão do orçamento, permitindo preparar NFS-e somente após a conclusão.
+- Entradas de produção e devolução passaram a reconhecer as descrições completas
+  da interface, e a auditoria de fornecedores usa seu tipo de recurso próprio.
+- Pedidos persistidos podem ser cancelados antes do faturamento, liberando a
+  reserva na mesma transação protegida do ciclo comercial.
+- Cancelamento após a conclusão e devolução de pedido faturado continuam
+  bloqueados até existir o tratamento fiscal/financeiro de estorno integral.
+
+## 1.14.0 - 2026-09-06
+
+- Vendas e Serviços passou a persistir clientes, fornecedores, orçamentos,
+  pedidos, ordens de serviço, recebimentos e movimentações de estoque no perfil
+  empresarial ativo; o login permanece somente como autorização e autoria da
+  auditoria.
+- Produtos publicados recebem saldo inicial zero no estoque principal, sem
+  estoque fictício. Entradas, saídas, inventários, reservas e baixas validam
+  saldo físico, saldo reservado, concorrência, datas e idempotência no servidor.
+- Recebimentos e estornos atualizam a receita mensal da Gestão pelo regime de
+  caixa, com vínculo idempotente por empresa e competência.
+- CPF e CNPJ passaram a usar dígitos verificadores; datas inexistentes,
+  sequências inválidas, vencimentos incoerentes, contatos e endereços fiscais
+  incompletos são bloqueados antes da gravação.
+- A interface integrada deixa de misturar registros demonstrativos com dados
+  reais e recarrega documentos comerciais, clientes, fornecedores, estoque e
+  recebimentos do servidor.
+- A emissão fiscal externa continua condicionada à migração, credenciais,
+  certificado ativo e homologação do autorizador/provedor; nenhum teste local
+  transmite documentos fiscais reais.
+
+## 1.13.0.92 - 2026-09-06
+
+- O atalho **Vendas e Serviços > Novo > Produto** passou a informar sua origem
+  ao abrir Custos e Precificação; nesse contexto, o cabeçalho exibe **Voltar** e
+  retorna diretamente ao Vendas do mesmo perfil empresarial.
+- Aberturas diretas de Custos e Precificação pela Gestão continuam mostrando
+  **Início**, sem alterar o fluxo normal do módulo.
+- O menu **Novo** agora escurece a tela enquanto está aberto e fecha ao clicar
+  fora ou pressionar Escape, mantendo visíveis apenas o acionador e as opções.
+
+## 1.13.0.91 - 2026-09-06
+
+- A página de **Vendas e Serviços** passou a receber a `corPrimaria` do perfil
+  empresarial autenticado e a utilizá-la como base visual, seguindo o mesmo
+  contrato de Custos e Precificação.
+- Botões principais, navegação ativa, ícones, gráficos, foco e sombras derivam
+  agora da cor do perfil; o azul institucional permanece como fallback quando
+  não houver uma cor hexadecimal válida.
+
+## 1.13.0.90 - 2026-09-06
+
+- O menu esquerdo **Novo** de Vendas e Serviços passou a oferecer também
+  **Cliente**, **Fornecedor** e **Produto**, respeitando as permissões do perfil.
+- Cliente abre diretamente o formulário comercial; fornecedor possui cadastro
+  rápido vinculado à empresa e fica disponível nas entradas de estoque; produto
+  abre o cadastro mestre em Custos e Precificação já preparado para inclusão.
+- As descrições de NF-e e NFC-e no menu deixaram de expor os códigos técnicos
+  “modelo 55” e “modelo 65”, usando nomes compreensíveis para o usuário.
+
+## 1.13.0.89 - 2026-09-06
+
+- A página integrada de **Vendas e Serviços** deixou de repetir no topo os
+  seletores de perfil empresarial e tabela de preços; o perfil continua vindo
+  obrigatoriamente do acesso feito pela Gestão e o catálogo usa sua tabela
+  padrão internamente.
+- O cabeçalho local voltou à composição compacta **Início / marca AvantaLab /
+  Ajustes**, sem o seletor de usuário de demonstração e sem o selo de protótipo.
+- O conteúdo passou a ocupar toda a altura disponível, sem a segunda barra de
+  cabeçalho, e o retorno preserva o perfil empresarial recebido no acesso.
+
+## 1.13.0.88 - 2026-09-06
+
+- A Gestão Mobile passou a exibir **Conteúdo AvantaVendas** no menu Sistemas,
+  substituindo o rótulo anterior **Conteúdo do Vendas**.
+- O controle de ativação e as mensagens do mesmo menu também adotaram a nova
+  nomenclatura e descrevem a função como publicação para a equipe.
+- A versão dos recursos móveis foi avançada para retirar o rótulo antigo de
+  sessões que ainda estejam abertas ou com recursos em cache.
+
+## 1.13.0.87 - 2026-09-06
+
+- O módulo integrado antes apresentado como **Vendas Mobile** passou a se chamar
+  **Conteúdo AvantaVendas** no catálogo, no menu e nas telas de publicação.
+- A descrição agora explicita sua finalidade: publicar novidades, catálogo e
+  materiais de divulgação para a equipe, sem confundi-lo com **Vendas e
+  Serviços**.
+- O identificador técnico `vendas_mobile`, as rotas, permissões, vínculos e dados
+  foram preservados; a alteração é somente de nomenclatura e orientação.
+
+## 1.13.0.86 - 2026-09-06
+
+- O catálogo de Módulos passou a exibir **Acessar** imediatamente nos módulos
+  Web de página total já instalados, incluindo Vendas e Serviços.
+- A ação usa o registro central do módulo, fecha o catálogo e abre a rota com o
+  perfil empresarial ativo, preservando as validações de vínculo e instalação.
+
+## 1.13.0.85 - 2026-09-05
+
+- Vendas e Serviços foi incorporado ao AvantaLab como módulo Web de página
+  total, incluído no Business Pro e contratável no Business.
+- Durante a finalização, o catálogo, a instalação, a assinatura e as APIs do
+  módulo ficam restritos ao UUID do perfil empresarial Tridium; perfis pessoais
+  não recebem o módulo e nenhum login é usado como chave de liberação.
+- Cadastro do emitente, certificado A1, registros comerciais e metadados de
+  XML/DANFE usam a empresa ativa como proprietária; o usuário aparece somente
+  como vínculo, permissão e autor da auditoria.
+- A interface validada passou a rodar na mesma implantação da Gestão, com dados
+  locais isolados por empresa e backend fiscal privado. Emissão, numeração,
+  assinatura, transmissão e cancelamento permanecem bloqueados no piloto; fica
+  habilitada somente a instalação/validação protegida do A1 e o diagnóstico
+  `NfeStatusServico` da SEFAZ-SP em homologação quando as travas técnicas forem
+  configuradas no ambiente.
+
+## 1.13.0.84 - 2026-09-05
+
+- O futuro Vendas Web padronizou CNPJ como primeiro campo de identificação e
+  CEP como primeiro campo de todo bloco de endereço.
+- Cliente, empresa ativa e cadastro interno de emissor agora apresentam
+  **Buscar** junto ao CNPJ e ao CEP, com preenchimento dos dados locais
+  disponíveis e continuidade manual quando algum campo não for encontrado.
+- Os dados da empresa foram separados em identificação e endereço fiscal para
+  tornar o cadastro do emitente mais simples, sem expor detalhes do backend.
+
+## 1.13.0.83 - 2026-09-05
+
+- O cancelamento da NF-e paulista ganhou adaptador interno para montar e assinar
+  o evento 110111 com o certificado A1 ativo, sem expor XML ou credenciais.
+- O transporte mTLS aceita somente o serviço oficial de eventos da homologação
+  paulista e valida lote, chave, tipo, sequência, protocolo e data do retorno.
+- O pacote XSD oficial do cancelamento foi incorporado com origem e SHA-512;
+  a conexão segue desligada até o ensaio autorizado com certificado controlado.
+
+## 1.13.0.82 - 2026-09-05
+
+- As estrelas da Constelação Avanta percorrem o interior das letras com maior
+  velocidade, respeitando a máscara da arte oficial para preservar a silhueta.
+- O fundo responde individualmente ao cursor, com dispersão, profundidade e
+  retorno amortecido, além de movimento contínuo mais visível.
+- Quando as letras teriam menos de 64 px de altura, o protótipo apresenta o A
+  oficial em escala ampliada, incluindo adaptação da área de interação.
+
+## 1.13.0.81 - 2026-09-05
+
+- A Constelação Avanta ganhou estrelas com núcleos brancos mais luminosos,
+  halos amplos e iluminação suave nos pontos menores do nome.
+- O fundo estelar agora combina pontos distantes, estrelas luminosas e halos
+  desfocados em primeiro plano, com variação de tamanho, cor e cintilação.
+- Mantidos o desenho oficial da marca, a dispersão com retorno automático e
+  o protótipo isolado para avaliação antes de integrar à página oficial.
+
+## 1.13.0.80 - 2026-09-05
+
+- A Central Fiscal agora diferencia o cancelamento de rascunho do cancelamento
+  de uma NF-e já autorizada, disponível nas ações do documento.
+- A solicitação exige permissão, confirmação explícita e justificativa de 15 a
+  255 caracteres; autorização, protocolo e documentos originais são preservados.
+- Foi criado um cenário local fictício para validar a experiência sem valor
+  fiscal. A transmissão governamental real permanece bloqueada até a homologação
+  do adaptador oficial e a migração de banco continua apenas como rascunho.
+
+## 1.13.0.79 - 2026-09-05
+
+- Constelação Avanta forma o nome completo a partir do arquivo oficial da
+  marca, preservando o A característico e as proporções das letras.
+- Estrelas flutuam continuamente; a passagem do ponteiro dispersa as próximas
+  e elas recompõem o nome automaticamente por movimento amortecido.
+- Ajustados o fundo estelar, a escala responsiva e o modo de movimento reduzido.
+
+## 1.13.0.78 - 2026-09-04
+
+- Refinada a Constelação Avanta após comparação direta com a referência da
+  OpenAI: o “A” passou a usar trilhas estreitas com espaço negativo definido.
+- Reduzidos o estouro luminoso, a quantidade de estrelas grandes e a densidade
+  do campo, preservando pontos nítidos e brilhos pontuais.
+- O palco inteiro agora reage ao movimento do ponteiro, com profundidade e
+  rotação mais perceptíveis; arraste, teclado e movimento reduzido permanecem.
+
+## 1.13.0.77 - 2026-09-04
+
+- A Central Fiscal do protótipo local agora inclui uma NF-e fictícia rejeitada
+  pelo código `778`, identificada como **Demonstração**, para validar o fluxo de
+  revisão sem certificado ou transmissão real.
+- No ensaio, o usuário altera somente o NCM, preserva série, número e histórico
+  e conclui a revisão sem assinatura, rede ou acesso ao autorizador fiscal.
+- O cenário demonstrativo é removido automaticamente quando o Vendas recebe uma
+  sessão autenticada da Gestão e nunca se mistura aos documentos reais.
+
+## 1.13.0.76 - 2026-09-04
+
+- Criado o protótipo público e isolado **Constelação Avanta**, sem integração
+  com a landing page oficial.
+- Um campo responsivo de partículas passa da dispersão à forma do “A” do
+  AvantaLab e volta a se expandir conforme a rolagem.
+- O ensaio responde a ponteiro, arraste e teclado, limita a densidade e a
+  resolução do canvas e oferece estado estático para movimento reduzido.
+
+## 1.13.0.75 - 2026-09-04
+
+- A Central Fiscal passou a separar a NF-e rejeitada do fluxo normal de emissão:
+  a ação agora se chama **Revisar dados fiscais** e exibe o código e o motivo
+  devolvidos pelo autorizador.
+- Para a rejeição `778`, o usuário corrige somente o NCM dos produtos. Os demais
+  retratos fiscais são recompostos no servidor, sem confiar no navegador.
+- Salvar a revisão mantém série, número e tentativa anterior, volta a nota para
+  **Número reservado** e não acessa certificado, não assina e não transmite.
+
+## 1.13.0.74 - 2026-09-04
+
+- Estruturada a retomada segura de NF-e rejeitada: o usuário precisa confirmar
+  a revisão, o código da rejeição é conferido e a nota volta somente até a
+  preparação com a mesma série, número e reserva.
+- O rascunho original, a tentativa rejeitada e cada XML assinado permanecem
+  imutáveis. Correções e artefatos agora recebem revisões próprias, e a nova
+  assinatura usa sempre o retrato fiscal corrigido mais recente.
+- A retomada não acessa certificado nem rede e não retransmite automaticamente.
+  O laboratório PostgreSQL recebeu apenas os rascunhos locais `0008` e `0009`;
+  a custódia continua com zero certificado real e a emissão pública bloqueada.
+
+## 1.13.0.73 - 2026-09-04
+
+- O ensaio de resiliência fiscal passou a cobrir rejeição `778` e o esgotamento
+  das oito consultas de recuperação, sempre com uma única transmissão.
+- A rejeição mantém somente o XML assinado e orienta **Revisar dados fiscais**;
+  a fila esgotada conserva a emissão como enviada e orienta **Revisar emissão**.
+- O status deixou de afirmar que uma equipe foi avisada, pois ainda não existe
+  notificação automática. Código interno, XML e falhas da fila não são expostos,
+  e a emissão real continua bloqueada.
+
+## 1.13.0.72 - 2026-09-04
+
+- O laboratório fiscal ganhou ensaios repetíveis de timeout após o registro do
+  envio e de lote recebido ainda em processamento.
+- A recuperação cobriu respostas `103`, `105` e duplicidade `204`, retentativa
+  com espera e reconciliação pela chave e pelo protocolo, chegando ao DANFE sem
+  repetir a transmissão.
+- Os dois cenários usam certificado efêmero e respostas mantidas em memória,
+  realizam zero acesso externo e apagam os artefatos temporários. A emissão real
+  continua bloqueada na interface.
+
+## 1.13.0.71 - 2026-09-04
+
+- Criado um ensaio sintético repetível para o caminho interno completo da NF-e,
+  usando os serviços reais de orquestração, ciclo, armazenamento e recuperação.
+- A prova chegou a `danfe_ready`, preservou XML assinado, protocolo, `procNFe` e
+  DANFE como quatro artefatos imutáveis e concluiu as três tarefas da fila.
+- Somente o certificado e a resposta autorizadora são sintéticos e efêmeros. O
+  ensaio realiza zero chamada de rede e remove o armazenamento temporário ao
+  final; a interface segue sem rota ou serviço capaz de transmitir nota real.
+
+## 1.13.0.70 - 2026-09-04
+
+- O runtime local do futuro Vendas passou a compor assinatura, autorização,
+  recibo/protocolo, armazenamento imutável e recuperação num orquestrador
+  interno único.
+- A execução exige ambiente, escopo e confirmação exatos de homologação mais
+  token técnico de no mínimo 32 bytes, validado novamente em cada chamada. A
+  saída remove recursivamente XML, chave privada, certificado, senha e token.
+- O orquestrador nasce bloqueado, não possui rota e o serviço de emissão usado
+  pela interface permanece nulo. A rota da fila continua indisponível e nenhum
+  certificado ou serviço fiscal real foi acessado.
+
+## 1.13.0.69 - 2026-09-04
+
+- Criado o transporte mTLS separado para consultar recibo e protocolo da NF-e
+  nos serviços oficiais `NFeRetAutorizacao` e `NfeConsultaProtocolo` 4.00 da
+  SEFAZ-SP em homologação.
+- O contrato aceita somente recibo paulista de 15 dígitos ou chave paulista de
+  44 dígitos e recusa produção, redirecionamento, troca de operação, conteúdo
+  ativo de emissão e identificadores duplicados antes de ler o certificado.
+- O adaptador está apenas no runtime local, sem rota pública, sem ligação à fila
+  ou ao comando de emissão. Nenhum certificado real ou serviço fiscal foi
+  acessado.
+
+## 1.13.0.68 - 2026-09-04
+
+- Criado o transporte mTLS separado para `NFeAutorizacao` 4.00 no endereço
+  oficial da SEFAZ-SP em homologação, com A1 ativo e cadeia pública validada.
+- O contrato aceita somente um lote síncrono com uma NF-e modelo 55 assinada,
+  ambiente 2 e chave paulista; produção, redirecionamento, lote assíncrono,
+  múltiplas notas e outras operações são recusados antes de ler o certificado.
+- O autorizador está apenas no runtime local, sem rota e sem ligação ao comando
+  de emissão. Nenhuma nota, certificado real ou serviço fiscal foi acessado.
+
+## 1.13.0.67 - 2026-09-04
+
+- A ativação do certificado A1 no laboratório passou a consultar
+  automaticamente a disponibilidade da SEFAZ-SP depois de aprovar titularidade,
+  validade, cadeia, revogação, assinatura e TLS mútuo.
+- A disponibilidade do autorizador é informativa: uma paralisação ou falha de
+  rede não desativa um certificado válido e será conferida novamente antes de
+  uma futura emissão.
+- O retorno ao Vendas expõe apenas **conexão fiscal verificada/disponível**, sem
+  endpoint, código técnico, motivo interno, certificado, senha ou XML. Nenhum
+  certificado real foi instalado e nenhuma consulta externa foi executada.
+
+## 1.13.0.66 - 2026-09-04
+
+- Preparado o transporte mTLS exclusivo para consultar o `NfeStatusServico`
+  4.00 no endereço oficial de homologação da SEFAZ-SP. Ele lê somente o A1
+  ativo da custódia protegida, reconstrói uma cópia temporária com a cadeia
+  pública validada e apaga da memória tanto o material carregado quanto a cópia.
+- O contrato aceita apenas o envelope `consStatServ` de SP em homologação e
+  recusa produção, redirecionamento, endereço alternativo, NF-e, autorização,
+  consulta de protocolo, inutilização ou evento antes de carregar o certificado
+  ou abrir rede.
+- O adaptador está disponível apenas no runtime do laboratório e ainda não
+  possui ação pública que o invoque. A transmissão de notas permanece
+  desabilitada; nenhum certificado real ou webservice fiscal foi acessado.
+
+## 1.13.0.65 - 2026-09-04
+
+- O runtime fiscal local passou a conectar o assinador real da NF-e ao A1
+  mantido na custódia protegida. A chave privada é aberta somente em memória e
+  nunca é devolvida ao navegador.
+- Antes de assinar, o servidor exige certificado com situação ativa e repete
+  titularidade, validade, chave, cadeia oficial, raiz fixada e LCR. O XML
+  assinado é novamente validado e guardado como artefato imutável antes da
+  transição transacional para `signed`.
+- A conexão foi limitada ao laboratório PostgreSQL local e não habilita a etapa
+  automática de transmissão. Sem certificado ativo ou fora do laboratório, o
+  assinador permanece indisponível; nenhum A1 real ou SEFAZ foi acessado.
+
+## 1.13.0.64 - 2026-09-04
+
+- O backend fiscal passou a reconstruir automaticamente a cadeia pública do A1
+  quando o arquivo instalado não trouxer todas as autoridades intermediárias.
+- A complementação usa somente o pacote oficial vigente da ICP-Brasil, em URL
+  fixa e sem redirecionamento, depois de confirmar o SHA-512 publicado pelo ITI.
+  O caminho reconstruído é novamente validado até uma raiz oficial fixada antes
+  de qualquer consulta de revogação.
+- Pacote indisponível, alterado, excessivo ou sem caminho confiável mantém o
+  certificado **Instalado** e inativo. Não há configuração adicional na tela,
+  nenhum certificado real foi usado e nenhuma nota foi transmitida.
+
+## 1.13.0.63 - 2026-09-04
+
+- O backend do certificado passou a consultar e validar LCR v2 conforme o
+  DOC-ICP-04/RFC 5280, sempre depois de aprovar localmente titular, validade,
+  chave, cadeia e raiz ICP-Brasil.
+- A LCR precisa estar vigente, conter as extensões obrigatórias e ter assinatura
+  válida da autoridade emissora. Revogação, adulteração, expiração, excesso de
+  tamanho ou indisponibilidade mantêm o A1 **Instalado** e inativo.
+- A consulta restringe protocolo, porta, host, redirecionamento, tempo e tamanho.
+  Nenhum certificado real foi usado e nenhuma nota foi transmitida.
+
+## 1.13.0.62 - 2026-09-04
+
+- O backend fiscal passou a trazer as seis raízes de assinatura ICP-Brasil
+  vigentes v4, v5, v6, v7, v12 e v13, publicadas pela AC-Raiz/ITI.
+- As impressões SHA-256 foram conferidas contra os certificados oficiais e o
+  pacote vigente foi validado pelo SHA-512 publicado pelo próprio ITI. Raízes
+  expiradas deixam automaticamente o conjunto aceito.
+- A configuração é exclusivamente técnica e invisível ao usuário. A ativação
+  continua bloqueada até existir evidência real e vigente de LCR ou OCSP;
+  nenhum certificado real ou órgão fiscal foi acessado.
+
+## 1.13.0.61 - 2026-09-04
+
+- Preparado o validador server-side que poderá promover o A1 de **Instalado**
+  para **Certificado ativo** somente com titularidade, validade, chave, cadeia
+  ICP-Brasil, raiz fixada, revogação, assinatura e TLS mútuo aprovados.
+- A promoção de estado e a auditoria são atômicas. Evidências incompletas ou
+  indisponíveis mantêm o certificado instalado e inativo, sem simular sucesso.
+- O rascunho `0007` foi aplicado somente ao PostgreSQL descartável da interface,
+  que continua sem certificado. Nenhum A1 real, LCR/OCSP, SEFAZ ou ambiente
+  governamental foi acessado.
+
+## 1.13.0.60 - 2026-09-04
+
+- A tela simples de **Ajustes > Certificado digital** foi conectada à Gestão
+  autenticada: arquivo e senha seguem por um canal dedicado, sem entrar no
+  armazenamento do navegador, e a senha é descartada depois da importação.
+- A situação persistente agora aparece de forma objetiva como **Não
+  configurado**, **Instalado** ou **Certificado ativo**. A interface não exibe
+  estabelecimento, conexão SEFAZ, chave mestra ou administração técnica.
+- A migração de custódia foi aplicada somente ao PostgreSQL descartável do
+  laboratório, e a preparação automática desse banco passou a incluí-la. A
+  chave aleatória local fica protegida no Chaves do macOS, fora do código e do
+  banco.
+- Nenhum certificado real foi selecionado, nenhuma senha de certificado foi
+  informada e nenhuma conexão ou transmissão fiscal foi realizada.
+
+## 1.13.0.59 - 2026-09-04
+
+- Preparada a custódia persistente do certificado A1 do futuro Vendas: o arquivo
+  normalizado recebe senha interna aleatória e envelope autenticado AES-256-GCM,
+  vinculado à empresa e a uma chave mestra mantida fora do banco.
+- O rascunho de banco mantém o certificado no schema fiscal privado, sem acesso
+  de navegador, registra substituições em auditoria imutável e nunca grava a
+  senha digitada pelo usuário.
+- A situação foi separada corretamente entre **instalado, aguardando validação**
+  e **certificado ativo**. A emissão só poderá usar o A1 depois de cadeia
+  ICP-Brasil e revogação serem confirmadas no servidor.
+- A API autenticada de instalação e consulta está preparada, mas permanece
+  desligada enquanto a migração local e a chave mestra não forem habilitadas.
+  Nenhum certificado real foi acessado e nenhuma conexão SEFAZ foi realizada.
+
+## 1.13.0.58 - 2026-09-04
+
+- Corrigido o fluxo da NF-e: o certificado digital é configurado uma única vez
+  para a empresa e não aparece como etapa manual em cada nota.
+- **Continuar emissão** passou a representar um único comando protegido. O
+  servidor confere o documento, localiza automaticamente o certificado ativo,
+  assina e transmite; não existem botões separados para adicionar certificado
+  ou assinar dentro da emissão.
+- O laboratório permanece bloqueado antes da assinatura e da transmissão porque
+  ainda não existe A1 instalado no armazenamento protegido. O usuário recebe a
+  orientação para revisar **Ajustes > Certificado digital**, sem informar arquivo
+  ou senha novamente na nota.
+- A orquestração automática foi validada com adaptadores sintéticos, inclusive a
+  retomada segura de uma NF-e já assinada sem repetir assinatura ou envio.
+
+## 1.13.0.57 - 2026-09-04
+
+- A Central Fiscal passou a separar claramente **Continuar emissão**,
+  **Adicionar certificado** e **Assinar NF-e**, exibindo cada ação somente no
+  ponto correspondente do fluxo.
+- A Gestão ganhou a ponte autenticada e a rota protegida para solicitar a
+  assinatura. XML, chave de acesso, senha, certificado e chave privada não são
+  devolvidos ao navegador; a assinatura também não transmite a nota à SEFAZ.
+- Sem um certificado A1 instalado e ativo no armazenamento protegido do
+  servidor, a operação falha fechada com a orientação simples para adicioná-lo.
+  O certificado da Tridium não foi acessado e a emissão local permaneceu em
+  `number_reserved`.
+
+## 1.13.0.56 - 2026-09-04
+
+- Uma NF-e com número reservado agora oferece **Continuar emissão** nas ações.
+  A etapa recompõe o documento definitivo no servidor, reconfirma os dados e o
+  XSD e informa quando ele está pronto para receber a assinatura digital.
+- A resposta entre Gestão e Vendas usa um canal dedicado à solicitação, com
+  origem validada e retorno limitado a dados operacionais; XML, chave de acesso,
+  certificado e material sensível não chegam ao navegador.
+- O ensaio integrado preservou a série 1, o número 1 e a versão 3 no estado
+  `number_reserved`. Nenhum certificado real foi lido, nenhuma assinatura foi
+  persistida e nenhuma tentativa de transmissão à SEFAZ foi criada.
+
+## 1.13.0.55 - 2026-09-04
+
+- A Central Fiscal passou a oferecer **Emitir NF-e** nas ações do documento
+  preparado. A confirmação revisa os dados e reserva série e número de forma
+  transacional, idempotente e protegida pela permissão `fiscal.issue`.
+- A interface mantém numeração e detalhes técnicos no servidor: o usuário vê
+  apenas a revisão, a confirmação e o resultado. O primeiro ensaio integrado
+  vinculou a série 1 e o número 1 e atualizou a situação para **Número reservado**.
+- Esta etapa permanece no PostgreSQL local de homologação. Nenhum certificado
+  foi acessado, nenhum XML foi assinado e nenhuma conexão ou transmissão à
+  SEFAZ foi realizada.
+
+## 1.13.0.54 - 2026-09-04
+
+- O laboratório integrado passou a oferecer um catálogo local autenticado como
+  contingência de desenvolvimento quando Custos e Precificação ainda não está
+  publicado, sem expor custos e mantendo o estoque explicitamente não integrado.
+- O fluxo completo foi comprovado no navegador: pedido confirmado, separação,
+  faturamento, parcela, rascunho fiscal, abertura da emissão e validação da NF-e
+  com a versão 1 das regras fiscais publicadas.
+- A preparação converte a data para o fuso fiscal de São Paulo e aplica pré-XML
+  e XSD. O resultado ficou em `prepared`, com série e número apenas candidatos;
+  nenhuma numeração foi reservada, nenhum certificado foi acessado e nenhuma
+  transmissão à SEFAZ ou alteração no Supabase remoto ocorreu.
+- O preparador do laboratório passou a instalar também a fila de recuperação e
+  a governança de artefatos exigidas pela consulta fiscal, sempre no PostgreSQL
+  local e descartável.
+
+## 1.13.0.53 - 2026-09-04
+
+- O laboratório integrado de Vendas permanece acessível mesmo quando o perfil
+  ativo ainda não possui Custos e Precificação, permitindo concluir os ajustes
+  fiscais sem confundir a indisponibilidade do catálogo com a do módulo.
+- **Regras fiscais** passou a reunir responsável, data e as duas confirmações
+  necessárias no mesmo fluxo, sem exigir a abertura de outra configuração.
+- A publicação da versão 1 foi validada pelo navegador com a conta de revisão e
+  confirmada no PostgreSQL local: sete regras revisadas, vínculo com a empresa,
+  confirmações e auditoria. Nenhum certificado, SEFAZ ou banco remoto foi usado.
+
+## 1.13.0.52 - 2026-09-04
+
+- O laboratório comercial passou a validar a publicação das regras fiscais com
+  um JWT real emitido pelo Supabase local, vínculo ativo com a empresa e o
+  resolvedor oficial de permissões do módulo.
+- A prova autenticada publica a versão 2, relê a configuração pela rota HTTP e
+  confirma os bloqueios `401` sem sessão e `403` para outra empresa.
+- Usuário, senha, token, banco e estruturas usados no ensaio são temporários e
+  removidos ao final; nenhum projeto remoto, certificado ou SEFAZ foi acessado.
+
+## 1.13.0.51 - 2026-09-04
+
+- **Ajustes > Empresa e notas > Regras fiscais** passou a distinguir rascunho
+  local, ausência de publicação, indisponibilidade e versão fiscal publicada.
+- A Gestão mantém sessão, token e empresa ativa fora do protótipo e encaminha a
+  consulta ou publicação por uma nova rota local protegida.
+- Publicar exige `fiscal.configure`, revisão integral, versão esperada e chave
+  idempotente; conflitos recarregam a versão vigente sem simular sucesso.
+- A integração continua restrita ao laboratório de desenvolvimento. Nenhuma
+  migração remota, certificado real ou conexão com a SEFAZ foi executada.
+
+## 1.13.0.50 - 2026-09-04
+
+- O futuro Vendas ganhou um repositório fiscal server-side por empresa para a
+  matriz revisada e publicada, com versão esperada, hash do conteúdo,
+  idempotência e auditoria append-only.
+- A preparação da NF-e passa a consumir somente a regra publicada da empresa e
+  bloqueia quando ela não existe, não foi integralmente revisada ou não
+  corresponde à operação.
+- O retrato imutável do item comercial agora preserva origem da mercadoria,
+  unidade tributável, CST/CSOSN, PIS, COFINS e campos preparados para IBS/CBS,
+  impedindo que uma alteração posterior do produto mude o documento faturado.
+- O laboratório PostgreSQL local validou publicação, repetição idempotente,
+  resolução da regra e preparação fiscal integrada. Nenhuma migração remota,
+  certificado real ou conexão com a SEFAZ foi utilizada.
+
+## 1.13.0.49 - 2026-09-04
+
+- A Central Fiscal passou a distinguir **Abrir emissão fiscal** de **Validar
+  dados fiscais**: abrir cria apenas o vínculo privado da NF-e em homologação;
+  validar é a etapa posterior de regra tributária, pré-XML e XSD.
+- A nova validação atravessa uma ponte autenticada que mantém token, empresa e
+  permissões na Gestão e aceita somente retorno `prepared` sem numeração,
+  certificado, assinatura ou transmissão.
+- Enquanto a matriz fiscal revisada não possuir repositório server-side, a
+  validação bloqueia com orientação clara. O sistema não deduz tributação a
+  partir do navegador ou do cadastro do produto.
+- Nenhuma migração remota foi aplicada, nenhum certificado foi acessado e não
+  houve conexão ou tentativa de transmissão à SEFAZ.
+
+## 1.13.0.48 - 2026-09-04
+
+- O laboratório integrado do futuro Vendas passou a consultar a matriz de
+  permissões pela sessão e pela API protegida da Gestão, sem entregar token,
+  perfil empresarial interno ou credenciais ao protótipo isolado.
+- A tela de **Usuários e permissões** distingue modo demonstrativo, consulta
+  protegida e gravação conectada; quando a persistência não está instalada, a
+  edição fica bloqueada com uma orientação clara.
+- O contrato de alterações transmite apenas diferenças de perfil ou usuário e
+  aceita liberar, bloquear ou voltar a herdar o padrão. A escrita remota fica
+  desligada por padrão e só pode ser habilitada por configuração explícita.
+- O ensaio PostgreSQL/Supabase descartável validou liberação, bloqueio,
+  herança, proteção administrativa, auditoria imutável e rollback. Nenhuma
+  migração remota foi aplicada.
+
+## 1.13.0.47 - 2026-09-04
+
+- A matriz granular do futuro Vendas foi unificada entre Gestão, protótipo e
+  resolvedor server-side: 45 permissões para Gestor e Administrador, 35 para
+  Operador completo e 10 para Operador simples.
+- A configuração de acessos passou a apresentar explicitamente a permissão
+  **Faturar**, mantendo as exceções por perfil e por usuário.
+- Confirmar, separar, faturar, cancelar e devolver pedidos agora conferem todas
+  as permissões comerciais, de estoque e fiscais exigidas pela ação. Operador
+  simples pode criar e salvar o rascunho, mas não confirma por padrão.
+- O alinhamento foi validado apenas no laboratório local. Nenhuma migração foi
+  aplicada, nenhum acesso remoto foi alterado e não houve transmissão fiscal.
+
+## 1.13.0.46 - 2026-09-04
+
+- O laboratório integrado passou a transportar os identificadores reais dos
+  itens publicados por Custos e Precificação até o backend comercial.
+- Pedido confirmado pode ser persistido de forma autenticada e idempotente; o
+  servidor relê ou cadastra o cliente, relê catálogo e preços e avança o ciclo
+  até confirmação, separação ou faturamento conforme a ação solicitada.
+- No faturamento, parcelas e rascunho fiscal são criados pelos serviços
+  transacionais já validados. O estoque continua explicitamente não integrado.
+- A empresa, o usuário e as permissões são resolvidos somente pela Gestão; o
+  iframe não recebe token e não pode declarar esses dados.
+- O fluxo permanece fechado quando o runtime ou as permissões não estiverem
+  configurados. Nenhuma migração remota, certificado ou transmissão fiscal foi
+  executada.
+
+## 1.13.0.45 - 2026-09-04
+
+- Rascunhos persistidos e prontos de NF-e ganharam a ação autenticada
+  **Preparar emissão** na Central Fiscal e nas ações da operação comercial.
+- A Gestão mantém sessão e empresa ativa, exige `fiscal.prepare` e encaminha ao
+  laboratório somente o identificador seguro do rascunho.
+- O backend confere empresa, pedido faturado, integridade e vínculo antes de
+  abrir ou reencontrar a mesma emissão em homologação; repetir a ação não cria
+  duplicidade.
+- Esta etapa não reserva série ou número, não acessa certificado, não assina e
+  não transmite à SEFAZ. Nenhuma migração ou projeto remoto foi alterado.
+
+## 1.13.0.44 - 2026-09-04
+
+- A Gestão Mobile passa a reconhecer o Android nativo como canal próprio de
+  assinatura: Pessoal Premium usa Google Play e restauração de compras; Business
+  e Business Pro continuam apenas para acesso a contratos empresariais já ativos.
+- A conciliação da RevenueCat registra a origem correta entre App Store e Google
+  Play e libera o Premium Pessoal em qualquer perfil pessoal do mesmo login.
+- O menu diferencia excluir somente um perfil da solicitação de exclusão
+  definitiva da conta da Gestão, disponível também em página pública própria.
+- O projeto Android declara as permissões de notificações, câmera e microfone
+  usadas sob ação do usuário e sincroniza os plugins nativos necessários.
+
+## 1.13.0.43 - 2026-09-04
+
+- A Central Fiscal do laboratório passou a listar os rascunhos comerciais
+  persistidos e a emissão correspondente, isolados por empresa e pela permissão
+  efetiva `fiscal.view`.
+- Pedido faturado, rascunho e emissão usam o mesmo UUID por contrato; a consulta
+  confirma também empresa e origem antes de apresentar o vínculo, sem criar uma
+  tabela duplicada.
+- Recarregar a tela ou repetir a abertura com outra chave segura reencontra a
+  mesma emissão, inclusive quando ela já avançou de estado. Um vínculo divergente
+  falha fechado antes de qualquer nova ação fiscal.
+- A Gestão mantém o token e a empresa ativa fora do iframe e encaminha ao
+  protótipo somente o retrato necessário. XML, PDF, certificado, referências de
+  armazenamento, checksums e detalhes da fila não integram essa lista.
+- O ensaio PostgreSQL/Supabase local confirmou a leitura ponta a ponta, sem rede
+  externa, certificado real, tentativa de SEFAZ, migração aplicada ou projeto
+  remoto vinculado.
+
+## 1.13.0.42 - 2026-09-05
+
+- A Central Fiscal do laboratório de Vendas passou a consumir visualmente o
+  contrato autenticado de situação da emissão, preservando o estado local para
+  rascunhos demonstrativos sem vínculo real.
+- A tabela e os detalhes distinguem processamento, autorização, rejeição,
+  recuperação em andamento e indisponibilidade sem expor fila, armazenamento,
+  SEFAZ ou mensagens técnicas ao usuário.
+- XML autorizado e DANFE aparecem separadamente nas ações somente quando o
+  backend os declarar disponíveis, respeitando permissões próprias de download;
+  a fila continua sem comando no navegador.
+- A Gestão mantém token e empresa ativa, consulta o laboratório por um proxy
+  restrito ao desenvolvimento local e devolve ao protótipo apenas dados seguros
+  ou uma concessão HTTPS temporária para o arquivo.
+- Nenhuma transmissão foi feita, nenhum certificado real foi utilizado e
+  nenhuma migração ou projeto remoto foi alterado.
+
+## 1.13.0.41 - 2026-09-05
+
+- O futuro Vendas ganhou uma borda autenticada de consulta da emissão para a
+  Central Fiscal, isolada por empresa e pela permissão `fiscal.view`.
+- A resposta apresenta somente situação operacional e disponibilidade do XML e
+  DANFE; referências privadas, checksums e erros internos não são expostos.
+- O executor persistente da fila ganhou uma entrada exclusiva para agendador,
+  protegida por segredo interno e desligada por padrão. Usuários não executam a
+  fila por botões da interface.
+- Mesmo com a flag do executor ativa, o runtime permanece bloqueado até existir
+  o conector real de certificado, mTLS e retorno da SEFAZ.
+- O ensaio PostgreSQL concluiu as três tarefas da emissão e confirmou
+  `danfe_ready` sem retransmissão, rede externa ou certificado da Tridium.
+  Nenhuma tela, migração ativa ou projeto remoto foi alterado.
+
+## 1.13.0.40 - 2026-09-05
+
+- A fila fiscal do futuro Vendas passou a consultar recibo ou protocolo sem
+  retransmitir a NF-e quando o resultado do envio precisar ser recuperado.
+- O protocolo bruto ficou restrito ao contrato protegido do backend; respostas
+  públicas informam somente situação e metadados seguros.
+- Depois da autorização, o serviço combina o XML assinado e o protocolo da
+  mesma chave, grava `procNFe.xml`, gera o DANFE e registra cada artefato junto
+  com a transição fiscal em uma única transação PostgreSQL.
+- O ensaio local concluiu a emissão em `danfe_ready`, versão 8, com quatro
+  artefatos imutáveis, oito eventos e oito operações.
+- O transporte continuou simulado em memória. Não houve conexão externa,
+  retransmissão real, uso do certificado da Tridium, API pública, tela,
+  migração aplicada ou projeto remoto alterado.
+
+## 1.13.0.39 - 2026-09-05
+
+- A NF-e assinada ganhou abertura transacional de tentativa: lote, emissão em
+  `submitted`, auditoria, idempotência e tarefa de recuperação são gravados
+  antes do transporte, sem incluir XML ou segredo no banco de eventos.
+- O fluxo relê o `signed_xml` pelo armazenamento privado, confere checksum,
+  assinatura, CNPJ e chave e resolve a referência do certificado somente no
+  servidor antes de montar o SOAP 1.2 de homologação.
+- Resposta síncrona autorizada grava `protocolNFe.xml` de forma imutável e
+  confirma `authorized`; lote pendente avança para `processing` com recibo e
+  rejeição preserva código e motivo sem criar protocolo autorizado.
+- O ensaio PostgreSQL chegou à versão 6 com dois artefatos, seis eventos, seis
+  operações, uma tentativa e duas tarefas de recuperação.
+- Todo transporte foi simulado em memória. Nenhuma conexão externa foi aberta,
+  a SEFAZ real não recebeu documento e o certificado da Tridium não foi usado.
+  Não houve API pública, tela, migração aplicada ou projeto remoto alterado.
+
+## 1.13.0.38 - 2026-09-05
+
+- A NF-e numerada ganhou o fluxo server-side protegido de assinatura XMLDSig.
+  O provedor A1 encapsula a chave privada, apaga o PKCS#12 carregado e devolve
+  o XML assinado somente para validação e armazenamento internos.
+- O XML assinado é reconferido por referência, digest, RSA, CNPJ do emissor e
+  XSD, recebe SHA-256 e rota imutável própria `signedNFe.xml`.
+- Após a guarda, uma única transação registra o metadado `signed_xml`, avança a
+  emissão de `number_reserved` para `signed` e inclui evento e operação
+  idempotente. Falha do banco não declara a emissão como assinada.
+- O laboratório PostgreSQL confirmou emissão na versão 4, chave com 44 dígitos,
+  checksum, um artefato assinado, quatro eventos e quatro operações.
+- A validação usou somente credencial sintética controlada. O certificado da
+  Tridium não foi acessado e não houve mTLS, consulta ou transmissão à SEFAZ,
+  API pública, tela, migração aplicada ou projeto remoto alterado.
+
+## 1.13.0.37 - 2026-09-05
+
+- A NF-e numerada ganhou montagem determinística do XML definitivo para
+  assinatura, usando exatamente a série e o número reservados, a data, o cNF,
+  a regra tributária e a versão do gerador congelados na preparação.
+- Antes da assinatura, o serviço reconfirma empresa, permissão `fiscal.issue`,
+  versão, vínculos, hash comercial, reserva, versão tributária e digest dos
+  parâmetros fiscais. Qualquer mudança exige nova preparação.
+- O XML definitivo passa novamente pelo XSD e por uma bancada XMLDSig efêmera
+  somente em memória, provando referência, digest, RSA, chave e XSD assinado
+  sem usar o certificado real e sem retornar conteúdo fiscal ou segredo.
+- O ensaio PostgreSQL confirmou que a prova mantém a emissão em
+  `number_reserved`, versão 3, sem chave persistida, artefato, evento adicional
+  ou tentativa de transmissão.
+- Certificado A1 real, assinatura persistente, armazenamento do XML assinado e
+  conexão com a SEFAZ seguem desligados. Nenhuma tela, API, migração ativa ou
+  projeto remoto foi alterado.
+
+## 1.13.0.36 - 2026-09-04
+
+- A NF-e preparada ganhou reserva fiscal transacional e idempotente no
+  laboratório PostgreSQL local, avançando de `prepared` para
+  `number_reserved` somente com a permissão efetiva `fiscal.issue`.
+- A mesma transação serializável bloqueia a sequência ativa, pula numerações
+  reservadas ou em inutilização, cria a reserva, atualiza o próximo número,
+  vincula série e número à emissão e registra evento e operação.
+- Repetir a mesma confirmação devolve a reserva existente sem consumir outro
+  número. Versão desatualizada, estado incorreto, conflito idempotente ou série
+  ausente encerram a operação sem avanço parcial.
+- O ensaio integrado confirmou emissão na versão 3, série 1, número 1, uma
+  reserva, três eventos e três operações, com a sequência avançada para 2.
+- Certificado, assinatura, chave de acesso, lote, transmissão e SEFAZ seguem
+  desativados. Nenhuma tela, API, migração ativa ou projeto remoto foi alterado.
+
+## 1.13.0.35 - 2026-09-04
+
+- A emissão privada de NF-e criada pelo faturamento agora pode avançar de
+  `draft` para `prepared` no laboratório PostgreSQL local.
+- A preparação relê e confere o hash do retrato comercial, exige regra
+  tributária aprovada por um resolvedor server-side, identifica o próximo
+  número sem consumi-lo, monta o pré-XML e executa o XSD oficial versionado.
+- Natureza da operação, presença, CSOSN/CST, origem e PIS/COFINS não recebem
+  suposições automáticas: ausência ou reprovação mantém a emissão em rascunho.
+- O evento privado registra apenas metadados seguros, digest e referência da
+  regra aplicada. O pré-XML não é persistido nessa etapa.
+- A repetição idempotente reutiliza a preparação anterior. O ensaio confirmou
+  emissão na versão 2, dois eventos e duas operações, mantendo série e número
+  nulos e a sequência fiscal intacta.
+- Certificado, assinatura, reserva, transmissão e consulta à SEFAZ permaneceram
+  desativados. Nenhuma tela, API, migração ativa ou projeto remoto foi alterado.
+
+## 1.13.0.34 - 2026-09-03
+
+- O rascunho comercial imutável de NF-e agora pode abrir, de forma idempotente,
+  uma emissão no repositório fiscal privado do laboratório PostgreSQL local.
+- A ponte reconfirma empresa, módulo e `fiscal.prepare`, exige pedido faturado,
+  rascunho pronto, emissor interno válido e SHA-256 íntegro antes de criar o
+  estado fiscal inicial `draft` em homologação.
+- A emissão utiliza o identificador do próprio rascunho, preserva o vínculo com
+  o pedido e grava um único evento e uma única operação mesmo após repetição.
+- Este passo não reserva série ou número, não monta XML, não usa certificado,
+  não assina, não transmite e não consulta a SEFAZ. NFC-e e NFS-e são recusadas
+  explicitamente pelo piloto de NF-e e seus rascunhos permanecem preservados.
+- O ensaio integrado aplicou e reverteu os contratos comercial e fiscal apenas
+  no Supabase local descartável, confirmou bloqueio ao usuário autenticado e
+  terminou sem projeto remoto vinculado. Nenhuma tela, API ou migração ativa
+  foi publicada.
+
+## 1.13.0.33 - 2026-09-03
+
+- O pedido em separação ganhou faturamento transacional candidato no laboratório
+  PostgreSQL local. A mesma transação baixa a reserva do estoque, cria as
+  parcelas a receber, congela o rascunho fiscal e registra a auditoria.
+- As parcelas preservam o valor exato do pedido, o número contratado e os
+  vencimentos mensais. Movimentos de estoque e eventos financeiros continuam
+  imutáveis, e repetir o faturamento não duplica saldo, parcela ou rascunho.
+- O núcleo passou a 19 tabelas com `vendas_fiscal_rascunhos`, um retrato
+  comercial imutável compatível com NF-e, NFC-e e NFS-e. Ele não reserva número,
+  não assina, não transmite e nunca representa documento autorizado.
+- O emitente é resolvido no servidor e apenas campos fiscais permitidos entram
+  no retrato. Pedidos com pendência mantêm o rascunho sinalizado para revisão.
+- A matriz ganhou a permissão específica `sales.invoice`, permitindo controlar
+  o faturamento por perfil ou usuário separadamente da edição de pedidos.
+- Nenhuma tela, API, migração ativa ou conexão governamental foi publicada.
+
+## 1.13.0.32 - 2026-09-03
+
+- O pedido de venda ganhou ciclo persistente candidato de confirmação, início
+  da separação e cancelamento no laboratório PostgreSQL local.
+- A confirmação verifica cliente ativo, forma de pagamento, versão concorrente,
+  permissões e disponibilidade e reserva todos os produtos controlados na mesma
+  transação. Repetir a solicitação não duplica reservas ou movimentos.
+- Iniciar a separação preserva o saldo físico e confere a integridade de cada
+  reserva. Cancelar antes do faturamento libera integralmente as quantidades e
+  devolve a disponibilidade, com eventos e movimentos imutáveis.
+- O rascunho reforça o vínculo entre pedido, item e reserva para impedir que um
+  item de outra operação da mesma empresa seja associado por engano.
+- Faturamento, baixa física, recebíveis e rascunho fiscal permanecem para as
+  próximas etapas. Nenhuma tela, API, migração ativa ou conexão remota mudou.
+
 ## 1.13.0.31.11 - 2026-09-06
 
 - O card **Saldo do mês** da Gestão Mobile passou do preto ao azul escuro
@@ -221,6 +1221,294 @@
 - AvantaVendas: ao confirmar pedido ou recebimento, o botão muda imediatamente
   para **Confirmando...**, antes da conferência financeira no servidor, e fica
   bloqueado durante todo o processamento para evitar envios duplicados.
+
+## 1.13.0.31 - 2026-09-03
+
+- Os materiais da Ordem de Serviço passaram a possuir vínculo explícito com a
+  reserva de estoque no núcleo comercial candidato, sempre dentro da empresa.
+- O laboratório PostgreSQL agora reserva os materiais antes da execução, baixa
+  somente a quantidade efetivamente utilizada após a conclusão e libera a
+  sobra sem reduzir o saldo físico.
+- A devolução controlada estorna a baixa concluída e recompõe o saldo físico.
+  Cada etapa é transacional, idempotente e registrada em movimentos e eventos
+  imutáveis, sem misturar reservas antigas ou permitir saldo indevido.
+- Permissões de saída e ajuste são verificadas antes do repositório e falhas
+  internas do banco não são expostas ao operador.
+- Nenhuma tela, API, migração ativa ou conexão remota foi publicada nesta etapa.
+
+## 1.13.0.30 - 2026-09-03
+
+- O orçamento de Serviços agora pode gerar uma única Ordem de Serviço no
+  laboratório PostgreSQL local, preservando cliente, itens, preços e origem.
+- A OS recebeu agenda, duração prevista, responsável, local, contato, checklist
+  e materiais com custo congelado, sem realizar baixa de estoque nesta etapa.
+- O ciclo validado passa por `Agendada`, `Em execução` e `Concluída`, registrando
+  duração real, relato, checklist, consumo informado, custo real e aceite do
+  cliente em histórico imutável.
+- A montagem ocorre como `Salva` dentro da transação e só depois muda para
+  `Agendada`, garantindo que a proteção de itens impeça alterações tardias.
+- Nenhuma tela, API, migração, estoque real ou conexão remota foi ativada.
+
+## 1.13.0.29 - 2026-09-03
+
+- Orçamentos de Vendas e Serviços e pedidos de venda ganharam serviço e
+  repositório PostgreSQL executáveis somente no laboratório local.
+- Cada documento congela o retrato do cliente, tabela de preços, nome, custo,
+  preço e classificação fiscal dos itens. Alterações posteriores nos cadastros
+  não reescrevem o histórico já salvo.
+- Os cálculos são realizados em unidades inteiras de centavos e milésimos, com
+  limite validado de `R$ 9.999.999,99`, numeração por tipo/ano, versão otimista,
+  idempotência e auditoria append-only.
+- A conversão de orçamento de venda em pedido copia o retrato transacional uma
+  única vez, registra a origem e recusa duplicidades. Orçamento de serviço já
+  aceita NFS-e; sua conversão em ordem de serviço permanece para a próxima etapa.
+- O teste PostgreSQL local confirmou criação, repetição segura, edição,
+  conflito, busca, isolamento por empresa e conversão sem duplicidade, seguido
+  de rollback. Nenhuma API, tela, migração ou conexão remota foi ativada.
+
+## 1.13.0.28 - 2026-09-03
+
+- A primeira persistência executável do futuro módulo comercial foi criada para
+  clientes, exclusivamente server-side e ainda restrita ao laboratório local.
+- O serviço confirma empresa, vínculo, módulo e permissão efetiva, valida e
+  normaliza CNPJ, CEP, telefone e endereço fiscal. Cadastro incompleto pode ser
+  preservado como `Revisar cadastro`, mas permanece inapto à emissão de nota.
+- Inclusão, edição e inativação usam transação serializável, código sequencial
+  por empresa, versão otimista e histórico append-only. Não existe exclusão de
+  cliente nem acesso direto do navegador às tabelas.
+- A prova real no PostgreSQL local confirmou busca por nome/CNPJ, isolamento
+  entre empresas, conflito de edição, inativação e auditoria, seguida de
+  rollback. Nenhuma API de tela, migração ou conexão remota foi ativada.
+
+## 1.13.0.27 - 2026-09-03
+
+- O futuro Vendas e Serviços ganhou um rascunho não aplicado para o núcleo
+  comercial: clientes, contatos, numeração interna, operações e itens, ordens de
+  serviço, estoque, inventários, contas a receber e históricos.
+- As 18 tabelas usam isolamento por empresa, RLS forçada e acesso exclusivamente
+  server-side. Itens confirmados e razões de estoque, recebimento e auditoria não
+  podem ser alterados retroativamente; correções exigem novos eventos.
+- Valores comerciais usam `numeric(14,2)` e a prova preservou exatamente
+  `9.999.999,99`. Cliente, tabela de preço, catálogo, operação, estoque e
+  recebimento foram protegidos contra referências pertencentes a outra empresa.
+- A numeração interna é reservada com bloqueio transacional e repetição
+  idempotente. O CPF ficou somente preparado no contrato; a interface inicial
+  continua habilitando CNPJ até existir fonte de dados contratada e homologada.
+- O rascunho foi aplicado e revertido em banco descartável do Supabase local. A
+  prova confirmou 18 tabelas protegidas, acesso direto negado a `authenticated`,
+  históricos imutáveis e rollback, sem projeto remoto vinculado ou dado real.
+
+## 1.13.0.26 - 2026-09-03
+
+- Foi criado um laboratório local e oculto para validar a futura integração do
+  Vendas e Serviços com o catálogo real de Custos e Precificação, sem publicar
+  rota comercial, item de menu ou alteração no ambiente de produção.
+- A nova API de catálogo é somente leitura, exige sessão e vínculo com a empresa
+  solicitada, funciona apenas em desenvolvimento e entrega somente produtos e
+  serviços ativos e publicados, usando a tabela de preços selecionada.
+- O contrato não expõe custo interno e declara explicitamente que estoque ainda
+  não está integrado. O protótipo bloqueia edição do catálogo e movimentações de
+  estoque enquanto recebe os itens da Gestão, evitando saldos ou gravações
+  demonstrativas misturados aos dados reais.
+- O laboratório foi conferido nos estados autenticado/indisponível previstos e
+  continua separado da implantação oficial. Nenhum banco remoto, migração,
+  pedido, orçamento, estoque ou documento fiscal foi criado ou alterado.
+
+## 1.13.0.25 - 2026-09-03
+
+- O futuro Vendas e Serviços ganhou contrato oficial dentro da Gestão, com o
+  identificador `vendas`, separado do `vendas_mobile` e dependente do catálogo
+  mantido por Custos e Precificação.
+- A matriz inicial reúne 44 permissões em dez áreas e preserva os quatro tipos
+  de usuário. O resultado efetivo segue padrão do tipo, exceção do tipo na
+  empresa e, por último, liberação ou bloqueio individual.
+- A nova API administrativa é exclusivamente server-side, exige Gestor Master
+  ou Administrador autenticado, módulo ativo e protege gestão de acessos,
+  auditoria, configuração fiscal e homologação contra bloqueio administrativo.
+- O SQL oficial continua em `supabase/drafts`, fora das migrações ativas. A
+  prova com sessão Supabase e PostgreSQL local validou empresa, módulo, RLS,
+  exceção individual, auditoria imutável e rollback para o identificador
+  `vendas`; nenhum banco remoto foi acessado ou alterado.
+- O módulo ainda não foi colocado no menu da Gestão e a tela de permissões não
+  foi exposta ao usuário: isso ocorrerá somente quando `/vendas` estiver
+  incorporada e todas as ações passarem a obedecer à decisão do servidor.
+
+## 1.13.0.24 - 2026-09-03
+
+- O protótipo separado ganhou um resolvedor server-side compatível com a sessão
+  Supabase da Gestão e passou a conferir token, empresa, vínculo ativo, módulo,
+  perfil-base e exceções individuais antes do acesso a documentos fiscais.
+- Um usuário fictício autenticado no Supabase local atravessou a rota HTTP. O
+  ensaio negou outra empresa, vínculo bloqueado e leitura direta pelas funções
+  públicas, sem persistir token e eliminando o usuário ao final.
+- O padrão inicial mantém XML bloqueado para operadores e libera o DANFE ao
+  Operador Completo; gestor ou administrador pode alterar essas decisões por
+  usuário no futuro contrato persistente.
+- Um quarto rascunho não aplicado estrutura exceções de perfil e usuário para
+  todos os módulos, exige gestor/administrador ativo, protege permissões críticas
+  e registra cada mudança em auditoria append-only. Seu rollback foi executado
+  e confirmado no banco descartável.
+- A rota real de download agora está conectada ao runtime protegido, mas a chave
+  de ativação permanece desligada. Sem infraestrutura, migrações e Storage de
+  produção aprovados, ela continua falhando fechada com HTTP 503.
+- Nenhuma migração foi aplicada ao AvantaLab e nenhum Supabase remoto foi usado.
+
+## 1.13.0.23 - 2026-09-03
+
+- O protótipo separado passou a usar o cliente oficial do Supabase e validou a
+  guarda de um `procNFe` sintético em bucket exclusivamente local e privado.
+- O ensaio aprovou gravação sem sobrescrita, repetição idempotente, conflito de
+  conteúdo, SHA-256, bloqueio da URL pública e leitura assinada por 60 segundos.
+- A imagem local não oferece versionamento nativo; o laboratório usa versão
+  lógica pelo checksum, mas o verificador rejeita essa condição para produção.
+- A rota server-side de download foi criada fechada por padrão e só poderá gerar
+  acesso depois da integração com a autenticação real e a permissão efetiva da
+  empresa ativa. A consulta e a auditoria no PostgreSQL descartável foram
+  validadas sem registrar a URL temporária.
+- O backup do banco não foi tratado como backup dos objetos. Produção continua
+  condicionada a versionamento nativo, criptografia, retenção e cópia separada
+  dos arquivos, além de prova recente de restauração.
+- Uma prova adicional exportou o arquivo em envelope AES-256-GCM, simulou sua
+  perda no bucket local, restaurou os mesmos bytes e confirmou o SHA-256. Ela
+  valida o procedimento, mas não se declara um segundo domínio de falha.
+- Nenhum projeto Supabase remoto, certificado ou autorizador fiscal foi acessado.
+
+## 1.13.0.22 - 2026-09-03
+
+- O protótipo separado de Vendas e Serviços ganhou o contrato do futuro
+  armazenamento fiscal durável, ainda sem configurar ou acessar provedor remoto.
+- Produção passa a exigir armazenamento privado, criptografia em repouso e em
+  trânsito, versionamento, gravação imutável, SHA-256, retenção com bloqueio
+  jurídico e backup criptografado em domínio de falha separado.
+- O acesso futuro ao XML autorizado e ao DANFE foi separado por permissões
+  efetivas do usuário, sempre validando empresa ativa, autorização server-side,
+  concessão HTTPS de até cinco minutos e auditoria sem guardar a URL temporária.
+- Um terceiro rascunho não aplicado separa eventos de retenção, tentativas de
+  acesso e provas de restauração. O PostgreSQL descartável aceitou as três novas
+  tabelas com RLS forçada e gatilhos de imutabilidade.
+- O piso operacional de retenção da NF-e é conservador, aceita extensão e
+  bloqueio jurídico e não cria qualquer rotina de exclusão sem revisão fiscal.
+- Nenhum Supabase remoto, certificado ou autorizador fiscal foi acessado.
+
+## 1.13.0.21 - 2026-09-03
+
+- A fila fiscal do protótipo separado ganhou executores idempotentes para
+  reconciliar a guarda de `procNFe` e a geração do DANFE.
+- Se o arquivo autorizado já estiver íntegro e faltar o metadado ou a mudança
+  de estado, a execução seguinte completa o ciclo sem duplicar registros.
+- Um DANFE ausente é regenerado a partir do `procNFe` conferido; XML autorizado
+  ausente ou adulterado falha fechado, preserva a emissão e entra na política de
+  retentativa com diagnóstico sem conteúdo sensível.
+- O laboratório simulou as interrupções, manteve a emissão em `danfe_ready` e
+  eliminou banco, backups e arquivos temporários ao final.
+- Nenhum Supabase remoto, certificado ou autorizador fiscal foi acessado.
+
+## 1.13.0.20 - 2026-09-03
+
+- O protótipo separado ganhou um provedor de artefatos restrito ao laboratório
+  local, com rota fiscal validada, escrita atômica sem sobrescrita, SHA-256,
+  diretórios `0700` e arquivos `0600`.
+- O backend guarda `procNFe` e DANFE, bloqueia amostras como documento fiscal,
+  recusa adulteração e não devolve XML, PDF ou caminho físico à interface.
+- O PostgreSQL registra somente referência opaca, versão, checksum, tamanho e
+  tipo do conteúdo em tabela imutável; o ensaio chegou ao estado `danfe_ready`.
+- A normalização de datas do driver PostgreSQL passou a usar ISO, impedindo erro
+  de fuso ao avançar uma emissão relida do banco.
+- Todos os arquivos e bancos criados pela prova continuam temporários; nenhum
+  Supabase remoto, certificado ou autorizador fiscal foi acessado.
+
+## 1.13.0.19 - 2026-09-03
+
+- O laboratório fiscal passou a gerar dois backups locais, restaurá-los em um
+  banco PostgreSQL descartável e conferir as 9 tabelas privadas, seus dados
+  fictícios e a aplicação de RLS forçada.
+- Uma prova com conexões reais confirmou que duas transições concorrentes não
+  avançam a mesma emissão e que dois trabalhadores com `SKIP LOCKED` recebem
+  tarefas distintas.
+- O repositório mantém `SERIALIZABLE` no ciclo de emissão, repete abortos seguros
+  de serialização e usa `READ COMMITTED` somente nas operações atômicas da fila.
+- O Next.js do protótipo separado foi atualizado de `16.2.6` para `16.3.4`; a
+  auditoria npm passou de três alertas altos para nenhuma vulnerabilidade.
+- Nenhum projeto Supabase remoto, certificado ou autorizador governamental foi
+  acessado nesta validação.
+
+## 1.13.0.18 - 2026-09-03
+
+- O Mac de desenvolvimento recebeu Docker Desktop e o protótipo separado de
+  Vendas passou a versionar o Supabase CLI no próprio projeto.
+- Foi iniciado um PostgreSQL/Supabase exclusivamente local, sem login ou vínculo
+  remoto, e os rascunhos de emissão e fila fiscal foram aplicados com dados
+  inteiramente fictícios.
+- O ensaio confirmou RLS forçada, bloqueio de `anon` e `authenticated`,
+  idempotência, histórico imutável e rollback sem tocar no Supabase de produção.
+
+## 1.13.0.17 - 2026-09-02
+
+- O protótipo separado de Vendas e Serviços recebeu um adaptador PostgreSQL
+  server-side com transação serializável, bloqueio consultivo, versão otimista e
+  idempotência validada pela impressão digital de cada operação.
+- O ciclo fiscal passou a agendar, na mesma transação, tarefas de recuperação
+  para consulta de autorização/recibo, guarda do `procNFe` e geração do DANFE.
+- A fila candidata usa lease, `SKIP LOCKED`, espera exponencial e `dead_letter`,
+  não armazena XML ou segredos e nunca retransmite a NF-e automaticamente.
+- As migrações seguem não aplicadas: o runtime local de PostgreSQL/Supabase não
+  está instalado e nenhum banco real foi alterado.
+
+## 1.13.0.16 - 2026-09-02
+
+- O protótipo separado de Vendas e Serviços recebeu a máquina de estados do
+  ciclo fiscal, com idempotência, controle otimista de versão, pré-requisitos por
+  etapa e imutabilidade de número, chave e cancelamento protocolado.
+- Foi preparado um rascunho não aplicado de persistência PostgreSQL/Supabase,
+  separando emissões, numeração, tentativas, artefatos e eventos em schema privado,
+  com RLS forçada e sem acesso direto de `anon` ou `authenticated`.
+- A migração real permanece desligada até revisão no repositório principal,
+  testes pgTAP, backup, restauração e autorização explícita de implantação.
+
+## 1.13.0.15 - 2026-09-02
+
+- O protótipo separado de Vendas e Serviços recebeu um gerador server-side de
+  DANFE A4 para NF-e modelo 55, baseado exclusivamente no `procNFe` autorizado.
+- O documento confere ambiente, assinatura, situação 100, protocolo e chave antes
+  de gerar o PDF, inclui código de barras Code 128 C e pagina os itens mantendo o
+  cabeçalho fiscal e o número de cada folha.
+- Uma amostra sintética de duas páginas foi renderizada e revisada visualmente,
+  sempre marcada como homologação, sem valor fiscal e não autorizada.
+
+## 1.13.0.14 - 2026-09-02
+
+- O conector interno de NF-e paulista em homologação ganhou os contratos SOAP
+  1.2 de consulta de recibo e consulta de protocolo nos endereços oficiais da
+  SEFAZ-SP, ainda com o transporte real desativado.
+- As respostas agora diferenciam processamento, autorização, cancelamento e
+  reconciliação por duplicidade, sempre validando ambiente, UF, chave e limites
+  seguros antes de reconhecer um resultado fiscal.
+- O backend monta `procNFe` somente quando XML assinado e protocolo de situação
+  100 pertencem à mesma chave; o contrato de guarda é imutável, idempotente e
+  não devolve o XML, mas o provedor durável continua deliberadamente ausente.
+
+## 1.13.0.13 - 2026-09-02
+
+- O protótipo de Vendas e Serviços ganhou a preparação server-side da tentativa
+  de NF-e paulista em homologação, ligada ao controle fiscal de numeração.
+- A etapa calcula candidato de série/número, cNF, chave de acesso, pré-XML e XSD
+  sem reservar número, assinar ou transmitir; repetição da mesma tentativa é
+  estável e uma reserva existente é reutilizada.
+- Rascunhos cancelados, outro modelo, produção ou numeração em inutilização
+  falham fechados antes de qualquer conexão externa.
+- O contrato de autorização NF-e 4.00 monta lote síncrono SOAP 1.2 e interpreta
+  recibo, protocolo e autorização, mas mantém o transporte desligado e não
+  recebe XML assinado por rota pública do navegador.
+
+## 1.13.0.12 - 2026-09-02
+
+- O protótipo de Vendas e Serviços recebeu controle fiscal versionado de séries
+  e próximo número para NF-e, NFC-e e NFS-e, sem transmitir ao governo.
+- A reserva futura é idempotente e impede duplicidade por rascunho, chave de
+  operação e par série/número; abrir ou revisar uma nota não consome numeração.
+- A Central Fiscal permite registrar intervalos para inutilização, preservando
+  justificativa, responsável e auditoria, mas só aceita confirmação com o
+  protocolo futuro do órgão autorizador.
 
 ## 1.13.0.11 - 2026-09-01
 
