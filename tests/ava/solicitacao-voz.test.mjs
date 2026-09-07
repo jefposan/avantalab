@@ -93,6 +93,8 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(officialApp, /solicitacaoVozAtiva: false/);
   assert.doesNotMatch(officialApp, /\['solicitacao_voz',\s*'10_Solicitacao_por_voz/);
   assert.match(officialApp, /mobile-voice-command-slot/);
+  assert.match(officialApp, /Deixe aqui suas sugestões/);
+  assert.doesNotMatch(officialApp, /Dúvidas e Sugestões/);
   assert.match(officialApp, /state\.solicitacaoVozAtiva \? `<div class="mobile-voice-command-slot"/);
   assert.match(officialApp, /carregarModuloSolicitacaoVozVendas/);
   assert.match(officialApp, /\/api\/vendas\/solicitacao-voz\//);

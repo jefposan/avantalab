@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.15.0.06 - 2026-09-07
+
+- O card da Sala de Botões que abre a central de feedback passou a dizer
+  **Deixe aqui suas sugestões**. Dúvidas continuam sendo atendidas pela Ava.
+
+## 1.15.0.06-av129 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com a comunicação exclusiva de sugestões
+  no card de feedback.
+
 ## 1.15.0.05 - 2026-09-07
 
 - O botão de voz e sua mensagem agora são um único bloco, centralizado pela

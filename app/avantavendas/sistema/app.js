@@ -2497,7 +2497,7 @@ function renderMenuMobile() {
       </button>
       <button type="button" class="mobile-suggestions-card" onclick="abrirSugestoesVendas()">
         <span class="mobile-suggestions-icon">${svgIconEstavel('message-circle')}</span>
-        <span><b>Dúvidas e Sugestões</b><small>Ajude a melhorar o AvantaLab</small></span>
+        <span><b>Deixe aqui suas sugestões</b><small>Ajude a melhorar o AvantaLab</small></span>
         <i aria-hidden="true">›</i>
       </button>
       ${state.solicitacaoVozAtiva ? `<div class="mobile-voice-command-slot" id="voiceCommandSalaMount">
