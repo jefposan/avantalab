@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.14.3.16.04 -->
+<!-- ava-version: 1.14.3.16.05 -->
+
+> Revisão 1.14.3.16.05: a edição de **Vendas e Serviços > Ajustes > Empresa e
+> notas > Regras fiscais** ficou mais compacta. **Adicionar**, **Duplicar** e
+> **Excluir** aparecem juntos acima das regras; o conteúdo central rola sem
+> ocultar as ações finais. O funcionamento e a exigência de revisão fiscal não
+> mudaram.
 
 > Revisão 1.14.3.16.04: os dados do emitente podem ser preenchidos em **Vendas
 > e Serviços > Ajustes > Empresa e notas > Dados da empresa**. **Buscar** consulta

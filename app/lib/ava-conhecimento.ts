@@ -1,5 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.14.3.16.05: a edição de Regras fiscais foi compactada e reúne Adicionar, Duplicar e Excluir na mesma barra, sem alterar o enquadramento ou a revisão obrigatória.
 // Revisado na versão 1.14.3.16.04: Dados da empresa no Vendas consulta CNPJ online e salva o emitente no perfil empresarial pela Gestão.
 // Revisado na versão 1.14.3.16.03: o modal do A1 mostra explicitamente o resultado devolvido pela última verificação de conexão.
 // Revisado na versão 1.14.3.16.02: a checagem usa a auditoria de revalidação já aceita pelo cofre e identifica a ação nos metadados públicos.

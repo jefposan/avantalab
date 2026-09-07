@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.14.3.16.05 - 2026-09-07
+
+- A edição de **Regras fiscais** em Vendas e Serviços foi compactada: contexto e
+  indicadores ocupam menos altura, os dados da revisão ficaram agrupados em uma
+  faixa única e o editor deixou de empilhar cartões internos desnecessários.
+- **Adicionar**, **Duplicar** e **Excluir** agora permanecem juntos na mesma barra
+  de ações, acima da lista e do conteúdo da regra selecionada.
+- O modal ganhou área útil mais ampla e rolagem restrita ao conteúdo, mantendo
+  cabeçalho, ações finais, campos de 44 px e adaptação para telas menores.
+
 ## 1.14.3.16.04 - 2026-09-07
 
 - **Ajustes > Empresa e notas > Dados da empresa** passou a consultar o CNPJ

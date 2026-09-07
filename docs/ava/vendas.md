@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.14.3.16.04 -->
+<!-- ava-version: 1.14.3.16.05 -->
+
+> Revisão 1.14.3.16.05: **Revisar regras fiscais** apresenta contexto,
+> indicadores e dados da revisão em faixas compactas. **Adicionar**,
+> **Duplicar** e **Excluir** ficam na mesma barra. Cada regra continua
+> representando um cenário fiscal distinto; a regra mais específica é aplicada
+> antes da prioridade, e **Qualquer** permanece como fallback. A confirmação do
+> contador ou responsável fiscal continua obrigatória antes da publicação.
 
 > Revisão 1.14.3.16.04: em **Ajustes > Empresa e notas > Dados da empresa**,
 > informe um CNPJ válido e use **Buscar** para consultar a fonte online oficial
