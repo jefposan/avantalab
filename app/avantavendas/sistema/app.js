@@ -1217,6 +1217,7 @@ const ICONES_SVG_ESTAVEIS = {
   warning: '<path d="M10.3 3.6 2.5 17.1A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.9L13.7 3.6a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>',
   'alert-circle': '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 17h.01"/>',
   'message-circle': '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A8 8 0 1 1 21 15Z"/>',
+  lightbulb: '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M8.2 14.4A6.2 6.2 0 1 1 15.8 14.4c-.8.7-1.3 1.5-1.5 2.6h-4.6c-.2-1.1-.7-1.9-1.5-2.6Z"/>',
   'chevron-up': '<path d="m6 15 6-6 6 6"/>',
   'chevron-down': '<path d="m6 9 6 6 6-6"/>',
   maximize: '<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>',
@@ -2496,7 +2497,7 @@ function renderMenuMobile() {
         <i aria-hidden="true">↑</i>
       </button>
       <button type="button" class="mobile-suggestions-card" onclick="abrirSugestoesVendas()">
-        <span class="mobile-suggestions-icon">${svgIconEstavel('message-circle')}</span>
+        <span class="mobile-suggestions-icon">${svgIconEstavel('lightbulb')}</span>
         <span><b>Deixe aqui suas sugestões</b><small>Ajude a melhorar o AvantaLab</small></span>
         <i aria-hidden="true">›</i>
       </button>

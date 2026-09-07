@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.15.0.06 -->
+<!-- ava-version: 1.15.0.07 -->
+
+> Revisão 1.15.0.07: o card **Deixe aqui suas sugestões** usa uma lâmpada de
+> contorno maior e legível, em vez do balão de conversa da Ava.
+
+> Revisão 1.15.0.07-av130: recursos de voz e Sala renovados com o ícone maior
+> de sugestões.
 
 > Revisão 1.15.0.06: o card que abre a central de feedback agora se chama
 > **Deixe aqui suas sugestões**. Dúvidas devem ser feitas à Ava; o card continua
@@ -1139,7 +1145,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 129 -->
+<!-- avantavendas-asset-revision: 130 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

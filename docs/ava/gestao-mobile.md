@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.15.0.06 -->
+<!-- ava-version: 1.15.0.07 -->
+
+> Revisão 1.15.0.07: o ícone de sugestões da Sala de Botões foi refinado no
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.15.0.06: o card de sugestões da Sala de Botões foi renomeado no
 > AvantaVendas; sem impacto operacional na Gestão Mobile.

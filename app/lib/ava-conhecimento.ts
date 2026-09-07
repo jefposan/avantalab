@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.15.0.07: o card de sugestões usa uma lâmpada de contorno
+// maior, sem o balão de conversa associado à Ava.
 // Revisado na versão 1.15.0.06: a Sala chama o card de feedback de "Deixe aqui
 // suas sugestões"; dúvidas continuam sendo tratadas pela Ava.
 // Revisado na versão 1.15.0.05: botão e mensagem de voz formam um só corpo,

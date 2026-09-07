@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.15.0.07 - 2026-09-07
+
+- O card **Deixe aqui suas sugestões** ganhou uma lâmpada de contorno maior e
+  mais legível, substituindo o balão de conversa associado à Ava.
+
+## 1.15.0.07-av130 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com o ícone ampliado de sugestões.
+
 ## 1.15.0.06 - 2026-09-07
 
 - O card da Sala de Botões que abre a central de feedback passou a dizer
