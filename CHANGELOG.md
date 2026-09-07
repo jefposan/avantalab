@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.14.3.16 - 2026-09-07
+
+- A conexão privada de Vendas e Serviços passou a aceitar host, usuário e porta
+  do pooler PostgreSQL por variáveis protegidas, preservando a senha já
+  armazenada e a validação TLS. Isso libera a custódia do certificado A1 na
+  infraestrutura de produção sem expor a credencial fiscal.
+- O papel PostgreSQL restrito da Tridium recebeu as permissões mínimas e as
+  políticas RLS que faltavam para fornecedores e cancelamentos comerciais,
+  sem liberar tabelas do Vendas Mobile nem dados de outros perfis.
+
 ## 1.14.3.15 - 2026-09-07
 
 - Aumentado o respiro acima do microfone da Solicitação por Voz para posicioná-lo

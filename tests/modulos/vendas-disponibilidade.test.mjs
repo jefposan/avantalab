@@ -42,12 +42,16 @@ test('o emissor fiscal é resolvido pelo cadastro da empresa', () => {
 test('a credencial PostgreSQL do piloto aplica menor privilégio e RLS da Tridium', () => {
   const provisionamento = readFileSync('supabase/migrations/20260905165000_vendas_runtime_credencial.sql', 'utf8');
   const fechamento = readFileSync('supabase/migrations/20260905166000_vendas_runtime_fechamento.sql', 'utf8');
+  const integradas = readFileSync('supabase/migrations/20260907164500_vendas_runtime_permissoes_integradas.sql', 'utf8');
   assert.match(provisionamento, /noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls/);
   assert.doesNotMatch(provisionamento, /grant service_role to avanta_vendas_runtime/i);
   assert.match(provisionamento, /create policy vendas_runtime_tridium/);
   assert.match(provisionamento, /ec9604fd-38f2-429b-9c00-c4bc6c642b0e/);
   assert.match(fechamento, /drop function public\.vendas_definir_senha_runtime/);
   assert.match(fechamento, /session_user = 'avanta_vendas_runtime'/);
+  assert.match(integradas, /grant select, insert, update on table public\.vendas_fornecedores[\s\S]*to avanta_vendas_runtime/i);
+  assert.match(integradas, /grant select, insert on table public\.vendas_fiscal_rascunho_cancelamentos[\s\S]*to avanta_vendas_runtime/i);
+  assert.equal((integradas.match(/ec9604fd-38f2-429b-9c00-c4bc6c642b0e/g) || []).length, 4);
 });
 
 test('o runtime fiscal exige validação TLS e aceita a CA oficial por variável protegida', () => {

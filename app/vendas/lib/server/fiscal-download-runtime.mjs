@@ -6,6 +6,7 @@ import { createPostgresFiscalRepository } from './fiscal-postgres-repository.mjs
 import { validateFiscalDurableStorageConfiguration } from './fiscal-durable-storage-policy.mjs';
 import { createSupabaseFiscalArtifactStorage } from './supabase-fiscal-artifact-storage.mjs';
 import { createAvantaLabAccessResolver, createPostgresAvantaLabModuleAccessRepository } from './avantalab-module-access.mjs';
+import { resolveFiscalDatabaseConnectionString } from './fiscal-database-connection.mjs';
 
 const { Pool } = pg;
 const HTTPS_URL = /^https:\/\//i;
@@ -23,7 +24,7 @@ export async function createFiscalDownloadRuntimeFromEnvironment(environment = p
   const supabaseUrl = text(environment.NEXT_PUBLIC_SUPABASE_URL);
   const anonKey = text(environment.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const serviceRoleKey = text(environment.SUPABASE_SERVICE_ROLE_KEY);
-  const databaseUrl = text(environment.FISCAL_DATABASE_URL);
+  const databaseUrl = resolveFiscalDatabaseConnectionString(environment);
   const bucket = text(environment.FISCAL_STORAGE_BUCKET);
   const policyInput = parsePolicy(environment.FISCAL_STORAGE_POLICY_JSON);
   if (!HTTPS_URL.test(supabaseUrl) || !anonKey || !serviceRoleKey || !databaseUrl || !bucket || !policyInput) return disabled('configuration_incomplete');

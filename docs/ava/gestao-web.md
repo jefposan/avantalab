@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.14.3.15 -->
+<!-- ava-version: 1.14.3.16 -->
+
+> Revisão 1.14.3.16: corrigida a conexão privada de Vendas e Serviços com o
+> banco do perfil empresarial. O certificado A1 continua sendo instalado em
+> **Ajustes > Certificado digital**, sempre vinculado à empresa acessada.
 
 > Revisão 1.14.3.15: ajuste fino de posição aplicado somente ao microfone da
 > Sala de Botões do AvantaVendas; sem impacto operacional na Gestão Web.

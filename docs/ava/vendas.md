@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.14.3.15 -->
+<!-- ava-version: 1.14.3.16 -->
+
+> Revisão 1.14.3.16: a instalação do certificado A1 em **Ajustes > Certificado
+> digital** voltou a gravar no cofre do perfil empresarial. O arquivo, a senha e
+> a validação permanecem vinculados à empresa acessada, nunca ao login.
 
 > Revisão 1.14.3.15: o microfone da Solicitação por Voz ganhou mais espaço
 > acima e fica um pouco mais abaixo de **Dúvidas e Sugestões**, sem mudar o
