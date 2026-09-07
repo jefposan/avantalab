@@ -215,6 +215,8 @@ test('interface oferece revalidação sem reabrir automaticamente o formulário 
   const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
   assert.match(source, /Verificar novamente/);
   assert.match(source, /Verificar conexão/);
+  assert.match(source, /latestConnectionMessage/);
+  assert.match(source, /bridge\.message\.trim\(\)/);
   assert.match(source, /!persistedCertificate\?\.fiscalConnectionAvailable/);
   assert.match(source, /companyRegistration\.ready && !certificateInstalled/);
   assert.match(source, /createFiscalCertificateActivateRequest/);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.14.3.16.03 - 2026-09-07
+
+- O modal do certificado A1 agora apresenta explicitamente a mensagem da última
+  verificação de conexão, inclusive quando a SEFAZ não confirma disponibilidade,
+  sem desativar ou substituir o certificado protegido.
+
 ## 1.14.3.16.02 - 2026-09-07
 
 - A verificação de conexão de um A1 já ativo passou a usar o evento protegido

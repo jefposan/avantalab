@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.14.3.16.02 -->
+<!-- ava-version: 1.14.3.16.03 -->
+
+> Revisão 1.14.3.16.03: retorno visual da verificação fiscal ajustado somente em
+> Vendas e Serviços Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.14.3.16.02: compatibilidade da auditoria fiscal ajustada somente em
 > Vendas e Serviços Web; sem impacto operacional na Gestão Mobile.

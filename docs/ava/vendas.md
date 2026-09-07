@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.14.3.16.02 -->
+<!-- ava-version: 1.14.3.16.03 -->
+
+> Revisão 1.14.3.16.03: depois de **Verificar conexão**, o modal do certificado
+> mostra claramente a resposta da tentativa, inclusive quando a homologação não
+> pôde ser confirmada. O A1 permanece ativo e protegido.
 
 > Revisão 1.14.3.16.02: a verificação da conexão permanece auditada como
 > revalidação do A1 ativo, identificada por ação pública específica e sem exigir

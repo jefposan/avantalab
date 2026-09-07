@@ -1,5 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.14.3.16.03: o modal do A1 mostra explicitamente o resultado devolvido pela última verificação de conexão.
 // Revisado na versão 1.14.3.16.02: a checagem usa a auditoria de revalidação já aceita pelo cofre e identifica a ação nos metadados públicos.
 // Revisado na versão 1.14.3.16.01: Verificar conexão consulta somente o status da SEFAZ-SP em homologação e preserva o resultado público no perfil empresarial.
 // Revisado na versão 1.14.3.16: a conexão privada do certificado A1 usa o pooler fiscal e preserva o vínculo integral com o perfil empresarial.

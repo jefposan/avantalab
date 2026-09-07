@@ -5071,7 +5071,10 @@ function CertificateDigitalDialog({ open, company, bridge, onClose, onRequestCom
       : validationResult?.valid ? 'Certificado A1 validado localmente'
         : bridge.loading ? 'Consultando certificado' : 'Nenhum certificado instalado';
   const blockerDescriptions = certificateBlockerDescription(persistedCertificate?.blockers ?? []);
-  const statusDescription = certificateActive && persistedCertificate?.validTo
+  const latestConnectionMessage = bridge.integrated && !bridge.loading && !validationError ? bridge.message.trim() : '';
+  const statusDescription = certificateActive && latestConnectionMessage
+    ? latestConnectionMessage
+    : certificateActive && persistedCertificate?.validTo
     ? persistedCertificate.fiscalConnectionAvailable
       ? `Certificado vinculado à empresa e válido até ${new Date(persistedCertificate.validTo).toLocaleDateString('pt-BR')}. A conexão fiscal está disponível.`
       : persistedCertificate.fiscalConnectionChecked

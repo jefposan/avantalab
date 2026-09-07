@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.14.3.16.02 -->
+<!-- ava-version: 1.14.3.16.03 -->
+
+> Revisão 1.14.3.16.03: o modal do certificado passou a informar explicitamente
+> o resultado da última verificação de conexão, sem alterar o estado do A1 quando
+> a disponibilidade da homologação não puder ser confirmada.
 
 > Revisão 1.14.3.16.02: a auditoria da verificação fiscal passou a reutilizar o
 > evento protegido de revalidação, com a ação identificada nos metadados públicos;
