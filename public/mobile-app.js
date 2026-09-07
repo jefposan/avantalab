@@ -10806,7 +10806,7 @@
     var final = inicial + atual.saldo;
     var previsto = inicial + atual.saldoPrevisto;
     return (
-      '<section class="rounded-2xl bg-slate-950 p-4 text-white shadow-lg">' +
+      '<section class="rounded-2xl p-4 text-white shadow-lg" style="background:#003E73">' +
         '<div class="mb-3 flex items-center justify-between gap-3">' +
           '<h2 class="text-sm font-black tracking-wide text-white">Saldo do m&ecirc;s</h2>' +
           botaoVisibilidadeValoresHtml(cardId, true) +

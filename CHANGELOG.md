@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.0.31.11 - 2026-09-06
+
+- O card **Saldo do mês** da Gestão Mobile passou do preto ao azul escuro
+  institucional AvantaLab, mantendo a leitura contrastada dos três valores.
+
 ## 1.13.0.31.10 - 2026-09-06
 
 - O retorno ao toque de **Sugestões** e **Sair** na Gestão Mobile não desloca

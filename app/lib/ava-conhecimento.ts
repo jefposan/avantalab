@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.13.0.31.11: o card Saldo do mês da Gestão Mobile usa o
+// azul institucional AvantaLab, mantendo a leitura dos valores.
 // Revisado na versão 1.13.0.31.10: Sugestões e Sair no Menu da Gestão Mobile
 // respondem ao toque com realce interno e ícone, sem deslocar o botão.
 // Revisado na versão 1.13.0.31.08: no rodapé do Menu da Gestão Mobile,

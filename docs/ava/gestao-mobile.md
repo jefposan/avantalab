@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.13.0.31.10 -->
+<!-- ava-version: 1.13.0.31.11 -->
+
+> Revisão 1.13.0.31.11: o card **Saldo do mês** usa o azul escuro
+> institucional. Os valores e a forma de consultar Inicial, Final e Previsto
+> permanecem iguais.
 
 > Revisão 1.13.0.31.10: ao tocar em **Sugestões** ou **Sair**, o botão preserva
 > sua posição e confirma a ação por realce interno e ícone; os fluxos seguem

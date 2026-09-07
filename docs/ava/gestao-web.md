@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.13.0.31.10 -->
+<!-- ava-version: 1.13.0.31.11 -->
+
+> Revisão 1.13.0.31.11: a cor do card Saldo do mês foi ajustada somente na
+> Gestão Mobile; sem alteração operacional na Gestão Web.
 
 > Revisão 1.13.0.31.10: o refinamento visual dos botões Sugestões e Sair
 > pertence somente à Gestão Mobile; sem alteração operacional na Gestão Web.
