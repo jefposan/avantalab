@@ -30,6 +30,7 @@ function voiceResolverDb(products = null, customers = null) {
       const query = {
         select() { return query; }, eq() { return query; }, or() { return query; }, in() { return query; },
         neq() { return query; }, order() { return query; },
+        async range(from, to) { return { data: (tables[table] || []).slice(from, to + 1), error: null }; },
         async limit(limit) { return { data: (tables[table] || []).slice(0, limit), error: null }; },
       };
       return query;
@@ -214,6 +215,15 @@ test('clientes são sugeridos por aproximação de dicção e letras repetidas',
   assert.equal(result.status, 'resolved');
   assert.equal(result.customer.id, UUIDS.damiles);
   assert.equal(result.candidates[0].label, 'Damiles');
+});
+
+test('desambiguação de pagamento mostra o saldo devedor atual, não o último pedido', async () => {
+  const result = await resolveCustomer(voiceResolverDb(null, [{
+    id: UUIDS.damiles, nome: 'Mari (Lila)', ativo: true, observacoes: null,
+  }]), 'conta', 'Mari', '', 'payment');
+  assert.equal(result.status, 'resolved');
+  assert.match(result.candidates[0].detail, /Saldo devedor atual: R\$/);
+  assert.doesNotMatch(result.candidates[0].detail, /Último pedido/);
 });
 
 test('desambiguação oculta observação técnica e preserva a manual', async () => {

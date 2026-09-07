@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.16.0.01 - 2026-09-07
+- Ao escolher um cliente para registrar pagamento por voz, a lista mostra o **saldo devedor atual** de cada opção, calculado com pedidos e pagamentos reais, em vez do último pedido.
+
+## 1.16.0.01-av133 - 2026-09-07
+- Recursos da Solicitação por Voz renovados com o saldo atual na desambiguação de pagamentos.
+
 ## 1.16.0 - 2026-09-07
 - A Solicitação por Voz agora cria agendamentos de visita, entrega, recebimento ou cobrança. Ela resolve o cliente na conta ativa, pede somente a data ausente, exige confirmação e relê o registro salvo.
 - A Agenda do AvantaVendas passou a usar a tabela operacional por conta, compartilhada com a voz, preservando os agendamentos nos backups e entre dispositivos.

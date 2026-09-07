@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.16.0.01: a escolha de cliente para pagamento por voz
+// mostra o saldo devedor atual, calculado pelos registros reais da conta.
 // Revisado na versão 1.16.0: a Solicitação por Voz cria agendamentos confirmados
 // para a conta ativa; Agenda e voz leem o mesmo registro operacional.
 // Revisado na versão 1.15.0.08: confirmação, dúvidas e resultado de voz seguem

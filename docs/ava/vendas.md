@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0 -->
+<!-- ava-version: 1.16.0.01 -->
+
+> Revisão 1.16.0.01: ao pedir um pagamento e existir mais de um cliente
+> compatível, cada opção mostra o **saldo devedor atual**, e não o último
+> pedido. O saldo é recalculado pelos pedidos e pagamentos da conta ativa.
+
+> Revisão 1.16.0.01-av133: recursos de voz renovados com o saldo atual na
+> seleção de cliente para pagamento.
 
 > Revisão 1.16.0: a Solicitação por Voz também agenda **Visita**, **Entrega**,
 > **Recebimento** ou **Cobrar**. Ela confirma o cliente, pergunta somente a
@@ -1160,7 +1167,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 132 -->
+<!-- avantavendas-asset-revision: 133 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

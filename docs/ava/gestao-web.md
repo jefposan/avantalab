@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.16.0 -->
+<!-- ava-version: 1.16.0.01 -->
+
+> Revisão 1.16.0.01: saldo atual na escolha de cliente de pagamento por voz,
+> aplicado somente ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.16.0: agendamento pela Solicitação por Voz aplicado somente ao
 > AvantaVendas; sem impacto operacional na Gestão Web.

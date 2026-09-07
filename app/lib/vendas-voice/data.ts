@@ -245,7 +245,37 @@ async function customerLastOrders(db: SupabaseClient, accountId: string, custome
   return map;
 }
 
-export async function resolveCustomer(db: SupabaseClient, accountId: string, reference: string, selectedId = '') {
+async function customerCurrentBalances(db: SupabaseClient, accountId: string, customerIds: string[]) {
+  const balances = new Map(customerIds.map((customerId) => [customerId, { debts: 0, credits: 0 }]));
+  if (!customerIds.length) return new Map<string, number>();
+  for (let from = 0; ; from += 500) {
+    const { data, error } = await db.from('vendas_mobile_pedidos')
+      .select('cliente_id,status,total,forma_pagamento')
+      .eq('conta_id', accountId).in('cliente_id', customerIds)
+      .range(from, from + 499);
+    if (error) throw new Error('Não foi possível consultar os saldos dos clientes.');
+    for (const order of data || []) {
+      const balance = balances.get(String(order.cliente_id || ''));
+      if (balance && order.status !== 'cancelada' && orderCreatesDebt(order)) balance.debts += Number(order.total || 0);
+    }
+    if ((data || []).length < 500) break;
+  }
+  for (let from = 0; ; from += 500) {
+    const { data, error } = await db.from('vendas_mobile_pagamentos')
+      .select('cliente_id,valor,desconto')
+      .eq('conta_id', accountId).in('cliente_id', customerIds)
+      .range(from, from + 499);
+    if (error) throw new Error('Não foi possível consultar os saldos dos clientes.');
+    for (const payment of data || []) {
+      const balance = balances.get(String(payment.cliente_id || ''));
+      if (balance) balance.credits += Number(payment.valor || 0) + Number(payment.desconto || 0);
+    }
+    if ((data || []).length < 500) break;
+  }
+  return new Map([...balances].map(([customerId, balance]) => [customerId, Math.max(0, balance.debts - balance.credits)]));
+}
+
+export async function resolveCustomer(db: SupabaseClient, accountId: string, reference: string, selectedId = '', detailMode: 'default' | 'payment' = 'default') {
   const variants = customerSearchVariants(reference);
   if (!variants.length) return { status: 'missing' as const, candidates: [] as VoiceEntityCandidate[] };
   const fields = ['nome', 'observacoes', 'email', 'telefone'];
@@ -261,7 +291,9 @@ export async function resolveCustomer(db: SupabaseClient, accountId: string, ref
     .map((row) => ({ row, score: customerScore(reference, row) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score || a.row.nome.localeCompare(b.row.nome, 'pt-BR'));
-  const lastOrders = await customerLastOrders(db, accountId, ranked.slice(0, 6).map(({ row }) => row.id));
+  const customerIds = ranked.slice(0, 6).map(({ row }) => row.id);
+  const lastOrders = detailMode === 'payment' ? new Map() : await customerLastOrders(db, accountId, customerIds);
+  const balances = detailMode === 'payment' ? await customerCurrentBalances(db, accountId, customerIds) : new Map();
   const candidates = ranked.slice(0, 4).map(({ row }) => {
     const address = row.endereco && typeof row.endereco === 'object' ? row.endereco : {};
     const place = [address.cidade, address.bairro, address.complemento].filter(Boolean).join(' · ');
@@ -269,7 +301,9 @@ export async function resolveCustomer(db: SupabaseClient, accountId: string, ref
     const details = [
       place,
       visibleCustomerNote(row.observacoes),
-      lastOrder ? `Último pedido: ${formatDate(lastOrder.criado_em)} · ${formatMoney(Number(lastOrder.total || 0))}` : 'Sem pedido anterior',
+      detailMode === 'payment'
+        ? `Saldo devedor atual: ${formatMoney(Number(balances.get(row.id) || 0))}`
+        : lastOrder ? `Último pedido: ${formatDate(lastOrder.criado_em)} · ${formatMoney(Number(lastOrder.total || 0))}` : 'Sem pedido anterior',
     ].filter(Boolean);
     return { id: row.id, label: row.nome, detail: details.join(' · ') };
   });
@@ -402,7 +436,7 @@ async function resolveRequiredCustomer(
 ) {
   if (!draft.customerReference) return { response: clarification(draft, transcription, metrics, 'Para qual cliente?', [], null, selections) };
   const selectedId = selectedEntityId(selections, 'customer', draft.customerReference);
-  const result = await resolveCustomer(db, accountId, draft.customerReference, selectedId);
+  const result = await resolveCustomer(db, accountId, draft.customerReference, selectedId, draft.intent === 'register_payment' ? 'payment' : 'default');
   const entity = { type: 'customer' as const, reference: draft.customerReference };
   if (result.status === 'missing') return { response: clarification(draft, transcription, metrics, `Não encontrei “${draft.customerReference}”. Pode dizer o nome de outra forma?`, [], entity, selections) };
   if (result.status === 'ambiguous') return { response: clarification(draft, transcription, metrics, `Encontrei mais de um cliente para “${draft.customerReference}”. Qual deles?`, result.candidates, entity, selections) };
