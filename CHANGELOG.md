@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.15.0.04 - 2026-09-07
+
+- O comando por voz passou a centralizar o conjunto de botão e legenda dentro
+  da faixa livre da Sala de Botões. Em telas baixas, o controle se reduz e a
+  legenda é ocultada antes de alcançar qualquer item da navegação.
+
+## 1.15.0.04-av127 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com a distribuição responsiva segura do
+  comando por voz.
+
+## 1.15.0.03 - 2026-09-07
+
+- O aviso exibido abaixo do botão de voz passou a separar o andamento da ação e
+  o cancelamento em linhas curtas, centralizadas no eixo do microfone.
+
+## 1.15.0.03-av126 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com a composição equilibrada do estado
+  de processamento por voz.
+
 ## 1.15.0.02 - 2026-09-07
 
 - A Solicitação por Voz passou a sugerir clientes com nomes aproximados, letras

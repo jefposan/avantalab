@@ -1,6 +1,21 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.15.0.02 -->
+<!-- ava-version: 1.15.0.04 -->
+
+> Revisão 1.15.0.04: botão e mensagem da Solicitação por Voz ocupam apenas a
+> faixa entre as sugestões e a navegação inferior. O conjunto é centralizado
+> nessa área e se reduz em telas baixas; sem altura segura, o botão permanece
+> acessível sem deixar a legenda sobrepor outro item.
+
+> Revisão 1.15.0.04-av127: recursos de voz renovados com distribuição vertical
+> responsiva e protegida.
+
+> Revisão 1.15.0.03: durante transcrição ou interpretação, o andamento e a
+> ação **Toque para cancelar** aparecem em linhas curtas, centralizadas abaixo
+> do microfone, sem avançar sobre a navegação inferior.
+
+> Revisão 1.15.0.03-av126: recursos de voz renovados com o aviso de
+> processamento centralizado.
 
 > Revisão 1.15.0.02: a **Solicitação por Voz** compara a referência falada com
 > nomes próximos de clientes da conta ativa, incluindo letras repetidas e
@@ -1110,7 +1125,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 125 -->
+<!-- avantavendas-asset-revision: 127 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

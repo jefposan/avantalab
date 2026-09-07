@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.15.0.04: voz usa somente a faixa livre da Sala; o grupo
+// reduz em telas baixas e nunca deixa a legenda alcançar a navegação inferior.
+// Revisado na versão 1.15.0.03: o aviso de processamento da voz é centralizado
+// em linhas curtas abaixo do microfone, sem competir com a navegação inferior.
 // Revisado na versão 1.15.0.02: a voz procura nomes próximos de clientes antes
 // de pedir repetição e mantém avisos e microfone centrados e discretos na Sala.
 // Revisado na versão 1.15.0.01: observações técnicas de importação foram limpas;

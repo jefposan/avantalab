@@ -106,7 +106,8 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(voiceModule, /pendencias: entries\.slice\(0, 30\)/);
   assert.doesNotMatch(voiceModule, /restoreSession\(/);
   assert.match(voiceModule, /Cancelar envio da solicitação/);
-  assert.match(voiceModule, /Transcrevendo sua fala… Toque para cancelar/);
+  assert.match(voiceModule, /Transcrevendo sua fala…/);
+  assert.match(voiceModule, /voice-status-action', 'Toque para cancelar/);
   assert.match(voiceModule, /processing-ring/);
   assert.match(officialApp, /const signalExterno = payload\?\.signal/);
   assert.match(officialApp, /signalExterno\?\.aborted/);
@@ -175,11 +176,12 @@ test('onda de voz usa área ampliada sem recorte e amplitude moderada', async ()
   assert.match(voiceModule, /const strength = 3 \+ activity \* 8/);
   assert.match(voiceModule, /for \(let ring = 0; ring < 3; ring \+= 1\)/);
   assert.match(voiceModule, /\.overlay\{display:flex;min-height:100svh;align-items:center;justify-content:center\}/);
-  assert.match(voiceModule, /\.dock\{position:relative\}\.dock>strong\{top:46px/);
-  assert.match(voiceModule, /:host\{all:initial;position:absolute;top:calc\(50% - 5px\);left:50%;display:block;width:0;height:0/);
-  assert.match(voiceModule, /\.dock\{position:static;width:0;height:0/);
-  assert.match(voiceModule, /\.dock>\.capture\{position:absolute;top:0;left:0/);
-  assert.doesNotMatch(voiceModule, /:host\{[^}]*inset:0/);
+  assert.match(voiceModule, /\.dock>\.voice-status\{position:relative;top:auto;left:auto/);
+  assert.match(voiceModule, /:host\{position:absolute;inset:0;display:block;width:auto;height:auto;container-type:size\}/);
+  assert.match(voiceModule, /\.dock\{position:absolute;inset:0;display:grid;width:auto;height:auto;align-content:center;justify-items:center/);
+  assert.match(voiceModule, /\.dock>\.capture\{position:relative;top:auto;left:auto;width:90px;height:90px/);
+  assert.match(voiceModule, /@container \(max-height:150px\)/);
+  assert.match(voiceModule, /@container \(max-height:112px\)/);
   assert.match(voiceModule, /\.dock \.voice\{width:84px;height:84px\}/);
   assert.match(voiceModule, /@media\(max-width:520px\).*\.dock \.voice\{width:80px;height:80px\}/);
 });

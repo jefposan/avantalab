@@ -20,7 +20,10 @@
     @media(prefers-reduced-motion:reduce){.spinner{animation-duration:1.6s}.voice.cancelling::after{animation:none}}
     /* A superfície de desenho é bem maior que a onda real: ela nunca revela
        um limite quadrado, mesmo em uma fala mais alta. */
-    .dock{position:relative}.dock>strong{top:46px;z-index:2;white-space:nowrap}.visualizer{inset:-96px;width:calc(100% + 192px);height:calc(100% + 192px)}.overlay{display:flex;min-height:100svh;align-items:center;justify-content:center}.panel{margin:auto}
+    /* O host ocupa somente a faixa livre da Sala. O grupo inteiro (botão e
+       legenda) é centralizado nela, sem depender de coordenadas da viewport. */
+    :host{position:absolute;inset:0;display:block;width:auto;height:auto;container-type:size}.dock{position:absolute;inset:0;display:grid;width:auto;height:auto;align-content:center;justify-items:center;gap:8px;overflow:visible;text-align:center}.dock>.capture{position:relative;top:auto;left:auto;width:90px;height:90px;margin:0;transform:none}.dock>.voice-status{position:relative;top:auto;left:auto;z-index:2;width:min(84vw,310px);display:grid;gap:3px;white-space:normal;transform:none;text-align:center}.voice-status-main{font-weight:800}.voice-status-action{font-size:11px;font-weight:700}.visualizer{inset:-96px;width:calc(100% + 192px);height:calc(100% + 192px)}.overlay{display:flex;min-height:100svh;align-items:center;justify-content:center}.panel{margin:auto}
+    @container (max-height:150px){.dock{gap:3px}.dock>.capture{width:76px;height:76px}.dock .voice{width:68px;height:68px}.dock .mic,.dock .cancel-icon{width:30px;height:30px}.dock>.voice-status{gap:1px;font-size:11px}.voice-status-action{font-size:10px}.visualizer{transform:scale(.86)}}@container (max-height:112px){.dock>.voice-status{display:none}.visualizer{transform:scale(.78)}}
   `;
 
   function el(tag, className, text) {
@@ -109,8 +112,8 @@
 
   function cancellationHint() {
     return state.requestStage === 'transcribe'
-      ? 'Transcrevendo sua fala… Toque para cancelar'
-      : 'Interpretando sua solicitação… Toque para cancelar';
+      ? 'Transcrevendo sua fala…'
+      : 'Interpretando sua solicitação…';
   }
 
   function micIcon(stopping = false) {
@@ -172,6 +175,17 @@
     return mount;
   }
 
+  function dockStatus() {
+    const cancelable = ['transcribing', 'processing'].includes(state.phase) && ['transcribe', 'process'].includes(state.requestStage);
+    const message = el('strong', 'voice-status');
+    if (cancelable) {
+      message.append(el('span', 'voice-status-main', cancellationHint()), el('span', 'voice-status-action', 'Toque para cancelar'));
+    } else {
+      message.textContent = state.phase === 'recording' ? 'Toque para encerrar' : statusText();
+    }
+    return message;
+  }
+
   function render() {
     if (!state.root) return;
     ensureMount();
@@ -179,7 +193,7 @@
     if (['idle', 'recording', 'transcribing', 'processing'].includes(state.phase)) {
       const dock = el('section', 'dock');
       dock.setAttribute('aria-live', 'polite');
-      dock.append(voiceControl(), el('strong', '', state.phase === 'recording' ? 'Toque para encerrar' : ['transcribing', 'processing'].includes(state.phase) && ['transcribe', 'process'].includes(state.requestStage) ? cancellationHint() : statusText()));
+      dock.append(voiceControl(), dockStatus());
       state.root.append(dock);
       return;
     }
