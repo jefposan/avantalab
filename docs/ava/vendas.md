@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.14.3.16.01 -->
+<!-- ava-version: 1.14.3.16.02 -->
+
+> Revisão 1.14.3.16.02: o histórico protegido passou a registrar a verificação
+> da conexão de homologação como evento próprio da empresa, sem guardar XML,
+> resposta SOAP, certificado ou senha. O modo de uso não mudou.
 
 > Revisão 1.14.3.16.01: com o A1 ativo, **Ver certificado > Verificar conexão**
 > consulta somente a disponibilidade da SEFAZ-SP em homologação. A consulta não

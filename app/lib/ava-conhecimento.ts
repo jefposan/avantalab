@@ -1,5 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.14.3.16.02: a auditoria da conexão fiscal usa um evento próprio, sem impacto no procedimento operacional.
 // Revisado na versão 1.14.3.16.01: Verificar conexão consulta somente o status da SEFAZ-SP em homologação e preserva o resultado público no perfil empresarial.
 // Revisado na versão 1.14.3.16: a conexão privada do certificado A1 usa o pooler fiscal e preserva o vínculo integral com o perfil empresarial.
 // Revisado na versão 1.14.3.15: ajuste visual do microfone na Sala, sem mudança operacional.
