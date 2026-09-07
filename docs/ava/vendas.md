@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.15.0.01 -->
+<!-- ava-version: 1.15.0.02 -->
+
+> Revisão 1.15.0.02: a **Solicitação por Voz** compara a referência falada com
+> nomes próximos de clientes da conta ativa, incluindo letras repetidas e
+> variações pequenas de dicção. Quando houver risco de confusão, continua
+> apresentando opções reais para escolha; o microfone e os avisos foram
+> refinados para manter leitura e toque confortáveis na Sala.
+
+> Revisão 1.15.0.02-av125: recursos de voz renovados com busca aproximada e
+> ondas de gravação suaves, sem recorte visível.
 
 > Revisão 1.15.0.01: observações técnicas deixadas pelo importador MySQL legado
 > foram removidas do cadastro de clientes. Anotações manuais permanecem e são as
@@ -1101,7 +1110,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 124 -->
+<!-- avantavendas-asset-revision: 125 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

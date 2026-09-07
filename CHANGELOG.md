@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.15.0.02 - 2026-09-07
+
+- A Solicitação por Voz passou a sugerir clientes com nomes aproximados, letras
+  repetidas e pequenas variações de dicção antes de pedir uma nova fala.
+- As ondas do microfone foram suavizadas, têm área de desenho ampliada sem
+  recorte visual e a legenda do estado fica junto ao acionador. Os avisos do
+  fluxo agora são centralizados explicitamente no viewport.
+
+## 1.15.0.02-av125 - 2026-09-07
+
+- Recursos do AvantaVendas atualizados com a busca aproximada de clientes e os
+  refinamentos visuais do comando por voz.
+
 ## 1.15.0.01 - 2026-09-07
 
 - Concluída no Supabase a limpeza restrita das observações técnicas da

@@ -2686,7 +2686,7 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .mobile-voice-command-trigger { position: absolute; top: calc(50% - 5px); left: 50%; display: grid; width: 84px; height: 84px; place-items: center; transform: translate(-50%,-50%); border: 0; border-radius: 999px; color: #fff; background: radial-gradient(circle at 36% 30%,#2498de,#07518b 72%); box-shadow: 0 12px 27px rgba(4,70,123,.30); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .mobile-voice-command-trigger:disabled { opacity: .72; cursor: wait; }
   .mobile-voice-command-trigger svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-  .mobile-voice-command-label { position: absolute; top: calc(50% + 46px); right: 0; left: 0; color: #35536c; font-size: 11px; font-weight: 900; line-height: 1.15; text-align: center; }
+  .mobile-voice-command-label { position: absolute; top: calc(50% + 44px); right: 0; left: 0; color: #35536c; font-size: 11px; font-weight: 900; line-height: 1.15; text-align: center; }
   .mobile-voice-command-slot.is-active > .mobile-voice-command-trigger,
   .mobile-voice-command-slot.is-active > .mobile-voice-command-label { display: none; }
   .dark-theme .mobile-ava-card { border-color: #334155; color: #f8fafc; background: #071a2b; }

@@ -3,18 +3,19 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import { normalizeVoiceSearch, validateVoiceIntent } from '../../app/lib/vendas-voice/validation.mjs';
-import { buildVoiceResponse, resolveProduct } from '../../app/lib/vendas-voice/data.ts';
+import { buildVoiceResponse, resolveCustomer, resolveProduct } from '../../app/lib/vendas-voice/data.ts';
 
 const UUIDS = {
   fernandaInfluencer: '11111111-1111-4111-8111-111111111111',
   fernandaSilva: '22222222-2222-4222-8222-222222222222',
+  damiles: '55555555-5555-4555-8555-555555555555',
   influencerLitro: '33333333-3333-4333-8333-333333333333',
   influencerCemMl: '44444444-4444-4444-8444-444444444444',
 };
 
-function voiceResolverDb(products = null) {
+function voiceResolverDb(products = null, customers = null) {
   const tables = {
-    vendas_mobile_clientes: [
+    vendas_mobile_clientes: customers || [
       { id: UUIDS.fernandaInfluencer, nome: 'Fernanda (influencer)', ativo: true, observacoes: 'observação manual útil' },
       { id: UUIDS.fernandaSilva, nome: 'Fernanda Silva', ativo: true, observacoes: null },
     ],
@@ -169,9 +170,12 @@ test('interpretação mantém qualificadores no nome do cliente e não os transf
 
 test('onda de voz usa área ampliada sem recorte e amplitude moderada', async () => {
   const voiceModule = await readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8');
-  assert.match(voiceModule, /\.visualizer\{position:absolute;inset:-45px/);
+  assert.match(voiceModule, /\.visualizer\{inset:-96px;width:calc\(100% \+ 192px\)/);
   assert.match(voiceModule, /overflow:visible/);
-  assert.match(voiceModule, /const strength = 8 \+ activity \* 16/);
+  assert.match(voiceModule, /const strength = 3 \+ activity \* 8/);
+  assert.match(voiceModule, /for \(let ring = 0; ring < 3; ring \+= 1\)/);
+  assert.match(voiceModule, /\.overlay\{display:flex;min-height:100svh;align-items:center;justify-content:center\}/);
+  assert.match(voiceModule, /\.dock\{position:relative\}\.dock>strong\{top:46px/);
   assert.match(voiceModule, /:host\{all:initial;position:absolute;top:calc\(50% - 5px\);left:50%;display:block;width:0;height:0/);
   assert.match(voiceModule, /\.dock\{position:static;width:0;height:0/);
   assert.match(voiceModule, /\.dock>\.capture\{position:absolute;top:0;left:0/);
@@ -180,11 +184,19 @@ test('onda de voz usa área ampliada sem recorte e amplitude moderada', async ()
   assert.match(voiceModule, /@media\(max-width:520px\).*\.dock \.voice\{width:80px;height:80px\}/);
 });
 
+test('clientes são sugeridos por aproximação de dicção e letras repetidas', async () => {
+  const damiles = { id: UUIDS.damiles, nome: 'Damiles', ativo: true, observacoes: null };
+  const result = await resolveCustomer(voiceResolverDb(null, [damiles]), 'conta', 'Damilles');
+  assert.equal(result.status, 'resolved');
+  assert.equal(result.customer.id, UUIDS.damiles);
+  assert.equal(result.candidates[0].label, 'Damiles');
+});
+
 test('desambiguação oculta observação técnica e preserva a manual', async () => {
   const resolver = await readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8');
   assert.match(resolver, /LEGACY_CUSTOMER_NOTE/);
   assert.match(resolver, /visibleCustomerNote\(row\.observacoes\)/);
-  assert.match(resolver, /observacoes\.ilike/);
+  assert.match(resolver, /const fields = \['nome', 'observacoes', 'email', 'telefone'\]/);
 });
 
 test('cliente e produto escolhidos permanecem resolvidos até a confirmação', async () => {

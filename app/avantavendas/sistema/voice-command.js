@@ -18,6 +18,9 @@
     .card{margin:0;background:#fff;border-radius:22px;padding:20px;box-shadow:0 12px 32px rgba(4,43,77,.1)}.card h2{font-size:21px;line-height:1.2;margin:0 48px 14px 0;color:#082e53}.summary{font-size:16px;line-height:1.5;white-space:pre-line;margin:0}.candidates{display:grid;gap:10px;margin:16px 0}.candidate{width:100%;border:1px solid #c8ddeb;border-radius:16px;padding:14px;text-align:left;background:#f8fcff;color:#0b3356;cursor:pointer}.candidate strong,.candidate small{display:block}.candidate strong{font-size:16px}.candidate small{margin-top:4px;color:#60758a;line-height:1.35}.helper{text-align:center;color:#667a8d;font-size:13px;margin:2px 0 10px}.actions{display:grid;grid-template-columns:1fr 1.35fr;gap:10px;margin-top:17px}.actions.single{grid-template-columns:1fr}.primary,.secondary,.text{min-height:50px;border-radius:15px;padding:10px 14px;font-weight:800;cursor:pointer}.primary{border:0;background:#086aaa;color:#fff}.secondary{border:1px solid #bdd3e2;background:#f5fafc;color:#244a69}.text{width:100%;border:0;background:transparent;color:#526b80}.save-later{display:block;min-height:44px;margin:12px auto 0;border:1px solid #bdd3e2;border-radius:999px;padding:10px 18px;background:#f5fafc;color:#244a69;font-weight:800;cursor:pointer}.result{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#dff7e8;color:#187544;font-weight:1000;font-size:23px;margin-bottom:12px}.error .result{background:#ffe5e6;color:#b51f31}.proof{margin-top:14px;padding:14px;border-radius:16px;background:#f2f9fd}.proof header{display:flex;justify-content:space-between;gap:10px;align-items:center}.badge{font-size:10px;font-weight:900;text-transform:uppercase;color:#187544}.proof dl{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;margin:12px 0 0;font-size:13px}.proof dt{color:#61758a}.proof dd{margin:0;text-align:right;font-weight:800;overflow-wrap:anywhere}
     @media(max-width:520px){.overlay{place-items:center;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))}.panel{width:100%;max-height:calc(100svh - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));border-radius:24px;padding:16px}.dock .voice{width:80px;height:80px}}
     @media(prefers-reduced-motion:reduce){.spinner{animation-duration:1.6s}.voice.cancelling::after{animation:none}}
+    /* A superfície de desenho é bem maior que a onda real: ela nunca revela
+       um limite quadrado, mesmo em uma fala mais alta. */
+    .dock{position:relative}.dock>strong{top:46px;z-index:2;white-space:nowrap}.visualizer{inset:-96px;width:calc(100% + 192px);height:calc(100% + 192px)}.overlay{display:flex;min-height:100svh;align-items:center;justify-content:center}.panel{margin:auto}
   `;
 
   function el(tag, className, text) {
@@ -331,15 +334,15 @@
     const ctx = canvas.getContext('2d'); if (!ctx) return; ctx.setTransform(ratio, 0, 0, ratio, 0, 0); ctx.clearRect(0, 0, size, size);
     const center = size / 2; const buttonSize = canvas.parentElement.querySelector('.voice').getBoundingClientRect().width; const base = buttonSize / 2 + 9; let peak = 0;
     if (active) for (const value of samples) peak = Math.max(peak, Math.abs((value - 128) / 128));
-    const normalization = Math.max(peak, .015); const strength = 8 + activity * 16;
-    for (let ring = 0; ring < 4; ring += 1) {
+    const normalization = Math.max(peak, .015); const strength = 3 + activity * 8;
+    for (let ring = 0; ring < 3; ring += 1) {
       ctx.beginPath();
       for (let point = 0; point <= 128; point += 1) {
         const angle = point / 128 * Math.PI * 2 - Math.PI / 2; const index = (Math.floor(point / 128 * samples.length) + ring * 13) % samples.length;
         const wave = active ? ((samples[index] - 128) / 128) / normalization * strength * (1 - ring * .14) : 0; const radius = base + ring * 7 + wave;
         const x = center + Math.cos(angle) * radius; const y = center + Math.sin(angle) * radius; if (!point) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
-      ctx.closePath(); ctx.lineWidth = active ? 2.55 - ring * .3 : 1.25; ctx.strokeStyle = `rgba(211,37,57,${active ? .72 - ring * .1 : .12 - ring * .02})`; ctx.shadowColor = active ? 'rgba(211,37,57,.4)' : 'transparent'; ctx.shadowBlur = active ? 6 : 0; ctx.stroke();
+      ctx.closePath(); ctx.lineWidth = active ? 1.65 - ring * .2 : 1; ctx.strokeStyle = `rgba(211,37,57,${active ? .48 - ring * .09 : .1 - ring * .02})`; ctx.shadowColor = active ? 'rgba(211,37,57,.18)' : 'transparent'; ctx.shadowBlur = active ? 3 : 0; ctx.stroke();
     }
   }
 

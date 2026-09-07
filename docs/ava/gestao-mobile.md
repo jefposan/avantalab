@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.15.0.01 -->
+<!-- ava-version: 1.15.0.02 -->
+
+> Revisão 1.15.0.02: busca aproximada e ajustes visuais da Solicitação por Voz
+> aplicados somente à Sala de Botões do AvantaVendas; sem impacto operacional na
+> Gestão Mobile.
 
 > Revisão 1.15.0.01: limpeza de metadados técnicos de clientes aplicada somente
 > ao banco do AvantaVendas; sem impacto operacional na Gestão Mobile.

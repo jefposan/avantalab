@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.15.0.02: a voz procura nomes próximos de clientes antes
+// de pedir repetição e mantém avisos e microfone centrados e discretos na Sala.
 // Revisado na versão 1.15.0.01: observações técnicas de importação foram limpas;
 // somente notas manuais podem apoiar a identificação de clientes por voz.
 // Revisado na versão 1.15.0: a voz diferencia pedido, consignado e pagamento,

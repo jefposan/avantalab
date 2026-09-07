@@ -44,13 +44,6 @@ function searchTokens(reference: string) {
   return normalizeVoiceSearch(reference).split(' ').filter((token) => token.length >= 2 && !STOP_WORDS.has(token));
 }
 
-function safeSearchToken(reference: string, preferLongest = false) {
-  const tokens = String(reference || '').toLocaleLowerCase('pt-BR').match(/[\p{L}\p{N}]+/gu) || [];
-  const meaningful = tokens.filter((token) => token.length >= 2 && !STOP_WORDS.has(normalizeVoiceSearch(token)));
-  const selected = preferLongest ? [...meaningful].sort((a, b) => b.length - a.length)[0] : meaningful[0];
-  return String(selected || '').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 48);
-}
-
 function safeSearchTokens(reference: string, maximum = 4) {
   const tokens = String(reference || '').toLocaleLowerCase('pt-BR').match(/[\p{L}\p{N}]+/gu) || [];
   return [...new Set(tokens
@@ -78,6 +71,21 @@ function productSearchVariants(reference: string) {
     // Prefixo curto absorve letras duplicadas comuns em marcas (Paladin /
     // Palladium). Ele só amplia a busca de candidatos; nunca confirma sozinho.
     if (phonetic.length >= 5) variants.add(phonetic.slice(0, 3));
+  }
+  return [...variants].slice(0, 8);
+}
+
+// Clientes também sofrem com vogais, letras dobradas e pequenas perdas da
+// transcrição (por exemplo, Damilles/Damiles). As variantes servem somente para
+// trazer uma lista curta da conta ativa; o score abaixo continua responsável por
+// confirmar um resultado evidente ou pedir que a pessoa escolha.
+function customerSearchVariants(reference: string) {
+  const variants = new Set<string>();
+  for (const token of safeSearchTokens(reference, 4)) {
+    const normalized = normalizeVoiceSearch(token);
+    const phonetic = phoneticVoiceToken(token);
+    [normalized, phonetic].filter((value) => value.length >= 3).forEach((value) => variants.add(value));
+    if (phonetic.length >= 5) variants.add(phonetic.slice(0, 4));
   }
   return [...variants].slice(0, 8);
 }
@@ -182,6 +190,24 @@ function productScore(reference: string, product: ProductRow) {
   return Math.max(base, exactNameScore, fuzzyScore);
 }
 
+function customerScore(reference: string, customer: CustomerRow) {
+  const fields = customerFields(customer);
+  const base = score(reference, fields);
+  const queryTokens = searchTokens(reference).filter((token) => token.length >= 3);
+  const fieldTokens = fields.flatMap((field) => searchTokens(String(field || '')));
+  if (!queryTokens.length || !fieldTokens.length) return base;
+  const similarities = queryTokens.map((queryToken) => fieldTokens
+    .reduce((best, fieldToken) => Math.max(best, voiceTokenSimilarity(queryToken, fieldToken)), 0));
+  const strongMatches = similarities.filter((similarity) => similarity >= .82).length;
+  const averageSimilarity = similarities.reduce((sum, similarity) => sum + similarity, 0) / similarities.length;
+  const fuzzyScore = strongMatches === queryTokens.length
+    ? Math.round(74 + averageSimilarity * 36)
+    : strongMatches
+      ? Math.round(30 + averageSimilarity * 42)
+      : 0;
+  return Math.max(base, fuzzyScore);
+}
+
 function formatMoney(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
@@ -213,17 +239,19 @@ async function customerLastOrders(db: SupabaseClient, accountId: string, custome
 }
 
 export async function resolveCustomer(db: SupabaseClient, accountId: string, reference: string, selectedId = '') {
-  const token = safeSearchToken(reference);
-  if (!token) return { status: 'missing' as const, candidates: [] as VoiceEntityCandidate[] };
+  const variants = customerSearchVariants(reference);
+  if (!variants.length) return { status: 'missing' as const, candidates: [] as VoiceEntityCandidate[] };
+  const fields = ['nome', 'observacoes', 'email', 'telefone'];
+  const expression = variants.flatMap((token) => fields.map((field) => `${field}.ilike.%${token}%`)).join(',');
   const { data, error } = await db.from('vendas_mobile_clientes')
     .select('id,nome,telefone,email,observacoes,endereco,ativo')
     .eq('conta_id', accountId)
     .eq('ativo', true)
-    .or(`nome.ilike.%${token}%,observacoes.ilike.%${token}%,email.ilike.%${token}%,telefone.ilike.%${token}%`)
-    .limit(12);
+    .or(expression)
+    .limit(24);
   if (error) throw new Error('Não foi possível pesquisar clientes.');
   const ranked = (data as CustomerRow[] || [])
-    .map((row) => ({ row, score: score(reference, customerFields(row)) }))
+    .map((row) => ({ row, score: customerScore(reference, row) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score || a.row.nome.localeCompare(b.row.nome, 'pt-BR'));
   const lastOrders = await customerLastOrders(db, accountId, ranked.slice(0, 6).map(({ row }) => row.id));
