@@ -1,5 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.14.3.15: ajuste visual do microfone na Sala, sem mudança operacional.
 // Revisado na versão 1.14.3.14: o microfone de Solicitação por Voz inicia a
 // gravação na própria Sala e usa sobreposições compactas para dúvidas e confirmação.
 // Revisado na versão 1.14.3.13: Solicitação por Voz pode ser ativada por conta

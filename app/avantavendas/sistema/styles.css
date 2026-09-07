@@ -2671,7 +2671,7 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .mobile-suggestions-card b { font-size: 12px; font-weight: 900; line-height: 1; }
   .mobile-suggestions-card small { overflow: hidden; color: #0e7490; font-size: 10px; font-weight: 700; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
   .mobile-suggestions-card > i { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; border-radius: 999px; color: #0e7490; background: rgba(255,255,255,.75); font-size: 21px; font-style: normal; line-height: 1; box-shadow: 0 1px 3px rgba(15,23,42,.10); }
-  .mobile-voice-command-slot { display: grid; min-height: 118px; place-items: center; align-content: center; gap: 7px; padding: 2px 0 0; }
+  .mobile-voice-command-slot { display: grid; min-height: 118px; place-items: center; align-content: center; gap: 7px; margin-top: 16px; padding: 2px 0 0; }
   .mobile-voice-command-trigger { display: grid; width: 84px; height: 84px; place-items: center; border: 0; border-radius: 999px; color: #fff; background: radial-gradient(circle at 36% 30%,#2498de,#07518b 72%); box-shadow: 0 12px 27px rgba(4,70,123,.30); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .mobile-voice-command-trigger:disabled { opacity: .72; cursor: wait; }
   .mobile-voice-command-trigger svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
@@ -2950,7 +2950,7 @@ html.agenda-form-open, body.agenda-form-open { overflow: hidden; overscroll-beha
   .mobile-menu-organize-instruction { font-size: 8px; }
   .mobile-menu-organize { width: 28px; height: 28px; flex-basis: 28px; }
   .mobile-menu-assistance { width: calc(100% - 48px); gap: 8px; margin-top: 18px; }
-  .mobile-voice-command-slot { min-height: 108px; }
+  .mobile-voice-command-slot { min-height: 108px; margin-top: 14px; }
   .mobile-voice-command-trigger { width: 80px; height: 80px; }
   .mobile-menu-card { height: auto; min-height: 0; aspect-ratio: 1 / 1; border-radius: 28px; gap: 8px; border-width: 3px; }
   .mobile-menu-card b { font-size: 45px; }

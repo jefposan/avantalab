@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.14.3.14 -->
+<!-- ava-version: 1.14.3.15 -->
+
+> Revisão 1.14.3.15: o microfone da Solicitação por Voz ganhou mais espaço
+> acima e fica um pouco mais abaixo de **Dúvidas e Sugestões**, sem mudar o
+> funcionamento do comando.
+
+> Revisão 1.14.3.15-av111: ajustado o afastamento visual do controle circular
+> na Sala de Botões.
 
 > Revisão 1.14.3.14: a **Solicitação por Voz** não é mais um card da grade. O
 > microfone circular fica centralizado abaixo de **Dúvidas e Sugestões** e o
@@ -993,7 +1000,7 @@
 
 > Revisão 1.8.3.01: refinamento visual do texto **Jornada Concluída** no botão
 > central do Controle de Ponto; sem impacto operacional.
-<!-- avantavendas-asset-revision: 110 -->
+<!-- avantavendas-asset-revision: 111 -->
 
 > Revisão 1.8.3: a assinatura própria de um perfil compartilhado é uma regra da
 > Gestão. Ela não altera contas nem assinaturas próprias do AvantaVendas; o

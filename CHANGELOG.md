@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.14.3.15 - 2026-09-07
+
+- Aumentado o respiro acima do microfone da Solicitação por Voz para posicioná-lo
+  um pouco mais abaixo de **Dúvidas e Sugestões**, mantendo a centralização.
+
+## 1.14.3.15-av111 - 2026-09-07
+
+- Recursos visuais do AvantaVendas revisados com o novo afastamento do comando
+  circular na Sala de Botões.
+
 ## 1.14.3.14 - 2026-09-07
 
 - A Solicitação por Voz deixou de ocupar um card na grade reordenável da Sala

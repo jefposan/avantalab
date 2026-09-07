@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.14.3.14 -->
+<!-- ava-version: 1.14.3.15 -->
+
+> Revisão 1.14.3.15: ajuste fino de posição aplicado somente ao microfone da
+> Sala de Botões do AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.14.3.14: comando circular incorporado à Sala de Botões do
 > AvantaVendas, sem navegação para outra página; sem impacto operacional na
