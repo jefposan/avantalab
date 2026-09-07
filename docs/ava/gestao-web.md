@@ -2,8 +2,9 @@
 
 <!-- ava-version: 1.14.3.16.02 -->
 
-> Revisão 1.14.3.16.02: auditoria da verificação de conexão fiscal ajustada no
-> backend protegido; sem mudança no procedimento da Gestão Web.
+> Revisão 1.14.3.16.02: a auditoria da verificação fiscal passou a reutilizar o
+> evento protegido de revalidação, com a ação identificada nos metadados públicos;
+> sem mudança no procedimento da Gestão Web.
 
 > Revisão 1.14.3.16.01: em Vendas e Serviços, um A1 ativo sem conexão fiscal
 > confirmada oferece **Verificar conexão**. A ação consulta apenas o status da

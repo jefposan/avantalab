@@ -2,9 +2,10 @@
 
 ## 1.14.3.16.02 - 2026-09-07
 
-- A restrição do histórico protegido passou a reconhecer o evento específico
-  de verificação da conexão fiscal, mantendo no payload somente data e estados
-  booleanos e preservando imutabilidade e isolamento da empresa.
+- A verificação de conexão de um A1 já ativo passou a usar o evento protegido
+  de revalidação já aceito pelo banco, distinguindo `connection_checked` somente
+  nos metadados públicos. O ajuste preserva auditoria, isolamento da empresa e
+  compatibilidade sem ampliar privilégios nem alterar a estrutura do cofre.
 
 ## 1.14.3.16.01 - 2026-09-07
 

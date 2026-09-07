@@ -250,8 +250,9 @@ export function createPostgresNfeCertificateProtectedRepository({ pool, cipher }
           if (updated.rowCount !== 1) throw new Error('O certificado ativo mudou durante a verificação.');
           await client.query(`
             insert into fiscal_private.certificate_events (company_id,certificate_id,event_type,actor_id,public_payload)
-            values ($1,$2,'certificate.connection_checked',$3,$4::jsonb)
+            values ($1,$2,'certificate.activated',$3,$4::jsonb)
           `, [companyId, certificateId, actorId, JSON.stringify({
+            auditAction: 'connection_checked',
             checkedAt: publicEvidence.checkedAt,
             fiscalConnectionChecked: publicEvidence.fiscalConnectionChecked,
             fiscalConnectionAvailable: publicEvidence.fiscalConnectionAvailable,

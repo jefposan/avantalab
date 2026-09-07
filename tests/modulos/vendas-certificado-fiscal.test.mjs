@@ -252,13 +252,6 @@ test('preparação do banco local inclui custódia e revisões fiscais imutávei
   assert.match(source, /0009_fiscal_rejection_corrections_NOT_APPLIED\.sql/);
 });
 
-test('migração fiscal permite o evento de conexão sem ampliar o payload protegido', async () => {
-  const source = await readFile('supabase/migrations/20260907194000_vendas_certificado_conexao_evento.sql', 'utf8');
-  assert.match(source, /certificate\.connection_checked/);
-  assert.match(source, /drop constraint if exists nfe_certificate_events_type_check/);
-  assert.doesNotMatch(source, /password|passphrase|pkcs12|private_key|encrypted_payload/i);
-});
-
 test('runtime fiscal usa as âncoras ICP-Brasil oficiais sem expor configuração na tela', async () => {
   const [runtime, interfaceSource, crlChecker, vault, protectedStorage] = await Promise.all([
     readFile('app/vendas/lib/server/fiscal-status-runtime.mjs', 'utf8'),
@@ -300,7 +293,8 @@ test('runtime fiscal usa as âncoras ICP-Brasil oficiais sem expor configuraçã
   assert.doesNotMatch(crlChecker, /CertificateRevocationList\.fromBER\(crlDer\(body\)\)/);
   assert.match(vault, /checkedAt\.getTime\(\) <= now\.getTime\(\) \+ REVOCATION_CLOCK_SKEW_MS/);
   assert.match(interfaceSource, /Verifique a conexão segura antes de iniciar a homologação/);
-  assert.match(protectedStorage, /certificate\.connection_checked/);
+  assert.match(protectedStorage, /auditAction:\s*'connection_checked'/);
+  assert.match(protectedStorage, /values \(\$1,\$2,'certificate\.activated',\$3,\$4::jsonb\)/);
   assert.match(protectedStorage, /fiscalConnectionAvailable/);
   assert.doesNotMatch(interfaceSource, /FISCAL_ICP_BRASIL_TRUSTED_ROOT_FINGERPRINTS|âncora de confiança|fingerprint da raiz|pacote oficial.*ICP-Brasil|SHA-512/i);
 });

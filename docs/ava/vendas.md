@@ -2,9 +2,9 @@
 
 <!-- ava-version: 1.14.3.16.02 -->
 
-> Revisão 1.14.3.16.02: o histórico protegido passou a registrar a verificação
-> da conexão de homologação como evento próprio da empresa, sem guardar XML,
-> resposta SOAP, certificado ou senha. O modo de uso não mudou.
+> Revisão 1.14.3.16.02: a verificação da conexão permanece auditada como
+> revalidação do A1 ativo, identificada por ação pública específica e sem exigir
+> alteração de estrutura do cofre. O procedimento operacional não mudou.
 
 > Revisão 1.14.3.16.01: com o A1 ativo, **Ver certificado > Verificar conexão**
 > consulta somente a disponibilidade da SEFAZ-SP em homologação. A consulta não
