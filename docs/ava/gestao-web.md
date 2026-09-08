@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.16.0.12 -->
+<!-- ava-version: 1.16.0.13 -->
+
+> Revisão 1.16.0.13: em **Conteúdo AvantaVendas > Produtos**, a lista abre sem
+> formulário. Use **Novo produto** para abrir um cadastro vazio; **Editar** abre
+> o item e leva a rolagem à edição no topo; **Cancelar** fecha sem gravar. Salvar
+> e Inativar aguardam a confirmação do banco e mantêm o formulário aberto se a
+> operação não puder ser concluída.
 
 > Revisão 1.16.0.12: refinamento aprovado do símbolo de ajuda da Solicitação
 > por Voz aplicado somente ao AvantaVendas; sem impacto operacional na Gestão Web.

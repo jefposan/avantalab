@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0.12 -->
+<!-- ava-version: 1.16.0.13 -->
 <!-- avantavendas-asset-revision: 140 -->
+
+> Revisão 1.16.0.13: o ajuste de cadastro em **Conteúdo AvantaVendas > Produtos**
+> foi aplicado na Gestão. O catálogo distribuído ao Vendas continua usando os
+> produtos confirmados da empresa, sem mudança operacional para o vendedor.
 
 > Revisão 1.16.0.12: o símbolo de informação da **Solicitação por Voz** foi
 > reduzido e ganhou folga interna. A área de toque continua com 48 px e, no

@@ -22,15 +22,17 @@ const formatarMoedaDigitada = (valor: string) => {
 };
 
 export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimaria }: Props) {
-  const [catalogoId, setCatalogoId] = useState('');
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [formulario, setFormulario] = useState<Record<string, string | boolean>>(vazio);
+  const [formularioAberto, setFormularioAberto] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [erro, setErro] = useState('');
   const [produtoExclusao, setProdutoExclusao] = useState<{ id: string; nome: string } | null>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
+  const formularioRef = useRef<HTMLElement>(null);
+  const botaoNovoRef = useRef<HTMLButtonElement>(null);
   const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
   const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['unidade', 'Unidade'], ['preco_divulgacao', 'Preço sugerido de revenda'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
@@ -39,27 +41,41 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     if (!empresaId) return;
     setCarregando(true);
     setErro('');
-    let { data: catalogo, error: erroCatalogo } = await supabase.from('vendas_mobile_catalogos').select('id').eq('empresa_id', empresaId).eq('ativo', true).order('criado_em').limit(1).maybeSingle();
-    if (!catalogo && !erroCatalogo) {
-      const criado = await supabase.from('vendas_mobile_catalogos').insert({ empresa_id: empresaId, nome: 'Catálogo principal', codigo: 'PRINCIPAL' }).select('id').single();
-      catalogo = criado.data;
-      erroCatalogo = criado.error;
-    }
-    if (erroCatalogo || !catalogo) {
+    const { data, error } = await supabase.rpc('listar_produtos_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId });
+    const resultado = data as { produtos?: Produto[] } | null;
+    if (error || !resultado) {
       setErro('Não foi possível preparar o catálogo desta empresa.');
       setCarregando(false);
       return;
     }
-    setCatalogoId(catalogo.id);
-    const { data, error } = await supabase.from('vendas_mobile_catalogo_produtos').select('id,sku,nome,marca,categoria,descricao,preco_divulgacao,unidade,imagem_url,ncm,codigo_barras,ativo,atualizado_em').eq('catalogo_id', catalogo.id).eq('disponivel_catalogo', true).order('nome');
-    if (error) setErro('Não foi possível carregar os produtos.');
-    else setProdutos((data || []) as Produto[]);
+    setProdutos(Array.isArray(resultado.produtos) ? resultado.produtos : []);
     setCarregando(false);
   }, [empresaId]);
 
   useEffect(() => { const timer = window.setTimeout(() => void carregar(), 0); return () => window.clearTimeout(timer); }, [carregar]);
   const mudar = (nome: string, valor: string | boolean) => setFormulario((atual) => ({ ...atual, [nome]: valor }));
-  const editar = (produto: Produto) => setFormulario({ ...vazio, ...produto, preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || '', descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
+  const levarAoFormulario = () => {
+    window.requestAnimationFrame(() => formularioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+  const iniciarNovoProduto = () => {
+    setErro('');
+    setFormulario(vazio);
+    setFormularioAberto(true);
+    levarAoFormulario();
+  };
+  const cancelarFormulario = () => {
+    if (salvando) return;
+    setErro('');
+    setFormulario(vazio);
+    setFormularioAberto(false);
+    window.requestAnimationFrame(() => botaoNovoRef.current?.focus());
+  };
+  const editar = (produto: Produto) => {
+    setErro('');
+    setFormulario({ ...vazio, ...produto, preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || '', descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
+    setFormularioAberto(true);
+    levarAoFormulario();
+  };
 
   const salvar = async () => {
     const nome = formatarDescricao(String(formulario.nome || ''));
@@ -71,20 +87,22 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     }
     setSalvando(true);
     setErro('');
-    const payload = { catalogo_id: catalogoId, sku, tipo_item: 'produto', disponivel_catalogo: true, codigo_barras: String(formulario.codigo_barras || '').trim() || null, marca: String(formulario.marca || '').trim() || null, categoria: String(formulario.categoria || '').trim() || null, nome, descricao: String(formulario.descricao || '').trim() || null, preco_divulgacao: revenda, unidade: String(formulario.unidade || 'un').trim() || 'un', imagem_url: String(formulario.imagem_url || '').trim() || null, ncm: String(formulario.ncm || '').trim() || null, ativo: formulario.ativo !== false, atualizado_em: new Date().toISOString() };
-    // A tabela ainda guarda os campos financeiros internos da Gestão. Em uma
-    // criação feita pela Divulgação eles nascem zerados apenas por
-    // compatibilidade estrutural e nunca recebem o preço de revenda.
-    const query = formulario.id
-      ? supabase.from('vendas_mobile_catalogo_produtos').update(payload).eq('id', formulario.id)
-      : supabase.from('vendas_mobile_catalogo_produtos').insert({ ...payload, preco_custo: 0, preco_venda: 0 });
-    const { error } = await query;
+    const payload = { sku, codigo_barras: String(formulario.codigo_barras || '').trim() || null, marca: String(formulario.marca || '').trim() || null, categoria: String(formulario.categoria || '').trim() || null, nome, descricao: String(formulario.descricao || '').trim() || null, preco_divulgacao: revenda, unidade: String(formulario.unidade || 'un').trim() || 'un', imagem_url: String(formulario.imagem_url || '').trim() || null, ncm: String(formulario.ncm || '').trim() || null, ativo: formulario.ativo !== false };
+    // A rotina protegida aceita somente campos de divulgação. Ela confirma a
+    // linha escrita e preserva preço de custo e venda internos da Gestão.
+    const { data, error } = await supabase.rpc('salvar_produto_conteudo_vendas_mobile_rpc', {
+      p_empresa_id: empresaId,
+      p_produto_id: formulario.id ? String(formulario.id) : null,
+      p_dados: payload,
+    });
+    const produtoSalvo = data as { id?: string } | null;
     setSalvando(false);
-    if (error) {
-      setErro(error.message.includes('sku') ? 'Este SKU já existe neste pacote.' : 'Não foi possível salvar o produto.');
+    if (error || !produtoSalvo?.id) {
+      setErro(error?.message.toLowerCase().includes('sku') ? 'Este SKU já existe neste pacote.' : 'Não foi possível salvar o produto.');
       return;
     }
     setFormulario(vazio);
+    setFormularioAberto(false);
     await carregar();
   };
 
@@ -150,15 +168,17 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     const { id } = produtoExclusao;
     setSalvando(true);
     setErro('');
-    const { error } = await supabase.from('vendas_mobile_catalogo_produtos').update({ ativo: false, atualizado_em: new Date().toISOString() }).eq('id', id);
+    const { data, error } = await supabase.rpc('inativar_produto_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId, p_produto_id: id });
+    const produtoInativado = data as { id?: string } | null;
     setSalvando(false);
     setProdutoExclusao(null);
-    if (error) {
+    if (error || !produtoInativado?.id) {
       setErro('Não foi possível inativar o produto.');
       return;
     }
     setProdutos((atuais) => atuais.map((produto) => produto.id === id ? { ...produto, ativo: false } : produto));
-    setFormulario((atual) => ({ ...atual, ativo: false }));
+    setFormulario(vazio);
+    setFormularioAberto(false);
   };
 
   return <div className="min-h-0 flex-1 overflow-y-auto p-4 xl:flex xl:flex-col xl:overflow-hidden">
@@ -166,9 +186,10 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
       <div className="flex items-center justify-between gap-2"><h3 className="min-w-0 text-base font-black">Pacote de produtos</h3><div className="flex shrink-0 items-center gap-1.5"><span className="rounded-full bg-cyan-500/10 px-2 py-1 text-[9px] font-black uppercase text-cyan-700">{produtos.length} produtos</span><button type="button" onClick={() => void exportarPacoteZip()} disabled={exportando} className="h-7 rounded-full border border-cyan-300 px-2.5 text-[9px] font-black uppercase text-cyan-700 disabled:opacity-60">{exportando ? 'Gerando...' : 'Gerar ZIP'}</button></div></div>
       <p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Os campos abaixo alimentam o Vendas Mobile. Dados fiscais podem ser completados sem afetar o catálogo atual.</p>
     </div>
+    <div className="mb-3 flex justify-end"><button ref={botaoNovoRef} type="button" onClick={iniciarNovoProduto} disabled={carregando || salvando} className="min-h-11 rounded-xl px-4 text-xs font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>Novo produto</button></div>
     <div className="grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
-      <div className="xl:flex xl:min-h-0 xl:items-center">
-      <section className={`rounded-xl border p-3 xl:max-h-full xl:w-full xl:overflow-y-auto ${painel}`}>
+      {formularioAberto && <div className="xl:flex xl:min-h-0 xl:items-center">
+      <section ref={formularioRef} tabIndex={-1} className={`scroll-mt-3 rounded-xl border p-3 focus:outline-none xl:max-h-full xl:w-full xl:overflow-y-auto ${painel}`}>
         <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ backgroundColor: corPrimaria }}>{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: código, nome e preço sugerido de revenda.</p></div>
         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
           {campos.map(([chave, rotulo]) => <label key={chave} className="text-[9px] font-black uppercase opacity-70">{rotulo}<input value={String(formulario[chave] || '')} onChange={(e) => mudar(chave, chave.startsWith('preco') ? formatarMoedaDigitada(e.target.value) : e.target.value)} onBlur={chave === 'nome' ? () => mudar('nome', formatarDescricao(String(formulario.nome || ''))) : undefined} inputMode={chave.startsWith('preco') ? 'numeric' : undefined} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} /></label>)}
@@ -180,10 +201,10 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
           {formulario.imagem_url && <a href={String(formulario.imagem_url)} target="_blank" rel="noreferrer" title="Abrir pré-visualização"><Image src={String(formulario.imagem_url)} alt="Pré-visualização do produto" width={32} height={32} unoptimized className="h-8 w-8 shrink-0 rounded-md border border-cyan-300 object-cover" /></a>}
           <button type="button" onClick={() => arquivoRef.current?.click()} disabled={salvando} className="h-8 shrink-0 rounded-md border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700">Enviar imagem</button>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2"><label className="mr-auto flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo</label><div className="flex items-center gap-2">{formulario.id && formulario.ativo !== false && <button type="button" onClick={solicitarExclusaoProduto} disabled={salvando} className="h-8 rounded-md border border-amber-300 bg-amber-50 px-2.5 text-[10px] font-black uppercase text-amber-800 disabled:opacity-60">Inativar</button>}<button type="button" onClick={() => void salvar()} disabled={salvando} className="h-8 rounded-md px-3 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Salvando...' : 'Salvar produto'}</button>{formulario.id && <button type="button" onClick={() => setFormulario(vazio)} disabled={salvando} className="h-8 rounded-md border px-2.5 text-[10px] font-black disabled:opacity-60">Cancelar</button>}</div></div>
+        <div className="mt-2 flex flex-wrap items-center gap-2"><label className="mr-auto flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo</label><div className="flex items-center gap-2">{formulario.id && formulario.ativo !== false && <button type="button" onClick={solicitarExclusaoProduto} disabled={salvando} className="min-h-11 rounded-md border border-amber-300 bg-amber-50 px-2.5 text-[10px] font-black uppercase text-amber-800 disabled:opacity-60">Inativar</button>}<button type="button" onClick={() => void salvar()} disabled={salvando} className="min-h-11 rounded-md px-3 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Salvando...' : 'Salvar produto'}</button><button type="button" onClick={cancelarFormulario} disabled={salvando} className="min-h-11 rounded-md border px-2.5 text-[10px] font-black disabled:opacity-60">Cancelar</button></div></div>
       </section>
-      </div>
-      <section className="xl:flex xl:min-h-0 xl:flex-col"><h4 className="shrink-0 text-sm font-black">Produtos do pacote</h4><div className="mt-2 overflow-x-auto rounded-xl border xl:min-h-0 xl:flex-1 xl:overflow-auto"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Revenda sugerida</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={4} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_divulgacao || 0).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={4} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
+      </div>}
+      <section className={`xl:flex xl:min-h-0 xl:flex-col ${formularioAberto ? '' : 'xl:col-span-2'}`}><h4 className="shrink-0 text-sm font-black">Produtos do pacote</h4><div className="mt-2 overflow-x-auto rounded-xl border xl:min-h-0 xl:flex-1 xl:overflow-auto"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Revenda sugerida</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={4} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_divulgacao || 0).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="min-h-11 rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={4} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
     </div>
     {erro && <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
     <ModalConfirmacao

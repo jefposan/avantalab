@@ -7,6 +7,7 @@ const migracao = readFileSync('supabase/migrations/20260831130000_tabelas_precos
 const desvinculo = readFileSync('supabase/migrations/20260831220000_desvincular_precificacao_avantavendas.sql', 'utf8');
 const separacaoDivulgacao = readFileSync('supabase/migrations/20260901100000_separar_preco_divulgacao_precificacao.sql', 'utf8');
 const migracaoCodigoAutomatico = readFileSync('supabase/migrations/20260901150000_codigo_automatico_tabela_preco.sql', 'utf8');
+const migracaoConteudoCatalogo = readFileSync('supabase/migrations/20260908230000_catalogo_conteudo_vendas_operador_completo.sql', 'utf8');
 const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const tabelas = readFileSync('app/custos/TabelasPrecosView.tsx', 'utf8');
 const repositorio = readFileSync('app/custos/repository.ts', 'utf8');
@@ -93,7 +94,9 @@ test('preço de revenda da divulgação é independente da venda interna da Gest
   assert.doesNotMatch(separacaoDivulgacao, /coalesce\(v_produto\.preco_divulgacao, v_produto\.preco_venda\)/);
   assert.match(catalogoDivulgacao, /Preço sugerido de revenda/);
   assert.match(catalogoDivulgacao, /preco_divulgacao: revenda/);
-  assert.match(catalogoDivulgacao, /insert\(\{ \.\.\.payload, preco_custo: 0, preco_venda: 0 \}\)/);
+  assert.match(catalogoDivulgacao, /salvar_produto_conteudo_vendas_mobile_rpc/);
+  assert.match(migracaoConteudoCatalogo, /preco_divulgacao = v_preco/);
+  assert.match(migracaoConteudoCatalogo, /v_preco, 0, 0, v_unidade/);
   assert.match(catalogoDivulgacao, /preco_custo: 0, preco_venda: Number\(produto\.preco_divulgacao \|\| 0\)/);
   assert.doesNotMatch(catalogoDivulgacao, /preco_custo: custo/);
   assert.doesNotMatch(repositorio, /preco_divulgacao/);

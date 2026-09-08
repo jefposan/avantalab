@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.16.0.13: em Conteúdo AvantaVendas > Produtos, a lista
+// inicia sem formulário; Novo produto abre o cadastro, Editar leva à edição no
+// topo e Cancelar fecha sem gravar. Salvar e Inativar confirmam a linha no banco.
 // Revisado na versão 1.16.0.05: Insights distinguem realizado de projeção,
 // calculam concentração sobre a mesma base e nunca mostram percentual acima de 100%.
 // Revisado na versão 1.16.0.04: a Caixinha inicia recolhida e a maior
@@ -749,6 +752,7 @@ NAVEGAÇÃO E PERFIS
   a ativação do módulo Vendas exigem Premium ou cortesia vigente.
 - Se o Premium Pessoal deixar de estar vigente, o Vendas fica inacessível sem ser desinstalado: módulo, vínculos e dados permanecem preservados. A receita consolidada do Vendas deixa de compor a Gestão durante o bloqueio e retorna, com o mesmo histórico, após a reativação.
 - Conteúdo AvantaVendas fica sempre listado em Menu > Sistemas. O acesso é habilitado em perfil Empresa com módulo ativo e permissão de Gestor Master, Administrador ou Operador Completo; nos demais casos, o botão informa a indisponibilidade. Em Divulgação, ao selecionar uma pasta, suas subpastas recebem uma variação do mesmo destaque para evidenciar o ramo ativo. Na Gestão Web, fotos, vídeos e PDFs podem ser selecionados ou arrastados para a pasta ativa; no iPhone, as opções de origem e seu idioma pertencem ao próprio iOS. Em uma pasta principal, Escolher capa separa **Enviar capa privada**, que aparece somente no cartão da pasta e não fica disponível aos vendedores, de **Imagens já publicadas**, que continuam disponíveis mesmo quando usadas como capa. Para capa, somente imagens são aceitas. Os cartões usam a proporção 16:10. Trocar capa ou Remover capa atual atualizam a apresentação no AvantaVendas. Ao confirmar a seleção de arquivos, o card Preparando arquivos para envio aparece antes do processamento e mantém percentual, arquivo atual e cancelamento até terminar. Tocar na miniatura abre a imagem, o vídeo ou o PDF original em um visualizador amplo; arrastar horizontalmente ou usar as setas alterna entre os materiais da pasta. A quantidade exibida em cada pasta soma os materiais próprios e os de todas as subpastas. Após o envio, o resumo mostra somente as quantidades enviadas e ignoradas por duplicidade, sem listar nomes.
+- Em **Conteúdo AvantaVendas > Produtos**, a lista abre sem formulário. **Novo produto** abre o cadastro vazio; **Editar** seleciona o item e leva a rolagem ao formulário; **Cancelar** fecha sem gravar. Salvar e Inativar só encerram o formulário após a confirmação da linha no banco; se uma permissão bloquear a operação, o formulário continua aberto com o erro.
 - Não há tela nem atalho de troca entre Gestão e Vendas. Os aplicativos usam a
   mesma identidade de acesso, mas são abertos de forma independente.
 - Cada usuário possui uma única conta operacional inicial no Vendas, preparada automaticamente no primeiro acesso; perfis adicionais só são criados em Configurações. O Vendas e a Gestão são aplicativos independentes e compartilham apenas a identidade de autenticação. O AvantaVendas não oferece acesso direto à Gestão no cabeçalho nem nos atalhos inferiores; o mesmo login e senha podem ser usados separadamente nos dois aplicativos.

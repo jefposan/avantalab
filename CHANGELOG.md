@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.16.0.13 - 2026-09-08
+- Em **Conteúdo AvantaVendas > Produtos**, a lista agora abre sem o formulário de cadastro. **Novo produto** abre o formulário vazio; **Editar** leva a tela à área de edição; e **Cancelar** fecha o formulário sem gravar.
+- Salvar e inativar produtos agora confirmam que a linha foi realmente alterada antes de concluir, evitando sucesso aparente quando uma permissão de acesso impedir a operação.
+
 ## 1.16.0.12 - 2026-09-08
 - O símbolo de informação da Solicitação por Voz foi reduzido e ganhou mais folga interna, conforme a prévia aprovada. O alvo de toque permanece em 48 px.
 

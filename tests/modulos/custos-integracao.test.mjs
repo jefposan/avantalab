@@ -20,6 +20,7 @@ const migracao = readFileSync('supabase/migrations/20260825103000_custos_precifi
 const migracaoDescricao = readFileSync('supabase/migrations/20260826150000_atualizar_descricao_modulo_custos.sql', 'utf8');
 const migracaoEndurecimento = readFileSync('supabase/migrations/20260826152000_endurecer_documentos_custos.sql', 'utf8');
 const migracaoPublicacao = readFileSync('supabase/migrations/20260826153000_publicar_modulo_custos.sql', 'utf8');
+const migracaoConteudoCatalogo = readFileSync('supabase/migrations/20260908230000_catalogo_conteudo_vendas_operador_completo.sql', 'utf8');
 const manifesto = readFileSync('app/custos/manifest.ts', 'utf8');
 
 test('Custos usa página total e exige o acesso oficial do módulo', () => {
@@ -101,9 +102,10 @@ test('Cabeçalho de Custos segue Projetos, retorna ao Dashboard e alterna o tema
 
 test('Catálogo e Custos usam o mesmo cadastro mestre e a mesma inativação', () => {
   assert.match(repositorio, /from\('vendas_mobile_catalogo_produtos'\)/);
-  assert.match(catalogo, /from\('vendas_mobile_catalogo_produtos'\)\.update\(\{ ativo: false/);
+  assert.match(catalogo, /inativar_produto_conteudo_vendas_mobile_rpc/);
+  assert.match(migracaoConteudoCatalogo, /update public\.vendas_mobile_catalogo_produtos produto\s+set ativo = false/);
   assert.doesNotMatch(catalogo, /from\('vendas_mobile_catalogo_produtos'\)\.delete\(\)/);
-  assert.match(catalogo, /eq\('disponivel_catalogo', true\)/);
+  assert.match(migracaoConteudoCatalogo, /disponivel_catalogo = true/);
   assert.match(migracao, /disponivel_catalogo boolean not null default true/);
 });
 
