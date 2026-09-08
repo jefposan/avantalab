@@ -115,7 +115,8 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(voiceModule, /function cancelSending\(\)/);
   assert.match(officialApp, /function alternarAjudaSolicitacaoVozVendas\(acionador\)/);
   assert.match(officialApp, /mobile-voice-command-help/);
-  assert.match(officialApp, /\$\{svgIconEstavel\('info'\)\}/);
+  assert.match(officialApp, /mobile-voice-command-help-symbol/);
+  assert.match(officialApp, /<i>i<\/i>/);
   assert.match(officialApp, /Como usar a Solicitação por Voz/);
   assert.match(officialApp, /lançar um pagamento, lançar um pedido ou lançar um agendamento/);
   assert.match(officialApp, /function fecharAjudaSolicitacaoVozVendas\(acionador, ajuda\)/);
@@ -126,6 +127,9 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   const vendasStyles = await readFile(new URL('../../app/avantavendas/sistema/styles.css', import.meta.url), 'utf8');
   assert.match(vendasStyles, /\.mobile-voice-command-help \{ position: absolute/);
   assert.match(vendasStyles, /left: clamp\(105px,calc\(75% - 3px\),calc\(100% - 54px\)\)/);
+  assert.match(vendasStyles, /\.mobile-voice-command-help-symbol \{ display: grid; width: 43px; height: 43px/);
+  assert.match(vendasStyles, /\.mobile-voice-command-help \{[^}]*border: 0;[^}]*background: transparent;[^}]*box-shadow: none/);
+  assert.match(vendasStyles, /\.dark-theme \.mobile-voice-command-help \{ color: #fff; \}/);
   assert.doesNotMatch(voiceModule, /function voiceHelp\(\)|voice-help-button/);
   assert.match(voiceModule, /state\.requestAbort\?\.abort\(\)/);
   assert.match(voiceModule, /function restorePending\(id\)/);

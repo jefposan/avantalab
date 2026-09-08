@@ -1213,7 +1213,6 @@ const ICONES_SVG_ESTAVEIS = {
   'rotate-ccw': '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
   'user-x': '<path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/>',
   'check-circle': '<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/>',
-  info: '<circle cx="12" cy="12" r="9"/><path d="M12 10.5v5.4"/><circle cx="12" cy="7.5" r=".75" fill="currentColor" stroke="none"/>',
   warning: '<path d="M10.3 3.6 2.5 17.1A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.9L13.7 3.6a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>',
   'alert-circle': '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 17h.01"/>',
   'message-circle': '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A8 8 0 1 1 21 15Z"/>',
@@ -2516,7 +2515,7 @@ function renderMenuMobile() {
           <span class="mobile-voice-command-label">Solicitação por Voz</span>
         </div>
         <button type="button" class="mobile-voice-command-help" onclick="alternarAjudaSolicitacaoVozVendas(this)" aria-label="Como usar a Solicitação por Voz" aria-expanded="false" aria-controls="voiceCommandHelp">
-          ${svgIconEstavel('info')}
+          <span class="mobile-voice-command-help-symbol" aria-hidden="true"><i>i</i></span>
         </button>
         <aside class="mobile-voice-command-help-popover" id="voiceCommandHelp" role="status" hidden>
           <b>Solicitação por Voz</b><p>Ao clicar no botão de gravar, você pode fazer solicitações como lançar um pagamento, lançar um pedido ou lançar um agendamento. Basta descrever todas as informações necessárias para esse lançamento.</p>

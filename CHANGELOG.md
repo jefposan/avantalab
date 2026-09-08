@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.16.0.11 - 2026-09-08
+- O atalho de ajuda da Solicitação por Voz agora mostra somente o símbolo clássico de informação, sem botão branco, fundo ou aro externo. No modo escuro, o símbolo fica branco.
+
+## 1.16.0.11-av139 - 2026-09-08
+- Recursos do AvantaVendas renovados com o símbolo de informação simplificado.
+
 ## 1.16.0.10 - 2026-09-08
 - O atalho de ajuda da Solicitação por Voz passou a usar o ícone clássico de informação, com círculo e “i” central mais legíveis.
 

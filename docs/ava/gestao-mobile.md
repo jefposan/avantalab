@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.16.0.10 -->
+<!-- ava-version: 1.16.0.11 -->
+
+> Revisão 1.16.0.11: símbolo de ajuda da Solicitação por Voz simplificado no
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.16.0.10: ícone de ajuda da Solicitação por Voz refinado somente no
 > AvantaVendas; sem impacto operacional na Gestão Mobile.
