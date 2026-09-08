@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.16.0.05: Insights distinguem realizado de projeção,
+// calculam concentração sobre a mesma base e nunca mostram percentual acima de 100%.
 // Revisado na versão 1.16.0.04: a Caixinha inicia recolhida e a maior
 // concentração usa a mesma base de despesas ativas para categoria e total.
 // Revisado na versão 1.16.0.03: o puxador da Gestão Mobile voltou ao espaço

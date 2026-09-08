@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.16.0.04 -->
+<!-- ava-version: 1.16.0.05 -->
+
+> Revisão 1.16.0.05: os **Insights da Ava** distinguem resultado realizado de
+> projeção quando houver lançamentos previstos. A concentração identifica se a
+> base inclui previsão e nunca ultrapassa 100%.
 
 > Revisão 1.16.0.04: a **Caixinha** começa recolhida. O Insight de maior
 > concentração usa a mesma base de despesas ativas no valor e no total, sem

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0.04 -->
+<!-- ava-version: 1.16.0.05 -->
+
+> Revisão 1.16.0.05: critérios dos Insights foram ajustados somente na Gestão
+> Mobile; sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.16.0.04: Caixinha e cálculo de Insight foram ajustados somente na
 > Gestão Mobile; sem impacto operacional no Vendas Mobile.

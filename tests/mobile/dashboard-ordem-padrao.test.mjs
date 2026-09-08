@@ -49,7 +49,7 @@ test('puxador de cards tem contraste reforçado, inclusive no Saldo do mês', as
   assert.match(mobile, /aria-label="Segure e arraste para mudar a posição de /);
 });
 
-test('Caixinha começa recolhida e Insight calcula concentração sobre a mesma base', async () => {
+test('Caixinha começa recolhida e Insights usam bases realizadas e previstas de forma coerente', async () => {
   const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
   const insights = mobile.slice(
     mobile.indexOf('function insightsAvaHtml(atual)'),
@@ -57,8 +57,16 @@ test('Caixinha começa recolhida e Insight calcula concentração sobre a mesma 
   );
 
   assert.match(mobile, /caixinhaRecolhida: true,/);
+  assert.match(insights, /var receitasRealizadas = numeroSeguro\(atual\.receitas\);/);
+  assert.match(insights, /var despesasRealizadas = numeroSeguro\(atual\.despesas\);/);
+  assert.match(insights, /var possuiPrevisoes = receitasPrevistas > 0 \|\| despesasPrevistas > 0;/);
+  assert.match(insights, /var resultadoConsiderado = receitasConsideradas - despesasConsideradas;/);
+  assert.match(insights, /titulo: 'Projecao positiva'/);
+  assert.match(insights, /titulo: 'Atencao a projecao'/);
   assert.match(insights, /var totalDespesasInsight = 0;/);
+  assert.match(insights, /var lancamentosConcentracao = possuiPrevisoes/);
   assert.match(insights, /totalDespesasInsight \+= valor;/);
-  assert.match(insights, /var percentual = \(maior\.valor \/ totalDespesasInsight\) \* 100;/);
-  assert.doesNotMatch(insights, /maior\.valor \/ despesas/);
+  assert.match(insights, /var percentual = Math\.min\(100, \(maior\.valor \/ totalDespesasInsight\) \* 100\);/);
+  assert.match(insights, /despesas ' \+ \(possuiPrevisoes \? 'registradas e previstas' : 'realizadas'\) \+ ' no mes\.'/);
+  assert.match(mobile, /if \(!Number\.isFinite\(valor\)\) return;[\s\S]*?saldo \+= mov\.tipo === 'resgate' \? -valor : valor;/);
 });

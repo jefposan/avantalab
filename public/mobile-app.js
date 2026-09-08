@@ -10825,17 +10825,30 @@
         '<div class="p-4"><div class="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-xs font-semibold leading-relaxed text-slate-700">Os Insights da Ava analisam receitas, despesas e sua reserva. Este recurso é exclusivo para assinantes.</div><button id="abrir-insights-ava" type="button" class="mt-3 h-10 w-full rounded-xl bg-slate-400 text-xs font-black uppercase tracking-wide text-white" aria-disabled="true">Saiba mais</button></div>' +
       '</section>';
     }
-    var receitas = Number(atual.receitas || 0);
-    var despesas = Number(atual.despesas || 0);
-    var resultado = receitas - despesas;
+    var numeroSeguro = function (valor) {
+      var numero = Number(valor || 0);
+      return Number.isFinite(numero) ? numero : 0;
+    };
+    var receitasRealizadas = numeroSeguro(atual.receitas);
+    var despesasRealizadas = numeroSeguro(atual.despesas);
+    var receitasPrevistas = numeroSeguro(atual.receitasPrevistas);
+    var despesasPrevistas = numeroSeguro(atual.despesasFuturas);
+    var possuiPrevisoes = receitasPrevistas > 0 || despesasPrevistas > 0;
+    var receitasConsideradas = receitasRealizadas + (possuiPrevisoes ? receitasPrevistas : 0);
+    var despesasConsideradas = despesasRealizadas + (possuiPrevisoes ? despesasPrevistas : 0);
+    var resultadoConsiderado = receitasConsideradas - despesasConsideradas;
+    var temMovimentacaoNoMes = receitasConsideradas > 0 || despesasConsideradas > 0;
     var caixinha = caixinhaResumo(atual);
     var porDespesa = {};
     var totalDespesasInsight = 0;
 
-    (atual.lancamentos || []).forEach(function (item) {
+    var lancamentosConcentracao = possuiPrevisoes
+      ? (atual.lancamentos || []).filter(function (item) { return item && item.status !== 'cancelada'; })
+      : lancamentosRealizadosDoMes(atual);
+    lancamentosConcentracao.forEach(function (item) {
       if (!item || item.status === 'cancelada') return;
-      var valor = Number(item.valor || 0);
-      if (!Number.isFinite(valor) || valor <= 0) return;
+      var valor = numeroSeguro(item.valor);
+      if (valor <= 0) return;
       var nome = item.despesa || 'Despesa';
       porDespesa[nome] = (porDespesa[nome] || 0) + valor;
       totalDespesasInsight += valor;
@@ -10846,27 +10859,31 @@
     }).sort(function (a, b) { return b.valor - a.valor; })[0];
 
     var insights = [];
-    if (!receitas && !despesas) {
+    if (!temMovimentacaoNoMes) {
       insights.push({ tom: 'neutro', titulo: 'Comece pelo basico', texto: 'Registre receitas e despesas para a Ava enxergar padroes e sugerir proximos passos.' });
-    } else if (resultado >= 0) {
-      insights.push({ tom: 'bom', titulo: 'Resultado positivo', texto: 'Voce esta com ' + dinheiro(resultado) + ' de sobra em ' + nomeMesCompleto(atual.mes) + '. Avalie separar parte para a Caixinha.' });
+    } else if (resultadoConsiderado >= 0) {
+      insights.push(possuiPrevisoes
+        ? { tom: 'bom', titulo: 'Projecao positiva', texto: 'Considerando os lancamentos previstos, ' + nomeMesCompleto(atual.mes) + ' pode fechar com ' + dinheiro(resultadoConsiderado) + ' de saldo.' }
+        : { tom: 'bom', titulo: 'Resultado positivo', texto: 'Voce esta com ' + dinheiro(resultadoConsiderado) + ' de sobra em ' + nomeMesCompleto(atual.mes) + '. Avalie separar parte para a Caixinha.' });
     } else {
-      insights.push({ tom: 'alerta', titulo: 'Atencao ao resultado', texto: 'As despesas superam as receitas em ' + dinheiro(Math.abs(resultado)) + '. Revise os maiores gastos primeiro.' });
+      insights.push(possuiPrevisoes
+        ? { tom: 'alerta', titulo: 'Atencao a projecao', texto: 'Considerando os lancamentos previstos, as despesas podem superar as receitas em ' + dinheiro(Math.abs(resultadoConsiderado)) + '.' }
+        : { tom: 'alerta', titulo: 'Atencao ao resultado', texto: 'As despesas superam as receitas em ' + dinheiro(Math.abs(resultadoConsiderado)) + '. Revise os maiores gastos primeiro.' });
     }
 
     if (maior && totalDespesasInsight > 0) {
-      var percentual = (maior.valor / totalDespesasInsight) * 100;
+      var percentual = Math.min(100, (maior.valor / totalDespesasInsight) * 100);
       insights.push({
         tom: percentual >= 35 ? 'alerta' : 'neutro',
         titulo: 'Maior concentracao',
-        texto: maior.nome + ' representa ' + percentual.toFixed(1) + '% das despesas do mes.',
+        texto: maior.nome + ' representa ' + percentual.toFixed(1) + '% das despesas ' + (possuiPrevisoes ? 'registradas e previstas' : 'realizadas') + ' no mes.',
       });
     }
 
     if (caixinha.saldo > 0) {
       insights.push({ tom: 'bom', titulo: 'Reserva em andamento', texto: 'Sua Caixinha ja soma ' + dinheiro(caixinha.saldo) + '. Aportes recorrentes ajudam a transformar sobra em patrimonio.' });
-    } else if (resultado > 0) {
-      insights.push({ tom: 'neutro', titulo: 'Proximo passo', texto: 'Como houve sobra no mes, este pode ser um bom momento para iniciar sua Caixinha.' });
+    } else if (resultadoConsiderado > 0) {
+      insights.push({ tom: 'neutro', titulo: 'Proximo passo', texto: possuiPrevisoes ? 'Mesmo considerando os lancamentos previstos, este pode ser um bom momento para iniciar sua Caixinha.' : 'Como houve sobra no mes, este pode ser um bom momento para iniciar sua Caixinha.' });
     }
 
     var dk = state.darkMode;
@@ -10951,6 +10968,7 @@
     var anoAtual = Number(state.ano);
     (state.caixinhaMovimentos || []).forEach(function (mov) {
       var valor = Number(mov.valor || 0);
+      if (!Number.isFinite(valor)) return;
       saldo += mov.tipo === 'resgate' ? -valor : valor;
       if (mov.tipo === 'saldo_inicial') saldoInicial = valor;
       var partes = String(mov.dataMovimento || '').split('-').map(Number);

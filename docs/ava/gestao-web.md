@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.16.0.04 -->
+<!-- ava-version: 1.16.0.05 -->
+
+> Revisão 1.16.0.05: critérios dos Insights foram ajustados somente na Gestão
+> Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.16.0.04: Caixinha e cálculo de Insight foram ajustados somente na
 > Gestão Mobile; sem impacto operacional na Gestão Web.
