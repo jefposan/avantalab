@@ -127,7 +127,8 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   const vendasStyles = await readFile(new URL('../../app/avantavendas/sistema/styles.css', import.meta.url), 'utf8');
   assert.match(vendasStyles, /\.mobile-voice-command-help \{ position: absolute/);
   assert.match(vendasStyles, /left: clamp\(105px,calc\(75% - 3px\),calc\(100% - 54px\)\)/);
-  assert.match(vendasStyles, /\.mobile-voice-command-help-symbol \{ display: grid; width: 43px; height: 43px/);
+  assert.match(vendasStyles, /\.mobile-voice-command-help-symbol \{ display: grid; width: 36px; height: 36px/);
+  assert.match(vendasStyles, /font-size: 30px/);
   assert.match(vendasStyles, /\.mobile-voice-command-help \{[^}]*border: 0;[^}]*background: transparent;[^}]*box-shadow: none/);
   assert.match(vendasStyles, /\.dark-theme \.mobile-voice-command-help \{ color: #fff; \}/);
   assert.doesNotMatch(voiceModule, /function voiceHelp\(\)|voice-help-button/);

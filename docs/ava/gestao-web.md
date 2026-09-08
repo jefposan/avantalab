@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.16.0.11 -->
+<!-- ava-version: 1.16.0.12 -->
+
+> Revisão 1.16.0.12: refinamento aprovado do símbolo de ajuda da Solicitação
+> por Voz aplicado somente ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.16.0.11: símbolo de ajuda da Solicitação por Voz simplificado no
 > AvantaVendas; sem impacto operacional na Gestão Web.

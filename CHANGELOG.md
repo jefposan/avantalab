@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.16.0.12 - 2026-09-08
+- O símbolo de informação da Solicitação por Voz foi reduzido e ganhou mais folga interna, conforme a prévia aprovada. O alvo de toque permanece em 48 px.
+
+## 1.16.0.12-av140 - 2026-09-08
+- Recursos do AvantaVendas renovados com o refinamento aprovado do símbolo de informação.
+
 ## 1.16.0.11 - 2026-09-08
 - O atalho de ajuda da Solicitação por Voz agora mostra somente o símbolo clássico de informação, sem botão branco, fundo ou aro externo. No modo escuro, o símbolo fica branco.
 

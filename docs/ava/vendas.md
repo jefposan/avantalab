@@ -1,7 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0.11 -->
-<!-- avantavendas-asset-revision: 139 -->
+<!-- ava-version: 1.16.0.12 -->
+<!-- avantavendas-asset-revision: 140 -->
+
+> Revisão 1.16.0.12: o símbolo de informação da **Solicitação por Voz** foi
+> reduzido e ganhou folga interna. A área de toque continua com 48 px e, no
+> modo escuro, o símbolo permanece branco.
+
+> Revisão 1.16.0.12-av140: recursos do AvantaVendas renovados com o refinamento
+> aprovado do símbolo de informação.
 
 > Revisão 1.16.0.11: o atalho de ajuda da **Solicitação por Voz** exibe somente
 > o símbolo clássico de informação, sem botão branco, fundo ou aro externo. No
