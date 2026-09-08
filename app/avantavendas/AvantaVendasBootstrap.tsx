@@ -73,8 +73,9 @@ export default function AvantaVendasBootstrap({
       scripts: 20,
       auth: 10,
       access: 15,
-      data: 40,
       resources: 10,
+      interface: 40,
+      data: 0,
     };
     const progresso = janela.__AVANTALAB_VENDAS_PROGRESSO__ || {
       grupos: {},
@@ -115,6 +116,7 @@ export default function AvantaVendasBootstrap({
       progresso.grupos = {
         shell: Number(progresso.grupos.shell || 0),
         scripts: Number(progresso.grupos.scripts || 0),
+        interface: 0,
       };
       progresso.valor = Math.round(
         pesosProgresso.shell * progresso.grupos.shell

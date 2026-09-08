@@ -1902,6 +1902,13 @@ function atualizarProgressoPreparacao(grupo, concluido, total, rotulo) {
   window.__avantalabAtualizarProgressoVendas?.(grupo, concluido, total, rotulo);
 }
 
+function concluirPreparacaoInicialVendas() {
+  atualizarProgressoPreparacao('interface', 1, 1, 'Acesso pronto');
+  // Permite que os 100% sejam efetivamente desenhados antes de a Sala ocupar
+  // a tela; as sincronizações não essenciais continuam após essa transição.
+  return new Promise((resolver) => requestAnimationFrame(() => requestAnimationFrame(resolver)));
+}
+
 function sincronizarProgressoPreparacao() {
   const progresso = window.__AVANTALAB_VENDAS_PROGRESSO__;
   if (!progresso) return;
@@ -2520,15 +2527,48 @@ function renderMenuMobile() {
 }
 
 let carregamentoSolicitacaoVozVendas = null;
+let limparFechamentoAjudaSolicitacaoVoz = null;
+
+function fecharAjudaSolicitacaoVozVendas(acionador, ajuda) {
+  if (!ajuda || ajuda.hasAttribute('hidden')) return;
+  ajuda.setAttribute('hidden', '');
+  acionador?.setAttribute('aria-expanded', 'false');
+  acionador?.setAttribute('aria-label', 'Como usar a Solicitação por Voz');
+  limparFechamentoAjudaSolicitacaoVoz?.();
+  limparFechamentoAjudaSolicitacaoVoz = null;
+}
 
 function alternarAjudaSolicitacaoVozVendas(acionador) {
   const sala = acionador?.closest?.('.mobile-voice-command-slot');
   const ajuda = sala?.querySelector?.('.mobile-voice-command-help-popover');
   if (!ajuda) return;
-  const aberta = ajuda.hasAttribute('hidden');
-  ajuda.toggleAttribute('hidden', !aberta);
-  acionador.setAttribute('aria-expanded', String(aberta));
-  acionador.setAttribute('aria-label', aberta ? 'Fechar ajuda da Solicitação por Voz' : 'Como usar a Solicitação por Voz');
+  if (!ajuda.hasAttribute('hidden')) {
+    fecharAjudaSolicitacaoVozVendas(acionador, ajuda);
+    return;
+  }
+
+  limparFechamentoAjudaSolicitacaoVoz?.();
+  ajuda.removeAttribute('hidden');
+  acionador.setAttribute('aria-expanded', 'true');
+  acionador.setAttribute('aria-label', 'Fechar ajuda da Solicitação por Voz');
+
+  const fecharAoTocarFora = (evento) => {
+    const alvo = evento.target;
+    if (ajuda.contains(alvo) || acionador.contains(alvo)) return;
+    fecharAjudaSolicitacaoVozVendas(acionador, ajuda);
+  };
+  const fecharAoEscapar = (evento) => {
+    if (evento.key !== 'Escape') return;
+    fecharAjudaSolicitacaoVozVendas(acionador, ajuda);
+    acionador.focus({ preventScroll: true });
+  };
+
+  document.addEventListener('pointerdown', fecharAoTocarFora, true);
+  document.addEventListener('keydown', fecharAoEscapar);
+  limparFechamentoAjudaSolicitacaoVoz = () => {
+    document.removeEventListener('pointerdown', fecharAoTocarFora, true);
+    document.removeEventListener('keydown', fecharAoEscapar);
+  };
 }
 
 function chaveSolicitacoesVozPendentes() {
@@ -3845,13 +3885,13 @@ async function carregarSistemaVendasCompleto() {
   carregandoBackend = true;
   preparandoRecursosSala = true;
   render();
-  let carregamentoConcluido = false;
   try {
     const recursosSala = prepararRecursosSalaBotoes();
     const cache = await lerCacheVendas();
     const restauradoDoCache = restaurarCacheVendas(cache);
     if (restauradoDoCache) {
       dadosOperacionaisCarregando = false;
+      await concluirPreparacaoInicialVendas();
       carregandoBackend = false;
       preparandoRecursosSala = false;
       render();
@@ -3863,6 +3903,7 @@ async function carregarSistemaVendasCompleto() {
       // a aplicação; cada módulo informa sua própria espera se for aberto.
       dadosOperacionaisCarregando = true;
       await recursosSala;
+      await concluirPreparacaoInicialVendas();
       carregandoBackend = false;
       preparandoRecursosSala = false;
       render();
@@ -3871,13 +3912,7 @@ async function carregarSistemaVendasCompleto() {
       dadosOperacionaisCarregando = false;
       render();
     }
-    carregamentoConcluido = true;
   } finally {
-    if (carregamentoConcluido) {
-      atualizarProgressoPreparacao('data', 1, 1, 'Acesso pronto');
-      atualizarProgressoPreparacao('resources', 1, 1, 'Acesso pronto');
-      await new Promise((resolver) => window.setTimeout(resolver, 120));
-    }
     carregandoBackend = false;
     preparandoRecursosSala = false;
     // A sala é o destino inicial, mas uma navegação feita enquanto a atualização

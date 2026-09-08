@@ -1,7 +1,22 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0.07 -->
-<!-- avantavendas-asset-revision: 135 -->
+<!-- ava-version: 1.16.0.09 -->
+<!-- avantavendas-asset-revision: 137 -->
+
+> Revisão 1.16.0.09: o balão de ajuda da **Solicitação por Voz** fecha ao tocar
+> fora dele, pelo próprio ícone ou pela tecla Esc. Tocar dentro do balão não
+> inicia nem interrompe a solicitação.
+
+> Revisão 1.16.0.09-av137: recursos do AvantaVendas renovados com o fechamento
+> contextual da ajuda.
+
+> Revisão 1.16.0.08: a régua de **Preparando acesso** chega a 100% antes de
+> abrir a Sala de Botões. A sincronização de dados operacionais e conteúdos
+> secundários pode continuar em segundo plano; módulos que dependem deles
+> mantêm seu próprio aviso de carregamento.
+
+> Revisão 1.16.0.08-av136: recursos do AvantaVendas renovados com a conclusão
+> visual da preparação.
 
 > Revisão 1.16.0.07: o ícone de ajuda da **Solicitação por Voz** fica sempre
 > disponível ao lado direito do microfone na Sala de Botões. Ele não acompanha

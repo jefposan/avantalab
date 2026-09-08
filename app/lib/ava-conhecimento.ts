@@ -9,6 +9,10 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Revisado na versão 1.16.0.02: a Gestão Mobile inicia e restaura a tela
 // inicial na mesma ordem oficial, com Agenda oculta até ser ativada; o puxador
 // de reorganização tem contraste reforçado inclusive sobre o saldo azul escuro.
+// Revisado na versão 1.16.0.09: o balão de ajuda da Solicitação por Voz fecha
+// fora dele, pelo ícone ou por Esc, sem interferir na gravação ou no envio.
+// Revisado na versão 1.16.0.08: o carregamento do Vendas atinge 100% quando
+// a Sala abre; dados e conteúdos não essenciais continuam em segundo plano.
 // Revisado na versão 1.16.0.07: a ajuda da Solicitação por Voz permanece no
 // bloco fixo da Sala, independente da gravação, e se adapta à largura da tela.
 // Revisado na versão 1.16.0.06: o ícone de informações junto ao microfone

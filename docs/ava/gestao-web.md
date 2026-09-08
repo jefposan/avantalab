@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.16.0.07 -->
+<!-- ava-version: 1.16.0.09 -->
+
+> Revisão 1.16.0.09: fechamento contextual da ajuda da Solicitação por Voz
+> aplicado somente ao AvantaVendas; sem impacto operacional na Gestão Web.
+
+> Revisão 1.16.0.08: conclusão visual do carregamento inicial aplicada somente
+> ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.16.0.07: atalho fixo de ajuda da Solicitação por Voz aplicado
 > somente ao AvantaVendas; sem impacto operacional na Gestão Web.

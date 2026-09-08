@@ -8,6 +8,7 @@ const ler = (arquivo) => readFileSync(resolve(raiz, arquivo), 'utf8');
 const paginaGestao = ler('app/mobile/page.tsx');
 const appGestao = ler('public/mobile-app.js');
 const paginaVendas = ler('app/avantavendas/page.tsx');
+const bootstrapVendas = ler('app/avantavendas/AvantaVendasBootstrap.tsx');
 const appVendas = ler('app/avantavendas/sistema/app.js');
 const bancoVendas = ler('app/avantavendas/sistema/supabase-client.js');
 
@@ -62,6 +63,11 @@ test('Vendas restaura o cache da conta ativa e n√£o bloqueia a Sala com Divulga√
   assert.match(appVendas, /const cache = await lerCacheVendas\(\)/);
   assert.match(appVendas, /dadosOperacionaisCarregando = true;[\s\S]*await recursosSala;[\s\S]*await carregarDadosBackend\(false, true, true\)/);
   assert.match(appVendas, /carregarConteudosSecundariosVendas\(false\)/);
+  assert.match(bootstrapVendas, /interface: 40/);
+  assert.match(bootstrapVendas, /data: 0/);
+  assert.match(appVendas, /function concluirPreparacaoInicialVendas\(\)/);
+  assert.match(appVendas, /atualizarProgressoPreparacao\('interface', 1, 1, 'Acesso pronto'\)/);
+  assert.match(appVendas, /await concluirPreparacaoInicialVendas\(\);\s*carregandoBackend = false;[\s\S]*render\(\)/);
 
   const inicioCargaPrincipal = bancoVendas.indexOf('async function loadAll(');
   const fimCargaPrincipal = bancoVendas.indexOf('async function loadClientFinancial(', inicioCargaPrincipal);

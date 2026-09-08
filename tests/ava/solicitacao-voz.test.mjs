@@ -117,7 +117,11 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(officialApp, /mobile-voice-command-help/);
   assert.match(officialApp, /Como usar a Solicitação por Voz/);
   assert.match(officialApp, /lançar um pagamento, lançar um pedido ou lançar um agendamento/);
-  assert.match(officialApp, /ajuda\.toggleAttribute\('hidden', !aberta\)/);
+  assert.match(officialApp, /function fecharAjudaSolicitacaoVozVendas\(acionador, ajuda\)/);
+  assert.match(officialApp, /document\.addEventListener\('pointerdown', fecharAoTocarFora, true\)/);
+  assert.match(officialApp, /if \(ajuda\.contains\(alvo\) \|\| acionador\.contains\(alvo\)\) return/);
+  assert.match(officialApp, /document\.removeEventListener\('pointerdown', fecharAoTocarFora, true\)/);
+  assert.match(officialApp, /evento\.key !== 'Escape'/);
   const vendasStyles = await readFile(new URL('../../app/avantavendas/sistema/styles.css', import.meta.url), 'utf8');
   assert.match(vendasStyles, /\.mobile-voice-command-help \{ position: absolute/);
   assert.match(vendasStyles, /left: clamp\(105px,calc\(75% - 3px\),calc\(100% - 54px\)\)/);

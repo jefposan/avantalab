@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.16.0.09 - 2026-09-08
+- O balão de ajuda da Solicitação por Voz agora fecha ao tocar fora dele, além de continuar alternando pelo ícone de informações.
+
+## 1.16.0.09-av137 - 2026-09-08
+- Recursos do AvantaVendas renovados com o fechamento contextual da ajuda por voz.
+
+## 1.16.0.08 - 2026-09-08
+- O carregamento inicial do AvantaVendas agora conclui a régua em **100%** no instante em que a Sala de Botões é aberta. Dados operacionais e conteúdos não essenciais continuam sincronizando em segundo plano, sem segurar a entrada.
+
+## 1.16.0.08-av136 - 2026-09-08
+- Recursos do AvantaVendas renovados com a conclusão visual da preparação inicial.
+
 ## 1.16.0.07 - 2026-09-08
 - O ícone de ajuda da Solicitação por Voz passou a integrar permanentemente o bloco fixo da Sala de Botões. Ele não inicia, desaparece, nem acompanha a gravação; sua posição se distribui de forma responsiva entre o microfone e a lateral direita.
 
