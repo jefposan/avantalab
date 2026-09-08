@@ -48,3 +48,17 @@ test('puxador de cards tem contraste reforçado, inclusive no Saldo do mês', as
   assert.match(mobile, /data-dashboard-handle="' \+ escapeHtml\(id\) \+ '"[\s\S]*?h-7 w-8[\s\S]*?cursor-grab/);
   assert.match(mobile, /aria-label="Segure e arraste para mudar a posição de /);
 });
+
+test('Caixinha começa recolhida e Insight calcula concentração sobre a mesma base', async () => {
+  const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
+  const insights = mobile.slice(
+    mobile.indexOf('function insightsAvaHtml(atual)'),
+    mobile.indexOf('function saldoTopoHtml'),
+  );
+
+  assert.match(mobile, /caixinhaRecolhida: true,/);
+  assert.match(insights, /var totalDespesasInsight = 0;/);
+  assert.match(insights, /totalDespesasInsight \+= valor;/);
+  assert.match(insights, /var percentual = \(maior\.valor \/ totalDespesasInsight\) \* 100;/);
+  assert.doesNotMatch(insights, /maior\.valor \/ despesas/);
+});

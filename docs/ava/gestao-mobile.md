@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.16.0.03 -->
+<!-- ava-version: 1.16.0.04 -->
+
+> Revisão 1.16.0.04: a **Caixinha** começa recolhida. O Insight de maior
+> concentração usa a mesma base de despesas ativas no valor e no total, sem
+> exibir percentual superior a 100%.
 
 > Revisão 1.16.0.03: o puxador de reorganização mantém o contraste reforçado,
 > mas voltou ao espaço compacto para não sobrepor o conteúdo dos cards.

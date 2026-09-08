@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.16.0.04 - 2026-09-08
+- A Caixinha da Gestão Mobile passa a iniciar recolhida.
+- O Insight de maior concentração calcula categoria e total sobre a mesma base de despesas ativas do mês, impedindo percentuais acima de 100%.
+
 ## 1.16.0.03 - 2026-09-08
 - O puxador de reorganização da Gestão Mobile voltou ao espaço compacto original para não alcançar conteúdo dos cards; o contraste reforçado foi mantido.
 

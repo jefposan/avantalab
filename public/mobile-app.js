@@ -609,7 +609,7 @@
     caixinhaSaldoInicialSalvando: false,
     caixinhaSaldoInicialAberto: false,
     caixinhaLancamentosVisiveis: false,
-    caixinhaRecolhida: false,
+    caixinhaRecolhida: true,
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     vendasMobileModuloAtivo: false,
@@ -10830,11 +10830,15 @@
     var resultado = receitas - despesas;
     var caixinha = caixinhaResumo(atual);
     var porDespesa = {};
+    var totalDespesasInsight = 0;
 
     (atual.lancamentos || []).forEach(function (item) {
       if (!item || item.status === 'cancelada') return;
+      var valor = Number(item.valor || 0);
+      if (!Number.isFinite(valor) || valor <= 0) return;
       var nome = item.despesa || 'Despesa';
-      porDespesa[nome] = (porDespesa[nome] || 0) + Number(item.valor || 0);
+      porDespesa[nome] = (porDespesa[nome] || 0) + valor;
+      totalDespesasInsight += valor;
     });
 
     var maior = Object.keys(porDespesa).map(function (nome) {
@@ -10850,8 +10854,8 @@
       insights.push({ tom: 'alerta', titulo: 'Atencao ao resultado', texto: 'As despesas superam as receitas em ' + dinheiro(Math.abs(resultado)) + '. Revise os maiores gastos primeiro.' });
     }
 
-    if (maior && despesas > 0) {
-      var percentual = (maior.valor / despesas) * 100;
+    if (maior && totalDespesasInsight > 0) {
+      var percentual = (maior.valor / totalDespesasInsight) * 100;
       insights.push({
         tom: percentual >= 35 ? 'alerta' : 'neutro',
         titulo: 'Maior concentracao',

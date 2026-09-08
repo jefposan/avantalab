@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.16.0.04: a Caixinha inicia recolhida e a maior
+// concentração usa a mesma base de despesas ativas para categoria e total.
 // Revisado na versão 1.16.0.03: o puxador da Gestão Mobile voltou ao espaço
 // compacto para não cobrir conteúdo dos cards, preservando o contraste reforçado.
 // Revisado na versão 1.16.0.02: a Gestão Mobile inicia e restaura a tela
