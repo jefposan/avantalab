@@ -45,6 +45,6 @@ test('puxador de cards tem contraste reforçado, inclusive no Saldo do mês', as
 
   assert.match(mobile, /var estiloPuxador = id === 'saldo'/);
   assert.match(mobile, /border-white\/40 bg-white\/20 text-white/);
-  assert.match(mobile, /data-dashboard-handle="' \+ escapeHtml\(id\) \+ '"[\s\S]*?h-10 w-10[\s\S]*?cursor-grab/);
+  assert.match(mobile, /data-dashboard-handle="' \+ escapeHtml\(id\) \+ '"[\s\S]*?h-7 w-8[\s\S]*?cursor-grab/);
   assert.match(mobile, /aria-label="Segure e arraste para mudar a posição de /);
 });

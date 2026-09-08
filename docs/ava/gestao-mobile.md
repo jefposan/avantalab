@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.16.0.02 -->
+<!-- ava-version: 1.16.0.03 -->
+
+> Revisão 1.16.0.03: o puxador de reorganização mantém o contraste reforçado,
+> mas voltou ao espaço compacto para não sobrepor o conteúdo dos cards.
 
 > Revisão 1.16.0.02: a tela inicial inicia e é restaurada na ordem padrão da
 > Gestão Mobile; **Agenda** começa oculta. O puxador de reorganização ficou mais

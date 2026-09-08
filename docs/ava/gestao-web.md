@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.16.0.02 -->
+<!-- ava-version: 1.16.0.03 -->
+
+> Revisão 1.16.0.03: área do puxador de cards foi ajustada somente na Gestão
+> Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.16.0.02: ordem inicial e puxador de cards foram ajustados somente
 > na Gestão Mobile; sem impacto operacional na Gestão Web.

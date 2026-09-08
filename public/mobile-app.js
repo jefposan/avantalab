@@ -10784,8 +10784,8 @@
             : 'border border-cyan-200 bg-white text-cyan-700 shadow-md shadow-cyan-950/15');
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative min-w-0 max-w-full pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
           cards[id] +
-          (menuDisponivel ? '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 right-14 z-40 flex h-8 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' : '') +
-          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-0.5 right-2 z-40 flex h-10 w-10 select-none touch-none cursor-grab items-center justify-center rounded-xl text-[13px] font-black leading-none active:cursor-grabbing ' + estiloPuxador + '" aria-label="Segure e arraste para mudar a posição de ' + escapeHtml(tituloCardDashboard(id)) + '" title="Segure e arraste para mudar a posição">&vellip;&vellip;</button>') +
+          (menuDisponivel ? '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 right-12 z-40 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' : '') +
+          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 z-40 flex h-7 w-8 select-none touch-none cursor-grab items-center justify-center rounded-full text-[11px] font-black leading-none active:cursor-grabbing ' + estiloPuxador + '" aria-label="Segure e arraste para mudar a posição de ' + escapeHtml(tituloCardDashboard(id)) + '" title="Segure e arraste para mudar a posição">&vellip;&vellip;</button>') +
         '</div>';
       })
       .join('');

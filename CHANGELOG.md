@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.16.0.03 - 2026-09-08
+- O puxador de reorganização da Gestão Mobile voltou ao espaço compacto original para não alcançar conteúdo dos cards; o contraste reforçado foi mantido.
+
 ## 1.16.0.02 - 2026-09-08
 - A Gestão Mobile passou a iniciar e restaurar a tela inicial na mesma ordem: Ava, Saldo do mês, Visão geral, lançamentos, gráficos, Insights, Caixinha, Controle de Ponto e Meus perfis. A Agenda permanece oculta até ser ativada pelo usuário.
 - O puxador usado para reorganizar cards agora tem contraste e área de toque mais claros, inclusive sobre o card azul escuro de Saldo do mês.
