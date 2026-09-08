@@ -1,7 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0.09 -->
-<!-- avantavendas-asset-revision: 137 -->
+<!-- ava-version: 1.16.0.10 -->
+<!-- avantavendas-asset-revision: 138 -->
+
+> Revisão 1.16.0.10: o atalho de ajuda da **Solicitação por Voz** usa o ícone
+> clássico de informação, com círculo e “i” central mais legíveis. O acesso e o
+> comportamento do balão permanecem os mesmos.
+
+> Revisão 1.16.0.10-av138: recursos do AvantaVendas renovados com o ícone de
+> informação padronizado.
 
 > Revisão 1.16.0.09: o balão de ajuda da **Solicitação por Voz** fecha ao tocar
 > fora dele, pelo próprio ícone ou pela tecla Esc. Tocar dentro do balão não

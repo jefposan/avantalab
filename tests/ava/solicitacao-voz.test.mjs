@@ -115,6 +115,7 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(voiceModule, /function cancelSending\(\)/);
   assert.match(officialApp, /function alternarAjudaSolicitacaoVozVendas\(acionador\)/);
   assert.match(officialApp, /mobile-voice-command-help/);
+  assert.match(officialApp, /\$\{svgIconEstavel\('info'\)\}/);
   assert.match(officialApp, /Como usar a Solicitação por Voz/);
   assert.match(officialApp, /lançar um pagamento, lançar um pedido ou lançar um agendamento/);
   assert.match(officialApp, /function fecharAjudaSolicitacaoVozVendas\(acionador, ajuda\)/);

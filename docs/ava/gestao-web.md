@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.16.0.09 -->
+<!-- ava-version: 1.16.0.10 -->
+
+> Revisão 1.16.0.10: ícone de ajuda da Solicitação por Voz refinado somente no
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.16.0.09: fechamento contextual da ajuda da Solicitação por Voz
 > aplicado somente ao AvantaVendas; sem impacto operacional na Gestão Web.

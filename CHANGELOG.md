@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.16.0.10 - 2026-09-08
+- O atalho de ajuda da Solicitação por Voz passou a usar o ícone clássico de informação, com círculo e “i” central mais legíveis.
+
+## 1.16.0.10-av138 - 2026-09-08
+- Recursos do AvantaVendas renovados com o ícone de informação padronizado.
+
 ## 1.16.0.09 - 2026-09-08
 - O balão de ajuda da Solicitação por Voz agora fecha ao tocar fora dele, além de continuar alternando pelo ícone de informações.
 
