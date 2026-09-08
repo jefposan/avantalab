@@ -8,6 +8,7 @@ const desvinculo = readFileSync('supabase/migrations/20260831220000_desvincular_
 const separacaoDivulgacao = readFileSync('supabase/migrations/20260901100000_separar_preco_divulgacao_precificacao.sql', 'utf8');
 const migracaoCodigoAutomatico = readFileSync('supabase/migrations/20260901150000_codigo_automatico_tabela_preco.sql', 'utf8');
 const migracaoConteudoCatalogo = readFileSync('supabase/migrations/20260908230000_catalogo_conteudo_vendas_operador_completo.sql', 'utf8');
+const migracaoSkuLegado = readFileSync('supabase/migrations/20260908233000_sku_tecnico_produtos_legados_conteudo_vendas.sql', 'utf8');
 const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const tabelas = readFileSync('app/custos/TabelasPrecosView.tsx', 'utf8');
 const repositorio = readFileSync('app/custos/repository.ts', 'utf8');
@@ -95,6 +96,8 @@ test('preço de revenda da divulgação é independente da venda interna da Gest
   assert.match(catalogoDivulgacao, /Preço sugerido de revenda/);
   assert.match(catalogoDivulgacao, /preco_divulgacao: revenda/);
   assert.match(catalogoDivulgacao, /salvar_produto_conteudo_vendas_mobile_rpc/);
+  assert.match(catalogoDivulgacao, /skuLegado\(produto\.id\)/);
+  assert.match(migracaoSkuLegado, /LEGADO-/);
   assert.match(migracaoConteudoCatalogo, /preco_divulgacao = v_preco/);
   assert.match(migracaoConteudoCatalogo, /v_preco, 0, 0, v_unidade/);
   assert.match(catalogoDivulgacao, /preco_custo: 0, preco_venda: Number\(produto\.preco_divulgacao \|\| 0\)/);
