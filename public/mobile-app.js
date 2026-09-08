@@ -591,7 +591,7 @@
     ultimasDespesasBusca: '',
     ultimasReceitasBusca: '',
     dashboardOrdem: ordemDashboardPadrao(),
-    dashboardOcultos: [],
+    dashboardOcultos: cardsDashboardOcultosPadrao(),
     dashboardOpcoesId: '',
     dashboardOpcoesPos: null,
     dashboardValoresVisiveis: {},
@@ -2617,20 +2617,24 @@
   function ordemDashboardPadrao() {
     return [
       'ia',
-      'agenda',
-      'meusPerfis',
-      'insightsAva',
       'saldo',
-      'caixinha',
       'totais',
-      'controlePonto',
       'ultimasDespesas',
       'ultimasReceitas',
-      'categorias',
       'tipos',
+      'categorias',
       'evolucaoDespesas',
       'evolucaoReceitas',
+      'agenda',
+      'insightsAva',
+      'caixinha',
+      'controlePonto',
+      'meusPerfis',
     ];
+  }
+
+  function cardsDashboardOcultosPadrao() {
+    return ['agenda'];
   }
 
   function tituloCardDashboard(id) {
@@ -2676,7 +2680,10 @@
     // Premium Pessoal: no grátis o dashboard fica sempre no padrão (sem
     // ordem personalizada e sem cards ocultos).
     if (premiumPessoalBloqueadoMobile()) {
-      return normalizarOrdemDashboard(ordemDashboardPadrao()).filter(cardDashboardPermitido);
+      var ocultosPadrao = cardsDashboardOcultosPadrao();
+      return normalizarOrdemDashboard(ordemDashboardPadrao()).filter(function (id) {
+        return ocultosPadrao.indexOf(id) < 0 && cardDashboardPermitido(id);
+      });
     }
     var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
     return normalizarOrdemDashboard(state.dashboardOrdem).filter(function (id) {
@@ -2752,8 +2759,12 @@
 
     state.darkMode = preferencias.darkMode === true;
     state.iniciarValoresOcultos = preferencias.iniciarValoresOcultos !== false;
-    state.dashboardOrdem = normalizarOrdemDashboard(preferencias.dashboardOrdem || []);
-    state.dashboardOcultos = normalizarOcultosDashboard(preferencias.dashboardOcultos || []);
+    state.dashboardOrdem = Array.isArray(preferencias.dashboardOrdem)
+      ? normalizarOrdemDashboard(preferencias.dashboardOrdem)
+      : ordemDashboardPadrao();
+    state.dashboardOcultos = Array.isArray(preferencias.dashboardOcultos)
+      ? normalizarOcultosDashboard(preferencias.dashboardOcultos)
+      : cardsDashboardOcultosPadrao();
     var atalhos = preferencias.atalhos || {};
     state.atalhoInferiorEsquerdo = normalizarAtalhoInferior(atalhos.esquerdo, 'perfil');
     state.atalhoInferiorDireito = normalizarAtalhoInferior(atalhos.direito, 'agenda');
@@ -10766,10 +10777,15 @@
       .map(function (id) {
         if (!cards[id]) return '';
         var menuDisponivel = id !== 'ia';
+        var estiloPuxador = id === 'saldo'
+          ? 'border border-white/40 bg-white/20 text-white shadow-lg shadow-slate-950/30 backdrop-blur-sm'
+          : (state.darkMode
+            ? 'border border-cyan-300/50 bg-cyan-300/15 text-cyan-100 shadow-lg shadow-slate-950/25'
+            : 'border border-cyan-200 bg-white text-cyan-700 shadow-md shadow-cyan-950/15');
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative min-w-0 max-w-full pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
           cards[id] +
-          (menuDisponivel ? '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 right-12 z-40 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' : '') +
-          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 z-40 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-600" aria-label="Mover card">&vellip;&vellip;</button>') +
+          (menuDisponivel ? '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 right-14 z-40 flex h-8 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' : '') +
+          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-0.5 right-2 z-40 flex h-10 w-10 select-none touch-none cursor-grab items-center justify-center rounded-xl text-[13px] font-black leading-none active:cursor-grabbing ' + estiloPuxador + '" aria-label="Segure e arraste para mudar a posição de ' + escapeHtml(tituloCardDashboard(id)) + '" title="Segure e arraste para mudar a posição">&vellip;&vellip;</button>') +
         '</div>';
       })
       .join('');
@@ -13299,7 +13315,7 @@
 
   function restaurarResumoPadrao() {
     state.dashboardOrdem = ordemDashboardPadrao();
-    state.dashboardOcultos = [];
+    state.dashboardOcultos = cardsDashboardOcultosPadrao();
     state.dashboardOpcoesId = '';
     state.dashboardOpcoesPos = null;
     salvarResumoDashboard();
@@ -15100,7 +15116,7 @@
     });
     bind('reset-dashboard', function () {
       state.dashboardOrdem = ordemDashboardPadrao();
-      state.dashboardOcultos = [];
+      state.dashboardOcultos = cardsDashboardOcultosPadrao();
       salvarResumoDashboard();
       render();
     });
@@ -16278,8 +16294,10 @@
       state.darkMode = localStorage.getItem('avantalab_mobile_dark') === '1';
       state.iniciarValoresOcultos = localStorage.getItem(CHAVE_INICIAR_VALORES_OCULTOS) !== '0';
       aplicarPreferenciaInicialValores();
-      state.dashboardOrdem = normalizarOrdemDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ordem') || '[]'));
-      state.dashboardOcultos = normalizarOcultosDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ocultos') || '[]'));
+      var ordemDashboardSalva = JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ordem') || 'null');
+      var ocultosDashboardSalvos = JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ocultos') || 'null');
+      if (Array.isArray(ordemDashboardSalva)) state.dashboardOrdem = normalizarOrdemDashboard(ordemDashboardSalva);
+      if (Array.isArray(ocultosDashboardSalvos)) state.dashboardOcultos = normalizarOcultosDashboard(ocultosDashboardSalvos);
       var atalhosSalvos = JSON.parse(localStorage.getItem(CHAVE_ATALHOS_INFERIORES) || '{}');
       state.atalhoInferiorEsquerdo = normalizarAtalhoInferior(atalhosSalvos.esquerdo, 'perfil');
       state.atalhoInferiorDireito = normalizarAtalhoInferior(atalhosSalvos.direito, 'agenda');

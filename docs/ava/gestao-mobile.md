@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.16.0.01 -->
+<!-- ava-version: 1.16.0.02 -->
+
+> Revisão 1.16.0.02: a tela inicial inicia e é restaurada na ordem padrão da
+> Gestão Mobile; **Agenda** começa oculta. O puxador de reorganização ficou mais
+> visível, inclusive no card Saldo do mês.
 
 > Revisão 1.16.0.01: saldo atual na escolha de cliente de pagamento por voz,
 > aplicado somente ao AvantaVendas; sem impacto operacional na Gestão Mobile.

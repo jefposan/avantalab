@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.16.0.02: a Gestão Mobile inicia e restaura a tela
+// inicial na mesma ordem oficial, com Agenda oculta até ser ativada; o puxador
+// de reorganização tem contraste reforçado inclusive sobre o saldo azul escuro.
 // Revisado na versão 1.16.0.01: a escolha de cliente para pagamento por voz
 // mostra o saldo devedor atual, calculado pelos registros reais da conta.
 // Revisado na versão 1.16.0: a Solicitação por Voz cria agendamentos confirmados
@@ -694,7 +697,7 @@ NAVEGAÇÃO E PERFIS
 - Na entrada da Gestão Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto.
 - No card de cadastro, **Cadastrar com Google** e **Cadastrar com Apple** criam ou acessam a mesma conta-base do cadastro por e-mail. Se ainda faltarem dados do primeiro perfil, a Gestão solicita a conclusão depois da autenticação.
 - Durante o login com Google ou Apple, **Preparando acesso** oferece **Cancelar e voltar ao login**. A ação encerra a tentativa pendente e restaura a tela de login sem manter o botão em Conectando.
-- A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar tela inicial > Organizar atalhos inferiores; o mesmo grupo permite mostrar, ocultar e ordenar cards.
+- A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar tela inicial > Organizar atalhos inferiores; o mesmo grupo permite mostrar, ocultar e ordenar cards. Ao iniciar ou usar Restaurar ordem padrão, a tela mostra Ava, Saldo do mês, Visão geral, lançamentos, gráficos, Insights, Caixinha, Controle de Ponto e Meus perfis; Agenda fica oculta até ser ativada.
 - O Menu começa diretamente por Assinatura e plano, seguido dos demais botões principais; não há o título Uso diário acima dessa lista.
 - Avisos já recebidos ficam em Menu > Central de avisos e identificam o perfil financeiro de origem. Abrir ou fechar o painel não os remove; eles e o indicador permanecem até usar **Fechar aviso** ou **Fechar todas**. No iPhone, quando a Gestão confirma que não existem avisos pendentes, também remove os pushes antigos da Central de Notificações e zera o selo do ícone. O painel fica abaixo da área segura; quantidade e **Fechar todas** permanecem fixos enquanto os cards rolam. A ativação das notificações do aparelho fica em Menu > Configurações > Preferências > Receber notificações.
 - Gestor Master e Administrador recebem no sininho avisos de faturas recorrentes a vencer em 5, 2 e 0 dias e em atraso há 1, 3 e 7 dias. Tocar em um aviso de assinatura abre **Assinatura**; quando as notificações do aparelho estiverem ativas, ele também é entregue por push.

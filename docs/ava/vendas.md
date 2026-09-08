@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0.01 -->
+<!-- ava-version: 1.16.0.02 -->
+
+> Revisão 1.16.0.02: ordem inicial e puxador de cards foram ajustados somente
+> na Gestão Mobile; sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.16.0.01: ao pedir um pagamento e existir mais de um cliente
 > compatível, cada opção mostra o **saldo devedor atual**, e não o último

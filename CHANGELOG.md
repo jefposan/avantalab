@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.16.0.02 - 2026-09-08
+- A Gestão Mobile passou a iniciar e restaurar a tela inicial na mesma ordem: Ava, Saldo do mês, Visão geral, lançamentos, gráficos, Insights, Caixinha, Controle de Ponto e Meus perfis. A Agenda permanece oculta até ser ativada pelo usuário.
+- O puxador usado para reorganizar cards agora tem contraste e área de toque mais claros, inclusive sobre o card azul escuro de Saldo do mês.
+
 ## 1.16.0.01 - 2026-09-07
 - Ao escolher um cliente para registrar pagamento por voz, a lista mostra o **saldo devedor atual** de cada opção, calculado com pedidos e pagamentos reais, em vez do último pedido.
 
