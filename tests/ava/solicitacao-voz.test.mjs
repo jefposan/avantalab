@@ -113,6 +113,11 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(voiceModule, /options\.autoStart && state\.phase === 'idle'/);
   assert.match(voiceModule, /const dock = el\('section', 'dock'\)/);
   assert.match(voiceModule, /function cancelSending\(\)/);
+  assert.match(voiceModule, /function voiceHelp\(\)/);
+  assert.match(voiceModule, /Como usar a Solicitação por Voz/);
+  assert.match(voiceModule, /lançar um pagamento, lançar um pedido ou lançar um agendamento/);
+  assert.match(voiceModule, /\.voice-help\{position:absolute/);
+  assert.match(voiceModule, /if \(state\.phase === 'idle'\) dock\.append\(voiceHelp\(\)\)/);
   assert.match(voiceModule, /state\.requestAbort\?\.abort\(\)/);
   assert.match(voiceModule, /function restorePending\(id\)/);
   assert.match(voiceModule, /pendencias: entries\.slice\(0, 30\)/);

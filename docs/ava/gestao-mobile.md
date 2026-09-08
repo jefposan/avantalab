@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.16.0.05 -->
+<!-- ava-version: 1.16.0.06 -->
+
+> Revisão 1.16.0.06: ajuda contextual da Solicitação por Voz aplicada somente
+> ao AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.16.0.05: os **Insights da Ava** distinguem resultado realizado de
 > projeção quando houver lançamentos previstos. A concentração identifica se a

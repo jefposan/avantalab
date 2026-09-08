@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.16.0.06 - 2026-09-08
+- A Solicitação por Voz da Sala de Botões ganhou um ícone de informações ao lado do microfone. O balão explica que é possível solicitar pagamentos, pedidos e agendamentos descrevendo os dados necessários.
+
+## 1.16.0.06-av134 - 2026-09-08
+- Recursos do AvantaVendas renovados com a ajuda contextual da Solicitação por Voz.
+
 ## 1.16.0.05 - 2026-09-08
 - Os Insights da Ava passaram por auditoria de cálculo: resultado e convite à Caixinha consideram receitas e despesas previstas quando existirem; mensagens identificam a projeção.
 - A concentração usa somente despesas realizadas quando não há previsões e passa a identificar a base registrada e prevista quando elas existem. O cálculo usa a mesma coleção no valor e no total, com proteção adicional de teto em 100%.

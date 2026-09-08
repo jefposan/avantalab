@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0.05 -->
+<!-- ava-version: 1.16.0.06 -->
+<!-- avantavendas-asset-revision: 134 -->
+
+> Revisão 1.16.0.06: ao lado do microfone da **Solicitação por Voz**, o ícone
+> de informações explica que pagamentos, pedidos e agendamentos podem ser
+> solicitados descrevendo todos os dados necessários. O balão não inicia nem
+> altera uma solicitação.
+
+> Revisão 1.16.0.06-av134: recursos de voz renovados com a ajuda contextual.
 
 > Revisão 1.16.0.05: critérios dos Insights foram ajustados somente na Gestão
 > Mobile; sem impacto operacional no Vendas Mobile.

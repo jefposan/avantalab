@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.16.0.05 -->
+<!-- ava-version: 1.16.0.06 -->
+
+> Revisão 1.16.0.06: ajuda contextual da Solicitação por Voz aplicada somente
+> ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.16.0.05: critérios dos Insights foram ajustados somente na Gestão
 > Mobile; sem impacto operacional na Gestão Web.

@@ -9,6 +9,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Revisado na versão 1.16.0.02: a Gestão Mobile inicia e restaura a tela
 // inicial na mesma ordem oficial, com Agenda oculta até ser ativada; o puxador
 // de reorganização tem contraste reforçado inclusive sobre o saldo azul escuro.
+// Revisado na versão 1.16.0.06: o ícone de informações junto ao microfone
+// explica os lançamentos por voz, sem iniciar ou alterar a solicitação.
 // Revisado na versão 1.16.0.01: a escolha de cliente para pagamento por voz
 // mostra o saldo devedor atual, calculado pelos registros reais da conta.
 // Revisado na versão 1.16.0: a Solicitação por Voz cria agendamentos confirmados
