@@ -2687,6 +2687,14 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .mobile-voice-command-trigger { position: relative; top: auto; left: auto; display: grid; width: 84px; height: 84px; place-items: center; transform: none; border: 0; border-radius: 999px; color: #fff; background: radial-gradient(circle at 36% 30%,#2498de,#07518b 72%); box-shadow: 0 12px 27px rgba(4,70,123,.30); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .mobile-voice-command-trigger:disabled { opacity: .72; cursor: wait; }
   .mobile-voice-command-trigger svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+  .mobile-voice-command-help { position: absolute; z-index: 5; top: 50%; left: clamp(105px,calc(75% - 3px),calc(100% - 54px)); display: grid; width: 48px; height: 48px; place-items: center; border: 1px solid #bdd8e9; border-radius: 999px; padding: 0; color: #126ba5; background: rgba(255,255,255,.96); box-shadow: 0 8px 20px rgba(19,66,105,.17); transform: translateY(-50%); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .mobile-voice-command-help:focus-visible { outline: 3px solid rgba(22,135,217,.45); outline-offset: 3px; }
+  .mobile-voice-command-help svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .mobile-voice-command-help-popover { position: absolute; z-index: 6; top: 50%; left: clamp(150px,calc(75% + 46px),calc(100% - 8px)); width: min(78vw,310px); margin: 0; border: 1px solid #cfe1ed; border-radius: 16px; padding: 15px 16px; color: #17324d; background: #fff; box-shadow: 0 15px 32px rgba(18,54,88,.20); transform: translate(-100%,calc(-100% - 38px)); text-align: left; }
+  .mobile-voice-command-help-popover[hidden] { display: none; }
+  .mobile-voice-command-help-popover::after { position: absolute; right: 18px; bottom: -8px; width: 15px; height: 15px; border-right: 1px solid #cfe1ed; border-bottom: 1px solid #cfe1ed; background: #fff; content: ''; transform: rotate(45deg); }
+  .mobile-voice-command-help-popover b { position: relative; z-index: 1; display: block; margin: 0 0 5px; color: #0A1F44; font-size: 14px; line-height: 1.25; }
+  .mobile-voice-command-help-popover p { position: relative; z-index: 1; margin: 0; color: #36516d; font-size: 13px; line-height: 1.42; }
   .mobile-voice-command-label { position: relative; top: auto; right: auto; left: auto; color: #35536c; font-size: 11px; font-weight: 900; line-height: 1.15; text-align: center; }
   .mobile-voice-command-slot.is-active > .mobile-voice-command-body { display: none; }
   .dark-theme .mobile-ava-card { border-color: #334155; color: #f8fafc; background: #071a2b; }
@@ -2973,6 +2981,8 @@ html.agenda-form-open, body.agenda-form-open { overflow: hidden; overscroll-beha
   .mobile-menu-assistance { width: calc(100% - 48px); gap: 8px; margin-top: 18px; }
   .mobile-voice-command-slot { min-height: 0; }
   .mobile-voice-command-trigger { width: 80px; height: 80px; }
+  .mobile-voice-command-help { left: clamp(102px,calc(75% - 3px),calc(100% - 52px)); width: 46px; height: 46px; }
+  .mobile-voice-command-help-popover { left: clamp(146px,calc(75% + 44px),calc(100% - 8px)); width: min(80vw,310px); }
   .mobile-menu-card { height: auto; min-height: 0; aspect-ratio: 1 / 1; border-radius: 28px; gap: 8px; border-width: 3px; }
   .mobile-menu-card b { font-size: 45px; }
   .mobile-menu-card span { font-size: 15px; }

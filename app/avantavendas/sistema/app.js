@@ -2507,6 +2507,12 @@ function renderMenuMobile() {
           </button>
           <span class="mobile-voice-command-label">Solicitação por Voz</span>
         </div>
+        <button type="button" class="mobile-voice-command-help" onclick="alternarAjudaSolicitacaoVozVendas(this)" aria-label="Como usar a Solicitação por Voz" aria-expanded="false" aria-controls="voiceCommandHelp">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.25"/><path d="M12 10.7v5.2M12 7.75h.01"/></svg>
+        </button>
+        <aside class="mobile-voice-command-help-popover" id="voiceCommandHelp" role="status" hidden>
+          <b>Solicitação por Voz</b><p>Ao clicar no botão de gravar, você pode fazer solicitações como lançar um pagamento, lançar um pedido ou lançar um agendamento. Basta descrever todas as informações necessárias para esse lançamento.</p>
+        </aside>
       </div>` : ''}
     </div>
     <div class="mobile-menu-bottom"><button class="mobile-menu-wide" onclick="setAba('configuracoes')"><img src="./assets/menu/13_Configurações.png" alt="Configurações" decoding="sync" fetchpriority="high" /></button><button class="mobile-menu-wide" onclick="sairMenuMobile()"><img src="./assets/menu/14_Sair.png" alt="Sair" decoding="sync" fetchpriority="high" /></button></div>
@@ -2514,6 +2520,16 @@ function renderMenuMobile() {
 }
 
 let carregamentoSolicitacaoVozVendas = null;
+
+function alternarAjudaSolicitacaoVozVendas(acionador) {
+  const sala = acionador?.closest?.('.mobile-voice-command-slot');
+  const ajuda = sala?.querySelector?.('.mobile-voice-command-help-popover');
+  if (!ajuda) return;
+  const aberta = ajuda.hasAttribute('hidden');
+  ajuda.toggleAttribute('hidden', !aberta);
+  acionador.setAttribute('aria-expanded', String(aberta));
+  acionador.setAttribute('aria-label', aberta ? 'Fechar ajuda da Solicitação por Voz' : 'Como usar a Solicitação por Voz');
+}
 
 function chaveSolicitacoesVozPendentes() {
   const contaId = state.contaVendasAtiva?.id || window.VendasDb?.contaAtivaId?.() || '';

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.16.0.06 -->
+<!-- ava-version: 1.16.0.07 -->
+
+> Revisão 1.16.0.07: atalho fixo de ajuda da Solicitação por Voz aplicado
+> somente ao AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.16.0.06: ajuda contextual da Solicitação por Voz aplicada somente
 > ao AvantaVendas; sem impacto operacional na Gestão Mobile.

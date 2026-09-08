@@ -1,7 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0.06 -->
-<!-- avantavendas-asset-revision: 134 -->
+<!-- ava-version: 1.16.0.07 -->
+<!-- avantavendas-asset-revision: 135 -->
+
+> Revisão 1.16.0.07: o ícone de ajuda da **Solicitação por Voz** fica sempre
+> disponível ao lado direito do microfone na Sala de Botões. Ele não acompanha
+> o estado de gravação e se posiciona responsivamente entre o microfone e a
+> lateral da tela.
+
+> Revisão 1.16.0.07-av135: recursos de voz renovados com o atalho fixo.
 
 > Revisão 1.16.0.06: ao lado do microfone da **Solicitação por Voz**, o ícone
 > de informações explica que pagamentos, pedidos e agendamentos podem ser

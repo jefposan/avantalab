@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.16.0.07 - 2026-09-08
+- O ícone de ajuda da Solicitação por Voz passou a integrar permanentemente o bloco fixo da Sala de Botões. Ele não inicia, desaparece, nem acompanha a gravação; sua posição se distribui de forma responsiva entre o microfone e a lateral direita.
+
+## 1.16.0.07-av135 - 2026-09-08
+- Recursos do AvantaVendas renovados com o atalho fixo de ajuda por voz.
+
 ## 1.16.0.06 - 2026-09-08
 - A Solicitação por Voz da Sala de Botões ganhou um ícone de informações ao lado do microfone. O balão explica que é possível solicitar pagamentos, pedidos e agendamentos descrevendo os dados necessários.
 

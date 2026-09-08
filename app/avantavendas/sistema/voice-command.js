@@ -7,7 +7,7 @@
     host: null, root: null, options: null, mount: null, phase: 'idle', current: null, error: '',
     recorder: null, stream: null, chunks: [], requestAbort: null, requestStage: null, pendingId: null, timer: 0,
     audioContext: null, analyser: null, source: null, frame: 0, canvas: null,
-    noiseFloor: 0.012, lastVoiceActive: null, canvasSize: 0, helpOpen: false,
+    noiseFloor: 0.012, lastVoiceActive: null, canvasSize: 0,
   };
 
   const styles = `
@@ -22,8 +22,8 @@
        um limite quadrado, mesmo em uma fala mais alta. */
     /* O host ocupa somente a faixa livre da Sala. O grupo inteiro (botão e
        legenda) é centralizado nela, sem depender de coordenadas da viewport. */
-    :host{position:absolute;inset:0;display:block;width:auto;height:auto;container-type:size}.dock{position:absolute;inset:0;display:grid;width:auto;height:auto;place-items:center;overflow:visible;text-align:center}.dock>.voice-body{display:grid;max-width:100%;align-content:center;justify-items:center;gap:8px}.dock>.voice-body>.capture{position:relative;top:auto;left:auto;width:90px;height:90px;margin:0;transform:none}.dock .voice-status{position:relative;top:auto;left:auto;z-index:2;width:min(84vw,310px);display:grid;gap:3px;white-space:normal;transform:none;text-align:center}.voice-status-main{font-weight:800}.voice-status-action{font-size:11px;font-weight:700}.visualizer{inset:-96px;width:calc(100% + 192px);height:calc(100% + 192px)}.voice-help{position:absolute;z-index:4;top:50%;left:calc(50% + 70px);width:48px;height:48px;transform:translateY(-50%)}.voice-help-button{display:grid;width:48px;height:48px;padding:0;place-items:center;border:1px solid #bdd8e9;border-radius:50%;background:rgba(255,255,255,.96);box-shadow:0 8px 20px rgba(19,66,105,.17);color:#126ba5;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.voice-help-button:focus-visible{outline:3px solid rgba(22,135,217,.45);outline-offset:3px}.voice-help-icon,.voice-help-icon svg{width:25px;height:25px}.voice-help-icon svg{display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.voice-help-popover{position:absolute;right:-8px;bottom:calc(100% + 12px);width:min(78vw,310px);padding:15px 16px;border:1px solid #cfe1ed;border-radius:16px;background:#fff;box-shadow:0 15px 32px rgba(18,54,88,.2);color:#17324d;text-align:left}.voice-help-popover::after{position:absolute;right:24px;bottom:-8px;width:15px;height:15px;border-right:1px solid #cfe1ed;border-bottom:1px solid #cfe1ed;background:#fff;content:'';transform:rotate(45deg)}.voice-help-popover strong{position:relative;z-index:1;display:block;margin:0 0 5px;color:#0A1F44;font-size:14px;line-height:1.25}.voice-help-popover p{position:relative;z-index:1;margin:0;color:#36516d;font-size:13px;line-height:1.42}.overlay{display:flex;min-height:100svh;align-items:center;justify-content:center}.panel{margin:auto}
-    @container (max-height:150px){.dock>.voice-body{gap:3px}.dock>.voice-body>.capture{width:76px;height:76px}.dock .voice{width:68px;height:68px}.dock .mic,.dock .cancel-icon{width:30px;height:30px}.dock .voice-status{gap:1px;font-size:11px}.voice-status-action{font-size:10px}.visualizer{transform:scale(.86)}.voice-help{left:calc(50% + 60px);transform:translateY(-50%) scale(.88)}}@container (max-height:112px){.dock .voice-status,.voice-help{display:none}.visualizer{transform:scale(.78)}}
+    :host{position:absolute;inset:0;display:block;width:auto;height:auto;container-type:size}.dock{position:absolute;inset:0;display:grid;width:auto;height:auto;place-items:center;overflow:visible;text-align:center}.dock>.voice-body{display:grid;max-width:100%;align-content:center;justify-items:center;gap:8px}.dock>.voice-body>.capture{position:relative;top:auto;left:auto;width:90px;height:90px;margin:0;transform:none}.dock .voice-status{position:relative;top:auto;left:auto;z-index:2;width:min(84vw,310px);display:grid;gap:3px;white-space:normal;transform:none;text-align:center}.voice-status-main{font-weight:800}.voice-status-action{font-size:11px;font-weight:700}.visualizer{inset:-96px;width:calc(100% + 192px);height:calc(100% + 192px)}.overlay{display:flex;min-height:100svh;align-items:center;justify-content:center}.panel{margin:auto}
+    @container (max-height:150px){.dock>.voice-body{gap:3px}.dock>.voice-body>.capture{width:76px;height:76px}.dock .voice{width:68px;height:68px}.dock .mic,.dock .cancel-icon{width:30px;height:30px}.dock .voice-status{gap:1px;font-size:11px}.voice-status-action{font-size:10px}.visualizer{transform:scale(.86)}}@container (max-height:112px){.dock .voice-status{display:none}.visualizer{transform:scale(.78)}}
   `;
 
   function el(tag, className, text) {
@@ -131,37 +131,6 @@
     return icon;
   }
 
-  function infoIcon() {
-    const icon = el('span', 'voice-help-icon');
-    icon.setAttribute('aria-hidden', 'true');
-    icon.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.25"/><path d="M12 10.7v5.2M12 7.75h.01"/></svg>';
-    return icon;
-  }
-
-  function voiceHelp() {
-    const wrap = el('div', 'voice-help');
-    const control = button('', 'voice-help-button', () => {
-      state.helpOpen = !state.helpOpen;
-      render();
-    });
-    control.setAttribute('aria-label', state.helpOpen ? 'Fechar ajuda da Solicitação por Voz' : 'Como usar a Solicitação por Voz');
-    control.setAttribute('aria-expanded', String(state.helpOpen));
-    control.setAttribute('aria-controls', 'voice-command-help');
-    control.append(infoIcon());
-    wrap.append(control);
-    if (state.helpOpen) {
-      const popover = el('aside', 'voice-help-popover');
-      popover.id = 'voice-command-help';
-      popover.setAttribute('role', 'status');
-      popover.append(
-        el('strong', '', 'Solicitação por Voz'),
-        el('p', '', 'Ao clicar no botão de gravar, você pode fazer solicitações como lançar um pagamento, lançar um pedido ou lançar um agendamento. Basta descrever todas as informações necessárias para esse lançamento.'),
-      );
-      wrap.append(popover);
-    }
-    return wrap;
-  }
-
   function voiceControl(small = false) {
     const listening = state.phase === 'recording';
     const busy = ['transcribing', 'processing'].includes(state.phase);
@@ -227,7 +196,6 @@
       dock.setAttribute('aria-live', 'polite');
       body.append(voiceControl(), dockStatus());
       dock.append(body);
-      if (state.phase === 'idle') dock.append(voiceHelp());
       state.root.append(dock);
       return;
     }
@@ -308,7 +276,6 @@
 
   async function startRecording() {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { setPhase('error', 'A gravação de áudio não está disponível neste navegador.'); return; }
-    state.helpOpen = false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       const types = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
