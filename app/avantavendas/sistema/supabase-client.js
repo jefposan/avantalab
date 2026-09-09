@@ -18,6 +18,8 @@
     : null;
   let canalAtualizacoesVinculo = null;
   let usuarioCanalAtualizacoesVinculo = '';
+  let canalAtualizacoesCatalogo = null;
+  let contaCanalAtualizacoesCatalogo = '';
 
   function contaAtivaId() { try { return localStorage.getItem(contaAtivaStorageKey) || ''; } catch { return ''; } }
   function definirContaAtiva(contaId) { try { contaId ? localStorage.setItem(contaAtivaStorageKey, contaId) : localStorage.removeItem(contaAtivaStorageKey); } catch { /* armazenamento indisponível */ } }
@@ -214,6 +216,7 @@
 
   async function signOut() {
     await cancelarAtualizacoesVinculo();
+    await cancelarAtualizacoesCatalogo();
     // Revoga somente a sessão armazenada pelo AvantaVendas neste aparelho.
     // O mesmo usuário pode manter uma sessão independente no Gestão.
     const { error } = await requireClient().auth.signOut({ scope: 'local' });
@@ -247,6 +250,33 @@
       }, aoAtualizar)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'vendas_mobile_vinculos_comerciais', filter: `user_id=eq.${user.id}`,
+      }, aoAtualizar)
+      .subscribe();
+    return true;
+  }
+
+  async function cancelarAtualizacoesCatalogo() {
+    if (canalAtualizacoesCatalogo && client) {
+      await client.removeChannel(canalAtualizacoesCatalogo).catch(() => undefined);
+    }
+    canalAtualizacoesCatalogo = null;
+    contaCanalAtualizacoesCatalogo = '';
+  }
+
+  async function assinarAtualizacoesCatalogo(aoAtualizar) {
+    const contaId = contaAtivaId();
+    const user = await currentUser();
+    if (!user || !contaId || typeof aoAtualizar !== 'function') {
+      await cancelarAtualizacoesCatalogo();
+      return false;
+    }
+    if (canalAtualizacoesCatalogo && contaCanalAtualizacoesCatalogo === contaId) return true;
+    await cancelarAtualizacoesCatalogo();
+    contaCanalAtualizacoesCatalogo = contaId;
+    canalAtualizacoesCatalogo = requireClient()
+      .channel(`vendas-catalogo-${contaId}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'vendas_mobile_produtos', filter: `conta_id=eq.${contaId}`,
       }, aoAtualizar)
       .subscribe();
     return true;
@@ -1130,5 +1160,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveAgendaItem, deleteAgendaItem, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, assinarAtualizacoesCatalogo, cancelarAtualizacoesCatalogo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveAgendaItem, deleteAgendaItem, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();

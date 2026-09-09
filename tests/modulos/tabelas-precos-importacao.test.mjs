@@ -9,6 +9,7 @@ const separacaoDivulgacao = readFileSync('supabase/migrations/20260901100000_sep
 const migracaoCodigoAutomatico = readFileSync('supabase/migrations/20260901150000_codigo_automatico_tabela_preco.sql', 'utf8');
 const migracaoConteudoCatalogo = readFileSync('supabase/migrations/20260908230000_catalogo_conteudo_vendas_operador_completo.sql', 'utf8');
 const migracaoSkuLegado = readFileSync('supabase/migrations/20260908233000_sku_tecnico_produtos_legados_conteudo_vendas.sql', 'utf8');
+const migracaoPublicacaoImediata = readFileSync('supabase/migrations/20260908234500_publicacao_imediata_catalogo_avantavendas.sql', 'utf8');
 const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const tabelas = readFileSync('app/custos/TabelasPrecosView.tsx', 'utf8');
 const repositorio = readFileSync('app/custos/repository.ts', 'utf8');
@@ -104,6 +105,17 @@ test('preço de revenda da divulgação é independente da venda interna da Gest
   assert.doesNotMatch(catalogoDivulgacao, /preco_custo: custo/);
   assert.doesNotMatch(repositorio, /preco_divulgacao/);
   assert.match(repositorio, /preco_venda: produto\.preco_venda/);
+});
+
+test('publicação do catálogo atualiza as cópias do AvantaVendas em tempo real', () => {
+  assert.match(migracaoPublicacaoImediata, /publicar_produto_catalogo_avantavendas/);
+  assert.match(migracaoPublicacaoImediata, /after insert or update of sku, codigo_barras, marca, categoria, nome, descricao/);
+  assert.match(migracaoPublicacaoImediata, /preco = coalesce\(origem\.preco_divulgacao, 0\)/);
+  assert.match(migracaoPublicacaoImediata, /alter publication supabase_realtime add table public\.vendas_mobile_produtos/);
+  assert.match(vendasDb, /assinarAtualizacoesCatalogo/);
+  assert.match(vendasDb, /table: 'vendas_mobile_produtos', filter: `conta_id=eq\.\$\{contaId\}`/);
+  assert.match(vendas, /agendarAtualizacaoCatalogoPublicado/);
+  assert.match(vendas, /atualizarCatalogoPublicadoAutomaticamente/);
 });
 
 test('migração de compatibilidade desativa automações sem apagar dados históricos', () => {

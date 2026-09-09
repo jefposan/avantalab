@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.17.0.03: alterações do catálogo publicadas no Gestão
+// chegam imediatamente às contas vinculadas do AvantaVendas, sem sobrescrever
+// custo ou estoque próprios da conta comercial.
 // Revisado na versão 1.17.0.02: a busca manual por voz preserva o campo e o
 // teclado; nomes de produto toleram termos intermediários, plural e transcrição
 // próxima, com indicação compatível de idioma ao gpt-transcribe, antes de

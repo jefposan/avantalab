@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.17.0.02 -->
+<!-- ava-version: 1.17.0.03 -->
+
+> Revisão 1.17.0.03: ao salvar ou inativar um produto em **Conteúdo
+> AvantaVendas > Produtos**, a publicação alcança imediatamente as contas de
+> AvantaVendas vinculadas. Não é necessário solicitar sincronização manual.
 
 > Revisão 1.17.0.02: digitação contínua e conciliação refinada do catálogo na
 > Solicitação por Voz aplicadas somente ao AvantaVendas; sem impacto

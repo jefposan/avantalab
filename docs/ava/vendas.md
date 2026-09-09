@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.17.0.02 -->
+<!-- ava-version: 1.17.0.03 -->
 <!-- avantavendas-asset-revision: 142 -->
+
+> Revisão 1.17.0.03: produtos publicados ou alterados pela Gestão aparecem
+> automaticamente neste catálogo. Não é necessário atualizar a página nem usar
+> a sincronização manual; custo e estoque da própria conta permanecem intactos.
 
 > Revisão 1.17.0.02: em **Procurar no catálogo**, digitar atualiza somente os
 > resultados; o campo permanece focado e o teclado não fecha a cada busca. A

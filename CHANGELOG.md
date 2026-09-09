@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.17.0.03 - 2026-09-08
+- Alterações em **Conteúdo AvantaVendas > Produtos** agora são publicadas no mesmo salvamento para todas as contas de AvantaVendas vinculadas ao perfil. Nome, SKU, descrição, preço sugerido, imagem, estado ativo e demais dados de divulgação substituem a cópia recebida, sem alterar custo ou estoque próprios da conta de vendas.
+- O AvantaVendas acompanha essas cópias por atualização em tempo real e atualiza o catálogo aberto sem exigir que o vendedor use o botão de sincronização ou recarregue a página.
+
 ## 1.17.0.02 - 2026-09-08
 - A pesquisa manual do catálogo na Solicitação por Voz mantém o mesmo campo durante a digitação. A lista e o aviso de carregamento são atualizados separadamente, evitando que o teclado do iPhone feche a cada resultado.
 - A conciliação de produtos aceita palavras intermediárias presentes somente no cadastro, variações de plural e pequenas perdas da transcrição. Assim, referências como **kit cabelos normais** e **kit cabelo normal** encontram **Kit Home Care - Cabelos Normais**.

@@ -393,6 +393,8 @@ let assinaturaSalaRenderizada = '';
 let rolagemPorAba = {};
 let contextoAberturaVendas = null;
 let sincronizacaoCatalogoEmAndamento = false;
+let atualizacaoCatalogoEmAndamento = false;
+let timerAtualizacaoCatalogo = null;
 let dadosOperacionaisCarregando = false;
 let revisaoDadosOperacionais = 0;
 let revisaoNavegacaoManual = 0;
@@ -3767,6 +3769,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.contasVendas = dados.contasVendas || [];
       state.contaVendasAtiva = dados.contaVendasAtiva || null;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
+      await window.VendasDb.assinarAtualizacoesCatalogo?.(agendarAtualizacaoCatalogoPublicado);
       await salvarCacheVendas();
     }
   } catch (error) {
@@ -3829,6 +3832,37 @@ async function sincronizarCatalogoAutomaticamente(atualizarTela = false) {
     return state.sincronizacaoCatalogo;
   } finally {
     sincronizacaoCatalogoEmAndamento = false;
+  }
+}
+
+function agendarAtualizacaoCatalogoPublicado() {
+  if (!backendAtivo || !state.autenticado) return;
+  if (timerAtualizacaoCatalogo) window.clearTimeout(timerAtualizacaoCatalogo);
+  timerAtualizacaoCatalogo = window.setTimeout(() => {
+    timerAtualizacaoCatalogo = null;
+    void atualizarCatalogoPublicadoAutomaticamente();
+  }, 120);
+}
+
+async function atualizarCatalogoPublicadoAutomaticamente() {
+  if (atualizacaoCatalogoEmAndamento || !backendAtivo || !state.autenticado) return;
+  if (carregandoBackend || preparandoRecursosSala) {
+    agendarAtualizacaoCatalogoPublicado();
+    return;
+  }
+  atualizacaoCatalogoEmAndamento = true;
+  try {
+    const catalogo = await window.VendasDb.listarCatalogoVendas();
+    state.produtos = catalogo.produtos;
+    state.pacotesProdutos = catalogo.pacotes;
+    await salvarCacheVendas();
+    const campoAtivo = document.activeElement;
+    const editando = campoAtivo instanceof HTMLElement && campoAtivo.matches('input, textarea, select, [contenteditable="true"]');
+    if (!editando) render();
+  } catch (error) {
+    console.warn('Não foi possível aplicar a atualização imediata do catálogo.', error);
+  } finally {
+    atualizacaoCatalogoEmAndamento = false;
   }
 }
 
