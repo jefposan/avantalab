@@ -1,6 +1,34 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.19.0.12 -->
+<!-- ava-version: 1.19.0.20 -->
+
+> Revisão 1.19.0.20: no PWA de Serviços, locais agrupadores com clientes em
+> mais de um piso ou nível apresentam primeiro a seleção do piso e, em seguida,
+> os clientes pendentes para visita naquele local.
+
+> Revisão 1.19.0.19: no PWA de Serviços, somente destinos com atendimento
+> pendente ou atrasado podem ser registrados. Sem atendimento disponível, o
+> colaborador vê a próxima execução antes de iniciar a assinatura.
+
+> Revisão 1.19.0.18: na avaliação de Serviço, o cliente escolhe entre cartões
+> visuais de **Bom** e **Regular**; a segunda opção tem borda âmbar destacada.
+
+> Revisão 1.19.0.17: o cabeçalho da assinatura de Serviço identifica o
+> assinante e, abaixo, a empresa ou empresa/subempresa escolhida.
+
+> Revisão 1.19.0.16: mensagens e validações exibidas na área de assinatura de
+> Serviço são centralizadas no campo.
+
+> Revisão 1.19.0.15: na assinatura de Serviço, **Cancelar** fica junto de
+> **Limpar assinatura** no rodapé. O cabeçalho e as ações usam a cor do sistema.
+
+> Revisão 1.19.0.14: no registro de Serviço, o campo do assinador aparece
+> após a escolha do destino; só então é exibida a ação **Avançar para
+> assinatura**.
+
+> Revisão 1.19.0.13: a assinatura de Serviço é exibida em uma camada de tela
+> cheia, sem o card ou o cabeçalho do PWA ao fundo. A área para assinar ocupa o
+> espaço disponível e o cancelamento devolve o colaborador ao cadastro.
 
 > Revisão 1.19.0.12: no PWA de Serviços, **Registrar novo serviço** inicia
 > selecionado e a ação alternativa fica contornada. A coleta da assinatura abre

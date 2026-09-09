@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.19.0.20 - 2026-09-09
+- **Operações de Campo**: em locais agrupadores distribuídos em mais de um piso ou nível, o colaborador seleciona primeiro o piso e vê todos os clientes pendentes daquela área antes de escolher quem atender.
+
+## 1.19.0.19 - 2026-09-09
+- **Operações de Campo**: o PWA agora exibe para registro somente os destinos com serviço pendente ou atrasado. Quando não houver atendimento disponível, informa antes da assinatura a próxima execução programada, evitando uma falha no momento de enviar a avaliação.
+
+## 1.19.0.18 - 2026-09-09
+- **Operações de Campo**: as opções de avaliação de Serviço foram transformadas em cartões mais expressivos, com ícone, texto de apoio e borda âmbar destacada para **Regular**.
+
+## 1.19.0.17 - 2026-09-09
+- **Operações de Campo**: o topo da assinatura agora mostra o nome do assinante sem aspas e identifica a empresa ou a combinação empresa/subempresa selecionada.
+
+## 1.19.0.16 - 2026-09-09
+- **Operações de Campo**: todas as mensagens exibidas na área de assinatura, inclusive validações, agora são centralizadas dentro do campo.
+
+## 1.19.0.15 - 2026-09-09
+- **Operações de Campo**: na tela de assinatura, **Cancelar** foi movido para o rodapé, ao lado de **Limpar assinatura**. Cabeçalho e ações agora usam a cor institucional do sistema.
+
+## 1.19.0.14 - 2026-09-09
+- **Operações de Campo**: o cadastro de Serviço agora revela o campo do assinador — e o botão **Avançar para assinatura** — somente depois que a empresa e, quando necessário, o cliente forem definidos.
+
+## 1.19.0.13 - 2026-09-09
+- **Operações de Campo**: a coleta de assinatura agora é uma camada global, fora do card e do cabeçalho do PWA. O cabeçalho identifica o assinador e a área de desenho preenche todo o espaço útil da tela.
+
 ## 1.19.0.12 - 2026-09-09
 - **Operações de Campo**: no PWA de Serviços, a ação ativa fica branca e a alternativa permanece apenas contornada. O acesso inicia em **Registrar novo serviço**. A assinatura do cliente agora abre em tela cheia, com cabeçalho identificado e opção de cancelamento.
 

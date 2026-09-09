@@ -1,6 +1,30 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.19.0.12 -->
+<!-- ava-version: 1.19.0.20 -->
+
+> Revisão 1.19.0.20: a seleção de piso no PWA de Serviços não altera a
+> operação do AvantaVendas.
+
+> Revisão 1.19.0.19: a validação de atendimento disponível no PWA de Serviços
+> não altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.18: o refinamento visual da avaliação de Serviço no PWA não
+> altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.17: a identificação no cabeçalho da assinatura de Serviço no
+> PWA não altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.16: a centralização das mensagens da assinatura de Serviço no
+> PWA não altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.15: o refinamento visual da assinatura de Serviço no PWA não
+> altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.14: a progressão do formulário de Serviço no PWA não altera a
+> operação do AvantaVendas.
+
+> Revisão 1.19.0.13: a camada de assinatura de Serviço no PWA não altera a
+> operação do AvantaVendas.
 
 > Revisão 1.19.0.12: o refinamento da assinatura no PWA de Serviços não altera
 > a operação do AvantaVendas.

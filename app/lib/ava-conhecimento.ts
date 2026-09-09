@@ -1,5 +1,22 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.19.0.20: locais agrupadores com mais de um nível no
+// PWA de Serviços permitem escolher o piso e exibem os clientes pendentes dele.
+// Revisado na versão 1.19.0.19: no PWA de Serviços, o registro é iniciado
+// apenas para atendimento pendente ou atrasado; sem ele, a próxima execução é exibida.
+
+// Revisado na versão 1.19.0.18: avaliação de Serviço usa cartões de Bom e
+// Regular, com borda âmbar destacada para a segunda opção.
+// Revisado na versão 1.19.0.17: o cabeçalho da assinatura identifica assinante
+// e empresa ou subempresa selecionada.
+// Revisado na versão 1.19.0.16: mensagens da assinatura de Serviço ficam
+// centralizadas na área do campo.
+// Revisado na versão 1.19.0.15: assinatura de Serviço usa cabeçalho e ações
+// na cor do sistema, com Cancelar ao lado de Limpar assinatura.
+// Revisado na versão 1.19.0.14: o formulário de Serviço revela a ação de
+// assinatura somente após o destino e o campo do assinador.
+// Revisado na versão 1.19.0.13: a assinatura de Serviço abre em uma camada
+// global de tela cheia, com a área de desenho adaptada ao visor.
 // Revisado na versão 1.19.0.12: no PWA de Serviços, a ação selecionada fica
 // branca e a assinatura abre em tela cheia, com cancelamento seguro.
 // Revisado na versão 1.19.0.11: no PWA de Serviços, registrar e consultar
