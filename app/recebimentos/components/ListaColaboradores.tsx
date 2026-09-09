@@ -51,6 +51,8 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [podeRecebimentos, setPodeRecebimentos] = useState(true);
+  const [podeServicos, setPodeServicos] = useState(false);
   const chaveRascunho = `avantalab:rascunho:v1:recebimentos:colaborador:${rascunhoEscopo}`;
 
   useEffect(() => {
@@ -122,7 +124,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   }, [colaboradores, recebimentos]);
 
   function limparForm() {
-    setNome(''); setCelular(''); setEmail(''); setCpf(''); setSenha(''); setConfirmarSenha('');
+    setNome(''); setCelular(''); setEmail(''); setCpf(''); setSenha(''); setConfirmarSenha(''); setPodeRecebimentos(true); setPodeServicos(false);
     setErro('');
     setConfirmandoExclusao(false);
     setFormAberto(false);
@@ -131,7 +133,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   }
 
   function abrirNovo() {
-    setNome(''); setCelular(''); setEmail(''); setCpf(''); setSenha(''); setConfirmarSenha('');
+    setNome(''); setCelular(''); setEmail(''); setCpf(''); setSenha(''); setConfirmarSenha(''); setPodeRecebimentos(true); setPodeServicos(false);
     setErro('');
     setConfirmandoExclusao(false);
     setEditandoId(null);
@@ -140,7 +142,10 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
 
   function abrirEdicao(c: Colaborador) {
     setNome(c.nome); setCelular(c.celular); setEmail(c.email); setCpf(formatarCpf(c.cpf));
-    setSenha(c.senha); setConfirmarSenha(c.senha);
+    // Senhas não retornam do servidor. Mantemos estes campos vazios na edição
+    // para que só uma troca explícita de senha acione a redefinição do acesso.
+    setSenha(''); setConfirmarSenha('');
+    setPodeRecebimentos(c.podeRecebimentos); setPodeServicos(c.podeServicos);
     setErro('');
     setConfirmandoExclusao(false);
     setEditandoId(c.id);
@@ -154,9 +159,12 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
 
   async function salvar() {
     setErro('');
-    // Todos os campos são obrigatórios.
-    if (!nome.trim() || !celular.trim() || !email.trim() || !cpf.trim() || !senha.trim() || !confirmarSenha.trim()) {
-      return setErro('Preencha todos os campos: nome, CPF, celular, e-mail, senha e confirmação.');
+    const criando = !editandoId;
+    if (!nome.trim() || !celular.trim() || !email.trim() || !cpf.trim()) {
+      return setErro('Preencha todos os campos: nome, CPF, celular e e-mail.');
+    }
+    if (criando && (!senha.trim() || !confirmarSenha.trim())) {
+      return setErro('Defina e confirme a senha de acesso do colaborador.');
     }
     if (!validarNomeCompleto(nome)) {
       return setErro('Informe o nome completo do colaborador, com nome e sobrenome.');
@@ -165,15 +173,19 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
     if (!cpfValido(cpf)) {
       return setErro('Informe um CPF válido (ele será o login do colaborador).');
     }
-    if (senha !== confirmarSenha) {
+    if ((senha || confirmarSenha) && senha !== confirmarSenha) {
       return setErro('A senha e a confirmação não coincidem.');
     }
+    if (senha && senha.length < 8) return setErro('A nova senha deve ter pelo menos 8 caracteres.');
+    if (!podeRecebimentos && !podeServicos) return setErro('Selecione ao menos um acesso: Recebimentos ou Serviços.');
     const dados: DadosColaborador = {
       nome: nome.trim(),
       celular: celular.trim(),
       email: email.trim(),
       cpf: cpf.replace(/\D/g, ''),
       senha: senha.trim(),
+      podeRecebimentos,
+      podeServicos,
     };
     setSalvando(true);
     try {
@@ -207,22 +219,22 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
         <div style={{ display: 'flex', gap: 8 }}>
           <div className={styles.field} style={{ flex: 1 }}><label className={styles.label}>CPF (login) *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="numeric" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(formatarCpf(e.target.value))} /></div>
           <div className={styles.field} style={{ flex: 1 }}>
-            <label className={styles.label} htmlFor="recebimentos-colaborador-senha">Senha *</label>
+            <label className={styles.label} htmlFor="recebimentos-colaborador-senha">{edicao ? 'Nova senha (opcional)' : 'Senha *'}</label>
             <CampoSenha
               id="recebimentos-colaborador-senha"
               name="recebimentos-nova-senha"
-              autoComplete={edicao ? 'current-password' : 'new-password'}
-              placeholder="Digite a senha"
+              autoComplete="new-password"
+              placeholder={edicao ? 'Preencha somente para alterar' : 'Digite a senha'}
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
             />
           </div>
           <div className={styles.field} style={{ flex: 1 }}>
-            <label className={styles.label} htmlFor="recebimentos-colaborador-confirmar-senha">Confirmar senha *</label>
+            <label className={styles.label} htmlFor="recebimentos-colaborador-confirmar-senha">{edicao ? 'Confirmar nova senha' : 'Confirmar senha *'}</label>
             <CampoSenha
               id="recebimentos-colaborador-confirmar-senha"
               autoComplete="new-password"
-              placeholder="Repita a senha"
+              placeholder={edicao ? 'Repita a nova senha' : 'Repita a senha'}
               value={confirmarSenha}
               onChange={(e) => setConfirmarSenha(e.target.value)}
             />
@@ -251,6 +263,12 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
               {salvando ? 'Salvando…' : 'Salvar'}
             </button>
           </div>
+        </div>
+        <div className={styles.permissoesColaborador} role="group" aria-labelledby="recebimentos-permissoes-colaborador">
+          <div id="recebimentos-permissoes-colaborador" className={styles.permissoesColaboradorTitulo}>Permissões no aplicativo</div>
+          <label><input type="checkbox" checked={podeRecebimentos} onChange={(event) => setPodeRecebimentos(event.target.checked)} /> Recebimentos</label>
+          <label><input type="checkbox" checked={podeServicos} onChange={(event) => setPodeServicos(event.target.checked)} /> Serviços</label>
+          <small>Com os dois acessos, o colaborador escolhe a operação ao entrar no PWA.</small>
         </div>
         {erro && <div className={styles.aviso} style={{ marginTop: 8 }}>{erro}</div>}
       </div>
@@ -314,6 +332,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
                   <div className={styles.subNome}>{c.nome}</div>
                   <div className={styles.subMeta}>{c.celular} · CPF {formatarCpf(c.cpf)}</div>
                   <div className={styles.subMeta}>Recebido: {formatarMoeda(t.recebido)} · Aguardando: {formatarMoeda(t.aguardando)}</div>
+                  <div className={styles.subMeta}>Acessos: {[c.podeRecebimentos && 'Recebimentos', c.podeServicos && 'Serviços'].filter(Boolean).join(' · ') || 'Nenhum'}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                   <span className={`${styles.chip} ${c.ativo ? styles.chipOn : styles.chipOff}`}>{c.ativo ? 'Ativo' : 'Inativo'}</span>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import styles from './recebimentos.module.css';
 import { corEhClara } from '@/app/lib/formatters';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
-import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Subempresa } from './components/types';
+import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Servico, Subempresa } from './components/types';
 import PainelAdministrativo from './components/PainelAdministrativo';
 import type { IntegracaoFinanceiraRecebimentos, RecebimentosRepo } from './data/repo';
 
@@ -41,6 +41,7 @@ export default function RecebimentosClient({
   const [subempresas, setSubempresas] = useState<Subempresa[]>([]);
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [recebimentos, setRecebimentos] = useState<Recebimento[]>([]);
+  const [servicos, setServicos] = useState<Servico[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [processando, setProcessando] = useState(false);
   const [erro, setErro] = useState('');
@@ -53,6 +54,7 @@ export default function RecebimentosClient({
       setSubempresas(dados.subempresas);
       setColaboradores(dados.colaboradores);
       setRecebimentos(dados.recebimentos);
+      setServicos(dados.servicos);
       setErro('');
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Não foi possível carregar o módulo.');
@@ -177,6 +179,7 @@ export default function RecebimentosClient({
           subempresas={subempresas}
           colaboradores={colaboradores}
           recebimentos={recebimentos}
+          servicos={servicos}
           mostrarLinkColaboradores={mostrarLinkColaboradores}
           rascunhoEscopo={rascunhoEscopo}
           onObterIntegracaoFinanceira={obterIntegracaoFinanceira}
@@ -210,6 +213,7 @@ export default function RecebimentosClient({
             const atual = colaboradores.find((c) => c.id === id);
             if (atual) void executar(() => repoAtual.alternarColaborador(id, !atual.ativo));
           }}
+          onConcluirAvisoServico={(id) => void executar(() => repoAtual.concluirAvisoServico(id))}
         />
       )}
     </>
@@ -222,7 +226,7 @@ export default function RecebimentosClient({
         <div className={styles.topbarInner}>
           <div className={styles.brand}>
             <span className={styles.brandKicker}>AvantaLab · Preview</span>
-            <span className={styles.brandTitle}>Recebimentos em Campo</span>
+            <span className={styles.brandTitle}>Operações de Campo</span>
           </div>
           <div className={styles.perfilGroup} role="tablist" aria-label="Perfil de teste">
             {PERFIS.map(([valor, label]) => (

@@ -296,24 +296,39 @@
 
 /* Abas administrativas */
 .tabs {
+  position: relative;
   display: flex;
-  gap: 4px;
+  align-items: flex-end;
+  gap: 8px;
   overflow-x: auto;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 8px;
-  scrollbar-width: thin;
+  padding: 5px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--cp) 3%, #f8fafc);
+  margin-bottom: 24px;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tabIndicador {
+  position: absolute;
+  z-index: 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 7px color-mix(in srgb, var(--cp) 24%, transparent);
+  transition: left .3s ease-out, top .3s ease-out, width .3s ease-out, height .3s ease-out, background-color .22s ease-out;
 }
 .tab {
+  position: relative;
+  z-index: 1;
   border: none;
   background: transparent;
   color: #64748b;
   font-size: 13px;
   font-weight: 700;
-  padding: 10px 14px;
+  padding: 9px 12px;
+  border-radius: 10px;
   white-space: nowrap;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s ease;
+  transition: color .22s ease, background .22s ease, box-shadow .22s ease, transform .22s ease;
 }
 .tabsStatus {
   display: inline-flex;
@@ -326,11 +341,30 @@
   font-weight: 700;
   white-space: nowrap;
 }
-.tab:hover { color: var(--cp); }
+.tab:hover { color: var(--cp); background: color-mix(in srgb, var(--cp) 7%, transparent); }
 .tabAtiva {
-  color: var(--cp);
-  border-bottom-color: var(--cp);
+  z-index: 2;
+  color: #fff;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
 }
+.tabsGrupo { display: flex; flex: 0 0 auto; flex-direction: column; gap: 3px; }
+.tabsGrupoGeral { padding-top: 17px; }
+.tabsGrupoBar { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 12px; }
+.tabsGrupoGeral .tabsGrupoBar { background: color-mix(in srgb, #475569 8%, #f8fafc); box-shadow: inset 0 0 0 1px color-mix(in srgb, #475569 16%, transparent); }
+.tabsGrupoRecebimentos .tabsGrupoBar { background: color-mix(in srgb, var(--cp) 10%, #faf5ff); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cp) 24%, transparent); }
+.tabsGrupoServicos .tabsGrupoBar { background: color-mix(in srgb, #0d9488 12%, #ecfdf5); box-shadow: inset 0 0 0 1px color-mix(in srgb, #0d9488 22%, transparent); }
+.tabsGrupoTitulo { padding: 0 6px; color: var(--cp); font-size: 10px; font-weight: 900; letter-spacing: .08em; line-height: 14px; text-transform: uppercase; }
+.tabsGrupoServicos .tabsGrupoTitulo { color: #0f766e; }
+.tabGeral { color: #475569; }
+.tabRecebimentos { color: var(--cp); }
+.tabServico { color: #0f766e; }
+.tabsGrupoGeral .tabAtiva { color: #fff; background: #475569; }
+.tabsGrupoRecebimentos .tabAtiva { color: #fff; background: var(--cp); }
+.tabsGrupoServicos .tabAtiva { color: #fff; background: #0f766e; }
+.tabServico:hover { color: #0f766e; background: color-mix(in srgb, #0d9488 12%, transparent); }
+.tabServico.tabAtiva { color: #fff; box-shadow: none; }
 
 /* Título do AvantaShell: perfil (Gestor/Administrador) em fonte menor. */
 .tituloPerfil {
@@ -1465,10 +1499,12 @@
   overscroll-behavior: contain;
   padding-right: 6px;
 }
-.listaRolavelCadastro { display: flex; }
-.listaRolavelCadastro > .cadastroSubShell { display: flex; width: 100%; }
-.listaRolavelCadastro > .formCadastroEmpresa { width: 100%; flex: 1 1 auto; }
-.listaRolavelCadastro .subListaCadastro { display: flex; flex: 1; }
+/* Cadastros não comprimem sua altura: a área da lista é o único scroll.
+   Isso mantém endereço, execução e ações alcançáveis ao editar um cliente. */
+.listaRolavelCadastro { display: block; }
+.listaRolavelCadastro > .cadastroSubShell { display: block; width: 100%; }
+.listaRolavelCadastro > .formCadastroEmpresa { width: 100%; min-height: max-content; }
+.listaRolavelCadastro .subListaCadastro { display: block; min-height: max-content; }
 
 /* Topo das listas: título + busca + ação principal (estático). */
 .listaTopo {
@@ -1740,7 +1776,9 @@
   display: grid;
   gap: 8px;
 }
-.enderecoLinhaPrincipal { grid-template-columns: 92px minmax(128px, 1.19fr) 71px minmax(82px, 0.75fr) minmax(82px, 0.75fr) minmax(88px, 0.8fr) 56px; }
+/* Rua recebe a maior parte da largura útil; a identificação de nível é curta
+   por natureza (ex.: 12, G, L2) e permanece legível em uma coluna compacta. */
+.enderecoLinhaPrincipal { grid-template-columns: 92px minmax(220px, 2fr) 72px minmax(104px, 0.8fr) minmax(82px, 0.62fr) minmax(108px, 0.9fr) minmax(88px, 0.8fr) minmax(104px, 0.9fr) 56px; }
 .enderecoLinhaPrincipal .field { margin-bottom: 0; }
 @media (max-width: 680px) {
   .linhaEmpresaCampos, .enderecoLinhaPrincipal { grid-template-columns: 1fr 1fr; }
@@ -1860,11 +1898,12 @@
   font-size: 11px;
 }
 .formCadastroEmpresa,
-.formCadastroSub { display: flex; min-height: 0; flex: 1; flex-direction: column; margin-bottom: 0; background: #f8fafc; }
-.formCadastroSub .recorrencia { min-height: 200px; flex: 1 1 auto; }
-.formCadastroSub .recorrenciaConfig { display: flex; min-height: 0; flex: 1 1 auto; align-items: center; justify-content: center; margin-bottom: 10px; }
+.formCadastroSub { display: flex; min-height: max-content; flex: 0 0 auto; flex-direction: column; margin-bottom: 0; background: #f8fafc; }
+.formCadastroSub .recorrencia { min-height: 0; flex: 0 0 auto; }
+.formCadastroSub .recorrenciaConfig { display: block; min-height: 0; margin-bottom: 10px; }
 .formCadastroSub .recorrenciaPopupDireto { width: min(560px, 100%); }
 .formCadastroSub .recorrenciaPopupSemMes { width: min(720px, 100%); }
+.formCadastroSub .recorrenciaPopupMensal { width: min(920px, 100%); }
 .formCadastroSub .recorrenciaPopupComMes { width: min(1040px, 100%); }
 .recorrenciaDias { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
 .recorrenciaDia {
@@ -1898,6 +1937,7 @@
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
   overflow-y: auto;
 }
+.recorrenciaPopupMensal { width: min(920px, calc(100vw - 52px)); }
 .recorrenciaPopupDireto {
   position: relative;
   top: auto;
@@ -1906,10 +1946,19 @@
   transform: none;
 }
 .recorrenciaPopupTitulo { margin-bottom: 3px; color: #475569; font-size: 10px; font-weight: 800; }
-.recorrenciaMeses { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+.recorrenciaLinhaSelecao {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.recorrenciaLinhaSelecao .recorrenciaPopupTitulo { margin: 0; white-space: nowrap; }
+.recorrenciaMeses { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; min-width: 0; }
 .recorrenciaDiasMes { display: grid; grid-template-columns: repeat(15, 1fr); gap: 3px; }
 .recorrenciaDiasQuinzenal { grid-template-columns: repeat(15, minmax(0, 1fr)); }
 .recorrenciaDiasQuinzenal .recorrenciaEscolha { white-space: nowrap; }
+.recorrenciaDiasMensal { grid-template-columns: repeat(31, minmax(0, 1fr)); }
 .recorrenciaDiasComMes { grid-template-columns: repeat(31, minmax(0, 1fr)); }
 .recorrenciaDiasSemMes .recorrenciaEscolha { min-height: 30px; border-radius: 7px; padding: 4px 2px; font-size: 11px; }
 .recorrenciaEscolha {
@@ -1927,10 +1976,13 @@
 .recorrenciaEscolha:hover { border-color: var(--cp); color: var(--cp); }
 .recorrenciaEscolhaAtiva { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 14%, #fff); color: var(--cp); }
 @media (max-width: 560px) {
-  .recorrenciaMeses { grid-template-columns: repeat(4, 1fr); }
+  .recorrenciaLinhaSelecao { grid-template-columns: 1fr; gap: 3px; }
+  .recorrenciaLinhaSelecao .recorrenciaPopupTitulo { white-space: normal; }
+  .recorrenciaMeses { grid-template-columns: repeat(12, minmax(36px, 1fr)); overflow-x: auto; }
   .recorrenciaDiasMes { grid-template-columns: repeat(7, 1fr); }
   .recorrenciaDiasQuinzenal { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-  .recorrenciaDiasComMes { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .recorrenciaDiasMensal,
+  .recorrenciaDiasComMes { grid-template-columns: repeat(31, minmax(24px, 1fr)); overflow-x: auto; }
 }
 .recorrencia + .linhaTelefoneAcoes { margin-top: 2px; }
 .empresaBloco:has(.recorrenciaPopup) { overflow: visible; }
@@ -2087,20 +2139,145 @@
    mudanças entre endereço e vencimento passam a redistribuir somente o corpo
    interno, sem alterar a altura do modal ou do AvantaCard. */
 .integradoShell { height: 100%; min-height: 0; }
-.painelAdministrativo { display: flex; height: 100%; min-height: 0; flex-direction: column; }
-.painelAdministrativo > .tabs { flex: 0 0 auto; }
-.painelCardFixo { display: flex; min-height: 0; flex: 1 1 0; flex-direction: column; }
-.painelCardFixo > div:last-child { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; }
-.painelCardCorpo { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; overflow: hidden; }
+
+/* Página total do módulo: o shell próprio preserva a navegação essencial da
+   Gestão e libera toda a área restante para o workspace de recebimentos. */
+.paginaModulo {
+  --pagina-bg: #eef3f6;
+  --pagina-superficie: #fff;
+  --pagina-texto: #142538;
+  --pagina-suave: #f5f8fa;
+  --pagina-borda: #dce5eb;
+  min-height: 100dvh;
+  background: radial-gradient(circle at 85% -10%, color-mix(in srgb, var(--cp) 8%, transparent), transparent 32rem), var(--pagina-bg);
+  color: var(--pagina-texto);
+  font-family: var(--av-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+}
+.paginaModulo, .paginaModulo * { box-sizing: border-box; }
+.paginaModulo :is(button, input, select, textarea):focus-visible,
+.botaoInicio:focus-visible, .botaoAjustes:focus-visible { outline: 3px solid color-mix(in srgb, var(--cp) 38%, transparent); outline-offset: 2px; }
+.paginaModuloEscura { --pagina-bg: #08131e; --pagina-superficie: #101b28; --pagina-texto: #e5edf2; --pagina-suave: #0b1520; --pagina-borda: #2a3d4c; color-scheme: dark; }
+.cabecalhoModulo {
+  position: sticky; top: 0; z-index: 120;
+  min-height: 76px;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+  padding: 8px clamp(14px, 2.5vw, 32px);
+  border-bottom: 1px solid var(--pagina-borda);
+  background: color-mix(in srgb, var(--pagina-superficie) 94%, transparent);
+  box-shadow: 0 5px 18px rgba(16, 42, 61, .07);
+  backdrop-filter: blur(14px);
+}
+.botaoInicio {
+  justify-self: start;
+  min-height: 40px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 15px;
+  border-radius: 11px;
+  color: #fff; background: var(--cp);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--cp) 24%, transparent);
+  font-size: 12px; font-weight: 700; text-decoration: none;
+}
+.botaoInicio:hover { background: color-mix(in srgb, var(--cp) 88%, #fff); }
+.identidadeModulo { display: grid; justify-items: center; gap: 6px; line-height: 1.2; text-align: center; }
+.logoModulo { display: block; width: clamp(148px, 12vw, 168px); height: auto; }
+.identidadeModulo span { color: color-mix(in srgb, var(--pagina-texto) 62%, transparent); font-size: 11px; font-weight: 500; }
+.paginaModuloEscura .logoModulo { filter: brightness(0) invert(1); }
+.botaoAjustes {
+  justify-self: end;
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border: 1px solid var(--pagina-borda); border-radius: 11px;
+  color: var(--cp); background: var(--pagina-superficie);
+  font-size: 19px; line-height: 1; text-decoration: none;
+}
+.botaoAjustes:hover { border-color: color-mix(in srgb, var(--cp) 40%, var(--pagina-borda)); background: var(--pagina-suave); }
+.areaModulo { width: min(100%, 1760px); margin: 0 auto; padding: 24px clamp(14px, 2.5vw, 34px) 34px; }
+.tituloPaginaModulo { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+.tituloPaginaModulo span { color: var(--cp); font-size: 10px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+.tituloPaginaModulo h1 { margin: 5px 0 3px; font-size: clamp(24px, 3vw, 34px); letter-spacing: -.025em; line-height: 1.2; }
+.tituloPaginaModulo p { margin: 0; color: color-mix(in srgb, var(--pagina-texto) 60%, transparent); font-size: 13px; }
+.workspaceModulo {
+  min-height: min(760px, calc(100dvh - 184px));
+  padding: 16px;
+  border: 1px solid var(--pagina-borda); border-radius: 18px;
+  background: var(--pagina-superficie);
+  box-shadow: 0 12px 34px rgba(28, 48, 64, .06);
+}
+.paginaModuloEscura .workspaceModulo { background: var(--pagina-superficie); }
+.acessoModuloEstado { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: #eef3f6; color: #142538; font-family: var(--av-font-family, sans-serif); }
+.acessoModuloEstado section { width: min(100%, 440px); padding: 28px; border-radius: 18px; background: #fff; box-shadow: 0 18px 45px rgba(15, 23, 42, .12); text-align: center; }
+.acessoModuloEstado span { color: #003e73; font-size: 30px; }.acessoModuloEstado h1 { margin: 8px 0; font-size: 21px; }.acessoModuloEstado p { margin: 0 0 18px; color: #607284; }.acessoModuloEstado a { color: #fff; background: #003e73; border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 800; text-decoration: none; }
+@media (max-width: 680px) {
+  .cabecalhoModulo { min-height: 68px; grid-template-columns: auto 1fr auto; gap: 8px; padding-inline: 12px; }
+  .botaoInicio { min-height: 40px; padding-inline: 11px; font-size: 12px; }
+  .logoModulo { width: 128px; }.identidadeModulo span { max-width: 132px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; }
+  .areaModulo { padding: 18px 12px 24px; }.tituloPaginaModulo p { font-size: 12px; }.workspaceModulo { min-height: calc(100dvh - 174px); padding: 10px; border-radius: 14px; }
+}
+.painelAdministrativo { display: block; min-height: 0; }
+.painelAdministrativo > .tabs { margin-bottom: 24px; }
+/* Recebimentos agora ocupa uma página completa. O AvantaCard acompanha o
+   conteúdo carregado e a rolagem fica no documento, não dentro do card. */
+.painelCardFixo { display: block; min-height: 0; }
+.painelCardFixo > div:last-child { display: block; min-height: 0; }
+.painelCardCorpo { display: block; min-height: 240px; overflow: visible; }
 .painelCardCorpo:has(.formCadastroSub),
 .painelCardCorpo:has(.formCadastroEmpresa) { padding: 18px 12px 8px; }
-.painelCardCorpo > .listaShell { max-height: none; flex: 1 1 auto; }
-.painelCardCorpo > .corpoRolavel { min-height: 0; flex: 1 1 auto; }
+.painelAdministrativo .listaShell,
+.painelAdministrativo .listaRolavel,
+.painelAdministrativo .corpoRolavel {
+  display: block;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+.painelAdministrativo .listaRolavel,
+.painelAdministrativo .corpoRolavel { padding-right: 0; }
+.permissoesColaborador { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 12px 0 0; padding: 12px; border: 1px solid #dbeafe; border-radius: 12px; color: #334155; background: #f8fbff; font-size: 12px; }
+.permissoesColaboradorTitulo { width: 100%; color: var(--cp); font-size: 12px; font-weight: 800; line-height: 1.2; }
+.permissoesColaborador label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.permissoesColaborador input { width: 16px; height: 16px; accent-color: var(--cp); }
+.permissoesColaborador small { width: 100%; color: #64748b; }
+.servicosPainel { max-width: 1100px; }
+.servicosTitulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.servicosTitulo h3 { margin: 0; color: #0f766e; font-size: 18px; }
+.servicosTitulo span { display: grid; min-width: 28px; min-height: 28px; place-items: center; border-radius: 999px; color: #fff; background: #0f766e; font-size: 12px; font-weight: 900; }
+.servicosLista { display: grid; gap: 8px; }
+.servicoItem { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; border: 1px solid #dbe7e6; border-radius: 14px; background: #fff; }
+.servicoItem > div { display: grid; min-width: 0; gap: 3px; }
+.servicoItem strong { color: #0f172a; font-size: 14px; }
+.servicoItem span, .servicoItem p { margin: 0; color: #64748b; font-size: 12px; line-height: 1.35; }
+.servicoAviso { border-color: #f4cf8f; background: #fffdf8; }
+.servicoAviso p { color: #92400e; }
+.servicoSituacao { flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; color: #0f766e !important; background: #ecfdf5; font-weight: 800; }
+.heroServicos { background: linear-gradient(135deg, #0f766e, #0d9488); }
+.btnServicoPwa { width: 100%; margin-top: 14px; color: #0f766e; background: #fff; }
+.servicoCardPwa { margin-top: 16px; }
+.formularioServico { max-width: 640px; }
+.servicoEtapa { color: #475569; font-size: 14px; }
+.assinaturaCanvas { display: block; width: 100%; height: 170px; touch-action: none; border: 2px dashed #94a3b8; border-radius: 14px; background: #fff; cursor: crosshair; }
+.acoesServico { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.avaliacaoServico { text-align: center; }
+.avaliacaoServico h3 { margin: 0; color: #0f172a; font-size: 20px; }
+.avaliacaoServico p { color: #64748b; }
+.avaliacaoServico > div { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+.avaliacaoServico button { min-height: 130px; border: 0; border-radius: 18px; cursor: pointer; font-size: 20px; font-weight: 900; }
+.avaliacaoBom { color: #fff; background: #15803d; }
+.avaliacaoRegular { color: #78350f; background: #fef3c7; }
+.avaliacaoServico textarea { margin-top: 16px; text-align: left; }
+.sucessoServico { margin-top: 16px; padding: 12px 14px; border-radius: 12px; color: #166534; background: #dcfce7; font-size: 13px; }
+.topbarAcoesColaborador { display: flex; align-items: center; gap: 6px; }
+.seletorOperacaoPwa { display: grid; min-height: 100dvh; place-items: center; padding: 24px; background: linear-gradient(145deg, #e6fffb, #eff6ff); color: #0f172a; font-family: var(--av-font-family, sans-serif); }
+.seletorOperacaoPwa section { display: grid; width: min(100%, 390px); gap: 12px; padding: 24px; border: 1px solid #dbeafe; border-radius: 22px; background: #fff; box-shadow: 0 22px 56px rgba(15, 23, 42, .14); }
+.seletorOperacaoPwa p { margin: 0; color: #0f766e; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.seletorOperacaoPwa h1 { margin: 0; font-size: 23px; }.seletorOperacaoPwa span { color: #64748b; font-size: 13px; }
+.seletorOperacaoPwa button { display: grid; gap: 3px; min-height: 78px; padding: 14px; border: 1px solid #cbd5e1; border-radius: 14px; color: #0f766e; background: #f0fdfa; text-align: left; cursor: pointer; }
+.seletorOperacaoPwa button b { font-size: 16px; }.seletorOperacaoPwa button small { color: #475569; font-size: 12px; }.seletorOperacaoPwa .seletorSair { min-height: 44px; display: block; color: #64748b; background: #fff; text-align: center; }
+@media (max-width: 640px) { .tabs { gap: 5px; border-radius: 12px; margin-bottom: 20px; }.tabsGrupoGeral { padding-top: 17px; }.tabsGrupoTitulo { padding-left: 5px; }.tab { padding: 9px 10px; font-size: 12px; }.servicoItem { align-items: flex-start; flex-direction: column; }.servicoItem .btn { width: 100%; }.acoesServico { flex-wrap: wrap; }.acoesServico .btn { flex: 1 1 130px; }.topbarAcoesColaborador .btn { padding-inline: 8px; font-size: 11px; } }
 .darkScope .tabs { border-bottom-color: #334155; }
 .darkScope .tab { color: #94a3b8; }
 .darkScope .tabsStatus { color: #94a3b8; }
 .darkScope .tab:hover,
-.darkScope .tabAtiva,
 .darkScope .sectionTitle,
 .darkScope .formTitulo,
 .darkScope .linkAcessoUrl,
@@ -2108,6 +2285,7 @@
 .darkScope .atrasoItemValor { color: #67e8f9; }
 .darkScope .sectionTitleEmpresaPai { color: #f8fafc; }
 .darkScope .tabAtiva { border-bottom-color: #22d3ee; }
+.darkScope .tabAtiva { color: #fff; }
 .darkScope .tituloPerfil { color: #a5f3fc; }
 .darkScope .mesSeletor {
   border-color: #475569;

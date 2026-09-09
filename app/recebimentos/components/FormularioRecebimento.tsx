@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import { FORMAS_PAGAMENTO_RECEBIMENTO, type Empresa, type FormaPagamentoRecebimento, type Recebimento, type Subempresa } from './types';
-import { dataLocalIso, diasEmAtraso, formatarData, formatarMoeda, formatarValorInput, parseValorBR, rotuloFrequenciaRecebimento, tipoDiferenca, valorParaInput } from './helpers';
+import { dataLocalIso, diasEmAtraso, formatarData, formatarMoeda, formatarValorInput, parseValorBR, rotuloFrequenciaExecucaoServico, tipoDiferenca, valorParaInput } from './helpers';
 
 type Props = {
   empresas: Empresa[];
@@ -113,6 +113,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
     return subempresas.find((s) => s.id === id) ?? null;
   }, [subempresas, subempresaId, cobranca]);
   const empresa = useMemo(() => empresas.find((e) => e.id === empresaId) ?? null, [empresas, empresaId]);
+  const execucaoServico = sub?.herdaExecucaoServico && empresa?.frequenciaExecucaoServico ? empresa : sub ?? empresa;
 
   const nomeSub = (id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto';
 
@@ -283,7 +284,10 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
           {cobranca ? (
             <div className={styles.readonlyRow}><span>Vencimento da parcela</span><span>{formatarData(cobranca.vencimento)}</span></div>
           ) : (
-            <div className={styles.readonlyRow}><span>Recebimento</span><span>{sub ? rotuloFrequenciaRecebimento(sub.frequenciaRecebimento) : empresa?.frequenciaRecebimento ? rotuloFrequenciaRecebimento(empresa.frequenciaRecebimento) : '—'}</span></div>
+            <>
+              <div className={styles.readonlyRow}><span>Vencimento mensal</span><span>Dia {sub?.diaVencimento ?? empresa?.diaVencimento ?? '—'}</span></div>
+              <div className={styles.readonlyRow}><span>Execução do serviço</span><span>{execucaoServico?.frequenciaExecucaoServico ? `${rotuloFrequenciaExecucaoServico(execucaoServico.frequenciaExecucaoServico)}${sub?.herdaExecucaoServico && empresa?.frequenciaExecucaoServico ? ' (do local)' : ''}` : '—'}</span></div>
+            </>
           )}
           <div className={styles.readonlyRow}><span>Valor contratado</span><span>{formatarMoeda(valorCombinado ?? 0)}</span></div>
         </div>

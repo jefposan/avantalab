@@ -43,5 +43,8 @@ next-env.d.ts
 # Supabase temp
 supabase/.temp/
 
+# Snapshots locais de dados reais antes de migrations; nunca versionar.
+.backups/
+
 # Referência local preservada da reconstrução do AvantaVendas
 /app/avantavendas/documentacao/referencia_tridium/

@@ -3,13 +3,15 @@
 
 export type Perfil = 'colaborador' | 'gestor' | 'administrador';
 export type TipoCadastroEmpresa = 'cliente_direto' | 'local_agrupador';
+export type TipoNivelEndereco = 'andar' | 'piso' | 'subsolo' | 'terreo' | 'mezanino' | 'outro';
 
-export type FrequenciaRecebimento = 'semanal' | 'quinzenal' | 'mensal' | 'trimestral' | 'semestral' | 'anual';
+/** Periodicidade do serviço contratado, independente da cobrança mensal. */
+export type FrequenciaExecucaoServico = 'semanal' | 'quinzenal' | 'mensal' | 'trimestral' | 'semestral' | 'anual';
 
-export type ConfiguracaoRecorrencia = {
-  /** 0 = domingo; usado pela cobrança semanal. */
+export type ConfiguracaoExecucaoServico = {
+  /** 0 = domingo; usado pela execução semanal. */
   diasSemana: number[];
-  /** Dia-base do mês. Para quinzenal, a segunda cobrança ocorre 15 dias depois. */
+  /** Dia-base do mês. Para quinzenal, a segunda execução ocorre 15 dias depois. */
   diaMes: number | null;
   /** Mês inicial (1–12), usado por trimestral, semestral e anual. */
   mesInicio: number | null;
@@ -51,13 +53,17 @@ export type Empresa = {
   cidade: string;
   estado: string;
   numero: string;
+  tipoNivel: TipoNivelEndereco | null;
+  identificacaoNivel: string;
   complemento: string;
   responsavel: string;
   telefone: string;
   email: string;
   valorCombinado: number | null;
-  frequenciaRecebimento: FrequenciaRecebimento | null;
-  configuracaoRecorrencia: ConfiguracaoRecorrencia | null;
+  /** Cobranças são sempre mensais e usam este dia (1–31). */
+  diaVencimento: number | null;
+  frequenciaExecucaoServico: FrequenciaExecucaoServico | null;
+  configuracaoExecucaoServico: ConfiguracaoExecucaoServico | null;
   ativo: boolean;
 };
 
@@ -73,14 +79,20 @@ export type Subempresa = {
   cidade: string;
   estado: string;
   numero: string;
+  tipoNivel: TipoNivelEndereco | null;
+  identificacaoNivel: string;
   complemento: string;
   shoppingGaleria: string;
   lojaSala: string;
   responsavel: string;
   /** Nulo enquanto o valor contratado ainda não foi definido. */
   valorCombinado: number | null;
-  frequenciaRecebimento: FrequenciaRecebimento;
-  configuracaoRecorrencia: ConfiguracaoRecorrencia;
+  /** Cobranças são sempre mensais e usam este dia (1–31). */
+  diaVencimento: number;
+  /** Quando ativo, usa a programação do local agrupador. */
+  herdaExecucaoServico: boolean;
+  frequenciaExecucaoServico: FrequenciaExecucaoServico;
+  configuracaoExecucaoServico: ConfiguracaoExecucaoServico;
   ativo: boolean;
 };
 
@@ -93,7 +105,29 @@ export type Colaborador = {
   // Guardado apenas com dígitos; exibido com máscara na UI.
   cpf: string;
   senha: string;
+  /** Define as superfícies que o colaborador pode usar no PWA. */
+  podeRecebimentos: boolean;
+  podeServicos: boolean;
   ativo: boolean;
+};
+
+export type AvaliacaoServico = 'bom' | 'regular';
+export type SituacaoServico = 'pendente' | 'realizado' | 'atrasado';
+
+/** Uma execução programada ou realizada, independente de qualquer cobrança. */
+export type Servico = {
+  id: string;
+  empresaId: string;
+  subempresaId: string | null;
+  dataProgramada: string;
+  situacao: SituacaoServico;
+  colaboradorId: string | null;
+  clienteNome: string | null;
+  assinatura: string | null;
+  avaliacao: AvaliacaoServico | null;
+  observacaoCliente: string | null;
+  realizadoEm: string | null;
+  avisoConcluidoEm: string | null;
 };
 
 export type Recebimento = {

@@ -5,20 +5,20 @@ import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
 import type { AbrirAvisoFn } from '@/app/hooks/useUI';
 import { validarNomeCompleto } from '@/app/lib/nome-pessoa';
-import type { Empresa, FrequenciaRecebimento, Subempresa, TipoCadastroEmpresa } from './types';
+import type { Empresa, FrequenciaExecucaoServico, Subempresa, TipoCadastroEmpresa, TipoNivelEndereco } from './types';
 import {
-  FREQUENCIAS_RECEBIMENTO,
+  FREQUENCIAS_EXECUCAO_SERVICO,
   formatarMoeda,
   formatarNomeProprio,
   formatarTelefone,
   formatarValorInput,
   parseValorBR,
-  rotuloFrequenciaRecebimento,
+  rotuloFrequenciaExecucaoServico,
   valorParaInput,
 } from './helpers';
 
 type DadosEmpresa = Omit<Empresa, 'id' | 'ativo'>;
-type DadosSubempresa = Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>;
+type DadosSubempresa = Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'tipoNivel' | 'identificacaoNivel' | 'complemento' | 'responsavel' | 'valorCombinado' | 'diaVencimento' | 'herdaExecucaoServico' | 'frequenciaExecucaoServico' | 'configuracaoExecucaoServico'>;
 
 type Props = {
   empresas: Empresa[];
@@ -84,14 +84,14 @@ export default function ListaEmpresas({
   // Referências dos blocos para rolar a empresa em edição ao topo do scroll.
   const blocosRef = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Form empresa — para cliente direto, apenas nome, valor e vencimento são obrigatórios.
+  // Form empresa — para cliente direto, nome, valor e dia de vencimento são obrigatórios.
   const [eNome, setENome] = useState('');
   const [eTipo, setETipo] = useState<TipoCadastroEmpresa>('cliente_direto');
   const [eResp, setEResp] = useState('');
   const [eTel, setETel] = useState('');
   const [eEmail, setEEmail] = useState('');
 
-  // Form cliente no local — apenas nome, valor e vencimento são obrigatórios.
+  // Form cliente no local — nome, valor e dia de vencimento são obrigatórios.
   const [sNome, setSNome] = useState('');
   const [sCep, setSCep] = useState('');
   const [sLogradouro, setSLogradouro] = useState('');
@@ -99,15 +99,19 @@ export default function ListaEmpresas({
   const [sCidade, setSCidade] = useState('');
   const [sEstado, setSEstado] = useState('');
   const [sNumero, setSNumero] = useState('');
+  const [sTipoNivel, setSTipoNivel] = useState<TipoNivelEndereco | null>(null);
+  const [sIdentificacaoNivel, setSIdentificacaoNivel] = useState('');
   const [sComplemento, setSComplemento] = useState('');
   const [sBuscandoCep, setSBuscandoCep] = useState(false);
   const [sResp, setSResp] = useState('');
   const [sValor, setSValor] = useState('');
-  const [sFrequencia, setSFrequencia] = useState<FrequenciaRecebimento | null>(null);
+  const [sDiaVencimento, setSDiaVencimento] = useState<number | null>(null);
+  const [sHerdaExecucaoServico, setSHerdaExecucaoServico] = useState(true);
+  const [sFrequenciaExecucao, setSFrequenciaExecucao] = useState<FrequenciaExecucaoServico | null>(null);
   const [sDiasSemana, setSDiasSemana] = useState<number[]>([]);
   const [sDiaMes, setSDiaMes] = useState<number | null>(null);
   const [sMesInicio, setSMesInicio] = useState<number | null>(null);
-  const [popupVencimento, setPopupVencimento] = useState<FrequenciaRecebimento | null>(null);
+  const [popupExecucaoServico, setPopupExecucaoServico] = useState<FrequenciaExecucaoServico | null>(null);
   const chaveRascunho = `avantalab:rascunho:v1:recebimentos:empresa:${rascunhoEscopo}`;
 
   const termo = busca.trim().toLowerCase();
@@ -149,10 +153,14 @@ export default function ListaEmpresas({
           setSCidade(String(salvo.sCidade || ''));
           setSEstado(String(salvo.sEstado || ''));
           setSNumero(String(salvo.sNumero || ''));
+          setSTipoNivel(typeof salvo.sTipoNivel === 'string' ? salvo.sTipoNivel as TipoNivelEndereco : null);
+          setSIdentificacaoNivel(String(salvo.sIdentificacaoNivel || ''));
           setSComplemento(String(salvo.sComplemento || ''));
           setSResp(String(salvo.sResp || ''));
           setSValor(String(salvo.sValor || ''));
-          setSFrequencia(typeof salvo.sFrequencia === 'string' ? salvo.sFrequencia as FrequenciaRecebimento : null);
+          setSDiaVencimento(salvo.sDiaVencimento == null ? null : Number(salvo.sDiaVencimento));
+          setSHerdaExecucaoServico(salvo.sHerdaExecucaoServico !== false);
+          setSFrequenciaExecucao(typeof salvo.sFrequenciaExecucao === 'string' ? salvo.sFrequenciaExecucao as FrequenciaExecucaoServico : null);
           setSDiasSemana(Array.isArray(salvo.sDiasSemana) ? salvo.sDiasSemana.map(Number) : []);
           setSDiaMes(salvo.sDiaMes == null ? null : Number(salvo.sDiaMes));
           setSMesInicio(salvo.sMesInicio == null ? null : Number(salvo.sMesInicio));
@@ -190,16 +198,28 @@ export default function ListaEmpresas({
         sCidade,
         sEstado,
         sNumero,
+        sTipoNivel,
+        sIdentificacaoNivel,
         sComplemento,
         sResp,
         sValor,
-        sFrequencia,
+        sDiaVencimento,
+        sHerdaExecucaoServico,
+        sFrequenciaExecucao,
         sDiasSemana,
         sDiaMes,
         sMesInicio,
       }));
     } catch { /* armazenamento indisponível */ }
-  }, [chaveRascunho, eEmail, eNome, eResp, eTel, eTipo, editandoEmpresaId, editandoSubId, formEmpresaAberto, sBairro, sCep, sCidade, sComplemento, sDiaMes, sDiasSemana, sEstado, sFrequencia, sLogradouro, sMesInicio, sNome, sNumero, sResp, sValor, subDe]);
+  }, [chaveRascunho, eEmail, eNome, eResp, eTel, eTipo, editandoEmpresaId, editandoSubId, formEmpresaAberto, sBairro, sCep, sCidade, sComplemento, sDiaMes, sDiaVencimento, sDiasSemana, sEstado, sFrequenciaExecucao, sHerdaExecucaoServico, sIdentificacaoNivel, sLogradouro, sMesInicio, sNome, sNumero, sResp, sTipoNivel, sValor, subDe]);
+
+  // Ao sair da seção Empresas dentro do módulo, o componente é desmontado.
+  // A edição é cancelada e não pode reaparecer ao voltar para esta aba. Trocar
+  // de aba do navegador não desmonta o componente, portanto não afeta o uso
+  // normal da tela aberta.
+  useEffect(() => () => {
+    try { window.sessionStorage.removeItem(chaveRascunho); } catch { /* armazenamento indisponível */ }
+  }, [chaveRascunho]);
 
   // Filtro instantâneo por letras/números: empresa (nome, responsável,
   // telefone, e-mail) e subempresas (nome, endereço, responsável).
@@ -241,7 +261,7 @@ export default function ListaEmpresas({
   function limparFormEmpresa() {
     setENome(''); setEResp(''); setETel(''); setEEmail('');
     setETipo('cliente_direto');
-    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSValor(''); setSFrequencia(null); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupVencimento(null);
+    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSTipoNivel(null); setSIdentificacaoNivel(''); setSComplemento(''); setSValor(''); setSDiaVencimento(null); setSFrequenciaExecucao(null); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupExecucaoServico(null);
     setErroEmpresa('');
     setConfirmandoExclusao(false);
     setFormEmpresaAberto(false);
@@ -250,9 +270,9 @@ export default function ListaEmpresas({
   }
 
   function limparFormSub() {
-    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSResp(''); setSValor(''); setSFrequencia(null);
+    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSTipoNivel(null); setSIdentificacaoNivel(''); setSComplemento(''); setSResp(''); setSValor(''); setSDiaVencimento(null); setSHerdaExecucaoServico(true); setSFrequenciaExecucao(null);
     setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null);
-    setPopupVencimento(null);
+    setPopupExecucaoServico(null);
     setErroSub('');
     setConfirmandoExclusao(false);
     setSubDe(null);
@@ -263,7 +283,7 @@ export default function ListaEmpresas({
   function abrirNovaEmpresa() {
     limparFormSub();
     setENome(''); setETipo('cliente_direto'); setEResp(''); setETel(''); setEEmail('');
-    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSValor(''); setSFrequencia(null); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupVencimento(null);
+    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSTipoNivel(null); setSIdentificacaoNivel(''); setSComplemento(''); setSValor(''); setSDiaVencimento(null); setSFrequenciaExecucao(null); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupExecucaoServico(null);
     setErroEmpresa('');
     setConfirmandoExclusao(false);
     setEditandoEmpresaId(null);
@@ -273,7 +293,7 @@ export default function ListaEmpresas({
   function abrirEdicaoEmpresa(emp: Empresa) {
     limparFormSub();
     setENome(emp.nome); setETipo(emp.tipoCadastro); setEResp(emp.responsavel); setETel(emp.telefone); setEEmail(emp.email);
-    setSCep(emp.cep); setSLogradouro(emp.logradouro); setSBairro(emp.bairro); setSCidade(emp.cidade); setSEstado(emp.estado); setSNumero(emp.numero); setSComplemento(emp.complemento); setSValor(emp.valorCombinado == null ? '' : valorParaInput(emp.valorCombinado)); setSFrequencia(emp.frequenciaRecebimento); setSDiasSemana(emp.configuracaoRecorrencia?.diasSemana ?? []); setSDiaMes(emp.configuracaoRecorrencia?.diaMes ?? null); setSMesInicio(emp.configuracaoRecorrencia?.mesInicio ?? null); setPopupVencimento(null);
+    setSCep(emp.cep); setSLogradouro(emp.logradouro); setSBairro(emp.bairro); setSCidade(emp.cidade); setSEstado(emp.estado); setSNumero(emp.numero); setSTipoNivel(emp.tipoNivel); setSIdentificacaoNivel(emp.identificacaoNivel); setSComplemento(emp.complemento); setSValor(emp.valorCombinado == null ? '' : valorParaInput(emp.valorCombinado)); setSDiaVencimento(emp.diaVencimento); setSFrequenciaExecucao(emp.frequenciaExecucaoServico); setSDiasSemana(emp.configuracaoExecucaoServico?.diasSemana ?? []); setSDiaMes(emp.configuracaoExecucaoServico?.diaMes ?? null); setSMesInicio(emp.configuracaoExecucaoServico?.mesInicio ?? null); setPopupExecucaoServico(null);
     setErroEmpresa('');
     setConfirmandoExclusao(false);
     setEditandoEmpresaId(emp.id);
@@ -285,9 +305,9 @@ export default function ListaEmpresas({
 
   function abrirNovaSub(empresaId: string) {
     limparFormEmpresa();
-    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSResp(''); setSValor(''); setSFrequencia(null);
+    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSTipoNivel(null); setSIdentificacaoNivel(''); setSComplemento(''); setSResp(''); setSValor(''); setSDiaVencimento(null); setSHerdaExecucaoServico(true); setSFrequenciaExecucao(null);
     setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null);
-    setPopupVencimento(null);
+    setPopupExecucaoServico(null);
     setErroSub('');
     setConfirmandoExclusao(false);
     setEditandoSubId(null);
@@ -303,14 +323,18 @@ export default function ListaEmpresas({
     setSCidade(s.cidade);
     setSEstado(s.estado);
     setSNumero(s.numero);
+    setSTipoNivel(s.tipoNivel);
+    setSIdentificacaoNivel(s.identificacaoNivel);
     setSComplemento(s.complemento);
     setSResp(s.responsavel);
     setSValor(s.valorCombinado == null ? '' : valorParaInput(s.valorCombinado));
-    setSFrequencia(s.frequenciaRecebimento);
-    setSDiasSemana(s.configuracaoRecorrencia.diasSemana);
-    setSDiaMes(s.configuracaoRecorrencia.diaMes);
-    setSMesInicio(s.configuracaoRecorrencia.mesInicio);
-    setPopupVencimento(null);
+    setSDiaVencimento(s.diaVencimento);
+    setSHerdaExecucaoServico(s.herdaExecucaoServico);
+    setSFrequenciaExecucao(s.frequenciaExecucaoServico);
+    setSDiasSemana(s.configuracaoExecucaoServico.diasSemana);
+    setSDiaMes(s.configuracaoExecucaoServico.diaMes);
+    setSMesInicio(s.configuracaoExecucaoServico.mesInicio);
+    setPopupExecucaoServico(null);
     setErroSub('');
     setConfirmandoExclusao(false);
     setEditandoSubId(s.id);
@@ -331,14 +355,13 @@ export default function ListaEmpresas({
     if (eTipo === 'cliente_direto') {
       if (eResp.trim() && !validarNomeCompleto(eResp)) return setErroEmpresa('Informe o nome completo do responsável, com nome e sobrenome.');
       if (valor != null && (Number.isNaN(valor) || valor <= 0)) return setErroEmpresa('Informe um valor contratado maior que zero.');
-      if (!sFrequencia) return setErroEmpresa('Selecione a frequência para configurar o vencimento.');
-      if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return setErroEmpresa('Selecione ao menos um dia para configurar o vencimento semanal.');
-      if (sFrequencia !== 'semanal' && !sDiaMes) return setErroEmpresa('Selecione o dia para configurar o vencimento.');
-      if (['trimestral', 'semestral', 'anual'].includes(sFrequencia) && !sMesInicio) return setErroEmpresa('Selecione o mês inicial para configurar o vencimento.');
+      if (!sDiaVencimento) return setErroEmpresa('Selecione o dia de vencimento mensal.');
     }
-    const endereco = [sLogradouro.trim(), sNumero.trim(), sComplemento.trim(), sBairro.trim(), [sCidade.trim(), sEstado.trim()].filter(Boolean).join('/')].filter(Boolean).join(' · ');
+    const erroExecucao = erroConfiguracaoExecucao(sFrequenciaExecucao, sDiasSemana, sDiaMes, sMesInicio);
+    if (erroExecucao) return setErroEmpresa(erroExecucao);
+    const endereco = enderecoEstruturado();
     const dados: DadosEmpresa = {
-      tipoCadastro: eTipo, nome: eNome.trim(), endereco, cep: sCep.trim(), logradouro: sLogradouro.trim(), bairro: sBairro.trim(), cidade: sCidade.trim(), estado: sEstado.trim().toUpperCase(), numero: sNumero.trim(), complemento: sComplemento.trim(), responsavel: eTipo === 'cliente_direto' ? eResp.trim() : '', telefone: eTipo === 'cliente_direto' ? eTel.trim() : '', email: eTipo === 'cliente_direto' ? eEmail.trim() : '', valorCombinado: eTipo === 'cliente_direto' ? valor : null, frequenciaRecebimento: eTipo === 'cliente_direto' ? sFrequencia : null, configuracaoRecorrencia: eTipo === 'cliente_direto' ? { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio } : null,
+      tipoCadastro: eTipo, nome: eNome.trim(), endereco, cep: sCep.trim(), logradouro: sLogradouro.trim(), bairro: sBairro.trim(), cidade: sCidade.trim(), estado: sEstado.trim().toUpperCase(), numero: sNumero.trim(), tipoNivel: sTipoNivel, identificacaoNivel: sIdentificacaoNivel.trim(), complemento: sComplemento.trim(), responsavel: eTipo === 'cliente_direto' ? eResp.trim() : '', telefone: eTipo === 'cliente_direto' ? eTel.trim() : '', email: eTipo === 'cliente_direto' ? eEmail.trim() : '', valorCombinado: eTipo === 'cliente_direto' ? valor : null, diaVencimento: eTipo === 'cliente_direto' ? sDiaVencimento : null, frequenciaExecucaoServico: sFrequenciaExecucao, configuracaoExecucaoServico: { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio },
     };
     setSalvandoCadastro(true);
     try {
@@ -375,33 +398,66 @@ export default function ListaEmpresas({
     else setErroSub(mensagem);
   }
 
+  function erroConfiguracaoExecucao(
+    frequencia: FrequenciaExecucaoServico | null,
+    diasSemana: number[],
+    diaMes: number | null,
+    mesInicio: number | null,
+  ) {
+    if (!frequencia) return 'Selecione a frequência de execução do serviço.';
+    if (frequencia === 'semanal' && diasSemana.length === 0) return 'Selecione ao menos um dia para a execução semanal.';
+    if (frequencia !== 'semanal' && !diaMes) return 'Selecione o dia para a execução do serviço.';
+    if (['trimestral', 'semestral', 'anual'].includes(frequencia) && !mesInicio) return 'Selecione o mês inicial da execução do serviço.';
+    return null;
+  }
+
+  function descricaoNivel() {
+    if (!sTipoNivel) return '';
+    const rotulos: Record<TipoNivelEndereco, string> = {
+      andar: 'Andar', piso: 'Piso', subsolo: 'Subsolo', terreo: 'Térreo', mezanino: 'Mezanino', outro: 'Nível',
+    };
+    return [rotulos[sTipoNivel], sIdentificacaoNivel.trim()].filter(Boolean).join(' ');
+  }
+
+  function enderecoEstruturado() {
+    return [sLogradouro.trim(), sNumero.trim(), descricaoNivel(), sComplemento.trim(), sBairro.trim(), [sCidade.trim(), sEstado.trim()].filter(Boolean).join('/')].filter(Boolean).join(' · ');
+  }
+
   async function salvarSub(empresaId: string) {
     setErroSub('');
     const valor = sValor.trim() ? parseValorBR(sValor) : null;
+    const local = empresas.find((empresa) => empresa.id === empresaId && empresa.tipoCadastro === 'local_agrupador') ?? null;
+    const localConfigurado = local?.frequenciaExecucaoServico ? local : null;
+    const frequenciaExecucao = sHerdaExecucaoServico ? localConfigurado?.frequenciaExecucaoServico ?? sFrequenciaExecucao : sFrequenciaExecucao;
+    const configuracaoExecucao = sHerdaExecucaoServico ? localConfigurado?.configuracaoExecucaoServico ?? { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio } : { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio };
     if (!sNome.trim()) {
-      return avisarErroSub('Preencha o nome e configure o vencimento para salvar o cliente.');
+      return avisarErroSub('Preencha o nome, o dia de vencimento e a execução do serviço para salvar o cliente.');
     }
     if (sResp.trim() && !validarNomeCompleto(sResp)) return avisarErroSub('Informe o nome completo do responsável, com nome e sobrenome.');
     if (valor != null && (Number.isNaN(valor) || valor <= 0)) return avisarErroSub('Informe um valor contratado maior que zero.');
-    if (!sFrequencia) return avisarErroSub('Selecione a frequência para configurar o vencimento.');
-    if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return avisarErroSub('Selecione ao menos um dia para configurar o vencimento semanal.');
-    if (sFrequencia !== 'semanal' && !sDiaMes) return avisarErroSub('Selecione o dia para configurar o vencimento.');
-    if (['trimestral', 'semestral', 'anual'].includes(sFrequencia) && !sMesInicio) return avisarErroSub('Selecione o mês inicial para configurar o vencimento.');
+    if (!sDiaVencimento) return avisarErroSub('Selecione o dia de vencimento mensal.');
+    if (sHerdaExecucaoServico && !local) return avisarErroSub('Não foi possível localizar o local agrupador para herdar a execução do serviço.');
+    const erroExecucao = erroConfiguracaoExecucao(frequenciaExecucao, configuracaoExecucao?.diasSemana ?? [], configuracaoExecucao?.diaMes ?? null, configuracaoExecucao?.mesInicio ?? null);
+    if (erroExecucao) return avisarErroSub(sHerdaExecucaoServico ? `Configure a execução do serviço no local antes de herdar. ${erroExecucao}` : erroExecucao);
 
     const dados: DadosSubempresa = {
       nome: sNome.trim(),
-      endereco: [sLogradouro.trim(), sNumero.trim(), sComplemento.trim(), sBairro.trim(), [sCidade.trim(), sEstado.trim()].filter(Boolean).join('/')].filter(Boolean).join(' · '),
+      endereco: enderecoEstruturado(),
       cep: sCep.trim(),
       logradouro: sLogradouro.trim(),
       bairro: sBairro.trim(),
       cidade: sCidade.trim(),
       estado: sEstado.trim().toUpperCase(),
       numero: sNumero.trim(),
+      tipoNivel: sTipoNivel,
+      identificacaoNivel: sIdentificacaoNivel.trim(),
       complemento: sComplemento.trim(),
       responsavel: sResp.trim(),
       valorCombinado: valor,
-      frequenciaRecebimento: sFrequencia,
-      configuracaoRecorrencia: { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio },
+      diaVencimento: sDiaVencimento,
+      herdaExecucaoServico: sHerdaExecucaoServico,
+      frequenciaExecucaoServico: sFrequenciaExecucao ?? frequenciaExecucao!,
+      configuracaoExecucaoServico: sFrequenciaExecucao ? { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio } : configuracaoExecucao!,
     };
     setSalvandoCadastro(true);
     try {
@@ -423,15 +479,15 @@ export default function ListaEmpresas({
     }
   }
 
-  function mudarFrequencia(frequencia: FrequenciaRecebimento) {
-    const mesmaFrequencia = sFrequencia === frequencia;
-    setSFrequencia(frequencia);
+  function mudarFrequenciaExecucao(frequencia: FrequenciaExecucaoServico) {
+    const mesmaFrequencia = sFrequenciaExecucao === frequencia;
+    setSFrequenciaExecucao(frequencia);
     if (!mesmaFrequencia) {
       setSDiasSemana([]);
       setSDiaMes(null);
       setSMesInicio(null);
     }
-    setPopupVencimento(frequencia === 'semanal' ? null : frequencia);
+    setPopupExecucaoServico(frequencia === 'semanal' ? null : frequencia);
   }
 
   function alternarDiaSemana(dia: number) {
@@ -463,41 +519,50 @@ export default function ListaEmpresas({
     }
   }
 
-  function formRecorrencia() {
+  function formRecorrencia({ bloqueada = false, herdarDe = null }: { bloqueada?: boolean; herdarDe?: Empresa | null } = {}) {
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    const precisaMes = sFrequencia ? ['trimestral', 'semestral', 'anual'].includes(sFrequencia) : false;
-    const popupAberto = popupVencimento === sFrequencia;
+    const frequencia = herdarDe?.frequenciaExecucaoServico ?? sFrequenciaExecucao;
+    const configuracao = herdarDe?.configuracaoExecucaoServico;
+    const diasSemana = configuracao?.diasSemana ?? sDiasSemana;
+    const diaMes = configuracao?.diaMes ?? sDiaMes;
+    const mesInicio = configuracao?.mesInicio ?? sMesInicio;
+    const precisaMes = frequencia ? ['trimestral', 'semestral', 'anual'].includes(frequencia) : false;
+    const popupAberto = !bloqueada && popupExecucaoServico === frequencia;
+    const resumoHerdado = frequencia === 'semanal'
+      ? diasSemana.map((dia) => dias[dia]).join(', ') || 'dias não configurados'
+      : `dia ${diaMes ?? 'não configurado'}${precisaMes ? ` · início em ${meses[(mesInicio ?? 1) - 1]}` : ''}`;
     function selecionarDia(dia: number) {
+      if (bloqueada) return;
       setSDiaMes(dia);
-      setPopupVencimento(null);
+      setPopupExecucaoServico(null);
     }
 
     return (
       <div className={styles.recorrencia}>
-        <div className={styles.formTitulo}>VENCIMENTO *</div>
-        <div className={styles.recorrenciaFrequencias} role="radiogroup" aria-label="Frequência de recebimento">
-          {FREQUENCIAS_RECEBIMENTO.map(([valor, rotulo]) => (
-            <button key={valor} type="button" className={`${styles.recorrenciaOpcao} ${sFrequencia === valor ? styles.recorrenciaOpcaoAtiva : ''}`} onClick={() => mudarFrequencia(valor)} aria-pressed={sFrequencia === valor}>{rotulo}</button>
+        <div className={styles.formTitulo}>{bloqueada ? 'EXECUÇÃO DO SERVIÇO — HERDADA DO LOCAL' : 'EXECUÇÃO DO SERVIÇO *'}</div>
+        <div className={styles.recorrenciaFrequencias} role="radiogroup" aria-label="Frequência de execução do serviço">
+          {FREQUENCIAS_EXECUCAO_SERVICO.map(([valor, rotulo]) => (
+            <button key={valor} type="button" className={`${styles.recorrenciaOpcao} ${frequencia === valor ? styles.recorrenciaOpcaoAtiva : ''}`} onClick={() => mudarFrequenciaExecucao(valor)} disabled={bloqueada} aria-pressed={frequencia === valor}>{rotulo}</button>
           ))}
         </div>
         <div className={styles.recorrenciaConfig}>
-          {sFrequencia === 'semanal' ? (
-              <div className={styles.recorrenciaDias}>{dias.map((dia, indice) => <button key={dia} type="button" className={`${styles.recorrenciaDia} ${sDiasSemana.includes(indice) ? styles.recorrenciaDiaAtivo : ''}`} onClick={() => alternarDiaSemana(indice)} aria-pressed={sDiasSemana.includes(indice)}>{dia}</button>)}</div>
+          {frequencia === 'semanal' ? (
+              <div className={styles.recorrenciaDias}>{dias.map((dia, indice) => <button key={dia} type="button" className={`${styles.recorrenciaDia} ${diasSemana.includes(indice) ? styles.recorrenciaDiaAtivo : ''}`} onClick={() => alternarDiaSemana(indice)} disabled={bloqueada} aria-pressed={diasSemana.includes(indice)}>{dia}</button>)}</div>
           ) : popupAberto ? (
-              <div className={`${styles.recorrenciaPopup} ${styles.recorrenciaPopupDireto} ${precisaMes ? styles.recorrenciaPopupComMes : styles.recorrenciaPopupSemMes}`} role="dialog" aria-label="Configurar vencimento">
+              <div className={`${styles.recorrenciaPopup} ${styles.recorrenciaPopupDireto} ${precisaMes ? styles.recorrenciaPopupComMes : styles.recorrenciaPopupSemMes} ${frequencia === 'mensal' ? styles.recorrenciaPopupMensal : ''}`} role="dialog" aria-label="Configurar execução do serviço">
                 {precisaMes && (
-                  <div>
+                  <div className={styles.recorrenciaLinhaSelecao}>
                     <div className={styles.recorrenciaPopupTitulo}>Mês inicial</div>
-                    <div className={styles.recorrenciaMeses}>{meses.map((mes, indice) => <button key={mes} type="button" className={`${styles.recorrenciaEscolha} ${sMesInicio === indice + 1 ? styles.recorrenciaEscolhaAtiva : ''}`} onClick={() => setSMesInicio(indice + 1)}>{mes}</button>)}</div>
+                    <div className={styles.recorrenciaMeses}>{meses.map((mes, indice) => <button key={mes} type="button" className={`${styles.recorrenciaEscolha} ${mesInicio === indice + 1 ? styles.recorrenciaEscolhaAtiva : ''}`} onClick={() => setSMesInicio(indice + 1)}>{mes}</button>)}</div>
                   </div>
                 )}
-                <div>
-                  <div className={styles.recorrenciaPopupTitulo}>{sFrequencia === 'quinzenal' ? 'Dia-base (intervalo de 15 dias)' : 'Dia do mês'}</div>
-                  <div className={`${styles.recorrenciaDiasMes} ${sFrequencia === 'quinzenal' ? styles.recorrenciaDiasQuinzenal : ''} ${precisaMes ? styles.recorrenciaDiasComMes : styles.recorrenciaDiasSemMes}`}>{Array.from({ length: sFrequencia === 'quinzenal' ? 15 : 31 }, (_, indice) => indice + 1).map((dia) => <button key={dia} type="button" className={`${styles.recorrenciaEscolha} ${sDiaMes === dia ? styles.recorrenciaEscolhaAtiva : ''}`} onClick={() => selecionarDia(dia)}>{sFrequencia === 'quinzenal' ? `${dia}/${dia + 15}` : dia}</button>)}</div>
+                <div className={styles.recorrenciaLinhaSelecao}>
+                  <div className={styles.recorrenciaPopupTitulo}>{frequencia === 'quinzenal' ? 'Dia-base (intervalo de 15 dias)' : 'Dia do mês'}</div>
+                  <div className={`${styles.recorrenciaDiasMes} ${frequencia === 'quinzenal' ? styles.recorrenciaDiasQuinzenal : ''} ${frequencia === 'mensal' ? styles.recorrenciaDiasMensal : ''} ${precisaMes ? styles.recorrenciaDiasComMes : styles.recorrenciaDiasSemMes}`}>{Array.from({ length: frequencia === 'quinzenal' ? 15 : 31 }, (_, indice) => indice + 1).map((dia) => <button key={dia} type="button" className={`${styles.recorrenciaEscolha} ${diaMes === dia ? styles.recorrenciaEscolhaAtiva : ''}`} onClick={() => selecionarDia(dia)}>{frequencia === 'quinzenal' ? `${dia}/${dia + 15}` : dia}</button>)}</div>
                 </div>
               </div>
-          ) : null}
+          ) : bloqueada ? <p className={styles.subMeta}>Programação do local: {frequencia ? `${rotuloFrequenciaExecucaoServico(frequencia)} · ${resumoHerdado}` : 'não configurada'}.</p> : null}
         </div>
       </div>
     );
@@ -510,6 +575,8 @@ export default function ListaEmpresas({
           <div className={`${styles.field} ${styles.enderecoCampoCep}`}><label className={styles.label}>CEP</label><input className={styles.input} inputMode="numeric" placeholder="00000-000" value={sCep} onChange={(e) => setSCep(formatarCep(e.target.value))} onBlur={() => void consultarCep(sCep)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void consultarCep(sCep); } }} /><span className={styles.enderecoAjuda}>{sBuscandoCep ? 'Buscando endereço…' : 'Informe o CEP para preencher o endereço.'}</span></div>
           <div className={styles.field}><label className={styles.label}>Rua</label><input className={styles.input} placeholder="Nome da rua" value={sLogradouro} onChange={(e) => setSLogradouro(e.target.value)} /></div>
           <div className={styles.field}><label className={styles.label}>Número</label><input className={styles.input} placeholder="Número" value={sNumero} onChange={(e) => setSNumero(e.target.value)} /></div>
+          <div className={styles.field}><label className={styles.label} htmlFor="recebimentos-tipo-nivel">Tipo de nível</label><select id="recebimentos-tipo-nivel" className={styles.select} value={sTipoNivel ?? ''} onChange={(event) => setSTipoNivel(event.target.value ? event.target.value as TipoNivelEndereco : null)}><option value="">Não informado</option><option value="andar">Andar</option><option value="piso">Piso</option><option value="subsolo">Subsolo</option><option value="terreo">Térreo</option><option value="mezanino">Mezanino</option><option value="outro">Outro nível</option></select></div>
+          <div className={styles.field}><label className={styles.label} htmlFor="recebimentos-identificacao-nivel">Referência</label><input id="recebimentos-identificacao-nivel" className={styles.input} placeholder={sTipoNivel === 'terreo' ? 'Opcional' : 'Ex.: 12, G, L2'} value={sIdentificacaoNivel} onChange={(e) => setSIdentificacaoNivel(e.target.value.slice(0, 20))} disabled={!sTipoNivel} /></div>
           <div className={styles.field}><label className={styles.label}>Complemento</label><input className={styles.input} placeholder="Sala, loja, bloco…" value={sComplemento} onChange={(e) => setSComplemento(e.target.value)} /></div>
           <div className={styles.field}><label className={styles.label}>Bairro</label><input className={styles.input} placeholder="Bairro" value={sBairro} onChange={(e) => setSBairro(e.target.value)} /></div>
           <div className={styles.field}><label className={styles.label}>Cidade</label><input className={styles.input} placeholder="Cidade" value={sCidade} onChange={(e) => setSCidade(e.target.value)} /></div>
@@ -525,6 +592,19 @@ export default function ListaEmpresas({
         <div className={styles.field}><label className={styles.label}>Nome do cliente *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
         <div className={styles.field}><label className={styles.label}>Responsável — nome completo</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
         <div className={styles.field}><label className={styles.label}>Valor contratado</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
+        {campoDiaVencimento()}
+      </div>
+    );
+  }
+
+  function campoDiaVencimento() {
+    return (
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="recebimentos-dia-vencimento">Dia de vencimento *</label>
+        <select id="recebimentos-dia-vencimento" className={styles.select} value={sDiaVencimento ?? ''} onChange={(event) => setSDiaVencimento(event.target.value ? Number(event.target.value) : null)}>
+          <option value="">Selecione</option>
+          {Array.from({ length: 31 }, (_, indice) => indice + 1).map((dia) => <option key={dia} value={dia}>Dia {dia}</option>)}
+        </select>
       </div>
     );
   }
@@ -565,14 +645,16 @@ export default function ListaEmpresas({
         {camposEndereco()}
         {clienteDireto && <>
         <div className={styles.linhaTelefoneAcoes}>
-          <div className={styles.field} style={{ flex: '1 1 160px', marginBottom: 0 }}>
+          <div className={styles.field} style={{ flex: '1 1 120px', marginBottom: 0 }}>
             <label className={styles.label}>E-mail</label>
             <input className={styles.input} placeholder="Ex: financeiro@empresa.com.br" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
           </div>
           <div className={styles.field} style={{ flex: '0 1 180px', marginBottom: 0 }}><label className={styles.label}>Valor contratado</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
+          <div style={{ flex: '0 1 168px', marginBottom: 0 }}>{campoDiaVencimento()}</div>
         </div>
         {formRecorrencia()}
         </>}
+        {!clienteDireto && formRecorrencia()}
       </div>
     );
   }
@@ -645,7 +727,7 @@ export default function ListaEmpresas({
               <span style={{ transform: aberta ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', color: '#64748b', fontSize: 12 }}>▸</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className={styles.empresaNome}>{emp.nome}</div>
-                <div className={styles.subMeta}>{localAgrupador ? `${emp.endereco || 'Endereço não informado'} · ${totalSubs} cliente(s)` : `Cliente direto · ${emp.responsavel} · ${emp.telefone} · ${emp.valorCombinado == null ? 'Valor não informado' : formatarMoeda(emp.valorCombinado)}`}</div>
+                <div className={styles.subMeta}>{localAgrupador ? `${emp.endereco || 'Endereço não informado'} · ${totalSubs} cliente(s) · Execução ${emp.frequenciaExecucaoServico ? rotuloFrequenciaExecucaoServico(emp.frequenciaExecucaoServico) : 'não configurada'}` : `Cliente direto · ${emp.responsavel} · ${emp.telefone} · ${emp.valorCombinado == null ? 'Valor não informado' : formatarMoeda(emp.valorCombinado)}`}</div>
               </div>
               {!localAgrupador && <span className={`${styles.chip} ${emp.ativo ? styles.chipOn : styles.chipOff}`}>{emp.ativo ? 'Ativo' : 'Inativo'}</span>}
               {/* Ações ocultas: surgem deslizando para a esquerda no hover/toque. */}
@@ -673,16 +755,18 @@ export default function ListaEmpresas({
                   <div className={styles.subItem}>
                     <div className={styles.subNome}>Cliente direto</div>
                     <div className={styles.subMeta}>{emp.endereco || 'Endereço não informado'}</div>
-                    <div className={styles.subMeta}>Recebimento {emp.frequenciaRecebimento ? rotuloFrequenciaRecebimento(emp.frequenciaRecebimento) : 'não configurado'} · {emp.valorCombinado == null ? 'Valor não informado' : formatarMoeda(emp.valorCombinado)}</div>
+                    <div className={styles.subMeta}>Vencimento mensal: dia {emp.diaVencimento ?? 'não configurado'} · Execução {emp.frequenciaExecucaoServico ? rotuloFrequenciaExecucaoServico(emp.frequenciaExecucaoServico) : 'não configurada'} · {emp.valorCombinado == null ? 'Valor não informado' : formatarMoeda(emp.valorCombinado)}</div>
                   </div>
                 )}
-                {!cadastroSubAtivo && localAgrupador && subs.map((s) => (
+                {!cadastroSubAtivo && localAgrupador && subs.map((s) => {
+                  const execucao = s.herdaExecucaoServico && emp.frequenciaExecucaoServico ? emp : s;
+                  return (
                     <div key={s.id} className={styles.subItem}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
                         <div style={{ minWidth: 0 }}>
                           <div className={styles.subNome}>{s.nome}</div>
                           <div className={styles.subMeta}>{s.endereco}</div>
-                          <div className={styles.subMeta}>Responsável: {s.responsavel} · Recebimento {rotuloFrequenciaRecebimento(s.frequenciaRecebimento)} · {s.valorCombinado == null ? 'Valor não informado' : formatarMoeda(s.valorCombinado)}</div>
+                          <div className={styles.subMeta}>Responsável: {s.responsavel} · Vencimento mensal: dia {s.diaVencimento} · Execução {execucao.frequenciaExecucaoServico ? rotuloFrequenciaExecucaoServico(execucao.frequenciaExecucaoServico) : 'não configurada'}{s.herdaExecucaoServico && emp.frequenciaExecucaoServico ? ' (do local)' : ''} · {s.valorCombinado == null ? 'Valor não informado' : formatarMoeda(s.valorCombinado)}</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                           <span className={`${styles.chip} ${s.ativo ? styles.chipOn : styles.chipOff}`}>{s.ativo ? 'Ativo' : 'Inativo'}</span>
@@ -702,14 +786,23 @@ export default function ListaEmpresas({
                         </div>
                       </div>
                     </div>
-                ))}
+                  );
+                })}
 
                 {cadastroSubAtivo ? (
                     <div className={`${styles.subItem} ${styles.formCompacto} ${styles.formCadastroSub} ${editandoSubId ? styles.blocoEditando : ''}`}>
                     <div className={styles.formTitulo}>{editandoSubId ? 'Editar cliente' : 'Novo cliente no local'}</div>
                     {camposBasicosSubempresa()}
                     {camposEndereco()}
-                    {formRecorrencia()}
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor={`recebimentos-herdar-execucao-${emp.id}`}>Execução do serviço</label>
+                      <label className={styles.subMeta} htmlFor={`recebimentos-herdar-execucao-${emp.id}`}>
+                        <input id={`recebimentos-herdar-execucao-${emp.id}`} type="checkbox" checked={sHerdaExecucaoServico} onChange={(event) => { setSHerdaExecucaoServico(event.target.checked); setPopupExecucaoServico(null); }} />{' '}
+                        Herdar a programação do local “{emp.nome}”
+                      </label>
+                      <span className={styles.enderecoAjuda}>{sHerdaExecucaoServico ? 'A programação abaixo é exibida apenas para consulta. Desative esta opção para definir datas próprias para este cliente.' : 'Este cliente terá sua própria programação de execução do serviço.'}</span>
+                    </div>
+                    {formRecorrencia({ bloqueada: sHerdaExecucaoServico, herdarDe: sHerdaExecucaoServico && emp.frequenciaExecucaoServico ? emp : null })}
                     <div className={styles.linhaTelefoneAcoes}>
                       <div className={styles.acoesForm}>
                         <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={limparFormSub}>Cancelar</button>

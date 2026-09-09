@@ -4,22 +4,22 @@ import ColaboradorApp from '../ColaboradorApp';
 const colaboradorUrl = 'https://avantalab.com.br/recebimentos/colaborador';
 const shareImage = 'https://avantalab.com.br/images/recebimentos-share-meta.jpg?v=160';
 
-// URL exclusiva do colaborador — alvo do PWA "Recebimentos em Campo".
+// URL exclusiva do colaborador — alvo do PWA de operações em campo.
 export const metadata: Metadata = {
   metadataBase: new URL('https://avantalab.com.br'),
-  title: 'AvantaLab · Recebimentos Presenciais',
-  description: 'Registre recebimentos em campo com CPF e senha.',
+  title: 'AvantaLab · Operações em Campo',
+  description: 'Registre recebimentos e serviços em campo com CPF e senha.',
   manifest: '/recebimentos-manifest.json',
   alternates: { canonical: colaboradorUrl },
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Recebimentos' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Operações' },
   icons: {
     icon: '/images/recebimentos-icon-192.png',
     apple: '/images/recebimentos-icon-180.png',
   },
   openGraph: {
-    title: 'AvantaLab · Recebimentos Presenciais',
-    description: 'Sistema de gestão financeira e operacional para recebimentos em campo.',
+    title: 'AvantaLab · Operações em Campo',
+    description: 'Sistema de gestão financeira e operacional para recebimentos e serviços em campo.',
     url: colaboradorUrl,
     locale: 'pt_BR',
     type: 'website',
@@ -29,14 +29,14 @@ export const metadata: Metadata = {
       secureUrl: shareImage,
       width: 1200,
       height: 628,
-      alt: 'AvantaLab · Recebimentos Presenciais',
+      alt: 'AvantaLab · Operações em Campo',
       type: 'image/jpeg',
     }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AvantaLab · Recebimentos Presenciais',
-    description: 'Sistema de gestão financeira e operacional para recebimentos em campo.',
+    title: 'AvantaLab · Operações em Campo',
+    description: 'Sistema de gestão financeira e operacional para recebimentos e serviços em campo.',
     images: [shareImage],
   },
 };

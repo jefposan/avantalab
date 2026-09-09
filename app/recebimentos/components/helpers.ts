@@ -1,5 +1,5 @@
 // Funções utilitárias do módulo Recebimentos Presenciais.
-import { FORMAS_PAGAMENTO_RECEBIMENTO, type DiferencaTipo, type FormaPagamentoRecebimento, type FrequenciaRecebimento, type LabelSituacao, type Recebimento, type SituacaoRecebimento } from './types';
+import { FORMAS_PAGAMENTO_RECEBIMENTO, type DiferencaTipo, type FormaPagamentoRecebimento, type FrequenciaExecucaoServico, type LabelSituacao, type Recebimento, type SituacaoRecebimento } from './types';
 
 export const COR_PRIMARIA = '#003E73';
 
@@ -36,7 +36,7 @@ export function cobrancasNosProximosDias(
     );
 }
 
-export const FREQUENCIAS_RECEBIMENTO: Array<[FrequenciaRecebimento, string]> = [
+export const FREQUENCIAS_EXECUCAO_SERVICO: Array<[FrequenciaExecucaoServico, string]> = [
   ['semanal', 'Semanal'],
   ['quinzenal', 'Quinzenal'],
   ['mensal', 'Mensal'],
@@ -45,8 +45,8 @@ export const FREQUENCIAS_RECEBIMENTO: Array<[FrequenciaRecebimento, string]> = [
   ['anual', 'Anual'],
 ];
 
-export function rotuloFrequenciaRecebimento(frequencia: FrequenciaRecebimento): string {
-  return FREQUENCIAS_RECEBIMENTO.find(([valor]) => valor === frequencia)?.[1] ?? 'Mensal';
+export function rotuloFrequenciaExecucaoServico(frequencia: FrequenciaExecucaoServico): string {
+  return FREQUENCIAS_EXECUCAO_SERVICO.find(([valor]) => valor === frequencia)?.[1] ?? 'Mensal';
 }
 
 export function rotuloFormaPagamento(forma: FormaPagamentoRecebimento | null | undefined): string {

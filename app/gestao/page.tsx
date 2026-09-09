@@ -17,7 +17,6 @@ import ModalLogo from '@/app/components/ModalLogo';
 import ModulosModal, { type Modulo } from '@/app/components/ModulosModal';
 import PontoAdminModal, { type AbaPontoAdmin, type DocumentoRepP, type EstadoAssinaturaPonto, type EventoAuditoriaPonto, type FuncionarioFacialPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil, type ResultadoCobrancaFacial } from '@/app/components/PontoAdminModal';
 import type { EstadoCobrancaFacial } from '@/app/lib/ponto-facial-cobranca';
-import RecebimentosAdminModal from '@/app/components/RecebimentosAdminModal';
 import SobreModal from '@/app/components/SobreModal';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import DraggableModalCard from '@/app/components/DraggableModalCard';
@@ -886,7 +885,6 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [modulosCancelamentos, setModulosCancelamentos] = useState<Record<string, string>>({});
   const [projetosCompartilhados, setProjetosCompartilhados] = useState(0);
   const [modalPontoAdmin, setModalPontoAdmin] = useState(false);
-  const [modalRecebimentos, setModalRecebimentos] = useState(false);
   const [abaInicialPontoAdmin, setAbaInicialPontoAdmin] = useState<AbaPontoAdmin>('lista');
   const [instanciaPontoAdmin, setInstanciaPontoAdmin] = useState(0);
   const [relatorioInicialPonto, setRelatorioInicialPonto] = useState<{ funcionarioUserId: string; data: string } | null>(null);
@@ -8130,18 +8128,6 @@ if (validacaoTelefoneObrigatoria) {
   darkMode={darkMode}
 />
 
-<RecebimentosAdminModal
-  aberto={modalRecebimentos && podeGerenciarRecebimentos && modulosAtivos.includes('recebimentos_presencial')}
-  empresaId={empresaId || ''}
-  rascunhoEscopo={`${acessoUsuarioAtualId || 'acesso'}:${empresaId || 'perfil'}`}
-  perfil={perfilUsuario === 'administrador' ? 'administrador' : 'gestor'}
-  darkMode={darkMode}
-  corPrimaria={corPrimaria}
-  onAviso={abrirAviso}
-  onConfirmacao={abrirConfirmacao}
-  onFechar={() => setModalRecebimentos(false)}
-  onFinanceiroAtualizado={notificarFinanceiroAtualizado}
-/>
 
 <SobreModal
   aberto={modalSobre}
@@ -10333,18 +10319,18 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
         )}
 
-        {/* 4a. Recebimentos Presenciais */}
+        {/* 4a. Operações de Campo */}
         {modulosAtivos.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
-          <Tooltip texto="Gerencie empresas, colaboradores e a conferência dos recebimentos em campo." posicao="right" wrapperClassName="order-40 w-full">
+          <Tooltip texto="Gerencie recebimentos, serviços, empresas e colaboradores em campo." posicao="right" wrapperClassName="order-40 w-full">
             <button
-              onClick={() => { setAjustesAberto(false); setModalRecebimentos(true); }}
+              onClick={() => { setAjustesAberto(false); router.push(`/recebimentos?empresaId=${encodeURIComponent(empresaId || '')}`); }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
               <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 3h12v18l-2.5-1.7L13 21l-2.5-1.7L8 21l-2-1.4V3Zm3 5h6M9 12h6M9 16h3" />
               </svg>
-              Recebimentos
+              Operações de Campo
             </button>
           </Tooltip>
         )}

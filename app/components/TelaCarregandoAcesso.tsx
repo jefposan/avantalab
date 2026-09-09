@@ -53,10 +53,6 @@ export default function TelaCarregandoAcesso({
             <span className="avanta-loading-spinner animate-spin" />
           </div>
 
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
-            AvantaLab Gestão
-          </p>
-
           <Titulo className="text-xl font-black text-slate-900">{titulo}</Titulo>
 
           <p className="text-sm font-semibold text-slate-500" aria-live="polite">

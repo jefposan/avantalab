@@ -111,8 +111,7 @@ export default function PontoPage() {
             className="ponto-access-brand pointer-events-none"
           />
           <div className="ponto-access-card w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>
-            <h1 className="mt-2 text-xl font-black">Controle de Ponto</h1>
+            <h1 className="text-xl font-black">Controle de Ponto</h1>
             <p className="mt-2 text-sm font-semibold text-slate-600">Preparando acesso…</p>
           </div>
         </section>

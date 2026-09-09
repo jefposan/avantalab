@@ -1,12 +1,73 @@
 # Changelog
 
-## 1.17.0.04 - 2026-09-09
-- **Solicitação por Voz**: após confirmar pedido, consignado, pagamento ou agendamento, o card central fecha e o resultado aparece no aviso temporizado padrão do rodapé. Para pedido, consignado e pagamento, o aviso preserva a ação **Compartilhar comprovante** antes de encerrar.
-- A resolução de produtos compara a fala com o catálogo ativo completo da conta em paralelo com a busca curta; uma escolha manual é validada pelo ID e encerra a dúvida sem voltar ao mesmo loop.
-- Corrigido o gatilho compartilhado de conta que podia impedir novos pagamentos, pedidos, clientes e agendamentos após a publicação do catálogo. A regra exclusiva do catálogo ficou isolada no gatilho de produtos, sem alterar registros existentes.
+## 1.19.0.08 - 2026-09-09
+- **Operações de Campo**: o título **Permissões no aplicativo** foi posicionado dentro do bloco, com espaçamento próprio e sem sobrepor a borda.
 
-## 1.17.0.04-av144 - 2026-09-09
-- Recursos do AvantaVendas renovados para confirmação discreta por voz, compartilhamento de comprovante e cache atualizado do PWA.
+## 1.19.0.07 - 2026-09-09
+- **Operações de Campo**: ao editar um colaborador, os dados já cadastrados permanecem válidos e a senha só é redefinida quando uma nova senha é preenchida e confirmada. Assim, é possível liberar **Serviços** sem alterar o acesso existente.
+
+## 1.19.0.06 - 2026-09-09
+- **Acesso**: os cards de **Preparando**, **Carregando** e **Validando** não repetem mais o nome AvantaLab; o logotipo permanece somente na cena de fundo.
+
+## 1.19.0.05 - 2026-09-09
+- **Operações de Campo**: o card de **Validando acesso** não exibe mais a identificação “AvantaLab Gestão”.
+
+## 1.19.0.04 - 2026-09-09
+- **Operações de Campo**: removida a descrição abaixo do título principal para deixar a abertura do módulo mais direta.
+
+## 1.19.0.03 - 2026-09-09
+- **Solicitação por Voz**: após confirmar pedido, consignado, pagamento ou agendamento, o card central fecha e o resultado aparece no aviso temporizado padrão do rodapé. Para pedido, consignado e pagamento, o mesmo aviso preserva a ação **Compartilhar comprovante** antes de encerrar.
+
+## 1.19.0.03-av144 - 2026-09-09
+- Recursos do AvantaVendas renovados com a confirmação discreta no rodapé e o compartilhamento de comprovante integrado ao aviso temporizado.
+
+## 1.19.0.02 - 2026-09-09
+- O módulo antes chamado **Recebimentos Presenciais** passa a se chamar **Operações de Campo**. A rota e os identificadores técnicos foram preservados; os títulos, menu, catálogo de módulos e cabeçalhos agora representam tanto Recebimentos quanto Serviços.
+
+## 1.19.0.01 - 2026-09-09
+- **Recebimentos Presenciais**: a navegação foi reorganizada em três áreas coloridas. À esquerda ficam **Visão geral**, **Resultados**, **Empresas** e **Colaboradores**; **Recebimentos** e **Serviços** receberam identificadores acima das respectivas barras. Também foi incluído o respiro visual entre o menu e o AvantaCard.
+
+## 1.19.0 - 2026-09-09
+- **Recebimentos Presenciais** passa a controlar também a execução de serviços. O menu web reúne **Realizados**, **Pendentes**, **Atrasados** e **Avisos** em um grupo visual próprio de Serviços, com a mesma pílula deslizante da navegação principal.
+- A programação já existente de execução do serviço cria a agenda operacional sem alterar cobranças, vencimentos ou históricos financeiros. Serviços passados sem confirmação ficam atrasados; uma avaliação **Regular** cria um aviso para o gestor, que pode concluí-lo após o tratamento.
+- Colaboradores agora recebem permissões separadas para **Recebimentos** e **Serviços**. Quem tiver ambas escolhe a operação ao entrar no PWA e pode alterná-la no topo.
+- No PWA, **Registrar novo serviço** coleta cliente, nome de quem recebeu, assinatura em tela e avaliação. Avaliações regulares podem incluir observação opcional para o aviso do gestor.
+
+## 1.18.0.07 - 2026-09-09
+- **AvantaVendas**: corrigido o gatilho compartilhado de conta que impedia novos pagamentos, pedidos, clientes e agendamentos após a publicação imediata do catálogo. A validação exclusiva do catálogo foi isolada no gatilho de produtos, sem alterar ou remover registros existentes.
+
+## 1.18.0.06 - 2026-09-09
+- **Recebimentos Presenciais**: o rótulo do campo compacto de nível passou de **Número / identificação** para **Referência**, evitando quebra de linha sem perder o contexto indicado pelo exemplo 12, G ou L2.
+
+## 1.18.0.05 - 2026-09-09
+- **Recebimentos Presenciais**: nos cadastros e edições, o campo **Rua** recebeu mais largura e **Número / identificação** ficou mais compacto, adequado a referências curtas como 12, G ou L2.
+
+## 1.18.0.04 - 2026-09-09
+- **Recebimentos Presenciais**: o AvantaCard de Administração não possui mais rolagem interna. Ele cresce conforme as linhas e filtros carregados, e a página completa assume a rolagem natural.
+
+## 1.18.0.03 - 2026-09-09
+- **Recebimentos Presenciais**: ao trocar de seção interna, qualquer cadastro ou edição de empresa, local ou cliente é cancelado sem gravar. Ao retornar à seção, a lista é exibida limpa.
+- O formulário de cliente passou a usar a área rolável corretamente, mantendo endereço, execução do serviço e ações finais acessíveis em telas de qualquer altura.
+
+## 1.18.0.02 - 2026-09-09
+- **Recebimentos Presenciais** passa a abrir em uma página independente, com cabeçalho oficial de **Início**, marca AvantaLab e **Ajustes**, preservando o perfil ativo e toda a operação existente no espaço total da tela.
+- Empresas, locais agrupadores e clientes no local agora podem registrar o nível do endereço por **Tipo de nível** (andar, piso, subsolo, térreo, mezanino ou outro) e **Número / identificação** livre. A estrutura evita listas extensas e mantém endereços já cadastrados intactos.
+
+## 1.18.0.01 - 2026-09-09
+- **Recebimentos Presenciais**: o **Local agrupador** agora também define a programação de execução do serviço. Cada cliente no local começa com **Herdar a programação do local** ativado; enquanto essa opção estiver ativa, suas datas ficam somente para consulta. Ao desativá-la, o cliente pode manter uma programação própria, sem alterar o vencimento mensal ou qualquer histórico financeiro.
+
+## 1.18.0 - 2026-09-09
+- **Recebimentos Presenciais** separa o pagamento da execução do serviço: todo cliente agora possui um **Dia de vencimento** mensal obrigatório, enquanto **Execução do serviço** concentra as opções semanal, quinzenal, mensal, trimestral, semestral e anual usadas como referência operacional.
+- A migração preserva o dia já utilizado por cada cadastro e mantém histórico, atrasos, conferências, baixas, comprovantes e eventos. Somente previsões automáticas futuras ainda abertas são recriadas como cobranças mensais no novo dia de vencimento.
+
+## 1.17.0.04 - 2026-09-08
+- A resolução por voz classifica cada produto sobre o catálogo ativo completo da conta, compartilhado em cache, enquanto executa em paralelo uma consulta curta por termos completos. Prefixos genéricos deixam de permitir que descrições técnicas parecidas ocupem o lugar do nome comercial correto.
+- Aproximações fortes precisam estar no nome, SKU ou marca; categoria e descrição continuam ajudando quando contêm os termos efetivamente falados. Assim, **Triliss** não é confundida com registros que apenas mencionam algo como **Tridium** em texto auxiliar.
+- Um produto escolhido em **Procurar no catálogo** é relido por ID, conta ativa e estado ativo. A escolha encerra a dúvida mesmo quando a referência falada era ruim, eliminando o retorno em looping para a mesma lista.
+- A conciliação continua independente do segmento do catálogo e também reconhece nomes separados ou unidos, como **Tri Liss** e **Triliss**.
+
+## 1.17.0.04-av143 - 2026-09-08
+- Recursos do AvantaVendas renovados com resolução definitiva da escolha manual e classificação segura do catálogo por voz.
 
 ## 1.17.0.03 - 2026-09-08
 - Alterações em **Conteúdo AvantaVendas > Produtos** agora são publicadas no mesmo salvamento para todas as contas de AvantaVendas vinculadas ao perfil. Nome, SKU, descrição, preço sugerido, imagem, estado ativo e demais dados de divulgação substituem a cópia recebida, sem alterar custo ou estoque próprios da conta de vendas.

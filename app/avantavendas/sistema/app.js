@@ -1145,7 +1145,8 @@ function toast(msg, opcoes = {}) {
     : null;
   const dados = dadosToast(msg, opcoes);
   const el = document.createElement('section');
-  el.className = `toast toast-${dados.tipo}${acao ? ' toast-com-acao' : ''}`;
+  el.className = `toast toast-${dados.tipo}`;
+  if (acao) el.classList.add('toast-com-acao');
   el.setAttribute('role', dados.tipo === 'erro' ? 'alert' : 'status');
   el.setAttribute('aria-live', dados.tipo === 'erro' ? 'assertive' : 'polite');
   el.setAttribute('aria-atomic', 'true');

@@ -1,7 +1,7 @@
 {
-  "name": "Recebimentos em Campo",
-  "short_name": "Recebimentos",
-  "description": "Registro de recebimentos em dinheiro em campo — AvantaLab.",
+  "name": "Operações em Campo",
+  "short_name": "Operações",
+  "description": "Registro de recebimentos e serviços em campo — AvantaLab.",
   "id": "/recebimentos/colaborador",
   "start_url": "/recebimentos/colaborador",
   "scope": "/recebimentos/colaborador",

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase as supabasePrincipal } from '@/app/lib/supabase';
-import type { Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, SituacaoRecebimento, Subempresa } from '../components/types';
+import type { AvaliacaoServico, Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, Servico, SituacaoRecebimento, Subempresa } from '../components/types';
 import { validarNomeCompleto } from '@/app/lib/nome-pessoa';
 
 export type DadosRecebimentos = {
@@ -8,6 +8,7 @@ export type DadosRecebimentos = {
   subempresas: Subempresa[];
   colaboradores: Colaborador[];
   recebimentos: Recebimento[];
+  servicos: Servico[];
 };
 
 export type DadosNovoColaborador = Omit<Colaborador, 'id'>;
@@ -28,7 +29,7 @@ export type ComprovanteRecebimento = {
   enviadoEm: string;
 };
 
-export type DadosSubempresaEditavel = Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>;
+export type DadosSubempresaEditavel = Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'tipoNivel' | 'identificacaoNivel' | 'complemento' | 'responsavel' | 'valorCombinado' | 'diaVencimento' | 'herdaExecucaoServico' | 'frequenciaExecucaoServico' | 'configuracaoExecucaoServico'>;
 export type DadosEmpresaEditavel = Omit<Empresa, 'id' | 'ativo'>;
 
 export interface RecebimentosRepo {
@@ -47,6 +48,8 @@ export interface RecebimentosRepo {
   alternarColaborador(id: string, ativo: boolean): Promise<void>;
   registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null): Promise<void>;
   receberCobranca(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null): Promise<void>;
+  registrarServico(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string): Promise<void>;
+  concluirAvisoServico(servicoId: string): Promise<void>;
   obterComprovante(lancamentoId: string): Promise<ComprovanteRecebimento>;
   confirmarBaixa(lancamentoId: string, formaPagamento?: FormaPagamentoRecebimento): Promise<void>;
   devolver(lancamentoId: string, motivo: string): Promise<void>;
@@ -80,28 +83,38 @@ function mapIntegracao(row: Linha | null | undefined): IntegracaoFinanceiraReceb
 
 function mapEmpresa(row: Linha): Empresa {
   const tipoCadastro = texto(row.tipo_cadastro) === 'cliente_direto' ? 'cliente_direto' : 'local_agrupador';
-  const diaMes = row.dia_mes == null ? null : numero(row.dia_mes);
+  const diaExecucaoMes = row.dia_execucao_mes == null ? (row.dia_mes == null ? null : numero(row.dia_mes)) : numero(row.dia_execucao_mes);
+  const diaVencimento = row.dia_vencimento == null ? diaExecucaoMes : numero(row.dia_vencimento);
+  const diasExecucao = row.dias_execucao_semana ?? row.dias_semana;
   return {
-    id: texto(row.id), tipoCadastro, nome: texto(row.nome), endereco: texto(row.endereco), cep: texto(row.cep), logradouro: texto(row.logradouro), bairro: texto(row.bairro), cidade: texto(row.cidade), estado: texto(row.estado), numero: texto(row.numero), complemento: texto(row.complemento),
+    id: texto(row.id), tipoCadastro, nome: texto(row.nome), endereco: texto(row.endereco), cep: texto(row.cep), logradouro: texto(row.logradouro), bairro: texto(row.bairro), cidade: texto(row.cidade), estado: texto(row.estado), numero: texto(row.numero), tipoNivel: (texto(row.tipo_nivel) || null) as Empresa['tipoNivel'], identificacaoNivel: texto(row.identificacao_nivel), complemento: texto(row.complemento),
     responsavel: texto(row.responsavel), telefone: texto(row.telefone), email: texto(row.email),
     valorCombinado: row.valor_combinado == null ? null : numero(row.valor_combinado),
-    frequenciaRecebimento: row.frequencia_recebimento == null ? null : texto(row.frequencia_recebimento) as Empresa['frequenciaRecebimento'],
-    configuracaoRecorrencia: tipoCadastro === 'cliente_direto' ? { diasSemana: Array.isArray(row.dias_semana) ? row.dias_semana.map(numero) : [], diaMes, mesInicio: row.mes_inicio == null ? null : numero(row.mes_inicio) } : null,
+    diaVencimento: tipoCadastro === 'cliente_direto' ? diaVencimento : null,
+    frequenciaExecucaoServico: texto(row.frequencia_execucao_servico ?? row.frequencia_recebimento) ? texto(row.frequencia_execucao_servico ?? row.frequencia_recebimento) as Empresa['frequenciaExecucaoServico'] : null,
+    configuracaoExecucaoServico: {
+      diasSemana: Array.isArray(diasExecucao) ? diasExecucao.map(numero).filter((dia) => dia >= 0 && dia <= 6) : [],
+      diaMes: diaExecucaoMes,
+      mesInicio: row.mes_inicio_execucao == null ? (row.mes_inicio == null ? null : numero(row.mes_inicio)) : numero(row.mes_inicio_execucao),
+    },
     ativo: row.ativo !== false,
   };
 }
 
 function mapSubempresa(row: Linha): Subempresa {
+  const diasExecucao = row.dias_execucao_semana ?? row.dias_semana;
   return {
     id: texto(row.id), empresaId: texto(row.recebimento_empresa_id), nome: texto(row.nome), endereco: texto(row.endereco),
-    cep: texto(row.cep), logradouro: texto(row.logradouro), bairro: texto(row.bairro), cidade: texto(row.cidade), estado: texto(row.estado), numero: texto(row.numero), complemento: texto(row.complemento),
+    cep: texto(row.cep), logradouro: texto(row.logradouro), bairro: texto(row.bairro), cidade: texto(row.cidade), estado: texto(row.estado), numero: texto(row.numero), tipoNivel: (texto(row.tipo_nivel) || null) as Subempresa['tipoNivel'], identificacaoNivel: texto(row.identificacao_nivel), complemento: texto(row.complemento),
     shoppingGaleria: texto(row.shopping_galeria), lojaSala: texto(row.loja_sala), responsavel: texto(row.responsavel),
     valorCombinado: row.valor_combinado == null ? null : numero(row.valor_combinado),
-    frequenciaRecebimento: (texto(row.frequencia_recebimento) || 'mensal') as Subempresa['frequenciaRecebimento'],
-    configuracaoRecorrencia: {
-      diasSemana: Array.isArray(row.dias_semana) ? row.dias_semana.map(numero).filter((dia) => dia >= 0 && dia <= 6) : [],
-      diaMes: row.dia_mes == null ? null : numero(row.dia_mes),
-      mesInicio: row.mes_inicio == null ? null : numero(row.mes_inicio),
+    diaVencimento: row.dia_vencimento == null ? (row.dia_mes == null ? 1 : numero(row.dia_mes)) : numero(row.dia_vencimento),
+    herdaExecucaoServico: row.herda_execucao_servico !== false,
+    frequenciaExecucaoServico: (texto(row.frequencia_execucao_servico ?? row.frequencia_recebimento) || 'mensal') as Subempresa['frequenciaExecucaoServico'],
+    configuracaoExecucaoServico: {
+      diasSemana: Array.isArray(diasExecucao) ? diasExecucao.map(numero).filter((dia) => dia >= 0 && dia <= 6) : [],
+      diaMes: row.dia_execucao_mes == null ? (row.dia_mes == null ? null : numero(row.dia_mes)) : numero(row.dia_execucao_mes),
+      mesInicio: row.mes_inicio_execucao == null ? (row.mes_inicio == null ? null : numero(row.mes_inicio)) : numero(row.mes_inicio_execucao),
     },
     ativo: row.ativo !== false,
   };
@@ -110,7 +123,26 @@ function mapSubempresa(row: Linha): Subempresa {
 function mapColaborador(row: Linha): Colaborador {
   return {
     id: texto(row.user_id), nome: texto(row.nome), celular: texto(row.celular),
-    email: texto(row.email_contato), cpf: texto(row.cpf), senha: '', ativo: row.ativo !== false,
+    email: texto(row.email_contato), cpf: texto(row.cpf), senha: '',
+    podeRecebimentos: row.pode_recebimentos !== false,
+    podeServicos: row.pode_servicos === true,
+    ativo: row.ativo !== false,
+  };
+}
+
+function mapServico(row: Linha): Servico {
+  return {
+    id: texto(row.id), empresaId: texto(row.recebimento_empresa_id),
+    subempresaId: row.subempresa_id == null ? null : texto(row.subempresa_id),
+    dataProgramada: texto(row.data_programada),
+    situacao: texto(row.situacao) as Servico['situacao'],
+    colaboradorId: row.colaborador_user_id == null ? null : texto(row.colaborador_user_id),
+    clienteNome: row.cliente_nome == null ? null : texto(row.cliente_nome),
+    assinatura: row.assinatura == null ? null : texto(row.assinatura),
+    avaliacao: row.avaliacao == null ? null : texto(row.avaliacao) as AvaliacaoServico,
+    observacaoCliente: row.observacao_cliente == null ? null : texto(row.observacao_cliente),
+    realizadoEm: row.realizado_em == null ? null : texto(row.realizado_em),
+    avisoConcluidoEm: row.aviso_concluido_em == null ? null : texto(row.aviso_concluido_em),
   };
 }
 
@@ -215,6 +247,19 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     return todasAsLinhas;
   }
 
+  async function carregarTodosServicos(): Promise<Linha[]> {
+    const { data, error } = await cliente
+      .from('recebimentos_servicos')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .order('data_programada', { ascending: false })
+      .limit(2000);
+    // A tela continua operável antes da migração de Serviços chegar ao ambiente.
+    if (error && ['PGRST205', '42P01'].includes(String((error as { code?: string }).code ?? ''))) return [];
+    if (error) throw new Error(erroMensagem(error, 'Erro ao carregar serviços.'));
+    return (data ?? []) as Linha[];
+  }
+
   return {
     async carregar() {
       // A migration de recorrência pode ainda não ter sido aplicada em um
@@ -224,12 +269,17 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       if (erroRecorrencia && erroRecorrencia.code !== 'PGRST202') {
         throw new Error(erroMensagem(erroRecorrencia, 'Erro ao atualizar as cobranças recorrentes.'));
       }
-      const [empresas, subempresas, colaboradores, recebimentos, comprovantes] = await Promise.all([
+      const { error: erroServicos } = await cliente.rpc('recebimentos_sincronizar_servicos', { p_empresa_id: empresaId });
+      if (erroServicos && !['PGRST202', 'PGRST205', '42P01'].includes(String(erroServicos.code ?? ''))) {
+        throw new Error(erroMensagem(erroServicos, 'Erro ao atualizar a programação de serviços.'));
+      }
+      const [empresas, subempresas, colaboradores, recebimentos, comprovantes, servicos] = await Promise.all([
         exigir(cliente.from('recebimentos_empresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar empresas.'),
         exigir(cliente.from('recebimentos_subempresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar subempresas.'),
         exigir(cliente.from('recebimentos_colaboradores').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar colaboradores.'),
         carregarTodosRecebimentos(),
         cliente.from('recebimentos_comprovantes').select('lancamento_id').eq('empresa_id', empresaId),
+        carregarTodosServicos(),
       ]);
       if (comprovantes.error && !['PGRST205', '42P01'].includes(String(comprovantes.error.code ?? ''))) {
         throw new Error(erroMensagem(comprovantes.error, 'Erro ao carregar os comprovantes.'));
@@ -244,18 +294,19 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
           ...item,
           tem_comprovante: idsComComprovante.has(texto(item.id)),
         })),
+        servicos: servicos.map(mapServico),
       };
     },
     async salvarEmpresa(dados) {
       exigirResponsavelValido(dados.responsavel);
       await exigir(cliente.from('recebimentos_empresas').insert({
-        empresa_id: empresaId, nome: dados.nome, tipo_cadastro: dados.tipoCadastro, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia?.diasSemana ?? [], dia_mes: dados.configuracaoRecorrencia?.diaMes ?? null, mes_inicio: dados.configuracaoRecorrencia?.mesInicio ?? null, dia_vencimento: dados.configuracaoRecorrencia?.diaMes ?? null, ativo: dados.ativo,
+        empresa_id: empresaId, nome: dados.nome, tipo_cadastro: dados.tipoCadastro, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, tipo_nivel: dados.tipoNivel, identificacao_nivel: dados.identificacaoNivel, complemento: dados.complemento, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, valor_combinado: dados.valorCombinado, dia_vencimento: dados.diaVencimento, frequencia_execucao_servico: dados.frequenciaExecucaoServico, dias_execucao_semana: dados.configuracaoExecucaoServico?.diasSemana ?? [], dia_execucao_mes: dados.configuracaoExecucaoServico?.diaMes ?? null, mes_inicio_execucao: dados.configuracaoExecucaoServico?.mesInicio ?? null, frequencia_recebimento: dados.tipoCadastro === 'cliente_direto' ? 'mensal' : null, dias_semana: [], dia_mes: dados.diaVencimento, mes_inicio: null, ativo: dados.ativo,
       }).select('id').single(), 'Erro ao cadastrar empresa.');
     },
     async editarEmpresa(id, dados) {
       exigirResponsavelValido(dados.responsavel);
       await exigir(cliente.from('recebimentos_empresas').update({
-        nome: dados.nome, tipo_cadastro: dados.tipoCadastro, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia?.diasSemana ?? [], dia_mes: dados.configuracaoRecorrencia?.diaMes ?? null, mes_inicio: dados.configuracaoRecorrencia?.mesInicio ?? null, dia_vencimento: dados.configuracaoRecorrencia?.diaMes ?? null, atualizado_em: new Date().toISOString(),
+        nome: dados.nome, tipo_cadastro: dados.tipoCadastro, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, tipo_nivel: dados.tipoNivel, identificacao_nivel: dados.identificacaoNivel, complemento: dados.complemento, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, valor_combinado: dados.valorCombinado, dia_vencimento: dados.diaVencimento, frequencia_execucao_servico: dados.frequenciaExecucaoServico, dias_execucao_semana: dados.configuracaoExecucaoServico?.diasSemana ?? [], dia_execucao_mes: dados.configuracaoExecucaoServico?.diaMes ?? null, mes_inicio_execucao: dados.configuracaoExecucaoServico?.mesInicio ?? null, frequencia_recebimento: dados.tipoCadastro === 'cliente_direto' ? 'mensal' : null, dias_semana: [], dia_mes: dados.diaVencimento, mes_inicio: null, atualizado_em: new Date().toISOString(),
       }).eq('empresa_id', empresaId).eq('id', id).select('id').single(), 'Erro ao editar empresa.');
     },
     async excluirEmpresa(id) { await exigir(cliente.from('recebimentos_empresas').delete().eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao excluir empresa.'); },
@@ -264,16 +315,17 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       exigirResponsavelValido(dados.responsavel);
       await exigir(cliente.from('recebimentos_subempresas').insert({
         empresa_id: empresaId, recebimento_empresa_id: dados.empresaId, nome: dados.nome, endereco: dados.endereco,
-        logradouro: dados.logradouro, numero: dados.numero, complemento: dados.complemento,
+        logradouro: dados.logradouro, numero: dados.numero, tipo_nivel: dados.tipoNivel, identificacao_nivel: dados.identificacaoNivel, complemento: dados.complemento,
         cep: dados.cep, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado,
         shopping_galeria: dados.shoppingGaleria, loja_sala: dados.lojaSala, responsavel: dados.responsavel,
-        valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento,
-        dias_semana: dados.configuracaoRecorrencia.diasSemana, dia_mes: dados.configuracaoRecorrencia.diaMes,
-        mes_inicio: dados.configuracaoRecorrencia.mesInicio, dia_vencimento: dados.configuracaoRecorrencia.diaMes,
+        valor_combinado: dados.valorCombinado, dia_vencimento: dados.diaVencimento, herda_execucao_servico: dados.herdaExecucaoServico,
+        frequencia_execucao_servico: dados.frequenciaExecucaoServico, dias_execucao_semana: dados.configuracaoExecucaoServico.diasSemana,
+        dia_execucao_mes: dados.configuracaoExecucaoServico.diaMes, mes_inicio_execucao: dados.configuracaoExecucaoServico.mesInicio,
+        frequencia_recebimento: 'mensal', dias_semana: [], dia_mes: dados.diaVencimento, mes_inicio: null,
         ativo: dados.ativo,
       }).select('id').single(), 'Erro ao cadastrar subempresa.');
     },
-    async editarSubempresa(id, dados) { exigirResponsavelValido(dados.responsavel); await exigir(cliente.from('recebimentos_subempresas').update({ nome: dados.nome, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia.diasSemana, dia_mes: dados.configuracaoRecorrencia.diaMes, mes_inicio: dados.configuracaoRecorrencia.mesInicio, dia_vencimento: dados.configuracaoRecorrencia.diaMes, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao editar subempresa.'); },
+    async editarSubempresa(id, dados) { exigirResponsavelValido(dados.responsavel); await exigir(cliente.from('recebimentos_subempresas').update({ nome: dados.nome, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, tipo_nivel: dados.tipoNivel, identificacao_nivel: dados.identificacaoNivel, complemento: dados.complemento, responsavel: dados.responsavel, valor_combinado: dados.valorCombinado, dia_vencimento: dados.diaVencimento, herda_execucao_servico: dados.herdaExecucaoServico, frequencia_execucao_servico: dados.frequenciaExecucaoServico, dias_execucao_semana: dados.configuracaoExecucaoServico.diasSemana, dia_execucao_mes: dados.configuracaoExecucaoServico.diaMes, mes_inicio_execucao: dados.configuracaoExecucaoServico.mesInicio, frequencia_recebimento: 'mensal', dias_semana: [], dia_mes: dados.diaVencimento, mes_inicio: null, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao editar subempresa.'); },
     async excluirSubempresa(id) { await exigir(cliente.from('recebimentos_subempresas').delete().eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao excluir subempresa.'); },
     async alternarSubempresa(id, ativo) { await exigir(cliente.from('recebimentos_subempresas').update({ ativo, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao alterar subempresa.'); },
     async criarColaborador(dados) { await chamarApi(cliente, '/api/recebimentos/criar-colaborador', { empresaId, ...dados }); },
@@ -283,9 +335,9 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     },
     async excluirColaborador(id) { await chamarApi(cliente, '/api/recebimentos/excluir-colaborador', { empresaId, colaboradorUserId: id }); },
     async alternarColaborador(id, ativo) {
-      const { data, error } = await cliente.from('recebimentos_colaboradores').select('nome, cpf, celular, email_contato').eq('empresa_id', empresaId).eq('user_id', id).single();
+      const { data, error } = await cliente.from('recebimentos_colaboradores').select('nome, cpf, celular, email_contato, pode_recebimentos, pode_servicos').eq('empresa_id', empresaId).eq('user_id', id).single();
       if (error || !data) throw new Error('Colaborador não encontrado.');
-      await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, ativo });
+      await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, podeRecebimentos: data.pode_recebimentos !== false, podeServicos: data.pode_servicos === true, ativo });
     },
     async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante) {
       await registrarViaApi(cliente, {
@@ -308,6 +360,14 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         comprovante,
         dataPagamento,
       });
+    },
+    async registrarServico(recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente) {
+      await chamarApi(cliente, '/api/recebimentos/registrar-servico', {
+        empresaId, recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente,
+      });
+    },
+    async concluirAvisoServico(servicoId) {
+      await chamarApi(cliente, '/api/recebimentos/concluir-aviso-servico', { empresaId, servicoId });
     },
     async obterComprovante(id) {
       const resposta = await fetch(`/api/recebimentos/comprovante?lancamentoId=${encodeURIComponent(id)}`, {
@@ -356,6 +416,7 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     assinarAtualizacoes(callback) {
       const canal = cliente.channel(`recebimentos-${empresaId}-${Math.random()}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_lancamentos', filter: `empresa_id=eq.${empresaId}` }, callback)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_servicos', filter: `empresa_id=eq.${empresaId}` }, callback)
         .subscribe();
       return () => { void cliente.removeChannel(canal); };
     },

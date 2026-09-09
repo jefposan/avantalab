@@ -3,9 +3,10 @@
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './recebimentos.module.css';
-import type { Colaborador, Empresa, Recebimento, Subempresa } from './components/types';
+import type { Colaborador, Empresa, Recebimento, Servico, Subempresa } from './components/types';
 import { cpfValido, formatarCpf } from './components/helpers';
 import PainelColaborador from './components/PainelColaborador';
+import PainelServicosColaborador from './components/PainelServicosColaborador';
 import CampoSenha from './components/CampoSenha';
 import { criarRepoSupabase, type RecebimentosRepo } from './data/repo';
 
@@ -62,6 +63,8 @@ export default function ColaboradorApp() {
   const [subempresas, setSubempresas] = useState<Subempresa[]>([]);
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [recebimentos, setRecebimentos] = useState<Recebimento[]>([]);
+  const [servicos, setServicos] = useState<Servico[]>([]);
+  const [operacao, setOperacao] = useState<'seletor' | 'recebimentos' | 'servicos'>('seletor');
   const [standalone, setStandalone] = useState<boolean | null>(null);
   const [instrucaoInstalacao, setInstrucaoInstalacao] = useState(false);
   const promptInstalacao = useRef<EventoInstalacaoPwa | null>(null);
@@ -112,6 +115,8 @@ export default function ColaboradorApp() {
     setSubempresas(dados.subempresas);
     setColaboradores(dados.colaboradores);
     setRecebimentos(dados.recebimentos);
+    setServicos(dados.servicos);
+    return dados;
   }, []);
 
   const prepararSessao = useCallback(async (sessao: Session, empresaSugerida?: string) => {
@@ -136,7 +141,10 @@ export default function ColaboradorApp() {
     }
     setEmpresaNome(String(acesso.empresaNome ?? '').trim());
     const repoAtivo = criarRepoSupabase(empresa, cliente);
-    await carregarDados(repoAtivo);
+    const dados = await carregarDados(repoAtivo);
+    const colaborador = dados.colaboradores.find((item) => item.id === sessao.user.id);
+    if (!colaborador || (!colaborador.podeRecebimentos && !colaborador.podeServicos)) throw new Error('Seu cadastro não possui acesso ativo a Recebimentos ou Serviços.');
+    setOperacao(colaborador.podeRecebimentos && colaborador.podeServicos ? 'seletor' : colaborador.podeServicos ? 'servicos' : 'recebimentos');
     setEmpresaId(empresa);
     setRepo(repoAtivo);
     setEstado('app');
@@ -189,7 +197,7 @@ export default function ColaboradorApp() {
 
   async function sair() {
     await cliente?.auth.signOut();
-    setRepo(null); setEmpresaId(''); setEmpresaNome(''); setEmpresas([]); setSubempresas([]); setColaboradores([]); setRecebimentos([]);
+    setRepo(null); setEmpresaId(''); setEmpresaNome(''); setEmpresas([]); setSubempresas([]); setColaboradores([]); setRecebimentos([]); setServicos([]); setOperacao('seletor');
     setEstado('login'); setErro('');
   }
 
@@ -208,9 +216,8 @@ export default function ColaboradorApp() {
             <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
               <span className="avanta-loading-spinner animate-spin" aria-hidden="true" />
             </div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-sky-700">AvantaLab</p>
             <h1 className="text-xl font-black text-slate-900">Preparando acesso</h1>
-            <p className="text-sm font-semibold text-slate-500">Carregando Recebimentos Presenciais…</p>
+            <p className="text-sm font-semibold text-slate-500">Carregando operações em campo…</p>
           </div>
         </section>
       </main>
@@ -224,7 +231,7 @@ export default function ColaboradorApp() {
         <div className={styles.loginCard}>
           <div className={styles.loginMarca}>AvantaLab</div>
           <h1 className={styles.loginTitulo}>Acesso indisponível</h1>
-          <p className={styles.muted}>O Recebimentos Presenciais está desativado ou seu acesso foi suspenso. Fale com o gestor da empresa.</p>
+          <p className={styles.muted}>As Operações em Campo estão desativadas ou seu acesso foi suspenso. Fale com o gestor da empresa.</p>
           <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={() => { setEstado('login'); setErro(''); }} style={{ width: '100%', marginTop: 16 }}>Voltar</button>
         </div>
       </div>
@@ -238,7 +245,7 @@ export default function ColaboradorApp() {
         <div className={styles.loginContent}>
           <form className={styles.loginCard} onSubmit={(event) => { event.preventDefault(); void entrar(); }}>
             <div className={styles.loginMarca}>AvantaLab</div>
-            <h1 className={styles.loginTitulo}>Recebimentos Presenciais</h1>
+            <h1 className={styles.loginTitulo}>Operações em Campo</h1>
             <p className={styles.muted}>Entre com o CPF e a senha fornecidos pelo gestor.</p>
             <div className={styles.field} style={{ marginTop: 18 }}>
               <label className={styles.label} htmlFor="recebimentos-cpf">CPF</label>
@@ -260,7 +267,7 @@ export default function ColaboradorApp() {
             <div className={styles.installCard}>
               <div className={styles.installCardInner}>
                 <div className={styles.installCopy}>
-                  <p className={styles.installNome}>Recebimentos Presenciais</p>
+                  <p className={styles.installNome}>Operações em Campo</p>
                   <p className={styles.installDescricao}>Instale como app no seu celular.</p>
                 </div>
                 <button type="button" className={styles.installButton} onClick={() => void instalarPwa()}>Instalar</button>
@@ -275,7 +282,7 @@ export default function ColaboradorApp() {
             onMouseDown={(evento) => { if (evento.target === evento.currentTarget) setInstrucaoInstalacao(false); }}
           >
             <section className={styles.installModal} role="dialog" aria-modal="true" aria-labelledby="recebimentos-instalar-titulo">
-              <h2 id="recebimentos-instalar-titulo">Instalar o Recebimentos Presenciais</h2>
+              <h2 id="recebimentos-instalar-titulo">Instalar Operações em Campo</h2>
               <div className={styles.installInstructions}>
                 <p>
                   No seu navegador, toque no botão <strong>Compartilhar</strong>{' '}
@@ -287,7 +294,7 @@ export default function ColaboradorApp() {
                   </span>.
                 </p>
                 <p>Depois escolha <strong>Adicionar à Tela de Início</strong>.</p>
-                <p className={styles.installHint}>Assim o Recebimentos abre como um app no seu celular.</p>
+                <p className={styles.installHint}>Assim as operações abrem como um app no seu celular.</p>
               </div>
               <button ref={botaoFecharInstalacao} type="button" className={styles.installClose} onClick={() => setInstrucaoInstalacao(false)}>Entendi</button>
             </section>
@@ -299,24 +306,35 @@ export default function ColaboradorApp() {
 
   const colaborador = colaboradores[0];
   if (!colaborador || !repo || !empresaId) return null;
+  const podeTrocarOperacao = colaborador.podeRecebimentos && colaborador.podeServicos;
+  if (operacao === 'seletor') return (
+    <main className={styles.seletorOperacaoPwa}>
+      <section>
+        <p>{empresaNome || 'AvantaLab'}</p><h1>Escolha a operação</h1><span>Você possui acesso aos dois sistemas.</span>
+        <button type="button" onClick={() => setOperacao('recebimentos')}><b>Recebimentos</b><small>Registrar cobranças em campo</small></button>
+        <button type="button" onClick={() => setOperacao('servicos')}><b>Serviços</b><small>Registrar atendimento e avaliação</small></button>
+        <button type="button" className={styles.seletorSair} onClick={() => void sair()}>Sair</button>
+      </section>
+    </main>
+  );
   return (
     <div className={styles.page}>
       <div className={`${styles.topbar} ${styles.topbarColaborador}`}>
         <div className={styles.topbarInner}>
           <div className={styles.brand}>
             {empresaNome && <span className={styles.brandTitle}>{empresaNome}</span>}
-            <span className={styles.brandEmpresa}>Recebimentos Presenciais</span>
+            <span className={styles.brandEmpresa}>{operacao === 'servicos' ? 'Registro de serviços' : 'Registro de recebimentos'}</span>
           </div>
-          <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button>
+          <div className={styles.topbarAcoesColaborador}>{podeTrocarOperacao && <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => setOperacao('seletor')}>Trocar sistema</button>}<button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button></div>
         </div>
       </div>
       <div className={styles.container}>
         {erro && <div className={styles.aviso} role="alert">{erro}</div>}
-        <PainelColaborador
+        {operacao === 'recebimentos' ? <PainelColaborador
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
           onRegistrar={(empresaRecebimentoId, subId, valor, obs, forma, arquivo) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs, forma, arquivo))}
           onReceberCobranca={(id, valor, obs, forma, arquivo, dataPagamento) => executar((r) => r.receberCobranca(id, valor, obs, forma, arquivo, dataPagamento))}
-        />
+        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} onRegistrar={(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao) => executar((r) => r.registrarServico(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao))} />}
       </div>
     </div>
   );

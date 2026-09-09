@@ -1,6 +1,92 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.17.0.03 -->
+<!-- ava-version: 1.19.0.08 -->
+
+> Revisão 1.19.0.08: em **Colaboradores**, o título **Permissões no
+> aplicativo** fica dentro do bloco de seleção, sem sobrepor sua borda.
+
+> Revisão 1.19.0.07: em **Colaboradores**, editar permissões não exige mudar a
+> senha. Preencha e confirme uma nova senha somente quando quiser redefinir o
+> acesso.
+
+> Revisão 1.19.0.06: nos cards de **Preparando**, **Carregando** e
+> **Validando**, a marca não é repetida em texto; o logotipo continua na cena
+> de fundo.
+
+> Revisão 1.19.0.05: no acesso de **Operações de Campo**, o card de validação
+> mostra somente o estado e a mensagem, sem a identificação AvantaLab Gestão.
+
+> Revisão 1.19.0.04: a abertura de **Operações de Campo** exibe somente o
+> identificador Gestão operacional e o título; a descrição complementar foi
+> removida.
+
+> Revisão 1.19.0.03: confirmação e compartilhamento da Solicitação por Voz
+> foram ajustados somente no AvantaVendas; sem impacto operacional na Gestão
+> Web.
+
+> Revisão 1.19.0.02: **Recebimentos Presenciais** passa a se chamar
+> **Operações de Campo**. O nome muda no catálogo, menu, página web e PWA; a
+> rota, as permissões e os dados existentes são preservados.
+
+> Revisão 1.19.0.01: a navegação de Recebimentos Presenciais separa as áreas
+> por cor. À esquerda, a ordem é **Visão geral**, **Resultados**, **Empresas**
+> e **Colaboradores**; as barras seguintes recebem os rótulos externos
+> **Recebimentos** e **Serviços**, com espaço antes do AvantaCard.
+
+> Revisão 1.19.0: **Recebimentos Presenciais** também controla serviços. As
+> abas **Realizados**, **Pendentes**, **Atrasados** e **Avisos** ficam reunidas
+> no grupo verde de Serviços e usam a mesma pílula deslizante da navegação
+> principal. A agenda vem de **Execução do serviço**, sem mexer em cobranças ou
+> histórico financeiro. Em **Colaboradores**, defina o acesso a Recebimentos,
+> Serviços ou ambos. No PWA de Operações em Campo, quem possui as duas
+> permissões escolhe a operação e pode usar **Trocar sistema**; o registro de
+> serviço solicita cliente, nome, assinatura e avaliação. Uma avaliação
+> **Regular** gera Aviso para o gestor, com observação opcional, até ser
+> concluído após o tratamento.
+
+> Revisão 1.18.0.07: correção interna e preservadora do gatilho de lançamentos
+> do AvantaVendas; sem impacto operacional na Gestão Web.
+
+> Revisão 1.18.0.06: o campo compacto ao lado de **Tipo de nível** passou a se
+> chamar **Referência**. Use-o para informar números ou códigos como 12, G ou
+> L2, sem quebra do rótulo.
+
+> Revisão 1.18.0.05: nos cadastros e edições de **Recebimentos
+> Presenciais**, **Rua** usa uma área maior e **Número / identificação** usa
+> uma área compacta, própria para referências curtas como 12, G ou L2.
+
+> Revisão 1.18.0.04: o card de **Administração** em **Recebimentos
+> Presenciais** acompanha a altura real dos filtros e linhas carregadas. A
+> rolagem ocorre na página completa, sem uma barra interna no card.
+
+> Revisão 1.18.0.03: em **Recebimentos Presenciais**, trocar para outra seção
+> interna cancela o cadastro ou a edição em andamento sem salvar. Ao retornar a
+> **Empresas**, a lista abre sem formulário pendente; os campos do endereço,
+> execução do serviço e as ações finais continuam disponíveis pela rolagem do
+> próprio cadastro.
+
+> Revisão 1.18.0.02: **Recebimentos Presenciais** abre em página própria, com
+> **Início**, marca AvantaLab e **Ajustes** no cabeçalho. No endereço de empresa,
+> local ou cliente, use **Tipo de nível** e **Número / identificação** para
+> registrar, por exemplo, Andar 12, Piso G ou Subsolo 2; nenhum endereço já
+> registrado é alterado automaticamente.
+>
+> Revisão 1.18.0.01: no **Local agrupador**, configure também a **Execução do
+> serviço**. Todo cliente já existente e todo novo cliente no local inicia com
+> **Herdar a programação do local** ativado; as datas aparecem somente para
+> consulta até que essa opção seja desativada para definir uma programação
+> própria. A herança é operacional e não altera vencimentos ou histórico.
+>
+> Revisão 1.18.0: em **Recebimentos Presenciais**, o pagamento é sempre
+> mensal. Ao cadastrar ou editar um cliente, selecione o **Dia de vencimento**
+> obrigatório; a antiga frequência passa a se chamar **Execução do serviço** e
+> serve de referência para controlar a realização semanal, quinzenal, mensal,
+> trimestral, semestral ou anual. O sistema preserva o dia já usado por cada
+> cliente e o histórico de cobranças.
+
+> Revisão 1.17.0.04: correção da conciliação e da escolha manual de
+> produtos na Solicitação por Voz aplicada somente ao AvantaVendas; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.17.0.03: ao salvar ou inativar um produto em **Conteúdo
 > AvantaVendas > Produtos**, a publicação alcança imediatamente as contas de
@@ -2509,27 +2595,50 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   validade legal.
   O botão **Disponibilizar manual** prepara o Manual do Sistema REP-P em PDF
   versionado e o inclui no mesmo histórico de documentos da empresa.
-- **Recebimentos Presenciais** é instalado em **Menu > Módulos**. Depois de
+- **Operações de Campo** é instalado em **Menu > Módulos**. Depois de
   instalado, Gestor Master e Administrador usam **Menu > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de
   conferir, devolver, registrar divergências ou estornar recebimentos.
+- A navegação de **Operações de Campo** segue a pílula deslizante do menu da Gestão e separa as
+  áreas por cor. À esquerda, a ordem é **Visão geral**, **Resultados**,
+  **Empresas** e **Colaboradores**. Acima das barras seguintes aparecem os
+  rótulos **Recebimentos** — **Recebimentos**, **Conferência**, **Próximo a
+  vencer** e **Inadimplentes** — e **Serviços** — **Realizados**, **Pendentes**,
+  **Atrasados** e **Avisos**. Há um espaço visual antes do AvantaCard. A pílula
+  muda para verde dentro de Serviços.
+  A agenda é gerada a partir da **Execução do serviço** do cliente direto ou,
+  quando aplicável, da programação herdada do Local agrupador. A estreia cria
+  somente a agenda atual e dos próximos 30 dias, preservando dados antigos sem
+  presumir serviços atrasados. Pendentes cuja data passou tornam-se Atrasados.
+  **Avisos** lista somente avaliações Regulares ainda não tratadas; o gestor ou
+  administrador conclui o aviso após resolver a situação.
 - Em **Empresas**, use **Pesquisar empresas e locais…** ou **+ Nova empresa**.
   No início do cadastro, escolha **Cliente direto** ou **Local agrupador**.
   Cliente direto possui responsável, contato, e-mail, endereço, valor contratado
   e vencimento próprios, sem clientes abaixo. Para salvar um cliente, somente
-  nome, valor contratado e vencimento são obrigatórios; os demais dados são
+  nome, valor contratado, dia de vencimento e execução do serviço são obrigatórios; os demais dados são
   opcionais. Local agrupador é um shopping,
-  galeria ou condomínio: registra somente nome e endereço, não gera cobrança e
-  permite **+ Novo cliente no local**. Em **Colaboradores**, use **+ Novo colaborador**.
-- Ao cadastrar ou editar um cliente — direto ou dentro de um local — escolha em **Recebimento** a frequência
-  semanal, quinzenal, mensal, trimestral, semestral ou anual. Em seguida configure
-  os dias aplicáveis: dias da semana; dia-base com intervalo rigoroso de 15 dias;
-  dia mensal; ou mês inicial e dia para os ciclos trimestral, semestral e anual.
-  Cada cliente mantém somente uma dessas regras. Ao trocar a frequência, o
-  sistema substitui as previsões automáticas futuras ainda não recebidas e
-  preserva atrasos, pagamentos e histórico anteriores.
-  A primeira cobrança nunca antecede o cadastro; daí em diante o sistema cria as
-  parcelas previstas e marca automaticamente como **Em atraso** as não recebidas
+  galeria ou condomínio: registra nome, endereço e a **Execução do serviço**,
+  não gera cobrança e permite **+ Novo cliente no local**. Nesse cliente, a
+  opção **Herdar a programação do local** inicia ativada e deixa as datas de
+  execução somente para consulta; desative-a para selecionar uma programação
+  própria. Em **Colaboradores**, use **+ Novo colaborador** e escolha ao menos
+  uma permissão no aplicativo: **Recebimentos** e/ou **Serviços**.
+- No endereço, informe opcionalmente **Tipo de nível** — Andar, Piso, Subsolo,
+  Térreo, Mezanino ou Outro nível — e depois o **Número / identificação** livre.
+  Use, por exemplo, `Andar` + `12`, `Piso` + `G` ou `Subsolo` + `2`; para
+  térreo, a identificação pode ficar vazia. Esses campos existem tanto em
+  empresa/local quanto em cliente no local.
+- Ao cadastrar ou editar um cliente — direto ou dentro de um local — informe o
+  **Dia de vencimento** obrigatório. A cobrança é sempre mensal; em meses mais
+  curtos, o sistema usa o último dia disponível. Em **Execução do serviço**,
+  escolha a frequência semanal, quinzenal, mensal, trimestral, semestral ou anual
+  e configure os dias aplicáveis como referência operacional do serviço. Essa
+  configuração não altera o calendário financeiro. Ao trocar o dia de vencimento,
+  o sistema substitui somente as previsões automáticas futuras ainda não recebidas
+  e preserva atrasos, pagamentos e histórico anteriores.
+  A primeira cobrança nunca antecede o cadastro; daí em diante o sistema cria
+  parcelas mensais previstas e marca automaticamente como **Em atraso** as não recebidas
   depois do vencimento. A aba **Inadimplentes** mostra somente cobranças já
   vencidas com situação **Em atraso**; uma cobrança **Previsto** nunca aparece ali.
   A aba **Próximo a vencer** mostra somente a cobrança futura mais próxima de
@@ -2549,8 +2658,15 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   está vazia. No resumo do colaborador, **Recebido hoje**
   considera somente o dia atual, enquanto **Aguardando** mantém o total acumulado
   até a conferência de todos os lançamentos pendentes. O header do PWA exibe como título principal a empresa gestora
-  que criou o acesso e, abaixo, **Recebimentos Presenciais**. Remover o módulo
-  bloqueia novas entradas sem apagar os dados.
+  que criou o acesso e, abaixo, o nome da operação atual. Com as duas
+  permissões, ele escolhe **Recebimentos** ou **Serviços** logo após o login e
+  usa **Trocar sistema** no topo para alternar sem sair. Em Serviços, **+ Registrar
+  novo serviço** seleciona empresa e cliente/local, pede o nome de quem recebeu,
+  exige assinatura em tela e então recebe a avaliação **Bom** ou **Regular**.
+  A opção Regular permite informar **Nos conte sobre sua experiência** de forma
+  opcional antes de enviar; o registro aparece em Realizados e seu aviso fica
+  disponível ao gestor. Remover o módulo bloqueia novas entradas sem apagar os
+  dados.
 - As cobranças **Previsto** alimentam o total calculado dos próximos meses, mas
   não aparecem individualmente na listagem detalhada. Ao selecionar um mês
   futuro, **Visão geral** e **Resultados** mostram somente o total previsto.

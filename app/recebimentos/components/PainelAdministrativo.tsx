@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import styles from '../recebimentos.module.css';
-import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Subempresa } from './types';
+import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Servico, Subempresa } from './types';
 import { aguardandoConferencia, cobrancasNosProximosDias, dataLocalIso, formatarMoeda } from './helpers';
 import ListaEmpresas from './ListaEmpresas';
 import ListaColaboradores from './ListaColaboradores';
@@ -13,10 +13,11 @@ import FiltroCompetencia from './FiltroCompetencia';
 import ListaInadimplentes from './ListaInadimplentes';
 import ListaProximosVencimentos from './ListaProximosVencimentos';
 import GraficoResultados from './GraficoResultados';
+import PainelServicos, { type FiltroServico } from './PainelServicos';
 import type { ComprovanteRecebimento, IntegracaoFinanceiraRecebimentos } from '../data/repo';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
 
-type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferencia' | 'proximo' | 'inadimplentes' | 'resultados';
+type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferencia' | 'proximo' | 'inadimplentes' | FiltroServico | 'resultados';
 
 type Props = {
   perfil: Perfil;
@@ -30,6 +31,7 @@ type Props = {
   subempresas: Subempresa[];
   colaboradores: Colaborador[];
   recebimentos: Recebimento[];
+  servicos: Servico[];
   mostrarLinkColaboradores?: boolean;
   rascunhoEscopo: string;
   onConfirmarBaixa: (id: string, formaPagamento?: FormaPagamentoRecebimento) => void;
@@ -44,7 +46,7 @@ type Props = {
   onExcluirEmpresa: (id: string) => void;
   onAlternarEmpresa: (id: string) => void;
   onAdicionarSubempresa: (dados: Omit<Subempresa, 'id'>) => Promise<void>;
-  onEditarSubempresa: (id: string, dados: Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>) => Promise<void>;
+  onEditarSubempresa: (id: string, dados: Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'tipoNivel' | 'identificacaoNivel' | 'complemento' | 'responsavel' | 'valorCombinado' | 'diaVencimento' | 'herdaExecucaoServico' | 'frequenciaExecucaoServico' | 'configuracaoExecucaoServico'>) => Promise<void>;
   onExcluirSubempresa: (id: string) => void;
   onAlternarSubempresa: (id: string) => void;
   onAdicionarColaborador: (dados: Omit<Colaborador, 'id'>) => Promise<void>;
@@ -54,24 +56,33 @@ type Props = {
   onObterIntegracaoFinanceira: (ano: number, mes: number) => Promise<IntegracaoFinanceiraRecebimentos>;
   onAtualizarTitulosFinanceiro: (ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string) => Promise<IntegracaoFinanceiraRecebimentos>;
   onDefinirIntegracaoFinanceira: (ano: number, mes: number, ativa: boolean) => Promise<IntegracaoFinanceiraRecebimentos>;
+  onConcluirAvisoServico: (id: string) => void;
 };
 
-const ABAS: Array<[Aba, string]> = [
+const ABAS_GERAL: Array<[Aba, string]> = [
   ['visao', 'Visão geral'],
+  ['resultados', 'Resultados'],
   ['empresas', 'Empresas'],
   ['colaboradores', 'Colaboradores'],
+];
+const ABAS_RECEBIMENTOS: Array<[Aba, string]> = [
   ['recebimentos', 'Recebimentos'],
   ['conferencia', 'Conferência'],
   ['proximo', 'Próximo a vencer'],
   ['inadimplentes', 'Inadimplentes'],
-  ['resultados', 'Resultados'],
+];
+const ABAS_SERVICOS: Array<[Aba, string]> = [
+  ['realizados', 'Realizados'],
+  ['pendentes_servico', 'Pendentes'],
+  ['atrasados_servico', 'Atrasados'],
+  ['avisos_servico', 'Avisos'],
 ];
 
 const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
 export default function PainelAdministrativo(props: Props) {
   const {
-    perfil, darkMode, salvando, podeConfirmar, empresas, subempresas, colaboradores, recebimentos,
+    perfil, darkMode, salvando, podeConfirmar, empresas, subempresas, colaboradores, recebimentos, servicos,
     onObterIntegracaoFinanceira, onAtualizarTitulosFinanceiro, onDefinirIntegracaoFinanceira,
   } = props;
   const [aba, setAba] = useState<Aba>('visao');
@@ -92,6 +103,8 @@ export default function PainelAdministrativo(props: Props) {
   const [portalBuscaConferencia, setPortalBuscaConferencia] = useState<HTMLDivElement | null>(null);
   const [portalBuscaInadimplentes, setPortalBuscaInadimplentes] = useState<HTMLDivElement | null>(null);
   const [portalBuscaRecebimentos, setPortalBuscaRecebimentos] = useState<HTMLDivElement | null>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const [indicadorAba, setIndicadorAba] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const avantaShell = criarAvantaShellPreset({ corPrimaria: props.corPrimaria, darkMode });
   const hojeIso = useMemo(() => dataLocalIso(), []);
 
@@ -104,6 +117,37 @@ export default function PainelAdministrativo(props: Props) {
     () => cobrancasNosProximosDias(recebimentos, hojeIso, 30).length,
     [recebimentos, hojeIso],
   );
+  const avisosServicosQtd = useMemo(() => servicos.filter((servico) => servico.avaliacao === 'regular' && !servico.avisoConcluidoEm).length, [servicos]);
+  const corIndicadorAba = ABAS_SERVICOS.some(([item]) => item === aba)
+    ? '#0f766e'
+    : ABAS_RECEBIMENTOS.some(([item]) => item === aba)
+      ? props.corPrimaria
+      : '#475569';
+
+  useEffect(() => {
+    const tabs = tabsRef.current;
+    if (!tabs) return;
+    const atualizarIndicador = () => {
+      const ativa = tabs.querySelector<HTMLButtonElement>(`[data-aba="${aba}"]`);
+      if (!ativa) return;
+      const areaTabs = tabs.getBoundingClientRect();
+      const areaAtiva = ativa.getBoundingClientRect();
+      setIndicadorAba({
+        left: areaAtiva.left - areaTabs.left + tabs.scrollLeft,
+        top: areaAtiva.top - areaTabs.top + tabs.scrollTop,
+        width: areaAtiva.width,
+        height: areaAtiva.height,
+      });
+    };
+    atualizarIndicador();
+    const observador = new ResizeObserver(atualizarIndicador);
+    observador.observe(tabs);
+    window.addEventListener('resize', atualizarIndicador);
+    return () => {
+      observador.disconnect();
+      window.removeEventListener('resize', atualizarIndicador);
+    };
+  }, [aba]);
 
   function mudarMes(delta: number) {
     setMesRef((atual) => {
@@ -248,19 +292,61 @@ export default function PainelAdministrativo(props: Props) {
 
   return (
     <div className={styles.painelAdministrativo}>
-      <div className={styles.tabs} role="tablist">
-        {ABAS.map(([a, label]) => (
-          <button
-            key={a}
-            type="button"
-            role="tab"
-            aria-selected={aba === a}
-            className={`${styles.tab} ${aba === a ? styles.tabAtiva : ''}`}
-            onClick={() => setAba(a)}
-          >
-            {label}{a === 'conferencia' && pendentesQtd > 0 ? ` (${pendentesQtd})` : ''}{a === 'proximo' && proximosQtd > 0 ? ` (${proximosQtd})` : ''}{a === 'inadimplentes' && inadimplentesQtd > 0 ? ` (${inadimplentesQtd})` : ''}
-          </button>
-        ))}
+      <div ref={tabsRef} className={styles.tabs} role="tablist" aria-label="Navegação de recebimentos e serviços">
+        {indicadorAba && (
+          <span
+            aria-hidden="true"
+            className={styles.tabIndicador}
+            style={{
+              left: indicadorAba.left,
+              top: indicadorAba.top,
+              width: indicadorAba.width,
+              height: indicadorAba.height,
+              backgroundColor: corIndicadorAba,
+            }}
+          />
+        )}
+        <span className={`${styles.tabsGrupo} ${styles.tabsGrupoGeral}`} aria-label="Visão geral e cadastros">
+          <span className={styles.tabsGrupoBar}>
+            {ABAS_GERAL.map(([a, label]) => (
+              <button
+                key={a}
+                type="button"
+                role="tab"
+                data-aba={a}
+                aria-selected={aba === a}
+                className={`${styles.tab} ${styles.tabGeral} ${aba === a ? styles.tabAtiva : ''}`}
+                onClick={() => setAba(a)}
+              >
+                {label}
+              </button>
+            ))}
+          </span>
+        </span>
+        <span className={`${styles.tabsGrupo} ${styles.tabsGrupoRecebimentos}`} aria-label="Controle de recebimentos">
+          <span className={styles.tabsGrupoTitulo}>Recebimentos</span>
+          <span className={styles.tabsGrupoBar}>
+            {ABAS_RECEBIMENTOS.map(([a, label]) => (
+              <button
+                key={a}
+                type="button"
+                role="tab"
+                data-aba={a}
+                aria-selected={aba === a}
+                className={`${styles.tab} ${styles.tabRecebimentos} ${aba === a ? styles.tabAtiva : ''}`}
+                onClick={() => setAba(a)}
+              >
+                {label}{a === 'conferencia' && pendentesQtd > 0 ? ` (${pendentesQtd})` : ''}{a === 'proximo' && proximosQtd > 0 ? ` (${proximosQtd})` : ''}{a === 'inadimplentes' && inadimplentesQtd > 0 ? ` (${inadimplentesQtd})` : ''}
+              </button>
+            ))}
+          </span>
+        </span>
+        <span className={`${styles.tabsGrupo} ${styles.tabsGrupoServicos}`} aria-label="Controle de serviços">
+          <span className={styles.tabsGrupoTitulo}>Serviços</span>
+          <span className={styles.tabsGrupoBar}>
+            {ABAS_SERVICOS.map(([a, label]) => <button key={a} type="button" role="tab" data-aba={a} aria-selected={aba === a} className={`${styles.tab} ${styles.tabServico} ${aba === a ? styles.tabAtiva : ''}`} onClick={() => setAba(a)}>{label}{a === 'avisos_servico' && avisosServicosQtd > 0 ? ` (${avisosServicosQtd})` : ''}</button>)}
+          </span>
+        </span>
         {salvando && <span className={styles.tabsStatus} role="status">Salvando alterações…</span>}
       </div>
 
@@ -295,8 +381,8 @@ export default function PainelAdministrativo(props: Props) {
           : avantaShell.cardStyle}
         bodyStyle={avantaShell.bodyStyle}
       >
-        {/* Empresas gerencia o próprio scroll: o topo (título + busca + nova
-            empresa) fica FORA do container rolável e não sofre o elástico. */}
+        {/* Empresas acompanha a altura real da lista; a página completa faz a
+            rolagem, preservando título, busca e ação principal no topo. */}
         {aba === 'empresas' && (
           <ListaEmpresas
             empresas={empresas}
@@ -315,7 +401,7 @@ export default function PainelAdministrativo(props: Props) {
           />
         )}
 
-        {/* Colaboradores também gerencia o próprio scroll (topo estático). */}
+        {/* Colaboradores também acompanha a altura real do conteúdo. */}
         {aba === 'colaboradores' && (
           <ListaColaboradores
             colaboradores={colaboradores}
@@ -330,7 +416,7 @@ export default function PainelAdministrativo(props: Props) {
           />
         )}
 
-        {/* Conferência gerencia o próprio scroll: título fixo no topo. */}
+        {/* Conferência acompanha a altura real da lista carregada. */}
         {aba === 'conferencia' && (
           <PainelConferencia
             podeConfirmar={podeConfirmar}
@@ -348,9 +434,12 @@ export default function PainelAdministrativo(props: Props) {
           />
         )}
 
-        {/* Demais abas: somente este corpo rola; header do card e abas fixos. */}
+        {/* Nas demais abas o card também cresce com o conteúdo; a página rola. */}
         {aba !== 'empresas' && aba !== 'colaboradores' && aba !== 'conferencia' && (
         <div className={styles.corpoRolavel}>
+        {(aba === 'realizados' || aba === 'pendentes_servico' || aba === 'atrasados_servico' || aba === 'avisos_servico') && (
+          <PainelServicos filtro={aba} servicos={servicos} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} onConcluirAviso={props.onConcluirAvisoServico} />
+        )}
         {aba === 'visao' && (
           <div>
             <h3 className={styles.sectionTitle}>Visão geral</h3>

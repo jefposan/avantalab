@@ -1,12 +1,81 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.17.0.04 -->
+<!-- ava-version: 1.19.0.08 -->
+
+> Revisão 1.19.0.08: o ajuste visual do título das permissões em Operações de
+> Campo não altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.07: a edição de permissões do colaborador em Operações de
+> Campo não altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.06: a retirada da repetição textual da marca nos cards de
+> acesso não altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.05: a identificação removida do card de validação de
+> Operações de Campo não altera o AvantaVendas.
+
+> Revisão 1.19.0.04: a remoção da descrição na abertura web de Operações de
+> Campo não altera o AvantaVendas.
+
+> Revisão 1.19.0.03: depois de confirmar uma solicitação por voz, o resultado
+> aparece no aviso temporizado do rodapé. Pedidos, consignados e pagamentos
+> exibem nele a ação **Compartilhar comprovante** antes de o aviso encerrar.
+
+> Revisão 1.19.0.03-av144: recursos do AvantaVendas renovados com a confirmação
+> discreta e o compartilhamento no aviso do rodapé.
+
+> Revisão 1.19.0.02: o módulo de Recebimentos Presenciais foi renomeado para
+> Operações de Campo; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.19.0.01: a reorganização visual das abas de Recebimentos
+> Presenciais não altera o AvantaVendas.
+
+> Revisão 1.19.0: o controle de Serviços no módulo de Recebimentos Presenciais
+> não altera o fluxo do AvantaVendas.
+
+> Revisão 1.18.0.07: pagamentos, pedidos, clientes e agendamentos voltaram a
+> usar somente os campos comuns do gatilho de conta. A exceção da publicação
+> imediata do catálogo ficou isolada no gatilho de produtos, sem alterar dados
+> já gravados ou mudar o fluxo do usuário.
+
+> Revisão 1.18.0.06: o ajuste do rótulo Referência foi aplicado somente ao
+> módulo web de Recebimentos Presenciais; sem impacto operacional no
+> AvantaVendas.
+
+> Revisão 1.18.0.05: a redistribuição dos campos Rua e Número / identificação
+> foi aplicada somente ao módulo web de Recebimentos Presenciais; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.18.0.04: a rolagem da página completa em vez da rolagem interna do
+> card foi aplicada somente ao módulo web de Recebimentos Presenciais; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.18.0.03: o cancelamento de edição ao trocar de seção e a rolagem
+> completa do cadastro foram aplicados somente ao módulo web de Recebimentos
+> Presenciais; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.18.0.02: a página própria e o endereço com nível de Recebimentos
+> Presenciais foram aplicados somente ao módulo web; sem impacto operacional
+> no AvantaVendas.
+>
+> Revisão 1.18.0.01: a programação herdada do Local agrupador foi aplicada
+> somente ao módulo web de Recebimentos Presenciais; sem impacto operacional
+> no AvantaVendas.
+>
+> Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
+> aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
+> operacional no AvantaVendas.
 <!-- avantavendas-asset-revision: 144 -->
 
-> Revisão 1.17.0.04: após a confirmação da Solicitação por Voz, o resultado
-> aparece no aviso temporizado do rodapé. Pedidos, consignados e pagamentos
-> mantêm nele a ação **Compartilhar comprovante** antes de encerrar. A escolha
-> manual de produto é validada pelo item real da conta e encerra a dúvida.
+> Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
+> catálogo ativo completo da conta sem permitir que uma palavra apenas parecida
+> em descrição técnica substitua o nome comercial. **Triliss**, por exemplo,
+> não é confundida com **Tridium**. Ao escolher um item em **Procurar no
+> catálogo**, o produto é validado novamente na conta e a escolha encerra a
+> dúvida, sem voltar para a mesma lista.
+
+> Revisão 1.17.0.04-av143: recursos do AvantaVendas renovados com
+> conciliação precisa e escolha manual sem looping.
 
 > Revisão 1.17.0.03: produtos publicados ou alterados pela Gestão aparecem
 > automaticamente neste catálogo. Não é necessário atualizar a página nem usar

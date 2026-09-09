@@ -1,6 +1,70 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.17.0.03 -->
+<!-- ava-version: 1.19.0.08 -->
+
+> Revisão 1.19.0.08: o ajuste visual do título das permissões no módulo web não
+> altera a operação da Gestão Mobile.
+
+> Revisão 1.19.0.07: a edição de permissões do colaborador no módulo web não
+> altera a operação da Gestão Mobile.
+
+> Revisão 1.19.0.06: a retirada da repetição textual da marca nos cards de
+> acesso não altera a operação da Gestão Mobile.
+
+> Revisão 1.19.0.05: a identificação removida do card de validação de
+> Operações de Campo não altera a Gestão Mobile.
+
+> Revisão 1.19.0.04: a remoção da descrição na abertura web de Operações de
+> Campo não altera a Gestão Mobile.
+
+> Revisão 1.19.0.03: confirmação e compartilhamento da Solicitação por Voz
+> foram ajustados somente no AvantaVendas; sem impacto operacional na Gestão
+> Mobile.
+
+> Revisão 1.19.0.02: o módulo de Recebimentos Presenciais foi renomeado para
+> Operações de Campo; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.19.0.01: a reorganização visual das abas do módulo web de
+> Recebimentos Presenciais não altera a Gestão Mobile.
+
+> Revisão 1.19.0: o controle de Serviços e o PWA de Operações em Campo foram
+> adicionados ao módulo de Recebimentos Presenciais; sem impacto operacional na
+> Gestão Mobile.
+
+> Revisão 1.18.0.07: correção interna e preservadora do gatilho de lançamentos
+> do AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.18.0.06: o ajuste do rótulo Referência foi aplicado somente ao
+> módulo web de Recebimentos Presenciais; sem impacto operacional na Gestão
+> Mobile.
+
+> Revisão 1.18.0.05: a redistribuição dos campos Rua e Número / identificação
+> foi aplicada somente ao módulo web de Recebimentos Presenciais; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.18.0.04: a rolagem da página completa em vez da rolagem interna do
+> card foi aplicada somente ao módulo web de Recebimentos Presenciais; sem
+> impacto operacional na Gestão Mobile.
+
+> Revisão 1.18.0.03: o cancelamento de edição ao trocar de seção e a rolagem
+> completa do cadastro foram aplicados somente ao módulo web de Recebimentos
+> Presenciais; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.18.0.02: a página própria e o endereço com nível de Recebimentos
+> Presenciais foram aplicados somente ao módulo web; sem impacto operacional
+> na Gestão Mobile.
+>
+> Revisão 1.18.0.01: a programação herdada do Local agrupador foi aplicada
+> somente ao módulo web de Recebimentos Presenciais; sem impacto operacional
+> na Gestão Mobile.
+>
+> Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
+> aplicada somente ao módulo web de Recebimentos Presenciais; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.17.0.04: correção da conciliação e da escolha manual de
+> produtos na Solicitação por Voz aplicada somente ao AvantaVendas; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.17.0.03: ao salvar ou inativar um produto em **Conteúdo
 > AvantaVendas > Produtos**, a publicação alcança imediatamente as contas de

@@ -6,3 +6,6 @@ android/
 **/*.apk
 **/*.ipa
 **/*.xcarchive
+
+# Backup local confidencial: nunca enviar em um deploy.
+.backups/
