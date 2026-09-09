@@ -2652,7 +2652,7 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
   const contaId = state.contaVendasAtiva?.id || window.VendasDb?.contaAtivaId?.() || '';
   const token = await window.VendasDb?.getAccessToken?.();
   if (!contaId || !token) throw new Error('Sua sessão do Avanta Vendas expirou. Entre novamente.');
-  const endpoint = `/api/vendas/solicitacao-voz/${operacao === 'transcribe' ? 'transcrever' : operacao === 'process' ? 'processar' : operacao === 'execute' ? 'executar' : 'log'}`;
+  const endpoint = `/api/vendas/solicitacao-voz/${operacao === 'transcribe' ? 'transcrever' : operacao === 'process' ? 'processar' : operacao === 'execute' ? 'executar' : operacao === 'catalog' ? 'catalogo' : 'log'}`;
   const controller = new AbortController();
   const signalExterno = payload?.signal;
   const abortarPorCancelamento = () => controller.abort();

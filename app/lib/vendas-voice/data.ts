@@ -33,6 +33,10 @@ type ProductRow = {
 };
 
 const STOP_WORDS = new Set(['a', 'o', 'as', 'os', 'da', 'de', 'do', 'das', 'dos', 'para', 'um', 'uma', 'cliente', 'produto']);
+const PRODUCT_GENERIC_TOKENS = new Set(['progressiva', 'redutor', 'organico', 'organica', 'shampoo', 'mascara', 'oxidante', 'tintura', 'creme', 'tratamento']);
+const PRODUCT_CATALOG_CACHE_TTL_MS = 30_000;
+const productCatalogCache = new Map<string, { expiresAt: number; rows: ProductRow[] }>();
+const productCatalogRequests = new Map<string, Promise<ProductRow[]>>();
 const LEGACY_CUSTOMER_NOTE = /^Importado de tridium_mysql_20260715; cliente legado #\d+(?:; profissão: .+)?\.$/i;
 
 function visibleCustomerNote(value: unknown) {
@@ -190,6 +194,102 @@ function productScore(reference: string, product: ProductRow) {
   return Math.max(base, exactNameScore, fuzzyScore);
 }
 
+// Um único termo genérico, como “orgânico”, não é motivo para sugerir produtos
+// sem relação com a marca ou o nome principal falado. O catálogo continua
+// aberto para busca manual, mas as sugestões por voz precisam ter evidência
+// suficiente para não desviar a pessoa para uma lista sem sentido.
+function isRelevantProductCandidate(reference: string, product: ProductRow, scoreValue: number) {
+  if (scoreValue >= 92) return true;
+  const queryTokens = searchTokens(reference).filter((token) => token.length >= 3);
+  const fieldTokens = [product.nome, product.sku, product.marca, product.categoria, product.descricao]
+    .flatMap((field) => searchTokens(String(field || '')));
+  if (!queryTokens.length || !fieldTokens.length || scoreValue < 68) return false;
+  const matches = queryTokens.map((queryToken) => fieldTokens.reduce(
+    (best, fieldToken) => Math.max(best, voiceTokenSimilarity(queryToken, fieldToken)),
+    0,
+  ));
+  const strong = matches.filter((similarity) => similarity >= .78).length;
+  // Uma marca/nome comercial muito próximo ainda é evidência suficiente quando
+  // o outro termo é somente o tipo humano do produto ("Progressiva Paladin"
+  // para "Palladium"). A exigência alta evita que "orgânico" sozinho passe.
+  const veryStrong = matches.some((similarity) => similarity >= .9);
+  const namedApproximation = queryTokens.some((token, index) => token.length >= 5
+    && !PRODUCT_GENERIC_TOKENS.has(token) && matches[index] >= .72);
+  return queryTokens.length === 1 ? strong === 1 : strong >= 2 || veryStrong || (namedApproximation && scoreValue >= 58);
+}
+
+function productCandidate(row: ProductRow): VoiceEntityCandidate {
+  return {
+    id: row.id,
+    label: row.nome,
+    detail: [row.sku ? `SKU ${row.sku}` : '', row.marca, row.categoria, formatMoney(Number(row.preco || 0))].filter(Boolean).join(' · '),
+  };
+}
+
+async function fetchActiveProducts(db: SupabaseClient, accountId: string, maximum = 1500) {
+  const key = `${accountId}:${maximum}`;
+  const cached = productCatalogCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.rows;
+  const inFlight = productCatalogRequests.get(key);
+  if (inFlight) return inFlight;
+  const load = async () => {
+    const rows: ProductRow[] = [];
+    const pageSize = 500;
+    const readPage = async (from: number) => {
+      const { data, error } = await db.from('vendas_mobile_produtos')
+        .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
+        .eq('conta_id', accountId)
+        .eq('ativo', true)
+        .order('nome')
+        .range(from, Math.min(from + pageSize - 1, maximum - 1));
+      if (error) throw new Error('Não foi possível pesquisar sugestões no catálogo.');
+      return data as ProductRow[] || [];
+    };
+    const first = await readPage(0);
+    rows.push(...first);
+    // A busca aprofundada só acontece para aproximações que não puderam ser
+    // resolvidas pela consulta curta. A primeira página atende a maior parte
+    // das contas; nas maiores, as páginas restantes viajam em paralelo.
+    if (first.length === pageSize && maximum > pageSize) {
+      const starts = [pageSize, pageSize * 2].filter((from) => from < maximum);
+      const pages = await Promise.all(starts.map(readPage));
+      pages.forEach((page) => rows.push(...page));
+    }
+    productCatalogCache.set(key, { expiresAt: Date.now() + PRODUCT_CATALOG_CACHE_TTL_MS, rows });
+    if (productCatalogCache.size > 16) productCatalogCache.delete(productCatalogCache.keys().next().value!);
+    return rows;
+  };
+  const request = load();
+  productCatalogRequests.set(key, request);
+  try { return await request; }
+  finally { productCatalogRequests.delete(key); }
+}
+
+export async function listVoiceCatalogProducts(db: SupabaseClient, accountId: string, query = '', offset = 0, limit = 40) {
+  const safeLimit = Math.max(1, Math.min(60, Math.floor(limit) || 40));
+  const safeOffset = Math.max(0, Math.floor(offset) || 0);
+  const normalized = normalizeVoiceSearch(query);
+  let request = db.from('vendas_mobile_produtos')
+    .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
+    .eq('conta_id', accountId)
+    .eq('ativo', true)
+    .order('nome');
+  if (normalized) {
+    const terms = productSearchVariants(normalized).slice(0, 5);
+    const fields = ['nome', 'sku', 'marca', 'categoria', 'descricao'];
+    const expression = terms.flatMap((term) => fields.map((field) => `${field}.ilike.%${term}%`)).join(',');
+    if (expression) request = request.or(expression);
+  }
+  const { data, error } = await request.range(safeOffset, safeOffset + safeLimit - 1);
+  if (error) throw new Error('Não foi possível abrir o catálogo de produtos.');
+  const ranked = (data as ProductRow[] || [])
+    .map((row) => ({ row, score: normalized ? productScore(normalized, row) : 0 }))
+    .sort((left, right) => normalized
+      ? right.score - left.score || left.row.nome.localeCompare(right.row.nome, 'pt-BR')
+      : left.row.nome.localeCompare(right.row.nome, 'pt-BR'));
+  return { products: ranked.map(({ row }) => productCandidate(row)), hasMore: (data || []).length === safeLimit };
+}
+
 function customerScore(reference: string, customer: CustomerRow) {
   const fields = customerFields(customer);
   const base = score(reference, fields);
@@ -331,25 +431,20 @@ export async function resolveProduct(db: SupabaseClient, accountId: string, refe
     .or(expression)
     .limit(24);
   if (error) throw new Error('Não foi possível pesquisar produtos.');
-  if (!data?.length) {
-    const fallback = await db.from('vendas_mobile_produtos')
-      .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
-      .eq('conta_id', accountId)
-      .eq('ativo', true)
-      .limit(1000);
-    data = fallback.data;
-    error = fallback.error;
-    if (error) throw new Error('Não foi possível pesquisar sugestões no catálogo.');
-  }
-  const ranked = (data as ProductRow[] || [])
+  const rank = (rows: ProductRow[]) => rows
     .map((row) => ({ row, score: productScore(reference, row) }))
-    .filter((entry) => entry.score > 0)
+    .filter((entry) => isRelevantProductCandidate(reference, entry.row, entry.score))
     .sort((a, b) => b.score - a.score || a.row.nome.localeCompare(b.row.nome, 'pt-BR'));
-  const candidates = ranked.slice(0, 5).map(({ row }) => ({
-    id: row.id,
-    label: row.nome,
-    detail: [row.sku ? `SKU ${row.sku}` : '', row.marca, row.categoria, formatMoney(Number(row.preco || 0))].filter(Boolean).join(' · '),
-  }));
+  let ranked = rank(data as ProductRow[] || []);
+  // Quando o filtro inicial do banco não devolve uma correspondência clara,
+  // percorremos o catálogo real da conta no servidor. Isso melhora abreviações,
+  // grafias próximas e sinônimos sem enviar uma lista extensa para a IA.
+  if (!ranked.length || ranked[0].score < 92) {
+    const allProducts = await fetchActiveProducts(db, accountId);
+    const byId = new Map<string, ProductRow>([...(data as ProductRow[] || []), ...allProducts].map((row) => [row.id, row]));
+    ranked = rank([...byId.values()]);
+  }
+  const candidates = ranked.slice(0, 8).map(({ row }) => productCandidate(row));
   if (!ranked.length) return { status: 'missing' as const, candidates };
   const selected = selectedId && candidates.some((candidate) => candidate.id === selectedId)
     ? ranked.find(({ row }) => row.id === selectedId)?.row
@@ -537,10 +632,12 @@ export async function buildVoiceResponse(args: {
   }
 
   if (!draft.items.length) return clarification(draft, transcription, metrics, `Quais produtos e quantidades entram no ${draft.intent === 'create_consignment' ? 'consignado' : 'pedido'} de ${customer.nome}?`, [], null, selections);
+  const productChecks = await Promise.all(draft.items.map(async (item) => ({
+    item,
+    result: await resolveProduct(db, accountId, item.productReference, selectedEntityId(selections, 'product', item.productReference)),
+  })));
   const resolvedItems: VoiceResolvedItem[] = [];
-  for (const item of draft.items) {
-    const selectedId = selectedEntityId(selections, 'product', item.productReference);
-    const result = await resolveProduct(db, accountId, item.productReference, selectedId);
+  for (const { item, result } of productChecks) {
     const entity = { type: 'product' as const, reference: item.productReference };
     if (result.status === 'missing') return clarification(
       draft,

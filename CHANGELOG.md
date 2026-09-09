@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.17.0.01 - 2026-09-08
+- Produtos antigos do **Conteúdo AvantaVendas** que ainda não possuíam SKU agora recebem um código técnico estável ao abrir a edição. Assim, **Salvar produto** funciona sem exigir o preenchimento manual de um dado ausente da importação original.
+- Falhas de validação do formulário agora aparecem junto aos campos, sem ficar ocultas abaixo da lista de produtos.
+
+## 1.17.0 - 2026-09-08
+- A **Solicitação por Voz** passou a resolver descrições compostas de produtos com mais rigor no catálogo real da conta: aproximações de grafia e dicção são comparadas com nome, SKU, marca, categoria e descrição, enquanto resultados apoiados apenas em palavras genéricas deixam de virar sugestões desconexas.
+- Quando a identificação de um produto não for suficiente, o painel oferece **Procurar no catálogo**. A busca manual é paginada, usa apenas produtos ativos da empresa e mantém cliente e todos os itens já entendidos na solicitação.
+- Antes da confirmação de pedido ou consignado, **Editar pedido** permite ajustar quantidades, remover itens ou incluir produto pelo catálogo. A edição retorna obrigatoriamente à resolução e confirmação seguras do servidor.
+- Pop-ups de dúvidas e catálogo agora reservam a área do menu inferior; listas extensas rolam dentro do card.
+- Para manter a experiência imediata, produtos de uma mesma fala são resolvidos em paralelo. A varredura aprofundada, acionada somente quando a consulta curta não basta, é compartilhada por 30 segundos na conta ativa.
+
+## 1.17.0-av141 - 2026-09-08
+- Recursos do AvantaVendas renovados com a resolução de catálogo, seleção manual e edição segura de pedidos por voz.
+
 ## 1.16.0.13 - 2026-09-08
 - Em **Conteúdo AvantaVendas > Produtos**, a lista agora abre sem o formulário de cadastro. **Novo produto** abre o formulário vazio; **Editar** leva a tela à área de edição; e **Cancelar** fecha o formulário sem gravar.
 - Salvar e inativar produtos agora confirmam que a linha foi realmente alterada antes de concluir, evitando sucesso aparente quando uma permissão de acesso impedir a operação.

@@ -1,7 +1,26 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.16.0.13 -->
-<!-- avantavendas-asset-revision: 140 -->
+<!-- ava-version: 1.17.0.01 -->
+<!-- avantavendas-asset-revision: 141 -->
+
+> Revisão 1.17.0.01: a edição de produtos antigos no **Conteúdo AvantaVendas**
+> passa a gerar SKU técnico estável quando o cadastro anterior não tinha código.
+> O catálogo entregue ao vendedor continua usando somente produtos confirmados.
+
+> Revisão 1.17.0: ao falar um produto, a Solicitação por Voz compara a frase
+> completa com nome, SKU, marca, categoria e descrição do catálogo ativo da
+> conta, aceitando aproximações de grafia e dicção sem sugerir itens ligados só
+> a uma palavra genérica. Se ainda houver dúvida, **Procurar no catálogo**
+> permite localizar e escolher manualmente o produto sem perder o cliente nem
+> os demais itens do pedido. Antes de confirmar pedido ou consignado, **Editar
+> pedido** permite corrigir quantidade, remover item ou adicionar produto; toda
+> edição retorna à validação e à confirmação segura do servidor. Listas longas
+> rolam dentro do painel, que preserva a área livre acima do menu inferior. Os
+> produtos da mesma fala são resolvidos em paralelo; uma varredura aprofundada
+> é reutilizada por até 30 segundos na conta ativa para evitar espera repetida.
+
+> Revisão 1.17.0-av141: recursos do AvantaVendas renovados com a resolução de
+> catálogo, escolha manual e edição segura da Solicitação por Voz.
 
 > Revisão 1.16.0.13: o ajuste de cadastro em **Conteúdo AvantaVendas > Produtos**
 > foi aplicado na Gestão. O catálogo distribuído ao Vendas continua usando os

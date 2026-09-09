@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import { normalizeVoiceSearch, validateVoiceIntent } from '../../app/lib/vendas-voice/validation.mjs';
-import { buildVoiceResponse, resolveCustomer, resolveProduct } from '../../app/lib/vendas-voice/data.ts';
+import { buildVoiceResponse, listVoiceCatalogProducts, resolveCustomer, resolveProduct } from '../../app/lib/vendas-voice/data.ts';
 
 const UUIDS = {
   fernandaInfluencer: '11111111-1111-4111-8111-111111111111',
@@ -298,6 +298,47 @@ test('catálogo reconhece produto pelo nome humano composto e sugere por aproxim
   ]), 'conta', 'Paladin');
   assert.ok(['resolved', 'ambiguous'].includes(phoneticApproximate.status));
   assert.equal(phoneticApproximate.candidates[0].id, paladium.id);
+});
+
+test('catálogo prioriza referência completa próxima e não sugere itens por palavra genérica', async () => {
+  const triliss = { id: UUIDS.influencerLitro, nome: 'Triliss - Redutor Orgânico', ativo: true, preco: 220, categoria: 'Progressiva' };
+  const ox = { id: UUIDS.influencerCemMl, nome: 'OX 10 vol.', ativo: true, preco: 18, categoria: 'Oxidante' };
+  const shampoo = { id: UUIDS.damiles, nome: 'Shampoo Onix', ativo: true, preco: 42, categoria: 'Shampoo' };
+  const resolved = await resolveProduct(voiceResolverDb([triliss, ox, shampoo]), 'conta', 'triliss organica');
+  assert.equal(resolved.status, 'resolved');
+  assert.equal(resolved.product.id, triliss.id);
+  assert.deepEqual(resolved.candidates.map(({ id }) => id), [triliss.id]);
+
+  const catalog = await listVoiceCatalogProducts(voiceResolverDb([triliss, ox, shampoo]), 'conta', 'triliss organica');
+  assert.equal(catalog.products[0].id, triliss.id);
+});
+
+test('produto pode ser escolhido manualmente sem perder o rascunho e pedido pode ser editado com validação', async () => {
+  const [voiceModule, route, catalogRoute] = await Promise.all([
+    readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/teste/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/teste/solicitacao-voz/catalogo/route.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(voiceModule, /Procurar no catálogo/);
+  assert.match(voiceModule, /Escolha um produto do catálogo/);
+  assert.match(voiceModule, /manualEdit: true/);
+  assert.match(voiceModule, /Editar pedido/);
+  assert.match(voiceModule, /Diga apenas o produto que ficou em dúvida\. O restante do pedido será mantido\./);
+  assert.match(voiceModule, /\.candidates,\.catalog-results\{[^}]*overflow-y:auto/);
+  assert.match(voiceModule, /max-height:calc\(100svh - max\(132px/);
+  assert.match(route, /body\?\.manualEdit === true/);
+  assert.match(route, /manualDraft\.intent !== previousDraft\.intent/);
+  assert.match(route, /manualDraft\.customerReference !== previousDraft\.customerReference/);
+  assert.match(catalogRoute, /getVoiceSalesContext/);
+  assert.match(catalogRoute, /listVoiceCatalogProducts/);
+});
+
+test('resolução de vários produtos prioriza resposta curta e compartilha a busca aprofundada', async () => {
+  const resolver = await readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8');
+  assert.match(resolver, /PRODUCT_CATALOG_CACHE_TTL_MS = 30_000/);
+  assert.match(resolver, /productCatalogRequests/);
+  assert.match(resolver, /const productChecks = await Promise\.all\(draft\.items\.map/);
+  assert.match(resolver, /const pages = await Promise\.all\(starts\.map\(readPage\)\)/);
 });
 
 test('pedido consignado usa o mesmo fluxo oficial com estoque e confirmação', async () => {

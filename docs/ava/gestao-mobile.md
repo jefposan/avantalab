@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.16.0.13 -->
+<!-- ava-version: 1.17.0.01 -->
+
+> Revisão 1.17.0.01: ao editar um produto antigo sem SKU em **Conteúdo
+> AvantaVendas > Produtos**, o sistema preenche um código técnico estável.
+> Portanto, basta revisar os dados e usar **Salvar produto**; a validação também
+> aparece no próprio formulário.
+
+> Revisão 1.17.0: resolução e edição da Solicitação por Voz aplicadas somente
+> ao AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.16.0.13: em **Conteúdo AvantaVendas > Produtos**, a lista abre sem
 > formulário. Use **Novo produto** para abrir um cadastro vazio; **Editar** abre

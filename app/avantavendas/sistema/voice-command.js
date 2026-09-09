@@ -8,15 +8,17 @@
     recorder: null, stream: null, chunks: [], requestAbort: null, requestStage: null, pendingId: null, timer: 0,
     audioContext: null, analyser: null, source: null, frame: 0, canvas: null,
     noiseFloor: 0.012, lastVoiceActive: null, canvasSize: 0,
+    catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogTimer: 0,
+    editDraft: null, editSelections: [],
   };
 
   const styles = `
     :host{all:initial;position:absolute;top:calc(50% - 5px);left:50%;display:block;width:0;height:0;overflow:visible;color-scheme:light;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#092847}
-    *{box-sizing:border-box}button{font:inherit}.dock{position:static;width:0;height:0;overflow:visible;text-align:center}.dock>.capture{position:absolute;top:0;left:0;margin:0;transform:translate(-50%,-50%)}.dock>strong{position:absolute;top:49px;left:0;width:240px;color:#35536c;font-size:12px;line-height:1.2;transform:translateX(-50%)}.overlay{position:fixed;inset:0;z-index:var(--vendas-layer-modal,100000);background:rgba(3,18,34,.58);display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
-    .panel{position:relative;width:min(100%,440px);max-height:calc(100svh - 24px);overflow:auto;border:1px solid rgba(219,229,239,.95);border-radius:18px;background:#fff;box-shadow:0 18px 42px rgba(15,42,80,.28);overscroll-behavior:contain}.close{position:absolute;z-index:2;top:14px;right:14px;width:44px;height:44px;border:0;border-radius:50%;background:#eaf3f8;color:#173b5d;font-size:25px;cursor:pointer}
+    *{box-sizing:border-box}button,input{font:inherit}.dock{position:static;width:0;height:0;overflow:visible;text-align:center}.dock>.capture{position:absolute;top:0;left:0;margin:0;transform:translate(-50%,-50%)}.dock>strong{position:absolute;top:49px;left:0;width:240px;color:#35536c;font-size:12px;line-height:1.2;transform:translateX(-50%)}.overlay{position:fixed;inset:0;z-index:var(--vendas-layer-modal,100000);background:rgba(3,18,34,.58);display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(110px,calc(env(safe-area-inset-bottom) + 92px)) max(12px,env(safe-area-inset-left));-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
+    .panel{position:relative;width:min(100%,440px);max-height:calc(100svh - max(132px,calc(env(safe-area-inset-bottom) + 108px)));overflow:hidden;border:1px solid rgba(219,229,239,.95);border-radius:18px;background:#fff;box-shadow:0 18px 42px rgba(15,42,80,.28);overscroll-behavior:contain}.close{position:absolute;z-index:2;top:14px;right:14px;width:44px;height:44px;border:0;border-radius:50%;background:#eaf3f8;color:#173b5d;font-size:25px;cursor:pointer}
     .capture{position:relative;width:142px;height:142px;display:grid;place-items:center;margin:0 auto;overflow:visible}.capture.small{width:132px;height:132px;margin:8px auto 0}.visualizer{position:absolute;inset:-45px;width:calc(100% + 90px);height:calc(100% + 90px);pointer-events:none;overflow:visible}.voice{position:relative;z-index:1;width:88px;height:88px;border:0;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 36% 30%,#2498de,#07518b 72%);box-shadow:0 12px 27px rgba(4,70,123,.30);color:#fff;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.dock .voice{width:84px;height:84px}.small .voice{width:82px;height:82px}.voice.listening,.voice.cancelling{background:radial-gradient(circle at 36% 30%,#f36a72,#c51e32 72%);box-shadow:0 14px 34px rgba(191,27,48,.42)}.voice.cancelling::after{content:'';position:absolute;inset:-8px;border:2px solid rgba(211,37,57,.22);border-top-color:#e23f51;border-right-color:#f18a93;border-radius:50%;pointer-events:none;animation:processing-ring 1s linear infinite}.voice:disabled{opacity:.8;cursor:wait}.mic,.cancel-icon{width:38px;height:38px}.cancel-icon{position:relative;z-index:1}.dock .mic,.dock .cancel-icon{width:36px;height:36px}.small .mic,.small .cancel-icon{width:34px;height:34px}.mic svg,.cancel-icon svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.stop{width:27px;height:27px;border-radius:7px;background:#fff}.small .stop{width:25px;height:25px}.spinner{width:32px;height:32px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@keyframes processing-ring{to{transform:rotate(360deg)}}
-    .card{margin:0;border-radius:18px;padding:22px;background:#fff;box-shadow:none}.card h2{margin:0 52px 14px 0;color:#0A1F44;font-size:21px;line-height:1.2;letter-spacing:-.025em}.summary{margin:0;color:#36516d;font-size:16px;line-height:1.5;white-space:pre-line}.candidates{display:grid;gap:9px;margin:16px 0}.candidate{width:100%;border:1px solid #d7e2eb;border-radius:12px;padding:13px;text-align:left;background:#f8fbfe;color:#17324d;cursor:pointer}.candidate strong,.candidate small{display:block}.candidate strong{font-size:16px}.candidate small{margin-top:4px;color:#60758a;line-height:1.35}.helper{text-align:center;color:#667a8d;font-size:13px;margin:2px 0 10px}.actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:18px}.actions.single{grid-template-columns:1fr}.primary,.secondary,.text{min-height:48px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer}.primary{border:1px solid #1687D9;background:#1687D9;color:#fff;box-shadow:0 6px 15px rgba(22,135,217,.24)}.secondary{border:1px solid #9fb7ca;background:#f8fbfe;color:#17324d}.text{width:100%;border:0;background:transparent;color:#526b80}.save-later{display:block;min-height:44px;margin:12px auto 0;border:1px solid #bdd3e2;border-radius:999px;padding:10px 18px;background:#f5fafc;color:#244a69;font-weight:800;cursor:pointer}.result{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#dff7e8;color:#187544;font-weight:1000;font-size:23px;margin-bottom:12px}.error .result{background:#ffe5e6;color:#b51f31}.proof{margin-top:14px;border:1px solid #d7e8f2;border-radius:12px;padding:14px;background:#f2f9fd}.proof header{display:flex;justify-content:space-between;gap:10px;align-items:center}.badge{font-size:10px;font-weight:900;text-transform:uppercase;color:#187544}.proof dl{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;margin:12px 0 0;font-size:13px}.proof dt{color:#61758a}.proof dd{margin:0;text-align:right;font-weight:800;overflow-wrap:anywhere}
-    @media(max-width:520px){.overlay{place-items:center;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))}.panel{width:100%;max-height:calc(100svh - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));border-radius:18px}.card{padding:20px}.dock .voice{width:80px;height:80px}}
+    .card{margin:0;max-height:inherit;border-radius:18px;padding:22px;background:#fff;box-shadow:none}.card h2{margin:0 52px 14px 0;color:#0A1F44;font-size:21px;line-height:1.2;letter-spacing:-.025em}.summary{margin:0;color:#36516d;font-size:16px;line-height:1.5;white-space:pre-line}.candidates,.catalog-results{display:grid;gap:9px;max-height:min(34svh,300px);margin:16px 0;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}.candidate{width:100%;border:1px solid #d7e2eb;border-radius:12px;padding:13px;text-align:left;background:#f8fbfe;color:#17324d;cursor:pointer}.candidate strong,.candidate small{display:block}.candidate strong{font-size:16px}.candidate small{margin-top:4px;color:#60758a;line-height:1.35}.helper{text-align:center;color:#667a8d;font-size:13px;margin:2px 0 10px}.actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:18px}.actions.single{grid-template-columns:1fr}.primary,.secondary,.text{min-height:48px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer}.primary{border:1px solid #1687D9;background:#1687D9;color:#fff;box-shadow:0 6px 15px rgba(22,135,217,.24)}.secondary{border:1px solid #9fb7ca;background:#f8fbfe;color:#17324d}.text{width:100%;border:0;background:transparent;color:#526b80}.save-later{display:block;min-height:44px;margin:12px auto 0;border:1px solid #bdd3e2;border-radius:999px;padding:10px 18px;background:#f5fafc;color:#244a69;font-weight:800;cursor:pointer}.catalog-search{width:100%;min-height:48px;border:1px solid #b9cede;border-radius:12px;padding:10px 13px;color:#17324d;background:#fff;font-size:16px}.catalog-empty{margin:14px 0;color:#60758a;text-align:center}.edit-items{display:grid;gap:9px;margin:14px 0}.edit-item{display:grid;grid-template-columns:minmax(0,1fr) 78px 42px;gap:8px;align-items:center;border:1px solid #d7e2eb;border-radius:12px;padding:10px;background:#f8fbfe}.edit-item strong{min-width:0;font-size:14px;line-height:1.25}.edit-quantity{min-height:42px;width:100%;border:1px solid #b9cede;border-radius:10px;padding:7px;text-align:center;color:#17324d;background:#fff}.edit-remove{width:42px;height:42px;border:0;border-radius:10px;background:#ffe8ea;color:#b51f31;font-size:20px;cursor:pointer}.result{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#dff7e8;color:#187544;font-weight:1000;font-size:23px;margin-bottom:12px}.error .result{background:#ffe5e6;color:#b51f31}.proof{margin-top:14px;border:1px solid #d7e8f2;border-radius:12px;padding:14px;background:#f2f9fd}.proof header{display:flex;justify-content:space-between;gap:10px;align-items:center}.badge{font-size:10px;font-weight:900;text-transform:uppercase;color:#187544}.proof dl{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;margin:12px 0 0;font-size:13px}.proof dt{color:#61758a}.proof dd{margin:0;text-align:right;font-weight:800;overflow-wrap:anywhere}
+    @media(max-width:520px){.overlay{place-items:center;padding:max(12px,env(safe-area-inset-top)) 12px max(104px,calc(env(safe-area-inset-bottom) + 88px))}.panel{width:100%;max-height:calc(100svh - max(126px,calc(env(safe-area-inset-bottom) + 104px)));border-radius:18px}.card{padding:20px}.candidates,.catalog-results{max-height:min(32svh,260px)}.dock .voice{width:80px;height:80px}}
     @media(prefers-reduced-motion:reduce){.spinner{animation-duration:1.6s}.voice.cancelling::after{animation:none}}
     /* A superfície de desenho é bem maior que a onda real: ela nunca revela
        um limite quadrado, mesmo em uma fala mais alta. */
@@ -103,7 +105,7 @@
     if (state.phase === 'recording') return 'Ouvindo...';
     if (state.phase === 'transcribing') return 'Entendendo seu áudio...';
     if (state.phase === 'processing') return state.current?.kind === 'confirmation' ? 'Executando com segurança...' : 'Preparando sua solicitação...';
-    if (state.phase === 'clarification') return 'Responda por voz ou toque em uma opção';
+    if (state.phase === 'clarification') return state.current?.entity?.type === 'product' ? 'Diga somente o produto que ficou em dúvida' : 'Responda por voz ou toque em uma opção';
     if (state.phase === 'confirmation') return 'Confira antes de confirmar';
     if (state.phase === 'done') return 'Solicitação concluída';
     if (state.phase === 'error') return 'Não foi possível continuar';
@@ -163,6 +165,98 @@
     return entity?.reference && candidate?.id ? { type: entity.type, reference: entity.reference, id: candidate.id } : null;
   }
 
+  function cloneDraft(draft) {
+    return draft ? JSON.parse(JSON.stringify(draft)) : null;
+  }
+
+  function resetCatalog() {
+    window.clearTimeout(state.catalogTimer);
+    Object.assign(state, { catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '' });
+  }
+
+  async function loadCatalog(reset = true) {
+    const offset = reset ? 0 : state.catalogOffset + state.catalogProducts.length;
+    state.catalogLoading = true; state.catalogError = '';
+    render();
+    try {
+      const result = await state.options.request('catalog', { query: state.catalogQuery, offset });
+      const products = Array.isArray(result?.products) ? result.products : [];
+      state.catalogProducts = reset ? products : [...state.catalogProducts, ...products];
+      state.catalogOffset = offset; state.catalogHasMore = Boolean(result?.hasMore);
+    } catch (error) {
+      state.catalogError = error instanceof Error ? error.message : 'Não foi possível abrir o catálogo de produtos.';
+    } finally { state.catalogLoading = false; render(); }
+  }
+
+  function openProductCatalog(mode) {
+    resetCatalog(); state.catalogMode = mode; render();
+    void loadCatalog(true);
+  }
+
+  function scheduleCatalogSearch(value) {
+    state.catalogQuery = String(value || '').slice(0, 120);
+    window.clearTimeout(state.catalogTimer);
+    state.catalogTimer = window.setTimeout(() => { void loadCatalog(true); }, 220);
+  }
+
+  function chooseCatalogProduct(candidate) {
+    if (state.catalogMode === 'clarification') {
+      const current = state.current;
+      resetCatalog();
+      void processTranscription(`Seleção manual: ${candidate.label}`, current, selectionFor(candidate));
+      return;
+    }
+    if (state.catalogMode !== 'edit' || !state.editDraft) return;
+    const reference = String(candidate.label || '').trim();
+    if (!reference) return;
+    const key = reference.toLocaleLowerCase('pt-BR');
+    const items = Array.isArray(state.editDraft.items) ? state.editDraft.items : [];
+    const existing = items.find((item) => String(item.productReference || '').toLocaleLowerCase('pt-BR') === key);
+    if (existing) existing.quantity = Number(existing.quantity || 0) + 1;
+    else items.push({ productReference: reference, quantity: 1 });
+    state.editDraft.items = items;
+    state.editSelections = [
+      ...state.editSelections.filter((selection) => selection.type !== 'product' || String(selection.reference || '').toLocaleLowerCase('pt-BR') !== key),
+      { type: 'product', reference, id: candidate.id },
+    ];
+    resetCatalog(); render();
+  }
+
+  function beginOrderEdit() {
+    if (state.current?.kind !== 'confirmation' || !['create_order', 'create_consignment'].includes(state.current.action?.intent)) return;
+    state.editDraft = cloneDraft(state.current.draft);
+    state.editSelections = Array.isArray(state.current.selections) ? [...state.current.selections] : [];
+    render();
+  }
+
+  function updateEditQuantity(index, value) {
+    const item = state.editDraft?.items?.[index];
+    const quantity = Number(String(value || '').replace(',', '.'));
+    if (item && Number.isFinite(quantity) && quantity > 0) item.quantity = quantity;
+  }
+
+  function removeEditItem(index) {
+    const item = state.editDraft?.items?.[index];
+    if (!item || !state.editDraft) return;
+    const reference = String(item.productReference || '').toLocaleLowerCase('pt-BR');
+    state.editDraft.items.splice(index, 1);
+    state.editSelections = state.editSelections.filter((selection) => selection.type !== 'product' || String(selection.reference || '').toLocaleLowerCase('pt-BR') !== reference);
+    render();
+  }
+
+  async function applyOrderEdit() {
+    const previous = state.current; const manualDraft = cloneDraft(state.editDraft);
+    if (!previous?.draft || !manualDraft || !Array.isArray(manualDraft.items)) { render(); return; }
+    state.editDraft = null; setPhase('processing');
+    try {
+      const result = await requestVoice('process', 'process', {
+        transcription: 'Edição manual do pedido.', previousDraft: previous.draft, manualDraft, manualEdit: true, selections: state.editSelections,
+      });
+      state.current = result;
+      setPhase(result.kind === 'clarification' ? 'clarification' : result.kind === 'confirmation' ? 'confirmation' : 'done');
+    } catch (error) { if (!wasCancelled(error)) setPhase('error', error instanceof Error ? error.message : 'Não foi possível atualizar o pedido.'); }
+  }
+
   function money(value) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0)); }
   function dateTime(value) { const date = new Date(String(value || '')); return Number.isNaN(date.getTime()) ? 'Não informado' : date.toLocaleString('pt-BR'); }
 
@@ -186,6 +280,45 @@
     return message;
   }
 
+  function renderCatalogPicker(panel) {
+    const card = el('section', 'card');
+    card.append(el('h2', '', 'Escolha um produto do catálogo'));
+    const search = el('input', 'catalog-search');
+    search.type = 'search'; search.autocomplete = 'off'; search.placeholder = 'Pesquisar produto'; search.value = state.catalogQuery;
+    search.setAttribute('aria-label', 'Pesquisar produto no catálogo');
+    search.addEventListener('input', () => scheduleCatalogSearch(search.value));
+    card.append(search);
+    if (state.catalogLoading) card.append(el('p', 'helper', 'Buscando no catálogo...'));
+    if (state.catalogError) card.append(el('p', 'catalog-empty', state.catalogError));
+    const list = el('div', 'catalog-results');
+    state.catalogProducts.forEach((candidate) => {
+      const option = button('', 'candidate', () => chooseCatalogProduct(candidate));
+      option.append(el('strong', '', candidate.label), el('small', '', candidate.detail)); list.append(option);
+    });
+    if (!state.catalogLoading && !state.catalogError && !state.catalogProducts.length) list.append(el('p', 'catalog-empty', state.catalogQuery ? 'Nenhum produto encontrado. Tente outro nome.' : 'Nenhum produto disponível no catálogo.'));
+    card.append(list);
+    if (state.catalogHasMore) card.append(button('Mostrar mais produtos', 'text', () => { void loadCatalog(false); }));
+    const actions = el('div', 'actions single'); actions.append(button('Voltar', 'secondary', () => { resetCatalog(); render(); }));
+    card.append(actions); panel.append(card);
+  }
+
+  function renderOrderEditor(panel) {
+    const card = el('section', 'card'); const draft = state.editDraft;
+    card.append(el('h2', '', 'Editar pedido'), el('p', 'summary', `Cliente: ${state.current?.action?.customerName || draft?.customerReference || ''}`));
+    const items = el('div', 'edit-items');
+    (draft?.items || []).forEach((item, index) => {
+      const row = el('div', 'edit-item'); const quantity = el('input', 'edit-quantity');
+      quantity.type = 'number'; quantity.min = '0.01'; quantity.step = 'any'; quantity.inputMode = 'decimal'; quantity.value = String(item.quantity || 1);
+      quantity.setAttribute('aria-label', `Quantidade de ${item.productReference}`);
+      quantity.addEventListener('input', () => updateEditQuantity(index, quantity.value));
+      row.append(el('strong', '', item.productReference), quantity, button('×', 'edit-remove', () => removeEditItem(index)));
+      items.append(row);
+    });
+    card.append(items, button('Adicionar produto do catálogo', 'secondary', () => openProductCatalog('edit')));
+    const actions = el('div', 'actions'); actions.append(button('Cancelar', 'secondary', () => { state.editDraft = null; state.editSelections = []; render(); }), button('Atualizar pedido', 'primary', applyOrderEdit));
+    card.append(actions); panel.append(card);
+  }
+
   function render() {
     if (!state.root) return;
     ensureMount();
@@ -206,6 +339,10 @@
     panel.setAttribute('aria-label', 'Solicitação por Voz');
     panel.append(button('×', 'close', close));
 
+    if (state.catalogMode) {
+      renderCatalogPicker(panel); overlay.append(panel); state.root.append(overlay); return;
+    }
+
     if (state.phase === 'clarification' && state.current?.kind === 'clarification') {
       const card = el('section', 'card'); card.append(el('h2', '', state.current.question));
       if (Array.isArray(state.current.candidates) && state.current.candidates.length) {
@@ -215,13 +352,19 @@
           option.append(el('strong', '', candidate.label), el('small', '', candidate.detail)); list.append(option);
         }); card.append(list);
       }
+      if (state.current.entity?.type === 'product') card.append(button('Procurar no catálogo', 'secondary', () => openProductCatalog('clarification')));
+      card.append(el('p', 'helper', state.current.entity?.type === 'product' ? 'Diga apenas o produto que ficou em dúvida. O restante do pedido será mantido.' : 'Responda por voz ou escolha uma opção.'));
       card.append(voiceControl(true));
       const actions = el('div', 'actions single'); actions.append(button('Cancelar', 'secondary', cancel)); card.append(actions, button('Salvar para depois', 'save-later', saveForLater)); panel.append(card);
     }
 
     if (state.phase === 'confirmation' && state.current?.kind === 'confirmation') {
+      if (state.editDraft) {
+        renderOrderEditor(panel); overlay.append(panel); state.root.append(overlay); return;
+      }
       const card = el('section', 'card'); card.append(el('h2', '', state.current.title), el('p', 'summary', state.current.message));
       const actions = el('div', 'actions'); actions.append(button('Cancelar', 'secondary', cancel), button('Confirmar', 'primary', execute)); card.append(actions, button('Salvar para depois', 'save-later', saveForLater)); panel.append(card);
+      if (['create_order', 'create_consignment'].includes(state.current.action?.intent)) card.insertBefore(button('Editar pedido', 'text', beginOrderEdit), card.lastChild);
     }
 
     if (state.phase === 'done' && state.current) {
@@ -395,6 +538,7 @@
     const current = state.current;
     const request = state.options?.request;
     discardCurrentPending();
+    resetCatalog(); state.editDraft = null; state.editSelections = [];
     state.current = null;
     close();
     if (current && request) void request('log', { event: 'cancelled', transcription: current.transcription, intent: current.draft?.intent }).catch(() => undefined);
@@ -402,6 +546,7 @@
   function saveForLater() { saveSession(); close(); }
   function close() {
     saveSession();
+    resetCatalog(); state.editDraft = null; state.editSelections = [];
     stopMedia(true);
     const mount = ensureMount() || state.mount;
     const trigger = mount?.querySelector?.('.mobile-voice-command-trigger');
@@ -417,7 +562,7 @@
     if (!options.mount?.isConnected) throw new Error('A Sala de Botões não está pronta para iniciar a gravação.');
     if (state.host) close();
     const host = document.createElement('avanta-voice-command'); const shadow = host.attachShadow({ mode: 'open' }); const style = document.createElement('style'); style.textContent = styles; const root = document.createElement('div'); shadow.append(style, root); options.mount.append(host);
-    Object.assign(state, { host, root, options, mount: options.mount, phase: 'idle', current: null, error: '', pendingId: null });
+    Object.assign(state, { host, root, options, mount: options.mount, phase: 'idle', current: null, error: '', pendingId: null, catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', editDraft: null, editSelections: [] });
     if (options.pendingId) restorePending(options.pendingId);
     render();
     if (options.autoStart && state.phase === 'idle') void startRecording();

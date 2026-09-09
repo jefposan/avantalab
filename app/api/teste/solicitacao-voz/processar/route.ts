@@ -60,17 +60,29 @@ export async function POST(request: Request) {
     const body = await request.json();
     accountId = String(body?.accountId || '').trim();
     transcription = String(body?.transcription || '').trim().slice(0, 1000);
-    if (!transcription) return NextResponse.json({ message: 'Fale sua solicitação para continuar.' }, { status: 400 });
     const context = await getVoiceSalesContext(request, accountId);
     if (!context) return NextResponse.json({ message: 'Sua sessão do Avanta Vendas expirou.' }, { status: 401 });
     if (!await isVoiceCommandEnabled(context)) return NextResponse.json({ message: 'Ative a Solicitação por Voz nas Configurações do Avanta Vendas.' }, { status: 403 });
     userId = context.userId;
     const previousDraft = body?.previousDraft ? validateVoiceIntentPayload(body.previousDraft) : null;
+    const manualDraft = body?.manualEdit === true && body?.manualDraft
+      ? validateVoiceIntentPayload(body.manualDraft)
+      : null;
+    if (!transcription && !manualDraft) return NextResponse.json({ message: 'Fale sua solicitação para continuar.' }, { status: 400 });
+    if (body?.manualEdit === true && (!previousDraft || !manualDraft
+      || !['create_order', 'create_consignment'].includes(previousDraft.intent)
+      || manualDraft.intent !== previousDraft.intent
+      || manualDraft.customerReference !== previousDraft.customerReference)) {
+      return NextResponse.json({ message: 'A edição do pedido não passou pela validação. Tente novamente.' }, { status: 400 });
+    }
     const selection = validSelection(body?.selection);
     const selections = mergeSelection(validSelections(body?.selections), selection);
     let intent: VoiceIntentPayload;
     let metrics: VoiceMetrics;
-    if (selection && previousDraft) {
+    if (manualDraft && previousDraft) {
+      intent = manualDraft;
+      metrics = { interpretationMs: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+    } else if (selection && previousDraft) {
       intent = previousDraft;
       metrics = { interpretationMs: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0 };
     } else {
