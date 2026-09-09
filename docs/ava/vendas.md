@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.17.0.03 -->
-<!-- avantavendas-asset-revision: 142 -->
+<!-- ava-version: 1.17.0.04 -->
+<!-- avantavendas-asset-revision: 144 -->
+
+> Revisão 1.17.0.04: após a confirmação da Solicitação por Voz, o resultado
+> aparece no aviso temporizado do rodapé. Pedidos, consignados e pagamentos
+> mantêm nele a ação **Compartilhar comprovante** antes de encerrar. A escolha
+> manual de produto é validada pelo item real da conta e encerra a dúvida.
 
 > Revisão 1.17.0.03: produtos publicados ou alterados pela Gestão aparecem
 > automaticamente neste catálogo. Não é necessário atualizar a página nem usar

@@ -27,11 +27,14 @@ function voiceResolverDb(products = null, customers = null) {
   };
   return {
     from(table) {
+      let selectedId = '';
+      const rows = () => (tables[table] || []).filter((row) => !selectedId || row.id === selectedId);
       const query = {
-        select() { return query; }, eq() { return query; }, or() { return query; }, in() { return query; },
+        select() { return query; }, eq(field, value) { if (field === 'id') selectedId = String(value); return query; }, or() { return query; }, in() { return query; },
         neq() { return query; }, order() { return query; },
-        async range(from, to) { return { data: (tables[table] || []).slice(from, to + 1), error: null }; },
-        async limit(limit) { return { data: (tables[table] || []).slice(0, limit), error: null }; },
+        async range(from, to) { return { data: rows().slice(from, to + 1), error: null }; },
+        async limit(limit) { return { data: rows().slice(0, limit), error: null }; },
+        async maybeSingle() { return { data: rows()[0] || null, error: null }; },
       };
       return query;
     },
@@ -143,6 +146,12 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(voiceModule, /\.primary\{border:1px solid #1687D9;background:#1687D9/);
   assert.match(voiceModule, /voice-status-action', 'Toque para cancelar/);
   assert.match(voiceModule, /processing-ring/);
+  assert.match(voiceModule, /options\?\.notify\?\.\(result\?\.message/);
+  assert.match(voiceModule, /rotulo: 'Compartilhar comprovante'/);
+  assert.doesNotMatch(voiceModule, /state\.phase === 'done'/);
+  assert.match(officialApp, /notify: \(mensagem, opcoes\) => toast\(mensagem, opcoes\)/);
+  assert.match(vendasStyles, /\.toast-com-acao \{ grid-template-areas:/);
+  assert.match(vendasStyles, /\.toast-action \{ grid-area: action;/);
   assert.match(officialApp, /const signalExterno = payload\?\.signal/);
   assert.match(officialApp, /signalExterno\?\.aborted/);
   assert.match(officialApp, /function solicitacoesVozPendentes\(\)/);
@@ -191,7 +200,8 @@ test('clique de desambiguação usa candidato validado sem reinterpretar pela IA
   assert.match(route, /if \(selection && previousDraft\)/);
   assert.match(route, /const selections = mergeSelection/);
   assert.match(route, /buildVoiceResponse\(\{[^}]*selections/s);
-  assert.match(resolver, /candidates\.some\(\(candidate\) => candidate\.id === selectedId\)/);
+  assert.match(resolver, /\.eq\('id', selectedId\)/);
+  assert.match(resolver, /Não foi possível validar o produto escolhido/);
   assert.match(resolver, /selectedEntityId\(selections, 'customer'/);
   assert.match(resolver, /selectedEntityId\(selections, 'product'/);
   assert.match(voiceModule, /selections: previous\?\.selections \|\| \[\]/);
@@ -313,6 +323,35 @@ test('catálogo prioriza referência completa próxima e não sugere itens por p
   assert.equal(catalog.products[0].id, triliss.id);
 });
 
+test('Triliss não é confundida com descrição técnica parecida', async () => {
+  const triliss = { id: UUIDS.influencerLitro, nome: 'Triliss - Redutor Orgânico', ativo: true, preco: 220 };
+  const imported = { id: UUIDS.influencerCemMl, nome: 'Shampoo Onix', descricao: 'Importado do Tridium MySQL', ativo: true, preco: 42 };
+  const result = await resolveProduct(voiceResolverDb([imported, triliss]), 'conta-triliss-tecnica', 'triliss');
+  assert.equal(result.status, 'resolved');
+  assert.equal(result.product.id, triliss.id);
+  assert.deepEqual(result.candidates.map(({ id }) => id), [triliss.id]);
+});
+
+test('nome comercial falado junto encontra o mesmo nome separado no catálogo', async () => {
+  const triliss = { id: UUIDS.influencerLitro, nome: 'Tri Liss - Redutor Orgânico', ativo: true, preco: 220 };
+  const result = await resolveProduct(voiceResolverDb([triliss]), 'conta-tri-liss', 'triliss');
+  assert.equal(result.status, 'resolved');
+  assert.equal(result.product.id, triliss.id);
+});
+
+test('produto escolhido manualmente encerra a dúvida mesmo quando a fala não combina com o nome', async () => {
+  const triliss = { id: UUIDS.influencerLitro, nome: 'Triliss - Redutor Orgânico', ativo: true, preco: 220 };
+  const result = await resolveProduct(
+    voiceResolverDb([triliss]),
+    'conta-selecao-manual',
+    'produto que o sistema não compreendeu',
+    triliss.id,
+  );
+  assert.equal(result.status, 'resolved');
+  assert.equal(result.product.id, triliss.id);
+  assert.deepEqual(result.candidates.map(({ id }) => id), [triliss.id]);
+});
+
 test('catálogo aceita palavras intermediárias ausentes na fala', async () => {
   const homeCare = { id: UUIDS.influencerLitro, nome: 'Kit Home Care - Cabelos Normais', ativo: true, preco: 189 };
   const outro = { id: UUIDS.influencerCemMl, nome: 'Kit Home Care - Cabelos Danificados', ativo: true, preco: 199 };
@@ -327,6 +366,14 @@ test('catálogo aceita palavras intermediárias ausentes na fala', async () => {
   const noisyTranscription = await resolveProduct(voiceResolverDb([homeCare, outro]), 'conta-home-care', 'que cabelos normais');
   assert.equal(noisyTranscription.status, 'resolved');
   assert.equal(noisyTranscription.product.id, homeCare.id);
+});
+
+test('conciliação de palavras intermediárias funciona em qualquer segmento de catálogo', async () => {
+  const drill = { id: UUIDS.influencerLitro, nome: 'Furadeira Profissional de Impacto 750W', ativo: true, preco: 349 };
+  const saw = { id: UUIDS.influencerCemMl, nome: 'Serra Circular Profissional 1200W', ativo: true, preco: 529 };
+  const result = await resolveProduct(voiceResolverDb([saw, drill]), 'conta-ferramentas', 'furadeira impacto');
+  assert.equal(result.status, 'resolved');
+  assert.equal(result.product.id, drill.id);
 });
 
 test('produto pode ser escolhido manualmente sem perder o rascunho e pedido pode ser editado com validação', async () => {

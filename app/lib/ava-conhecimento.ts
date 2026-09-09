@@ -1,5 +1,10 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.17.0.04: depois da confirmação por voz, o Vendas mostra
+// o resultado no aviso temporizado do rodapé e mantém a ação de compartilhar
+// comprovante para pedido, consignado e pagamento; a escolha manual de produto
+// é validada pelo ID da conta antes de encerrar a dúvida.
+
 // Revisado na versão 1.17.0.03: alterações do catálogo publicadas no Gestão
 // chegam imediatamente às contas vinculadas do AvantaVendas, sem sobrescrever
 // custo ou estoque próprios da conta comercial.

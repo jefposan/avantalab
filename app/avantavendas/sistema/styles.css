@@ -943,6 +943,13 @@ body.sheet-open {
 .toast-close { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 12px; padding: 0; color: #64748b; background: #f1f5f9; }
 .toast-close .svg-icon { width: 17px; height: 17px; }
 .toast-close:focus-visible { outline: 3px solid rgba(22,135,217,.3); outline-offset: 1px; }
+.toast-com-acao { grid-template-areas: 'icon copy close' '. action close'; }
+.toast-com-acao .toast-icon { grid-area: icon; }
+.toast-com-acao .toast-copy { grid-area: copy; }
+.toast-com-acao .toast-close { grid-area: close; }
+.toast-action { grid-area: action; width: fit-content; min-height: 34px; border: 0; border-radius: 999px; padding: 7px 12px; color: #fff; background: #1687D9; font-size: 11px; font-weight: 850; line-height: 1.2; cursor: pointer; }
+.toast-action:disabled { opacity: .72; cursor: wait; }
+.toast-action:focus-visible { outline: 3px solid rgba(22,135,217,.3); outline-offset: 2px; }
 
 .toast-progress {
   position: absolute;
@@ -970,6 +977,7 @@ body.sheet-open {
 .dark-theme .toast-copy strong { color: #f8fafc; }
 .dark-theme .toast-copy > span { color: #cbd5e1; }
 .dark-theme .toast-close { color: #cbd5e1; background: #243247; }
+.dark-theme .toast-action { color: #071d32; background: #7dd3fc; }
 .dark-theme .toast-informacao .toast-icon { color: #7dd3fc; background: #12324a; }
 .dark-theme .toast-sucesso .toast-icon { color: #6ee7b7; background: #123a32; }
 .dark-theme .toast-atencao .toast-icon { color: #fcd34d; background: #3b2d16; }

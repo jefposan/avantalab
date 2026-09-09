@@ -107,7 +107,6 @@
     if (state.phase === 'processing') return state.current?.kind === 'confirmation' ? 'Executando com segurança...' : 'Preparando sua solicitação...';
     if (state.phase === 'clarification') return state.current?.entity?.type === 'product' ? 'Diga somente o produto que ficou em dúvida' : 'Responda por voz ou toque em uma opção';
     if (state.phase === 'confirmation') return 'Confira antes de confirmar';
-    if (state.phase === 'done') return 'Solicitação concluída';
     if (state.phase === 'error') return 'Não foi possível continuar';
     return 'Toque para falar';
   }
@@ -393,14 +392,6 @@
       if (['create_order', 'create_consignment'].includes(state.current.action?.intent)) card.insertBefore(button('Editar pedido', 'text', beginOrderEdit), card.lastChild);
     }
 
-    if (state.phase === 'done' && state.current) {
-      const card = el('section', 'card'); card.append(el('h2', '', state.current.title), el('p', 'summary', state.current.message));
-      const evidence = state.current.evidence;
-      const actions = el('div', 'actions'); actions.append(button('Fechar', 'secondary', close));
-      if (evidence && ['create_order', 'create_consignment', 'register_payment'].includes(state.current.intent)) actions.append(button('Compartilhar comprovante', 'primary', shareReceipt));
-      card.append(actions); panel.append(card);
-    }
-
     if (state.phase === 'error') {
       const card = el('section', 'card error'); card.setAttribute('role', 'alert'); card.append(el('h2', '', statusText()), el('p', 'summary', state.error));
       const actions = el('div', 'actions'); actions.append(button('Cancelar', 'secondary', close), button('Tentar novamente', 'primary', () => state.current?.kind === 'confirmation' ? execute() : startRecording())); card.append(actions); panel.append(card);
@@ -539,19 +530,29 @@
 
   async function execute() {
     if (state.current?.kind !== 'confirmation') return;
-    const confirmation = state.current; setPhase('processing');
+    const confirmation = state.current;
+    const options = state.options;
+    setPhase('processing');
     try {
       const result = await requestVoice('execute', 'execute', { action: confirmation.action });
       state.current = { ...confirmation, ...result, kind: 'answer', intent: confirmation.action.intent };
       try { await state.options.afterExecute?.(result); } catch (error) { console.warn('Lançamento por voz confirmado, mas a tela ainda não foi atualizada.', error); }
-      setPhase('done');
+      const podeCompartilhar = result?.evidence
+        && ['create_order', 'create_consignment', 'register_payment'].includes(confirmation.action?.intent)
+        && typeof options?.shareReceipt === 'function';
+      options?.notify?.(result?.message || 'Lançamento registrado com sucesso.', {
+        tipo: 'sucesso',
+        titulo: result?.title || 'Lançamento registrado',
+        duracao: podeCompartilhar ? 9000 : 4600,
+        acao: podeCompartilhar
+          ? {
+            rotulo: 'Compartilhar comprovante',
+            executar: () => options.shareReceipt(result.evidence.recordId, confirmation.action.intent),
+          }
+          : null,
+      });
+      close();
     } catch (error) { state.current = confirmation; setPhase('error', error instanceof Error ? error.message : 'Não foi possível executar a solicitação.'); }
-  }
-
-  async function shareReceipt() {
-    const evidence = state.current?.evidence; if (!evidence) return;
-    try { const shared = await state.options.shareReceipt?.(evidence.recordId, state.current.intent); if (shared) close(); }
-    catch (error) { setPhase('error', error instanceof Error ? error.message : 'Não foi possível compartilhar o comprovante.'); }
   }
 
   function reset() {

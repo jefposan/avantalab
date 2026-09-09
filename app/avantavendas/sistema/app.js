@@ -1138,17 +1138,42 @@ function toast(msg, opcoes = {}) {
   const atual = document.querySelector('.toast');
   if (atual) atual.remove();
 
+  const configuracao = typeof opcoes === 'string' ? { tipo: opcoes } : (opcoes || {});
+  const acao = configuracao.acao && typeof configuracao.acao.executar === 'function'
+    && String(configuracao.acao.rotulo || '').trim()
+    ? { rotulo: String(configuracao.acao.rotulo).trim(), executar: configuracao.acao.executar }
+    : null;
   const dados = dadosToast(msg, opcoes);
   const el = document.createElement('section');
-  el.className = `toast toast-${dados.tipo}`;
+  el.className = `toast toast-${dados.tipo}${acao ? ' toast-com-acao' : ''}`;
   el.setAttribute('role', dados.tipo === 'erro' ? 'alert' : 'status');
   el.setAttribute('aria-live', dados.tipo === 'erro' ? 'assertive' : 'polite');
   el.setAttribute('aria-atomic', 'true');
   el.style.setProperty('--toast-duration', `${dados.duracao}ms`);
   el.innerHTML = `<span class="toast-icon" aria-hidden="true">${svgIconEstavel(dados.icone)}</span><span class="toast-copy"><strong>${escapeHtml(dados.titulo)}</strong><span>${escapeHtml(dados.mensagem)}</span></span><button class="toast-close" type="button" aria-label="Fechar aviso">${svgIcon('x')}</button><i class="toast-progress" aria-hidden="true"></i>`;
-  el.querySelector('.toast-close')?.addEventListener('click', () => el.remove());
+  let encerrar = () => el.remove();
+  el.querySelector('.toast-close')?.addEventListener('click', () => encerrar());
+  if (acao) {
+    const acaoBotao = document.createElement('button');
+    acaoBotao.type = 'button';
+    acaoBotao.className = 'toast-action';
+    acaoBotao.textContent = acao.rotulo;
+    acaoBotao.addEventListener('click', async () => {
+      acaoBotao.disabled = true;
+      try {
+        const compartilhado = await acao.executar();
+        if (compartilhado !== false) encerrar();
+        else acaoBotao.disabled = false;
+      } catch (error) {
+        encerrar();
+        toast(traduzErro(error), { tipo: 'erro' });
+      }
+    });
+    el.querySelector('.toast-close')?.before(acaoBotao);
+  }
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), dados.duracao);
+  const temporizador = window.setTimeout(() => el.remove(), dados.duracao);
+  encerrar = () => { window.clearTimeout(temporizador); el.remove(); };
 }
 
 function chaveMetaCelebrada(meta) {
@@ -2712,6 +2737,7 @@ async function abrirSolicitacaoVozVendas(acionador = null, pendenciaId = '') {
         label: state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'Conta ativa',
       },
       request: requisitarSolicitacaoVozVendas,
+      notify: (mensagem, opcoes) => toast(mensagem, opcoes),
       afterExecute: async () => carregarDadosBackend(false),
       onPendingChange: atualizarPendenciasSolicitacaoVoz,
       shareReceipt: async (recordId, intent) => {

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.17.0.04 - 2026-09-09
+- **Solicitação por Voz**: após confirmar pedido, consignado, pagamento ou agendamento, o card central fecha e o resultado aparece no aviso temporizado padrão do rodapé. Para pedido, consignado e pagamento, o aviso preserva a ação **Compartilhar comprovante** antes de encerrar.
+- A resolução de produtos compara a fala com o catálogo ativo completo da conta em paralelo com a busca curta; uma escolha manual é validada pelo ID e encerra a dúvida sem voltar ao mesmo loop.
+- Corrigido o gatilho compartilhado de conta que podia impedir novos pagamentos, pedidos, clientes e agendamentos após a publicação do catálogo. A regra exclusiva do catálogo ficou isolada no gatilho de produtos, sem alterar registros existentes.
+
+## 1.17.0.04-av144 - 2026-09-09
+- Recursos do AvantaVendas renovados para confirmação discreta por voz, compartilhamento de comprovante e cache atualizado do PWA.
+
 ## 1.17.0.03 - 2026-09-08
 - Alterações em **Conteúdo AvantaVendas > Produtos** agora são publicadas no mesmo salvamento para todas as contas de AvantaVendas vinculadas ao perfil. Nome, SKU, descrição, preço sugerido, imagem, estado ativo e demais dados de divulgação substituem a cópia recebida, sem alterar custo ou estoque próprios da conta de vendas.
 - O AvantaVendas acompanha essas cópias por atualização em tempo real e atualiza o catálogo aberto sem exigir que o vendedor use o botão de sincronização ou recarregue a página.

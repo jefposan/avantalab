@@ -62,19 +62,16 @@ function phoneticVoiceToken(value: string) {
     .replace(/([a-z])\1+/g, '$1');
 }
 
-// A consulta ao banco também precisa sobreviver a pequenas trocas de dicção da
-// transcrição. As variantes continuam sendo apenas filtros para obter poucos
-// candidatos reais; a escolha final passa pelo score e, quando necessário,
-// pela confirmação da pessoa.
+// A consulta curta usa somente termos completos. Prefixos de três letras, como
+// "tri", poluem catálogos grandes com descrições técnicas e podem excluir o
+// produto correto antes da classificação. Aproximações continuam sendo feitas
+// depois, sobre o catálogo real da conta.
 function productSearchVariants(reference: string) {
   const variants = new Set<string>();
   for (const token of safeSearchTokens(reference, 5)) {
     const normalized = normalizeVoiceSearch(token);
     const phonetic = phoneticVoiceToken(token);
     [normalized, phonetic].filter((value) => value.length >= 3).forEach((value) => variants.add(value));
-    // Prefixo curto absorve letras duplicadas comuns em marcas (Paladin /
-    // Palladium). Ele só amplia a busca de candidatos; nunca confirma sozinho.
-    if (phonetic.length >= 5) variants.add(phonetic.slice(0, 3));
   }
   return [...variants].slice(0, 8);
 }
@@ -193,17 +190,18 @@ function orderedTokenCoverage(queryTokens: string[], candidateTokens: string[]) 
 
 function productScore(reference: string, product: ProductRow) {
   const fields = [product.nome, product.sku, product.marca, product.categoria, product.descricao];
+  const identityFields = [product.nome, product.sku, product.marca];
   const base = score(reference, fields);
   const queryTokens = searchTokens(reference).filter((token) => token.length >= 4);
   const normalizedName = normalizeVoiceSearch(product.nome);
   const nameTokens = searchTokens(product.nome);
-  const fieldTokens = fields.flatMap((field) => searchTokens(String(field || '')));
+  const identityTokens = identityFields.flatMap((field) => searchTokens(String(field || '')));
   if (queryTokens.includes(normalizedName)) return Math.max(base, 116);
   const exactNameMatches = queryTokens.filter((token) => nameTokens.includes(token)).length;
   const exactNameScore = exactNameMatches
     ? 70 + Math.round(exactNameMatches / Math.max(1, queryTokens.length) * 20)
     : 0;
-  const similarities = queryTokens.map((queryToken) => fieldTokens
+  const similarities = queryTokens.map((queryToken) => identityTokens
     .reduce((best, fieldToken) => Math.max(best, voiceTokenSimilarity(queryToken, fieldToken)), 0));
   const strongMatches = similarities.filter((similarity) => similarity >= .72).length;
   const averageSimilarity = similarities.length
@@ -222,7 +220,14 @@ function productScore(reference: string, product: ProductRow) {
   const descriptiveScore = descriptiveTokens.length && descriptiveCoverage >= .78
     ? Math.round(100 + descriptiveCoverage * 14)
     : 0;
-  return Math.max(base, exactNameScore, fuzzyScore, orderedScore, descriptiveScore);
+  const compactReference = spokenTokens.join('');
+  const compactName = nameTokens.join('');
+  const compactScore = compactReference.length >= 5 && compactName
+    ? compactReference === compactName
+      ? 124
+      : compactName.includes(compactReference) ? 116 : 0
+    : 0;
+  return Math.max(base, exactNameScore, fuzzyScore, orderedScore, descriptiveScore, compactScore);
 }
 
 // Um único termo genérico, como “orgânico”, não é motivo para sugerir produtos
@@ -230,23 +235,35 @@ function productScore(reference: string, product: ProductRow) {
 // aberto para busca manual, mas as sugestões por voz precisam ter evidência
 // suficiente para não desviar a pessoa para uma lista sem sentido.
 function isRelevantProductCandidate(reference: string, product: ProductRow, scoreValue: number) {
-  if (scoreValue >= 92) return true;
   const queryTokens = searchTokens(reference).filter((token) => token.length >= 3);
-  const fieldTokens = [product.nome, product.sku, product.marca, product.categoria, product.descricao]
+  const nameTokens = searchTokens(product.nome);
+  const identityTokens = [product.nome, product.sku, product.marca]
     .flatMap((field) => searchTokens(String(field || '')));
-  if (!queryTokens.length || !fieldTokens.length || scoreValue < 58) return false;
-  const matches = queryTokens.map((queryToken) => fieldTokens.reduce(
+  const contextTokens = [product.categoria, product.descricao]
+    .flatMap((field) => searchTokens(String(field || '')));
+  if (!queryTokens.length || (!identityTokens.length && !contextTokens.length) || scoreValue < 58) return false;
+  const identityMatches = queryTokens.map((queryToken) => identityTokens.reduce(
     (best, fieldToken) => Math.max(best, voiceTokenSimilarity(queryToken, fieldToken)),
     0,
   ));
-  const strong = matches.filter((similarity) => similarity >= .78).length;
+  const identityStrong = identityMatches.filter((similarity) => similarity >= .78).length;
+  const exactContext = queryTokens.filter((queryToken) => contextTokens.includes(queryToken)).length;
+  const compactReference = queryTokens.join('');
+  const compactName = nameTokens.join('');
+  const compactIdentityMatch = compactReference.length >= 5
+    && (compactName === compactReference || compactName.includes(compactReference));
+  if (scoreValue >= 92 && (identityStrong > 0 || compactIdentityMatch || exactContext === queryTokens.length)) return true;
   // Uma marca/nome comercial muito próximo ainda é evidência suficiente quando
   // o outro termo é somente o tipo humano do produto ("Progressiva Paladin"
-  // para "Palladium"). A exigência alta evita que "orgânico" sozinho passe.
-  const namedVeryStrong = queryTokens.some((token, index) => !PRODUCT_GENERIC_TOKENS.has(token) && matches[index] >= .9);
+  // para "Palladium"). A aproximação precisa estar no nome, SKU ou marca; uma
+  // palavra parecida encontrada somente na descrição não sugere outro produto.
+  const namedVeryStrong = queryTokens.some((token, index) => !PRODUCT_GENERIC_TOKENS.has(token) && identityMatches[index] >= .9);
   const namedApproximation = queryTokens.some((token, index) => token.length >= 5
-    && !PRODUCT_GENERIC_TOKENS.has(token) && matches[index] >= .72);
-  return queryTokens.length === 1 ? strong === 1 : strong >= 2 || namedVeryStrong || namedApproximation;
+    && !PRODUCT_GENERIC_TOKENS.has(token) && identityMatches[index] >= .72);
+  const exactContextMatch = exactContext === queryTokens.length;
+  return queryTokens.length === 1
+    ? identityStrong === 1 || compactIdentityMatch || exactContextMatch
+    : identityStrong >= 2 || compactIdentityMatch || namedVeryStrong || namedApproximation || exactContextMatch;
 }
 
 function productCandidate(row: ProductRow): VoiceEntityCandidate {
@@ -452,36 +469,48 @@ export async function resolveCustomer(db: SupabaseClient, accountId: string, ref
 }
 
 export async function resolveProduct(db: SupabaseClient, accountId: string, reference: string, selectedId = '') {
+  if (selectedId) {
+    const { data: selected, error: selectedError } = await db.from('vendas_mobile_produtos')
+      .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
+      .eq('conta_id', accountId)
+      .eq('ativo', true)
+      .eq('id', selectedId)
+      .maybeSingle();
+    if (selectedError) throw new Error('Não foi possível validar o produto escolhido.');
+    if (selected) {
+      const product = selected as ProductRow;
+      return { status: 'resolved' as const, product, candidates: [productCandidate(product)] };
+    }
+  }
   const variants = productSearchVariants(reference);
   if (!variants.length) return { status: 'missing' as const, candidates: [] as VoiceEntityCandidate[] };
   const fields = ['nome', 'sku', 'marca', 'categoria', 'descricao'];
   const expression = variants.flatMap((token) => fields.map((field) => `${field}.ilike.%${token}%`)).join(',');
-  let { data, error } = await db.from('vendas_mobile_produtos')
+  const directSearch = db.from('vendas_mobile_produtos')
     .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
     .eq('conta_id', accountId)
     .eq('ativo', true)
     .or(expression)
-    .limit(24);
-  if (error) throw new Error('Não foi possível pesquisar produtos.');
+    .limit(60);
+  // A consulta exata e o catálogo completo viajam juntos. Em pedidos com
+  // vários itens, todos compartilham a mesma leitura em andamento e o cache de
+  // 30 segundos, mantendo a comparação abrangente sem criar espera em série.
+  const [directResult, catalogResult] = await Promise.all([
+    directSearch,
+    fetchActiveProducts(db, accountId)
+      .then((products) => ({ products, error: null }))
+      .catch((error: unknown) => ({ products: [] as ProductRow[], error })),
+  ]);
+  const { data, error } = directResult;
+  if (error && catalogResult.error) throw new Error('Não foi possível pesquisar produtos.');
   const rank = (rows: ProductRow[]) => rows
     .map((row) => ({ row, score: productScore(reference, row) }))
     .filter((entry) => isRelevantProductCandidate(reference, entry.row, entry.score))
     .sort((a, b) => b.score - a.score || a.row.nome.localeCompare(b.row.nome, 'pt-BR'));
-  let ranked = rank(data as ProductRow[] || []);
-  // Quando o filtro inicial do banco não devolve uma correspondência clara,
-  // percorremos o catálogo real da conta no servidor. Isso melhora abreviações,
-  // grafias próximas e sinônimos sem enviar uma lista extensa para a IA.
-  if (!ranked.length || ranked[0].score < 92) {
-    const allProducts = await fetchActiveProducts(db, accountId);
-    const byId = new Map<string, ProductRow>([...(data as ProductRow[] || []), ...allProducts].map((row) => [row.id, row]));
-    ranked = rank([...byId.values()]);
-  }
+  const byId = new Map<string, ProductRow>([...catalogResult.products, ...(data as ProductRow[] || [])].map((row) => [row.id, row]));
+  const ranked = rank([...byId.values()]);
   const candidates = ranked.slice(0, 8).map(({ row }) => productCandidate(row));
   if (!ranked.length) return { status: 'missing' as const, candidates };
-  const selected = selectedId && candidates.some((candidate) => candidate.id === selectedId)
-    ? ranked.find(({ row }) => row.id === selectedId)?.row
-    : null;
-  if (selected) return { status: 'resolved' as const, product: selected, candidates };
   const tokenCount = searchTokens(reference).length;
   const clearWinner = ranked.length === 1
     || (ranked[0].score === 120 && (ranked[1]?.score || 0) < 100)
