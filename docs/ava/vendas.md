@@ -1,7 +1,19 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.17.0.01 -->
-<!-- avantavendas-asset-revision: 141 -->
+<!-- ava-version: 1.17.0.02 -->
+<!-- avantavendas-asset-revision: 142 -->
+
+> Revisão 1.17.0.02: em **Procurar no catálogo**, digitar atualiza somente os
+> resultados; o campo permanece focado e o teclado não fecha a cada busca. A
+> conciliação considera a ordem das palavras relevantes, tolera termos extras
+> no nome cadastrado, plural/singular e pequenas perdas da transcrição. Por
+> exemplo, **kit cabelos normais** e **kit cabelo normal** encontram **Kit Home
+> Care - Cabelos Normais**. Uma resposta antiga da rede nunca substitui uma
+> pesquisa mais nova. A transcrição também envia ao modelo a indicação de
+> português no formato de idiomas suportado pelo `gpt-transcribe`.
+
+> Revisão 1.17.0.02-av142: recursos do AvantaVendas renovados com digitação
+> contínua e conciliação refinada do catálogo por voz.
 
 > Revisão 1.17.0.01: a edição de produtos antigos no **Conteúdo AvantaVendas**
 > passa a gerar SKU técnico estável quando o cadastro anterior não tinha código.

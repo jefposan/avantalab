@@ -304,13 +304,29 @@ test('catálogo prioriza referência completa próxima e não sugere itens por p
   const triliss = { id: UUIDS.influencerLitro, nome: 'Triliss - Redutor Orgânico', ativo: true, preco: 220, categoria: 'Progressiva' };
   const ox = { id: UUIDS.influencerCemMl, nome: 'OX 10 vol.', ativo: true, preco: 18, categoria: 'Oxidante' };
   const shampoo = { id: UUIDS.damiles, nome: 'Shampoo Onix', ativo: true, preco: 42, categoria: 'Shampoo' };
-  const resolved = await resolveProduct(voiceResolverDb([triliss, ox, shampoo]), 'conta', 'triliss organica');
+  const resolved = await resolveProduct(voiceResolverDb([triliss, ox, shampoo]), 'conta-triliss', 'triliss organica');
   assert.equal(resolved.status, 'resolved');
   assert.equal(resolved.product.id, triliss.id);
   assert.deepEqual(resolved.candidates.map(({ id }) => id), [triliss.id]);
 
-  const catalog = await listVoiceCatalogProducts(voiceResolverDb([triliss, ox, shampoo]), 'conta', 'triliss organica');
+  const catalog = await listVoiceCatalogProducts(voiceResolverDb([triliss, ox, shampoo]), 'conta-triliss', 'triliss organica');
   assert.equal(catalog.products[0].id, triliss.id);
+});
+
+test('catálogo aceita palavras intermediárias ausentes na fala', async () => {
+  const homeCare = { id: UUIDS.influencerLitro, nome: 'Kit Home Care - Cabelos Normais', ativo: true, preco: 189 };
+  const outro = { id: UUIDS.influencerCemMl, nome: 'Kit Home Care - Cabelos Danificados', ativo: true, preco: 199 };
+  const exact = await resolveProduct(voiceResolverDb([homeCare, outro]), 'conta-home-care', 'kit cabelos normais');
+  assert.equal(exact.status, 'resolved');
+  assert.equal(exact.product.id, homeCare.id);
+
+  const singular = await resolveProduct(voiceResolverDb([homeCare, outro]), 'conta-home-care', 'kit cabelo normal');
+  assert.equal(singular.status, 'resolved');
+  assert.equal(singular.product.id, homeCare.id);
+
+  const noisyTranscription = await resolveProduct(voiceResolverDb([homeCare, outro]), 'conta-home-care', 'que cabelos normais');
+  assert.equal(noisyTranscription.status, 'resolved');
+  assert.equal(noisyTranscription.product.id, homeCare.id);
 });
 
 test('produto pode ser escolhido manualmente sem perder o rascunho e pedido pode ser editado com validação', async () => {
@@ -339,6 +355,15 @@ test('resolução de vários produtos prioriza resposta curta e compartilha a bu
   assert.match(resolver, /productCatalogRequests/);
   assert.match(resolver, /const productChecks = await Promise\.all\(draft\.items\.map/);
   assert.match(resolver, /const pages = await Promise\.all\(starts\.map\(readPage\)\)/);
+});
+
+test('pesquisa manual atualiza resultados sem reconstruir o campo focado', async () => {
+  const voiceModule = await readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8');
+  const loadCatalog = voiceModule.match(/async function loadCatalog[\s\S]*?\n  function openProductCatalog/)?.[0] || '';
+  assert.match(voiceModule, /function refreshCatalogResults\(\)/);
+  assert.match(voiceModule, /query !== state\.catalogQuery/);
+  assert.match(voiceModule, /const offset = reset \? 0 : state\.catalogProducts\.length/);
+  assert.doesNotMatch(loadCatalog, /\brender\(\)/);
 });
 
 test('pedido consignado usa o mesmo fluxo oficial com estoque e confirmação', async () => {
@@ -403,6 +428,8 @@ test('transcrição de voz usa modelo especializado sem enviar o catálogo da co
   assert.match(source, /OPENAI_VOICE_TRANSCRIPTION_MODEL \|\| 'gpt-transcribe'/);
   assert.match(source, /OPENAI_VOICE_TRANSCRIPTION_CONTEXT/);
   assert.match(source, /keywords\[\]/);
+  assert.match(source, /languages\[\].*'pt'/);
+  assert.doesNotMatch(source, /append\('language',/);
   assert.match(source, /audioSeconds/);
   assert.doesNotMatch(source, /vendas_mobile_produtos/);
 });

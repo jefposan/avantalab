@@ -33,7 +33,7 @@ type ProductRow = {
 };
 
 const STOP_WORDS = new Set(['a', 'o', 'as', 'os', 'da', 'de', 'do', 'das', 'dos', 'para', 'um', 'uma', 'cliente', 'produto']);
-const PRODUCT_GENERIC_TOKENS = new Set(['progressiva', 'redutor', 'organico', 'organica', 'shampoo', 'mascara', 'oxidante', 'tintura', 'creme', 'tratamento']);
+const PRODUCT_GENERIC_TOKENS = new Set(['kit', 'progressiva', 'redutor', 'organico', 'organica', 'shampoo', 'mascara', 'oxidante', 'tintura', 'creme', 'tratamento']);
 const PRODUCT_CATALOG_CACHE_TTL_MS = 30_000;
 const productCatalogCache = new Map<string, { expiresAt: number; rows: ProductRow[] }>();
 const productCatalogRequests = new Map<string, Promise<ProductRow[]>>();
@@ -168,6 +168,29 @@ function voiceTokenSimilarity(left: string, right: string) {
   return Math.max(tokenSimilarity(left, right), jaroWinklerSimilarity(left, right));
 }
 
+// Palavras adicionais no cadastro não devem quebrar uma descrição humana mais
+// curta. Assim, "kit cabelos normais" casa com "kit home care cabelos normais"
+// e "triliss orgânica" casa com "triliss redutor orgânico" mantendo a ordem e
+// exigindo que todos os termos falados estejam representados.
+function orderedTokenCoverage(queryTokens: string[], candidateTokens: string[]) {
+  if (!queryTokens.length || !candidateTokens.length) return 0;
+  let cursor = 0;
+  let total = 0;
+  for (const queryToken of queryTokens) {
+    let bestIndex = -1;
+    let bestSimilarity = 0;
+    for (let index = cursor; index < candidateTokens.length; index += 1) {
+      const similarity = voiceTokenSimilarity(queryToken, candidateTokens[index]);
+      if (similarity > bestSimilarity) { bestIndex = index; bestSimilarity = similarity; }
+      if (similarity >= .98) break;
+    }
+    if (bestIndex < 0 || bestSimilarity < .78) return 0;
+    cursor = bestIndex + 1;
+    total += bestSimilarity;
+  }
+  return total / queryTokens.length;
+}
+
 function productScore(reference: string, product: ProductRow) {
   const fields = [product.nome, product.sku, product.marca, product.categoria, product.descricao];
   const base = score(reference, fields);
@@ -191,7 +214,15 @@ function productScore(reference: string, product: ProductRow) {
     : strongMatches
       ? Math.round(38 + averageSimilarity * 42)
       : 0;
-  return Math.max(base, exactNameScore, fuzzyScore);
+  const spokenTokens = searchTokens(reference).filter((token) => token.length >= 3);
+  const orderedCoverage = orderedTokenCoverage(spokenTokens, nameTokens);
+  const orderedScore = orderedCoverage >= .78 ? Math.round(112 + orderedCoverage * 12) : 0;
+  const descriptiveTokens = spokenTokens.filter((token) => !PRODUCT_GENERIC_TOKENS.has(token) && token !== 'que');
+  const descriptiveCoverage = orderedTokenCoverage(descriptiveTokens, nameTokens);
+  const descriptiveScore = descriptiveTokens.length && descriptiveCoverage >= .78
+    ? Math.round(100 + descriptiveCoverage * 14)
+    : 0;
+  return Math.max(base, exactNameScore, fuzzyScore, orderedScore, descriptiveScore);
 }
 
 // Um único termo genérico, como “orgânico”, não é motivo para sugerir produtos
@@ -203,7 +234,7 @@ function isRelevantProductCandidate(reference: string, product: ProductRow, scor
   const queryTokens = searchTokens(reference).filter((token) => token.length >= 3);
   const fieldTokens = [product.nome, product.sku, product.marca, product.categoria, product.descricao]
     .flatMap((field) => searchTokens(String(field || '')));
-  if (!queryTokens.length || !fieldTokens.length || scoreValue < 68) return false;
+  if (!queryTokens.length || !fieldTokens.length || scoreValue < 58) return false;
   const matches = queryTokens.map((queryToken) => fieldTokens.reduce(
     (best, fieldToken) => Math.max(best, voiceTokenSimilarity(queryToken, fieldToken)),
     0,
@@ -212,10 +243,10 @@ function isRelevantProductCandidate(reference: string, product: ProductRow, scor
   // Uma marca/nome comercial muito próximo ainda é evidência suficiente quando
   // o outro termo é somente o tipo humano do produto ("Progressiva Paladin"
   // para "Palladium"). A exigência alta evita que "orgânico" sozinho passe.
-  const veryStrong = matches.some((similarity) => similarity >= .9);
+  const namedVeryStrong = queryTokens.some((token, index) => !PRODUCT_GENERIC_TOKENS.has(token) && matches[index] >= .9);
   const namedApproximation = queryTokens.some((token, index) => token.length >= 5
     && !PRODUCT_GENERIC_TOKENS.has(token) && matches[index] >= .72);
-  return queryTokens.length === 1 ? strong === 1 : strong >= 2 || veryStrong || (namedApproximation && scoreValue >= 58);
+  return queryTokens.length === 1 ? strong === 1 : strong >= 2 || namedVeryStrong || namedApproximation;
 }
 
 function productCandidate(row: ProductRow): VoiceEntityCandidate {
@@ -269,24 +300,25 @@ export async function listVoiceCatalogProducts(db: SupabaseClient, accountId: st
   const safeLimit = Math.max(1, Math.min(60, Math.floor(limit) || 40));
   const safeOffset = Math.max(0, Math.floor(offset) || 0);
   const normalized = normalizeVoiceSearch(query);
+  if (normalized) {
+    const products = await fetchActiveProducts(db, accountId);
+    const ranked = products
+      .map((row) => ({ row, score: productScore(normalized, row) }))
+      .filter((entry) => isRelevantProductCandidate(normalized, entry.row, entry.score))
+      .sort((left, right) => right.score - left.score || left.row.nome.localeCompare(right.row.nome, 'pt-BR'));
+    const page = ranked.slice(safeOffset, safeOffset + safeLimit);
+    return { products: page.map(({ row }) => productCandidate(row)), hasMore: ranked.length > safeOffset + safeLimit };
+  }
   let request = db.from('vendas_mobile_produtos')
     .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
     .eq('conta_id', accountId)
     .eq('ativo', true)
     .order('nome');
-  if (normalized) {
-    const terms = productSearchVariants(normalized).slice(0, 5);
-    const fields = ['nome', 'sku', 'marca', 'categoria', 'descricao'];
-    const expression = terms.flatMap((term) => fields.map((field) => `${field}.ilike.%${term}%`)).join(',');
-    if (expression) request = request.or(expression);
-  }
   const { data, error } = await request.range(safeOffset, safeOffset + safeLimit - 1);
   if (error) throw new Error('Não foi possível abrir o catálogo de produtos.');
   const ranked = (data as ProductRow[] || [])
-    .map((row) => ({ row, score: normalized ? productScore(normalized, row) : 0 }))
-    .sort((left, right) => normalized
-      ? right.score - left.score || left.row.nome.localeCompare(right.row.nome, 'pt-BR')
-      : left.row.nome.localeCompare(right.row.nome, 'pt-BR'));
+    .map((row) => ({ row, score: 0 }))
+    .sort((left, right) => left.row.nome.localeCompare(right.row.nome, 'pt-BR'));
   return { products: ranked.map(({ row }) => productCandidate(row)), hasMore: (data || []).length === safeLimit };
 }
 
@@ -453,6 +485,7 @@ export async function resolveProduct(db: SupabaseClient, accountId: string, refe
   const tokenCount = searchTokens(reference).length;
   const clearWinner = ranked.length === 1
     || (ranked[0].score === 120 && (ranked[1]?.score || 0) < 100)
+    || (ranked[0].score >= 122 && (ranked[1]?.score || 0) < 118)
     || (tokenCount >= 2 && ranked[0].score >= 85 && ranked[0].score - (ranked[1]?.score || 0) >= 15);
   return clearWinner
     ? { status: 'resolved' as const, product: ranked[0].row, candidates }

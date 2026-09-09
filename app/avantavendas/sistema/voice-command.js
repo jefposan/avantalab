@@ -8,7 +8,7 @@
     recorder: null, stream: null, chunks: [], requestAbort: null, requestStage: null, pendingId: null, timer: 0,
     audioContext: null, analyser: null, source: null, frame: 0, canvas: null,
     noiseFloor: 0.012, lastVoiceActive: null, canvasSize: 0,
-    catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogTimer: 0,
+    catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogTimer: 0, catalogRequestId: 0,
     editDraft: null, editSelections: [],
   };
 
@@ -171,21 +171,28 @@
 
   function resetCatalog() {
     window.clearTimeout(state.catalogTimer);
-    Object.assign(state, { catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '' });
+    Object.assign(state, { catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogRequestId: state.catalogRequestId + 1 });
   }
 
   async function loadCatalog(reset = true) {
-    const offset = reset ? 0 : state.catalogOffset + state.catalogProducts.length;
+    const offset = reset ? 0 : state.catalogProducts.length;
+    const query = state.catalogQuery;
+    const requestId = state.catalogRequestId + 1;
+    state.catalogRequestId = requestId;
     state.catalogLoading = true; state.catalogError = '';
-    render();
+    refreshCatalogResults();
     try {
-      const result = await state.options.request('catalog', { query: state.catalogQuery, offset });
+      const result = await state.options.request('catalog', { query, offset });
+      if (requestId !== state.catalogRequestId || query !== state.catalogQuery) return;
       const products = Array.isArray(result?.products) ? result.products : [];
       state.catalogProducts = reset ? products : [...state.catalogProducts, ...products];
       state.catalogOffset = offset; state.catalogHasMore = Boolean(result?.hasMore);
     } catch (error) {
+      if (requestId !== state.catalogRequestId) return;
       state.catalogError = error instanceof Error ? error.message : 'Não foi possível abrir o catálogo de produtos.';
-    } finally { state.catalogLoading = false; render(); }
+    } finally {
+      if (requestId === state.catalogRequestId) { state.catalogLoading = false; refreshCatalogResults(); }
+    }
   }
 
   function openProductCatalog(mode) {
@@ -280,6 +287,30 @@
     return message;
   }
 
+  function fillCatalogResults(feedback, list, more) {
+    feedback.replaceChildren(); list.replaceChildren(); more.replaceChildren();
+    if (state.catalogLoading) feedback.append(el('p', 'helper', 'Buscando no catálogo...'));
+    if (state.catalogError) feedback.append(el('p', 'catalog-empty', state.catalogError));
+    state.catalogProducts.forEach((candidate) => {
+      const option = button('', 'candidate', () => chooseCatalogProduct(candidate));
+      option.append(el('strong', '', candidate.label), el('small', '', candidate.detail)); list.append(option);
+    });
+    if (!state.catalogLoading && !state.catalogError && !state.catalogProducts.length) {
+      list.append(el('p', 'catalog-empty', state.catalogQuery ? 'Nenhum produto encontrado. Tente outro nome.' : 'Nenhum produto disponível no catálogo.'));
+    }
+    if (state.catalogHasMore) more.append(button('Mostrar mais produtos', 'text', () => { void loadCatalog(false); }));
+  }
+
+  function refreshCatalogResults() {
+    if (!state.catalogMode || !state.root) return false;
+    const feedback = state.root.querySelector('.catalog-feedback');
+    const list = state.root.querySelector('.catalog-results');
+    const more = state.root.querySelector('.catalog-more');
+    if (!feedback || !list || !more) return false;
+    fillCatalogResults(feedback, list, more);
+    return true;
+  }
+
   function renderCatalogPicker(panel) {
     const card = el('section', 'card');
     card.append(el('h2', '', 'Escolha um produto do catálogo'));
@@ -288,16 +319,11 @@
     search.setAttribute('aria-label', 'Pesquisar produto no catálogo');
     search.addEventListener('input', () => scheduleCatalogSearch(search.value));
     card.append(search);
-    if (state.catalogLoading) card.append(el('p', 'helper', 'Buscando no catálogo...'));
-    if (state.catalogError) card.append(el('p', 'catalog-empty', state.catalogError));
+    const feedback = el('div', 'catalog-feedback'); feedback.setAttribute('aria-live', 'polite');
     const list = el('div', 'catalog-results');
-    state.catalogProducts.forEach((candidate) => {
-      const option = button('', 'candidate', () => chooseCatalogProduct(candidate));
-      option.append(el('strong', '', candidate.label), el('small', '', candidate.detail)); list.append(option);
-    });
-    if (!state.catalogLoading && !state.catalogError && !state.catalogProducts.length) list.append(el('p', 'catalog-empty', state.catalogQuery ? 'Nenhum produto encontrado. Tente outro nome.' : 'Nenhum produto disponível no catálogo.'));
-    card.append(list);
-    if (state.catalogHasMore) card.append(button('Mostrar mais produtos', 'text', () => { void loadCatalog(false); }));
+    const more = el('div', 'catalog-more');
+    fillCatalogResults(feedback, list, more);
+    card.append(feedback, list, more);
     const actions = el('div', 'actions single'); actions.append(button('Voltar', 'secondary', () => { resetCatalog(); render(); }));
     card.append(actions); panel.append(card);
   }
@@ -562,7 +588,7 @@
     if (!options.mount?.isConnected) throw new Error('A Sala de Botões não está pronta para iniciar a gravação.');
     if (state.host) close();
     const host = document.createElement('avanta-voice-command'); const shadow = host.attachShadow({ mode: 'open' }); const style = document.createElement('style'); style.textContent = styles; const root = document.createElement('div'); shadow.append(style, root); options.mount.append(host);
-    Object.assign(state, { host, root, options, mount: options.mount, phase: 'idle', current: null, error: '', pendingId: null, catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', editDraft: null, editSelections: [] });
+    Object.assign(state, { host, root, options, mount: options.mount, phase: 'idle', current: null, error: '', pendingId: null, catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogRequestId: state.catalogRequestId + 1, editDraft: null, editSelections: [] });
     if (options.pendingId) restorePending(options.pendingId);
     render();
     if (options.autoStart && state.phase === 'idle') void startRecording();

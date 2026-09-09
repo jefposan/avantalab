@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     // Modelo especializado de alta precisão. O contexto é curto e restrito ao
     // domínio: não envia clientes ou catálogo da conta à OpenAI.
     transcriptionForm.append('model', process.env.OPENAI_VOICE_TRANSCRIPTION_MODEL || 'gpt-transcribe');
-    transcriptionForm.append('language', 'pt');
+    transcriptionForm.append('languages[]', 'pt');
     transcriptionForm.append('prompt', process.env.OPENAI_VOICE_TRANSCRIPTION_CONTEXT || TRANSCRIPTION_CONTEXT);
     TRANSCRIPTION_KEYWORDS.forEach((keyword) => transcriptionForm.append('keywords[]', keyword));
     const startedAt = performance.now();

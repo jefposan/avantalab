@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.17.0.01 -->
+<!-- ava-version: 1.17.0.02 -->
+
+> Revisão 1.17.0.02: digitação contínua e conciliação refinada do catálogo na
+> Solicitação por Voz aplicadas somente ao AvantaVendas; sem impacto
+> operacional na Gestão Web.
 
 > Revisão 1.17.0.01: ao editar um produto antigo sem SKU em **Conteúdo
 > AvantaVendas > Produtos**, o sistema preenche um código técnico estável.

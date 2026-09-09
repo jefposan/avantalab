@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.17.0.02 - 2026-09-08
+- A pesquisa manual do catálogo na Solicitação por Voz mantém o mesmo campo durante a digitação. A lista e o aviso de carregamento são atualizados separadamente, evitando que o teclado do iPhone feche a cada resultado.
+- A conciliação de produtos aceita palavras intermediárias presentes somente no cadastro, variações de plural e pequenas perdas da transcrição. Assim, referências como **kit cabelos normais** e **kit cabelo normal** encontram **Kit Home Care - Cabelos Normais**.
+- A busca manual digitada usa a mesma classificação aprofundada do comando de voz e ignora respostas antigas quando uma nova pesquisa já foi iniciada.
+- A transcrição informa o português brasileiro pelo campo de idiomas compatível com o modelo `gpt-transcribe`, reforçando a dicção esperada sem criar outra chamada à IA.
+
+## 1.17.0.02-av142 - 2026-09-08
+- Recursos do AvantaVendas renovados com digitação contínua no catálogo e conciliação refinada de produtos por voz.
+
 ## 1.17.0.01 - 2026-09-08
 - Produtos antigos do **Conteúdo AvantaVendas** que ainda não possuíam SKU agora recebem um código técnico estável ao abrir a edição. Assim, **Salvar produto** funciona sem exigir o preenchimento manual de um dado ausente da importação original.
 - Falhas de validação do formulário agora aparecem junto aos campos, sem ficar ocultas abaixo da lista de produtos.
