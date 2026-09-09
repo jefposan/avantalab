@@ -85,7 +85,6 @@ export default function RecebimentosPaginaClient({ empresaId }: { empresaId: str
       <section className={styles.areaModulo} aria-labelledby="recebimentos-pagina-titulo">
         <div className={styles.tituloPaginaModulo}>
           <div>
-            <span>Gestão operacional</span>
             <h1 id="recebimentos-pagina-titulo">Operações de Campo</h1>
           </div>
         </div>

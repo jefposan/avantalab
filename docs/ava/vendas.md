@@ -1,6 +1,49 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.19.0.20 -->
+<!-- ava-version: 1.20.0.08 -->
+
+> Revisão 1.20.0.08: o backup ampliado de Recebimentos e Serviços não altera o
+> AvantaVendas.
+
+> Revisão 1.20.0.07: o uso integral da largura pelos painéis de Serviços
+> pertence a Operações de Campo e não altera o AvantaVendas.
+
+> Revisão 1.20.0.06: o ajuste de altura do seletor de **Avisos** pertence a
+> Operações de Campo e não altera o AvantaVendas.
+
+> Revisão 1.20.0.05: o ajuste visual dos controles de **Avisos** pertence a
+> Operações de Campo e não altera o AvantaVendas.
+
+> Revisão 1.20.0.04: os controles de pesquisa, mês e **Todos** em **Avisos**
+> pertencem a Operações de Campo e não alteram o AvantaVendas.
+
+> Revisão 1.20.0.03: a fila de tratamento mensal de avaliações regulares em
+> **Serviços > Avisos** pertence a Operações de Campo e não altera o
+> AvantaVendas.
+
+> Revisão 1.20.0.02: a recomposição de atrasos pelo cronograma de Serviços
+> pertence a Operações de Campo e não altera o AvantaVendas.
+
+> Revisão 1.20.0.01: a janela de 10 dias de Serviços pendentes pertence a
+> Operações de Campo e não altera o AvantaVendas.
+
+> Revisão 1.20.0: o comprovante de assinatura e a consulta mensal de Serviços
+> realizados pertencem a Operações de Campo e não alteram o AvantaVendas.
+
+> Revisão 1.19.0.25: o reposicionamento progressivo do formulário de Serviços
+> no PWA não altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.24: a lista completa por piso no PWA de Serviços não altera a
+> operação do AvantaVendas.
+
+> Revisão 1.19.0.23: a reversão de cliente selecionado no PWA de Serviços não
+> altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.22: a retirada do aviso redundante de salvamento em
+> Operações de Campo não altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.21: a remoção do identificador visual de Operações de Campo
+> não altera a operação do AvantaVendas.
 
 > Revisão 1.19.0.20: a seleção de piso no PWA de Serviços não altera a
 > operação do AvantaVendas.

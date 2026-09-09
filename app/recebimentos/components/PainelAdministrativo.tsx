@@ -23,7 +23,6 @@ type Props = {
   perfil: Perfil;
   darkMode: boolean;
   corPrimaria: string;
-  salvando: boolean;
   onAviso?: AbrirAvisoFn;
   onConfirmacao?: AbrirConfirmacaoFn;
   podeConfirmar: boolean;
@@ -36,6 +35,7 @@ type Props = {
   rascunhoEscopo: string;
   onConfirmarBaixa: (id: string, formaPagamento?: FormaPagamentoRecebimento) => void;
   onObterComprovante: (id: string) => Promise<ComprovanteRecebimento>;
+  onObterComprovanteServico: (id: string) => Promise<ComprovanteRecebimento>;
   onBaixarDireto: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void>;
   onDevolver: (id: string, motivo: string) => void;
   onDivergencia: (id: string, motivo: string) => void;
@@ -57,6 +57,7 @@ type Props = {
   onAtualizarTitulosFinanceiro: (ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string) => Promise<IntegracaoFinanceiraRecebimentos>;
   onDefinirIntegracaoFinanceira: (ano: number, mes: number, ativa: boolean) => Promise<IntegracaoFinanceiraRecebimentos>;
   onConcluirAvisoServico: (id: string) => void;
+  onReabrirAvisoServico: (id: string) => void;
 };
 
 const ABAS_GERAL: Array<[Aba, string]> = [
@@ -82,7 +83,7 @@ const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'S
 
 export default function PainelAdministrativo(props: Props) {
   const {
-    perfil, darkMode, salvando, podeConfirmar, empresas, subempresas, colaboradores, recebimentos, servicos,
+    perfil, darkMode, podeConfirmar, empresas, subempresas, colaboradores, recebimentos, servicos,
     onObterIntegracaoFinanceira, onAtualizarTitulosFinanceiro, onDefinirIntegracaoFinanceira,
   } = props;
   const [aba, setAba] = useState<Aba>('visao');
@@ -103,6 +104,7 @@ export default function PainelAdministrativo(props: Props) {
   const [portalBuscaConferencia, setPortalBuscaConferencia] = useState<HTMLDivElement | null>(null);
   const [portalBuscaInadimplentes, setPortalBuscaInadimplentes] = useState<HTMLDivElement | null>(null);
   const [portalBuscaRecebimentos, setPortalBuscaRecebimentos] = useState<HTMLDivElement | null>(null);
+  const [portalBuscaAvisos, setPortalBuscaAvisos] = useState<HTMLDivElement | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [indicadorAba, setIndicadorAba] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const avantaShell = criarAvantaShellPreset({ corPrimaria: props.corPrimaria, darkMode });
@@ -347,7 +349,6 @@ export default function PainelAdministrativo(props: Props) {
             {ABAS_SERVICOS.map(([a, label]) => <button key={a} type="button" role="tab" data-aba={a} aria-selected={aba === a} className={`${styles.tab} ${styles.tabServico} ${aba === a ? styles.tabAtiva : ''}`} onClick={() => setAba(a)}>{label}{a === 'avisos_servico' && avisosServicosQtd > 0 ? ` (${avisosServicosQtd})` : ''}</button>)}
           </span>
         </span>
-        {salvando && <span className={styles.tabsStatus} role="status">Salvando alterações…</span>}
       </div>
 
       <AvantaCard
@@ -367,6 +368,8 @@ export default function PainelAdministrativo(props: Props) {
               ? <div ref={setPortalBuscaRecebimentos} className={styles.platoBuscaRecebimentos} />
             : aba === 'conferencia'
               ? <div ref={setPortalBuscaConferencia} className={styles.platoBuscaVencimentos} />
+              : aba === 'avisos_servico'
+                ? <div ref={setPortalBuscaAvisos} className={styles.platoBuscaVencimentos} />
               : aba === 'inadimplentes'
                 ? <div ref={setPortalBuscaInadimplentes} className={styles.platoBuscaVencimentos} />
             : aba === 'proximo'
@@ -438,7 +441,7 @@ export default function PainelAdministrativo(props: Props) {
         {aba !== 'empresas' && aba !== 'colaboradores' && aba !== 'conferencia' && (
         <div className={styles.corpoRolavel}>
         {(aba === 'realizados' || aba === 'pendentes_servico' || aba === 'atrasados_servico' || aba === 'avisos_servico') && (
-          <PainelServicos filtro={aba} servicos={servicos} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} onConcluirAviso={props.onConcluirAvisoServico} />
+          <PainelServicos filtro={aba} servicos={servicos} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} onConcluirAviso={props.onConcluirAvisoServico} onReabrirAviso={props.onReabrirAvisoServico} onObterAssinatura={props.onObterComprovanteServico} portalBusca={aba === 'avisos_servico' ? portalBuscaAvisos : undefined} darkMode={darkMode} />
         )}
         {aba === 'visao' && (
           <div>

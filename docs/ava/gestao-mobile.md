@@ -1,6 +1,50 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.19.0.20 -->
+<!-- ava-version: 1.20.0.08 -->
+
+> Revisão 1.20.0.08: a ampliação do backup administrativo não altera a operação
+> da Gestão Mobile.
+
+> Revisão 1.20.0.07: a largura das filas de Serviços na Gestão Web não altera
+> a operação da Gestão Mobile.
+
+> Revisão 1.20.0.06: a altura do seletor de **Avisos** pertence à Gestão Web e
+> não altera a operação da Gestão Mobile.
+
+> Revisão 1.20.0.05: o alinhamento dos controles de **Avisos** pertence à
+> Gestão Web e não altera a operação da Gestão Mobile.
+
+> Revisão 1.20.0.04: o reposicionamento dos controles de **Avisos** pertence
+> à Gestão Web e não altera a operação da Gestão Mobile.
+
+> Revisão 1.20.0.03: os filtros e o tratamento de avaliações regulares em
+> **Serviços > Avisos** pertencem à Gestão Web e não alteram a operação da
+> Gestão Mobile.
+
+> Revisão 1.20.0.02: a recomposição de atrasos pelo cronograma de Serviços
+> pertence a Operações de Campo e não altera a operação da Gestão Mobile.
+
+> Revisão 1.20.0.01: a janela de 10 dias de Serviços pendentes pertence à
+> Gestão Web e não altera a operação da Gestão Mobile.
+
+> Revisão 1.20.0: ao concluir um serviço no PWA, a assinatura, o nome do
+> assinador, a data e a avaliação são preservados para consulta posterior pela
+> Gestão Web. A operação de Gestão Mobile não muda.
+
+> Revisão 1.19.0.25: o reposicionamento progressivo do formulário de Serviços
+> no PWA não altera a operação da Gestão Mobile.
+
+> Revisão 1.19.0.24: a lista completa por piso no PWA de Serviços não altera a
+> operação da Gestão Mobile.
+
+> Revisão 1.19.0.23: a reversão de cliente selecionado no PWA de Serviços não
+> altera a operação da Gestão Mobile.
+
+> Revisão 1.19.0.22: a retirada do aviso redundante de salvamento em
+> Operações de Campo não altera a operação da Gestão Mobile.
+
+> Revisão 1.19.0.21: a remoção do identificador visual de Operações de Campo
+> não altera a operação da Gestão Mobile.
 
 > Revisão 1.19.0.20: a seleção de piso no PWA de Serviços não altera a
 > operação da Gestão Mobile.

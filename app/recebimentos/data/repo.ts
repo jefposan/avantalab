@@ -50,7 +50,9 @@ export interface RecebimentosRepo {
   receberCobranca(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null): Promise<void>;
   registrarServico(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string): Promise<void>;
   concluirAvisoServico(servicoId: string): Promise<void>;
+  reabrirAvisoServico(servicoId: string): Promise<void>;
   obterComprovante(lancamentoId: string): Promise<ComprovanteRecebimento>;
+  obterComprovanteServico(servicoId: string): Promise<ComprovanteRecebimento>;
   confirmarBaixa(lancamentoId: string, formaPagamento?: FormaPagamentoRecebimento): Promise<void>;
   devolver(lancamentoId: string, motivo: string): Promise<void>;
   divergencia(lancamentoId: string, motivo: string): Promise<void>;
@@ -138,6 +140,7 @@ function mapServico(row: Linha): Servico {
     situacao: texto(row.situacao) as Servico['situacao'],
     colaboradorId: row.colaborador_user_id == null ? null : texto(row.colaborador_user_id),
     clienteNome: row.cliente_nome == null ? null : texto(row.cliente_nome),
+    assinaturaArquivoPath: row.assinatura_arquivo_path == null ? null : texto(row.assinatura_arquivo_path),
     assinatura: row.assinatura == null ? null : texto(row.assinatura),
     avaliacao: row.avaliacao == null ? null : texto(row.avaliacao) as AvaliacaoServico,
     observacaoCliente: row.observacao_cliente == null ? null : texto(row.observacao_cliente),
@@ -369,6 +372,9 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     async concluirAvisoServico(servicoId) {
       await chamarApi(cliente, '/api/recebimentos/concluir-aviso-servico', { empresaId, servicoId });
     },
+    async reabrirAvisoServico(servicoId) {
+      await chamarApi(cliente, '/api/recebimentos/reabrir-aviso-servico', { empresaId, servicoId });
+    },
     async obterComprovante(id) {
       const resposta = await fetch(`/api/recebimentos/comprovante?lancamentoId=${encodeURIComponent(id)}`, {
         headers: { Authorization: `Bearer ${await tokenSessao(cliente)}` },
@@ -380,6 +386,21 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         url: String(json.url ?? ''),
         nome: String(json.nome ?? 'Comprovante'),
         mimeType: String(json.mimeType ?? ''),
+        tamanho: Number(json.tamanho ?? 0),
+        enviadoEm: String(json.enviadoEm ?? ''),
+      };
+    },
+    async obterComprovanteServico(id) {
+      const resposta = await fetch(`/api/recebimentos/comprovante-servico?empresaId=${encodeURIComponent(empresaId)}&servicoId=${encodeURIComponent(id)}`, {
+        headers: { Authorization: `Bearer ${await tokenSessao(cliente)}` },
+        cache: 'no-store',
+      });
+      const json = await resposta.json().catch(() => ({}));
+      if (!resposta.ok || json.erro) throw new Error(String(json.mensagem ?? 'Não foi possível abrir a assinatura.'));
+      return {
+        url: String(json.url ?? ''),
+        nome: String(json.nome ?? 'Assinatura do atendimento'),
+        mimeType: String(json.mimeType ?? 'image/png'),
         tamanho: Number(json.tamanho ?? 0),
         enviadoEm: String(json.enviadoEm ?? ''),
       };

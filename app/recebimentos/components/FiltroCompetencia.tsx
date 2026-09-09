@@ -11,10 +11,11 @@ type Props = {
   todos: boolean;
   onMudarMes: (delta: number) => void;
   onMostrarTodos: () => void;
+  mostrarTodos?: boolean;
 };
 
 /** Controle único de competência para as filas de Recebimentos. */
-export default function FiltroCompetencia({ referencia, todos, onMudarMes, onMostrarTodos }: Props) {
+export default function FiltroCompetencia({ referencia, todos, onMudarMes, onMostrarTodos, mostrarTodos = true }: Props) {
   return (
     <div className={styles.filtroCompetencia} aria-label="Filtro por competência">
       <div className={styles.mesSeletor}>
@@ -32,14 +33,14 @@ export default function FiltroCompetencia({ referencia, todos, onMudarMes, onMos
           </svg>
         </button>
       </div>
-      <button
+      {mostrarTodos && <button
         type="button"
         className={`${styles.btn} ${styles.btnSm} ${styles.conferenciaTodos} ${todos ? styles.conferenciaTodosAtivo : ''}`}
         aria-pressed={todos}
         onClick={onMostrarTodos}
       >
         Todos
-      </button>
+      </button>}
     </div>
   );
 }

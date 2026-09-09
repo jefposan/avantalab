@@ -336,17 +336,6 @@
   cursor: pointer;
   transition: color .22s ease, background .22s ease, box-shadow .22s ease, transform .22s ease;
 }
-.tabsStatus {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  margin-left: auto;
-  padding: 0 6px 2px;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
 .tab:hover { color: var(--cp); background: color-mix(in srgb, var(--cp) 7%, transparent); }
 .tabAtiva {
   z-index: 2;
@@ -2244,10 +2233,12 @@
 .permissoesColaborador label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
 .permissoesColaborador input { width: 16px; height: 16px; accent-color: var(--cp); }
 .permissoesColaborador small { width: 100%; color: #64748b; }
-.servicosPainel { max-width: 1100px; }
-.servicosTitulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.servicosPainel { width: 100%; max-width: none; }
+.servicosTitulo { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .servicosTitulo h3 { margin: 0; color: #0f766e; font-size: 18px; }
-.servicosTitulo span { display: grid; min-width: 28px; min-height: 28px; place-items: center; border-radius: 999px; color: #fff; background: #0f766e; font-size: 12px; font-weight: 900; }
+.servicosTituloAcoes { display: flex; align-items: flex-end; justify-content: flex-end; gap: 12px; min-width: 0; margin-left: auto; }
+.servicosTituloAcoes .filtroCompetencia { margin: 0; }
+.servicosContagem { display: grid; flex: 0 0 auto; min-width: 28px; min-height: 28px; place-items: center; border-radius: 999px; color: #fff; background: #0f766e; font-size: 12px; font-weight: 900; }
 .servicosLista { display: grid; gap: 8px; }
 .servicoItem { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; border: 1px solid #dbe7e6; border-radius: 14px; background: #fff; }
 .servicoItem > div { display: grid; min-width: 0; gap: 3px; }
@@ -2256,6 +2247,31 @@
 .servicoAviso { border-color: #f4cf8f; background: #fffdf8; }
 .servicoAviso p { color: #92400e; }
 .servicoSituacao { flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; color: #0f766e !important; background: #ecfdf5; font-weight: 800; }
+.servicoRealizado { display: block; }
+.servicoRealizadoDados { display: grid; grid-template-columns: minmax(150px, 1.3fr) minmax(140px, 1.1fr) minmax(130px, 1fr) minmax(130px, 1fr) minmax(142px, 1fr) minmax(104px, .7fr); gap: 12px; }
+.servicoRealizadoDados > div { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.servicoRealizadoDados small { color: #64748b; font-size: 10px; font-weight: 800; letter-spacing: .04em; line-height: 1.2; text-transform: uppercase; }
+.servicoRealizadoDados strong, .servicoRealizadoDados span { overflow: hidden; color: #0f172a; font-size: 13px; font-weight: 700; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.servicoRealizadoDados em { overflow: hidden; color: #64748b; font-size: 11px; font-style: normal; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.servicoRealizadoDados .btnAbrirComprovante { justify-self: start; min-height: 30px; padding: 4px 7px; }
+.avaliacaoSelo { display: inline-flex; width: fit-content; align-items: center; min-height: 26px; padding: 4px 8px; border-radius: 999px; font-size: 11px !important; font-weight: 900 !important; }
+.avaliacaoSeloBom { color: #166534 !important; background: #dcfce7; }
+.avaliacaoSeloRegular { color: #92400e !important; background: #fef3c7; }
+.servicoObservacao { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #475569; font-size: 12px; line-height: 1.45; }
+.filtroAvisoCampo { display: grid; gap: 5px; min-width: 0; color: #475569; font-size: 11px; font-weight: 800; line-height: 1.2; }
+.filtroAvisoCampo .select { width: 172px; min-height: 32px; height: 32px; padding: 4px 10px; font-size: 13px; }
+.servicoAviso { display: block; }
+.avisoServicoDados { display: grid; grid-template-columns: minmax(150px, 1.3fr) minmax(130px, 1fr) minmax(130px, 1fr) minmax(94px, .65fr) minmax(100px, .7fr); gap: 12px; }
+.avisoServicoDados > div { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.avisoServicoDados small, .avisoObservacao small { color: #92400e; font-size: 10px; font-weight: 800; letter-spacing: .04em; line-height: 1.2; text-transform: uppercase; }
+.avisoServicoDados strong, .avisoServicoDados span { overflow: hidden; color: #0f172a; font-size: 13px; font-weight: 700; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.avisoObservacao { display: grid; gap: 4px; margin-top: 12px; padding: 10px 0 0; border-top: 1px solid #fde3b0; }
+.avisoObservacao p { margin: 0; color: #78350f; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.avisoObservacao .btn { justify-self: start; margin-top: 2px; }
+.avisoSituacao { display: inline-flex; width: fit-content; align-items: center; min-height: 26px; padding: 4px 8px; border-radius: 999px; font-size: 11px !important; font-weight: 900 !important; }
+.avisoSituacaoPendente { color: #92400e !important; background: #fef3c7; }
+.avisoSituacaoConcluido { color: #166534 !important; background: #dcfce7; }
+.acoesAviso { display: flex; justify-content: flex-end; margin-top: 12px; }
 .heroServicos { background: linear-gradient(135deg, #0f766e, #0d9488); }
 .acoesServicoPwa { display: grid; gap: 8px; margin-top: 14px; }
 .btnServicoPwa, .btnServicoPwaSecundario { width: 100%; border: 1px solid color-mix(in srgb, #fff 80%, transparent); color: #fff; background: transparent; }
@@ -2263,6 +2279,7 @@
 .btnServicoPwa[data-ativa='true'], .btnServicoPwaSecundario[data-ativa='true'] { color: #0f766e; border-color: #fff; background: #fff; }
 .servicoCardPwa { margin-top: 16px; }
 .formularioServico { max-width: 640px; }
+.formularioServico :is(.field, .listaVisitasPiso) { scroll-margin-top: 96px; }
 .listaVisitasPiso { display: grid; gap: 10px; margin-top: 16px; padding: 14px; border: 1px solid color-mix(in srgb, var(--cp, #003e73) 16%, #dbeafe); border-radius: 14px; background: color-mix(in srgb, var(--cp, #003e73) 4%, #fff); }
 .listaVisitasPisoTitulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .listaVisitasPisoTitulo h3 { margin: 0; color: #0f172a; font-size: 14px; line-height: 1.3; }
@@ -2271,11 +2288,14 @@
 .listaVisitasPisoItens { display: grid; gap: 8px; }
 .visitaPisoItem { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 3px 10px; width: 100%; min-height: 58px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; color: #0f172a; background: #fff; text-align: left; cursor: pointer; font-family: inherit; }
 .visitaPisoItem:hover { border-color: color-mix(in srgb, var(--cp, #003e73) 44%, #cbd5e1); background: color-mix(in srgb, var(--cp, #003e73) 4%, #fff); }
+.visitaPisoItem:disabled { border-color: #e2e8f0; color: #64748b; background: #f8fafc; cursor: not-allowed; opacity: .78; }
+.visitaPisoItem:disabled:hover { border-color: #e2e8f0; background: #f8fafc; }
 .visitaPisoItem[aria-pressed='true'] { border-color: var(--cp, #003e73); box-shadow: 0 0 0 2px color-mix(in srgb, var(--cp, #003e73) 16%, transparent); }
 .visitaPisoItem:focus-visible { outline: 3px solid color-mix(in srgb, var(--cp, #003e73) 38%, transparent); outline-offset: 2px; }
 .visitaPisoItem strong { min-width: 0; overflow: hidden; font-size: 13px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .visitaPisoItem span { min-width: 0; overflow: hidden; color: #64748b; font-size: 11px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
 .visitaPisoItem small { grid-column: 2; grid-row: 1 / span 2; color: var(--cp, #003e73); font-size: 11px; font-weight: 800; }
+.visitaPisoItem:disabled small { color: #64748b; }
 .servicoEtapa { color: #475569; font-size: 14px; }
 .assinaturaOverlay { position: fixed; z-index: 2200; inset: 0; display: grid; min-height: 100dvh; background: #eef3f6; color: #0f172a; }
 .assinaturaDialogo { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 100dvh; }
@@ -2313,10 +2333,9 @@
 .seletorOperacaoPwa h1 { margin: 0; font-size: 23px; }.seletorOperacaoPwa span { color: #64748b; font-size: 13px; }
 .seletorOperacaoPwa button { display: grid; gap: 3px; min-height: 78px; padding: 14px; border: 1px solid #cbd5e1; border-radius: 14px; color: #0f766e; background: #f0fdfa; text-align: left; cursor: pointer; }
 .seletorOperacaoPwa button b { font-size: 16px; }.seletorOperacaoPwa button small { color: #475569; font-size: 12px; }.seletorOperacaoPwa .seletorSair { min-height: 44px; display: block; color: #64748b; background: #fff; text-align: center; }
-@media (max-width: 640px) { .tabs { gap: 5px; border-radius: 12px; margin-bottom: 20px; }.tabsGrupoGeral { padding-top: 17px; }.tabsGrupoTitulo { padding-left: 5px; }.servicoItem { align-items: flex-start; flex-direction: column; }.servicoItem .btn { width: 100%; }.acoesServico { flex-wrap: wrap; }.acoesServico .btn { flex: 1 1 130px; }.assinaturaCabecalho { min-height: 64px; }.assinaturaCorpo { padding: 12px 16px; }.assinaturaAcoes { align-items: stretch; flex-direction: column; }.assinaturaAcoesSecundarias { display: grid; grid-template-columns: 1fr 1fr; }.assinaturaAcoes .btn { width: 100%; }.topbarAcoesColaborador .btn { padding-inline: 8px; font-size: 11px; } }
+@media (max-width: 760px) { .tabs { gap: 5px; border-radius: 12px; margin-bottom: 20px; }.tabsGrupoGeral { padding-top: 17px; }.tabsGrupoTitulo { padding-left: 5px; }.servicosTitulo { align-items: flex-start; flex-wrap: wrap; }.servicosTituloAcoes { flex-wrap: wrap; width: 100%; }.servicosTituloAcoes .filtroCompetencia { margin-left: auto; }.servicoItem { align-items: flex-start; flex-direction: column; }.servicoItem .btn { width: 100%; }.servicoRealizadoDados, .avisoServicoDados { grid-template-columns: 1fr 1fr; width: 100%; }.servicoRealizadoDados > div, .avisoServicoDados > div { min-height: 52px; }.servicoRealizadoDados .btnAbrirComprovante { width: fit-content; }.filtroAvisoCampo { flex: 1 1 148px; }.filtroAvisoCampo .select { width: 100%; }.avisoObservacao .btn { width: auto; }.acoesAviso { width: 100%; }.acoesServico { flex-wrap: wrap; }.acoesServico .btn { flex: 1 1 130px; }.assinaturaCabecalho { min-height: 64px; }.assinaturaCorpo { padding: 12px 16px; }.assinaturaAcoes { align-items: stretch; flex-direction: column; }.assinaturaAcoesSecundarias { display: grid; grid-template-columns: 1fr 1fr; }.assinaturaAcoes .btn { width: 100%; }.topbarAcoesColaborador .btn { padding-inline: 8px; font-size: 11px; } }
 .darkScope .tabs { border-bottom-color: #334155; }
 .darkScope .tab { color: #94a3b8; }
-.darkScope .tabsStatus { color: #94a3b8; }
 .darkScope .tab:hover,
 .darkScope .sectionTitle,
 .darkScope .formTitulo,

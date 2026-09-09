@@ -1,5 +1,48 @@
 # Changelog
 
+## 1.20.0.08 - 2026-09-09
+- **Proteção de dados**: o backup de Recebimentos agora inclui também os registros de Serviços e os PNGs privados de assinatura, permitindo a guarda completa antes de mudanças estruturais.
+
+## 1.20.0.07 - 2026-09-09
+- **Operações de Campo**: os painéis de Serviços agora usam toda a largura interna disponível do AvantaCard, como as filas de Recebimentos.
+
+## 1.20.0.06 - 2026-09-09
+- **Operações de Campo**: o seletor **Exibir avisos** agora tem 32 px, a mesma altura visual do seletor mensal e do botão **Todos**.
+
+## 1.20.0.05 - 2026-09-09
+- **Operações de Campo**: corrigido o seletor de mês deformado em **Avisos**. A situação **Exibir avisos** agora fica na mesma linha, à esquerda do seletor de mês; ambos, o botão **Todos** e o contador permanecem agrupados e alinhados à direita.
+
+## 1.20.0.04 - 2026-09-09
+- **Operações de Campo**: os controles de **Avisos** agora reutilizam o mesmo posicionamento e comportamento das filas de Conferência e Próximo a vencer: pesquisa no platô do card, seletor de mês no topo e ação **Todos** para remover o recorte mensal.
+
+## 1.20.0.03 - 2026-09-09
+- **Operações de Campo**: a aba **Avisos** passa a manter uma fila mensal de avaliações **Regular**, com pesquisa por empresa, pessoa ou observação; seleção de pendentes, concluídos ou todos; observação expansível; e ações para concluir ou reabrir o tratamento. O contador da aba permanece restrito aos avisos pendentes.
+
+## 1.20.0.02 - 2026-09-09
+- **Operações de Campo**: a agenda de Serviços recompõe o período operacional em curso conforme a frequência cadastrada. Um serviço semanal de terça não realizado, por exemplo, já aparece em **Atrasados** quando o módulo é aberto na quarta. A mesma regra respeita frequências quinzenal, mensal, trimestral, semestral e anual, sem alterar serviços concluídos.
+
+## 1.20.0.01 - 2026-09-09
+- **Operações de Campo**: a aba **Pendentes** agora mantém automaticamente uma janela móvel de hoje até os próximos 10 dias, sem seletor manual.
+
+## 1.20.0 - 2026-09-09
+- **Operações de Campo**: Serviços realizados agora têm filtro exclusivo por mês e exibem empresa, local ou vínculo, data de realização, colaborador, assinador, observação e selo de avaliação (**Bom** ou **Regular**).
+- **Comprovante de serviço**: cada assinatura enviada passa a ser arquivada como PNG privado no servidor e pode ser visualizada pela gestão. O registro legado em banco foi mantido, preservando todas as assinaturas e históricos existentes durante a migração.
+
+## 1.19.0.25 - 2026-09-09
+- **Operações de Campo**: no PWA de Serviços, ao escolher empresa, piso ou cliente, a tela posiciona suavemente o próximo campo útil logo abaixo do cabeçalho. Assim, a sequência de preenchimento permanece visível, sem abrir o teclado antecipadamente.
+
+## 1.19.0.24 - 2026-09-09
+- **Operações de Campo**: a lista de piso dos locais agrupadores agora considera todos os clientes ativos, mesmo com um único piso cadastrado. A lista orienta a rota completa; clientes sem serviço pendente ficam identificados e indisponíveis para registro até a data programada.
+
+## 1.19.0.23 - 2026-09-09
+- **Operações de Campo**: a seleção de um cliente na lista de visitas agora pode ser desfeita tocando novamente no mesmo item, liberando a escolha de qualquer outro cliente.
+
+## 1.19.0.22 - 2026-09-09
+- **Operações de Campo**: removido o aviso redundante de **Salvando alterações…** da faixa de abas. O próprio botão de salvar continua informando o processamento.
+
+## 1.19.0.21 - 2026-09-09
+- **Operações de Campo**: removido o identificador redundante **Gestão operacional** do topo da página.
+
 ## 1.19.0.20 - 2026-09-09
 - **Operações de Campo**: em locais agrupadores distribuídos em mais de um piso ou nível, o colaborador seleciona primeiro o piso e vê todos os clientes pendentes daquela área antes de escolher quem atender.
 

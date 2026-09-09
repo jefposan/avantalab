@@ -1,6 +1,58 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.19.0.20 -->
+<!-- ava-version: 1.20.0.08 -->
+
+> Revisão 1.20.0.08: o backup administrativo de Recebimentos também preserva
+> Serviços e suas assinaturas privadas; não há mudança no uso do módulo.
+
+> Revisão 1.20.0.07: as filas de **Serviços** ocupam toda a largura interna do
+> card de Administração, no mesmo comportamento das filas de Recebimentos.
+
+> Revisão 1.20.0.06: o seletor **Exibir avisos** tem a mesma altura do
+> controle mensal e de **Todos**, preservando o alinhamento da faixa de filtros.
+
+> Revisão 1.20.0.05: em **Serviços > Avisos**, o filtro **Exibir avisos** fica
+> à esquerda do seletor de mês. Os dois controles, **Todos** e o contador ficam
+> no mesmo grupo alinhado à direita, sem alterar a consulta.
+
+> Revisão 1.20.0.04: os controles de **Serviços > Avisos** seguem a mesma
+> disposição das filas de Conferência e Próximo a vencer: pesquisa no topo do
+> card, seletor de mês junto ao título e botão **Todos** para consultar todo o
+> histórico de avaliações regulares.
+
+> Revisão 1.20.0.03: em **Serviços > Avisos**, consulte por mês apenas as
+> avaliações **Regular**. Pesquise por empresa, pessoa ou observação e alterne
+> entre pendentes, concluídos e todos. A observação longa pode ser expandida;
+> conclua o tratamento ou reabra o aviso quando necessário. O número na aba
+> mostra exclusivamente os pendentes.
+
+> Revisão 1.20.0.02: **Serviços > Atrasados** é preenchido pelo cronograma
+> cadastrado. Se a execução semanal era prevista para terça e não foi
+> registrada, ela aparece na quarta; o mesmo vale para as demais frequências.
+
+> Revisão 1.20.0.01: a aba **Serviços > Pendentes** mostra automaticamente
+> os serviços de hoje até os próximos 10 dias; não há seletor nesse painel.
+
+> Revisão 1.20.0: em **Serviços > Realizados**, escolha o mês no seletor
+> para consultar os atendimentos concluídos. Cada item informa empresa, local,
+> data, colaborador, assinador e avaliação. Use **Visualizar assinatura** para
+> abrir o PNG privado do comprovante.
+
+> Revisão 1.19.0.25: no PWA de Serviços, cada seleção reposiciona suavemente
+> o próximo campo útil para mantê-lo visível no visor.
+
+> Revisão 1.19.0.24: no PWA de Serviços, o piso e todos os clientes ativos do
+> local agrupador são exibidos mesmo sem serviço pendente. Somente os clientes
+> com atendimento pendente ou atrasado podem ser selecionados para registro.
+
+> Revisão 1.19.0.23: na lista de visitas do PWA de Serviços, tocar novamente
+> no cliente selecionado desfaz a escolha e oculta o campo do assinador.
+
+> Revisão 1.19.0.22: o processamento de salvamento em Operações de Campo é
+> indicado somente no botão da ação; a faixa de abas não exibe aviso adicional.
+
+> Revisão 1.19.0.21: o identificador visual **Gestão operacional** foi
+> removido do topo de Operações de Campo, sem impacto no uso do módulo.
 
 > Revisão 1.19.0.20: no PWA de Serviços, locais agrupadores com clientes em
 > mais de um piso ou nível apresentam primeiro a seleção do piso e, em seguida,

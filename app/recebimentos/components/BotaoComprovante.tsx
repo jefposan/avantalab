@@ -10,9 +10,12 @@ type Props = {
   onObter: (lancamentoId: string) => Promise<ComprovanteRecebimento>;
   compacto?: boolean;
   darkMode?: boolean;
+  titulo?: string;
+  rotulo?: string;
+  descricaoImagem?: string;
 };
 
-export default function BotaoComprovante({ lancamentoId, onObter, compacto = false, darkMode = false }: Props) {
+export default function BotaoComprovante({ lancamentoId, onObter, compacto = false, darkMode = false, titulo = 'Comprovante', rotulo = 'Visualizar', descricaoImagem = 'Imagem do comprovante do recebimento' }: Props) {
   const [aberto, setAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
@@ -56,14 +59,14 @@ export default function BotaoComprovante({ lancamentoId, onObter, compacto = fal
         type="button"
         className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm} ${styles.btnAbrirComprovante} ${compacto ? styles.btnAbrirComprovanteCompacto : ''}`}
         onClick={() => void abrir()}
-        aria-label="Visualizar comprovante"
+        aria-label={rotulo}
       >
         <svg className={styles.iconeComprovante} viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <rect x="3" y="4" width="18" height="16" rx="2" />
           <circle cx="8.5" cy="9" r="1.5" />
           <path d="m5 17 4.5-4 3.5 3 2.5-2 3.5 3" />
         </svg>
-        {!compacto && <span>Visualizar</span>}
+        {!compacto && <span>{rotulo}</span>}
       </button>
 
       {aberto && createPortal((
@@ -81,7 +84,7 @@ export default function BotaoComprovante({ lancamentoId, onObter, compacto = fal
           >
             <div className={styles.comprovanteModalTopo}>
               <div>
-                <h3 id={`comprovante-titulo-${lancamentoId}`}>Comprovante</h3>
+                <h3 id={`comprovante-titulo-${lancamentoId}`}>{titulo}</h3>
                 {comprovante?.nome && <p>{comprovante.nome}</p>}
               </div>
               <button ref={fechar} type="button" className={styles.comprovanteFechar} onClick={encerrar} aria-label="Fechar comprovante">×</button>
@@ -93,7 +96,7 @@ export default function BotaoComprovante({ lancamentoId, onObter, compacto = fal
                 <div className={styles.comprovanteImagemWrap}>
                   {/* A URL é privada e assinada por apenas cinco minutos. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={comprovante.url} alt="Imagem do comprovante do recebimento" />
+                  <img src={comprovante.url} alt={descricaoImagem} />
                 </div>
                 <a className={`${styles.btn} ${styles.btnPrimary} ${styles.comprovanteAbrirOriginal}`} href={comprovante.url} target="_blank" rel="noreferrer">
                   Abrir imagem

@@ -171,7 +171,6 @@ export default function RecebimentosClient({
           perfil={perfil}
           darkMode={darkMode}
           corPrimaria={corPrimaria}
-          salvando={processando}
           onAviso={onAviso}
           onConfirmacao={onConfirmacao}
           podeConfirmar={podeConfirmar}
@@ -187,6 +186,7 @@ export default function RecebimentosClient({
           onDefinirIntegracaoFinanceira={definirIntegracaoFinanceira}
           onConfirmarBaixa={(id, formaPagamento) => void executar(() => repoAtual.confirmarBaixa(id, formaPagamento))}
           onObterComprovante={(id) => repoAtual.obterComprovante(id)}
+          onObterComprovanteServico={(id) => repoAtual.obterComprovanteServico(id)}
           onBaixarDireto={baixarDireto}
           onDevolver={(id, motivo) => void executar(() => repoAtual.devolver(id, motivo))}
           onDivergencia={(id, motivo) => void executar(() => repoAtual.divergencia(id, motivo))}
@@ -214,6 +214,7 @@ export default function RecebimentosClient({
             if (atual) void executar(() => repoAtual.alternarColaborador(id, !atual.ativo));
           }}
           onConcluirAvisoServico={(id) => void executar(() => repoAtual.concluirAvisoServico(id))}
+          onReabrirAvisoServico={(id) => void executar(() => repoAtual.reabrirAvisoServico(id))}
         />
       )}
     </>

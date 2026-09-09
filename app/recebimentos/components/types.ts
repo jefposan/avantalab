@@ -123,6 +123,8 @@ export type Servico = {
   situacao: SituacaoServico;
   colaboradorId: string | null;
   clienteNome: string | null;
+  /** PNG protegido no Storage; assinaturas antigas permanecem no campo legado. */
+  assinaturaArquivoPath: string | null;
   assinatura: string | null;
   avaliacao: AvaliacaoServico | null;
   observacaoCliente: string | null;

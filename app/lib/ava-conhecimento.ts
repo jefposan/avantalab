@@ -1,5 +1,34 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.20.0.08: o backup de Recebimentos inclui Serviços e
+// assinaturas privadas, sem impacto na orientação operacional da Ava.
+// Revisado na versão 1.20.0.07: as filas de Serviços ocupam toda a largura
+// interna do AvantaCard, como as filas de Recebimentos.
+// Revisado na versão 1.20.0.06: o seletor Exibir avisos tem a mesma altura dos
+// controles mensais, mantendo o alinhamento visual da faixa de filtros.
+// Revisado na versão 1.20.0.05: em Avisos, situação, mês, Todos e contador
+// ficam em uma única faixa alinhada à direita, sem deformar o seletor de mês.
+// Revisado na versão 1.20.0.04: Avisos usa a pesquisa no platô, o seletor de
+// mês e o botão Todos no mesmo padrão das filas de recebimentos.
+// Revisado na versão 1.20.0.03: Avisos permite consultar mensalmente avaliações
+// Regulares, pesquisar, filtrar por situação e concluir ou reabrir o tratamento.
+// O contador da aba considera apenas os avisos pendentes.
+// Revisado na versão 1.20.0.02: a agenda de Serviços recompõe o período em
+// curso pela frequência e marca como atrasada a execução vencida sem registro.
+// Revisado na versão 1.20.0.01: a aba Pendentes de Serviços mantém a janela
+// automática de hoje até os próximos 10 dias, sem seletor manual.
+// Revisado na versão 1.20.0: Serviços realizados permite consulta mensal e
+// preserva empresa, vínculo, data, assinador, assinatura PNG e avaliação.
+// Revisado na versão 1.19.0.25: no PWA de Serviços, cada escolha reposiciona
+// suavemente o próximo campo do formulário para mantê-lo visível no visor.
+// Revisado na versão 1.19.0.24: o PWA de Serviços lista todos os clientes do
+// piso; apenas os que têm serviço pendente ou atrasado ficam selecionáveis.
+// Revisado na versão 1.19.0.23: no PWA de Serviços, tocar novamente em um
+// cliente selecionado desfaz a escolha e permite selecionar outro destino.
+// Revisado na versão 1.19.0.22: a faixa de abas de Operações de Campo não
+// repete o estado de salvamento, que permanece visível no próprio botão.
+// Revisado na versão 1.19.0.21: o topo de Operações de Campo não repete mais
+// o identificador visual Gestão operacional.
 // Revisado na versão 1.19.0.20: locais agrupadores com mais de um nível no
 // PWA de Serviços permitem escolher o piso e exibem os clientes pendentes dele.
 // Revisado na versão 1.19.0.19: no PWA de Serviços, o registro é iniciado

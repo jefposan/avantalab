@@ -4,6 +4,8 @@ import { assinaturaEmpresaLiberada, clientesServidor, respostaErro, usuarioDaReq
 export const runtime = 'nodejs';
 
 const AVALIACOES = new Set(['bom', 'regular']);
+const BUCKET_ASSINATURAS = 'assinaturas-servicos';
+const dataOperacional = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 
 export async function POST(request: Request) {
   try {
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
       .eq('empresa_id', empresaId)
       .eq('recebimento_empresa_id', recebimentoEmpresaId)
       .in('situacao', ['pendente', 'atrasado'])
-      .lte('data_programada', new Date().toISOString().slice(0, 10))
+      .lte('data_programada', dataOperacional())
       .order('data_programada', { ascending: false })
       .limit(1);
     consultaServico = subempresaId ? consultaServico.eq('subempresa_id', subempresaId) : consultaServico.is('subempresa_id', null);
@@ -44,10 +46,35 @@ export async function POST(request: Request) {
     if (erroServico) return respostaErro('Não foi possível localizar a programação do serviço.', 500);
     if (!servico) return respostaErro('Não há serviço pendente para este cliente hoje.');
 
-    const { error: erroRegistro } = await clientes.admin.from('recebimentos_servicos').update({
+    const realizadoEm = new Date().toISOString();
+    const base64 = assinatura.slice('data:image/png;base64,'.length);
+    const imagem = Buffer.from(base64, 'base64');
+    const caminhoAssinatura = `${empresaId}/${servico.id}/${Date.now()}.png`;
+    const { error: erroUpload } = await clientes.admin.storage.from(BUCKET_ASSINATURAS).upload(caminhoAssinatura, imagem, {
+      contentType: 'image/png', cacheControl: '31536000', upsert: false,
+    });
+    const dadosRegistro = {
       situacao: 'realizado', colaborador_user_id: user.id, cliente_nome: clienteNome,
-      assinatura, avaliacao, observacao_cliente: observacaoCliente, realizado_em: new Date().toISOString(), atualizado_em: new Date().toISOString(),
-    }).eq('id', servico.id).eq('empresa_id', empresaId).in('situacao', ['pendente', 'atrasado']);
+      assinatura, avaliacao, observacao_cliente: observacaoCliente, realizado_em: realizadoEm, atualizado_em: realizadoEm,
+    };
+    let erroRegistro: { message?: string } | null = null;
+    if (!erroUpload) {
+      const resultado = await clientes.admin.from('recebimentos_servicos').update({ ...dadosRegistro, assinatura_arquivo_path: caminhoAssinatura })
+        .eq('id', servico.id).eq('empresa_id', empresaId).in('situacao', ['pendente', 'atrasado']);
+      erroRegistro = resultado.error;
+      // Durante a atualização gradual, a assinatura segue preservada no banco
+      // mesmo se o ambiente ainda não possuir a nova coluna de Storage.
+      if (erroRegistro) {
+        await clientes.admin.storage.from(BUCKET_ASSINATURAS).remove([caminhoAssinatura]);
+        const legado = await clientes.admin.from('recebimentos_servicos').update(dadosRegistro)
+          .eq('id', servico.id).eq('empresa_id', empresaId).in('situacao', ['pendente', 'atrasado']);
+        erroRegistro = legado.error;
+      }
+    } else {
+      const legado = await clientes.admin.from('recebimentos_servicos').update(dadosRegistro)
+        .eq('id', servico.id).eq('empresa_id', empresaId).in('situacao', ['pendente', 'atrasado']);
+      erroRegistro = legado.error;
+    }
     if (erroRegistro) return respostaErro('Não foi possível registrar o serviço.', 500);
     return NextResponse.json({ erro: false, servicoId: servico.id });
   } catch (error) {

@@ -44,21 +44,27 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
   const dialogoAssinatura = useRef<HTMLElement | null>(null);
   const cancelarAssinaturaRef = useRef<HTMLButtonElement | null>(null);
   const focoAntesAssinatura = useRef<HTMLElement | null>(null);
+  const campoPisoRef = useRef<HTMLDivElement | null>(null);
+  const listaClientesRef = useRef<HTMLElement | null>(null);
+  const campoAssinadorRef = useRef<HTMLDivElement | null>(null);
   const desenhando = useRef(false);
   const houveTraço = useRef(false);
+  const [proximoCampoEmDestaque, setProximoCampoEmDestaque] = useState<'piso' | 'clientes' | 'assinador' | null>(null);
 
   const hoje = dataLocalIso();
   const servicosDisponiveis = useMemo(() => servicos.filter((item) => item.dataProgramada <= hoje && (item.situacao === 'pendente' || item.situacao === 'atrasado')), [hoje, servicos]);
-  const proximoServico = useMemo(() => servicos.filter((item) => item.situacao === 'pendente' && item.dataProgramada > hoje).sort((a, b) => a.dataProgramada.localeCompare(b.dataProgramada))[0] ?? null, [hoje, servicos]);
-  const empresasAtivas = useMemo(() => empresas.filter((item) => item.ativo && servicosDisponiveis.some((servico) => servico.empresaId === item.id && (item.tipoCadastro === 'cliente_direto' ? servico.subempresaId == null : servico.subempresaId != null))).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })), [empresas, servicosDisponiveis]);
+  const empresasAtivas = useMemo(() => empresas.filter((item) => item.ativo && (item.tipoCadastro === 'local_agrupador' ? subempresas.some((subempresa) => subempresa.empresaId === item.id && subempresa.ativo) : servicosDisponiveis.some((servico) => servico.empresaId === item.id && servico.subempresaId == null))).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })), [empresas, subempresas, servicosDisponiveis]);
   const empresa = useMemo(() => empresas.find((item) => item.id === empresaId) ?? null, [empresas, empresaId]);
-  const subs = useMemo(() => subempresas.filter((item) => item.empresaId === empresaId && item.ativo && servicosDisponiveis.some((servico) => servico.subempresaId === item.id)).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })), [subempresas, empresaId, servicosDisponiveis]);
+  const subs = useMemo(() => subempresas.filter((item) => item.empresaId === empresaId && item.ativo).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })), [subempresas, empresaId]);
   const precisaSubempresa = empresa?.tipoCadastro === 'local_agrupador';
   const niveis = useMemo(() => Array.from(new Map(subs.map((item) => [chaveNivel(item), { chave: chaveNivel(item), rotulo: rotuloNivel(item) }])).values()).sort((a, b) => a.rotulo.localeCompare(b.rotulo, 'pt-BR', { sensitivity: 'base' })), [subs]);
-  const escolherPiso = precisaSubempresa && niveis.length > 1;
+  const escolherPiso = precisaSubempresa && subs.some((item) => item.tipoNivel != null || item.identificacaoNivel.trim() !== '');
   const subsNoNivel = useMemo(() => escolherPiso ? subs.filter((item) => chaveNivel(item) === nivelSelecionado) : subs, [escolherPiso, nivelSelecionado, subs]);
   const subempresa = useMemo(() => subsNoNivel.find((item) => item.id === subempresaId) ?? null, [subsNoNivel, subempresaId]);
-  const destinoDefinido = Boolean(empresaId) && (!precisaSubempresa || Boolean(subempresaId));
+  const servicoDisponivelParaSubempresa = (id: string) => servicosDisponiveis.some((item) => item.subempresaId === id);
+  const proximoServicoParaSubempresa = (id: string) => servicos.filter((item) => item.subempresaId === id && item.situacao === 'pendente' && item.dataProgramada > hoje).sort((a, b) => a.dataProgramada.localeCompare(b.dataProgramada))[0] ?? null;
+  const servicoSelecionadoDisponivel = subempresa ? servicoDisponivelParaSubempresa(subempresa.id) : false;
+  const destinoDefinido = Boolean(empresaId) && (!precisaSubempresa || (Boolean(subempresaId) && servicoSelecionadoDisponivel));
   const identificacaoEmpresa = [empresa?.nome, subempresa?.nome].filter(Boolean).join(' / ');
 
   useEffect(() => {
@@ -87,8 +93,29 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
     };
   }, [etapa]);
 
-  function selecionarEmpresa(id: string) { setEmpresaId(id); setSubempresaId(''); setNivelSelecionado(''); setErro(''); }
-  function selecionarNivel(nivel: string) { setNivelSelecionado(nivel); setSubempresaId(''); setErro(''); }
+  useEffect(() => {
+    if (!proximoCampoEmDestaque) return;
+    const alvo = proximoCampoEmDestaque === 'piso'
+      ? campoPisoRef.current
+      : proximoCampoEmDestaque === 'clientes'
+        ? listaClientesRef.current
+        : campoAssinadorRef.current;
+    const respeitaMovimentoReduzido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const quadro = window.requestAnimationFrame(() => {
+      alvo?.scrollIntoView({ behavior: respeitaMovimentoReduzido ? 'auto' : 'smooth', block: 'start' });
+      setProximoCampoEmDestaque(null);
+    });
+    return () => window.cancelAnimationFrame(quadro);
+  }, [proximoCampoEmDestaque]);
+
+  function selecionarEmpresa(id: string) {
+    const empresaEscolhida = empresas.find((item) => item.id === id);
+    const possuiPiso = empresaEscolhida?.tipoCadastro === 'local_agrupador'
+      && subempresas.some((item) => item.empresaId === id && item.ativo && (item.tipoNivel != null || item.identificacaoNivel.trim() !== ''));
+    setEmpresaId(id); setSubempresaId(''); setNivelSelecionado(''); setErro('');
+    setProximoCampoEmDestaque(empresaEscolhida?.tipoCadastro === 'local_agrupador' ? (possuiPiso ? 'piso' : 'clientes') : 'assinador');
+  }
+  function selecionarNivel(nivel: string) { setNivelSelecionado(nivel); setSubempresaId(''); setErro(''); setProximoCampoEmDestaque(nivel ? 'clientes' : null); }
   function ponto(evento: React.PointerEvent<HTMLCanvasElement>) {
     const alvo = evento.currentTarget;
     const area = alvo.getBoundingClientRect();
@@ -120,6 +147,7 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
   function avancarDestino() {
     if (!empresa) return setErro('Selecione a empresa.');
     if (precisaSubempresa && !subempresaId) return setErro('Selecione o cliente.');
+    if (precisaSubempresa && !servicoSelecionadoDisponivel) return setErro('Este cliente não possui serviço pendente para registrar hoje.');
     if (!clienteNome.trim()) return setErro('Informe o nome de quem recebeu o atendimento.');
     focoAntesAssinatura.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setErro(''); setEtapa('assinatura');
@@ -139,13 +167,12 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
   return <>
   <div className={styles.formularioServico}>
     {etapa === 'destino' && <>
-      {servicosDisponiveis.length === 0 ? <div className={styles.aviso} role="status">Não há serviço pendente para registrar hoje.{proximoServico ? ` A próxima execução está programada para ${formatarData(proximoServico.dataProgramada)}.` : ''}</div> : <>
       <div className={styles.field}><label className={styles.label} htmlFor="servico-empresa">Empresa</label><select id="servico-empresa" className={styles.select} value={empresaId} onChange={(event) => selecionarEmpresa(event.target.value)}><option value="">Selecione…</option>{empresasAtivas.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></div>
-      {precisaSubempresa && escolherPiso && <div className={styles.field}><label className={styles.label} htmlFor="servico-piso">Piso</label><select id="servico-piso" className={styles.select} value={nivelSelecionado} onChange={(event) => selecionarNivel(event.target.value)}><option value="">Selecione o piso…</option>{niveis.map((nivel) => <option key={nivel.chave} value={nivel.chave}>{nivel.rotulo}</option>)}</select></div>}
-      {precisaSubempresa && (!escolherPiso || nivelSelecionado) && <section className={styles.listaVisitasPiso} aria-labelledby="servico-clientes-piso"><div className={styles.listaVisitasPisoTitulo}><h3 id="servico-clientes-piso">Clientes para visitar{escolherPiso ? ` — ${niveis.find((nivel) => nivel.chave === nivelSelecionado)?.rotulo ?? ''}` : ''}</h3><span>{subsNoNivel.length}</span></div><p>Selecione o cliente para registrar o atendimento.</p><div className={styles.listaVisitasPisoItens} role="group" aria-label="Clientes disponíveis para registro">{subsNoNivel.map((item) => <button key={item.id} type="button" className={styles.visitaPisoItem} aria-pressed={subempresaId === item.id} onClick={() => { setSubempresaId(item.id); setErro(''); }}><strong>{item.nome}</strong><span>{item.endereco || rotuloNivel(item)}</span><small>{subempresaId === item.id ? 'Selecionado' : 'Selecionar'}</small></button>)}</div></section>}
-      {destinoDefinido && <div className={styles.field}><label className={styles.label} htmlFor="servico-cliente-nome">Nome de quem recebeu o atendimento</label><input id="servico-cliente-nome" className={styles.input} value={clienteNome} onChange={(event) => setClienteNome(event.target.value)} maxLength={160} placeholder="Nome completo" autoComplete="name" /></div>}
+      {empresasAtivas.length === 0 && <div className={styles.aviso} role="status">Não há serviço pendente para registrar hoje.</div>}
+      {precisaSubempresa && escolherPiso && <div ref={campoPisoRef} className={styles.field}><label className={styles.label} htmlFor="servico-piso">Piso</label><select id="servico-piso" className={styles.select} value={nivelSelecionado} onChange={(event) => selecionarNivel(event.target.value)}><option value="">Selecione o piso…</option>{niveis.map((nivel) => <option key={nivel.chave} value={nivel.chave}>{nivel.rotulo}</option>)}</select></div>}
+      {precisaSubempresa && (!escolherPiso || nivelSelecionado) && <section ref={listaClientesRef} className={styles.listaVisitasPiso} aria-labelledby="servico-clientes-piso"><div className={styles.listaVisitasPisoTitulo}><h3 id="servico-clientes-piso">Clientes deste piso{escolherPiso ? ` — ${niveis.find((nivel) => nivel.chave === nivelSelecionado)?.rotulo ?? ''}` : ''}</h3><span>{subsNoNivel.length}</span></div><p>Os clientes sem serviço pendente permanecem na lista para orientar a visita, mas não iniciam registro.</p><div className={styles.listaVisitasPisoItens} role="group" aria-label="Clientes disponíveis neste piso">{subsNoNivel.map((item) => { const disponivel = servicoDisponivelParaSubempresa(item.id); const proximo = proximoServicoParaSubempresa(item.id); return <button key={item.id} type="button" className={styles.visitaPisoItem} disabled={!disponivel} aria-pressed={subempresaId === item.id} onClick={() => { const proximoId = subempresaId === item.id ? '' : item.id; setSubempresaId(proximoId); setProximoCampoEmDestaque(proximoId ? 'assinador' : 'clientes'); setErro(''); }}><strong>{item.nome}</strong><span>{item.endereco || rotuloNivel(item)}</span><small>{disponivel ? (subempresaId === item.id ? 'Selecionado · desfazer' : 'Selecionar') : proximo ? `Programado: ${formatarData(proximo.dataProgramada)}` : 'Sem serviço pendente'}</small></button>; })}</div></section>}
+      {destinoDefinido && <div ref={campoAssinadorRef} className={styles.field}><label className={styles.label} htmlFor="servico-cliente-nome">Nome de quem recebeu o atendimento</label><input id="servico-cliente-nome" className={styles.input} value={clienteNome} onChange={(event) => setClienteNome(event.target.value)} maxLength={160} placeholder="Nome completo" autoComplete="name" /></div>}
       <div className={styles.acoesServico}><button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={onCancelar}>Cancelar</button>{destinoDefinido && <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={avancarDestino}>Avançar para assinatura</button>}</div>
-      </>}
     </>}
     {etapa === 'avaliacao' && <section className={styles.avaliacaoServico}><h3>{clienteNome}, como foi o atendimento?</h3><p>Escolha uma das opções para finalizar:</p><div><button type="button" className={styles.avaliacaoBom} disabled={enviando} onClick={() => { setAvaliacao('bom'); void enviar('bom'); }}><span aria-hidden="true">✓</span><strong>Bom</strong><small>Bom atendimento</small></button><button type="button" className={styles.avaliacaoRegular} disabled={enviando} onClick={() => { setAvaliacao('regular'); setEtapa('regular'); }}><span aria-hidden="true">!</span><strong>Regular</strong><small>Atendimento regular</small></button></div></section>}
     {etapa === 'regular' && <section className={styles.avaliacaoServico}><h3>Nos conte sobre sua experiência</h3><textarea className={styles.input} rows={4} value={observacao} onChange={(event) => setObservacao(event.target.value)} placeholder="Opcional" maxLength={2000} /><div className={styles.acoesServico}><button type="button" className={`${styles.btn} ${styles.btnGhost}`} disabled={enviando} onClick={() => void enviar('regular')}>Ignorar e enviar</button><button type="button" className={`${styles.btn} ${styles.btnPrimary}`} disabled={enviando} onClick={() => void enviar('regular', observacao)}>{enviando ? 'Enviando…' : 'Enviar avaliação'}</button></div></section>}

@@ -50,15 +50,18 @@ async function main() {
   const cliente = createClient(url, chave, { auth: { persistSession: false, autoRefreshToken: false } });
   const destino = path.resolve(diretorioDestino);
   const diretorioComprovantes = path.join(destino, 'comprovantes');
+  const diretorioAssinaturasServicos = path.join(destino, 'assinaturas-servicos');
   await fs.mkdir(diretorioComprovantes, { recursive: true });
+  await fs.mkdir(diretorioAssinaturasServicos, { recursive: true });
 
-  const [colaboradores, empresasRecebimentos, subempresas, lancamentos, eventosBrutos, comprovantes, integracoes, receitasGestao, modulos] = await Promise.all([
+  const [colaboradores, empresasRecebimentos, subempresas, lancamentos, eventosBrutos, comprovantes, servicos, integracoes, receitasGestao, modulos] = await Promise.all([
     buscarTodos(cliente, 'recebimentos_colaboradores'),
     buscarTodos(cliente, 'recebimentos_empresas'),
     buscarTodos(cliente, 'recebimentos_subempresas'),
     buscarTodos(cliente, 'recebimentos_lancamentos'),
     buscarTodos(cliente, 'recebimentos_eventos'),
     buscarTodos(cliente, 'recebimentos_comprovantes'),
+    buscarTodos(cliente, 'recebimentos_servicos'),
     buscarTodos(cliente, 'recebimentos_integracao_financeira'),
     buscarTodos(cliente, 'recebimentos_receitas_gestao'),
     buscarTodos(cliente, 'empresa_modulos'),
@@ -73,6 +76,7 @@ async function main() {
     ...idsUnicos(subempresas, 'empresa_id'),
     ...idsUnicos(lancamentos, 'empresa_id'),
     ...idsUnicos(comprovantes, 'empresa_id'),
+    ...idsUnicos(servicos, 'empresa_id'),
     ...idsUnicos(integracoes, 'empresa_id'),
     ...idsUnicos(receitasGestao, 'empresa_id'),
     ...idsUnicos(modulosRecebimentos, 'empresa_id'),
@@ -103,6 +107,21 @@ async function main() {
     arquivos.push({ storagePath: caminhoOriginal, arquivo: path.relative(destino, destinoArquivo), tamanhoBytes: bytes.length, sha256: hash(bytes) });
   }
 
+  const assinaturasServicos = [];
+  for (const servico of servicos) {
+    const caminhoOriginal = String(servico.assinatura_arquivo_path || '');
+    if (!caminhoOriginal) continue;
+    const partesSeguras = caminhoOriginal.split('/').filter((parte) => parte && parte !== '.' && parte !== '..');
+    const destinoArquivo = path.resolve(diretorioAssinaturasServicos, ...partesSeguras);
+    if (!destinoArquivo.startsWith(`${diretorioAssinaturasServicos}${path.sep}`)) throw new Error('Caminho de assinatura de serviço inválido no backup.');
+    const { data, error } = await cliente.storage.from('assinaturas-servicos').download(caminhoOriginal);
+    if (error || !data) throw new Error(`Não foi possível exportar a assinatura de serviço ${caminhoOriginal}: ${error?.message || 'arquivo ausente'}`);
+    const bytes = Buffer.from(await data.arrayBuffer());
+    await fs.mkdir(path.dirname(destinoArquivo), { recursive: true });
+    await fs.writeFile(destinoArquivo, bytes);
+    assinaturasServicos.push({ storagePath: caminhoOriginal, arquivo: path.relative(destino, destinoArquivo), tamanhoBytes: bytes.length, sha256: hash(bytes) });
+  }
+
   const dados = {
     schema: 'avantalab.recebimentos.backup.v1',
     geradoEm: new Date().toISOString(),
@@ -116,6 +135,7 @@ async function main() {
       recebimentos_lancamentos: lancamentos,
       recebimentos_eventos: eventos,
       recebimentos_comprovantes: comprovantes,
+      recebimentos_servicos: servicos,
       recebimentos_integracao_financeira: integracoes,
       recebimentos_receitas_gestao: receitasGestao,
       faturamentos_entradas: faturamentosEntradas,
@@ -136,10 +156,11 @@ async function main() {
     perfilLimpQuality: perfilLimpQuality ? { id: perfilLimpQuality.id, nome: perfilLimpQuality.nome } : null,
     contagens: Object.fromEntries(Object.entries(dados.tabelas).map(([tabela, registros]) => [tabela, registros.length])),
     comprovantes: arquivos,
+    assinaturasServicos,
     dadosSha256: hash(dadosSerializados),
   };
   await fs.writeFile(path.join(destino, 'manifesto.json'), `${JSON.stringify(manifesto, null, 2)}\n`, 'utf8');
-  console.log(JSON.stringify({ perfilLimpQuality: manifesto.perfilLimpQuality, contagens: manifesto.contagens, comprovantes: arquivos.length, dadosSha256: manifesto.dadosSha256 }, null, 2));
+  console.log(JSON.stringify({ perfilLimpQuality: manifesto.perfilLimpQuality, contagens: manifesto.contagens, comprovantes: arquivos.length, assinaturasServicos: assinaturasServicos.length, dadosSha256: manifesto.dadosSha256 }, null, 2));
 }
 
 main().catch((erro) => {
