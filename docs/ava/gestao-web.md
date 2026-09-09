@@ -1,6 +1,22 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.19.0.08 -->
+<!-- ava-version: 1.19.0.12 -->
+
+> Revisão 1.19.0.12: no PWA de Serviços, **Registrar novo serviço** inicia
+> selecionado e a ação alternativa fica contornada. A coleta da assinatura abre
+> em tela cheia e pode ser cancelada antes de avançar para a avaliação.
+
+> Revisão 1.19.0.11: no PWA de Serviços, o colaborador escolhe entre abrir
+> **Registrar novo serviço** ou **Serviços realizados**; os dois cards não são
+> exibidos juntos.
+
+> Revisão 1.19.0.10: o nome do perfil vinculado é sincronizado nas credenciais
+> dos colaboradores para manter o cabeçalho completo no PWA de Operações de
+> Campo.
+
+> Revisão 1.19.0.09: no PWA de **Operações de Campo**, os cabeçalhos de
+> Recebimentos e Serviços mantêm o nome do perfil ou empresa e informam, logo
+> abaixo, o tipo de registro disponível na área.
 
 > Revisão 1.19.0.08: em **Colaboradores**, o título **Permissões no
 > aplicativo** fica dentro do bloco de seleção, sem sobrepor sua borda.

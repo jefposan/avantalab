@@ -1,6 +1,18 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.19.0.08 -->
+<!-- ava-version: 1.19.0.12 -->
+
+> Revisão 1.19.0.12: o refinamento da assinatura no PWA de Serviços não altera
+> a operação do AvantaVendas.
+
+> Revisão 1.19.0.11: a separação das ações de Serviços no PWA não altera a
+> operação do AvantaVendas.
+
+> Revisão 1.19.0.10: a sincronização do nome do perfil nas credenciais do PWA
+> de Operações de Campo não altera a operação do AvantaVendas.
+
+> Revisão 1.19.0.09: o cabeçalho do PWA de Operações de Campo foi ajustado; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.19.0.08: o ajuste visual do título das permissões em Operações de
 > Campo não altera a operação do AvantaVendas.

@@ -40,6 +40,12 @@ export async function POST(request: Request) {
 
     const validacao = await validarGestor(clientes.admin, user.id, empresaId);
     if (validacao !== 'ok') return erroValidacaoGestor(validacao);
+    const { data: empresa } = await clientes.admin
+      .from('empresas')
+      .select('nome')
+      .eq('id', empresaId)
+      .maybeSingle();
+    const empresaNome = String(empresa?.nome ?? '').trim();
 
     const { data: existente, error: erroBusca } = await clientes.admin
       .from('recebimentos_colaboradores')
@@ -60,6 +66,7 @@ export async function POST(request: Request) {
         celular,
         email_contato: emailContato,
         empresa_id: empresaId,
+        empresa_nome: empresaNome,
         tipo: 'colaborador_recebimentos',
       },
     });

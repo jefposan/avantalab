@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { AvaliacaoServico, Empresa, Subempresa } from './types';
 
@@ -24,6 +24,8 @@ export default function FormularioServico({ empresas, subempresas, onConfirmar, 
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
   const canvas = useRef<HTMLCanvasElement | null>(null);
+  const dialogoAssinatura = useRef<HTMLElement | null>(null);
+  const cancelarAssinaturaRef = useRef<HTMLButtonElement | null>(null);
   const desenhando = useRef(false);
   const houveTraço = useRef(false);
 
@@ -31,6 +33,27 @@ export default function FormularioServico({ empresas, subempresas, onConfirmar, 
   const empresa = useMemo(() => empresas.find((item) => item.id === empresaId) ?? null, [empresas, empresaId]);
   const subs = useMemo(() => subempresas.filter((item) => item.empresaId === empresaId && item.ativo), [subempresas, empresaId]);
   const precisaSubempresa = empresa?.tipoCadastro === 'local_agrupador';
+
+  useEffect(() => {
+    if (etapa !== 'assinatura') return;
+    cancelarAssinaturaRef.current?.focus();
+    function manterFoco(evento: KeyboardEvent) {
+      if (evento.key === 'Escape') {
+        evento.preventDefault();
+        cancelarAssinatura();
+        return;
+      }
+      if (evento.key !== 'Tab') return;
+      const foco = dialogoAssinatura.current?.querySelectorAll<HTMLElement>('button:not([disabled]), canvas[tabindex="0"]');
+      if (!foco?.length) return;
+      const primeiro = foco[0];
+      const ultimo = foco[foco.length - 1];
+      if (evento.shiftKey && document.activeElement === primeiro) { evento.preventDefault(); ultimo.focus(); }
+      if (!evento.shiftKey && document.activeElement === ultimo) { evento.preventDefault(); primeiro.focus(); }
+    }
+    document.addEventListener('keydown', manterFoco);
+    return () => document.removeEventListener('keydown', manterFoco);
+  }, [etapa]);
 
   function selecionarEmpresa(id: string) { setEmpresaId(id); setSubempresaId(''); setErro(''); }
   function ponto(evento: React.PointerEvent<HTMLCanvasElement>) {
@@ -55,6 +78,11 @@ export default function FormularioServico({ empresas, subempresas, onConfirmar, 
     if (!houveTraço.current || !canvas.current) return setErro('Peça ao cliente para assinar antes de avançar.');
     setAssinatura(canvas.current.toDataURL('image/png')); setErro(''); setEtapa('avaliacao');
   }
+  function cancelarAssinatura() {
+    limparAssinatura();
+    setErro('');
+    setEtapa('destino');
+  }
   function avancarDestino() {
     if (!empresa) return setErro('Selecione a empresa.');
     if (precisaSubempresa && !subempresaId) return setErro('Selecione o cliente.');
@@ -76,11 +104,7 @@ export default function FormularioServico({ empresas, subempresas, onConfirmar, 
       {empresaId && <div className={styles.field}><label className={styles.label} htmlFor="servico-cliente-nome">Nome de quem recebeu o atendimento</label><input id="servico-cliente-nome" className={styles.input} value={clienteNome} onChange={(event) => setClienteNome(event.target.value)} maxLength={160} placeholder="Nome completo" autoComplete="name" /></div>}
       <div className={styles.acoesServico}><button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={onCancelar}>Cancelar</button><button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={avancarDestino}>Avançar para assinatura</button></div>
     </>}
-    {etapa === 'assinatura' && <>
-      <p className={styles.servicoEtapa}>Peça para <b>{clienteNome}</b> assinar na área abaixo.</p>
-      <canvas ref={canvas} className={styles.assinaturaCanvas} width="800" height="280" aria-label="Área de assinatura do cliente" onPointerDown={iniciarAssinatura} onPointerMove={desenhar} onPointerUp={finalizarAssinatura} onPointerCancel={finalizarAssinatura} />
-      <div className={styles.acoesServico}><button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={limparAssinatura}>Limpar assinatura</button><button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={avancarAssinatura}>Avançar</button></div>
-    </>}
+    {etapa === 'assinatura' && <div className={styles.assinaturaOverlay} role="presentation"><section ref={dialogoAssinatura} className={styles.assinaturaDialogo} role="dialog" aria-modal="true" aria-labelledby="servico-assinatura-titulo"><header className={styles.assinaturaCabecalho}><h2 id="servico-assinatura-titulo">Assinatura de &quot;{clienteNome}&quot;</h2><button ref={cancelarAssinaturaRef} type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={cancelarAssinatura}>Cancelar</button></header><div className={styles.assinaturaCorpo}><p className={styles.servicoEtapa}>Peça para o cliente assinar na área abaixo.</p><canvas ref={canvas} tabIndex={0} className={styles.assinaturaCanvas} width="800" height="280" aria-label="Área de assinatura do cliente" onPointerDown={iniciarAssinatura} onPointerMove={desenhar} onPointerUp={finalizarAssinatura} onPointerCancel={finalizarAssinatura} /></div><footer className={styles.assinaturaAcoes}><button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={limparAssinatura}>Limpar assinatura</button><button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={avancarAssinatura}>Avançar</button></footer></section></div>}
     {etapa === 'avaliacao' && <section className={styles.avaliacaoServico}><h3>{clienteNome}, como foi o atendimento?</h3><p>Escolha uma das opções para finalizar:</p><div><button type="button" className={styles.avaliacaoBom} disabled={enviando} onClick={() => { setAvaliacao('bom'); void enviar('bom'); }}>Bom</button><button type="button" className={styles.avaliacaoRegular} disabled={enviando} onClick={() => { setAvaliacao('regular'); setEtapa('regular'); }}>Regular</button></div></section>}
     {etapa === 'regular' && <section className={styles.avaliacaoServico}><h3>Nos conte sobre sua experiência</h3><textarea className={styles.input} rows={4} value={observacao} onChange={(event) => setObservacao(event.target.value)} placeholder="Opcional" maxLength={2000} /><div className={styles.acoesServico}><button type="button" className={`${styles.btn} ${styles.btnGhost}`} disabled={enviando} onClick={() => void enviar('regular')}>Ignorar e enviar</button><button type="button" className={`${styles.btn} ${styles.btnPrimary}`} disabled={enviando} onClick={() => void enviar('regular', observacao)}>{enviando ? 'Enviando…' : 'Enviar avaliação'}</button></div></section>}
     {erro && <div className={styles.aviso} role="alert">{erro}</div>}

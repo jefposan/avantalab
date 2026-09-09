@@ -119,7 +119,7 @@ export default function ColaboradorApp() {
     return dados;
   }, []);
 
-  const prepararSessao = useCallback(async (sessao: Session, empresaSugerida?: string) => {
+  const prepararSessao = useCallback(async (sessao: Session, empresaSugerida?: string, nomePerfilSugerido?: string) => {
     if (!cliente) throw new Error('Configuração do aplicativo indisponível.');
     const empresaMetadata = String(sessao.user.user_metadata?.empresa_id ?? '');
     let empresa = empresaSugerida || empresaMetadata;
@@ -139,7 +139,20 @@ export default function ColaboradorApp() {
       setEstado('bloqueado');
       return;
     }
-    setEmpresaNome(String(acesso.empresaNome ?? '').trim());
+    let nomePerfilDaSessao = [
+      nomePerfilSugerido,
+      acesso.empresaNome,
+      sessao.user.user_metadata?.empresa_nome,
+      sessao.user.user_metadata?.perfil_nome,
+    ].map((nome) => String(nome ?? '').trim()).find(Boolean) ?? '';
+    if (!nomePerfilDaSessao) {
+      const { data: sessaoAtualizada } = await cliente.auth.refreshSession();
+      nomePerfilDaSessao = [
+        sessaoAtualizada.session?.user.user_metadata?.empresa_nome,
+        sessaoAtualizada.session?.user.user_metadata?.perfil_nome,
+      ].map((nome) => String(nome ?? '').trim()).find(Boolean) ?? '';
+    }
+    setEmpresaNome(nomePerfilDaSessao);
     const repoAtivo = criarRepoSupabase(empresa, cliente);
     const dados = await carregarDados(repoAtivo);
     const colaborador = dados.colaboradores.find((item) => item.id === sessao.user.id);
@@ -185,7 +198,7 @@ export default function ColaboradorApp() {
       }
       const { data, error } = await cliente.auth.signInWithPassword({ email: String(acesso.email), password: senha });
       if (error || !data.session) throw new Error('CPF ou senha inválidos.');
-      await prepararSessao(data.session, String(acesso.empresaId ?? ''));
+      await prepararSessao(data.session, String(acesso.empresaId ?? ''), String(acesso.empresaNome ?? ''));
       setSenha('');
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Não foi possível entrar.');
@@ -307,10 +320,12 @@ export default function ColaboradorApp() {
   const colaborador = colaboradores[0];
   if (!colaborador || !repo || !empresaId) return null;
   const podeTrocarOperacao = colaborador.podeRecebimentos && colaborador.podeServicos;
+  const nomeDoPerfil = empresaNome || 'Perfil da empresa';
+  const descricaoDaOperacao = operacao === 'servicos' ? 'Registro de serviços' : 'Registro de recebimentos';
   if (operacao === 'seletor') return (
     <main className={styles.seletorOperacaoPwa}>
       <section>
-        <p>{empresaNome || 'AvantaLab'}</p><h1>Escolha a operação</h1><span>Você possui acesso aos dois sistemas.</span>
+        <p>{nomeDoPerfil}</p><h1>Escolha a operação</h1><span>Você possui acesso aos dois sistemas.</span>
         <button type="button" onClick={() => setOperacao('recebimentos')}><b>Recebimentos</b><small>Registrar cobranças em campo</small></button>
         <button type="button" onClick={() => setOperacao('servicos')}><b>Serviços</b><small>Registrar atendimento e avaliação</small></button>
         <button type="button" className={styles.seletorSair} onClick={() => void sair()}>Sair</button>
@@ -322,8 +337,8 @@ export default function ColaboradorApp() {
       <div className={`${styles.topbar} ${styles.topbarColaborador}`}>
         <div className={styles.topbarInner}>
           <div className={styles.brand}>
-            {empresaNome && <span className={styles.brandTitle}>{empresaNome}</span>}
-            <span className={styles.brandEmpresa}>{operacao === 'servicos' ? 'Registro de serviços' : 'Registro de recebimentos'}</span>
+            <span className={styles.brandTitle}>{nomeDoPerfil}</span>
+            <span className={styles.brandEmpresa}>{descricaoDaOperacao}</span>
           </div>
           <div className={styles.topbarAcoesColaborador}>{podeTrocarOperacao && <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => setOperacao('seletor')}>Trocar sistema</button>}<button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button></div>
         </div>

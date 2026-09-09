@@ -45,11 +45,12 @@ export function clientesServidor() {
 export async function usuarioDaRequisicao(request: Request, url: string, anonKey: string): Promise<User | null> {
   const authorization = request.headers.get('authorization');
   if (!authorization) return null;
+  const token = authorization.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return null;
   const cliente = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: authorization } },
   });
-  const { data, error } = await cliente.auth.getUser();
+  const { data, error } = await cliente.auth.getUser(token);
   return error ? null : data.user;
 }
 

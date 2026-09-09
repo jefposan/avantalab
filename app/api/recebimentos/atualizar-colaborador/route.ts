@@ -39,6 +39,12 @@ export async function POST(request: Request) {
 
     const validacao = await validarGestor(clientes.admin, user.id, empresaId);
     if (validacao !== 'ok') return erroValidacaoGestor(validacao);
+    const { data: empresa } = await clientes.admin
+      .from('empresas')
+      .select('nome')
+      .eq('id', empresaId)
+      .maybeSingle();
+    const empresaNome = String(empresa?.nome ?? '').trim();
     const { data: atual, error: erroAtual } = await clientes.admin
       .from('recebimentos_colaboradores')
       .select('id, cpf, email')
@@ -62,7 +68,7 @@ export async function POST(request: Request) {
 
     const { error: erroAuth } = await clientes.admin.auth.admin.updateUserById(colaboradorUserId, {
       ...(cpfMudou ? { email: emailInterno, email_confirm: true } : {}),
-      user_metadata: { nome, cpf, celular, email_contato: emailContato, empresa_id: empresaId, tipo: 'colaborador_recebimentos' },
+      user_metadata: { nome, cpf, celular, email_contato: emailContato, empresa_id: empresaId, empresa_nome: empresaNome, tipo: 'colaborador_recebimentos' },
     });
     if (erroAuth) {
       if (erroDuplicidade(erroAuth)) return respostaErro('Este CPF já está cadastrado no Recebimentos Presenciais.');

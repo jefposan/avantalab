@@ -244,6 +244,8 @@
 }
 .brand {
   display: flex;
+  flex: 1 1 160px;
+  min-width: 0;
   flex-direction: column;
   gap: 2px;
   line-height: 1.1;
@@ -256,8 +258,12 @@
   color: color-mix(in srgb, #fff 70%, var(--cp));
 }
 .brandTitle {
+  max-width: 100%;
+  overflow: hidden;
   font-size: 16px;
   font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .brandEmpresa {
   max-width: min(70vw, 680px);
@@ -2251,11 +2257,21 @@
 .servicoAviso p { color: #92400e; }
 .servicoSituacao { flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; color: #0f766e !important; background: #ecfdf5; font-weight: 800; }
 .heroServicos { background: linear-gradient(135deg, #0f766e, #0d9488); }
-.btnServicoPwa { width: 100%; margin-top: 14px; color: #0f766e; background: #fff; }
+.acoesServicoPwa { display: grid; gap: 8px; margin-top: 14px; }
+.btnServicoPwa, .btnServicoPwaSecundario { width: 100%; border: 1px solid color-mix(in srgb, #fff 80%, transparent); color: #fff; background: transparent; }
+.btnServicoPwa:hover, .btnServicoPwaSecundario:hover { border-color: #fff; background: color-mix(in srgb, #fff 14%, transparent); }
+.btnServicoPwa[data-ativa='true'], .btnServicoPwaSecundario[data-ativa='true'] { color: #0f766e; border-color: #fff; background: #fff; }
 .servicoCardPwa { margin-top: 16px; }
 .formularioServico { max-width: 640px; }
 .servicoEtapa { color: #475569; font-size: 14px; }
-.assinaturaCanvas { display: block; width: 100%; height: 170px; touch-action: none; border: 2px dashed #94a3b8; border-radius: 14px; background: #fff; cursor: crosshair; }
+.assinaturaOverlay { position: fixed; z-index: 520; inset: 0; display: grid; min-height: 100dvh; background: #eef3f6; color: #0f172a; }
+.assinaturaDialogo { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 100dvh; }
+.assinaturaCabecalho { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 68px; padding: 12px clamp(16px, 4vw, 40px); border-bottom: 1px solid #d7e1e8; background: #fff; }
+.assinaturaCabecalho h2 { margin: 0; min-width: 0; overflow: hidden; color: #0f172a; font-size: clamp(16px, 4vw, 21px); font-weight: 800; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.assinaturaCorpo { display: grid; align-content: center; width: min(100%, 960px); margin: 0 auto; padding: 24px clamp(16px, 4vw, 40px); }
+.assinaturaCorpo .servicoEtapa { margin: 0 0 12px; text-align: center; }
+.assinaturaCanvas { display: block; width: 100%; height: min(52dvh, 360px); min-height: 220px; touch-action: none; border: 2px dashed #94a3b8; border-radius: 14px; background: #fff; cursor: crosshair; }
+.assinaturaAcoes { display: flex; justify-content: flex-end; gap: 8px; padding: 14px clamp(16px, 4vw, 40px) calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid #d7e1e8; background: #fff; }
 .acoesServico { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .avaliacaoServico { text-align: center; }
 .avaliacaoServico h3 { margin: 0; color: #0f172a; font-size: 20px; }
@@ -2266,14 +2282,14 @@
 .avaliacaoRegular { color: #78350f; background: #fef3c7; }
 .avaliacaoServico textarea { margin-top: 16px; text-align: left; }
 .sucessoServico { margin-top: 16px; padding: 12px 14px; border-radius: 12px; color: #166534; background: #dcfce7; font-size: 13px; }
-.topbarAcoesColaborador { display: flex; align-items: center; gap: 6px; }
+.topbarAcoesColaborador { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
 .seletorOperacaoPwa { display: grid; min-height: 100dvh; place-items: center; padding: 24px; background: linear-gradient(145deg, #e6fffb, #eff6ff); color: #0f172a; font-family: var(--av-font-family, sans-serif); }
 .seletorOperacaoPwa section { display: grid; width: min(100%, 390px); gap: 12px; padding: 24px; border: 1px solid #dbeafe; border-radius: 22px; background: #fff; box-shadow: 0 22px 56px rgba(15, 23, 42, .14); }
 .seletorOperacaoPwa p { margin: 0; color: #0f766e; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .seletorOperacaoPwa h1 { margin: 0; font-size: 23px; }.seletorOperacaoPwa span { color: #64748b; font-size: 13px; }
 .seletorOperacaoPwa button { display: grid; gap: 3px; min-height: 78px; padding: 14px; border: 1px solid #cbd5e1; border-radius: 14px; color: #0f766e; background: #f0fdfa; text-align: left; cursor: pointer; }
 .seletorOperacaoPwa button b { font-size: 16px; }.seletorOperacaoPwa button small { color: #475569; font-size: 12px; }.seletorOperacaoPwa .seletorSair { min-height: 44px; display: block; color: #64748b; background: #fff; text-align: center; }
-@media (max-width: 640px) { .tabs { gap: 5px; border-radius: 12px; margin-bottom: 20px; }.tabsGrupoGeral { padding-top: 17px; }.tabsGrupoTitulo { padding-left: 5px; }.tab { padding: 9px 10px; font-size: 12px; }.servicoItem { align-items: flex-start; flex-direction: column; }.servicoItem .btn { width: 100%; }.acoesServico { flex-wrap: wrap; }.acoesServico .btn { flex: 1 1 130px; }.topbarAcoesColaborador .btn { padding-inline: 8px; font-size: 11px; } }
+@media (max-width: 640px) { .tabs { gap: 5px; border-radius: 12px; margin-bottom: 20px; }.tabsGrupoGeral { padding-top: 17px; }.tabsGrupoTitulo { padding-left: 5px; }.tab { padding: 9px 10px; font-size: 12px; }.servicoItem { align-items: flex-start; flex-direction: column; }.servicoItem .btn { width: 100%; }.acoesServico { flex-wrap: wrap; }.acoesServico .btn { flex: 1 1 130px; }.assinaturaCabecalho { min-height: 64px; }.assinaturaCabecalho .btn { flex: 0 0 auto; width: auto; }.assinaturaCanvas { min-height: 190px; height: min(50dvh, 300px); }.assinaturaAcoes .btn { flex: 1 1 130px; }.topbarAcoesColaborador .btn { padding-inline: 8px; font-size: 11px; } }
 .darkScope .tabs { border-bottom-color: #334155; }
 .darkScope .tab { color: #94a3b8; }
 .darkScope .tabsStatus { color: #94a3b8; }

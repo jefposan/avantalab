@@ -1,5 +1,13 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.19.0.12: no PWA de Serviços, a ação selecionada fica
+// branca e a assinatura abre em tela cheia, com cancelamento seguro.
+// Revisado na versão 1.19.0.11: no PWA de Serviços, registrar e consultar
+// realizados são ações exclusivas e exibem somente o card selecionado.
+// Revisado na versão 1.19.0.10: o nome do perfil é sincronizado nas
+// credenciais de colaboradores para manter o cabeçalho do PWA completo.
+// Revisado na versão 1.19.0.09: o cabeçalho do PWA de Operações de Campo
+// identifica sempre o perfil ou empresa e o registro de recebimentos ou serviços.
 // Revisado na versão 1.19.0.08: o título de permissões fica dentro do bloco,
 // sem sobrepor a borda do campo.
 // Revisado na versão 1.19.0.07: editar permissões de colaborador não exige

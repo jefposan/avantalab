@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.19.0.12 - 2026-09-09
+- **Operações de Campo**: no PWA de Serviços, a ação ativa fica branca e a alternativa permanece apenas contornada. O acesso inicia em **Registrar novo serviço**. A assinatura do cliente agora abre em tela cheia, com cabeçalho identificado e opção de cancelamento.
+
+## 1.19.0.11 - 2026-09-09
+- **Operações de Campo**: no PWA de Serviços, **Registrar novo serviço** e **Serviços realizados** são ações separadas. O colaborador escolhe qual card abrir, sem exibir o registro e o histórico ao mesmo tempo.
+
+## 1.19.0.10 - 2026-09-09
+- **Operações de Campo**: o nome do perfil é sincronizado com as credenciais dos colaboradores já existentes e novos. O PWA atualiza a sessão quando necessário, garantindo o cabeçalho completo em Recebimentos e Serviços.
+
+## 1.19.0.09 - 2026-09-09
+- **Operações de Campo**: o cabeçalho do colaborador volta a identificar sempre o perfil ou empresa e, abaixo, informa de modo igual em ambos os acessos se a área é de **Registro de recebimentos** ou **Registro de serviços**.
+
 ## 1.19.0.08 - 2026-09-09
 - **Operações de Campo**: o título **Permissões no aplicativo** foi posicionado dentro do bloco, com espaçamento próprio e sem sobrepor a borda.
 

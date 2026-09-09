@@ -19,20 +19,32 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (error || !data?.email) return respostaErro('CPF ou senha inválidos.', 404);
 
-    const { data: modulo, error: erroModulo } = await clientes.admin
+    const [{ data: modulo, error: erroModulo }, { data: empresa, error: erroEmpresa }] = await Promise.all([
+      clientes.admin
       .from('empresa_modulos')
       .select('id')
       .eq('empresa_id', data.empresa_id)
       .eq('modulo_id', MODULO_RECEBIMENTOS)
       .eq('ativo', true)
-      .maybeSingle();
+      .maybeSingle(),
+      clientes.admin
+        .from('empresas')
+        .select('nome')
+        .eq('id', data.empresa_id)
+        .maybeSingle(),
+    ]);
     if (!erroModulo && !modulo) {
       return respostaErro('O Recebimentos Presenciais está indisponível. Fale com o gestor.', 403, { bloqueado: true });
     }
     if (!await assinaturaEmpresaLiberada(data.empresa_id)) {
       return respostaErro('O Recebimentos Presenciais está indisponível. Fale com o gestor.', 403, { bloqueado: true });
     }
-    return NextResponse.json({ erro: false, email: data.email, empresaId: data.empresa_id });
+    return NextResponse.json({
+      erro: false,
+      email: data.email,
+      empresaId: data.empresa_id,
+      empresaNome: erroEmpresa ? '' : String(empresa?.nome ?? '').trim(),
+    });
   } catch (error) {
     console.error('Erro ao resolver e-mail de recebimentos:', error);
     return respostaErro('Erro ao validar o acesso.', 500);
