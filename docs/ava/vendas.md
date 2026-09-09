@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.20.0.08 -->
+<!-- ava-version: 1.20.0.09 -->
+
+> Revisão 1.20.0.09: a âncora pública direta do card AvantaVendas na página de
+> Gestão Financeira não altera a operação do AvantaVendas.
 
 > Revisão 1.20.0.08: o backup ampliado de Recebimentos e Serviços não altera o
 > AvantaVendas.

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.20.0.09 - 2026-09-09
+- **Página pública**: o card do AvantaVendas em Gestão Financeira agora pode ser aberto diretamente por `#avantavendas`, com a posição compensada pelo cabeçalho fixo também no celular.
+
 ## 1.20.0.08 - 2026-09-09
 - **Proteção de dados**: o backup de Recebimentos agora inclui também os registros de Serviços e os PNGs privados de assinatura, permitindo a guarda completa antes de mudanças estruturais.
 

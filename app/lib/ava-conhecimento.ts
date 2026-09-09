@@ -80,6 +80,9 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Presenciais chama-se Referência e aceita números ou códigos como 12, G e L2.
 // Revisado na versão 1.18.0.05: no endereço de Recebimentos Presenciais, Rua
 // tem área ampliada e Número / identificação fica compacto para códigos curtos.
+// Revisado na versão 1.20.0.09: a página pública de Gestão Financeira permite
+// abrir diretamente o card AvantaVendas pela âncora #avantavendas, sem impacto
+// operacional nos manuais da Ava.
 // Revisado na versão 1.18.0.04: o AvantaCard de Administração em Recebimentos
 // Presenciais cresce conforme filtros e linhas carregam; a página completa rola.
 // Revisado na versão 1.18.0.03: ao sair de Empresas em Recebimentos

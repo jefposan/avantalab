@@ -65,7 +65,11 @@ export default function LandingAppsSection() {
 
         <div className={styles.grid}>
           {aplicativos.map((aplicativo) => (
-            <article className={styles.card} key={aplicativo.nome}>
+            <article
+              className={styles.card}
+              id={aplicativo.nome === 'AvantaVendas' ? 'avantavendas' : undefined}
+              key={aplicativo.nome}
+            >
               <div className={styles.cardContent}>
                 <header className={styles.cardHeader}>
                   <Image src={aplicativo.icone} alt="" width={512} height={512} sizes="72px" />

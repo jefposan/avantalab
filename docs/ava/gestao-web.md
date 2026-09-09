@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.20.0.08 -->
+<!-- ava-version: 1.20.0.09 -->
+
+> Revisão 1.20.0.09: a âncora pública direta do card AvantaVendas na página de
+> Gestão Financeira não altera a operação da Gestão Web.
 
 > Revisão 1.20.0.08: o backup administrativo de Recebimentos também preserva
 > Serviços e suas assinaturas privadas; não há mudança no uso do módulo.

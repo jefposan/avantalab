@@ -77,6 +77,11 @@
   box-shadow: 0 20px 46px rgb(0 62 115 / 9%);
 }
 
+/* Compensa o cabeçalho fixo quando a campanha abre o card diretamente. */
+.card[id='avantavendas'] {
+  scroll-margin-top: 146px;
+}
+
 .cardContent {
   display: flex;
   min-width: 0;
@@ -304,6 +309,10 @@
   .card {
     padding: 1.25rem;
     border-radius: 20px;
+  }
+
+  .card[id='avantavendas'] {
+    scroll-margin-top: 126px;
   }
 
   .cardHeader img {

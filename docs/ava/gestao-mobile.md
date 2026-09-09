@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.20.0.08 -->
+<!-- ava-version: 1.20.0.09 -->
+
+> Revisão 1.20.0.09: a âncora pública direta do card AvantaVendas na página de
+> Gestão Financeira não altera a operação da Gestão Mobile.
 
 > Revisão 1.20.0.08: a ampliação do backup administrativo não altera a operação
 > da Gestão Mobile.
