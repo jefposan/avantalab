@@ -13,7 +13,7 @@ const UUIDS = {
   influencerCemMl: '44444444-4444-4444-8444-444444444444',
 };
 
-function voiceResolverDb(products = null, customers = null) {
+function voiceResolverDb(products = null, customers = null, extraTables = {}) {
   const tables = {
     vendas_mobile_clientes: customers || [
       { id: UUIDS.fernandaInfluencer, nome: 'Fernanda (influencer)', ativo: true, observacoes: 'observação manual útil' },
@@ -24,6 +24,10 @@ function voiceResolverDb(products = null, customers = null) {
       { id: UUIDS.influencerCemMl, nome: 'Influencer 100 ml', ativo: true, preco: 25 },
     ],
     vendas_mobile_pedidos: [],
+    vendas_mobile_pagamentos: [],
+    vendas_mobile_produtos_busca_voz: [],
+    vendas_mobile_clientes_busca_voz: [],
+    ...extraTables,
   };
   return {
     from(table) {
@@ -100,7 +104,7 @@ test('rota experimental permanece fora dos menus oficiais', async () => {
 test('função oficial de voz fica sob preferência da conta e carregamento isolado', async () => {
   const [officialApp, voiceModule] = await Promise.all([
     readFile(new URL('../../app/avantavendas/sistema/app.js', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8'),
   ]);
   assert.match(officialApp, /solicitacaoVozAtiva: false/);
   assert.doesNotMatch(officialApp, /\['solicitacao_voz',\s*'10_Solicitacao_por_voz/);
@@ -127,7 +131,10 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(officialApp, /if \(ajuda\.contains\(alvo\) \|\| acionador\.contains\(alvo\)\) return/);
   assert.match(officialApp, /document\.removeEventListener\('pointerdown', fecharAoTocarFora, true\)/);
   assert.match(officialApp, /evento\.key !== 'Escape'/);
-  const vendasStyles = await readFile(new URL('../../app/avantavendas/sistema/styles.css', import.meta.url), 'utf8');
+  const [vendasStyles, hostStyles] = await Promise.all([
+    readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.css', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/sistema/styles.css', import.meta.url), 'utf8'),
+  ]);
   assert.match(vendasStyles, /\.mobile-voice-command-help \{ position: absolute/);
   assert.match(vendasStyles, /left: clamp\(105px,calc\(75% - 3px\),calc\(100% - 54px\)\)/);
   assert.match(vendasStyles, /\.mobile-voice-command-help-symbol \{ display: grid; width: 36px; height: 36px/);
@@ -150,8 +157,8 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(voiceModule, /rotulo: 'Compartilhar comprovante'/);
   assert.doesNotMatch(voiceModule, /state\.phase === 'done'/);
   assert.match(officialApp, /notify: \(mensagem, opcoes\) => toast\(mensagem, opcoes\)/);
-  assert.match(vendasStyles, /\.toast-com-acao \{ grid-template-areas:/);
-  assert.match(vendasStyles, /\.toast-action \{ grid-area: action;/);
+  assert.match(hostStyles, /\.toast-com-acao \{ grid-template-areas:/);
+  assert.match(hostStyles, /\.toast-action \{ grid-area: action;/);
   assert.match(officialApp, /const signalExterno = payload\?\.signal/);
   assert.match(officialApp, /signalExterno\?\.aborted/);
   assert.match(officialApp, /function solicitacoesVozPendentes\(\)/);
@@ -195,7 +202,7 @@ test('clique de desambiguação usa candidato validado sem reinterpretar pela IA
   const [route, resolver, voiceModule] = await Promise.all([
     readFile(new URL('../../app/api/teste/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8'),
   ]);
   assert.match(route, /if \(selection && previousDraft\)/);
   assert.match(route, /const selections = mergeSelection/);
@@ -214,9 +221,10 @@ test('interpretação mantém qualificadores no nome do cliente e não os transf
 });
 
 test('onda de voz usa área ampliada sem recorte e amplitude moderada', async () => {
-  const [voiceModule, styles] = await Promise.all([
-    readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8'),
+  const [voiceModule, styles, voiceStyles] = await Promise.all([
+    readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8'),
     readFile(new URL('../../app/avantavendas/sistema/styles.css', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.css', import.meta.url), 'utf8'),
   ]);
   assert.match(voiceModule, /\.visualizer\{inset:-96px;width:calc\(100% \+ 192px\)/);
   assert.match(voiceModule, /overflow:visible/);
@@ -231,11 +239,30 @@ test('onda de voz usa área ampliada sem recorte e amplitude moderada', async ()
   assert.match(voiceModule, /\.dock>\.voice-body\{display:grid;max-width:100%;align-content:center;justify-items:center/);
   assert.match(voiceModule, /\.dock>\.voice-body>\.capture\{position:relative;top:auto;left:auto;width:90px;height:90px/);
   assert.match(styles, /\.mobile-menu-assistance\.has-voice-command \{[^}]*margin-bottom: 0;/);
-  assert.match(styles, /\.mobile-voice-command-body \{[^}]*align-content: center;[^}]*justify-items: center;/);
+  assert.match(voiceStyles, /\.mobile-voice-command-body \{[^}]*align-content: center;[^}]*justify-items: center;/);
   assert.match(voiceModule, /@container \(max-height:150px\)/);
   assert.match(voiceModule, /@container \(max-height:112px\)/);
   assert.match(voiceModule, /\.dock \.voice\{width:84px;height:84px\}/);
   assert.match(voiceModule, /@media\(max-width:520px\).*\.dock \.voice\{width:80px;height:80px\}/);
+});
+
+test('Solicitação por Voz reutiliza o componente central do PADRÃO AVANTA', async () => {
+  const [officialApp, resourceRoute, page, serviceWorker, standard, localStyles] = await Promise.all([
+    readFile(new URL('../../app/avantavendas/sistema/app.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/recursos/[...arquivo]/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/page.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/sw.js/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../docs/padrao-avanta/acoes-por-voz.md', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/sistema/styles.css', import.meta.url), 'utf8'),
+  ]);
+  assert.match(officialApp, /window\.AvantaVoiceActions\?\.open/);
+  assert.match(officialApp, /recursos\/avanta-voice-actions\.js/);
+  assert.match(officialApp, /storageNamespace: 'avantalab\.vendas\.voice_command\.official\.v1'/);
+  assert.match(resourceRoute, /app\/padrao-avanta\/acoes-por-voz\/avanta-voice-actions\.js/);
+  assert.match(page, /avanta-voice-actions\.css/);
+  assert.match(serviceWorker, /avanta-voice-actions\.css/);
+  assert.match(standard, /É proibido copiar o JavaScript/);
+  assert.doesNotMatch(localStyles, /\.mobile-voice-command-trigger\s*\{/);
 });
 
 test('clientes são sugeridos por aproximação de dicção e letras repetidas', async () => {
@@ -378,7 +405,7 @@ test('conciliação de palavras intermediárias funciona em qualquer segmento de
 
 test('produto pode ser escolhido manualmente sem perder o rascunho e pedido pode ser editado com validação', async () => {
   const [voiceModule, route, catalogRoute] = await Promise.all([
-    readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8'),
     readFile(new URL('../../app/api/teste/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../app/api/teste/solicitacao-voz/catalogo/route.ts', import.meta.url), 'utf8'),
   ]);
@@ -405,7 +432,7 @@ test('resolução de vários produtos prioriza resposta curta e compartilha a bu
 });
 
 test('pesquisa manual atualiza resultados sem reconstruir o campo focado', async () => {
-  const voiceModule = await readFile(new URL('../../app/avantavendas/sistema/voice-command.js', import.meta.url), 'utf8');
+  const voiceModule = await readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8');
   const loadCatalog = voiceModule.match(/async function loadCatalog[\s\S]*?\n  function openProductCatalog/)?.[0] || '';
   assert.match(voiceModule, /function refreshCatalogResults\(\)/);
   assert.match(voiceModule, /query !== state\.catalogQuery/);
@@ -479,4 +506,80 @@ test('transcrição de voz usa modelo especializado sem enviar o catálogo da co
   assert.doesNotMatch(source, /append\('language',/);
   assert.match(source, /audioSeconds/);
   assert.doesNotMatch(source, /vendas_mobile_produtos/);
+});
+
+test('índice oculto de voz é aditivo, isolado por conta e sem campo manual no cadastro', async () => {
+  const [migration, catalogComponent] = await Promise.all([
+    readFile(new URL('../../supabase/migrations/20260909210000_busca_voz_catalogo_aprendizado.sql', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/components/CatalogoProdutosVendas.tsx', import.meta.url), 'utf8'),
+  ]);
+  assert.match(migration, /create table if not exists public\.vendas_mobile_catalogo_produtos_busca_voz/);
+  assert.match(migration, /create table if not exists public\.vendas_mobile_produtos_busca_voz/);
+  assert.match(migration, /create table if not exists public\.vendas_mobile_clientes_busca_voz/);
+  assert.match(migration, /vendas_mobile_pode_ler_conta\(conta_id\)/);
+  assert.match(migration, /vendas_mobile_confirmar_aprendizado_busca_voz_rpc/);
+  assert.match(migration, /revoke all on function public\.vendas_mobile_reconstruir_busca_produto_conta/);
+  assert.doesNotMatch(catalogComponent, /Nomes para busca|Como este produto também pode ser chamado/i);
+  assert.match(catalogComponent, /\/api\/conteudo-vendas\/produtos\/indexar-voz/);
+});
+
+test('catálogo gera aliases com IA em segundo plano e valida cada termo antes de salvar', async () => {
+  const [indexer, route, processor] = await Promise.all([
+    readFile(new URL('../../app/lib/vendas-voice/catalog-index.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/conteudo-vendas/produtos/indexar-voz/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/teste/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(indexer, /response_format: \{ type: 'json_schema'/);
+  assert.match(indexer, /strict: true/);
+  assert.match(indexer, /groundedAlias/);
+  assert.match(indexer, /Não invente características/);
+  assert.match(indexer, /OPENAI_VOICE_CATALOG_MODEL/);
+  assert.match(route, /after\(async \(\) =>/);
+  assert.match(processor, /enrichPendingCatalogForAccount/);
+  assert.match(processor, /after\(async \(\) =>/);
+});
+
+test('alias aprendido resolve uma expressão humana específica da conta', async () => {
+  const triliss = { id: UUIDS.influencerLitro, nome: 'Triliss - Redutor Orgânico', ativo: true, preco: 220 };
+  const firstConfirmation = await resolveProduct(voiceResolverDb([triliss], null, {
+    vendas_mobile_produtos_busca_voz: [{
+      conta_id: 'conta-alias-inicial', produto_id: triliss.id, termo: 'selagem rubi',
+      termo_normalizado: 'selagem rubi', origem: 'aprendizado', confianca: 0.92, confirmacoes: 1,
+    }],
+  }), 'conta-alias-inicial', 'selagem rubi');
+  assert.equal(firstConfirmation.status, 'missing');
+
+  const result = await resolveProduct(voiceResolverDb([triliss], null, {
+    vendas_mobile_produtos_busca_voz: [{
+      conta_id: 'conta-alias', produto_id: triliss.id, termo: 'selagem rubi',
+      termo_normalizado: 'selagem rubi', origem: 'aprendizado', confianca: 0.945, confirmacoes: 2,
+    }],
+  }), 'conta-alias', 'selagem rubi');
+  assert.equal(result.status, 'resolved');
+  assert.equal(result.product.id, triliss.id);
+});
+
+test('seleção manual só vira aprendizado depois da gravação oficial confirmada', async () => {
+  const [resolver, executor] = await Promise.all([
+    readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/teste/solicitacao-voz/executar/route.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(resolver, /voiceLearnings: voiceLearningsForAction/);
+  assert.match(executor, /vendas_mobile_confirmar_aprendizado_busca_voz_rpc/);
+  assert.match(resolver, /Number\(alias\.confirmacoes \|\| 0\) >= 2/);
+  const verificationPosition = executor.indexOf('verifiedOrder');
+  const learningPosition = executor.indexOf('await confirmVoiceLearnings(context.db, action, productIds)');
+  assert.ok(verificationPosition >= 0 && learningPosition > verificationPosition);
+});
+
+test('transcrição recebe só um vocabulário curto já aprendido, nunca o catálogo inteiro', async () => {
+  const [transcription, resolver] = await Promise.all([
+    readFile(new URL('../../app/api/teste/solicitacao-voz/transcrever/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(transcription, /listVoiceTranscriptionHints/);
+  assert.match(transcription, /listVoiceTranscriptionHints\(context\.db, accountId, 24\)/);
+  assert.match(resolver, /Math\.min\(30/);
+  assert.match(resolver, /Referências aprendidas de clientes ficam restritas à busca/);
+  assert.doesNotMatch(transcription, /from\('vendas_mobile_produtos'\)/);
 });

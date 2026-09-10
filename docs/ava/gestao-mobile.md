@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.25.0.05 -->
+<!-- ava-version: 1.26.0 -->
+
+> Revisão 1.26.0: os nomes alternativos usados pela Solicitação por Voz são
+> preparados automaticamente quando o catálogo é atualizado. Não há campo ou
+> ação manual nova na Gestão Mobile. O botão e o fluxo de ações por voz agora
+> usam o componente central do PADRÃO AVANTA, sem mudança operacional aqui.
 
 > Revisão 1.25.0.05: a correção do hover no Menu da Gestão pertence à interface
 > Web e não altera a Gestão Mobile.

@@ -1,5 +1,15 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.8.0 - 2026-09-10
+
+- A experiência completa de ações por voz com IA passa a ser um padrão oficial
+  reutilizável: acionador, ajuda, onda reativa ao áudio, estados, cards,
+  desambiguação, confirmação, pendências, resultado e comprovante.
+- Criados controlador, estilos e contrato centrais. Sistemas integrados fornecem
+  apenas adaptadores autenticados e não podem manter cópias locais do fluxo.
+- Formalizados indexação oculta e automática de catálogos, aliases semânticos,
+  aprendizado controlado por correções confirmadas e pesquisa manual segura.
+
 ## 1.7.0 - 2026-08-07
 
 - Cortesia empresarial vigente passa a equivaler à liberação total dos módulos,

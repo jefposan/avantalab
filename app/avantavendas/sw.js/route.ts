@@ -10,6 +10,8 @@ const recursosEssenciais = [
   '/avantavendas',
   '/avantavendas/manifest.webmanifest',
   `${caminhoRecursos}/styles.css?v=${AVANTAVENDAS_VERSION}`,
+  `${caminhoRecursos}/avanta-voice-actions.css?v=${AVANTAVENDAS_VERSION}`,
+  `${caminhoRecursos}/avanta-voice-actions.js?v=${AVANTAVENDAS_VERSION}`,
   `${caminhoRecursos}/vendor/supabase.min.js?v=${AVANTAVENDAS_VERSION}`,
   `${caminhoRecursos}/config.js?v=${AVANTAVENDAS_VERSION}`,
   `${caminhoRecursos}/supabase-client.js?v=${AVANTAVENDAS_VERSION}`,

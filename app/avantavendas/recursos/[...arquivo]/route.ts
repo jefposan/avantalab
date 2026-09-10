@@ -5,6 +5,16 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const RAIZ_RECURSOS = path.resolve(process.cwd(), 'app/avantavendas/sistema');
+const RECURSOS_PADRAO_AVANTA = new Map([
+  [
+    'avanta-voice-actions.js',
+    path.resolve(process.cwd(), 'app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js'),
+  ],
+  [
+    'avanta-voice-actions.css',
+    path.resolve(process.cwd(), 'app/padrao-avanta/acoes-por-voz/avanta-voice-actions.css'),
+  ],
+]);
 
 const TIPOS_CONTEUDO: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
@@ -39,8 +49,10 @@ export async function GET(
   const { arquivo: segmentos } = await contexto.params;
   if (!Array.isArray(segmentos) || segmentos.length === 0) return respostaNaoEncontrada();
 
-  const caminhoArquivo = path.resolve(RAIZ_RECURSOS, ...segmentos);
-  if (!caminhoArquivo.startsWith(`${RAIZ_RECURSOS}${path.sep}`)) {
+  const chaveRecurso = segmentos.join('/');
+  const caminhoCompartilhado = RECURSOS_PADRAO_AVANTA.get(chaveRecurso);
+  const caminhoArquivo = caminhoCompartilhado || path.resolve(RAIZ_RECURSOS, ...segmentos);
+  if (!caminhoCompartilhado && !caminhoArquivo.startsWith(`${RAIZ_RECURSOS}${path.sep}`)) {
     return respostaNaoEncontrada();
   }
 

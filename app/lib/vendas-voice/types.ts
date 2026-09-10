@@ -66,6 +66,7 @@ export type VoiceConfirmationAction = {
   scheduledTime?: string | null;
   appointmentType?: 'Visita' | 'Entrega' | 'Recebimento' | 'Cobrar' | 'Outro' | null;
   appointmentNotes?: string | null;
+  voiceLearnings: VoiceEntitySelection[];
 };
 
 export type VoiceProcessResponse =

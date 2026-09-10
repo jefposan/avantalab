@@ -18,6 +18,8 @@ Fonte oficial do PWA de vendas do ecossistema AvantaLab.
 - `versao/`: endpoint sem cache para confirmação da versão publicada.
 - `recursos/`: entrega controlada dos arquivos do sistema.
 - `sistema/`: código, estilos, bibliotecas e recursos oficiais do AvantaVendas.
+- `../padrao-avanta/acoes-por-voz/`: controlador, estilos e contrato oficiais
+  compartilhados pelo AvantaVendas e por futuras integrações de voz.
 - `documentacao/historico/`: documentos preservados da fase inicial do produto.
 - `documentacao/referencia_tridium/`: referência local histórica, ignorada pelo
   Git e sem participação no build ou na produção.
@@ -36,9 +38,9 @@ em Configurações e não transfere sessão ou dados operacionais entre aplicati
 
 ## Desenvolvimento
 
-O build usa diretamente os arquivos de `app/avantavendas/sistema`. Não existe
-mais sincronização para `public/vendas-mobile` nem projeto separado em
-`vendas_mobile`.
+O build usa diretamente os arquivos de `app/avantavendas/sistema` e serve os
+ativos centrais de voz sem copiá-los. Não existe mais sincronização para
+`public/vendas-mobile` nem projeto separado em `vendas_mobile`.
 
 Os recursos recebem a versão definida em `version.ts` e são publicados com
 cache imutável. Toda alteração funcional nesses arquivos exige incrementar

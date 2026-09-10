@@ -34,9 +34,24 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const arquivoRef = useRef<HTMLInputElement>(null);
   const formularioRef = useRef<HTMLElement>(null);
   const botaoNovoRef = useRef<HTMLButtonElement>(null);
+  const indiceVozSolicitadoRef = useRef('');
   const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
   const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['unidade', 'Unidade'], ['preco_divulgacao', 'Preço sugerido de revenda'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
+
+  const solicitarIndiceVoz = useCallback(async (productId = '') => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token || '';
+      if (!token) return;
+      await fetch('/api/conteudo-vendas/produtos/indexar-voz', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId: empresaId, productId: productId || null }),
+        keepalive: true,
+      });
+    } catch { /* O índice determinístico já está disponível; a IA tentará novamente depois. */ }
+  }, [empresaId]);
 
   const carregar = useCallback(async () => {
     if (!empresaId) return;
@@ -51,7 +66,11 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     }
     setProdutos(Array.isArray(resultado.produtos) ? resultado.produtos : []);
     setCarregando(false);
-  }, [empresaId]);
+    if (indiceVozSolicitadoRef.current !== empresaId) {
+      indiceVozSolicitadoRef.current = empresaId;
+      void solicitarIndiceVoz();
+    }
+  }, [empresaId, solicitarIndiceVoz]);
 
   useEffect(() => { const timer = window.setTimeout(() => void carregar(), 0); return () => window.clearTimeout(timer); }, [carregar]);
   const mudar = (nome: string, valor: string | boolean) => setFormulario((atual) => ({ ...atual, [nome]: valor }));
@@ -102,6 +121,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
       setErro(error?.message.toLowerCase().includes('sku') ? 'Este SKU já existe neste pacote.' : 'Não foi possível salvar o produto.');
       return;
     }
+    void solicitarIndiceVoz(produtoSalvo.id);
     setFormulario(vazio);
     setFormularioAberto(false);
     await carregar();

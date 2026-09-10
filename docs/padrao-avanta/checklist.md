@@ -16,6 +16,8 @@
 - [ ] Carregamento, vazio, erro, sucesso e desabilitado foram tratados.
 - [ ] Desktop, mobile e tema escuro aplicável foram verificados.
 - [ ] Teclado, foco, contraste, labels e redução de movimento foram verificados.
+- [ ] Se há ações por voz, a integração usa os ativos centrais, botão imóvel,
+      onda por áudio real, cards responsivos e confirmação antes de escrita.
 
 ## Integrações e entrega
 
@@ -24,6 +26,8 @@
       restauração garantida após erro ou fechamento.
 - [ ] Redirect web, deep link nativo, sessão, origem e logout foram testados.
 - [ ] Preferências possuem namespace, versão e fallback.
+- [ ] Ações por voz validam schema, empresa e permissões no servidor; catálogo,
+      pendências, cancelamento, comprovante e perda de rede foram testados.
 - [ ] Ava e manuais operacionais foram revisados.
 - [ ] `app/lib/version.ts` e `CHANGELOG.md` foram avaliados/atualizados.
 - [ ] `npm run verificar:padrao-avanta` passou.

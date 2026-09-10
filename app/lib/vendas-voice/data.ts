@@ -18,6 +18,14 @@ type CustomerRow = {
   observacoes?: string | null;
   endereco?: Record<string, unknown> | string | null;
   ativo?: boolean | null;
+  voiceAliases?: VoiceAliasRow[];
+};
+
+type VoiceAliasRow = {
+  termo: string;
+  origem?: 'automatico' | 'ia' | 'aprendizado' | null;
+  confianca?: number | string | null;
+  confirmacoes?: number | null;
 };
 
 type ProductRow = {
@@ -30,7 +38,12 @@ type ProductRow = {
   preco?: number | string | null;
   preco_custo?: number | string | null;
   ativo?: boolean | null;
+  voiceAliases?: VoiceAliasRow[];
 };
+
+function searchableVoiceAliases(aliases: VoiceAliasRow[] | undefined) {
+  return (aliases || []).filter((alias) => alias.origem !== 'aprendizado' || Number(alias.confirmacoes || 0) >= 2);
+}
 
 const STOP_WORDS = new Set(['a', 'o', 'as', 'os', 'da', 'de', 'do', 'das', 'dos', 'para', 'um', 'uma', 'cliente', 'produto']);
 const PRODUCT_GENERIC_TOKENS = new Set(['kit', 'progressiva', 'redutor', 'organico', 'organica', 'shampoo', 'mascara', 'oxidante', 'tintura', 'creme', 'tratamento']);
@@ -74,6 +87,71 @@ function productSearchVariants(reference: string) {
     [normalized, phonetic].filter((value) => value.length >= 3).forEach((value) => variants.add(value));
   }
   return [...variants].slice(0, 8);
+}
+
+function voiceAliasSearchVariants(reference: string) {
+  const variants = new Set(productSearchVariants(reference));
+  for (const token of safeSearchTokens(reference, 5)) {
+    const phonetic = phoneticVoiceToken(token);
+    if (phonetic.length >= 5) variants.add(phonetic.slice(0, 4));
+  }
+  return [...variants].slice(0, 10);
+}
+
+async function matchingVoiceAliases(
+  db: SupabaseClient,
+  table: 'vendas_mobile_produtos_busca_voz' | 'vendas_mobile_clientes_busca_voz',
+  accountId: string,
+  reference: string,
+  foreignKey: 'produto_id' | 'cliente_id',
+) {
+  const variants = voiceAliasSearchVariants(reference);
+  if (!variants.length) return new Map<string, VoiceAliasRow[]>();
+  const expression = variants.map((token) => `termo_normalizado.ilike.%${token}%`).join(',');
+  const { data, error } = await db.from(table)
+    .select(`${foreignKey},termo,origem,confianca,confirmacoes`)
+    .eq('conta_id', accountId)
+    .or(expression)
+    .limit(120);
+  // Compatibilidade durante publicação gradual: o resolvedor antigo continua
+  // funcional até a migração do índice oculto chegar ao banco.
+  if (error) return new Map<string, VoiceAliasRow[]>();
+  const aliases = new Map<string, VoiceAliasRow[]>();
+  for (const row of data || []) {
+    const record = row as unknown as Record<string, unknown>;
+    const id = String(record[foreignKey] || '');
+    const term = String(row.termo || '').trim();
+    if (!id || !term) continue;
+    aliases.set(id, [...(aliases.get(id) || []), {
+      termo: term,
+      origem: row.origem as VoiceAliasRow['origem'],
+      confianca: row.confianca,
+      confirmacoes: Number(row.confirmacoes || 0),
+    }]);
+  }
+  return aliases;
+}
+
+export async function listVoiceTranscriptionHints(db: SupabaseClient, accountId: string, maximum = 24) {
+  const limit = Math.max(1, Math.min(30, Math.floor(maximum) || 24));
+  // Somente termos de produtos participam do vocabulário enviado ao modelo de
+  // transcrição. Referências aprendidas de clientes ficam restritas à busca
+  // local da conta e nunca compõem o contexto enviado à OpenAI.
+  const { data } = await db.from('vendas_mobile_produtos_busca_voz')
+    .select('termo,origem,confirmacoes,confianca')
+    .eq('conta_id', accountId)
+    .in('origem', ['ia', 'aprendizado'])
+    .or('origem.eq.ia,and(origem.eq.aprendizado,confirmacoes.gte.2)')
+    .order('confirmacoes', { ascending: false })
+    .order('confianca', { ascending: false })
+    .limit(limit);
+  const terms = new Map<string, string>();
+  for (const row of data || []) {
+    const term = String(row.termo || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+    const normalized = normalizeVoiceSearch(term);
+    if (term && normalized.length >= 3 && !terms.has(normalized)) terms.set(normalized, term);
+  }
+  return [...terms.values()].slice(0, limit);
 }
 
 // Clientes também sofrem com vogais, letras dobradas e pequenas perdas da
@@ -189,14 +267,23 @@ function orderedTokenCoverage(queryTokens: string[], candidateTokens: string[]) 
 }
 
 function productScore(reference: string, product: ProductRow) {
-  const fields = [product.nome, product.sku, product.marca, product.categoria, product.descricao];
-  const identityFields = [product.nome, product.sku, product.marca];
+  const usableAliases = searchableVoiceAliases(product.voiceAliases);
+  const aliasTerms = usableAliases.map((alias) => alias.termo);
+  const fields = [product.nome, product.sku, product.marca, product.categoria, product.descricao, ...aliasTerms];
+  const identityFields = [product.nome, product.sku, product.marca, ...aliasTerms];
   const base = score(reference, fields);
   const queryTokens = searchTokens(reference).filter((token) => token.length >= 4);
   const normalizedName = normalizeVoiceSearch(product.nome);
   const nameTokens = searchTokens(product.nome);
   const identityTokens = identityFields.flatMap((field) => searchTokens(String(field || '')));
-  if (queryTokens.includes(normalizedName)) return Math.max(base, 116);
+  const normalizedReference = normalizeVoiceSearch(reference);
+  const exactAlias = usableAliases.find((alias) => normalizeVoiceSearch(alias.termo) === normalizedReference);
+  const exactAliasScore = exactAlias
+    ? exactAlias.origem === 'aprendizado'
+      ? Number(exactAlias.confirmacoes || 0) >= 2 ? 134 : 126
+      : exactAlias.origem === 'ia' ? 130 : 124
+    : 0;
+  if (queryTokens.includes(normalizedName)) return Math.max(base, exactAliasScore, 116);
   const exactNameMatches = queryTokens.filter((token) => nameTokens.includes(token)).length;
   const exactNameScore = exactNameMatches
     ? 70 + Math.round(exactNameMatches / Math.max(1, queryTokens.length) * 20)
@@ -227,7 +314,7 @@ function productScore(reference: string, product: ProductRow) {
       ? 124
       : compactName.includes(compactReference) ? 116 : 0
     : 0;
-  return Math.max(base, exactNameScore, fuzzyScore, orderedScore, descriptiveScore, compactScore);
+  return Math.max(base, exactAliasScore, exactNameScore, fuzzyScore, orderedScore, descriptiveScore, compactScore);
 }
 
 // Um único termo genérico, como “orgânico”, não é motivo para sugerir produtos
@@ -237,7 +324,7 @@ function productScore(reference: string, product: ProductRow) {
 function isRelevantProductCandidate(reference: string, product: ProductRow, scoreValue: number) {
   const queryTokens = searchTokens(reference).filter((token) => token.length >= 3);
   const nameTokens = searchTokens(product.nome);
-  const identityTokens = [product.nome, product.sku, product.marca]
+  const identityTokens = [product.nome, product.sku, product.marca, ...searchableVoiceAliases(product.voiceAliases).map((alias) => alias.termo)]
     .flatMap((field) => searchTokens(String(field || '')));
   const contextTokens = [product.categoria, product.descricao]
     .flatMap((field) => searchTokens(String(field || '')));
@@ -326,7 +413,7 @@ export async function listVoiceCatalogProducts(db: SupabaseClient, accountId: st
     const page = ranked.slice(safeOffset, safeOffset + safeLimit);
     return { products: page.map(({ row }) => productCandidate(row)), hasMore: ranked.length > safeOffset + safeLimit };
   }
-  let request = db.from('vendas_mobile_produtos')
+  const request = db.from('vendas_mobile_produtos')
     .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
     .eq('conta_id', accountId)
     .eq('ativo', true)
@@ -342,6 +429,9 @@ export async function listVoiceCatalogProducts(db: SupabaseClient, accountId: st
 function customerScore(reference: string, customer: CustomerRow) {
   const fields = customerFields(customer);
   const base = score(reference, fields);
+  const exactAlias = searchableVoiceAliases(customer.voiceAliases)
+    .find((alias) => normalizeVoiceSearch(alias.termo) === normalizeVoiceSearch(reference));
+  if (exactAlias) return 132;
   const queryTokens = searchTokens(reference).filter((token) => token.length >= 3);
   const fieldTokens = fields.flatMap((field) => searchTokens(String(field || '')));
   if (!queryTokens.length || !fieldTokens.length) return base;
@@ -375,7 +465,8 @@ function formatAppointmentDate(value: string, time: string | null) {
 
 function customerFields(customer: CustomerRow) {
   const address = customer.endereco && typeof customer.endereco === 'object' ? customer.endereco : {};
-  return [customer.nome, customer.telefone, customer.email, visibleCustomerNote(customer.observacoes), customer.endereco, ...Object.values(address)];
+  return [customer.nome, customer.telefone, customer.email, visibleCustomerNote(customer.observacoes), customer.endereco,
+    ...searchableVoiceAliases(customer.voiceAliases).map((alias) => alias.termo), ...Object.values(address)];
 }
 
 async function customerLastOrders(db: SupabaseClient, accountId: string, customerIds: string[]) {
@@ -429,14 +520,26 @@ export async function resolveCustomer(db: SupabaseClient, accountId: string, ref
   if (!variants.length) return { status: 'missing' as const, candidates: [] as VoiceEntityCandidate[] };
   const fields = ['nome', 'observacoes', 'email', 'telefone'];
   const expression = variants.flatMap((token) => fields.map((field) => `${field}.ilike.%${token}%`)).join(',');
-  const { data, error } = await db.from('vendas_mobile_clientes')
-    .select('id,nome,telefone,email,observacoes,endereco,ativo')
-    .eq('conta_id', accountId)
-    .eq('ativo', true)
-    .or(expression)
-    .limit(24);
+  const [directResult, aliases] = await Promise.all([
+    db.from('vendas_mobile_clientes')
+      .select('id,nome,telefone,email,observacoes,endereco,ativo')
+      .eq('conta_id', accountId)
+      .eq('ativo', true)
+      .or(expression)
+      .limit(24),
+    matchingVoiceAliases(db, 'vendas_mobile_clientes_busca_voz', accountId, reference, 'cliente_id'),
+  ]);
+  const { data, error } = directResult;
   if (error) throw new Error('Não foi possível pesquisar clientes.');
-  const ranked = (data as CustomerRow[] || [])
+  const aliasIds = [...aliases.keys()];
+  const aliasResult = aliasIds.length
+    ? await db.from('vendas_mobile_clientes')
+      .select('id,nome,telefone,email,observacoes,endereco,ativo')
+      .eq('conta_id', accountId).eq('ativo', true).in('id', aliasIds)
+    : { data: [] as CustomerRow[], error: null };
+  const byId = new Map<string, CustomerRow>([...(data as CustomerRow[] || []), ...(aliasResult.data as CustomerRow[] || [])]
+    .map((row) => [row.id, { ...row, voiceAliases: aliases.get(row.id) || [] }]));
+  const ranked = [...byId.values()]
     .map((row) => ({ row, score: customerScore(reference, row) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score || a.row.nome.localeCompare(b.row.nome, 'pt-BR'));
@@ -495,19 +598,31 @@ export async function resolveProduct(db: SupabaseClient, accountId: string, refe
   // A consulta exata e o catálogo completo viajam juntos. Em pedidos com
   // vários itens, todos compartilham a mesma leitura em andamento e o cache de
   // 30 segundos, mantendo a comparação abrangente sem criar espera em série.
-  const [directResult, catalogResult] = await Promise.all([
+  const [directResult, catalogResult, aliases] = await Promise.all([
     directSearch,
     fetchActiveProducts(db, accountId)
       .then((products) => ({ products, error: null }))
       .catch((error: unknown) => ({ products: [] as ProductRow[], error })),
+    matchingVoiceAliases(db, 'vendas_mobile_produtos_busca_voz', accountId, reference, 'produto_id'),
   ]);
   const { data, error } = directResult;
   if (error && catalogResult.error) throw new Error('Não foi possível pesquisar produtos.');
+  const aliasIds = [...aliases.keys()];
+  const aliasResult = aliasIds.length
+    ? await db.from('vendas_mobile_produtos')
+      .select('id,nome,sku,marca,categoria,descricao,preco,preco_custo,ativo')
+      .eq('conta_id', accountId).eq('ativo', true).in('id', aliasIds)
+    : { data: [] as ProductRow[], error: null };
   const rank = (rows: ProductRow[]) => rows
     .map((row) => ({ row, score: productScore(reference, row) }))
     .filter((entry) => isRelevantProductCandidate(reference, entry.row, entry.score))
     .sort((a, b) => b.score - a.score || a.row.nome.localeCompare(b.row.nome, 'pt-BR'));
-  const byId = new Map<string, ProductRow>([...catalogResult.products, ...(data as ProductRow[] || [])].map((row) => [row.id, row]));
+  const byId = new Map<string, ProductRow>([
+    ...catalogResult.products,
+    ...(data as ProductRow[] || []),
+    ...(aliasResult.data as ProductRow[] || []),
+  ]
+    .map((row) => [row.id, { ...row, voiceAliases: aliases.get(row.id) || [] }]));
   const ranked = rank([...byId.values()]);
   const candidates = ranked.slice(0, 8).map(({ row }) => productCandidate(row));
   if (!ranked.length) return { status: 'missing' as const, candidates };
@@ -581,6 +696,17 @@ function selectedEntityId(selections: VoiceEntitySelection[], type: VoiceEntityS
   const normalizedReference = normalizeVoiceSearch(reference);
   return selections.find((selection) => selection.type === type
     && normalizeVoiceSearch(selection.reference) === normalizedReference)?.id || '';
+}
+
+function voiceLearningsForAction(
+  selections: VoiceEntitySelection[],
+  customerId: string,
+  productIds: string[] = [],
+) {
+  const validProducts = new Set(productIds);
+  return selections.filter((selection) => selection.type === 'customer'
+    ? selection.id === customerId
+    : validProducts.has(selection.id)).slice(0, 20);
 }
 
 async function resolveRequiredCustomer(
@@ -672,6 +798,7 @@ export async function buildVoiceResponse(args: {
       customerId: customer.id, customerName: customer.nome, items: [], amount: draft.amount,
       expectedTotal: null, expectedBalance: financial.balance, paymentMethod: draft.paymentMethod,
       paymentDate: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
+      voiceLearnings: voiceLearningsForAction(selections, customer.id),
     };
     return { kind: 'confirmation', title: 'Registrar pagamento', message: `Cliente: ${customer.nome}\nValor: ${formatMoney(draft.amount)}\nForma: ${draft.paymentMethod}\nSaldo anterior: ${formatMoney(financial.balance)}\nSaldo após pagamento: ${formatMoney(Math.max(0, financial.balance - draft.amount))}`, action, selections, draft, transcription, metrics };
   }
@@ -685,6 +812,7 @@ export async function buildVoiceResponse(args: {
       expectedTotal: null, expectedBalance: null, paymentMethod: '', paymentDate: null,
       scheduledDate: draft.scheduledDate, scheduledTime: draft.scheduledTime,
       appointmentType, appointmentNotes: draft.appointmentNotes,
+      voiceLearnings: voiceLearningsForAction(selections, customer.id),
     };
     return {
       kind: 'confirmation', title: `Agendar ${appointmentType.toLocaleLowerCase('pt-BR')}`,
@@ -723,6 +851,7 @@ export async function buildVoiceResponse(args: {
     customerId: customer.id, customerName: customer.nome, items: resolvedItems,
     amount: null, expectedTotal: total, expectedBalance: null,
     paymentMethod: draft.intent === 'create_consignment' ? 'Consignado' : 'Venda', paymentDate: null,
+    voiceLearnings: voiceLearningsForAction(selections, customer.id, resolvedItems.map((item) => item.productId)),
   };
   const consignment = draft.intent === 'create_consignment';
   return { kind: 'confirmation', title: consignment ? 'Criar consignado' : 'Criar pedido', message: `Cliente: ${customer.nome}\n${resolvedItems.map((item) => `${item.name} — ${item.quantity} × ${formatMoney(item.unitPrice)}`).join('\n')}\n${consignment ? 'Total consignado' : 'Total'}: ${formatMoney(total)}`, action, selections, draft, transcription, metrics };

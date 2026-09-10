@@ -60,6 +60,10 @@ export default function AvantaVendasPage() {
         rel="stylesheet"
         href={`${caminhoRecursos}/styles.css?v=${assetVersion}`}
       />
+      <link
+        rel="stylesheet"
+        href={`${caminhoRecursos}/avanta-voice-actions.css?v=${assetVersion}`}
+      />
       {[
         'vendor/supabase.min.js',
         'config.js',

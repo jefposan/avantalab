@@ -16,6 +16,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
   endereço absoluto do padrão ou invocar a skill pessoal `$padrao-avanta`.
 - Antes de concluir, executar `npm run verificar:padrao-avanta`.
 
+## Padrão de ações por voz com IA
+
+- Antes de criar ou alterar botão, captura, movimento, estado, card,
+  desambiguação, confirmação, pendência ou resultado de comando por voz, ler
+  integralmente `docs/padrao-avanta/acoes-por-voz.md`.
+- Reutilizar o controlador, os estilos e o contrato em
+  `app/padrao-avanta/acoes-por-voz/`; não manter cópia local em outro sistema.
+
 ## Versionamento do AvantaLab
 
 - A versao oficial do sistema fica em `app/lib/version.ts`.

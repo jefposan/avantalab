@@ -1,6 +1,21 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.25.0.05 -->
+<!-- ava-version: 1.26.0 -->
+
+> Revisão 1.26.0-av145: recursos do AvantaVendas renovados para consumir o
+> controlador e os estilos centrais de ações por voz do PADRÃO AVANTA.
+
+> Revisão 1.26.0: a Solicitação por Voz usa um índice oculto de nomes oficiais,
+> marca, categoria, apresentação e variações seguras geradas automaticamente
+> para cada produto do catálogo. Se a pessoa escolher manualmente um produto
+> ou cliente e depois confirmar o lançamento, essa forma de falar é aprendida
+> somente naquela conta; após duas confirmações reais da mesma associação, ela
+> passa a ter prioridade. Cancelamentos e solicitações não concluídas não geram
+> aprendizado. A preparação do índice acontece em segundo plano e não exige
+> cadastrar apelidos manualmente.
+> O mesmo botão, estados, movimentos, cards, confirmação, pendências e retorno
+> passam a vir do componente oficial de ações por voz do PADRÃO AVANTA, sem
+> alterar as solicitações já salvas nesta conta.
 
 > Revisão 1.25.0.05: a correção visual do hover no Menu da Gestão não altera
 > o fluxo operacional do AvantaVendas.
@@ -197,7 +212,7 @@
 > Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
 > aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
 > operacional no AvantaVendas.
-<!-- avantavendas-asset-revision: 144 -->
+<!-- avantavendas-asset-revision: 145 -->
 
 > Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
 > catálogo ativo completo da conta sem permitir que uma palavra apenas parecida

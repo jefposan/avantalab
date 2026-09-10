@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.25.0.05 -->
+<!-- ava-version: 1.26.0 -->
+
+> Revisão 1.26.0: ao salvar ou atualizar um produto em **Conteúdo
+> AvantaVendas**, o sistema prepara automaticamente e em segundo plano as
+> formas de localização usadas pela Solicitação por Voz. Não existe campo
+> adicional para preencher e a publicação do produto não fica aguardando a IA.
+> A experiência de voz foi centralizada no PADRÃO AVANTA; não há mudança na
+> edição do catálogo nem nova configuração manual para a Gestão.
 
 > Revisão 1.25.0.05: a folga e o hover dos botões principais do Menu da Gestão
 > são aplicados diretamente a cada atalho; não há mudança nos fluxos operacionais.

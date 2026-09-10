@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import { getVoiceSalesContext, isVoiceCommandEnabled } from '@/app/lib/vendas-voice/auth';
 import { buildVoiceResponse } from '@/app/lib/vendas-voice/data';
 import { interpretVoiceCommand } from '@/app/lib/vendas-voice/interpreter';
 import { logVoiceLab } from '@/app/lib/vendas-voice/logger';
 import { validateVoiceIntentPayload } from '@/app/lib/vendas-voice/schema';
 import type { VoiceEntityCandidate, VoiceEntitySelection, VoiceIntentPayload, VoiceMetrics } from '@/app/lib/vendas-voice/types';
+import { enrichPendingCatalogForAccount } from '@/app/lib/vendas-voice/catalog-index';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -100,6 +101,10 @@ export async function POST(request: Request) {
       interpretationMs: metrics.interpretationMs, disambiguation: result.kind === 'clarification',
       inputTokens: metrics.inputTokens, outputTokens: metrics.outputTokens, totalTokens: metrics.totalTokens,
       success: true,
+    });
+    after(async () => {
+      try { await enrichPendingCatalogForAccount(context.admin, accountId, 8); }
+      catch (error) { console.warn('[voice-catalog-index] Atualização oportunista adiada.', error instanceof Error ? error.message : error); }
     });
     return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store, private' } });
   } catch (error) {

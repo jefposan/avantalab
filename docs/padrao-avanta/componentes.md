@@ -94,6 +94,21 @@ testes. Esta seção resume apenas a face dos controles.
 - Usar apenas quando a rolagem assistida facilitar uma área longa ou quando for
   solicitada; o botão não substitui a rolagem nativa.
 
+### Ações por voz com IA
+
+- Reutilizar os ativos e o contrato em
+  `app/padrao-avanta/acoes-por-voz/`; não copiar controlador, estilos, cards ou
+  movimentos para o módulo consumidor.
+- O componente compartilhado controla captura, estados, dúvida contextual,
+  escolha manual, confirmação, persistência e feedback. O módulo fornece somente
+  o adaptador autenticado para transcrever, resolver e executar suas funções.
+- O acionador permanece imóvel em todos os estados. A onda reage ao volume real,
+  sem animação na ausência de voz e sem revelar recorte quadrado.
+- Alterações exigem confirmação; o sucesso usa o aviso inferior padrão e oferece
+  comprovante quando houver. Pendências ficam separadas de uma nova gravação.
+- O contrato completo, textos, segurança, catálogo e matriz de testes estão em
+  `acoes-por-voz.md`.
+
 ## Estados assíncronos
 
 - Desabilitar submissão duplicada e indicar ação em andamento.

@@ -1,6 +1,6 @@
 # PADRÃO AVANTA
 
-Versão oficial: **1.7.0**
+Versão oficial: **1.8.0**
 Identificador: `PADRAO-AVANTA`
 Manifesto: `docs/padrao-avanta/manifest.json`
 
@@ -28,6 +28,7 @@ antes de criar uma convenção isolada. Não duplicar componentes existentes.
 | Card geral | `componentes.md`, `identidade-visual.md` e `acessibilidade.md` |
 | AvantaCard/AvantaShell solicitado | documentos de card geral e `planejamento/padrao-avanta-card.md` |
 | Preferências do usuário/empresa | `preferencias.md` |
+| Ações ou comandos por voz com IA | `acoes-por-voz.md`, `componentes.md`, `acessibilidade.md` e `preferencias.md` |
 | Novo módulo ou sistema plugado | todos os documentos, especialmente `modulos.md` |
 | Revisão de uma tela existente | documentos da área alterada e `checklist.md` |
 | Login, cadastro, recuperação ou OAuth | `autenticacao.md`, `componentes.md`, `campos-formatacao.md` e `acessibilidade.md` |
@@ -43,6 +44,8 @@ antes de criar uma convenção isolada. Não duplicar componentes existentes.
   `app/components/AuthCard.tsx`, `app/hooks/useAuth.ts`,
   `public/mobile-app.js` e `app/avantavendas/sistema/`.
 - Próxima rolagem: `app/components/BotaoProximoScroll.tsx`.
+- Ações por voz: contrato e ativos centrais em
+  `app/padrao-avanta/acoes-por-voz/`; especificação em `acoes-por-voz.md`.
 - Versão do produto: `app/lib/version.ts`.
 
 ## Fluxo obrigatório

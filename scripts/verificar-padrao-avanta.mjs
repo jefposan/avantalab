@@ -47,6 +47,41 @@ if (manifesto) {
     falhas.push('A regra condicional de uso do AvantaCard não está documentada.');
   }
 
+  const acoesPorVoz = await ler('docs/padrao-avanta/acoes-por-voz.md');
+  for (const contrato of [
+    'window.AvantaVoiceActions.open(adapter)',
+    'Sem voz, sem movimento',
+    'Qualquer escrita exige confirmação explícita',
+    'É proibido copiar o JavaScript',
+    'aliases semânticos gerados por IA em segundo plano',
+  ]) {
+    if (!acoesPorVoz.includes(contrato)) {
+      falhas.push(`Contrato obrigatório ausente em acoes-por-voz.md: ${contrato}`);
+    }
+  }
+
+  const controladorVoz = await ler('app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js');
+  const estilosVoz = await ler('app/padrao-avanta/acoes-por-voz/avanta-voice-actions.css');
+  const contratoVoz = await ler('app/padrao-avanta/acoes-por-voz/contract.ts');
+  for (const referencia of [
+    'window.AvantaVoiceActions = publicApi',
+    'getByteTimeDomainData',
+    "button('Salvar para depois'",
+    "rotulo: 'Compartilhar comprovante'",
+  ]) {
+    if (!controladorVoz.includes(referencia)) {
+      falhas.push(`Controlador oficial de ações por voz incompleto: ${referencia}`);
+    }
+  }
+  for (const referencia of ['.mobile-voice-command-trigger', '.mobile-voice-command-help', '.voice-pending-list']) {
+    if (!estilosVoz.includes(referencia)) {
+      falhas.push(`Estilo oficial de ações por voz incompleto: ${referencia}`);
+    }
+  }
+  if (!contratoVoz.includes('AvantaVoiceActionsAdapter')) {
+    falhas.push('Contrato TypeScript oficial de ações por voz ausente.');
+  }
+
   const autenticacao = await ler('docs/padrao-avanta/autenticacao.md');
   for (const contrato of [
     'uma única fonte de estado social',
@@ -89,11 +124,29 @@ if (manifesto) {
       falhas.push(`Referência de autenticação do AvantaVendas ausente: ${referencia}`);
     }
   }
+  for (const referencia of [
+    'window.AvantaVoiceActions?.open',
+    '/avantavendas/recursos/avanta-voice-actions.js',
+    "storageNamespace: 'avantalab.vendas.voice_command.official.v1'",
+  ]) {
+    if (!loginVendas.includes(referencia)) {
+      falhas.push(`AvantaVendas não usa o padrão central de ações por voz: ${referencia}`);
+    }
+  }
+
+  const estilosLocaisVendas = await ler('app/avantavendas/sistema/styles.css');
+  if (/\.mobile-voice-command-trigger\s*\{/.test(estilosLocaisVendas)) {
+    falhas.push('AvantaVendas mantém uma cópia local dos estilos oficiais de ações por voz.');
+  }
 }
 
 const agents = await ler('AGENTS.md');
 if (!agents.includes('PADRAO-AVANTA') || !agents.includes('docs/padrao-avanta/README.md')) {
   falhas.push('AGENTS.md não obriga a leitura do PADRÃO AVANTA.');
+}
+if (!agents.includes('docs/padrao-avanta/acoes-por-voz.md')
+  || !agents.includes('app/padrao-avanta/acoes-por-voz/')) {
+  falhas.push('AGENTS.md não obriga o uso do padrão central de ações por voz.');
 }
 
 const packageJson = await ler('package.json');

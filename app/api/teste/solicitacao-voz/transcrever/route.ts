@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getVoiceSalesContext, isVoiceCommandEnabled } from '@/app/lib/vendas-voice/auth';
+import { listVoiceTranscriptionHints } from '@/app/lib/vendas-voice/data';
 import { logVoiceLab } from '@/app/lib/vendas-voice/logger';
 
 export const runtime = 'nodejs';
@@ -25,12 +26,18 @@ export async function POST(request: Request) {
     if (!apiKey) return NextResponse.json({ message: 'A transcrição ainda não está configurada no servidor.' }, { status: 503 });
     const transcriptionForm = new FormData();
     transcriptionForm.append('file', audio, audio.name || 'solicitacao-voz.webm');
-    // Modelo especializado de alta precisão. O contexto é curto e restrito ao
-    // domínio: não envia clientes ou catálogo da conta à OpenAI.
+    // Modelo especializado de alta precisão. O contexto é curto: não envia
+    // clientes nem linhas do catálogo, somente poucos termos de produtos já
+    // validados para melhorar a grafia da transcrição.
     transcriptionForm.append('model', process.env.OPENAI_VOICE_TRANSCRIPTION_MODEL || 'gpt-transcribe');
     transcriptionForm.append('languages[]', 'pt');
-    transcriptionForm.append('prompt', process.env.OPENAI_VOICE_TRANSCRIPTION_CONTEXT || TRANSCRIPTION_CONTEXT);
-    TRANSCRIPTION_KEYWORDS.forEach((keyword) => transcriptionForm.append('keywords[]', keyword));
+    const learnedHints = await listVoiceTranscriptionHints(context.db, accountId, 24).catch(() => [] as string[]);
+    const baseContext = process.env.OPENAI_VOICE_TRANSCRIPTION_CONTEXT || TRANSCRIPTION_CONTEXT;
+    transcriptionForm.append('prompt', learnedHints.length
+      ? `${baseContext} Termos relevantes desta conta: ${learnedHints.join(', ')}.`
+      : baseContext);
+    [...TRANSCRIPTION_KEYWORDS, ...learnedHints].slice(0, 40)
+      .forEach((keyword) => transcriptionForm.append('keywords[]', keyword));
     const startedAt = performance.now();
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',

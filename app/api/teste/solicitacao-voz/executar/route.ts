@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { canOperateVoiceSales, getVoiceSalesContext, isVoiceCommandEnabled } from '@/app/lib/vendas-voice/auth';
 import { customerBalance } from '@/app/lib/vendas-voice/data';
 import { logVoiceLab } from '@/app/lib/vendas-voice/logger';
@@ -34,7 +35,35 @@ function validateAction(value: unknown): VoiceConfirmationAction | null {
     if (action.scheduledTime && !CLOCK_TIME.test(String(action.scheduledTime))) return null;
     if (!APPOINTMENT_TYPES.has(String(action.appointmentType || ''))) return null;
   }
-  return action;
+  const voiceLearnings = Array.isArray(action.voiceLearnings)
+    ? action.voiceLearnings.slice(0, 20).flatMap((learning) => {
+      const type = String(learning?.type || '');
+      const id = String(learning?.id || '');
+      const reference = String(learning?.reference || '').trim().slice(0, 160);
+      return ['product', 'customer'].includes(type) && UUID.test(id) && reference
+        ? [{ type: type as 'product' | 'customer', id, reference }]
+        : [];
+    })
+    : [];
+  return { ...action, voiceLearnings };
+}
+
+async function confirmVoiceLearnings(
+  db: SupabaseClient,
+  action: VoiceConfirmationAction,
+  productIds: string[] = [],
+) {
+  const allowedProducts = new Set(productIds);
+  const learnings = (action.voiceLearnings || []).filter((learning) => learning.type === 'customer'
+    ? learning.id === action.customerId
+    : allowedProducts.has(learning.id));
+  if (!learnings.length) return;
+  const { error } = await db.rpc('vendas_mobile_confirmar_aprendizado_busca_voz_rpc', {
+    p_conta_id: action.accountId,
+    p_operacao_id: action.operationId,
+    p_aprendizados: learnings,
+  });
+  if (error) console.warn('[voice-learning] O lançamento foi concluído, mas o aprendizado será tentado novamente.', error.message);
 }
 
 export async function POST(request: Request) {
@@ -86,6 +115,7 @@ export async function POST(request: Request) {
         || verifiedAppointment.tipo !== appointmentType) {
         throw new Error('O agendamento foi enviado, mas o servidor não conseguiu conferir sua gravação. Consulte a Agenda antes de tentar novamente.');
       }
+      await confirmVoiceLearnings(context.db, action);
       logVoiceLab({ event: 'executed', userId, accountId, intent, confirmed: true, success: true });
       return NextResponse.json({
         title: 'Agendamento criado com sucesso',
@@ -141,6 +171,7 @@ export async function POST(request: Request) {
         || verifiedOrder.itens.length !== items.length) {
         throw new Error('O pedido foi enviado, mas o servidor não conseguiu conferir sua gravação. Consulte os pedidos antes de tentar novamente.');
       }
+      await confirmVoiceLearnings(context.db, action, productIds);
       logVoiceLab({ event: 'executed', userId, accountId, intent, confirmed: true, success: true });
       return NextResponse.json({
         title: consignment ? 'Consignado criado com sucesso' : 'Pedido criado com sucesso',
@@ -182,6 +213,7 @@ export async function POST(request: Request) {
       || moneyCents(verifiedPayment.valor) !== moneyCents(amount)) {
       throw new Error('O pagamento foi enviado, mas o servidor não conseguiu conferir sua gravação. Consulte os pagamentos antes de tentar novamente.');
     }
+    await confirmVoiceLearnings(context.db, action);
     logVoiceLab({ event: 'executed', userId, accountId, intent, confirmed: true, success: true });
     return NextResponse.json({
       title: 'Pagamento registrado com sucesso',

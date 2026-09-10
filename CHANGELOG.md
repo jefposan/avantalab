@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.26.0-av145 - 2026-09-10
+- **Recursos do AvantaVendas**: cache renovado para carregar o componente e os
+  estilos centrais de ações por voz do PADRÃO AVANTA.
+
+## 1.26.0 - 2026-09-10
+- **Padrão Avanta de ações por voz**: botão, ajuda, movimento por áudio real,
+  estados, cards, desambiguação, edição, confirmação, pendências e resultado
+  agora usam um único componente central reutilizável por outros sistemas.
+  O AvantaVendas consome essa fonte sem alterar o fluxo aprovado (recursos
+  renovados em `av145`).
+- **Solicitação por Voz**: a localização de produtos ganhou um índice oculto com nomes oficiais, marca, categoria, apresentação e aliases de fala gerados automaticamente. O enriquecimento por IA acontece em segundo plano, sem criar campos para preenchimento manual nem atrasar a gravação do comando.
+- **Aprendizado controlado**: quando uma pessoa corrige manualmente um cliente ou produto e conclui o lançamento, a associação é reforçada naquela conta; após duas confirmações reais, passa a ter prioridade. Escolhas canceladas ou lançamentos não confirmados não ensinam o sistema.
+- **Segurança e custo**: o modelo recebe somente pequenos lotes de produtos reais e devolve saída estruturada validada; não executa consultas nem grava lançamentos. A transcrição recebe no máximo um vocabulário curto já aprendido, nunca o catálogo inteiro.
+
 ## 1.25.0.05 - 2026-09-09
 - **Menu da Gestão**: a redução de largura e o deslocamento no hover agora são aplicados diretamente a cada atalho principal, garantindo a folga lateral mesmo com as utilidades de largura do menu.
 

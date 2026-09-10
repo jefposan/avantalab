@@ -1,7 +1,12 @@
 (() => {
   'use strict';
 
-  const SESSION_PREFIX = 'avantalab.vendas.voice_command.official.v1';
+  // Implementação executável oficial do PADRÃO AVANTA para ações por voz.
+  // Adaptadores de produto fornecem dados e execução; este componente controla
+  // captura, estados, desambiguação, confirmação e continuidade da solicitação.
+  const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.0.0';
+
+  const DEFAULT_SESSION_PREFIX = 'avantalab.voice_actions.official.v1';
   const MAX_RECORDING_MS = 45000;
   const state = {
     host: null, root: null, options: null, mount: null, phase: 'idle', current: null, error: '',
@@ -42,7 +47,10 @@
     return node;
   }
 
-  function sessionKey() { return `${SESSION_PREFIX}:${state.options?.account?.id || 'none'}`; }
+  function sessionKey() {
+    const prefix = state.options?.storageNamespace || DEFAULT_SESSION_PREFIX;
+    return `${prefix}:${state.options?.account?.id || 'none'}`;
+  }
 
   function newPendingId() {
     return crypto?.randomUUID?.() || `voz-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -262,9 +270,6 @@
       setPhase(result.kind === 'clarification' ? 'clarification' : result.kind === 'confirmation' ? 'confirmation' : 'done');
     } catch (error) { if (!wasCancelled(error)) setPhase('error', error instanceof Error ? error.message : 'Não foi possível atualizar o pedido.'); }
   }
-
-  function money(value) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0)); }
-  function dateTime(value) { const date = new Date(String(value || '')); return Number.isNaN(date.getTime()) ? 'Não informado' : date.toLocaleString('pt-BR'); }
 
   function ensureMount() {
     const mount = document.getElementById(state.options?.mountId || '') || state.mount || state.options?.mount;
@@ -555,12 +560,6 @@
     } catch (error) { state.current = confirmation; setPhase('error', error instanceof Error ? error.message : 'Não foi possível executar a solicitação.'); }
   }
 
-  function reset() {
-    discardCurrentPending();
-    state.current = null;
-    setPhase('idle');
-    void startRecording();
-  }
   function cancel() {
     const current = state.current;
     const request = state.options?.request;
@@ -581,7 +580,10 @@
     state.host?.remove();
     mount?.classList?.remove('is-active');
     Object.assign(state, { host: null, root: null, options: null, mount: null, phase: 'idle', current: null, error: '', requestAbort: null, requestStage: null, pendingId: null });
-    requestAnimationFrame(() => { trigger?.isConnected && trigger.focus({ preventScroll: true }); onPendingChange?.(); });
+    requestAnimationFrame(() => {
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+      onPendingChange?.();
+    });
   }
 
   function open(options) {
@@ -596,6 +598,13 @@
     else requestAnimationFrame(() => shadow.querySelector('.voice,.candidate,.primary,.close')?.focus());
   }
 
-  window.AvantaVoiceCommand = Object.freeze({ open, close });
+  const publicApi = Object.freeze({
+    version: AVANTA_VOICE_ACTIONS_STANDARD_VERSION,
+    open,
+    close,
+  });
+  window.AvantaVoiceActions = publicApi;
+  // Compatibilidade temporária com integrações anteriores à oficialização.
+  window.AvantaVoiceCommand = publicApi;
   window.addEventListener('pagehide', () => stopMedia(true));
 })();

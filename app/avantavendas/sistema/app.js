@@ -2657,15 +2657,15 @@ function cancelarSolicitacaoVozPendente(id) {
 }
 
 function carregarModuloSolicitacaoVozVendas() {
-  if (window.AvantaVoiceCommand?.open) return Promise.resolve(window.AvantaVoiceCommand);
+  if (window.AvantaVoiceActions?.open) return Promise.resolve(window.AvantaVoiceActions);
   if (carregamentoSolicitacaoVozVendas) return carregamentoSolicitacaoVozVendas;
   carregamentoSolicitacaoVozVendas = new Promise((resolver, rejeitar) => {
     const script = document.createElement('script');
     const versao = encodeURIComponent(window.__VENDAS_MOBILE_VERSION__ || Date.now());
-    script.src = `/avantavendas/recursos/voice-command.js?v=${versao}`;
+    script.src = `/avantavendas/recursos/avanta-voice-actions.js?v=${versao}`;
     script.async = true;
-    script.onload = () => window.AvantaVoiceCommand?.open
-      ? resolver(window.AvantaVoiceCommand)
+    script.onload = () => window.AvantaVoiceActions?.open
+      ? resolver(window.AvantaVoiceActions)
       : rejeitar(new Error('O módulo de voz não iniciou corretamente.'));
     script.onerror = () => rejeitar(new Error('Não foi possível carregar a solicitação por voz.'));
     document.body.appendChild(script);
@@ -2733,6 +2733,7 @@ async function abrirSolicitacaoVozVendas(acionador = null, pendenciaId = '') {
       mountId: 'voiceCommandSalaMount',
       autoStart: !pendenciaId,
       pendingId: pendenciaId,
+      storageNamespace: 'avantalab.vendas.voice_command.official.v1',
       account: {
         id: state.contaVendasAtiva?.id || window.VendasDb?.contaAtivaId?.() || '',
         label: state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'Conta ativa',
