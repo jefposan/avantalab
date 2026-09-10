@@ -77,6 +77,7 @@ export async function handleCommercialFiscalRulesRequest({ request, runtime, com
       idempotencyKey,
       input: {
         matrix: body.matrix,
+        documentScope: body.documentScope,
         fiscalResponsible: body.fiscalResponsible,
         reviewedAt: body.reviewedAt,
         taxReviewConfirmed: body.taxReviewConfirmed === true,

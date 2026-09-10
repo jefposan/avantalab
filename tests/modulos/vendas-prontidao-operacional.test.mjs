@@ -72,7 +72,7 @@ test('cliente direto aceita CPF válido e permanece vinculado ao perfil', async 
   } });
   const result = await service.create({ context, input: {
     documentType: 'cpf', document: '529.982.247-25', legalName: 'Maria da Silva', displayName: 'Maria da Silva',
-    stateRegistrationIndicator: 'nao_contribuinte', email: 'maria@example.com', phone: '11999999999',
+    stateRegistrationIndicator: 'nao_contribuinte', consumerFinal: true, email: 'maria@example.com', phone: '11999999999',
     postalCode: '01310100', street: 'Avenida Paulista', number: '100', district: 'Bela Vista', city: 'São Paulo', cityCode: '3550308', state: 'SP',
   } });
   assert.equal(result.ok, true);

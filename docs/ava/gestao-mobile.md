@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.26.0.02 -->
+<!-- ava-version: 1.27.0 -->
+
+> Revisão 1.27.0: a integridade e o histórico das regras fiscais foram
+> reforçados no módulo Vendas e Serviços. A Gestão Mobile não ganhou nova ação;
+> oriente a revisão pelo módulo web e não confirme enquadramentos tributários
+> sem o responsável fiscal da empresa.
 
 > Revisão 1.26.0.02: o refinamento visual da revisão de regras fiscais pertence
 > à tela de Vendas e Serviços e não altera o fluxo operacional da Gestão Mobile.

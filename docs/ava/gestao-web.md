@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.26.0.02 -->
+<!-- ava-version: 1.27.0 -->
+
+> Revisão 1.27.0: em **Vendas e Serviços**, o cadastro do cliente pergunta
+> separadamente a situação da inscrição estadual e se ele é consumidor final.
+> Na publicação das regras fiscais, todos os tipos de nota habilitados precisam
+> estar revisados, com responsável e data válida. O sistema bloqueia CFOP
+> incompleto, condição inválida, data futura e falta de inscrição estadual
+> quando a regra escolhida a exigir. Nenhuma regra inicial é confirmada
+> automaticamente: a decisão tributária continua sendo do responsável fiscal.
 
 > Revisão 1.26.0.02: em **Vendas e Serviços**, a tela **Revisar regras fiscais**
 > ficou mais compacta. As ações Adicionar, Duplicar e Excluir agora aparecem

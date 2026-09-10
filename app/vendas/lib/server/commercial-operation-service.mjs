@@ -108,6 +108,7 @@ function customerSnapshot(customer) {
     stateRegistration: customer.stateRegistration || '',
     municipalRegistration: customer.municipalRegistration || '',
     stateRegistrationIndicator: customer.stateRegistrationIndicator,
+    consumerFinal: customer.consumerFinal === true,
     email: customer.email || '',
     phone: customer.phone || '',
     address: {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.27.0 - 2026-09-10
+- **Integridade fiscal**: consumidor final passa a ser uma informação própria do cliente, independente da situação da inscrição estadual, e alimenta corretamente o `indFinal` da NF-e.
+- **Regras fiscais**: finalidade da emissão e exigência de inscrição estadual agora são efetivamente aplicadas pelo resolvedor server-side; valores desconhecidos, CFOP incompleto, escopo vazio e data futura bloqueiam a publicação.
+- **Publicação segura**: todos os tipos de nota habilitados precisam ter suas regras ativas revisadas. Cada publicação mantém uma cópia integral, imutável e vinculada ao perfil empresarial, inclusive para repetição idempotente exata.
+- **Compatibilidade**: cadastros e matrizes anteriores são migrados sem perder a interpretação já usada, mas permanecem sujeitos à confirmação fiscal responsável antes da emissão.
+
 ## 1.26.0.02 - 2026-09-10
 - **Revisão de regras fiscais**: a edição ficou mais compacta, com contexto e indicadores condensados, campos reorganizados e as ações Adicionar, Duplicar e Excluir reunidas na mesma linha.
 - **Responsividade**: o diálogo preserva a leitura no celular, mantém as três ações agrupadas e usa uma coluna para os campos de revisão em telas estreitas.

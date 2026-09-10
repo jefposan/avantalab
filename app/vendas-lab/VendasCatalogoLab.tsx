@@ -123,6 +123,7 @@ function analisarPublicacaoRegrasFiscais(data: any) {
     idempotencyKey: data.requestId as string,
     expectedVersion: data.expectedVersion as number,
     matrix: data.matrix,
+    documentScope: Array.isArray(data.documentScope) ? data.documentScope : [],
     fiscalResponsible: String(data.fiscalResponsible || '').slice(0, 160),
     reviewedAt: String(data.reviewedAt || '').slice(0, 40),
     taxReviewConfirmed: data.taxReviewConfirmed === true,

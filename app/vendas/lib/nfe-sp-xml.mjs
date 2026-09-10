@@ -67,8 +67,8 @@ function destinationCode(issuerUf, recipientUf) {
 function recipientStateRegistrationIndicator(profile, stateRegistration) {
   const normalizedProfile = text(profile).toLocaleLowerCase('pt-BR');
   const normalizedRegistration = text(stateRegistration).toLocaleLowerCase('pt-BR');
+  if (normalizedProfile.includes('isento') || normalizedRegistration === 'isento') return '2';
   if (normalizedProfile.includes('contribuinte') && !normalizedProfile.includes('não')) return '1';
-  if (normalizedRegistration === 'isento') return '2';
   return '9';
 }
 
@@ -464,7 +464,7 @@ export function prototypeDraftToNfeSpXmlInput({ draft, client, config, issuedAt 
     series: issuer.series || draft?.series,
     number: config?.testDocumentNumber,
     numericCode: config?.testNumericCode,
-    consumerFinal: client?.fiscal === 'Consumidor final',
+    consumerFinal: client?.consumerFinal === true || (client?.consumerFinal == null && client?.fiscal === 'Consumidor final'),
     presence: draft?.operationContext?.presence,
     issuer: {
       document: issuer.document,

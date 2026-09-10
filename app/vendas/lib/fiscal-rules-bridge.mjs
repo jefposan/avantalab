@@ -40,14 +40,15 @@ export function parseFiscalRulesSnapshot(value) {
 export function createFiscalRulesSaveRequest(input = {}) {
   const requestId = text(input.requestId, 120);
   const expectedVersion = Number(input.expectedVersion);
-  const matrix = normalizeFiscalMatrix(input.matrix);
+  const matrix = normalizeFiscalMatrix({ ...input.matrix, documentScope: input.documentScope });
   if (!REQUEST_ID.test(requestId) || !Number.isInteger(expectedVersion) || expectedVersion < 0
-    || !matrix.rules.length || matrix.rules.length > 100) return null;
+    || !matrix.documentScope.length || !matrix.rules.length || matrix.rules.length > 100) return null;
   return Object.freeze({
     type: SAVE_REQUEST,
     requestId,
     expectedVersion,
     matrix,
+    documentScope: matrix.documentScope,
     fiscalResponsible: text(input.fiscalResponsible || matrix.reviewedBy, 160),
     reviewedAt: text(input.reviewedAt || matrix.reviewedAt, 40),
     taxReviewConfirmed: input.taxReviewConfirmed === true,

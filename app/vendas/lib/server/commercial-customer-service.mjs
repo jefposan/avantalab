@@ -73,6 +73,7 @@ export function normalizeCommercialCustomerInput(input = {}) {
     stateRegistration: text(input.stateRegistration, 40),
     municipalRegistration: text(input.municipalRegistration, 40),
     stateRegistrationIndicator,
+    consumerFinal: input.consumerFinal === true,
     email: text(input.email, 254).toLowerCase(),
     phone: digits(input.phone).slice(0, 15),
     primaryContact: text(input.primaryContact, 120),
@@ -94,7 +95,8 @@ export function normalizeCommercialCustomerInput(input = {}) {
     && normalized.district && normalized.city && normalized.cityCode.length === 7
     && /^[A-Z]{2}$/.test(normalized.state)
   );
-  const stateRegistrationReady = stateRegistrationIndicator !== 'contribuinte_icms' || Boolean(normalized.stateRegistration);
+  const stateRegistrationReady = stateRegistrationIndicator !== 'contribuinte_icms'
+    || Boolean(normalized.stateRegistration && normalized.stateRegistration.toLocaleLowerCase('pt-BR') !== 'isento');
   if (!fiscalAddressReady || !stateRegistrationReady) normalized.status = 'revisar_cadastro';
   return { normalized, fiscalReady: fiscalAddressReady && stateRegistrationReady };
 }
@@ -103,6 +105,7 @@ export function validateCommercialCustomerInput(input = {}) {
   const { normalized, fiscalReady } = normalizeCommercialCustomerInput(input);
   const errors = [];
   const warnings = [];
+  if (typeof input.consumerFinal !== 'boolean') errors.push(error('AV-COMMERCIAL-CONSUMER-FINAL', 'consumerFinal', 'Informe se o cliente é consumidor final.'));
   if (!['cnpj', 'cpf'].includes(normalized.documentType)) errors.push(error('AV-COMMERCIAL-DOCUMENT-TYPE', 'documentType', 'Selecione Pessoa jurídica ou Pessoa física.'));
   if (normalized.documentType === 'cnpj' && !isValidCnpj(normalized.document)) errors.push(error('AV-COMMERCIAL-CNPJ', 'document', 'Informe um CNPJ válido.'));
   if (normalized.documentType === 'cpf' && !isValidCpf(normalized.document)) errors.push(error('AV-COMMERCIAL-CPF', 'document', 'Informe um CPF válido.'));

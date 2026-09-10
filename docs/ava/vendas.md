@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.26.0.02 -->
+<!-- ava-version: 1.27.0 -->
+
+> Revisão 1.27.0: **Consumidor final** agora é informado separadamente da
+> situação da inscrição estadual no cadastro do cliente. Ao publicar regras,
+> todos os tipos de nota habilitados precisam ter regras ativas revisadas,
+> responsável e data válida. CFOP incompleto, opções desconhecidas, data futura
+> e inscrição estadual obrigatória ausente bloqueiam o fluxo. Cada publicação
+> fica preservada no histórico imutável do perfil empresarial. As sete regras
+> iniciais continuam pendentes até confirmação do responsável fiscal.
 
 > Revisão 1.26.0.02: a tela **Revisar regras fiscais** apresenta os mesmos
 > campos e bloqueios em uma organização mais compacta. Adicionar, Duplicar e

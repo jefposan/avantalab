@@ -20,6 +20,13 @@ function digest(value) {
   return createHash('sha256').update(JSON.stringify(stable(value))).digest('hex');
 }
 
+function validReviewDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T12:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+    && value <= new Date().toISOString().slice(0, 10);
+}
+
 function accessError(context) {
   if (!context || !UUID.test(clean(context.companyId)) || !UUID.test(clean(context.actorId))) {
     return issue('AV-FISCAL-RULES-SESSION', 'session', 'Confirme novamente a sessão e a empresa ativa.');
@@ -42,21 +49,23 @@ function readAccessError(context) {
 }
 
 function normalizePublication(input = {}) {
-  const normalizedMatrix = normalizeFiscalMatrix(input.matrix);
+  const validation = validateFiscalMatrix(input.matrix, input.documentScope);
+  const normalizedMatrix = validation.matrix;
   const responsible = clean(input.fiscalResponsible || normalizedMatrix.reviewedBy, 160);
   const reviewedAt = clean(input.reviewedAt || normalizedMatrix.reviewedAt, 40);
   const matrix = { ...normalizedMatrix, reviewedBy: responsible, reviewedAt };
-  const validation = validateFiscalMatrix(matrix, ['nfe']);
-  const nfeRules = matrix.rules.filter((rule) => rule.documentType === 'nfe' && rule.active);
+  const activeRules = matrix.rules.filter((rule) => rule.active && validation.documentScope.includes(rule.documentType));
+  const nfeRules = activeRules.filter((rule) => rule.documentType === 'nfe');
   const errors = [...validation.errors.map((message) => issue('AV-FISCAL-RULES-MATRIX', 'matrix', message))];
-  if (!nfeRules.length) errors.push(issue('AV-FISCAL-RULES-COVERAGE', 'matrix', 'Mantenha ao menos uma regra ativa e revisada para NF-e.'));
-  if (nfeRules.some((rule) => !rule.reviewed)) errors.push(issue('AV-FISCAL-RULES-REVIEW', 'matrix', 'Revise todas as regras ativas de NF-e antes de publicá-las.'));
+  if (validation.documentScope.includes('nfe') && !nfeRules.length) errors.push(issue('AV-FISCAL-RULES-COVERAGE', 'matrix', 'Mantenha ao menos uma regra ativa e revisada para NF-e.'));
+  if (activeRules.some((rule) => !rule.reviewed)) errors.push(issue('AV-FISCAL-RULES-REVIEW', 'matrix', 'Revise todas as regras ativas dos tipos de nota habilitados antes de publicá-las.'));
   if (!responsible) errors.push(issue('AV-FISCAL-RULES-RESPONSIBLE', 'fiscalResponsible', 'Informe o responsável fiscal pela revisão.'));
-  if (!Number.isFinite(new Date(reviewedAt).getTime())) errors.push(issue('AV-FISCAL-RULES-REVIEW-DATE', 'reviewedAt', 'Informe quando a revisão fiscal foi concluída.'));
+  if (!validReviewDate(reviewedAt)) errors.push(issue('AV-FISCAL-RULES-REVIEW-DATE', 'reviewedAt', 'Informe uma data de revisão válida, sem usar uma data futura.'));
   if (input.taxReviewConfirmed !== true) errors.push(issue('AV-FISCAL-RULES-TAX-REVIEW', 'taxReviewConfirmed', 'Confirme a revisão tributária antes de publicar.'));
   if (input.taxReformReviewConfirmed !== true) errors.push(issue('AV-FISCAL-RULES-TAX-REFORM', 'taxReformReviewConfirmed', 'Confirme a revisão dos campos tributários vigentes antes de publicar.'));
   const publication = {
     matrix: { ...matrix, reviewedBy: responsible, reviewedAt },
+    documentScope: validation.documentScope,
     matrixVersion: clean(matrix.version, 40),
     fiscalResponsible: responsible,
     reviewedAt,
@@ -71,6 +80,23 @@ function mapRow(row) {
   return {
     companyId: row.empresa_id,
     status: row.situacao,
+    matrixVersion: row.matriz_versao,
+    matrix: row.matriz || {},
+    taxReviewConfirmed: row.revisao_tributaria_confirmada === true,
+    taxReformReviewConfirmed: row.reforma_tributaria_confirmada === true,
+    fiscalResponsible: row.responsavel_fiscal,
+    reviewedAt: row.revisado_em ? new Date(row.revisado_em).toISOString() : '',
+    publishedAt: row.publicado_em ? new Date(row.publicado_em).toISOString() : '',
+    contentDigest: row.conteudo_hash,
+    version: Number(row.versao || 0),
+  };
+}
+
+function mapHistoryRow(row) {
+  if (!row) return null;
+  return {
+    companyId: row.empresa_id,
+    status: 'publicada',
     matrixVersion: row.matriz_versao,
     matrix: row.matriz || {},
     taxReviewConfirmed: row.revisao_tributaria_confirmada === true,
@@ -120,8 +146,14 @@ export function createPostgresCommercialFiscalRulesRepository({ pool } = {}) {
         if (repeated.rows[0]) {
           if (repeated.rows[0].recurso_id !== companyId || repeated.rows[0].evento !== 'configuracao_fiscal_publicada'
             || repeated.rows[0].metadados?.conteudoHash !== contentDigest) throw coded('AV-FISCAL-RULES-IDEMPOTENCY');
+          const historical = await client.query(`
+            select * from public.vendas_fiscal_configuracoes_revisoes
+            where empresa_id=$1 and chave_idempotencia=$2 limit 1
+          `, [companyId, idempotencyKey]);
+          if (historical.rows[0]) return { reused: true, configuration: mapHistoryRow(historical.rows[0]) };
           const existing = await client.query('select * from public.vendas_fiscal_configuracoes where empresa_id=$1', [companyId]);
-          return { reused: true, configuration: mapRow(existing.rows[0]) };
+          if (existing.rows[0]?.conteudo_hash === contentDigest) return { reused: true, configuration: mapRow(existing.rows[0]) };
+          throw coded('AV-FISCAL-RULES-IDEMPOTENCY');
         }
         const current = await client.query('select * from public.vendas_fiscal_configuracoes where empresa_id=$1 for update', [companyId]);
         const currentVersion = Number(current.rows[0]?.versao || 0);
@@ -145,6 +177,17 @@ export function createPostgresCommercialFiscalRulesRepository({ pool } = {}) {
               ) values ($1,'publicada',$2,$3::jsonb,$4,$5,$6,$7,$8,now(),$9,$10,$8) returning *
             `, values);
         const configuration = mapRow(saved.rows[0]);
+        await client.query(`
+          insert into public.vendas_fiscal_configuracoes_revisoes(
+            empresa_id,versao,matriz_versao,matriz,revisao_tributaria_confirmada,
+            reforma_tributaria_confirmada,responsavel_fiscal,revisado_em,
+            publicado_por,publicado_em,conteudo_hash,chave_idempotencia
+          ) values ($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,$11,$12)
+        `, [companyId, configuration.version, publication.matrixVersion,
+          JSON.stringify(publication.matrix), publication.taxReviewConfirmed,
+          publication.taxReformReviewConfirmed, publication.fiscalResponsible,
+          publication.reviewedAt, actorId, configuration.publishedAt,
+          contentDigest, idempotencyKey]);
         await client.query(`
           insert into public.vendas_eventos(
             empresa_id,recurso_tipo,recurso_id,evento,resumo,metadados,chave_idempotencia,criado_por
@@ -226,8 +269,14 @@ export function createCommercialFiscalRulesPublicationService({ repository } = {
 function recipientProfile(customer = {}) {
   const indicator = clean(customer.stateRegistrationIndicator).toLowerCase();
   if (['contribuinte', 'contribuinte_icms'].includes(indicator)) return 'Contribuinte ICMS';
-  if (customer.consumerFinal === true || customer.finalConsumer === true) return 'Consumidor final';
+  if (['isento', 'contribuinte_isento'].includes(indicator)) return 'Contribuinte isento';
   return 'Não contribuinte';
+}
+
+function consumerFinal(customer = {}) {
+  if (customer.consumerFinal === true || customer.finalConsumer === true) return 'Sim';
+  if (customer.consumerFinal === false || customer.finalConsumer === false) return 'Não';
+  return ['isento', 'contribuinte_isento'].includes(clean(customer.stateRegistrationIndicator).toLowerCase()) ? 'Sim' : 'Não';
 }
 
 function itemRule(item, rule) {
@@ -273,11 +322,17 @@ export function createCommercialFiscalRuleResolver({ repository } = {}) {
       operation: 'Venda',
       destination: issuerState && customerState ? issuerState === customerState ? 'Dentro da UF' : 'Fora da UF' : 'Qualquer',
       recipientProfile: recipientProfile(customer),
+      consumerFinal: consumerFinal(customer),
       presence: 'Não presencial',
+      issuePurpose: 'Normal',
     };
     const resolution = resolveFiscalMatrixRule({ matrix: configuration.matrix, documentType: 'nfe', ...context });
     if (!resolution.matched || !resolution.reviewed || !resolution.rule) {
       return { valid: false, errors: [issue('AV-FISCAL-RULES-NO-MATCH', 'fiscal', 'Nenhuma regra fiscal revisada corresponde a esta venda. Revise a matriz da empresa.')] };
+    }
+    const customerStateRegistration = clean(customer.stateRegistration, 40);
+    if (resolution.rule.requiresStateRegistration && (!customerStateRegistration || customerStateRegistration.toLocaleLowerCase('pt-BR') === 'isento')) {
+      return { valid: false, errors: [issue('AV-FISCAL-RULES-STATE-REGISTRATION', 'customer', 'A regra fiscal exige a inscrição estadual do destinatário. Complete o cadastro do cliente.')] };
     }
     const itemEntries = [];
     const errors = [];

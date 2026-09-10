@@ -40,6 +40,7 @@ function mapCustomer(row) {
     stateRegistration: row.inscricao_estadual || '',
     municipalRegistration: row.inscricao_municipal || '',
     stateRegistrationIndicator: row.indicador_ie,
+    consumerFinal: row.consumidor_final === true,
     email: row.email || '',
     phone: row.telefone || '',
     primaryContact: row.contato_principal || '',
@@ -68,12 +69,12 @@ function customerValues(customer) {
     customer.companyId, customer.personType, customer.documentType, customer.document,
     customer.legalName, nullable(customer.tradeName), customer.displayName,
     nullable(customer.stateRegistration), nullable(customer.municipalRegistration),
-    customer.stateRegistrationIndicator, nullable(customer.email), nullable(customer.phone),
-    nullable(customer.primaryContact), nullable(customer.postalCode), nullable(customer.street),
-    nullable(customer.number), nullable(customer.complement), nullable(customer.district),
-    nullable(customer.city), nullable(customer.cityCode), nullable(customer.state),
-    nullable(customer.sellerId), nullable(customer.paymentTerms), nullable(customer.notes),
-    customer.status, customer.actorId,
+    customer.stateRegistrationIndicator, customer.consumerFinal === true,
+    nullable(customer.email), nullable(customer.phone), nullable(customer.primaryContact),
+    nullable(customer.postalCode), nullable(customer.street), nullable(customer.number),
+    nullable(customer.complement), nullable(customer.district), nullable(customer.city),
+    nullable(customer.cityCode), nullable(customer.state), nullable(customer.sellerId),
+    nullable(customer.paymentTerms), nullable(customer.notes), customer.status, customer.actorId,
   ];
 }
 
@@ -150,12 +151,12 @@ export function createPostgresCommercialCustomerRepository({ pool } = {}) {
           const result = await client.query(`
             insert into public.vendas_clientes(
               empresa_id,codigo,tipo_pessoa,documento_tipo,documento,razao_social,nome_fantasia,
-              nome_exibicao,inscricao_estadual,inscricao_municipal,indicador_ie,email,telefone,
+              nome_exibicao,inscricao_estadual,inscricao_municipal,indicador_ie,consumidor_final,email,telefone,
               contato_principal,cep,logradouro,numero,complemento,bairro,municipio,municipio_ibge,
               uf,vendedor_id,condicao_pagamento,observacoes,situacao,criado_por,atualizado_por
             ) values (
-              $1,$27,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,
-              $22,$23,$24,$25,$26,$26
+              $1,$28,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,
+              $22,$23,$24,$25,$26,$27,$27
             ) returning *
           `, [...values, code]);
           const created = mapCustomer(result.rows?.[0]);
@@ -182,10 +183,11 @@ export function createPostgresCommercialCustomerRepository({ pool } = {}) {
             update public.vendas_clientes set
               tipo_pessoa=$2,documento_tipo=$3,documento=$4,razao_social=$5,nome_fantasia=$6,
               nome_exibicao=$7,inscricao_estadual=$8,inscricao_municipal=$9,indicador_ie=$10,
-              email=$11,telefone=$12,contato_principal=$13,cep=$14,logradouro=$15,numero=$16,
-              complemento=$17,bairro=$18,municipio=$19,municipio_ibge=$20,uf=$21,vendedor_id=$22,
-              condicao_pagamento=$23,observacoes=$24,situacao=$25,atualizado_por=$26
-            where empresa_id=$1 and id=$27 and versao=$28 returning *
+              consumidor_final=$11,email=$12,telefone=$13,contato_principal=$14,cep=$15,
+              logradouro=$16,numero=$17,complemento=$18,bairro=$19,municipio=$20,
+              municipio_ibge=$21,uf=$22,vendedor_id=$23,condicao_pagamento=$24,
+              observacoes=$25,situacao=$26,atualizado_por=$27
+            where empresa_id=$1 and id=$28 and versao=$29 returning *
           `, [...values, customerId, expectedVersion]);
           if (!result.rows?.[0]) {
             const current = await client.query('select versao from public.vendas_clientes where empresa_id=$1 and id=$2', [companyId, customerId]);

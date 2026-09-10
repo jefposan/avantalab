@@ -7,6 +7,7 @@ export type FiscalMatrixRule = {
   operation: string;
   destination: string;
   recipientProfile: string;
+  consumerFinal: string;
   presence: string;
   issuePurpose: string;
   operationNature: string;
@@ -17,9 +18,9 @@ export type FiscalMatrixRule = {
   active: boolean;
   reviewed: boolean;
 };
-export type FiscalMatrix = { version: string; reviewedAt: string; reviewedBy: string; rules: FiscalMatrixRule[] };
-export const FISCAL_MATRIX_REFERENCE: '2026.08';
+export type FiscalMatrix = { version: string; reviewedAt: string; reviewedBy: string; documentScope: FiscalDocumentType[]; rules: FiscalMatrixRule[] };
+export const FISCAL_MATRIX_REFERENCE: '2026.09';
 export function createDefaultFiscalMatrix(): FiscalMatrix;
 export function normalizeFiscalMatrix(input: unknown): FiscalMatrix;
 export function validateFiscalMatrix(input: unknown, documentScope?: FiscalDocumentType[]): { matrix: FiscalMatrix; ready: boolean; errors: string[]; warnings: string[]; activeCount: number; reviewedCount: number; documentScope: FiscalDocumentType[] };
-export function resolveFiscalMatrixRule(input: { matrix: unknown; documentType: FiscalDocumentType; operation: string; destination: string; recipientProfile: string; presence: string }): { matrixReference: string; context: { operation: string; destination: string; recipientProfile: string; presence: string }; matched: boolean; reviewed: boolean; rule: FiscalMatrixRule | null; reason: string };
+export function resolveFiscalMatrixRule(input: { matrix: unknown; documentType: FiscalDocumentType; operation: string; destination: string; recipientProfile: string; consumerFinal: string; presence: string; issuePurpose: string }): { matrixReference: string; context: { operation: string; destination: string; recipientProfile: string; consumerFinal: string; presence: string; issuePurpose: string }; matched: boolean; reviewed: boolean; rule: FiscalMatrixRule | null; reason: string };

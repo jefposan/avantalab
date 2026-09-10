@@ -113,6 +113,12 @@ function recipientProfile(snapshot = {}) {
   return 'Não contribuinte';
 }
 
+function recipientConsumerFinal(snapshot = {}) {
+  if (snapshot.consumerFinal === true || snapshot.finalConsumer === true) return true;
+  if (snapshot.consumerFinal === false || snapshot.finalConsumer === false) return false;
+  return ['isento', 'contribuinte_isento'].includes(snapshot.stateRegistrationIndicator);
+}
+
 function appliedItemRule(rules, item) {
   const collection = rules?.items && typeof rules.items === 'object' ? rules.items : {};
   return collection[item.productId] || collection[item.sku] || {};
@@ -189,6 +195,7 @@ export function buildCommercialNfePreparationInput(data, rules, idempotencyKey, 
       document: customer.document,
       legalName: customer.legalName || customer.displayName,
       fiscal: recipientProfile(customer),
+      consumerFinal: recipientConsumerFinal(customer),
       stateRegistration: customer.stateRegistration,
       email: customer.email,
       phone: customer.phone,
