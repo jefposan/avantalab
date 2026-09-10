@@ -541,16 +541,15 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
 }
 
 /* Os atalhos principais deixam uma margem à direita para avançarem no hover. */
-.av-menu-gestao-acoes > span,
-.av-menu-gestao-acoes > .order-100 > span {
-  width: calc(100% - 12px);
+.av-menu-gestao-atalho {
+  width: calc(100% - 14px) !important;
   transition: transform 180ms cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .av-menu-gestao-acoes > span:hover,
-  .av-menu-gestao-acoes > .order-100 > span:hover {
-    transform: translateX(8px);
+  .av-menu-gestao-atalho:hover {
+    transform: translateX(10px);
   }
 }
 
@@ -577,8 +576,7 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
     animation: none;
   }
 
-  .av-menu-gestao-acoes > span,
-  .av-menu-gestao-acoes > .order-100 > span {
+  .av-menu-gestao-atalho {
     transition: none;
   }
 }

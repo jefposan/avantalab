@@ -10228,7 +10228,7 @@ if (validacaoTelefoneObrigatoria) {
         </div>
 
         {/* 3. Modulos */}
-        {podeGerenciarModulos && <Tooltip texto="Compre, instale ou remova módulos deste perfil." posicao="right" wrapperClassName="order-20 w-full">
+        {podeGerenciarModulos && <Tooltip texto="Compre, instale ou remova módulos deste perfil." posicao="right" wrapperClassName="av-menu-gestao-atalho order-20 w-full">
           <button
             onClick={() => { setAjustesAberto(false); setModalModulos(true); }}
             className="flex min-h-10 w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-black shadow-md transition-all hover:brightness-110 hover:shadow-lg"
@@ -10248,7 +10248,7 @@ if (validacaoTelefoneObrigatoria) {
 
         {/* 3b. Assinatura (só com cobrança ativa, para gestor master / administrador) */}
         {COBRANCA_ATIVA && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador') && (
-          <Tooltip texto="Veja a situação da sua assinatura e do plano." posicao="right" wrapperClassName="order-15 w-full">
+          <Tooltip texto="Veja a situação da sua assinatura e do plano." posicao="right" wrapperClassName="av-menu-gestao-atalho order-15 w-full">
             <button
               onClick={() => { setAjustesAberto(false); setModalAssinatura(true); }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border border-amber-400 bg-amber-600 px-3 py-2 text-left text-xs font-black text-white shadow-md transition-colors hover:bg-amber-500"
@@ -10262,7 +10262,7 @@ if (validacaoTelefoneObrigatoria) {
         )}
 
         {modulosPaginaTotalAtivos(modulosAtivos).filter((modulo) => modulo.id !== 'recebimentos_presencial').map((modulo) => (
-          <Tooltip key={modulo.id} texto={modulo.id === 'projetos' ? 'Crie e gerencie seus projetos, etapas, tarefas e responsáveis.' : `Abrir ${modulo.nome} em tela total.`} posicao="right" wrapperClassName="order-28 w-full">
+          <Tooltip key={modulo.id} texto={modulo.id === 'projetos' ? 'Crie e gerencie seus projetos, etapas, tarefas e responsáveis.' : `Abrir ${modulo.nome} em tela total.`} posicao="right" wrapperClassName="av-menu-gestao-atalho order-28 w-full">
             <button
               type="button"
               onClick={() => {
@@ -10283,7 +10283,7 @@ if (validacaoTelefoneObrigatoria) {
         ))}
 
         {!modulosAtivos.includes('projetos') && projetosCompartilhados > 0 && (
-          <Tooltip texto={`${projetosCompartilhados} projeto${projetosCompartilhados === 1 ? '' : 's'} compartilhado${projetosCompartilhados === 1 ? '' : 's'} com você.`} posicao="right" wrapperClassName="order-28 w-full">
+          <Tooltip texto={`${projetosCompartilhados} projeto${projetosCompartilhados === 1 ? '' : 's'} compartilhado${projetosCompartilhados === 1 ? '' : 's'} com você.`} posicao="right" wrapperClassName="av-menu-gestao-atalho order-28 w-full">
             <button
               type="button"
               onClick={() => {
@@ -10305,7 +10305,7 @@ if (validacaoTelefoneObrigatoria) {
 
         {/* 4. Ponto */}
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
-          <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="right" wrapperClassName="order-30 w-full">
+          <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="right" wrapperClassName="av-menu-gestao-atalho order-30 w-full">
             <button
               onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setRelatorioInicialPonto(null); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); carregarFuncionariosFacialPonto(); carregarDiasNaoUteisPonto(); }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
@@ -10321,7 +10321,7 @@ if (validacaoTelefoneObrigatoria) {
 
         {/* Operações de Campo usa um acesso dedicado para manter seu ícone e descrição. */}
         {modulosAtivos.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
-          <Tooltip texto="Gerencie recebimentos, serviços, empresas e colaboradores em campo." posicao="right" wrapperClassName="order-40 w-full">
+          <Tooltip texto="Gerencie recebimentos, serviços, empresas e colaboradores em campo." posicao="right" wrapperClassName="av-menu-gestao-atalho order-40 w-full">
             <button
               onClick={() => { setAjustesAberto(false); router.push(`/recebimentos?empresaId=${encodeURIComponent(empresaId || '')}`); }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
@@ -10337,7 +10337,7 @@ if (validacaoTelefoneObrigatoria) {
 
         {/* 4b. Conteúdo AvantaVendas */}
         {modulosAtivos.includes('vendas_mobile') && podeAcessarVendasMobileWeb && (
-          <Tooltip texto="Publique novidades, catálogo, fotos, vídeos e PDFs para a equipe do AvantaVendas." posicao="right" wrapperClassName="order-50 w-full">
+          <Tooltip texto="Publique novidades, catálogo, fotos, vídeos e PDFs para a equipe do AvantaVendas." posicao="right" wrapperClassName="av-menu-gestao-atalho order-50 w-full">
             <button
               onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setModalNovidadesVendas(true); }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
@@ -10350,7 +10350,7 @@ if (validacaoTelefoneObrigatoria) {
         )}
 
         {/* 5. Visual (dropdown) */}
-        <Tooltip texto="Personalize a aparência: logo, cor do tema e modo escuro." posicao="right" wrapperClassName="order-60 w-full">
+        <Tooltip texto="Personalize a aparência: logo, cor do tema e modo escuro." posicao="right" wrapperClassName="av-menu-gestao-atalho order-60 w-full">
           <button
             type="button"
             onClick={(e) => alternarMenuAjuste('visual', e)}
@@ -10368,7 +10368,7 @@ if (validacaoTelefoneObrigatoria) {
         </Tooltip>
 
         {/* 7. Configuracoes (dropdown) */}
-        <Tooltip texto="Configurações: duplicados, usuários, perfil, backup e restauração." posicao="right" wrapperClassName="order-80 w-full">
+        <Tooltip texto="Configurações: duplicados, usuários, perfil, backup e restauração." posicao="right" wrapperClassName="av-menu-gestao-atalho order-80 w-full">
           <button
             type="button"
             onClick={(e) => alternarMenuAjuste('config', e)}
@@ -10387,7 +10387,7 @@ if (validacaoTelefoneObrigatoria) {
 
         {/* 8. Sobre + Tutorial (colados à direita) */}
         <div className="order-100 flex w-full flex-col gap-2 border-t border-slate-700 pt-2">
-          <Tooltip texto="Sobre o AvantaLab e novidades das versões." posicao="right" wrapperClassName="w-full">
+          <Tooltip texto="Sobre o AvantaLab e novidades das versões." posicao="right" wrapperClassName="av-menu-gestao-atalho w-full">
             <button
               type="button"
               onClick={() => { setAjustesAberto(false); setModalSobre(true); }}
@@ -10398,7 +10398,7 @@ if (validacaoTelefoneObrigatoria) {
               Sobre
             </button>
           </Tooltip>
-          <Tooltip texto="Reveja o tour guiado de uso do sistema." posicao="right" wrapperClassName="w-full">
+          <Tooltip texto="Reveja o tour guiado de uso do sistema." posicao="right" wrapperClassName="av-menu-gestao-atalho w-full">
             <button
               type="button"
               onClick={() => { setAjustesAberto(false); setTourAberto(true); }}

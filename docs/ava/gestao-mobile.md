@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.25.0.04 -->
+<!-- ava-version: 1.25.0.05 -->
+
+> Revisão 1.25.0.05: a correção do hover no Menu da Gestão pertence à interface
+> Web e não altera a Gestão Mobile.
 
 > Revisão 1.25.0.04: o refinamento do hover no Menu da Gestão pertence à
 > interface Web e não altera a Gestão Mobile.

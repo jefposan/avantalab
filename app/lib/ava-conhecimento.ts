@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.25.0.05: cada atalho do Menu da Gestão Web aplica sua
+// própria folga e animação de hover; não há alteração operacional para a Ava.
 // Revisado na versão 1.25.0.04: os atalhos do Menu da Gestão Web avançam no
 // hover com margem lateral; não há alteração operacional para a Ava.
 // Revisado na versão 1.25.0.03: todos os módulos de página própria mostram a

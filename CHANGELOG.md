@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.25.0.05 - 2026-09-09
+- **Menu da Gestão**: a redução de largura e o deslocamento no hover agora são aplicados diretamente a cada atalho principal, garantindo a folga lateral mesmo com as utilidades de largura do menu.
+
 ## 1.25.0.04 - 2026-09-09
 - **Menu da Gestão**: os atalhos principais agora preservam uma pequena folga à direita e avançam suavemente ao passar o mouse, sem tocar no limite lateral do painel.
 

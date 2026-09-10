@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.25.0.04 -->
+<!-- ava-version: 1.25.0.05 -->
+
+> Revisão 1.25.0.05: a correção visual do hover no Menu da Gestão não altera
+> o fluxo operacional do AvantaVendas.
 
 > Revisão 1.25.0.04: o refinamento visual do Menu da Gestão não altera o
 > fluxo operacional do AvantaVendas.

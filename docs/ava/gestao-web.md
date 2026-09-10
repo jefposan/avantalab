@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.25.0.04 -->
+<!-- ava-version: 1.25.0.05 -->
+
+> Revisão 1.25.0.05: a folga e o hover dos botões principais do Menu da Gestão
+> são aplicados diretamente a cada atalho; não há mudança nos fluxos operacionais.
 
 > Revisão 1.25.0.04: os botões principais do Menu da Gestão deixam uma folga
 > lateral e avançam suavemente no hover; não há mudança nos fluxos operacionais.
