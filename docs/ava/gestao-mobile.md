@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.26.0.01 -->
+<!-- ava-version: 1.26.0.02 -->
+
+> Revisão 1.26.0.02: o refinamento visual da revisão de regras fiscais pertence
+> à tela de Vendas e Serviços e não altera o fluxo operacional da Gestão Mobile.
 
 > Revisão 1.26.0.01: no PWA de Serviços, a área de desenho da assinatura termina
 > antes das ações de Cancelar, Limpar assinatura e Avançar.

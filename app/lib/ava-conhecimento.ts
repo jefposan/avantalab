@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.26.0.02: a edição de regras fiscais foi compactada e
+// reúne Adicionar, Duplicar e Excluir; validações e comportamento não mudaram.
 // Revisado na versão 1.26.0.01: o canvas de assinatura do PWA de Serviços
 // termina antes da faixa de ações, sem alteração operacional para a Ava.
 // Revisado na versão 1.26.0: a Solicitação por Voz usa aliases ocultos gerados

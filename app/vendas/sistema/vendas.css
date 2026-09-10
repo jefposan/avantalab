@@ -1087,8 +1087,20 @@ td strong { color: #293c4e; font-size: 10.7px; }
 .access-editor-heading p { margin: 0; color: var(--av-muted); font-size: 9px; line-height: 1.4; overflow-wrap: anywhere; }
 .access-protected-note { display: flex; align-items: center; gap: 8px; margin: 0; padding: 9px 11px; color: #2c6752; background: #e8f4ed; border-radius: 9px; font-size: 8.9px; line-height: 1.4; }
 .access-readonly-note { display: flex; align-items: center; gap: 8px; margin: 0; padding: 9px 11px; color: #775216; background: #fff2d9; border-radius: 9px; font-size: 8.9px; line-height: 1.4; }
-.fiscal-matrix-body { min-width: 0; }
-.fiscal-matrix-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.dialog:has(.fiscal-matrix-body) { display: grid; grid-template-rows: auto minmax(0,1fr) auto; width: min(1100px,100%); overflow: hidden; }
+.dialog:has(.fiscal-matrix-body) > header { padding: 14px 18px 11px; }
+.dialog:has(.fiscal-matrix-body) > header .icon-button { width: 40px; height: 40px; }
+.dialog:has(.fiscal-matrix-body) > .dialog-body { padding: 11px 18px 12px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.dialog:has(.fiscal-matrix-body) > .dialog-footer { padding: 10px 18px; }
+.fiscal-matrix-body { gap: 8px; min-width: 0; }
+.fiscal-matrix-context { grid-template-columns: 32px minmax(0,1fr); gap: 9px; padding: 8px 11px; }
+.fiscal-matrix-context > .icon { padding: 6px; border-radius: 8px; }
+.fiscal-matrix-context small { line-height: 1.35; }
+.fiscal-matrix-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+.fiscal-matrix-metrics > div { grid-template-columns: minmax(0,1fr) auto; align-items: baseline; gap: 1px 8px; padding: 7px 9px; border-radius: 8px; }
+.fiscal-matrix-metrics span { min-width: 0; }
+.fiscal-matrix-metrics strong { font-size: 14px; }
+.fiscal-matrix-metrics small { grid-column: 1 / -1; font-size: 8.2px; }
 .fiscal-matrix-overview { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
 .fiscal-matrix-overview > article { display: grid; align-content: start; gap: 11px; min-width: 0; padding: 14px; background: var(--av-surface-soft); border-radius: 12px; }
 .fiscal-matrix-overview-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -1105,15 +1117,31 @@ td strong { color: #293c4e; font-size: 10.7px; }
 .fiscal-matrix-review-summary p { display: grid; gap: 3px; min-width: 0; margin: 0; }
 .fiscal-matrix-review-summary strong { color: var(--av-blue-950); font-size: 10px; }
 .fiscal-matrix-review-summary small { color: var(--av-muted); font-size: 8.8px; line-height: 1.4; overflow-wrap: anywhere; }
-.fiscal-matrix-review { padding: 13px 14px; }
-.fiscal-matrix-workspace { grid-template-columns: minmax(210px,240px) minmax(0,1fr); }
-.fiscal-matrix-sidebar { display: grid; align-content: start; gap: 9px; min-width: 0; }
-.fiscal-matrix-sidebar > .button { width: 100%; }
-.fiscal-matrix-sidebar .access-option-list { max-height: 640px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-.fiscal-matrix-sidebar .access-option-list > button { grid-template-columns: minmax(0,1fr); align-items: start; }
-.fiscal-matrix-sidebar .access-option-list .badge { justify-self: start; }
-.fiscal-matrix-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
-.fiscal-matrix-validation { display: grid; gap: 8px; padding: 12px 14px; color: #775216; background: #fff2d9; border-radius: 10px; }
+.fiscal-matrix-review { display: grid; grid-template-columns: minmax(180px,.7fr) minmax(0,2.3fr); align-items: end; gap: 10px 14px; min-width: 0; padding: 9px 11px; background: var(--av-surface-soft); border-radius: 10px; }
+.fiscal-matrix-review .client-section-heading { align-self: center; margin: 0; }
+.fiscal-matrix-review-fields { display: grid; grid-template-columns: minmax(150px,.9fr) minmax(132px,.65fr) repeat(2,minmax(170px,1fr)); align-items: stretch; gap: 8px; min-width: 0; }
+.fiscal-matrix-review-check { align-items: center; min-height: 44px; padding: 6px 9px; background: #fff; border: 1px solid var(--av-border-soft); border-radius: 9px; }
+.fiscal-matrix-review-check small { font-size: 8.2px; line-height: 1.3; }
+.fiscal-matrix-workspace { grid-template-columns: minmax(190px,220px) minmax(0,1fr); gap: 8px 10px; }
+.fiscal-matrix-rule-toolbar { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 7px 9px 7px 11px; background: #eef5f7; border-radius: 9px; }
+.fiscal-matrix-rule-toolbar > div:first-child { display: grid; gap: 1px; min-width: 0; }
+.fiscal-matrix-rule-toolbar span { color: var(--av-cyan); font-size: 8px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+.fiscal-matrix-rule-toolbar strong { color: var(--av-blue-950); font-size: 10px; }
+.fiscal-matrix-sidebar { display: grid; align-content: start; min-width: 0; }
+.fiscal-matrix-sidebar .access-option-list { max-height: 610px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.fiscal-matrix-sidebar .access-option-list > button { grid-template-columns: minmax(0,1fr) auto; align-items: center; min-height: 48px; padding: 7px 8px; border-radius: 8px; }
+.fiscal-matrix-sidebar .access-option-list .badge { justify-self: end; }
+.fiscal-matrix-editor { gap: 8px; padding: 10px 11px; background: var(--av-surface-soft); border-radius: 10px; }
+.fiscal-matrix-editor > .settings-form-section { display: grid; gap: 8px; min-width: 0; padding: 0 0 10px; border: 0; border-bottom: 1px solid var(--av-border-soft); border-radius: 0; }
+.fiscal-matrix-editor > .settings-form-section:last-child { padding-bottom: 0; border-bottom: 0; }
+.fiscal-matrix-editor > .settings-form-section .client-section-heading { margin: 0; }
+.fiscal-matrix-editor > .settings-form-section .form-grid { gap: 8px 10px; }
+.fiscal-matrix-editor > .settings-form-section .field input, .fiscal-matrix-editor > .settings-form-section .field select { background: #fff; }
+.fiscal-matrix-editor > .settings-form-section .check-field { min-height: 50px; padding: 8px 9px; background: #fff; border: 1px solid var(--av-border-soft); }
+.fiscal-matrix-editor > .settings-form-section .check-field small { font-size: 8.3px; line-height: 1.35; }
+.fiscal-matrix-actions { display: flex; flex-wrap: nowrap; justify-content: flex-end; gap: 6px; }
+.fiscal-matrix-actions .button { min-width: 0; white-space: nowrap; }
+.fiscal-matrix-validation { display: grid; gap: 6px; padding: 8px 11px; color: #775216; background: #fff2d9; border-radius: 9px; }
 .fiscal-matrix-validation > div { display: grid; grid-template-columns: 28px minmax(0,1fr); align-items: center; gap: 9px; }
 .fiscal-matrix-validation p { display: grid; gap: 3px; min-width: 0; margin: 0; }
 .fiscal-matrix-validation strong { font-size: 10px; }
@@ -2065,6 +2093,8 @@ td strong { color: #293c4e; font-size: 10.7px; }
   .certificate-file-control .button { width: 100%; }
   .access-workspace { grid-template-columns: 1fr; }
   .fiscal-matrix-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .fiscal-matrix-review { grid-template-columns: 1fr; align-items: start; }
+  .fiscal-matrix-review-fields { grid-template-columns: repeat(2,minmax(0,1fr)); width: 100%; }
   .fiscal-matrix-overview { grid-template-columns: 1fr; }
   .fiscal-matrix-workspace { grid-template-columns: 1fr; }
   .fiscal-matrix-sidebar .access-option-list { max-height: none; }
@@ -2089,10 +2119,12 @@ td strong { color: #293c4e; font-size: 10.7px; }
   .access-integration-grid article .badge { grid-column: 2; justify-self: start; }
   .access-editor-heading { align-items: flex-start; flex-direction: column; }
   .access-editor-heading .button { width: 100%; }
-  .fiscal-matrix-metrics { grid-template-columns: 1fr; }
+  .fiscal-matrix-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .fiscal-matrix-review-fields { grid-template-columns: 1fr; }
   .fiscal-matrix-review-summary { align-items: flex-start; flex-direction: column; }
+  .fiscal-matrix-rule-toolbar { align-items: stretch; flex-direction: column; gap: 6px; }
   .fiscal-matrix-actions { width: 100%; }
-  .fiscal-matrix-actions .button { width: 100%; }
+  .fiscal-matrix-actions .button { width: auto; min-width: 0; flex: 1 1 0; padding-inline: 8px; }
   .permission-row { grid-template-columns: minmax(0,1fr) auto; }
   .permission-row > select { grid-column: 1 / -1; width: 100%; }
   .access-reset-overrides { width: 100%; }

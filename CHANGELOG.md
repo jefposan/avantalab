@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.26.0.02 - 2026-09-10
+- **Revisão de regras fiscais**: a edição ficou mais compacta, com contexto e indicadores condensados, campos reorganizados e as ações Adicionar, Duplicar e Excluir reunidas na mesma linha.
+- **Responsividade**: o diálogo preserva a leitura no celular, mantém as três ações agrupadas e usa uma coluna para os campos de revisão em telas estreitas.
+
 ## 1.26.0.01 - 2026-09-10
 - **Assinatura de serviços**: a área de desenho agora respeita estritamente a região livre antes da faixa de ações. Em celular, o canvas não avança nem fica sob os botões Cancelar, Limpar assinatura e Avançar.
 

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.26.0.01 -->
+<!-- ava-version: 1.26.0.02 -->
+
+> Revisão 1.26.0.02: em **Vendas e Serviços**, a tela **Revisar regras fiscais**
+> ficou mais compacta. As ações Adicionar, Duplicar e Excluir agora aparecem
+> juntas acima da lista; o comportamento e as validações fiscais permanecem os mesmos.
 
 > Revisão 1.26.0.01: a área de assinatura do PWA de Serviços respeita a faixa
 > fixa de ações, sem alterar o fluxo operacional de registro.

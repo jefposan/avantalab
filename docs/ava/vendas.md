@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.26.0.01 -->
+<!-- ava-version: 1.26.0.02 -->
+
+> Revisão 1.26.0.02: a tela **Revisar regras fiscais** apresenta os mesmos
+> campos e bloqueios em uma organização mais compacta. Adicionar, Duplicar e
+> Excluir ficam juntos acima da lista de regras.
 
 > Revisão 1.26.0.01: o ajuste da área de assinatura do PWA de Serviços não
 > altera o fluxo operacional do AvantaVendas.
