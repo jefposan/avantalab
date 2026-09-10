@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.26.0 -->
+<!-- ava-version: 1.26.0.01 -->
+
+> Revisão 1.26.0.01: no PWA de Serviços, a área de desenho da assinatura termina
+> antes das ações de Cancelar, Limpar assinatura e Avançar.
 
 > Revisão 1.26.0: os nomes alternativos usados pela Solicitação por Voz são
 > preparados automaticamente quando o catálogo é atualizado. Não há campo ou

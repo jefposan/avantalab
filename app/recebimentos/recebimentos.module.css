@@ -2406,10 +2406,10 @@
 .assinaturaCabecalho { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; min-height: 68px; padding: 12px clamp(16px, 4vw, 40px); background: linear-gradient(135deg, color-mix(in srgb, var(--cp, #003e73) 94%, #000), var(--cp, #003e73)); }
 .assinaturaCabecalho h2 { margin: 0; min-width: 0; overflow: hidden; color: #fff; font-size: clamp(16px, 4vw, 21px); font-weight: 800; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .assinaturaCabecalho p { margin: 0; color: color-mix(in srgb, #fff 82%, transparent); font-size: 13px; font-weight: 600; line-height: 1.3; }
-.assinaturaCorpo { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; gap: 12px; padding: 16px clamp(16px, 4vw, 40px); }
+.assinaturaCorpo { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; overflow: hidden; gap: 12px; padding: 16px clamp(16px, 4vw, 40px); }
 .assinaturaCorpo .servicoEtapa { margin: 0; text-align: center; }
 .assinaturaCorpo .aviso { width: 100%; text-align: center; }
-.assinaturaCanvas { display: block; width: 100%; min-height: 0; height: 100%; touch-action: none; border: 2px dashed #94a3b8; border-radius: 14px; background: #fff; cursor: crosshair; }
+.assinaturaCanvas { display: block; align-self: stretch; box-sizing: border-box; width: 100%; min-height: 0; max-height: 100%; height: 100%; touch-action: none; border: 2px dashed #94a3b8; border-radius: 14px; background: #fff; cursor: crosshair; }
 .assinaturaAcoes { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px clamp(16px, 4vw, 40px) calc(14px + env(safe-area-inset-bottom)); background: var(--cp, #003e73); }
 .assinaturaAcoesSecundarias { display: flex; gap: 8px; }
 .assinaturaAcoes .btnGhost { border-color: color-mix(in srgb, #fff 82%, transparent); color: #fff; background: transparent; }

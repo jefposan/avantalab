@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.26.0.01 - 2026-09-10
+- **Assinatura de serviços**: a área de desenho agora respeita estritamente a região livre antes da faixa de ações. Em celular, o canvas não avança nem fica sob os botões Cancelar, Limpar assinatura e Avançar.
+
 ## 1.26.0-av145 - 2026-09-10
 - **Recursos do AvantaVendas**: cache renovado para carregar o componente e os
   estilos centrais de ações por voz do PADRÃO AVANTA.

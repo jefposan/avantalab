@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.26.0.01: o canvas de assinatura do PWA de Serviços
+// termina antes da faixa de ações, sem alteração operacional para a Ava.
 // Revisado na versão 1.26.0: a Solicitação por Voz usa aliases ocultos gerados
 // automaticamente a partir do catálogo e aprende correções manuais somente
 // depois que o lançamento confirmado é conferido no banco da conta; duas

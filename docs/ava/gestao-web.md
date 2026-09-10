@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.26.0 -->
+<!-- ava-version: 1.26.0.01 -->
+
+> Revisão 1.26.0.01: a área de assinatura do PWA de Serviços respeita a faixa
+> fixa de ações, sem alterar o fluxo operacional de registro.
 
 > Revisão 1.26.0: ao salvar ou atualizar um produto em **Conteúdo
 > AvantaVendas**, o sistema prepara automaticamente e em segundo plano as

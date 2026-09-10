@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.26.0 -->
+<!-- ava-version: 1.26.0.01 -->
+
+> Revisão 1.26.0.01: o ajuste da área de assinatura do PWA de Serviços não
+> altera o fluxo operacional do AvantaVendas.
 
 > Revisão 1.26.0-av145: recursos do AvantaVendas renovados para consumir o
 > controlador e os estilos centrais de ações por voz do PADRÃO AVANTA.
