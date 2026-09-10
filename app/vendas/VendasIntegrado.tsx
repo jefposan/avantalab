@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
+import RodapeAvanta from '@/app/components/RodapeAvanta';
 import type { CatalogoVendasDTO } from '@/app/modules/vendas/types';
 import { CODIGOS_PERMISSOES_VENDAS } from '@/app/modules/vendas/permissions';
 import { RECEIVABLE_MOVE_REQUEST_TYPE, RECEIVABLE_MOVE_RESPONSE_TYPE, RECEIVABLE_READY_TYPE, RECEIVABLE_SNAPSHOT_TYPE } from '@/app/vendas/lib/commercial-receivable-bridge.mjs';
@@ -183,6 +184,7 @@ export default function VendasIntegrado() {
   const [empresaId, setEmpresaId] = useState('');
   const [catalogo, setCatalogo] = useState<CatalogoVendasDTO | null>(null);
   const [perfilCadastro, setPerfilCadastro] = useState<Record<string, unknown> | null>(null);
+  const [logoUrl, setLogoUrl] = useState('');
   const [corPrimaria, setCorPrimaria] = useState('#003e73');
   const [documentosFiscais, setDocumentosFiscais] = useState<unknown[]>([]);
   const [erro, setErro] = useState('');
@@ -208,10 +210,11 @@ export default function VendasIntegrado() {
       catalogo: catalogoDoPerfil,
       perfil: perfilCadastro,
       corPrimaria,
+      logoUrl,
       catalogoDisponivel: Boolean(catalogo),
       mensagem: catalogo ? '' : erro || 'O perfil foi carregado; o catálogo de Custos ainda está sendo consultado.',
     }, origemPrototipo);
-  }, [catalogo, corPrimaria, empresaId, erro, iframePronto, origemPrototipo, perfilCadastro]);
+  }, [catalogo, corPrimaria, empresaId, erro, iframePronto, logoUrl, origemPrototipo, perfilCadastro]);
 
   const enviarDocumentosFiscais = useCallback(() => {
     if (!iframePronto || !iframeRef.current?.contentWindow || !UUID_PATTERN.test(empresaId)) return;
@@ -363,6 +366,7 @@ export default function VendasIntegrado() {
     if (!perfilId) return;
     setErro('');
     setCatalogo(null);
+    setLogoUrl('');
     setPerfilCadastro((current) => String(current?.empresa_id || '') === perfilId ? current : null);
     try {
       const { data } = await aguardarComLimite(supabase.auth.getSession(), 10_000, 'A confirmação da sessão demorou mais que o esperado. Tente novamente.');
@@ -376,6 +380,7 @@ export default function VendasIntegrado() {
         throw new Error(perfil.mensagem || 'Complete o cadastro do perfil empresarial antes de usar o módulo.');
       }
       setPerfilCadastro(perfil.cadastro);
+      setLogoUrl(String(perfil.logoUrl || ''));
       setCorPrimaria(typeof perfil.corPrimaria === 'string' && /^#[0-9a-f]{6}$/i.test(perfil.corPrimaria) ? perfil.corPrimaria : '#003e73');
       if (iframeRef.current?.contentWindow) {
         void Promise.all([
@@ -937,5 +942,6 @@ export default function VendasIntegrado() {
     <section className="min-h-0 flex-1" aria-label="Vendas e Serviços">
       {!perfilPronto ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">{erro ? 'Módulo indisponível' : 'Preparando o módulo'}</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro || 'Confirmando sua sessão e o perfil empresarial ativo.'}</p>{erro ? <div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><Link href="/gestao" className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</Link></div> : null}</div></div> : <iframe ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className="block h-screen min-h-[620px] w-full border-0 bg-white" onLoad={() => setIframePronto(true)} />}
     </section>
+    <RodapeAvanta />
   </main>;
 }

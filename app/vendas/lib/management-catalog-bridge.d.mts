@@ -8,6 +8,7 @@ export type ManagementCatalogBridge = {
   catalogAvailable: boolean;
   message: string;
   primaryColor: string;
+  logoUrl: string;
   company: {
     name: string;
     legalName: string;

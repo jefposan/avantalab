@@ -156,8 +156,10 @@ export default function ColaboradorApp() {
     const repoAtivo = criarRepoSupabase(empresa, cliente);
     const dados = await carregarDados(repoAtivo);
     const colaborador = dados.colaboradores.find((item) => item.id === sessao.user.id);
-    if (!colaborador || (!colaborador.podeRecebimentos && !colaborador.podeServicos)) throw new Error('Seu cadastro não possui acesso ativo a Recebimentos ou Serviços.');
-    setOperacao(colaborador.podeRecebimentos && colaborador.podeServicos ? 'seletor' : colaborador.podeServicos ? 'servicos' : 'recebimentos');
+    if (!colaborador) throw new Error('Seu cadastro de colaborador não foi encontrado.');
+    const podeAbrirServicos = colaborador.podeServicos || colaborador.podeAgendamentos;
+    if (!colaborador.podeRecebimentos && !podeAbrirServicos) throw new Error('Seu cadastro não possui acesso ativo a Recebimentos, Serviços ou Agendamento.');
+    setOperacao(colaborador.podeRecebimentos && podeAbrirServicos ? 'seletor' : podeAbrirServicos ? 'servicos' : 'recebimentos');
     setEmpresaId(empresa);
     setRepo(repoAtivo);
     setEstado('app');
@@ -257,7 +259,6 @@ export default function ColaboradorApp() {
         <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
         <div className={styles.loginContent}>
           <form className={styles.loginCard} onSubmit={(event) => { event.preventDefault(); void entrar(); }}>
-            <div className={styles.loginMarca}>AvantaLab</div>
             <h1 className={styles.loginTitulo}>Operações em Campo</h1>
             <p className={styles.muted}>Entre com o CPF e a senha fornecidos pelo gestor.</p>
             <div className={styles.field} style={{ marginTop: 18 }}>
@@ -319,16 +320,24 @@ export default function ColaboradorApp() {
 
   const colaborador = colaboradores[0];
   if (!colaborador || !repo || !empresaId) return null;
-  const podeTrocarOperacao = colaborador.podeRecebimentos && colaborador.podeServicos;
+  const podeAbrirServicos = colaborador.podeServicos || colaborador.podeAgendamentos;
+  const podeTrocarOperacao = colaborador.podeRecebimentos && podeAbrirServicos;
   const nomeDoPerfil = empresaNome || 'Perfil da empresa';
   const descricaoDaOperacao = operacao === 'servicos' ? 'Registro de serviços' : 'Registro de recebimentos';
   if (operacao === 'seletor') return (
-    <main className={styles.seletorOperacaoPwa}>
-      <section>
-        <p>{nomeDoPerfil}</p><h1>Escolha a operação</h1><span>Você possui acesso aos dois sistemas.</span>
-        <button type="button" onClick={() => setOperacao('recebimentos')}><b>Recebimentos</b><small>Registrar cobranças em campo</small></button>
-        <button type="button" onClick={() => setOperacao('servicos')}><b>Serviços</b><small>Registrar atendimento e avaliação</small></button>
-        <button type="button" className={styles.seletorSair} onClick={() => void sair()}>Sair</button>
+    <main className={`${styles.loginWrap} ${styles.seletorOperacaoPwa}`}>
+      <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
+      <section className={styles.loginContent} aria-labelledby="operacao-titulo">
+        <div className={`${styles.loginCard} ${styles.seletorOperacaoCard}`}>
+          <header className={styles.seletorOperacaoCabecalho}><p className={styles.seletorOperacaoEmpresa}>{nomeDoPerfil}</p></header>
+          <h1 id="operacao-titulo" className={styles.loginTitulo}>Escolha a operação</h1>
+          <p className={styles.seletorOperacaoAjuda}>Você possui acesso aos dois sistemas.</p>
+          <div className={styles.seletorOperacaoAcoes}>
+            <button type="button" onClick={() => setOperacao('recebimentos')}><b>Recebimentos</b><small>Registrar cobranças em campo</small></button>
+            <button type="button" onClick={() => setOperacao('servicos')}><b>Serviços</b><small>{colaborador.podeServicos ? 'Registrar atendimento e avaliação' : 'Agendar atendimentos'}</small></button>
+          </div>
+          <button type="button" className={styles.seletorSair} onClick={() => void sair()}>Sair</button>
+        </div>
       </section>
     </main>
   );
@@ -349,7 +358,7 @@ export default function ColaboradorApp() {
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
           onRegistrar={(empresaRecebimentoId, subId, valor, obs, forma, arquivo) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs, forma, arquivo))}
           onReceberCobranca={(id, valor, obs, forma, arquivo, dataPagamento) => executar((r) => r.receberCobranca(id, valor, obs, forma, arquivo, dataPagamento))}
-        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} onRegistrar={(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao) => executar((r) => r.registrarServico(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao))} />}
+        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} onRegistrar={(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao) => executar((r) => r.registrarServico(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao))} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
       </div>
     </div>
   );

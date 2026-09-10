@@ -10195,7 +10195,7 @@ if (validacaoTelefoneObrigatoria) {
       <div><h2 className="text-base font-black">Menu</h2></div>
       <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); }} className="grid h-9 w-9 place-items-center rounded-xl border border-slate-700 text-lg text-slate-300 transition hover:bg-slate-800 hover:text-white" aria-label="Fechar menu">×</button>
     </div>
-    <div ref={painelAjustesRef} className="custom-scroll flex min-h-0 w-full flex-1 flex-col gap-2 overflow-y-auto pr-1">
+    <div ref={painelAjustesRef} className="av-menu-gestao-acoes custom-scroll flex min-h-0 w-full flex-1 flex-col gap-2 overflow-y-auto pr-1">
 
         {/* 1. Cadastrar Despesas + 2. Instrucoes (icone ?) */}
         <div className="order-10 flex w-full items-center gap-1.5">
@@ -10261,7 +10261,7 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
         )}
 
-        {modulosPaginaTotalAtivos(modulosAtivos).map((modulo) => (
+        {modulosPaginaTotalAtivos(modulosAtivos).filter((modulo) => modulo.id !== 'recebimentos_presencial').map((modulo) => (
           <Tooltip key={modulo.id} texto={modulo.id === 'projetos' ? 'Crie e gerencie seus projetos, etapas, tarefas e responsáveis.' : `Abrir ${modulo.nome} em tela total.`} posicao="right" wrapperClassName="order-28 w-full">
             <button
               type="button"
@@ -10319,7 +10319,7 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
         )}
 
-        {/* 4a. Operações de Campo */}
+        {/* Operações de Campo usa um acesso dedicado para manter seu ícone e descrição. */}
         {modulosAtivos.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
           <Tooltip texto="Gerencie recebimentos, serviços, empresas e colaboradores em campo." posicao="right" wrapperClassName="order-40 w-full">
             <button
@@ -11521,7 +11521,7 @@ if (validacaoTelefoneObrigatoria) {
       <span className="text-sm tracking-wide">
         <span style={{ color: '#003E73' }}>AVANTA</span>
         <span style={{ color: '#00A6C8' }}>LAB</span>
-        <span className={darkMode ? 'text-slate-300' : 'text-slate-700'}> Gestão v{APP_VERSION}</span>
+        <span className={`ml-1 align-middle text-[10px] font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>v{APP_VERSION}</span>
       </span>
 
       <span className={darkMode ? 'text-slate-500' : 'text-slate-400'}>

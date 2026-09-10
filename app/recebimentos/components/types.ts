@@ -108,11 +108,20 @@ export type Colaborador = {
   /** Define as superfícies que o colaborador pode usar no PWA. */
   podeRecebimentos: boolean;
   podeServicos: boolean;
+  /** Permite criar agendamentos manuais de serviço no PWA. */
+  podeAgendamentos: boolean;
   ativo: boolean;
 };
 
 export type AvaliacaoServico = 'bom' | 'regular';
 export type SituacaoServico = 'pendente' | 'realizado' | 'atrasado';
+export type TipoServico = 'rotina' | 'interna' | 'revisao' | 'extra';
+
+export const TIPOS_AGENDAMENTO_SERVICO: Array<[Exclude<TipoServico, 'rotina'>, string]> = [
+  ['interna', 'Interna'],
+  ['revisao', 'Revisão'],
+  ['extra', 'Extra'],
+];
 
 /** Uma execução programada ou realizada, independente de qualquer cobrança. */
 export type Servico = {
@@ -121,6 +130,8 @@ export type Servico = {
   subempresaId: string | null;
   dataProgramada: string;
   situacao: SituacaoServico;
+  /** Rotina vem da frequência contratada; os demais são agendamentos manuais. */
+  tipoServico: TipoServico;
   colaboradorId: string | null;
   clienteNome: string | null;
   /** PNG protegido no Storage; assinaturas antigas permanecem no campo legado. */

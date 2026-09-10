@@ -30,13 +30,14 @@ export async function POST(request: Request) {
     const emailContato = String(corpo.email ?? '').trim().toLowerCase();
     const podeRecebimentos = corpo.podeRecebimentos !== false;
     const podeServicos = corpo.podeServicos === true;
+    const podeAgendamentos = corpo.podeAgendamentos === true;
     if (!empresaId) return respostaErro('Empresa não informada.');
     if (!validarNomeCompleto(nome)) return respostaErro('Informe o nome completo do colaborador, com nome e sobrenome.');
     if (!cpfValido(cpf)) return respostaErro('Informe um CPF válido.');
     if (senha.length < 8) return respostaErro('A senha deve ter pelo menos 8 caracteres.');
     if (!celular) return respostaErro('Informe o celular do colaborador.');
     if (!/^\S+@\S+\.\S+$/.test(emailContato)) return respostaErro('Informe um e-mail de contato válido.');
-    if (!podeRecebimentos && !podeServicos) return respostaErro('Escolha ao menos um acesso: Recebimentos ou Serviços.');
+    if (!podeRecebimentos && !podeServicos && !podeAgendamentos) return respostaErro('Escolha ao menos um acesso: Recebimentos, Serviços ou Agendamento.');
 
     const validacao = await validarGestor(clientes.admin, user.id, empresaId);
     if (validacao !== 'ok') return erroValidacaoGestor(validacao);
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
       email_contato: emailContato,
       pode_recebimentos: podeRecebimentos,
       pode_servicos: podeServicos,
+      pode_agendamentos: podeAgendamentos,
       ativo: true,
     });
     if (erroCadastro) {
@@ -97,7 +99,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       erro: false,
-      colaborador: { id: usuarioCriado.user.id, nome, cpf, celular, email: emailContato, podeRecebimentos, podeServicos, ativo: true },
+      colaborador: { id: usuarioCriado.user.id, nome, cpf, celular, email: emailContato, podeRecebimentos, podeServicos, podeAgendamentos, ativo: true },
     });
   } catch (error) {
     console.error('Erro inesperado ao criar colaborador de recebimentos:', error);

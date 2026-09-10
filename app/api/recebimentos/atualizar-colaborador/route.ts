@@ -30,12 +30,13 @@ export async function POST(request: Request) {
     const ativo = corpo.ativo !== false;
     const podeRecebimentos = corpo.podeRecebimentos !== false;
     const podeServicos = corpo.podeServicos === true;
+    const podeAgendamentos = corpo.podeAgendamentos === true;
     if (!empresaId || !colaboradorUserId) return respostaErro('Empresa ou colaborador não informado.');
     if (!validarNomeCompleto(nome)) return respostaErro('Informe o nome completo do colaborador, com nome e sobrenome.');
     if (!cpfValido(cpf)) return respostaErro('Informe um CPF válido.');
     if (!celular) return respostaErro('Informe o celular do colaborador.');
     if (!/^\S+@\S+\.\S+$/.test(emailContato)) return respostaErro('Informe um e-mail de contato válido.');
-    if (!podeRecebimentos && !podeServicos) return respostaErro('Escolha ao menos um acesso: Recebimentos ou Serviços.');
+    if (!podeRecebimentos && !podeServicos && !podeAgendamentos) return respostaErro('Escolha ao menos um acesso: Recebimentos, Serviços ou Agendamento.');
 
     const validacao = await validarGestor(clientes.admin, user.id, empresaId);
     if (validacao !== 'ok') return erroValidacaoGestor(validacao);
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
 
     const { error: erroAtualizacao } = await clientes.admin
       .from('recebimentos_colaboradores')
-      .update({ nome, cpf, celular, email: emailInterno, email_contato: emailContato, pode_recebimentos: podeRecebimentos, pode_servicos: podeServicos, ativo, atualizado_em: new Date().toISOString() })
+      .update({ nome, cpf, celular, email: emailInterno, email_contato: emailContato, pode_recebimentos: podeRecebimentos, pode_servicos: podeServicos, pode_agendamentos: podeAgendamentos, ativo, atualizado_em: new Date().toISOString() })
       .eq('empresa_id', empresaId)
       .eq('user_id', colaboradorUserId);
     if (erroAtualizacao) {

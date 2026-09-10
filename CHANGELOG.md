@@ -1,5 +1,61 @@
 # Changelog
 
+## 1.25.0.04 - 2026-09-09
+- **Menu da Gestão**: os atalhos principais agora preservam uma pequena folga à direita e avançam suavemente ao passar o mouse, sem tocar no limite lateral do painel.
+
+## 1.25.0.03 - 2026-09-09
+- **Identidade dos módulos**: Projetos, Custos e Precificação e Vendas e Serviços agora seguem Operações de Campo e exibem a logo configurada do perfil em seus cabeçalhos. Onde não houver logo, o nome do perfil é mostrado como alternativa.
+
+## 1.25.0.02 - 2026-09-09
+- **Identidade dos módulos**: Operações de Campo passa a exibir a logo configurada do perfil no cabeçalho, sem repetir o nome quando a marca já o comunica; sem logo, o nome do perfil é a alternativa.
+- **Navegação e ajustes**: removida a entrada duplicada de Operações de Campo no menu. O seletor de modo escuro ficou centralizado e o botão de fechar dos ajustes ganhou contraste e área clicável explícitos.
+- **Rodapé**: as páginas próprias de Operações de Campo, Projetos, Custos e Precificação e Vendas e Serviços agora compartilham o rodapé institucional. A marca apresenta somente **AVANTALAB** e a versão em tamanho reduzido.
+
+## 1.25.0.01 - 2026-09-09
+- **Ajustes de Operações de Campo**: o painel ficou mais compacto. Modo escuro agora aparece somente como seletor ON/OFF em uma linha.
+
+## 1.25.0 - 2026-09-09
+- **Visão geral**: Recebimentos deixou de exibir valores e agora acompanha somente quantidades operacionais: programados, recebidos em campo, confirmados, em conferência, divergências, devolvidos e atrasados. Os resultados em valor permanecem na aba **Resultados**.
+- **Ajustes de Operações de Campo**: a engrenagem do cabeçalho agora abre os ajustes do módulo. Nela, gestores podem configurar o nome e a etiqueta da entrada financeira, ativar ou retirar a integração e definir se o resultado da empresa recebe valores **Recebidos e confirmados** ou **Programados no vencimento**. O padrão de perfis existentes continua sendo recebido e confirmado.
+- **Aparência**: Ajustes também permite ativar ou desativar o modo escuro do perfil, com aplicação imediata e persistente.
+
+## 1.24.0.01 - 2026-09-09
+- **Visão geral**: **Recebimentos** passou a seguir o mesmo padrão de seção e cards numéricos de Serviços, usando a paleta própria da divisão financeira.
+- **Total confirmado**: a faixa financeira ficou mais baixa, com valor destacado e os controles concentrados no canto direito.
+
+## 1.24.0 - 2026-09-09
+- **Financeiro**: o total recebido e confirmado agora ocupa uma pílula horizontal de largura total, reunindo valor, integração e ações na mesma linha em telas amplas.
+- **Relatório de recebimentos**: a Visão geral ganhou um resumo mensal de cobranças, registros em campo, confirmações e atrasos, com acesso direto à listagem detalhada.
+
+## 1.23.0 - 2026-09-09
+- **Visão geral**: a Gestão Web agora separa claramente os resumos de **Financeiro** e **Serviços** para o mês selecionado. Serviços mostra programados, realizados, pendentes, atrasados, agendamentos manuais e avaliações regulares, com a quantidade de avaliações boas como referência de qualidade.
+
+## 1.22.0.03 - 2026-09-09
+- **Acesso do colaborador**: o cabeçalho do card de escolha de operação agora é uma faixa contínua do próprio card; o login não repete mais o texto AvantaLab. Em Serviços, **Registrar novo serviço** fica em destaque e **Serviços realizados** e **Agendar serviço** dividem a segunda linha.
+- **Agendamentos**: novos agendamentos passam a iniciar em **Interna** como tipo de serviço padrão.
+
+## 1.22.0.02 - 2026-09-09
+- **Agendamentos**: os botões secundários **Fechar** e **Cancelar** no modal de edição receberam contraste próprio para permanecerem visíveis sobre o card branco.
+
+## 1.22.0.01 - 2026-09-09
+- **Agendamentos**: os botões de ação permanecem alinhados na mesma linha no Web. O calendário do PWA agora ocupa a camada superior da tela, mantém a data escolhida em destaque e exige a ação explícita **Confirmar**.
+- **Acesso do colaborador**: o card de escolha de operação ganhou cabeçalho institucional colorido, nome do perfil maior e centralizado, além do botão **Sair** em pílula com contorno.
+
+## 1.22.0 - 2026-09-09
+- **Operações de Campo**: a aba **Agendamentos** agora permite à Gestão editar o local, a data e o tipo de um atendimento manual; cancelá-lo com confirmação; ou marcá-lo como concluído a partir da data programada. A conclusão entra em **Realizados** identificada como feita pela Gestão, sem criar assinatura ou avaliação fictícias.
+- **Navegação**: as três áreas de abas ajustam tipografia, espaçamento e quebra responsiva para que **Agendamentos** permaneça dentro dos limites do card.
+
+## 1.21.0.02 - 2026-09-09
+- **Operações de Campo**: o campo de data de **Agendar serviço** agora abre o mesmo calendário centralizado do AvantaVendas, com navegação mensal, ação **Hoje**, cancelamento e bloqueio das datas anteriores ao dia atual.
+
+## 1.21.0.01 - 2026-09-09
+- **Operações de Campo**: a escolha entre Recebimentos e Serviços no PWA agora usa a mesma cena institucional de fundo e o mesmo card de acesso do login, com botões de seleção no padrão AvantaLab.
+
+## 1.21.0 - 2026-09-09
+- **Operações de Campo**: colaboradores podem receber a permissão independente **Agendamento**. No PWA de Serviços, ela libera **Agendar serviço** para criar atendimentos **Interna**, **Revisão** ou **Extra**, com empresa, piso/local e data.
+- **Serviços**: a Gestão Web ganhou a aba **Agendamentos**, com lista dos manuais pendentes ou atrasados e modal para criar novos. Esses atendimentos seguem para Pendentes, Atrasados e Realizados conforme a execução; as etiquetas distinguem o tipo do serviço.
+- **Alerta operacional**: ao selecionar uma empresa no registro de serviço, o PWA avisa os agendamentos manuais do dia naquele grupo. O aviso persiste até a execução ser registrada. Cobranças, vencimentos e históricos financeiros não são alterados.
+
 ## 1.20.0.09 - 2026-09-09
 - **Página pública**: o card do AvantaVendas em Gestão Financeira agora pode ser aberto diretamente por `#avantavendas`, com a posição compensada pelo cabeçalho fixo também no celular.
 

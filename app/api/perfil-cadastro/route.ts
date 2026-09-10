@@ -97,11 +97,12 @@ export async function GET(request: Request) {
   const ctx = await contexto(request, empresaId);
   if (!ctx) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
 
-  const [{ data: empresa }, { data: assinatura }, { data: cadastroAtual }, { data: configuracao }] = await Promise.all([
+  const [{ data: empresa }, { data: assinatura }, { data: cadastroAtual }, { data: configuracao }, { data: configuracaoMarca }] = await Promise.all([
     ctx.admin.from('empresas').select('id, nome, tipo_perfil').eq('id', empresaId).maybeSingle(),
     ctx.admin.from('assinaturas').select('cobranca_nome, cobranca_documento, cobranca_email, cobranca_telefone').eq('empresa_id', empresaId).maybeSingle(),
     ctx.admin.from('cadastros_perfil').select('*').eq('empresa_id', empresaId).maybeSingle(),
     ctx.admin.from('configuracoes').select('cor_primaria').eq('empresa_id', empresaId).maybeSingle(),
+    ctx.admin.from('configuracoes').select('logo_url').eq('empresa_id', empresaId).maybeSingle(),
   ]);
   if (!empresa) return NextResponse.json({ erro: true, mensagem: 'Perfil não encontrado.' }, { status: 404 });
 
@@ -140,6 +141,7 @@ export async function GET(request: Request) {
       diasRestantes: 0,
       modoRevisao: true,
       corPrimaria: /^#[0-9a-f]{6}$/i.test(texto(configuracao?.cor_primaria, 7)) ? texto(configuracao?.cor_primaria, 7) : '#003E73',
+      logoUrl: typeof configuracaoMarca?.logo_url === 'string' && configuracaoMarca.logo_url.trim() && configuracaoMarca.logo_url !== '__blank__' ? configuracaoMarca.logo_url : '',
     });
   }
 
@@ -147,6 +149,7 @@ export async function GET(request: Request) {
     ok: true,
     ...statusCadastro(preenchido, tipoPerfil, ['gestor_master', 'administrador'].includes(ctx.vinculo.perfil || '')),
     corPrimaria: /^#[0-9a-f]{6}$/i.test(texto(configuracao?.cor_primaria, 7)) ? texto(configuracao?.cor_primaria, 7) : '#003E73',
+    logoUrl: typeof configuracaoMarca?.logo_url === 'string' && configuracaoMarca.logo_url.trim() && configuracaoMarca.logo_url !== '__blank__' ? configuracaoMarca.logo_url : '',
   });
 }
 

@@ -112,8 +112,8 @@ select:focus-visible {
 .module-exit:hover { background: color-mix(in srgb, var(--av-blue-900) 88%, #fff); }
 
 .module-brand { display: grid; justify-items: center; gap: 7px; min-width: 0; line-height: 1.2; }
-.module-logo { display: block; width: clamp(148px, 12vw, 168px); height: auto; }
-.module-brand span { color: var(--av-muted); font-size: 11px; font-weight: 500; letter-spacing: .01em; line-height: 1.35; white-space: nowrap; }
+.company-logo { display: block; width: clamp(124px, 14vw, 190px); height: 52px; max-width: min(38vw, 260px); object-fit: contain; }
+.module-brand span { max-width: min(38vw, 290px); overflow: hidden; color: var(--av-muted); font-size: clamp(12px, 1.15vw, 15px); font-weight: 850; letter-spacing: .01em; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 
 .topbar-actions { justify-self: end; display: flex; align-items: center; gap: 7px; }
 .module-settings-button, .mobile-menu-button {

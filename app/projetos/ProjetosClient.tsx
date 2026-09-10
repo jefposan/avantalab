@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
+import RodapeAvanta from '@/app/components/RodapeAvanta';
 import { useProjectCollection } from './hooks/useProjectCollection';
 import { SupabaseProjectRepository } from './services/supabase-repository';
 import styles from './projetos.module.css';
@@ -16,7 +16,7 @@ import { Modal } from './components/Modal';
 import { PROJECT_FILE_VERSION, type ProfileRole, type ProjectCollection, type SharedProjectSummary } from './types';
 
 type ModuleAccess = {
-  empresa: { id: string; nome: string; corPrimaria: string; temaEscuro: boolean };
+  empresa: { id: string; nome: string; corPrimaria: string; temaEscuro: boolean; logoUrl?: string };
   perfil: ProfileRole;
   podeEditar: boolean;
   podeGerenciarModulo: boolean;
@@ -26,11 +26,12 @@ type ModuleAccess = {
   retornoEmpresaId?: string | null;
 };
 
-type SharedContext = { id: string; nome: string; corPrimaria: string; temaEscuro: boolean };
+type SharedContext = { id: string; nome: string; corPrimaria: string; temaEscuro: boolean; logoUrl?: string };
 type SharedProjectsState = 'loading' | 'ready' | 'error';
 
-function ProjectModuleHeader({ companyName, returnCompanyId, showSettings = false, onSettings, badge }: {
+function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId, showSettings = false, onSettings, badge }: {
   companyName: string;
+  companyLogoUrl?: string;
   returnCompanyId: string;
   showSettings?: boolean;
   onSettings?: () => void;
@@ -39,8 +40,7 @@ function ProjectModuleHeader({ companyName, returnCompanyId, showSettings = fals
   return <header className={styles.moduleHeader}>
     <Link href={`/gestao?empresaId=${encodeURIComponent(returnCompanyId)}`} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</Link>
     <div className={styles.moduleIdentity}>
-      <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={160} height={40} loading="eager" className={styles.moduleLogo} />
-      <span>{companyName}</span>
+      {companyLogoUrl ? <img src={companyLogoUrl} alt={companyName} className={styles.companyLogo} /> : <span>{companyName}</span>}
     </div>
     <div className={styles.moduleHeaderActions}>
       {showSettings && <button type="button" className={styles.moduleSettingsButton} onClick={onSettings} aria-label="Abrir ajustes do AvantaProjetos" title="Ajustes"><Icon name="settings" size={18} /></button>}
@@ -117,10 +117,11 @@ function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, onAc
   };
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.darkTheme : ''} ${mapaEmFoco ? styles.mapFocusMode : ''} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
-    <ProjectModuleHeader companyName={access.empresa.nome} returnCompanyId={effectiveReturnCompanyId} showSettings={access.podeGerenciarModulo} onSettings={() => setAjustesAbertos(true)} badge={activeProject ? activeProjectReadOnly ? 'Somente visualização' : access.compartilhado ? 'Projeto compartilhado' : undefined : access.compartilhado ? 'Acesso compartilhado' : !access.podeEditar ? 'Somente visualização' : undefined} />
+    <ProjectModuleHeader companyName={access.empresa.nome} companyLogoUrl={access.empresa.logoUrl} returnCompanyId={effectiveReturnCompanyId} showSettings={access.podeGerenciarModulo} onSettings={() => setAjustesAbertos(true)} badge={activeProject ? activeProjectReadOnly ? 'Somente visualização' : access.compartilhado ? 'Projeto compartilhado' : undefined : access.compartilhado ? 'Acesso compartilhado' : !access.podeEditar ? 'Somente visualização' : undefined} />
     <div className={styles.moduleContent}>
       {activeProject ? <ProjectWorkspace readOnly={activeProjectReadOnly} project={activeProject} people={collection.people} saveState={saveState} onBack={voltarParaProjetos} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={!activeProjectReadOnly && canUndo} canRedo={!activeProjectReadOnly && canRedo} onMessage={setMessage} mapaEmFoco={mapaEmFoco} onMapaEmFocoChange={setMapaEmFoco} /> : <ProjectHome readOnly={!access.podeEditar || access.compartilhado === true} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} sharedProjects={sharedProjects} sharedProjectsState={sharedProjectsState} onOpenShared={openSharedProject} sharedAccessOnly={access.compartilhado === true} />}
     </div>
+    {!mapaEmFoco && <RodapeAvanta darkMode={access.empresa.temaEscuro} />}
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes do AvantaProjetos" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">
         <div><strong>Modo escuro</strong><p>Aplica a aparência escura a este perfil no AvantaLab e nos módulos compatíveis.</p></div>
@@ -146,10 +147,11 @@ function SharedProjectsHub({ companyId, context, projects, state }: { companyId:
     router.push(`/projetos?empresaId=${encodeURIComponent(project.companyId)}&projetoId=${encodeURIComponent(project.projectId)}&retornoEmpresaId=${encodeURIComponent(companyId)}`);
   };
   return <main className={`${styles.root} ${context.temaEscuro ? styles.darkTheme : ''} typography-system`} style={{ '--project-profile-color': context.corPrimaria } as React.CSSProperties}>
-    <ProjectModuleHeader companyName={context.nome} returnCompanyId={companyId} badge="Acesso compartilhado" />
+    <ProjectModuleHeader companyName={context.nome} companyLogoUrl={context.logoUrl} returnCompanyId={companyId} badge="Acesso compartilhado" />
     <div className={styles.moduleContent}>
       <ProjectHome collection={collection} onChange={() => {}} onOpen={() => {}} onMessage={setMessage} readOnly sharedProjects={projects} sharedProjectsState={state} onOpenShared={openSharedProject} sharedAccessOnly />
     </div>
+    <RodapeAvanta darkMode={context.temaEscuro} />
     {message && <div className={styles.toast} role="status" aria-live="polite">{message}</div>}
   </main>;
 }

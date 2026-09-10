@@ -18,19 +18,20 @@ export async function GET(request: Request) {
   try {
     const projetos = await listarProjetosCompartilhados(db, auth.user.id);
     const empresaId = String(new URL(request.url).searchParams.get('empresaId') || '').trim();
-    let contexto = { id: empresaId, nome: 'Projetos compartilhados', corPrimaria: '#003E73', temaEscuro: false };
+    let contexto = { id: empresaId, nome: 'Projetos compartilhados', corPrimaria: '#003E73', temaEscuro: false, logoUrl: '' };
     if (empresaId) {
       const { data: membership } = await db.from('usuarios_empresa').select('id').eq('empresa_id', empresaId).eq('user_id', auth.user.id).eq('status', 'ativo').limit(1).maybeSingle();
       if (membership) {
         const [{ data: company }, { data: config }] = await Promise.all([
           db.from('empresas').select('nome').eq('id', empresaId).maybeSingle(),
-          db.from('configuracoes').select('cor_primaria,dark_mode').eq('empresa_id', empresaId).maybeSingle(),
+          db.from('configuracoes').select('cor_primaria,dark_mode,logo_url').eq('empresa_id', empresaId).maybeSingle(),
         ]);
         contexto = {
           id: empresaId,
           nome: company?.nome || 'Perfil empresarial',
           corPrimaria: config?.cor_primaria || '#003E73',
           temaEscuro: config?.dark_mode === true,
+          logoUrl: typeof config?.logo_url === 'string' && config.logo_url.trim() && config.logo_url !== '__blank__' ? config.logo_url : '',
         };
       }
     }

@@ -1,6 +1,72 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.20.0.09 -->
+<!-- ava-version: 1.25.0.04 -->
+
+> Revisão 1.25.0.04: os botões principais do Menu da Gestão deixam uma folga
+> lateral e avançam suavemente no hover; não há mudança nos fluxos operacionais.
+
+> Revisão 1.25.0.03: todos os módulos em página própria usam a logo configurada
+> do perfil no cabeçalho; quando ela não existe, mostram o nome do perfil. Não
+> há mudança nos fluxos operacionais.
+
+> Revisão 1.25.0.02: as páginas próprias dos módulos exibem o rodapé
+> institucional AvantaLab e Operações de Campo mostra a logo configurada do
+> perfil, quando existir. A entrada duplicada no menu foi removida; não há
+> mudança nos fluxos operacionais.
+
+> Revisão 1.25.0.01: o ajuste visual do painel de Ajustes deixa **Modo escuro**
+> em uma linha curta, com seletor ON/OFF; não há mudança operacional.
+
+> Revisão 1.25.0: a **Visão geral** de Operações de Campo passou a mostrar
+> somente quantidades operacionais de Recebimentos e Serviços; os valores ficam
+> em **Resultados**. Em **Ajustes** (engrenagem do cabeçalho), Gestor Master e
+> Administrador definem o nome, a etiqueta, o envio para Resultados e a base
+> financeira: **Recebido e confirmado** ou **Programado no vencimento**. Perfis
+> existentes preservam a primeira opção. A mesma tela também altera o modo
+> escuro do perfil, aplicado imediatamente.
+
+> Revisão 1.24.0.01: a Visão geral preserva as mesmas informações financeiras,
+> mas **Recebimentos** agora usa a mesma estrutura de seção e cards numéricos de
+> Serviços, na cor própria da divisão. O total confirmado ganhou mais destaque
+> e os controles permanecem agrupados à direita; não há mudança operacional.
+
+> Revisão 1.24.0: em **Visão geral > Financeiro**, a pílula de total recebido
+> concentra a integração em uma linha. O novo **Relatório de recebimentos**
+> resume as cobranças do mês e permite abrir a listagem detalhada.
+
+> Revisão 1.23.0: a **Visão geral** separa Financeiro de Serviços no mês
+> selecionado. Em Serviços, acompanhe programados, realizados, pendentes,
+> atrasados, agendamentos manuais e avaliações regulares; as avaliações boas
+> aparecem como referência de qualidade.
+
+> Revisão 1.22.0.03: novos agendamentos iniciam no tipo **Interna**. Os demais
+> refinamentos desta revisão pertencem ao acesso do colaborador.
+
+> Revisão 1.22.0.02: o contraste dos botões secundários no modal de
+> Agendamentos foi ajustado; não há mudança operacional.
+
+> Revisão 1.22.0.01: as ações de cada agendamento manual permanecem alinhadas
+> em uma linha na Gestão Web; não há mudança no fluxo operacional.
+
+> Revisão 1.22.0: em **Serviços > Agendamentos**, a Gestão pode editar um
+> agendamento manual, cancelá-lo após confirmação ou concluí-lo a partir da
+> data marcada. A conclusão aparece em **Realizados** como feita pela Gestão,
+> sem simular assinatura ou avaliação do cliente.
+
+> Revisão 1.21.0.02: em **Serviços > Agendamentos**, a data usa o calendário
+> centralizado do AvantaVendas. Navegue pelos meses, escolha um dia a partir de
+> hoje ou use **Hoje**; datas anteriores permanecem indisponíveis.
+
+> Revisão 1.21.0.01: a escolha de operação do PWA usa a mesma cena visual do
+> login; não altera as permissões nem o fluxo operacional.
+
+> Revisão 1.21.0: em **Operações de Campo > Colaboradores**, a permissão
+> **Agendamento** libera no PWA de Serviços a criação de serviços **Interna**,
+> **Revisão** e **Extra**. Na Gestão Web, use **Serviços > Agendamentos > Novo
+> agendamento** para escolher empresa, piso/local, data e tipo. Serviços manuais
+> ficam em Pendentes ou Atrasados até o registro; ao concluir, aparecem em
+> Realizados. O alerta do PWA informa agendamentos manuais do dia da empresa e
+> só desaparece quando forem registrados. Nada disso altera recebimentos.
 
 > Revisão 1.20.0.09: a âncora pública direta do card AvantaVendas na página de
 > Gestão Financeira não altera a operação da Gestão Web.

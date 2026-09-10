@@ -1,6 +1,53 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.20.0.09 -->
+<!-- ava-version: 1.25.0.04 -->
+
+> Revisão 1.25.0.04: o refinamento visual do Menu da Gestão não altera o
+> fluxo operacional do AvantaVendas.
+
+> Revisão 1.25.0.03: o cabeçalho web de Vendas e Serviços recebe a logo do
+> perfil selecionado; não altera o fluxo operacional do AvantaVendas.
+
+> Revisão 1.25.0.02: o rodapé institucional da página web de Vendas e Serviços
+> e os refinamentos de identidade de outros módulos não alteram o fluxo do
+> AvantaVendas.
+
+> Revisão 1.25.0.01: a compactação visual dos Ajustes de Operações de Campo não
+> altera fluxos do AvantaVendas.
+
+> Revisão 1.25.0: a configuração de como Operações de Campo alimenta os
+> resultados do perfil é feita na Gestão Web e não altera fluxos do
+> AvantaVendas.
+
+> Revisão 1.24.0.01: o refinamento visual dos cards de Recebimentos pertence a
+> Operações de Campo e não altera o AvantaVendas.
+
+> Revisão 1.24.0: a pílula financeira e o relatório de recebimentos pertencem
+> a Operações de Campo e não alteram o AvantaVendas.
+
+> Revisão 1.23.0: a Visão geral separada de Operações de Campo pertence à
+> Gestão Web e não altera o AvantaVendas.
+
+> Revisão 1.22.0.03: o ajuste visual do acesso de Operações de Campo e o tipo
+> padrão de seus agendamentos não alteram o AvantaVendas.
+
+> Revisão 1.22.0.02: o ajuste visual do modal de Agendamentos pertence a
+> Operações de Campo e não altera o AvantaVendas.
+
+> Revisão 1.22.0.01: os ajustes de calendário e do card de operação pertencem
+> a Operações de Campo e não alteram o AvantaVendas.
+
+> Revisão 1.22.0: a gestão de agendamentos manuais pertence a Operações de
+> Campo e não altera o AvantaVendas.
+
+> Revisão 1.21.0.02: Operações de Campo reutiliza o padrão de calendário do
+> AvantaVendas para agendamentos, sem alterar o fluxo de Vendas.
+
+> Revisão 1.21.0.01: o refinamento visual da seleção de operação no PWA de
+> Operações de Campo não altera o AvantaVendas.
+
+> Revisão 1.21.0: Agendamentos de Operações de Campo são independentes do
+> AvantaVendas e não alteram sua operação.
 
 > Revisão 1.20.0.09: a âncora pública direta do card AvantaVendas na página de
 > Gestão Financeira não altera a operação do AvantaVendas.

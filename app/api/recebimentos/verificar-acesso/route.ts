@@ -15,12 +15,12 @@ export async function POST(request: Request) {
 
     const { data: colaborador, error: erroColaborador } = await clientes.admin
       .from('recebimentos_colaboradores')
-      .select('id, ativo, pode_recebimentos, pode_servicos')
+      .select('id, ativo, pode_recebimentos, pode_servicos, pode_agendamentos')
       .eq('empresa_id', empresaId)
       .eq('user_id', user.id)
       .maybeSingle();
     if (erroColaborador) return NextResponse.json({ ativo: true, indeterminado: true });
-    if (!colaborador?.ativo || (!colaborador.pode_recebimentos && !colaborador.pode_servicos)) return NextResponse.json({ ativo: false, motivo: 'colaborador' });
+    if (!colaborador?.ativo || (!colaborador.pode_recebimentos && !colaborador.pode_servicos && !colaborador.pode_agendamentos)) return NextResponse.json({ ativo: false, motivo: 'colaborador' });
 
     const [{ data: modulo, error: erroModulo }, { data: empresa, error: erroEmpresa }] = await Promise.all([
       clientes.admin
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const empresaNome = erroEmpresa ? '' : String(empresa?.nome ?? '').trim();
     if (erroModulo) return NextResponse.json({ ativo: true, indeterminado: true, empresaNome });
     const assinaturaAtiva = await assinaturaEmpresaLiberada(empresaId);
-    return NextResponse.json({ ativo: Boolean(modulo) && assinaturaAtiva, motivo: !modulo ? 'modulo' : (assinaturaAtiva ? undefined : 'assinatura'), empresaNome, podeRecebimentos: colaborador.pode_recebimentos !== false, podeServicos: colaborador.pode_servicos === true });
+    return NextResponse.json({ ativo: Boolean(modulo) && assinaturaAtiva, motivo: !modulo ? 'modulo' : (assinaturaAtiva ? undefined : 'assinatura'), empresaNome, podeRecebimentos: colaborador.pode_recebimentos !== false, podeServicos: colaborador.pode_servicos === true, podeAgendamentos: colaborador.pode_agendamentos === true });
   } catch (error) {
     console.error('Erro ao verificar acesso de recebimentos:', error);
     return NextResponse.json({ ativo: true, indeterminado: true });

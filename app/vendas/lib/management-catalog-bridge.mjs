@@ -6,6 +6,10 @@ const READY_TYPE = 'AVANTALAB_VENDAS_CATALOGO_READY_V1';
 function text(value) { return typeof value === 'string' ? value.trim() : String(value ?? '').trim(); }
 function number(value) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : 0; }
 function color(value) { const normalized = text(value); return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized.toLowerCase() : '#003e73'; }
+function imageUrl(value) {
+  const normalized = text(value);
+  try { const url = new URL(normalized); return ['https:', 'http:'].includes(url.protocol) ? url.toString() : ''; } catch { return ''; }
+}
 
 export function isAllowedLocalManagementOrigin(origin, currentOrigin = '') {
   try {
@@ -93,6 +97,7 @@ export function parseManagementCatalogMessage(data) {
     catalogAvailable: data.catalogoDisponivel !== false,
     message: text(data.mensagem).slice(0, 240),
     primaryColor: color(data.corPrimaria),
+    logoUrl: imageUrl(data.logoUrl),
     company: mapCompanyProfile(data.perfil, companyId),
     priceTable: catalog.tabelaPreco ? { id: text(catalog.tabelaPreco.id), name: text(catalog.tabelaPreco.nome) } : null,
     generatedAt: text(catalog.geradoEm),

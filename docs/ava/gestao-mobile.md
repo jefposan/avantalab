@@ -1,6 +1,53 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.20.0.09 -->
+<!-- ava-version: 1.25.0.04 -->
+
+> Revisão 1.25.0.04: o refinamento do hover no Menu da Gestão pertence à
+> interface Web e não altera a Gestão Mobile.
+
+> Revisão 1.25.0.03: a logo de perfil nos cabeçalhos das páginas web dos
+> módulos não altera a Gestão Mobile.
+
+> Revisão 1.25.0.02: rodapé, logo no cabeçalho Web e refinamentos do painel de
+> Ajustes pertencem às páginas web dos módulos e não alteram a Gestão Mobile.
+
+> Revisão 1.25.0.01: a compactação visual dos Ajustes pertence à Gestão Web e
+> não altera a Gestão Mobile.
+
+> Revisão 1.25.0: a reorganização da Visão geral e os novos Ajustes pertencem
+> à Gestão Web de Operações de Campo e não alteram a Gestão Mobile.
+
+> Revisão 1.24.0.01: o refinamento visual dos cards de Recebimentos pertence à
+> Gestão Web e não altera a Gestão Mobile.
+
+> Revisão 1.24.0: a pílula financeira e o relatório de recebimentos pertencem
+> à Gestão Web e não alteram a Gestão Mobile.
+
+> Revisão 1.23.0: a separação de resumos da Visão geral pertence à Gestão Web
+> e não altera a Gestão Mobile.
+
+> Revisão 1.22.0.03: no PWA de Serviços, Registrar novo serviço aparece em
+> destaque; Serviços realizados e Agendar serviço ficam lado a lado. O novo
+> agendamento inicia como **Interna**.
+
+> Revisão 1.22.0.02: o contraste do modal de Agendamentos pertence à Gestão
+> Web e não altera a Gestão Mobile.
+
+> Revisão 1.22.0.01: em Agendar serviço, escolha a data no calendário e toque
+> em **Confirmar** para aplicá-la. O calendário cobre toda a tela enquanto está
+> aberto; o card de escolha da operação teve apenas refinamento visual.
+
+> Revisão 1.22.0: editar, cancelar ou concluir agendamentos manuais pertence à
+> Gestão Web de Operações de Campo e não altera a Gestão Mobile.
+
+> Revisão 1.21.0.02: o calendário de Agendamentos pertence a Operações de
+> Campo e não altera a Gestão Mobile.
+
+> Revisão 1.21.0.01: o refinamento visual da seleção de operação no PWA de
+> Operações de Campo não altera a Gestão Mobile.
+
+> Revisão 1.21.0: Agendamentos de Operações de Campo pertencem ao PWA específico
+> de colaboradores e à Gestão Web; não alteram a operação da Gestão Mobile.
 
 > Revisão 1.20.0.09: a âncora pública direta do card AvantaVendas na página de
 > Gestão Financeira não altera a operação da Gestão Mobile.

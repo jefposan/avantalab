@@ -540,6 +540,20 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
   animation: av-menu-gestao-entrada 620ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
+/* Os atalhos principais deixam uma margem à direita para avançarem no hover. */
+.av-menu-gestao-acoes > span,
+.av-menu-gestao-acoes > .order-100 > span {
+  width: calc(100% - 12px);
+  transition: transform 180ms cubic-bezier(.22, 1, .36, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .av-menu-gestao-acoes > span:hover,
+  .av-menu-gestao-acoes > .order-100 > span:hover {
+    transform: translateX(8px);
+  }
+}
+
 @keyframes av-card-revelar {
   from {
     opacity: .82;
@@ -561,5 +575,10 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
 
   .av-menu-gestao-entrada {
     animation: none;
+  }
+
+  .av-menu-gestao-acoes > span,
+  .av-menu-gestao-acoes > .order-100 > span {
+    transition: none;
   }
 }

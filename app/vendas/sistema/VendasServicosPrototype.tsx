@@ -66,7 +66,6 @@ import {
   evaluateAccessDecision,
   normalizeAccessBoundary,
 } from '../lib/access-control.mjs';
-import { brandLogoDataUri } from '../lib/brand-logo';
 import { buildQuotePdf, quotePdfFileName, type QuotePdfInput } from '../lib/quote-pdf.mjs';
 import { buildServiceOrderPdf, serviceOrderPdfFileName, type ServiceOrderPdfInput } from '../lib/service-order-pdf.mjs';
 import { FISCAL_REFERENCE_DATE, buildFiscalWorkflow, getFiscalDocumentProfile } from '../lib/fiscal-flow.mjs';
@@ -7177,6 +7176,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     ? `/gestao?empresaId=${encodeURIComponent(managementCatalogBridge.companyId)}`
     : '/gestao';
   const profileColor = managementCatalogBridge?.primaryColor || '#003e73';
+  const companyLogoUrl = managementCatalogBridge?.logoUrl || '';
 
   return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div className="commercial-app" style={{ '--av-profile-primary': profileColor } as CSSProperties}>
     <header className="topbar">
@@ -7185,8 +7185,9 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         <button type="button" className="mobile-menu-button" onClick={() => setMobileMenu(true)} aria-label="Abrir menu"><Icon name="menu"/></button>
       </div>
       <div className="module-brand">
-        <img src={brandLogoDataUri} alt="AvantaLab — Do zero ao operacional" className="module-logo"/>
-        <span>{managementProfileReady ? moduleSettings.company.name : 'Carregando perfil empresarial'} · Vendas e Serviços</span>
+        {companyLogoUrl
+          ? <img src={companyLogoUrl} alt={moduleSettings.company.name} className="company-logo"/>
+          : <span>{managementProfileReady ? moduleSettings.company.name : 'Carregando perfil empresarial'}</span>}
       </div>
       <div className="topbar-actions">
         {managementContextReady && can('settings.view') && <button type="button" className="module-settings-button" onClick={() => navigate('configuracoes')} aria-label="Abrir ajustes de Vendas e Serviços" title="Ajustes"><Icon name="settings" size={18}/></button>}

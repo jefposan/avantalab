@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase as supabasePrincipal } from '@/app/lib/supabase';
-import type { AvaliacaoServico, Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, Servico, SituacaoRecebimento, Subempresa } from '../components/types';
+import type { AvaliacaoServico, Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, Servico, SituacaoRecebimento, Subempresa, TipoServico } from '../components/types';
 import { validarNomeCompleto } from '@/app/lib/nome-pessoa';
 
 export type DadosRecebimentos = {
@@ -18,6 +18,8 @@ export type IntegracaoFinanceiraRecebimentos = {
   nomeEntrada: string;
   tituloEtiqueta: string;
   integrado: boolean;
+  /** Define se a Receita recebe o valor já confirmado ou o programado no vencimento. */
+  baseValor: 'recebido' | 'programado';
   valorSincronizado: number;
 };
 
@@ -49,6 +51,10 @@ export interface RecebimentosRepo {
   registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null): Promise<void>;
   receberCobranca(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null): Promise<void>;
   registrarServico(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string): Promise<void>;
+  agendarServico(empresaRecebimentoId: string, subempresaId: string | null, dataProgramada: string, tipoServico: Exclude<TipoServico, 'rotina'>): Promise<void>;
+  editarAgendamentoServico(servicoId: string, empresaRecebimentoId: string, subempresaId: string | null, dataProgramada: string, tipoServico: Exclude<TipoServico, 'rotina'>): Promise<void>;
+  cancelarAgendamentoServico(servicoId: string): Promise<void>;
+  concluirAgendamentoServico(servicoId: string): Promise<void>;
   concluirAvisoServico(servicoId: string): Promise<void>;
   reabrirAvisoServico(servicoId: string): Promise<void>;
   obterComprovante(lancamentoId: string): Promise<ComprovanteRecebimento>;
@@ -59,6 +65,7 @@ export interface RecebimentosRepo {
   estornar(lancamentoId: string, motivo: string): Promise<void>;
   obterIntegracaoFinanceira(ano: number, mes: number): Promise<IntegracaoFinanceiraRecebimentos>;
   atualizarTitulosFinanceiro(ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string): Promise<IntegracaoFinanceiraRecebimentos>;
+  atualizarConfiguracaoFinanceira(ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string, baseValor: IntegracaoFinanceiraRecebimentos['baseValor']): Promise<IntegracaoFinanceiraRecebimentos>;
   definirIntegracaoFinanceira(ano: number, mes: number, ativa: boolean): Promise<IntegracaoFinanceiraRecebimentos>;
   assinarAtualizacoes?(callback: () => void): () => void;
 }
@@ -79,6 +86,7 @@ function mapIntegracao(row: Linha | null | undefined): IntegracaoFinanceiraReceb
     nomeEntrada: texto(row?.nome_entrada) || 'Recebimentos em campo',
     tituloEtiqueta: texto(row?.titulo_etiqueta) || 'Recebimentos',
     integrado: row?.integrado === true,
+    baseValor: texto(row?.base_valor) === 'programado' ? 'programado' : 'recebido',
     valorSincronizado: numero(row?.valor_sincronizado),
   };
 }
@@ -128,6 +136,7 @@ function mapColaborador(row: Linha): Colaborador {
     email: texto(row.email_contato), cpf: texto(row.cpf), senha: '',
     podeRecebimentos: row.pode_recebimentos !== false,
     podeServicos: row.pode_servicos === true,
+    podeAgendamentos: row.pode_agendamentos === true,
     ativo: row.ativo !== false,
   };
 }
@@ -138,6 +147,7 @@ function mapServico(row: Linha): Servico {
     subempresaId: row.subempresa_id == null ? null : texto(row.subempresa_id),
     dataProgramada: texto(row.data_programada),
     situacao: texto(row.situacao) as Servico['situacao'],
+    tipoServico: (texto(row.tipo_servico) || 'rotina') as Servico['tipoServico'],
     colaboradorId: row.colaborador_user_id == null ? null : texto(row.colaborador_user_id),
     clienteNome: row.cliente_nome == null ? null : texto(row.cliente_nome),
     assinaturaArquivoPath: row.assinatura_arquivo_path == null ? null : texto(row.assinatura_arquivo_path),
@@ -338,9 +348,9 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     },
     async excluirColaborador(id) { await chamarApi(cliente, '/api/recebimentos/excluir-colaborador', { empresaId, colaboradorUserId: id }); },
     async alternarColaborador(id, ativo) {
-      const { data, error } = await cliente.from('recebimentos_colaboradores').select('nome, cpf, celular, email_contato, pode_recebimentos, pode_servicos').eq('empresa_id', empresaId).eq('user_id', id).single();
+      const { data, error } = await cliente.from('recebimentos_colaboradores').select('nome, cpf, celular, email_contato, pode_recebimentos, pode_servicos, pode_agendamentos').eq('empresa_id', empresaId).eq('user_id', id).single();
       if (error || !data) throw new Error('Colaborador não encontrado.');
-      await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, podeRecebimentos: data.pode_recebimentos !== false, podeServicos: data.pode_servicos === true, ativo });
+      await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, podeRecebimentos: data.pode_recebimentos !== false, podeServicos: data.pode_servicos === true, podeAgendamentos: data.pode_agendamentos === true, ativo });
     },
     async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante) {
       await registrarViaApi(cliente, {
@@ -368,6 +378,22 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       await chamarApi(cliente, '/api/recebimentos/registrar-servico', {
         empresaId, recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente,
       });
+    },
+    async agendarServico(recebimentoEmpresaId, subempresaId, dataProgramada, tipoServico) {
+      await chamarApi(cliente, '/api/recebimentos/agendar-servico', {
+        empresaId, recebimentoEmpresaId, subempresaId, dataProgramada, tipoServico,
+      });
+    },
+    async editarAgendamentoServico(servicoId, recebimentoEmpresaId, subempresaId, dataProgramada, tipoServico) {
+      await chamarApi(cliente, '/api/recebimentos/gerenciar-agendamento-servico', {
+        empresaId, servicoId, acao: 'editar', recebimentoEmpresaId, subempresaId, dataProgramada, tipoServico,
+      });
+    },
+    async cancelarAgendamentoServico(servicoId) {
+      await chamarApi(cliente, '/api/recebimentos/gerenciar-agendamento-servico', { empresaId, servicoId, acao: 'cancelar' });
+    },
+    async concluirAgendamentoServico(servicoId) {
+      await chamarApi(cliente, '/api/recebimentos/gerenciar-agendamento-servico', { empresaId, servicoId, acao: 'concluir' });
     },
     async concluirAvisoServico(servicoId) {
       await chamarApi(cliente, '/api/recebimentos/concluir-aviso-servico', { empresaId, servicoId });
@@ -426,6 +452,13 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         p_empresa_id: empresaId, p_ano: ano, p_mes: mes,
         p_nome_entrada: nomeEntrada, p_titulo_etiqueta: tituloEtiqueta,
       }), 'Erro ao atualizar os títulos da integração.');
+      return mapIntegracao(data as Linha);
+    },
+    async atualizarConfiguracaoFinanceira(ano, mes, nomeEntrada, tituloEtiqueta, baseValor) {
+      const data = await exigir(cliente.rpc('recebimentos_atualizar_configuracao_financeira', {
+        p_empresa_id: empresaId, p_ano: ano, p_mes: mes,
+        p_nome_entrada: nomeEntrada, p_titulo_etiqueta: tituloEtiqueta, p_base_valor: baseValor,
+      }), 'Erro ao atualizar a configuração financeira.');
       return mapIntegracao(data as Linha);
     },
     async definirIntegracaoFinanceira(ano, mes, ativa) {

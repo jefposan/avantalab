@@ -43,10 +43,11 @@ export async function GET(request: Request) {
   }
 
   const agora = new Date().toISOString();
-  const [{ data: instalacao }, { data: empresa }, { data: configuracao }] = await Promise.all([
+  const [{ data: instalacao }, { data: empresa }, { data: configuracao }, { data: configuracaoMarca }] = await Promise.all([
     acesso.db.from('empresa_modulos').select('ativo, origem, expira_em').eq('empresa_id', empresaId).eq('modulo_id', moduloId).maybeSingle(),
     acesso.db.from('empresas').select('nome').eq('id', empresaId).maybeSingle(),
     acesso.db.from('configuracoes').select('cor_primaria, dark_mode').eq('empresa_id', empresaId).maybeSingle(),
+    acesso.db.from('configuracoes').select('logo_url').eq('empresa_id', empresaId).maybeSingle(),
   ]);
 
   const instalado = instalacao?.ativo === true && (!instalacao.expira_em || instalacao.expira_em > agora);
@@ -63,6 +64,7 @@ export async function GET(request: Request) {
       nome: empresa?.nome || 'Perfil empresarial',
       corPrimaria: configuracao?.cor_primaria || '#003E73',
       temaEscuro: configuracao?.dark_mode === true,
+      logoUrl: typeof configuracaoMarca?.logo_url === 'string' && configuracaoMarca.logo_url.trim() && configuracaoMarca.logo_url !== '__blank__' ? configuracaoMarca.logo_url : '',
     },
     perfil,
     nivel,

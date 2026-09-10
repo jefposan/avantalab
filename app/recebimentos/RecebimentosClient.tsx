@@ -6,7 +6,7 @@ import { corEhClara } from '@/app/lib/formatters';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
 import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Servico, Subempresa } from './components/types';
 import PainelAdministrativo from './components/PainelAdministrativo';
-import type { IntegracaoFinanceiraRecebimentos, RecebimentosRepo } from './data/repo';
+import type { RecebimentosRepo } from './data/repo';
 
 const PERFIS: Array<[Perfil, string]> = [['gestor', 'Gestor'], ['administrador', 'Administrador']];
 
@@ -20,7 +20,6 @@ type Props = {
   rascunhoEscopo?: string;
   onAviso?: AbrirAvisoFn;
   onConfirmacao?: AbrirConfirmacaoFn;
-  onFinanceiroAtualizado?: () => void;
 };
 
 export default function RecebimentosClient({
@@ -33,7 +32,6 @@ export default function RecebimentosClient({
   rascunhoEscopo = 'preview',
   onAviso,
   onConfirmacao,
-  onFinanceiroAtualizado,
 }: Props) {
   const repoAtual = repo;
   const [perfil, setPerfil] = useState<Perfil>(perfilInicial);
@@ -79,52 +77,6 @@ export default function RecebimentosClient({
       setProcessando(false);
     }
   }, [carregar]);
-
-  const atualizarTitulosFinanceiro = useCallback(async (
-    ano: number,
-    mes: number,
-    nomeEntrada: string,
-    tituloEtiqueta: string,
-  ): Promise<IntegracaoFinanceiraRecebimentos> => {
-    setProcessando(true);
-    setErro('');
-    try {
-      const integracao = await repoAtual.atualizarTitulosFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta);
-      onFinanceiroAtualizado?.();
-      await carregar(true);
-      return integracao;
-    } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Não foi possível atualizar os títulos da integração.');
-      throw error;
-    } finally {
-      setProcessando(false);
-    }
-  }, [carregar, onFinanceiroAtualizado, repoAtual]);
-
-  const definirIntegracaoFinanceira = useCallback(async (
-    ano: number,
-    mes: number,
-    ativa: boolean,
-  ): Promise<IntegracaoFinanceiraRecebimentos> => {
-    setProcessando(true);
-    setErro('');
-    try {
-      const integracao = await repoAtual.definirIntegracaoFinanceira(ano, mes, ativa);
-      onFinanceiroAtualizado?.();
-      await carregar(true);
-      return integracao;
-    } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Não foi possível alterar a integração financeira.');
-      throw error;
-    } finally {
-      setProcessando(false);
-    }
-  }, [carregar, onFinanceiroAtualizado, repoAtual]);
-
-  const obterIntegracaoFinanceira = useCallback(
-    (ano: number, mes: number) => repoAtual.obterIntegracaoFinanceira(ano, mes),
-    [repoAtual],
-  );
 
   const baixarDireto = useCallback(async (id: string, formaPagamento: FormaPagamentoRecebimento) => {
     setProcessando(true);
@@ -181,9 +133,6 @@ export default function RecebimentosClient({
           servicos={servicos}
           mostrarLinkColaboradores={mostrarLinkColaboradores}
           rascunhoEscopo={rascunhoEscopo}
-          onObterIntegracaoFinanceira={obterIntegracaoFinanceira}
-          onAtualizarTitulosFinanceiro={atualizarTitulosFinanceiro}
-          onDefinirIntegracaoFinanceira={definirIntegracaoFinanceira}
           onConfirmarBaixa={(id, formaPagamento) => void executar(() => repoAtual.confirmarBaixa(id, formaPagamento))}
           onObterComprovante={(id) => repoAtual.obterComprovante(id)}
           onObterComprovanteServico={(id) => repoAtual.obterComprovanteServico(id)}
@@ -215,6 +164,10 @@ export default function RecebimentosClient({
           }}
           onConcluirAvisoServico={(id) => void executar(() => repoAtual.concluirAvisoServico(id))}
           onReabrirAvisoServico={(id) => void executar(() => repoAtual.reabrirAvisoServico(id))}
+          onAgendarServico={(empresaId, subempresaId, data, tipo) => executar(() => repoAtual.agendarServico(empresaId, subempresaId, data, tipo), true)}
+          onEditarAgendamentoServico={(id, empresaId, subempresaId, data, tipo) => executar(() => repoAtual.editarAgendamentoServico(id, empresaId, subempresaId, data, tipo), true)}
+          onCancelarAgendamentoServico={(id) => executar(() => repoAtual.cancelarAgendamentoServico(id))}
+          onConcluirAgendamentoServico={(id) => executar(() => repoAtual.concluirAgendamentoServico(id))}
         />
       )}
     </>

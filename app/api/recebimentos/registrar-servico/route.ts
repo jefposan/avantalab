@@ -34,15 +34,18 @@ export async function POST(request: Request) {
 
     let consultaServico = clientes.admin
       .from('recebimentos_servicos')
-      .select('id')
+      .select('id, tipo_servico')
       .eq('empresa_id', empresaId)
       .eq('recebimento_empresa_id', recebimentoEmpresaId)
       .in('situacao', ['pendente', 'atrasado'])
       .lte('data_programada', dataOperacional())
       .order('data_programada', { ascending: false })
-      .limit(1);
+      .limit(20);
     consultaServico = subempresaId ? consultaServico.eq('subempresa_id', subempresaId) : consultaServico.is('subempresa_id', null);
-    const { data: servico, error: erroServico } = await consultaServico.maybeSingle();
+    const { data: servicosPendentes, error: erroServico } = await consultaServico;
+    // Agendamentos manuais têm prioridade para que o alerta de atendimento
+    // especial desapareça exatamente após a confirmação correspondente.
+    const servico = (servicosPendentes ?? []).find((item) => item.tipo_servico !== 'rotina') ?? servicosPendentes?.[0] ?? null;
     if (erroServico) return respostaErro('Não foi possível localizar a programação do serviço.', 500);
     if (!servico) return respostaErro('Não há serviço pendente para este cliente hoje.');
 

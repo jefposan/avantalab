@@ -53,6 +53,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [podeRecebimentos, setPodeRecebimentos] = useState(true);
   const [podeServicos, setPodeServicos] = useState(false);
+  const [podeAgendamentos, setPodeAgendamentos] = useState(false);
   const chaveRascunho = `avantalab:rascunho:v1:recebimentos:colaborador:${rascunhoEscopo}`;
 
   useEffect(() => {
@@ -72,6 +73,9 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
         celular?: string;
         email?: string;
         cpf?: string;
+        podeRecebimentos?: boolean;
+        podeServicos?: boolean;
+        podeAgendamentos?: boolean;
       } | null;
       if (salvo && Number(salvo.expiraEm) > Date.now()) {
         timer = window.setTimeout(() => {
@@ -82,6 +86,9 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
           setCelular(String(salvo.celular || ''));
           setEmail(String(salvo.email || ''));
           setCpf(String(salvo.cpf || ''));
+          setPodeRecebimentos(salvo.podeRecebimentos !== false);
+          setPodeServicos(salvo.podeServicos === true);
+          setPodeAgendamentos(salvo.podeAgendamentos === true);
           setEditandoId(editandoRestaurado);
           setFormAberto(Boolean(salvo.aberto));
           rascunhoCarregadoRef.current = chaveRascunho;
@@ -108,9 +115,12 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
         celular,
         email,
         cpf,
+        podeRecebimentos,
+        podeServicos,
+        podeAgendamentos,
       }));
     } catch { /* armazenamento indisponível */ }
-  }, [celular, chaveRascunho, cpf, editandoId, email, formAberto, nome]);
+  }, [celular, chaveRascunho, cpf, editandoId, email, formAberto, nome, podeAgendamentos, podeRecebimentos, podeServicos]);
 
   const totais = useMemo(() => {
     const map: Record<string, { recebido: number; aguardando: number }> = {};
@@ -124,7 +134,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   }, [colaboradores, recebimentos]);
 
   function limparForm() {
-    setNome(''); setCelular(''); setEmail(''); setCpf(''); setSenha(''); setConfirmarSenha(''); setPodeRecebimentos(true); setPodeServicos(false);
+    setNome(''); setCelular(''); setEmail(''); setCpf(''); setSenha(''); setConfirmarSenha(''); setPodeRecebimentos(true); setPodeServicos(false); setPodeAgendamentos(false);
     setErro('');
     setConfirmandoExclusao(false);
     setFormAberto(false);
@@ -133,7 +143,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   }
 
   function abrirNovo() {
-    setNome(''); setCelular(''); setEmail(''); setCpf(''); setSenha(''); setConfirmarSenha(''); setPodeRecebimentos(true); setPodeServicos(false);
+    setNome(''); setCelular(''); setEmail(''); setCpf(''); setSenha(''); setConfirmarSenha(''); setPodeRecebimentos(true); setPodeServicos(false); setPodeAgendamentos(false);
     setErro('');
     setConfirmandoExclusao(false);
     setEditandoId(null);
@@ -145,7 +155,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
     // Senhas não retornam do servidor. Mantemos estes campos vazios na edição
     // para que só uma troca explícita de senha acione a redefinição do acesso.
     setSenha(''); setConfirmarSenha('');
-    setPodeRecebimentos(c.podeRecebimentos); setPodeServicos(c.podeServicos);
+    setPodeRecebimentos(c.podeRecebimentos); setPodeServicos(c.podeServicos); setPodeAgendamentos(c.podeAgendamentos);
     setErro('');
     setConfirmandoExclusao(false);
     setEditandoId(c.id);
@@ -177,7 +187,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
       return setErro('A senha e a confirmação não coincidem.');
     }
     if (senha && senha.length < 8) return setErro('A nova senha deve ter pelo menos 8 caracteres.');
-    if (!podeRecebimentos && !podeServicos) return setErro('Selecione ao menos um acesso: Recebimentos ou Serviços.');
+    if (!podeRecebimentos && !podeServicos && !podeAgendamentos) return setErro('Selecione ao menos um acesso: Recebimentos, Serviços ou Agendamento.');
     const dados: DadosColaborador = {
       nome: nome.trim(),
       celular: celular.trim(),
@@ -186,6 +196,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
       senha: senha.trim(),
       podeRecebimentos,
       podeServicos,
+      podeAgendamentos,
     };
     setSalvando(true);
     try {
@@ -268,7 +279,8 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
           <div id="recebimentos-permissoes-colaborador" className={styles.permissoesColaboradorTitulo}>Permissões no aplicativo</div>
           <label><input type="checkbox" checked={podeRecebimentos} onChange={(event) => setPodeRecebimentos(event.target.checked)} /> Recebimentos</label>
           <label><input type="checkbox" checked={podeServicos} onChange={(event) => setPodeServicos(event.target.checked)} /> Serviços</label>
-          <small>Com os dois acessos, o colaborador escolhe a operação ao entrar no PWA.</small>
+          <label><input type="checkbox" checked={podeAgendamentos} onChange={(event) => setPodeAgendamentos(event.target.checked)} /> Agendamento</label>
+          <small>Recebimentos e Serviços definem a operação do PWA; Agendamento libera a criação de serviços Interna, Revisão e Extra.</small>
         </div>
         {erro && <div className={styles.aviso} style={{ marginTop: 8 }}>{erro}</div>}
       </div>
@@ -332,7 +344,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
                   <div className={styles.subNome}>{c.nome}</div>
                   <div className={styles.subMeta}>{c.celular} · CPF {formatarCpf(c.cpf)}</div>
                   <div className={styles.subMeta}>Recebido: {formatarMoeda(t.recebido)} · Aguardando: {formatarMoeda(t.aguardando)}</div>
-                  <div className={styles.subMeta}>Acessos: {[c.podeRecebimentos && 'Recebimentos', c.podeServicos && 'Serviços'].filter(Boolean).join(' · ') || 'Nenhum'}</div>
+                  <div className={styles.subMeta}>Acessos: {[c.podeRecebimentos && 'Recebimentos', c.podeServicos && 'Serviços', c.podeAgendamentos && 'Agendamento'].filter(Boolean).join(' · ') || 'Nenhum'}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                   <span className={`${styles.chip} ${c.ativo ? styles.chipOn : styles.chipOff}`}>{c.ativo ? 'Ativo' : 'Inativo'}</span>

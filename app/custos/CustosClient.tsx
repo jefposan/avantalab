@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
+import RodapeAvanta from '@/app/components/RodapeAvanta';
 import { supabase } from '@/app/lib/supabase';
 import { Icon } from '@/app/projetos/components/Icon';
 import { Modal } from '@/app/projetos/components/Modal';
@@ -12,7 +12,7 @@ import CustosWorkspace from './CustosWorkspace';
 import styles from './custos.module.css';
 
 export type CustosAccess = {
-  empresa: { id: string; nome: string; corPrimaria: string; temaEscuro: boolean };
+  empresa: { id: string; nome: string; corPrimaria: string; temaEscuro: boolean; logoUrl?: string };
   perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
   podeEditar: boolean;
   podeGerenciarModulo: boolean;
@@ -86,8 +86,9 @@ export default function CustosClient({ companyId, initialNewType, returnTo }: { 
     <header className={styles.moduleHeader}>
       <Link href={returnHref} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</Link>
       <div className={styles.moduleIdentity}>
-        <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={160} height={40} loading="eager" className={styles.moduleLogo} />
-        <span>{access.empresa.nome}</span>
+        {access.empresa.logoUrl
+          ? <img src={access.empresa.logoUrl} alt={access.empresa.nome} className={styles.moduleLogo} />
+          : <span>{access.empresa.nome}</span>}
       </div>
       <div className={styles.moduleHeaderActions}>
         {access.podeGerenciarModulo && <button type="button" className={styles.moduleSettingsButton} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Custos e Precificação" title="Ajustes"><Icon name="settings" size={18} /></button>}
@@ -95,6 +96,7 @@ export default function CustosClient({ companyId, initialNewType, returnTo }: { 
       </div>
     </header>
     <CustosWorkspace companyId={companyId} access={access} initialNewType={initialNewType} />
+    <RodapeAvanta darkMode={access.empresa.temaEscuro} />
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes de Custos e Precificação" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">
         <div><strong>Modo escuro</strong><p>Aplica a aparência escura a este perfil no AvantaLab e nos módulos compatíveis.</p></div>

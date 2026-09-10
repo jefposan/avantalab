@@ -11,6 +11,8 @@ import BotaoComprovante from './BotaoComprovante';
 
 export type FiltroServico = 'realizados' | 'pendentes_servico' | 'atrasados_servico' | 'avisos_servico';
 
+const rotuloTipoServico = (tipo: Servico['tipoServico']) => ({ rotina: 'Rotina', interna: 'Interna', revisao: 'Revisão', extra: 'Extra' })[tipo];
+
 type Props = {
   filtro: FiltroServico;
   servicos: Servico[];
@@ -139,9 +141,10 @@ export default function PainelServicos({ filtro, servicos, empresas, subempresas
               <div><small>Empresa</small><strong>{nomeEmpresa(servico.empresaId)}</strong></div>
               <div><small>Local / vínculo</small><span>{nomeCliente(servico)}</span></div>
               <div><small>Realizado em</small><span>{formatarDataHora(servico.realizadoEm)}</span></div>
-              <div><small>Registrado por</small><span>{nomeColaborador(servico.colaboradorId)}</span></div>
-              <div><small>Assinatura</small>{possuiAssinatura ? <BotaoComprovante lancamentoId={servico.id} onObter={onObterAssinatura} compacto darkMode={darkMode} titulo="Assinatura do serviço" rotulo="Visualizar assinatura" descricaoImagem={`Assinatura de ${servico.clienteNome || 'quem recebeu o atendimento'}`} /> : <span>Não disponível</span>}<em>{servico.clienteNome ? `Assinada por ${servico.clienteNome}` : ''}</em></div>
-              <div><small>Avaliação</small><span className={`${styles.avaliacaoSelo} ${servico.avaliacao === 'regular' ? styles.avaliacaoSeloRegular : styles.avaliacaoSeloBom}`}>{servico.avaliacao === 'regular' ? 'Regular' : 'Bom'}</span></div>
+              <div><small>Registrado por</small><span>{servico.colaboradorId ? nomeColaborador(servico.colaboradorId) : 'Gestão'}</span></div>
+              <div><small>Assinatura</small>{possuiAssinatura ? <BotaoComprovante lancamentoId={servico.id} onObter={onObterAssinatura} compacto darkMode={darkMode} titulo="Assinatura do serviço" rotulo="Visualizar assinatura" descricaoImagem={`Assinatura de ${servico.clienteNome || 'quem recebeu o atendimento'}`} /> : <span>{servico.clienteNome ? 'Não disponível' : 'Dispensada pela gestão'}</span>}<em>{servico.clienteNome ? `Assinada por ${servico.clienteNome}` : ''}</em></div>
+              <div><small>Avaliação</small>{servico.avaliacao ? <span className={`${styles.avaliacaoSelo} ${servico.avaliacao === 'regular' ? styles.avaliacaoSeloRegular : styles.avaliacaoSeloBom}`}>{servico.avaliacao === 'regular' ? 'Regular' : 'Bom'}</span> : <span>Não registrada</span>}</div>
+              {servico.tipoServico !== 'rotina' && <div><small>Tipo</small><span className={`${styles.tipoServicoBadge} ${styles[`tipoServico${servico.tipoServico[0].toUpperCase()}${servico.tipoServico.slice(1)}`]}`}>{rotuloTipoServico(servico.tipoServico)}</span></div>}
             </div>
             {servico.observacaoCliente && <p className={styles.servicoObservacao}>Observação do cliente: {servico.observacaoCliente}</p>}
           </> : filtro === 'avisos_servico' ? <>
@@ -166,6 +169,7 @@ export default function PainelServicos({ filtro, servicos, empresas, subempresas
             <div>
               <strong>{nomeCliente(servico)}</strong>
               <span>{nomeEmpresa(servico.empresaId)} · Programado: {formatarData(servico.dataProgramada)}</span>
+              {servico.tipoServico !== 'rotina' && <span className={`${styles.tipoServicoBadge} ${styles[`tipoServico${servico.tipoServico[0].toUpperCase()}${servico.tipoServico.slice(1)}`]}`}>{rotuloTipoServico(servico.tipoServico)}</span>}
               {servico.situacao === 'realizado' && <span>Realizado por {nomeColaborador(servico.colaboradorId)} em {formatarDataHora(servico.realizadoEm)}</span>}
             </div>
             <span className={styles.servicoSituacao}>{servico.situacao === 'realizado' ? 'Realizado' : servico.situacao === 'atrasado' ? 'Atrasado' : 'Pendente'}</span>

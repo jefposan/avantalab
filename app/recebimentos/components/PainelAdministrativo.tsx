@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Servico, Subempresa } from './types';
-import { aguardandoConferencia, cobrancasNosProximosDias, dataLocalIso, formatarMoeda } from './helpers';
+import { aguardandoConferencia, cobrancasNosProximosDias, dataLocalIso } from './helpers';
 import ListaEmpresas from './ListaEmpresas';
 import ListaColaboradores from './ListaColaboradores';
 import ListaRecebimentos from './ListaRecebimentos';
@@ -14,10 +14,11 @@ import ListaInadimplentes from './ListaInadimplentes';
 import ListaProximosVencimentos from './ListaProximosVencimentos';
 import GraficoResultados from './GraficoResultados';
 import PainelServicos, { type FiltroServico } from './PainelServicos';
-import type { ComprovanteRecebimento, IntegracaoFinanceiraRecebimentos } from '../data/repo';
+import PainelAgendamentosServico from './PainelAgendamentosServico';
+import type { ComprovanteRecebimento } from '../data/repo';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
 
-type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferencia' | 'proximo' | 'inadimplentes' | FiltroServico | 'resultados';
+type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferencia' | 'proximo' | 'inadimplentes' | FiltroServico | 'agendamentos_servico' | 'resultados';
 
 type Props = {
   perfil: Perfil;
@@ -53,11 +54,12 @@ type Props = {
   onEditarColaborador: (id: string, dados: Omit<Colaborador, 'id' | 'ativo'>) => Promise<void>;
   onExcluirColaborador: (id: string) => void;
   onAlternarColaborador: (id: string) => void;
-  onObterIntegracaoFinanceira: (ano: number, mes: number) => Promise<IntegracaoFinanceiraRecebimentos>;
-  onAtualizarTitulosFinanceiro: (ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string) => Promise<IntegracaoFinanceiraRecebimentos>;
-  onDefinirIntegracaoFinanceira: (ano: number, mes: number, ativa: boolean) => Promise<IntegracaoFinanceiraRecebimentos>;
   onConcluirAvisoServico: (id: string) => void;
   onReabrirAvisoServico: (id: string) => void;
+  onAgendarServico: (empresaId: string, subempresaId: string | null, data: string, tipo: 'interna' | 'revisao' | 'extra') => Promise<void>;
+  onEditarAgendamentoServico: (id: string, empresaId: string, subempresaId: string | null, data: string, tipo: 'interna' | 'revisao' | 'extra') => Promise<void>;
+  onCancelarAgendamentoServico: (id: string) => Promise<void> | void;
+  onConcluirAgendamentoServico: (id: string) => Promise<void> | void;
 };
 
 const ABAS_GERAL: Array<[Aba, string]> = [
@@ -77,6 +79,7 @@ const ABAS_SERVICOS: Array<[Aba, string]> = [
   ['pendentes_servico', 'Pendentes'],
   ['atrasados_servico', 'Atrasados'],
   ['avisos_servico', 'Avisos'],
+  ['agendamentos_servico', 'Agendamentos'],
 ];
 
 const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -84,7 +87,6 @@ const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'S
 export default function PainelAdministrativo(props: Props) {
   const {
     perfil, darkMode, podeConfirmar, empresas, subempresas, colaboradores, recebimentos, servicos,
-    onObterIntegracaoFinanceira, onAtualizarTitulosFinanceiro, onDefinirIntegracaoFinanceira,
   } = props;
   const [aba, setAba] = useState<Aba>('visao');
   // Mês de referência da Visão geral (navegado pelo seletor no platô do card).
@@ -93,13 +95,6 @@ export default function PainelAdministrativo(props: Props) {
     return { ano: hoje.getFullYear(), mes: hoje.getMonth() };
   });
   const [todosMesesRecebimentos, setTodosMesesRecebimentos] = useState(false);
-  const [nomeEntrada, setNomeEntrada] = useState('Recebimentos em campo');
-  const [tituloEtiqueta, setTituloEtiqueta] = useState('Recebimentos');
-  const [integracao, setIntegracao] = useState<IntegracaoFinanceiraRecebimentos | null>(null);
-  const [integracaoCarregando, setIntegracaoCarregando] = useState(false);
-  const [integracaoSalvando, setIntegracaoSalvando] = useState(false);
-  const [integracaoMensagem, setIntegracaoMensagem] = useState('');
-  const [integracaoErro, setIntegracaoErro] = useState('');
   const [portalBuscaProximos, setPortalBuscaProximos] = useState<HTMLDivElement | null>(null);
   const [portalBuscaConferencia, setPortalBuscaConferencia] = useState<HTMLDivElement | null>(null);
   const [portalBuscaInadimplentes, setPortalBuscaInadimplentes] = useState<HTMLDivElement | null>(null);
@@ -164,99 +159,35 @@ export default function PainelAdministrativo(props: Props) {
   }
 
   const chaveMes = `${mesRef.ano}-${String(mesRef.mes + 1).padStart(2, '0')}`;
-  const mesFuturo = chaveMes > hojeIso.slice(0, 7);
 
-  const resumo = useMemo(() => {
-    let previstoMes = 0, recebidoCampo = 0, aguardando = 0, baixado = 0, atraso = 0, pendentesMes = 0;
-    for (const r of recebimentos) {
-      if (r.vencimento.slice(0, 7) === chaveMes) previstoMes += r.valorCombinado;
-      if (r.recebidoEm && r.recebidoEm.slice(0, 7) === chaveMes) recebidoCampo += r.valorRecebido ?? 0;
-      if (aguardandoConferencia(r.situacao) && r.recebidoEm && r.recebidoEm.slice(0, 7) === chaveMes) {
-        aguardando += r.valorRecebido ?? 0;
-        pendentesMes += 1;
-      }
-      if (r.situacao === 'baixado' && (r.baixadoEm ?? r.recebidoEm ?? '').slice(0, 7) === chaveMes) baixado += r.valorRecebido ?? 0;
-      if (r.situacao === 'em_atraso' && r.vencimento < hojeIso && r.vencimento.slice(0, 7) <= chaveMes) atraso += r.valorCombinado;
-    }
-    return { previstoMes, recebidoCampo, aguardando, baixado, atraso, pendentesMes };
-  }, [recebimentos, chaveMes, hojeIso]);
+  const resumoRecebimentos = useMemo(() => {
+    const programados = recebimentos.filter((recebimento) => recebimento.vencimento.slice(0, 7) === chaveMes);
+    const recebidos = recebimentos.filter((recebimento) => (recebimento.recebidoEm ?? '').slice(0, 7) === chaveMes);
+    return {
+      programados: programados.length,
+      recebidos: recebidos.length,
+      confirmados: recebimentos.filter((recebimento) => recebimento.situacao === 'baixado' && (recebimento.baixadoEm ?? recebimento.recebidoEm ?? '').slice(0, 7) === chaveMes).length,
+      emConferencia: recebidos.filter((recebimento) => aguardandoConferencia(recebimento.situacao)).length,
+      divergencias: recebidos.filter((recebimento) => recebimento.situacao === 'recebido_a_menor' || recebimento.situacao === 'recebido_a_maior').length,
+      devolvidos: recebidos.filter((recebimento) => recebimento.situacao === 'devolvido_para_correcao').length,
+      atrasados: programados.filter((recebimento) => recebimento.situacao === 'em_atraso' && recebimento.vencimento < hojeIso).length,
+    };
+  }, [chaveMes, recebimentos, hojeIso]);
 
-  useEffect(() => {
-    let ativo = true;
-    setIntegracaoCarregando(true);
-    setIntegracaoMensagem('');
-    setIntegracaoErro('');
-    onObterIntegracaoFinanceira(mesRef.ano, mesRef.mes + 1)
-      .then((dados) => {
-        if (!ativo) return;
-        setIntegracao(dados);
-        setNomeEntrada(dados.nomeEntrada);
-        setTituloEtiqueta(dados.tituloEtiqueta);
-      })
-      .catch((error) => {
-        if (!ativo) return;
-        setIntegracaoErro(error instanceof Error ? error.message : 'Não foi possível carregar a integração financeira.');
-      })
-      .finally(() => { if (ativo) setIntegracaoCarregando(false); });
-    return () => { ativo = false; };
-  }, [mesRef.ano, mesRef.mes, onObterIntegracaoFinanceira]);
-
-  async function atualizarTitulos() {
-    const nome = nomeEntrada.trim();
-    const etiqueta = tituloEtiqueta.trim();
-    setIntegracaoErro('');
-    setIntegracaoMensagem('');
-    if (!nome) return setIntegracaoErro('Informe o nome da entrada.');
-    if (!etiqueta) return setIntegracaoErro('Informe o título da etiqueta.');
-    setIntegracaoSalvando(true);
-    try {
-      const dados = await onAtualizarTitulosFinanceiro(mesRef.ano, mesRef.mes + 1, nome, etiqueta);
-      setIntegracao(dados);
-      setNomeEntrada(dados.nomeEntrada);
-      setTituloEtiqueta(dados.tituloEtiqueta);
-      setIntegracaoMensagem('Títulos atualizados em todos os meses integrados.');
-    } catch (error) {
-      setIntegracaoErro(error instanceof Error ? error.message : 'Não foi possível atualizar os títulos.');
-    } finally {
-      setIntegracaoSalvando(false);
-    }
-  }
-
-  async function definirIntegracao(ativa: boolean) {
-    setIntegracaoErro('');
-    setIntegracaoMensagem('');
-    setIntegracaoSalvando(true);
-    try {
-      const dados = await onDefinirIntegracaoFinanceira(mesRef.ano, mesRef.mes + 1, ativa);
-      setIntegracao(dados);
-      setIntegracaoMensagem(ativa
-        ? 'Sincronização automática com Receitas ativada.'
-        : 'Lançamentos do módulo retirados das Receitas.');
-    } catch (error) {
-      setIntegracaoErro(error instanceof Error ? error.message : 'Não foi possível alterar a integração.');
-    } finally {
-      setIntegracaoSalvando(false);
-    }
-  }
-
-  function alternarIntegracao() {
-    const ativar = !integracao?.integrado;
-    if (ativar) {
-      void definirIntegracao(true);
-      return;
-    }
-    const executar = () => definirIntegracao(false);
-    if (!props.onConfirmacao) {
-      void executar();
-      return;
-    }
-    props.onConfirmacao({
-      titulo: 'Retirar das receitas?',
-      mensagem: 'Todos os lançamentos automáticos deste módulo serão retirados das Receitas. Os recebimentos e seus históricos serão preservados.',
-      textoConfirmar: 'Retirar das receitas',
-      acao: executar,
-    });
-  }
+  const resumoServicos = useMemo(() => {
+    const programadosNoMes = servicos.filter((servico) => servico.dataProgramada.slice(0, 7) === chaveMes);
+    const realizadosNoMes = servicos.filter((servico) => servico.situacao === 'realizado' && servico.realizadoEm?.slice(0, 7) === chaveMes);
+    const avaliacoes = realizadosNoMes.filter((servico) => servico.avaliacao != null);
+    return {
+      programados: programadosNoMes.length,
+      realizados: realizadosNoMes.length,
+      pendentes: programadosNoMes.filter((servico) => servico.situacao === 'pendente').length,
+      atrasados: programadosNoMes.filter((servico) => servico.situacao === 'atrasado').length,
+      agendamentosManuais: programadosNoMes.filter((servico) => servico.tipoServico !== 'rotina').length,
+      regulares: avaliacoes.filter((servico) => servico.avaliacao === 'regular').length,
+      boas: avaliacoes.filter((servico) => servico.avaliacao === 'bom').length,
+    };
+  }, [chaveMes, servicos]);
 
   // Seletor de mês no padrão da página de lançamentos: bloco único com setas,
   // centralizado no platô do AvantaCard.
@@ -443,56 +374,33 @@ export default function PainelAdministrativo(props: Props) {
         {(aba === 'realizados' || aba === 'pendentes_servico' || aba === 'atrasados_servico' || aba === 'avisos_servico') && (
           <PainelServicos filtro={aba} servicos={servicos} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} onConcluirAviso={props.onConcluirAvisoServico} onReabrirAviso={props.onReabrirAvisoServico} onObterAssinatura={props.onObterComprovanteServico} portalBusca={aba === 'avisos_servico' ? portalBuscaAvisos : undefined} darkMode={darkMode} />
         )}
+        {aba === 'agendamentos_servico' && <PainelAgendamentosServico empresas={empresas} subempresas={subempresas} servicos={servicos} onAgendar={props.onAgendarServico} onEditar={props.onEditarAgendamentoServico} onCancelar={props.onCancelarAgendamentoServico} onConcluir={props.onConcluirAgendamentoServico} onConfirmacao={props.onConfirmacao} />}
         {aba === 'visao' && (
           <div>
             <h3 className={styles.sectionTitle}>Visão geral</h3>
-            <div className={`${styles.cardsGrid} ${mesFuturo ? styles.cardsGridSomentePrevisto : ''}`}>
-              <div className={`${styles.statCard} ${styles.statAzul}`}><div className={styles.statLabel}>Total previsto no mês</div><div className={styles.statValue}>{formatarMoeda(resumo.previstoMes)}</div></div>
-              {!mesFuturo && (
-                <>
-                  <div className={`${styles.statCard} ${styles.statCiano}`}><div className={styles.statLabel}>Recebido em campo</div><div className={styles.statValue}>{formatarMoeda(resumo.recebidoCampo)}</div></div>
-                  <div className={`${styles.statCard} ${styles.statArdosia}`}><div className={styles.statLabel}>Aguardando conferência</div><div className={styles.statValue}>{formatarMoeda(resumo.aguardando)}</div><div className={styles.statSub}>{resumo.pendentesMes} registro(s)</div></div>
-                  <div className={`${styles.statCard} ${styles.statIndigo}`}><div className={styles.statLabel}>Em atraso</div><div className={styles.statValue}>{formatarMoeda(resumo.atraso)}</div></div>
-                  <div className={`${styles.statCard} ${styles.statTeal} ${styles.integracaoCard}`}>
-                    <div className={styles.integracaoResumo}>
-                      <div>
-                        <div className={styles.statLabel}>Total recebido e confirmado</div>
-                        <div className={styles.statValue}>{formatarMoeda(resumo.baixado)}</div>
-                      </div>
-                    </div>
-                    <div className={styles.integracaoAcoes}>
-                      <div className={styles.integracaoCampos}>
-                        <label className={styles.integracaoCampo} htmlFor="recebimentos-nome-entrada">
-                          <span>Nome da entrada</span>
-                          <input id="recebimentos-nome-entrada" className={styles.input} value={nomeEntrada} onChange={(event) => setNomeEntrada(event.target.value)} maxLength={120} placeholder="Ex.: Recebimentos em campo" disabled={integracaoCarregando || integracaoSalvando} />
-                        </label>
-                        <label className={styles.integracaoCampo} htmlFor="recebimentos-titulo-etiqueta">
-                          <span>Título da etiqueta</span>
-                          <input id="recebimentos-titulo-etiqueta" className={styles.input} value={tituloEtiqueta} onChange={(event) => setTituloEtiqueta(event.target.value)} maxLength={40} placeholder="Recebimentos" disabled={integracaoCarregando || integracaoSalvando} />
-                        </label>
-                      </div>
-                      <div className={styles.integracaoBotoes}>
-                        <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.integracaoBotao}`} onClick={() => void atualizarTitulos()} disabled={integracaoCarregando || integracaoSalvando}>
-                          {integracaoSalvando ? 'Processando…' : 'Atualizar títulos'}
-                        </button>
-                        <button type="button" className={`${styles.btn} ${integracao?.integrado ? styles.integracaoBotaoPerigo : styles.btnPrimary} ${styles.integracaoBotao}`} onClick={alternarIntegracao} disabled={integracaoCarregando || integracaoSalvando}>
-                          {integracao?.integrado ? 'Retirar das receitas' : 'Adicionar às receitas'}
-                        </button>
-                      </div>
-                    </div>
-                    <div className={styles.integracaoFeedback} aria-live="polite" aria-atomic="true">
-                      {integracaoCarregando ? (
-                        <div className={styles.integracaoAjuda} role="status">Carregando valores…</div>
-                      ) : integracaoErro ? (
-                        <div className={styles.integracaoErro} role="alert">{integracaoErro}</div>
-                      ) : integracaoMensagem ? (
-                        <div className={styles.integracaoSucesso} role="status">{integracaoMensagem}</div>
-                      ) : null}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <section className={`${styles.resumoSecao} ${styles.resumoRecebimentos}`} aria-labelledby="resumo-recebimentos">
+              <div className={styles.resumoSecaoCabecalho}><h4 id="resumo-recebimentos">Recebimentos</h4><span>Andamento das cobranças e exceções da competência selecionada</span></div>
+              <div className={styles.cardsGrid}>
+                <div className={`${styles.statCard} ${styles.statRecebimentoPrevisto}`}><div className={styles.statLabel}>Programados</div><div className={styles.statValue}>{resumoRecebimentos.programados}</div><div className={styles.statSub}>Vencimentos previstos no mês</div></div>
+                <div className={`${styles.statCard} ${styles.statRecebimentoConfirmado}`}><div className={styles.statLabel}>Recebidos em campo</div><div className={styles.statValue}>{resumoRecebimentos.recebidos}</div><div className={styles.statSub}>Registros realizados no mês</div></div>
+                <div className={`${styles.statCard} ${styles.statRecebimentoPendente}`}><div className={styles.statLabel}>Confirmados</div><div className={styles.statValue}>{resumoRecebimentos.confirmados}</div><div className={styles.statSub}>Conferidos e baixados</div></div>
+                <div className={`${styles.statCard} ${styles.statRecebimentoConferencia}`}><div className={styles.statLabel}>Em conferência</div><div className={styles.statValue}>{resumoRecebimentos.emConferencia}</div><div className={styles.statSub}>Aguardam decisão do gestor</div></div>
+                <div className={`${styles.statCard} ${styles.statRecebimentoDivergencia}`}><div className={styles.statLabel}>Com divergência</div><div className={styles.statValue}>{resumoRecebimentos.divergencias}</div><div className={styles.statSub}>Valor menor ou maior informado</div></div>
+                <div className={`${styles.statCard} ${styles.statRecebimentoDevolvido}`}><div className={styles.statLabel}>Devolvidos</div><div className={styles.statValue}>{resumoRecebimentos.devolvidos}</div><div className={styles.statSub}>Retornaram para correção</div></div>
+                <div className={`${styles.statCard} ${styles.statRecebimentoAtraso}`}><div className={styles.statLabel}>Em atraso</div><div className={styles.statValue}>{resumoRecebimentos.atrasados}</div><div className={styles.statSub}>Vencidos e ainda pendentes</div></div>
+              </div>
+            </section>
+            <section className={styles.resumoSecao} aria-labelledby="resumo-servicos">
+              <div className={`${styles.resumoSecaoCabecalho} ${styles.resumoSecaoServicos}`}><h4 id="resumo-servicos">Serviços</h4><span>Execução e qualidade do mês selecionado</span></div>
+              <div className={styles.cardsGrid}>
+                <div className={`${styles.statCard} ${styles.statServicoProgramado}`}><div className={styles.statLabel}>Programados</div><div className={styles.statValue}>{resumoServicos.programados}</div><div className={styles.statSub}>Serviços previstos no mês</div></div>
+                <div className={`${styles.statCard} ${styles.statServicoRealizado}`}><div className={styles.statLabel}>Realizados</div><div className={styles.statValue}>{resumoServicos.realizados}</div><div className={styles.statSub}>Concluídos no mês</div></div>
+                <div className={`${styles.statCard} ${styles.statServicoPendente}`}><div className={styles.statLabel}>Pendentes</div><div className={styles.statValue}>{resumoServicos.pendentes}</div><div className={styles.statSub}>Ainda no cronograma</div></div>
+                <div className={`${styles.statCard} ${styles.statServicoAtrasado}`}><div className={styles.statLabel}>Atrasados</div><div className={styles.statValue}>{resumoServicos.atrasados}</div><div className={styles.statSub}>Precisam de atenção</div></div>
+                <div className={`${styles.statCard} ${styles.statServicoAgendado}`}><div className={styles.statLabel}>Agendamentos</div><div className={styles.statValue}>{resumoServicos.agendamentosManuais}</div><div className={styles.statSub}>Interna, revisão ou extra</div></div>
+                <div className={`${styles.statCard} ${styles.statServicoRegular}`}><div className={styles.statLabel}>Avaliações regulares</div><div className={styles.statValue}>{resumoServicos.regulares}</div><div className={styles.statSub}>{resumoServicos.boas} avaliação(ões) boa(s)</div></div>
+              </div>
+            </section>
           </div>
         )}
 

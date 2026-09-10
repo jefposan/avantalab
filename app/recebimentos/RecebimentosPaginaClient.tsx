@@ -1,17 +1,18 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
+import RodapeAvanta from '@/app/components/RodapeAvanta';
 import { supabase } from '@/app/lib/supabase';
 import { criarRepoSupabase } from './data/repo';
+import AjustesOperacoesCampo from './components/AjustesOperacoesCampo';
 import RecebimentosClient from './RecebimentosClient';
 import styles from './recebimentos.module.css';
 
 type AcessoRecebimentos = {
-  empresa: { id: string; nome: string; corPrimaria: string; temaEscuro: boolean };
+  empresa: { id: string; nome: string; corPrimaria: string; temaEscuro: boolean; logoUrl?: string };
   perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
   podeGerenciarModulo: boolean;
 };
@@ -20,6 +21,7 @@ export default function RecebimentosPaginaClient({ empresaId }: { empresaId: str
   const router = useRouter();
   const [acesso, setAcesso] = useState<AcessoRecebimentos | null>(null);
   const [erro, setErro] = useState('');
+  const [ajustesAbertos, setAjustesAbertos] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -77,14 +79,15 @@ export default function RecebimentosPaginaClient({ empresaId }: { empresaId: str
       <header className={styles.cabecalhoModulo}>
         <Link href={inicioHref} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab">‹ Início</Link>
         <div className={styles.identidadeModulo}>
-          <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={160} height={40} priority className={styles.logoModulo} />
-          <span>{acesso.empresa.nome} · Operações de Campo</span>
+          {acesso.empresa.logoUrl
+            ? <img src={acesso.empresa.logoUrl} alt={acesso.empresa.nome} className={styles.logoEmpresaModulo} />
+            : <span className={styles.nomeEmpresaModulo}>{acesso.empresa.nome}</span>}
         </div>
-        <Link href={inicioHref} className={styles.botaoAjustes} aria-label="Abrir Ajustes no AvantaLab" title="Ajustes">⚙</Link>
+        <button type="button" className={styles.botaoAjustes} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Operações de Campo" title="Ajustes">⚙</button>
       </header>
       <section className={styles.areaModulo} aria-labelledby="recebimentos-pagina-titulo">
         <div className={styles.tituloPaginaModulo}>
-          <div>
+          <div className={styles.tituloPaginaModuloTexto}>
             <h1 id="recebimentos-pagina-titulo">Operações de Campo</h1>
           </div>
         </div>
@@ -100,6 +103,15 @@ export default function RecebimentosPaginaClient({ empresaId }: { empresaId: str
           />
         </div>
       </section>
+      <RodapeAvanta darkMode={acesso.empresa.temaEscuro} />
+      <AjustesOperacoesCampo
+        aberto={ajustesAbertos}
+        empresaId={acesso.empresa.id}
+        repo={repo}
+        temaEscuro={acesso.empresa.temaEscuro}
+        onFechar={() => setAjustesAbertos(false)}
+        onTemaAtualizado={(temaEscuro) => setAcesso((atual) => atual ? { ...atual, empresa: { ...atual.empresa, temaEscuro } } : atual)}
+      />
     </main>
   );
 }
