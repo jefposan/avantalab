@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.28.0.04 - 2026-09-11
+- **PWA de Serviços**: o seletor de empresa agora exibe todas as empresas
+  ativas cadastradas. A disponibilidade de execução é informada depois da
+  escolha, sem ocultar clientes do cadastro.
+
+## 1.28.0.03 - 2026-09-11
+- **Relatório de serviços**: o quadro de seleção de cliente/local recebeu uma
+  superfície contextual mais marcada, com contraste próprio nos temas claro e
+  escuro para se diferenciar dos filtros de período e exportação.
+
 ## 1.28.0.02 - 2026-09-11
 - **Operações de Campo**: a rotina contratada e cada agendamento manual são
   tarefas independentes no PWA; cada execução selecionada preserva assinatura

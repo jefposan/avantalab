@@ -2690,7 +2690,7 @@
 
 /* Relatório: a camada global não herda a cor do shell. */
 .modalRelatorioServicos .relatorioServicosFiltros { border-color: color-mix(in srgb, var(--cp) 36%, #cbd5e1); background: color-mix(in srgb, var(--cp) 8%, #fff); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .72); }
-.modalRelatorioServicos .relatorioClientes { border-color: color-mix(in srgb, var(--cp) 28%, #cbd5e1); background: color-mix(in srgb, var(--cp) 5%, #fff); }
+.modalRelatorioServicos .relatorioClientes { border-color: color-mix(in srgb, var(--cp) 54%, #cbd5e1); background: linear-gradient(135deg, color-mix(in srgb, var(--cp) 14%, #fff), color-mix(in srgb, var(--cp) 7%, #f8fbff)); box-shadow: 0 6px 18px color-mix(in srgb, var(--cp) 10%, transparent); }
 .modalRelatorioServicos .relatorioServicosAcoes .btn { min-height: 42px; padding-inline: 15px; font-weight: 800; }
 .modalRelatorioServicos .relatorioServicosAcoes .btnPrimary { border: 1px solid color-mix(in srgb, var(--cp) 82%, #000); color: var(--cp-text); background: var(--cp); box-shadow: 0 4px 10px color-mix(in srgb, var(--cp) 25%, transparent); }
 .modalRelatorioServicos .relatorioServicosAcoes .btnPrimary:hover { background: color-mix(in srgb, var(--cp) 88%, #000); }
@@ -2700,7 +2700,8 @@
 .modalRelatorioServicos .relatorioClienteDireto, .modalRelatorioServicos .relatorioSubempresa { border-color: #b9c9d5; }
 .modalRelatorioServicos .relatorioClientesTopo h3, .modalRelatorioServicos .relatorioEmpresaCabecalho strong { color: #172033; }
 .modalRelatorioServicos .relatorioClientesTopo p { color: #475569; }
-.darkScope.modalRelatorioServicos .relatorioServicosFiltros, .darkScope.modalRelatorioServicos .relatorioClientes { border-color: #3b6470; background: #0b1f26; box-shadow: none; }
+.darkScope.modalRelatorioServicos .relatorioServicosFiltros { border-color: #3b6470; background: #0b1f26; box-shadow: none; }
+.darkScope.modalRelatorioServicos .relatorioClientes { border-color: #52707c; background: #102b34; box-shadow: 0 8px 20px rgba(0, 0, 0, .2); }
 .darkScope.modalRelatorioServicos .relatorioServicosAcoes .btnPrimary { border-color: #5eead4; color: #042f2e; background: #99f6e4; box-shadow: none; }
 .darkScope.modalRelatorioServicos .relatorioServicosAcoes .btnPrimary:hover { background: #ccfbf1; }
 .darkScope.modalRelatorioServicos .relatorioServicosAcoes .btnGhost { border-color: #5f8490; color: #ccfbf1; background: #102b34; }

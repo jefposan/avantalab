@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.28.0.04: o seletor de empresas do PWA de Serviços exibe
+// todas as empresas ativas; a disponibilidade é informada após a escolha.
+// Revisado na versão 1.28.0.03: o seletor de cliente/local no relatório de
+// Serviços tem contraste contextual próprio, sem alterar seu filtro ou acesso.
 // Revisado na versão 1.28.0.02: em Operações de Campo, a rotina contratada e
 // cada agendamento manual são execuções independentes; cada item selecionado
 // requer assinatura e avaliação próprias. O modo escuro muda silenciosamente.

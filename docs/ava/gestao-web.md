@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.28.0.02 -->
+<!-- ava-version: 1.28.0.04 -->
+
+> Revisão 1.28.0.04: o seletor de empresas do PWA passou a mostrar todas as
+> empresas ativas; a disponibilidade do serviço é verificada depois da escolha.
+
+> Revisão 1.28.0.03: o quadro de seleção de cliente/local no relatório de
+> Serviços possui superfície e contraste próprios nos temas claro e escuro.
 
 > Revisão 1.28.0.02: Operações de Campo separa rotina e agendamentos na
 > execução do colaborador, preserva comprovantes nos relatórios e mantém o

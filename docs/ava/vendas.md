@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.28.0.02 -->
+<!-- ava-version: 1.28.0.04 -->
+
+> Revisão 1.28.0.04: a visibilidade de empresas no PWA de Serviços pertence a
+> Operações de Campo, sem impacto operacional no AvantaVendas.
+
+> Revisão 1.28.0.03: o refinamento visual do relatório de Serviços pertence à
+> Gestão Web, sem impacto operacional no AvantaVendas.
 
 > Revisão 1.28.0.02: os ajustes de execução e preferência visual pertencem a
 > Operações de Campo, sem impacto operacional no AvantaVendas.

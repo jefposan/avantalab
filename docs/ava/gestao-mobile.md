@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.28.0.02 -->
+<!-- ava-version: 1.28.0.04 -->
+
+> Revisão 1.28.0.04: o seletor de empresa no PWA de Serviços mostra todas as
+> empresas ativas. A lista seguinte informa se há serviço pendente para executar.
+
+> Revisão 1.28.0.03: o destaque do seletor de cliente/local pertence ao
+> relatório da Gestão Web, sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.28.0.02: em Operações de Campo, rotina e agendamento manual são
 > tarefas separadas; cada execução do colaborador exige assinatura e avaliação
