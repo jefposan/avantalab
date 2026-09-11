@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0.04 -->
+<!-- ava-version: 1.33.0.05 -->
+
+> Revisão 1.33.0.05: o ajuste do seletor de Centros de custo e a correção de
+> compilação da fila offline não alteram a operação da Gestão Mobile.
 
 > Revisão 1.33.0.04: em Operações de Campo, Recebimentos e Serviços mostram a
 > rede riscada somente sem conexão e exibem a quantidade real de atendimentos

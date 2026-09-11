@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0.04 -->
+<!-- ava-version: 1.33.0.05 -->
+
+> Revisão 1.33.0.05: o ajuste do seletor de Centros de custo e a correção de
+> compilação da fila offline não alteram o fluxo do AvantaVendas.
 
 > Revisão 1.33.0.04: os mesmos indicadores e a proteção de voz foram aplicados
 > ao PWA Operações de Campo; o fluxo do AvantaVendas permanece inalterado.

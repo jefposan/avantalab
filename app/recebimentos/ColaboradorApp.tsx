@@ -57,13 +57,14 @@ function estaSemRede() {
 }
 
 function descricaoOperacaoPendente(operacao: OperacaoOffline, empresas: Empresa[], subempresas: Subempresa[], recebimentos: Recebimento[]) {
-  const lancamento = operacao.lancamentoId ? recebimentos.find((item) => item.id === operacao.lancamentoId) : null;
+  const lancamentoId = operacao.tipo === 'recebimento' ? operacao.lancamentoId : undefined;
+  const lancamento = lancamentoId ? recebimentos.find((item) => item.id === lancamentoId) : null;
   const empresa = empresas.find((item) => item.id === (operacao.recebimentoEmpresaId ?? lancamento?.empresaId));
   const subempresaId = operacao.subempresaId ?? lancamento?.subempresaId;
   const subempresa = subempresaId ? subempresas.find((item) => item.id === subempresaId) : null;
   const local = [empresa?.nome, subempresa?.nome].filter(Boolean).join(' · ') || 'Cliente selecionado';
   if (operacao.tipo === 'servico') return { titulo: 'Serviço realizado', detalhe: `${local}${operacao.clienteNome ? ` · Assinado por ${operacao.clienteNome}` : ''}` };
-  return { titulo: operacao.lancamentoId ? 'Recebimento lançado' : 'Novo recebimento', detalhe: local };
+  return { titulo: lancamentoId ? 'Recebimento lançado' : 'Novo recebimento', detalhe: local };
 }
 
 export default function ColaboradorApp() {

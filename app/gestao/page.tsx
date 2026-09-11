@@ -10770,7 +10770,7 @@ if (validacaoTelefoneObrigatoria) {
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
     <div className={`flex min-w-0 max-w-full flex-1 flex-col items-end gap-1.5 overflow-hidden ${centrosCustoAtivo ? 'xl:flex-row xl:items-end xl:justify-between xl:gap-4' : ''}`}>
       {centrosCustoAtivo && (
-        <label className="flex min-w-0 w-full max-w-[250px] shrink-0 flex-col items-center gap-1 xl:self-end">
+        <label className="flex w-[176px] shrink-0 flex-col items-center gap-1 xl:self-end">
           <span className="whitespace-nowrap text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">Centro de custos</span>
           <span className="relative h-9 w-full">
             <select

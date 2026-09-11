@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.33.0.05 - 2026-09-11
+- **Publicação e Centro de custos corrigidos**: a tipagem da fila offline de
+  Operações de Campo volta a compilar para que a entrega seja publicada. O
+  seletor de Centro de custos foi reduzido à largura do botão Despesas fixas,
+  preservando sua posição antes dos comparativos financeiros.
+
 ## 1.33.0.04 - 2026-09-11
 - **Operações de Campo offline visível**: Recebimentos e Serviços agora mostram
   no cabeçalho a rede riscada somente sem conexão e a quantidade real de

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.04 -->
+<!-- ava-version: 1.33.0.05 -->
+
+> Revisão 1.33.0.05: o seletor de **Centro de custos** permanece entre
+> **Despesas fixas** e os comparativos financeiros, agora na mesma largura do
+> botão. A correção técnica da fila offline não altera a operação da Gestão Web.
 
 > Revisão 1.33.0.04: os indicadores de conexão, fila real e bloqueio de voz
 > pertencem ao PWA Operações de Campo; sem impacto operacional adicional na
