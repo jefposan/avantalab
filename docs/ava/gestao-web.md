@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.28.0.04 -->
+<!-- ava-version: 1.28.0.05 -->
+
+> Revisão 1.28.0.05: a busca de cliente/local no relatório de Serviços mantém
+> um único controle de limpeza, sem impacto operacional.
 
 > Revisão 1.28.0.04: o seletor de empresas do PWA passou a mostrar todas as
 > empresas ativas; a disponibilidade do serviço é verificada depois da escolha.

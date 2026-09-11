@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.28.0.05 - 2026-09-11
+- **Relatório de serviços**: a busca de cliente/local usa um único botão para
+  limpar o texto, com cursor de ação ao passar sobre ele.
+
 ## 1.28.0.04 - 2026-09-11
 - **PWA de Serviços**: o seletor de empresa agora exibe todas as empresas
   ativas cadastradas. A disponibilidade de execução é informada depois da

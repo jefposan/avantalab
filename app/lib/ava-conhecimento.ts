@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.28.0.05: a busca de cliente/local do relatório de
+// Serviços usa um único controle de limpeza, sem alterar a consulta.
 // Revisado na versão 1.28.0.04: o seletor de empresas do PWA de Serviços exibe
 // todas as empresas ativas; a disponibilidade é informada após a escolha.
 // Revisado na versão 1.28.0.03: o seletor de cliente/local no relatório de
