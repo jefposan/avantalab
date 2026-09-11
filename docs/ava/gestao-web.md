@@ -1,6 +1,33 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.28.0.05 -->
+<!-- ava-version: 1.31.0.02 -->
+
+> Revisão 1.31.0.02: o texto reorganizado da ajuda pertence ao PWA Operações de
+> Campo e não altera o fluxo da Gestão Web.
+
+> Revisão 1.31.0.01: a continuidade visual das respostas por voz pertence ao
+> PWA Operações de Campo e não altera a conferência na Gestão Web.
+
+> Revisão 1.31.0: a voz do PWA pode preparar um registro de serviço, mas não o
+> conclui. Cliente e execução são preenchidos; assinatura, avaliação e gravação
+> continuam no fluxo oficial. O agendamento mantém cliente, data e tipo.
+
+> Revisão 1.30.0.01: o refinamento do card de formas de pagamento pertence ao
+> PWA Operações de Campo, sem alterar a conferência na Gestão.
+
+> Revisão 1.30.0: novos cadastros de empresas e locais de Operações de Campo
+> passam a alimentar automaticamente a pesquisa por voz do PWA. Não há campo
+> manual de aliases nem alteração nas regras de conferência da Gestão.
+
+> Revisão 1.29.0.02: ajuste visual da faixa de voz pertence ao PWA Operações
+> em Campo, sem impacto operacional na Gestão Web.
+
+> Revisão 1.29.0.01: refinamento visual do acionador de voz pertence ao PWA
+> Operações em Campo, sem impacto operacional na Gestão Web.
+
+> Revisão 1.29.0: Operações de Campo recebeu Solicitação por Voz no PWA do
+> colaborador para recebimentos e agendamentos. A gestão e suas regras de
+> conferência permanecem inalteradas.
 
 > Revisão 1.28.0.05: a busca de cliente/local no relatório de Serviços mantém
 > um único controle de limpeza, sem impacto operacional.

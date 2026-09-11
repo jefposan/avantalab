@@ -57,6 +57,7 @@ export default function RecebimentosColaboradorPage() {
         as="image"
         type="image/webp"
       />
+      <link rel="stylesheet" href="/recursos/padrao-avanta/avanta-voice-actions.css?v=1.2.1" />
       <ColaboradorApp />
     </>
   );

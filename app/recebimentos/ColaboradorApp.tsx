@@ -7,8 +7,10 @@ import type { Colaborador, Empresa, Recebimento, Servico, Subempresa } from './c
 import { cpfValido, formatarCpf } from './components/helpers';
 import PainelColaborador from './components/PainelColaborador';
 import PainelServicosColaborador from './components/PainelServicosColaborador';
+import OperacoesCampoVoiceDock from './components/OperacoesCampoVoiceDock';
 import CampoSenha from './components/CampoSenha';
 import { criarRepoSupabase, type RecebimentosRepo } from './data/repo';
+import type { PreparacaoRegistroServicoVoz } from './voice/types';
 
 type Estado = 'carregando' | 'login' | 'app' | 'bloqueado';
 
@@ -65,6 +67,7 @@ export default function ColaboradorApp() {
   const [recebimentos, setRecebimentos] = useState<Recebimento[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [operacao, setOperacao] = useState<'seletor' | 'recebimentos' | 'servicos'>('seletor');
+  const [registroServicoVoz, setRegistroServicoVoz] = useState<PreparacaoRegistroServicoVoz | null>(null);
   const [standalone, setStandalone] = useState<boolean | null>(null);
   const [instrucaoInstalacao, setInstrucaoInstalacao] = useState(false);
   const promptInstalacao = useRef<EventoInstalacaoPwa | null>(null);
@@ -72,7 +75,7 @@ export default function ColaboradorApp() {
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/recebimentos-sw.js?v=9', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
+    navigator.serviceWorker.register('/recebimentos-sw.js?v=11', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -319,7 +322,7 @@ export default function ColaboradorApp() {
   }
 
   const colaborador = colaboradores[0];
-  if (!colaborador || !repo || !empresaId) return null;
+  if (!colaborador || !repo || !empresaId || !cliente) return null;
   const podeAbrirServicos = colaborador.podeServicos || colaborador.podeAgendamentos;
   const podeTrocarOperacao = colaborador.podeRecebimentos && podeAbrirServicos;
   const nomeDoPerfil = empresaNome || 'Perfil da empresa';
@@ -342,7 +345,7 @@ export default function ColaboradorApp() {
     </main>
   );
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.pageComVoz}`}>
       <div className={`${styles.topbar} ${styles.topbarColaborador}`}>
         <div className={styles.topbarInner}>
           <div className={styles.brand}>
@@ -358,8 +361,27 @@ export default function ColaboradorApp() {
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
           onRegistrar={(empresaRecebimentoId, subId, valor, obs, forma, arquivo) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs, forma, arquivo))}
           onReceberCobranca={(id, valor, obs, forma, arquivo, dataPagamento) => executar((r) => r.receberCobranca(id, valor, obs, forma, arquivo, dataPagamento))}
-        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} onRegistrar={(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId) => executar((r) => r.registrarServico(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId))} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
+        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} registroInicial={registroServicoVoz} onRegistroInicialConsumido={() => setRegistroServicoVoz(null)} onRegistrar={(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId) => executar((r) => r.registrarServico(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId))} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
       </div>
+      <footer className={styles.voiceActionBar} aria-label={`Ações por voz de ${operacao}`}>
+        <OperacoesCampoVoiceDock
+          key={operacao}
+          mode={operacao}
+          empresaId={empresaId}
+          userId={colaborador.id}
+          cliente={cliente}
+          empresas={empresas}
+          subempresas={subempresas}
+          recebimentos={recebimentos}
+          servicos={servicos}
+          podeRegistrar={colaborador.podeServicos}
+          podeAgendar={colaborador.podeAgendamentos}
+          onRegistrarRecebimento={(empresaRecebimentoId, subId, valor, obs, forma) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs, forma))}
+          onReceberCobranca={(recebimentoId, valor, obs, forma) => executar((r) => r.receberCobranca(recebimentoId, valor, obs, forma))}
+          onAgendarServico={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))}
+          onPrepararRegistroServico={(companyId, subcompanyId, serviceId) => setRegistroServicoVoz({ requestId: `${Date.now()}-${Math.random()}`, companyId, subcompanyId, serviceId })}
+        />
+      </footer>
     </div>
   );
 }

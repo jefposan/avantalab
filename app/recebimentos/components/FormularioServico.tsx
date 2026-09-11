@@ -4,12 +4,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
 import type { AvaliacaoServico, Empresa, Servico, Subempresa, TipoNivelEndereco } from './types';
+import type { PreparacaoRegistroServicoVoz } from '../voice/types';
 import { dataLocalIso, formatarData } from './helpers';
 
 type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
   servicos: Servico[];
+  selecaoInicial?: PreparacaoRegistroServicoVoz | null;
   onConfirmar: (empresaId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacao: string, servicoId?: string) => Promise<void> | void;
   onCancelar: () => void;
 };
@@ -29,12 +31,15 @@ function rotuloNivel(item: Subempresa) {
   return [ROTULOS_NIVEL[item.tipoNivel], item.identificacaoNivel.trim()].filter(Boolean).join(' ');
 }
 
-export default function FormularioServico({ empresas, subempresas, servicos, onConfirmar, onCancelar }: Props) {
+export default function FormularioServico({ empresas, subempresas, servicos, selecaoInicial, onConfirmar, onCancelar }: Props) {
   const [etapa, setEtapa] = useState<Etapa>('destino');
-  const [empresaId, setEmpresaId] = useState('');
-  const [subempresaId, setSubempresaId] = useState('');
-  const [servicoId, setServicoId] = useState('');
-  const [nivelSelecionado, setNivelSelecionado] = useState('');
+  const [empresaId, setEmpresaId] = useState(selecaoInicial?.companyId ?? '');
+  const [subempresaId, setSubempresaId] = useState(selecaoInicial?.subcompanyId ?? '');
+  const [servicoId, setServicoId] = useState(selecaoInicial?.serviceId ?? '');
+  const [nivelSelecionado, setNivelSelecionado] = useState(() => {
+    const subempresa = subempresas.find((item) => item.id === selecaoInicial?.subcompanyId);
+    return subempresa ? chaveNivel(subempresa) : '';
+  });
   const [clienteNome, setClienteNome] = useState('');
   const [assinatura, setAssinatura] = useState('');
   const [avaliacao, setAvaliacao] = useState<AvaliacaoServico | null>(null);
@@ -82,6 +87,22 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
   const rotuloTipoAgendado = (tipo: Servico['tipoServico']) => ({ interna: 'Interna', revisao: 'Revisão', extra: 'Extra', rotina: 'Rotina' })[tipo];
 
   useEffect(() => {
+    if (!selecaoInicial) return;
+    const subempresaSelecionada = subempresas.find((item) => item.id === selecaoInicial.subcompanyId);
+    setEtapa('destino');
+    setEmpresaId(selecaoInicial.companyId);
+    setSubempresaId(selecaoInicial.subcompanyId ?? '');
+    setServicoId(selecaoInicial.serviceId);
+    setNivelSelecionado(subempresaSelecionada ? chaveNivel(subempresaSelecionada) : '');
+    setClienteNome('');
+    setAssinatura('');
+    setAvaliacao(null);
+    setObservacao('');
+    setErro('');
+    setProximoCampoEmDestaque('assinador');
+  }, [selecaoInicial?.requestId]);
+
+  useEffect(() => {
     if (etapa !== 'assinatura') return;
     const overflowAnterior = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -119,6 +140,7 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
     const respeitaMovimentoReduzido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const quadro = window.requestAnimationFrame(() => {
       alvo?.scrollIntoView({ behavior: respeitaMovimentoReduzido ? 'auto' : 'smooth', block: 'start' });
+      if (proximoCampoEmDestaque === 'assinador') alvo?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
       setProximoCampoEmDestaque(null);
     });
     return () => window.cancelAnimationFrame(quadro);

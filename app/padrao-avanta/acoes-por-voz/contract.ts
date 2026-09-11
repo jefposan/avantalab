@@ -1,4 +1,4 @@
-export const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.0.0' as const;
+export const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.2.1' as const;
 
 export type AvantaVoiceActionOperation =
   | 'transcribe'

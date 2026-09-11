@@ -1,5 +1,45 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.11.1 - 2026-09-11
+
+- Corrigida a continuidade das dúvidas respondidas por voz: o card permanece
+  aberto e o microfone fica no mesmo ponto durante gravação, transcrição e
+  interpretação em todas as integrações do controlador compartilhado.
+
+## 1.11.0 - 2026-09-11
+
+- Adicionada a continuação guiada: a voz pode resolver escolhas e entregar o
+  fluxo à tela oficial quando assinatura, avaliação ou outro gesto humano ainda
+  for obrigatório, sem simular conclusão nem criar uma escrita paralela.
+- O controlador encerra a solicitação de voz após o handoff e preserva a tela
+  oficial como única responsável pelas etapas e confirmações restantes.
+
+## 1.10.1 - 2026-09-11
+
+- Listas curtas de escolhas simples, como formas de pagamento, usam linhas
+  compactas acessíveis e aparecem integralmente sem scroll interno desnecessário.
+- Listas extensas de clientes, produtos e catálogo preservam rolagem própria e
+  o limite seguro do painel em telas baixas.
+
+## 1.10.0 - 2026-09-11
+
+- Padronizado o catálogo fixo de funções por sistema, com intenção e campos
+  obrigatórios validados antes de qualquer regra de negócio.
+- Novos clientes e locais passam a participar automaticamente da transcrição e
+  da resolução autenticada, sem aliases preenchidos pelo usuário ou catálogo
+  completo enviado ao modelo.
+- Uma solicitação claramente nova cancela e substitui o rascunho em andamento;
+  respostas curtas à dúvida atual continuam complementando o mesmo fluxo.
+
+## 1.9.0 - 2026-09-11
+
+- Adicionado o dock React oficial para montar acionador, ajuda contextual,
+  feedback temporário e adaptador sem duplicar a experiência entre sistemas.
+- Os ativos centrais passam a ter um endereço neutro do PADRÃO AVANTA, sem
+  obrigar novos módulos a depender da rota de recursos do AvantaVendas.
+- Operações de Campo torna-se a segunda integração oficial, com textos e
+  permissões próprios e as mesmas garantias visuais e de confirmação.
+
 ## 1.8.0 - 2026-09-10
 
 - A experiência completa de ações por voz com IA passa a ser um padrão oficial

@@ -1,5 +1,5 @@
 /*
- * PADRÃO AVANTA — Ações por voz v1.0.0
+ * PADRÃO AVANTA — Ações por voz v1.2.1
  * Superfícies externas compartilhadas: acionador, ajuda e solicitações salvas.
  * O fluxo ativo usa Shadow DOM e permanece encapsulado em avanta-voice-actions.js.
  */
@@ -35,6 +35,16 @@
 .dark-theme .mobile-voice-command-help:focus-visible { outline-color: rgba(255,255,255,.62); }
 .dark-theme .mobile-voice-command-label { color: #cbd5e1; }
 
+.avanta-voice-toast { position: fixed; z-index: 100010; right: max(14px, env(safe-area-inset-right)); bottom: max(16px, calc(env(safe-area-inset-bottom) + 12px)); left: max(14px, env(safe-area-inset-left)); display: grid; width: min(460px, calc(100% - 28px)); min-height: 64px; margin: 0 auto; overflow: hidden; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; border-radius: 16px; padding: 12px 14px 15px; color: #17324d; background: #fff; box-shadow: 0 16px 40px rgba(3, 18, 34, .28); }
+.avanta-voice-toast > div { display: grid; gap: 3px; min-width: 0; }
+.avanta-voice-toast b { color: #0a1f44; font-size: 14px; line-height: 1.2; }
+.avanta-voice-toast span { font-size: 13px; line-height: 1.35; }
+.avanta-voice-toast button { min-height: 42px; border: 0; border-radius: 12px; padding: 8px 12px; color: #fff; background: #1687d9; cursor: pointer; font: inherit; font-size: 12px; font-weight: 800; }
+.avanta-voice-toast > i { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; background: #1687d9; transform-origin: left; animation: avanta-voice-toast-time linear forwards; }
+@keyframes avanta-voice-toast-time { to { transform: scaleX(0); } }
+.dark-theme .avanta-voice-toast { color: #d8e6f2; background: #102538; }
+.dark-theme .avanta-voice-toast b { color: #fff; }
+
 .voice-pending-list { display: grid; gap: 10px; margin-top: 14px; }
 .voice-pending-item { display: grid; gap: 12px; border-radius: 16px; padding: 14px; background: #f4f9fc; }
 .voice-pending-item > div:first-child { display: grid; gap: 4px; }
@@ -55,4 +65,5 @@
 @media (prefers-reduced-motion: reduce) {
   .mobile-voice-command-trigger,
   .mobile-voice-command-help { scroll-behavior: auto; }
+  .avanta-voice-toast > i { animation: none; }
 }

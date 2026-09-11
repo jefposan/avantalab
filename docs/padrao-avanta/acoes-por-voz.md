@@ -28,11 +28,23 @@ alcançar todas as integrações do mesmo projeto na publicação seguinte.
    torna cancelável, mostra `X`, anel de progresso e mensagem curta.
 5. Dúvidas, catálogo, edição e confirmação usam o painel central oficial. Em
    telas baixas, o conteúdo interno rola e nunca cobre a navegação fixa.
+   Listas curtas de escolhas simples, como as formas de pagamento, devem caber
+   integralmente sem scroll próprio; a rolagem fica reservada a listas longas.
+   Quando a dúvida for respondida por voz, o card permanece aberto e o mesmo
+   microfone continua ancorado nele durante gravação, transcrição e
+   interpretação; a interface não volta ao acionador principal nesse intervalo.
 6. Resultado confirmado usa o aviso temporário padrão no rodapé. Quando houver
    comprovante, o aviso oferece **Compartilhar comprovante** antes de desaparecer.
 7. Solicitações incompletas podem ser salvas. O acionador sempre inicia uma nova
    fala; pendências ficam em indicador separado e podem ser retomadas ou
    canceladas individualmente.
+8. Se uma nova solicitação completa for gravada antes da conclusão da atual, o
+   rascunho em andamento é cancelado e substituído. Respostas curtas à pergunta
+   exibida continuam o fluxo atual e não são tratadas como uma nova ação.
+9. Quando uma ação exigir assinatura, avaliação, biometria ou outro gesto humano,
+   a voz pode resolver as escolhas anteriores e entregar o fluxo já preenchido à
+   tela oficial. Esse handoff encerra o card de voz, não grava dados e não pode
+   substituir as confirmações obrigatórias da tela de destino.
 
 Não inserir cabeçalhos redundantes como “experimental”, nome do usuário,
 “confirmação obrigatória” ou explicações sobre o que o botão **Confirmar** já
@@ -75,6 +87,11 @@ schema e dados novamente. Qualquer escrita exige confirmação explícita e util
 service, RPC, server action ou API oficial. Consultas podem concluir sem
 confirmação.
 
+Em módulos React, reutilizar `AvantaVoiceActionDock.tsx`; ele monta o acionador,
+a ajuda acessível e o aviso temporário, e carrega o controlador pelo endereço
+neutro `/recursos/padrao-avanta/`. O consumidor fornece somente o adaptador e a
+faixa de layout reservada.
+
 Cada integração deve informar `storageNamespace` estável e específico do
 sistema. Alterar esse namespace exige migração compatível para não perder
 solicitações salvas.
@@ -84,6 +101,16 @@ solicitações salvas.
 A transcrição recebe apenas vocabulário curto e relevante, nunca o catálogo
 inteiro. A IA devolve intenção estruturada validada por schema. O servidor então
 resolve clientes e produtos dentro da empresa ativa.
+
+Cada integração declara um catálogo pequeno e fixo de funções, com exemplos de
+linguagem e campos obrigatórios. O modelo apenas escolhe uma dessas funções e
+extrai os dados. A aplicação pergunta somente o campo obrigatório ausente e
+recusa operações fora do catálogo, sem inventar execução.
+
+Clientes, empresas e locais são resolvidos em dados vivos da conta autenticada.
+Cadastros novos devem entrar automaticamente no vocabulário curto da próxima
+transcrição e no resolvedor local, com atualização em tempo real quando o módulo
+já estiver aberto. Não exigir aliases ou manutenção manual para cada cadastro.
 
 Produtos devem possuir índice de voz oculto, construído automaticamente com:
 

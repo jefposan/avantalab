@@ -1,5 +1,63 @@
 # Changelog
 
+## 1.31.0.02 - 2026-09-11
+- **Ajuda de Serviços mais clara**: o texto agora explica primeiro o registro,
+  mantendo nome e assinatura junto desse caminho, e apresenta o agendamento em
+  uma instrução separada.
+
+## 1.31.0.01 - 2026-09-11
+- **Resposta por voz sem perder a pergunta**: o microfone permanece no mesmo
+  local dentro do card durante gravação, transcrição e interpretação. O ajuste
+  é central e atende todas as perguntas em Recebimentos e Serviços.
+
+## 1.31.0 - 2026-09-11
+- **Registrar serviço por voz**: em Serviços, a pessoa pode pedir para registrar
+  um atendimento e informar o cliente. O sistema resolve a empresa/local e a
+  execução pendente; quando houver mais de uma, pergunta qual serviço utilizar.
+- **Continuação no fluxo oficial**: após a resolução, a voz fecha e abre
+  **Registrar serviços** já na etapa do nome de quem recebeu. Assinatura e
+  avaliação continuam obrigatórias e nenhuma execução é gravada pela IA.
+- **Ajuda direta**: o balão de Serviços explica, em poucas palavras, tanto o
+  registro quanto o agendamento e adapta o texto às permissões do colaborador.
+
+## 1.30.0.01 - 2026-09-11
+- **Escolha de pagamento sem scroll**: o card de voz apresenta integralmente as
+  cinco formas de pagamento em linhas compactas, mantendo alvos de toque de
+  44 px. Listas extensas continuam com rolagem protegida.
+
+## 1.30.0 - 2026-09-11
+- **Interpretação dinâmica em Operações de Campo**: Recebimentos e Serviços
+  reconhecem um catálogo fixo de funções e localizam empresas e locais novos
+  automaticamente pelos dados autenticados, com aproximação textual, fonética
+  e contextual sem cadastro manual de aliases.
+- **Atualização imediata**: empresas e locais criados ou editados atualizam o
+  catálogo aberto em tempo real e os nomes mais recentes ajudam a próxima
+  transcrição sem enviar a base completa à IA.
+- **Troca segura de solicitação**: respostas curtas continuam a dúvida atual;
+  uma nova solicitação completa cancela o rascunho em andamento e inicia outro
+  fluxo limpo. A confirmação e a escrita oficial permanecem obrigatórias.
+
+## 1.29.0.02 - 2026-09-11
+- **Faixa de voz mais leve**: removido o fundo circular sob o microfone; a
+  superfície inferior passa a usar 70% de transparência e o ícone de informação
+  fica centralizado verticalmente dentro da faixa em qualquer altura de tela.
+
+## 1.29.0.01 - 2026-09-11
+- **Encaixe da Solicitação por Voz**: a faixa inferior de Operações de Campo
+  agora começa no eixo do acionador e recebe o aro elevado do padrão usado no
+  botão central do AvantaVendas, preservando posição, ajuda e estados do fluxo.
+
+## 1.29.0 - 2026-09-11
+- **Ações por voz em Operações de Campo**: Recebimentos e Serviços receberam a
+  faixa inferior oficial com acionador, ajuda contextual e estados compartilhados
+  do PADRÃO AVANTA. Recebimentos registra cliente, valor e forma de pagamento;
+  Serviços cria agendamentos respeitando as permissões do colaborador.
+- **Segurança operacional**: toda escrita continua usando as APIs oficiais, com
+  confirmação prévia, sessão, empresa, assinatura e permissões revalidadas. A
+  conclusão de serviço permanece na tela por exigir assinatura e avaliação.
+- **Componente compartilhado**: criado o dock React e o endereço neutro dos
+  recursos de voz para que novos sistemas consumam o mesmo controlador e estilo.
+
 ## 1.28.0.05 - 2026-09-11
 - **Relatório de serviços**: a busca de cliente/local usa um único botão para
   limpar o texto, com cursor de ação ao passar sobre ele.

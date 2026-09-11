@@ -1,6 +1,30 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.28.0.05 -->
+<!-- ava-version: 1.31.0.02 -->
+
+> Revisão 1.31.0.02: o ajuste no texto de ajuda de Serviços pertence ao PWA
+> Operações de Campo e não altera o AvantaVendas.
+
+> Revisão 1.31.0.01: o microfone ancorado durante respostas às dúvidas foi
+> corrigido no controlador compartilhado, sem alterar os fluxos do AvantaVendas.
+
+> Revisão 1.31.0: registro e agendamento por voz em Serviços pertencem ao PWA
+> Operações de Campo e não alteram o AvantaVendas.
+
+> Revisão 1.30.0.01: o card compacto de formas de pagamento pertence ao PWA
+> Operações de Campo e não altera o AvantaVendas.
+
+> Revisão 1.30.0: a interpretação dinâmica de empresas e a substituição de
+> rascunho pertencem ao PWA Operações de Campo e não alteram o AvantaVendas.
+
+> Revisão 1.29.0.02: o ajuste visual da faixa de voz pertence ao PWA Operações
+> em Campo e não altera o AvantaVendas.
+
+> Revisão 1.29.0.01: o refinamento visual da faixa de voz pertence ao PWA
+> Operações em Campo e não altera o AvantaVendas.
+
+> Revisão 1.29.0: a nova faixa de voz pertence ao PWA Operações em Campo e não
+> altera o fluxo do AvantaVendas.
 
 > Revisão 1.28.0.05: refinamento da busca do relatório de Serviços pertence à
 > Gestão Web, sem impacto operacional no AvantaVendas.

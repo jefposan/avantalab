@@ -469,6 +469,8 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     },
     assinarAtualizacoes(callback) {
       const canal = cliente.channel(`recebimentos-${empresaId}-${Math.random()}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_empresas', filter: `empresa_id=eq.${empresaId}` }, callback)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_subempresas', filter: `empresa_id=eq.${empresaId}` }, callback)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_lancamentos', filter: `empresa_id=eq.${empresaId}` }, callback)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_servicos', filter: `empresa_id=eq.${empresaId}` }, callback)
         .subscribe();

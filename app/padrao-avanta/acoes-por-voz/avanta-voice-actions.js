@@ -4,7 +4,7 @@
   // Implementação executável oficial do PADRÃO AVANTA para ações por voz.
   // Adaptadores de produto fornecem dados e execução; este componente controla
   // captura, estados, desambiguação, confirmação e continuidade da solicitação.
-  const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.0.0';
+  const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.2.1';
 
   const DEFAULT_SESSION_PREFIX = 'avantalab.voice_actions.official.v1';
   const MAX_RECORDING_MS = 45000;
@@ -13,6 +13,7 @@
     recorder: null, stream: null, chunks: [], requestAbort: null, requestStage: null, pendingId: null, timer: 0,
     audioContext: null, analyser: null, source: null, frame: 0, canvas: null,
     noiseFloor: 0.012, lastVoiceActive: null, canvasSize: 0,
+    inlineClarification: false,
     catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogTimer: 0, catalogRequestId: 0,
     editDraft: null, editSelections: [],
   };
@@ -22,7 +23,7 @@
     *{box-sizing:border-box}button,input{font:inherit}.dock{position:static;width:0;height:0;overflow:visible;text-align:center}.dock>.capture{position:absolute;top:0;left:0;margin:0;transform:translate(-50%,-50%)}.dock>strong{position:absolute;top:49px;left:0;width:240px;color:#35536c;font-size:12px;line-height:1.2;transform:translateX(-50%)}.overlay{position:fixed;inset:0;z-index:var(--vendas-layer-modal,100000);background:rgba(3,18,34,.58);display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(110px,calc(env(safe-area-inset-bottom) + 92px)) max(12px,env(safe-area-inset-left));-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
     .panel{position:relative;width:min(100%,440px);max-height:calc(100svh - max(132px,calc(env(safe-area-inset-bottom) + 108px)));overflow:hidden;border:1px solid rgba(219,229,239,.95);border-radius:18px;background:#fff;box-shadow:0 18px 42px rgba(15,42,80,.28);overscroll-behavior:contain}.close{position:absolute;z-index:2;top:14px;right:14px;width:44px;height:44px;border:0;border-radius:50%;background:#eaf3f8;color:#173b5d;font-size:25px;cursor:pointer}
     .capture{position:relative;width:142px;height:142px;display:grid;place-items:center;margin:0 auto;overflow:visible}.capture.small{width:132px;height:132px;margin:8px auto 0}.visualizer{position:absolute;inset:-45px;width:calc(100% + 90px);height:calc(100% + 90px);pointer-events:none;overflow:visible}.voice{position:relative;z-index:1;width:88px;height:88px;border:0;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 36% 30%,#2498de,#07518b 72%);box-shadow:0 12px 27px rgba(4,70,123,.30);color:#fff;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.dock .voice{width:84px;height:84px}.small .voice{width:82px;height:82px}.voice.listening,.voice.cancelling{background:radial-gradient(circle at 36% 30%,#f36a72,#c51e32 72%);box-shadow:0 14px 34px rgba(191,27,48,.42)}.voice.cancelling::after{content:'';position:absolute;inset:-8px;border:2px solid rgba(211,37,57,.22);border-top-color:#e23f51;border-right-color:#f18a93;border-radius:50%;pointer-events:none;animation:processing-ring 1s linear infinite}.voice:disabled{opacity:.8;cursor:wait}.mic,.cancel-icon{width:38px;height:38px}.cancel-icon{position:relative;z-index:1}.dock .mic,.dock .cancel-icon{width:36px;height:36px}.small .mic,.small .cancel-icon{width:34px;height:34px}.mic svg,.cancel-icon svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.stop{width:27px;height:27px;border-radius:7px;background:#fff}.small .stop{width:25px;height:25px}.spinner{width:32px;height:32px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@keyframes processing-ring{to{transform:rotate(360deg)}}
-    .card{margin:0;max-height:inherit;border-radius:18px;padding:22px;background:#fff;box-shadow:none}.card h2{margin:0 52px 14px 0;color:#0A1F44;font-size:21px;line-height:1.2;letter-spacing:-.025em}.summary{margin:0;color:#36516d;font-size:16px;line-height:1.5;white-space:pre-line}.candidates,.catalog-results{display:grid;gap:9px;max-height:min(34svh,300px);margin:16px 0;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}.candidate{width:100%;border:1px solid #d7e2eb;border-radius:12px;padding:13px;text-align:left;background:#f8fbfe;color:#17324d;cursor:pointer}.candidate strong,.candidate small{display:block}.candidate strong{font-size:16px}.candidate small{margin-top:4px;color:#60758a;line-height:1.35}.helper{text-align:center;color:#667a8d;font-size:13px;margin:2px 0 10px}.actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:18px}.actions.single{grid-template-columns:1fr}.primary,.secondary,.text{min-height:48px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer}.primary{border:1px solid #1687D9;background:#1687D9;color:#fff;box-shadow:0 6px 15px rgba(22,135,217,.24)}.secondary{border:1px solid #9fb7ca;background:#f8fbfe;color:#17324d}.text{width:100%;border:0;background:transparent;color:#526b80}.save-later{display:block;min-height:44px;margin:12px auto 0;border:1px solid #bdd3e2;border-radius:999px;padding:10px 18px;background:#f5fafc;color:#244a69;font-weight:800;cursor:pointer}.catalog-search{width:100%;min-height:48px;border:1px solid #b9cede;border-radius:12px;padding:10px 13px;color:#17324d;background:#fff;font-size:16px}.catalog-empty{margin:14px 0;color:#60758a;text-align:center}.edit-items{display:grid;gap:9px;margin:14px 0}.edit-item{display:grid;grid-template-columns:minmax(0,1fr) 78px 42px;gap:8px;align-items:center;border:1px solid #d7e2eb;border-radius:12px;padding:10px;background:#f8fbfe}.edit-item strong{min-width:0;font-size:14px;line-height:1.25}.edit-quantity{min-height:42px;width:100%;border:1px solid #b9cede;border-radius:10px;padding:7px;text-align:center;color:#17324d;background:#fff}.edit-remove{width:42px;height:42px;border:0;border-radius:10px;background:#ffe8ea;color:#b51f31;font-size:20px;cursor:pointer}.result{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#dff7e8;color:#187544;font-weight:1000;font-size:23px;margin-bottom:12px}.error .result{background:#ffe5e6;color:#b51f31}.proof{margin-top:14px;border:1px solid #d7e8f2;border-radius:12px;padding:14px;background:#f2f9fd}.proof header{display:flex;justify-content:space-between;gap:10px;align-items:center}.badge{font-size:10px;font-weight:900;text-transform:uppercase;color:#187544}.proof dl{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;margin:12px 0 0;font-size:13px}.proof dt{color:#61758a}.proof dd{margin:0;text-align:right;font-weight:800;overflow-wrap:anywhere}
+    .card{margin:0;max-height:inherit;border-radius:18px;padding:22px;background:#fff;box-shadow:none}.card h2{margin:0 52px 14px 0;color:#0A1F44;font-size:21px;line-height:1.2;letter-spacing:-.025em}.summary{margin:0;color:#36516d;font-size:16px;line-height:1.5;white-space:pre-line}.candidates,.catalog-results{display:grid;gap:9px;max-height:min(34svh,300px);margin:16px 0;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}.candidates.compact{gap:7px;max-height:none;margin:12px 0;overflow:visible;padding-right:0}.candidate{width:100%;border:1px solid #d7e2eb;border-radius:12px;padding:13px;text-align:left;background:#f8fbfe;color:#17324d;cursor:pointer}.candidates.compact .candidate{display:flex;min-height:44px;align-items:center;padding:9px 13px}.candidate strong,.candidate small{display:block}.candidate strong{font-size:16px}.candidate small{margin-top:4px;color:#60758a;line-height:1.35}.helper{min-height:2.7em;display:flex;align-items:center;justify-content:center;text-align:center;color:#667a8d;font-size:13px;line-height:1.35;margin:2px 0 10px}.actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:18px}.actions.single{grid-template-columns:1fr}.primary,.secondary,.text{min-height:48px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer}.primary{border:1px solid #1687D9;background:#1687D9;color:#fff;box-shadow:0 6px 15px rgba(22,135,217,.24)}.secondary{border:1px solid #9fb7ca;background:#f8fbfe;color:#17324d}.text{width:100%;border:0;background:transparent;color:#526b80}.save-later{display:block;min-height:44px;margin:12px auto 0;border:1px solid #bdd3e2;border-radius:999px;padding:10px 18px;background:#f5fafc;color:#244a69;font-weight:800;cursor:pointer}.catalog-search{width:100%;min-height:48px;border:1px solid #b9cede;border-radius:12px;padding:10px 13px;color:#17324d;background:#fff;font-size:16px}.catalog-empty{margin:14px 0;color:#60758a;text-align:center}.edit-items{display:grid;gap:9px;margin:14px 0}.edit-item{display:grid;grid-template-columns:minmax(0,1fr) 78px 42px;gap:8px;align-items:center;border:1px solid #d7e2eb;border-radius:12px;padding:10px;background:#f8fbfe}.edit-item strong{min-width:0;font-size:14px;line-height:1.25}.edit-quantity{min-height:42px;width:100%;border:1px solid #b9cede;border-radius:10px;padding:7px;text-align:center;color:#17324d;background:#fff}.edit-remove{width:42px;height:42px;border:0;border-radius:10px;background:#ffe8ea;color:#b51f31;font-size:20px;cursor:pointer}.result{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#dff7e8;color:#187544;font-weight:1000;font-size:23px;margin-bottom:12px}.error .result{background:#ffe5e6;color:#b51f31}.proof{margin-top:14px;border:1px solid #d7e8f2;border-radius:12px;padding:14px;background:#f2f9fd}.proof header{display:flex;justify-content:space-between;gap:10px;align-items:center}.badge{font-size:10px;font-weight:900;text-transform:uppercase;color:#187544}.proof dl{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;margin:12px 0 0;font-size:13px}.proof dt{color:#61758a}.proof dd{margin:0;text-align:right;font-weight:800;overflow-wrap:anywhere}
     @media(max-width:520px){.overlay{place-items:center;padding:max(12px,env(safe-area-inset-top)) 12px max(104px,calc(env(safe-area-inset-bottom) + 88px))}.panel{width:100%;max-height:calc(100svh - max(126px,calc(env(safe-area-inset-bottom) + 104px)));border-radius:18px}.card{padding:20px}.candidates,.catalog-results{max-height:min(32svh,260px)}.dock .voice{width:80px;height:80px}}
     @media(prefers-reduced-motion:reduce){.spinner{animation-duration:1.6s}.voice.cancelling::after{animation:none}}
     /* A superfície de desenho é bem maior que a onda real: ela nunca revela
@@ -353,7 +354,10 @@
     if (!state.root) return;
     ensureMount();
     state.root.replaceChildren();
-    if (['idle', 'recording', 'transcribing', 'processing'].includes(state.phase)) {
+    const inlineClarification = state.inlineClarification
+      && state.current?.kind === 'clarification'
+      && ['recording', 'transcribing', 'processing'].includes(state.phase);
+    if (['idle', 'recording', 'transcribing', 'processing'].includes(state.phase) && !inlineClarification) {
       const dock = el('section', 'dock');
       const body = el('div', 'voice-body');
       dock.setAttribute('aria-live', 'polite');
@@ -373,17 +377,26 @@
       renderCatalogPicker(panel); overlay.append(panel); state.root.append(overlay); return;
     }
 
-    if (state.phase === 'clarification' && state.current?.kind === 'clarification') {
+    if ((state.phase === 'clarification' || inlineClarification) && state.current?.kind === 'clarification') {
+      const compactChoices = state.current.entity?.type === 'choice'
+        && Array.isArray(state.current.candidates)
+        && state.current.candidates.length <= 5
+        && state.current.candidates.every((candidate) => !String(candidate?.detail || '').trim());
       const card = el('section', 'card'); card.append(el('h2', '', state.current.question));
       if (Array.isArray(state.current.candidates) && state.current.candidates.length) {
-        const list = el('div', 'candidates');
+        const list = el('div', compactChoices ? 'candidates compact' : 'candidates');
         state.current.candidates.forEach((candidate) => {
           const option = button('', 'candidate', () => processTranscription(`Seleção confirmada: ${candidate.label}`, state.current, selectionFor(candidate)));
-          option.append(el('strong', '', candidate.label), el('small', '', candidate.detail)); list.append(option);
+          option.append(el('strong', '', candidate.label));
+          if (candidate.detail) option.append(el('small', '', candidate.detail));
+          list.append(option);
         }); card.append(list);
       }
       if (state.current.entity?.type === 'product') card.append(button('Procurar no catálogo', 'secondary', () => openProductCatalog('clarification')));
-      card.append(el('p', 'helper', state.current.entity?.type === 'product' ? 'Diga apenas o produto que ficou em dúvida. O restante do pedido será mantido.' : 'Responda por voz ou escolha uma opção.'));
+      const helper = inlineClarification
+        ? state.phase === 'recording' ? 'Ouvindo… toque para encerrar.' : cancellationHint()
+        : state.current.entity?.type === 'product' ? 'Diga apenas o produto que ficou em dúvida. O restante do pedido será mantido.' : 'Responda por voz ou escolha uma opção.';
+      card.append(el('p', 'helper', helper));
       card.append(voiceControl(true));
       const actions = el('div', 'actions single'); actions.append(button('Cancelar', 'secondary', cancel)); card.append(actions, button('Salvar para depois', 'save-later', saveForLater)); panel.append(card);
     }
@@ -425,9 +438,23 @@
     setPhase('processing');
     try {
       const result = await requestVoice('process', 'process', { transcription, previousDraft: previous?.draft || null, candidates: previous?.kind === 'clarification' ? previous.candidates : [], selections: previous?.selections || [], selection });
+      if (result?.replacesPrevious) discardCurrentPending();
+      if (result?.kind === 'handoff') {
+        state.inlineClarification = false;
+        discardCurrentPending();
+        state.current = null;
+        close({ persist: false });
+        return;
+      }
+      state.inlineClarification = false;
       state.current = result;
       setPhase(result.kind === 'clarification' ? 'clarification' : result.kind === 'confirmation' ? 'confirmation' : 'done');
-    } catch (error) { if (!wasCancelled(error)) setPhase('error', error instanceof Error ? error.message : 'Não foi possível entender sua solicitação.'); }
+    } catch (error) {
+      if (!wasCancelled(error)) {
+        state.inlineClarification = false;
+        setPhase('error', error instanceof Error ? error.message : 'Não foi possível entender sua solicitação.');
+      }
+    }
   }
 
   async function transcribe(audio, extension) {
@@ -436,11 +463,17 @@
       const result = await requestVoice('transcribe', 'transcribe', { audio, extension });
       if (!result?.transcription) throw new Error('Não foi possível transcrever o áudio.');
       await processTranscription(String(result.transcription));
-    } catch (error) { if (!wasCancelled(error)) setPhase('error', error instanceof Error ? error.message : 'Não foi possível transcrever o áudio.'); }
+    } catch (error) {
+      if (!wasCancelled(error)) {
+        state.inlineClarification = false;
+        setPhase('error', error instanceof Error ? error.message : 'Não foi possível transcrever o áudio.');
+      }
+    }
   }
 
   async function startRecording() {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { setPhase('error', 'A gravação de áudio não está disponível neste navegador.'); return; }
+    state.inlineClarification = state.phase === 'clarification' && state.current?.kind === 'clarification';
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       const types = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
@@ -448,12 +481,12 @@
       const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       state.stream = stream; state.recorder = recorder; state.chunks = [];
       recorder.ondataavailable = (event) => { if (event.data.size) state.chunks.push(event.data); };
-      recorder.onerror = () => { stopMedia(true); setPhase('error', 'A gravação foi interrompida. Tente novamente.'); };
+      recorder.onerror = () => { state.inlineClarification = false; stopMedia(true); setPhase('error', 'A gravação foi interrompida. Tente novamente.'); };
       recorder.onstop = () => {
         window.clearTimeout(state.timer); state.timer = 0; stopVisualization(); stream.getTracks().forEach((track) => track.stop()); state.stream = null;
         state.recorder = null;
         const chunks = state.chunks; state.chunks = [];
-        if (!chunks.length) { setPhase('error', 'Não identificamos áudio. Tente novamente.'); return; }
+        if (!chunks.length) { state.inlineClarification = false; setPhase('error', 'Não identificamos áudio. Tente novamente.'); return; }
         const type = recorder.mimeType || mimeType || 'audio/webm';
         void transcribe(new Blob(chunks, { type }), type.includes('mp4') ? 'mp4' : 'webm');
       };
@@ -461,6 +494,7 @@
       setPhase('recording'); startVisualization(stream); recorder.start(250);
       state.timer = window.setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, MAX_RECORDING_MS);
     } catch (error) {
+      state.inlineClarification = false;
       const denied = error instanceof DOMException && ['NotAllowedError', 'SecurityError'].includes(error.name);
       setPhase('error', denied ? 'Autorize o microfone nos ajustes do navegador e tente novamente.' : 'Não foi possível iniciar o microfone.');
     }
@@ -469,7 +503,9 @@
   function cancelSending() {
     if (!['transcribe', 'process'].includes(state.requestStage)) return;
     state.requestAbort?.abort(); state.requestAbort = null; state.requestStage = null;
-    setPhase('idle');
+    const returnToClarification = state.inlineClarification && state.current?.kind === 'clarification';
+    state.inlineClarification = false;
+    setPhase(returnToClarification ? 'clarification' : 'idle');
   }
   function toggleRecording() {
     if (state.phase === 'recording') { if (state.recorder?.state === 'recording') state.recorder.stop(); }
@@ -570,8 +606,8 @@
     if (current && request) void request('log', { event: 'cancelled', transcription: current.transcription, intent: current.draft?.intent }).catch(() => undefined);
   }
   function saveForLater() { saveSession(); close(); }
-  function close() {
-    saveSession();
+  function close(options = {}) {
+    if (options?.persist !== false) saveSession();
     resetCatalog(); state.editDraft = null; state.editSelections = [];
     stopMedia(true);
     const mount = ensureMount() || state.mount;
@@ -579,7 +615,7 @@
     const onPendingChange = state.options?.onPendingChange;
     state.host?.remove();
     mount?.classList?.remove('is-active');
-    Object.assign(state, { host: null, root: null, options: null, mount: null, phase: 'idle', current: null, error: '', requestAbort: null, requestStage: null, pendingId: null });
+    Object.assign(state, { host: null, root: null, options: null, mount: null, phase: 'idle', current: null, error: '', requestAbort: null, requestStage: null, pendingId: null, inlineClarification: false });
     requestAnimationFrame(() => {
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
       onPendingChange?.();
@@ -589,9 +625,14 @@
   function open(options) {
     if (!options?.account?.id || typeof options.request !== 'function') throw new Error('A conta ativa não está pronta para usar comandos por voz.');
     if (!options.mount?.isConnected) throw new Error('A Sala de Botões não está pronta para iniciar a gravação.');
-    if (state.host) close();
+    if (state.host) {
+      state.requestAbort?.abort();
+      discardCurrentPending();
+      state.current = null;
+      close({ persist: false });
+    }
     const host = document.createElement('avanta-voice-command'); const shadow = host.attachShadow({ mode: 'open' }); const style = document.createElement('style'); style.textContent = styles; const root = document.createElement('div'); shadow.append(style, root); options.mount.append(host);
-    Object.assign(state, { host, root, options, mount: options.mount, phase: 'idle', current: null, error: '', pendingId: null, catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogRequestId: state.catalogRequestId + 1, editDraft: null, editSelections: [] });
+    Object.assign(state, { host, root, options, mount: options.mount, phase: 'idle', current: null, error: '', pendingId: null, inlineClarification: false, catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogRequestId: state.catalogRequestId + 1, editDraft: null, editSelections: [] });
     if (options.pendingId) restorePending(options.pendingId);
     render();
     if (options.autoStart && state.phase === 'idle') void startRecording();

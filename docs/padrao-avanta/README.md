@@ -1,6 +1,6 @@
 # PADRÃO AVANTA
 
-Versão oficial: **1.8.0**
+Versão oficial: **1.11.1**
 Identificador: `PADRAO-AVANTA`
 Manifesto: `docs/padrao-avanta/manifest.json`
 
@@ -46,6 +46,8 @@ antes de criar uma convenção isolada. Não duplicar componentes existentes.
 - Próxima rolagem: `app/components/BotaoProximoScroll.tsx`.
 - Ações por voz: contrato e ativos centrais em
   `app/padrao-avanta/acoes-por-voz/`; especificação em `acoes-por-voz.md`.
+  Integrações React reutilizam `AvantaVoiceActionDock.tsx` e carregam os ativos
+  pelo endereço neutro `/recursos/padrao-avanta/`.
 - Versão do produto: `app/lib/version.ts`.
 
 ## Fluxo obrigatório

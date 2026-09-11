@@ -1,6 +1,37 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.28.0.05 -->
+<!-- ava-version: 1.31.0.02 -->
+
+> Revisão 1.31.0.02: a ajuda de voz de Serviços separa claramente os caminhos:
+> registrar segue para nome e assinatura; agendar solicita cliente, data e tipo.
+
+> Revisão 1.31.0.01: ao responder uma dúvida por voz em Recebimentos ou
+> Serviços, o card permanece aberto e o microfone continua no mesmo local até
+> terminar a interpretação.
+
+> Revisão 1.31.0: em Serviços, a voz permite registrar ou agendar. Registrar
+> localiza cliente e execução pendente e abre o nome de quem recebeu; assinatura
+> e avaliação continuam na tela. Agendar solicita cliente, data e tipo.
+
+> Revisão 1.30.0.01: a escolha por voz mostra todas as formas de pagamento sem
+> scroll interno, preservando rolagem apenas para listas extensas.
+
+> Revisão 1.30.0: em Operações de Campo, empresas e locais novos entram
+> automaticamente na pesquisa por voz. Respostas curtas completam a dúvida
+> exibida; uma solicitação claramente nova cancela o rascunho atual e inicia
+> outro fluxo antes da confirmação.
+
+> Revisão 1.29.0.02: refinamento visual da faixa de voz e da ajuda contextual,
+> sem alteração no funcionamento das solicitações.
+
+> Revisão 1.29.0.01: refinamento visual da faixa inferior de voz em Operações
+> de Campo, sem alteração no funcionamento das solicitações.
+
+> Revisão 1.29.0: no PWA Operações em Campo, Recebimentos e Serviços possuem
+> uma faixa inferior de Solicitação por Voz. Em Recebimentos, diga cliente,
+> valor e forma de pagamento; em Serviços, diga cliente, data e tipo para criar
+> agendamento. Toda escrita exige confirmação. Serviço realizado continua na
+> tela porque exige assinatura e avaliação.
 
 > Revisão 1.28.0.05: refinamento visual da busca do relatório de Serviços na
 > Gestão Web, sem impacto operacional na Gestão Mobile.

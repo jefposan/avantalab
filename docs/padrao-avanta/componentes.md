@@ -99,6 +99,8 @@ testes. Esta seção resume apenas a face dos controles.
 - Reutilizar os ativos e o contrato em
   `app/padrao-avanta/acoes-por-voz/`; não copiar controlador, estilos, cards ou
   movimentos para o módulo consumidor.
+- Em telas React, usar `AvantaVoiceActionDock.tsx` e reservar no layout a faixa
+  onde o conjunto botão + texto será centralizado.
 - O componente compartilhado controla captura, estados, dúvida contextual,
   escolha manual, confirmação, persistência e feedback. O módulo fornece somente
   o adaptador autenticado para transcrever, resolver e executar suas funções.
@@ -108,6 +110,10 @@ testes. Esta seção resume apenas a face dos controles.
   comprovante quando houver. Pendências ficam separadas de uma nova gravação.
 - O contrato completo, textos, segurança, catálogo e matriz de testes estão em
   `acoes-por-voz.md`.
+- Em fluxos de voz, uma resposta curta complementa a dúvida aberta; uma nova
+  solicitação completa substitui o rascunho atual sem acumular dados antigos.
+- O microfone de uma pergunta permanece dentro do card enquanto a resposta é
+  gravada, transcrita e interpretada, sem fechar ou deslocar o contexto atual.
 
 ## Estados assíncronos
 
