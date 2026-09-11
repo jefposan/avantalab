@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.28.0 -->
+<!-- ava-version: 1.28.0.01 -->
+
+> Revisão 1.28.0.01: emissão fiscal pertence exclusivamente a **Vendas e
+> Serviços**, módulo da Gestão Web. Não encaminhe a pessoa para o aplicativo
+> AvantaVendas nem para **Conteúdo AvantaVendas**; essas duas áreas não emitem
+> notas fiscais.
 
 > Revisão 1.28.0: os tipos de nota são configurados por perfil empresarial e
 > persistidos na Gestão. O produto contempla NF-e, NFC-e e NFS-e, mas a tela

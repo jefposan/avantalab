@@ -1,12 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.28.0 -->
+<!-- ava-version: 1.28.0.01 -->
 
-> Revisão 1.28.0: o AvantaVendas mantém capacidade para NF-e, NFC-e e NFS-e,
-> enquanto cada perfil empresarial define quais documentos utiliza. A escolha
-> é salva no servidor e acompanha o perfil em qualquer acesso. Para o piloto
-> Tridium, apresente apenas NF-e em homologação. Preserve cadastro e certificado
-> já existentes; eles não precisam ser preenchidos novamente.
+> Revisão 1.28.0.01: sem impacto operacional no AvantaVendas. Este aplicativo
+> não emite NF-e, NFC-e nem NFS-e. Configuração, homologação e emissão fiscal
+> pertencem exclusivamente ao módulo **Vendas e Serviços da Gestão Web**. Nunca
+> oriente a pessoa a procurar notas no AvantaVendas ou em Conteúdo AvantaVendas.
+
+> Revisão 1.28.0: a configuração fiscal por perfil foi aplicada somente a
+> **Vendas e Serviços da Gestão Web**. O AvantaVendas permaneceu inalterado.
 
 > Revisão 1.27.0: **Consumidor final** agora é informado separadamente da
 > situação da inscrição estadual no cadastro do cliente. Ao publicar regras,

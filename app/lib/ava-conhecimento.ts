@@ -1,10 +1,13 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.28.0.01: emissão fiscal pertence somente ao módulo
+// Vendas e Serviços da Gestão Web. AvantaVendas e Conteúdo AvantaVendas não
+// emitem notas; nunca orientar o usuário a procurar funções fiscais neles.
 // Revisado na versão 1.28.0: NF-e, NFC-e e NFS-e são capacidades do produto,
-// mas os documentos habilitados são configuração persistida do perfil
-// empresarial. A Tridium usa somente NF-e no piloto de homologação. Nunca
-// associe a configuração ao usuário e não solicite novamente cadastro ou
-// certificado já salvos no perfil.
+// especificamente no módulo Vendas e Serviços da Gestão Web. Os documentos
+// habilitados são configuração persistida do perfil empresarial. A Tridium usa
+// somente NF-e no piloto de homologação. Nunca associe a configuração ao
+// usuário e não solicite novamente cadastro ou certificado já salvos no perfil.
 // Revisado na versão 1.27.0: consumidor final e situação da inscrição estadual
 // são independentes; publicação fiscal exige revisão de todos os documentos
 // habilitados, responsável e data válida. CFOP incompleto, opção inválida, data

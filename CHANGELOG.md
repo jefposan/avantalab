@@ -1,8 +1,12 @@
 # Changelog
 
+## 1.28.0.01 - 2026-09-10
+- **Separação entre produtos**: corrigida a orientação para declarar expressamente que emissão fiscal pertence somente ao módulo **Vendas e Serviços da Gestão Web**. O aplicativo **AvantaVendas** e o módulo **Conteúdo AvantaVendas** não emitem notas fiscais.
+- **Proteção contra regressão**: teste automatizado passa a impedir que a ponte de configuração fiscal seja ligada às fontes do AvantaVendas ou de Conteúdo AvantaVendas.
+
 ## 1.28.0 - 2026-09-10
 - **Arquitetura fiscal de mercado**: NF-e, NFC-e e NFS-e permanecem capacidades independentes do produto; cada perfil empresarial passa a registrar no servidor somente os documentos que realmente utiliza.
-- **Piloto sem regra especial no produto**: a Tridium foi configurada para o ciclo oficial somente com NF-e em homologação. Essa seleção é dado de implantação do perfil, não limitação do AvantaVendas.
+- **Piloto sem regra especial no produto**: a Tridium foi configurada para o ciclo oficial somente com NF-e em homologação. Essa seleção é dado de implantação do perfil, não limitação do módulo Vendas e Serviços.
 - **Persistência e isolamento**: o recorte fiscal é versionado, protegido por permissões e RLS, carregado em qualquer dispositivo e nunca associado ao usuário ou ao armazenamento local do navegador.
 - **Segurança operacional**: a configuração de produção permanece bloqueada até a homologação formal dos conectores da empresa; cadastro e certificado já existentes não são alterados.
 

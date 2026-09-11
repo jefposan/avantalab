@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import test from 'node:test';
 import { createFiscalProfileSaveRequest, parseFiscalProfileSnapshot } from '../../app/vendas/lib/fiscal-profile-bridge.mjs';
 import { createCommercialFiscalProfileService, normalizeCommercialFiscalProfile } from '../../app/vendas/lib/server/commercial-fiscal-profile.mjs';
@@ -7,6 +7,17 @@ import { createCommercialFiscalProfileService, normalizeCommercialFiscalProfile 
 const companyId = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e';
 const actorId = '20202020-2020-4020-8020-202020202020';
 const context = { companyId, actorId, moduleId: 'vendas', active: true, moduleActive: true, effectivePermissions: { 'settings.view': true, 'settings.edit': true } };
+
+async function readTree(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const contents = await Promise.all(entries.map(async (entry) => {
+    const path = `${directory}/${entry.name}`;
+    if (entry.isDirectory()) return readTree(path);
+    if (!/\.(?:js|jsx|mjs|ts|tsx)$/.test(entry.name)) return '';
+    return readFile(path, 'utf8');
+  }));
+  return contents.flat(Infinity).join('\n');
+}
 
 test('produto mantém catálogo fiscal genérico e valida o recorte de cada empresa', () => {
   assert.deepEqual(normalizeCommercialFiscalProfile({ documentScope: ['nfse', 'nfe', 'nfse'], defaultDocument: 'nfe', environment: 'homologacao' }).profile.documentScope, ['nfse', 'nfe']);
@@ -57,4 +68,16 @@ test('integração salva e recarrega o perfil sem entregar token ao iframe', asy
   assert.match(source, /\/api\/modulos\/vendas\/fiscal\/profile/);
   assert.match(source, /FISCAL_PROFILE_SAVE_REQUEST_TYPE/);
   assert.doesNotMatch(source, /postMessage\([^\n]*access_token/);
+});
+
+test('AvantaVendas e Conteúdo AvantaVendas permanecem fora da emissão fiscal', async () => {
+  const [avantaVendas, conteudo, manual] = await Promise.all([
+    readTree('app/avantavendas'),
+    readTree('app/mobile/conteudo-vendas'),
+    readFile('docs/ava/vendas.md', 'utf8'),
+  ]);
+  assert.doesNotMatch(avantaVendas, /FISCAL_PROFILE_|\/fiscal\/profile/);
+  assert.doesNotMatch(conteudo, /FISCAL_PROFILE_|\/fiscal\/profile/);
+  assert.match(manual, /Este aplicativo\s+> não emite NF-e, NFC-e nem NFS-e/i);
+  assert.match(manual, /Vendas e Serviços da Gestão Web/i);
 });

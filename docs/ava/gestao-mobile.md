@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.28.0 -->
+<!-- ava-version: 1.28.0.01 -->
+
+> Revisão 1.28.0.01: sem impacto operacional na Gestão Mobile. Emissão fiscal
+> existe somente em **Vendas e Serviços**, na Gestão Web. AvantaVendas e
+> Conteúdo AvantaVendas não emitem notas fiscais.
 
 > Revisão 1.28.0: a seleção de NF-e, NFC-e e NFS-e agora pertence ao perfil
 > empresarial, não ao usuário ou aparelho. A Gestão Mobile não ganhou nova
