@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0 -->
+<!-- ava-version: 1.33.0.01 -->
+
+> Revisão 1.33.0.01: os centros de custo pertencem à Gestão Web; sem impacto
+> operacional na Gestão Mobile.
 
 > Revisão 1.33.0: após um login online válido, Operações de Campo pode abrir
 > sem sinal por até 30 dias com a última base sincronizada. Recebimentos e

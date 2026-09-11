@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0 -->
+<!-- ava-version: 1.33.0.01 -->
+
+> Revisão 1.33.0.01: centros de custo pertencem ao financeiro da Gestão Web e
+> não alteram os fluxos do AvantaVendas.
 
 > Revisão 1.33.0: depois do último login online autorizado, o AvantaVendas
 > conserva por até 30 dias a conta e os dados já sincronizados para consulta e

@@ -13,6 +13,7 @@ import Tooltip from '@/app/components/Tooltip';
 import BotaoVisibilidadeSenha from '@/app/components/BotaoVisibilidadeSenha';
 import ModalInstrucoes from '@/app/components/ModalInstrucoes';
 import ModalDespesasBase from '@/app/components/ModalDespesasBase';
+import CentrosCustoModal from '@/app/components/CentrosCustoModal';
 import ModalLogo from '@/app/components/ModalLogo';
 import ModulosModal, { type Modulo } from '@/app/components/ModulosModal';
 import PontoAdminModal, { type AbaPontoAdmin, type DocumentoRepP, type EstadoAssinaturaPonto, type EventoAuditoriaPonto, type FuncionarioFacialPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil, type ResultadoCobrancaFacial } from '@/app/components/PontoAdminModal';
@@ -70,6 +71,7 @@ import {
   buscarEmpresasDoUsuario,
   buscarConfiguracoes,
   buscarDespesasCadastradas,
+  buscarCentrosCusto,
   buscarLancamentos,
   buscarCaixinhaMovimentos,
   garantirFixasDoMesAtual,
@@ -112,6 +114,9 @@ import {
   inserirRecorrencia,
   atualizarRecorrencia,
   deletarRecorrencia,
+  inserirCentroCusto,
+  atualizarCentroCusto,
+  type CentroCusto,
   type Recorrencia,
 } from '@/app/lib/database';
 
@@ -180,6 +185,13 @@ type ResumoPerfilFinanceiro = {
   }[];
 };
 
+type ResumoCentroCusto = {
+  id: string;
+  nome: string;
+  despesas: number;
+  percentual: number;
+};
+
 type DespesaCadastrada = {
   nome: string;
   categoria: string;
@@ -195,6 +207,7 @@ type LancamentoFinanceiro = {
   status: string | null;
   tipo: string | null;
   recorrenciaId?: string | null;
+  centroCustoId?: string | null;
   notaArquivoPath?: string | null;
 };
 
@@ -807,8 +820,8 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     }
   };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
-  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'meusPerfis', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
-  const ordemDashboardPadrao = { left: [], a: ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'controlePonto'], b: ['meusPerfis', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
+  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'meusPerfis', 'centrosCusto', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
+  const ordemDashboardPadrao = { left: [], a: ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'controlePonto'], b: ['meusPerfis', 'centrosCusto', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
   const ocultosDashboardPadrao = normalizarTipoPerfil(tipoPerfilAtual) === 'empresa' ? ['caixinha'] : [];
   const [dashboardOrdem, setDashboardOrdem] = useState<{ left: string[]; a: string[]; b: string[] }>(ordemDashboardPadrao);
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>(ocultosDashboardPadrao);
@@ -947,6 +960,11 @@ const [mesResumoDash, setMesResumoDash] = useState('JANEIRO');
 
 const [faturamentosEntradas, setFaturamentosEntradas] = useState<EntradaFaturamento[]>([]);
 const [resumoPerfisDashboard, setResumoPerfisDashboard] = useState<ResumoPerfilFinanceiro[]>([]);
+const [centrosCustoAtivo, setCentrosCustoAtivo] = useState(false);
+const [centrosCusto, setCentrosCusto] = useState<CentroCusto[]>([]);
+const [centroCustoSelecionadoId, setCentroCustoSelecionadoId] = useState('');
+const [modalCentrosCusto, setModalCentrosCusto] = useState(false);
+const [centroCustoSalvando, setCentroCustoSalvando] = useState(false);
 const [entradaFaturamentoDia, setEntradaFaturamentoDia] = useState('');
 const [entradaFaturamentoOrigem, setEntradaFaturamentoOrigem] = useState('');
 const [entradaFaturamentoValor, setEntradaFaturamentoValor] = useState('');
@@ -1574,8 +1592,11 @@ const carregarEmpresaSelecionada = async (empresa: EmpresaUsuarioResumo) => {
   const mesAtual = meses[new Date().getMonth()];
 setMesResumoDash(mesAtual);
 setMesFaturamento(mesAtual);
-setMesAtivo(null);
+  setMesAtivo(null);
   setConfiguracoesCarregadas(false);
+  setCentrosCustoAtivo(false);
+  setCentrosCusto([]);
+  setCentroCustoSelecionadoId('');
 
   setEmpresaId(empresa.id);
   setNomeEmpresaAtual(empresa.nome || empresa.empresa_nome || '');
@@ -1654,6 +1675,7 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
 
     setDarkMode(config.dark_mode === true);
     if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
+    setCentrosCustoAtivo(config.centros_custo_ativo === true);
     setLogoUrl(config.logo_url ?? '');
     if (config.logo_settings) setLogoSettings(config.logo_settings);
 
@@ -1687,6 +1709,11 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
     if (config.ultimo_backup_em) {
       setUltimoBackupEm(config.ultimo_backup_em);
     }
+  }
+
+  if (config?.centros_custo_ativo === true) {
+    const listaCentros = await buscarCentrosCusto(empresa.id);
+    setCentrosCusto(listaCentros);
   }
 
   if (despesas && despesas.length > 0) {
@@ -1966,6 +1993,7 @@ useEffect(() => {
         status: l.status ? textoRegistro(l.status) : null,
         tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
         recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
+        centroCustoId: l.centro_custo_id ? textoRegistro(l.centro_custo_id) : null,
         notaArquivoPath: l.nota_arquivo_path ? textoRegistro(l.nota_arquivo_path) : null,
       }))
     );
@@ -2140,6 +2168,7 @@ useEffect(() => {
   corPrimaria,
   darkMode,
   duplicadosAtivo,
+  centrosCustoAtivo,
   logoUrl,
   logoSettings,
 });
@@ -2171,6 +2200,7 @@ useEffect(() => {
   corPrimaria,
   darkMode,
   duplicadosAtivo,
+  centrosCustoAtivo,
   logoUrl,
   logoSettings,
   mounted,
@@ -3410,6 +3440,18 @@ const totalDespesasMes = lancamentosRealizadosDoMes.reduce(
   0
 );
 
+const resumoCentrosCustoDashboard: ResumoCentroCusto[] = centrosCusto.map((centro) => {
+  const despesas = lancamentosRealizadosDoMes
+    .filter((lancamento) => lancamento.centroCustoId === centro.id)
+    .reduce((total, lancamento) => total + Number(lancamento.valor || 0), 0);
+  return {
+    id: centro.id,
+    nome: centro.nome,
+    despesas,
+    percentual: totalDespesasMes > 0 ? (despesas / totalDespesasMes) * 100 : 0,
+  };
+});
+
 const totalDespesasMesAnterior = lancamentosDoMesAnterior.reduce(
   (acc, lanc) => acc + (
     despesaRealizada(lanc, Number(anoSelecionado), indiceMesParaAnalise - 1) ? lanc.valor : 0
@@ -3973,6 +4015,30 @@ const solicitarEntradaFaturamentoDashboard = () => {
     setModalDespesasFixas(true);
   };
 
+  const criarCentroCusto = async (nome: string): Promise<{ ok: boolean; mensagem?: string }> => {
+    if (!empresaId || !podeAcessarAjustes) return { ok: false, mensagem: 'Você não tem permissão para cadastrar centros de custo.' };
+    const nomeFormatado = nome.trim();
+    if (!nomeFormatado) return { ok: false, mensagem: 'Informe o nome ou número do centro.' };
+    setCentroCustoSalvando(true);
+    const resultado = await inserirCentroCusto(empresaId, nomeFormatado);
+    setCentroCustoSalvando(false);
+    if (resultado.erro || !resultado.data) return { ok: false, mensagem: resultado.mensagem || 'Não foi possível cadastrar o centro agora.' };
+    setCentrosCusto((atual) => [...atual, resultado.data!].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { numeric: true })));
+    setCentroCustoSelecionadoId(resultado.data.id);
+    return { ok: true };
+  };
+
+  const editarCentroCusto = async (id: string, campos: { nome?: string; ativo?: boolean }): Promise<boolean> => {
+    if (!empresaId || !podeAcessarAjustes) return false;
+    const nome = campos.nome?.trim();
+    if (campos.nome !== undefined && !nome) return false;
+    const ok = await atualizarCentroCusto(id, empresaId, { ...campos, ...(nome !== undefined ? { nome } : {}) });
+    if (!ok) return false;
+    setCentrosCusto((atual) => atual.map((centro) => centro.id === id ? { ...centro, ...campos, ...(nome !== undefined ? { nome } : {}) } : centro).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { numeric: true })));
+    if (campos.ativo === false && centroCustoSelecionadoId === id) setCentroCustoSelecionadoId('');
+    return true;
+  };
+
   const handleEditRecorrValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
     if (!value) { setEditRecorrValor(''); setEditRecorrValorNumerico(0); return; }
@@ -4005,6 +4071,7 @@ const solicitarEntradaFaturamentoDashboard = () => {
       categoria: novaRecorrCategoria.trim(),
       descricao: novaRecorrDescricao.trim(),
       dia,
+      centroCustoId: centrosCustoAtivo ? centroCustoSelecionadoId || null : null,
     });
     if (!resultado.erro && resultado.data) {
       setRecorrencias((prev) => [...prev, resultado.data!].sort((a, b) => a.nome.localeCompare(b.nome)));
@@ -4021,6 +4088,7 @@ const solicitarEntradaFaturamentoDashboard = () => {
           status: 'prevista',
           tipoObs: 'fixa',
           recorrenciaId: resultado.data!.id,
+          centroCustoId: resultado.data!.centro_custo_id || null,
         });
         if (!salvo.erro && salvo.data) {
           novosLancamentos.push({
@@ -4033,6 +4101,7 @@ const solicitarEntradaFaturamentoDashboard = () => {
             status: salvo.data!.status || null,
             tipo: salvo.data!.tipo_obs || null,
             recorrenciaId: salvo.data!.recorrencia_id || null,
+            centroCustoId: salvo.data!.centro_custo_id || null,
           });
         }
       }
@@ -4052,6 +4121,7 @@ const solicitarEntradaFaturamentoDashboard = () => {
             status: 'prevista',
             tipoObs: 'fixa',
             recorrenciaId: resultado.data!.id,
+            centroCustoId: centrosCustoAtivo ? centroCustoSelecionadoId || null : null,
           });
           if (!salvo.erro && salvo.data) {
             novosLancamentos.push({
@@ -4064,6 +4134,7 @@ const solicitarEntradaFaturamentoDashboard = () => {
               status: salvo.data.status || null,
               tipo: salvo.data.tipo_obs || null,
               recorrenciaId: salvo.data.recorrencia_id || null,
+              centroCustoId: salvo.data.centro_custo_id || null,
             });
           }
         }
@@ -4139,6 +4210,7 @@ const solicitarEntradaFaturamentoDashboard = () => {
           status: 'prevista',
           tipoObs: 'fixa',
           recorrenciaId: recorrEditandoId,
+          centroCustoId: recorrencias.find((recorrencia) => recorrencia.id === recorrEditandoId)?.centro_custo_id || null,
         });
         if (!salvo.erro && salvo.data) {
           setLancamentos((prev) => [{
@@ -4151,6 +4223,7 @@ const solicitarEntradaFaturamentoDashboard = () => {
             status: salvo.data!.status || null,
             tipo: salvo.data!.tipo_obs || null,
             recorrenciaId: salvo.data!.recorrencia_id || null,
+            centroCustoId: salvo.data!.centro_custo_id || null,
           }, ...prev]);
         }
       }
@@ -4503,6 +4576,7 @@ const executarParcelamento = async () => {
       valor: valorNumericoRaw,
       status: statusLanc,
       tipoObs: tipoLanc,
+      centroCustoId: centrosCustoAtivo ? centroCustoSelecionadoId || null : null,
     });
 
     if (!salvo.erro && salvo.data) {
@@ -4516,6 +4590,7 @@ const executarParcelamento = async () => {
         status: salvo.data.status || null,
         tipo: salvo.data.tipo_obs || null,
         recorrenciaId: salvo.data.recorrencia_id || null,
+        centroCustoId: salvo.data.centro_custo_id || null,
       });
     } else {
       abrirAviso(
@@ -5596,6 +5671,7 @@ const recarregarDadosFinanceirosAtual = async () => {
       status: l.status ? textoRegistro(l.status) : null,
       tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
       recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
+      centroCustoId: l.centro_custo_id ? textoRegistro(l.centro_custo_id) : null,
     }))
   );
 
@@ -10349,6 +10425,25 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
         )}
 
+        {centrosCustoAtivo && podeAcessarAjustes && (
+          <Tooltip texto="Cadastre, renomeie ou pause os centros de custo deste perfil." posicao="right" wrapperClassName="av-menu-gestao-atalho order-[55] w-full">
+            <button
+              type="button"
+              onClick={() => {
+                if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Somente gestor master ou administrador pode gerenciar centros de custo.'); return; }
+                setAjustesAberto(false);
+                setMenuAjuste(null);
+                setModalCentrosCusto(true);
+              }}
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16M7 3v18M17 3v18" /></svg>
+              Centros de custo
+            </button>
+          </Tooltip>
+        )}
+
         {/* 5. Visual (dropdown) */}
         <Tooltip texto="Personalize a aparência: logo, cor do tema e modo escuro." posicao="right" wrapperClassName="av-menu-gestao-atalho order-60 w-full">
           <button
@@ -10462,6 +10557,20 @@ if (validacaoTelefoneObrigatoria) {
               </div>
             </button>
           </Tooltip>
+
+          {podeAcessarAjustes && (
+            <Tooltip texto="Ao ativar, permite separar novos lançamentos por centro de custo dentro deste perfil." posicao="right" wrapperClassName="w-full">
+              <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={() => setCentrosCustoAtivo(!centrosCustoAtivo)}>
+                <span className="min-w-0 text-left">
+                  <span className="block truncate">Centros de custo</span>
+                  <span className="mt-0.5 block truncate text-[9px] font-semibold text-slate-400">{centrosCustoAtivo ? 'Separação de despesas ativa' : 'Manter um único financeiro'}</span>
+                </span>
+                <div className={`relative h-3.5 w-7 shrink-0 rounded-full transition-colors ${centrosCustoAtivo ? '' : 'bg-slate-600'}`} style={{ backgroundColor: centrosCustoAtivo ? corPrimaria : '', border: centrosCustoAtivo && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '' }}>
+                  <span className={`absolute left-0.5 top-0.5 h-2.5 w-2.5 rounded-full transition-transform ${centrosCustoAtivo ? 'translate-x-3.5' : ''}`} style={{ backgroundColor: centrosCustoAtivo && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }} />
+                </div>
+              </button>
+            </Tooltip>
+          )}
 
           <Tooltip texto="Define se os valores financeiros começam ocultos ao abrir o sistema neste dispositivo." posicao="right" wrapperClassName="w-full">
             <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={alternarInicioValoresOcultos}>
@@ -10639,6 +10748,23 @@ if (validacaoTelefoneObrigatoria) {
           <span>Despesas fixas</span>
         </button>
       </div>
+
+      {centrosCustoAtivo && (
+        <label className="flex min-w-0 flex-1 flex-col items-center gap-1 sm:max-w-[200px]">
+          <span className="text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">Centro de custo</span>
+          <select
+            value={centroCustoSelecionadoId}
+            onChange={(event) => setCentroCustoSelecionadoId(event.target.value)}
+            className="h-9 w-full min-w-0 rounded-lg border border-white/20 bg-black/15 px-2 text-xs font-black text-white outline-none transition hover:bg-black/25 focus:ring-2 focus:ring-white/60"
+            aria-label="Centro de custo para os novos lançamentos"
+          >
+            <option value="" className="text-slate-900">Sem centro</option>
+            {centrosCusto.filter((centro) => centro.ativo).map((centro) => (
+              <option key={centro.id} value={centro.id} className="text-slate-900">{centro.nome}</option>
+            ))}
+          </select>
+        </label>
+      )}
     </div>
 
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
@@ -11083,6 +11209,8 @@ if (validacaoTelefoneObrigatoria) {
         empresaId={empresaId}
         nomePerfilAtual={nomeEmpresaAtual}
         resumoPerfis={resumoPerfisDashboard}
+        centrosCustoAtivo={centrosCustoAtivo}
+        resumoCentrosCusto={resumoCentrosCustoDashboard}
         mesPerfis={mesAtivo || mesResumoDash}
         setMesAtivo={setMesAtivo}
         bgCard={bgCard}
@@ -11332,6 +11460,17 @@ if (validacaoTelefoneObrigatoria) {
       totalDespesasMesAnterior > 0 ? `Despesas mês anterior: R$ ${totalDespesasMesAnterior.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
     ].filter(Boolean).join('\n');
   })()}
+/>
+
+<CentrosCustoModal
+  aberto={modalCentrosCusto}
+  centros={centrosCusto}
+  corPrimaria={corPrimaria}
+  darkMode={darkMode}
+  salvando={centroCustoSalvando}
+  onFechar={() => setModalCentrosCusto(false)}
+  onCriar={criarCentroCusto}
+  onAtualizar={editarCentroCusto}
 />
 
 {/* ── MODAL DESPESAS FIXAS ─────────────────────────────────────────── */}

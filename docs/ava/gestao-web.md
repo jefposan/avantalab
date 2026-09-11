@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0 -->
+<!-- ava-version: 1.33.0.01 -->
+
+> Revisão 1.33.0.01: em **Configurações**, gestor master ou administrador
+> pode ativar **Centros de custo** no perfil. Após cadastrar os centros no
+> novo item do menu, escolha um deles junto a **Despesas fixas** para direcionar
+> os novos lançamentos; o Dashboard mostra o resumo mensal por centro. Quando
+> desativado, o financeiro continua como um único conjunto de receitas e despesas.
 
 > Revisão 1.33.0: a contingência offline pertence aos PWAs Operações de Campo
 > e AvantaVendas; não altera os fluxos de cadastro ou conferência na Gestão Web.

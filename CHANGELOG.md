@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.33.0.01 - 2026-09-11
+- **Centros de custo opcionais**: cada perfil financeiro pode ativar a
+  separação de despesas, cadastrar centros por nome ou número e escolher o
+  destino dos novos lançamentos avulsos, parcelados e fixos.
+- **Resumo por centro**: o Dashboard passa a exibir as despesas realizadas de
+  cada centro no mês, sem mover ou alterar lançamentos já existentes.
+
 ## 1.33.0 - 2026-09-11
 - **PWAs preparados para falta de sinal**: Operações de Campo mantém, por até
   30 dias após o último acesso autorizado, os dados necessários para registrar

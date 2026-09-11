@@ -412,6 +412,26 @@ export async function buscarDespesasCadastradas(empresaId: string) {
   return ordenarDespesasAlfabeticamente(data || []);
 }
 
+export type CentroCusto = { id: string; empresa_id: string; nome: string; ativo: boolean; criado_em: string };
+
+export async function buscarCentrosCusto(empresaId: string): Promise<CentroCusto[]> {
+  const { data, error } = await supabase.from('centros_custo').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true });
+  if (error) { console.error('Erro ao buscar centros de custo:', error); return []; }
+  return (data as CentroCusto[]) || [];
+}
+
+export async function inserirCentroCusto(empresaId: string, nome: string): Promise<{ erro: boolean; data?: CentroCusto; mensagem?: string }> {
+  const { data, error } = await supabase.from('centros_custo').insert({ empresa_id: empresaId, nome: nome.trim() }).select().single();
+  if (error) return { erro: true, mensagem: tratarErroSupabase(error) };
+  return { erro: false, data: data as CentroCusto };
+}
+
+export async function atualizarCentroCusto(id: string, empresaId: string, campos: Partial<Pick<CentroCusto, 'nome' | 'ativo'>>): Promise<boolean> {
+  const { error } = await supabase.from('centros_custo').update({ ...campos, atualizado_em: new Date().toISOString() }).eq('id', id).eq('empresa_id', empresaId);
+  if (error) { console.error('Erro ao atualizar centro de custo:', error); return false; }
+  return true;
+}
+
 export async function buscarLancamentos(empresaId: string, ano: number) {
   const pageSize = 1000;
   let inicio = 0;
@@ -524,6 +544,7 @@ export async function garantirFixasDoMesAtual(empresaId: string): Promise<void> 
           status: 'prevista',
           tipo_obs: 'fixa',
           recorrencia_id: rec.id,
+          centro_custo_id: rec.centro_custo_id || null,
         });
       }
     }
@@ -695,6 +716,7 @@ export async function salvarLancamento({
   status = null,
   tipoObs = null,
   recorrenciaId = null,
+  centroCustoId = null,
 }: {
   empresaId: string;
   ano: number;
@@ -706,6 +728,7 @@ export async function salvarLancamento({
   status?: string | null;
   tipoObs?: string | null;
   recorrenciaId?: string | null;
+  centroCustoId?: string | null;
 }) {
   const { data, error } = await supabase
     .from('lancamentos')
@@ -720,6 +743,7 @@ export async function salvarLancamento({
       status,
       tipo_obs: tipoObs ?? null,
       recorrencia_id: recorrenciaId ?? null,
+      centro_custo_id: centroCustoId ?? null,
     })
     .select()
     .single();
@@ -1111,6 +1135,7 @@ export async function salvarConfiguracoesBanco({
   duplicadosAtivo,
   logoUrl,
   logoSettings,
+  centrosCustoAtivo,
 }: {
   empresaId: string;
   corPrimaria: string;
@@ -1118,6 +1143,7 @@ export async function salvarConfiguracoesBanco({
   duplicadosAtivo: boolean;
   logoUrl: string;
   logoSettings: any;
+  centrosCustoAtivo?: boolean;
 }) {
   const { data, error } = await supabase
     .from('configuracoes')
@@ -1129,6 +1155,7 @@ export async function salvarConfiguracoesBanco({
         duplicados_ativo: duplicadosAtivo,
         logo_url: logoUrl,
         logo_settings: logoSettings,
+        ...(centrosCustoAtivo === undefined ? {} : { centros_custo_ativo: centrosCustoAtivo }),
       },
       {
         onConflict: 'empresa_id',
@@ -1849,6 +1876,7 @@ export type Recorrencia = {
   descricao: string;
   dia: number;
   ativo: boolean;
+  centro_custo_id?: string | null;
   criado_em: string;
 };
 
@@ -1863,13 +1891,13 @@ export async function buscarRecorrencias(empresaId: string): Promise<Recorrencia
 }
 
 export async function inserirRecorrencia({
-  empresaId, nome, categoria, descricao, dia,
+  empresaId, nome, categoria, descricao, dia, centroCustoId,
 }: {
-  empresaId: string; nome: string; categoria: string; descricao?: string; dia: number;
+  empresaId: string; nome: string; categoria: string; descricao?: string; dia: number; centroCustoId?: string | null;
 }): Promise<{ erro: boolean; data?: Recorrencia }> {
   const { data, error } = await supabase
     .from('recorrencias')
-    .insert({ empresa_id: empresaId, nome, categoria, descricao: descricao ?? '', dia })
+    .insert({ empresa_id: empresaId, nome, categoria, descricao: descricao ?? '', dia, centro_custo_id: centroCustoId ?? null })
     .select()
     .single();
   if (error) { console.error('Erro ao inserir recorrência:', error); return { erro: true }; }
