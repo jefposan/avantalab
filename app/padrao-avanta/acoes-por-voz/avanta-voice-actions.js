@@ -4,7 +4,7 @@
   // Implementação executável oficial do PADRÃO AVANTA para ações por voz.
   // Adaptadores de produto fornecem dados e execução; este componente controla
   // captura, estados, desambiguação, confirmação e continuidade da solicitação.
-  const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.3.0';
+  const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.3.1';
 
   const DEFAULT_SESSION_PREFIX = 'avantalab.voice_actions.official.v1';
   const MAX_RECORDING_MS = 45000;
@@ -417,6 +417,22 @@
       panel.append(card);
     }
 
+    if (state.phase === 'response' && ['answer', 'unsupported'].includes(state.current?.kind)) {
+      const card = el('section', 'card');
+      card.setAttribute('role', 'status');
+      card.setAttribute('aria-live', 'polite');
+      card.append(
+        el('h2', '', state.current.title || (state.current.kind === 'unsupported' ? 'Comando não disponível' : 'Solicitação concluída')),
+        el('p', 'summary', state.current.message || (state.current.kind === 'unsupported'
+          ? 'Esse comando ainda não está disponível por voz.'
+          : 'A solicitação foi concluída.')),
+      );
+      const actions = el('div', 'actions single');
+      actions.append(button('Fechar', 'primary', close));
+      card.append(actions);
+      panel.append(card);
+    }
+
     if (state.phase === 'error') {
       const card = el('section', 'card error'); card.setAttribute('role', 'alert'); card.append(el('h2', '', statusText()), el('p', 'summary', state.error));
       const actions = el('div', 'actions'); actions.append(button('Cancelar', 'secondary', close), button('Tentar novamente', 'primary', () => state.current?.kind === 'confirmation' ? execute() : startRecording())); card.append(actions); panel.append(card);
@@ -453,9 +469,17 @@
         close({ persist: false });
         return;
       }
+      const nextPhase = result?.kind === 'clarification'
+        ? 'clarification'
+        : result?.kind === 'confirmation'
+          ? 'confirmation'
+          : ['answer', 'unsupported'].includes(result?.kind)
+            ? 'response'
+            : '';
+      if (!nextPhase) throw new Error('A solicitação retornou uma resposta inválida. Tente novamente.');
       state.inlineClarification = false;
       state.current = result;
-      setPhase(result.kind === 'clarification' ? 'clarification' : result.kind === 'confirmation' ? 'confirmation' : 'done');
+      setPhase(nextPhase);
     } catch (error) {
       if (!wasCancelled(error)) {
         state.inlineClarification = false;

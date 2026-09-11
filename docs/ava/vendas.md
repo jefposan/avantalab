@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.31.0.03 -->
+<!-- ava-version: 1.31.0.04 -->
+
+> Revisão 1.31.0.04: quando a Solicitação por Voz recebe uma ação ainda não
+> implementada, como editar um pedido, informa que o comando não está disponível
+> e permite fechar o card. Consultas também exibem sua resposta normalmente;
+> nenhuma ação desconhecida é executada.
 
 > Revisão 1.31.0.03: a retirada de **Salvar para depois** foi aplicada somente a
 > Recebimentos e Serviços; o fluxo de pendências do AvantaVendas foi preservado.

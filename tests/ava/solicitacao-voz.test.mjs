@@ -73,6 +73,24 @@ test('busca de voz ignora acentos sem perder as referências humanas', () => {
   assert.equal(normalizeVoiceSearch('Luciána (Renata)'), 'luciana renata');
 });
 
+test('comando não suportado devolve uma resposta clara e renderizável', async () => {
+  const result = await buildVoiceResponse({
+    db: voiceResolverDb(),
+    accountId: 'conta',
+    transcription: 'edite o último pedido da Fernanda',
+    metrics: { interpretationMs: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+    draft: {
+      intent: 'unsupported', customerReference: null, items: [], amount: null,
+      paymentMethod: null, scheduledDate: null, scheduledTime: null, appointmentType: null,
+      appointmentNotes: null, period: null,
+      unsupportedReason: 'A edição de pedidos ainda não está disponível por voz.',
+    },
+  });
+  assert.equal(result.kind, 'unsupported');
+  assert.equal(result.title, 'Comando não disponível');
+  assert.equal(result.message, 'A edição de pedidos ainda não está disponível por voz.');
+});
+
 test('executor usa o RPC oficial e não aceita SQL gerado pela IA', async () => {
   const source = await readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/executar.ts', import.meta.url), 'utf8');
   assert.match(source, /salvar_pedido_vendas_mobile_rpc/);
@@ -177,7 +195,10 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(voiceModule, /processing-ring/);
   assert.match(voiceModule, /options\?\.notify\?\.\(result\?\.message/);
   assert.match(voiceModule, /rotulo: 'Compartilhar comprovante'/);
-  assert.doesNotMatch(voiceModule, /state\.phase === 'done'/);
+  assert.match(voiceModule, /state\.phase === 'response'/);
+  assert.match(voiceModule, /\['answer', 'unsupported'\]\.includes\(state\.current\?\.kind\)/);
+  assert.match(voiceModule, /button\('Fechar', 'primary', close\)/);
+  assert.match(voiceModule, /A solicitação retornou uma resposta inválida/);
   assert.match(officialApp, /notify: \(mensagem, opcoes\) => toast\(mensagem, opcoes\)/);
   assert.match(hostStyles, /\.toast-com-acao \{ grid-template-areas:/);
   assert.match(hostStyles, /\.toast-action \{ grid-area: action;/);

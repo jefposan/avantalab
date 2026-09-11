@@ -8,6 +8,10 @@ em `docs/padrao-avanta/acoes-por-voz.md`.
 - `avanta-voice-actions.css`: acionador, ajuda contextual e solicitações salvas.
 - `contract.ts`: contrato entre o componente compartilhado e cada produto.
 
+Respostas de consulta e comandos não suportados usam um card informativo com
+fechamento explícito. Um tipo de resposta desconhecido é tratado como erro
+recuperável e nunca pode deixar somente a camada escura aberta.
+
 O componente não acessa banco nem credenciais diretamente. Cada sistema fornece
 um adaptador autenticado por meio de `window.AvantaVoiceActions.open(options)`.
 O adaptador é responsável por transcrever, interpretar, buscar, executar e

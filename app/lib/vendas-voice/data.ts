@@ -747,7 +747,7 @@ export async function buildVoiceResponse(args: {
 }): Promise<VoiceProcessResponse> {
   const { db, accountId, draft, transcription, metrics, selections = [] } = args;
   if (draft.intent === 'unsupported') {
-    return { kind: 'unsupported', title: 'Comando ainda não disponível', message: draft.unsupportedReason || 'Essa ação ainda não está disponível por voz neste laboratório.', selections, draft, transcription, metrics };
+    return { kind: 'unsupported', title: 'Comando não disponível', message: draft.unsupportedReason || 'Esse comando ainda não está disponível por voz.', selections, draft, transcription, metrics };
   }
 
   if (draft.intent === 'query_sales') {

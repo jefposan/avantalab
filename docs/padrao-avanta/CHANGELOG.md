@@ -1,5 +1,12 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.12.1 - 2026-09-11
+
+- Respostas de consulta e comandos não suportados passam a usar um card
+  informativo com fechamento explícito no controlador compartilhado.
+- Um tipo de retorno desconhecido é convertido em erro recuperável e nunca pode
+  deixar somente a camada escura aberta.
+
 ## 1.12.0 - 2026-09-11
 
 - Adicionadas opções oficiais para desativar **Salvar para depois** junto com a

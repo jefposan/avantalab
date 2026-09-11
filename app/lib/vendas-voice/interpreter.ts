@@ -30,6 +30,7 @@ Regras:
 - Em register_payment, extraia a forma de pagamento somente como Pix, Dinheiro, Cartão de crédito, Cartão de débito, Transferência ou Outro. Se não for dita, use null.
 - Em create_appointment, extraia cliente, data, horário, tipo e observação quando forem ditos. A data deve usar YYYY-MM-DD; use a data de referência fornecida no contexto para interpretar “hoje”, “amanhã”, dias da semana e datas relativas. Tipos permitidos: Visita, Entrega, Recebimento, Cobrar ou Outro. Sem tipo, use null; a aplicação assumirá Visita. Sem horário, use null. Nunca invente data.
 - Se o período não for dito em query_sales, use this_month.
+- Em unsupported, explique em uma frase curta qual ação ainda não está disponível por voz. Exemplo: “A edição de pedidos ainda não está disponível por voz.”
 - Não transforme uma consulta em ação de escrita.`;
 
 type InterpretVoiceInput = {

@@ -47,6 +47,9 @@ alcançar todas as integrações do mesmo projeto na publicação seguinte.
    a voz pode resolver as escolhas anteriores e entregar o fluxo já preenchido à
    tela oficial. Esse handoff encerra o card de voz, não grava dados e não pode
    substituir as confirmações obrigatórias da tela de destino.
+10. Consultas e comandos não suportados sempre exibem um card informativo com
+    fechamento explícito. Respostas desconhecidas viram erro recuperável; a
+    camada escura jamais permanece aberta sem conteúdo ou ação disponível.
 
 Não inserir cabeçalhos redundantes como “experimental”, nome do usuário,
 “confirmação obrigatória” ou explicações sobre o que o botão **Confirmar** já
@@ -63,6 +66,7 @@ de pagamento”.
 | Interpretando | Controle cancelável e indicação contínua de atividade. |
 | Esclarecimento | Somente a dúvida atual, opções pertinentes, fala complementar e busca manual quando aplicável. |
 | Confirmação | Resumo validado, cancelar, confirmar, editar quando suportado e salvar para depois quando habilitado. |
+| Resposta | Consulta ou comando não suportado apresentado em card informativo, com fechamento explícito. |
 | Erro | Mensagem humana, sem detalhe técnico sensível, com tentar novamente ou cancelar. |
 | Sucesso | Aviso temporário inferior e ação de comprovante quando disponível. |
 

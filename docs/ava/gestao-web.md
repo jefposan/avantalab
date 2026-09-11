@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.31.0.03 -->
+<!-- ava-version: 1.31.0.04 -->
+
+> Revisão 1.31.0.04: a correção de comandos não suportados pertence ao
+> AvantaVendas e não altera a Gestão Web.
 
 > Revisão 1.31.0.03: a remoção de pendências e as listas compactas pertencem ao
 > PWA Operações de Campo, sem alterar a Gestão Web.

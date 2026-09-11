@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.31.0.04 - 2026-09-11
+- **Comando de voz não suportado**: o AvantaVendas passa a informar claramente
+  quando uma ação, como editar um pedido, ainda não está disponível por voz.
+- **Sem tela vazia**: respostas informativas, consultas e recusas recebem um
+  card com fechamento; retornos desconhecidos viram erro recuperável.
+
 ## 1.31.0.03 - 2026-09-11
 - **Fluxo imediato em Operações de Campo**: Recebimentos e Serviços deixam de
   exibir ou persistir a opção **Salvar para depois**.
