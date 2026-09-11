@@ -1002,15 +1002,33 @@ function erroTemporarioPersistencia(error) {
   return !navigator.onLine || /fetch|network|conex|offline|timeout|tempo limite|failed to fetch|load failed/i.test(texto);
 }
 
+function marcarResultadoPendenteOfflineVendas(resultado) {
+  if (!resultado || typeof resultado !== 'object') return resultado;
+  Object.defineProperty(resultado, '__avantaPendenteOffline', { value: true, enumerable: false });
+  return resultado;
+}
+
+function resultadoPendenteOfflineVendas(tipo, payload) {
+  if (tipo === 'pedido_salvar') return marcarResultadoPendenteOfflineVendas({ ...payload.pedido });
+  if (tipo === 'pedido_excluir') return marcarResultadoPendenteOfflineVendas({ pedido_id: payload.id, estoques_atualizados: [] });
+  if (tipo === 'cliente_excluir' || tipo === 'pagamento_excluir') return marcarResultadoPendenteOfflineVendas({ id: payload.id });
+  return marcarResultadoPendenteOfflineVendas({ ...payload });
+}
+
+function mutacaoPendenteOfflineVendas(resultado) {
+  return resultado?.__avantaPendenteOffline === true;
+}
+
 async function executarMutacaoGarantidaVendas(tipo, identificador, payload, executar) {
   const chave = await registrarPendenciaVendas(tipo, identificador, payload);
+  if (!navigator.onLine && chave) return resultadoPendenteOfflineVendas(tipo, payload);
   try {
     const resultado = await executar();
     await removerPendenciaVendas(chave);
     return resultado;
   } catch (error) {
     if (!erroTemporarioPersistencia(error)) await removerPendenciaVendas(chave);
-    else if (chave) error.persistenciaPendente = true;
+    else if (chave) return resultadoPendenteOfflineVendas(tipo, payload);
     else error.persistenciaLocalIndisponivel = true;
     throw error;
   }
@@ -7696,12 +7714,16 @@ async function finalizarPedidoCliente() {
   }
   let mutacaoIniciada = false;
   try {
-    let financeiroAnterior;
-    try {
-      financeiroAnterior = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId, rascunho.editandoId || '');
-    } catch {
-      toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
-      return;
+    let financeiroAnterior = saldoFinanceiroCliente(rascunho.clienteId, rascunho.editandoId || '');
+    if (backendAtivo && navigator.onLine) {
+      try {
+        financeiroAnterior = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId, rascunho.editandoId || '');
+      } catch (error) {
+        if (!erroTemporarioPersistencia(error)) {
+          toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
+          return;
+        }
+      }
     }
     const saldoLiquidoAnterior = financeiroAnterior.debito - financeiroAnterior.credito;
     const saldoAtual = rascunho.tipo === 'consignado'
@@ -7750,7 +7772,7 @@ async function finalizarPedidoCliente() {
     state.vendas = rascunho.editandoId
       ? state.vendas.map((item) => item.id === salvo.id ? salvo : item)
       : [salvo, ...state.vendas];
-    if (backendAtivo) {
+    if (backendAtivo && !mutacaoPendenteOfflineVendas(salvo)) {
       await reconciliarFinanceiroCliente(salvo.cliente_id, { pedido: salvo });
       const confirmado = (state.vendas || []).find((item) => item.id === salvo.id);
       if (!confirmado || !valoresMonetariosConferem(confirmado.total, venda.total)) {
@@ -7767,7 +7789,8 @@ async function finalizarPedidoCliente() {
     await atualizarDashboardAposLancamento();
     render();
     abrirPedidoCliente(salvo.id);
-    if (rascunho.editandoId) toast('Pedido atualizado.');
+    if (mutacaoPendenteOfflineVendas(salvo)) toast('Pedido salvo neste aparelho. Ele será enviado automaticamente quando a conexão voltar.');
+    else if (rascunho.editandoId) toast('Pedido atualizado.');
   } catch (error) {
     toast(traduzErro(error));
   } finally {
@@ -7922,13 +7945,17 @@ async function confirmarPagamentoCliente() {
   }
   let mutacaoIniciada = false;
   try {
-    try {
-      const saldoConfirmado = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId);
-      rascunho.saldoAnterior = saldoConfirmado.debito;
-      resumo = resumoPagamentoCliente();
-    } catch {
-      toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
-      return;
+    if (backendAtivo && navigator.onLine) {
+      try {
+        const saldoConfirmado = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId);
+        rascunho.saldoAnterior = saldoConfirmado.debito;
+        resumo = resumoPagamentoCliente();
+      } catch (error) {
+        if (!erroTemporarioPersistencia(error)) {
+          toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
+          return;
+        }
+      }
     }
     const pagamento = {
       id: rascunho.idPersistencia || uuidPersistenciaVendas(),
@@ -7947,7 +7974,7 @@ async function confirmarPagamentoCliente() {
       ? await executarMutacaoGarantidaVendas('pagamento_salvar', pagamento.id, pagamento, () => window.VendasDb.savePayment(pagamento))
       : pagamento;
     state.pagamentos = atualizarRegistroPersistido(state.pagamentos, salvo);
-    if (backendAtivo) {
+    if (backendAtivo && !mutacaoPendenteOfflineVendas(salvo)) {
       await reconciliarFinanceiroCliente(pagamento.cliente_id, { pagamento: salvo });
       const confirmado = (state.pagamentos || []).find((item) => item.id === salvo.id);
       if (!confirmado || !valoresMonetariosConferem(confirmado.valor, pagamento.valor)) {
@@ -7963,6 +7990,7 @@ async function confirmarPagamentoCliente() {
     await atualizarDashboardAposLancamento();
     render();
     abrirPagamentoClienteDetalhe(salvo.id);
+    if (mutacaoPendenteOfflineVendas(salvo)) toast('Pagamento salvo neste aparelho. Ele será enviado automaticamente quando a conexão voltar.');
   } catch (error) {
     toast(traduzErro(error));
   } finally {
@@ -9771,7 +9799,7 @@ async function finalizarVenda() {
     state.vendas.unshift(salva);
     state.carrinho = [];
     await confirmarMutacaoDadosVendas();
-    fecharSheet(); state.aba = 'vendas'; toast('Venda registrada com sucesso.'); render();
+    fecharSheet(); state.aba = 'vendas'; toast(mutacaoPendenteOfflineVendas(salva) ? 'Venda salva neste aparelho. Ela será enviada automaticamente quando a conexão voltar.' : 'Venda registrada com sucesso.'); render();
   } catch (error) {
     toast(traduzErro(error));
   } finally {

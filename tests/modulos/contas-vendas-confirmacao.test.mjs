@@ -55,6 +55,22 @@ test('pedido e pagamento exibem confirmação antes da sincronização financeir
   assert.match(fluxoPagamento, /setAttribute\('aria-busy', 'true'\)/);
 });
 
+test('fila offline preserva pedido e pagamento locais sem exigir saldo do servidor', () => {
+  const inicioPedido = aplicacao.indexOf('async function finalizarPedidoCliente()');
+  const fimPedido = aplicacao.indexOf('function abrirEditarPedido(', inicioPedido);
+  const fluxoPedido = aplicacao.slice(inicioPedido, fimPedido);
+  const inicioPagamento = aplicacao.indexOf('async function confirmarPagamentoCliente()');
+  const fimPagamento = aplicacao.indexOf('function listaPagamentosPaginaHtml(', inicioPagamento);
+  const fluxoPagamento = aplicacao.slice(inicioPagamento, fimPagamento);
+
+  assert.match(aplicacao, /if \(!navigator\.onLine && chave\) return resultadoPendenteOfflineVendas\(tipo, payload\);/);
+  assert.match(aplicacao, /function mutacaoPendenteOfflineVendas\(resultado\)/);
+  assert.match(fluxoPedido, /if \(backendAtivo && navigator\.onLine\) \{/);
+  assert.match(fluxoPedido, /backendAtivo && !mutacaoPendenteOfflineVendas\(salvo\)/);
+  assert.match(fluxoPagamento, /if \(backendAtivo && navigator\.onLine\) \{/);
+  assert.match(fluxoPagamento, /backendAtivo && !mutacaoPendenteOfflineVendas\(salvo\)/);
+});
+
 test('aviso rápido permanece acessível acima das camadas modais', () => {
   assert.match(aplicacao, /el\.setAttribute\('role', dados\.tipo === 'erro' \? 'alert' : 'status'\)/);
   assert.match(aplicacao, /el\.setAttribute\('aria-live', dados\.tipo === 'erro' \? 'assertive' : 'polite'\)/);
