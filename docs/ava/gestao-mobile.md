@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.32.0.01 -->
+<!-- ava-version: 1.32.0.03 -->
+
+> Revisão 1.32.0.03: o refinamento visual do ícone Pix no comprovante pertence
+> ao AvantaVendas; sem impacto operacional adicional na Gestão Mobile.
+
+> Revisão 1.32.0.02: o refinamento do comprovante compartilhado pertence ao
+> AvantaVendas; sem impacto operacional adicional na Gestão Mobile.
 
 > Revisão 1.32.0.01: no PWA Operações de Campo, desativar **Comando por voz**
 > remove integralmente botão, ajuda, faixa inferior e espaço reservado em

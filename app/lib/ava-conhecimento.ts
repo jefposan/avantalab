@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.32.0.03: o ícone Pix no comprovante do AvantaVendas
+// preserva a geometria da marca em tamanho de compartilhamento.
+// Revisado na versão 1.32.0.02: o comprovante de pagamento do AvantaVendas
+// isola o saldo anterior e reúne valor, modalidade e desconto no lançamento.
 // Revisado na versão 1.32.0.01: a permissão de voz de Operações de Campo é
 // relida no servidor e remove ou restaura todo o rodapé sem exigir novo login.
 // Revisado na versão 1.32.0: pedidos, consignados e pagamentos do AvantaVendas
@@ -1108,6 +1112,7 @@ CLIENTES
 CATÁLOGO, PEDIDOS E PAGAMENTOS
 - Produtos permite cadastrar, editar, ativar/desativar, buscar, trabalhar com pacotes e imagens. Custo e preço de venda são usados para rentabilidade; estoque é opcional e pode ser ajustado em Configurações > Controle de estoque. Ao registrar entrada ou ajuste, Quantidade e Data ficam na mesma linha; tocar na data abre o calendário centralizado, a exibição usa dd/mm/aaaa, aceita lançamento anterior e não permite dia futuro. Depois de ativado, o estoque é abatido por vendas, consignados e itens bonificados; editar, cancelar ou excluir devolve somente a diferença necessária, e converter consignado em pedido não gera uma segunda saída.
 - Pedido e itens são salvos na mesma transação: se alguma parte falhar, o pedido anterior permanece intacto.
+- No comprovante compartilhado de **pagamento**, Saldo anterior é uma informação isolada, sem o título Resumo financeiro. Valor recebido, forma de pagamento e eventual desconto aparecem no mesmo painel do lançamento; o ícone muda conforme Pix, boleto, cartão, dinheiro, cheque ou outra modalidade. Essa organização não altera saldo, cálculo, exportação ou o compartilhamento.
 - Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Ao selecionar um produto, o pedido começa com o **Preço sugerido de revenda** publicado em Conteúdo AvantaVendas > Catálogo e o vendedor pode editar esse valor manualmente antes de inserir o item. O preço de venda interno e as tabelas de Custos e Precificação não interferem neste fluxo. Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar. No celular, abrir o teclado desloca somente o card uma única vez, após o teclado estabilizar, para manter o campo ativo visível, inclusive o desconto; o fundo do modal continua cobrindo toda a tela. Fechar o teclado devolve o card à posição original sem apagar o preenchimento.
 - Ao iniciar um pedido ou pagamento sem cliente predefinido, o foco e o teclado abrem diretamente na busca. Digite nome, telefone ou e-mail e toque em um resultado; o primeiro cliente não é selecionado automaticamente.
 - Em Produtos, os indicadores de produtos cadastrados, pacotes ativos e o botão Gerenciar permanecem fixos com o cabeçalho enquanto a lista rola abaixo. No campo Produto, digite nome, código, marca ou categoria para filtrar imediatamente a lista; toque no resultado para selecionar o produto e preencher seu preço.

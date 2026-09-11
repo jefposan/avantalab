@@ -97,11 +97,15 @@ exigir(
     && comprovantePagamento.includes("retangulo(ctx, 44, 42, 992, 260, 36, '#063B72')")
     && comprovantePagamento.includes("retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3')")
     && comprovantePagamento.includes("'Pagamento registrado com sucesso!', 570, 367")
-    && comprovantePagamento.includes("card(ctx, yPagamento, alturaCardValor, '', 'PAGAMENTO REGISTRADO')")
-    && comprovantePagamento.includes("card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
-    && comprovantePagamento.includes("const alturaResumo = 184")
-    && comprovantePagamento.includes("card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO')")
-    && comprovantePagamento.includes("card(ctx, yDetalhes, alturaDetalhes, '', 'DETALHES DO PAGAMENTO')")
+    && comprovantePagamento.includes("const alturaSaldoAnterior = 112")
+    && comprovantePagamento.includes("card(ctx, yPagamento, alturaCardPagamento, '', 'PAGAMENTO REGISTRADO')")
+    && comprovantePagamento.includes("card(ctx, ySaldo, alturaCardSaldo, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
+    && comprovantePagamento.includes('function iconeFormaPagamento(formaPagamento)')
+    && comprovantePagamento.includes("forma.includes('pix')")
+    && comprovantePagamento.includes("forma.includes('boleto')")
+    && comprovantePagamento.includes("forma.includes('cartao')")
+    && !comprovantePagamento.includes('RESUMO FINANCEIRO')
+    && !comprovantePagamento.includes('DETALHES DO PAGAMENTO')
     && comprovantePagamento.includes('function desenharRodapeEmPilula(ctx, conteudo, y)')
     && comprovantePagamento.includes('const clienteExibido = primeiroNomeClienteComprovante(cliente)')
     && !comprovantePagamento.includes("'Seu pagamento foi confirmado no sistema.'")
@@ -110,9 +114,11 @@ exigir(
     && !comprovantePagamento.includes("icone(ctx, 'detalhes',")
     && !comprovantePagamento.includes("card(ctx, yResumo, alturaResumo, 'carteira'")
     && aplicacao.includes("etiqueta: 'Pagamento registrado com sucesso!'")
-    && !aplicacao.includes("tituloDestaque: 'Pagamento registrado', subtitulo:")
+    && aplicacao.includes('resumoSemTitulo: true')
+    && aplicacao.includes('ocultarDetalhes: true')
+    && aplicacao.includes('Forma de pagamento: ${dadosComprovante.formaPagamento}')
     && aplicacao.includes('const clienteExibido = primeiroNomeClienteComprovante(cliente);'),
-  'O comprovante de pagamento deve usar a mesma composição compacta do pedido, sem textos ou ícone redundantes, com detalhes centralizados e pílula no rodapé.',
+  'O comprovante de pagamento deve isolar o saldo anterior e reunir valor, forma e desconto no mesmo lançamento, com ícone da modalidade e pílula no rodapé.',
 );
 exigir(
   aplicacao.includes("abrirAvisoRecuperacaoSenhaVendas('Usuário não localizado', 'Confirme o e-mail digitado.')")
@@ -433,7 +439,7 @@ exigir(
     && aplicacao.includes("ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', largura / 2, y + 13)")
     && aplicacao.includes("ctx.fillText('Situação após o lançamento', largura / 2, y + 13)")
     && aplicacao.includes("ctx.fillText('Resumo financeiro', largura / 2, y + 13)")
-    && aplicacao.includes('const yRodape = yDetalhes + alturaDetalhes + 70;')
+    && aplicacao.includes('const yRodape = ocultarDetalhes ? yAntesDosDetalhes + 70 : yDetalhes + alturaDetalhes + 70;')
     && aplicacao.includes('const altura = yRodape + 78;')
     && !aplicacao.includes("linhaSaldo.subtitulo || 'Valor que permanece em aberto'")
     && aplicacao.includes('const clienteExibido = primeiroNomeClienteComprovante(cliente);'),

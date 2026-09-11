@@ -91,6 +91,44 @@
     } else if (nome === 'grafico') {
       linha(ctx, p(4), p(20), p(4), p(15), cor, p(2)); linha(ctx, p(10), p(20), p(10), p(10), cor, p(2)); linha(ctx, p(16), p(20), p(16), p(5), cor, p(2)); linha(ctx, p(2), p(20), p(21), p(20), cor, p(2));
       linha(ctx, p(4), p(9), p(10), p(6), cor, p(2)); linha(ctx, p(10), p(6), p(16), p(2), cor, p(2)); linha(ctx, p(16), p(2), p(20), p(2), cor, p(2)); linha(ctx, p(20), p(2), p(20), p(6), cor, p(2));
+    } else if (nome === 'pix') {
+      // Símbolo Pix em três áreas preenchidas, preservando a geometria da marca
+      // também em tamanhos pequenos no comprovante.
+      ctx.fillStyle = cor;
+      ctx.beginPath();
+      ctx.moveTo(p(5.283), p(18.36)); ctx.lineTo(p(7.776), p(17.328)); ctx.lineTo(p(11.376), p(13.728));
+      ctx.quadraticCurveTo(p(11.85), p(13.254), p(12.322), p(13.728)); ctx.lineTo(p(15.935), p(17.341));
+      ctx.lineTo(p(18.428), p(18.373)); ctx.lineTo(p(19.138), p(18.373)); ctx.lineTo(p(14.578), p(22.933));
+      ctx.quadraticCurveTo(p(12), p(25.511), p(9.422), p(22.933)); ctx.lineTo(p(4.85), p(18.36));
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(p(18.428), p(5.627)); ctx.lineTo(p(15.935), p(6.659)); ctx.lineTo(p(12.322), p(10.273));
+      ctx.quadraticCurveTo(p(11.85), p(10.727), p(11.376), p(10.273)); ctx.lineTo(p(7.776), p(6.673));
+      ctx.lineTo(p(5.283), p(5.64)); ctx.lineTo(p(4.849), p(5.64)); ctx.lineTo(p(9.422), p(1.068));
+      ctx.quadraticCurveTo(p(12), p(-1.51), p(14.578), p(1.068)); ctx.lineTo(p(19.137), p(5.627));
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(p(1.068), p(9.422)); ctx.lineTo(p(3.79), p(6.699)); ctx.lineTo(p(5.282), p(6.699));
+      ctx.quadraticCurveTo(p(6.154), p(6.699), p(7.026), p(7.421)); ctx.lineTo(p(10.626), p(11.021));
+      ctx.quadraticCurveTo(p(11.848), p(12.243), p(13.069), p(11.021)); ctx.lineTo(p(16.683), p(7.408));
+      ctx.quadraticCurveTo(p(17.555), p(6.685), p(18.427), p(6.685)); ctx.lineTo(p(20.194), p(6.685));
+      ctx.lineTo(p(22.931), p(9.422)); ctx.quadraticCurveTo(p(24.754), p(12), p(22.931), p(14.578));
+      ctx.lineTo(p(20.195), p(17.314)); ctx.lineTo(p(18.427), p(17.314)); ctx.quadraticCurveTo(p(17.555), p(17.314), p(16.683), p(16.592));
+      ctx.lineTo(p(13.07), p(12.979)); ctx.quadraticCurveTo(p(11.848), p(11.757), p(10.626), p(12.979));
+      ctx.lineTo(p(7.026), p(16.579)); ctx.quadraticCurveTo(p(6.154), p(17.301), p(5.282), p(17.301));
+      ctx.lineTo(p(3.791), p(17.301)); ctx.lineTo(p(1.068), p(14.578)); ctx.quadraticCurveTo(p(-0.755), p(12), p(1.068), p(9.422));
+      ctx.closePath();
+      ctx.fill();
+    } else if (nome === 'boleto') {
+      [4, 7, 10, 13, 16, 19].forEach((x, indice) => linha(ctx, p(x), p(4), p(x), p(20), cor, p(indice % 2 ? 1.5 : 2.5)));
+    } else if (nome === 'cartao') {
+      caminhoArredondado(ctx, p(2), p(5), p(20), p(14), p(2)); ctx.stroke(); linha(ctx, p(3), p(10), p(21), p(10), cor, p(2)); linha(ctx, p(6), p(15), p(12), p(15), cor, p(2));
+    } else if (nome === 'dinheiro') {
+      caminhoArredondado(ctx, p(2), p(5), p(20), p(14), p(2)); ctx.stroke(); ctx.beginPath(); ctx.arc(p(12), p(12), p(3), 0, Math.PI * 2); ctx.stroke();
+    } else if (nome === 'cheque') {
+      caminhoArredondado(ctx, p(2), p(5), p(20), p(14), p(2)); ctx.stroke(); linha(ctx, p(5), p(10), p(14), p(10), cor, p(2)); linha(ctx, p(5), p(15), p(11), p(15), cor, p(2));
     } else if (nome === 'detalhes') {
       ctx.strokeRect(p(5), p(2), p(14), p(20)); linha(ctx, p(9), p(8), p(16), p(8), cor, p(2)); linha(ctx, p(9), p(12), p(16), p(12), cor, p(2)); linha(ctx, p(9), p(16), p(14), p(16), cor, p(2));
     }
@@ -113,6 +151,15 @@
 
   function fundoDeValor(ctx, y, altura, cor) { retangulo(ctx, 146, y, 810, altura, 26, cor); }
   function primeiroNomeClienteComprovante(nome) { return String(nome || '').trim().split(/\s+/)[0] || 'Cliente'; }
+  function iconeFormaPagamento(formaPagamento) {
+    const forma = String(formaPagamento || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (forma.includes('pix')) return 'pix';
+    if (forma.includes('boleto')) return 'boleto';
+    if (forma.includes('cartao')) return 'cartao';
+    if (forma.includes('dinheiro')) return 'dinheiro';
+    if (forma.includes('cheque')) return 'cheque';
+    return 'carteira';
+  }
   function desenharRodapeEmPilula(ctx, conteudo, y) {
     ctx.font = `700 28px ${FONTE}`;
     const conteudoLimitado = textoLimitado(ctx, conteudo, 820);
@@ -124,16 +171,15 @@
 
   async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', valorPago = 'R$ 0,00', saldoAtual = 'R$ 0,00', formaPagamento = 'Não informado', desconto = '', rotuloValorPago = 'Valor pago' } = {}) {
     const clienteExibido = primeiroNomeClienteComprovante(cliente);
-    const yResumo = 440;
-    const alturaCardValor = 218;
+    const ySaldoAnterior = 440;
+    const alturaSaldoAnterior = 112;
     const espacoEntreCards = 24;
-    const alturaResumo = 184;
-    const yPagamento = yResumo + alturaResumo + espacoEntreCards;
-    const ySaldo = yPagamento + alturaCardValor + espacoEntreCards;
-    const yDetalhes = ySaldo + alturaCardValor + espacoEntreCards;
     const temDesconto = Boolean(desconto);
-    const alturaDetalhes = temDesconto ? 235 : 167;
-    const yRodape = yDetalhes + alturaDetalhes + 70;
+    const alturaCardPagamento = temDesconto ? 334 : 276;
+    const alturaCardSaldo = 218;
+    const yPagamento = ySaldoAnterior + alturaSaldoAnterior + espacoEntreCards;
+    const ySaldo = yPagamento + alturaCardPagamento + espacoEntreCards;
+    const yRodape = ySaldo + alturaCardSaldo + 70;
     // A base acompanha o rodapé: não há sobra em pagamentos curtos e a
     // distância inferior continua estável em qualquer composição.
     const altura = yRodape + MARGEM_INFERIOR_RODAPE;
@@ -158,18 +204,25 @@
     retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3');
     icone(ctx, 'confirmado', 288, 367, 44, '#168448'); texto(ctx, 'Pagamento registrado com sucesso!', 570, 367, { tamanho: 24, peso: 800, cor: '#16773F', alinhamento: 'center', largura: 460, linhaBase: 'middle' });
 
-    card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, yResumo + 72, 86, '#F3F7FC');
-    texto(ctx, 'Saldo anterior', 180, yResumo + 125, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, yResumo + 125, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
+    // Saldo anterior é uma informação isolada, não um resumo financeiro.
+    retangulo(ctx, 44, ySaldoAnterior, 992, alturaSaldoAnterior, 34, '#FFFFFF', COR_BORDA_CARD);
+    texto(ctx, 'Saldo anterior', 112, ySaldoAnterior + 70, { tamanho: 28, peso: 600, cor: '#425675' });
+    texto(ctx, saldoAnterior, 968, ySaldoAnterior + 70, { tamanho: 35, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 390 });
 
-    card(ctx, yPagamento, alturaCardValor, '', 'PAGAMENTO REGISTRADO'); fundoDeValor(ctx, yPagamento + 72, 112, '#1674D1');
-    icone(ctx, 'confirmado', 208, yPagamento + 128, 58, '#FFFFFF'); texto(ctx, rotuloValorPago, 276, yPagamento + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPago, 922, yPagamento + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    card(ctx, yPagamento, alturaCardPagamento, '', 'PAGAMENTO REGISTRADO'); fundoDeValor(ctx, yPagamento + 72, temDesconto ? 238 : 180, '#1674D1');
+    icone(ctx, 'confirmado', 208, yPagamento + 124, 58, '#FFFFFF'); texto(ctx, rotuloValorPago, 276, yPagamento + 133, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPago, 922, yPagamento + 137, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    linha(ctx, 180, yPagamento + 154, 922, yPagamento + 154, 'rgba(255,255,255,.42)', 2);
+    icone(ctx, iconeFormaPagamento(formaPagamento), 208, yPagamento + 206, 48, '#FFFFFF');
+    texto(ctx, 'Forma de pagamento', 276, yPagamento + 195, { tamanho: 21, peso: 600, cor: '#D9F0FF', largura: 400 });
+    texto(ctx, formaPagamento, 276, yPagamento + 226, { tamanho: 30, peso: 800, cor: '#FFFFFF', largura: 500 });
+    if (temDesconto) {
+      linha(ctx, 180, yPagamento + 246, 922, yPagamento + 246, 'rgba(255,255,255,.42)', 2);
+      texto(ctx, 'Desconto concedido', 276, yPagamento + 287, { tamanho: 24, peso: 600, cor: '#D9F0FF', largura: 390 });
+      texto(ctx, desconto, 922, yPagamento + 287, { tamanho: 31, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 330 });
+    }
 
-    card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 72, 112, '#0A2F6B');
+    card(ctx, ySaldo, alturaCardSaldo, '', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 72, 112, '#0A2F6B');
     icone(ctx, 'grafico', 208, ySaldo + 128, 56, '#46B7FF'); texto(ctx, 'Saldo atual', 276, ySaldo + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, saldoAtual, 922, ySaldo + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
-
-    card(ctx, yDetalhes, alturaDetalhes, '', 'DETALHES DO PAGAMENTO'); fundoDeValor(ctx, yDetalhes + 70, temDesconto ? 116 : 58, '#F3F7FC');
-    texto(ctx, 'Forma de pagamento', 180, yDetalhes + 114, { tamanho: 25, peso: 600, cor: '#425675' }); texto(ctx, formaPagamento, 922, yDetalhes + 114, { tamanho: 30, peso: 800, cor: '#126ED1', alinhamento: 'right', largura: 330 });
-    if (temDesconto) { linha(ctx, 180, yDetalhes + 138, 922, yDetalhes + 138, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, yDetalhes + 181, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 922, yDetalhes + 181, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }
     desenharRodapeEmPilula(ctx, `Comprovante de pagamento • ${clienteExibido}`, yRodape);
     return canvas;
   }

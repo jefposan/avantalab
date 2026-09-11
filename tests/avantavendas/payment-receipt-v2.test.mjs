@@ -6,7 +6,7 @@ import test from 'node:test';
 function contextoDeCanvas() {
   const textos = [];
   const ctx = {
-    arc() {}, arcTo() {}, beginPath() {}, closePath() {}, drawImage() {}, fill() {}, fillRect() {}, lineTo() {}, moveTo() {}, restore() {}, save() {}, stroke() {}, strokeRect() {}, translate() {},
+    arc() {}, arcTo() {}, beginPath() {}, closePath() {}, drawImage() {}, fill() {}, fillRect() {}, lineTo() {}, moveTo() {}, quadraticCurveTo() {}, restore() {}, save() {}, stroke() {}, strokeRect() {}, translate() {},
     fillText(texto) { textos.push(String(texto)); },
     measureText(texto) { return { width: String(texto).length * 13 }; },
   };
@@ -46,25 +46,30 @@ test('PaymentReceiptV2 compõe o comprovante com os valores formatados sem cálc
 
   assert.equal(resultado, canvas);
   assert.equal(canvas.width, 1080);
-  assert.equal(canvas.height, 1447, 'a altura deve terminar logo após a margem fixa do rodapé');
-  for (const valor of ['TRIDIUM COSMÉTICOS', 'Cliente: Isa', '06/08/2026', 'R$ 1.283,50', 'R$ 100,00', 'R$ 1.183,50', 'Pix', 'Comprovante de pagamento • Isa']) {
+  assert.equal(canvas.height, 1242, 'a altura deve terminar logo após a margem fixa do rodapé');
+  for (const valor of ['TRIDIUM COSMÉTICOS', 'Cliente: Isa', '06/08/2026', 'Saldo anterior', 'R$ 1.283,50', 'R$ 100,00', 'Forma de pagamento', 'Pix', 'R$ 1.183,50', 'Comprovante de pagamento • Isa']) {
     assert.ok(textos.some((texto) => texto.includes(valor)), `deveria manter ${valor}`);
   }
   assert.ok(textos.every((texto) => !texto.includes('(mitsutani)')), 'observações posteriores ao primeiro nome não devem aparecer no comprovante');
   for (const textoRemovido of ['Seu pagamento foi confirmado no sistema.', 'Pagamento confirmado', 'Valor que permanece em aberto']) assert.ok(!textos.includes(textoRemovido), `não deveria exibir ${textoRemovido}`);
   assert.match(codigo, /retangulo\(ctx, 236, 326, 608, 82, 26/);
   assert.match(codigo, /'Pagamento registrado com sucesso!', 570, 367/);
-  assert.match(codigo, /card\(ctx, yPagamento, alturaCardValor, '', 'PAGAMENTO REGISTRADO'\)/);
-  assert.match(codigo, /card\(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO'\)/);
-  assert.match(codigo, /card\(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'\)/);
-  assert.match(codigo, /const alturaResumo = 184/);
+  assert.match(codigo, /card\(ctx, yPagamento, alturaCardPagamento, '', 'PAGAMENTO REGISTRADO'\)/);
+  assert.match(codigo, /card\(ctx, ySaldo, alturaCardSaldo, '', 'SITUAÇÃO APÓS O LANÇAMENTO'\)/);
+  assert.match(codigo, /const alturaSaldoAnterior = 112/);
+  assert.match(codigo, /function iconeFormaPagamento\(formaPagamento\)/);
+  assert.match(codigo, /Símbolo Pix em três áreas preenchidas/);
+  assert.match(codigo, /ctx\.fillStyle = cor;/);
+  assert.match(codigo, /forma\.includes\('boleto'\).*return 'boleto'/s);
+  assert.match(codigo, /forma\.includes\('cartao'\).*return 'cartao'/s);
+  assert.doesNotMatch(codigo, /RESUMO FINANCEIRO/);
+  assert.doesNotMatch(codigo, /DETALHES DO PAGAMENTO/);
   assert.match(codigo, /const altura = yRodape \+ MARGEM_INFERIOR_RODAPE/);
   assert.doesNotMatch(codigo, /const ALTURA = 1680/);
   assert.match(codigo, /function desenharFundoAncoradoNoRodape/);
   assert.match(codigo, /alturaFonte - alturaVisivel/);
   assert.match(codigo, /const COR_BORDA_CARD = '#C7D8E8'/);
   assert.match(codigo, /'#FFFFFF', COR_BORDA_CARD/);
-  assert.match(codigo, /card\(ctx, yDetalhes, alturaDetalhes, '', 'DETALHES DO PAGAMENTO'\)/);
   assert.match(codigo, /function desenharRodapeEmPilula/);
   assert.doesNotMatch(codigo, /icone\(ctx, 'detalhes',/);
   assert.doesNotMatch(codigo, /card\(ctx, yResumo, 205, 'carteira'/);

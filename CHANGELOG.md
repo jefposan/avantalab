@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.32.0.03-av147 - 2026-09-11
+- **Ícone Pix corrigido**: o comprovante de pagamento passa a usar uma marca
+  vetorial proporcional e preenchida, sem cruzamentos ou deformação no tamanho
+  de compartilhamento. Recursos PWA renovados para receber o refinamento.
+
+## 1.32.0.03 - 2026-09-11
+- **Símbolo de pagamento refinado**: a indicação de Pix no comprovante ficou
+  mais nítida, equilibrada e distinguível dos demais meios de pagamento.
+
+## 1.32.0.02-av146 - 2026-09-11
+- **Recursos do AvantaVendas**: cache renovado para entregar o novo comprovante
+  de pagamento também a instalações PWA já existentes.
+
+## 1.32.0.02 - 2026-09-11
+- **Comprovante de pagamento mais direto**: saldo anterior passa a ser uma
+  informação própria, sem o título incorreto de Resumo financeiro.
+- **Forma junto ao lançamento**: valor recebido, forma de pagamento e eventual
+  desconto ficam no mesmo painel azul. O ícone se adapta a Pix, boleto,
+  cartões, dinheiro, cheque ou uma modalidade genérica.
+
 ## 1.32.0.01 - 2026-09-11
 - **Permissão de voz propagada ao PWA**: Operações de Campo passa a identificar
   sempre o colaborador autenticado e reler sua permissão no servidor em tempo

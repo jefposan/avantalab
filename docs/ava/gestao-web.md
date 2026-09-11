@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.32.0.01 -->
+<!-- ava-version: 1.32.0.03 -->
+
+> Revisão 1.32.0.03: o refinamento visual do ícone Pix no comprovante pertence
+> ao AvantaVendas; sem impacto operacional adicional na Gestão Web.
+
+> Revisão 1.32.0.02: o refinamento do comprovante compartilhado pertence ao
+> AvantaVendas; sem impacto operacional adicional na Gestão Web.
 
 > Revisão 1.32.0.01: ao salvar a permissão **Comando por voz** de um
 > colaborador, o PWA daquele usuário passa a remover ou restaurar toda a faixa

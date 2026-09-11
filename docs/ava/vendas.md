@@ -1,6 +1,16 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.32.0.01 -->
+<!-- ava-version: 1.32.0.03 -->
+
+> Revisão 1.32.0.03-av147: o símbolo de **Pix** no comprovante de pagamento
+> foi refinado para manter a proporção e a leitura da marca no tamanho de
+> compartilhamento. Recursos do PWA renovados em `av147`.
+
+> Revisão 1.32.0.02-av146: no comprovante de pagamento, **Saldo anterior** é
+> apresentado isoladamente. Valor, forma de pagamento e desconto, quando
+> houver, ficam no mesmo painel do lançamento; o ícone acompanha Pix, boleto,
+> cartão, dinheiro, cheque ou outra modalidade. Recursos do PWA renovados em
+> `av146`.
 
 > Revisão 1.32.0.01: a propagação imediata da permissão individual pertence ao
 > PWA Operações de Campo e não altera a ativação do AvantaVendas.
@@ -352,7 +362,7 @@
 > Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
 > aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
 > operacional no AvantaVendas.
-<!-- avantavendas-asset-revision: 145 -->
+<!-- avantavendas-asset-revision: 147 -->
 
 > Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
 > catálogo ativo completo da conta sem permitir que uma palavra apenas parecida
