@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.06 -->
+<!-- ava-version: 1.33.0.07 -->
+
+> Revisão 1.33.0.07: o seletor de **Centro de custos** abre a lista abaixo do
+> campo e fecha ao escolher, clicar fora ou pressionar Escape. O cabeçalho
+> mantém **Despesas fixas** alinhado aos controles financeiros.
 
 > Revisão 1.33.0.06: o card **Centros de custo** permite ocultar ou mostrar
 > somente seus valores pelo botão de olho, sem alterar os outros resumos.

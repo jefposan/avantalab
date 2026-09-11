@@ -963,6 +963,7 @@ const [resumoPerfisDashboard, setResumoPerfisDashboard] = useState<ResumoPerfilF
 const [centrosCustoAtivo, setCentrosCustoAtivo] = useState(false);
 const [centrosCusto, setCentrosCusto] = useState<CentroCusto[]>([]);
 const [centroCustoSelecionadoId, setCentroCustoSelecionadoId] = useState('');
+const [listaCentroCustoAberta, setListaCentroCustoAberta] = useState(false);
 const [modalCentrosCusto, setModalCentrosCusto] = useState(false);
 const [centroCustoSalvando, setCentroCustoSalvando] = useState(false);
 const [entradaFaturamentoDia, setEntradaFaturamentoDia] = useState('');
@@ -977,6 +978,7 @@ const [editEntradaFaturamentoDia, setEditEntradaFaturamentoDia] = useState('');
 const [editEntradaFaturamentoOrigem, setEditEntradaFaturamentoOrigem] = useState('');
 const [editEntradaFaturamentoValor, setEditEntradaFaturamentoValor] = useState('');
 const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumerico] = useState(0);
+const seletorCentroCustoRef = useRef<HTMLDivElement | null>(null);
 
   const [despesasCadastradas, setDespesasCadastradas] = useState<
   DespesaCadastrada[]
@@ -2223,6 +2225,30 @@ useEffect(() => {
     centroCustoSelecionadoId
   );
 }, [empresaId, centrosCustoAtivo, centroCustoSelecionadoId]);
+
+useEffect(() => {
+  if (!listaCentroCustoAberta) return;
+
+  const fecharAoClicarFora = (event: PointerEvent) => {
+    if (!seletorCentroCustoRef.current?.contains(event.target as Node)) {
+      setListaCentroCustoAberta(false);
+    }
+  };
+  const fecharComEscape = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') setListaCentroCustoAberta(false);
+  };
+
+  document.addEventListener('pointerdown', fecharAoClicarFora);
+  document.addEventListener('keydown', fecharComEscape);
+  return () => {
+    document.removeEventListener('pointerdown', fecharAoClicarFora);
+    document.removeEventListener('keydown', fecharComEscape);
+  };
+}, [listaCentroCustoAberta]);
+
+useEffect(() => {
+  if (!centrosCustoAtivo) setListaCentroCustoAberta(false);
+}, [centrosCustoAtivo]);
 
 
 const limparTimerAjustes = () => {
@@ -10682,7 +10708,7 @@ if (validacaoTelefoneObrigatoria) {
   className="print-ocultar sticky top-[92px] z-[850] shadow-md pt-1 pb-2 text-white xl:top-[108px]"
   style={{ backgroundColor: corPrimaria }}
 >
-  <div className="mx-auto grid w-full min-w-0 max-w-7xl grid-cols-1 items-center gap-3 px-3 sm:px-5 lg:px-6 xl:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] xl:gap-4 xl:px-8">
+  <div className="mx-auto grid w-full min-w-0 max-w-7xl grid-cols-1 items-center gap-3 px-3 sm:px-5 lg:px-6 xl:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] xl:items-end xl:gap-4 xl:px-8">
     {/* ESQUERDA: MÊS COM SETAS + DESPESAS FIXAS */}
     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
       {/* MÊS SELECIONADO */}
@@ -10768,26 +10794,62 @@ if (validacaoTelefoneObrigatoria) {
     </div>
 
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
-    <div className={`flex min-w-0 max-w-full flex-1 flex-col items-end gap-1.5 overflow-hidden ${centrosCustoAtivo ? 'xl:flex-row xl:items-end xl:justify-between xl:gap-4' : ''}`}>
+    <div className={`flex min-w-0 max-w-full flex-1 flex-col items-end gap-1.5 overflow-visible ${centrosCustoAtivo ? 'xl:flex-row xl:items-end xl:justify-between xl:gap-4' : ''}`}>
       {centrosCustoAtivo && (
-        <label className="flex w-[176px] shrink-0 flex-col items-center gap-1 xl:self-end">
-          <span className="whitespace-nowrap text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">Centro de custos</span>
-          <span className="relative h-9 w-full">
-            <select
-              value={centroCustoSelecionadoId}
-              onChange={(event) => setCentroCustoSelecionadoId(event.target.value)}
-              className="h-9 w-full appearance-none rounded-lg bg-white px-3 pr-9 text-left text-xs font-black uppercase tracking-wide shadow-[0_4px_14px_rgba(0,0,0,0.18)] outline-none transition hover:bg-slate-50 focus:ring-2 focus:ring-white/60"
+        <div className="flex w-[176px] shrink-0 flex-col items-center gap-1 xl:self-end">
+          <span id="rotulo-centro-custo" className="whitespace-nowrap text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">Centro de custos</span>
+          <div ref={seletorCentroCustoRef} className="relative h-9 w-full">
+            <button
+              type="button"
+              onClick={() => setListaCentroCustoAberta((aberta) => !aberta)}
+              className="flex h-9 w-full items-center justify-between gap-2 rounded-lg bg-white px-3 text-left text-xs font-black uppercase tracking-wide shadow-[0_4px_14px_rgba(0,0,0,0.18)] outline-none transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-white/60"
               style={{ color: corPrimaria }}
-              aria-label="Centro de custo para os novos lançamentos"
+              aria-labelledby="rotulo-centro-custo"
+              aria-haspopup="listbox"
+              aria-expanded={listaCentroCustoAberta}
+              aria-controls="lista-centros-custo"
             >
-              <option value="" className="text-slate-900">Sem centro</option>
-              {centrosCusto.filter((centro) => centro.ativo).map((centro) => (
-                <option key={centro.id} value={centro.id} className="text-slate-900">{centro.nome}</option>
-              ))}
-            </select>
-            <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24" style={{ color: corPrimaria }} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
-          </span>
-        </label>
+              <span className="min-w-0 truncate">{centrosCusto.find((centro) => centro.id === centroCustoSelecionadoId)?.nome || 'Sem centro'}</span>
+              <svg className={`h-4 w-4 shrink-0 transition-transform ${listaCentroCustoAberta ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+            </button>
+            {listaCentroCustoAberta && (
+              <div id="lista-centros-custo" role="listbox" aria-label="Centros de custo disponíveis" className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={!centroCustoSelecionadoId}
+                  onClick={() => {
+                    setCentroCustoSelecionadoId('');
+                    setListaCentroCustoAberta(false);
+                  }}
+                  className={`flex min-h-10 w-full items-center rounded-lg px-2.5 text-left text-xs font-black uppercase tracking-wide transition hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none ${!centroCustoSelecionadoId ? 'bg-slate-100' : 'text-slate-700'}`}
+                  style={!centroCustoSelecionadoId ? { color: corPrimaria } : undefined}
+                >
+                  Sem centro
+                </button>
+                {centrosCusto.filter((centro) => centro.ativo).map((centro) => {
+                  const selecionado = centro.id === centroCustoSelecionadoId;
+                  return (
+                    <button
+                      key={centro.id}
+                      type="button"
+                      role="option"
+                      aria-selected={selecionado}
+                      onClick={() => {
+                        setCentroCustoSelecionadoId(centro.id);
+                        setListaCentroCustoAberta(false);
+                      }}
+                      className={`flex min-h-10 w-full items-center rounded-lg px-2.5 text-left text-xs font-black uppercase tracking-wide transition hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none ${selecionado ? 'bg-slate-100' : 'text-slate-700'}`}
+                      style={selecionado ? { color: corPrimaria } : undefined}
+                    >
+                      <span className="truncate">{centro.nome}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       )}
       <div className="grid w-full max-w-[520px] grid-cols-2 items-stretch justify-end gap-1.5 min-[1180px]:grid-cols-4">
   <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1 text-left shadow-sm border border-white/20">

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.33.0.07 - 2026-09-11
+- **Seletor de Centros de custo refinado**: a lista abre abaixo do campo em
+  desktop e mobile, fecha de forma previsível e o botão Despesas fixas fica
+  alinhado verticalmente aos controles financeiros do cabeçalho.
+
 ## 1.33.0.06 - 2026-09-11
 - **Privacidade em Centros de custo**: o card do Dashboard agora tem o botão
   de olho para ocultar ou mostrar seus valores sem afetar os demais resumos.

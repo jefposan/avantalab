@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0.06 -->
+<!-- ava-version: 1.33.0.07 -->
+
+> Revisão 1.33.0.07: o seletor de Centros de custo é um menu controlado da
+> Gestão Web; não altera a operação da Gestão Mobile.
 
 > Revisão 1.33.0.06: o botão de privacidade do card Centros de custo pertence
 > à Gestão Web e não altera a operação da Gestão Mobile.
