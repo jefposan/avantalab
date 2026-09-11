@@ -10682,7 +10682,7 @@ if (validacaoTelefoneObrigatoria) {
   className="print-ocultar sticky top-[92px] z-[850] shadow-md pt-1 pb-2 text-white xl:top-[108px]"
   style={{ backgroundColor: corPrimaria }}
 >
-  <div className={`mx-auto grid w-full min-w-0 max-w-7xl grid-cols-1 items-center gap-3 px-3 sm:px-5 lg:px-6 xl:gap-4 xl:px-8 ${centrosCustoAtivo ? 'xl:grid-cols-[40%_minmax(220px,250px)_minmax(0,1fr)]' : 'xl:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)]'}`}>
+  <div className="mx-auto grid w-full min-w-0 max-w-7xl grid-cols-1 items-center gap-3 px-3 sm:px-5 lg:px-6 xl:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] xl:gap-4 xl:px-8">
     {/* ESQUERDA: MÊS COM SETAS + DESPESAS FIXAS */}
     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
       {/* MÊS SELECIONADO */}
@@ -10767,29 +10767,28 @@ if (validacaoTelefoneObrigatoria) {
 
     </div>
 
-    {centrosCustoAtivo && (
-      <label className="flex min-w-0 flex-col items-center gap-1">
-        <span className="whitespace-nowrap text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">Centro de custos</span>
-        <span className="relative h-9 w-full max-w-[250px]">
-          <select
-            value={centroCustoSelecionadoId}
-            onChange={(event) => setCentroCustoSelecionadoId(event.target.value)}
-            className="h-9 w-full appearance-none rounded-lg bg-white px-3 pr-9 text-left text-xs font-black uppercase tracking-wide shadow-[0_4px_14px_rgba(0,0,0,0.18)] outline-none transition hover:bg-slate-50 focus:ring-2 focus:ring-white/60"
-            style={{ color: corPrimaria }}
-            aria-label="Centro de custo para os novos lançamentos"
-          >
-            <option value="" className="text-slate-900">Sem centro</option>
-            {centrosCusto.filter((centro) => centro.ativo).map((centro) => (
-              <option key={centro.id} value={centro.id} className="text-slate-900">{centro.nome}</option>
-            ))}
-          </select>
-          <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24" style={{ color: corPrimaria }} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
-        </span>
-      </label>
-    )}
-
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
-    <div className="flex min-w-0 max-w-full flex-1 flex-col items-end gap-1.5 overflow-hidden">
+    <div className={`flex min-w-0 max-w-full flex-1 flex-col items-end gap-1.5 overflow-hidden ${centrosCustoAtivo ? 'xl:flex-row xl:items-end xl:justify-between xl:gap-4' : ''}`}>
+      {centrosCustoAtivo && (
+        <label className="flex min-w-0 w-full max-w-[250px] shrink-0 flex-col items-center gap-1 xl:self-end">
+          <span className="whitespace-nowrap text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">Centro de custos</span>
+          <span className="relative h-9 w-full">
+            <select
+              value={centroCustoSelecionadoId}
+              onChange={(event) => setCentroCustoSelecionadoId(event.target.value)}
+              className="h-9 w-full appearance-none rounded-lg bg-white px-3 pr-9 text-left text-xs font-black uppercase tracking-wide shadow-[0_4px_14px_rgba(0,0,0,0.18)] outline-none transition hover:bg-slate-50 focus:ring-2 focus:ring-white/60"
+              style={{ color: corPrimaria }}
+              aria-label="Centro de custo para os novos lançamentos"
+            >
+              <option value="" className="text-slate-900">Sem centro</option>
+              {centrosCusto.filter((centro) => centro.ativo).map((centro) => (
+                <option key={centro.id} value={centro.id} className="text-slate-900">{centro.nome}</option>
+              ))}
+            </select>
+            <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24" style={{ color: corPrimaria }} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+          </span>
+        </label>
+      )}
       <div className="grid w-full max-w-[520px] grid-cols-2 items-stretch justify-end gap-1.5 min-[1180px]:grid-cols-4">
   <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1 text-left shadow-sm border border-white/20">
   <div className="mb-1 flex items-center justify-between gap-2">
