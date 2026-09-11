@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0.05 -->
+<!-- ava-version: 1.33.0.06 -->
+
+> Revisão 1.33.0.06: o botão de privacidade do card Centros de custo pertence
+> à Gestão Web e não altera a operação da Gestão Mobile.
 
 > Revisão 1.33.0.05: o ajuste do seletor de Centros de custo e a correção de
 > compilação da fila offline não alteram a operação da Gestão Mobile.

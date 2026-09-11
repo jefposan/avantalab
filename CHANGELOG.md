@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.33.0.06 - 2026-09-11
+- **Privacidade em Centros de custo**: o card do Dashboard agora tem o botão
+  de olho para ocultar ou mostrar seus valores sem afetar os demais resumos.
+
 ## 1.33.0.05 - 2026-09-11
 - **Publicação e Centro de custos corrigidos**: a tipagem da fila offline de
   Operações de Campo volta a compilar para que a entrega seja publicada. O

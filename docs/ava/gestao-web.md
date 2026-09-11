@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.05 -->
+<!-- ava-version: 1.33.0.06 -->
+
+> Revisão 1.33.0.06: o card **Centros de custo** permite ocultar ou mostrar
+> somente seus valores pelo botão de olho, sem alterar os outros resumos.
 
 > Revisão 1.33.0.05: o seletor de **Centro de custos** permanece entre
 > **Despesas fixas** e os comparativos financeiros, agora na mesma largura do
