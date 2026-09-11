@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.33.0 - 2026-09-11
+- **PWAs preparados para falta de sinal**: Operações de Campo mantém, por até
+  30 dias após o último acesso autorizado, os dados necessários para registrar
+  Recebimentos e Serviços sem conexão. Cada atendimento fica protegido no
+  aparelho e é enviado automaticamente ao servidor ao reconectar.
+- **Sem duplicidade na sincronização**: recebimentos, comprovantes e serviços
+  recebem uma chave idempotente; uma resposta perdida ou uma nova tentativa não
+  cria um segundo lançamento nem uma segunda assinatura.
+- **Acesso offline no AvantaVendas**: a última conta autorizada e os dados já
+  sincronizados continuam disponíveis sem rede pelo mesmo período. A fila
+  existente de clientes, pedidos e pagamentos volta a enviar as pendências
+  assim que a sessão puder ser renovada.
+
 ## 1.32.0.03-av147 - 2026-09-11
 - **Ícone Pix corrigido**: o comprovante de pagamento passa a usar uma marca
   vetorial proporcional e preenchida, sem cruzamentos ou deformação no tamanho

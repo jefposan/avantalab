@@ -48,9 +48,9 @@ export interface RecebimentosRepo {
   editarColaborador(id: string, dados: DadosEditarColaborador): Promise<void>;
   excluirColaborador(id: string): Promise<void>;
   alternarColaborador(id: string, ativo: boolean): Promise<void>;
-  registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null): Promise<void>;
-  receberCobranca(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null): Promise<void>;
-  registrarServico(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string, servicoId?: string): Promise<void>;
+  registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, operacaoId?: string): Promise<void>;
+  receberCobranca(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null, operacaoId?: string): Promise<void>;
+  registrarServico(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string, servicoId?: string, operacaoId?: string): Promise<void>;
   agendarServico(empresaRecebimentoId: string, subempresaId: string | null, dataProgramada: string, tipoServico: Exclude<TipoServico, 'rotina'>): Promise<void>;
   editarAgendamentoServico(servicoId: string, empresaRecebimentoId: string, subempresaId: string | null, dataProgramada: string, tipoServico: Exclude<TipoServico, 'rotina'>): Promise<void>;
   cancelarAgendamentoServico(servicoId: string): Promise<void>;
@@ -210,6 +210,7 @@ async function registrarViaApi(
     formaPagamento: FormaPagamentoRecebimento;
     comprovante?: File | null;
     dataPagamento?: string | null;
+    operacaoId?: string;
   },
 ) {
   const form = new FormData();
@@ -221,6 +222,7 @@ async function registrarViaApi(
   form.set('observacao', dados.observacao);
   form.set('formaPagamento', dados.formaPagamento);
   if (dados.dataPagamento) form.set('dataPagamento', dados.dataPagamento);
+  if (dados.operacaoId) form.set('operacaoId', dados.operacaoId);
   if (dados.comprovante) form.set('comprovante', dados.comprovante);
   const resposta = await fetch('/api/recebimentos/registrar', {
     method: 'POST',
@@ -353,7 +355,7 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       if (error || !data) throw new Error('Colaborador não encontrado.');
       await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, podeRecebimentos: data.pode_recebimentos !== false, podeServicos: data.pode_servicos === true, podeAgendamentos: data.pode_agendamentos === true, podeComandoVoz: data.pode_comando_voz !== false, ativo });
     },
-    async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante) {
+    async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante, operacaoId) {
       await registrarViaApi(cliente, {
         empresaId,
         recebimentoEmpresaId: empresaRecebimentoId,
@@ -362,9 +364,10 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         observacao,
         formaPagamento,
         comprovante,
+        operacaoId,
       });
     },
-    async receberCobranca(id, valor, observacao, formaPagamento, comprovante, dataPagamento) {
+    async receberCobranca(id, valor, observacao, formaPagamento, comprovante, dataPagamento, operacaoId) {
       await registrarViaApi(cliente, {
         empresaId,
         lancamentoId: id,
@@ -373,11 +376,12 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         formaPagamento,
         comprovante,
         dataPagamento,
+        operacaoId,
       });
     },
-    async registrarServico(recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId) {
+    async registrarServico(recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId, operacaoId) {
       await chamarApi(cliente, '/api/recebimentos/registrar-servico', {
-        empresaId, recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId,
+        empresaId, recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId, operacaoId,
       });
     },
     async agendarServico(recebimentoEmpresaId, subempresaId, dataProgramada, tipoServico) {

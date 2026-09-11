@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.32.0.03 -->
+<!-- ava-version: 1.33.0 -->
+
+> Revisão 1.33.0: depois do último login online autorizado, o AvantaVendas
+> conserva por até 30 dias a conta e os dados já sincronizados para consulta e
+> continuidade offline. Clientes, pedidos e pagamentos pendentes continuam na
+> fila do aparelho e são reenviados ao servidor após a reconexão.
 
 > Revisão 1.32.0.03-av147: o símbolo de **Pix** no comprovante de pagamento
 > foi refinado para manter a proporção e a leitura da marca no tamanho de

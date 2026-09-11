@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.32.0.03 -->
+<!-- ava-version: 1.33.0 -->
+
+> Revisão 1.33.0: a contingência offline pertence aos PWAs Operações de Campo
+> e AvantaVendas; não altera os fluxos de cadastro ou conferência na Gestão Web.
 
 > Revisão 1.32.0.03: o refinamento visual do ícone Pix no comprovante pertence
 > ao AvantaVendas; sem impacto operacional adicional na Gestão Web.

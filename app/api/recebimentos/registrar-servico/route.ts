@@ -22,9 +22,11 @@ export async function POST(request: Request) {
     const assinatura = String(corpo.assinatura ?? '');
     const avaliacao = String(corpo.avaliacao ?? '');
     const observacaoCliente = String(corpo.observacaoCliente ?? '').trim().slice(0, 2000) || null;
+    const operacaoId = String(corpo.operacaoId ?? '').trim() || null;
     if (!empresaId || !recebimentoEmpresaId || !clienteNome) return respostaErro('Selecione o cliente e informe o nome de quem recebeu o atendimento.');
     if (!assinatura.startsWith('data:image/png;base64,') || assinatura.length > 700_000) return respostaErro('A assinatura digital é obrigatória e precisa ser válida.');
     if (!AVALIACOES.has(avaliacao)) return respostaErro('Escolha como foi o atendimento.');
+    if (operacaoId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(operacaoId)) return respostaErro('Identificador da operação inválido.');
     if (!await assinaturaEmpresaLiberada(empresaId)) return respostaErro('A assinatura deste perfil precisa estar ativa para registrar serviços.', 403);
 
     const { data: colaborador, error: erroColaborador } = await clientes.admin
@@ -32,6 +34,12 @@ export async function POST(request: Request) {
       .select('id')
       .eq('empresa_id', empresaId).eq('user_id', user.id).eq('ativo', true).eq('pode_servicos', true).maybeSingle();
     if (erroColaborador || !colaborador) return respostaErro('Seu acesso não possui permissão para registrar serviços.', 403);
+
+    if (operacaoId) {
+      const { data: existente } = await clientes.admin.from('recebimentos_servicos')
+        .select('id').eq('empresa_id', empresaId).eq('operacao_offline_id', operacaoId).maybeSingle();
+      if (existente?.id) return NextResponse.json({ erro: false, servicoId: String(existente.id), repetido: true });
+    }
 
     let consultaServico = clientes.admin
       .from('recebimentos_servicos')
@@ -61,6 +69,7 @@ export async function POST(request: Request) {
     const dadosRegistro = {
       situacao: 'realizado', colaborador_user_id: user.id, cliente_nome: clienteNome,
       assinatura, avaliacao, observacao_cliente: observacaoCliente, realizado_em: realizadoEm, atualizado_em: realizadoEm,
+      operacao_offline_id: operacaoId,
     };
     let erroRegistro: { message?: string } | null = null;
     if (!erroUpload) {

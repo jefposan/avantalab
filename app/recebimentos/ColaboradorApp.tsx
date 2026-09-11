@@ -3,13 +3,14 @@
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './recebimentos.module.css';
-import type { Colaborador, Empresa, Recebimento, Servico, Subempresa } from './components/types';
+import type { AvaliacaoServico, Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, Servico, Subempresa } from './components/types';
 import { cpfValido, formatarCpf } from './components/helpers';
 import PainelColaborador from './components/PainelColaborador';
 import PainelServicosColaborador from './components/PainelServicosColaborador';
 import OperacoesCampoVoiceDock from './components/OperacoesCampoVoiceDock';
 import CampoSenha from './components/CampoSenha';
 import { criarRepoSupabase, type RecebimentosRepo } from './data/repo';
+import { aplicarOperacoesPendentes, concluirOperacaoOffline, enfileirarOperacao, erroDeConexao, limparContextoOffline, listarOperacoesOffline, registrarTentativaOffline, restaurarContextoOffline, salvarContextoOffline, type ContextoOffline, type OperacaoOffline } from './data/offline';
 import type { PreparacaoRegistroServicoVoz } from './voice/types';
 
 type Estado = 'carregando' | 'login' | 'app' | 'bloqueado';
@@ -72,12 +73,15 @@ export default function ColaboradorApp() {
   const [registroServicoVoz, setRegistroServicoVoz] = useState<PreparacaoRegistroServicoVoz | null>(null);
   const [standalone, setStandalone] = useState<boolean | null>(null);
   const [instrucaoInstalacao, setInstrucaoInstalacao] = useState(false);
+  const [contextoOffline, setContextoOffline] = useState<ContextoOffline | null>(null);
+  const [pendenciasOffline, setPendenciasOffline] = useState(0);
+  const [modoOffline, setModoOffline] = useState(false);
   const promptInstalacao = useRef<EventoInstalacaoPwa | null>(null);
   const botaoFecharInstalacao = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/recebimentos-sw.js?v=12', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
+    navigator.serviceWorker.register('/recebimentos-sw.js?v=13', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -170,24 +174,60 @@ export default function ColaboradorApp() {
     setComandoVozPermitido(vozAutorizada);
     setEmpresaId(empresa);
     setRepo(repoAtivo);
+    setModoOffline(false);
+    try {
+      const contexto = await salvarContextoOffline(dados, {
+        usuarioId: sessao.user.id, empresaId: empresa, colaboradorId: colaborador.id, empresaNome: nomePerfilDaSessao,
+      });
+      setContextoOffline(contexto);
+      setPendenciasOffline((await listarOperacoesOffline(contexto)).length);
+    } catch {
+      // A sessão online continua disponível quando o aparelho bloqueia o armazenamento local.
+      setContextoOffline(null);
+      setPendenciasOffline(0);
+    }
     setEstado('app');
   }, [cliente, carregarDados]);
+
+  const restaurarAcessoOffline = useCallback(async () => {
+    const salvo = await restaurarContextoOffline();
+    if (!salvo) return false;
+    const pendencias = await listarOperacoesOffline(salvo.contexto);
+    const dados = aplicarOperacoesPendentes(salvo.dados, pendencias);
+    const colaborador = dados.colaboradores.find((item) => item.id === salvo.contexto.colaboradorId);
+    if (!colaborador || !colaborador.ativo) return false;
+    const podeAbrirServicos = colaborador.podeServicos || colaborador.podeAgendamentos;
+    if (!colaborador.podeRecebimentos && !podeAbrirServicos) return false;
+    setEmpresas(dados.empresas); setSubempresas(dados.subempresas); setColaboradores(dados.colaboradores);
+    setRecebimentos(dados.recebimentos); setServicos(dados.servicos);
+    setEmpresaId(salvo.contexto.empresaId); setEmpresaNome(salvo.contexto.empresaNome);
+    setColaboradorId(colaborador.id); setComandoVozPermitido(false);
+    setOperacao(colaborador.podeRecebimentos && podeAbrirServicos ? 'seletor' : podeAbrirServicos ? 'servicos' : 'recebimentos');
+    if (cliente) setRepo(criarRepoSupabase(salvo.contexto.empresaId, cliente));
+    setContextoOffline(salvo.contexto); setPendenciasOffline(pendencias.length); setModoOffline(true); setEstado('app');
+    return true;
+  }, [cliente]);
 
   useEffect(() => {
     let ativo = true;
     if (!cliente) { setErro('Configuração do aplicativo indisponível.'); setEstado('login'); return; }
     cliente.auth.getSession().then(async ({ data }) => {
       if (!ativo) return;
-      if (!data.session) { setEstado('login'); return; }
+      if (!data.session) {
+        if (!navigator.onLine && await restaurarAcessoOffline()) return;
+        setEstado('login');
+        return;
+      }
       try { await prepararSessao(data.session); }
       catch (error) {
         if (!ativo) return;
+        if (!navigator.onLine && await restaurarAcessoOffline()) return;
         setErro(error instanceof Error ? error.message : 'Não foi possível abrir o aplicativo.');
         setEstado('login');
       }
     });
     return () => { ativo = false; };
-  }, [cliente, prepararSessao]);
+  }, [cliente, prepararSessao, restaurarAcessoOffline]);
 
   const revalidarPermissoes = useCallback(async () => {
     if (!cliente || !empresaId || !colaboradorId || estado !== 'app') return;
@@ -238,6 +278,130 @@ export default function ColaboradorApp() {
     };
   }, [colaboradorId, empresaId, estado, revalidarPermissoes]);
 
+  const aplicarOperacaoLocal = useCallback((operacao: OperacaoOffline) => {
+    if (operacao.tipo === 'servico') {
+      setServicos((atuais) => atuais.map((item) => item.id === operacao.servicoId ? {
+        ...item, situacao: 'realizado', clienteNome: operacao.clienteNome, assinatura: operacao.assinatura,
+        avaliacao: operacao.avaliacao, observacaoCliente: operacao.observacaoCliente,
+        realizadoEm: new Date(operacao.criadoEm).toISOString(),
+      } : item));
+      return;
+    }
+    if (operacao.lancamentoId) {
+      setRecebimentos((atuais) => atuais.map((item) => item.id === operacao.lancamentoId ? {
+        ...item, valorRecebido: operacao.valor, recebidoEm: new Date(operacao.criadoEm).toISOString(),
+        observacao: operacao.observacao || null, formaPagamento: operacao.formaPagamento,
+        temComprovante: Boolean(operacao.comprovante),
+        situacao: operacao.valor < item.valorCombinado ? 'recebido_a_menor' : operacao.valor > item.valorCombinado ? 'recebido_a_maior' : 'aguardando_conferencia',
+      } : item));
+    }
+  }, []);
+
+  const sincronizarPendencias = useCallback(async () => {
+    if (!cliente || !contextoOffline || !navigator.onLine) return;
+    let { data: sessaoAtual } = await cliente.auth.getSession();
+    if (!sessaoAtual.session) {
+      const renovada = await cliente.auth.refreshSession();
+      sessaoAtual = renovada.data;
+    }
+    if (!sessaoAtual.session) return;
+    const repoAtivo = criarRepoSupabase(contextoOffline.empresaId, cliente);
+    const pendencias = await listarOperacoesOffline(contextoOffline);
+    for (const pendencia of pendencias) {
+      try {
+        if (pendencia.tipo === 'servico') {
+          await repoAtivo.registrarServico(pendencia.recebimentoEmpresaId, pendencia.subempresaId, pendencia.clienteNome, pendencia.assinatura, pendencia.avaliacao, pendencia.observacaoCliente, pendencia.servicoId, pendencia.id);
+        } else if (pendencia.lancamentoId) {
+          await repoAtivo.receberCobranca(pendencia.lancamentoId, pendencia.valor, pendencia.observacao, pendencia.formaPagamento, pendencia.comprovante, pendencia.dataPagamento, pendencia.id);
+        } else if (pendencia.recebimentoEmpresaId) {
+          await repoAtivo.registrarRecebimento(pendencia.recebimentoEmpresaId, pendencia.subempresaId ?? null, pendencia.valor, pendencia.observacao, pendencia.formaPagamento, pendencia.comprovante, pendencia.id);
+        }
+        await concluirOperacaoOffline(pendencia.id);
+      } catch (error) {
+        await registrarTentativaOffline(pendencia);
+        if (erroDeConexao(error)) break;
+        setErro('Um atendimento salvo neste aparelho precisa ser revisado antes do envio. Ele permanece protegido na fila offline.');
+        break;
+      }
+    }
+    const restantes = await listarOperacoesOffline(contextoOffline);
+    setPendenciasOffline(restantes.length);
+    if (restantes.length === 0) {
+      const dados = await carregarDados(repoAtivo);
+      const colaborador = dados.colaboradores.find((item) => item.id === contextoOffline.colaboradorId);
+      if (colaborador) {
+        const contexto = await salvarContextoOffline(dados, { usuarioId: contextoOffline.usuarioId, empresaId: contextoOffline.empresaId, colaboradorId: colaborador.id, empresaNome: empresaNome || contextoOffline.empresaNome });
+        setContextoOffline(contexto);
+      }
+      setModoOffline(false);
+    }
+  }, [carregarDados, cliente, contextoOffline, empresaNome]);
+
+  useEffect(() => {
+    const aoConectar = () => { void sincronizarPendencias(); };
+    window.addEventListener('online', aoConectar);
+    window.addEventListener('focus', aoConectar);
+    return () => { window.removeEventListener('online', aoConectar); window.removeEventListener('focus', aoConectar); };
+  }, [sincronizarPendencias]);
+
+  const atualizarAposEnvio = useCallback(async () => {
+    if (!repo || !contextoOffline || !navigator.onLine) return;
+    try {
+      const dados = await carregarDados(repo);
+      const colaborador = dados.colaboradores.find((item) => item.id === contextoOffline.colaboradorId);
+      if (!colaborador) return;
+      const contexto = await salvarContextoOffline(dados, {
+        usuarioId: contextoOffline.usuarioId, empresaId: contextoOffline.empresaId,
+        colaboradorId: colaborador.id, empresaNome: empresaNome || contextoOffline.empresaNome,
+      });
+      setContextoOffline(contexto);
+    } catch {
+      // A operação já foi confirmada. Uma leitura posterior atualiza a tela.
+    }
+  }, [carregarDados, contextoOffline, empresaNome, repo]);
+
+  async function registrarRecebimentoComFila(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null) {
+    if (!repo || !contextoOffline) throw new Error('A sessão operacional não está disponível neste aparelho. Conecte-se à internet e entre novamente.');
+    const pendencia = await enfileirarOperacao(contextoOffline, { recebimentoEmpresaId: empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante }, 'recebimento');
+    setPendenciasOffline((quantidade) => quantidade + 1);
+    try {
+      await repo.registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante, pendencia.id);
+      await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1));
+      void atualizarAposEnvio();
+    } catch (error) {
+      if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1)); throw error; }
+      aplicarOperacaoLocal(pendencia); setModoOffline(true);
+    }
+  }
+
+  async function receberCobrancaComFila(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null) {
+    if (!repo || !contextoOffline) throw new Error('A sessão operacional não está disponível neste aparelho. Conecte-se à internet e entre novamente.');
+    const pendencia = await enfileirarOperacao(contextoOffline, { lancamentoId, valor, observacao, formaPagamento, comprovante, dataPagamento }, 'recebimento');
+    setPendenciasOffline((quantidade) => quantidade + 1);
+    try {
+      await repo.receberCobranca(lancamentoId, valor, observacao, formaPagamento, comprovante, dataPagamento, pendencia.id);
+      await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1));
+      void atualizarAposEnvio();
+    } catch (error) {
+      if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1)); throw error; }
+      aplicarOperacaoLocal(pendencia); setModoOffline(true);
+    }
+  }
+
+  async function registrarServicoComFila(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string, servicoId?: string) {
+    if (!repo || !contextoOffline || !servicoId) throw new Error('Selecione o serviço que será executado antes de concluir o atendimento.');
+    const pendencia = await enfileirarOperacao(contextoOffline, { recebimentoEmpresaId: empresaRecebimentoId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId }, 'servico');
+    setPendenciasOffline((quantidade) => quantidade + 1);
+    try {
+      await repo.registrarServico(empresaRecebimentoId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId, pendencia.id);
+      await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1));
+      void atualizarAposEnvio();
+    } catch (error) {
+      if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1)); throw error; }
+      aplicarOperacaoLocal(pendencia); setModoOffline(true);
+    }
+  }
+
   async function entrar() {
     setErro('');
     if (!cliente) return setErro('Configuração do aplicativo indisponível.');
@@ -267,14 +431,16 @@ export default function ColaboradorApp() {
 
   async function sair() {
     await cliente?.auth.signOut();
+    if (contextoOffline) await limparContextoOffline(contextoOffline.usuarioId, contextoOffline.empresaId).catch(() => undefined);
     setRepo(null); setEmpresaId(''); setEmpresaNome(''); setColaboradorId(''); setComandoVozPermitido(false); setEmpresas([]); setSubempresas([]); setColaboradores([]); setRecebimentos([]); setServicos([]); setOperacao('seletor');
+    setContextoOffline(null); setPendenciasOffline(0); setModoOffline(false);
     setEstado('login'); setErro('');
   }
 
   async function executar(acao: (repoAtivo: RecebimentosRepo) => Promise<void>) {
     if (!repo) throw new Error('Sessão não encontrada.');
     await acao(repo);
-    await carregarDados(repo);
+    if (navigator.onLine) await carregarDados(repo);
   }
 
   if (estado === 'carregando') {
@@ -409,11 +575,12 @@ export default function ColaboradorApp() {
       </div>
       <div className={styles.container}>
         {erro && <div className={styles.aviso} role="alert">{erro}</div>}
+        {(modoOffline || pendenciasOffline > 0) && <div className={styles.aviso} role="status">{pendenciasOffline > 0 ? `${pendenciasOffline} atendimento${pendenciasOffline === 1 ? '' : 's'} salvo${pendenciasOffline === 1 ? '' : 's'} neste aparelho e aguardando conexão.` : 'Modo offline ativo. Os novos atendimentos serão enviados automaticamente ao reconectar.'}</div>}
         {operacao === 'recebimentos' ? <PainelColaborador
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
-          onRegistrar={(empresaRecebimentoId, subId, valor, obs, forma, arquivo) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs, forma, arquivo))}
-          onReceberCobranca={(id, valor, obs, forma, arquivo, dataPagamento) => executar((r) => r.receberCobranca(id, valor, obs, forma, arquivo, dataPagamento))}
-        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} registroInicial={registroServicoVoz} onRegistroInicialConsumido={() => setRegistroServicoVoz(null)} onRegistrar={(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId) => executar((r) => r.registrarServico(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId))} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
+          onRegistrar={registrarRecebimentoComFila}
+          onReceberCobranca={receberCobrancaComFila}
+        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} registroInicial={registroServicoVoz} onRegistroInicialConsumido={() => setRegistroServicoVoz(null)} onRegistrar={registrarServicoComFila} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
       </div>
       {comandoVozPermitido && <footer className={styles.voiceActionBar} aria-label={`Ações por voz de ${operacao}`}>
         <OperacoesCampoVoiceDock
@@ -428,8 +595,8 @@ export default function ColaboradorApp() {
           servicos={servicos}
           podeRegistrar={colaborador.podeServicos}
           podeAgendar={colaborador.podeAgendamentos}
-          onRegistrarRecebimento={(empresaRecebimentoId, subId, valor, obs, forma) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs, forma))}
-          onReceberCobranca={(recebimentoId, valor, obs, forma) => executar((r) => r.receberCobranca(recebimentoId, valor, obs, forma))}
+          onRegistrarRecebimento={(empresaRecebimentoId, subId, valor, obs, forma) => registrarRecebimentoComFila(empresaRecebimentoId, subId, valor, obs, forma)}
+          onReceberCobranca={(recebimentoId, valor, obs, forma) => receberCobrancaComFila(recebimentoId, valor, obs, forma)}
           onAgendarServico={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))}
           onPrepararRegistroServico={(companyId, subcompanyId, serviceId) => setRegistroServicoVoz({ requestId: `${Date.now()}-${Math.random()}`, companyId, subcompanyId, serviceId })}
         />

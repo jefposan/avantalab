@@ -187,8 +187,8 @@ test('comando por voz é permissão individual ativa por padrão e validada no s
   assert.match(app, /document\.addEventListener\('visibilitychange', aoRetomar\)/);
   assert.match(app, /window\.addEventListener\('focus', aoRetomar\)/);
   assert.match(app, /setInterval\(\(\) => \{ void revalidarPermissoes\(\); \}, 15000\)/);
-  assert.match(app, /recebimentos-sw\.js\?v=12/);
-  assert.match(serviceWorker, /avantalab-recebimentos-v12/);
+  assert.match(app, /recebimentos-sw\.js\?v=13/);
+  assert.match(serviceWorker, /avantalab-recebimentos-v13/);
   assert.match(repo, /postgres_changes[^\n]*recebimentos_colaboradores/);
   assert.match(auth, /\.eq\('pode_comando_voz', true\)/);
   assert.match(migration, /add column if not exists pode_comando_voz boolean not null default true/);

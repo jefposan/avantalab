@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.32.0.03 -->
+<!-- ava-version: 1.33.0 -->
+
+> Revisão 1.33.0: após um login online válido, Operações de Campo pode abrir
+> sem sinal por até 30 dias com a última base sincronizada. Recebimentos e
+> Serviços concluídos offline ficam na fila deste aparelho e são enviados ao
+> servidor ao reconectar; sair do aplicativo apaga esse acesso local e a fila.
 
 > Revisão 1.32.0.03: o refinamento visual do ícone Pix no comprovante pertence
 > ao AvantaVendas; sem impacto operacional adicional na Gestão Mobile.

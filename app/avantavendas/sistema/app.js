@@ -6,6 +6,7 @@ const REDIRECT_OAUTH_NATIVO_VENDAS = 'br.com.avantalab.vendas://auth/callback';
 const LEMBRAR_CONECTADO_ATE_KEY = 'avantalab.vendas_mobile.lembrar_conectado_ate';
 const SESSAO_TEMPORARIA_KEY = 'avantalab.vendas_mobile.sessao_temporaria';
 const OAUTH_TEMPORARIO_ATE_KEY = 'avantalab.vendas_mobile.oauth_temporario_ate';
+const ACESSO_OFFLINE_VENDAS_KEY = 'avantalab.vendas_mobile.acesso_offline.v1';
 const TRINTA_DIAS_MS = 1000 * 60 * 60 * 24 * 30;
 const DEZ_MINUTOS_MS = 1000 * 60 * 10;
 const PREPARING_VIEWPORT_HEIGHT_KEY_LEGACY = 'avantalab.vendas_mobile.preparing_viewport_height';
@@ -17,7 +18,7 @@ const CACHE_VENDAS_DB = 'avantalab.vendas_mobile.cache';
 const CACHE_VENDAS_STORE = 'sessoes';
 const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
 const CACHE_VENDAS_VERSAO = 5;
-const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
+const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 30;
 const PREFERENCIAS_VENDAS_VERSAO = 4;
 const META_CELEBRADA_PREFIX = 'avantalab.vendas_mobile.meta_celebrada';
 const SOLICITACOES_VOZ_PENDENTES_PREFIX = 'avantalab.vendas.voice_command.official.v1';
@@ -169,6 +170,7 @@ const INTERVALO_VERIFICACAO_APROVACAO_MS = 15000;
 let timerVerificacaoAprovacao = null;
 let timerAtualizacaoVinculo = null;
 let atualizandoVinculoAprovado = false;
+let modoOfflineVendas = false;
 
 function carregarRascunhoCadastroVendas() {
   try {
@@ -298,6 +300,47 @@ function sessaoPersistenteValidaVendas() {
 function renovarSessaoPersistenteVendas() {
   if (!sessaoPersistenteValidaVendas()) return;
   try { localStorage.setItem(LEMBRAR_CONECTADO_ATE_KEY, String(Date.now() + TRINTA_DIAS_MS)); } catch { /* armazenamento indisponível */ }
+}
+
+function salvarAcessoOfflineVendas() {
+  if (!state.autenticado || !state.usuario?.id || !state.acessoVendas || !state.contaVendasAtiva?.id) return;
+  try {
+    localStorage.setItem(ACESSO_OFFLINE_VENDAS_KEY, JSON.stringify({
+      versao: 1,
+      autorizadoAte: Date.now() + TRINTA_DIAS_MS,
+      usuario: state.usuario,
+      acessoVendas: state.acessoVendas,
+      contasVendas: state.contasVendas,
+      contaVendasAtiva: state.contaVendasAtiva,
+      moduloVendasAtivo: state.moduloVendasAtivo,
+      premiumVendasBloqueado: state.premiumVendasBloqueado,
+      estadoAssinaturaVendas: state.estadoAssinaturaVendas,
+    }));
+  } catch { /* Sem armazenamento não há acesso offline, mas a sessão online permanece. */ }
+}
+
+function restaurarAcessoOfflineVendas() {
+  if (navigator.onLine) return false;
+  try {
+    const salvo = JSON.parse(localStorage.getItem(ACESSO_OFFLINE_VENDAS_KEY) || 'null');
+    if (!salvo || salvo.versao !== 1 || Number(salvo.autorizadoAte || 0) <= Date.now() || !salvo.usuario?.id || !salvo.acessoVendas || !salvo.contaVendasAtiva?.id) return false;
+    state.usuario = salvo.usuario;
+    state.acessoVendas = salvo.acessoVendas;
+    state.contasVendas = Array.isArray(salvo.contasVendas) ? salvo.contasVendas : [];
+    state.contaVendasAtiva = salvo.contaVendasAtiva;
+    state.moduloVendasAtivo = salvo.moduloVendasAtivo !== false;
+    state.premiumVendasBloqueado = salvo.premiumVendasBloqueado === true;
+    state.estadoAssinaturaVendas = salvo.estadoAssinaturaVendas || null;
+    state.autenticado = true;
+    state.usuarioSemAcesso = false;
+    modoOfflineVendas = true;
+    contextoAberturaVendas = null;
+    return true;
+  } catch { return false; }
+}
+
+function limparAcessoOfflineVendas() {
+  try { localStorage.removeItem(ACESSO_OFFLINE_VENDAS_KEY); } catch { /* logout continua mesmo sem armazenamento */ }
 }
 
 function deveEncerrarSessaoSalvaVendas() {
@@ -2993,6 +3036,7 @@ async function sairSistema(destinoForcado = '') {
   timerVerificacaoAprovacao = null;
   timerAtualizacaoVinculo = null;
   void limparCacheVendas();
+  limparAcessoOfflineVendas();
   await suspenderSincronizacaoPreferenciasVendas();
   try { if (backendAtivo) await window.VendasDb.signOut(); } catch (error) { console.error(error); }
   try {
@@ -3938,6 +3982,7 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
       sessionStorage.removeItem(ENTRADA_VENDAS_PELA_GESTAO_KEY);
     } catch { /* navegação continua sem armazenamento local */ }
   }
+  salvarAcessoOfflineVendas();
   if (!state.autenticado || !state.moduloVendasAtivo) return false;
   return false;
 }
@@ -4089,6 +4134,13 @@ async function inicializarApp() {
       : await comLimiteDeTempo(window.VendasDb.hasSession(), 'Não foi possível restaurar sua sessão.', 10000);
     atualizarProgressoPreparacao('auth', 1, 1, sessaoAtiva ? 'Sessão restaurada' : 'Sessão não encontrada');
     if (!sessaoAtiva) {
+      if (restaurarAcessoOfflineVendas()) {
+        atualizarProgressoPreparacao('auth', 1, 1, 'Modo offline restaurado');
+        carregandoBackend = false;
+        await carregarSistemaVendasCompleto();
+        toast('Modo offline restaurado. As alterações serão enviadas assim que a conexão voltar.', { tipo: 'informacao' });
+        return;
+      }
       carregandoBackend = false;
       provedorOAuthNativoPendente = '';
       limparLoginSocialPendenteVendas();
@@ -4107,6 +4159,14 @@ async function inicializarApp() {
     await carregarSistemaVendasCompleto();
   } catch (error) {
     console.error('Falha ao inicializar o Vendas Mobile.', error);
+    if (restaurarAcessoOfflineVendas()) {
+      carregandoBackend = false;
+      preparandoRecursosSala = false;
+      state.autenticado = true;
+      await carregarSistemaVendasCompleto();
+      toast('Modo offline restaurado. As alterações serão enviadas assim que a conexão voltar.', { tipo: 'informacao' });
+      return;
+    }
     carregandoBackend = false;
     preparandoRecursosSala = false;
     provedorOAuthNativoPendente = '';
@@ -10174,6 +10234,15 @@ if (window.__VENDAS_MOBILE_EMBEDDED__) {
 }
 
 window.addEventListener('online', () => {
+  if (modoOfflineVendas) {
+    window.VendasDb.refreshSession?.().then(async (sessao) => {
+      if (!sessao) return;
+      modoOfflineVendas = false;
+      await prepararSelecaoSistemaAntesDosDadosVendas();
+      await carregarDadosBackend(false, true, true);
+      await reenviarPendenciasVendas();
+    }).catch(() => undefined);
+  }
   reenviarPendenciasVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
   if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
 });

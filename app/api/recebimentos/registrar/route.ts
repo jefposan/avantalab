@@ -51,6 +51,7 @@ export async function POST(request: Request) {
     const observacao = campo(form, 'observacao');
     const formaPagamento = campo(form, 'formaPagamento');
     const dataPagamento = campo(form, 'dataPagamento') || null;
+    const operacaoId = campo(form, 'operacaoId') || null;
     const arquivo = form.get('comprovante');
 
     if (!empresaId) return respostaErro('Empresa não informada.');
@@ -60,6 +61,9 @@ export async function POST(request: Request) {
     if (!lancamentoExistenteId && !recebimentoEmpresaId) return respostaErro('Selecione o cliente do recebimento.');
     if (!Number.isFinite(valorRecebido) || valorRecebido < 0) return respostaErro('Informe um valor recebido válido.');
     if (!FORMAS_PAGAMENTO.has(formaPagamento)) return respostaErro('Selecione uma forma de pagamento.');
+    if (operacaoId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(operacaoId)) {
+      return respostaErro('Identificador da operação inválido.');
+    }
     if (dataPagamento && !/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dataPagamento)) {
       return respostaErro('Informe um mês de pagamento válido.');
     }
@@ -72,6 +76,15 @@ export async function POST(request: Request) {
 
     const lancamentoId = lancamentoExistenteId ?? novoLancamentoId;
     if (!lancamentoId) return respostaErro('Não foi possível identificar o lançamento.', 500);
+
+    // Uma resposta pode se perder depois de o servidor concluir a gravação.
+    // O identificador local permite reconhecer a repetição antes de reenviar
+    // o arquivo e evita lançar o mesmo valor duas vezes.
+    if (operacaoId) {
+      const { data: existente } = await clientes.admin.from('recebimentos_lancamentos')
+        .select('id').eq('empresa_id', empresaId).eq('operacao_offline_id', operacaoId).maybeSingle();
+      if (existente?.id) return NextResponse.json({ erro: false, lancamentoId: String(existente.id), comprovante: true, repetido: true });
+    }
 
     if (arquivo instanceof File) {
       const bytes = new Uint8Array(await arquivo.arrayBuffer());
@@ -110,6 +123,7 @@ export async function POST(request: Request) {
       p_comprovante_mime: arquivo instanceof File ? arquivo.type : null,
       p_comprovante_tamanho: arquivo instanceof File ? arquivo.size : null,
       p_data_pagamento: dataPagamento,
+      p_operacao_offline_id: operacaoId,
     });
     if (error || !data) {
       if (arquivoEnviado) await clientes.admin.storage.from(BUCKET).remove([arquivoEnviado]);
