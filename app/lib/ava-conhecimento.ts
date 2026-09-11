@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.33.0.03: sem internet, a Solicitação por Voz do
+// AvantaVendas fica cinza e indisponível; lançamentos manuais seguem ativos e
+// a voz retorna automaticamente com a conexão.
 // Revisado na versão 1.33.0.02: o AvantaVendas mostra a rede riscada somente
 // sem conexão e apresenta a fila real de pedidos, clientes e recebimentos
 // aguardando sincronização; os indicadores somem após confirmação do servidor.

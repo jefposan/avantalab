@@ -154,7 +154,7 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(officialApp, /Deixe aqui suas sugestões/);
   assert.match(officialApp, /mobile-suggestions-icon">\$\{svgIconEstavel\('lightbulb'\)\}/);
   assert.doesNotMatch(officialApp, /Dúvidas e Sugestões/);
-  assert.match(officialApp, /state\.solicitacaoVozAtiva \? `<div class="mobile-voice-command-slot"/);
+  assert.match(officialApp, /state\.solicitacaoVozAtiva \? `<div class="mobile-voice-command-slot\$\{vozIndisponivel/);
   assert.match(officialApp, /carregarModuloSolicitacaoVozVendas/);
   assert.match(officialApp, /\/api\/vendas\/solicitacao-voz\//);
   assert.match(voiceModule, /attachShadow/);
@@ -183,6 +183,13 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(vendasStyles, /font-size: 30px/);
   assert.match(vendasStyles, /\.mobile-voice-command-help \{[^}]*border: 0;[^}]*background: transparent;[^}]*box-shadow: none/);
   assert.match(vendasStyles, /\.dark-theme \.mobile-voice-command-help \{ color: #fff; \}/);
+  assert.match(officialApp, /const vozIndisponivel = estaSemRedeVendas\(\);/);
+  assert.match(officialApp, /Solicitação por Voz indisponível sem internet\. Use os lançamentos manuais\./);
+  assert.match(officialApp, /function atualizarDisponibilidadeSolicitacaoVozVendas\(\)/);
+  assert.match(officialApp, /window\.AvantaVoiceActions\?\.close\?\.\(\);/);
+  assert.match(vendasStyles, /\.mobile-voice-command-slot\.is-offline \.mobile-voice-command-trigger/);
+  assert.match(vendasStyles, /cursor: not-allowed/);
+  assert.match(vendasStyles, /\.dark-theme \.mobile-voice-command-slot\.is-offline/);
   assert.doesNotMatch(voiceModule, /function voiceHelp\(\)|voice-help-button/);
   assert.match(voiceModule, /state\.requestAbort\?\.abort\(\)/);
   assert.match(voiceModule, /function restorePending\(id\)/);

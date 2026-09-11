@@ -77,7 +77,7 @@ test('cabeçalho informa a rede offline e a fila real de sincronização', () =>
   assert.match(aplicacao, /function botaoPendenciasSincronizacaoVendas\(\)/);
   assert.match(aplicacao, /abrirPendenciasSincronizacaoVendas\(\)/);
   assert.match(aplicacao, /void atualizarIndicadoresSincronizacaoVendas\(\);/);
-  assert.match(aplicacao, /window\.addEventListener\('offline', \(\) => atualizarAcoesCabecalhoSistemaVendas\(\)\);/);
+  assert.match(aplicacao, /window\.addEventListener\('offline', \(\) => \{[\s\S]*atualizarAcoesCabecalhoSistemaVendas\(\);[\s\S]*atualizarDisponibilidadeSolicitacaoVozVendas\(\);/);
   assert.doesNotMatch(aplicacao, /Modo offline restaurado\. As alterações serão enviadas/);
   assert.match(estilos, /\.offline-header-indicator/);
   assert.match(estilos, /\.sync-pending-header-button/);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.33.0.03 - 2026-09-11
+- **Voz protegida sem internet**: no AvantaVendas, a Solicitação por Voz fica
+  cinza e sem interação enquanto o aparelho estiver offline. O fluxo aberto é
+  fechado de forma segura e os lançamentos manuais continuam disponíveis; a
+  voz volta automaticamente na reconexão.
+
 ## 1.33.0.02 - 2026-09-11
 - **Sincronização visível no AvantaVendas**: o cabeçalho mostra a rede riscada
   somente quando o aparelho está offline e apresenta a quantidade real de

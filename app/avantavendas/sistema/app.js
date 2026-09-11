@@ -2617,6 +2617,7 @@ function renderMenuMobile() {
   const aniversariantesHoje = aniversariosHojeVendas();
   const agendamentosHoje = agendamentosHojeVendas();
   const pendenciasVoz = solicitacoesVozPendentes();
+  const vozIndisponivel = estaSemRedeVendas();
   return `<section class="mobile-menu is-loading-images" aria-label="Menu principal" aria-busy="true">
     <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, true)}</div></header>
     ${pendenciasVoz.length ? `<button type="button" class="mobile-voice-pending-notice" onclick="abrirPendenciasSolicitacaoVoz()" aria-label="${pendenciasVoz.length} solicitação${pendenciasVoz.length === 1 ? '' : 'ões'} por voz pendente${pendenciasVoz.length === 1 ? '' : 's'}">
@@ -2634,14 +2635,14 @@ function renderMenuMobile() {
         <span><b>Deixe aqui suas sugestões</b><small>Ajude a melhorar o AvantaLab</small></span>
         <i aria-hidden="true">›</i>
       </button>
-      ${state.solicitacaoVozAtiva ? `<div class="mobile-voice-command-slot" id="voiceCommandSalaMount">
+      ${state.solicitacaoVozAtiva ? `<div class="mobile-voice-command-slot${vozIndisponivel ? ' is-offline' : ''}" id="voiceCommandSalaMount">
         <div class="mobile-voice-command-body">
-          <button type="button" class="mobile-voice-command-trigger" onclick="abrirSolicitacaoVozVendas(this)" aria-label="Iniciar solicitação por voz">
+          <button type="button" class="mobile-voice-command-trigger" onclick="abrirSolicitacaoVozVendas(this)" aria-label="${vozIndisponivel ? 'Solicitação por voz indisponível sem internet' : 'Iniciar solicitação por voz'}" ${vozIndisponivel ? 'disabled aria-describedby="voiceCommandOfflineHint"' : ''}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.4a3.9 3.9 0 0 0 3.9-3.9V6.4a3.9 3.9 0 1 0-7.8 0v5.1a3.9 3.9 0 0 0 3.9 3.9Z"/><path d="M5.7 10.9v.7a6.3 6.3 0 0 0 12.6 0v-.7M12 17.9V21M9.2 21h5.6"/></svg>
           </button>
-          <span class="mobile-voice-command-label">Solicitação por Voz</span>
+          <span class="mobile-voice-command-label">Solicitação por Voz${vozIndisponivel ? '<small id="voiceCommandOfflineHint">Indisponível sem internet</small>' : ''}</span>
         </div>
-        <button type="button" class="mobile-voice-command-help" onclick="alternarAjudaSolicitacaoVozVendas(this)" aria-label="Como usar a Solicitação por Voz" aria-expanded="false" aria-controls="voiceCommandHelp">
+        <button type="button" class="mobile-voice-command-help" onclick="alternarAjudaSolicitacaoVozVendas(this)" aria-label="Como usar a Solicitação por Voz" aria-expanded="false" aria-controls="voiceCommandHelp" ${vozIndisponivel ? 'disabled' : ''}>
           <span class="mobile-voice-command-help-symbol" aria-hidden="true"><i>i</i></span>
         </button>
         <aside class="mobile-voice-command-help-popover" id="voiceCommandHelp" role="status" hidden>
@@ -2655,6 +2656,11 @@ function renderMenuMobile() {
 
 let carregamentoSolicitacaoVozVendas = null;
 let limparFechamentoAjudaSolicitacaoVoz = null;
+
+function atualizarDisponibilidadeSolicitacaoVozVendas() {
+  if (estaSemRedeVendas()) window.AvantaVoiceActions?.close?.();
+  if (state.menuAberto) render();
+}
 
 function fecharAjudaSolicitacaoVozVendas(acionador, ajuda) {
   if (!ajuda || ajuda.hasAttribute('hidden')) return;
@@ -2857,6 +2863,10 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
 async function abrirSolicitacaoVozVendas(acionador = null, pendenciaId = '') {
   if (!state.solicitacaoVozAtiva) {
     toast('Ative a Solicitação por Voz em Configurações.');
+    return;
+  }
+  if (estaSemRedeVendas()) {
+    toast('Solicitação por Voz indisponível sem internet. Use os lançamentos manuais.');
     return;
   }
   try {
@@ -10352,12 +10362,17 @@ async function sincronizarAoReconectarVendas() {
 }
 
 window.addEventListener('online', () => {
+  atualizarDisponibilidadeSolicitacaoVozVendas();
   void sincronizarAoReconectarVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
   if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
 });
-window.addEventListener('offline', () => atualizarAcoesCabecalhoSistemaVendas());
+window.addEventListener('offline', () => {
+  atualizarAcoesCabecalhoSistemaVendas();
+  atualizarDisponibilidadeSolicitacaoVozVendas();
+});
 window.addEventListener('focus', () => {
   atualizarAcoesCabecalhoSistemaVendas();
+  atualizarDisponibilidadeSolicitacaoVozVendas();
   if (navigator.onLine) void sincronizarAoReconectarVendas().catch(() => undefined);
   if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
 });

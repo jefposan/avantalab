@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0.02 -->
+<!-- ava-version: 1.33.0.03 -->
+
+> Revisão 1.33.0.03: quando não houver internet, a **Solicitação por Voz** fica
+> cinza e indisponível para evitar transcrição ou execução incompleta. Use os
+> lançamentos manuais; a voz retorna automaticamente quando a conexão voltar.
 
 > Revisão 1.33.0.02: o cabeçalho mostra o ícone de rede riscada somente sem
 > conexão. Quando houver pedidos, clientes ou recebimentos aguardando envio,

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.02 -->
+<!-- ava-version: 1.33.0.03 -->
+
+> Revisão 1.33.0.03: a indisponibilidade da Solicitação por Voz sem internet
+> pertence ao AvantaVendas; sem impacto operacional adicional na Gestão Web.
 
 > Revisão 1.33.0.02: os indicadores de rede e sincronização pertencem ao
 > AvantaVendas; sem impacto operacional adicional na Gestão Web.
