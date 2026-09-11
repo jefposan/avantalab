@@ -10,7 +10,7 @@ Intenções permitidas:
 - create_appointment: criar agendamento na agenda do cliente;
 - query_customer_history: consultar histórico, saldo ou último pedido de cliente;
 - query_sales: consultar pedidos/vendas em today, this_month, last_month ou all;
-- unsupported: qualquer outra ação, inclusive despesa, nota fiscal, cadastro, edição e exclusão.
+- unsupported: qualquer outra ação, inclusive despesa, nota fiscal, cadastro, edição de registros já gravados e exclusão.
 
 Regras:
 - Extraia somente referências faladas. A aplicação pesquisará o banco depois.
@@ -24,13 +24,16 @@ Regras:
 - Entenda formulações naturais equivalentes: “faz”, “cria”, “lança”, “manda”, “separa” ou “deixa” podem indicar pedido quando vierem com cliente e produtos; “recebi”, “baixar”, “dar baixa”, “pagamento” ou “quitou” podem indicar register_payment quando vierem com valor. Sem produto ou quantidade, mantenha o rascunho e deixe a aplicação perguntar o dado ausente.
 - Não corrija silenciosamente um nome de cliente ou produto: mantenha a referência falada, mesmo se a dicção parecer próxima de outro nome. O resolvedor seguro do catálogo decide se é único ou pede uma escolha.
 - Preserve e complete o rascunho anterior quando a fala for uma resposta curta de esclarecimento.
+- Quando existir previous_draft, trate pedidos como “adicione”, “retire”, “troque”, “mude”, “corrija”, “aplique desconto” ou “altere a forma” como edição do rascunho ainda não confirmado, mantendo cliente e campos não mencionados. Não classifique essa continuação como unsupported.
 - Se houver candidatos anteriores, use a nova fala para tornar a referência mais específica, sem copiar IDs.
-- Para create_order, mantenha todos os itens já informados e acrescente/complemente os novos.
+- Para create_order e create_consignment, mantenha todos os itens já informados, acrescente os novos, atualize quantidades pedidas e retire somente um item explicitamente removido.
 - Quantidades e valores devem ser números positivos.
+- Desconto de pedido pode ser informado como valor ou percentual. Use discount_amount para reais e discount_percent para porcentagem, nunca os dois. “Tire/remova o desconto” deixa ambos null.
+- Na edição de register_payment, preserve o valor e a forma já informados quando não forem mencionados. O desconto pode ser valor ou percentual do saldo pendente e também exige confirmação posterior.
 - Em register_payment, extraia a forma de pagamento somente como Pix, Dinheiro, Cartão de crédito, Cartão de débito, Transferência ou Outro. Se não for dita, use null.
 - Em create_appointment, extraia cliente, data, horário, tipo e observação quando forem ditos. A data deve usar YYYY-MM-DD; use a data de referência fornecida no contexto para interpretar “hoje”, “amanhã”, dias da semana e datas relativas. Tipos permitidos: Visita, Entrega, Recebimento, Cobrar ou Outro. Sem tipo, use null; a aplicação assumirá Visita. Sem horário, use null. Nunca invente data.
 - Se o período não for dito em query_sales, use this_month.
-- Em unsupported, explique em uma frase curta qual ação ainda não está disponível por voz. Exemplo: “A edição de pedidos ainda não está disponível por voz.”
+- Em unsupported, explique em uma frase curta qual ação ainda não está disponível por voz. Edição do rascunho atual de pedido ou pagamento é permitida; edição de um registro já gravado continua indisponível.
 - Não transforme uma consulta em ação de escrita.`;
 
 type InterpretVoiceInput = {

@@ -27,8 +27,9 @@ type AvantaPreferencias = {
   servidor.
 - Ordem e visibilidade de cards usam identificadores estáveis, não títulos.
 - Tema e cor são recebidos pelo módulo; módulo plugado não cria tema paralelo.
-- A ativação de ações por voz é configuração funcional do módulo ou da empresa,
-  validada no servidor; ao desativar, o acionador desaparece sem remover dados.
+- A ativação de ações por voz é configuração funcional do módulo, da empresa ou
+  permissão individual, conforme o produto. Ela é validada no servidor; ao
+  desativar, acionador, ajuda e espaço reservado desaparecem sem remover dados.
 - Pendências de voz usam namespace versionado e isolado por sistema e empresa.
   Trocar o namespace exige migração compatível.
 

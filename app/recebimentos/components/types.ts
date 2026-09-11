@@ -110,6 +110,8 @@ export type Colaborador = {
   podeServicos: boolean;
   /** Permite criar agendamentos manuais de serviço no PWA. */
   podeAgendamentos: boolean;
+  /** Exibe e autoriza as ações por voz no rodapé do PWA. */
+  podeComandoVoz: boolean;
   ativo: boolean;
 };
 

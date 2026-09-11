@@ -1,6 +1,17 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.31.0.04 -->
+<!-- ava-version: 1.32.0.01 -->
+
+> Revisão 1.32.0.01: a propagação imediata da permissão individual pertence ao
+> PWA Operações de Campo e não altera a ativação do AvantaVendas.
+
+> Revisão 1.32.0: antes da confirmação, pedidos, consignados e pagamentos podem
+> ser editados no próprio card. O microfone permite complementar o rascunho,
+> inclusive com desconto em reais ou percentual; preços, saldo e totais são
+> recalculados no servidor e a ação volta para nova confirmação.
+
+> Revisão 1.31.0.05: a nova permissão individual de voz pertence ao PWA
+> Operações de Campo e não altera a ativação do AvantaVendas.
 
 > Revisão 1.31.0.04: quando a Solicitação por Voz recebe uma ação ainda não
 > implementada, como editar um pedido, informa que o comando não está disponível

@@ -60,6 +60,8 @@ export default function ColaboradorApp() {
   const [entrando, setEntrando] = useState(false);
   const [empresaId, setEmpresaId] = useState('');
   const [empresaNome, setEmpresaNome] = useState('');
+  const [colaboradorId, setColaboradorId] = useState('');
+  const [comandoVozPermitido, setComandoVozPermitido] = useState(false);
   const [repo, setRepo] = useState<RecebimentosRepo | null>(null);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [subempresas, setSubempresas] = useState<Subempresa[]>([]);
@@ -75,7 +77,7 @@ export default function ColaboradorApp() {
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/recebimentos-sw.js?v=11', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
+    navigator.serviceWorker.register('/recebimentos-sw.js?v=12', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -160,9 +162,12 @@ export default function ColaboradorApp() {
     const dados = await carregarDados(repoAtivo);
     const colaborador = dados.colaboradores.find((item) => item.id === sessao.user.id);
     if (!colaborador) throw new Error('Seu cadastro de colaborador não foi encontrado.');
+    const vozAutorizada = acesso.podeComandoVoz === true && colaborador.podeComandoVoz === true;
     const podeAbrirServicos = colaborador.podeServicos || colaborador.podeAgendamentos;
     if (!colaborador.podeRecebimentos && !podeAbrirServicos) throw new Error('Seu cadastro não possui acesso ativo a Recebimentos, Serviços ou Agendamento.');
     setOperacao(colaborador.podeRecebimentos && podeAbrirServicos ? 'seletor' : podeAbrirServicos ? 'servicos' : 'recebimentos');
+    setColaboradorId(sessao.user.id);
+    setComandoVozPermitido(vozAutorizada);
     setEmpresaId(empresa);
     setRepo(repoAtivo);
     setEstado('app');
@@ -184,7 +189,54 @@ export default function ColaboradorApp() {
     return () => { ativo = false; };
   }, [cliente, prepararSessao]);
 
-  useEffect(() => repo?.assinarAtualizacoes?.(() => { void carregarDados(repo); }), [repo, carregarDados]);
+  const revalidarPermissoes = useCallback(async () => {
+    if (!cliente || !empresaId || !colaboradorId || estado !== 'app') return;
+    const { data } = await cliente.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+    try {
+      const resposta = await fetch('/api/recebimentos/verificar-acesso', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ empresaId }),
+        cache: 'no-store',
+      });
+      const acesso = await resposta.json().catch(() => ({}));
+      if (!resposta.ok || acesso.indeterminado === true) return;
+      if (acesso.ativo === false) {
+        setComandoVozPermitido(false);
+        setEstado('bloqueado');
+        return;
+      }
+      setComandoVozPermitido(acesso.podeComandoVoz === true);
+      setColaboradores((atuais) => atuais.map((item) => item.id === colaboradorId
+        ? { ...item, podeComandoVoz: acesso.podeComandoVoz === true }
+        : item));
+    } catch {
+      // Em falha transitória, preserva o estado confirmado mais recente.
+    }
+  }, [cliente, colaboradorId, empresaId, estado]);
+
+  useEffect(() => repo?.assinarAtualizacoes?.(() => {
+    void carregarDados(repo).then((dados) => {
+      const atual = dados.colaboradores.find((item) => item.id === colaboradorId);
+      if (atual) setComandoVozPermitido(atual.podeComandoVoz === true);
+      void revalidarPermissoes();
+    }).catch(() => undefined);
+  }), [repo, carregarDados, colaboradorId, revalidarPermissoes]);
+
+  useEffect(() => {
+    if (estado !== 'app' || !empresaId || !colaboradorId) return;
+    const aoRetomar = () => { if (document.visibilityState === 'visible') void revalidarPermissoes(); };
+    const intervalo = window.setInterval(() => { void revalidarPermissoes(); }, 15000);
+    document.addEventListener('visibilitychange', aoRetomar);
+    window.addEventListener('focus', aoRetomar);
+    return () => {
+      window.clearInterval(intervalo);
+      document.removeEventListener('visibilitychange', aoRetomar);
+      window.removeEventListener('focus', aoRetomar);
+    };
+  }, [colaboradorId, empresaId, estado, revalidarPermissoes]);
 
   async function entrar() {
     setErro('');
@@ -215,7 +267,7 @@ export default function ColaboradorApp() {
 
   async function sair() {
     await cliente?.auth.signOut();
-    setRepo(null); setEmpresaId(''); setEmpresaNome(''); setEmpresas([]); setSubempresas([]); setColaboradores([]); setRecebimentos([]); setServicos([]); setOperacao('seletor');
+    setRepo(null); setEmpresaId(''); setEmpresaNome(''); setColaboradorId(''); setComandoVozPermitido(false); setEmpresas([]); setSubempresas([]); setColaboradores([]); setRecebimentos([]); setServicos([]); setOperacao('seletor');
     setEstado('login'); setErro('');
   }
 
@@ -321,7 +373,7 @@ export default function ColaboradorApp() {
     );
   }
 
-  const colaborador = colaboradores[0];
+  const colaborador = colaboradores.find((item) => item.id === colaboradorId);
   if (!colaborador || !repo || !empresaId || !cliente) return null;
   const podeAbrirServicos = colaborador.podeServicos || colaborador.podeAgendamentos;
   const podeTrocarOperacao = colaborador.podeRecebimentos && podeAbrirServicos;
@@ -345,7 +397,7 @@ export default function ColaboradorApp() {
     </main>
   );
   return (
-    <div className={`${styles.page} ${styles.pageComVoz}`}>
+    <div className={`${styles.page} ${comandoVozPermitido ? styles.pageComVoz : ''}`}>
       <div className={`${styles.topbar} ${styles.topbarColaborador}`}>
         <div className={styles.topbarInner}>
           <div className={styles.brand}>
@@ -363,7 +415,7 @@ export default function ColaboradorApp() {
           onReceberCobranca={(id, valor, obs, forma, arquivo, dataPagamento) => executar((r) => r.receberCobranca(id, valor, obs, forma, arquivo, dataPagamento))}
         /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} registroInicial={registroServicoVoz} onRegistroInicialConsumido={() => setRegistroServicoVoz(null)} onRegistrar={(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId) => executar((r) => r.registrarServico(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId))} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
       </div>
-      <footer className={styles.voiceActionBar} aria-label={`Ações por voz de ${operacao}`}>
+      {comandoVozPermitido && <footer className={styles.voiceActionBar} aria-label={`Ações por voz de ${operacao}`}>
         <OperacoesCampoVoiceDock
           key={operacao}
           mode={operacao}
@@ -381,7 +433,7 @@ export default function ColaboradorApp() {
           onAgendarServico={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))}
           onPrepararRegistroServico={(companyId, subcompanyId, serviceId) => setRegistroServicoVoz({ requestId: `${Date.now()}-${Math.random()}`, companyId, subcompanyId, serviceId })}
         />
-      </footer>
+      </footer>}
     </div>
   );
 }

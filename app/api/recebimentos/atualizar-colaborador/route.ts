@@ -31,6 +31,7 @@ export async function POST(request: Request) {
     const podeRecebimentos = corpo.podeRecebimentos !== false;
     const podeServicos = corpo.podeServicos === true;
     const podeAgendamentos = corpo.podeAgendamentos === true;
+    const podeComandoVoz = corpo.podeComandoVoz !== false;
     if (!empresaId || !colaboradorUserId) return respostaErro('Empresa ou colaborador não informado.');
     if (!validarNomeCompleto(nome)) return respostaErro('Informe o nome completo do colaborador, com nome e sobrenome.');
     if (!cpfValido(cpf)) return respostaErro('Informe um CPF válido.');
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
 
     const { error: erroAtualizacao } = await clientes.admin
       .from('recebimentos_colaboradores')
-      .update({ nome, cpf, celular, email: emailInterno, email_contato: emailContato, pode_recebimentos: podeRecebimentos, pode_servicos: podeServicos, pode_agendamentos: podeAgendamentos, ativo, atualizado_em: new Date().toISOString() })
+      .update({ nome, cpf, celular, email: emailInterno, email_contato: emailContato, pode_recebimentos: podeRecebimentos, pode_servicos: podeServicos, pode_agendamentos: podeAgendamentos, pode_comando_voz: podeComandoVoz, ativo, atualizado_em: new Date().toISOString() })
       .eq('empresa_id', empresaId)
       .eq('user_id', colaboradorUserId);
     if (erroAtualizacao) {

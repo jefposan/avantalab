@@ -451,6 +451,19 @@ function formatMoney(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
+function roundMoney(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+function resolveVoiceDiscount(draft: VoiceIntentPayload, base: number) {
+  const percent = draft.discountPercent == null ? null : Math.max(0, Math.min(100, Number(draft.discountPercent)));
+  const requested = percent == null ? Number(draft.discountAmount || 0) : base * percent / 100;
+  return {
+    amount: Math.min(Math.max(0, roundMoney(requested)), Math.max(0, roundMoney(base))),
+    percent,
+  };
+}
+
 function formatDate(value: unknown) {
   const date = new Date(String(value || ''));
   return Number.isNaN(date.getTime()) ? 'data não informada' : new Intl.DateTimeFormat('pt-BR').format(date);
@@ -793,14 +806,19 @@ export async function buildVoiceResponse(args: {
       selections,
     );
     const financial = await customerBalance(db, accountId, customer.id);
+    const discount = resolveVoiceDiscount(draft, financial.balance);
     const action: VoiceConfirmationAction = {
       operationId: crypto.randomUUID(), intent: 'register_payment', accountId,
       customerId: customer.id, customerName: customer.nome, items: [], amount: draft.amount,
+      discountAmount: discount.amount, discountPercent: discount.percent,
       expectedTotal: null, expectedBalance: financial.balance, paymentMethod: draft.paymentMethod,
       paymentDate: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
       voiceLearnings: voiceLearningsForAction(selections, customer.id),
     };
-    return { kind: 'confirmation', title: 'Registrar pagamento', message: `Cliente: ${customer.nome}\nValor: ${formatMoney(draft.amount)}\nForma: ${draft.paymentMethod}\nSaldo anterior: ${formatMoney(financial.balance)}\nSaldo após pagamento: ${formatMoney(Math.max(0, financial.balance - draft.amount))}`, action, selections, draft, transcription, metrics };
+    const discountText = discount.amount > 0
+      ? `\nDesconto${discount.percent == null ? '' : ` (${discount.percent}%)`}: ${formatMoney(discount.amount)}`
+      : '';
+    return { kind: 'confirmation', title: 'Registrar pagamento', message: `Cliente: ${customer.nome}\nValor: ${formatMoney(draft.amount)}\nForma: ${draft.paymentMethod}${discountText}\nSaldo anterior: ${formatMoney(financial.balance)}\nSaldo após pagamento: ${formatMoney(Math.max(0, financial.balance - draft.amount - discount.amount))}`, action, selections, draft, transcription, metrics };
   }
 
   if (draft.intent === 'create_appointment') {
@@ -809,6 +827,7 @@ export async function buildVoiceResponse(args: {
     const action: VoiceConfirmationAction = {
       operationId: crypto.randomUUID(), intent: 'create_appointment', accountId,
       customerId: customer.id, customerName: customer.nome, items: [], amount: null,
+      discountAmount: 0, discountPercent: null,
       expectedTotal: null, expectedBalance: null, paymentMethod: '', paymentDate: null,
       scheduledDate: draft.scheduledDate, scheduledTime: draft.scheduledTime,
       appointmentType, appointmentNotes: draft.appointmentNotes,
@@ -845,14 +864,20 @@ export async function buildVoiceResponse(args: {
     const unitPrice = Number(product.preco || 0);
     resolvedItems.push({ productId: product.id, name: product.nome, sku: product.sku || null, quantity: item.quantity, unitPrice, lineTotal: Math.round(unitPrice * item.quantity * 100) / 100 });
   }
-  const total = Math.round(resolvedItems.reduce((sum, item) => sum + item.lineTotal, 0) * 100) / 100;
+  const subtotal = roundMoney(resolvedItems.reduce((sum, item) => sum + item.lineTotal, 0));
+  const discount = resolveVoiceDiscount(draft, subtotal);
+  const total = roundMoney(subtotal - discount.amount);
   const action: VoiceConfirmationAction = {
     operationId: crypto.randomUUID(), intent: draft.intent === 'create_consignment' ? 'create_consignment' : 'create_order', accountId,
     customerId: customer.id, customerName: customer.nome, items: resolvedItems,
-    amount: null, expectedTotal: total, expectedBalance: null,
+    amount: null, discountAmount: discount.amount, discountPercent: discount.percent,
+    expectedTotal: total, expectedBalance: null,
     paymentMethod: draft.intent === 'create_consignment' ? 'Consignado' : 'Venda', paymentDate: null,
     voiceLearnings: voiceLearningsForAction(selections, customer.id, resolvedItems.map((item) => item.productId)),
   };
   const consignment = draft.intent === 'create_consignment';
-  return { kind: 'confirmation', title: consignment ? 'Criar consignado' : 'Criar pedido', message: `Cliente: ${customer.nome}\n${resolvedItems.map((item) => `${item.name} — ${item.quantity} × ${formatMoney(item.unitPrice)}`).join('\n')}\n${consignment ? 'Total consignado' : 'Total'}: ${formatMoney(total)}`, action, selections, draft, transcription, metrics };
+  const totals = discount.amount > 0
+    ? `Subtotal: ${formatMoney(subtotal)}\nDesconto${discount.percent == null ? '' : ` (${discount.percent}%)`}: ${formatMoney(discount.amount)}\n${consignment ? 'Total consignado' : 'Total'}: ${formatMoney(total)}`
+    : `${consignment ? 'Total consignado' : 'Total'}: ${formatMoney(total)}`;
+  return { kind: 'confirmation', title: consignment ? 'Criar consignado' : 'Criar pedido', message: `Cliente: ${customer.nome}\n${resolvedItems.map((item) => `${item.name} — ${item.quantity} × ${formatMoney(item.unitPrice)}`).join('\n')}\n${totals}`, action, selections, draft, transcription, metrics };
 }

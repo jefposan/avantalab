@@ -30,6 +30,10 @@ function validateAction(value: unknown): VoiceConfirmationAction | null {
   if (!Array.isArray(action.items) || action.items.length > 20) return null;
   if (['create_order', 'create_consignment'].includes(action.intent) && (!action.items.length || action.items.some((item) => !UUID.test(String(item.productId || '')) || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))) return null;
   if (action.intent === 'register_payment' && (!Number.isFinite(Number(action.amount)) || Number(action.amount) <= 0)) return null;
+  const discountAmount = Number(action.discountAmount || 0);
+  const discountPercent = action.discountPercent == null ? null : Number(action.discountPercent);
+  if (!Number.isFinite(discountAmount) || discountAmount < 0) return null;
+  if (discountPercent !== null && (!Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100)) return null;
   if (action.intent === 'create_appointment') {
     if (!validIsoDate(action.scheduledDate)) return null;
     if (action.scheduledTime && !CLOCK_TIME.test(String(action.scheduledTime))) return null;
@@ -45,7 +49,14 @@ function validateAction(value: unknown): VoiceConfirmationAction | null {
         : [];
     })
     : [];
-  return { ...action, voiceLearnings };
+  return { ...action, discountAmount: Math.round(discountAmount * 100) / 100, discountPercent, voiceLearnings };
+}
+
+function confirmedDiscount(action: VoiceConfirmationAction, base: number) {
+  const requested = action.discountPercent == null
+    ? Number(action.discountAmount || 0)
+    : base * Number(action.discountPercent) / 100;
+  return Math.min(Math.max(0, Math.round(requested * 100) / 100), Math.max(0, Math.round(base * 100) / 100));
 }
 
 async function confirmVoiceLearnings(
@@ -151,12 +162,15 @@ export async function POST(request: Request) {
           desconto: 0, total: Math.round(quantity * unitPrice * 100) / 100,
         };
       });
-      const total = Math.round(items.reduce((sum, item) => sum + item.total, 0) * 100) / 100;
+      const subtotal = Math.round(items.reduce((sum, item) => sum + item.total, 0) * 100) / 100;
+      const discount = confirmedDiscount(action, subtotal);
+      const total = Math.round((subtotal - discount) * 100) / 100;
+      if (moneyCents(discount) !== moneyCents(action.discountAmount)) return NextResponse.json({ message: 'O desconto mudou. Revise e confirme o pedido novamente.' }, { status: 409 });
       if (moneyCents(total) !== moneyCents(action.expectedTotal)) return NextResponse.json({ message: 'O preço de um produto mudou. Revise e confirme o pedido novamente.' }, { status: 409 });
       const order = {
         id: action.operationId, conta_id: accountId, cliente_id: customer.id, status: 'concluida',
-        subtotal: total, desconto: 0, total, forma_pagamento: consignment ? 'Consignado' : 'Venda',
-        observacoes: JSON.stringify({ avantalab_pedido: true, tipo: consignment ? 'consignado' : 'venda', descricao: consignment ? 'Pedido consignado' : 'Pedido de venda', origem: 'solicitacao_por_voz' }), criado_em: new Date().toISOString(),
+        subtotal, desconto: discount, total, forma_pagamento: consignment ? 'Consignado' : 'Venda',
+        observacoes: JSON.stringify({ avantalab_pedido: true, tipo: consignment ? 'consignado' : 'venda', descricao: consignment ? 'Pedido consignado' : 'Pedido de venda', desconto_tipo: action.discountPercent == null ? 'valor' : 'percentual', desconto_percentual: action.discountPercent || 0, origem: 'solicitacao_por_voz' }), criado_em: new Date().toISOString(),
       };
       const { data, error } = await context.db.rpc('salvar_pedido_vendas_mobile_rpc', { p_pedido: order, p_itens: items, p_novo: true });
       if (error) throw new Error(error.message || 'O pedido não pôde ser criado.');
@@ -193,24 +207,28 @@ export async function POST(request: Request) {
     const financial = await customerBalance(context.db, accountId, customer.id);
     if (moneyCents(financial.balance) !== moneyCents(action.expectedBalance)) return NextResponse.json({ message: 'O saldo do cliente mudou. Revise e confirme o pagamento novamente.' }, { status: 409 });
     const amount = Math.round(Number(action.amount) * 100) / 100;
-    const finalBalance = Math.max(0, Math.round((financial.balance - amount) * 100) / 100);
+    const discount = confirmedDiscount(action, financial.balance);
+    if (moneyCents(discount) !== moneyCents(action.discountAmount)) return NextResponse.json({ message: 'O desconto mudou. Revise e confirme o pagamento novamente.' }, { status: 409 });
+    const finalBalance = Math.max(0, Math.round((financial.balance - amount - discount) * 100) / 100);
     const paymentDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
     const payload = {
       id: action.operationId, user_id: context.userId, conta_id: accountId, cliente_id: customer.id,
-      tipo: 'pagamento', forma_pagamento: action.paymentMethod || 'Pix', valor: amount, desconto: 0,
+      tipo: 'pagamento', forma_pagamento: action.paymentMethod || 'Pix', valor: amount, desconto: discount,
       saldo_anterior: financial.balance, saldo_final: finalBalance, data_pagamento: paymentDate,
-      observacoes: JSON.stringify({ avantalab_pagamento: true, comprovante_financeiro_confirmado: true, desconto: 0, saldo_anterior: financial.balance, saldo_final: finalBalance, origem: 'laboratorio_solicitacao_voz' }),
+      observacoes: JSON.stringify({ avantalab_pagamento: true, comprovante_financeiro_confirmado: true, desconto: discount, desconto_tipo: action.discountPercent == null ? 'valor' : 'percentual', desconto_percentual: action.discountPercent || 0, saldo_anterior: financial.balance, saldo_final: finalBalance, origem: 'solicitacao_por_voz' }),
     };
     const { data, error } = await context.db.from('vendas_mobile_pagamentos').upsert(payload, { onConflict: 'id' }).select().single();
     if (error) throw new Error(error.message || 'O pagamento não pôde ser registrado.');
-    if (!data?.id || data.cliente_id !== customer.id || moneyCents(data.valor) !== moneyCents(amount)) throw new Error('O servidor não confirmou o pagamento integralmente.');
+    if (!data?.id || data.cliente_id !== customer.id || moneyCents(data.valor) !== moneyCents(amount) || moneyCents(data.desconto) !== moneyCents(discount)) throw new Error('O servidor não confirmou o pagamento integralmente.');
     const { data: verifiedPayment, error: verificationError } = await context.db.from('vendas_mobile_pagamentos')
-      .select('id,conta_id,cliente_id,tipo,valor,data_pagamento,criado_em')
+      .select('id,conta_id,cliente_id,tipo,valor,desconto,saldo_final,data_pagamento,criado_em')
       .eq('conta_id', accountId).eq('id', data.id).maybeSingle();
     if (verificationError || !verifiedPayment
       || verifiedPayment.cliente_id !== customer.id
       || verifiedPayment.tipo !== 'pagamento'
-      || moneyCents(verifiedPayment.valor) !== moneyCents(amount)) {
+      || moneyCents(verifiedPayment.valor) !== moneyCents(amount)
+      || moneyCents(verifiedPayment.desconto) !== moneyCents(discount)
+      || moneyCents(verifiedPayment.saldo_final) !== moneyCents(finalBalance)) {
       throw new Error('O pagamento foi enviado, mas o servidor não conseguiu conferir sua gravação. Consulte os pagamentos antes de tentar novamente.');
     }
     await confirmVoiceLearnings(context.db, action);

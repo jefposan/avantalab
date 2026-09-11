@@ -1,5 +1,20 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.13.0 - 2026-09-11
+
+- O card de confirmação pode abrir edição por voz sem perder o rascunho nem
+  deslocar o microfone para fora do painel.
+- Alterações faladas voltam obrigatoriamente à validação e a uma nova
+  confirmação. Valores derivados, como descontos e totais, são recalculados
+  pela camada oficial do sistema com dados atuais.
+
+## 1.12.2 - 2026-09-11
+
+- A liberação de ações por voz pode ser restringida por usuário quando o
+  produto exigir controle individual, sempre com validação no servidor.
+- Ao retirar a permissão, acionador, ajuda e faixa reservada desaparecem sem
+  apagar dados nem alterar as demais permissões operacionais.
+
 ## 1.12.1 - 2026-09-11
 
 - Respostas de consulta e comandos não suportados passam a usar um card

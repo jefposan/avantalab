@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.31.0.04 -->
+<!-- ava-version: 1.32.0.01 -->
+
+> Revisão 1.32.0.01: no PWA Operações de Campo, desativar **Comando por voz**
+> remove integralmente botão, ajuda, faixa inferior e espaço reservado em
+> Recebimentos e Serviços. Reativar devolve a estrutura sem novo login; a
+> permissão é relida ao retomar o app e também por atualização em tempo real.
+
+> Revisão 1.32.0: a edição de rascunhos no comando por voz pertence ao
+> AvantaVendas; sem impacto operacional adicional na Gestão Mobile.
+
+> Revisão 1.31.0.05: a permissão individual de Comando por voz é administrada
+> na Gestão Web. No PWA Operações de Campo, a faixa de voz aparece somente para
+> colaboradores autorizados; os demais fluxos continuam disponíveis conforme
+> suas próprias permissões.
 
 > Revisão 1.31.0.04: a correção de comandos não suportados pertence ao
 > AvantaVendas e não altera o fluxo da Gestão Mobile.

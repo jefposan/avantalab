@@ -21,6 +21,8 @@ export type VoiceIntentPayload = {
   items: VoiceIntentItem[];
   amount: number | null;
   paymentMethod: string | null;
+  discountAmount: number | null;
+  discountPercent: number | null;
   scheduledDate: string | null;
   scheduledTime: string | null;
   appointmentType: 'Visita' | 'Entrega' | 'Recebimento' | 'Cobrar' | 'Outro' | null;
@@ -58,6 +60,8 @@ export type VoiceConfirmationAction = {
   customerName: string;
   items: VoiceResolvedItem[];
   amount: number | null;
+  discountAmount: number;
+  discountPercent: number | null;
   expectedTotal: number | null;
   expectedBalance: number | null;
   paymentMethod: string;
@@ -113,6 +117,8 @@ export const EMPTY_VOICE_INTENT: VoiceIntentPayload = {
   items: [],
   amount: null,
   paymentMethod: null,
+  discountAmount: null,
+  discountPercent: null,
   scheduledDate: null,
   scheduledTime: null,
   appointmentType: null,

@@ -4,7 +4,7 @@
   // Implementação executável oficial do PADRÃO AVANTA para ações por voz.
   // Adaptadores de produto fornecem dados e execução; este componente controla
   // captura, estados, desambiguação, confirmação e continuidade da solicitação.
-  const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.3.1';
+  const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.4.0';
 
   const DEFAULT_SESSION_PREFIX = 'avantalab.voice_actions.official.v1';
   const MAX_RECORDING_MS = 45000;
@@ -13,7 +13,7 @@
     recorder: null, stream: null, chunks: [], requestAbort: null, requestStage: null, pendingId: null, timer: 0,
     audioContext: null, analyser: null, source: null, frame: 0, canvas: null,
     noiseFloor: 0.012, lastVoiceActive: null, canvasSize: 0,
-    inlineClarification: false,
+    inlineClarification: false, inlineEdit: false,
     catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogTimer: 0, catalogRequestId: 0,
     editDraft: null, editSelections: [],
   };
@@ -23,7 +23,7 @@
     *{box-sizing:border-box}button,input{font:inherit}.dock{position:static;width:0;height:0;overflow:visible;text-align:center}.dock>.capture{position:absolute;top:0;left:0;margin:0;transform:translate(-50%,-50%)}.dock>strong{position:absolute;top:49px;left:0;width:240px;color:#35536c;font-size:12px;line-height:1.2;transform:translateX(-50%)}.overlay{position:fixed;inset:0;z-index:var(--vendas-layer-modal,100000);background:rgba(3,18,34,.58);display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(110px,calc(env(safe-area-inset-bottom) + 92px)) max(12px,env(safe-area-inset-left));-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
     .panel{position:relative;width:min(100%,440px);max-height:calc(100svh - max(132px,calc(env(safe-area-inset-bottom) + 108px)));overflow:hidden;border:1px solid rgba(219,229,239,.95);border-radius:18px;background:#fff;box-shadow:0 18px 42px rgba(15,42,80,.28);overscroll-behavior:contain}.close{position:absolute;z-index:2;top:14px;right:14px;width:44px;height:44px;border:0;border-radius:50%;background:#eaf3f8;color:#173b5d;font-size:25px;cursor:pointer}
     .capture{position:relative;width:142px;height:142px;display:grid;place-items:center;margin:0 auto;overflow:visible}.capture.small{width:132px;height:132px;margin:8px auto 0}.visualizer{position:absolute;inset:-45px;width:calc(100% + 90px);height:calc(100% + 90px);pointer-events:none;overflow:visible}.voice{position:relative;z-index:1;width:88px;height:88px;border:0;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 36% 30%,#2498de,#07518b 72%);box-shadow:0 12px 27px rgba(4,70,123,.30);color:#fff;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.dock .voice{width:84px;height:84px}.small .voice{width:82px;height:82px}.voice.listening,.voice.cancelling{background:radial-gradient(circle at 36% 30%,#f36a72,#c51e32 72%);box-shadow:0 14px 34px rgba(191,27,48,.42)}.voice.cancelling::after{content:'';position:absolute;inset:-8px;border:2px solid rgba(211,37,57,.22);border-top-color:#e23f51;border-right-color:#f18a93;border-radius:50%;pointer-events:none;animation:processing-ring 1s linear infinite}.voice:disabled{opacity:.8;cursor:wait}.mic,.cancel-icon{width:38px;height:38px}.cancel-icon{position:relative;z-index:1}.dock .mic,.dock .cancel-icon{width:36px;height:36px}.small .mic,.small .cancel-icon{width:34px;height:34px}.mic svg,.cancel-icon svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.stop{width:27px;height:27px;border-radius:7px;background:#fff}.small .stop{width:25px;height:25px}.spinner{width:32px;height:32px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@keyframes processing-ring{to{transform:rotate(360deg)}}
-    .card{margin:0;max-height:inherit;border-radius:18px;padding:22px;background:#fff;box-shadow:none}.card h2{margin:0 52px 14px 0;color:#0A1F44;font-size:21px;line-height:1.2;letter-spacing:-.025em}.summary{margin:0;color:#36516d;font-size:16px;line-height:1.5;white-space:pre-line}.candidates,.catalog-results{display:grid;gap:9px;max-height:min(34svh,300px);margin:16px 0;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}.candidates.compact{gap:7px;max-height:none;margin:12px 0;overflow:visible;padding-right:0}.candidate{width:100%;border:1px solid #d7e2eb;border-radius:12px;padding:13px;text-align:left;background:#f8fbfe;color:#17324d;cursor:pointer}.candidates.compact .candidate{display:grid;min-height:44px;align-content:center;padding:7px 12px}.candidates.compact .candidate small{margin-top:2px;font-size:12px}.candidate strong,.candidate small{display:block}.candidate strong{font-size:16px}.candidate small{margin-top:4px;color:#60758a;line-height:1.35}.helper{min-height:2.7em;display:flex;align-items:center;justify-content:center;text-align:center;color:#667a8d;font-size:13px;line-height:1.35;margin:2px 0 10px}.actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:18px}.actions.single{grid-template-columns:1fr}.primary,.secondary,.text{min-height:48px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer}.primary{border:1px solid #1687D9;background:#1687D9;color:#fff;box-shadow:0 6px 15px rgba(22,135,217,.24)}.secondary{border:1px solid #9fb7ca;background:#f8fbfe;color:#17324d}.text{width:100%;border:0;background:transparent;color:#526b80}.save-later{display:block;min-height:44px;margin:12px auto 0;border:1px solid #bdd3e2;border-radius:999px;padding:10px 18px;background:#f5fafc;color:#244a69;font-weight:800;cursor:pointer}.catalog-search{width:100%;min-height:48px;border:1px solid #b9cede;border-radius:12px;padding:10px 13px;color:#17324d;background:#fff;font-size:16px}.catalog-empty{margin:14px 0;color:#60758a;text-align:center}.edit-items{display:grid;gap:9px;margin:14px 0}.edit-item{display:grid;grid-template-columns:minmax(0,1fr) 78px 42px;gap:8px;align-items:center;border:1px solid #d7e2eb;border-radius:12px;padding:10px;background:#f8fbfe}.edit-item strong{min-width:0;font-size:14px;line-height:1.25}.edit-quantity{min-height:42px;width:100%;border:1px solid #b9cede;border-radius:10px;padding:7px;text-align:center;color:#17324d;background:#fff}.edit-remove{width:42px;height:42px;border:0;border-radius:10px;background:#ffe8ea;color:#b51f31;font-size:20px;cursor:pointer}.result{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#dff7e8;color:#187544;font-weight:1000;font-size:23px;margin-bottom:12px}.error .result{background:#ffe5e6;color:#b51f31}.proof{margin-top:14px;border:1px solid #d7e8f2;border-radius:12px;padding:14px;background:#f2f9fd}.proof header{display:flex;justify-content:space-between;gap:10px;align-items:center}.badge{font-size:10px;font-weight:900;text-transform:uppercase;color:#187544}.proof dl{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;margin:12px 0 0;font-size:13px}.proof dt{color:#61758a}.proof dd{margin:0;text-align:right;font-weight:800;overflow-wrap:anywhere}
+    .card{margin:0;max-height:inherit;border-radius:18px;padding:22px;background:#fff;box-shadow:none}.card h2{margin:0 52px 14px 0;color:#0A1F44;font-size:21px;line-height:1.2;letter-spacing:-.025em}.summary{margin:0;color:#36516d;font-size:16px;line-height:1.5;white-space:pre-line}.candidates,.catalog-results{display:grid;gap:9px;max-height:min(34svh,300px);margin:16px 0;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}.candidates.compact{gap:7px;max-height:none;margin:12px 0;overflow:visible;padding-right:0}.candidate{width:100%;border:1px solid #d7e2eb;border-radius:12px;padding:13px;text-align:left;background:#f8fbfe;color:#17324d;cursor:pointer}.candidates.compact .candidate{display:grid;min-height:44px;align-content:center;padding:7px 12px}.candidates.compact .candidate small{margin-top:2px;font-size:12px}.candidate strong,.candidate small{display:block}.candidate strong{font-size:16px}.candidate small{margin-top:4px;color:#60758a;line-height:1.35}.helper{min-height:2.7em;display:flex;align-items:center;justify-content:center;text-align:center;color:#667a8d;font-size:13px;line-height:1.35;margin:2px 0 10px}.actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:18px}.actions.single{grid-template-columns:1fr}.primary,.secondary,.text{min-height:48px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer}.primary{border:1px solid #1687D9;background:#1687D9;color:#fff;box-shadow:0 6px 15px rgba(22,135,217,.24)}.secondary{border:1px solid #9fb7ca;background:#f8fbfe;color:#17324d}.text{width:100%;border:0;background:transparent;color:#526b80}.save-later{display:block;min-height:44px;margin:12px auto 0;border:1px solid #bdd3e2;border-radius:999px;padding:10px 18px;background:#f5fafc;color:#244a69;font-weight:800;cursor:pointer}.catalog-search,.edit-field{width:100%;min-height:46px;border:1px solid #b9cede;border-radius:12px;padding:9px 12px;color:#17324d;background:#fff;font-size:16px}.catalog-empty{margin:14px 0;color:#60758a;text-align:center}.edit-items{display:grid;gap:9px;margin:14px 0}.edit-item{display:grid;grid-template-columns:minmax(0,1fr) 78px 42px;gap:8px;align-items:center;border:1px solid #d7e2eb;border-radius:12px;padding:10px;background:#f8fbfe}.edit-item strong{min-width:0;font-size:14px;line-height:1.25}.edit-quantity{min-height:42px;width:100%;border:1px solid #b9cede;border-radius:10px;padding:7px;text-align:center;color:#17324d;background:#fff}.edit-remove{width:42px;height:42px;border:0;border-radius:10px;background:#ffe8ea;color:#b51f31;font-size:20px;cursor:pointer}.edit-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}.edit-fields label{display:grid;gap:5px;color:#526b80;font-size:12px;font-weight:800}.edit-voice{margin-top:10px;padding-top:8px;border-top:1px solid #e4edf4}.edit-voice .helper{margin-bottom:0}.result{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#dff7e8;color:#187544;font-weight:1000;font-size:23px;margin-bottom:12px}.error .result{background:#ffe5e6;color:#b51f31}.proof{margin-top:14px;border:1px solid #d7e8f2;border-radius:12px;padding:14px;background:#f2f9fd}.proof header{display:flex;justify-content:space-between;gap:10px;align-items:center}.badge{font-size:10px;font-weight:900;text-transform:uppercase;color:#187544}.proof dl{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;margin:12px 0 0;font-size:13px}.proof dt{color:#61758a}.proof dd{margin:0;text-align:right;font-weight:800;overflow-wrap:anywhere}
     @media(max-width:520px){.overlay{place-items:center;padding:max(12px,env(safe-area-inset-top)) 12px max(104px,calc(env(safe-area-inset-bottom) + 88px))}.panel{width:100%;max-height:calc(100svh - max(126px,calc(env(safe-area-inset-bottom) + 104px)));border-radius:18px}.card{padding:20px}.candidates,.catalog-results{max-height:min(32svh,260px)}.dock .voice{width:80px;height:80px}}
     @media(prefers-reduced-motion:reduce){.spinner{animation-duration:1.6s}.voice.cancelling::after{animation:none}}
     /* A superfície de desenho é bem maior que a onda real: ela nunca revela
@@ -238,10 +238,13 @@
     resetCatalog(); render();
   }
 
-  function beginOrderEdit() {
-    if (state.current?.kind !== 'confirmation' || !['create_order', 'create_consignment'].includes(state.current.action?.intent)) return;
+  function beginEdit() {
+    if (state.current?.kind !== 'confirmation' || !['create_order', 'create_consignment', 'register_payment'].includes(state.current.action?.intent)) return;
     state.editDraft = cloneDraft(state.current.draft);
+    state.editDraft.discountAmount ??= null;
+    state.editDraft.discountPercent ??= null;
     state.editSelections = Array.isArray(state.current.selections) ? [...state.current.selections] : [];
+    state.inlineEdit = false;
     render();
   }
 
@@ -260,17 +263,44 @@
     render();
   }
 
-  async function applyOrderEdit() {
+  function editNumber(value) {
+    const number = Number(String(value || '').replace(',', '.'));
+    return Number.isFinite(number) && number >= 0 ? number : 0;
+  }
+
+  function updateEditDiscountMode(value) {
+    if (!state.editDraft) return;
+    if (value === 'percent') {
+      state.editDraft.discountPercent = state.editDraft.discountPercent ?? 0;
+      state.editDraft.discountAmount = null;
+    } else if (value === 'amount') {
+      state.editDraft.discountAmount = state.editDraft.discountAmount ?? 0;
+      state.editDraft.discountPercent = null;
+    } else {
+      state.editDraft.discountAmount = null;
+      state.editDraft.discountPercent = null;
+    }
+    render();
+  }
+
+  function updateEditDiscount(value) {
+    if (!state.editDraft) return;
+    if (state.editDraft.discountPercent != null) state.editDraft.discountPercent = Math.min(100, editNumber(value));
+    else state.editDraft.discountAmount = editNumber(value);
+  }
+
+  async function applyEdit() {
     const previous = state.current; const manualDraft = cloneDraft(state.editDraft);
-    if (!previous?.draft || !manualDraft || !Array.isArray(manualDraft.items)) { render(); return; }
-    state.editDraft = null; setPhase('processing');
+    if (!previous?.draft || !manualDraft || !['create_order', 'create_consignment', 'register_payment'].includes(manualDraft.intent)) { render(); return; }
+    state.inlineEdit = true; setPhase('processing');
     try {
       const result = await requestVoice('process', 'process', {
-        transcription: 'Edição manual do pedido.', previousDraft: previous.draft, manualDraft, manualEdit: true, selections: state.editSelections,
+        transcription: 'Edição manual da solicitação.', previousDraft: previous.draft, manualDraft, manualEdit: true, selections: state.editSelections,
       });
+      state.editDraft = null; state.editSelections = []; state.inlineEdit = false;
       state.current = result;
-      setPhase(result.kind === 'clarification' ? 'clarification' : result.kind === 'confirmation' ? 'confirmation' : 'done');
-    } catch (error) { if (!wasCancelled(error)) setPhase('error', error instanceof Error ? error.message : 'Não foi possível atualizar o pedido.'); }
+      setPhase(result.kind === 'clarification' ? 'clarification' : result.kind === 'confirmation' ? 'confirmation' : 'response');
+    } catch (error) { if (!wasCancelled(error)) setPhase('error', error instanceof Error ? error.message : 'Não foi possível atualizar a solicitação.'); }
   }
 
   function ensureMount() {
@@ -334,20 +364,53 @@
     card.append(actions); panel.append(card);
   }
 
-  function renderOrderEditor(panel) {
+  function editField(label, control) {
+    const wrapper = el('label'); wrapper.append(el('span', '', label), control); return wrapper;
+  }
+
+  function renderEditor(panel) {
     const card = el('section', 'card'); const draft = state.editDraft;
-    card.append(el('h2', '', 'Editar pedido'), el('p', 'summary', `Cliente: ${state.current?.action?.customerName || draft?.customerReference || ''}`));
-    const items = el('div', 'edit-items');
-    (draft?.items || []).forEach((item, index) => {
-      const row = el('div', 'edit-item'); const quantity = el('input', 'edit-quantity');
-      quantity.type = 'number'; quantity.min = '0.01'; quantity.step = 'any'; quantity.inputMode = 'decimal'; quantity.value = String(item.quantity || 1);
-      quantity.setAttribute('aria-label', `Quantidade de ${item.productReference}`);
-      quantity.addEventListener('input', () => updateEditQuantity(index, quantity.value));
-      row.append(el('strong', '', item.productReference), quantity, button('×', 'edit-remove', () => removeEditItem(index)));
-      items.append(row);
+    const payment = draft?.intent === 'register_payment';
+    card.append(el('h2', '', payment ? 'Editar pagamento' : 'Editar pedido'), el('p', 'summary', `Cliente: ${state.current?.action?.customerName || draft?.customerReference || ''}`));
+    if (!payment) {
+      const items = el('div', 'edit-items');
+      (draft?.items || []).forEach((item, index) => {
+        const row = el('div', 'edit-item'); const quantity = el('input', 'edit-quantity');
+        quantity.type = 'number'; quantity.min = '0.01'; quantity.step = 'any'; quantity.inputMode = 'decimal'; quantity.value = String(item.quantity || 1);
+        quantity.setAttribute('aria-label', `Quantidade de ${item.productReference}`);
+        quantity.addEventListener('input', () => updateEditQuantity(index, quantity.value));
+        row.append(el('strong', '', item.productReference), quantity, button('×', 'edit-remove', () => removeEditItem(index)));
+        items.append(row);
+      });
+      card.append(items, button('Adicionar produto do catálogo', 'secondary', () => openProductCatalog('edit')));
+    }
+    const fields = el('div', 'edit-fields');
+    if (payment) {
+      const amount = el('input', 'edit-field'); amount.type = 'number'; amount.min = '0.01'; amount.step = '0.01'; amount.inputMode = 'decimal'; amount.value = String(draft?.amount || '');
+      amount.addEventListener('input', () => { if (state.editDraft) state.editDraft.amount = editNumber(amount.value); });
+      const method = el('select', 'edit-field');
+      ['Pix', 'Dinheiro', 'Cartão de crédito', 'Cartão de débito', 'Transferência', 'Outro'].forEach((value) => { const option = el('option', '', value); option.value = value; option.selected = value === draft?.paymentMethod; method.append(option); });
+      method.addEventListener('change', () => { if (state.editDraft) state.editDraft.paymentMethod = method.value; });
+      fields.append(editField('Valor recebido', amount), editField('Forma', method));
+    }
+    const discountMode = el('select', 'edit-field');
+    [['none', 'Sem desconto'], ['percent', 'Desconto em %'], ['amount', 'Desconto em R$']].forEach(([value, label]) => {
+      const option = el('option', '', label); option.value = value;
+      option.selected = value === (draft?.discountPercent != null ? 'percent' : draft?.discountAmount != null ? 'amount' : 'none'); discountMode.append(option);
     });
-    card.append(items, button('Adicionar produto do catálogo', 'secondary', () => openProductCatalog('edit')));
-    const actions = el('div', 'actions'); actions.append(button('Cancelar', 'secondary', () => { state.editDraft = null; state.editSelections = []; render(); }), button('Atualizar pedido', 'primary', applyOrderEdit));
+    discountMode.addEventListener('change', () => updateEditDiscountMode(discountMode.value));
+    const discount = el('input', 'edit-field'); discount.type = 'number'; discount.min = '0'; discount.step = '0.01'; discount.inputMode = 'decimal';
+    discount.value = String(draft?.discountPercent ?? draft?.discountAmount ?? 0); discount.disabled = draft?.discountPercent == null && draft?.discountAmount == null;
+    discount.setAttribute('aria-label', 'Valor do desconto'); discount.addEventListener('input', () => updateEditDiscount(discount.value));
+    fields.append(editField('Tipo de desconto', discountMode), editField(draft?.discountPercent != null ? 'Percentual' : 'Valor do desconto', discount));
+    card.append(fields);
+    const voice = el('div', 'edit-voice');
+    const helper = state.phase === 'recording' ? 'Ouvindo… toque para encerrar.'
+      : ['transcribing', 'processing'].includes(state.phase) ? cancellationHint()
+        : `Fale o que deseja alterar${payment ? ' no pagamento' : ' no pedido'}.`;
+    voice.append(el('p', 'helper', helper), voiceControl(true)); card.append(voice);
+    const actions = el('div', 'actions');
+    actions.append(button('Cancelar edição', 'secondary', () => { state.editDraft = null; state.editSelections = []; state.inlineEdit = false; setPhase('confirmation'); }), button('Atualizar', 'primary', applyEdit));
     card.append(actions); panel.append(card);
   }
 
@@ -358,7 +421,11 @@
     const inlineClarification = state.inlineClarification
       && state.current?.kind === 'clarification'
       && ['recording', 'transcribing', 'processing'].includes(state.phase);
-    if (['idle', 'recording', 'transcribing', 'processing'].includes(state.phase) && !inlineClarification) {
+    const inlineEdit = state.inlineEdit
+      && state.editDraft
+      && state.current?.kind === 'confirmation'
+      && ['recording', 'transcribing', 'processing'].includes(state.phase);
+    if (['idle', 'recording', 'transcribing', 'processing'].includes(state.phase) && !inlineClarification && !inlineEdit) {
       const dock = el('section', 'dock');
       const body = el('div', 'voice-body');
       dock.setAttribute('aria-live', 'polite');
@@ -376,6 +443,10 @@
 
     if (state.catalogMode) {
       renderCatalogPicker(panel); overlay.append(panel); state.root.append(overlay); return;
+    }
+
+    if ((state.phase === 'confirmation' || inlineEdit) && state.current?.kind === 'confirmation' && state.editDraft) {
+      renderEditor(panel); overlay.append(panel); state.root.append(overlay); return;
     }
 
     if ((state.phase === 'clarification' || inlineClarification) && state.current?.kind === 'clarification') {
@@ -407,12 +478,9 @@
     }
 
     if (state.phase === 'confirmation' && state.current?.kind === 'confirmation') {
-      if (state.editDraft) {
-        renderOrderEditor(panel); overlay.append(panel); state.root.append(overlay); return;
-      }
       const card = el('section', 'card'); card.append(el('h2', '', state.current.title), el('p', 'summary', state.current.message));
       const actions = el('div', 'actions'); actions.append(button('Cancelar', 'secondary', cancel), button('Confirmar', 'primary', execute)); card.append(actions);
-      if (['create_order', 'create_consignment'].includes(state.current.action?.intent)) card.append(button('Editar pedido', 'text', beginOrderEdit));
+      if (['create_order', 'create_consignment', 'register_payment'].includes(state.current.action?.intent)) card.append(button(state.current.action.intent === 'register_payment' ? 'Editar pagamento' : 'Editar pedido', 'text', beginEdit));
       if (state.options?.allowSaveForLater !== false) card.append(button('Salvar para depois', 'save-later', saveForLater));
       panel.append(card);
     }
@@ -435,7 +503,7 @@
 
     if (state.phase === 'error') {
       const card = el('section', 'card error'); card.setAttribute('role', 'alert'); card.append(el('h2', '', statusText()), el('p', 'summary', state.error));
-      const actions = el('div', 'actions'); actions.append(button('Cancelar', 'secondary', close), button('Tentar novamente', 'primary', () => state.current?.kind === 'confirmation' ? execute() : startRecording())); card.append(actions); panel.append(card);
+      const actions = el('div', 'actions'); actions.append(button('Cancelar', 'secondary', close), button('Tentar novamente', 'primary', () => state.editDraft ? startRecording() : state.current?.kind === 'confirmation' ? execute() : startRecording())); card.append(actions); panel.append(card);
     }
     overlay.append(panel); state.root.append(overlay);
   }
@@ -458,9 +526,17 @@
   function wasCancelled(error) { return error?.name === 'AbortError'; }
 
   async function processTranscription(transcription, previous = state.current, selection = null) {
+    const editingDraft = state.inlineEdit && state.editDraft ? cloneDraft(state.editDraft) : null;
+    const editingSelections = state.inlineEdit ? [...state.editSelections] : [];
     setPhase('processing');
     try {
-      const result = await requestVoice('process', 'process', { transcription, previousDraft: previous?.draft || null, candidates: previous?.kind === 'clarification' ? previous.candidates : [], selections: previous?.selections || [], selection });
+      const result = await requestVoice('process', 'process', {
+        transcription,
+        previousDraft: editingDraft || previous?.draft || null,
+        candidates: editingDraft ? [] : previous?.kind === 'clarification' ? previous.candidates : [],
+        selections: editingDraft ? editingSelections : previous?.selections || [],
+        selection,
+      });
       if (result?.replacesPrevious) discardCurrentPending();
       if (result?.kind === 'handoff') {
         state.inlineClarification = false;
@@ -477,7 +553,7 @@
             ? 'response'
             : '';
       if (!nextPhase) throw new Error('A solicitação retornou uma resposta inválida. Tente novamente.');
-      state.inlineClarification = false;
+      state.inlineClarification = false; state.inlineEdit = false; state.editDraft = null; state.editSelections = [];
       state.current = result;
       setPhase(nextPhase);
     } catch (error) {
@@ -505,6 +581,7 @@
   async function startRecording() {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { setPhase('error', 'A gravação de áudio não está disponível neste navegador.'); return; }
     state.inlineClarification = state.phase === 'clarification' && state.current?.kind === 'clarification';
+    state.inlineEdit = state.current?.kind === 'confirmation' && Boolean(state.editDraft);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       const types = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
@@ -521,7 +598,7 @@
         const type = recorder.mimeType || mimeType || 'audio/webm';
         void transcribe(new Blob(chunks, { type }), type.includes('mp4') ? 'mp4' : 'webm');
       };
-      if (state.current?.kind !== 'clarification') state.current = null;
+      if (state.current?.kind !== 'clarification' && !state.inlineEdit) state.current = null;
       setPhase('recording'); startVisualization(stream); recorder.start(250);
       state.timer = window.setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, MAX_RECORDING_MS);
     } catch (error) {
@@ -535,13 +612,14 @@
     if (!['transcribe', 'process'].includes(state.requestStage)) return;
     state.requestAbort?.abort(); state.requestAbort = null; state.requestStage = null;
     const returnToClarification = state.inlineClarification && state.current?.kind === 'clarification';
-    state.inlineClarification = false;
-    setPhase(returnToClarification ? 'clarification' : 'idle');
+    const returnToEdit = state.inlineEdit && state.editDraft && state.current?.kind === 'confirmation';
+    state.inlineClarification = false; state.inlineEdit = false;
+    setPhase(returnToClarification ? 'clarification' : returnToEdit ? 'confirmation' : 'idle');
   }
   function toggleRecording() {
     if (state.phase === 'recording') { if (state.recorder?.state === 'recording') state.recorder.stop(); }
     else if (['transcribing', 'processing'].includes(state.phase)) cancelSending();
-    else if (['idle', 'clarification', 'error'].includes(state.phase)) startRecording();
+    else if (['idle', 'clarification'].includes(state.phase) || (state.phase === 'confirmation' && state.editDraft) || (state.phase === 'error' && state.editDraft)) startRecording();
   }
   function stopMedia(discard = false) {
     window.clearTimeout(state.timer); state.timer = 0;
@@ -631,7 +709,7 @@
     const current = state.current;
     const request = state.options?.request;
     discardCurrentPending();
-    resetCatalog(); state.editDraft = null; state.editSelections = [];
+    resetCatalog(); state.editDraft = null; state.editSelections = []; state.inlineEdit = false;
     state.current = null;
     close();
     if (current && request) void request('log', { event: 'cancelled', transcription: current.transcription, intent: current.draft?.intent }).catch(() => undefined);
@@ -639,14 +717,14 @@
   function saveForLater() { saveSession(); close(); }
   function close(options = {}) {
     if (options?.persist !== false) saveSession();
-    resetCatalog(); state.editDraft = null; state.editSelections = [];
+    resetCatalog(); state.editDraft = null; state.editSelections = []; state.inlineEdit = false;
     stopMedia(true);
     const mount = ensureMount() || state.mount;
     const trigger = mount?.querySelector?.('.mobile-voice-command-trigger');
     const onPendingChange = state.options?.onPendingChange;
     state.host?.remove();
     mount?.classList?.remove('is-active');
-    Object.assign(state, { host: null, root: null, options: null, mount: null, phase: 'idle', current: null, error: '', requestAbort: null, requestStage: null, pendingId: null, inlineClarification: false });
+    Object.assign(state, { host: null, root: null, options: null, mount: null, phase: 'idle', current: null, error: '', requestAbort: null, requestStage: null, pendingId: null, inlineClarification: false, inlineEdit: false });
     requestAnimationFrame(() => {
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
       onPendingChange?.();
@@ -663,7 +741,7 @@
       close({ persist: false });
     }
     const host = document.createElement('avanta-voice-command'); const shadow = host.attachShadow({ mode: 'open' }); const style = document.createElement('style'); style.textContent = styles; const root = document.createElement('div'); shadow.append(style, root); options.mount.append(host);
-    Object.assign(state, { host, root, options, mount: options.mount, phase: 'idle', current: null, error: '', pendingId: null, inlineClarification: false, catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogRequestId: state.catalogRequestId + 1, editDraft: null, editSelections: [] });
+    Object.assign(state, { host, root, options, mount: options.mount, phase: 'idle', current: null, error: '', pendingId: null, inlineClarification: false, inlineEdit: false, catalogMode: '', catalogQuery: '', catalogProducts: [], catalogOffset: 0, catalogLoading: false, catalogHasMore: false, catalogError: '', catalogRequestId: state.catalogRequestId + 1, editDraft: null, editSelections: [] });
     if (options.allowSaveForLater === false) persistPendingEntries([]);
     if (options.pendingId) restorePending(options.pendingId);
     render();

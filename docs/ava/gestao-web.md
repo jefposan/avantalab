@@ -1,6 +1,18 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.31.0.04 -->
+<!-- ava-version: 1.32.0.01 -->
+
+> Revisão 1.32.0.01: ao salvar a permissão **Comando por voz** de um
+> colaborador, o PWA daquele usuário passa a remover ou restaurar toda a faixa
+> de voz em Recebimentos e Serviços, sem depender de novo login.
+
+> Revisão 1.32.0: a edição de rascunhos no comando por voz pertence ao
+> AvantaVendas; sem impacto operacional adicional na Gestão Web.
+
+> Revisão 1.31.0.05: em **Operações de Campo > Colaboradores**, **Comando por
+> voz** é uma permissão individual, marcada por padrão em cadastros existentes
+> e novos. Ao desmarcar e salvar, a faixa de voz desaparece somente no PWA
+> daquele colaborador; Recebimentos, Serviços e Agendamento não são alterados.
 
 > Revisão 1.31.0.04: a correção de comandos não suportados pertence ao
 > AvantaVendas e não altera a Gestão Web.
@@ -2945,7 +2957,10 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   opção **Herdar a programação do local** inicia ativada e deixa as datas de
   execução somente para consulta; desative-a para selecionar uma programação
   própria. Em **Colaboradores**, use **+ Novo colaborador** e escolha ao menos
-  uma permissão no aplicativo: **Recebimentos** e/ou **Serviços**.
+  uma permissão operacional no aplicativo: **Recebimentos**, **Serviços** e/ou
+  **Agendamento**. **Comando por voz** é uma permissão complementar marcada por
+  padrão; desmarque-a para retirar acionador, ajuda e faixa inferior somente do
+  PWA daquele colaborador.
 - No endereço, informe opcionalmente **Tipo de nível** — Andar, Piso, Subsolo,
   Térreo, Mezanino ou Outro nível — e depois o **Número / identificação** livre.
   Use, por exemplo, `Andar` + `12`, `Piso` + `G` ou `Subsolo` + `2`; para

@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
     const { data: colaborador, error: erroColaborador } = await clientes.admin
       .from('recebimentos_colaboradores')
-      .select('id, ativo, pode_recebimentos, pode_servicos, pode_agendamentos')
+      .select('id, ativo, pode_recebimentos, pode_servicos, pode_agendamentos, pode_comando_voz')
       .eq('empresa_id', empresaId)
       .eq('user_id', user.id)
       .maybeSingle();
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const empresaNome = erroEmpresa ? '' : String(empresa?.nome ?? '').trim();
     if (erroModulo) return NextResponse.json({ ativo: true, indeterminado: true, empresaNome });
     const assinaturaAtiva = await assinaturaEmpresaLiberada(empresaId);
-    return NextResponse.json({ ativo: Boolean(modulo) && assinaturaAtiva, motivo: !modulo ? 'modulo' : (assinaturaAtiva ? undefined : 'assinatura'), empresaNome, podeRecebimentos: colaborador.pode_recebimentos !== false, podeServicos: colaborador.pode_servicos === true, podeAgendamentos: colaborador.pode_agendamentos === true });
+    return NextResponse.json({ ativo: Boolean(modulo) && assinaturaAtiva, motivo: !modulo ? 'modulo' : (assinaturaAtiva ? undefined : 'assinatura'), empresaNome, podeRecebimentos: colaborador.pode_recebimentos !== false, podeServicos: colaborador.pode_servicos === true, podeAgendamentos: colaborador.pode_agendamentos === true, podeComandoVoz: colaborador.pode_comando_voz !== false });
   } catch (error) {
     console.error('Erro ao verificar acesso de recebimentos:', error);
     return NextResponse.json({ ativo: true, indeterminado: true });

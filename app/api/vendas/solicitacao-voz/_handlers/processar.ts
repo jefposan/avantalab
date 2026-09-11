@@ -71,10 +71,10 @@ export async function POST(request: Request) {
       : null;
     if (!transcription && !manualDraft) return NextResponse.json({ message: 'Fale sua solicitação para continuar.' }, { status: 400 });
     if (body?.manualEdit === true && (!previousDraft || !manualDraft
-      || !['create_order', 'create_consignment'].includes(previousDraft.intent)
+      || !['create_order', 'create_consignment', 'register_payment'].includes(previousDraft.intent)
       || manualDraft.intent !== previousDraft.intent
       || manualDraft.customerReference !== previousDraft.customerReference)) {
-      return NextResponse.json({ message: 'A edição do pedido não passou pela validação. Tente novamente.' }, { status: 400 });
+      return NextResponse.json({ message: 'A edição não passou pela validação. Tente novamente.' }, { status: 400 });
     }
     const selection = validSelection(body?.selection);
     const selections = mergeSelection(validSelections(body?.selections), selection);

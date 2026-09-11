@@ -45,6 +45,8 @@ export function validateVoiceIntent(value) {
   const periodValue = textOrNull(value.period);
   const period = periodValue && ['today', 'this_month', 'last_month', 'all'].includes(periodValue) ? periodValue : null;
   const amount = numberOrNull(value.amount);
+  const discountAmount = numberOrNull(value.discount_amount ?? value.discountAmount);
+  const discountPercent = numberOrNull(value.discount_percent ?? value.discountPercent);
   const paymentMethodValue = textOrNull(value.payment_method ?? value.paymentMethod);
   const paymentMethod = paymentMethodValue && PAYMENT_METHODS.has(paymentMethodValue) ? paymentMethodValue : null;
   const appointmentTypeValue = textOrNull(value.appointment_type ?? value.appointmentType);
@@ -57,12 +59,17 @@ export function validateVoiceIntent(value) {
   if (textOrNull(scheduledTimeValue) && !scheduledTime) return null;
   if (appointmentTypeValue && !appointmentType) return null;
   if (amount !== null && (amount <= 0 || amount > 9_999_999.99)) return null;
+  if (discountAmount !== null && (discountAmount < 0 || discountAmount > 9_999_999.99)) return null;
+  if (discountPercent !== null && (discountPercent < 0 || discountPercent > 100)) return null;
+  if (discountAmount !== null && discountPercent !== null) return null;
   return {
     intent: value.intent,
     customerReference: textOrNull(value.customer_reference ?? value.customerReference),
     items,
     amount: amount === null ? null : Math.round(amount * 100) / 100,
     paymentMethod,
+    discountAmount: discountAmount === null ? null : Math.round(discountAmount * 100) / 100,
+    discountPercent: discountPercent === null ? null : Math.round(discountPercent * 100) / 100,
     scheduledDate,
     scheduledTime,
     appointmentType,

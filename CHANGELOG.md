@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.32.0.01 - 2026-09-11
+- **Permissão de voz propagada ao PWA**: Operações de Campo passa a identificar
+  sempre o colaborador autenticado e reler sua permissão no servidor em tempo
+  real, ao retomar o aplicativo e em verificação periódica de contingência.
+- **Rodapé realmente condicional**: ao desativar Comando por voz, botão, ajuda,
+  faixa e espaço reservado somem juntos de Recebimentos e Serviços; ao reativar,
+  retornam sem exigir novo login.
+- **Cache renovado**: o service worker do PWA avança de revisão para não manter
+  a interface anterior instalada no celular.
+
+## 1.32.0 - 2026-09-11
+- **Edição antes da confirmação por voz**: pedidos, consignados e pagamentos
+  passam a oferecer edição com o microfone dentro do próprio card, preservando
+  cliente, itens e escolhas já resolvidas.
+- **Desconto falado ou manual**: o usuário pode aplicar desconto em reais ou
+  percentual ao rascunho. O servidor relê preços e saldo, recalcula subtotal,
+  desconto e total e exige uma nova confirmação antes de gravar.
+- **Componente central atualizado**: o comportamento pertence ao controlador
+  oficial de ações por voz e fica disponível aos módulos que reutilizam o
+  contrato, sem cópias locais.
+
+## 1.31.0.05 - 2026-09-11
+- **Voz por colaborador**: em Operações de Campo, Comando por voz passa a ser
+  uma permissão individual junto a Recebimentos, Serviços e Agendamento.
+- **Compatibilidade preservada**: colaboradores existentes e novos começam com
+  a permissão marcada. Ao desmarcar, a faixa de voz some somente daquele PWA e
+  os endpoints também recusam o acesso, sem alterar dados ou outras funções.
+
 ## 1.31.0.04 - 2026-09-11
 - **Comando de voz não suportado**: o AvantaVendas passa a informar claramente
   quando uma ação, como editar um pedido, ainda não está disponível por voz.

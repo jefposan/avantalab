@@ -33,6 +33,9 @@ alcançar todas as integrações do mesmo projeto na publicação seguinte.
    Quando a dúvida for respondida por voz, o card permanece aberto e o mesmo
    microfone continua ancorado nele durante gravação, transcrição e
    interpretação; a interface não volta ao acionador principal nesse intervalo.
+   Quando a confirmação permitir edição, o microfone fica dentro do editor e a
+   fala complementa o rascunho atual. Gravação, envio e cancelamento permanecem
+   nesse mesmo local até a resposta atualizada.
 6. Resultado confirmado usa o aviso temporário padrão no rodapé. Quando houver
    comprovante, o aviso oferece **Compartilhar comprovante** antes de desaparecer.
 7. Solicitações incompletas podem ser salvas quando o sistema habilitar essa
@@ -93,6 +96,18 @@ diretamente. Endpoints do módulo validam usuário, empresa ativa, permissão,
 schema e dados novamente. Qualquer escrita exige confirmação explícita e utiliza
 service, RPC, server action ou API oficial. Consultas podem concluir sem
 confirmação.
+
+Edições feitas antes da confirmação são alterações do rascunho, não de um
+registro persistido. Campos derivados nunca são aceitos como cálculo da IA: a
+camada de negócio relê preços, saldos e demais referências atuais, recalcula os
+valores e devolve uma nova confirmação. Editar um registro já gravado exige uma
+intenção e um executor próprios do sistema.
+
+Quando o produto possuir liberação individual, a permissão de voz deve nascer
+no padrão documentado pelo sistema, ser administrada junto às demais permissões
+do usuário e ser revalidada em todos os endpoints de voz. Ao desativá-la,
+acionador, ajuda e faixa reservada desaparecem por completo; os outros acessos e
+os dados já gravados permanecem inalterados.
 
 Em módulos React, reutilizar `AvantaVoiceActionDock.tsx`; ele monta o acionador,
 a ajuda acessível e o aviso temporário, e carrega o controlador pelo endereço

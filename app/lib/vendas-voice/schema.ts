@@ -29,6 +29,8 @@ export const VOICE_INTENT_JSON_SCHEMA = {
       },
       amount: { type: ['number', 'null'] },
       payment_method: { type: ['string', 'null'], enum: ['Pix', 'Dinheiro', 'Cartão de crédito', 'Cartão de débito', 'Transferência', 'Outro', null] },
+      discount_amount: { type: ['number', 'null'], minimum: 0 },
+      discount_percent: { type: ['number', 'null'], minimum: 0, maximum: 100 },
       scheduled_date: { type: ['string', 'null'] },
       scheduled_time: { type: ['string', 'null'] },
       appointment_type: { type: ['string', 'null'], enum: ['Visita', 'Entrega', 'Recebimento', 'Cobrar', 'Outro', null] },
@@ -36,6 +38,6 @@ export const VOICE_INTENT_JSON_SCHEMA = {
       period: { type: ['string', 'null'], enum: ['today', 'this_month', 'last_month', 'all', null] },
       unsupported_reason: { type: ['string', 'null'] },
     },
-    required: ['intent', 'customer_reference', 'items', 'amount', 'payment_method', 'scheduled_date', 'scheduled_time', 'appointment_type', 'appointment_notes', 'period', 'unsupported_reason'],
+    required: ['intent', 'customer_reference', 'items', 'amount', 'payment_method', 'discount_amount', 'discount_percent', 'scheduled_date', 'scheduled_time', 'appointment_type', 'appointment_notes', 'period', 'unsupported_reason'],
   },
 } as const;

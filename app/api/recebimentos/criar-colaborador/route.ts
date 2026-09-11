@@ -31,6 +31,7 @@ export async function POST(request: Request) {
     const podeRecebimentos = corpo.podeRecebimentos !== false;
     const podeServicos = corpo.podeServicos === true;
     const podeAgendamentos = corpo.podeAgendamentos === true;
+    const podeComandoVoz = corpo.podeComandoVoz !== false;
     if (!empresaId) return respostaErro('Empresa não informada.');
     if (!validarNomeCompleto(nome)) return respostaErro('Informe o nome completo do colaborador, com nome e sobrenome.');
     if (!cpfValido(cpf)) return respostaErro('Informe um CPF válido.');
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
       pode_recebimentos: podeRecebimentos,
       pode_servicos: podeServicos,
       pode_agendamentos: podeAgendamentos,
+      pode_comando_voz: podeComandoVoz,
       ativo: true,
     });
     if (erroCadastro) {
@@ -99,7 +101,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       erro: false,
-      colaborador: { id: usuarioCriado.user.id, nome, cpf, celular, email: emailContato, podeRecebimentos, podeServicos, podeAgendamentos, ativo: true },
+      colaborador: { id: usuarioCriado.user.id, nome, cpf, celular, email: emailContato, podeRecebimentos, podeServicos, podeAgendamentos, podeComandoVoz, ativo: true },
     });
   } catch (error) {
     console.error('Erro inesperado ao criar colaborador de recebimentos:', error);

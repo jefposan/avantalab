@@ -56,6 +56,8 @@ test('schema de voz aceita somente intenções e valores previstos', () => {
   });
   assert.equal(valid?.intent, 'create_order');
   assert.equal(valid?.items[0].quantity, 5);
+  assert.equal(validateVoiceIntent({ ...valid, discount_percent: 15 })?.discountPercent, 15);
+  assert.equal(validateVoiceIntent({ ...valid, discount_amount: 10, discount_percent: 15 }), null);
   assert.equal(validateVoiceIntent({ ...valid, intent: 'run_sql' }), null);
   assert.equal(validateVoiceIntent({ ...valid, items: [{ productReference: 'Overliss', quantity: -1 }] }), null);
   const appointment = validateVoiceIntent({
@@ -254,7 +256,7 @@ test('clique de desambiguação usa candidato validado sem reinterpretar pela IA
   assert.match(resolver, /Não foi possível validar o produto escolhido/);
   assert.match(resolver, /selectedEntityId\(selections, 'customer'/);
   assert.match(resolver, /selectedEntityId\(selections, 'product'/);
-  assert.match(voiceModule, /selections: previous\?\.selections \|\| \[\]/);
+  assert.match(voiceModule, /selections: editingDraft \? editingSelections : previous\?\.selections \|\| \[\]/);
 });
 
 test('interpretação mantém qualificadores no nome do cliente e não os transforma em produto', async () => {
@@ -456,14 +458,34 @@ test('produto pode ser escolhido manualmente sem perder o rascunho e pedido pode
   assert.match(voiceModule, /Escolha um produto do catálogo/);
   assert.match(voiceModule, /manualEdit: true/);
   assert.match(voiceModule, /Editar pedido/);
+  assert.match(voiceModule, /Editar pagamento/);
+  assert.match(voiceModule, /Fale o que deseja alterar/);
+  assert.match(voiceModule, /state\.inlineEdit/);
+  assert.match(voiceModule, /previousDraft: editingDraft \|\| previous\?\.draft/);
   assert.match(voiceModule, /Diga apenas o produto que ficou em dúvida\. O restante do pedido será mantido\./);
   assert.match(voiceModule, /\.candidates,\.catalog-results\{[^}]*overflow-y:auto/);
   assert.match(voiceModule, /max-height:calc\(100svh - max\(132px/);
   assert.match(route, /body\?\.manualEdit === true/);
   assert.match(route, /manualDraft\.intent !== previousDraft\.intent/);
   assert.match(route, /manualDraft\.customerReference !== previousDraft\.customerReference/);
+  assert.match(route, /'create_order', 'create_consignment', 'register_payment'/);
   assert.match(catalogRoute, /getVoiceSalesContext/);
   assert.match(catalogRoute, /listVoiceCatalogProducts/);
+});
+
+test('edição por voz aplica desconto no rascunho e o servidor recalcula antes de gravar', async () => {
+  const [resolver, executor, interpreter] = await Promise.all([
+    readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/executar.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/lib/vendas-voice/interpreter.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(interpreter, /aplique desconto/);
+  assert.match(interpreter, /discount_percent/);
+  assert.match(resolver, /resolveVoiceDiscount\(draft, subtotal\)/);
+  assert.match(resolver, /Desconto\$\{discount\.percent/);
+  assert.match(executor, /const discount = confirmedDiscount\(action, subtotal\)/);
+  assert.match(executor, /subtotal, desconto: discount, total/);
+  assert.match(executor, /financial\.balance - amount - discount/);
 });
 
 test('resolução de vários produtos prioriza resposta curta e compartilha a busca aprofundada', async () => {
@@ -491,7 +513,7 @@ test('pedido consignado usa o mesmo fluxo oficial com estoque e confirmação', 
     draft: {
       intent: 'create_consignment', customerReference: 'Fernanda influencer',
       items: [{ productReference: 'Progressiva Paladin', quantity: 2 }], amount: null,
-      paymentMethod: null, period: null, unsupportedReason: null,
+      paymentMethod: null, discountAmount: null, discountPercent: 15, period: null, unsupportedReason: null,
     },
   });
   assert.equal(result.kind, 'confirmation');
@@ -499,6 +521,9 @@ test('pedido consignado usa o mesmo fluxo oficial com estoque e confirmação', 
   assert.equal(result.action.intent, 'create_consignment');
   assert.equal(result.action.paymentMethod, 'Consignado');
   assert.equal(result.action.items[0].productId, UUIDS.influencerLitro);
+  assert.equal(result.action.discountAmount, 54);
+  assert.equal(result.action.expectedTotal, 306);
+  assert.match(result.message, /Desconto \(15%\): R\$\s54,00/);
 });
 
 test('agendamento por voz resolve cliente, exige data e prepara confirmação segura', async () => {

@@ -137,6 +137,7 @@ function mapColaborador(row: Linha): Colaborador {
     podeRecebimentos: row.pode_recebimentos !== false,
     podeServicos: row.pode_servicos === true,
     podeAgendamentos: row.pode_agendamentos === true,
+    podeComandoVoz: row.pode_comando_voz !== false,
     ativo: row.ativo !== false,
   };
 }
@@ -348,9 +349,9 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     },
     async excluirColaborador(id) { await chamarApi(cliente, '/api/recebimentos/excluir-colaborador', { empresaId, colaboradorUserId: id }); },
     async alternarColaborador(id, ativo) {
-      const { data, error } = await cliente.from('recebimentos_colaboradores').select('nome, cpf, celular, email_contato, pode_recebimentos, pode_servicos, pode_agendamentos').eq('empresa_id', empresaId).eq('user_id', id).single();
+      const { data, error } = await cliente.from('recebimentos_colaboradores').select('nome, cpf, celular, email_contato, pode_recebimentos, pode_servicos, pode_agendamentos, pode_comando_voz').eq('empresa_id', empresaId).eq('user_id', id).single();
       if (error || !data) throw new Error('Colaborador não encontrado.');
-      await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, podeRecebimentos: data.pode_recebimentos !== false, podeServicos: data.pode_servicos === true, podeAgendamentos: data.pode_agendamentos === true, ativo });
+      await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, podeRecebimentos: data.pode_recebimentos !== false, podeServicos: data.pode_servicos === true, podeAgendamentos: data.pode_agendamentos === true, podeComandoVoz: data.pode_comando_voz !== false, ativo });
     },
     async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante) {
       await registrarViaApi(cliente, {
@@ -471,6 +472,7 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       const canal = cliente.channel(`recebimentos-${empresaId}-${Math.random()}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_empresas', filter: `empresa_id=eq.${empresaId}` }, callback)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_subempresas', filter: `empresa_id=eq.${empresaId}` }, callback)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_colaboradores', filter: `empresa_id=eq.${empresaId}` }, callback)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_lancamentos', filter: `empresa_id=eq.${empresaId}` }, callback)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_servicos', filter: `empresa_id=eq.${empresaId}` }, callback)
         .subscribe();

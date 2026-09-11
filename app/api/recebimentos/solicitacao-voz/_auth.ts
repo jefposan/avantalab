@@ -15,7 +15,8 @@ export async function contextoVozCampo(request: Request, empresaId: string, modo
     .select('id')
     .eq('empresa_id', empresaId)
     .eq('user_id', user.id)
-    .eq('ativo', true);
+    .eq('ativo', true)
+    .eq('pode_comando_voz', true);
   consulta = modo === 'recebimentos'
     ? consulta.eq('pode_recebimentos', true)
     : consulta.or('pode_servicos.eq.true,pode_agendamentos.eq.true');

@@ -123,7 +123,7 @@ test('resposta por voz permanece ancorada dentro do card da pergunta', async () 
   assert.match(controller, /\(state\.phase === 'clarification' \|\| inlineClarification\)/);
   assert.match(controller, /card\.append\(voiceControl\(true\)\)/);
   assert.match(controller, /\.helper\{min-height:2\.7em/);
-  assert.match(controller, /setPhase\(returnToClarification \? 'clarification' : 'idle'\)/);
+  assert.match(controller, /setPhase\(returnToClarification \? 'clarification' : returnToEdit \? 'confirmation' : 'idle'\)/);
 });
 
 test('registro por voz escolhe somente execução pendente e já disponível', () => {
@@ -163,4 +163,34 @@ test('ajuda de Serviços explica registro e agendamento de forma curta', async (
   const dock = await readFile(new URL('../../app/recebimentos/components/OperacoesCampoVoiceDock.tsx', import.meta.url), 'utf8');
   assert.match(dock, /Para registrar, diga “registrar serviço” e o cliente; depois, informe o nome e colete a assinatura\./);
   assert.match(dock, /Para agendar, diga “agendar” com cliente, data e tipo\./);
+});
+
+test('comando por voz é permissão individual ativa por padrão e validada no servidor', async () => {
+  const [form, app, repo, createRoute, updateRoute, auth, migration, serviceWorker] = await Promise.all([
+    readFile(new URL('../../app/recebimentos/components/ListaColaboradores.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/recebimentos/ColaboradorApp.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/recebimentos/data/repo.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/recebimentos/criar-colaborador/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/recebimentos/atualizar-colaborador/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/recebimentos/solicitacao-voz/_auth.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../supabase/migrations/20260911143000_comando_voz_por_colaborador.sql', import.meta.url), 'utf8'),
+    readFile(new URL('../../public/recebimentos-sw.js', import.meta.url), 'utf8'),
+  ]);
+  assert.match(form, /useState\(true\)[^;]*;[\s\S]*Comando por voz/);
+  assert.match(form, /setPodeComandoVoz\(salvo\.podeComandoVoz !== false\)/);
+  assert.match(createRoute, /podeComandoVoz = corpo\.podeComandoVoz !== false/);
+  assert.match(updateRoute, /pode_comando_voz: podeComandoVoz/);
+  assert.match(app, /colaboradores\.find\(\(item\) => item\.id === colaboradorId\)/);
+  assert.match(app, /comandoVozPermitido && <footer/);
+  assert.match(app, /comandoVozPermitido \? styles\.pageComVoz : ''/);
+  assert.match(app, /cache: 'no-store'/);
+  assert.match(app, /document\.addEventListener\('visibilitychange', aoRetomar\)/);
+  assert.match(app, /window\.addEventListener\('focus', aoRetomar\)/);
+  assert.match(app, /setInterval\(\(\) => \{ void revalidarPermissoes\(\); \}, 15000\)/);
+  assert.match(app, /recebimentos-sw\.js\?v=12/);
+  assert.match(serviceWorker, /avantalab-recebimentos-v12/);
+  assert.match(repo, /postgres_changes[^\n]*recebimentos_colaboradores/);
+  assert.match(auth, /\.eq\('pode_comando_voz', true\)/);
+  assert.match(migration, /add column if not exists pode_comando_voz boolean not null default true/);
+  assert.doesNotMatch(migration, /delete|drop|truncate/i);
 });
