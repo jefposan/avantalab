@@ -1714,6 +1714,14 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
   if (config?.centros_custo_ativo === true) {
     const listaCentros = await buscarCentrosCusto(empresa.id);
     setCentrosCusto(listaCentros);
+    const centrosAtivos = listaCentros.filter((centro) => centro.ativo);
+    const chaveUltimoCentro = `avantalab.gestao.centro-custo.ultimo.v1:${empresa.id}`;
+    const ultimoCentro = window.localStorage.getItem(chaveUltimoCentro);
+    setCentroCustoSelecionadoId(
+      centrosAtivos.some((centro) => centro.id === ultimoCentro)
+        ? ultimoCentro!
+        : centrosAtivos[0]?.id || ''
+    );
   }
 
   if (despesas && despesas.length > 0) {
@@ -2207,6 +2215,14 @@ useEffect(() => {
   empresaId,
   configuracoesCarregadas,
 ]);
+
+useEffect(() => {
+  if (!empresaId || !centrosCustoAtivo || !centroCustoSelecionadoId) return;
+  window.localStorage.setItem(
+    `avantalab.gestao.centro-custo.ultimo.v1:${empresaId}`,
+    centroCustoSelecionadoId
+  );
+}, [empresaId, centrosCustoAtivo, centroCustoSelecionadoId]);
 
 
 const limparTimerAjustes = () => {
@@ -10750,19 +10766,23 @@ if (validacaoTelefoneObrigatoria) {
       </div>
 
       {centrosCustoAtivo && (
-        <label className="flex min-w-0 flex-1 flex-col items-center gap-1 sm:max-w-[200px]">
-          <span className="text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">Centro de custo</span>
-          <select
-            value={centroCustoSelecionadoId}
-            onChange={(event) => setCentroCustoSelecionadoId(event.target.value)}
-            className="h-9 w-full min-w-0 rounded-lg border border-white/20 bg-black/15 px-2 text-xs font-black text-white outline-none transition hover:bg-black/25 focus:ring-2 focus:ring-white/60"
-            aria-label="Centro de custo para os novos lançamentos"
-          >
-            <option value="" className="text-slate-900">Sem centro</option>
-            {centrosCusto.filter((centro) => centro.ativo).map((centro) => (
-              <option key={centro.id} value={centro.id} className="text-slate-900">{centro.nome}</option>
-            ))}
-          </select>
+        <label className="flex min-w-0 shrink-0 flex-col items-center gap-1">
+          <span className="whitespace-nowrap text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">Centro de custos</span>
+          <span className="relative h-9 w-[220px] sm:w-[250px]">
+            <select
+              value={centroCustoSelecionadoId}
+              onChange={(event) => setCentroCustoSelecionadoId(event.target.value)}
+              className="h-9 w-full appearance-none rounded-lg bg-white px-3 pr-9 text-left text-xs font-black uppercase tracking-wide shadow-[0_4px_14px_rgba(0,0,0,0.18)] outline-none transition hover:bg-slate-50 focus:ring-2 focus:ring-white/60"
+              style={{ color: corPrimaria }}
+              aria-label="Centro de custo para os novos lançamentos"
+            >
+              <option value="" className="text-slate-900">Sem centro</option>
+              {centrosCusto.filter((centro) => centro.ativo).map((centro) => (
+                <option key={centro.id} value={centro.id} className="text-slate-900">{centro.nome}</option>
+              ))}
+            </select>
+            <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24" style={{ color: corPrimaria }} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+          </span>
         </label>
       )}
     </div>
