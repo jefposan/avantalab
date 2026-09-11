@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0.01 -->
+<!-- ava-version: 1.33.0.02 -->
+
+> Revisão 1.33.0.02: o cabeçalho mostra o ícone de rede riscada somente sem
+> conexão. Quando houver pedidos, clientes ou recebimentos aguardando envio,
+> o número exibido abre a lista real da fila deste aparelho; cada item some
+> automaticamente depois da confirmação do servidor.
 
 > Revisão 1.33.0.01: centros de custo pertencem ao financeiro da Gestão Web e
 > não alteram os fluxos do AvantaVendas.

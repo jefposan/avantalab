@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.33.0.02 - 2026-09-11
+- **Sincronização visível no AvantaVendas**: o cabeçalho mostra a rede riscada
+  somente quando o aparelho está offline e apresenta a quantidade real de
+  pedidos, clientes ou recebimentos aguardando envio. Ao tocar no indicador,
+  a pessoa vê cada alteração pendente; a contagem desaparece à medida que o
+  servidor confirma os itens.
+
 ## 1.33.0.01 - 2026-09-11
 - **Centros de custo opcionais**: cada perfil financeiro pode ativar a
   separação de despesas, cadastrar centros por nome ou número e escolher o

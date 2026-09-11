@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.01 -->
+<!-- ava-version: 1.33.0.02 -->
+
+> Revisão 1.33.0.02: os indicadores de rede e sincronização pertencem ao
+> AvantaVendas; sem impacto operacional adicional na Gestão Web.
 
 > Revisão 1.33.0.01: em **Configurações**, gestor master ou administrador
 > pode ativar **Centros de custo** no perfil. Após cadastrar os centros no

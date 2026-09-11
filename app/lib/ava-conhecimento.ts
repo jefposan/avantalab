@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.33.0.02: o AvantaVendas mostra a rede riscada somente
+// sem conexão e apresenta a fila real de pedidos, clientes e recebimentos
+// aguardando sincronização; os indicadores somem após confirmação do servidor.
 // Revisado na versão 1.33.0.01: na Gestão Web, gestor master ou administrador
 // ativa Centros de custo por perfil, cadastra os centros e escolhe o destino
 // dos novos lançamentos; o Dashboard mostra despesas realizadas por centro.

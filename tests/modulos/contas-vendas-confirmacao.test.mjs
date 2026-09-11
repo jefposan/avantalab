@@ -71,6 +71,18 @@ test('fila offline preserva pedido e pagamento locais sem exigir saldo do servid
   assert.match(fluxoPagamento, /backendAtivo && !mutacaoPendenteOfflineVendas\(salvo\)/);
 });
 
+test('cabeçalho informa a rede offline e a fila real de sincronização', () => {
+  assert.match(aplicacao, /function estaSemRedeVendas\(\)/);
+  assert.match(aplicacao, /navigator\.onLine === false/);
+  assert.match(aplicacao, /function botaoPendenciasSincronizacaoVendas\(\)/);
+  assert.match(aplicacao, /abrirPendenciasSincronizacaoVendas\(\)/);
+  assert.match(aplicacao, /void atualizarIndicadoresSincronizacaoVendas\(\);/);
+  assert.match(aplicacao, /window\.addEventListener\('offline', \(\) => atualizarAcoesCabecalhoSistemaVendas\(\)\);/);
+  assert.doesNotMatch(aplicacao, /Modo offline restaurado\. As alterações serão enviadas/);
+  assert.match(estilos, /\.offline-header-indicator/);
+  assert.match(estilos, /\.sync-pending-header-button/);
+});
+
 test('aviso rápido permanece acessível acima das camadas modais', () => {
   assert.match(aplicacao, /el\.setAttribute\('role', dados\.tipo === 'erro' \? 'alert' : 'status'\)/);
   assert.match(aplicacao, /el\.setAttribute\('aria-live', dados\.tipo === 'erro' \? 'assertive' : 'polite'\)/);

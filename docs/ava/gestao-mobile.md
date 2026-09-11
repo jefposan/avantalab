@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0.01 -->
+<!-- ava-version: 1.33.0.02 -->
+
+> Revisão 1.33.0.02: os indicadores de rede e sincronização pertencem ao
+> AvantaVendas; sem impacto operacional adicional na Gestão Mobile.
 
 > Revisão 1.33.0.01: os centros de custo pertencem à Gestão Web; sem impacto
 > operacional na Gestão Mobile.

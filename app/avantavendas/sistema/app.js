@@ -444,6 +444,8 @@ let revisaoNavegacaoManual = 0;
 let mutacoesDadosEmAndamento = 0;
 let filaCacheVendas = Promise.resolve();
 let reenviandoPendenciasVendas = false;
+let quantidadePendenciasSincronizacaoVendas = 0;
+let revisaoPendenciasSincronizacaoVendas = 0;
 
 try {
   rolagemPorAba = JSON.parse(sessionStorage.getItem('avantalab.vendas_mobile.rolagem_abas') || '{}') || {};
@@ -957,6 +959,7 @@ async function registrarPendenciaVendas(tipo, identificador, payload) {
       pedido.onerror = () => rejeitar(pedido.error);
     });
     banco.close();
+    void atualizarIndicadoresSincronizacaoVendas();
     return chave;
   } catch {
     return '';
@@ -975,6 +978,7 @@ async function removerPendenciaVendas(chave) {
       pedido.onerror = () => rejeitar(pedido.error);
     });
     banco.close();
+    void atualizarIndicadoresSincronizacaoVendas();
   } catch { /* a operação idempotente será conferida novamente */ }
 }
 
@@ -995,6 +999,18 @@ async function listarPendenciasVendas() {
   } catch {
     return [];
   }
+}
+
+function estaSemRedeVendas() {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+async function atualizarIndicadoresSincronizacaoVendas() {
+  const revisao = ++revisaoPendenciasSincronizacaoVendas;
+  const pendencias = await listarPendenciasVendas();
+  if (revisao !== revisaoPendenciasSincronizacaoVendas) return;
+  quantidadePendenciasSincronizacaoVendas = pendencias.length;
+  atualizarAcoesCabecalhoSistemaVendas();
 }
 
 function erroTemporarioPersistencia(error) {
@@ -1298,6 +1314,7 @@ const ICONES_SVG_ESTAVEIS = {
   cake: '<path d="M4 11h16v9H4zM3 20h18"/><path d="M7 11V8M12 11V6M17 11V8M7 5h0M12 3h0M17 5h0"/><path d="M4 14h16"/>',
   home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/>',
   database: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
+  'network-off': '<path d="M3 8.8a13.2 13.2 0 0 1 15.3-1.3M6 12.3a8.6 8.6 0 0 1 5.4-1.9M10.5 16.2a2.5 2.5 0 0 1 1.5-.5"/><path d="m3 3 18 18"/><path d="m17.2 16.2 3.2 3.2M20.4 16.2 17.2 19.4"/>',
   download: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
   'rotate-ccw': '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
   'user-x': '<path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/>',
@@ -1332,13 +1349,34 @@ function botaoAniversariosHojeVendas(aniversariantesHoje) {
   return `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${quantidade} aniversário${quantidade === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${quantidade}</i></button>`;
 }
 
+function avisoRedeOfflineVendas() {
+  if (!estaSemRedeVendas()) return '';
+  return `<span class="offline-header-indicator" role="status" aria-label="Sem rede. O AvantaVendas está trabalhando offline." title="Sem rede — trabalhando offline">${svgIconEstavel('network-off')}</span>`;
+}
+
+function botaoPendenciasSincronizacaoVendas() {
+  if (!quantidadePendenciasSincronizacaoVendas) return '';
+  const quantidade = quantidadePendenciasSincronizacaoVendas;
+  const rotulo = `${quantidade} alteração${quantidade === 1 ? '' : 'ões'} aguardando sincronização`;
+  return `<button type="button" class="sync-pending-header-button" onclick="abrirPendenciasSincronizacaoVendas()" aria-label="${rotulo}" title="${rotulo}">${svgIconEstavel('database')}<i>${quantidade}</i></button>`;
+}
+
 function botaoTrocaPerfilVendas() {
   const nomePerfil = String(state.contaVendasAtiva?.nome || 'Perfil de vendas').trim() || 'Perfil de vendas';
   return `<button type="button" class="sales-profile-header-button" onclick="abrirContasVendas()" aria-label="Perfis de vendas. Perfil atual: ${escapeAttr(nomePerfil)}" title="Perfis de vendas">${svgIcon('users')}<span title="${escapeAttr(nomePerfil)}">${escapeHtml(nomePerfil)}</span></button>`;
 }
 
 function acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, mostrarTrocaPerfil = false) {
-  return `${botaoAgendamentosHojeVendas(agendamentosHoje)}${botaoAniversariosHojeVendas(aniversariantesHoje)}${mostrarTrocaPerfil ? botaoTrocaPerfilVendas() : ''}`;
+  return `${avisoRedeOfflineVendas()}${botaoPendenciasSincronizacaoVendas()}${botaoAgendamentosHojeVendas(agendamentosHoje)}${botaoAniversariosHojeVendas(aniversariantesHoje)}${mostrarTrocaPerfil ? botaoTrocaPerfilVendas() : ''}`;
+}
+
+function atualizarAcoesCabecalhoSistemaVendas() {
+  const aniversariantesHoje = aniversariosHojeVendas();
+  const agendamentosHoje = agendamentosHojeVendas();
+  const cabecalho = app.querySelector('.system-header .system-header-actions');
+  const menuMobile = app.querySelector('.mobile-menu-header .system-header-actions');
+  if (cabecalho) cabecalho.innerHTML = acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje);
+  if (menuMobile) menuMobile.innerHTML = acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, true);
 }
 
 function preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje, agendamentosHoje) {
@@ -2709,6 +2747,43 @@ function abrirPendenciasSolicitacaoVoz() {
   sheet(`<div class="sheet-header"><div><h2>Solicitações salvas</h2></div><button class="close" onclick="fecharSheet()">×</button></div><div class="voice-pending-list">${itens}</div>`, 'sheet-backdrop-centered voice-pending-backdrop');
 }
 
+function rotuloPendenciaSincronizacaoVendas(pendencia) {
+  const novoPedido = Boolean(pendencia?.payload?.novo);
+  const rotulos = {
+    cliente_salvar: 'Cadastro de cliente',
+    cliente_excluir: 'Exclusão de cliente',
+    pedido_salvar: novoPedido ? 'Novo pedido' : 'Pedido atualizado',
+    pedido_excluir: 'Exclusão de pedido',
+    pagamento_salvar: 'Novo recebimento',
+    pagamento_atualizar: 'Recebimento atualizado',
+    pagamento_excluir: 'Exclusão de recebimento',
+  };
+  return rotulos[pendencia?.tipo] || 'Alteração operacional';
+}
+
+function dataPendenciaSincronizacaoVendas(pendencia) {
+  const data = new Date(Number(pendencia?.atualizadoEm || 0));
+  return Number.isNaN(data.getTime())
+    ? ''
+    : new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(data);
+}
+
+async function abrirPendenciasSincronizacaoVendas() {
+  const pendencias = await listarPendenciasVendas();
+  quantidadePendenciasSincronizacaoVendas = pendencias.length;
+  atualizarAcoesCabecalhoSistemaVendas();
+  if (!pendencias.length) {
+    toast('Não há alterações aguardando sincronização.');
+    return;
+  }
+  const itens = pendencias
+    .sort((primeira, segunda) => Number(primeira.atualizadoEm || 0) - Number(segunda.atualizadoEm || 0))
+    .map((pendencia) => `<article class="sync-pending-item"><span>${svgIconEstavel('database')}</span><div><b>${escapeHtml(rotuloPendenciaSincronizacaoVendas(pendencia))}</b><small>${escapeHtml(dataPendenciaSincronizacaoVendas(pendencia))} · aguardando conexão</small></div></article>`)
+    .join('');
+  const quantidade = pendencias.length;
+  sheet(`<div class="sheet-header"><div><h2>Sincronização pendente</h2><p class="muted">${quantidade} alteração${quantidade === 1 ? '' : 'ões'} será${quantidade === 1 ? '' : 'ão'} enviada${quantidade === 1 ? '' : 's'} automaticamente quando houver conexão.</p></div><button class="close" onclick="fecharSheet()" aria-label="Fechar">×</button></div><div class="sync-pending-list">${itens}</div>`, 'sheet-backdrop-centered sync-pending-backdrop');
+}
+
 function cancelarSolicitacaoVozPendente(id) {
   const restantes = solicitacoesVozPendentes().filter((item) => item.id !== id);
   salvarSolicitacoesVozPendentes(restantes);
@@ -3789,10 +3864,10 @@ async function reenviarPendenciasVendas() {
       revisaoDadosOperacionais += 1;
       await salvarCacheVendas();
       render();
-      toast('Alterações pendentes confirmadas pelo servidor.');
     }
   } finally {
     reenviandoPendenciasVendas = false;
+    await atualizarIndicadoresSincronizacaoVendas();
   }
 }
 
@@ -4047,6 +4122,7 @@ async function carregarSistemaVendasCompleto() {
       state.menuAberto = true;
     }
     render();
+    void atualizarIndicadoresSincronizacaoVendas();
     liberarAlturaPreparacao();
     window.setTimeout(() => {
       carregarConteudosSecundariosVendas(false).catch((error) => console.warn('Não foi possível carregar conteúdos secundários.', error));
@@ -4156,7 +4232,6 @@ async function inicializarApp() {
         atualizarProgressoPreparacao('auth', 1, 1, 'Modo offline restaurado');
         carregandoBackend = false;
         await carregarSistemaVendasCompleto();
-        toast('Modo offline restaurado. As alterações serão enviadas assim que a conexão voltar.', { tipo: 'informacao' });
         return;
       }
       carregandoBackend = false;
@@ -4182,7 +4257,6 @@ async function inicializarApp() {
       preparandoRecursosSala = false;
       state.autenticado = true;
       await carregarSistemaVendasCompleto();
-      toast('Modo offline restaurado. As alterações serão enviadas assim que a conexão voltar.', { tipo: 'informacao' });
       return;
     }
     carregandoBackend = false;
@@ -10261,20 +10335,30 @@ if (window.__VENDAS_MOBILE_EMBEDDED__) {
   }, 120000);
 }
 
-window.addEventListener('online', () => {
+async function sincronizarAoReconectarVendas() {
+  atualizarAcoesCabecalhoSistemaVendas();
   if (modoOfflineVendas) {
-    window.VendasDb.refreshSession?.().then(async (sessao) => {
-      if (!sessao) return;
-      modoOfflineVendas = false;
-      await prepararSelecaoSistemaAntesDosDadosVendas();
-      await carregarDadosBackend(false, true, true);
-      await reenviarPendenciasVendas();
-    }).catch(() => undefined);
+    try {
+      const sessao = await window.VendasDb.refreshSession?.();
+      if (sessao) {
+        modoOfflineVendas = false;
+        await prepararSelecaoSistemaAntesDosDadosVendas();
+        await carregarDadosBackend(false, true, true);
+      }
+    } catch { /* mantém a sessão offline até a próxima tentativa */ }
   }
-  reenviarPendenciasVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
+  await reenviarPendenciasVendas();
+  await atualizarIndicadoresSincronizacaoVendas();
+}
+
+window.addEventListener('online', () => {
+  void sincronizarAoReconectarVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
   if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
 });
+window.addEventListener('offline', () => atualizarAcoesCabecalhoSistemaVendas());
 window.addEventListener('focus', () => {
+  atualizarAcoesCabecalhoSistemaVendas();
+  if (navigator.onLine) void sincronizarAoReconectarVendas().catch(() => undefined);
   if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
 });
 document.addEventListener('visibilitychange', () => {
@@ -10458,6 +10542,7 @@ window.formatarDataNascimentoCampo = formatarDataNascimentoCampo;
 window.salvarIntegracaoGestao = salvarIntegracaoGestao;
 window.abrirAgendaAniversariantes = abrirAgendaAniversariantes;
 window.abrirAgendaHojeVendas = abrirAgendaHojeVendas;
+window.abrirPendenciasSincronizacaoVendas = abrirPendenciasSincronizacaoVendas;
 window.abrirPerfilFinanceiroVendas = abrirPerfilFinanceiroVendas;
 window.selecionarPerfilFinanceiroVendas = selecionarPerfilFinanceiroVendas;
 window.abrirPeriodoNovoPerfilFinanceiroVendas = abrirPeriodoNovoPerfilFinanceiroVendas;
