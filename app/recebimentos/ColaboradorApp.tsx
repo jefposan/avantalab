@@ -3,8 +3,10 @@
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './recebimentos.module.css';
+import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import type { AvaliacaoServico, Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, Servico, Subempresa } from './components/types';
-import { cpfValido, formatarCpf } from './components/helpers';
+import type { ResultadoRegistroServico } from './components/PainelServicosColaborador';
+import { COR_PRIMARIA, cpfValido, formatarCpf } from './components/helpers';
 import PainelColaborador from './components/PainelColaborador';
 import PainelServicosColaborador from './components/PainelServicosColaborador';
 import OperacoesCampoVoiceDock from './components/OperacoesCampoVoiceDock';
@@ -93,8 +95,11 @@ export default function ColaboradorApp() {
   const [operacoesPendentes, setOperacoesPendentes] = useState<OperacaoOffline[]>([]);
   const [filaOfflineAberta, setFilaOfflineAberta] = useState(false);
   const [semRede, setSemRede] = useState(false);
+  const [notificacaoSincronizacaoPendente, setNotificacaoSincronizacaoPendente] = useState(false);
   const promptInstalacao = useRef<EventoInstalacaoPwa | null>(null);
   const botaoFecharInstalacao = useRef<HTMLButtonElement | null>(null);
+  const botaoEntendiSincronizacao = useRef<HTMLButtonElement | null>(null);
+  const avantaShell = criarAvantaShellPreset({ corPrimaria: COR_PRIMARIA, darkMode: false });
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -175,6 +180,25 @@ export default function ColaboradorApp() {
     window.addEventListener('keydown', fecharComEscape);
     return () => window.removeEventListener('keydown', fecharComEscape);
   }, [filaOfflineAberta]);
+
+  useEffect(() => {
+    if (!notificacaoSincronizacaoPendente) return;
+    const quadro = window.requestAnimationFrame(() => botaoEntendiSincronizacao.current?.focus());
+    const manterFoco = (evento: KeyboardEvent) => {
+      if (evento.key === 'Escape') {
+        evento.preventDefault();
+        setNotificacaoSincronizacaoPendente(false);
+      } else if (evento.key === 'Tab') {
+        evento.preventDefault();
+        botaoEntendiSincronizacao.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', manterFoco);
+    return () => {
+      window.cancelAnimationFrame(quadro);
+      window.removeEventListener('keydown', manterFoco);
+    };
+  }, [notificacaoSincronizacaoPendente]);
 
   const carregarDados = useCallback(async (repoAtivo: RecebimentosRepo) => {
     const dados = await repoAtivo.carregar();
@@ -386,6 +410,7 @@ export default function ColaboradorApp() {
     setPendenciasOffline(restantes.length);
     setOperacoesPendentes(restantes);
     if (restantes.length === 0) {
+      setNotificacaoSincronizacaoPendente(false);
       const dados = await carregarDados(repoAtivo);
       const colaborador = dados.colaboradores.find((item) => item.id === contextoOffline.colaboradorId);
       if (colaborador) {
@@ -446,17 +471,25 @@ export default function ColaboradorApp() {
     }
   }
 
-  async function registrarServicoComFila(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string, servicoId?: string) {
+  async function registrarServicoComFila(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string, servicoId?: string): Promise<ResultadoRegistroServico> {
     if (!repo || !contextoOffline || !servicoId) throw new Error('Selecione o serviço que será executado antes de concluir o atendimento.');
     const pendencia = await enfileirarOperacao(contextoOffline, { recebimentoEmpresaId: empresaRecebimentoId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId }, 'servico');
     await atualizarPendenciasOffline(contextoOffline);
+    // Sem sinal, a fila local já é a conclusão segura. Não iniciar uma chamada
+    // de rede que só atrasaria o retorno e poderia sugerir um sucesso no servidor.
+    if (estaSemRede()) {
+      aplicarOperacaoLocal(pendencia);
+      return 'pendente_sincronizacao';
+    }
     try {
       await repo.registrarServico(empresaRecebimentoId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId, pendencia.id);
       await concluirOperacaoOffline(pendencia.id); await atualizarPendenciasOffline(contextoOffline);
       void atualizarAposEnvio();
+      return 'confirmado';
     } catch (error) {
       if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); await atualizarPendenciasOffline(contextoOffline); throw error; }
       aplicarOperacaoLocal(pendencia);
+      return 'pendente_sincronizacao';
     }
   }
 
@@ -642,8 +675,15 @@ export default function ColaboradorApp() {
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
           onRegistrar={registrarRecebimentoComFila}
           onReceberCobranca={receberCobrancaComFila}
-        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} registroInicial={registroServicoVoz} onRegistroInicialConsumido={() => setRegistroServicoVoz(null)} onRegistrar={registrarServicoComFila} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
+        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} registroInicial={registroServicoVoz} onRegistroInicialConsumido={() => setRegistroServicoVoz(null)} onServicoSalvoOffline={() => setNotificacaoSincronizacaoPendente(true)} onRegistrar={registrarServicoComFila} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
       </div>
+      {notificacaoSincronizacaoPendente && <div className={styles.avisoSincronizacaoOverlay} role="presentation">
+        <section className={styles.avisoSincronizacao} role="dialog" aria-modal="true" aria-labelledby="sincronizacao-offline-titulo" aria-describedby="sincronizacao-offline-descricao">
+          <AvantaCard title={<span id="sincronizacao-offline-titulo">Aviso importante</span>} titleClassName={styles.avisoSincronizacaoTitulo} hideTitleAccent centerTitle hideDragHandle hideMenu style={{ ...avantaShell.cardStyle, ['--plato-w' as string]: '0%', ['--avanta-title-left' as string]: '30px', ['--avanta-tras-bg' as string]: 'linear-gradient(135deg, #fff9ed 0%, #fef3c7 100%)', ['--avanta-tras-overlay' as string]: 'none', ['--avanta-front-bg' as string]: '#fffdf7', ['--avanta-body-bg' as string]: '#fffdf7', ['--avanta-title-color' as string]: '#92400e' }} bodyStyle={{ ...avantaShell.bodyStyle, background: '#fffdf7' }}>
+            <div className={styles.avisoSincronizacaoConteudo}><span className={styles.avisoSincronizacaoIcone} aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9.5a12 12 0 0 1 14.8-1.8M2.8 5.2 21.2 18.8M7.6 13.2a7 7 0 0 1 5.3-.5M12 19h.01" /></svg></span><b>Serviço salvo neste aparelho</b><p id="sincronizacao-offline-descricao">Você está sem conexão. O serviço ficou protegido neste aparelho e será enviado automaticamente ao reconectar.</p><button ref={botaoEntendiSincronizacao} type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setNotificacaoSincronizacaoPendente(false)}>Entendi</button></div>
+          </AvantaCard>
+        </section>
+      </div>}
       {comandoVozPermitido && <footer className={styles.voiceActionBar} aria-label={`Ações por voz de ${operacao}`}>
         <OperacoesCampoVoiceDock
           key={operacao}

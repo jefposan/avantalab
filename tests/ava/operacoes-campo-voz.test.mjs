@@ -214,3 +214,25 @@ test('Operações de Campo sinaliza a rede e protege voz e fila reais nos dois m
   assert.match(sharedDock, /mobile-voice-command-slot\$\{disabled \? ' is-offline' : ''\}/);
   assert.match(sharedDock, /window\.AvantaVoiceActions\?\.close\(\)/);
 });
+
+test('Serviço offline responde pela fila local sem anunciar confirmação do servidor', async () => {
+  const [app, panel, card] = await Promise.all([
+    readFile(new URL('../../app/recebimentos/ColaboradorApp.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/recebimentos/components/PainelServicosColaborador.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/components/AvantaCard.tsx', import.meta.url), 'utf8'),
+  ]);
+  assert.match(app, /if \(estaSemRede\(\)\) \{\s*aplicarOperacaoLocal\(pendencia\);\s*return 'pendente_sincronizacao';/);
+  assert.match(app, /Serviço salvo neste aparelho/);
+  assert.match(app, /será enviado automaticamente ao reconectar\./);
+  assert.match(app, /avisoSincronizacaoOverlay/);
+  assert.match(app, /Aviso importante/);
+  assert.match(app, /hideTitleAccent centerTitle/);
+  assert.match(app, /#fef3c7/);
+  assert.match(panel, /resultado === 'pendente_sincronizacao'[\s\S]*onServicoSalvoOffline\?\.\(\); return;/);
+  assert.match(panel, /setSucesso\(true\);/);
+  assert.match(panel, /hideTitleAccent centerTitle/);
+  assert.match(panel, /#dcfce7/);
+  assert.match(card, /hideTitleAccent\?: boolean/);
+  assert.match(card, /centerTitle\?: boolean/);
+  assert.match(card, /!hideTitleAccent && <span className=\{styles\.acento\}/);
+});

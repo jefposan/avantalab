@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.33.0.10 - 2026-09-11
+- **Pop-ups de retorno refinados**: os cards importantes de sincronização
+  offline e operação concluída agora usam um topo contínuo sem a tarja lateral.
+  A cor do topo comunica atenção (âmbar) ou sucesso (verde), mantendo o título
+  centralizado e legível.
+
+## 1.33.0.09 - 2026-09-11
+- **Aviso offline centralizado**: a confirmação de Serviço salvo no aparelho
+  agora usa um card importante no centro da tela, com a orientação explícita
+  de sincronização automática ao reconectar.
+
+## 1.33.0.08 - 2026-09-11
+- **Serviço offline sem falso sucesso**: ao finalizar sem conexão, o atendimento
+  é salvo imediatamente na fila do aparelho, retorna ao fluxo sem abrir o card
+  de confirmação do servidor e mostra no rodapé que o envio ocorrerá ao
+  reconectar.
+
 ## 1.33.0.07 - 2026-09-11
 - **Seletor de Centros de custo refinado**: a lista abre abaixo do campo em
   desktop e mobile, fecha de forma previsível e o botão Despesas fixas fica

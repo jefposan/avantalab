@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0.07 -->
+<!-- ava-version: 1.33.0.10 -->
+
+> Revisão 1.33.0.10: os pop-ups de retorno do PWA usam cabeçalho contínuo,
+> título centralizado e cor semântica. O aviso offline permanece âmbar e a
+> confirmação do servidor fica verde; não há mudança no fluxo operacional.
+
+> Revisão 1.33.0.09: a confirmação de Serviço salvo sem conexão é exibida em
+> um card importante central. Ela informa que o registro está protegido no
+> aparelho e será enviado automaticamente ao reconectar.
+
+> Revisão 1.33.0.08: ao concluir um Serviço sem conexão, o PWA grava primeiro
+> no aparelho e informa imediatamente que o envio será automático ao
+> reconectar. O card de operação concluída só aparece após confirmação real do
+> servidor.
 
 > Revisão 1.33.0.07: o seletor de Centros de custo é um menu controlado da
 > Gestão Web; não altera a operação da Gestão Mobile.

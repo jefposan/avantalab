@@ -66,6 +66,16 @@
   white-space: nowrap;
 }
 
+.tituloCentralizado {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.tituloCentralizado > span:last-child {
+  flex: 0 1 auto;
+}
+
 .acento {
   width: 4px;
   height: 24px;

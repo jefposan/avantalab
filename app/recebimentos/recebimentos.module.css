@@ -2549,10 +2549,18 @@
 .sucessoServicoOverlay { position: fixed; z-index: 2300; inset: 0; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, #06121e 46%, transparent); }
 .sucessoServico { width: min(100%, 380px); text-align: center; }
 .sucessoServicoCard { --avanta-title-left: 30px; }
-.sucessoServicoTitulo { justify-content: center; width: 100%; text-align: center; }
-.sucessoServicoTitulo > span:last-child { flex: 0 1 auto; }
+.sucessoServicoTitulo { color: #166534; }
 .sucessoServico p { margin: 0; color: #475569; font-size: 14px; line-height: 1.45; }
 .sucessoServico .btn { margin-top: 16px; }
+.avisoSincronizacaoOverlay { position: fixed; z-index: 2300; inset: 0; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, #06121e 52%, transparent); }
+.avisoSincronizacao { width: min(100%, 390px); color: #0f172a; }
+.avisoSincronizacaoTitulo { color: #92400e; }
+.avisoSincronizacaoConteudo { display: grid; justify-items: center; gap: 12px; padding: 2px 0 4px; text-align: center; }
+.avisoSincronizacaoIcone { display: grid; width: 50px; height: 50px; place-items: center; border-radius: 999px; color: #9a6700; background: #fef3c7; }
+.avisoSincronizacaoIcone svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+.avisoSincronizacaoConteudo b { color: #0f172a; font-size: 17px; line-height: 1.25; }
+.avisoSincronizacaoConteudo p { margin: 0; color: #475569; font-size: 14px; line-height: 1.5; }
+.avisoSincronizacaoConteudo .btn { min-width: 132px; margin-top: 4px; }
 @media (prefers-reduced-motion: reduce) { .avaliacaoServico button { transition: none; }.avaliacaoServico button:active:not(:disabled) { transform: none; } }
 .topbarAcoesColaborador { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
 .indicadorRedeOffline, .botaoPendenciasOffline { display: inline-grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border: 1px solid color-mix(in srgb, #fff 52%, transparent); border-radius: 999px; color: #fff; background: color-mix(in srgb, #06121e 22%, transparent); }
@@ -2718,6 +2726,10 @@
 .darkScope .chipOff { background: #7f1d1d; color: #fecaca; }
 .darkScope .aviso { border-color: #854d0e; background: #422006; color: #fde68a; }
 .darkScope .avisoTopo { background: #422006; color: #fde68a; }
+.darkScope .avisoSincronizacao { color: #f8fafc; }
+.darkScope .avisoSincronizacaoConteudo b { color: #f8fafc; }
+.darkScope .avisoSincronizacaoConteudo p { color: #cbd5e1; }
+.darkScope .avisoSincronizacaoIcone { color: #fde68a; background: #422006; }
 .darkScope .integracaoAjuda { color: #cbd5e1; }
 .darkScope .integracaoSucesso { color: #86efac; }
 .darkScope .integracaoErro { color: #fca5a5; }

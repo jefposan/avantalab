@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.07 -->
+<!-- ava-version: 1.33.0.10 -->
+
+> Revisão 1.33.0.10: a padronização visual dos pop-ups de retorno pertence ao
+> PWA Operações de Campo; não altera a operação da Gestão Web.
+
+> Revisão 1.33.0.09: o posicionamento central do aviso offline de Serviços
+> pertence ao PWA Operações de Campo; não altera a operação da Gestão Web.
+
+> Revisão 1.33.0.08: o retorno imediato para Serviços concluídos sem conexão
+> pertence ao PWA Operações de Campo; não altera a operação da Gestão Web.
 
 > Revisão 1.33.0.07: o seletor de **Centro de custos** abre a lista abaixo do
 > campo e fecha ao escolher, clicar fora ou pressionar Escape. O cabeçalho

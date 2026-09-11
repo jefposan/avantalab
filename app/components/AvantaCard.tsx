@@ -19,6 +19,13 @@ type AvantaCardProps = {
   // Aceita texto simples ou um nó (ex.: título com complemento em fonte menor).
   title?: React.ReactNode;
   titleClassName?: string;
+  /**
+   * Pop-ups de retorno usam um título central e limpo. A barra de acento
+   * continua sendo a convenção dos cards de conteúdo, mas não deve competir
+   * com mensagens importantes e pontuais.
+   */
+  hideTitleAccent?: boolean;
+  centerTitle?: boolean;
   children: React.ReactNode;
   // ── Modo simples ─────────────────────────────────────────────
   // Informe `corPrimaria` (e opcionalmente `darkMode`) e o card monta o
@@ -91,6 +98,8 @@ export function criarAvantaShellPreset({ corPrimaria, darkMode }: AvantaShellPre
 export function AvantaCard({
   title,
   titleClassName,
+  hideTitleAccent = false,
+  centerTitle = false,
   children,
   corPrimaria,
   darkMode = false,
@@ -135,8 +144,8 @@ export function AvantaCard({
       {/* CARD DE TRÁS: título (aparece pelo recorte do card da frente) */}
       <div className={styles.cardTras}>
         {title ? (
-          <h3 className={`${styles.titulo}${titleClassName ? ` ${titleClassName}` : ''}`}>
-            <span className={styles.acento} aria-hidden="true" />
+          <h3 className={`${styles.titulo}${centerTitle ? ` ${styles.tituloCentralizado}` : ''}${titleClassName ? ` ${titleClassName}` : ''}`}>
+            {!hideTitleAccent && <span className={styles.acento} aria-hidden="true" />}
             <span>{title}</span>
           </h3>
         ) : null}
