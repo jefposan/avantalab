@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.28.0 - 2026-09-10
+- **Arquitetura fiscal de mercado**: NF-e, NFC-e e NFS-e permanecem capacidades independentes do produto; cada perfil empresarial passa a registrar no servidor somente os documentos que realmente utiliza.
+- **Piloto sem regra especial no produto**: a Tridium foi configurada para o ciclo oficial somente com NF-e em homologação. Essa seleção é dado de implantação do perfil, não limitação do AvantaVendas.
+- **Persistência e isolamento**: o recorte fiscal é versionado, protegido por permissões e RLS, carregado em qualquer dispositivo e nunca associado ao usuário ou ao armazenamento local do navegador.
+- **Segurança operacional**: a configuração de produção permanece bloqueada até a homologação formal dos conectores da empresa; cadastro e certificado já existentes não são alterados.
+
 ## 1.27.0 - 2026-09-10
 - **Integridade fiscal**: consumidor final passa a ser uma informação própria do cliente, independente da situação da inscrição estadual, e alimenta corretamente o `indFinal` da NF-e.
 - **Regras fiscais**: finalidade da emissão e exigência de inscrição estadual agora são efetivamente aplicadas pelo resolvedor server-side; valores desconhecidos, CFOP incompleto, escopo vazio e data futura bloqueiam a publicação.

@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.27.0 -->
+<!-- ava-version: 1.28.0 -->
+
+> Revisão 1.28.0: os tipos de nota são configurados por perfil empresarial e
+> persistidos na Gestão. O produto contempla NF-e, NFC-e e NFS-e, mas a tela
+> deve mostrar somente os documentos habilitados para a empresa ativa. No
+> piloto Tridium, oriente exclusivamente o ciclo de NF-e em homologação; não
+> peça novamente dados cadastrais nem certificado que já estejam salvos.
 
 > Revisão 1.27.0: em **Vendas e Serviços**, o cadastro do cliente pergunta
 > separadamente a situação da inscrição estadual e se ele é consumidor final.

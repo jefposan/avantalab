@@ -90,6 +90,7 @@ import { CUSTOMER_READY_TYPE, CUSTOMER_SAVE_REQUEST_TYPE, CUSTOMER_SAVE_RESPONSE
 import { COMMERCIAL_PROFILE_PERMISSIONS } from '../lib/commercial-permissions.mjs';
 import { ACCESS_READY_MESSAGE_TYPE, createAccessSaveRequest, parseAccessSaveResponse, parseAccessSnapshotMessage, type AccessBridgeSnapshot } from '../lib/access-settings-bridge.mjs';
 import { FISCAL_RULES_READY_TYPE, createFiscalRulesSaveRequest, parseFiscalRulesSaveResponse, parseFiscalRulesSnapshot, type FiscalRulesBridgeSnapshot } from '../lib/fiscal-rules-bridge.mjs';
+import { FISCAL_PROFILE_READY_TYPE, createFiscalProfileSaveRequest, parseFiscalProfileSaveResponse, parseFiscalProfileSnapshot, type FiscalProfile } from '../lib/fiscal-profile-bridge.mjs';
 
 type View = 'painel' | 'vendas' | 'novo_pedido' | 'novo_orcamento' | 'nova_ordem_servico' | 'servicos' | 'clientes' | 'catalogo' | 'estoque' | 'fiscal' | 'recebimentos' | 'relatorios' | 'configuracoes';
 type IconName = 'home' | 'sale' | 'service' | 'users' | 'box' | 'stock' | 'fiscal' | 'money' | 'chart' | 'settings' | 'plus' | 'search' | 'menu' | 'close' | 'chevron' | 'warning' | 'check' | 'clock' | 'document' | 'calendar' | 'arrow' | 'back' | 'copy' | 'print' | 'mail' | 'whatsapp' | 'tag' | 'edit' | 'image';
@@ -641,6 +642,7 @@ type AccessUser = { id: string; name: string; email: string; roleId: AccessRoleI
 type AccessAuditEntry = { id: string; at: string; actor: string; summary: string };
 type AccessBridgeState = Pick<AccessBridgeSnapshot, 'available' | 'writable' | 'message'> & { integrated: boolean; loading: boolean };
 type FiscalRulesBridgeState = FiscalRulesBridgeSnapshot & { integrated: boolean; loading: boolean };
+type FiscalProfileBridgeState = { integrated: boolean; available: boolean; writable: boolean; loading: boolean; message: string; profile: FiscalProfile | null };
 type FiscalCertificateBridgeState = { integrated: boolean; available: boolean; writable: boolean; loading: boolean; message: string; certificate: FiscalCertificateStatus | null };
 type FiscalMatrixSaveInput = {
   matrix: FiscalMatrix;
@@ -5203,6 +5205,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [managementBridgeOrigin, setManagementBridgeOrigin] = useState('');
   const [accessBridgeState, setAccessBridgeState] = useState<AccessBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '' });
   const [fiscalRulesBridgeState, setFiscalRulesBridgeState] = useState<FiscalRulesBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', configuration: null });
+  const [fiscalProfileBridgeState, setFiscalProfileBridgeState] = useState<FiscalProfileBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', profile: null });
   const [fiscalCertificateBridgeState, setFiscalCertificateBridgeState] = useState<FiscalCertificateBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', certificate: null });
   const [fiscalPrepareState, setFiscalPrepareState] = useState<Record<string, { loading: boolean; message: string }>>({});
   const [stockMovementRecords, setStockMovementRecords] = useState<StockMovementRecord[]>(stockMoves);
@@ -5234,6 +5237,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const pendingOperationSaveRef = useRef(new Map<string, { recordId: string; timer: number }>());
   const pendingAccessSaveRef = useRef(new Map<string, number>());
   const pendingFiscalRulesSaveRef = useRef(new Map<string, number>());
+  const pendingFiscalProfileSaveRef = useRef(new Map<string, number>());
   const stockAttentionCount = catalogRecords.filter((item) => item.category !== 'Serviço' && item.trackStock && stockStatus(item.available, item.minimum) !== 'normal').length;
   const receivableOpenCount = receivableRecords.filter((item) => receivableBalance(item) > 0).length;
   const salesRecordCount = created.filter((item) => ['orcamento', 'pedido', 'venda'].includes(item.type)).length;
@@ -5432,6 +5436,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     setFiscalDraftRecords([]);
     setAccessBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando permissões na Gestão…' });
     setFiscalRulesBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando regras fiscais na Gestão…', configuration: null });
+    setFiscalProfileBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando documentos fiscais do perfil…', profile: null });
     setFiscalCertificateBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando certificado digital…', certificate: null });
     const receive = (event: MessageEvent) => {
       if (event.source !== window.parent || event.origin !== parentOrigin) return;
@@ -5463,6 +5468,29 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         pendingAccessSaveRef.current.delete(accessSave.requestId);
         setAccessBridgeState((current) => ({ ...current, loading: false, message: accessSave.message }));
         setToast(accessSave.message);
+        return;
+      }
+      const fiscalProfileSnapshot = parseFiscalProfileSnapshot(event.data);
+      if (fiscalProfileSnapshot) {
+        setFiscalProfileBridgeState({ integrated: true, available: fiscalProfileSnapshot.available, writable: fiscalProfileSnapshot.writable, loading: false, message: fiscalProfileSnapshot.message, profile: fiscalProfileSnapshot.profile });
+        if (fiscalProfileSnapshot.profile) setModuleSettings((current) => normalizeModuleSettings({
+          ...current,
+          commercial: { ...current.commercial, defaultFiscalDocument: fiscalProfileSnapshot.profile?.defaultDocument || 'nenhum' },
+          fiscal: { ...current.fiscal, documentScope: fiscalProfileSnapshot.profile?.documentScope || current.fiscal.documentScope },
+        }, defaultModuleSettings) as ModuleSettings);
+        return;
+      }
+      const fiscalProfileSave = parseFiscalProfileSaveResponse(event.data);
+      if (fiscalProfileSave) {
+        const timer = pendingFiscalProfileSaveRef.current.get(fiscalProfileSave.requestId);
+        if (!timer) return;
+        window.clearTimeout(timer);
+        pendingFiscalProfileSaveRef.current.delete(fiscalProfileSave.requestId);
+        if (fiscalProfileSave.ok && fiscalProfileSave.profile) {
+          setFiscalProfileBridgeState((current) => ({ ...current, available: true, writable: true, loading: false, message: fiscalProfileSave.message, profile: fiscalProfileSave.profile }));
+          setModuleSettings((current) => normalizeModuleSettings({ ...current, commercial: { ...current.commercial, defaultFiscalDocument: fiscalProfileSave.profile?.defaultDocument || 'nenhum' }, fiscal: { ...current.fiscal, documentScope: fiscalProfileSave.profile?.documentScope || current.fiscal.documentScope } }, defaultModuleSettings) as ModuleSettings);
+        } else setFiscalProfileBridgeState((current) => ({ ...current, loading: false, message: fiscalProfileSave.message }));
+        setToast(fiscalProfileSave.message);
         return;
       }
       const fiscalRulesSnapshot = parseFiscalRulesSnapshot(event.data);
@@ -5775,6 +5803,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     window.parent.postMessage({ type: MANAGEMENT_CATALOG_READY_TYPE }, parentOrigin);
     window.parent.postMessage({ type: ACCESS_READY_MESSAGE_TYPE }, parentOrigin);
     window.parent.postMessage({ type: FISCAL_RULES_READY_TYPE }, parentOrigin);
+    window.parent.postMessage({ type: FISCAL_PROFILE_READY_TYPE }, parentOrigin);
     window.parent.postMessage({ type: RECEIVABLE_READY_TYPE }, parentOrigin);
     window.parent.postMessage({ type: STOCK_READY_TYPE }, parentOrigin);
     window.parent.postMessage({ type: CUSTOMER_READY_TYPE }, parentOrigin);
@@ -5787,6 +5816,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       setManagementBridgeOrigin('');
       setAccessBridgeState({ integrated: false, available: false, writable: false, loading: false, message: '' });
       setFiscalRulesBridgeState({ integrated: false, available: false, writable: false, loading: false, message: '', configuration: null });
+      setFiscalProfileBridgeState({ integrated: false, available: false, writable: false, loading: false, message: '', profile: null });
       setFiscalCertificateBridgeState({ integrated: false, available: false, writable: false, loading: false, message: '', certificate: null });
     };
   }, []);
@@ -5818,6 +5848,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     pendingAccessSaveRef.current.clear();
     pendingFiscalRulesSaveRef.current.forEach((timer) => window.clearTimeout(timer));
     pendingFiscalRulesSaveRef.current.clear();
+    pendingFiscalProfileSaveRef.current.forEach((timer) => window.clearTimeout(timer));
+    pendingFiscalProfileSaveRef.current.clear();
   }, []);
 
   useEffect(() => {
@@ -6005,6 +6037,31 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       : candidate;
     setModuleSettings(normalized);
     writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: normalized.company.document.replace(/\D/g, ''), module: 'vendas-servicos', settings: normalized }));
+    if (managementBridgeOrigin && window.parent !== window) {
+      if (!fiscalProfileBridgeState.available || !fiscalProfileBridgeState.writable) {
+        setToast(fiscalProfileBridgeState.message || 'A configuração fiscal protegida ainda não está disponível.');
+        return false;
+      }
+      const requestId = `fiscal:profile:${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+      const request = createFiscalProfileSaveRequest({
+        requestId,
+        expectedVersion: fiscalProfileBridgeState.profile?.version ?? 0,
+        documentScope: normalized.fiscal.documentScope,
+        defaultDocument: normalized.commercial.defaultFiscalDocument,
+        environment: normalized.fiscal.environment,
+      });
+      if (!request) { setToast('Revise os tipos de nota utilizados pela empresa.'); return false; }
+      const timer = window.setTimeout(() => {
+        pendingFiscalProfileSaveRef.current.delete(requestId);
+        setFiscalProfileBridgeState((current) => ({ ...current, loading: false, message: 'A Gestão não confirmou a configuração no tempo esperado.' }));
+        setToast('A Gestão não confirmou a configuração fiscal no tempo esperado.');
+      }, 20_000);
+      pendingFiscalProfileSaveRef.current.set(requestId, timer);
+      setFiscalProfileBridgeState((current) => ({ ...current, loading: true, message: 'Salvando os documentos fiscais no perfil…' }));
+      window.parent.postMessage(request, managementBridgeOrigin);
+      setToast('Salvando os documentos fiscais no perfil empresarial…');
+      return true;
+    }
     setToast('Configurações do módulo salvas e aplicadas aos novos lançamentos.');
     return true;
   };

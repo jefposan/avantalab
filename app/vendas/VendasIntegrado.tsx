@@ -11,6 +11,7 @@ import { STOCK_MOVE_REQUEST_TYPE, STOCK_MOVE_RESPONSE_TYPE, STOCK_READY_TYPE, ST
 import { COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE, COMMERCIAL_SERVICE_WORKFLOW_RESPONSE_TYPE } from '@/app/vendas/lib/commercial-service-workflow-bridge.mjs';
 import { SERVICE_ATTACHMENT_OPEN_REQUEST_TYPE, SERVICE_ATTACHMENT_OPEN_RESPONSE_TYPE, SERVICE_ATTACHMENT_UPLOAD_REQUEST_TYPE, SERVICE_ATTACHMENT_UPLOAD_RESPONSE_TYPE } from '@/app/vendas/lib/commercial-service-attachment-bridge.mjs';
 import { CUSTOMER_READY_TYPE, CUSTOMER_SAVE_REQUEST_TYPE, CUSTOMER_SAVE_RESPONSE_TYPE, CUSTOMER_SNAPSHOT_TYPE, OPERATION_READY_TYPE, OPERATION_SAVE_REQUEST_TYPE, OPERATION_SAVE_RESPONSE_TYPE, OPERATION_SNAPSHOT_TYPE, SUPPLIER_READY_TYPE, SUPPLIER_SAVE_REQUEST_TYPE, SUPPLIER_SAVE_RESPONSE_TYPE, SUPPLIER_SNAPSHOT_TYPE } from '@/app/vendas/lib/commercial-party-bridge.mjs';
+import { FISCAL_PROFILE_READY_TYPE, FISCAL_PROFILE_SAVE_REQUEST_TYPE, FISCAL_PROFILE_SAVE_RESPONSE_TYPE, FISCAL_PROFILE_SNAPSHOT_TYPE } from '@/app/vendas/lib/fiscal-profile-bridge.mjs';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FISCAL_STATUS_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_STATUS_REQUEST_V1';
@@ -296,6 +297,22 @@ export default function VendasIntegrado() {
     }
   }, [origemPrototipo]);
 
+  const carregarPerfilFiscal = useCallback(async (perfilId: string) => {
+    const destination = iframeRef.current?.contentWindow;
+    if (!destination || !UUID_PATTERN.test(perfilId)) return false;
+    const send = (snapshot: Record<string, unknown>) => destination.postMessage({ type: FISCAL_PROFILE_SNAPSHOT_TYPE, snapshot }, origemPrototipo);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) { send({ available: false, writable: false, message: 'Confirme novamente sua sessão na Gestão.', profile: null }); return false; }
+      const response = await fetch(`/api/modulos/vendas/fiscal/profile?${new URLSearchParams({ companyId: perfilId })}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok !== true) { send({ available: false, writable: false, message: payload.message || 'A configuração fiscal da empresa está indisponível.', profile: null }); return false; }
+      send({ available: true, writable: payload.writable === true, message: payload.profile ? 'Documentos fiscais carregados do perfil empresarial.' : 'Defina quais notas esta empresa utiliza.', profile: payload.profile || null });
+      return true;
+    } catch { send({ available: false, writable: false, message: 'Não foi possível consultar a configuração fiscal da empresa.', profile: null }); return false; }
+  }, [origemPrototipo]);
+
   const carregarRecebimentos = useCallback(async (perfilId: string) => {
     const destination=iframeRef.current?.contentWindow;
     if(!destination||!UUID_PATTERN.test(perfilId))return false;
@@ -390,6 +407,7 @@ export default function VendasIntegrado() {
           carregarDocumentosFiscais(perfilId, token),
           carregarPermissoes(perfilId),
           carregarRegrasFiscais(perfilId),
+          carregarPerfilFiscal(perfilId),
           carregarRecebimentos(perfilId),
           carregarEstoque(perfilId),
           carregarClientes(perfilId),
@@ -410,7 +428,7 @@ export default function VendasIntegrado() {
       setCatalogo(null);
       setErro(falha instanceof Error ? falha.message : 'Não foi possível carregar o catálogo de Custos.');
     }
-  }, [carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes]);
+  }, [carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes]);
 
   useEffect(() => {
     let ativo = true;
@@ -442,6 +460,7 @@ export default function VendasIntegrado() {
       if (event.data?.type === 'AVANTALAB_VENDAS_CATALOGO_READY_V1') { setIframePronto(true); return; }
       if (event.data?.type === ACCESS_READY_MESSAGE_TYPE) { void carregarPermissoes(empresaId); return; }
       if (event.data?.type === FISCAL_RULES_READY_TYPE) { void carregarRegrasFiscais(empresaId); return; }
+      if (event.data?.type === FISCAL_PROFILE_READY_TYPE) { void carregarPerfilFiscal(empresaId); return; }
       if (event.data?.type === RECEIVABLE_READY_TYPE) { void carregarRecebimentos(empresaId); return; }
       if (event.data?.type === STOCK_READY_TYPE) { void carregarEstoque(empresaId); return; }
       if (event.data?.type === CUSTOMER_READY_TYPE) { void carregarClientes(empresaId); return; }
@@ -645,6 +664,28 @@ export default function VendasIntegrado() {
           }
         };
         void publish();
+        return;
+      }
+      if (event.data?.type === FISCAL_PROFILE_SAVE_REQUEST_TYPE) {
+        const destination = iframeRef.current?.contentWindow;
+        const requestId = String(event.data?.requestId || '');
+        const expectedVersion = Number(event.data?.expectedVersion);
+        const documentScope = Array.isArray(event.data?.documentScope) ? event.data.documentScope : [];
+        const respond = (ok: boolean, message: string, profile: unknown = null) => destination?.postMessage({ type: FISCAL_PROFILE_SAVE_RESPONSE_TYPE, requestId, ok, message, profile }, origemPrototipo);
+        if (!destination || !requestIdValido(requestId) || !Number.isInteger(expectedVersion) || expectedVersion < 0 || !documentScope.length) return;
+        const save = async () => {
+          try {
+            const { data } = await supabase.auth.getSession();
+            const token = data.session?.access_token;
+            if (!token) { respond(false, 'Confirme novamente sua sessão na Gestão.'); return; }
+            const response = await fetch(`/api/modulos/vendas/fiscal/profile?${new URLSearchParams({ companyId: empresaId })}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ expectedVersion, documentScope, defaultDocument: event.data.defaultDocument, environment: event.data.environment }), cache: 'no-store' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.ok !== true || !payload.profile) { await carregarPerfilFiscal(empresaId); respond(false, payload.message || 'A Gestão recusou a configuração fiscal.'); return; }
+            respond(true, 'Documentos fiscais salvos no perfil empresarial.', payload.profile);
+            await carregarPerfilFiscal(empresaId);
+          } catch { await carregarPerfilFiscal(empresaId); respond(false, 'A conexão com a Gestão foi interrompida.'); }
+        };
+        void save();
         return;
       }
       if ([FISCAL_CERTIFICATE_STATUS_REQUEST_TYPE, FISCAL_CERTIFICATE_INSTALL_REQUEST_TYPE, FISCAL_CERTIFICATE_ACTIVATE_REQUEST_TYPE].includes(event.data?.type)) {
@@ -937,7 +978,7 @@ export default function VendasIntegrado() {
     };
     window.addEventListener('message', receber);
     return () => window.removeEventListener('message', receber);
-  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, empresaId, origemPrototipo]);
+  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, empresaId, origemPrototipo]);
 
   const perfilPronto = Boolean(empresaId && perfilCadastro);
 

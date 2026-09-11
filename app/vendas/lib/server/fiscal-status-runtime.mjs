@@ -10,6 +10,7 @@ import { createCommercialCatalogService, createPostgresCommercialCatalogReposito
 import { createCommercialFiscalCenterService, createPostgresCommercialFiscalCenterRepository } from './commercial-fiscal-center.mjs';
 import { createCommercialFiscalEmissionBridge, createPostgresCommercialFiscalDraftRepository } from './commercial-fiscal-emission-bridge.mjs';
 import { createCommercialFiscalRuleResolver, createCommercialFiscalRulesPublicationService, createCommercialFiscalRulesQueryService, createPostgresCommercialFiscalRulesRepository } from './commercial-fiscal-rules.mjs';
+import { createCommercialFiscalProfileService, createPostgresCommercialFiscalProfileRepository } from './commercial-fiscal-profile.mjs';
 import { createCommercialNfePreparationService, createPostgresCommercialNfePreparationRepository } from './commercial-nfe-preparation.mjs';
 import { createCommercialNfeRejectionCorrectionService, createPostgresCommercialNfeRejectionCorrectionRepository } from './commercial-nfe-rejection-correction.mjs';
 import { createCommercialNfeCancellationService, createDisabledNfeCancellationAdapter, createPostgresCommercialNfeCancellationRepository } from './commercial-nfe-cancellation.mjs';
@@ -57,7 +58,7 @@ const { Pool } = pg;
 const HTTPS_URL = /^https:\/\//i;
 const VENDAS_PILOTO_EMPRESA_ID = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e';
 function text(value) { return typeof value === 'string' ? value.trim() : String(value ?? '').trim(); }
-function disabled(reason) { return Object.freeze({ configured: false, reason, accessResolver: null, catalogService: null, statusService: null, centerService: null, emissionBridge: null, fiscalRulesQueryService: null, fiscalRulesPublicationService: null, certificateInstallationService: null, nfePreparationService: null, nfeRejectionCorrectionService: null, nfeCancellationService: null, nfeNumberReservationService: null, nfeSigningPreparationService: null, nfeSigningService: null, nfeStatusServiceAdapter: null, nfeAuthorizationAdapter: null, nfeReturnAdapter: null, nfeIssuanceOrchestrator: null, nfeAutomaticIssuanceService: null, orderWorkflow: null, serviceWorkflow: null, operationService: null, serviceOrderService: null, customerService: null, receivableService: null, stockService: null, supplierService: null }); }
+function disabled(reason) { return Object.freeze({ configured: false, reason, accessResolver: null, catalogService: null, statusService: null, centerService: null, emissionBridge: null, fiscalProfileService: null, fiscalRulesQueryService: null, fiscalRulesPublicationService: null, certificateInstallationService: null, nfePreparationService: null, nfeRejectionCorrectionService: null, nfeCancellationService: null, nfeNumberReservationService: null, nfeSigningPreparationService: null, nfeSigningService: null, nfeStatusServiceAdapter: null, nfeAuthorizationAdapter: null, nfeReturnAdapter: null, nfeIssuanceOrchestrator: null, nfeAutomaticIssuanceService: null, orderWorkflow: null, serviceWorkflow: null, operationService: null, serviceOrderService: null, customerService: null, receivableService: null, stockService: null, supplierService: null }); }
 
 function createCertificateRuntime({ environment, pool, issuerResolver, databaseUrl }) {
   const key = text(environment.FISCAL_CERTIFICATE_MASTER_KEY);
@@ -262,6 +263,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     const fiscalRepository = createPostgresFiscalRepository({ pool });
     const fiscalLifecycle = createFiscalEmissionLifecycleService({ repository: fiscalRepository });
     const fiscalRulesRepository = createPostgresCommercialFiscalRulesRepository({ pool });
+    const fiscalProfileRepository = createPostgresCommercialFiscalProfileRepository({ pool });
     const fiscalRuleResolver = createCommercialFiscalRuleResolver({ repository: fiscalRulesRepository });
     const centerRepository = createPostgresCommercialFiscalCenterRepository({ pool });
     const commercialDraftRepository = createPostgresCommercialFiscalDraftRepository({ pool });
@@ -309,6 +311,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
         draftRepository: commercialDraftRepository,
         emissionLifecycle: fiscalLifecycle,
       }),
+      fiscalProfileService: createCommercialFiscalProfileService({ repository: fiscalProfileRepository }),
       fiscalRulesQueryService: createCommercialFiscalRulesQueryService({ repository: fiscalRulesRepository }),
       fiscalRulesPublicationService: createCommercialFiscalRulesPublicationService({ repository: fiscalRulesRepository }),
       certificateInstallationService: certificateRuntime?.installationService || null,

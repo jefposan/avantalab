@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.27.0 -->
+<!-- ava-version: 1.28.0 -->
+
+> Revisão 1.28.0: a seleção de NF-e, NFC-e e NFS-e agora pertence ao perfil
+> empresarial, não ao usuário ou aparelho. A Gestão Mobile não ganhou nova
+> ação; quando necessário, encaminhe a configuração para Vendas e Serviços na
+> Gestão Web. Para a Tridium, o teste oficial usa somente NF-e em homologação.
 
 > Revisão 1.27.0: a integridade e o histórico das regras fiscais foram
 > reforçados no módulo Vendas e Serviços. A Gestão Mobile não ganhou nova ação;
