@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.31.0.03 - 2026-09-11
+- **Fluxo imediato em Operações de Campo**: Recebimentos e Serviços deixam de
+  exibir ou persistir a opção **Salvar para depois**.
+- **Listas sem scroll**: escolhas curtas, incluindo formas de pagamento e tipos
+  de serviço, usam o espaço liberado dentro do mesmo tamanho de card.
+
 ## 1.31.0.02 - 2026-09-11
 - **Ajuda de Serviços mais clara**: o texto agora explica primeiro o registro,
   mantendo nome e assinatura junto desse caminho, e apresenta o agendamento em

@@ -114,6 +114,8 @@ testes. Esta seção resume apenas a face dos controles.
   solicitação completa substitui o rascunho atual sem acumular dados antigos.
 - O microfone de uma pergunta permanece dentro do card enquanto a resposta é
   gravada, transcrita e interpretada, sem fechar ou deslocar o contexto atual.
+- O adaptador pode desativar **Salvar para depois** quando o módulo não oferece
+  retomada de pendências e pode compactar listas curtas sem rolagem interna.
 
 ## Estados assíncronos
 

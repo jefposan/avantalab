@@ -35,9 +35,11 @@ alcançar todas as integrações do mesmo projeto na publicação seguinte.
    interpretação; a interface não volta ao acionador principal nesse intervalo.
 6. Resultado confirmado usa o aviso temporário padrão no rodapé. Quando houver
    comprovante, o aviso oferece **Compartilhar comprovante** antes de desaparecer.
-7. Solicitações incompletas podem ser salvas. O acionador sempre inicia uma nova
-   fala; pendências ficam em indicador separado e podem ser retomadas ou
-   canceladas individualmente.
+7. Solicitações incompletas podem ser salvas quando o sistema habilitar essa
+   capacidade. Quando desabilitada no adaptador, o botão não aparece e o
+   controlador não mantém pendências ocultas. Onde estiver habilitada, o
+   acionador sempre inicia uma nova fala; pendências ficam em indicador separado
+   e podem ser retomadas ou canceladas individualmente.
 8. Se uma nova solicitação completa for gravada antes da conclusão da atual, o
    rascunho em andamento é cancelado e substituído. Respostas curtas à pergunta
    exibida continuam o fluxo atual e não são tratadas como uma nova ação.
@@ -60,7 +62,7 @@ de pagamento”.
 | Transcrevendo | Controle cancelável e indicação contínua de atividade. |
 | Interpretando | Controle cancelável e indicação contínua de atividade. |
 | Esclarecimento | Somente a dúvida atual, opções pertinentes, fala complementar e busca manual quando aplicável. |
-| Confirmação | Resumo validado, cancelar, confirmar, editar quando suportado e salvar para depois. |
+| Confirmação | Resumo validado, cancelar, confirmar, editar quando suportado e salvar para depois quando habilitado. |
 | Erro | Mensagem humana, sem detalhe técnico sensível, com tentar novamente ou cancelar. |
 | Sucesso | Aviso temporário inferior e ação de comprovante quando disponível. |
 
@@ -80,6 +82,7 @@ O módulo chama `window.AvantaVoiceActions.open(adapter)`. O adaptador fornece:
 - atualização da tela após execução;
 - aviso temporário e compartilhamento de comprovante;
 - atualização do contador de pendências.
+- opções de experiência, como salvar para depois e compactar listas curtas.
 
 O componente nunca acessa Supabase, OpenAI, tokens ou regras comerciais
 diretamente. Endpoints do módulo validam usuário, empresa ativa, permissão,
@@ -91,6 +94,10 @@ Em módulos React, reutilizar `AvantaVoiceActionDock.tsx`; ele monta o acionador
 a ajuda acessível e o aviso temporário, e carrega o controlador pelo endereço
 neutro `/recursos/padrao-avanta/`. O consumidor fornece somente o adaptador e a
 faixa de layout reservada.
+
+`allowSaveForLater: false` remove a ação e desativa a persistência da integração.
+`compactShortLists: true` apresenta integralmente listas de até cinco opções,
+usando o espaço do próprio card e preservando o alvo de toque mínimo.
 
 Cada integração deve informar `storageNamespace` estável e específico do
 sistema. Alterar esse namespace exige migração compatível para não perder

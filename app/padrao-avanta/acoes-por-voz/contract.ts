@@ -1,4 +1,4 @@
-export const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.2.1' as const;
+export const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.3.0' as const;
 
 export type AvantaVoiceActionOperation =
   | 'transcribe'
@@ -30,6 +30,8 @@ export type AvantaVoiceActionsAdapter = {
   autoStart?: boolean;
   pendingId?: string | null;
   storageNamespace?: string;
+  allowSaveForLater?: boolean;
+  compactShortLists?: boolean;
   request: (
     operation: AvantaVoiceActionOperation,
     payload: Record<string, unknown> | FormData,

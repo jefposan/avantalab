@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.31.0.02 -->
+<!-- ava-version: 1.31.0.03 -->
+
+> Revisão 1.31.0.03: a retirada de **Salvar para depois** foi aplicada somente a
+> Recebimentos e Serviços; o fluxo de pendências do AvantaVendas foi preservado.
 
 > Revisão 1.31.0.02: o ajuste no texto de ajuda de Serviços pertence ao PWA
 > Operações de Campo e não altera o AvantaVendas.

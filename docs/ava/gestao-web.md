@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.31.0.02 -->
+<!-- ava-version: 1.31.0.03 -->
+
+> Revisão 1.31.0.03: a remoção de pendências e as listas compactas pertencem ao
+> PWA Operações de Campo, sem alterar a Gestão Web.
 
 > Revisão 1.31.0.02: o texto reorganizado da ajuda pertence ao PWA Operações de
 > Campo e não altera o fluxo da Gestão Web.

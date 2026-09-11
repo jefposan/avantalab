@@ -96,16 +96,20 @@ test('cadastros novos atualizam o resolvedor e ajudam a próxima transcrição',
   assert.doesNotMatch(transcriber, /select\('\*'\)/);
 });
 
-test('formas de pagamento usam lista compacta sem scroll interno', async () => {
-  const controller = await readFile(
-    new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url),
-    'utf8',
-  );
+test('listas curtas usam o card sem scroll e sem salvar pendências', async () => {
+  const [controller, dock] = await Promise.all([
+    readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/recebimentos/components/OperacoesCampoVoiceDock.tsx', import.meta.url), 'utf8'),
+  ]);
   assert.match(controller, /state\.current\.entity\?\.type === 'choice'/);
-  assert.match(controller, /state\.current\.candidates\.length <= 5/);
+  assert.match(controller, /candidates\.length <= 5/);
+  assert.match(controller, /state\.options\?\.compactShortLists === true/);
   assert.match(controller, /compactChoices \? 'candidates compact' : 'candidates'/);
   assert.match(controller, /\.candidates\.compact\{[^}]*max-height:none;[^}]*overflow:visible/);
   assert.match(controller, /\.candidates\.compact \.candidate\{[^}]*min-height:44px/);
+  assert.match(controller, /state\.options\?\.allowSaveForLater === false/);
+  assert.match(dock, /allowSaveForLater=\{false\}/);
+  assert.match(dock, /compactShortLists/);
 });
 
 test('resposta por voz permanece ancorada dentro do card da pergunta', async () => {

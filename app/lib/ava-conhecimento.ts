@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.31.0.03: Operações de Campo não salva pendências de voz;
+// listas curtas de escolhas ficam completas no card, sem scroll interno.
 // Revisado na versão 1.31.0.02: a ajuda de Serviços separa registro, com nome e
 // assinatura, do caminho de agendamento, com cliente, data e tipo.
 // Revisado na versão 1.31.0.01: ao responder uma dúvida por voz, o card e o

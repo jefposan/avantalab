@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.31.0.02 -->
+<!-- ava-version: 1.31.0.03 -->
+
+> Revisão 1.31.0.03: Recebimentos e Serviços por voz não oferecem pendência para
+> depois. As listas curtas de escolhas aparecem completas, sem scroll interno.
 
 > Revisão 1.31.0.02: a ajuda de voz de Serviços separa claramente os caminhos:
 > registrar segue para nome e assinatura; agendar solicita cliente, data e tipo.

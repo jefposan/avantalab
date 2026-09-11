@@ -1,5 +1,13 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.12.0 - 2026-09-11
+
+- Adicionadas opções oficiais para desativar **Salvar para depois** junto com a
+  persistência correspondente e para compactar listas de até cinco escolhas sem
+  scroll interno.
+- As opções ficam no adaptador, permitindo experiências distintas sem copiar ou
+  alterar o controlador compartilhado.
+
 ## 1.11.1 - 2026-09-11
 
 - Corrigida a continuidade das dúvidas respondidas por voz: o card permanece

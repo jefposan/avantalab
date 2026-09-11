@@ -17,6 +17,11 @@ O contrato diferencia complemento e substituição: respostas curtas preservam o
 rascunho atual, enquanto uma solicitação claramente nova devolve
 `replacesPrevious` e descarta o fluxo anterior antes de montar a nova ação.
 
+O adaptador pode desativar `allowSaveForLater` em sistemas cujo fluxo deve ser
+concluído ou cancelado na hora. Também pode ativar `compactShortLists` para
+mostrar até cinco escolhas integralmente, sem scroll interno e sem ampliar o
+painel.
+
 Ao responder uma pergunta por voz, o controlador mantém o card visível e o
 microfone ancorado dentro dele durante gravação, transcrição e interpretação.
 Essa continuidade é central e vale para todo sistema que reutiliza o padrão.

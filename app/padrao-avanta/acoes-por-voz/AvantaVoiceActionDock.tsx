@@ -45,6 +45,8 @@ type Props = {
   id: string;
   account: AvantaVoiceAccount;
   storageNamespace: string;
+  allowSaveForLater?: boolean;
+  compactShortLists?: boolean;
   label?: string;
   helpTitle?: string;
   helpText: string;
@@ -63,6 +65,8 @@ export default function AvantaVoiceActionDock({
   id,
   account,
   storageNamespace,
+  allowSaveForLater,
+  compactShortLists,
   label = 'Solicitação por Voz',
   helpTitle = 'Solicitação por Voz',
   helpText,
@@ -125,6 +129,8 @@ export default function AvantaVoiceActionDock({
         autoStart: true,
         account,
         storageNamespace,
+        allowSaveForLater,
+        compactShortLists,
         request,
         notify: notificar,
         afterExecute,

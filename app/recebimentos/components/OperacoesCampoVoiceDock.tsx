@@ -342,6 +342,8 @@ export default function OperacoesCampoVoiceDock({
       id={`operacoes-campo-voz-${mode}`}
       account={{ id: `${empresaId}:${userId}`, userId, label: mode === 'recebimentos' ? 'Recebimentos' : 'Serviços' }}
       storageNamespace={`avantalab.operacoes-campo.${mode}.voice-actions.v1`}
+      allowSaveForLater={false}
+      compactShortLists
       helpText={helpText}
       request={request}
     />
