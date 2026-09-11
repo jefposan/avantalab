@@ -16,7 +16,7 @@ test('Configurações usa o Kanban estável e persiste a ordem por perfil', asyn
     app.indexOf('function renderConfiguracoes'),
   );
 
-  assert.match(app, /const PREFERENCIAS_VENDAS_VERSAO = 3/);
+  assert.match(app, /const PREFERENCIAS_VENDAS_VERSAO = 4/);
   assert.match(app, /ordemCardsConfiguracoes: \[\]/);
   assert.match(app, /ordemCardsConfiguracoes = Array\.isArray/);
   assert.match(app, /ordemCardsConfiguracoes: state\.ordemCardsConfiguracoes/);

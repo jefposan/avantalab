@@ -588,7 +588,7 @@ export default function ListaEmpresas({
 
   function camposBasicosSubempresa() {
     return (
-      <div className={styles.linhaEmpresaCampos}>
+      <div className={`${styles.linhaEmpresaCampos} ${styles.linhaSubempresaCampos}`}>
         <div className={styles.field}><label className={styles.label}>Nome do cliente *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
         <div className={styles.field}><label className={styles.label}>Responsável — nome completo</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
         <div className={styles.field}><label className={styles.label}>Valor contratado</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
@@ -637,10 +637,12 @@ export default function ListaEmpresas({
           </div>
         </div>
         <p className={`${styles.subMeta} ${styles.tipoCadastroAjuda}`}>{clienteDireto ? 'Cliente com cobrança própria. Não permite clientes abaixo.' : 'Local como shopping, galeria ou condomínio. Não possui cobrança própria.'}</p>
-        <div className={styles.linhaEmpresaCampos}>
+        <div className={`${styles.linhaEmpresaCampos} ${clienteDireto ? styles.linhaClienteDiretoCampos : ''}`}>
           <div className={styles.field}><label className={styles.label}>{clienteDireto ? 'Nome da empresa *' : 'Nome do local *'}</label><input className={styles.input} placeholder={clienteDireto ? 'Ex: Clínica Horizonte' : 'Ex: Shopping Morumbi'} value={eNome} onChange={(e) => setENome(formatarNomeProprio(e.target.value))} /></div>
           {clienteDireto && <><div className={styles.field}><label className={styles.label}>Responsável — nome completo</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={eResp} onChange={(e) => setEResp(formatarNomeProprio(e.target.value))} /></div>
-          <div className={styles.field}><label className={styles.label}>Contato</label><input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} /></div></>}
+          <div className={styles.field}><label className={styles.label}>Valor contratado</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
+          {campoDiaVencimento()}</>}
+          {!clienteDireto && <div className={styles.field}><label className={styles.label}>Contato</label><input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} /></div>}
         </div>
         {camposEndereco()}
         {clienteDireto && <>
@@ -649,8 +651,7 @@ export default function ListaEmpresas({
             <label className={styles.label}>E-mail</label>
             <input className={styles.input} placeholder="Ex: financeiro@empresa.com.br" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
           </div>
-          <div className={styles.field} style={{ flex: '0 1 180px', marginBottom: 0 }}><label className={styles.label}>Valor contratado</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
-          <div style={{ flex: '0 1 168px', marginBottom: 0 }}>{campoDiaVencimento()}</div>
+          <div className={styles.field} style={{ flex: '0 1 180px' }}><label className={styles.label}>Contato</label><input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} /></div>
         </div>
         {formRecorrencia()}
         </>}

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.28.0.01 -->
+<!-- ava-version: 1.28.0.02 -->
+
+> Revisão 1.28.0.02: em Operações de Campo, rotina e agendamento manual são
+> tarefas separadas; cada execução do colaborador exige assinatura e avaliação
+> próprias. O ajuste de modo escuro é silencioso após o salvamento.
 
 > Revisão 1.28.0.01: sem impacto operacional na Gestão Mobile. Emissão fiscal
 > existe somente em **Vendas e Serviços**, na Gestão Web. AvantaVendas e
@@ -18,6 +22,71 @@
 
 > Revisão 1.26.0.02: o refinamento visual da revisão de regras fiscais pertence
 > à tela de Vendas e Serviços e não altera o fluxo operacional da Gestão Mobile.
+> Revisão 1.26.1.21: a confirmação visual da troca de modo escuro foi retirada
+> dos Ajustes de Operações de Campo; não há impacto operacional na Gestão Mobile.
+
+> Revisão 1.26.1.20: no PWA de Serviços, a rotina contratada e cada
+> agendamento manual são execuções separadas. Ao selecionar o local, escolha
+> qual serviço executar; cada item solicita nome, assinatura e avaliação
+> próprios. O canvas termina antes da faixa de ações.
+
+> Revisão 1.26.1.19: no PWA de Serviços, o colaborador escolhe o agendamento
+> pendente como uma execução e o conclui com assinatura e avaliação. A
+> confirmação central informa que a gestão já pode acompanhar o serviço.
+
+> Revisão 1.26.1.18: ajustes exclusivos da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.26.1.17: refinamento exclusivo da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.26.1.16: consulta explícita exclusiva da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.26.1.15: refinamento exclusivo do PDF na Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.26.1.14: geração do PDF exclusiva da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.26.1.13: refinamento visual exclusivo da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.26.1.12: refinamento visual exclusivo da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.26.1.11: refinamento visual exclusivo da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.26.1.10: a identidade no cabeçalho do relatório pertence à Gestão
+> Web e não altera o fluxo operacional da Gestão Mobile.
+
+> Revisão 1.26.1.09: a lista recolhível do relatório pertence à Gestão Web e
+> não altera o fluxo operacional da Gestão Mobile.
+
+> Revisão 1.26.1.08: o calendário padronizado do relatório pertence à Gestão
+> Web e não altera o fluxo operacional da Gestão Mobile.
+
+> Revisão 1.26.1.07: refinamento visual e de seleção do relatório da Gestão
+> Web, sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.26.1.06: ajuste de layout no relatório da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.26.1.05: ajuste do seletor de clientes no relatório da Gestão Web,
+> sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.26.1.04: ajuste visual do modal de relatório da Gestão Web, sem
+> impacto operacional na Gestão Mobile.
+
+> Revisão 1.26.1.03: o filtro de cliente/local do relatório de Serviços está
+> na Gestão Web e não altera o fluxo operacional da Gestão Mobile.
+
+> Revisão 1.26.1.02: o relatório por período de Serviços foi adicionado à
+> Gestão Web; não altera o fluxo operacional da Gestão Mobile.
+
+> Revisão 1.26.1: reorganização interna de protótipos, testes, build e
+> infraestrutura das rotas de voz; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.26.0.01: no PWA de Serviços, a área de desenho da assinatura termina
 > antes das ações de Cancelar, Limpar assinatura e Avançar.

@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.28.0.02: em Operações de Campo, a rotina contratada e
+// cada agendamento manual são execuções independentes; cada item selecionado
+// requer assinatura e avaliação próprias. O modo escuro muda silenciosamente.
 // Revisado na versão 1.28.0.01: emissão fiscal pertence somente ao módulo
 // Vendas e Serviços da Gestão Web. AvantaVendas e Conteúdo AvantaVendas não
 // emitem notas; nunca orientar o usuário a procurar funções fiscais neles.
@@ -15,6 +18,55 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // devem ser confirmadas sem o responsável fiscal da empresa.
 // Revisado na versão 1.26.0.02: a edição de regras fiscais foi compactada e
 // reúne Adicionar, Duplicar e Excluir; validações e comportamento não mudaram.
+// Revisado na versão 1.26.1.21: a alteração do modo escuro de Operações de
+// Campo é silenciosa após o sucesso e mantém apenas os erros visíveis.
+// Revisado na versão 1.26.1.20: rotina e agendamentos manuais de Serviços são
+// execuções independentes no PWA; cada uma exige registro, assinatura e
+// avaliação próprios. O canvas mantém folga antes das ações.
+// Revisado na versão 1.26.1.19: o PWA de Serviços seleciona explicitamente o
+// agendamento pendente para concluir com assinatura e avaliação. A confirmação
+// central avisa que a Gestão já pode acompanhar o serviço.
+// Revisado na versão 1.26.1.18: reclicar uma aba ativa da Gestão Web descarta
+// edições e seleções em curso. PDF e Excel de Serviços incluem comprovantes de
+// assinatura reduzidos, sem alteração para a Ava.
+// Revisado na versão 1.26.1.17: a busca do relatório de Serviços da Gestão Web
+// fica ao lado do seletor e abre a lista ao receber foco, sem alteração para a Ava.
+// Revisado na versão 1.26.1.16: o relatório de Serviços da Gestão Web exige
+// consulta explícita antes de exibir ou exportar dados, sem alteração para a Ava.
+// Revisado na versão 1.26.1.15: logos PNG transparentes são preservadas no
+// PDF de Serviços da Gestão Web, sem alteração operacional para a Ava.
+// Revisado na versão 1.26.1.14: o relatório de Serviços da Gestão Web gera
+// download de PDF com a identidade do perfil, sem alteração operacional para a Ava.
+// Revisado na versão 1.26.1.13: o rótulo do botão Relatórios da Gestão Web
+// foi centralizado verticalmente, sem alteração operacional para a Ava.
+// Revisado na versão 1.26.1.12: o visualizador de comprovantes da Gestão Web
+// usa contraste explícito e abre acima dos modais, sem alteração operacional
+// para a Ava.
+// Revisado na versão 1.26.1.11: o botão Relatórios da Gestão Web foi alinhado
+// ao seletor de competência, sem alteração operacional para a Ava.
+// Revisado na versão 1.26.1.10: o relatório de Serviços identifica a empresa
+// ou perfil ativo e usa a logo cadastrada quando disponível; sem alteração
+// operacional para a Ava.
+// Revisado na versão 1.26.1.09: a seleção de cliente/local do relatório de
+// Serviços começa recolhida e fecha após uma escolha; sem alteração operacional
+// para a Ava.
+// Revisado na versão 1.26.1.08: o período do relatório de Serviços usa o
+// calendário padrão do sistema, com confirmação explícita; sem alteração
+// operacional para a Ava.
+// Revisado na versão 1.26.1.07: o relatório de Serviços permite desfazer a
+// seleção ao clicar no item ativo e mantém as ações de exportação contrastadas
+// na camada global, sem alteração operacional para a Ava.
+// Revisado na versão 1.26.1.06: o relatório de Serviços agrupa período e
+// exportações em uma faixa compacta, sem alteração operacional para a Ava.
+// Revisado na versão 1.26.1.05: o relatório de Serviços permite localizar e
+// selecionar clientes pela hierarquia Empresa → locais; sem impacto para Ava.
+// Revisado na versão 1.26.1.04: o relatório de Serviços cobre visualmente
+// toda a tela, sem alteração operacional para a Ava.
+// Revisado na versão 1.26.1.03: o relatório de Serviços permite filtrar um
+// cliente direto, todos os locais de um agrupado ou um local específico.
+// Revisado na versão 1.26.1.02: em Serviços > Realizados, a Gestão pode
+// consultar por período e exportar o relatório das execuções. A assinatura
+// continua protegida e é aberta pelo comprovante no AvantaLab.
 // Revisado na versão 1.26.0.01: o canvas de assinatura do PWA de Serviços
 // termina antes da faixa de ações, sem alteração operacional para a Ava.
 // Revisado na versão 1.26.0: a Solicitação por Voz usa aliases ocultos gerados

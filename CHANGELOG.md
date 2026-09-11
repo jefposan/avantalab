@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.28.0.02 - 2026-09-11
+- **Operações de Campo**: a rotina contratada e cada agendamento manual são
+  tarefas independentes no PWA; cada execução selecionada preserva assinatura
+  e avaliação próprias. Relatórios e cadastros foram refinados, e o modo escuro
+  passa a ser aplicado silenciosamente, mantendo apenas erros visíveis.
+
 ## 1.28.0.01 - 2026-09-10
 - **Separação entre produtos**: corrigida a orientação para declarar expressamente que emissão fiscal pertence somente ao módulo **Vendas e Serviços da Gestão Web**. O aplicativo **AvantaVendas** e o módulo **Conteúdo AvantaVendas** não emitem notas fiscais.
 - **Proteção contra regressão**: teste automatizado passa a impedir que a ponte de configuração fiscal seja ligada às fontes do AvantaVendas ou de Conteúdo AvantaVendas.
@@ -19,6 +25,136 @@
 ## 1.26.0.02 - 2026-09-10
 - **Revisão de regras fiscais**: a edição ficou mais compacta, com contexto e indicadores condensados, campos reorganizados e as ações Adicionar, Duplicar e Excluir reunidas na mesma linha.
 - **Responsividade**: o diálogo preserva a leitura no celular, mantém as três ações agrupadas e usa uma coluna para os campos de revisão em telas estreitas.
+## 1.26.1.21 - 2026-09-11
+- **Ajustes de Operações de Campo**: a troca de modo escuro passa a ocorrer de
+  forma imediata e silenciosa; mensagens de erro continuam visíveis caso a
+  preferência não possa ser salva.
+
+## 1.26.1.20 - 2026-09-11
+- **Execuções de serviço**: a rotina contratada e cada agendamento manual agora
+  aparecem como serviços independentes no PWA. Quando ambos coincidirem no
+  mesmo local e dia, o colaborador escolhe qual executar; os agendados mantêm
+  a etiqueta **Interna**, **Revisão** ou **Extra** e cada execução coleta sua
+  própria assinatura e avaliação.
+- **Assinatura e cadastros**: o canvas de assinatura termina antes da faixa de
+  ações, com folga visual abaixo do tracejado. O cadastro de subempresa também
+  reúne nome, responsável, valor e dia de vencimento na mesma linha no desktop.
+
+## 1.26.1.19 - 2026-09-10
+- **Serviços no colaborador**: agendamentos do dia agora são identificados como
+  execuções selecionáveis e o app envia o identificador do serviço escolhido,
+  garantindo que a assinatura e a avaliação concluam o agendamento correto.
+  A confirmação ganhou card centralizado e as avaliações **Bom** e **Regular**
+  respondem ao toque.
+- **Relatórios e cadastros**: a assinatura volta à mesma linha da execução no
+  PDF, o tipo de rotina é apresentado como **Externa**, e o cadastro de cliente
+  direto reúne nome, responsável, valor e vencimento na mesma linha.
+
+## 1.26.1.18 - 2026-09-10
+- **Operações de Campo**: reclicar a aba aberta descarta formulários, edições e
+  seleções em curso, retornando à tela inicial daquela área. Os campos de
+  vencimento foram alinhados nos cadastros direto e de subempresa, e a lista
+  de serviços realizados agora preserva a coluna **Tipo** na mesma linha.
+- **Relatório de serviços executados**: a mensagem inicial foi simplificada;
+  PDF identifica somente o nome do perfil e PDF/Excel passam a incluir as
+  imagens reduzidas das assinaturas disponíveis.
+
+## 1.26.1.17 - 2026-09-10
+- **Relatório de serviços executados**: a busca de cliente/local agora fica ao
+  lado do seletor, abre a lista ao receber foco e remove os textos auxiliares
+  redundantes.
+
+## 1.26.1.16 - 2026-09-10
+- **Relatório de serviços executados**: a consulta agora abre sem resultados.
+  Após definir os filtros, o gestor usa **Consultar relatório** para exibir a
+  lista e liberar as exportações PDF e Excel.
+
+## 1.26.1.15 - 2026-09-10
+- **Relatório de serviços executados**: logos PNG transparentes agora preservam
+  integralmente a transparência no cabeçalho do PDF, sem placa de fundo.
+
+## 1.26.1.14 - 2026-09-10
+- **Relatório de serviços executados**: a identificação da empresa/perfil saiu
+  do card de consulta e passou a compor somente o PDF baixado. O PDF agora é
+  gerado diretamente pelo sistema — com logo quando o arquivo é compatível — e
+  baixado no dispositivo, sem abrir a janela de impressão.
+
+## 1.26.1.13 - 2026-09-10
+- **Serviços realizados**: o rótulo do botão **Relatórios** foi centralizado
+  verticalmente, mantendo sua altura alinhada ao seletor de competência.
+
+## 1.26.1.12 - 2026-09-10
+- **Comprovantes de assinatura**: o visualizador agora abre acima dos demais
+  modais e tem contexto próprio de cor. Título, nome do arquivo, estado,
+  imagem, fechamento e ação de abertura receberam contraste explícito nos
+  temas claro e escuro.
+
+## 1.26.1.11 - 2026-09-10
+- **Serviços realizados**: o botão **Relatórios** agora tem a mesma altura do
+  seletor de competência ao lado.
+
+## 1.26.1.10 - 2026-09-10
+- **Relatório de serviços executados**: o cabeçalho agora identifica a empresa
+  ou perfil ativo. Quando uma logo está cadastrada, ela aparece no canto
+  superior esquerdo do relatório.
+
+## 1.26.1.09 - 2026-09-10
+- **Relatório de serviços executados**: a lista de clientes e locais agora
+  inicia recolhida para preservar o espaço de trabalho. Ela abre somente em
+  **Selecionar cliente ou local** e volta a recolher após uma escolha.
+
+## 1.26.1.08 - 2026-09-10
+- **Relatório de serviços executados**: as datas de período agora usam o
+  calendário padrão de Agendamentos, com navegação mensal e confirmação
+  explícita. Quando aberto sobre o relatório, o calendário ocupa a camada
+  correta acima do modal e mantém contraste nos dois temas.
+
+## 1.26.1.07 - 2026-09-10
+- **Relatório de serviços executados**: removida a pílula redundante de todos
+  os clientes. A seleção ativa pode ser desfeita pelo próprio item, e o botão
+  do agrupado agora explica que inclui somente os seus locais. Ações, filtros
+  e lista ganharam contraste reforçado nos temas claro e escuro; a exportação
+  para Excel permanece sempre visível na camada global do relatório.
+
+## 1.26.1.06 - 2026-09-10
+- **Relatório de serviços executados**: período e exportações foram reunidos
+  em uma faixa compacta; os campos de data agora usam o controle padrão com
+  ícone associado ao próprio campo. A busca foi alinhada ao título da lista.
+
+## 1.26.1.05 - 2026-09-10
+- **Relatório de serviços executados**: a seleção de cliente agora segue a
+  hierarquia Empresa → locais, com pílulas de estado, busca lateral e
+  contraste específico para os temas claro e escuro.
+
+## 1.26.1.04 - 2026-09-10
+- **Relatório de serviços executados**: o modal agora é renderizado na camada
+  global acima dos controles fixos, garantindo que o escurecimento cubra toda
+  a tela atrás do card.
+
+## 1.26.1.03 - 2026-09-10
+- **Relatório de serviços executados**: acrescentado o seletor de
+  cliente/local. O filtro é respeitado na prévia, no Excel e na impressão/PDF.
+
+## 1.26.1.02 - 2026-09-10
+- **Relatório de serviços executados**: a aba **Realizados** agora permite
+  escolher um período, revisar empresa, local, data e hora, colaborador,
+  assinador, avaliação, observação e o comprovante protegido da assinatura.
+  A listagem pode ser exportada para Excel ou impressa/salva como PDF.
+
+## 1.26.1 - 2026-09-10
+- **Arquitetura de voz**: as rotas oficiais e experimentais agora apontam para
+  handlers privados únicos sob o domínio de Vendas. O laboratório continua
+  compatível, mas o sistema oficial não depende mais da área de testes.
+- **Qualidade**: o build passou a executar a suíte completa de 286 testes, e o
+  lint foi organizado para separar código-fonte de bundles, espelhos nativos,
+  rascunhos não aplicados e worktrees locais, sem ocultar avisos legados.
+- **Organização**: os protótipos Constelação Avanta e preview de card de
+  perfis foram retirados do aplicativo oficial e preservados em AvantaLab
+  Projetos. Formatadores e armazenamento local de Vendas e Serviços foram
+  isolados em módulo testado, sem mudança de contrato ou de dados.
+- **Build estável**: a compilação de produção usa o Webpack suportado pelo
+  Next 16 para evitar a paralisação observada no Turbopack ao recompilar os
+  componentes legados de grande porte.
 
 ## 1.26.0.01 - 2026-09-10
 - **Assinatura de serviços**: a área de desenho agora respeita estritamente a região livre antes da faixa de ações. Em celular, o canvas não avança nem fica sob os botões Cancelar, Limpar assinatura e Avançar.

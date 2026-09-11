@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.28.0.01 -->
+<!-- ava-version: 1.28.0.02 -->
+
+> Revisão 1.28.0.02: Operações de Campo separa rotina e agendamentos na
+> execução do colaborador, preserva comprovantes nos relatórios e mantém o
+> modo escuro silencioso após a preferência ser salva.
 
 > Revisão 1.28.0.01: emissão fiscal pertence exclusivamente a **Vendas e
 > Serviços**, módulo da Gestão Web. Não encaminhe a pessoa para o aplicativo
@@ -24,6 +28,81 @@
 > Revisão 1.26.0.02: em **Vendas e Serviços**, a tela **Revisar regras fiscais**
 > ficou mais compacta. As ações Adicionar, Duplicar e Excluir agora aparecem
 > juntas acima da lista; o comportamento e as validações fiscais permanecem os mesmos.
+> Revisão 1.26.1.21: a preferência de modo escuro é aplicada sem aviso de
+> sucesso; falhas de gravação continuam sendo apresentadas para correção.
+
+> Revisão 1.26.1.20: o cadastro de subempresa alinha nome, responsável, valor
+> e vencimento em uma única linha no desktop. A separação de rotina e
+> agendamento é operacional no PWA e não altera os registros existentes.
+
+> Revisão 1.26.1.19: o PDF de Serviços mantém a assinatura reduzida na mesma
+> linha do serviço executado. O cadastro direto alinha valor e vencimento com
+> os demais campos, sem mudança nos dados operacionais.
+
+> Revisão 1.26.1.18: na Gestão Web, reclicar a aba ativa cancela qualquer
+> edição, formulário ou seleção em curso. O relatório de Serviços agora leva
+> comprovantes de assinatura reduzidos nos arquivos PDF e Excel.
+
+> Revisão 1.26.1.17: a busca de cliente/local do relatório de Serviços fica ao
+> lado do seletor e abre a lista ao receber foco, sem alteração operacional.
+
+> Revisão 1.26.1.16: o relatório de Serviços abre sem resultados e exige a
+> ação explícita **Consultar relatório** antes de exibir ou exportar dados.
+
+> Revisão 1.26.1.15: logos PNG transparentes preservam a transparência no PDF
+> de Serviços da Gestão Web, sem impacto operacional.
+
+> Revisão 1.26.1.14: o relatório de Serviços gera e baixa um PDF com a
+> identificação da empresa/perfil; o card de consulta permanece neutro. Não há
+> alteração nos registros operacionais.
+
+> Revisão 1.26.1.13: o rótulo do botão Relatórios foi centralizado
+> verticalmente na Gestão Web, sem impacto operacional.
+
+> Revisão 1.26.1.12: o visualizador de comprovantes de assinatura mantém
+> contraste legível e abre acima dos modais do relatório, sem alteração do
+> conteúdo ou acesso privado aos arquivos.
+
+> Revisão 1.26.1.11: o alinhamento do botão Relatórios na Gestão Web foi
+> refinado, sem impacto operacional.
+
+> Revisão 1.26.1.10: o relatório de Serviços identifica no cabeçalho a
+> empresa/perfil ativo e mostra a logo cadastrada quando disponível.
+
+> Revisão 1.26.1.09: a lista de clientes e locais do relatório de Serviços
+> inicia fechada. Use **Selecionar cliente ou local** para abri-la; após a
+> escolha, ela se fecha e o filtro fica resumido no cabeçalho.
+
+> Revisão 1.26.1.08: as datas do relatório de Serviços usam o calendário
+> padrão do sistema. Escolha o dia e confirme a seleção antes de continuar.
+
+> Revisão 1.26.1.07: no relatório de Serviços, a seleção é removida ao clicar
+> novamente no cliente, agrupado ou local ativo. **Todos deste agrupado**
+> inclui somente os locais daquele agrupado; os controles de exportação têm
+> contraste reforçado nos dois temas.
+
+> Revisão 1.26.1.06: período e exportações do relatório de Serviços ficam em
+> uma faixa única; a busca passou para o topo da lista de clientes e locais.
+
+> Revisão 1.26.1.05: o seletor de cliente/local do relatório de Serviços
+> agora mostra a hierarquia Empresa → locais. Pesquise ao lado da lista e
+> selecione todos, o agrupado ou um local específico.
+
+> Revisão 1.26.1.04: a camada do relatório de Serviços cobre a página inteira
+> atrás do card, sem alteração operacional.
+
+> Revisão 1.26.1.03: no relatório de **Serviços > Realizados**, escolha um
+> cliente direto, todos os locais de um agrupado ou um local específico. A
+> mesma seleção segue para a prévia, Excel e PDF.
+
+> Revisão 1.26.1.02: em **Serviços > Realizados**, use **Relatórios** para
+> definir a data inicial e final, revisar os serviços executados e exportar a
+> listagem para Excel ou imprimir/salvar em PDF. A prévia mantém o botão
+> **Visualizar assinatura**: o comprovante continua privado dentro do
+> AvantaLab e não é exposto como link permanente na exportação.
+
+> Revisão 1.26.1: reorganização interna de protótipos, testes, build e
+> infraestrutura das rotas de voz; sem impacto operacional na Gestão Web.
 
 > Revisão 1.26.0.01: a área de assinatura do PWA de Serviços respeita a faixa
 > fixa de ações, sem alterar o fluxo operacional de registro.

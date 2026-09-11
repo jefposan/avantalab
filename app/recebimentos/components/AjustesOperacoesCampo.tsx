@@ -95,7 +95,6 @@ export default function AjustesOperacoesCampo({ aberto, empresaId, repo, temaEsc
       });
       const dados = await resposta.json().catch(() => ({}));
       if (!resposta.ok) throw new Error(dados.mensagem || 'Não foi possível atualizar o modo visual.');
-      setMensagem(novoTema ? 'Modo escuro ativado para este perfil.' : 'Modo claro ativado para este perfil.');
     } catch (falha) {
       onTemaAtualizado(temaAnterior);
       setErro(falha instanceof Error ? falha.message : 'Não foi possível atualizar o modo visual.');

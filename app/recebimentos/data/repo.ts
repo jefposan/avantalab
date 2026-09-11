@@ -50,7 +50,7 @@ export interface RecebimentosRepo {
   alternarColaborador(id: string, ativo: boolean): Promise<void>;
   registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null): Promise<void>;
   receberCobranca(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null): Promise<void>;
-  registrarServico(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string): Promise<void>;
+  registrarServico(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string, servicoId?: string): Promise<void>;
   agendarServico(empresaRecebimentoId: string, subempresaId: string | null, dataProgramada: string, tipoServico: Exclude<TipoServico, 'rotina'>): Promise<void>;
   editarAgendamentoServico(servicoId: string, empresaRecebimentoId: string, subempresaId: string | null, dataProgramada: string, tipoServico: Exclude<TipoServico, 'rotina'>): Promise<void>;
   cancelarAgendamentoServico(servicoId: string): Promise<void>;
@@ -374,9 +374,9 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         dataPagamento,
       });
     },
-    async registrarServico(recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente) {
+    async registrarServico(recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId) {
       await chamarApi(cliente, '/api/recebimentos/registrar-servico', {
-        empresaId, recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente,
+        empresaId, recebimentoEmpresaId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId,
       });
     },
     async agendarServico(recebimentoEmpresaId, subempresaId, dataProgramada, tipoServico) {

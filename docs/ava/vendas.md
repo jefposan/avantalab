@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.28.0.01 -->
+<!-- ava-version: 1.28.0.02 -->
+
+> Revisão 1.28.0.02: os ajustes de execução e preferência visual pertencem a
+> Operações de Campo, sem impacto operacional no AvantaVendas.
 
 > Revisão 1.28.0.01: sem impacto operacional no AvantaVendas. Este aplicativo
 > não emite NF-e, NFC-e nem NFS-e. Configuração, homologação e emissão fiscal
@@ -21,6 +24,68 @@
 > Revisão 1.26.0.02: a tela **Revisar regras fiscais** apresenta os mesmos
 > campos e bloqueios em uma organização mais compacta. Adicionar, Duplicar e
 > Excluir ficam juntos acima da lista de regras.
+> Revisão 1.26.1.21: o aviso silencioso da preferência visual pertence a
+> Operações de Campo, sem impacto operacional no AvantaVendas.
+
+> Revisão 1.26.1.20: a separação das execuções de Serviços pertence à Gestão e
+> ao PWA de Operações de Campo, sem impacto operacional no AvantaVendas.
+
+> Revisão 1.26.1.19: ajustes de Serviços pertencem à Gestão e ao PWA de
+> Operações de Campo, sem impacto operacional no AvantaVendas.
+
+> Revisão 1.26.1.18: ajustes exclusivos da Gestão Web, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.26.1.17: refinamento exclusivo da Gestão Web, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.26.1.16: consulta explícita exclusiva da Gestão Web, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.26.1.15: refinamento exclusivo do PDF na Gestão Web, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.26.1.14: geração do PDF exclusiva da Gestão Web, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.26.1.13: refinamento visual exclusivo da Gestão Web, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.26.1.12: refinamento visual exclusivo da Gestão Web, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.26.1.11: refinamento visual exclusivo da Gestão Web, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.26.1.10: a identidade no cabeçalho do relatório pertence à Gestão
+> Web e não altera o fluxo operacional no AvantaVendas.
+
+> Revisão 1.26.1.09: a lista recolhível do relatório pertence à Gestão Web e
+> não altera o fluxo operacional no AvantaVendas.
+
+> Revisão 1.26.1.08: o calendário padronizado do relatório pertence à Gestão
+> Web e não altera o fluxo operacional no AvantaVendas.
+
+> Revisão 1.26.1.07: refinamento visual e de seleção do relatório da Gestão
+> Web, sem impacto operacional no AvantaVendas.
+
+> Revisão 1.26.1.06: ajuste de layout no relatório da Gestão Web, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.26.1.05: ajuste do seletor de clientes no relatório da Gestão Web,
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.26.1.04: ajuste visual do modal de relatório da Gestão Web, sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.26.1.03: o filtro de cliente/local do relatório de Serviços está
+> na Gestão Web e não altera o fluxo operacional do AvantaVendas.
+
+> Revisão 1.26.1.02: o relatório por período de Serviços foi adicionado à
+> Gestão Web; não altera o fluxo operacional do AvantaVendas.
+
+> Revisão 1.26.1: rotas e utilitários foram modularizados, com os mesmos
+> contratos, telas, dados e comportamento da Solicitação por Voz e do Vendas.
 
 > Revisão 1.26.0.01: o ajuste da área de assinatura do PWA de Serviços não
 > altera o fluxo operacional do AvantaVendas.

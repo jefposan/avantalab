@@ -1,4 +1,4 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export { POST } from '@/app/api/teste/solicitacao-voz/transcrever/route';
+export { POST } from '@/app/api/vendas/solicitacao-voz/_handlers/transcrever';

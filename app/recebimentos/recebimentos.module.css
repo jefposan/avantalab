@@ -1439,8 +1439,10 @@
 }
 .comprovanteOverlayPortal {
   /* O visualizador é portado para o body e precisa ficar acima do popup
-     administrativo de Recebimentos, cuja camada base é 2000. */
-  z-index: 2100;
+     administrativo e também do relatório de serviços, cuja camada é 3000. */
+  --cp: #003e73;
+  --cp-text: #fff;
+  z-index: 3200;
 }
 .comprovante {
   background: #fff;
@@ -1463,6 +1465,9 @@
 .comprovanteImagemModal {
   max-width: min(720px, 96vw);
   max-height: 90dvh;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.3);
+  color: #0f172a;
   text-align: left;
   overflow: auto;
 }
@@ -1473,7 +1478,12 @@
   gap: 16px;
   margin-bottom: 14px;
 }
-.comprovanteModalTopo h3 { margin: 0; font-size: 17px; font-weight: 800; }
+.comprovanteModalTopo h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 17px;
+  font-weight: 800;
+}
 .comprovanteModalTopo p {
   margin: 4px 0 0;
   color: #64748b;
@@ -1502,6 +1512,7 @@
   max-height: 62dvh;
   place-items: center;
   overflow: auto;
+  border: 1px solid #dbe7ed;
   border-radius: 12px;
   background: #f8fafc;
 }
@@ -1514,9 +1525,15 @@
 .comprovanteAbrirOriginal {
   display: block;
   margin-top: 12px;
+  border: 1px solid color-mix(in srgb, var(--cp) 82%, #000);
+  border-radius: 10px;
+  background: var(--cp);
+  color: var(--cp-text);
+  font-weight: 800;
   text-align: center;
   text-decoration: none;
 }
+.comprovanteAbrirOriginal:hover { background: color-mix(in srgb, var(--cp) 88%, #000); }
 
 /* Corpo rolável do AvantaCard: somente o conteúdo abaixo do header do card
    (e das abas de páginas) rola; topo permanece fixo. */
@@ -1806,11 +1823,16 @@
   align-items: flex-end;
   gap: 8px;
 }
+.linhaTelefoneAcoes .field { margin-bottom: 0; }
+.campoValorContratado { flex: 0 1 180px; }
+.campoDiaVencimentoLinha { flex: 0 1 168px; }
+.campoDiaVencimentoLinha .field { margin-bottom: 0; }
 .linhaEmpresaCampos {
   display: grid;
   grid-template-columns: minmax(160px, 1.3fr) minmax(140px, 1fr) minmax(130px, 0.8fr);
   gap: 8px;
 }
+.linhaClienteDiretoCampos, .linhaSubempresaCampos { grid-template-columns: minmax(160px, 1.35fr) minmax(140px, 1fr) minmax(112px, .72fr) minmax(132px, .78fr); }
 .linhaEmpresaCampos .field { margin-bottom: 8px; }
 .enderecoEstruturado {
   display: grid;
@@ -2334,7 +2356,7 @@
 .tipoServicoRevisao { color: #7e22ce !important; background: #f3e8ff; }
 .tipoServicoExtra { color: #b45309 !important; background: #ffedd5; }
 .servicoRealizado { display: block; }
-.servicoRealizadoDados { display: grid; grid-template-columns: minmax(150px, 1.3fr) minmax(140px, 1.1fr) minmax(130px, 1fr) minmax(130px, 1fr) minmax(142px, 1fr) minmax(104px, .7fr); gap: 12px; }
+.servicoRealizadoDados { display: grid; grid-template-columns: minmax(0, 1.28fr) minmax(0, 1.06fr) minmax(0, .96fr) minmax(0, .96fr) minmax(0, 1.04fr) minmax(0, .62fr) minmax(0, .58fr); gap: 8px; }
 .servicoRealizadoDados > div { display: grid; align-content: start; gap: 4px; min-width: 0; }
 .servicoRealizadoDados small { color: #64748b; font-size: 10px; font-weight: 800; letter-spacing: .04em; line-height: 1.2; text-transform: uppercase; }
 .servicoRealizadoDados strong, .servicoRealizadoDados span { overflow: hidden; color: #0f172a; font-size: 13px; font-weight: 700; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
@@ -2372,23 +2394,46 @@
 .seletorDataBotao { display: flex; width: 100%; min-height: 42px; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #cbd5e1; border-radius: 12px; padding: 9px 12px; color: #334155; background: #fff; cursor: pointer; font: inherit; font-size: 14px; font-weight: 750; font-variant-numeric: tabular-nums; text-align: left; }
 .seletorDataBotao:hover { border-color: color-mix(in srgb, var(--cp, #003e73) 44%, #cbd5e1); }.seletorDataBotao:focus-visible { outline: 3px solid color-mix(in srgb, var(--cp, #003e73) 30%, transparent); outline-offset: 2px; }.seletorDataBotao svg { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: var(--cp, #003e73); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
 .calendarioOverlay { position: fixed; z-index: 2800; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(2, 8, 23, .88); backdrop-filter: blur(2px); }
+.calendarioOverlayElevado { z-index: 3100; }
 .calendarioCard { width: min(100%, 360px); border: 1px solid #cfe1ed; border-radius: 20px; padding: 14px; color: #0f172a; background: #fff; box-shadow: 0 24px 58px rgba(2, 19, 35, .34); }.calendarioCard:focus { outline: 0; }
 .calendarioCard > header { display: grid; grid-template-columns: 38px 1fr 38px; align-items: center; gap: 7px; margin-bottom: 13px; text-align: center; }.calendarioCard > header button { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #cfe1ed; border-radius: 999px; color: var(--cp, #003e73); background: color-mix(in srgb, var(--cp, #003e73) 7%, #fff); cursor: pointer; }.calendarioCard > header button:last-child { justify-self: end; }.calendarioCard > header svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }.calendarioCard > header strong { font-size: 14px; }
 .calendarioSemana, .calendarioDias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }.calendarioSemana { margin-bottom: 5px; color: #718096; font-size: 9px; font-weight: 850; }.calendarioDias { grid-auto-rows: 36px; }.calendarioDias button { border: 0; border-radius: 999px; color: #334155; background: transparent; cursor: pointer; font: inherit; font-size: 12px; font-weight: 750; }.calendarioDias button:hover, .calendarioDias .calendarioDiaSelecionado { color: #fff; background: var(--cp, #003e73); box-shadow: 0 4px 10px color-mix(in srgb, var(--cp, #003e73) 25%, transparent); }.calendarioDias button:disabled { color: #b5c0cc; background: transparent; box-shadow: none; cursor: not-allowed; opacity: .58; }.calendarioDias button:focus-visible, .calendarioCard button:focus-visible { outline: 3px solid color-mix(in srgb, var(--cp, #003e73) 34%, transparent); outline-offset: 2px; }
 .calendarioCard > footer { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 13px; }.calendarioCard > footer button { min-height: 34px; border: 1px solid #cfe1ed; border-radius: 999px; color: #526477; background: #f5f9fc; cursor: pointer; font: inherit; font-size: 11px; font-weight: 850; }.calendarioCard > footer button:last-child { border-color: color-mix(in srgb, var(--cp, #003e73) 28%, #b9dff6); color: var(--cp, #003e73); background: color-mix(in srgb, var(--cp, #003e73) 8%, #fff); }.calendarioCard > footer button:disabled { cursor: not-allowed; opacity: .55; }
+.seletorDataBotaoEscuro { border-color: #52707c; color: #f8fafc; background: #102b34; }.seletorDataBotaoEscuro svg { stroke: #99f6e4; }
+.calendarioCardEscuro { border-color: #476571; color: #e2e8f0; background: #10242c; }.calendarioCardEscuro > header button { border-color: #476571; color: #99f6e4; background: #0b1f26; }.calendarioCardEscuro > header strong { color: #f8fafc; }.calendarioCardEscuro .calendarioSemana { color: #94a3b8; }.calendarioCardEscuro .calendarioDias button { color: #e2e8f0; }.calendarioCardEscuro .calendarioDias button:hover, .calendarioCardEscuro .calendarioDias .calendarioDiaSelecionado { color: #042f2e; background: #99f6e4; box-shadow: none; }.calendarioCardEscuro .calendarioDias button:disabled { color: #64748b; }.calendarioCardEscuro > footer button { border-color: #476571; color: #cbd5e1; background: #0b1f26; }.calendarioCardEscuro > footer button:last-child { border-color: #5eead4; color: #042f2e; background: #99f6e4; }
 .alertaAgendamentoServico { display: grid; gap: 4px; margin: 14px 0; padding: 12px 14px; border: 1px solid #f4cf8f; border-radius: 12px; color: #92400e; background: #fff7e5; }
 .alertaAgendamentoServico strong { font-size: 13px; }.alertaAgendamentoServico span { font-size: 12px; font-weight: 700; }.alertaAgendamentoServico small { color: #a16207; font-size: 11px; }
 .agendamentosAjuda { margin: 3px 0 0; color: #64748b; font-size: 12px; }
 .agendamentoItemMeta { display: flex !important; flex: 0 0 auto; align-items: center; gap: 8px; }
 .modalAgendamentoOverlay { position: fixed; z-index: 2150; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(15, 23, 42, .48); }
+.modalRelatorioServicosOverlay { z-index: 3000; }
 .modalAgendamento { width: min(100%, 760px); max-height: min(760px, calc(100dvh - 48px)); overflow: auto; padding: 22px; border-radius: 20px; background: #fff; box-shadow: 0 24px 66px rgba(15, 23, 42, .28); }.modalAgendamento .btnGhost { border-color: #94a3b8; color: #003e73; background: #f8fafc; }.modalAgendamento .btnGhost:hover { border-color: #003e73; background: #eaf3f8; }
 .modalAgendamento > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }.modalAgendamento h2 { margin: 0; color: #0f172a; font-size: 19px; }.modalAgendamento header p { margin: 4px 0 0; color: #64748b; font-size: 13px; }
-.formularioServico :is(.field, .listaVisitasPiso) { scroll-margin-top: 96px; }
-.listaVisitasPiso { display: grid; gap: 10px; margin-top: 16px; padding: 14px; border: 1px solid color-mix(in srgb, var(--cp, #003e73) 16%, #dbeafe); border-radius: 14px; background: color-mix(in srgb, var(--cp, #003e73) 4%, #fff); }
+.btnRelatorioServicos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  min-height: 32px;
+  white-space: nowrap;
+}
+.modalRelatorioServicos { --cp: #0f766e; --cp-text: #fff; width: min(100%, 1120px); }
+.relatorioServicosCabecalho { align-items: center !important; }.modalRelatorioServicos .relatorioServicosCabecalho h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.relatorioServicosFiltros { display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 12px 14px; border: 1px solid #dbe7ed; border-radius: 14px; background: color-mix(in srgb, var(--cp, #003e73) 3%, #fff); }
+.relatorioPeriodo { display: flex; align-items: end; gap: 8px; min-width: 0; }.relatorioPeriodo > strong { padding: 0 4px 11px 0; color: #334155; font-size: 12px; }.relatorioCampoData { display: grid; gap: 4px; width: 170px; color: #475569; font-size: 10px; font-weight: 800; text-transform: uppercase; }.relatorioCampoData .seletorDataBotao { min-height: 42px; padding: 8px 10px; color: #0f172a; font-size: 13px; }.relatorioCampoData .seletorDataBotao svg { margin-left: auto; }
+.relatorioServicosAcoes { display: flex; justify-content: flex-end; gap: 8px; }.relatorioServicosAcoes .btn { min-height: 38px; white-space: nowrap; }
+.relatorioClientes { display: grid; gap: 12px; margin-top: 12px; padding: 14px; border: 1px solid color-mix(in srgb, var(--cp, #003e73) 18%, #cbd5e1); border-radius: 14px; background: color-mix(in srgb, var(--cp, #003e73) 3%, #fff); }.relatorioClientesTopo { display: flex; align-items: end; justify-content: space-between; gap: 16px; }.relatorioClientesTopo h3 { margin: 0; color: #0f172a; font-size: 14px; }.relatorioClientesTopo p { margin: 3px 0 0; color: #64748b; font-size: 12px; line-height: 1.35; }.relatorioClientesAcoes { display: flex; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: 8px; }.relatorioClienteTrigger { display: inline-flex; min-height: 40px; align-items: center; gap: 8px; white-space: nowrap; }.relatorioClienteTrigger span { font-size: 16px; line-height: 1; }.relatorioClientesConteudo { display: grid; gap: 12px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--cp, #003e73) 16%, #cbd5e1); }
+.relatorioClientesItens { display: grid; gap: 8px; max-height: 260px; overflow: auto; padding: 2px; }.relatorioClienteTodos, .relatorioClienteDireto, .relatorioClientePill, .relatorioSubempresa { border: 1px solid #cbd5e1; color: #0f172a; background: #fff; font: inherit; text-align: left; cursor: pointer; }.relatorioClienteTodos { width: fit-content; min-height: 34px; padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; }.relatorioClienteDireto, .relatorioSubempresa { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 42px; padding: 9px 11px; border-radius: 12px; font-size: 13px; font-weight: 750; }.relatorioClienteDireto small, .relatorioSubempresa small { color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; }.relatorioEmpresaAgrupada { display: grid; gap: 7px; padding: 10px; border: 1px solid #dbe7ed; border-radius: 12px; background: #fff; }.relatorioEmpresaCabecalho { display: flex; align-items: center; justify-content: space-between; gap: 10px; }.relatorioEmpresaCabecalho strong { min-width: 0; overflow: hidden; color: #0f172a; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }.relatorioClientePill { flex: 0 0 auto; min-height: 30px; padding: 5px 9px; border-radius: 999px; color: var(--cp, #003e73); font-size: 11px; font-weight: 800; }.relatorioSubempresas { display: grid; gap: 6px; padding-left: 12px; border-left: 2px solid color-mix(in srgb, var(--cp, #003e73) 22%, #dbe7ed); }.relatorioSubempresa { min-height: 38px; padding-block: 7px; font-size: 12px; }.relatorioClienteTodos:hover, .relatorioClienteDireto:hover, .relatorioClientePill:hover, .relatorioSubempresa:hover { border-color: var(--cp, #003e73); background: color-mix(in srgb, var(--cp, #003e73) 5%, #fff); }.relatorioClienteTodos:focus-visible, .relatorioClienteDireto:focus-visible, .relatorioClientePill:focus-visible, .relatorioSubempresa:focus-visible { outline: 3px solid color-mix(in srgb, var(--cp, #003e73) 28%, transparent); outline-offset: 2px; }.relatorioClienteAtivo { border-color: var(--cp, #003e73) !important; color: var(--cp, #003e73) !important; background: color-mix(in srgb, var(--cp, #003e73) 11%, #fff) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--cp, #003e73) 15%, transparent); }.relatorioClienteAtivo small { color: inherit !important; }.relatorioClientesVazio { margin: 0; padding: 10px; border-radius: 10px; color: #64748b; background: #f8fafc; font-size: 12px; }.relatorioClientesBusca { display: grid; align-content: start; gap: 7px; padding: 10px; border-radius: 12px; background: color-mix(in srgb, var(--cp, #003e73) 5%, #fff); }.relatorioClientesBusca .buscaFixa { width: 100%; min-height: 42px; height: 42px; border-radius: 12px; }.relatorioClientesBusca .buscaFixaInput { width: 100%; font-size: 13px; }
+.relatorioServicosErro { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #fecaca; border-radius: 10px; color: #991b1b; background: #fef2f2; font-size: 13px; font-weight: 700; }
+.relatorioServicosResumo { display: flex; align-items: baseline; gap: 8px; margin: 16px 0 10px; color: #475569; font-size: 13px; }.relatorioServicosResumo strong { display: grid; min-width: 28px; min-height: 28px; place-items: center; border-radius: 999px; color: #fff; background: #0f766e; font-size: 12px; }
+.relatorioServicosInicial { overflow-x: auto; margin-top: 16px; padding: 18px; border: 1px dashed color-mix(in srgb, var(--cp) 42%, #cbd5e1); border-radius: 12px; color: #475569; background: color-mix(in srgb, var(--cp) 4%, #fff); font-size: 13px; line-height: 1.4; text-align: center; white-space: nowrap; }.relatorioServicosInicial strong { color: #172033; font-size: 14px; }.relatorioServicosInicial span { font-size: 13px; line-height: 1.4; }
+.relatorioServicosLista { display: grid; gap: 8px; }.relatorioServicosItem { display: grid; grid-template-columns: minmax(150px, 1.25fr) minmax(138px, 1fr) minmax(145px, 1.05fr) minmax(150px, 1.2fr) minmax(120px, .8fr); gap: 12px; padding: 12px; border: 1px solid #dbe7ed; border-radius: 12px; background: #fff; }.relatorioServicosItem > div { display: grid; align-content: start; gap: 4px; min-width: 0; }.relatorioServicosItem small { color: #64748b; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }.relatorioServicosItem strong, .relatorioServicosItem span { overflow: hidden; color: #0f172a; font-size: 12px; line-height: 1.32; text-overflow: ellipsis; white-space: nowrap; }.relatorioServicosItem > div:nth-child(4) span { white-space: normal; }.relatorioServicosItem .btnAbrirComprovante { justify-self: start; min-height: 30px; padding: 4px 7px; }
+.formularioServico :is(.field, .listaVisitasPiso, .listaServicosPendentes) { scroll-margin-top: 96px; }
+.listaVisitasPiso, .listaServicosPendentes { display: grid; gap: 10px; margin-top: 16px; padding: 14px; border: 1px solid color-mix(in srgb, var(--cp, #003e73) 16%, #dbeafe); border-radius: 14px; background: color-mix(in srgb, var(--cp, #003e73) 4%, #fff); }
 .listaVisitasPisoTitulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .listaVisitasPisoTitulo h3 { margin: 0; color: #0f172a; font-size: 14px; line-height: 1.3; }
 .listaVisitasPisoTitulo span { display: grid; flex: 0 0 auto; min-width: 24px; min-height: 24px; place-items: center; border-radius: 999px; color: #fff; background: var(--cp, #003e73); font-size: 11px; font-weight: 800; }
-.listaVisitasPiso > p { margin: -4px 0 0; color: #64748b; font-size: 12px; }
+.listaVisitasPiso > p, .listaServicosPendentes > p { margin: -4px 0 0; color: #64748b; font-size: 12px; }
 .listaVisitasPisoItens { display: grid; gap: 8px; }
 .visitaPisoItem { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 3px 10px; width: 100%; min-height: 58px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; color: #0f172a; background: #fff; text-align: left; cursor: pointer; font-family: inherit; }
 .visitaPisoItem:hover { border-color: color-mix(in srgb, var(--cp, #003e73) 44%, #cbd5e1); background: color-mix(in srgb, var(--cp, #003e73) 4%, #fff); }
@@ -2400,6 +2445,17 @@
 .visitaPisoItem span { min-width: 0; overflow: hidden; color: #64748b; font-size: 11px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
 .visitaPisoItem small { grid-column: 2; grid-row: 1 / span 2; color: var(--cp, #003e73); font-size: 11px; font-weight: 800; }
 .visitaPisoItem:disabled small { color: #64748b; }
+.listaServicosPendentesItens { display: grid; gap: 8px; }
+.servicoPendenteItem { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 10px; width: 100%; min-height: 64px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; color: #0f172a; background: #fff; text-align: left; cursor: pointer; font-family: inherit; transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease; }
+.servicoPendenteItem:hover { border-color: color-mix(in srgb, var(--cp, #003e73) 48%, #cbd5e1); background: color-mix(in srgb, var(--cp, #003e73) 4%, #fff); transform: translateY(-1px); }
+.servicoPendenteItem[aria-pressed='true'] { border-color: var(--cp, #003e73); background: color-mix(in srgb, var(--cp, #003e73) 7%, #fff); box-shadow: 0 0 0 2px color-mix(in srgb, var(--cp, #003e73) 16%, transparent); }
+.servicoPendenteItem:focus-visible { outline: 3px solid color-mix(in srgb, var(--cp, #003e73) 38%, transparent); outline-offset: 2px; }
+.servicoPendenteItem > span { display: grid; min-width: 0; gap: 3px; }
+.servicoPendenteItem strong { color: #0f172a; font-size: 13px; line-height: 1.2; }
+.servicoPendenteItem small { color: #64748b; font-size: 11px; line-height: 1.25; }
+.servicoPendenteItem em { justify-self: end; font-style: normal; }
+.servicoPendenteItem > em:not(.tipoServicoBadge) { padding: 4px 8px; border-radius: 999px; color: #475569; background: #e2e8f0; font-size: 11px; font-weight: 800; }
+.servicoPendenteItem b { grid-column: 2; justify-self: end; color: var(--cp, #003e73); font-size: 11px; }
 .servicoEtapa { color: #475569; font-size: 14px; }
 .assinaturaOverlay { position: fixed; z-index: 2200; inset: 0; display: grid; min-height: 100dvh; background: #eef3f6; color: #0f172a; }
 .assinaturaDialogo { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 100dvh; }
@@ -2409,7 +2465,7 @@
 .assinaturaCorpo { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; overflow: hidden; gap: 12px; padding: 16px clamp(16px, 4vw, 40px); }
 .assinaturaCorpo .servicoEtapa { margin: 0; text-align: center; }
 .assinaturaCorpo .aviso { width: 100%; text-align: center; }
-.assinaturaCanvas { display: block; align-self: stretch; box-sizing: border-box; width: 100%; min-height: 0; max-height: 100%; height: 100%; touch-action: none; border: 2px dashed #94a3b8; border-radius: 14px; background: #fff; cursor: crosshair; }
+.assinaturaCanvas { display: block; align-self: stretch; box-sizing: border-box; width: 100%; min-height: 0; height: auto; margin-bottom: 20px; touch-action: none; border: 2px dashed #94a3b8; border-radius: 14px; background: #fff; cursor: crosshair; }
 .assinaturaAcoes { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px clamp(16px, 4vw, 40px) calc(14px + env(safe-area-inset-bottom)); background: var(--cp, #003e73); }
 .assinaturaAcoesSecundarias { display: flex; gap: 8px; }
 .assinaturaAcoes .btnGhost { border-color: color-mix(in srgb, #fff 82%, transparent); color: #fff; background: transparent; }
@@ -2420,6 +2476,8 @@
 .avaliacaoServico p { color: #64748b; }
 .avaliacaoServico > div { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
 .avaliacaoServico button { display: grid; place-content: center; gap: 5px; min-height: 150px; border: 2px solid transparent; border-radius: 18px; cursor: pointer; font-family: inherit; }
+.avaliacaoServico button { transition: transform .12s ease-out, box-shadow .12s ease-out, filter .12s ease-out; }
+.avaliacaoServico button:active:not(:disabled) { transform: scale(.96); filter: brightness(.97); }
 .avaliacaoServico button > span { display: grid; width: 34px; height: 34px; place-items: center; justify-self: center; border-radius: 999px; font-size: 20px; font-weight: 900; line-height: 1; }
 .avaliacaoServico button > strong { font-size: 21px; line-height: 1.1; }
 .avaliacaoServico button > small { font-size: 12px; font-weight: 700; line-height: 1.2; }
@@ -2429,7 +2487,14 @@
 .avaliacaoRegular { border-color: #d97706 !important; color: #92400e; background: #fffbeb; }
 .avaliacaoRegular > span { color: #fff; background: #d97706; }
 .avaliacaoServico textarea { margin-top: 16px; text-align: left; }
-.sucessoServico { margin-top: 16px; padding: 12px 14px; border-radius: 12px; color: #166534; background: #dcfce7; font-size: 13px; }
+.sucessoServicoOverlay { position: fixed; z-index: 2300; inset: 0; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, #06121e 46%, transparent); }
+.sucessoServico { width: min(100%, 380px); text-align: center; }
+.sucessoServicoCard { --avanta-title-left: 30px; }
+.sucessoServicoTitulo { justify-content: center; width: 100%; text-align: center; }
+.sucessoServicoTitulo > span:last-child { flex: 0 1 auto; }
+.sucessoServico p { margin: 0; color: #475569; font-size: 14px; line-height: 1.45; }
+.sucessoServico .btn { margin-top: 16px; }
+@media (prefers-reduced-motion: reduce) { .avaliacaoServico button { transition: none; }.avaliacaoServico button:active:not(:disabled) { transform: none; } }
 .topbarAcoesColaborador { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
 .seletorOperacaoPwa { color: #0f172a; font-family: var(--av-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif); }
 .seletorOperacaoCard { display: grid; gap: 14px; overflow: hidden; }
@@ -2442,7 +2507,7 @@
 .seletorOperacaoAcoes button:focus-visible, .seletorSair:focus-visible { outline: 3px solid color-mix(in srgb, var(--cp, #003e73) 38%, transparent); outline-offset: 3px; }
 .seletorOperacaoAcoes button b { font-size: 16px; }.seletorOperacaoAcoes button small { color: #475569; font-size: 12px; }.seletorSair { justify-self: center; min-height: 38px; padding: 8px 18px; border: 1px solid color-mix(in srgb, var(--cp, #003e73) 34%, #cbd5e1); border-radius: 999px; color: var(--cp, #003e73); background: #fff; text-align: center; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; }
 @media (max-width: 1380px) and (min-width: 761px) { .tabs { flex-wrap: wrap; justify-content: center; overflow: visible; } }
-@media (max-width: 760px) { .tabs { gap: 5px; border-radius: 12px; margin-bottom: 20px; overflow: visible; }.tabsGrupoGeral { padding-top: 17px; }.tabsGrupoTitulo { padding-left: 5px; }.servicosTitulo { align-items: flex-start; flex-wrap: wrap; }.servicosTituloAcoes { flex-wrap: wrap; width: 100%; }.servicosTituloAcoes .filtroCompetencia { margin-left: auto; }.servicoItem { align-items: flex-start; flex-direction: column; }.servicoItem .btn { width: 100%; }.servicoItem > .agendamentoItemAcoes { display: grid; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }.agendamentoItemAcoes .btn { white-space: normal; }.servicoRealizadoDados, .avisoServicoDados { grid-template-columns: 1fr 1fr; width: 100%; }.servicoRealizadoDados > div, .avisoServicoDados > div { min-height: 52px; }.servicoRealizadoDados .btnAbrirComprovante { width: fit-content; }.filtroAvisoCampo { flex: 1 1 148px; }.filtroAvisoCampo .select { width: 100%; }.avisoObservacao .btn { width: auto; }.acoesAviso { width: 100%; }.acoesServico { flex-wrap: wrap; }.acoesServico .btn { flex: 1 1 130px; }.assinaturaCabecalho { min-height: 64px; }.assinaturaCorpo { padding: 12px 16px; }.assinaturaAcoes { align-items: stretch; flex-direction: column; }.assinaturaAcoesSecundarias { display: grid; grid-template-columns: 1fr 1fr; }.assinaturaAcoes .btn { width: 100%; }.topbarAcoesColaborador .btn { padding-inline: 8px; font-size: 11px; }.agendamentoCampos { grid-template-columns: 1fr; gap: 0; }.modalAgendamentoOverlay { align-items: end; padding: 0; }.modalAgendamento { width: 100%; max-height: min(88dvh, 760px); border-radius: 20px 20px 0 0; }.agendamentoItemMeta { width: 100%; } }
+@media (max-width: 760px) { .tabs { gap: 5px; border-radius: 12px; margin-bottom: 20px; overflow: visible; }.tabsGrupoGeral { padding-top: 17px; }.tabsGrupoTitulo { padding-left: 5px; }.servicosTitulo { align-items: flex-start; flex-wrap: wrap; }.servicosTituloAcoes { flex-wrap: wrap; width: 100%; }.servicosTituloAcoes .filtroCompetencia { margin-left: auto; }.servicoItem { align-items: flex-start; flex-direction: column; }.servicoItem .btn { width: 100%; }.servicoItem > .agendamentoItemAcoes { display: grid; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }.agendamentoItemAcoes .btn { white-space: normal; }.servicoRealizadoDados, .avisoServicoDados { grid-template-columns: 1fr 1fr; width: 100%; }.servicoRealizadoDados > div, .avisoServicoDados > div { min-height: 52px; }.servicoRealizadoDados .btnAbrirComprovante { width: fit-content; }.filtroAvisoCampo { flex: 1 1 148px; }.filtroAvisoCampo .select { width: 100%; }.avisoObservacao .btn { width: auto; }.acoesAviso { width: 100%; }.acoesServico { flex-wrap: wrap; }.acoesServico .btn { flex: 1 1 130px; }.assinaturaCabecalho { min-height: 64px; }.assinaturaCorpo { padding: 12px 16px; }.assinaturaAcoes { align-items: stretch; flex-direction: column; }.assinaturaAcoesSecundarias { display: grid; grid-template-columns: 1fr 1fr; }.assinaturaAcoes .btn { width: 100%; }.topbarAcoesColaborador .btn { padding-inline: 8px; font-size: 11px; }.agendamentoCampos { grid-template-columns: 1fr; gap: 0; }.modalAgendamentoOverlay { align-items: end; padding: 0; }.modalAgendamento { width: 100%; max-height: min(88dvh, 760px); border-radius: 20px 20px 0 0; }.agendamentoItemMeta { width: 100%; }.btnRelatorioServicos { width: auto !important; }.relatorioServicosFiltros { grid-template-columns: 1fr; }.relatorioServicosAcoes { justify-content: stretch; }.relatorioServicosAcoes .btn { flex: 1 1 0; }.relatorioClientes { grid-template-columns: 1fr; }.relatorioClientesBusca { order: -1; }.relatorioClientesItens { max-height: 300px; }.relatorioClientesLista > header { align-items: flex-start; }.relatorioServicosItem { grid-template-columns: 1fr 1fr; }.relatorioServicosItem > div { min-height: 52px; }.relatorioServicosItem .btnAbrirComprovante { width: fit-content; } }
 .darkScope .tabs { border-bottom-color: #334155; }
 .darkScope .tab { color: #94a3b8; }
 .darkScope .tab:hover,
@@ -2555,10 +2620,15 @@
 .darkScope .btnComprovanteSelecionado { border-color: #4ade80; background: #052e16; color: #bbf7d0; }
 .darkScope .comprovanteArquivo { color: #94a3b8; }
 .darkScope .comprovanteArquivo button { color: #fca5a5; }
+.darkScope.comprovanteOverlayPortal { --cp: #99f6e4; --cp-text: #042f2e; }
+.darkScope .comprovanteImagemModal { border-color: #476571; background: #111827; color: #f8fafc; }
+.darkScope .comprovanteModalTopo h3 { color: #f8fafc; }
 .darkScope .comprovanteModalTopo p,
-.darkScope .comprovanteEstado { color: #94a3b8; }
+.darkScope .comprovanteEstado { color: #cbd5e1; }
 .darkScope .comprovanteFechar { background: #1e293b; color: #e2e8f0; }
-.darkScope .comprovanteImagemWrap { background: #020617; }
+.darkScope .comprovanteImagemWrap { border-color: #334155; background: #020617; }
+.darkScope .comprovanteAbrirOriginal { border-color: #5eead4; background: #99f6e4; color: #042f2e; }
+.darkScope .comprovanteAbrirOriginal:hover { background: #ccfbf1; }
 .darkScope .acoesTrigger:hover,
 .darkScope .acoesGrupoAberto .acoesTrigger { background: #1e293b; color: #67e8f9; }
 .darkScope .chip { background: #334155; color: #e2e8f0; }
@@ -2587,3 +2657,54 @@
 .darkScope .recorrenciaPopupTitulo { color: #94a3b8; }
 .darkScope .recorrenciaEscolhaAtiva { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 26%, #0f172a); color: #a5f3fc; }
 .darkScope .enderecoAjuda { color: #94a3b8; }
+
+/* Relatório: busca compacta ao lado da seleção de cliente/local. */
+.relatorioClientesAcoes { flex-wrap: wrap; }.relatorioClientesBusca { display: flex; flex: 0 1 250px; align-items: center; gap: 8px; width: 250px; min-height: 40px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 12px; color: #64748b; background: #fff; }.relatorioClientesBusca:focus-within { border-color: var(--cp); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cp) 18%, transparent); }.relatorioClientesBusca .buscaFixaInput { flex: 1 1 auto; width: auto; min-width: 0; height: 38px; border: 0; outline: 0; color: #0f172a; background: transparent; font: inherit; font-size: 13px; }.relatorioClientesBusca .buscaFixaInput::placeholder { color: #94a3b8; }
+.darkScope .relatorioPeriodo > strong { color: #e2e8f0; }.darkScope .relatorioCampoData { color: #cbd5e1; }.darkScope .relatorioClientesTopo h3 { color: #f8fafc; }.darkScope .relatorioClientesTopo p { color: #94a3b8; }.darkScope .relatorioClientesBusca { border-color: #476571; color: #94a3b8; background: #111827; }.darkScope .relatorioClientesBusca .buscaFixaInput { color: #f8fafc; }.darkScope .relatorioClientesBusca .buscaFixaInput::placeholder { color: #94a3b8; }
+@media (max-width: 760px) { .relatorioServicosFiltros { align-items: stretch; flex-direction: column; }.relatorioPeriodo { display: grid; grid-template-columns: 1fr 1fr; }.relatorioPeriodo > strong { grid-column: 1 / -1; padding: 0; }.relatorioCampoData { width: auto; }.relatorioClientesTopo { align-items: stretch; flex-direction: column; }.relatorioClientesAcoes { justify-content: stretch; }.relatorioClientesAcoes .btn { flex: 1 1 auto; }.relatorioClienteTrigger { justify-content: center; }.relatorioClientesBusca { flex: 1 1 100%; width: 100%; order: -1; }.relatorioClientesItens { max-height: 300px; } }
+.darkScope.modalRelatorioServicos { border: 1px solid #334155; background: #111827; color: #e2e8f0; }
+.darkScope.modalRelatorioServicos h2, .darkScope .relatorioClientesLista h3, .darkScope .relatorioEmpresaCabecalho strong { color: #f8fafc; }
+.darkScope.modalRelatorioServicos > header p, .darkScope .relatorioClientesLista header p, .darkScope .relatorioClientesBusca > p, .darkScope .relatorioClientesVazio { color: #94a3b8; }
+.darkScope .relatorioServicosFiltros, .darkScope .relatorioClientes { border-color: #334155; background: #0f172a; }
+.darkScope .relatorioServicosFiltros .field span { color: #cbd5e1; }
+.darkScope .relatorioClientesLista > header > span { color: #a5f3fc; background: #123044; }
+.darkScope .relatorioClientesBusca { background: #111827; }
+.darkScope :is(.relatorioClienteTodos, .relatorioClienteDireto, .relatorioClientePill, .relatorioSubempresa, .relatorioEmpresaAgrupada) { border-color: #475569; color: #e2e8f0; background: #111827; }
+.darkScope .relatorioClienteDireto small, .darkScope .relatorioSubempresa small { color: #94a3b8; }
+.darkScope .relatorioSubempresas { border-left-color: #475569; }
+.darkScope :is(.relatorioClienteTodos, .relatorioClienteDireto, .relatorioClientePill, .relatorioSubempresa):hover { border-color: #67e8f9; background: #162c3d; }
+.darkScope .relatorioClienteAtivo { border-color: #67e8f9 !important; color: #cffafe !important; background: #123044 !important; box-shadow: 0 0 0 2px rgba(103, 232, 249, .18); }
+.darkScope .relatorioClientesVazio { background: #162334; }
+.darkScope .relatorioServicosInicial { border-color: #3b6470; color: #cbd5e1; background: #0b1f26; }.darkScope .relatorioServicosInicial strong { color: #f8fafc; }
+.darkScope .relatorioServicosResumo { color: #cbd5e1; }.darkScope .relatorioServicosResumo strong { color: #042f2e; background: #99f6e4; }
+.darkScope .relatorioServicosItem { border-color: #334155; background: #0f172a; }.darkScope .relatorioServicosItem small { color: #94a3b8; }.darkScope .relatorioServicosItem :is(strong, span) { color: #e2e8f0; }
+.darkScope :is(.listaVisitasPiso, .listaServicosPendentes) { border-color: #3b6470; background: #0b1f26; }
+.darkScope :is(.listaVisitasPisoTitulo h3, .servicoPendenteItem strong) { color: #f8fafc; }
+.darkScope :is(.listaVisitasPiso > p, .listaServicosPendentes > p, .servicoPendenteItem small) { color: #94a3b8; }
+.darkScope :is(.visitaPisoItem, .servicoPendenteItem) { border-color: #476571; color: #e2e8f0; background: #10242c; }
+.darkScope :is(.visitaPisoItem:hover, .servicoPendenteItem:hover) { border-color: #67e8f9; background: #163744; }
+.darkScope :is(.visitaPisoItem[aria-pressed='true'], .servicoPendenteItem[aria-pressed='true']) { border-color: #67e8f9; background: #123044; box-shadow: 0 0 0 2px rgba(103, 232, 249, .18); }
+.darkScope .servicoPendenteItem > em:not(.tipoServicoBadge) { color: #cbd5e1; background: #334155; }
+
+@media (prefers-reduced-motion: reduce) { .servicoPendenteItem { transition: none; }.servicoPendenteItem:hover { transform: none; } }
+
+/* Relatório: a camada global não herda a cor do shell. */
+.modalRelatorioServicos .relatorioServicosFiltros { border-color: color-mix(in srgb, var(--cp) 36%, #cbd5e1); background: color-mix(in srgb, var(--cp) 8%, #fff); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .72); }
+.modalRelatorioServicos .relatorioClientes { border-color: color-mix(in srgb, var(--cp) 28%, #cbd5e1); background: color-mix(in srgb, var(--cp) 5%, #fff); }
+.modalRelatorioServicos .relatorioServicosAcoes .btn { min-height: 42px; padding-inline: 15px; font-weight: 800; }
+.modalRelatorioServicos .relatorioServicosAcoes .btnPrimary { border: 1px solid color-mix(in srgb, var(--cp) 82%, #000); color: var(--cp-text); background: var(--cp); box-shadow: 0 4px 10px color-mix(in srgb, var(--cp) 25%, transparent); }
+.modalRelatorioServicos .relatorioServicosAcoes .btnPrimary:hover { background: color-mix(in srgb, var(--cp) 88%, #000); }
+.modalRelatorioServicos .relatorioServicosAcoes .btnGhost { border-color: color-mix(in srgb, var(--cp) 48%, #cbd5e1); color: color-mix(in srgb, var(--cp) 88%, #0f172a); background: #fff; }
+.modalRelatorioServicos .relatorioServicosAcoes .btnGhost:hover { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 8%, #fff); }
+.modalRelatorioServicos .relatorioEmpresaAgrupada { border-color: color-mix(in srgb, var(--cp) 20%, #cbd5e1); box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.modalRelatorioServicos .relatorioClienteDireto, .modalRelatorioServicos .relatorioSubempresa { border-color: #b9c9d5; }
+.modalRelatorioServicos .relatorioClientesTopo h3, .modalRelatorioServicos .relatorioEmpresaCabecalho strong { color: #172033; }
+.modalRelatorioServicos .relatorioClientesTopo p { color: #475569; }
+.darkScope.modalRelatorioServicos .relatorioServicosFiltros, .darkScope.modalRelatorioServicos .relatorioClientes { border-color: #3b6470; background: #0b1f26; box-shadow: none; }
+.darkScope.modalRelatorioServicos .relatorioServicosAcoes .btnPrimary { border-color: #5eead4; color: #042f2e; background: #99f6e4; box-shadow: none; }
+.darkScope.modalRelatorioServicos .relatorioServicosAcoes .btnPrimary:hover { background: #ccfbf1; }
+.darkScope.modalRelatorioServicos .relatorioServicosAcoes .btnGhost { border-color: #5f8490; color: #ccfbf1; background: #102b34; }
+.darkScope.modalRelatorioServicos .relatorioServicosAcoes .btnGhost:hover { border-color: #99f6e4; background: #16404c; }
+.darkScope.modalRelatorioServicos .relatorioEmpresaAgrupada, .darkScope.modalRelatorioServicos .relatorioClienteDireto, .darkScope.modalRelatorioServicos .relatorioSubempresa { border-color: #476571; background: #10242c; }
+.darkScope.modalRelatorioServicos .relatorioClientesTopo h3, .darkScope.modalRelatorioServicos .relatorioEmpresaCabecalho strong { color: #f8fafc; }
+.darkScope.modalRelatorioServicos .relatorioClientesTopo p { color: #cbd5e1; }

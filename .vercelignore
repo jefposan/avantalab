@@ -9,3 +9,8 @@ android/
 
 # Backup local confidencial: nunca enviar em um deploy.
 .backups/
+backups/
+
+# Rascunhos de banco e worktrees locais não fazem parte do artefato Web.
+supabase/drafts/
+.codex/

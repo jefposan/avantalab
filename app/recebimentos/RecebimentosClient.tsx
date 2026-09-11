@@ -16,6 +16,7 @@ type Props = {
   perfilInicial?: Extract<Perfil, 'gestor' | 'administrador'>;
   darkMode?: boolean;
   corPrimaria?: string;
+  nomeEmpresa?: string;
   mostrarLinkColaboradores?: boolean;
   rascunhoEscopo?: string;
   onAviso?: AbrirAvisoFn;
@@ -28,6 +29,7 @@ export default function RecebimentosClient({
   perfilInicial = 'gestor',
   darkMode = false,
   corPrimaria = '#003E73',
+  nomeEmpresa = '',
   mostrarLinkColaboradores = false,
   rascunhoEscopo = 'preview',
   onAviso,
@@ -123,6 +125,7 @@ export default function RecebimentosClient({
           perfil={perfil}
           darkMode={darkMode}
           corPrimaria={corPrimaria}
+          nomeEmpresa={nomeEmpresa}
           onAviso={onAviso}
           onConfirmacao={onConfirmacao}
           podeConfirmar={podeConfirmar}

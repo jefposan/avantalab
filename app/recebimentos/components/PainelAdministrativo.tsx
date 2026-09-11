@@ -24,6 +24,7 @@ type Props = {
   perfil: Perfil;
   darkMode: boolean;
   corPrimaria: string;
+  nomeEmpresa?: string;
   onAviso?: AbrirAvisoFn;
   onConfirmacao?: AbrirConfirmacaoFn;
   podeConfirmar: boolean;
@@ -89,6 +90,7 @@ export default function PainelAdministrativo(props: Props) {
     perfil, darkMode, podeConfirmar, empresas, subempresas, colaboradores, recebimentos, servicos,
   } = props;
   const [aba, setAba] = useState<Aba>('visao');
+  const [reinicioAba, setReinicioAba] = useState(0);
   // Mês de referência da Visão geral (navegado pelo seletor no platô do card).
   const [mesRef, setMesRef] = useState(() => {
     const hoje = new Date();
@@ -104,6 +106,16 @@ export default function PainelAdministrativo(props: Props) {
   const [indicadorAba, setIndicadorAba] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const avantaShell = criarAvantaShellPreset({ corPrimaria: props.corPrimaria, darkMode });
   const hojeIso = useMemo(() => dataLocalIso(), []);
+
+  function abrirAba(proximaAba: Aba) {
+    if (proximaAba === aba) {
+      // Recria a área ativa para que um formulário, edição ou seleção em curso
+      // seja descartado com o mesmo resultado do botão Cancelar.
+      setReinicioAba((atual) => atual + 1);
+      return;
+    }
+    setAba(proximaAba);
+  }
 
   const pendentesQtd = useMemo(() => recebimentos.filter((r) => aguardandoConferencia(r.situacao)).length, [recebimentos]);
   const inadimplentesQtd = useMemo(
@@ -249,7 +261,7 @@ export default function PainelAdministrativo(props: Props) {
                 data-aba={a}
                 aria-selected={aba === a}
                 className={`${styles.tab} ${styles.tabGeral} ${aba === a ? styles.tabAtiva : ''}`}
-                onClick={() => setAba(a)}
+                onClick={() => abrirAba(a)}
               >
                 {label}
               </button>
@@ -267,7 +279,7 @@ export default function PainelAdministrativo(props: Props) {
                 data-aba={a}
                 aria-selected={aba === a}
                 className={`${styles.tab} ${styles.tabRecebimentos} ${aba === a ? styles.tabAtiva : ''}`}
-                onClick={() => setAba(a)}
+                onClick={() => abrirAba(a)}
               >
                 {label}{a === 'conferencia' && pendentesQtd > 0 ? ` (${pendentesQtd})` : ''}{a === 'proximo' && proximosQtd > 0 ? ` (${proximosQtd})` : ''}{a === 'inadimplentes' && inadimplentesQtd > 0 ? ` (${inadimplentesQtd})` : ''}
               </button>
@@ -277,7 +289,7 @@ export default function PainelAdministrativo(props: Props) {
         <span className={`${styles.tabsGrupo} ${styles.tabsGrupoServicos}`} aria-label="Controle de serviços">
           <span className={styles.tabsGrupoTitulo}>Serviços</span>
           <span className={styles.tabsGrupoBar}>
-            {ABAS_SERVICOS.map(([a, label]) => <button key={a} type="button" role="tab" data-aba={a} aria-selected={aba === a} className={`${styles.tab} ${styles.tabServico} ${aba === a ? styles.tabAtiva : ''}`} onClick={() => setAba(a)}>{label}{a === 'avisos_servico' && avisosServicosQtd > 0 ? ` (${avisosServicosQtd})` : ''}</button>)}
+            {ABAS_SERVICOS.map(([a, label]) => <button key={a} type="button" role="tab" data-aba={a} aria-selected={aba === a} className={`${styles.tab} ${styles.tabServico} ${aba === a ? styles.tabAtiva : ''}`} onClick={() => abrirAba(a)}>{label}{a === 'avisos_servico' && avisosServicosQtd > 0 ? ` (${avisosServicosQtd})` : ''}</button>)}
           </span>
         </span>
       </div>
@@ -315,6 +327,7 @@ export default function PainelAdministrativo(props: Props) {
           : avantaShell.cardStyle}
         bodyStyle={avantaShell.bodyStyle}
       >
+        <div key={`${aba}-${reinicioAba}`}>
         {/* Empresas acompanha a altura real da lista; a página completa faz a
             rolagem, preservando título, busca e ação principal no topo. */}
         {aba === 'empresas' && (
@@ -372,7 +385,7 @@ export default function PainelAdministrativo(props: Props) {
         {aba !== 'empresas' && aba !== 'colaboradores' && aba !== 'conferencia' && (
         <div className={styles.corpoRolavel}>
         {(aba === 'realizados' || aba === 'pendentes_servico' || aba === 'atrasados_servico' || aba === 'avisos_servico') && (
-          <PainelServicos filtro={aba} servicos={servicos} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} onConcluirAviso={props.onConcluirAvisoServico} onReabrirAviso={props.onReabrirAvisoServico} onObterAssinatura={props.onObterComprovanteServico} portalBusca={aba === 'avisos_servico' ? portalBuscaAvisos : undefined} darkMode={darkMode} />
+          <PainelServicos filtro={aba} servicos={servicos} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} nomeEmpresa={props.nomeEmpresa} onConcluirAviso={props.onConcluirAvisoServico} onReabrirAviso={props.onReabrirAvisoServico} onObterAssinatura={props.onObterComprovanteServico} portalBusca={aba === 'avisos_servico' ? portalBuscaAvisos : undefined} darkMode={darkMode} />
         )}
         {aba === 'agendamentos_servico' && <PainelAgendamentosServico empresas={empresas} subempresas={subempresas} servicos={servicos} onAgendar={props.onAgendarServico} onEditar={props.onEditarAgendamentoServico} onCancelar={props.onCancelarAgendamentoServico} onConcluir={props.onConcluirAgendamentoServico} onConfirmacao={props.onConfirmacao} />}
         {aba === 'visao' && (
@@ -419,6 +432,7 @@ export default function PainelAdministrativo(props: Props) {
         {aba === 'resultados' && <GraficoResultados chaveMes={chaveMes} recebimentos={recebimentos} />}
         </div>
         )}
+        </div>
       </AvantaCard>
     </div>
   );

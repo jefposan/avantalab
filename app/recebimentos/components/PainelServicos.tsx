@@ -8,6 +8,7 @@ import type { Colaborador, Empresa, Servico, Subempresa } from './types';
 import { dataLocalIso, diferencaDiasIso, formatarData, formatarDataHora } from './helpers';
 import FiltroCompetencia from './FiltroCompetencia';
 import BotaoComprovante from './BotaoComprovante';
+import RelatorioServicosModal from './RelatorioServicosModal';
 
 export type FiltroServico = 'realizados' | 'pendentes_servico' | 'atrasados_servico' | 'avisos_servico';
 
@@ -19,6 +20,7 @@ type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
   colaboradores: Colaborador[];
+  nomeEmpresa?: string;
   onConcluirAviso: (id: string) => void;
   onReabrirAviso: (id: string) => void;
   onObterAssinatura: (id: string) => Promise<ComprovanteRecebimento>;
@@ -33,7 +35,7 @@ function referenciaDoMes(iso: string | null) {
   return { ano: data.getFullYear(), mes: data.getMonth() };
 }
 
-export default function PainelServicos({ filtro, servicos, empresas, subempresas, colaboradores, onConcluirAviso, onReabrirAviso, onObterAssinatura, portalBusca, darkMode = false }: Props) {
+export default function PainelServicos({ filtro, servicos, empresas, subempresas, colaboradores, nomeEmpresa: nomePerfilEmpresa = 'Perfil da empresa', onConcluirAviso, onReabrirAviso, onObterAssinatura, portalBusca, darkMode = false }: Props) {
   const hoje = dataLocalIso();
   const [mesRealizados, setMesRealizados] = useState(() => {
     const agora = new Date();
@@ -47,6 +49,7 @@ export default function PainelServicos({ filtro, servicos, empresas, subempresas
   const [situacaoAvisos, setSituacaoAvisos] = useState<'pendentes' | 'concluidos' | 'todos'>('pendentes');
   const [buscaAvisos, setBuscaAvisos] = useState('');
   const [avisosExpandidos, setAvisosExpandidos] = useState<Set<string>>(() => new Set());
+  const [relatorioAberto, setRelatorioAberto] = useState(false);
   const nomeEmpresa = (id: string) => empresas.find((item) => item.id === id)?.nome ?? '—';
   const nomeCliente = (servico: Servico) => servico.subempresaId ? subempresas.find((item) => item.id === servico.subempresaId)?.nome ?? '—' : nomeEmpresa(servico.empresaId);
   const nomeColaborador = (id: string | null) => id ? colaboradores.find((item) => item.id === id)?.nome ?? '—' : '—';
@@ -123,7 +126,10 @@ export default function PainelServicos({ filtro, servicos, empresas, subempresas
             <option value="todos">Todos</option>
           </select>
         </label>}
-        {filtro === 'realizados' && <FiltroCompetencia referencia={mesRealizados} todos={false} onMudarMes={mudarMesRealizados} onMostrarTodos={() => undefined} mostrarTodos={false} />}
+        {filtro === 'realizados' && <>
+          <FiltroCompetencia referencia={mesRealizados} todos={false} onMudarMes={mudarMesRealizados} onMostrarTodos={() => undefined} mostrarTodos={false} />
+          <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnRelatorioServicos}`} onClick={() => setRelatorioAberto(true)}>Relatórios</button>
+        </>}
         {filtro === 'avisos_servico' && <FiltroCompetencia referencia={mesAvisos} todos={todosAvisos} onMudarMes={(delta) => { mudarMesAvisos(delta); setTodosAvisos(false); }} onMostrarTodos={() => setTodosAvisos(true)} />}
         <span className={styles.servicosContagem} aria-label={filtro === 'avisos_servico' ? `${avisosPendentesNoMes} avisos pendentes` : undefined}>{filtro === 'avisos_servico' ? avisosPendentesNoMes : lista.length}</span>
       </div>
@@ -142,7 +148,7 @@ export default function PainelServicos({ filtro, servicos, empresas, subempresas
               <div><small>Local / vínculo</small><span>{nomeCliente(servico)}</span></div>
               <div><small>Realizado em</small><span>{formatarDataHora(servico.realizadoEm)}</span></div>
               <div><small>Registrado por</small><span>{servico.colaboradorId ? nomeColaborador(servico.colaboradorId) : 'Gestão'}</span></div>
-              <div><small>Assinatura</small>{possuiAssinatura ? <BotaoComprovante lancamentoId={servico.id} onObter={onObterAssinatura} compacto darkMode={darkMode} titulo="Assinatura do serviço" rotulo="Visualizar assinatura" descricaoImagem={`Assinatura de ${servico.clienteNome || 'quem recebeu o atendimento'}`} /> : <span>{servico.clienteNome ? 'Não disponível' : 'Dispensada pela gestão'}</span>}<em>{servico.clienteNome ? `Assinada por ${servico.clienteNome}` : ''}</em></div>
+              <div><small>Assinatura</small>{possuiAssinatura ? <BotaoComprovante lancamentoId={servico.id} onObter={onObterAssinatura} compacto darkMode={darkMode} titulo="Assinatura do serviço" rotulo="Visualizar assinatura" descricaoImagem={`Assinatura de ${servico.clienteNome || 'quem recebeu o atendimento'}`} /> : <span>{servico.clienteNome ? 'Não disponível' : 'Dispensada pela gestão'}</span>}<em>{servico.clienteNome ? `Assinado por: ${servico.clienteNome}` : ''}</em></div>
               <div><small>Avaliação</small>{servico.avaliacao ? <span className={`${styles.avaliacaoSelo} ${servico.avaliacao === 'regular' ? styles.avaliacaoSeloRegular : styles.avaliacaoSeloBom}`}>{servico.avaliacao === 'regular' ? 'Regular' : 'Bom'}</span> : <span>Não registrada</span>}</div>
               {servico.tipoServico !== 'rotina' && <div><small>Tipo</small><span className={`${styles.tipoServicoBadge} ${styles[`tipoServico${servico.tipoServico[0].toUpperCase()}${servico.tipoServico.slice(1)}`]}`}>{rotuloTipoServico(servico.tipoServico)}</span></div>}
             </div>
@@ -177,5 +183,6 @@ export default function PainelServicos({ filtro, servicos, empresas, subempresas
         </article>;
       })}
     </div>}
+    <RelatorioServicosModal aberto={relatorioAberto} referenciaInicial={mesRealizados} servicos={servicos} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} nomePerfil={nomePerfilEmpresa || 'Perfil da empresa'} onFechar={() => setRelatorioAberto(false)} onObterAssinatura={onObterAssinatura} darkMode={darkMode} />
   </section>;
 }

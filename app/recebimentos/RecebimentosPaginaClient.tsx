@@ -98,6 +98,7 @@ export default function RecebimentosPaginaClient({ empresaId }: { empresaId: str
             perfilInicial={acesso.perfil === 'administrador' ? 'administrador' : 'gestor'}
             darkMode={acesso.empresa.temaEscuro}
             corPrimaria={acesso.empresa.corPrimaria}
+            nomeEmpresa={acesso.empresa.nome}
             mostrarLinkColaboradores
             rascunhoEscopo={`pagina:${acesso.empresa.id}`}
           />

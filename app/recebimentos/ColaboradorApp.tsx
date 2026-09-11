@@ -358,7 +358,7 @@ export default function ColaboradorApp() {
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
           onRegistrar={(empresaRecebimentoId, subId, valor, obs, forma, arquivo) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs, forma, arquivo))}
           onReceberCobranca={(id, valor, obs, forma, arquivo, dataPagamento) => executar((r) => r.receberCobranca(id, valor, obs, forma, arquivo, dataPagamento))}
-        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} onRegistrar={(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao) => executar((r) => r.registrarServico(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao))} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
+        /> : <PainelServicosColaborador colaborador={colaborador} empresas={empresas} subempresas={subempresas} servicos={servicos} podeRegistrar={colaborador.podeServicos} podeAgendar={colaborador.podeAgendamentos} onRegistrar={(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId) => executar((r) => r.registrarServico(empresaRecebimentoId, subId, clienteNome, assinatura, avaliacao, observacao, servicoId))} onAgendar={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))} />}
       </div>
     </div>
   );

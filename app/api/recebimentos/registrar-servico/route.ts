@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     const empresaId = String(corpo.empresaId ?? '').trim();
     const recebimentoEmpresaId = String(corpo.recebimentoEmpresaId ?? '').trim();
     const subempresaId = String(corpo.subempresaId ?? '').trim() || null;
+    const servicoId = String(corpo.servicoId ?? '').trim() || null;
     const clienteNome = String(corpo.clienteNome ?? '').trim().slice(0, 160);
     const assinatura = String(corpo.assinatura ?? '');
     const avaliacao = String(corpo.avaliacao ?? '');
@@ -42,10 +43,11 @@ export async function POST(request: Request) {
       .order('data_programada', { ascending: false })
       .limit(20);
     consultaServico = subempresaId ? consultaServico.eq('subempresa_id', subempresaId) : consultaServico.is('subempresa_id', null);
+    if (servicoId) consultaServico = consultaServico.eq('id', servicoId);
     const { data: servicosPendentes, error: erroServico } = await consultaServico;
     // Agendamentos manuais têm prioridade para que o alerta de atendimento
     // especial desapareça exatamente após a confirmação correspondente.
-    const servico = (servicosPendentes ?? []).find((item) => item.tipo_servico !== 'rotina') ?? servicosPendentes?.[0] ?? null;
+    const servico = servicoId ? servicosPendentes?.[0] ?? null : (servicosPendentes ?? []).find((item) => item.tipo_servico !== 'rotina') ?? servicosPendentes?.[0] ?? null;
     if (erroServico) return respostaErro('Não foi possível localizar a programação do serviço.', 500);
     if (!servico) return respostaErro('Não há serviço pendente para este cliente hoje.');
 

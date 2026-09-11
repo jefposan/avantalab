@@ -18,6 +18,7 @@ import styles from './AvantaCard.module.css';
 type AvantaCardProps = {
   // Aceita texto simples ou um nó (ex.: título com complemento em fonte menor).
   title?: React.ReactNode;
+  titleClassName?: string;
   children: React.ReactNode;
   // ── Modo simples ─────────────────────────────────────────────
   // Informe `corPrimaria` (e opcionalmente `darkMode`) e o card monta o
@@ -89,6 +90,7 @@ export function criarAvantaShellPreset({ corPrimaria, darkMode }: AvantaShellPre
 
 export function AvantaCard({
   title,
+  titleClassName,
   children,
   corPrimaria,
   darkMode = false,
@@ -133,7 +135,7 @@ export function AvantaCard({
       {/* CARD DE TRÁS: título (aparece pelo recorte do card da frente) */}
       <div className={styles.cardTras}>
         {title ? (
-          <h3 className={styles.titulo}>
+          <h3 className={`${styles.titulo}${titleClassName ? ` ${titleClassName}` : ''}`}>
             <span className={styles.acento} aria-hidden="true" />
             <span>{title}</span>
           </h3>

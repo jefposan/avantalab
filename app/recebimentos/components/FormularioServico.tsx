@@ -10,7 +10,7 @@ type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
   servicos: Servico[];
-  onConfirmar: (empresaId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacao: string) => Promise<void> | void;
+  onConfirmar: (empresaId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacao: string, servicoId?: string) => Promise<void> | void;
   onCancelar: () => void;
 };
 
@@ -33,6 +33,7 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
   const [etapa, setEtapa] = useState<Etapa>('destino');
   const [empresaId, setEmpresaId] = useState('');
   const [subempresaId, setSubempresaId] = useState('');
+  const [servicoId, setServicoId] = useState('');
   const [nivelSelecionado, setNivelSelecionado] = useState('');
   const [clienteNome, setClienteNome] = useState('');
   const [assinatura, setAssinatura] = useState('');
@@ -46,14 +47,17 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
   const focoAntesAssinatura = useRef<HTMLElement | null>(null);
   const campoPisoRef = useRef<HTMLDivElement | null>(null);
   const listaClientesRef = useRef<HTMLElement | null>(null);
+  const listaServicosRef = useRef<HTMLElement | null>(null);
   const campoAssinadorRef = useRef<HTMLDivElement | null>(null);
   const desenhando = useRef(false);
   const houveTraço = useRef(false);
-  const [proximoCampoEmDestaque, setProximoCampoEmDestaque] = useState<'piso' | 'clientes' | 'assinador' | null>(null);
+  const [proximoCampoEmDestaque, setProximoCampoEmDestaque] = useState<'piso' | 'clientes' | 'servicos' | 'assinador' | null>(null);
 
   const hoje = dataLocalIso();
   const servicosDisponiveis = useMemo(() => servicos.filter((item) => item.dataProgramada <= hoje && (item.situacao === 'pendente' || item.situacao === 'atrasado')), [hoje, servicos]);
-  const empresasAtivas = useMemo(() => empresas.filter((item) => item.ativo && (item.tipoCadastro === 'local_agrupador' ? subempresas.some((subempresa) => subempresa.empresaId === item.id && subempresa.ativo) : servicosDisponiveis.some((servico) => servico.empresaId === item.id && servico.subempresaId == null))).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })), [empresas, subempresas, servicosDisponiveis]);
+  const empresasAtivas = useMemo(() => empresas.filter((item) => item.ativo && (item.tipoCadastro === 'local_agrupador'
+    ? subempresas.some((subempresa) => subempresa.empresaId === item.id && subempresa.ativo && servicosDisponiveis.some((servico) => servico.subempresaId === subempresa.id))
+    : servicosDisponiveis.some((servico) => servico.empresaId === item.id && servico.subempresaId == null))).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })), [empresas, subempresas, servicosDisponiveis]);
   const empresa = useMemo(() => empresas.find((item) => item.id === empresaId) ?? null, [empresas, empresaId]);
   const subs = useMemo(() => subempresas.filter((item) => item.empresaId === empresaId && item.ativo).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })), [subempresas, empresaId]);
   const precisaSubempresa = empresa?.tipoCadastro === 'local_agrupador';
@@ -63,8 +67,16 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
   const subempresa = useMemo(() => subsNoNivel.find((item) => item.id === subempresaId) ?? null, [subsNoNivel, subempresaId]);
   const servicoDisponivelParaSubempresa = (id: string) => servicosDisponiveis.some((item) => item.subempresaId === id);
   const proximoServicoParaSubempresa = (id: string) => servicos.filter((item) => item.subempresaId === id && item.situacao === 'pendente' && item.dataProgramada > hoje).sort((a, b) => a.dataProgramada.localeCompare(b.dataProgramada))[0] ?? null;
-  const servicoSelecionadoDisponivel = subempresa ? servicoDisponivelParaSubempresa(subempresa.id) : false;
-  const destinoDefinido = Boolean(empresaId) && (!precisaSubempresa || (Boolean(subempresaId) && servicoSelecionadoDisponivel));
+  const servicosDoDestino = useMemo(() => {
+    if (!empresaId) return null;
+    return servicosDisponiveis
+      .filter((item) => item.empresaId === empresaId && (precisaSubempresa ? item.subempresaId === subempresaId : item.subempresaId == null))
+      .sort((a, b) => a.dataProgramada.localeCompare(b.dataProgramada)
+        || Number(a.tipoServico !== 'rotina') - Number(b.tipoServico !== 'rotina')
+        || a.tipoServico.localeCompare(b.tipoServico));
+  }, [empresaId, precisaSubempresa, servicosDisponiveis, subempresaId]);
+  const servicoSelecionado = useMemo(() => servicosDoDestino?.find((item) => item.id === servicoId) ?? null, [servicoId, servicosDoDestino]);
+  const destinoDefinido = Boolean(empresaId) && Boolean(servicoSelecionado) && (!precisaSubempresa || Boolean(subempresaId));
   const identificacaoEmpresa = [empresa?.nome, subempresa?.nome].filter(Boolean).join(' / ');
   const agendamentosManuaisDoDia = useMemo(() => servicos.filter((item) => item.empresaId === empresaId && item.dataProgramada === hoje && item.tipoServico !== 'rotina' && (item.situacao === 'pendente' || item.situacao === 'atrasado')).sort((a, b) => a.tipoServico.localeCompare(b.tipoServico)), [empresaId, hoje, servicos]);
   const rotuloTipoAgendado = (tipo: Servico['tipoServico']) => ({ interna: 'Interna', revisao: 'Revisão', extra: 'Extra', rotina: 'Rotina' })[tipo];
@@ -101,7 +113,9 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
       ? campoPisoRef.current
       : proximoCampoEmDestaque === 'clientes'
         ? listaClientesRef.current
-        : campoAssinadorRef.current;
+        : proximoCampoEmDestaque === 'servicos'
+          ? listaServicosRef.current
+          : campoAssinadorRef.current;
     const respeitaMovimentoReduzido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const quadro = window.requestAnimationFrame(() => {
       alvo?.scrollIntoView({ behavior: respeitaMovimentoReduzido ? 'auto' : 'smooth', block: 'start' });
@@ -114,10 +128,11 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
     const empresaEscolhida = empresas.find((item) => item.id === id);
     const possuiPiso = empresaEscolhida?.tipoCadastro === 'local_agrupador'
       && subempresas.some((item) => item.empresaId === id && item.ativo && (item.tipoNivel != null || item.identificacaoNivel.trim() !== ''));
-    setEmpresaId(id); setSubempresaId(''); setNivelSelecionado(''); setErro('');
-    setProximoCampoEmDestaque(empresaEscolhida?.tipoCadastro === 'local_agrupador' ? (possuiPiso ? 'piso' : 'clientes') : 'assinador');
+    setEmpresaId(id); setSubempresaId(''); setServicoId(''); setNivelSelecionado(''); setErro('');
+    setProximoCampoEmDestaque(empresaEscolhida?.tipoCadastro === 'local_agrupador' ? (possuiPiso ? 'piso' : 'clientes') : 'servicos');
   }
-  function selecionarNivel(nivel: string) { setNivelSelecionado(nivel); setSubempresaId(''); setErro(''); setProximoCampoEmDestaque(nivel ? 'clientes' : null); }
+  function selecionarNivel(nivel: string) { setNivelSelecionado(nivel); setSubempresaId(''); setServicoId(''); setErro(''); setProximoCampoEmDestaque(nivel ? 'clientes' : null); }
+  function selecionarServico(id: string) { const proximoId = servicoId === id ? '' : id; setServicoId(proximoId); setErro(''); setProximoCampoEmDestaque(proximoId ? 'assinador' : 'servicos'); }
   function ponto(evento: React.PointerEvent<HTMLCanvasElement>) {
     const alvo = evento.currentTarget;
     const area = alvo.getBoundingClientRect();
@@ -149,7 +164,7 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
   function avancarDestino() {
     if (!empresa) return setErro('Selecione a empresa.');
     if (precisaSubempresa && !subempresaId) return setErro('Selecione o cliente.');
-    if (precisaSubempresa && !servicoSelecionadoDisponivel) return setErro('Este cliente não possui serviço pendente para registrar hoje.');
+    if (!servicoSelecionado) return setErro('Selecione o serviço que será executado.');
     if (!clienteNome.trim()) return setErro('Informe o nome de quem recebeu o atendimento.');
     focoAntesAssinatura.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setErro(''); setEtapa('assinatura');
@@ -157,7 +172,7 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
   async function enviar(avaliacaoFinal: AvaliacaoServico, observacaoFinal = '') {
     if (!assinatura) return setEtapa('assinatura');
     setEnviando(true); setErro('');
-    try { await onConfirmar(empresaId, precisaSubempresa ? subempresaId : null, clienteNome.trim(), assinatura, avaliacaoFinal, observacaoFinal.trim()); }
+    try { await onConfirmar(empresaId, precisaSubempresa ? subempresaId : null, clienteNome.trim(), assinatura, avaliacaoFinal, observacaoFinal.trim(), servicoSelecionado?.id); }
     catch (error) { setErro(error instanceof Error ? error.message : 'Não foi possível registrar o serviço.'); }
     finally { setEnviando(false); }
   }
@@ -171,9 +186,10 @@ export default function FormularioServico({ empresas, subempresas, servicos, onC
     {etapa === 'destino' && <>
       <div className={styles.field}><label className={styles.label} htmlFor="servico-empresa">Empresa</label><select id="servico-empresa" className={styles.select} value={empresaId} onChange={(event) => selecionarEmpresa(event.target.value)}><option value="">Selecione…</option>{empresasAtivas.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></div>
       {empresasAtivas.length === 0 && <div className={styles.aviso} role="status">Não há serviço pendente para registrar hoje.</div>}
-      {agendamentosManuaisDoDia.length > 0 && <aside className={styles.alertaAgendamentoServico} role="status"><strong>Há {agendamentosManuaisDoDia.length === 1 ? 'um agendamento' : `${agendamentosManuaisDoDia.length} agendamentos`} para hoje nesta empresa.</strong><span>{agendamentosManuaisDoDia.map((item) => `${rotuloTipoAgendado(item.tipoServico)}${item.subempresaId ? ` · ${subempresas.find((sub) => sub.id === item.subempresaId)?.nome ?? 'local'}` : ''}`).join(' · ')}</span><small>Este aviso permanece até que os serviços agendados sejam registrados.</small></aside>}
+      {agendamentosManuaisDoDia.length > 0 && <aside className={styles.alertaAgendamentoServico} role="status"><strong>Há {agendamentosManuaisDoDia.length === 1 ? 'um serviço agendado' : `${agendamentosManuaisDoDia.length} serviços agendados`} para executar hoje nesta empresa.</strong><span>{agendamentosManuaisDoDia.map((item) => `${rotuloTipoAgendado(item.tipoServico)}${item.subempresaId ? ` · ${subempresas.find((sub) => sub.id === item.subempresaId)?.nome ?? 'local'}` : ''}`).join(' · ')}</span><small>Agendamentos e serviços padrão são execuções independentes: selecione cada um para registrar separadamente.</small></aside>}
       {precisaSubempresa && escolherPiso && <div ref={campoPisoRef} className={styles.field}><label className={styles.label} htmlFor="servico-piso">Piso</label><select id="servico-piso" className={styles.select} value={nivelSelecionado} onChange={(event) => selecionarNivel(event.target.value)}><option value="">Selecione o piso…</option>{niveis.map((nivel) => <option key={nivel.chave} value={nivel.chave}>{nivel.rotulo}</option>)}</select></div>}
-      {precisaSubempresa && (!escolherPiso || nivelSelecionado) && <section ref={listaClientesRef} className={styles.listaVisitasPiso} aria-labelledby="servico-clientes-piso"><div className={styles.listaVisitasPisoTitulo}><h3 id="servico-clientes-piso">Clientes deste piso{escolherPiso ? ` — ${niveis.find((nivel) => nivel.chave === nivelSelecionado)?.rotulo ?? ''}` : ''}</h3><span>{subsNoNivel.length}</span></div><p>Os clientes sem serviço pendente permanecem na lista para orientar a visita, mas não iniciam registro.</p><div className={styles.listaVisitasPisoItens} role="group" aria-label="Clientes disponíveis neste piso">{subsNoNivel.map((item) => { const disponivel = servicoDisponivelParaSubempresa(item.id); const proximo = proximoServicoParaSubempresa(item.id); return <button key={item.id} type="button" className={styles.visitaPisoItem} disabled={!disponivel} aria-pressed={subempresaId === item.id} onClick={() => { const proximoId = subempresaId === item.id ? '' : item.id; setSubempresaId(proximoId); setProximoCampoEmDestaque(proximoId ? 'assinador' : 'clientes'); setErro(''); }}><strong>{item.nome}</strong><span>{item.endereco || rotuloNivel(item)}</span><small>{disponivel ? (subempresaId === item.id ? 'Selecionado · desfazer' : 'Selecionar') : proximo ? `Programado: ${formatarData(proximo.dataProgramada)}` : 'Sem serviço pendente'}</small></button>; })}</div></section>}
+      {precisaSubempresa && (!escolherPiso || nivelSelecionado) && <section ref={listaClientesRef} className={styles.listaVisitasPiso} aria-labelledby="servico-clientes-piso"><div className={styles.listaVisitasPisoTitulo}><h3 id="servico-clientes-piso">Clientes deste piso{escolherPiso ? ` — ${niveis.find((nivel) => nivel.chave === nivelSelecionado)?.rotulo ?? ''}` : ''}</h3><span>{subsNoNivel.length}</span></div><p>Selecione o local e, em seguida, o serviço que será executado.</p><div className={styles.listaVisitasPisoItens} role="group" aria-label="Clientes disponíveis neste piso">{subsNoNivel.map((item) => { const servicosDoLocal = servicosDisponiveis.filter((servico) => servico.subempresaId === item.id); const disponivel = servicosDoLocal.length > 0; const proximo = proximoServicoParaSubempresa(item.id); const tiposAgendados = servicosDoLocal.filter((servico) => servico.tipoServico !== 'rotina').map((servico) => rotuloTipoAgendado(servico.tipoServico)); return <button key={item.id} type="button" className={styles.visitaPisoItem} disabled={!disponivel} aria-pressed={subempresaId === item.id} onClick={() => { const proximoId = subempresaId === item.id ? '' : item.id; setSubempresaId(proximoId); setServicoId(''); setProximoCampoEmDestaque(proximoId ? 'servicos' : 'clientes'); setErro(''); }}><strong>{item.nome}</strong><span>{item.endereco || rotuloNivel(item)}</span><small>{disponivel ? (subempresaId === item.id ? 'Selecionado · escolher serviço' : `${servicosDoLocal.length} ${servicosDoLocal.length === 1 ? 'serviço disponível' : 'serviços disponíveis'}${tiposAgendados.length ? ` · ${tiposAgendados.join(' / ')}` : ''}`) : proximo ? `Programado: ${formatarData(proximo.dataProgramada)}` : 'Sem serviço pendente'}</small></button>; })}</div></section>}
+      {servicosDoDestino && servicosDoDestino.length > 0 && <section ref={listaServicosRef} className={styles.listaServicosPendentes} aria-labelledby="servicos-a-executar"><div className={styles.listaVisitasPisoTitulo}><h3 id="servicos-a-executar">Serviços a executar</h3><span>{servicosDoDestino.length}</span></div><p>Selecione uma execução. Cada serviço exige seu próprio registro e assinatura.</p><div className={styles.listaServicosPendentesItens} role="group" aria-label="Serviços disponíveis para execução">{servicosDoDestino.map((item) => <button key={item.id} type="button" className={styles.servicoPendenteItem} aria-pressed={servicoId === item.id} onClick={() => selecionarServico(item.id)}><span><strong>{item.tipoServico === 'rotina' ? 'Serviço padrão' : 'Serviço agendado'}</strong><small>{item.dataProgramada === hoje ? 'Programado para hoje' : `Programado para ${formatarData(item.dataProgramada)}`}</small></span>{item.tipoServico === 'rotina' ? <em>Rotina</em> : <em className={`${styles.tipoServicoBadge} ${styles[`tipoServico${item.tipoServico[0].toUpperCase()}${item.tipoServico.slice(1)}`]}`}>{rotuloTipoAgendado(item.tipoServico)}</em>}<b>{servicoId === item.id ? 'Selecionado' : 'Selecionar'}</b></button>)}</div></section>}
       {destinoDefinido && <div ref={campoAssinadorRef} className={styles.field}><label className={styles.label} htmlFor="servico-cliente-nome">Nome de quem recebeu o atendimento</label><input id="servico-cliente-nome" className={styles.input} value={clienteNome} onChange={(event) => setClienteNome(event.target.value)} maxLength={160} placeholder="Nome completo" autoComplete="name" /></div>}
       <div className={styles.acoesServico}><button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={onCancelar}>Cancelar</button>{destinoDefinido && <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={avancarDestino}>Avançar para assinatura</button>}</div>
     </>}

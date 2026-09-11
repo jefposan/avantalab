@@ -42,9 +42,15 @@ next-env.d.ts
 
 # Supabase temp
 supabase/.temp/
+# Rascunhos deliberadamente não aplicados não pertencem ao sistema oficial.
+supabase/drafts/
 
 # Snapshots locais de dados reais antes de migrations; nunca versionar.
 .backups/
+backups/
+
+# Worktrees e estado local do Codex.
+.codex/
 
 # Referência local preservada da reconstrução do AvantaVendas
 /app/avantavendas/documentacao/referencia_tridium/

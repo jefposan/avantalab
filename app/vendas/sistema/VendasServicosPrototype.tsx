@@ -91,6 +91,42 @@ import { COMMERCIAL_PROFILE_PERMISSIONS } from '../lib/commercial-permissions.mj
 import { ACCESS_READY_MESSAGE_TYPE, createAccessSaveRequest, parseAccessSaveResponse, parseAccessSnapshotMessage, type AccessBridgeSnapshot } from '../lib/access-settings-bridge.mjs';
 import { FISCAL_RULES_READY_TYPE, createFiscalRulesSaveRequest, parseFiscalRulesSaveResponse, parseFiscalRulesSnapshot, type FiscalRulesBridgeSnapshot } from '../lib/fiscal-rules-bridge.mjs';
 import { FISCAL_PROFILE_READY_TYPE, createFiscalProfileSaveRequest, parseFiscalProfileSaveResponse, parseFiscalProfileSnapshot, type FiscalProfile } from '../lib/fiscal-profile-bridge.mjs';
+import {
+  ACTIVE_USER_STORAGE_KEY,
+  CATALOG_LEGACY_STORAGE_KEYS,
+  CATALOG_STORAGE_KEY,
+  CLIENT_LEGACY_STORAGE_KEYS,
+  CLIENT_STORAGE_KEY,
+  FISCAL_DRAFT_LEGACY_STORAGE_KEYS,
+  FISCAL_DRAFT_STORAGE_KEY,
+  FISCAL_HOMOLOGATION_STORAGE_KEY,
+  FISCAL_INTEGRATION_EVALUATION_STORAGE_KEY,
+  FISCAL_ISSUER_REGISTRY_LEGACY_STORAGE_KEYS,
+  FISCAL_ISSUER_REGISTRY_STORAGE_KEY,
+  FISCAL_NUMBERING_STORAGE_KEY,
+  NFE_SP_HOMOLOGATION_LEGACY_STORAGE_KEYS,
+  NFE_SP_HOMOLOGATION_STORAGE_KEY,
+  RECEIVABLE_STORAGE_KEY,
+  SETTINGS_LEGACY_STORAGE_KEYS,
+  SETTINGS_STORAGE_KEY,
+  STOCK_STORAGE_KEY,
+  STORAGE_KEY,
+  SUPPLIER_STORAGE_KEY,
+  brazilStateCodes,
+  companyStorageKey,
+  displayDateTime,
+  displayIsoDate,
+  formatDuration,
+  isIntegratedManagementRuntime,
+  isoAfterDays,
+  localDateTimeInput,
+  paymentMethodLabel,
+  ptBrDateToIso,
+  readCompanyStorage,
+  removeCompanyStorage,
+  todayIso,
+  writeCompanyStorage,
+} from './vendas-servicos-runtime';
 
 type View = 'painel' | 'vendas' | 'novo_pedido' | 'novo_orcamento' | 'nova_ordem_servico' | 'servicos' | 'clientes' | 'catalogo' | 'estoque' | 'fiscal' | 'recebimentos' | 'relatorios' | 'configuracoes';
 type IconName = 'home' | 'sale' | 'service' | 'users' | 'box' | 'stock' | 'fiscal' | 'money' | 'chart' | 'settings' | 'plus' | 'search' | 'menu' | 'close' | 'chevron' | 'warning' | 'check' | 'clock' | 'document' | 'calendar' | 'arrow' | 'back' | 'copy' | 'print' | 'mail' | 'whatsapp' | 'tag' | 'edit' | 'image';
@@ -722,41 +758,6 @@ function orderLineFromCatalog(item: CatalogItem): OrderLine {
   };
 }
 
-const STORAGE_KEY = 'avantalab:prototipo-vendas-servicos:v1';
-const CLIENT_STORAGE_KEY = 'avantalab:prototipo-vendas-clientes:v2';
-const CLIENT_LEGACY_STORAGE_KEYS = ['avantalab:prototipo-vendas-clientes:v1'];
-const SUPPLIER_STORAGE_KEY = 'avantalab:prototipo-vendas-fornecedores:v1';
-const CATALOG_STORAGE_KEY = 'avantalab:prototipo-vendas-catalogo:v3';
-const CATALOG_LEGACY_STORAGE_KEYS = ['avantalab:prototipo-vendas-catalogo:v2', 'avantalab:prototipo-vendas-catalogo:v1'];
-const STOCK_STORAGE_KEY = 'avantalab:prototipo-vendas-estoque:v1';
-const RECEIVABLE_STORAGE_KEY = 'avantalab:prototipo-vendas-recebimentos:v1';
-const FISCAL_DRAFT_STORAGE_KEY = 'avantalab:prototipo-vendas-fiscal:v4';
-const FISCAL_DRAFT_LEGACY_STORAGE_KEYS = ['avantalab:prototipo-vendas-fiscal:v3', 'avantalab:prototipo-vendas-fiscal:v2', 'avantalab:prototipo-vendas-fiscal:v1'];
-const FISCAL_HOMOLOGATION_STORAGE_KEY = 'avantalab:prototipo-vendas-homologacao-fiscal:v1';
-const FISCAL_INTEGRATION_EVALUATION_STORAGE_KEY = 'avantalab:prototipo-vendas-avaliacao-integracao-fiscal:v1';
-const FISCAL_ISSUER_REGISTRY_STORAGE_KEY = 'avantalab:prototipo-vendas-estabelecimentos-fiscais:v2';
-const FISCAL_ISSUER_REGISTRY_LEGACY_STORAGE_KEYS = ['avantalab:prototipo-vendas-estabelecimentos-fiscais:v1'];
-const NFE_SP_HOMOLOGATION_STORAGE_KEY = 'avantalab:prototipo-vendas-nfe-sp-homologacao:v2';
-const NFE_SP_HOMOLOGATION_LEGACY_STORAGE_KEYS = ['avantalab:prototipo-vendas-nfe-sp-homologacao:v1'];
-const FISCAL_NUMBERING_STORAGE_KEY = 'avantalab:prototipo-vendas-numeracao-fiscal:v1';
-const SETTINGS_STORAGE_KEY = 'avantalab:prototipo-vendas-configuracoes:v8';
-const SETTINGS_LEGACY_STORAGE_KEYS = ['avantalab:prototipo-vendas-configuracoes:v7', 'avantalab:prototipo-vendas-configuracoes:v6', 'avantalab:prototipo-vendas-configuracoes:v5', 'avantalab:prototipo-vendas-configuracoes:v4', 'avantalab:prototipo-vendas-configuracoes:v3', 'avantalab:prototipo-vendas-configuracoes:v2', 'avantalab:prototipo-vendas-configuracoes:v1'];
-const ACTIVE_USER_STORAGE_KEY = 'avantalab:prototipo-vendas-sessao:v1';
-function companyStorageKey(key: string) {
-  const companyId = typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('companyId') || '';
-  return companyId ? `${key}:empresa:${companyId}` : `${key}:demonstracao`;
-}
-
-function isIntegratedManagementRuntime() {
-  if (typeof window === 'undefined') return false;
-  const bridge = new URLSearchParams(window.location.search).get('bridge') || '';
-  return ['gestao', 'gestao-local'].includes(bridge) && window.parent !== window;
-}
-function readCompanyStorage(key: string) { return window.localStorage.getItem(companyStorageKey(key)); }
-function writeCompanyStorage(key: string, value: string) { window.localStorage.setItem(companyStorageKey(key), value); }
-function removeCompanyStorage(key: string) { window.localStorage.removeItem(companyStorageKey(key)); }
-const brazilStateCodes = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'] as const;
-
 const defaultModuleSettings: ModuleSettings = {
   version: 8,
   company: { ...activeCompany, stateRegistration: '110.042.490.114', municipalRegistration: '', taxRegime: 'Simples Nacional', cityCode: '3550308', cep: '01001-000', street: 'Praça da Sé', number: '100', complement: '', district: 'Sé', email: 'contato@empresa.com.br', phone: '(11) 4000-0000' },
@@ -838,50 +839,6 @@ function fiscalConfigForIssuer(settings: ModuleSettings, issuer?: FiscalIssuerSe
     municipalRegistration: issuer.municipalRegistration,
     stateRegistration: issuer.stateRegistration,
   };
-}
-
-function ptBrDateToIso(value: string) {
-  const [day, month, year] = value.split('/');
-  return year && month && day ? `${year}-${month}-${day}` : value;
-}
-
-function displayIsoDate(value: string) {
-  const [year, month, day] = String(value || '').split('-');
-  return year && month && day ? `${day}/${month}/${year}` : value;
-}
-
-function displayDateTime(value: string) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value.replace('T', ' ');
-  return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-}
-
-function localDateTimeInput(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value.slice(0, 16);
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
-
-function formatDuration(minutes: number) {
-  const safe = Math.max(0, Math.round(Number(minutes) || 0));
-  const hours = Math.floor(safe / 60);
-  const remaining = safe % 60;
-  if (!hours) return `${remaining} min`;
-  return remaining ? `${hours}h${String(remaining).padStart(2, '0')}` : `${hours}h`;
-}
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function isoAfterDays(days: number) {
-  return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
-}
-
-function paymentMethodLabel(value: string) {
-  return ({ pix: 'PIX', boleto: 'Boleto', cartao: 'Cartão', prazo: 'A prazo' } as Record<string, string>)[value] ?? value;
 }
 
 const initialReceivables: ReceivableRecord[] = receivables.map((record) => ({

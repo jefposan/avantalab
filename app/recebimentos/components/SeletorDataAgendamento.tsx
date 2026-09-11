@@ -9,6 +9,9 @@ type Props = {
   value: string;
   min: string;
   onChange: (data: string) => void;
+  ariaLabel?: string;
+  camada?: 'padrao' | 'acima-modal';
+  temaEscuro?: boolean;
 };
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -23,7 +26,7 @@ function dataFormatada(iso: string) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(dataPorIso(iso));
 }
 
-export default function SeletorDataAgendamento({ id, value, min, onChange }: Props) {
+export default function SeletorDataAgendamento({ id, value, min, onChange, ariaLabel, camada = 'padrao', temaEscuro = false }: Props) {
   const [aberto, setAberto] = useState(false);
   const [mesVisivel, setMesVisivel] = useState(() => dataPorIso(value));
   const [dataSelecionada, setDataSelecionada] = useState(value);
@@ -82,12 +85,12 @@ export default function SeletorDataAgendamento({ id, value, min, onChange }: Pro
   }
 
   return <>
-    <button ref={botaoRef} id={id} type="button" className={styles.seletorDataBotao} aria-haspopup="dialog" aria-expanded={aberto} onClick={abrir}>
+    <button ref={botaoRef} id={id} type="button" className={`${styles.seletorDataBotao} ${temaEscuro ? styles.seletorDataBotaoEscuro : ''}`} aria-label={ariaLabel} aria-haspopup="dialog" aria-expanded={aberto} onClick={abrir}>
       <span>{dataFormatada(value)}</span>
       <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01" /></svg>
     </button>
-    {aberto && typeof document !== 'undefined' && createPortal(<div className={styles.calendarioOverlay} role="presentation" onMouseDown={(evento) => { if (evento.target === evento.currentTarget) fechar(); }}>
-      <section ref={dialogoRef} className={styles.calendarioCard} role="dialog" aria-modal="true" aria-labelledby={`${id}-titulo`} tabIndex={-1}>
+    {aberto && typeof document !== 'undefined' && createPortal(<div className={`${styles.calendarioOverlay} ${camada === 'acima-modal' ? styles.calendarioOverlayElevado : ''}`} role="presentation" onMouseDown={(evento) => { if (evento.target === evento.currentTarget) fechar(); }}>
+      <section ref={dialogoRef} className={`${styles.calendarioCard} ${temaEscuro ? styles.calendarioCardEscuro : ''}`} role="dialog" aria-modal="true" aria-labelledby={`${id}-titulo`} tabIndex={-1}>
         <header>
           <button type="button" onClick={() => setMesVisivel((atual) => new Date(atual.getFullYear(), atual.getMonth() - 1, 1))} aria-label="Mês anterior">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>

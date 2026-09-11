@@ -74,7 +74,7 @@ test('busca de voz ignora acentos sem perder as referências humanas', () => {
 });
 
 test('executor usa o RPC oficial e não aceita SQL gerado pela IA', async () => {
-  const source = await readFile(new URL('../../app/api/teste/solicitacao-voz/executar/route.ts', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/executar.ts', import.meta.url), 'utf8');
   assert.match(source, /salvar_pedido_vendas_mobile_rpc/);
   assert.match(source, /getVoiceSalesContext/);
   assert.match(source, /expectedTotal/);
@@ -84,7 +84,7 @@ test('executor usa o RPC oficial e não aceita SQL gerado pela IA', async () => 
 });
 
 test('executor relê a escrita e devolve evidência verificável ao laboratório', async () => {
-  const source = await readFile(new URL('../../app/api/teste/solicitacao-voz/executar/route.ts', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/executar.ts', import.meta.url), 'utf8');
   assert.match(source, /verifiedOrder/);
   assert.match(source, /verifiedPayment/);
   assert.match(source, /Registro relido do banco após a gravação/g);
@@ -99,6 +99,28 @@ test('rota experimental permanece fora dos menus oficiais', async () => {
   ]);
   assert.doesNotMatch(manifest, /teste\/solicitacao-voz/);
   assert.doesNotMatch(officialApp, /teste\/solicitacao-voz/);
+});
+
+test('rotas oficiais de voz não dependem da implementação experimental', async () => {
+  const operations = ['catalogo', 'executar', 'log', 'processar', 'transcrever'];
+  const [officialRoutes, compatibilityRoutes] = await Promise.all([
+    Promise.all(operations.map((operation) => readFile(
+      new URL(`../../app/api/vendas/solicitacao-voz/${operation}/route.ts`, import.meta.url),
+      'utf8',
+    ))),
+    Promise.all(operations.map((operation) => readFile(
+      new URL(`../../app/api/teste/solicitacao-voz/${operation}/route.ts`, import.meta.url),
+      'utf8',
+    ))),
+  ]);
+
+  for (const [index, source] of officialRoutes.entries()) {
+    assert.doesNotMatch(source, /api\/teste\/solicitacao-voz/);
+    assert.match(source, new RegExp(`api/vendas/solicitacao-voz/_handlers/${operations[index]}`));
+  }
+  for (const [index, source] of compatibilityRoutes.entries()) {
+    assert.match(source, new RegExp(`api/vendas/solicitacao-voz/_handlers/${operations[index]}`));
+  }
 });
 
 test('função oficial de voz fica sob preferência da conta e carregamento isolado', async () => {
@@ -180,9 +202,9 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
 test('backend recusa comandos quando a função está desligada', async () => {
   const [auth, transcribe, process, execute] = await Promise.all([
     readFile(new URL('../../app/lib/vendas-voice/auth.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/api/teste/solicitacao-voz/transcrever/route.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/api/teste/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/api/teste/solicitacao-voz/executar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/transcrever.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/processar.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/executar.ts', import.meta.url), 'utf8'),
   ]);
   assert.match(auth, /solicitacaoVozAtiva === true/);
   assert.match(transcribe, /isVoiceCommandEnabled/);
@@ -200,7 +222,7 @@ test('pagamento sem forma escolhida pede esclarecimento antes da confirmação',
 
 test('clique de desambiguação usa candidato validado sem reinterpretar pela IA', async () => {
   const [route, resolver, voiceModule] = await Promise.all([
-    readFile(new URL('../../app/api/teste/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/processar.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8'),
   ]);
@@ -406,8 +428,8 @@ test('conciliação de palavras intermediárias funciona em qualquer segmento de
 test('produto pode ser escolhido manualmente sem perder o rascunho e pedido pode ser editado com validação', async () => {
   const [voiceModule, route, catalogRoute] = await Promise.all([
     readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/api/teste/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/api/teste/solicitacao-voz/catalogo/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/processar.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/catalogo.ts', import.meta.url), 'utf8'),
   ]);
   assert.match(voiceModule, /Procurar no catálogo/);
   assert.match(voiceModule, /Escolha um produto do catálogo/);
@@ -485,7 +507,7 @@ test('agenda e executor reutilizam a fonte oficial por conta', async () => {
   const [client, app, executor, interpreter] = await Promise.all([
     readFile(new URL('../../app/avantavendas/sistema/supabase-client.js', import.meta.url), 'utf8'),
     readFile(new URL('../../app/avantavendas/sistema/app.js', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/api/teste/solicitacao-voz/executar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/executar.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../app/lib/vendas-voice/interpreter.ts', import.meta.url), 'utf8'),
   ]);
   assert.match(client, /from\('vendas_mobile_agenda'\)/);
@@ -498,7 +520,7 @@ test('agenda e executor reutilizam a fonte oficial por conta', async () => {
 });
 
 test('transcrição de voz usa modelo especializado sem enviar o catálogo da conta', async () => {
-  const source = await readFile(new URL('../../app/api/teste/solicitacao-voz/transcrever/route.ts', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/transcrever.ts', import.meta.url), 'utf8');
   assert.match(source, /OPENAI_VOICE_TRANSCRIPTION_MODEL \|\| 'gpt-transcribe'/);
   assert.match(source, /OPENAI_VOICE_TRANSCRIPTION_CONTEXT/);
   assert.match(source, /keywords\[\]/);
@@ -527,7 +549,7 @@ test('catálogo gera aliases com IA em segundo plano e valida cada termo antes d
   const [indexer, route, processor] = await Promise.all([
     readFile(new URL('../../app/lib/vendas-voice/catalog-index.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../app/api/conteudo-vendas/produtos/indexar-voz/route.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/api/teste/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/processar.ts', import.meta.url), 'utf8'),
   ]);
   assert.match(indexer, /response_format: \{ type: 'json_schema'/);
   assert.match(indexer, /strict: true/);
@@ -562,7 +584,7 @@ test('alias aprendido resolve uma expressão humana específica da conta', async
 test('seleção manual só vira aprendizado depois da gravação oficial confirmada', async () => {
   const [resolver, executor] = await Promise.all([
     readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../../app/api/teste/solicitacao-voz/executar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/executar.ts', import.meta.url), 'utf8'),
   ]);
   assert.match(resolver, /voiceLearnings: voiceLearningsForAction/);
   assert.match(executor, /vendas_mobile_confirmar_aprendizado_busca_voz_rpc/);
@@ -574,7 +596,7 @@ test('seleção manual só vira aprendizado depois da gravação oficial confirm
 
 test('transcrição recebe só um vocabulário curto já aprendido, nunca o catálogo inteiro', async () => {
   const [transcription, resolver] = await Promise.all([
-    readFile(new URL('../../app/api/teste/solicitacao-voz/transcrever/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/transcrever.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8'),
   ]);
   assert.match(transcription, /listVoiceTranscriptionHints/);

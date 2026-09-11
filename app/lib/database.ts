@@ -48,13 +48,15 @@ function tratarErroSupabase(error: any) {
     const usuarioAtual = await validarUsuarioAutenticado(usuarioId);
     const emailUsuario = usuarioAtual.email?.toLowerCase() || '';
 
-    let { data: vinculo, error: erroVinculo } = await supabase
+    const respostaVinculo = await supabase
       .from('usuarios_empresa')
       .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
       .eq('user_id', usuarioId)
       .eq('status', 'ativo')
       .limit(1)
       .maybeSingle();
+    let vinculo = respostaVinculo.data;
+    const erroVinculo = respostaVinculo.error;
 
     if (erroVinculo) {
     console.error('Erro ao buscar vínculo do usuário com empresa:', erroVinculo);
