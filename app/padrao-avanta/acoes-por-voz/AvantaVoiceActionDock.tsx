@@ -50,6 +50,8 @@ type Props = {
   label?: string;
   helpTitle?: string;
   helpText: string;
+  disabled?: boolean;
+  disabledMessage?: string;
   request: (
     operation: AvantaVoiceActionOperation,
     payload: Record<string, unknown> | FormData,
@@ -70,6 +72,8 @@ export default function AvantaVoiceActionDock({
   label = 'Solicitação por Voz',
   helpTitle = 'Solicitação por Voz',
   helpText,
+  disabled = false,
+  disabledMessage = 'Indisponível sem internet',
   request,
   afterExecute,
   onPendingChange,
@@ -82,6 +86,15 @@ export default function AvantaVoiceActionDock({
   const [helpOpen, setHelpOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
+  const disabledRef = useRef(disabled);
+
+  useEffect(() => {
+    disabledRef.current = disabled;
+    if (!disabled) return;
+    if (mountRef.current?.querySelector('avanta-voice-command')) window.AvantaVoiceActions?.close();
+  }, [disabled]);
+
+  const ajudaVisivel = helpOpen && !disabled;
 
   const fecharAjuda = useCallback((restaurarFoco = false) => {
     setHelpOpen(false);
@@ -118,11 +131,12 @@ export default function AvantaVoiceActionDock({
 
   async function abrir() {
     const mount = mountRef.current;
-    if (!mount || loading) return;
+    if (!mount || loading || disabled) return;
     setLoading(true);
     fecharAjuda();
     try {
       const modulo = await carregarModulo();
+      if (disabledRef.current) return;
       modulo.open({
         mount,
         mountId: id,
@@ -149,20 +163,20 @@ export default function AvantaVoiceActionDock({
 
   return (
     <>
-      <div ref={mountRef} id={id} className="mobile-voice-command-slot">
+      <div ref={mountRef} id={id} className={`mobile-voice-command-slot${disabled ? ' is-offline' : ''}`}>
         <div className="mobile-voice-command-body">
-          <button type="button" className="mobile-voice-command-trigger" disabled={loading} onClick={() => void abrir()} aria-label="Iniciar solicitação por voz">
+          <button type="button" className="mobile-voice-command-trigger" disabled={loading || disabled} onClick={() => void abrir()} aria-label={disabled ? `${label} indisponível sem internet` : 'Iniciar solicitação por voz'} aria-describedby={disabled ? `${id}-offline` : undefined}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 15.4a3.9 3.9 0 0 0 3.9-3.9V6.4a3.9 3.9 0 1 0-7.8 0v5.1a3.9 3.9 0 0 0 3.9 3.9Z" />
               <path d="M5.7 10.9v.7a6.3 6.3 0 0 0 12.6 0v-.7M12 17.9V21M9.2 21h5.6" />
             </svg>
           </button>
-          <span className="mobile-voice-command-label">{label}</span>
+          <span className="mobile-voice-command-label">{label}{disabled && <small id={`${id}-offline`}>{disabledMessage}</small>}</span>
         </div>
-        <button ref={helpButtonRef} type="button" className="mobile-voice-command-help" onClick={() => setHelpOpen((open) => !open)} aria-label={helpOpen ? `Fechar ajuda de ${label}` : `Como usar ${label}`} aria-expanded={helpOpen} aria-controls={helpId}>
+        <button ref={helpButtonRef} type="button" className="mobile-voice-command-help" disabled={disabled} onClick={() => setHelpOpen((open) => !open)} aria-label={ajudaVisivel ? `Fechar ajuda de ${label}` : `Como usar ${label}`} aria-expanded={ajudaVisivel} aria-controls={helpId}>
           <span className="mobile-voice-command-help-symbol" aria-hidden="true"><i>i</i></span>
         </button>
-        <aside id={helpId} className="mobile-voice-command-help-popover" role="status" hidden={!helpOpen}>
+        <aside id={helpId} className="mobile-voice-command-help-popover" role="status" hidden={!ajudaVisivel}>
           <b>{helpTitle}</b>
           <p>{helpText}</p>
         </aside>

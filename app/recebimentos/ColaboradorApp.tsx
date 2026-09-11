@@ -52,6 +52,20 @@ function obterClienteColaborador() {
   return escopo.__avantaRecebimentosCliente ?? null;
 }
 
+function estaSemRede() {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+function descricaoOperacaoPendente(operacao: OperacaoOffline, empresas: Empresa[], subempresas: Subempresa[], recebimentos: Recebimento[]) {
+  const lancamento = operacao.lancamentoId ? recebimentos.find((item) => item.id === operacao.lancamentoId) : null;
+  const empresa = empresas.find((item) => item.id === (operacao.recebimentoEmpresaId ?? lancamento?.empresaId));
+  const subempresaId = operacao.subempresaId ?? lancamento?.subempresaId;
+  const subempresa = subempresaId ? subempresas.find((item) => item.id === subempresaId) : null;
+  const local = [empresa?.nome, subempresa?.nome].filter(Boolean).join(' · ') || 'Cliente selecionado';
+  if (operacao.tipo === 'servico') return { titulo: 'Serviço realizado', detalhe: `${local}${operacao.clienteNome ? ` · Assinado por ${operacao.clienteNome}` : ''}` };
+  return { titulo: operacao.lancamentoId ? 'Recebimento lançado' : 'Novo recebimento', detalhe: local };
+}
+
 export default function ColaboradorApp() {
   const cliente = obterClienteColaborador();
   const [estado, setEstado] = useState<Estado>('carregando');
@@ -75,13 +89,15 @@ export default function ColaboradorApp() {
   const [instrucaoInstalacao, setInstrucaoInstalacao] = useState(false);
   const [contextoOffline, setContextoOffline] = useState<ContextoOffline | null>(null);
   const [pendenciasOffline, setPendenciasOffline] = useState(0);
-  const [modoOffline, setModoOffline] = useState(false);
+  const [operacoesPendentes, setOperacoesPendentes] = useState<OperacaoOffline[]>([]);
+  const [filaOfflineAberta, setFilaOfflineAberta] = useState(false);
+  const [semRede, setSemRede] = useState(false);
   const promptInstalacao = useRef<EventoInstalacaoPwa | null>(null);
   const botaoFecharInstalacao = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/recebimentos-sw.js?v=13', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
+    navigator.serviceWorker.register('/recebimentos-sw.js?v=14', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -117,6 +133,47 @@ export default function ColaboradorApp() {
     }
     setInstrucaoInstalacao(true);
   }
+
+  const atualizarPendenciasOffline = useCallback(async (contexto: ContextoOffline | null) => {
+    if (!contexto) {
+      setPendenciasOffline(0);
+      setOperacoesPendentes([]);
+      return [] as OperacaoOffline[];
+    }
+    try {
+      const pendencias = await listarOperacoesOffline(contexto);
+      setPendenciasOffline(pendencias.length);
+      setOperacoesPendentes(pendencias);
+      return pendencias;
+    } catch {
+      setPendenciasOffline(0);
+      setOperacoesPendentes([]);
+      return [] as OperacaoOffline[];
+    }
+  }, []);
+
+  const abrirFilaOffline = useCallback(async () => {
+    await atualizarPendenciasOffline(contextoOffline);
+    setFilaOfflineAberta(true);
+  }, [atualizarPendenciasOffline, contextoOffline]);
+
+  useEffect(() => {
+    const atualizarRede = () => setSemRede(estaSemRede());
+    atualizarRede();
+    window.addEventListener('online', atualizarRede);
+    window.addEventListener('offline', atualizarRede);
+    return () => {
+      window.removeEventListener('online', atualizarRede);
+      window.removeEventListener('offline', atualizarRede);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!filaOfflineAberta) return;
+    const fecharComEscape = (evento: KeyboardEvent) => { if (evento.key === 'Escape') setFilaOfflineAberta(false); };
+    window.addEventListener('keydown', fecharComEscape);
+    return () => window.removeEventListener('keydown', fecharComEscape);
+  }, [filaOfflineAberta]);
 
   const carregarDados = useCallback(async (repoAtivo: RecebimentosRepo) => {
     const dados = await repoAtivo.carregar();
@@ -174,20 +231,20 @@ export default function ColaboradorApp() {
     setComandoVozPermitido(vozAutorizada);
     setEmpresaId(empresa);
     setRepo(repoAtivo);
-    setModoOffline(false);
     try {
       const contexto = await salvarContextoOffline(dados, {
         usuarioId: sessao.user.id, empresaId: empresa, colaboradorId: colaborador.id, empresaNome: nomePerfilDaSessao,
       });
       setContextoOffline(contexto);
-      setPendenciasOffline((await listarOperacoesOffline(contexto)).length);
+      await atualizarPendenciasOffline(contexto);
     } catch {
       // A sessão online continua disponível quando o aparelho bloqueia o armazenamento local.
       setContextoOffline(null);
       setPendenciasOffline(0);
+      setOperacoesPendentes([]);
     }
     setEstado('app');
-  }, [cliente, carregarDados]);
+  }, [atualizarPendenciasOffline, cliente, carregarDados]);
 
   const restaurarAcessoOffline = useCallback(async () => {
     const salvo = await restaurarContextoOffline();
@@ -204,7 +261,7 @@ export default function ColaboradorApp() {
     setColaboradorId(colaborador.id); setComandoVozPermitido(false);
     setOperacao(colaborador.podeRecebimentos && podeAbrirServicos ? 'seletor' : podeAbrirServicos ? 'servicos' : 'recebimentos');
     if (cliente) setRepo(criarRepoSupabase(salvo.contexto.empresaId, cliente));
-    setContextoOffline(salvo.contexto); setPendenciasOffline(pendencias.length); setModoOffline(true); setEstado('app');
+    setContextoOffline(salvo.contexto); setPendenciasOffline(pendencias.length); setOperacoesPendentes(pendencias); setEstado('app');
     return true;
   }, [cliente]);
 
@@ -230,7 +287,7 @@ export default function ColaboradorApp() {
   }, [cliente, prepararSessao, restaurarAcessoOffline]);
 
   const revalidarPermissoes = useCallback(async () => {
-    if (!cliente || !empresaId || !colaboradorId || estado !== 'app') return;
+    if (!cliente || !empresaId || !colaboradorId || estado !== 'app' || estaSemRede()) return;
     const { data } = await cliente.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return;
@@ -326,6 +383,7 @@ export default function ColaboradorApp() {
     }
     const restantes = await listarOperacoesOffline(contextoOffline);
     setPendenciasOffline(restantes.length);
+    setOperacoesPendentes(restantes);
     if (restantes.length === 0) {
       const dados = await carregarDados(repoAtivo);
       const colaborador = dados.colaboradores.find((item) => item.id === contextoOffline.colaboradorId);
@@ -333,12 +391,11 @@ export default function ColaboradorApp() {
         const contexto = await salvarContextoOffline(dados, { usuarioId: contextoOffline.usuarioId, empresaId: contextoOffline.empresaId, colaboradorId: colaborador.id, empresaNome: empresaNome || contextoOffline.empresaNome });
         setContextoOffline(contexto);
       }
-      setModoOffline(false);
     }
   }, [carregarDados, cliente, contextoOffline, empresaNome]);
 
   useEffect(() => {
-    const aoConectar = () => { void sincronizarPendencias(); };
+    const aoConectar = () => { if (!estaSemRede()) void sincronizarPendencias(); };
     window.addEventListener('online', aoConectar);
     window.addEventListener('focus', aoConectar);
     return () => { window.removeEventListener('online', aoConectar); window.removeEventListener('focus', aoConectar); };
@@ -363,42 +420,42 @@ export default function ColaboradorApp() {
   async function registrarRecebimentoComFila(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null) {
     if (!repo || !contextoOffline) throw new Error('A sessão operacional não está disponível neste aparelho. Conecte-se à internet e entre novamente.');
     const pendencia = await enfileirarOperacao(contextoOffline, { recebimentoEmpresaId: empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante }, 'recebimento');
-    setPendenciasOffline((quantidade) => quantidade + 1);
+    await atualizarPendenciasOffline(contextoOffline);
     try {
       await repo.registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante, pendencia.id);
-      await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1));
+      await concluirOperacaoOffline(pendencia.id); await atualizarPendenciasOffline(contextoOffline);
       void atualizarAposEnvio();
     } catch (error) {
-      if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1)); throw error; }
-      aplicarOperacaoLocal(pendencia); setModoOffline(true);
+      if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); await atualizarPendenciasOffline(contextoOffline); throw error; }
+      aplicarOperacaoLocal(pendencia);
     }
   }
 
   async function receberCobrancaComFila(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null, dataPagamento?: string | null) {
     if (!repo || !contextoOffline) throw new Error('A sessão operacional não está disponível neste aparelho. Conecte-se à internet e entre novamente.');
     const pendencia = await enfileirarOperacao(contextoOffline, { lancamentoId, valor, observacao, formaPagamento, comprovante, dataPagamento }, 'recebimento');
-    setPendenciasOffline((quantidade) => quantidade + 1);
+    await atualizarPendenciasOffline(contextoOffline);
     try {
       await repo.receberCobranca(lancamentoId, valor, observacao, formaPagamento, comprovante, dataPagamento, pendencia.id);
-      await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1));
+      await concluirOperacaoOffline(pendencia.id); await atualizarPendenciasOffline(contextoOffline);
       void atualizarAposEnvio();
     } catch (error) {
-      if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1)); throw error; }
-      aplicarOperacaoLocal(pendencia); setModoOffline(true);
+      if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); await atualizarPendenciasOffline(contextoOffline); throw error; }
+      aplicarOperacaoLocal(pendencia);
     }
   }
 
   async function registrarServicoComFila(empresaRecebimentoId: string, subempresaId: string | null, clienteNome: string, assinatura: string, avaliacao: AvaliacaoServico, observacaoCliente: string, servicoId?: string) {
     if (!repo || !contextoOffline || !servicoId) throw new Error('Selecione o serviço que será executado antes de concluir o atendimento.');
     const pendencia = await enfileirarOperacao(contextoOffline, { recebimentoEmpresaId: empresaRecebimentoId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId }, 'servico');
-    setPendenciasOffline((quantidade) => quantidade + 1);
+    await atualizarPendenciasOffline(contextoOffline);
     try {
       await repo.registrarServico(empresaRecebimentoId, subempresaId, clienteNome, assinatura, avaliacao, observacaoCliente, servicoId, pendencia.id);
-      await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1));
+      await concluirOperacaoOffline(pendencia.id); await atualizarPendenciasOffline(contextoOffline);
       void atualizarAposEnvio();
     } catch (error) {
-      if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); setPendenciasOffline((quantidade) => Math.max(0, quantidade - 1)); throw error; }
-      aplicarOperacaoLocal(pendencia); setModoOffline(true);
+      if (!erroDeConexao(error)) { await concluirOperacaoOffline(pendencia.id); await atualizarPendenciasOffline(contextoOffline); throw error; }
+      aplicarOperacaoLocal(pendencia);
     }
   }
 
@@ -433,7 +490,7 @@ export default function ColaboradorApp() {
     await cliente?.auth.signOut();
     if (contextoOffline) await limparContextoOffline(contextoOffline.usuarioId, contextoOffline.empresaId).catch(() => undefined);
     setRepo(null); setEmpresaId(''); setEmpresaNome(''); setColaboradorId(''); setComandoVozPermitido(false); setEmpresas([]); setSubempresas([]); setColaboradores([]); setRecebimentos([]); setServicos([]); setOperacao('seletor');
-    setContextoOffline(null); setPendenciasOffline(0); setModoOffline(false);
+    setContextoOffline(null); setPendenciasOffline(0); setOperacoesPendentes([]); setFilaOfflineAberta(false);
     setEstado('login'); setErro('');
   }
 
@@ -570,12 +627,16 @@ export default function ColaboradorApp() {
             <span className={styles.brandTitle}>{nomeDoPerfil}</span>
             <span className={styles.brandEmpresa}>{descricaoDaOperacao}</span>
           </div>
-          <div className={styles.topbarAcoesColaborador}>{podeTrocarOperacao && <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => setOperacao('seletor')}>Trocar sistema</button>}<button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button></div>
+          <div className={styles.topbarAcoesColaborador}>
+            {semRede && <span className={styles.indicadorRedeOffline} role="status" aria-label="Sem conexão. Os lançamentos manuais serão enviados ao reconectar." title="Sem conexão: trabalhando offline"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5a12 12 0 0 1 14.8-1.8M2.8 5.2 21.2 18.8M7.6 13.2a7 7 0 0 1 5.3-.5M12 19h.01" /></svg></span>}
+            {pendenciasOffline > 0 && <button type="button" className={styles.botaoPendenciasOffline} onClick={() => void abrirFilaOffline()} aria-label={`${pendenciasOffline} atendimento${pendenciasOffline === 1 ? '' : 's'} aguardando sincronização`} title="Atendimentos aguardando sincronização"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M5 7h14M5 17h14M7 7v10m10-10v10M9 10h6M9 14h4" /></svg><b>{pendenciasOffline}</b></button>}
+            {podeTrocarOperacao && <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => setOperacao('seletor')}>Trocar sistema</button>}
+            <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button>
+          </div>
         </div>
       </div>
       <div className={styles.container}>
         {erro && <div className={styles.aviso} role="alert">{erro}</div>}
-        {(modoOffline || pendenciasOffline > 0) && <div className={styles.aviso} role="status">{pendenciasOffline > 0 ? `${pendenciasOffline} atendimento${pendenciasOffline === 1 ? '' : 's'} salvo${pendenciasOffline === 1 ? '' : 's'} neste aparelho e aguardando conexão.` : 'Modo offline ativo. Os novos atendimentos serão enviados automaticamente ao reconectar.'}</div>}
         {operacao === 'recebimentos' ? <PainelColaborador
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
           onRegistrar={registrarRecebimentoComFila}
@@ -595,12 +656,23 @@ export default function ColaboradorApp() {
           servicos={servicos}
           podeRegistrar={colaborador.podeServicos}
           podeAgendar={colaborador.podeAgendamentos}
+          offline={semRede}
           onRegistrarRecebimento={(empresaRecebimentoId, subId, valor, obs, forma) => registrarRecebimentoComFila(empresaRecebimentoId, subId, valor, obs, forma)}
           onReceberCobranca={(recebimentoId, valor, obs, forma) => receberCobrancaComFila(recebimentoId, valor, obs, forma)}
           onAgendarServico={(empresaRecebimentoId, subId, data, tipo) => executar((r) => r.agendarServico(empresaRecebimentoId, subId, data, tipo))}
           onPrepararRegistroServico={(companyId, subcompanyId, serviceId) => setRegistroServicoVoz({ requestId: `${Date.now()}-${Math.random()}`, companyId, subcompanyId, serviceId })}
         />
       </footer>}
+      {filaOfflineAberta && <div className={styles.filaOfflineOverlay} role="presentation" onMouseDown={(evento) => { if (evento.target === evento.currentTarget) setFilaOfflineAberta(false); }}>
+        <section className={styles.filaOfflineModal} role="dialog" aria-modal="true" aria-labelledby="fila-offline-titulo">
+          <header><div><p>Sincronização</p><h2 id="fila-offline-titulo">Atendimentos aguardando envio</h2></div><button type="button" onClick={() => setFilaOfflineAberta(false)} aria-label="Fechar pendências de sincronização">×</button></header>
+          {operacoesPendentes.length ? <ul>{operacoesPendentes.map((item) => {
+            const descricao = descricaoOperacaoPendente(item, empresas, subempresas, recebimentos);
+            return <li key={item.id}><span className={styles.filaOfflineTipo}>{item.tipo === 'servico' ? 'Serviço' : 'Recebimento'}</span><div><b>{descricao.titulo}</b><small>{descricao.detalhe}</small><time dateTime={new Date(item.criadoEm).toISOString()}>Salvo em {new Date(item.criadoEm).toLocaleString('pt-BR')}</time></div></li>;
+          })}</ul> : <p className={styles.filaOfflineVazia}>Todos os atendimentos deste aparelho já foram sincronizados.</p>}
+          <footer><span>{semRede ? 'Sem conexão: o envio acontece automaticamente ao reconectar.' : 'Aguardando confirmação do servidor.'}</span><button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setFilaOfflineAberta(false)}>Entendi</button></footer>
+        </section>
+      </div>}
     </div>
   );
 }

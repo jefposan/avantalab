@@ -187,10 +187,30 @@ test('comando por voz é permissão individual ativa por padrão e validada no s
   assert.match(app, /document\.addEventListener\('visibilitychange', aoRetomar\)/);
   assert.match(app, /window\.addEventListener\('focus', aoRetomar\)/);
   assert.match(app, /setInterval\(\(\) => \{ void revalidarPermissoes\(\); \}, 15000\)/);
-  assert.match(app, /recebimentos-sw\.js\?v=13/);
-  assert.match(serviceWorker, /avantalab-recebimentos-v13/);
+  assert.match(app, /recebimentos-sw\.js\?v=14/);
+  assert.match(serviceWorker, /avantalab-recebimentos-v14/);
   assert.match(repo, /postgres_changes[^\n]*recebimentos_colaboradores/);
   assert.match(auth, /\.eq\('pode_comando_voz', true\)/);
   assert.match(migration, /add column if not exists pode_comando_voz boolean not null default true/);
   assert.doesNotMatch(migration, /delete|drop|truncate/i);
+});
+
+test('Operações de Campo sinaliza a rede e protege voz e fila reais nos dois modos', async () => {
+  const [app, dock, sharedDock] = await Promise.all([
+    readFile(new URL('../../app/recebimentos/ColaboradorApp.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/recebimentos/components/OperacoesCampoVoiceDock.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/padrao-avanta/acoes-por-voz/AvantaVoiceActionDock.tsx', import.meta.url), 'utf8'),
+  ]);
+  assert.match(app, /function estaSemRede\(\)/);
+  assert.match(app, /window\.addEventListener\('offline', atualizarRede\)/);
+  assert.match(app, /botaoPendenciasOffline/);
+  assert.match(app, /abrirFilaOffline/);
+  assert.match(app, /listarOperacoesOffline\(contexto\)/);
+  assert.match(app, /offline=\{semRede\}/);
+  assert.match(dock, /offline\?: boolean/);
+  assert.match(dock, /Solicitação por Voz indisponível sem internet\. Use os lançamentos manuais\./);
+  assert.match(dock, /disabled=\{offline\}/);
+  assert.match(sharedDock, /disabled\?: boolean/);
+  assert.match(sharedDock, /mobile-voice-command-slot\$\{disabled \? ' is-offline' : ''\}/);
+  assert.match(sharedDock, /window\.AvantaVoiceActions\?\.close\(\)/);
 });

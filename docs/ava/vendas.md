@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0.03 -->
+<!-- ava-version: 1.33.0.04 -->
+
+> Revisão 1.33.0.04: os mesmos indicadores e a proteção de voz foram aplicados
+> ao PWA Operações de Campo; o fluxo do AvantaVendas permanece inalterado.
 
 > Revisão 1.33.0.03: quando não houver internet, a **Solicitação por Voz** fica
 > cinza e indisponível para evitar transcrição ou execução incompleta. Use os

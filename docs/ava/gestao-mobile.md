@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0.03 -->
+<!-- ava-version: 1.33.0.04 -->
+
+> Revisão 1.33.0.04: em Operações de Campo, Recebimentos e Serviços mostram a
+> rede riscada somente sem conexão e exibem a quantidade real de atendimentos
+> aguardando sincronização. O número abre a fila deste aparelho; cada item some
+> depois da confirmação do servidor. Sem internet, a Solicitação por Voz fica
+> cinza, sem clique, e os lançamentos manuais continuam disponíveis até a
+> reconexão.
 
 > Revisão 1.33.0.03: a indisponibilidade da Solicitação por Voz sem internet
 > pertence ao AvantaVendas; sem impacto operacional adicional na Gestão Mobile.

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.03 -->
+<!-- ava-version: 1.33.0.04 -->
+
+> Revisão 1.33.0.04: os indicadores de conexão, fila real e bloqueio de voz
+> pertencem ao PWA Operações de Campo; sem impacto operacional adicional na
+> Gestão Web.
 
 > Revisão 1.33.0.03: a indisponibilidade da Solicitação por Voz sem internet
 > pertence ao AvantaVendas; sem impacto operacional adicional na Gestão Web.

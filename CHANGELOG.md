@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.33.0.04 - 2026-09-11
+- **Operações de Campo offline visível**: Recebimentos e Serviços agora mostram
+  no cabeçalho a rede riscada somente sem conexão e a quantidade real de
+  atendimentos aguardando sincronização. O indicador abre a fila protegida no
+  aparelho e atualiza após a confirmação do servidor.
+- **Voz segura nos dois fluxos**: a Solicitação por Voz fica cinza, sem clique
+  e é fechada ao perder a rede; os lançamentos manuais continuam disponíveis e
+  o acionador volta automaticamente com a reconexão.
+
 ## 1.33.0.03 - 2026-09-11
 - **Voz protegida sem internet**: no AvantaVendas, a Solicitação por Voz fica
   cinza e sem interação enquanto o aparelho estiver offline. O fluxo aberto é

@@ -21,6 +21,7 @@ type Props = {
   servicos: Servico[];
   podeRegistrar?: boolean;
   podeAgendar?: boolean;
+  offline?: boolean;
   onRegistrarRecebimento: (empresaId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void>;
   onReceberCobranca: (recebimentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void>;
   onAgendarServico: (empresaId: string, subempresaId: string | null, data: string, tipo: 'interna' | 'revisao' | 'extra') => Promise<void>;
@@ -261,6 +262,7 @@ export default function OperacoesCampoVoiceDock({
   servicos,
   podeRegistrar = false,
   podeAgendar = false,
+  offline = false,
   onRegistrarRecebimento,
   onReceberCobranca,
   onAgendarServico,
@@ -276,6 +278,7 @@ export default function OperacoesCampoVoiceDock({
         : 'Diga “agendar” com cliente, data e tipo: interna, revisão ou extra.';
 
   const request = useCallback(async (operation: AvantaVoiceActionOperation, payload: Record<string, unknown> | FormData) => {
+    if (offline) throw new Error('Solicitação por Voz indisponível sem internet. Use os lançamentos manuais.');
     const { data } = await cliente.auth.getSession();
     const token = data.session?.access_token;
     if (!token) throw new Error('Sua sessão expirou. Entre novamente.');
@@ -335,7 +338,7 @@ export default function OperacoesCampoVoiceDock({
       throw new Error('A ação não possui todos os dados necessários.');
     }
     return {};
-  }, [cliente, clientes, empresaId, mode, onAgendarServico, onPrepararRegistroServico, onReceberCobranca, onRegistrarRecebimento, podeAgendar, podeRegistrar, recebimentos, servicos]);
+  }, [cliente, clientes, empresaId, mode, offline, onAgendarServico, onPrepararRegistroServico, onReceberCobranca, onRegistrarRecebimento, podeAgendar, podeRegistrar, recebimentos, servicos]);
 
   return (
     <AvantaVoiceActionDock
@@ -345,6 +348,7 @@ export default function OperacoesCampoVoiceDock({
       allowSaveForLater={false}
       compactShortLists
       helpText={helpText}
+      disabled={offline}
       request={request}
     />
   );
