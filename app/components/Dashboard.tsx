@@ -130,7 +130,10 @@ interface DashboardProps {
   centrosCustoAtivo?: boolean;
   centroCustoSelecionadoId?: string;
   resumoCentrosCusto?: ResumoCentroCusto[];
-  mesPerfis?: string;
+  mesPerfis: string;
+  setMesPerfis: (mes: string) => void;
+  mesCentrosCusto: string;
+  setMesCentrosCusto: (mes: string) => void;
   setMesAtivo: (mes: string) => void;
   bgCard: string;
   corPrimaria: string;
@@ -199,7 +202,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], centrosCustoAtivo = false, centroCustoSelecionadoId, resumoCentrosCusto = [], mesPerfis, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode, iniciarValoresOcultos,
+  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], centrosCustoAtivo = false, centroCustoSelecionadoId, resumoCentrosCusto = [], mesPerfis, setMesPerfis, mesCentrosCusto, setMesCentrosCusto, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode, iniciarValoresOcultos,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   entradaFaturamentoDia,
   setEntradaFaturamentoDia,
@@ -935,7 +938,6 @@ const mostrarComparativoResumoDash =
   const totalDespesasPerfis = perfisDashboard.reduce((total, perfil) => total + Number(perfil.despesas || 0), 0);
   const resultadoPerfis = totalReceitasPerfis - totalDespesasPerfis;
   const maiorResultadoPerfil = Math.max(1, ...perfisDashboard.map((perfil) => Math.abs(Number(perfil.resultado || 0))));
-  const nomeMesPerfis = mesPerfis || mesResumoDash;
   const centrosCustoDashboard = [...resumoCentrosCusto].sort((a, b) => b.despesas - a.despesas);
   const totalDespesasCentrosCusto = centrosCustoDashboard.reduce((total, centro) => total + Number(centro.despesas || 0), 0);
   const totalReceitasCentrosCusto = centrosCustoDashboard.reduce((total, centro) => total + Number(centro.receitas || 0), 0);
@@ -1593,9 +1595,7 @@ const mostrarComparativoResumoDash =
       >
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="truncate">{cols.full.includes('meusPerfis') ? 'Meus perfis' : 'Perfis'}</span>
-          <span className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-black leading-none text-white/90">
-            {nomeMesPerfis}
-          </span>
+          <SeletorMesCard value={mesPerfis} onChange={setMesPerfis} ariaLabel="Selecionar mês de Meus perfis" />
           <div className="flex items-center justify-end gap-2">
             <span className="inline-flex h-6 min-w-[76px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-white/15 px-2 text-[9px] font-black leading-none text-white">
               {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
@@ -1810,7 +1810,7 @@ const mostrarComparativoResumoDash =
       <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="truncate">Centros de custo</span>
-          <span className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-black leading-none text-white/90">{nomeMesPerfis}</span>
+          <SeletorMesCard value={mesCentrosCusto} onChange={setMesCentrosCusto} ariaLabel="Selecionar mês de Centros de custo" />
           <div className="flex items-center justify-end gap-2">
             <span className="inline-flex h-6 min-w-[72px] items-center justify-center whitespace-nowrap rounded-full bg-white/15 px-2 text-[9px] font-black leading-none text-white">{centrosCustoDashboard.length} centro{centrosCustoDashboard.length === 1 ? '' : 's'}</span>
             <button
@@ -2368,7 +2368,7 @@ const mostrarComparativoResumoDash =
       const receitasPerfil = Number(perfilDetalhado.receitas || 0);
       const despesasPerfil = Number(perfilDetalhado.despesas || 0);
       const resultadoPerfil = Number(perfilDetalhado.resultado ?? receitasPerfil - despesasPerfil);
-      const indiceMesDetalhe = Math.max(0, meses.indexOf(nomeMesPerfis));
+      const indiceMesDetalhe = Math.max(0, meses.indexOf(mesPerfis));
       const historicoFallback = Array.from({ length: 6 }, (_, offset) => {
         const data = new Date(Number(anoSelecionado), indiceMesDetalhe, 1);
         data.setMonth(data.getMonth() - (5 - offset));

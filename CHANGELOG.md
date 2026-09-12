@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.33.0.15 - 2026-09-11
+- **Filtros mensais independentes**: os cards **Meus perfis** e **Centros de
+  custo** agora usam o mesmo seletor de mês do Resumo Financeiro. Cada card
+  preserva seu próprio mês e atualiza apenas o respectivo resumo.
+
+## 1.33.0.14 - 2026-09-11
+- **Carregamento centralizado**: os overlays de carregamento da Gestão usam a
+  viewport visível e mantêm o card exatamente no centro da tela em desktop e
+  mobile, sem depender da resolução ou do tamanho do conteúdo.
+
+## 1.33.0.13 - 2026-09-11
+- **Troca de centro com retorno visual**: ao escolher outro Centro de custo, a
+  Gestão bloqueia a tela brevemente e informa o carregamento até que receitas,
+  despesas e resumos do novo contexto estejam prontos.
+
 ## 1.33.0.12 - 2026-09-11
 - **Resumo correto dos centros**: o centro **Principal** continua exibindo
   somente seus próprios lançamentos. O card Centros de custo passa a seguir a

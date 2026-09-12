@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0.12 -->
+<!-- ava-version: 1.33.0.15 -->
+
+> Revisão 1.33.0.15: os seletores de mês dos cards da Gestão Web não alteram o
+> fluxo do AvantaVendas.
+
+> Revisão 1.33.0.14: o posicionamento central dos cards de carregamento pertence
+> à Gestão Web e não altera o fluxo do AvantaVendas.
+
+> Revisão 1.33.0.13: o retorno visual ao trocar Centro de custo pertence à
+> Gestão Web e não altera o fluxo do AvantaVendas.
 
 > Revisão 1.33.0.12: o refinamento do resumo de Centros de custo pertence à
 > Gestão Web e não altera o fluxo do AvantaVendas.

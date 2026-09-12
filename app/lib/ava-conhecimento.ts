@@ -1,5 +1,12 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.33.0.15: Meus perfis e Centros de custo têm seletores
+// mensais próprios, iguais ao Resumo Financeiro, sem alterar os demais cards.
+// Revisado na versão 1.33.0.14: os carregamentos da Gestão Web são ancorados
+// ao centro da viewport visível, sem depender da altura do conteúdo ou tela.
+// Revisado na versão 1.33.0.13: a troca de Centro de custo na Gestão Web
+// bloqueia brevemente o contexto anterior e informa o carregamento até os
+// dados do novo centro estarem disponíveis.
 // Revisado na versão 1.33.0.12: o centro Principal mostra somente seu próprio
 // financeiro; o card Centros de custo concentra o consolidado e o resultado
 // independente de cada centro, no padrão de leitura de Meus perfis.

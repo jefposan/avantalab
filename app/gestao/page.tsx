@@ -960,6 +960,8 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
 const [mesFaturamento, setMesFaturamento] = useState('JANEIRO');
 const [faturamentos, setFaturamentos] = useState<Record<string, number>>({});
 const [mesResumoDash, setMesResumoDash] = useState('JANEIRO');
+const [mesPerfisDashboard, setMesPerfisDashboard] = useState('JANEIRO');
+const [mesCentrosCustoDashboard, setMesCentrosCustoDashboard] = useState('JANEIRO');
 
 const [faturamentosEntradas, setFaturamentosEntradas] = useState<EntradaFaturamento[]>([]);
 const [resumoPerfisDashboard, setResumoPerfisDashboard] = useState<ResumoPerfilFinanceiro[]>([]);
@@ -967,6 +969,7 @@ const [centrosCustoAtivo, setCentrosCustoAtivo] = useState(false);
 const [centrosCusto, setCentrosCusto] = useState<CentroCusto[]>([]);
 const [resumoCentrosCustoDashboard, setResumoCentrosCustoDashboard] = useState<ResumoCentroCusto[]>([]);
 const [centroCustoSelecionadoId, setCentroCustoSelecionadoId] = useState('');
+const [carregandoCentroCusto, setCarregandoCentroCusto] = useState(false);
 const [listaCentroCustoAberta, setListaCentroCustoAberta] = useState(false);
 const [modalCentrosCusto, setModalCentrosCusto] = useState(false);
 const [centroCustoSalvando, setCentroCustoSalvando] = useState(false);
@@ -1597,6 +1600,8 @@ const carregarEmpresaSelecionada = async (empresa: EmpresaUsuarioResumo) => {
   setTimeout(() => setCarregandoPerfil(false), 12000);
   const mesAtual = meses[new Date().getMonth()];
 setMesResumoDash(mesAtual);
+setMesPerfisDashboard(mesAtual);
+setMesCentrosCustoDashboard(mesAtual);
 setMesFaturamento(mesAtual);
   setMesAtivo(null);
   setConfiguracoesCarregadas(false);
@@ -1967,6 +1972,8 @@ setMensagemCarregamentoSistema('Carregando empresa...');
 
     const mesAtual = meses[new Date().getMonth()];
     setMesResumoDash(mesAtual);
+    setMesPerfisDashboard(mesAtual);
+    setMesCentrosCustoDashboard(mesAtual);
     setMesFaturamento(mesAtual);
 
     setMounted(true);
@@ -1980,16 +1987,21 @@ setMensagemCarregamentoSistema('Carregando empresa...');
   // 2. Carrega Dados Financeiros do Ano pelo Supabase
 useEffect(() => {
   if (!mounted || !empresaId) return;
+  let ativo = true;
 
   const carregarDadosFinanceiros = async () => {
     const ano = Number(anoSelecionado);
+    const contextoCentroCustoId = centrosCustoAtivo ? centroCustoSelecionadoId : undefined;
+    if (centrosCustoAtivo && !contextoCentroCustoId) {
+      if (ativo) setCarregandoCentroCusto(false);
+      return;
+    }
+    if (centrosCustoAtivo) setCarregandoCentroCusto(true);
 
     // Mantém a receita consolidada do Vendas Mobile atualizada a cada acesso
     // ao perfil, sem bloquear o restante do carregamento caso o módulo não exista.
     await supabase.rpc('atualizar_receita_vendas_mobile_gestao_rpc', { p_empresa_id: empresaId });
     await garantirFixasDoMesAtual(empresaId);
-    const contextoCentroCustoId = centrosCustoAtivo ? centroCustoSelecionadoId : undefined;
-    if (centrosCustoAtivo && !contextoCentroCustoId) return;
     const lancamentosBanco = await buscarLancamentos(empresaId, ano, contextoCentroCustoId);
     const caixinhaBanco = await buscarCaixinhaMovimentos(empresaId, ano);
     const faturamentosBanco = await buscarFaturamentos(empresaId, ano);
@@ -1998,6 +2010,8 @@ useEffect(() => {
       ano,
       contextoCentroCustoId,
     );
+
+    if (!ativo) return;
 
     setLancamentos(
       lancamentosBanco.map((l: RegistroSupabase) => ({
@@ -2057,7 +2071,13 @@ useEffect(() => {
     setFaturamentos(faturamentosFormatados);
   };
 
-  carregarDadosFinanceiros().finally(() => setCarregandoPerfil(false));
+  carregarDadosFinanceiros().finally(() => {
+    if (!ativo) return;
+    setCarregandoPerfil(false);
+    setCarregandoCentroCusto(false);
+  });
+
+  return () => { ativo = false; };
 }, [anoSelecionado, mounted, empresaId, centrosCustoAtivo, centroCustoSelecionadoId]);
 
 useEffect(() => {
@@ -2098,7 +2118,7 @@ useEffect(() => {
       return;
     }
 
-    const mesResumo = mesAtivo || mesResumoDash;
+    const mesResumo = mesPerfisDashboard;
     const indiceMesResumo = meses.indexOf(mesResumo);
     const receitasPorPerfil = new Map<string, number>();
     const despesasPorPerfil = new Map<string, number>();
@@ -2167,7 +2187,7 @@ useEffect(() => {
   return () => {
     cancelado = true;
   };
-}, [anoSelecionado, mounted, empresaId, empresasDoUsuario, mesAtivo, mesResumoDash]);
+}, [anoSelecionado, mounted, empresaId, empresasDoUsuario, mesPerfisDashboard]);
 
 // O card de centros sempre mostra todos os contextos do perfil, mesmo quando
 // a tela está filtrada em apenas um deles.
@@ -2178,7 +2198,7 @@ useEffect(() => {
   }
 
   let cancelado = false;
-  const mesResumo = mesAtivo || mesResumoDash;
+  const mesResumo = mesCentrosCustoDashboard;
   const indiceMes = meses.indexOf(mesResumo);
 
   const carregarResumoCentros = async () => {
@@ -2218,7 +2238,7 @@ useEffect(() => {
 
   void carregarResumoCentros();
   return () => { cancelado = true; };
-}, [anoSelecionado, centrosCusto, centrosCustoAtivo, empresaId, mesAtivo, mesResumoDash, mounted]);
+}, [anoSelecionado, centrosCusto, centrosCustoAtivo, empresaId, mesCentrosCustoDashboard, mounted]);
 
   // 3. Salva Configurações Globais no Supabase
 useEffect(() => {
@@ -10867,6 +10887,7 @@ if (validacaoTelefoneObrigatoria) {
             <button
               type="button"
               onClick={() => setListaCentroCustoAberta((aberta) => !aberta)}
+              disabled={carregandoCentroCusto}
               className="flex h-9 w-full items-center justify-between gap-2 rounded-lg bg-white px-3 text-left text-xs font-black uppercase tracking-wide shadow-[0_4px_14px_rgba(0,0,0,0.18)] outline-none transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-white/60"
               style={{ color: corPrimaria }}
               aria-labelledby="rotulo-centro-custo"
@@ -10875,7 +10896,7 @@ if (validacaoTelefoneObrigatoria) {
               aria-controls="lista-centros-custo"
             >
               <span className="min-w-0 truncate">{centrosCusto.find((centro) => centro.id === centroCustoSelecionadoId)?.nome || 'Principal'}</span>
-              <svg className={`h-4 w-4 shrink-0 transition-transform ${listaCentroCustoAberta ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+              {carregandoCentroCusto ? <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" /> : <svg className={`h-4 w-4 shrink-0 transition-transform ${listaCentroCustoAberta ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>}
             </button>
             {listaCentroCustoAberta && (
               <div id="lista-centros-custo" role="listbox" aria-label="Centros de custo disponíveis" className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
@@ -10888,6 +10909,11 @@ if (validacaoTelefoneObrigatoria) {
                       role="option"
                       aria-selected={selecionado}
                       onClick={() => {
+                        if (selecionado) {
+                          setListaCentroCustoAberta(false);
+                          return;
+                        }
+                        setCarregandoCentroCusto(true);
                         setCentroCustoSelecionadoId(centro.id);
                         setListaCentroCustoAberta(false);
                       }}
@@ -11346,7 +11372,10 @@ if (validacaoTelefoneObrigatoria) {
         centrosCustoAtivo={centrosCustoAtivo}
         centroCustoSelecionadoId={centroCustoSelecionadoId}
         resumoCentrosCusto={resumoCentrosCustoDashboard}
-        mesPerfis={mesAtivo || mesResumoDash}
+        mesPerfis={mesPerfisDashboard}
+        setMesPerfis={setMesPerfisDashboard}
+        mesCentrosCusto={mesCentrosCustoDashboard}
+        setMesCentrosCusto={setMesCentrosCustoDashboard}
         setMesAtivo={setMesAtivo}
         bgCard={bgCard}
         corPrimaria={corPrimaria}
@@ -11422,12 +11451,23 @@ if (validacaoTelefoneObrigatoria) {
 )}
 
       {carregandoPerfil && (
-        <div className="avanta-loading-stage fixed inset-0 z-[9500] bg-slate-950/70 backdrop-blur-sm">
+        <div className="avanta-loading-stage fixed inset-0 z-[9500] !min-h-[100dvh] !items-center !justify-center !p-4 bg-slate-950/70 backdrop-blur-sm">
           <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
             <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
               <span className="avanta-loading-spinner animate-spin" />
             </div>
             <p className="text-sm font-black uppercase tracking-wide text-sky-800">Carregando perfil...</p>
+          </div>
+        </div>
+      )}
+
+      {carregandoCentroCusto && !carregandoPerfil && (
+        <div className="avanta-loading-stage fixed inset-0 z-[9500] !min-h-[100dvh] !items-center !justify-center !p-4 bg-slate-950/35 backdrop-blur-[1px]" role="status" aria-live="polite" aria-label="Carregando centro de custo">
+          <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
+            <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
+              <span className="avanta-loading-spinner animate-spin" />
+            </div>
+            <p className="text-sm font-black uppercase tracking-wide text-sky-800">Carregando centro de custo...</p>
           </div>
         </div>
       )}

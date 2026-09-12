@@ -1,6 +1,17 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.12 -->
+<!-- ava-version: 1.33.0.15 -->
+
+> Revisão 1.33.0.15: os cards **Meus perfis** e **Centros de custo** têm seu
+> próprio seletor de mês, igual ao do Resumo Financeiro. Cada seletor atualiza
+> somente o resumo do respectivo card.
+
+> Revisão 1.33.0.14: os cards de carregamento da Gestão Web ficam no centro da
+> viewport visível em qualquer resolução, inclusive em telas móveis.
+
+> Revisão 1.33.0.13: ao trocar o **Centro de custos**, a Gestão Web mostra
+> “Carregando centro de custo” e bloqueia interações com o contexto anterior
+> até concluir a leitura do novo centro.
 
 > Revisão 1.33.0.12: selecionar **Principal** mostra somente o financeiro do
 > próprio centro. O consolidado fica no card **Centros de custo**, que apresenta
