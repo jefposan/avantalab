@@ -412,10 +412,10 @@ export async function buscarDespesasCadastradas(empresaId: string) {
   return ordenarDespesasAlfabeticamente(data || []);
 }
 
-export type CentroCusto = { id: string; empresa_id: string; nome: string; ativo: boolean; criado_em: string };
+export type CentroCusto = { id: string; empresa_id: string; nome: string; ativo: boolean; is_principal?: boolean; criado_em: string };
 
 export async function buscarCentrosCusto(empresaId: string): Promise<CentroCusto[]> {
-  const { data, error } = await supabase.from('centros_custo').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true });
+  const { data, error } = await supabase.from('centros_custo').select('*').eq('empresa_id', empresaId).order('is_principal', { ascending: false }).order('nome', { ascending: true });
   if (error) { console.error('Erro ao buscar centros de custo:', error); return []; }
   return (data as CentroCusto[]) || [];
 }
@@ -432,19 +432,23 @@ export async function atualizarCentroCusto(id: string, empresaId: string, campos
   return true;
 }
 
-export async function buscarLancamentos(empresaId: string, ano: number) {
+export async function buscarLancamentos(empresaId: string, ano: number, centroCustoId?: string | null) {
   const pageSize = 1000;
   let inicio = 0;
   const todos: any[] = [];
 
   while (true) {
-    const { data, error } = await supabase
+    let consulta = supabase
       .from('lancamentos')
       .select('*')
       .eq('empresa_id', empresaId)
       .eq('ano', ano)
       .order('dia', { ascending: true })
       .range(inicio, inicio + pageSize - 1);
+    if (centroCustoId !== undefined) {
+      consulta = centroCustoId ? consulta.eq('centro_custo_id', centroCustoId) : consulta.is('centro_custo_id', null);
+    }
+    const { data, error } = await consulta;
 
     if (error) {
       console.error('Erro ao buscar lançamentos:', error);
@@ -569,15 +573,20 @@ export async function buscarFaturamentos(empresaId: string, ano: number) {
 }
 export async function buscarFaturamentosEntradas(
   empresaId: string,
-  ano: number
+  ano: number,
+  centroCustoId?: string | null,
 ) {
-  const { data, error } = await supabase
+  let consulta = supabase
     .from('faturamentos_entradas')
     .select('*')
     .eq('empresa_id', empresaId)
     .eq('ano', ano)
     .order('dia', { ascending: true })
     .order('created_at', { ascending: true });
+  if (centroCustoId !== undefined) {
+    consulta = centroCustoId ? consulta.eq('centro_custo_id', centroCustoId) : consulta.is('centro_custo_id', null);
+  }
+  const { data, error } = await consulta;
 
   if (error) {
     console.error('Erro ao buscar entradas de faturamento:', error);
@@ -1004,6 +1013,7 @@ export async function salvarFaturamentoEntrada({
   valor,
   status = null,
   tipoObs = null,
+  centroCustoId = null,
 }: {
   empresaId: string;
   ano: number;
@@ -1013,6 +1023,7 @@ export async function salvarFaturamentoEntrada({
   valor: number;
   status?: string | null;
   tipoObs?: string | null;
+  centroCustoId?: string | null;
 }) {
   const { data: usuarioLogado } = await supabase.auth.getUser();
 
@@ -1027,6 +1038,7 @@ export async function salvarFaturamentoEntrada({
       valor,
       status,
       tipo_obs: tipoObs,
+      centro_custo_id: centroCustoId,
       criado_por: usuarioLogado.user?.id || null,
     })
     .select()
@@ -1880,12 +1892,16 @@ export type Recorrencia = {
   criado_em: string;
 };
 
-export async function buscarRecorrencias(empresaId: string): Promise<Recorrencia[]> {
-  const { data, error } = await supabase
+export async function buscarRecorrencias(empresaId: string, centroCustoId?: string | null): Promise<Recorrencia[]> {
+  let consulta = supabase
     .from('recorrencias')
     .select('*')
     .eq('empresa_id', empresaId)
     .order('nome', { ascending: true });
+  if (centroCustoId !== undefined) {
+    consulta = centroCustoId ? consulta.eq('centro_custo_id', centroCustoId) : consulta.is('centro_custo_id', null);
+  }
+  const { data, error } = await consulta;
   if (error) { console.error('Erro ao buscar recorrências:', error); return []; }
   return (data as Recorrencia[]) || [];
 }

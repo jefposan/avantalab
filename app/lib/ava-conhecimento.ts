@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.33.0.11: ao ativar Centros de custo, o perfil cria o
+// Principal permanente e move nele o histórico. A Gestão Web filtra receitas,
+// despesas, fixas e evolução pelo centro escolhido, mantendo no card o resumo
+// de todos os centros; itens novos sem destino informado entram no Principal.
 // Revisado na versão 1.33.0.10: os pop-ups de retorno de Operações de Campo
 // usam topo contínuo, título central e cores semânticas para aviso e sucesso.
 // Revisado na versão 1.33.0.09: o aviso de Serviço offline é um card central

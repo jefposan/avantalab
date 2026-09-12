@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.33.0.11 - 2026-09-11
+- **Financeiro independente por centro**: ao ativar Centros de custo, o perfil
+  cria e mantém o centro **Principal**, que recebe o histórico já existente.
+  Cada centro selecionado passa a carregar suas próprias receitas, despesas,
+  despesas fixas e evolução anual; o perfil continua com o consolidado geral.
+- **Proteção de contexto**: receitas e despesas novas sem centro informado são
+  vinculadas automaticamente ao Principal, evitando lançamentos fora de um
+  contexto financeiro.
+
 ## 1.33.0.10 - 2026-09-11
 - **Pop-ups de retorno refinados**: os cards importantes de sincronização
   offline e operação concluída agora usam um topo contínuo sem a tarja lateral.

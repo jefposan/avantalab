@@ -188,7 +188,9 @@ type ResumoPerfilFinanceiro = {
 type ResumoCentroCusto = {
   id: string;
   nome: string;
+  receitas: number;
   despesas: number;
+  resultado: number;
   percentual: number;
 };
 
@@ -220,6 +222,7 @@ type EntradaFaturamento = {
   status: string | null;
   tipo: string | null;
   etiquetaOrigem?: string | null;
+  centroCustoId?: string | null;
 };
 
 type CaixinhaMovimento = {
@@ -962,6 +965,7 @@ const [faturamentosEntradas, setFaturamentosEntradas] = useState<EntradaFaturame
 const [resumoPerfisDashboard, setResumoPerfisDashboard] = useState<ResumoPerfilFinanceiro[]>([]);
 const [centrosCustoAtivo, setCentrosCustoAtivo] = useState(false);
 const [centrosCusto, setCentrosCusto] = useState<CentroCusto[]>([]);
+const [resumoCentrosCustoDashboard, setResumoCentrosCustoDashboard] = useState<ResumoCentroCusto[]>([]);
 const [centroCustoSelecionadoId, setCentroCustoSelecionadoId] = useState('');
 const [listaCentroCustoAberta, setListaCentroCustoAberta] = useState(false);
 const [modalCentrosCusto, setModalCentrosCusto] = useState(false);
@@ -1717,12 +1721,12 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
     const listaCentros = await buscarCentrosCusto(empresa.id);
     setCentrosCusto(listaCentros);
     const centrosAtivos = listaCentros.filter((centro) => centro.ativo);
-    const chaveUltimoCentro = `avantalab.gestao.centro-custo.ultimo.v1:${empresa.id}`;
+    const chaveUltimoCentro = `avantalab.gestao.centro-custo.ultimo.v2:${empresa.id}`;
     const ultimoCentro = window.localStorage.getItem(chaveUltimoCentro);
     setCentroCustoSelecionadoId(
       centrosAtivos.some((centro) => centro.id === ultimoCentro)
         ? ultimoCentro!
-        : centrosAtivos[0]?.id || ''
+        : centrosAtivos.find((centro) => centro.is_principal)?.id || centrosAtivos[0]?.id || ''
     );
   }
 
@@ -1984,12 +1988,15 @@ useEffect(() => {
     // ao perfil, sem bloquear o restante do carregamento caso o módulo não exista.
     await supabase.rpc('atualizar_receita_vendas_mobile_gestao_rpc', { p_empresa_id: empresaId });
     await garantirFixasDoMesAtual(empresaId);
-    const lancamentosBanco = await buscarLancamentos(empresaId, ano);
+    const contextoCentroCustoId = centrosCustoAtivo ? centroCustoSelecionadoId : undefined;
+    if (centrosCustoAtivo && !contextoCentroCustoId) return;
+    const lancamentosBanco = await buscarLancamentos(empresaId, ano, contextoCentroCustoId);
     const caixinhaBanco = await buscarCaixinhaMovimentos(empresaId, ano);
     const faturamentosBanco = await buscarFaturamentos(empresaId, ano);
     const faturamentosEntradasBanco = await buscarFaturamentosEntradas(
       empresaId,
-      ano
+      ano,
+      contextoCentroCustoId,
     );
 
     setLancamentos(
@@ -2029,21 +2036,29 @@ useEffect(() => {
         status: entrada.status ? textoRegistro(entrada.status) : null,
         tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
         etiquetaOrigem: entrada.origem_etiqueta ? textoRegistro(entrada.origem_etiqueta) : null,
+        centroCustoId: entrada.centro_custo_id ? textoRegistro(entrada.centro_custo_id) : null,
       }))
     );
 
     const faturamentosFormatados: Record<string, number> = {};
-
-    faturamentosBanco.forEach((f: RegistroSupabase) => {
-      faturamentosFormatados[textoRegistro(f.mes)] = Number(f.valor);
-
-    });
+    if (centrosCustoAtivo) {
+      faturamentosEntradasBanco.forEach((entrada: RegistroSupabase) => {
+        if (textoRegistro(entrada.status) !== 'prevista') {
+          const mes = textoRegistro(entrada.mes);
+          faturamentosFormatados[mes] = (faturamentosFormatados[mes] || 0) + Number(entrada.valor || 0);
+        }
+      });
+    } else {
+      faturamentosBanco.forEach((f: RegistroSupabase) => {
+        faturamentosFormatados[textoRegistro(f.mes)] = Number(f.valor);
+      });
+    }
 
     setFaturamentos(faturamentosFormatados);
   };
 
   carregarDadosFinanceiros().finally(() => setCarregandoPerfil(false));
-}, [anoSelecionado, mounted, empresaId]);
+}, [anoSelecionado, mounted, empresaId, centrosCustoAtivo, centroCustoSelecionadoId]);
 
 useEffect(() => {
   if (!mounted || !empresaId || empresasDoUsuario.length === 0) {
@@ -2154,6 +2169,57 @@ useEffect(() => {
   };
 }, [anoSelecionado, mounted, empresaId, empresasDoUsuario, mesAtivo, mesResumoDash]);
 
+// O card de centros sempre mostra todos os contextos do perfil, mesmo quando
+// a tela está filtrada em apenas um deles.
+useEffect(() => {
+  if (!mounted || !empresaId || !centrosCustoAtivo) {
+    setResumoCentrosCustoDashboard([]);
+    return;
+  }
+
+  let cancelado = false;
+  const mesResumo = mesAtivo || mesResumoDash;
+  const indiceMes = meses.indexOf(mesResumo);
+
+  const carregarResumoCentros = async () => {
+    const [lancamentosBanco, receitasBanco] = await Promise.all([
+      buscarLancamentos(empresaId, Number(anoSelecionado)),
+      buscarFaturamentosEntradas(empresaId, Number(anoSelecionado)),
+    ]);
+    if (cancelado) return;
+
+    const totais = new Map(centrosCusto.filter((centro) => centro.ativo).map((centro) => [centro.id, { receitas: 0, despesas: 0 }]));
+    lancamentosBanco.forEach((lancamento: RegistroSupabase) => {
+      if (textoRegistro(lancamento.mes) !== mesResumo) return;
+      const centroId = textoRegistro(lancamento.centro_custo_id);
+      const total = totais.get(centroId);
+      if (!total || !despesaRealizada({ dia: Number(lancamento.dia), status: lancamento.status ? textoRegistro(lancamento.status) : null }, Number(anoSelecionado), indiceMes)) return;
+      total.despesas += Number(lancamento.valor || 0);
+    });
+    receitasBanco.forEach((receita: RegistroSupabase) => {
+      if (textoRegistro(receita.mes) !== mesResumo || textoRegistro(receita.status) === 'prevista') return;
+      const total = totais.get(textoRegistro(receita.centro_custo_id));
+      if (total) total.receitas += Number(receita.valor || 0);
+    });
+
+    const totalDespesas = Array.from(totais.values()).reduce((total, item) => total + item.despesas, 0);
+    setResumoCentrosCustoDashboard(centrosCusto.filter((centro) => centro.ativo).map((centro) => {
+      const total = totais.get(centro.id) || { receitas: 0, despesas: 0 };
+      return {
+        id: centro.id,
+        nome: centro.nome,
+        receitas: total.receitas,
+        despesas: total.despesas,
+        resultado: total.receitas - total.despesas,
+        percentual: totalDespesas > 0 ? (total.despesas / totalDespesas) * 100 : 0,
+      };
+    }));
+  };
+
+  void carregarResumoCentros();
+  return () => { cancelado = true; };
+}, [anoSelecionado, centrosCusto, centrosCustoAtivo, empresaId, mesAtivo, mesResumoDash, mounted]);
+
   // 3. Salva Configurações Globais no Supabase
 useEffect(() => {
   if (!mounted || !empresaId || !configuracoesCarregadas) return;
@@ -2221,7 +2287,7 @@ useEffect(() => {
 useEffect(() => {
   if (!empresaId || !centrosCustoAtivo || !centroCustoSelecionadoId) return;
   window.localStorage.setItem(
-    `avantalab.gestao.centro-custo.ultimo.v1:${empresaId}`,
+    `avantalab.gestao.centro-custo.ultimo.v2:${empresaId}`,
     centroCustoSelecionadoId
   );
 }, [empresaId, centrosCustoAtivo, centroCustoSelecionadoId]);
@@ -3482,18 +3548,6 @@ const totalDespesasMes = lancamentosRealizadosDoMes.reduce(
   0
 );
 
-const resumoCentrosCustoDashboard: ResumoCentroCusto[] = centrosCusto.map((centro) => {
-  const despesas = lancamentosRealizadosDoMes
-    .filter((lancamento) => lancamento.centroCustoId === centro.id)
-    .reduce((total, lancamento) => total + Number(lancamento.valor || 0), 0);
-  return {
-    id: centro.id,
-    nome: centro.nome,
-    despesas,
-    percentual: totalDespesasMes > 0 ? (despesas / totalDespesasMes) * 100 : 0,
-  };
-});
-
 const totalDespesasMesAnterior = lancamentosDoMesAnterior.reduce(
   (acc, lanc) => acc + (
     despesaRealizada(lanc, Number(anoSelecionado), indiceMesParaAnalise - 1) ? lanc.valor : 0
@@ -3967,6 +4021,7 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
       valor: entradaFaturamentoValorNumerico,
       status: ehFuturaEntrada ? 'prevista' : null,
       tipoObs: ehFuturaEntrada ? 'previsto' : null,
+      centroCustoId: centrosCustoAtivo ? centroCustoSelecionadoId : null,
     });
 
     if (entradaSalva.erro || !entradaSalva.data) {
@@ -3981,11 +4036,8 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
       const totalAtual = faturamentos[mesReferenciaFaturamento] || 0;
       const novoTotal = totalAtual + entradaFaturamentoValorNumerico;
 
-      const faturamentoSalvo = await salvarFaturamentoBanco({
-        empresaId,
-        ano: Number(anoSelecionado),
-        mes: mesReferenciaFaturamento,
-        valor: novoTotal,
+      const faturamentoSalvo = centrosCustoAtivo || await salvarFaturamentoBanco({
+        empresaId, ano: Number(anoSelecionado), mes: mesReferenciaFaturamento, valor: novoTotal,
       });
 
       if (!faturamentoSalvo) {
@@ -4010,6 +4062,7 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
       valor: Number(entradaSalva.data.valor),
       status: entradaSalva.data.status || null,
       tipo: entradaSalva.data.tipo_obs || null,
+      centroCustoId: entradaSalva.data.centro_custo_id || null,
     };
 
     setFaturamentosEntradas((prev) => [novaEntrada, ...prev]);
@@ -4052,7 +4105,7 @@ const solicitarEntradaFaturamentoDashboard = () => {
 
   const abrirModalDespesasFixas = async () => {
     if (!empresaId) return;
-    const lista = await buscarRecorrencias(empresaId);
+    const lista = await buscarRecorrencias(empresaId, centrosCustoAtivo ? centroCustoSelecionadoId : undefined);
     setRecorrencias(lista);
     setModalDespesasFixas(true);
   };
@@ -4797,11 +4850,8 @@ const confirmarReceitaPrevista = async (id: string | number) => {
     const totalAtual = faturamentos[mesEntrada] || 0;
     const novoTotal = totalAtual + valorEntrada;
 
-    const faturamentoSalvo = await salvarFaturamentoBanco({
-      empresaId,
-      ano: Number(anoSelecionado),
-      mes: mesEntrada,
-      valor: novoTotal,
+    const faturamentoSalvo = centrosCustoAtivo || await salvarFaturamentoBanco({
+      empresaId, ano: Number(anoSelecionado), mes: mesEntrada, valor: novoTotal,
     });
 
     if (!faturamentoSalvo) {
@@ -5032,11 +5082,8 @@ const excluirEntradaFaturamento = async (entrada: TabelaEntradaFaturamento) => {
         const totalAtual = faturamentos[mesEntrada] || 0;
         const novoTotal = Math.max(0, totalAtual - valorEntrada);
 
-        const faturamentoSalvo = await salvarFaturamentoBanco({
-          empresaId,
-          ano: Number(anoSelecionado),
-          mes: mesEntrada,
-          valor: novoTotal,
+        const faturamentoSalvo = centrosCustoAtivo || await salvarFaturamentoBanco({
+          empresaId, ano: Number(anoSelecionado), mes: mesEntrada, valor: novoTotal,
         });
 
         if (!faturamentoSalvo) {
@@ -5322,11 +5369,8 @@ const salvarEdicaoEntradaFaturamento = async (confirmarPrevista = false) => {
     totalAtual - valorAnterior + editEntradaFaturamentoValorNumerico
   );
 
-  const faturamentoSalvo = await salvarFaturamentoBanco({
-    empresaId,
-    ano: Number(anoSelecionado),
-    mes: mesEntrada,
-    valor: novoTotal,
+  const faturamentoSalvo = centrosCustoAtivo || await salvarFaturamentoBanco({
+    empresaId, ano: Number(anoSelecionado), mes: mesEntrada, valor: novoTotal,
   });
 
   if (!faturamentoSalvo) {
@@ -5678,6 +5722,8 @@ const recarregarDadosFinanceirosAtual = async () => {
   if (!empresaId) return;
 
   const ano = Number(anoSelecionado);
+  const contextoCentroCustoId = centrosCustoAtivo ? centroCustoSelecionadoId : undefined;
+  if (centrosCustoAtivo && !contextoCentroCustoId) return;
   await garantirFixasDoMesAtual(empresaId);
   const [
     despesasBanco,
@@ -5688,11 +5734,11 @@ const recarregarDadosFinanceirosAtual = async () => {
     recorrenciasBanco,
   ] = await Promise.all([
     buscarDespesasCadastradas(empresaId),
-    buscarLancamentos(empresaId, ano),
+    buscarLancamentos(empresaId, ano, contextoCentroCustoId),
     buscarCaixinhaMovimentos(empresaId, ano),
     buscarFaturamentos(empresaId, ano),
-    buscarFaturamentosEntradas(empresaId, ano),
-    buscarRecorrencias(empresaId),
+    buscarFaturamentosEntradas(empresaId, ano, contextoCentroCustoId),
+    buscarRecorrencias(empresaId, contextoCentroCustoId),
   ]);
 
   setDespesasCadastradas(
@@ -5739,13 +5785,23 @@ const recarregarDadosFinanceirosAtual = async () => {
       status: entrada.status ? textoRegistro(entrada.status) : null,
       tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
       etiquetaOrigem: entrada.origem_etiqueta ? textoRegistro(entrada.origem_etiqueta) : null,
+      centroCustoId: entrada.centro_custo_id ? textoRegistro(entrada.centro_custo_id) : null,
     }))
   );
 
   const faturamentosFormatados: Record<string, number> = {};
-  faturamentosBanco.forEach((f: RegistroSupabase) => {
-    faturamentosFormatados[textoRegistro(f.mes)] = Number(f.valor);
-  });
+  if (centrosCustoAtivo) {
+    faturamentosEntradasBanco.forEach((entrada: RegistroSupabase) => {
+      if (textoRegistro(entrada.status) !== 'prevista') {
+        const mes = textoRegistro(entrada.mes);
+        faturamentosFormatados[mes] = (faturamentosFormatados[mes] || 0) + Number(entrada.valor || 0);
+      }
+    });
+  } else {
+    faturamentosBanco.forEach((f: RegistroSupabase) => {
+      faturamentosFormatados[textoRegistro(f.mes)] = Number(f.valor);
+    });
+  }
   setFaturamentos(faturamentosFormatados);
   setRecorrencias(recorrenciasBanco);
 };
@@ -10601,11 +10657,20 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
 
           {podeAcessarAjustes && (
-            <Tooltip texto="Ao ativar, permite separar novos lançamentos por centro de custo dentro deste perfil." posicao="right" wrapperClassName="w-full">
-              <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={() => setCentrosCustoAtivo(!centrosCustoAtivo)}>
+            <Tooltip texto="Ao ativar, cria o centro Principal e separa todo o financeiro deste perfil por centro de custo." posicao="right" wrapperClassName="w-full">
+              <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={async () => {
+                if (centrosCustoAtivo) { setCentrosCustoAtivo(false); return; }
+                if (!empresaId) return;
+                const { data, error } = await supabase.rpc('garantir_centro_custo_principal', { p_empresa_id: empresaId });
+                if (error || !data) { abrirAviso('Não foi possível ativar', 'Tente ativar os centros de custo novamente.'); return; }
+                const lista = await buscarCentrosCusto(empresaId);
+                setCentrosCusto(lista);
+                setCentroCustoSelecionadoId(String(data));
+                setCentrosCustoAtivo(true);
+              }}>
                 <span className="min-w-0 text-left">
                   <span className="block truncate">Centros de custo</span>
-                  <span className="mt-0.5 block truncate text-[9px] font-semibold text-slate-400">{centrosCustoAtivo ? 'Separação de despesas ativa' : 'Manter um único financeiro'}</span>
+                  <span className="mt-0.5 block truncate text-[9px] font-semibold text-slate-400">{centrosCustoAtivo ? 'Financeiro separado por centro' : 'Manter um único financeiro'}</span>
                 </span>
                 <div className={`relative h-3.5 w-7 shrink-0 rounded-full transition-colors ${centrosCustoAtivo ? '' : 'bg-slate-600'}`} style={{ backgroundColor: centrosCustoAtivo ? corPrimaria : '', border: centrosCustoAtivo && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '' }}>
                   <span className={`absolute left-0.5 top-0.5 h-2.5 w-2.5 rounded-full transition-transform ${centrosCustoAtivo ? 'translate-x-3.5' : ''}`} style={{ backgroundColor: centrosCustoAtivo && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }} />
@@ -10809,24 +10874,11 @@ if (validacaoTelefoneObrigatoria) {
               aria-expanded={listaCentroCustoAberta}
               aria-controls="lista-centros-custo"
             >
-              <span className="min-w-0 truncate">{centrosCusto.find((centro) => centro.id === centroCustoSelecionadoId)?.nome || 'Sem centro'}</span>
+              <span className="min-w-0 truncate">{centrosCusto.find((centro) => centro.id === centroCustoSelecionadoId)?.nome || 'Principal'}</span>
               <svg className={`h-4 w-4 shrink-0 transition-transform ${listaCentroCustoAberta ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
             </button>
             {listaCentroCustoAberta && (
               <div id="lista-centros-custo" role="listbox" aria-label="Centros de custo disponíveis" className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={!centroCustoSelecionadoId}
-                  onClick={() => {
-                    setCentroCustoSelecionadoId('');
-                    setListaCentroCustoAberta(false);
-                  }}
-                  className={`flex min-h-10 w-full items-center rounded-lg px-2.5 text-left text-xs font-black uppercase tracking-wide transition hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none ${!centroCustoSelecionadoId ? 'bg-slate-100' : 'text-slate-700'}`}
-                  style={!centroCustoSelecionadoId ? { color: corPrimaria } : undefined}
-                >
-                  Sem centro
-                </button>
                 {centrosCusto.filter((centro) => centro.ativo).map((centro) => {
                   const selecionado = centro.id === centroCustoSelecionadoId;
                   return (
@@ -11292,6 +11344,7 @@ if (validacaoTelefoneObrigatoria) {
         nomePerfilAtual={nomeEmpresaAtual}
         resumoPerfis={resumoPerfisDashboard}
         centrosCustoAtivo={centrosCustoAtivo}
+        centroCustoSelecionadoId={centroCustoSelecionadoId}
         resumoCentrosCusto={resumoCentrosCustoDashboard}
         mesPerfis={mesAtivo || mesResumoDash}
         setMesAtivo={setMesAtivo}

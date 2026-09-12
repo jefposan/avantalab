@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0.10 -->
+<!-- ava-version: 1.33.0.11 -->
+
+> Revisão 1.33.0.11: os contextos financeiros por Centro de custo pertencem à
+> Gestão Web e não alteram a operação da Gestão Mobile.
 
 > Revisão 1.33.0.10: os pop-ups de retorno do PWA usam cabeçalho contínuo,
 > título centralizado e cor semântica. O aviso offline permanece âmbar e a

@@ -19,7 +19,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { createPortal, flushSync } from 'react-dom';
-import { buscarFaturamentos, buscarLancamentos } from '../lib/database';
+import { buscarFaturamentos, buscarFaturamentosEntradas, buscarLancamentos } from '../lib/database';
 import { restringirArrasteAJanela } from '../lib/dnd';
 import { corEhClara } from '../lib/formatters';
 import AvantaCard, { criarAvantaShellPreset } from './AvantaCard';
@@ -113,7 +113,9 @@ type ResumoPerfilFinanceiro = {
 type ResumoCentroCusto = {
   id: string;
   nome: string;
+  receitas: number;
   despesas: number;
+  resultado: number;
   percentual: number;
 };
 
@@ -126,6 +128,7 @@ interface DashboardProps {
   nomePerfilAtual?: string;
   resumoPerfis?: ResumoPerfilFinanceiro[];
   centrosCustoAtivo?: boolean;
+  centroCustoSelecionadoId?: string;
   resumoCentrosCusto?: ResumoCentroCusto[];
   mesPerfis?: string;
   setMesAtivo: (mes: string) => void;
@@ -196,7 +199,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], centrosCustoAtivo = false, resumoCentrosCusto = [], mesPerfis, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode, iniciarValoresOcultos,
+  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], centrosCustoAtivo = false, centroCustoSelecionadoId, resumoCentrosCusto = [], mesPerfis, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode, iniciarValoresOcultos,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   entradaFaturamentoDia,
   setEntradaFaturamentoDia,
@@ -559,15 +562,31 @@ export default function Dashboard({
     async function carregarEvolucaoAno() {
       setEvolucaoCarregando(true);
 
-      const [lancamentosAno, faturamentosAno] = await Promise.all([
-        buscarLancamentos(empresaId as string, Number(evolucaoAno)),
-        buscarFaturamentos(empresaId as string, Number(evolucaoAno)),
+      const contextoCentroCustoId = centrosCustoAtivo ? centroCustoSelecionadoId : undefined;
+      if (centrosCustoAtivo && !contextoCentroCustoId) {
+        setEvolucaoLancamentos([]);
+        setEvolucaoFaturamentos({});
+        setEvolucaoCarregando(false);
+        return;
+      }
+
+      const [lancamentosAno, fonteFaturamento] = await Promise.all([
+        buscarLancamentos(empresaId as string, Number(evolucaoAno), contextoCentroCustoId),
+        centrosCustoAtivo
+          ? buscarFaturamentosEntradas(empresaId as string, Number(evolucaoAno), contextoCentroCustoId)
+          : buscarFaturamentos(empresaId as string, Number(evolucaoAno)),
       ]);
 
       if (!ativo) return;
 
       const faturamentosMap: Record<string, number> = {};
-      (faturamentosAno || []).forEach((item: any) => {
+      (fonteFaturamento || []).forEach((item: any) => {
+        if (centrosCustoAtivo) {
+          if (item.status !== 'prevista') {
+            faturamentosMap[item.mes] = (faturamentosMap[item.mes] || 0) + Number(item.valor || 0);
+          }
+          return;
+        }
         faturamentosMap[item.mes] = Number(item.valor || 0);
       });
 
@@ -581,7 +600,7 @@ export default function Dashboard({
     return () => {
       ativo = false;
     };
-  }, [empresaId, evolucaoAno, anoSelecionado, lancamentos, faturamentos]);
+  }, [empresaId, evolucaoAno, anoSelecionado, lancamentos, faturamentos, centrosCustoAtivo, centroCustoSelecionadoId]);
 
   const handleCaixinhaValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
@@ -919,6 +938,7 @@ const mostrarComparativoResumoDash =
   const nomeMesPerfis = mesPerfis || mesResumoDash;
   const centrosCustoDashboard = [...resumoCentrosCusto].sort((a, b) => b.despesas - a.despesas);
   const totalDespesasCentrosCusto = centrosCustoDashboard.reduce((total, centro) => total + Number(centro.despesas || 0), 0);
+  const totalReceitasCentrosCusto = centrosCustoDashboard.reduce((total, centro) => total + Number(centro.receitas || 0), 0);
   useEffect(() => {
     const timer = window.setTimeout(atualizarEstadoScrollPerfis, 0);
     return () => window.clearTimeout(timer);
@@ -1816,12 +1836,12 @@ const mostrarComparativoResumoDash =
         <div className="space-y-3 p-3">
           <div className={`grid grid-cols-2 gap-1.5 rounded-xl border p-1.5 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
             <div className="min-w-0 rounded-lg px-2.5 py-2 shadow-sm" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
-              <span className="block truncate text-[9px] font-black uppercase tracking-wide opacity-75">Despesas nos centros</span>
-              <strong className="mt-0.5 block truncate text-[13px] font-black tabular-nums">{ocultarValoresCentrosCusto ? 'R$ •••••••' : formatarMoeda(totalDespesasCentrosCusto)}</strong>
+              <span className="block truncate text-[9px] font-black uppercase tracking-wide opacity-75">Receitas nos centros</span>
+              <strong className="mt-0.5 block truncate text-[13px] font-black tabular-nums">{ocultarValoresCentrosCusto ? 'R$ •••••••' : formatarMoeda(totalReceitasCentrosCusto)}</strong>
             </div>
             <div className={`min-w-0 rounded-lg px-2.5 py-2 text-right ${darkMode ? 'bg-slate-900/50' : 'bg-white'}`}>
-              <span className={`block truncate text-[9px] font-black uppercase tracking-wide ${textMuted}`}>Do perfil</span>
-              <span className="mt-0.5 block truncate text-[13px] font-black text-red-500">{ocultarValoresCentrosCusto ? 'R$ •••••••' : formatarMoeda(totalDespesasMes)}</span>
+              <span className={`block truncate text-[9px] font-black uppercase tracking-wide ${textMuted}`}>Despesas nos centros</span>
+              <span className="mt-0.5 block truncate text-[13px] font-black text-red-500">{ocultarValoresCentrosCusto ? 'R$ •••••••' : formatarMoeda(totalDespesasCentrosCusto)}</span>
             </div>
           </div>
           {centrosCustoDashboard.length > 0 ? (
@@ -1829,7 +1849,7 @@ const mostrarComparativoResumoDash =
               {centrosCustoDashboard.map((centro) => (
                 <div key={centro.id} className={`rounded-xl border px-3 py-2.5 ${darkMode ? 'border-slate-700 bg-slate-800/45' : 'border-slate-200 bg-white'}`}>
                   <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0"><p className={`truncate text-[13px] font-black ${textStrong}`}>{centro.nome}</p><p className={`mt-0.5 text-[10px] font-semibold ${textMuted}`}>{Number(centro.percentual || 0).toFixed(1)}% das despesas do perfil</p></div>
+                    <div className="min-w-0"><p className={`truncate text-[13px] font-black ${textStrong}`}>{centro.nome}</p><p className={`mt-0.5 text-[10px] font-semibold ${textMuted}`}>{ocultarValoresCentrosCusto ? 'Receitas e despesas' : `Receitas ${formatarMoeda(centro.receitas)} · Resultado ${formatarMoeda(centro.resultado)}`}</p></div>
                     <strong className="shrink-0 text-[13px] font-black tabular-nums text-red-500">{ocultarValoresCentrosCusto ? 'R$ ••••' : formatarMoeda(centro.despesas)}</strong>
                   </div>
                   <div className={`mt-2 h-1.5 overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}><div className="h-full rounded-full bg-red-500" style={{ width: `${Math.max(0, Math.min(100, centro.percentual || 0))}%` }} /></div>

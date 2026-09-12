@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0.10 -->
+<!-- ava-version: 1.33.0.11 -->
+
+> Revisão 1.33.0.11: os contextos financeiros por Centro de custo pertencem à
+> Gestão Web e não alteram o fluxo do AvantaVendas.
 
 > Revisão 1.33.0.10: a padronização visual dos pop-ups de retorno pertence ao
 > PWA Operações de Campo; não altera o fluxo do AvantaVendas.

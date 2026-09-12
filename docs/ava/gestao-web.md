@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.10 -->
+<!-- ava-version: 1.33.0.11 -->
+
+> Revisão 1.33.0.11: ao ativar **Centros de custo**, o perfil passa a ter o
+> centro **Principal**, sempre ativo e presente na lista. O histórico já
+> existente fica no Principal. Ao escolher outro centro no cabeçalho, receitas,
+> despesas, despesas fixas e evolução anual passam a mostrar somente aquele
+> contexto; o card **Centros de custo** preserva o resumo de todos eles.
 
 > Revisão 1.33.0.10: a padronização visual dos pop-ups de retorno pertence ao
 > PWA Operações de Campo; não altera a operação da Gestão Web.
