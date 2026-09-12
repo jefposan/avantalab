@@ -4,7 +4,10 @@
 
 > Revisão 1.34.0: a NF-e de homologação pertence exclusivamente a Vendas e
 > Serviços na Gestão Web. AvantaVendas e Conteúdo AvantaVendas não emitem,
-> assinam, transmitem nem armazenam notas fiscais.
+> assinam, transmitem nem armazenam notas fiscais. O endereço público
+> `/baixar/avantavendas` encaminha
+> automaticamente iPhone, iPad/iPadOS e Android para a loja correspondente.
+> Em computador, permite escolher a App Store ou Google Play e usar QR Code.
 
 > Revisão 1.33.0.16: ao compartilhar um comprovante com desconto, o valor é
 > mostrado no bloco **Pedido registrado** ou **Pagamento registrado**. No

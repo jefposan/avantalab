@@ -13,6 +13,10 @@
   simulam mais certificado, armazenamento ou conexão pendentes.
 - **Fluxo sem botão inerte**: a ação principal da Central Fiscal inicia uma
   venda ou ordem de serviço, mantendo a nota vinculada à operação de origem.
+- **Link inteligente do AvantaVendas**: `/baixar/avantavendas` identifica iOS,
+  Android e iPadOS pelo User-Agent e redireciona diretamente à loja adequada.
+  Em desktop, oferece página de escolha com QR Codes. UTMs são preservadas e os
+  acessos/destinos passam a ter registro próprio, sem bloquear o redirecionamento.
 
 ## 1.33.0.16 - 2026-09-12
 - **Descontos nos comprovantes**: o comprovante de pedido exibe o desconto em

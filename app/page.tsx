@@ -10,6 +10,7 @@ import LinkRolagemPublica from './components/LinkRolagemPublica';
 import AvaPlansPreview from './components/AvaPlansPreview';
 import LandingAppsSection from './components/LandingAppsSection';
 import LandingBrandLabSection from './components/LandingBrandLabSection';
+import { AVANTAVENDAS_APP_STORE_URL_PADRAO, AVANTAVENDAS_PLAY_STORE_URL_PADRAO } from './lib/avantavendas-download';
 import styles from './styles/landing/landing.module.css';
 import mobileSpacing from './styles/landing/landing-mobile-gestao.module.css';
 import effects from './styles/landing/landing-effects.module.css';
@@ -107,8 +108,8 @@ const dadosEstruturados = {
     { '@type': 'WebSite', name: 'AvantaLab', url: siteUrl, inLanguage: 'pt-BR' },
     { '@type': 'SoftwareApplication', name: 'AvantaLab Gestão', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url: siteUrl, description: 'Plataforma de gestão financeira e operacional com indicadores, rotinas de equipe e assistência por IA.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL', description: 'Plano Free gratuito para uso pessoal, sem cartão de crédito' } },
     { '@type': 'MobileApplication', name: 'AvantaLab', applicationCategory: 'FinanceApplication', operatingSystem: 'iOS', url: 'https://apps.apple.com/br/app/avantalab/id6793744930', downloadUrl: 'https://apps.apple.com/br/app/avantalab/id6793744930', description: 'Aplicativo oficial de gestão financeira e operacional do AvantaLab.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' } },
-    { '@type': 'MobileApplication', name: 'AvantaVendas', applicationCategory: 'BusinessApplication', operatingSystem: 'iOS', url: 'https://apps.apple.com/br/app/avantavendas/id6797617650', downloadUrl: 'https://apps.apple.com/br/app/avantavendas/id6797617650', description: 'Aplicativo oficial para organizar clientes, produtos, pedidos, pagamentos e divulgação.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' } },
-    { '@type': 'MobileApplication', name: 'AvantaVendas', applicationCategory: 'BusinessApplication', operatingSystem: 'Android', url: 'https://play.google.com/store/apps/details?id=br.com.avantalab.vendas', downloadUrl: 'https://play.google.com/store/apps/details?id=br.com.avantalab.vendas', description: 'Aplicativo oficial para organizar clientes, produtos, pedidos, pagamentos e divulgação.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' } },
+    { '@type': 'MobileApplication', name: 'AvantaVendas', applicationCategory: 'BusinessApplication', operatingSystem: 'iOS', url: AVANTAVENDAS_APP_STORE_URL_PADRAO, downloadUrl: AVANTAVENDAS_APP_STORE_URL_PADRAO, description: 'Aplicativo oficial para organizar clientes, produtos, pedidos, pagamentos e divulgação.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' } },
+    { '@type': 'MobileApplication', name: 'AvantaVendas', applicationCategory: 'BusinessApplication', operatingSystem: 'Android', url: AVANTAVENDAS_PLAY_STORE_URL_PADRAO, downloadUrl: AVANTAVENDAS_PLAY_STORE_URL_PADRAO, description: 'Aplicativo oficial para organizar clientes, produtos, pedidos, pagamentos e divulgação.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' } },
     {
       '@type': 'OfferCatalog',
       name: 'Planos AvantaLab',

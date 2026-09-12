@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { AVANTAVENDAS_APP_STORE_URL_PADRAO, AVANTAVENDAS_PLAY_STORE_URL_PADRAO, obterLinksDownloadAvantaVendas } from '../lib/avantavendas-download';
 import styles from '../styles/landing/landing-apps.module.css';
 
 type AppAvanta = {
@@ -28,8 +29,8 @@ const aplicativos: readonly AppAvanta[] = [
     descricao: 'Cuide de clientes, produtos, pedidos, pagamentos e materiais de divulgação sem depender do computador.',
     icone: '/images/avanta-vendas-pwa-512.png',
     tela: '/images/landing/avantavendas-dashboard.jpg',
-    appStoreUrl: 'https://apps.apple.com/br/app/avantavendas/id6797617650',
-    googlePlayUrl: 'https://play.google.com/store/apps/details?id=br.com.avantalab.vendas',
+    appStoreUrl: AVANTAVENDAS_APP_STORE_URL_PADRAO,
+    googlePlayUrl: AVANTAVENDAS_PLAY_STORE_URL_PADRAO,
     recursos: ['Clientes e produtos', 'Pedidos e pagamentos', 'Conteúdos de divulgação'],
   },
 ];
@@ -52,6 +53,7 @@ function IconeGooglePlay() {
 }
 
 export default function LandingAppsSection() {
+  const linksAvantaVendas = obterLinksDownloadAvantaVendas();
   return (
     <section className={styles.section} id="nossos-apps" aria-labelledby="titulo-aplicativos">
       <div className={styles.wrap} data-scroll-target>
@@ -64,10 +66,14 @@ export default function LandingAppsSection() {
         </div>
 
         <div className={styles.grid}>
-          {aplicativos.map((aplicativo) => (
+          {aplicativos.map((aplicativo) => {
+            const ehAvantaVendas = aplicativo.nome === 'AvantaVendas';
+            const appStoreUrl = ehAvantaVendas ? linksAvantaVendas.appStoreUrl : aplicativo.appStoreUrl;
+            const googlePlayUrl = ehAvantaVendas ? linksAvantaVendas.playStoreUrl : aplicativo.googlePlayUrl;
+            return (
             <article
               className={styles.card}
-              id={aplicativo.nome === 'AvantaVendas' ? 'avantavendas' : undefined}
+              id={ehAvantaVendas ? 'avantavendas' : undefined}
               key={aplicativo.nome}
             >
               <div className={styles.cardContent}>
@@ -85,7 +91,7 @@ export default function LandingAppsSection() {
                 <div className={styles.storeActions}>
                   <a
                     className={styles.appStoreButton}
-                    href={aplicativo.appStoreUrl}
+                    href={appStoreUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`Baixar ${aplicativo.nome} na App Store (abre em nova aba)`}
@@ -93,10 +99,10 @@ export default function LandingAppsSection() {
                     <IconeDownload />
                     <span><small>Baixar na</small><strong>App Store</strong></span>
                   </a>
-                  {aplicativo.googlePlayUrl ? (
+                  {googlePlayUrl ? (
                     <a
                       className={styles.googlePlayButton}
-                      href={aplicativo.googlePlayUrl}
+                      href={googlePlayUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`Baixar ${aplicativo.nome} na Google Play (abre em nova aba)`}
@@ -116,7 +122,8 @@ export default function LandingAppsSection() {
                 <Image src={aplicativo.tela} alt="" fill sizes="(max-width: 640px) 120px, (max-width: 1050px) 132px, 170px" />
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

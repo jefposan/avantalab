@@ -2,7 +2,10 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
 // Revisado na versão 1.34.0: Vendas e Serviços informa a prontidão real do
 // executor de NF-e de homologação; produção fiscal segue bloqueada. AvantaVendas
-// e Conteúdo AvantaVendas não emitem notas.
+// e Conteúdo AvantaVendas não emitem notas. O endereço /baixar/avantavendas
+// identifica iOS, iPadOS e
+// Android no servidor, preserva UTMs até a loja e mostra escolha com QR Codes
+// em desktop; o fluxo interno do Vendas permanece o mesmo.
 // Revisado na versão 1.33.0.16: comprovantes compartilhados pelo AvantaVendas
 // exibem desconto no próprio Pedido registrado ou Pagamento registrado; o
 // valor pago permanece separado do desconto concedido.

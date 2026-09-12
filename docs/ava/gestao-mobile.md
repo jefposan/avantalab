@@ -4,7 +4,8 @@
 
 > Revisão 1.34.0: o executor protegido de NF-e de homologação pertence ao
 > módulo Vendas e Serviços da Gestão Web; não altera a operação da Gestão
-> Mobile.
+> Mobile. O link público de download do AvantaVendas também não altera essa
+> operação.
 
 > Revisão 1.33.0.16: a composição dos comprovantes compartilhados pelo
 > AvantaVendas não altera a operação da Gestão Mobile.
