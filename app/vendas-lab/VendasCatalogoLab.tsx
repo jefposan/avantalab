@@ -402,7 +402,7 @@ export default function VendasCatalogoLab() {
               });
               const payload = await response.json().catch(() => ({}));
               if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível consultar o certificado digital.'); return; }
-              deliver({ type: responseType, requestId, ok: true, certificate: payload.certificate, message: payload.message || '' });
+              deliver({ type: responseType, requestId, ok: true, certificate: payload.certificate, execution: payload.execution, message: payload.message || '' });
               return;
             }
             const certificate = event.data.certificate;
@@ -424,7 +424,7 @@ export default function VendasCatalogoLab() {
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível instalar o certificado digital.'); return; }
-            deliver({ type: responseType, requestId, ok: true, certificate: payload.certificate, message: payload.message || 'Certificado instalado.' });
+            deliver({ type: responseType, requestId, ok: true, certificate: payload.certificate, execution: payload.execution, message: payload.message || 'Certificado instalado.' });
           } catch {
             fail('A instalação do certificado está temporariamente indisponível.');
           }

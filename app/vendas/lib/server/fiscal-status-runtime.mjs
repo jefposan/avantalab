@@ -38,7 +38,7 @@ import { createNfeCertificateVaultAdapter } from './nfe-certificate-vault.mjs';
 import { createNfeReturnAdapter } from './nfe-return-service.mjs';
 import { createNfeStatusServiceAdapter } from './nfe-status-service.mjs';
 import { createFiscalRecoveryQueueService, createFiscalRecoveryWorker } from './fiscal-recovery-queue.mjs';
-import { createNfeIssuanceOrchestrator } from './nfe-issuance-orchestrator.mjs';
+import { NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION, NFE_ISSUANCE_ORCHESTRATOR_SCOPE, createNfeIssuanceOrchestrator } from './nfe-issuance-orchestrator.mjs';
 import { createCommercialOperationService } from './commercial-operation-service.mjs';
 import { createPostgresCommercialOperationRepository } from './commercial-operation-repository.mjs';
 import { createCommercialOrderWorkflow } from './commercial-order-workflow.mjs';
@@ -53,12 +53,24 @@ import { createCommercialServiceWorkflow, createPostgresCommercialServiceWorkflo
 import { createFiscalEmissionLifecycleService } from './fiscal-emission-lifecycle.mjs';
 import { createFiscalEmissionStatusService } from './fiscal-emission-status-service.mjs';
 import { createPostgresFiscalRepository } from './fiscal-postgres-repository.mjs';
+import { createSupabaseFiscalArtifactStorage } from './supabase-fiscal-artifact-storage.mjs';
 
 const { Pool } = pg;
 const HTTPS_URL = /^https:\/\//i;
 const VENDAS_PILOTO_EMPRESA_ID = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e';
+const NFE_HOMOLOGATION_RELEASE = 'TRIDIUM_NFE_SP_HOMOLOGACAO_CONTROLADA';
 function text(value) { return typeof value === 'string' ? value.trim() : String(value ?? '').trim(); }
-function disabled(reason) { return Object.freeze({ configured: false, reason, accessResolver: null, catalogService: null, statusService: null, centerService: null, emissionBridge: null, fiscalProfileService: null, fiscalRulesQueryService: null, fiscalRulesPublicationService: null, certificateInstallationService: null, nfePreparationService: null, nfeRejectionCorrectionService: null, nfeCancellationService: null, nfeNumberReservationService: null, nfeSigningPreparationService: null, nfeSigningService: null, nfeStatusServiceAdapter: null, nfeAuthorizationAdapter: null, nfeReturnAdapter: null, nfeIssuanceOrchestrator: null, nfeAutomaticIssuanceService: null, orderWorkflow: null, serviceWorkflow: null, operationService: null, serviceOrderService: null, customerService: null, receivableService: null, stockService: null, supplierService: null }); }
+function disabled(reason) { return Object.freeze({ configured: false, reason, accessResolver: null, catalogService: null, statusService: null, centerService: null, emissionBridge: null, fiscalProfileService: null, fiscalRulesQueryService: null, fiscalRulesPublicationService: null, certificateInstallationService: null, nfePreparationService: null, nfeRejectionCorrectionService: null, nfeCancellationService: null, nfeNumberReservationService: null, nfeSigningPreparationService: null, nfeSigningService: null, nfeStatusServiceAdapter: null, nfeAuthorizationAdapter: null, nfeReturnAdapter: null, nfeIssuanceOrchestrator: null, nfeAutomaticIssuanceService: null, fiscalExecution: null, orderWorkflow: null, serviceWorkflow: null, operationService: null, serviceOrderService: null, customerService: null, receivableService: null, stockService: null, supplierService: null }); }
+function isLocalDatabase(databaseUrl) { return databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1'); }
+function controlledHomologationEnabled(environment) {
+  return text(environment.FISCAL_SANDBOX_STATUS_ONLY).toLowerCase() === 'false'
+    && text(environment.FISCAL_NFE_HOMOLOGATION_RELEASE) === NFE_HOMOLOGATION_RELEASE
+    && text(environment.FISCAL_NFE_ORCHESTRATOR_ENABLED).toLowerCase() === 'true'
+    && text(environment.FISCAL_NFE_ORCHESTRATOR_ENVIRONMENT).toLowerCase() === 'homologacao'
+    && text(environment.FISCAL_NFE_ORCHESTRATOR_SCOPE) === NFE_ISSUANCE_ORCHESTRATOR_SCOPE
+    && text(environment.FISCAL_NFE_ORCHESTRATOR_CONFIRMATION) === NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION
+    && Buffer.byteLength(text(environment.FISCAL_NFE_ORCHESTRATOR_TOKEN), 'utf8') >= 32;
+}
 
 function createCertificateRuntime({ environment, pool, issuerResolver, databaseUrl }) {
   const key = text(environment.FISCAL_CERTIFICATE_MASTER_KEY);
@@ -101,12 +113,12 @@ function createCertificateRuntime({ environment, pool, issuerResolver, databaseU
 }
 
 function createStatusRuntime({ environment, databaseUrl, certificateRuntime }) {
-  const localDatabase = databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1');
+  const localDatabase = isLocalDatabase(databaseUrl);
   const productionPilot = text(environment.FISCAL_SANDBOX_STATUS_ONLY).toLowerCase() === 'true'
     && text(environment.FISCAL_STATUS_ENVIRONMENT).toLowerCase() === 'homologacao'
     && text(environment.FISCAL_STATUS_SCOPE).toLowerCase() === 'sp'
     && text(environment.FISCAL_STATUS_CONFIRMATION) === 'NFE_STATUS_HOMOLOGACAO_SP';
-  if (!certificateRuntime || (!localDatabase && !productionPilot)) return null;
+  if (!certificateRuntime || (!localDatabase && !productionPilot && !controlledHomologationEnabled(environment))) return null;
   try {
     const transport = createNfeA1MtlsStatusTransport({
       secretLoader: certificateRuntime.activeLoader,
@@ -118,8 +130,8 @@ function createStatusRuntime({ environment, databaseUrl, certificateRuntime }) {
   }
 }
 
-function createLocalAuthorizationRuntime({ databaseUrl, certificateRuntime, statusAdapter }) {
-  if (!certificateRuntime || !statusAdapter || (!databaseUrl.includes('localhost') && !databaseUrl.includes('127.0.0.1'))) return null;
+function createAuthorizationRuntime({ environment, databaseUrl, certificateRuntime, statusAdapter }) {
+  if (!certificateRuntime || !statusAdapter || (!isLocalDatabase(databaseUrl) && !controlledHomologationEnabled(environment))) return null;
   try {
     const transport = createNfeA1MtlsAuthorizationTransport({
       secretLoader: certificateRuntime.activeLoader,
@@ -135,8 +147,8 @@ function createLocalAuthorizationRuntime({ databaseUrl, certificateRuntime, stat
   }
 }
 
-function createLocalReturnRuntime({ databaseUrl, certificateRuntime }) {
-  if (!certificateRuntime || (!databaseUrl.includes('localhost') && !databaseUrl.includes('127.0.0.1'))) return null;
+function createReturnRuntime({ environment, databaseUrl, certificateRuntime }) {
+  if (!certificateRuntime || (!isLocalDatabase(databaseUrl) && !controlledHomologationEnabled(environment))) return null;
   try {
     const transport = createNfeA1MtlsReturnTransport({
       secretLoader: certificateRuntime.activeLoader,
@@ -151,20 +163,34 @@ function createLocalReturnRuntime({ databaseUrl, certificateRuntime }) {
   }
 }
 
-function createLocalCancellationRuntime({ environment, databaseUrl, certificateRuntime }) {
+function createCancellationRuntime({ environment, databaseUrl, certificateRuntime }) {
   const enabled = text(environment.FISCAL_NFE_CANCELLATION_ENABLED).toLowerCase() === 'true'
     && text(environment.FISCAL_NFE_CANCELLATION_ENVIRONMENT).toLowerCase() === 'homologacao'
     && text(environment.FISCAL_NFE_CANCELLATION_SCOPE).toLowerCase() === 'sp'
     && text(environment.FISCAL_NFE_CANCELLATION_CONFIRMATION) === 'CANCELAMENTO_NFE_HOMOLOGACAO_AUTORIZADO';
-  if (!enabled || !certificateRuntime || (!databaseUrl.includes('localhost') && !databaseUrl.includes('127.0.0.1'))) return null;
+  if (!enabled || !certificateRuntime || (!isLocalDatabase(databaseUrl) && !controlledHomologationEnabled(environment))) return null;
   try {
     const transport = createNfeA1MtlsCancellationTransport({ secretLoader: certificateRuntime.activeLoader, chainResolver: certificateRuntime.chainResolver });
     return createNfeCancellationAdapter({ certificateAdapter: certificateRuntime.signingAdapter, signingProvider: certificateRuntime.signingProvider, transport });
   } catch { return null; }
 }
 
-function createLocalArtifactStorageRuntime(databaseUrl) {
-  if (!databaseUrl.includes('localhost') && !databaseUrl.includes('127.0.0.1')) return null;
+async function createArtifactStorageRuntime({ environment, databaseUrl, supabaseUrl }) {
+  if (!isLocalDatabase(databaseUrl)) {
+    if (!controlledHomologationEnabled(environment)
+      || text(environment.FISCAL_STORAGE_HOMOLOGATION_ENABLED).toLowerCase() !== 'true') return null;
+    const serviceRoleKey = text(environment.SUPABASE_SERVICE_ROLE_KEY);
+    const bucket = text(environment.FISCAL_STORAGE_BUCKET);
+    if (!serviceRoleKey || !bucket) return null;
+    try {
+      const client = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+      const storage = createSupabaseFiscalArtifactStorage({ client, bucket, environment: 'homologacao' });
+      const readiness = await storage.inspectReadiness();
+      return readiness.homologationReady === true ? storage : null;
+    } catch {
+      return null;
+    }
+  }
   try {
     return createLocalFiscalArtifactStorage({ rootDirectory: join(tmpdir(), 'avantalab-vendas-fiscal-lab-artifacts') });
   } catch {
@@ -172,8 +198,8 @@ function createLocalArtifactStorageRuntime(databaseUrl) {
   }
 }
 
-function createLocalSigningRuntime({ databaseUrl, pool, certificateRuntime, fiscalRuleResolver, fiscalLifecycle, artifactStorage }) {
-  if (!certificateRuntime || !artifactStorage || (!databaseUrl.includes('localhost') && !databaseUrl.includes('127.0.0.1'))) return null;
+function createSigningRuntime({ environment, databaseUrl, pool, certificateRuntime, fiscalRuleResolver, fiscalLifecycle, artifactStorage }) {
+  if (!certificateRuntime || !artifactStorage || (!isLocalDatabase(databaseUrl) && !controlledHomologationEnabled(environment))) return null;
   try {
     const repository = createPostgresCommercialNfeSigningPreparationRepository({ pool });
     return createCommercialNfeSigningService({
@@ -190,8 +216,8 @@ function createLocalSigningRuntime({ databaseUrl, pool, certificateRuntime, fisc
   }
 }
 
-function createLocalIssuanceOrchestrator({ environment, databaseUrl, pool, certificateRuntime, issuerResolver, fiscalRepository, fiscalLifecycle, artifactStorage, nfeSigningPreparationService, nfeSigningService, nfeAuthorizationAdapter, nfeReturnAdapter }) {
-  if (!certificateRuntime || !artifactStorage || !nfeSigningPreparationService || !nfeSigningService || !nfeAuthorizationAdapter || !nfeReturnAdapter || (!databaseUrl.includes('localhost') && !databaseUrl.includes('127.0.0.1'))) return null;
+function createIssuanceOrchestrator({ environment, databaseUrl, pool, certificateRuntime, issuerResolver, fiscalRepository, fiscalLifecycle, artifactStorage, nfeSigningPreparationService, nfeSigningService, nfeAuthorizationAdapter, nfeReturnAdapter }) {
+  if (!certificateRuntime || !artifactStorage || !nfeSigningPreparationService || !nfeSigningService || !nfeAuthorizationAdapter || !nfeReturnAdapter || (!isLocalDatabase(databaseUrl) && !controlledHomologationEnabled(environment))) return null;
   try {
     const certificateBindingResolver = ({ companyId }) => certificateRuntime.repository.getActiveBinding({ companyId });
     const submissionService = createCommercialNfeSubmissionService({
@@ -239,7 +265,8 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
   const databaseUrl = text(environment.FISCAL_DATABASE_URL);
   const statusOnly = text(environment.FISCAL_SANDBOX_STATUS_ONLY).toLowerCase() === 'true';
   if (!HTTPS_URL.test(supabaseUrl) || !anonKey || !databaseUrl) return disabled('configuration_incomplete');
-  const localDatabase = databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1');
+  const localDatabase = isLocalDatabase(databaseUrl);
+  const fiscalWorkflowEnabled = !statusOnly && (localDatabase || controlledHomologationEnabled(environment));
   const databaseCa = text(environment.FISCAL_DATABASE_CA_PEM);
   const pool = new Pool({
     connectionString: databaseUrl,
@@ -285,17 +312,25 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     });
     const issuerResolver = createPostgresCommercialIssuerResolver({ pool });
     const certificateRuntime = createCertificateRuntime({ environment, pool, issuerResolver, databaseUrl });
-    const artifactStorage = statusOnly ? null : createLocalArtifactStorageRuntime(databaseUrl);
-    const nfeSigningPreparationService = statusOnly ? null : createCommercialNfeSigningPreparationService({
+    const artifactStorage = fiscalWorkflowEnabled ? await createArtifactStorageRuntime({ environment, databaseUrl, supabaseUrl }) : null;
+    const nfeSigningPreparationService = fiscalWorkflowEnabled ? createCommercialNfeSigningPreparationService({
       repository: createPostgresCommercialNfeSigningPreparationRepository({ pool }),
       fiscalRuleResolver,
-    });
-    const nfeSigningService = statusOnly ? null : createLocalSigningRuntime({ databaseUrl, pool, certificateRuntime, fiscalRuleResolver, fiscalLifecycle, artifactStorage });
+    }) : null;
+    const nfeSigningService = fiscalWorkflowEnabled ? createSigningRuntime({ environment, databaseUrl, pool, certificateRuntime, fiscalRuleResolver, fiscalLifecycle, artifactStorage }) : null;
     const nfeStatusServiceAdapter = certificateRuntime?.nfeStatusServiceAdapter || null;
-    const nfeAuthorizationAdapter = statusOnly ? null : createLocalAuthorizationRuntime({ databaseUrl, certificateRuntime, statusAdapter: nfeStatusServiceAdapter });
-    const nfeReturnAdapter = statusOnly ? null : createLocalReturnRuntime({ databaseUrl, certificateRuntime });
-    const nfeCancellationAdapter = statusOnly ? null : createLocalCancellationRuntime({ environment, databaseUrl, certificateRuntime });
-    const nfeIssuanceOrchestrator = statusOnly ? null : createLocalIssuanceOrchestrator({ environment, databaseUrl, pool, certificateRuntime, issuerResolver, fiscalRepository, fiscalLifecycle, artifactStorage, nfeSigningPreparationService, nfeSigningService, nfeAuthorizationAdapter, nfeReturnAdapter });
+    const nfeAuthorizationAdapter = fiscalWorkflowEnabled ? createAuthorizationRuntime({ environment, databaseUrl, certificateRuntime, statusAdapter: nfeStatusServiceAdapter }) : null;
+    const nfeReturnAdapter = fiscalWorkflowEnabled ? createReturnRuntime({ environment, databaseUrl, certificateRuntime }) : null;
+    const nfeCancellationAdapter = fiscalWorkflowEnabled ? createCancellationRuntime({ environment, databaseUrl, certificateRuntime }) : null;
+    const nfeIssuanceOrchestrator = fiscalWorkflowEnabled ? createIssuanceOrchestrator({ environment, databaseUrl, pool, certificateRuntime, issuerResolver, fiscalRepository, fiscalLifecycle, artifactStorage, nfeSigningPreparationService, nfeSigningService, nfeAuthorizationAdapter, nfeReturnAdapter }) : null;
+    const orchestratorToken = text(environment.FISCAL_NFE_ORCHESTRATOR_TOKEN);
+    const nfeAutomaticIssuanceService = nfeIssuanceOrchestrator?.configured === true ? Object.freeze({
+      async continue(input) {
+        const result = await nfeIssuanceOrchestrator.continueProtected({ ...input, activationToken: orchestratorToken });
+        if (result?.ok) await nfeIssuanceOrchestrator.runRecoveryOnceProtected({ activationToken: orchestratorToken, limit: 4 }).catch(() => null);
+        return result;
+      },
+    }) : null;
     const billingService = createCommercialSalesOrderBillingService({
       repository: createPostgresCommercialSalesOrderBillingRepository({ pool }),
       issuerResolver,
@@ -315,41 +350,47 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
       fiscalRulesQueryService: createCommercialFiscalRulesQueryService({ repository: fiscalRulesRepository }),
       fiscalRulesPublicationService: createCommercialFiscalRulesPublicationService({ repository: fiscalRulesRepository }),
       certificateInstallationService: certificateRuntime?.installationService || null,
-      nfePreparationService: statusOnly ? null : createCommercialNfePreparationService({
+      nfePreparationService: fiscalWorkflowEnabled ? createCommercialNfePreparationService({
         repository: createPostgresCommercialNfePreparationRepository({ pool }),
         emissionLifecycle: fiscalLifecycle,
         fiscalRuleResolver,
-      }),
-      nfeRejectionCorrectionService: statusOnly ? null : createCommercialNfeRejectionCorrectionService({
+      }) : null,
+      nfeRejectionCorrectionService: fiscalWorkflowEnabled ? createCommercialNfeRejectionCorrectionService({
         repository: createPostgresCommercialNfeRejectionCorrectionRepository({ pool }),
         emissionLifecycle: fiscalLifecycle,
         fiscalRuleResolver,
-      }),
-      nfeCancellationService: !statusOnly && certificateRuntime && artifactStorage ? createCommercialNfeCancellationService({
+      }) : null,
+      nfeCancellationService: fiscalWorkflowEnabled && certificateRuntime && artifactStorage ? createCommercialNfeCancellationService({
         repository: createPostgresCommercialNfeCancellationRepository({ pool }),
         certificateBindingResolver: ({ companyId }) => certificateRuntime.repository.getActiveBinding({ companyId }),
         cancellationAdapter: nfeCancellationAdapter || createDisabledNfeCancellationAdapter(),
         artifactStorage,
         lifecycle: fiscalLifecycle,
       }) : null,
-      nfeNumberReservationService: statusOnly ? null : createCommercialNfeNumberReservationService({ emissionLifecycle: fiscalLifecycle }),
+      nfeNumberReservationService: fiscalWorkflowEnabled ? createCommercialNfeNumberReservationService({ emissionLifecycle: fiscalLifecycle }) : null,
       nfeSigningPreparationService,
-      // O laboratório assina somente com A1 ativo no armazenamento protegido,
-      // cadeia/LCR aprovadas e guarda imutável local. Não existe transmissão aqui.
+      // A assinatura exige A1 ativo, cadeia/LCR aprovadas e guarda imutável.
       nfeSigningService,
-      // Diagnóstico mTLS restrito ao NfeStatusServico 4.00 de homologação.
-      // Não aceita XML de NF-e e não participa ainda do fluxo de transmissão.
+      // Todos os transportes estão fixos nos serviços de homologação da SEFAZ-SP.
       nfeStatusServiceAdapter,
-      // O autorizador possui transporte próprio, limitado à homologação paulista,
-      // mas segue sem rota e sem ligação ao comando de emissão.
       nfeAuthorizationAdapter,
-      // Recibo e protocolo usam outro transporte mTLS, limitado aos dois
-      // serviços oficiais paulistas. O adaptador não possui rota de usuário.
       nfeReturnAdapter,
-      // Composição completa disponível apenas atrás de quatro confirmações de
-      // homologação e token técnico. Nenhuma rota recebe este objeto.
+      // O token de execução fica somente no servidor e nunca atravessa a rota.
       nfeIssuanceOrchestrator,
-      nfeAutomaticIssuanceService: null,
+      nfeAutomaticIssuanceService,
+      fiscalExecution: Object.freeze({
+        environment: 'homologacao',
+        statusOnly,
+        workflowEnabled: fiscalWorkflowEnabled,
+        durableStorageReady: Boolean(artifactStorage),
+        certificateRuntimeReady: Boolean(certificateRuntime),
+        statusServiceReady: Boolean(nfeStatusServiceAdapter),
+        authorizationReady: Boolean(nfeAuthorizationAdapter),
+        returnServiceReady: Boolean(nfeReturnAdapter),
+        orchestratorReady: nfeIssuanceOrchestrator?.configured === true,
+        transmissionAllowed: nfeAutomaticIssuanceService !== null,
+        productionTransmissionAllowed: false,
+      }),
       orderWorkflow: createCommercialOrderWorkflow({
         customerRepository, customerService, operationService, lifecycleService, billingService,
       }),

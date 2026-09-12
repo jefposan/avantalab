@@ -56,6 +56,19 @@ export type FiscalCertificateStatus = Readonly<{
   sensitiveMaterialReturned: false;
   originalPasswordStored?: false;
 }>;
+export type FiscalExecutionReadiness = Readonly<{
+  environment: 'homologacao';
+  statusOnly: boolean;
+  workflowEnabled: boolean;
+  durableStorageReady: boolean;
+  certificateRuntimeReady: boolean;
+  statusServiceReady: boolean;
+  authorizationReady: boolean;
+  returnServiceReady: boolean;
+  orchestratorReady: boolean;
+  transmissionAllowed: boolean;
+  productionTransmissionAllowed: false;
+}>;
 
 export const FISCAL_STATUS_REQUEST_TYPE: 'AVANTALAB_VENDAS_FISCAL_STATUS_REQUEST_V1';
 export const FISCAL_STATUS_RESPONSE_TYPE: 'AVANTALAB_VENDAS_FISCAL_STATUS_RESPONSE_V1';
@@ -96,9 +109,9 @@ export function createFiscalCancellationRequest(input?: { requestId?: unknown; e
 export function createFiscalCertificateStatusRequest(input?: { requestId?: unknown }): Readonly<{ type: typeof FISCAL_CERTIFICATE_STATUS_REQUEST_TYPE; requestId: string }> | null;
 export function createFiscalCertificateInstallRequest(input?: { requestId?: unknown; certificate?: File | null; passphrase?: unknown }): Readonly<{ type: typeof FISCAL_CERTIFICATE_INSTALL_REQUEST_TYPE; requestId: string; certificate: File; passphrase: string }> | null;
 export function createFiscalCertificateActivateRequest(input?: { requestId?: unknown }): Readonly<{ type: typeof FISCAL_CERTIFICATE_ACTIVATE_REQUEST_TYPE; requestId: string }> | null;
-export function parseFiscalCertificateStatusResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; message: string; certificate: FiscalCertificateStatus }> | null;
-export function parseFiscalCertificateInstallResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; message: string; certificate: FiscalCertificateStatus }> | null;
-export function parseFiscalCertificateActivateResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; message: string; certificate: FiscalCertificateStatus }> | null;
+export function parseFiscalCertificateStatusResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; message: string; certificate: FiscalCertificateStatus; execution: FiscalExecutionReadiness | null }> | null;
+export function parseFiscalCertificateInstallResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; message: string; certificate: FiscalCertificateStatus; execution: FiscalExecutionReadiness | null }> | null;
+export function parseFiscalCertificateActivateResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; message: string; certificate: FiscalCertificateStatus; execution: FiscalExecutionReadiness | null }> | null;
 export function normalizeFiscalEmissionStatus(value: unknown): Readonly<FiscalEmissionStatus> | null;
 export function parseFiscalStatusResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; emission: FiscalEmissionStatus }> | null;
 export function parseFiscalDownloadResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; download: Readonly<{ url: string; expiresAt: string; filename: string; contentType: 'application/xml' | 'application/pdf' }> }> | null;

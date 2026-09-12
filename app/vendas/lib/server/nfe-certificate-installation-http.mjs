@@ -39,7 +39,7 @@ export async function handleNfeCertificateStatusRequest({ request, runtime, comp
   if (access.error) return access.error;
   if (!runtime.certificateInstallationService?.status) return reply(503, { ok: false, code: 'AV-NFE-CERTIFICATE-STORAGE-PENDING', message: 'O armazenamento protegido do certificado ainda não foi ativado.' });
   const result = await runtime.certificateInstallationService.status({ context: access.context });
-  return result?.ok ? reply(200, { ok: true, certificate: result.result }) : failure(result, 'Não foi possível consultar o certificado digital.');
+  return result?.ok ? reply(200, { ok: true, certificate: result.result, execution: runtime.fiscalExecution || null }) : failure(result, 'Não foi possível consultar o certificado digital.');
 }
 
 export async function handleNfeCertificateInstallationRequest({ request, runtime, companyId } = {}) {
@@ -62,7 +62,7 @@ export async function handleNfeCertificateInstallationRequest({ request, runtime
   const pkcs12 = Buffer.from(await certificate.arrayBuffer());
   try {
     const result = await runtime.certificateInstallationService.install({ context: access.context, pkcs12, passphrase });
-    return result?.ok ? reply(201, { ok: true, certificate: result.result, message: result.result?.certificateActive ? 'Certificado adicionado e ativado com segurança.' : 'Certificado adicionado. A validação continuará automaticamente.' }) : failure(result, 'Não foi possível instalar o certificado digital.');
+    return result?.ok ? reply(201, { ok: true, certificate: result.result, execution: runtime.fiscalExecution || null, message: result.result?.certificateActive ? 'Certificado adicionado e ativado com segurança.' : 'Certificado adicionado. A validação continuará automaticamente.' }) : failure(result, 'Não foi possível instalar o certificado digital.');
   } finally {
     pkcs12.fill(0);
   }
@@ -80,6 +80,7 @@ export async function handleNfeCertificateActivationRequest({ request, runtime, 
   return reply(200, {
     ok: true,
     certificate: result.result,
+    execution: runtime.fiscalExecution || null,
     message: result.result?.certificateActive
       ? 'Certificado ativado com segurança.'
       : 'A validação foi concluída, mas ainda existem verificações pendentes.',

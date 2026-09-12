@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 
 export const NFE_ISSUANCE_ORCHESTRATOR_REFERENCE = '2026-09-04';
-export const NFE_ISSUANCE_ORCHESTRATOR_SCOPE = 'nfe-sp-local-lab';
+export const NFE_ISSUANCE_ORCHESTRATOR_SCOPE = 'nfe-sp-homologacao-controlada';
 export const NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION = 'AUTORIZO_HOMOLOGACAO_SEM_VALOR_FISCAL';
 
 const MIN_TOKEN_BYTES = 32;

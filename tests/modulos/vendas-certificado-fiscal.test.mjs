@@ -117,7 +117,7 @@ test('certificado ativo alimenta a prontidão fiscal sem simular conexão com o 
   assert.match(source, /providerConnected: certificate\?\.fiscalConnectionAvailable === true/);
   assert.match(source, /fiscalConfigForIssuer\(moduleSettings, issuer, fiscalCertificateBridgeState\.certificate\)/);
   assert.match(source, /Certificado fiscal ativo/);
-  assert.match(source, /Conexão segura ainda não confirmada/);
+  assert.match(source, /Consulta ativa; envio de homologação ainda bloqueado/);
   assert.doesNotMatch(source, /<strong>Fiscal não conectado<\/strong><small>Produção bloqueada com segurança<\/small>/);
 });
 
@@ -156,6 +156,8 @@ test('runtime fiscal usa as âncoras ICP-Brasil oficiais sem expor configuraçã
   assert.match(runtime, /createNfeCertificateSecretLoader/);
   assert.match(runtime, /getActiveBinding/);
   assert.match(runtime, /createLocalFiscalArtifactStorage/);
+  assert.match(runtime, /createSupabaseFiscalArtifactStorage/);
+  assert.match(runtime, /FISCAL_STORAGE_HOMOLOGATION_ENABLED/);
   assert.match(runtime, /createNfeA1MtlsStatusTransport/);
   assert.match(runtime, /createNfeA1MtlsAuthorizationTransport/);
   assert.match(runtime, /createNfeA1MtlsReturnTransport/);
@@ -175,7 +177,8 @@ test('runtime fiscal usa as âncoras ICP-Brasil oficiais sem expor configuraçã
   assert.match(runtime, /nfeIssuanceOrchestrator/);
   assert.match(runtime, /nfeRejectionCorrectionService/);
   assert.match(runtime, /availabilityService: nfeStatusServiceAdapter/);
-  assert.match(runtime, /nfeAutomaticIssuanceService: null/);
+  assert.match(runtime, /nfeAutomaticIssuanceService/);
+  assert.match(runtime, /productionTransmissionAllowed: false/);
   assert.match(crlChecker, /fromBER\(der,\s*\{/);
   assert.match(crlChecker, /maxNodes: MAX_ASN1_NODES/);
   assert.match(crlChecker, /asn1\.offset !== der\.byteLength/);

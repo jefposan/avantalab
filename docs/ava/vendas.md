@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0.16 -->
+<!-- ava-version: 1.34.0 -->
+
+> Revisão 1.34.0: a NF-e de homologação pertence exclusivamente a Vendas e
+> Serviços na Gestão Web. AvantaVendas e Conteúdo AvantaVendas não emitem,
+> assinam, transmitem nem armazenam notas fiscais.
 
 > Revisão 1.33.0.16: ao compartilhar um comprovante com desconto, o valor é
 > mostrado no bloco **Pedido registrado** ou **Pagamento registrado**. No

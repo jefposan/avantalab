@@ -61,7 +61,10 @@ export function createFiscalArtifactDownloadService({ repository, storageProvide
         return denied(access.reason, [error('AV-FISCAL-DOWNLOAD-ACCESS', 'permission', 'Este usuário não possui acesso a este documento fiscal.')]);
       }
       if (repository?.configured !== true || typeof repository.findArtifactForDownload !== 'function') return denied('repository_unavailable', [error('AV-FISCAL-DOWNLOAD-REPOSITORY', 'repository', 'O catálogo privado de documentos fiscais não está disponível.')]);
-      if (storageProvider?.configured !== true || storageProvider?.environment !== 'production' || storageProvider?.productionReady !== true || typeof storageProvider.createReadGrant !== 'function') return denied('storage_unavailable', [error('AV-FISCAL-DOWNLOAD-STORAGE', 'storageProvider', 'O armazenamento fiscal durável não está disponível ou não passou pelas proteções de produção.')]);
+      const storageReady = storageProvider?.environment === 'production'
+        ? storageProvider?.productionReady === true
+        : storageProvider?.environment === 'homologacao' && storageProvider?.homologationReady === true;
+      if (storageProvider?.configured !== true || !storageReady || typeof storageProvider.createReadGrant !== 'function') return denied('storage_unavailable', [error('AV-FISCAL-DOWNLOAD-STORAGE', 'storageProvider', 'A guarda fiscal privada não está disponível ou não passou pelas proteções do ambiente atual.')]);
       const artifact = await repository.findArtifactForDownload({ companyId: access.session.companyId, artifactId: text(input.artifactId), artifactType });
       if (!artifact || text(artifact.companyId) !== access.session.companyId || artifact.artifactType !== artifactType || artifact.contentType !== artifactDefinition.contentType) {
         await auditWriter.appendArtifactAccessEvent({ ...baseEvent, outcome: 'denied', reasonCode: 'artifact_not_found' });

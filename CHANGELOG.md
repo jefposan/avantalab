@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.34.0 - 2026-09-12
+- **NF-e de homologação protegida**: Vendas e Serviços passa a possuir executor
+  server-side liberável apenas para a SEFAZ-SP em homologação, com certificado
+  A1 da empresa, token técnico e trava explícita que mantém a produção fiscal
+  indisponível.
+- **Guarda fiscal privada**: XML e DANFE do piloto recebem objetos físicos
+  imutáveis por SHA-256 em bucket privado, sem acesso direto do navegador e com
+  download temporário auditado pelo perfil empresarial.
+- **Prontidão real na tela**: Central Fiscal, certificado e menu lateral exibem
+  a situação devolvida pelo servidor; mensagens antigas de laboratório não
+  simulam mais certificado, armazenamento ou conexão pendentes.
+- **Fluxo sem botão inerte**: a ação principal da Central Fiscal inicia uma
+  venda ou ordem de serviço, mantendo a nota vinculada à operação de origem.
+
 ## 1.33.0.16 - 2026-09-12
 - **Descontos nos comprovantes**: o comprovante de pedido exibe o desconto em
   **Pedido registrado**, e o comprovante de pagamento o mostra em **Pagamento

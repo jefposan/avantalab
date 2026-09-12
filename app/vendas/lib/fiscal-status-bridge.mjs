@@ -203,13 +203,30 @@ function normalizeFiscalCertificate(value) {
   });
 }
 
+function normalizeFiscalExecution(value) {
+  if (!value || text(value.environment) !== 'homologacao' || value.productionTransmissionAllowed !== false) return null;
+  return Object.freeze({
+    environment: 'homologacao',
+    statusOnly: value.statusOnly === true,
+    workflowEnabled: value.workflowEnabled === true,
+    durableStorageReady: value.durableStorageReady === true,
+    certificateRuntimeReady: value.certificateRuntimeReady === true,
+    statusServiceReady: value.statusServiceReady === true,
+    authorizationReady: value.authorizationReady === true,
+    returnServiceReady: value.returnServiceReady === true,
+    orchestratorReady: value.orchestratorReady === true,
+    transmissionAllowed: value.transmissionAllowed === true,
+    productionTransmissionAllowed: false,
+  });
+}
+
 export function parseFiscalCertificateStatusResponse(data) {
   if (!data || data.type !== FISCAL_CERTIFICATE_STATUS_RESPONSE_TYPE) return null;
   const id = requestId(data.requestId);
   if (!id) return null;
   if (data.ok !== true) return Object.freeze({ requestId: id, ok: false, message: text(data.message) || 'Não foi possível consultar o certificado digital.' });
   const certificate = normalizeFiscalCertificate(data.certificate);
-  return certificate ? Object.freeze({ requestId: id, ok: true, message: text(data.message), certificate }) : null;
+  return certificate ? Object.freeze({ requestId: id, ok: true, message: text(data.message), certificate, execution: normalizeFiscalExecution(data.execution) }) : null;
 }
 
 export function parseFiscalCertificateInstallResponse(data) {
@@ -218,7 +235,7 @@ export function parseFiscalCertificateInstallResponse(data) {
   if (!id) return null;
   if (data.ok !== true) return Object.freeze({ requestId: id, ok: false, message: text(data.message) || 'Não foi possível instalar o certificado digital.' });
   const certificate = normalizeFiscalCertificate(data.certificate);
-  return certificate ? Object.freeze({ requestId: id, ok: true, message: text(data.message) || 'Certificado instalado.', certificate }) : null;
+  return certificate ? Object.freeze({ requestId: id, ok: true, message: text(data.message) || 'Certificado instalado.', certificate, execution: normalizeFiscalExecution(data.execution) }) : null;
 }
 
 export function parseFiscalCertificateActivateResponse(data) {
@@ -227,7 +244,7 @@ export function parseFiscalCertificateActivateResponse(data) {
   if (!id) return null;
   if (data.ok !== true) return Object.freeze({ requestId: id, ok: false, message: text(data.message) || 'Não foi possível verificar o certificado digital.' });
   const certificate = normalizeFiscalCertificate(data.certificate);
-  return certificate ? Object.freeze({ requestId: id, ok: true, message: text(data.message) || 'Verificação concluída.', certificate }) : null;
+  return certificate ? Object.freeze({ requestId: id, ok: true, message: text(data.message) || 'Verificação concluída.', certificate, execution: normalizeFiscalExecution(data.execution) }) : null;
 }
 
 function normalizeArtifact(value) {

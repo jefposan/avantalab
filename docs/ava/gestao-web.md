@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.16 -->
+<!-- ava-version: 1.34.0 -->
+
+> Revisão 1.34.0: em **Vendas e Serviços > Central Fiscal**, a situação do
+> executor vem do servidor. **NF-e de teste disponível** significa somente
+> homologação da SEFAZ-SP, sem valor fiscal; produção permanece bloqueada. O
+> certificado A1, os XMLs, o DANFE e os registros pertencem sempre ao perfil
+> empresarial. A ação principal inicia a venda que dará origem à nota; não cria
+> uma nota fiscal avulsa sem operação comercial.
 
 > Revisão 1.33.0.16: a composição dos comprovantes compartilhados pelo
 > AvantaVendas não altera a operação da Gestão Web.

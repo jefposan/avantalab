@@ -79,7 +79,7 @@ import { NFE_SP_HOMOLOGATION_REFERENCE, buildNfeSpHomologationExecutionPlan, cre
 import { evaluateNfeCertificateInstallationReadiness } from '../lib/nfe-certificate-installation.mjs';
 import { configureFiscalSequence, createFiscalNumberingLedger, normalizeFiscalNumberingLedger, requestFiscalNumberVoid, validateFiscalNumberingLedger, type FiscalNumberingLedger, type FiscalNumberingSequence } from '../lib/fiscal-numbering.mjs';
 import { isAllowedLocalManagementOrigin, MANAGEMENT_CATALOG_READY_TYPE, parseManagementCatalogMessage, type ManagementCatalogBridge } from '../lib/management-catalog-bridge.mjs';
-import { createFiscalCancellationRequest, createFiscalCertificateActivateRequest, createFiscalCertificateInstallRequest, createFiscalCertificateStatusRequest, createFiscalCorrectionRequest, createFiscalDownloadRequest, createFiscalIssueRequest, createFiscalNumberRequest, createFiscalPrepareRequest, createFiscalStatusRequest, createFiscalValidateRequest, fiscalStatusPresentation, parseFiscalCancellationResponse, parseFiscalCertificateActivateResponse, parseFiscalCertificateInstallResponse, parseFiscalCertificateStatusResponse, parseFiscalCorrectionResponse, parseFiscalDownloadResponse, parseFiscalIssueResponse, parseFiscalNumberResponse, parseFiscalPrepareResponse, parseFiscalStatusResponse, parseFiscalValidateResponse, type FiscalArtifactType, type FiscalCertificateStatus, type FiscalEmissionStatus, type FiscalPreparedEmission } from '../lib/fiscal-status-bridge.mjs';
+import { createFiscalCancellationRequest, createFiscalCertificateActivateRequest, createFiscalCertificateInstallRequest, createFiscalCertificateStatusRequest, createFiscalCorrectionRequest, createFiscalDownloadRequest, createFiscalIssueRequest, createFiscalNumberRequest, createFiscalPrepareRequest, createFiscalStatusRequest, createFiscalValidateRequest, fiscalStatusPresentation, parseFiscalCancellationResponse, parseFiscalCertificateActivateResponse, parseFiscalCertificateInstallResponse, parseFiscalCertificateStatusResponse, parseFiscalCorrectionResponse, parseFiscalDownloadResponse, parseFiscalIssueResponse, parseFiscalNumberResponse, parseFiscalPrepareResponse, parseFiscalStatusResponse, parseFiscalValidateResponse, type FiscalArtifactType, type FiscalCertificateStatus, type FiscalEmissionStatus, type FiscalExecutionReadiness, type FiscalPreparedEmission } from '../lib/fiscal-status-bridge.mjs';
 import { parseFiscalDocumentsMessage, type PersistedFiscalDocument } from '../lib/fiscal-documents-bridge.mjs';
 import { createCommercialOrderWorkflowRequest, parseCommercialOrderWorkflowResponse } from '../lib/commercial-order-bridge.mjs';
 import { createCommercialServiceWorkflowRequest, parseCommercialServiceWorkflowResponse } from '../lib/commercial-service-workflow-bridge.mjs';
@@ -679,7 +679,7 @@ type AccessAuditEntry = { id: string; at: string; actor: string; summary: string
 type AccessBridgeState = Pick<AccessBridgeSnapshot, 'available' | 'writable' | 'message'> & { integrated: boolean; loading: boolean };
 type FiscalRulesBridgeState = FiscalRulesBridgeSnapshot & { integrated: boolean; loading: boolean };
 type FiscalProfileBridgeState = { integrated: boolean; available: boolean; writable: boolean; loading: boolean; message: string; profile: FiscalProfile | null };
-type FiscalCertificateBridgeState = { integrated: boolean; available: boolean; writable: boolean; loading: boolean; message: string; certificate: FiscalCertificateStatus | null };
+type FiscalCertificateBridgeState = { integrated: boolean; available: boolean; writable: boolean; loading: boolean; message: string; certificate: FiscalCertificateStatus | null; execution: FiscalExecutionReadiness | null };
 type FiscalMatrixSaveInput = {
   matrix: FiscalMatrix;
   taxReviewConfirmed: boolean;
@@ -4009,7 +4009,7 @@ function FiscalNumberingDialog({ open, ledger, documentScope, actor, readOnly, o
   </Dialog>;
 }
 
-function FiscalView({ origin, drafts, fiscalPrepareState, config, company, settings, numberingLedger, activeUserName, onClearOrigin, onPrepare, onValidate, onReserveNumber, onContinueIssuance, onRevalidate, onCancel, onOpenCertificate, onNavigate, onSaveNumbering }: { origin: FiscalOrigin | null; drafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; config: FiscalConfig; company: CompanyProfile; settings: ModuleSettings; numberingLedger: FiscalNumberingLedger; activeUserName: string; onClearOrigin: () => void; onPrepare: (draft: FiscalDraftRecord) => void; onValidate: (draft: FiscalDraftRecord) => void; onReserveNumber: (draft: FiscalDraftRecord, expectedVersion: number) => void; onContinueIssuance: (draft: FiscalDraftRecord, expectedVersion: number) => void; onRevalidate: (draft: FiscalDraftRecord) => void; onCancel: (draft: FiscalDraftRecord) => void; onOpenCertificate: () => void; onNavigate: (view: View) => void; onSaveNumbering: (ledger: FiscalNumberingLedger, message: string) => boolean }) {
+function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, company, settings, numberingLedger, activeUserName, onClearOrigin, onPrepare, onValidate, onReserveNumber, onContinueIssuance, onRevalidate, onCancel, onOpenCertificate, onNavigate, onSaveNumbering }: { origin: FiscalOrigin | null; drafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; config: FiscalConfig; execution: FiscalExecutionReadiness | null; company: CompanyProfile; settings: ModuleSettings; numberingLedger: FiscalNumberingLedger; activeUserName: string; onClearOrigin: () => void; onPrepare: (draft: FiscalDraftRecord) => void; onValidate: (draft: FiscalDraftRecord) => void; onReserveNumber: (draft: FiscalDraftRecord, expectedVersion: number) => void; onContinueIssuance: (draft: FiscalDraftRecord, expectedVersion: number) => void; onRevalidate: (draft: FiscalDraftRecord) => void; onCancel: (draft: FiscalDraftRecord) => void; onOpenCertificate: () => void; onNavigate: (view: View) => void; onSaveNumbering: (ledger: FiscalNumberingLedger, message: string) => boolean }) {
   const { can } = useContext(PermissionContext);
   const [documentType, setDocumentType] = useState<FiscalDocumentType>(() => settings.fiscal.documentScope[0] ?? 'nfe');
   const [query, setQuery] = useState('');
@@ -4266,24 +4266,28 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, company, setti
   const certificateReady = config.certificateValid;
   const rulesForDocument = settings.fiscal.matrix.rules.filter((rule) => rule.active && rule.documentType === documentType);
   const fiscalRulesReady = Boolean(settings.fiscal.taxReviewConfirmed && settings.fiscal.matrix.reviewedBy && rulesForDocument.length && rulesForDocument.every((rule) => rule.reviewed));
-  const readyForIssue = companyReady && registrationReady && certificateReady && fiscalRulesReady && config.providerConnected;
+  const emissionServiceReady = documentType === 'nfe' && execution?.transmissionAllowed === true;
+  const readyForIssue = companyReady && registrationReady && certificateReady && fiscalRulesReady && emissionServiceReady;
   const readinessGuidance = certificateReady
-    ? config.providerConnected
-      ? 'O certificado e a conexão fiscal estão ativos. Conclua os dados e a revisão fiscal que ainda aparecem como pendentes.'
-      : 'O certificado digital está ativo. Conclua os dados e a revisão fiscal; a conexão segura com o autorizador ainda precisa ser confirmada.'
+    ? emissionServiceReady
+      ? 'O certificado e o executor de homologação estão ativos. Conclua os dados e a revisão fiscal que ainda aparecem como pendentes.'
+      : documentType === 'nfe'
+        ? 'O certificado digital está ativo. A consulta de homologação pode estar disponível, mas o envio continua bloqueado até a guarda fiscal e o executor serem liberados.'
+        : 'Neste piloto, somente NF-e possui executor fiscal. Selecione NF-e ou mantenha este documento apenas como preparação comercial.'
     : 'Conclua os dados da empresa, a revisão fiscal e a instalação do certificado digital. A conexão segura será verificada antes da emissão.';
   const readinessItems = [
     ['Dados da empresa', companyReady, 'CNPJ, regime tributário e endereço fiscal'],
     [documentType === 'nfse' ? 'Inscrição municipal' : 'Inscrição estadual', registrationReady, 'Cadastro necessário para este documento'],
     ['Certificado digital', certificateReady, certificateReady ? 'Certificado ativo' : 'Adicione o certificado nas configurações'],
     ['Configuração fiscal', fiscalRulesReady, fiscalRulesReady ? 'Revisão concluída' : 'Revisão fiscal pendente'],
-    ['Serviço de emissão', config.providerConnected, config.providerConnected ? 'Emissão disponível' : 'Conexão segura ainda não confirmada'],
+    ['Serviço de emissão', emissionServiceReady, emissionServiceReady ? 'NF-e de homologação disponível, sem valor fiscal' : documentType === 'nfe' && execution?.statusServiceReady ? 'Consulta ativa; envio de homologação ainda bloqueado' : documentType === 'nfe' ? 'Guarda fiscal e executor ainda não liberados' : 'Documento sem executor neste piloto'],
   ] as const;
 
   return <>
-    <PageHeading view="fiscal" action={<button type="button" className="button primary" disabled={!readyForIssue} title={!readyForIssue ? 'Conclua as pendências de emissão' : undefined}><Icon name="plus" size={18}/> Emitir nova nota</button>}/>
+    <PageHeading view="fiscal" action={<button type="button" className="button primary" onClick={() => onNavigate(documentType === 'nfse' ? 'servicos' : 'vendas')}><Icon name="plus" size={18}/> {documentType === 'nfse' ? 'Nova ordem de serviço' : 'Nova venda'}</button>}/>
     {origin && (() => { const originStatus = selectedOriginDraft ? fiscalDraftUserStatus(selectedOriginDraft) : null; return <div className="fiscal-origin-banner" role="status"><span><Icon name="fiscal" size={20}/></span><div><strong>{selectedOriginDraft ? `Documento de ${origin.id} localizado` : `Preparação iniciada a partir de ${origin.id}`}</strong><p>{origin.sourceLabel} de {origin.client} · {money(origin.total)}. A origem permanece vinculada e uma nova seleção não cria duplicidade.</p></div><Badge tone={originStatus?.tone ?? 'info'}>{originStatus?.label ?? documentLabel(origin.documentType)}</Badge><button type="button" className="button secondary" onClick={onClearOrigin}>Limpar seleção</button></div>; })()}
     {!readyForIssue && <div className="fiscal-warning fiscal-operational-warning"><div><Icon name="warning" size={22}/></div><span><strong>Emissão fiscal ainda não liberada</strong><p>{readinessGuidance}</p></span><button type="button" className="button secondary" onClick={() => onNavigate('configuracoes')} disabled={!can('settings.view')}>Revisar ajustes</button></div>}
+    {readyForIssue && <div className="fiscal-status-message" role="status"><Icon name="check" size={17}/><span>NF-e liberada exclusivamente no ambiente de homologação. O documento de teste não possui valor fiscal e a produção permanece bloqueada.</span></div>}
     <div className="metric-grid compact"><Metric label="Documentos" value={String(Math.max(0, drafts.length - canceledCount))} note="Originados nas operações"/><Metric label="Para revisar" value={String(pendingCount)} note="Dados ou rejeições" tone="warning"/><Metric label="Preparados" value={String(readyCount)} note="Aguardando emissão" tone="cyan"/><Metric label="Cancelados" value={String(canceledCount)} note="Histórico preservado"/></div>
     <div className="fiscal-layout fiscal-user-overview">
       <Panel title="Situação para emissão" subtitle="Confira somente o que exige ação da empresa"><div className="segmented" role="group" aria-label="Tipo de documento fiscal">{settings.fiscal.documentScope.map((type) => <button key={type} type="button" className={documentType === type ? 'active' : ''} aria-pressed={documentType === type} onClick={() => setDocumentType(type)}>{documentLabel(type)}</button>)}</div><div className="checklist">{readinessItems.map(([label, ready, detail]) => <div key={label}><span className={ready ? 'ready' : 'blocked'}><Icon name={ready ? 'check' : 'warning'} size={16}/></span><div><strong>{label}</strong><small>{detail}</small></div><Badge tone={ready ? 'success' : 'warning'}>{ready ? 'Pronto' : 'Pendente'}</Badge></div>)}</div></Panel>
@@ -5029,15 +5033,18 @@ function CertificateDigitalDialog({ open, company, bridge, onClose, onRequestCom
   const dialogTitle = !companyRegistration.ready ? 'Complete os dados da empresa' : adding ? 'Adicionar certificado digital' : 'Certificado digital';
   const statusLabel = bridge.loading ? 'Consultando' : certificateActive ? 'Certificado ativo' : certificateInstalled ? 'Instalado' : validationResult?.valid ? 'Validado neste navegador' : 'Não configurado';
   const statusTone: 'success' | 'warning' | 'info' = certificateActive || validationResult?.valid ? 'success' : certificateInstalled ? 'info' : 'warning';
-  const statusTitle = certificateActive ? 'Certificado pronto para uso'
+  const statusTitle = certificateActive && bridge.execution?.transmissionAllowed ? 'Certificado e homologação prontos'
+    : certificateActive ? 'Certificado pronto para uso'
     : certificateInstalled ? 'Certificado instalado'
       : validationResult?.valid ? 'Certificado A1 validado localmente'
         : bridge.loading ? 'Consultando certificado' : 'Nenhum certificado instalado';
   const blockerDescriptions = certificateBlockerDescription(persistedCertificate?.blockers ?? []);
   const statusDescription = certificateActive && persistedCertificate?.validTo
-    ? persistedCertificate.fiscalConnectionAvailable
-      ? `Certificado vinculado à empresa e válido até ${new Date(persistedCertificate.validTo).toLocaleDateString('pt-BR')}. A conexão fiscal está disponível.`
-      : `Certificado vinculado à empresa e válido até ${new Date(persistedCertificate.validTo).toLocaleDateString('pt-BR')}. A conexão fiscal será confirmada automaticamente ao emitir.`
+    ? bridge.execution?.transmissionAllowed
+      ? `Certificado vinculado à empresa e válido até ${new Date(persistedCertificate.validTo).toLocaleDateString('pt-BR')}. O executor está liberado exclusivamente para NF-e de homologação, sem valor fiscal.`
+      : persistedCertificate.fiscalConnectionAvailable || bridge.execution?.statusServiceReady
+        ? `Certificado vinculado à empresa e válido até ${new Date(persistedCertificate.validTo).toLocaleDateString('pt-BR')}. A consulta ao ambiente de homologação está disponível; o envio continua bloqueado até a guarda fiscal e o executor serem liberados.`
+        : `Certificado vinculado à empresa e válido até ${new Date(persistedCertificate.validTo).toLocaleDateString('pt-BR')}. A conexão fiscal será confirmada automaticamente ao emitir.`
     : certificateInstalled
       ? persistedCertificate?.validationChecked && blockerDescriptions.length
         ? `O arquivo continua protegido e vinculado à empresa. Falta concluir: ${blockerDescriptions.join('; ')}.`
@@ -5088,7 +5095,7 @@ function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAc
   const settingsGroups: Array<{ id: SettingsGroupId; label: string; title: string; description: string; items: SettingsItem[] }> = [
     { id: 'empresa-notas', label: 'Empresa e notas', title: 'Empresa e emissão de notas', description: 'Dados usados nos documentos e ajustes necessários para emitir notas fiscais.', items: [
       { title: 'Dados da empresa', description: 'CNPJ, endereço, inscrições e dados do emitente', icon: 'settings', status: companyRegistration.ready ? 'Completo' : `${companyRegistration.missing.length} pendentes`, target: 'empresa' },
-      { title: 'Certificado digital', description: 'Adicionar ou substituir o certificado A1', icon: 'document', status: certificateBridge.loading ? 'Consultando' : certificateBridge.certificate?.certificateActive ? 'Certificado ativo' : certificateBridge.certificate?.certificateInstalled ? 'Instalado' : 'Não configurado', target: 'certificado' },
+      { title: 'Certificado digital', description: 'Certificado A1 e situação do executor de homologação', icon: 'document', status: certificateBridge.loading ? 'Consultando' : certificateBridge.certificate?.certificateActive && certificateBridge.execution?.transmissionAllowed ? 'Homologação disponível' : certificateBridge.certificate?.certificateActive && certificateBridge.execution?.statusServiceReady ? 'Consulta ativa' : certificateBridge.certificate?.certificateActive ? 'Executor pendente' : certificateBridge.certificate?.certificateInstalled ? 'Instalado' : 'Não configurado', target: 'certificado' },
       { title: 'Dados para emissão', description: `${settings.fiscal.documentScope.length} ${settings.fiscal.documentScope.length === 1 ? 'tipo de nota' : 'tipos de nota'}, responsável e séries`, icon: 'fiscal', status: fiscalPendingCount ? `${fiscalPendingCount} ${fiscalPendingCount === 1 ? 'pendência' : 'pendências'}` : 'Completo', target: 'fiscal' },
       { title: 'Regras fiscais', description: 'Regras dos tipos de nota ativados', icon: 'document', status: fiscalRulesBridge.integrated ? fiscalRulesBridge.loading ? 'Consultando' : fiscalRulesBridge.configuration ? `Publicada · v${fiscalRulesBridge.configuration.version}` : fiscalRulesBridge.available ? 'Não publicada' : 'Indisponível' : matrixValidation.activeCount > 0 && matrixValidation.reviewedCount === matrixValidation.activeCount ? 'Revisadas localmente' : `${matrixValidation.reviewedCount}/${matrixValidation.activeCount} revisadas`, target: 'matriz' },
     ] },
@@ -5163,7 +5170,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [accessBridgeState, setAccessBridgeState] = useState<AccessBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '' });
   const [fiscalRulesBridgeState, setFiscalRulesBridgeState] = useState<FiscalRulesBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', configuration: null });
   const [fiscalProfileBridgeState, setFiscalProfileBridgeState] = useState<FiscalProfileBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', profile: null });
-  const [fiscalCertificateBridgeState, setFiscalCertificateBridgeState] = useState<FiscalCertificateBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', certificate: null });
+  const [fiscalCertificateBridgeState, setFiscalCertificateBridgeState] = useState<FiscalCertificateBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', certificate: null, execution: null });
   const [fiscalPrepareState, setFiscalPrepareState] = useState<Record<string, { loading: boolean; message: string }>>({});
   const [stockMovementRecords, setStockMovementRecords] = useState<StockMovementRecord[]>(stockMoves);
   const [receivableRecords, setReceivableRecords] = useState<ReceivableRecord[]>(initialReceivables);
@@ -5205,12 +5212,13 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const managementAccessReady = !integratedManagementRuntime || accessBridgeState.available;
   const managementContextReady = managementProfileReady && managementAccessReady;
   const sidebarFiscalStatus = useMemo(() => {
-    if (currentFiscalConfig.certificateValid && currentFiscalConfig.providerConnected) return { title: 'Fiscal conectado', detail: 'Homologação fiscal disponível' };
-    if (currentFiscalConfig.certificateValid) return { title: 'Certificado fiscal ativo', detail: 'Revisão e homologação pendentes' };
+    if (currentFiscalConfig.certificateValid && fiscalCertificateBridgeState.execution?.transmissionAllowed) return { title: 'NF-e de teste disponível', detail: 'Somente homologação, sem valor fiscal' };
+    if (currentFiscalConfig.certificateValid && fiscalCertificateBridgeState.execution?.statusServiceReady) return { title: 'Certificado fiscal ativo', detail: 'Consulta de homologação disponível' };
+    if (currentFiscalConfig.certificateValid) return { title: 'Certificado fiscal ativo', detail: 'Executor de homologação pendente' };
     if (fiscalCertificateBridgeState.loading) return { title: 'Situação fiscal em consulta', detail: 'Aguarde a verificação da empresa' };
     if (fiscalCertificateBridgeState.certificate?.certificateInstalled) return { title: 'Certificado em validação', detail: 'Produção bloqueada com segurança' };
     return { title: 'Fiscal não conectado', detail: 'Produção bloqueada com segurança' };
-  }, [currentFiscalConfig.certificateValid, currentFiscalConfig.providerConnected, fiscalCertificateBridgeState.certificate?.certificateInstalled, fiscalCertificateBridgeState.loading]);
+  }, [currentFiscalConfig.certificateValid, fiscalCertificateBridgeState.certificate?.certificateInstalled, fiscalCertificateBridgeState.execution?.statusServiceReady, fiscalCertificateBridgeState.execution?.transmissionAllowed, fiscalCertificateBridgeState.loading]);
   const activeUser = moduleSettings.access.users.find((user) => user.id === activeUserId) ?? moduleSettings.access.users[0] ?? null;
   const activeRole = moduleSettings.access.roles.find((role) => role.id === activeUser?.roleId) ?? null;
   const effectivePermissions = useMemo(() => resolveEffectivePermissions({ rolePermissions: activeRole?.permissions ?? [], overrides: activeUser?.overrides ?? {}, permissionIds: allPermissionIds }), [activeRole, activeUser]);
@@ -5251,7 +5259,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         finish({ ok: false, message: response.message });
         return;
       }
-      setFiscalCertificateBridgeState({ integrated: true, available: true, writable: true, loading: false, message: response.message, certificate: response.certificate });
+      setFiscalCertificateBridgeState({ integrated: true, available: true, writable: true, loading: false, message: response.message, certificate: response.certificate, execution: response.execution });
       finish({ ok: true, message: response.message, certificate: response.certificate });
     };
     setFiscalCertificateBridgeState((current) => ({ ...current, loading: true, message: 'Instalando certificado…' }));
@@ -5290,7 +5298,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         finish({ ok: false, message: response.message });
         return;
       }
-      setFiscalCertificateBridgeState({ integrated: true, available: true, writable: true, loading: false, message: response.message, certificate: response.certificate });
+      setFiscalCertificateBridgeState({ integrated: true, available: true, writable: true, loading: false, message: response.message, certificate: response.certificate, execution: response.execution });
       finish({ ok: true, message: response.message, certificate: response.certificate });
     };
     setFiscalCertificateBridgeState((current) => ({ ...current, loading: true, message: 'Verificando certificado…' }));
@@ -5394,7 +5402,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     setAccessBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando permissões na Gestão…' });
     setFiscalRulesBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando regras fiscais na Gestão…', configuration: null });
     setFiscalProfileBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando documentos fiscais do perfil…', profile: null });
-    setFiscalCertificateBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando certificado digital…', certificate: null });
+    setFiscalCertificateBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando certificado digital…', certificate: null, execution: null });
     const receive = (event: MessageEvent) => {
       if (event.source !== window.parent || event.origin !== parentOrigin) return;
       const applyPublishedConfiguration = (configuration: NonNullable<FiscalRulesBridgeSnapshot['configuration']>) => {
@@ -5480,6 +5488,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           loading: false,
           message: certificateStatus.message,
           certificate: certificateStatus.ok ? certificateStatus.certificate : null,
+          execution: certificateStatus.ok ? certificateStatus.execution : null,
         });
         return;
       }
@@ -5774,7 +5783,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       setAccessBridgeState({ integrated: false, available: false, writable: false, loading: false, message: '' });
       setFiscalRulesBridgeState({ integrated: false, available: false, writable: false, loading: false, message: '', configuration: null });
       setFiscalProfileBridgeState({ integrated: false, available: false, writable: false, loading: false, message: '', profile: null });
-      setFiscalCertificateBridgeState({ integrated: false, available: false, writable: false, loading: false, message: '', certificate: null });
+      setFiscalCertificateBridgeState({ integrated: false, available: false, writable: false, loading: false, message: '', certificate: null, execution: null });
     };
   }, []);
 
@@ -7265,6 +7274,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           drafts={fiscalDraftRecords}
           fiscalPrepareState={fiscalPrepareState}
           config={currentFiscalConfig}
+          execution={fiscalCertificateBridgeState.execution}
           company={moduleSettings.company}
           settings={moduleSettings}
           numberingLedger={fiscalNumberingLedger}

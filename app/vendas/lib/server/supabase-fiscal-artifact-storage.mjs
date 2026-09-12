@@ -4,7 +4,8 @@ export const SUPABASE_FISCAL_ARTIFACT_STORAGE_REFERENCE = '2026-09-03';
 
 const MAX_ARTIFACT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_CONTENT_TYPES = new Set(['application/xml', 'application/pdf']);
-const STORAGE_KEY_PATTERN = /^fiscal\/nfe\/(\d{14})\/(20\d{2})\/(0[1-9]|1[0-2])\/(\d{44})-(signedNFe\.xml|protocolNFe\.xml|procNFe\.xml|danfe\.pdf)$/;
+const LOGICAL_STORAGE_KEY_PATTERN = /^fiscal\/nfe\/(\d{14})\/(20\d{2})\/(0[1-9]|1[0-2])\/(\d{44})-(signedNFe\.xml|protocolNFe\.xml|procNFe\.xml|danfe\.pdf)$/;
+const VERSIONED_STORAGE_KEY_PATTERN = /^fiscal\/nfe\/(\d{14})\/(20\d{2})\/(0[1-9]|1[0-2])\/(\d{44})\/versions\/([a-f0-9]{64})-(signedNFe\.xml|protocolNFe\.xml|procNFe\.xml|danfe\.pdf)$/;
 const BUCKET_PATTERN = /^[a-z0-9][a-z0-9-]{2,61}[a-z0-9]$/;
 
 function storageError(code, message) {
@@ -36,15 +37,33 @@ function validateBucketName(value) {
   return bucket;
 }
 
+function parseStorageKey(storageKey) {
+  const key = text(storageKey);
+  const logical = LOGICAL_STORAGE_KEY_PATTERN.exec(key);
+  if (logical) return { key, issuerDocument: logical[1], year: logical[2], month: logical[3], accessKey: logical[4], checksum: '', filename: logical[5], versioned: false };
+  const versioned = VERSIONED_STORAGE_KEY_PATTERN.exec(key);
+  if (versioned) return { key, issuerDocument: versioned[1], year: versioned[2], month: versioned[3], accessKey: versioned[4], checksum: versioned[5], filename: versioned[6], versioned: true };
+  return null;
+}
+
 function validateStorageKey(storageKey, accessKey, contentType) {
   const key = text(storageKey);
   const normalizedAccessKey = text(accessKey);
-  const match = STORAGE_KEY_PATTERN.exec(key);
-  if (!match || match[4] !== normalizedAccessKey) throw storageError('AV-FISCAL-SUPABASE-KEY', 'A chave do objeto fiscal não é válida.');
-  if (match[1] !== normalizedAccessKey.slice(6, 20) || match[2] !== `20${normalizedAccessKey.slice(2, 4)}` || match[3] !== normalizedAccessKey.slice(4, 6)) throw storageError('AV-FISCAL-SUPABASE-ROUTE', 'A rota do objeto não corresponde à chave de acesso.');
-  const expectedContentType = match[5].endsWith('.xml') ? 'application/xml' : 'application/pdf';
+  const parsed = parseStorageKey(key);
+  if (!parsed || parsed.accessKey !== normalizedAccessKey) throw storageError('AV-FISCAL-SUPABASE-KEY', 'A chave do objeto fiscal não é válida.');
+  if (parsed.issuerDocument !== normalizedAccessKey.slice(6, 20) || parsed.year !== `20${normalizedAccessKey.slice(2, 4)}` || parsed.month !== normalizedAccessKey.slice(4, 6)) throw storageError('AV-FISCAL-SUPABASE-ROUTE', 'A rota do objeto não corresponde à chave de acesso.');
+  const expectedContentType = parsed.filename.endsWith('.xml') ? 'application/xml' : 'application/pdf';
   if (contentType && text(contentType) !== expectedContentType) throw storageError('AV-FISCAL-SUPABASE-CONTENT-TYPE', 'O tipo de conteúdo não corresponde ao documento fiscal.');
-  return { key, contentType: expectedContentType };
+  return { ...parsed, contentType: expectedContentType };
+}
+
+function immutableVersionKey(parsed, checksum) {
+  if (parsed.versioned) {
+    if (parsed.checksum !== checksum) throw storageError('AV-FISCAL-SUPABASE-VERSION', 'A versão física não corresponde ao conteúdo fiscal.');
+    return parsed.key;
+  }
+  const prefix = parsed.key.slice(0, parsed.key.length - `${parsed.accessKey}-${parsed.filename}`.length);
+  return `${prefix}${parsed.accessKey}/versions/${checksum}-${parsed.filename}`;
 }
 
 function parseStorageReference(storageReference, expectedBucket) {
@@ -52,7 +71,7 @@ function parseStorageReference(storageReference, expectedBucket) {
   const reference = text(storageReference);
   if (!reference.startsWith(prefix)) throw storageError('AV-FISCAL-SUPABASE-REFERENCE', 'A referência não pertence ao bucket fiscal configurado.');
   const key = reference.slice(prefix.length);
-  if (!key || key.includes('..') || key.includes('\\') || !STORAGE_KEY_PATTERN.test(key)) throw storageError('AV-FISCAL-SUPABASE-REFERENCE', 'A referência do objeto fiscal não é segura.');
+  if (!key || key.includes('..') || key.includes('\\') || !VERSIONED_STORAGE_KEY_PATTERN.test(key)) throw storageError('AV-FISCAL-SUPABASE-REFERENCE', 'A referência do objeto fiscal não é segura.');
   return key;
 }
 
@@ -65,16 +84,13 @@ function assertClient(client) {
   if (!client?.storage || typeof client.storage.from !== 'function' || typeof client.storage.getBucket !== 'function') throw new TypeError('Informe um cliente Supabase server-side compatível com Storage.');
 }
 
-async function currentObject(bucketApi, key, expectedChecksum, storageVersion = '') {
-  const options = storageVersion ? { versionId: storageVersion } : undefined;
-  const downloaded = await bucketApi.download(key, options);
+async function currentObject(bucketApi, key, expectedChecksum) {
+  const downloaded = await bucketApi.download(key);
   if (downloaded.error) throw downloaded.error;
   const content = await blobToBuffer(downloaded.data);
   const actualChecksum = sha256(content);
   if (expectedChecksum && actualChecksum !== expectedChecksum) throw storageError('AV-FISCAL-SUPABASE-CONFLICT', 'O objeto existente possui outro conteúdo.');
-  const inspected = await bucketApi.info(key, options);
-  if (inspected.error) throw inspected.error;
-  return { content, checksum: actualChecksum, versionId: text(inspected.data?.version) || actualChecksum };
+  return { content, checksum: actualChecksum, versionId: actualChecksum };
 }
 
 function receipt(bucket, key, stored, clock, reused) {
@@ -91,14 +107,16 @@ export function createSupabaseFiscalArtifactStorage({ client, bucket: bucketInpu
   assertClient(client);
   const bucket = validateBucketName(bucketInput);
   const normalizedEnvironment = text(environment);
-  if (!['local-lab', 'production'].includes(normalizedEnvironment)) throw new TypeError('O ambiente do Storage fiscal não é permitido.');
+  if (!['local-lab', 'homologacao', 'production'].includes(normalizedEnvironment)) throw new TypeError('O ambiente do Storage fiscal não é permitido.');
   const productionReady = normalizedEnvironment === 'production' && productionReadiness?.productionReady === true;
   const bucketApi = client.storage.from(bucket);
+  let homologationReady = false;
   return Object.freeze({
     id: 'avantalab-supabase-fiscal-artifact-storage-v1',
     configured: true,
     environment: normalizedEnvironment,
     productionReady,
+    get homologationReady() { return homologationReady; },
     bucket,
     async inspectReadiness() {
       const response = await client.storage.getBucket(bucket);
@@ -117,7 +135,11 @@ export function createSupabaseFiscalArtifactStorage({ client, bucket: bucketInpu
       }
       if (!Number.isFinite(fileSizeLimit) || fileSizeLimit <= 0 || fileSizeLimit > MAX_ARTIFACT_BYTES) errors.push({ code: 'AV-FISCAL-SUPABASE-BUCKET-SIZE', field: 'bucket.fileSizeLimit', message: 'O limite do bucket fiscal deve ser de no máximo 10 MiB.' });
       for (const required of ALLOWED_CONTENT_TYPES) if (!mimeTypes.includes(required)) errors.push({ code: 'AV-FISCAL-SUPABASE-BUCKET-MIME', field: 'bucket.allowedMimeTypes', message: `O bucket fiscal precisa aceitar ${required}.` });
-      return { valid: errors.length === 0, productionReady: errors.length === 0 && nativeVersioning && productionReady, bucket: { id: bucket, public: false, versioning: nativeVersioning ? 'ENABLED' : 'LOGICAL_SHA256', nativeVersioning, fileSizeLimit, allowedMimeTypes: [...mimeTypes] }, warnings, errors };
+      const secureForHomologation = details.public === false
+        && Number.isFinite(fileSizeLimit) && fileSizeLimit > 0 && fileSizeLimit <= MAX_ARTIFACT_BYTES
+        && [...ALLOWED_CONTENT_TYPES].every((required) => mimeTypes.includes(required));
+      homologationReady = secureForHomologation;
+      return { valid: errors.length === 0, homologationReady: secureForHomologation, productionReady: errors.length === 0 && nativeVersioning && productionReady, bucket: { id: bucket, public: false, versioning: nativeVersioning ? 'ENABLED' : 'LOGICAL_SHA256', nativeVersioning, fileSizeLimit, allowedMimeTypes: [...mimeTypes] }, warnings, errors };
     },
     async putImmutable({ accessKey, storageKey, contentType, content, checksum: expectedChecksum, byteLength } = {}) {
       const validated = validateStorageKey(storageKey, accessKey, contentType);
@@ -125,35 +147,43 @@ export function createSupabaseFiscalArtifactStorage({ client, bucket: bucketInpu
       if (body.length === 0 || body.length > MAX_ARTIFACT_BYTES || Number(byteLength) !== body.length) throw storageError('AV-FISCAL-SUPABASE-SIZE', 'O tamanho do documento fiscal é inválido.');
       const contentChecksum = sha256(body);
       if (!/^[a-f0-9]{64}$/.test(text(expectedChecksum)) || expectedChecksum !== contentChecksum) throw storageError('AV-FISCAL-SUPABASE-CHECKSUM', 'A integridade do documento fiscal não foi confirmada.');
-      const uploaded = await bucketApi.upload(validated.key, body, { cacheControl: '0', contentType: validated.contentType, upsert: false, metadata: { sha256: contentChecksum } });
+      const physicalKey = immutableVersionKey(validated, contentChecksum);
+      const uploaded = await bucketApi.upload(physicalKey, body, { cacheControl: '0', contentType: validated.contentType, upsert: false, metadata: { sha256: contentChecksum, logicalKey: validated.key } });
       if (uploaded.error) {
         if (!isAlreadyExists(uploaded.error)) throw storageError('AV-FISCAL-SUPABASE-UPLOAD', 'O Storage não conseguiu guardar o documento fiscal.');
-        const existing = await currentObject(bucketApi, validated.key, contentChecksum);
-        return receipt(bucket, validated.key, existing, clock, true);
+        const existing = await currentObject(bucketApi, physicalKey, contentChecksum);
+        return receipt(bucket, physicalKey, existing, clock, true);
       }
-      const stored = await currentObject(bucketApi, validated.key, contentChecksum);
-      return receipt(bucket, validated.key, stored, clock, false);
+      const stored = await currentObject(bucketApi, physicalKey, contentChecksum);
+      return receipt(bucket, physicalKey, stored, clock, false);
     },
     async readVerified({ accessKey, storageKey, contentType, expectedChecksum, storageVersion } = {}) {
       const validated = validateStorageKey(storageKey, accessKey, contentType);
-      const stored = await currentObject(bucketApi, validated.key, text(expectedChecksum), text(storageVersion));
-      return { content: new Uint8Array(stored.content), contentType: validated.contentType, byteLength: stored.content.length, storageReference: `supabase://${bucket}/${validated.key}`, versionId: stored.versionId, checksum: stored.checksum };
+      const checksum = text(expectedChecksum) || text(storageVersion);
+      if (!/^[a-f0-9]{64}$/.test(checksum)) throw storageError('AV-FISCAL-SUPABASE-VERSION', 'A versão imutável do objeto fiscal é obrigatória.');
+      const physicalKey = immutableVersionKey(validated, checksum);
+      const stored = await currentObject(bucketApi, physicalKey, checksum);
+      return { content: new Uint8Array(stored.content), contentType: validated.contentType, byteLength: stored.content.length, storageReference: `supabase://${bucket}/${physicalKey}`, versionId: stored.versionId, checksum: stored.checksum };
     },
     async readByReference({ accessKey, storageReference, contentType, expectedChecksum, storageVersion } = {}) {
       const storageKey = parseStorageReference(storageReference, bucket);
       const validated = validateStorageKey(storageKey, accessKey, contentType);
-      const stored = await currentObject(bucketApi, validated.key, text(expectedChecksum), text(storageVersion));
+      const version = text(storageVersion);
+      if (!/^[a-f0-9]{64}$/.test(version) || validated.checksum !== version) throw storageError('AV-FISCAL-SUPABASE-VERSION', 'A versão solicitada não corresponde ao objeto fiscal.');
+      const stored = await currentObject(bucketApi, validated.key, text(expectedChecksum) || version);
       return { content: new Uint8Array(stored.content), contentType: validated.contentType, byteLength: stored.content.length, storageReference: `supabase://${bucket}/${validated.key}`, versionId: stored.versionId, checksum: stored.checksum };
     },
     async createReadGrant({ storageReference, storageVersion, contentType, filename, ttlSeconds } = {}) {
       const key = parseStorageReference(storageReference, bucket);
-      const validated = validateStorageKey(key, STORAGE_KEY_PATTERN.exec(key)?.[4], contentType);
+      const parsed = parseStorageKey(key);
+      const validated = validateStorageKey(key, parsed?.accessKey, contentType);
       const ttl = Number(ttlSeconds);
       if (!Number.isInteger(ttl) || ttl < 30 || ttl > 300) throw storageError('AV-FISCAL-SUPABASE-TTL', 'O acesso temporário deve durar de 30 a 300 segundos.');
       if (!text(storageVersion)) throw storageError('AV-FISCAL-SUPABASE-VERSION', 'A versão imutável do objeto fiscal é obrigatória.');
       const downloadName = text(filename);
       if (!/^[A-Za-z0-9._-]{5,120}$/.test(downloadName)) throw storageError('AV-FISCAL-SUPABASE-FILENAME', 'O nome do arquivo para download não é seguro.');
-      const checked = await currentObject(bucketApi, validated.key, '', text(storageVersion));
+      if (validated.checksum !== text(storageVersion)) throw storageError('AV-FISCAL-SUPABASE-VERSION', 'A versão solicitada não corresponde ao objeto fiscal.');
+      const checked = await currentObject(bucketApi, validated.key, validated.checksum);
       if (checked.versionId !== text(storageVersion)) throw storageError('AV-FISCAL-SUPABASE-VERSION', 'A versão solicitada não corresponde ao objeto fiscal.');
       const response = await bucketApi.createSignedUrl(validated.key, ttl, { download: downloadName });
       if (response.error || !text(response.data?.signedUrl)) throw storageError('AV-FISCAL-SUPABASE-GRANT', 'O Storage não criou o acesso temporário.');
