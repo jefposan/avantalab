@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0.15 -->
+<!-- ava-version: 1.33.0.16 -->
+
+> Revisão 1.33.0.16: ao compartilhar um comprovante com desconto, o valor é
+> mostrado no bloco **Pedido registrado** ou **Pagamento registrado**. No
+> pagamento, o valor pago permanece separado do desconto concedido.
 
 > Revisão 1.33.0.15: os seletores de mês dos cards da Gestão Web não alteram o
 > fluxo do AvantaVendas.

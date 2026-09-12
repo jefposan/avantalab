@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.33.0.16: comprovantes compartilhados pelo AvantaVendas
+// exibem desconto no próprio Pedido registrado ou Pagamento registrado; o
+// valor pago permanece separado do desconto concedido.
 // Revisado na versão 1.33.0.15: Meus perfis e Centros de custo têm seletores
 // mensais próprios, iguais ao Resumo Financeiro, sem alterar os demais cards.
 // Revisado na versão 1.33.0.14: os carregamentos da Gestão Web são ancorados

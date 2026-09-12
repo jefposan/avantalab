@@ -8678,12 +8678,13 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   const linhasRegulares = resumo.filter((linha) => !linha.destaque);
   const linhaPrincipal = resumo.find((linha) => linha.destaque === 'principal');
   const linhaSaldo = resumo.find((linha) => linha.destaque === 'saldo');
+  const complementoPrincipal = linhaPrincipal?.complemento;
   const largura = 1080;
   const alturaBlocoResumoRegular = linhasRegulares.length ? (resumoSemTitulo ? 75 : 97) + linhasRegulares.length * 72 : 0;
   const yAntesDosDetalhes = 278
     + (etiqueta ? 116 : 0)
     + alturaBlocoResumoRegular
-    + (linhaPrincipal ? 180 : 0)
+    + (linhaPrincipal ? (complementoPrincipal ? 240 : 180) : 0)
     + (linhaSaldo ? 192 : 0);
   const yDetalhes = yAntesDosDetalhes + (ocultarDetalhes ? 0 : 22);
   const alturaDetalhes = ocultarDetalhes ? 0 : Math.max(112, 26 + linhasExibidas.length * 90);
@@ -8730,7 +8731,8 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   if (linhaPrincipal) {
     ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     y += 22;
-    caminhoRetanguloArredondado(ctx, 48, y, 984, 116, 26);
+    const alturaDestaquePrincipal = complementoPrincipal ? 176 : 116;
+    caminhoRetanguloArredondado(ctx, 48, y, 984, alturaDestaquePrincipal, 26);
     const destaqueGradiente = ctx.createLinearGradient(48, y, 1032, y + 116);
     destaqueGradiente.addColorStop(0, '#075985'); destaqueGradiente.addColorStop(1, '#1687D9');
     ctx.fillStyle = destaqueGradiente; ctx.fill(); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.stroke();
@@ -8738,7 +8740,12 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     ctx.fillStyle = '#dff5ff'; ctx.font = '800 29px Arial, sans-serif'; ctx.fillText(linhaPrincipal.rotulo, 84, y + (temSubtituloPrincipal ? 45 : 70));
     if (linhaPrincipal.subtitulo) { ctx.fillStyle = '#bae6fd'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linhaPrincipal.subtitulo, 470), 84, y + 81); }
     ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText(linhaPrincipal.valor, 996, y + 70); ctx.textAlign = 'left';
-    y += 158;
+    if (complementoPrincipal) {
+      ctx.strokeStyle = 'rgba(255,255,255,.42)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(84, y + 92); ctx.lineTo(996, y + 92); ctx.stroke();
+      ctx.fillStyle = '#dff5ff'; ctx.font = '750 27px Arial, sans-serif'; ctx.fillText(complementoPrincipal.rotulo, 84, y + 140);
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '850 38px Arial, sans-serif'; ctx.fillText(complementoPrincipal.valor, 996, y + 142); ctx.textAlign = 'left';
+    }
+    y += complementoPrincipal ? 218 : 158;
   }
   if (linhaSaldo) {
     ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Situação após o lançamento', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
@@ -8848,8 +8855,7 @@ async function compartilharPedido(pedidoId) {
       linhas,
       resumo: [
         { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
-        ...(desconto > 0 ? [{ rotulo: 'Desconto concedido', valor: dadosComprovante.desconto }] : []),
-        { rotulo: titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', valor: dadosComprovante.valorPedido, destaque: 'principal', tituloDestaque: 'Pedido registrado' },
+        { rotulo: titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', valor: dadosComprovante.valorPedido, destaque: 'principal', tituloDestaque: 'Pedido registrado', ...(desconto > 0 ? { complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto } } : {}) },
         { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],
     });
@@ -8864,17 +8870,18 @@ async function compartilharPagamento(pagamentoId) {
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
   const desconto = Number(pagamento.desconto || 0);
-  const abatimento = Number(pagamento.valor || 0) + desconto;
   const dadosComprovante = {
     empresa: nomeEmpresaParaComprovantes(),
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(pagamento.data_pagamento),
     saldoAnterior: moeda(resumo.saldoAnterior),
-    valorPago: moeda(abatimento),
+    // O desconto é uma linha própria do pagamento registrado; não deve ser
+    // incorporado ao valor efetivamente recebido.
+    valorPago: moeda(pagamento.valor),
     saldoAtual: moeda(resumo.saldoAtual),
     formaPagamento: pagamento.forma_pagamento || 'Não informado',
     desconto: desconto > 0 ? moeda(desconto) : '',
-    rotuloValorPago: desconto > 0 ? 'Valor pago + desconto' : 'Valor pago',
+    rotuloValorPago: 'Valor pago',
   };
   // O V2 só recebe valores já formatados. O fallback preserva a exportação se
   // o PWA estiver entre as versões de cache durante a atualização.
@@ -8889,7 +8896,7 @@ async function compartilharPagamento(pagamentoId) {
       ocultarDetalhes: true,
       resumo: [
         { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
-        { rotulo: dadosComprovante.rotuloValorPago, subtitulo: `Forma de pagamento: ${dadosComprovante.formaPagamento}${desconto > 0 ? ` · Desconto: ${dadosComprovante.desconto}` : ''}`, valor: dadosComprovante.valorPago, destaque: 'principal', tituloDestaque: 'Pagamento registrado' },
+        { rotulo: dadosComprovante.rotuloValorPago, subtitulo: `Forma de pagamento: ${dadosComprovante.formaPagamento}`, valor: dadosComprovante.valorPago, destaque: 'principal', tituloDestaque: 'Pagamento registrado', ...(desconto > 0 ? { complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto } } : {}) },
         { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],
     });

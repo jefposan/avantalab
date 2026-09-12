@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.33.0.16 - 2026-09-12
+- **Descontos nos comprovantes**: o comprovante de pedido exibe o desconto em
+  **Pedido registrado**, e o comprovante de pagamento o mostra em **Pagamento
+  registrado**, sem somá-lo ao valor efetivamente pago.
+
 ## 1.33.0.15 - 2026-09-11
 - **Filtros mensais independentes**: os cards **Meus perfis** e **Centros de
   custo** agora usam o mesmo seletor de mês do Resumo Financeiro. Cada card

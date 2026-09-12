@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0.15 -->
+<!-- ava-version: 1.33.0.16 -->
+
+> Revisão 1.33.0.16: a composição dos comprovantes compartilhados pelo
+> AvantaVendas não altera a operação da Gestão Mobile.
 
 > Revisão 1.33.0.15: os seletores de mês dos cards da Gestão Web não alteram a
 > operação da Gestão Mobile.

@@ -76,6 +76,18 @@ test('PaymentReceiptV2 compõe o comprovante com os valores formatados sem cálc
   assert.ok(!codigo.includes('atesta o registro do pagamento'));
   assert.match(codigo, /assets\/receipts\/avantalab-receipt-bg\.webp/);
   assert.doesNotMatch(codigo, /https?:\/\//);
+
+  textos.length = 0;
+  await janela.PaymentReceiptV2.criarCanvas({
+    valorPago: 'R$ 90,00',
+    desconto: 'R$ 10,00',
+    formaPagamento: 'Pix',
+  });
+  assert.equal(canvas.height, 1300, 'o desconto amplia somente o bloco de pagamento registrado');
+  for (const valor of ['PAGAMENTO REGISTRADO', 'Valor pago', 'R$ 90,00', 'Desconto concedido', 'R$ 10,00']) {
+    assert.ok(textos.some((texto) => texto.includes(valor)), `deveria exibir ${valor} no pagamento registrado`);
+  }
+  assert.match(codigo, /if \(temDesconto\) \{\n      linha\(ctx, 180, yPagamento \+ 246.*'Desconto concedido'/s);
 });
 
 test('o PWA carrega e coloca em cache o renderizador e o fundo fixo', async () => {

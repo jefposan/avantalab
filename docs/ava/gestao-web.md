@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.15 -->
+<!-- ava-version: 1.33.0.16 -->
+
+> Revisão 1.33.0.16: a composição dos comprovantes compartilhados pelo
+> AvantaVendas não altera a operação da Gestão Web.
 
 > Revisão 1.33.0.15: os cards **Meus perfis** e **Centros de custo** têm seu
 > próprio seletor de mês, igual ao do Resumo Financeiro. Cada seletor atualiza

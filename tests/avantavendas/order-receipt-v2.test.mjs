@@ -38,7 +38,7 @@ test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', as
   });
   assert.equal(resultado, canvas);
   assert.equal(canvas.height, 1620, 'a altura deve terminar logo após a margem fixa do rodapé');
-  for (const valor of ['TRIDIUM COSMÉTICOS', 'Cliente: Isa', 'R$ 1.283,50', 'R$ 10,00', 'R$ 100,00', 'R$ 1.383,50', 'Shampoo', '2 × R$ 30,00', 'Brinde', 'BONIFICADO', 'Comprovante de pedido • Isa']) assert.ok(textos.some((texto) => texto.includes(valor)), `deveria manter ${valor}`);
+  for (const valor of ['TRIDIUM COSMÉTICOS', 'Cliente: Isa', 'R$ 1.283,50', 'Desconto concedido', 'R$ 10,00', 'R$ 100,00', 'R$ 1.383,50', 'Shampoo', '2 × R$ 30,00', 'Brinde', 'BONIFICADO', 'Comprovante de pedido • Isa']) assert.ok(textos.some((texto) => texto.includes(valor)), `deveria manter ${valor}`);
   assert.ok(textos.every((texto) => !texto.includes('(mitsutani)')), 'observações posteriores ao primeiro nome não devem aparecer no comprovante');
   assert.ok(textos.every((texto) => !texto.includes('1 ×')), 'um item com quantidade 1 não deve exibir a linha de quantidade');
   for (const textoRemovido of ['Pedido confirmado', 'Valor que permanece em aberto', 'Seu pedido foi confirmado no sistema.']) assert.ok(!textos.includes(textoRemovido), `não deveria exibir ${textoRemovido}`);
@@ -48,10 +48,12 @@ test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', as
   assert.match(codigo, /alinhamento: 'center', largura: 460, linhaBase: 'middle'/);
   assert.match(codigo, /'Valor do pedido', 276, yPedido \+ 137/);
   assert.match(codigo, /'Saldo atual', 276, ySaldo \+ 137/);
-  assert.match(codigo, /card\(ctx, yPedido, alturaCardValor, '', 'PEDIDO REGISTRADO'\)/);
+  assert.match(codigo, /card\(ctx, yPedido, alturaCardPedido, '', 'PEDIDO REGISTRADO'\)/);
   assert.match(codigo, /card\(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO'\)/);
   assert.match(codigo, /card\(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'\)/);
-  assert.match(codigo, /const alturaResumo = temDesconto \? 246 : 184/);
+  assert.match(codigo, /const alturaResumo = 184/);
+  assert.match(codigo, /if \(temDesconto\).*'Desconto concedido'.*yPedido \+ 208/s);
+  assert.doesNotMatch(codigo, /'Desconto concedido'.*yResumo/s);
   assert.match(codigo, /card\(ctx, yDetalhes, alturaDetalhes, '', titulo === 'Pedido consignado' \? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO'\)/);
   assert.doesNotMatch(codigo, /icone\(ctx, 'itens',/);
   assert.doesNotMatch(codigo, /card\(ctx, yResumo, alturaResumo, 'carteira'/);

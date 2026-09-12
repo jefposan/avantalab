@@ -106,12 +106,15 @@
     const clienteExibido = primeiroNomeClienteComprovante(cliente);
     const itensExibidos = Array.isArray(itens) ? itens : [];
     const temDesconto = Boolean(desconto);
-    const alturaResumo = temDesconto ? 246 : 184;
+    // O resumo mostra somente o contexto do saldo. O desconto é parte do
+    // pedido registrado e deve aparecer no próprio bloco do lançamento.
+    const alturaResumo = 184;
     const yResumo = 440;
+    const alturaCardPedido = temDesconto ? 280 : 218;
     const alturaCardValor = 218;
     const espacoEntreCards = 24;
     const yPedido = yResumo + alturaResumo + espacoEntreCards;
-    const ySaldo = yPedido + alturaCardValor + espacoEntreCards;
+    const ySaldo = yPedido + alturaCardPedido + espacoEntreCards;
     const yDetalhes = ySaldo + alturaCardValor + espacoEntreCards;
     const alturaItens = Math.max(82, 26 + itensExibidos.length * 82);
     const alturaDetalhes = 88 + alturaItens;
@@ -132,10 +135,10 @@
 
     retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 288, 367, 44, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', 570, 367, { tamanho: 24, peso: 800, cor: '#16773F', alinhamento: 'center', largura: 460, linhaBase: 'middle' });
 
-    card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, yResumo + 72, temDesconto ? 140 : 86, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, yResumo + 125, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, yResumo + 125, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
-    if (temDesconto) { linha(ctx, 180, yResumo + 140, 928, yResumo + 140, '#DCE6F0', 2); texto(ctx, 'Desconto concedido', 180, yResumo + 184, { tamanho: 24, peso: 600, cor: '#425675' }); texto(ctx, desconto, 928, yResumo + 184, { tamanho: 29, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 300 }); }
+    card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, yResumo + 72, 86, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, yResumo + 125, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, yResumo + 125, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
 
-    card(ctx, yPedido, alturaCardValor, '', 'PEDIDO REGISTRADO'); fundoDeValor(ctx, yPedido + 72, 112, '#1674D1'); icone(ctx, 'confirmado', 208, yPedido + 128, 58, '#FFFFFF'); texto(ctx, titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', 276, yPedido + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPedido, 922, yPedido + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    card(ctx, yPedido, alturaCardPedido, '', 'PEDIDO REGISTRADO'); fundoDeValor(ctx, yPedido + 72, temDesconto ? 174 : 112, '#1674D1'); icone(ctx, 'confirmado', 208, yPedido + 128, 58, '#FFFFFF'); texto(ctx, titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', 276, yPedido + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPedido, 922, yPedido + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    if (temDesconto) { linha(ctx, 180, yPedido + 154, 922, yPedido + 154, 'rgba(255,255,255,.42)', 2); texto(ctx, 'Desconto concedido', 276, yPedido + 208, { tamanho: 24, peso: 600, cor: '#D9F0FF', largura: 390 }); texto(ctx, desconto, 922, yPedido + 208, { tamanho: 31, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 330 }); }
 
     card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 72, 112, '#0A2F6B'); icone(ctx, 'grafico', 208, ySaldo + 128, 56, '#46B7FF'); texto(ctx, 'Saldo atual', 276, ySaldo + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, saldoAtual, 922, ySaldo + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
 

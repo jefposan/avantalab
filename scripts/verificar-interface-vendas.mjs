@@ -117,6 +117,9 @@ exigir(
     && aplicacao.includes('resumoSemTitulo: true')
     && aplicacao.includes('ocultarDetalhes: true')
     && aplicacao.includes('Forma de pagamento: ${dadosComprovante.formaPagamento}')
+    && aplicacao.includes('valorPago: moeda(pagamento.valor)')
+    && comprovantePagamento.includes("'Desconto concedido'")
+    && aplicacao.includes("complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto }")
     && aplicacao.includes('const clienteExibido = primeiroNomeClienteComprovante(cliente);'),
   'O comprovante de pagamento deve isolar o saldo anterior e reunir valor, forma e desconto no mesmo lançamento, com ícone da modalidade e pílula no rodapé.',
 );
@@ -415,10 +418,11 @@ exigir(
     && comprovantePedido.includes("'Saldo atual', 276, ySaldo + 137")
     && comprovantePedido.includes("'Pedido registrado com sucesso!', 570, 367")
     && comprovantePedido.includes("alinhamento: 'center', largura: 460, linhaBase: 'middle'")
-    && comprovantePedido.includes("card(ctx, yPedido, alturaCardValor, '', 'PEDIDO REGISTRADO')")
+    && comprovantePedido.includes("card(ctx, yPedido, alturaCardPedido, '', 'PEDIDO REGISTRADO')")
     && comprovantePedido.includes("card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
     && comprovantePedido.includes("card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO')")
-    && comprovantePedido.includes('const alturaResumo = temDesconto ? 246 : 184')
+    && comprovantePedido.includes('const alturaResumo = 184')
+    && comprovantePedido.includes("'Desconto concedido', 276, yPedido + 208")
     && comprovantePedido.includes('const altura = yRodape + MARGEM_INFERIOR_RODAPE;')
     && !comprovantePedido.includes('itens.slice(0, 44)')
     && comprovantePedido.includes('function desenharFundoAncoradoNoRodape(ctx, fundo, altura)')
@@ -434,6 +438,8 @@ exigir(
     && !comprovantePedido.includes("texto(ctx, 'Valor que permanece em aberto'")
     && !comprovantePedido.includes("texto(ctx, 'Seu pedido foi confirmado no sistema.'")
     && aplicacao.includes('const temSubtituloPrincipal = Boolean(linhaPrincipal.subtitulo)')
+    && aplicacao.includes('const complementoPrincipal = linhaPrincipal?.complemento;')
+    && aplicacao.includes("complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto }")
     && aplicacao.includes('const temSubtituloSaldo = Boolean(linhaSaldo.subtitulo)')
     && aplicacao.includes("etiqueta: 'Pedido registrado com sucesso!'")
     && aplicacao.includes("ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', largura / 2, y + 13)")
