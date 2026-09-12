@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.33.0.11 -->
+<!-- ava-version: 1.33.0.12 -->
+
+> Revisão 1.33.0.12: o refinamento do resumo de Centros de custo pertence à
+> Gestão Web e não altera a operação da Gestão Mobile.
 
 > Revisão 1.33.0.11: os contextos financeiros por Centro de custo pertencem à
 > Gestão Web e não alteram a operação da Gestão Mobile.

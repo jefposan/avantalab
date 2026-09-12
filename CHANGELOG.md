@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.33.0.12 - 2026-09-11
+- **Resumo correto dos centros**: o centro **Principal** continua exibindo
+  somente seus próprios lançamentos. O card Centros de custo passa a seguir a
+  leitura de Meus perfis: resultado consolidado, receitas, despesas e resultado
+  independente de cada centro.
+
 ## 1.33.0.11 - 2026-09-11
 - **Financeiro independente por centro**: ao ativar Centros de custo, o perfil
   cria e mantém o centro **Principal**, que recebe o histórico já existente.

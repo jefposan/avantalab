@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.33.0.12: o centro Principal mostra somente seu próprio
+// financeiro; o card Centros de custo concentra o consolidado e o resultado
+// independente de cada centro, no padrão de leitura de Meus perfis.
 // Revisado na versão 1.33.0.11: ao ativar Centros de custo, o perfil cria o
 // Principal permanente e move nele o histórico. A Gestão Web filtra receitas,
 // despesas, fixas e evolução pelo centro escolhido, mantendo no card o resumo

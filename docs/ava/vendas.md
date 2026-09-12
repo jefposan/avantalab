@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.33.0.11 -->
+<!-- ava-version: 1.33.0.12 -->
+
+> Revisão 1.33.0.12: o refinamento do resumo de Centros de custo pertence à
+> Gestão Web e não altera o fluxo do AvantaVendas.
 
 > Revisão 1.33.0.11: os contextos financeiros por Centro de custo pertencem à
 > Gestão Web e não alteram o fluxo do AvantaVendas.

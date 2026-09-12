@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.33.0.11 -->
+<!-- ava-version: 1.33.0.12 -->
+
+> Revisão 1.33.0.12: selecionar **Principal** mostra somente o financeiro do
+> próprio centro. O consolidado fica no card **Centros de custo**, que apresenta
+> receitas, despesas e resultado de cada centro no mesmo padrão de Meus perfis.
 
 > Revisão 1.33.0.11: ao ativar **Centros de custo**, o perfil passa a ter o
 > centro **Principal**, sempre ativo e presente na lista. O histórico já
