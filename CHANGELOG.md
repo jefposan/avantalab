@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.0.12 - 2026-09-13
+- **Sincronização Apple acelerada**: a releitura inicial de até 90 relatórios
+  diários é processada em lotes limitados, permitindo gravar os downloads
+  corrigidos dentro do tempo da função sem sobrecarregar a API da loja.
+
 ## 1.35.0.11 - 2026-09-13
 - **Persistência corrigida dos downloads Apple**: a fonte da releitura de
   instalações iniciais passa a ser aceita na base. A sincronização deixa de

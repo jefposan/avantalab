@@ -39,6 +39,7 @@ const PACOTES_GOOGLE: Record<AplicativoLoja, string> = {
 
 const DIAS_JANELA = 90;
 const FONTE_APPLE = 'apple_sales_report_v2';
+const CONCORRENCIA_RELATORIOS_APPLE = 6;
 
 type ResultadoSincronizacaoLoja = {
   loja: LojaDownload;
@@ -53,7 +54,9 @@ function mensagemErro(erro: unknown) {
     ? erro.message
     : typeof erro === 'object' && erro !== null && 'message' in erro && typeof erro.message === 'string'
       ? erro.message
-      : 'Falha desconhecida.';
+      : typeof erro === 'string' && erro.trim()
+        ? erro
+        : 'Falha desconhecida.';
 }
 
 let sincronizacaoEmAndamento: Promise<ResultadoSincronizacaoLoja[]> | null = null;
@@ -198,14 +201,20 @@ export async function sincronizarDownloadsApple() {
   const datas = datasParaBuscar(dataInicial);
   const agora = new Date().toISOString();
   const registros: RegistroDownloadDiario[] = [];
-  for (const data of datas) {
-    const linhas = await buscarRelatorioApple(data);
-    if (linhas === null) break;
-    for (const aplicativo of APLICATIVOS_LOJAS) {
-      const downloads = linhas
-        .filter((linha) => linha.appleId === APPLE_IDS[aplicativo] && ehDownloadInicialApple(linha.tipoProduto))
-        .reduce((total, linha) => total + linha.unidades, 0);
-      registros.push({ aplicativo, loja: 'apple_app_store', data_referencia: data, downloads: Math.max(0, downloads), fonte: FONTE_APPLE, atualizado_em: agora });
+  // O histórico inicial contém até 90 relatórios. Lemos pequenos lotes em
+  // paralelo para caber no tempo da função, sem abrir conexões ilimitadas com
+  // a API da Apple.
+  for (let inicio = 0; inicio < datas.length; inicio += CONCORRENCIA_RELATORIOS_APPLE) {
+    const lote = datas.slice(inicio, inicio + CONCORRENCIA_RELATORIOS_APPLE);
+    const relatorios = await Promise.all(lote.map(async (data) => ({ data, linhas: await buscarRelatorioApple(data) })));
+    for (const { data, linhas } of relatorios) {
+      if (linhas === null) continue;
+      for (const aplicativo of APLICATIVOS_LOJAS) {
+        const downloads = linhas
+          .filter((linha) => linha.appleId === APPLE_IDS[aplicativo] && ehDownloadInicialApple(linha.tipoProduto))
+          .reduce((total, linha) => total + linha.unidades, 0);
+        registros.push({ aplicativo, loja: 'apple_app_store', data_referencia: data, downloads: Math.max(0, downloads), fonte: FONTE_APPLE, atualizado_em: agora });
+      }
     }
   }
   await salvarRegistros(registros);

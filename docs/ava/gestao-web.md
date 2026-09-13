@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.11 -->
+<!-- ava-version: 1.35.0.12 -->
 
+> Revisão 1.35.0.12: a releitura de instalações iniciais Apple foi acelerada
+> no painel administrativo. Sem impacto operacional para a Ava.
+>
 > Revisão 1.35.0.11: a persistência da releitura de instalações iniciais Apple
 > no painel administrativo foi corrigida. Sem impacto operacional para a Ava.
 >
