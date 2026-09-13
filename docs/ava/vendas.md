@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.10 -->
+<!-- ava-version: 1.35.0.11 -->
 
+> Revisão 1.35.0.11: a persistência da releitura de instalações iniciais Apple
+> foi corrigida no painel administrativo. Sem impacto operacional para a Ava.
+>
 > Revisão 1.35.0.10: a leitura administrativa reconhece corretamente os
 > downloads iniciais Apple do AvantaVendas, sem alterar o aplicativo.
 

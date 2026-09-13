@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.11: a persistência da releitura dos downloads Apple
+// no painel administrativo foi corrigida. Sem impacto operacional para a Ava.
 // Revisado na versão 1.35.0.10: a correção da leitura de downloads Apple no
 // painel administrativo não altera a orientação da Ava.
 // Revisado na versão 1.35.0.07: os filtros administrativos distinguem vínculo

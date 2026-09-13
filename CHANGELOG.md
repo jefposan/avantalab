@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.0.11 - 2026-09-13
+- **Persistência corrigida dos downloads Apple**: a fonte da releitura de
+  instalações iniciais passa a ser aceita na base. A sincronização deixa de
+  falhar ao gravar os totais corrigidos e informa a mensagem real de qualquer
+  erro de integração futura.
+
 ## 1.35.0.10 - 2026-09-13
 - **Downloads Apple corrigidos**: o Admin passa a reconhecer todas as variantes
   oficiais de download inicial da App Store, incluindo o tipo `1` usado pelos

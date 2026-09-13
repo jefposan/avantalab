@@ -48,6 +48,14 @@ type ResultadoSincronizacaoLoja = {
   erro?: string;
 };
 
+function mensagemErro(erro: unknown) {
+  return erro instanceof Error
+    ? erro.message
+    : typeof erro === 'object' && erro !== null && 'message' in erro && typeof erro.message === 'string'
+      ? erro.message
+      : 'Falha desconhecida.';
+}
+
 let sincronizacaoEmAndamento: Promise<ResultadoSincronizacaoLoja[]> | null = null;
 
 function base64Url(valor: Buffer | string) {
@@ -236,7 +244,7 @@ export async function sincronizarDownloadsDasLojas() {
     .then((resultados) => resultados.map((resultado, indice) => ({
       loja: indice === 0 ? 'apple_app_store' as const : 'google_play' as const,
       ok: resultado.status === 'fulfilled',
-      ...(resultado.status === 'fulfilled' ? resultado.value : { erro: resultado.reason instanceof Error ? resultado.reason.message : 'Falha desconhecida.' }),
+      ...(resultado.status === 'fulfilled' ? resultado.value : { erro: mensagemErro(resultado.reason) }),
     })))
     .finally(() => {
       sincronizacaoEmAndamento = null;

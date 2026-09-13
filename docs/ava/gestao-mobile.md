@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.10 -->
+<!-- ava-version: 1.35.0.11 -->
 
+> Revisão 1.35.0.11: a persistência da releitura de instalações iniciais Apple
+> foi corrigida no painel administrativo. Sem impacto operacional para a Ava.
+>
 > Revisão 1.35.0.10: a correção da leitura dos downloads Apple fica restrita ao
 > painel administrativo e não altera a operação da Gestão Mobile.
 

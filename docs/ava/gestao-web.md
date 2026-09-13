@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.10 -->
+<!-- ava-version: 1.35.0.11 -->
 
+> Revisão 1.35.0.11: a persistência da releitura de instalações iniciais Apple
+> no painel administrativo foi corrigida. Sem impacto operacional para a Ava.
+>
 > Revisão 1.35.0.10: os downloads da App Store no painel administrativo usam
 > todas as classificações oficiais de instalação inicial e reprocessam a janela
 > após a correção. Não altera a operação da Gestão Web.
