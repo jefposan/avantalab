@@ -39,6 +39,16 @@ const PACOTES_GOOGLE: Record<AplicativoLoja, string> = {
 
 const DIAS_JANELA = 90;
 
+type ResultadoSincronizacaoLoja = {
+  loja: LojaDownload;
+  ok: boolean;
+  configurado?: boolean;
+  registros?: number;
+  erro?: string;
+};
+
+let sincronizacaoEmAndamento: Promise<ResultadoSincronizacaoLoja[]> | null = null;
+
 function base64Url(valor: Buffer | string) {
   return Buffer.from(valor).toString('base64url');
 }
@@ -216,12 +226,17 @@ export async function sincronizarDownloadsGoogle() {
 }
 
 export async function sincronizarDownloadsDasLojas() {
-  const resultados = await Promise.allSettled([sincronizarDownloadsApple(), sincronizarDownloadsGoogle()]);
-  return resultados.map((resultado, indice) => ({
-    loja: indice === 0 ? 'apple_app_store' : 'google_play',
-    ok: resultado.status === 'fulfilled',
-    ...(resultado.status === 'fulfilled' ? resultado.value : { erro: resultado.reason instanceof Error ? resultado.reason.message : 'Falha desconhecida.' }),
-  }));
+  if (sincronizacaoEmAndamento) return sincronizacaoEmAndamento;
+  sincronizacaoEmAndamento = Promise.allSettled([sincronizarDownloadsApple(), sincronizarDownloadsGoogle()])
+    .then((resultados) => resultados.map((resultado, indice) => ({
+      loja: indice === 0 ? 'apple_app_store' as const : 'google_play' as const,
+      ok: resultado.status === 'fulfilled',
+      ...(resultado.status === 'fulfilled' ? resultado.value : { erro: resultado.reason instanceof Error ? resultado.reason.message : 'Falha desconhecida.' }),
+    })))
+    .finally(() => {
+      sincronizacaoEmAndamento = null;
+    });
+  return sincronizacaoEmAndamento;
 }
 
 export async function resumoDownloadsDasLojas(): Promise<Record<AplicativoLoja, Record<LojaDownload, ResumoLoja>>> {

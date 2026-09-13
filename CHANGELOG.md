@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.0.09 - 2026-09-13
+- **Atualização sob demanda no Admin**: ao selecionar **AvantaLab** ou
+  **AvantaVendas** em Perfis, o painel solicita a sincronização protegida dos
+  relatórios oficiais e atualiza os indicadores assim que as lojas respondem.
+  O agendamento diário permanece como garantia de atualização automática.
+
 ## 1.35.0.08 - 2026-09-13
 - **Downloads oficiais no Admin**: a leitura de Perfis ganha indicadores de
   downloads da Apple e Google Play em uma área fixa, sem o texto descritivo do

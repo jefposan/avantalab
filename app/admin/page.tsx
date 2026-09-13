@@ -533,6 +533,24 @@ export default function AdminPage() {
     }
   };
 
+  const sincronizarDownloadsDasLojas = async (value = token) => {
+    const cleanToken = value.trim();
+    if (!cleanToken || downloadsDasLojasCarregando) return;
+    setDownloadsDasLojasCarregando(true);
+    try {
+      const response = await fetch('/api/admin-downloads', { method: 'POST', headers: authHeaders(cleanToken) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível atualizar os downloads das lojas.');
+      setDownloadsDasLojas(data.lojas || null);
+    } catch (requestError) {
+      // A lista de cadastros continua disponível quando uma loja demora para
+      // disponibilizar o relatório oficial ou responde com falha transitória.
+      console.warn(requestError);
+    } finally {
+      setDownloadsDasLojasCarregando(false);
+    }
+  };
+
   const atualizarOrdemDasListas = (ordem: PerfilOrdem) => {
     setPerfilOrdem(ordem);
     void carregarCadastros(plataformaCadastro, 1, token, { ordem });
@@ -1118,7 +1136,9 @@ export default function AdminPage() {
                         if (ehConsultaDeCadastro(plataforma.id)) {
                           setPlataformaCadastro(plataforma.id);
                           void carregarCadastros(plataforma.id, 1);
-                          void carregarDownloadsDasLojas();
+                          if (plataforma.id === 'avantalab' || plataforma.id === 'avantavendas') {
+                            void sincronizarDownloadsDasLojas();
+                          }
                         } else {
                           void buscarPerfis(1);
                         }
