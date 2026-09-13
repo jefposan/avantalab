@@ -1,10 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.09 -->
+<!-- ava-version: 1.35.0.10 -->
 
-> Revisão 1.35.0.09: ao escolher AvantaLab ou AvantaVendas no painel
-> administrativo, os indicadores solicitam a atualização oficial das lojas;
-> o agendamento diário permanece ativo. Não altera a operação da Gestão Web.
+> Revisão 1.35.0.10: os downloads da App Store no painel administrativo usam
+> todas as classificações oficiais de instalação inicial e reprocessam a janela
+> após a correção. Não altera a operação da Gestão Web.
 
 > Revisão 1.35.0.07: no painel administrativo, os filtros de Cadastros
 > classificam o vínculo da pessoa entre plataformas e a ordem por data usa o

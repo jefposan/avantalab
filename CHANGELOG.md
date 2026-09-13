@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.0.10 - 2026-09-13
+- **Downloads Apple corrigidos**: o Admin passa a reconhecer todas as variantes
+  oficiais de download inicial da App Store, incluindo o tipo `1` usado pelos
+  apps Avanta. A próxima sincronização reprocessa a janela de 90 dias e
+  substitui os zeros gravados pela leitura anterior.
+
 ## 1.35.0.09 - 2026-09-13
 - **Atualização sob demanda no Admin**: ao selecionar **AvantaLab** ou
   **AvantaVendas** em Perfis, o painel solicita a sincronização protegida dos

@@ -1,9 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.09 -->
+<!-- ava-version: 1.35.0.10 -->
 
-> Revisão 1.35.0.09: a consulta administrativa de AvantaVendas pode solicitar
-> a atualização oficial dos downloads, sem alterar a operação do aplicativo.
+> Revisão 1.35.0.10: a leitura administrativa reconhece corretamente os
+> downloads iniciais Apple do AvantaVendas, sem alterar o aplicativo.
 
 > Revisão 1.35.0.07: os filtros administrativos por vínculo de plataforma não
 > alteram o fluxo do AvantaVendas.

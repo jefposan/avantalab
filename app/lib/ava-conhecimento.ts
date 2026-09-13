@@ -1,7 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.35.0.09: a atualização sob demanda dos indicadores de
-// downloads no painel administrativo não altera a orientação da Ava.
+// Revisado na versão 1.35.0.10: a correção da leitura de downloads Apple no
+// painel administrativo não altera a orientação da Ava.
 // Revisado na versão 1.35.0.07: os filtros administrativos distinguem vínculo
 // entre plataformas e ordem por data, sem mudar a orientação da Ava.
 // Revisado na versão 1.35.0.06: o painel administrativo preserva resultado,

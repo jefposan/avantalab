@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { lerRelatorioApple, lerRelatorioGoogle } from '../../app/lib/downloads-lojas-relatorios.ts';
+import { ehDownloadInicialApple, lerRelatorioApple, lerRelatorioGoogle } from '../../app/lib/downloads-lojas-relatorios.ts';
 
 test('lê unidades do relatório diário de vendas da Apple', () => {
   const linhas = lerRelatorioApple([
@@ -12,6 +12,14 @@ test('lê unidades do relatório diário de vendas da Apple', () => {
     { appleId: '6797617650', tipoProduto: '1F', unidades: 4 },
     { appleId: '6793744930', tipoProduto: '1F', unidades: 2 },
   ]);
+});
+
+test('considera todas as variantes de download inicial da Apple e ignora atualizações', () => {
+  assert.equal(ehDownloadInicialApple('1'), true);
+  assert.equal(ehDownloadInicialApple('1F'), true);
+  assert.equal(ehDownloadInicialApple('1T'), true);
+  assert.equal(ehDownloadInicialApple('3'), false);
+  assert.equal(ehDownloadInicialApple('7'), false);
 });
 
 test('lê instalações diárias do relatório CSV do Google Play', () => {

@@ -10,6 +10,15 @@ type LinhaGoogle = {
   instalacoes: number;
 };
 
+// A Apple usa variantes por plataforma para a primeira instalação. As versões
+// 1, 1F e 1T são as mais comuns para iOS/iPadOS; as demais mantêm a leitura
+// correta quando o app é publicado como app personalizado.
+const TIPOS_DOWNLOAD_INICIAL_APPLE = new Set(['1', '1F', '1T', '1E', '1EP', '1EU']);
+
+export function ehDownloadInicialApple(tipoProduto: string) {
+  return TIPOS_DOWNLOAD_INICIAL_APPLE.has(tipoProduto.trim().toUpperCase());
+}
+
 function numero(valor: string | undefined) {
   if (!valor) return 0;
   const convertido = Number(valor.replace(/,/g, ''));

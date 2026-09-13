@@ -1,9 +1,9 @@
 import { createPrivateKey, sign } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { criarSupabaseAdmin } from './admin-server';
-import { lerRelatorioApple, lerRelatorioGoogle } from './downloads-lojas-relatorios';
+import { ehDownloadInicialApple, lerRelatorioApple, lerRelatorioGoogle } from './downloads-lojas-relatorios';
 
-export { lerRelatorioApple, lerRelatorioGoogle } from './downloads-lojas-relatorios';
+export { ehDownloadInicialApple, lerRelatorioApple, lerRelatorioGoogle } from './downloads-lojas-relatorios';
 
 export const APLICATIVOS_LOJAS = ['avantalab', 'avantavendas'] as const;
 export const LOJAS_DOWNLOADS = ['apple_app_store', 'google_play'] as const;
@@ -38,6 +38,7 @@ const PACOTES_GOOGLE: Record<AplicativoLoja, string> = {
 };
 
 const DIAS_JANELA = 90;
+const FONTE_APPLE = 'apple_sales_report_v2';
 
 type ResultadoSincronizacaoLoja = {
   loja: LojaDownload;
@@ -172,16 +173,20 @@ async function salvarRegistros(registros: RegistroDownloadDiario[]) {
   if (error) throw error;
 }
 
-async function ultimaData(aplicativo: AplicativoLoja, loja: LojaDownload) {
+async function ultimaData(aplicativo: AplicativoLoja, loja: LojaDownload, fonte?: string) {
   const db = criarSupabaseAdmin();
-  const { data, error } = await db.from('lojas_downloads_diarios').select('data_referencia').eq('aplicativo', aplicativo).eq('loja', loja).order('data_referencia', { ascending: false }).limit(1).maybeSingle();
+  let consulta = db.from('lojas_downloads_diarios').select('data_referencia').eq('aplicativo', aplicativo).eq('loja', loja);
+  if (fonte) consulta = consulta.eq('fonte', fonte);
+  const { data, error } = await consulta.order('data_referencia', { ascending: false }).limit(1).maybeSingle();
   if (error && error.code !== '42P01' && error.code !== 'PGRST205') throw error;
   return data?.data_referencia || null;
 }
 
 export async function sincronizarDownloadsApple() {
   if (!jwtApple() || !process.env.APPLE_APP_STORE_VENDOR_NUMBER) return { configurado: false, registros: 0 };
-  const dataInicial = await ultimaData('avantavendas', 'apple_app_store');
+  // A versão da fonte força uma única reprocessamento da janela depois de uma
+  // correção de interpretação, sem repetir o histórico em cada cron diário.
+  const dataInicial = await ultimaData('avantavendas', 'apple_app_store', FONTE_APPLE);
   const datas = datasParaBuscar(dataInicial);
   const agora = new Date().toISOString();
   const registros: RegistroDownloadDiario[] = [];
@@ -190,9 +195,9 @@ export async function sincronizarDownloadsApple() {
     if (linhas === null) break;
     for (const aplicativo of APLICATIVOS_LOJAS) {
       const downloads = linhas
-        .filter((linha) => linha.appleId === APPLE_IDS[aplicativo] && (!linha.tipoProduto || linha.tipoProduto === '1F'))
+        .filter((linha) => linha.appleId === APPLE_IDS[aplicativo] && ehDownloadInicialApple(linha.tipoProduto))
         .reduce((total, linha) => total + linha.unidades, 0);
-      registros.push({ aplicativo, loja: 'apple_app_store', data_referencia: data, downloads: Math.max(0, downloads), fonte: 'apple_sales_report', atualizado_em: agora });
+      registros.push({ aplicativo, loja: 'apple_app_store', data_referencia: data, downloads: Math.max(0, downloads), fonte: FONTE_APPLE, atualizado_em: agora });
     }
   }
   await salvarRegistros(registros);

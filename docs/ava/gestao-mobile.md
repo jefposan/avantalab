@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.09 -->
+<!-- ava-version: 1.35.0.10 -->
 
-> Revisão 1.35.0.09: a atualização sob demanda dos indicadores de lojas fica
-> restrita ao painel administrativo e não altera a operação da Gestão Mobile.
+> Revisão 1.35.0.10: a correção da leitura dos downloads Apple fica restrita ao
+> painel administrativo e não altera a operação da Gestão Mobile.
 
 > Revisão 1.35.0.07: os filtros administrativos por vínculo de plataforma não
 > alteram a operação da Gestão Mobile.
