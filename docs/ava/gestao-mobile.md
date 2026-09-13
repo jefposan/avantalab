@@ -1,6 +1,33 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.34.0 -->
+<!-- ava-version: 1.35.0.08 -->
+
+> Revisão 1.35.0.08: os indicadores de downloads de lojas pertencem ao painel
+> administrativo e não alteram a operação da Gestão Mobile.
+
+> Revisão 1.35.0.07: os filtros administrativos por vínculo de plataforma não
+> alteram a operação da Gestão Mobile.
+
+> Revisão 1.35.0.06: a estabilidade visual do painel administrativo não altera
+> a operação da Gestão Mobile.
+
+> Revisão 1.35.0.05: a separação de Cadastros e Perfis AvantaLab no painel
+> administrativo não altera a operação da Gestão Mobile.
+
+> Revisão 1.35.0.04: a unificação dos controles de listas do painel
+> administrativo não altera a operação da Gestão Mobile.
+
+> Revisão 1.35.0.03: a distinção visual do painel administrativo não altera a
+> operação da Gestão Mobile.
+
+> Revisão 1.35.0.02: a data de último acesso exibida no painel administrativo
+> não altera a operação da Gestão Mobile.
+
+> Revisão 1.35.0.01: o alinhamento visual do painel administrativo não altera
+> a operação da Gestão Mobile.
+
+> Revisão 1.35.0: os filtros administrativos de cadastros por plataforma não
+> alteram a operação da Gestão Mobile.
 
 > Revisão 1.34.0: o executor protegido de NF-e de homologação pertence ao
 > módulo Vendas e Serviços da Gestão Web; não altera a operação da Gestão

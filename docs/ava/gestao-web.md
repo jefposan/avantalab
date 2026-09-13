@@ -1,6 +1,43 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.34.0 -->
+<!-- ava-version: 1.35.0.08 -->
+
+> Revisão 1.35.0.08: o painel administrativo exibe downloads oficiais das
+> lojas, atualizados diariamente pelo servidor; não altera a operação da
+> Gestão Web.
+
+> Revisão 1.35.0.07: no painel administrativo, os filtros de Cadastros
+> classificam o vínculo da pessoa entre plataformas e a ordem por data usa o
+> cadastro da conta. Perfis AvantaLab mantém seus filtros próprios; não altera
+> a operação da Gestão Web.
+
+> Revisão 1.35.0.06: o painel administrativo mantém resultado, pesquisa e
+> controles ao alternar a leitura de cadastros ou perfis; não altera a
+> operação da Gestão Web.
+
+> Revisão 1.35.0.05: no painel administrativo, Cadastros e Perfis AvantaLab
+> são leituras separadas. Cadastros mede pessoas por plataforma; Perfis
+> AvantaLab mantém empresas, assinatura e liberação de acesso. Não altera a
+> operação da Gestão Web.
+
+> Revisão 1.35.0.04: os controles de ordenação e paginação do painel
+> administrativo passam a valer também para Cadastros; não alteram a operação
+> da Gestão Web.
+
+> Revisão 1.35.0.03: a distinção visual do cabeçalho de Cadastros no painel
+> administrativo não altera a operação da Gestão Web.
+
+> Revisão 1.35.0.02: a lista de cadastros do painel administrativo mostra o
+> último acesso junto à data de cadastro, sem alterar a operação da Gestão Web.
+
+> Revisão 1.35.0.01: o alinhamento visual do cabeçalho de **Perfis** no painel
+> administrativo não altera a operação da Gestão Web.
+
+> Revisão 1.35.0: no painel administrativo, **Perfis** permite alternar os
+> cadastros ativos entre **Todos**, **AvantaLab** e **AvantaVendas**. Uma pessoa
+> presente nas duas plataformas aparece uma única vez em Todos e recebe as duas
+> identificações na lista. Esta leitura é exclusiva do administrador e não
+> altera os acessos da Gestão Web.
 
 > Revisão 1.34.0: em **Vendas e Serviços > Central Fiscal**, a situação do
 > executor vem do servidor. **NF-e de teste disponível** significa somente

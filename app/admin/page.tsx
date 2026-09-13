@@ -131,6 +131,44 @@ type UsuariosAtivosSistema = {
   carregando: boolean;
 };
 
+type PlataformaCadastro = 'todos' | 'avantalab' | 'avantavendas';
+type ConsultaCadastros = PlataformaCadastro | 'perfis_avantalab';
+type FiltroVinculoCadastro = 'todos' | 'somente_avantalab' | 'somente_avantavendas' | 'ambos';
+
+type CadastroPlataforma = {
+  id: string;
+  nome: string;
+  email: string | null;
+  criadoEm: string | null;
+  ultimoAcesso: string | null;
+  plataformas: Array<Exclude<PlataformaCadastro, 'todos'>>;
+};
+
+type ResumoDownloadsLoja = {
+  downloads: number | null;
+  atualizadoEm: string | null;
+  dataMaisRecente: string | null;
+};
+
+type DownloadsDasLojas = Record<'avantalab' | 'avantavendas', Record<'apple_app_store' | 'google_play', ResumoDownloadsLoja>>;
+
+const PLATAFORMAS_CADASTRO: Array<{ id: ConsultaCadastros; label: string }> = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'avantalab', label: 'AvantaLab' },
+  { id: 'avantavendas', label: 'AvantaVendas' },
+  { id: 'perfis_avantalab', label: 'Perfis AvantaLab' },
+];
+
+function rotuloPlataformaCadastro(plataforma: PlataformaCadastro) {
+  if (plataforma === 'avantalab') return 'AvantaLab';
+  if (plataforma === 'avantavendas') return 'AvantaVendas';
+  return 'Todos';
+}
+
+function ehConsultaDeCadastro(consulta: ConsultaCadastros): consulta is PlataformaCadastro {
+  return consulta !== 'perfis_avantalab';
+}
+
 function detalheAcesso(p: Perfil): string {
   if (p.status === 'cortesia') {
     const origem = p.cupom_id ? 'Cupom' : 'Cortesia';
@@ -366,6 +404,8 @@ export default function AdminPage() {
   const [creatingCupom, setCreatingCupom] = useState(false);
   const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [perfilBusca, setPerfilBusca] = useState('');
+  const [cadastroBusca, setCadastroBusca] = useState('');
+  const [filtroVinculoCadastro, setFiltroVinculoCadastro] = useState<FiltroVinculoCadastro>('todos');
   const [perfilFiltro, setPerfilFiltro] = useState<PerfilFiltro>('todos');
   const [perfilTipoFiltro, setPerfilTipoFiltro] = useState<PerfilTipoFiltro>('todos');
   const [perfilOrdem, setPerfilOrdem] = useState<PerfilOrdem>('nome_asc');
@@ -376,6 +416,15 @@ export default function AdminPage() {
   const [perfilTotal, setPerfilTotal] = useState(0);
   const [perfisCarregados, setPerfisCarregados] = useState(false);
   const [usuariosAtivosSistema, setUsuariosAtivosSistema] = useState<UsuariosAtivosSistema>({ total: null, carregando: false });
+  const [plataformaCadastro, setPlataformaCadastro] = useState<PlataformaCadastro>('todos');
+  const [consultaCadastros, setConsultaCadastros] = useState<ConsultaCadastros>('todos');
+  const [cadastros, setCadastros] = useState<CadastroPlataforma[]>([]);
+  const [cadastrosCarregados, setCadastrosCarregados] = useState(false);
+  const [cadastrosCarregando, setCadastrosCarregando] = useState(false);
+  const [cadastroPagina, setCadastroPagina] = useState(1);
+  const [cadastroTotal, setCadastroTotal] = useState(0);
+  const [downloadsDasLojas, setDownloadsDasLojas] = useState<DownloadsDasLojas | null>(null);
+  const [downloadsDasLojasCarregando, setDownloadsDasLojasCarregando] = useState(false);
   const [consumo, setConsumo] = useState<ConsumoPlataforma[]>([]);
   const [historicoIa, setHistoricoIa] = useState<HistoricoIa[]>([]);
   const [consumoCarregando, setConsumoCarregando] = useState(false);
@@ -394,6 +443,7 @@ export default function AdminPage() {
   const [documentoDesenvolvedorRepP, setDocumentoDesenvolvedorRepP] = useState('');
 
   const totalFiltrosPerfilAtivos = Number(perfilFiltro !== 'todos') + Number(perfilTipoFiltro !== 'todos');
+  const totalFiltrosCadastroAtivos = Number(filtroVinculoCadastro !== 'todos');
 
   const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
 
@@ -415,14 +465,14 @@ export default function AdminPage() {
     }
   };
 
-  const buscarPerfis = async (pagina = 1, filtros?: { situacao?: PerfilFiltro; tipo?: PerfilTipoFiltro; ordem?: PerfilOrdem }, busca = perfilBusca) => {
+  const buscarPerfis = async (pagina = 1, filtros?: { situacao?: PerfilFiltro; tipo?: PerfilTipoFiltro; ordem?: PerfilOrdem }, busca = perfilBusca, porPagina = perfilPorPagina) => {
     setBuscandoPerfis(true);
     setError('');
     try {
       const situacao = filtros?.situacao ?? perfilFiltro;
       const tipo = filtros?.tipo ?? perfilTipoFiltro;
       const ordem = filtros?.ordem ?? perfilOrdem;
-      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(busca.trim())}&filtro=${situacao}&tipo=${tipo}&ordem=${ordem}&pagina=${pagina}&porPagina=${perfilPorPagina}`, { headers: authHeaders() });
+      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(busca.trim())}&filtro=${situacao}&tipo=${tipo}&ordem=${ordem}&pagina=${pagina}&porPagina=${porPagina}`, { headers: authHeaders() });
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível buscar.');
       setPerfis(data.perfis || []);
@@ -436,17 +486,63 @@ export default function AdminPage() {
     }
   };
 
-  const carregarUsuariosAtivosSistema = async () => {
+  const carregarCadastros = async (plataforma = plataformaCadastro, pagina = 1, value = token, opcoes?: { ordem?: PerfilOrdem; porPagina?: number; busca?: string; vinculo?: FiltroVinculoCadastro }) => {
+    const cleanToken = value.trim();
+    if (!cleanToken) return;
+    const ordem = opcoes?.ordem ?? perfilOrdem;
+    const porPagina = opcoes?.porPagina ?? perfilPorPagina;
+    const busca = opcoes?.busca ?? cadastroBusca;
+    const vinculo = opcoes?.vinculo ?? filtroVinculoCadastro;
+    setCadastrosCarregando(true);
     setUsuariosAtivosSistema((current) => current.carregando ? current : { ...current, carregando: true });
     try {
-      const response = await fetch('/api/usuarios-ativos');
+      const response = await fetch(`/api/admin-cadastros?plataforma=${plataforma}&vinculo=${vinculo}&ordem=${ordem}&q=${encodeURIComponent(busca.trim())}&pagina=${pagina}&porPagina=${porPagina}`, { headers: authHeaders(cleanToken) });
       const data = await response.json().catch(() => null);
-      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível contar usuários.');
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível carregar os cadastros.');
       const total = Number(data?.total);
       setUsuariosAtivosSistema({ total: Number.isFinite(total) ? total : 0, carregando: false });
-    } catch {
+      setCadastros(data?.cadastros || []);
+      setCadastroTotal(Number.isFinite(total) ? total : 0);
+      setCadastroPagina(pagina);
+      setCadastrosCarregados(true);
+    } catch (requestError) {
       setUsuariosAtivosSistema({ total: null, carregando: false });
+      setCadastros([]);
+      setCadastrosCarregados(false);
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível carregar os cadastros.');
+    } finally {
+      setCadastrosCarregando(false);
     }
+  };
+
+  const carregarDownloadsDasLojas = async (value = token) => {
+    const cleanToken = value.trim();
+    if (!cleanToken || downloadsDasLojasCarregando) return;
+    setDownloadsDasLojasCarregando(true);
+    try {
+      const response = await fetch('/api/admin-downloads', { headers: authHeaders(cleanToken) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível carregar os downloads das lojas.');
+      setDownloadsDasLojas(data.lojas || null);
+    } catch (requestError) {
+      // Cadastros continuam disponíveis enquanto a integração oficial é
+      // configurada ou o cron recupera um erro transitório da loja.
+      console.warn(requestError);
+    } finally {
+      setDownloadsDasLojasCarregando(false);
+    }
+  };
+
+  const atualizarOrdemDasListas = (ordem: PerfilOrdem) => {
+    setPerfilOrdem(ordem);
+    void carregarCadastros(plataformaCadastro, 1, token, { ordem });
+    if (perfisCarregados) void buscarPerfis(1, { ordem });
+  };
+
+  const atualizarTamanhoDasListas = (porPagina: number) => {
+    setPerfilPorPagina(porPagina);
+    void carregarCadastros(plataformaCadastro, 1, token, { porPagina });
+    if (perfisCarregados) void buscarPerfis(1, undefined, perfilBusca, porPagina);
   };
 
   const executarAcaoPerfil = async (perfil: Perfil, corpo: { acao: 'revogar' | 'liberar'; duracaoValor?: number; duracaoUnidade?: string }) => {
@@ -705,7 +801,7 @@ export default function AdminPage() {
       }
       setFeedbacks(data.feedbacks || []);
       setAuthorized(true);
-      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarUsuariosAtivosSistema()]);
+      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarCadastros('todos', 1, cleanToken), carregarDownloadsDasLojas(cleanToken)]);
     } catch {
       setAuthorized(false);
       setError('Erro inesperado ao acessar o painel.');
@@ -1009,46 +1105,135 @@ export default function AdminPage() {
 
           {view === 'perfis' && <div className="space-y-4">
             <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div className="min-w-0">
                   <h2 className="text-base font-black text-slate-950">Perfis</h2>
-                  <p className="text-xs text-slate-500">Busque por nome, ou carregue a lista para ver qualquer perfil.</p>
                 </div>
-                <div className="shrink-0 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2 text-right">
-                  <p className="text-[9px] font-black uppercase tracking-wide text-cyan-800">Usuários ativos/cadastrados</p>
-                  <p className="mt-0.5 text-xl font-black leading-none text-cyan-950">
-                    {usuariosAtivosSistema.carregando
-                      ? '...'
-                      : usuariosAtivosSistema.total === null
-                        ? '-'
-                        : usuariosAtivosSistema.total.toLocaleString('pt-BR')}
-                  </p>
+                <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="grid w-full grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 sm:grid-cols-4 sm:w-auto" role="group" aria-label="Escolher a leitura administrativa">
+                    {PLATAFORMAS_CADASTRO.map((plataforma) => {
+                      const selecionada = consultaCadastros === plataforma.id;
+                      return <button key={plataforma.id} type="button" aria-pressed={selecionada} onClick={() => {
+                        setConsultaCadastros(plataforma.id);
+                        if (ehConsultaDeCadastro(plataforma.id)) {
+                          setPlataformaCadastro(plataforma.id);
+                          void carregarCadastros(plataforma.id, 1);
+                          void carregarDownloadsDasLojas();
+                        } else {
+                          void buscarPerfis(1);
+                        }
+                      }} className={`h-10 rounded-md px-2 text-[10px] font-black uppercase transition focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-1 ${selecionada ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-cyan-800'}`}>
+                        {plataforma.label}
+                      </button>;
+                    })}
+                  </div>
+                  <div className="grid w-full grid-cols-2 gap-x-4 gap-y-2 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2 text-left sm:w-[420px] sm:grid-cols-4">
+                    <div className="min-w-0 border-r border-cyan-100 pr-3 sm:col-span-1">
+                      <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">{consultaCadastros === 'perfis_avantalab' ? 'Perfis' : 'Cadastros'}</p>
+                      <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">
+                        {consultaCadastros === 'perfis_avantalab'
+                          ? buscandoPerfis
+                            ? '...'
+                            : perfisCarregados
+                              ? perfilTotal.toLocaleString('pt-BR')
+                              : '-'
+                          : usuariosAtivosSistema.carregando
+                            ? '...'
+                            : usuariosAtivosSistema.total === null
+                              ? '-'
+                              : usuariosAtivosSistema.total.toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    {consultaCadastros !== 'perfis_avantalab' && <>
+                      {(plataformaCadastro === 'todos' || plataformaCadastro === 'avantalab') && <div className="min-w-0">
+                        <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">Apple · AvantaLab</p>
+                        <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">{downloadsDasLojasCarregando ? '...' : downloadsDasLojas?.avantalab.apple_app_store.downloads?.toLocaleString('pt-BR') ?? '-'}</p>
+                      </div>}
+                      {(plataformaCadastro === 'todos' || plataformaCadastro === 'avantavendas') && <div className="min-w-0">
+                        <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">Apple · Vendas</p>
+                        <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">{downloadsDasLojasCarregando ? '...' : downloadsDasLojas?.avantavendas.apple_app_store.downloads?.toLocaleString('pt-BR') ?? '-'}</p>
+                      </div>}
+                      {(plataformaCadastro === 'todos' || plataformaCadastro === 'avantavendas') && <div className="min-w-0">
+                        <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">Google Play · Vendas</p>
+                        <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">{downloadsDasLojasCarregando ? '...' : downloadsDasLojas?.avantavendas.google_play.downloads?.toLocaleString('pt-BR') ?? '-'}</p>
+                      </div>}
+                    </>}
+                  </div>
                 </div>
               </div>
               <div className="mt-3 flex flex-col gap-2 lg:flex-row">
-                <div className="relative min-w-0 flex-1"><input value={perfilBusca} onChange={(event) => setPerfilBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void buscarPerfis(1); }} placeholder="Nome do perfil (vazio = todos)" className="h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 pr-11 text-sm outline-none focus:border-cyan-700 lg:h-10" />{perfilBusca && <button type="button" onClick={() => { setPerfilBusca(''); void buscarPerfis(1, undefined, ''); }} aria-label="Limpar busca de perfis" title="Limpar busca" className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-md text-lg leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 lg:h-8 lg:w-8">×</button>}</div>
+                <div className="relative min-w-0 flex-1"><input value={consultaCadastros === 'perfis_avantalab' ? perfilBusca : cadastroBusca} onChange={(event) => consultaCadastros === 'perfis_avantalab' ? setPerfilBusca(event.target.value) : setCadastroBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { if (consultaCadastros === 'perfis_avantalab') void buscarPerfis(1); else void carregarCadastros(plataformaCadastro, 1); } }} placeholder={consultaCadastros === 'perfis_avantalab' ? 'Nome do perfil (vazio = todos)' : 'Nome ou e-mail do cadastro (vazio = todos)'} className="h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 pr-11 text-sm outline-none focus:border-cyan-700 lg:h-10" />{(consultaCadastros === 'perfis_avantalab' ? perfilBusca : cadastroBusca) && <button type="button" onClick={() => { if (consultaCadastros === 'perfis_avantalab') { setPerfilBusca(''); void buscarPerfis(1, undefined, ''); } else { setCadastroBusca(''); void carregarCadastros(plataformaCadastro, 1, token, { busca: '' }); } }} aria-label="Limpar busca" title="Limpar busca" className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-md text-lg leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 lg:h-8 lg:w-8">×</button>}</div>
                 <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:flex lg:shrink-0">
-                  <button type="button" onClick={() => setFiltrosPerfilAbertos((aberto) => !aberto)} aria-expanded={filtrosPerfilAbertos} className={`relative flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-black uppercase lg:h-10 lg:px-3 ${filtrosPerfilAbertos || totalFiltrosPerfilAtivos ? 'border-cyan-300 bg-cyan-50 text-cyan-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><Icon name="filter" size={15} />Filtros{totalFiltrosPerfilAtivos > 0 && <span className="rounded-full bg-cyan-700 px-1.5 py-0.5 text-[9px] text-white">{totalFiltrosPerfilAtivos}</span>}</button>
-                  <button type="button" onClick={() => { const porCriacao = perfilOrdem.startsWith('criado_em'); const ordem = porCriacao ? (perfilOrdem === 'criado_em_desc' ? 'criado_em_asc' : 'criado_em_desc') : (perfilOrdem === 'nome_asc' ? 'nome_desc' : 'nome_asc'); setPerfilOrdem(ordem); void buscarPerfis(1, { ordem }); }} aria-label={perfilOrdem.startsWith('criado_em') ? `Ordenar perfis por data de criação, ${perfilOrdem === 'criado_em_desc' ? 'mais antigos primeiro' : 'mais recentes primeiro'}` : `Ordenar perfis de ${perfilOrdem === 'nome_asc' ? 'Z a A' : 'A a Z'}`} className="flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border border-slate-300 px-2 text-xs font-black uppercase text-slate-600 hover:bg-slate-50 lg:h-10 lg:px-3"><Icon name="filter" size={15} />Ordem {perfilOrdem === 'nome_desc' || perfilOrdem === 'criado_em_desc' ? 'Z/A' : 'A/Z'}</button>
-                  <select value={perfilPorPagina} onChange={(event) => setPerfilPorPagina(Number(event.target.value))} aria-label="Perfis por página" className="h-11 min-w-0 w-full rounded-md border border-slate-300 bg-white px-2 text-xs font-bold outline-none focus:border-cyan-700 lg:h-10 lg:w-auto"><option value={20}>20/pág</option><option value={50}>50/pág</option><option value={100}>100/pág</option></select>
-                  <button type="button" onClick={() => void buscarPerfis(1)} disabled={buscandoPerfis} className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-md bg-cyan-700 px-2 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60 lg:h-10 lg:w-[172px] lg:shrink-0 lg:px-4"><Icon name="search" size={15} />{buscandoPerfis ? 'Carregando...' : <><span className="lg:hidden">Buscar</span><span className="hidden lg:inline">Carregar / Buscar</span></>}</button>
+                  <button type="button" onClick={() => setFiltrosPerfilAbertos((aberto) => !aberto)} aria-expanded={filtrosPerfilAbertos} className={`relative flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-black uppercase lg:h-10 lg:px-3 ${filtrosPerfilAbertos || (consultaCadastros === 'perfis_avantalab' ? totalFiltrosPerfilAtivos : totalFiltrosCadastroAtivos) ? 'border-cyan-300 bg-cyan-50 text-cyan-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><Icon name="filter" size={15} />Filtros{(consultaCadastros === 'perfis_avantalab' ? totalFiltrosPerfilAtivos : totalFiltrosCadastroAtivos) > 0 && <span className="rounded-full bg-cyan-700 px-1.5 py-0.5 text-[9px] text-white">{consultaCadastros === 'perfis_avantalab' ? totalFiltrosPerfilAtivos : totalFiltrosCadastroAtivos}</span>}</button>
+                  <button type="button" onClick={() => { const porCriacao = perfilOrdem.startsWith('criado_em'); const ordem = porCriacao ? (perfilOrdem === 'criado_em_desc' ? 'criado_em_asc' : 'criado_em_desc') : (perfilOrdem === 'nome_asc' ? 'nome_desc' : 'nome_asc'); atualizarOrdemDasListas(ordem); }} aria-label={perfilOrdem.startsWith('criado_em') ? `Ordenar perfis e cadastros por data de criação, ${perfilOrdem === 'criado_em_desc' ? 'mais antigos primeiro' : 'mais recentes primeiro'}` : `Ordenar perfis e cadastros de ${perfilOrdem === 'nome_asc' ? 'Z a A' : 'A a Z'}`} className="flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border border-slate-300 px-2 text-xs font-black uppercase text-slate-600 hover:bg-slate-50 lg:h-10 lg:px-3"><Icon name="filter" size={15} />Ordem {perfilOrdem === 'nome_desc' || perfilOrdem === 'criado_em_desc' ? 'Z/A' : 'A/Z'}</button>
+                  <select value={perfilPorPagina} onChange={(event) => atualizarTamanhoDasListas(Number(event.target.value))} aria-label="Perfis e cadastros por página" className="h-11 min-w-0 w-full rounded-md border border-slate-300 bg-white px-2 text-xs font-bold outline-none focus:border-cyan-700 lg:h-10 lg:w-auto"><option value={20}>20/pág</option><option value={50}>50/pág</option><option value={100}>100/pág</option></select>
+                  <button type="button" onClick={() => { if (consultaCadastros === 'perfis_avantalab') void buscarPerfis(1); else void carregarCadastros(plataformaCadastro, 1); }} disabled={consultaCadastros === 'perfis_avantalab' ? buscandoPerfis : cadastrosCarregando} className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-md bg-cyan-700 px-2 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60 lg:h-10 lg:w-[172px] lg:shrink-0 lg:px-4"><Icon name="search" size={15} />{(consultaCadastros === 'perfis_avantalab' ? buscandoPerfis : cadastrosCarregando) ? 'Carregando...' : <><span className="lg:hidden">Buscar</span><span className="hidden lg:inline">Carregar / Buscar</span></>}</button>
                 </div>
               </div>
-              {filtrosPerfilAbertos && <div className="mt-3 rounded-lg border border-cyan-100 bg-cyan-50/40 p-3">
+              {filtrosPerfilAbertos && (consultaCadastros === 'perfis_avantalab' ? <div className="mt-3 rounded-lg border border-cyan-100 bg-cyan-50/40 p-3">
                 <div className="flex flex-col gap-3">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Situação de acesso</p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">{FILTROS_PERFIL.map((filtro) => <button key={filtro.id} type="button" onClick={() => setPerfilFiltro(filtro.id)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilFiltro === filtro.id ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{filtro.label}</button>)}<button type="button" onClick={() => setPerfilOrdem('criado_em_desc')} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilOrdem.startsWith('criado_em') ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>Data de criação</button></div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">{FILTROS_PERFIL.map((filtro) => <button key={filtro.id} type="button" onClick={() => setPerfilFiltro(filtro.id)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilFiltro === filtro.id ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{filtro.label}</button>)}<button type="button" onClick={() => atualizarOrdemDasListas('criado_em_desc')} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilOrdem.startsWith('criado_em') ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>Data de criação</button></div>
                   </div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo de perfil</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">{([['todos', 'Todos os tipos'], ['empresa', 'Empresa'], ['pessoal', 'Pessoal']] as Array<[PerfilTipoFiltro, string]>).map(([tipo, label]) => <button key={tipo} type="button" onClick={() => setPerfilTipoFiltro(tipo)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilTipoFiltro === tipo ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{label}</button>)}</div>
                   </div>
-                  <div className="flex justify-end gap-2 border-t border-cyan-100 pt-3"><button type="button" onClick={() => { setPerfilFiltro('todos'); setPerfilTipoFiltro('todos'); setPerfilOrdem('nome_asc'); void buscarPerfis(1, { situacao: 'todos', tipo: 'todos', ordem: 'nome_asc' }); }} className="h-9 rounded-md px-3 text-[10px] font-black uppercase text-slate-600 hover:bg-white">Limpar</button><button type="button" onClick={() => { setFiltrosPerfilAbertos(false); void buscarPerfis(1); }} disabled={buscandoPerfis} className="h-9 rounded-md bg-cyan-700 px-3 text-[10px] font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">Aplicar filtros</button></div>
+                  <div className="flex justify-end gap-2 border-t border-cyan-100 pt-3"><button type="button" onClick={() => { setPerfilFiltro('todos'); setPerfilTipoFiltro('todos'); atualizarOrdemDasListas('nome_asc'); void buscarPerfis(1, { situacao: 'todos', tipo: 'todos', ordem: 'nome_asc' }); }} className="h-9 rounded-md px-3 text-[10px] font-black uppercase text-slate-600 hover:bg-white">Limpar</button><button type="button" onClick={() => { setFiltrosPerfilAbertos(false); void buscarPerfis(1); void carregarCadastros(plataformaCadastro, 1); }} disabled={buscandoPerfis} className="h-9 rounded-md bg-cyan-700 px-3 text-[10px] font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">Aplicar filtros</button></div>
                 </div>
-              </div>}
+              </div> : <div className="mt-3 rounded-lg border border-cyan-100 bg-cyan-50/40 p-3">
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Vínculo com as plataformas</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">{([['todos', 'Todos'], ['somente_avantalab', 'Somente AvantaLab'], ['somente_avantavendas', 'Somente AvantaVendas'], ['ambos', 'Usa as duas']] as Array<[FiltroVinculoCadastro, string]>).map(([vinculo, label]) => <button key={vinculo} type="button" onClick={() => setFiltroVinculoCadastro(vinculo)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${filtroVinculoCadastro === vinculo ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{label}</button>)}</div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Ordenação</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5"><button type="button" onClick={() => atualizarOrdemDasListas('nome_asc')} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilOrdem.startsWith('nome_') ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>Nome</button><button type="button" onClick={() => atualizarOrdemDasListas('criado_em_desc')} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilOrdem.startsWith('criado_em') ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>Data de cadastro</button></div>
+                  </div>
+                  <div className="flex justify-end gap-2 border-t border-cyan-100 pt-3"><button type="button" onClick={() => { setFiltroVinculoCadastro('todos'); setPerfilOrdem('nome_asc'); void carregarCadastros(plataformaCadastro, 1, token, { vinculo: 'todos', ordem: 'nome_asc' }); }} className="h-9 rounded-md px-3 text-[10px] font-black uppercase text-slate-600 hover:bg-white">Limpar</button><button type="button" onClick={() => { setFiltrosPerfilAbertos(false); void carregarCadastros(plataformaCadastro, 1); }} disabled={cadastrosCarregando} className="h-9 rounded-md bg-cyan-700 px-3 text-[10px] font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">Aplicar filtros</button></div>
+                </div>
+              </div>)}
             </section>
-            {!perfisCarregados ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Clique em &quot;Carregar / Buscar&quot; para listar os perfis.</div>
+            {ehConsultaDeCadastro(consultaCadastros) && <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="flex flex-col gap-2 border-b border-cyan-100 bg-cyan-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-sm font-black text-cyan-950">Cadastros · {rotuloPlataformaCadastro(plataformaCadastro)}</h3>
+                  <p className="text-[11px] text-cyan-800/70">Cada pessoa é contada uma vez, mesmo que participe de mais de um perfil ou conta.</p>
+                </div>
+                <div className="sm:shrink-0">
+                  <button type="button" onClick={() => void carregarCadastros(plataformaCadastro, cadastroPagina)} disabled={cadastrosCarregando} className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-cyan-200 px-3 text-[10px] font-black uppercase text-cyan-800 hover:bg-white disabled:opacity-60"><Icon name="refresh" size={14} />{cadastrosCarregando ? 'Atualizando...' : 'Atualizar'}</button>
+                </div>
+              </div>
+              {!cadastrosCarregados && !cadastrosCarregando ? <p className="px-4 py-8 text-center text-sm text-slate-500">Os cadastros serão carregados ao acessar o painel.</p>
+               : cadastrosCarregando && !cadastros.length ? <p className="px-4 py-8 text-center text-sm text-slate-500">Carregando cadastros...</p>
+               : !cadastros.length ? <p className="px-4 py-8 text-center text-sm text-slate-500">Nenhum cadastro ativo nesta plataforma.</p>
+               : <>
+                <div className="divide-y divide-slate-100">
+                  {cadastros.map((cadastro) => <article key={cadastro.id} className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <h4 className="truncate text-sm font-black text-slate-900">{cadastro.nome}</h4>
+                      <p className="truncate text-[11px] text-slate-500">{cadastro.email || 'E-mail não disponível'} · Cadastro: {formatDateOnly(cadastro.criadoEm)} · Último acesso: {formatDateOnly(cadastro.ultimoAcesso)}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-1.5">
+                      {cadastro.plataformas.map((origem) => <span key={origem} className={`rounded-full px-2 py-1 text-[9px] font-black uppercase ${origem === 'avantavendas' ? 'bg-violet-50 text-violet-700' : 'bg-cyan-50 text-cyan-800'}`}>{rotuloPlataformaCadastro(origem)}</span>)}
+                    </div>
+                  </article>)}
+                </div>
+                {cadastroTotal > perfilPorPagina && (() => {
+                  const totalPaginas = Math.ceil(cadastroTotal / perfilPorPagina);
+                  return <div className="flex items-center justify-between gap-2 border-t border-slate-200 px-3 py-3 text-xs font-bold text-slate-600">
+                    <span>{cadastroTotal} cadastros · página {cadastroPagina} de {totalPaginas}</span>
+                    <div className="flex gap-1.5">
+                      <button type="button" disabled={cadastroPagina <= 1 || cadastrosCarregando} onClick={() => void carregarCadastros(plataformaCadastro, cadastroPagina - 1)} className="rounded-md border border-slate-300 px-3 py-1.5 disabled:opacity-40">Anterior</button>
+                      <button type="button" disabled={cadastroPagina >= totalPaginas || cadastrosCarregando} onClick={() => void carregarCadastros(plataformaCadastro, cadastroPagina + 1)} className="rounded-md border border-slate-300 px-3 py-1.5 disabled:opacity-40">Próxima</button>
+                    </div>
+                  </div>;
+                })()}
+              </>}
+            </section>}
+            {consultaCadastros === 'perfis_avantalab' && <>{!perfisCarregados ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Clique em &quot;Carregar / Buscar&quot; para listar os perfis.</div>
              : perfis.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum perfil encontrado.</div>
              : <>
               <div className="grid gap-2">{perfis.map((perfil) => {
@@ -1087,7 +1272,7 @@ export default function AdminPage() {
                   </div>
                 </div>;
               })()}
-             </>}
+             </>}</>}
           </div>}
 
           {view === 'consumo' && <div className="space-y-4">

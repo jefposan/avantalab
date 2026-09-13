@@ -1,6 +1,34 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.34.0 -->
+<!-- ava-version: 1.35.0.08 -->
+
+> Revisão 1.35.0.08: os indicadores de downloads das lojas são atualizados no
+> painel administrativo pelo servidor e não alteram o fluxo do AvantaVendas.
+
+> Revisão 1.35.0.07: os filtros administrativos por vínculo de plataforma não
+> alteram o fluxo do AvantaVendas.
+
+> Revisão 1.35.0.06: a estabilidade visual do painel administrativo não altera
+> o fluxo do AvantaVendas.
+
+> Revisão 1.35.0.05: a separação de Cadastros e Perfis AvantaLab no painel
+> administrativo não altera o fluxo do AvantaVendas.
+
+> Revisão 1.35.0.04: a unificação dos controles de listas do painel
+> administrativo não altera o fluxo do AvantaVendas.
+
+> Revisão 1.35.0.03: a distinção visual do painel administrativo não altera o
+> fluxo do AvantaVendas.
+
+> Revisão 1.35.0.02: a leitura de último acesso no painel administrativo não
+> altera o fluxo do AvantaVendas.
+
+> Revisão 1.35.0.01: o alinhamento visual do painel administrativo não altera
+> o fluxo do AvantaVendas.
+
+> Revisão 1.35.0: o painel administrativo separa cadastros ativos de
+> AvantaLab e AvantaVendas para leitura de campanha; não altera o fluxo do
+> aplicativo AvantaVendas.
 
 > Revisão 1.34.0: a NF-e de homologação pertence exclusivamente a Vendas e
 > Serviços na Gestão Web. AvantaVendas e Conteúdo AvantaVendas não emitem,

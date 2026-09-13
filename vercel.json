@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sincronizar-downloads-lojas",
+      "schedule": "30 9 * * *"
+    }
+  ]
+}

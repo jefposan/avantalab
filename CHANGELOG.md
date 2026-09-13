@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.35.0.08 - 2026-09-13
+- **Downloads oficiais no Admin**: a leitura de Perfis ganha indicadores de
+  downloads da Apple e Google Play em uma área fixa, sem o texto descritivo do
+  topo. O servidor guarda métricas diárias dos relatórios oficiais e a Vercel
+  agenda a atualização diária, sem depender de um navegador aberto.
+
+## 1.35.0.07 - 2026-09-13
+- **Filtros funcionais por leitura**: Cadastros permite filtrar vínculo entre
+  AvantaLab, AvantaVendas ou ambas, pesquisar pessoas e ordenar por nome ou
+  data de cadastro. Perfis AvantaLab preserva seus filtros de acesso e tipo.
+
+## 1.35.0.06 - 2026-09-13
+- **Leitura estável no Admin**: o total permanece visível em todas as opções,
+  inclusive Perfis AvantaLab. A pesquisa e os controles de lista não somem ao
+  alternar a leitura; o contador comporta AvantaVendas sem quebra de linha.
+
+## 1.35.0.05 - 2026-09-13
+- **Leituras administrativas separadas**: Cadastros exibe somente pessoas por
+  plataforma; a leitura anterior de empresas e assinaturas passa a estar em
+  **Perfis AvantaLab**. O contador de cadastros tem largura fixa no desktop.
+
+## 1.35.0.04 - 2026-09-13
+- **Controles unificados de listas**: Ordem e itens por página passam a afetar
+  simultaneamente Perfis e Cadastros, preservando o filtro de plataforma ativo.
+
+## 1.35.0.03 - 2026-09-13
+- **Separação visual no Admin**: o cabeçalho da lista de cadastros recebe o
+  ciano institucional suave, distinguindo-o dos registros exibidos abaixo.
+
+## 1.35.0.02 - 2026-09-13
+- **Leitura de acesso no Admin**: a lista de cadastros em Todos, AvantaLab e
+  AvantaVendas mostra o último acesso logo após a data de cadastro.
+
+## 1.35.0.01 - 2026-09-13
+- **Cabeçalho de Perfis alinhado**: os filtros de plataforma e o total de
+  cadastros ativos passam a ocupar a mesma linha do título em telas amplas,
+  preservando a organização vertical no celular.
+
+## 1.35.0 - 2026-09-13
+- **Cadastros por plataforma no Admin**: a área **Perfis** passa a separar
+  pessoas ativas de **AvantaLab**, **AvantaVendas** ou de ambas. O total de
+  **Todos** elimina duplicidades de quem participa das duas plataformas e a
+  lista mostra a origem de cada cadastro para acompanhamento de campanhas.
+
 ## 1.34.0 - 2026-09-12
 - **NF-e de homologação protegida**: Vendas e Serviços passa a possuir executor
   server-side liberável apenas para a SEFAZ-SP em homologação, com certificado

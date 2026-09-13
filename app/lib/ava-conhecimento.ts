@@ -1,5 +1,24 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.08: os indicadores de downloads oficiais no painel
+// administrativo são atualizados pelo servidor e não alteram a orientação da Ava.
+// Revisado na versão 1.35.0.07: os filtros administrativos distinguem vínculo
+// entre plataformas e ordem por data, sem mudar a orientação da Ava.
+// Revisado na versão 1.35.0.06: o painel administrativo preserva resultado,
+// pesquisa e controles em todas as leituras, sem mudar a orientação da Ava.
+// Revisado na versão 1.35.0.05: o painel administrativo separa Cadastros por
+// plataforma dos Perfis AvantaLab, sem alterar a orientação operacional da Ava.
+// Revisado na versão 1.35.0.04: o painel administrativo aplica ordem e
+// paginação tanto aos Perfis quanto aos Cadastros, sem alterar a orientação da Ava.
+// Revisado na versão 1.35.0.03: a distinção visual do cabeçalho administrativo
+// não altera a orientação operacional da Ava.
+// Revisado na versão 1.35.0.02: a lista administrativa de cadastros passa a
+// informar o último acesso, sem alterar a orientação operacional da Ava.
+// Revisado na versão 1.35.0.01: o alinhamento visual do painel administrativo
+// não muda a orientação operacional da Ava.
+// Revisado na versão 1.35.0: o painel administrativo separa cadastros ativos
+// de AvantaLab e AvantaVendas; Todos elimina a duplicidade de uma pessoa nas
+// duas plataformas. Essa leitura não muda os fluxos operacionais da Ava.
 // Revisado na versão 1.34.0: Vendas e Serviços informa a prontidão real do
 // executor de NF-e de homologação; produção fiscal segue bloqueada. AvantaVendas
 // e Conteúdo AvantaVendas não emitem notas. O endereço /baixar/avantavendas
