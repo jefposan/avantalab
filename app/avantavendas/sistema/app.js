@@ -2829,6 +2829,7 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
   if (signalExterno?.aborted) abortarPorCancelamento();
   else signalExterno?.addEventListener?.('abort', abortarPorCancelamento, { once: true });
   const timeout = window.setTimeout(() => controller.abort(), 50000);
+  const startedAt = window.performance?.now?.() || Date.now();
   try {
     let init;
     if (operacao === 'transcribe') {
@@ -2849,6 +2850,15 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
     const resposta = await fetch(endpoint, init);
     const resultado = await resposta.json().catch(() => ({ message: 'O servidor retornou uma resposta inválida.' }));
     if (!resposta.ok) throw new Error(resultado?.message || 'Não foi possível concluir a solicitação.');
+    if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+      const elapsedMs = Math.round((window.performance?.now?.() || Date.now()) - startedAt);
+      console.info('[solicitacao-voz:tempo]', {
+        operacao,
+        totalMs: elapsedMs,
+        servidor: resposta.headers.get('server-timing') || 'indisponível',
+        audioBytes: operacao === 'transcribe' && payload.audio instanceof Blob ? payload.audio.size : undefined,
+      });
+    }
     return resultado;
   } catch (error) {
     if (error?.name === 'AbortError' && signalExterno?.aborted) throw error;
@@ -2880,6 +2890,7 @@ async function abrirSolicitacaoVozVendas(acionador = null, pendenciaId = '') {
       autoStart: !pendenciaId,
       pendingId: pendenciaId,
       storageNamespace: 'avantalab.vendas.voice_command.official.v1',
+      recording: { audioBitsPerSecond: 32_000 },
       account: {
         id: state.contaVendasAtiva?.id || window.VendasDb?.contaAtivaId?.() || '',
         label: state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'Conta ativa',

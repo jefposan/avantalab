@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.17 -->
+<!-- ava-version: 1.35.0.18 -->
+
+> Revisão 1.35.0.18-av148: o laboratório local da Solicitação por Voz mede
+> silenciosamente o tempo de transcrição e interpretação e testa envio de fala
+> otimizado para rede móvel. Não muda a pergunta, o resultado, a confirmação ou
+> as regras operacionais do AvantaVendas.
+>
 
 > Revisão 1.35.0.17: o limite de 1 a 31 no campo Dia pertence à Gestão Web.
 > Sem impacto operacional para o AvantaVendas.
@@ -475,7 +481,7 @@
 > Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
 > aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
 > operacional no AvantaVendas.
-<!-- avantavendas-asset-revision: 147 -->
+<!-- avantavendas-asset-revision: 148 -->
 
 > Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
 > catálogo ativo completo da conta sem permitir que uma palavra apenas parecida

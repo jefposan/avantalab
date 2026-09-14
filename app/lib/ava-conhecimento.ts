@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.18: o teste local de desempenho da Solicitação por
+// Voz não altera nenhuma orientação, função ou regra operacional da Ava.
 // Revisado na versão 1.35.0.17: o Dia da receita do Dashboard aceita somente
 // valores de 1 a 31 durante a digitação. Sem impacto adicional para a Ava.
 // Revisado na versão 1.35.0.16: o Dia da receita do Dashboard é limpo ao

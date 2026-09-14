@@ -1,4 +1,4 @@
-export const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.4.0' as const;
+export const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.4.1' as const;
 
 export type AvantaVoiceActionOperation =
   | 'transcribe'
@@ -32,6 +32,10 @@ export type AvantaVoiceActionsAdapter = {
   storageNamespace?: string;
   allowSaveForLater?: boolean;
   compactShortLists?: boolean;
+  recording?: {
+    /** Taxa opcional para fala; o controlador volta ao padrão do navegador se ele não aceitar. */
+    audioBitsPerSecond?: number;
+  };
   request: (
     operation: AvantaVoiceActionOperation,
     payload: Record<string, unknown> | FormData,

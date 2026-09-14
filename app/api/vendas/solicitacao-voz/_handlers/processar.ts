@@ -54,6 +54,7 @@ function mergeSelection(selections: VoiceEntitySelection[], current: VoiceEntity
 }
 
 export async function POST(request: Request) {
+  const requestStartedAt = performance.now();
   let userId = '';
   let accountId = '';
   let transcription = '';
@@ -61,9 +62,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     accountId = String(body?.accountId || '').trim();
     transcription = String(body?.transcription || '').trim().slice(0, 1000);
+    const authStartedAt = performance.now();
     const context = await getVoiceSalesContext(request, accountId);
     if (!context) return NextResponse.json({ message: 'Sua sessão do Avanta Vendas expirou.' }, { status: 401 });
     if (!await isVoiceCommandEnabled(context)) return NextResponse.json({ message: 'Ative a Solicitação por Voz nas Configurações do Avanta Vendas.' }, { status: 403 });
+    const authMs = Math.round(performance.now() - authStartedAt);
     userId = context.userId;
     const previousDraft = body?.previousDraft ? validateVoiceIntentPayload(body.previousDraft) : null;
     const manualDraft = body?.manualEdit === true && body?.manualDraft
@@ -95,7 +98,9 @@ export async function POST(request: Request) {
       intent = interpreted.intent;
       metrics = interpreted.metrics;
     }
+    const resolutionStartedAt = performance.now();
     const result = await buildVoiceResponse({ db: context.db, accountId, draft: intent, transcription, metrics, selections });
+    const resolutionMs = Math.round(performance.now() - resolutionStartedAt);
     logVoiceLab({
       event: 'interpreted', userId, accountId, transcription, intent: intent.intent,
       interpretationMs: metrics.interpretationMs, disambiguation: result.kind === 'clarification',
@@ -106,7 +111,13 @@ export async function POST(request: Request) {
       try { await enrichPendingCatalogForAccount(context.admin, accountId, 8); }
       catch (error) { console.warn('[voice-catalog-index] Atualização oportunista adiada.', error instanceof Error ? error.message : error); }
     });
-    return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store, private' } });
+    const totalMs = Math.round(performance.now() - requestStartedAt);
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'no-store, private',
+        'Server-Timing': `auth;dur=${authMs}, interpret;dur=${metrics.interpretationMs}, resolve;dur=${resolutionMs}, total;dur=${totalMs}`,
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Não foi possível entender sua solicitação.';
     logVoiceLab({ event: 'interpretation_error', userId, accountId, transcription, success: false, error: message });

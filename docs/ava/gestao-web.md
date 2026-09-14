@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.17 -->
+<!-- ava-version: 1.35.0.18 -->
+
+> Revisão 1.35.0.18: o teste técnico local de desempenho da Solicitação por
+> Voz pertence ao AvantaVendas; sem impacto operacional na Gestão Web.
+>
 
 > Revisão 1.35.0.17: no card **Registrar entradas**, o campo Dia aceita somente
 > números de 1 a 31. A Ava pode orientar o preenchimento de um dia válido.

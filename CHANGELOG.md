@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.35.0.18-av148 - 2026-09-14
+- **Teste local de velocidade da voz**: a transcrição declara corretamente o
+  idioma português, o AvantaVendas envia fala em taxa adequada a rede móvel com
+  retorno nativo quando o navegador não suportar a configuração, e as etapas
+  passam a expor métricas técnicas silenciosas apenas no console local.
+
+## 1.35.0.18 - 2026-09-14
+- **Resposta por voz mais eficiente**: o envio de áudio e o caminho de
+  transcrição foram preparados para teste comparativo local, sem mudar o schema,
+  a interpretação, as buscas, as confirmações ou qualquer regra comercial.
+
 ## 1.35.0.17 - 2026-09-14
 - **Dia da receita limitado**: o campo **Dia** de **Registrar entradas** aceita
   somente valores de 1 a 31 durante a digitação.

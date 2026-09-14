@@ -573,14 +573,25 @@ test('agenda e executor reutilizam a fonte oficial por conta', async () => {
 });
 
 test('transcrição de voz usa modelo especializado sem enviar o catálogo da conta', async () => {
-  const source = await readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/transcrever.ts', import.meta.url), 'utf8');
-  assert.match(source, /OPENAI_VOICE_TRANSCRIPTION_MODEL \|\| 'gpt-transcribe'/);
-  assert.match(source, /OPENAI_VOICE_TRANSCRIPTION_CONTEXT/);
-  assert.match(source, /keywords\[\]/);
-  assert.match(source, /languages\[\].*'pt'/);
-  assert.doesNotMatch(source, /append\('language',/);
+  const [source, transcription, controller, app] = await Promise.all([
+    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/transcrever.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/lib/vendas-voice/transcription.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/avantavendas/sistema/app.js', import.meta.url), 'utf8'),
+  ]);
+  assert.match(transcription, /OPENAI_VOICE_TRANSCRIPTION_MODEL \|\| 'gpt-transcribe'/);
+  assert.match(transcription, /OPENAI_VOICE_TRANSCRIPTION_CONTEXT/);
+  assert.match(transcription, /keywords\[\]/);
+  assert.match(transcription, /append\('language', 'pt'\)/);
+  assert.doesNotMatch(transcription, /languages\[\]/);
+  assert.match(source, /transcribeVoiceAudio/);
   assert.match(source, /audioSeconds/);
-  assert.doesNotMatch(source, /vendas_mobile_produtos/);
+  assert.match(source, /Server-Timing/);
+  assert.match(controller, /audioBitsPerSecond/);
+  assert.match(controller, /recorder = new MediaRecorder\(stream, mimeType \? \{ mimeType \} : undefined\)/);
+  assert.match(app, /recording: \{ audioBitsPerSecond: 32_000 \}/);
+  assert.match(app, /\[solicitacao-voz:tempo\]/);
+  assert.doesNotMatch(transcription, /vendas_mobile_produtos/);
 });
 
 test('índice oculto de voz é aditivo, isolado por conta e sem campo manual no cadastro', async () => {
@@ -649,11 +660,11 @@ test('seleção manual só vira aprendizado depois da gravação oficial confirm
 
 test('transcrição recebe só um vocabulário curto já aprendido, nunca o catálogo inteiro', async () => {
   const [transcription, resolver] = await Promise.all([
-    readFile(new URL('../../app/api/vendas/solicitacao-voz/_handlers/transcrever.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/lib/vendas-voice/transcription.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../app/lib/vendas-voice/data.ts', import.meta.url), 'utf8'),
   ]);
   assert.match(transcription, /listVoiceTranscriptionHints/);
-  assert.match(transcription, /listVoiceTranscriptionHints\(context\.db, accountId, 24\)/);
+  assert.match(transcription, /listVoiceTranscriptionHints\(db, accountId, 24\)/);
   assert.match(resolver, /Math\.min\(30/);
   assert.match(resolver, /Referências aprendidas de clientes ficam restritas à busca/);
   assert.doesNotMatch(transcription, /from\('vendas_mobile_produtos'\)/);

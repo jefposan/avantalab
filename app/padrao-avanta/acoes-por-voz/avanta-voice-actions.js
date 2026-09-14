@@ -4,7 +4,7 @@
   // Implementação executável oficial do PADRÃO AVANTA para ações por voz.
   // Adaptadores de produto fornecem dados e execução; este componente controla
   // captura, estados, desambiguação, confirmação e continuidade da solicitação.
-  const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.4.0';
+  const AVANTA_VOICE_ACTIONS_STANDARD_VERSION = '1.4.1';
 
   const DEFAULT_SESSION_PREFIX = 'avantalab.voice_actions.official.v1';
   const MAX_RECORDING_MS = 45000;
@@ -586,7 +586,25 @@
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       const types = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
       const mimeType = types.find((type) => MediaRecorder.isTypeSupported(type)) || '';
-      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      // Fala não precisa da taxa padrão de mídia. O adaptador pode pedir uma
+      // taxa menor para reduzir o envio em redes móveis; navegadores que não
+      // aceitem a opção continuam usando a configuração nativa, sem falhar.
+      const configuredBitrate = Number(state.options?.recording?.audioBitsPerSecond);
+      const audioBitsPerSecond = Number.isFinite(configuredBitrate)
+        && configuredBitrate >= 16_000 && configuredBitrate <= 128_000
+        ? Math.round(configuredBitrate)
+        : 0;
+      const recorderOptions = {
+        ...(mimeType ? { mimeType } : {}),
+        ...(audioBitsPerSecond ? { audioBitsPerSecond } : {}),
+      };
+      let recorder;
+      try {
+        recorder = new MediaRecorder(stream, Object.keys(recorderOptions).length ? recorderOptions : undefined);
+      } catch (error) {
+        if (!audioBitsPerSecond) throw error;
+        recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      }
       state.stream = stream; state.recorder = recorder; state.chunks = [];
       recorder.ondataavailable = (event) => { if (event.data.size) state.chunks.push(event.data); };
       recorder.onerror = () => { state.inlineClarification = false; stopMedia(true); setPhase('error', 'A gravação foi interrompida. Tente novamente.'); };

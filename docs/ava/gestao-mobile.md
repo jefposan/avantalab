@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.17 -->
+<!-- ava-version: 1.35.0.18 -->
+
+> Revisão 1.35.0.18: o teste técnico local de desempenho da Solicitação por
+> Voz pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.
+>
 
 > Revisão 1.35.0.17: o limite de 1 a 31 no campo Dia pertence ao Dashboard Web.
 > Sem impacto operacional para a Ava Mobile.
