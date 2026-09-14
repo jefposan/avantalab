@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.01: a organização visual dos indicadores do
+// Admin não muda a orientação operacional da Ava.
 // Revisado na versão 1.35.0.18: o teste local de desempenho da Solicitação por
 // Voz não altera nenhuma orientação, função ou regra operacional da Ava.
 // Revisado na versão 1.35.0.17: o Dia da receita do Dashboard aceita somente

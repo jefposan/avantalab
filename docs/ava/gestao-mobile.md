@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19 -->
+<!-- ava-version: 1.35.0.19.01 -->
 
+> Revisão 1.35.0.19.01: a organização visual dos indicadores do Admin não
+> altera a orientação operacional da Ava Mobile.
+>
 > Revisão 1.35.0.19: nas páginas **Recebimentos** e **Serviços** do
 > colaborador, a Solicitação por Voz usa a mesma captura compacta, idioma
 > português explícito e medição técnica local do AvantaVendas. As perguntas,

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.0.19.01 - 2026-09-14
+- **Indicadores do Admin ajustados**: a faixa de cadastros e downloads usa
+  largura responsiva maior em telas amplas e se reorganiza antes de exceder o
+  card principal.
+
 ## 1.35.0.19-av149 - 2026-09-14
 - **Voz em Operações em Campo**: Recebimentos e Serviços passam a usar a mesma
   captura móvel compacta, idioma de transcrição explícito e telemetria técnica

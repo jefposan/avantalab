@@ -1123,12 +1123,12 @@ export default function AdminPage() {
 
           {view === 'perfis' && <div className="space-y-4">
             <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
                 <div className="min-w-0">
                   <h2 className="text-base font-black text-slate-950">Perfis</h2>
                 </div>
-                <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-                  <div className="grid w-full grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 sm:grid-cols-4 sm:w-auto" role="group" aria-label="Escolher a leitura administrativa">
+                <div className="flex min-w-0 flex-col gap-2 2xl:flex-row 2xl:items-center">
+                  <div className="grid w-full grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 sm:grid-cols-4 2xl:w-auto" role="group" aria-label="Escolher a leitura administrativa">
                     {PLATAFORMAS_CADASTRO.map((plataforma) => {
                       const selecionada = consultaCadastros === plataforma.id;
                       return <button key={plataforma.id} type="button" aria-pressed={selecionada} onClick={() => {
@@ -1147,7 +1147,7 @@ export default function AdminPage() {
                       </button>;
                     })}
                   </div>
-                  <div className="grid w-full grid-cols-2 gap-x-4 gap-y-2 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2 text-left sm:w-[420px] sm:grid-cols-4">
+                  <div className="grid w-full grid-cols-2 gap-x-4 gap-y-2 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2 text-left sm:grid-cols-4 2xl:w-[560px]">
                     <div className="min-w-0 border-r border-cyan-100 pr-3 sm:col-span-1">
                       <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">{consultaCadastros === 'perfis_avantalab' ? 'Perfis' : 'Cadastros'}</p>
                       <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">

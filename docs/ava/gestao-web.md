@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19 -->
+<!-- ava-version: 1.35.0.19.01 -->
 
+> Revisão 1.35.0.19.01: a organização visual dos indicadores do Admin não
+> altera a orientação operacional da Ava na Gestão Web.
+>
 > Revisão 1.35.0.19: a otimização técnica da Solicitação por Voz foi aplicada
 > às páginas de colaborador de Operações em Campo; sem impacto operacional na
 > Gestão Web.

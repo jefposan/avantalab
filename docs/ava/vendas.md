@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19 -->
+<!-- ava-version: 1.35.0.19.01 -->
 
+> Revisão 1.35.0.19.01: a organização visual dos indicadores do Admin não
+> altera a orientação operacional do AvantaVendas.
+>
 > Revisão 1.35.0.19-av149: a mesma captura compacta e medição silenciosa já
 > validada no AvantaVendas também passou a ser usada em Recebimentos e
 > Serviços. Sem mudança operacional para o AvantaVendas.
