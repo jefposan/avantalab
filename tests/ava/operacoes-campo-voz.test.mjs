@@ -96,6 +96,20 @@ test('cadastros novos atualizam o resolvedor e ajudam a próxima transcrição',
   assert.doesNotMatch(transcriber, /select\('\*'\)/);
 });
 
+test('Recebimentos e Serviços usam a mesma captura móvel otimizada e métricas locais', async () => {
+  const [dock, transcriber, processor] = await Promise.all([
+    readFile(new URL('../../app/recebimentos/components/OperacoesCampoVoiceDock.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/recebimentos/solicitacao-voz/transcrever/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/recebimentos/solicitacao-voz/processar/route.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(dock, /recording=\{\{ audioBitsPerSecond: 32_000 \}\}/);
+  assert.match(dock, /\[solicitacao-voz:tempo\]/);
+  assert.match(transcriber, /transcriptionForm\.append\('language', 'pt'\)/);
+  assert.doesNotMatch(transcriber, /languages\[\]/);
+  assert.match(transcriber, /Server-Timing/);
+  assert.match(processor, /Server-Timing/);
+});
+
 test('listas curtas usam o card sem scroll e sem salvar pendências', async () => {
   const [controller, dock] = await Promise.all([
     readFile(new URL('../../app/padrao-avanta/acoes-por-voz/avanta-voice-actions.js', import.meta.url), 'utf8'),

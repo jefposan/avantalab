@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.18 -->
+<!-- ava-version: 1.35.0.19 -->
+
+> Revisão 1.35.0.19: nas páginas **Recebimentos** e **Serviços** do
+> colaborador, a Solicitação por Voz usa a mesma captura compacta, idioma
+> português explícito e medição técnica local do AvantaVendas. As perguntas,
+> confirmações e lançamentos permanecem os mesmos.
+>
 
 > Revisão 1.35.0.18: o teste técnico local de desempenho da Solicitação por
 > Voz pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.

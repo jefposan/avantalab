@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type {
   AvantaVoiceAccount,
+  AvantaVoiceActionsAdapter,
   AvantaVoiceActionOperation,
   AvantaVoiceNotificationOptions,
 } from './contract';
@@ -47,6 +48,8 @@ type Props = {
   storageNamespace: string;
   allowSaveForLater?: boolean;
   compactShortLists?: boolean;
+  /** Configuração opcional de captura; o controlador mantém fallback nativo. */
+  recording?: AvantaVoiceActionsAdapter['recording'];
   label?: string;
   helpTitle?: string;
   helpText: string;
@@ -69,6 +72,7 @@ export default function AvantaVoiceActionDock({
   storageNamespace,
   allowSaveForLater,
   compactShortLists,
+  recording,
   label = 'Solicitação por Voz',
   helpTitle = 'Solicitação por Voz',
   helpText,
@@ -145,6 +149,7 @@ export default function AvantaVoiceActionDock({
         storageNamespace,
         allowSaveForLater,
         compactShortLists,
+        recording,
         request,
         notify: notificar,
         afterExecute,

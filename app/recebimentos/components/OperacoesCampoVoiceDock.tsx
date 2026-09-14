@@ -245,9 +245,20 @@ function construirResposta(input: {
   return { kind: 'confirmation', title: 'Agendar serviço', message: `Cliente: ${action.customerName}\nData: ${data}\nTipo: ${TIPO_LABEL[draft.serviceType]}`, action, selections, draft, transcription, metrics };
 }
 
-async function respostaJson(response: Response) {
+async function respostaJson(
+  response: Response,
+  timing?: { operation: AvantaVoiceActionOperation; startedAt: number; audioBytes?: number },
+) {
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(String(result.message || result.mensagem || 'Não foi possível concluir a solicitação.'));
+  if (timing && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+    console.info('[solicitacao-voz:tempo]', {
+      operacao: timing.operation,
+      totalMs: Math.round(performance.now() - timing.startedAt),
+      servidor: response.headers.get('server-timing') || 'indisponível',
+      audioBytes: timing.audioBytes,
+    });
+  }
   return result as Record<string, unknown>;
 }
 
@@ -287,11 +298,15 @@ export default function OperacoesCampoVoiceDock({
     if (operation === 'transcribe') {
       const audio = values.audio;
       if (!(audio instanceof Blob) || !audio.size) throw new Error('Não identificamos áudio. Tente novamente.');
+      const startedAt = performance.now();
       const form = new FormData();
       form.set('empresaId', empresaId);
       form.set('mode', mode);
       form.set('audio', audio, `solicitacao-voz.${values.extension === 'mp4' ? 'mp4' : 'webm'}`);
-      return respostaJson(await fetch('/api/recebimentos/solicitacao-voz/transcrever', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form, signal }));
+      return respostaJson(
+        await fetch('/api/recebimentos/solicitacao-voz/transcrever', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form, signal }),
+        { operation, startedAt, audioBytes: audio.size },
+      );
     }
     if (operation === 'process') {
       const previousDraft = values.previousDraft ? validarRascunhoVozCampo(values.previousDraft) : null;
@@ -300,12 +315,16 @@ export default function OperacoesCampoVoiceDock({
       let draft = previousDraft;
       let metrics = METRICAS_VAZIAS;
       if (!(selection && previousDraft && (selection.type === 'customer' || selection.type === 'choice'))) {
-        const result = await respostaJson(await fetch('/api/recebimentos/solicitacao-voz/processar', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ empresaId, mode, transcription: values.transcription, previousDraft }),
-          signal,
-        }));
+        const startedAt = performance.now();
+        const result = await respostaJson(
+          await fetch('/api/recebimentos/solicitacao-voz/processar', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ empresaId, mode, transcription: values.transcription, previousDraft }),
+            signal,
+          }),
+          { operation, startedAt },
+        );
         draft = validarRascunhoVozCampo(result.draft);
         metrics = (result.metrics || METRICAS_VAZIAS) as MetricasVozCampo;
       }
@@ -347,6 +366,7 @@ export default function OperacoesCampoVoiceDock({
       storageNamespace={`avantalab.operacoes-campo.${mode}.voice-actions.v1`}
       allowSaveForLater={false}
       compactShortLists
+      recording={{ audioBitsPerSecond: 32_000 }}
       helpText={helpText}
       disabled={offline}
       request={request}

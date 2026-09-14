@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.18 -->
+<!-- ava-version: 1.35.0.19 -->
+
+> Revisão 1.35.0.19: a otimização técnica da Solicitação por Voz foi aplicada
+> às páginas de colaborador de Operações em Campo; sem impacto operacional na
+> Gestão Web.
+>
 
 > Revisão 1.35.0.18: o teste técnico local de desempenho da Solicitação por
 > Voz pertence ao AvantaVendas; sem impacto operacional na Gestão Web.

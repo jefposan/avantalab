@@ -317,6 +317,9 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Presenciais chama-se Referência e aceita números ou códigos como 12, G e L2.
 // Revisado na versão 1.18.0.05: no endereço de Recebimentos Presenciais, Rua
 // tem área ampliada e Número / identificação fica compacto para códigos curtos.
+// Revisado na versão 1.35.0.19: Recebimentos e Serviços usam a mesma captura
+// compacta e transcrição em português da Solicitação por Voz; a mudança não
+// altera as intenções, confirmações ou lançamentos oficiais.
 // Revisado na versão 1.20.0.09: a página pública de Gestão Financeira permite
 // abrir diretamente o card AvantaVendas pela âncora #avantavendas, sem impacto
 // operacional nos manuais da Ava.

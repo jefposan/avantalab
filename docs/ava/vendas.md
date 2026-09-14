@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.18 -->
+<!-- ava-version: 1.35.0.19 -->
+
+> Revisão 1.35.0.19-av149: a mesma captura compacta e medição silenciosa já
+> validada no AvantaVendas também passou a ser usada em Recebimentos e
+> Serviços. Sem mudança operacional para o AvantaVendas.
+>
 
 > Revisão 1.35.0.18-av148: o laboratório local da Solicitação por Voz mede
 > silenciosamente o tempo de transcrição e interpretação e testa envio de fala
@@ -481,7 +486,7 @@
 > Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
 > aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
 > operacional no AvantaVendas.
-<!-- avantavendas-asset-revision: 148 -->
+<!-- avantavendas-asset-revision: 149 -->
 
 > Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
 > catálogo ativo completo da conta sem permitir que uma palavra apenas parecida

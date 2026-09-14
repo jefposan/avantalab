@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.0.19-av149 - 2026-09-14
+- **Voz em Operações em Campo**: Recebimentos e Serviços passam a usar a mesma
+  captura móvel compacta, idioma de transcrição explícito e telemetria técnica
+  local da Solicitação por Voz do AvantaVendas. Não houve alteração das
+  intenções, confirmações, permissões ou lançamentos.
+
 ## 1.35.0.18-av148 - 2026-09-14
 - **Teste local de velocidade da voz**: a transcrição declara corretamente o
   idioma português, o AvantaVendas envia fala em taxa adequada a rede móvel com
