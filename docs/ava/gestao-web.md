@@ -1,7 +1,23 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.12 -->
+<!-- ava-version: 1.35.0.17 -->
 
+> Revisão 1.35.0.17: no card **Registrar entradas**, o campo Dia aceita somente
+> números de 1 a 31. A Ava pode orientar o preenchimento de um dia válido.
+>
+> Revisão 1.35.0.16: ao voltar ao campo Dia do card **Registrar entradas**, a
+> Ava pode orientar uma nova digitação, pois o valor anterior é limpo no foco.
+>
+> Revisão 1.35.0.15: o rascunho do card **Registrar entradas** é preservado ao
+> trocar apenas o foco entre os campos. Sem impacto na orientação da Ava.
+>
+> Revisão 1.35.0.14: o campo de dia da receita no Dashboard é digitável e sem
+> controles incrementais. Sem impacto na orientação da Ava.
+>
+> Revisão 1.35.0.13: quando o perfil possui mais de um centro de custo, a Ava
+> pode orientar que a receita lançada pelo card **Registrar entradas** seja
+> direcionada pelo seletor do próprio card, sem trocar o centro aberto na tela.
+>
 > Revisão 1.35.0.12: a releitura de instalações iniciais Apple foi acelerada
 > no painel administrativo. Sem impacto operacional para a Ava.
 >

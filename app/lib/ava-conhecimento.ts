@@ -1,5 +1,16 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.17: o Dia da receita do Dashboard aceita somente
+// valores de 1 a 31 durante a digitação. Sem impacto adicional para a Ava.
+// Revisado na versão 1.35.0.16: o Dia da receita do Dashboard é limpo ao
+// receber foco para uma nova digitação. Sem impacto para a Ava.
+// Revisado na versão 1.35.0.15: o rascunho da receita do Dashboard é preservado
+// ao trocar apenas o foco entre os campos. Sem impacto para a Ava.
+// Revisado na versão 1.35.0.14: o campo de dia da receita do Dashboard é
+// digitável e não exibe controles incrementais. Sem impacto para a Ava.
+// Revisado na versão 1.35.0.13: quando houver mais de um centro de custo, a
+// receita do card Registrar entradas pode ser direcionada sem trocar o centro
+// aberto na página.
 // Revisado na versão 1.35.0.12: a releitura dos downloads Apple foi acelerada
 // no painel administrativo. Sem impacto operacional para a Ava.
 // Revisado na versão 1.35.0.11: a persistência da releitura dos downloads Apple

@@ -119,6 +119,12 @@ type ResumoCentroCusto = {
   percentual: number;
 };
 
+type CentroCustoDisponivel = {
+  id: string;
+  nome: string;
+  ativo: boolean;
+};
+
 interface DashboardProps {
   meses: string[];
   lancamentos: any[];
@@ -129,6 +135,9 @@ interface DashboardProps {
   resumoPerfis?: ResumoPerfilFinanceiro[];
   centrosCustoAtivo?: boolean;
   centroCustoSelecionadoId?: string;
+  centrosCusto?: CentroCustoDisponivel[];
+  centroCustoEntradaId?: string;
+  setCentroCustoEntradaId?: (id: string) => void;
   resumoCentrosCusto?: ResumoCentroCusto[];
   mesPerfis: string;
   setMesPerfis: (mes: string) => void;
@@ -202,7 +211,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], centrosCustoAtivo = false, centroCustoSelecionadoId, resumoCentrosCusto = [], mesPerfis, setMesPerfis, mesCentrosCusto, setMesCentrosCusto, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode, iniciarValoresOcultos,
+  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], centrosCustoAtivo = false, centroCustoSelecionadoId, centrosCusto = [], centroCustoEntradaId = '', setCentroCustoEntradaId, resumoCentrosCusto = [], mesPerfis, setMesPerfis, mesCentrosCusto, setMesCentrosCusto, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode, iniciarValoresOcultos,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   entradaFaturamentoDia,
   setEntradaFaturamentoDia,
@@ -226,6 +235,8 @@ export default function Dashboard({
   const ehPerfilPessoal = tipoPerfil === 'pessoal';
   const nomeCaixinha = ehPerfilPessoal ? 'Caixinha' : 'Reserva financeira';
   const nomeCaixinhaMinusculo = nomeCaixinha.toLocaleLowerCase('pt-BR');
+  const centrosCustoAtivos = centrosCusto.filter((centro) => centro.ativo);
+  const exibirSeletorCentroCustoNaReceita = centrosCustoAtivo && centrosCustoAtivos.length > 1;
 
   const [ocultarValores, setOcultarValores] = useState(iniciarValoresOcultos);
   const [ocultarValoresPerfis, setOcultarValoresPerfis] = useState(iniciarValoresOcultos);
@@ -2045,12 +2056,37 @@ const mostrarComparativoResumoDash =
         </div>
         <div className="p-5">
           <section className={(darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>Lançar receita</p>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>Lançar receita</p>
+              </div>
+              {exibirSeletorCentroCustoNaReceita && (
+                <label className="ml-auto flex min-h-8 min-w-0 items-center gap-2" htmlFor="centro-custo-entrada-dashboard">
+                  <span className={textMuted + " whitespace-nowrap text-[9px] font-black uppercase tracking-wide"}>Centro de custo</span>
+                  <select
+                    id="centro-custo-entrada-dashboard"
+                    value={centroCustoEntradaId}
+                    onChange={(e) => setCentroCustoEntradaId?.(e.target.value)}
+                    className={`h-8 min-w-0 max-w-[168px] rounded-lg border px-2 text-[11px] font-black uppercase tracking-wide outline-none transition focus-visible:ring-2 ${
+                      darkMode
+                        ? 'border-slate-600 bg-slate-900 text-white focus-visible:ring-sky-400'
+                        : 'border-slate-200 bg-white text-slate-700 focus-visible:ring-sky-500'
+                    }`}
+                  >
+                    {centrosCustoAtivos.map((centro) => (
+                      <option key={centro.id} value={centro.id}>{centro.nome}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </div>
             <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
-              <input type="number" min="1" max="31" value={entradaFaturamentoDia} onChange={(e) => setEntradaFaturamentoDia(e.target.value)} placeholder="Dia" className="w-full rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-inner outline-none" />
+              <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={2} value={entradaFaturamentoDia} onFocus={() => setEntradaFaturamentoDia('')} onChange={(e) => {
+                const valor = e.target.value.replace(/\D/g, '').slice(0, 2);
+                const dia = Number(valor);
+                setEntradaFaturamentoDia(!valor ? '' : dia >= 1 && dia <= 31 ? valor : valor.slice(0, -1));
+              }} placeholder="Dia" aria-label="Dia da receita" className="w-full rounded-lg bg-white px-3 py-2 text-center text-sm font-bold text-slate-800 shadow-inner outline-none" />
               <input type="text" value={entradaFaturamentoOrigem} onChange={(e) => setEntradaFaturamentoOrigem(e.target.value)} placeholder="Origem da entrada" className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-inner outline-none" />
             </div>
             <div className="flex gap-2">

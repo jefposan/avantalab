@@ -1,7 +1,22 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.12 -->
+<!-- ava-version: 1.35.0.17 -->
 
+> Revisão 1.35.0.17: o limite de 1 a 31 no campo Dia pertence à Gestão Web.
+> Sem impacto operacional para o AvantaVendas.
+>
+> Revisão 1.35.0.16: a limpeza do Dia ao receber foco pertence à Gestão Web.
+> Sem impacto operacional para o AvantaVendas.
+>
+> Revisão 1.35.0.15: a preservação do rascunho de receita pertence à Gestão
+> Web. Sem impacto operacional para o AvantaVendas.
+>
+> Revisão 1.35.0.14: o refinamento do campo de dia pertence à Gestão Web. Sem
+> impacto operacional para o AvantaVendas.
+>
+> Revisão 1.35.0.13: o seletor de centro de custo no card de receita pertence
+> somente à Gestão Web. Sem impacto operacional para o AvantaVendas.
+>
 > Revisão 1.35.0.12: a releitura de instalações iniciais Apple foi acelerada
 > no painel administrativo. Sem impacto operacional para a Ava.
 >

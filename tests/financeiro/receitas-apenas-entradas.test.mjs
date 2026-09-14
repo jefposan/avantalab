@@ -24,6 +24,30 @@ test('Gestão Web oferece somente o lançamento individual de receitas', () => {
   assert.match(dashboard, /Lançar receita/);
 });
 
+test('receita do Dashboard permite direcionar ao centro de custo sem trocar o contexto da página', () => {
+  assert.match(dashboard, /centro-custo-entrada-dashboard/);
+  assert.match(dashboard, /centrosCustoAtivos\.length > 1/);
+  assert.match(gestao, /centroCustoEntradaDashboardId/);
+  assert.match(gestao, /adicionarEntradaFaturamento\(mesSelecionado, centroCustoEntradaDashboardId\)/);
+});
+
+test('campo de dia da receita é somente digitável e não exibe controles numéricos', () => {
+  assert.match(dashboard, /inputMode="numeric"/);
+  assert.match(dashboard, /aria-label="Dia da receita"/);
+  assert.match(dashboard, /text-center text-sm font-bold/);
+  assert.doesNotMatch(dashboard, /type="number" min="1" max="31" value=\{entradaFaturamentoDia\}/);
+});
+
+test('campo de dia é limpo ao voltar a receber foco para uma nova digitação', () => {
+  assert.match(dashboard, /onFocus=\{\(\) => setEntradaFaturamentoDia\(''\)\}/);
+  assert.doesNotMatch(gestao, /contextoRascunhoReceitaRef/);
+});
+
+test('campo de dia da receita aceita somente dias de 1 a 31', () => {
+  assert.match(dashboard, /const dia = Number\(valor\)/);
+  assert.match(dashboard, /dia >= 1 && dia <= 31/);
+});
+
 test('Gestão Mobile não mantém seletor nem confirmação de total mensal', () => {
   assert.doesNotMatch(mobile, /modo-receita-total|salvar-total-receita/);
   assert.doesNotMatch(mobile, /confirmacaoTotalReceita|salvarTotalReceita/);

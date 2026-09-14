@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.35.0.17 - 2026-09-14
+- **Dia da receita limitado**: o campo **Dia** de **Registrar entradas** aceita
+  somente valores de 1 a 31 durante a digitação.
+
+## 1.35.0.16 - 2026-09-14
+- **Dia da receita reiniciado ao focar**: ao retornar ao campo Dia do card
+  **Registrar entradas**, o valor é apagado para uma nova digitação, sem os
+  controles incrementais do navegador.
+
+## 1.35.0.15 - 2026-09-14
+- **Rascunho de receita preservado**: o campo Dia e os demais dados de
+  **Registrar entradas** não são mais limpos ao somente perder e recuperar o
+  foco; a limpeza permanece para trocas reais de contexto e após a gravação.
+
+## 1.35.0.14 - 2026-09-14
+- **Dia da receita no Dashboard**: o campo passou a aceitar apenas digitação
+  numérica centralizada, sem os controles de aumentar ou diminuir do navegador.
+
+## 1.35.0.13 - 2026-09-14
+- **Receitas por centro de custo**: o card **Registrar entradas** do Dashboard
+  exibe o seletor de centro de custo quando há mais de um centro ativo. A
+  receita é direcionada ao centro escolhido sem trocar o contexto financeiro
+  atualmente aberto na página.
+
 ## 1.35.0.12 - 2026-09-13
 - **Sincronização Apple acelerada**: a releitura inicial de até 90 relatórios
   diários é processada em lotes limitados, permitindo gravar os downloads

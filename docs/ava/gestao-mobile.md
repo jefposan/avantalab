@@ -1,7 +1,22 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.12 -->
+<!-- ava-version: 1.35.0.17 -->
 
+> Revisão 1.35.0.17: o limite de 1 a 31 no campo Dia pertence ao Dashboard Web.
+> Sem impacto operacional para a Ava Mobile.
+>
+> Revisão 1.35.0.16: a limpeza do Dia ao receber foco pertence ao Dashboard
+> Web. Sem impacto operacional para a Ava Mobile.
+>
+> Revisão 1.35.0.15: a preservação do rascunho de receita pertence ao
+> Dashboard Web. Sem impacto operacional para a Ava Mobile.
+>
+> Revisão 1.35.0.14: o refinamento do campo de dia pertence ao Dashboard Web.
+> Sem impacto operacional para a Ava Mobile.
+>
+> Revisão 1.35.0.13: o seletor de centro de custo no card de receita pertence
+> somente ao Dashboard Web. Sem impacto operacional para a Ava Mobile.
+>
 > Revisão 1.35.0.12: a releitura de instalações iniciais Apple foi acelerada
 > no painel administrativo. Sem impacto operacional para a Ava.
 >

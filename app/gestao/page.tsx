@@ -969,6 +969,7 @@ const [centrosCustoAtivo, setCentrosCustoAtivo] = useState(false);
 const [centrosCusto, setCentrosCusto] = useState<CentroCusto[]>([]);
 const [resumoCentrosCustoDashboard, setResumoCentrosCustoDashboard] = useState<ResumoCentroCusto[]>([]);
 const [centroCustoSelecionadoId, setCentroCustoSelecionadoId] = useState('');
+const [centroCustoEntradaDashboardId, setCentroCustoEntradaDashboardId] = useState('');
 const [carregandoCentroCusto, setCarregandoCentroCusto] = useState(false);
 const [listaCentroCustoAberta, setListaCentroCustoAberta] = useState(false);
 const [modalCentrosCusto, setModalCentrosCusto] = useState(false);
@@ -2335,6 +2336,23 @@ useEffect(() => {
 useEffect(() => {
   if (!centrosCustoAtivo) setListaCentroCustoAberta(false);
 }, [centrosCustoAtivo]);
+
+// A receita lançada pelo Dashboard pode ser direcionada sem trocar o contexto
+// financeiro aberto na página. O padrão inicial acompanha o centro atual.
+useEffect(() => {
+  const ativos = centrosCusto.filter((centro) => centro.ativo);
+  if (!centrosCustoAtivo || ativos.length < 2) {
+    setCentroCustoEntradaDashboardId('');
+    return;
+  }
+  setCentroCustoEntradaDashboardId((atual) => (
+    ativos.some((centro) => centro.id === atual)
+      ? atual
+      : (ativos.some((centro) => centro.id === centroCustoSelecionadoId)
+        ? centroCustoSelecionadoId
+        : ativos[0].id)
+  ));
+}, [centrosCusto, centrosCustoAtivo, centroCustoSelecionadoId]);
 
 
 const limparTimerAjustes = () => {
@@ -3974,7 +3992,7 @@ const entradasFaturamentoDoMes = useMemo(() => {
       maximumFractionDigits: 2,
     });
 
-const adicionarEntradaFaturamento = async (mesInformado?: string) => {
+const adicionarEntradaFaturamento = async (mesInformado?: string, centroCustoIdInformado?: string) => {
   if (entradaFaturamentoSalvando) return;
 
   if (!empresaId) {
@@ -4041,7 +4059,7 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
       valor: entradaFaturamentoValorNumerico,
       status: ehFuturaEntrada ? 'prevista' : null,
       tipoObs: ehFuturaEntrada ? 'previsto' : null,
-      centroCustoId: centrosCustoAtivo ? centroCustoSelecionadoId : null,
+      centroCustoId: centrosCustoAtivo ? (centroCustoIdInformado || centroCustoSelecionadoId) : null,
     });
 
     if (entradaSalva.erro || !entradaSalva.data) {
@@ -4387,7 +4405,7 @@ const confirmarEntradaFaturamentoDashboard = async () => {
   }
 
   setModalReceitaDashboardAberto(false);
-  await adicionarEntradaFaturamento(mesSelecionado);
+  await adicionarEntradaFaturamento(mesSelecionado, centroCustoEntradaDashboardId);
   limparCamposReceitaDashboard();
 };
 
@@ -11371,6 +11389,9 @@ if (validacaoTelefoneObrigatoria) {
         resumoPerfis={resumoPerfisDashboard}
         centrosCustoAtivo={centrosCustoAtivo}
         centroCustoSelecionadoId={centroCustoSelecionadoId}
+        centrosCusto={centrosCusto}
+        centroCustoEntradaId={centroCustoEntradaDashboardId}
+        setCentroCustoEntradaId={setCentroCustoEntradaDashboardId}
         resumoCentrosCusto={resumoCentrosCustoDashboard}
         mesPerfis={mesPerfisDashboard}
         setMesPerfis={setMesPerfisDashboard}
