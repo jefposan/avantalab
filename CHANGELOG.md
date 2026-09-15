@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.35.0.19.05 - 2026-09-14
+- **Saldo do Mês por centro de custo**: o card ganhou uma lista com **Todos**
+  como padrão e os centros ativos do perfil. Todos consolida receitas e despesas
+  de todos os centros; cada opção individual mostra apenas o centro escolhido,
+  inclusive nos valores previstos.
+
+## 1.35.0.19.04 - 2026-09-14
+- **Resumo Financeiro consolidado**: o card do Dashboard passa a somar receitas
+  e despesas de todos os centros de custo do perfil no mês selecionado,
+  incluindo o comparativo mensal, maior gasto e resultado operacional.
+
+## 1.35.0.19.03 - 2026-09-14
+- **Resumo de Centros de Custo atualizado**: o card do Dashboard reapura todos
+  os centros ativos depois de cada alteração financeira, mantendo receitas,
+  despesas e consolidado sincronizados sem exigir trocar o mês ou o centro.
+
 ## 1.35.0.19.02 - 2026-09-14
 - **Balanço consolidado por perfil**: Balanço Geral, Relatório e Gráficos agora
   somam receitas e despesas de todos os centros de custo do perfil, por mês e

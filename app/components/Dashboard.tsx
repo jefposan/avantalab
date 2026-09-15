@@ -152,6 +152,8 @@ interface DashboardProps {
   iniciarValoresOcultos: boolean;
   mesResumoDash: string;
   setMesResumoDash: (mes: string) => void;
+  lancamentosResumoFinanceiro?: any[];
+  faturamentosResumoFinanceiro?: Record<string, number>;
   totalDespesasMes: number;
   maiorGasto: { despesa: string; valor: number };
   lucroOperacional: number;
@@ -177,6 +179,8 @@ interface DashboardProps {
   onExcluirReceita: (id: any) => void;
   saldoCardMesIdx: number;
   setSaldoCardMesIdx: (idx: number) => void;
+  centroCustoSaldoId: string;
+  setCentroCustoSaldoId: (id: string) => void;
   saldoInicial: number;
   saldoFinal: number;
   saldoPrevisto: number;
@@ -212,7 +216,7 @@ interface DashboardProps {
 
 export default function Dashboard({
   meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], centrosCustoAtivo = false, centroCustoSelecionadoId, centrosCusto = [], centroCustoEntradaId = '', setCentroCustoEntradaId, resumoCentrosCusto = [], mesPerfis, setMesPerfis, mesCentrosCusto, setMesCentrosCusto, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode, iniciarValoresOcultos,
-  mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
+  mesResumoDash, setMesResumoDash, lancamentosResumoFinanceiro = lancamentos, faturamentosResumoFinanceiro = faturamentos, totalDespesasMes, maiorGasto, lucroOperacional,
   entradaFaturamentoDia,
   setEntradaFaturamentoDia,
   entradaFaturamentoOrigem,
@@ -223,7 +227,7 @@ export default function Dashboard({
   receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda,
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
   receitasAConfirmar, onConfirmarReceita, onEditarReceita, onExcluirReceita,
-  saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
+  saldoCardMesIdx, setSaldoCardMesIdx, centroCustoSaldoId, setCentroCustoSaldoId, saldoInicial, saldoFinal, saldoPrevisto,
   caixinhaSaldo, caixinhaSaldoInicial, caixinhaAportesMes, caixinhaUltimosMovimentos, onAdicionarAporteCaixinha, onDefinirSaldoInicialCaixinha, onExcluirSaldoInicialCaixinha, onEditarAporteCaixinha, onExcluirAporteCaixinha,
   tipoPerfil,
   dashboardOrdem, dashboardOcultos, onAtualizarLayoutDashboard,
@@ -775,13 +779,14 @@ export default function Dashboard({
 
   return abreviacoes[mes] || mes;
 };
-  const indiceMesResumoDash = meses.indexOf(mesResumoDash);
+const indiceMesResumoDash = meses.indexOf(mesResumoDash);
+const receitasResumoFinanceiro = Number(faturamentosResumoFinanceiro[mesResumoDash] || 0);
 
 const mesAnteriorResumoDash =
   indiceMesResumoDash > 0 ? meses[indiceMesResumoDash - 1] : null;
 
 const lancamentosMesAnteriorResumoDash = mesAnteriorResumoDash
-  ? lancamentos.filter((l) => l.mes === mesAnteriorResumoDash)
+  ? lancamentosResumoFinanceiro.filter((l) => l.mes === mesAnteriorResumoDash)
   : [];
 
 const totalDespesasMesAnteriorResumoDash =
@@ -1285,10 +1290,24 @@ const mostrarComparativoResumoDash =
 
     saldo: (
       <div className={`${bgCard} card-radius-avantalab relative w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="flex items-center justify-between rounded-tl-[12px] rounded-tr-[26px] px-6 py-3 text-center text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
-          <span>Saldo do mês</span>
+        <div className="flex items-center justify-between gap-3 rounded-tl-[12px] rounded-tr-[26px] px-6 py-3 text-center text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span className="min-w-0 truncate">Saldo do mês</span>
           <div className="flex items-center gap-2">
             <SeletorMesCard value={meses[saldoCardMesIdx]} onChange={(mes) => setSaldoCardMesIdx(meses.indexOf(mes))} ariaLabel="Selecionar mês do saldo" />
+            {centrosCustoAtivo && centrosCustoAtivos.length > 0 && (
+              <select
+                value={centroCustoSaldoId}
+                onChange={(event) => setCentroCustoSaldoId(event.target.value)}
+                aria-label="Selecionar centro de custo do saldo"
+                title="Selecionar centro de custo do saldo"
+                className="h-7 max-w-[126px] rounded-lg border border-white/30 bg-white/15 px-2 text-[10px] font-black normal-case tracking-normal text-white outline-none transition hover:bg-white/25 focus-visible:ring-2 focus-visible:ring-white/80"
+              >
+                <option value="todos">Todos</option>
+                {centrosCustoAtivos.map((centro) => (
+                  <option key={centro.id} value={centro.id}>{centro.nome}</option>
+                ))}
+              </select>
+            )}
             <DragHandle tone="light" />
             <BotaoOpcoesCard id="saldo" tone="light" />
           </div>
@@ -1911,6 +1930,10 @@ const mostrarComparativoResumoDash =
                 <span>Ant.: {mostrarComparativoResumoDash ? formatarMoeda(totalDespesasMesAnteriorResumoDash) : '--'}</span>
               </div>
             </div>
+          </div>
+          <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
+            <span className={`font-semibold text-sm ${textMuted}`}>Total Receitas</span>
+            <span className="font-semibold text-base tabular-nums tracking-tight text-emerald-500">{formatarMoeda(receitasResumoFinanceiro)}</span>
           </div>
           <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
             <div className="flex flex-col">

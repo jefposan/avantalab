@@ -824,6 +824,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     }
   };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
+  const [centroCustoSaldoId, setCentroCustoSaldoId] = useState('todos');
   const dashboardCardsKanban = ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'meusPerfis', 'centrosCusto', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
   const ordemDashboardPadrao = { left: [], a: ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'controlePonto'], b: ['meusPerfis', 'centrosCusto', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
   const ocultosDashboardPadrao = normalizarTipoPerfil(tipoPerfilAtual) === 'empresa' ? ['caixinha'] : [];
@@ -968,6 +969,7 @@ const [mesPerfisDashboard, setMesPerfisDashboard] = useState('JANEIRO');
 const [mesCentrosCustoDashboard, setMesCentrosCustoDashboard] = useState('JANEIRO');
 
 const [faturamentosEntradas, setFaturamentosEntradas] = useState<EntradaFaturamento[]>([]);
+const [faturamentosEntradasConsolidados, setFaturamentosEntradasConsolidados] = useState<EntradaFaturamento[]>([]);
 const [resumoPerfisDashboard, setResumoPerfisDashboard] = useState<ResumoPerfilFinanceiro[]>([]);
 const [centrosCustoAtivo, setCentrosCustoAtivo] = useState(false);
 const [centrosCusto, setCentrosCusto] = useState<CentroCusto[]>([]);
@@ -1953,6 +1955,7 @@ setMensagemCarregamentoSistema('Carregando empresa...');
   setFaturamentos({});
   setFaturamentosConsolidados({});
   setFaturamentosEntradas([]);
+  setFaturamentosEntradasConsolidados([]);
 
   setEmpresasDoUsuario(empresasEncontradas);
   setEmpresaParaSelecionar(empresasEncontradas[0]);
@@ -2071,6 +2074,19 @@ useEffect(() => {
     );
         setFaturamentosEntradas(
       faturamentosEntradasBanco.map((entrada: RegistroSupabase) => ({
+        id: String(entrada.id),
+        mes: textoRegistro(entrada.mes),
+        dia: Number(entrada.dia),
+        origem: textoRegistro(entrada.origem),
+        valor: Number(entrada.valor),
+        status: entrada.status ? textoRegistro(entrada.status) : null,
+        tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
+        etiquetaOrigem: entrada.origem_etiqueta ? textoRegistro(entrada.origem_etiqueta) : null,
+        centroCustoId: entrada.centro_custo_id ? textoRegistro(entrada.centro_custo_id) : null,
+      }))
+    );
+    setFaturamentosEntradasConsolidados(
+      faturamentosEntradasConsolidadosBanco.map((entrada: RegistroSupabase) => ({
         id: String(entrada.id),
         mes: textoRegistro(entrada.mes),
         dia: Number(entrada.dia),
@@ -2278,7 +2294,10 @@ useEffect(() => {
 
   void carregarResumoCentros();
   return () => { cancelado = true; };
-}, [anoSelecionado, centrosCusto, centrosCustoAtivo, empresaId, mesCentrosCustoDashboard, mounted]);
+// A recarga financeira atualiza as duas fontes consolidadas abaixo. Ao observá-las,
+// o card volta a consultar todos os centros do perfil depois de cada lançamento,
+// edição, confirmação ou exclusão, sem depender da troca manual de mês/centro.
+}, [anoSelecionado, centrosCusto, centrosCustoAtivo, empresaId, faturamentosConsolidados, lancamentosConsolidados, mesCentrosCustoDashboard, mounted]);
 
   // 3. Salva Configurações Globais no Supabase
 useEffect(() => {
@@ -3618,6 +3637,27 @@ const lancamentosRealizadosAno = lancamentos.filter((lancamento) =>
   despesaRealizada(lancamento, Number(anoSelecionado), meses.indexOf(lancamento.mes))
 );
 
+// O Resumo Financeiro é do perfil inteiro: ele não segue o centro escolhido
+// para a operação diária no Dashboard.
+const lancamentosConsolidadosRealizadosAno = lancamentosConsolidados.filter((lancamento) =>
+  despesaRealizada(lancamento, Number(anoSelecionado), meses.indexOf(lancamento.mes))
+);
+const lancamentosConsolidadosRealizadosDoMes = lancamentosConsolidadosRealizadosAno.filter((lancamento) =>
+  lancamento.mes === mesResumoDash
+);
+const totalDespesasResumoFinanceiro = lancamentosConsolidadosRealizadosDoMes.reduce(
+  (acc, lancamento) => acc + Number(lancamento.valor || 0),
+  0,
+);
+const receitasResumoFinanceiro = Number(faturamentosConsolidados[mesResumoDash] || 0);
+const lucroOperacionalResumoFinanceiro = receitasResumoFinanceiro - totalDespesasResumoFinanceiro;
+const maiorGastoResumoFinanceiro = lancamentosConsolidadosRealizadosDoMes.length > 0
+  ? lancamentosConsolidadosRealizadosDoMes.reduce(
+    (anterior, atual) => (atual.valor > anterior.valor ? atual : anterior),
+    { despesa: '', valor: 0 },
+  )
+  : { despesa: 'Nenhuma despesa', valor: 0 };
+
 // Uma despesa prevista so integra o realizado depois da confirmacao manual,
 // mesmo quando a data programada ja passou.
 const totalDespesasMes = lancamentosRealizadosDoMes.reduce(
@@ -3910,11 +3950,18 @@ const receitasAConfirmar = faturamentosEntradas.filter(
     ehDataHoje(Number(anoSelecionado), meses.indexOf(e.mes), e.dia)
 );
 
-// Card de saldo (Inicial/Final/Previsto) com seletor proprio de mes.
+// Card de saldo (Inicial/Final/Previsto) com seletores próprios de mês e
+// centro. "Todos" é o consolidado do perfil; cada centro mantém seus totais.
 const mesSaldoCardNome = meses[saldoCardMesIdx];
 const mesSaldoAntNome = saldoCardMesIdx > 0 ? meses[saldoCardMesIdx - 1] : null;
+const saldoDoPerfilInteiro = !centrosCustoAtivo || centroCustoSaldoId === 'todos';
+const lancamentosSaldoCard = saldoDoPerfilInteiro ? lancamentosConsolidados : lancamentos;
+const faturamentosSaldoCard = saldoDoPerfilInteiro ? faturamentosConsolidados : faturamentos;
+const faturamentosEntradasSaldoCard = saldoDoPerfilInteiro
+  ? faturamentosEntradasConsolidados
+  : faturamentosEntradas;
 const somaDespesasMesSaldo = (mesNome: string, mIdx: number, projetadas: boolean) =>
-  lancamentos
+  lancamentosSaldoCard
     .filter((l) => l.mes === mesNome)
     .reduce(
       (acc, l) => acc + ((projetadas
@@ -3925,7 +3972,7 @@ const somaDespesasMesSaldo = (mesNome: string, mIdx: number, projetadas: boolean
 // Receitas previstas: nao entram no total efetivado ate a confirmacao.
 // noDiaOuFuturo (hoje ou futuro) = alimentam o Previsto; passadas = lazy auto-confirm (viram efetivadas na exibicao).
 const somaReceitasPrevistasMes = (mesNome: string, mIdx: number, futurasOuHoje: boolean) =>
-  faturamentosEntradas
+  faturamentosEntradasSaldoCard
     .filter((e) => e.mes === mesNome && e.status === 'prevista')
     .reduce((acc, e) => {
       const noDiaOuFuturo =
@@ -3937,12 +3984,12 @@ const somaReceitasPrevistasMes = (mesNome: string, mIdx: number, futurasOuHoje: 
 const recPrevPassadasSaldo = somaReceitasPrevistasMes(mesSaldoCardNome, saldoCardMesIdx, false);
 const recPrevFuturasSaldo = somaReceitasPrevistasMes(mesSaldoCardNome, saldoCardMesIdx, true);
 // Receitas efetivadas = total do mes + previstas cuja data ja passou (auto-confirmadas na exibicao).
-const recSaldoCard = (faturamentos[mesSaldoCardNome] || 0) + recPrevPassadasSaldo;
+const recSaldoCard = (faturamentosSaldoCard[mesSaldoCardNome] || 0) + recPrevPassadasSaldo;
 const despRealSaldoCard = somaDespesasMesSaldo(mesSaldoCardNome, saldoCardMesIdx, false);
 const despFutSaldoCard = somaDespesasMesSaldo(mesSaldoCardNome, saldoCardMesIdx, true);
 // Saldo inicial = resultado do mes anterior (entra como saldo de abertura do mes atual).
 const saldoInicialCard = mesSaldoAntNome
-  ? (faturamentos[mesSaldoAntNome] || 0) +
+  ? (faturamentosSaldoCard[mesSaldoAntNome] || 0) +
     somaReceitasPrevistasMes(mesSaldoAntNome, saldoCardMesIdx - 1, false) -
     somaDespesasMesSaldo(mesSaldoAntNome, saldoCardMesIdx - 1, false)
   : 0;
@@ -3950,6 +3997,12 @@ const saldoInicialCard = mesSaldoAntNome
 const saldoFinalCard = saldoInicialCard + recSaldoCard - despRealSaldoCard;
 // Previsto = Final + Receitas previstas (hoje/futuras) - Despesas futuras do mes.
 const saldoPrevistoCard = saldoFinalCard + recPrevFuturasSaldo - despFutSaldoCard;
+
+useEffect(() => {
+  if (!centrosCustoAtivo || !centrosCusto.some((centro) => centro.ativo && centro.id === centroCustoSaldoId)) {
+    setCentroCustoSaldoId('todos');
+  }
+}, [centroCustoSaldoId, centrosCusto, centrosCustoAtivo]);
   const lancamentosOrdenados = useMemo(() => {
   return [...lancamentos].sort((a, b) => {
     const diaA = Number(a.dia);
@@ -5874,6 +5927,19 @@ const recarregarDadosFinanceirosAtual = async () => {
 
   setFaturamentosEntradas(
     faturamentosEntradasBanco.map((entrada: RegistroSupabase) => ({
+      id: String(entrada.id),
+      mes: textoRegistro(entrada.mes),
+      dia: Number(entrada.dia),
+      origem: textoRegistro(entrada.origem),
+      valor: Number(entrada.valor),
+      status: entrada.status ? textoRegistro(entrada.status) : null,
+      tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
+      etiquetaOrigem: entrada.origem_etiqueta ? textoRegistro(entrada.origem_etiqueta) : null,
+      centroCustoId: entrada.centro_custo_id ? textoRegistro(entrada.centro_custo_id) : null,
+    }))
+  );
+  setFaturamentosEntradasConsolidados(
+    faturamentosEntradasConsolidadosBanco.map((entrada: RegistroSupabase) => ({
       id: String(entrada.id),
       mes: textoRegistro(entrada.mes),
       dia: Number(entrada.dia),
@@ -11476,9 +11542,11 @@ if (validacaoTelefoneObrigatoria) {
         iniciarValoresOcultos={iniciarValoresOcultos}
         mesResumoDash={mesResumoDash}
         setMesResumoDash={setMesResumoDash}
-        totalDespesasMes={totalDespesasMes}
-        maiorGasto={maiorGasto}
-        lucroOperacional={lucroOperacional}
+        lancamentosResumoFinanceiro={lancamentosConsolidadosRealizadosAno}
+        faturamentosResumoFinanceiro={faturamentosConsolidados}
+        totalDespesasMes={totalDespesasResumoFinanceiro}
+        maiorGasto={maiorGastoResumoFinanceiro}
+        lucroOperacional={lucroOperacionalResumoFinanceiro}
         entradaFaturamentoDia={entradaFaturamentoDia}
         setEntradaFaturamentoDia={setEntradaFaturamentoDia}
         entradaFaturamentoOrigem={entradaFaturamentoOrigem}
@@ -11500,6 +11568,8 @@ if (validacaoTelefoneObrigatoria) {
         onExcluirReceita={excluirReceitaPrevista}
         saldoCardMesIdx={saldoCardMesIdx}
         setSaldoCardMesIdx={setSaldoCardMesIdx}
+        centroCustoSaldoId={centroCustoSaldoId}
+        setCentroCustoSaldoId={setCentroCustoSaldoId}
         saldoInicial={saldoInicialCard}
         saldoFinal={saldoFinalCard}
         saldoPrevisto={saldoPrevistoCard}

@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.02 -->
+<!-- ava-version: 1.35.0.19.05 -->
+
+> Revisão 1.35.0.19.05: o card **Saldo do Mês** oferece **Todos** como padrão
+> e permite consultar o saldo consolidado ou o saldo individual de cada centro
+> de custo ativo, incluindo previsões.
+
+> Revisão 1.35.0.19.04: o card **Resumo Financeiro** usa receitas e despesas
+> consolidadas de todos os centros de custo do perfil no mês selecionado.
+
+> Revisão 1.35.0.19.03: o card **Centros de custo** reapura receitas, despesas
+> e consolidado de todos os centros ativos ao alterar um lançamento financeiro.
 
 > Revisão 1.35.0.19.02: **Balanço Geral**, **Relatório** e **Gráficos** usam o
 > consolidado de todos os centros de custo do perfil em cada mês e ano. O

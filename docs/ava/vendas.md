@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.02 -->
+<!-- ava-version: 1.35.0.19.05 -->
+
+> Revisão 1.35.0.19.05: o seletor de centro no Saldo do Mês pertence à Gestão
+> Web e não altera a orientação operacional do AvantaVendas.
+
+> Revisão 1.35.0.19.04: o consolidado do Resumo Financeiro pertence à Gestão
+> Web e não altera a orientação operacional do AvantaVendas.
+
+> Revisão 1.35.0.19.03: a atualização do resumo de centros de custo pertence à
+> Gestão Web e não altera a orientação operacional do AvantaVendas.
 
 > Revisão 1.35.0.19.02: o consolidado financeiro por centros de custo pertence
 > à Gestão Web e não altera a orientação operacional do AvantaVendas.

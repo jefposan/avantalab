@@ -1,5 +1,11 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.05: Saldo do Mês da Gestão Web permite Todos
+// (consolidado) ou um centro de custo individual, preservando as previsões.
+// Revisado na versão 1.35.0.19.04: o Resumo Financeiro da Gestão Web consolida
+// receitas e despesas de todos os centros de custo no mês selecionado.
+// Revisado na versão 1.35.0.19.03: o card Centros de custo da Gestão Web
+// atualiza o consolidado após cada alteração financeira. Sem novo comando Ava.
 // Revisado na versão 1.35.0.19.02: Balanço, Relatório e Gráficos da Gestão Web
 // consolidam todos os centros de custo do perfil; o contexto operacional segue
 // isolado pelo centro selecionado.
