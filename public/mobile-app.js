@@ -11942,6 +11942,17 @@
           }).join('') +
         '</select></label>'
       : '<h2 class="text-base font-black">Novo lan&ccedil;amento</h2>';
+    var seletorMesLancamento =
+      '<label class="grid w-[116px] min-w-0 justify-self-center gap-0.5"><span class="text-center text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/85">Mês</span>' +
+        '<div class="flex h-8 w-full items-center rounded-lg border border-white/30 bg-white px-0.5 text-[#003E73] shadow-sm" aria-label="Mês do lançamento: ' + escapeHtml(nomeMesCompleto(periodo.mes) + ' de ' + periodo.ano) + '">' +
+          '<button id="lancamento-mes-anterior" type="button" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-lg font-black leading-none transition hover:bg-slate-100" aria-label="Mês anterior">&lsaquo;</button>' +
+          '<span class="min-w-0 flex-1 truncate px-0.5 text-center text-[10px] font-black leading-none tracking-wide">' + escapeHtml(nomeMesCompleto(periodo.mes).toUpperCase()) + '</span>' +
+          '<button id="lancamento-mes-proximo" type="button" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-lg font-black leading-none transition hover:bg-slate-100" aria-label="Próximo mês">&rsaquo;</button>' +
+        '</div>' +
+      '</label>';
+    var controlesCabecalhoLancamento = mostrarCentroCusto
+      ? '<div class="flex min-w-0 flex-1 justify-center gap-1.5">' + cabecalhoLancamento + seletorMesLancamento + '</div>'
+      : '<div class="flex min-w-0 flex-1 items-center justify-between gap-2 pr-10">' + cabecalhoLancamento + seletorMesLancamento + '</div>';
 
     return (
       '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:var(--avanta-lancamento-padding-bottom, calc(env(safe-area-inset-bottom) + 78px))">' +
@@ -11958,14 +11969,9 @@
               '<div class="' + corpoModal + ' p-4">' +
               novaDespesaFormHtml() +
               '</div>'
-            : '<div class="grid ' + (mostrarCentroCusto ? 'grid-cols-[116px_116px_36px] justify-center' : 'grid-cols-[minmax(0,1fr)_auto_auto]') + ' items-center gap-1.5 px-3 py-2.5 text-white" style="background-color:#003E73">' +
-                cabecalhoLancamento +
-                '<div class="flex w-[116px] items-center justify-self-center rounded-full border border-white/25 bg-white/15 px-0.5 py-0.5 text-white shadow-sm" aria-label="Mês do lançamento: ' + escapeHtml(nomeMesCompleto(periodo.mes) + ' de ' + periodo.ano) + '">' +
-                  '<button id="lancamento-mes-anterior" type="button" class="flex h-6 w-6 items-center justify-center rounded-full text-lg font-black leading-none transition hover:bg-white/15" aria-label="Mês anterior">&lsaquo;</button>' +
-                  '<span class="min-w-[56px] px-0.5 text-center text-[10px] font-black leading-none tracking-wide">' + escapeHtml(nomeMesCompleto(periodo.mes).toUpperCase()) + '</span>' +
-                  '<button id="lancamento-mes-proximo" type="button" class="flex h-6 w-6 items-center justify-center rounded-full text-lg font-black leading-none transition hover:bg-white/15" aria-label="Próximo mês">&rsaquo;</button>' +
-                '</div>' +
-                '<button id="fechar-lancamento" type="button" class="justify-self-end flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar lançamento">' + iconeFecharGeometricoMobile() + '</button>' +
+            : '<div class="relative flex items-center px-3 py-2.5 text-white" style="background-color:#003E73">' +
+                controlesCabecalhoLancamento +
+                '<button id="fechar-lancamento" type="button" class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar lançamento">' + iconeFecharGeometricoMobile() + '</button>' +
               '</div>' +
               '<div class="' + corpoModal + ' p-4">' +
               '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl ' + abas + ' p-1">' +

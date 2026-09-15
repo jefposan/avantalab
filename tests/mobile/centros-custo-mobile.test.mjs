@@ -29,6 +29,9 @@ test('novos lançamentos usam o centro ativo escolhido no cabeçalho', () => {
 test('edição de centro mantém ações alinhadas e os seletores compactos', () => {
   assert.match(mobile, /flex items-start gap-2 rounded-xl border/);
   assert.match(mobile, /mt-2 text-\[10px\] font-bold uppercase leading-none/);
-  assert.match(mobile, /grid-cols-\[116px_116px_36px\] justify-center/);
-  assert.match(mobile, /class="flex w-\[116px\] items-center justify-self-center rounded-full/);
+  assert.match(mobile, /var seletorMesLancamento/);
+  assert.match(mobile, /Mês<\/span>' \+\n\s*'<div class="flex h-8 w-full items-center rounded-lg border border-white\/30 bg-white/);
+  assert.match(mobile, /var controlesCabecalhoLancamento = mostrarCentroCusto/);
+  assert.match(mobile, /flex min-w-0 flex-1 justify-center gap-1\.5/);
+  assert.match(mobile, /absolute right-3 top-1\/2 flex h-9 w-9 -translate-y-1\/2/);
 });

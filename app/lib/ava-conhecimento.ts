@@ -1,5 +1,10 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.29: o X de fechamento do lançamento móvel fica
+// ancorado no canto direito; mês e centro de custo continuam centralizados.
+// Revisado na versão 1.35.0.19.28: no cabeçalho de lançamento da Gestão
+// Mobile, mês e centro de custo têm o mesmo formato e ficam alinhados. As
+// setas de mês e o destino do lançamento permanecem os mesmos.
 // Revisado na versão 1.35.0.19.27: na Gestão Mobile, o status do centro em
 // edição fica abaixo do nome sem deslocar as ações. O seletor de centro no
 // cabeçalho de lançamento tem a mesma largura do seletor de mês.

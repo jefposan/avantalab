@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.27 -->
+<!-- ava-version: 1.35.0.19.29 -->
+
+> Revisão 1.35.0.19.29: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.28: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.27: ajuste visual exclusivo da Gestão Mobile, sem impacto
 > operacional no AvantaVendas.

@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.27 -->
+<!-- ava-version: 1.35.0.19.29 -->
+
+> Revisão 1.35.0.19.29: o X de fechamento fica no canto direito do cabeçalho de
+> **Lançar**. Mês e Centro de custo continuam centralizados e alinhados.
+
+> Revisão 1.35.0.19.28: no cabeçalho de **Lançar**, Mês e Centro de custo têm
+> o mesmo formato e ficam alinhados. As setas continuam mudando o mês e o
+> seletor continua definindo o destino do lançamento.
 
 > Revisão 1.35.0.19.27: ao editar um centro de custo, o status permanece abaixo
 > do nome sem deslocar as ações. No cabeçalho de **Lançar**, o seletor de centro

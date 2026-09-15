@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.35.0.19.29 - 2026-09-15
+- **Fechamento do lançamento mobile**: o botão X foi fixado no canto direito do
+  cabeçalho. Mês e Centro de custo permanecem centralizados e alinhados entre si.
+
+## 1.35.0.19.28 - 2026-09-15
+- **Cabeçalho de lançamento mobile**: o seletor de mês passou a usar o mesmo
+  formato de rótulo acima e campo compacto do Centro de custo. Ambos ficam
+  alinhados na mesma grade, sem alterar a navegação entre meses.
+
 ## 1.35.0.19.27 - 2026-09-15
 - **Ajuste mobile de centros de custo**: ao editar, o estado **Ativo** agora
   fica abaixo do campo com respiro próprio, preservando o alinhamento superior
