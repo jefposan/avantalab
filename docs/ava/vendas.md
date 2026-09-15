@@ -1,6 +1,21 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.42 -->
+<!-- ava-version: 1.35.0.19.47 -->
+
+> Revisão 1.35.0.19.47: o espaçamento dos seletores em **Lançar** pertence à
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.46: a igualdade tipográfica dos seletores em **Lançar**
+> pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.45: o ajuste de largura do seletor de Centro de custo na
+> Gestão Mobile não altera o fluxo operacional do AvantaVendas.
+
+> Revisão 1.35.0.19.44: a opção **Todos** no seletor de Centro de custo da
+> Gestão Mobile não altera o fluxo operacional do AvantaVendas.
+
+> Revisão 1.35.0.19.43: o alinhamento do seletor de Mês em **Lançar** pertence
+> à Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.42: o sincronismo de Centros de custo entre Gestão Web e
 > Gestão Mobile não altera o fluxo operacional do AvantaVendas.

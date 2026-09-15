@@ -647,6 +647,7 @@
     centrosCustoAtivo: false,
     centrosCusto: [],
     centroCustoSelecionadoId: '',
+    centroCustoTodosSelecionado: false,
     centroCustoSalvando: false,
     centroCustoNovoNome: '',
     centroCustoEditandoId: '',
@@ -4068,6 +4069,10 @@
   }
 
   function prepararNovoLancamentoMobile() {
+    if (state.centrosCustoAtivo && state.centroCustoTodosSelecionado) {
+      var principal = centroCustoPrincipalMobile();
+      if (principal) selecionarCentroCustoMobile(principal.id);
+    }
     iniciarPeriodoLancamentoMobile();
     if (!state.despesaDia) {
       state.despesaDia = diaHojeLancamentoMobile();
@@ -4107,6 +4112,11 @@
   function sincronizarCentroCustoSelecionadoMobile() {
     if (!state.centrosCustoAtivo) {
       state.centroCustoSelecionadoId = '';
+      state.centroCustoTodosSelecionado = false;
+      return;
+    }
+    if (state.centroCustoTodosSelecionado) {
+      state.centroCustoSelecionadoId = '';
       return;
     }
     var ativos = centrosCustoAtivosMobile();
@@ -4124,14 +4134,20 @@
   }
 
   function selecionarCentroCustoMobile(id) {
+    if (!id) {
+      state.centroCustoSelecionadoId = '';
+      state.centroCustoTodosSelecionado = true;
+      return;
+    }
     if (!centrosCustoAtivosMobile().some(function (centro) { return centro.id === id; })) return;
     state.centroCustoSelecionadoId = id;
+    state.centroCustoTodosSelecionado = false;
     var chave = chaveUltimoCentroCustoMobile();
     if (chave) window.localStorage.setItem(chave, id);
   }
 
   function itemPertenceAoCentroCustoAtualMobile(item) {
-    if (!state.centrosCustoAtivo) return true;
+    if (!state.centrosCustoAtivo || state.centroCustoTodosSelecionado) return true;
     var centroId = item && (item.centroCustoId || item.centro_custo_id);
     return String(centroId || '') === String(state.centroCustoSelecionadoId || '');
   }
@@ -4146,11 +4162,12 @@
 
   function trocarCentroCustoGlobalMobile(id) {
     var anterior = state.centroCustoSelecionadoId;
+    var todosAnterior = state.centroCustoTodosSelecionado;
     selecionarCentroCustoMobile(id);
-    if (state.centroCustoSelecionadoId === anterior) return;
+    if (state.centroCustoSelecionadoId === anterior && state.centroCustoTodosSelecionado === todosAnterior) return;
     var centro = centrosCustoAtivosMobile().find(function (item) { return item.id === state.centroCustoSelecionadoId; });
     state.busca = '';
-    mostrarToast(centro ? 'Centro de custo: ' + centro.nome + '.' : 'Centro de custo atualizado.');
+    mostrarToast(state.centroCustoTodosSelecionado ? 'Todos os centros de custo.' : (centro ? 'Centro de custo: ' + centro.nome + '.' : 'Centro de custo atualizado.'));
   }
 
   function bind(id, fn) {
@@ -8823,6 +8840,7 @@
     else {
       state.centrosCusto = [];
       state.centroCustoSelecionadoId = '';
+      state.centroCustoTodosSelecionado = false;
     }
     if (mudou || state.menuAberto || state.modalLancamento || state.modalMenu === 'centrosCusto') render();
     return mudou;
@@ -8862,6 +8880,7 @@
     } else {
       state.centrosCusto = [];
       state.centroCustoSelecionadoId = '';
+      state.centroCustoTodosSelecionado = false;
     }
     state.centroCustoSalvando = false;
     render();
@@ -10653,13 +10672,19 @@
   function seletorCentroCustoPerfilHtml() {
     var centros = centrosCustoAtivosMobile();
     if (!state.centrosCustoAtivo || !centros.length) return '';
-    var opcoes = centros.map(function (centro) {
+    var centroSelecionado = state.centroCustoTodosSelecionado
+      ? 'Todos'
+      : ((centros.find(function (centro) { return centro.id === state.centroCustoSelecionadoId; }) || {}).nome || 'Principal');
+    // A largura acompanha a escolha atual: valores curtos aproximam o rótulo
+    // do seletor, sem comprometer nomes maiores ou a seta de abertura.
+    var larguraSeletor = Math.max(58, Math.min(104, 24 + Array.from(centroSelecionado).length * 8));
+    var opcoes = '<option value=""' + (state.centroCustoTodosSelecionado ? ' selected' : '') + '>Todos</option>' + centros.map(function (centro) {
       return '<option value="' + escapeHtml(centro.id) + '"' + (centro.id === state.centroCustoSelecionadoId ? ' selected' : '') + '>' + escapeHtml(centro.nome) + '</option>';
     }).join('');
     return '<span class="relative z-10 h-4 w-px shrink-0 bg-white/30" aria-hidden="true"></span>' +
       '<div class="relative z-10 flex min-w-0 shrink-0 items-center gap-1"><span class="shrink-0 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.04em] text-cyan-100/80">Centro de custo:</span>' +
-      '<label class="relative block w-[104px] shrink-0"><span class="sr-only">Centro de custo ativo</span>' +
-        '<select id="perfil-centro-custo" aria-label="Centro de custo ativo" style="font-size:14px !important" class="h-7 w-full min-w-0 appearance-none bg-transparent pl-0 pr-4 text-right text-[14px] font-black uppercase tracking-[0.04em] text-white outline-none">' + opcoes + '</select>' +
+      '<label class="relative block shrink-0" style="width:' + larguraSeletor + 'px"><span class="sr-only">Selecionar centro de custo</span>' +
+        '<select id="perfil-centro-custo" aria-label="Selecionar centro de custo" style="font-size:14px !important" class="h-7 w-full min-w-0 appearance-none bg-transparent pl-0 pr-4 text-right text-[14px] font-black uppercase tracking-[0.04em] text-white outline-none">' + opcoes + '</select>' +
         '<span class="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[13px] font-black text-white" aria-hidden="true">⌄</span>' +
       '</label></div>';
   }
@@ -11998,7 +12023,7 @@
     var centrosAtivos = centrosCustoAtivosMobile();
     var mostrarCentroCusto = state.centrosCustoAtivo && centrosAtivos.length > 0;
     var cabecalhoLancamento = mostrarCentroCusto
-      ? '<label class="grid w-[116px] min-w-0 justify-self-center gap-0.5"><span class="text-center text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/85">Centro de custo</span><select id="lancamento-centro-custo" aria-label="Centro de custo do lançamento" class="h-8 w-full min-w-0 rounded-lg border border-white/30 bg-white px-2 text-center text-[11px] font-black uppercase tracking-wide text-[#003E73] outline-none">' +
+      ? '<label class="grid w-[116px] min-w-0 justify-self-center gap-0.5"><span class="text-center text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/85">Centro de custo</span><select id="lancamento-centro-custo" aria-label="Centro de custo do lançamento" style="font-size:11px !important;line-height:1 !important" class="h-8 w-full min-w-0 rounded-lg border border-white/30 bg-white px-2 text-center text-[11px] font-black uppercase tracking-wide text-[#003E73] outline-none">' +
           centrosAtivos.map(function (centro) {
             return '<option value="' + escapeHtml(centro.id) + '"' + (centro.id === state.centroCustoSelecionadoId ? ' selected' : '') + '>' + escapeHtml(centro.nome) + '</option>';
           }).join('') +
@@ -12013,8 +12038,12 @@
         '</div>' +
       '</label>';
     var controlesCabecalhoLancamento = mostrarCentroCusto
-      ? '<div class="flex min-w-0 flex-1 justify-center gap-4 pr-10">' + cabecalhoLancamento + seletorMesLancamento + '</div>'
-      : '<div class="flex min-w-0 flex-1 items-center justify-between gap-2 pr-10">' + cabecalhoLancamento + seletorMesLancamento + '</div>';
+      ? '<div class="flex min-w-0 flex-1 justify-center gap-6 pr-10">' + cabecalhoLancamento + seletorMesLancamento + '</div>'
+      : '<div class="grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)_36px] items-center gap-2">' +
+          cabecalhoLancamento +
+          '<div class="min-w-0 justify-self-center">' + seletorMesLancamento + '</div>' +
+          '<span aria-hidden="true"></span>' +
+        '</div>';
 
     return (
       '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:var(--avanta-lancamento-padding-bottom, calc(env(safe-area-inset-bottom) + 78px))">' +
@@ -13787,6 +13816,11 @@
     if (!valorNum && state.novaRecorrValorNumerico) valorNum = Number(state.novaRecorrValorNumerico || 0);
     var mesesFrente = parseInt((document.getElementById('nova-recorr-meses-frente') || {}).value || state.novaRecorrMesesFrente || '1', 10);
     mesesFrente = Math.max(1, Math.min(60, mesesFrente || 1));
+    if (state.centrosCustoAtivo && !centrosCustoAtivosMobile().some(function (centro) { return centro.id === state.centroCustoSelecionadoId; })) {
+      state.erro = 'Selecione um centro de custo específico para cadastrar a despesa fixa.';
+      render();
+      return;
+    }
     if (!nome || !dia || dia < 1 || dia > 31) {
       state.erro = 'Preencha a despesa e o dia (1-31).';
       render();

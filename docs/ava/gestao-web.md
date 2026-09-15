@@ -1,6 +1,21 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.42 -->
+<!-- ava-version: 1.35.0.19.47 -->
+
+> Revisão 1.35.0.19.47: o espaçamento dos seletores em **Lançar** pertence à
+> Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.46: a igualdade tipográfica dos seletores em **Lançar**
+> pertence à Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.45: o ajuste de largura do seletor de Centro de custo na
+> pílula da Gestão Mobile não altera a operação da Gestão Web.
+
+> Revisão 1.35.0.19.44: a opção **Todos** no seletor de Centro de custo da
+> Gestão Mobile não altera a operação da Gestão Web.
+
+> Revisão 1.35.0.19.43: o alinhamento do seletor de Mês em **Lançar** pertence
+> à Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.35.0.19.42: a ativação, desativação e gestão de **Centros de
 > custo** é atualizada em tempo real entre Gestão Web e Gestão Mobile para o

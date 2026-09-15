@@ -1,6 +1,27 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.42 -->
+<!-- ava-version: 1.35.0.19.47 -->
+
+> Revisão 1.35.0.19.47: os seletores **Centro de custo** e **Mês** de
+> **Lançar** têm maior separação visual. As escolhas e os lançamentos mantêm o
+> mesmo funcionamento.
+
+> Revisão 1.35.0.19.46: no cabeçalho de **Lançar**, os valores dos seletores
+> **Centro de custo** e **Mês** usam a mesma escala visual. As escolhas e os
+> destinos dos lançamentos não mudaram.
+
+> Revisão 1.35.0.19.45: na pílula, a largura do seletor de **Centro de custo**
+> acompanha o nome escolhido. O rótulo fica próximo à escolha sem mudar o
+> contexto financeiro ou as opções disponíveis.
+
+> Revisão 1.35.0.19.44: o seletor de **Centro de custo** inclui **Todos**
+> para consultar o consolidado do perfil. Ao abrir **Lançar**, o contexto volta
+> ao **Principal**, porque cada nova despesa, receita ou despesa fixa precisa
+> pertencer a um centro específico.
+
+> Revisão 1.35.0.19.43: sem **Centros de custo** ativos, o seletor de **Mês**
+> de **Lançar** fica centralizado entre **Novo lançamento** e o X. As setas e
+> o fechamento continuam com o mesmo funcionamento.
 
 > Revisão 1.35.0.19.42: a ativação, desativação e gestão de **Centros de
 > custo** é atualizada em tempo real entre Gestão Web e Gestão Mobile para o

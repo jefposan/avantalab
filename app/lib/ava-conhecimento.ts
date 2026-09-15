@@ -1,5 +1,15 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.47: os seletores de Centro de custo e Mês de
+// Novo lançamento móvel possuem maior separação visual no cabeçalho.
+// Revisado na versão 1.35.0.19.46: os valores dos seletores de Centro de custo
+// e Mês de Novo lançamento móvel usam a mesma escala visual.
+// Revisado na versão 1.35.0.19.45: a largura do seletor de Centro de custo na
+// pílula móvel acompanha o valor ativo, aproximando-o do respectivo rótulo.
+// Revisado na versão 1.35.0.19.44: Centro de custo inclui Todos na Gestão
+// Mobile para a visão consolidada; novos registros continuam usando um centro.
+// Revisado na versão 1.35.0.19.43: sem Centros de custo ativos, o seletor de
+// Mês de Novo lançamento fica centralizado entre o título e o botão X.
 // Revisado na versão 1.35.0.19.42: Centros de custo sincroniza em tempo real
 // entre Gestão Web e Gestão Mobile; o centro selecionado continua local ao
 // dispositivo como último contexto de trabalho.

@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.35.0.19.47 - 2026-09-15
+- **Gestão Mobile — Novo lançamento**: Centro de custo e Mês receberam mais
+  respiro horizontal no cabeçalho, mantendo o conjunto centralizado e o X no
+  canto direito.
+
+## 1.35.0.19.46 - 2026-09-15
+- **Gestão Mobile — Novo lançamento**: os valores dos seletores de **Centro
+  de custo** e **Mês** agora usam explicitamente a mesma escala de 11px,
+  impedindo que a regra global de campos amplie apenas o Centro de custo.
+
+## 1.35.0.19.45 - 2026-09-15
+- **Gestão Mobile — Centro de custo**: a largura do seletor da pílula agora
+  acompanha o nome escolhido. Com valores curtos, o rótulo **Centro de custo**
+  aproxima-se do seletor, preservando espaço para nomes maiores e para a seta.
+
+## 1.35.0.19.44 - 2026-09-15
+- **Gestão Mobile — Centro de custo**: o seletor da pílula agora inclui
+  **Todos**, exibindo o consolidado de receitas e despesas do perfil. Ao abrir
+  **Lançar**, o contexto retorna ao centro **Principal**, pois cada novo
+  registro continua vinculado a um único centro específico.
+
+## 1.35.0.19.43 - 2026-09-15
+- **Gestão Mobile — Novo lançamento**: sem Centros de custo ativos, o seletor
+  de **Mês** agora fica centralizado no espaço entre o título **Novo
+  lançamento** e o botão X, preservando as setas e o fechamento no canto
+  direito.
+
 ## 1.35.0.19.42 - 2026-09-15
 - **Sincronismo de Centros de custo**: Gestão Web e Gestão Mobile agora escutam
   em tempo real a configuração e a lista de centros do mesmo perfil. Ativar,
