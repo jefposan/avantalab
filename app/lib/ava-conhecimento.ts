@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.27: na Gestão Mobile, o status do centro em
+// edição fica abaixo do nome sem deslocar as ações. O seletor de centro no
+// cabeçalho de lançamento tem a mesma largura do seletor de mês.
 // Revisado na versão 1.35.0.19.26: a Gestão Mobile compartilha a configuração
 // de Centros de custo com a Gestão Web. Gestor Master ou Administrador ativa o
 // recurso em Configurações, gerencia centros adicionais pelo Menu e direciona

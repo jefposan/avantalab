@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.0.19.27 - 2026-09-15
+- **Ajuste mobile de centros de custo**: ao editar, o estado **Ativo** agora
+  fica abaixo do campo com respiro próprio, preservando o alinhamento superior
+  entre nome e ações. No cabeçalho de lançamento, o seletor de centro passou a
+  ter a mesma largura compacta do seletor de mês.
+
 ## 1.35.0.19.26 - 2026-09-15
 - **Centros de custo na Gestão Mobile**: Configurações agora compartilha a
   ativação com a Gestão Web. Quando ativo, gestores encontram o menu **Centros

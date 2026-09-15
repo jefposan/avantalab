@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.26 -->
+<!-- ava-version: 1.35.0.19.27 -->
+
+> Revisão 1.35.0.19.27: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.26: Centros de custo na Gestão Mobile não altera o fluxo
 > operacional do AvantaVendas.

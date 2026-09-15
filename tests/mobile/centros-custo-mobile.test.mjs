@@ -25,3 +25,10 @@ test('novos lançamentos usam o centro ativo escolhido no cabeçalho', () => {
   assert.match(mobile, /centro_custo_id: centroCustoId/);
   assert.match(mobile, /!ehFutura && !state\.centrosCustoAtivo/);
 });
+
+test('edição de centro mantém ações alinhadas e os seletores compactos', () => {
+  assert.match(mobile, /flex items-start gap-2 rounded-xl border/);
+  assert.match(mobile, /mt-2 text-\[10px\] font-bold uppercase leading-none/);
+  assert.match(mobile, /grid-cols-\[116px_116px_36px\] justify-center/);
+  assert.match(mobile, /class="flex w-\[116px\] items-center justify-self-center rounded-full/);
+});

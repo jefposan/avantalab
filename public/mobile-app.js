@@ -11936,7 +11936,7 @@
     var centrosAtivos = centrosCustoAtivosMobile();
     var mostrarCentroCusto = state.centrosCustoAtivo && centrosAtivos.length > 0;
     var cabecalhoLancamento = mostrarCentroCusto
-      ? '<label class="grid min-w-0 gap-0.5"><span class="text-center text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/85">Centro de custo</span><select id="lancamento-centro-custo" aria-label="Centro de custo do lançamento" class="h-8 w-full min-w-0 rounded-lg border border-white/30 bg-white px-2 text-center text-[11px] font-black uppercase tracking-wide text-[#003E73] outline-none">' +
+      ? '<label class="grid w-[116px] min-w-0 justify-self-center gap-0.5"><span class="text-center text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/85">Centro de custo</span><select id="lancamento-centro-custo" aria-label="Centro de custo do lançamento" class="h-8 w-full min-w-0 rounded-lg border border-white/30 bg-white px-2 text-center text-[11px] font-black uppercase tracking-wide text-[#003E73] outline-none">' +
           centrosAtivos.map(function (centro) {
             return '<option value="' + escapeHtml(centro.id) + '"' + (centro.id === state.centroCustoSelecionadoId ? ' selected' : '') + '>' + escapeHtml(centro.nome) + '</option>';
           }).join('') +
@@ -11958,9 +11958,9 @@
               '<div class="' + corpoModal + ' p-4">' +
               novaDespesaFormHtml() +
               '</div>'
-            : '<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1.5 px-3 py-2.5 text-white" style="background-color:#003E73">' +
+            : '<div class="grid ' + (mostrarCentroCusto ? 'grid-cols-[116px_116px_36px] justify-center' : 'grid-cols-[minmax(0,1fr)_auto_auto]') + ' items-center gap-1.5 px-3 py-2.5 text-white" style="background-color:#003E73">' +
                 cabecalhoLancamento +
-                '<div class="flex items-center justify-self-center rounded-full border border-white/25 bg-white/15 px-0.5 py-0.5 text-white shadow-sm" aria-label="Mês do lançamento: ' + escapeHtml(nomeMesCompleto(periodo.mes) + ' de ' + periodo.ano) + '">' +
+                '<div class="flex w-[116px] items-center justify-self-center rounded-full border border-white/25 bg-white/15 px-0.5 py-0.5 text-white shadow-sm" aria-label="Mês do lançamento: ' + escapeHtml(nomeMesCompleto(periodo.mes) + ' de ' + periodo.ano) + '">' +
                   '<button id="lancamento-mes-anterior" type="button" class="flex h-6 w-6 items-center justify-center rounded-full text-lg font-black leading-none transition hover:bg-white/15" aria-label="Mês anterior">&lsaquo;</button>' +
                   '<span class="min-w-[56px] px-0.5 text-center text-[10px] font-black leading-none tracking-wide">' + escapeHtml(nomeMesCompleto(periodo.mes).toUpperCase()) + '</span>' +
                   '<button id="lancamento-mes-proximo" type="button" class="flex h-6 w-6 items-center justify-center rounded-full text-lg font-black leading-none transition hover:bg-white/15" aria-label="Próximo mês">&rsaquo;</button>' +
@@ -14144,16 +14144,16 @@
     var itens = (state.centrosCusto || []).map(function (centro) {
       var editando = state.centroCustoEditandoId === centro.id;
       var principal = centro.is_principal === true;
-      return '<div class="flex items-center gap-2 rounded-xl border ' + (escuro ? 'border-slate-700 bg-slate-900/40' : 'border-slate-200 bg-white') + ' p-3">' +
+      return '<div class="flex items-start gap-2 rounded-xl border ' + (escuro ? 'border-slate-700 bg-slate-900/40' : 'border-slate-200 bg-white') + ' p-3">' +
         '<div class="min-w-0 flex-1">' +
           (editando
             ? '<input id="centro-custo-editar-nome" value="' + escapeHtml(state.centroCustoNomeEdicao) + '" maxlength="80" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'style="font-size:16px" class="h-9 w-full rounded-lg border px-2 text-sm font-bold outline-none ' + campo + '" aria-label="Nome do centro de custo" />'
             : '<p class="truncate text-sm font-black ' + (escuro ? 'text-white' : 'text-slate-800') + '">' + escapeHtml(centro.nome) + '</p>') +
-          '<p class="mt-0.5 text-[10px] font-bold uppercase tracking-wide ' + (principal || centro.ativo ? 'text-emerald-600' : 'text-slate-400') + '">' + (principal ? 'Principal · sempre ativo' : (centro.ativo ? 'Ativo' : 'Pausado')) + '</p>' +
+          '<p class="mt-2 text-[10px] font-bold uppercase leading-none tracking-wide ' + (principal || centro.ativo ? 'text-emerald-600' : 'text-slate-400') + '">' + (principal ? 'Principal · sempre ativo' : (centro.ativo ? 'Ativo' : 'Pausado')) + '</p>' +
         '</div>' +
         (principal ? '' : (
           editando
-            ? '<div class="flex shrink-0 flex-wrap justify-end gap-1"><button type="button" data-centro-custo-salvar="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando || !String(state.centroCustoNomeEdicao || '').trim() ? 'disabled ' : '') + 'class="h-9 rounded-lg bg-[#003E73] px-2 text-[10px] font-black uppercase text-white disabled:opacity-50">Salvar</button><button type="button" data-centro-custo-cancelar="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg border px-2 text-[10px] font-black uppercase ' + (escuro ? 'border-slate-600 text-slate-300' : 'border-slate-300 text-slate-600') + '">Cancelar</button><button type="button" data-centro-custo-excluir="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg border border-red-300 px-2 text-[10px] font-black uppercase text-red-600 disabled:opacity-50">Excluir</button></div>'
+            ? '<div class="flex shrink-0 self-start flex-wrap justify-end gap-1"><button type="button" data-centro-custo-salvar="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando || !String(state.centroCustoNomeEdicao || '').trim() ? 'disabled ' : '') + 'class="h-9 rounded-lg bg-[#003E73] px-2 text-[10px] font-black uppercase text-white disabled:opacity-50">Salvar</button><button type="button" data-centro-custo-cancelar="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg border px-2 text-[10px] font-black uppercase ' + (escuro ? 'border-slate-600 text-slate-300' : 'border-slate-300 text-slate-600') + '">Cancelar</button><button type="button" data-centro-custo-excluir="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg border border-red-300 px-2 text-[10px] font-black uppercase text-red-600 disabled:opacity-50">Excluir</button></div>'
             : '<div class="flex shrink-0 flex-wrap justify-end gap-1"><button type="button" data-centro-custo-editar="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg border px-2 text-[10px] font-black uppercase ' + (escuro ? 'border-slate-600 text-slate-300' : 'border-slate-300 text-slate-600') + '">Editar</button><button type="button" data-centro-custo-pausar="' + escapeHtml(centro.id) + '" data-centro-custo-ativo="' + (centro.ativo ? '1' : '0') + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg px-2 text-[10px] font-black uppercase ' + (centro.ativo ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800') + '">' + (centro.ativo ? 'Pausar' : 'Ativar') + '</button></div>'
         )) +
       '</div>';

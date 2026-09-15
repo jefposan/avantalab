@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.26 -->
+<!-- ava-version: 1.35.0.19.27 -->
+
+> Revisão 1.35.0.19.27: ao editar um centro de custo, o status permanece abaixo
+> do nome sem deslocar as ações. No cabeçalho de **Lançar**, o seletor de centro
+> usa a mesma largura compacta do seletor de mês; a escolha e o destino dos
+> lançamentos não mudaram.
 
 > Revisão 1.35.0.19.26: em **Menu → Configurações**, Gestor Master ou
 > Administrador pode ativar **Centros de custo**. A escolha é compartilhada com

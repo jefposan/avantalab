@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.26 -->
+<!-- ava-version: 1.35.0.19.27 -->
+
+> Revisão 1.35.0.19.27: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
 
 > Revisão 1.35.0.19.26: a Gestão Mobile passou a usar a mesma configuração e
 > os mesmos centros de custo da Gestão Web. Ativar ou desativar em qualquer
