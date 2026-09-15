@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.01 -->
+<!-- ava-version: 1.35.0.19.02 -->
+
+> Revisão 1.35.0.19.02: **Balanço Geral**, **Relatório** e **Gráficos** usam o
+> consolidado de todos os centros de custo do perfil em cada mês e ano. O
+> centro selecionado continua sendo o contexto isolado dos lançamentos diários
+> e do Dashboard.
 
 > Revisão 1.35.0.19.01: a organização visual dos indicadores do Admin não
 > altera a orientação operacional da Ava na Gestão Web.

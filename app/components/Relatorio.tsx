@@ -22,6 +22,7 @@ type LancamentoBanco = {
   despesa_nome: string;
   descricao?: string | null;
   valor: number;
+  status?: string | null;
 };
 
 type FaturamentoBanco = {
@@ -67,7 +68,7 @@ export default function Relatorio({
       await Promise.all([
         supabase
           .from('lancamentos')
-          .select('ano, mes, despesa_nome, descricao, valor')
+          .select('ano, mes, despesa_nome, descricao, valor, status')
           .eq('empresa_id', empresaId)
           .order('ano', { ascending: true })
           .order('mes', { ascending: true }),
@@ -80,12 +81,13 @@ export default function Relatorio({
 
     if (!erroLancs && lancs) {
       setLancamentosTodosAnos(
-        lancs.map((l: any) => ({
+        lancs.filter((l: any) => l.status !== 'cancelada').map((l: any) => ({
           ano: Number(l.ano),
           mes: l.mes,
           despesa_nome: l.despesa_nome,
           descricao: l.descricao || '',
           valor: Number(l.valor || 0),
+          status: l.status || null,
         }))
       );
     }

@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.02: Balanço, Relatório e Gráficos da Gestão Web
+// consolidam todos os centros de custo do perfil; o contexto operacional segue
+// isolado pelo centro selecionado.
 // Revisado na versão 1.35.0.19.01: a organização visual dos indicadores do
 // Admin não muda a orientação operacional da Ava.
 // Revisado na versão 1.35.0.18: o teste local de desempenho da Solicitação por

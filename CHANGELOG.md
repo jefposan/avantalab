@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.0.19.02 - 2026-09-14
+- **Balanço consolidado por perfil**: Balanço Geral, Relatório e Gráficos agora
+  somam receitas e despesas de todos os centros de custo do perfil, por mês e
+  por ano. A seleção de centro continua afetando somente o contexto operacional
+  de lançamentos e do Dashboard.
+
 ## 1.35.0.19.01 - 2026-09-14
 - **Indicadores do Admin ajustados**: a faixa de cadastros e downloads usa
   largura responsiva maior em telas amplas e se reorganiza antes de exceder o

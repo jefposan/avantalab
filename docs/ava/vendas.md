@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.01 -->
+<!-- ava-version: 1.35.0.19.02 -->
+
+> Revisão 1.35.0.19.02: o consolidado financeiro por centros de custo pertence
+> à Gestão Web e não altera a orientação operacional do AvantaVendas.
 
 > Revisão 1.35.0.19.01: a organização visual dos indicadores do Admin não
 > altera a orientação operacional do AvantaVendas.

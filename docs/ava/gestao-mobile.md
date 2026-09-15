@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.01 -->
+<!-- ava-version: 1.35.0.19.02 -->
+
+> Revisão 1.35.0.19.02: o consolidado de centros de custo é uma mudança da
+> Gestão Web; não altera a orientação operacional da Ava Mobile.
 
 > Revisão 1.35.0.19.01: a organização visual dos indicadores do Admin não
 > altera a orientação operacional da Ava Mobile.

@@ -59,6 +59,7 @@ import {
   type TipoPerfil,
 } from '@/app/lib/perfis';
 import { APP_VERSION } from '@/app/lib/version';
+import { consolidarReceitasRealizadasPorMes } from '@/app/lib/financeiro-consolidado';
 import {
   ehCriacaoDePerfilAdicional,
   resolverEmpresaOrigemDaCriacao,
@@ -959,6 +960,9 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   // Dados Financeiros
 const [mesFaturamento, setMesFaturamento] = useState('JANEIRO');
 const [faturamentos, setFaturamentos] = useState<Record<string, number>>({});
+// O contexto selecionado isola a operação diária; estes dados preservam o
+// consolidado de todos os centros para Balanço, Relatório e Gráficos.
+const [faturamentosConsolidados, setFaturamentosConsolidados] = useState<Record<string, number>>({});
 const [mesResumoDash, setMesResumoDash] = useState('JANEIRO');
 const [mesPerfisDashboard, setMesPerfisDashboard] = useState('JANEIRO');
 const [mesCentrosCustoDashboard, setMesCentrosCustoDashboard] = useState('JANEIRO');
@@ -996,6 +1000,7 @@ const seletorCentroCustoRef = useRef<HTMLDivElement | null>(null);
   const [novaBaseCat, setNovaBaseCat] = useState('');
 
   const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([]);
+  const [lancamentosConsolidados, setLancamentosConsolidados] = useState<LancamentoFinanceiro[]>([]);
   const [caixinhaMovimentos, setCaixinhaMovimentos] = useState<CaixinhaMovimento[]>([]);
   const [formDia, setFormDia] = useState('');
   const [formDespesa, setFormDespesa] = useState('');
@@ -1943,8 +1948,10 @@ setMensagemCarregamentoSistema('Carregando empresa...');
   setLogoSettings({ scale: 100, x: 0, y: 0 });
   setDespesasCadastradas([]);
   setLancamentos([]);
+  setLancamentosConsolidados([]);
   setCaixinhaMovimentos([]);
   setFaturamentos({});
+  setFaturamentosConsolidados({});
   setFaturamentosEntradas([]);
 
   setEmpresasDoUsuario(empresasEncontradas);
@@ -2011,11 +2018,32 @@ useEffect(() => {
       ano,
       contextoCentroCustoId,
     );
+    const [lancamentosConsolidadosBanco, faturamentosEntradasConsolidadosBanco] = centrosCustoAtivo
+      ? await Promise.all([
+        buscarLancamentos(empresaId, ano),
+        buscarFaturamentosEntradas(empresaId, ano),
+      ])
+      : [lancamentosBanco, faturamentosEntradasBanco];
 
     if (!ativo) return;
 
     setLancamentos(
       lancamentosBanco.map((l: RegistroSupabase) => ({
+        id: String(l.id),
+        mes: textoRegistro(l.mes),
+        dia: Number(l.dia),
+        despesa: formatarNomeCategoria(textoRegistro(l.despesa_nome)),
+        descricao: textoRegistro(l.descricao),
+        valor: Number(l.valor),
+        status: l.status ? textoRegistro(l.status) : null,
+        tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
+        recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
+        centroCustoId: l.centro_custo_id ? textoRegistro(l.centro_custo_id) : null,
+        notaArquivoPath: l.nota_arquivo_path ? textoRegistro(l.nota_arquivo_path) : null,
+      }))
+    );
+    setLancamentosConsolidados(
+      lancamentosConsolidadosBanco.map((l: RegistroSupabase) => ({
         id: String(l.id),
         mes: textoRegistro(l.mes),
         dia: Number(l.dia),
@@ -2070,6 +2098,17 @@ useEffect(() => {
     }
 
     setFaturamentos(faturamentosFormatados);
+    setFaturamentosConsolidados(
+      centrosCustoAtivo
+        ? consolidarReceitasRealizadasPorMes(
+          faturamentosEntradasConsolidadosBanco.map((entrada: RegistroSupabase) => ({
+            mes: textoRegistro(entrada.mes),
+            valor: Number(entrada.valor || 0),
+            status: entrada.status ? textoRegistro(entrada.status) : null,
+          }))
+        )
+        : faturamentosFormatados
+    );
   };
 
   carregarDadosFinanceiros().finally(() => {
@@ -5778,6 +5817,12 @@ const recarregarDadosFinanceirosAtual = async () => {
     buscarFaturamentosEntradas(empresaId, ano, contextoCentroCustoId),
     buscarRecorrencias(empresaId, contextoCentroCustoId),
   ]);
+  const [lancamentosConsolidadosBanco, faturamentosEntradasConsolidadosBanco] = centrosCustoAtivo
+    ? await Promise.all([
+      buscarLancamentos(empresaId, ano),
+      buscarFaturamentosEntradas(empresaId, ano),
+    ])
+    : [lancamentosBanco, faturamentosEntradasBanco];
 
   setDespesasCadastradas(
     ordenarDespesasAlfabeticamente(despesasBanco.map((d: RegistroSupabase) => ({
@@ -5788,6 +5833,20 @@ const recarregarDadosFinanceirosAtual = async () => {
 
   setLancamentos(
     lancamentosBanco.map((l: RegistroSupabase) => ({
+      id: String(l.id),
+      mes: textoRegistro(l.mes),
+      dia: Number(l.dia),
+      despesa: formatarNomeCategoria(textoRegistro(l.despesa_nome)),
+      descricao: textoRegistro(l.descricao),
+      valor: Number(l.valor),
+      status: l.status ? textoRegistro(l.status) : null,
+      tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
+      recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
+      centroCustoId: l.centro_custo_id ? textoRegistro(l.centro_custo_id) : null,
+    }))
+  );
+  setLancamentosConsolidados(
+    lancamentosConsolidadosBanco.map((l: RegistroSupabase) => ({
       id: String(l.id),
       mes: textoRegistro(l.mes),
       dia: Number(l.dia),
@@ -5841,6 +5900,17 @@ const recarregarDadosFinanceirosAtual = async () => {
     });
   }
   setFaturamentos(faturamentosFormatados);
+  setFaturamentosConsolidados(
+    centrosCustoAtivo
+      ? consolidarReceitasRealizadasPorMes(
+        faturamentosEntradasConsolidadosBanco.map((entrada: RegistroSupabase) => ({
+          mes: textoRegistro(entrada.mes),
+          valor: Number(entrada.valor || 0),
+          status: entrada.status ? textoRegistro(entrada.status) : null,
+        }))
+      )
+      : faturamentosFormatados
+  );
   setRecorrencias(recorrenciasBanco);
 };
 
@@ -11320,8 +11390,8 @@ if (validacaoTelefoneObrigatoria) {
   <div className={classeConteudoPagina}>
     <BalancoGeral
       meses={meses}
-      lancamentos={lancamentos}
-      faturamentos={faturamentos}
+      lancamentos={lancamentosConsolidados}
+      faturamentos={faturamentosConsolidados}
       corPrimaria={corPrimaria}
       darkMode={darkMode}
       anoSelecionado={anoSelecionado}
@@ -11335,8 +11405,8 @@ if (validacaoTelefoneObrigatoria) {
     <div className={classeConteudoPagina}>
       <Graficos
         meses={meses}
-        lancamentos={lancamentosRealizadosAno}
-        faturamentos={faturamentos}
+        lancamentos={lancamentosConsolidados}
+        faturamentos={faturamentosConsolidados}
         despesasCadastradas={despesasCadastradas}
         tipoPerfil={tipoPerfilAtualNormalizado}
         empresaId={empresaId}
@@ -11365,8 +11435,8 @@ if (validacaoTelefoneObrigatoria) {
     <div className={classeConteudoPagina}>
       <Relatorio
         meses={meses}
-        lancamentos={lancamentosRealizadosAno}
-        faturamentos={faturamentos}
+        lancamentos={lancamentosConsolidados}
+        faturamentos={faturamentosConsolidados}
         despesasCadastradas={despesasCadastradas}
         corPrimaria={corPrimaria}
         darkMode={darkMode}
