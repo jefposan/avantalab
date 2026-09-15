@@ -1,6 +1,47 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.29 -->
+<!-- ava-version: 1.35.0.19.42 -->
+
+> Revisão 1.35.0.19.42: a ativação, desativação e gestão de **Centros de
+> custo** é atualizada em tempo real entre Gestão Web e Gestão Mobile para o
+> mesmo perfil. A escolha em tela continua sendo o último contexto usado
+> naquele dispositivo.
+
+> Revisão 1.35.0.19.41: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.40: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.39: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.38: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.37: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.36: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.35: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.34: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.33: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.32: o contexto global de centro de custo na Gestão Mobile
+> não altera a operação da Gestão Web.
+
+> Revisão 1.35.0.19.31: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
+
+> Revisão 1.35.0.19.30: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional na Gestão Web.
 
 > Revisão 1.35.0.19.29: ajuste visual exclusivo da Gestão Mobile, sem impacto
 > operacional na Gestão Web.

@@ -1,6 +1,45 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.29 -->
+<!-- ava-version: 1.35.0.19.42 -->
+
+> Revisão 1.35.0.19.42: o sincronismo de Centros de custo entre Gestão Web e
+> Gestão Mobile não altera o fluxo operacional do AvantaVendas.
+
+> Revisão 1.35.0.19.41: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.40: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.39: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.38: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.37: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.36: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.35: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.34: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.33: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.32: o contexto global de centro de custo na Gestão Mobile
+> não altera o fluxo operacional do AvantaVendas.
+
+> Revisão 1.35.0.19.31: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.30: ajuste visual exclusivo da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.29: ajuste visual exclusivo da Gestão Mobile, sem impacto
 > operacional no AvantaVendas.

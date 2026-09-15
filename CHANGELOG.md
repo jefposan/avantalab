@@ -1,5 +1,67 @@
 # Changelog
 
+## 1.35.0.19.42 - 2026-09-15
+- **Sincronismo de Centros de custo**: Gestão Web e Gestão Mobile agora escutam
+  em tempo real a configuração e a lista de centros do mesmo perfil. Ativar,
+  desativar, criar, pausar, editar ou excluir em uma sessão atualiza a outra
+  automaticamente, sem reabrir a tela.
+
+## 1.35.0.19.41 - 2026-09-15
+- **Pílula de perfil na Gestão Mobile**: a área útil do seletor de centro foi
+  ampliada para exibir integralmente o valor ativo em 14px, sem cortar o texto
+  ou a seta no celular.
+
+## 1.35.0.19.40 - 2026-09-15
+- **Pílula de perfil na Gestão Mobile**: os valores do perfil e do centro ativo
+  receberam mais dois pixels e agora usam 14px; os rótulos permanecem em 10px.
+
+## 1.35.0.19.39 - 2026-09-15
+- **Pílula de perfil na Gestão Mobile**: os rótulos voltaram a 10px; os valores
+  do perfil e do centro selecionado passaram igualmente para 12px.
+
+## 1.35.0.19.38 - 2026-09-15
+- **Pílula de perfil na Gestão Mobile**: os títulos **Perfil:** e **Centro de
+  custo:** receberam o mesmo aumento de dois pixels, passando para 12px.
+
+## 1.35.0.19.37 - 2026-09-15
+- **Pílula de perfil na Gestão Mobile**: a fonte do seletor de centro passou a
+  sobrepor a regra global de campos móveis, que a forçava a 16px. Agora segue a
+  mesma escala de 10px de Perfil e Centro de custo.
+
+## 1.35.0.19.36 - 2026-09-15
+- **Pílula de perfil na Gestão Mobile**: o bloco **Centro de custo:** passou a
+  ficar imediatamente ao lado do seletor, sem ocupar o espaço restante. Perfil,
+  nome e valor selecionado usam a mesma escala tipográfica.
+
+## 1.35.0.19.35 - 2026-09-15
+- **Pílula de perfil na Gestão Mobile**: o nome curto do perfil passou a usar a
+  mesma tipografia do valor do seletor; o segundo rótulo ficou explícito como
+  **Centro de custo:** antes da escolha ativa.
+
+## 1.35.0.19.34 - 2026-09-15
+- **Pílula de perfil na Gestão Mobile**: o seletor ganhou o título **Centro de
+  custo**, na mesma escala tipográfica do rótulo **Perfil:**.
+
+## 1.35.0.19.33 - 2026-09-15
+- **Pílula de perfil na Gestão Mobile**: o rótulo foi compactado para
+  **Perfil: Nome** e mostra somente a primeira palavra do perfil, reservando
+  mais espaço para o seletor de centro de custo.
+
+## 1.35.0.19.32 - 2026-09-15
+- **Centro de custo global na Gestão Mobile**: com o recurso ativo, a pílula
+  **Perfil ativo** foi ampliada e ganhou o seletor do centro à direita. A troca
+  passa a atualizar o contexto de receitas, despesas, pendências e despesas
+  fixas; o mesmo seletor de **Lançar** inicia no centro ativo e, ao ser alterado,
+  atualiza todo o sistema.
+
+## 1.35.0.19.31 - 2026-09-15
+- **Tipografia do lançamento mobile**: o texto selecionado de Mês passou a usar
+  a mesma escala do Centro de custo.
+
+## 1.35.0.19.30 - 2026-09-15
+- **Espaçamento no lançamento mobile**: Mês e Centro de custo receberam uma
+  separação maior no cabeçalho, preservando o fechamento no canto direito.
+
 ## 1.35.0.19.29 - 2026-09-15
 - **Fechamento do lançamento mobile**: o botão X foi fixado no canto direito do
   cabeçalho. Mês e Centro de custo permanecem centralizados e alinhados entre si.

@@ -97,7 +97,10 @@
 
   var CACHE_GESTAO_MOBILE_DB = 'avantalab.gestao_mobile.cache';
   var CACHE_GESTAO_MOBILE_STORE = 'perfis';
-  var CACHE_GESTAO_MOBILE_VERSAO = 1;
+  // Inclui o contexto de centro de custo em cada lançamento cacheado.
+  // A versão anterior não possuía esses identificadores e não poderia filtrar
+  // com segurança quando o usuário troca o centro ativo.
+  var CACHE_GESTAO_MOBILE_VERSAO = 2;
   var CACHE_GESTAO_MOBILE_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
 
   function abrirCacheGestaoMobile() {
@@ -1242,6 +1245,11 @@
 
   function nomeEmpresa(empresa) {
     return (empresa && (empresa.nome || empresa.empresa_nome)) || 'Perfil';
+  }
+
+  function nomeCurtoPerfilMobile(empresa) {
+    var nome = String(nomeEmpresa(empresa) || '').trim().replace(/\s+/g, ' ');
+    return nome ? nome.split(' ')[0] : 'Perfil';
   }
 
   function emailUsuarioAtualMobile() {
@@ -3192,13 +3200,13 @@
 
   function despesasFuturasDoDia(ano, mes, dia) {
     var mesIndice = indiceMes(mes);
-    return (state.lancamentos || []).filter(function (item) {
+    return lancamentosDoCentroCustoAtualMobile().filter(function (item) {
       return item && item.mes === mes && Number(item.dia) === Number(dia) && (item.status === 'prevista' || dataFutura(Number(ano), mesIndice, dia));
     });
   }
 
   function receitasPrevistasDoDia(ano, mes, dia) {
-    return (state.entradas || []).filter(function (item) {
+    return entradasDoCentroCustoAtualMobile().filter(function (item) {
       return item && item.mes === mes && Number(item.dia) === Number(dia) && item.status === 'prevista';
     });
   }
@@ -3310,6 +3318,12 @@
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
           function () { carregarRecorrencias(); carregarDados(); })
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'configuracoes', filter: 'empresa_id=eq.' + empresaId },
+          function () { sincronizarCentrosCustoMobile(); })
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'centros_custo', filter: 'empresa_id=eq.' + empresaId },
+          function () { sincronizarCentrosCustoMobile(); })
         .on('broadcast',
           { event: 'financeiro_atualizado' },
           function () { carregarRecorrencias(); carregarDados(); })
@@ -3843,10 +3857,10 @@
   }
 
   function dadosMes(mes) {
-    var lancamentos = state.lancamentos.filter(function (item) {
+    var lancamentos = lancamentosDoCentroCustoAtualMobile().filter(function (item) {
       return item.mes === mes && item.status !== 'cancelada';
     });
-    var entradas = state.entradas.filter(function (item) { return item.mes === mes; });
+    var entradas = entradasDoCentroCustoAtualMobile().filter(function (item) { return item.mes === mes; });
     var mesIndice = indiceMes(mes);
     var despesasRealizadas = 0;
     var despesasFuturas = 0;
@@ -3872,7 +3886,9 @@
         receitasNaoPrevistas += item.valor;
       }
     });
-    var receitasBase = temTotalDefinido ? state.faturamentos[mes] : receitasNaoPrevistas;
+    // `faturamentos` é o consolidado do perfil. No contexto de um centro,
+    // a receita efetivada vem apenas das entradas daquele centro.
+    var receitasBase = state.centrosCustoAtivo ? receitasNaoPrevistas : (temTotalDefinido ? state.faturamentos[mes] : receitasNaoPrevistas);
     var receitas = receitasBase + receitasPrevistasPassadas;
     var receitasPrevistas = receitasPrevistasFuturas;
 
@@ -4112,6 +4128,29 @@
     state.centroCustoSelecionadoId = id;
     var chave = chaveUltimoCentroCustoMobile();
     if (chave) window.localStorage.setItem(chave, id);
+  }
+
+  function itemPertenceAoCentroCustoAtualMobile(item) {
+    if (!state.centrosCustoAtivo) return true;
+    var centroId = item && (item.centroCustoId || item.centro_custo_id);
+    return String(centroId || '') === String(state.centroCustoSelecionadoId || '');
+  }
+
+  function lancamentosDoCentroCustoAtualMobile() {
+    return (state.lancamentos || []).filter(itemPertenceAoCentroCustoAtualMobile);
+  }
+
+  function entradasDoCentroCustoAtualMobile() {
+    return (state.entradas || []).filter(itemPertenceAoCentroCustoAtualMobile);
+  }
+
+  function trocarCentroCustoGlobalMobile(id) {
+    var anterior = state.centroCustoSelecionadoId;
+    selecionarCentroCustoMobile(id);
+    if (state.centroCustoSelecionadoId === anterior) return;
+    var centro = centrosCustoAtivosMobile().find(function (item) { return item.id === state.centroCustoSelecionadoId; });
+    state.busca = '';
+    mostrarToast(centro ? 'Centro de custo: ' + centro.nome + '.' : 'Centro de custo atualizado.');
   }
 
   function bind(id, fn) {
@@ -6326,7 +6365,11 @@
         };
       });
 
-      var recsResp = await db.from('recorrencias').select('*').eq('empresa_id', empresaId).eq('ativo', true);
+      var consultaRecorrencias = db.from('recorrencias').select('*').eq('empresa_id', empresaId).eq('ativo', true);
+      if (state.centrosCustoAtivo && state.centroCustoSelecionadoId) {
+        consultaRecorrencias = consultaRecorrencias.eq('centro_custo_id', state.centroCustoSelecionadoId);
+      }
+      var recsResp = await consultaRecorrencias;
       var recs = recsResp.data || [];
       if (!recs.length) return 0;
 
@@ -6365,6 +6408,7 @@
             status: 'prevista',
             tipo_obs: 'fixa',
             recorrencia_id: rec.id,
+            centro_custo_id: rec.centro_custo_id || null,
           }).select().single();
           if (ins.data) {
             lancsBanco.push(ins.data);
@@ -6374,6 +6418,7 @@
                 despesa: ins.data.despesa_nome, descricao: ins.data.descricao || '',
                 valor: Number(ins.data.valor || 0), status: ins.data.status || null,
                 tipo: ins.data.tipo_obs || null, recorrenciaId: ins.data.recorrencia_id || null,
+                centroCustoId: ins.data.centro_custo_id ? String(ins.data.centro_custo_id) : null,
               });
             }
           }
@@ -6564,7 +6609,7 @@
     while (true) {
       var resposta = await db
         .from('lancamentos')
-        .select('id, mes, dia, despesa_nome, descricao, valor, status, tipo_obs, recorrencia_id, nota_arquivo_path')
+        .select('id, mes, dia, despesa_nome, descricao, valor, status, tipo_obs, recorrencia_id, nota_arquivo_path, centro_custo_id')
         .eq('empresa_id', empresaId)
         .eq('ano', ano)
         .order('dia', { ascending: true })
@@ -6699,7 +6744,7 @@
     var resultadosPromise = Promise.all([
       acompanharEtapaDados(buscarLancamentosAnoMobile(empresaId, ano), 'Carregando despesas e lançamentos'),
       acompanharEtapaDados(db.from('faturamentos').select('mes, valor').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
-      acompanharEtapaDados(db.from('faturamentos_entradas').select('id, mes, dia, origem, valor, status, tipo_obs').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
+      acompanharEtapaDados(db.from('faturamentos_entradas').select('id, mes, dia, origem, valor, status, tipo_obs, centro_custo_id').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
       acompanharEtapaDados(db.from('despesas_cadastradas').select('id, nome, categoria').eq('empresa_id', empresaId).order('nome', { ascending: true }), 'Carregando categorias de despesas'),
       acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo, centros_custo_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
       acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
@@ -6793,6 +6838,7 @@
         tipo: item.tipo_obs || null,
         recorrenciaId: item.recorrencia_id || null,
         notaArquivoPath: item.nota_arquivo_path || null,
+        centroCustoId: item.centro_custo_id ? String(item.centro_custo_id) : null,
       };
     });
 
@@ -6825,6 +6871,7 @@
         valor: Number(item.valor || 0),
         status: item.status || null,
         tipo: item.tipo_obs || null,
+        centroCustoId: item.centro_custo_id ? String(item.centro_custo_id) : null,
       };
     });
 
@@ -8393,7 +8440,7 @@
     }
 
     if (state.duplicadosAtivo) {
-      var existeIgual = state.lancamentos.some(function (item) {
+      var existeIgual = lancamentosDoCentroCustoAtualMobile().some(function (item) {
         return item.mes === periodo.mes && Number(item.valor) === Number(valor);
       });
 
@@ -10603,10 +10650,25 @@
       : '<span class="h-10 w-10 shrink-0" aria-hidden="true"></span>';
   }
 
+  function seletorCentroCustoPerfilHtml() {
+    var centros = centrosCustoAtivosMobile();
+    if (!state.centrosCustoAtivo || !centros.length) return '';
+    var opcoes = centros.map(function (centro) {
+      return '<option value="' + escapeHtml(centro.id) + '"' + (centro.id === state.centroCustoSelecionadoId ? ' selected' : '') + '>' + escapeHtml(centro.nome) + '</option>';
+    }).join('');
+    return '<span class="relative z-10 h-4 w-px shrink-0 bg-white/30" aria-hidden="true"></span>' +
+      '<div class="relative z-10 flex min-w-0 shrink-0 items-center gap-1"><span class="shrink-0 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.04em] text-cyan-100/80">Centro de custo:</span>' +
+      '<label class="relative block w-[104px] shrink-0"><span class="sr-only">Centro de custo ativo</span>' +
+        '<select id="perfil-centro-custo" aria-label="Centro de custo ativo" style="font-size:14px !important" class="h-7 w-full min-w-0 appearance-none bg-transparent pl-0 pr-4 text-right text-[14px] font-black uppercase tracking-[0.04em] text-white outline-none">' + opcoes + '</select>' +
+        '<span class="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[13px] font-black text-white" aria-hidden="true">⌄</span>' +
+      '</label></div>';
+  }
+
   function telaApp() {
     var atual = dadosMes(state.mes);
     var anterior = dadosMesAnterior();
     var opcoesDashboardAberta = state.visao === 'home' && state.dashboardOpcoesId && state.dashboardOpcoesId !== 'ia';
+    var exibeCentroCustoNoPerfil = state.centrosCustoAtivo && centrosCustoAtivosMobile().length > 0;
 
     // Agenda: tela cheia, sem o cabeçalho global (que mostra outro mês e confunde).
     if (state.visao === 'agenda') {
@@ -10653,10 +10715,10 @@
             insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
-        '<div id="mobile-profile-pill" class="pointer-events-none absolute left-1/2 z-0 flex w-max items-center gap-1.5 rounded-[0_0_14px_14px] border-0 px-5 py-1.5 text-white shadow-[0_8px_18px_rgba(8,47,73,0.24)]" style="top:calc(100% - 6px);max-width:calc(100% - 48px);opacity:1;transform:translate(-50%,var(--profile-pill-y,0%));transition:opacity .24s ease,transform .28s cubic-bezier(.22,1,.36,1);will-change:opacity,transform;">' +
-          '<span class="relative z-10 shrink-0 text-[9px] font-black uppercase tracking-[0.14em] text-cyan-100/80">Perfil ativo</span>' +
-          '<span class="relative z-10 shrink-0 text-white/55" aria-hidden="true">&middot;</span>' +
-          '<strong class="relative z-10 min-w-0 truncate text-[13px] font-black leading-tight">' + escapeHtml(nomeEmpresa(state.empresa)) + '</strong>' +
+        '<div id="mobile-profile-pill" class="pointer-events-auto absolute left-1/2 z-0 flex items-center gap-1.5 rounded-[0_0_14px_14px] border-0 py-1.5 text-white shadow-[0_8px_18px_rgba(8,47,73,0.24)] ' + (exibeCentroCustoNoPerfil ? 'w-[calc(100%-24px)] max-w-md justify-center px-3' : 'w-max px-5') + '" style="top:calc(100% - 6px);max-width:calc(100% - 24px);opacity:1;transform:translate(-50%,var(--profile-pill-y,0%));transition:opacity .24s ease,transform .28s cubic-bezier(.22,1,.36,1);will-change:opacity,transform;">' +
+          '<span class="relative z-10 shrink-0 text-[10px] font-black uppercase tracking-[0.04em] text-cyan-100/80">Perfil:</span>' +
+          '<strong class="relative z-10 min-w-0 truncate text-[14px] font-black uppercase leading-tight tracking-[0.04em]' + (exibeCentroCustoNoPerfil ? ' max-w-[30%]' : '') + '">' + escapeHtml(nomeCurtoPerfilMobile(state.empresa)) + '</strong>' +
+          seletorCentroCustoPerfilHtml() +
         '</div>' +
         '</div>' +
         (opcoesDashboardAberta
@@ -10788,8 +10850,8 @@
   }
 
   function avisoConfirmarHtml() {
-    var pDesp = (state.lancamentos || []).filter(ehDespesaAConfirmar).map(function (i) { return { rec: false, item: i }; });
-    var pRec = (state.entradas || []).filter(function (i) { return ehReceitaAConfirmar(i) && !ehReceitaSincronizada(i); }).map(function (i) { return { rec: true, item: i }; });
+    var pDesp = lancamentosDoCentroCustoAtualMobile().filter(ehDespesaAConfirmar).map(function (i) { return { rec: false, item: i }; });
+    var pRec = entradasDoCentroCustoAtualMobile().filter(function (i) { return ehReceitaAConfirmar(i) && !ehReceitaSincronizada(i); }).map(function (i) { return { rec: true, item: i }; });
     var pendentes = pDesp.concat(pRec);
     if (!pendentes.length) return '';
     var plural = pendentes.length > 1;
@@ -11946,12 +12008,12 @@
       '<label class="grid w-[116px] min-w-0 justify-self-center gap-0.5"><span class="text-center text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/85">Mês</span>' +
         '<div class="flex h-8 w-full items-center rounded-lg border border-white/30 bg-white px-0.5 text-[#003E73] shadow-sm" aria-label="Mês do lançamento: ' + escapeHtml(nomeMesCompleto(periodo.mes) + ' de ' + periodo.ano) + '">' +
           '<button id="lancamento-mes-anterior" type="button" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-lg font-black leading-none transition hover:bg-slate-100" aria-label="Mês anterior">&lsaquo;</button>' +
-          '<span class="min-w-0 flex-1 truncate px-0.5 text-center text-[10px] font-black leading-none tracking-wide">' + escapeHtml(nomeMesCompleto(periodo.mes).toUpperCase()) + '</span>' +
+          '<span class="min-w-0 flex-1 truncate px-0.5 text-center text-[11px] font-black leading-none tracking-wide">' + escapeHtml(nomeMesCompleto(periodo.mes).toUpperCase()) + '</span>' +
           '<button id="lancamento-mes-proximo" type="button" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-lg font-black leading-none transition hover:bg-slate-100" aria-label="Próximo mês">&rsaquo;</button>' +
         '</div>' +
       '</label>';
     var controlesCabecalhoLancamento = mostrarCentroCusto
-      ? '<div class="flex min-w-0 flex-1 justify-center gap-1.5">' + cabecalhoLancamento + seletorMesLancamento + '</div>'
+      ? '<div class="flex min-w-0 flex-1 justify-center gap-4 pr-10">' + cabecalhoLancamento + seletorMesLancamento + '</div>'
       : '<div class="flex min-w-0 flex-1 items-center justify-between gap-2 pr-10">' + cabecalhoLancamento + seletorMesLancamento + '</div>';
 
     return (
@@ -13703,7 +13765,11 @@
   async function carregarRecorrencias() {
     if (!state.empresa) return;
     var empresaId = state.empresa.id || state.empresa.empresa_id;
-    var resp = await db.from('recorrencias').select('*').eq('empresa_id', empresaId).order('dia', { ascending: true });
+    var consulta = db.from('recorrencias').select('*').eq('empresa_id', empresaId).order('dia', { ascending: true });
+    if (state.centrosCustoAtivo && state.centroCustoSelecionadoId) {
+      consulta = consulta.eq('centro_custo_id', state.centroCustoSelecionadoId);
+    }
+    var resp = await consulta;
     if (!resp.error && resp.data) {
       state.recorrencias = (resp.data || []).map(function (item) {
         return Object.assign({}, item, { nome: formatarDescricao(item.nome) });
@@ -13745,6 +13811,7 @@
       descricao: descricao,
       dia: dia,
       ativo: true,
+      centro_custo_id: state.centrosCustoAtivo ? state.centroCustoSelecionadoId : null,
     }).select().single();
     if (resp.error) {
       state.erro = 'Erro ao salvar: ' + resp.error.message;
@@ -13771,6 +13838,7 @@
         tipo_obs: 'fixa',
         status: 'prevista',
         recorrencia_id: resp.data.id,
+        centro_custo_id: state.centrosCustoAtivo ? state.centroCustoSelecionadoId : null,
       }).select().single();
       if (lancAtual.data && Number(lancAtual.data.ano) === Number(state.ano)) novosLancamentos.push(lancAtual.data);
     }
@@ -13790,6 +13858,7 @@
           tipo_obs: 'fixa',
           status: 'prevista',
           recorrencia_id: resp.data.id,
+          centro_custo_id: state.centrosCustoAtivo ? state.centroCustoSelecionadoId : null,
         }).select().single();
         if (lancFuturo.data && Number(lancFuturo.data.ano) === Number(state.ano)) novosLancamentos.push(lancFuturo.data);
       }
@@ -13801,6 +13870,7 @@
           id: item.id, mes: item.mes, dia: Number(item.dia), despesa: formatarDescricao(item.despesa_nome),
           descricao: item.descricao || '', valor: Number(item.valor || 0),
           status: item.status || null, tipo: item.tipo_obs || null, recorrenciaId: item.recorrencia_id || null,
+          centroCustoId: item.centro_custo_id ? String(item.centro_custo_id) : null,
         };
       }).concat(state.lancamentos || []);
     }
@@ -13886,6 +13956,7 @@
           status: 'prevista',
           tipo_obs: 'fixa',
           recorrencia_id: id,
+          centro_custo_id: state.centrosCustoAtivo ? state.centroCustoSelecionadoId : null,
         });
         if (novoLancamentoResp.error) {
           state.recorrencias = state.recorrencias.map(function(r) {
@@ -15534,7 +15605,10 @@
     bind('lancamento-mes-anterior', function () { mudarPeriodoLancamentoMobile(-1); });
     bind('lancamento-mes-proximo', function () { mudarPeriodoLancamentoMobile(1); });
     bindChange('lancamento-centro-custo', function () {
-      selecionarCentroCustoMobile(this.value || '');
+      trocarCentroCustoGlobalMobile(this.value || '');
+    });
+    bindChange('perfil-centro-custo', function () {
+      trocarCentroCustoGlobalMobile(this.value || '');
     });
     bind('tipo-despesa', function () {
       state.tipoLancamento = 'despesa';

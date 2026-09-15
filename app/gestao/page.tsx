@@ -6016,6 +6016,34 @@ const notificarFinanceiroAtualizado = () => {
   }
 };
 
+const sincronizarContextoCentrosCustoEmTempoReal = async () => {
+  if (!empresaId) return;
+
+  const resultado = await buscarConfiguracoes(empresaId);
+  if (resultado.erro) return;
+  const ativoAgora = resultado.configuracao?.centros_custo_ativo === true;
+  setCentrosCustoAtivo(ativoAgora);
+
+  if (!ativoAgora) {
+    setCentrosCusto([]);
+    setCentroCustoSelecionadoId('');
+    return;
+  }
+
+  const lista = await buscarCentrosCusto(empresaId);
+  const ativos = lista.filter((centro) => centro.ativo);
+  const chaveUltimoCentro = `avantalab.gestao.centro-custo.ultimo.v2:${empresaId}`;
+  const ultimoCentro = window.localStorage.getItem(chaveUltimoCentro);
+  setCentrosCusto(lista);
+  setCentroCustoSelecionadoId((atual) => (
+    ativos.some((centro) => centro.id === atual)
+      ? atual
+      : (ativos.some((centro) => centro.id === ultimoCentro)
+        ? ultimoCentro!
+        : (ativos.find((centro) => centro.is_principal)?.id || ativos[0]?.id || ''))
+  ));
+};
+
 // Agenda: carrega itens do localStorage
 useEffect(() => {
   const timerAgendaLocal = window.setTimeout(() => {
@@ -6077,6 +6105,16 @@ useEffect(() => {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'faturamentos', filter: 'empresa_id=eq.' + empresaId },
       () => { recarregarDadosFinanceirosAtual(); }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'configuracoes', filter: 'empresa_id=eq.' + empresaId },
+      () => { void sincronizarContextoCentrosCustoEmTempoReal(); }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'centros_custo', filter: 'empresa_id=eq.' + empresaId },
+      () => { void sincronizarContextoCentrosCustoEmTempoReal(); }
     )
     .on(
       'broadcast',

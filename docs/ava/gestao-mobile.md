@@ -1,6 +1,51 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.29 -->
+<!-- ava-version: 1.35.0.19.42 -->
+
+> Revisão 1.35.0.19.42: a ativação, desativação e gestão de **Centros de
+> custo** é atualizada em tempo real entre Gestão Web e Gestão Mobile para o
+> mesmo perfil. A escolha do centro em tela continua sendo o último contexto
+> usado naquele dispositivo.
+
+> Revisão 1.35.0.19.41: o seletor de centro recebeu largura útil para mostrar
+> integralmente o valor ativo em 14px no celular.
+
+> Revisão 1.35.0.19.40: os valores selecionados de perfil e centro receberam
+> mais dois pixels e usam 14px; os rótulos permanecem em 10px.
+
+> Revisão 1.35.0.19.39: **Perfil:** e **Centro de custo:** permanecem em 10px;
+> os valores selecionados do perfil e do centro usam 12px.
+
+> Revisão 1.35.0.19.38: os títulos **Perfil:** e **Centro de custo:** da
+> pílula receberam igualmente dois pixels a mais de fonte.
+
+> Revisão 1.35.0.19.37: o valor do seletor de centro segue a mesma escala de
+> **Perfil:** e **Centro de custo:** também em telas móveis.
+
+> Revisão 1.35.0.19.36: o bloco **Centro de custo:** fica imediatamente antes
+> do seletor. Perfil, nome e a escolha usam a mesma escala tipográfica.
+
+> Revisão 1.35.0.19.35: **Perfil: Nome** e o valor do seletor usam a mesma
+> tipografia. O segundo rótulo aparece como **Centro de custo:** antes da
+> escolha ativa.
+
+> Revisão 1.35.0.19.34: na pílula, o rótulo **Centro de custo** usa a mesma
+> escala de **Perfil:**. O centro selecionado e as ações não mudaram.
+
+> Revisão 1.35.0.19.33: a pílula usa o formato **Perfil: Nome** e mostra a
+> primeira palavra do perfil para abrir espaço ao seletor de centro de custo.
+> O centro selecionado e as ações não mudaram.
+
+> Revisão 1.35.0.19.32: com **Centros de custo** ativo, a pílula **Perfil
+> ativo** mostra à direita o centro em uso. Ao escolher outro, receitas,
+> despesas, pendências e despesas fixas passam a mostrar apenas aquele centro.
+> **Lançar** abre nessa mesma escolha e alterá-la ali atualiza o contexto geral.
+
+> Revisão 1.35.0.19.31: os valores mostrados nos seletores de Mês e Centro de
+> custo de **Lançar** usam o mesmo tamanho de fonte. As escolhas não mudaram.
+
+> Revisão 1.35.0.19.30: Mês e Centro de custo têm mais espaço entre si no
+> cabeçalho de **Lançar**. As escolhas e o X de fechamento não mudaram.
 
 > Revisão 1.35.0.19.29: o X de fechamento fica no canto direito do cabeçalho de
 > **Lançar**. Mês e Centro de custo continuam centralizados e alinhados.

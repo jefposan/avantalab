@@ -43,3 +43,10 @@ test('lista de centros abre acima das demais camadas da Gestão', () => {
   assert.match(header, /listaCentroCustoAberta \? 'z-\[8600\]' : 'z-\[900\]'/);
   assert.match(header, /absolute left-0 top-full z-\[8610\] mt-1 max-h-56 w-full.*shadow-2xl/);
 });
+
+test('Gestão Web acompanha em tempo real a configuração e a lista de centros', () => {
+  assert.match(gestao, /const sincronizarContextoCentrosCustoEmTempoReal = async/);
+  assert.match(gestao, /table: 'configuracoes', filter: 'empresa_id=eq.' \+ empresaId/);
+  assert.match(gestao, /table: 'centros_custo', filter: 'empresa_id=eq.' \+ empresaId/);
+  assert.match(gestao, /sincronizarContextoCentrosCustoEmTempoReal\(\)/);
+});

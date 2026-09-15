@@ -1,5 +1,33 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.42: Centros de custo sincroniza em tempo real
+// entre Gestão Web e Gestão Mobile; o centro selecionado continua local ao
+// dispositivo como último contexto de trabalho.
+// Revisado na versão 1.35.0.19.41: o seletor da pílula móvel possui largura
+// útil para exibir o valor ativo integralmente em 14px.
+// Revisado na versão 1.35.0.19.40: os valores de perfil e centro selecionado
+// na pílula móvel usam 14px; os rótulos continuam em 10px.
+// Revisado na versão 1.35.0.19.39: os valores do perfil e centro selecionado
+// da pílula móvel usam 12px; os rótulos permanecem em 10px.
+// Revisado na versão 1.35.0.19.38: os títulos Perfil e Centro de custo da
+// pílula móvel receberam o mesmo aumento de dois pixels.
+// Revisado na versão 1.35.0.19.37: o valor do seletor de centro de custo da
+// pílula móvel não herda o tamanho global de campos e fica na escala do título.
+// Revisado na versão 1.35.0.19.36: Centro de custo fica junto do seletor e a
+// pílula móvel usa uma única escala tipográfica em toda a linha.
+// Revisado na versão 1.35.0.19.35: Perfil e o valor do centro de custo da
+// pílula usam a mesma tipografia; o centro possui rótulo explícito.
+// Revisado na versão 1.35.0.19.34: o título Centro de custo da pílula móvel
+// usa a mesma escala do título Perfil.
+// Revisado na versão 1.35.0.19.33: a pílula móvel mostra "Perfil: Nome" com
+// a primeira palavra do perfil para acomodar o seletor de centro de custo.
+// Revisado na versão 1.35.0.19.32: com Centros de custo ativo, a pílula de
+// Perfil ativo na Gestão Mobile seleciona o contexto financeiro global. O
+// lançamento abre no centro escolhido e qualquer troca ali vale para a tela.
+// Revisado na versão 1.35.0.19.31: os valores mostrados nos seletores de mês e
+// centro de custo do lançamento móvel usam a mesma escala tipográfica.
+// Revisado na versão 1.35.0.19.30: o cabeçalho de lançamento móvel aumenta a
+// separação visual entre mês e centro de custo, sem alterar suas ações.
 // Revisado na versão 1.35.0.19.29: o X de fechamento do lançamento móvel fica
 // ancorado no canto direito; mês e centro de custo continuam centralizados.
 // Revisado na versão 1.35.0.19.28: no cabeçalho de lançamento da Gestão
