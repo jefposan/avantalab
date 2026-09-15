@@ -5,6 +5,8 @@ export const NFE_STATUS_SERVICE_CONTENT_TYPE = `application/soap+xml; charset=ut
 export const NFE_STATUS_SERVICE_RESPONSE_LIMIT = 256 * 1024;
 export const NFE_STATUS_SERVICE_TIMEOUT_MS = 15_000;
 
+import { isOfficialNfeEndpoint, resolveNationalNfeAuthority } from './nfe-national-authorities.mjs';
+
 const SOAP_NAMESPACE = 'http://www.w3.org/2003/05/soap-envelope';
 const NFE_NAMESPACE = 'http://www.portalfiscal.inf.br/nfe';
 const STATUS_WSDL_NAMESPACE = 'http://www.portalfiscal.inf.br/nfe/wsdl/NFeStatusServico4';
@@ -69,9 +71,14 @@ function attributeValue(attributes, name) {
   return match?.[2]?.trim() || '';
 }
 
-export function validateNfeStatusServiceEndpoint(endpoint) {
-  if (endpoint !== NFE_STATUS_SERVICE_ENDPOINT) {
-    return { valid: false, error: 'Somente o endereço oficial de homologação do NfeStatusServico 4.00 da SEFAZ-SP é permitido nesta bancada.' };
+function resolveAuthority({ issuerUf = 'SP', environment = 'homologacao' } = {}) {
+  return resolveNationalNfeAuthority({ uf: issuerUf, environment });
+}
+
+export function validateNfeStatusServiceEndpoint(endpoint, { issuerUf = 'SP', environment = 'homologacao' } = {}) {
+  const authority = resolveAuthority({ issuerUf, environment });
+  if (!authority || !isOfficialNfeEndpoint({ uf: authority.issuerUf, environment, service: 'status', endpoint })) {
+    return { valid: false, error: 'O endereço de status não corresponde ao autorizador oficial da UF e do ambiente selecionados.' };
   }
   try {
     const url = new URL(endpoint);
@@ -82,22 +89,27 @@ export function validateNfeStatusServiceEndpoint(endpoint) {
   }
 }
 
-export function buildNfeStatusServiceSoapRequest() {
-  const payload = `<consStatServ xmlns="${NFE_NAMESPACE}" versao="${SERVICE_VERSION}"><tpAmb>${HOMOLOGATION_ENVIRONMENT}</tpAmb><cUF>${SAO_PAULO_CODE}</cUF><xServ>STATUS</xServ></consStatServ>`;
+export function buildNfeStatusServiceSoapRequest({ issuerUf = 'SP', environment = 'homologacao' } = {}) {
+  const authority = resolveAuthority({ issuerUf, environment });
+  if (!authority) throw new TypeError('Informe uma UF e ambiente NF-e reconhecidos.');
+  const payload = `<consStatServ xmlns="${NFE_NAMESPACE}" versao="${SERVICE_VERSION}"><tpAmb>${authority.environmentCode}</tpAmb><cUF>${authority.issuerCode}</cUF><xServ>STATUS</xServ></consStatServ>`;
   const envelope = `<?xml version="1.0" encoding="utf-8"?><soap12:Envelope xmlns:soap12="${SOAP_NAMESPACE}"><soap12:Body><nfeDadosMsg xmlns="${STATUS_WSDL_NAMESPACE}">${payload}</nfeDadosMsg></soap12:Body></soap12:Envelope>`;
   return Object.freeze({
-    endpoint: NFE_STATUS_SERVICE_ENDPOINT,
+    endpoint: authority.endpoints.status,
     action: NFE_STATUS_SERVICE_ACTION,
     contentType: NFE_STATUS_SERVICE_CONTENT_TYPE,
-    environment: 'homologacao',
-    stateCode: SAO_PAULO_CODE,
+    environment: authority.environment,
+    stateCode: authority.issuerCode,
+    issuerUf: authority.issuerUf,
+    authority: authority.authority,
     version: SERVICE_VERSION,
     payload,
     envelope,
   });
 }
 
-export function parseNfeStatusServiceSoapResponse(value) {
+export function parseNfeStatusServiceSoapResponse(value, { issuerUf = 'SP', environment = 'homologacao' } = {}) {
+  const authority = resolveAuthority({ issuerUf, environment });
   const xml = typeof value === 'string' ? value.trim() : '';
   const result = {
     valid: false,
@@ -139,8 +151,11 @@ export function parseNfeStatusServiceSoapResponse(value) {
   result.xMotivo = tagValue(xml, 'xMotivo');
   result.receivedAt = tagValue(xml, 'dhRecbto');
   if (result.version !== SERVICE_VERSION) result.errors.push(error('AV-NFE-STATUS-VERSION', 'response.versao', 'A resposta não usa o leiaute 4.00 esperado.'));
-  if (result.environment !== HOMOLOGATION_ENVIRONMENT) result.errors.push(error('AV-NFE-STATUS-ENVIRONMENT', 'response.tpAmb', 'A resposta não pertence ao ambiente de homologação.'));
-  if (result.stateCode !== SAO_PAULO_CODE) result.errors.push(error('AV-NFE-STATUS-UF', 'response.cUF', 'A resposta não pertence ao autorizador de São Paulo.'));
+  if (!authority) result.errors.push(error('AV-NFE-STATUS-AUTHORITY', 'issuer.uf', 'A UF informada não possui autorizador NF-e configurado.'));
+  else {
+    if (result.environment !== authority.environmentCode) result.errors.push(error('AV-NFE-STATUS-ENVIRONMENT', 'response.tpAmb', 'A resposta não pertence ao ambiente fiscal esperado.'));
+    if (result.stateCode !== authority.issuerCode) result.errors.push(error('AV-NFE-STATUS-UF', 'response.cUF', 'A resposta não pertence ao autorizador da UF do emitente.'));
+  }
   if (!/^\d{3}$/.test(result.cStat)) result.errors.push(error('AV-NFE-STATUS-CSTAT', 'response.cStat', 'A resposta não contém um código de situação válido.'));
   if (!result.xMotivo) result.errors.push(error('AV-NFE-STATUS-REASON', 'response.xMotivo', 'A resposta não descreve o motivo retornado pela SEFAZ.'));
   result.valid = result.errors.length === 0;
@@ -166,13 +181,20 @@ export function createNfeStatusServiceAdapter({
 } = {}) {
   return Object.freeze({
     id: 'avantalab-nfe-status-service-v1',
-    async checkAvailability({ secureReference, expectedDocument, expectedMode } = {}) {
+    async checkAvailability({ secureReference, expectedDocument, expectedMode, issuerUf = 'SP', environment = 'homologacao' } = {}) {
       const diagnostic = baseDiagnostic();
-      diagnostic.endpoint = endpoint;
-      const endpointResult = validateNfeStatusServiceEndpoint(endpoint);
+      const authority = resolveAuthority({ issuerUf, environment });
+      diagnostic.environment = environment;
+      diagnostic.authority = authority?.authority || '';
+      const resolvedEndpoint = endpoint === NFE_STATUS_SERVICE_ENDPOINT ? authority?.endpoints.status : endpoint;
+      diagnostic.endpoint = resolvedEndpoint || '';
+      if (environment !== 'homologacao') diagnostic.errors.push(error('AV-NFE-STATUS-ENVIRONMENT-LOCK', 'environment', 'A consulta nacional está liberada somente para homologação até a validação fiscal de produção.'));
+      if (!authority) diagnostic.errors.push(error('AV-NFE-STATUS-AUTHORITY', 'issuer.uf', 'A UF do emitente não possui autorizador NF-e configurado.'));
+      const endpointResult = validateNfeStatusServiceEndpoint(resolvedEndpoint, { issuerUf, environment });
       diagnostic.endpointValidated = endpointResult.valid;
-      const request = buildNfeStatusServiceSoapRequest();
-      diagnostic.requestBuilt = true;
+      let request = null;
+      try { request = buildNfeStatusServiceSoapRequest({ issuerUf, environment }); diagnostic.requestBuilt = true; }
+      catch { diagnostic.errors.push(error('AV-NFE-STATUS-REQUEST', 'issuer.uf', 'Não foi possível preparar a consulta para a UF do emitente.')); }
       diagnostic.transportConfigured = Boolean(transport?.configured === true && typeof transport.postSoap === 'function');
       if (!endpointResult.valid) diagnostic.errors.push(error('AV-NFE-STATUS-ENDPOINT', 'transport.endpoint', endpointResult.error));
 
@@ -204,7 +226,7 @@ export function createNfeStatusServiceAdapter({
       let response;
       try {
         response = await transport.postSoap({
-          endpoint,
+          endpoint: resolvedEndpoint,
           action: request.action,
           contentType: request.contentType,
           body: request.envelope,
@@ -212,6 +234,8 @@ export function createNfeStatusServiceAdapter({
           timeoutMs: NFE_STATUS_SERVICE_TIMEOUT_MS,
           maxResponseBytes: NFE_STATUS_SERVICE_RESPONSE_LIMIT,
           followRedirects: false,
+          issuerUf: authority?.issuerUf,
+          environment,
         });
       } catch {
         diagnostic.errors.push(error('AV-NFE-STATUS-NETWORK', 'transport', 'A conexão segura com o serviço de status não foi concluída.'));
@@ -220,7 +244,7 @@ export function createNfeStatusServiceAdapter({
       }
       diagnostic.latencyMs = Math.max(0, now() - startedAt);
       diagnostic.responseReceived = true;
-      const parsed = parseNfeStatusServiceSoapResponse(response?.body);
+      const parsed = parseNfeStatusServiceSoapResponse(response?.body, { issuerUf, environment });
       diagnostic.cStat = parsed.cStat;
       diagnostic.xMotivo = parsed.xMotivo;
       diagnostic.receivedAt = parsed.receivedAt;

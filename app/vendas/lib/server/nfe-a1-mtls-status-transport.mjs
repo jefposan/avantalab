@@ -9,6 +9,7 @@ import {
   NFE_STATUS_SERVICE_RESPONSE_LIMIT,
   NFE_STATUS_SERVICE_TIMEOUT_MS,
 } from './nfe-status-service.mjs';
+import { isOfficialNfeEndpoint, resolveNationalNfeAuthority } from './nfe-national-authorities.mjs';
 
 export const NFE_A1_MTLS_STATUS_TRANSPORT_REFERENCE = '2026-09-04';
 
@@ -17,10 +18,13 @@ const MAX_PASSPHRASE_BYTES = 512;
 const MAX_REQUEST_BYTES = 16 * 1024;
 const FORBIDDEN_FISCAL_OPERATION = /<(?:[A-Za-z_][\w.-]*:)?(?:NFe|enviNFe|inutNFe|evento|consSitNFe|consReciNFe)\b|<(?:[A-Za-z_][\w.-]*:)?(?:CNPJ|CPF|chNFe)\b/i;
 
-function statusRequestIsSafe({ endpoint, action, contentType, body, secureCertificateReference, timeoutMs, maxResponseBytes, followRedirects }) {
+function statusRequestIsSafe({ endpoint, action, contentType, body, secureCertificateReference, timeoutMs, maxResponseBytes, followRedirects, issuerUf, environment }) {
   const reference = validateSecureCertificateReference(secureCertificateReference);
   const source = typeof body === 'string' ? body.trim() : '';
-  return endpoint === NFE_STATUS_SERVICE_ENDPOINT
+  const authority = resolveNationalNfeAuthority({ uf: issuerUf, environment });
+  return authority
+    && environment === 'homologacao'
+    && isOfficialNfeEndpoint({ uf: authority.issuerUf, environment, service: 'status', endpoint })
     && action === NFE_STATUS_SERVICE_ACTION
     && contentType === NFE_STATUS_SERVICE_CONTENT_TYPE
     && reference.valid
@@ -30,8 +34,8 @@ function statusRequestIsSafe({ endpoint, action, contentType, body, secureCertif
     && Buffer.byteLength(source, 'utf8') > 0 && Buffer.byteLength(source, 'utf8') <= MAX_REQUEST_BYTES
     && /<(?:(?:[A-Za-z_][\w.-]*):)?Envelope\b/i.test(source)
     && /<consStatServ\b[^>]*\bversao=["']4\.00["']/i.test(source)
-    && /<tpAmb>2<\/tpAmb>/i.test(source)
-    && /<cUF>35<\/cUF>/i.test(source)
+    && new RegExp(`<tpAmb>${authority.environmentCode}<\\/tpAmb>`, 'i').test(source)
+    && new RegExp(`<cUF>${authority.issuerCode}<\\/cUF>`, 'i').test(source)
     && /<xServ>STATUS<\/xServ>/i.test(source)
     && !FORBIDDEN_FISCAL_OPERATION.test(source);
 }

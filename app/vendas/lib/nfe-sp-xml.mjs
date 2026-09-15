@@ -4,6 +4,8 @@ export const NFE_SP_SCHEMA_VERSION = '4.00';
 export const NFE_NAMESPACE = 'http://www.portalfiscal.inf.br/nfe';
 export const HOMOLOGATION_RECIPIENT_NAME = 'NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL';
 
+const NFE_UF_CODES = Object.freeze({ AC: '12', AL: '27', AP: '16', AM: '13', BA: '29', CE: '23', DF: '53', ES: '32', GO: '52', MA: '21', MT: '51', MS: '50', MG: '31', PA: '15', PB: '25', PR: '41', PE: '26', PI: '22', RJ: '33', RN: '24', RS: '43', RO: '11', RR: '14', SC: '42', SP: '35', SE: '28', TO: '17' });
+
 function text(value, maxLength = 0) {
   const normalized = typeof value === 'string' ? value.trim() : '';
   return maxLength ? normalized.slice(0, maxLength) : normalized;
@@ -176,7 +178,7 @@ function validationError(code, field, message) {
 }
 
 function validIssuedAt(value) {
-  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-03:00$/.test(value) && Number.isFinite(new Date(value).getTime());
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(new Date(value).getTime());
 }
 
 export function calculateNfeAccessKeyCheckDigit(base43) {
@@ -194,10 +196,10 @@ export function calculateNfeAccessKeyCheckDigit(base43) {
 
 export function buildNfeAccessKey(inputValue) {
   const input = normalizeNfeSpXmlInput(inputValue);
-  if (!validIssuedAt(input.issuedAt)) throw new Error('A data de emissão deve estar no fuso de São Paulo.');
+  if (!validIssuedAt(input.issuedAt)) throw new Error('A data de emissão precisa conter data, hora e fuso horário válidos.');
   const yearMonth = `${input.issuedAt.slice(2, 4)}${input.issuedAt.slice(5, 7)}`;
   const base = [
-    '35',
+    NFE_UF_CODES[input.issuer.address.uf] || '',
     yearMonth,
     input.issuer.document,
     '55',
@@ -216,7 +218,7 @@ export function validateNfeSpXmlInput(inputValue) {
   const warnings = [];
   const requiredText = (value, code, field, message) => { if (!value) errors.push(validationError(code, field, message)); };
   requiredText(input.operationNature, 'NFE-B04', 'operationNature', 'Informe a natureza da operação com até 60 caracteres.');
-  if (!validIssuedAt(input.issuedAt)) errors.push(validationError('NFE-B09', 'issuedAt', 'Informe data e hora no formato ISO com o fuso -03:00 de São Paulo.'));
+  if (!validIssuedAt(input.issuedAt)) errors.push(validationError('NFE-B09', 'issuedAt', 'Informe data e hora no formato ISO com fuso horário válido.'));
   if (!input.series || Number(input.series) > 999) errors.push(validationError('NFE-B07', 'series', 'Informe uma série de NF-e entre 0 e 999.'));
   if (!input.number || Number(input.number) < 1) errors.push(validationError('NFE-B08', 'number', 'Informe um número de teste entre 1 e 999999999.'));
   if (input.numericCode.length !== 8) errors.push(validationError('NFE-B03', 'numericCode', 'Informe o código numérico cNF com exatamente oito dígitos.'));
@@ -224,7 +226,7 @@ export function validateNfeSpXmlInput(inputValue) {
   if (input.issuer.document.length !== 14) errors.push(validationError('NFE-C02', 'issuer.document', 'O CNPJ do emitente deve possuir 14 dígitos nesta fase do piloto.'));
   requiredText(input.issuer.legalName, 'NFE-C03', 'issuer.legalName', 'Informe a razão social do emitente.');
   requiredText(input.issuer.stateRegistration, 'NFE-C17', 'issuer.stateRegistration', 'Informe a inscrição estadual do emitente.');
-  if (input.issuer.address.uf !== 'SP') errors.push(validationError('NFE-C09', 'issuer.address.uf', 'O piloto direto aceita somente estabelecimento emitente de São Paulo.'));
+  if (!NFE_UF_CODES[input.issuer.address.uf]) errors.push(validationError('NFE-C09', 'issuer.address.uf', 'Informe uma UF brasileira atendida pela NF-e.'));
   if (input.issuer.address.cityCode.length !== 7) errors.push(validationError('NFE-C07', 'issuer.address.cityCode', 'Não foi possível identificar o município fiscal do emitente. Revise CEP, município e UF.'));
   [['street', 'logradouro'], ['number', 'número'], ['district', 'bairro'], ['city', 'município'], ['cep', 'CEP']].forEach(([field, label]) => requiredText(input.issuer.address[field], `NFE-C-${field}`, `issuer.address.${field}`, `Informe ${label} do endereço do emitente.`));
   if (input.issuer.address.cep && input.issuer.address.cep.length !== 8) errors.push(validationError('NFE-C13', 'issuer.address.cep', 'O CEP do emitente deve possuir oito dígitos.'));
@@ -348,7 +350,7 @@ export function buildUnsignedNfeSpXml(inputValue) {
     `<NFe xmlns="${NFE_NAMESPACE}">`,
     `  <infNFe Id="NFe${accessKey}" versao="4.00">`,
     '    <ide>',
-    xmlTag('cUF', '35', 3),
+    xmlTag('cUF', NFE_UF_CODES[input.issuer.address.uf], 3),
     xmlTag('cNF', input.numericCode.padStart(8, '0'), 3),
     xmlTag('natOp', input.operationNature, 3),
     xmlTag('mod', '55', 3),

@@ -91,6 +91,8 @@ export function createNfeCertificateActivationService({ repository, issuerResolv
               secureReference: binding.secureReference,
               expectedDocument,
               expectedMode: binding.expectedMode,
+              issuerUf: issuer?.uf,
+              environment: 'homologacao',
             });
             connection = fiscalConnectionStatus(availability);
           } catch { /* indisponibilidade do autorizador não invalida o certificado */ }

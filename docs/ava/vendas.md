@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.05 -->
+<!-- ava-version: 1.35.0.19.06 -->
+
+> Revisão 1.35.0.19.06: sem impacto operacional no AvantaVendas. A NF-e da
+> Gestão Web passou a resolver o autorizador de homologação conforme a UF do
+> perfil empresarial; produção continua bloqueada.
 
 > Revisão 1.35.0.19.05: o seletor de centro no Saldo do Mês pertence à Gestão
 > Web e não altera a orientação operacional do AvantaVendas.

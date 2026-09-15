@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.05 -->
+<!-- ava-version: 1.35.0.19.06 -->
+
+> Revisão 1.35.0.19.06: a integração nacional de NF-e pertence à Gestão Web e
+> não altera a orientação operacional da Ava Mobile.
 
 > Revisão 1.35.0.19.05: o seletor de centro no Saldo do Mês pertence à Gestão
 > Web e não altera a orientação operacional da Ava Mobile.

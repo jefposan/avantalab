@@ -76,7 +76,7 @@ export async function buildNfeIssuancePreparation({ draft, client, config, numbe
   if (normalizedDraft.documentType !== 'nfe') result.errors.push(diagnosticError('AV-NFE-ISSUE-DOCUMENT', 'draft.documentType', 'Esta primeira preparação aceita somente NF-e modelo 55.'));
   if (normalizedDraft.status === 'Cancelado') result.errors.push(diagnosticError('AV-NFE-ISSUE-CANCELLED', 'draft.status', 'Um rascunho cancelado não pode iniciar uma tentativa de emissão.'));
   if (text(normalizedDraft.environment) && !/homologa/i.test(text(normalizedDraft.environment))) result.errors.push(diagnosticError('AV-NFE-ISSUE-ENVIRONMENT', 'draft.environment', 'A preparação está travada no ambiente de homologação.'));
-  if (text(normalizedDraft.issuer?.uf).toUpperCase() !== 'SP') result.errors.push(diagnosticError('AV-NFE-ISSUE-UF', 'draft.issuer.uf', 'O primeiro conector direto aceita somente emitente de São Paulo.'));
+  if (!/^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/.test(text(normalizedDraft.issuer?.uf).toUpperCase())) result.errors.push(diagnosticError('AV-NFE-ISSUE-UF', 'draft.issuer.uf', 'Informe uma UF brasileira atendida pela NF-e.'));
   if (issuerDocument.length !== 14) result.errors.push(diagnosticError('AV-NFE-ISSUE-ISSUER', 'draft.issuer.document', 'O CNPJ do emitente não está completo.'));
 
   const ledger = normalizeFiscalNumberingLedger(numberingLedger, { nfe: normalizedDraft.issuer?.series || normalizedDraft.series });

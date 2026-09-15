@@ -9,6 +9,7 @@ import {
   NFE_AUTHORIZATION_TIMEOUT_MS,
 } from './nfe-authorization-service.mjs';
 import { validateSecureCertificateReference } from './nfe-certificate-vault.mjs';
+import { isOfficialNfeEndpoint, resolveNationalNfeAuthority } from './nfe-national-authorities.mjs';
 
 export const NFE_A1_MTLS_AUTHORIZATION_TRANSPORT_REFERENCE = '2026-09-04';
 
@@ -21,11 +22,15 @@ function openingTagCount(xml, localName) {
   return (xml.match(new RegExp(`<(?:[A-Za-z_][\\w.-]*:)?${localName}\\b`, 'gi')) || []).length;
 }
 
-function authorizationRequestIsSafe({ endpoint, action, contentType, body, secureCertificateReference, timeoutMs, maxResponseBytes, followRedirects }) {
+function authorizationRequestIsSafe({ endpoint, action, contentType, body, secureCertificateReference, timeoutMs, maxResponseBytes, followRedirects, issuerUf, environment }) {
   const reference = validateSecureCertificateReference(secureCertificateReference);
   const source = typeof body === 'string' ? body.trim() : '';
   const accessKey = /<(?:[A-Za-z_][\w.-]*:)?infNFe\b[^>]*\bId=["']NFe(\d{44})["']/i.exec(source)?.[1] || '';
-  return endpoint === NFE_AUTHORIZATION_ENDPOINT
+  const authority = resolveNationalNfeAuthority({ uf: issuerUf, environment });
+  return authority
+    && environment === 'homologacao'
+    && accessKey.startsWith(authority.issuerCode)
+    && isOfficialNfeEndpoint({ uf: authority.issuerUf, environment, service: 'authorization', endpoint })
     && action === NFE_AUTHORIZATION_ACTION
     && contentType === NFE_AUTHORIZATION_CONTENT_TYPE
     && reference.valid
@@ -37,10 +42,9 @@ function authorizationRequestIsSafe({ endpoint, action, contentType, body, secur
     && /<(?:[A-Za-z_][\w.-]*:)?enviNFe\b[^>]*\bversao=["']4\.00["']/i.test(source)
     && /<(?:[A-Za-z_][\w.-]*:)?idLote>\d{1,15}<\/(?:[A-Za-z_][\w.-]*:)?idLote>/i.test(source)
     && /<(?:[A-Za-z_][\w.-]*:)?indSinc>1<\/(?:[A-Za-z_][\w.-]*:)?indSinc>/i.test(source)
-    && /<(?:[A-Za-z_][\w.-]*:)?tpAmb>2<\/(?:[A-Za-z_][\w.-]*:)?tpAmb>/i.test(source)
-    && /<(?:[A-Za-z_][\w.-]*:)?cUF>35<\/(?:[A-Za-z_][\w.-]*:)?cUF>/i.test(source)
+    && new RegExp(`<(?:[A-Za-z_][\\w.-]*:)?tpAmb>${authority.environmentCode}<\\/(?:[A-Za-z_][\\w.-]*:)?tpAmb>`, 'i').test(source)
+    && new RegExp(`<(?:[A-Za-z_][\\w.-]*:)?cUF>${authority.issuerCode}<\\/(?:[A-Za-z_][\\w.-]*:)?cUF>`, 'i').test(source)
     && /<(?:[A-Za-z_][\w.-]*:)?mod>55<\/(?:[A-Za-z_][\w.-]*:)?mod>/i.test(source)
-    && accessKey.startsWith('35')
     && openingTagCount(source, 'Envelope') === 1
     && openingTagCount(source, 'enviNFe') === 1
     && openingTagCount(source, 'idLote') === 1

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.05 -->
+<!-- ava-version: 1.35.0.19.06 -->
+
+> Revisão 1.35.0.19.06: a Central Fiscal resolve o autorizador oficial de
+> homologação da UF cadastrada no perfil empresarial. Isto permite testes de
+> NF-e modelo 55 nas 27 UFs atendidas; não habilita produção, contingência,
+> NFC-e ou NFS-e.
 
 > Revisão 1.35.0.19.05: o card **Saldo do Mês** oferece **Todos** como padrão
 > e permite consultar o saldo consolidado ou o saldo individual de cada centro

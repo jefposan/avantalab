@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.35.0.19.06 - 2026-09-14
+- **NF-e nacional em homologação**: o emissor resolve, por UF do
+  estabelecimento, o autorizador oficial próprio, SVAN ou SVRS para as 27 UFs.
+  A chave de acesso, o XML e a consulta de status deixam de fixar São Paulo.
+  Produção fiscal, contingência, NFC-e e NFS-e continuam bloqueadas até a
+  homologação formal de cada fluxo.
+
 ## 1.35.0.19.05 - 2026-09-14
 - **Saldo do Mês por centro de custo**: o card ganhou uma lista com **Todos**
   como padrão e os centros ativos do perfil. Todos consolida receitas e despesas
