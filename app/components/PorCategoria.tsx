@@ -10,11 +10,25 @@ interface PorCategoriaProps {
   corPrimaria: string;
   darkMode: boolean;
   formatarMoeda: (valor: number) => string;
+  centroCustoId?: string;
 }
 
 export default function PorCategoria({
-  meses, lancamentos, despesasCadastradas, tipoPerfil, corPrimaria, darkMode, formatarMoeda
+  meses,
+  lancamentos,
+  despesasCadastradas,
+  tipoPerfil,
+  corPrimaria,
+  darkMode,
+  formatarMoeda,
+  centroCustoId,
 }: PorCategoriaProps) {
+  const lancamentosDoCentro = useMemo(
+    () => centroCustoId
+      ? lancamentos.filter((lancamento) => lancamento.centroCustoId === centroCustoId)
+      : lancamentos,
+    [centroCustoId, lancamentos],
+  );
 
   // --- CÁLCULOS TOTAIS ---
   const { totalGeral, despMap, catMap } = useMemo(() => {
@@ -29,7 +43,7 @@ export default function PorCategoria({
       despMap[d.nome] = 0;
     });
 
-    lancamentos.forEach(l => {
+    lancamentosDoCentro.forEach(l => {
       totalGeral += l.valor;
       despMap[l.despesa] = (despMap[l.despesa] || 0) + l.valor;
       
@@ -42,7 +56,7 @@ const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
     });
 
     return { totalGeral, despMap, catMap };
-  }, [lancamentos, despesasCadastradas, tipoPerfil]);
+  }, [lancamentosDoCentro, despesasCadastradas, tipoPerfil]);
 
   const despesasNomes = Object.keys(despMap).sort((a, b) => a.localeCompare(b));
   const metade = Math.ceil(despesasNomes.length / 2);
@@ -55,7 +69,7 @@ const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
   const maxCategoria = Math.max(...Object.values(catMap), 1);
 
 const getValorMensal = (despesa: string, mes: string) => {
-  return lancamentos
+  return lancamentosDoCentro
     .filter(
       (l) =>
         normalizarTexto(l.despesa) === normalizarTexto(despesa) &&
@@ -70,13 +84,13 @@ const getValorMensal = (despesa: string, mes: string) => {
   const totaisPorMes = useMemo(
     () =>
       meses.reduce<Record<string, number>>((acc, mes) => {
-        acc[mes] = lancamentos
+        acc[mes] = lancamentosDoCentro
           .filter((l) => l.mes === mes)
           .reduce((total, l) => total + Number(l.valor || 0), 0);
 
         return acc;
       }, {}),
-    [meses, lancamentos]
+    [meses, lancamentosDoCentro]
   );
 
   // --- CLASSES DE TEMA (Padrão Relatório) ---

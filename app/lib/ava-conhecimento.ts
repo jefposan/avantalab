@@ -1,7 +1,31 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.35.0.19.06: a NF-e de homologação resolve o autorizador
-// nacional pela UF do perfil, sem liberar produção fiscal.
+// Revisado na versão 1.35.0.19.26: a Gestão Mobile compartilha a configuração
+// de Centros de custo com a Gestão Web. Gestor Master ou Administrador ativa o
+// recurso em Configurações, gerencia centros adicionais pelo Menu e direciona
+// novas despesas e receitas pelo seletor no cabeçalho de Novo lançamento. O
+// centro Principal permanece sempre ativo e protegido.
+// A NF-e de homologação também resolve o autorizador nacional pela UF do
+// perfil, sem liberar produção fiscal.
+// Revisado na versão 1.35.0.19.24: em Centros de custo, Editar de um centro
+// adicional oferece Excluir com confirmação. A exclusão remove receitas,
+// despesas e despesas fixas de todos os períodos; Pausar preserva o histórico
+// e bloqueia novos lançamentos. O Principal permanece sempre ativo e protegido.
+// Revisado na versão 1.35.0.19.23: quando Centros de custo está ativo, o único
+// seletor operacional fica no cabeçalho, com fundo na cor primária e texto
+// contrastante. A faixa de abas fica quatro pixels acima dele somente nessa
+// condição; sem o recurso, retorna à posição original. A lista abre alinhada
+// ao campo e acima das demais camadas. Gráficos, Categorias e Relatório
+// acompanham o mesmo centro; não possuem seletor local.
+// Revisado na versão 1.35.0.19.09: Centro de custo em Registrar Entradas usa
+// a escala tipográfica de Selecione o mês. Sem alteração operacional.
+// Revisado na versão 1.35.0.19.08: o rótulo Centro de custo do card Registrar
+// Entradas fica acima do seletor. Sem alteração no lançamento da receita.
+// Revisado na versão 1.35.0.19.07: os seletores de mês dos cards do Dashboard
+// da Gestão Web têm rótulo visível. Sem alteração de cálculo ou operação.
+// Revisado na versão 1.35.0.19.06: o Relatório Contábil da Gestão Web permite
+// consultar Todos (consolidado) ou um centro de custo ativo, inclusive na
+// análise evolutiva multianual.
 // Revisado na versão 1.35.0.19.05: Saldo do Mês da Gestão Web permite Todos
 // (consolidado) ou um centro de custo individual, preservando as previsões.
 // Revisado na versão 1.35.0.19.04: o Resumo Financeiro da Gestão Web consolida

@@ -432,6 +432,18 @@ export async function atualizarCentroCusto(id: string, empresaId: string, campos
   return true;
 }
 
+export async function excluirCentroCustoComLancamentos(id: string, empresaId: string): Promise<{ erro: boolean; mensagem?: string }> {
+  const { error } = await supabase.rpc('excluir_centro_custo_com_lancamentos_rpc', {
+    p_centro_custo_id: id,
+    p_empresa_id: empresaId,
+  });
+  if (error) {
+    console.error('Erro ao excluir centro de custo:', error);
+    return { erro: true, mensagem: tratarErroSupabase(error) };
+  }
+  return { erro: false };
+}
+
 export async function buscarLancamentos(empresaId: string, ano: number, centroCustoId?: string | null) {
   const pageSize = 1000;
   let inicio = 0;
@@ -499,12 +511,20 @@ export async function garantirFixasDoMesAtual(empresaId: string): Promise<void> 
       };
     });
 
-    const { data: recs } = await supabase
-      .from('recorrencias')
-      .select('*')
-      .eq('empresa_id', empresaId)
-      .eq('ativo', true);
+    const [{ data: recs }, { data: centrosAtivos }] = await Promise.all([
+      supabase
+        .from('recorrencias')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .eq('ativo', true),
+      supabase
+        .from('centros_custo')
+        .select('id')
+        .eq('empresa_id', empresaId)
+        .eq('ativo', true),
+    ]);
     if (!recs || !recs.length) return;
+    const centrosAtivosIds = new Set((centrosAtivos || []).map((centro: { id: string }) => centro.id));
 
     const anosAlvo = Array.from(new Set(alvos.map((alvo) => alvo.ano)));
     const { data: lancs } = await supabase
@@ -514,6 +534,7 @@ export async function garantirFixasDoMesAtual(empresaId: string): Promise<void> 
       .in('ano', anosAlvo);
 
     for (const rec of recs as any[]) {
+      if (rec.centro_custo_id && !centrosAtivosIds.has(rec.centro_custo_id)) continue;
       const dia = Number(rec.dia);
       if (!dia || dia < 1 || dia > 31) continue;
 

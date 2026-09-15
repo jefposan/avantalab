@@ -1023,20 +1023,26 @@ const mostrarComparativoResumoDash =
     aplicarMudanca();
   };
 
-  const SeletorMesCard = ({ value, onChange, ariaLabel }: { value: string; onChange: (mes: string) => void; ariaLabel: string }) => (
-    <div className="relative shrink-0">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={ariaLabel}
-        className="h-8 min-w-[108px] appearance-none rounded-lg border border-white/70 bg-white/95 pl-3 pr-8 text-[11px] font-black uppercase tracking-wide text-[#123451] shadow-[0_4px_12px_rgba(15,23,42,0.16)] outline-none transition hover:bg-white focus:ring-2 focus:ring-white/60 cursor-pointer"
-      >
-        {meses.map((mes) => <option key={mes} value={mes} className="bg-white text-slate-800">{mes}</option>)}
-      </select>
-      <svg className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#123451]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-        <path d="m7 10 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
+  const SeletorMesCard = ({ id, value, onChange, ariaLabel }: { id: string; value: string; onChange: (mes: string) => void; ariaLabel: string }) => (
+    <label htmlFor={id} className="flex shrink-0 flex-col items-start gap-1 text-left">
+      <span className="text-[8px] font-black uppercase leading-none tracking-[0.12em] text-white/80">
+        Selecione o mês
+      </span>
+      <span className="relative block">
+        <select
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={ariaLabel}
+          className="h-7 min-w-[108px] appearance-none rounded-lg border border-white/70 bg-white/95 pl-3 pr-8 text-[11px] font-black uppercase tracking-wide text-[#123451] shadow-[0_4px_12px_rgba(15,23,42,0.16)] outline-none transition hover:bg-white focus:ring-2 focus:ring-white/60 cursor-pointer"
+        >
+          {meses.map((mes) => <option key={mes} value={mes} className="bg-white text-slate-800">{mes}</option>)}
+        </select>
+        <svg className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#123451]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+          <path d="m7 10 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    </label>
   );
 
   const BotaoOpcoesCard = ({ id, tone = 'dark' }: { id: string; tone?: 'dark' | 'light' }) => {
@@ -1293,7 +1299,7 @@ const mostrarComparativoResumoDash =
         <div className="flex items-center justify-between gap-3 rounded-tl-[12px] rounded-tr-[26px] px-6 py-3 text-center text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="min-w-0 truncate">Saldo do mês</span>
           <div className="flex items-center gap-2">
-            <SeletorMesCard value={meses[saldoCardMesIdx]} onChange={(mes) => setSaldoCardMesIdx(meses.indexOf(mes))} ariaLabel="Selecionar mês do saldo" />
+            <SeletorMesCard id="mes-saldo-dashboard" value={meses[saldoCardMesIdx]} onChange={(mes) => setSaldoCardMesIdx(meses.indexOf(mes))} ariaLabel="Selecionar mês do saldo" />
             {centrosCustoAtivo && centrosCustoAtivos.length > 0 && (
               <select
                 value={centroCustoSaldoId}
@@ -1625,7 +1631,7 @@ const mostrarComparativoResumoDash =
       >
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="truncate">{cols.full.includes('meusPerfis') ? 'Meus perfis' : 'Perfis'}</span>
-          <SeletorMesCard value={mesPerfis} onChange={setMesPerfis} ariaLabel="Selecionar mês de Meus perfis" />
+          <SeletorMesCard id="mes-perfis-dashboard" value={mesPerfis} onChange={setMesPerfis} ariaLabel="Selecionar mês de Meus perfis" />
           <div className="flex items-center justify-end gap-2">
             <span className="inline-flex h-6 min-w-[76px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-white/15 px-2 text-[9px] font-black leading-none text-white">
               {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
@@ -1840,7 +1846,7 @@ const mostrarComparativoResumoDash =
       <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="truncate">Centros de custo</span>
-          <SeletorMesCard value={mesCentrosCusto} onChange={setMesCentrosCusto} ariaLabel="Selecionar mês de Centros de custo" />
+          <SeletorMesCard id="mes-centros-custo-dashboard" value={mesCentrosCusto} onChange={setMesCentrosCusto} ariaLabel="Selecionar mês de Centros de custo" />
           <div className="flex items-center justify-end gap-2">
             <span className="inline-flex h-6 min-w-[72px] items-center justify-center whitespace-nowrap rounded-full bg-white/15 px-2 text-[9px] font-black leading-none text-white">{centrosCustoDashboard.length} centro{centrosCustoDashboard.length === 1 ? '' : 's'}</span>
             <button
@@ -1906,7 +1912,7 @@ const mostrarComparativoResumoDash =
         <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>Resumo Financeiro</span>
           <div className="flex items-center gap-2">
-            <SeletorMesCard value={mesResumoDash} onChange={setMesResumoDash} ariaLabel="Selecionar mês do resumo financeiro" />
+            <SeletorMesCard id="mes-resumo-financeiro-dashboard" value={mesResumoDash} onChange={setMesResumoDash} ariaLabel="Selecionar mês do resumo financeiro" />
             <DragHandle tone="light" />
             <BotaoOpcoesCard id="resumoFinanceiro" tone="light" />
           </div>
@@ -2085,8 +2091,8 @@ const mostrarComparativoResumoDash =
                 <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>Lançar receita</p>
               </div>
               {exibirSeletorCentroCustoNaReceita && (
-                <label className="ml-auto flex min-h-8 min-w-0 items-center gap-2" htmlFor="centro-custo-entrada-dashboard">
-                  <span className={textMuted + " whitespace-nowrap text-[9px] font-black uppercase tracking-wide"}>Centro de custo</span>
+                <label className="ml-auto flex min-w-0 flex-col items-center gap-1 text-center" htmlFor="centro-custo-entrada-dashboard">
+                  <span className={textMuted + " whitespace-nowrap text-[8px] font-black uppercase leading-none tracking-[0.12em]"}>Centro de custo</span>
                   <select
                     id="centro-custo-entrada-dashboard"
                     value={centroCustoEntradaId}

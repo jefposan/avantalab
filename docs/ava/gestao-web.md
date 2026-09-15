@@ -1,11 +1,84 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.06 -->
+<!-- ava-version: 1.35.0.19.26 -->
 
-> Revisão 1.35.0.19.06: a Central Fiscal resolve o autorizador oficial de
-> homologação da UF cadastrada no perfil empresarial. Isto permite testes de
-> NF-e modelo 55 nas 27 UFs atendidas; não habilita produção, contingência,
-> NFC-e ou NFS-e.
+> Revisão 1.35.0.19.26: a Gestão Mobile passou a usar a mesma configuração e
+> os mesmos centros de custo da Gestão Web. Ativar ou desativar em qualquer
+> versão mantém o estado compartilhado do perfil; lançamentos feitos no Mobile
+> podem ser direcionados para o centro ativo escolhido.
+
+> A Central Fiscal resolve o autorizador oficial de homologação da UF cadastrada
+> no perfil empresarial. Isto permite testes de NF-e modelo 55 nas 27 UFs
+> atendidas; não habilita produção, contingência, NFC-e ou NFS-e.
+
+> Revisão 1.35.0.19.24: em **Centros de custo**, abra **Editar** de um centro
+> adicional para encontrar **Excluir**. A confirmação informa que receitas,
+> despesas e despesas fixas de todos os períodos serão apagadas. **Pausar**
+> preserva o histórico e bloqueia novos lançamentos; o **Principal** não pode
+> ser pausado ou excluído.
+
+> Revisão 1.35.0.19.23: a elevação das abas do cabeçalho só ocorre com
+> **Centros de custo** ativo; sem o recurso, o menu volta à posição original.
+
+> Revisão 1.35.0.19.22: a faixa de abas do cabeçalho subiu discretamente, sem
+> mover o seletor global de centro de custo ou modificar sua seleção.
+
+> Revisão 1.35.0.19.21: o seletor global de centro de custo usa a cor primária
+> do perfil e texto contrastante. A seleção e a lista não mudaram.
+
+> Revisão 1.35.0.19.20: o seletor global de centro de custo foi ajustado dois
+> pixels para baixo, equilibrando a folga do cabeçalho. A seleção não mudou.
+
+> Revisão 1.35.0.19.19: o seletor global de centro de custo recebeu dois pixels
+> extras de folga acima e dois abaixo no cabeçalho desktop. A seleção não mudou.
+
+> Revisão 1.35.0.19.18: com **Centros de custo** ativo nas Configurações, há
+> apenas um seletor no cabeçalho. **Gráficos**, **Categorias** e **Relatório**
+> seguem esse mesmo centro; os seletores repetidos foram removidos das páginas.
+
+> Revisão 1.35.0.19.17: a lista do centro de custo abre alinhada exatamente ao
+> campo que a acionou. Sem alteração na escolha ou no carregamento do contexto.
+
+> Revisão 1.35.0.19.16: no cabeçalho, o contexto financeiro aparece como
+> **Centro de custo: [seletor]**, centralizado pela mesma faixa das abas entre
+> Início e Relatório. Sem alteração no carregamento do centro escolhido.
+
+> Revisão 1.35.0.19.15: a lista do seletor global de centro de custo fica
+> acima das barras e do conteúdo enquanto aberta. O campo continua compacto,
+> abaixo das abas, sem alterar a altura do cabeçalho.
+
+> Revisão 1.35.0.19.14: com Centros de custo ativo, a seleção do contexto
+> financeiro passou para abaixo do menu superior. Ela permanece disponível em
+> todas as páginas da Gestão e continua carregando somente o centro escolhido.
+
+> Revisão 1.35.0.19.13: o texto selecionado nos campos de centro de custo de
+> **Gráficos**, **Categorias** e **Relatório** é centralizado. Sem alteração
+> no comportamento de consulta.
+
+> Revisão 1.35.0.19.12: os seletores de centro de custo em **Categorias** e
+> **Relatório** adotam a mesma apresentação de Gráficos. O comportamento de
+> consulta por centro não foi alterado.
+
+> Revisão 1.35.0.19.11: em **Categorias**, o seletor de centro de custo ao
+> lado do total anual permite consultar **Todos** (consolidado) ou somente um
+> centro. A lista, a matriz e os totais seguem a escolha.
+
+> Revisão 1.35.0.19.10: a **Análise Gráfica** permite filtrar por centro de
+> custo e alternar entre visão anual e mensal. A visão anual usa o ano global;
+> a mensal permite escolher o mês e aplica o recorte a todos os gráficos.
+
+> Revisão 1.35.0.19.09: o rótulo **Centro de custo** de Registrar Entradas
+> recebeu apenas padronização tipográfica; o fluxo de receita não mudou.
+
+> Revisão 1.35.0.19.08: no card **Registrar Entradas**, o rótulo do centro de
+> custo fica acima da lista. Não houve alteração no destino da receita.
+
+> Revisão 1.35.0.19.07: os seletores de mês dos cards do Dashboard exibem o
+> rótulo **Selecione o mês**. Não houve alteração nas opções ou nos cálculos.
+
+> Revisão 1.35.0.19.06: com Centros de custo ativo, o **Relatório Contábil**
+> permite escolher **Todos** para o consolidado do perfil ou um centro ativo
+> para consultar somente seus valores mensais e multianuais.
 
 > Revisão 1.35.0.19.05: o card **Saldo do Mês** oferece **Todos** como padrão
 > e permite consultar o saldo consolidado ou o saldo individual de cada centro

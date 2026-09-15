@@ -12,6 +12,7 @@ interface RelatorioProps {
   anoSelecionado: string;
   setAnoSelecionado: (ano: string) => void;
   empresaId: string | null;
+  centroCustoId?: string;
 }
 
 type MetricaEvolutiva = 'entradas' | 'saidas' | 'ab' | 'ebitda';
@@ -29,6 +30,10 @@ type FaturamentoBanco = {
   ano: number;
   mes: string;
   valor: number;
+};
+
+type EntradaFaturamentoBanco = FaturamentoBanco & {
+  status?: string | null;
 };
 
 type DadosComparativoAno = {
@@ -49,6 +54,7 @@ export default function Relatorio({
   anoSelecionado,
   setAnoSelecionado,
   empresaId,
+  centroCustoId,
 }: RelatorioProps) {
   const [metricaEvolutiva, setMetricaEvolutiva] = useState<MetricaEvolutiva>('entradas');
   const [lancamentosTodosAnos, setLancamentosTodosAnos] = useState<LancamentoBanco[]>([]);
@@ -64,18 +70,26 @@ export default function Relatorio({
   const carregarComparativoAnual = async () => {
     if (!empresaId) return;
 
+    let consultaLancamentos = supabase
+      .from('lancamentos')
+      .select('ano, mes, despesa_nome, descricao, valor, status')
+      .eq('empresa_id', empresaId);
+    let consultaEntradas = supabase
+      .from('faturamentos_entradas')
+      .select('ano, mes, valor, status')
+      .eq('empresa_id', empresaId);
+
+    if (centroCustoId) {
+      consultaLancamentos = consultaLancamentos.eq('centro_custo_id', centroCustoId);
+      consultaEntradas = consultaEntradas.eq('centro_custo_id', centroCustoId);
+    }
+
     const [{ data: lancs, error: erroLancs }, { data: fats, error: erroFats }] =
       await Promise.all([
-        supabase
-          .from('lancamentos')
-          .select('ano, mes, despesa_nome, descricao, valor, status')
-          .eq('empresa_id', empresaId)
+        consultaLancamentos
           .order('ano', { ascending: true })
           .order('mes', { ascending: true }),
-        supabase
-          .from('faturamentos')
-          .select('ano, mes, valor')
-          .eq('empresa_id', empresaId)
+        consultaEntradas
           .order('ano', { ascending: true }),
       ]);
 
@@ -94,17 +108,19 @@ export default function Relatorio({
 
     if (!erroFats && fats) {
       setFaturamentosTodosAnos(
-        fats.map((f: any) => ({
+        (fats as EntradaFaturamentoBanco[])
+          .filter((f) => f.status !== 'prevista')
+          .map((f) => ({
           ano: Number(f.ano),
           mes: f.mes,
           valor: Number(f.valor || 0),
-        }))
+          }))
       );
     }
   };
 
   carregarComparativoAnual();
-}, [empresaId]);
+}, [empresaId, centroCustoId]);
 
   const calcularValoresMes = (mes: string) => {
     const entradas = faturamentos[mes] || 0;
@@ -449,7 +465,7 @@ export default function Relatorio({
         .dark .custom-scroll::-webkit-scrollbar-thumb { background: #475569; }
       `}</style>
 
-      <div className="mb-6 flex min-w-0 items-center justify-between print-ocultar">
+      <div className="mb-6 flex min-w-0 items-center print-ocultar">
         <div className="flex min-w-0 items-center">
           <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
           <h2 className={`min-w-0 break-words text-xl font-black sm:text-2xl ${textClass} uppercase tracking-wider`}>Relatório Contábil</h2>

@@ -641,6 +641,15 @@
     sobreAbertos: {},
     toast: '',
     duplicadosAtivo: true,
+    centrosCustoAtivo: false,
+    centrosCusto: [],
+    centroCustoSelecionadoId: '',
+    centroCustoSalvando: false,
+    centroCustoNovoNome: '',
+    centroCustoEditandoId: '',
+    centroCustoNomeEdicao: '',
+    centroCustoMensagem: '',
+    centroCustoExclusao: null,
     feedbackEtapa: 'inicio',
     feedbackTipo: '',
     feedbackMensagem: '',
@@ -4066,6 +4075,45 @@
     state.entradaValor = '';
   }
 
+  function chaveUltimoCentroCustoMobile() {
+    var empresaId = state.empresa && (state.empresa.id || state.empresa.empresa_id);
+    return empresaId ? 'avantalab.gestao.centro-custo.ultimo.v2:' + empresaId : '';
+  }
+
+  function centrosCustoAtivosMobile() {
+    return (state.centrosCusto || []).filter(function (centro) { return centro.ativo !== false; });
+  }
+
+  function centroCustoPrincipalMobile() {
+    return centrosCustoAtivosMobile().find(function (centro) { return centro.is_principal; }) || centrosCustoAtivosMobile()[0] || null;
+  }
+
+  function sincronizarCentroCustoSelecionadoMobile() {
+    if (!state.centrosCustoAtivo) {
+      state.centroCustoSelecionadoId = '';
+      return;
+    }
+    var ativos = centrosCustoAtivosMobile();
+    var chave = chaveUltimoCentroCustoMobile();
+    var ultimo = chave ? window.localStorage.getItem(chave) : '';
+    var selecionadoValido = ativos.some(function (centro) { return centro.id === state.centroCustoSelecionadoId; });
+    var ultimoValido = ativos.some(function (centro) { return centro.id === ultimo; });
+    var principal = centroCustoPrincipalMobile();
+    state.centroCustoSelecionadoId = selecionadoValido
+      ? state.centroCustoSelecionadoId
+      : (ultimoValido ? ultimo : (principal ? principal.id : ''));
+    if (chave && state.centroCustoSelecionadoId) {
+      window.localStorage.setItem(chave, state.centroCustoSelecionadoId);
+    }
+  }
+
+  function selecionarCentroCustoMobile(id) {
+    if (!centrosCustoAtivosMobile().some(function (centro) { return centro.id === id; })) return;
+    state.centroCustoSelecionadoId = id;
+    var chave = chaveUltimoCentroCustoMobile();
+    if (chave) window.localStorage.setItem(chave, id);
+  }
+
   function bind(id, fn) {
     var item = document.getElementById(id);
     if (item) item.addEventListener('click', fn);
@@ -4141,6 +4189,7 @@
 
   function fecharModalMenu() {
     if (state.modalMenu === 'despesasFixas' && (state.recorrEditandoSalvandoId || state.recorrSalvando)) return;
+    if (state.modalMenu === 'centrosCusto' && state.centroCustoSalvando) return;
     if (state.modalMenu === 'gerenciar') {
       if (state.empresaEdicaoAberta) { cancelarEdicaoEmpresaMobile(); return; }
       if (state.empresaCriarAberta) { cancelarCriarEmpresaMobile(); return; }
@@ -4163,6 +4212,11 @@
     }
     if (state.modalMenu === 'despesasFixas') {
       limparNovaRecorrenciaMobile();
+    }
+    if (state.modalMenu === 'centrosCusto') {
+      state.centroCustoEditandoId = '';
+      state.centroCustoNomeEdicao = '';
+      state.centroCustoMensagem = '';
     }
     if (state.modalMenu === 'feedback') {
       limparFeedbackMobile();
@@ -4283,6 +4337,7 @@
     state.modalLancamento = false;
     state.modalAcao = null;
     state.exclusaoRecorrencia = null;
+    state.centroCustoExclusao = null;
     state.agendaFormAberto = false;
     state.novaDespesaAberta = false;
     limparNovaRecorrenciaMobile();
@@ -4334,6 +4389,7 @@
     state.menuAberto = true;
     state.menuAnimacao = 'entrar';
     render();
+    sincronizarCentrosCustoMobile();
     atualizarEstadoNotificacoesMobile(false);
     setTimeout(function () {
       if (state.menuAberto && state.menuAnimacao === 'entrar') state.menuAnimacao = '';
@@ -4539,7 +4595,7 @@
   }
 
   function deveBloquearScroll() {
-    return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.aplicacaoLancamento || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto);
+    return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.aplicacaoLancamento || state.exclusaoRecorrencia || state.centroCustoExclusao || state.chatIAAberto || state.tourAberto);
   }
 
   var ALTURA_MINIMA_TECLADO_LANCAMENTO = 96;
@@ -4719,7 +4775,7 @@
     var ativo = document.activeElement;
     if (ativo && ativo.matches && ativo.matches('input, select, textarea, [contenteditable="true"]')) return false;
     if (state.carregando || state.lancandoDespesa || state.recorrSalvando || state.recorrEditandoSalvandoId || state.empresaAcao || state.assinaturaAcao) return false;
-    if (state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.aplicacaoLancamento || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto) return false;
+    if (state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.aplicacaoLancamento || state.exclusaoRecorrencia || state.centroCustoExclusao || state.chatIAAberto || state.tourAberto) return false;
     if (state.agendaFormAberto || state.empresaEdicaoAberta || state.empresaCriarAberta || state.empresaExclusaoAberta) return false;
     return true;
   }
@@ -6535,7 +6591,7 @@
     if (exibeTelaPreparacao) state.dadosCriticosProntos = false;
     // O resumo comparativo roda após a entrada e não integra a preparação
     // bloqueante; o percentual representa somente o que libera o perfil.
-    var totalEtapasDados = 11;
+    var totalEtapasDados = 12;
     // O início da carga é uma etapa real: as verificações foram disparadas.
     // Isso impede que a barra pareça presa nos 60% enquanto elas respondem.
     var etapasDadosConcluidas = 1;
@@ -6645,9 +6701,10 @@
       acompanharEtapaDados(db.from('faturamentos').select('mes, valor').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
       acompanharEtapaDados(db.from('faturamentos_entradas').select('id, mes, dia, origem, valor, status, tipo_obs').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
       acompanharEtapaDados(db.from('despesas_cadastradas').select('id, nome, categoria').eq('empresa_id', empresaId).order('nome', { ascending: true }), 'Carregando categorias de despesas'),
-      acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
+      acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo, centros_custo_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
       acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
       acompanharEtapaDados(db.from('caixinhas_movimentos').select('id, lancamento_id, tipo, descricao, valor, data_movimento, criado_em').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando caixinhas'),
+      acompanharEtapaDados(db.from('centros_custo').select('id, nome, ativo, is_principal').eq('empresa_id', empresaId).order('is_principal', { ascending: false }).order('nome', { ascending: true }), 'Carregando centros de custo'),
     ]);
 
     var verificacoesPerfil;
@@ -6784,6 +6841,18 @@
     } else {
       state.duplicadosAtivo = true;
     }
+    state.centrosCustoAtivo = Boolean(resultados[4].data && resultados[4].data.centros_custo_ativo === true);
+    state.centrosCusto = state.centrosCustoAtivo
+      ? ((resultados[7] && resultados[7].data) || []).map(function (centro) {
+          return {
+            id: String(centro.id),
+            nome: formatarDescricao(centro.nome),
+            ativo: centro.ativo !== false,
+            is_principal: centro.is_principal === true,
+          };
+        })
+      : [];
+    sincronizarCentroCustoSelecionadoMobile();
 
     var modulosAtivosMobile = (resultados[5] && resultados[5].data) || [];
     state.pontoModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'ponto'; });
@@ -8299,6 +8368,12 @@
     state.despesaDescricao = descricao;
     state.despesaValor = valorTexto;
 
+    var centroCustoId = state.centrosCustoAtivo ? state.centroCustoSelecionadoId : null;
+    if (state.centrosCustoAtivo && !centrosCustoAtivosMobile().some(function (centro) { return centro.id === centroCustoId; })) {
+      setErro('Selecione um centro de custo ativo para salvar a despesa.');
+      return;
+    }
+
     if (!dia || dia < 1 || dia > limite || !nome || valor <= 0) {
       // Preservar campos preenchidos ao mostrar erro de validação
       var _diaV = campo('despesa-dia'), _nomeV = campo('despesa-nome'),
@@ -8366,6 +8441,7 @@
           valor: valor,
           status: statusLanc,
           tipo_obs: tipoLanc,
+          centro_custo_id: centroCustoId,
         })
         .select()
         .single();
@@ -8666,6 +8742,174 @@
     mostrarToast(proximo ? 'Aviso de duplicados ativado.' : 'Aviso de duplicados desativado.');
   }
 
+  async function carregarCentrosCustoMobile() {
+    if (!state.empresa) return [];
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
+    var resposta = await db
+      .from('centros_custo')
+      .select('id, nome, ativo, is_principal')
+      .eq('empresa_id', empresaId)
+      .order('is_principal', { ascending: false })
+      .order('nome', { ascending: true });
+    if (resposta.error) return [];
+    state.centrosCusto = (resposta.data || []).map(function (centro) {
+      return {
+        id: String(centro.id),
+        nome: formatarDescricao(centro.nome),
+        ativo: centro.ativo !== false,
+        is_principal: centro.is_principal === true,
+      };
+    });
+    sincronizarCentroCustoSelecionadoMobile();
+    return state.centrosCusto;
+  }
+
+  async function sincronizarCentrosCustoMobile() {
+    if (!state.empresa || state.centroCustoSalvando) return false;
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
+    var resposta = await db.from('configuracoes').select('centros_custo_ativo').eq('empresa_id', empresaId).maybeSingle();
+    if (resposta.error) return false;
+    var ativoAgora = Boolean(resposta.data && resposta.data.centros_custo_ativo === true);
+    var mudou = ativoAgora !== state.centrosCustoAtivo;
+    state.centrosCustoAtivo = ativoAgora;
+    if (ativoAgora) await carregarCentrosCustoMobile();
+    else {
+      state.centrosCusto = [];
+      state.centroCustoSelecionadoId = '';
+    }
+    if (mudou || state.menuAberto || state.modalLancamento || state.modalMenu === 'centrosCusto') render();
+    return mudou;
+  }
+
+  async function alternarCentrosCustoMobile() {
+    if (!state.empresa || !podeGerenciarUsuarios() || state.centroCustoSalvando) return;
+    var proximo = !state.centrosCustoAtivo;
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
+    state.centroCustoSalvando = true;
+    state.centroCustoMensagem = '';
+    render();
+
+    var configuracao = await db
+      .from('configuracoes')
+      .upsert({ empresa_id: empresaId, centros_custo_ativo: proximo }, { onConflict: 'empresa_id' });
+    if (configuracao.error) {
+      state.centroCustoSalvando = false;
+      setErro(mensagemErro(configuracao.error, 'Nao foi possivel salvar a configuracao de centros de custo.'));
+      return;
+    }
+
+    state.centrosCustoAtivo = proximo;
+    if (proximo) {
+      await carregarCentrosCustoMobile();
+      // O gatilho da configuração cria o Principal. A RPC é somente uma
+      // garantia para perfis legados que ainda não possuam o centro inicial.
+      if (!centroCustoPrincipalMobile()) {
+        var principal = await db.rpc('garantir_centro_custo_principal', { p_empresa_id: empresaId });
+        if (principal.error) {
+          state.centroCustoSalvando = false;
+          setErro(mensagemErro(principal.error, 'Centros de custo foram ativados, mas o centro Principal ainda nao ficou disponivel.'));
+          return;
+        }
+        await carregarCentrosCustoMobile();
+      }
+    } else {
+      state.centrosCusto = [];
+      state.centroCustoSelecionadoId = '';
+    }
+    state.centroCustoSalvando = false;
+    render();
+    mostrarToast(proximo ? 'Centros de custo ativados.' : 'Centros de custo desativados.');
+  }
+
+  async function abrirCentrosCustoMobile() {
+    if (!state.centrosCustoAtivo || !podeGerenciarUsuarios()) return;
+    state.centroCustoMensagem = '';
+    abrirModalMenu('centrosCusto');
+    await carregarCentrosCustoMobile();
+    if (state.modalMenu === 'centrosCusto') render();
+  }
+
+  async function criarCentroCustoMobile() {
+    if (!state.empresa || !podeGerenciarUsuarios() || state.centroCustoSalvando) return;
+    var nome = String(state.centroCustoNovoNome || '').trim().replace(/\s+/g, ' ');
+    if (!nome) {
+      state.centroCustoMensagem = 'Informe o nome do centro de custo.';
+      render();
+      return;
+    }
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
+    state.centroCustoSalvando = true;
+    state.centroCustoMensagem = '';
+    render();
+    var resposta = await db.from('centros_custo').insert({ empresa_id: empresaId, nome: nome, ativo: true }).select('id, nome, ativo, is_principal').single();
+    state.centroCustoSalvando = false;
+    if (resposta.error || !resposta.data) {
+      state.centroCustoMensagem = mensagemErro(resposta.error, 'Nao foi possivel criar o centro de custo.');
+      render();
+      return;
+    }
+    state.centroCustoNovoNome = '';
+    await carregarCentrosCustoMobile();
+    render();
+    mostrarToast('Centro de custo adicionado.');
+  }
+
+  async function atualizarCentroCustoMobile(id, campos) {
+    if (!state.empresa || !podeGerenciarUsuarios() || state.centroCustoSalvando) return;
+    var centro = (state.centrosCusto || []).find(function (item) { return item.id === id; });
+    if (!centro || centro.is_principal) return;
+    var nome = campos && campos.nome ? String(campos.nome).trim().replace(/\s+/g, ' ') : '';
+    if (campos && Object.prototype.hasOwnProperty.call(campos, 'nome') && !nome) {
+      state.centroCustoMensagem = 'Informe o nome do centro de custo.';
+      render();
+      return;
+    }
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
+    var dados = {};
+    if (campos && Object.prototype.hasOwnProperty.call(campos, 'nome')) dados.nome = nome;
+    if (campos && Object.prototype.hasOwnProperty.call(campos, 'ativo')) dados.ativo = campos.ativo === true;
+    state.centroCustoSalvando = true;
+    state.centroCustoMensagem = '';
+    render();
+    var resposta = await db.from('centros_custo').update(dados).eq('id', id).eq('empresa_id', empresaId);
+    state.centroCustoSalvando = false;
+    if (resposta.error) {
+      state.centroCustoMensagem = mensagemErro(resposta.error, 'Nao foi possivel atualizar o centro de custo.');
+      render();
+      return;
+    }
+    state.centroCustoEditandoId = '';
+    state.centroCustoNomeEdicao = '';
+    await carregarCentrosCustoMobile();
+    render();
+    mostrarToast(campos && Object.prototype.hasOwnProperty.call(campos, 'ativo') ? (campos.ativo ? 'Centro de custo ativado.' : 'Centro de custo pausado.') : 'Centro de custo atualizado.');
+  }
+
+  async function confirmarExclusaoCentroCustoMobile() {
+    if (!state.empresa || !state.centroCustoExclusao || state.centroCustoSalvando) return;
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
+    var centro = state.centroCustoExclusao;
+    state.centroCustoSalvando = true;
+    state.centroCustoMensagem = '';
+    render();
+    var resposta = await db.rpc('excluir_centro_custo_com_lancamentos_rpc', {
+      p_centro_custo_id: centro.id,
+      p_empresa_id: empresaId,
+    });
+    state.centroCustoSalvando = false;
+    if (resposta.error) {
+      state.centroCustoMensagem = mensagemErro(resposta.error, 'Nao foi possivel excluir o centro de custo.');
+      render();
+      return;
+    }
+    state.centroCustoExclusao = null;
+    state.centroCustoEditandoId = '';
+    state.centroCustoNomeEdicao = '';
+    await carregarCentrosCustoMobile();
+    await carregarDados();
+    mostrarToast('Centro de custo e lancamentos excluidos.');
+  }
+
   async function salvarEntrada() {
     if (!state.empresa || state.aplicacaoLancamento) return;
 
@@ -8679,6 +8923,12 @@
     state.entradaDiaAutoHoje = false;
     state.entradaOrigem = origem;
     state.entradaValor = valorTexto;
+
+    var centroCustoId = state.centrosCustoAtivo ? state.centroCustoSelecionadoId : null;
+    if (state.centrosCustoAtivo && !centrosCustoAtivosMobile().some(function (centro) { return centro.id === centroCustoId; })) {
+      setErro('Selecione um centro de custo ativo para salvar a receita.');
+      return;
+    }
 
     if (!dia || dia < 1 || dia > limite || !origem.trim() || valor <= 0) {
       setErro('Informe dia, origem e valor validos.');
@@ -8703,6 +8953,7 @@
         status: ehFutura ? 'prevista' : null,
         tipo_obs: ehFutura ? 'previsto' : null,
         criado_por: state.usuario ? state.usuario.id : null,
+        centro_custo_id: centroCustoId,
       })
       .select()
       .single();
@@ -8712,7 +8963,9 @@
       return;
     }
 
-    if (!ehFutura) {
+    // Com centros ativos, o gatilho do banco recalcula o total consolidado
+    // a partir das entradas de todos os centros. Evita somar duas vezes.
+    if (!ehFutura && !state.centrosCustoAtivo) {
       var totalExistente = await db
         .from('faturamentos')
         .select('valor')
@@ -10365,6 +10618,7 @@
           (state.menuAberto ? menuLateralHtml() : '') +
           (state.modalMenu ? modalMenuHtml() : '') +
           (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
+          (state.centroCustoExclusao ? confirmacaoExclusaoCentroCustoHtml() : '') +
           (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
           notaVisualizacaoHtml() +
           processandoNotaHtml() +
@@ -10421,6 +10675,7 @@
         (state.menuAberto ? menuLateralHtml() : '') +
         (state.modalMenu ? modalMenuHtml() : '') +
         (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
+        (state.centroCustoExclusao ? confirmacaoExclusaoCentroCustoHtml() : '') +
         (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
         notaVisualizacaoHtml() +
         processandoNotaHtml() +
@@ -11678,6 +11933,15 @@
     var abaInativa = campoEscuro ? 'text-slate-300' : 'text-slate-500';
     var abaDespesaAtiva = campoEscuro ? 'border border-red-400/60 bg-red-600 text-white shadow-sm' : 'bg-red-600 text-white shadow-sm';
     var abaReceitaAtiva = campoEscuro ? 'border border-emerald-400/60 bg-emerald-600 text-white shadow-sm' : 'bg-emerald-600 text-white shadow-sm';
+    var centrosAtivos = centrosCustoAtivosMobile();
+    var mostrarCentroCusto = state.centrosCustoAtivo && centrosAtivos.length > 0;
+    var cabecalhoLancamento = mostrarCentroCusto
+      ? '<label class="grid min-w-0 gap-0.5"><span class="text-center text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/85">Centro de custo</span><select id="lancamento-centro-custo" aria-label="Centro de custo do lançamento" class="h-8 w-full min-w-0 rounded-lg border border-white/30 bg-white px-2 text-center text-[11px] font-black uppercase tracking-wide text-[#003E73] outline-none">' +
+          centrosAtivos.map(function (centro) {
+            return '<option value="' + escapeHtml(centro.id) + '"' + (centro.id === state.centroCustoSelecionadoId ? ' selected' : '') + '>' + escapeHtml(centro.nome) + '</option>';
+          }).join('') +
+        '</select></label>'
+      : '<h2 class="text-base font-black">Novo lan&ccedil;amento</h2>';
 
     return (
       '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:var(--avanta-lancamento-padding-bottom, calc(env(safe-area-inset-bottom) + 78px))">' +
@@ -11694,12 +11958,12 @@
               '<div class="' + corpoModal + ' p-4">' +
               novaDespesaFormHtml() +
               '</div>'
-            : '<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 text-white" style="background-color:#003E73">' +
-                '<h2 class="text-base font-black">Novo lan&ccedil;amento</h2>' +
-                '<div class="flex items-center justify-self-center rounded-full border border-white/25 bg-white/15 px-1 py-1 text-white shadow-sm" aria-label="Mês do lançamento: ' + escapeHtml(nomeMesCompleto(periodo.mes) + ' de ' + periodo.ano) + '">' +
-                  '<button id="lancamento-mes-anterior" type="button" class="flex h-7 w-7 items-center justify-center rounded-full text-xl font-black leading-none transition hover:bg-white/15" aria-label="Mês anterior">&lsaquo;</button>' +
-                  '<span class="min-w-[72px] px-1 text-center text-xs font-black leading-none tracking-wide">' + escapeHtml(nomeMesCompleto(periodo.mes).toUpperCase()) + '</span>' +
-                  '<button id="lancamento-mes-proximo" type="button" class="flex h-7 w-7 items-center justify-center rounded-full text-xl font-black leading-none transition hover:bg-white/15" aria-label="Próximo mês">&rsaquo;</button>' +
+            : '<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1.5 px-3 py-2.5 text-white" style="background-color:#003E73">' +
+                cabecalhoLancamento +
+                '<div class="flex items-center justify-self-center rounded-full border border-white/25 bg-white/15 px-0.5 py-0.5 text-white shadow-sm" aria-label="Mês do lançamento: ' + escapeHtml(nomeMesCompleto(periodo.mes) + ' de ' + periodo.ano) + '">' +
+                  '<button id="lancamento-mes-anterior" type="button" class="flex h-6 w-6 items-center justify-center rounded-full text-lg font-black leading-none transition hover:bg-white/15" aria-label="Mês anterior">&lsaquo;</button>' +
+                  '<span class="min-w-[56px] px-0.5 text-center text-[10px] font-black leading-none tracking-wide">' + escapeHtml(nomeMesCompleto(periodo.mes).toUpperCase()) + '</span>' +
+                  '<button id="lancamento-mes-proximo" type="button" class="flex h-6 w-6 items-center justify-center rounded-full text-lg font-black leading-none transition hover:bg-white/15" aria-label="Próximo mês">&rsaquo;</button>' +
                 '</div>' +
                 '<button id="fechar-lancamento" type="button" class="justify-self-end flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar lançamento">' + iconeFecharGeometricoMobile() + '</button>' +
               '</div>' +
@@ -12024,6 +12288,15 @@
             chaveMenuHtml(state.duplicadosAtivo) +
           '</div>' +
         '</button>' +
+        (podeGerenciarUsuarios()
+          ? '<button id="menu-centros-custo-ativo" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:5;' + (dk ? '' : 'background:linear-gradient(90deg,#E6FBF9 0%,#FFFFFF 78%);border-color:#BDEBE6;') + '">' +
+              '<div class="flex items-center gap-2">' +
+                '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D8F7F2;color:#0F766E">' + iconeMenuLateralSvg('menu-centros-custo') + '</span>' +
+                '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Centros de custo</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.centrosCustoAtivo ? 'Financeiro separado por centro' : 'Manter um unico financeiro') + '</span></span>' +
+                chaveMenuHtml(state.centrosCustoAtivo) +
+              '</div>' +
+            '</button>'
+          : '') +
         '<p class="mt-1 border-t ' + bordaDivisorConfig + ' px-2 pb-0.5 pt-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500" style="order:7">Conta e equipe</p>' +
         (podeGerenciarAprovacoesVendasMobile()
           ? '<button id="menu-aprovacoes-vendas" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:8;' + (dk ? '' : 'background:linear-gradient(90deg,#FFF8E6 0%,#FFFFFF 78%);border-color:#F6D88E;') + '"><span class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#FFF0C2;color:#A16207">' + iconeMenuLateralSvg('menu-aprovacoes-vendas') + '</span><span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Aprovações do Vendas</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Pedidos de acesso ao perfil</span></span>' + (state.aprovacoesVendasPendentes.length > 0 ? '<span class="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-black text-slate-950">' + (state.aprovacoesVendasPendentes.length > 99 ? '99+' : state.aprovacoesVendasPendentes.length) + '</span>' : '') + '</span></button>'
@@ -12111,6 +12384,9 @@
             menuBotaoHtml('menu-avisos', 'Central de avisos', 'Consultar e apagar avisos recebidos', false, premiumInativo) +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa') +
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais') +
+            (state.centrosCustoAtivo && podeGerenciarUsuarios()
+              ? menuBotaoHtml('menu-centros-custo', 'Centros de custo', 'Cadastrar, pausar ou editar centros')
+              : '') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab') +
             '<button id="menu-organizacao-toggle" type="button" aria-expanded="' + (organizacaoAberto ? 'true' : 'false') + '" aria-controls="menu-organizacao-conteudo" class="mt-1 min-h-11 rounded-xl border border-sky-200 px-2.5 py-2 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99]" style="background:' + (dk ? '#0F172A' : 'linear-gradient(90deg,#E8F3FF 0%,#FAFCFF 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
@@ -12383,6 +12659,7 @@
       'menu-organizar-atalhos': '<path d="M7 7h13M17 3l4 4-4 4M17 17H4M7 13l-4 4 4 4"/>',
       'menu-categorias': '<path d="M12 5v14M5 12h14"/>',
       'menu-despesas-fixas': '<path d="M20 6v5h-5M4 18v-5h5M18 9a7 7 0 0 0-12-2l-2 4M6 15a7 7 0 0 0 12 2l2-4"/>',
+      'menu-centros-custo': '<path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v18M16 3v18"/>',
       'menu-ajuda-categorias': '<circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 3.3 2.37c-.9.36-.9 1.13-.9 1.63M12 17h.01"/>',
       'menu-tutorial': '<path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 12.5V17c3 2 7 2 10 0v-4.5M21 10v6"/>',
       'menu-vendas-mobile': '<path d="m3 11 18-5v12L3 14zM11.5 16.5 13 21H8l-1.5-6"/><path d="M7 8.8v6.4"/>',
@@ -12413,6 +12690,7 @@
       'menu-organizar-atalhos': ['linear-gradient(90deg,#E3FAFC 0%,#F9FEFF 100%)', '#BDEBF0', 'linear-gradient(135deg,#22D3EE,#0891B2)', '#FFFFFF'],
       'menu-categorias': ['linear-gradient(90deg,#E3F8F3 0%,#FAFEFD 100%)', '#BDE9DD', 'linear-gradient(135deg,#2DD4BF,#0F766E)', '#FFFFFF'],
       'menu-despesas-fixas': ['linear-gradient(90deg,#E7F1FF 0%,#FAFCFF 100%)', '#C6DCF7', 'linear-gradient(135deg,#38BDF8,#1D4ED8)', '#FFFFFF'],
+      'menu-centros-custo': ['linear-gradient(90deg,#E6FBF9 0%,#FAFFFE 100%)', '#BDEBE6', 'linear-gradient(135deg,#14B8A6,#0F766E)', '#FFFFFF'],
       'menu-ajuda-categorias': ['linear-gradient(90deg,#ECEBFF 0%,#FCFBFF 100%)', '#D4D5FA', 'linear-gradient(135deg,#818CF8,#4F46E5)', '#FFFFFF'],
       'menu-tutorial': ['linear-gradient(90deg,#F0EAFE 0%,#FCFAFF 100%)', '#DED4FA', 'linear-gradient(135deg,#A78BFA,#7C3AED)', '#FFFFFF'],
       'menu-vendas-mobile': ['linear-gradient(90deg,#E1F7FC 0%,#F8FDFF 100%)', '#B9E8F2', 'linear-gradient(135deg,#22D3EE,#0369A1)', '#FFFFFF'],
@@ -12446,6 +12724,7 @@
       privacidade: 'Privacidade',
       feedback: 'Dúvidas e Sugestões',
       despesasFixas: 'Gerenciar despesas fixas',
+      centrosCusto: 'Centros de custo',
       assinatura: 'Assinatura',
       contratarAssinatura: 'Assinar Premium',
       excluirConta: 'Excluir este perfil',
@@ -12501,6 +12780,7 @@
     if (state.modalMenu === 'privacidade') return privacidadeMobileHtml();
     if (state.modalMenu === 'feedback') return feedbackMobileHtml();
     if (state.modalMenu === 'despesasFixas') return despesasFixasMenuHtml();
+    if (state.modalMenu === 'centrosCusto') return centrosCustoMenuHtml();
     if (state.modalMenu === 'assinatura') return assinaturaMobileHtml();
     if (state.modalMenu === 'contratarAssinatura') return contratacaoAssinaturaMobileHtml();
     if (state.modalMenu === 'excluirConta') return excluirContaMobileHtml();
@@ -13709,6 +13989,25 @@
     );
   }
 
+  function confirmacaoExclusaoCentroCustoHtml() {
+    var centro = state.centroCustoExclusao;
+    if (!centro) return '';
+    return (
+      '<div id="excluir-centro-custo-overlay" class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/90 px-4 pt-4 backdrop-blur-sm" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+        '<section class="w-full max-w-sm overflow-y-auto rounded-3xl bg-white shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
+          '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
+            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">Confirmar exclusão</p><h2 class="truncate text-base font-black">Excluir centro de custo</h2></div>' +
+            '<button id="cancelar-exclusao-centro-custo-topo" type="button" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white disabled:opacity-50" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button>' +
+          '</div>' +
+          '<div class="p-4">' +
+            '<div class="rounded-2xl border border-red-100 bg-red-50 p-4"><p class="text-sm font-black text-slate-900">' + escapeHtml(centro.nome) + '</p><p class="mt-1.5 text-xs font-semibold leading-relaxed text-slate-600">Ao aceitar, o centro e todo o conteúdo lançado nele serão apagados: receitas, despesas e despesas fixas de qualquer período. Esta ação não pode ser desfeita.</p></div>' +
+            '<div class="mt-4 grid grid-cols-2 gap-2"><button id="cancelar-exclusao-centro-custo" type="button" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase text-slate-600 disabled:opacity-50">Cancelar</button><button id="confirmar-exclusao-centro-custo" type="button" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-red-600 px-3 text-xs font-black uppercase text-white shadow-sm disabled:opacity-60">' + (state.centroCustoSalvando ? 'Excluindo...' : 'Excluir tudo') + '</button></div>' +
+          '</div>' +
+        '</section>' +
+      '</div>'
+    );
+  }
+
   function confirmacaoResetCaixinhaHtml() {
     return (
       '<div id="reset-caixinha-overlay" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/90 px-4 pt-4 backdrop-blur-sm" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
@@ -13833,6 +14132,42 @@
           : '<p class="text-center text-[11px] font-semibold text-slate-400 py-2">Nenhuma despesa fixa cadastrada</p>') +
       '</div>'
     );
+  }
+
+  function centrosCustoMenuHtml() {
+    var escuro = !!state.darkMode;
+    var campo = escuro ? 'border-slate-600 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900';
+    var fundo = escuro ? 'border-slate-700 bg-slate-900/50' : 'border-slate-200 bg-slate-50';
+    var mensagem = state.centroCustoMensagem
+      ? '<p role="status" class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-bold text-rose-700">' + escapeHtml(state.centroCustoMensagem) + '</p>'
+      : '';
+    var itens = (state.centrosCusto || []).map(function (centro) {
+      var editando = state.centroCustoEditandoId === centro.id;
+      var principal = centro.is_principal === true;
+      return '<div class="flex items-center gap-2 rounded-xl border ' + (escuro ? 'border-slate-700 bg-slate-900/40' : 'border-slate-200 bg-white') + ' p-3">' +
+        '<div class="min-w-0 flex-1">' +
+          (editando
+            ? '<input id="centro-custo-editar-nome" value="' + escapeHtml(state.centroCustoNomeEdicao) + '" maxlength="80" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'style="font-size:16px" class="h-9 w-full rounded-lg border px-2 text-sm font-bold outline-none ' + campo + '" aria-label="Nome do centro de custo" />'
+            : '<p class="truncate text-sm font-black ' + (escuro ? 'text-white' : 'text-slate-800') + '">' + escapeHtml(centro.nome) + '</p>') +
+          '<p class="mt-0.5 text-[10px] font-bold uppercase tracking-wide ' + (principal || centro.ativo ? 'text-emerald-600' : 'text-slate-400') + '">' + (principal ? 'Principal · sempre ativo' : (centro.ativo ? 'Ativo' : 'Pausado')) + '</p>' +
+        '</div>' +
+        (principal ? '' : (
+          editando
+            ? '<div class="flex shrink-0 flex-wrap justify-end gap-1"><button type="button" data-centro-custo-salvar="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando || !String(state.centroCustoNomeEdicao || '').trim() ? 'disabled ' : '') + 'class="h-9 rounded-lg bg-[#003E73] px-2 text-[10px] font-black uppercase text-white disabled:opacity-50">Salvar</button><button type="button" data-centro-custo-cancelar="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg border px-2 text-[10px] font-black uppercase ' + (escuro ? 'border-slate-600 text-slate-300' : 'border-slate-300 text-slate-600') + '">Cancelar</button><button type="button" data-centro-custo-excluir="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg border border-red-300 px-2 text-[10px] font-black uppercase text-red-600 disabled:opacity-50">Excluir</button></div>'
+            : '<div class="flex shrink-0 flex-wrap justify-end gap-1"><button type="button" data-centro-custo-editar="' + escapeHtml(centro.id) + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg border px-2 text-[10px] font-black uppercase ' + (escuro ? 'border-slate-600 text-slate-300' : 'border-slate-300 text-slate-600') + '">Editar</button><button type="button" data-centro-custo-pausar="' + escapeHtml(centro.id) + '" data-centro-custo-ativo="' + (centro.ativo ? '1' : '0') + '" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'class="h-9 rounded-lg px-2 text-[10px] font-black uppercase ' + (centro.ativo ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800') + '">' + (centro.ativo ? 'Pausar' : 'Ativar') + '</button></div>'
+        )) +
+      '</div>';
+    }).join('');
+    return '<div class="grid gap-4">' +
+      '<div class="rounded-xl border p-3 ' + fundo + '">' +
+        '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide ' + (escuro ? 'text-slate-300' : 'text-slate-600') + '">Novo centro' +
+          '<div class="flex gap-2"><input id="centro-custo-novo-nome" value="' + escapeHtml(state.centroCustoNovoNome) + '" maxlength="80" placeholder="Ex.: Loja 01 ou 100" ' + (state.centroCustoSalvando ? 'disabled ' : '') + 'style="font-size:16px" class="h-11 min-w-0 flex-1 rounded-xl border px-3 text-base font-bold normal-case tracking-normal outline-none ' + campo + '" /><button id="centro-custo-adicionar" type="button" ' + (state.centroCustoSalvando || !String(state.centroCustoNovoNome || '').trim() ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-[#003E73] px-3 text-[10px] font-black uppercase text-white disabled:opacity-50">' + (state.centroCustoSalvando ? 'Salvando...' : 'Adicionar') + '</button></div>' +
+        '</label>' +
+        '<p class="mt-2 text-[11px] font-semibold ' + (escuro ? 'text-slate-400' : 'text-slate-500') + '">Use texto ou número. O centro escolhido será aplicado aos novos lançamentos.</p>' +
+      '</div>' +
+      mensagem +
+      (itens || '<p class="rounded-xl bg-slate-50 px-3 py-5 text-center text-sm font-semibold text-slate-500">Nenhum centro cadastrado.</p>') +
+    '</div>';
   }
 
   function categoriasMenuHtml() {
@@ -14399,6 +14734,7 @@
     bind('tour-proximo', function () { tourIr(1); });
     bind('menu-categorias', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('categorias'); }); });
     bind('menu-despesas-fixas', function () { fecharMenuLateralAnimado(abrirModalMenuDespesasFixas); });
+    bind('menu-centros-custo', function () { fecharMenuLateralAnimado(abrirCentrosCustoMobile); });
     bind('menu-ajuda-categorias', function () {
       if (state.modalMenu === 'categorias') state.modalMenuRetorno = 'categorias';
       fecharMenuLateralAnimado(function () { abrirModalMenu('ajudaCategorias'); });
@@ -14436,6 +14772,9 @@
     bind('menu-instalar', function () { fecharMenuLateralAnimado(instalarApp); });
     bind('menu-duplicados', function () {
       executarChaveMenuSemMover('menu-duplicados', alternarDuplicados);
+    });
+    bind('menu-centros-custo-ativo', function () {
+      executarChaveMenuSemMover('menu-centros-custo-ativo', alternarCentrosCustoMobile);
     });
     bind('menu-tema', function () {
       executarChaveMenuSemMover('menu-tema', trocarTema);
@@ -15188,6 +15527,9 @@
     });
     bind('lancamento-mes-anterior', function () { mudarPeriodoLancamentoMobile(-1); });
     bind('lancamento-mes-proximo', function () { mudarPeriodoLancamentoMobile(1); });
+    bindChange('lancamento-centro-custo', function () {
+      selecionarCentroCustoMobile(this.value || '');
+    });
     bind('tipo-despesa', function () {
       state.tipoLancamento = 'despesa';
       render();
@@ -15215,6 +15557,80 @@
       render();
     });
     bind('salvar-nova-despesa', salvarNovaDespesaInline);
+    var centroCustoNovoNome = document.getElementById('centro-custo-novo-nome');
+    if (centroCustoNovoNome) {
+      centroCustoNovoNome.addEventListener('input', function () {
+        state.centroCustoNovoNome = this.value || '';
+        var botaoAdicionar = document.getElementById('centro-custo-adicionar');
+        if (botaoAdicionar) botaoAdicionar.disabled = !String(state.centroCustoNovoNome).trim() || state.centroCustoSalvando;
+      });
+      centroCustoNovoNome.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        criarCentroCustoMobile();
+      });
+    }
+    bind('centro-custo-adicionar', criarCentroCustoMobile);
+    var centroCustoEdicaoNome = document.getElementById('centro-custo-editar-nome');
+    if (centroCustoEdicaoNome) {
+      centroCustoEdicaoNome.addEventListener('input', function () {
+        state.centroCustoNomeEdicao = this.value || '';
+        var botaoSalvar = document.querySelector('[data-centro-custo-salvar]');
+        if (botaoSalvar) botaoSalvar.disabled = !String(state.centroCustoNomeEdicao).trim() || state.centroCustoSalvando;
+      });
+      centroCustoEdicaoNome.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        var idCentro = state.centroCustoEditandoId;
+        if (idCentro) atualizarCentroCustoMobile(idCentro, { nome: state.centroCustoNomeEdicao });
+      });
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('[data-centro-custo-editar]'), function (botao) {
+      botao.addEventListener('click', function () {
+        var idCentro = botao.getAttribute('data-centro-custo-editar') || '';
+        var centro = (state.centrosCusto || []).find(function (item) { return item.id === idCentro; });
+        if (!centro) return;
+        state.centroCustoEditandoId = idCentro;
+        state.centroCustoNomeEdicao = centro.nome;
+        state.centroCustoMensagem = '';
+        render();
+        window.setTimeout(function () {
+          var campoEdicao = document.getElementById('centro-custo-editar-nome');
+          if (campoEdicao) campoEdicao.focus();
+        }, 0);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-centro-custo-cancelar]'), function (botao) {
+      botao.addEventListener('click', function () {
+        if (state.centroCustoSalvando) return;
+        state.centroCustoEditandoId = '';
+        state.centroCustoNomeEdicao = '';
+        state.centroCustoMensagem = '';
+        render();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-centro-custo-salvar]'), function (botao) {
+      botao.addEventListener('click', function () {
+        atualizarCentroCustoMobile(botao.getAttribute('data-centro-custo-salvar') || '', { nome: state.centroCustoNomeEdicao });
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-centro-custo-pausar]'), function (botao) {
+      botao.addEventListener('click', function () {
+        atualizarCentroCustoMobile(botao.getAttribute('data-centro-custo-pausar') || '', { ativo: botao.getAttribute('data-centro-custo-ativo') !== '1' });
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-centro-custo-excluir]'), function (botao) {
+      botao.addEventListener('click', function () {
+        var idCentro = botao.getAttribute('data-centro-custo-excluir') || '';
+        var centro = (state.centrosCusto || []).find(function (item) { return item.id === idCentro && !item.is_principal; });
+        if (!centro) return;
+        state.centroCustoExclusao = centro;
+        render();
+      });
+    });
+    bind('cancelar-exclusao-centro-custo', function () { if (!state.centroCustoSalvando) { state.centroCustoExclusao = null; render(); } });
+    bind('cancelar-exclusao-centro-custo-topo', function () { if (!state.centroCustoSalvando) { state.centroCustoExclusao = null; render(); } });
+    bind('confirmar-exclusao-centro-custo', confirmarExclusaoCentroCustoMobile);
     bind('fechar-acao-lancamento', fecharAcaoLancamento);
     bind('ver-nota-lancamento', function () { if (state.modalAcao && state.modalAcao.item) abrirNotaLancamentoMobile(state.modalAcao.item.id); });
     bind('fechar-nota-lancamento', function () { state.notaVisualizandoUrl = ''; render(); });
@@ -16378,6 +16794,8 @@
       } catch (e) {}
       if (diaVirou && state.autenticado && state.empresa && !ehFuncionarioPontoMobile() && !state.validacaoTelefoneObrigatoria && podeAtualizarDadosAoRetornar()) {
         carregarDados();
+      } else if (state.autenticado && state.empresa && podeAtualizarDadosAoRetornar()) {
+        sincronizarCentrosCustoMobile();
       }
     });
 
@@ -16385,6 +16803,7 @@
     // Reconsulta a fonte de verdade também nessa retomada para remover selos antigos.
     window.addEventListener('pageshow', function () {
       if (!document.hidden) carregarNotificacoesNaoLidas();
+      if (!document.hidden && state.autenticado && state.empresa && podeAtualizarDadosAoRetornar()) sincronizarCentrosCustoMobile();
     });
 
     // Android: o modal de lancamento acompanha toda a animacao do teclado e

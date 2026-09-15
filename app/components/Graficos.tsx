@@ -8,6 +8,7 @@ import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import { CATEGORIAS_EXCLUSAO_EBITDA } from '../lib/perfis';
 import { restringirArrasteAJanela } from '../lib/dnd';
+import { consolidarReceitasRealizadasPorMes } from '../lib/financeiro-consolidado';
 
 interface GraficosProps {
   meses: string[];
@@ -19,6 +20,9 @@ interface GraficosProps {
   corPrimaria: string;
   darkMode: boolean;
   formatarMoeda: (valor: number) => string;
+  faturamentosEntradas?: { mes: string; valor: number; status?: string | null; centroCustoId?: string | null }[];
+  centroCustoId?: string;
+  mesInicial?: string | null;
 }
 
 type LinhaTip = { label: string; valor: string; cor?: string; forte?: boolean; sep?: boolean };
@@ -70,7 +74,20 @@ function Coluna({ id, items, isEmpty, arrastando, className, children }: { id: s
   );
 }
 
-export default function Graficos({ meses, lancamentos, faturamentos, despesasCadastradas = [], tipoPerfil = 'empresa', empresaId, corPrimaria, darkMode, formatarMoeda }: GraficosProps) {
+export default function Graficos({
+  meses,
+  lancamentos,
+  faturamentos,
+  despesasCadastradas = [],
+  tipoPerfil = 'empresa',
+  empresaId,
+  corPrimaria,
+  darkMode,
+  formatarMoeda,
+  faturamentosEntradas = [],
+  centroCustoId,
+  mesInicial,
+}: GraficosProps) {
 
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
@@ -78,6 +95,40 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
   const cardBase = `${bgCard} card-radius-avantalab min-w-0 rounded-2xl shadow-lg border p-5 sm:p-6 flex flex-col border-t-4`;
   const cardStyle = { borderTopColor: corPrimaria } as const;
   const ehEmpresa = tipoPerfil !== 'pessoal';
+  const [periodoGrafico, setPeriodoGrafico] = useState<'anual' | 'mensal'>('anual');
+  const [mesGrafico, setMesGrafico] = useState(mesInicial || meses[0] || 'JANEIRO');
+
+  useEffect(() => {
+    if (!meses.includes(mesGrafico)) setMesGrafico(mesInicial || meses[0] || 'JANEIRO');
+  }, [mesGrafico, mesInicial, meses]);
+
+  // O ano e o centro de custo vêm dos controles globais do cabeçalho.
+  // Aqui, o filtro local refina apenas entre a visão anual e mensal.
+  const lancamentosDoGrafico = useMemo(
+    () => centroCustoId
+      ? lancamentos.filter((lancamento) => lancamento.centroCustoId === centroCustoId)
+      : lancamentos,
+    [centroCustoId, lancamentos],
+  );
+  const faturamentosDoGrafico = useMemo(
+    () => centroCustoId
+      ? consolidarReceitasRealizadasPorMes(
+          faturamentosEntradas.filter((entrada) => entrada.centroCustoId === centroCustoId),
+        )
+      : faturamentos,
+    [centroCustoId, faturamentos, faturamentosEntradas],
+  );
+  const mesesDoGrafico = useMemo(
+    () => periodoGrafico === 'mensal' ? [mesGrafico] : meses,
+    [mesGrafico, meses, periodoGrafico],
+  );
+  const lancamentosNoPeriodo = useMemo(
+    () => periodoGrafico === 'mensal'
+      ? lancamentosDoGrafico.filter((lancamento) => lancamento.mes === mesGrafico)
+      : lancamentosDoGrafico,
+    [lancamentosDoGrafico, mesGrafico, periodoGrafico],
+  );
+  const rotuloPeriodo = periodoGrafico === 'mensal' ? `Mensal · ${mesGrafico}` : 'Anual';
 
   const TOM_BARRA_POSITIVA = '#003E73';
   const cores = [corPrimaria, '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'];
@@ -251,33 +302,33 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
 
   const dadosAnuais = useMemo(() => {
     let maxValor = 0;
-    const dados = meses.map((mes) => {
-      const desp = lancamentos.filter((l) => l.mes === mes).reduce((acc, l) => acc + (l.valor || 0), 0);
-      const fat = faturamentos[mes] || 0;
+    const dados = mesesDoGrafico.map((mes) => {
+      const desp = lancamentosNoPeriodo.filter((l) => l.mes === mes).reduce((acc, l) => acc + (l.valor || 0), 0);
+      const fat = faturamentosDoGrafico[mes] || 0;
       if (desp > maxValor) maxValor = desp;
       if (fat > maxValor) maxValor = fat;
       return { mes, desp, fat };
     });
     return { dados, maxValor: maxValor > 0 ? maxValor : 1 };
-  }, [meses, lancamentos, faturamentos]);
+  }, [mesesDoGrafico, lancamentosNoPeriodo, faturamentosDoGrafico]);
 
   const analiseCategorias = useMemo(() => {
     const totais: Record<string, number> = {};
     let totalGeral = 0;
-    lancamentos.forEach((l) => { totais[l.despesa] = (totais[l.despesa] || 0) + (l.valor || 0); totalGeral += (l.valor || 0); });
+    lancamentosNoPeriodo.forEach((l) => { totais[l.despesa] = (totais[l.despesa] || 0) + (l.valor || 0); totalGeral += (l.valor || 0); });
     const dadosGrafico = Object.entries(totais).sort((a, b) => b[1] - a[1]).map(([nome, valor], index) => ({
       nome, valor, percentual: totalGeral > 0 ? (valor / totalGeral) * 100 : 0, cor: cores[index % cores.length]
     }));
     let ang = 0;
     const parts = dadosGrafico.map((item) => { const ini = ang; ang += item.percentual; return `${item.cor} ${ini}% ${ang}%`; });
     return { dados: dadosGrafico, gradiente: `conic-gradient(${parts.join(', ')})`, totalGeral };
-  }, [lancamentos, corPrimaria]);
+  }, [lancamentosNoPeriodo, corPrimaria]);
 
-  const porMes = useMemo(() => meses.map((mes) => {
-    const desp = lancamentos.filter((l) => l.mes === mes).reduce((a, l) => a + (l.valor || 0), 0);
-    const fat = faturamentos[mes] || 0;
+  const porMes = useMemo(() => mesesDoGrafico.map((mes) => {
+    const desp = lancamentosNoPeriodo.filter((l) => l.mes === mes).reduce((a, l) => a + (l.valor || 0), 0);
+    const fat = faturamentosDoGrafico[mes] || 0;
     return { mes, desp, fat, resultado: fat - desp };
-  }), [meses, lancamentos, faturamentos]);
+  }), [mesesDoGrafico, lancamentosNoPeriodo, faturamentosDoGrafico]);
 
   const maxAbsResultado = useMemo(() => Math.max(1, ...porMes.map((m) => Math.abs(m.resultado))), [porMes]);
 
@@ -293,46 +344,46 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
   const porCategoria = useMemo(() => {
     const tot: Record<string, number> = {};
     let geral = 0;
-    lancamentos.forEach((l) => { const cat = catDeDespesa[l.despesa] || 'Sem categoria'; tot[cat] = (tot[cat] || 0) + (l.valor || 0); geral += (l.valor || 0); });
+    lancamentosNoPeriodo.forEach((l) => { const cat = catDeDespesa[l.despesa] || 'Sem categoria'; tot[cat] = (tot[cat] || 0) + (l.valor || 0); geral += (l.valor || 0); });
     const dados = Object.entries(tot).sort((a, b) => b[1] - a[1]).map(([nome, valor], i) => ({ nome, valor, percentual: geral > 0 ? (valor / geral) * 100 : 0, cor: cores[i % cores.length] }));
     let ang = 0;
     const parts = dados.map((d) => { const ini = ang; ang += d.percentual; return `${d.cor} ${ini}% ${ang}%`; });
     return { dados, gradiente: `conic-gradient(${parts.join(', ')})`, geral };
-  }, [lancamentos, catDeDespesa, corPrimaria]);
+  }, [lancamentosNoPeriodo, catDeDespesa, corPrimaria]);
 
   const porTipo = useMemo(() => {
     const rotulos: Record<string, string> = { fixa: 'Fixa', parcela: 'Parcela', previsto: 'Previsto', normal: 'Normal' };
     const coresTipo: Record<string, string> = { fixa: '#6366f1', parcela: '#8b5cf6', previsto: '#f59e0b', normal: '#64748b' };
     const tot: Record<string, number> = { fixa: 0, parcela: 0, previsto: 0, normal: 0 };
     let geral = 0;
-    lancamentos.forEach((l) => { const t = (l.tipo && tot[l.tipo] !== undefined) ? l.tipo : 'normal'; tot[t] += (l.valor || 0); geral += (l.valor || 0); });
+    lancamentosNoPeriodo.forEach((l) => { const t = (l.tipo && tot[l.tipo] !== undefined) ? l.tipo : 'normal'; tot[t] += (l.valor || 0); geral += (l.valor || 0); });
     const dados = Object.keys(tot).filter((k) => tot[k] > 0).sort((a, b) => tot[b] - tot[a]).map((k) => ({ nome: rotulos[k], valor: tot[k], percentual: geral > 0 ? (tot[k] / geral) * 100 : 0, cor: coresTipo[k] }));
     let ang = 0;
     const parts = dados.map((d) => { const ini = ang; ang += d.percentual; return `${d.cor} ${ini}% ${ang}%`; });
     return { dados, gradiente: `conic-gradient(${parts.join(', ')})`, geral };
-  }, [lancamentos]);
+  }, [lancamentosNoPeriodo]);
 
   const ebitda = useMemo(() => {
     const excl = new Set(CATEGORIAS_EXCLUSAO_EBITDA);
-    const pm = meses.map((mes) => {
-      const fat = faturamentos[mes] || 0;
+    const pm = mesesDoGrafico.map((mes) => {
+      const fat = faturamentosDoGrafico[mes] || 0;
       let despOper = 0;
-      lancamentos.filter((l) => l.mes === mes).forEach((l) => { const cat = catDeDespesa[l.despesa] || ''; if (!excl.has(cat)) despOper += (l.valor || 0); });
+      lancamentosNoPeriodo.filter((l) => l.mes === mes).forEach((l) => { const cat = catDeDespesa[l.despesa] || ''; if (!excl.has(cat)) despOper += (l.valor || 0); });
       return { mes, ebitda: fat - despOper };
     });
     const total = pm.reduce((a, m) => a + m.ebitda, 0);
     const maxAbs = Math.max(1, ...pm.map((m) => Math.abs(m.ebitda)));
     return { pm, total, maxAbs };
-  }, [meses, lancamentos, faturamentos, catDeDespesa]);
+  }, [mesesDoGrafico, lancamentosNoPeriodo, faturamentosDoGrafico, catDeDespesa]);
 
   const topDespesas = useMemo(() => {
     const tot: Record<string, number> = {};
     let geral = 0;
-    lancamentos.forEach((l) => { tot[l.despesa] = (tot[l.despesa] || 0) + (l.valor || 0); geral += (l.valor || 0); });
+    lancamentosNoPeriodo.forEach((l) => { tot[l.despesa] = (tot[l.despesa] || 0) + (l.valor || 0); geral += (l.valor || 0); });
     const dados = Object.entries(tot).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([nome, valor]) => ({ nome, valor, percentual: geral > 0 ? (valor / geral) * 100 : 0 }));
     const max = Math.max(1, ...dados.map((d) => d.valor));
     return { dados, max };
-  }, [lancamentos]);
+  }, [lancamentosNoPeriodo]);
 
   const margem = useMemo(() => porMes.map((m) => {
     const pct = m.fat > 0 ? (m.desp / m.fat) * 100 : (m.desp > 0 ? 100 : 0);
@@ -394,7 +445,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
   const cardsById: Record<string, React.ReactNode> = {};
 
   cardsById.comparativo = (
-    <CardShell id="comparativo" titulo="Comparativo Anual" extra={
+    <CardShell id="comparativo" titulo={`Comparativo ${rotuloPeriodo}`} extra={
       <div className="hidden shrink-0 gap-3 text-[11px] font-bold sm:flex">
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#003E73]"></span>Faturamento</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#94a3b8]"></span>Despesas</span>
@@ -538,7 +589,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
   );
 
   cardsById.top10 = (
-    <CardShell id="top10" titulo="Top 10 Maiores Despesas (Ano)">
+    <CardShell id="top10" titulo={`Top 10 Maiores Despesas (${rotuloPeriodo})`}>
       {topDespesas.dados.length > 0 ? (
         <div className="grid gap-3" onMouseLeave={esconderTip}>
           {topDespesas.dados.map((item, i) => (
@@ -587,18 +638,51 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
     </CardShell>
   );
 
-  cardsById.distribuicao = donut('Distribuição de Gastos', 'distribuicao', analiseCategorias.dados, analiseCategorias.gradiente, analiseCategorias.totalGeral, 'Total Ano', false);
+  cardsById.distribuicao = donut('Distribuição de Gastos', 'distribuicao', analiseCategorias.dados, analiseCategorias.gradiente, analiseCategorias.totalGeral, `Total ${rotuloPeriodo}`, false);
   cardsById.tipo = donut('Composição por Tipo', 'tipo', porTipo.dados, porTipo.gradiente, porTipo.geral, 'Tipos', true);
   cardsById.categoria = donut('Gastos por Categoria', 'categoria', porCategoria.dados, porCategoria.gradiente, porCategoria.geral, 'Categorias', false);
+
+  const classeFiltroGrafico = darkMode
+    ? 'border-slate-600 bg-slate-800 text-white'
+    : 'border-slate-200 bg-white text-slate-700';
 
   return (
     <>
     <main className="w-full min-w-0 max-w-full overflow-x-hidden animate-fade-in">
-      <div className="relative mb-5 flex min-w-0 items-center sm:mb-6">
-        <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
-        <h2 className={`min-w-0 flex-1 break-words text-xl font-black sm:text-2xl ${textStrong} uppercase tracking-wider`}>Análise Gráfica</h2>
+      <div className="relative mb-5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:mb-6 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <div className="flex min-w-0 items-center">
+          <span className="mr-4 h-8 w-3 shrink-0 rounded-full shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
+          <h2 className={`min-w-0 break-words text-xl font-black sm:text-2xl ${textStrong} uppercase tracking-wider`}>Análise Gráfica</h2>
+        </div>
+        <div className="col-span-2 flex min-w-0 flex-wrap items-end justify-center gap-2 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+          <label className="flex min-w-[104px] flex-col gap-1">
+            <span className={`text-center text-[8px] font-black uppercase leading-none tracking-[0.12em] ${textMuted}`}>Visualização</span>
+            <select
+              value={periodoGrafico}
+              onChange={(event) => setPeriodoGrafico(event.target.value as 'anual' | 'mensal')}
+              className={`h-8 w-full rounded-lg border px-2 text-[10px] font-black uppercase tracking-wide outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-500/40 ${classeFiltroGrafico}`}
+              aria-label="Selecionar visualização dos gráficos"
+            >
+              <option value="anual">Anual</option>
+              <option value="mensal">Mensal</option>
+            </select>
+          </label>
+          {periodoGrafico === 'mensal' && (
+            <label className="flex min-w-[128px] flex-col gap-1">
+              <span className={`text-center text-[8px] font-black uppercase leading-none tracking-[0.12em] ${textMuted}`}>Selecione o mês</span>
+              <select
+                value={mesGrafico}
+                onChange={(event) => setMesGrafico(event.target.value)}
+                className={`h-8 w-full rounded-lg border px-2 text-[10px] font-black uppercase tracking-wide outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-500/40 ${classeFiltroGrafico}`}
+                aria-label="Selecionar mês dos gráficos"
+              >
+                {meses.map((mes) => <option key={mes} value={mes}>{mes}</option>)}
+              </select>
+            </label>
+          )}
+        </div>
         <button type="button" onClick={() => setGerenciadorAberto(!gerenciadorAberto)} title="Organizar blocos" aria-label="Organizar blocos"
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition hover:scale-110 active:scale-95 ${darkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-950'}`}>
+          className={`flex h-8 w-8 shrink-0 items-center justify-center justify-self-end rounded-lg transition hover:scale-110 active:scale-95 sm:col-start-3 sm:row-start-1 ${darkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-950'}`}>
           <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17.17V20h2.83L17.81 9.02l-2.83-2.83L4 17.17Z" /><path d="M19.71 7.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.05 1.05 2.83 2.83.97-1.13Z" /></svg>
         </button>
 

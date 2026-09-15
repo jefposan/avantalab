@@ -1,11 +1,110 @@
 # Changelog
 
-## 1.35.0.19.06 - 2026-09-14
+## 1.35.0.19.26 - 2026-09-15
+- **Centros de custo na Gestão Mobile**: Configurações agora compartilha a
+  ativação com a Gestão Web. Quando ativo, gestores encontram o menu **Centros
+  de custo** para criar, editar, pausar ou excluir centros adicionais; o
+  **Principal** permanece protegido. O cabeçalho de **Novo lançamento** ganhou
+  o seletor com o rótulo **Centro de custo**, que direciona novas despesas e
+  receitas sem duplicar o total financeiro consolidado.
+
 - **NF-e nacional em homologação**: o emissor resolve, por UF do
   estabelecimento, o autorizador oficial próprio, SVAN ou SVRS para as 27 UFs.
   A chave de acesso, o XML e a consulta de status deixam de fixar São Paulo.
   Produção fiscal, contingência, NFC-e e NFS-e continuam bloqueadas até a
   homologação formal de cada fluxo.
+
+## 1.35.0.19.24 - 2026-09-15
+- **Exclusão de centro de custo**: em **Editar**, centros adicionais agora têm
+  a ação **Excluir** com confirmação. Ela remove, de forma atômica, receitas,
+  despesas, despesas fixas e movimentos associados de todos os períodos. O
+  **Principal** continua protegido; **Pausar** mantém o histórico e bloqueia
+  novos lançamentos, inclusive recorrências futuras.
+
+## 1.35.0.19.23 - 2026-09-15
+- **Posição condicional das abas**: a elevação de quatro pixels da faixa do
+  menu é aplicada somente com **Centros de custo** ativo; desativado, o menu
+  retorna à posição original.
+
+## 1.35.0.19.22 - 2026-09-15
+- **Separação no cabeçalho**: a faixa das abas do menu subiu quatro pixels sem
+  mover o seletor global, deixando uma separação visual mais clara entre ambos.
+
+## 1.35.0.19.21 - 2026-09-15
+- **Destaque do centro de custo**: o seletor global agora recebe o fundo na cor
+  primária do perfil e texto/ícone na cor contrastante calculada pelo cabeçalho.
+
+## 1.35.0.19.20 - 2026-09-15
+- **Alinhamento vertical do seletor**: o seletor global foi deslocado dois
+  pixels para baixo, equilibrando a folga superior e inferior no cabeçalho.
+
+## 1.35.0.19.19 - 2026-09-15
+- **Respiro do seletor global**: o cabeçalho recebeu apenas quatro pixels de
+  altura adicional no desktop, distribuídos igualmente acima e abaixo do campo.
+
+## 1.35.0.19.18 - 2026-09-15
+- **Centro de custo global**: Gráficos, Categorias e Relatório passam a seguir
+  exclusivamente o seletor do menu superior. Os campos duplicados foram
+  removidos dessas páginas e o seletor global só é exibido quando o recurso está
+  ativo nas Configurações.
+
+## 1.35.0.19.17 - 2026-09-15
+- **Lista de centros**: a lista agora herda exatamente a largura e o alinhamento
+  horizontal do seletor global, abrindo imediatamente abaixo dele.
+
+## 1.35.0.19.16 - 2026-09-15
+- **Posição do centro de custo**: o campo compacto passou a usar o formato
+  **Centro de custo: [seletor]**, centralizado exatamente pela faixa de abas
+  entre Início e Relatório e encaixado abaixo dela.
+
+## 1.35.0.19.15 - 2026-09-15
+- **Camada do centro de custo**: a lista global fica acima das barras e do
+  conteúdo enquanto aberta. O campo compacto permanece sob as abas sem aumentar
+  a altura do cabeçalho.
+
+## 1.35.0.19.14 - 2026-09-15
+- **Seletor global de centro de custo**: o seletor operacional foi movido para
+  o espaço abaixo das abas do menu superior, centralizado no cabeçalho e visível
+  em todas as páginas da Gestão. O campo mantém lista abaixo e contorno na cor
+  primária, sem alterar a altura do cabeçalho.
+
+## 1.35.0.19.13 - 2026-09-15
+- **Alinhamento dos seletores**: o centro de custo exibido em Gráficos,
+  Categorias e Relatório agora permanece centralizado horizontalmente no campo.
+
+## 1.35.0.19.12 - 2026-09-15
+- **Padrão dos seletores de centro**: Categorias e Relatório agora usam a mesma
+  escala compacta de Gráficos. O bloco **Total de despesas anual** recuperou
+  exatamente sua grade, tamanho e posição anteriores.
+
+## 1.35.0.19.11 - 2026-09-15
+- **Categorias por centro de custo**: ao ativar Centros de custo, o seletor ao
+  lado do total anual permite consultar **Todos** (consolidado) ou somente um
+  centro. A tabela, os totais e a distribuição acompanham a escolha.
+
+## 1.35.0.19.10 - 2026-09-15
+- **Filtros da Análise Gráfica**: o cabeçalho centraliza os controles de
+  Centro de custo e Visualização. A opção **Mensal** revela o seletor de mês;
+  **Anual** continua usando o ano selecionado no cabeçalho geral.
+
+## 1.35.0.19.09 - 2026-09-15
+- **Tipografia do centro de custo**: o rótulo de Registrar Entradas passou a
+  usar a mesma escala, peso e espaçamento de letras de **Selecione o mês**.
+
+## 1.35.0.19.08 - 2026-09-15
+- **Centro de custo em Registrar Entradas**: o rótulo passou a ficar
+  centralizado acima da respectiva lista, preservando a posição do controle e
+  os campos de lançamento.
+
+## 1.35.0.19.07 - 2026-09-14
+- **Seletores de mês do Dashboard**: Saldo do Mês, Meus Perfis, Centros de
+  Custo e Resumo Financeiro agora exibem o rótulo **Selecione o mês** acima do
+  campo, com altura compacta e label associado ao seletor.
+
+## 1.35.0.19.06 - 2026-09-14
+- **Relatório por centro de custo**: quando o recurso está ativo, o Relatório
+  Contábil oferece **Todos** (consolidado) ou cada centro ativo. A escolha
+  atualiza os totais mensais e a análise evolutiva multianual.
 
 ## 1.35.0.19.05 - 2026-09-14
 - **Saldo do Mês por centro de custo**: o card ganhou uma lista com **Todos**

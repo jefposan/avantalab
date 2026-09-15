@@ -16,18 +16,13 @@ test('receitas consolidadas somam os centros do perfil e excluem somente previs�
   assert.deepEqual(receitas, { JANEIRO: 350, FEVEREIRO: 90 });
 });
 
-test('balanço, gráficos e relatório usam a consulta consolidada do perfil', () => {
+test('balanço e gráficos usam o consolidado; relatório pode derivar um centro sem perder Todos', () => {
   assert.match(gestao, /const \[lancamentosConsolidados, setLancamentosConsolidados\]/);
   assert.match(gestao, /buscarLancamentos\(empresaId, ano\)/);
   assert.match(gestao, /buscarFaturamentosEntradas\(empresaId, ano\)/);
-  assert.equal(
-    (gestao.match(/lancamentos=\{lancamentosConsolidados\}/g) || []).length,
-    3,
-    'Balanço, Gráficos e Relatório devem receber as despesas consolidadas',
-  );
-  assert.equal(
-    (gestao.match(/faturamentos=\{faturamentosConsolidados\}/g) || []).length,
-    3,
-    'Balanço, Gráficos e Relatório devem receber as receitas consolidadas',
-  );
+  assert.equal((gestao.match(/lancamentos=\{lancamentosConsolidados\}/g) || []).length, 2);
+  assert.equal((gestao.match(/faturamentos=\{faturamentosConsolidados\}/g) || []).length, 2);
+  assert.match(gestao, /const lancamentosRelatorio = relatorioConsolidado/);
+  assert.match(gestao, /lancamentos=\{lancamentosRelatorio\}/);
+  assert.match(gestao, /faturamentos=\{faturamentosRelatorio\}/);
 });

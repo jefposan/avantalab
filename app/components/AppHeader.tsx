@@ -51,6 +51,11 @@ interface AppHeaderProps {
   setModalEmpresasAberto: React.Dispatch<React.SetStateAction<boolean>>;
   agendaHojeCount: number;
   onAbrirAgenda: () => void;
+  centrosCustoAtivo?: boolean;
+  centrosCusto?: { id: string; nome: string; ativo: boolean }[];
+  centroCustoSelecionadoId?: string;
+  carregandoCentroCusto?: boolean;
+  onSelecionarCentroCusto?: (centroCustoId: string) => void;
   headerId?: string;
   onHeaderHeightChange?: (altura: number) => void;
   // Abas premium bloqueadas no plano grátis (mostram cadeado; o clique é
@@ -76,6 +81,11 @@ export default function AppHeader({
   onAbrirLogo,
   setModalEmpresasAberto,
   agendaHojeCount, onAbrirAgenda,
+  centrosCustoAtivo = false,
+  centrosCusto = [],
+  centroCustoSelecionadoId = '',
+  carregandoCentroCusto = false,
+  onSelecionarCentroCusto,
   headerId,
   onHeaderHeightChange,
   abasPremium = [],
@@ -91,7 +101,10 @@ export default function AppHeader({
   // Indicador deslizante do menu (a "pilula" que escorrega ate a aba ativa)
   const navRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const seletorCentroCustoRef = useRef<HTMLDivElement>(null);
   const [indicador, setIndicador] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  const [listaCentroCustoAberta, setListaCentroCustoAberta] = useState(false);
+  const centrosCustoAtivos = centrosCusto.filter((centro) => centro.ativo);
 
   useEffect(() => {
     const nav = navRef.current;
@@ -121,6 +134,30 @@ export default function AppHeader({
     observador.observe(header);
     return () => observador.disconnect();
   }, [onHeaderHeightChange]);
+
+  useEffect(() => {
+    if (!listaCentroCustoAberta) return;
+
+    const fecharAoClicarFora = (event: PointerEvent) => {
+      if (!seletorCentroCustoRef.current?.contains(event.target as Node)) {
+        setListaCentroCustoAberta(false);
+      }
+    };
+    const fecharComEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setListaCentroCustoAberta(false);
+    };
+
+    document.addEventListener('pointerdown', fecharAoClicarFora);
+    document.addEventListener('keydown', fecharComEscape);
+    return () => {
+      document.removeEventListener('pointerdown', fecharAoClicarFora);
+      document.removeEventListener('keydown', fecharComEscape);
+    };
+  }, [listaCentroCustoAberta]);
+
+  useEffect(() => {
+    if (!centrosCustoAtivo) setListaCentroCustoAberta(false);
+  }, [centrosCustoAtivo]);
 
   const fecharMenuResponsivo = () => {
     setMenuResponsivoAberto(false);
@@ -295,7 +332,7 @@ export default function AppHeader({
       <header
         id={headerId}
         ref={headerRef}
-        className={`print-ocultar ${bgCard} sticky top-0 z-[900] w-full max-w-full overflow-hidden border-b px-3 py-2 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:py-3 relative`}
+        className={`print-ocultar ${bgCard} sticky top-0 ${listaCentroCustoAberta ? 'z-[8600]' : 'z-[900]'} w-full max-w-full overflow-visible border-b px-3 py-2 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:py-[14px] relative`}
         style={{ borderBottomColor: darkMode ? '#334155' : 'transparent', borderBottomWidth: '1px' }}
       >
         <div className="mx-auto flex min-h-[68px] w-full min-w-0 max-w-7xl items-center gap-3 px-0 sm:min-h-[72px] sm:gap-4 xl:min-h-[88px] xl:gap-6 xl:px-8">
@@ -383,7 +420,7 @@ export default function AppHeader({
               <div className="flex min-w-0 flex-1 justify-center">
               <nav
                 ref={navRef}
-                className={`relative grid w-full min-w-0 max-w-[560px] grid-cols-5 gap-2 rounded-xl border p-1 shadow-sm ${
+                className={`relative grid w-full min-w-0 max-w-[560px] ${centrosCustoAtivo ? '-translate-y-1' : ''} grid-cols-5 gap-2 rounded-xl border p-1 shadow-sm ${
                   darkMode ? 'border-slate-700 bg-slate-900/70' : 'border-slate-200 bg-slate-50'
                 }`}
               >
@@ -429,6 +466,54 @@ export default function AppHeader({
                     </button>
                   );
                 })}
+                {centrosCustoAtivo && centrosCustoAtivos.length > 0 && (
+                  <div ref={seletorCentroCustoRef} className="absolute left-1/2 top-full z-10 mt-[6px] flex w-max -translate-x-1/2 translate-y-1 items-center gap-1.5">
+                    <span className={`whitespace-nowrap text-[9px] font-black uppercase tracking-wide ${textMuted}`}>Centro de custo:</span>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setListaCentroCustoAberta((aberta) => !aberta)}
+                        disabled={carregandoCentroCusto}
+                        className={`relative flex h-6 w-[138px] items-center justify-center rounded-md border-2 px-6 text-center text-[9px] font-black uppercase tracking-wide shadow-sm outline-none transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-2 ${darkMode ? 'focus-visible:ring-slate-300 focus-visible:ring-offset-slate-900' : 'focus-visible:ring-slate-500 focus-visible:ring-offset-white'}`}
+                        style={{ backgroundColor: corPrimaria, borderColor: corPrimaria, color: textoSobreCorPrimaria }}
+                        aria-label="Selecionar centro de custo"
+                        aria-haspopup="listbox"
+                        aria-expanded={listaCentroCustoAberta}
+                        aria-controls="lista-centros-custo-global"
+                      >
+                        <span className="truncate">{centrosCustoAtivos.find((centro) => centro.id === centroCustoSelecionadoId)?.nome || 'Principal'}</span>
+                        {carregandoCentroCusto ? (
+                          <span className="absolute right-2 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
+                        ) : (
+                          <svg className={`absolute right-2 h-3 w-3 transition-transform ${listaCentroCustoAberta ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+                        )}
+                      </button>
+                      {listaCentroCustoAberta && (
+                        <div id="lista-centros-custo-global" role="listbox" aria-label="Centros de custo disponíveis" className={`absolute left-0 top-full z-[8610] mt-1 max-h-56 w-full overflow-y-auto rounded-xl border p-1.5 shadow-2xl ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-white'}`}>
+                          {centrosCustoAtivos.map((centro) => {
+                            const selecionado = centro.id === centroCustoSelecionadoId;
+                            return (
+                              <button
+                                key={centro.id}
+                                type="button"
+                                role="option"
+                                aria-selected={selecionado}
+                                onClick={() => {
+                                  setListaCentroCustoAberta(false);
+                                  if (!selecionado) onSelecionarCentroCusto?.(centro.id);
+                                }}
+                                className={`flex min-h-10 w-full items-center justify-center rounded-lg px-2.5 text-center text-xs font-black uppercase tracking-wide transition focus-visible:outline-none ${selecionado ? (darkMode ? 'bg-slate-700' : 'bg-slate-100') : (darkMode ? 'text-slate-200 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-100')}`}
+                                style={selecionado ? { color: corPrimaria } : undefined}
+                              >
+                                <span className="truncate">{centro.nome}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </nav>
               </div>
 
@@ -587,6 +672,7 @@ export default function AppHeader({
             />
           </div>
         </div>
+
       </header>
 
       {/* ── PAINEL DE AVISOS ── */}

@@ -1,10 +1,69 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.06 -->
+<!-- ava-version: 1.35.0.19.26 -->
 
-> Revisão 1.35.0.19.06: sem impacto operacional no AvantaVendas. A NF-e da
-> Gestão Web passou a resolver o autorizador de homologação conforme a UF do
-> perfil empresarial; produção continua bloqueada.
+> Revisão 1.35.0.19.26: Centros de custo na Gestão Mobile não altera o fluxo
+> operacional do AvantaVendas.
+
+> A NF-e nacional em homologação pertence à Gestão Web e não altera o fluxo do
+> AvantaVendas. A produção fiscal continua bloqueada.
+
+> Revisão 1.35.0.19.24: a exclusão e a pausa de Centros de custo pertencem à
+> Gestão Web e não alteram o AvantaVendas.
+
+> Revisão 1.35.0.19.23: a posição condicional das abas da Gestão Web não
+> altera o AvantaVendas.
+
+> Revisão 1.35.0.19.22: o ajuste da faixa de abas da Gestão Web não altera o
+> AvantaVendas.
+
+> Revisão 1.35.0.19.21: o destaque visual do seletor da Gestão Web não altera o
+> AvantaVendas.
+
+> Revisão 1.35.0.19.20: o alinhamento vertical do seletor da Gestão Web não
+> altera o AvantaVendas.
+
+> Revisão 1.35.0.19.19: o respiro do seletor da Gestão Web não altera o
+> AvantaVendas.
+
+> Revisão 1.35.0.19.18: a unificação do seletor de centro da Gestão Web não
+> altera o AvantaVendas.
+
+> Revisão 1.35.0.19.17: o alinhamento da lista de centro da Gestão Web não
+> altera o AvantaVendas.
+
+> Revisão 1.35.0.19.16: o alinhamento do contexto financeiro no cabeçalho da
+> Gestão Web não altera o AvantaVendas.
+
+> Revisão 1.35.0.19.15: a camada da lista de centro da Gestão Web não altera
+> o AvantaVendas.
+
+> Revisão 1.35.0.19.14: a posição global do seletor de centro pertence à
+> Gestão Web e não altera o AvantaVendas.
+
+> Revisão 1.35.0.19.13: o alinhamento dos seletores da Gestão Web não altera
+> o AvantaVendas.
+
+> Revisão 1.35.0.19.12: a padronização visual dos seletores de Categorias e
+> Relatório pertence à Gestão Web e não altera o AvantaVendas.
+
+> Revisão 1.35.0.19.11: o seletor de Categorias por centro pertence à Gestão
+> Web e não altera o AvantaVendas.
+
+> Revisão 1.35.0.19.10: os filtros da Análise Gráfica pertencem à Gestão Web
+> e não alteram o AvantaVendas.
+
+> Revisão 1.35.0.19.09: a padronização tipográfica do rótulo de centro pertence
+> à Gestão Web e não altera o AvantaVendas.
+
+> Revisão 1.35.0.19.08: o ajuste visual do rótulo do centro em Registrar
+> Entradas pertence à Gestão Web e não altera o AvantaVendas.
+
+> Revisão 1.35.0.19.07: o rótulo dos seletores de mês pertence aos cards da
+> Gestão Web e não altera a orientação operacional do AvantaVendas.
+
+> Revisão 1.35.0.19.06: o filtro de centro do Relatório Contábil pertence à
+> Gestão Web e não altera a orientação operacional do AvantaVendas.
 
 > Revisão 1.35.0.19.05: o seletor de centro no Saldo do Mês pertence à Gestão
 > Web e não altera a orientação operacional do AvantaVendas.

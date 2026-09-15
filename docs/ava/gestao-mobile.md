@@ -1,9 +1,70 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.06 -->
+<!-- ava-version: 1.35.0.19.26 -->
 
-> Revisão 1.35.0.19.06: a integração nacional de NF-e pertence à Gestão Web e
-> não altera a orientação operacional da Ava Mobile.
+> Revisão 1.35.0.19.26: em **Menu → Configurações**, Gestor Master ou
+> Administrador pode ativar **Centros de custo**. A escolha é compartilhada com
+> a Gestão Web. Com o recurso ativo, o menu oferece **Centros de custo** para
+> criar, editar, pausar ou excluir centros adicionais; no botão **Lançar**, o
+> cabeçalho mostra **Centro de custo** e o seletor define o destino de novas
+> despesas e receitas. O **Principal** permanece sempre ativo.
+
+> Revisão 1.35.0.19.24: a exclusão e a pausa de Centros de custo pertencem à
+> Gestão Web e não alteram a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.23: a posição condicional das abas da Gestão Web não
+> altera a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.22: o ajuste da faixa de abas da Gestão Web não altera a
+> orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.21: o destaque visual do seletor da Gestão Web não altera a
+> orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.20: o alinhamento vertical do seletor da Gestão Web não
+> altera a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.19: o respiro do seletor da Gestão Web não altera a
+> orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.18: a unificação do seletor de centro da Gestão Web não
+> altera a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.17: o alinhamento da lista de centro da Gestão Web não
+> altera a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.16: o alinhamento do contexto financeiro no cabeçalho da
+> Gestão Web não altera a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.15: a camada da lista de centro da Gestão Web não altera
+> a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.14: a posição global do seletor de centro pertence à
+> Gestão Web e não altera a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.13: o alinhamento dos seletores da Gestão Web não altera
+> a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.12: a padronização visual dos seletores de Categorias e
+> Relatório pertence à Gestão Web e não altera a orientação da Ava Mobile.
+
+> Revisão 1.35.0.19.11: o seletor de Categorias por centro pertence à Gestão
+> Web e não altera a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.10: os filtros da Análise Gráfica pertencem à Gestão Web
+> e não alteram a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.09: a padronização tipográfica do rótulo de centro pertence
+> à Gestão Web e não altera a Ava Mobile.
+
+> Revisão 1.35.0.19.08: o ajuste visual do rótulo do centro em Registrar
+> Entradas pertence à Gestão Web e não altera a Ava Mobile.
+
+> Revisão 1.35.0.19.07: o rótulo dos seletores de mês pertence aos cards da
+> Gestão Web e não altera a orientação operacional da Ava Mobile.
+
+> Revisão 1.35.0.19.06: o filtro de centro do Relatório Contábil pertence à
+> Gestão Web e não altera a orientação operacional da Ava Mobile.
 
 > Revisão 1.35.0.19.05: o seletor de centro no Saldo do Mês pertence à Gestão
 > Web e não altera a orientação operacional da Ava Mobile.

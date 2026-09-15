@@ -26,6 +26,9 @@ test('Gestão Web oferece somente o lançamento individual de receitas', () => {
 
 test('receita do Dashboard permite direcionar ao centro de custo sem trocar o contexto da página', () => {
   assert.match(dashboard, /centro-custo-entrada-dashboard/);
+  assert.match(dashboard, /flex-col items-center gap-1 text-center/);
+  assert.match(dashboard, /Centro de custo<\/span>\s*<select/);
+  assert.match(dashboard, /text-\[8px\] font-black uppercase leading-none tracking-\[0\.12em\].*Centro de custo/);
   assert.match(dashboard, /centrosCustoAtivos\.length > 1/);
   assert.match(gestao, /centroCustoEntradaDashboardId/);
   assert.match(gestao, /adicionarEntradaFaturamento\(mesSelecionado, centroCustoEntradaDashboardId\)/);
