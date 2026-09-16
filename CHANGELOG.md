@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.35.0.19.52 - 2026-09-16
+- **Custos e Precificação — Histórico de custos**: a lista de produtos do
+  seletor usa fonte de 14 px para melhorar a leitura sem ampliar o campo.
+
+## 1.35.0.19.51 - 2026-09-16
+- **Custos e Precificação — Histórico de custos**: o seletor de produto agora
+  respeita a largura do card, inclusive com nomes longos e em telas estreitas.
+
 ## 1.35.0.19.50 - 2026-09-15
 - **Gestão Web — Centro de custo**: a mensagem do carregamento com efeito de
   vidro agora usa texto branco para melhorar a leitura sobre a superfície.

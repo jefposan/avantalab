@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.50 -->
+<!-- ava-version: 1.35.0.19.52 -->
+
+> Revisão 1.35.0.19.52: o aumento da fonte do seletor em Histórico de custos
+> pertence à Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.35.0.19.51: a contenção do seletor em Histórico de custos pertence
+> à Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.35.0.19.50: a cor da mensagem no carregamento de **Centro de custo**
 > pertence à Gestão Web; sem impacto operacional na Gestão Mobile.

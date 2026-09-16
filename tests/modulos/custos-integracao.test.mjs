@@ -4,6 +4,7 @@ import { test } from 'node:test';
 
 const registro = readFileSync('app/lib/modulos-registro.ts', 'utf8');
 const cliente = readFileSync('app/custos/CustosClient.tsx', 'utf8');
+const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const estilos = readFileSync('app/custos/custos.module.css', 'utf8');
 const ajustes = readFileSync('app/api/modulos/custos/ajustes/route.ts', 'utf8');
 const repositorio = readFileSync('app/custos/repository.ts', 'utf8');
@@ -119,4 +120,10 @@ test('Dados próprios preservam composições, simulações e histórico', () =>
   assert.match(repositorio, /eq\('revisao', revisaoEsperada\)/);
   assert.match(migracaoEndurecimento, /new\.atualizado_por := auth\.uid\(\)/);
   assert.match(migracaoEndurecimento, /revoke delete on public\.custos_documentos from authenticated/);
+});
+
+test('seletor de produto do Histórico não ultrapassa o card com nomes longos', () => {
+  assert.match(workspace, /styles\.search\} \$\{styles\.historyProductSelector/);
+  assert.match(estilos, /\.historyProductSelector\{[^}]*min-width:0;max-width:100%;flex:0 1 285px;grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(estilos, /\.historyProductSelector select\{[^}]*width:100%;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px/);
 });

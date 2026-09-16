@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.50 -->
+<!-- ava-version: 1.35.0.19.52 -->
+
+> Revisão 1.35.0.19.52: a fonte da lista de produtos em **Custos e
+> Precificação > Histórico de custos** foi ampliada, sem mudar a seleção ou os
+> registros exibidos.
+
+> Revisão 1.35.0.19.51: em **Custos e Precificação > Histórico de custos**, o
+> seletor de produto foi contido dentro do card, sem alterar a seleção ou os
+> registros exibidos.
 
 > Revisão 1.35.0.19.50: a mensagem do carregamento ao trocar **Centro de custo**
 > usa texto branco sobre a superfície de vidro. A escolha e os dados não mudaram.

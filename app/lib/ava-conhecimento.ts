@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.52: a lista de produtos do seletor em Histórico
+// de custos usa fonte maior, sem alterar a seleção ou os registros exibidos.
+// Revisado na versão 1.35.0.19.51: o seletor de produto no Histórico de custos
+// permanece contido no card, sem alterar a seleção ou os registros exibidos.
 // Revisado na versão 1.35.0.19.50: o carregamento de troca de Centro de custo
 // na Gestão Web usa mensagem branca sobre avanta-loading-glass, sem alterar a
 // seleção nem os dados financeiros.
