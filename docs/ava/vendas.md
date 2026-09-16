@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.52 -->
+<!-- ava-version: 1.35.0.19.53 -->
+
+> Revisão 1.35.0.19.53: o aceite de lançamentos previstos na data atual pertence
+> à Gestão Web e Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.52: o aumento da fonte do seletor em Histórico de custos
 > pertence à Gestão Web; sem impacto operacional no AvantaVendas.

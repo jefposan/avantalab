@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.53: previsões financeiras podem ser aceitas com
+// a data atual na Gestão Web e Mobile; registros confirmados abrem em edição.
 // Revisado na versão 1.35.0.19.52: a lista de produtos do seletor em Histórico
 // de custos usa fonte maior, sem alterar a seleção ou os registros exibidos.
 // Revisado na versão 1.35.0.19.51: o seletor de produto no Histórico de custos

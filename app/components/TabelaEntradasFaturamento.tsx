@@ -28,6 +28,7 @@ type TabelaEntradasFaturamentoProps = {
   handleEditEntradaValorChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onIniciarEdicaoEntrada: (entrada: EntradaFaturamento) => void;
   onSalvarEdicaoEntrada: (confirmarPrevista?: boolean) => void | Promise<void>;
+  onAceitarPrevistaHoje: (entrada: EntradaFaturamento) => void | Promise<void>;
   onCancelarEdicaoEntrada: () => void;
   onExcluirEntrada: (entrada: EntradaFaturamento) => void | Promise<void>;
   expandidoPopup?: boolean;
@@ -40,16 +41,6 @@ function formatarMoedaLocal(valor: number | string | null) {
     style: 'currency',
     currency: 'BRL',
   });
-}
-
-function dataFuturaEntrada(ano: number, mes: string, dia: number) {
-  const indiceMes = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'].indexOf(mes.toUpperCase());
-  const hoje = new Date();
-  if (indiceMes < 0 || ano > hoje.getFullYear()) return true;
-  if (ano < hoje.getFullYear()) return false;
-  if (indiceMes > hoje.getMonth()) return true;
-  if (indiceMes < hoje.getMonth()) return false;
-  return dia > hoje.getDate();
 }
 
 export default function TabelaEntradasFaturamento({
@@ -66,6 +57,7 @@ export default function TabelaEntradasFaturamento({
   handleEditEntradaValorChange,
   onIniciarEdicaoEntrada,
   onSalvarEdicaoEntrada,
+  onAceitarPrevistaHoje,
   onCancelarEdicaoEntrada,
   onExcluirEntrada,
   expandidoPopup = false,
@@ -100,7 +92,12 @@ export default function TabelaEntradasFaturamento({
             return (
             <tr
               key={entrada.id}
-              className="border-b border-dotted border-slate-300/40"
+              onClick={(event) => {
+                if (entradaEditandoId === entrada.id || ehProtegida) return;
+                if ((event.target as HTMLElement).closest('button, input, select, textarea, a')) return;
+                onIniciarEdicaoEntrada(entrada);
+              }}
+              className={`border-b border-dotted border-slate-300/40 ${ehProtegida ? '' : 'cursor-pointer hover:bg-slate-50'}`}
             >
               {entradaEditandoId === entrada.id && !ehProtegida ? (
                 <>
@@ -145,21 +142,16 @@ export default function TabelaEntradasFaturamento({
 
                   <td className="py-1.5 px-1.5 w-36 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      {entrada.status === 'prevista' && (() => {
-                        const diaEditado = Number(editEntradaDia);
-                        const mesEntrada = String(entrada.mes || mesAtivo || '');
-                        const podeConfirmar = diaEditado >= 1 && mesEntrada && !dataFuturaEntrada(Number(anoSelecionado), mesEntrada, diaEditado);
-                        return podeConfirmar ? (
-                          <button
-                            type="button"
-                            onClick={() => onSalvarEdicaoEntrada(true)}
-                            className="rounded-md bg-emerald-600 px-2 py-1.5 text-[10px] font-black text-white transition hover:bg-emerald-700"
-                            title={`Confirmar como recebida no dia ${String(diaEditado).padStart(2, '0')}`}
-                          >
-                            Confirmar
-                          </button>
-                        ) : null;
-                      })()}
+                      {entrada.status === 'prevista' && (
+                        <button
+                          type="button"
+                          onClick={() => onAceitarPrevistaHoje(entrada)}
+                          className="rounded-md bg-emerald-600 px-2 py-1.5 text-[10px] font-black text-white transition hover:bg-emerald-700"
+                          title="Aceitar esta receita com a data de hoje"
+                        >
+                          Aceitar hoje
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => onSalvarEdicaoEntrada()}

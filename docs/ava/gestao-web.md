@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.52 -->
+<!-- ava-version: 1.35.0.19.53 -->
+
+> Revisão 1.35.0.19.53: em um mês aberto, toque uma despesa ou receita
+> **prevista** para editar ou usar **Aceitar hoje**. Essa ação efetiva o
+> lançamento com a data atual. Registros já confirmados abrem diretamente para
+> edição.
 
 > Revisão 1.35.0.19.52: a fonte da lista de produtos em **Custos e
 > Precificação > Histórico de custos** foi ampliada, sem mudar a seleção ou os

@@ -1087,6 +1087,8 @@ export async function atualizarFaturamentoEntrada({
   empresaId,
   ano,
   mes,
+  anoDestino,
+  mesDestino,
   dia,
   origem,
   valor,
@@ -1097,6 +1099,8 @@ export async function atualizarFaturamentoEntrada({
   empresaId: string;
   ano: number;
   mes: string;
+  anoDestino?: number;
+  mesDestino?: string;
   dia: number;
   origem: string;
   valor: number;
@@ -1104,6 +1108,8 @@ export async function atualizarFaturamentoEntrada({
   tipoObs?: string | null;
 }) {
   const payload: Record<string, unknown> = {
+    ano: anoDestino ?? ano,
+    mes: mesDestino ?? mes,
     dia,
     origem,
     valor,

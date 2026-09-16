@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.52 -->
+<!-- ava-version: 1.35.0.19.53 -->
+
+> Revisão 1.35.0.19.53: ao tocar uma despesa ou receita **prevista** no mês,
+> escolha **Aceitar hoje** para efetivá-la na data atual ou **Editar** para
+> ajustar seus dados. Registros já confirmados abrem direto na edição.
 
 > Revisão 1.35.0.19.52: o aumento da fonte do seletor em Histórico de custos
 > pertence à Gestão Web; sem impacto operacional na Gestão Mobile.

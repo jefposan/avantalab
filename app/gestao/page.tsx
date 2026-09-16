@@ -87,7 +87,6 @@ import {
   obterUrlNotaLancamento,
   removerNotaLancamento,
   atualizarLancamento,
-  definirStatusLancamento,
   salvarDashboardOrdemWeb,
   salvarFaturamentoBanco,
   salvarFaturamentoEntrada,
@@ -4923,27 +4922,8 @@ const cancelarDespesaFixaDoMes = async (lanc: LancamentoFinanceiro | TabelaLanca
 };
 
 const confirmarDespesaPrevista = async (id: string | number) => {
-  if (!empresaId) return;
-  if (!iniciarProcessamentoLancamento('Confirmando despesa')) return;
   const lancamento = lancamentos.find((item) => String(item.id) === String(id));
-  const tipoAposConfirmacao = lancamento?.tipo === 'previsto'
-    ? null
-    : lancamento?.tipo;
-  try {
-    const ok = await definirStatusLancamento(id, empresaId, 'confirmada', tipoAposConfirmacao);
-    if (ok) {
-      setLancamentos((prev) =>
-        prev.map((l) => (String(l.id) === String(id)
-          ? { ...l, status: 'confirmada', tipo: l.tipo === 'previsto' ? null : l.tipo }
-          : l))
-      );
-      notificarFinanceiroAtualizado();
-    } else {
-      abrirAviso('Erro', 'Não foi possível confirmar a despesa.');
-    }
-  } finally {
-    finalizarProcessamentoLancamento();
-  }
+  if (lancamento) await aceitarDespesaPrevistaHoje(lancamento);
 };
 
 const excluirDespesaPrevista = (id: string | number) => {
@@ -4964,63 +4944,8 @@ const ajustarDespesaPrevista = (despesa: TabelaLancamentoDespesa) => {
 
 // ---- Receitas previstas: confirmar / excluir / editar (a partir do card de confirmacao) ----
 const confirmarReceitaPrevista = async (id: string | number) => {
-  if (!empresaId) return;
   const entrada = faturamentosEntradas.find((e) => e.id === id);
-  if (!entrada) {
-    abrirAviso('Erro', 'Não foi possível localizar a receita.');
-    return;
-  }
-  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema') {
-    abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser alterada no Gestão.');
-    return;
-  }
-  if (!iniciarProcessamentoLancamento('Confirmando receita')) return;
-
-  try {
-    const mesEntrada = entrada.mes;
-    const valorEntrada = Number(entrada.valor || 0);
-
-    const resultado = await atualizarFaturamentoEntrada({
-      id: id as string,
-      empresaId,
-      ano: Number(anoSelecionado),
-      mes: mesEntrada,
-      dia: Number(entrada.dia),
-      origem: entrada.origem,
-      valor: valorEntrada,
-      status: 'confirmada',
-      tipoObs: null,
-    });
-
-    if (resultado.erro) {
-      abrirAviso('Erro', resultado.mensagem || 'Não foi possível confirmar a receita.');
-      return;
-    }
-
-    // Ao confirmar, a receita passa a integrar o total efetivado do mes.
-    const totalAtual = faturamentos[mesEntrada] || 0;
-    const novoTotal = totalAtual + valorEntrada;
-
-    const faturamentoSalvo = centrosCustoAtivo || await salvarFaturamentoBanco({
-      empresaId, ano: Number(anoSelecionado), mes: mesEntrada, valor: novoTotal,
-    });
-
-    if (!faturamentoSalvo) {
-      abrirAviso(
-        'Receita confirmada parcialmente',
-        'A receita foi confirmada, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
-      );
-      return;
-    }
-
-    setFaturamentosEntradas((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, status: 'confirmada', tipo: null } : e))
-    );
-    setFaturamentos((prev) => ({ ...prev, [mesEntrada]: novoTotal }));
-    notificarFinanceiroAtualizado();
-  } finally {
-    finalizarProcessamentoLancamento();
-  }
+  if (entrada) await aceitarReceitaPrevistaHoje(entrada);
 };
 
 const excluirReceitaPrevista = (id: string | number) => {
@@ -5694,6 +5619,131 @@ const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
         salvo.mensagem || 'Não foi possível atualizar o lançamento.'
       );
     }
+  } finally {
+    finalizarProcessamentoLancamento();
+  }
+};
+
+const dataFinanceiraDeHoje = () => {
+  const hoje = new Date();
+  return {
+    ano: hoje.getFullYear(),
+    mes: meses[hoje.getMonth()],
+    dia: hoje.getDate(),
+  };
+};
+
+const aceitarDespesaPrevistaHoje = async (lancamento: TabelaLancamentoDespesa) => {
+  if (lancamento.status !== 'prevista') {
+    iniciarEdicaoLancamento(lancamento);
+    return;
+  }
+  if (!empresaId || !podeEditarLancamentos) {
+    abrirAviso('Acesso não permitido', 'Você não tem permissão para editar lançamentos.');
+    return;
+  }
+  if (!iniciarProcessamentoLancamento('Confirmando despesa')) return;
+
+  const hoje = dataFinanceiraDeHoje();
+  try {
+    const resultado = await atualizarLancamento({
+      id: lancamento.id,
+      empresaId,
+      ano: hoje.ano,
+      mes: hoje.mes,
+      dia: hoje.dia,
+      despesaNome: lancamento.despesa,
+      descricao: formatarDescricao(lancamento.descricao || ''),
+      valor: Number(lancamento.valor || 0),
+      status: 'confirmada',
+      tipoObs: lancamento.tipo === 'previsto' ? null : lancamento.tipo || null,
+    });
+
+    if (resultado.erro || !resultado.data) {
+      abrirAviso('Erro ao confirmar despesa', resultado.mensagem || 'Não foi possível aceitar esta despesa.');
+      return;
+    }
+
+    setLancamentos((prev) => Number(anoSelecionado) === hoje.ano
+      ? prev.map((item) => (item.id === lancamento.id
+        ? { ...item, mes: hoje.mes, dia: hoje.dia, status: 'confirmada', tipo: lancamento.tipo === 'previsto' ? null : lancamento.tipo || null }
+        : item))
+      : prev.filter((item) => item.id !== lancamento.id));
+    cancelarEdicaoLancamento();
+    notificarFinanceiroAtualizado();
+  } finally {
+    finalizarProcessamentoLancamento();
+  }
+};
+
+const aceitarReceitaPrevistaHoje = async (entrada: TabelaEntradaFaturamento) => {
+  if (entrada.status !== 'prevista') {
+    iniciarEdicaoEntradaFaturamento(entrada);
+    return;
+  }
+  if (!empresaId || !podeEditarLancamentos) {
+    abrirAviso('Acesso não permitido', 'Você não tem permissão para editar lançamentos.');
+    return;
+  }
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema') {
+    abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser alterada no Gestão.');
+    return;
+  }
+
+  const mesOriginal = entrada.mes || mesAtivo;
+  if (!mesOriginal || !iniciarProcessamentoLancamento('Confirmando receita')) return;
+
+  const hoje = dataFinanceiraDeHoje();
+  const valor = Number(entrada.valor || 0);
+  try {
+    const resultado = await atualizarFaturamentoEntrada({
+      id: String(entrada.id),
+      empresaId,
+      ano: Number(anoSelecionado),
+      mes: mesOriginal,
+      anoDestino: hoje.ano,
+      mesDestino: hoje.mes,
+      dia: hoje.dia,
+      origem: entrada.origem || '',
+      valor,
+      status: 'confirmada',
+      tipoObs: null,
+    });
+
+    if (resultado.erro || !resultado.data) {
+      abrirAviso('Erro ao confirmar receita', resultado.mensagem || 'Não foi possível aceitar esta receita.');
+      return;
+    }
+
+    let totalHoje = 0;
+    if (!centrosCustoAtivo) {
+      const faturamentosDoAno = await buscarFaturamentos(empresaId, hoje.ano);
+      totalHoje = (faturamentosDoAno || [])
+        .filter((f: RegistroSupabase) => textoRegistro(f.mes) === hoje.mes)
+        .reduce((total: number, f: RegistroSupabase) => total + Number(f.valor || 0), 0) + valor;
+      const faturamentoSalvo = await salvarFaturamentoBanco({
+        empresaId,
+        ano: hoje.ano,
+        mes: hoje.mes,
+        valor: totalHoje,
+      });
+      if (!faturamentoSalvo) {
+        abrirAviso('Receita confirmada parcialmente', 'A receita foi aceita, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.');
+        notificarFinanceiroAtualizado();
+        return;
+      }
+    }
+
+    setFaturamentosEntradas((prev) => Number(anoSelecionado) === hoje.ano
+      ? prev.map((item) => (item.id === entrada.id
+        ? { ...item, mes: hoje.mes, dia: hoje.dia, status: 'confirmada', tipo: null }
+        : item))
+      : prev.filter((item) => item.id !== entrada.id));
+    if (!centrosCustoAtivo && Number(anoSelecionado) === hoje.ano) {
+      setFaturamentos((prev) => ({ ...prev, [hoje.mes]: totalHoje }));
+    }
+    cancelarEdicaoEntradaFaturamento();
+    notificarFinanceiroAtualizado();
   } finally {
     finalizarProcessamentoLancamento();
   }
@@ -11219,6 +11269,7 @@ if (validacaoTelefoneObrigatoria) {
               salvarEdicaoLancamento={salvarEdicaoLancamento}
               cancelarEdicaoLancamento={cancelarEdicaoLancamento}
               iniciarEdicaoLancamento={iniciarEdicaoLancamento}
+              onAceitarPrevistaHoje={aceitarDespesaPrevistaHoje}
               onSolicitarExclusaoLancamento={solicitarExclusaoLancamento}
               alturaTabelaLancamentos={alturaTabelaLancamentos}
               setAlturaTabelaLancamentos={setAlturaTabelaLancamentos}
@@ -11281,6 +11332,7 @@ if (validacaoTelefoneObrigatoria) {
   handleEditEntradaValorChange={handleEditEntradaFaturamentoValorChange}
   onIniciarEdicaoEntrada={iniciarEdicaoEntradaFaturamento}
   onSalvarEdicaoEntrada={salvarEdicaoEntradaFaturamento}
+  onAceitarPrevistaHoje={aceitarReceitaPrevistaHoje}
   onCancelarEdicaoEntrada={cancelarEdicaoEntradaFaturamento}
   onExcluirEntrada={excluirEntradaFaturamento}
   onFocoReceita={() => setBlocoAtivo('receita')}

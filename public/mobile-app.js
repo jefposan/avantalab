@@ -9578,7 +9578,9 @@
 
     state.modalAcao = {
       tipo: tipo,
-      modo: 'opcoes',
+      // Previsões pedem uma decisão explícita (editar ou aceitar hoje).
+      // Registros já efetivados seguem direto para a edição.
+      modo: !caixinha && item.status !== 'prevista' ? 'editar' : 'opcoes',
       item: item,
     };
     render();
@@ -9965,19 +9967,80 @@
     concluirAplicacaoLancamentoMobile(confirmarAgora ? (tipo === 'receita' ? 'Receita confirmada.' : 'Despesa confirmada.') : (tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.'));
   }
 
-  async function confirmarDespesaPrevista(id) {
+  function periodoFinanceiroHojeMobile() {
+    var hoje = new Date();
+    return { ano: hoje.getFullYear(), mes: meses[hoje.getMonth()], dia: hoje.getDate() };
+  }
+
+  async function aceitarPrevistaHojeMobile(tipo, id) {
     if (!state.empresa) return;
+    var receita = tipo === 'receita';
+    var lista = receita ? (state.entradas || []) : (state.lancamentos || []);
+    var item = lista.find(function (registro) { return String(registro.id) === String(id); });
+    if (!item || item.status !== 'prevista') return;
+    if (receita && ehReceitaSincronizada(item)) return;
+
+    var hoje = periodoFinanceiroHojeMobile();
+    var totalDestino = 0;
+    if (receita && !state.centrosCustoAtivo) {
+      var faturamentoAtual = await db
+        .from('faturamentos')
+        .select('valor')
+        .eq('empresa_id', state.empresa.id)
+        .eq('ano', hoje.ano)
+        .eq('mes', hoje.mes)
+        .maybeSingle();
+      if (faturamentoAtual.error) {
+        falharAplicacaoLancamentoMobile('Nao foi possivel preparar a confirmacao da receita.');
+        return;
+      }
+      totalDestino = Number((faturamentoAtual.data && faturamentoAtual.data.valor) || 0) + Number(item.valor || 0);
+    }
+
     iniciarAplicacaoLancamentoMobile();
-    var lancamento = (state.lancamentos || []).find(function (item) { return String(item.id) === String(id); });
-    var atualizacao = { status: 'confirmada' };
-    if (lancamento && lancamento.tipo === 'previsto') atualizacao.tipo_obs = null;
-    var resp = await db.from('lancamentos').update(atualizacao).eq('id', id).eq('empresa_id', state.empresa.id);
-    if (resp.error) {
-      falharAplicacaoLancamentoMobile('Nao foi possivel confirmar a despesa.');
+    var resposta = receita
+      ? await db.from('faturamentos_entradas').update({
+          ano: hoje.ano,
+          mes: hoje.mes,
+          dia: hoje.dia,
+          status: 'confirmada',
+          tipo_obs: null,
+          updated_at: new Date().toISOString(),
+        }).eq('id', item.id).eq('empresa_id', state.empresa.id)
+      : await db.from('lancamentos').update({
+          ano: hoje.ano,
+          mes: hoje.mes,
+          dia: hoje.dia,
+          status: 'confirmada',
+          tipo_obs: item.tipo === 'previsto' ? null : (item.tipo || null),
+          updated_at: new Date().toISOString(),
+        }).eq('id', item.id).eq('empresa_id', state.empresa.id);
+
+    if (resposta.error) {
+      falharAplicacaoLancamentoMobile('Nao foi possivel aceitar este lancamento.');
       return;
     }
+
+    if (receita && !state.centrosCustoAtivo) {
+      var faturamentoSalvo = await db.from('faturamentos').upsert(
+        { empresa_id: state.empresa.id, ano: hoje.ano, mes: hoje.mes, valor: totalDestino },
+        { onConflict: 'empresa_id,ano,mes' }
+      );
+      if (faturamentoSalvo.error) {
+        state.modalAcao = null;
+        await carregarDados();
+        falharAplicacaoLancamentoMobile('Receita aceita, mas o total do mes nao foi atualizado. Atualize e confira o faturamento.');
+        return;
+      }
+    }
+
+    state.modalAcao = null;
     await carregarDados();
-    concluirAplicacaoLancamentoMobile('Despesa confirmada.');
+    concluirAplicacaoLancamentoMobile(receita ? 'Receita aceita com a data de hoje.' : 'Despesa aceita com a data de hoje.');
+  }
+
+  async function confirmarDespesaPrevista(id) {
+    return aceitarPrevistaHojeMobile('despesa', id);
   }
 
   async function excluirDespesaPrevista(id) {
@@ -10027,24 +10090,7 @@
   }
 
   async function confirmarReceitaPrevista(id) {
-    if (!state.empresa) return;
-    var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
-    if (!entrada) return;
-    if (ehReceitaSincronizada(entrada)) return;
-    iniciarAplicacaoLancamentoMobile();
-    var resp = await db.from('faturamentos_entradas').update({ status: 'confirmada', tipo_obs: null }).eq('id', id).eq('empresa_id', state.empresa.id);
-    if (resp.error) {
-      falharAplicacaoLancamentoMobile('Nao foi possivel confirmar a receita.');
-      return;
-    }
-    // Efetiva a receita: soma no total do mes.
-    var totalAtual = state.faturamentos[entrada.mes] || 0;
-    await db.from('faturamentos').upsert(
-      { empresa_id: state.empresa.id, ano: Number(state.ano), mes: entrada.mes, valor: totalAtual + Number(entrada.valor || 0) },
-      { onConflict: 'empresa_id,ano,mes' }
-    );
-    await carregarDados();
-    concluirAplicacaoLancamentoMobile('Receita confirmada.');
+    return aceitarPrevistaHojeMobile('receita', id);
   }
 
   async function excluirReceitaPrevista(id) {
@@ -12198,14 +12244,16 @@
     var receita = acao.tipo === 'receita';
     var caixinha = acao.tipo === 'caixinha';
     var temNota = !receita && acao.item.notaArquivoPath;
+    var prevista = !caixinha && acao.item.status === 'prevista';
     var resumoData = caixinha
       ? (function () { var p = String(acao.item.dataMovimento || '').split('-'); return p.length === 3 ? 'Data ' + p[2] + '/' + p[1] + '/' + p[0] : 'Aporte'; })()
       : 'Dia ' + escapeHtml(acao.item.dia);
     return (
       '<div class="grid gap-2">' +
         '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">' + resumoData + '</p><strong class="mt-1 block text-lg font-black">' + dinheiro(acao.item.valor) + '</strong></div>' +
-        '<div class="grid ' + (temNota ? 'grid-cols-3' : 'grid-cols-2') + ' gap-2">' +
+        '<div class="grid grid-cols-2 gap-2">' +
         (temNota ? '<button id="ver-nota-lancamento" type="button" class="h-11 rounded-xl bg-cyan-600 px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Ver nota</button>' : '') +
+        (prevista ? '<button id="aceitar-prevista-hoje" type="button" class="h-11 rounded-xl bg-emerald-600 px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Aceitar hoje</button>' : '') +
         '<button id="editar-lancamento" type="button" class="h-11 rounded-xl bg-[#003E73] px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Editar</button>' +
         '<button id="excluir-lancamento" type="button" class="h-11 rounded-xl border border-red-200 bg-red-50 px-2 text-xs font-black uppercase text-red-700 shadow-sm transition active:scale-[0.98]">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
         '</div>' +
@@ -15795,6 +15843,10 @@
 	      render();
 	    });
 	    bind('confirmar-exclusao-lancamento', excluirLancamentoSelecionado);
+	    bind('aceitar-prevista-hoje', function () {
+	      if (!state.modalAcao || !state.modalAcao.item) return;
+	      aceitarPrevistaHojeMobile(state.modalAcao.tipo, state.modalAcao.item.id);
+	    });
 	    bind('salvar-edicao-lancamento', salvarEdicaoLancamentoSelecionado);
 	    bind('confirmar-edicao-prevista', function () { salvarEdicaoLancamentoSelecionado(true); });
     ['despesa-valor', 'entrada-valor', 'editar-valor'].forEach(function (id) {

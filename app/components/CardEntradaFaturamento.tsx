@@ -40,6 +40,7 @@ type CardEntradaFaturamentoProps = {
   handleEditEntradaValorChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onIniciarEdicaoEntrada: (entrada: EntradaFaturamento) => void;
   onSalvarEdicaoEntrada: (confirmarPrevista?: boolean) => void | Promise<void>;
+  onAceitarPrevistaHoje: (entrada: EntradaFaturamento) => void | Promise<void>;
   onCancelarEdicaoEntrada: () => void;
   onExcluirEntrada: (entrada: EntradaFaturamento) => void | Promise<void>;
   onFocoReceita: () => void;
@@ -75,6 +76,7 @@ export default function CardEntradaFaturamento({
   handleEditEntradaValorChange,
   onIniciarEdicaoEntrada,
   onSalvarEdicaoEntrada,
+  onAceitarPrevistaHoje,
   onCancelarEdicaoEntrada,
   onExcluirEntrada,
   onFocoReceita,
@@ -300,6 +302,7 @@ export default function CardEntradaFaturamento({
         handleEditEntradaValorChange={handleEditEntradaValorChange}
         onIniciarEdicaoEntrada={onIniciarEdicaoEntrada}
         onSalvarEdicaoEntrada={onSalvarEdicaoEntrada}
+        onAceitarPrevistaHoje={onAceitarPrevistaHoje}
         onCancelarEdicaoEntrada={onCancelarEdicaoEntrada}
         onExcluirEntrada={onExcluirEntrada}
         expandidoPopup={popupExpandido}

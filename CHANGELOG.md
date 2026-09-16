@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.0.19.53 - 2026-09-16
+- **Gestão Web e Mobile — Lançamentos previstos**: despesas e receitas previstas
+  agora abrem para edição ao tocar na linha e podem ser aceitas na data de hoje,
+  inclusive quando estavam programadas para um mês futuro. Lançamentos já
+  confirmados seguem direto para edição.
+
 ## 1.35.0.19.52 - 2026-09-16
 - **Custos e Precificação — Histórico de custos**: a lista de produtos do
   seletor usa fonte de 14 px para melhorar a leitura sem ampliar o campo.

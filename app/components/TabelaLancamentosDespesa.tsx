@@ -118,6 +118,7 @@ type TabelaLancamentosDespesaProps = {
   salvarEdicaoLancamento: (confirmarPrevista?: boolean) => void | Promise<void>;
   cancelarEdicaoLancamento: () => void;
   iniciarEdicaoLancamento: (lancamento: LancamentoDespesa) => void;
+  onAceitarPrevistaHoje: (lancamento: LancamentoDespesa) => void | Promise<void>;
   onSolicitarExclusaoLancamento: (lancamento: LancamentoDespesa) => void;
   alturaTabelaLancamentos: number;
   setAlturaTabelaLancamentos: (valor: number) => void;
@@ -182,6 +183,7 @@ export default function TabelaLancamentosDespesa({
   salvarEdicaoLancamento,
   cancelarEdicaoLancamento,
   iniciarEdicaoLancamento,
+  onAceitarPrevistaHoje,
   onSolicitarExclusaoLancamento,
   alturaTabelaLancamentos,
   setAlturaTabelaLancamentos,
@@ -371,7 +373,13 @@ export default function TabelaLancamentosDespesa({
                 lancamentosFiltradosDoMes.map((lanc) => (
                   <tr
                     key={lanc.id}
-                    className={`border-b border-dotted transition-colors ${
+                    onClick={(event) => {
+                      if (lancamentoEditandoId === lanc.id) return;
+                      if ((event.target as HTMLElement).closest('button, input, select, textarea, a')) return;
+                      onFocoDespesa();
+                      iniciarEdicaoLancamento(lanc);
+                    }}
+                    className={`cursor-pointer border-b border-dotted transition-colors ${
                       buscaLancamento.trim()
                         ? 'bg-sky-50 border-sky-200'
                         : 'border-slate-300/60 hover:bg-slate-50'
@@ -458,21 +466,16 @@ export default function TabelaLancamentosDespesa({
                           darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-white'
                         }`}>
                           <div className="flex items-center justify-center gap-1">
-                            {lanc.status === 'prevista' && (() => {
-                              const diaEditado = Number(editDia);
-                              const mesIndice = MESES_TAB.indexOf(String(lanc.mes || mesAtivo || '').toUpperCase());
-                              const podeConfirmar = diaEditado >= 1 && mesIndice >= 0 && !dataFuturaTab(Number(anoSelecionado), mesIndice, diaEditado);
-                              return podeConfirmar ? (
-                                <button
-                                  type="button"
-                                  onClick={() => salvarEdicaoLancamento(true)}
-                                  className="rounded-md bg-emerald-600 px-2 py-1.5 text-[10px] font-black text-white transition hover:bg-emerald-700"
-                                  title={`Confirmar como realizada no dia ${String(diaEditado).padStart(2, '0')}`}
-                                >
-                                  Confirmar
-                                </button>
-                              ) : null;
-                            })()}
+                            {lanc.status === 'prevista' && (
+                              <button
+                                type="button"
+                                onClick={() => onAceitarPrevistaHoje(lanc)}
+                                className="rounded-md bg-emerald-600 px-2 py-1.5 text-[10px] font-black text-white transition hover:bg-emerald-700"
+                                title="Aceitar esta despesa com a data de hoje"
+                              >
+                                Aceitar hoje
+                              </button>
+                            )}
                             {lanc.notaArquivoPath && (
                               <button
                                 onClick={() => onVerNota(lanc)}
