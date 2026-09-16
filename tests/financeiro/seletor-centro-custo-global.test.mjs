@@ -29,6 +29,17 @@ test('controle global mantém contorno primário e aciona a troca do contexto', 
   assert.match(gestao, /setCentroCustoSelecionadoId\(centroCustoId\);/);
 });
 
+test('troca de centro reutiliza a superfície glass de carregamento', () => {
+  const inicio = gestao.indexOf('{carregandoCentroCusto && !carregandoPerfil && (');
+  const fim = gestao.indexOf('{despesaRelatorioAberta && (', inicio);
+  const carregamento = gestao.slice(inicio, fim);
+
+  assert.ok(inicio >= 0 && fim > inicio);
+  assert.match(carregamento, /avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl/);
+  assert.match(carregamento, /avanta-loading-glass-icon mx-auto flex h-11 w-11/);
+  assert.match(carregamento, /text-white">Carregando centro de custo/);
+});
+
 test('cabeçalho eleva as abas apenas com centro de custo ativo', () => {
   assert.match(header, /xl:py-\[14px\]/);
   assert.match(header, /max-w-\[560px\] \$\{centrosCustoAtivo \? '-translate-y-1' : ''\} grid-cols-5/);

@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.47 -->
+<!-- ava-version: 1.35.0.19.50 -->
+
+> Revisão 1.35.0.19.50: a cor da mensagem no carregamento de **Centro de custo**
+> pertence à Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.35.0.19.49: o teste visual `avanta-loading-glass` ao trocar **Centro
+> de custo** pertence à Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.35.0.19.48: o card opaco ao trocar **Centro de custo** pertence à
+> Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.35.0.19.47: os seletores **Centro de custo** e **Mês** de
 > **Lançar** têm maior separação visual. As escolhas e os lançamentos mantêm o

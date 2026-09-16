@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.50: o carregamento de troca de Centro de custo
+// na Gestão Web usa mensagem branca sobre avanta-loading-glass, sem alterar a
+// seleção nem os dados financeiros.
 // Revisado na versão 1.35.0.19.47: os seletores de Centro de custo e Mês de
 // Novo lançamento móvel possuem maior separação visual no cabeçalho.
 // Revisado na versão 1.35.0.19.46: os valores dos seletores de Centro de custo

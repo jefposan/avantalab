@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.47 -->
+<!-- ava-version: 1.35.0.19.50 -->
+
+> Revisão 1.35.0.19.50: a mensagem do carregamento ao trocar **Centro de custo**
+> usa texto branco sobre a superfície de vidro. A escolha e os dados não mudaram.
+
+> Revisão 1.35.0.19.49: ao trocar **Centro de custo**, o carregamento da Gestão
+> Web reutiliza temporariamente o efeito visual `avanta-loading-glass`. A escolha
+> e os dados do centro não mudaram.
+
+> Revisão 1.35.0.19.48: ao trocar **Centro de custo**, o card de carregamento
+> usa uma superfície branca opaca. A escolha e os dados do centro não mudaram.
 
 > Revisão 1.35.0.19.47: o espaçamento dos seletores em **Lançar** pertence à
 > Gestão Mobile; sem impacto operacional na Gestão Web.

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.35.0.19.50 - 2026-09-15
+- **Gestão Web — Centro de custo**: a mensagem do carregamento com efeito de
+  vidro agora usa texto branco para melhorar a leitura sobre a superfície.
+
+## 1.35.0.19.49 - 2026-09-15
+- **Gestão Web — Centro de custo**: o carregamento voltou a reutilizar o efeito
+  visual `avanta-loading-glass`, para avaliação no fluxo real, sem alterar
+  seleção ou dados financeiros.
+
+## 1.35.0.19.48 - 2026-09-15
+- **Gestão Web — Centro de custo**: o card de carregamento da troca de centro
+  agora usa superfície branca opaca, sem o efeito translúcido de vidro.
+
 ## 1.35.0.19.47 - 2026-09-15
 - **Gestão Mobile — Novo lançamento**: Centro de custo e Mês receberam mais
   respiro horizontal no cabeçalho, mantendo o conjunto centralizado e o X no

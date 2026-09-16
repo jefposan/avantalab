@@ -11652,7 +11652,7 @@ if (validacaoTelefoneObrigatoria) {
             <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
               <span className="avanta-loading-spinner animate-spin" />
             </div>
-            <p className="text-sm font-black uppercase tracking-wide text-sky-800">Carregando centro de custo...</p>
+            <p className="text-sm font-black uppercase tracking-wide text-white">Carregando centro de custo...</p>
           </div>
         </div>
       )}
