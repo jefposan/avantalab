@@ -10084,8 +10084,12 @@
   }
 
   function ajustarDespesaPrevista(id) {
-    abrirAcaoLancamento('despesa', id);
-    if (state.modalAcao) state.modalAcao.modo = 'editar';
+    var despesa = (state.lancamentos || []).find(function (item) { return String(item.id) === String(id); });
+    if (!despesa) return;
+    // O aviso abre diretamente na edição. Evita a renderização intermediária
+    // de "opções", que reconstruía o card antes de a edição ser exibida.
+    state.modalAcao = { tipo: 'despesa', modo: 'editar', item: despesa };
+    state.erro = '';
     render();
   }
 
@@ -10121,8 +10125,8 @@
   function editarReceitaPrevista(id) {
     var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
     if (!entrada || ehReceitaSincronizada(entrada)) return;
-    abrirAcaoLancamento('receita', id);
-    if (state.modalAcao) state.modalAcao.modo = 'editar';
+    state.modalAcao = { tipo: 'receita', modo: 'editar', item: entrada };
+    state.erro = '';
     render();
   }
 

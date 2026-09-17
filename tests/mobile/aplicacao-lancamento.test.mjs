@@ -16,3 +16,19 @@ test('alterações de lançamento bloqueiam a tela e comunicam o progresso', asy
   assert.match(mobile, /async function excluirLancamentoSelecionado\(\)[\s\S]*?iniciarAplicacaoLancamentoMobile\(\)[\s\S]*?concluirAplicacaoLancamentoMobile\(/);
   assert.match(mobile, /async function salvarEdicaoLancamentoSelecionado\(confirmarPrevista\)[\s\S]*?iniciarAplicacaoLancamentoMobile\(\)[\s\S]*?concluirAplicacaoLancamentoMobile\(/);
 });
+
+test('Editar nos avisos de previsão abre diretamente o formulário do lançamento', async () => {
+  const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
+
+  const inicioDespesa = mobile.indexOf('function ajustarDespesaPrevista(id)');
+  const fimDespesa = mobile.indexOf('async function confirmarReceitaPrevista', inicioDespesa);
+  const ajusteDespesa = mobile.slice(inicioDespesa, fimDespesa);
+  assert.match(ajusteDespesa, /state\.modalAcao = \{ tipo: 'despesa', modo: 'editar', item: despesa \}/);
+  assert.doesNotMatch(ajusteDespesa, /abrirAcaoLancamento/);
+
+  const inicioReceita = mobile.indexOf('function editarReceitaPrevista(id)');
+  const fimReceita = mobile.indexOf('function telaLoginWrapper', inicioReceita);
+  const ajusteReceita = mobile.slice(inicioReceita, fimReceita);
+  assert.match(ajusteReceita, /state\.modalAcao = \{ tipo: 'receita', modo: 'editar', item: entrada \}/);
+  assert.match(mobile, /\[data-ajustar-id\][\s\S]*?ajustarDespesaPrevista/);
+});

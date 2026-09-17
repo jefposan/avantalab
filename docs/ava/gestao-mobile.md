@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.53 -->
+<!-- ava-version: 1.35.0.19.54 -->
+
+> Revisão 1.35.0.19.54: no aviso de despesa prevista, **Editar** abre
+> diretamente o formulário do lançamento. A edição, o aceite na data atual e
+> a exclusão mantêm o mesmo funcionamento.
 
 > Revisão 1.35.0.19.53: ao tocar uma despesa ou receita **prevista** no mês,
 > escolha **Aceitar hoje** para efetivá-la na data atual ou **Editar** para

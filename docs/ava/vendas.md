@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.53 -->
+<!-- ava-version: 1.35.0.19.54 -->
+
+> Revisão 1.35.0.19.54: a correção de **Editar** em avisos de despesas previstas
+> pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.53: o aceite de lançamentos previstos na data atual pertence
 > à Gestão Web e Mobile; sem impacto operacional no AvantaVendas.

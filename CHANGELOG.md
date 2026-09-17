@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.0.19.54 - 2026-09-17
+- **Gestão Mobile — Avisos de despesas previstas**: o botão **Editar** agora
+  abre diretamente o formulário do lançamento, sem passar por uma renderização
+  intermediária que podia descartar a ação.
+
 ## 1.35.0.19.53 - 2026-09-16
 - **Gestão Web e Mobile — Lançamentos previstos**: despesas e receitas previstas
   agora abrem para edição ao tocar na linha e podem ser aceitas na data de hoje,
