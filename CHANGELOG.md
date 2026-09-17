@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.35.0.19.59 - 2026-09-17
+- **Gestão Mobile — Lançamentos**: as linhas de despesas e receitas voltaram a
+  abrir as ações de editar ou excluir ao toque, inclusive nas listas filtradas.
+
 ## 1.35.0.19.58-av150 - 2026-09-17
 - **AvantaVendas — Solicitação por Voz offline**: a revisão dos recursos força
   a atualização do PWA instalado. Sem conexão, o microfone e a ajuda ficam

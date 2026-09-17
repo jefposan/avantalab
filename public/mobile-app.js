@@ -14605,6 +14605,9 @@
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml();
+    // O conteúdo da lista é reconstruído a cada renderização. Vincula de novo
+    // as linhas de despesas, receitas e lista detalhada à ação de editar/excluir.
+    vincularAcoesLancamentosLista();
     window.dispatchEvent(new CustomEvent('avantalab:theme-changed', {
       detail: { dark: Boolean(state.autenticado && state.darkMode) }
     }));

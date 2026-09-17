@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.58 -->
+<!-- ava-version: 1.35.0.19.59 -->
+
+> Revisão 1.35.0.19.59: toque uma linha de **despesa** ou **receita** para abrir
+> as opções de editar ou excluir. O comportamento vale também após pesquisar ou
+> filtrar a lista.
 
 > Revisão 1.35.0.19.58: a indisponibilidade sem rede da Solicitação por Voz
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.

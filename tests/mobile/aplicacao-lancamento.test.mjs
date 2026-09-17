@@ -46,3 +46,14 @@ test('validação do lançamento fica no card e não vaza para o dashboard', asy
   assert.match(mobile, /id="lancamento-alerta-dia" role="alert"[\s\S]*?state\.lancamentoErro/);
   assert.match(mobile, /bind\('fechar-lancamento', function \(\) \{[\s\S]*?state\.lancamentoErro = ''/);
 });
+
+test('linhas de despesas e receitas vinculam a ação de editar ou excluir após renderizar', async () => {
+  const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
+  const inicioRender = mobile.indexOf('function render(forcarDuranteEdicao)');
+  const chamadaAposRender = mobile.indexOf('vincularAcoesLancamentosLista();', inicioRender);
+
+  assert.match(mobile, /data-tipo-lancamento="despesa" data-lancamento-id=/);
+  assert.match(mobile, /data-tipo-lancamento="receita" data-lancamento-id=/);
+  assert.match(mobile, /function vincularAcoesLancamentosLista\(\)[\s\S]*?abrirAcaoLancamento\(/);
+  assert.ok(chamadaAposRender > inicioRender, 'a renderização deve reativar as ações das linhas de lançamento');
+});

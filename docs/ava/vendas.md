@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.58 -->
+<!-- ava-version: 1.35.0.19.59 -->
+
+> Revisão 1.35.0.19.59: a restauração das ações de linhas de lançamento
+> pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.58-av150: sem internet, **Solicitação por Voz** fica
 > desativada, exibe a indisponibilidade e encerra uma captura em andamento. Ao

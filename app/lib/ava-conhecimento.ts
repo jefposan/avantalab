@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.59: linhas de despesas e receitas na Gestão
+// Mobile abrem novamente as ações de editar ou excluir após cada renderização.
 // Revisado na versão 1.35.0.19.58: a Solicitação por Voz do AvantaVendas fica
 // visivelmente indisponível sem internet e fecha qualquer captura em andamento.
 // Revisado na versão 1.35.0.19.57: o card Saldo do mês móvel reserva rodapé
