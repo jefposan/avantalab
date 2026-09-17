@@ -9591,6 +9591,9 @@
   }
 
   function abrirAcaoLancamento(tipo, id) {
+    // A mesma ação atende despesas, receitas e aportes. Define o contexto
+    // antes de decidir a tela para que o toque não interrompa com erro.
+    var caixinha = tipo === 'caixinha';
     var lista = tipo === 'receita'
       ? state.entradas
       : (tipo === 'caixinha' ? state.caixinhaMovimentos : state.lancamentos);
@@ -12278,11 +12281,11 @@
     return (
       '<div class="grid gap-2">' +
         '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">' + resumoData + '</p><strong class="mt-1 block text-lg font-black">' + dinheiro(acao.item.valor) + '</strong></div>' +
-        '<div class="grid grid-cols-2 gap-2">' +
         (temNota ? '<button id="ver-nota-lancamento" type="button" class="h-11 rounded-xl bg-cyan-600 px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Ver nota</button>' : '') +
-        (prevista ? '<button id="aceitar-prevista-hoje" type="button" class="h-11 rounded-xl bg-emerald-600 px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Aceitar hoje</button>' : '') +
-        '<button id="editar-lancamento" type="button" class="h-11 rounded-xl bg-[#003E73] px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Editar</button>' +
-        '<button id="excluir-lancamento" type="button" class="h-11 rounded-xl border border-red-200 bg-red-50 px-2 text-xs font-black uppercase text-red-700 shadow-sm transition active:scale-[0.98]">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
+        '<div class="grid ' + (prevista ? 'grid-cols-3' : 'grid-cols-2') + ' gap-2">' +
+        (prevista ? '<button id="aceitar-prevista-hoje" type="button" class="h-11 min-w-0 whitespace-nowrap rounded-xl bg-emerald-600 px-1 text-[10px] font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Aceitar hoje</button>' : '') +
+        '<button id="editar-lancamento" type="button" class="h-11 min-w-0 whitespace-nowrap rounded-xl bg-[#003E73] px-1 text-[10px] font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Editar</button>' +
+        '<button id="excluir-lancamento" type="button" class="h-11 min-w-0 whitespace-nowrap rounded-xl border border-red-200 bg-red-50 px-1 text-[10px] font-black uppercase text-red-700 shadow-sm transition active:scale-[0.98]">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
         '</div>' +
       '</div>'
 	    );
@@ -14498,14 +14501,6 @@
     );
   }
 
-  function vincularAcoesLancamentosLista() {
-    Array.prototype.forEach.call(document.querySelectorAll('[data-lancamento-id]'), function (botao) {
-      botao.addEventListener('click', function () {
-        abrirAcaoLancamento(botao.getAttribute('data-tipo-lancamento'), botao.getAttribute('data-lancamento-id'));
-      });
-    });
-  }
-
   function atualizarBuscaListaMobile() {
     var termo = String(state.busca || '').toLowerCase();
     var visiveis = 0;
@@ -14605,9 +14600,6 @@
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml();
-    // O conteúdo da lista é reconstruído a cada renderização. Vincula de novo
-    // as linhas de despesas, receitas e lista detalhada à ação de editar/excluir.
-    vincularAcoesLancamentosLista();
     window.dispatchEvent(new CustomEvent('avantalab:theme-changed', {
       detail: { dark: Boolean(state.autenticado && state.darkMode) }
     }));

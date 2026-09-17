@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import vm from 'node:vm';
 
 const raiz = new URL('../..', import.meta.url);
 
@@ -47,13 +48,52 @@ test('validação do lançamento fica no card e não vaza para o dashboard', asy
   assert.match(mobile, /bind\('fechar-lancamento', function \(\) \{[\s\S]*?state\.lancamentoErro = ''/);
 });
 
-test('linhas de despesas e receitas vinculam a ação de editar ou excluir após renderizar', async () => {
+test('linhas de despesas e receitas abrem a ação sem erro de contexto', async () => {
   const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
-  const inicioRender = mobile.indexOf('function render(forcarDuranteEdicao)');
-  const chamadaAposRender = mobile.indexOf('vincularAcoesLancamentosLista();', inicioRender);
+  const inicio = mobile.indexOf('function abrirAcaoLancamento(tipo, id)');
+  const fim = mobile.indexOf('function fecharAcaoLancamento()', inicio);
+  const abrirAcao = mobile.slice(inicio, fim);
+  let renderizacoes = 0;
+  const state = {
+    lancamentos: [
+      { id: 'despesa-confirmada', status: 'confirmada' },
+      { id: 'despesa-prevista', status: 'prevista' },
+    ],
+    entradas: [{ id: 'receita-confirmada', status: 'confirmada' }],
+    caixinhaMovimentos: [],
+    modalAcao: null,
+  };
+  const contexto = {
+    state,
+    ehReceitaSincronizada: () => false,
+    render: () => { renderizacoes += 1; },
+  };
+  vm.runInNewContext(`${abrirAcao}\nthis.abrirAcaoLancamento = abrirAcaoLancamento;`, contexto);
 
   assert.match(mobile, /data-tipo-lancamento="despesa" data-lancamento-id=/);
   assert.match(mobile, /data-tipo-lancamento="receita" data-lancamento-id=/);
-  assert.match(mobile, /function vincularAcoesLancamentosLista\(\)[\s\S]*?abrirAcaoLancamento\(/);
-  assert.ok(chamadaAposRender > inicioRender, 'a renderização deve reativar as ações das linhas de lançamento');
+  assert.match(abrirAcao, /var caixinha = tipo === 'caixinha';/);
+
+  contexto.abrirAcaoLancamento('despesa', 'despesa-confirmada');
+  assert.equal(state.modalAcao.modo, 'editar');
+  assert.equal(state.modalAcao.item.id, 'despesa-confirmada');
+
+  contexto.abrirAcaoLancamento('despesa', 'despesa-prevista');
+  assert.equal(state.modalAcao.modo, 'opcoes');
+
+  contexto.abrirAcaoLancamento('receita', 'receita-confirmada');
+  assert.equal(state.modalAcao.modo, 'editar');
+  assert.equal(renderizacoes, 3);
+});
+
+test('ações de lançamento previsto cabem em uma única linha no modal móvel', async () => {
+  const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
+  const inicio = mobile.indexOf('function modalOpcoesLancamentoHtml(acao)');
+  const fim = mobile.indexOf('function modalConfirmarExclusaoLancamentoHtml(acao)', inicio);
+  const opcoes = mobile.slice(inicio, fim);
+
+  assert.match(opcoes, /prevista \? 'grid-cols-3' : 'grid-cols-2'/);
+  assert.match(opcoes, /id="aceitar-prevista-hoje"[\s\S]*?text-\[10px\]/);
+  assert.match(opcoes, /id="editar-lancamento"[\s\S]*?text-\[10px\]/);
+  assert.match(opcoes, /id="excluir-lancamento"[\s\S]*?text-\[10px\]/);
 });

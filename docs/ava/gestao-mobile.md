@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.59 -->
+<!-- ava-version: 1.35.0.19.61 -->
+
+> Revisão 1.35.0.19.61: em um lançamento **previsto**, os comandos **Aceitar
+> hoje**, **Editar** e **Excluir** ficam juntos em uma única linha. Se houver
+> comprovante, o botão **Ver nota** aparece acima deles.
+
+> Revisão 1.35.0.19.60: ao tocar uma linha de **despesa** ou **receita**, a
+> ação abre corretamente: lançamentos confirmados entram em edição e previsões
+> apresentam as opções de editar, excluir ou aceitar na data atual.
 
 > Revisão 1.35.0.19.59: toque uma linha de **despesa** ou **receita** para abrir
 > as opções de editar ou excluir. O comportamento vale também após pesquisar ou

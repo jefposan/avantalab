@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.59 -->
+<!-- ava-version: 1.35.0.19.61 -->
+
+> Revisão 1.35.0.19.61: o ajuste de ações de lançamentos previstos pertence à
+> Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.60: a correção da abertura de lançamentos pertence à Gestão
+> Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.35.0.19.59: a restauração das ações ao tocar linhas de lançamento
 > pertence à Gestão Mobile; sem impacto operacional na Gestão Web.

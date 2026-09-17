@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.61: ações de lançamentos previstos na Gestão
+// Mobile ficam compactas em uma linha, com o comprovante acima quando houver.
+// Revisado na versão 1.35.0.19.60: o toque em despesas e receitas na Gestão
+// Mobile abre a ação correta sem falhar ao identificar o tipo do lançamento.
 // Revisado na versão 1.35.0.19.59: linhas de despesas e receitas na Gestão
 // Mobile abrem novamente as ações de editar ou excluir após cada renderização.
 // Revisado na versão 1.35.0.19.58: a Solicitação por Voz do AvantaVendas fica

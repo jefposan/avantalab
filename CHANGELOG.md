@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.35.0.19.61 - 2026-09-17
+- **Gestão Mobile — Lançamentos previstos**: **Aceitar hoje**, **Editar** e
+  **Excluir** usam a mesma linha, com tipografia compacta e alvos de toque de
+  44 px. Quando houver comprovante, **Ver nota** permanece separado acima.
+
+## 1.35.0.19.60 - 2026-09-17
+- **Gestão Mobile — Lançamentos**: corrigida a abertura de despesas e receitas
+  ao toque. O fluxo agora define corretamente o contexto do registro antes de
+  abrir as opções ou a edição.
+
 ## 1.35.0.19.59 - 2026-09-17
 - **Gestão Mobile — Lançamentos**: as linhas de despesas e receitas voltaram a
   abrir as ações de editar ou excluir ao toque, inclusive nas listas filtradas.
