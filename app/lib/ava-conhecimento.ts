@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.62: Confirmar hoje no editor de previsão móvel
+// aplica a data atual automaticamente, inclusive em outro mês ou ano.
 // Revisado na versão 1.35.0.19.61: ações de lançamentos previstos na Gestão
 // Mobile ficam compactas em uma linha, com o comprovante acima quando houver.
 // Revisado na versão 1.35.0.19.60: o toque em despesas e receitas na Gestão

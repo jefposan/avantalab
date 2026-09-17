@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.61 -->
+<!-- ava-version: 1.35.0.19.62 -->
+
+> Revisão 1.35.0.19.62: no editor de um lançamento **previsto**, **Confirmar
+> hoje** usa automaticamente a data atual e leva o registro ao mês e ano
+> correspondentes, sem exigir alteração do campo Dia.
 
 > Revisão 1.35.0.19.61: em um lançamento **previsto**, os comandos **Aceitar
 > hoje**, **Editar** e **Excluir** ficam juntos em uma única linha. Se houver

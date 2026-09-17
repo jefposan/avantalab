@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.0.19.62 - 2026-09-17
+- **Gestão Mobile — Lançamentos previstos**: **Confirmar hoje** aplica a data
+  atual automaticamente, inclusive quando a previsão pertence a outro mês ou
+  ano, preservando os demais ajustes feitos no editor.
+
 ## 1.35.0.19.61 - 2026-09-17
 - **Gestão Mobile — Lançamentos previstos**: **Aceitar hoje**, **Editar** e
   **Excluir** usam a mesma linha, com tipografia compacta e alvos de toque de

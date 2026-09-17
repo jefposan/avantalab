@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.61 -->
+<!-- ava-version: 1.35.0.19.62 -->
+
+> Revisão 1.35.0.19.62: a confirmação automática no editor de previsões
+> pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.61: o ajuste de ações de lançamentos previstos pertence à
 > Gestão Mobile; sem impacto operacional no AvantaVendas.

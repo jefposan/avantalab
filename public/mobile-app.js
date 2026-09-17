@@ -9870,29 +9870,30 @@
       render();
       return;
     }
-    var limite = maxDias(state.mes, state.ano);
+    var mesItem = item.mes || state.mes;
+    var eraPrevista = item.status === 'prevista';
+    var confirmarAgora = Boolean(confirmarPrevista && eraPrevista);
+    // Confirmar hoje tem data própria: preserva as demais alterações do editor,
+    // mas efetiva o lançamento no período financeiro atual automaticamente.
+    var periodoConfirmacao = confirmarAgora ? periodoFinanceiroHojeMobile() : null;
+    var anoDestino = confirmarAgora ? periodoConfirmacao.ano : Number(state.ano);
+    var mesDestino = confirmarAgora ? periodoConfirmacao.mes : mesItem;
+    var limite = maxDias(mesDestino, anoDestino);
 
     // Lê TODOS os campos ANTES do render() — o render reconstrói o DOM e zera os inputs.
-    var dia = Number(campo('editar-dia'));
+    var diaInformado = Number(campo('editar-dia'));
+    var dia = confirmarAgora ? periodoConfirmacao.dia : diaInformado;
     var valor = normalizarValor(campo('editar-valor'));
     var origem = tipo === 'receita' ? campo('editar-origem').trim() : '';
     var despesaNome = tipo === 'receita' ? '' : campo('editar-despesa').trim();
     var descricao = tipo === 'receita' ? '' : campo('editar-descricao');
 
-    if (!dia || dia < 1 || dia > limite || valor <= 0) {
+    if ((!confirmarAgora && (!dia || dia < 1 || dia > limite)) || valor <= 0) {
       setErro('Informe dia e valor validos.');
       return;
     }
     if (tipo === 'receita' && !origem) { setErro('Informe a origem.'); return; }
     if (tipo !== 'receita' && !despesaNome) { setErro('Informe a despesa.'); return; }
-
-    var eraPrevista = item.status === 'prevista';
-    var mesItem = item.mes || state.mes;
-    var confirmarAgora = Boolean(confirmarPrevista && eraPrevista);
-    if (confirmarAgora && dataFutura(Number(state.ano), indiceMes(mesItem), dia)) {
-      setErro('Para confirmar agora, informe hoje ou uma data anterior.');
-      return;
-    }
 
     // O render de "Salvando..." reconstrói o formulário. Mantém no modal os
     // valores recém-digitados para não exibir novamente os dados antigos
@@ -9918,6 +9919,8 @@
       var receita = await db
         .from('faturamentos_entradas')
         .update({
+          ano: anoDestino,
+          mes: mesDestino,
           dia: dia,
           origem: formatarDescricao(origem),
           valor: valor,
@@ -9936,15 +9939,29 @@
       }
 
       if (!eraPrevista || confirmarAgora) {
-        var totalAtual = state.faturamentos[state.mes] || 0;
+        var totalAtual = state.faturamentos[mesDestino] || 0;
+        if (confirmarAgora && !state.centrosCustoAtivo) {
+          var faturamentoAtual = await db
+            .from('faturamentos')
+            .select('valor')
+            .eq('empresa_id', state.empresa.id)
+            .eq('ano', anoDestino)
+            .eq('mes', mesDestino)
+            .maybeSingle();
+          if (faturamentoAtual.error) {
+            falharAplicacaoLancamentoMobile('Nao foi possivel preparar a confirmacao da receita.');
+            return;
+          }
+          totalAtual = Number((faturamentoAtual.data && faturamentoAtual.data.valor) || 0);
+        }
         var diferenca = confirmarAgora ? valor : (valor - Number(item.valor || 0));
         await db
           .from('faturamentos')
           .upsert(
             {
               empresa_id: state.empresa.id,
-              ano: Number(state.ano),
-              mes: state.mes,
+              ano: anoDestino,
+              mes: mesDestino,
               valor: Math.max(0, totalAtual + diferenca),
             },
             { onConflict: 'empresa_id,ano,mes' }
@@ -9953,7 +9970,7 @@
     } else {
       var ehFixaEditada = item.tipo === 'fixa' || Boolean(item.recorrenciaId);
       var ehParcelaEditada = item.tipo === 'parcela';
-      var ehFuturaEditada = dataFutura(Number(state.ano), indiceMes(mesItem), dia);
+      var ehFuturaEditada = dataFutura(anoDestino, indiceMes(mesDestino), dia);
       var continuavaPrevista = eraPrevista;
       var tipoEditado = confirmarAgora
         ? (item.tipo === 'previsto' ? null : (item.tipo || null))
@@ -9970,6 +9987,8 @@
       var despesa = await db
         .from('lancamentos')
         .update({
+          ano: anoDestino,
+          mes: mesDestino,
           dia: dia,
           despesa_nome: despesaNome,
           descricao: formatarDescricao(descricao),
@@ -9990,7 +10009,7 @@
 
     state.modalAcao = null;
     await carregarDados();
-    concluirAplicacaoLancamentoMobile(confirmarAgora ? (tipo === 'receita' ? 'Receita confirmada.' : 'Despesa confirmada.') : (tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.'));
+    concluirAplicacaoLancamentoMobile(confirmarAgora ? (tipo === 'receita' ? 'Receita confirmada com a data de hoje.' : 'Despesa confirmada com a data de hoje.') : (tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.'));
   }
 
   function periodoFinanceiroHojeMobile() {
@@ -12373,7 +12392,7 @@
           '</div>' +
           campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
         (item.status === 'prevista'
-          ? '<p class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] font-semibold leading-relaxed text-emerald-800">Se esta receita foi recebida antes do previsto, ajuste o dia e confirme nesta data.</p><div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white px-2 text-[11px] font-black uppercase tracking-wide text-slate-700 disabled:opacity-60">Salvar previsto</button><button id="confirmar-edicao-prevista" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-emerald-600 px-2 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60">Confirmar nesta data</button></div>'
+          ? '<p class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] font-semibold leading-relaxed text-emerald-800">Ao confirmar, esta receita será registrada automaticamente na data de hoje.</p><div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white px-2 text-[11px] font-black uppercase tracking-wide text-slate-700 disabled:opacity-60">Salvar previsto</button><button id="confirmar-edicao-prevista" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-emerald-600 px-2 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60">Confirmar hoje</button></div>'
           : '<button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950 disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>') +
         '</div>'
       );
@@ -12394,7 +12413,7 @@
         campoClaro('editar-descricao', 'Descricao', 'value="' + escapeHtml(item.descricao || '') + '"') +
         campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
         (item.status === 'prevista'
-          ? '<p class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] font-semibold leading-relaxed text-emerald-800">Se esta despesa foi paga antes do previsto, ajuste o dia e confirme nesta data.</p><div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white px-2 text-[11px] font-black uppercase tracking-wide text-slate-700 disabled:opacity-60">Salvar previsto</button><button id="confirmar-edicao-prevista" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-emerald-600 px-2 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60">Confirmar nesta data</button></div>'
+          ? '<p class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] font-semibold leading-relaxed text-emerald-800">Ao confirmar, esta despesa será registrada automaticamente na data de hoje.</p><div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white px-2 text-[11px] font-black uppercase tracking-wide text-slate-700 disabled:opacity-60">Salvar previsto</button><button id="confirmar-edicao-prevista" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-emerald-600 px-2 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60">Confirmar hoje</button></div>'
           : '<button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>') +
       '</div>'
     );

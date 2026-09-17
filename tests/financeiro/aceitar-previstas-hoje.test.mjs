@@ -40,4 +40,10 @@ test('Gestão Mobile oferece aceitar hoje para previsão e abre confirmados em e
   assert.match(mobile, /modo: !caixinha && item\.status !== 'prevista' \? 'editar' : 'opcoes'/);
   assert.match(mobile, /id="aceitar-prevista-hoje"/);
   assert.match(mobile, /bind\('aceitar-prevista-hoje'/);
+  assert.match(mobile, /var periodoConfirmacao = confirmarAgora \? periodoFinanceiroHojeMobile\(\) : null;/);
+  assert.match(mobile, /var anoDestino = confirmarAgora \? periodoConfirmacao\.ano : Number\(state\.ano\);/);
+  assert.match(mobile, /var mesDestino = confirmarAgora \? periodoConfirmacao\.mes : mesItem;/);
+  assert.match(mobile, /var dia = confirmarAgora \? periodoConfirmacao\.dia : diaInformado;/);
+  assert.match(mobile, /id="confirmar-edicao-prevista"[\s\S]*?Confirmar hoje/);
+  assert.doesNotMatch(mobile, /Confirmar nesta data/);
 });
