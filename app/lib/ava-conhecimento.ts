@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.58: a Solicitação por Voz do AvantaVendas fica
+// visivelmente indisponível sem internet e fecha qualquer captura em andamento.
 // Revisado na versão 1.35.0.19.57: o card Saldo do mês móvel reserva rodapé
 // suficiente para o puxador de reordenação não cobrir o valor Previsto.
 // Revisado na versão 1.35.0.19.56: avisos de validação de lançamento móvel

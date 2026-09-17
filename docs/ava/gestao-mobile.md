@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.57 -->
+<!-- ava-version: 1.35.0.19.58 -->
+
+> Revisão 1.35.0.19.58: a indisponibilidade sem rede da Solicitação por Voz
+> pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.
+>
 
 > Revisão 1.35.0.19.57: o card **Saldo do mês** foi ampliado no rodapé para
 > afastar totalmente o puxador de reordenação do valor **Previsto**.

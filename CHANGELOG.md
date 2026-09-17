@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.0.19.58-av150 - 2026-09-17
+- **AvantaVendas — Solicitação por Voz offline**: a revisão dos recursos força
+  a atualização do PWA instalado. Sem conexão, o microfone e a ajuda ficam
+  desativados, a indisponibilidade é informada e uma captura em curso é fechada.
+
 ## 1.35.0.19.57 - 2026-09-17
 - **Gestão Mobile — Saldo do mês**: o rodapé do card foi ampliado para manter o
   puxador de reordenação inteiramente abaixo do valor **Previsto**.

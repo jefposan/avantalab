@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.57 -->
+<!-- ava-version: 1.35.0.19.58 -->
+
+> Revisão 1.35.0.19.58-av150: sem internet, **Solicitação por Voz** fica
+> desativada, exibe a indisponibilidade e encerra uma captura em andamento. Ao
+> reconectar, o botão volta a ficar disponível automaticamente.
+>
 
 > Revisão 1.35.0.19.57: o ajuste do rodapé do card móvel **Saldo do mês**
 > pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
@@ -657,7 +662,7 @@
 > Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
 > aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
 > operacional no AvantaVendas.
-<!-- avantavendas-asset-revision: 149 -->
+<!-- avantavendas-asset-revision: 150 -->
 
 > Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
 > catálogo ativo completo da conta sem permitir que uma palavra apenas parecida
