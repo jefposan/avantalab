@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.35.0.19.57 - 2026-09-17
+- **Gestão Mobile — Saldo do mês**: o rodapé do card foi ampliado para manter o
+  puxador de reordenação inteiramente abaixo do valor **Previsto**.
+
+## 1.35.0.19.56 - 2026-09-17
+- **Gestão Mobile — Lançamentos**: avisos de validação agora pertencem somente
+  ao card de lançamento. Ao fechar ou corrigir o campo, não reaparecem no
+  dashboard.
+
+## 1.35.0.19.55 - 2026-09-17
+- **Gestão Mobile — Saldo do mês**: o card ganhou 2 px de respiro inferior,
+  mantendo o puxador de reordenação afastado do valor **Previsto**.
+
 ## 1.35.0.19.54 - 2026-09-17
 - **Gestão Mobile — Avisos de despesas previstas**: o botão **Editar** agora
   abre diretamente o formulário do lançamento, sem passar por uma renderização

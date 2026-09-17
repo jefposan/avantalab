@@ -1,6 +1,17 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.54 -->
+<!-- ava-version: 1.35.0.19.57 -->
+
+> Revisão 1.35.0.19.57: o card **Saldo do mês** foi ampliado no rodapé para
+> afastar totalmente o puxador de reordenação do valor **Previsto**.
+
+> Revisão 1.35.0.19.56: no card de lançamento, o aviso de campo inválido fica
+> somente no próprio card e some ao corrigir um campo ou fechá-lo. Não aparece
+> novamente no dashboard.
+
+> Revisão 1.35.0.19.55: o card **Saldo do mês** ganhou respiro inferior para
+> manter o puxador de reordenação afastado do valor **Previsto**. Os valores e
+> a ordenação não mudaram.
 
 > Revisão 1.35.0.19.54: no aviso de despesa prevista, **Editar** abre
 > diretamente o formulário do lançamento. A edição, o aceite na data atual e

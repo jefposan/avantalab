@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.54 -->
+<!-- ava-version: 1.35.0.19.57 -->
+
+> Revisão 1.35.0.19.57: o ajuste do rodapé do card móvel **Saldo do mês** não
+> altera a operação da Gestão Web.
+
+> Revisão 1.35.0.19.56: o isolamento dos avisos de validação do card de
+> lançamento pertence à Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.55: o ajuste de respiro no card móvel **Saldo do mês** não
+> altera a operação da Gestão Web.
 
 > Revisão 1.35.0.19.54: a correção do botão **Editar** em avisos de despesas
 > previstas pertence à Gestão Mobile; sem impacto operacional na Gestão Web.

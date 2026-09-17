@@ -9,7 +9,7 @@ test('saldo do mês usa o azul institucional AvantaLab', () => {
   const fim = mobile.indexOf('function caixinhaResumo(', inicio);
   const saldo = mobile.slice(inicio, fim);
 
-  assert.match(saldo, /<section class="rounded-2xl p-4 text-white shadow-lg" style="background:#003E73">/);
+  assert.match(saldo, /<section class="rounded-2xl px-4 pb-6 pt-4 text-white shadow-lg" style="background:#003E73">/);
   assert.doesNotMatch(saldo, /bg-slate-950/);
   assert.match(saldo, /text-emerald-300/);
   assert.match(saldo, /text-cyan-300/);

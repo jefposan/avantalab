@@ -32,3 +32,17 @@ test('Editar nos avisos de previsão abre diretamente o formulário do lançamen
   assert.match(ajusteReceita, /state\.modalAcao = \{ tipo: 'receita', modo: 'editar', item: entrada \}/);
   assert.match(mobile, /\[data-ajustar-id\][\s\S]*?ajustarDespesaPrevista/);
 });
+
+test('validação do lançamento fica no card e não vaza para o dashboard', async () => {
+  const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
+  const inicioEntrada = mobile.indexOf('async function salvarEntrada()');
+  const fimEntrada = mobile.indexOf('async function salvarCategoriaDespesa()', inicioEntrada);
+  const salvarEntrada = mobile.slice(inicioEntrada, fimEntrada);
+
+  assert.match(mobile, /lancamentoErro: ''/);
+  assert.match(mobile, /function setErroLancamentoMobile\(texto\)[\s\S]*?state\.lancamentoErro = texto \|\| ''/);
+  assert.match(salvarEntrada, /setErroLancamentoMobile\('Informe dia, origem e valor validos\.'\)/);
+  assert.doesNotMatch(salvarEntrada, /setErro\('Informe dia, origem e valor validos\.'\)/);
+  assert.match(mobile, /id="lancamento-alerta-dia" role="alert"[\s\S]*?state\.lancamentoErro/);
+  assert.match(mobile, /bind\('fechar-lancamento', function \(\) \{[\s\S]*?state\.lancamentoErro = ''/);
+});

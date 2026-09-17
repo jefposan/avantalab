@@ -546,6 +546,9 @@
     visao: 'home',
     busca: '',
     modalLancamento: false,
+    // Validação exclusiva do formulário de lançamento. Não reutiliza o alerta
+    // global do dashboard, que deve ficar reservado a falhas fora do card.
+    lancamentoErro: '',
     modalAcao: null,
     aplicacaoLancamento: false,
     aplicacaoLancamentoMensagem: '',
@@ -3613,6 +3616,7 @@
     state.aplicacaoLancamentoMensagem = mensagem || 'Aplicando alteração';
     state.carregando = true;
     state.erro = '';
+    state.lancamentoErro = '';
     render();
     return true;
   }
@@ -3955,6 +3959,22 @@
     render();
   }
 
+  function limparErroLancamentoMobile() {
+    if (!state.lancamentoErro) return;
+    state.lancamentoErro = '';
+    var alerta = document.getElementById('lancamento-alerta-dia');
+    if (alerta) {
+      alerta.textContent = '';
+      alerta.style.display = 'none';
+    }
+  }
+
+  function setErroLancamentoMobile(texto) {
+    state.lancamentoErro = texto || '';
+    state.mensagem = '';
+    render();
+  }
+
   function focarCampoUsuarioMobile(id) {
     window.setTimeout(function () {
       var elemento = document.getElementById(id);
@@ -4055,7 +4075,7 @@
     var data = new Date(periodo.ano, periodo.indice + Number(delta || 0), 1);
     state.lancamentoMesIndice = data.getMonth();
     state.lancamentoAno = data.getFullYear();
-    state.erro = '';
+    limparErroLancamentoMobile();
     state._diaInvalido = false;
 
     var limite = maxDias(meses[state.lancamentoMesIndice], state.lancamentoAno);
@@ -4074,6 +4094,8 @@
       if (principal) selecionarCentroCustoMobile(principal.id);
     }
     iniciarPeriodoLancamentoMobile();
+    state.erro = '';
+    state.lancamentoErro = '';
     if (!state.despesaDia) {
       state.despesaDia = diaHojeLancamentoMobile();
       state.despesaDiaAutoHoje = true;
@@ -8434,7 +8456,7 @@
 
     var centroCustoId = state.centrosCustoAtivo ? state.centroCustoSelecionadoId : null;
     if (state.centrosCustoAtivo && !centrosCustoAtivosMobile().some(function (centro) { return centro.id === centroCustoId; })) {
-      setErro('Selecione um centro de custo ativo para salvar a despesa.');
+      setErroLancamentoMobile('Selecione um centro de custo ativo para salvar a despesa.');
       return;
     }
 
@@ -8445,7 +8467,7 @@
       var _msgErro = (!dia || dia < 1 || dia > limite)
         ? 'Data invalida. Informe um dia entre 1 e ' + limite + '.'
         : (!nome ? 'Selecione o tipo de despesa.' : 'Informe um valor valido.');
-      setErro(_msgErro);
+      setErroLancamentoMobile(_msgErro);
       var _d = document.getElementById('despesa-dia'); if (_d) _d.value = _diaV;
       var _n = document.getElementById('despesa-nome'); if (_n) _n.value = _nomeV;
       var _desc = document.getElementById('despesa-descricao'); if (_desc) _desc.value = _descV;
@@ -8992,12 +9014,12 @@
 
     var centroCustoId = state.centrosCustoAtivo ? state.centroCustoSelecionadoId : null;
     if (state.centrosCustoAtivo && !centrosCustoAtivosMobile().some(function (centro) { return centro.id === centroCustoId; })) {
-      setErro('Selecione um centro de custo ativo para salvar a receita.');
+      setErroLancamentoMobile('Selecione um centro de custo ativo para salvar a receita.');
       return;
     }
 
     if (!dia || dia < 1 || dia > limite || !origem.trim() || valor <= 0) {
-      setErro('Informe dia, origem e valor validos.');
+      setErroLancamentoMobile('Informe dia, origem e valor validos.');
       return;
     }
 
@@ -9069,6 +9091,7 @@
     state.tipoLancamento = 'despesa';
     limparRascunhoLancamentoMobile();
     state.erro = '';
+    state.lancamentoErro = '';
     await carregarDados();
     concluirAplicacaoLancamentoMobile('Receita lançada.');
   }
@@ -11338,7 +11361,7 @@
     var final = inicial + atual.saldo;
     var previsto = inicial + atual.saldoPrevisto;
     return (
-      '<section class="rounded-2xl p-4 text-white shadow-lg" style="background:#003E73">' +
+      '<section class="rounded-2xl px-4 pb-6 pt-4 text-white shadow-lg" style="background:#003E73">' +
         '<div class="mb-3 flex items-center justify-between gap-3">' +
           '<h2 class="text-sm font-black tracking-wide text-white">Saldo do m&ecirc;s</h2>' +
           botaoVisibilidadeValoresHtml(cardId, true) +
@@ -12119,7 +12142,7 @@
                 '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? abaDespesaAtiva : abaInativa) + '">Despesa</button>' +
                 '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? abaReceitaAtiva : abaInativa) + '">Receita</button>' +
               '</div>' +
-              '<p id="lancamento-alerta-dia" class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700 mb-3"' + (state.erro ? '' : ' style="display:none"') + '>' + escapeHtml(state.erro) + '</p>' +
+              '<p id="lancamento-alerta-dia" role="alert" class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700 mb-3"' + (state.lancamentoErro ? '' : ' style="display:none"') + '>' + escapeHtml(state.lancamentoErro) + '</p>' +
               (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml()) +
               '</div>'
           ) +
@@ -15434,7 +15457,7 @@
         var limite = maxDias(periodo.mes, periodo.ano);
         if (this.value !== '' && (isNaN(val) || val < 1 || val > limite)) {
           var msg = 'Data invalida. Informe um dia entre 1 e ' + limite + '.';
-          state.erro = msg;
+          state.lancamentoErro = msg;
           var alertaEl = document.getElementById('lancamento-alerta-dia');
           if (alertaEl) { alertaEl.textContent = msg; alertaEl.style.display = 'block'; }
           this.value = '';
@@ -15447,41 +15470,45 @@
         var periodo = periodoLancamentoMobile();
         var limite = maxDias(periodo.mes, periodo.ano);
         if (this.value === '' || (!isNaN(val) && val >= 1 && val <= limite)) {
-          state.erro = '';
+          limparErroLancamentoMobile();
           state._diaInvalido = false;
           var alertaEl = document.getElementById('lancamento-alerta-dia');
           if (alertaEl) alertaEl.style.display = 'none';
         }
       });
     }
-    bindChange('despesa-nome', function () { state.despesaNome = this.value || ''; });
-    bindInput('despesa-descricao', function () { state.despesaDescricao = this.value || ''; });
+    bindChange('despesa-nome', function () { state.despesaNome = this.value || ''; limparErroLancamentoMobile(); });
+    bindInput('despesa-descricao', function () { state.despesaDescricao = this.value || ''; limparErroLancamentoMobile(); });
     bindInput('despesa-valor', function () {
       var item = document.getElementById('despesa-valor');
       if (!item) return;
       item.value = formatarMoedaDigitada(item.value);
       state.despesaValor = item.value;
+      limparErroLancamentoMobile();
     });
     var entradaDiaEl = document.getElementById('entrada-dia');
     if (entradaDiaEl) {
       entradaDiaEl.addEventListener('focus', function() {
         if (state.entradaDiaAutoHoje && this.value === diaHojeLancamentoMobile()) {
           this.value = '';
-          state.entradaDia = '';
-          state.entradaDiaAutoHoje = false;
+        state.entradaDia = '';
+        state.entradaDiaAutoHoje = false;
+        limparErroLancamentoMobile();
         }
       });
       entradaDiaEl.addEventListener('input', function() {
         state.entradaDia = this.value;
         state.entradaDiaAutoHoje = false;
+        limparErroLancamentoMobile();
       });
     }
-    bindInput('entrada-origem', function () { state.entradaOrigem = this.value || ''; });
+    bindInput('entrada-origem', function () { state.entradaOrigem = this.value || ''; limparErroLancamentoMobile(); });
     bindInput('entrada-valor', function () {
       var item = document.getElementById('entrada-valor');
       if (!item) return;
       item.value = formatarMoedaDigitada(item.value);
       state.entradaValor = item.value;
+      limparErroLancamentoMobile();
     });
     // Interceptar outros campos quando dia tem erro
     ['despesa-nome', 'despesa-descricao', 'despesa-valor'].forEach(function(fid) {
@@ -15682,6 +15709,7 @@
     });
     bind('fechar-lancamento', function () {
       state.modalLancamento = false;
+      state.lancamentoErro = '';
       state.novaDespesaAberta = false;
       state.novaDespesaNome = '';
       state.novaDespesaCategoria = '';
@@ -15698,10 +15726,12 @@
     });
     bind('tipo-despesa', function () {
       state.tipoLancamento = 'despesa';
+      state.lancamentoErro = '';
       render();
     });
     bind('tipo-receita', function () {
       state.tipoLancamento = 'receita';
+      state.lancamentoErro = '';
       state.novaDespesaAberta = false;
       state.novaDespesaNome = '';
       state.novaDespesaCategoria = '';

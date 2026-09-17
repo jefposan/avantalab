@@ -1,5 +1,11 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.57: o card Saldo do mês móvel reserva rodapé
+// suficiente para o puxador de reordenação não cobrir o valor Previsto.
+// Revisado na versão 1.35.0.19.56: avisos de validação de lançamento móvel
+// pertencem ao card e desaparecem ao corrigir ou fechar, sem vazar ao painel.
+// Revisado na versão 1.35.0.19.55: o puxador de reordenação do card Saldo do
+// mês móvel possui respiro inferior e não sobrepõe o valor Previsto.
 // Revisado na versão 1.35.0.19.54: Editar em avisos de despesas previstas abre
 // diretamente o formulário móvel, sem renderização intermediária.
 // Revisado na versão 1.35.0.19.53: previsões financeiras podem ser aceitas com

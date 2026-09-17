@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.54 -->
+<!-- ava-version: 1.35.0.19.57 -->
+
+> Revisão 1.35.0.19.57: o ajuste do rodapé do card móvel **Saldo do mês**
+> pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.56: o isolamento do aviso de validação do lançamento
+> pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.55: o respiro do card móvel **Saldo do mês** pertence à
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.54: a correção de **Editar** em avisos de despesas previstas
 > pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
