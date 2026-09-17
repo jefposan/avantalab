@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.62 -->
+<!-- ava-version: 1.35.0.19.63 -->
+
+> Revisão 1.35.0.19.63: ao criar ou acessar um perfil empresarial, escolha
+> **Preencher depois** para usar a Gestão sem CNPJ ou cadastro completo. Essa
+> decisão fica salva e o lembrete não retorna; o sistema pedirá os dados apenas
+> ao iniciar uma assinatura, emitir documento fiscal ou usar outra ação que os
+> exija. **Salvar rascunho** mantém o que já foi informado.
 
 > Revisão 1.35.0.19.62: a confirmação automática no editor de previsões
 > pertence à Gestão Mobile; sem impacto operacional na Gestão Web.

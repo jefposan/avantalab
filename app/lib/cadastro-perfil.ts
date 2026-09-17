@@ -54,12 +54,14 @@ export type CadastroPerfil = {
   inscricao_municipal_isento: boolean;
   regime_tributario: string;
   obrigatorio_em: string;
+  adiado_em: string | null;
   concluido_em: string | null;
 };
 
 export type StatusCadastroPerfil = {
   cadastro: CadastroPerfil;
   completo: boolean;
+  adiado: boolean;
   obrigatorio: boolean;
   diasRestantes: number;
   podeEditar: boolean;

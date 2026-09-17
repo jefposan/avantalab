@@ -39,7 +39,7 @@ type Props = {
   statusInicial?: StatusCadastroPerfil | null;
   contexto: 'lembrete' | 'bloqueio' | 'paywall' | 'edicao';
   ciclo?: 'mensal' | 'anual' | null;
-  onLembrarDepois?: () => void;
+  onLembrarDepois?: (status: StatusCadastroPerfil) => void | Promise<void>;
   onCancelar?: () => void;
   onConcluido: (status: StatusCadastroPerfil, cobranca: DadosCobranca) => void | Promise<void>;
 };
@@ -48,7 +48,7 @@ const VAZIO: CadastroPerfil = {
   empresa_id: '', nome_fantasia: '', nome_responsavel: '', razao_social: '', tipo_documento: 'cnpj', documento: '',
   tipo_empresa: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', telefone: '',
   whatsapp: '', email_empresa: '', site: '', instagram: '', inscricao_estadual: '', inscricao_estadual_isento: false,
-  inscricao_municipal: '', inscricao_municipal_isento: false, regime_tributario: '', obrigatorio_em: '', concluido_em: null,
+  inscricao_municipal: '', inscricao_municipal_isento: false, regime_tributario: '', obrigatorio_em: '', adiado_em: null, concluido_em: null,
 };
 
 export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, contexto, ciclo, onLembrarDepois, onCancelar, onConcluido }: Props) {
@@ -277,7 +277,22 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
   };
 
   const lembrarDepois = async () => {
-    onLembrarDepois?.();
+    setSalvando(true); setErro('');
+    try {
+      const { data: sessao } = await (await import('../lib/supabase')).supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      const resposta = await fetch('/api/perfil-cadastro', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ empresaId, adiar: true }),
+      });
+      const json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível adiar o cadastro.');
+      setStatus(json); setDados(json.cadastro);
+      await onLembrarDepois?.(json);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível adiar o cadastro.');
+    } finally { setSalvando(false); }
   };
 
   const salvarParcial = async () => {
@@ -288,12 +303,12 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
       const resposta = await fetch('/api/perfil-cadastro', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ empresaId, dados, concluir: false }),
+        body: JSON.stringify({ empresaId, dados, concluir: false, adiar: true }),
       });
       const json = await resposta.json();
       if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível salvar as informações.');
       setStatus(json); setDados(json.cadastro);
-      onLembrarDepois?.();
+      await onLembrarDepois?.(json);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível salvar as informações.');
     } finally { setSalvando(false); }
@@ -313,7 +328,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
         <header className="shrink-0 bg-[#003E73] px-4 py-3 text-white">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200">Cadastro do perfil</p>
           <h2 className="mt-0.5 text-base font-black leading-tight sm:text-lg">{titulo}</h2>
-          {contexto === 'lembrete' && <p className="mt-1 text-xs text-white/80">Faltam {status?.diasRestantes ?? 7} dias para este cadastro se tornar obrigatório.</p>}
+          {contexto === 'lembrete' && <p className="mt-1 text-xs text-white/80">Você pode concluir estes dados quando precisar de recursos que exigem cadastro, como assinatura ou emissão fiscal.</p>}
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
@@ -532,8 +547,8 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
         </div>
 
         <footer className={`shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 ${contexto === 'lembrete' ? 'grid grid-cols-3 gap-1.5' : 'flex justify-end gap-2'}`}>
-          {contexto === 'lembrete' && <button type="button" onClick={lembrarDepois} disabled={salvando} className="h-9 min-w-0 rounded-lg border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 transition active:scale-95 disabled:opacity-60">Lembrar depois</button>}
-          {contexto === 'lembrete' && status?.podeEditar && <button type="button" onClick={salvarParcial} disabled={salvando || carregando} className="h-9 min-w-0 rounded-lg border border-sky-200 bg-sky-50 px-1 text-[10px] font-black text-sky-800 transition active:scale-95 disabled:opacity-60">{salvando ? 'Salvando...' : 'Salvar inclusões'}</button>}
+          {contexto === 'lembrete' && <button type="button" onClick={lembrarDepois} disabled={salvando} className="h-9 min-w-0 rounded-lg border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 transition active:scale-95 disabled:opacity-60">Preencher depois</button>}
+          {contexto === 'lembrete' && status?.podeEditar && <button type="button" onClick={salvarParcial} disabled={salvando || carregando} className="h-9 min-w-0 rounded-lg border border-sky-200 bg-sky-50 px-1 text-[10px] font-black text-sky-800 transition active:scale-95 disabled:opacity-60">{salvando ? 'Salvando...' : 'Salvar rascunho'}</button>}
           {contexto === 'paywall' && <button type="button" onClick={onCancelar} className="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Voltar aos planos</button>}
           {contexto === 'edicao' && <button type="button" onClick={onCancelar} disabled={salvando} className="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600 disabled:opacity-60">Cancelar</button>}
           {status?.podeEditar && <button type="button" onClick={salvar} disabled={salvando || carregando} className={`h-9 min-w-0 rounded-lg bg-[#003E73] text-xs font-black text-white transition active:scale-95 disabled:opacity-60 ${contexto === 'lembrete' ? 'px-1 text-[10px]' : 'px-5'}`}>{salvando ? 'Salvando...' : contexto === 'paywall' ? 'Salvar e continuar' : contexto === 'edicao' ? 'Salvar alterações' : 'Concluir cadastro'}</button>}

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.0.19.63 - 2026-09-17
+- **Cadastro de perfil — Gestão Web e Mobile**: um novo perfil pode ser usado
+  sem CNPJ ou cadastro completo. **Preencher depois** guarda essa escolha no
+  perfil e remove o lembrete recorrente; dados legais continuam obrigatórios
+  ao iniciar assinatura, emissão fiscal ou outra ação que os exija.
+
 ## 1.35.0.19.62 - 2026-09-17
 - **Gestão Mobile — Lançamentos previstos**: **Confirmar hoje** aplica a data
   atual automaticamente, inclusive quando a previsão pertence a outro mês ou

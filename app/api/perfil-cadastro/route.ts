@@ -49,6 +49,7 @@ function normalizarCadastro(cadastro: Record<string, unknown>) {
     inscricao_municipal_isento: cadastro.inscricao_municipal_isento === true,
     regime_tributario: texto(cadastro.regime_tributario, 40),
     obrigatorio_em: String(cadastro.obrigatorio_em || ''),
+    adiado_em: cadastro.adiado_em ? String(cadastro.adiado_em) : null,
     concluido_em: cadastro.concluido_em ? String(cadastro.concluido_em) : null,
   };
 }
@@ -85,8 +86,9 @@ function statusCadastro(cadastro: Record<string, unknown>, tipoPerfil: 'empresa'
   return {
     cadastro: normalizado,
     completo: Boolean(normalizado.concluido_em),
-    obrigatorio: !normalizado.concluido_em && Number.isFinite(obrigatorioEm) && obrigatorioEm <= agora,
-    diasRestantes: normalizado.concluido_em ? 0 : Math.max(0, Math.ceil((obrigatorioEm - agora) / 86400000)),
+    adiado: Boolean(normalizado.adiado_em),
+    obrigatorio: !normalizado.concluido_em && !normalizado.adiado_em && Number.isFinite(obrigatorioEm) && obrigatorioEm <= agora,
+    diasRestantes: normalizado.concluido_em || normalizado.adiado_em ? 0 : Math.max(0, Math.ceil((obrigatorioEm - agora) / 86400000)),
     podeEditar,
     tipoPerfil,
   };
@@ -164,9 +166,21 @@ export async function PUT(request: Request) {
 
   const [{ data: empresa }, { data: cadastroAtual }] = await Promise.all([
     ctx.admin.from('empresas').select('nome, tipo_perfil').eq('id', empresaId).maybeSingle(),
-    ctx.admin.from('cadastros_perfil').select('concluido_em').eq('empresa_id', empresaId).maybeSingle(),
+    ctx.admin.from('cadastros_perfil').select('*').eq('empresa_id', empresaId).maybeSingle(),
   ]);
   if (!empresa) return NextResponse.json({ erro: true, mensagem: 'Perfil não encontrado.' }, { status: 404 });
+
+  const adiar = corpo.adiar === true;
+  if (adiar && !(corpo.dados && typeof corpo.dados === 'object')) {
+    const { data: salvo, error } = await ctx.admin.from('cadastros_perfil').upsert({
+      empresa_id: empresaId,
+      adiado_em: new Date().toISOString(),
+      atualizado_em: new Date().toISOString(),
+    }, { onConflict: 'empresa_id' }).select('*').single();
+    if (error || !salvo) return NextResponse.json({ erro: true, mensagem: 'Não foi possível adiar o cadastro agora.' }, { status: 500 });
+    return NextResponse.json({ ok: true, ...statusCadastro(salvo, empresa.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa', true) });
+  }
+
   const pessoal = empresa.tipo_perfil === 'pessoal';
   const dados = corpo.dados && typeof corpo.dados === 'object' ? corpo.dados : {};
   const tipoEmpresaInformado = texto(dados.tipo_empresa, 30);
@@ -228,7 +242,8 @@ export async function PUT(request: Request) {
     documento: valores.documento || null,
     tipo_empresa: valores.tipo_empresa || null,
     regime_tributario: valores.regime_tributario || null,
-    ...(concluir ? { concluido_em: cadastroAtual?.concluido_em || new Date().toISOString() } : {}),
+    ...(adiar ? { adiado_em: new Date().toISOString() } : {}),
+    ...(concluir ? { concluido_em: cadastroAtual?.concluido_em || new Date().toISOString(), adiado_em: null } : {}),
   }, { onConflict: 'empresa_id' }).select('*').single();
   if (error) {
     const duplicado = error.code === '23505';

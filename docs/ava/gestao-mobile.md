@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.62 -->
+<!-- ava-version: 1.35.0.19.63 -->
+
+> Revisão 1.35.0.19.63: ao criar ou acessar um perfil empresarial, toque
+> **Preencher depois** para usar a Gestão sem CNPJ ou cadastro completo. A
+> decisão permanece salva e o aviso não volta; o cadastro será solicitado ao
+> iniciar assinatura, emissão fiscal ou outra ação que realmente o exija.
+> **Salvar rascunho** preserva os campos já preenchidos.
 
 > Revisão 1.35.0.19.62: no editor de um lançamento **previsto**, **Confirmar
 > hoje** usa automaticamente a data atual e leva o registro ao mês e ano

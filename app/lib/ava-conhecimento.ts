@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.63: o cadastro empresarial pode ser adiado de
+// forma persistente para o uso comum da Gestão. Ava deve orientar a conclusão
+// apenas quando a pessoa iniciar assinatura, emissão fiscal ou outra ação que
+// exija dados legais; o rascunho permanece disponível no perfil.
 // Revisado na versão 1.35.0.19.62: Confirmar hoje no editor de previsão móvel
 // aplica a data atual automaticamente, inclusive em outro mês ou ano.
 // Revisado na versão 1.35.0.19.61: ações de lançamentos previstos na Gestão

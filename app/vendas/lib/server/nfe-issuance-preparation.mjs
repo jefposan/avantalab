@@ -77,7 +77,7 @@ export async function buildNfeIssuancePreparation({ draft, client, config, numbe
   if (normalizedDraft.status === 'Cancelado') result.errors.push(diagnosticError('AV-NFE-ISSUE-CANCELLED', 'draft.status', 'Um rascunho cancelado não pode iniciar uma tentativa de emissão.'));
   if (text(normalizedDraft.environment) && !/homologa/i.test(text(normalizedDraft.environment))) result.errors.push(diagnosticError('AV-NFE-ISSUE-ENVIRONMENT', 'draft.environment', 'A preparação está travada no ambiente de homologação.'));
   if (!/^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/.test(text(normalizedDraft.issuer?.uf).toUpperCase())) result.errors.push(diagnosticError('AV-NFE-ISSUE-UF', 'draft.issuer.uf', 'Informe uma UF brasileira atendida pela NF-e.'));
-  if (issuerDocument.length !== 14) result.errors.push(diagnosticError('AV-NFE-ISSUE-ISSUER', 'draft.issuer.document', 'O CNPJ do emitente não está completo.'));
+  if (issuerDocument.length !== 14) result.errors.push(diagnosticError('AV-NFE-ISSUE-ISSUER', 'draft.issuer.document', 'Conclua o cadastro do perfil empresarial com o CNPJ antes de emitir a nota.'));
 
   const ledger = normalizeFiscalNumberingLedger(numberingLedger, { nfe: normalizedDraft.issuer?.series || normalizedDraft.series });
   const existingReservation = ledger.reservations.find((entry) => entry.draftId === draftId);

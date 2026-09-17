@@ -1375,7 +1375,7 @@
   function deveExibirCadastroPerfilMobile() {
     if (ehContaRevisaoAppAppleMobile(state.usuario)) return false;
     var status = state.cadastroPerfilStatus;
-    return !!(status && !status.completo && (status.obrigatorio || !state.cadastroPerfilAdiado));
+    return !!(status && status.podeEditar === true && !status.completo && !status.adiado && !state.cadastroPerfilAdiado);
   }
 
   function telaErroCadastroPerfilMobile() {
@@ -1521,10 +1521,10 @@
         '</div>';
     return '<section class="avantalab-mobile-bg fixed inset-0 z-[12000] flex items-start justify-center overflow-y-auto bg-black/85 px-3 py-4">' +
       '<div class="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white text-slate-900 shadow-2xl">' +
-        '<header class="flex shrink-0 items-start gap-3 bg-[#003E73] px-4 py-3 text-white"><div class="min-w-0 flex-1"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Faltam ' + Number(status.diasRestantes || 0) + ' dias para se tornar obrigat&oacute;rio.</p>' : '') + '</div>' + (contexto === 'edicao' ? '<button id="cp-fechar-edicao" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition active:scale-95" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button>' : '') + '</header>' +
+        '<header class="flex shrink-0 items-start gap-3 bg-[#003E73] px-4 py-3 text-white"><div class="min-w-0 flex-1"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Conclua quando precisar de assinatura, emissão fiscal ou outro recurso que exige cadastro.</p>' : '') + '</div>' + (contexto === 'edicao' ? '<button id="cp-fechar-edicao" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition active:scale-95" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button>' : '') + '</header>' +
         '<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">' + formulario + '<p id="cp-erro" class="mt-3 text-xs font-bold text-red-600"></p><p id="cp-autosave-status" class="mt-2 text-[10px] font-bold text-slate-500"></p></div>' +
         '<footer class="' + (contexto === 'lembrete' ? 'grid grid-cols-3' : 'flex justify-end') + ' shrink-0 gap-1.5 border-t border-slate-200 bg-slate-50 px-4 py-3">' +
-          (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 min-w-0 rounded-lg border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 transition active:scale-95">Lembrar depois</button><button id="cp-salvar-parcial" type="button" class="h-9 min-w-0 rounded-lg border border-sky-200 bg-sky-50 px-1 text-[10px] font-black text-sky-800 transition active:scale-95">Salvar inclusões</button>' : '') +
+          (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 min-w-0 rounded-lg border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 transition active:scale-95">Preencher depois</button><button id="cp-salvar-parcial" type="button" class="h-9 min-w-0 rounded-lg border border-sky-200 bg-sky-50 px-1 text-[10px] font-black text-sky-800 transition active:scale-95">Salvar rascunho</button>' : '') +
           (contexto === 'paywall' ? '<button id="cp-voltar" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Voltar aos planos</button>' : '') +
           (contexto === 'edicao' ? '<button id="cp-cancelar-edicao" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600 transition active:scale-95">Cancelar</button>' : '') +
           (podeEditar ? '<button id="cp-salvar" type="button" class="h-9 min-w-0 rounded-lg bg-[#003E73] ' + (contexto === 'lembrete' ? 'px-1 text-[10px]' : 'px-5 text-xs') + ' font-black text-white transition active:scale-95">' + (contexto === 'paywall' ? 'Salvar e continuar' : (contexto === 'edicao' ? 'Salvar alterações' : 'Concluir cadastro')) + '</button>' : '') +
@@ -1782,9 +1782,28 @@
   }
 
   async function adiarCadastroPerfilMobile() {
-    if (!state.empresa) return;
-    state.cadastroPerfilAdiado = true;
-    render();
+    if (state.cadastroPerfilSalvando || !state.empresa) return;
+    var erroEl = document.getElementById('cp-erro');
+    state.cadastroPerfilSalvando = true;
+    if (erroEl) erroEl.textContent = 'Salvando...';
+    try {
+      var token = await tokenSessao();
+      var resposta = await fetch('/api/perfil-cadastro', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, adiar: true }),
+      });
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível adiar o cadastro.');
+      state.cadastroPerfilStatus = json;
+      state.cadastroPerfilDados = json.cadastro;
+      state.cadastroPerfilAdiado = true;
+      render();
+    } catch (e) {
+      if (erroEl) erroEl.textContent = e.message || 'Não foi possível adiar o cadastro.';
+    } finally {
+      state.cadastroPerfilSalvando = false;
+    }
   }
 
   async function salvarCadastroPerfilParcialMobile() {
@@ -1797,7 +1816,7 @@
       var resposta = await fetch('/api/perfil-cadastro', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ empresaId: state.empresa.id, dados: capturarCadastroPerfilMobile(), concluir: false }),
+        body: JSON.stringify({ empresaId: state.empresa.id, dados: capturarCadastroPerfilMobile(), concluir: false, adiar: true }),
       });
       var json = await resposta.json();
       if (!resposta.ok) throw new Error(json.mensagem || 'Nao foi possivel salvar as informacoes.');
@@ -14613,7 +14632,7 @@
     else if (state.paywallCadastroCiclo) telaAtual = telaCadastroPerfilMobile('paywall');
     else if (state.paywallAtivo) telaAtual = telaPaywallMobile();
     else if (state.cadastroPerfilErro) telaAtual = telaErroCadastroPerfilMobile();
-    else if (deveExibirCadastroPerfilMobile()) telaAtual = telaCadastroPerfilMobile(state.cadastroPerfilStatus.obrigatorio ? 'bloqueio' : 'lembrete');
+    else if (deveExibirCadastroPerfilMobile()) telaAtual = telaCadastroPerfilMobile('lembrete');
     else if (state.cadastroPerfilEditando) telaAtual = telaCadastroPerfilMobile('edicao');
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();

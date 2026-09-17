@@ -8122,13 +8122,13 @@ if (validacaoTelefoneObrigatoria) {
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${bgMain}`}>
 
-      {empresaId && !contaRevisaoAppApple && cadastroPerfilStatus && !cadastroPerfilStatus.completo && !cadastroPerfilAdiado && (
+      {empresaId && !contaRevisaoAppApple && cadastroPerfilStatus?.podeEditar && !cadastroPerfilStatus.completo && !cadastroPerfilStatus.adiado && !cadastroPerfilAdiado && (
         <CadastroPerfilModal
           aberto
           empresaId={empresaId}
           statusInicial={cadastroPerfilStatus}
-          contexto={cadastroPerfilStatus.obrigatorio ? 'bloqueio' : 'lembrete'}
-          onLembrarDepois={cadastroPerfilStatus.obrigatorio ? undefined : () => setCadastroPerfilAdiado(true)}
+          contexto="lembrete"
+          onLembrarDepois={(status) => { setCadastroPerfilStatus(status); setCadastroPerfilAdiado(true); }}
           onConcluido={(status) => {
             setCadastroPerfilStatus(status);
             setNomeEmpresaAtual(status.cadastro.nome_fantasia);

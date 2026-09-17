@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.62 -->
+<!-- ava-version: 1.35.0.19.63 -->
+
+> Revisão 1.35.0.19.63: um perfil empresarial pode usar o módulo Vendas antes
+> de concluir o cadastro legal. Dados completos continuam necessários somente
+> ao iniciar recursos fiscais, como emissão de documentos, e não são exigidos
+> pelo AvantaVendas Mobile.
 
 > Revisão 1.35.0.19.62: a confirmação automática no editor de previsões
 > pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
