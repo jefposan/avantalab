@@ -1,5 +1,26 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.73: as linhas do card móvel Centros de custo
+// permanecem dentro do card pai, inclusive com o destaque de seleção ativo.
+// Revisado na versão 1.35.0.19.72: com valores ocultos, tocar um centro no
+// card móvel Centros de custo revela somente seus valores, sem trocar o
+// contexto financeiro da pílula nem mostrar o consolidado.
+// Revisado na versão 1.35.0.19.71: o card móvel Centros de custo não possui
+// seletor de mês próprio; ele sempre acompanha o período do cabeçalho global.
+// Revisado na versão 1.35.0.19.70: o seletor de mês do card móvel Centros de
+// custo usa 108 px e fonte de 9 px, preservando o texto completo e o centro.
+// Revisado na versão 1.35.0.19.69: o seletor de mês do card móvel Centros de
+// custo tem 96 px fixos, suficientes para o mês completo no espaço central.
+// Revisado na versão 1.35.0.19.68: no card móvel Centros de custo, o seletor
+// de mês mantém uma largura fixa para o texto completo e fica centralizado no
+// espaço entre o título e os controles à direita.
+// Revisado na versão 1.35.0.19.67: no card móvel Centros de custo, o seletor
+// de mês ocupa somente a largura disponível do cabeçalho e não corta o mês.
+// Revisado na versão 1.35.0.19.66: com Centros de custo ativo e ao menos um
+// adicional ao Principal, a Gestão Mobile exibe no Dashboard o card Centros
+// de custo. Ava deve orientar que o card consolida todos os centros sem mudar
+// o seletor global; centros pausados preservam histórico e desativar o
+// recurso em Configurações oculta o card automaticamente.
 // Revisado na versão 1.35.0.19.65: Ava orienta a edição de lançamentos pelo
 // local real de cada ambiente. No Mobile, tocar a linha no card do mês abre o
 // editor; Cadastrar despesas é apenas o catálogo de tipos e categorias.
@@ -1245,6 +1266,7 @@ NAVEGAÇÃO E PERFIS
   mesma identidade de acesso, mas são abertos de forma independente.
 - Cada usuário possui uma única conta operacional inicial no Vendas, preparada automaticamente no primeiro acesso; perfis adicionais só são criados em Configurações. O Vendas e a Gestão são aplicativos independentes e compartilham apenas a identidade de autenticação. O AvantaVendas não oferece acesso direto à Gestão no cabeçalho nem nos atalhos inferiores; o mesmo login e senha podem ser usados separadamente nos dois aplicativos.
 - O dashboard organiza ordem e visibilidade dos cards em Menu > Organizar tela inicial. Instruções sobre categorias abrem pelo ícone i no cabeçalho de Cadastrar despesas e retornam ao cadastro ao fechar.
+- Com **Centros de custo** ativo, o card **Centros de custo** aparece no Dashboard somente depois de criar pelo menos um centro além do **Principal**. Ele acompanha o mês escolhido no cabeçalho, consolida todos os centros do perfil e não altera o centro selecionado na pílula. Com valores ocultos, tocar um centro mostra somente suas receitas, despesas e resultado, sem revelar o consolidado. Centros pausados mantêm o histórico no card; desativar o recurso em Configurações o oculta automaticamente.
 - Tema, ordem e visibilidade do dashboard, atalhos inferiores e a preferência de iniciar valores ocultos acompanham a conta por perfil. O aparelho mantém somente uma cópia local para uso sem conexão.
 - Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. No seletor de troca, o perfil em uso fica identificado e desativado; a troca real usa somente os demais perfis disponíveis.
 - Em Usuários, Gestor Master edita todos; Administrador edita seus próprios dados e os de operadores; Operador Completo edita apenas seus dados; Operador Simples não edita. Criar exige Nome completo, E-mail, Login, Senha inicial e Tipo de usuário. E-mail e login acessam a mesma conta; se o e-mail já existir, use Adicionar usuário existente. O servidor verifica a disponibilidade de ambos antes de salvar; se houver erro, os valores permanecem e o cursor vai ao campo indicado. A exclusão total de uma conta interna só ocorre sem outros perfis, vínculos ou histórico; nos demais casos, remove somente o acesso atual e mantém a conta pesquisável.

@@ -71,3 +71,33 @@ test('edição de centro mantém ações alinhadas e os seletores compactos', ()
   assert.match(mobile, /min-w-0 justify-self-center.*seletorMesLancamento/);
   assert.match(mobile, /absolute right-3 top-1\/2 flex h-9 w-9 -translate-y-1\/2/);
 });
+
+test('o card de centros consolida os centros do perfil sem trocar o contexto global', () => {
+  assert.match(mobile, /function temCardCentrosCustoMobile\(\)/);
+  assert.match(mobile, /state\.centrosCustoAtivo\s*&& \(state\.centrosCusto \|\| \[\]\)\.some\(function \(centro\) \{ return !centro\.is_principal; \}\)/);
+  assert.match(mobile, /function resumoCentrosCustoMobile\(mes\)/);
+  assert.match(mobile, /Este resumo não segue o seletor global do cabeçalho/);
+  assert.match(mobile, /function centrosCustoCardHtml\(\)/);
+  assert.match(mobile, /var mes = state\.mes;/);
+  assert.match(mobile, /O resumo acompanha diretamente o período ativo no cabeçalho da Gestão/);
+  assert.doesNotMatch(mobile, /mesCentrosCusto/);
+  assert.doesNotMatch(mobile, /mes-centros-custo-mobile/);
+  assert.match(mobile, /centrosCusto: centrosCustoCardHtml\(\)/);
+  assert.match(mobile, /if \(id === 'centrosCusto'\) return temCardCentrosCustoMobile\(\);/);
+});
+
+test('tocar um centro revela somente os seus valores sem alterar o centro operacional', () => {
+  assert.match(mobile, /centroCustoResumoExibidoId/);
+  assert.match(mobile, /data-centro-custo-resumo-id/);
+  assert.match(mobile, /valorCentroHtml\(centro\.resultado, centro\.id\)/);
+  assert.match(mobile, /state\.centroCustoResumoExibidoId = id;/);
+  assert.match(mobile, /function centralizarCentroCustoResumoNoCard\(id\)/);
+  assert.doesNotMatch(mobile, /data-centro-custo-resumo-id[\s\S]{0,500}trocarCentroCustoGlobalMobile/);
+});
+
+test('linhas de centros permanecem contidas no card, inclusive quando destacadas', () => {
+  assert.match(mobile, /id="centros-custo-lista-mobile" class="box-border grid w-full min-w-0 max-w-full/);
+  assert.match(mobile, /overflow-x-hidden overflow-y-auto overscroll-contain p-1/);
+  assert.match(mobile, /class="box-border w-full min-w-0 max-w-full rounded-xl border-2/);
+  assert.match(mobile, /flex min-w-0 max-w-full flex-col overflow-x-hidden overflow-y-hidden rounded-2xl border-2/);
+});

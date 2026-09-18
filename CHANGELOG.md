@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.35.0.19.73 - 2026-09-18
+- **Gestão Mobile — Centros de custo**: as linhas do card agora respeitam a
+  largura útil do card pai, sem rolagem horizontal ou corte ao receberem o
+  destaque de seleção.
+
+## 1.35.0.19.72 - 2026-09-18
+- **Gestão Mobile — Centros de custo**: no card do Dashboard, tocar um centro
+  revela somente suas receitas, despesas e resultado quando os valores gerais
+  estiverem ocultos. A ação não troca o centro operacional nem o consolidado.
+
+## 1.35.0.19.71 - 2026-09-18
+- **Gestão Mobile — Centros de custo**: removido o seletor próprio de mês do
+  card. O resumo passa a acompanhar exclusivamente o período escolhido no
+  cabeçalho principal da Gestão.
+
+## 1.35.0.19.70 - 2026-09-18
+- **Gestão Mobile — Centros de custo**: o seletor de mês central passou a 108
+  px e sua tipografia foi reduzida para 9 px, garantindo o texto completo sem
+  ampliar visualmente o cabeçalho.
+
+## 1.35.0.19.69 - 2026-09-18
+- **Gestão Mobile — Centros de custo**: refinada a largura fixa do seletor de
+  mês para 96 px, medida que comporta o mês completo e permanece dentro do
+  espaço central do cabeçalho em telas móveis.
+
+## 1.35.0.19.68 - 2026-09-18
+- **Gestão Mobile — Centros de custo**: o seletor de mês voltou a ter largura
+  fixa para exibir o mês completo e agora fica centralizado apenas no espaço
+  entre o título do card e seus controles à direita.
+
+## 1.35.0.19.67 - 2026-09-18
+- **Gestão Mobile — Centros de custo**: o seletor de mês do card agora ocupa
+  dinamicamente somente o espaço restante do cabeçalho, preservando o nome do
+  mês completo em telas estreitas.
+
+## 1.35.0.19.66 - 2026-09-18
+- **Gestão Mobile — Centros de custo**: o Dashboard ganhou o card consolidado
+  de todos os centros do perfil. Ele aparece somente com o recurso ativo e ao
+  menos um centro além do Principal, possui seletor próprio de mês e não muda
+  o centro selecionado no cabeçalho. Pausar um centro preserva seu histórico;
+  desativar o recurso oculta o card imediatamente em todos os dispositivos.
+
 ## 1.35.0.19.65 - 2026-09-17
 - **Ava — Gestão**: a orientação de edição de lançamentos agora informa o
   caminho real de cada ambiente. No Mobile, a pessoa toca a linha em

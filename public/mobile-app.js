@@ -606,7 +606,9 @@
     resumoPerfisSolicitacao: 0,
     resumoPerfilDestaqueId: '',
     resumoPerfilExibidoId: '',
+    centroCustoResumoExibidoId: '',
     meusPerfisExpandido: false,
+    centrosCustoExpandido: false,
     caixinhaData: (function () { var hoje = new Date(); return hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0'); })(),
     caixinhaDescricao: 'Reserva',
     caixinhaValor: '',
@@ -825,7 +827,7 @@
   var CHAVE_PREFERENCIAS_CONTA_MOBILE = 'avantalab_mobile_preferencias_v1';
   var TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
   var DEZ_MINUTOS_MS = 10 * 60 * 1000;
-  var CARDS_COM_VALORES = ['saldo', 'caixinha', 'totais', 'categorias', 'tipos', 'meusPerfis'];
+  var CARDS_COM_VALORES = ['saldo', 'caixinha', 'totais', 'categorias', 'tipos', 'meusPerfis', 'centrosCusto'];
 
   // --- Helpers de tipo de perfil ---
   var CATEGORIAS_EMPRESA_MOBILE = [
@@ -2670,6 +2672,7 @@
       'caixinha',
       'controlePonto',
       'meusPerfis',
+      'centrosCusto',
     ];
   }
 
@@ -2685,6 +2688,7 @@
       ia: 'Perguntas para IA',
       agenda: 'Agenda',
       meusPerfis: 'Meus perfis',
+      centrosCusto: 'Centros de custo',
       categorias: 'Despesas por categoria',
       tipos: 'Total por tipo de despesa',
       ultimasDespesas: 'Despesas do mês',
@@ -2741,7 +2745,12 @@
   }
 
   function cardDashboardPermitido(id) {
-    return id !== 'controlePonto' || podeGerenciarPontoMobile();
+    if (id === 'controlePonto') return podeGerenciarPontoMobile();
+    // O Principal nasce junto com a ativação, mas não deve criar um card
+    // redundante. O resumo aparece somente depois que houver ao menos um
+    // centro adicional no perfil.
+    if (id === 'centrosCusto') return temCardCentrosCustoMobile();
+    return true;
   }
 
   function salvarOrdemDashboard() {
@@ -3132,6 +3141,7 @@
     state.empresa = empresaSelecionada;
     state.resumoPerfilDestaqueId = empresaSelecionada.id;
     state.resumoPerfilExibidoId = '';
+    state.centroCustoResumoExibidoId = '';
     window._avaProfilePillHidden = false;
     state.pontoModuloAtivo = false;
     state.vendasMobileModuloAtivo = false;
@@ -4144,6 +4154,57 @@
 
   function centrosCustoAtivosMobile() {
     return (state.centrosCusto || []).filter(function (centro) { return centro.ativo !== false; });
+  }
+
+  function temCardCentrosCustoMobile() {
+    return Boolean(
+      state.centrosCustoAtivo
+      && (state.centrosCusto || []).some(function (centro) { return !centro.is_principal; })
+    );
+  }
+
+  // Este resumo não segue o seletor global do cabeçalho. Assim como na Web,
+  // ele compara todos os centros do perfil para o mês escolhido no próprio
+  // card, sem mudar o contexto que a pessoa está usando para lançar dados.
+  function resumoCentrosCustoMobile(mes) {
+    var centros = (state.centrosCusto || []).slice();
+    var totais = {};
+    var mesIndice = indiceMes(mes);
+
+    centros.forEach(function (centro) {
+      totais[centro.id] = { receitas: 0, despesas: 0 };
+    });
+
+    (state.lancamentos || []).forEach(function (item) {
+      if (!item || item.mes !== mes || item.status === 'cancelada' || item.status === 'prevista') return;
+      if (dataFutura(Number(state.ano), mesIndice, Number(item.dia || 1))) return;
+      var centroId = String(item.centroCustoId || item.centro_custo_id || '');
+      if (!totais[centroId]) return;
+      totais[centroId].despesas += Number(item.valor || 0);
+    });
+
+    (state.entradas || []).forEach(function (item) {
+      if (!item || item.mes !== mes || item.status === 'prevista') return;
+      var centroId = String(item.centroCustoId || item.centro_custo_id || '');
+      if (!totais[centroId]) return;
+      totais[centroId].receitas += Number(item.valor || 0);
+    });
+
+    return centros.map(function (centro) {
+      var total = totais[centro.id] || { receitas: 0, despesas: 0 };
+      return {
+        id: centro.id,
+        nome: centro.nome,
+        ativo: centro.ativo !== false,
+        is_principal: centro.is_principal === true,
+        receitas: total.receitas,
+        despesas: total.despesas,
+        resultado: total.receitas - total.despesas,
+      };
+    }).sort(function (a, b) {
+      if (a.is_principal !== b.is_principal) return a.is_principal ? -1 : 1;
+      return b.despesas - a.despesas || a.nome.localeCompare(b.nome, 'pt-BR');
+    });
   }
 
   function centroCustoPrincipalMobile() {
@@ -6957,6 +7018,9 @@
           };
         })
       : [];
+    if (!state.centrosCusto.some(function (centro) { return centro.id === state.centroCustoResumoExibidoId; })) {
+      state.centroCustoResumoExibidoId = '';
+    }
     sincronizarCentroCustoSelecionadoMobile();
 
     var modulosAtivosMobile = (resultados[5] && resultados[5].data) || [];
@@ -8865,6 +8929,9 @@
         is_principal: centro.is_principal === true,
       };
     });
+    if (!state.centrosCusto.some(function (centro) { return centro.id === state.centroCustoResumoExibidoId; })) {
+      state.centroCustoResumoExibidoId = '';
+    }
     sincronizarCentroCustoSelecionadoMobile();
     return state.centrosCusto;
   }
@@ -8874,6 +8941,9 @@
     var empresaId = state.empresa.id || state.empresa.empresa_id;
     var resposta = await db.from('configuracoes').select('centros_custo_ativo').eq('empresa_id', empresaId).maybeSingle();
     if (resposta.error) return false;
+    var assinaturaAntes = (state.centrosCusto || []).map(function (centro) {
+      return [centro.id, centro.nome, centro.ativo !== false, centro.is_principal === true].join(':');
+    }).join('|');
     var ativoAgora = Boolean(resposta.data && resposta.data.centros_custo_ativo === true);
     var mudou = ativoAgora !== state.centrosCustoAtivo;
     state.centrosCustoAtivo = ativoAgora;
@@ -8882,8 +8952,14 @@
       state.centrosCusto = [];
       state.centroCustoSelecionadoId = '';
       state.centroCustoTodosSelecionado = false;
+      state.centroCustoResumoExibidoId = '';
     }
-    if (mudou || state.menuAberto || state.modalLancamento || state.modalMenu === 'centrosCusto') render();
+    var assinaturaDepois = (state.centrosCusto || []).map(function (centro) {
+      return [centro.id, centro.nome, centro.ativo !== false, centro.is_principal === true].join(':');
+    }).join('|');
+    // Mudanças feitas pela Web ou por outro aparelho também precisam mostrar
+    // ou ocultar o card imediatamente, sem exigir recarregar o app.
+    if (mudou || assinaturaAntes !== assinaturaDepois || state.menuAberto || state.modalLancamento || state.modalMenu === 'centrosCusto') render();
     return mudou;
   }
 
@@ -8922,6 +8998,7 @@
       state.centrosCusto = [];
       state.centroCustoSelecionadoId = '';
       state.centroCustoTodosSelecionado = false;
+      state.centroCustoResumoExibidoId = '';
     }
     state.centroCustoSalvando = false;
     render();
@@ -11109,6 +11186,70 @@
     '</section>';
   }
 
+  function centrosCustoCardHtml() {
+    if (!temCardCentrosCustoMobile()) return '';
+
+    var cardId = 'centrosCusto';
+    // O resumo acompanha diretamente o período ativo no cabeçalho da Gestão.
+    // Não há um segundo seletor de mês dentro deste card.
+    var mes = state.mes;
+    var centros = resumoCentrosCustoMobile(mes);
+    var totalReceitas = centros.reduce(function (total, centro) { return total + Number(centro.receitas || 0); }, 0);
+    var totalDespesas = centros.reduce(function (total, centro) { return total + Number(centro.despesas || 0); }, 0);
+    var consolidado = totalReceitas - totalDespesas;
+    var maiorResultado = Math.max(1, centros.reduce(function (maior, centro) {
+      return Math.max(maior, Math.abs(Number(centro.resultado || 0)));
+    }, 0));
+    var escuro = !!state.darkMode;
+    var fundo = escuro ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900';
+    var fundoLinha = escuro ? 'bg-slate-800/55' : 'bg-white';
+    var textoSecundario = escuro ? 'text-slate-400' : 'text-slate-500';
+    var expandido = !!state.centrosCustoExpandido;
+    var valorCentroHtml = function (valor, centroId) {
+      var revelarIndividual = !!(centroId && state.centroCustoResumoExibidoId === centroId);
+      return valoresCardVisiveis(cardId) || revelarIndividual
+        ? dinheiro(valor)
+        : 'R$ &bull;&bull;&bull;&bull;&bull;&bull;';
+    };
+    var corpo = '<div id="centros-custo-lista-mobile" class="box-border grid w-full min-w-0 max-w-full ' + (expandido ? 'max-h-[52dvh]' : 'max-h-[190px]') + ' gap-2 overflow-x-hidden overflow-y-auto overscroll-contain p-1">' + centros.map(function (centro) {
+      var positivo = Number(centro.resultado || 0) >= 0;
+      var largura = Math.max(6, Math.round((Math.abs(Number(centro.resultado || 0)) / maiorResultado) * 100));
+      var centroAtual = !state.centroCustoTodosSelecionado && centro.id === state.centroCustoSelecionadoId;
+      var revelarIndividual = state.centroCustoResumoExibidoId === centro.id;
+      var destacado = centroAtual || revelarIndividual;
+      var estado = centroAtual ? 'Centro atual' : (centro.is_principal ? 'Principal' : (centro.ativo ? 'Ativo' : 'Pausado'));
+      return '<button type="button" data-centro-custo-resumo-id="' + escapeHtml(centro.id) + '" aria-pressed="' + (revelarIndividual ? 'true' : 'false') + '" class="box-border w-full min-w-0 max-w-full rounded-xl border-2 px-3 py-2 text-left shadow-sm transition active:scale-[0.98] ' + fundoLinha + ' ' + (destacado ? 'border-cyan-500 shadow-[inset_0_0_0_1px_rgba(6,182,212,.18)]' : (escuro ? 'border-slate-700' : 'border-slate-200')) + '">' +
+        '<div class="flex items-center justify-between gap-3"><div class="min-w-0 flex-1"><p class="truncate text-xs font-black">' + escapeHtml(centro.nome) + '</p><p class="mt-0.5 truncate text-[9px] font-semibold ' + textoSecundario + '">' + estado + ((valoresCardVisiveis(cardId) || revelarIndividual) ? ' · Receitas ' + dinheiro(centro.receitas) + ' · Despesas ' + dinheiro(centro.despesas) : ' · Receitas e despesas') + '</p></div>' +
+          '<strong class="shrink-0 text-xs font-black ' + (positivo ? 'text-emerald-500' : 'text-red-500') + '">' + valorCentroHtml(centro.resultado, centro.id) + '</strong></div>' +
+        '<div class="mt-2 h-1.5 overflow-hidden rounded-full ' + (escuro ? 'bg-slate-700' : 'bg-slate-100') + '"><div class="h-full rounded-full ' + (positivo ? 'bg-emerald-500' : 'bg-red-500') + '" style="width:' + largura + '%"></div></div>' +
+      '</button>';
+    }).join('') + '</div>';
+    var cabecalho = '<div class="flex items-center justify-between gap-2 px-3 py-2.5 text-white" style="background:#003E73">' +
+      '<div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-100/75">' + escapeHtml(nomeMesCompleto(mes)) + '</p><h2 class="truncate text-sm font-black">Centros de custo</h2></div>' +
+      '<div class="flex shrink-0 items-center gap-1.5"><span class="whitespace-nowrap rounded-full bg-white/15 px-1.5 py-1 text-[8px] font-black" aria-label="' + centros.length + ' centro' + (centros.length === 1 ? '' : 's') + '"><span>' + centros.length + '</span><span class="hidden sm:inline"> centro' + (centros.length === 1 ? '' : 's') + '</span></span>' + botaoVisibilidadeValoresHtml(cardId, true) + '</div>' +
+    '</div>';
+    var totais = '<div class="mb-2 grid grid-cols-3 gap-1.5 rounded-xl ' + (escuro ? 'bg-slate-800/55' : 'bg-slate-50') + ' p-1.5">' +
+      '<div class="rounded-lg bg-[#003E73] px-2 py-2 text-white"><span class="block truncate text-[8px] font-black uppercase text-cyan-100/75">Consolidado</span><strong class="mt-0.5 block truncate text-[11px] font-black">' + valorCentroHtml(consolidado) + '</strong></div>' +
+      '<div class="rounded-lg px-2 py-2 ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Receitas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-emerald-500">' + valorCentroHtml(totalReceitas) + '</strong></div>' +
+      '<div class="rounded-lg px-2 py-2 text-right ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Despesas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-red-500">' + valorCentroHtml(totalDespesas) + '</strong></div>' +
+    '</div>';
+    var esticar = centros.length > 3
+      ? '<button id="toggle-esticar-centros-custo" type="button" class="flex h-8 w-full items-center justify-center border-t ' + (escuro ? 'border-slate-700 bg-slate-800/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-500') + ' text-[9px] font-black uppercase tracking-[0.14em] transition active:brightness-95">' + (expandido ? 'Recolher' : 'Esticar') + '</button>'
+      : '';
+    return '<section class="flex min-w-0 max-w-full flex-col overflow-x-hidden overflow-y-hidden rounded-2xl border-2 shadow-lg ' + fundo + '" style="border-color:#003E73;' + (expandido ? 'min-height:min(68dvh,560px);' : '') + '">' + cabecalho + '<div class="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden p-3">' + totais + corpo + '</div>' + esticar + '</section>';
+  }
+
+  function rolarCardCentrosCustoAoTopo() {
+    window.requestAnimationFrame(function () {
+      var scroll = document.getElementById('mobile-main-scroll');
+      var card = document.querySelector('[data-dashboard-card="centrosCusto"]');
+      if (!scroll || !card) return;
+      var scrollRect = scroll.getBoundingClientRect();
+      var cardRect = card.getBoundingClientRect();
+      scroll.scrollTo({ top: Math.max(0, scroll.scrollTop + cardRect.top - scrollRect.top), behavior: 'smooth' });
+    });
+  }
+
   function rolarCardMeusPerfisAoTopo() {
     window.requestAnimationFrame(function () {
       var scroll = document.getElementById('mobile-main-scroll');
@@ -11130,6 +11271,26 @@
       var selecionado = null;
       Array.prototype.some.call(lista.querySelectorAll('[data-meu-perfil-id]'), function (item) {
         if (item.getAttribute('data-meu-perfil-id') !== id) return false;
+        selecionado = item;
+        return true;
+      });
+      if (!selecionado) return;
+      var listaRect = lista.getBoundingClientRect();
+      var itemRect = selecionado.getBoundingClientRect();
+      lista.scrollTo({
+        top: Math.max(0, lista.scrollTop + itemRect.top - listaRect.top - (lista.clientHeight - itemRect.height) / 2),
+        behavior: 'smooth',
+      });
+    });
+  }
+
+  function centralizarCentroCustoResumoNoCard(id) {
+    window.requestAnimationFrame(function () {
+      var lista = document.getElementById('centros-custo-lista-mobile');
+      if (!lista) return;
+      var selecionado = null;
+      Array.prototype.some.call(lista.querySelectorAll('[data-centro-custo-resumo-id]'), function (item) {
+        if (item.getAttribute('data-centro-custo-resumo-id') !== id) return false;
         selecionado = item;
         return true;
       });
@@ -11203,6 +11364,7 @@
     var cards = {
       saldo: saldoTopoHtml(atual, anterior),
       meusPerfis: meusPerfisCardHtml(),
+      centrosCusto: centrosCustoCardHtml(),
       insightsAva: insightsAvaHtml(atual),
       caixinha: caixinhaCardHtml(atual),
       ia: perguntaIaHtml(),
@@ -15607,6 +15769,12 @@
     bind('toggle-valores-categorias', function () { alternarVisibilidadeValoresCard('categorias'); });
     bind('toggle-valores-tipos', function () { alternarVisibilidadeValoresCard('tipos'); });
     bind('toggle-valores-meusPerfis', function () { alternarVisibilidadeValoresCard('meusPerfis'); });
+    bind('toggle-valores-centrosCusto', function () { alternarVisibilidadeValoresCard('centrosCusto'); });
+    bind('toggle-esticar-centros-custo', function () {
+      state.centrosCustoExpandido = !state.centrosCustoExpandido;
+      render();
+      if (state.centrosCustoExpandido) rolarCardCentrosCustoAoTopo();
+    });
     bind('toggle-esticar-meus-perfis', function () {
       state.meusPerfisExpandido = !state.meusPerfisExpandido;
       state.resumoPerfilExibidoId = '';
@@ -16041,15 +16209,32 @@
         centralizarPerfilDestacadoNoCard(id);
       });
     });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-centro-custo-resumo-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        var id = botao.getAttribute('data-centro-custo-resumo-id');
+        if (!id) return;
+        state.centroCustoResumoExibidoId = id;
+        render();
+        centralizarCentroCustoResumoNoCard(id);
+      });
+    });
     var scrollPrincipalPerfis = document.getElementById('mobile-main-scroll');
     if (scrollPrincipalPerfis) {
       scrollPrincipalPerfis.addEventListener('click', function (event) {
-        if (!state.resumoPerfilExibidoId) return;
         var alvo = event.target && event.target.closest ? event.target.closest('[data-meu-perfil-id]') : null;
-        if (alvo) return;
-        state.resumoPerfilExibidoId = '';
-        state.resumoPerfilDestaqueId = (state.empresa && state.empresa.id) || '';
-        render();
+        var centro = event.target && event.target.closest ? event.target.closest('[data-centro-custo-resumo-id]') : null;
+        if (alvo || centro) return;
+        var precisaRenderizar = false;
+        if (state.resumoPerfilExibidoId) {
+          state.resumoPerfilExibidoId = '';
+          state.resumoPerfilDestaqueId = (state.empresa && state.empresa.id) || '';
+          precisaRenderizar = true;
+        }
+        if (state.centroCustoResumoExibidoId) {
+          state.centroCustoResumoExibidoId = '';
+          precisaRenderizar = true;
+        }
+        if (precisaRenderizar) render();
       });
     }
     Array.prototype.forEach.call(document.querySelectorAll('[data-lancamento-id]'), function (botao) {

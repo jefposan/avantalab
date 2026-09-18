@@ -1,6 +1,37 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.65 -->
+<!-- ava-version: 1.35.0.19.73 -->
+
+> Revisão 1.35.0.19.73: as linhas do card **Centros de custo** ficam contidas
+> no card pai, inclusive quando um centro é destacado; não há rolagem lateral.
+
+> Revisão 1.35.0.19.72: com os valores ocultos no card **Centros de custo**,
+> toque um centro para consultar somente suas receitas, despesas e resultado.
+> Isso não troca o centro operacional da pílula nem revela o consolidado.
+
+> Revisão 1.35.0.19.71: o card **Centros de custo** não possui seletor próprio
+> de mês. Ele respeita diretamente o mês escolhido no cabeçalho da Gestão.
+
+> Revisão 1.35.0.19.70: o seletor de mês do card **Centros de custo** usa 108
+> px e fonte de 9 px para exibir o nome inteiro sem alterar sua posição central.
+
+> Revisão 1.35.0.19.69: o seletor de mês do card **Centros de custo** mantém
+> 96 px para mostrar o mês inteiro e continua centralizado entre título e
+> controles em telas móveis.
+
+> Revisão 1.35.0.19.68: no card **Centros de custo**, o seletor de mês tem
+> largura fixa para mostrar o nome inteiro e fica centralizado entre o título
+> e os controles à direita. Os totais e a seleção do mês não mudaram.
+
+> Revisão 1.35.0.19.67: no card **Centros de custo**, o seletor de mês usa o
+> espaço livre do cabeçalho e mantém o mês legível em telas estreitas. A forma
+> de selecionar o mês e os totais não mudaram.
+
+> Revisão 1.35.0.19.66: com **Centros de custo** ativo e pelo menos um centro
+> além do **Principal**, o Dashboard exibe o card **Centros de custo** para
+> conferir o consolidado e cada centro sem alterar o seletor global do
+> cabeçalho. Centros pausados preservam o histórico; ao
+> desativar o recurso em Configurações, o card some automaticamente.
 
 > Revisão 1.35.0.19.65: para editar um lançamento já registrado no
 > **Gestão Mobile**, toque sua linha em **Despesas do mês** ou **Receitas do

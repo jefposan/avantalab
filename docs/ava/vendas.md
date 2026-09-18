@@ -1,6 +1,30 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.65 -->
+<!-- ava-version: 1.35.0.19.73 -->
+
+> Revisão 1.35.0.19.73: a contenção visual do card Centros de custo pertence à
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.72: a consulta individual por toque no card Centros de
+> custo pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.71: a remoção do seletor próprio de mês do card Centros de
+> custo pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.70: o ajuste de largura e fonte do seletor de mês do card
+> Centros de custo pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.69: o refinamento da largura do seletor de mês do card
+> Centros de custo pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.68: o reposicionamento fixo do seletor de mês do card
+> Centros de custo pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.67: o ajuste responsivo do seletor de mês do card Centros
+> de custo pertence à Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.66: o card consolidado de Centros de custo pertence à
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.65: a orientação de edição de lançamentos da Gestão foi
 > esclarecida para Web e Mobile; sem impacto operacional no AvantaVendas.

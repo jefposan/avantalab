@@ -1,6 +1,30 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.65 -->
+<!-- ava-version: 1.35.0.19.73 -->
+
+> Revisão 1.35.0.19.73: a contenção visual do card Centros de custo pertence à
+> Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.72: a consulta individual por toque no card Centros de
+> custo pertence à Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.71: a remoção do seletor próprio de mês do card Centros de
+> custo pertence à Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.70: o ajuste de largura e fonte do seletor de mês do card
+> Centros de custo pertence à Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.69: o refinamento da largura do seletor de mês do card
+> Centros de custo pertence à Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.68: o reposicionamento fixo do seletor de mês do card
+> Centros de custo pertence à Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.67: o ajuste responsivo do seletor de mês do card Centros
+> de custo pertence à Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 1.35.0.19.66: o novo card consolidado de Centros de custo pertence
+> à Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.35.0.19.65: na Gestão Web, uma despesa já lançada é editada ao
 > clicar sua linha em **Lançamentos do período**. **Cadastrar despesas**
