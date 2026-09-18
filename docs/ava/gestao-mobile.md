@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.35.0.19.63 -->
+<!-- ava-version: 1.35.0.19.65 -->
+
+> Revisão 1.35.0.19.65: para editar um lançamento já registrado no
+> **Gestão Mobile**, toque sua linha em **Despesas do mês** ou **Receitas do
+> mês**. **Cadastrar despesas** é somente o catálogo de tipos e categorias;
+> previsões continuam com as opções próprias antes da edição.
+
+> Revisão 1.35.0.19.64: ao editar uma **despesa já lançada**, use **Salvar**
+> ou **Excluir** na mesma linha. **Excluir** sempre mostra a confirmação antes
+> de remover o lançamento; despesas previstas continuam com o fluxo próprio de
+> confirmar na data atual.
 
 > Revisão 1.35.0.19.63: ao criar ou acessar um perfil empresarial, toque
 > **Preencher depois** para usar a Gestão sem CNPJ ou cadastro completo. A
@@ -1437,7 +1447,7 @@
 > Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.11.0.01: ao editar um lançamento previsto para hoje ou uma data
-> passada, escolha **Salvar previsto** ou **Confirmar nesta data**. Confirmar
+> passada, escolha **Salvar previsto** ou **Confirmar hoje**. Confirmar
 > efetiva somente aquela ocorrência; despesas fixas e recorrentes continuam
 > programadas nos próximos períodos.
 
@@ -3109,6 +3119,11 @@ deve usar os nomes do menu e da barra inferior do celular.
   perfil, e as alterações da Web atualizam o Mobile.
 - Nos cards **Despesas do mês** e **Receitas do mês**, tocar na lupa abre a busca
   já focada e pronta para digitação.
+- Para editar ou excluir um lançamento já registrado, toque a própria linha
+  nesses cards. Uma despesa confirmada abre o editor com **Salvar** e
+  **Excluir**; excluir sempre pede confirmação. Em previsões, escolha antes
+  entre editar, excluir ou confirmar hoje. **Menu > Cadastrar despesas** serve
+  somente para tipos e categorias, não para editar lançamentos existentes.
 - O app registra receitas, despesas, despesas futuras, parcelamentos e despesas
   fixas. Previsto só se torna lançamento confirmado após a ação do usuário.
 - Durante o preenchimento de um lançamento, atualizações secundárias aguardam o

@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.63 -->
+<!-- ava-version: 1.35.0.19.65 -->
+
+> Revisão 1.35.0.19.65: na Gestão Web, uma despesa já lançada é editada ao
+> clicar sua linha em **Lançamentos do período**. **Cadastrar despesas**
+> permanece somente para os tipos e categorias.
+
+> Revisão 1.35.0.19.64: a opção de excluir dentro do editor de despesa pertence
+> à Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.35.0.19.63: ao criar ou acessar um perfil empresarial, escolha
 > **Preencher depois** para usar a Gestão sem CNPJ ou cadastro completo. Essa
@@ -1615,7 +1622,7 @@
 > ou cancelar o módulo preserva todos os cadastros e históricos.
 
 > Revisão 1.11.0.01: ao editar um lançamento previsto para hoje ou uma data
-> passada, escolha **Salvar previsto** ou **Confirmar nesta data**. Confirmar
+> passada, escolha **Salvar previsto** ou **Confirmar hoje**. Confirmar
 > efetiva somente aquela ocorrência; despesas fixas e recorrentes continuam
 > programadas nos próximos períodos.
 
@@ -3223,6 +3230,10 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 
 - O sistema registra receitas, despesas, despesas futuras, parcelamentos e
   despesas fixas.
+- Para editar uma despesa já registrada, clique sua linha no card
+  **Lançamentos do período**; o formulário abre na própria linha. **Cadastrar
+  despesas** administra somente os tipos e categorias. Para uma recorrência
+  inteira, use **Menu > Despesas fixas**.
 - No novo lançamento, o botão **Arquivo** aceita imagens de nota e também PDF,
   CSV, TXT, XLS e XLSX. Imagens continuam preenchendo o lançamento único como
   nota; extratos, faturas e planilhas mostram uma barra de progresso e abrem a

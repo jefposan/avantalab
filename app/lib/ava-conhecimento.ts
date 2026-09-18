@@ -1,5 +1,11 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.35.0.19.65: Ava orienta a edição de lançamentos pelo
+// local real de cada ambiente. No Mobile, tocar a linha no card do mês abre o
+// editor; Cadastrar despesas é apenas o catálogo de tipos e categorias.
+// Revisado na versão 1.35.0.19.64: o editor de uma despesa já confirmada na
+// Gestão Mobile oferece Salvar e Excluir na mesma linha. Ava deve informar que
+// Excluir pede confirmação e que previsões usam o fluxo de confirmar hoje.
 // Revisado na versão 1.35.0.19.63: o cadastro empresarial pode ser adiado de
 // forma persistente para o uso comum da Gestão. Ava deve orientar a conclusão
 // apenas quando a pessoa iniciar assinatura, emissão fiscal ou outra ação que
@@ -1139,6 +1145,7 @@ NAVEGAÇÃO E PERFIS
 
 FINANCEIRO
 - Para lançar receita, despesa, despesa futura, parcelamento ou despesa fixa, use os controles de novo lançamento/cadastro da página. No Gestão Mobile, o cabeçalho do novo lançamento começa no mês vigente e as setas escolhem o mês e ano que receberão o registro, sem mudar o período do painel. Uma despesa programada aparece como Previsto antes da data, A confirmar no dia e Pendente depois do vencimento; somente a confirmação manual a inclui nos totais, gráficos e resultado realizado.
+- Para editar uma despesa já registrada na Gestão Web, clique a própria linha no card **Lançamentos do período**: ela vira o formulário de edição na mesma linha. **Cadastrar despesas** serve apenas para administrar tipos e categorias, não para editar um lançamento existente. Para a recorrência completa, use **Menu > Despesas fixas**; editar a linha mensal afeta só aquele mês.
 - Em **Configurações**, Gestor Master ou Administrador pode ativar **Centros de custo** no perfil. Com o recurso ativo, o menu permite cadastrar centros por texto ou número e o seletor junto a **Despesas fixas** define o centro dos novos lançamentos avulsos, parcelados e fixos. O Dashboard mostra as despesas realizadas por centro no mês; registros sem centro e receitas continuam no total do perfil. Ao desativar, os dados não são movidos nem apagados e o financeiro volta a ser exibido como um único conjunto.
 - Ao incluir, editar, excluir ou confirmar uma receita ou despesa, a Gestão bloqueia a tela com fundo escuro e informa a operação em andamento até o servidor responder. Oriente a aguardar o indicador desaparecer; toques adicionais não iniciam outra solicitação.
 - O card Lançamentos a confirmar exibe receitas previstas somente durante a data programada e mantém despesas previstas desde a data até confirmação, edição ou exclusão. Despesas pendentes permanecem na Agenda, nos controles financeiros e no saldo previsto.
@@ -1257,6 +1264,7 @@ LANÇAMENTOS E RESULTADOS
 - Em Receita, o usuário informa dia, origem e valor e salva uma entrada comum. Não existe opção para definir, substituir ou excluir o total do mês; o consolidado é calculado a partir das entradas preservadas.
 - Confirmações operacionais aparecem em cards do sistema. Fechar, tocar fora, pressionar Esc ou escolher Voltar sem excluir não remove dados. Em despesa parcelada, escolha Excluir somente esta ou Excluir todas; em despesa fixa, escolha Excluir somente este mês ou Abrir despesas fixas.
 - Nos cards Despesas do mês e Receitas do mês, tocar na lupa abre o campo de busca já focado e pronto para digitação; enquanto a busca estiver aberta, a ação Recolher permanece disponível e fecha a busca para retornar à lista compacta.
+- Para editar ou excluir um lançamento já registrado no Gestão Mobile, toque a própria linha no card Despesas do mês ou Receitas do mês. Despesa confirmada abre diretamente o editor com Salvar e Excluir; a exclusão pede confirmação. Em um lançamento previsto, primeiro aparecem as opções de editar, excluir ou confirmar hoje. Menu > Cadastrar despesas serve apenas para cadastrar ou revisar os tipos e categorias, nunca para editar a linha já lançada. Para alterar uma recorrência inteira, use Despesas fixas.
 - Para cadastrar ou revisar despesas e categorias: Menu > Cadastrar despesas. Despesas fixas devem ser gerenciadas na área própria para afetar a recorrência completa.
 - Agenda mostra lembretes e compromissos financeiros. Puxar para atualizar exige um gesto longo e conexão ativa.
 - A Caixinha, os relatórios e os gráficos usam o perfil e período selecionados; o resultado do Vendas aparece como uma receita consolidada por mês atualizada no acesso. Não estime resultados sem dados no contexto.

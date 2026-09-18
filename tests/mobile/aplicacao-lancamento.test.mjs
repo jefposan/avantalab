@@ -97,3 +97,25 @@ test('ações de lançamento previsto cabem em uma única linha no modal móvel'
   assert.match(opcoes, /id="editar-lancamento"[\s\S]*?text-\[10px\]/);
   assert.match(opcoes, /id="excluir-lancamento"[\s\S]*?text-\[10px\]/);
 });
+
+test('editor de despesa confirmada permite salvar ou excluir na mesma linha', async () => {
+  const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
+  const inicio = mobile.indexOf('function modalEditarLancamentoHtml(acao)');
+  const fim = mobile.indexOf('function menuLateralHtml()', inicio);
+  const editor = mobile.slice(inicio, fim);
+
+  assert.match(editor, /grid grid-cols-2 gap-2[\s\S]*?id="salvar-edicao-lancamento"[\s\S]*?Salvar[\s\S]*?id="excluir-lancamento-edicao"[\s\S]*?Excluir/);
+  assert.match(editor, /id="excluir-lancamento-edicao"[\s\S]*?h-11/);
+  assert.match(mobile, /bind\('excluir-lancamento-edicao', function \(\) \{[\s\S]*?state\.modalAcao\.modo = 'excluir'/);
+});
+
+test('Ava indica a linha do lançamento como caminho de edição no Gestão Mobile', async () => {
+  const conhecimento = await readFile(new URL('app/lib/ava-conhecimento.ts', raiz), 'utf8');
+  const inicio = conhecimento.indexOf("'gestao-mobile': `GUIA OPERACIONAL");
+  const fim = conhecimento.indexOf("'vendas': `GUIA OPERACIONAL", inicio);
+  const guiaMobile = conhecimento.slice(inicio, fim);
+
+  assert.match(guiaMobile, /Para editar ou excluir um lançamento já registrado no Gestão Mobile, toque[\s\S]*?Despesas do mês ou Receitas do mês/);
+  assert.match(guiaMobile, /Menu > Cadastrar despesas serve apenas[\s\S]*?nunca para editar a linha/);
+  assert.match(guiaMobile, /Despesa confirmada abre diretamente o editor com Salvar e Excluir/);
+});

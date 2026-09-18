@@ -12433,7 +12433,7 @@
         campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
         (item.status === 'prevista'
           ? '<p class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] font-semibold leading-relaxed text-emerald-800">Ao confirmar, esta despesa será registrada automaticamente na data de hoje.</p><div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white px-2 text-[11px] font-black uppercase tracking-wide text-slate-700 disabled:opacity-60">Salvar previsto</button><button id="confirmar-edicao-prevista" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-emerald-600 px-2 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60">Confirmar hoje</button></div>'
-          : '<button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>') +
+          : '<div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-2 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar') + '</button><button id="excluir-lancamento-edicao" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-red-200 bg-red-50 px-2 text-xs font-black uppercase tracking-wide text-red-700 disabled:opacity-60">Excluir</button></div>') +
       '</div>'
     );
   }
@@ -15898,6 +15898,12 @@
       render();
     });
 	    bind('excluir-lancamento', function () {
+	      if (!state.modalAcao) return;
+	      state.modalAcao.modo = 'excluir';
+	      state.erro = '';
+	      render();
+	    });
+	    bind('excluir-lancamento-edicao', function () {
 	      if (!state.modalAcao) return;
 	      state.modalAcao.modo = 'excluir';
 	      state.erro = '';

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.35.0.19.65 - 2026-09-17
+- **Ava — Gestão**: a orientação de edição de lançamentos agora informa o
+  caminho real de cada ambiente. No Mobile, a pessoa toca a linha em
+  **Despesas do mês** ou **Receitas do mês**; **Cadastrar despesas** fica
+  restrito ao catálogo de tipos e categorias.
+
+## 1.35.0.19.64 - 2026-09-17
+- **Gestão Mobile — Despesas confirmadas**: no editor de uma despesa já
+  lançada, **Salvar** ficou compacto e ganhou **Excluir** na mesma linha. A
+  exclusão preserva a confirmação antes de remover o lançamento.
+
 ## 1.35.0.19.63 - 2026-09-17
 - **Cadastro de perfil — Gestão Web e Mobile**: um novo perfil pode ser usado
   sem CNPJ ou cadastro completo. **Preencher depois** guarda essa escolha no

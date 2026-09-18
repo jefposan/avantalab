@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.35.0.19.63 -->
+<!-- ava-version: 1.35.0.19.65 -->
+
+> Revisão 1.35.0.19.65: a orientação de edição de lançamentos da Gestão foi
+> esclarecida para Web e Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.35.0.19.64: a opção de excluir dentro do editor de despesa pertence
+> à Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.35.0.19.63: um perfil empresarial pode usar o módulo Vendas antes
 > de concluir o cadastro legal. Dados completos continuam necessários somente
