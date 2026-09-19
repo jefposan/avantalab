@@ -68,13 +68,18 @@ test('PaymentReceiptV2 compõe o comprovante com os valores formatados sem cálc
   assert.doesNotMatch(codigo, /const ALTURA = 1680/);
   assert.match(codigo, /function desenharFundoAncoradoNoRodape/);
   assert.match(codigo, /alturaFonte - alturaVisivel/);
-  assert.match(codigo, /const COR_BORDA_CARD = '#C7D8E8'/);
+  assert.match(codigo, /const COR_BORDA_CARD = '#BFDED1'/);
   assert.match(codigo, /'#FFFFFF', COR_BORDA_CARD/);
+  assert.match(codigo, /cabecalho: '#078F63'/);
+  assert.match(codigo, /valor: '#24C978'/);
+  assert.match(codigo, /saldo: '#0B7A58'/);
+  assert.match(codigo, /PALETA_PAGAMENTO\.valor/);
+  assert.match(codigo, /PALETA_PAGAMENTO\.saldo/);
   assert.match(codigo, /function desenharRodapeEmPilula/);
   assert.doesNotMatch(codigo, /icone\(ctx, 'detalhes',/);
   assert.doesNotMatch(codigo, /card\(ctx, yResumo, 205, 'carteira'/);
   assert.ok(!codigo.includes('atesta o registro do pagamento'));
-  assert.match(codigo, /assets\/receipts\/avantalab-receipt-bg\.webp/);
+  assert.match(codigo, /assets\/receipts\/avantalab-payment-receipt-bg\.webp/);
   assert.doesNotMatch(codigo, /https?:\/\//);
 
   textos.length = 0;
@@ -97,5 +102,6 @@ test('o PWA carrega e coloca em cache o renderizador e o fundo fixo', async () =
   ]);
   assert.match(bootstrap, /payment-receipt-v2\.js/);
   assert.match(serviceWorker, /payment-receipt-v2\.js\?v=/);
+  assert.match(serviceWorker, /assets\/receipts\/avantalab-payment-receipt-bg\.webp\?v=/);
   assert.match(serviceWorker, /assets\/receipts\/avantalab-receipt-bg\.webp\?v=/);
 });

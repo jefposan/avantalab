@@ -4,9 +4,18 @@
 
   const LARGURA = 1080;
   const MARGEM_INFERIOR_RODAPE = 78;
-  const COR_BORDA_CARD = '#C7D8E8';
+  const COR_BORDA_CARD = '#BFDED1';
   const FONTE = 'Inter, Arial, sans-serif';
-  const FUNDO_URL = './assets/receipts/avantalab-receipt-bg.webp';
+  const FUNDO_URL = './assets/receipts/avantalab-payment-receipt-bg.webp';
+  const PALETA_PAGAMENTO = Object.freeze({
+    cabecalho: '#078F63',
+    cabecalhoIcone: '#27B97D',
+    cabecalhoDetalhe: '#7AE4BD',
+    valor: '#24C978',
+    valorDetalhe: '#DDF8EB',
+    saldo: '#0B7A58',
+    saldoIcone: '#76E2B4',
+  });
   let carregamentoFundo;
 
   function carregarFundo() {
@@ -192,13 +201,13 @@
     if (fundo) desenharFundoAncoradoNoRodape(ctx, fundo, altura);
 
     // Cabeçalho sólido: sem textura ou gradiente para garantir leitura.
-    retangulo(ctx, 44, 42, 992, 260, 36, '#063B72');
-    ctx.beginPath(); ctx.arc(132, 122, 54, 0, Math.PI * 2); ctx.fillStyle = '#0B5EAA'; ctx.fill(); icone(ctx, 'documento', 132, 122, 60, '#FFFFFF');
+    retangulo(ctx, 44, 42, 992, 260, 36, PALETA_PAGAMENTO.cabecalho);
+    ctx.beginPath(); ctx.arc(132, 122, 54, 0, Math.PI * 2); ctx.fillStyle = PALETA_PAGAMENTO.cabecalhoIcone; ctx.fill(); icone(ctx, 'documento', 132, 122, 60, '#FFFFFF');
     const nomeEmpresa = String(empresa || 'AvantaLab').toUpperCase();
     texto(ctx, nomeEmpresa, 575, 145, { tamanho: nomeEmpresa.length > 31 ? 38 : nomeEmpresa.length > 23 ? 44 : 51, peso: 800, cor: '#FFFFFF', alinhamento: 'center', largura: 730 });
-    icone(ctx, 'usuario', 93, 235, 38, '#3FE3E8'); texto(ctx, `Cliente: ${clienteExibido}`, 125, 248, { tamanho: 29, peso: 700, cor: '#FFFFFF', largura: 510 });
+    icone(ctx, 'usuario', 93, 235, 38, PALETA_PAGAMENTO.cabecalhoDetalhe); texto(ctx, `Cliente: ${clienteExibido}`, 125, 248, { tamanho: 29, peso: 700, cor: '#FFFFFF', largura: 510 });
     linha(ctx, 654, 194, 654, 266, 'rgba(255,255,255,.68)', 2);
-    icone(ctx, 'calendario', 714, 235, 38, '#3FE3E8'); texto(ctx, data, 1000, 248, { tamanho: 29, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
+    icone(ctx, 'calendario', 714, 235, 38, PALETA_PAGAMENTO.cabecalhoDetalhe); texto(ctx, data, 1000, 248, { tamanho: 29, peso: 700, cor: '#FFFFFF', alinhamento: 'right', largura: 275 });
 
     // É o status de confirmação do pagamento; o aviso de autenticação não existe no V2.
     retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3');
@@ -209,20 +218,20 @@
     texto(ctx, 'Saldo anterior', 112, ySaldoAnterior + 70, { tamanho: 28, peso: 600, cor: '#425675' });
     texto(ctx, saldoAnterior, 968, ySaldoAnterior + 70, { tamanho: 35, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 390 });
 
-    card(ctx, yPagamento, alturaCardPagamento, '', 'PAGAMENTO REGISTRADO'); fundoDeValor(ctx, yPagamento + 72, temDesconto ? 238 : 180, '#1674D1');
+    card(ctx, yPagamento, alturaCardPagamento, '', 'PAGAMENTO REGISTRADO'); fundoDeValor(ctx, yPagamento + 72, temDesconto ? 238 : 180, PALETA_PAGAMENTO.valor);
     icone(ctx, 'confirmado', 208, yPagamento + 124, 58, '#FFFFFF'); texto(ctx, rotuloValorPago, 276, yPagamento + 133, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPago, 922, yPagamento + 137, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
     linha(ctx, 180, yPagamento + 154, 922, yPagamento + 154, 'rgba(255,255,255,.42)', 2);
     icone(ctx, iconeFormaPagamento(formaPagamento), 208, yPagamento + 206, 48, '#FFFFFF');
-    texto(ctx, 'Forma de pagamento', 276, yPagamento + 195, { tamanho: 21, peso: 600, cor: '#D9F0FF', largura: 400 });
+    texto(ctx, 'Forma de pagamento', 276, yPagamento + 195, { tamanho: 21, peso: 600, cor: PALETA_PAGAMENTO.valorDetalhe, largura: 400 });
     texto(ctx, formaPagamento, 276, yPagamento + 226, { tamanho: 30, peso: 800, cor: '#FFFFFF', largura: 500 });
     if (temDesconto) {
       linha(ctx, 180, yPagamento + 246, 922, yPagamento + 246, 'rgba(255,255,255,.42)', 2);
-      texto(ctx, 'Desconto concedido', 276, yPagamento + 287, { tamanho: 24, peso: 600, cor: '#D9F0FF', largura: 390 });
+      texto(ctx, 'Desconto concedido', 276, yPagamento + 287, { tamanho: 24, peso: 600, cor: PALETA_PAGAMENTO.valorDetalhe, largura: 390 });
       texto(ctx, desconto, 922, yPagamento + 287, { tamanho: 31, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 330 });
     }
 
-    card(ctx, ySaldo, alturaCardSaldo, '', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 72, 112, '#0A2F6B');
-    icone(ctx, 'grafico', 208, ySaldo + 128, 56, '#46B7FF'); texto(ctx, 'Saldo atual', 276, ySaldo + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, saldoAtual, 922, ySaldo + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
+    card(ctx, ySaldo, alturaCardSaldo, '', 'SITUAÇÃO APÓS O LANÇAMENTO'); fundoDeValor(ctx, ySaldo + 72, 112, PALETA_PAGAMENTO.saldo);
+    icone(ctx, 'grafico', 208, ySaldo + 128, 56, PALETA_PAGAMENTO.saldoIcone); texto(ctx, 'Saldo atual', 276, ySaldo + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, saldoAtual, 922, ySaldo + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
     desenharRodapeEmPilula(ctx, `Comprovante de pagamento • ${clienteExibido}`, yRodape);
     return canvas;
   }

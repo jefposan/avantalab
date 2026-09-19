@@ -17,6 +17,7 @@ const recursosEssenciais = [
   `${caminhoRecursos}/supabase-client.js?v=${AVANTAVENDAS_VERSION}`,
   `${caminhoRecursos}/payment-receipt-v2.js?v=${AVANTAVENDAS_VERSION}`,
   `${caminhoRecursos}/order-receipt-v2.js?v=${AVANTAVENDAS_VERSION}`,
+  `${caminhoRecursos}/assets/receipts/avantalab-payment-receipt-bg.webp?v=${AVANTAVENDAS_VERSION}`,
   `${caminhoRecursos}/assets/receipts/avantalab-receipt-bg.webp?v=${AVANTAVENDAS_VERSION}`,
   `${caminhoRecursos}/app.js?v=${AVANTAVENDAS_VERSION}`,
   '/images/logo-avantalab-oficial.png',

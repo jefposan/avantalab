@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.15 -->
+<!-- ava-version: 1.36.0.16 -->
+
+> Revisão 1.36.0.16: a nova paleta verde do comprovante pertence ao
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.36.0.15: quando um perfil Empresa estiver bloqueado por assinatura
 > cancelada ou sem vigência, a tela de reativação permite escolher Business

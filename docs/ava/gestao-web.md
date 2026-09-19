@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.15 -->
+<!-- ava-version: 1.36.0.16 -->
+
+> Revisão 1.36.0.16: a nova paleta verde do comprovante pertence ao
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.36.0.15: a correção da escolha de plano pertence à tela de
 > reativação da Gestão Mobile; a Gestão Web já oferecia os três planos Business

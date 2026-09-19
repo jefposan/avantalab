@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.15 -->
+<!-- ava-version: 1.36.0.16 -->
+
+> Revisão 1.36.0.16-av152: o comprovante compartilhável de pagamento usa a
+> paleta verde-clara, enquanto o comprovante de pedido permanece azul. Textos,
+> valores, estrutura e caminho para compartilhar não mudaram.
 
 > Revisão 1.36.0.15: a escolha de plano na reativação pertence à Gestão Mobile;
 > sem mudança operacional no AvantaVendas.
@@ -766,7 +770,7 @@
 > Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
 > aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
 > operacional no AvantaVendas.
-<!-- avantavendas-asset-revision: 151 -->
+<!-- avantavendas-asset-revision: 152 -->
 
 > Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
 > catálogo ativo completo da conta sem permitir que uma palavra apenas parecida

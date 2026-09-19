@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.36.0.16-av152 - 2026-09-19
+- **Comprovante de pagamento em verde claro**: cabeçalho, valor pago, saldo atual
+  e detalhes passam a usar uma paleta esmeralda mais leve, preservando todos os
+  textos, valores, proporções e a estrutura já aprovada.
+- **Leitura imediata do tipo de comprovante**: pagamentos usam verde e pedidos
+  permanecem azuis, facilitando a distinção visual sem depender somente do
+  título.
+- **Fundo próprio e cache renovado**: o pagamento recebe uma arte suave em tons
+  verdes, separada da arte azul do pedido, e o PWA atualiza os recursos pela
+  revisão `av152`.
+
 ## 1.36.0.15 - 2026-09-19
 - **Reativação Mobile com escolha de plano**: perfis Empresa bloqueados por
   assinatura cancelada ou vencida passam a oferecer Business Básico, Business
