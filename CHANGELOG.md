@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.36.0.13 - 2026-09-19
+## 1.36.0.13-av151 - 2026-09-19
 - **AvantaVendas — comando por voz sem conexão**: o botão passa a refletir
   imediatamente o modo offline interno e a indisponibilidade de rede do
   navegador. A captura é interrompida com segurança e o acionador fica cinza,
