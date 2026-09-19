@@ -2,13 +2,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  PLANOS_EMPRESARIAIS,
   PLANOS_COMERCIAIS,
   VALOR_MODULO_AVULSO_MENSAL,
   normalizarPlanoComercial,
+  resolverPlanoCortesia,
 } from '../../app/lib/planos-comerciais.ts';
 import { PRECOS, assinaturaVigente, rotuloPlano } from '../../app/lib/cobranca.ts';
 
 test('catálogo comercial mantém preços e limites aprovados', () => {
+  assert.deepEqual(PLANOS_EMPRESARIAIS, ['business', 'business_pro', 'business_premium']);
   assert.deepEqual(PLANOS_COMERCIAIS.pessoal_premium.precos, { mensal: 9.9, anual: 99.9 });
   assert.deepEqual(PLANOS_COMERCIAIS.business.precos, { mensal: 34.9, anual: 249.9 });
   assert.deepEqual(PLANOS_COMERCIAIS.business_pro.precos, { mensal: 49.9, anual: 359.9 });
@@ -50,6 +53,39 @@ test('catálogo comercial mantém preços e limites aprovados', () => {
   assert.equal(PLANOS_COMERCIAIS.business_premium.limites.centrosDeCustoAtivos, true);
 });
 
+test('interfaces públicas e autenticadas oferecem os três planos empresariais', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const [landing, landingCss, interactionCss, paywall, modal, checkout] = await Promise.all([
+    readFile(new URL('../../app/components/AvaPlansPreview.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/components/AvaPlansCommerce.module.css', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/components/AvaPlansCommercePolish.module.css', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/components/PaywallEmpresa.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/components/AssinaturaModal.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/cobranca/assinar/route.ts', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(landing, /<h3>Business<\/h3>/);
+  assert.match(landing, /Business Pro/);
+  assert.match(landing, /Business Premium/);
+  assert.match(landing, /Teste por 7 dias grátis/);
+  assert.doesNotMatch(landing, /Testar Business Pro/);
+  assert.doesNotMatch(landing, /<h3>Business Básico<\/h3>/);
+  assert.match(landing, /polish\.personalBadge/);
+  assert.equal((landing.match(/<AcessoPublicoLink className=\{polish\.cardLink\}/g) ?? []).length, 5);
+  assert.match(landingCss, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(landingCss, /@media\(max-width:1100px\).*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(interactionCss, /cardLink:hover \.clickablePlan\{transform:translateY\(-8px\)/);
+  assert.match(interactionCss, /prefers-reduced-motion:reduce/);
+
+  for (const conteudo of [paywall, modal]) {
+    assert.match(conteudo, /Business Básico/);
+    assert.match(conteudo, /Business Pro/);
+    assert.match(conteudo, /Business Premium/);
+  }
+  assert.match(checkout, /'business_premium'/);
+  assert.match(checkout, /PRECOS\[plano\]\[ciclo\]/);
+});
+
 test('camada de cobrança usa a mesma tabela de preços do catálogo', () => {
   for (const plano of ['pessoal_premium', 'business', 'business_pro', 'business_premium']) {
     assert.deepEqual(PRECOS[plano], PLANOS_COMERCIAIS[plano].precos);
@@ -62,6 +98,15 @@ test('camada de cobrança usa a mesma tabela de preços do catálogo', () => {
   assert.equal(rotuloPlano('business_pro', 'anual'), 'Business Pro · Anual');
   assert.equal(rotuloPlano('business', 'mensal'), 'Business Básico · Mensal');
   assert.equal(rotuloPlano('business_premium', 'anual'), 'Business Premium · Anual');
+});
+
+test('cortesia respeita plano escolhido e preserva legado como Business Pro', () => {
+  assert.equal(resolverPlanoCortesia('pessoal', null), 'pessoal_premium');
+  assert.equal(resolverPlanoCortesia('empresa', 'business'), 'business');
+  assert.equal(resolverPlanoCortesia('empresa', 'business_pro'), 'business_pro');
+  assert.equal(resolverPlanoCortesia('empresa', 'business_premium'), 'business_premium');
+  assert.equal(resolverPlanoCortesia('empresa', null), 'business_pro');
+  assert.equal(resolverPlanoCortesia('empresa', 'invalido'), 'business_pro');
 });
 
 test('vigência respeita trial, carência e cancelamento até o fim pago', () => {

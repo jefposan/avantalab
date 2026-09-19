@@ -1,9 +1,57 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.01 -->
+<!-- ava-version: 1.36.0.13 -->
 
-> Revisão 1.36.0.01: a correção da indisponibilidade do comando por voz
+> Revisão 1.36.0.13: a correção da indisponibilidade do comando por voz
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.36.0.12: **Excluir este perfil** e **Gerenciar perfil > Excluir
+> perfil** usam a mesma escolha: **Guardar por 30 dias** ou **Excluir agora**.
+> A segunda opção exige nova confirmação com **EXCLUIR**, remove dados e pontos
+> de restauração do sistema e não apaga o login. Registros de guarda obrigatória
+> permanecem protegidos.
+
+> Revisão 1.36.0.11: alterações agendadas permanecem sincronizadas sem antecipar
+> plano ou ciclo na Gestão Mobile; sem mudança no caminho operacional.
+
+> Revisão 1.36.0.10: o ajuste do valor vigente pertence ao modal da Gestão Web;
+> sem mudança operacional adicional na Gestão Mobile.
+
+> Revisão 1.36.0.09: no PWA, **Assinatura e plano** permite contratar e alternar
+> Business Básico, Pro e Premium. Upgrade é imediato; downgrade e mudança de
+> ciclo entram no fim do período pago e podem ser cancelados antes. No app
+> nativo, planos empresariais continuam sendo administrados pela plataforma
+> Web. Nenhuma redução apaga lançamentos ou históricos.
+
+> Revisão 1.36.0.08: a Gestão Mobile aplica os mesmos direitos da Web. Centros
+> de custo só pode ser ativado no Business Pro ou Premium; no Básico, a opção
+> orienta a mudança de plano. O limite de funcionários ativos do Controle de
+> Ponto é validado no servidor: 10 no Básico com módulo avulso, 30 no Pro e
+> ilimitado no Premium. Mudanças de plano preservam dados e históricos.
+
+> Revisão 1.36.0.07: o plano da cortesia é escolhido no Admin Web e passa a
+> valer automaticamente também na Gestão Mobile. Business Básico mantém
+> módulos avulsos e sem Centros de custo; Pro e Premium incluem esses direitos.
+
+> Revisão 1.36.0.06: a validação adicional do plano pago ocorre no servidor;
+> sem mudança no caminho operacional da Gestão Mobile.
+
+> Revisão 1.36.0.05: o texto resumido do CTA pertence à landing pública; sem
+> mudança no fluxo de cadastro da Gestão Mobile.
+
+> Revisão 1.36.0.04: os cards da landing pública são acionáveis por inteiro e
+> continuam direcionando aparelhos móveis ao cadastro da Gestão Mobile.
+
+> Revisão 1.36.0.03: o ajuste da pílula do Pessoal Premium pertence à landing
+> desktop; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.36.0.02: o alinhamento dos cards de assinatura pertence à landing
+> desktop; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.36.0.01: os planos empresariais Business Básico, Business Pro e
+> Business Premium são contratados pela plataforma Web. O aplicativo móvel
+> reconhece a assinatura já liberada, mas não vende planos empresariais dentro
+> da App Store ou Google Play.
 
 > Revisão 1.36.0: a matriz comercial central reconhece Business Básico,
 > Business Pro e Business Premium. A interface de planos e a regra visual de
@@ -3076,11 +3124,11 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Em **Configurações**, **Preferências** reúne os controles com chave; **Conta e
   equipe** reúne Gerenciar perfil, Dados cadastrais e Usuários; **Dados e
   segurança** reúne Backup, Restaurar backup e Pontos de restauração.
-  **Excluir este perfil** aparece logo após Pontos de restauração e exige digitar
-  **EXCLUIR**. O login permanece válido, enquanto o perfil fica inacessível e
-  pode ser restaurado com o mesmo login por 30 dias. Depois desse prazo, o
-  servidor remove o perfil; registros sujeitos a retenção legal permanecem
-  bloqueados pelo prazo obrigatório.
+  **Excluir este perfil** aparece logo após Pontos de restauração. O usuário
+  escolhe **Guardar por 30 dias**, mantendo a restauração disponível, ou
+  **Excluir agora**, que pede uma segunda confirmação com **EXCLUIR** e apaga
+  dados e pontos de restauração do sistema. O login permanece válido e registros
+  sujeitos a retenção legal continuam protegidos pelo prazo obrigatório.
 - Em **Usuários**, criar exige Nome completo, E-mail, Login, Senha inicial e
   Tipo de usuário. Na edição, nome, e-mail, login e tipo continuam obrigatórios,
   mas a nova senha é opcional. E-mail e login acessam a mesma conta; se o e-mail

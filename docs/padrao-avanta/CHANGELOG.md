@@ -1,5 +1,21 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.16.0 - 2026-09-19
+
+- Upgrade de nível pode ser imediato, enquanto downgrade e mudança de ciclo
+  preservam os direitos atuais até o fim do período pago.
+- Transições agendadas ficam visíveis e podem ser canceladas antes da vigência.
+- Redução de franquia nunca apaga dados: perfis são desvinculados e acessos
+  excedentes são inativados de forma determinística, com histórico preservado.
+
+## 1.15.0 - 2026-09-19
+
+- Cortesias empresariais passam a declarar explicitamente o plano concedido:
+  Business Básico, Business Pro ou Business Premium.
+- Limites, Centros de custo, módulos e demais direitos de uma cortesia seguem o
+  plano escolhido. Registros legados sem plano preservam o antigo equivalente
+  ao Business Pro para manter compatibilidade.
+
 ## 1.14.0 - 2026-09-19
 
 - Formalizada a matriz empresarial **Business Básico**, **Business Pro** e

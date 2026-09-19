@@ -9,11 +9,15 @@
 //   $aact_hmlg_...  → sandbox (testes)
 // ─────────────────────────────────────────────────────────────
 
-const API_KEY = normalizarSecret(process.env.ASAAS_API_KEY);
+function apiKey(): string {
+  // Resolvida no momento da requisição para não congelar uma credencial vazia
+  // em processos locais e para aceitar rotação segura no runtime servidor.
+  return normalizarSecret(process.env.ASAAS_API_KEY);
+}
 
-function baseUrl(): string {
+function baseUrl(chave: string): string {
   if (process.env.ASAAS_BASE_URL) return process.env.ASAAS_BASE_URL.replace(/\/$/, '');
-  return API_KEY.startsWith('$aact_prod_')
+  return chave.startsWith('$aact_prod_')
     ? 'https://api.asaas.com/v3'
     : 'https://api-sandbox.asaas.com/v3';
 }
@@ -45,15 +49,16 @@ function normalizarSecret(valor: string | undefined) {
 }
 
 async function asaasFetch<T = unknown>(caminho: string, init?: RequestInit): Promise<AsaasResposta<T>> {
-  if (!API_KEY) return { ok: false, status: 0, data: null, erro: 'ASAAS_API_KEY não configurada' };
+  const chave = apiKey();
+  if (!chave) return { ok: false, status: 0, data: null, erro: 'ASAAS_API_KEY não configurada' };
   try {
-    const resp = await fetch(`${baseUrl()}${caminho}`, {
+    const resp = await fetch(`${baseUrl(chave)}${caminho}`, {
       ...init,
       headers: {
         'Content-Type': 'application/json',
         // User-Agent é obrigatório para contas novas da Asaas.
         'User-Agent': 'AvantaLab',
-        access_token: API_KEY,
+        access_token: chave,
         ...(init?.headers || {}),
       },
     });
@@ -85,7 +90,7 @@ export function criarAssinaturaAsaas(dados: {
   nextDueDate: string;                               // 'AAAA-MM-DD'
   cycle: 'MONTHLY' | 'YEARLY';
   description?: string;
-  externalReference?: string;                        // empresa_id do nosso sistema
+  externalReference?: string;                        // referência interna da contratação
 }) {
   return asaasFetch<{ id: string }>('/subscriptions', { method: 'POST', body: JSON.stringify(dados) });
 }
@@ -99,6 +104,7 @@ export type AssinaturaAsaas = {
   nextDueDate?: string;
   billingType?: string;
   description?: string;
+  externalReference?: string;
 };
 
 export type CobrancaAssinaturaAsaas = {
@@ -123,6 +129,7 @@ export function atualizarAssinaturaAsaas(id: string, dados: {
   status?: 'ACTIVE' | 'INACTIVE';
   nextDueDate?: string;
   description?: string;
+  externalReference?: string;
   updatePendingPayments?: boolean;
 }) {
   return asaasFetch<AssinaturaAsaas>(`/subscriptions/${id}`, {

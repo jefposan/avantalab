@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { atualizarAssinaturaAsaas, listarCobrancasAssinaturaAsaas } from '../../../lib/asaas';
 import { calcularFimCarencia, calcularFimPeriodoPago } from '../../../lib/cobranca-fluxo';
 import { fimDaCarencia, somarUmMesData } from '../../../lib/ponto-facial-cobranca-servidor';
+import { lerReferenciaAssinatura, referenciaConfereAssinatura } from '../../../lib/cobranca-referencia';
 
 export const runtime = 'nodejs';
 
@@ -27,12 +28,21 @@ export async function POST(request: Request) {
   const evento = String(corpo.event);
   const pagamento = corpo.payment || {};
   const assinaturaPayload = corpo.subscription || {};
-  const referenciaExterna = String(pagamento.externalReference || assinaturaPayload.externalReference || '');
-  const empresaIdFacial = referenciaExterna.match(/^ponto_facial:([0-9a-f-]{36})$/i)?.[1]
-    || referenciaExterna.match(/^ponto_facial_empresa:([0-9a-f-]{36})$/i)?.[1]
+  const referenciasExternas = [pagamento.externalReference, assinaturaPayload.externalReference]
+    .map((valor) => String(valor || '').trim())
+    .filter(Boolean);
+  const referenciaAssinatura = referenciasExternas
+    .map((valor) => lerReferenciaAssinatura(valor))
+    .find(Boolean) || null;
+  const referenciaFacial = referenciasExternas.find((valor) => /^ponto_facial(?:_empresa)?:[0-9a-f-]{36}$/i.test(valor)) || '';
+  const empresaIdFacial = referenciaFacial.match(/^ponto_facial:([0-9a-f-]{36})$/i)?.[1]
+    || referenciaFacial.match(/^ponto_facial_empresa:([0-9a-f-]{36})$/i)?.[1]
     || null;
-  const alteracaoFacialId = referenciaExterna.match(/^ponto_facial_alteracao:([0-9a-f-]{36})$/i)?.[1] || null;
-  const empresaId: string | null = /^[0-9a-f-]{36}$/i.test(referenciaExterna) ? referenciaExterna : empresaIdFacial;
+  const alteracaoFacialId = referenciasExternas
+    .map((valor) => valor.match(/^ponto_facial_alteracao:([0-9a-f-]{36})$/i)?.[1])
+    .find(Boolean) || null;
+  const referenciaLegada = referenciasExternas.find((valor) => /^[0-9a-f-]{36}$/i.test(valor)) || null;
+  const empresaId: string | null = referenciaAssinatura?.empresaId || referenciaLegada || empresaIdFacial;
   const assinaturaGw: string | null = pagamento.subscription || assinaturaPayload.id || null;
   const pagamentoGw: string | null = pagamento.id || null;
 
@@ -134,7 +144,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ recebido: true, modulo: true });
     }
 
-    let consulta = db.from('assinaturas').select('id, empresa_id, status, ciclo, trial_fim, valido_ate');
+    let consulta = db.from('assinaturas').select('id, empresa_id, status, plano, ciclo, trial_fim, valido_ate, plano_agendado, ciclo_agendado, alteracao_agendada_para');
     if (empresaId && assinaturaGw) consulta = consulta.eq('empresa_id', empresaId).eq('gateway_subscription_id', assinaturaGw);
     else if (empresaId) consulta = consulta.eq('empresa_id', empresaId);
     else if (assinaturaGw) consulta = consulta.eq('gateway_subscription_id', assinaturaGw);
@@ -142,7 +152,33 @@ export async function POST(request: Request) {
       await db.from('cobranca_webhook_eventos').update({ status: 'processado', processado_em: new Date().toISOString() }).eq('id', registroEventoId);
       return NextResponse.json({ recebido: true });
     }
-    const { data: assinaturaAtual } = await consulta.maybeSingle();
+    const { data: assinaturaLida } = await consulta.maybeSingle();
+    let assinaturaAtual = assinaturaLida;
+
+    if (
+      assinaturaAtual?.plano_agendado
+      && assinaturaAtual.ciclo_agendado
+      && assinaturaAtual.alteracao_agendada_para
+      && new Date(assinaturaAtual.alteracao_agendada_para) <= new Date()
+    ) {
+      const { data: aplicacao, error: erroAplicacao } = await db.rpc('aplicar_alteracao_assinatura_agendada', {
+        p_empresa_id: assinaturaAtual.empresa_id,
+        p_agora: new Date().toISOString(),
+      });
+      if (erroAplicacao || aplicacao?.ok === false) {
+        throw erroAplicacao || new Error(`Não foi possível aplicar a alteração agendada: ${aplicacao?.codigo || 'erro desconhecido'}`);
+      }
+      if (aplicacao?.aplicada) {
+        assinaturaAtual = {
+          ...assinaturaAtual,
+          plano: aplicacao.plano,
+          ciclo: aplicacao.ciclo,
+          plano_agendado: null,
+          ciclo_agendado: null,
+          alteracao_agendada_para: null,
+        };
+      }
+    }
 
     if (assinaturaAtual && pagamentoGw) {
       await db.from('assinatura_faturas').upsert({
@@ -205,13 +241,29 @@ export async function POST(request: Request) {
 
       if (novoStatus) {
         if (novoStatus === 'ativa') {
+          const referenciaAtualConfere = referenciaAssinatura && referenciaConfereAssinatura(referenciaAssinatura, {
+            empresaId: assinaturaAtual.empresa_id,
+            plano: assinaturaAtual.plano,
+            ciclo: assinaturaAtual.ciclo,
+          });
+          const referenciaAgendadaConfere = referenciaAssinatura
+            && assinaturaAtual.plano_agendado
+            && assinaturaAtual.ciclo_agendado
+            && referenciaConfereAssinatura(referenciaAssinatura, {
+              empresaId: assinaturaAtual.empresa_id,
+              plano: assinaturaAtual.plano_agendado,
+              ciclo: assinaturaAtual.ciclo_agendado,
+            });
+          if (referenciaAssinatura && !referenciaAtualConfere && !referenciaAgendadaConfere) {
+            throw new Error('A referência paga não corresponde ao plano registrado para esta assinatura.');
+          }
           const cicloConfirmado = assinaturaPayload.cycle === 'YEARLY'
             ? 'anual'
             : assinaturaPayload.cycle === 'MONTHLY' ? 'mensal' : null;
           const { data: ativacao, error: erroAtivacao } = await db.rpc('ativar_assinatura_propria_perfil', {
             p_empresa_id: assinaturaAtual.empresa_id,
             p_gateway_subscription_id: assinaturaGw,
-            p_ciclo: cicloConfirmado,
+            p_ciclo: assinaturaAtual.plano_agendado ? null : cicloConfirmado,
           });
           if (erroAtivacao || ativacao?.ok === false) {
             throw erroAtivacao || new Error(`Não foi possível ativar a assinatura: ${ativacao?.codigo || 'erro desconhecido'}`);
@@ -227,13 +279,21 @@ export async function POST(request: Request) {
             status: novoStatus,
             valido_ate: validoAte,
             ...(limparCheckoutTrial ? { gateway_subscription_id: null } : {}),
+            ...(novoStatus === 'cancelada' ? {
+              plano_agendado: null,
+              ciclo_agendado: null,
+              alteracao_agendada_para: null,
+              alteracao_agendada_em: null,
+            } : {}),
             atualizado_em: new Date().toISOString(),
           }).eq('id', assinaturaAtual.id);
           if (erroAtualizacaoAssinatura) throw erroAtualizacaoAssinatura;
         }
       } else if (evento === 'SUBSCRIPTION_UPDATED') {
         const ciclo = assinaturaPayload.cycle === 'YEARLY' ? 'anual' : assinaturaPayload.cycle === 'MONTHLY' ? 'mensal' : null;
-        if (ciclo) await db.from('assinaturas').update({ ciclo, atualizado_em: new Date().toISOString() }).eq('id', assinaturaAtual.id);
+        if (ciclo && !assinaturaAtual.plano_agendado) {
+          await db.from('assinaturas').update({ ciclo, atualizado_em: new Date().toISOString() }).eq('id', assinaturaAtual.id);
+        }
       }
     }
 

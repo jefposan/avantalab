@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import ModalConfirmacao from '../components/ModalConfirmacao';
 import BotaoVisibilidadeSenha from '../components/BotaoVisibilidadeSenha';
+import { PLANOS_COMERCIAIS, type PlanoEmpresarial } from '../lib/planos-comerciais';
 
 type FeedbackStatus = 'novo' | 'em_analise' | 'respondido' | 'arquivado';
 type AdminView = 'avaliacoes' | 'disparos' | 'conteudo-vendas' | 'cupons' | 'perfis' | 'consumo' | 'rep-p' | 'configuracoes';
@@ -172,12 +173,19 @@ function ehConsultaDeCadastro(consulta: ConsultaCadastros): consulta is Platafor
 function detalheAcesso(p: Perfil): string {
   if (p.status === 'cortesia') {
     const origem = p.cupom_id ? 'Cupom' : 'Cortesia';
-    return p.valido_ate ? `${origem} até ${formatDate(p.valido_ate)}` : `${origem} (sem prazo)`;
+    const plano = p.tipo_perfil === 'pessoal'
+      ? PLANOS_COMERCIAIS.pessoal_premium.nome
+      : p.plano === 'business' || p.plano === 'business_pro' || p.plano === 'business_premium'
+        ? PLANOS_COMERCIAIS[p.plano].nome
+        : PLANOS_COMERCIAIS.business_pro.nome;
+    return p.valido_ate ? `${origem} · ${plano} · até ${formatDate(p.valido_ate)}` : `${origem} · ${plano} · sem prazo`;
   }
   if (p.status === 'trial') return p.trial_fim ? `Trial até ${formatDate(p.trial_fim)}` : 'Trial';
   if (p.status === 'ativa') {
     if (p.plano) {
-      const plano = p.plano === 'pessoal_premium' ? 'Premium Pessoal' : 'Empresa';
+      const plano = p.plano in PLANOS_COMERCIAIS
+        ? PLANOS_COMERCIAIS[p.plano as keyof typeof PLANOS_COMERCIAIS].nome
+        : 'Empresa';
       const ciclo = p.ciclo === 'anual' ? 'Anual' : p.ciclo === 'mensal' ? 'Mensal' : '';
       return ciclo ? `Assinatura · ${plano} · ${ciclo}` : `Assinatura · ${plano}`;
     }
@@ -431,6 +439,7 @@ export default function AdminPage() {
   const [consumoGeradoEm, setConsumoGeradoEm] = useState('');
   const [liberarPerfil, setLiberarPerfil] = useState<Perfil | null>(null);
   const [liberarTipo, setLiberarTipo] = useState<'indeterminado' | 'periodo'>('indeterminado');
+  const [liberarPlano, setLiberarPlano] = useState<PlanoEmpresarial | ''>('');
   const [liberarValor, setLiberarValor] = useState('1');
   const [liberarUnidade, setLiberarUnidade] = useState<'dias' | 'semanas' | 'meses'>('meses');
   const [certificadoRepP, setCertificadoRepP] = useState<CertificadoRepP | null>(null);
@@ -563,7 +572,7 @@ export default function AdminPage() {
     if (perfisCarregados) void buscarPerfis(1, undefined, perfilBusca, porPagina);
   };
 
-  const executarAcaoPerfil = async (perfil: Perfil, corpo: { acao: 'revogar' | 'liberar'; duracaoValor?: number; duracaoUnidade?: string }) => {
+  const executarAcaoPerfil = async (perfil: Perfil, corpo: { acao: 'revogar' | 'liberar'; plano?: PlanoEmpresarial; duracaoValor?: number; duracaoUnidade?: string }) => {
     setWorkingId(perfil.id);
     setError('');
     setNotice('');
@@ -576,7 +585,7 @@ export default function AdminPage() {
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível executar.');
       setPerfis((current) => current.map((item) => item.id === perfil.id
-        ? { ...item, status: data.status, valido_ate: data.validoAte ?? null, trial_fim: data.trialFim ?? null, plano: null, ciclo: null, cupom_id: data.cupomId ?? null, tem_acesso: Boolean(data.temAcesso), tem_registro: Boolean(data.temRegistro) }
+        ? { ...item, status: data.status, valido_ate: data.validoAte ?? null, trial_fim: data.trialFim ?? null, plano: data.plano ?? null, ciclo: null, cupom_id: data.cupomId ?? null, tem_acesso: Boolean(data.temAcesso), tem_registro: Boolean(data.temRegistro) }
         : item));
       const mensagens: Record<string, string> = {
         revogar: 'Acesso revogado.',
@@ -614,6 +623,7 @@ export default function AdminPage() {
 
   const abrirLiberar = (perfil: Perfil) => {
     setLiberarTipo('indeterminado');
+    setLiberarPlano('');
     setLiberarValor('1');
     setLiberarUnidade('meses');
     setLiberarPerfil(perfil);
@@ -622,9 +632,14 @@ export default function AdminPage() {
   const confirmarLiberar = async () => {
     if (!liberarPerfil) return;
     const alvo = liberarPerfil;
+    if (alvo.tipo_perfil !== 'pessoal' && !liberarPlano) {
+      setError('Selecione o plano da cortesia empresarial.');
+      return;
+    }
+    const plano = alvo.tipo_perfil === 'pessoal' ? undefined : liberarPlano || undefined;
     const corpo = liberarTipo === 'periodo'
-      ? { acao: 'liberar' as const, duracaoValor: Number(liberarValor), duracaoUnidade: liberarUnidade }
-      : { acao: 'liberar' as const };
+      ? { acao: 'liberar' as const, plano, duracaoValor: Number(liberarValor), duracaoUnidade: liberarUnidade }
+      : { acao: 'liberar' as const, plano };
     setLiberarPerfil(null);
     await executarAcaoPerfil(alvo, corpo);
   };
@@ -1477,25 +1492,55 @@ export default function AdminPage() {
 
       {liberarPerfil && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setLiberarPerfil(null)}>
-          <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <h3 className="text-base font-black text-slate-950">Liberar acesso</h3>
-            <p className="mt-1 text-xs text-slate-500">Cortesia para <strong>{liberarPerfil.nome}</strong>. Escolha acesso ilimitado ou uma duração definida.</p>
+          <div role="dialog" aria-modal="true" aria-labelledby="liberar-acesso-titulo" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <h3 id="liberar-acesso-titulo" className="text-base font-black text-slate-950">Liberar acesso</h3>
+            <p className="mt-1 text-xs text-slate-500">Cortesia para <strong>{liberarPerfil.nome}</strong>. Escolha o plano e a duração do acesso.</p>
 
-            <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-md border border-slate-200 bg-slate-50 p-1">
+            {liberarPerfil.tipo_perfil === 'pessoal' ? (
+              <div className="mt-4 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2.5">
+                <p className="text-[10px] font-black uppercase tracking-wide text-cyan-800">Plano da cortesia</p>
+                <p className="mt-1 text-sm font-black text-slate-900">{PLANOS_COMERCIAIS.pessoal_premium.nome}</p>
+              </div>
+            ) : (
+              <fieldset className="mt-4">
+                <legend className="text-xs font-black text-slate-700">Plano da cortesia</legend>
+                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  {([
+                    ['business', '1 usuário · 1 empresa'],
+                    ['business_pro', '3 usuários · 3 empresas'],
+                    ['business_premium', '10 usuários · 10 empresas'],
+                  ] as Array<[PlanoEmpresarial, string]>).map(([plano, resumo]) => {
+                    const selecionado = liberarPlano === plano;
+                    return <button
+                      key={plano}
+                      type="button"
+                      aria-pressed={selecionado}
+                      onClick={() => setLiberarPlano(plano)}
+                      className={`min-h-16 rounded-xl border px-3 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2 ${selecionado ? 'border-cyan-700 bg-cyan-700 text-white shadow' : 'border-slate-200 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50'}`}
+                    >
+                      <span className="block text-[11px] font-black leading-tight">{PLANOS_COMERCIAIS[plano].nome}</span>
+                      <span className={`mt-1 block text-[9px] font-bold leading-tight ${selecionado ? 'text-cyan-50' : 'text-slate-500'}`}>{resumo}</span>
+                    </button>;
+                  })}
+                </div>
+              </fieldset>
+            )}
+
+            <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1">
               <button type="button" onClick={() => setLiberarTipo('indeterminado')} className={`rounded px-3 py-1.5 text-xs font-black uppercase transition ${liberarTipo === 'indeterminado' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-white'}`}>Ilimitado</button>
               <button type="button" onClick={() => setLiberarTipo('periodo')} className={`rounded px-3 py-1.5 text-xs font-black uppercase transition ${liberarTipo === 'periodo' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-white'}`}>Por período</button>
             </div>
 
             {liberarTipo === 'periodo' && (
-              <div className="mt-3 flex gap-2">
-                <input type="number" min={1} value={liberarValor} onChange={(event) => setLiberarValor(event.target.value)} className="h-10 w-24 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" />
-                <select value={liberarUnidade} onChange={(event) => setLiberarUnidade(event.target.value as 'dias' | 'semanas' | 'meses')} className="h-10 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700"><option value="dias">Dias</option><option value="semanas">Semanas</option><option value="meses">Meses</option></select>
+              <div className="mt-3 grid grid-cols-[96px_1fr] gap-2">
+                <label className="text-[10px] font-black uppercase text-slate-500">Duração<input type="number" min={1} value={liberarValor} onChange={(event) => setLiberarValor(event.target.value)} className="mt-1 h-11 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700 focus:ring-2 focus:ring-cyan-700/20" /></label>
+                <label className="text-[10px] font-black uppercase text-slate-500">Unidade<select value={liberarUnidade} onChange={(event) => setLiberarUnidade(event.target.value as 'dias' | 'semanas' | 'meses')} className="mt-1 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700 focus:ring-2 focus:ring-cyan-700/20"><option value="dias">Dias</option><option value="semanas">Semanas</option><option value="meses">Meses</option></select></label>
               </div>
             )}
 
             <div className="mt-5 flex gap-2">
-              <button type="button" onClick={() => setLiberarPerfil(null)} className="h-10 flex-1 rounded-md border border-slate-300 text-xs font-black uppercase text-slate-600 hover:bg-slate-50">Cancelar</button>
-              <button type="button" onClick={() => void confirmarLiberar()} className="h-10 flex-1 rounded-md bg-emerald-600 text-xs font-black uppercase text-white hover:bg-emerald-700">Liberar</button>
+              <button type="button" onClick={() => setLiberarPerfil(null)} className="h-11 flex-1 rounded-xl border border-slate-300 text-xs font-black uppercase text-slate-600 hover:bg-slate-50">Cancelar</button>
+              <button type="button" onClick={() => void confirmarLiberar()} disabled={liberarPerfil.tipo_perfil !== 'pessoal' && !liberarPlano} className="h-11 flex-1 rounded-xl bg-emerald-600 text-xs font-black uppercase text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40">Liberar</button>
             </div>
           </div>
         </div>

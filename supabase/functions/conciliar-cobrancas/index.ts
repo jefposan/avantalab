@@ -8,6 +8,9 @@ type Assinatura = {
   trial_fim: string | null;
   ciclo: string | null;
   plano: string | null;
+  plano_agendado: string | null;
+  ciclo_agendado: string | null;
+  alteracao_agendada_para: string | null;
   gateway_subscription_id: string;
 };
 
@@ -59,6 +62,19 @@ async function asaasOuAusente(path: string) {
 }
 
 const STATUS_PAGOS = new Set(['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']);
+const PLANOS_REFERENCIA = new Set(['pessoal_premium', 'business', 'business_pro', 'business_premium']);
+
+function lerReferenciaAssinatura(valor: unknown) {
+  const partes = String(valor || '').trim().split(':');
+  if (
+    partes.length !== 4
+    || partes[0] !== 'assinatura'
+    || !/^[0-9a-f-]{36}$/i.test(partes[1])
+    || !PLANOS_REFERENCIA.has(partes[2])
+    || !['mensal', 'anual'].includes(partes[3])
+  ) return null;
+  return { empresaId: partes[1], plano: partes[2], ciclo: partes[3] };
+}
 
 function fimCarencia(trialFim: string | null) {
   const carencia = new Date();
@@ -101,12 +117,13 @@ Deno.serve(async () => {
   try {
     const { data, error } = await db
       .from('assinaturas')
-      .select('id, empresa_id, status, valido_ate, trial_fim, ciclo, plano, gateway_subscription_id')
+      .select('id, empresa_id, status, valido_ate, trial_fim, ciclo, plano, plano_agendado, ciclo_agendado, alteracao_agendada_para, gateway_subscription_id')
       .not('gateway_subscription_id', 'is', null);
     if (error) throw error;
 
     let verificadas = 0;
     let atualizadas = 0;
+    let alteracoesAgendadasAplicadas = 0;
     let faturasSincronizadas = 0;
     const falhas: Array<{ empresaId: string; erro: string }> = [];
 
@@ -114,6 +131,28 @@ Deno.serve(async () => {
       if (assinatura.status === 'cancelada' || assinatura.status === 'cortesia') continue;
       verificadas++;
       try {
+        if (
+          assinatura.plano_agendado
+          && assinatura.ciclo_agendado
+          && assinatura.alteracao_agendada_para
+          && new Date(assinatura.alteracao_agendada_para) <= new Date()
+        ) {
+          const { data: aplicacao, error: erroAplicacao } = await db.rpc('aplicar_alteracao_assinatura_agendada', {
+            p_empresa_id: assinatura.empresa_id,
+            p_agora: new Date().toISOString(),
+          });
+          if (erroAplicacao || aplicacao?.ok === false) {
+            throw erroAplicacao || new Error(`Falha na alteração agendada: ${aplicacao?.codigo || 'erro desconhecido'}`);
+          }
+          if (aplicacao?.aplicada) {
+            assinatura.plano = assinatura.plano_agendado;
+            assinatura.ciclo = assinatura.ciclo_agendado;
+            assinatura.plano_agendado = null;
+            assinatura.ciclo_agendado = null;
+            assinatura.alteracao_agendada_para = null;
+            alteracoesAgendadasAplicadas++;
+          }
+        }
         const [detalhe, pagamentosResposta] = await Promise.all([
           asaasOuAusente(`/subscriptions/${assinatura.gateway_subscription_id}`),
           asaasOuAusente(`/subscriptions/${assinatura.gateway_subscription_id}/payments`),
@@ -165,10 +204,20 @@ Deno.serve(async () => {
 
         const ciclo = detalhe?.cycle === 'YEARLY' ? 'anual' : detalhe?.cycle === 'MONTHLY' ? 'mensal' : null;
         if (status === 'ativa') {
+          const referencia = lerReferenciaAssinatura(detalhe?.externalReference);
+          if (referencia && (
+            referencia.empresaId !== assinatura.empresa_id
+            || !(
+              (referencia.plano === assinatura.plano && referencia.ciclo === assinatura.ciclo)
+              || (referencia.plano === assinatura.plano_agendado && referencia.ciclo === assinatura.ciclo_agendado)
+            )
+          )) {
+            throw new Error('A referência da Asaas não corresponde ao plano registrado.');
+          }
           const { data: ativacao, error: erroAtivacao } = await db.rpc('ativar_assinatura_propria_perfil', {
             p_empresa_id: assinatura.empresa_id,
             p_gateway_subscription_id: assinatura.gateway_subscription_id,
-            p_ciclo: ciclo,
+            p_ciclo: assinatura.plano_agendado ? null : ciclo,
           });
           if (erroAtivacao || ativacao?.ok === false) {
             throw erroAtivacao || new Error(`Falha ao ativar assinatura própria: ${ativacao?.codigo || 'erro desconhecido'}`);
@@ -179,7 +228,7 @@ Deno.serve(async () => {
             status,
             valido_ate: validoAte,
             ...(limparCheckoutTrial ? { gateway_subscription_id: null } : {}),
-            ...(ciclo ? { ciclo } : {}),
+            ...(ciclo && !assinatura.plano_agendado ? { ciclo } : {}),
             atualizado_em: new Date().toISOString(),
           }).eq('id', assinatura.id);
           if (erroAtualizacao) throw erroAtualizacao;
@@ -357,7 +406,7 @@ Deno.serve(async () => {
       }
     }
 
-    return resposta({ ok: true, verificadas, atualizadas, faturasSincronizadas, modulosVerificados, modulosAtualizados, faciaisVerificadas, faciaisAtualizadas, falhas });
+    return resposta({ ok: true, verificadas, atualizadas, alteracoesAgendadasAplicadas, faturasSincronizadas, modulosVerificados, modulosAtualizados, faciaisVerificadas, faciaisAtualizadas, falhas });
   } catch (error) {
     return resposta({ ok: false, erro: String(error) }, 500);
   }

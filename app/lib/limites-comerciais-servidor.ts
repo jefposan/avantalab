@@ -2,14 +2,26 @@ import { COBRANCA_ATIVA, assinaturaVigente, type EstadoAcesso } from './cobranca
 import { normalizarPlanoComercial, PLANOS_COMERCIAIS, type PlanoComercial } from './planos-comerciais';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export function planoAplicavelParaLimites(estado: EstadoAcesso | null): PlanoComercial | null {
-  if (!COBRANCA_ATIVA || !estado) return null;
+export function planoAplicavelParaLimites(
+  estado: EstadoAcesso | null,
+  cobrancaAtiva = COBRANCA_ATIVA,
+): PlanoComercial | null {
+  if (!cobrancaAtiva || !estado) return null;
   const plano = normalizarPlanoComercial(estado.plano);
   if (estado.tipoPerfil === 'pessoal') {
     return plano === 'pessoal_premium' && assinaturaVigente(estado) ? 'pessoal_premium' : 'free';
   }
   if (!assinaturaVigente(estado)) return null;
   return plano === 'business_pro' || plano === 'business_premium' ? plano : 'business';
+}
+
+export function planoPermiteCentrosDeCusto(
+  estado: EstadoAcesso | null,
+  cobrancaAtiva = COBRANCA_ATIVA,
+): boolean {
+  if (!cobrancaAtiva) return true;
+  const plano = planoAplicavelParaLimites(estado, cobrancaAtiva);
+  return plano !== null && PLANOS_COMERCIAIS[plano].limites.centrosDeCustoAtivos;
 }
 
 export async function validarLimiteDeUsuarios(
@@ -36,4 +48,32 @@ export async function validarLimiteDeUsuarios(
       ? 'Business Pro'
       : 'Business Premium';
   return { permitido: false, mensagem: `Este plano permite até ${limite} ${limite === 1 ? 'usuário' : 'usuários'}. Faça upgrade para o ${sugestao} para adicionar mais pessoas.` };
+}
+
+export async function validarLimiteDeFuncionariosPonto(
+  db: SupabaseClient,
+  empresaId: string,
+  estado: EstadoAcesso | null,
+  cobrancaAtiva = COBRANCA_ATIVA,
+): Promise<{ permitido: true } | { permitido: false; mensagem: string }> {
+  const plano = planoAplicavelParaLimites(estado, cobrancaAtiva);
+  if (!plano) return { permitido: true };
+  const limite = PLANOS_COMERCIAIS[plano].limites.funcionarios;
+  if (limite === null) return { permitido: true };
+  const { count, error } = await db
+    .from('ponto_funcionarios')
+    .select('id', { count: 'exact', head: true })
+    .eq('empresa_id', empresaId)
+    .eq('ativo', true);
+  if (error) throw error;
+  if ((count || 0) < limite) return { permitido: true };
+  const sugestao = plano === 'business_premium'
+    ? 'Business Premium'
+    : plano === 'business_pro'
+      ? 'Business Premium'
+      : 'Business Pro';
+  return {
+    permitido: false,
+    mensagem: `Este plano permite até ${limite} ${limite === 1 ? 'funcionário ativo' : 'funcionários ativos'} no Controle de Ponto. Faça upgrade para o ${sugestao} para continuar.`,
+  };
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
+import { resolverEstadoAcesso } from '../../lib/cobranca-servidor';
+import { validarLimiteDeFuncionariosPonto } from '../../lib/limites-comerciais-servidor';
 
 function soDigitos(v: string) {
   return String(v || '').replace(/\D/g, '');
@@ -127,6 +129,12 @@ export async function POST(request: Request) {
     // pontual dessa camada impedir o desligamento seguro do funcionário.
     const mudouAtivo = atual.ativo !== ativo;
     if (mudouAtivo && ativo) {
+      const limiteFuncionarios = await validarLimiteDeFuncionariosPonto(
+        supabaseAdmin,
+        empresaId,
+        await resolverEstadoAcesso(empresaId),
+      );
+      if (!limiteFuncionarios.permitido) return respostaErro(limiteFuncionarios.mensagem, 409);
       const { error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
         ban_duration: 'none',
       });

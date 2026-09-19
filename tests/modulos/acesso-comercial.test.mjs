@@ -41,15 +41,36 @@ const baseEmpresa = {
   modoRevisao: false,
 };
 
-test('cortesia empresarial vigente libera instalação sem cobrança', () => {
-  const acesso = resolverAcessoComercialModulo({
+test('cortesia empresarial segue o plano escolhido e preserva legado Pro', () => {
+  const legado = resolverAcessoComercialModulo({
     ...baseEmpresa,
     status: 'cortesia',
     plano: null,
   }, true);
+  const business = resolverAcessoComercialModulo({
+    ...baseEmpresa,
+    status: 'cortesia',
+    plano: 'business',
+  }, true);
+  const businessPro = resolverAcessoComercialModulo({
+    ...baseEmpresa,
+    status: 'cortesia',
+    plano: 'business_pro',
+  }, true);
+  const businessPremium = resolverAcessoComercialModulo({
+    ...baseEmpresa,
+    status: 'cortesia',
+    plano: 'business_premium',
+  }, true);
 
-  assert.equal(acesso, 'cortesia');
-  assert.equal(permiteInstalacaoModuloSemCobranca(acesso), true);
+  assert.equal(legado, 'cortesia');
+  assert.equal(permiteInstalacaoModuloSemCobranca(legado), true);
+  assert.equal(business, 'business');
+  assert.equal(permiteInstalacaoModuloSemCobranca(business), false);
+  assert.equal(businessPro, 'business_pro');
+  assert.equal(permiteInstalacaoModuloSemCobranca(businessPro), true);
+  assert.equal(businessPremium, 'business_premium');
+  assert.equal(permiteInstalacaoModuloSemCobranca(businessPremium), true);
 });
 
 test('Business Básico contrata módulo e Pro/Premium instalam sem cobrança', () => {

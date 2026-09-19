@@ -19,9 +19,12 @@ export function resolverAcessoComercialModulo(
 ): AcessoComercialModulo {
   if (!cobrancaAtiva) return 'liberado';
   if (!estado || estado.tipoPerfil !== 'empresa' || !assinaturaVigente(estado)) return null;
-  if (estado.status === 'cortesia') return 'cortesia';
-
   const plano = normalizarPlanoComercial(estado.plano);
+  if (estado.status === 'cortesia') {
+    return plano === 'business' || plano === 'business_pro' || plano === 'business_premium'
+      ? plano
+      : 'cortesia';
+  }
   return plano === 'business' || plano === 'business_pro' || plano === 'business_premium' ? plano : null;
 }
 

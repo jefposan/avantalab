@@ -9,7 +9,13 @@ import {
 import { PRECOS, type Ciclo, type PlanoPago } from '../../../lib/cobranca';
 import { calcularFimPeriodoPago } from '../../../lib/cobranca-fluxo';
 import { normalizarPlanoComercial, PLANOS_COMERCIAIS } from '../../../lib/planos-comerciais';
+import { criarReferenciaAssinatura } from '../../../lib/cobranca-referencia';
 import { autenticarPerfilCobranca, resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
+import {
+  classificarAlteracaoAssinatura,
+  ehCicloComercial,
+  ehPlanoEmpresarial,
+} from '../../../lib/assinatura-transicoes';
 
 export const runtime = 'nodejs';
 const STATUS_COM_ASSINATURA = new Set(['ativa', 'inadimplente', 'cancelada']);
@@ -61,7 +67,7 @@ export async function GET(request: Request) {
   }
   const { data: local } = await acesso.db
     .from('assinaturas')
-    .select('id, status, plano, ciclo, gateway_subscription_id, cupom_id')
+    .select('id, status, plano, ciclo, gateway_subscription_id, cupom_id, plano_agendado, ciclo_agendado, alteracao_agendada_para')
     .eq('empresa_id', empresaId)
     .maybeSingle();
   const { data: assinaturasLoja } = await acesso.db
@@ -95,6 +101,14 @@ export async function GET(request: Request) {
       obterAssinaturaAsaas(local.gateway_subscription_id),
       listarCobrancasAssinaturaAsaas(local.gateway_subscription_id),
     ]);
+    if (!assinaturaGw.ok || !cobrancasGw.ok) {
+      console.warn('[cobranca/gerenciar] Falha ao consultar assinatura no gateway', {
+        assinaturaStatus: assinaturaGw.status,
+        assinaturaErro: assinaturaGw.erro,
+        cobrancasStatus: cobrancasGw.status,
+        cobrancasErro: cobrancasGw.erro,
+      });
+    }
     if (assinaturaGw.ok && assinaturaGw.data) {
       assinatura = {
         id: assinaturaGw.data.id,
@@ -153,8 +167,9 @@ export async function GET(request: Request) {
   const valorPlano = planoLocal !== null && cicloLocal !== null
     ? PRECOS[planoLocal][cicloLocal]
     : 0;
+  const temAlteracaoAgendada = Boolean(local?.plano_agendado && local?.ciclo_agendado && local?.alteracao_agendada_para);
   const valorContratado = temAssinatura && (valorGateway > 0 || valorFatura > 0 || valorPlano > 0)
-    ? (valorGateway > 0 ? valorGateway : (valorFatura > 0 ? valorFatura : valorPlano))
+    ? (temAlteracaoAgendada && valorPlano > 0 ? valorPlano : (valorGateway > 0 ? valorGateway : (valorFatura > 0 ? valorFatura : valorPlano)))
     : null;
   const proximoVencimento = temAssinatura && estado?.status !== 'cancelada'
     ? (
@@ -177,15 +192,24 @@ export async function GET(request: Request) {
     viaCupom,
     podeGerenciar: acesso.podeGerenciar,
     origemAssinatura,
+    alteracaoAgendada: local?.plano_agendado && local?.ciclo_agendado && local?.alteracao_agendada_para
+      ? {
+          plano: local.plano_agendado,
+          ciclo: local.ciclo_agendado,
+          efetivaEm: local.alteracao_agendada_para,
+          valor: PRECOS[local.plano_agendado as Exclude<PlanoPago, 'empresa'>]?.[local.ciclo_agendado as Ciclo] ?? null,
+        }
+      : null,
   });
 }
 
 export async function PATCH(request: Request) {
   const corpo = await request.json().catch(() => ({}));
   const empresaId = String(corpo.empresaId || '').trim();
-  const ciclo = String(corpo.ciclo || '') as Ciclo;
+  const cicloSolicitadoBruto = String(corpo.ciclo || '').trim();
   const planoSolicitado = String(corpo.plano || '').trim();
-  if (!empresaId || !['mensal', 'anual'].includes(ciclo)) {
+  const cancelarAlteracaoAgendada = corpo.cancelarAlteracaoAgendada === true;
+  if (!empresaId || (!cancelarAlteracaoAgendada && !ehCicloComercial(cicloSolicitadoBruto))) {
     return NextResponse.json({ erro: true, mensagem: 'Dados inválidos.' }, { status: 400 });
   }
   const acesso = await autenticarPerfilCobranca(request, empresaId, true);
@@ -205,7 +229,7 @@ export async function PATCH(request: Request) {
 
   const { data: local } = await acesso.db
     .from('assinaturas')
-    .select('status, plano, gateway_subscription_id')
+    .select('status, plano, ciclo, valido_ate, gateway_subscription_id, plano_agendado, ciclo_agendado, alteracao_agendada_para')
     .eq('empresa_id', empresaId)
     .maybeSingle();
   if (!local?.gateway_subscription_id || local.status === 'cancelada') {
@@ -215,25 +239,127 @@ export async function PATCH(request: Request) {
   const planoAtual: PlanoPago = planoNormalizado === 'pessoal_premium' || planoNormalizado === 'business' || planoNormalizado === 'business_pro' || planoNormalizado === 'business_premium'
     ? planoNormalizado
     : 'business';
-  let plano: PlanoPago = planoAtual;
+  const cicloAtual: Ciclo = local.ciclo === 'anual' ? 'anual' : 'mensal';
 
-  // A troca de plano por aqui é deliberadamente unidirecional: só permite
-  // elevar o plano. Reduções exigem uma revisão dos recursos já utilizados e
-  // não devem acontecer por engano.
-  if (planoSolicitado) {
-    const elevacoesPermitidas = new Set([
-      'business:business_pro',
-      'business:business_premium',
-      'business_pro:business_premium',
-    ]);
-    if (!elevacoesPermitidas.has(`${planoAtual}:${planoSolicitado}`)) {
-      return NextResponse.json({ erro: true, mensagem: 'Esta alteração de plano não está disponível.' }, { status: 409 });
+  if (cancelarAlteracaoAgendada) {
+    if (!local.plano_agendado) return NextResponse.json({ ok: true, jaCancelada: true });
+    const restaurada = await atualizarAssinaturaAsaas(local.gateway_subscription_id, {
+      value: PRECOS[planoAtual][cicloAtual],
+      cycle: cicloAtual === 'anual' ? 'YEARLY' : 'MONTHLY',
+      description: `AvantaLab — ${PLANOS_COMERCIAIS[planoAtual].nome} (${cicloAtual})`,
+      externalReference: criarReferenciaAssinatura({
+        empresaId,
+        plano: planoAtual as Exclude<PlanoPago, 'empresa'>,
+        ciclo: cicloAtual,
+      }),
+      updatePendingPayments: true,
+    });
+    if (!restaurada.ok) {
+      return NextResponse.json({ erro: true, mensagem: restaurada.erro || 'Não foi possível cancelar a alteração agendada.' }, { status: 502 });
     }
-    const estado = await resolverEstadoAcessoParaUsuario(empresaId, acesso.usuario.id);
-    if (estado?.tipoPerfil !== 'empresa') {
-      return NextResponse.json({ erro: true, mensagem: 'Business Pro está disponível apenas para perfis empresariais.' }, { status: 403 });
+    const { error } = await acesso.db.from('assinaturas').update({
+      plano_agendado: null,
+      ciclo_agendado: null,
+      alteracao_agendada_para: null,
+      alteracao_agendada_em: null,
+      atualizado_em: new Date().toISOString(),
+    }).eq('empresa_id', empresaId);
+    if (error) {
+      return NextResponse.json({ erro: true, mensagem: 'A cobrança foi restaurada, mas o agendamento local não pôde ser removido.' }, { status: 500 });
     }
-    plano = planoSolicitado as 'business_pro' | 'business_premium';
+    return NextResponse.json({ ok: true, alteracaoAgendadaCancelada: true });
+  }
+
+  const ciclo = cicloSolicitadoBruto as Ciclo;
+  const plano = planoSolicitado || planoAtual;
+  const estado = await resolverEstadoAcessoParaUsuario(empresaId, acesso.usuario.id);
+  if (estado?.tipoPerfil === 'empresa' && !ehPlanoEmpresarial(plano)) {
+    return NextResponse.json({ erro: true, mensagem: 'Plano empresarial inválido.' }, { status: 400 });
+  }
+  if (estado?.tipoPerfil !== 'empresa' && plano !== 'pessoal_premium') {
+    return NextResponse.json({ erro: true, mensagem: 'Este plano está disponível apenas para perfis empresariais.' }, { status: 403 });
+  }
+
+  // A assinatura pessoal ainda não troca de nível. Sua mudança de ciclo
+  // preserva o comportamento já existente, sem afetar a matriz Business.
+  const tipoAlteracao = ehPlanoEmpresarial(planoAtual) && ehPlanoEmpresarial(plano)
+    ? classificarAlteracaoAssinatura({
+        planoAtual,
+        cicloAtual,
+        planoSolicitado: plano,
+        cicloSolicitado: ciclo,
+      })
+    : (plano === planoAtual && ciclo === cicloAtual ? 'sem_alteracao' : 'upgrade_imediato');
+
+  if (tipoAlteracao === 'sem_alteracao') {
+    return NextResponse.json({ ok: true, plano: planoAtual, ciclo: cicloAtual, semAlteracao: true });
+  }
+
+  if (tipoAlteracao === 'alteracao_agendada') {
+    const cobrancas = await listarCobrancasAssinaturaAsaas(local.gateway_subscription_id);
+    if (!cobrancas.ok) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: 'Não foi possível confirmar o período já pago. Nenhuma alteração foi realizada.',
+      }, { status: 502 });
+    }
+    const efetivaEm = calcularFimPeriodoPago(
+      cobrancas.data?.data || [],
+      cicloAtual,
+      local.valido_ate,
+    );
+    if (!efetivaEm) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: 'Não foi possível identificar a validade atual. A assinatura permaneceu sem alterações.',
+      }, { status: 409 });
+    }
+    const atualizada = await atualizarAssinaturaAsaas(local.gateway_subscription_id, {
+      value: PRECOS[plano as PlanoPago][ciclo],
+      cycle: ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
+      description: `AvantaLab — ${PLANOS_COMERCIAIS[plano as keyof typeof PLANOS_COMERCIAIS].nome} (${ciclo})`,
+      externalReference: criarReferenciaAssinatura({
+        empresaId,
+        plano: plano as Exclude<PlanoPago, 'empresa'>,
+        ciclo,
+      }),
+      updatePendingPayments: true,
+    });
+    if (!atualizada.ok) {
+      return NextResponse.json({ erro: true, mensagem: atualizada.erro || 'Não foi possível agendar a alteração.' }, { status: 502 });
+    }
+    const agora = new Date().toISOString();
+    const { error } = await acesso.db.from('assinaturas').update({
+      plano_agendado: plano,
+      ciclo_agendado: ciclo,
+      alteracao_agendada_para: efetivaEm,
+      alteracao_agendada_em: agora,
+      atualizado_em: agora,
+    }).eq('empresa_id', empresaId);
+    if (error) {
+      await atualizarAssinaturaAsaas(local.gateway_subscription_id, {
+        value: PRECOS[planoAtual][cicloAtual],
+        cycle: cicloAtual === 'anual' ? 'YEARLY' : 'MONTHLY',
+        description: `AvantaLab — ${PLANOS_COMERCIAIS[planoAtual].nome} (${cicloAtual})`,
+        externalReference: criarReferenciaAssinatura({
+          empresaId,
+          plano: planoAtual as Exclude<PlanoPago, 'empresa'>,
+          ciclo: cicloAtual,
+        }),
+        updatePendingPayments: true,
+      });
+      return NextResponse.json({ erro: true, mensagem: 'Não foi possível registrar o agendamento. A cobrança anterior foi restaurada.' }, { status: 500 });
+    }
+    return NextResponse.json({
+      ok: true,
+      agendada: true,
+      efetivaEm,
+      planoAtual,
+      cicloAtual,
+      planoAgendado: plano,
+      cicloAgendado: ciclo,
+      mensagem: `Alteração agendada para ${new Date(efetivaEm).toLocaleDateString('pt-BR')}. Até lá, o plano atual permanece disponível.`,
+    });
   }
 
   // Business Pro e Premium incluem todos os módulos. Antes de elevar a
@@ -262,9 +388,14 @@ export async function PATCH(request: Request) {
   }
 
   const atualizada = await atualizarAssinaturaAsaas(local.gateway_subscription_id, {
-    value: PRECOS[plano][ciclo],
+    value: PRECOS[plano as PlanoPago][ciclo],
     cycle: ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
-    description: `AvantaLab — ${PLANOS_COMERCIAIS[plano].nome} (${ciclo})`,
+    description: `AvantaLab — ${PLANOS_COMERCIAIS[plano as keyof typeof PLANOS_COMERCIAIS].nome} (${ciclo})`,
+    externalReference: criarReferenciaAssinatura({
+      empresaId,
+      plano: plano as Exclude<PlanoPago, 'empresa'>,
+      ciclo,
+    }),
     // A alteração comercial é imediata: a cobrança pendente acompanha o
     // plano escolhido, evitando liberar Business Pro com uma fatura Business.
     updatePendingPayments: true,
@@ -276,6 +407,10 @@ export async function PATCH(request: Request) {
   const { error: erroPersistencia } = await acesso.db.from('assinaturas').update({
     plano,
     ciclo,
+    plano_agendado: null,
+    ciclo_agendado: null,
+    alteracao_agendada_para: null,
+    alteracao_agendada_em: null,
     atualizado_em: new Date().toISOString(),
   }).eq('empresa_id', empresaId);
   if (erroPersistencia) {
@@ -375,6 +510,10 @@ export async function DELETE(request: Request) {
   const { error: erroPersistencia } = await acesso.db.from('assinaturas').update({
     status: trialVigente ? 'trial' : 'cancelada',
     valido_ate: trialVigente ? null : acessoAte || new Date().toISOString(),
+    plano_agendado: null,
+    ciclo_agendado: null,
+    alteracao_agendada_para: null,
+    alteracao_agendada_em: null,
     ...(trialVigente ? { gateway_subscription_id: null } : {}),
     atualizado_em: new Date().toISOString(),
   }).eq('empresa_id', empresaId);

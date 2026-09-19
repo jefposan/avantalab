@@ -43,6 +43,29 @@ test('Business Pro compartilha a assinatura enquanto houver vaga', () => {
   });
 });
 
+test('franquias 1, 3 e 10 bloqueiam exatamente o próximo perfil', () => {
+  for (const [plano, limite] of [
+    ['business', 1],
+    ['business_pro', 3],
+    ['business_premium', 10],
+  ]) {
+    const ultimaVaga = avaliarQuotaParaCriacao({
+      plano,
+      usados: limite - 1,
+      limite,
+      origemEmpresaId: 'origem-id',
+    }, 'empresa', ['empresa']);
+    const cheia = avaliarQuotaParaCriacao({
+      plano,
+      usados: limite,
+      limite,
+      origemEmpresaId: 'origem-id',
+    }, 'empresa', ['empresa']);
+    assert.equal(ultimaVaga.compartilhaAssinatura, true);
+    assert.equal(cheia.compartilhaAssinatura, false);
+  }
+});
+
 test('empresa fora da quota segue independente sem herdar a assinatura', () => {
   const quotaCheia = avaliarQuotaParaCriacao({
     plano: 'business_pro',

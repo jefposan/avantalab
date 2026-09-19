@@ -1,9 +1,63 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.01 -->
+<!-- ava-version: 1.36.0.13 -->
 
-> Revisão 1.36.0.01: a correção da indisponibilidade do comando por voz
+> Revisão 1.36.0.13: a correção da indisponibilidade do comando por voz
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Web.
+
+> Revisão 1.36.0.12: ao excluir um perfil, o Gestor Master escolhe entre
+> **Guardar por 30 dias**, com restauração disponível, e **Excluir agora**.
+> A exclusão imediata pede uma segunda confirmação com **EXCLUIR**, apaga dados
+> e pontos de restauração do sistema e preserva apenas registros cuja guarda é
+> obrigatória. O login AvantaLab não é excluído.
+
+> Revisão 1.36.0.11: a conciliação reconhece a cobrança futura de uma alteração
+> agendada sem antecipar o plano ou o ciclo. O caminho operacional não muda.
+
+> Revisão 1.36.0.10: em uma alteração agendada, **Assinatura** continua exibindo
+> o valor do plano vigente. O novo valor começa somente na renovação informada.
+
+> Revisão 1.36.0.09: em **Assinatura**, o gestor escolhe Business Básico,
+> Business Pro ou Business Premium. Upgrade de nível é imediato; downgrade e
+> mudança mensal/anual ficam agendados para o fim do período pago, sem devolução
+> proporcional, e podem ser cancelados antes da data. Cancelar renovação mantém
+> o acesso até a validade. Ao reduzir a franquia, dados e históricos permanecem;
+> perfis excedentes são desvinculados e acessos excedentes ficam inativos.
+
+> Revisão 1.36.0.08: o Controle de Ponto aceita até 10 funcionários ativos no
+> Business Básico quando contratado como módulo avulso, até 30 no Business Pro
+> e quantidade ilimitada no Premium. Centros de custo só podem ser ativados no
+> Pro ou Premium. Ao mudar para o Básico, o recurso e os módulos antes incluídos
+> são desativados sem apagar dados; módulos avulsos pagos continuam ativos.
+
+> Revisão 1.36.0.07: em **/admin > Perfis**, **Liberar acesso** exige escolher
+> Business Básico, Business Pro ou Business Premium para uma cortesia Empresa;
+> perfil Pessoal recebe Pessoal Premium. Limites, Centros de custo e módulos
+> seguem o plano escolhido. Básico mantém módulos avulsos; Pro e Premium os
+> incluem. Cortesias empresariais antigas sem plano preservam Business Pro.
+
+> Revisão 1.36.0.06: a confirmação do Asaas agora valida perfil, plano e ciclo
+> da cobrança antes de liberar o acesso. O caminho operacional de contratação
+> permanece o mesmo.
+
+> Revisão 1.36.0.05: o CTA do Business Pro na landing aparece como **Teste por
+> 7 dias grátis** e continua levando ao mesmo cadastro.
+
+> Revisão 1.36.0.04: cada card de plano da landing pode ser acionado em toda a
+> sua superfície e leva ao mesmo cadastro indicado pelo botão interno.
+
+> Revisão 1.36.0.03: a pílula de destaque do Pessoal Premium acomoda o texto
+> integralmente; sem impacto nos caminhos operacionais orientados pela Ava.
+
+> Revisão 1.36.0.02: os cinco cards da landing ficam na mesma linha no desktop;
+> sem impacto nos caminhos operacionais orientados pela Ava.
+
+> Revisão 1.36.0.01: a landing pública e a contratação Web exibem Business
+> Básico, Business Pro e Business Premium. Básico possui 1 usuário e 1 empresa,
+> módulos avulsos e sem Centros de custo; Pro possui até 3 usuários e empresas,
+> Ponto para até 30 funcionários e módulos incluídos; Premium possui até 10
+> usuários e empresas e funcionários ilimitados no Ponto. O ciclo pode ser
+> mensal ou anual, e a liberação continua ocorrendo após confirmação do Asaas.
 
 > Revisão 1.36.0: a base comercial reconhece Business Básico, Business Pro e
 > Business Premium, inclusive limites de empresa, usuários, módulos, ponto e
@@ -1999,8 +2053,8 @@
 > Revisão 1.7.2.30: ajuste visual do botão **Início** para o azul-marinho de
 > marca do AvantaLab no modo claro; sem alteração de operação.
 
-> Nesta publicação, cortesias empresariais equivalem ao plano completo
-> correspondente, e aprovações comerciais atualizam o vínculo automaticamente.
+> Cortesias empresariais seguem o plano selecionado pelo administrador, e
+> aprovações comerciais atualizam o vínculo automaticamente.
 
 > Revisão 1.7.2.29: ajuste visual do ícone SVG no botão **Início** do
 > AvantaProjetos Web; sem alteração de operação.

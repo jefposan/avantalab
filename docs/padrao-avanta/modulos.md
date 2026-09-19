@@ -41,16 +41,26 @@ O manifesto também declara obrigatoriamente:
 - O **Business Básico** permite contratação avulsa. O **Business Pro** e o
   **Business Premium** incluem os módulos, mas Gestor Master ou Administrador
   ainda escolhe o que instalar. A inclusão não instala módulos automaticamente.
-- Uma cortesia empresarial vigente equivale à liberação total do Business Pro
-  para módulos: não gera cobrança adicional e permite instalar ou remover todos
-  os módulos disponíveis. A cortesia não instala módulos automaticamente e não
-  amplia a permissão de Operador Completo ou Operador Simples.
+- Uma cortesia empresarial vigente possui plano explícito. Business Básico
+  mantém módulos avulsos; Business Pro e Business Premium permitem instalar ou
+  remover os módulos incluídos sem cobrança adicional. A cortesia não instala
+  módulos automaticamente e não amplia a permissão de Operador Completo ou
+  Operador Simples. Registros legados sem plano preservam o equivalente ao
+  Business Pro até receberem uma definição administrativa.
 - Gestor Master e Administrador instalam, removem e controlam a visibilidade.
 - Operador Completo executa todas as operações internas permitidas pelo módulo,
   mas não instala, oculta nem remove o módulo.
 - Operador Simples somente visualiza.
 - Cancelar uma assinatura interrompe a renovação, mantendo o acesso até o fim do
   período pago. A data final fica registrada na ativação e é validada no servidor.
+- Upgrade de nível pode aplicar os novos direitos imediatamente. Downgrade ou
+  mudança de ciclo fica agendado para o fim do período já pago, sem devolução
+  proporcional, e pode ser cancelado antes dessa data. O gateway pode receber
+  desde já o valor da próxima renovação, mas a autorização local continua no
+  plano vigente até a aplicação atômica da mudança.
+- Quando a nova franquia for menor, nenhum dado é apagado: perfis excedentes
+  voltam a ser independentes e usuários ou funcionários excedentes ficam
+  inativos, priorizando a preservação do Gestor Master e de todo o histórico.
 - Remover ou expirar um módulo nunca apaga seus dados. Reinstalar recupera o
   mesmo conteúdo, salvo solicitação administrativa separada e explícita de
   exclusão de dados.

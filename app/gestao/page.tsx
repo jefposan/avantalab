@@ -285,6 +285,7 @@ export default function AppGestao() {
   const router = useRouter();
   const [mostrarEditEmpresaSenha, setMostrarEditEmpresaSenha] = useState(false);
   const [mostrarEditUsuarioConfirmarSenha, setMostrarEditUsuarioConfirmarSenha] = useState(false);
+  const [etapaExclusaoEmpresa, setEtapaExclusaoEmpresa] = useState<'escolha' | 'definitiva'>('escolha');
 
   // ---------------------------------------------------------------------------
   // Hooks — estados e funções extraídos
@@ -577,6 +578,13 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const [premiumRecurso, setPremiumRecurso] = useState<Recurso | null>(null);
   // Recurso premium bloqueado neste perfil? (false sempre que a flag está off)
   const recursoBloqueado = (recurso: Recurso) => precisaUpgradePessoal(recurso, estadoAcesso);
+  const planoEmpresarialAtual = estadoAcesso?.plano === 'empresa' ? 'business' : estadoAcesso?.plano;
+  const centrosCustoPermitidosPeloPlano = !COBRANCA_ATIVA
+    || !estadoAcesso
+    || (
+      assinaturaVigente(estadoAcesso)
+      && (planoEmpresarialAtual === 'business_pro' || planoEmpresarialAtual === 'business_premium')
+    );
 
   useEffect(() => {
     if (!COBRANCA_ATIVA || !criandoPerfilAdicional) {
@@ -2322,7 +2330,6 @@ useEffect(() => {
   corPrimaria,
   darkMode,
   duplicadosAtivo,
-  centrosCustoAtivo,
   logoUrl,
   logoSettings,
 });
@@ -2354,7 +2361,6 @@ useEffect(() => {
   corPrimaria,
   darkMode,
   duplicadosAtivo,
-  centrosCustoAtivo,
   logoUrl,
   logoSettings,
   mounted,
@@ -6094,6 +6100,56 @@ const sincronizarContextoCentrosCustoEmTempoReal = async () => {
   ));
 };
 
+const alternarCentrosCustoWeb = async () => {
+  if (!empresaId || centroCustoSalvando) return;
+  const proximo = !centrosCustoAtivo;
+  if (proximo && !centrosCustoPermitidosPeloPlano) {
+    abrirAviso(
+      'Recurso do Business Pro',
+      'Centros de custo estão disponíveis no Business Pro e no Business Premium.',
+    );
+    return;
+  }
+
+  setCentroCustoSalvando(true);
+  try {
+    const { data: sessao } = await supabase.auth.getSession();
+    const token = sessao.session?.access_token;
+    if (!token) throw new Error('Sua sessão expirou. Entre novamente.');
+    const resposta = await fetch('/api/centros-custo/configurar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ empresaId, ativo: proximo }),
+    });
+    const resultado = await resposta.json().catch(() => ({}));
+    if (!resposta.ok) throw new Error(resultado.mensagem || 'Não foi possível salvar a configuração.');
+
+    setCentrosCustoAtivo(proximo);
+    if (!proximo) {
+      setCentrosCusto([]);
+      setCentroCustoSelecionadoId('');
+      return;
+    }
+
+    const lista = await buscarCentrosCusto(empresaId);
+    const ativos = lista.filter((centro) => centro.ativo);
+    setCentrosCusto(lista);
+    setCentroCustoSelecionadoId(
+      ativos.find((centro) => centro.id === resultado.centroPrincipalId)?.id
+        || ativos.find((centro) => centro.is_principal)?.id
+        || ativos[0]?.id
+        || '',
+    );
+  } catch (error) {
+    abrirAviso(
+      'Não foi possível alterar',
+      error instanceof Error ? error.message : 'Tente novamente em instantes.',
+    );
+  } finally {
+    setCentroCustoSalvando(false);
+  }
+};
+
 // Agenda: carrega itens do localStorage
 useEffect(() => {
   const timerAgendaLocal = window.setTimeout(() => {
@@ -6795,22 +6851,12 @@ const confirmarExclusaoEmpresaAtual = () => {
     return;
   }
 
-  abrirConfirmacao({
-  titulo: 'Backup antes da exclusão',
-  mensagem:
-    `Antes de excluir a empresa "${nomeEmpresaAtual}", o sistema vai tentar gerar um backup local dos dados.\n\nSe não houver dados para backup, você verá um aviso. Depois que fechar o aviso, a tela final de confirmação será aberta.\n\nDeseja continuar?`,
-  textoConfirmar: 'Fazer backup',
-  acao: async () => {
-    setModalConfirmacaoAberto(false);
-
-    await new Promise((resolve) => setTimeout(resolve, 150));
-
-    await gerarBackupExcel({ ...backupParams(), abrirExclusaoDepois: true });
-  },
-});
+  setEtapaExclusaoEmpresa('escolha');
+  setNomeConfirmacaoExclusao('');
+  setModalExcluirEmpresa(true);
 };
 
-const executarExclusaoEmpresaAtual = async () => {
+const executarExclusaoEmpresaAtual = async (modo: 'retencao' | 'definitiva') => {
   if (!empresaId || !nomeEmpresaAtual) {
     abrirAviso(
       'Empresa não carregada',
@@ -6819,31 +6865,38 @@ const executarExclusaoEmpresaAtual = async () => {
     return;
   }
 
-  const nomeDigitado = nomeConfirmacaoExclusao.trim();
-
-  if (nomeDigitado !== nomeEmpresaAtual) {
+  if (modo === 'definitiva' && nomeConfirmacaoExclusao.trim().toUpperCase() !== 'EXCLUIR') {
     abrirAviso(
-      'Nome incorreto',
-      'Digite exatamente o nome da empresa para confirmar a exclusão.'
+      'Confirmação necessária',
+      'Digite EXCLUIR para confirmar a exclusão definitiva.'
     );
     return;
   }
 
   setExcluindoEmpresa(true);
+  const { data: sessao } = await supabase.auth.getSession();
+  const token = sessao.session?.access_token;
+  if (!token) {
+    setExcluindoEmpresa(false);
+    abrirAviso('Sessão inválida', 'Entre novamente para excluir este perfil.');
+    return;
+  }
 
-  const { error } = await supabase.rpc('excluir_empresa_rpc', {
-    p_empresa_id: empresaId,
-    p_nome_confirmacao: nomeDigitado,
+  const resposta = await fetch('/api/conta', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ empresaId, modo, confirmacao: 'EXCLUIR' }),
   });
+  const resultado = await resposta.json().catch(() => ({}));
 
-  if (error) {
-    console.error('Erro ao excluir empresa:', error);
+  if (!resposta.ok || !resultado.ok) {
+    console.error('Erro ao excluir perfil:', resultado);
 
     setExcluindoEmpresa(false);
 
     abrirAviso(
-      'Erro ao excluir empresa',
-      error.message || 'Não foi possível excluir a empresa atual.'
+      'Não foi possível excluir',
+      resultado.mensagem || 'Não foi possível excluir o perfil atual.'
     );
 
     return;
@@ -6867,12 +6920,16 @@ const executarExclusaoEmpresaAtual = async () => {
     console.error('Erro ao recarregar empresas após exclusão:', e);
     setExcluindoEmpresa(false);
     setModalExcluirEmpresa(false);
-    abrirAviso('Empresa excluída', 'A empresa foi excluída. Recarregando o sistema...');
+    abrirAviso(
+      modo === 'definitiva' ? 'Perfil excluído' : 'Perfil guardado por 30 dias',
+      'A operação foi concluída. Recarregando o sistema...'
+    );
     setTimeout(() => window.location.reload(), 1200);
     return;
   }
 
   setModalExcluirEmpresa(false);
+  setEtapaExclusaoEmpresa('escolha');
   setNomeConfirmacaoExclusao('');
   setExcluindoEmpresa(false);
 
@@ -6901,8 +6958,10 @@ const executarExclusaoEmpresaAtual = async () => {
     await carregarEmpresaSelecionada(empresasRestantes[0]);
 
     abrirAviso(
-      'Empresa excluída',
-      'A empresa foi excluída com sucesso. O sistema carregou a empresa restante.'
+      modo === 'definitiva' ? 'Perfil excluído' : 'Perfil guardado por 30 dias',
+      modo === 'definitiva'
+        ? 'O perfil foi excluído definitivamente. O sistema carregou o perfil restante.'
+        : 'O perfil poderá ser restaurado por 30 dias. O sistema carregou o perfil restante.'
     );
 
     return;
@@ -6915,8 +6974,10 @@ const executarExclusaoEmpresaAtual = async () => {
   setAcessoLiberado(true);
 
   abrirAviso(
-    'Empresa excluída',
-    'A empresa foi excluída com sucesso. Selecione outra empresa para continuar.'
+    modo === 'definitiva' ? 'Perfil excluído' : 'Perfil guardado por 30 dias',
+    modo === 'definitiva'
+      ? 'O perfil foi excluído definitivamente. Selecione outro perfil para continuar.'
+      : 'O perfil poderá ser restaurado por 30 dias. Selecione outro perfil para continuar.'
   );
 };
 
@@ -8932,6 +8993,7 @@ if (validacaoTelefoneObrigatoria) {
       if (excluindoEmpresa) return;
 
       setModalExcluirEmpresa(false);
+      setEtapaExclusaoEmpresa('escolha');
       setNomeConfirmacaoExclusao('');
     }}
   >
@@ -8943,89 +9005,128 @@ if (validacaoTelefoneObrigatoria) {
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div data-modal-drag-handle className="mb-5 cursor-grab active:cursor-grabbing">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-red-500">
-          Exclusão definitiva
-        </p>
+      {etapaExclusaoEmpresa === 'escolha' ? (
+        <>
+          <div data-modal-drag-handle className="mb-5 cursor-grab active:cursor-grabbing">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-red-500">Excluir perfil</p>
+            <h2 className={`mt-2 text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+              Como deseja continuar?
+            </h2>
+            <p className={`mt-2 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              Escolha o prazo de proteção dos dados de <strong>{nomeEmpresaAtual}</strong>.
+            </p>
+          </div>
 
-        <h2 className={`mt-2 text-2xl font-black ${
-          darkMode ? 'text-white' : 'text-slate-800'
-        }`}>
-          Confirmar exclusão da empresa
-        </h2>
+          <div className="grid gap-3">
+            <button
+              type="button"
+              onClick={() => void executarExclusaoEmpresaAtual('retencao')}
+              disabled={excluindoEmpresa}
+              className={`rounded-2xl border px-4 py-4 text-left transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+                darkMode
+                  ? 'border-cyan-700 bg-cyan-950/40 hover:bg-cyan-950/65'
+                  : 'border-cyan-200 bg-cyan-50 hover:bg-cyan-100'
+              }`}
+            >
+              <span className={`block text-sm font-black ${darkMode ? 'text-cyan-100' : 'text-cyan-900'}`}>
+                {excluindoEmpresa ? 'Excluindo...' : 'Guardar por 30 dias'}
+              </span>
+              <span className={`mt-1 block text-xs ${darkMode ? 'text-cyan-200/80' : 'text-cyan-800'}`}>
+                Perfil, dados e pontos poderão ser restaurados.
+              </span>
+            </button>
 
-        <p className={`mt-3 text-sm leading-relaxed ${
-          darkMode ? 'text-slate-300' : 'text-slate-600'
-        }`}>
-          O backup já foi solicitado. Agora, para excluir definitivamente a empresa,
-          digite exatamente o nome abaixo:
-        </p>
+            <button
+              type="button"
+              onClick={() => {
+                setEtapaExclusaoEmpresa('definitiva');
+                setNomeConfirmacaoExclusao('');
+              }}
+              disabled={excluindoEmpresa}
+              className={`rounded-2xl border px-4 py-4 text-left transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+                darkMode
+                  ? 'border-red-900 bg-red-950/35 hover:bg-red-950/60'
+                  : 'border-red-200 bg-red-50 hover:bg-red-100'
+              }`}
+            >
+              <span className={`block text-sm font-black ${darkMode ? 'text-red-200' : 'text-red-800'}`}>Excluir agora</span>
+              <span className={`mt-1 block text-xs ${darkMode ? 'text-red-200/75' : 'text-red-700'}`}>
+                Apaga dados e pontos de restauração. Não pode ser desfeito.
+              </span>
+            </button>
+          </div>
 
-        <div className={`mt-4 rounded-xl border px-4 py-3 text-sm font-black ${
-          darkMode
-            ? 'border-slate-600 bg-slate-900 text-white'
-            : 'border-slate-200 bg-slate-50 text-slate-800'
-        }`}>
-          {nomeEmpresaAtual}
-        </div>
-      </div>
+          <button
+            type="button"
+            onClick={() => setModalExcluirEmpresa(false)}
+            disabled={excluindoEmpresa}
+            className={`mt-5 w-full rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wide transition cursor-pointer ${
+              darkMode ? 'bg-slate-700 text-slate-200 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Cancelar
+          </button>
+          <p className={`mt-3 text-center text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            Seu login AvantaLab não será excluído.
+          </p>
+        </>
+      ) : (
+        <>
+          <div data-modal-drag-handle className="mb-5 cursor-grab active:cursor-grabbing">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-red-500">Exclusão definitiva</p>
+            <h2 className={`mt-2 text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+              Excluir sem restauração?
+            </h2>
+            <p className={`mt-3 text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              Todos os dados e pontos de restauração salvos no sistema serão apagados.
+            </p>
+          </div>
 
-      <label className={`mb-1 block text-sm font-bold ${
-        darkMode ? 'text-slate-200' : 'text-slate-700'
-      }`}>
-        Digite o nome da empresa
-      </label>
+          <label className={`mb-1 block text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+            Digite EXCLUIR para confirmar
+          </label>
+          <input
+            type="text"
+            autoFocus
+            autoComplete="off"
+            value={nomeConfirmacaoExclusao}
+            onChange={(e) => setNomeConfirmacaoExclusao(e.target.value)}
+            placeholder="EXCLUIR"
+            className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition ${
+              darkMode
+                ? 'border-slate-600 bg-slate-900 text-white focus:border-red-500'
+                : 'border-slate-300 bg-white text-slate-800 focus:border-red-500'
+            }`}
+          />
+          <p className={`mt-3 text-xs leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            Registros sujeitos à guarda legal não podem ser apagados antecipadamente.
+          </p>
 
-      <input
-        type="text"
-        value={nomeConfirmacaoExclusao}
-        onChange={(e) => setNomeConfirmacaoExclusao(e.target.value)}
-        placeholder={nomeEmpresaAtual}
-        className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition ${
-          darkMode
-            ? 'border-slate-600 bg-slate-900 text-white focus:border-red-500'
-            : 'border-slate-300 bg-white text-slate-800 focus:border-red-500'
-        }`}
-      />
-
-      <p className={`mt-3 text-xs leading-relaxed ${
-        darkMode ? 'text-slate-400' : 'text-slate-500'
-      }`}>
-        Esta ação é irreversível e removerá lançamentos, despesas cadastradas,
-        configurações, vínculos de usuários e a empresa atual.
-      </p>
-
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => {
-            if (excluindoEmpresa) return;
-
-            setModalExcluirEmpresa(false);
-            setNomeConfirmacaoExclusao('');
-          }}
-          disabled={excluindoEmpresa}
-          className={`rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wide transition cursor-pointer ${
-  darkMode
-    ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-} disabled:cursor-not-allowed disabled:opacity-60`}
-        >
-          Cancelar
-        </button>
-
-        <button
-          type="button"
-          onClick={executarExclusaoEmpresaAtual}
-          disabled={
-            excluindoEmpresa ||
-            nomeConfirmacaoExclusao.trim() !== nomeEmpresaAtual
-          }
-          className="rounded-xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {excluindoEmpresa ? 'Excluindo...' : 'Excluir definitivamente'}
-        </button>
-      </div>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setEtapaExclusaoEmpresa('escolha');
+                setNomeConfirmacaoExclusao('');
+              }}
+              disabled={excluindoEmpresa}
+              className={`rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wide transition cursor-pointer ${
+                darkMode ? 'bg-slate-700 text-slate-200 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              } disabled:cursor-not-allowed disabled:opacity-60`}
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              onClick={() => void executarExclusaoEmpresaAtual('definitiva')}
+              disabled={excluindoEmpresa || nomeConfirmacaoExclusao.trim().toUpperCase() !== 'EXCLUIR'}
+              className="rounded-xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {excluindoEmpresa ? 'Excluindo...' : 'Excluir definitivamente'}
+            </button>
+          </div>
+        </>
+      )}
     </DraggableModalCard>
   </div>
 )}
@@ -10949,20 +11050,11 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
 
           {podeAcessarAjustes && (
-            <Tooltip texto="Ao ativar, cria o centro Principal e separa todo o financeiro deste perfil por centro de custo." posicao="right" wrapperClassName="w-full">
-              <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={async () => {
-                if (centrosCustoAtivo) { setCentrosCustoAtivo(false); return; }
-                if (!empresaId) return;
-                const { data, error } = await supabase.rpc('garantir_centro_custo_principal', { p_empresa_id: empresaId });
-                if (error || !data) { abrirAviso('Não foi possível ativar', 'Tente ativar os centros de custo novamente.'); return; }
-                const lista = await buscarCentrosCusto(empresaId);
-                setCentrosCusto(lista);
-                setCentroCustoSelecionadoId(String(data));
-                setCentrosCustoAtivo(true);
-              }}>
+            <Tooltip texto={centrosCustoPermitidosPeloPlano ? 'Ao ativar, cria o centro Principal e separa todo o financeiro deste perfil por centro de custo.' : 'Disponível no Business Pro e no Business Premium.'} posicao="right" wrapperClassName="w-full">
+              <button type="button" aria-disabled={!centrosCustoAtivo && !centrosCustoPermitidosPeloPlano} className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer ${!centrosCustoAtivo && !centrosCustoPermitidosPeloPlano ? 'opacity-60' : ''}`} onClick={() => void alternarCentrosCustoWeb()}>
                 <span className="min-w-0 text-left">
                   <span className="block truncate">Centros de custo</span>
-                  <span className="mt-0.5 block truncate text-[9px] font-semibold text-slate-400">{centrosCustoAtivo ? 'Financeiro separado por centro' : 'Manter um único financeiro'}</span>
+                  <span className="mt-0.5 block truncate text-[9px] font-semibold text-slate-400">{centrosCustoAtivo ? 'Financeiro separado por centro' : centrosCustoPermitidosPeloPlano ? 'Manter um único financeiro' : 'Disponível a partir do Business Pro'}</span>
                 </span>
                 <div className={`relative h-3.5 w-7 shrink-0 rounded-full transition-colors ${centrosCustoAtivo ? '' : 'bg-slate-600'}`} style={{ backgroundColor: centrosCustoAtivo ? corPrimaria : '', border: centrosCustoAtivo && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '' }}>
                   <span className={`absolute left-0.5 top-0.5 h-2.5 w-2.5 rounded-full transition-transform ${centrosCustoAtivo ? 'translate-x-3.5' : ''}`} style={{ backgroundColor: centrosCustoAtivo && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }} />

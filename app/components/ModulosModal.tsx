@@ -164,7 +164,7 @@ export default function ModulosModal({
                                 ? 'Incluso no seu plano'
                                 : business
                                   ? `${preco} por mês`
-                                  : 'Disponível no Business e Business Pro'}
+                                  : 'Disponível nos planos Business'}
                       </p>
                       {instalado ? (
                         <div className={`grid gap-2 ${possuiPagina ? 'grid-cols-2' : 'grid-cols-1'}`}>

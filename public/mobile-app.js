@@ -452,6 +452,7 @@
     assinaturaNome: '',
     assinaturaEmail: '',
     assinaturaTelefone: '',
+    assinaturaPlanoSelecionado: 'business',
     assinaturaConfirmarCancelamento: false,
     assinaturaApplePrecoMensal: 'R$ 9,90',
     assinaturaApplePrecoAnual: 'R$ 99,90',
@@ -463,6 +464,7 @@
     assinaturaGoogleManagementUrl: '',
     assinaturaCicloSelecionado: '',
     contaExclusaoAcao: false,
+    contaExclusaoEtapa: 'escolha',
     mes: meses[new Date().getMonth()],
     ano: String(new Date().getFullYear()),
     faturamentos: {},
@@ -665,6 +667,7 @@
     feedbackEnviando: false,
     manterConectado: false,
     empresaExclusaoAberta: false,
+    empresaExclusaoEtapa: 'escolha',
     empresaEdicaoAberta: false,
     empresaCriarAberta: false,
     criarPerfilErro: '',
@@ -1992,6 +1995,14 @@
     return false;
   }
 
+  function centrosCustoPermitidosPeloPlanoMobile() {
+    if (!COBRANCA_ATIVA_MOBILE) return true;
+    var estado = state.paywallEstado;
+    if (!estado) return true;
+    var plano = estado.plano === 'empresa' ? 'business' : estado.plano;
+    return assinaturaVigenteMobile(estado) && (plano === 'business_pro' || plano === 'business_premium');
+  }
+
   // Perfil PESSOAL grátis tentando usar recurso premium? (flag off → nunca bloqueia)
   function premiumPessoalBloqueadoMobile() {
     if (!COBRANCA_ATIVA_MOBILE) return false;
@@ -2332,6 +2343,7 @@
     state.assinaturaErro = '';
     state.assinaturaAcao = '';
     state.assinaturaCicloSelecionado = '';
+    state.assinaturaPlanoSelecionado = 'business';
     render();
     if (
       ehLojaNativaMobile()
@@ -2355,14 +2367,20 @@
       return '<div class="grid gap-3">' +
         '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
           '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Plano empresarial</p>' +
-          '<h3 class="mt-1 text-lg font-black">Business e Business Pro</h3>' +
+          '<h3 class="mt-1 text-lg font-black">Business Básico, Pro e Premium</h3>' +
           '<p class="mt-1 text-xs font-semibold leading-relaxed text-white/85">Este aplicativo permite acessar assinaturas empresariais já contratadas.</p>' +
         '</div>' +
         '<p class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold leading-relaxed text-slate-600">Planos empresariais não são vendidos neste aplicativo. A contratação e a administração comercial são realizadas na plataforma AvantaLab para empresas.</p>' +
       '</div>';
     }
-    var precoMensal = pessoal ? 'R$ 9,90' : 'R$ 34,90';
-    var precoAnual = pessoal ? 'R$ 99,90' : 'R$ 249,90';
+    var planoEmpresaSelecionado = state.assinaturaPlanoSelecionado || 'business';
+    var precosEmpresa = {
+      business: ['R$ 34,90', 'R$ 249,90'],
+      business_pro: ['R$ 49,90', 'R$ 359,90'],
+      business_premium: ['R$ 99,90', 'R$ 719,90']
+    };
+    var precoMensal = pessoal ? 'R$ 9,90' : precosEmpresa[planoEmpresaSelecionado][0];
+    var precoAnual = pessoal ? 'R$ 99,90' : precosEmpresa[planoEmpresaSelecionado][1];
     if (iosNativo && pessoal) {
       precoMensal = state.assinaturaApplePrecoMensal || precoMensal;
       precoAnual = state.assinaturaApplePrecoAnual || precoAnual;
@@ -2389,10 +2407,15 @@
     return '<div class="grid gap-3">' +
       '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
         '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Contratação</p>' +
-        '<h3 class="mt-1 text-lg font-black">' + (pessoal ? 'Premium Pessoal' : 'Plano Empresa') + '</h3>' +
+        '<h3 class="mt-1 text-lg font-black">' + (pessoal ? 'Premium Pessoal' : 'Planos Business') + '</h3>' +
         '<p class="mt-1 text-xs font-semibold leading-relaxed text-white/85">Escolha o ciclo e siga para o checkout seguro do Asaas.</p>' +
       '</div>' +
       (state.assinaturaErro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.assinaturaErro) + '</div>' : '') +
+      (!pessoal ? '<div class="grid grid-cols-3 gap-1.5">' +
+        [['business','Básico'],['business_pro','Pro'],['business_premium','Premium']].map(function (item) {
+          var ativo = planoEmpresaSelecionado === item[0];
+          return '<button type="button" data-assinatura-plano="' + item[0] + '" class="min-h-11 rounded-xl border px-1.5 text-[9px] font-black uppercase ' + (ativo ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">' + item[1] + '</button>';
+        }).join('') + '</div>' : '') +
       '<div class="grid grid-cols-2 gap-2">' +
         '<button id="assinatura-selecionar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'mensal' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Mensal · ' + precoMensal + '</button>' +
         '<button id="assinatura-selecionar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border px-2 text-[10px] font-black uppercase disabled:opacity-60 ' + (state.assinaturaCicloSelecionado === 'anual' ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">Anual · ' + precoAnual + '</button>' +
@@ -2533,9 +2556,9 @@
     render();
   }
 
-  async function alterarAssinaturaMobile(ciclo) {
+  async function alterarAssinaturaMobile(ciclo, plano) {
     if (!state.empresa || state.assinaturaAcao) return;
-    state.assinaturaAcao = ciclo;
+    state.assinaturaAcao = plano || ciclo;
     state.assinaturaErro = '';
     render();
     try {
@@ -2543,16 +2566,41 @@
       var resposta = await fetch('/api/cobranca/gerenciar', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ empresaId: state.empresa.id, ciclo: ciclo }),
+        body: JSON.stringify({ empresaId: state.empresa.id, ciclo: ciclo, plano: plano || undefined }),
       });
       var json = await resposta.json();
       if (!resposta.ok) throw new Error(json.mensagem || 'Nao foi possivel alterar o plano.');
       state.assinaturaAcao = '';
       await carregarAssinaturaMobile();
-      mostrarToast('Novo ciclo aplicado a proxima renovacao.');
+      mostrarToast(json.mensagem || (json.agendada ? 'Alteracao agendada para o fim do periodo pago.' : 'Assinatura atualizada.'));
       return;
     } catch (erro) {
       state.assinaturaErro = erro && erro.message ? erro.message : 'Nao foi possivel alterar o plano.';
+    }
+    state.assinaturaAcao = '';
+    render();
+  }
+
+  async function cancelarAlteracaoAssinaturaMobile() {
+    if (!state.empresa || state.assinaturaAcao) return;
+    state.assinaturaAcao = 'cancelar-alteracao';
+    state.assinaturaErro = '';
+    render();
+    try {
+      var token = await _avaPaywallToken();
+      var resposta = await fetch('/api/cobranca/gerenciar', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, cancelarAlteracaoAgendada: true }),
+      });
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Nao foi possivel cancelar a alteracao agendada.');
+      state.assinaturaAcao = '';
+      await carregarAssinaturaMobile();
+      mostrarToast('Alteracao agendada cancelada.');
+      return;
+    } catch (erro) {
+      state.assinaturaErro = erro && erro.message ? erro.message : 'Nao foi possivel cancelar a alteracao agendada.';
     }
     state.assinaturaAcao = '';
     render();
@@ -2605,7 +2653,7 @@
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify({
           empresaId: state.empresa.id,
-          plano: normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal' ? 'pessoal_premium' : 'empresa',
+          plano: normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal' ? 'pessoal_premium' : (state.assinaturaPlanoSelecionado || 'business'),
           ciclo: ciclo,
           cobranca: { nome: state.assinaturaNome, cpfCnpj: documento, email: state.assinaturaEmail, telefone: telefone }
         }),
@@ -4299,6 +4347,7 @@
     state.menuAberto = false;
     state.modalMenu = nome;
     if (nome === 'gerenciar') state.empresaExclusaoAberta = false;
+    if (nome === 'excluirConta') state.contaExclusaoEtapa = 'escolha';
     render();
     if (nome === 'gerenciar') carregarCodigoAvaPerfilMobile();
   }
@@ -4380,6 +4429,8 @@
       limparFeedbackMobile();
     }
     state.empresaExclusaoAberta = false;
+    state.empresaExclusaoEtapa = 'escolha';
+    state.contaExclusaoEtapa = 'escolha';
     state.modalMenuRetorno = '';
     state.modalMenu = '';
     render();
@@ -8195,9 +8246,10 @@
     });
   }
 
-  async function excluirContaMobile() {
+  async function excluirContaMobile(modo) {
     if (state.contaExclusaoAcao) return;
-    if (campo('excluir-conta-confirmacao').trim().toUpperCase() !== 'EXCLUIR') {
+    modo = modo === 'definitiva' ? 'definitiva' : 'retencao';
+    if (modo === 'definitiva' && campo('excluir-conta-confirmacao').trim().toUpperCase() !== 'EXCLUIR') {
       state.erro = 'Digite EXCLUIR para confirmar.';
       render();
       return;
@@ -8210,7 +8262,7 @@
       var resposta = await fetch('/api/conta', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ empresaId: state.empresa && state.empresa.id, confirmacao: 'EXCLUIR' })
+        body: JSON.stringify({ empresaId: state.empresa && state.empresa.id, modo: modo, confirmacao: 'EXCLUIR' })
       });
       var json = await lerResposta(resposta);
       if (!resposta.ok || !json.ok) throw new Error(json.mensagem || 'Não foi possível excluir este perfil.');
@@ -8966,34 +9018,36 @@
   async function alternarCentrosCustoMobile() {
     if (!state.empresa || !podeGerenciarUsuarios() || state.centroCustoSalvando) return;
     var proximo = !state.centrosCustoAtivo;
+    if (proximo && !centrosCustoPermitidosPeloPlanoMobile()) {
+      mostrarAvisoAssinanteMobile('Centros de custo', 'Disponível no Business Pro e no Business Premium.');
+      return;
+    }
     var empresaId = state.empresa.id || state.empresa.empresa_id;
     state.centroCustoSalvando = true;
     state.centroCustoMensagem = '';
     render();
 
-    var configuracao = await db
-      .from('configuracoes')
-      .upsert({ empresa_id: empresaId, centros_custo_ativo: proximo }, { onConflict: 'empresa_id' });
-    if (configuracao.error) {
+    var token = await tokenSessao();
+    if (!token) {
       state.centroCustoSalvando = false;
-      setErro(mensagemErro(configuracao.error, 'Nao foi possivel salvar a configuracao de centros de custo.'));
+      setErro('Sua sessao expirou. Entre novamente.');
+      return;
+    }
+    var respostaConfiguracao = await fetch('/api/centros-custo/configurar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ empresaId: empresaId, ativo: proximo }),
+    });
+    var configuracao = await lerResposta(respostaConfiguracao);
+    if (!respostaConfiguracao.ok || configuracao.erro) {
+      state.centroCustoSalvando = false;
+      setErro(configuracao.mensagem || 'Nao foi possivel salvar a configuracao de centros de custo.');
       return;
     }
 
     state.centrosCustoAtivo = proximo;
     if (proximo) {
       await carregarCentrosCustoMobile();
-      // O gatilho da configuração cria o Principal. A RPC é somente uma
-      // garantia para perfis legados que ainda não possuam o centro inicial.
-      if (!centroCustoPrincipalMobile()) {
-        var principal = await db.rpc('garantir_centro_custo_principal', { p_empresa_id: empresaId });
-        if (principal.error) {
-          state.centroCustoSalvando = false;
-          setErro(mensagemErro(principal.error, 'Centros de custo foram ativados, mas o centro Principal ainda nao ficou disponivel.'));
-          return;
-        }
-        await carregarCentrosCustoMobile();
-      }
     } else {
       state.centrosCusto = [];
       state.centroCustoSelecionadoId = '';
@@ -9639,7 +9693,7 @@
     mostrarToast('Dados atualizados.');
   }
 
-  async function excluirEmpresaMobile() {
+  async function excluirEmpresaMobile(modo) {
     if (!state.empresa) return;
 
     if (state.empresa.perfil !== 'gestor_master') {
@@ -9647,11 +9701,9 @@
       return;
     }
 
-    var confirmacao = campo('excluir-empresa-confirmacao').trim();
-    var nome = nomeEmpresa(state.empresa);
-
-    if (confirmacao !== nome) {
-      setErro('Digite exatamente o nome do perfil para confirmar.');
+    modo = modo === 'definitiva' ? 'definitiva' : 'retencao';
+    if (modo === 'definitiva' && campo('excluir-empresa-confirmacao').trim().toUpperCase() !== 'EXCLUIR') {
+      setErro('Digite EXCLUIR para confirmar.');
       return;
     }
 
@@ -9660,21 +9712,28 @@
     state.erro = '';
     render();
 
-    var resposta = await db.rpc('excluir_empresa_rpc', {
-      p_empresa_id: state.empresa.id,
-      p_nome_confirmacao: confirmacao,
-    });
-
-    if (resposta.error) {
+    var resposta;
+    var json;
+    try {
+      var token = await _avaPaywallToken();
+      resposta = await fetch('/api/conta', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, modo: modo, confirmacao: 'EXCLUIR' })
+      });
+      json = await lerResposta(resposta);
+      if (!resposta.ok || !json.ok) throw new Error(json.mensagem || 'Não foi possível excluir o perfil financeiro.');
+    } catch (erroExclusao) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro(mensagemErro(resposta.error, 'Nao foi possivel excluir o perfil financeiro.'));
+      setErro(erroExclusao && erroExclusao.message ? erroExclusao.message : 'Não foi possível excluir o perfil financeiro.');
       return;
     }
 
     state.modalMenu = '';
     state.empresaAcao = '';
     state.empresaExclusaoAberta = false;
+    state.empresaExclusaoEtapa = 'escolha';
     await carregarEmpresas(state.usuario.id);
 
     if (!state.empresa) {
@@ -9683,7 +9742,7 @@
     }
 
     await carregarDados();
-    mostrarToast('Perfil excluido.');
+    mostrarToast(modo === 'definitiva' ? 'Perfil excluído definitivamente.' : 'Perfil guardado por 30 dias.');
   }
 
   function abrirAcaoLancamento(tipo, id) {
@@ -12664,10 +12723,10 @@
           '</div>' +
         '</button>' +
         (podeGerenciarUsuarios()
-          ? '<button id="menu-centros-custo-ativo" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:5;' + (dk ? '' : 'background:linear-gradient(90deg,#E6FBF9 0%,#FFFFFF 78%);border-color:#BDEBE6;') + '">' +
+          ? '<button id="menu-centros-custo-ativo" type="button" class="min-h-11 rounded-xl border ' + bordaBase + ' px-2.5 py-2 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]' + (!state.centrosCustoAtivo && !centrosCustoPermitidosPeloPlanoMobile() ? ' opacity-60' : '') + '" style="order:5;' + (dk ? '' : 'background:linear-gradient(90deg,#E6FBF9 0%,#FFFFFF 78%);border-color:#BDEBE6;') + '"' + (!state.centrosCustoAtivo && !centrosCustoPermitidosPeloPlanoMobile() ? ' aria-disabled="true"' : '') + '>' +
               '<div class="flex items-center gap-2">' +
                 '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D8F7F2;color:#0F766E">' + iconeMenuLateralSvg('menu-centros-custo') + '</span>' +
-                '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Centros de custo</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.centrosCustoAtivo ? 'Financeiro separado por centro' : 'Manter um unico financeiro') + '</span></span>' +
+                '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Centros de custo</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.centrosCustoAtivo ? 'Financeiro separado por centro' : (centrosCustoPermitidosPeloPlanoMobile() ? 'Manter um unico financeiro' : 'Disponivel a partir do Business Pro')) + '</span></span>' +
                 chaveMenuHtml(state.centrosCustoAtivo) +
               '</div>' +
             '</button>'
@@ -13168,16 +13227,26 @@
   }
 
   function excluirContaMobileHtml() {
+    var definitiva = state.contaExclusaoEtapa === 'definitiva';
     return '<div class="grid gap-4">' +
       '<div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-900">' +
-        '<p class="text-xs font-black uppercase tracking-wide">Exclusão com prazo de restauração</p>' +
-        '<p class="mt-2 text-xs font-semibold leading-relaxed">Você está excluindo apenas o perfil <b>' + escapeHtml(nomeEmpresa(state.empresa)) + '</b>. Seu login continuará ativo. Os dados ficam guardados por 30 dias e podem ser restaurados ao entrar com esta mesma conta. Depois desse prazo, o servidor remove o perfil e seus dados. Perfis com outros usuários ativos não podem ser excluídos por esta tela.</p>' +
+        '<p class="text-xs font-black uppercase tracking-wide">' + (definitiva ? 'Exclusão definitiva' : 'Excluir perfil') + '</p>' +
+        '<p class="mt-2 text-xs font-semibold leading-relaxed">' + (definitiva
+          ? 'Todos os dados e pontos de restauração salvos no sistema serão apagados.'
+          : 'Escolha como deseja excluir <b>' + escapeHtml(nomeEmpresa(state.empresa)) + '</b>. Seu login AvantaLab continuará ativo.') + '</p>' +
       '</div>' +
       (state.erro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.erro) + '</div>' : '') +
-      '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Para confirmar, digite EXCLUIR' +
-        '<input id="excluir-conta-confirmacao" type="text" autocomplete="off" autocapitalize="characters" style="font-size:16px" class="h-11 rounded-xl border border-rose-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-500" />' +
-      '</label>' +
-      '<button id="confirmar-exclusao-conta" type="button" ' + (state.contaExclusaoAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-rose-600 px-4 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.contaExclusaoAcao ? 'Excluindo...' : 'Excluir este perfil') + '</button>' +
+      (definitiva
+        ? '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Digite EXCLUIR para confirmar' +
+            '<input id="excluir-conta-confirmacao" type="text" autocomplete="off" autocapitalize="characters" style="font-size:16px" class="h-11 rounded-xl border border-rose-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-500" />' +
+          '</label>' +
+          '<p class="text-[11px] font-semibold leading-relaxed text-slate-500">Registros sujeitos à guarda legal não podem ser apagados antecipadamente.</p>' +
+          '<div class="grid grid-cols-2 gap-2">' +
+            '<button id="voltar-exclusao-conta" type="button" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-xs font-black uppercase text-slate-700">Voltar</button>' +
+            '<button id="confirmar-exclusao-conta-definitiva" type="button" ' + (state.contaExclusaoAcao ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-rose-600 px-3 text-xs font-black uppercase text-white disabled:opacity-60">' + (state.contaExclusaoAcao ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
+          '</div>'
+        : '<button id="confirmar-exclusao-conta-retencao" type="button" ' + (state.contaExclusaoAcao ? 'disabled ' : '') + 'class="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-left disabled:opacity-60"><strong class="block text-sm font-black text-cyan-900">' + (state.contaExclusaoAcao ? 'Excluindo...' : 'Guardar por 30 dias') + '</strong><span class="mt-1 block text-xs font-semibold text-cyan-800">Perfil, dados e pontos poderão ser restaurados.</span></button>' +
+          '<button id="abrir-exclusao-conta-definitiva" type="button" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-left"><strong class="block text-sm font-black text-rose-800">Excluir agora</strong><span class="mt-1 block text-xs font-semibold text-rose-700">Apaga dados e pontos de restauração. Não pode ser desfeito.</span></button>') +
       '<a href="/excluir-conta-gestao" class="text-center text-xs font-black text-rose-700 underline underline-offset-4">Excluir definitivamente a conta AvantaLab</a>' +
       '<button id="cancelar-exclusao-conta" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-4 text-xs font-black uppercase text-slate-700">Cancelar</button>' +
     '</div>';
@@ -13670,18 +13739,21 @@
 
     // ── Vista: excluir perfil ──────────────────────────────────────────────
     if (state.empresaExclusaoAberta) {
+      var exclusaoDefinitiva = state.empresaExclusaoEtapa === 'definitiva';
       return (
         '<div class="grid gap-3 text-sm">' +
           cabecalho +
           '<div class="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">' +
-            '<p class="text-[10px] font-black uppercase tracking-wide text-rose-700">Excluir perfil atual</p>' +
-            '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">Esta ação remove o perfil e todos os seus dados. Para confirmar, digite exatamente o nome abaixo.</p>' +
-            '<p class="mt-2 text-sm font-black text-rose-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-            '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome do perfil" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" />' +
-            '<div class="mt-3 grid gap-2">' +
-              '<button id="excluir-empresa-mobile" type="button" class="h-11 w-full rounded-xl bg-rose-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'excluir' ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
-              '<button id="cancelar-exclusao-empresa-mobile" type="button" class="h-10 w-full rounded-xl bg-white border border-slate-200 px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
-            '</div>' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-rose-700">' + (exclusaoDefinitiva ? 'Exclusão definitiva' : 'Excluir perfil atual') + '</p>' +
+            '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">' + (exclusaoDefinitiva
+              ? 'Todos os dados e pontos de restauração salvos no sistema serão apagados.'
+              : 'Escolha o prazo de proteção dos dados de <b>' + escapeHtml(nomeEmpresa(state.empresa)) + '</b>.') + '</p>' +
+            (exclusaoDefinitiva
+              ? '<label class="mt-3 grid gap-1.5 text-[10px] font-black uppercase tracking-wide text-slate-600">Digite EXCLUIR para confirmar<input id="excluir-empresa-confirmacao" placeholder="EXCLUIR" autocomplete="off" autocapitalize="characters" style="font-size:16px" class="h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" /></label>' +
+                '<p class="mt-2 text-[11px] font-semibold leading-relaxed text-slate-500">Registros sujeitos à guarda legal não podem ser apagados antecipadamente.</p>' +
+                '<div class="mt-3 grid grid-cols-2 gap-2"><button id="voltar-exclusao-empresa-mobile" type="button" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase text-slate-600">Voltar</button><button id="excluir-empresa-mobile-definitiva" type="button" class="h-11 rounded-xl bg-rose-600 px-3 text-xs font-black uppercase text-white">' + (state.empresaAcao === 'excluir' ? 'Excluindo...' : 'Excluir definitivamente') + '</button></div>'
+              : '<div class="mt-3 grid gap-2"><button id="excluir-empresa-mobile-retencao" type="button" class="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-left"><strong class="block text-sm font-black text-cyan-900">' + (state.empresaAcao === 'excluir' ? 'Excluindo...' : 'Guardar por 30 dias') + '</strong><span class="mt-1 block text-xs font-semibold text-cyan-800">Perfil, dados e pontos poderão ser restaurados.</span></button><button id="abrir-exclusao-empresa-definitiva" type="button" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-left"><strong class="block text-sm font-black text-rose-800">Excluir agora</strong><span class="mt-1 block text-xs font-semibold text-rose-700">Apaga dados e pontos de restauração. Não pode ser desfeito.</span></button></div>') +
+            '<button id="cancelar-exclusao-empresa-mobile" type="button" class="mt-3 h-10 w-full rounded-xl bg-white border border-slate-200 px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
           '</div>' +
           alertaHtml().replace('mt-4', '') +
         '</div>'
@@ -13734,6 +13806,10 @@
       ? 'anual'
       : (assinatura && assinatura.ciclo === 'MONTHLY' ? 'mensal' : '');
     var ciclo = estado.ciclo || cicloGateway;
+    var planoAtualEmpresa = estado.plano === 'business_premium'
+      ? 'business_premium'
+      : (estado.plano === 'business_pro' ? 'business_pro' : 'business');
+    var alteracaoAgendada = detalhes && detalhes.alteracaoAgendada;
     // Tipo do perfil: prioriza o perfil aberto no app (fonte confiável);
     // o tipoPerfil do estado é só fallback.
     var pessoal = state.empresa && state.empresa.tipo_perfil
@@ -13782,7 +13858,11 @@
           : 'background:#FEE2E2;color:#B91C1C'));
     var nomePlano = modoRevisao && !temAssinatura
       ? 'Pessoal'
-      : (pessoal ? 'Premium Pessoal' : 'Empresa');
+      : (pessoal
+        ? 'Premium Pessoal'
+        : (planoAtualEmpresa === 'business_premium'
+          ? 'Business Premium'
+          : (planoAtualEmpresa === 'business_pro' ? 'Business Pro' : 'Business Básico')));
     var complementoPlano = modoRevisao && !temAssinatura
       ? 'demonstração'
       : temAssinatura
@@ -13824,6 +13904,7 @@
       (state.assinaturaErro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.assinaturaErro) + '</div>' : '') +
       (assinaturaEmCarenciaMobile() ? '<div class="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900"><strong>Pagamento pendente.</strong> Regularize ate ' + dataAssinaturaMobile(estado.validoAte) + ' para evitar o bloqueio.</div>' : '') +
       (canceladaNoFim ? '<div class="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-xs leading-relaxed text-sky-900"><strong>Renovacao cancelada.</strong> O acesso continua ate ' + dataAssinaturaMobile(estado.validoAte) + '.</div>' : '') +
+      (alteracaoAgendada ? '<div class="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-950"><strong>Alteracao agendada.</strong> ' + escapeHtml(alteracaoAgendada.plano === 'business_premium' ? 'Business Premium' : (alteracaoAgendada.plano === 'business_pro' ? 'Business Pro' : 'Business Basico')) + ' · ' + escapeHtml(alteracaoAgendada.ciclo) + ' entra em vigor em ' + dataAssinaturaMobile(alteracaoAgendada.efetivaEm) + '. O plano atual continua ate essa data.<button id="assinatura-cancelar-alteracao" type="button" class="mt-2 h-9 w-full rounded-lg border border-amber-500 bg-white text-[9px] font-black uppercase text-amber-900">' + (state.assinaturaAcao === 'cancelar-alteracao' ? 'Cancelando...' : 'Cancelar alteracao agendada') + '</button></div>' : '') +
       '<div class="grid grid-cols-2 gap-2 rounded-[14px_24px_24px_24px] border border-slate-200 bg-slate-50 p-3">' +
         '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Situacao</p><span class="mt-1 inline-flex rounded-full px-2 py-1 text-[9px] font-black" style="' + statusEstilo + '">' + escapeHtml(situacaoRotulo) + '</span></div>' +
         '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Plano</p><strong class="mt-1 block text-xs text-slate-900">' + escapeHtml(planoExibido) + '</strong></div>' +
@@ -13835,6 +13916,11 @@
         : (cortesiaAtiva ? '' : sugestaoAssinaturaMobileHtml(pessoal, podeGerenciar))) +
       (iosNativo && assinaturaApple && temAssinatura ? '<div class="grid gap-2"><button id="assinatura-gerenciar-apple" type="button" class="h-10 rounded-xl bg-[#003E73] px-4 text-[10px] font-black uppercase text-white">Gerenciar na App Store</button><button id="assinatura-restaurar-apple" type="button" class="h-10 rounded-xl border border-slate-300 bg-white text-[10px] font-black uppercase text-slate-700">Restaurar compras</button></div>' : '') +
       (androidNativo && assinaturaGoogle && temAssinatura ? '<div class="grid gap-2"><button id="assinatura-gerenciar-google" type="button" class="h-10 rounded-xl bg-[#003E73] px-4 text-[10px] font-black uppercase text-white">Gerenciar no Google Play</button><button id="assinatura-restaurar-google" type="button" class="h-10 rounded-xl border border-slate-300 bg-white text-[10px] font-black uppercase text-slate-700">Restaurar compras</button></div>' : '') +
+      (!pessoal && podeGerenciar && temAssinatura && assinatura && !ehLojaNativaMobile() && !canceladaNoFim && !cortesiaAtiva ? '<div><h3 class="text-xs font-black text-slate-900">Alterar plano</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">Upgrade e imediato. Downgrade vale no fim do periodo pago, sem devolucao proporcional.</p><div class="mt-2 grid grid-cols-3 gap-1.5">' +
+        [['business','Basico'],['business_pro','Pro'],['business_premium','Premium']].map(function (item) {
+          var atual = planoAtualEmpresa === item[0];
+          return '<button type="button" data-assinatura-alterar-plano="' + item[0] + '" ' + (state.assinaturaAcao || atual ? 'disabled ' : '') + 'class="min-h-10 rounded-xl border px-1 text-[9px] font-black uppercase ' + (atual ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === item[0] ? 'Alterando...' : item[1]) + '</button>';
+        }).join('') + '</div></div>' : '') +
       (podeGerenciar && temAssinatura && assinatura && !ehLojaNativaMobile() && !canceladaNoFim && !cortesiaAtiva ? '<div><h3 class="text-xs font-black text-slate-900">Ciclo de cobranca</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">A mudanca vale para a proxima renovacao.</p><div class="mt-2 grid grid-cols-2 gap-2">' +
         '<button id="assinatura-mensal" type="button" ' + (state.assinaturaAcao || ciclo === 'mensal' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'mensal' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'mensal' ? 'Alterando...' : 'Mensal') + '</button>' +
         '<button id="assinatura-anual" type="button" ' + (state.assinaturaAcao || ciclo === 'anual' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'anual' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'anual' ? 'Alterando...' : 'Anual') + '</button>' +
@@ -15248,6 +15334,22 @@
     bind('assinatura-abrir-contratacao', abrirContratacaoAssinaturaMobile);
     bind('assinatura-mensal', function () { alterarAssinaturaMobile('mensal'); });
     bind('assinatura-anual', function () { alterarAssinaturaMobile('anual'); });
+    bind('assinatura-cancelar-alteracao', cancelarAlteracaoAssinaturaMobile);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-assinatura-plano]'), function (item) {
+      item.addEventListener('click', function () {
+        state.assinaturaPlanoSelecionado = item.getAttribute('data-assinatura-plano') || 'business';
+        state.assinaturaErro = '';
+        render();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-assinatura-alterar-plano]'), function (item) {
+      item.addEventListener('click', function () {
+        var plano = item.getAttribute('data-assinatura-alterar-plano') || '';
+        var detalhes = state.assinaturaDetalhes || {};
+        var cicloAtual = detalhes.estado && detalhes.estado.ciclo === 'anual' ? 'anual' : 'mensal';
+        alterarAssinaturaMobile(cicloAtual, plano);
+      });
+    });
     bind('assinatura-selecionar-mensal', function () { state.assinaturaCicloSelecionado = 'mensal'; state.assinaturaErro = ''; render(); });
     bind('assinatura-selecionar-anual', function () { state.assinaturaCicloSelecionado = 'anual'; state.assinaturaErro = ''; render(); });
     bind('assinatura-confirmar-apple', function () { assinarPeloPainelMobile(state.assinaturaCicloSelecionado); });
@@ -15260,8 +15362,22 @@
     bind('assinatura-abrir-cancelamento', function () { state.assinaturaConfirmarCancelamento = true; render(); });
     bind('assinatura-voltar-cancelamento', function () { state.assinaturaConfirmarCancelamento = false; render(); });
     bind('assinatura-confirmar-cancelamento', cancelarAssinaturaMobile);
-    bind('confirmar-exclusao-conta', excluirContaMobile);
-    bind('cancelar-exclusao-conta', fecharModalMenu);
+    bind('confirmar-exclusao-conta-retencao', function () { excluirContaMobile('retencao'); });
+    bind('abrir-exclusao-conta-definitiva', function () {
+      state.contaExclusaoEtapa = 'definitiva';
+      state.erro = '';
+      render();
+    });
+    bind('voltar-exclusao-conta', function () {
+      state.contaExclusaoEtapa = 'escolha';
+      state.erro = '';
+      render();
+    });
+    bind('confirmar-exclusao-conta-definitiva', function () { excluirContaMobile('definitiva'); });
+    bind('cancelar-exclusao-conta', function () {
+      state.contaExclusaoEtapa = 'escolha';
+      fecharModalMenu();
+    });
     Array.prototype.forEach.call(document.querySelectorAll('[data-detalhar-tipo-despesa]'), function (item) {
       item.addEventListener('click', function () {
         state.tipoDespesaDetalhe = item.getAttribute('data-detalhar-tipo-despesa') || '';
@@ -15398,15 +15514,28 @@
     bind('novo-tipo-pessoal', function () { selecionarTipoPerfilNovo('pessoal'); });
     bind('abrir-exclusao-empresa-mobile', function () {
       state.empresaExclusaoAberta = true;
+      state.empresaExclusaoEtapa = 'escolha';
       state.erro = '';
       render();
     });
     bind('cancelar-exclusao-empresa-mobile', function () {
       state.empresaExclusaoAberta = false;
+      state.empresaExclusaoEtapa = 'escolha';
       state.erro = '';
       render();
     });
-    bind('excluir-empresa-mobile', excluirEmpresaMobile);
+    bind('excluir-empresa-mobile-retencao', function () { excluirEmpresaMobile('retencao'); });
+    bind('abrir-exclusao-empresa-definitiva', function () {
+      state.empresaExclusaoEtapa = 'definitiva';
+      state.erro = '';
+      render();
+    });
+    bind('voltar-exclusao-empresa-mobile', function () {
+      state.empresaExclusaoEtapa = 'escolha';
+      state.erro = '';
+      render();
+    });
+    bind('excluir-empresa-mobile-definitiva', function () { excluirEmpresaMobile('definitiva'); });
     bind('abrir-criar-usuario-mobile', abrirCriarUsuarioMobile);
     bind('abrir-usuario-existente-mobile', abrirAdicionarUsuarioExistenteMobile);
     bind('pesquisar-usuario-existente-mobile', buscarUsuarioExistenteMobile);

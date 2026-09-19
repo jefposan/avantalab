@@ -10,6 +10,7 @@ type AcessoPublicoLinkProps = {
   modo: ModoAcessoPublico;
   children: ReactNode;
   className?: string;
+  ariaLabel?: string;
   tabIndex?: number;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
@@ -30,7 +31,7 @@ function deveAbrirGestaoMobile() {
  * O href para Gestão Web preserva navegação sem JavaScript e o clique no
  * cliente seleciona o destino específico do aparelho.
  */
-export default function AcessoPublicoLink({ modo, children, className, tabIndex, onClick }: AcessoPublicoLinkProps) {
+export default function AcessoPublicoLink({ modo, children, className, ariaLabel, tabIndex, onClick }: AcessoPublicoLinkProps) {
   const destinoWeb = `/gestao?${modo}=1`;
 
   const tratarClique = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -42,5 +43,5 @@ export default function AcessoPublicoLink({ modo, children, className, tabIndex,
     window.location.assign(`/mobile?${modo}=1`);
   };
 
-  return <Link href={destinoWeb} className={className} tabIndex={tabIndex} onClick={tratarClique}>{children}</Link>;
+  return <Link href={destinoWeb} className={className} aria-label={ariaLabel} tabIndex={tabIndex} onClick={tratarClique}>{children}</Link>;
 }

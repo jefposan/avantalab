@@ -8,7 +8,7 @@ import { MENSAGEM_MODULO_EM_FINALIZACAO, moduloDisponivelParaEmpresa } from '../
 
 export const runtime = 'nodejs';
 
-// Business Pro inclui os módulos, mas o gestor decide quais deseja instalar.
+// Business Pro e Premium incluem os módulos, mas o gestor decide quais instalar.
 export async function POST(request: Request) {
   const corpo = await request.json().catch(() => ({}));
   const empresaId = String(corpo.empresaId || '').trim();
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const estado = await resolverEstadoAcesso(empresaId);
   const acessoComercial = resolverAcessoComercialModulo(estado);
   if (!permiteInstalacaoModuloSemCobranca(acessoComercial)) {
-    return NextResponse.json({ erro: true, mensagem: 'A instalação sem cobrança está disponível no Business Pro ou em perfis liberados por cortesia.' }, { status: 409 });
+    return NextResponse.json({ erro: true, mensagem: 'A instalação sem cobrança está disponível no Business Pro e no Business Premium.' }, { status: 409 });
   }
   const [{ data: modulo }, { data: empresa }, { data: custos }] = await Promise.all([
     acesso.db.from('modulos').select('id, disponivel, perfis').eq('id', moduloId).maybeSingle(),

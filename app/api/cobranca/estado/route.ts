@@ -4,6 +4,8 @@ import { resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor'
 import { precisaPaywallEmpresa, precisaUpgradePessoal, PRECOS } from '../../../lib/cobranca';
 import { listarCobrancasAssinaturaAsaas, obterAssinaturaAsaas } from '../../../lib/asaas';
 import { calcularFimCarencia, calcularFimPeriodoPago, STATUS_FATURA_PAGA, STATUS_FATURA_PAGAVEL } from '../../../lib/cobranca-fluxo';
+import { lerReferenciaAssinatura, referenciaConfereAssinatura } from '../../../lib/cobranca-referencia';
+import { referenciaConferePlanoAtualOuAgendado } from '../../../lib/assinatura-transicoes';
 
 export const runtime = 'nodejs';
 
@@ -65,7 +67,7 @@ export async function GET(request: Request) {
   let faturaPendente: { invoiceUrl: string; valor: number | null; vencimento: string | null; status: string | null } | null = null;
   const { data: assinatura } = await admin
     .from('assinaturas')
-    .select('id, gateway_subscription_id, status, ciclo, trial_fim, valido_ate')
+    .select('id, gateway_subscription_id, status, plano, ciclo, trial_fim, valido_ate, plano_agendado, ciclo_agendado, alteracao_agendada_para')
     .eq('empresa_id', empresaId)
     .maybeSingle();
 
@@ -131,16 +133,51 @@ export async function GET(request: Request) {
           ? 'mensal'
           : null;
       if (novoStatus === 'ativa') {
-        const { data: ativacao, error: erroAtivacao } = await admin.rpc('ativar_assinatura_propria_perfil', {
-          p_empresa_id: empresaId,
-          p_gateway_subscription_id: assinatura.gateway_subscription_id,
-          p_ciclo: ciclo,
-        });
-        if (erroAtivacao || ativacao?.ok === false) {
-          console.error('Erro ao ativar assinatura própria:', erroAtivacao?.message || ativacao?.codigo);
+        const referenciaAssinatura = lerReferenciaAssinatura(assinaturaGw.data?.externalReference);
+        const referenciaAtualValida = referenciaAssinatura
+          ? referenciaConfereAssinatura(referenciaAssinatura, {
+              empresaId,
+              plano: assinatura.plano,
+              ciclo: assinatura.ciclo,
+            })
+          : true;
+        const referenciaValida = referenciaAssinatura
+          ? referenciaConferePlanoAtualOuAgendado({
+              referencia: referenciaAssinatura,
+              empresaId,
+              planoAtual: assinatura.plano,
+              cicloAtual: assinatura.ciclo,
+              alteracaoAgendada: assinatura.plano_agendado
+                && assinatura.ciclo_agendado
+                && assinatura.alteracao_agendada_para
+                ? {
+                    plano: assinatura.plano_agendado,
+                    ciclo: assinatura.ciclo_agendado,
+                    efetivaEm: assinatura.alteracao_agendada_para,
+                  }
+                : null,
+            })
+          : true;
+        if (!referenciaValida) {
+          console.error('A referência da Asaas não corresponde ao plano atual nem à alteração agendada desta assinatura.');
           assinaturaAtivaAposConciliacao = false;
-        } else {
+        } else if (referenciaAssinatura && !referenciaAtualValida) {
+          // O gateway já guarda o próximo preço/ciclo, mas o período atual
+          // continua valendo. Não antecipa o ciclo local nem reaplica a RPC de
+          // ativação enquanto a alteração estiver apenas agendada.
           assinaturaAtivaAposConciliacao = true;
+        } else {
+          const { data: ativacao, error: erroAtivacao } = await admin.rpc('ativar_assinatura_propria_perfil', {
+            p_empresa_id: empresaId,
+            p_gateway_subscription_id: assinatura.gateway_subscription_id,
+            p_ciclo: ciclo,
+          });
+          if (erroAtivacao || ativacao?.ok === false) {
+            console.error('Erro ao ativar assinatura própria:', erroAtivacao?.message || ativacao?.codigo);
+            assinaturaAtivaAposConciliacao = false;
+          } else {
+            assinaturaAtivaAposConciliacao = true;
+          }
         }
       } else if (novoStatus || ciclo) {
         const { error: erroAtualizacao } = await admin.from('assinaturas').update({

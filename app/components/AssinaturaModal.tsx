@@ -11,9 +11,10 @@ import {
   type DadosCobrancaAssinatura,
   type EstadoAcesso,
 } from '../lib/cobranca';
-import { PLANOS_COMERCIAIS } from '../lib/planos-comerciais';
+import { PLANOS_COMERCIAIS, type PlanoEmpresarial } from '../lib/planos-comerciais';
 
-type PlanoContratavel = 'pessoal_premium' | 'business' | 'business_pro' | 'business_premium';
+type PlanoContratavel = 'pessoal_premium' | PlanoEmpresarial;
+type AlteracaoGerenciavel = 'mensal' | 'anual' | PlanoEmpresarial;
 
 type Fatura = {
   id: string;
@@ -34,12 +35,18 @@ type DetalhesAssinatura = {
     proximoVencimento: string | null;
     formaPagamento: string | null;
   } | null;
+  valorContratado?: number | null;
   faturas: Fatura[];
   viaCupom?: boolean; // cortesia concedida por cupom
   podeGerenciar: boolean;
   perfilCompartilhado?: boolean;
   podeCriarAssinaturaPropria?: boolean;
   cortesiaCompartilhada?: boolean;
+  alteracaoAgendada?: {
+    plano: PlanoEmpresarial;
+    ciclo: 'mensal' | 'anual';
+    efetivaEm: string;
+  } | null;
 };
 
 interface AssinaturaModalProps {
@@ -100,7 +107,7 @@ export default function AssinaturaModal({
 }: AssinaturaModalProps) {
   const [detalhes, setDetalhes] = useState<DetalhesAssinatura | null>(null);
   const [carregando, setCarregando] = useState(false);
-  const [acao, setAcao] = useState<'mensal' | 'anual' | 'business_pro' | 'cancelar' | 'assinar-mensal' | 'assinar-anual' | null>(null);
+  const [acao, setAcao] = useState<'mensal' | 'anual' | PlanoEmpresarial | 'cancelar' | 'cancelar-alteracao' | 'assinar-mensal' | 'assinar-anual' | null>(null);
   const [erro, setErro] = useState('');
   const [nomeCobranca, setNomeCobranca] = useState(nomePadrao);
   const [cpfCnpj, setCpfCnpj] = useState('');
@@ -108,8 +115,9 @@ export default function AssinaturaModal({
   const [telefoneCobranca, setTelefoneCobranca] = useState(telefonePadrao);
   const [confirmarCancelamento, setConfirmarCancelamento] = useState(false);
   const [confirmarAssinaturaPropria, setConfirmarAssinaturaPropria] = useState(false);
+  const [confirmarAlteracao, setConfirmarAlteracao] = useState<AlteracaoGerenciavel | null>(null);
   const [modoAssinaturaPropria, setModoAssinaturaPropria] = useState(false);
-  const [planoEmpresa, setPlanoEmpresa] = useState<'business' | 'business_pro'>('business');
+  const [planoEmpresa, setPlanoEmpresa] = useState<PlanoEmpresarial>('business');
   const requisicaoRef = useRef(false);
 
   const carregar = useCallback(async () => {
@@ -152,11 +160,12 @@ export default function AssinaturaModal({
   const fechar = () => {
     setConfirmarCancelamento(false);
     setConfirmarAssinaturaPropria(false);
+    setConfirmarAlteracao(null);
     setModoAssinaturaPropria(false);
     onFechar();
   };
 
-  const executar = async (tipo: 'mensal' | 'anual' | 'business_pro' | 'cancelar') => {
+  const executar = async (tipo: 'mensal' | 'anual' | PlanoEmpresarial | 'cancelar' | 'cancelar-alteracao') => {
     if (!empresaId || acao) return;
     setAcao(tipo);
     setErro('');
@@ -169,8 +178,10 @@ export default function AssinaturaModal({
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(tipo === 'cancelar'
           ? { empresaId }
-          : tipo === 'business_pro'
-            ? { empresaId, ciclo: cicloAtual === 'anual' ? 'anual' : 'mensal', plano: 'business_pro' }
+          : tipo === 'cancelar-alteracao'
+            ? { empresaId, cancelarAlteracaoAgendada: true }
+          : tipo === 'business' || tipo === 'business_pro' || tipo === 'business_premium'
+            ? { empresaId, ciclo: cicloAtual === 'anual' ? 'anual' : 'mensal', plano: tipo }
             : { empresaId, ciclo: tipo }),
       });
       const json = await resposta.json();
@@ -268,7 +279,12 @@ export default function AssinaturaModal({
     : '—';
   // Valor e vencimento: só em plano pago (mensal/anual).
   const planoPago = !cortesiaAtiva && Boolean(assinatura);
-  const valorExibido = planoPago && assinatura ? dinheiro(assinatura.valor) : '—';
+  // Durante um downgrade ou troca de ciclo agendada, o Asaas já guarda o
+  // valor da próxima renovação. A interface, porém, deve continuar mostrando
+  // o valor do plano vigente até a data efetiva da alteração.
+  const valorExibido = planoPago && assinatura
+    ? dinheiro(detalhes?.valorContratado ?? assinatura.valor)
+    : '—';
   const vencimentoExibido = viaCupom
     ? (estadoAtual?.validoAte ? formatarData(estadoAtual.validoAte) : 'Sem prazo')
     : planoPago ? formatarData(assinatura?.proximoVencimento || null)
@@ -333,6 +349,18 @@ export default function AssinaturaModal({
             </div>}
             {carencia && <div className="mb-4 w-full rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900"><strong>Pagamento pendente.</strong> Regularize até {formatarData(estadoAtual?.validoAte || null)} para evitar o bloqueio do perfil.</div>}
             {canceladaNoFim && <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900"><strong>Renovação cancelada.</strong> O acesso permanece disponível até {formatarData(estadoAtual?.validoAte || null)}.</div>}
+            {detalhes?.alteracaoAgendada && <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <strong>Alteração agendada.</strong>{' '}
+              {rotuloPlano(detalhes.alteracaoAgendada.plano, detalhes.alteracaoAgendada.ciclo)} entra em vigor em {formatarData(detalhes.alteracaoAgendada.efetivaEm)}. Até essa data, o plano atual e seus recursos continuam disponíveis.
+              {podeGerenciar && <button
+                type="button"
+                disabled={acao !== null}
+                onClick={() => void executar('cancelar-alteracao')}
+                className="mt-3 min-h-10 w-full rounded-lg border border-amber-500 bg-white px-3 text-xs font-bold uppercase text-amber-900 transition hover:bg-amber-100 disabled:opacity-60"
+              >
+                {acao === 'cancelar-alteracao' ? 'Cancelando...' : 'Cancelar alteração agendada'}
+              </button>}
+            </div>}
 
             <div className={`grid gap-3 rounded-[14px_24px_24px_24px] border p-4 sm:grid-cols-2 ${painel}`}>
               <div><span className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Situação</span><div className="mt-1"><span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: selo.bg, color: selo.texto }}>{rotuloSituacao}</span></div></div>
@@ -350,11 +378,12 @@ export default function AssinaturaModal({
                     ? 'Você pode contratar agora sem perder os dias restantes do período de teste.'
                     : 'Escolha o plano e o ciclo de cobrança.'}
               </p>
-              {!tipoPessoal && <fieldset className="mt-3 grid grid-cols-2 gap-2" aria-label="Plano empresarial">
+              {!tipoPessoal && <fieldset className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3" aria-label="Plano empresarial">
                 <legend className="sr-only">Plano empresarial</legend>
                 {([
-                  ['business', 'Business', 'Módulos à parte.'],
-                  ['business_pro', 'Business Pro', 'Todos os módulos incluídos.'],
+                  ['business', 'Business Básico', '1 usuário e 1 empresa.'],
+                  ['business_pro', 'Business Pro', '3 usuários e 3 empresas.'],
+                  ['business_premium', 'Business Premium', '10 usuários e 10 empresas.'],
                 ] as const).map(([plano, titulo, descricao]) => <button
                   key={plano}
                   type="button"
@@ -379,17 +408,33 @@ export default function AssinaturaModal({
             </section>}
 
             {podeGerenciar && assinatura && !canceladaNoFim && !cortesiaAtiva && <section className="mt-5">
-              {!tipoPessoal && planoAtualEmpresa === 'business' && <div className={`mb-5 rounded-[14px_24px_24px_24px] border p-4 ${painel}`}>
-                <h3 className="text-sm font-semibold">Eleve para Business Pro</h3>
-                <p className={`mt-1 text-xs leading-relaxed ${muted}`}>Amplie agora para até 10 usuários e perfis, sessões simultâneas e todos os módulos incluídos. A cobrança pendente será atualizada para o novo plano.</p>
-                <button type="button" disabled={acao !== null} onClick={() => void executar('business_pro')} className="mt-3 min-h-11 w-full rounded-lg bg-sky-700 px-3 text-xs font-semibold uppercase text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60">
-                  {acao === 'business_pro' ? 'Alterando plano...' : 'Migrar para Business Pro'}
-                </button>
+              {!tipoPessoal && <div className={`mb-5 rounded-[14px_24px_24px_24px] border p-4 ${painel}`}>
+                <h3 className="text-sm font-semibold">Alterar plano</h3>
+                <p className={`mt-1 text-xs leading-relaxed ${muted}`}>Upgrade de nível é imediato. Downgrade mantém o plano atual até o fim do período pago e não gera devolução proporcional.</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  {([
+                    ['business', 'Business Básico'],
+                    ['business_pro', 'Business Pro'],
+                    ['business_premium', 'Business Premium'],
+                  ] as const).map(([plano, nome]) => <button
+                    key={plano}
+                    type="button"
+                    disabled={acao !== null || planoAtualEmpresa === plano}
+                    onClick={() => {
+                      const ordem = { business: 1, business_pro: 2, business_premium: 3 } as const;
+                      if (ordem[plano] < ordem[planoAtualEmpresa]) setConfirmarAlteracao(plano);
+                      else void executar(plano);
+                    }}
+                    className={`min-h-11 rounded-lg border px-3 text-xs font-semibold uppercase transition disabled:cursor-default ${planoAtualEmpresa === plano ? 'border-sky-600 bg-sky-600 text-white' : darkMode ? 'border-slate-600 bg-slate-800 text-slate-200 hover:border-sky-500' : 'border-slate-300 bg-white text-slate-700 hover:border-sky-600 hover:text-sky-700'} disabled:opacity-70`}
+                  >
+                    {acao === plano ? 'Alterando...' : planoAtualEmpresa === plano ? `${nome} · atual` : nome}
+                  </button>)}
+                </div>
               </div>}
               <h3 className="text-sm font-semibold">Ciclo de cobrança</h3>
               <p className={`mt-1 text-xs ${muted}`}>A alteração vale para a próxima renovação e não modifica cobranças já geradas.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                {(['mensal', 'anual'] as const).map((ciclo) => <button key={ciclo} type="button" disabled={acao !== null || cicloAtual === ciclo} onClick={() => void executar(ciclo)} className={`h-11 rounded-lg border px-3 text-xs font-semibold uppercase transition disabled:cursor-default ${cicloAtual === ciclo ? 'border-sky-600 bg-sky-600 text-white' : darkMode ? 'border-slate-600 bg-slate-800 text-slate-200 hover:border-sky-500' : 'border-slate-300 bg-white text-slate-700 hover:border-sky-600 hover:text-sky-700'} disabled:opacity-70`}>{acao === ciclo ? 'Alterando...' : ciclo}</button>)}
+                {(['mensal', 'anual'] as const).map((ciclo) => <button key={ciclo} type="button" disabled={acao !== null || cicloAtual === ciclo} onClick={() => setConfirmarAlteracao(ciclo)} className={`h-11 rounded-lg border px-3 text-xs font-semibold uppercase transition disabled:cursor-default ${cicloAtual === ciclo ? 'border-sky-600 bg-sky-600 text-white' : darkMode ? 'border-slate-600 bg-slate-800 text-slate-200 hover:border-sky-500' : 'border-slate-300 bg-white text-slate-700 hover:border-sky-600 hover:text-sky-700'} disabled:opacity-70`}>{acao === ciclo ? 'Alterando...' : ciclo}</button>)}
               </div>
             </section>}
 
@@ -426,6 +471,22 @@ export default function AssinaturaModal({
       aoConfirmar={() => {
         setConfirmarAssinaturaPropria(false);
         setModoAssinaturaPropria(true);
+      }}
+    />
+    <ModalConfirmacao
+      aberto={confirmarAlteracao !== null}
+      titulo="Confirmar alteração da assinatura?"
+      mensagem="A alteração ficará programada para o fim do período já pago. Até essa data, o plano atual e seus recursos permanecem disponíveis; não haverá devolução proporcional."
+      textoCancelar="Voltar"
+      textoConfirmar="Confirmar alteração"
+      variante="alerta"
+      corPrimaria={corPrimaria}
+      darkMode={darkMode}
+      aoCancelar={() => setConfirmarAlteracao(null)}
+      aoConfirmar={() => {
+        const alteracao = confirmarAlteracao;
+        setConfirmarAlteracao(null);
+        if (alteracao) void executar(alteracao);
       }}
     />
   </>;

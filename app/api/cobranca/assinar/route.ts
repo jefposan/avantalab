@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { atualizarClienteAsaas, criarClienteAsaas, criarAssinaturaAsaas, listarCobrancasAssinaturaAsaas, obterAssinaturaAsaas, removerAssinaturaAsaas } from '../../../lib/asaas';
 import { COBRANCA_ATIVA, PRECOS, type PlanoPago, type Ciclo, type StatusAssinatura } from '../../../lib/cobranca';
 import { assinaturaBloqueiaNovoCheckout, STATUS_FATURA_PAGA, STATUS_FATURA_PAGAVEL } from '../../../lib/cobranca-fluxo';
-import { normalizarPlanoComercial } from '../../../lib/planos-comerciais';
+import { normalizarPlanoComercial, PLANOS_COMERCIAIS } from '../../../lib/planos-comerciais';
+import { criarReferenciaAssinatura } from '../../../lib/cobranca-referencia';
 
 export const runtime = 'nodejs';
 
@@ -256,8 +257,12 @@ export async function POST(request: Request) {
     value: valor,
     nextDueDate: hojeSaoPaulo(),
     cycle: ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
-    description: `AvantaLab — ${plano === 'business_premium' ? 'Business Premium' : plano === 'business_pro' ? 'Business Pro' : plano === 'business' ? 'Business Básico' : 'Pessoal Premium'} (${ciclo})`,
-    externalReference: empresaId,
+    description: `AvantaLab — ${PLANOS_COMERCIAIS[plano as Exclude<PlanoPago, 'empresa'>].nome} (${ciclo})`,
+    externalReference: criarReferenciaAssinatura({
+      empresaId,
+      plano: plano as Exclude<PlanoPago, 'empresa'>,
+      ciclo,
+    }),
   });
   if (!a.ok || !a.data?.id) return NextResponse.json({ erro: true, mensagem: a.erro || 'falha ao criar assinatura' }, { status: 502 });
   const assinaturaGwId = a.data.id;

@@ -1,5 +1,6 @@
 export type CicloComercial = 'mensal' | 'anual';
 export type PlanoComercial = 'free' | 'pessoal_premium' | 'business' | 'business_pro' | 'business_premium';
+export type PlanoEmpresarial = Extract<PlanoComercial, 'business' | 'business_pro' | 'business_premium'>;
 
 export type LimitesPlano = {
   usuarios: number;
@@ -30,6 +31,12 @@ export type PlanoComercialDefinicao = {
 };
 
 export const VALOR_MODULO_AVULSO_MENSAL = 14.9;
+
+export const PLANOS_EMPRESARIAIS: readonly PlanoEmpresarial[] = [
+  'business',
+  'business_pro',
+  'business_premium',
+];
 
 export const PLANOS_COMERCIAIS: Record<PlanoComercial, PlanoComercialDefinicao> = {
   free: {
@@ -139,4 +146,20 @@ export function formatarPrecoComercial(valor: number): string {
 export function normalizarPlanoComercial(plano: string | null | undefined): PlanoComercial | null {
   if (plano === 'empresa') return 'business';
   return plano && plano in PLANOS_COMERCIAIS ? plano as PlanoComercial : null;
+}
+
+/**
+ * Resolve o plano efetivo de uma cortesia já persistida. Cortesias pessoais
+ * sempre equivalem ao Pessoal Premium. Nas empresariais, registros antigos
+ * sem plano mantêm o antigo comportamento integral do Business Pro.
+ */
+export function resolverPlanoCortesia(
+  tipoPerfil: 'pessoal' | 'empresa',
+  plano: string | null | undefined,
+): 'pessoal_premium' | PlanoEmpresarial {
+  if (tipoPerfil === 'pessoal') return 'pessoal_premium';
+  const normalizado = normalizarPlanoComercial(plano);
+  return normalizado === 'business' || normalizado === 'business_pro' || normalizado === 'business_premium'
+    ? normalizado
+    : 'business_pro';
 }

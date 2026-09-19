@@ -6,9 +6,10 @@ const mobile = readFileSync('public/mobile-app.js', 'utf8');
 
 test('a configuração de centros de custo é compartilhada com a Gestão Web', () => {
   assert.match(mobile, /select\('duplicados_ativo, centros_custo_ativo'\)/);
-  assert.match(mobile, /upsert\(\{ empresa_id: empresaId, centros_custo_ativo: proximo \}/);
+  assert.match(mobile, /fetch\('\/api\/centros-custo\/configurar'/);
+  assert.match(mobile, /body: JSON\.stringify\(\{ empresaId: empresaId, ativo: proximo \}\)/);
   assert.match(mobile, /function sincronizarCentrosCustoMobile\(\)/);
-  assert.match(mobile, /garantir_centro_custo_principal/);
+  assert.match(mobile, /function centrosCustoPermitidosPeloPlanoMobile\(\)/);
   assert.match(mobile, /table: 'configuracoes', filter: 'empresa_id=eq.' \+ empresaId/);
   assert.match(mobile, /table: 'centros_custo', filter: 'empresa_id=eq.' \+ empresaId/);
   assert.match(mobile, /function \(\) \{ sincronizarCentrosCustoMobile\(\); \}/);

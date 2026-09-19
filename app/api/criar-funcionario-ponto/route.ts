@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
+import { resolverEstadoAcesso } from '../../lib/cobranca-servidor';
+import { validarLimiteDeFuncionariosPonto } from '../../lib/limites-comerciais-servidor';
 
 function soDigitos(v: string) {
   return String(v || '').replace(/\D/g, '');
@@ -86,6 +88,13 @@ export async function POST(request: Request) {
       .eq('ativo', true)
       .maybeSingle();
     if (!moduloAtivo) return respostaErro('O módulo Controle de Ponto não está ativo nesta empresa.', 403);
+
+    const limiteFuncionarios = await validarLimiteDeFuncionariosPonto(
+      supabaseAdmin,
+      empresaId,
+      await resolverEstadoAcesso(empresaId),
+    );
+    if (!limiteFuncionarios.permitido) return respostaErro(limiteFuncionarios.mensagem, 409);
 
     // CPF (login) único GLOBALMENTE entre funcionários de ponto.
     // (Um CPF = uma empresa: permite o login único em /ponto resolver a empresa.)

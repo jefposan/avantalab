@@ -1,11 +1,52 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.01 -->
+<!-- ava-version: 1.36.0.13 -->
 
-> Revisão 1.36.0.01-av151: sem conexão útil, a Solicitação por Voz fica
+> Revisão 1.36.0.13-av151: sem conexão útil, a Solicitação por Voz fica
 > imediatamente indisponível também no PWA do iPhone. A Sala de Botões passa a
 > refletir o modo offline interno; ao reconectar com êxito, o acionador retorna
 > automaticamente.
+
+> Revisão 1.36.0.12: a nova escolha de exclusão pertence aos perfis da Gestão;
+> sem mudança operacional no AvantaVendas. Vínculos financeiros com um perfil
+> excluído são encerrados pelo fluxo protegido.
+
+> Revisão 1.36.0.11: a conciliação de uma alteração agendada não antecipa o
+> direito vigente no AvantaVendas; sem mudança no caminho operacional.
+
+> Revisão 1.36.0.10: a correção de exibição do valor vigente pertence à
+> assinatura da Gestão Web; sem mudança operacional no AvantaVendas.
+
+> Revisão 1.36.0.09: upgrade, downgrade, ciclo e cancelamento pertencem à
+> assinatura da Gestão. O AvantaVendas acompanha o direito empresarial vigente;
+> transições agendadas e redução de franquia não apagam seu conteúdo.
+
+> Revisão 1.36.0.08: os novos limites de Controle de Ponto e Centros de custo
+> pertencem à Gestão AvantaLab. O AvantaVendas apenas acompanha o plano vigente
+> do perfil, sem mudança em seu caminho operacional nesta versão.
+
+> Revisão 1.36.0.07: a escolha administrativa do plano de cortesia pertence ao
+> AvantaLab e não cria um novo caminho operacional no AvantaVendas. O acesso
+> acompanha automaticamente o plano empresarial vigente do perfil.
+
+> Revisão 1.36.0.06: a validação adicional do plano empresarial pago ocorre no
+> AvantaLab; sem mudança operacional no AvantaVendas.
+
+> Revisão 1.36.0.05: o texto resumido do CTA pertence à landing do AvantaLab;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.36.0.04: a interação dos cards pertence à landing do AvantaLab;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.36.0.03: o ajuste da pílula do Pessoal Premium pertence à landing
+> desktop; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.36.0.02: o alinhamento dos cards de assinatura pertence à landing
+> desktop; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.36.0.01: a seleção Web dos planos Business Básico, Business Pro e
+> Business Premium não altera o fluxo do AvantaVendas. A liberação dos recursos
+> empresariais ocorre no AvantaLab após a confirmação da cobrança.
 
 > Revisão 1.36.0: a matriz comercial empresarial passa a reconhecer Business
 > Básico, Business Pro e Business Premium. A seleção pública e administrativa

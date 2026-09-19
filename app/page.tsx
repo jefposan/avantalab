@@ -118,6 +118,7 @@ const dadosEstruturados = {
         { '@type': 'Offer', name: 'Pessoal Premium', price: '9.90', priceCurrency: 'BRL', description: 'Plano pessoal premium mensal.' },
         { '@type': 'Offer', name: 'Business', price: '34.90', priceCurrency: 'BRL', description: 'Gestão empresarial essencial mensal.' },
         { '@type': 'Offer', name: 'Business Pro', price: '49.90', priceCurrency: 'BRL', description: 'Ecossistema empresarial completo mensal.' },
+        { '@type': 'Offer', name: 'Business Premium', price: '99.90', priceCurrency: 'BRL', description: 'Ecossistema empresarial completo para mais usuários, perfis e funcionários.' },
       ],
     },
     { '@type': 'FAQPage', mainEntity: perguntas.map(([pergunta, resposta]) => ({ '@type': 'Question', name: pergunta, acceptedAnswer: { '@type': 'Answer', text: resposta } })) },

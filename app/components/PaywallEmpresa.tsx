@@ -1,9 +1,9 @@
 'use client';
 import React, { useRef, useState } from 'react';
 import { type DadosCobrancaAssinatura, type EstadoAcesso } from '../lib/cobranca';
-import { PLANOS_COMERCIAIS } from '../lib/planos-comerciais';
+import { PLANOS_COMERCIAIS, type PlanoEmpresarial } from '../lib/planos-comerciais';
 
-type PlanoContratavel = 'pessoal_premium' | 'business' | 'business_pro';
+type PlanoContratavel = 'pessoal_premium' | PlanoEmpresarial;
 
 // Formata como CPF (000.000.000-00) até 11 dígitos, ou CNPJ (00.000.000/0000-00) acima.
 function formatarCpfCnpj(valor: string): string {
@@ -59,7 +59,11 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
   const [cupom, setCupom] = useState('');
   const [resgatando, setResgatando] = useState(false);
   const [cupomErro, setCupomErro] = useState('');
-  const [planoEmpresa, setPlanoEmpresa] = useState<'business' | 'business_pro'>(() => estadoAcesso?.plano === 'business_pro' ? 'business_pro' : 'business');
+  const [planoEmpresa, setPlanoEmpresa] = useState<PlanoEmpresarial>(() => {
+    if (estadoAcesso?.plano === 'business_premium') return 'business_premium';
+    if (estadoAcesso?.plano === 'business_pro') return 'business_pro';
+    return 'business';
+  });
   const [instanteAbertura] = useState(() => Date.now());
   const assinaturaEmCursoRef = useRef(false);
   const resgateEmCursoRef = useRef(false);
@@ -340,11 +344,12 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
               </div>}
 
               {!acessoWebPessoal && (
-                <fieldset className="mt-3 grid grid-cols-2 gap-2" aria-label="Plano empresarial">
+                <fieldset className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3" aria-label="Plano empresarial">
                   <legend className="sr-only">Plano empresarial</legend>
                   {([
-                    ['business', 'Business', 'Monte os módulos que precisar.'],
-                    ['business_pro', 'Business Pro', 'Tudo liberado + 7 dias grátis para novos testes.'],
+                    ['business', 'Business Básico', '1 usuário e 1 empresa. Módulos à parte.'],
+                    ['business_pro', 'Business Pro', '3 usuários, 3 empresas e módulos incluídos.'],
+                    ['business_premium', 'Business Premium', '10 usuários, 10 empresas e Ponto ilimitado.'],
                   ] as const).map(([plano, titulo, descricao]) => {
                     const ativo = planoEmpresa === plano;
                     return <button
@@ -381,7 +386,7 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
 
                 <div className="relative rounded-2xl border-2 border-sky-600 bg-white/85 p-3">
                   <span className="absolute -top-2.5 left-3 rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white" style={{ background: GRADIENTE }}>
-                    {acessoWebPessoal ? 'Melhor valor' : '2 meses grátis'}
+                    {acessoWebPessoal ? 'Melhor valor' : 'Cerca de 40% de desconto'}
                   </span>
                   <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Anual</p>
                   <p className="mt-1 text-xl font-black text-slate-900">

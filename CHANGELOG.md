@@ -1,10 +1,103 @@
 # Changelog
 
-## 1.36.0.01-av151 - 2026-09-19
+## 1.36.0.13 - 2026-09-19
 - **AvantaVendas — comando por voz sem conexão**: o botão passa a refletir
   imediatamente o modo offline interno e a indisponibilidade de rede do
   navegador. A captura é interrompida com segurança e o acionador fica cinza,
   bloqueado e acessível até a reconexão confirmada.
+
+## 1.36.0.12 - 2026-09-19
+- **Exclusão de perfil com escolha clara**: Gestão Web e Mobile oferecem
+  retenção restaurável por 30 dias ou exclusão imediata com uma segunda
+  confirmação.
+- **Exclusão definitiva protegida**: dados e pontos de restauração são removidos
+  em conjunto, assinaturas externas são canceladas antes da purga e registros
+  sujeitos à guarda legal continuam protegidos.
+- **Fluxo único e seguro**: os antigos caminhos diretos foram substituídos pela
+  mesma rota autenticada nas duas interfaces, sem excluir o login AvantaLab.
+- **Credencial rotacionável**: o adaptador Asaas lê a chave no momento da
+  requisição, evitando manter uma credencial vazia em processos já iniciados.
+
+## 1.36.0.11 - 2026-09-19
+- **Assinaturas — conciliação durante agendamento**: a consulta imediata aceita
+  a referência futura já configurada no Asaas sem antecipar plano ou ciclo no
+  AvantaLab, mantendo acesso e franquias estáveis até a data efetiva.
+
+## 1.36.0.10 - 2026-09-19
+- **Assinaturas — valor vigente no agendamento**: ao programar downgrade ou
+  mudança de ciclo, a Gestão Web mantém no resumo o valor do plano ainda ativo;
+  o novo valor só passa a valer na renovação agendada.
+- **Sandbox validado ponta a ponta**: contratação do Business Básico, pagamento,
+  upgrade imediato para Premium, downgrade e ciclo anual agendados, cancelamento
+  dos agendamentos e cancelamento da renovação foram exercitados no Asaas.
+
+## 1.36.0.09 - 2026-09-19
+- **Assinaturas — ciclo completo**: Gestão Web e PWA passam a oferecer os três
+  níveis Business para upgrade e downgrade, além da mudança mensal/anual e do
+  cancelamento da renovação.
+- **Downgrade sem perda do período pago**: reduções de plano e mudanças de ciclo
+  são agendadas para a validade atual. Até lá, o plano contratado permanece
+  integralmente disponível e não há devolução proporcional.
+- **Franquias preservando dados**: na data efetiva, perfis excedentes deixam de
+  compartilhar a assinatura e usuários/funcionários excedentes são inativados;
+  nenhum histórico ou lançamento é apagado.
+- **Conciliação protegida**: webhook e rotina periódica reconhecem o plano atual
+  e o próximo plano, aplicando a transição uma única vez e sem antecipá-la.
+- **Validação automatizada**: adicionados testes das bordas 1/3/10, limites do
+  Ponto, upgrade, downgrade, cancelamento e contrato do adaptador Asaas.
+
+## 1.36.0.08 - 2026-09-19
+- **Direitos dos planos — aplicação efetiva**: o servidor limita funcionários
+  ativos do Controle de Ponto a 10 no Business Básico com módulo avulso, 30 no
+  Business Pro e quantidade ilimitada no Business Premium.
+- **Centros de custo por plano**: a ativação passa por uma rota protegida e fica
+  disponível somente no Business Pro e Premium, tanto na Gestão Web quanto na
+  Mobile.
+- **Troca segura para o Básico**: a transição desativa Centros de custo e
+  módulos antes incluídos pelo plano, sem apagar lançamentos, funcionários,
+  históricos ou módulos avulsos pagos.
+
+## 1.36.0.07 - 2026-09-19
+- **Admin — cortesia por plano**: ao liberar um perfil Empresa, o administrador
+  escolhe Business Básico, Business Pro ou Business Premium, além do prazo.
+  Perfis Pessoais permanecem em Pessoal Premium.
+- **Direitos coerentes**: limites, Centros de custo e módulos seguem o plano da
+  cortesia. Business Básico mantém módulos avulsos; Pro e Premium os incluem.
+  Cortesias antigas sem plano preservam o comportamento do Business Pro.
+
+## 1.36.0.06 - 2026-09-19
+- **Asaas — liberação vinculada ao plano pago**: novas assinaturas e upgrades
+  passam a registrar perfil, plano e ciclo em uma referência única no gateway.
+  Webhook, consulta imediata e conciliação validam essa referência antes de
+  liberar o acesso; assinaturas antigas permanecem compatíveis.
+
+## 1.36.0.05 - 2026-09-19
+- **Landing — CTA Business Pro**: o botão foi resumido para “Teste por 7 dias
+  grátis”, preservando seu destino e a seta de ação.
+
+## 1.36.0.04 - 2026-09-19
+- **Landing — cards de planos clicáveis**: toda a superfície dos cinco cards
+  abre o respectivo fluxo de cadastro e se eleva no hover ou foco por teclado,
+  respeitando a preferência de redução de movimento.
+
+## 1.36.0.03 - 2026-09-19
+- **Landing — destaque do Pessoal Premium**: a pílula passa a acomodar o texto
+  completo sem alterar a largura dos cards ou a grade de cinco planos.
+
+## 1.36.0.02 - 2026-09-19
+- **Landing — planos em uma linha**: Free, Pessoal Premium, Business, Business
+  Pro e Business Premium permanecem lado a lado no desktop, preservando a
+  adaptação em duas colunas no tablet e uma coluna no celular.
+
+## 1.36.0.01 - 2026-09-19
+- **Planos empresariais — contratação**: a landing preserva a composição já
+  existente de Business e Business Pro e acrescenta somente o novo card
+  Business Premium; bloqueio e gerenciamento da assinatura oferecem os três
+  níveis comerciais com preços, limites e recursos coerentes.
+- **Asaas — plano escolhido**: os três planos empresariais usam o mesmo checkout
+  recorrente já protegido, com preço e descrição derivados do catálogo central;
+  upgrades para Pro e Premium permanecem unidirecionais e evitam cobrança dupla
+  dos módulos avulsos.
 
 ## 1.36.0 - 2026-09-19
 - **Planos empresariais — base comercial**: centralizada a matriz Business

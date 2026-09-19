@@ -3,6 +3,7 @@ import { exigirAdmin } from '../../lib/admin-server';
 import { DATA_LANCAMENTO, assinaturaVigente, type EstadoAcesso, type TipoPerfil, type StatusAssinatura } from '../../lib/cobranca';
 import { normalizarStatusTemporal } from '../../lib/cobranca-fluxo';
 import { removerAssinaturaAsaas, removerCobrancaAsaas } from '../../lib/asaas';
+import { normalizarPlanoComercial, resolverPlanoCortesia, type PlanoEmpresarial } from '../../lib/planos-comerciais';
 
 function naoAutorizado() {
   return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
@@ -22,6 +23,7 @@ async function limparCobrancasParaCortesia(
   db: Awaited<ReturnType<typeof exigirAdmin>>['db'],
   empresaId: string,
   gatewaySubscriptionId: string | null | undefined,
+  planoCortesia: 'pessoal_premium' | PlanoEmpresarial,
 ) {
   const { data: faturas, error: erroFaturas } = await db
     .from('assinatura_faturas')
@@ -67,8 +69,8 @@ async function limparCobrancasParaCortesia(
   if (erroNotificacoes) throw erroNotificacoes;
   const { error: erroLimpeza } = await db.from('assinatura_faturas').delete().eq('empresa_id', empresaId);
   if (erroLimpeza) throw erroLimpeza;
+  const agora = new Date().toISOString();
   if ((assinaturasModulos || []).length > 0) {
-    const agora = new Date().toISOString();
     const { error: erroModulos } = await db.from('assinaturas_modulos').update({
       status: 'cancelada',
       valido_ate: agora,
@@ -76,6 +78,20 @@ async function limparCobrancasParaCortesia(
       atualizado_em: agora,
     }).in('id', assinaturasModulos.map((assinatura) => assinatura.id));
     if (erroModulos) throw erroModulos;
+  }
+  if (planoCortesia === 'business' || planoCortesia === 'pessoal_premium') {
+    const { error: erroConfiguracao } = await db.from('configuracoes').upsert({
+      empresa_id: empresaId,
+      centros_custo_ativo: false,
+    }, { onConflict: 'empresa_id' });
+    if (erroConfiguracao) throw erroConfiguracao;
+    const { error: erroInstalacoes } = await db.from('empresa_modulos').update({
+      ativo: false,
+      expira_em: null,
+      atualizado_em: agora,
+    }).eq('empresa_id', empresaId).eq('ativo', true).in('origem', ['plano_business_pro', 'cortesia', 'assinatura_modulo']);
+    if (erroInstalacoes) throw erroInstalacoes;
+  } else {
     const { error: erroInstalacoes } = await db.from('empresa_modulos').update({
       origem: 'cortesia',
       expira_em: null,
@@ -94,7 +110,7 @@ function estadoDoPerfil(tipoPerfil: TipoPerfil, criadoEmISO: string | null, row:
       row.valido_ate,
     );
     const plano = row.status === 'cortesia'
-      ? (tipoPerfil === 'empresa' ? 'business_pro' : 'pessoal_premium')
+      ? resolverPlanoCortesia(tipoPerfil, row.plano)
       : row.plano;
     return { tipoPerfil, status, validoAte: row.valido_ate, trialFim: row.trial_fim, plano, ciclo: row.ciclo };
   }
@@ -253,7 +269,7 @@ export async function GET(request: Request) {
 
 // Ação sobre um perfil:
 //   'revogar' → bloqueia uma cortesia/cupom vigente (cancelada)
-//   'liberar' → concede cortesia (Premium/acesso)
+//   'liberar' → concede cortesia com o plano selecionado
 export async function PATCH(request: Request) {
   try {
     const { autorizado, db } = await exigirAdmin(request);
@@ -285,25 +301,38 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ erro: true, mensagem: 'Só é possível revogar perfis liberados por cortesia ou cupom.' }, { status: 409 });
     }
 
-    if (acao === 'liberar') {
-      await limparCobrancasParaCortesia(db, empresaId, existe?.gateway_subscription_id);
+    const status = acao === 'revogar' ? 'cancelada' : 'cortesia';
+    const planoSolicitado = normalizarPlanoComercial(corpo.plano);
+    if (acao === 'liberar' && tipoPerfil === 'empresa' && !['business', 'business_pro', 'business_premium'].includes(planoSolicitado || '')) {
+      return NextResponse.json({ erro: true, mensagem: 'Selecione o plano da cortesia empresarial.' }, { status: 400 });
+    }
+    const planoCortesia: 'pessoal_premium' | PlanoEmpresarial = tipoPerfil === 'empresa'
+      ? planoSolicitado as PlanoEmpresarial
+      : 'pessoal_premium';
+
+    const informouPeriodo = corpo.duracaoValor !== undefined || corpo.duracaoUnidade !== undefined;
+    const duracaoValor = Number(corpo.duracaoValor);
+    const duracaoUnidade = corpo.duracaoUnidade;
+    if (
+      acao === 'liberar'
+      && informouPeriodo
+      && (!Number.isInteger(duracaoValor) || duracaoValor < 1 || !['dias', 'semanas', 'meses'].includes(duracaoUnidade))
+    ) {
+      return NextResponse.json({ erro: true, mensagem: 'Informe uma duração válida para a cortesia.' }, { status: 400 });
     }
 
-    const status = acao === 'revogar' ? 'cancelada' : 'cortesia';
-    // Cortesia é uma liberação integral do perfil: Empresa recebe todos os
-    // benefícios do Business Pro e Pessoal recebe o Pessoal Premium.
-    const planoCortesia = tipoPerfil === 'empresa' ? 'business_pro' : 'pessoal_premium';
+    if (acao === 'liberar') {
+      await limparCobrancasParaCortesia(db, empresaId, existe?.gateway_subscription_id, planoCortesia);
+    }
 
     // Liberar: cortesia vitalícia (sem duração) ou por período (valor + unidade).
     let validoAte: string | null = null;
     if (acao === 'liberar') {
-      const valor = Number(corpo.duracaoValor) || 0;
-      const unidade = corpo.duracaoUnidade;
-      if (valor > 0 && (unidade === 'dias' || unidade === 'semanas' || unidade === 'meses')) {
+      if (informouPeriodo) {
         const fim = new Date();
-        if (unidade === 'dias') fim.setDate(fim.getDate() + valor);
-        else if (unidade === 'semanas') fim.setDate(fim.getDate() + valor * 7);
-        else fim.setMonth(fim.getMonth() + valor);
+        if (duracaoUnidade === 'dias') fim.setDate(fim.getDate() + duracaoValor);
+        else if (duracaoUnidade === 'semanas') fim.setDate(fim.getDate() + duracaoValor * 7);
+        else fim.setMonth(fim.getMonth() + duracaoValor);
         validoAte = fim.toISOString();
       }
     }
@@ -328,7 +357,7 @@ export async function PATCH(request: Request) {
       : await db.from('assinaturas').insert(base);
     if (persistencia.error) throw persistencia.error;
 
-    return NextResponse.json({ erro: false, status, validoAte, trialFim: null, cupomId: null, temAcesso: acao === 'liberar', temRegistro: true });
+    return NextResponse.json({ erro: false, status, plano: acao === 'liberar' ? planoCortesia : null, validoAte, trialFim: null, cupomId: null, temAcesso: acao === 'liberar', temRegistro: true });
   } catch (error) {
     console.error('Erro na ação sobre o perfil:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível executar a ação.' }, { status: 500 });

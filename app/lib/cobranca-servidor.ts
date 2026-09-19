@@ -20,7 +20,7 @@ import {
 } from './cobranca';
 import { emailsContaRevisaoLojas } from './conta-revisao';
 import { normalizarStatusTemporal } from './cobranca-fluxo';
-import { normalizarPlanoComercial, PLANOS_COMERCIAIS, type PlanoComercial } from './planos-comerciais';
+import { normalizarPlanoComercial, PLANOS_COMERCIAIS, resolverPlanoCortesia, type PlanoComercial } from './planos-comerciais';
 import { papelPodeConsumirQuotaDePerfis } from './perfis-quota';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -213,11 +213,10 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
     .maybeSingle();
 
   if (assin) {
-    // Protege perfis antigos cuja cortesia foi gravada antes de o plano ser
-    // persistido. Cortesia sempre representa acesso completo ao plano do tipo
-    // de perfil, sem depender da normalização histórica no banco.
+    // Cortesias atuais respeitam o plano escolhido no Admin. Registros antigos
+    // sem plano preservam o antigo equivalente ao Business Pro.
     const planoCortesia = assin.status === 'cortesia'
-      ? (tipoPerfil === 'empresa' ? 'business_pro' : 'pessoal_premium')
+      ? resolverPlanoCortesia(tipoPerfil, assin.plano)
       : null;
     const status = normalizarStatusTemporal(
       assin.status as StatusAssinatura,
