@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.13 -->
+<!-- ava-version: 1.36.0.14 -->
+
+> Revisão 1.36.0.14: a consulta unificada pertence ao painel `/admin`; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.36.0.13: a correção da indisponibilidade do comando por voz
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.

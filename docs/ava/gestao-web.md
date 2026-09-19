@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.13 -->
+<!-- ava-version: 1.36.0.14 -->
+
+> Revisão 1.36.0.14: em **/admin > Perfis**, **Todos** pesquisa em conjunto os
+> usuários AvantaLab, os usuários AvantaVendas e os Perfis AvantaLab. Usuários
+> e perfis continuam identificados separadamente; um perfil sem acesso ou com
+> assinatura cancelada também aparece quando a situação selecionada é Todos.
 
 > Revisão 1.36.0.13: a correção da indisponibilidade do comando por voz
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Web.

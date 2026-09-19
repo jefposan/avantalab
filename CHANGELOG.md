@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.36.0.14 - 2026-09-19
+- **Admin — Todos sem exceção**: a consulta unificada passa a pesquisar e
+  exibir usuários do AvantaLab, usuários do AvantaVendas e Perfis AvantaLab,
+  inclusive perfis sem acesso ou com assinatura cancelada.
+- **Busca administrativa coerente**: o mesmo termo, ordenação e quantidade por
+  página são aplicados às duas leituras; o total mostra a soma dos resultados e
+  mantém usuários e perfis identificados em seções próprias.
+- **Resultado móvel direto**: durante uma pesquisa, se apenas usuários ou apenas
+  perfis corresponderem ao termo, a seção vazia é omitida para mostrar
+  imediatamente os resultados encontrados.
+
 ## 1.36.0.13-av151 - 2026-09-19
 - **AvantaVendas — comando por voz sem conexão**: o botão passa a refletir
   imediatamente o modo offline interno e a indisponibilidade de rede do

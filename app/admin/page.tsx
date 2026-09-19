@@ -453,6 +453,11 @@ export default function AdminPage() {
 
   const totalFiltrosPerfilAtivos = Number(perfilFiltro !== 'todos') + Number(perfilTipoFiltro !== 'todos');
   const totalFiltrosCadastroAtivos = Number(filtroVinculoCadastro !== 'todos');
+  const totalFiltrosConsultaAtivos = consultaCadastros === 'todos'
+    ? totalFiltrosCadastroAtivos + totalFiltrosPerfilAtivos
+    : consultaCadastros === 'perfis_avantalab'
+      ? totalFiltrosPerfilAtivos
+      : totalFiltrosCadastroAtivos;
 
   const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
 
@@ -474,14 +479,16 @@ export default function AdminPage() {
     }
   };
 
-  const buscarPerfis = async (pagina = 1, filtros?: { situacao?: PerfilFiltro; tipo?: PerfilTipoFiltro; ordem?: PerfilOrdem }, busca = perfilBusca, porPagina = perfilPorPagina) => {
+  const buscarPerfis = async (pagina = 1, filtros?: { situacao?: PerfilFiltro; tipo?: PerfilTipoFiltro; ordem?: PerfilOrdem }, busca = perfilBusca, porPagina = perfilPorPagina, value = token) => {
+    const cleanToken = value.trim();
+    if (!cleanToken) return;
     setBuscandoPerfis(true);
     setError('');
     try {
       const situacao = filtros?.situacao ?? perfilFiltro;
       const tipo = filtros?.tipo ?? perfilTipoFiltro;
       const ordem = filtros?.ordem ?? perfilOrdem;
-      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(busca.trim())}&filtro=${situacao}&tipo=${tipo}&ordem=${ordem}&pagina=${pagina}&porPagina=${porPagina}`, { headers: authHeaders() });
+      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(busca.trim())}&filtro=${situacao}&tipo=${tipo}&ordem=${ordem}&pagina=${pagina}&porPagina=${porPagina}`, { headers: authHeaders(cleanToken) });
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível buscar.');
       setPerfis(data.perfis || []);
@@ -524,6 +531,23 @@ export default function AdminPage() {
     }
   };
 
+  const carregarConsultaAdministrativa = async (consulta = consultaCadastros, busca?: string) => {
+    if (consulta === 'perfis_avantalab') {
+      return buscarPerfis(1, undefined, busca ?? perfilBusca);
+    }
+
+    const termo = busca ?? cadastroBusca;
+    if (consulta === 'todos') {
+      await Promise.allSettled([
+        carregarCadastros('todos', 1, token, { busca: termo }),
+        buscarPerfis(1, undefined, termo),
+      ]);
+      return;
+    }
+
+    return carregarCadastros(consulta, 1, token, { busca: termo });
+  };
+
   const carregarDownloadsDasLojas = async (value = token) => {
     const cleanToken = value.trim();
     if (!cleanToken || downloadsDasLojasCarregando) return;
@@ -563,13 +587,13 @@ export default function AdminPage() {
   const atualizarOrdemDasListas = (ordem: PerfilOrdem) => {
     setPerfilOrdem(ordem);
     void carregarCadastros(plataformaCadastro, 1, token, { ordem });
-    if (perfisCarregados) void buscarPerfis(1, { ordem });
+    if (perfisCarregados) void buscarPerfis(1, { ordem }, consultaCadastros === 'todos' ? cadastroBusca : perfilBusca);
   };
 
   const atualizarTamanhoDasListas = (porPagina: number) => {
     setPerfilPorPagina(porPagina);
     void carregarCadastros(plataformaCadastro, 1, token, { porPagina });
-    if (perfisCarregados) void buscarPerfis(1, undefined, perfilBusca, porPagina);
+    if (perfisCarregados) void buscarPerfis(1, undefined, consultaCadastros === 'todos' ? cadastroBusca : perfilBusca, porPagina);
   };
 
   const executarAcaoPerfil = async (perfil: Perfil, corpo: { acao: 'revogar' | 'liberar'; plano?: PlanoEmpresarial; duracaoValor?: number; duracaoUnidade?: string }) => {
@@ -834,7 +858,7 @@ export default function AdminPage() {
       }
       setFeedbacks(data.feedbacks || []);
       setAuthorized(true);
-      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarCadastros('todos', 1, cleanToken), carregarDownloadsDasLojas(cleanToken)]);
+      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarCadastros('todos', 1, cleanToken), buscarPerfis(1, undefined, '', perfilPorPagina, cleanToken), carregarDownloadsDasLojas(cleanToken)]);
     } catch {
       setAuthorized(false);
       setError('Erro inesperado ao acessar o painel.');
@@ -1150,12 +1174,12 @@ export default function AdminPage() {
                         setConsultaCadastros(plataforma.id);
                         if (ehConsultaDeCadastro(plataforma.id)) {
                           setPlataformaCadastro(plataforma.id);
-                          void carregarCadastros(plataforma.id, 1);
+                          void carregarConsultaAdministrativa(plataforma.id);
                           if (plataforma.id === 'avantalab' || plataforma.id === 'avantavendas') {
                             void sincronizarDownloadsDasLojas();
                           }
                         } else {
-                          void buscarPerfis(1);
+                          void carregarConsultaAdministrativa(plataforma.id);
                         }
                       }} className={`h-10 rounded-md px-2 text-[10px] font-black uppercase transition focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-1 ${selecionada ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-cyan-800'}`}>
                         {plataforma.label}
@@ -1164,9 +1188,15 @@ export default function AdminPage() {
                   </div>
                   <div className="grid w-full grid-cols-2 gap-x-4 gap-y-2 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2 text-left sm:grid-cols-4 2xl:w-[560px]">
                     <div className="min-w-0 border-r border-cyan-100 pr-3 sm:col-span-1">
-                      <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">{consultaCadastros === 'perfis_avantalab' ? 'Perfis' : 'Cadastros'}</p>
+                      <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">{consultaCadastros === 'todos' ? 'Resultados' : consultaCadastros === 'perfis_avantalab' ? 'Perfis' : 'Cadastros'}</p>
                       <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">
-                        {consultaCadastros === 'perfis_avantalab'
+                        {consultaCadastros === 'todos'
+                          ? cadastrosCarregando || buscandoPerfis
+                            ? '...'
+                            : cadastrosCarregados && perfisCarregados
+                              ? (cadastroTotal + perfilTotal).toLocaleString('pt-BR')
+                              : '-'
+                          : consultaCadastros === 'perfis_avantalab'
                           ? buscandoPerfis
                             ? '...'
                             : perfisCarregados
@@ -1197,12 +1227,12 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="mt-3 flex flex-col gap-2 lg:flex-row">
-                <div className="relative min-w-0 flex-1"><input value={consultaCadastros === 'perfis_avantalab' ? perfilBusca : cadastroBusca} onChange={(event) => consultaCadastros === 'perfis_avantalab' ? setPerfilBusca(event.target.value) : setCadastroBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { if (consultaCadastros === 'perfis_avantalab') void buscarPerfis(1); else void carregarCadastros(plataformaCadastro, 1); } }} placeholder={consultaCadastros === 'perfis_avantalab' ? 'Nome do perfil (vazio = todos)' : 'Nome ou e-mail do cadastro (vazio = todos)'} className="h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 pr-11 text-sm outline-none focus:border-cyan-700 lg:h-10" />{(consultaCadastros === 'perfis_avantalab' ? perfilBusca : cadastroBusca) && <button type="button" onClick={() => { if (consultaCadastros === 'perfis_avantalab') { setPerfilBusca(''); void buscarPerfis(1, undefined, ''); } else { setCadastroBusca(''); void carregarCadastros(plataformaCadastro, 1, token, { busca: '' }); } }} aria-label="Limpar busca" title="Limpar busca" className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-md text-lg leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 lg:h-8 lg:w-8">×</button>}</div>
+                <div className="relative min-w-0 flex-1"><input value={consultaCadastros === 'perfis_avantalab' ? perfilBusca : cadastroBusca} onChange={(event) => consultaCadastros === 'perfis_avantalab' ? setPerfilBusca(event.target.value) : setCadastroBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void carregarConsultaAdministrativa(); }} placeholder={consultaCadastros === 'todos' ? 'Nome, e-mail ou perfil (vazio = todos)' : consultaCadastros === 'perfis_avantalab' ? 'Nome do perfil (vazio = todos)' : 'Nome ou e-mail do cadastro (vazio = todos)'} className="h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 pr-11 text-sm outline-none focus:border-cyan-700 lg:h-10" />{(consultaCadastros === 'perfis_avantalab' ? perfilBusca : cadastroBusca) && <button type="button" onClick={() => { if (consultaCadastros === 'perfis_avantalab') setPerfilBusca(''); else setCadastroBusca(''); void carregarConsultaAdministrativa(consultaCadastros, ''); }} aria-label="Limpar busca" title="Limpar busca" className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-md text-lg leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 lg:h-8 lg:w-8">×</button>}</div>
                 <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:flex lg:shrink-0">
-                  <button type="button" onClick={() => setFiltrosPerfilAbertos((aberto) => !aberto)} aria-expanded={filtrosPerfilAbertos} className={`relative flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-black uppercase lg:h-10 lg:px-3 ${filtrosPerfilAbertos || (consultaCadastros === 'perfis_avantalab' ? totalFiltrosPerfilAtivos : totalFiltrosCadastroAtivos) ? 'border-cyan-300 bg-cyan-50 text-cyan-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><Icon name="filter" size={15} />Filtros{(consultaCadastros === 'perfis_avantalab' ? totalFiltrosPerfilAtivos : totalFiltrosCadastroAtivos) > 0 && <span className="rounded-full bg-cyan-700 px-1.5 py-0.5 text-[9px] text-white">{consultaCadastros === 'perfis_avantalab' ? totalFiltrosPerfilAtivos : totalFiltrosCadastroAtivos}</span>}</button>
+                  <button type="button" onClick={() => setFiltrosPerfilAbertos((aberto) => !aberto)} aria-expanded={filtrosPerfilAbertos} className={`relative flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-black uppercase lg:h-10 lg:px-3 ${filtrosPerfilAbertos || totalFiltrosConsultaAtivos ? 'border-cyan-300 bg-cyan-50 text-cyan-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><Icon name="filter" size={15} />Filtros{totalFiltrosConsultaAtivos > 0 && <span className="rounded-full bg-cyan-700 px-1.5 py-0.5 text-[9px] text-white">{totalFiltrosConsultaAtivos}</span>}</button>
                   <button type="button" onClick={() => { const porCriacao = perfilOrdem.startsWith('criado_em'); const ordem = porCriacao ? (perfilOrdem === 'criado_em_desc' ? 'criado_em_asc' : 'criado_em_desc') : (perfilOrdem === 'nome_asc' ? 'nome_desc' : 'nome_asc'); atualizarOrdemDasListas(ordem); }} aria-label={perfilOrdem.startsWith('criado_em') ? `Ordenar perfis e cadastros por data de criação, ${perfilOrdem === 'criado_em_desc' ? 'mais antigos primeiro' : 'mais recentes primeiro'}` : `Ordenar perfis e cadastros de ${perfilOrdem === 'nome_asc' ? 'Z a A' : 'A a Z'}`} className="flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border border-slate-300 px-2 text-xs font-black uppercase text-slate-600 hover:bg-slate-50 lg:h-10 lg:px-3"><Icon name="filter" size={15} />Ordem {perfilOrdem === 'nome_desc' || perfilOrdem === 'criado_em_desc' ? 'Z/A' : 'A/Z'}</button>
                   <select value={perfilPorPagina} onChange={(event) => atualizarTamanhoDasListas(Number(event.target.value))} aria-label="Perfis e cadastros por página" className="h-11 min-w-0 w-full rounded-md border border-slate-300 bg-white px-2 text-xs font-bold outline-none focus:border-cyan-700 lg:h-10 lg:w-auto"><option value={20}>20/pág</option><option value={50}>50/pág</option><option value={100}>100/pág</option></select>
-                  <button type="button" onClick={() => { if (consultaCadastros === 'perfis_avantalab') void buscarPerfis(1); else void carregarCadastros(plataformaCadastro, 1); }} disabled={consultaCadastros === 'perfis_avantalab' ? buscandoPerfis : cadastrosCarregando} className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-md bg-cyan-700 px-2 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60 lg:h-10 lg:w-[172px] lg:shrink-0 lg:px-4"><Icon name="search" size={15} />{(consultaCadastros === 'perfis_avantalab' ? buscandoPerfis : cadastrosCarregando) ? 'Carregando...' : <><span className="lg:hidden">Buscar</span><span className="hidden lg:inline">Carregar / Buscar</span></>}</button>
+                  <button type="button" onClick={() => void carregarConsultaAdministrativa()} disabled={consultaCadastros === 'todos' ? cadastrosCarregando || buscandoPerfis : consultaCadastros === 'perfis_avantalab' ? buscandoPerfis : cadastrosCarregando} className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-md bg-cyan-700 px-2 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60 lg:h-10 lg:w-[172px] lg:shrink-0 lg:px-4"><Icon name="search" size={15} />{(consultaCadastros === 'todos' ? cadastrosCarregando || buscandoPerfis : consultaCadastros === 'perfis_avantalab' ? buscandoPerfis : cadastrosCarregando) ? 'Carregando...' : <><span className="lg:hidden">Buscar</span><span className="hidden lg:inline">Carregar / Buscar</span></>}</button>
                 </div>
               </div>
               {filtrosPerfilAbertos && (consultaCadastros === 'perfis_avantalab' ? <div className="mt-3 rounded-lg border border-cyan-100 bg-cyan-50/40 p-3">
@@ -1223,15 +1253,25 @@ export default function AdminPage() {
                     <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Vínculo com as plataformas</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">{([['todos', 'Todos'], ['somente_avantalab', 'Somente AvantaLab'], ['somente_avantavendas', 'Somente AvantaVendas'], ['ambos', 'Usa as duas']] as Array<[FiltroVinculoCadastro, string]>).map(([vinculo, label]) => <button key={vinculo} type="button" onClick={() => setFiltroVinculoCadastro(vinculo)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${filtroVinculoCadastro === vinculo ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{label}</button>)}</div>
                   </div>
+                  {consultaCadastros === 'todos' && <>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Situação dos Perfis AvantaLab</p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">{FILTROS_PERFIL.map((filtro) => <button key={filtro.id} type="button" onClick={() => setPerfilFiltro(filtro.id)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilFiltro === filtro.id ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{filtro.label}</button>)}</div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo de Perfil AvantaLab</p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">{([['todos', 'Todos os tipos'], ['empresa', 'Empresa'], ['pessoal', 'Pessoal']] as Array<[PerfilTipoFiltro, string]>).map(([tipo, label]) => <button key={tipo} type="button" onClick={() => setPerfilTipoFiltro(tipo)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilTipoFiltro === tipo ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{label}</button>)}</div>
+                    </div>
+                  </>}
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Ordenação</p>
                     <div className="mt-2 flex flex-wrap gap-1.5"><button type="button" onClick={() => atualizarOrdemDasListas('nome_asc')} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilOrdem.startsWith('nome_') ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>Nome</button><button type="button" onClick={() => atualizarOrdemDasListas('criado_em_desc')} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilOrdem.startsWith('criado_em') ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>Data de cadastro</button></div>
                   </div>
-                  <div className="flex justify-end gap-2 border-t border-cyan-100 pt-3"><button type="button" onClick={() => { setFiltroVinculoCadastro('todos'); setPerfilOrdem('nome_asc'); void carregarCadastros(plataformaCadastro, 1, token, { vinculo: 'todos', ordem: 'nome_asc' }); }} className="h-9 rounded-md px-3 text-[10px] font-black uppercase text-slate-600 hover:bg-white">Limpar</button><button type="button" onClick={() => { setFiltrosPerfilAbertos(false); void carregarCadastros(plataformaCadastro, 1); }} disabled={cadastrosCarregando} className="h-9 rounded-md bg-cyan-700 px-3 text-[10px] font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">Aplicar filtros</button></div>
+                  <div className="flex justify-end gap-2 border-t border-cyan-100 pt-3"><button type="button" onClick={() => { setFiltroVinculoCadastro('todos'); setPerfilFiltro('todos'); setPerfilTipoFiltro('todos'); setPerfilOrdem('nome_asc'); void carregarCadastros(plataformaCadastro, 1, token, { vinculo: 'todos', ordem: 'nome_asc' }); if (consultaCadastros === 'todos') void buscarPerfis(1, { situacao: 'todos', tipo: 'todos', ordem: 'nome_asc' }, cadastroBusca); }} className="h-9 rounded-md px-3 text-[10px] font-black uppercase text-slate-600 hover:bg-white">Limpar</button><button type="button" onClick={() => { setFiltrosPerfilAbertos(false); void carregarConsultaAdministrativa(); }} disabled={cadastrosCarregando || (consultaCadastros === 'todos' && buscandoPerfis)} className="h-9 rounded-md bg-cyan-700 px-3 text-[10px] font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">Aplicar filtros</button></div>
                 </div>
               </div>)}
             </section>
-            {ehConsultaDeCadastro(consultaCadastros) && <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            {ehConsultaDeCadastro(consultaCadastros) && !(consultaCadastros === 'todos' && cadastroBusca.trim() && cadastrosCarregados && cadastroTotal === 0) && <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
               <div className="flex flex-col gap-2 border-b border-cyan-100 bg-cyan-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="text-sm font-black text-cyan-950">Cadastros · {rotuloPlataformaCadastro(plataformaCadastro)}</h3>
@@ -1268,7 +1308,16 @@ export default function AdminPage() {
                 })()}
               </>}
             </section>}
-            {consultaCadastros === 'perfis_avantalab' && <>{!perfisCarregados ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Clique em &quot;Carregar / Buscar&quot; para listar os perfis.</div>
+            {(consultaCadastros === 'todos' || consultaCadastros === 'perfis_avantalab') && !(consultaCadastros === 'todos' && cadastroBusca.trim() && perfisCarregados && perfilTotal === 0) && <section className="space-y-2">
+              <div className="flex flex-col gap-2 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-sm font-black text-cyan-950">Perfis AvantaLab</h3>
+                  <p className="text-[11px] text-cyan-800/70">Empresas e perfis financeiros aparecem aqui independentemente da situação de acesso.</p>
+                </div>
+                <button type="button" onClick={() => void buscarPerfis(perfilPagina, undefined, consultaCadastros === 'todos' ? cadastroBusca : perfilBusca)} disabled={buscandoPerfis} className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-cyan-200 px-3 text-[10px] font-black uppercase text-cyan-800 hover:bg-white disabled:opacity-60"><Icon name="refresh" size={14} />{buscandoPerfis ? 'Atualizando...' : 'Atualizar'}</button>
+              </div>
+              {!perfisCarregados && buscandoPerfis ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Carregando perfis...</div>
+             : !perfisCarregados ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Clique em &quot;Carregar / Buscar&quot; para listar os perfis.</div>
              : perfis.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum perfil encontrado.</div>
              : <>
               <div className="grid gap-2">{perfis.map((perfil) => {
@@ -1302,12 +1351,13 @@ export default function AdminPage() {
                 return <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-3 text-xs font-bold text-slate-600">
                   <span>{perfilTotal} perfis · página {perfilPagina} de {totalPaginas}</span>
                   <div className="flex gap-1.5">
-                    <button type="button" disabled={perfilPagina <= 1 || buscandoPerfis} onClick={() => void buscarPerfis(perfilPagina - 1)} className="rounded-md border border-slate-300 px-3 py-1.5 disabled:opacity-40">Anterior</button>
-                    <button type="button" disabled={perfilPagina >= totalPaginas || buscandoPerfis} onClick={() => void buscarPerfis(perfilPagina + 1)} className="rounded-md border border-slate-300 px-3 py-1.5 disabled:opacity-40">Próxima</button>
+                    <button type="button" disabled={perfilPagina <= 1 || buscandoPerfis} onClick={() => void buscarPerfis(perfilPagina - 1, undefined, consultaCadastros === 'todos' ? cadastroBusca : perfilBusca)} className="rounded-md border border-slate-300 px-3 py-1.5 disabled:opacity-40">Anterior</button>
+                    <button type="button" disabled={perfilPagina >= totalPaginas || buscandoPerfis} onClick={() => void buscarPerfis(perfilPagina + 1, undefined, consultaCadastros === 'todos' ? cadastroBusca : perfilBusca)} className="rounded-md border border-slate-300 px-3 py-1.5 disabled:opacity-40">Próxima</button>
                   </div>
                 </div>;
               })()}
-             </>}</>}
+             </>}</section>}
+            {consultaCadastros === 'todos' && cadastroBusca.trim() && cadastrosCarregados && perfisCarregados && cadastroTotal === 0 && perfilTotal === 0 && <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum usuário ou perfil encontrado.</div>}
           </div>}
 
           {view === 'consumo' && <div className="space-y-4">

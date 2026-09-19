@@ -181,6 +181,9 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Revisado na versão 1.35.0.13: quando houver mais de um centro de custo, a
 // receita do card Registrar entradas pode ser direcionada sem trocar o centro
 // aberto na página.
+// Revisado na versão 1.36.0.14: em /admin > Perfis, Todos pesquisa usuários
+// AvantaLab, usuários AvantaVendas e Perfis AvantaLab na mesma consulta, sem
+// ocultar perfis cancelados quando o filtro de situação está em Todos.
 // Revisado na versão 1.35.0.12: a releitura dos downloads Apple foi acelerada
 // no painel administrativo. Sem impacto operacional para a Ava.
 // Revisado na versão 1.35.0.11: a persistência da releitura dos downloads Apple

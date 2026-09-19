@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.13 -->
+<!-- ava-version: 1.36.0.14 -->
+
+> Revisão 1.36.0.14: a consulta unificada pertence ao painel `/admin`; sem
+> mudança operacional no AvantaVendas.
 
 > Revisão 1.36.0.13-av151: sem conexão útil, a Solicitação por Voz fica
 > imediatamente indisponível também no PWA do iPhone. A Sala de Botões passa a
