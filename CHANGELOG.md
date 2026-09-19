@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.36.0.15 - 2026-09-19
+- **Reativação Mobile com escolha de plano**: perfis Empresa bloqueados por
+  assinatura cancelada ou vencida passam a oferecer Business Básico, Business
+  Pro e Business Premium antes da escolha mensal ou anual.
+- **Cobrança coerente com a seleção**: o plano escolhido na tela de bloqueio é
+  preservado durante o cadastro e enviado ao checkout do Asaas, com preços
+  obtidos da mesma configuração central usada pelas demais telas.
+- **Estado anterior respeitado**: quando houver um plano empresarial registrado,
+  ele inicia selecionado; perfis legados sem plano começam no Business Básico,
+  sem impedir a escolha das outras opções.
+
 ## 1.36.0.14 - 2026-09-19
 - **Admin — Todos sem exceção**: a consulta unificada passa a pesquisar e
   exibir usuários do AvantaLab, usuários do AvantaVendas e Perfis AvantaLab,

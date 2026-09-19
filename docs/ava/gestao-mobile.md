@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.14 -->
+<!-- ava-version: 1.36.0.15 -->
+
+> Revisão 1.36.0.15: quando um perfil Empresa estiver bloqueado por assinatura
+> cancelada ou sem vigência, a tela de reativação permite escolher Business
+> Básico, Business Pro ou Business Premium e, depois, o ciclo mensal ou anual.
+> O plano selecionado segue até o checkout seguro; uma cobrança já pendente
+> continua sendo regularizada pela própria cobrança, sem criar outra.
 
 > Revisão 1.36.0.14: a consulta unificada pertence ao painel `/admin`; sem
 > impacto operacional na Gestão Mobile.

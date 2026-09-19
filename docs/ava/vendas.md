@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.14 -->
+<!-- ava-version: 1.36.0.15 -->
+
+> Revisão 1.36.0.15: a escolha de plano na reativação pertence à Gestão Mobile;
+> sem mudança operacional no AvantaVendas.
 
 > Revisão 1.36.0.14: a consulta unificada pertence ao painel `/admin`; sem
 > mudança operacional no AvantaVendas.

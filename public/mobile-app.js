@@ -424,6 +424,7 @@
     paywallProcessando: false,
     paywallCupomProcessando: false,
     paywallSelecionando: false,
+    paywallPlanoSelecionado: 'business',
     paywallCadastroCiclo: '',
     cadastroPerfilStatus: null,
     cadastroPerfilDados: null,
@@ -1295,9 +1296,17 @@
 
   function telaPaywallMobile() {
     if (state.paywallSelecionando) return telaPaywallSelecaoMobile();
-    var precos = state.paywallPrecos || { empresa: { mensal: 34.9, anual: 249.9 } };
-    var mensal = (precos.empresa && precos.empresa.mensal) || 34.9;
-    var anualAno = (precos.empresa && precos.empresa.anual) || 249.9;
+    var precos = state.paywallPrecos || {
+      business: { mensal: 34.9, anual: 249.9 },
+      business_pro: { mensal: 49.9, anual: 359.9 },
+      business_premium: { mensal: 99.9, anual: 719.9 },
+    };
+    var planoSelecionado = ['business', 'business_pro', 'business_premium'].indexOf(state.paywallPlanoSelecionado) >= 0
+      ? state.paywallPlanoSelecionado
+      : 'business';
+    var precosSelecionados = precos[planoSelecionado] || precos.business || precos.empresa || { mensal: 34.9, anual: 249.9 };
+    var mensal = Number(precosSelecionados.mensal || 34.9);
+    var anualAno = Number(precosSelecionados.anual || 249.9);
     var anualMes = anualAno / 12;
     function brl(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
     var nome = state.paywallNome ? escapeHtml(state.paywallNome) : 'Este perfil';
@@ -1319,13 +1328,23 @@
         ? 'Regularize o pagamento para liberar novamente o acesso ao perfil.'
         : 'Escolha um plano para ativar o perfil. Seus dados permanecem guardados.';
     var faturaUrl = state.paywallFaturaUrl || '';
+    var blocoSelecaoPlano = '<div class="mt-2" role="group" aria-label="Escolha o plano empresarial">' +
+      '<p class="mb-1 text-[9px] font-black uppercase tracking-wide text-slate-500">Escolha o plano</p>' +
+      '<div class="grid grid-cols-3 gap-1.5">' +
+        [['business','Básico'],['business_pro','Pro'],['business_premium','Premium']].map(function (item) {
+          var ativo = planoSelecionado === item[0];
+          return '<button type="button" aria-pressed="' + (ativo ? 'true' : 'false') + '" onclick="window._avaPaywallSelecionarPlano(\'' + item[0] + '\')" class="min-h-11 rounded-xl border px-1.5 text-[9px] font-black uppercase transition active:scale-[0.98] ' + (ativo ? 'border-sky-700 bg-sky-700 text-white' : 'border-sky-300 bg-sky-50 text-sky-700') + '">' + item[1] + '</button>';
+        }).join('') +
+      '</div>' +
+    '</div>';
     var blocoCobranca = faturaUrl
       ? '<div class="mt-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 shadow-sm">' +
           '<p class="text-xs font-black text-slate-900">Cobrança disponível</p>' +
           '<p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-600">Já existe uma cobrança pendente para este perfil.</p>' +
           '<button type="button" onclick="window._avaPaywallPagarCobranca()" class="mt-2 h-8 w-full rounded-lg bg-sky-700 text-[10px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Pagar cobrança</button>' +
         '</div>'
-      : '<div class="mt-2 grid grid-cols-2 gap-1.5">' +
+      : blocoSelecaoPlano +
+        '<div class="mt-2 grid grid-cols-2 gap-1.5">' +
           '<input id="paywall-nome" type="text" placeholder="Nome ou razão social" value="' + escapeHtml(state.paywallNome || '') + '" class="h-8 rounded-lg border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-800 outline-none" />' +
           '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="CPF/CNPJ" class="h-8 rounded-lg border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-800 outline-none" />' +
           '<input id="paywall-email" type="email" placeholder="E-mail cobrança" value="' + escapeHtml(emailUsuarioAtualMobile()) + '" class="h-8 rounded-lg border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-800 outline-none" />' +
@@ -1544,6 +1563,12 @@
 
   window._avaPaywallEscolherPlano = function (ciclo) {
     state.paywallCadastroCiclo = ciclo === 'anual' ? 'anual' : 'mensal';
+    render();
+  };
+
+  window._avaPaywallSelecionarPlano = function (plano) {
+    if (['business', 'business_pro', 'business_premium'].indexOf(plano) < 0) return;
+    state.paywallPlanoSelecionado = plano;
     render();
   };
 
@@ -1860,7 +1885,7 @@
       var resp = await fetch('/api/cobranca/assinar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ empresaId: state.empresa.id, plano: 'empresa', ciclo: ciclo, cobranca: { nome: nome, cpfCnpj: cpf, email: email, telefone: telefone } }),
+        body: JSON.stringify({ empresaId: state.empresa.id, plano: state.paywallPlanoSelecionado || 'business', ciclo: ciclo, cobranca: { nome: nome, cpfCnpj: cpf, email: email, telefone: telefone } }),
       });
       var json = await resp.json();
       if (resp.ok && json.invoiceUrl) {
@@ -6605,6 +6630,7 @@
   // Fail-open: qualquer falha não bloqueia o acesso.
   async function verificarPaywallMobile(silencioso, tokenCompartilhado) {
     if (!state.empresa || !state.empresa.id) { state.paywallAtivo = false; state.paywallVerificado = true; if (!silencioso) render(); return; }
+    var perfilPaywallNovo = state.paywallPerfilVerificado !== state.empresa.id;
     try {
       var token = tokenCompartilhado
         ? await Promise.resolve(tokenCompartilhado)
@@ -6620,6 +6646,11 @@
         state.paywallNome = nomeEmpresa(state.empresa);
         state.paywallEstado = json.estado || null;
         state.paywallPrecos = json.precos || null;
+        if (!state.paywallCadastroCiclo && perfilPaywallNovo) {
+          state.paywallPlanoSelecionado = json.estado && ['business', 'business_pro', 'business_premium'].indexOf(json.estado.plano) >= 0
+            ? json.estado.plano
+            : 'business';
+        }
         state.paywallFaturaUrl = (json.faturaPendente && json.faturaPendente.invoiceUrl) || '';
       } else {
         state.paywallAtivo = false;

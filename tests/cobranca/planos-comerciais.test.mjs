@@ -55,13 +55,14 @@ test('catálogo comercial mantém preços e limites aprovados', () => {
 
 test('interfaces públicas e autenticadas oferecem os três planos empresariais', async () => {
   const { readFile } = await import('node:fs/promises');
-  const [landing, landingCss, interactionCss, paywall, modal, checkout] = await Promise.all([
+  const [landing, landingCss, interactionCss, paywall, modal, checkout, mobile] = await Promise.all([
     readFile(new URL('../../app/components/AvaPlansPreview.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../app/components/AvaPlansCommerce.module.css', import.meta.url), 'utf8'),
     readFile(new URL('../../app/components/AvaPlansCommercePolish.module.css', import.meta.url), 'utf8'),
     readFile(new URL('../../app/components/PaywallEmpresa.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../app/components/AssinaturaModal.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../app/api/cobranca/assinar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../public/mobile-app.js', import.meta.url), 'utf8'),
   ]);
 
   assert.match(landing, /<h3>Business<\/h3>/);
@@ -84,6 +85,10 @@ test('interfaces públicas e autenticadas oferecem os três planos empresariais'
   }
   assert.match(checkout, /'business_premium'/);
   assert.match(checkout, /PRECOS\[plano\]\[ciclo\]/);
+  assert.match(mobile, /window\._avaPaywallSelecionarPlano/);
+  assert.match(mobile, /\[\['business','Básico'\],\['business_pro','Pro'\],\['business_premium','Premium'\]\]/);
+  assert.match(mobile, /plano: state\.paywallPlanoSelecionado \|\| 'business'/);
+  assert.doesNotMatch(mobile, /plano: 'empresa', ciclo: ciclo/);
 });
 
 test('camada de cobrança usa a mesma tabela de preços do catálogo', () => {

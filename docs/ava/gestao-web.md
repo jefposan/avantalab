@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.14 -->
+<!-- ava-version: 1.36.0.15 -->
+
+> Revisão 1.36.0.15: a correção da escolha de plano pertence à tela de
+> reativação da Gestão Mobile; a Gestão Web já oferecia os três planos Business
+> e não teve seu caminho operacional alterado.
 
 > Revisão 1.36.0.14: em **/admin > Perfis**, **Todos** pesquisa em conjunto os
 > usuários AvantaLab, os usuários AvantaVendas e os Perfis AvantaLab. Usuários

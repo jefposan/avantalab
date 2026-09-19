@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.36.0.15: na Gestão Mobile, perfil Empresa bloqueado por
+// assinatura sem vigência escolhe Business Básico, Pro ou Premium e o ciclo
+// antes de seguir ao checkout. Cobrança pendente deve ser paga, não duplicada.
 // Revisado na versão 1.36.0.09: upgrade Business é imediato; downgrade e ciclo
 // ficam agendados para o fim pago e podem ser cancelados. Reduções preservam
 // dados, desvinculam perfis excedentes e inativam acessos acima da franquia.
