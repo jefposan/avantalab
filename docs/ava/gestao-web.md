@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0 -->
+<!-- ava-version: 1.36.0.01 -->
+
+> Revisão 1.36.0.01: a correção da indisponibilidade do comando por voz
+> pertence ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.36.0: a base comercial reconhece Business Básico, Business Pro e
 > Business Premium, inclusive limites de empresa, usuários, módulos, ponto e

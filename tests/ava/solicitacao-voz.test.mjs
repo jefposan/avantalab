@@ -187,6 +187,10 @@ test('função oficial de voz fica sob preferência da conta e carregamento isol
   assert.match(officialApp, /Solicitação por Voz indisponível sem internet\. Use os lançamentos manuais\./);
   assert.match(officialApp, /function atualizarDisponibilidadeSolicitacaoVozVendas\(\)/);
   assert.match(officialApp, /window\.AvantaVoiceActions\?\.close\?\.\(\);/);
+  assert.match(officialApp, /return modoOfflineVendas \|\|/);
+  assert.match(officialApp, /slot\.classList\.toggle\('is-offline', indisponivel\)/);
+  assert.match(officialApp, /gravar\.disabled = indisponivel/);
+  assert.match(officialApp, /modoOfflineVendas = true;[\s\S]*atualizarDisponibilidadeSolicitacaoVozVendas\(\)/);
   assert.match(vendasStyles, /\.mobile-voice-command-slot\.is-offline \.mobile-voice-command-trigger/);
   assert.match(vendasStyles, /cursor: not-allowed/);
   assert.match(vendasStyles, /\.dark-theme \.mobile-voice-command-slot\.is-offline/);

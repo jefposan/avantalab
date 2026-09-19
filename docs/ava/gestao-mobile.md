@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0 -->
+<!-- ava-version: 1.36.0.01 -->
+
+> Revisão 1.36.0.01: a correção da indisponibilidade do comando por voz
+> pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.36.0: a matriz comercial central reconhece Business Básico,
 > Business Pro e Business Premium. A interface de planos e a regra visual de

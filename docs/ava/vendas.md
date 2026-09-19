@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0 -->
+<!-- ava-version: 1.36.0.01 -->
+
+> Revisão 1.36.0.01-av151: sem conexão útil, a Solicitação por Voz fica
+> imediatamente indisponível também no PWA do iPhone. A Sala de Botões passa a
+> refletir o modo offline interno; ao reconectar com êxito, o acionador retorna
+> automaticamente.
 
 > Revisão 1.36.0: a matriz comercial empresarial passa a reconhecer Business
 > Básico, Business Pro e Business Premium. A seleção pública e administrativa
@@ -714,7 +719,7 @@
 > Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
 > aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
 > operacional no AvantaVendas.
-<!-- avantavendas-asset-revision: 150 -->
+<!-- avantavendas-asset-revision: 151 -->
 
 > Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
 > catálogo ativo completo da conta sem permitir que uma palavra apenas parecida

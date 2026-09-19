@@ -1002,7 +1002,10 @@ async function listarPendenciasVendas() {
 }
 
 function estaSemRedeVendas() {
-  return typeof navigator !== 'undefined' && navigator.onLine === false;
+  // Em PWAs do iPhone, navigator.onLine pode permanecer true enquanto a sessão
+  // já foi restaurada do cache por falta de conexão útil. Para a voz, os dois
+  // sinais representam indisponibilidade: ela sempre depende do servidor.
+  return modoOfflineVendas || (typeof navigator !== 'undefined' && navigator.onLine === false);
 }
 
 async function atualizarIndicadoresSincronizacaoVendas() {
@@ -2658,7 +2661,24 @@ let carregamentoSolicitacaoVozVendas = null;
 let limparFechamentoAjudaSolicitacaoVoz = null;
 
 function atualizarDisponibilidadeSolicitacaoVozVendas() {
-  if (estaSemRedeVendas()) window.AvantaVoiceActions?.close?.();
+  const indisponivel = estaSemRedeVendas();
+  if (indisponivel) window.AvantaVoiceActions?.close?.();
+  // Atualiza imediatamente o acionador já montado. Além de evitar uma janela
+  // visual até a próxima renderização, isso acompanha a perda de rede dentro
+  // do PWA mesmo quando o navegador posterga o redesenho da Sala.
+  const slot = document.getElementById('voiceCommandSalaMount');
+  if (slot) {
+    slot.classList.toggle('is-offline', indisponivel);
+    const gravar = slot.querySelector('.mobile-voice-command-trigger');
+    const ajuda = slot.querySelector('.mobile-voice-command-help');
+    if (gravar instanceof HTMLButtonElement) {
+      gravar.disabled = indisponivel;
+      gravar.setAttribute('aria-label', indisponivel ? 'Solicitação por voz indisponível sem internet' : 'Iniciar solicitação por voz');
+      if (indisponivel) gravar.setAttribute('aria-describedby', 'voiceCommandOfflineHint');
+      else gravar.removeAttribute('aria-describedby');
+    }
+    if (ajuda instanceof HTMLButtonElement) ajuda.disabled = indisponivel;
+  }
   if (state.menuAberto) render();
 }
 
@@ -2863,6 +2883,10 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
   } catch (error) {
     if (error?.name === 'AbortError' && signalExterno?.aborted) throw error;
     if (error?.name === 'AbortError') throw new Error('A solicitação demorou mais que o esperado. Tente novamente.');
+    if (erroTemporarioPersistencia(error)) {
+      modoOfflineVendas = true;
+      atualizarDisponibilidadeSolicitacaoVozVendas();
+    }
     throw error;
   } finally {
     window.clearTimeout(timeout);
@@ -10377,6 +10401,7 @@ async function sincronizarAoReconectarVendas() {
   }
   await reenviarPendenciasVendas();
   await atualizarIndicadoresSincronizacaoVendas();
+  atualizarDisponibilidadeSolicitacaoVozVendas();
 }
 
 window.addEventListener('online', () => {
@@ -10385,6 +10410,7 @@ window.addEventListener('online', () => {
   if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
 });
 window.addEventListener('offline', () => {
+  modoOfflineVendas = true;
   atualizarAcoesCabecalhoSistemaVendas();
   atualizarDisponibilidadeSolicitacaoVozVendas();
 });
