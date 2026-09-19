@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.35.0.19.73 -->
+<!-- ava-version: 1.36.0 -->
+
+> Revisão 1.36.0: a base comercial reconhece Business Básico, Business Pro e
+> Business Premium, inclusive limites de empresa, usuários, módulos, ponto e
+> Centros de custo. A seleção pública do novo plano e a escolha de cortesia no
+> Admin serão entregues nas próximas etapas; até lá, oriente somente os
+> caminhos que já estiverem visíveis na tela.
 
 > Revisão 1.35.0.19.73: a contenção visual do card Centros de custo pertence à
 > Gestão Mobile; sem impacto operacional na Gestão Web.

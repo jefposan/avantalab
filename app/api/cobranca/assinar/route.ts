@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   let emailCobranca = limparTexto(dadosCobranca.email || corpo.emailCobranca).toLowerCase();
   let telefoneCobranca = String(dadosCobranca.telefone || corpo.telefoneCobranca || '').replace(/\D/g, '');
   let cpfCnpj = String(dadosCobranca.cpfCnpj || corpo.cpfCnpj || '').replace(/\D/g, ''); // só dígitos
-  if (!empresaId || !['pessoal_premium', 'business', 'business_pro'].includes(plano) || (ciclo !== 'mensal' && ciclo !== 'anual')) {
+  if (!empresaId || !['pessoal_premium', 'business', 'business_pro', 'business_premium'].includes(plano) || (ciclo !== 'mensal' && ciclo !== 'anual')) {
     return NextResponse.json({ erro: true, mensagem: 'dados inválidos' }, { status: 400 });
   }
   // 1) Autentica o usuário e pega o e-mail.
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
   const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
   const planoPermitido = tipoPerfil === 'pessoal'
     ? plano === 'pessoal_premium'
-    : plano === 'business' || plano === 'business_pro';
+    : plano === 'business' || plano === 'business_pro' || plano === 'business_premium';
   if (!planoPermitido) {
     return NextResponse.json({ erro: true, mensagem: 'O plano informado não corresponde ao tipo deste perfil.' }, { status: 400 });
   }
@@ -256,7 +256,7 @@ export async function POST(request: Request) {
     value: valor,
     nextDueDate: hojeSaoPaulo(),
     cycle: ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
-    description: `AvantaLab — ${plano === 'business_pro' ? 'Business Pro' : plano === 'business' ? 'Business' : 'Pessoal Premium'} (${ciclo})`,
+    description: `AvantaLab — ${plano === 'business_premium' ? 'Business Premium' : plano === 'business_pro' ? 'Business Pro' : plano === 'business' ? 'Business Básico' : 'Pessoal Premium'} (${ciclo})`,
     externalReference: empresaId,
   });
   if (!a.ok || !a.data?.id) return NextResponse.json({ erro: true, mensagem: a.erro || 'falha ao criar assinatura' }, { status: 502 });

@@ -1,5 +1,17 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.14.0 - 2026-09-19
+
+- Formalizada a matriz empresarial **Business Básico**, **Business Pro** e
+  **Business Premium**. O identificador técnico histórico `business` continua
+  válido e passa a ser exibido como Business Básico.
+- A quota empresarial passa a contar empresas, incluindo a empresa assinante:
+  1, 3 e 10 perfis, respectivamente. Usuários da Gestão seguem os mesmos
+  limites, e Controle de Ponto limita 10, 30 e funcionários ilimitados.
+- Centros de custo são recurso nativo a partir do Business Pro. Business
+  Básico permite módulos avulsos, inclusive Controle de Ponto; Pro e Premium
+  incluem os módulos, sem instalação automática.
+
 ## 1.13.0 - 2026-09-11
 
 - O card de confirmação pode abrir edição por voz sem perder o rascunho nem

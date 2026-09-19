@@ -115,7 +115,7 @@ export async function resolverDireitoDePerfisDoPerfil(
   }
   const planoAssinatura = normalizarPlanoComercial(assinatura.plano);
   const plano: PlanoComercial = empresa.tipo_perfil === 'empresa'
-    ? (planoAssinatura === 'business_pro' ? 'business_pro' : 'business')
+    ? (planoAssinatura === 'business_pro' || planoAssinatura === 'business_premium' ? planoAssinatura : 'business')
     : planoAssinatura === 'pessoal_premium' ? 'pessoal_premium' : 'free';
   const { count } = await db
     .from('empresas')
@@ -124,7 +124,7 @@ export async function resolverDireitoDePerfisDoPerfil(
   return {
     plano,
     usados: count || 1,
-    limite: PLANOS_COMERCIAIS[plano].limites.perfis,
+    limite: PLANOS_COMERCIAIS[plano].limites.perfisEmpresa ?? PLANOS_COMERCIAIS[plano].limites.perfis,
     origemEmpresaId: plano === 'free' ? null : empresaOrigemId,
   };
 }
@@ -197,7 +197,7 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
         status: statusOrigem,
         validoAte: assinaturaOrigem.valido_ate,
         trialFim: assinaturaOrigem.trial_fim,
-        plano: tipoPerfil === 'pessoal' && (planoOrigem === 'business' || planoOrigem === 'business_pro')
+        plano: tipoPerfil === 'pessoal' && (planoOrigem === 'business' || planoOrigem === 'business_pro' || planoOrigem === 'business_premium')
           ? 'pessoal_premium'
           : assinaturaOrigem.plano ?? null,
         ciclo: assinaturaOrigem.ciclo ?? null,

@@ -112,6 +112,7 @@ export default function ModulosModal({
                 const cancelamentoEm = cancelamentos[m.id];
                 const business = acessoComercial === 'business';
                 const businessPro = acessoComercial === 'business_pro';
+                const businessPremium = acessoComercial === 'business_premium';
                 const cortesia = acessoComercial === 'cortesia';
                 const liberado = acessoComercial === 'liberado';
                 const disponivelNoPlano = Boolean(acessoComercial);
@@ -159,8 +160,8 @@ export default function ModulosModal({
                             ? 'Liberado por cortesia'
                             : liberado
                               ? 'Disponível para instalação'
-                              : businessPro
-                                ? 'Incluso no Business Pro'
+                              : businessPro || businessPremium
+                                ? 'Incluso no seu plano'
                                 : business
                                   ? `${preco} por mês`
                                   : 'Disponível no Business e Business Pro'}
@@ -190,7 +191,7 @@ export default function ModulosModal({
                           onClick={() => onInstalar(m.id)}
                           className="min-h-11 w-full rounded-xl px-3 py-2 text-xs font-black text-white shadow transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
                           style={{ backgroundColor: corPrimaria, outlineColor: corPrimaria }}
-                        >{processando ? '...' : business ? `Assinar ${preco}` : businessPro || cortesia || liberado ? 'Instalar' : 'Indisponível'}</button>
+                        >{processando ? '...' : business ? `Assinar ${preco}` : businessPro || businessPremium || cortesia || liberado ? 'Instalar' : 'Indisponível'}</button>
                       )}
                     </div>
                   </article>

@@ -8,7 +8,7 @@ import {
 } from '../../../lib/asaas';
 import { PRECOS, type Ciclo, type PlanoPago } from '../../../lib/cobranca';
 import { calcularFimPeriodoPago } from '../../../lib/cobranca-fluxo';
-import { normalizarPlanoComercial } from '../../../lib/planos-comerciais';
+import { normalizarPlanoComercial, PLANOS_COMERCIAIS } from '../../../lib/planos-comerciais';
 import { autenticarPerfilCobranca, resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
 
 export const runtime = 'nodejs';
@@ -212,30 +212,34 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ erro: true, mensagem: 'Não existe uma assinatura ativa para alterar.' }, { status: 409 });
   }
   const planoNormalizado = normalizarPlanoComercial(local.plano);
-  const planoAtual: PlanoPago = planoNormalizado === 'pessoal_premium' || planoNormalizado === 'business' || planoNormalizado === 'business_pro'
+  const planoAtual: PlanoPago = planoNormalizado === 'pessoal_premium' || planoNormalizado === 'business' || planoNormalizado === 'business_pro' || planoNormalizado === 'business_premium'
     ? planoNormalizado
     : 'business';
   let plano: PlanoPago = planoAtual;
 
-  // A troca de plano por aqui é deliberadamente unidirecional: Business pode
-  // subir para Business Pro sem cancelar a assinatura atual. Reduções exigem
-  // uma revisão dos módulos já instalados e não devem acontecer por engano.
+  // A troca de plano por aqui é deliberadamente unidirecional: só permite
+  // elevar o plano. Reduções exigem uma revisão dos recursos já utilizados e
+  // não devem acontecer por engano.
   if (planoSolicitado) {
-    if (planoSolicitado !== 'business_pro' || planoAtual !== 'business') {
+    const elevacoesPermitidas = new Set([
+      'business:business_pro',
+      'business:business_premium',
+      'business_pro:business_premium',
+    ]);
+    if (!elevacoesPermitidas.has(`${planoAtual}:${planoSolicitado}`)) {
       return NextResponse.json({ erro: true, mensagem: 'Esta alteração de plano não está disponível.' }, { status: 409 });
     }
     const estado = await resolverEstadoAcessoParaUsuario(empresaId, acesso.usuario.id);
     if (estado?.tipoPerfil !== 'empresa') {
       return NextResponse.json({ erro: true, mensagem: 'Business Pro está disponível apenas para perfis empresariais.' }, { status: 403 });
     }
-    plano = 'business_pro';
+    plano = planoSolicitado as 'business_pro' | 'business_premium';
   }
 
-  // O Business Pro já inclui todos os módulos. Antes de elevar a assinatura
-  // principal, encerra renovações avulsas para que o cliente nunca seja cobrado
-  // duas vezes pelo mesmo acesso.
+  // Business Pro e Premium incluem todos os módulos. Antes de elevar a
+  // assinatura principal, encerra renovações avulsas para não cobrar duas vezes.
   const modulosIncluidos: Array<{ id: string; modulo_id: string; gateway_subscription_id: string | null }> = [];
-  if (planoAtual === 'business' && plano === 'business_pro') {
+  if (planoAtual === 'business' && (plano === 'business_pro' || plano === 'business_premium')) {
     const { data: assinaturasModulos, error: erroConsultaModulos } = await acesso.db
       .from('assinaturas_modulos')
       .select('id, modulo_id, gateway_subscription_id')
@@ -260,7 +264,7 @@ export async function PATCH(request: Request) {
   const atualizada = await atualizarAssinaturaAsaas(local.gateway_subscription_id, {
     value: PRECOS[plano][ciclo],
     cycle: ciclo === 'anual' ? 'YEARLY' : 'MONTHLY',
-    description: `AvantaLab — ${plano} (${ciclo})`,
+    description: `AvantaLab — ${PLANOS_COMERCIAIS[plano].nome} (${ciclo})`,
     // A alteração comercial é imediata: a cobrança pendente acompanha o
     // plano escolhido, evitando liberar Business Pro com uma fatura Business.
     updatePendingPayments: true,

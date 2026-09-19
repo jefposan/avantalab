@@ -13,7 +13,7 @@ import {
 } from '../lib/cobranca';
 import { PLANOS_COMERCIAIS } from '../lib/planos-comerciais';
 
-type PlanoContratavel = 'pessoal_premium' | 'business' | 'business_pro';
+type PlanoContratavel = 'pessoal_premium' | 'business' | 'business_pro' | 'business_premium';
 
 type Fatura = {
   id: string;
@@ -292,7 +292,11 @@ export default function AssinaturaModal({
   const botaoCompartilhado = darkMode
     ? 'border-sky-300/50 bg-slate-900 text-sky-100 hover:bg-slate-800 focus-visible:ring-sky-300'
     : 'border-sky-300 bg-white text-sky-800 hover:bg-sky-100 focus-visible:ring-sky-700';
-  const planoAtualEmpresa = estadoAtual?.plano === 'business_pro' ? 'business_pro' : 'business';
+  const planoAtualEmpresa = estadoAtual?.plano === 'business_premium'
+    ? 'business_premium'
+    : estadoAtual?.plano === 'business_pro'
+      ? 'business_pro'
+      : 'business';
 
   return <>
     <div className="fixed inset-0 z-[5600] flex items-center justify-center bg-black/60 px-4 py-5" onClick={fechar}>

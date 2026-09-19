@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     empresa_id: empresaId,
     modulo_id: moduloId,
     ativo: true,
-    origem: acessoComercial === 'business_pro'
+    origem: acessoComercial === 'business_pro' || acessoComercial === 'business_premium'
       ? 'plano_business_pro'
       : acessoComercial === 'cortesia'
         ? 'cortesia'

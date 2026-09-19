@@ -566,7 +566,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const [cadastroPerfilTentativa, setCadastroPerfilTentativa] = useState(0);
   const [cadastroPerfilAdiado, setCadastroPerfilAdiado] = useState(false);
   const [cicloCadastroPaywall, setCicloCadastroPaywall] = useState<'mensal' | 'anual' | null>(null);
-  const [planoCadastroPaywall, setPlanoCadastroPaywall] = useState<'pessoal_premium' | 'business' | 'business_pro' | null>(null);
+  const [planoCadastroPaywall, setPlanoCadastroPaywall] = useState<'pessoal_premium' | 'business' | 'business_pro' | 'business_premium' | null>(null);
   // Só liberamos a renderização do app depois de conhecer o estado de acesso,
   // evitando o "flash" do conteúdo antes de o paywall bloquear.
   const [estadoCarregado, setEstadoCarregado] = useState(false);
@@ -770,7 +770,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   }, [acessoLiberado, empresaId, cadastroPerfilTentativa]);
 
   const iniciarAssinatura = async (
-    plano: 'pessoal_premium' | 'business' | 'business_pro',
+    plano: 'pessoal_premium' | 'business' | 'business_pro' | 'business_premium',
     ciclo: 'mensal' | 'anual',
     dadosCobranca: DadosCobrancaAssinatura,
     cadastroConfirmado = false,
@@ -1362,7 +1362,7 @@ const renderizarOpcoesInicioPerfilEmpresa = () => {
     const restantes = Math.max(0, quotaPerfis.disponiveis - 1);
     return (
       <p className="text-xs font-bold leading-snug text-sky-900">
-        Este perfil usará sua assinatura <b>{quotaPerfis.plano === 'business_pro' ? 'Business Pro' : 'Business'}</b>. Após criá-lo, você terá {restantes} {restantes === 1 ? 'vaga restante' : 'vagas restantes'} de {quotaPerfis.limite} perfis.
+        Este perfil usará sua assinatura <b>{quotaPerfis.plano === 'business_premium' ? 'Business Premium' : quotaPerfis.plano === 'business_pro' ? 'Business Pro' : 'Business Básico'}</b>. Após criá-lo, você terá {restantes} {restantes === 1 ? 'vaga restante' : 'vagas restantes'} de {quotaPerfis.limite} perfis.
       </p>
     );
   }
@@ -2845,7 +2845,7 @@ useEffect(() => {
         );
         return;
       }
-      if (acessoComercial === 'business_pro' || acessoComercial === 'cortesia') {
+      if (acessoComercial === 'business_pro' || acessoComercial === 'business_premium' || acessoComercial === 'cortesia') {
         const { data: sessao } = await supabase.auth.getSession();
         const token = sessao.session?.access_token;
         if (!token) throw new Error('Sessão indisponível. Entre novamente para instalar o módulo.');
@@ -2861,14 +2861,14 @@ useEffect(() => {
           'Módulo ativado',
           acessoComercial === 'cortesia'
             ? 'Este módulo foi liberado pela cortesia do perfil.'
-            : 'Este módulo já está incluído no Business Pro.',
+            : 'Este módulo já está incluído no seu plano.',
           undefined,
           'sucesso',
         );
         return;
       }
       if (acessoComercial !== 'liberado') {
-        throw new Error('Módulos estão disponíveis nos planos Business e Business Pro.');
+        throw new Error('Módulos estão disponíveis nos planos Business Básico, Business Pro e Business Premium.');
       }
       if (moduloId === 'vendas_mobile') {
         const { data, error } = await supabase.rpc('ativar_modulo_vendas_mobile_rpc', {
