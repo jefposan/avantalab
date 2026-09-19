@@ -8,7 +8,6 @@ import { normalizarPlanoComercial } from './planos-comerciais';
 export type AcessoComercialModulo =
   | 'business'
   | 'business_pro'
-  | 'business_premium'
   | 'cortesia'
   | 'liberado'
   | null;
@@ -22,9 +21,9 @@ export function resolverAcessoComercialModulo(
   if (estado.status === 'cortesia') return 'cortesia';
 
   const plano = normalizarPlanoComercial(estado.plano);
-  return plano === 'business' || plano === 'business_pro' || plano === 'business_premium' ? plano : null;
+  return plano === 'business' || plano === 'business_pro' ? plano : null;
 }
 
 export function permiteInstalacaoModuloSemCobranca(acesso: AcessoComercialModulo): boolean {
-  return acesso === 'business_pro' || acesso === 'business_premium' || acesso === 'cortesia' || acesso === 'liberado';
+  return acesso === 'business_pro' || acesso === 'cortesia' || acesso === 'liberado';
 }

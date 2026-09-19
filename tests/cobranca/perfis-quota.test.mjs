@@ -31,9 +31,9 @@ test('Business Pro compartilha a assinatura enquanto houver vaga', () => {
   const resultado = avaliarQuotaParaCriacao({
     plano: 'business_pro',
     usados: 1,
-    limite: 3,
+    limite: 10,
     origemEmpresaId: 'limp-quality-id',
-  }, 'empresa', ['empresa']);
+  }, 'empresa', ['pessoal', 'empresa']);
 
   assert.deepEqual(resultado, {
     tipoPermitido: true,
@@ -46,10 +46,10 @@ test('Business Pro compartilha a assinatura enquanto houver vaga', () => {
 test('empresa fora da quota segue independente sem herdar a assinatura', () => {
   const quotaCheia = avaliarQuotaParaCriacao({
     plano: 'business_pro',
-    usados: 3,
-    limite: 3,
+    usados: 10,
+    limite: 10,
     origemEmpresaId: 'limp-quality-id',
-  }, 'empresa', ['empresa']);
+  }, 'empresa', ['pessoal', 'empresa']);
   const semOrigem = avaliarQuotaParaCriacao({
     plano: 'free',
     usados: 0,

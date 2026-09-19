@@ -1,16 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.01 -->
+<!-- ava-version: 1.35.0.19.74 -->
 
-> Revisão 1.36.0.01-av151: sem conexão útil, a Solicitação por Voz fica
+> Revisão 1.35.0.19.74-av151: sem conexão útil, a Solicitação por Voz fica
 > imediatamente indisponível também no PWA do iPhone. A Sala de Botões passa a
 > refletir o modo offline interno; ao reconectar com êxito, o acionador retorna
 > automaticamente.
-
-> Revisão 1.36.0: a matriz comercial empresarial passa a reconhecer Business
-> Básico, Business Pro e Business Premium. A seleção pública e administrativa
-> dos planos será entregue nas próximas etapas; sem novo caminho operacional
-> no AvantaVendas nesta etapa.
 
 > Revisão 1.35.0.19.73: a contenção visual do card Centros de custo pertence à
 > Gestão Mobile; sem impacto operacional no AvantaVendas.

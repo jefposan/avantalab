@@ -1,10 +1,5 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.36.0: a matriz comercial central passa a reconhecer
-// Business Básico, Business Pro e Business Premium. Nesta entrega de base, as
-// telas públicas e a escolha administrativa de cortesia ainda não mudaram;
-// Ava deve orientar os caminhos já visíveis e não prometer a nova escolha
-// antes de ela ser publicada nas próximas etapas.
 // Revisado na versão 1.35.0.19.73: as linhas do card móvel Centros de custo
 // permanecem dentro do card pai, inclusive com o destaque de seleção ativo.
 // Revisado na versão 1.35.0.19.72: com valores ocultos, tocar um centro no

@@ -1,18 +1,10 @@
 # Changelog
 
-## 1.36.0.01-av151 - 2026-09-19
+## 1.35.0.19.74-av151 - 2026-09-19
 - **AvantaVendas — comando por voz sem conexão**: o botão passa a refletir
   imediatamente o modo offline interno e a indisponibilidade de rede do
   navegador. A captura é interrompida com segurança e o acionador fica cinza,
   bloqueado e acessível até a reconexão confirmada.
-
-## 1.36.0 - 2026-09-19
-- **Planos empresariais — base comercial**: centralizada a matriz Business
-  Básico, Business Pro e Business Premium, com preços, limites de usuários e
-  empresas, Controle de Ponto, módulos, sessões e Centros de custo.
-- **Migração protegida**: a próxima migração do Supabase promove somente a
-  única assinatura empresarial paga atual para Business Premium, preservando a
-  cobrança e o histórico existentes na Asaas.
 
 ## 1.35.0.19.73 - 2026-09-18
 - **Gestão Mobile — Centros de custo**: as linhas do card agora respeitam a

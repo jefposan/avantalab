@@ -55,7 +55,7 @@ async function validarPlanoEmpresa(empresaId: string) {
     estado
     && estado.tipoPerfil === 'empresa'
     && assinaturaVigente(estado)
-    && (!plano || plano === 'business' || plano === 'business_pro' || plano === 'business_premium'),
+    && (!plano || plano === 'business' || plano === 'business_pro'),
   );
 }
 

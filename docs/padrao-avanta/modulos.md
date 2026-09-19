@@ -38,9 +38,8 @@ O manifesto também declara obrigatoriamente:
 
 - Módulos avulsos possuem preço mensal definido no catálogo central. Enquanto
   a política inicial estiver vigente, todos usam **R$ 14,90 por mês**.
-- O **Business Básico** permite contratação avulsa. O **Business Pro** e o
-  **Business Premium** incluem os módulos, mas Gestor Master ou Administrador
-  ainda escolhe o que instalar. A inclusão não instala módulos automaticamente.
+- O plano Business permite contratação avulsa. O Business Pro inclui os módulos,
+  mas Gestor Master ou Administrador ainda escolhe o que instalar.
 - Uma cortesia empresarial vigente equivale à liberação total do Business Pro
   para módulos: não gera cobrança adicional e permite instalar ou remover todos
   os módulos disponíveis. A cortesia não instala módulos automaticamente e não

@@ -86,7 +86,6 @@ export async function POST(request: Request) {
           .maybeSingle();
         const origemEmpresarial = origem?.plano === 'business'
           || origem?.plano === 'business_pro'
-          || origem?.plano === 'business_premium'
           || origem?.plano === 'empresa';
         if (!origemEmpresarial) {
           return respostaErro('O tipo deste perfil nao pode ser alterado enquanto ele utiliza uma assinatura Pessoal compartilhada.', 409);

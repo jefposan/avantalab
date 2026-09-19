@@ -1,19 +1,12 @@
 export type CicloComercial = 'mensal' | 'anual';
-export type PlanoComercial = 'free' | 'pessoal_premium' | 'business' | 'business_pro' | 'business_premium';
+export type PlanoComercial = 'free' | 'pessoal_premium' | 'business' | 'business_pro';
 
 export type LimitesPlano = {
   usuarios: number;
-  /** Limite de perfis pessoais quando o plano permite esse tipo. */
+  /** Limite total de perfis; o tipo permitido é definido por `tiposDePerfilPermitidos`. */
   perfis: number;
-  /**
-   * Limite de empresas que compartilham a assinatura empresarial, incluindo
-   * o perfil que é origem da assinatura. `null` é usado somente para planos
-   * que não administram perfis empresariais.
-   */
-  perfisEmpresa: number | null;
   tiposDePerfilPermitidos: Array<'pessoal' | 'empresa'>;
   funcionarios: number | null;
-  centrosDeCustoAtivos: boolean;
   permiteWeb: boolean;
   permiteSessoesSimultaneasDoMesmoUsuario: boolean;
   incluiTodosModulos: boolean;
@@ -40,10 +33,8 @@ export const PLANOS_COMERCIAIS: Record<PlanoComercial, PlanoComercialDefinicao> 
     limites: {
       usuarios: 1,
       perfis: 1,
-      perfisEmpresa: null,
       tiposDePerfilPermitidos: ['pessoal'],
       funcionarios: 0,
-      centrosDeCustoAtivos: false,
       permiteWeb: false,
       permiteSessoesSimultaneasDoMesmoUsuario: false,
       incluiTodosModulos: false,
@@ -59,10 +50,8 @@ export const PLANOS_COMERCIAIS: Record<PlanoComercial, PlanoComercialDefinicao> 
     limites: {
       usuarios: 2,
       perfis: 3,
-      perfisEmpresa: null,
       tiposDePerfilPermitidos: ['pessoal'],
       funcionarios: 0,
-      centrosDeCustoAtivos: false,
       permiteWeb: true,
       permiteSessoesSimultaneasDoMesmoUsuario: false,
       incluiTodosModulos: false,
@@ -72,18 +61,14 @@ export const PLANOS_COMERCIAIS: Record<PlanoComercial, PlanoComercialDefinicao> 
   },
   business: {
     id: 'business',
-    // O identificador histórico `business` é preservado em assinaturas e
-    // integrações. A nomenclatura comercial passa a ser Business Básico.
-    nome: 'Business Básico',
+    nome: 'Business',
     publico: 'empresa',
     precos: { mensal: 34.9, anual: 249.9 },
     limites: {
-      usuarios: 1,
-      perfis: 1,
-      perfisEmpresa: 1,
-      tiposDePerfilPermitidos: ['empresa'],
-      funcionarios: 10,
-      centrosDeCustoAtivos: false,
+      usuarios: 3,
+      perfis: 3,
+      tiposDePerfilPermitidos: ['pessoal', 'empresa'],
+      funcionarios: null,
       permiteWeb: true,
       permiteSessoesSimultaneasDoMesmoUsuario: false,
       incluiTodosModulos: false,
@@ -97,37 +82,15 @@ export const PLANOS_COMERCIAIS: Record<PlanoComercial, PlanoComercialDefinicao> 
     publico: 'empresa',
     precos: { mensal: 49.9, anual: 359.9 },
     limites: {
-      usuarios: 3,
-      perfis: 3,
-      perfisEmpresa: 3,
-      tiposDePerfilPermitidos: ['empresa'],
-      funcionarios: 30,
-      centrosDeCustoAtivos: true,
+      usuarios: 10,
+      perfis: 10,
+      tiposDePerfilPermitidos: ['pessoal', 'empresa'],
+      funcionarios: null,
       permiteWeb: true,
       permiteSessoesSimultaneasDoMesmoUsuario: true,
       incluiTodosModulos: true,
       permiteModulosAvulsos: false,
       temTrial: true,
-    },
-  },
-  business_premium: {
-    id: 'business_premium',
-    nome: 'Business Premium',
-    publico: 'empresa',
-    // R$ 99,90 × 12 com desconto comercial de aproximadamente 40%.
-    precos: { mensal: 99.9, anual: 719.9 },
-    limites: {
-      usuarios: 10,
-      perfis: 10,
-      perfisEmpresa: 10,
-      tiposDePerfilPermitidos: ['empresa'],
-      funcionarios: null,
-      centrosDeCustoAtivos: true,
-      permiteWeb: true,
-      permiteSessoesSimultaneasDoMesmoUsuario: true,
-      incluiTodosModulos: true,
-      permiteModulosAvulsos: false,
-      temTrial: false,
     },
   },
 };

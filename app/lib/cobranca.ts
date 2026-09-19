@@ -25,13 +25,12 @@ export const DATA_LANCAMENTO = process.env.NEXT_PUBLIC_COBRANCA_LANCAMENTO || '2
 export type TipoPerfil = 'empresa' | 'pessoal';
 
 // Planos pagos e preços (R$). Fonte única da verdade.
-export type PlanoPago = 'pessoal_premium' | 'business' | 'business_pro' | 'business_premium' | 'empresa';
+export type PlanoPago = 'pessoal_premium' | 'business' | 'business_pro' | 'empresa';
 export type Ciclo = 'mensal' | 'anual';
 export const PRECOS: Record<PlanoPago, Record<Ciclo, number>> = {
   pessoal_premium: { mensal: 9.9, anual: 99.9 },
   business: { mensal: 34.9, anual: 249.9 },
   business_pro: { mensal: 49.9, anual: 359.9 },
-  business_premium: { mensal: 99.9, anual: 719.9 },
   // Compatibilidade temporária com assinaturas gravadas antes da nomenclatura
   // comercial. Nenhuma nova contratação deve persistir este valor.
   empresa: { mensal: 34.9, anual: 249.9 },
@@ -88,9 +87,7 @@ export function rotuloPlano(plano: string | null, ciclo: string | null): string 
     ? 'Pessoal Premium'
     : plano === 'business_pro'
       ? 'Business Pro'
-      : plano === 'business_premium'
-        ? 'Business Premium'
-        : 'Business Básico';
+      : 'Business';
   const cic = ciclo === 'anual' ? 'Anual' : ciclo === 'mensal' ? 'Mensal' : '';
   return cic ? `${nome} · ${cic}` : nome;
 }

@@ -52,7 +52,7 @@ test('cortesia empresarial vigente libera instalação sem cobrança', () => {
   assert.equal(permiteInstalacaoModuloSemCobranca(acesso), true);
 });
 
-test('Business Básico contrata módulo e Pro/Premium instalam sem cobrança', () => {
+test('Business contrata módulo e Business Pro instala sem cobrança', () => {
   const business = resolverAcessoComercialModulo({
     ...baseEmpresa,
     status: 'ativa',
@@ -63,18 +63,11 @@ test('Business Básico contrata módulo e Pro/Premium instalam sem cobrança', (
     status: 'ativa',
     plano: 'business_pro',
   }, true);
-  const businessPremium = resolverAcessoComercialModulo({
-    ...baseEmpresa,
-    status: 'ativa',
-    plano: 'business_premium',
-  }, true);
 
   assert.equal(business, 'business');
   assert.equal(permiteInstalacaoModuloSemCobranca(business), false);
   assert.equal(businessPro, 'business_pro');
   assert.equal(permiteInstalacaoModuloSemCobranca(businessPro), true);
-  assert.equal(businessPremium, 'business_premium');
-  assert.equal(permiteInstalacaoModuloSemCobranca(businessPremium), true);
 });
 
 test('cortesia expirada e perfil pessoal não liberam módulos empresariais', () => {
