@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.38.0.08 - 2026-09-20
+- **Edição mais direta**: removido o botão superior **Cancelar edição**, pois a
+  barra flutuante já concentra Cancelar, Salvar e Inativar.
+- **Código protegido**: ao tentar salvar um código interno duplicado, a Gestão
+  informa o conflito e posiciona o foco — com o conteúdo selecionado — no campo
+  para a correção imediata.
+- **Preço digitável**: o preço de venda da empresa não exibe mais os controles
+  de incremento/decremento por centavos.
+- **Catálogo explicado**: o editor deixa claro que desmarcar **Disponível no
+  catálogo** mantém o item em estudo, para uso interno, sem divulgação.
+
 ## 1.38.0.07 - 2026-09-20
 - **Sugestão compacta de código**: o painel extenso foi removido. O campo
   **Código interno** agora oferece um popover de sequências existentes, sem

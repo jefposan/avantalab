@@ -127,3 +127,13 @@ test('seletor de produto do Histórico não ultrapassa o card com nomes longos',
   assert.match(estilos, /\.historyProductSelector\{[^}]*min-width:0;max-width:100%;flex:0 1 285px;grid-template-columns:minmax\(0,1fr\)/);
   assert.match(estilos, /\.historyProductSelector select\{[^}]*width:100%;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px/);
 });
+
+test('edição concentra o cancelamento na barra flutuante e orienta erros no código', () => {
+  assert.doesNotMatch(workspace, /actions=\{<button className=\{styles\.secondaryButton\} type="button" onClick=\{voltarParaLista\}>Cancelar edição<\/button>\}/);
+  assert.doesNotMatch(workspace, /O código próprio é obrigatório e nunca é gerado às cegas\./);
+  assert.match(workspace, /Este código já está sendo usado\. Informe outro código interno\./);
+  assert.match(workspace, /codigoRef\.current\?\.focus\(\); codigoRef\.current\?\.select\(\);/);
+  assert.match(workspace, /mostrarAjustes=\{false\}/);
+  assert.match(workspace, /Disponível no catálogo<\/label><small>Marcado: o item pode aparecer no Catálogo\./);
+  assert.match(estilos, /\.moneyInputSimple\{grid-template-columns:auto minmax\(0,1fr\)\}/);
+});

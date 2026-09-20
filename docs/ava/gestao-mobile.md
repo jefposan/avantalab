@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.38.0.07 -->
+<!-- ava-version: 1.38.0.08 -->
+
+> Revisão 1.38.0.08: os ajustes de edição e a explicação de disponibilidade no
+> Catálogo pertencem a Custos e Precificação na Gestão Web; sem alteração
+> operacional na Gestão Mobile.
 
 > Revisão 1.38.0.07: a sugestão compacta de código pertence a Custos e
 > Precificação na Gestão Web; sem alteração operacional na Gestão Mobile.

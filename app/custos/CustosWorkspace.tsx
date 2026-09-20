@@ -217,6 +217,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   const solicitacaoInicioAnteriorRef = useRef(solicitacaoInicio);
   const menuAcoesRef = useRef<HTMLDivElement>(null);
   const sugestoesCodigoRef = useRef<HTMLDivElement>(null);
+  const codigoRef = useRef<HTMLInputElement>(null);
 
   const calculo = calcularComposicao(composicao, documento.recursos);
   const codigos = produtos.filter((produto) => produto.id !== rascunho.id).map((produto) => produto.sku).filter(Boolean);
@@ -286,7 +287,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   }, [sugestoesCodigoAbertas]);
   const validar = () => {
     if (!rascunho.sku.trim() || !rascunho.nome.trim()) return 'Código e nome são obrigatórios.';
-    if (codigos.some((codigo) => codigo.toUpperCase() === rascunho.sku.trim().toUpperCase())) return 'Este código já está sendo usado.';
+    if (codigos.some((codigo) => codigo.toUpperCase() === rascunho.sku.trim().toUpperCase())) return 'Este código já está sendo usado. Informe outro código interno.';
     const anterior = produtos.find((produto) => produto.id === rascunho.id);
     const publicandoAgora = rascunho.disponivel_catalogo && !anterior?.disponivel_catalogo;
     if (publicandoAgora && rascunho.preco_venda <= 0) return 'Informe o preço de venda antes de publicar no catálogo.';
@@ -295,7 +296,11 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     return '';
   };
   const salvar = async () => {
-    const falha = validar(); if (falha) { onErro(falha); return false; }
+    const falha = validar(); if (falha) {
+      onErro(falha);
+      if (falha.startsWith('Este código já está sendo usado')) window.requestAnimationFrame(() => { codigoRef.current?.focus(); codigoRef.current?.select(); });
+      return false;
+    }
     const atualizada = { ...composicao, atualizadoEm: new Date().toISOString() };
     const calculoAtual = calcularComposicao(atualizada, documento.recursos);
     if (!calculoAtual.valido) { onErro('A soma de impostos, taxas e margem deve ficar abaixo de 100%.'); return false; }
@@ -416,23 +421,23 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   </>;
 
   return <>
-    <PageHeader title={rascunho.id ? 'Editar produto ou serviço' : 'Novo produto ou serviço'} description="Complete o cadastro, os dados fiscais e a composição de custo." actions={<button className={styles.secondaryButton} type="button" onClick={voltarParaLista}>Cancelar edição</button>} />
+    <PageHeader title={rascunho.id ? 'Editar produto ou serviço' : 'Novo produto ou serviço'} description="Complete o cadastro, os dados fiscais e a composição de custo." />
     <ProductStrip produtos={produtos} ativoId={rascunho.id} documento={documento} onSelecionar={selecionarProdutoNoEditor} />
     <fieldset className={styles.editor} disabled={!podeEditar || salvando}>
-      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Identificação</h2><p>O código próprio é obrigatório e nunca é gerado às cegas.</p></div><span className={`${styles.status} ${!rascunho.ativo ? styles.statusInactive : rascunho.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!rascunho.ativo ? 'Inativo' : rascunho.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></div>
+      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Identificação</h2></div><span className={`${styles.status} ${!rascunho.ativo ? styles.statusInactive : rascunho.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!rascunho.ativo ? 'Inativo' : rascunho.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></div>
         <div className={styles.identification}><div className={styles.imageBox}>{rascunho.imagem_url ? <Image src={rascunho.imagem_url} alt={`Imagem de ${rascunho.nome || 'cadastro'}`} width={135} height={135} unoptimized /> : <span>{rascunho.tipo_item === 'produto' ? 'Produto' : 'Serviço'}<small>Imagem opcional</small></span>}<input ref={arquivoRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => void carregarImagem(e.target.files?.[0])} /><button type="button" className={styles.secondaryButton} onClick={() => arquivoRef.current?.click()}>Escolher imagem</button></div>
           <div className={styles.formGrid}>
             <Field label="Tipo"><select value={rascunho.tipo_item} onChange={(e) => alterar('tipo_item', e.target.value as TipoItem)}><option value="produto">Produto</option><option value="servico">Serviço</option></select></Field>
-            <Field label="Código interno *"><div ref={sugestoesCodigoRef} className={styles.codeField}><input value={rascunho.sku} onChange={(e) => alterar('sku', e.target.value.toUpperCase())} placeholder={sugestoesCodigo[0]?.codigo || 'Digite o primeiro código'} /><button type="button" className={styles.codeSuggestButton} aria-expanded={sugestoesCodigoAbertas} aria-label="Pesquisar sequências de código desta empresa" onClick={() => setSugestoesCodigoAbertas((abertas) => !abertas)}>Sugerir</button>{sugestoesCodigoAbertas && <div className={styles.codeSuggestions} role="dialog" aria-label="Sugestões de sequência"><strong>Sequências desta empresa</strong>{sugestoesCodigo.length ? <div>{sugestoesCodigo.map((sugestao) => <button key={sugestao.familia} type="button" onClick={() => { alterar('sku', sugestao.codigo); setSugestoesCodigoAbertas(false); }}><b>{sugestao.codigo}</b><span>{sugestao.motivo} · {sugestao.ocorrencias} {sugestao.ocorrencias === 1 ? 'uso' : 'usos'}</span></button>)}</div> : <p>Esta empresa ainda não tem uma sequência reconhecida. Informe o primeiro código.</p>}</div>}</div></Field>
+            <Field label="Código interno *"><div ref={sugestoesCodigoRef} className={styles.codeField}><input ref={codigoRef} value={rascunho.sku} onChange={(e) => alterar('sku', e.target.value.toUpperCase())} placeholder={sugestoesCodigo[0]?.codigo || 'Digite o primeiro código'} /><button type="button" className={styles.codeSuggestButton} aria-expanded={sugestoesCodigoAbertas} aria-label="Pesquisar sequências de código desta empresa" onClick={() => setSugestoesCodigoAbertas((abertas) => !abertas)}>Sugerir</button>{sugestoesCodigoAbertas && <div className={styles.codeSuggestions} role="dialog" aria-label="Sugestões de sequência"><strong>Sequências desta empresa</strong>{sugestoesCodigo.length ? <div>{sugestoesCodigo.map((sugestao) => <button key={sugestao.familia} type="button" onClick={() => { alterar('sku', sugestao.codigo); setSugestoesCodigoAbertas(false); }}><b>{sugestao.codigo}</b><span>{sugestao.motivo} · {sugestao.ocorrencias} {sugestao.ocorrencias === 1 ? 'uso' : 'usos'}</span></button>)}</div> : <p>Esta empresa ainda não tem uma sequência reconhecida. Informe o primeiro código.</p>}</div>}</div></Field>
             <Field label="Nome *" wide><input value={rascunho.nome} onChange={(e) => alterar('nome', e.target.value)} /></Field>
             <Field label="Categoria"><input value={rascunho.categoria} onChange={(e) => alterar('categoria', e.target.value)} /></Field>
             <Field label="Marca"><input value={rascunho.marca} onChange={(e) => alterar('marca', e.target.value)} /></Field>
             <Field label="Unidade"><input value={rascunho.unidade} onChange={(e) => alterar('unidade', e.target.value)} /></Field>
-            <Field label="Preço de venda da empresa"><MoneyInput value={rascunho.preco_venda} onChange={(valor) => alterar('preco_venda', valor)} label="Preço de venda da empresa" /></Field>
+            <Field label="Preço de venda da empresa"><MoneyInput value={rascunho.preco_venda} onChange={(valor) => alterar('preco_venda', valor)} label="Preço de venda da empresa" mostrarAjustes={false} /></Field>
             <Field label="Descrição" wide><textarea rows={2} value={rascunho.descricao} onChange={(e) => alterar('descricao', e.target.value)} /></Field>
           </div>
         </div>
-        <div className={styles.switches}><label><input type="checkbox" checked={rascunho.ativo} onChange={(e) => alterar('ativo', e.target.checked)} /> Cadastro ativo</label><label><input type="checkbox" checked={rascunho.disponivel_catalogo} onChange={(e) => alterar('disponivel_catalogo', e.target.checked)} /> Disponível no catálogo</label><small>Itens novos começam em estudo. A publicação usa este mesmo cadastro no Catálogo.</small></div>
+        <div className={styles.switches}><label><input type="checkbox" checked={rascunho.ativo} onChange={(e) => alterar('ativo', e.target.checked)} /> Cadastro ativo</label><label><input type="checkbox" checked={rascunho.disponivel_catalogo} onChange={(e) => alterar('disponivel_catalogo', e.target.checked)} /> Disponível no catálogo</label><small>Marcado: o item pode aparecer no Catálogo. Desmarcado: fica em estudo, disponível somente para organização interna.</small></div>
       </section>
 
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Dados fiscais para emissão</h2><p>Campos ausentes nos produtos Tridium permanecem disponíveis para complemento.</p></div></div>
@@ -508,11 +513,11 @@ function Field({ label, wide = false, children }: { label: string; wide?: boolea
   return <label className={`${styles.field} ${wide ? styles.fieldWide : ''}`}><span>{label}</span>{children}</label>;
 }
 
-function MoneyInput({ value, onChange, label, compact = false, disabled = false }: { value: number; onChange: (valor: number) => void; label: string; compact?: boolean; disabled?: boolean }) {
+function MoneyInput({ value, onChange, label, compact = false, disabled = false, mostrarAjustes = true }: { value: number; onChange: (valor: number) => void; label: string; compact?: boolean; disabled?: boolean; mostrarAjustes?: boolean }) {
   const [texto, setTexto] = useState(formatarMoeda(value).replace('R$ ', ''));
   const [editando, setEditando] = useState(false);
   const exibido = editando ? texto : formatarMoeda(value).replace('R$ ', '');
-  return <div className={`${styles.moneyInput} ${compact ? styles.inputCompact : ''}`}><span>R$</span><input disabled={disabled} aria-label={label} inputMode="numeric" value={exibido} onFocus={(e) => { setTexto(formatarMoeda(value).replace('R$ ', '')); setEditando(true); e.currentTarget.select(); }} onChange={(e) => { const formatado = formatarMoedaDigitada(e.target.value); setTexto(formatado); onChange(moedaDigitadaParaNumero(formatado) || 0); }} onBlur={() => setEditando(false)} /><i><button type="button" disabled={disabled} aria-label={`Aumentar ${label}`} onClick={() => onChange(Math.round((value + .01) * 100) / 100)}>▲</button><button type="button" disabled={disabled} aria-label={`Diminuir ${label}`} onClick={() => onChange(Math.max(0, Math.round((value - .01) * 100) / 100))}>▼</button></i></div>;
+  return <div className={`${styles.moneyInput} ${compact ? styles.inputCompact : ''} ${!mostrarAjustes ? styles.moneyInputSimple : ''}`}><span>R$</span><input disabled={disabled} aria-label={label} inputMode="numeric" value={exibido} onFocus={(e) => { setTexto(formatarMoeda(value).replace('R$ ', '')); setEditando(true); e.currentTarget.select(); }} onChange={(e) => { const formatado = formatarMoedaDigitada(e.target.value); setTexto(formatado); onChange(moedaDigitadaParaNumero(formatado) || 0); }} onBlur={() => setEditando(false)} />{mostrarAjustes && <i><button type="button" disabled={disabled} aria-label={`Aumentar ${label}`} onClick={() => onChange(Math.round((value + .01) * 100) / 100)}>▲</button><button type="button" disabled={disabled} aria-label={`Diminuir ${label}`} onClick={() => onChange(Math.max(0, Math.round((value - .01) * 100) / 100))}>▼</button></i>}</div>;
 }
 
 function PercentInput({ value, onChange, compact = false, disabled = false }: { value: number; onChange: (valor: number) => void; compact?: boolean; disabled?: boolean }) {

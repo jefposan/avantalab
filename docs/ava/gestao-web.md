@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.07 -->
+<!-- ava-version: 1.38.0.08 -->
+
+> Revisão 1.38.0.08: **Em estudo** significa que o cadastro está ativo, mas
+> ainda não está disponível no Catálogo de divulgação. Marque **Disponível no
+> catálogo** somente quando ele estiver pronto para aparecer lá; salvar a
+> publicação exige preço de venda e os dados fiscais aplicáveis. Se o código
+> interno já existir, a Gestão avisa e devolve o foco ao campo para correção.
 
 > Revisão 1.38.0.07: no cadastro de Produtos e Serviços, use **Sugerir** ao
 > lado de **Código interno** para abrir as sequências já reconhecidas somente

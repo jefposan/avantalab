@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.38.0.07 -->
+<!-- ava-version: 1.38.0.08 -->
+
+> Revisão 1.38.0.08: os ajustes do editor de Custos e a disponibilidade no
+> Catálogo pertencem à Gestão Web; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.38.0.07: a sugestão de sequência de códigos pertence ao cadastro
 > em Custos e Precificação na Gestão Web; sem alteração operacional no
