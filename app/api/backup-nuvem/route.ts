@@ -8,7 +8,9 @@ import {
 
 export const runtime = 'nodejs';
 
-type Contexto = { admin: ReturnType<typeof createClient>; userId: string; perfil: string };
+// A instância é criada com as variáveis de ambiente em tempo de execução; não
+// há schema TypeScript gerado para estas tabelas privadas neste projeto.
+type Contexto = { admin: any; userId: string; perfil: string };
 const perfisBackup = ['gestor_master', 'administrador', 'operador_completo'];
 
 async function contexto(request: Request, empresaId: string): Promise<Contexto | null> {
