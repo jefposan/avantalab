@@ -16,7 +16,7 @@ function reviewedRule(overrides = {}) {
     id: 'nfe-teste', name: 'NF-e · teste controlado', documentType: 'nfe', priority: 10,
     operation: 'Venda', destination: 'Dentro da UF', recipientProfile: 'Contribuinte ICMS',
     consumerFinal: 'Não', presence: 'Não presencial', issuePurpose: 'Normal',
-    operationNature: 'Venda de mercadoria', cfopOverride: '', serviceIncidenceMode: 'Não aplicável',
+    operationNature: 'Venda de mercadoria', cfopOverride: '5102', serviceIncidenceMode: 'Não aplicável',
     requiresStateRegistration: true, requiresMunicipalIncidence: false, active: true, reviewed: true,
     ...overrides,
   };
@@ -27,7 +27,7 @@ function reviewedMatrix(rules = [reviewedRule()], documentScope = ['nfe']) {
 }
 
 function completeItem() {
-  return { productId: '30303030-3030-4030-8030-303030303030', name: 'Produto', unit: 'UN', fiscal: { ncm: '33049990', cfop: '5102', originCode: '0', icmsCode: '102', pisCst: '49', cofinsCst: '49' } };
+  return { productId: '30303030-3030-4030-8030-303030303030', name: 'Produto', unit: 'UN', fiscal: { ncm: '33049990', taxableUnit: 'UN' } };
 }
 
 test('rota de regras fiscais delega ao handler autenticado e validado', async () => {
@@ -119,7 +119,7 @@ test('publicação exige revisão de todas as regras habilitadas e data não fut
 test('resolução server-side exige inscrição estadual quando a regra selecionada determina', async () => {
   const matrix = reviewedMatrix();
   const resolver = createCommercialFiscalRuleResolver({ repository: { getPublished: async () => ({ status: 'publicada', matrixVersion: matrix.version, matrix, version: 2, taxReviewConfirmed: true, taxReformReviewConfirmed: true, contentDigest: 'a'.repeat(64) }) } });
-  const base = { companyId, documentType: 'nfe', issuer: { state: 'SP' }, customer: { stateRegistrationIndicator: 'contribuinte_icms', consumerFinal: false, stateRegistration: '', address: { state: 'SP' } }, items: [completeItem()] };
+  const base = { companyId, documentType: 'nfe', issuer: { state: 'SP', taxRegime: 'simples_nacional', fiscalConfiguration: { originCode: '0', csosn: '102', pisCst: '49', cofinsCst: '49' } }, customer: { stateRegistrationIndicator: 'contribuinte_icms', consumerFinal: false, stateRegistration: '', address: { state: 'SP' } }, items: [completeItem()] };
 
   const missing = await resolver(base);
   assert.equal(missing.valid, false);
@@ -130,6 +130,19 @@ test('resolução server-side exige inscrição estadual quando a regra selecion
   const complete = await resolver({ ...base, customer: { ...base.customer, stateRegistration: '110042490114' } });
   assert.equal(complete.valid, true);
   assert.equal(complete.ruleId, 'nfe-teste');
+});
+
+test('resolução usa o enquadramento da empresa, não códigos legados do produto', async () => {
+  const matrix = reviewedMatrix();
+  const resolver = createCommercialFiscalRuleResolver({ repository: { getPublished: async () => ({ status: 'publicada', matrixVersion: matrix.version, matrix, version: 2, taxReviewConfirmed: true, taxReformReviewConfirmed: true, contentDigest: 'a'.repeat(64) }) } });
+  const result = await resolver({
+    companyId, documentType: 'nfe',
+    issuer: { state: 'SP', taxRegime: 'simples_nacional', fiscalConfiguration: { originCode: '0', csosn: '', pisCst: '', cofinsCst: '' } },
+    customer: { stateRegistrationIndicator: 'contribuinte_icms', consumerFinal: false, stateRegistration: '110042490114', address: { state: 'SP' } },
+    items: [{ ...completeItem(), fiscal: { ...completeItem().fiscal, originCode: '1', icmsCode: '102', pisCst: '49', cofinsCst: '49' } }],
+  });
+  assert.equal(result.valid, false);
+  assert.match(result.errors.map((error) => error.message).join(' '), /CST\/CSOSN.*CST do PIS.*CST da COFINS/i);
 });
 
 test('XML usa consumidor final explícito sem confundir com inscrição estadual', () => {

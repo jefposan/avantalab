@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.38.0.09 - 2026-09-20
+- **Tributação por empresa**: o cadastro empresarial passa a reunir o regime e
+  os parâmetros tributários padrão; eles deixam de ser repetidos no formulário
+  de cada produto.
+- **Produto objetivo**: para mercadorias, o editor exige apenas **NCM** e
+  **unidade tributável**. Serviços aguardam a classificação aplicável à NFS-e
+  durante a emissão.
+- **Emissão contextual**: natureza da operação e CFOP foram separados do
+  produto. A regra fiscal da emissão exige CFOP próprio e combina operação,
+  destinatário e enquadramento da empresa antes de preparar a NF-e.
+
 ## 1.38.0.08 - 2026-09-20
 - **Edição mais direta**: removido o botão superior **Cancelar edição**, pois a
   barra flutuante já concentra Cancelar, Salvar e Inativar.

@@ -3,14 +3,19 @@ import { resolveMunicipalityCode } from '../municipality.mjs';
 const clean = (value) => String(value ?? '').trim();
 const number = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 
+function fiscalConfiguration(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  return {
+    originCode: /^[0-8]$/.test(clean(source.origem_mercadoria_padrao)) ? clean(source.origem_mercadoria_padrao) : '0',
+    cstIcms: clean(source.cst_icms), csosn: clean(source.csosn),
+    pisCst: clean(source.cst_pis), cofinsCst: clean(source.cst_cofins),
+    ibsCbsCst: clean(source.cst_ibs_cbs), ibsCbsClassification: clean(source.classificacao_ibs_cbs),
+  };
+}
+
 function fiscalReady(row) {
-  if (row.tipo_item === 'servico') {
-    return Boolean(clean(row.codigo_tributacao_nacional) && clean(row.codigo_tributacao_municipal)
-      && clean(row.item_lc116) && clean(row.municipio_prestacao));
-  }
-  return Boolean(clean(row.ncm) && clean(row.origem_mercadoria) && clean(row.unidade_tributavel)
-    && clean(row.cfop_padrao) && (clean(row.cst) || clean(row.csosn))
-    && clean(row.cst_pis) && clean(row.cst_cofins));
+  if (row.tipo_item === 'servico') return true;
+  return Boolean(clean(row.ncm) && clean(row.unidade_tributavel));
 }
 
 export function createPostgresCommercialCatalogResolver({ pool } = {}) {
@@ -53,9 +58,7 @@ export function createPostgresCommercialCatalogResolver({ pool } = {}) {
         costPrice: number(row.preco_custo), active: true, published: true, controlsStock: row.tipo_item !== 'servico' && row.controla_estoque === true, fiscalReady: fiscalReady(row),
         fiscal: {
           ncm: clean(row.ncm), cest: clean(row.cest), originCode: clean(row.origem_mercadoria),
-          taxableUnit: clean(row.unidade_tributavel), cfop: clean(row.cfop_padrao),
-          cst: clean(row.cst), csosn: clean(row.csosn), pisCst: clean(row.cst_pis), cofinsCst: clean(row.cst_cofins),
-          ibsCbsCst: clean(row.cst_ibs_cbs), ibsCbsClassification: clean(row.classificacao_ibs_cbs),
+          taxableUnit: clean(row.unidade_tributavel),
           nationalServiceCode: clean(row.codigo_tributacao_nacional), municipalServiceCode: clean(row.codigo_tributacao_municipal),
           itemLc116: clean(row.item_lc116), nbs: clean(row.nbs), taxableMunicipality: clean(row.municipio_prestacao),
         },
@@ -80,7 +83,7 @@ export function createPostgresCommercialIssuerResolver({ pool } = {}) {
       document: clean(row.documento), legalName: clean(row.razao_social), tradeName: clean(row.nome_fantasia || row.empresa_nome),
       stateRegistration: row.inscricao_estadual_isento ? 'ISENTO' : clean(row.inscricao_estadual),
       municipalRegistration: row.inscricao_municipal_isento ? 'ISENTO' : clean(row.inscricao_municipal),
-      taxRegime: clean(row.regime_tributario), postalCode: clean(row.cep), street: clean(row.rua), number: clean(row.numero),
+      taxRegime: clean(row.regime_tributario), fiscalConfiguration: fiscalConfiguration(row.configuracao_fiscal), postalCode: clean(row.cep), street: clean(row.rua), number: clean(row.numero),
       complement: clean(row.complemento), district: clean(row.bairro), city: clean(row.cidade),
       cityCode: resolveMunicipalityCode({ city: row.cidade, uf: row.estado, cep: row.cep }), state: clean(row.estado).toUpperCase(),
     };

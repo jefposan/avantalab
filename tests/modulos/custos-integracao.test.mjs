@@ -137,3 +137,12 @@ test('edição concentra o cancelamento na barra flutuante e orienta erros no c�
   assert.match(workspace, /Disponível no catálogo<\/label><small>Marcado: o item pode aparecer no Catálogo\./);
   assert.match(estilos, /\.moneyInputSimple\{grid-template-columns:auto minmax\(0,1fr\)\}/);
 });
+
+test('produto conserva apenas a identificação fiscal e delega a tributação à empresa', () => {
+  assert.match(workspace, /Identificação fiscal do produto/);
+  assert.match(workspace, /NCM \*/);
+  assert.match(workspace, /Unidade tributável \*/);
+  assert.match(workspace, /Os demais tributos seguem o enquadramento da empresa/);
+  assert.doesNotMatch(workspace, /<Field label="CFOP padrão">/);
+  assert.doesNotMatch(workspace, /<Field label="CST ICMS">/);
+});

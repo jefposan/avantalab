@@ -37,3 +37,17 @@ test('a assinatura e a emissão fiscal seguem exigindo os dados necessários', (
   assert.match(web, /!cadastroConfirmado && cadastroPerfilStatus && !cadastroPerfilStatus\.completo/);
   assert.match(fiscal, /Conclua o cadastro do perfil empresarial com o CNPJ antes de emitir a nota/);
 });
+
+test('configuração tributária fica no cadastro da empresa e não no formulário do produto', () => {
+  const route = read('app/api/perfil-cadastro/route.ts');
+  const modal = read('app/components/CadastroPerfilModal.tsx');
+  const migration = read('supabase/migrations/20260920123000_configuracao_tributaria_empresa.sql');
+  const rules = read('app/vendas/lib/server/commercial-fiscal-rules.mjs');
+
+  assert.match(migration, /configuracao_fiscal jsonb/);
+  assert.match(route, /normalizarConfiguracaoFiscal/);
+  assert.match(modal, /Parâmetros tributários padrão/);
+  assert.match(modal, /CFOP e natureza da operação são definidos na regra da própria emissão/);
+  assert.match(rules, /function companyFiscalProfile/);
+  assert.match(rules, /cfop: clean\(rule\.cfopOverride\)/);
+});

@@ -5,6 +5,7 @@ import {
   ESTADOS_BRASIL,
   formatarDocumentoFiscal,
   REGIMES_TRIBUTARIOS,
+  CONFIGURACAO_FISCAL_EMPRESA_VAZIA,
   somenteDigitos,
   TIPOS_EMPRESA,
   validarCnpj,
@@ -48,7 +49,7 @@ const VAZIO: CadastroPerfil = {
   empresa_id: '', nome_fantasia: '', nome_responsavel: '', razao_social: '', tipo_documento: 'cnpj', documento: '',
   tipo_empresa: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', telefone: '',
   whatsapp: '', email_empresa: '', site: '', instagram: '', inscricao_estadual: '', inscricao_estadual_isento: false,
-  inscricao_municipal: '', inscricao_municipal_isento: false, regime_tributario: '', obrigatorio_em: '', adiado_em: null, concluido_em: null,
+  inscricao_municipal: '', inscricao_municipal_isento: false, regime_tributario: '', configuracao_fiscal: CONFIGURACAO_FISCAL_EMPRESA_VAZIA, obrigatorio_em: '', adiado_em: null, concluido_em: null,
 };
 
 export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, contexto, ciclo, onLembrarDepois, onCancelar, onConcluido }: Props) {
@@ -99,6 +100,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
   if (!aberto) return null;
 
   const pessoal = status?.tipoPerfil === 'pessoal';
+  const simplesNacional = ['mei_simei', 'simples_nacional'].includes(dados.regime_tributario);
   const autonomo = dados.tipo_empresa === 'autonomo';
   const tipoDocumento = pessoal || autonomo ? 'CPF' : 'CNPJ';
   const planoConsultaCnpj = consultaCnpj
@@ -538,6 +540,18 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
                   <label className={label}>Inscrição Estadual<span className="flex gap-2"><input disabled={dados.inscricao_estadual_isento} className={input} value={dados.inscricao_estadual} onChange={(e) => set('inscricao_estadual', e.target.value)} /><span className="flex items-center gap-1 text-xs"><input type="checkbox" checked={dados.inscricao_estadual_isento} onChange={(e) => setDados((a) => ({ ...a, inscricao_estadual_isento: e.target.checked, inscricao_estadual: e.target.checked ? '' : a.inscricao_estadual }))} />Isento</span></span></label>
                   <label className={label}>Inscrição Municipal<span className="flex gap-2"><input disabled={dados.inscricao_municipal_isento} className={input} value={dados.inscricao_municipal} onChange={(e) => set('inscricao_municipal', e.target.value)} /><span className="flex items-center gap-1 text-xs"><input type="checkbox" checked={dados.inscricao_municipal_isento} onChange={(e) => setDados((a) => ({ ...a, inscricao_municipal_isento: e.target.checked, inscricao_municipal: e.target.checked ? '' : a.inscricao_municipal }))} />Isento</span></span></label>
                   <label className={label}>Regime Tributário<select className={input} value={dados.regime_tributario} onChange={(e) => set('regime_tributario', e.target.value)}><option value="">Selecione</option>{REGIMES_TRIBUTARIOS.map(([v,n]) => <option key={v} value={v}>{n}</option>)}</select></label>
+                </div>
+                <div className="mt-3 rounded-lg border border-sky-100 bg-sky-50/60 p-3">
+                  <div><p className="text-[11px] font-black text-sky-900">Parâmetros tributários padrão</p><p className="mt-0.5 text-[10px] leading-relaxed text-slate-600">Aplicados na emissão conforme o enquadramento da empresa. CFOP e natureza da operação são definidos na regra da própria emissão; NCM e unidade tributável permanecem no produto.</p></div>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <label className={label}>Origem padrão da mercadoria<select className={input} value={dados.configuracao_fiscal?.origem_mercadoria_padrao || '0'} onChange={(e) => setDados((atual) => ({ ...atual, configuracao_fiscal: { ...CONFIGURACAO_FISCAL_EMPRESA_VAZIA, ...atual.configuracao_fiscal, origem_mercadoria_padrao: e.target.value } }))}><option value="0">0 · Nacional</option><option value="1">1 · Estrangeira — importação direta</option><option value="2">2 · Estrangeira — adquirida no mercado interno</option><option value="3">3 · Nacional, conteúdo importado &gt; 40%</option><option value="4">4 · Nacional, processos produtivos básicos</option><option value="5">5 · Nacional, conteúdo importado ≤ 40%</option><option value="6">6 · Estrangeira, sem similar nacional</option><option value="7">7 · Estrangeira, mercado interno sem similar</option><option value="8">8 · Nacional, conteúdo importado &gt; 70%</option></select></label>
+                    <label className={label}>{simplesNacional ? 'CSOSN padrão do ICMS' : 'CST padrão do ICMS'}<input className={input} inputMode="numeric" maxLength={3} value={simplesNacional ? dados.configuracao_fiscal?.csosn || '' : dados.configuracao_fiscal?.cst_icms || ''} onChange={(e) => setDados((atual) => ({ ...atual, configuracao_fiscal: { ...CONFIGURACAO_FISCAL_EMPRESA_VAZIA, ...atual.configuracao_fiscal, [simplesNacional ? 'csosn' : 'cst_icms']: e.target.value.replace(/\D/g, '').slice(0, 3) } }))} placeholder={simplesNacional ? 'Ex.: 102' : 'Ex.: 00'} /></label>
+                    <label className={label}>CST padrão do PIS<input className={input} inputMode="numeric" maxLength={2} value={dados.configuracao_fiscal?.cst_pis || ''} onChange={(e) => setDados((atual) => ({ ...atual, configuracao_fiscal: { ...CONFIGURACAO_FISCAL_EMPRESA_VAZIA, ...atual.configuracao_fiscal, cst_pis: e.target.value.replace(/\D/g, '').slice(0, 2) } }))} placeholder="Ex.: 49" /></label>
+                    <label className={label}>CST padrão da COFINS<input className={input} inputMode="numeric" maxLength={2} value={dados.configuracao_fiscal?.cst_cofins || ''} onChange={(e) => setDados((atual) => ({ ...atual, configuracao_fiscal: { ...CONFIGURACAO_FISCAL_EMPRESA_VAZIA, ...atual.configuracao_fiscal, cst_cofins: e.target.value.replace(/\D/g, '').slice(0, 2) } }))} placeholder="Ex.: 49" /></label>
+                    <label className={label}>CST IBS/CBS<input className={input} maxLength={12} value={dados.configuracao_fiscal?.cst_ibs_cbs || ''} onChange={(e) => setDados((atual) => ({ ...atual, configuracao_fiscal: { ...CONFIGURACAO_FISCAL_EMPRESA_VAZIA, ...atual.configuracao_fiscal, cst_ibs_cbs: e.target.value } }))} /></label>
+                    <label className={label}>Classificação IBS/CBS<input className={input} maxLength={40} value={dados.configuracao_fiscal?.classificacao_ibs_cbs || ''} onChange={(e) => setDados((atual) => ({ ...atual, configuracao_fiscal: { ...CONFIGURACAO_FISCAL_EMPRESA_VAZIA, ...atual.configuracao_fiscal, classificacao_ibs_cbs: e.target.value } }))} /></label>
+                  </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-slate-600">Esses parâmetros não são obrigatórios para concluir o cadastro. Na emissão, o sistema exigirá apenas o que corresponder ao documento, regime e operação selecionados.</p>
                 </div>
               </div>}
             </div>

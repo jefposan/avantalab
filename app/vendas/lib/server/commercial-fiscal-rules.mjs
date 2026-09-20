@@ -279,18 +279,29 @@ function consumerFinal(customer = {}) {
   return ['isento', 'contribuinte_isento'].includes(clean(customer.stateRegistrationIndicator).toLowerCase()) ? 'Sim' : 'Não';
 }
 
-function itemRule(item, rule) {
+function companyFiscalProfile(issuer = {}) {
+  const source = issuer?.fiscalConfiguration && typeof issuer.fiscalConfiguration === 'object' ? issuer.fiscalConfiguration : {};
+  const simplesNacional = ['mei_simei', 'simples_nacional'].includes(clean(issuer.taxRegime));
+  return {
+    originCode: clean(source.originCode) || '0',
+    icmsCode: simplesNacional ? clean(source.csosn) : clean(source.cstIcms),
+    pisCst: clean(source.pisCst), cofinsCst: clean(source.cofinsCst),
+  };
+}
+
+function itemRule(item, rule, issuer) {
   const fiscal = item?.fiscal && typeof item.fiscal === 'object' ? item.fiscal : {};
   const value = (keys) => keys.map((key) => clean(fiscal[key])).find(Boolean) || '';
+  const companyFiscal = companyFiscalProfile(issuer);
   const applied = {
     ncm: value(['ncm']),
     cest: value(['cest']),
-    cfop: clean(rule.cfopOverride) || value(['cfop', 'cfopPadrao', 'cfopInternal']),
+    cfop: clean(rule.cfopOverride),
     taxableUnit: value(['taxableUnit', 'unidadeTributavel']) || clean(item.unit),
-    originCode: value(['originCode', 'origemMercadoria', 'origin']),
-    icmsCode: value(['icmsCode', 'csosn', 'cst']),
-    pisCst: value(['pisCst', 'cstPis']),
-    cofinsCst: value(['cofinsCst', 'cstCofins']),
+    originCode: companyFiscal.originCode,
+    icmsCode: companyFiscal.icmsCode,
+    pisCst: companyFiscal.pisCst,
+    cofinsCst: companyFiscal.cofinsCst,
   };
   const missing = [];
   if (!/^\d{8}$/.test(applied.ncm)) missing.push('NCM');
@@ -337,8 +348,8 @@ export function createCommercialFiscalRuleResolver({ repository } = {}) {
     const itemEntries = [];
     const errors = [];
     for (const item of Array.isArray(items) ? items : []) {
-      const { applied, missing } = itemRule(item, resolution.rule);
-      if (missing.length) errors.push(issue('AV-FISCAL-RULES-ITEM', 'items', `${clean(item.name, 100) || 'Item'}: revise ${missing.join(', ')} no cadastro de Custos e Precificação.`));
+      const { applied, missing } = itemRule(item, resolution.rule, issuer);
+      if (missing.length) errors.push(issue('AV-FISCAL-RULES-ITEM', 'items', `${clean(item.name, 100) || 'Item'}: revise ${missing.join(', ')} antes da emissão. NCM e unidade tributável ficam no produto; CFOP é definido pela operação e os tributos pelo enquadramento da empresa.`));
       const key = UUID.test(clean(item.productId)) ? clean(item.productId) : clean(item.sku, 80);
       if (key) itemEntries.push([key, applied]);
     }

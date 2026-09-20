@@ -161,7 +161,7 @@ function ProductStrip({ produtos, ativoId, documento, onSelecionar }: { produtos
 }
 
 function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, onAtualizar }: { produtos: ProdutoCustos[]; documento: DocumentoCustos; produtoAtivo?: ProdutoCustos; onSelecionar: (id: string) => void; onAbrir: () => void; onAtualizar: () => void }) {
-  const pendencias = produtos.filter((produto) => !produto.sku || (produto.tipo_item === 'produto' ? !produto.ncm : !produto.codigo_tributacao_nacional) || !documento.composicoes[produto.id]?.itens.length).length;
+  const pendencias = produtos.filter((produto) => !produto.sku || (produto.tipo_item === 'produto' && (!produto.ncm || !produto.unidade_tributavel)) || !documento.composicoes[produto.id]?.itens.length).length;
   const publicados = produtos.filter((produto) => produto.ativo && produto.disponivel_catalogo).length;
   const emEstudo = produtos.filter((produto) => produto.ativo && !produto.disponivel_catalogo).length;
   const calculo = produtoAtivo ? calcularComposicao(documento.composicoes[produtoAtivo.id] || composicaoVazia(), documento.recursos) : null;
@@ -171,7 +171,7 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
       <Metric accent label="Produtos e serviços" value={String(produtos.length)} detail={`${produtos.filter((p) => p.tipo_item === 'produto').length} produtos · ${produtos.filter((p) => p.tipo_item === 'servico').length} serviços`} />
       <Metric label="No catálogo" value={String(publicados)} detail="Ativos e disponíveis para divulgação" />
       <Metric label="Em estudo" value={String(emEstudo)} detail="Ainda não publicados no catálogo" />
-      <Metric label="Pendências" value={String(pendencias)} detail="Código, fiscal ou composição incompleta" />
+      <Metric label="Pendências" value={String(pendencias)} detail="Código, NCM, unidade tributável ou composição incompleta" />
     </section>
     <ProductStrip produtos={produtos} ativoId={produtoAtivo?.id || ''} documento={documento} onSelecionar={onSelecionar} />
     {produtoAtivo && calculo ? <>
@@ -183,7 +183,7 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
       </section>
       <section className={styles.twoColumns}><article className={styles.panel}><div className={styles.panelTitle}><div><h2>Composição de {produtoAtivo.nome}</h2><p>Participação dos principais componentes no custo.</p></div><button type="button" className={styles.linkButton} onClick={onAbrir}>Abrir cadastro</button></div>
         <div className={styles.costBars}>{calculo.linhas.sort((a, b) => b.custo - a.custo).slice(0, 8).map((linha) => <div key={linha.item.id}><span>{linha.recurso?.nome || 'Recurso não localizado'}<b>{formatarMoeda(linha.custo)}</b></span><i><em style={{ width: `${calculo.total ? Math.max(3, linha.custo / calculo.total * 100) : 3}%` }} /></i></div>)}{!calculo.linhas.length && <p className={styles.empty}>Ainda não há componentes neste cadastro.</p>}</div>
-      </article><article className={`${styles.panel} ${styles.quickRead}`}><span>Leitura rápida</span><h2>{produtoAtivo.disponivel_catalogo ? 'Disponível no catálogo' : 'Produto em estudo'}</h2><p>Alterações de identificação feitas no Catálogo aparecem aqui porque o registro é único.</p><ul><li>{produtoAtivo.sku ? '✓' : '!'} Código interno</li><li>{calculo.linhas.length ? '✓' : '!'} Composição de custo</li><li>{produtoAtivo.tipo_item === 'produto' ? (produtoAtivo.ncm ? '✓ NCM informado' : '! NCM pendente') : (produtoAtivo.codigo_tributacao_nacional ? '✓ Tributação informada' : '! Tributação pendente')}</li></ul></article></section>
+      </article><article className={`${styles.panel} ${styles.quickRead}`}><span>Leitura rápida</span><h2>{produtoAtivo.disponivel_catalogo ? 'Disponível no catálogo' : 'Produto em estudo'}</h2><p>Alterações de identificação feitas no Catálogo aparecem aqui porque o registro é único.</p><ul><li>{produtoAtivo.sku ? '✓' : '!'} Código interno</li><li>{calculo.linhas.length ? '✓' : '!'} Composição de custo</li><li>{produtoAtivo.tipo_item === 'produto' ? (produtoAtivo.ncm && produtoAtivo.unidade_tributavel ? '✓ NCM e unidade tributável informados' : '! NCM ou unidade tributável pendente') : '✓ Tributação definida na emissão'}</li></ul></article></section>
     </> : <section className={styles.panel}><p className={styles.empty}>Cadastre o primeiro produto ou serviço na área Produtos e serviços.</p></section>}
   </>;
 }
@@ -288,11 +288,8 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   const validar = () => {
     if (!rascunho.sku.trim() || !rascunho.nome.trim()) return 'Código e nome são obrigatórios.';
     if (codigos.some((codigo) => codigo.toUpperCase() === rascunho.sku.trim().toUpperCase())) return 'Este código já está sendo usado. Informe outro código interno.';
-    const anterior = produtos.find((produto) => produto.id === rascunho.id);
-    const publicandoAgora = rascunho.disponivel_catalogo && !anterior?.disponivel_catalogo;
-    if (publicandoAgora && rascunho.preco_venda <= 0) return 'Informe o preço de venda antes de publicar no catálogo.';
-    if (publicandoAgora && rascunho.tipo_item === 'produto' && !rascunho.ncm.trim()) return 'Informe o NCM antes de publicar o produto.';
-    if (publicandoAgora && rascunho.tipo_item === 'servico' && !rascunho.codigo_tributacao_nacional.trim()) return 'Informe o código de tributação nacional antes de publicar o serviço.';
+    if (rascunho.tipo_item === 'produto' && !rascunho.ncm.trim()) return 'Informe o NCM do produto.';
+    if (rascunho.tipo_item === 'produto' && !rascunho.unidade_tributavel.trim()) return 'Informe a unidade tributável do produto.';
     return '';
   };
   const salvar = async () => {
@@ -440,13 +437,11 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
         <div className={styles.switches}><label><input type="checkbox" checked={rascunho.ativo} onChange={(e) => alterar('ativo', e.target.checked)} /> Cadastro ativo</label><label><input type="checkbox" checked={rascunho.disponivel_catalogo} onChange={(e) => alterar('disponivel_catalogo', e.target.checked)} /> Disponível no catálogo</label><small>Marcado: o item pode aparecer no Catálogo. Desmarcado: fica em estudo, disponível somente para organização interna.</small></div>
       </section>
 
-      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Dados fiscais para emissão</h2><p>Campos ausentes nos produtos Tridium permanecem disponíveis para complemento.</p></div></div>
-        {rascunho.tipo_item === 'produto' ? <div className={styles.fiscalGrid}>
-          <Field label="GTIN / EAN"><input value={rascunho.codigo_barras} onChange={(e) => alterar('codigo_barras', e.target.value)} /></Field><Field label="NCM"><input value={rascunho.ncm} onChange={(e) => alterar('ncm', e.target.value)} placeholder="0000.00.00" /></Field><Field label="CEST"><input value={rascunho.cest} onChange={(e) => alterar('cest', e.target.value)} /></Field><Field label="Origem"><input value={rascunho.origem_mercadoria} onChange={(e) => alterar('origem_mercadoria', e.target.value)} /></Field><Field label="Unidade tributável"><input value={rascunho.unidade_tributavel} onChange={(e) => alterar('unidade_tributavel', e.target.value)} /></Field><Field label="CFOP padrão"><input value={rascunho.cfop_padrao} onChange={(e) => alterar('cfop_padrao', e.target.value)} /></Field><Field label="CST ICMS"><input value={rascunho.cst} onChange={(e) => alterar('cst', e.target.value)} /></Field><Field label="CSOSN"><input value={rascunho.csosn} onChange={(e) => alterar('csosn', e.target.value)} /></Field><Field label="CST PIS"><input value={rascunho.cst_pis} onChange={(e) => alterar('cst_pis', e.target.value)} /></Field><Field label="CST COFINS"><input value={rascunho.cst_cofins} onChange={(e) => alterar('cst_cofins', e.target.value)} /></Field>
-        </div> : <div className={styles.fiscalGrid}>
-          <Field label="Tributação nacional"><input value={rascunho.codigo_tributacao_nacional} onChange={(e) => alterar('codigo_tributacao_nacional', e.target.value)} /></Field><Field label="Código municipal"><input value={rascunho.codigo_tributacao_municipal} onChange={(e) => alterar('codigo_tributacao_municipal', e.target.value)} /></Field><Field label="Item LC 116"><input value={rascunho.item_lc116} onChange={(e) => alterar('item_lc116', e.target.value)} /></Field><Field label="NBS"><input value={rascunho.nbs} onChange={(e) => alterar('nbs', e.target.value)} /></Field><Field label="Município da prestação"><input value={rascunho.municipio_prestacao} onChange={(e) => alterar('municipio_prestacao', e.target.value)} /></Field><Field label="Alíquota ISS"><PercentInput value={rascunho.aliquota_iss} onChange={(valor) => alterar('aliquota_iss', valor)} /></Field>
+      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>{rascunho.tipo_item === 'produto' ? 'Identificação fiscal do produto' : 'Emissão fiscal do serviço'}</h2><p>{rascunho.tipo_item === 'produto' ? 'NCM e unidade tributável identificam a mercadoria. Os demais tributos seguem o enquadramento da empresa; CFOP e natureza são definidos para a operação na emissão.' : 'A classificação, incidência e tributação do serviço são definidas na emissão da NFS-e, conforme o município, a operação e a situação tributária da empresa.'}</p></div></div>
+        {rascunho.tipo_item === 'produto' && <div className={styles.formGrid}>
+          <Field label="NCM *"><input value={rascunho.ncm} onChange={(e) => alterar('ncm', e.target.value.replace(/\D/g, '').slice(0, 8))} inputMode="numeric" placeholder="00000000" maxLength={8} /></Field>
+          <Field label="Unidade tributável *"><input value={rascunho.unidade_tributavel} onChange={(e) => alterar('unidade_tributavel', e.target.value)} placeholder="UN" maxLength={20} /></Field>
         </div>}
-        <details className={styles.taxDetails}><summary>Classificações IBS/CBS</summary><div className={styles.formGrid}><Field label="CST IBS/CBS"><input value={rascunho.cst_ibs_cbs} onChange={(e) => alterar('cst_ibs_cbs', e.target.value)} /></Field><Field label="Classificação tributária"><input value={rascunho.classificacao_ibs_cbs} onChange={(e) => alterar('classificacao_ibs_cbs', e.target.value)} /></Field></div></details>
       </section>
 
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Composição do custo</h2><p>Insumos, embalagens, mão de obra e recursos compartilhados.</p></div><button type="button" className={styles.secondaryButton} onClick={() => setComposicao((atual) => ({ ...atual, itens: [...atual.itens, { id: crypto.randomUUID(), recursoId: documento.recursos[0]?.id || '', quantidade: 1, perda: 0 }] }))}>Adicionar recurso</button></div>

@@ -1,11 +1,17 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.08 -->
+<!-- ava-version: 1.38.0.09 -->
+
+> Revisão 1.38.0.09: em **Editar cadastro do perfil > Dados fiscais**, informe
+> o regime tributário e os parâmetros padrão da empresa. Em **Produtos e
+> serviços**, mercadorias pedem somente **NCM** e **unidade tributável**;
+> CFOP e natureza da operação são escolhidos pela regra fiscal durante a
+> emissão, conforme operação e destinatário. Revise os parâmetros com o
+> responsável fiscal antes de emitir.
 
 > Revisão 1.38.0.08: **Em estudo** significa que o cadastro está ativo, mas
 > ainda não está disponível no Catálogo de divulgação. Marque **Disponível no
-> catálogo** somente quando ele estiver pronto para aparecer lá; salvar a
-> publicação exige preço de venda e os dados fiscais aplicáveis. Se o código
+> catálogo** somente quando ele estiver pronto para aparecer lá. Se o código
 > interno já existir, a Gestão avisa e devolve o foco ao campo para correção.
 
 > Revisão 1.38.0.07: no cadastro de Produtos e Serviços, use **Sugerir** ao

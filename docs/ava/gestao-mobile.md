@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.38.0.08 -->
+<!-- ava-version: 1.38.0.09 -->
+
+> Revisão 1.38.0.09: os parâmetros tributários passaram para o cadastro da
+> empresa e a identificação fiscal do produto foi simplificada na Gestão Web;
+> sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.38.0.08: os ajustes de edição e a explicação de disponibilidade no
 > Catálogo pertencem a Custos e Precificação na Gestão Web; sem alteração

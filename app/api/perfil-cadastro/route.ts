@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import {
   ESTADOS_BRASIL,
+  CONFIGURACAO_FISCAL_EMPRESA_VAZIA,
   REGIMES_TRIBUTARIOS,
   TIPOS_EMPRESA,
   somenteDigitos,
@@ -20,6 +21,21 @@ function texto(valor: unknown, limite = 180) {
 const TIPOS_EMPRESA_VALIDOS = new Set<string>(TIPOS_EMPRESA.map(([valor]) => valor));
 const REGIMES_VALIDOS = new Set<string>(REGIMES_TRIBUTARIOS.map(([valor]) => valor));
 const ESTADOS_VALIDOS = new Set<string>(ESTADOS_BRASIL);
+
+function normalizarConfiguracaoFiscal(valor: unknown) {
+  const origem = texto(valor && typeof valor === 'object' ? (valor as Record<string, unknown>).origem_mercadoria_padrao : '', 1).replace(/\D/g, '');
+  const origemMercadoria = /^[0-8]$/.test(origem) ? origem : CONFIGURACAO_FISCAL_EMPRESA_VAZIA.origem_mercadoria_padrao;
+  const campoNumerico = (chave: string, limite: number) => somenteDigitos(valor && typeof valor === 'object' ? (valor as Record<string, unknown>)[chave] : '', limite);
+  return {
+    origem_mercadoria_padrao: origemMercadoria,
+    cst_icms: campoNumerico('cst_icms', 3),
+    csosn: campoNumerico('csosn', 3),
+    cst_pis: campoNumerico('cst_pis', 2),
+    cst_cofins: campoNumerico('cst_cofins', 2),
+    cst_ibs_cbs: texto(valor && typeof valor === 'object' ? (valor as Record<string, unknown>).cst_ibs_cbs : '', 12),
+    classificacao_ibs_cbs: texto(valor && typeof valor === 'object' ? (valor as Record<string, unknown>).classificacao_ibs_cbs : '', 40),
+  };
+}
 
 function normalizarCadastro(cadastro: Record<string, unknown>) {
   return {
@@ -48,6 +64,7 @@ function normalizarCadastro(cadastro: Record<string, unknown>) {
     inscricao_municipal: texto(cadastro.inscricao_municipal, 40),
     inscricao_municipal_isento: cadastro.inscricao_municipal_isento === true,
     regime_tributario: texto(cadastro.regime_tributario, 40),
+    configuracao_fiscal: normalizarConfiguracaoFiscal(cadastro.configuracao_fiscal),
     obrigatorio_em: String(cadastro.obrigatorio_em || ''),
     adiado_em: cadastro.adiado_em ? String(cadastro.adiado_em) : null,
     concluido_em: cadastro.concluido_em ? String(cadastro.concluido_em) : null,
@@ -215,6 +232,7 @@ export async function PUT(request: Request) {
     inscricao_municipal: texto(dados.inscricao_municipal, 40),
     inscricao_municipal_isento: dados.inscricao_municipal_isento === true,
     regime_tributario: pessoal ? 'nao_aplicavel' : (REGIMES_VALIDOS.has(regimeInformado) ? regimeInformado : ''),
+    configuracao_fiscal: pessoal ? CONFIGURACAO_FISCAL_EMPRESA_VAZIA : normalizarConfiguracaoFiscal(dados.configuracao_fiscal),
     atualizado_em: new Date().toISOString(),
   };
 

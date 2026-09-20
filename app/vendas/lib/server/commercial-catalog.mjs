@@ -8,13 +8,8 @@ const number = (value) => Number.isFinite(Number(value)) ? Math.max(0, Number(va
 const timestamp = (value) => value instanceof Date ? value.toISOString() : clean(value, 40);
 
 function fiscalReady(row) {
-  if (row.tipo_item === 'servico') {
-    return Boolean(clean(row.codigo_tributacao_nacional) && clean(row.codigo_tributacao_municipal)
-      && clean(row.item_lc116) && clean(row.municipio_prestacao));
-  }
-  return Boolean(clean(row.ncm) && clean(row.origem_mercadoria) && clean(row.unidade_tributavel)
-    && clean(row.cfop_padrao) && (clean(row.cst) || clean(row.csosn))
-    && clean(row.cst_pis) && clean(row.cst_cofins));
+  if (row.tipo_item === 'servico') return true;
+  return Boolean(clean(row.ncm) && clean(row.unidade_tributavel));
 }
 
 function mapItem(row, price) {

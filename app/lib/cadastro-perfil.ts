@@ -28,6 +28,26 @@ export const ESTADOS_BRASIL = [
 
 export { validarNomeCompleto } from './nome-pessoa';
 
+export type ConfiguracaoFiscalEmpresa = {
+  origem_mercadoria_padrao: string;
+  cst_icms: string;
+  csosn: string;
+  cst_pis: string;
+  cst_cofins: string;
+  cst_ibs_cbs: string;
+  classificacao_ibs_cbs: string;
+};
+
+export const CONFIGURACAO_FISCAL_EMPRESA_VAZIA: ConfiguracaoFiscalEmpresa = {
+  origem_mercadoria_padrao: '0',
+  cst_icms: '',
+  csosn: '',
+  cst_pis: '',
+  cst_cofins: '',
+  cst_ibs_cbs: '',
+  classificacao_ibs_cbs: '',
+};
+
 export type CadastroPerfil = {
   empresa_id: string;
   nome_fantasia: string;
@@ -53,6 +73,7 @@ export type CadastroPerfil = {
   inscricao_municipal: string;
   inscricao_municipal_isento: boolean;
   regime_tributario: string;
+  configuracao_fiscal: ConfiguracaoFiscalEmpresa;
   obrigatorio_em: string;
   adiado_em: string | null;
   concluido_em: string | null;

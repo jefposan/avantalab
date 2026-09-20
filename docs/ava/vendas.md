@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.38.0.08 -->
+<!-- ava-version: 1.38.0.09 -->
+
+> Revisão 1.38.0.09: NCM e unidade tributável continuam no produto; o regime
+> e os parâmetros tributários pertencem ao cadastro da empresa, enquanto CFOP
+> e natureza são definidos pela regra da emissão. Revise a regra e os dados
+> empresariais antes de preparar a nota.
 
 > Revisão 1.38.0.08: os ajustes do editor de Custos e a disponibilidade no
 > Catálogo pertencem à Gestão Web; sem alteração operacional no AvantaVendas.

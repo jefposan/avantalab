@@ -8,20 +8,10 @@ const numero = (valor: unknown) => Number.isFinite(Number(valor)) ? Number(valor
 export function situacaoFiscalItemCustos(linha: LinhaCatalogoCustos): ItemCatalogoVendas['situacaoFiscal'] {
   const tipo = linha.tipo_item === 'servico' ? 'servico' : 'produto';
   const completo = tipo === 'servico'
-    ? Boolean(
-      texto(linha.codigo_tributacao_nacional)
-      && texto(linha.codigo_tributacao_municipal)
-      && texto(linha.item_lc116)
-      && texto(linha.municipio_prestacao)
-    )
+    ? true
     : Boolean(
       texto(linha.ncm)
-      && texto(linha.origem_mercadoria)
       && texto(linha.unidade_tributavel)
-      && texto(linha.cfop_padrao)
-      && (texto(linha.cst) || texto(linha.csosn))
-      && texto(linha.cst_pis)
-      && texto(linha.cst_cofins)
     );
   return completo ? 'Completo' : 'Revisar cadastro fiscal';
 }

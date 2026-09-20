@@ -94,7 +94,8 @@ export function validateFiscalMatrix(input, requestedDocumentScope) {
       if (field === 'consumerFinal' && rule[field] == null) continue;
       if (!values.includes(rule[field])) errors.push(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: selecione uma opção válida para ${label}.`);
     }
-    if (rule.cfopOverride && !/^\d{4}$/.test(String(rule.cfopOverride))) errors.push(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: informe o CFOP com quatro dígitos ou deixe o campo vazio.`);
+    if (rule.cfopOverride && !/^\d{4}$/.test(String(rule.cfopOverride))) errors.push(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: informe o CFOP com quatro dígitos.`);
+    if (['nfe', 'nfce'].includes(rule.documentType) && !String(rule.cfopOverride || '').trim()) errors.push(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: informe o CFOP da operação para a emissão.`);
   });
   const requestedScope = Array.isArray(requestedDocumentScope) ? requestedDocumentScope : matrix.documentScope;
   const documentScope = [...new Set(requestedScope.filter((documentType) => documentTypes.includes(documentType)))];
@@ -120,7 +121,7 @@ export function validateFiscalMatrix(input, requestedDocumentScope) {
   if (reviewedRules.length && (!matrix.reviewedBy || !matrix.reviewedAt)) errors.push('Informe responsável e data para registrar regras como revisadas.');
   const pending = activeRules.filter((rule) => !rule.reviewed).length;
   if (pending) warnings.push(`${pending} ${pending === 1 ? 'regra ativa ainda precisa' : 'regras ativas ainda precisam'} de revisão fiscal.`);
-  if (activeRules.some((rule) => rule.cfopOverride)) warnings.push('CFOPs definidos na matriz substituem o padrão do item somente após revisão da operação.');
+  if (activeRules.some((rule) => rule.cfopOverride)) warnings.push('CFOPs são definidos pela regra fiscal da operação e exigem revisão antes da emissão.');
   return { matrix, ready: errors.length === 0, errors, warnings, activeCount: activeRules.length, reviewedCount: reviewedRules.length, documentScope: effectiveDocumentScope };
 }
 
