@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.38.0.03 -->
+<!-- ava-version: 1.38.0.04 -->
+
+> Revisão 1.38.0.04: o refinamento da barra de ações pertence a Custos e
+> Precificação na Gestão Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.38.0.03: o salvar unificado e o aviso de descarte pertencem a
 > Custos e Precificação na Gestão Web; sem alteração operacional na Gestão Mobile.

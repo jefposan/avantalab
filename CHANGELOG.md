@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.38.0.04 - 2026-09-20
+- **Barra de ações compacta**: a barra flutuante de edição mantém sua camada
+  após fechar confirmações, com altura, espaçamento e botões mais enxutos.
+- **Inativação delimitada**: **Inativar cadastro** ganhou contorno e superfície
+  de alerta compatíveis com os demais botões, preservando sua separação visual.
+
 ## 1.38.0.03 - 2026-09-20
 - **Salvar unificado**: a edição de produto ou serviço passou a ter uma única
   ação **Salvar**, que grava cadastro e composição de custo juntos.

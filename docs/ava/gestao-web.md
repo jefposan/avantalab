@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.03 -->
+<!-- ava-version: 1.38.0.04 -->
+
+> Revisão 1.38.0.04: a barra flutuante de **Inativar cadastro**, **Cancelar**
+> e **Salvar** no editor de Produtos e Serviços permanece elevada após fechar
+> confirmações e ocupa menos altura; o fluxo operacional não muda.
 
 > Revisão 1.38.0.03: no cadastro de Produtos e Serviços, use **Salvar** uma
 > única vez para gravar cadastro e composição. **Cancelar** volta para a lista;

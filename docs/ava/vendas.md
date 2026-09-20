@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.38.0.03 -->
+<!-- ava-version: 1.38.0.04 -->
+
+> Revisão 1.38.0.04: o refinamento visual da barra de ações pertence a Custos
+> e Precificação na Gestão Web; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.38.0.03: o salvar unificado e a proteção contra descarte pertencem
 > a Custos e Precificação na Gestão Web; sem alteração operacional no AvantaVendas.
