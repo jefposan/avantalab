@@ -1196,14 +1196,36 @@
 
   function registrarDiagnosticoAcessoMobile(etapa, erro) {
     try {
-      sessionStorage.setItem('avantalab.mobile.diagnostico_acesso', JSON.stringify({
+      var diagnostico = JSON.stringify({
         etapa: String(etapa || 'indefinida'),
         mensagem: String(erro && erro.message ? erro.message : erro || ''),
         versao: APP_VERSION,
         origem: window.location.pathname,
         registradoEm: new Date().toISOString(),
-      }));
+      });
+      sessionStorage.setItem('avantalab.mobile.diagnostico_acesso', diagnostico);
+      localStorage.setItem('avantalab.mobile.ultimo_diagnostico_acesso', diagnostico);
     } catch (e) {}
+  }
+
+  function limparSessaoLocalMobile() {
+    try {
+      var referencia = new URL(config.supabaseUrl).hostname.split('.')[0];
+      if (!referencia) return;
+      localStorage.removeItem('sb-' + referencia + '-auth-token');
+      localStorage.removeItem('sb-' + referencia + '-auth-token-code-verifier');
+    } catch (error) {}
+  }
+
+  function abrirLoginAposFalhaSessaoMobile(erro) {
+    registrarDiagnosticoAcessoMobile('restauracao_sessao', erro);
+    state.usuario = null;
+    state.autenticado = false;
+    state.carregando = false;
+    state.pronto = true;
+    state.telaAcesso = 'login';
+    state.falhaAcesso = '';
+    render();
   }
 
   function exibirFalhaRenderizacaoAcessoMobile(erro) {
@@ -17371,6 +17393,7 @@
   }
 
   async function iniciar() {
+    var etapaAcessoMobile = 'preparacao';
     state.falhaAcesso = '';
     state.preparacaoAcessoInterrompida = false;
     if (window.__avantalabDestinoPushNativoMobile) {
@@ -17578,15 +17601,34 @@
 
     try {
       if (deveEncerrarSessaoSalvaMobile()) {
-        await db.auth.signOut({ scope: 'local' });
-        window.location.replace(destinoLogoutMobile());
+        etapaAcessoMobile = 'encerramento_sessao_temporaria';
+        try {
+          await promessaMobileComPrazo(
+            db.auth.signOut({ scope: 'local' }),
+            5000,
+            'A limpeza da sessão temporária demorou mais que o esperado.'
+          );
+        } catch (erroSaidaLocal) {
+          registrarDiagnosticoAcessoMobile(etapaAcessoMobile, erroSaidaLocal);
+          limparSessaoLocalMobile();
+        }
+        limparPreferenciaSessaoMobile();
+        abrirLoginAposFalhaSessaoMobile('Sessão temporária encerrada ao fechar o aplicativo.');
         return;
       }
-      var sessao = await promessaMobileComPrazo(
-        db.auth.getSession(),
-        8000,
-        'A restauração da sessão demorou mais que o esperado.'
-      );
+      etapaAcessoMobile = 'restauracao_sessao';
+      var sessao;
+      try {
+        sessao = await promessaMobileComPrazo(
+          db.auth.getSession(),
+          12000,
+          'A restauração da sessão demorou mais que o esperado.'
+        );
+        if (sessao && sessao.error) throw sessao.error;
+      } catch (erroSessao) {
+        abrirLoginAposFalhaSessaoMobile(erroSessao);
+        return;
+      }
       atualizarProgressoAcessoMobile(
         'auth',
         1,
@@ -17610,6 +17652,7 @@
         state.pronto = false;
         state.carregando = true;
         render();
+        etapaAcessoMobile = 'carregamento_perfis';
         var perfisCarregados = await carregarEmpresas(state.usuario.id, state.usuario);
         if (!perfisCarregados) {
           var erroPerfis = new Error('Não foi possível carregar os perfis no tempo esperado.');
@@ -17636,8 +17679,12 @@
             state.modoCriarPerfil = true;
           }
         } else {
+          etapaAcessoMobile = 'preparacao_perfil';
           var aguardandoEscolhaSistema = await prepararSistemaInicialAntesDosDadosMobile();
-          if (!aguardandoEscolhaSistema) await carregarDados();
+          if (!aguardandoEscolhaSistema) {
+            etapaAcessoMobile = 'carregamento_dados';
+            await carregarDados();
+          }
           if (state.preparacaoAcessoInterrompida) return;
           // carregarDados já conclui e pinta a interface em todos os estados
           // terminais; uma segunda renderização aqui causava o flash do painel.
@@ -17669,7 +17716,12 @@
       ) {
         return;
       }
-      exibirFalhaDeAcessoMobile('Não foi possível recuperar a sessão. Tente novamente para reconectar.');
+      registrarDiagnosticoAcessoMobile(etapaAcessoMobile, error);
+      exibirFalhaDeAcessoMobile(
+        etapaAcessoMobile === 'carregamento_perfis'
+          ? 'Não foi possível carregar seus perfis. Confira a conexão e tente novamente.'
+          : 'Não foi possível carregar seus dados. Confira a conexão e tente novamente.'
+      );
     }
   }
 

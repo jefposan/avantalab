@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.21 -->
+<!-- ava-version: 1.36.0.22 -->
+
+> Revisão 1.36.0.22: tocar no push ou abrir o aplicativo pelo ícone apenas
+> inicia/retoma a Gestão Mobile. Com sessão válida, o painel abre; sem sessão
+> válida, aparece o login. A abertura nativa não deve ficar presa no aviso de
+> falha de sessão. Se o problema estiver nos perfis ou dados, o aviso identifica
+> essa etapa e permite tentar novamente.
 
 > Revisão 1.36.0.21: tocar em uma notificação push abre ou retoma a Gestão
 > Mobile sem reiniciar a sessão. Avisos com destino específico, como

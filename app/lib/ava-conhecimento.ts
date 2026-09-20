@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.36.0.22: abrir a Gestão Mobile pelo ícone ou push leva
+// ao painel com sessão válida ou ao login sem sessão, sem travar na recuperação.
 // Revisado na versão 1.36.0.21: tocar em um push da Gestão Mobile retoma o app
 // sem recarregar /mobile; destinos específicos abrem após a sessão ficar pronta.
 // Revisado na versão 1.36.0.20: Gestão Mobile e AvantaVendas pedem autorização

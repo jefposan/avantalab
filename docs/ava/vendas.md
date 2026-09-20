@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.21 -->
+<!-- ava-version: 1.36.0.22 -->
+
+> Revisão 1.36.0.22: o destravamento da restauração de sessão pertence à Gestão
+> Mobile; o fluxo do AvantaVendas permanece inalterado.
 
 > Revisão 1.36.0.21: a correção de retomada da sessão pertence à Gestão
 > Mobile; o caminho de abertura do AvantaVendas pelo push permanece inalterado.

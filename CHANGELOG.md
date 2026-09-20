@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.36.0.22 - 2026-09-20
+- **Abertura nativa destravada**: a Gestão Mobile deixa de disputar o bloqueio
+  de autenticação entre os dois clientes usados pela tela, evitando que uma
+  abertura fria pelo push prenda a restauração da sessão.
+- **Destino seguro da autenticação**: sessão válida abre o sistema normalmente;
+  sessão ausente ou irrecuperável volta ao login limpo, sem permanecer no aviso
+  “Não foi possível concluir o acesso”.
+- **Recuperação e diagnóstico precisos**: o encerramento de sessão temporária
+  possui limite de espera e limpeza local segura; falhas posteriores distinguem
+  carregamento de perfis e dados em vez de atribuir tudo à sessão.
+
 ## 1.36.0.21 - 2026-09-20
 - **Push abre a Gestão sem reiniciar a sessão**: tocar em uma notificação da
   Gestão Mobile deixa de recarregar `/mobile` quando o aplicativo já está nessa

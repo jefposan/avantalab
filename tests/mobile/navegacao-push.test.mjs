@@ -41,3 +41,21 @@ test('a ponte preserva a sessão ao abrir o push e entrega o destino para o app'
   assert.match(mobile, /window\.addEventListener\('avantalab:push-mobile-aberto'/);
   assert.match(mobile, /carregarNotificacoesNaoLidas\(false\)/);
 });
+
+test('a abertura nativa não fica presa no lock de sessão nem em uma tela de erro de autenticação', async () => {
+  const [mobile, clienteSupabase] = await Promise.all([
+    readFile(new URL('public/mobile-app.js', raiz), 'utf8'),
+    readFile(new URL('app/lib/supabase.ts', raiz), 'utf8'),
+  ]);
+
+  assert.match(clienteSupabase, /window\.location\.pathname\.startsWith\('\/mobile'\)/);
+  assert.match(clienteSupabase, /autoRefreshToken: false/);
+  assert.match(clienteSupabase, /detectSessionInUrl: false/);
+  assert.match(clienteSupabase, /lock: async \(_nome, _limiteMs, executar\) => executar\(\)/);
+  assert.match(mobile, /abrirLoginAposFalhaSessaoMobile\(erroSessao\)/);
+  assert.match(mobile, /state\.telaAcesso = 'login'/);
+  assert.doesNotMatch(
+    mobile,
+    /exibirFalhaDeAcessoMobile\('Não foi possível recuperar a sessão\. Tente novamente para reconectar\.'\)/,
+  );
+});

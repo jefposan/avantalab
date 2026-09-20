@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.21 -->
+<!-- ava-version: 1.36.0.22 -->
+
+> Revisão 1.36.0.22: a recuperação da sessão ao abrir por push pertence à
+> Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.36.0.21: a correção de abertura pelo push pertence à Gestão
 > Mobile; sem impacto operacional na Gestão Web.
