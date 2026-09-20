@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.31 -->
+<!-- ava-version: 1.37.0 -->
+
+> Revisão 1.37.0: backup em nuvem pertence à Gestão Web e Gestão Mobile; sem
+> mudança operacional no AvantaVendas.
 
 > Revisão 1.36.0.31: o histórico paginado de disparos pertence ao painel
 > administrativo; sem mudança operacional no AvantaVendas.

@@ -53,6 +53,8 @@ export interface GerarBackupExcelParams {
   setModalExcluirEmpresa: (val: boolean) => void;
   abrirExclusaoDepois?: boolean;
   nomeArquivoPrefixo?: string;
+  destino?: 'local' | 'nuvem' | 'ambos';
+  enviarParaNuvem?: (arquivo: File) => Promise<void>;
 }
 
 export type AnaliseBackupImportacao = {
@@ -277,6 +279,8 @@ export async function gerarBackupExcel({
   setModalExcluirEmpresa,
   abrirExclusaoDepois = false,
   nomeArquivoPrefixo = 'backup_avantalab',
+  destino = 'local',
+  enviarParaNuvem,
 }: GerarBackupExcelParams): Promise<void> {
   if (!empresaId) {
     abrirAviso('Perfil nao carregado', 'Faca login novamente e tente gerar o backup.', undefined, 'erro');
@@ -452,7 +456,12 @@ export async function gerarBackupExcel({
   adicionarPlanilha(wb, 'Resumo Financeiro', dadosResumoFinanceiro);
 
   const nomeArquivo = `${nomeArquivoPrefixo}_${sanitizarNomeArquivo(nomePerfilFinal)}_${dataHoje}_v${APP_VERSION}.xlsx`;
-  XLSX.writeFile(wb, nomeArquivo);
+  if (destino === 'local' || destino === 'ambos') XLSX.writeFile(wb, nomeArquivo);
+  if (destino === 'nuvem' || destino === 'ambos') {
+    if (!enviarParaNuvem) throw new Error('Nenhuma conta de nuvem está conectada para receber este backup.');
+    const conteudo = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    await enviarParaNuvem(new File([conteudo], nomeArquivo, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  }
 
   const { error: erroSalvarBackup } = await supabase
     .from('configuracoes')

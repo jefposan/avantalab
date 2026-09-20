@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.37.0: Gestão Web e Mobile escolhem, em cada backup,
+// dispositivo, conta conectada ou ambos; restauração recebe arquivo local,
+// conta conectada ou ponto AvantaLab. OAuth abre somente o provedor oficial,
+// sem campo de senha no AvantaLab.
 // Revisado na versão 1.36.0.31: a paginação do histórico de disparos pertence
 // somente ao /admin e não altera a orientação operacional da Ava.
 // Revisado na versão 1.36.0.30: destinos Todos, Usuário e Perfil/Conta são

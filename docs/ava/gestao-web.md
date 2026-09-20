@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.31 -->
+<!-- ava-version: 1.37.0 -->
+
+> Revisão 1.37.0: em **Configurações > Backup**, escolha em cada geração se o
+> Excel será salvo neste dispositivo, na conta conectada ou nos dois. Em
+> **Restauração**, escolha **Arquivo deste dispositivo**, **Conta conectada**
+> ou **Ponto de restauração**. Conectar Google Drive ou OneDrive abre a página
+> oficial do provedor; a pessoa autoriza a pasta de backups sem informar senha
+> ao AvantaLab.
 
 > Revisão 1.36.0.31: o histórico paginado de disparos pertence ao painel
 > `/admin`; sem impacto operacional na Gestão Web.

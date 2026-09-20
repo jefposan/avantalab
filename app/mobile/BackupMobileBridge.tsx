@@ -11,6 +11,8 @@ import {
   type ResultadoImportacaoBackup,
 } from '../lib/exportacao';
 import PontosRestauracaoModal from '../components/PontosRestauracaoModal';
+import { DestinoBackupNuvemModal, RestaurarDaNuvemModal, type DestinoBackup } from '../components/BackupNuvemModals';
+import { supabase } from '../lib/supabase';
 
 type DadosMobile = {
   empresaId: string;
@@ -45,6 +47,8 @@ export default function BackupMobileBridge() {
   const [confirmarBackup, setConfirmarBackup] = useState(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [pontosAbertos, setPontosAbertos] = useState(false);
+  const [fonteRestauracaoAberta, setFonteRestauracaoAberta] = useState(false);
+  const [nuvemAberta, setNuvemAberta] = useState(false);
 
   useEffect(() => {
     const receber = (evento: Event) => {
@@ -54,7 +58,7 @@ export default function BackupMobileBridge() {
       if (detalhe.acao === 'backup') setConfirmarBackup(true);
       if (detalhe.acao === 'restauracao') {
         setArquivo(null); setAnalise(null); setModo('atualizar'); setConfirmacao('');
-        inputRef.current?.click();
+        setFonteRestauracaoAberta(true);
       }
       if (detalhe.acao === 'pontos') setPontosAbertos(true);
     };
@@ -83,13 +87,21 @@ export default function BackupMobileBridge() {
     nomeArquivoPrefixo: prefixo,
   });
 
-  const gerar = async () => {
+  const enviarParaNuvem = async (arquivoNuvem: File) => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.access_token) throw new Error('Sua sessão expirou. Entre novamente para continuar.');
+    const corpo = new FormData(); corpo.set('acao', 'enviar'); corpo.set('empresaId', dados?.empresaId || ''); corpo.set('arquivo', arquivoNuvem);
+    const resposta = await fetch('/api/backup-nuvem', { method: 'POST', headers: { Authorization: `Bearer ${data.session.access_token}` }, body: corpo });
+    const json = await resposta.json(); if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível enviar o backup para a nuvem.');
+  };
+
+  const gerar = async (destino: DestinoBackup) => {
     if (!dados) return;
     setProcessando(true);
     try {
-      await gerarBackupExcel(parametrosBackup(dados));
+      await gerarBackupExcel({ ...parametrosBackup(dados), destino, enviarParaNuvem });
       setConfirmarBackup(false);
-      setAviso({ titulo: 'Backup gerado', mensagem: 'O arquivo foi gerado com sucesso.', tipo: 'sucesso' });
+      setAviso({ titulo: 'Backup gerado', mensagem: destino === 'ambos' ? 'O backup foi salvo no aparelho e na conta conectada.' : destino === 'nuvem' ? 'O backup foi enviado para a conta conectada.' : 'O arquivo foi gerado com sucesso.', tipo: 'sucesso' });
     } catch (error) {
       setAviso({ titulo: 'Erro ao gerar backup', mensagem: error instanceof Error ? error.message : 'Nao foi possivel gerar o arquivo.', tipo: 'erro' });
     } finally { setProcessando(false); }
@@ -138,13 +150,9 @@ export default function BackupMobileBridge() {
   return <>
     <input ref={inputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => { void selecionar(e.target.files?.[0]); e.target.value = ''; }} />
 
-    {confirmarBackup && <div className={painel}>
-      <section className={card}>
-        <header className="bg-[#003E73] px-4 py-3 text-white"><p className="text-[10px] font-black uppercase tracking-widest text-cyan-100">Configuracoes</p><h2 className="text-lg font-black">Gerar backup</h2></header>
-        <div className="p-4 text-sm font-semibold leading-relaxed text-slate-600">Será gerado um arquivo Excel com os dados completos do perfil atual.</div>
-        <footer className="flex gap-2 border-t border-slate-200 p-3"><button type="button" disabled={processando} onClick={() => setConfirmarBackup(false)} className="h-11 flex-1 rounded-xl border border-slate-300 text-xs font-black uppercase text-slate-600">Cancelar</button><button type="button" disabled={processando} onClick={() => void gerar()} className="h-11 flex-1 rounded-xl bg-[#003E73] text-xs font-black uppercase text-white disabled:opacity-60">{processando ? 'Gerando...' : 'Gerar backup'}</button></footer>
-      </section>
-    </div>}
+    <DestinoBackupNuvemModal aberto={confirmarBackup} empresaId={dados?.empresaId || ''} darkMode={dados?.darkMode || false} origem="mobile" onFechar={() => setConfirmarBackup(false)} onConfirmar={(destino) => gerar(destino)} />
+
+    {fonteRestauracaoAberta && <div className={painel}><section className={card}><header className="bg-[#003E73] px-4 py-3 text-white"><p className="text-[10px] font-black uppercase tracking-widest text-cyan-100">Restauração</p><h2 className="text-lg font-black">De onde restaurar?</h2></header><div className="grid gap-2 p-4"><button type="button" onClick={() => { setFonteRestauracaoAberta(false); inputRef.current?.click(); }} className="rounded-xl border border-slate-200 p-3 text-left text-sm font-black">Arquivo deste aparelho<span className="mt-1 block text-xs font-semibold text-slate-500">Selecione um Excel salvo localmente.</span></button><button type="button" onClick={() => { setFonteRestauracaoAberta(false); setNuvemAberta(true); }} className="rounded-xl border border-slate-200 p-3 text-left text-sm font-black">Conta conectada<span className="mt-1 block text-xs font-semibold text-slate-500">Escolha um backup da nuvem autorizada.</span></button><button type="button" onClick={() => { setFonteRestauracaoAberta(false); setPontosAbertos(true); }} className="rounded-xl border border-slate-200 p-3 text-left text-sm font-black">Ponto de restauração<span className="mt-1 block text-xs font-semibold text-slate-500">Restaura diretamente o estado salvo no AvantaLab.</span></button></div><footer className="border-t border-slate-200 p-3"><button type="button" onClick={() => setFonteRestauracaoAberta(false)} className="h-11 w-full rounded-xl border border-slate-300 text-xs font-black uppercase">Cancelar</button></footer></section></div>}
 
     {analise && <div className={painel}>
       <section className={card}>
@@ -164,5 +172,6 @@ export default function BackupMobileBridge() {
 
     {aviso && <div className={painel}><section className={card}><header className="bg-[#003E73] px-4 py-3 text-white"><h2 className="text-lg font-black">{aviso.titulo}</h2></header><div className="whitespace-pre-line p-4 text-sm font-semibold leading-relaxed text-slate-600">{aviso.mensagem}</div><footer className="border-t border-slate-200 p-3"><button type="button" onClick={fecharAviso} className="h-11 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase text-white">OK</button></footer></section></div>}
     <PontosRestauracaoModal aberto={pontosAbertos} empresaId={dados?.empresaId || ''} darkMode={dados?.darkMode || false} onFechar={() => setPontosAbertos(false)} />
+    <RestaurarDaNuvemModal aberto={nuvemAberta} empresaId={dados?.empresaId || ''} darkMode={dados?.darkMode || false} onFechar={() => setNuvemAberta(false)} onSelecionar={async (arquivoNuvem) => { setNuvemAberta(false); await selecionar(arquivoNuvem); }} />
   </>;
 }

@@ -33,6 +33,7 @@ import PaywallEmpresa from '@/app/components/PaywallEmpresa';
 import CadastroPerfilModal from '@/app/components/CadastroPerfilModal';
 import AssinaturaModal from '@/app/components/AssinaturaModal';
 import PontosRestauracaoModal from '@/app/components/PontosRestauracaoModal';
+import { DestinoBackupNuvemModal, RestaurarDaNuvemModal, type DestinoBackup } from '@/app/components/BackupNuvemModals';
 import PremiumPessoalModal from '@/app/components/PremiumPessoalModal';
 import TelaCarregandoAcesso, { FundoAcessoResponsivo } from '@/app/components/TelaCarregandoAcesso';
 import ModalAprovacoes, { type AcessoVendasAprovado, type SolicitacaoAprovacao } from '@/app/components/ModalAprovacoes';
@@ -939,6 +940,9 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [confirmacaoSubstituirBackup, setConfirmacaoSubstituirBackup] = useState('');
   const [importandoBackup, setImportandoBackup] = useState(false);
   const [pontosRestauracaoAberto, setPontosRestauracaoAberto] = useState(false);
+  const [backupNuvemDestinoAberto, setBackupNuvemDestinoAberto] = useState(false);
+  const [fonteRestauracaoBackupAberta, setFonteRestauracaoBackupAberta] = useState(false);
+  const [restaurarNuvemAberto, setRestaurarNuvemAberto] = useState(false);
 
   // Modais e Calc
   const [modalInstrucoes, setModalInstrucoes] = useState(false);
@@ -5930,6 +5934,26 @@ const backupParams = () => ({
   setModalExcluirEmpresa,
 });
 
+const enviarBackupParaNuvem = async (arquivo: File) => {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session?.access_token) throw new Error('Sua sessão expirou. Entre novamente para continuar.');
+  const corpo = new FormData();
+  corpo.set('acao', 'enviar'); corpo.set('empresaId', empresaId || ''); corpo.set('arquivo', arquivo);
+  const resposta = await fetch('/api/backup-nuvem', { method: 'POST', headers: { Authorization: `Bearer ${data.session.access_token}` }, body: corpo });
+  const json = await resposta.json();
+  if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível enviar o backup para a nuvem.');
+};
+
+const gerarBackupNoDestino = async (destino: DestinoBackup) => {
+  try {
+    await gerarBackupExcel({ ...backupParams(), destino, enviarParaNuvem: enviarBackupParaNuvem });
+    setBackupNuvemDestinoAberto(false);
+    abrirAviso('Backup gerado', destino === 'ambos' ? 'O backup foi salvo neste dispositivo e na conta conectada.' : destino === 'nuvem' ? 'O backup foi enviado para a conta conectada.' : 'O arquivo Excel foi salvo neste dispositivo.', undefined, 'sucesso');
+  } catch (error) {
+    abrirAviso('Erro ao gerar backup', error instanceof Error ? error.message : 'Não foi possível gerar o backup.', undefined, 'erro');
+  }
+};
+
 const recarregarDadosFinanceirosAtual = async () => {
   if (!empresaId) return;
 
@@ -6347,10 +6371,16 @@ const abrirImportacaoBackup = () => {
 
   setAjustesAberto(false);
 
-  if (backupImportInputRef.current) {
-    backupImportInputRef.current.value = '';
-    backupImportInputRef.current.click();
-  }
+  setFonteRestauracaoBackupAberta(true);
+};
+
+const abrirArquivoLocalRestauracao = () => {
+  setFonteRestauracaoBackupAberta(false);
+  if (backupImportInputRef.current) { backupImportInputRef.current.value = ''; backupImportInputRef.current.click(); }
+};
+
+const selecionarArquivoNuvem = async (arquivo: File) => {
+  await selecionarArquivoBackup({ target: { files: [arquivo], value: '' } } as unknown as React.ChangeEvent<HTMLInputElement>);
 };
 
 const fecharModalRestauracaoBackup = () => {
@@ -6645,7 +6675,7 @@ const alertasSistema = useMemo(() => {
       mensagem:
         'Recomendamos gerar um backup local dos dados da empresa após o encerramento de cada mês.',
       acaoTexto: 'Gerar backup agora',
-      acao: () => gerarBackupExcel(backupParams()),
+      acao: () => setBackupNuvemDestinoAberto(true),
       naoLida: true,
     });
   }
@@ -8903,6 +8933,32 @@ if (validacaoTelefoneObrigatoria) {
 
 <PontosRestauracaoModal aberto={pontosRestauracaoAberto} empresaId={empresaId || ''} darkMode={darkMode} onFechar={() => setPontosRestauracaoAberto(false)} />
 
+<DestinoBackupNuvemModal
+  aberto={backupNuvemDestinoAberto}
+  empresaId={empresaId || ''}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+  origem="web"
+  onFechar={() => setBackupNuvemDestinoAberto(false)}
+  onConfirmar={gerarBackupNoDestino}
+/>
+
+{fonteRestauracaoBackupAberta && (
+  <div className="fixed inset-0 z-[7100] flex items-center justify-center bg-black/70 px-4" role="dialog" aria-modal="true" aria-labelledby="titulo-fonte-restauracao">
+    <div className={`w-full max-w-md overflow-hidden rounded-2xl border shadow-2xl ${darkMode ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-900'}`}>
+      <div className="px-5 py-4 text-white" style={estiloTemaPrimario}><p className="text-xs font-black uppercase tracking-[.18em] opacity-75">Restauração</p><h2 id="titulo-fonte-restauracao" className="mt-1 text-xl font-black">De onde restaurar?</h2></div>
+      <div className="grid gap-2 p-4">
+        <button type="button" onClick={abrirArquivoLocalRestauracao} className={`rounded-xl border p-3 text-left transition ${darkMode ? 'border-slate-700 hover:bg-slate-700' : 'border-slate-200 hover:bg-slate-50'}`}><strong className="block text-sm">Arquivo deste dispositivo</strong><span className="mt-1 block text-xs font-semibold opacity-70">Selecione um backup Excel salvo localmente.</span></button>
+        <button type="button" onClick={() => { setFonteRestauracaoBackupAberta(false); setRestaurarNuvemAberto(true); }} className={`rounded-xl border p-3 text-left transition ${darkMode ? 'border-slate-700 hover:bg-slate-700' : 'border-slate-200 hover:bg-slate-50'}`}><strong className="block text-sm">Conta conectada</strong><span className="mt-1 block text-xs font-semibold opacity-70">Escolha um arquivo da pasta de backups na nuvem.</span></button>
+        <button type="button" onClick={() => { setFonteRestauracaoBackupAberta(false); setPontosRestauracaoAberto(true); }} className={`rounded-xl border p-3 text-left transition ${darkMode ? 'border-slate-700 hover:bg-slate-700' : 'border-slate-200 hover:bg-slate-50'}`}><strong className="block text-sm">Ponto de restauração</strong><span className="mt-1 block text-xs font-semibold opacity-70">Restaura diretamente um estado salvo pelo AvantaLab.</span></button>
+      </div>
+      <div className={`border-t p-3 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => setFonteRestauracaoBackupAberta(false)} className="h-11 w-full rounded-xl border border-slate-300 text-xs font-black uppercase">Cancelar</button></div>
+    </div>
+  </div>
+)}
+
+<RestaurarDaNuvemModal aberto={restaurarNuvemAberto} empresaId={empresaId || ''} darkMode={darkMode} corPrimaria={corPrimaria} onFechar={() => setRestaurarNuvemAberto(false)} onSelecionar={async (arquivo) => { setRestaurarNuvemAberto(false); await selecionarArquivoNuvem(arquivo); }} />
+
 {modalReceitaDashboardAberto && (
   <div
     className="fixed inset-0 z-[6200] flex items-center justify-center bg-black/60 px-4"
@@ -11112,7 +11168,7 @@ if (validacaoTelefoneObrigatoria) {
 
           <Tooltip texto="Exporte os dados do perfil atual para um arquivo Excel." posicao="right" wrapperClassName="w-full">
             <button
-              onClick={() => { if (recursoBloqueado('exportacao')) { setAjustesAberto(false); abrirPremium('exportacao'); return; } if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para gerar backup dos dados da empresa.'); return; } setAjustesAberto(false); abrirConfirmacao({ titulo: 'Gerar backup', mensagem: 'O sistema vai gerar um arquivo Excel com os dados da empresa atual.\n\nDeseja continuar?', textoConfirmar: 'Gerar backup', acao: async () => { await gerarBackupExcel(backupParams()); } }); }}
+              onClick={() => { if (recursoBloqueado('exportacao')) { setAjustesAberto(false); abrirPremium('exportacao'); return; } if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para gerar backup dos dados da empresa.'); return; } setAjustesAberto(false); setBackupNuvemDestinoAberto(true); }}
               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-emerald-300 transition-colors hover:bg-slate-700"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>

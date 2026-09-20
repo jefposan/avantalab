@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.31 -->
+<!-- ava-version: 1.37.0 -->
+
+> Revisão 1.37.0: em **Configurações > Backup**, escolha a cada geração se o
+> arquivo fica no aparelho, na conta conectada ou nos dois. Em **Restauração**,
+> escolha um arquivo do aparelho, um backup da conta conectada ou um ponto de
+> restauração. A conexão do Drive ou OneDrive acontece na tela oficial do
+> provedor; não há campo de senha no AvantaLab.
 
 > Revisão 1.36.0.31: o histórico paginado de disparos pertence ao painel
 > administrativo; sem mudança operacional na Gestão Mobile.

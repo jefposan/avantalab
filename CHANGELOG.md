@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.37.0 - 2026-09-20
+- **Backup em nuvem opcional**: cada backup agora escolhe, a cada execução,
+  entre salvar no dispositivo, na conta conectada ou nos dois destinos.
+- **Restauração por origem**: Gestão Web e Gestão Mobile permitem restaurar de
+  arquivo local, da conta conectada ou de um ponto de restauração do AvantaLab.
+- **OAuth protegido**: Google Drive e OneDrive usam a autorização oficial do
+  provedor; senhas não passam pelo AvantaLab e tokens ficam cifrados no servidor.
+
 ## 1.36.0.31 - 2026-09-20
 - **Disparos paginados**: o `/admin` exibe até 10 envios e até 10 automações por
   página, com total, página atual e controles **Anterior** e **Próxima**.
