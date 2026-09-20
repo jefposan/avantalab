@@ -65,3 +65,17 @@ test('automações existentes podem ser editadas com validação no painel e na 
   assert.match(rota, /data_programada: gatilho === 'data_programada'/);
   assert.match(rota, /intervalo_valor: gatilho === 'data_programada'/);
 });
+
+test('disparo imediato permite todos ou um único usuário da plataforma', async () => {
+  const [painel, rota, broadcast] = await Promise.all([
+    readFile(new URL('../../app/admin/page.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/admin-disparos/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../supabase/functions/broadcast/index.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(painel, /id="disparo-destinatario"/);
+  assert.match(painel, /Todos os usuários/);
+  assert.match(painel, /usuarioId: broadcastDestinatarioId === 'todos' \? null : broadcastDestinatarioId/);
+  assert.match(rota, /\.{3}\(usuarioId \? \{ usuariosIds: \[usuarioId\] \} : \{\}\)/);
+  assert.match(rota, /destinatarioEncontrado = !usuarioId \|\| Number\(result\.usuarios \|\| 0\) === 1/);
+  assert.match(broadcast, /userIds\.filter\(\(userId\) => usuariosSolicitados\.has\(String\(userId\)\)\)/);
+});

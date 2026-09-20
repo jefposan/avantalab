@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import ModalConfirmacao from '../components/ModalConfirmacao';
 import BotaoVisibilidadeSenha from '../components/BotaoVisibilidadeSenha';
 import { PLANOS_COMERCIAIS, type PlanoEmpresarial } from '../lib/planos-comerciais';
@@ -241,6 +241,11 @@ type Disparo = {
 };
 
 type AplicativoDisparo = 'gestao' | 'avantavendas';
+type DestinatarioDisparo = {
+  id: string;
+  nome: string;
+  email: string | null;
+};
 type GatilhoDisparo = 'data_programada' | 'apos_cadastro' | 'sem_acesso';
 type ProgramacaoDisparo = {
   id: string;
@@ -435,6 +440,11 @@ export default function AdminPage() {
   const [broadcastTitle, setBroadcastTitle] = useState('Novidade no AvantaLab');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [broadcastApp, setBroadcastApp] = useState<AplicativoDisparo>('gestao');
+  const [broadcastDestinatarioId, setBroadcastDestinatarioId] = useState('todos');
+  const [broadcastDestinatarios, setBroadcastDestinatarios] = useState<DestinatarioDisparo[]>([]);
+  const [broadcastDestinatariosCarregando, setBroadcastDestinatariosCarregando] = useState(false);
+  const [broadcastDestinatariosErro, setBroadcastDestinatariosErro] = useState('');
+  const requisicaoDestinatariosDisparo = useRef(0);
   const [sending, setSending] = useState(false);
   const [historyPending, setHistoryPending] = useState(false);
   const [programacoesDisparo, setProgramacoesDisparo] = useState<ProgramacaoDisparo[]>([]);
@@ -786,6 +796,45 @@ export default function AdminPage() {
     }
   };
 
+  const carregarDestinatariosDisparo = async (aplicativo: AplicativoDisparo, value = token) => {
+    const requisicaoAtual = ++requisicaoDestinatariosDisparo.current;
+    setBroadcastDestinatariosCarregando(true);
+    setBroadcastDestinatariosErro('');
+    try {
+      const plataforma = aplicativo === 'gestao' ? 'avantalab' : 'avantavendas';
+      const buscarPagina = async (pagina: number) => {
+        const params = new URLSearchParams({ plataforma, pagina: String(pagina), porPagina: '100', ordem: 'nome_asc' });
+        const response = await fetch(`/api/admin-cadastros?${params}`, { headers: authHeaders(value) });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível carregar os usuários.');
+        return data;
+      };
+      const primeiraPagina = await buscarPagina(1);
+      const totalPaginas = Math.max(1, Math.ceil(Number(primeiraPagina.total || 0) / 100));
+      const demaisPaginas = totalPaginas > 1
+        ? await Promise.all(Array.from({ length: totalPaginas - 1 }, (_, indice) => buscarPagina(indice + 2)))
+        : [];
+      if (requisicaoAtual !== requisicaoDestinatariosDisparo.current) return;
+      const porId = new Map<string, DestinatarioDisparo>();
+      for (const cadastro of [primeiraPagina, ...demaisPaginas].flatMap((pagina) => pagina.cadastros || [])) {
+        if (!cadastro?.id) continue;
+        porId.set(String(cadastro.id), {
+          id: String(cadastro.id),
+          nome: String(cadastro.nome || cadastro.email || 'Usuário sem nome'),
+          email: cadastro.email ? String(cadastro.email) : null,
+        });
+      }
+      const comparador = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
+      setBroadcastDestinatarios([...porId.values()].sort((a, b) => comparador.compare(a.nome, b.nome)));
+    } catch (requestError) {
+      if (requisicaoAtual !== requisicaoDestinatariosDisparo.current) return;
+      setBroadcastDestinatarios([]);
+      setBroadcastDestinatariosErro(requestError instanceof Error ? requestError.message : 'Não foi possível carregar os usuários.');
+    } finally {
+      if (requisicaoAtual === requisicaoDestinatariosDisparo.current) setBroadcastDestinatariosCarregando(false);
+    }
+  };
+
   const loadProgramacoesDisparo = async (value = token) => {
     const response = await fetch('/api/admin-disparos/programacoes', { headers: authHeaders(value) });
     const data = await response.json().catch(() => null);
@@ -920,7 +969,7 @@ export default function AdminPage() {
       }
       setFeedbacks(data.feedbacks || []);
       setAuthorized(true);
-      await Promise.allSettled([loadBroadcasts(cleanToken), loadProgramacoesDisparo(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarCadastros('todos', 1, cleanToken), buscarPerfis(1, undefined, '', perfilPorPagina, cleanToken), carregarDownloadsDasLojas(cleanToken)]);
+      await Promise.allSettled([loadBroadcasts(cleanToken), carregarDestinatariosDisparo('gestao', cleanToken), loadProgramacoesDisparo(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarCadastros('todos', 1, cleanToken), buscarPerfis(1, undefined, '', perfilPorPagina, cleanToken), carregarDownloadsDasLojas(cleanToken)]);
     } catch {
       setAuthorized(false);
       setError('Erro inesperado ao acessar o painel.');
@@ -996,11 +1045,19 @@ export default function AdminPage() {
       const response = await fetch('/api/admin-disparos', {
         method: 'POST',
         headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ titulo: broadcastTitle, mensagem: broadcastMessage, aplicativo: broadcastApp }),
+        body: JSON.stringify({
+          titulo: broadcastTitle,
+          mensagem: broadcastMessage,
+          aplicativo: broadcastApp,
+          usuarioId: broadcastDestinatarioId === 'todos' ? null : broadcastDestinatarioId,
+        }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível enviar.');
-      setNotice(`Aviso do ${broadcastApp === 'gestao' ? 'App Gestão' : 'AvantaVendas'} enviado para ${data.resultado?.usuarios || 0} usuários.`);
+      const destinatario = broadcastDestinatarios.find((item) => item.id === broadcastDestinatarioId);
+      setNotice(broadcastDestinatarioId === 'todos'
+        ? `Aviso do ${broadcastApp === 'gestao' ? 'App Gestão' : 'AvantaVendas'} enviado para ${data.resultado?.usuarios || 0} usuários.`
+        : `Aviso enviado somente para ${destinatario?.nome || 'o usuário selecionado'}.`);
       setBroadcastMessage('');
       await loadBroadcasts();
     } catch (requestError) {
@@ -1015,10 +1072,18 @@ export default function AdminPage() {
       setError('Digite a mensagem do disparo.');
       return;
     }
+    const destinatario = broadcastDestinatarios.find((item) => item.id === broadcastDestinatarioId);
+    const todos = broadcastDestinatarioId === 'todos';
+    if (!todos && !destinatario) {
+      setError('Selecione novamente o usuário que receberá a mensagem.');
+      return;
+    }
     setConfirmacaoAdmin({
       titulo: `Enviar para ${broadcastApp === 'gestao' ? 'App Gestão' : 'AvantaVendas'}`,
-      mensagem: `Este aviso será enviado a todos os usuários do ${broadcastApp === 'gestao' ? 'App Gestão' : 'AvantaVendas'} que permitiram notificações. Deseja continuar?`,
-      textoConfirmar: 'Enviar para todos',
+      mensagem: todos
+        ? `Este aviso será enviado a todos os usuários do ${broadcastApp === 'gestao' ? 'App Gestão' : 'AvantaVendas'}. Deseja continuar?`
+        : `Este aviso será enviado somente para ${destinatario?.nome}${destinatario?.email ? ` (${destinatario.email})` : ''}. Deseja continuar?`,
+      textoConfirmar: todos ? 'Enviar para todos' : 'Enviar mensagem',
       variante: 'primaria',
       aoConfirmar: executarEnvioBroadcast,
     });
@@ -1326,10 +1391,14 @@ export default function AdminPage() {
             <div className="grid gap-4 xl:grid-cols-2">
               <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-700">Envio imediato</p><h2 className="mt-1 text-lg font-black text-slate-950">Novo disparo</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Escolha o aplicativo. A Gestão também recebe o aviso no sininho.</p>
-                <label htmlFor="disparo-app" className="mt-4 block text-[10px] font-black uppercase text-slate-500">Aplicativo</label><select id="disparo-app" value={broadcastApp} onChange={(event) => setBroadcastApp(event.target.value as AplicativoDisparo)} className="mt-1 h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700"><option value="gestao">App Gestão</option><option value="avantavendas">AvantaVendas</option></select>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="disparo-app">Aplicativo<select id="disparo-app" value={broadcastApp} onChange={(event) => { const aplicativo = event.target.value as AplicativoDisparo; setBroadcastApp(aplicativo); setBroadcastDestinatarioId('todos'); void carregarDestinatariosDisparo(aplicativo); }} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700"><option value="gestao">App Gestão</option><option value="avantavendas">AvantaVendas</option></select></label>
+                  <label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="disparo-destinatario">Destinatário<select id="disparo-destinatario" value={broadcastDestinatarioId} onChange={(event) => setBroadcastDestinatarioId(event.target.value)} disabled={broadcastDestinatariosCarregando} className="h-11 min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700 disabled:cursor-wait disabled:opacity-60"><option value="todos">{broadcastDestinatariosCarregando ? 'Carregando usuários...' : `Todos os usuários${broadcastDestinatarios.length ? ` (${broadcastDestinatarios.length})` : ''}`}</option>{broadcastDestinatarios.map((item) => <option key={item.id} value={item.id}>{item.nome}{item.email ? ` — ${item.email}` : ''}</option>)}</select></label>
+                </div>
+                {broadcastDestinatariosErro && <p role="alert" className="mt-2 text-xs font-bold text-red-700">{broadcastDestinatariosErro}</p>}
                 <label htmlFor="disparo-titulo" className="mt-3 block text-[10px] font-black uppercase text-slate-500">Título</label><input id="disparo-titulo" value={broadcastTitle} onChange={(event) => setBroadcastTitle(event.target.value)} className="mt-1 h-11 w-full rounded-md border border-slate-300 px-3 text-sm font-bold outline-none focus:border-cyan-700" />
                 <label htmlFor="disparo-mensagem" className="mt-3 block text-[10px] font-black uppercase text-slate-500">Mensagem</label><textarea id="disparo-mensagem" value={broadcastMessage} onChange={(event) => setBroadcastMessage(event.target.value)} rows={4} className="mt-1 w-full resize-y rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-cyan-700" placeholder="Escreva uma mensagem objetiva..." />
-                <button type="button" onClick={() => void sendBroadcast()} disabled={sending} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="send" />{sending ? 'Enviando...' : `Disparar para ${broadcastApp === 'gestao' ? 'Gestão' : 'AvantaVendas'}`}</button>
+                <button type="button" onClick={() => void sendBroadcast()} disabled={sending || broadcastDestinatariosCarregando} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="send" />{sending ? 'Enviando...' : broadcastDestinatarioId === 'todos' ? `Disparar para ${broadcastApp === 'gestao' ? 'Gestão' : 'AvantaVendas'}` : 'Disparar para o usuário'}</button>
               </section>
 
               <section className="rounded-lg border border-cyan-200 bg-cyan-50/40 p-4 shadow-sm">

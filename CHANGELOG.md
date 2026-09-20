@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.36.0.29 - 2026-09-20
+- **Destinatário no disparo administrativo**: o envio imediato do `/admin`
+  inicia em **Todos os usuários** e permite escolher uma única pessoa ativa do
+  App Gestão ou do AvantaVendas, com nome e e-mail na lista.
+- **Envio individual protegido**: o servidor valida o identificador e confirma
+  que a pessoa pertence ao aplicativo escolhido antes de registrar o disparo.
+
 ## 1.36.0.28 - 2026-09-20
 - **Entrega APNs estabilizada**: o servidor reutiliza a credencial da Apple
   durante a janela segura, evitando a recusa `TooManyProviderTokenUpdates` nas

@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.36.0.29: o seletor de destinatário pertence somente ao
+// painel administrativo e não altera as orientações operacionais da Ava.
 // Revisado na versão 1.36.0.28: reativar notificações substitui corretamente
 // qualquer preferência legada de desativação na Gestão e no AvantaVendas.
 // Revisado na versão 1.36.0.27: o registro de último acesso da Gestão Mobile é

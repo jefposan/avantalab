@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.28 -->
+<!-- ava-version: 1.36.0.29 -->
+
+> Revisão 1.36.0.29: a seleção de um destinatário para disparos pertence ao
+> painel `/admin`; sem impacto operacional na Gestão Web.
 
 > Revisão 1.36.0.28: a correção da preferência e o diagnóstico de entrega de
 > notificações pertencem aos aplicativos móveis; sem impacto operacional na

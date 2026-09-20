@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.28 -->
+<!-- ava-version: 1.36.0.29 -->
+
+> Revisão 1.36.0.29: o seletor de destinatário pertence ao painel
+> administrativo; sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.36.0.28: ao ativar novamente **Receber notificações neste
 > aparelho**, a escolha atual substitui qualquer desativação antiga guardada no

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.28 -->
+<!-- ava-version: 1.36.0.29 -->
+
+> Revisão 1.36.0.29: o seletor de destinatário pertence ao painel
+> administrativo; sem mudança operacional no AvantaVendas.
 
 > Revisão 1.36.0.28: ao reativar notificações no AvantaVendas, a preferência
 > atual substitui corretamente qualquer marcador antigo de desativação. A
