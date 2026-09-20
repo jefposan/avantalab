@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.23 -->
+<!-- ava-version: 1.36.0.24 -->
+
+> Revisão 1.36.0.24: o novo convite de notificações pertence aos aplicativos
+> móveis; sem impacto operacional na Gestão Web.
 
 > Revisão 1.36.0.23: a recuperação de versão pertence à Gestão Mobile; sem
 > impacto operacional na Gestão Web.

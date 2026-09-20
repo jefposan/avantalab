@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.23 -->
+<!-- ava-version: 1.36.0.24 -->
+
+> Revisão 1.36.0.24: no próximo login ou carregamento completo, usuários que
+> ainda não ativaram notificações recebem uma nova oportunidade de ativação.
+> O convite aparece uma vez por usuário e instalação; permissão já concedida é
+> sincronizada, e desativação explícita em Configurações continua respeitada.
 
 > Revisão 1.36.0.23: se a Gestão Mobile reabrir uma tela antiga de erro, ela
 > verifica a versão publicada mesmo fora da tela de preparação. **Tentar

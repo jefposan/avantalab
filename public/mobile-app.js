@@ -858,7 +858,8 @@
   var CHAVE_SESSAO_TEMPORARIA = 'avantalab_mobile_sessao_temporaria';
   var CHAVE_OAUTH_TEMPORARIO_ATE = 'avantalab_mobile_oauth_temporario_ate';
   var CHAVE_AGENDA_ITENS = 'avantalab_mobile_agenda_itens';
-  var PREFIXO_PROMPT_NOTIF = 'avantalab:notificacoes-primeiro-acesso:v1:gestao:';
+  var PREFIXO_PROMPT_NOTIF_ANTERIOR = 'avantalab:notificacoes-primeiro-acesso:v1:gestao:';
+  var PREFIXO_PROMPT_NOTIF = 'avantalab:notificacoes-primeiro-acesso:v2:gestao:';
   var CHAVE_ATALHOS_INFERIORES = 'avantalab_mobile_atalhos_inferiores';
   var CHAVE_INICIAR_VALORES_OCULTOS = 'avantalab_mobile_iniciar_valores_ocultos';
   var CHAVE_PREFERENCIAS_CONTA_MOBILE = 'avantalab_mobile_preferencias_v1';
@@ -5124,12 +5125,19 @@
     return state.usuario && state.usuario.id ? PREFIXO_PROMPT_NOTIF + state.usuario.id : '';
   }
 
+  function notificacoesDesativadasExplicitamenteMobile() {
+    if (!state.usuario || !state.usuario.id) return false;
+    try {
+      var valorAtual = localStorage.getItem(PREFIXO_PROMPT_NOTIF + state.usuario.id) || '';
+      var valorAnterior = localStorage.getItem(PREFIXO_PROMPT_NOTIF_ANTERIOR + state.usuario.id) || '';
+      return valorAtual === 'desativado' || valorAnterior === 'desativado';
+    } catch (e) { return false; }
+  }
+
   function permiteSincronizarNotificacoesMobile() {
     var chave = chavePromptNotifMobile();
     if (!chave) return false;
-    try {
-      return ['adiado', 'negado', 'negado-sistema', 'desativado'].indexOf(localStorage.getItem(chave) || '') < 0;
-    } catch (e) { return true; }
+    return !notificacoesDesativadasExplicitamenteMobile();
   }
 
   function normalizarTokenPushNativoMobile(registro) {
@@ -5307,6 +5315,7 @@
     try {
       if (!state.usuario || !state.usuario.id) return;
       if (state.notificacoesAtivas) { marcarPromptNotifVisto('ativado'); return; }
+      if (notificacoesDesativadasExplicitamenteMobile()) return;
       var suporteNativo = typeof window.__avantalabAtivarPushNativoMobile === 'function';
       var suporteWeb = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
       if (!suporteNativo && !suporteWeb) return;

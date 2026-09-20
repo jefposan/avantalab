@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.23 -->
+<!-- ava-version: 1.36.0.24 -->
+
+> Revisão 1.36.0.24-av153: no próximo login ou carregamento completo, usuários
+> do AvantaVendas que ainda não ativaram notificações recebem uma nova
+> oportunidade de ativação. O convite aparece uma vez por usuário e instalação;
+> permissão já concedida é sincronizada, e desativação explícita permanece.
 
 > Revisão 1.36.0.23: a recuperação de versão pertence à Gestão Mobile; sem
 > impacto operacional no AvantaVendas.
@@ -796,7 +801,7 @@
 > Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
 > aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
 > operacional no AvantaVendas.
-<!-- avantavendas-asset-revision: 152 -->
+<!-- avantavendas-asset-revision: 153 -->
 
 > Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
 > catálogo ativo completo da conta sem permitir que uma palavra apenas parecida

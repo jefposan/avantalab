@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'avantalab.vendas_mobile.v1';
-const PREFIXO_PROMPT_NOTIFICACOES_VENDAS = 'avantalab:notificacoes-primeiro-acesso:v1:avantavendas:';
+const PREFIXO_PROMPT_NOTIFICACOES_VENDAS_ANTERIOR = 'avantalab:notificacoes-primeiro-acesso:v1:avantavendas:';
+const PREFIXO_PROMPT_NOTIFICACOES_VENDAS = 'avantalab:notificacoes-primeiro-acesso:v2:avantavendas:';
 const LOGIN_SOCIAL_PENDENTE_KEY = 'avantalab.vendas_mobile.login_social_pendente';
 const LOGIN_SOCIAL_PENDENTE_ATE_KEY = 'avantalab.vendas_mobile.login_social_pendente_ate';
 const GOOGLE_CONNECTING_KEY_ANTIGA = 'avantalab.vendas_mobile.google_connecting';
@@ -6244,12 +6245,19 @@ function marcarPromptNotificacoesVendas(situacao) {
   try { if (chave) localStorage.setItem(chave, situacao || 'visto'); } catch { /* armazenamento indisponível */ }
 }
 
+function notificacoesDesativadasExplicitamenteVendas() {
+  if (!state.usuario?.id) return false;
+  try {
+    const valorAtual = localStorage.getItem(`${PREFIXO_PROMPT_NOTIFICACOES_VENDAS}${state.usuario.id}`) || '';
+    const valorAnterior = localStorage.getItem(`${PREFIXO_PROMPT_NOTIFICACOES_VENDAS_ANTERIOR}${state.usuario.id}`) || '';
+    return valorAtual === 'desativado' || valorAnterior === 'desativado';
+  } catch { return false; }
+}
+
 function permiteSincronizarNotificacoesVendas() {
   const chave = chavePromptNotificacoesVendas();
   if (!chave) return false;
-  try {
-    return !['adiado', 'negado', 'negado-sistema', 'desativado'].includes(localStorage.getItem(chave) || '');
-  } catch { return true; }
+  return !notificacoesDesativadasExplicitamenteVendas();
 }
 
 function avaliarPromptNotificacoesVendas() {
@@ -6258,6 +6266,7 @@ function avaliarPromptNotificacoesVendas() {
     marcarPromptNotificacoesVendas('ativado');
     return;
   }
+  if (notificacoesDesativadasExplicitamenteVendas()) return;
   const suporteNativo = typeof window.__avantavendasAtivarPushNativo === 'function';
   const suporteWeb = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
   if (!suporteNativo && !suporteWeb) return;

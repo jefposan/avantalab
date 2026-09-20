@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.36.0.24-av153 - 2026-09-20
+- **Novo convite para notificações**: Gestão Mobile e AvantaVendas oferecem uma
+  nova oportunidade de ativação, uma única vez por usuário e instalação, para
+  quem ainda não concedeu a permissão.
+- **Usuários antigos incluídos**: o convite não fica restrito a contas criadas
+  depois do recurso; instalações existentes sem push ativo também participam
+  após o próximo login ou carregamento completo do aplicativo.
+- **Preferência respeitada**: permissão já concedida é sincronizada sem novo
+  pedido, enquanto uma desativação explícita feita nas Configurações continua
+  preservada.
+
 ## 1.36.0.23 - 2026-09-20
 - **Gestão Mobile se recupera de uma tela antiga**: ao voltar ao aplicativo,
   a versão publicada passa a ser conferida mesmo quando o acesso já está em

@@ -18,7 +18,8 @@ async function fontes() {
 test('a Gestão pede autorização uma vez por usuário e aparelho após preparar o acesso', async () => {
   const { gestao } = await fontes();
 
-  assert.match(gestao, /PREFIXO_PROMPT_NOTIF = 'avantalab:notificacoes-primeiro-acesso:v1:gestao:';/);
+  assert.match(gestao, /PREFIXO_PROMPT_NOTIF_ANTERIOR = 'avantalab:notificacoes-primeiro-acesso:v1:gestao:';/);
+  assert.match(gestao, /PREFIXO_PROMPT_NOTIF = 'avantalab:notificacoes-primeiro-acesso:v2:gestao:';/);
   assert.match(gestao, /PREFIXO_PROMPT_NOTIF \+ state\.usuario\.id/);
   assert.match(gestao, /atualizarEstadoNotificacoesMobile\(false\)\.then\(avaliarPromptNotificacoes\)/);
   assert.match(gestao, /suporteNativo = typeof window\.__avantalabAtivarPushNativoMobile === 'function'/);
@@ -41,7 +42,8 @@ test('a Gestão sincroniza automaticamente permissões nativas já concedidas em
 test('o AvantaVendas sincroniza permissões concedidas e oferece o consentimento no primeiro acesso', async () => {
   const { vendas, vendasDb, ponteVendas } = await fontes();
 
-  assert.match(vendas, /PREFIXO_PROMPT_NOTIFICACOES_VENDAS = 'avantalab:notificacoes-primeiro-acesso:v1:avantavendas:';/);
+  assert.match(vendas, /PREFIXO_PROMPT_NOTIFICACOES_VENDAS_ANTERIOR = 'avantalab:notificacoes-primeiro-acesso:v1:avantavendas:';/);
+  assert.match(vendas, /PREFIXO_PROMPT_NOTIFICACOES_VENDAS = 'avantalab:notificacoes-primeiro-acesso:v2:avantavendas:';/);
   assert.match(vendas, /estadoNotificacoes\?\.\(permiteSincronizarNotificacoesVendas\(\)\)/);
   assert.match(vendas, /Primeiro acesso neste aparelho/);
   assert.match(vendas, /Receba lembretes e avisos importantes das suas vendas/);
@@ -56,7 +58,20 @@ test('o AvantaVendas sincroniza permissões concedidas e oferece o consentimento
 test('uma desativação explícita não é revertida silenciosamente no login seguinte', async () => {
   const { gestao, vendas, vendasDb } = await fontes();
 
-  assert.match(gestao, /\['adiado', 'negado', 'negado-sistema', 'desativado'\]/);
-  assert.match(vendas, /\['adiado', 'negado', 'negado-sistema', 'desativado'\]\.includes/);
+  assert.match(gestao, /notificacoesDesativadasExplicitamenteMobile/);
+  assert.match(gestao, /valorAtual === 'desativado' \|\| valorAnterior === 'desativado'/);
+  assert.match(vendas, /notificacoesDesativadasExplicitamenteVendas/);
+  assert.match(vendas, /valorAtual === 'desativado' \|\| valorAnterior === 'desativado'/);
   assert.match(vendasDb, /async function estadoNotificacoes\(sincronizar = true\) \{\s*if \(!sincronizar\) return false;/);
+});
+
+test('usuários que adiaram o convite anterior recebem uma nova oportunidade', async () => {
+  const { gestao, vendas } = await fontes();
+
+  assert.match(gestao, /PREFIXO_PROMPT_NOTIF_ANTERIOR/);
+  assert.match(gestao, /PREFIXO_PROMPT_NOTIF = .*:v2:gestao:/);
+  assert.doesNotMatch(gestao, /return \['adiado', 'negado', 'negado-sistema', 'desativado'\]/);
+  assert.match(vendas, /PREFIXO_PROMPT_NOTIFICACOES_VENDAS_ANTERIOR/);
+  assert.match(vendas, /PREFIXO_PROMPT_NOTIFICACOES_VENDAS = .*:v2:avantavendas:/);
+  assert.doesNotMatch(vendas, /\['adiado', 'negado', 'negado-sistema', 'desativado'\]\.includes/);
 });

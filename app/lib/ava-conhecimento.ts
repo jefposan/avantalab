@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.36.0.24: Gestão Mobile e AvantaVendas renovam uma vez o
+// convite para ativar notificações de quem ainda não concedeu a permissão;
+// permissões ativas sincronizam e desativação explícita continua respeitada.
 // Revisado na versão 1.36.0.23: uma tela antiga de erro da Gestão Mobile
 // verifica a versão ao retomar; Tentar novamente recarrega sem cache e mantém
 // a sessão válida, abrindo o painel ou o login conforme o estado real.
