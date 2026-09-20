@@ -1,5 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.38.0.02: o menu de ações do item flutua sobre a lista e fecha ao clicar fora, rolar ou usar Escape.
 // Revisado na versão 1.38.0.01: Produtos e serviços abre em lista por tipo, com ações por item
 // para cadastro e atualização conjunta das listas de preços; o editor detalhado mantém a faixa horizontal.
 // Revisado na versão 1.38.0: importação administrativa de catálogo cria backup

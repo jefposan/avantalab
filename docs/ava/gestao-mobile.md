@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.38.0.01 -->
+<!-- ava-version: 1.38.0.02 -->
+
+> Revisão 1.38.0.02: o ajuste do menu flutuante de ações pertence a Custos e
+> Precificação na Gestão Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.38.0.01: a lista e a edição centralizada de tabelas de preço
 > pertencem a Custos e Precificação na Gestão Web; sem alteração operacional

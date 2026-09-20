@@ -181,7 +181,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   const [modo, setModo] = useState<'lista' | 'cadastro'>(initialNewType ? 'cadastro' : 'lista');
   const [tipoLista, setTipoLista] = useState<TipoItem>('produto');
   const [buscaLista, setBuscaLista] = useState('');
-  const [menuAcaoId, setMenuAcaoId] = useState('');
+  const [menuAcao, setMenuAcao] = useState<{ produtoId: string; top: number; left: number } | null>(null);
   const [precosDoProduto, setPrecosDoProduto] = useState<ProdutoCustos | null>(null);
   const [valoresTabela, setValoresTabela] = useState<Record<string, number>>({});
   const [rascunho, setRascunho] = useState<ProdutoCustos>(() => produtoSelecionado || novoProduto('produto', catalogoId));
@@ -191,6 +191,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   const arquivoRef = useRef<HTMLInputElement>(null);
   const initialNewAppliedRef = useRef(false);
   const produtoAtivoAnteriorRef = useRef(produtoAtivoId);
+  const menuAcoesRef = useRef<HTMLDivElement>(null);
 
   const calculo = calcularComposicao(composicao, documento.recursos);
   const codigos = produtos.filter((produto) => produto.id !== rascunho.id).map((produto) => produto.sku).filter(Boolean);
@@ -211,6 +212,24 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     setRascunho(produtoSelecionado);
     setComposicao(documento.composicoes[produtoSelecionado.id] || composicaoVazia());
   }, [produtoAtivoId]);
+  useEffect(() => {
+    if (!menuAcao) return;
+    const fechar = () => setMenuAcao(null);
+    const fecharAoClicarFora = (evento: PointerEvent) => {
+      if (!menuAcoesRef.current?.contains(evento.target as Node)) fechar();
+    };
+    const fecharAoPressionarTecla = (evento: KeyboardEvent) => { if (evento.key === 'Escape') fechar(); };
+    document.addEventListener('pointerdown', fecharAoClicarFora);
+    document.addEventListener('keydown', fecharAoPressionarTecla);
+    window.addEventListener('resize', fechar);
+    window.addEventListener('scroll', fechar, true);
+    return () => {
+      document.removeEventListener('pointerdown', fecharAoClicarFora);
+      document.removeEventListener('keydown', fecharAoPressionarTecla);
+      window.removeEventListener('scroll', fechar, true);
+      window.removeEventListener('resize', fechar);
+    };
+  }, [menuAcao]);
   const validar = () => {
     if (!rascunho.sku.trim() || !rascunho.nome.trim()) return 'Código e nome são obrigatórios.';
     if (codigos.some((codigo) => codigo.toUpperCase() === rascunho.sku.trim().toUpperCase())) return 'Este código já está sendo usado.';
@@ -260,14 +279,26 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   };
 
   const listaFiltrada = produtos.filter((produto) => produto.tipo_item === tipoLista && `${produto.sku} ${produto.nome} ${produto.marca} ${produto.categoria}`.toLocaleLowerCase('pt-BR').includes(buscaLista.toLocaleLowerCase('pt-BR')));
+  const alternarMenuAcoes = (produtoId: string, acionador: HTMLButtonElement) => {
+    if (menuAcao?.produtoId === produtoId) { setMenuAcao(null); return; }
+    const limites = acionador.getBoundingClientRect();
+    const larguraMenu = 212;
+    const alturaMenu = 112;
+    const abreAbaixo = window.innerHeight - limites.bottom >= alturaMenu + 12;
+    setMenuAcao({
+      produtoId,
+      top: abreAbaixo ? limites.bottom + 6 : Math.max(8, limites.top - alturaMenu - 6),
+      left: Math.max(8, Math.min(limites.right - larguraMenu, window.innerWidth - larguraMenu - 8)),
+    });
+  };
   const abrirCadastro = (produto: ProdutoCustos) => {
     setRascunho(produto); setComposicao(documento.composicoes[produto.id] || composicaoVazia());
-    setMenuAcaoId(''); onSelecionar(produto.id); setModo('cadastro');
+    setMenuAcao(null); onSelecionar(produto.id); setModo('cadastro');
   };
   const abrirPrecos = (produto: ProdutoCustos) => {
     setPrecosDoProduto(produto);
     setValoresTabela(Object.fromEntries(tabelas.filter((tabela) => tabela.ativo).map((tabela) => [tabela.id, precoEfetivoTabela(tabela, produto, precos)])));
-    setMenuAcaoId('');
+    setMenuAcao(null);
   };
   const salvarListasPrecos = async () => {
     if (!precosDoProduto) return;
@@ -286,7 +317,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
         <div className={styles.listTabs} role="tablist" aria-label="Tipo de cadastro"><button type="button" role="tab" aria-selected={tipoLista === 'produto'} className={tipoLista === 'produto' ? styles.listTabActive : ''} onClick={() => setTipoLista('produto')}>Produtos <b>{produtos.filter((produto) => produto.tipo_item === 'produto').length}</b></button><button type="button" role="tab" aria-selected={tipoLista === 'servico'} className={tipoLista === 'servico' ? styles.listTabActive : ''} onClick={() => setTipoLista('servico')}>Serviços <b>{produtos.filter((produto) => produto.tipo_item === 'servico').length}</b></button></div>
         <label className={styles.search}><span>Localizar</span><input type="search" value={buscaLista} onChange={(event) => setBuscaLista(event.target.value)} placeholder="Código, nome, marca…" /></label>
       </div>
-      <div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => <tr key={produto.id}><td><b>{produto.sku}</b></td><td><b>{produto.nome}</b><small>{produto.unidade}</small></td><td>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${!produto.ativo ? styles.statusInactive : produto.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!produto.ativo ? 'Inativo' : produto.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcaoId === produto.id} onClick={() => setMenuAcaoId(menuAcaoId === produto.id ? '' : produto.id)}>•••</button>{menuAcaoId === produto.id && <div className={styles.contextMenu}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button></div>}</td></tr>)}{!listaFiltrada.length && <tr><td colSpan={6} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
+      <div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => <tr key={produto.id}><td><b>{produto.sku}</b></td><td><b>{produto.nome}</b><small>{produto.unidade}</small></td><td>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${!produto.ativo ? styles.statusInactive : produto.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!produto.ativo ? 'Inativo' : produto.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button></div>}</td></tr>)}{!listaFiltrada.length && <tr><td colSpan={6} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
     </section>
     <Modal open={Boolean(precosDoProduto)} onClose={() => !salvando && setPrecosDoProduto(null)} title="Atualizar listas de preços" description={precosDoProduto ? `${precosDoProduto.sku} · ${precosDoProduto.nome}` : ''}>
       {precosDoProduto && <div className={styles.productPriceList}>{tabelas.filter((tabela) => tabela.ativo).map((tabela) => <label key={tabela.id}><span>{tabela.nome}{tabela.padrao && <small>Preço principal</small>}</span><MoneyInput value={valoresTabela[tabela.id] ?? 0} onChange={(valor) => setValoresTabela((atuais) => ({ ...atuais, [tabela.id]: valor }))} label={`Preço ${tabela.nome}`} disabled={salvando || !podeEditar} /></label>)}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => setPrecosDoProduto(null)}>Cancelar</button><button type="button" className={styles.primaryButton} disabled={salvando || !podeEditar} onClick={() => void salvarListasPrecos()}>{salvando ? 'Salvando…' : 'Salvar preços'}</button></div></div>}

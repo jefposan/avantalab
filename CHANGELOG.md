@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.38.0.02 - 2026-09-20
+- **Menu de ações sobre a lista**: o menu de cada produto agora é um popover
+  flutuante acima da tabela e dos filtros, sem ser ocultado pela área rolável.
+- **Fechamento previsível**: clicar fora, pressionar Escape, rolar ou redimensionar
+  fecha o menu de ações antes de reposicioná-lo.
+
 ## 1.38.0.01 - 2026-09-20
 - **Produtos e serviços em lista**: a área passa a abrir na listagem, com
   abas separadas para Produtos e Serviços, busca e ações no fim de cada linha.

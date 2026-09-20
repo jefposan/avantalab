@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.01 -->
+<!-- ava-version: 1.38.0.02 -->
+
+> Revisão 1.38.0.02: o menu de ações ao final da linha de um produto fica sobre
+> a lista e os filtros. Clique fora, pressione Escape ou role a tela para fechá-lo.
 
 > Revisão 1.38.0.01: em **Custos e Precificação > Produtos e serviços**, a
 > abertura padrão é a lista. Use **Produtos** ou **Serviços** no topo e o menu
