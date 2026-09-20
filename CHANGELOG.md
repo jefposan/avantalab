@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.38.0.03 - 2026-09-20
+- **Salvar unificado**: a edição de produto ou serviço passou a ter uma única
+  ação **Salvar**, que grava cadastro e composição de custo juntos.
+- **Descarte protegido**: **Cancelar** retorna à lista e descarta as mudanças
+  somente após confirmação; a navegação lateral também avisa antes de trocar
+  de área quando houver edição pendente.
+
 ## 1.38.0.02 - 2026-09-20
 - **Menu de ações sobre a lista**: o menu de cada produto agora é um popover
   flutuante acima da tabela e dos filtros, sem ser ocultado pela área rolável.

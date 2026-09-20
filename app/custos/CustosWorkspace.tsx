@@ -40,6 +40,8 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const [erro, setErro] = useState('');
+  const [edicaoPendente, setEdicaoPendente] = useState(false);
+  const [abaPendente, setAbaPendente] = useState<Aba | null>(null);
   const carregamentoRef = useRef(0);
   const revisaoRef = useRef(0);
 
@@ -90,12 +92,23 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
   const enviarImagem = (arquivo: File) => enviarImagemProduto(companyId, arquivo);
   const selecionarProduto = (id: string) => setProdutoAtivoId(id);
   const produtoAtivo = produtos.find((produto) => produto.id === produtoAtivoId) || produtos[0];
+  const abrirAba = (proximaAba: Aba) => {
+    if (proximaAba === aba) return;
+    if (aba === 'produtos' && edicaoPendente) { setAbaPendente(proximaAba); return; }
+    setAba(proximaAba);
+  };
+  const descartarAoNavegar = () => {
+    if (!abaPendente) return;
+    setEdicaoPendente(false);
+    setAba(abaPendente);
+    setAbaPendente(null);
+  };
 
   if (carregando) return <div className={styles.loading}><span /><strong>Preparando custos e precificação</strong><p>Carregando o cadastro compartilhado e as composições…</p></div>;
 
   return <div className={styles.workspace}>
     <aside className={styles.sidebar} aria-label="Áreas de Custos e Precificação">
-      <nav>{navegacao.map((item) => <button key={item.id} type="button" className={aba === item.id ? styles.navActive : ''} onClick={() => setAba(item.id)}><span aria-hidden="true">{item.icone}</span>{item.rotulo}</button>)}</nav>
+      <nav>{navegacao.map((item) => <button key={item.id} type="button" className={aba === item.id ? styles.navActive : ''} onClick={() => abrirAba(item.id)}><span aria-hidden="true">{item.icone}</span>{item.rotulo}</button>)}</nav>
       <div className={styles.sharedNote}><strong>Base compartilhada</strong><p>Catálogo e Custos usam o mesmo produto. Não há cópias para sincronizar.</p></div>
     </aside>
     <section className={styles.content}>
@@ -103,13 +116,14 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
         {erro && <div className={styles.error}><span>{erro}</span><button type="button" onClick={() => void recarregar()}>Tentar novamente</button></div>}
         {mensagem && <div className={styles.success}>{mensagem}</div>}
       </div>
-      {aba === 'visao' && <VisaoGeral produtos={produtos} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => setAba('produtos')} onAtualizar={() => void recarregar()} />}
-      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
+      {aba === 'visao' && <VisaoGeral produtos={produtos} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => abrirAba('produtos')} onAtualizar={() => void recarregar()} />}
+      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'recursos' && <RecursosView documento={documento} produtos={produtos} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
       {aba === 'historico' && <HistoricoView produtos={produtos} documento={documento} produtoAtivoId={produtoAtivoId} onSelecionar={selecionarProduto} />}
     </section>
+    <ModalConfirmacao aberto={Boolean(abaPendente)} titulo="Descartar alterações?" mensagem="Há alterações não salvas neste produto ou serviço. Se continuar, elas serão perdidas." textoCancelar="Continuar editando" textoConfirmar="Descartar e sair" corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => setAbaPendente(null)} aoConfirmar={descartarAoNavegar} />
   </div>;
 }
 
@@ -170,12 +184,12 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
   </>;
 }
 
-function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onMensagem, onErro }: {
+function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onEdicaoPendente, onMensagem, onErro }: {
   companyId: string; catalogoId: string; produtos: ProdutoCustos[]; tabelas: TabelaPreco[]; precos: PrecoTabelaItem[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
   documento: DocumentoCustos; produtoAtivoId: string; initialNewType?: 'produto'; onSelecionar: (id: string) => void;
   onDocumento: (proximo: DocumentoCustos, retorno: string) => Promise<void>; podeEditar: boolean;
   onSalvarProduto: (produto: ProdutoCustos) => Promise<ProdutoCustos>; onEnviarImagem: (arquivo: File) => Promise<string>;
-  onRecarregar: () => Promise<void>; onMensagem: (texto: string) => void; onErro: (texto: string) => void;
+  onRecarregar: () => Promise<void>; onEdicaoPendente: (pendente: boolean) => void; onMensagem: (texto: string) => void; onErro: (texto: string) => void;
 }) {
   const produtoSelecionado = produtos.find((produto) => produto.id === produtoAtivoId);
   const [modo, setModo] = useState<'lista' | 'cadastro'>(initialNewType ? 'cadastro' : 'lista');
@@ -186,8 +200,11 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   const [valoresTabela, setValoresTabela] = useState<Record<string, number>>({});
   const [rascunho, setRascunho] = useState<ProdutoCustos>(() => produtoSelecionado || novoProduto('produto', catalogoId));
   const [composicao, setComposicao] = useState<ComposicaoCusto>(() => produtoSelecionado ? documento.composicoes[produtoSelecionado.id] || composicaoVazia() : composicaoVazia());
+  const [referenciaEdicao, setReferenciaEdicao] = useState(() => JSON.stringify({ rascunho, composicao }));
   const [salvando, setSalvando] = useState(false);
   const [confirmarInativacao, setConfirmarInativacao] = useState(false);
+  const [confirmarDescarte, setConfirmarDescarte] = useState(false);
+  const [produtoPendenteId, setProdutoPendenteId] = useState('');
   const arquivoRef = useRef<HTMLInputElement>(null);
   const initialNewAppliedRef = useRef(false);
   const produtoAtivoAnteriorRef = useRef(produtoAtivoId);
@@ -198,8 +215,10 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   const prefixo = rascunho.sku.match(/^[A-Za-z_-]+/)?.[0] || (rascunho.tipo_item === 'produto' ? 'T' : 'S');
   const proximo = proximoCodigo(prefixo, codigos);
   const alterar = <K extends keyof ProdutoCustos>(campo: K, valor: ProdutoCustos[K]) => setRascunho((atual) => ({ ...atual, [campo]: valor }));
+  const registrarReferenciaEdicao = (produto: ProdutoCustos, proximaComposicao: ComposicaoCusto) => setReferenciaEdicao(JSON.stringify({ rascunho: produto, composicao: proximaComposicao }));
+  const possuiEdicaoPendente = modo === 'cadastro' && JSON.stringify({ rascunho, composicao }) !== referenciaEdicao;
 
-  const iniciar = (tipo: TipoItem) => { const novo = novoProduto(tipo, catalogoId); setRascunho(novo); setComposicao(composicaoVazia()); onSelecionar(''); setModo('cadastro'); };
+  const iniciar = (tipo: TipoItem) => { const novo = novoProduto(tipo, catalogoId); const novaComposicao = composicaoVazia(); setRascunho(novo); setComposicao(novaComposicao); registrarReferenciaEdicao(novo, novaComposicao); onSelecionar(''); setModo('cadastro'); };
   useEffect(() => {
     if (!initialNewType || !catalogoId || initialNewAppliedRef.current) return;
     initialNewAppliedRef.current = true;
@@ -210,8 +229,12 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     produtoAtivoAnteriorRef.current = produtoAtivoId;
     if (!mudouProduto || modo !== 'cadastro' || !produtoSelecionado) return;
     setRascunho(produtoSelecionado);
-    setComposicao(documento.composicoes[produtoSelecionado.id] || composicaoVazia());
+    const proximaComposicao = documento.composicoes[produtoSelecionado.id] || composicaoVazia();
+    setComposicao(proximaComposicao);
+    registrarReferenciaEdicao(produtoSelecionado, proximaComposicao);
   }, [produtoAtivoId]);
+  useEffect(() => { onEdicaoPendente(possuiEdicaoPendente); }, [onEdicaoPendente, possuiEdicaoPendente]);
+  useEffect(() => () => onEdicaoPendente(false), [onEdicaoPendente]);
   useEffect(() => {
     if (!menuAcao) return;
     const fechar = () => setMenuAcao(null);
@@ -240,36 +263,32 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     if (publicandoAgora && rascunho.tipo_item === 'servico' && !rascunho.codigo_tributacao_nacional.trim()) return 'Informe o código de tributação nacional antes de publicar o serviço.';
     return '';
   };
-  const salvarCadastro = async () => {
-    const falha = validar(); if (falha) { onErro(falha); return null; }
-    setSalvando(true); onErro('');
-    try {
-      const salvo = await onSalvarProduto({ ...rascunho, preco_custo: calculo.total || rascunho.preco_custo });
-      setProdutos((atuais) => atuais.some((produto) => produto.id === salvo.id) ? atuais.map((produto) => produto.id === salvo.id ? salvo : produto) : [salvo, ...atuais]);
-      setRascunho(salvo); onSelecionar(salvo.id); onMensagem('Cadastro salvo na base compartilhada.'); return salvo;
-    } catch (falhaSalvamento) { onErro(erroTexto(falhaSalvamento)); return null; }
-    finally { setSalvando(false); }
-  };
-  const salvarComposicao = async () => {
-    let salvo = rascunho.id ? rascunho : await salvarCadastro();
-    if (!salvo) return;
+  const salvar = async () => {
+    const falha = validar(); if (falha) { onErro(falha); return; }
     const atualizada = { ...composicao, atualizadoEm: new Date().toISOString() };
     const calculoAtual = calcularComposicao(atualizada, documento.recursos);
     if (!calculoAtual.valido) { onErro('A soma de impostos, taxas e margem deve ficar abaixo de 100%.'); return; }
-    salvo = await onSalvarProduto({ ...salvo, preco_custo: calculoAtual.total });
-    setProdutos((atuais) => atuais.map((produto) => produto.id === salvo!.id ? salvo! : produto)); setRascunho(salvo);
-    const ultima = documento.historico.find((versao) => versao.produtoId === salvo.id);
-    const mudou = !ultima || Math.abs(ultima.custoTotal - calculoAtual.total) >= 0.005 || Math.abs(ultima.precoSugerido - calculoAtual.preco) >= 0.005;
-    const proximo: DocumentoCustos = {
-      ...documento,
-      composicoes: { ...documento.composicoes, [salvo.id]: atualizada },
-      historico: mudou ? [{ id: crypto.randomUUID(), produtoId: salvo.id, custoDireto: calculoAtual.direto, custoTotal: calculoAtual.total, precoSugerido: calculoAtual.preco, criadoEm: new Date().toISOString() }, ...documento.historico] : documento.historico,
-    };
-    await onDocumento(proximo, mudou ? 'Composição salva e nova versão de custo registrada.' : 'Composição salva sem alteração de valores.');
+    setSalvando(true); onErro('');
+    try {
+      const salvo = await onSalvarProduto({ ...rascunho, preco_custo: calculoAtual.total });
+      setProdutos((atuais) => atuais.some((produto) => produto.id === salvo.id) ? atuais.map((produto) => produto.id === salvo.id ? salvo : produto) : [salvo, ...atuais]);
+      setRascunho(salvo); onSelecionar(salvo.id);
+      const ultima = documento.historico.find((versao) => versao.produtoId === salvo.id);
+      const mudou = !ultima || Math.abs(ultima.custoTotal - calculoAtual.total) >= 0.005 || Math.abs(ultima.precoSugerido - calculoAtual.preco) >= 0.005;
+      const proximo: DocumentoCustos = {
+        ...documento,
+        composicoes: { ...documento.composicoes, [salvo.id]: atualizada },
+        historico: mudou ? [{ id: crypto.randomUUID(), produtoId: salvo.id, custoDireto: calculoAtual.direto, custoTotal: calculoAtual.total, precoSugerido: calculoAtual.preco, criadoEm: new Date().toISOString() }, ...documento.historico] : documento.historico,
+      };
+      await onDocumento(proximo, mudou ? 'Cadastro e composição salvos; nova versão de custo registrada.' : 'Cadastro e composição salvos.');
+      setComposicao(atualizada);
+      registrarReferenciaEdicao(salvo, atualizada);
+    } catch (falhaSalvamento) { onErro(erroTexto(falhaSalvamento)); }
+    finally { setSalvando(false); }
   };
   const inativar = async () => {
     setSalvando(true); setConfirmarInativacao(false);
-    try { const salvo = await onSalvarProduto({ ...rascunho, ativo: false }); setProdutos((atuais) => atuais.map((produto) => produto.id === salvo.id ? salvo : produto)); setRascunho(salvo); onMensagem('Cadastro inativado. O histórico foi preservado.'); }
+    try { const salvo = await onSalvarProduto({ ...rascunho, ativo: false }); setProdutos((atuais) => atuais.map((produto) => produto.id === salvo.id ? salvo : produto)); setRascunho(salvo); registrarReferenciaEdicao(salvo, composicao); onMensagem('Cadastro inativado. O histórico foi preservado.'); }
     catch (falha) { onErro(erroTexto(falha)); } finally { setSalvando(false); }
   };
   const carregarImagem = async (arquivo?: File) => {
@@ -292,7 +311,8 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     });
   };
   const abrirCadastro = (produto: ProdutoCustos) => {
-    setRascunho(produto); setComposicao(documento.composicoes[produto.id] || composicaoVazia());
+    const proximaComposicao = documento.composicoes[produto.id] || composicaoVazia();
+    setRascunho(produto); setComposicao(proximaComposicao); registrarReferenciaEdicao(produto, proximaComposicao);
     setMenuAcao(null); onSelecionar(produto.id); setModo('cadastro');
   };
   const abrirPrecos = (produto: ProdutoCustos) => {
@@ -308,6 +328,27 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
       await onRecarregar(); setPrecosDoProduto(null); onMensagem(`Listas de preços de ${precosDoProduto.sku} atualizadas.`);
     } catch (falha) { onErro(erroTexto(falha)); }
     finally { setSalvando(false); }
+  };
+  const voltarParaLista = () => {
+    if (possuiEdicaoPendente) { setConfirmarDescarte(true); return; }
+    setModo('lista');
+  };
+  const selecionarProdutoNoEditor = (id: string) => {
+    if (id === rascunho.id) return;
+    if (possuiEdicaoPendente) { setProdutoPendenteId(id); setConfirmarDescarte(true); return; }
+    onSelecionar(id);
+  };
+  const descartarEdicao = () => {
+    setConfirmarDescarte(false);
+    onEdicaoPendente(false);
+    if (produtoPendenteId) {
+      const proximoProduto = produtos.find((produto) => produto.id === produtoPendenteId);
+      const proximaComposicao = proximoProduto ? documento.composicoes[proximoProduto.id] || composicaoVazia() : composicaoVazia();
+      if (proximoProduto) { setRascunho(proximoProduto); setComposicao(proximaComposicao); registrarReferenciaEdicao(proximoProduto, proximaComposicao); onSelecionar(proximoProduto.id); }
+      setProdutoPendenteId('');
+      return;
+    }
+    setModo('lista');
   };
 
   if (modo === 'lista') return <>
@@ -325,8 +366,8 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   </>;
 
   return <>
-    <PageHeader title={rascunho.id ? 'Editar produto ou serviço' : 'Novo produto ou serviço'} description="Complete o cadastro, os dados fiscais e a composição de custo." actions={<button className={styles.secondaryButton} type="button" onClick={() => setModo('lista')}>Voltar à lista</button>} />
-    <ProductStrip produtos={produtos} ativoId={rascunho.id} documento={documento} onSelecionar={onSelecionar} />
+    <PageHeader title={rascunho.id ? 'Editar produto ou serviço' : 'Novo produto ou serviço'} description="Complete o cadastro, os dados fiscais e a composição de custo." actions={<button className={styles.secondaryButton} type="button" onClick={voltarParaLista}>Cancelar edição</button>} />
+    <ProductStrip produtos={produtos} ativoId={rascunho.id} documento={documento} onSelecionar={selecionarProdutoNoEditor} />
     <fieldset className={styles.editor} disabled={!podeEditar || salvando}>
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Identificação</h2><p>O código próprio é obrigatório e nunca é gerado às cegas.</p></div><span className={`${styles.status} ${!rascunho.ativo ? styles.statusInactive : rascunho.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!rascunho.ativo ? 'Inativo' : rascunho.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></div>
         <div className={styles.identification}><div className={styles.imageBox}>{rascunho.imagem_url ? <Image src={rascunho.imagem_url} alt={`Imagem de ${rascunho.nome || 'cadastro'}`} width={135} height={135} unoptimized /> : <span>{rascunho.tipo_item === 'produto' ? 'Produto' : 'Serviço'}<small>Imagem opcional</small></span>}<input ref={arquivoRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => void carregarImagem(e.target.files?.[0])} /><button type="button" className={styles.secondaryButton} onClick={() => arquivoRef.current?.click()}>Escolher imagem</button></div>
@@ -362,9 +403,10 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
         <div className={styles.priceResults}><div><span>Custo direto</span><b>{formatarMoeda(calculo.direto)}</b></div><div><span>Custo total</span><b>{formatarMoeda(calculo.total)}</b></div><div className={styles.priceHighlight}><span>Venda interna calculada</span><strong>{calculo.valido ? formatarMoeda(calculo.preco) : 'Revisar percentuais'}</strong></div><div><span>Preço de venda da empresa</span><b>{formatarMoeda(rascunho.preco_venda)}</b><button type="button" className={styles.linkButton} disabled={!calculo.valido} onClick={() => alterar('preco_venda', calculo.preco)}>Usar preço calculado</button></div></div>
       </section>
       <footer className={styles.saveBar}>{rascunho.id && rascunho.ativo ? <button type="button" className={styles.dangerLink} onClick={() => setConfirmarInativacao(true)}>Inativar cadastro</button> : <span />}
-        <div><small>Salvar composição registra uma nova versão apenas quando os valores mudarem.</small><button type="button" className={styles.secondaryButton} onClick={() => void salvarCadastro()}>Salvar cadastro</button><button type="button" className={styles.primaryButton} onClick={() => void salvarComposicao()}>Salvar composição</button></div></footer>
+        <div><small>Salvar registra o cadastro e a composição em uma única ação.</small><button type="button" className={styles.secondaryButton} onClick={voltarParaLista}>Cancelar</button><button type="button" className={styles.primaryButton} onClick={() => void salvar()}>Salvar</button></div></footer>
     </fieldset>
     <ModalConfirmacao aberto={confirmarInativacao} titulo={`Inativar ${rascunho.nome || 'cadastro'}?`} mensagem="O item ficará inativo no Catálogo e em Custos. Composição e histórico serão preservados para consulta e eventual reativação." textoCancelar="Manter ativo" textoConfirmar="Inativar" carregando={salvando} corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => setConfirmarInativacao(false)} aoConfirmar={() => void inativar()} />
+    <ModalConfirmacao aberto={confirmarDescarte} titulo="Descartar alterações?" mensagem={produtoPendenteId ? 'As mudanças ainda não foram salvas. Se continuar, a edição será descartada e o outro item será aberto.' : 'As mudanças ainda não foram salvas. Se continuar, a edição será descartada e a lista será aberta.'} textoCancelar="Continuar editando" textoConfirmar="Descartar alterações" corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => { setConfirmarDescarte(false); setProdutoPendenteId(''); }} aoConfirmar={descartarEdicao} />
   </>;
 }
 

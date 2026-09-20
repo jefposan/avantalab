@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.02 -->
+<!-- ava-version: 1.38.0.03 -->
+
+> Revisão 1.38.0.03: no cadastro de Produtos e Serviços, use **Salvar** uma
+> única vez para gravar cadastro e composição. **Cancelar** volta para a lista;
+> se houver mudanças, escolha entre continuar editando ou descartá-las. O mesmo
+> aviso aparece antes de trocar de área pelo menu lateral.
 
 > Revisão 1.38.0.02: o menu de ações ao final da linha de um produto fica sobre
 > a lista e os filtros. Clique fora, pressione Escape ou role a tela para fechá-lo.
