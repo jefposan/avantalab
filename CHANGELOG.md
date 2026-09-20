@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.38.0.06 - 2026-09-20
+- **Editor no topo**: abrir **Editar cadastro** ou mudar o item no editor
+  reposiciona a tela no início, sem herdar a rolagem usada para localizar o item.
+
 ## 1.38.0.05 - 2026-09-20
 - **Retorno ao início de Produtos e Serviços**: clicar novamente no item lateral
   agora restaura a lista inicial, limpa a busca e fecha contextos abertos.

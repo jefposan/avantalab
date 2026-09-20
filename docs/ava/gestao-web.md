@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.05 -->
+<!-- ava-version: 1.38.0.06 -->
+
+> Revisão 1.38.0.06: ao abrir **Editar cadastro** de qualquer item, a tela do
+> editor começa no topo, mesmo que a lista tenha sido rolada para localizá-lo.
 
 > Revisão 1.38.0.05: ao clicar novamente em **Produtos e serviços** no menu
 > lateral, a Gestão volta à lista inicial de Produtos. Se estiver editando com

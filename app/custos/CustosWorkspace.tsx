@@ -231,6 +231,11 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     iniciar(initialNewType);
   }, [catalogoId, initialNewType]);
   useEffect(() => {
+    if (modo !== 'cadastro') return;
+    const quadro = window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
+    return () => window.cancelAnimationFrame(quadro);
+  }, [modo, rascunho.id]);
+  useEffect(() => {
     const mudouProduto = produtoAtivoAnteriorRef.current !== produtoAtivoId;
     produtoAtivoAnteriorRef.current = produtoAtivoId;
     if (!mudouProduto || modo !== 'cadastro' || !produtoSelecionado) return;
