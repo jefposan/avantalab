@@ -4,6 +4,7 @@ import { exigirAdmin } from '../../../lib/admin-server';
 const APLICATIVOS = new Set(['gestao', 'avantavendas']);
 const GATILHOS = new Set(['data_programada', 'apos_cadastro', 'sem_acesso']);
 const UNIDADES = new Set(['horas', 'dias', 'semanas']);
+const POR_PAGINA_PROGRAMACOES = 10;
 
 function naoAutorizado() {
   return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
@@ -13,17 +14,31 @@ export async function GET(request: Request) {
   try {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return naoAutorizado();
-    const { data, error } = await db
+    const url = new URL(request.url);
+    const paginaRecebida = Number.parseInt(url.searchParams.get('pagina') || '1', 10);
+    const pagina = Number.isFinite(paginaRecebida) && paginaRecebida > 0 ? paginaRecebida : 1;
+    const inicio = (pagina - 1) * POR_PAGINA_PROGRAMACOES;
+    const fim = inicio + POR_PAGINA_PROGRAMACOES - 1;
+    const { data, error, count } = await db
       .from('admin_disparos_programados')
-      .select('id, nome, aplicativo, gatilho, titulo, mensagem, data_programada, intervalo_valor, intervalo_unidade, ativo, ultima_execucao_em, criado_em, atualizado_em')
-      .order('criado_em', { ascending: false });
+      .select('id, nome, aplicativo, gatilho, titulo, mensagem, data_programada, intervalo_valor, intervalo_unidade, ativo, ultima_execucao_em, criado_em, atualizado_em', { count: 'exact' })
+      .order('criado_em', { ascending: false })
+      .range(inicio, fim);
     if (error) {
       if (error.code === '42P01' || error.code === 'PGRST205') {
-        return NextResponse.json({ erro: false, programacoes: [], configuracaoPendente: true });
+        return NextResponse.json({ erro: false, programacoes: [], pagina: 1, porPagina: POR_PAGINA_PROGRAMACOES, total: 0, totalPaginas: 1, configuracaoPendente: true });
       }
       throw error;
     }
-    return NextResponse.json({ erro: false, programacoes: data || [] });
+    const total = Number(count || 0);
+    return NextResponse.json({
+      erro: false,
+      programacoes: data || [],
+      pagina,
+      porPagina: POR_PAGINA_PROGRAMACOES,
+      total,
+      totalPaginas: Math.max(1, Math.ceil(total / POR_PAGINA_PROGRAMACOES)),
+    });
   } catch (error) {
     console.error('Erro ao carregar programações de disparos:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível carregar as automações.' }, { status: 500 });

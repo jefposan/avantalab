@@ -7,6 +7,7 @@ type UsuarioDestino = { id: string; nome: string | null; email: string | null };
 type PerfilDestino = { id: string; nome: string; usuarios: number };
 
 const UUID_VALIDO = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const POR_PAGINA_HISTORICO = 10;
 
 function naoAutorizado() {
   return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
@@ -117,20 +118,32 @@ export async function GET(request: Request) {
       });
     }
 
-    const { data, error } = await db
+    const paginaRecebida = Number.parseInt(url.searchParams.get('pagina') || '1', 10);
+    const pagina = Number.isFinite(paginaRecebida) && paginaRecebida > 0 ? paginaRecebida : 1;
+    const inicio = (pagina - 1) * POR_PAGINA_HISTORICO;
+    const fim = inicio + POR_PAGINA_HISTORICO - 1;
+    const { data, error, count } = await db
       .from('admin_disparos')
-      .select('id, titulo, mensagem, usuarios, pushes_enviados, total_inscricoes, status, erro, aplicativo, origem, programacao_id, created_at')
+      .select('id, titulo, mensagem, usuarios, pushes_enviados, total_inscricoes, status, erro, aplicativo, origem, programacao_id, created_at', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .limit(100);
+      .range(inicio, fim);
 
     if (error) {
       if (error.code === '42P01' || error.code === 'PGRST205') {
-        return NextResponse.json({ erro: false, disparos: [], configuracaoPendente: true });
+        return NextResponse.json({ erro: false, disparos: [], pagina: 1, porPagina: POR_PAGINA_HISTORICO, total: 0, totalPaginas: 1, configuracaoPendente: true });
       }
       throw error;
     }
 
-    return NextResponse.json({ erro: false, disparos: data || [] });
+    const total = Number(count || 0);
+    return NextResponse.json({
+      erro: false,
+      disparos: data || [],
+      pagina,
+      porPagina: POR_PAGINA_HISTORICO,
+      total,
+      totalPaginas: Math.max(1, Math.ceil(total / POR_PAGINA_HISTORICO)),
+    });
   } catch (error) {
     console.error('Erro ao carregar histórico de disparos:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível carregar o histórico.' }, { status: 500 });

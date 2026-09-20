@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.30 -->
+<!-- ava-version: 1.36.0.31 -->
+
+> Revisão 1.36.0.31: o histórico paginado de disparos pertence ao painel
+> administrativo; sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.36.0.30: a seleção Todos, Usuário ou Perfil pertence ao painel
 > administrativo; sem mudança operacional na Gestão Mobile.

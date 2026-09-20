@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.36.0.31 - 2026-09-20
+- **Disparos paginados**: o `/admin` exibe até 10 envios e até 10 automações por
+  página, com total, página atual e controles **Anterior** e **Próxima**.
+- **Consultas enxutas**: as APIs carregam somente os 10 registros da página
+  solicitada, evitando que o painel cresça ou transfira as listas completas.
+
 ## 1.36.0.30 - 2026-09-20
 - **Destinos completos nos disparos**: o envio imediato do `/admin` oferece
   **Todos**, **Usuário** e **Perfil** na Gestão, ou **Conta** no AvantaVendas.

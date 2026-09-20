@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.30 -->
+<!-- ava-version: 1.36.0.31 -->
+
+> Revisão 1.36.0.31: o histórico paginado de disparos pertence ao painel
+> administrativo; sem mudança operacional no AvantaVendas.
 
 > Revisão 1.36.0.30: a seleção Todos, Usuário ou Conta pertence ao painel
 > administrativo; sem mudança operacional no AvantaVendas.

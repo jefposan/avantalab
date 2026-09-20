@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.30 -->
+<!-- ava-version: 1.36.0.31 -->
+
+> Revisão 1.36.0.31: o histórico paginado de disparos pertence ao painel
+> `/admin`; sem impacto operacional na Gestão Web.
 
 > Revisão 1.36.0.30: os destinos Todos, Usuário e Perfil/Conta pertencem ao
 > painel `/admin`; sem impacto operacional na Gestão Web.

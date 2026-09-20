@@ -95,3 +95,31 @@ test('disparo imediato permite todos, um usuário ou todos os membros de um perf
   assert.match(broadcast, /const rows = empresaId/);
   assert.match(broadcast, /empresa_id: empresaId, user_id: null/);
 });
+
+test('histórico de envios usa páginas de dez registros com navegação', async () => {
+  const [painel, rota] = await Promise.all([
+    readFile(new URL('../../app/admin/page.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/admin-disparos/route.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(rota, /POR_PAGINA_HISTORICO = 10/);
+  assert.match(rota, /\.range\(inicio, fim\)/);
+  assert.match(rota, /\{ count: 'exact' \}/);
+  assert.match(painel, /Paginação do histórico de envios/);
+  assert.match(painel, /loadBroadcasts\(broadcastPagina - 1\)/);
+  assert.match(painel, /loadBroadcasts\(broadcastPagina \+ 1\)/);
+  assert.match(painel, /broadcastPagina >= broadcastTotalPaginas/);
+});
+
+test('automações também usam páginas de dez registros com navegação', async () => {
+  const [painel, rota] = await Promise.all([
+    readFile(new URL('../../app/admin/page.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/admin-disparos/programacoes/route.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(rota, /POR_PAGINA_PROGRAMACOES = 10/);
+  assert.match(rota, /\.range\(inicio, fim\)/);
+  assert.match(rota, /\{ count: 'exact' \}/);
+  assert.match(painel, /Paginação das automações/);
+  assert.match(painel, /loadProgramacoesDisparo\(programacoesPagina - 1\)/);
+  assert.match(painel, /loadProgramacoesDisparo\(programacoesPagina \+ 1\)/);
+  assert.match(painel, /programacoesPagina >= programacoesTotalPaginas/);
+});
