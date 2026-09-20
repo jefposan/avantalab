@@ -46,7 +46,7 @@ test('a ponte preserva a sessão ao abrir o push e entrega o destino para o app'
   assert.match(mobile, /carregarNotificacoesNaoLidas\(false\)/);
 });
 
-test('a abertura nativa não fica presa no lock de sessão nem em uma tela de erro de autenticação', async () => {
+test('a abertura nativa usa uma sessão única e não fica presa em erro de autenticação', async () => {
   const [mobile, clienteSupabase, paginaMobile, rotaRecuperacao] = await Promise.all([
     readFile(new URL('public/mobile-app.js', raiz), 'utf8'),
     readFile(new URL('app/lib/supabase.ts', raiz), 'utf8'),
@@ -54,10 +54,12 @@ test('a abertura nativa não fica presa no lock de sessão nem em uma tela de er
     readFile(new URL('app/mobile/recuperar/route.ts', raiz), 'utf8'),
   ]);
 
-  assert.match(clienteSupabase, /window\.location\.pathname\.startsWith\('\/mobile'\)/);
-  assert.match(clienteSupabase, /autoRefreshToken: false/);
-  assert.match(clienteSupabase, /detectSessionInUrl: false/);
-  assert.match(clienteSupabase, /lock: async \(_nome, _limiteMs, executar\) => executar\(\)/);
+  assert.match(clienteSupabase, /window\.location\.pathname === '\/mobile'/);
+  assert.match(clienteSupabase, /clienteCompartilhadoDaGestaoNativa\(\)/);
+  assert.match(clienteSupabase, /__AVANTALAB_MOBILE_SUPABASE_CLIENT__/);
+  assert.doesNotMatch(clienteSupabase, /autoRefreshToken: false/);
+  assert.doesNotMatch(clienteSupabase, /lock: async/);
+  assert.match(mobile, /window\.__AVANTALAB_MOBILE_SUPABASE_CLIENT__ = db/);
   assert.match(mobile, /abrirLoginAposFalhaSessaoMobile\(erroSessao\)/);
   assert.match(mobile, /state\.telaAcesso = 'login'/);
   assert.doesNotMatch(

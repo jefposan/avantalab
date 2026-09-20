@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.24 -->
+<!-- ava-version: 1.36.0.25 -->
+
+> Revisão 1.36.0.25: a correção de sessão única pertence à Gestão Mobile; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.36.0.24-av153: no próximo login ou carregamento completo, usuários
 > do AvantaVendas que ainda não ativaram notificações recebem uma nova

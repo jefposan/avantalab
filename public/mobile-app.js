@@ -94,6 +94,10 @@
       detectSessionInUrl: true,
     },
   });
+  // Única instância proprietária da autenticação no app nativo. As pontes
+  // React (OAuth, Ava, backup e conteúdo) reutilizam este cliente em vez de
+  // abrir outro GoTrue sobre a mesma sessão persistida.
+  window.__AVANTALAB_MOBILE_SUPABASE_CLIENT__ = db;
 
   var CACHE_GESTAO_MOBILE_DB = 'avantalab.gestao_mobile.cache';
   var CACHE_GESTAO_MOBILE_STORE = 'perfis';

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.24 -->
+<!-- ava-version: 1.36.0.25 -->
+
+> Revisão 1.36.0.25: a Gestão Mobile usa uma única sessão no aplicativo
+> nativo. O primeiro login, as aberturas seguintes, a retomada pelo ícone e a
+> abertura por notificação devem levar ao painel enquanto a sessão for válida;
+> as pontes de OAuth, Ava, backup e conteúdo não iniciam outra autenticação.
 
 > Revisão 1.36.0.24: no próximo login ou carregamento completo, usuários que
 > ainda não ativaram notificações recebem uma nova oportunidade de ativação.

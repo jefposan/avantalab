@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.24 -->
+<!-- ava-version: 1.36.0.25 -->
+
+> Revisão 1.36.0.25: a correção de sessão única pertence à Gestão Mobile
+> nativa; sem impacto operacional na Gestão Web.
 
 > Revisão 1.36.0.24: o novo convite de notificações pertence aos aplicativos
 > móveis; sem impacto operacional na Gestão Web.

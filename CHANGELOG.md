@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.36.0.25 - 2026-09-20
+- **Sessão móvel com proprietário único**: a Gestão Mobile passa a usar uma
+  única instância Supabase para restaurar, renovar e encerrar a sessão no app
+  nativo. OAuth, Ava, backup e conteúdo reutilizam o mesmo cliente.
+- **Segunda abertura corrigida**: removida a concorrência entre dois clientes
+  de autenticação sobre a mesma sessão persistida, que podia deixar a primeira
+  entrada funcionar e travar as aberturas seguintes no aviso de acesso.
+- **Push sem interferir no login**: a sincronização das notificações continua
+  depois da carga, mas agora utiliza a sessão já restaurada pelo aplicativo e
+  não inicia um segundo ciclo de autenticação.
+
 ## 1.36.0.24-av153 - 2026-09-20
 - **Novo convite para notificações**: Gestão Mobile e AvantaVendas oferecem uma
   nova oportunidade de ativação, uma única vez por usuário e instalação, para
