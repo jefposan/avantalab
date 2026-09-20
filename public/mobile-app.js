@@ -332,6 +332,39 @@
   window.addEventListener('avantalab:oauth-nativo-mobile', function (event) {
     processarRetornoOAuthNativoMobile(event && event.detail ? event.detail : {});
   });
+
+  function processarDestinoPushNativoMobile(destinoRecebido) {
+    if (!state) return false;
+    try {
+      var destino = new URL(String(destinoRecebido || '/mobile'), window.location.origin);
+      if (destino.origin !== window.location.origin || destino.pathname !== '/mobile') return true;
+
+      if (destino.searchParams.get('assinatura') === '1') {
+        state.abrirAssinaturaAoCarregar = true;
+        if (state.autenticado && state.empresa && state.pronto && !state.carregando) {
+          state.abrirAssinaturaAoCarregar = false;
+          window.setTimeout(abrirAssinaturaMobile, 0);
+        }
+      } else if (state.autenticado && state.usuario && state.pronto) {
+        window.setTimeout(function () {
+          carregarNotificacoesNaoLidas(false).catch(function () {});
+        }, 0);
+      }
+      return true;
+    } catch (error) {
+      return true;
+    }
+  }
+
+  function consumirDestinoPushNativoMobile(destinoRecebido) {
+    if (!processarDestinoPushNativoMobile(destinoRecebido)) return;
+    try { window.__avantalabDestinoPushNativoMobile = ''; } catch (error) {}
+  }
+
+  window.addEventListener('avantalab:push-mobile-aberto', function (event) {
+    var detalhe = event && event.detail ? event.detail : {};
+    consumirDestinoPushNativoMobile(detalhe.url || window.__avantalabDestinoPushNativoMobile);
+  });
   var CHAVE_ULTIMO_PERFIL_MOBILE = 'avantalab_mobile_ultimo_perfil_id';
   var CHAVE_RASCUNHO_CADASTRO_MOBILE = 'avantalab_mobile_rascunho_cadastro';
   var CHAVE_RASCUNHO_USUARIO_MOBILE = 'avantalab:rascunho:v1:gestao-mobile:usuarios:';
@@ -17340,6 +17373,9 @@
   async function iniciar() {
     state.falhaAcesso = '';
     state.preparacaoAcessoInterrompida = false;
+    if (window.__avantalabDestinoPushNativoMobile) {
+      consumirDestinoPushNativoMobile(window.__avantalabDestinoPushNativoMobile);
+    }
     prepararOrigemAcessoMobile();
     window._avaProfilePillHidden = false;
     if (typeof window.__avantalabReiniciarProgressoMobile === 'function') {

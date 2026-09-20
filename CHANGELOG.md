@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.36.0.21 - 2026-09-20
+- **Push abre a Gestão sem reiniciar a sessão**: tocar em uma notificação da
+  Gestão Mobile deixa de recarregar `/mobile` quando o aplicativo já está nessa
+  rota, evitando a disputa que podia interromper a recuperação da sessão.
+- **Destino interno preservado**: avisos com uma ação específica, como abrir a
+  assinatura, atualizam a rota e entregam a ação ao aplicativo sem reiniciar o
+  WebView. Destinos externos ou fora da Gestão Mobile são rejeitados.
+- **Abertura fria e retomada cobertas**: o destino fica pendente até a Gestão
+  estar pronta, funcionando tanto com o aplicativo fechado quanto em segundo
+  plano.
+
 ## 1.36.0.20 - 2026-09-19
 - **Notificações no primeiro acesso**: Gestão Mobile e AvantaVendas oferecem a
   autorização após o primeiro login de cada usuário no aparelho, com ações

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.20 -->
+<!-- ava-version: 1.36.0.21 -->
+
+> Revisão 1.36.0.21: tocar em uma notificação push abre ou retoma a Gestão
+> Mobile sem reiniciar a sessão. Avisos com destino específico, como
+> assinatura, encaminham para a ação correta depois que o acesso estiver
+> pronto; um erro de sessão não deve ser provocado apenas pelo toque no aviso.
 
 > Revisão 1.36.0.20: após o primeiro login de cada usuário neste aparelho, a
 > Gestão oferece **Ativar notificações** ou **Agora não**. Se o sistema já tiver

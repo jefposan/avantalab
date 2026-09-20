@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.20 -->
+<!-- ava-version: 1.36.0.21 -->
+
+> Revisão 1.36.0.21: a correção de retomada da sessão pertence à Gestão
+> Mobile; o caminho de abertura do AvantaVendas pelo push permanece inalterado.
 
 > Revisão 1.36.0.20: após o primeiro login de cada usuário neste aparelho, o
 > AvantaVendas oferece **Ativar notificações** ou **Agora não**. Permissões já

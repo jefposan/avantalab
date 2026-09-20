@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.20 -->
+<!-- ava-version: 1.36.0.21 -->
+
+> Revisão 1.36.0.21: a correção de abertura pelo push pertence à Gestão
+> Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.36.0.20: a autorização no primeiro login e a sincronização de push
 > pertencem aos aplicativos Gestão Mobile e AvantaVendas; sem mudança

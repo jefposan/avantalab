@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { EVENTO_ABERTURA_PUSH_MOBILE, resolverDestinoPushMobile } from './push-navigation';
 
 type NativeBadge = { set(options: { count: number }): Promise<unknown> };
 const NativeBadge = registerPlugin<NativeBadge>('NativeBadge');
@@ -18,6 +19,7 @@ declare global {
     __avantalabDesativarPushNativoMobile?: () => Promise<TokenPushNativo | null>;
     __avantalabEstadoPushNativoMobile?: () => Promise<boolean>;
     __avantalabAtualizarBadgeNativo?: (quantidade: number) => void;
+    __avantalabDestinoPushNativoMobile?: string;
   }
 }
 
@@ -75,8 +77,22 @@ export default function NativePushNotificationsBridge() {
         rejeitarToken?.(new Error(error)); resolverToken = null; rejeitarToken = null;
       });
       await PushNotifications.addListener('pushNotificationActionPerformed', ({ notification }) => {
-        const url = String(notification.data?.url || '/mobile');
-        window.location.assign(url);
+        const destino = resolverDestinoPushMobile(window.location.href, notification.data?.url);
+        if (!destino) return;
+
+        window.__avantalabDestinoPushNativoMobile = destino.href;
+        if (destino.mesmoDocumento) {
+          const hrefAtual = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+          if (hrefAtual !== destino.href) {
+            window.history.replaceState(window.history.state, '', destino.href);
+          }
+          window.dispatchEvent(new CustomEvent(EVENTO_ABERTURA_PUSH_MOBILE, {
+            detail: { url: destino.href },
+          }));
+          return;
+        }
+
+        window.location.assign(destino.href);
       });
       window.__avantalabAtivarPushNativoMobile = () => iniciar(true);
       window.__avantalabSincronizarPushNativoMobile = async () => {
