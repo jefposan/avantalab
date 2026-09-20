@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.25 -->
+<!-- ava-version: 1.36.0.26 -->
+
+> Revisão 1.36.0.26: a renovação da sessão lembrada pertence à Gestão Mobile;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.36.0.25: a correção de sessão única pertence à Gestão Mobile; sem
 > impacto operacional no AvantaVendas.

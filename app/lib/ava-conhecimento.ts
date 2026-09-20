@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.36.0.26: com Lembrar-me ativo, a Gestão Mobile renova a
+// sessão antes de carregar dados; sessão inválida volta ao login sem reinstalar.
 // Revisado na versão 1.36.0.25: a Gestão Mobile nativa mantém uma única sessão
 // para login, retomada e push; as pontes reutilizam o cliente já autenticado.
 // Revisado na versão 1.36.0.24: Gestão Mobile e AvantaVendas renovam uma vez o

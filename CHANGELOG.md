@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.36.0.26 - 2026-09-20
+- **Lembrar-me validado na abertura**: a Gestão Mobile renova explicitamente a
+  sessão persistida antes de consultar perfis e dados, eliminando o uso de um
+  token salvo que ainda não foi revalidado ao reabrir o aplicativo.
+- **Recuperação sem reinstalação**: se a sessão lembrada estiver inválida ou não
+  puder ser renovada, o estado local é limpo e o login volta operável, sem
+  prender o usuário na tela de falha nem exigir reinstalar o aplicativo.
+- **Escopo isolado**: o ajuste pertence somente à restauração de sessão da
+  Gestão Mobile; `/admin`, automações e AvantaVendas permanecem inalterados.
+
 ## 1.36.0.25 - 2026-09-20
 - **Sessão móvel com proprietário único**: a Gestão Mobile passa a usar uma
   única instância Supabase para restaurar, renovar e encerrar a sessão no app

@@ -1192,6 +1192,21 @@
     });
   }
 
+  async function renovarSessaoLembradaMobile(sessao) {
+    if (!sessao || !sessao.refresh_token || !sessaoPersistenteValidaMobile()) return sessao;
+
+    var resposta = await promessaMobileComPrazo(
+      db.auth.refreshSession({ refresh_token: sessao.refresh_token }),
+      12000,
+      'A renovação da sessão salva demorou mais que o esperado.'
+    );
+    if (resposta && resposta.error) throw resposta.error;
+    if (!resposta || !resposta.data || !resposta.data.session || !resposta.data.session.user) {
+      throw new Error('A sessão salva não pôde ser renovada.');
+    }
+    return resposta.data.session;
+  }
+
   function exibirFalhaDeAcessoMobile(texto) {
     state.carregando = false;
     state.pronto = true;
@@ -17638,7 +17653,12 @@
           'A restauração da sessão demorou mais que o esperado.'
         );
         if (sessao && sessao.error) throw sessao.error;
+        if (sessao && sessao.data && sessao.data.session) {
+          sessao.data.session = await renovarSessaoLembradaMobile(sessao.data.session);
+        }
       } catch (erroSessao) {
+        limparSessaoLocalMobile();
+        limparPreferenciaSessaoMobile();
         abrirLoginAposFalhaSessaoMobile(erroSessao);
         return;
       }

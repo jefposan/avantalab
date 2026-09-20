@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.25 -->
+<!-- ava-version: 1.36.0.26 -->
+
+> Revisão 1.36.0.26: a renovação da sessão lembrada pertence à Gestão Mobile;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.36.0.25: a correção de sessão única pertence à Gestão Mobile
 > nativa; sem impacto operacional na Gestão Web.

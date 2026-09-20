@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.25 -->
+<!-- ava-version: 1.36.0.26 -->
+
+> Revisão 1.36.0.26: ao abrir a Gestão Mobile com **Lembrar-me** ativo, a
+> sessão salva é renovada antes de buscar perfis e dados. Se ela não puder ser
+> recuperada, o aplicativo limpa somente a sessão inválida e apresenta um login
+> operável; não é necessário reinstalar o aplicativo.
 
 > Revisão 1.36.0.25: a Gestão Mobile usa uma única sessão no aplicativo
 > nativo. O primeiro login, as aberturas seguintes, a retomada pelo ícone e a
