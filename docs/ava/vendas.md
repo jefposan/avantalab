@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.16 -->
+<!-- ava-version: 1.36.0.17 -->
+
+> Revisão 1.36.0.17: o ajuste de altura do seletor de perfis pertence à Gestão
+> Web; sem mudança operacional no AvantaVendas.
 
 > Revisão 1.36.0.16-av152: o comprovante compartilhável de pagamento usa a
 > paleta verde-clara, enquanto o comprovante de pedido permanece azul. Textos,

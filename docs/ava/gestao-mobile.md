@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.16 -->
+<!-- ava-version: 1.36.0.17 -->
+
+> Revisão 1.36.0.17: o ajuste de altura do seletor de perfis pertence à Gestão
+> Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.36.0.16: a nova paleta verde do comprovante pertence ao
 > AvantaVendas; sem impacto operacional na Gestão Mobile.

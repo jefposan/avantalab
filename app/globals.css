@@ -236,6 +236,38 @@ nav {
   padding: 0;
 }
 
+/* Seletor de perfil: o card ocupa primeiro toda a altura útil disponível,
+   mantendo um respiro mínimo. Só a lista interna rola quando seus itens não
+   cabem ao lado do cabeçalho e das ações. */
+.avanta-profile-selection-scene {
+  --av-profile-selection-top-gap: max(12px, env(safe-area-inset-top));
+  --av-profile-selection-bottom-gap: max(12px, env(safe-area-inset-bottom));
+  height: 100dvh;
+  min-height: 0;
+  padding-top: var(--av-profile-selection-top-gap);
+  padding-bottom: var(--av-profile-selection-bottom-gap);
+}
+
+.avanta-profile-selection-card {
+  min-height: 0;
+  max-height: calc(100dvh - var(--av-profile-selection-top-gap) - var(--av-profile-selection-bottom-gap));
+}
+
+.avanta-profile-selection-content {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.avanta-profile-selection-list {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 @media (min-width: 1024px) {
   .avanta-access-scene {
     min-height: 100dvh;

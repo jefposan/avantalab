@@ -7685,14 +7685,14 @@ if (acessoNaoConfigurado) {
 
 if (modalSelecionarEmpresa) {
   return (
-    <main className={`avanta-access-scene relative overflow-y-auto font-sans ${
+    <main className={`avanta-access-scene avanta-profile-selection-scene relative overflow-hidden font-sans ${
       darkMode ? 'bg-slate-950 text-slate-100 lg:bg-transparent' : 'bg-slate-100 text-slate-800 lg:bg-transparent'
     }`}>
       <div className="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
         <FundoAcessoResponsivo />
       </div>
       <section
-        className={`relative z-10 row-start-2 my-auto flex w-full max-w-sm flex-col justify-self-center overflow-hidden rounded-2xl border shadow-2xl ${
+        className={`avanta-profile-selection-card relative z-10 row-start-2 my-auto flex w-full max-w-sm flex-col justify-self-center overflow-hidden rounded-2xl border shadow-2xl ${
           darkMode
             ? 'bg-slate-900 border-slate-700'
             : 'bg-white border-slate-200'
@@ -7714,8 +7714,8 @@ if (modalSelecionarEmpresa) {
           </p>
         </div>
 
-        <div className="p-4 space-y-3">
-          <div className="max-h-[45vh] space-y-2 overflow-y-auto px-1 pr-2">
+        <div className="avanta-profile-selection-content p-4">
+          <div className="avanta-profile-selection-list space-y-2 px-1 pr-2">
             {empresasDoUsuario.map((empresa) => {
               const perfilAtualInativo = modoSelecaoPerfil === 'troca' && empresa.id === empresaId;
               const selecionada = !perfilAtualInativo && empresaParaSelecionar?.id === empresa.id;

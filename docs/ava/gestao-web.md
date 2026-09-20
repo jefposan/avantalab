@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.16 -->
+<!-- ava-version: 1.36.0.17 -->
+
+> Revisão 1.36.0.17: ao escolher um perfil na Gestão Web, o card aproveita a
+> altura útil da tela com respiro superior e inferior. A rolagem aparece apenas
+> na lista quando há perfis demais para o espaço disponível; as ações continuam
+> acessíveis ao final do card.
 
 > Revisão 1.36.0.16: a nova paleta verde do comprovante pertence ao
 > AvantaVendas; sem impacto operacional na Gestão Web.

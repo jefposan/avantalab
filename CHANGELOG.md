@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.36.0.17 - 2026-09-19
+- **Seletor de perfil adaptável**: na Gestão Web, o card usa a altura útil da
+  tela com respiro mínimo superior e inferior. A lista de perfis só ganha
+  rolagem quando excede o espaço restante entre o cabeçalho e as ações.
+
 ## 1.36.0.16-av152 - 2026-09-19
 - **Comprovante de pagamento em verde claro**: cabeçalho, valor pago, saldo atual
   e detalhes passam a usar uma paleta esmeralda mais leve, preservando todos os
