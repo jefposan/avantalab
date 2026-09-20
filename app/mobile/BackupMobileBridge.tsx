@@ -66,6 +66,20 @@ export default function BackupMobileBridge() {
     return () => window.removeEventListener('avantalab:mobile-backup', receber);
   }, []);
 
+  useEffect(() => {
+    const parametros = new URLSearchParams(window.location.search);
+    const resultado = parametros.get('backupNuvem');
+    if (!resultado) return;
+    const mensagem = parametros.get('mensagem') || '';
+    setAviso(resultado === 'conectado'
+      ? { titulo: 'Conta conectada', mensagem: 'A conta de nuvem foi autorizada. Agora você pode escolher salvar cada backup nela, neste aparelho ou nos dois destinos.', tipo: 'sucesso' }
+      : { titulo: 'Não foi possível conectar a conta', mensagem: mensagem || 'A autorização não foi concluída. Tente novamente quando estiver pronto.', tipo: 'erro' });
+    parametros.delete('backupNuvem');
+    parametros.delete('mensagem');
+    const restante = parametros.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${restante ? `?${restante}` : ''}${window.location.hash}`);
+  }, []);
+
   const abrirAviso = (titulo: string, mensagem: string, _acao?: () => void, tipo: 'alerta' | 'erro' | 'sucesso' = 'alerta') => {
     setAviso({ titulo, mensagem, tipo });
   };

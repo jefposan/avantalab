@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.37.0 -->
+<!-- ava-version: 1.37.0.01 -->
+
+> Revisão 1.37.0.01: ao retornar da autorização da nuvem, a Gestão Mobile
+> informa se a conta foi conectada ou se a tentativa falhou. Somente o
+> **Gestor Master** conecta ou troca a conta; os demais usam a conta existente.
 
 > Revisão 1.37.0: em **Configurações > Backup**, escolha a cada geração se o
 > arquivo fica no aparelho, na conta conectada ou nos dois. Em **Restauração**,

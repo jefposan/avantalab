@@ -944,6 +944,22 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [fonteRestauracaoBackupAberta, setFonteRestauracaoBackupAberta] = useState(false);
   const [restaurarNuvemAberto, setRestaurarNuvemAberto] = useState(false);
 
+  useEffect(() => {
+    const parametros = new URLSearchParams(window.location.search);
+    const resultado = parametros.get('backupNuvem');
+    if (!resultado) return;
+    const mensagem = parametros.get('mensagem') || '';
+    if (resultado === 'conectado') {
+      abrirAviso('Conta conectada', 'A conta de nuvem foi autorizada. Agora você pode escolher salvar cada backup nela, neste dispositivo ou nos dois destinos.', undefined, 'sucesso');
+    } else {
+      abrirAviso('Não foi possível conectar a conta', mensagem || 'A autorização não foi concluída. Tente novamente quando estiver pronto.', undefined, 'erro');
+    }
+    parametros.delete('backupNuvem');
+    parametros.delete('mensagem');
+    const restante = parametros.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${restante ? `?${restante}` : ''}${window.location.hash}`);
+  }, []);
+
   // Modais e Calc
   const [modalInstrucoes, setModalInstrucoes] = useState(false);
   const [modalDespesasBase, setModalDespesasBase] = useState(false);

@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.37.0.01: o retorno de autorização da conta de backup
+// confirma sucesso ou erro na Gestão Web e Mobile; conectar/trocar a conta é
+// exclusivo do Gestor Master, e demais perfis usam a conexão existente.
 // Revisado na versão 1.37.0: Gestão Web e Mobile escolhem, em cada backup,
 // dispositivo, conta conectada ou ambos; restauração recebe arquivo local,
 // conta conectada ou ponto AvantaLab. OAuth abre somente o provedor oficial,

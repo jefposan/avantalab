@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.37.0 -->
+<!-- ava-version: 1.37.0.01 -->
+
+> Revisão 1.37.0.01: a confirmação de conexão de backup em nuvem pertence à
+> Gestão Web e Gestão Mobile; sem mudança operacional no AvantaVendas.
 
 > Revisão 1.37.0: backup em nuvem pertence à Gestão Web e Gestão Mobile; sem
 > mudança operacional no AvantaVendas.

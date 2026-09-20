@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.37.0.01 - 2026-09-20
+- **Conexão confirmada**: ao voltar da autorização do Google Drive ou OneDrive,
+  a Gestão Web e Gestão Mobile agora informam claramente o sucesso ou a falha e
+  removem os parâmetros temporários da URL.
+- **Permissão coerente**: apenas o Gestor Master vê os controles para conectar
+  ou trocar a conta de nuvem; os demais perfis recebem a orientação correta.
+- **Cobertura de simulação**: os testes automatizados exercitam cifra de
+  credenciais, OAuth, renovação, upload, listagem, download e erros dos dois
+  provedores, sem usar contas ou arquivos reais.
+
 ## 1.37.0 - 2026-09-20
 - **Backup em nuvem opcional**: cada backup agora escolhe, a cada execução,
   entre salvar no dispositivo, na conta conectada ou nos dois destinos.

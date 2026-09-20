@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.37.0 -->
+<!-- ava-version: 1.37.0.01 -->
+
+> Revisão 1.37.0.01: depois de autorizar uma conta de nuvem, a Gestão Web
+> confirma o resultado e volta ao fluxo de backup. Somente o **Gestor Master**
+> conecta ou troca a conta; os demais podem usar a conta já autorizada.
 
 > Revisão 1.37.0: em **Configurações > Backup**, escolha em cada geração se o
 > Excel será salvo neste dispositivo, na conta conectada ou nos dois. Em
