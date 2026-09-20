@@ -3,13 +3,14 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
+import { Modal } from '@/app/projetos/components/Modal';
 import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
 import { supabase } from '@/app/lib/supabase';
 import type { CustosAccess } from './CustosClient';
 import TabelasPrecosView from './TabelasPrecosView';
-import { carregarCustos, enviarImagemProduto, salvarDocumentoCustos, salvarProdutoCustos } from './repository';
+import { carregarCustos, enviarImagemProduto, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos } from './repository';
 import {
-  calcularComposicao, composicaoVazia, documentoVazio, novoProduto, proximoCodigo,
+  calcularComposicao, composicaoVazia, documentoVazio, novoProduto, precoEfetivoTabela, proximoCodigo,
   type CampoCenario, type CenarioPreco, type ComposicaoCusto, type DocumentoCustos,
   type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
 } from './types';
@@ -103,7 +104,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
         {mensagem && <div className={styles.success}>{mensagem}</div>}
       </div>
       {aba === 'visao' && <VisaoGeral produtos={produtos} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => setAba('produtos')} onAtualizar={() => void recarregar()} />}
-      {aba === 'produtos' && <ProdutosView key={`${produtoAtivoId}:${produtoAtivo?.atualizado_em || 'novo'}`} catalogoId={catalogoId} produtos={produtos} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onMensagem={setMensagem} onErro={setErro} />}
+      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'recursos' && <RecursosView documento={documento} produtos={produtos} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
@@ -169,20 +170,27 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
   </>;
 }
 
-function ProdutosView({ catalogoId, produtos, setProdutos, documento, produtoAtivoId, initialNewType, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onMensagem, onErro }: {
-  catalogoId: string; produtos: ProdutoCustos[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
+function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onMensagem, onErro }: {
+  companyId: string; catalogoId: string; produtos: ProdutoCustos[]; tabelas: TabelaPreco[]; precos: PrecoTabelaItem[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
   documento: DocumentoCustos; produtoAtivoId: string; initialNewType?: 'produto'; onSelecionar: (id: string) => void;
   onDocumento: (proximo: DocumentoCustos, retorno: string) => Promise<void>; podeEditar: boolean;
   onSalvarProduto: (produto: ProdutoCustos) => Promise<ProdutoCustos>; onEnviarImagem: (arquivo: File) => Promise<string>;
-  onMensagem: (texto: string) => void; onErro: (texto: string) => void;
+  onRecarregar: () => Promise<void>; onMensagem: (texto: string) => void; onErro: (texto: string) => void;
 }) {
   const produtoSelecionado = produtos.find((produto) => produto.id === produtoAtivoId);
+  const [modo, setModo] = useState<'lista' | 'cadastro'>(initialNewType ? 'cadastro' : 'lista');
+  const [tipoLista, setTipoLista] = useState<TipoItem>('produto');
+  const [buscaLista, setBuscaLista] = useState('');
+  const [menuAcaoId, setMenuAcaoId] = useState('');
+  const [precosDoProduto, setPrecosDoProduto] = useState<ProdutoCustos | null>(null);
+  const [valoresTabela, setValoresTabela] = useState<Record<string, number>>({});
   const [rascunho, setRascunho] = useState<ProdutoCustos>(() => produtoSelecionado || novoProduto('produto', catalogoId));
   const [composicao, setComposicao] = useState<ComposicaoCusto>(() => produtoSelecionado ? documento.composicoes[produtoSelecionado.id] || composicaoVazia() : composicaoVazia());
   const [salvando, setSalvando] = useState(false);
   const [confirmarInativacao, setConfirmarInativacao] = useState(false);
   const arquivoRef = useRef<HTMLInputElement>(null);
   const initialNewAppliedRef = useRef(false);
+  const produtoAtivoAnteriorRef = useRef(produtoAtivoId);
 
   const calculo = calcularComposicao(composicao, documento.recursos);
   const codigos = produtos.filter((produto) => produto.id !== rascunho.id).map((produto) => produto.sku).filter(Boolean);
@@ -190,12 +198,19 @@ function ProdutosView({ catalogoId, produtos, setProdutos, documento, produtoAti
   const proximo = proximoCodigo(prefixo, codigos);
   const alterar = <K extends keyof ProdutoCustos>(campo: K, valor: ProdutoCustos[K]) => setRascunho((atual) => ({ ...atual, [campo]: valor }));
 
-  const iniciar = (tipo: TipoItem) => { const novo = novoProduto(tipo, catalogoId); setRascunho(novo); setComposicao(composicaoVazia()); onSelecionar(''); };
+  const iniciar = (tipo: TipoItem) => { const novo = novoProduto(tipo, catalogoId); setRascunho(novo); setComposicao(composicaoVazia()); onSelecionar(''); setModo('cadastro'); };
   useEffect(() => {
     if (!initialNewType || !catalogoId || initialNewAppliedRef.current) return;
     initialNewAppliedRef.current = true;
     iniciar(initialNewType);
   }, [catalogoId, initialNewType]);
+  useEffect(() => {
+    const mudouProduto = produtoAtivoAnteriorRef.current !== produtoAtivoId;
+    produtoAtivoAnteriorRef.current = produtoAtivoId;
+    if (!mudouProduto || modo !== 'cadastro' || !produtoSelecionado) return;
+    setRascunho(produtoSelecionado);
+    setComposicao(documento.composicoes[produtoSelecionado.id] || composicaoVazia());
+  }, [produtoAtivoId]);
   const validar = () => {
     if (!rascunho.sku.trim() || !rascunho.nome.trim()) return 'Código e nome são obrigatórios.';
     if (codigos.some((codigo) => codigo.toUpperCase() === rascunho.sku.trim().toUpperCase())) return 'Este código já está sendo usado.';
@@ -244,8 +259,42 @@ function ProdutosView({ catalogoId, produtos, setProdutos, documento, produtoAti
     catch (falha) { onErro(erroTexto(falha)); } finally { setSalvando(false); }
   };
 
+  const listaFiltrada = produtos.filter((produto) => produto.tipo_item === tipoLista && `${produto.sku} ${produto.nome} ${produto.marca} ${produto.categoria}`.toLocaleLowerCase('pt-BR').includes(buscaLista.toLocaleLowerCase('pt-BR')));
+  const abrirCadastro = (produto: ProdutoCustos) => {
+    setRascunho(produto); setComposicao(documento.composicoes[produto.id] || composicaoVazia());
+    setMenuAcaoId(''); onSelecionar(produto.id); setModo('cadastro');
+  };
+  const abrirPrecos = (produto: ProdutoCustos) => {
+    setPrecosDoProduto(produto);
+    setValoresTabela(Object.fromEntries(tabelas.filter((tabela) => tabela.ativo).map((tabela) => [tabela.id, precoEfetivoTabela(tabela, produto, precos)])));
+    setMenuAcaoId('');
+  };
+  const salvarListasPrecos = async () => {
+    if (!precosDoProduto) return;
+    setSalvando(true); onErro('');
+    try {
+      await Promise.all(tabelas.filter((tabela) => tabela.ativo).map((tabela) => salvarPrecoTabela(companyId, tabela.id, precosDoProduto.id, valoresTabela[tabela.id] ?? 0)));
+      await onRecarregar(); setPrecosDoProduto(null); onMensagem(`Listas de preços de ${precosDoProduto.sku} atualizadas.`);
+    } catch (falha) { onErro(erroTexto(falha)); }
+    finally { setSalvando(false); }
+  };
+
+  if (modo === 'lista') return <>
+    <PageHeader title="Produtos e serviços" description="Consulte, localize e ajuste o cadastro ou as listas comerciais de cada item." actions={<><button className={styles.secondaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('servico')}>Novo serviço</button><button className={styles.primaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('produto')}>Novo produto</button></>} />
+    <section className={styles.panel}>
+      <div className={styles.catalogListTools}>
+        <div className={styles.listTabs} role="tablist" aria-label="Tipo de cadastro"><button type="button" role="tab" aria-selected={tipoLista === 'produto'} className={tipoLista === 'produto' ? styles.listTabActive : ''} onClick={() => setTipoLista('produto')}>Produtos <b>{produtos.filter((produto) => produto.tipo_item === 'produto').length}</b></button><button type="button" role="tab" aria-selected={tipoLista === 'servico'} className={tipoLista === 'servico' ? styles.listTabActive : ''} onClick={() => setTipoLista('servico')}>Serviços <b>{produtos.filter((produto) => produto.tipo_item === 'servico').length}</b></button></div>
+        <label className={styles.search}><span>Localizar</span><input type="search" value={buscaLista} onChange={(event) => setBuscaLista(event.target.value)} placeholder="Código, nome, marca…" /></label>
+      </div>
+      <div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => <tr key={produto.id}><td><b>{produto.sku}</b></td><td><b>{produto.nome}</b><small>{produto.unidade}</small></td><td>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${!produto.ativo ? styles.statusInactive : produto.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!produto.ativo ? 'Inativo' : produto.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcaoId === produto.id} onClick={() => setMenuAcaoId(menuAcaoId === produto.id ? '' : produto.id)}>•••</button>{menuAcaoId === produto.id && <div className={styles.contextMenu}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button></div>}</td></tr>)}{!listaFiltrada.length && <tr><td colSpan={6} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
+    </section>
+    <Modal open={Boolean(precosDoProduto)} onClose={() => !salvando && setPrecosDoProduto(null)} title="Atualizar listas de preços" description={precosDoProduto ? `${precosDoProduto.sku} · ${precosDoProduto.nome}` : ''}>
+      {precosDoProduto && <div className={styles.productPriceList}>{tabelas.filter((tabela) => tabela.ativo).map((tabela) => <label key={tabela.id}><span>{tabela.nome}{tabela.padrao && <small>Preço principal</small>}</span><MoneyInput value={valoresTabela[tabela.id] ?? 0} onChange={(valor) => setValoresTabela((atuais) => ({ ...atuais, [tabela.id]: valor }))} label={`Preço ${tabela.nome}`} disabled={salvando || !podeEditar} /></label>)}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => setPrecosDoProduto(null)}>Cancelar</button><button type="button" className={styles.primaryButton} disabled={salvando || !podeEditar} onClick={() => void salvarListasPrecos()}>{salvando ? 'Salvando…' : 'Salvar preços'}</button></div></div>}
+    </Modal>
+  </>;
+
   return <>
-    <PageHeader title="Produtos e serviços" description="Crie o cadastro mestre, complete dados fiscais e monte o custo." actions={<><button className={styles.secondaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('servico')}>Novo serviço</button><button className={styles.primaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('produto')}>Novo produto</button></>} />
+    <PageHeader title={rascunho.id ? 'Editar produto ou serviço' : 'Novo produto ou serviço'} description="Complete o cadastro, os dados fiscais e a composição de custo." actions={<button className={styles.secondaryButton} type="button" onClick={() => setModo('lista')}>Voltar à lista</button>} />
     <ProductStrip produtos={produtos} ativoId={rascunho.id} documento={documento} onSelecionar={onSelecionar} />
     <fieldset className={styles.editor} disabled={!podeEditar || salvando}>
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Identificação</h2><p>O código próprio é obrigatório e nunca é gerado às cegas.</p></div><span className={`${styles.status} ${!rascunho.ativo ? styles.statusInactive : rascunho.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!rascunho.ativo ? 'Inativo' : rascunho.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></div>

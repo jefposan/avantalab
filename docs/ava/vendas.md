@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.38.0 -->
+<!-- ava-version: 1.38.0.01 -->
+
+> Revisão 1.38.0.01: a lista de Produtos e Serviços e a edição centralizada
+> das tabelas pertencem a Custos e Precificação na Gestão Web; sem alteração
+> operacional no AvantaVendas.
 
 > Revisão 1.38.0: a importação administrativa de Custos preserva saldo em
 > histórico e mantém os itens em estudo até publicação humana; sem alteração

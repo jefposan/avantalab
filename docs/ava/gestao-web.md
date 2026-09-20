@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0 -->
+<!-- ava-version: 1.38.0.01 -->
+
+> Revisão 1.38.0.01: em **Custos e Precificação > Produtos e serviços**, a
+> abertura padrão é a lista. Use **Produtos** ou **Serviços** no topo e o menu
+> de ações no fim de cada linha para abrir **Editar cadastro** ou **Editar
+> listas de preços**. Esta última reúne todas as tabelas ativas do mesmo item
+> e salva os valores em uma única confirmação. **Novo produto** e **Novo
+> serviço** abrem o cadastro detalhado, com a faixa horizontal para consultar
+> os itens já existentes.
 
 > Revisão 1.38.0: uma importação administrativa de catálogo em **Custos e
 > Precificação** pode consolidar cadastro, preços e estoque de uma base

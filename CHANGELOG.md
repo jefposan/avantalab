@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.38.0.01 - 2026-09-20
+- **Produtos e serviços em lista**: a área passa a abrir na listagem, com
+  abas separadas para Produtos e Serviços, busca e ações no fim de cada linha.
+- **Edição comercial centralizada**: cada item agora abre **Editar listas de
+  preços**, reunindo as tabelas ativas em uma única confirmação; o valor zero
+  continua sendo um preço válido.
+- **Cadastro sob demanda**: **Novo produto**, **Novo serviço** e editar
+  cadastro levam à tela detalhada, que preserva a faixa horizontal de cards
+  para navegar entre itens durante o trabalho.
+
 ## 1.38.0 - 2026-09-20
 - **Importação Tridium consolidada**: o catálogo de Custos e Precificação passa
   a aceitar uma carga completa com cadastro, EAN, NCM, fornecedor, pesos,
