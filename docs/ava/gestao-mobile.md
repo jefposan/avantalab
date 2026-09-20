@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.26 -->
+<!-- ava-version: 1.36.0.27 -->
+
+> Revisão 1.36.0.27: ao reabrir a Gestão Mobile com **Lembrar-me**, o registro
+> de último acesso acontece em segundo plano e nunca interrompe o carregamento.
+> O painel deve abrir normalmente pelo ícone ou por push, sem reinstalação.
 
 > Revisão 1.36.0.26: ao abrir a Gestão Mobile com **Lembrar-me** ativo, a
 > sessão salva é renovada antes de buscar perfis e dados. Se ela não puder ser

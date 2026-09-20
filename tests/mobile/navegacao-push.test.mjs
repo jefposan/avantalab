@@ -61,15 +61,11 @@ test('a abertura nativa usa uma sessão única e não fica presa em erro de aute
   assert.doesNotMatch(clienteSupabase, /lock: async/);
   assert.match(mobile, /window\.__AVANTALAB_MOBILE_SUPABASE_CLIENT__ = db/);
   assert.match(mobile, /abrirLoginAposFalhaSessaoMobile\(erroSessao\)/);
-  assert.match(mobile, /async function renovarSessaoLembradaMobile\(sessao\)/);
-  assert.match(
-    mobile,
-    /db\.auth\.refreshSession\(\{ refresh_token: sessao\.refresh_token \}\)/,
-  );
-  assert.match(
-    mobile,
-    /sessao\.data\.session = await renovarSessaoLembradaMobile\(sessao\.data\.session\)/,
-  );
+  assert.doesNotMatch(mobile, /renovarSessaoLembradaMobile/);
+  assert.doesNotMatch(mobile, /db\.auth\.refreshSession\(/);
+  assert.match(mobile, /function registrarAtividadeGestaoMobile\(\)/);
+  assert.match(mobile, /Promise\.resolve\([\s\S]*?db\.rpc\('registrar_atividade_aplicativo'/);
+  assert.doesNotMatch(mobile, /db\.rpc\('registrar_atividade_aplicativo',[\s\S]{0,120}?\)\.catch\(/);
   assert.match(
     mobile,
     /catch \(erroSessao\) \{\s*limparSessaoLocalMobile\(\);\s*limparPreferenciaSessaoMobile\(\);\s*abrirLoginAposFalhaSessaoMobile\(erroSessao\)/,

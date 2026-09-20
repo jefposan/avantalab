@@ -1192,19 +1192,19 @@
     });
   }
 
-  async function renovarSessaoLembradaMobile(sessao) {
-    if (!sessao || !sessao.refresh_token || !sessaoPersistenteValidaMobile()) return sessao;
-
-    var resposta = await promessaMobileComPrazo(
-      db.auth.refreshSession({ refresh_token: sessao.refresh_token }),
-      12000,
-      'A renovação da sessão salva demorou mais que o esperado.'
-    );
-    if (resposta && resposta.error) throw resposta.error;
-    if (!resposta || !resposta.data || !resposta.data.session || !resposta.data.session.user) {
-      throw new Error('A sessão salva não pôde ser renovada.');
-    }
-    return resposta.data.session;
+  function registrarAtividadeGestaoMobile() {
+    // O construtor de consulta do Supabase é "thenable", mas não expõe
+    // .catch() diretamente nesta versão. O AvantaVendas já normaliza a mesma
+    // chamada como Promise antes de executá-la em segundo plano.
+    void Promise.resolve(
+      db.rpc('registrar_atividade_aplicativo', { p_aplicativo: 'gestao' })
+    ).then(function (resultado) {
+      if (resultado && resultado.error) {
+        console.warn('Não foi possível registrar a atividade da Gestão Mobile:', resultado.error);
+      }
+    }).catch(function () {
+      // Telemetria de atividade nunca pode bloquear login, retomada ou dados.
+    });
   }
 
   function exibirFalhaDeAcessoMobile(texto) {
@@ -1225,6 +1225,7 @@
       });
       sessionStorage.setItem('avantalab.mobile.diagnostico_acesso', diagnostico);
       localStorage.setItem('avantalab.mobile.ultimo_diagnostico_acesso', diagnostico);
+      console.error('[AvantaLab Mobile] Falha na abertura:', diagnostico);
     } catch (e) {}
   }
 
@@ -17519,7 +17520,7 @@
     // Ao voltar ao app (apos receber um push), reconfere as nao lidas
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) return;
-      if (state.autenticado) db.rpc('registrar_atividade_aplicativo', { p_aplicativo: 'gestao' }).catch(function () {});
+      if (state.autenticado) registrarAtividadeGestaoMobile();
       carregarNotificacoesNaoLidas();
       // Congela a tela ao trocar de janela e voltar: só recarrega os dados se
       // o DIA virou desde a última carga (ex.: despesas previstas do novo dia
@@ -17653,9 +17654,6 @@
           'A restauração da sessão demorou mais que o esperado.'
         );
         if (sessao && sessao.error) throw sessao.error;
-        if (sessao && sessao.data && sessao.data.session) {
-          sessao.data.session = await renovarSessaoLembradaMobile(sessao.data.session);
-        }
       } catch (erroSessao) {
         limparSessaoLocalMobile();
         limparPreferenciaSessaoMobile();
@@ -17681,7 +17679,7 @@
         }
         state.usuario = sessao.data.session.user;
         state.autenticado = true;
-        db.rpc('registrar_atividade_aplicativo', { p_aplicativo: 'gestao' }).catch(function () {});
+        registrarAtividadeGestaoMobile();
         state.pronto = false;
         state.carregando = true;
         render();

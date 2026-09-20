@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.36.0.27 - 2026-09-20
+- **Segunda abertura da Gestão Mobile corrigida na origem**: o registro de
+  atividade adicionado aos disparos automáticos não chama mais `.catch()`
+  diretamente no construtor de consulta do Supabase, que não oferece esse
+  método e interrompia a sessão restaurada antes de carregar os dados.
+- **Fluxo validado com sessão real**: primeiro login com **Lembrar-me**, segunda
+  abertura e nova reabertura foram exercitados com uma conta temporária; o
+  painel carregou nas duas retomadas sem reinstalação.
+- **Mesmo padrão funcional do AvantaVendas**: a telemetria de último acesso é
+  normalizada como `Promise` e permanece estritamente não bloqueante. A
+  restauração volta a confiar na renovação automática do cliente Supabase.
+
 ## 1.36.0.26 - 2026-09-20
 - **Lembrar-me validado na abertura**: a Gestão Mobile renova explicitamente a
   sessão persistida antes de consultar perfis e dados, eliminando o uso de um

@@ -1,7 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.36.0.26: com Lembrar-me ativo, a Gestão Mobile renova a
-// sessão antes de carregar dados; sessão inválida volta ao login sem reinstalar.
+// Revisado na versão 1.36.0.27: o registro de último acesso da Gestão Mobile é
+// não bloqueante e não interrompe a segunda abertura com Lembrar-me ativo.
+// Revisado na versão 1.36.0.26: a sessão inválida volta ao login sem reinstalar.
 // Revisado na versão 1.36.0.25: a Gestão Mobile nativa mantém uma única sessão
 // para login, retomada e push; as pontes reutilizam o cliente já autenticado.
 // Revisado na versão 1.36.0.24: Gestão Mobile e AvantaVendas renovam uma vez o
@@ -1284,7 +1285,7 @@ NAVEGAÇÃO E PERFIS
   aplicativo.
 - Ao chegar à Gestão pelo Vendas, sair retorna ao login do Vendas. Quem iniciou
   pela Gestão retorna à entrada da própria Gestão.
-- Na entrada da Gestão Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto.
+- Na entrada da Gestão Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto. Ao reabrir com a sessão lembrada, o registro de último acesso acontece em segundo plano e nunca deve impedir o carregamento do painel.
 - No card de cadastro, **Cadastrar com Google** e **Cadastrar com Apple** criam ou acessam a mesma conta-base do cadastro por e-mail. Se ainda faltarem dados do primeiro perfil, a Gestão solicita a conclusão depois da autenticação.
 - Durante o login com Google ou Apple, **Preparando acesso** oferece **Cancelar e voltar ao login**. A ação encerra a tentativa pendente e restaura a tela de login sem manter o botão em Conectando.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar tela inicial > Organizar atalhos inferiores; o mesmo grupo permite mostrar, ocultar e ordenar cards. Ao iniciar ou usar Restaurar ordem padrão, a tela mostra Ava, Saldo do mês, Visão geral, lançamentos, gráficos, Insights, Caixinha, Controle de Ponto e Meus perfis; Agenda fica oculta até ser ativada.

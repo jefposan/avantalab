@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.26 -->
+<!-- ava-version: 1.36.0.27 -->
+
+> Revisão 1.36.0.27: a correção da telemetria de último acesso pertence à
+> Gestão Mobile. O AvantaVendas, usado como referência funcional, permanece
+> inalterado.
 
 > Revisão 1.36.0.26: a renovação da sessão lembrada pertence à Gestão Mobile;
 > sem impacto operacional no AvantaVendas.

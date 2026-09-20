@@ -11,6 +11,7 @@ test('Gestão Mobile expõe o único cliente proprietário da sessão', async ()
     mobile,
     /var db = supabaseGlobal\.createClient[\s\S]*?window\.__AVANTALAB_MOBILE_SUPABASE_CLIENT__ = db;/,
   );
+  assert.doesNotMatch(mobile, /db\.auth\.refreshSession\(/);
 });
 
 test('pontes React reutilizam o cliente da Gestão Mobile nativa', async () => {
