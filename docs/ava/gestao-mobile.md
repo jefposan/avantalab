@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.27 -->
+<!-- ava-version: 1.36.0.28 -->
+
+> Revisão 1.36.0.28: ao ativar novamente **Receber notificações neste
+> aparelho**, a escolha atual substitui qualquer desativação antiga guardada no
+> dispositivo. A Gestão sincroniza o token nativo sem reverter essa escolha.
 
 > Revisão 1.36.0.27: ao reabrir a Gestão Mobile com **Lembrar-me**, o registro
 > de último acesso acontece em segundo plano e nunca interrompe o carregamento.

@@ -48,6 +48,9 @@ test('contrato inclui os dois aplicativos, processamento recorrente e inscriçã
   assert.match(vendasDb, /app_origem: 'avantavendas'/);
   assert.match(vendasDb, /registroNativo\?\.canal === 'fcm'/);
   assert.match(push, /FIREBASE_SERVICE_ACCOUNT_JSON_AVANTAVENDAS/);
+  assert.match(push, /export async function enviarPushDetalhado/);
+  assert.match(broadcast, /diagnostico = body\.diagnostico === true/);
+  assert.match(broadcast, /idProvedor: resultado\.idProvedor/);
 });
 
 test('automações existentes podem ser editadas com validação no painel e na API', async () => {

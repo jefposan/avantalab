@@ -5150,7 +5150,10 @@
     try {
       var valorAtual = localStorage.getItem(PREFIXO_PROMPT_NOTIF + state.usuario.id) || '';
       var valorAnterior = localStorage.getItem(PREFIXO_PROMPT_NOTIF_ANTERIOR + state.usuario.id) || '';
-      return valorAtual === 'desativado' || valorAnterior === 'desativado';
+      // A preferência da versão atual sempre prevalece. Sem isso, um antigo
+      // "desativado" continuava bloqueando o push mesmo após o usuário
+      // reativar as notificações na versão nova.
+      return valorAtual ? valorAtual === 'desativado' : valorAnterior === 'desativado';
     } catch (e) { return false; }
   }
 
@@ -5355,7 +5358,12 @@
 
   function marcarPromptNotifVisto(situacao) {
     var chave = chavePromptNotifMobile();
-    try { if (chave) localStorage.setItem(chave, situacao || 'visto'); } catch (e) {}
+    try {
+      if (chave) localStorage.setItem(chave, situacao || 'visto');
+      if (situacao === 'ativado' && state.usuario && state.usuario.id) {
+        localStorage.removeItem(PREFIXO_PROMPT_NOTIF_ANTERIOR + state.usuario.id);
+      }
+    } catch (e) {}
   }
 
   function promptNotificacoesHtml() {

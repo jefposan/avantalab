@@ -24,7 +24,16 @@ type MensagemPush = {
 };
 
 type CacheBadges = Map<string, number | null>;
+export type ResultadoEnvioPush = {
+  entregue: boolean;
+  expirou: boolean;
+  canal: 'web' | 'apns' | 'fcm';
+  status: number;
+  motivo: string;
+  idProvedor: string | null;
+};
 let tokenFcmCache: { token: string; expiraEm: number } | null = null;
+let tokenApnsCache: { token: string; expiraEm: number } | null = null;
 
 function base64Url(valor: Uint8Array | string) {
   const bytes = typeof valor === 'string' ? new TextEncoder().encode(valor) : valor;
@@ -34,6 +43,9 @@ function base64Url(valor: Uint8Array | string) {
 }
 
 async function tokenApns() {
+  if (tokenApnsCache && tokenApnsCache.expiraEm > Date.now() + 5 * 60_000) {
+    return tokenApnsCache.token;
+  }
   const keyId = Deno.env.get('APNS_KEY_ID');
   const teamId = Deno.env.get('APNS_TEAM_ID');
   const chave = Deno.env.get('APNS_PRIVATE_KEY')?.replaceAll('\\n', '\n');
@@ -50,7 +62,11 @@ async function tokenApns() {
   const assinatura = new Uint8Array(await crypto.subtle.sign(
     { name: 'ECDSA', hash: 'SHA-256' }, chavePrivada, new TextEncoder().encode(`${cabecalho}.${carga}`),
   ));
-  return `${cabecalho}.${carga}.${base64Url(assinatura)}`;
+  const token = `${cabecalho}.${carga}.${base64Url(assinatura)}`;
+  // A Apple permite reutilizar o provider token por até uma hora e pode
+  // bloquear trocas sucessivas com TooManyProviderTokenUpdates.
+  tokenApnsCache = { token, expiraEm: (agora + 50 * 60) * 1000 };
+  return token;
 }
 
 async function tokenFcm() {
@@ -95,10 +111,10 @@ async function tokenFcm() {
 
 async function enviarFcm(tokenDispositivo: string, mensagem: MensagemPush) {
   const segredo = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_JSON_AVANTAVENDAS');
-  if (!segredo) return { entregue: false, expirou: false };
+  if (!segredo) return { entregue: false, expirou: false, canal: 'fcm' as const, status: 0, motivo: 'ConfiguracaoFCMAusente', idProvedor: null };
   const projeto = String(JSON.parse(segredo).project_id || '');
   const acesso = await tokenFcm();
-  if (!projeto || !acesso) return { entregue: false, expirou: false };
+  if (!projeto || !acesso) return { entregue: false, expirou: false, canal: 'fcm' as const, status: 0, motivo: 'AutenticacaoFCMIndisponivel', idProvedor: null };
   const resposta = await fetch(`https://fcm.googleapis.com/v1/projects/${projeto}/messages:send`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${acesso}`, 'Content-Type': 'application/json' },
@@ -115,9 +131,16 @@ async function enviarFcm(tokenDispositivo: string, mensagem: MensagemPush) {
     }),
   });
   const detalhe = resposta.ok ? '' : await resposta.text().catch(() => '');
+  const respostaJson: Record<string, unknown> = resposta.ok
+    ? await resposta.json().catch(() => ({} as Record<string, unknown>))
+    : {};
   return {
     entregue: resposta.ok,
     expirou: resposta.status === 404 || /UNREGISTERED|registration-token-not-registered/i.test(detalhe),
+    canal: 'fcm' as const,
+    status: resposta.status,
+    motivo: resposta.ok ? '' : detalhe.slice(0, 240),
+    idProvedor: String(respostaJson?.name || '') || null,
   };
 }
 
@@ -126,7 +149,7 @@ async function enviarApns(token: string, mensagem: MensagemPush) {
   const bundleId = mensagem.appOrigem === 'avantavendas'
     ? Deno.env.get('APNS_BUNDLE_ID_AVANTAVENDAS') || 'br.com.avantalab.vendas'
     : Deno.env.get('APNS_BUNDLE_ID');
-  if (!jwt || !bundleId) return { entregue: false, expirou: false };
+  if (!jwt || !bundleId) return { entregue: false, expirou: false, canal: 'apns' as const, status: 0, motivo: 'ConfiguracaoAPNSAusente', idProvedor: null };
   const ambiente = Deno.env.get('APNS_ENVIRONMENT') === 'sandbox' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com';
   const titulo = mensagem.titulo || mensagem.title || 'AvantaLab';
   const corpo = mensagem.corpo || mensagem.body || '';
@@ -150,7 +173,17 @@ async function enviarApns(token: string, mensagem: MensagemPush) {
       url: mensagem.url || '/mobile', perfil: mensagem.perfil || '',
     }),
   });
-  return { entregue: resposta.ok, expirou: resposta.status === 400 || resposta.status === 410 };
+  const detalhe: Record<string, unknown> = resposta.ok
+    ? {}
+    : await resposta.json().catch(() => ({} as Record<string, unknown>));
+  return {
+    entregue: resposta.ok,
+    expirou: resposta.status === 400 || resposta.status === 410,
+    canal: 'apns' as const,
+    status: resposta.status,
+    motivo: String(detalhe?.reason || ''),
+    idProvedor: resposta.headers.get('apns-id'),
+  };
 }
 
 async function contarAvisosPendentes(db: any, userId: string, cache?: CacheBadges) {
@@ -191,11 +224,11 @@ async function contarAvisosPendentes(db: any, userId: string, cache?: CacheBadge
   }
 }
 
-export async function enviarPush(db: any, assinatura: AssinaturaPush, mensagem: MensagemPush, cacheBadges?: CacheBadges) {
+export async function enviarPushDetalhado(db: any, assinatura: AssinaturaPush, mensagem: MensagemPush, cacheBadges?: CacheBadges): Promise<ResultadoEnvioPush> {
   if (assinatura.canal === 'fcm' && assinatura.fcm_token) {
     const resultado = await enviarFcm(assinatura.fcm_token, mensagem);
     if (resultado.expirou) await db.from('push_subscriptions').delete().eq('id', assinatura.id);
-    return resultado.entregue;
+    return resultado;
   }
   if (assinatura.canal === 'apns' && assinatura.apns_token) {
     const origem = mensagem.appOrigem || assinatura.app_origem;
@@ -207,21 +240,34 @@ export async function enviarPush(db: any, assinatura: AssinaturaPush, mensagem: 
       badge === null ? mensagem : { ...mensagem, badge },
     );
     if (resultado.expirou) await db.from('push_subscriptions').delete().eq('id', assinatura.id);
-    return resultado.entregue;
+    return resultado;
   }
 
   const publico = Deno.env.get('VAPID_PUBLIC_KEY');
   const privado = Deno.env.get('VAPID_PRIVATE_KEY');
-  if (!publico || !privado || !assinatura.p256dh || !assinatura.auth) return false;
+  if (!publico || !privado || !assinatura.p256dh || !assinatura.auth) {
+    return { entregue: false, expirou: false, canal: 'web', status: 0, motivo: 'ConfiguracaoWebPushIncompleta', idProvedor: null };
+  }
   webpush.setVapidDetails(Deno.env.get('VAPID_SUBJECT') || 'mailto:contato@avantalab.com.br', publico, privado);
   try {
     await webpush.sendNotification(
       { endpoint: assinatura.endpoint, keys: { p256dh: assinatura.p256dh, auth: assinatura.auth } },
       JSON.stringify(mensagem),
     );
-    return true;
+    return { entregue: true, expirou: false, canal: 'web', status: 201, motivo: '', idProvedor: null };
   } catch (erro: any) {
     if ([404, 410].includes(erro?.statusCode)) await db.from('push_subscriptions').delete().eq('id', assinatura.id);
-    return false;
+    return {
+      entregue: false,
+      expirou: [404, 410].includes(erro?.statusCode),
+      canal: 'web',
+      status: Number(erro?.statusCode || 0),
+      motivo: String(erro?.body || erro?.message || '').slice(0, 240),
+      idProvedor: null,
+    };
   }
+}
+
+export async function enviarPush(db: any, assinatura: AssinaturaPush, mensagem: MensagemPush, cacheBadges?: CacheBadges) {
+  return (await enviarPushDetalhado(db, assinatura, mensagem, cacheBadges)).entregue;
 }

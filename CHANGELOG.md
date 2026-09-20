@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.36.0.28 - 2026-09-20
+- **Entrega APNs estabilizada**: o servidor reutiliza a credencial da Apple
+  durante a janela segura, evitando a recusa `TooManyProviderTokenUpdates` nas
+  inscrições mais recentes durante disparos para vários aparelhos.
+- **Reativação de notificações corrigida**: a preferência atual passa a
+  prevalecer sobre marcadores legados. Ao reativar os avisos, o bloqueio antigo
+  é removido tanto na Gestão Mobile quanto no AvantaVendas.
+- **Diagnóstico individual de push**: disparos protegidos podem informar, por
+  inscrição e sem expor tokens, o canal, status, motivo e identificador do
+  provedor. Isso permite distinguir entrega aceita pelo APNs/FCM de falhas do
+  dispositivo, em vez de depender apenas do total agregado.
+
 ## 1.36.0.27 - 2026-09-20
 - **Segunda abertura da Gestão Mobile corrigida na origem**: o registro de
   atividade adicionado aos disparos automáticos não chama mais `.catch()`

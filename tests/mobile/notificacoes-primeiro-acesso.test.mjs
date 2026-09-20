@@ -59,9 +59,11 @@ test('uma desativação explícita não é revertida silenciosamente no login se
   const { gestao, vendas, vendasDb } = await fontes();
 
   assert.match(gestao, /notificacoesDesativadasExplicitamenteMobile/);
-  assert.match(gestao, /valorAtual === 'desativado' \|\| valorAnterior === 'desativado'/);
+  assert.match(gestao, /valorAtual \? valorAtual === 'desativado' : valorAnterior === 'desativado'/);
+  assert.match(gestao, /situacao === 'ativado'[\s\S]*?removeItem\(PREFIXO_PROMPT_NOTIF_ANTERIOR/);
   assert.match(vendas, /notificacoesDesativadasExplicitamenteVendas/);
-  assert.match(vendas, /valorAtual === 'desativado' \|\| valorAnterior === 'desativado'/);
+  assert.match(vendas, /valorAtual \? valorAtual === 'desativado' : valorAnterior === 'desativado'/);
+  assert.match(vendas, /situacao === 'ativado'[\s\S]*?removeItem\(`\$\{PREFIXO_PROMPT_NOTIFICACOES_VENDAS_ANTERIOR\}/);
   assert.match(vendasDb, /async function estadoNotificacoes\(sincronizar = true\) \{\s*if \(!sincronizar\) return false;/);
 });
 

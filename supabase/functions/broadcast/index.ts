@@ -10,7 +10,7 @@
 // SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY sao injetados automaticamente.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { enviarPush } from "../_shared/push.ts";
+import { enviarPushDetalhado } from "../_shared/push.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
     const titulo = String(body.titulo || "").trim();
     const corpo = String(body.corpo || "").trim();
     const aplicativo = body.aplicativo === "avantavendas" ? "avantavendas" : "gestao";
+    const diagnostico = body.diagnostico === true;
     if (!titulo || !corpo) return json({ ok: false, erro: "Informe titulo e mensagem." }, 400);
 
     const db = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -87,15 +88,33 @@ Deno.serve(async (req) => {
     // Push para todas as inscricoes
     const { data: subs } = await db
       .from("push_subscriptions")
-      .select("id, user_id, endpoint, p256dh, auth, canal, apns_token, fcm_token, app_origem")
+      .select("id, user_id, endpoint, p256dh, auth, canal, apns_token, fcm_token, app_origem, atualizado_em")
       .in("user_id", destinatarios)
       .eq("app_origem", origemPush);
 
     let enviados = 0;
     const cacheBadges = new Map<string, number | null>();
+    const entregas: Array<Record<string, unknown>> = [];
 
     for (const s of subs || []) {
-      if (await enviarPush(db, s, { titulo, corpo, url: destino, appOrigem: origemPush }, cacheBadges)) enviados++;
+      const resultado = await enviarPushDetalhado(
+        db,
+        s,
+        { titulo, corpo, url: destino, appOrigem: origemPush },
+        cacheBadges,
+      );
+      if (resultado.entregue) enviados++;
+      if (diagnostico) {
+        entregas.push({
+          inscricaoId: s.id,
+          canal: resultado.canal,
+          atualizadoEm: s.atualizado_em,
+          entregue: resultado.entregue,
+          status: resultado.status,
+          motivo: resultado.motivo,
+          idProvedor: resultado.idProvedor,
+        });
+      }
     }
 
     return json({
@@ -104,6 +123,7 @@ Deno.serve(async (req) => {
       usuarios: destinatarios.length,
       enviados,
       total: (subs || []).length,
+      ...(diagnostico ? { entregas } : {}),
     });
   } catch (e) {
     return json({ ok: false, erro: String(e) }, 500);

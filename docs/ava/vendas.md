@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.27 -->
+<!-- ava-version: 1.36.0.28 -->
+
+> Revisão 1.36.0.28: ao reativar notificações no AvantaVendas, a preferência
+> atual substitui corretamente qualquer marcador antigo de desativação. A
+> escolha explícita de manter os avisos desligados continua respeitada.
 
 > Revisão 1.36.0.27: a correção da telemetria de último acesso pertence à
 > Gestão Mobile. O AvantaVendas, usado como referência funcional, permanece

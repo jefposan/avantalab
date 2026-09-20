@@ -6242,7 +6242,12 @@ function chavePromptNotificacoesVendas() {
 
 function marcarPromptNotificacoesVendas(situacao) {
   const chave = chavePromptNotificacoesVendas();
-  try { if (chave) localStorage.setItem(chave, situacao || 'visto'); } catch { /* armazenamento indisponível */ }
+  try {
+    if (chave) localStorage.setItem(chave, situacao || 'visto');
+    if (situacao === 'ativado' && state.usuario?.id) {
+      localStorage.removeItem(`${PREFIXO_PROMPT_NOTIFICACOES_VENDAS_ANTERIOR}${state.usuario.id}`);
+    }
+  } catch { /* armazenamento indisponível */ }
 }
 
 function notificacoesDesativadasExplicitamenteVendas() {
@@ -6250,7 +6255,7 @@ function notificacoesDesativadasExplicitamenteVendas() {
   try {
     const valorAtual = localStorage.getItem(`${PREFIXO_PROMPT_NOTIFICACOES_VENDAS}${state.usuario.id}`) || '';
     const valorAnterior = localStorage.getItem(`${PREFIXO_PROMPT_NOTIFICACOES_VENDAS_ANTERIOR}${state.usuario.id}`) || '';
-    return valorAtual === 'desativado' || valorAnterior === 'desativado';
+    return valorAtual ? valorAtual === 'desativado' : valorAnterior === 'desativado';
   } catch { return false; }
 }
 

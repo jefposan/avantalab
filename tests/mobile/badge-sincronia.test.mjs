@@ -22,6 +22,9 @@ test('o APNs recebe a quantidade real, sem forçar badge 1', async () => {
   const { push } = await fontes();
 
   assert.doesNotMatch(push, /badge:\s*Math\.max\(1,/);
+  assert.match(push, /let tokenApnsCache:/);
+  assert.match(push, /tokenApnsCache\.expiraEm > Date\.now\(\) \+ 5 \* 60_000/);
+  assert.match(push, /TooManyProviderTokenUpdates/);
   assert.match(push, /async function contarAvisosPendentes/);
   assert.match(push, /\.eq\('user_id', userId\)/);
   assert.match(push, /\.is\('user_id', null\)\.in\('empresa_id', empresasIds\)/);
@@ -34,7 +37,7 @@ test('todas as rotas de push identificam o usuário da inscrição antes de envi
 
   for (const funcao of funcoes) {
     assert.match(funcao, /user_id, endpoint, p256dh, auth, canal, apns_token/);
-    assert.match(funcao, /enviarPush\([\s\S]*cacheBadges\)/);
+    assert.match(funcao, /enviarPush(?:Detalhado)?\([\s\S]*cacheBadges,?\s*\)/);
   }
 });
 
