@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.37.0.01 -->
+<!-- ava-version: 1.38.0 -->
+
+> Revisão 1.38.0: a importação administrativa de Custos preserva saldo em
+> histórico e mantém os itens em estudo até publicação humana; sem alteração
+> no fluxo operacional do Vendas e Serviços.
 
 > Revisão 1.37.0.01: a confirmação de conexão de backup em nuvem pertence à
 > Gestão Web e Gestão Mobile; sem mudança operacional no AvantaVendas.

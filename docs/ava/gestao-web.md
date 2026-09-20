@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.37.0.01 -->
+<!-- ava-version: 1.38.0 -->
+
+> Revisão 1.38.0: uma importação administrativa de catálogo em **Custos e
+> Precificação** pode consolidar cadastro, preços e estoque de uma base
+> legada. Ela cria um backup antes de substituir registros de teste, bloqueia
+> catálogos com operação comercial e registra saldo inicial ou correção no
+> histórico de estoque. A Ava orienta a conferir a prévia, mas não executa a
+> substituição nem confirma os valores sem evidência.
 
 > Revisão 1.37.0.01: depois de autorizar uma conta de nuvem, a Gestão Web
 > confirma o resultado e volta ao fluxo de backup. Somente o **Gestor Master**

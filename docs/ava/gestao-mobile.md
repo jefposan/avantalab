@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.37.0.01 -->
+<!-- ava-version: 1.38.0 -->
+
+> Revisão 1.38.0: a carga administrativa de catálogo e precificação é feita
+> na Gestão Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.37.0.01: ao retornar da autorização da nuvem, a Gestão Mobile
 > informa se a conta foi conectada ou se a tentativa falhou. Somente o

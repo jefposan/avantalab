@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.38.0 - 2026-09-20
+- **Importação Tridium consolidada**: o catálogo de Custos e Precificação passa
+  a aceitar uma carga completa com cadastro, EAN, NCM, fornecedor, pesos,
+  tributação, estoque e tabelas comerciais.
+- **Substituição recuperável**: uma carga que substitui um catálogo de teste
+  registra um retrato do catálogo, preços, saldos e documento de custos antes
+  de qualquer limpeza e bloqueia catálogos com operação comercial real.
+- **Estoque auditável**: saldos iniciais e correções são registrados como
+  inventário/ajuste, sem apagar o histórico operacional.
+
 ## 1.37.0.01 - 2026-09-20
 - **Conexão confirmada**: ao voltar da autorização do Google Drive ou OneDrive,
   a Gestão Web e Gestão Mobile agora informam claramente o sucesso ou a falha e
