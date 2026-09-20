@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.38.0.04 -->
+<!-- ava-version: 1.38.0.05 -->
+
+> Revisão 1.38.0.05: o retorno à lista de Produtos e Serviços pertence a Custos
+> e Precificação na Gestão Web; sem alteração operacional no AvantaVendas.
 
 > Revisão 1.38.0.04: o refinamento visual da barra de ações pertence a Custos
 > e Precificação na Gestão Web; sem alteração operacional no AvantaVendas.

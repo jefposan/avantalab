@@ -1,5 +1,6 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.38.0.05: clicar novamente em Produtos e serviços retorna à lista inicial e permite salvar ou descartar edição pendente.
 // Revisado na versão 1.38.0.04: a barra flutuante de ações do editor mantém elevação após confirmações e ficou mais compacta.
 // Revisado na versão 1.38.0.03: cadastro e composição usam Salvar único; cancelar ou navegar pede confirmação ao descartar edição pendente.
 // Revisado na versão 1.38.0.02: o menu de ações do item flutua sobre a lista e fecha ao clicar fora, rolar ou usar Escape.

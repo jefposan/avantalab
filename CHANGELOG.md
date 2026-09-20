@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.38.0.05 - 2026-09-20
+- **Retorno ao início de Produtos e Serviços**: clicar novamente no item lateral
+  agora restaura a lista inicial, limpa a busca e fecha contextos abertos.
+- **Escolha antes de sair do editor**: com alterações pendentes, o retorno
+  oferece **Salvar e ir à lista** ou **Descartar**; fechar o diálogo mantém a
+  edição intacta.
+
 ## 1.38.0.04 - 2026-09-20
 - **Barra de ações compacta**: a barra flutuante de edição mantém sua camada
   após fechar confirmações, com altura, espaçamento e botões mais enxutos.

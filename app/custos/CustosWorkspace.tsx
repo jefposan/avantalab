@@ -42,6 +42,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
   const [erro, setErro] = useState('');
   const [edicaoPendente, setEdicaoPendente] = useState(false);
   const [abaPendente, setAbaPendente] = useState<Aba | null>(null);
+  const [solicitacaoInicioProdutos, setSolicitacaoInicioProdutos] = useState(0);
   const carregamentoRef = useRef(0);
   const revisaoRef = useRef(0);
 
@@ -93,7 +94,10 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
   const selecionarProduto = (id: string) => setProdutoAtivoId(id);
   const produtoAtivo = produtos.find((produto) => produto.id === produtoAtivoId) || produtos[0];
   const abrirAba = (proximaAba: Aba) => {
-    if (proximaAba === aba) return;
+    if (proximaAba === aba) {
+      if (proximaAba === 'produtos') setSolicitacaoInicioProdutos((atual) => atual + 1);
+      return;
+    }
     if (aba === 'produtos' && edicaoPendente) { setAbaPendente(proximaAba); return; }
     setAba(proximaAba);
   };
@@ -117,7 +121,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
         {mensagem && <div className={styles.success}>{mensagem}</div>}
       </div>
       {aba === 'visao' && <VisaoGeral produtos={produtos} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => abrirAba('produtos')} onAtualizar={() => void recarregar()} />}
-      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onMensagem={setMensagem} onErro={setErro} />}
+      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'recursos' && <RecursosView documento={documento} produtos={produtos} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
@@ -184,9 +188,9 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
   </>;
 }
 
-function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onEdicaoPendente, onMensagem, onErro }: {
+function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, solicitacaoInicio, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onEdicaoPendente, onMensagem, onErro }: {
   companyId: string; catalogoId: string; produtos: ProdutoCustos[]; tabelas: TabelaPreco[]; precos: PrecoTabelaItem[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
-  documento: DocumentoCustos; produtoAtivoId: string; initialNewType?: 'produto'; onSelecionar: (id: string) => void;
+  documento: DocumentoCustos; produtoAtivoId: string; initialNewType?: 'produto'; solicitacaoInicio: number; onSelecionar: (id: string) => void;
   onDocumento: (proximo: DocumentoCustos, retorno: string) => Promise<void>; podeEditar: boolean;
   onSalvarProduto: (produto: ProdutoCustos) => Promise<ProdutoCustos>; onEnviarImagem: (arquivo: File) => Promise<string>;
   onRecarregar: () => Promise<void>; onEdicaoPendente: (pendente: boolean) => void; onMensagem: (texto: string) => void; onErro: (texto: string) => void;
@@ -204,10 +208,12 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   const [salvando, setSalvando] = useState(false);
   const [confirmarInativacao, setConfirmarInativacao] = useState(false);
   const [confirmarDescarte, setConfirmarDescarte] = useState(false);
+  const [confirmarRetornoInicio, setConfirmarRetornoInicio] = useState(false);
   const [produtoPendenteId, setProdutoPendenteId] = useState('');
   const arquivoRef = useRef<HTMLInputElement>(null);
   const initialNewAppliedRef = useRef(false);
   const produtoAtivoAnteriorRef = useRef(produtoAtivoId);
+  const solicitacaoInicioAnteriorRef = useRef(solicitacaoInicio);
   const menuAcoesRef = useRef<HTMLDivElement>(null);
 
   const calculo = calcularComposicao(composicao, documento.recursos);
@@ -233,6 +239,12 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     setComposicao(proximaComposicao);
     registrarReferenciaEdicao(produtoSelecionado, proximaComposicao);
   }, [produtoAtivoId]);
+  useEffect(() => {
+    if (solicitacaoInicioAnteriorRef.current === solicitacaoInicio) return;
+    solicitacaoInicioAnteriorRef.current = solicitacaoInicio;
+    if (possuiEdicaoPendente) { setConfirmarRetornoInicio(true); return; }
+    irParaInicioProdutos();
+  }, [solicitacaoInicio]);
   useEffect(() => { onEdicaoPendente(possuiEdicaoPendente); }, [onEdicaoPendente, possuiEdicaoPendente]);
   useEffect(() => () => onEdicaoPendente(false), [onEdicaoPendente]);
   useEffect(() => {
@@ -264,10 +276,10 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     return '';
   };
   const salvar = async () => {
-    const falha = validar(); if (falha) { onErro(falha); return; }
+    const falha = validar(); if (falha) { onErro(falha); return false; }
     const atualizada = { ...composicao, atualizadoEm: new Date().toISOString() };
     const calculoAtual = calcularComposicao(atualizada, documento.recursos);
-    if (!calculoAtual.valido) { onErro('A soma de impostos, taxas e margem deve ficar abaixo de 100%.'); return; }
+    if (!calculoAtual.valido) { onErro('A soma de impostos, taxas e margem deve ficar abaixo de 100%.'); return false; }
     setSalvando(true); onErro('');
     try {
       const salvo = await onSalvarProduto({ ...rascunho, preco_custo: calculoAtual.total });
@@ -283,7 +295,8 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
       await onDocumento(proximo, mudou ? 'Cadastro e composição salvos; nova versão de custo registrada.' : 'Cadastro e composição salvos.');
       setComposicao(atualizada);
       registrarReferenciaEdicao(salvo, atualizada);
-    } catch (falhaSalvamento) { onErro(erroTexto(falhaSalvamento)); }
+      return true;
+    } catch (falhaSalvamento) { onErro(erroTexto(falhaSalvamento)); return false; }
     finally { setSalvando(false); }
   };
   const inativar = async () => {
@@ -328,6 +341,24 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
       await onRecarregar(); setPrecosDoProduto(null); onMensagem(`Listas de preços de ${precosDoProduto.sku} atualizadas.`);
     } catch (falha) { onErro(erroTexto(falha)); }
     finally { setSalvando(false); }
+  };
+  const irParaInicioProdutos = () => {
+    setConfirmarRetornoInicio(false);
+    setConfirmarDescarte(false);
+    setProdutoPendenteId('');
+    setMenuAcao(null);
+    setPrecosDoProduto(null);
+    setBuscaLista('');
+    setTipoLista('produto');
+    setModo('lista');
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
+  };
+  const salvarERetornarInicio = async () => {
+    if (await salvar()) irParaInicioProdutos();
+  };
+  const descartarERetornarInicio = () => {
+    onEdicaoPendente(false);
+    irParaInicioProdutos();
   };
   const voltarParaLista = () => {
     if (possuiEdicaoPendente) { setConfirmarDescarte(true); return; }
@@ -407,6 +438,9 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     </fieldset>
     <ModalConfirmacao aberto={confirmarInativacao} titulo={`Inativar ${rascunho.nome || 'cadastro'}?`} mensagem="O item ficará inativo no Catálogo e em Custos. Composição e histórico serão preservados para consulta e eventual reativação." textoCancelar="Manter ativo" textoConfirmar="Inativar" carregando={salvando} corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => setConfirmarInativacao(false)} aoConfirmar={() => void inativar()} />
     <ModalConfirmacao aberto={confirmarDescarte} titulo="Descartar alterações?" mensagem={produtoPendenteId ? 'As mudanças ainda não foram salvas. Se continuar, a edição será descartada e o outro item será aberto.' : 'As mudanças ainda não foram salvas. Se continuar, a edição será descartada e a lista será aberta.'} textoCancelar="Continuar editando" textoConfirmar="Descartar alterações" corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => { setConfirmarDescarte(false); setProdutoPendenteId(''); }} aoConfirmar={descartarEdicao} />
+    <Modal open={confirmarRetornoInicio} onClose={() => setConfirmarRetornoInicio(false)} title="Salvar antes de voltar à lista?" description="Há alterações não salvas neste produto ou serviço.">
+      <div className={styles.formActions}><button type="button" className={styles.dangerLink} disabled={salvando} onClick={descartarERetornarInicio}>Descartar</button><button type="button" className={styles.primaryButton} disabled={salvando} onClick={() => void salvarERetornarInicio()}>{salvando ? 'Salvando…' : 'Salvar e ir à lista'}</button></div>
+    </Modal>
   </>;
 }
 

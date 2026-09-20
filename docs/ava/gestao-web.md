@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.04 -->
+<!-- ava-version: 1.38.0.05 -->
+
+> Revisão 1.38.0.05: ao clicar novamente em **Produtos e serviços** no menu
+> lateral, a Gestão volta à lista inicial de Produtos. Se estiver editando com
+> alterações pendentes, escolha **Salvar e ir à lista** ou **Descartar**;
+> fechar o diálogo mantém a edição.
 
 > Revisão 1.38.0.04: a barra flutuante de **Inativar cadastro**, **Cancelar**
 > e **Salvar** no editor de Produtos e Serviços permanece elevada após fechar
