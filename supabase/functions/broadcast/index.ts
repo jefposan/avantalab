@@ -10,6 +10,7 @@
 // SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY sao injetados automaticamente.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { idsUnicos } from "../_shared/disparos.ts";
 import { enviarPushDetalhado } from "../_shared/push.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -36,6 +37,9 @@ Deno.serve(async (req) => {
     const corpo = String(body.corpo || "").trim();
     const aplicativo = body.aplicativo === "avantavendas" ? "avantavendas" : "gestao";
     const diagnostico = body.diagnostico === true;
+    const empresaId = aplicativo === "gestao" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(body.empresaId || ""))
+      ? String(body.empresaId)
+      : null;
     if (!titulo || !corpo) return json({ ok: false, erro: "Informe titulo e mensagem." }, 400);
 
     const db = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -53,7 +57,9 @@ Deno.serve(async (req) => {
         : { data: [], error: null };
       if (erroContas) throw erroContas;
       const contasAtivas = new Set((contas || []).map((item: any) => item.id));
-      userIds = Array.from(new Set((membros || []).filter((item: any) => contasAtivas.has(item.conta_id)).map((item: any) => item.user_id).filter(Boolean)));
+      userIds = idsUnicos((membros || [])
+        .filter((item: any) => contasAtivas.has(item.conta_id))
+        .map((item: any) => item.user_id));
     } else {
       const { data: vinculos, error: erroVinculos } = await db
         .from("usuarios_empresa")
@@ -61,7 +67,7 @@ Deno.serve(async (req) => {
         .eq("status", "ativo")
         .neq("perfil", "funcionario_ponto");
       if (erroVinculos) throw erroVinculos;
-      userIds = Array.from(new Set((vinculos || []).map((item: any) => item.user_id).filter(Boolean)));
+      userIds = idsUnicos((vinculos || []).map((item: any) => item.user_id));
     }
     const usuariosSolicitados = Array.isArray(body.usuariosIds)
       ? new Set(body.usuariosIds.map((item: unknown) => String(item)))
@@ -74,14 +80,18 @@ Deno.serve(async (req) => {
 
     // Cria a notificacao (sino) para cada usuario
     if (aplicativo === "gestao" && destinatarios.length) {
-      const rows = destinatarios.map((uid) => ({
-        empresa_id: null,
-        user_id: uid,
-        titulo,
-        corpo,
-        url: destino,
-        tipo: "novidade",
-      }));
+      // No envio por perfil existe um único aviso compartilhado pelos membros.
+      // Nos envios geral e individual, cada usuário mantém seu aviso global.
+      const rows = empresaId
+        ? [{ empresa_id: empresaId, user_id: null, titulo, corpo, url: destino, tipo: "novidade" }]
+        : destinatarios.map((uid) => ({
+          empresa_id: null,
+          user_id: uid,
+          titulo,
+          corpo,
+          url: destino,
+          tipo: "novidade",
+        }));
       await db.from("notificacoes").insert(rows);
     }
 

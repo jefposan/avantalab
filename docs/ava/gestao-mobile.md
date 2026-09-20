@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.29 -->
+<!-- ava-version: 1.36.0.30 -->
+
+> Revisão 1.36.0.30: a seleção Todos, Usuário ou Perfil pertence ao painel
+> administrativo; sem mudança operacional na Gestão Mobile.
 
 > Revisão 1.36.0.29: o seletor de destinatário pertence ao painel
 > administrativo; sem mudança operacional na Gestão Mobile.

@@ -13,6 +13,10 @@ export type AtividadeAplicativo = {
   ultimo_acesso_em: string;
 };
 
+export function idsUnicos(valores: Array<string | null | undefined>) {
+  return Array.from(new Set(valores.filter((valor): valor is string => Boolean(valor))));
+}
+
 export function milissegundosDisparo(valor: number, unidade: UnidadeDisparoProgramado | null) {
   const hora = 60 * 60 * 1000;
   if (unidade === 'semanas') return valor * 7 * 24 * hora;

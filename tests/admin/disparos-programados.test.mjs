@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import {
+  idsUnicos,
   referenciaDisparo,
   usuarioElegivelParaDisparo,
 } from '../../supabase/functions/_shared/disparos.ts';
@@ -30,6 +31,13 @@ test('inatividade usa o último acesso como referência e permite novo ciclo ap�
   const retorno = { ...atividade, ultimo_acesso_em: '2026-09-18T08:00:00.000Z' };
   assert.notEqual(referenciaDisparo(regra, retorno), referenciaDisparo(regra, atividade));
   assert.equal(usuarioElegivelParaDisparo(regra, retorno, new Date('2026-09-20T12:00:00.000Z')), false);
+});
+
+test('o envio geral elimina o mesmo usuário quando ele participa de vários perfis', () => {
+  assert.deepEqual(
+    idsUnicos(['usuario-1', 'usuario-1', 'usuario-2', null, undefined, 'usuario-2']),
+    ['usuario-1', 'usuario-2'],
+  );
 });
 
 test('contrato inclui os dois aplicativos, processamento recorrente e inscrição própria do Vendas', async () => {
@@ -66,16 +74,24 @@ test('automações existentes podem ser editadas com validação no painel e na 
   assert.match(rota, /intervalo_valor: gatilho === 'data_programada'/);
 });
 
-test('disparo imediato permite todos ou um único usuário da plataforma', async () => {
+test('disparo imediato permite todos, um usuário ou todos os membros de um perfil', async () => {
   const [painel, rota, broadcast] = await Promise.all([
     readFile(new URL('../../app/admin/page.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../app/api/admin-disparos/route.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../supabase/functions/broadcast/index.ts', import.meta.url), 'utf8'),
   ]);
   assert.match(painel, /id="disparo-destinatario"/);
+  assert.match(painel, /id="disparo-perfil"/);
   assert.match(painel, /Todos os usuários/);
-  assert.match(painel, /usuarioId: broadcastDestinatarioId === 'todos' \? null : broadcastDestinatarioId/);
-  assert.match(rota, /\.{3}\(usuarioId \? \{ usuariosIds: \[usuarioId\] \} : \{\}\)/);
-  assert.match(rota, /destinatarioEncontrado = !usuarioId \|\| Number\(result\.usuarios \|\| 0\) === 1/);
+  assert.match(painel, /<option value="usuario">Um único usuário<\/option>/);
+  assert.match(painel, /<option value="perfil">Um \{broadcastApp === 'gestao'/);
+  assert.match(painel, /tipoDestino: broadcastDestinoTipo/);
+  assert.match(painel, /destinoId: broadcastDestinoTipo === 'todos' \? null : broadcastDestinoId/);
+  assert.match(rota, /async function listarDestinos/);
+  assert.match(rota, /usuariosIds = Array\.from\(new Set\(\(vinculos \|\| \[\]\)/);
+  assert.match(rota, /usuariosIds = Array\.from\(new Set\(\(membros \|\| \[\]\)/);
+  assert.match(rota, /empresaIdNotificacao = destinoId/);
   assert.match(broadcast, /userIds\.filter\(\(userId\) => usuariosSolicitados\.has\(String\(userId\)\)\)/);
+  assert.match(broadcast, /const rows = empresaId/);
+  assert.match(broadcast, /empresa_id: empresaId, user_id: null/);
 });

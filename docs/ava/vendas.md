@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.29 -->
+<!-- ava-version: 1.36.0.30 -->
+
+> Revisão 1.36.0.30: a seleção Todos, Usuário ou Conta pertence ao painel
+> administrativo; sem mudança operacional no AvantaVendas.
 
 > Revisão 1.36.0.29: o seletor de destinatário pertence ao painel
 > administrativo; sem mudança operacional no AvantaVendas.

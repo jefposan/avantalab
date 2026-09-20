@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.36.0.30 - 2026-09-20
+- **Destinos completos nos disparos**: o envio imediato do `/admin` oferece
+  **Todos**, **Usuário** e **Perfil** na Gestão, ou **Conta** no AvantaVendas.
+- **Sem duplicidade entre perfis**: envios gerais e por perfil consolidam os
+  vínculos pelo identificador do usuário; cada pessoa recebe uma vez por
+  aparelho ativo, mesmo que participe de vários perfis.
+- **Aviso vinculado ao perfil**: na Gestão, o envio por perfil cria um único
+  aviso compartilhado e identificado no sininho para todos os membros ativos.
+
 ## 1.36.0.29 - 2026-09-20
 - **Destinatário no disparo administrativo**: o envio imediato do `/admin`
   inicia em **Todos os usuários** e permite escolher uma única pessoa ativa do
