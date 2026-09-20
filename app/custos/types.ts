@@ -206,6 +206,52 @@ export function proximoCodigo(prefixoInformado: string, codigos: string[]) {
   return `${prefixo}${String(maior + 1).padStart(largura, '0')}`;
 }
 
+export type SugestaoCodigoEmpresa = {
+  familia: string;
+  codigo: string;
+  motivo: string;
+  ocorrencias: number;
+};
+
+const normalizarReferenciaCodigo = (valor: string) => valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleUpperCase('pt-BR');
+const familiaDoCodigo = (codigo: string) => codigo.trim().toUpperCase().match(/^([A-Z]+(?:[-_][A-Z]+)*[-_]?)(\d+)$/)?.[1] || '';
+
+/**
+ * Encontra as famílias de códigos já usadas no catálogo atual. Não cria uma
+ * sequência genérica: sem histórico, o primeiro código continua sendo escolha
+ * da pessoa que está cadastrando o item.
+ */
+export function sugerirCodigosEmpresa(
+  produtos: Array<Pick<ProdutoCustos, 'id' | 'sku' | 'tipo_item' | 'categoria' | 'marca'>>,
+  atual: Pick<ProdutoCustos, 'id' | 'sku' | 'tipo_item' | 'categoria' | 'marca'>,
+): SugestaoCodigoEmpresa[] {
+  const familias = new Map<string, Array<Pick<ProdutoCustos, 'id' | 'sku' | 'tipo_item' | 'categoria' | 'marca'>>>();
+  produtos.filter((produto) => produto.id !== atual.id).forEach((produto) => {
+    const familia = familiaDoCodigo(produto.sku);
+    if (!familia) return;
+    familias.set(familia, [...(familias.get(familia) || []), produto]);
+  });
+  const familiaDigitada = atual.sku.trim().toUpperCase().match(/^([A-Z]+(?:[-_][A-Z]+)*[-_]?)/)?.[1] || '';
+  const categoriaAtual = normalizarReferenciaCodigo(atual.categoria);
+  const marcaAtual = normalizarReferenciaCodigo(atual.marca);
+  const codigos = produtos.filter((produto) => produto.id !== atual.id).map((produto) => produto.sku);
+
+  return [...familias.entries()].map(([familia, itens]) => {
+    const mesmaCategoria = Boolean(categoriaAtual) && itens.some((item) => normalizarReferenciaCodigo(item.categoria) === categoriaAtual);
+    const mesmaMarca = Boolean(marcaAtual) && itens.some((item) => normalizarReferenciaCodigo(item.marca) === marcaAtual);
+    const mesmoTipo = itens.some((item) => item.tipo_item === atual.tipo_item);
+    const motivos = [familia === familiaDigitada && 'Família digitada', mesmaCategoria && 'Categoria semelhante', mesmaMarca && 'Marca semelhante', mesmoTipo && 'Mesmo tipo'];
+    return {
+      familia,
+      codigo: proximoCodigo(familia, codigos),
+      motivo: motivos.find((motivo): motivo is string => Boolean(motivo)) || 'Família já usada nesta empresa',
+      ocorrencias: itens.length,
+      prioridade: (familia === familiaDigitada ? 1000 : 0) + (mesmaCategoria ? 100 : 0) + (mesmaMarca ? 30 : 0) + (mesmoTipo ? 10 : 0),
+    };
+  }).sort((a, b) => b.prioridade - a.prioridade || b.ocorrencias - a.ocorrencias || a.familia.localeCompare(b.familia, 'pt-BR')).slice(0, 6)
+    .map(({ prioridade: _prioridade, ...sugestao }) => sugestao);
+}
+
 export function gerarCodigoTecnicoTabelaPreco(nome: string, codigos: string[]) {
   const normalizado = nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const codigoNormalizado = normalizado.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30);

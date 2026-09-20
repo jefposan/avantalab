@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.38.0.07 - 2026-09-20
+- **Sugestão compacta de código**: o painel extenso foi removido. O campo
+  **Código interno** agora oferece um popover de sequências existentes, sem
+  preencher nada até que a pessoa escolha uma opção.
+- **Padrão por empresa**: as famílias e a próxima numeração são calculadas só
+  com os itens da empresa atual. Categoria, marca, tipo e o prefixo já digitado
+  ajudam a priorizar `T`, `TM`, `CX`, `N` ou qualquer padrão próprio; sem
+  histórico reconhecível, o primeiro código continua manual.
+
 ## 1.38.0.06 - 2026-09-20
 - **Editor no topo**: abrir **Editar cadastro** ou mudar o item no editor
   reposiciona a tela no início, sem herdar a rolagem usada para localizar o item.

@@ -10,7 +10,7 @@ import type { CustosAccess } from './CustosClient';
 import TabelasPrecosView from './TabelasPrecosView';
 import { carregarCustos, enviarImagemProduto, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos } from './repository';
 import {
-  calcularComposicao, composicaoVazia, documentoVazio, novoProduto, precoEfetivoTabela, proximoCodigo,
+  calcularComposicao, composicaoVazia, documentoVazio, novoProduto, precoEfetivoTabela, proximoCodigo, sugerirCodigosEmpresa,
   type CampoCenario, type CenarioPreco, type ComposicaoCusto, type DocumentoCustos,
   type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
 } from './types';
@@ -210,16 +210,17 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   const [confirmarDescarte, setConfirmarDescarte] = useState(false);
   const [confirmarRetornoInicio, setConfirmarRetornoInicio] = useState(false);
   const [produtoPendenteId, setProdutoPendenteId] = useState('');
+  const [sugestoesCodigoAbertas, setSugestoesCodigoAbertas] = useState(false);
   const arquivoRef = useRef<HTMLInputElement>(null);
   const initialNewAppliedRef = useRef(false);
   const produtoAtivoAnteriorRef = useRef(produtoAtivoId);
   const solicitacaoInicioAnteriorRef = useRef(solicitacaoInicio);
   const menuAcoesRef = useRef<HTMLDivElement>(null);
+  const sugestoesCodigoRef = useRef<HTMLDivElement>(null);
 
   const calculo = calcularComposicao(composicao, documento.recursos);
   const codigos = produtos.filter((produto) => produto.id !== rascunho.id).map((produto) => produto.sku).filter(Boolean);
-  const prefixo = rascunho.sku.match(/^[A-Za-z_-]+/)?.[0] || (rascunho.tipo_item === 'produto' ? 'T' : 'S');
-  const proximo = proximoCodigo(prefixo, codigos);
+  const sugestoesCodigo = sugerirCodigosEmpresa(produtos, rascunho);
   const alterar = <K extends keyof ProdutoCustos>(campo: K, valor: ProdutoCustos[K]) => setRascunho((atual) => ({ ...atual, [campo]: valor }));
   const registrarReferenciaEdicao = (produto: ProdutoCustos, proximaComposicao: ComposicaoCusto) => setReferenciaEdicao(JSON.stringify({ rascunho: produto, composicao: proximaComposicao }));
   const possuiEdicaoPendente = modo === 'cadastro' && JSON.stringify({ rascunho, composicao }) !== referenciaEdicao;
@@ -270,6 +271,19 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
       window.removeEventListener('resize', fechar);
     };
   }, [menuAcao]);
+  useEffect(() => {
+    if (!sugestoesCodigoAbertas) return;
+    const fecharAoClicarFora = (evento: PointerEvent) => {
+      if (!sugestoesCodigoRef.current?.contains(evento.target as Node)) setSugestoesCodigoAbertas(false);
+    };
+    const fecharAoPressionarTecla = (evento: KeyboardEvent) => { if (evento.key === 'Escape') setSugestoesCodigoAbertas(false); };
+    document.addEventListener('pointerdown', fecharAoClicarFora);
+    document.addEventListener('keydown', fecharAoPressionarTecla);
+    return () => {
+      document.removeEventListener('pointerdown', fecharAoClicarFora);
+      document.removeEventListener('keydown', fecharAoPressionarTecla);
+    };
+  }, [sugestoesCodigoAbertas]);
   const validar = () => {
     if (!rascunho.sku.trim() || !rascunho.nome.trim()) return 'Código e nome são obrigatórios.';
     if (codigos.some((codigo) => codigo.toUpperCase() === rascunho.sku.trim().toUpperCase())) return 'Este código já está sendo usado.';
@@ -409,7 +423,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
         <div className={styles.identification}><div className={styles.imageBox}>{rascunho.imagem_url ? <Image src={rascunho.imagem_url} alt={`Imagem de ${rascunho.nome || 'cadastro'}`} width={135} height={135} unoptimized /> : <span>{rascunho.tipo_item === 'produto' ? 'Produto' : 'Serviço'}<small>Imagem opcional</small></span>}<input ref={arquivoRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => void carregarImagem(e.target.files?.[0])} /><button type="button" className={styles.secondaryButton} onClick={() => arquivoRef.current?.click()}>Escolher imagem</button></div>
           <div className={styles.formGrid}>
             <Field label="Tipo"><select value={rascunho.tipo_item} onChange={(e) => alterar('tipo_item', e.target.value as TipoItem)}><option value="produto">Produto</option><option value="servico">Serviço</option></select></Field>
-            <Field label="Código interno *"><input value={rascunho.sku} onChange={(e) => alterar('sku', e.target.value.toUpperCase())} placeholder={proximo} /></Field>
+            <Field label="Código interno *"><div ref={sugestoesCodigoRef} className={styles.codeField}><input value={rascunho.sku} onChange={(e) => alterar('sku', e.target.value.toUpperCase())} placeholder={sugestoesCodigo[0]?.codigo || 'Digite o primeiro código'} /><button type="button" className={styles.codeSuggestButton} aria-expanded={sugestoesCodigoAbertas} aria-label="Pesquisar sequências de código desta empresa" onClick={() => setSugestoesCodigoAbertas((abertas) => !abertas)}>Sugerir</button>{sugestoesCodigoAbertas && <div className={styles.codeSuggestions} role="dialog" aria-label="Sugestões de sequência"><strong>Sequências desta empresa</strong>{sugestoesCodigo.length ? <div>{sugestoesCodigo.map((sugestao) => <button key={sugestao.familia} type="button" onClick={() => { alterar('sku', sugestao.codigo); setSugestoesCodigoAbertas(false); }}><b>{sugestao.codigo}</b><span>{sugestao.motivo} · {sugestao.ocorrencias} {sugestao.ocorrencias === 1 ? 'uso' : 'usos'}</span></button>)}</div> : <p>Esta empresa ainda não tem uma sequência reconhecida. Informe o primeiro código.</p>}</div>}</div></Field>
             <Field label="Nome *" wide><input value={rascunho.nome} onChange={(e) => alterar('nome', e.target.value)} /></Field>
             <Field label="Categoria"><input value={rascunho.categoria} onChange={(e) => alterar('categoria', e.target.value)} /></Field>
             <Field label="Marca"><input value={rascunho.marca} onChange={(e) => alterar('marca', e.target.value)} /></Field>
@@ -418,7 +432,6 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
             <Field label="Descrição" wide><textarea rows={2} value={rascunho.descricao} onChange={(e) => alterar('descricao', e.target.value)} /></Field>
           </div>
         </div>
-        <div className={styles.codeAssistant}><span>Próximo na sequência <b>{proximo}</b></span><button type="button" className={styles.linkButton} onClick={() => alterar('sku', proximo)}>Usar código</button><div>{codigos.filter((codigo) => codigo.startsWith(prefixo.toUpperCase())).sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })).map((codigo) => <i key={codigo}>{codigo}</i>)}</div></div>
         <div className={styles.switches}><label><input type="checkbox" checked={rascunho.ativo} onChange={(e) => alterar('ativo', e.target.checked)} /> Cadastro ativo</label><label><input type="checkbox" checked={rascunho.disponivel_catalogo} onChange={(e) => alterar('disponivel_catalogo', e.target.checked)} /> Disponível no catálogo</label><small>Itens novos começam em estudo. A publicação usa este mesmo cadastro no Catálogo.</small></div>
       </section>
 

@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.38.0.06 -->
+<!-- ava-version: 1.38.0.07 -->
+
+> Revisão 1.38.0.07: a sugestão de sequência de códigos pertence ao cadastro
+> em Custos e Precificação na Gestão Web; sem alteração operacional no
+> AvantaVendas.
 
 > Revisão 1.38.0.06: o reposicionamento do editor pertence a Custos e
 > Precificação na Gestão Web; sem alteração operacional no AvantaVendas.

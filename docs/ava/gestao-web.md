@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.06 -->
+<!-- ava-version: 1.38.0.07 -->
+
+> Revisão 1.38.0.07: no cadastro de Produtos e Serviços, use **Sugerir** ao
+> lado de **Código interno** para abrir as sequências já reconhecidas somente
+> na empresa atual. A lista prioriza categoria, marca, tipo e o prefixo
+> digitado; escolher uma sugestão preenche o campo. Sem sequência existente,
+> informe manualmente o primeiro código.
 
 > Revisão 1.38.0.06: ao abrir **Editar cadastro** de qualquer item, a tela do
 > editor começa no topo, mesmo que a lista tenha sido rolada para localizá-lo.
