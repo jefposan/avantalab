@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.18 -->
+<!-- ava-version: 1.36.0.20 -->
+
+> Revisão 1.36.0.20: após o primeiro login de cada usuário neste aparelho, o
+> AvantaVendas oferece **Ativar notificações** ou **Agora não**. Permissões já
+> concedidas são sincronizadas automaticamente; recusa ou desativação explícita
+> permanecem respeitadas e podem ser alteradas em **Configurações >
+> Notificações**.
+
+> Revisão 1.36.0.19: a edição de automações pertence ao painel `/admin`; sem
+> mudança operacional no AvantaVendas.
 
 > Revisão 1.36.0.18: em **Configurações > Notificações**, o usuário pode ativar
 > ou desativar avisos do AvantaVendas neste aparelho. Disparos administrativos
@@ -3711,6 +3720,11 @@ função existir ali.
   catálogo, produtos próprios, clientes, estoque, pedidos, pagamentos e agenda.
   Um ponto de segurança é criado automaticamente antes de restaurar ou resetar.
   A restauração não contorna uma autorização revogada pela empresa.
+- No primeiro login de cada usuário no aparelho, o AvantaVendas oferece a
+  autorização para notificações. Se o sistema já tiver permitido, o token é
+  sincronizado silenciosamente. **Agora não** e uma desativação manual não são
+  revertidos em acessos seguintes; para mudar a escolha, use **Configurações >
+  Notificações**.
 - **Excluir conta do Vendas** exige digitar `EXCLUIR`. A operação remove os
   dados específicos deste aplicativo, inclusive uploads particulares, e o
   acesso às contas compartilhadas. Se a conta também possui outros

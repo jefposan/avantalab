@@ -1153,27 +1153,47 @@
     if (error && !/function|schema cache|does not exist/i.test(String(error.message || ''))) throw error;
   }
 
+  async function salvarInscricaoNativa(user, registroNativo) {
+    const token = String(registroNativo?.token || '').trim();
+    if (!token) throw new Error('O aparelho não informou um token de notificações válido.');
+    const canal = registroNativo?.canal === 'fcm' ? 'fcm' : 'apns';
+    const { error } = await client.from('push_subscriptions').upsert({
+      user_id: user.id,
+      empresa_id: null,
+      endpoint: `${canal}:${token}`,
+      p256dh: '',
+      auth: '',
+      apns_token: canal === 'apns' ? token : null,
+      fcm_token: canal === 'fcm' ? token : null,
+      canal,
+      user_agent: navigator.userAgent,
+      app_origem: 'avantavendas',
+      atualizado_em: new Date().toISOString(),
+    }, { onConflict: 'endpoint' });
+    if (error) throw error;
+  }
+
+  async function salvarInscricaoWeb(user, inscricao) {
+    const dados = inscricao.toJSON();
+    const { error } = await client.from('push_subscriptions').upsert({
+      user_id: user.id,
+      empresa_id: null,
+      endpoint: dados.endpoint,
+      p256dh: dados.keys?.p256dh || '',
+      auth: dados.keys?.auth || '',
+      user_agent: navigator.userAgent,
+      app_origem: 'avantavendas',
+      atualizado_em: new Date().toISOString(),
+    }, { onConflict: 'endpoint' });
+    if (error) throw error;
+  }
+
   async function ativarNotificacoes() {
     const user = await currentUser();
     if (!user) throw new Error('Faça login para ativar as notificações.');
     if (typeof window.__avantavendasAtivarPushNativo === 'function') {
       const registroNativo = await window.__avantavendasAtivarPushNativo();
-      const token = registroNativo.token;
-      const canal = registroNativo.canal === 'fcm' ? 'fcm' : 'apns';
-      const { error } = await client.from('push_subscriptions').upsert({
-        user_id: user.id,
-        empresa_id: null,
-        endpoint: `${canal}:${token}`,
-        p256dh: '',
-        auth: '',
-        apns_token: canal === 'apns' ? token : null,
-        fcm_token: canal === 'fcm' ? token : null,
-        canal,
-        user_agent: navigator.userAgent,
-        app_origem: 'avantavendas',
-        atualizado_em: new Date().toISOString(),
-      }, { onConflict: 'endpoint' });
-      if (error) throw error;
+      await salvarInscricaoNativa(user, registroNativo);
       return true;
     }
     if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -1189,18 +1209,7 @@
         applicationServerKey: chaveVapidBytes(VAPID_PUBLIC_KEY),
       });
     }
-    const dados = inscricao.toJSON();
-    const { error } = await client.from('push_subscriptions').upsert({
-      user_id: user.id,
-      empresa_id: null,
-      endpoint: dados.endpoint,
-      p256dh: dados.keys?.p256dh || '',
-      auth: dados.keys?.auth || '',
-      user_agent: navigator.userAgent,
-      app_origem: 'avantavendas',
-      atualizado_em: new Date().toISOString(),
-    }, { onConflict: 'endpoint' });
-    if (error) throw error;
+    await salvarInscricaoWeb(user, inscricao);
     return true;
   }
 
@@ -1221,11 +1230,28 @@
     return false;
   }
 
-  async function estadoNotificacoes() {
+  async function estadoNotificacoes(sincronizar = true) {
+    if (!sincronizar) return false;
+    const user = await currentUser();
+    if (!user) return false;
+    if (typeof window.__avantavendasSincronizarPushNativo === 'function') {
+      const registroNativo = await window.__avantavendasSincronizarPushNativo();
+      if (!registroNativo) return false;
+      await salvarInscricaoNativa(user, registroNativo);
+      return true;
+    }
     if (typeof window.__avantavendasEstadoPushNativo === 'function') return window.__avantavendasEstadoPushNativo();
     if (!('Notification' in window) || Notification.permission !== 'granted' || !('serviceWorker' in navigator)) return false;
     const registro = await navigator.serviceWorker.ready;
-    return Boolean(await registro.pushManager.getSubscription());
+    let inscricao = await registro.pushManager.getSubscription();
+    if (!inscricao) {
+      inscricao = await registro.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: chaveVapidBytes(VAPID_PUBLIC_KEY),
+      });
+    }
+    await salvarInscricaoWeb(user, inscricao);
+    return true;
   }
 
   async function saveFeedback({ empresaId, nomeEmpresa, mensagem }) {

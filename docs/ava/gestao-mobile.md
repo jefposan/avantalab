@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.18 -->
+<!-- ava-version: 1.36.0.20 -->
+
+> Revisão 1.36.0.20: após o primeiro login de cada usuário neste aparelho, a
+> Gestão oferece **Ativar notificações** ou **Agora não**. Se o sistema já tiver
+> autorizado, a inscrição é sincronizada sem repetir o pedido. A escolha vale
+> para este usuário e aparelho; uma desativação explícita é respeitada e pode
+> ser alterada em **Menu > Configurações > Preferências**.
+
+> Revisão 1.36.0.19: a edição de automações pertence ao painel `/admin`; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.36.0.18: a Gestão Mobile registra o último acesso próprio para os
 > disparos automáticos do administrador. O recebimento continua dependendo da
@@ -3130,6 +3139,11 @@ deve usar os nomes do menu e da barra inferior do celular.
   permanecem fixos enquanto somente os cards rolam. A ativação das notificações
   do aparelho fica em **Menu > Configurações > Preferências > Receber
   notificações**.
+- No primeiro login de cada usuário no aparelho, a Gestão oferece a autorização
+  para notificações depois do tutorial inicial. Se o iOS, Android ou navegador
+  já tiver autorizado, o token é sincronizado automaticamente. **Agora não** e
+  uma desativação manual são respeitados; para mudar depois, use **Menu >
+  Configurações > Preferências > Receber notificações**.
 - **Sobre** apresenta as principais novidades em marcos consolidados, sem listar
   ajustes exclusivamente técnicos.
 - **Assinatura e plano** é o primeiro item do **Menu**. A tela sempre informa a situação

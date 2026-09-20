@@ -46,6 +46,19 @@ test('contrato inclui os dois aplicativos, processamento recorrente e inscriçã
   assert.match(painel, /Após o cadastro/);
   assert.match(broadcast, /aplicativo === "avantavendas"/);
   assert.match(vendasDb, /app_origem: 'avantavendas'/);
-  assert.match(vendasDb, /registroNativo\.canal === 'fcm'/);
+  assert.match(vendasDb, /registroNativo\?\.canal === 'fcm'/);
   assert.match(push, /FIREBASE_SERVICE_ACCOUNT_JSON_AVANTAVENDAS/);
+});
+
+test('automações existentes podem ser editadas com validação no painel e na API', async () => {
+  const [painel, rota] = await Promise.all([
+    readFile(new URL('../../app/admin/page.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/admin-disparos/programacoes/route.ts', import.meta.url), 'utf8'),
+  ]);
+  assert.match(painel, /iniciarEdicaoProgramacaoDisparo/);
+  assert.match(painel, /Salvar alterações/);
+  assert.match(painel, /dataProgramada: programacaoEditando\.gatilho/);
+  assert.match(rota, /export async function PATCH/);
+  assert.match(rota, /data_programada: gatilho === 'data_programada'/);
+  assert.match(rota, /intervalo_valor: gatilho === 'data_programada'/);
 });

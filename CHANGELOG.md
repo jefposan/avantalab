@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.36.0.20 - 2026-09-19
+- **Notificações no primeiro acesso**: Gestão Mobile e AvantaVendas oferecem a
+  autorização após o primeiro login de cada usuário no aparelho, com ações
+  claras para ativar ou decidir **Agora não**.
+- **Permissão já concedida sincronizada**: ao abrir os aplicativos, tokens APNs,
+  FCM e Web Push autorizados são registrados ou atualizados automaticamente,
+  sem exigir nova confirmação do sistema operacional.
+- **Preferência respeitada**: uma desativação ou recusa explícita não é revertida
+  silenciosamente em logins futuros; o controle permanece disponível nas
+  Configurações. Android e iOS também gravam o canal nativo correto.
+
+## 1.36.0.19 - 2026-09-19
+- **Edição de automações no Admin**: cada fluxo em `/admin > Disparos` recebe a
+  ação **Editar**, com os dados atuais preenchidos no próprio card.
+- **Regra completa editável**: aplicativo, gatilho, data ou intervalo, nome,
+  título e mensagem podem ser atualizados sem recriar a automação; o estado
+  ativo ou pausado e o histórico de envios são preservados.
+- **Validação protegida**: painel e API validam novamente todos os campos, o
+  intervalo de 1 a 999 e a data programada antes de salvar.
+
 ## 1.36.0.18 - 2026-09-19
 - **Disparos por aplicativo**: o `/admin > Disparos` permite escolher App
   Gestão ou AvantaVendas em cada envio manual, com identificação do destino no

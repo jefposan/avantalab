@@ -257,6 +257,18 @@ type ProgramacaoDisparo = {
   criado_em: string;
 };
 
+type ProgramacaoDisparoEdicao = {
+  id: string;
+  nome: string;
+  aplicativo: AplicativoDisparo;
+  gatilho: GatilhoDisparo;
+  titulo: string;
+  mensagem: string;
+  dataLocal: string;
+  intervaloValor: string;
+  intervaloUnidade: 'horas' | 'dias' | 'semanas';
+};
+
 type ConteudoVendasPagina = 'novidades' | 'informacoes';
 type ConteudoVendas = {
   id: string;
@@ -336,6 +348,14 @@ function rotuloStatusIa(status: HistoricoIa['status']) {
 function formatDate(value?: string) {
   if (!value) return '-';
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+}
+
+function formatDateTimeLocal(value?: string | null) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (numero: number) => String(numero).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function formatDateOnly(value?: string | null) {
@@ -428,6 +448,7 @@ export default function AdminPage() {
   const [programacaoUnidade, setProgramacaoUnidade] = useState<'horas' | 'dias' | 'semanas'>('dias');
   const [programacaoTitulo, setProgramacaoTitulo] = useState('Sentimos sua falta');
   const [programacaoMensagem, setProgramacaoMensagem] = useState('Estamos com saudade de você. Volte para acompanhar suas informações.');
+  const [programacaoEditando, setProgramacaoEditando] = useState<ProgramacaoDisparoEdicao | null>(null);
   const [customPassword, setCustomPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -1061,6 +1082,73 @@ export default function AdminPage() {
     }
   };
 
+  const iniciarEdicaoProgramacaoDisparo = (programacao: ProgramacaoDisparo) => {
+    setError('');
+    setNotice('');
+    setProgramacaoEditando({
+      id: programacao.id,
+      nome: programacao.nome,
+      aplicativo: programacao.aplicativo,
+      gatilho: programacao.gatilho,
+      titulo: programacao.titulo,
+      mensagem: programacao.mensagem,
+      dataLocal: formatDateTimeLocal(programacao.data_programada),
+      intervaloValor: String(programacao.intervalo_valor || 7),
+      intervaloUnidade: programacao.intervalo_unidade || 'dias',
+    });
+  };
+
+  const atualizarEdicaoProgramacaoDisparo = <Campo extends keyof ProgramacaoDisparoEdicao,>(campo: Campo, valor: ProgramacaoDisparoEdicao[Campo]) => {
+    setProgramacaoEditando((atual) => atual ? { ...atual, [campo]: valor } : atual);
+  };
+
+  const salvarEdicaoProgramacaoDisparo = async () => {
+    if (!programacaoEditando) return;
+    if (!programacaoEditando.nome.trim() || !programacaoEditando.titulo.trim() || !programacaoEditando.mensagem.trim()) {
+      setError('Preencha nome, título e mensagem da automação.');
+      return;
+    }
+    if (programacaoEditando.gatilho === 'data_programada' && !programacaoEditando.dataLocal) {
+      setError('Informe a data e a hora do disparo.');
+      return;
+    }
+    const intervalo = Number(programacaoEditando.intervaloValor);
+    if (programacaoEditando.gatilho !== 'data_programada' && (!Number.isInteger(intervalo) || intervalo < 1 || intervalo > 999)) {
+      setError('Informe um intervalo entre 1 e 999.');
+      return;
+    }
+
+    setWorkingId(programacaoEditando.id);
+    setError('');
+    setNotice('');
+    try {
+      const response = await fetch('/api/admin-disparos/programacoes', {
+        method: 'PATCH',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: programacaoEditando.id,
+          nome: programacaoEditando.nome,
+          aplicativo: programacaoEditando.aplicativo,
+          gatilho: programacaoEditando.gatilho,
+          titulo: programacaoEditando.titulo,
+          mensagem: programacaoEditando.mensagem,
+          dataProgramada: programacaoEditando.gatilho === 'data_programada' ? new Date(programacaoEditando.dataLocal).toISOString() : null,
+          intervaloValor: programacaoEditando.gatilho === 'data_programada' ? null : intervalo,
+          intervaloUnidade: programacaoEditando.gatilho === 'data_programada' ? null : programacaoEditando.intervaloUnidade,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível salvar a automação.');
+      setProgramacoesDisparo((atuais) => atuais.map((item) => item.id === programacaoEditando.id ? data.programacao : item));
+      setProgramacaoEditando(null);
+      setNotice('Automação atualizada.');
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível salvar a automação.');
+    } finally {
+      setWorkingId(null);
+    }
+  };
+
   const excluirProgramacaoDisparo = (programacao: ProgramacaoDisparo) => {
     setConfirmacaoAdmin({
       titulo: 'Excluir automação',
@@ -1260,8 +1348,8 @@ export default function AdminPage() {
 
             {programacoesPendentes && <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Aplique a migração de disparos no Supabase para ativar as automações.</div>}
             <div className="grid gap-4 xl:grid-cols-2">
-              <section className="min-w-0"><div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Automações</h2><p className="text-xs text-slate-500">Ative, pause ou exclua cada fluxo.</p></div><button type="button" onClick={() => void loadProgramacoesDisparo()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
-                {programacoesDisparo.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhuma automação criada.</div> : <div className="grid gap-2">{programacoesDisparo.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h3 className="text-sm font-black text-slate-950">{item.nome}</h3><span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${item.aplicativo === 'gestao' ? 'bg-cyan-50 text-cyan-800' : 'bg-violet-50 text-violet-700'}`}>{item.aplicativo === 'gestao' ? 'Gestão' : 'AvantaVendas'}</span></div><p className="mt-1 text-xs font-bold text-slate-600">{item.gatilho === 'data_programada' ? `Em ${formatDate(item.data_programada || undefined)}` : item.gatilho === 'apos_cadastro' ? `${item.intervalo_valor} ${item.intervalo_unidade} após o cadastro` : `${item.intervalo_valor} ${item.intervalo_unidade} sem acesso`}</p><p className="mt-2 text-xs text-slate-500"><b>{item.titulo}</b> · {item.mensagem}</p>{item.ultima_execucao_em && <p className="mt-2 text-[10px] font-bold text-slate-400">Última execução: {formatDate(item.ultima_execucao_em)}</p>}</div><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase ${item.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{item.ativo ? 'Ativa' : 'Pausada'}</span></div><div className="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-2"><button type="button" disabled={workingId === item.id} onClick={() => void alternarProgramacaoDisparo(item)} className="h-9 rounded-md border border-slate-300 px-3 text-[10px] font-black uppercase text-slate-700 disabled:opacity-50">{item.ativo ? 'Pausar' : 'Ativar'}</button><button type="button" disabled={workingId === item.id} onClick={() => excluirProgramacaoDisparo(item)} className="h-9 rounded-md border border-red-200 px-3 text-[10px] font-black uppercase text-red-700 disabled:opacity-50">Excluir</button></div></article>)}</div>}
+              <section className="min-w-0"><div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Automações</h2><p className="text-xs text-slate-500">Edite, ative, pause ou exclua cada fluxo.</p></div><button type="button" onClick={() => void loadProgramacoesDisparo()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
+                {programacoesDisparo.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhuma automação criada.</div> : <div className="grid gap-2">{programacoesDisparo.map((item) => programacaoEditando?.id === item.id ? <article key={item.id} className="rounded-lg border border-cyan-300 bg-cyan-50/40 p-3 shadow-sm"><div className="flex items-center justify-between gap-3"><h3 className="text-sm font-black text-slate-950">Editar automação</h3><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase ${item.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{item.ativo ? 'Ativa' : 'Pausada'}</span></div><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor={`editar-automacao-nome-${item.id}`}>Nome da automação<input id={`editar-automacao-nome-${item.id}`} value={programacaoEditando.nome} onChange={(event) => atualizarEdicaoProgramacaoDisparo('nome', event.target.value)} disabled={workingId === item.id} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700 disabled:opacity-60" /></label><label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor={`editar-automacao-app-${item.id}`}>Aplicativo<select id={`editar-automacao-app-${item.id}`} value={programacaoEditando.aplicativo} onChange={(event) => atualizarEdicaoProgramacaoDisparo('aplicativo', event.target.value as AplicativoDisparo)} disabled={workingId === item.id} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700 disabled:opacity-60"><option value="gestao">App Gestão</option><option value="avantavendas">AvantaVendas</option></select></label></div><label className="mt-3 grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor={`editar-automacao-gatilho-${item.id}`}>Quando enviar<select id={`editar-automacao-gatilho-${item.id}`} value={programacaoEditando.gatilho} onChange={(event) => atualizarEdicaoProgramacaoDisparo('gatilho', event.target.value as GatilhoDisparo)} disabled={workingId === item.id} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700 disabled:opacity-60"><option value="data_programada">Em data e hora programadas</option><option value="apos_cadastro">Após o cadastro</option><option value="sem_acesso">Após um período sem acesso</option></select></label>{programacaoEditando.gatilho === 'data_programada' ? <label className="mt-3 grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor={`editar-automacao-data-${item.id}`}>Data e hora<input id={`editar-automacao-data-${item.id}`} type="datetime-local" value={programacaoEditando.dataLocal} onChange={(event) => atualizarEdicaoProgramacaoDisparo('dataLocal', event.target.value)} disabled={workingId === item.id} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700 disabled:opacity-60" /></label> : <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-3"><label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor={`editar-automacao-intervalo-${item.id}`}>Tempo<input id={`editar-automacao-intervalo-${item.id}`} type="number" min={1} max={999} value={programacaoEditando.intervaloValor} onChange={(event) => atualizarEdicaoProgramacaoDisparo('intervaloValor', event.target.value)} disabled={workingId === item.id} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700 disabled:opacity-60" /></label><label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor={`editar-automacao-unidade-${item.id}`}>Unidade<select id={`editar-automacao-unidade-${item.id}`} value={programacaoEditando.intervaloUnidade} onChange={(event) => atualizarEdicaoProgramacaoDisparo('intervaloUnidade', event.target.value as ProgramacaoDisparoEdicao['intervaloUnidade'])} disabled={workingId === item.id} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700 disabled:opacity-60"><option value="horas">Horas</option><option value="dias">Dias</option><option value="semanas">Semanas</option></select></label></div>}<label className="mt-3 grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor={`editar-automacao-titulo-${item.id}`}>Título<input id={`editar-automacao-titulo-${item.id}`} value={programacaoEditando.titulo} onChange={(event) => atualizarEdicaoProgramacaoDisparo('titulo', event.target.value)} disabled={workingId === item.id} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700 disabled:opacity-60" /></label><label className="mt-3 grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor={`editar-automacao-mensagem-${item.id}`}>Mensagem<textarea id={`editar-automacao-mensagem-${item.id}`} rows={3} value={programacaoEditando.mensagem} onChange={(event) => atualizarEdicaoProgramacaoDisparo('mensagem', event.target.value)} disabled={workingId === item.id} className="resize-y rounded-md border border-slate-300 bg-white p-3 text-sm font-normal normal-case outline-none focus:border-cyan-700 disabled:opacity-60" /></label><div className="mt-3 flex flex-col-reverse gap-2 border-t border-cyan-100 pt-3 sm:flex-row sm:justify-end"><button type="button" disabled={workingId === item.id} onClick={() => setProgramacaoEditando(null)} className="h-11 rounded-md border border-slate-300 bg-white px-4 text-[10px] font-black uppercase text-slate-700 disabled:opacity-50">Cancelar</button><button type="button" disabled={workingId === item.id} onClick={() => void salvarEdicaoProgramacaoDisparo()} className="h-11 rounded-md bg-cyan-700 px-4 text-[10px] font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-50">{workingId === item.id ? 'Salvando...' : 'Salvar alterações'}</button></div></article> : <article key={item.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h3 className="text-sm font-black text-slate-950">{item.nome}</h3><span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${item.aplicativo === 'gestao' ? 'bg-cyan-50 text-cyan-800' : 'bg-violet-50 text-violet-700'}`}>{item.aplicativo === 'gestao' ? 'Gestão' : 'AvantaVendas'}</span></div><p className="mt-1 text-xs font-bold text-slate-600">{item.gatilho === 'data_programada' ? `Em ${formatDate(item.data_programada || undefined)}` : item.gatilho === 'apos_cadastro' ? `${item.intervalo_valor} ${item.intervalo_unidade} após o cadastro` : `${item.intervalo_valor} ${item.intervalo_unidade} sem acesso`}</p><p className="mt-2 text-xs text-slate-500"><b>{item.titulo}</b> · {item.mensagem}</p>{item.ultima_execucao_em && <p className="mt-2 text-[10px] font-bold text-slate-400">Última execução: {formatDate(item.ultima_execucao_em)}</p>}</div><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase ${item.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{item.ativo ? 'Ativa' : 'Pausada'}</span></div><div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-2"><button type="button" disabled={workingId === item.id} onClick={() => iniciarEdicaoProgramacaoDisparo(item)} className="h-9 rounded-md border border-cyan-200 px-3 text-[10px] font-black uppercase text-cyan-800 disabled:opacity-50">Editar</button><button type="button" disabled={workingId === item.id} onClick={() => void alternarProgramacaoDisparo(item)} className="h-9 rounded-md border border-slate-300 px-3 text-[10px] font-black uppercase text-slate-700 disabled:opacity-50">{item.ativo ? 'Pausar' : 'Ativar'}</button><button type="button" disabled={workingId === item.id} onClick={() => excluirProgramacaoDisparo(item)} className="h-9 rounded-md border border-red-200 px-3 text-[10px] font-black uppercase text-red-700 disabled:opacity-50">Excluir</button></div></article>)}</div>}
               </section>
               <section className="min-w-0"><div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Histórico de envios</h2><p className="text-xs text-slate-500">Manuais e automáticos dos dois aplicativos.</p></div><button type="button" onClick={() => void loadBroadcasts()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
                 {historyPending && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Execute a migração administrativa no Supabase para ativar o histórico.</div>}

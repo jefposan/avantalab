@@ -11,6 +11,7 @@ type TokenPushNativo = { token: string; canal: 'apns' | 'fcm' };
 declare global {
   interface Window {
     __avantavendasAtivarPushNativo?: () => Promise<TokenPushNativo>;
+    __avantavendasSincronizarPushNativo?: () => Promise<TokenPushNativo | null>;
     __avantavendasDesativarPushNativo?: () => Promise<TokenPushNativo | null>;
     __avantavendasEstadoPushNativo?: () => Promise<boolean>;
   }
@@ -29,13 +30,13 @@ export default function NativePushNotificationsBridge() {
       if (permissao.receive !== 'granted') throw new Error('Permissão de notificações não concedida.');
       const tokenAtual = localStorage.getItem(TOKEN_KEY);
       const canal: TokenPushNativo['canal'] = Capacitor.getPlatform() === 'android' ? 'fcm' : 'apns';
-      const espera = new Promise<TokenPushNativo>((resolve, reject) => {
+      const espera = tokenAtual ? null : new Promise<TokenPushNativo>((resolve, reject) => {
         resolverToken = resolve;
         rejeitarToken = reject;
         window.setTimeout(() => reject(new Error('O aparelho demorou para registrar as notificações.')), 12000);
       });
       await PushNotifications.register();
-      return tokenAtual ? { token: tokenAtual, canal } : espera;
+      return tokenAtual ? { token: tokenAtual, canal } : espera!;
     };
 
     const preparar = async () => {
@@ -56,6 +57,10 @@ export default function NativePushNotificationsBridge() {
         window.location.assign(String(notification.data?.url || '/avantavendas'));
       });
       window.__avantavendasAtivarPushNativo = () => iniciar(true);
+      window.__avantavendasSincronizarPushNativo = async () => {
+        const permissao = await PushNotifications.checkPermissions();
+        return permissao.receive === 'granted' ? iniciar(false) : null;
+      };
       window.__avantavendasDesativarPushNativo = async () => {
         const token = localStorage.getItem(TOKEN_KEY);
         const canal = localStorage.getItem(CANAL_KEY) === 'fcm' ? 'fcm' : 'apns';
@@ -70,12 +75,12 @@ export default function NativePushNotificationsBridge() {
         void iniciar(false).catch(() => undefined);
         return Boolean(localStorage.getItem(TOKEN_KEY));
       };
-      void iniciar(false).catch(() => undefined);
     };
 
     void preparar();
     return () => {
       delete window.__avantavendasAtivarPushNativo;
+      delete window.__avantavendasSincronizarPushNativo;
       delete window.__avantavendasDesativarPushNativo;
       delete window.__avantavendasEstadoPushNativo;
       void PushNotifications.removeAllListeners();

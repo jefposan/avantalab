@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'avantalab.vendas_mobile.v1';
+const PREFIXO_PROMPT_NOTIFICACOES_VENDAS = 'avantalab:notificacoes-primeiro-acesso:v1:avantavendas:';
 const LOGIN_SOCIAL_PENDENTE_KEY = 'avantalab.vendas_mobile.login_social_pendente';
 const LOGIN_SOCIAL_PENDENTE_ATE_KEY = 'avantalab.vendas_mobile.login_social_pendente_ate';
 const GOOGLE_CONNECTING_KEY_ANTIGA = 'avantalab.vendas_mobile.google_connecting';
@@ -3952,7 +3953,10 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       };
       await Promise.allSettled([
         window.VendasDb.registrarAtividadeAplicativo?.(),
-        Promise.resolve(window.VendasDb.estadoNotificacoes?.()).then((ativa) => { state.notificacoesAtivas = Boolean(ativa); }),
+        Promise.resolve(window.VendasDb.estadoNotificacoes?.(permiteSincronizarNotificacoesVendas())).then((ativa) => {
+          state.notificacoesAtivas = Boolean(ativa);
+          if (state.notificacoesAtivas) marcarPromptNotificacoesVendas('ativado');
+        }),
       ]);
       await inicializarPreferenciasVendasServidor(dados);
       const houveAlteracaoDuranteCarga = revisaoDadosOperacionais !== revisaoAoIniciar;
@@ -4180,6 +4184,7 @@ async function carregarSistemaVendasCompleto() {
       carregarConteudosSecundariosVendas(false).catch((error) => console.warn('Não foi possível carregar conteúdos secundários.', error));
       sincronizarCatalogoAutomaticamente().catch((error) => console.warn('Não foi possível sincronizar o catálogo em segundo plano.', error));
       reenviarPendenciasVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
+      avaliarPromptNotificacoesVendas();
     }, 160);
   }
 }
@@ -6218,6 +6223,7 @@ async function alternarNotificacoesVendas(ativar, campo) {
     state.notificacoesAtivas = ativar
       ? await window.VendasDb.ativarNotificacoes()
       : await window.VendasDb.desativarNotificacoes();
+    marcarPromptNotificacoesVendas(state.notificacoesAtivas ? 'ativado' : 'desativado');
     render();
     toast(state.notificacoesAtivas ? 'Notificações ativadas neste aparelho.' : 'Notificações desativadas neste aparelho.');
   } catch (error) {
@@ -6227,6 +6233,69 @@ async function alternarNotificacoesVendas(ativar, campo) {
   } finally {
     if (campo) campo.disabled = false;
   }
+}
+
+function chavePromptNotificacoesVendas() {
+  return state.usuario?.id ? `${PREFIXO_PROMPT_NOTIFICACOES_VENDAS}${state.usuario.id}` : '';
+}
+
+function marcarPromptNotificacoesVendas(situacao) {
+  const chave = chavePromptNotificacoesVendas();
+  try { if (chave) localStorage.setItem(chave, situacao || 'visto'); } catch { /* armazenamento indisponível */ }
+}
+
+function permiteSincronizarNotificacoesVendas() {
+  const chave = chavePromptNotificacoesVendas();
+  if (!chave) return false;
+  try {
+    return !['adiado', 'negado', 'negado-sistema', 'desativado'].includes(localStorage.getItem(chave) || '');
+  } catch { return true; }
+}
+
+function avaliarPromptNotificacoesVendas() {
+  if (!state.autenticado || !state.usuario?.id) return;
+  if (state.notificacoesAtivas) {
+    marcarPromptNotificacoesVendas('ativado');
+    return;
+  }
+  const suporteNativo = typeof window.__avantavendasAtivarPushNativo === 'function';
+  const suporteWeb = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+  if (!suporteNativo && !suporteWeb) return;
+  if (!suporteNativo && Notification.permission === 'denied') {
+    marcarPromptNotificacoesVendas('negado-sistema');
+    return;
+  }
+  const chave = chavePromptNotificacoesVendas();
+  try { if (!chave || localStorage.getItem(chave)) return; } catch { return; }
+  window.setTimeout(() => {
+    const chaveAtual = chavePromptNotificacoesVendas();
+    if (!state.autenticado || state.notificacoesAtivas || !chaveAtual || document.getElementById('sheetBackdrop')) return;
+    try { if (localStorage.getItem(chaveAtual)) return; } catch { return; }
+    sheet(`<div class="sheet-header"><div><h2>Ativar notificações?</h2><p class="muted small">Primeiro acesso neste aparelho</p></div><button class="close" type="button" aria-label="Agora não" onclick="adiarNotificacoesPrimeiroAcessoVendas()">×</button></div><p>Receba lembretes e avisos importantes das suas vendas, mesmo com o app fechado.</p><div class="actions"><button id="ativarNotificacoesPrimeiroAcessoVendas" type="button" class="primary" onclick="confirmarNotificacoesPrimeiroAcessoVendas(this)">Ativar notificações</button><button type="button" class="ghost" onclick="adiarNotificacoesPrimeiroAcessoVendas()">Agora não</button></div>`, 'sheet-backdrop-centered');
+  }, 900);
+}
+
+async function confirmarNotificacoesPrimeiroAcessoVendas(botao) {
+  if (botao) botao.disabled = true;
+  try {
+    const ativas = await window.VendasDb.ativarNotificacoes();
+    state.notificacoesAtivas = Boolean(ativas);
+    if (!state.notificacoesAtivas) return;
+    marcarPromptNotificacoesVendas('ativado');
+    fecharSheet();
+    render();
+    toast('Notificações ativadas neste aparelho.');
+  } catch (error) {
+    if (/permiss[aã]o|permission/i.test(String(error?.message || ''))) marcarPromptNotificacoesVendas('negado');
+    toast(traduzErro(error));
+  } finally {
+    if (botao && document.body.contains(botao)) botao.disabled = false;
+  }
+}
+
+function adiarNotificacoesPrimeiroAcessoVendas() {
+  marcarPromptNotificacoesVendas('adiado');
+  fecharSheet();
 }
 
 function nomeEmpresaParaComprovantes() {
@@ -10654,6 +10723,9 @@ window.confirmarExclusaoContaVendas = confirmarExclusaoContaVendas;
 window.confirmarResetDadosLocais = confirmarResetDadosLocais;
 window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;
+window.alternarNotificacoesVendas = alternarNotificacoesVendas;
+window.confirmarNotificacoesPrimeiroAcessoVendas = confirmarNotificacoesPrimeiroAcessoVendas;
+window.adiarNotificacoesPrimeiroAcessoVendas = adiarNotificacoesPrimeiroAcessoVendas;
 window.alternarSolicitacaoVozVendas = alternarSolicitacaoVozVendas;
 window.abrirSolicitacaoVozVendas = abrirSolicitacaoVozVendas;
 window.alternarOrganizacaoSalaBotoes = alternarOrganizacaoSalaBotoes;

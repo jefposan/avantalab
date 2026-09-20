@@ -9,11 +9,13 @@ const NativeBadge = registerPlugin<NativeBadge>('NativeBadge');
 const TOKEN_KEY = 'avantalab.nativo.push-token';
 const TOKEN_KEY_IOS_ANTERIOR = 'avantalab.ios.push-token';
 const BADGE_KEY = 'avantalab.mobile.badge';
+type TokenPushNativo = { token: string; canal: 'apns' | 'fcm' };
 
 declare global {
   interface Window {
-    __avantalabAtivarPushNativoMobile?: () => Promise<string>;
-    __avantalabDesativarPushNativoMobile?: () => Promise<string | null>;
+    __avantalabAtivarPushNativoMobile?: () => Promise<TokenPushNativo>;
+    __avantalabSincronizarPushNativoMobile?: () => Promise<TokenPushNativo | null>;
+    __avantalabDesativarPushNativoMobile?: () => Promise<TokenPushNativo | null>;
     __avantalabEstadoPushNativoMobile?: () => Promise<boolean>;
     __avantalabAtualizarBadgeNativo?: (quantidade: number) => void;
   }
@@ -22,7 +24,7 @@ declare global {
 export default function NativePushNotificationsBridge() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    let resolverToken: ((token: string) => void) | null = null;
+    let resolverToken: ((token: TokenPushNativo) => void) | null = null;
     let rejeitarToken: ((erro: Error) => void) | null = null;
     let badgeConfirmadoPelaGestao: number | null = null;
 
@@ -41,9 +43,10 @@ export default function NativePushNotificationsBridge() {
     };
 
     const salvarToken = (token: string) => {
+      const canal: TokenPushNativo['canal'] = Capacitor.getPlatform() === 'android' ? 'fcm' : 'apns';
       localStorage.setItem(TOKEN_KEY, token);
       localStorage.removeItem(TOKEN_KEY_IOS_ANTERIOR);
-      resolverToken?.(token);
+      resolverToken?.({ token, canal });
       resolverToken = null;
       rejeitarToken = null;
       if (badgeConfirmadoPelaGestao !== null) aplicarBadgeNativo(badgeConfirmadoPelaGestao, true);
@@ -56,13 +59,14 @@ export default function NativePushNotificationsBridge() {
         : await PushNotifications.checkPermissions();
       if (permissao.receive !== 'granted') throw new Error('Permissão de notificações não concedida.');
       const tokenAtual = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_IOS_ANTERIOR);
-      const espera = new Promise<string>((resolve, reject) => {
+      const canal: TokenPushNativo['canal'] = Capacitor.getPlatform() === 'android' ? 'fcm' : 'apns';
+      const espera = tokenAtual ? null : new Promise<TokenPushNativo>((resolve, reject) => {
         resolverToken = resolve;
         rejeitarToken = reject;
         window.setTimeout(() => reject(new Error('O aparelho demorou para registrar as notificações.')), 12000);
       });
       await PushNotifications.register();
-      return tokenAtual || espera;
+      return tokenAtual ? { token: tokenAtual, canal } : espera!;
     };
 
     const preparar = async () => {
@@ -75,9 +79,14 @@ export default function NativePushNotificationsBridge() {
         window.location.assign(url);
       });
       window.__avantalabAtivarPushNativoMobile = () => iniciar(true);
+      window.__avantalabSincronizarPushNativoMobile = async () => {
+        const permissao = await PushNotifications.checkPermissions();
+        return permissao.receive === 'granted' ? iniciar(false) : null;
+      };
       window.__avantalabDesativarPushNativoMobile = async () => {
         const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_IOS_ANTERIOR);
-        await PushNotifications.unregister(); localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY_IOS_ANTERIOR); return token;
+        const canal: TokenPushNativo['canal'] = Capacitor.getPlatform() === 'android' ? 'fcm' : 'apns';
+        await PushNotifications.unregister(); localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY_IOS_ANTERIOR); return token ? { token, canal } : null;
       };
       window.__avantalabEstadoPushNativoMobile = async () => {
         const permissao = await PushNotifications.checkPermissions();
@@ -90,10 +99,9 @@ export default function NativePushNotificationsBridge() {
       try { badgePersistido = Number(localStorage.getItem(BADGE_KEY)); } catch (_) {}
       aplicarBadgeNativo(normalizarBadge(badgePersistido), false);
       window.dispatchEvent(new CustomEvent('avantalab:badge-nativo-pronto'));
-      void iniciar(false).catch(() => undefined);
     };
     void preparar();
-    return () => { delete window.__avantalabAtivarPushNativoMobile; delete window.__avantalabDesativarPushNativoMobile; delete window.__avantalabEstadoPushNativoMobile; delete window.__avantalabAtualizarBadgeNativo; void PushNotifications.removeAllListeners(); };
+    return () => { delete window.__avantalabAtivarPushNativoMobile; delete window.__avantalabSincronizarPushNativoMobile; delete window.__avantalabDesativarPushNativoMobile; delete window.__avantalabEstadoPushNativoMobile; delete window.__avantalabAtualizarBadgeNativo; void PushNotifications.removeAllListeners(); };
   }, []);
   return null;
 }

@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.18 -->
+<!-- ava-version: 1.36.0.20 -->
+
+> Revisão 1.36.0.20: a autorização no primeiro login e a sincronização de push
+> pertencem aos aplicativos Gestão Mobile e AvantaVendas; sem mudança
+> operacional na Gestão Web.
+
+> Revisão 1.36.0.19: em **/admin > Disparos > Automações**, use **Editar** no
+> card desejado para alterar nome, aplicativo, gatilho, data ou intervalo,
+> título e mensagem. **Salvar alterações** mantém o histórico e o estado ativo
+> ou pausado; **Cancelar** fecha a edição sem modificar o fluxo.
 
 > Revisão 1.36.0.18: em **/admin > Disparos**, escolha **App Gestão** ou
 > **AvantaVendas** para um envio imediato. Em **Programar disparo**, informe o

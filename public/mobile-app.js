@@ -825,7 +825,7 @@
   var CHAVE_SESSAO_TEMPORARIA = 'avantalab_mobile_sessao_temporaria';
   var CHAVE_OAUTH_TEMPORARIO_ATE = 'avantalab_mobile_oauth_temporario_ate';
   var CHAVE_AGENDA_ITENS = 'avantalab_mobile_agenda_itens';
-  var CHAVE_PROMPT_NOTIF = 'avantalab_mobile_prompt_notif';
+  var PREFIXO_PROMPT_NOTIF = 'avantalab:notificacoes-primeiro-acesso:v1:gestao:';
   var CHAVE_ATALHOS_INFERIORES = 'avantalab_mobile_atalhos_inferiores';
   var CHAVE_INICIAR_VALORES_OCULTOS = 'avantalab_mobile_iniciar_valores_ocultos';
   var CHAVE_PREFERENCIAS_CONTA_MOBILE = 'avantalab_mobile_preferencias_v1';
@@ -5065,32 +5065,88 @@
     return arr;
   }
 
-  async function ativarNotificacoesMobile() {
+  function chavePromptNotifMobile() {
+    return state.usuario && state.usuario.id ? PREFIXO_PROMPT_NOTIF + state.usuario.id : '';
+  }
+
+  function permiteSincronizarNotificacoesMobile() {
+    var chave = chavePromptNotifMobile();
+    if (!chave) return false;
+    try {
+      return ['adiado', 'negado', 'negado-sistema', 'desativado'].indexOf(localStorage.getItem(chave) || '') < 0;
+    } catch (e) { return true; }
+  }
+
+  function normalizarTokenPushNativoMobile(registro) {
+    if (!registro) return null;
+    if (typeof registro === 'string') return { token: registro, canal: 'apns' };
+    var token = String(registro.token || '').trim();
+    if (!token) return null;
+    return { token: token, canal: registro.canal === 'fcm' ? 'fcm' : 'apns' };
+  }
+
+  async function salvarInscricaoNativaMobile(registro) {
+    var tokenNativo = normalizarTokenPushNativoMobile(registro);
+    if (!tokenNativo || !state.usuario || !state.usuario.id) return false;
+    var resultadoNativo = await db.from('push_subscriptions').upsert({
+      user_id: state.usuario.id,
+      empresa_id: state.empresa ? state.empresa.id : null,
+      endpoint: tokenNativo.canal + ':' + tokenNativo.token,
+      p256dh: '',
+      auth: '',
+      apns_token: tokenNativo.canal === 'apns' ? tokenNativo.token : null,
+      fcm_token: tokenNativo.canal === 'fcm' ? tokenNativo.token : null,
+      canal: tokenNativo.canal,
+      user_agent: navigator.userAgent,
+      app_origem: 'mobile',
+      atualizado_em: new Date().toISOString(),
+    }, { onConflict: 'endpoint' });
+    if (resultadoNativo.error) throw resultadoNativo.error;
+    return true;
+  }
+
+  async function salvarInscricaoWebMobile(inscricao) {
+    if (!inscricao || !state.usuario || !state.usuario.id) return false;
+    var dados = inscricao.toJSON();
+    var resultado = await db.from('push_subscriptions').upsert({
+      user_id: state.usuario.id,
+      empresa_id: state.empresa ? state.empresa.id : null,
+      endpoint: dados.endpoint,
+      p256dh: dados.keys ? dados.keys.p256dh : '',
+      auth: dados.keys ? dados.keys.auth : '',
+      user_agent: navigator.userAgent,
+      app_origem: 'mobile',
+      atualizado_em: new Date().toISOString(),
+    }, { onConflict: 'endpoint' });
+    if (resultado.error) throw resultado.error;
+    return true;
+  }
+
+  async function ativarNotificacoesMobile(opcoes) {
+    var silencioso = opcoes && opcoes.silencioso === true;
     try {
       if (typeof window.__avantalabAtivarPushNativoMobile === 'function') {
-        if (!state.usuario || !state.usuario.id) { mostrarToast('Faca login para ativar as notificacoes.'); return; }
-        var tokenNativo = await window.__avantalabAtivarPushNativoMobile();
-        var resultadoNativo = await db.from('push_subscriptions').upsert({
-          user_id: state.usuario.id, empresa_id: state.empresa ? state.empresa.id : null,
-          endpoint: 'apns:' + tokenNativo, p256dh: '', auth: '', apns_token: tokenNativo,
-          canal: 'apns', user_agent: navigator.userAgent, app_origem: 'mobile', atualizado_em: new Date().toISOString(),
-        }, { onConflict: 'endpoint' });
-        if (resultadoNativo.error) throw resultadoNativo.error;
-        state.notificacoesAtivas = true; mostrarToast('Notificacoes ativadas neste iPhone.'); return;
+        if (!state.usuario || !state.usuario.id) { if (!silencioso) mostrarToast('Faça login para ativar as notificações.'); return false; }
+        var registroNativo = await window.__avantalabAtivarPushNativoMobile();
+        await salvarInscricaoNativaMobile(registroNativo);
+        state.notificacoesAtivas = true;
+        marcarPromptNotifVisto('ativado');
+        if (!silencioso) mostrarToast('Notificações ativadas neste aparelho.');
+        return true;
       }
       if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-        mostrarToast('Este aparelho/navegador nao suporta notificacoes push.');
-        return;
+        if (!silencioso) mostrarToast('Este aparelho ou navegador não suporta notificações.');
+        return false;
       }
       if (!state.usuario || !state.usuario.id) {
-        mostrarToast('Faca login para ativar as notificacoes.');
-        return;
+        if (!silencioso) mostrarToast('Faça login para ativar as notificações.');
+        return false;
       }
 
       var permissao = await Notification.requestPermission();
       if (permissao !== 'granted') {
-        mostrarToast('Permissao de notificacao negada.');
-        return;
+        if (!silencioso) mostrarToast('A permissão de notificações não foi concedida.');
+        return false;
       }
 
       var registro = await navigator.serviceWorker.ready;
@@ -5102,35 +5158,23 @@
         });
       }
 
-      var dados = inscricao.toJSON();
-      var resultado = await db.from('push_subscriptions').upsert({
-        user_id: state.usuario.id,
-        empresa_id: state.empresa ? state.empresa.id : null,
-        endpoint: dados.endpoint,
-        p256dh: dados.keys ? dados.keys.p256dh : '',
-        auth: dados.keys ? dados.keys.auth : '',
-        user_agent: navigator.userAgent,
-        app_origem: 'mobile',
-        atualizado_em: new Date().toISOString(),
-      }, { onConflict: 'endpoint' });
-
-      if (resultado.error) {
-        mostrarToast('Nao foi possivel salvar a inscricao.');
-        return;
-      }
+      await salvarInscricaoWebMobile(inscricao);
       state.notificacoesAtivas = true;
-      mostrarToast('Notificacoes ativadas neste aparelho.');
+      marcarPromptNotifVisto('ativado');
+      if (!silencioso) mostrarToast('Notificações ativadas neste aparelho.');
+      return true;
     } catch (e) {
-      mostrarToast('Falha ao ativar notificacoes.');
+      if (!silencioso) mostrarToast('Não foi possível ativar as notificações.');
+      return false;
     }
   }
 
   async function desativarNotificacoesMobile() {
     try {
       if (typeof window.__avantalabDesativarPushNativoMobile === 'function') {
-        var tokenNativo = await window.__avantalabDesativarPushNativoMobile();
-        if (tokenNativo && state.usuario?.id) await db.from('push_subscriptions').delete().eq('endpoint', 'apns:' + tokenNativo);
-        state.notificacoesAtivas = false; atualizarBadgeApp(0); mostrarToast('Notificacoes desativadas neste iPhone.'); return;
+        var tokenNativo = normalizarTokenPushNativoMobile(await window.__avantalabDesativarPushNativoMobile());
+        if (tokenNativo && state.usuario?.id) await db.from('push_subscriptions').delete().eq('endpoint', tokenNativo.canal + ':' + tokenNativo.token);
+        state.notificacoesAtivas = false; marcarPromptNotifVisto('desativado'); atualizarBadgeApp(0); mostrarToast('Notificações desativadas neste aparelho.'); return;
       }
       var registro = await navigator.serviceWorker.ready;
       var inscricao = await registro.pushManager.getSubscription();
@@ -5142,6 +5186,7 @@
         }
       }
       state.notificacoesAtivas = false;
+      marcarPromptNotifVisto('desativado');
       atualizarBadgeApp(0);
       mostrarToast('Notificacoes desativadas neste aparelho.');
     } catch (e) {
@@ -5161,8 +5206,9 @@
   // Liga/desliga. Se a permissao ainda nao foi dada, chama ativar
   // direto (o iOS exige o pedido de permissao no proprio toque).
   async function alternarNotificacoesMobile() {
-    // Premium Pessoal: notificações são recurso pago no plano grátis.
-    if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('notificacoes'); return; }
+    if (typeof window.__avantalabAtivarPushNativoMobile === 'function') {
+      return state.notificacoesAtivas ? desativarNotificacoesMobile() : ativarNotificacoesMobile();
+    }
     if (!('Notification' in window)) return ativarNotificacoesMobile();
     if (Notification.permission === 'granted') return desativarOuReativarNotificacoes();
     return ativarNotificacoesMobile();
@@ -5171,45 +5217,61 @@
   async function atualizarEstadoNotificacoesMobile(renderizar) {
     var ativas = false;
     try {
-      if (typeof window.__avantalabEstadoPushNativoMobile === 'function') {
+      if (!permiteSincronizarNotificacoesMobile()) {
+        state.notificacoesAtivas = false;
+        if (renderizar && state.menuAberto) render();
+        return;
+      }
+      if (typeof window.__avantalabSincronizarPushNativoMobile === 'function') {
+        var registroNativo = await window.__avantalabSincronizarPushNativoMobile();
+        ativas = registroNativo ? await salvarInscricaoNativaMobile(registroNativo) : false;
+      } else if (typeof window.__avantalabEstadoPushNativoMobile === 'function') {
         ativas = await window.__avantalabEstadoPushNativoMobile();
       } else
       if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
         var registro = await navigator.serviceWorker.ready;
         var inscricao = await registro.pushManager.getSubscription();
-        ativas = Boolean(inscricao);
-        if (inscricao && state.usuario && state.usuario.id) {
-          await db.from('push_subscriptions').update({ app_origem: 'mobile', atualizado_em: new Date().toISOString() }).eq('endpoint', inscricao.endpoint);
+        if (!inscricao) {
+          inscricao = await registro.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+          });
         }
+        ativas = await salvarInscricaoWebMobile(inscricao);
       }
     } catch (e) {}
     state.notificacoesAtivas = ativas;
+    if (ativas) marcarPromptNotifVisto('ativado');
     if (renderizar && state.menuAberto) render();
   }
 
-  // Na primeira abertura (uma vez por aparelho), oferece ativar as
+  // No primeiro acesso de cada usuário neste aparelho, oferece ativar as
   // notificacoes. O toque no botao "Ativar" e o gesto que o iOS exige
   // para disparar o pedido de permissao do sistema.
   function avaliarPromptNotificacoes() {
     try {
-      if (premiumPessoalBloqueadoMobile()) return; // premium: não oferece no grátis
-      if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
-      if (Notification.permission !== 'default') return;
       if (!state.usuario || !state.usuario.id) return;
-      if (localStorage.getItem(CHAVE_PROMPT_NOTIF) === '1') return;
+      if (state.notificacoesAtivas) { marcarPromptNotifVisto('ativado'); return; }
+      var suporteNativo = typeof window.__avantalabAtivarPushNativoMobile === 'function';
+      var suporteWeb = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+      if (!suporteNativo && !suporteWeb) return;
+      if (!suporteNativo && Notification.permission === 'denied') { marcarPromptNotifVisto('negado-sistema'); return; }
+      var chave = chavePromptNotifMobile();
+      if (!chave || localStorage.getItem(chave)) return;
       // So oferece notificacoes depois que o tutorial foi concluido/pulado
       if (localStorage.getItem('avantalab_mobile_tour_concluido') !== '1') return;
       setTimeout(function () {
-        if (Notification.permission !== 'default') return;
-        if (localStorage.getItem(CHAVE_PROMPT_NOTIF) === '1') return;
+        var chaveAtual = chavePromptNotifMobile();
+        if (!chaveAtual || localStorage.getItem(chaveAtual) || state.notificacoesAtivas) return;
         state.mostrarPromptNotificacoes = true;
         render();
       }, 1500);
     } catch (e) {}
   }
 
-  function marcarPromptNotifVisto() {
-    try { localStorage.setItem(CHAVE_PROMPT_NOTIF, '1'); } catch (e) {}
+  function marcarPromptNotifVisto(situacao) {
+    var chave = chavePromptNotifMobile();
+    try { if (chave) localStorage.setItem(chave, situacao || 'visto'); } catch (e) {}
   }
 
   function promptNotificacoesHtml() {
@@ -5218,13 +5280,13 @@
         '<div class="w-full max-w-xs overflow-y-auto rounded-3xl bg-white text-center shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
           '<div class="flex items-center gap-3 px-5 py-4 text-left text-white" style="background-color:#003E73">' +
             '<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-xl">&#128276;</div>' +
-            '<h2 class="text-base font-black">Ativar notificacoes?</h2>' +
+            '<h2 class="text-base font-black">Ativar notificações?</h2>' +
           '</div>' +
           '<div class="p-5">' +
-            '<p class="text-xs font-semibold text-slate-500">Receba no celular os lembretes e avisos da sua agenda, mesmo com o app fechado.</p>' +
+            '<p class="text-xs font-semibold text-slate-500">Receba lembretes e avisos importantes da sua gestão, mesmo com o app fechado.</p>' +
             '<div class="mt-4 grid gap-2">' +
             '<button id="prompt-notif-ativar" type="button" class="h-11 rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Ativar</button>' +
-            '<button id="prompt-notif-agora-nao" type="button" class="h-10 rounded-xl text-xs font-bold text-slate-500">Agora nao</button>' +
+            '<button id="prompt-notif-agora-nao" type="button" class="h-10 rounded-xl text-xs font-bold text-slate-500">Agora não</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -7226,7 +7288,9 @@
         });
       });
       executarSegundoPlano('Falha ao avaliar tutorial', avaliarTourMobile);
-      executarSegundoPlano('Falha ao avaliar permissão de notificações', avaliarPromptNotificacoes);
+      executarSegundoPlano('Falha ao avaliar permissão de notificações', function () {
+        return atualizarEstadoNotificacoesMobile(false).then(avaliarPromptNotificacoes);
+      });
     }, 0);
   }
 
@@ -15213,14 +15277,14 @@
     bind('menu-notificacoes', function () {
       executarChaveMenuSemMover('menu-notificacoes', alternarNotificacoesMobile);
     });
-    bind('prompt-notif-ativar', function () {
-      marcarPromptNotifVisto();
+    bind('prompt-notif-ativar', async function () {
       state.mostrarPromptNotificacoes = false;
       render();
-      ativarNotificacoesMobile();
+      var ativadas = await ativarNotificacoesMobile();
+      marcarPromptNotifVisto(ativadas ? 'ativado' : 'negado');
     });
     bind('prompt-notif-agora-nao', function () {
-      marcarPromptNotifVisto();
+      marcarPromptNotifVisto('adiado');
       state.mostrarPromptNotificacoes = false;
       render();
     });
