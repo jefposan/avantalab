@@ -1640,6 +1640,11 @@ setMesFaturamento(mesAtual);
   setAcessoLiberado(true);
 
   const { data: usuarioLogado } = await supabase.auth.getUser();
+  if (usuarioLogado.user) {
+    void supabase.rpc('registrar_atividade_aplicativo', { p_aplicativo: 'gestao' }).then(({ error }) => {
+      if (error && !/function|schema cache|does not exist/i.test(error.message || '')) console.warn('Não foi possível registrar a atividade na Gestão.', error);
+    });
+  }
 
 const emailLogado = usuarioLogado.user?.email || '';
 

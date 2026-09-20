@@ -234,7 +234,27 @@ type Disparo = {
   total_inscricoes: number;
   status: 'enviado' | 'erro';
   erro?: string | null;
+  aplicativo?: 'gestao' | 'avantavendas';
+  origem?: 'manual' | 'automatico';
+  programacao_id?: string | null;
   created_at?: string;
+};
+
+type AplicativoDisparo = 'gestao' | 'avantavendas';
+type GatilhoDisparo = 'data_programada' | 'apos_cadastro' | 'sem_acesso';
+type ProgramacaoDisparo = {
+  id: string;
+  nome: string;
+  aplicativo: AplicativoDisparo;
+  gatilho: GatilhoDisparo;
+  titulo: string;
+  mensagem: string;
+  data_programada: string | null;
+  intervalo_valor: number | null;
+  intervalo_unidade: 'horas' | 'dias' | 'semanas' | null;
+  ativo: boolean;
+  ultima_execucao_em: string | null;
+  criado_em: string;
 };
 
 type ConteudoVendasPagina = 'novidades' | 'informacoes';
@@ -394,8 +414,20 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ativos');
   const [broadcastTitle, setBroadcastTitle] = useState('Novidade no AvantaLab');
   const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcastApp, setBroadcastApp] = useState<AplicativoDisparo>('gestao');
   const [sending, setSending] = useState(false);
   const [historyPending, setHistoryPending] = useState(false);
+  const [programacoesDisparo, setProgramacoesDisparo] = useState<ProgramacaoDisparo[]>([]);
+  const [programacoesPendentes, setProgramacoesPendentes] = useState(false);
+  const [programacaoSalvando, setProgramacaoSalvando] = useState(false);
+  const [programacaoNome, setProgramacaoNome] = useState('');
+  const [programacaoApp, setProgramacaoApp] = useState<AplicativoDisparo>('gestao');
+  const [programacaoGatilho, setProgramacaoGatilho] = useState<GatilhoDisparo>('data_programada');
+  const [programacaoData, setProgramacaoData] = useState('');
+  const [programacaoIntervalo, setProgramacaoIntervalo] = useState('7');
+  const [programacaoUnidade, setProgramacaoUnidade] = useState<'horas' | 'dias' | 'semanas'>('dias');
+  const [programacaoTitulo, setProgramacaoTitulo] = useState('Sentimos sua falta');
+  const [programacaoMensagem, setProgramacaoMensagem] = useState('Estamos com saudade de você. Volte para acompanhar suas informações.');
   const [customPassword, setCustomPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -733,6 +765,15 @@ export default function AdminPage() {
     }
   };
 
+  const loadProgramacoesDisparo = async (value = token) => {
+    const response = await fetch('/api/admin-disparos/programacoes', { headers: authHeaders(value) });
+    const data = await response.json().catch(() => null);
+    if (response.ok && !data?.erro) {
+      setProgramacoesDisparo(data.programacoes || []);
+      setProgramacoesPendentes(Boolean(data.configuracaoPendente));
+    }
+  };
+
   const loadConteudosVendas = async (value = token) => {
     const response = await fetch('/api/admin-conteudos-vendas', { headers: authHeaders(value) });
     const data = await response.json().catch(() => null);
@@ -858,7 +899,7 @@ export default function AdminPage() {
       }
       setFeedbacks(data.feedbacks || []);
       setAuthorized(true);
-      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarCadastros('todos', 1, cleanToken), buscarPerfis(1, undefined, '', perfilPorPagina, cleanToken), carregarDownloadsDasLojas(cleanToken)]);
+      await Promise.allSettled([loadBroadcasts(cleanToken), loadProgramacoesDisparo(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarCadastros('todos', 1, cleanToken), buscarPerfis(1, undefined, '', perfilPorPagina, cleanToken), carregarDownloadsDasLojas(cleanToken)]);
     } catch {
       setAuthorized(false);
       setError('Erro inesperado ao acessar o painel.');
@@ -934,11 +975,11 @@ export default function AdminPage() {
       const response = await fetch('/api/admin-disparos', {
         method: 'POST',
         headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ titulo: broadcastTitle, mensagem: broadcastMessage }),
+        body: JSON.stringify({ titulo: broadcastTitle, mensagem: broadcastMessage, aplicativo: broadcastApp }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível enviar.');
-      setNotice(`Aviso enviado para ${data.resultado?.usuarios || 0} usuários.`);
+      setNotice(`Aviso do ${broadcastApp === 'gestao' ? 'App Gestão' : 'AvantaVendas'} enviado para ${data.resultado?.usuarios || 0} usuários.`);
       setBroadcastMessage('');
       await loadBroadcasts();
     } catch (requestError) {
@@ -954,11 +995,92 @@ export default function AdminPage() {
       return;
     }
     setConfirmacaoAdmin({
-      titulo: 'Enviar aviso geral',
-      mensagem: 'Este aviso será enviado para todos os usuários. Deseja continuar?',
+      titulo: `Enviar para ${broadcastApp === 'gestao' ? 'App Gestão' : 'AvantaVendas'}`,
+      mensagem: `Este aviso será enviado a todos os usuários do ${broadcastApp === 'gestao' ? 'App Gestão' : 'AvantaVendas'} que permitiram notificações. Deseja continuar?`,
       textoConfirmar: 'Enviar para todos',
       variante: 'primaria',
       aoConfirmar: executarEnvioBroadcast,
+    });
+  };
+
+  const criarProgramacaoDisparo = async () => {
+    if (!programacaoNome.trim() || !programacaoTitulo.trim() || !programacaoMensagem.trim()) {
+      setError('Preencha nome, título e mensagem da automação.');
+      return;
+    }
+    if (programacaoGatilho === 'data_programada' && !programacaoData) {
+      setError('Informe a data e a hora do disparo.');
+      return;
+    }
+    setProgramacaoSalvando(true);
+    setError('');
+    setNotice('');
+    try {
+      const response = await fetch('/api/admin-disparos/programacoes', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: programacaoNome,
+          aplicativo: programacaoApp,
+          gatilho: programacaoGatilho,
+          titulo: programacaoTitulo,
+          mensagem: programacaoMensagem,
+          dataProgramada: programacaoGatilho === 'data_programada' ? new Date(programacaoData).toISOString() : null,
+          intervaloValor: programacaoGatilho === 'data_programada' ? null : Number(programacaoIntervalo),
+          intervaloUnidade: programacaoGatilho === 'data_programada' ? null : programacaoUnidade,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível criar a automação.');
+      setProgramacaoNome('');
+      setNotice('Automação criada e ativada.');
+      await loadProgramacoesDisparo();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível criar a automação.');
+    } finally {
+      setProgramacaoSalvando(false);
+    }
+  };
+
+  const alternarProgramacaoDisparo = async (programacao: ProgramacaoDisparo) => {
+    setWorkingId(programacao.id);
+    setError('');
+    try {
+      const response = await fetch('/api/admin-disparos/programacoes', {
+        method: 'PATCH',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: programacao.id, ativo: !programacao.ativo }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível atualizar a automação.');
+      setProgramacoesDisparo((atuais) => atuais.map((item) => item.id === programacao.id ? { ...item, ativo: !programacao.ativo } : item));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível atualizar a automação.');
+    } finally {
+      setWorkingId(null);
+    }
+  };
+
+  const excluirProgramacaoDisparo = (programacao: ProgramacaoDisparo) => {
+    setConfirmacaoAdmin({
+      titulo: 'Excluir automação',
+      mensagem: `A automação “${programacao.nome}” será removida. O histórico de disparos já realizados será mantido.`,
+      textoConfirmar: 'Excluir automação',
+      variante: 'destrutiva',
+      aoConfirmar: async () => {
+        setWorkingId(programacao.id);
+        try {
+          const response = await fetch(`/api/admin-disparos/programacoes?id=${encodeURIComponent(programacao.id)}`, { method: 'DELETE', headers: authHeaders() });
+          const data = await response.json().catch(() => null);
+          if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível excluir a automação.');
+          setProgramacoesDisparo((atuais) => atuais.filter((item) => item.id !== programacao.id));
+          setNotice('Automação excluída.');
+        } catch (requestError) {
+          setError(requestError instanceof Error ? requestError.message : 'Não foi possível excluir a automação.');
+        } finally {
+          setWorkingId(null);
+        }
+      },
     });
   };
 
@@ -1112,17 +1234,40 @@ export default function AdminPage() {
             </div>}
           </div>}
 
-          {view === 'disparos' && <div className="grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-            <section className="self-start rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-32">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-700">Comunicação</p><h2 className="mt-1 text-lg font-black text-slate-950">Novo disparo</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Envia aviso no sininho e notificação push para todos os usuários.</p>
-              <label className="mt-4 block text-[10px] font-black uppercase text-slate-500">Título</label><input value={broadcastTitle} onChange={(event) => setBroadcastTitle(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold outline-none focus:border-cyan-700" />
-              <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Mensagem</label><textarea value={broadcastMessage} onChange={(event) => setBroadcastMessage(event.target.value)} rows={5} className="mt-1 w-full resize-y rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-cyan-700" placeholder="Escreva uma mensagem objetiva..." />
-              <button type="button" onClick={() => void sendBroadcast()} disabled={sending} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="send" />{sending ? 'Enviando...' : 'Disparar para todos'}</button>
-            </section>
-            <section className="min-w-0"><div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Histórico de envios</h2><p className="text-xs text-slate-500">Últimos 100 disparos realizados.</p></div><button type="button" onClick={() => void loadBroadcasts()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
-              {historyPending && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Execute a migração administrativa no Supabase para ativar o histórico.</div>}
-              {broadcasts.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum disparo registrado.</div> : <div className="grid gap-2">{broadcasts.map((item, index) => <article key={item.id || `${item.created_at}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-sm font-black text-slate-950">{item.titulo}</h3><p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-600">{item.mensagem}</p></div><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase ${item.status === 'enviado' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{item.status}</span></div><div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-[10px] font-bold text-slate-500"><span>{formatDate(item.created_at)}</span><span>{item.usuarios} usuários</span><span>{item.pushes_enviados}/{item.total_inscricoes} pushes</span></div>{item.erro && <p className="mt-2 text-xs font-bold text-red-700">{item.erro}</p>}</article>)}</div>}
-            </section>
+          {view === 'disparos' && <div className="space-y-4">
+            <div className="grid gap-4 xl:grid-cols-2">
+              <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-700">Envio imediato</p><h2 className="mt-1 text-lg font-black text-slate-950">Novo disparo</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Escolha o aplicativo. A Gestão também recebe o aviso no sininho.</p>
+                <label htmlFor="disparo-app" className="mt-4 block text-[10px] font-black uppercase text-slate-500">Aplicativo</label><select id="disparo-app" value={broadcastApp} onChange={(event) => setBroadcastApp(event.target.value as AplicativoDisparo)} className="mt-1 h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700"><option value="gestao">App Gestão</option><option value="avantavendas">AvantaVendas</option></select>
+                <label htmlFor="disparo-titulo" className="mt-3 block text-[10px] font-black uppercase text-slate-500">Título</label><input id="disparo-titulo" value={broadcastTitle} onChange={(event) => setBroadcastTitle(event.target.value)} className="mt-1 h-11 w-full rounded-md border border-slate-300 px-3 text-sm font-bold outline-none focus:border-cyan-700" />
+                <label htmlFor="disparo-mensagem" className="mt-3 block text-[10px] font-black uppercase text-slate-500">Mensagem</label><textarea id="disparo-mensagem" value={broadcastMessage} onChange={(event) => setBroadcastMessage(event.target.value)} rows={4} className="mt-1 w-full resize-y rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-cyan-700" placeholder="Escreva uma mensagem objetiva..." />
+                <button type="button" onClick={() => void sendBroadcast()} disabled={sending} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="send" />{sending ? 'Enviando...' : `Disparar para ${broadcastApp === 'gestao' ? 'Gestão' : 'AvantaVendas'}`}</button>
+              </section>
+
+              <section className="rounded-lg border border-cyan-200 bg-cyan-50/40 p-4 shadow-sm">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-700">Automação</p><h2 className="mt-1 text-lg font-black text-slate-950">Programar disparo</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">O envio ocorre automaticamente, sem precisar abrir o painel.</p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="automacao-nome">Nome da automação<input id="automacao-nome" value={programacaoNome} onChange={(event) => setProgramacaoNome(event.target.value)} placeholder="Ex.: Retorno após 30 dias" className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700" /></label>
+                  <label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="automacao-app">Aplicativo<select id="automacao-app" value={programacaoApp} onChange={(event) => setProgramacaoApp(event.target.value as AplicativoDisparo)} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700"><option value="gestao">App Gestão</option><option value="avantavendas">AvantaVendas</option></select></label>
+                </div>
+                <label className="mt-3 grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="automacao-gatilho">Quando enviar<select id="automacao-gatilho" value={programacaoGatilho} onChange={(event) => setProgramacaoGatilho(event.target.value as GatilhoDisparo)} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700"><option value="data_programada">Em data e hora programadas</option><option value="apos_cadastro">Após o cadastro</option><option value="sem_acesso">Após um período sem acesso</option></select></label>
+                {programacaoGatilho === 'data_programada' ? <label className="mt-3 grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="automacao-data">Data e hora<input id="automacao-data" type="datetime-local" value={programacaoData} onChange={(event) => setProgramacaoData(event.target.value)} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700" /></label> : <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-3"><label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="automacao-intervalo">Tempo<input id="automacao-intervalo" type="number" min={1} max={999} value={programacaoIntervalo} onChange={(event) => setProgramacaoIntervalo(event.target.value)} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700" /></label><label className="grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="automacao-unidade">Unidade<select id="automacao-unidade" value={programacaoUnidade} onChange={(event) => setProgramacaoUnidade(event.target.value as typeof programacaoUnidade)} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700"><option value="horas">Horas</option><option value="dias">Dias</option><option value="semanas">Semanas</option></select></label></div>}
+                <label className="mt-3 grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="automacao-titulo">Título<input id="automacao-titulo" value={programacaoTitulo} onChange={(event) => setProgramacaoTitulo(event.target.value)} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold normal-case outline-none focus:border-cyan-700" /></label>
+                <label className="mt-3 grid gap-1 text-[10px] font-black uppercase text-slate-500" htmlFor="automacao-mensagem">Mensagem<textarea id="automacao-mensagem" rows={3} value={programacaoMensagem} onChange={(event) => setProgramacaoMensagem(event.target.value)} className="resize-y rounded-md border border-slate-300 bg-white p-3 text-sm font-normal normal-case outline-none focus:border-cyan-700" /></label>
+                <button type="button" onClick={() => void criarProgramacaoDisparo()} disabled={programacaoSalvando} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-slate-900 text-xs font-black uppercase text-white hover:bg-slate-800 disabled:opacity-60"><Icon name="send" />{programacaoSalvando ? 'Salvando...' : 'Criar e ativar automação'}</button>
+              </section>
+            </div>
+
+            {programacoesPendentes && <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Aplique a migração de disparos no Supabase para ativar as automações.</div>}
+            <div className="grid gap-4 xl:grid-cols-2">
+              <section className="min-w-0"><div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Automações</h2><p className="text-xs text-slate-500">Ative, pause ou exclua cada fluxo.</p></div><button type="button" onClick={() => void loadProgramacoesDisparo()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
+                {programacoesDisparo.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhuma automação criada.</div> : <div className="grid gap-2">{programacoesDisparo.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h3 className="text-sm font-black text-slate-950">{item.nome}</h3><span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${item.aplicativo === 'gestao' ? 'bg-cyan-50 text-cyan-800' : 'bg-violet-50 text-violet-700'}`}>{item.aplicativo === 'gestao' ? 'Gestão' : 'AvantaVendas'}</span></div><p className="mt-1 text-xs font-bold text-slate-600">{item.gatilho === 'data_programada' ? `Em ${formatDate(item.data_programada || undefined)}` : item.gatilho === 'apos_cadastro' ? `${item.intervalo_valor} ${item.intervalo_unidade} após o cadastro` : `${item.intervalo_valor} ${item.intervalo_unidade} sem acesso`}</p><p className="mt-2 text-xs text-slate-500"><b>{item.titulo}</b> · {item.mensagem}</p>{item.ultima_execucao_em && <p className="mt-2 text-[10px] font-bold text-slate-400">Última execução: {formatDate(item.ultima_execucao_em)}</p>}</div><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase ${item.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{item.ativo ? 'Ativa' : 'Pausada'}</span></div><div className="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-2"><button type="button" disabled={workingId === item.id} onClick={() => void alternarProgramacaoDisparo(item)} className="h-9 rounded-md border border-slate-300 px-3 text-[10px] font-black uppercase text-slate-700 disabled:opacity-50">{item.ativo ? 'Pausar' : 'Ativar'}</button><button type="button" disabled={workingId === item.id} onClick={() => excluirProgramacaoDisparo(item)} className="h-9 rounded-md border border-red-200 px-3 text-[10px] font-black uppercase text-red-700 disabled:opacity-50">Excluir</button></div></article>)}</div>}
+              </section>
+              <section className="min-w-0"><div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Histórico de envios</h2><p className="text-xs text-slate-500">Manuais e automáticos dos dois aplicativos.</p></div><button type="button" onClick={() => void loadBroadcasts()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
+                {historyPending && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Execute a migração administrativa no Supabase para ativar o histórico.</div>}
+                {broadcasts.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum disparo registrado.</div> : <div className="grid gap-2">{broadcasts.map((item, index) => <article key={item.id || `${item.created_at}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h3 className="text-sm font-black text-slate-950">{item.titulo}</h3><span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${item.aplicativo === 'avantavendas' ? 'bg-violet-50 text-violet-700' : 'bg-cyan-50 text-cyan-800'}`}>{item.aplicativo === 'avantavendas' ? 'AvantaVendas' : 'Gestão'}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase text-slate-500">{item.origem === 'automatico' ? 'Automático' : 'Manual'}</span></div><p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-600">{item.mensagem}</p></div><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase ${item.status === 'enviado' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{item.status}</span></div><div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-[10px] font-bold text-slate-500"><span>{formatDate(item.created_at)}</span><span>{item.usuarios} usuários</span><span>{item.pushes_enviados}/{item.total_inscricoes} pushes</span></div>{item.erro && <p className="mt-2 text-xs font-bold text-red-700">{item.erro}</p>}</article>)}</div>}
+              </section>
+            </div>
           </div>}
 
           {view === 'conteudo-vendas' && <div className="space-y-4">

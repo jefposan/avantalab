@@ -6,8 +6,10 @@ type AssinaturaPush = {
   endpoint: string;
   p256dh: string | null;
   auth: string | null;
-  canal?: 'web' | 'apns';
+  canal?: 'web' | 'apns' | 'fcm';
   apns_token?: string | null;
+  fcm_token?: string | null;
+  app_origem?: 'mobile' | 'ponto' | 'avantavendas';
 };
 
 type MensagemPush = {
@@ -18,9 +20,11 @@ type MensagemPush = {
   url?: string;
   perfil?: string;
   badge?: number;
+  appOrigem?: 'mobile' | 'ponto' | 'avantavendas';
 };
 
 type CacheBadges = Map<string, number | null>;
+let tokenFcmCache: { token: string; expiraEm: number } | null = null;
 
 function base64Url(valor: Uint8Array | string) {
   const bytes = typeof valor === 'string' ? new TextEncoder().encode(valor) : valor;
@@ -49,9 +53,79 @@ async function tokenApns() {
   return `${cabecalho}.${carga}.${base64Url(assinatura)}`;
 }
 
+async function tokenFcm() {
+  if (tokenFcmCache && tokenFcmCache.expiraEm > Date.now() + 60_000) return tokenFcmCache.token;
+  const segredo = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_JSON_AVANTAVENDAS');
+  if (!segredo) return null;
+  const conta = JSON.parse(segredo);
+  const email = String(conta.client_email || '');
+  const projeto = String(conta.project_id || '');
+  const chave = String(conta.private_key || '').replaceAll('\\n', '\n');
+  if (!email || !projeto || !chave) return null;
+  const pem = chave.replace(/-----(BEGIN|END) PRIVATE KEY-----|\s/g, '');
+  const dados = Uint8Array.from(atob(pem), (caractere) => caractere.charCodeAt(0));
+  const chavePrivada = await crypto.subtle.importKey(
+    'pkcs8', dados, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const agora = Math.floor(Date.now() / 1000);
+  const cabecalho = base64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const carga = base64Url(JSON.stringify({
+    iss: email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: agora,
+    exp: agora + 3600,
+  }));
+  const assinatura = new Uint8Array(await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5', chavePrivada, new TextEncoder().encode(`${cabecalho}.${carga}`),
+  ));
+  const jwt = `${cabecalho}.${carga}.${base64Url(assinatura)}`;
+  const resposta = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: jwt }),
+  });
+  if (!resposta.ok) return null;
+  const json = await resposta.json();
+  const token = String(json.access_token || '');
+  if (!token) return null;
+  tokenFcmCache = { token, expiraEm: Date.now() + Number(json.expires_in || 3600) * 1000 };
+  return token;
+}
+
+async function enviarFcm(tokenDispositivo: string, mensagem: MensagemPush) {
+  const segredo = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_JSON_AVANTAVENDAS');
+  if (!segredo) return { entregue: false, expirou: false };
+  const projeto = String(JSON.parse(segredo).project_id || '');
+  const acesso = await tokenFcm();
+  if (!projeto || !acesso) return { entregue: false, expirou: false };
+  const resposta = await fetch(`https://fcm.googleapis.com/v1/projects/${projeto}/messages:send`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${acesso}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: {
+        token: tokenDispositivo,
+        notification: {
+          title: mensagem.titulo || mensagem.title || 'AvantaVendas',
+          body: mensagem.corpo || mensagem.body || '',
+        },
+        data: { url: mensagem.url || '/avantavendas' },
+        android: { priority: 'high' },
+      },
+    }),
+  });
+  const detalhe = resposta.ok ? '' : await resposta.text().catch(() => '');
+  return {
+    entregue: resposta.ok,
+    expirou: resposta.status === 404 || /UNREGISTERED|registration-token-not-registered/i.test(detalhe),
+  };
+}
+
 async function enviarApns(token: string, mensagem: MensagemPush) {
   const jwt = await tokenApns();
-  const bundleId = Deno.env.get('APNS_BUNDLE_ID');
+  const bundleId = mensagem.appOrigem === 'avantavendas'
+    ? Deno.env.get('APNS_BUNDLE_ID_AVANTAVENDAS') || 'br.com.avantalab.vendas'
+    : Deno.env.get('APNS_BUNDLE_ID');
   if (!jwt || !bundleId) return { entregue: false, expirou: false };
   const ambiente = Deno.env.get('APNS_ENVIRONMENT') === 'sandbox' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com';
   const titulo = mensagem.titulo || mensagem.title || 'AvantaLab';
@@ -118,8 +192,14 @@ async function contarAvisosPendentes(db: any, userId: string, cache?: CacheBadge
 }
 
 export async function enviarPush(db: any, assinatura: AssinaturaPush, mensagem: MensagemPush, cacheBadges?: CacheBadges) {
+  if (assinatura.canal === 'fcm' && assinatura.fcm_token) {
+    const resultado = await enviarFcm(assinatura.fcm_token, mensagem);
+    if (resultado.expirou) await db.from('push_subscriptions').delete().eq('id', assinatura.id);
+    return resultado.entregue;
+  }
   if (assinatura.canal === 'apns' && assinatura.apns_token) {
-    const badge = assinatura.user_id
+    const origem = mensagem.appOrigem || assinatura.app_origem;
+    const badge = assinatura.user_id && origem !== 'avantavendas'
       ? await contarAvisosPendentes(db, assinatura.user_id, cacheBadges)
       : null;
     const resultado = await enviarApns(

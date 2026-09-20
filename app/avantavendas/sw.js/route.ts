@@ -100,6 +100,33 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
+
+self.addEventListener('push', (event) => {
+  let dados = {};
+  try { dados = event.data ? event.data.json() : {}; } catch { dados = {}; }
+  const titulo = dados.title || dados.titulo || 'AvantaVendas';
+  const corpo = dados.body || dados.corpo || dados.mensagem || '';
+  event.waitUntil(self.registration.showNotification(titulo, {
+    body: corpo,
+    icon: dados.icon || '/images/avanta-vendas-pwa-192.png',
+    badge: dados.badge || '/images/avanta-vendas-pwa-192.png',
+    data: { url: dados.url || '/avantavendas' },
+    tag: dados.tag || undefined,
+    renotify: Boolean(dados.tag),
+    vibrate: [80, 40, 80],
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const destino = event.notification.data?.url || '/avantavendas';
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientes) => {
+    for (const cliente of clientes) {
+      if (cliente.url.includes(destino) && 'focus' in cliente) return cliente.focus();
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(destino);
+  }));
+});
 `;
 }
 

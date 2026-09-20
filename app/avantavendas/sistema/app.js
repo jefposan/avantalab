@@ -29,6 +29,7 @@ const IDS_CARDS_CONFIGURACOES_VENDAS = new Set([
   'dados-usuario',
   'dados-seguranca',
   'aparencia',
+  'notificacoes',
   'funcoes',
   'meta-periodo',
   'integracao-gestao',
@@ -127,6 +128,7 @@ const estadoInicial = {
   ordemSalaBotoes: [],
   ordemCardsConfiguracoes: [],
   solicitacaoVozAtiva: false,
+  notificacoesAtivas: false,
   nomeEmpresaComprovantes: '',
   organizandoSalaBotoes: false,
 };
@@ -3948,6 +3950,10 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
         email: dados.user.email || state.usuario.email || '',
         telefone: dados.user.phone || dados.user.user_metadata?.telefone || dados.user.user_metadata?.phone || state.usuario.telefone || '',
       };
+      await Promise.allSettled([
+        window.VendasDb.registrarAtividadeAplicativo?.(),
+        Promise.resolve(window.VendasDb.estadoNotificacoes?.()).then((ativa) => { state.notificacoesAtivas = Boolean(ativa); }),
+      ]);
       await inicializarPreferenciasVendasServidor(dados);
       const houveAlteracaoDuranteCarga = revisaoDadosOperacionais !== revisaoAoIniciar;
       if (!houveAlteracaoDuranteCarga) {
@@ -4101,6 +4107,7 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
       email: user.email || state.usuario.email || '',
       telefone: user.phone || user.user_metadata?.telefone || user.user_metadata?.phone || state.usuario.telefone || '',
     };
+    void Promise.resolve(window.VendasDb.registrarAtividadeAplicativo?.()).catch(() => undefined);
   }
   try {
     await window.VendasDb.assinarAtualizacoesVinculo?.(agendarAtualizacaoVinculoAprovado);
@@ -5814,6 +5821,7 @@ const CONFIGURACOES_CARD_ID_POR_TITULO = new Map([
   ['Dados do usuário', 'dados-usuario'],
   ['Dados e segurança', 'dados-seguranca'],
   ['Aparência', 'aparencia'],
+  ['Notificações', 'notificacoes'],
   ['Funções', 'funcoes'],
   ['Meta do período', 'meta-periodo'],
   ['Integração com Gestão', 'integracao-gestao'],
@@ -6182,6 +6190,7 @@ function renderConfiguracoes() {
       <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
       ${podeGerirDadosConta ? `<article class="settings-card settings-data-security-card"><h3>${svgIconEstavel('database')} Dados e segurança</h3><p>Backups e pontos de restauração pertencem somente ao perfil <b>${escapeHtml(contaAtiva?.nome || 'ativo')}</b>.</p><div class="settings-data-security-actions"><button class="primary" type="button" onclick="baixarBackupContaVendas()">${svgIconEstavel('download')} Fazer backup</button><button class="secondary" type="button" onclick="selecionarBackupContaVendas()" ${podeRestaurarDadosConta ? '' : 'disabled'}>${svgIconEstavel('rotate-ccw')} Restaurar backup</button><button class="secondary" type="button" onclick="abrirPontosRestauracaoVendas()">${svgIconEstavel('clock')} Pontos de restauração</button></div>${podeRestaurarDadosConta ? '<small>Uma cópia de segurança é criada automaticamente antes de cada restauração.</small>' : '<small>Administradores podem criar backups e pontos. A restauração é exclusiva do proprietário.</small>'}</article>` : ''}
     <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
+    <article class="settings-card settings-functions-card"><h3>${svgIcon('inbox')} Notificações</h3><label class="switch-line"><span><b>Receber avisos neste aparelho</b><small>Novidades e lembretes do AvantaVendas.</small></span><input type="checkbox" ${state.notificacoesAtivas ? 'checked' : ''} onchange="alternarNotificacoesVendas(this.checked,this)"><i></i></label><p>O navegador ou o sistema do aparelho solicitará sua autorização.</p></article>
     <article class="settings-card settings-functions-card"><h3>${svgIconEstavel('mic')} Funções</h3><label class="switch-line"><span><b>Solicitação por Voz</b><small>Mostra o botão de comandos por voz na Sala de Botões.</small></span><input type="checkbox" ${state.solicitacaoVozAtiva ? 'checked' : ''} onchange="alternarSolicitacaoVozVendas(this.checked,this)"><i></i></label><p>Recurso experimental. Toda inclusão exige sua confirmação e utiliza somente a conta de vendas ativa.</p></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>${metaAtingida ? '<b>Meta atingida, parabéns!</b>' : `Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.`}</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
@@ -6201,6 +6210,23 @@ function salvarMeta() {
   state.metaMensal = Math.max(0, lerCampoMoeda('metaConfig'));
   render();
   toast('Meta mensal salva.');
+}
+
+async function alternarNotificacoesVendas(ativar, campo) {
+  if (campo) campo.disabled = true;
+  try {
+    state.notificacoesAtivas = ativar
+      ? await window.VendasDb.ativarNotificacoes()
+      : await window.VendasDb.desativarNotificacoes();
+    render();
+    toast(state.notificacoesAtivas ? 'Notificações ativadas neste aparelho.' : 'Notificações desativadas neste aparelho.');
+  } catch (error) {
+    state.notificacoesAtivas = !ativar;
+    if (campo) campo.checked = state.notificacoesAtivas;
+    toast(traduzErro(error));
+  } finally {
+    if (campo) campo.disabled = false;
+  }
 }
 
 function nomeEmpresaParaComprovantes() {
@@ -10421,6 +10447,9 @@ window.addEventListener('focus', () => {
   if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
 });
 document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state.autenticado) {
+    void Promise.resolve(window.VendasDb.registrarAtividadeAplicativo?.()).catch(() => undefined);
+  }
   if (document.visibilityState === 'visible' && solicitacaoVendasAguardandoAprovacao()) {
     agendarAtualizacaoVinculoAprovado();
   }

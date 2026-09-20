@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.36.0.18: /admin envia ou programa avisos separados para
+// Gestão e AvantaVendas; o Vendas ativa notificações em Configurações.
 // Revisado na versão 1.36.0.17: na Gestão Web, o seletor de perfil usa a
 // altura útil da tela com respiro e rola somente a lista que exceder esse espaço.
 // Revisado na versão 1.36.0.16: comprovantes de pagamento usam verde-claro e

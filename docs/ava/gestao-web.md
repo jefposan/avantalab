@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.17 -->
+<!-- ava-version: 1.36.0.18 -->
+
+> Revisão 1.36.0.18: em **/admin > Disparos**, escolha **App Gestão** ou
+> **AvantaVendas** para um envio imediato. Em **Programar disparo**, informe o
+> aplicativo, o gatilho (**data e hora**, **após o cadastro** ou **sem acesso**),
+> o intervalo quando aplicável, o título e a mensagem. As automações podem ser
+> pausadas, reativadas ou excluídas; os envios aparecem no histórico.
 
 > Revisão 1.36.0.17: ao escolher um perfil na Gestão Web, o card aproveita a
 > altura útil da tela com respiro superior e inferior. A rolagem aparece apenas

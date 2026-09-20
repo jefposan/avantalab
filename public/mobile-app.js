@@ -17368,6 +17368,7 @@
     // Ao voltar ao app (apos receber um push), reconfere as nao lidas
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) return;
+      if (state.autenticado) db.rpc('registrar_atividade_aplicativo', { p_aplicativo: 'gestao' }).catch(function () {});
       carregarNotificacoesNaoLidas();
       // Congela a tela ao trocar de janela e voltar: só recarrega os dados se
       // o DIA virou desde a última carga (ex.: despesas previstas do novo dia
@@ -17505,6 +17506,7 @@
         }
         state.usuario = sessao.data.session.user;
         state.autenticado = true;
+        db.rpc('registrar_atividade_aplicativo', { p_aplicativo: 'gestao' }).catch(function () {});
         state.pronto = false;
         state.carregando = true;
         render();

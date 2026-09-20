@@ -1139,6 +1139,95 @@
     return data;
   }
 
+  const VAPID_PUBLIC_KEY = 'BL_wlTejki6TPH1TJSHw8q6VeeSoaoH5Ciiirjs0nSg0M4riD5jl-RnkUVArlGMuI5h-eshP98kQKFPsjjM7f4c';
+
+  function chaveVapidBytes(valor) {
+    const padding = '='.repeat((4 - (valor.length % 4)) % 4);
+    const base64 = (valor + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const bruto = atob(base64);
+    return Uint8Array.from(bruto, (caractere) => caractere.charCodeAt(0));
+  }
+
+  async function registrarAtividadeAplicativo() {
+    const { error } = await requireClient().rpc('registrar_atividade_aplicativo', { p_aplicativo: 'avantavendas' });
+    if (error && !/function|schema cache|does not exist/i.test(String(error.message || ''))) throw error;
+  }
+
+  async function ativarNotificacoes() {
+    const user = await currentUser();
+    if (!user) throw new Error('Faça login para ativar as notificações.');
+    if (typeof window.__avantavendasAtivarPushNativo === 'function') {
+      const registroNativo = await window.__avantavendasAtivarPushNativo();
+      const token = registroNativo.token;
+      const canal = registroNativo.canal === 'fcm' ? 'fcm' : 'apns';
+      const { error } = await client.from('push_subscriptions').upsert({
+        user_id: user.id,
+        empresa_id: null,
+        endpoint: `${canal}:${token}`,
+        p256dh: '',
+        auth: '',
+        apns_token: canal === 'apns' ? token : null,
+        fcm_token: canal === 'fcm' ? token : null,
+        canal,
+        user_agent: navigator.userAgent,
+        app_origem: 'avantavendas',
+        atualizado_em: new Date().toISOString(),
+      }, { onConflict: 'endpoint' });
+      if (error) throw error;
+      return true;
+    }
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      throw new Error('Este aparelho ou navegador não suporta notificações.');
+    }
+    const permissao = await Notification.requestPermission();
+    if (permissao !== 'granted') throw new Error('Permissão de notificações não concedida.');
+    const registro = await navigator.serviceWorker.ready;
+    let inscricao = await registro.pushManager.getSubscription();
+    if (!inscricao) {
+      inscricao = await registro.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: chaveVapidBytes(VAPID_PUBLIC_KEY),
+      });
+    }
+    const dados = inscricao.toJSON();
+    const { error } = await client.from('push_subscriptions').upsert({
+      user_id: user.id,
+      empresa_id: null,
+      endpoint: dados.endpoint,
+      p256dh: dados.keys?.p256dh || '',
+      auth: dados.keys?.auth || '',
+      user_agent: navigator.userAgent,
+      app_origem: 'avantavendas',
+      atualizado_em: new Date().toISOString(),
+    }, { onConflict: 'endpoint' });
+    if (error) throw error;
+    return true;
+  }
+
+  async function desativarNotificacoes() {
+    const user = await currentUser();
+    if (!user) return false;
+    if (typeof window.__avantavendasDesativarPushNativo === 'function') {
+      const registroNativo = await window.__avantavendasDesativarPushNativo();
+      if (registroNativo) await client.from('push_subscriptions').delete().eq('user_id', user.id).eq('endpoint', `${registroNativo.canal}:${registroNativo.token}`);
+      return false;
+    }
+    const registro = await navigator.serviceWorker.ready;
+    const inscricao = await registro.pushManager.getSubscription();
+    if (inscricao) {
+      await client.from('push_subscriptions').delete().eq('user_id', user.id).eq('endpoint', inscricao.endpoint);
+      await inscricao.unsubscribe().catch(() => undefined);
+    }
+    return false;
+  }
+
+  async function estadoNotificacoes() {
+    if (typeof window.__avantavendasEstadoPushNativo === 'function') return window.__avantavendasEstadoPushNativo();
+    if (!('Notification' in window) || Notification.permission !== 'granted' || !('serviceWorker' in navigator)) return false;
+    const registro = await navigator.serviceWorker.ready;
+    return Boolean(await registro.pushManager.getSubscription());
+  }
+
   async function saveFeedback({ empresaId, nomeEmpresa, mensagem }) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
@@ -1166,5 +1255,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, refreshSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, assinarAtualizacoesCatalogo, cancelarAtualizacoesCatalogo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveAgendaItem, deleteAgendaItem, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
+  window.VendasDb = { client, currentUser, hasSession, refreshSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, assinarAtualizacoesCatalogo, cancelarAtualizacoesCatalogo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveAgendaItem, deleteAgendaItem, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, registrarAtividadeAplicativo, ativarNotificacoes, desativarNotificacoes, estadoNotificacoes, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();

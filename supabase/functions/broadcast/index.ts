@@ -1,5 +1,5 @@
 // Edge Function: broadcast
-// Dispara um aviso para TODOS os usuarios do app:
+// Dispara um aviso para TODOS os usuarios do aplicativo selecionado:
 //  - cria uma notificacao (sino) para cada usuario
 //  - envia push para todas as inscricoes
 // Protegida pela senha de admin (mesma do /admin).
@@ -34,24 +34,51 @@ Deno.serve(async (req) => {
 
     const titulo = String(body.titulo || "").trim();
     const corpo = String(body.corpo || "").trim();
-    if (!titulo) return json({ ok: false, erro: "Informe a mensagem." }, 400);
+    const aplicativo = body.aplicativo === "avantavendas" ? "avantavendas" : "gestao";
+    if (!titulo || !corpo) return json({ ok: false, erro: "Informe titulo e mensagem." }, 400);
 
     const db = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-    // Usuarios do app (distinct user_id dos vinculos de empresa)
-    const { data: vinc } = await db.from("usuarios_empresa").select("user_id");
-    const userIds = Array.from(
-      new Set((vinc || []).map((v: any) => v.user_id).filter(Boolean)),
-    );
+    let userIds: string[] = [];
+    if (aplicativo === "avantavendas") {
+      const { data: membros, error: erroMembros } = await db
+        .from("vendas_mobile_contas_usuarios")
+        .select("conta_id, user_id")
+        .eq("status", "ativo");
+      if (erroMembros) throw erroMembros;
+      const contasIds = Array.from(new Set((membros || []).map((item: any) => item.conta_id).filter(Boolean)));
+      const { data: contas, error: erroContas } = contasIds.length
+        ? await db.from("vendas_mobile_contas").select("id").in("id", contasIds).is("arquivada_em", null)
+        : { data: [], error: null };
+      if (erroContas) throw erroContas;
+      const contasAtivas = new Set((contas || []).map((item: any) => item.id));
+      userIds = Array.from(new Set((membros || []).filter((item: any) => contasAtivas.has(item.conta_id)).map((item: any) => item.user_id).filter(Boolean)));
+    } else {
+      const { data: vinculos, error: erroVinculos } = await db
+        .from("usuarios_empresa")
+        .select("user_id")
+        .eq("status", "ativo")
+        .neq("perfil", "funcionario_ponto");
+      if (erroVinculos) throw erroVinculos;
+      userIds = Array.from(new Set((vinculos || []).map((item: any) => item.user_id).filter(Boolean)));
+    }
+    const usuariosSolicitados = Array.isArray(body.usuariosIds)
+      ? new Set(body.usuariosIds.map((item: unknown) => String(item)))
+      : null;
+    const destinatarios = usuariosSolicitados
+      ? userIds.filter((userId) => usuariosSolicitados.has(String(userId)))
+      : userIds;
+    const destino = aplicativo === "avantavendas" ? "/avantavendas" : "/mobile";
+    const origemPush = aplicativo === "avantavendas" ? "avantavendas" : "mobile";
 
     // Cria a notificacao (sino) para cada usuario
-    if (userIds.length) {
-      const rows = userIds.map((uid) => ({
+    if (aplicativo === "gestao" && destinatarios.length) {
+      const rows = destinatarios.map((uid) => ({
         empresa_id: null,
         user_id: uid,
         titulo,
         corpo,
-        url: "/mobile",
+        url: destino,
         tipo: "novidade",
       }));
       await db.from("notificacoes").insert(rows);
@@ -60,19 +87,21 @@ Deno.serve(async (req) => {
     // Push para todas as inscricoes
     const { data: subs } = await db
       .from("push_subscriptions")
-      .select("id, user_id, endpoint, p256dh, auth, canal, apns_token")
-      .eq("app_origem", "mobile");
+      .select("id, user_id, endpoint, p256dh, auth, canal, apns_token, fcm_token, app_origem")
+      .in("user_id", destinatarios)
+      .eq("app_origem", origemPush);
 
     let enviados = 0;
     const cacheBadges = new Map<string, number | null>();
 
     for (const s of subs || []) {
-      if (await enviarPush(db, s, { titulo, corpo, url: "/mobile" }, cacheBadges)) enviados++;
+      if (await enviarPush(db, s, { titulo, corpo, url: destino, appOrigem: origemPush }, cacheBadges)) enviados++;
     }
 
     return json({
       ok: true,
-      usuarios: userIds.length,
+      aplicativo,
+      usuarios: destinatarios.length,
       enviados,
       total: (subs || []).length,
     });

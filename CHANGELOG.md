@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.36.0.18 - 2026-09-19
+- **Disparos por aplicativo**: o `/admin > Disparos` permite escolher App
+  Gestão ou AvantaVendas em cada envio manual, com identificação do destino no
+  histórico.
+- **Automações de relacionamento**: administradores podem programar uma data e
+  hora, um intervalo após o cadastro ou um período sem acesso, além de pausar,
+  reativar e excluir cada automação.
+- **Execução independente do painel**: o Supabase processa as regras a cada 15
+  minutos, registra entregas por usuário para impedir duplicidade e mantém os
+  disparos recorrentes elegíveis após um novo ciclo de uso e inatividade.
+- **AvantaVendas preparado para push**: PWA e app nativo ganham inscrição
+  própria, preferência em Configurações e abertura direta do aplicativo ao
+  tocar no aviso. Gestão e Vendas registram seus últimos acessos separadamente.
+
 ## 1.36.0.17 - 2026-09-19
 - **Seletor de perfil adaptável**: na Gestão Web, o card usa a altura útil da
   tela com respiro mínimo superior e inferior. A lista de perfis só ganha

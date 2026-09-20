@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import AvaMobileBridge from '../mobile/AvaMobileBridge';
 import AvantaVendasBootstrap from './AvantaVendasBootstrap';
+import NativePushNotificationsBridge from './NativePushNotificationsBridge';
 import { AVANTAVENDAS_VERSION } from './version';
 
 export const metadata: Metadata = {
@@ -104,6 +105,7 @@ export default function AvantaVendasPage() {
         supabaseAnonKey={supabaseAnonKey}
         supabaseUrl={supabaseUrl}
       />
+      <NativePushNotificationsBridge />
       <AvaMobileBridge />
     </main>
   );

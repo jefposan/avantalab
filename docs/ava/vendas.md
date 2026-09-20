@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.36.0.17 -->
+<!-- ava-version: 1.36.0.18 -->
+
+> Revisão 1.36.0.18: em **Configurações > Notificações**, o usuário pode ativar
+> ou desativar avisos do AvantaVendas neste aparelho. Disparos administrativos
+> e lembretes automáticos abrem o AvantaVendas ao serem tocados. O aplicativo
+> registra seu próprio último acesso, separado da Gestão.
 
 > Revisão 1.36.0.17: o ajuste de altura do seletor de perfis pertence à Gestão
 > Web; sem mudança operacional no AvantaVendas.

@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
     const { data, error } = await db
       .from('admin_disparos')
-      .select('id, titulo, mensagem, usuarios, pushes_enviados, total_inscricoes, status, erro, created_at')
+      .select('id, titulo, mensagem, usuarios, pushes_enviados, total_inscricoes, status, erro, aplicativo, origem, programacao_id, created_at')
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -35,9 +35,10 @@ export async function POST(request: Request) {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return naoAutorizado();
 
-    const { titulo: tituloRecebido, mensagem: mensagemRecebida } = await request.json();
+    const { titulo: tituloRecebido, mensagem: mensagemRecebida, aplicativo: aplicativoRecebido } = await request.json();
     const titulo = String(tituloRecebido || '').trim() || 'Novidade no AvantaLab';
     const mensagem = String(mensagemRecebida || '').trim();
+    const aplicativo = aplicativoRecebido === 'avantavendas' ? 'avantavendas' : 'gestao';
     if (!mensagem) return NextResponse.json({ erro: true, mensagem: 'Digite a mensagem.' }, { status: 400 });
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
     const response = await fetch(`${supabaseUrl}/functions/v1/broadcast`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: anon, Authorization: `Bearer ${anon}` },
-      body: JSON.stringify({ token: internalToken, titulo, corpo: mensagem }),
+      body: JSON.stringify({ token: internalToken, titulo, corpo: mensagem, aplicativo }),
     });
     const result = await response.json().catch(() => ({}));
     const success = response.ok && result.ok;
@@ -63,6 +64,8 @@ export async function POST(request: Request) {
       total_inscricoes: Number(result.total || 0),
       status: success ? 'enviado' : 'erro',
       erro: success ? null : String(result.erro || 'Falha no disparo.'),
+      aplicativo,
+      origem: 'manual',
     };
     const historyResult = await db.from('admin_disparos').insert(history).select().single();
 

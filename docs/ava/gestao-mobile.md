@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.17 -->
+<!-- ava-version: 1.36.0.18 -->
+
+> Revisão 1.36.0.18: a Gestão Mobile registra o último acesso próprio para os
+> disparos automáticos do administrador. O recebimento continua dependendo da
+> opção **Receber notificações neste aparelho** já existente no menu.
 
 > Revisão 1.36.0.17: o ajuste de altura do seletor de perfis pertence à Gestão
 > Web; sem impacto operacional na Gestão Mobile.
