@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.36.0.22 -->
+<!-- ava-version: 1.36.0.23 -->
+
+> Revisão 1.36.0.23: a recuperação de versão pertence à Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.36.0.22: a recuperação da sessão ao abrir por push pertence à
 > Gestão Mobile; sem impacto operacional na Gestão Web.

@@ -1302,7 +1302,7 @@
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">' + escapeHtml(titulo) + '</h1>' +
           '<p class="mt-2 text-sm font-semibold leading-relaxed text-slate-600">' + escapeHtml(texto) + '</p>' +
-          '<button type="button" onclick="window.location.reload()" class="mt-4 h-11 w-full rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">Tentar novamente</button>' +
+          '<button type="button" onclick="window.__avantalabForcarAtualizacaoMobile ? window.__avantalabForcarAtualizacaoMobile() : window.location.replace(\'/mobile/recuperar?agora=\' + Date.now())" class="mt-4 h-11 w-full rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">Tentar novamente</button>' +
         '</div>'
       )
     );

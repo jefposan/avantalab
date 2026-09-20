@@ -131,6 +131,12 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
       window.__avantalabConfirmarAcessoMobile = function () {
         try { sessionStorage.removeItem(chaveRecuperacao); } catch (error) {}
       };
+      window.__avantalabForcarAtualizacaoMobile = function () {
+        try {
+          sessionStorage.removeItem(chaveRecuperacao);
+        } catch (error) {}
+        window.location.replace('/mobile/recuperar?agora=' + Date.now());
+      };
       window.__avantalabRecuperarAcessoMobile = function () {
         var agora = Date.now();
         var ultimaRecuperacao = 0;
@@ -166,7 +172,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
         if (telaPreparacaoVisivel()) registrarFalhaGlobal('promessa_rejeitada', evento.reason);
       });
       window.__avantalabVerificarVersaoMobile = function () {
-        if (!telaPreparacaoVisivel() || typeof window.fetch !== 'function') return;
+        if (typeof window.fetch !== 'function') return;
         fetch('/mobile/versao?agora=' + Date.now(), { cache: 'no-store' })
           .then(function (resposta) { return resposta.ok ? resposta.json() : null; })
           .then(function (dados) {
@@ -176,12 +182,14 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
             try { ultima = Number(sessionStorage.getItem(chaveRecargaVersao) || 0); } catch (error) {}
             if (ultima && Date.now() - ultima < 120000) return;
             try { sessionStorage.setItem(chaveRecargaVersao, String(Date.now())); } catch (error) {}
-            window.location.reload();
+            window.__avantalabForcarAtualizacaoMobile();
           })
           .catch(function () {});
       };
       function retomarPreparacaoAcesso() {
-        if (document.hidden || !telaPreparacaoVisivel()) return;
+        if (document.hidden) return;
+        window.__avantalabVerificarVersaoMobile();
+        if (!telaPreparacaoVisivel()) return;
         if (typeof window.__avantalabConcluirAcessoMobile === 'function') {
           try {
             if (window.__avantalabConcluirAcessoMobile()) return;
@@ -189,11 +197,14 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
             registrarFalhaGlobal('retomada_acesso', error);
           }
         }
-        window.__avantalabVerificarVersaoMobile();
       }
       window.addEventListener('pageshow', retomarPreparacaoAcesso);
       window.addEventListener('online', retomarPreparacaoAcesso);
       document.addEventListener('visibilitychange', retomarPreparacaoAcesso);
+      window.setTimeout(function () { window.__avantalabVerificarVersaoMobile(); }, 1200);
+      window.setInterval(function () {
+        if (!document.hidden) window.__avantalabVerificarVersaoMobile();
+      }, 60000);
       window.setInterval(function () {
         if (document.hidden) return;
         var root = document.getElementById('mobile-root');

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.36.0.23 - 2026-09-20
+- **Gestão Mobile se recupera de uma tela antiga**: ao voltar ao aplicativo,
+  a versão publicada passa a ser conferida mesmo quando o acesso já está em
+  uma tela de erro, evitando que o WebView reabra indefinidamente o mesmo
+  estado congelado.
+- **Nova tentativa com recarga limpa**: o botão **Tentar novamente** usa uma
+  rota dinâmica sem cache para obter o HTML e os scripts atuais, preservando a
+  sessão local e levando ao painel ou ao login conforme o estado real.
+- **Prevenção contínua**: a verificação também ocorre na retomada, no retorno
+  da conexão e periodicamente enquanto o app está visível, protegendo outros
+  usuários que mantenham uma versão anterior aberta em memória.
+
 ## 1.36.0.22 - 2026-09-20
 - **Abertura nativa destravada**: a Gestão Mobile deixa de disputar o bloqueio
   de autenticação entre os dois clientes usados pela tela, evitando que uma

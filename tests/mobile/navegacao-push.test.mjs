@@ -15,6 +15,10 @@ test('toque no push da Gestão não recarrega o WebView quando ele já está em 
     resolverDestinoPushMobile('https://app.avantalab.com.br/mobile', '/mobile?assinatura=1'),
     { href: '/mobile?assinatura=1', mesmoDocumento: true },
   );
+  assert.deepEqual(
+    resolverDestinoPushMobile('https://app.avantalab.com.br/mobile', '/mobile/recuperar'),
+    { href: '/mobile/recuperar', mesmoDocumento: false },
+  );
 });
 
 test('destinos externos ou fora da Gestão Mobile são rejeitados', () => {
@@ -43,9 +47,11 @@ test('a ponte preserva a sessão ao abrir o push e entrega o destino para o app'
 });
 
 test('a abertura nativa não fica presa no lock de sessão nem em uma tela de erro de autenticação', async () => {
-  const [mobile, clienteSupabase] = await Promise.all([
+  const [mobile, clienteSupabase, paginaMobile, rotaRecuperacao] = await Promise.all([
     readFile(new URL('public/mobile-app.js', raiz), 'utf8'),
     readFile(new URL('app/lib/supabase.ts', raiz), 'utf8'),
+    readFile(new URL('app/mobile/page.tsx', raiz), 'utf8'),
+    readFile(new URL('app/mobile/recuperar/route.ts', raiz), 'utf8'),
   ]);
 
   assert.match(clienteSupabase, /window\.location\.pathname\.startsWith\('\/mobile'\)/);
@@ -58,4 +64,11 @@ test('a abertura nativa não fica presa no lock de sessão nem em uma tela de er
     mobile,
     /exibirFalhaDeAcessoMobile\('Não foi possível recuperar a sessão\. Tente novamente para reconectar\.'\)/,
   );
+  assert.match(mobile, /window\.__avantalabForcarAtualizacaoMobile/);
+  assert.match(mobile, /\/mobile\/recuperar\?agora=/);
+  assert.match(paginaMobile, /if \(typeof window\.fetch !== 'function'\) return/);
+  assert.doesNotMatch(paginaMobile, /if \(!telaPreparacaoVisivel\(\) \|\| typeof window\.fetch !== 'function'\) return/);
+  assert.match(paginaMobile, /window\.setInterval\(function \(\) \{[\s\S]*?window\.__avantalabVerificarVersaoMobile\(\);[\s\S]*?\}, 60000\)/);
+  assert.match(rotaRecuperacao, /NextResponse\.redirect/);
+  assert.match(rotaRecuperacao, /Cache-Control/);
 });

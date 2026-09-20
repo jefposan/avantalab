@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.36.0.22 -->
+<!-- ava-version: 1.36.0.23 -->
+
+> Revisão 1.36.0.23: se a Gestão Mobile reabrir uma tela antiga de erro, ela
+> verifica a versão publicada mesmo fora da tela de preparação. **Tentar
+> novamente** faz uma recarga limpa, preserva a sessão existente e abre o
+> painel quando o acesso for válido ou o login quando for necessário.
 
 > Revisão 1.36.0.22: tocar no push ou abrir o aplicativo pelo ícone apenas
 > inicia/retoma a Gestão Mobile. Com sessão válida, o painel abre; sem sessão

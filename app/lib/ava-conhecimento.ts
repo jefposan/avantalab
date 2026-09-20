@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.36.0.23: uma tela antiga de erro da Gestão Mobile
+// verifica a versão ao retomar; Tentar novamente recarrega sem cache e mantém
+// a sessão válida, abrindo o painel ou o login conforme o estado real.
 // Revisado na versão 1.36.0.22: abrir a Gestão Mobile pelo ícone ou push leva
 // ao painel com sessão válida ou ao login sem sessão, sem travar na recuperação.
 // Revisado na versão 1.36.0.21: tocar em um push da Gestão Mobile retoma o app
