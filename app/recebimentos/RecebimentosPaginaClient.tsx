@@ -8,6 +8,7 @@ import RodapeAvanta from '@/app/components/RodapeAvanta';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
+import { Icon } from '@/app/projetos/components/Icon';
 import { criarRepoSupabase } from './data/repo';
 import AjustesOperacoesCampo from './components/AjustesOperacoesCampo';
 import RecebimentosClient from './RecebimentosClient';
@@ -96,7 +97,7 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
       style={{ '--cp': acesso.empresa.corPrimaria } as CSSProperties}
     >
       <header className={styles.cabecalhoModulo}>
-        <button type="button" onClick={retornarInicio} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab">‹ Início</button>
+        <button type="button" onClick={retornarInicio} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>
         <div className={styles.identidadeModulo}>
           {acesso.empresa.logoUrl
             ? <img src={acesso.empresa.logoUrl} alt={acesso.empresa.nome} className={styles.logoEmpresaModulo} />

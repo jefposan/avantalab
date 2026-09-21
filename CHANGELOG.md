@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.38.0.24 - 2026-09-21
+- **Dimensão real do Início**: corrigida a especificidade que fazia alguns
+  módulos renderizarem o botão maior. Custos, Projetos, Vendas e Serviços e
+  Operações de Campo agora usam 36 px no desktop e 38 px no mobile.
+
+## 1.38.0.23 - 2026-09-20
+- **Vendas e Serviços alinhado**: o módulo removeu os textos que ainda usavam
+  a cor primária. A escala e o tratamento do botão **Início** são agora os
+  mesmos dos demais módulos, inclusive na versão mobile.
+
+## 1.38.0.22 - 2026-09-20
+- **Botão Início padronizado**: os quatro módulos usam as mesmas medidas,
+  contorno, peso tipográfico, cores neutras e comportamento responsivo para
+  retornar à Gestão.
+
+## 1.38.0.21 - 2026-09-20
+- **Marca consistente nos módulos**: Custos e Precificação, Projetos, Vendas e
+  Serviços e Operações de Campo exibem a logo cadastrada também no cabeçalho
+  mobile. Quando não há imagem, mostram somente o nome da empresa. A ponte de
+  Vendas agora aceita com segurança as imagens de logo salvas pelo cadastro.
+
+## 1.38.0.20 - 2026-09-20
+- **Tipografia neutra nos módulos**: Custos e Precificação, Projetos, Vendas e
+  Serviços e Operações de Campo agora usam preto e tons de cinza para títulos,
+  textos, rótulos, métricas e itens de leitura. A cor de identidade fica
+  reservada para ações, preenchimentos, foco e demais estados visuais.
+
 ## 1.38.0.19 - 2026-09-20
 - **Retorno dos módulos**: o botão **Início** adota o modelo discreto aprovado:
   fundo de superfície, contorno sutil e seta, sem preenchimento sólido ou

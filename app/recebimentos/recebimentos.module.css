@@ -5,6 +5,8 @@
   position: relative;
   --cp: #003E73;
   --cp-text: #fff;
+  --texto-primario: #0f172a;
+  --texto-secundario: #475569;
   min-height: 100dvh;
   background-color: #eef6fb;
   background-image: image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-sem-logo.png') type('image/png'));
@@ -258,7 +260,7 @@
   text-transform: uppercase;
 }
 .loginMarca {
-  color: var(--cp);
+  color: var(--texto-primario);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.14em;
@@ -357,7 +359,7 @@
 .perfilBtn:hover { color: #fff; }
 .perfilBtnAtivo {
   background: #fff;
-  color: var(--cp);
+  color: var(--texto-primario);
 }
 
 /* Abas administrativas */
@@ -397,7 +399,7 @@
   cursor: pointer;
   transition: color .22s ease, background .22s ease, box-shadow .22s ease, transform .22s ease;
 }
-.tab:hover { color: var(--cp); background: color-mix(in srgb, var(--cp) 7%, transparent); }
+.tab:hover { color: var(--texto-primario); background: color-mix(in srgb, var(--cp) 7%, transparent); }
 .tabAtiva {
   z-index: 2;
   color: #fff;
@@ -411,10 +413,10 @@
 .tabsGrupoGeral .tabsGrupoBar { background: color-mix(in srgb, #475569 8%, #f8fafc); box-shadow: inset 0 0 0 1px color-mix(in srgb, #475569 16%, transparent); }
 .tabsGrupoRecebimentos .tabsGrupoBar { background: color-mix(in srgb, var(--cp) 10%, #faf5ff); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cp) 24%, transparent); }
 .tabsGrupoServicos .tabsGrupoBar { background: color-mix(in srgb, #0d9488 12%, #ecfdf5); box-shadow: inset 0 0 0 1px color-mix(in srgb, #0d9488 22%, transparent); }
-.tabsGrupoTitulo { padding: 0 6px; color: var(--cp); font-size: 10px; font-weight: 900; letter-spacing: .08em; line-height: 14px; text-transform: uppercase; }
+.tabsGrupoTitulo { padding: 0 6px; color: var(--texto-primario); font-size: 10px; font-weight: 900; letter-spacing: .08em; line-height: 14px; text-transform: uppercase; }
 .tabsGrupoServicos .tabsGrupoTitulo { color: #0f766e; }
 .tabGeral { color: #475569; }
-.tabRecebimentos { color: var(--cp); }
+.tabRecebimentos { color: var(--texto-primario); }
 .tabServico { color: #0f766e; }
 .tabsGrupoGeral .tabAtiva { color: #fff; background: #475569; }
 .tabsGrupoRecebimentos .tabAtiva { color: #fff; background: var(--cp); }
@@ -449,7 +451,7 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--cp);
+  color: var(--texto-primario);
   padding: 0 9px;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.1s ease;
@@ -470,7 +472,7 @@
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: var(--cp);
+  color: var(--texto-primario);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -1050,7 +1052,7 @@
 .btn:hover { filter: brightness(1.06); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
 .btnPrimary { background: var(--cp); color: var(--cp-text, #fff); }
-.btnGhost { background: #fff; color: var(--cp); border: 1px solid #cbd5e1; }
+.btnGhost { background: #fff; color: var(--texto-primario); border: 1px solid #cbd5e1; }
 .btnDanger { background: #fee2e2; color: #b91c1c; }
 .btnExcluir { border: 1px solid #dc2626; }
 .btnSuccess { background: #16a34a; color: #fff; }
@@ -1205,7 +1207,7 @@
   background: transparent;
   cursor: pointer;
 }
-.passwordToggle:hover { color: var(--cp); }
+.passwordToggle:hover { color: var(--texto-primario); }
 .passwordToggle:focus-visible {
   outline: 2px solid var(--cp);
   outline-offset: -4px;
@@ -1266,7 +1268,7 @@
 .conferenciaTodosAtivo {
   border-color: color-mix(in srgb, var(--cp) 35%, #d8e2ec);
   background: color-mix(in srgb, var(--cp) 12%, #fff);
-  color: var(--cp);
+  color: var(--texto-primario);
 }
 @container conferencia-recebimentos (max-width: 620px) {
   .conferenciaTopo { align-items: flex-start; flex-wrap: wrap; }
@@ -1297,7 +1299,7 @@
   padding: 3px 8px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--cp) 12%, #fff);
-  color: var(--cp);
+  color: var(--texto-primario);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -1410,14 +1412,14 @@
 .atrasoItemValor {
   font-size: 13px;
   font-weight: 800;
-  color: var(--cp);
+  color: var(--texto-primario);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .atrasoItemAcao {
   font-size: 11px;
   font-weight: 800;
-  color: var(--cp);
+  color: var(--texto-primario);
   white-space: nowrap;
 }
 
@@ -1479,7 +1481,7 @@
   padding: 3px 7px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--cp) 10%, #fff);
-  color: var(--cp);
+  color: var(--texto-primario);
   font-size: 11px;
   font-weight: 800;
   line-height: 1.2;
@@ -1713,7 +1715,7 @@
 }
 .linkAcessoUrl {
   margin-top: 2px;
-  color: var(--cp);
+  color: var(--texto-primario);
   font-size: 12px;
   font-weight: 700;
   overflow-wrap: anywhere;
@@ -1756,7 +1758,7 @@
   cursor: pointer;
   padding: 0 2px;
 }
-.buscaLimpar:hover { color: var(--cp); }
+.buscaLimpar:hover { color: var(--texto-primario); }
 
 @media (max-width: 640px) {
   .listaTituloComAviso { align-items: flex-start; flex-direction: column; gap: 4px; }
@@ -1805,7 +1807,7 @@
 .acoesTrigger:hover,
 .acoesGrupoAberto .acoesTrigger {
   background: #eef2f7;
-  color: var(--cp);
+  color: var(--texto-primario);
 }
 
 /* Fôlego ao rolar o bloco em edição para o topo da área rolável (o topo da
@@ -1871,7 +1873,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--cp);
+  color: var(--texto-primario);
   margin-bottom: 8px;
 }
 
@@ -1980,7 +1982,7 @@
   font-weight: 700;
   cursor: pointer;
 }
-.tipoCadastroOpcao:hover:not(:disabled) { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 8%, #fff); color: var(--cp); }
+.tipoCadastroOpcao:hover:not(:disabled) { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 8%, #fff); color: var(--texto-primario); }
 .tipoCadastroOpcao:focus-visible { outline: 2px solid var(--cp); outline-offset: 2px; }
 .tipoCadastroOpcaoAtiva { border-color: var(--cp); background: var(--cp); color: var(--cp-text); }
 .tipoCadastroOpcao:disabled { cursor: default; opacity: 1; }
@@ -2014,7 +2016,7 @@
   font-weight: 700;
   cursor: pointer;
 }
-.recorrenciaOpcao:hover { background: color-mix(in srgb, var(--cp) 10%, #fff); color: var(--cp); }
+.recorrenciaOpcao:hover { background: color-mix(in srgb, var(--cp) 10%, #fff); color: var(--texto-primario); }
 .recorrenciaOpcaoAtiva { border-color: var(--cp); background: var(--cp); color: var(--cp-text); }
 .recorrenciaConfig {
   position: relative;
@@ -2101,8 +2103,8 @@
   font-weight: 800;
   cursor: pointer;
 }
-.recorrenciaEscolha:hover { border-color: var(--cp); color: var(--cp); }
-.recorrenciaEscolhaAtiva { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 14%, #fff); color: var(--cp); }
+.recorrenciaEscolha:hover { border-color: var(--cp); color: var(--texto-primario); }
+.recorrenciaEscolhaAtiva { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 14%, #fff); color: var(--texto-primario); }
 @media (max-width: 560px) {
   .recorrenciaLinhaSelecao { grid-template-columns: 1fr; gap: 3px; }
   .recorrenciaLinhaSelecao .recorrenciaPopupTitulo { white-space: normal; }
@@ -2167,7 +2169,7 @@
 .sectionTitle {
   font-size: 15px;
   font-weight: 800;
-  color: var(--cp);
+  color: var(--texto-primario);
   margin: 4px 0 12px;
 }
 .sectionTitleEmpresaPai {
@@ -2185,7 +2187,7 @@
   padding: 6px 8px 8px;
 }
 .recebimentosPeriodoTitulo {
-  color: var(--cp);
+  color: var(--texto-primario);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -2259,6 +2261,8 @@
 
 /* Tema escuro do módulo integrado: acompanha o modo do shell principal. */
 .darkScope {
+  --texto-primario: #e2e8f0;
+  --texto-secundario: #94a3b8;
   color: #e2e8f0;
   color-scheme: dark;
 }
@@ -2279,6 +2283,8 @@
   --pagina-bg: #eef3f6;
   --pagina-superficie: #fff;
   --pagina-texto: #142538;
+  --texto-primario: #142538;
+  --texto-secundario: #607284;
   --pagina-suave: #f5f8fa;
   --pagina-borda: #dce5eb;
   --brand: var(--cp);
@@ -2294,7 +2300,7 @@
 .paginaModulo, .paginaModulo * { box-sizing: border-box; }
 .paginaModulo :is(button, input, select, textarea):focus-visible,
 .botaoInicio:focus-visible, .botaoAjustes:focus-visible { outline: 3px solid color-mix(in srgb, var(--cp) 38%, transparent); outline-offset: 2px; }
-.paginaModuloEscura { --pagina-bg: #08131e; --pagina-superficie: #101b28; --pagina-texto: #e5edf2; --pagina-suave: #0b1520; --pagina-borda: #2a3d4c; color-scheme: dark; }
+.paginaModuloEscura { --pagina-bg: #08131e; --pagina-superficie: #101b28; --pagina-texto: #e5edf2; --texto-primario: #e5edf2; --texto-secundario: #9cadb9; --pagina-suave: #0b1520; --pagina-borda: #2a3d4c; color-scheme: dark; }
 .cabecalhoModulo {
   position: sticky; top: 0; z-index: 120;
   min-height: 76px;
@@ -2305,29 +2311,30 @@
   box-shadow: 0 5px 18px rgba(16, 42, 61, .07);
   backdrop-filter: blur(14px);
 }
-.botaoInicio {
+.paginaModulo .botaoInicio {
   justify-self: start;
+  height: 36px;
   min-height: 36px;
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px;
   border: 1px solid color-mix(in srgb, var(--cp) 28%, var(--pagina-borda));
   border-radius: 10px;
-  color: var(--cp); background: var(--pagina-superficie);
+  color: var(--texto-primario); background: var(--pagina-superficie);
   appearance: none;
   box-shadow: none;
-  font-size: 11px; font-weight: 800; text-decoration: none;
+  font-size: 11px; font-weight: 800; line-height: 1; text-decoration: none;
   transition: border-color .16s ease, background .16s ease;
 }
 .botaoInicio:hover { border-color: color-mix(in srgb, var(--cp) 48%, var(--pagina-borda)); background: color-mix(in srgb, var(--cp) 6%, var(--pagina-superficie)); }
-.identidadeModulo { display: grid; min-width: 0; justify-items: center; line-height: 1.2; text-align: center; }
-.logoEmpresaModulo { display: block; width: clamp(124px, 14vw, 190px); height: 52px; max-width: min(38vw, 260px); object-fit: contain; }
-.nomeEmpresaModulo { max-width: min(38vw, 290px); overflow: hidden; color: color-mix(in srgb, var(--pagina-texto) 78%, transparent); font-size: clamp(12px, 1.15vw, 15px); font-weight: 850; letter-spacing: .01em; text-overflow: ellipsis; white-space: nowrap; }
+.identidadeModulo { display: grid; min-width: 0; justify-items: center; gap: 3px; line-height: 1.2; text-align: center; }
+.logoEmpresaModulo { display: block; width: clamp(112px, 13vw, 164px); height: 36px; max-width: min(38vw, 260px); object-fit: contain; }
+.nomeEmpresaModulo { max-width: min(38vw, 290px); overflow: hidden; color: color-mix(in srgb, var(--pagina-texto) 78%, transparent); font-size: 10px; font-weight: 800; letter-spacing: .01em; text-overflow: ellipsis; white-space: nowrap; }
 .botaoAjustes {
   justify-self: end;
   width: 40px; height: 40px;
   display: grid; place-items: center;
   border: 1px solid var(--pagina-borda); border-radius: 11px;
-  color: var(--cp); background: var(--pagina-superficie);
+  color: var(--texto-primario); background: var(--pagina-superficie);
   font-size: 19px; line-height: 1; text-decoration: none;
 }
 .botaoAjustes:hover { border-color: color-mix(in srgb, var(--cp) 40%, var(--pagina-borda)); background: var(--pagina-suave); }
@@ -2356,7 +2363,7 @@
 .ajustesErro, .ajustesSucesso { margin: 0; padding: 10px 12px; border-radius: 11px; font-size: 12px; font-weight: 750; }.ajustesErro { color: #b91c1c; background: #fef2f2; }.ajustesSucesso { color: #166534; background: #f0fdf4; }
 .areaModulo { width: min(100%, 1760px); margin: 0 auto; padding: 24px clamp(14px, 2.5vw, 34px) 34px; }
 .tituloPaginaModulo { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
-.tituloPaginaModulo span { color: var(--cp); font-size: 10px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+.tituloPaginaModulo span { color: var(--texto-primario); font-size: 10px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
 .tituloPaginaModuloTexto { display: flex; align-items: center; gap: 14px; }
 .tituloPaginaModuloTexto::before { width: 7px; height: 36px; flex: 0 0 7px; border-radius: 999px; background: var(--cp, #003e73); content: ''; }
 .tituloPaginaModulo h1 { margin: 0; font-size: clamp(21px, 2.35vw, 29px); letter-spacing: -.02em; line-height: 1.2; }
@@ -2374,8 +2381,8 @@
 .acessoModuloEstado span { color: #003e73; font-size: 30px; }.acessoModuloEstado h1 { margin: 8px 0; font-size: 21px; }.acessoModuloEstado p { margin: 0 0 18px; color: #607284; }.acessoModuloEstado a { color: #fff; background: #003e73; border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 800; text-decoration: none; }
 @media (max-width: 680px) {
   .cabecalhoModulo { min-height: 68px; grid-template-columns: auto 1fr auto; gap: 8px; padding-inline: 12px; }
-  .botaoInicio { min-height: 40px; padding-inline: 11px; font-size: 12px; }
-  .logoEmpresaModulo { width: min(42vw, 154px); height: 44px; }.nomeEmpresaModulo { max-width: 42vw; font-size: 11px; }
+  .paginaModulo .botaoInicio { height: 38px; min-height: 38px; padding: 7px 12px; font-size: 11px; }
+  .logoEmpresaModulo { width: min(30vw, 120px); height: 30px; }.nomeEmpresaModulo { max-width: 30vw; font-size: 8px; }
   .ajustesSecaoCabecalho { flex-direction: column; gap: 10px; }.ajustesCampos, .ajustesBaseValor { grid-template-columns: 1fr; }.ajustesCheck { white-space: normal; }.ajustesAcoes .btn { width: 100%; }
   .areaModulo { padding: 18px 12px 24px; }.tituloPaginaModulo p { font-size: 12px; }.workspaceModulo { min-height: calc(100dvh - 174px); padding: 10px; border-radius: 14px; }
 }
@@ -2400,7 +2407,7 @@
 .painelAdministrativo .listaRolavel,
 .painelAdministrativo .corpoRolavel { padding-right: 0; }
 .permissoesColaborador { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 12px 0 0; padding: 12px; border: 1px solid #dbeafe; border-radius: 12px; color: #334155; background: #f8fbff; font-size: 12px; }
-.permissoesColaboradorTitulo { width: 100%; color: var(--cp); font-size: 12px; font-weight: 800; line-height: 1.2; }
+.permissoesColaboradorTitulo { width: 100%; color: var(--texto-primario); font-size: 12px; font-weight: 800; line-height: 1.2; }
 .permissoesColaborador label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
 .permissoesColaborador input { width: 16px; height: 16px; accent-color: var(--cp); }
 .permissoesColaborador small { width: 100%; color: #64748b; }

@@ -8,6 +8,10 @@ function number(value) { const parsed = Number(value); return Number.isFinite(pa
 function color(value) { const normalized = text(value); return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized.toLowerCase() : '#003e73'; }
 function imageUrl(value) {
   const normalized = text(value);
+  // As logos salvas no cadastro da Gestão são produzidas pelo FileReader como
+  // data URLs. Aceitamos somente os formatos de imagem que o próprio cadastro
+  // permite, em base64, e mantemos a mesma barreira contra esquemas executáveis.
+  if (/^data:image\/(?:png|jpe?g|webp);base64,[a-z0-9+/=\s]+$/i.test(normalized)) return normalized;
   try { const url = new URL(normalized); return ['https:', 'http:'].includes(url.protocol) ? url.toString() : ''; } catch { return ''; }
 }
 

@@ -6,6 +6,9 @@ const registro = readFileSync('app/lib/modulos-registro.ts', 'utf8');
 const cliente = readFileSync('app/custos/CustosClient.tsx', 'utf8');
 const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const estilos = readFileSync('app/custos/custos.module.css', 'utf8');
+const estilosProjetos = readFileSync('app/projetos/projetos.module.css', 'utf8');
+const estilosOperacoes = readFileSync('app/recebimentos/recebimentos.module.css', 'utf8');
+const estilosVendas = readFileSync('app/vendas/sistema/vendas.css', 'utf8');
 const ajustes = readFileSync('app/api/modulos/custos/ajustes/route.ts', 'utf8');
 const repositorio = readFileSync('app/custos/repository.ts', 'utf8');
 const catalogo = readFileSync('app/components/CatalogoProdutosVendas.tsx', 'utf8');
@@ -195,6 +198,46 @@ test('módulos mantêm a estrutura visível e cobrem apenas os dados até estare
   assert.match(projetos, /<CarregamentoDadosModulo ativo=\{carregandoDados\}/);
   assert.match(recebimentosClient, /<CarregamentoDadosModulo ativo=\{carregando\}/);
   assert.match(vendasIntegrado, /<CarregamentoDadosModulo ativo=\{!perfilPronto \|\| !iframePronto\}/);
+});
+
+test('tipografia dos módulos usa tons neutros e preserva a cor de perfil para ações', () => {
+  assert.match(estilos, /pageHeader>div:first-child>span\{color:var\(--text\)/);
+  assert.match(estilos, /metricAccent strong\{color:var\(--text\)/);
+  assert.doesNotMatch(estilos, /pageHeader>div:first-child>span\{color:var\(--brand\)/);
+
+  assert.match(estilosProjetos, /\.homeHeader h1 \{[^}]*color: var\(--text\)/);
+  assert.match(estilosProjetos, /\.projectCardBody strong \{[^}]*color: var\(--text\)/);
+  assert.doesNotMatch(estilosProjetos, /color: var\(--brand\)/);
+
+  assert.match(estilosOperacoes, /--texto-primario: #142538/);
+  assert.match(estilosOperacoes, /\.tituloPaginaModulo span \{ color: var\(--texto-primario\)/);
+
+  assert.match(estilosVendas, /--av-text-strong: #172839/);
+  assert.match(estilosVendas, /--av-blue-950: var\(--av-text-strong\)/);
+  assert.doesNotMatch(estilosVendas, /(?:^|[;{]\s*)color:\s*var\(--av-blue-(?:900|800|700)\)/m);
+  assert.match(estilosVendas, /\.module-exit \{[\s\S]*?min-height: 36px;[\s\S]*?padding: 7px 12px;[\s\S]*?color: var\(--av-text-strong\);[\s\S]*?border-radius: 10px;[\s\S]*?font-size: 11px;[\s\S]*?font-weight: 800;/);
+});
+
+test('todos os cabeçalhos dos módulos exibem a logo do perfil ou o nome como alternativa', () => {
+  assert.match(cliente, /access\.empresa\.logoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.moduleLogo\}/);
+  assert.match(projetos, /companyLogoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.companyLogo\}/);
+  assert.match(recebimentos, /acesso\.empresa\.logoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.logoEmpresaModulo\}/);
+  assert.match(vendasSistema, /companyLogoUrl\s*\?\s*<img[\s\S]*?className="company-logo"/);
+  assert.doesNotMatch(estilos, /@media\(max-width:760px\)\{[\s\S]*?\.moduleIdentity\{display:none\}/);
+  assert.doesNotMatch(estilosProjetos, /@media \(max-width:760px\) \{[\s\S]*?\.moduleIdentity \{ display: none; \}/);
+  assert.doesNotMatch(estilosVendas, /@media \(max-width:760px\) \{[\s\S]*?\.module-brand \{ display: none; \}/);
+});
+
+test('o botão Início mantém a mesma escala e tratamento nos quatro módulos', () => {
+  assert.match(estilos, /\.root \.moduleExit\{height:36px;min-height:36px;gap:6px;padding:7px 12px;border:1px solid color-mix[\s\S]*?line-height:1/);
+  assert.match(estilosProjetos, /\.root \.moduleExit \{ height: 36px; min-height: 36px; gap: 6px; border: 1px solid color-mix[\s\S]*?line-height: 1/);
+  assert.match(estilosOperacoes, /\.paginaModulo \.botaoInicio \{[\s\S]*?height: 36px;[\s\S]*?min-height: 36px;[\s\S]*?gap: 6px;[\s\S]*?padding: 7px 12px;[\s\S]*?border-radius: 10px;[\s\S]*?line-height: 1;/);
+  assert.match(recebimentos, /<Icon name="back" size=\{16\} \/> Início<\/button>/);
+  assert.match(estilosVendas, /\.module-exit \{[\s\S]*?gap: 6px;[\s\S]*?height: 36px;[\s\S]*?min-height: 36px;[\s\S]*?padding: 7px 12px;[\s\S]*?border-radius: 10px;[\s\S]*?font-size: 11px;[\s\S]*?font-weight: 800;[\s\S]*?line-height: 1;/);
+  assert.match(estilos, /\.root \.moduleExit\{height:38px;min-height:38px;padding:7px 12px\}/);
+  assert.match(estilosProjetos, /\.root \.moduleExit \{ height: 38px; min-height: 38px; padding: 7px 12px; \}/);
+  assert.match(estilosOperacoes, /\.paginaModulo \.botaoInicio \{ height: 38px; min-height: 38px; padding: 7px 12px; font-size: 11px; \}/);
+  assert.match(estilosVendas, /\.module-exit \{ height: 38px; min-height: 38px; padding: 7px 12px; \}/);
 });
 
 test('todos os módulos em página total devolvem o controle à Gestão quando embutidos', () => {

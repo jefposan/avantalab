@@ -1,6 +1,22 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.38.0.19 -->
+<!-- ava-version: 1.38.0.24 -->
+
+> Revisão 1.38.0.24: a correção da altura renderizada do botão **Início**
+> pertence aos módulos da Gestão Web; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.38.0.23: o refinamento de cores e do botão **Início** de Vendas e
+> Serviços pertence aos módulos da Gestão Web; sem alteração operacional na
+> Gestão Mobile.
+
+> Revisão 1.38.0.22: a padronização visual do botão **Início** pertence aos
+> módulos da Gestão Web; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.38.0.21: a padronização da logo nos cabeçalhos pertence aos módulos
+> da Gestão Web; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.38.0.20: a revisão de tipografia pertence aos módulos da Gestão
+> Web; sem alteração operacional na Gestão Mobile.
 
 > Revisão 1.38.0.19: o refinamento visual do botão **Início** pertence à Gestão
 > Web; sem alteração operacional na Gestão Mobile.

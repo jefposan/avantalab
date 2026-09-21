@@ -1,6 +1,25 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.19 -->
+<!-- ava-version: 1.38.0.24 -->
+
+> Revisão 1.38.0.24: o botão **Início** dos módulos tem a mesma altura
+> renderizada em desktop e mobile. Não há alteração no fluxo de retorno.
+
+> Revisão 1.38.0.23: em **Vendas e Serviços**, os textos de leitura usam os
+> mesmos tons neutros dos demais módulos. O botão **Início** também segue a
+> mesma medida e aparência.
+
+> Revisão 1.38.0.22: o botão **Início** tem a mesma medida e aparência em
+> todos os módulos. Ele continua retornando à Gestão Web.
+
+> Revisão 1.38.0.21: os cabeçalhos de **Custos e Precificação**, **Projetos**,
+> **Vendas e Serviços** e **Operações de Campo** usam a logo configurada da
+> empresa, inclusive no celular. Sem logo cadastrada, exibem somente o nome da
+> empresa; não há mudança nas funções.
+
+> Revisão 1.38.0.20: os módulos usam texto em preto e tons de cinza para
+> leitura. A cor de cada empresa continua identificando ações e estados; não
+> há mudança no uso das funções.
 
 > Revisão 1.38.0.19: o retorno dos módulos permanece **Início** e usa um
 > contorno discreto, sem o antigo botão sólido. A função continua levando de

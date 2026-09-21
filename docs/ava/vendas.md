@@ -1,6 +1,24 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.38.0.19 -->
+<!-- ava-version: 1.38.0.24 -->
+
+> Revisão 1.38.0.24: o botão **Início** agora tem a mesma altura realmente
+> renderizada em Vendas e Serviços e nos demais módulos; sem mudança no fluxo.
+
+> Revisão 1.38.0.23: Vendas e Serviços usa tons neutros em textos e ícones de
+> leitura. O botão **Início** tem a mesma medida e aparência dos demais
+> módulos; as ações e estados continuam identificados pela cor da empresa.
+
+> Revisão 1.38.0.22: o botão **Início** de Vendas e Serviços usa a mesma
+> medida, contorno e tipografia dos demais módulos.
+
+> Revisão 1.38.0.21: o cabeçalho de Vendas e Serviços reconhece a logo salva
+> pelo cadastro da empresa, inclusive quando a imagem foi enviada pelo próprio
+> AvantaLab. Sem logo, mostra somente o nome da empresa.
+
+> Revisão 1.38.0.20: títulos, métricas e textos de leitura usam tons neutros.
+> A cor da empresa continua exclusiva para ações e estados; o fluxo de Vendas
+> e Serviços não muda.
 
 > Revisão 1.38.0.19: o retorno **Início** de Vendas e Serviços usa o mesmo
 > contorno discreto dos demais módulos e continua levando à Gestão Web.

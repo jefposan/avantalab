@@ -1,5 +1,10 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.38.0.24: o botão Início tem altura renderizada idêntica em Custos, Projetos, Vendas e Operações; o fluxo operacional não muda.
+// Revisado na versão 1.38.0.23: Vendas e Serviços usa textos neutros em toda a leitura e o botão Início segue a mesma escala dos demais módulos; o fluxo operacional não muda.
+// Revisado na versão 1.38.0.22: o botão Início usa o mesmo tamanho, contorno e tipografia nos quatro módulos; o fluxo operacional não muda.
+// Revisado na versão 1.38.0.21: os cabeçalhos de Custos, Projetos, Vendas e Operações exibem a logo configurada do perfil, inclusive no mobile; sem logo, exibem somente o nome. O fluxo operacional não muda.
+// Revisado na versão 1.38.0.20: títulos, rótulos, métricas e textos de leitura dos módulos usam tons neutros; a cor da empresa fica reservada a ações e estados. O fluxo operacional não muda.
 // Revisado na versão 1.38.0.19: o retorno **Início** dos módulos usa fundo de superfície e contorno discreto, sem preenchimento sólido, mas continua levando à Gestão Web. A camada de carregamento ocupa todo o viewport, acima de cada workspace, e só some quando perfil, permissões e dados estão prontos.
 // Revisado na versão 1.38.0.10: Gestão Web e Custos trocam de página sem a cena institucional de carregamento; a permissão continua confirmada pelo servidor.
 // Revisado na versão 1.38.0.09: regime e parâmetros tributários pertencem à empresa; NCM e unidade tributável ficam no produto; CFOP e natureza são definidos na emissão.

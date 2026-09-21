@@ -53,6 +53,8 @@ test('Vendas deriva sua identidade da cor primária do perfil empresarial', asyn
   const base = { versao: 1, origem: 'custos_precificacao', somenteLeitura: true, estoqueIntegrado: false, empresaId: 'empresa-1', itens: [] };
   assert.equal(parseManagementCatalogMessage({ type: 'AVANTALAB_VENDAS_CATALOGO_V1', catalogo: base, corPrimaria: '#A45E21' })?.primaryColor, '#a45e21');
   assert.equal(parseManagementCatalogMessage({ type: 'AVANTALAB_VENDAS_CATALOGO_V1', catalogo: base, corPrimaria: 'red; color: white' })?.primaryColor, '#003e73');
+  assert.equal(parseManagementCatalogMessage({ type: 'AVANTALAB_VENDAS_CATALOGO_V1', catalogo: base, logoUrl: 'data:image/png;base64,aGVsbG8=' })?.logoUrl, 'data:image/png;base64,aGVsbG8=');
+  assert.equal(parseManagementCatalogMessage({ type: 'AVANTALAB_VENDAS_CATALOGO_V1', catalogo: base, logoUrl: 'data:text/html;base64,PHNjcmlwdD4=' })?.logoUrl, '');
 });
 
 test('perfil empresarial chega ao módulo mesmo quando o catálogo ainda está indisponível', async () => {
