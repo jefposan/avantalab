@@ -115,6 +115,10 @@ type TabelaLancamentosDespesaProps = {
   setEditDescricao: (valor: string) => void;
   editValor: string;
   handleEditValorChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  editParcelaAtual: number;
+  setEditParcelaAtual: (valor: number) => void;
+  editTotalParcelas: number;
+  setEditTotalParcelas: (valor: number) => void;
   salvarEdicaoLancamento: (confirmarPrevista?: boolean) => void | Promise<void>;
   cancelarEdicaoLancamento: () => void;
   iniciarEdicaoLancamento: (lancamento: LancamentoDespesa) => void;
@@ -180,6 +184,10 @@ export default function TabelaLancamentosDespesa({
   setEditDescricao,
   editValor,
   handleEditValorChange,
+  editParcelaAtual,
+  setEditParcelaAtual,
+  editTotalParcelas,
+  setEditTotalParcelas,
   salvarEdicaoLancamento,
   cancelarEdicaoLancamento,
   iniciarEdicaoLancamento,
@@ -437,6 +445,41 @@ export default function TabelaLancamentosDespesa({
                             }`}
                             placeholder="Descrição..."
                           />
+                          {lanc.tipo === 'parcela' && (
+                            <div className={`mt-1.5 rounded-md border px-2 py-1.5 ${
+                              darkMode ? 'border-violet-400/30 bg-violet-400/10' : 'border-violet-200 bg-violet-50'
+                            }`}>
+                              <div className="flex items-center gap-1.5 text-[10px] font-bold">
+                                <span className={darkMode ? 'text-violet-100' : 'text-violet-900'}>Parcela</span>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={editTotalParcelas || 120}
+                                  value={editParcelaAtual}
+                                  onChange={(e) => setEditParcelaAtual(Math.max(1, Number(e.target.value) || 1))}
+                                  aria-label="Número da parcela atual"
+                                  className={`h-7 w-11 rounded border px-1 text-center text-[11px] font-black outline-none ${
+                                    darkMode ? 'border-violet-300/40 bg-slate-800 text-white' : 'border-violet-200 bg-white text-slate-800'
+                                  }`}
+                                />
+                                <span className={darkMode ? 'text-violet-100' : 'text-violet-900'}>de</span>
+                                <input
+                                  type="number"
+                                  min={editParcelaAtual || 1}
+                                  max={120}
+                                  value={editTotalParcelas}
+                                  onChange={(e) => setEditTotalParcelas(Math.max(editParcelaAtual || 1, Number(e.target.value) || 1))}
+                                  aria-label="Quantidade total de parcelas"
+                                  className={`h-7 w-11 rounded border px-1 text-center text-[11px] font-black outline-none ${
+                                    darkMode ? 'border-violet-300/40 bg-slate-800 text-white' : 'border-violet-200 bg-white text-slate-800'
+                                  }`}
+                                />
+                              </div>
+                              <p className={`mt-1 text-[9px] font-medium leading-tight ${darkMode ? 'text-violet-100/80' : 'text-violet-800/80'}`}>
+                                Ao salvar, as próximas parcelas serão reorganizadas.
+                              </p>
+                            </div>
+                          )}
                         </td>
 
                         <td className="py-1.5 px-1.5 w-32">

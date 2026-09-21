@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.38.0.24 -->
+<!-- ava-version: 1.39.0 -->
+
+> Revisão 1.39.0: ao editar uma despesa parcelada, corrija **Parcela atual** e
+> **Total de parcelas**. Depois da confirmação, a sequência é reprogramada da
+> parcela aberta em diante; o histórico anterior permanece intacto.
 
 > Revisão 1.38.0.24: a correção da altura renderizada do botão **Início**
 > pertence aos módulos da Gestão Web; sem alteração operacional na Gestão Mobile.

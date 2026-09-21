@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.24 -->
+<!-- ava-version: 1.39.0 -->
+
+> Revisão 1.39.0: ao editar uma despesa identificada como parcela, ajuste
+> **Parcela atual** e **Total de parcelas** quando necessário. Ao salvar e
+> confirmar, a parcela aberta e as próximas são reorganizadas a partir da data
+> informada; as parcelas anteriores não são alteradas.
 
 > Revisão 1.38.0.24: o botão **Início** dos módulos tem a mesma altura
 > renderizada em desktop e mobile. Não há alteração no fluxo de retorno.

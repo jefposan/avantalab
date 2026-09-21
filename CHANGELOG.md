@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.39.0 - 2026-09-21
+- **Correção de parcelamentos**: ao editar uma despesa parcelada, a Gestão Web
+  e Mobile permitem corrigir o número da parcela e o total. A partir da parcela
+  editada, a sequência é reorganizada em uma única operação; lançamentos
+  anteriores permanecem preservados.
+
 ## 1.38.0.24 - 2026-09-21
 - **Dimensão real do Início**: corrigida a especificidade que fazia alguns
   módulos renderizarem o botão maior. Custos, Projetos, Vendas e Serviços e

@@ -3971,6 +3971,26 @@
     return Number(dia) > hoje.getDate();
   }
 
+  function lerParcelamentoEditavelMobile(descricao) {
+    var partes = String(descricao || '').match(/^(.*?)[\s]*\((\d+)\/(\d+)\)\s*$/);
+    if (!partes) return null;
+    var parcelaAtual = Number(partes[2]);
+    var totalParcelas = Number(partes[3]);
+    if (!Number.isInteger(parcelaAtual) || !Number.isInteger(totalParcelas)
+      || parcelaAtual < 1 || totalParcelas < parcelaAtual) return null;
+    return {
+      descricaoBase: partes[1].trim(),
+      parcelaAtual: parcelaAtual,
+      totalParcelas: totalParcelas,
+    };
+  }
+
+  function descricaoComParcelamentoMobile(descricaoBase, parcelaAtual, totalParcelas) {
+    var base = formatarDescricao(descricaoBase);
+    if (totalParcelas <= 1) return base;
+    return base ? base + ' (' + parcelaAtual + '/' + totalParcelas + ')' : '(' + parcelaAtual + '/' + totalParcelas + ')';
+  }
+
   function ehDespesaFutura(mesIndice, dia) {
     return dataFutura(Number(state.ano), mesIndice, dia);
   }
@@ -10229,6 +10249,12 @@
     var origem = tipo === 'receita' ? campo('editar-origem').trim() : '';
     var despesaNome = tipo === 'receita' ? '' : campo('editar-despesa').trim();
     var descricao = tipo === 'receita' ? '' : campo('editar-descricao');
+    var parcelamentoOriginal = tipo === 'receita' || item.tipo !== 'parcela'
+      ? null
+      : lerParcelamentoEditavelMobile(item.descricao);
+    var parcelaAtual = parcelamentoOriginal ? Number(campo('editar-parcela-atual')) : 1;
+    var totalParcelas = parcelamentoOriginal ? Number(campo('editar-total-parcelas')) : 1;
+    var descricaoBase = tipo === 'receita' ? '' : formatarDescricao(descricao);
 
     if ((!confirmarAgora && (!dia || dia < 1 || dia > limite)) || valor <= 0) {
       setErro('Informe dia e valor validos.');
@@ -10236,6 +10262,63 @@
     }
     if (tipo === 'receita' && !origem) { setErro('Informe a origem.'); return; }
     if (tipo !== 'receita' && !despesaNome) { setErro('Informe a despesa.'); return; }
+    if (item.tipo === 'parcela' && !parcelamentoOriginal) {
+      setErro('Esta parcela não possui uma sequência válida.');
+      return;
+    }
+    if (parcelamentoOriginal && (
+      !Number.isInteger(parcelaAtual) || !Number.isInteger(totalParcelas)
+      || parcelaAtual < 1 || totalParcelas < parcelaAtual || totalParcelas > 120
+    )) {
+      setErro('Informe uma parcela atual entre 1 e o total, com no máximo 120 parcelas.');
+      return;
+    }
+
+    var sequenciaMudou = Boolean(parcelamentoOriginal && (
+      parcelaAtual !== parcelamentoOriginal.parcelaAtual
+      || totalParcelas !== parcelamentoOriginal.totalParcelas
+    ));
+
+    if (sequenciaMudou) {
+      var confirmarReorganizacao = await solicitarDialogoSistemaMobile({
+        titulo: 'Reorganizar parcelamento?',
+        rotulo: 'Confirmar alteração',
+        mensagem: 'Esta despesa passará a ser a parcela ' + parcelaAtual + '/' + totalParcelas + '. As parcelas seguintes serão reprogramadas a partir desta data; as anteriores permanecerão como estão.',
+        variante: 'alerta',
+        acoes: [
+          { valor: 'cancelar', rotulo: 'Manter edição', estilo: 'secundaria' },
+          { valor: 'reorganizar', rotulo: 'Reorganizar', estilo: 'primaria' },
+        ],
+      });
+      if (confirmarReorganizacao !== 'reorganizar') return;
+
+      iniciarAplicacaoLancamentoMobile();
+      var reorganizacao = await db.rpc('reorganizar_parcelamento_despesa_rpc', {
+        p_empresa_id: state.empresa.id,
+        p_lancamento_id: item.id,
+        p_ano: anoDestino,
+        p_mes: mesDestino,
+        p_dia: dia,
+        p_despesa_nome: despesaNome,
+        p_descricao_base: descricaoBase,
+        p_valor: valor,
+        p_parcela_atual: parcelaAtual,
+        p_total_parcelas: totalParcelas,
+      });
+      if (reorganizacao.error) {
+        falharAplicacaoLancamentoMobile('Não foi possível reorganizar as parcelas: ' + (reorganizacao.error.message || reorganizacao.error.code || 'erro'));
+        return;
+      }
+
+      state.modalAcao = null;
+      await carregarDados();
+      concluirAplicacaoLancamentoMobile('Parcelamento reorganizado a partir da parcela ' + parcelaAtual + '/' + totalParcelas + '.');
+      return;
+    }
+
+    var descricaoFinal = parcelamentoOriginal
+      ? descricaoComParcelamentoMobile(descricaoBase, parcelaAtual, totalParcelas)
+      : descricaoBase;
 
     // O render de "Salvando..." reconstrói o formulário. Mantém no modal os
     // valores recém-digitados para não exibir novamente os dados antigos
@@ -10247,10 +10330,10 @@
           origem: formatarDescricao(origem),
           valor: valor,
         }
-      : {
+        : {
           dia: dia,
           despesa: despesaNome,
-          descricao: formatarDescricao(descricao),
+          descricao: descricaoFinal,
           valor: valor,
         });
     iniciarAplicacaoLancamentoMobile();
@@ -10333,7 +10416,7 @@
           mes: mesDestino,
           dia: dia,
           despesa_nome: despesaNome,
-          descricao: formatarDescricao(descricao),
+          descricao: descricaoFinal,
           valor: valor,
           status: statusEditado,
           tipo_obs: tipoEditado,
@@ -12798,6 +12881,23 @@
     var escuro = !!state.darkMode;
     var rotuloCampo = escuro ? 'text-slate-300' : 'text-slate-600';
     var selectCampo = escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900';
+    var parcelamento = acao.tipo === 'despesa' && item.tipo === 'parcela'
+      ? lerParcelamentoEditavelMobile(item.descricao)
+      : null;
+    var blocoParcelamento = parcelamento
+      ? '<section class="rounded-2xl border border-violet-200 bg-violet-50 p-3" aria-label="Editar parcelamento">' +
+          '<p class="text-[10px] font-black uppercase tracking-[0.14em] text-violet-800">Parcelamento</p>' +
+          '<div class="mt-2 grid grid-cols-2 gap-2">' +
+            '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-violet-900">Parcela atual' +
+              '<input id="editar-parcela-atual" type="number" inputmode="numeric" min="1" max="' + parcelamento.totalParcelas + '" value="' + parcelamento.parcelaAtual + '" class="h-11 rounded-xl border border-violet-200 bg-white px-3 text-center text-base font-black normal-case tracking-normal text-slate-900">' +
+            '</label>' +
+            '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-violet-900">Total de parcelas' +
+              '<input id="editar-total-parcelas" type="number" inputmode="numeric" min="' + parcelamento.parcelaAtual + '" max="120" value="' + parcelamento.totalParcelas + '" class="h-11 rounded-xl border border-violet-200 bg-white px-3 text-center text-base font-black normal-case tracking-normal text-slate-900">' +
+            '</label>' +
+          '</div>' +
+          '<p class="mt-2 text-[11px] font-semibold leading-relaxed text-violet-900">Ao salvar, as próximas parcelas serão reorganizadas. As anteriores permanecem registradas.</p>' +
+        '</section>'
+      : '';
     if (acao.tipo === 'caixinha') {
       return (
         '<div class="grid gap-3">' +
@@ -12837,8 +12937,9 @@
             '</select>' +
           '</label>' +
         '</div>' +
-        campoClaro('editar-descricao', 'Descricao', 'value="' + escapeHtml(item.descricao || '') + '"') +
+        campoClaro('editar-descricao', 'Descricao', 'value="' + escapeHtml(parcelamento ? parcelamento.descricaoBase : (item.descricao || '')) + '"') +
         campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
+        blocoParcelamento +
         (item.status === 'prevista'
           ? '<p class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] font-semibold leading-relaxed text-emerald-800">Ao confirmar, esta despesa será registrada automaticamente na data de hoje.</p><div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white px-2 text-[11px] font-black uppercase tracking-wide text-slate-700 disabled:opacity-60">Salvar previsto</button><button id="confirmar-edicao-prevista" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-emerald-600 px-2 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60">Confirmar hoje</button></div>'
           : '<div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-2 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar') + '</button><button id="excluir-lancamento-edicao" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-red-200 bg-red-50 px-2 text-xs font-black uppercase tracking-wide text-red-700 disabled:opacity-60">Excluir</button></div>') +

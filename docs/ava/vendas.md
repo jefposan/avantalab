@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.38.0.24 -->
+<!-- ava-version: 1.39.0 -->
+
+> Revisão 1.39.0: a reorganização de parcelas pertence à Gestão Web e Mobile;
+> sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.38.0.24: o botão **Início** agora tem a mesma altura realmente
 > renderizada em Vendas e Serviços e nos demais módulos; sem mudança no fluxo.

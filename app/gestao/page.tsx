@@ -283,6 +283,34 @@ function tipoPedeConfirmacao(tipo: string | null | undefined): boolean {
   return tipo === 'previsto' || tipo === 'fixa';
 }
 
+type ParcelamentoEditavel = {
+  descricaoBase: string;
+  parcelaAtual: number;
+  totalParcelas: number;
+};
+
+function lerParcelamentoEditavel(descricao: string | null | undefined): ParcelamentoEditavel | null {
+  const partes = String(descricao || '').match(/^(.*?)[\s]*\((\d+)\/(\d+)\)\s*$/);
+  if (!partes) return null;
+
+  const parcelaAtual = Number(partes[2]);
+  const totalParcelas = Number(partes[3]);
+  if (!Number.isInteger(parcelaAtual) || !Number.isInteger(totalParcelas)
+    || parcelaAtual < 1 || totalParcelas < parcelaAtual) return null;
+
+  return {
+    descricaoBase: partes[1].trim(),
+    parcelaAtual,
+    totalParcelas,
+  };
+}
+
+function descricaoComParcelamento(descricaoBase: string, parcelaAtual: number, totalParcelas: number): string {
+  const base = formatarDescricao(descricaoBase);
+  if (totalParcelas <= 1) return base;
+  return base ? `${base} (${parcelaAtual}/${totalParcelas})` : `(${parcelaAtual}/${totalParcelas})`;
+}
+
 export default function AppGestao() {
   const router = useRouter();
   const [mostrarEditEmpresaSenha, setMostrarEditEmpresaSenha] = useState(false);
@@ -1099,6 +1127,8 @@ const [editDespesa, setEditDespesa] = useState('');
 const [editDescricao, setEditDescricao] = useState('');
 const [editValor, setEditValor] = useState('');
 const [editValorNumerico, setEditValorNumerico] = useState(0);
+const [editParcelaAtual, setEditParcelaAtual] = useState(1);
+const [editTotalParcelas, setEditTotalParcelas] = useState(1);
 const [ordemLancamentos, setOrdemLancamentos] = useState<'desc' | 'asc'>('desc');
 const [ordemEntradasFaturamento, setOrdemEntradasFaturamento] = useState<'desc' | 'asc'>('desc');
 const [buscaLancamento, setBuscaLancamento] = useState('');
@@ -5349,12 +5379,17 @@ const iniciarEdicaoLancamento = (lanc: TabelaLancamentoDespesa) => {
 );
   return;
 }
+  const parcelamento = lanc.tipo === 'parcela'
+    ? lerParcelamentoEditavel(lanc.descricao)
+    : null;
   setLancamentoEditandoId(lanc.id);
   setEditDia(String(lanc.dia));
   setEditDespesa(lanc.despesa);
-  setEditDescricao(lanc.descricao || '');
+  setEditDescricao(parcelamento?.descricaoBase || lanc.descricao || '');
   setEditValor(formatarValorCampo(Number(lanc.valor)));
   setEditValorNumerico(Number(lanc.valor));
+  setEditParcelaAtual(parcelamento?.parcelaAtual || 1);
+  setEditTotalParcelas(parcelamento?.totalParcelas || 1);
 };
 
 const cancelarEdicaoLancamento = () => {
@@ -5364,6 +5399,8 @@ const cancelarEdicaoLancamento = () => {
   setEditDescricao('');
   setEditValor('');
   setEditValorNumerico(0);
+  setEditParcelaAtual(1);
+  setEditTotalParcelas(1);
 };
 const handleEntradaFaturamentoValorChange = (
   e: React.ChangeEvent<HTMLInputElement>
@@ -5610,6 +5647,58 @@ const handleEditValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   setEditValor(formatarValorCampo(numericValue));
 };
 
+type ReorganizacaoParcelamento = {
+  lancamentoId: string | number;
+  dia: number;
+  despesa: string;
+  descricaoBase: string;
+  valor: number;
+  parcelaAtual: number;
+  totalParcelas: number;
+};
+
+const reorganizarParcelamentoEmEdicao = async (dados: ReorganizacaoParcelamento) => {
+  if (!empresaId || !mesAtivo) return;
+  if (!iniciarProcessamentoLancamento('Reorganizando parcelamento')) return;
+
+  try {
+    const { error } = await supabase.rpc('reorganizar_parcelamento_despesa_rpc', {
+      p_empresa_id: empresaId,
+      p_lancamento_id: String(dados.lancamentoId),
+      p_ano: Number(anoSelecionado),
+      p_mes: mesAtivo,
+      p_dia: dados.dia,
+      p_despesa_nome: dados.despesa,
+      p_descricao_base: formatarDescricao(dados.descricaoBase),
+      p_valor: dados.valor,
+      p_parcela_atual: dados.parcelaAtual,
+      p_total_parcelas: dados.totalParcelas,
+    });
+
+    if (error) {
+      abrirAviso(
+        'Não foi possível reorganizar as parcelas',
+        error.message || 'A sequência foi preservada. Tente novamente em instantes.',
+        undefined,
+        'erro'
+      );
+      return;
+    }
+
+    await recarregarDadosFinanceirosAtual();
+    cancelarEdicaoLancamento();
+    notificarFinanceiroAtualizado();
+    abrirAviso(
+      'Parcelamento reorganizado',
+      `A parcela foi ajustada para ${dados.parcelaAtual}/${dados.totalParcelas}. As próximas parcelas foram reprogramadas.`,
+      undefined,
+      'sucesso'
+    );
+  } finally {
+    finalizarProcessamentoLancamento();
+  }
+};
+
 const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
   if (!empresaId) {
   abrirAviso(
@@ -5649,6 +5738,39 @@ const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
   const lancamentoAtual = lancamentos.find((item) => String(item.id) === String(lancamentoEditandoId));
   const ehFixaEditada = lancamentoAtual?.tipo === 'fixa' || Boolean(lancamentoAtual?.recorrenciaId);
   const ehParcelaEditada = lancamentoAtual?.tipo === 'parcela';
+  const parcelamentoOriginal = ehParcelaEditada
+    ? lerParcelamentoEditavel(lancamentoAtual?.descricao)
+    : null;
+  const parcelaAtual = Math.trunc(Number(editParcelaAtual));
+  const totalParcelas = Math.trunc(Number(editTotalParcelas));
+  const descricaoBase = formatarDescricao(editDescricao);
+
+  if (ehParcelaEditada && !parcelamentoOriginal) {
+    abrirAviso(
+      'Parcelamento inválido',
+      'Esta parcela não possui uma sequência válida. Corrija pelo lançamento original ou crie um novo parcelamento.',
+      undefined,
+      'erro'
+    );
+    return;
+  }
+
+  if (parcelamentoOriginal && (
+    !Number.isInteger(parcelaAtual)
+    || !Number.isInteger(totalParcelas)
+    || parcelaAtual < 1
+    || totalParcelas < parcelaAtual
+    || totalParcelas > 120
+  )) {
+    abrirAviso(
+      'Parcelamento inválido',
+      'Informe uma parcela atual entre 1 e o total, com no máximo 120 parcelas.',
+      undefined,
+      'erro'
+    );
+    return;
+  }
+
   const ehFuturaEditada = dataFutura(Number(anoSelecionado), meses.indexOf(mesAtivo), diaNumerico);
   const continuavaPrevista = lancamentoAtual?.status === 'prevista';
   const confirmarAgora = Boolean(confirmarPrevista && continuavaPrevista);
@@ -5675,6 +5797,31 @@ const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
       ? 'prevista'
       : null;
 
+  const sequenciaMudou = Boolean(
+    parcelamentoOriginal
+    && (parcelaAtual !== parcelamentoOriginal.parcelaAtual || totalParcelas !== parcelamentoOriginal.totalParcelas)
+  );
+
+  if (sequenciaMudou) {
+    const dadosReorganizacao: ReorganizacaoParcelamento = {
+      lancamentoId: lancamentoEditandoId,
+      dia: diaNumerico,
+      despesa: editDespesa,
+      descricaoBase,
+      valor: editValorNumerico,
+      parcelaAtual,
+      totalParcelas,
+    };
+    abrirConfirmacao({
+      titulo: 'Reorganizar parcelamento?',
+      mensagem: `Esta despesa passará a ser a parcela ${parcelaAtual}/${totalParcelas}. As parcelas seguintes serão reprogramadas a partir desta data; as anteriores permanecerão como estão.`,
+      textoConfirmar: 'Reorganizar parcelas',
+      variante: 'alerta',
+      acao: async () => { await reorganizarParcelamentoEmEdicao(dadosReorganizacao); },
+    });
+    return;
+  }
+
   if (!iniciarProcessamentoLancamento(confirmarAgora ? 'Confirmando despesa' : 'Atualizando despesa')) return;
   try {
     const salvo = await atualizarLancamento({
@@ -5684,7 +5831,9 @@ const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
       mes: mesAtivo,
       dia: diaNumerico,
       despesaNome: editDespesa,
-      descricao: formatarDescricao(editDescricao),
+      descricao: parcelamentoOriginal
+        ? descricaoComParcelamento(descricaoBase, parcelaAtual, totalParcelas)
+        : descricaoBase,
       valor: editValorNumerico,
       status: statusEditado,
       tipoObs: tipoEditado,
@@ -11504,6 +11653,10 @@ if (validacaoTelefoneObrigatoria) {
               setEditDescricao={setEditDescricao}
               editValor={editValor}
               handleEditValorChange={handleEditValorChange}
+              editParcelaAtual={editParcelaAtual}
+              setEditParcelaAtual={setEditParcelaAtual}
+              editTotalParcelas={editTotalParcelas}
+              setEditTotalParcelas={setEditTotalParcelas}
               salvarEdicaoLancamento={salvarEdicaoLancamento}
               cancelarEdicaoLancamento={cancelarEdicaoLancamento}
               iniciarEdicaoLancamento={iniciarEdicaoLancamento}
