@@ -227,7 +227,9 @@ test('perfil integrado não reutiliza contadores nem indicadores demonstrativos'
   assert.match(integrated, /20_000, 'A confirmação do perfil demorou mais que o esperado/);
   assert.match(integrated, />Tentar novamente<\/button>/);
   assert.match(integrated, /if \(iframeRef\.current\?\.contentWindow\) \{[\s\S]*void Promise\.all/);
-  assert.match(integrated, /!perfilPronto \? <div/);
+  assert.match(integrated, /!empresaId \? erro \? <div/);
+  assert.match(integrated, /<CarregamentoDadosModulo ativo=\{!perfilPronto \|\| !iframePronto\}/);
+  assert.match(integrated, /<TransicaoNavegacaoInterna destino="Vendas e Serviços"/);
   assert.match(page, /integratedManagementRuntime=\{bridge === 'gestao' \|\| bridge === 'gestao-local'\}/);
 });
 

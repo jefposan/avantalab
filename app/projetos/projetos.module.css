@@ -22,14 +22,14 @@
 .companyLogo { display: block; width: clamp(124px, 14vw, 190px); height: 52px; max-width: min(38vw, 260px); object-fit: contain; }
 .moduleLogo { display: block; width: clamp(148px, 12vw, 168px); height: auto; }
 .moduleIdentity span { max-width: min(38vw, 290px); overflow: hidden; color: var(--muted); font-size: clamp(12px, 1.15vw, 15px); font-weight: 850; letter-spacing: .01em; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.moduleExit { justify-self: start; min-height: 40px; display: inline-flex; align-items: center; gap: 5px; border-radius: 11px; padding: 8px 15px; color: #fff; background: var(--brand); box-shadow: 0 5px 14px color-mix(in srgb, var(--brand) 24%, transparent); font-size: 12px; font-weight: 700; text-decoration: none; }
+.moduleExit { justify-self: start; min-height: 40px; display: inline-flex; align-items: center; gap: 5px; border: 0; border-radius: 11px; padding: 8px 15px; color: #fff; background: var(--brand); appearance: none; box-shadow: 0 5px 14px color-mix(in srgb, var(--brand) 24%, transparent); font-size: 12px; font-weight: 700; text-decoration: none; }
 .moduleExit svg { display: block; flex: 0 0 16px; }
 .moduleExit:hover { background: color-mix(in srgb, var(--brand) 88%, #fff); }
 .moduleHeaderActions { justify-self: end; display: flex; align-items: center; gap: 7px; }
 .moduleSettingsButton { display: inline-grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--border); border-radius: 11px; color: var(--brand); background: var(--surface); cursor: pointer; }
 .moduleSettingsButton:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: var(--surface-soft); }
 .readOnlyBadge { justify-self: end; border-radius: 999px; padding: 6px 10px; color: var(--brand); background: color-mix(in srgb, var(--brand) 10%, var(--surface)); font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
-.moduleContent { min-height: calc(100dvh - var(--module-header-height)); }
+.moduleContent { position: relative; min-height: calc(100dvh - var(--module-header-height)); }
 .root *, .root *::before, .root *::after { box-sizing: border-box; }
 .root button, .root input, .root select, .root textarea { font: inherit; }
 .root button { color: inherit; }
@@ -631,6 +631,11 @@ fieldset.detailSection { padding-top: 8px; }
 .darkTheme .colorAction::after { border-color: var(--surface); box-shadow: 0 0 0 1px #426071; }
 .darkTheme .shortcutList kbd { border-color: #3b5363; color: var(--brand); background: #1a2b39; }
 .darkTheme .filters select, .darkTheme .filters input, .darkTheme .projectForm input, .darkTheme .projectForm select, .darkTheme .detailsPanel input, .darkTheme .detailsPanel select, .darkTheme .detailsPanel textarea, .darkTheme .toolbarButtons select, .darkTheme .filterPanel select, .darkTheme .taskTableRow select, .darkTheme .taskTableRow input { color-scheme: dark; }
+
+.moduleExit { min-height: 36px; gap: 6px; border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--border)); border-radius: 10px; padding: 7px 12px; color: var(--brand); background: var(--surface); box-shadow: none; font-size: 11px; font-weight: 800; transition: border-color .16s ease, background .16s ease; }
+.moduleExit:hover { border-color: color-mix(in srgb, var(--brand) 48%, var(--border)); background: color-mix(in srgb, var(--brand) 6%, var(--surface)); }
+.darkTheme .moduleExit { border-color: color-mix(in srgb, var(--brand) 35%, var(--border)); color: var(--brand); background: var(--surface); box-shadow: none; }
+.darkTheme .moduleExit:hover { background: color-mix(in srgb, var(--brand) 12%, var(--surface)); }
 
 @media (prefers-reduced-motion: reduce) {
   .root *, .root *::before, .root *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

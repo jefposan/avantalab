@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
+import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
 import { Modal } from '@/app/projetos/components/Modal';
 import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
 import { supabase } from '@/app/lib/supabase';
@@ -108,9 +109,8 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
     setAbaPendente(null);
   };
 
-  if (carregando) return <div className={styles.loading}><span /><strong>Preparando custos e precificação</strong><p>Carregando o cadastro compartilhado e as composições…</p></div>;
-
   return <div className={styles.workspace}>
+    <div className={styles.workspaceContent} aria-hidden={carregando || undefined} inert={carregando || undefined}>
     <aside className={styles.sidebar} aria-label="Áreas de Custos e Precificação">
       <nav>{navegacao.map((item) => <button key={item.id} type="button" className={aba === item.id ? styles.navActive : ''} onClick={() => abrirAba(item.id)}><span aria-hidden="true">{item.icone}</span>{item.rotulo}</button>)}</nav>
       <div className={styles.sharedNote}><strong>Base compartilhada</strong><p>Catálogo e Custos usam o mesmo produto. Não há cópias para sincronizar.</p></div>
@@ -127,6 +127,8 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
       {aba === 'historico' && <HistoricoView produtos={produtos} documento={documento} produtoAtivoId={produtoAtivoId} onSelecionar={selecionarProduto} />}
     </section>
+    </div>
+    <CarregamentoDadosModulo ativo={carregando} titulo="Preparando Custos e Precificação" mensagem="Carregando o cadastro compartilhado e as composições…" corPrimaria="var(--brand)" />
     <ModalConfirmacao aberto={Boolean(abaPendente)} titulo="Descartar alterações?" mensagem="Há alterações não salvas neste produto ou serviço. Se continuar, elas serão perdidas." textoCancelar="Continuar editando" textoConfirmar="Descartar e sair" corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => setAbaPendente(null)} aoConfirmar={descartarAoNavegar} />
   </div>;
 }

@@ -1,6 +1,31 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.38.0.09 -->
+<!-- ava-version: 1.38.0.19 -->
+
+> Revisão 1.38.0.19: o retorno dos módulos permanece **Início** e usa um
+> contorno discreto, sem o antigo botão sólido. A função continua levando de
+> volta à Gestão Web.
+
+> Revisão 1.38.0.18: o carregamento de dados usa uma camada clara e discreta
+> sobre todo o módulo, inclusive em Operações de Campo; o card é compacto e
+> some quando a tela está pronta.
+
+> Revisão 1.38.0.17: ao abrir um módulo pela Gestão Web, sua estrutura aparece
+> de imediato e um card central informa apenas o carregamento dos dados. Espere
+> esse card fechar antes de usar os controles: ele garante que não haja ações
+> sobre uma tela parcial. Ao fechar, o módulo já está pronto para uso.
+
+> Revisão 1.38.0.16: ao abrir **Custos e Precificação**, **Projetos**, **Vendas
+> e Serviços** ou **Operações de Campo**, a Gestão Web mantém o Dashboard pronto
+> em segundo plano e o módulo começa diretamente em sua própria estrutura. Ao
+> usar **Início**, ele fecha de imediato e o Dashboard reaparece com seus dados
+> já carregados; a confirmação de sessão, empresa e permissões continua no acesso
+> ao módulo.
+
+> Revisão 1.38.0.10: abrir **Custos e Precificação** pelo menu ou voltar por
+> **Início** troca a página imediatamente na mesma sessão. A confirmação de
+> empresa e permissões continua automática; se o acesso tiver mudado, a Gestão
+> informa o bloqueio em vez de mostrar dados indevidos.
 
 > Revisão 1.38.0.09: em **Editar cadastro do perfil > Dados fiscais**, informe
 > o regime tributário e os parâmetros padrão da empresa. Em **Produtos e

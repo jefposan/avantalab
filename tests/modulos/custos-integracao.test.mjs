@@ -23,6 +23,18 @@ const migracaoEndurecimento = readFileSync('supabase/migrations/20260826152000_e
 const migracaoPublicacao = readFileSync('supabase/migrations/20260826153000_publicar_modulo_custos.sql', 'utf8');
 const migracaoConteudoCatalogo = readFileSync('supabase/migrations/20260908230000_catalogo_conteudo_vendas_operador_completo.sql', 'utf8');
 const manifesto = readFileSync('app/custos/manifest.ts', 'utf8');
+const navegacao = readFileSync('app/lib/navegacao-modulos.ts', 'utf8');
+const transicao = readFileSync('app/components/TransicaoNavegacaoInterna.tsx', 'utf8');
+const projetos = readFileSync('app/projetos/ProjetosClient.tsx', 'utf8');
+const recebimentos = readFileSync('app/recebimentos/RecebimentosPaginaClient.tsx', 'utf8');
+const recebimentosClient = readFileSync('app/recebimentos/RecebimentosClient.tsx', 'utf8');
+const vendasIntegrado = readFileSync('app/vendas/VendasIntegrado.tsx', 'utf8');
+const vendasSistema = readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
+const paginaCustos = readFileSync('app/custos/page.tsx', 'utf8');
+const paginaProjetos = readFileSync('app/projetos/page.tsx', 'utf8');
+const paginaRecebimentos = readFileSync('app/recebimentos/page.tsx', 'utf8');
+const paginaVendas = readFileSync('app/vendas/page.tsx', 'utf8');
+const carregamentoDadosModulo = readFileSync('app/components/CarregamentoDadosModulo.tsx', 'utf8');
 
 test('Custos usa página total e exige o acesso oficial do módulo', () => {
   assert.match(registro, /id: 'custos'/);
@@ -145,4 +157,61 @@ test('produto conserva apenas a identificação fiscal e delega a tributação �
   assert.match(workspace, /Os demais tributos seguem o enquadramento da empresa/);
   assert.doesNotMatch(workspace, /<Field label="CFOP padrão">/);
   assert.doesNotMatch(workspace, /<Field label="CST ICMS">/);
+});
+
+test('Gestão mantém o Dashboard montado e recebe o retorno seguro do módulo embutido', () => {
+  assert.match(gestao, /prepararNavegacaoModulo\(/);
+  assert.match(gestao, /criarHrefModuloEmbutido\(rota, contexto\)/);
+  assert.match(gestao, /router\.prefetch\(destino\)/);
+  assert.match(gestao, /const \[moduloEmbutido, setModuloEmbutido\]/);
+  assert.match(gestao, /window\.history\.pushState\(/);
+  assert.match(gestao, /<iframe[\s\S]*src=\{moduloEmbutido\.href\}/);
+  assert.match(gestao, /event\.origin !== window\.location\.origin/);
+  assert.match(gestao, /event\.source !== moduloEmbutidoRef\.current\?\.contentWindow/);
+  assert.match(gestao, /MENSAGEM_RETORNO_MODULO_EMBUTIDO/);
+  assert.match(cliente, /consumirNavegacaoModulo\('custos', companyId\)/);
+  assert.match(cliente, /solicitarRetornoAoModuloHospedeiro\(\)/);
+  assert.match(cliente, /router\.push\(returnHref\)/);
+  assert.doesNotMatch(gestao, /consumirNavegacaoModulo\('gestao'\)/);
+  assert.match(cliente, /\/api\/modulos\/acesso\?empresaId=/);
+  assert.match(transicao, /aria-busy="true"/);
+  assert.match(navegacao, /Nunca concede\n \* acesso/);
+  assert.match(navegacao, /sessionStorage/);
+  assert.match(navegacao, /window\.parent\.postMessage\(/);
+  assert.match(navegacao, /CHAVE_CONTEXTO_URL/);
+  assert.match(navegacao, /a rota ainda confirma acesso no servidor/);
+  assert.match(navegacao, /Lê a prévia visual também no servidor/);
+  assert.match(paginaCustos, /lerContextoVisualModulo\(/);
+  assert.match(paginaProjetos, /lerContextoVisualModulo\(/);
+  assert.match(paginaRecebimentos, /lerContextoVisualModulo\(/);
+  assert.match(paginaVendas, /lerContextoVisualModulo\(/);
+});
+
+test('módulos mantêm a estrutura visível e cobrem apenas os dados até estarem prontos', () => {
+  assert.match(carregamentoDadosModulo, /role="status"/);
+  assert.match(carregamentoDadosModulo, /aria-live="polite"/);
+  assert.match(carregamentoDadosModulo, /fixed inset-0 z-\[4000\]/);
+  assert.match(workspace, /<CarregamentoDadosModulo ativo=\{carregando\}/);
+  assert.match(projetos, /<CarregamentoDadosModulo ativo=\{carregandoDados\}/);
+  assert.match(recebimentosClient, /<CarregamentoDadosModulo ativo=\{carregando\}/);
+  assert.match(vendasIntegrado, /<CarregamentoDadosModulo ativo=\{!perfilPronto \|\| !iframePronto\}/);
+});
+
+test('todos os módulos em página total devolvem o controle à Gestão quando embutidos', () => {
+  assert.match(gestao, /navegarParaModulo\('projetos', '\/projetos', empresaId \|\| ''\)/);
+  assert.match(gestao, /navegarParaModulo\('recebimentos_presencial', '\/recebimentos', empresaId \|\| ''\)/);
+  assert.match(cliente, /router\.prefetch\(returnHref\)/);
+  assert.match(projetos, /consumirNavegacaoModulo\('projetos', companyId\)/);
+  assert.match(projetos, /solicitarRetornoAoModuloHospedeiro\(\)/);
+  assert.match(projetos, /router\.push\(destino\)/);
+  assert.match(projetos, /Preparando Projetos/);
+  assert.match(recebimentos, /consumirNavegacaoModulo\('recebimentos_presencial', empresaId\)/);
+  assert.match(recebimentos, /router\.prefetch\(inicioHref\)/);
+  assert.match(recebimentos, /solicitarRetornoAoModuloHospedeiro\(\)/);
+  assert.match(recebimentos, /router\.push\(inicioHref\)/);
+  assert.match(vendasIntegrado, /consumirNavegacaoModulo\('vendas'\)/);
+  assert.match(vendasIntegrado, /solicitarRetornoAoModuloHospedeiro\(\)/);
+  assert.match(vendasIntegrado, /RETURN_TO_MANAGEMENT_MESSAGE_TYPE/);
+  assert.match(vendasSistema, /AVANTALAB_VENDAS_RETURN_TO_MANAGEMENT_V1/);
+  assert.match(vendasSistema, /window\.parent\.postMessage/);
 });

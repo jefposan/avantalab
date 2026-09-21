@@ -1,6 +1,21 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.38.0.09 -->
+<!-- ava-version: 1.38.0.19 -->
+
+> Revisão 1.38.0.19: o refinamento visual do botão **Início** pertence à Gestão
+> Web; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.38.0.18: o refinamento visual da camada de carregamento pertence à
+> Gestão Web; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.38.0.17: o card de dados carregando na abertura de módulos pertence
+> à Gestão Web; sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.38.0.16: a navegação fluida entre módulos pertence à Gestão Web;
+> sem alteração operacional na Gestão Mobile.
+
+> Revisão 1.38.0.10: a troca contínua entre Gestão Web e Custos e Precificação
+> não altera a operação da Gestão Mobile.
 
 > Revisão 1.38.0.09: os parâmetros tributários passaram para o cadastro da
 > empresa e a identificação fiscal do produto foi simplificada na Gestão Web;

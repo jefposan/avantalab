@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import ProjetosClient from './ProjetosClient';
+import { lerContextoVisualModulo } from '@/app/lib/navegacao-modulos';
 
 export const metadata: Metadata = {
   title: 'AvantaProjetos — Mapa de Projetos',
@@ -7,10 +8,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true },
 };
 
-export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ empresaId?: string | string[]; projetoId?: string | string[]; retornoEmpresaId?: string | string[] }> }) {
+export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ empresaId?: string | string[]; projetoId?: string | string[]; retornoEmpresaId?: string | string[]; __avctx?: string | string[] }> }) {
   const params = await searchParams;
   const empresaId = Array.isArray(params.empresaId) ? params.empresaId[0] : params.empresaId;
   const projetoId = Array.isArray(params.projetoId) ? params.projetoId[0] : params.projetoId;
   const retornoEmpresaId = Array.isArray(params.retornoEmpresaId) ? params.retornoEmpresaId[0] : params.retornoEmpresaId;
-  return <ProjetosClient companyId={String(empresaId || '').trim()} initialProjectId={String(projetoId || '').trim()} returnCompanyId={String(retornoEmpresaId || '').trim()} />;
+  const contextoVisual = lerContextoVisualModulo(Array.isArray(params.__avctx) ? params.__avctx[0] : params.__avctx, 'projetos', empresaId);
+  return <ProjetosClient companyId={String(empresaId || '').trim()} initialProjectId={String(projetoId || '').trim()} returnCompanyId={String(retornoEmpresaId || '').trim()} initialContext={contextoVisual} />;
 }

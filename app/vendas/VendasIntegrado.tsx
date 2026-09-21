@@ -1,9 +1,12 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
+import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
+import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
+import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import type { CatalogoVendasDTO } from '@/app/modules/vendas/types';
 import { CODIGOS_PERMISSOES_VENDAS } from '@/app/modules/vendas/permissions';
 import { RECEIVABLE_MOVE_REQUEST_TYPE, RECEIVABLE_MOVE_RESPONSE_TYPE, RECEIVABLE_READY_TYPE, RECEIVABLE_SNAPSHOT_TYPE } from '@/app/vendas/lib/commercial-receivable-bridge.mjs';
@@ -47,6 +50,7 @@ const ACCESS_READY_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_READY_V1';
 const ACCESS_SNAPSHOT_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_SNAPSHOT_V1';
 const ACCESS_SAVE_REQUEST_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_SAVE_REQUEST_V1';
 const ACCESS_SAVE_RESPONSE_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_SAVE_RESPONSE_V1';
+const RETURN_TO_MANAGEMENT_MESSAGE_TYPE = 'AVANTALAB_VENDAS_RETURN_TO_MANAGEMENT_V1';
 const ESCRITA_PERMISSOES_HABILITADA = true;
 const PERFIS_MODULO = ['gestor_master', 'administrador', 'operador_completo', 'operador_simples'] as const;
 const PERMISSOES_VENDAS = new Set(CODIGOS_PERMISSOES_VENDAS);
@@ -183,9 +187,11 @@ function analisarPublicacaoRegrasFiscais(data: any) {
   };
 }
 
-export default function VendasIntegrado() {
+export default function VendasIntegrado({ initialContext }: { initialContext?: ContextoNavegacaoModulo | null }) {
+  const router = useRouter();
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [empresaId, setEmpresaId] = useState('');
+  const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('vendas'));
+  const [empresaId, setEmpresaId] = useState(() => contextoInicial?.empresaId || '');
   const [catalogo, setCatalogo] = useState<CatalogoVendasDTO | null>(null);
   const [perfilCadastro, setPerfilCadastro] = useState<Record<string, unknown> | null>(null);
   const [logoUrl, setLogoUrl] = useState('');
@@ -194,6 +200,13 @@ export default function VendasIntegrado() {
   const [erro, setErro] = useState('');
   const [iframePronto, setIframePronto] = useState(false);
   const origemPrototipo = useMemo(() => typeof window === 'undefined' ? '' : window.location.origin, []);
+
+  const retornarParaGestao = useCallback(() => {
+    const empresaRetorno = empresaId || contextoInicial?.empresaId || '';
+    const destino = empresaRetorno ? `/gestao?empresaId=${encodeURIComponent(empresaRetorno)}` : '/gestao';
+    if (solicitarRetornoAoModuloHospedeiro()) return;
+    router.push(destino);
+  }, [contextoInicial, empresaId, router]);
 
   const enviarCatalogo = useCallback(() => {
     if (!perfilCadastro || !empresaId || !iframePronto || !iframeRef.current?.contentWindow) return;
@@ -457,6 +470,7 @@ export default function VendasIntegrado() {
   useEffect(() => {
     const receber = (event: MessageEvent) => {
       if (event.origin !== origemPrototipo || event.source !== iframeRef.current?.contentWindow) return;
+      if (event.data?.type === RETURN_TO_MANAGEMENT_MESSAGE_TYPE) { retornarParaGestao(); return; }
       if (event.data?.type === 'AVANTALAB_VENDAS_CATALOGO_READY_V1') { setIframePronto(true); return; }
       if (event.data?.type === ACCESS_READY_MESSAGE_TYPE) { void carregarPermissoes(empresaId); return; }
       if (event.data?.type === FISCAL_RULES_READY_TYPE) { void carregarRegrasFiscais(empresaId); return; }
@@ -978,13 +992,16 @@ export default function VendasIntegrado() {
     };
     window.addEventListener('message', receber);
     return () => window.removeEventListener('message', receber);
-  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, empresaId, origemPrototipo]);
+  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, empresaId, origemPrototipo, retornarParaGestao]);
 
   const perfilPronto = Boolean(empresaId && perfilCadastro);
 
   return <main className="flex min-h-screen flex-col bg-slate-100 text-slate-800">
-    <section className="min-h-0 flex-1" aria-label="Vendas e Serviços">
-      {!perfilPronto ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">{erro ? 'Módulo indisponível' : 'Preparando o módulo'}</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro || 'Confirmando sua sessão e o perfil empresarial ativo.'}</p>{erro ? <div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><Link href="/gestao" className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</Link></div> : null}</div></div> : <iframe ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className="block h-screen min-h-[620px] w-full border-0 bg-white" onLoad={() => setIframePronto(true)} />}
+    <section className="relative min-h-0 flex-1" aria-label="Vendas e Serviços">
+      {!empresaId ? erro ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <TransicaoNavegacaoInterna destino="Vendas e Serviços" empresa={contextoInicial?.empresa} /> : erro && !perfilPronto ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <>
+        <div aria-hidden={!perfilPronto || undefined} inert={!perfilPronto || undefined}><iframe ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className="block h-screen min-h-[620px] w-full border-0 bg-white" onLoad={() => setIframePronto(true)} /></div>
+        <CarregamentoDadosModulo ativo={!perfilPronto || !iframePronto} titulo="Preparando Vendas e Serviços" mensagem="Renderizando o módulo e carregando os dados deste perfil…" corPrimaria={corPrimaria} />
+      </>}
     </section>
     <RodapeAvanta />
   </main>;

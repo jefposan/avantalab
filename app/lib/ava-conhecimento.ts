@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.38.0.19: o retorno **Início** dos módulos usa fundo de superfície e contorno discreto, sem preenchimento sólido, mas continua levando à Gestão Web. A camada de carregamento ocupa todo o viewport, acima de cada workspace, e só some quando perfil, permissões e dados estão prontos.
+// Revisado na versão 1.38.0.10: Gestão Web e Custos trocam de página sem a cena institucional de carregamento; a permissão continua confirmada pelo servidor.
 // Revisado na versão 1.38.0.09: regime e parâmetros tributários pertencem à empresa; NCM e unidade tributável ficam no produto; CFOP e natureza são definidos na emissão.
 // Revisado na versão 1.38.0.08: código duplicado devolve foco ao campo; Em estudo mantém o item interno até a publicação no Catálogo.
 // Revisado na versão 1.38.0.05: clicar novamente em Produtos e serviços retorna à lista inicial e permite salvar ou descartar edição pendente.

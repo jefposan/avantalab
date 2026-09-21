@@ -1,6 +1,25 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.38.0.09 -->
+<!-- ava-version: 1.38.0.19 -->
+
+> Revisão 1.38.0.19: o retorno **Início** de Vendas e Serviços usa o mesmo
+> contorno discreto dos demais módulos e continua levando à Gestão Web.
+
+> Revisão 1.38.0.18: o card de dados carregando foi refinado para uma superfície
+> clara e compacta, cobrindo todo o módulo até que esteja pronto.
+
+> Revisão 1.38.0.17: ao abrir Vendas e Serviços pela Gestão Web, a estrutura
+> aparece primeiro e o card central de carregamento protege a tela até que o
+> perfil, permissões e dados estejam prontos. Use os controles somente quando
+> ele fechar.
+
+> Revisão 1.38.0.16: no Vendas e Serviços aberto pela Gestão Web, a estrutura
+> do módulo abre diretamente e **Início** revela o Dashboard que permaneceu
+> pronto, sem telas intermediárias. A confirmação de acesso permanece automática
+> na entrada do módulo.
+
+> Revisão 1.38.0.10: a troca contínua entre Gestão Web e Custos e Precificação
+> não altera a operação do AvantaVendas.
 
 > Revisão 1.38.0.09: NCM e unidade tributável continuam no produto; o regime
 > e os parâmetros tributários pertencem ao cadastro da empresa, enquanto CFOP

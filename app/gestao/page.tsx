@@ -67,6 +67,7 @@ import {
   type SubAcaoGerenciarPerfil,
 } from '@/app/lib/perfis-quota';
 import { modulosPaginaTotalAtivos, obterRegistroModulo } from '@/app/lib/modulos-registro';
+import { criarHrefModuloEmbutido, MENSAGEM_RETORNO_MODULO_EMBUTIDO, prepararNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { resolverAcessoComercialModulo } from '@/app/lib/modulos-acesso-comercial';
 import {
   buscarEmpresaDoUsuario,
@@ -525,6 +526,8 @@ export default function AppGestao() {
   // --- ESTADOS PRINCIPAIS ---
 
 const [mounted, setMounted] = useState(false);
+const [moduloEmbutido, setModuloEmbutido] = useState<{ id: string; nome: string; href: string } | null>(null);
+const moduloEmbutidoRef = useRef<HTMLIFrameElement | null>(null);
 const [isTelaMobile, setIsTelaMobile] = useState(false);
 const [darkMode, setDarkMode] = useState(false);
 const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
@@ -539,6 +542,49 @@ const [telefoneObrigatorioConfirmado, setTelefoneObrigatorioConfirmado] = useSta
 const [segundosReenvioTelefoneObrigatorio, setSegundosReenvioTelefoneObrigatorio] = useState(0);
 const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useState(false);
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
+
+  const sincronizarModuloEmbutidoPelaUrl = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    const moduloId = params.get('modulo');
+    const modulo = moduloId ? obterRegistroModulo(moduloId) : null;
+    if (!moduloId || !modulo || modulo.navegacao.modo !== 'pagina_total' || !modulo.navegacao.rota || !empresaId) {
+      setModuloEmbutido(null);
+      return;
+    }
+    setModuloEmbutido({
+      id: modulo.id,
+      nome: modulo.nome,
+      href: `${modulo.navegacao.rota}?empresaId=${encodeURIComponent(empresaId)}`,
+    });
+  }, [empresaId]);
+
+  const fecharModuloEmbutido = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('modulo')) {
+      window.history.back();
+      return;
+    }
+    setModuloEmbutido(null);
+  }, []);
+
+  useEffect(() => {
+    sincronizarModuloEmbutidoPelaUrl();
+    window.addEventListener('popstate', sincronizarModuloEmbutidoPelaUrl);
+    return () => window.removeEventListener('popstate', sincronizarModuloEmbutidoPelaUrl);
+  }, [sincronizarModuloEmbutidoPelaUrl]);
+
+  useEffect(() => {
+    const receberRetornoDoModulo = (event: MessageEvent) => {
+      if (
+        event.origin !== window.location.origin
+        || event.source !== moduloEmbutidoRef.current?.contentWindow
+        || event.data?.type !== MENSAGEM_RETORNO_MODULO_EMBUTIDO
+      ) return;
+      fecharModuloEmbutido();
+    };
+    window.addEventListener('message', receberRetornoDoModulo);
+    return () => window.removeEventListener('message', receberRetornoDoModulo);
+  }, [fecharModuloEmbutido]);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<SubAcaoGerenciarPerfil>(null);
   const criandoPerfilAdicional = ehCriacaoDePerfilAdicional(
@@ -2952,7 +2998,27 @@ useEffect(() => {
       return;
     }
     setModalModulos(false);
-    router.push(`${modulo.navegacao.rota}?empresaId=${encodeURIComponent(empresaId)}`);
+    navegarParaModulo(modulo.id, modulo.navegacao.rota, empresaId);
+  }
+
+  function navegarParaModulo(moduloId: string, rota: string, empresaAtualId: string) {
+    const contexto = {
+      destino: moduloId,
+      empresaId: empresaAtualId,
+      empresa: { nome: nomeEmpresaAtual, corPrimaria, temaEscuro: darkMode, logoUrl: logoUrl || undefined },
+      perfil: (perfilUsuario || 'operador_simples') as PerfilAcessoUsuario,
+      podeEditar: podeEditarLancamentos,
+      podeGerenciarModulo: podeGerenciarModulos,
+    };
+    prepararNavegacaoModulo(contexto);
+    const destino = criarHrefModuloEmbutido(rota, contexto);
+    router.prefetch(destino);
+    const modulo = obterRegistroModulo(moduloId);
+    setModuloEmbutido({ id: moduloId, nome: modulo?.nome || 'Módulo', href: destino });
+    const url = new URL(window.location.href);
+    url.searchParams.set('empresaId', empresaAtualId);
+    url.searchParams.set('modulo', moduloId);
+    window.history.pushState({ ...window.history.state, avantaModuloEmbutido: moduloId }, '', url);
   }
 
   async function desinstalarModulo(moduloId: string) {
@@ -10912,7 +10978,7 @@ if (validacaoTelefoneObrigatoria) {
               onClick={() => {
                 setAjustesAberto(false);
                 setMenuAjuste(null);
-                router.push(`${modulo.navegacao.rota}?empresaId=${encodeURIComponent(empresaId || '')}`);
+                navegarParaModulo(modulo.id, modulo.navegacao.rota!, empresaId || '');
               }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
@@ -10933,7 +10999,7 @@ if (validacaoTelefoneObrigatoria) {
               onClick={() => {
                 setAjustesAberto(false);
                 setMenuAjuste(null);
-                router.push(`/projetos?empresaId=${encodeURIComponent(empresaId || '')}`);
+                navegarParaModulo('projetos', '/projetos', empresaId || '');
               }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
@@ -10967,7 +11033,10 @@ if (validacaoTelefoneObrigatoria) {
         {modulosAtivos.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
           <Tooltip texto="Gerencie recebimentos, serviços, empresas e colaboradores em campo." posicao="right" wrapperClassName="av-menu-gestao-atalho order-40 w-full">
             <button
-              onClick={() => { setAjustesAberto(false); router.push(`/recebimentos?empresaId=${encodeURIComponent(empresaId || '')}`); }}
+              onClick={() => {
+                setAjustesAberto(false);
+                navegarParaModulo('recebimentos_presencial', '/recebimentos', empresaId || '');
+              }}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
@@ -12293,6 +12362,17 @@ if (validacaoTelefoneObrigatoria) {
   </div>
 </footer>
 
+      {moduloEmbutido && (
+        <section className="fixed inset-0 z-[10000] bg-white" role="dialog" aria-modal="true" aria-label={moduloEmbutido.nome}>
+          <iframe
+            ref={moduloEmbutidoRef}
+            key={moduloEmbutido.href}
+            src={moduloEmbutido.href}
+            title={moduloEmbutido.nome}
+            className="block h-full w-full border-0 bg-white"
+          />
+        </section>
+      )}
 
     </div>
   );

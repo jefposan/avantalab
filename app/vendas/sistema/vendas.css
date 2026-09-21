@@ -99,17 +99,20 @@ select:focus-visible {
 .module-exit {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 40px;
-  padding: 8px 15px;
-  color: #fff;
-  background: var(--av-blue-900);
-  border-radius: 11px;
-  box-shadow: 0 5px 14px rgba(0, 62, 115, 0.24);
-  font-size: 12px;
-  font-weight: 700;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid color-mix(in srgb, var(--av-profile-primary, #003e73) 28%, var(--av-border));
+  color: var(--av-blue-900);
+  background: var(--av-surface);
+  appearance: none;
+  border-radius: 10px;
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 800;
+  transition: border-color .16s ease, background .16s ease;
 }
-.module-exit:hover { background: color-mix(in srgb, var(--av-blue-900) 88%, #fff); }
+.module-exit:hover { border-color: color-mix(in srgb, var(--av-profile-primary, #003e73) 48%, var(--av-border)); background: color-mix(in srgb, var(--av-profile-primary, #003e73) 6%, var(--av-surface)); }
 
 .module-brand { display: grid; justify-items: center; gap: 7px; min-width: 0; line-height: 1.2; }
 .company-logo { display: block; width: clamp(124px, 14vw, 190px); height: 52px; max-width: min(38vw, 260px); object-fit: contain; }

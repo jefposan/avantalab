@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
+import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
+import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import { criarRepoSupabase } from './data/repo';
 import AjustesOperacoesCampo from './components/AjustesOperacoesCampo';
@@ -17,9 +19,14 @@ type AcessoRecebimentos = {
   podeGerenciarModulo: boolean;
 };
 
-export default function RecebimentosPaginaClient({ empresaId }: { empresaId: string }) {
+export default function RecebimentosPaginaClient({ empresaId, initialContext }: { empresaId: string; initialContext?: ContextoNavegacaoModulo | null }) {
   const router = useRouter();
-  const [acesso, setAcesso] = useState<AcessoRecebimentos | null>(null);
+  const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('recebimentos_presencial', empresaId));
+  const [acesso, setAcesso] = useState<AcessoRecebimentos | null>(() => contextoInicial?.podeGerenciarModulo ? {
+    empresa: { id: contextoInicial.empresaId, ...contextoInicial.empresa },
+    perfil: contextoInicial.perfil,
+    podeGerenciarModulo: contextoInicial.podeGerenciarModulo,
+  } : null);
   const [erro, setErro] = useState('');
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
 
@@ -59,6 +66,10 @@ export default function RecebimentosPaginaClient({ empresaId }: { empresaId: str
   const repo = useMemo(() => acesso ? criarRepoSupabase(acesso.empresa.id) : null, [acesso]);
   const inicioHref = empresaId ? `/gestao?empresaId=${encodeURIComponent(empresaId)}` : '/gestao';
 
+  useEffect(() => {
+    router.prefetch(inicioHref);
+  }, [inicioHref, router]);
+
   if (erro) return (
     <main className={styles.acessoModuloEstado}>
       <section>
@@ -69,7 +80,15 @@ export default function RecebimentosPaginaClient({ empresaId }: { empresaId: str
       </section>
     </main>
   );
-  if (!acesso || !repo) return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" />;
+  if (!acesso || !repo) {
+    if (contextoInicial) return <TransicaoNavegacaoInterna destino="Operações de Campo" empresa={contextoInicial.empresa} />;
+    return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" />;
+  }
+
+  const retornarInicio = () => {
+    if (solicitarRetornoAoModuloHospedeiro()) return;
+    router.push(inicioHref);
+  };
 
   return (
     <main
@@ -77,7 +96,7 @@ export default function RecebimentosPaginaClient({ empresaId }: { empresaId: str
       style={{ '--cp': acesso.empresa.corPrimaria } as CSSProperties}
     >
       <header className={styles.cabecalhoModulo}>
-        <Link href={inicioHref} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab">‹ Início</Link>
+        <button type="button" onClick={retornarInicio} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab">‹ Início</button>
         <div className={styles.identidadeModulo}>
           {acesso.empresa.logoUrl
             ? <img src={acesso.empresa.logoUrl} alt={acesso.empresa.nome} className={styles.logoEmpresaModulo} />

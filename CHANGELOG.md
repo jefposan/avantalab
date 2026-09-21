@@ -1,5 +1,65 @@
 # Changelog
 
+## 1.38.0.19 - 2026-09-20
+- **Retorno dos módulos**: o botão **Início** adota o modelo discreto aprovado:
+  fundo de superfície, contorno sutil e seta, sem preenchimento sólido ou
+  sombra. Custos, Projetos, Vendas e Serviços e Operações de Campo usam a
+  mesma linguagem visual.
+
+## 1.38.0.18 - 2026-09-20
+- **Camada de carregamento refinada**: o card de dados passou a usar uma
+  superfície clara, compacta e limpa, sem fundo escuro. A camada ocupa todo o
+  viewport do módulo com elevação alta, inclusive em Operações de Campo.
+
+## 1.38.0.17 - 2026-09-20
+- **Abertura pronta, dados em camada**: Custos e Precificação, Projetos,
+  Vendas e Serviços e Operações de Campo agora mantêm a estrutura do módulo
+  já renderizada e exibem um card central, breve e acessível somente enquanto
+  carregam seus dados. A camada bloqueia ações até a tela estar pronta, sem
+  expor uma versão parcial do módulo.
+
+## 1.38.0.16 - 2026-09-20
+- **Sem flash de validação**: a prévia visual agora é lida pela própria rota do
+  módulo no servidor, antes da primeira pintura do iframe. O card padrão
+  **Validando acesso** não é mais emitido ao abrir ou retornar pela Gestão;
+  somente a estrutura e o carregamento local do módulo são exibidos.
+
+## 1.38.0.15 - 2026-09-20
+- **Entrada direta no módulo**: a Gestão agora entrega ao iframe somente uma
+  prévia visual curta e não sensível do perfil ativo. Assim, a abertura de
+  Custos e Precificação, Projetos, Vendas e Serviços e Operações de Campo já
+  começa na estrutura do próprio módulo, sem a tela institucional de
+  **Validando acesso**. Sessão e permissões continuam obrigatoriamente
+  confirmadas no servidor.
+
+## 1.38.0.14 - 2026-09-20
+- **Troca realmente contínua entre módulos**: a Gestão mantém o Dashboard
+  montado enquanto abre Custos e Precificação, Projetos, Vendas e Serviços ou
+  Operações de Campo em sua superfície interna. Ao usar **Início**, a superfície
+  fecha e revela o Dashboard já carregado, sem cards vazios, tela institucional
+  ou um segundo carregamento.
+
+## 1.38.0.12 - 2026-09-20
+- **Cobertura completa dos atalhos**: os caminhos especiais de **Projetos** e
+  **Operações de Campo** no menu Gestão agora usam a mesma prévia, pré-carregamento
+  e retorno fluido dos demais módulos em página total.
+
+## 1.38.0.11 - 2026-09-20
+- **Navegação fluida entre módulos**: Gestão, Custos e Precificação, Projetos,
+  Vendas e Serviços e Operações de Campo passam a antecipar a rota de retorno
+  e exibem a estrutura da página enquanto somente seus dados próprios carregam.
+- **Retorno integrado de Vendas**: o botão **Início** agora sai do iframe pela
+  navegação interna do AvantaLab, preservando a mesma experiência de troca de
+  página dos demais módulos.
+
+## 1.38.0.10 - 2026-09-20
+- **Troca contínua entre Gestão e Custos**: ao abrir ou retornar do módulo na
+  mesma sessão, o contexto visual da empresa acompanha a rota e a tela
+  institucional de carregamento deixa de interromper a navegação.
+- **Segurança preservada**: sessão, empresa e permissão continuam confirmadas
+  pelo módulo no servidor; o contexto breve salvo no navegador nunca concede
+  acesso nem libera ações.
+
 ## 1.38.0.09 - 2026-09-20
 - **Tributação por empresa**: o cadastro empresarial passa a reunir o regime e
   os parâmetros tributários padrão; eles deixam de ser repetidos no formulário

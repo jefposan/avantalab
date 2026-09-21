@@ -54,7 +54,8 @@ test('falha do catálogo não esconde os ajustes fiscais do módulo', async () =
   assert.match(source, /carregarDocumentosFiscais\(perfilId, token\)/);
   assert.match(source, /carregarPermissoes\(perfilId\)/);
   assert.match(source, /carregarRegrasFiscais\(perfilId\)/);
-  assert.match(source, /!perfilPronto \?[^]*: <iframe/);
+  assert.match(source, /!empresaId \?[^]*: <TransicaoNavegacaoInterna/);
+  assert.match(source, /<CarregamentoDadosModulo ativo=\{!perfilPronto \|\| !iframePronto\}/);
   assert.match(source, /setPerfilCadastro\(perfil\.cadastro\)[^]*fetch\(`\/api\/modulos\/vendas\/catalogo/);
   assert.doesNotMatch(source, /!catalogo \?[^]*: <iframe/);
 });

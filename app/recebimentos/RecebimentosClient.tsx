@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import styles from './recebimentos.module.css';
 import { corEhClara } from '@/app/lib/formatters';
+import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
 import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Servico, Subempresa } from './components/types';
 import PainelAdministrativo from './components/PainelAdministrativo';
@@ -118,9 +119,8 @@ export default function RecebimentosClient({
   const painel = (
     <>
       {erro && <div className={styles.aviso} role="alert" style={{ marginBottom: 12 }}>{erro}</div>}
-      {carregando ? (
-        <div className={styles.muted} role="status" style={{ padding: 28, textAlign: 'center' }}>Carregando recebimentos…</div>
-      ) : (
+      <div className={styles.painelDados} aria-hidden={carregando || undefined} inert={carregando || undefined}>
+      {carregando ? <section className={styles.esqueletoPainel} aria-hidden="true"><i /><i /><i /><i /></section> : (
         <PainelAdministrativo
           perfil={perfil}
           darkMode={darkMode}
@@ -173,6 +173,8 @@ export default function RecebimentosClient({
           onConcluirAgendamentoServico={(id) => executar(() => repoAtual.concluirAgendamentoServico(id))}
         />
       )}
+      </div>
+      <CarregamentoDadosModulo ativo={carregando} titulo="Preparando Operações de Campo" mensagem="Carregando recebimentos, serviços e equipes…" corPrimaria={corPrimaria} />
     </>
   );
 

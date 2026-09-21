@@ -99,7 +99,8 @@ test('modo de foco do mapa oculta os cabeçalhos e preserva o retorno flutuante'
   assert.match(mapa, /<Tooltip texto="Adicionar filho \(Tab\)" posicao="bottom">/);
   assert.doesNotMatch(mapa, /title="Adicionar filho \(Tab\)"/);
   assert.match(estilos, /\.moduleExit svg \{ display: block; flex: 0 0 16px; \}/);
-  assert.match(estilos, /\.moduleExit \{[^}]*background: var\(--brand\);/);
+  assert.match(estilos, /\.moduleExit \{[^}]*border: 1px solid color-mix\(in srgb, var\(--brand\) 28%, var\(--border\)\);/);
+  assert.match(estilos, /\.moduleExit \{[^}]*background: var\(--surface\);[^}]*box-shadow: none/);
 });
 
 test('botão de compartilhamento executa a função de cópia', () => {

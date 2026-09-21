@@ -7206,11 +7206,18 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     : '/gestao';
   const profileColor = managementCatalogBridge?.primaryColor || '#003e73';
   const companyLogoUrl = managementCatalogBridge?.logoUrl || '';
+  const retornarGestao = () => {
+    if (integratedManagementRuntime && window.parent !== window) {
+      window.parent.postMessage({ type: 'AVANTALAB_VENDAS_RETURN_TO_MANAGEMENT_V1' }, window.location.origin);
+      return;
+    }
+    window.location.assign(gestaoHref);
+  };
 
   return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div className="commercial-app" style={{ '--av-profile-primary': profileColor } as CSSProperties}>
     <header className="topbar">
       <div className="topbar-start">
-        <a href={gestaoHref} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</a>
+        <button type="button" onClick={retornarGestao} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</button>
         <button type="button" className="mobile-menu-button" onClick={() => setMobileMenu(true)} aria-label="Abrir menu"><Icon name="menu"/></button>
       </div>
       <div className="module-brand">

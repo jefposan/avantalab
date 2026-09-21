@@ -1,10 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
+import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
+import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import { Icon } from '@/app/projetos/components/Icon';
 import { Modal } from '@/app/projetos/components/Modal';
@@ -18,9 +19,16 @@ export type CustosAccess = {
   podeGerenciarModulo: boolean;
 };
 
-export default function CustosClient({ companyId, initialNewType, returnTo }: { companyId: string; initialNewType?: 'produto'; returnTo?: 'vendas' }) {
+export default function CustosClient({ companyId, initialNewType, returnTo, initialContext }: { companyId: string; initialNewType?: 'produto'; returnTo?: 'vendas'; initialContext?: ContextoNavegacaoModulo | null }) {
   const router = useRouter();
-  const [access, setAccess] = useState<CustosAccess | null>(null);
+  const returnHref = returnTo === 'vendas' && companyId ? `/vendas?empresaId=${encodeURIComponent(companyId)}` : companyId ? `/gestao?empresaId=${encodeURIComponent(companyId)}` : '/gestao';
+  const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('custos', companyId));
+  const [access, setAccess] = useState<CustosAccess | null>(() => contextoInicial ? {
+    empresa: { id: contextoInicial.empresaId, ...contextoInicial.empresa },
+    perfil: contextoInicial.perfil,
+    podeEditar: contextoInicial.podeEditar,
+    podeGerenciarModulo: contextoInicial.podeGerenciarModulo,
+  } : null);
   const [error, setError] = useState('');
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
   const [atualizandoTema, setAtualizandoTema] = useState(false);
@@ -52,8 +60,15 @@ export default function CustosClient({ companyId, initialNewType, returnTo }: { 
     return () => window.clearTimeout(timer);
   }, [mensagem]);
 
-  if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>Custos e Precificação</h1><p>{error}</p><Link href="/gestao">‹ Início</Link></div></main>;
-  if (!access) return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" />;
+  useEffect(() => {
+    router.prefetch(returnHref);
+  }, [returnHref, router]);
+
+  if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>Custos e Precificação</h1><p>{error}</p><button type="button" onClick={() => router.push('/gestao')}>‹ Início</button></div></main>;
+  if (!access) {
+    if (contextoInicial) return <TransicaoNavegacaoInterna destino="Custos e Precificação" empresa={contextoInicial.empresa} />;
+    return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" />;
+  }
 
   const alterarTema = async () => {
     if (atualizandoTema || !access.podeGerenciarModulo) return;
@@ -78,13 +93,16 @@ export default function CustosClient({ companyId, initialNewType, returnTo }: { 
       setMensagem(falha instanceof Error ? falha.message : 'Não foi possível atualizar o modo visual.');
     } finally { setAtualizandoTema(false); }
   };
-  const returnHref = returnTo === 'vendas' && companyId ? `/vendas?empresaId=${encodeURIComponent(companyId)}` : companyId ? `/gestao?empresaId=${encodeURIComponent(companyId)}` : '/gestao';
   const returnLabel = returnTo === 'vendas' ? 'Voltar' : 'Início';
   const returnAriaLabel = returnTo === 'vendas' ? 'Voltar para Vendas e Serviços' : 'Voltar ao Dashboard do AvantaLab';
+  const voltar = () => {
+    if (solicitarRetornoAoModuloHospedeiro()) return;
+    router.push(returnHref);
+  };
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>
     <header className={styles.moduleHeader}>
-      <Link href={returnHref} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</Link>
+      <button type="button" onClick={voltar} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</button>
       <div className={styles.moduleIdentity}>
         {access.empresa.logoUrl
           ? <img src={access.empresa.logoUrl} alt={access.empresa.nome} className={styles.moduleLogo} />

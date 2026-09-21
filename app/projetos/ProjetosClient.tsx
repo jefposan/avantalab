@@ -6,6 +6,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
+import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
+import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
+import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { useProjectCollection } from './hooks/useProjectCollection';
 import { SupabaseProjectRepository } from './services/supabase-repository';
 import styles from './projetos.module.css';
@@ -29,16 +32,19 @@ type ModuleAccess = {
 type SharedContext = { id: string; nome: string; corPrimaria: string; temaEscuro: boolean; logoUrl?: string };
 type SharedProjectsState = 'loading' | 'ready' | 'error';
 
-function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId, showSettings = false, onSettings, badge }: {
+function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId, showSettings = false, onSettings, badge, onReturn }: {
   companyName: string;
   companyLogoUrl?: string;
   returnCompanyId: string;
   showSettings?: boolean;
   onSettings?: () => void;
   badge?: string;
+  onReturn?: () => void;
 }) {
   return <header className={styles.moduleHeader}>
-    <Link href={`/gestao?empresaId=${encodeURIComponent(returnCompanyId)}`} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</Link>
+    {onReturn
+      ? <button type="button" onClick={onReturn} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>
+      : <Link href={`/gestao?empresaId=${encodeURIComponent(returnCompanyId)}`} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</Link>}
     <div className={styles.moduleIdentity}>
       {companyLogoUrl ? <img src={companyLogoUrl} alt={companyName} className={styles.companyLogo} /> : <span>{companyName}</span>}
     </div>
@@ -69,6 +75,7 @@ function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, onAc
   const effectiveReturnCompanyId = returnCompanyId || access.retornoEmpresaId || companyId;
   const activeSharedAccess = access.compartilhamentos?.find((item) => item.projetoId === activeProjectId)?.acesso;
   const activeProjectReadOnly = access.compartilhado ? activeSharedAccess !== 'editor' : !access.podeEditar;
+  const carregandoDados = !loaded || sharedProjectsState === 'loading';
 
   useEffect(() => {
     if (!message) return;
@@ -76,7 +83,15 @@ function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, onAc
     return () => window.clearTimeout(timer);
   }, [message, setMessage]);
 
-  if (!loaded) return <TelaCarregandoAcesso titulo="Preparando projetos" mensagem="Carregando os dados do perfil com segurança…" />;
+  const retornarInicio = () => {
+    if (solicitarRetornoAoModuloHospedeiro()) return;
+    const destino = `/gestao?empresaId=${encodeURIComponent(effectiveReturnCompanyId)}`;
+    router.push(destino);
+  };
+
+  useEffect(() => {
+    router.prefetch(`/gestao?empresaId=${encodeURIComponent(effectiveReturnCompanyId)}`);
+  }, [effectiveReturnCompanyId, router]);
 
   const voltarParaProjetos = () => {
     setMapaEmFoco(false);
@@ -117,9 +132,12 @@ function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, onAc
   };
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.darkTheme : ''} ${mapaEmFoco ? styles.mapFocusMode : ''} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
-    <ProjectModuleHeader companyName={access.empresa.nome} companyLogoUrl={access.empresa.logoUrl} returnCompanyId={effectiveReturnCompanyId} showSettings={access.podeGerenciarModulo} onSettings={() => setAjustesAbertos(true)} badge={activeProject ? activeProjectReadOnly ? 'Somente visualização' : access.compartilhado ? 'Projeto compartilhado' : undefined : access.compartilhado ? 'Acesso compartilhado' : !access.podeEditar ? 'Somente visualização' : undefined} />
+    <ProjectModuleHeader companyName={access.empresa.nome} companyLogoUrl={access.empresa.logoUrl} returnCompanyId={effectiveReturnCompanyId} onReturn={retornarInicio} showSettings={access.podeGerenciarModulo} onSettings={() => setAjustesAbertos(true)} badge={activeProject ? activeProjectReadOnly ? 'Somente visualização' : access.compartilhado ? 'Projeto compartilhado' : undefined : access.compartilhado ? 'Acesso compartilhado' : !access.podeEditar ? 'Somente visualização' : undefined} />
     <div className={styles.moduleContent}>
-      {activeProject ? <ProjectWorkspace readOnly={activeProjectReadOnly} project={activeProject} people={collection.people} saveState={saveState} onBack={voltarParaProjetos} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={!activeProjectReadOnly && canUndo} canRedo={!activeProjectReadOnly && canRedo} onMessage={setMessage} mapaEmFoco={mapaEmFoco} onMapaEmFocoChange={setMapaEmFoco} /> : <ProjectHome readOnly={!access.podeEditar || access.compartilhado === true} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} sharedProjects={sharedProjects} sharedProjectsState={sharedProjectsState} onOpenShared={openSharedProject} sharedAccessOnly={access.compartilhado === true} />}
+      <div aria-hidden={carregandoDados || undefined} inert={carregandoDados || undefined}>
+        {!loaded ? <section className={styles.emptyState}><span aria-hidden="true">◇</span><h2>Área de projetos</h2><p>A estrutura do módulo já está pronta.</p></section> : activeProject ? <ProjectWorkspace readOnly={activeProjectReadOnly} project={activeProject} people={collection.people} saveState={saveState} onBack={voltarParaProjetos} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={!activeProjectReadOnly && canUndo} canRedo={!activeProjectReadOnly && canRedo} onMessage={setMessage} mapaEmFoco={mapaEmFoco} onMapaEmFocoChange={setMapaEmFoco} /> : <ProjectHome readOnly={!access.podeEditar || access.compartilhado === true} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} sharedProjects={sharedProjects} sharedProjectsState={sharedProjectsState} onOpenShared={openSharedProject} sharedAccessOnly={access.compartilhado === true} />}
+      </div>
+      <CarregamentoDadosModulo ativo={carregandoDados} titulo="Preparando Projetos" mensagem="Carregando os projetos e acessos deste perfil…" corPrimaria={access.empresa.corPrimaria} />
     </div>
     {!mapaEmFoco && <RodapeAvanta darkMode={access.empresa.temaEscuro} />}
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes do AvantaProjetos" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
@@ -156,8 +174,15 @@ function SharedProjectsHub({ companyId, context, projects, state }: { companyId:
   </main>;
 }
 
-export default function ProjetosClient({ companyId, initialProjectId = '', returnCompanyId = '' }: { companyId: string; initialProjectId?: string; returnCompanyId?: string }) {
-  const [access, setAccess] = useState<ModuleAccess | null>(null);
+export default function ProjetosClient({ companyId, initialProjectId = '', returnCompanyId = '', initialContext }: { companyId: string; initialProjectId?: string; returnCompanyId?: string; initialContext?: ContextoNavegacaoModulo | null }) {
+  const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('projetos', companyId));
+  const [access, setAccess] = useState<ModuleAccess | null>(() => contextoInicial ? {
+    empresa: { id: contextoInicial.empresaId, ...contextoInicial.empresa },
+    perfil: contextoInicial.perfil,
+    podeEditar: contextoInicial.podeEditar,
+    podeGerenciarModulo: contextoInicial.podeGerenciarModulo,
+    expiraEm: null,
+  } : null);
   const [sharedOnly, setSharedOnly] = useState(false);
   const [sharedProjects, setSharedProjects] = useState<SharedProjectSummary[]>([]);
   const [sharedProjectsState, setSharedProjectsState] = useState<SharedProjectsState>('loading');
@@ -168,7 +193,7 @@ export default function ProjetosClient({ companyId, initialProjectId = '', retur
     let active = true;
     const verify = async () => {
       if (!companyId) { setError('Selecione um perfil empresarial na Gestão antes de abrir Projetos.'); return; }
-      setAccess(null);
+      if (!contextoInicial) setAccess(null);
       setSharedOnly(false);
       setError('');
       setSharedProjectsState('loading');
@@ -197,10 +222,13 @@ export default function ProjetosClient({ companyId, initialProjectId = '', retur
     };
     void verify();
     return () => { active = false; };
-  }, [companyId, returnCompanyId]);
+  }, [companyId, contextoInicial, returnCompanyId]);
 
   if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>AvantaProjetos</h1><p>{error}</p><Link href={`/gestao?empresaId=${encodeURIComponent(returnCompanyId || companyId)}`}>‹ Início</Link></div></main>;
   if (sharedOnly) return <SharedProjectsHub companyId={returnCompanyId || companyId} context={sharedContext} projects={sharedProjects} state={sharedProjectsState} />;
-  if (!access) return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e os projetos compartilhados…" />;
+  if (!access) {
+    if (contextoInicial) return <TransicaoNavegacaoInterna destino="Projetos" empresa={contextoInicial.empresa} />;
+    return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e os projetos compartilhados…" />;
+  }
   return <ProjectApp companyId={companyId} returnCompanyId={returnCompanyId} initialProjectId={initialProjectId} access={access} onAccessChange={setAccess} sharedProjects={sharedProjects} sharedProjectsState={sharedProjectsState} />;
 }
