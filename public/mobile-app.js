@@ -9485,9 +9485,21 @@
       return;
     }
 
+    var despesaSalva = resposta.data || {};
+    var novoTipo = {
+      id: despesaSalva.id,
+      nome: formatarDescricao(despesaSalva.nome || nome),
+      categoria: formatarDescricao(despesaSalva.categoria || tipo),
+    };
+    state.despesas = ordenarDespesasAlfabeticamenteMobile(
+      (state.despesas || []).filter(function (despesa) {
+        return String(despesa.id) !== String(novoTipo.id) && despesa.nome.toLowerCase() !== novoTipo.nome.toLowerCase();
+      }).concat([novoTipo])
+    );
+    state.carregando = false;
     state.modalMenu = 'categorias';
     state.erro = '';
-    await carregarDados();
+    render(true);
     notificarFinanceiroAtualizadoMobile();
     mostrarToast('Despesa cadastrada.');
   }
@@ -9534,21 +9546,26 @@
       return;
     }
 
-    var novoNome = resposta.data && resposta.data.nome ? resposta.data.nome : formatarDescricao(nome);
+    var despesaSalva = resposta.data || {};
+    var novoNome = despesaSalva.nome ? formatarDescricao(despesaSalva.nome) : formatarDescricao(nome);
+    var novoTipo = {
+      id: despesaSalva.id,
+      nome: novoNome,
+      categoria: formatarDescricao(despesaSalva.categoria || categoria),
+    };
+    state.despesas = ordenarDespesasAlfabeticamenteMobile(
+      (state.despesas || []).filter(function (despesa) {
+        return String(despesa.id) !== String(novoTipo.id) && despesa.nome.toLowerCase() !== novoTipo.nome.toLowerCase();
+      }).concat([novoTipo])
+    );
+    state.despesaNome = novoNome;
     state.novaDespesaAberta = false;
     state.novaDespesaNome = '';
     state.novaDespesaCategoria = '';
+    state.carregando = false;
     state.erro = '';
-    await carregarDados();
+    render(true);
     notificarFinanceiroAtualizadoMobile();
-    setTimeout(function () {
-      var sel = document.getElementById('despesa-nome');
-      if (sel) {
-        for (var i = 0; i < sel.options.length; i++) {
-          if (sel.options[i].value === novoNome) { sel.selectedIndex = i; break; }
-        }
-      }
-    }, 50);
     mostrarToast('Tipo cadastrado e selecionado.');
   }
 
@@ -11161,18 +11178,22 @@
     var scroll = document.getElementById('mobile-main-scroll');
     var pill = document.getElementById('mobile-profile-pill');
     if (!scroll || !pill) return;
-    window._avaProfilePillHidden = false;
     pill.style.setProperty('--profile-pill-y', '0%');
 
     var aplicarTransparencia = function () {
       var pillAtual = document.getElementById('mobile-profile-pill');
       if (!pillAtual) return;
       var translucida = scroll.scrollTop > 8;
+      window._avaProfilePillScrollTop = scroll.scrollTop;
       window._avaProfilePillTranslucent = translucida;
       pillAtual.style.opacity = translucida ? '0.25' : '1';
     };
 
-    aplicarTransparencia();
+    // A tela é reconstruída em salvamentos e edições. Enquanto o scroll do
+    // novo DOM ainda não foi restaurado, conserva o estado visual calculado
+    // antes do render para a pílula não piscar entre opaca e transparente.
+    pill.style.opacity = window._avaProfilePillTranslucent ? '0.25' : '1';
+    window.requestAnimationFrame(aplicarTransparencia);
     scroll.addEventListener('scroll', aplicarTransparencia, { passive: true });
   }
 
@@ -11260,7 +11281,7 @@
             insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
-        '<div id="mobile-profile-pill" class="pointer-events-auto absolute left-1/2 z-0 flex items-center gap-1.5 rounded-[0_0_14px_14px] border-0 py-1.5 text-white shadow-[0_8px_18px_rgba(8,47,73,0.24)] ' + (exibeCentroCustoNoPerfil ? 'w-[calc(100%-24px)] max-w-md justify-center px-3' : 'w-max px-5') + '" style="top:calc(100% - 6px);max-width:calc(100% - 24px);opacity:1;transform:translate(-50%,var(--profile-pill-y,0%));transition:opacity .24s ease,transform .28s cubic-bezier(.22,1,.36,1);will-change:opacity,transform;">' +
+        '<div id="mobile-profile-pill" class="pointer-events-auto absolute left-1/2 z-0 flex items-center gap-1.5 rounded-[0_0_14px_14px] border-0 py-1.5 text-white shadow-[0_8px_18px_rgba(8,47,73,0.24)] ' + (exibeCentroCustoNoPerfil ? 'w-[calc(100%-24px)] max-w-md justify-center px-3' : 'w-max px-5') + '" style="top:calc(100% - 6px);max-width:calc(100% - 24px);opacity:' + (window._avaProfilePillTranslucent ? '0.25' : '1') + ';transform:translate(-50%,var(--profile-pill-y,0%));transition:opacity .24s ease,transform .28s cubic-bezier(.22,1,.36,1);will-change:opacity,transform;">' +
           '<span class="relative z-10 shrink-0 text-[10px] font-black uppercase tracking-[0.04em] text-cyan-100/80">Perfil:</span>' +
           '<strong class="relative z-10 min-w-0 truncate text-[14px] font-black uppercase leading-tight tracking-[0.04em]' + (exibeCentroCustoNoPerfil ? ' max-w-[30%]' : '') + '">' + escapeHtml(nomeCurtoPerfilMobile(state.empresa)) + '</strong>' +
           seletorCentroCustoPerfilHtml() +
@@ -15149,6 +15170,13 @@
       if (_preservaveis[_i].id) {
         _scrollContainers[_preservaveis[_i].id] = _preservaveis[_i].scrollTop;
       }
+    }
+    // Registra a posição do conteúdo principal antes de destruir o DOM. A
+    // pílula do perfil usa exclusivamente essa rolagem para a transparência,
+    // portanto salvamentos e edições não podem reiniciar sua aparência.
+    if (Object.prototype.hasOwnProperty.call(_scrollContainers, 'mobile-main-scroll')) {
+      window._avaProfilePillScrollTop = _scrollContainers['mobile-main-scroll'];
+      window._avaProfilePillTranslucent = window._avaProfilePillScrollTop > 8;
     }
     if (typeof window._avaMenuScrollTravado === 'number') {
       _scrollContainers['menu-botoes-scroll'] = window._avaMenuScrollTravado;

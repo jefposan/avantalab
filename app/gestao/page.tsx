@@ -4702,13 +4702,18 @@ const adicionarDespesaBase = async () => {
 
   setDespesasCadastradas((atuais) =>
     ordenarDespesasAlfabeticamente([
-      ...atuais,
+      ...atuais.filter((despesa) => normalizarTexto(despesa.nome) !== normalizarTexto(despesaSalva.nome)),
       {
       nome: despesaSalva.nome,
       categoria: despesaSalva.categoria,
       },
     ])
   );
+
+  // Quando o tipo é criado a partir de um lançamento, ele já fica disponível
+  // e selecionado no formulário atual. Não depende da recarga posterior da
+  // página nem do retorno do Realtime.
+  setFormDespesa(despesaSalva.nome);
 
   setNovaBaseNome('');
   setNovaBaseCat('');

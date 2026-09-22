@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.39.0.02 - 2026-09-22
+- **Tipo de despesa imediato**: ao cadastrar um novo tipo pela tela de
+  lançamento, a Gestão Web e Mobile o incluem imediatamente no seletor atual;
+  no Mobile ele já permanece selecionado, sem fechar ou reabrir o lançamento.
+- **Pílula de perfil estável**: a identificação do perfil ativo no Gestão
+  Mobile preserva sua transparência durante salvamentos e edições e só a
+  recalcula pela rolagem do conteúdo.
+
 ## 1.39.0.01 - 2026-09-21
 - **Excluir receita no editor mobile**: o card aberto ao tocar uma receita agora
   apresenta **Salvar** e **Excluir**. A exclusão reutiliza a confirmação e o

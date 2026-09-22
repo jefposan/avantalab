@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.39.0.01 -->
+<!-- ava-version: 1.39.0.02 -->
+
+> Revisão 1.39.0.02: ao cadastrar um tipo de despesa dentro de Novo
+> lançamento, ele entra imediatamente no seletor e já fica escolhido. A
+> pílula do perfil ativo preserva sua transparência durante salvamentos e
+> edições; a aparência só é recalculada quando a pessoa rola o conteúdo.
 
 > Revisão 1.39.0.01: ao editar uma receita já lançada, use **Excluir** no
 > próprio card quando necessário. A confirmação é obrigatória e o total mensal

@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.39.0.01 -->
+<!-- ava-version: 1.39.0.02 -->
+
+> Revisão 1.39.0.02: a atualização imediata de tipos de despesa e a
+> estabilização visual da pílula pertencem à Gestão; sem impacto operacional
+> no Vendas Mobile.
 
 > Revisão 1.39.0.01: a exclusão de receita pelo editor pertence à Gestão Mobile;
 > sem impacto operacional no Vendas Mobile.

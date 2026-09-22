@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.39.0.01 -->
+<!-- ava-version: 1.39.0.02 -->
+
+> Revisão 1.39.0.02: ao cadastrar um tipo de despesa a partir de um
+> lançamento, ele entra imediatamente no seletor da tela aberta e já fica
+> escolhido; não é necessário fechá-la ou abri-la novamente.
 
 > Revisão 1.39.0.01: a opção de excluir receita no editor pertence à Gestão
 > Mobile; sem alteração operacional na Gestão Web.
