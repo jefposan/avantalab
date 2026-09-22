@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.39.0 -->
+<!-- ava-version: 1.39.0.01 -->
+
+> Revisão 1.39.0.01: ao editar uma receita já lançada, use **Excluir** no
+> próprio card quando necessário. A confirmação é obrigatória e o total mensal
+> é recalculado quando a receita já estiver efetivada.
 
 > Revisão 1.39.0: ao editar uma despesa parcelada, corrija **Parcela atual** e
 > **Total de parcelas**. Depois da confirmação, a sequência é reprogramada da

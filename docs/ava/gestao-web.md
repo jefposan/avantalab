@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.39.0 -->
+<!-- ava-version: 1.39.0.01 -->
+
+> Revisão 1.39.0.01: a opção de excluir receita no editor pertence à Gestão
+> Mobile; sem alteração operacional na Gestão Web.
 
 > Revisão 1.39.0: ao editar uma despesa identificada como parcela, ajuste
 > **Parcela atual** e **Total de parcelas** quando necessário. Ao salvar e

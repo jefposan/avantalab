@@ -109,6 +109,18 @@ test('editor de despesa confirmada permite salvar ou excluir na mesma linha', as
   assert.match(mobile, /bind\('excluir-lancamento-edicao', function \(\) \{[\s\S]*?state\.modalAcao\.modo = 'excluir'/);
 });
 
+test('editor de receita também oferece exclusão com a confirmação já existente', async () => {
+  const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
+  const inicio = mobile.indexOf("if (acao.tipo === 'receita') {");
+  const fim = mobile.indexOf('\n    return (', inicio);
+  const editorReceita = mobile.slice(inicio, fim);
+
+  assert.match(editorReceita, /id="salvar-edicao-lancamento"[\s\S]*?Salvar/);
+  assert.match(editorReceita, /id="excluir-lancamento-edicao"[\s\S]*?Excluir/);
+  assert.match(editorReceita, /item\.status === 'prevista'[\s\S]*?id="excluir-lancamento-edicao"/);
+  assert.match(mobile, /function modalConfirmarExclusaoLancamentoHtml\(acao\)[\s\S]*?receita[\s\S]*?descontada do total do mes/);
+});
+
 test('Ava indica a linha do lançamento como caminho de edição no Gestão Mobile', async () => {
   const conhecimento = await readFile(new URL('app/lib/ava-conhecimento.ts', raiz), 'utf8');
   const inicio = conhecimento.indexOf("'gestao-mobile': `GUIA OPERACIONAL");
@@ -117,5 +129,5 @@ test('Ava indica a linha do lançamento como caminho de edição no Gestão Mobi
 
   assert.match(guiaMobile, /Para editar ou excluir um lançamento já registrado no Gestão Mobile, toque[\s\S]*?Despesas do mês ou Receitas do mês/);
   assert.match(guiaMobile, /Menu > Cadastrar despesas serve apenas[\s\S]*?nunca para editar a linha/);
-  assert.match(guiaMobile, /Despesa confirmada abre diretamente o editor com Salvar e Excluir/);
+  assert.match(guiaMobile, /Despesa ou receita confirmada abre diretamente o editor com \*\*Salvar\*\* e \*\*Excluir\*\*/);
 });

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.39.0.01 - 2026-09-21
+- **Excluir receita no editor mobile**: o card aberto ao tocar uma receita agora
+  apresenta **Salvar** e **Excluir**. A exclusão reutiliza a confirmação e o
+  recálculo seguro do total mensal já existentes.
+
 ## 1.39.0 - 2026-09-21
 - **Correção de parcelamentos**: ao editar uma despesa parcelada, a Gestão Web
   e Mobile permitem corrigir o número da parcela e o total. A partir da parcela

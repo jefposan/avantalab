@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.39.0 -->
+<!-- ava-version: 1.39.0.01 -->
+
+> Revisão 1.39.0.01: a exclusão de receita pelo editor pertence à Gestão Mobile;
+> sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.39.0: a reorganização de parcelas pertence à Gestão Web e Mobile;
 > sem impacto operacional no Vendas Mobile.
