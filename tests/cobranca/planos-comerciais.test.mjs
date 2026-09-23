@@ -5,6 +5,7 @@ import {
   PLANOS_EMPRESARIAIS,
   PLANOS_COMERCIAIS,
   VALOR_MODULO_AVULSO_MENSAL,
+  VALOR_PERFIL_EMPRESARIAL_ADICIONAL_MENSAL,
   normalizarPlanoComercial,
   resolverPlanoCortesia,
 } from '../../app/lib/planos-comerciais.ts';
@@ -17,6 +18,7 @@ test('catálogo comercial mantém preços e limites aprovados', () => {
   assert.deepEqual(PLANOS_COMERCIAIS.business_pro.precos, { mensal: 49.9, anual: 359.9 });
   assert.deepEqual(PLANOS_COMERCIAIS.business_premium.precos, { mensal: 99.9, anual: 719.9 });
   assert.equal(VALOR_MODULO_AVULSO_MENSAL, 14.9);
+  assert.equal(VALOR_PERFIL_EMPRESARIAL_ADICIONAL_MENSAL, 14.99);
 
   assert.deepEqual(PLANOS_COMERCIAIS.free.limites, {
     usuarios: 1,
@@ -68,6 +70,9 @@ test('interfaces públicas e autenticadas oferecem os três planos empresariais'
   assert.match(landing, /<h3>Business<\/h3>/);
   assert.match(landing, /Business Pro/);
   assert.match(landing, /Business Premium/);
+  assert.match(landing, /1 usuário e 1 perfil empresarial/);
+  assert.match(landing, /Até 3 usuários e 3 perfis empresariais/);
+  assert.doesNotMatch(landing, /Perfis adicionais por R\$ 14,99\/mês/);
   assert.match(landing, /Teste por 7 dias grátis/);
   assert.doesNotMatch(landing, /Testar Business Pro/);
   assert.doesNotMatch(landing, /<h3>Business Básico<\/h3>/);
@@ -85,6 +90,8 @@ test('interfaces públicas e autenticadas oferecem os três planos empresariais'
   }
   assert.match(checkout, /'business_premium'/);
   assert.match(checkout, /PRECOS\[plano\]\[ciclo\]/);
+  assert.doesNotMatch(paywall, /Perfil extra: R\$ 14,99\/mês/);
+  assert.doesNotMatch(modal, /Perfil extra: R\$ 14,99\/mês/);
   assert.match(mobile, /window\._avaPaywallSelecionarPlano/);
   assert.match(mobile, /\[\['business','Básico'\],\['business_pro','Pro'\],\['business_premium','Premium'\]\]/);
   assert.match(mobile, /plano: state\.paywallPlanoSelecionado \|\| 'business'/);

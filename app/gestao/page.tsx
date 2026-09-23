@@ -32,6 +32,7 @@ import TourPrimeiroAcesso from '@/app/components/TourPrimeiroAcesso';
 import PaywallEmpresa from '@/app/components/PaywallEmpresa';
 import CadastroPerfilModal from '@/app/components/CadastroPerfilModal';
 import AssinaturaModal from '@/app/components/AssinaturaModal';
+import PerfilAdicionalPremiumModal from '@/app/components/PerfilAdicionalPremiumModal';
 import PontosRestauracaoModal from '@/app/components/PontosRestauracaoModal';
 import { DestinoBackupNuvemModal, RestaurarDaNuvemModal, type DestinoBackup } from '@/app/components/BackupNuvemModals';
 import PremiumPessoalModal from '@/app/components/PremiumPessoalModal';
@@ -69,6 +70,7 @@ import {
 import { modulosPaginaTotalAtivos, obterRegistroModulo } from '@/app/lib/modulos-registro';
 import { criarHrefModuloEmbutido, MENSAGEM_RETORNO_MODULO_EMBUTIDO, prepararNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { resolverAcessoComercialModulo } from '@/app/lib/modulos-acesso-comercial';
+import { validarSessaoDoDispositivo } from '@/app/lib/sessao-acesso-cliente';
 import {
   buscarEmpresaDoUsuario,
   buscarEmpresasDoUsuario,
@@ -108,6 +110,7 @@ import {
   bloquearUsuarioEmpresa,
   excluirUsuarioEmpresa,
   criarEmpresaInicial,
+  inserirDespesasPadraoPerfil,
   redefinirSenhaUsuarioEmpresa,
   buscarEmailPorLogin,
   atualizarTelefoneUsuarioEmpresa,
@@ -214,6 +217,7 @@ type LancamentoFinanceiro = {
   recorrenciaId?: string | null;
   centroCustoId?: string | null;
   notaArquivoPath?: string | null;
+  revisao?: number;
 };
 
 type EntradaFaturamento = {
@@ -226,6 +230,7 @@ type EntradaFaturamento = {
   tipo: string | null;
   etiquetaOrigem?: string | null;
   centroCustoId?: string | null;
+  revisao?: number;
 };
 
 type CaixinhaMovimento = {
@@ -632,9 +637,12 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     disponiveis: number;
     possuiAssinaturaOrigem: boolean;
     compartilhaAcesso: boolean;
+    perfilAdicionalEmpresarial?: boolean;
+    valorPerfilAdicionalMensal?: number | null;
   } | null>(null);
   const [quotaPerfisCarregando, setQuotaPerfisCarregando] = useState(false);
   const [quotaPerfisErro, setQuotaPerfisErro] = useState('');
+  const [modalPerfilAdicionalEmpresarial, setModalPerfilAdicionalEmpresarial] = useState(false);
   const [faturaPendenteUrl, setFaturaPendenteUrl] = useState<string | null>(null);
   const [cadastroPerfilStatus, setCadastroPerfilStatus] = useState<StatusCadastroPerfil | null>(null);
   const [cadastroPerfilCarregado, setCadastroPerfilCarregado] = useState(false);
@@ -646,7 +654,6 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   // Só liberamos a renderização do app depois de conhecer o estado de acesso,
   // evitando o "flash" do conteúdo antes de o paywall bloquear.
   const [estadoCarregado, setEstadoCarregado] = useState(false);
-  const sessaoBusinessAplicadaRef = useRef<string | null>(null);
   const [modalAssinatura, setModalAssinatura] = useState(false);
   // Premium Pessoal: recurso premium que o usuário grátis tentou usar
   // (abre o modal de upgrade; null = fechado).
@@ -697,19 +704,26 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   }, [criandoPerfilAdicional, empresaId]);
 
   useEffect(() => {
-    if (!COBRANCA_ATIVA || !empresaId || (estadoAcesso?.plano !== 'business' && estadoAcesso?.plano !== 'empresa')) return;
-    void (async () => {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token || sessaoBusinessAplicadaRef.current === token) return;
-      sessaoBusinessAplicadaRef.current = token;
-      await fetch('/api/cobranca/sessao-unica', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ empresaId }),
-      }).catch(() => null);
-    })();
-  }, [empresaId, estadoAcesso?.plano]);
+    if (!COBRANCA_ATIVA || !empresaId || !estadoAcesso) return;
+    let ativo = true;
+    const confirmar = async (acao: 'entrar' | 'verificar') => {
+      const resultado = await validarSessaoDoDispositivo(empresaId, acao);
+      if (!ativo || resultado.ignorado || resultado.ativa) return;
+      await encerrarSessaoExpirada();
+      if (ativo) setAuthErro(resultado.mensagem || 'Esta conta foi acessada em outro dispositivo. Entre novamente para continuar.');
+    };
+    void confirmar('entrar');
+    const intervalo = window.setInterval(() => { void confirmar('verificar'); }, 8000);
+    const aoRetomar = () => { if (document.visibilityState === 'visible') void confirmar('verificar'); };
+    document.addEventListener('visibilitychange', aoRetomar);
+    return () => {
+      ativo = false;
+      window.clearInterval(intervalo);
+      document.removeEventListener('visibilitychange', aoRetomar);
+    };
+  // A empresa identifica o contexto; o servidor valida o token a cada chamada.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [empresaId, estadoAcesso?.plano, estadoAcesso?.status]);
   const abrirPremium = (recurso: Recurso) => setPremiumRecurso(recurso);
   // Intercepta as abas premium (Relatório/Gráficos) no plano Pessoal grátis.
   const setAbaAtivaComGate: React.Dispatch<React.SetStateAction<string>> = (valor) => {
@@ -1444,13 +1458,73 @@ const criarPerfilPessoalBloqueado = (): boolean => {
   return estadoAcesso.status !== 'ativa';
 };
 
-// Envolve a criação de perfil com o gate do Premium (só bloqueia perfil pessoal extra).
+// Envolve a criação de perfil com os limites comerciais antes da chamada ao servidor.
 const handleCriarEmpresaInicialComGate = () => {
   if (criandoPerfilAdicional && tipoPerfilInicialNormalizado === 'pessoal' && criarPerfilPessoalBloqueado()) {
     abrirPremium('multiplos_perfis');
     return;
   }
+  if (
+    criandoPerfilAdicional
+    && tipoPerfilInicialNormalizado === 'empresa'
+    && quotaPerfis?.perfilAdicionalEmpresarial
+  ) {
+    if (!nomeEmpresaInicial.trim()) {
+      setAuthErro('Informe o nome do novo perfil antes de continuar.');
+      return;
+    }
+    setAuthErro('');
+    setModalPerfilAdicionalEmpresarial(true);
+    return;
+  }
+  if (
+    criandoPerfilAdicional
+    && tipoPerfilInicialNormalizado === 'empresa'
+    && quotaPerfis?.possuiAssinaturaOrigem
+    && quotaPerfis.disponiveis === 0
+    && quotaPerfis.plano === 'business'
+  ) {
+    setAuthErro('O Business Básico inclui 1 perfil empresarial. Faça upgrade para o Business Pro para continuar.');
+    setModalAssinatura(true);
+    return;
+  }
   handleCriarEmpresaInicial({ empresaOrigemId: empresaOrigemCriacao });
+};
+
+const contratarPerfilAdicionalEmpresarial = async (dadosCobranca: DadosCobrancaAssinatura) => {
+  if (!empresaId || !nomeEmpresaInicial.trim()) return { ok: false, mensagem: 'Informe o nome do novo perfil.' };
+  try {
+    const { data: sessao } = await supabase.auth.getSession();
+    const token = sessao.session?.access_token;
+    if (!token) return { ok: false, mensagem: 'Sua sessão expirou. Entre novamente para continuar.' };
+    const resposta = await fetch('/api/cobranca/perfis-adicionais/assinar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        empresaOrigemId: empresaId,
+        nomePerfil: nomeEmpresaInicial.trim(),
+        cobranca: dadosCobranca,
+      }),
+    });
+    const json = await resposta.json();
+    if (!resposta.ok || !json.ok) return { ok: false, mensagem: json.mensagem || 'Não foi possível preparar a cobrança.' };
+    const perfil = json.empresa as { id?: string; nome?: string } | null;
+    if (perfil?.id) {
+      // Mantém a experiência de um perfil recém-criado, mas o acesso segue
+      // bloqueado até o webhook de pagamento ativá-lo.
+      await inserirDespesasPadraoPerfil(perfil.id, 'empresa');
+      setEmpresasDoUsuario((atuais) => atuais.some((item) => item.id === perfil.id)
+        ? atuais
+        : [...atuais, { ...perfil, empresa_nome: perfil.nome || nomeEmpresaInicial.trim(), tipo_perfil: 'empresa', assinatura_origem_empresa_id: empresaId }]);
+    }
+    setSubAcaoGerenciar(null);
+    setCriandoNovaEmpresaLogada(false);
+    setNomeEmpresaInicial('');
+    setAuthMensagem('Cobrança mensal de R$ 14,99 iniciada. Conclua o pagamento para liberar o novo perfil.');
+    return { ok: true, url: json.invoiceUrl || undefined };
+  } catch {
+    return { ok: false, mensagem: 'Não foi possível preparar a cobrança agora.' };
+  }
 };
 
 const renderizarOpcoesInicioPerfilEmpresa = () => {
@@ -1471,16 +1545,28 @@ const renderizarOpcoesInicioPerfilEmpresa = () => {
     );
   }
 
+  if (quotaPerfis?.perfilAdicionalEmpresarial) {
+    return null;
+  }
+
+  if (quotaPerfis?.possuiAssinaturaOrigem && quotaPerfis.disponiveis === 0 && quotaPerfis.plano === 'business') {
+    return (
+      <>
+        <p className="text-xs font-bold leading-snug text-amber-800">
+          O <b>Business Básico</b> inclui 1 perfil empresarial. Faça upgrade para o <b>Business Pro</b> para criar mais perfis com a mesma assinatura.
+        </p>
+        <button type="button" onClick={() => setModalAssinatura(true)} className="mt-2 rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-sky-800 hover:bg-sky-100">
+          Ver opções do Business Pro
+        </button>
+      </>
+    );
+  }
+
   return (
     <>
       {quotaPerfisErro && (
         <p role="alert" className="mb-2 text-xs font-bold leading-snug text-red-700">
           {quotaPerfisErro}
-        </p>
-      )}
-      {quotaPerfis?.possuiAssinaturaOrigem && quotaPerfis.disponiveis === 0 && (
-        <p className="mb-2 text-xs font-bold leading-snug text-amber-800">
-          Sua assinatura já utiliza as {quotaPerfis.limite} vagas. Este novo perfil empresarial terá uma assinatura independente.
         </p>
       )}
       <p className="text-xs font-bold leading-snug text-sky-900">
@@ -5842,6 +5928,7 @@ const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
       valor: editValorNumerico,
       status: statusEditado,
       tipoObs: tipoEditado,
+      revisaoEsperada: lancamentoAtual?.revisao,
     });
 
     if (!salvo.erro && salvo.data) {
@@ -5857,6 +5944,7 @@ const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
                 valor: Number(salvo.data.valor),
                 status: salvo.data.status || null,
                 tipo: salvo.data.tipo_obs || null,
+                revisao: Number(salvo.data.revisao || l.revisao || 1),
               }
             : l
         )
@@ -5896,6 +5984,7 @@ const aceitarDespesaPrevistaHoje = async (lancamento: TabelaLancamentoDespesa) =
   if (!iniciarProcessamentoLancamento('Confirmando despesa')) return;
 
   const hoje = dataFinanceiraDeHoje();
+  const revisaoEsperada = lancamentos.find((item) => String(item.id) === String(lancamento.id))?.revisao;
   try {
     const resultado = await atualizarLancamento({
       id: lancamento.id,
@@ -5908,6 +5997,7 @@ const aceitarDespesaPrevistaHoje = async (lancamento: TabelaLancamentoDespesa) =
       valor: Number(lancamento.valor || 0),
       status: 'confirmada',
       tipoObs: lancamento.tipo === 'previsto' ? null : lancamento.tipo || null,
+      revisaoEsperada,
     });
 
     if (resultado.erro || !resultado.data) {
@@ -6238,6 +6328,7 @@ const recarregarDadosFinanceirosAtual = async () => {
       tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
       recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
       centroCustoId: l.centro_custo_id ? textoRegistro(l.centro_custo_id) : null,
+      revisao: Number(l.revisao || 1),
     }))
   );
   setLancamentosConsolidados(
@@ -6252,6 +6343,7 @@ const recarregarDadosFinanceirosAtual = async () => {
       tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
       recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
       centroCustoId: l.centro_custo_id ? textoRegistro(l.centro_custo_id) : null,
+      revisao: Number(l.revisao || 1),
     }))
   );
 
@@ -6278,6 +6370,7 @@ const recarregarDadosFinanceirosAtual = async () => {
       tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
       etiquetaOrigem: entrada.origem_etiqueta ? textoRegistro(entrada.origem_etiqueta) : null,
       centroCustoId: entrada.centro_custo_id ? textoRegistro(entrada.centro_custo_id) : null,
+      revisao: Number(entrada.revisao || 1),
     }))
   );
   setFaturamentosEntradasConsolidados(
@@ -6291,6 +6384,7 @@ const recarregarDadosFinanceirosAtual = async () => {
       tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
       etiquetaOrigem: entrada.origem_etiqueta ? textoRegistro(entrada.origem_etiqueta) : null,
       centroCustoId: entrada.centro_custo_id ? textoRegistro(entrada.centro_custo_id) : null,
+      revisao: Number(entrada.revisao || 1),
     }))
   );
 
@@ -8947,6 +9041,18 @@ if (validacaoTelefoneObrigatoria) {
   corPrimaria={corPrimaria}
   estado={estadoAcesso}
   tipoPerfil={tipoPerfilAtualNormalizado}
+/>
+
+<PerfilAdicionalPremiumModal
+  aberto={modalPerfilAdicionalEmpresarial}
+  nomePerfil={nomeEmpresaInicial.trim()}
+  plano={quotaPerfis?.plano === 'business_pro' ? 'business_pro' : 'business_premium'}
+  vagasIncluidas={quotaPerfis?.limite || 10}
+  nomePadrao={nomeEmpresaAtual}
+  emailPadrao={emailUsuarioAtual}
+  telefonePadrao={telefoneCobrancaPadrao}
+  onFechar={() => setModalPerfilAdicionalEmpresarial(false)}
+  onContratar={contratarPerfilAdicionalEmpresarial}
 />
 
 <PremiumPessoalModal

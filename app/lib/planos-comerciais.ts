@@ -32,6 +32,9 @@ export type PlanoComercialDefinicao = {
 
 export const VALOR_MODULO_AVULSO_MENSAL = 14.9;
 
+/** Valor mensal, por perfil empresarial, após as vagas incluídas no Pro ou Premium. */
+export const VALOR_PERFIL_EMPRESARIAL_ADICIONAL_MENSAL = 14.99;
+
 export const PLANOS_EMPRESARIAIS: readonly PlanoEmpresarial[] = [
   'business',
   'business_pro',

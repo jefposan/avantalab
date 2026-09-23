@@ -180,6 +180,31 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
   // a fonte da verdade. Uma assinatura local antiga de trial/cortesia pode
   // permanecer apenas como histórico e não deve se sobrepor à origem paga.
   if (emp.assinatura_origem_empresa_id) {
+    // Perfis criados além das vagas incluídas do Business Pro ou Premium têm uma
+    // recorrência própria. O vínculo com a origem só libera acesso após a
+    // confirmação da Asaas; isso impede que uma empresa pendente use o plano
+    // assinatura de origem antes de pagar.
+    const { data: perfilAdicional } = await db
+      .from('assinaturas_perfis_adicionais')
+      .select('status, valido_ate')
+      .eq('empresa_id', empresaId)
+      .maybeSingle();
+    if (perfilAdicional) {
+      const adicionalVigente = perfilAdicional.status === 'ativa'
+        || ((perfilAdicional.status === 'cancelada' || perfilAdicional.status === 'inadimplente')
+          && !!perfilAdicional.valido_ate
+          && new Date(perfilAdicional.valido_ate) > new Date());
+      if (!adicionalVigente) {
+        return {
+          tipoPerfil,
+          status: 'expirada',
+          validoAte: perfilAdicional.valido_ate,
+          trialFim: null,
+          plano: null,
+          ciclo: 'mensal',
+        };
+      }
+    }
     const { data: assinaturaOrigem } = await db
       .from('assinaturas')
       .select('status, valido_ate, trial_fim, plano, ciclo')

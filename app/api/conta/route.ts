@@ -65,6 +65,7 @@ export async function DELETE(request: Request) {
       acesso.db.from('assinaturas').select('gateway_subscription_id').eq('empresa_id', empresaId).not('gateway_subscription_id', 'is', null),
       acesso.db.from('assinaturas_modulos').select('gateway_subscription_id').eq('empresa_id', empresaId).not('gateway_subscription_id', 'is', null),
       acesso.db.from('ponto_facial_assinaturas').select('gateway_subscription_id').eq('empresa_id', empresaId).not('gateway_subscription_id', 'is', null),
+      acesso.db.from('assinaturas_perfis_adicionais').select('gateway_subscription_id').eq('empresa_id', empresaId).not('gateway_subscription_id', 'is', null),
     ]);
     const consultaComErro = consultas.find((resultado) => resultado.error);
     if (consultaComErro?.error) {

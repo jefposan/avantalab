@@ -4,7 +4,9 @@ import test from 'node:test';
 
 import {
   criarReferenciaAssinatura,
+  criarReferenciaPerfilAdicional,
   lerReferenciaAssinatura,
+  lerReferenciaPerfilAdicional,
   referenciaConfereAssinatura,
 } from '../../app/lib/cobranca-referencia.ts';
 
@@ -30,6 +32,15 @@ test('referência rejeita plano, ciclo e perfil adulterados', () => {
   assert.equal(lerReferenciaAssinatura(`assinatura:${empresaId}:free:mensal`), null);
   assert.equal(lerReferenciaAssinatura('assinatura:perfil-invalido:business:mensal'), null);
   assert.throws(() => criarReferenciaAssinatura({ empresaId: 'invalido', plano: 'business', ciclo: 'mensal' }));
+});
+
+test('referência do perfil adicional não se confunde com a assinatura principal', () => {
+  const referencia = criarReferenciaPerfilAdicional({ assinaturaAdicionalId: empresaId });
+  assert.equal(referencia, `perfil_adicional:${empresaId}`);
+  assert.deepEqual(lerReferenciaPerfilAdicional(referencia), { assinaturaAdicionalId: empresaId });
+  assert.equal(lerReferenciaAssinatura(referencia), null);
+  assert.equal(lerReferenciaPerfilAdicional(`perfil_adicional:${empresaId}:mensal`), null);
+  assert.throws(() => criarReferenciaPerfilAdicional({ assinaturaAdicionalId: 'invalido' }));
 });
 
 test('liberação confere a referência com o registro local', () => {

@@ -39,7 +39,7 @@ const recursosPremium = [
 
 const recursosBusiness = [
   'Tudo do Pessoal Premium, mais:',
-  'Até 3 usuários e até 3 perfis',
+  '1 usuário e 1 perfil empresarial',
   'Até 10 funcionários no Controle de Ponto',
   'Módulos contratados separadamente',
   'Uma sessão por usuário de cada vez',
@@ -47,8 +47,8 @@ const recursosBusiness = [
 
 const recursosPro = [
   'Tudo do Business, mais:',
-  'Até 10 usuários e até 10 perfis',
-  'Funcionários ilimitados no Controle de Ponto',
+  'Até 3 usuários e 3 perfis empresariais',
+  'Até 30 funcionários no Controle de Ponto',
   'Logins simultâneos do mesmo usuário',
   'Todos os módulos existentes incluídos',
 ];
@@ -171,17 +171,17 @@ export default function AvaPlansPreview() {
             </AcessoPublicoLink>
           </div>
           <div className={commerce.comparison}>
-            <div><p>Comparação rápida</p><h3>Business ou Business Pro?</h3></div>
+            <div><p>Comparação rápida</p><h3>Compare os planos empresariais</h3></div>
             <div className={commerce.tableWrap} tabIndex={0}>
               <table>
                 <caption>Limites e recursos dos planos empresariais</caption>
-                <thead><tr><th scope="col">Recurso</th><th scope="col">Business</th><th scope="col">Business Pro</th></tr></thead>
+                <thead><tr><th scope="col">Recurso</th><th scope="col">Business</th><th scope="col">Business Pro</th><th scope="col">Business Premium</th></tr></thead>
                 <tbody>
-                  <tr><th scope="row">Usuários</th><td>Até 3</td><td>Até 10</td></tr>
-                  <tr><th scope="row">Perfis empresariais ou pessoais</th><td>Até 3</td><td>Até 10</td></tr>
-                  <tr><th scope="row">Controle de Ponto</th><td>Até 10 funcionários</td><td>Funcionários ilimitados</td></tr>
-                  <tr><th scope="row">Sessões do mesmo usuário</th><td>Uma sessão por vez</td><td>Simultâneas em mais de um dispositivo</td></tr>
-                  <tr><th scope="row">Módulos</th><td>Contratados separadamente</td><td>Todos os módulos existentes incluídos</td></tr>
+                  <tr><th scope="row">Usuários</th><td>1</td><td>Até 3</td><td>Até 10</td></tr>
+                  <tr><th scope="row">Perfis empresariais incluídos</th><td>1</td><td>3</td><td>10</td></tr>
+                  <tr><th scope="row">Controle de Ponto</th><td>Até 10 funcionários</td><td>Até 30 funcionários</td><td>Funcionários ilimitados</td></tr>
+                  <tr><th scope="row">Sessões do mesmo usuário</th><td>Uma sessão por vez</td><td>Simultâneas em mais de um dispositivo</td><td>Simultâneas em mais de um dispositivo</td></tr>
+                  <tr><th scope="row">Módulos</th><td>Contratados separadamente</td><td>Todos os módulos existentes incluídos</td><td>Todos os módulos existentes incluídos</td></tr>
                 </tbody>
               </table>
             </div>

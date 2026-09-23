@@ -46,15 +46,27 @@ export async function POST(request: Request) {
       tipoPerfil,
       limites.tiposDePerfilPermitidos,
     );
-    // Um perfil empresarial sem vaga compartilhada continua podendo iniciar
-    // uma assinatura própria. Perfis pessoais extras permanecem protegidos
-    // pelos limites do plano atual.
+    // Perfis pessoais extras permanecem protegidos pelos limites do plano atual.
     if (tipoPerfil === 'pessoal' && !quota.tipoPermitido) {
       return erro('Seu plano atual não permite criar outro perfil pessoal. Faça upgrade para continuar.', 409);
     }
     if (tipoPerfil === 'pessoal' && !quota.temVaga) {
       const sugestao = plano === 'free' ? 'Pessoal Premium' : plano === 'pessoal_premium' || plano === 'business' ? 'Business Pro' : 'um plano superior';
       return erro(`Este plano permite até ${limites.perfis} ${limites.perfis === 1 ? 'perfil' : 'perfis'}. Faça upgrade para o ${sugestao} para continuar.`, 409);
+    }
+    if (quota.requerPerfilEmpresarialAdicional) {
+      return NextResponse.json({
+        erro: true,
+        codigo: 'perfil_adicional_empresarial',
+        mensagem: `As ${direitoPerfis.limite} vagas incluídas no ${plano === 'business_pro' ? 'Business Pro' : 'Business Premium'} já estão em uso. Contrate um perfil empresarial adicional para continuar.`,
+      }, { status: 409 });
+    }
+    if (tipoPerfil === 'empresa' && quota.possuiAssinaturaOrigem && !quota.temVaga && plano === 'business') {
+      return NextResponse.json({
+        erro: true,
+        codigo: 'upgrade_business_pro',
+        mensagem: 'O Business Básico inclui 1 perfil empresarial. Faça upgrade para o Business Pro para criar mais perfis.',
+      }, { status: 409 });
     }
   }
 

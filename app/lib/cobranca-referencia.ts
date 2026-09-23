@@ -8,6 +8,10 @@ export type ReferenciaAssinatura = {
   ciclo: CicloComercial;
 };
 
+export type ReferenciaPerfilAdicional = {
+  assinaturaAdicionalId: string;
+};
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PLANOS_ASSINAVEIS = new Set<PlanoAssinatura>([
   'pessoal_premium',
@@ -53,4 +57,19 @@ export function referenciaConfereAssinatura(
   return referencia.empresaId === assinatura.empresaId
     && referencia.plano === normalizarPlanoAssinatura(assinatura.plano)
     && referencia.ciclo === assinatura.ciclo;
+}
+
+/**
+ * Referência exclusiva do adicional de perfil empresarial. Ela não usa o ID
+ * da empresa para impedir que um webhook de plano principal ative um perfil
+ * adicional (ou o inverso).
+ */
+export function criarReferenciaPerfilAdicional({ assinaturaAdicionalId }: ReferenciaPerfilAdicional): string {
+  if (!UUID.test(assinaturaAdicionalId)) throw new Error('Referência de perfil adicional inválida.');
+  return `perfil_adicional:${assinaturaAdicionalId}`;
+}
+
+export function lerReferenciaPerfilAdicional(valor: unknown): ReferenciaPerfilAdicional | null {
+  const encontrado = String(valor || '').trim().match(/^perfil_adicional:([0-9a-f-]{36})$/i);
+  return encontrado && UUID.test(encontrado[1]) ? { assinaturaAdicionalId: encontrado[1] } : null;
 }

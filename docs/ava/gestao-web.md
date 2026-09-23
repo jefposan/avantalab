@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.39.0.02 -->
+<!-- ava-version: 1.41.0 -->
+
+> Revisão 1.41.0: no **Business Básico**, entrar no perfil em outro aparelho
+> encerra a sessão anterior. No **Business Pro** e **Business Premium**, Web e
+> Mobile podem trabalhar juntos; alterações financeiras chegam em tempo real.
+> Se alguém salvar o mesmo lançamento antes de você, o sistema não substitui a
+> alteração: atualize a lista, confira os dados e salve novamente.
+
+> Revisão 1.40.0: Business Pro inclui 3 empresas e Business Premium inclui 10.
+> Depois da franquia, o novo perfil empresarial custa **R$ 14,99 por mês**,
+> sempre no ciclo mensal — mesmo que o plano principal seja anual. O sistema
+> solicita os dados de cobrança e abre o checkout da Asaas; o perfil só é
+> liberado após a confirmação. Business Básico inclui 1 empresa e orienta o
+> upgrade para Pro ao atingir o limite.
 
 > Revisão 1.39.0.02: ao cadastrar um tipo de despesa a partir de um
 > lançamento, ele entra imediatamente no seletor da tela aberta e já fica

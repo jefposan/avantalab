@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.39.0.02 -->
+<!-- ava-version: 1.41.0 -->
+
+> Revisão 1.41.0: sessões por dispositivo e a revisão concorrente de
+> lançamentos pertencem à Gestão Web e Mobile; sem impacto operacional no
+> AvantaVendas.
+
+> Revisão 1.40.0: a cobrança de perfis empresariais adicionais do Business
+> Pro e Premium pertence à Gestão Web e Mobile; permanece sem impacto
+> operacional no Vendas Mobile.
 
 > Revisão 1.39.0.02: a atualização imediata de tipos de despesa e a
 > estabilização visual da pílula pertencem à Gestão; sem impacto operacional

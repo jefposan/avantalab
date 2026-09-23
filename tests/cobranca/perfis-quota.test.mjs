@@ -40,6 +40,7 @@ test('Business Pro compartilha a assinatura enquanto houver vaga', () => {
     temVaga: true,
     possuiAssinaturaOrigem: true,
     compartilhaAssinatura: true,
+    requerPerfilEmpresarialAdicional: false,
   });
 });
 
@@ -63,7 +64,39 @@ test('franquias 1, 3 e 10 bloqueiam exatamente o próximo perfil', () => {
     }, 'empresa', ['empresa']);
     assert.equal(ultimaVaga.compartilhaAssinatura, true);
     assert.equal(cheia.compartilhaAssinatura, false);
+    assert.equal(cheia.requerPerfilEmpresarialAdicional, plano === 'business_pro' || plano === 'business_premium');
   }
+});
+
+test('perfil além da franquia do Business Pro ou Premium exige cobrança mensal e só libera após confirmação', async () => {
+  const [sql, rota, webhook, resolvedor, referencia, web, mobile] = await Promise.all([
+    readFile(new URL('../../supabase/migrations/20260922113000_perfis_adicionais_business_premium.sql', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/cobranca/perfis-adicionais/assinar/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/api/cobranca/webhook/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/lib/cobranca-servidor.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/lib/cobranca-referencia.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/gestao/page.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../public/mobile-app.js', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(sql, /valor_mensal numeric\(10,2\) not null default 14\.99/);
+  assert.match(sql, /v_limite_incluido := case when v_assinatura\.plano = 'business_premium' then 10 else 3 end/);
+  assert.match(sql, /v_usados < v_limite_incluido/);
+  assert.match(sql, /p_user_id, trim\(p_nome\), 'pendente_pagamento'/);
+  assert.match(sql, /grant execute on function public\.criar_perfil_adicional_business_pendente[\s\S]*to service_role/);
+  assert.match(rota, /VALOR_PERFIL_EMPRESARIAL_ADICIONAL_MENSAL/);
+  assert.match(rota, /criarReferenciaPerfilAdicional/);
+  assert.match(rota, /criar_perfil_adicional_business_pendente/);
+  assert.match(webhook, /processarCobrancaPerfilAdicional/);
+  assert.match(webhook, /status: 'ativa'/);
+  assert.match(resolvedor, /assinaturas_perfis_adicionais/);
+  assert.match(resolvedor, /adicionalVigente/);
+  assert.match(await readFile(new URL('../../supabase/functions/conciliar-cobrancas/index.ts', import.meta.url), 'utf8'), /assinaturas_perfis_adicionais/);
+  assert.match(referencia, /perfil_adicional:/);
+  assert.match(web, /PerfilAdicionalPremiumModal/);
+  assert.match(web, /perfilAdicionalEmpresarial/);
+  assert.match(mobile, /contratarPerfilAdicionalPremiumMobile/);
+  assert.match(mobile, /perfilAdicionalEmpresarial/);
 });
 
 test('empresa fora da quota segue independente sem herdar a assinatura', () => {

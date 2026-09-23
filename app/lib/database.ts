@@ -1221,6 +1221,7 @@ export async function atualizarLancamento({
   valor,
   status,
   tipoObs,
+  revisaoEsperada,
 }: {
   id: string | number;
   empresaId: string;
@@ -1232,8 +1233,10 @@ export async function atualizarLancamento({
   valor: number;
   status: string | null;
   tipoObs: string | null;
+  /** Revisão lida ao abrir a edição; evita sobrescrever alteração remota. */
+  revisaoEsperada?: number | null;
 }) {
-  const { data, error } = await supabase
+  let consulta = supabase
     .from('lancamentos')
     .update({
       empresa_id: empresaId,
@@ -1248,16 +1251,22 @@ export async function atualizarLancamento({
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
-    .eq('empresa_id', empresaId)
-    .select()
-    .single();
+    .eq('empresa_id', empresaId);
 
-  if (error) {
+  if (typeof revisaoEsperada === 'number') {
+    consulta = consulta.eq('revisao', revisaoEsperada);
+  }
+
+  const { data, error } = await consulta.select().maybeSingle();
+
+  if (error || !data) {
     console.error('Erro ao atualizar lançamento:', error);
 
     return {
   erro: true,
-  mensagem: tratarErroSupabase(error),
+  mensagem: !data && typeof revisaoEsperada === 'number'
+    ? 'Este lançamento foi alterado em outro dispositivo. Atualize a lista e revise os dados antes de salvar novamente.'
+    : tratarErroSupabase(error),
   data: null,
 };
   }

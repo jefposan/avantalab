@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA } from '../../../lib/cobranca';
 import { resolverDireitoDePerfisDoPerfil } from '../../../lib/cobranca-servidor';
+import { VALOR_PERFIL_EMPRESARIAL_ADICIONAL_MENSAL } from '../../../lib/planos-comerciais';
 
 export const runtime = 'nodejs';
 
@@ -20,6 +21,9 @@ export async function GET(request: Request) {
   if (error || !auth.user) return NextResponse.json({ erro: true }, { status: 401 });
   const direito = await resolverDireitoDePerfisDoPerfil(createClient(url, service), auth.user.id, empresaId);
   const disponiveis = Math.max(0, direito.limite - direito.usados);
+  const perfilAdicionalEmpresarial = (direito.plano === 'business_pro' || direito.plano === 'business_premium')
+    && direito.origemEmpresaId !== null
+    && disponiveis === 0;
   return NextResponse.json({
     ativo: true,
     plano: direito.plano,
@@ -28,5 +32,7 @@ export async function GET(request: Request) {
     disponiveis,
     possuiAssinaturaOrigem: direito.origemEmpresaId !== null,
     compartilhaAcesso: direito.origemEmpresaId !== null && disponiveis > 0,
+    perfilAdicionalEmpresarial,
+    valorPerfilAdicionalMensal: perfilAdicionalEmpresarial ? VALOR_PERFIL_EMPRESARIAL_ADICIONAL_MENSAL : null,
   });
 }

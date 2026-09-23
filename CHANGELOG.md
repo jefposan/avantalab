@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.41.0 - 2026-09-23
+- **Sessões empresariais por dispositivo**: no Business Básico, entrar em outro
+  aparelho encerra a sessão anterior. Business Pro e Business Premium mantêm
+  dispositivos simultâneos, com confirmação da sessão pelo servidor e retorno
+  imediato à entrada quando ela for revogada.
+- **Sincronização financeira sem sobrescrita**: lançamentos e receitas recebem
+  revisão de concorrência. Se outro aparelho salvar o mesmo registro primeiro,
+  a edição desatualizada é recusada e a pessoa revisa os dados atuais antes de
+  tentar novamente. A Gestão Mobile também acompanha receitas em tempo real.
+
+## 1.40.0 - 2026-09-22
+- **Perfis adicionais empresariais**: Business Pro inclui 3 empresas e
+  Business Premium inclui 10. Depois da franquia do plano, Gestão Web e Mobile
+  apresentam a contratação individual, sempre mensal, de **R$ 14,99/mês**,
+  com dados de cobrança e checkout seguro pela Asaas. Business Básico mantém
+  uma empresa e orienta o upgrade para Pro.
+- **Planos empresariais claros**: a landing e as opções de contratação agora
+  distinguem corretamente usuários, perfis, ponto, módulos e o adicional de
+  cada plano; o adicional não possui modalidade anual, inclusive para uma
+  assinatura principal anual.
+- **Liberação financeira protegida**: o novo perfil fica pendente e sem acesso
+  ao Premium até o webhook confirmar o pagamento. Atrasos respeitam a carência
+  existente; estorno, chargeback ou encerramento removem o acesso ao fim do
+  período efetivamente pago. A exclusão definitiva também cancela a recorrência
+  adicional antes de apagar o perfil.
+
 ## 1.39.0.02 - 2026-09-22
 - **Tipo de despesa imediato**: ao cadastrar um novo tipo pela tela de
   lançamento, a Gestão Web e Mobile o incluem imediatamente no seletor atual;

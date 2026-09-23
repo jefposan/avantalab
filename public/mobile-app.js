@@ -513,6 +513,9 @@
     notaVisualizandoUrl: '',
     caixinhaMovimentos: [],
     entradas: [],
+    sessaoDispositivoEmpresa: '',
+    sessaoDispositivoTimer: null,
+    sessaoDispositivoVisibilidadeInstalada: false,
     receitaVendasOcultaPorMes: {},
     despesas: [],
     usuariosEmpresa: [],
@@ -708,6 +711,11 @@
     empresaExclusaoEtapa: 'escolha',
     empresaEdicaoAberta: false,
     empresaCriarAberta: false,
+    perfilAdicionalPremiumAberto: false,
+    perfilAdicionalPremiumNome: '',
+    perfilAdicionalPremiumErro: '',
+    perfilAdicionalPlano: '',
+    perfilAdicionalLimite: 0,
     criarPerfilErro: '',
     editEmpresaNome: '',
     editEmpresaLogin: '',
@@ -3501,6 +3509,12 @@
           { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
           function () { carregarRecorrencias(); carregarDados(); })
         .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'faturamentos_entradas', filter: 'empresa_id=eq.' + empresaId },
+          function () { carregarDados(); })
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'faturamentos', filter: 'empresa_id=eq.' + empresaId },
+          function () { carregarDados(); })
+        .on('postgres_changes',
           { event: '*', schema: 'public', table: 'configuracoes', filter: 'empresa_id=eq.' + empresaId },
           function () { sincronizarCentrosCustoMobile(); })
         .on('postgres_changes',
@@ -5863,6 +5877,62 @@
     return sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
   }
 
+  function idDispositivoSessaoMobile() {
+    var chave = 'avantalab.dispositivo.v1';
+    try {
+      var existente = localStorage.getItem(chave);
+      if (existente) return existente;
+      var novo = (window.crypto && typeof window.crypto.randomUUID === 'function')
+        ? window.crypto.randomUUID()
+        : String(Date.now()) + '-' + Math.random().toString(36).slice(2);
+      localStorage.setItem(chave, novo);
+      return novo;
+    } catch (erro) {
+      return 'mobile-' + String(Date.now());
+    }
+  }
+
+  async function confirmarSessaoDispositivoMobile(acao) {
+    if (!COBRANCA_ATIVA_MOBILE || !state.empresa || !state.empresa.id) return { ativa: true, ignorado: true };
+    var token = await tokenSessao().catch(function () { return ''; });
+    if (!token) return { ativa: false, mensagem: 'Sua sessão expirou.' };
+    var resposta;
+    try {
+      resposta = await fetch('/api/cobranca/sessoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, dispositivoId: idDispositivoSessaoMobile(), acao: acao }),
+      });
+    } catch (erro) {
+      // Sem conexão não há fila de escrita: o app mantém apenas leitura local.
+      return { ativa: true, offline: true };
+    }
+    var dados = await resposta.json().catch(function () { return {}; });
+    if (dados.ativa !== false) return { ativa: true, ignorado: Boolean(dados.ignorado) };
+    try { await db.auth.signOut({ scope: 'local' }); } catch (erro) {}
+    state.pronto = false;
+    state.carregando = false;
+    state.erro = dados.mensagem || 'Esta conta foi acessada em outro dispositivo.';
+    window.location.replace(destinoLogoutMobile());
+    return { ativa: false, mensagem: state.erro };
+  }
+
+  function iniciarControleSessaoDispositivoMobile() {
+    if (!COBRANCA_ATIVA_MOBILE || !state.empresa || !state.empresa.id) return;
+    if (state.sessaoDispositivoEmpresa === state.empresa.id && state.sessaoDispositivoTimer) return;
+    if (state.sessaoDispositivoTimer) window.clearInterval(state.sessaoDispositivoTimer);
+    state.sessaoDispositivoEmpresa = state.empresa.id;
+    state.sessaoDispositivoTimer = window.setInterval(function () {
+      confirmarSessaoDispositivoMobile('verificar');
+    }, 8000);
+    if (!state.sessaoDispositivoVisibilidadeInstalada) {
+      state.sessaoDispositivoVisibilidadeInstalada = true;
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') confirmarSessaoDispositivoMobile('verificar');
+      });
+    }
+  }
+
   async function criarPerfilViaApiMobile(nome, tipoPerfil, somentePrimeiro) {
     try {
       var token = await tokenSessao();
@@ -5895,6 +5965,70 @@
         data: null,
         criado: false,
       };
+    }
+  }
+
+  async function quotaPerfisMobile() {
+    if (!COBRANCA_ATIVA_MOBILE || !state.empresa || !state.empresa.id) return null;
+    var token = await tokenSessao();
+    if (!token) return null;
+    var retorno = await requisitarJsonMobileComRetry('/api/cobranca/quota-perfis?empresaId=' + encodeURIComponent(state.empresa.id), {
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    return retorno.resposta && retorno.resposta.ok && retorno.json && retorno.json.ativo ? retorno.json : null;
+  }
+
+  async function contratarPerfilAdicionalPremiumMobile() {
+    if (state.empresaAcao === 'perfil-adicional' || !state.empresa) return;
+    var nomePerfil = String(state.perfilAdicionalPremiumNome || '').trim();
+    var nome = campo('perfil-adicional-nome-cobranca').trim().replace(/\s+/g, ' ');
+    var documento = campo('perfil-adicional-cpf-cnpj').replace(/\D/g, '');
+    var email = campo('perfil-adicional-email').trim().toLowerCase();
+    var telefone = campo('perfil-adicional-telefone').replace(/\D/g, '');
+    if (nome.length < 3) { state.perfilAdicionalPremiumErro = 'Informe o nome ou a razão social da cobrança.'; render(); return; }
+    if (documento.length !== 11 && documento.length !== 14) { state.perfilAdicionalPremiumErro = 'Informe um CPF ou CNPJ válido.'; render(); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { state.perfilAdicionalPremiumErro = 'Informe um e-mail de cobrança válido.'; render(); return; }
+    if (telefone.length < 10 || telefone.length > 13) { state.perfilAdicionalPremiumErro = 'Informe um telefone válido.'; render(); return; }
+    var janela = window.open('', '_blank');
+    state.empresaAcao = 'perfil-adicional';
+    state.perfilAdicionalPremiumErro = '';
+    render();
+    try {
+      var token = await tokenSessao();
+      if (!token) throw new Error('Sua sessão expirou. Entre novamente para continuar.');
+      var resposta = await fetch('/api/cobranca/perfis-adicionais/assinar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({
+          empresaOrigemId: state.empresa.id,
+          nomePerfil: nomePerfil,
+          cobranca: { nome: nome, cpfCnpj: documento, email: email, telefone: telefone },
+        }),
+      });
+      var json = await resposta.json();
+      if (!resposta.ok || !json.ok) throw new Error(json.mensagem || 'Não foi possível preparar a cobrança.');
+      var empresa = json.empresa || {};
+      var empresaIdNova = empresa.id || json.empresaId;
+      if (empresaIdNova) await inserirDespesasPadraoMobile(empresaIdNova, 'empresa');
+      if (json.invoiceUrl) {
+        if (janela) janela.location.href = json.invoiceUrl;
+        else window.open(json.invoiceUrl, '_blank', 'noopener,noreferrer');
+      } else if (janela) {
+        janela.close();
+      }
+      state.empresaAcao = '';
+      state.perfilAdicionalPremiumAberto = false;
+      state.perfilAdicionalPremiumNome = '';
+      state.perfilAdicionalPlano = '';
+      state.perfilAdicionalLimite = 0;
+      await carregarEmpresas(state.usuario.id);
+      render();
+      mostrarToast('Cobrança de R$ 14,99/mês iniciada. O perfil será liberado após o pagamento.');
+    } catch (erro) {
+      if (janela) janela.close();
+      state.empresaAcao = '';
+      state.perfilAdicionalPremiumErro = mensagemErro(erro, 'Não foi possível preparar a cobrança agora.');
+      render();
     }
   }
 
@@ -6984,7 +7118,7 @@
     while (true) {
       var resposta = await db
         .from('lancamentos')
-        .select('id, mes, dia, despesa_nome, descricao, valor, status, tipo_obs, recorrencia_id, nota_arquivo_path, centro_custo_id')
+        .select('id, mes, dia, despesa_nome, descricao, valor, status, tipo_obs, recorrencia_id, nota_arquivo_path, centro_custo_id, revisao')
         .eq('empresa_id', empresaId)
         .eq('ano', ano)
         .order('dia', { ascending: true })
@@ -7119,7 +7253,7 @@
     var resultadosPromise = Promise.all([
       acompanharEtapaDados(buscarLancamentosAnoMobile(empresaId, ano), 'Carregando despesas e lançamentos'),
       acompanharEtapaDados(db.from('faturamentos').select('mes, valor').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
-      acompanharEtapaDados(db.from('faturamentos_entradas').select('id, mes, dia, origem, valor, status, tipo_obs, centro_custo_id').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
+      acompanharEtapaDados(db.from('faturamentos_entradas').select('id, mes, dia, origem, valor, status, tipo_obs, centro_custo_id, revisao').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
       acompanharEtapaDados(db.from('despesas_cadastradas').select('id, nome, categoria').eq('empresa_id', empresaId).order('nome', { ascending: true }), 'Carregando categorias de despesas'),
       acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo, centros_custo_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
       acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
@@ -7195,6 +7329,11 @@
       render();
       return;
     }
+    var sessaoDispositivo = await confirmarSessaoDispositivoMobile(
+      state.sessaoDispositivoEmpresa === empresaId ? 'verificar' : 'entrar'
+    );
+    if (!sessaoDispositivo.ativa) return;
+    state.sessaoDispositivoEmpresa = empresaId;
     // Guarda o dia da carga (São Paulo) — usado para só recarregar ao voltar
     // ao app quando o dia virou (despesas previstas do novo dia).
     try { state.diaUltimoCarregamento = dataHoraPontoMobile().data; } catch (e) {}
@@ -7214,6 +7353,7 @@
         recorrenciaId: item.recorrencia_id || null,
         notaArquivoPath: item.nota_arquivo_path || null,
         centroCustoId: item.centro_custo_id ? String(item.centro_custo_id) : null,
+        revisao: Number(item.revisao || 1),
       };
     });
 
@@ -7247,6 +7387,7 @@
         status: item.status || null,
         tipo: item.tipo_obs || null,
         centroCustoId: item.centro_custo_id ? String(item.centro_custo_id) : null,
+        revisao: Number(item.revisao || 1),
       };
     });
 
@@ -7375,6 +7516,7 @@
       });
       executarSegundoPlano('Falha ao iniciar agenda em tempo real', configurarRealtimeAgendaMobile);
       executarSegundoPlano('Falha ao iniciar financeiro em tempo real', configurarRealtimeFinanceiroMobile);
+      executarSegundoPlano('Falha ao iniciar controle de sessão', iniciarControleSessaoDispositivoMobile);
       executarSegundoPlano('Falha ao iniciar notificações em tempo real', configurarRealtimeNotificacoesMobile);
       executarSegundoPlano('Falha ao carregar aprovações do Vendas', function () {
         return carregarAprovacoesVendasMobile(false);
@@ -9685,6 +9827,33 @@
       return;
     }
 
+    if (tipoPerfil === 'empresa' && COBRANCA_ATIVA_MOBILE) {
+      try {
+        var quota = await quotaPerfisMobile();
+        if (quota && quota.perfilAdicionalEmpresarial) {
+          state.empresaCriarAberta = false;
+          state.perfilAdicionalPremiumAberto = true;
+          state.perfilAdicionalPremiumNome = nome;
+          state.perfilAdicionalPremiumErro = '';
+          state.perfilAdicionalPlano = quota.plano || '';
+          state.perfilAdicionalLimite = Number(quota.limite || 0);
+          render();
+          return;
+        }
+        if (quota && quota.plano === 'business' && quota.possuiAssinaturaOrigem && Number(quota.disponiveis || 0) === 0) {
+          state.assinaturaPlanoSelecionado = 'business_pro';
+          state.empresaCriarAberta = false;
+          state.modalMenu = 'assinatura';
+          state.criarPerfilErro = 'O Business Básico inclui 1 perfil empresarial. Escolha o Business Pro para criar mais perfis.';
+          render();
+          return;
+        }
+      } catch (erroQuota) {
+        setErroCriarPerfil('Não foi possível verificar as vagas do plano. Tente novamente.');
+        return;
+      }
+    }
+
     state.carregando = true;
     state.empresaAcao = 'criar';
     state.criarPerfilErro = '';
@@ -9793,6 +9962,9 @@
     state.empresaCriarAberta = true;
     state.empresaEdicaoAberta = false;
     state.empresaExclusaoAberta = false;
+    state.perfilAdicionalPremiumAberto = false;
+    state.perfilAdicionalPlano = '';
+    state.perfilAdicionalLimite = 0;
     state.novaEmpresaTipoPerfil = 'empresa';
     state.criarPerfilErro = '';
     state.erro = '';
@@ -9805,6 +9977,17 @@
     state.novaEmpresaTipoPerfil = 'empresa';
     state.criarPerfilErro = '';
     state.erro = '';
+    render();
+  }
+
+  function cancelarPerfilAdicionalPremiumMobile() {
+    if (state.empresaAcao === 'perfil-adicional') return;
+    state.perfilAdicionalPremiumAberto = false;
+    state.perfilAdicionalPremiumNome = '';
+    state.perfilAdicionalPremiumErro = '';
+    state.perfilAdicionalPlano = '';
+    state.perfilAdicionalLimite = 0;
+    state.empresaCriarAberta = true;
     render();
   }
 
@@ -10372,11 +10555,14 @@
         })
         .eq('id', item.id)
         .eq('empresa_id', state.empresa.id)
+        .eq('revisao', Number(item.revisao || 1))
         .select()
         .single();
 
       if (receita.error) {
-        falharAplicacaoLancamentoMobile('Nao foi possivel editar a receita.');
+        falharAplicacaoLancamentoMobile(receita.error.code === 'PGRST116'
+          ? 'Esta receita foi alterada em outro dispositivo. Atualize a lista e revise os dados antes de salvar novamente.'
+          : 'Nao foi possivel editar a receita.');
         return;
       }
 
@@ -10440,11 +10626,14 @@
         })
         .eq('id', item.id)
         .eq('empresa_id', state.empresa.id)
+        .eq('revisao', Number(item.revisao || 1))
         .select()
         .single();
 
       if (despesa.error) {
-        falharAplicacaoLancamentoMobile('Nao foi possivel editar a despesa: ' + (despesa.error.message || despesa.error.code || 'erro'));
+        falharAplicacaoLancamentoMobile(despesa.error.code === 'PGRST116'
+          ? 'Esta despesa foi alterada em outro dispositivo. Atualize a lista e revise os dados antes de salvar novamente.'
+          : 'Nao foi possivel editar a despesa: ' + (despesa.error.message || despesa.error.code || 'erro'));
         return;
       }
     }
@@ -13965,7 +14154,7 @@
     var tipoAtual = normalizarTipoPerfil(state.empresa && state.empresa.tipo_perfil);
     var tipoEdicao = normalizarTipoPerfil(state.editEmpresaTipoPerfil);
     var tipoNovo = normalizarTipoPerfil(state.novaEmpresaTipoPerfil);
-    var algumAberto = state.empresaEdicaoAberta || state.empresaCriarAberta || state.empresaExclusaoAberta;
+    var algumAberto = state.empresaEdicaoAberta || state.empresaCriarAberta || state.empresaExclusaoAberta || state.perfilAdicionalPremiumAberto;
 
     var cabecalho = (
       '<div class="rounded-2xl bg-slate-50 p-4">' +
@@ -13999,6 +14188,32 @@
             '<button id="abrir-exclusao-empresa-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition ' + (gestorMaster ? 'border-red-700 bg-red-600 text-white active:scale-[0.98]' : 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-80') + '"' + (gestorMaster ? '' : ' disabled title="Somente o Gestor Master pode excluir o perfil"') + '>' + iconeExcluirPerfil + '<span>Excluir perfil</span></button>' +
           '</div>' +
           alertaHtml().replace('mt-4', '') +
+        '</div>'
+      );
+    }
+
+    // ── Vista: perfil empresarial adicional ───────────────────────────────
+    if (state.perfilAdicionalPremiumAberto) {
+      var emailPadraoAdicional = state.usuario && state.usuario.email || '';
+      var planoAdicional = state.perfilAdicionalPlano === 'business_pro' ? 'Business Pro' : 'Business Premium';
+      var limiteAdicional = Number(state.perfilAdicionalLimite || (state.perfilAdicionalPlano === 'business_pro' ? 3 : 10));
+      return (
+        '<div class="grid gap-3 text-sm">' +
+          cabecalho +
+          '<div class="grid gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 p-3">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-sky-800">' + escapeHtml(planoAdicional) + '</p>' +
+            '<p class="text-sm font-bold leading-relaxed text-slate-700">As ' + escapeHtml(String(limiteAdicional)) + ' vagas incluídas já estão em uso. <strong>' + escapeHtml(state.perfilAdicionalPremiumNome) + '</strong> será um perfil empresarial adicional por <strong>R$ 14,99/mês</strong>.</p>' +
+            '<p class="rounded-xl border border-sky-100 bg-white px-3 py-2 text-[11px] font-semibold leading-relaxed text-sky-900">A cobrança é sempre mensal, mesmo que o plano principal seja anual. O perfil será liberado quando a Asaas confirmar o pagamento.</p>' +
+            '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Nome ou razão social da cobrança<input id="perfil-adicional-nome-cobranca" value="' + escapeHtml(nomeEmpresa(state.empresa)) + '" autocomplete="name" style="font-size:16px" class="h-11 rounded-md border border-sky-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-sky-500" /></label>' +
+            '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">CPF ou CNPJ<input id="perfil-adicional-cpf-cnpj" inputmode="numeric" autocomplete="off" style="font-size:16px" class="h-11 rounded-md border border-sky-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-sky-500" /></label>' +
+            '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">E-mail de cobrança<input id="perfil-adicional-email" type="email" value="' + escapeHtml(emailPadraoAdicional) + '" autocomplete="email" style="font-size:16px" class="h-11 rounded-md border border-sky-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-sky-500" /></label>' +
+            '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Telefone<input id="perfil-adicional-telefone" inputmode="tel" autocomplete="tel" style="font-size:16px" class="h-11 rounded-md border border-sky-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-sky-500" /></label>' +
+            (state.perfilAdicionalPremiumErro ? '<p class="text-xs font-bold text-red-700">' + escapeHtml(state.perfilAdicionalPremiumErro) + '</p>' : '') +
+            '<div class="grid grid-cols-2 gap-2">' +
+              '<button id="cancelar-perfil-adicional-premium-mobile" type="button" ' + (state.empresaAcao === 'perfil-adicional' ? 'disabled ' : '') + 'class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase tracking-wide text-slate-600 disabled:opacity-50">Voltar</button>' +
+              '<button id="contratar-perfil-adicional-premium-mobile" type="button" ' + (state.empresaAcao === 'perfil-adicional' ? 'disabled ' : '') + 'class="h-10 rounded-xl bg-[#003E73] px-3 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.empresaAcao === 'perfil-adicional' ? 'Preparando...' : 'Ir para pagamento') + '</button>' +
+            '</div>' +
+          '</div>' +
         '</div>'
       );
     }
@@ -15824,6 +16039,8 @@
     bind('cancelar-edicao-empresa-mobile', cancelarEdicaoEmpresaMobile);
     bind('salvar-edicao-empresa-mobile', salvarEdicaoEmpresaMobile);
     bind('criar-empresa-mobile', criarEmpresaMobile);
+    bind('cancelar-perfil-adicional-premium-mobile', cancelarPerfilAdicionalPremiumMobile);
+    bind('contratar-perfil-adicional-premium-mobile', contratarPerfilAdicionalPremiumMobile);
     bind('edit-tipo-empresa', function () { selecionarTipoPerfilEdicao('empresa'); });
     bind('edit-tipo-pessoal', function () { selecionarTipoPerfilEdicao('pessoal'); });
     bind('novo-tipo-empresa', function () { selecionarTipoPerfilNovo('empresa'); });

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { atualizarAssinaturaAsaas, listarCobrancasAssinaturaAsaas } from '../../../lib/asaas';
 import { calcularFimCarencia, calcularFimPeriodoPago } from '../../../lib/cobranca-fluxo';
 import { fimDaCarencia, somarUmMesData } from '../../../lib/ponto-facial-cobranca-servidor';
-import { lerReferenciaAssinatura, referenciaConfereAssinatura } from '../../../lib/cobranca-referencia';
+import { lerReferenciaAssinatura, lerReferenciaPerfilAdicional, referenciaConfereAssinatura } from '../../../lib/cobranca-referencia';
 
 export const runtime = 'nodejs';
 
@@ -33,6 +33,9 @@ export async function POST(request: Request) {
     .filter(Boolean);
   const referenciaAssinatura = referenciasExternas
     .map((valor) => lerReferenciaAssinatura(valor))
+    .find(Boolean) || null;
+  const referenciaPerfilAdicional = referenciasExternas
+    .map((valor) => lerReferenciaPerfilAdicional(valor))
     .find(Boolean) || null;
   const referenciaFacial = referenciasExternas.find((valor) => /^ponto_facial(?:_empresa)?:[0-9a-f-]{36}$/i.test(valor)) || '';
   const empresaIdFacial = referenciaFacial.match(/^ponto_facial:([0-9a-f-]{36})$/i)?.[1]
@@ -84,6 +87,18 @@ export async function POST(request: Request) {
     if (resultadoFacial) {
       await db.from('cobranca_webhook_eventos').update({ status: 'processado', erro: null, processado_em: new Date().toISOString() }).eq('id', registroEventoId);
       return NextResponse.json({ recebido: true, facial: true });
+    }
+
+    const resultadoPerfilAdicional = await processarCobrancaPerfilAdicional({
+      db,
+      evento,
+      pagamento,
+      assinaturaGw,
+      assinaturaAdicionalId: referenciaPerfilAdicional?.assinaturaAdicionalId || null,
+    });
+    if (resultadoPerfilAdicional) {
+      await db.from('cobranca_webhook_eventos').update({ status: 'processado', erro: null, processado_em: new Date().toISOString() }).eq('id', registroEventoId);
+      return NextResponse.json({ recebido: true, perfilAdicional: true });
     }
 
     // Assinatura de módulo: é independente da assinatura principal e só libera
@@ -310,6 +325,55 @@ export async function POST(request: Request) {
     }).eq('id', registroEventoId);
     return NextResponse.json({ erro: true, mensagem: 'falha ao processar evento' }, { status: 500 });
   }
+}
+
+async function processarCobrancaPerfilAdicional({
+  db,
+  evento,
+  pagamento,
+  assinaturaGw,
+  assinaturaAdicionalId,
+}: {
+  // A tabela é entregue pela migration de perfis adicionais e não está no
+  // schema TypeScript gerado localmente.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any;
+  evento: string;
+  pagamento: Record<string, unknown>;
+  assinaturaGw: string | null;
+  assinaturaAdicionalId: string | null;
+}) {
+  let consulta = db.from('assinaturas_perfis_adicionais')
+    .select('id, empresa_id, status, valido_ate, gateway_subscription_id, cancelamento_solicitado_em');
+  if (assinaturaAdicionalId) consulta = consulta.eq('id', assinaturaAdicionalId);
+  else if (assinaturaGw) consulta = consulta.eq('gateway_subscription_id', assinaturaGw);
+  else return false;
+  const { data: assinatura } = await consulta.maybeSingle();
+  if (!assinatura) return false;
+
+  const agora = new Date().toISOString();
+  const pago = evento === 'PAYMENT_CONFIRMED' || evento === 'PAYMENT_RECEIVED';
+  const vencido = evento === 'PAYMENT_OVERDUE';
+  const encerrado = ['PAYMENT_REFUNDED', 'PAYMENT_CHARGEBACK_REQUESTED', 'SUBSCRIPTION_INACTIVATED', 'SUBSCRIPTION_DELETED'].includes(evento);
+  if (pago) {
+    // A confirmação é a única transição que concede o Premium ao perfil 11+.
+    await db.from('assinaturas_perfis_adicionais').update({ status: 'ativa', valido_ate: null, atualizado_em: agora }).eq('id', assinatura.id);
+  } else if (vencido) {
+    const validoAte = assinatura.status === 'inadimplente' && assinatura.valido_ate
+      ? assinatura.valido_ate
+      : calcularFimCarencia();
+    await db.from('assinaturas_perfis_adicionais').update({ status: 'inadimplente', valido_ate: validoAte, atualizado_em: agora }).eq('id', assinatura.id);
+  } else if (encerrado) {
+    let validoAte = agora;
+    const encerramentoExterno = evento === 'SUBSCRIPTION_INACTIVATED' || evento === 'SUBSCRIPTION_DELETED';
+    if (encerramentoExterno && assinaturaGw) {
+      const cobrancas = await listarCobrancasAssinaturaAsaas(assinaturaGw);
+      if (!cobrancas.ok) throw new Error('Não foi possível confirmar o período pago do perfil adicional encerrado.');
+      validoAte = calcularFimPeriodoPago(cobrancas.data?.data || [], 'mensal', assinatura.valido_ate) || agora;
+    }
+    await db.from('assinaturas_perfis_adicionais').update({ status: 'cancelada', valido_ate: validoAte, atualizado_em: agora }).eq('id', assinatura.id);
+  }
+  return true;
 }
 
 async function processarCobrancaFacial({

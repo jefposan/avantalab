@@ -43,5 +43,9 @@ export function avaliarQuotaParaCriacao(
     temVaga,
     possuiAssinaturaOrigem,
     compartilhaAssinatura: possuiAssinaturaOrigem && tipoPermitido && temVaga,
+    requerPerfilEmpresarialAdicional: (direito.plano === 'business_pro' || direito.plano === 'business_premium')
+      && tipoPerfil === 'empresa'
+      && possuiAssinaturaOrigem
+      && !temVaga,
   };
 }

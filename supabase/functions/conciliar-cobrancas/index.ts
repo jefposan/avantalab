@@ -30,6 +30,14 @@ type AssinaturaFacial = Assinatura & {
   proximo_vencimento: string | null;
 };
 
+type AssinaturaPerfilAdicional = {
+  id: string;
+  empresa_id: string;
+  status: string;
+  valido_ate: string | null;
+  gateway_subscription_id: string;
+};
+
 async function asaas(path: string, init: RequestInit = {}) {
   const ASAAS_API_KEY = normalizarSecret(Deno.env.get('ASAAS_API_KEY'));
   if (!ASAAS_API_KEY) throw new Error('ASAAS_API_KEY não configurada');
@@ -297,6 +305,50 @@ Deno.serve(async () => {
       }
     }
 
+    // Segunda camada de segurança: se o webhook atrasar ou falhar, a
+    // conciliação nunca deixa um perfil adicional pendente usar a origem Business.
+    const { data: perfisAdicionais, error: erroPerfisAdicionais } = await db
+      .from('assinaturas_perfis_adicionais')
+      .select('id, empresa_id, status, valido_ate, gateway_subscription_id')
+      .not('gateway_subscription_id', 'is', null)
+      .neq('status', 'cancelada');
+    if (erroPerfisAdicionais) throw erroPerfisAdicionais;
+    let perfisAdicionaisVerificados = 0;
+    let perfisAdicionaisAtualizados = 0;
+    for (const assinatura of (perfisAdicionais || []) as AssinaturaPerfilAdicional[]) {
+      perfisAdicionaisVerificados++;
+      try {
+        const [detalhe, pagamentosResposta] = await Promise.all([
+          asaasOuAusente(`/subscriptions/${assinatura.gateway_subscription_id}`),
+          asaasOuAusente(`/subscriptions/${assinatura.gateway_subscription_id}/payments`),
+        ]);
+        const pagamentos = Array.isArray(pagamentosResposta?.data) ? pagamentosResposta.data : [];
+        const vencida = pagamentos.some((item: { status?: string }) => item.status === 'OVERDUE');
+        const paga = pagamentos.some((item: { status?: string }) => STATUS_PAGOS.has(item.status || ''));
+        let status = assinatura.status;
+        let validoAte = assinatura.valido_ate;
+        if (!detalhe || detalhe.status === 'INACTIVE' || detalhe.status === 'EXPIRED') {
+          status = 'cancelada';
+          validoAte = fimPeriodoPago(pagamentos, 'mensal', assinatura.valido_ate) || new Date().toISOString();
+        } else if (vencida) {
+          status = 'inadimplente';
+          if (assinatura.status !== 'inadimplente' || !assinatura.valido_ate) validoAte = fimCarencia(null);
+        } else if (paga) {
+          status = 'ativa';
+          validoAte = null;
+        }
+        if (status !== assinatura.status || validoAte !== assinatura.valido_ate) {
+          const { error } = await db.from('assinaturas_perfis_adicionais')
+            .update({ status, valido_ate: validoAte, atualizado_em: new Date().toISOString() })
+            .eq('id', assinatura.id);
+          if (error) throw error;
+          perfisAdicionaisAtualizados++;
+        }
+      } catch (error) {
+        falhas.push({ empresaId: assinatura.empresa_id, erro: `Perfil adicional: ${String(error)}` });
+      }
+    }
+
     const { data: assinaturasFaciais, error: erroFaciais } = await db
       .from('ponto_facial_assinaturas')
       .select('id, empresa_id, status, valido_ate, gateway_subscription_id, quantidade_atual, quantidade_proxima, valor_mensal_centavos, proximo_vencimento')
@@ -406,7 +458,7 @@ Deno.serve(async () => {
       }
     }
 
-    return resposta({ ok: true, verificadas, atualizadas, alteracoesAgendadasAplicadas, faturasSincronizadas, modulosVerificados, modulosAtualizados, faciaisVerificadas, faciaisAtualizadas, falhas });
+    return resposta({ ok: true, verificadas, atualizadas, alteracoesAgendadasAplicadas, faturasSincronizadas, modulosVerificados, modulosAtualizados, perfisAdicionaisVerificados, perfisAdicionaisAtualizados, faciaisVerificadas, faciaisAtualizadas, falhas });
   } catch (error) {
     return resposta({ ok: false, erro: String(error) }, 500);
   }

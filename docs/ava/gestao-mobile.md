@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.39.0.02 -->
+<!-- ava-version: 1.41.0 -->
+
+> Revisão 1.41.0: no **Business Básico**, acessar em outro aparelho encerra o
+> acesso anterior. **Business Pro** e **Business Premium** permitem aparelhos
+> simultâneos e atualizam despesas e receitas imediatamente. Se o mesmo
+> lançamento tiver sido salvo em outro aparelho, a edição antiga é recusada;
+> atualize a lista e revise antes de salvar de novo.
+
+> Revisão 1.40.0: Business Pro inclui 3 empresas e Business Premium inclui 10.
+> Depois da franquia, o app informa **R$ 14,99 por mês**, sempre em ciclo
+> mensal mesmo que o plano principal seja anual, coleta dados de cobrança e
+> abre o checkout seguro. O perfil só é liberado após a confirmação de
+> pagamento pela Asaas. Business Básico inclui 1 empresa e orienta o upgrade
+> para Pro ao atingir o limite.
 
 > Revisão 1.39.0.02: ao cadastrar um tipo de despesa dentro de Novo
 > lançamento, ele entra imediatamente no seletor e já fica escolhido. A
