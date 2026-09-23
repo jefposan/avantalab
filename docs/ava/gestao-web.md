@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.41.0 -->
+<!-- ava-version: 1.41.0.01 -->
+
+> Revisão 1.41.0.01: ao editar uma **despesa fixa**, use **Manter sempre**.
+> A Gestão conserva o mês atual e os três seguintes; quando um mês termina,
+> acrescenta automaticamente o próximo. Ao editar uma **despesa parcelada**,
+> é possível corrigir a parcela atual e a quantidade total, inclusive em
+> sequências mais antigas. Confirme a reorganização para alterar somente a
+> parcela aberta e as seguintes; o histórico anterior continua preservado.
 
 > Revisão 1.41.0: no **Business Básico**, entrar no perfil em outro aparelho
 > encerra a sessão anterior. No **Business Pro** e **Business Premium**, Web e

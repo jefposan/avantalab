@@ -1061,7 +1061,9 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [novaRecorrValor, setNovaRecorrValor] = useState('');
   const [novaRecorrValorNumerico, setNovaRecorrValorNumerico] = useState(0);
   const [novaRecorrLancarAgora, setNovaRecorrLancarAgora] = useState(false);
-  const [novaRecorrMesesFrente, setNovaRecorrMesesFrente] = useState('1');
+  // Despesas fixas são contínuas. Mantemos os três próximos meses criados para
+  // dar previsibilidade ao caixa e renovamos a janela a cada virada de mês.
+  const [novaRecorrMesesFrente, setNovaRecorrMesesFrente] = useState('3');
   const [recorrEditandoId, setRecorrEditandoId] = useState<string | null>(null);
   const [editRecorrNome, setEditRecorrNome] = useState('');
   const [editRecorrCategoria, setEditRecorrCategoria] = useState('');
@@ -4606,7 +4608,7 @@ const solicitarEntradaFaturamentoDashboard = () => {
       setNovaRecorrValor('');
       setNovaRecorrValorNumerico(0);
       setNovaRecorrLancarAgora(false);
-      setNovaRecorrMesesFrente('1');
+      setNovaRecorrMesesFrente('3');
     }
     setRecorrSalvando(false);
   };
@@ -5139,6 +5141,64 @@ const cancelarDespesaFixaDoMes = async (lanc: LancamentoFinanceiro | TabelaLanca
   }
 };
 
+// Despesas fixas existentes antes do fluxo contínuo podem não possuir uma
+// recorrência vinculada. Ao escolher “Manter sempre”, convertemos somente esse
+// lançamento em uma recorrência e criamos a janela futura de forma idempotente.
+const definirDespesaFixaSempre = async (lanc: TabelaLancamentoDespesa) => {
+  if (!empresaId) return;
+  if (!podeEditarLancamentos) {
+    abrirAviso('Acesso não permitido', 'Você não tem permissão para editar lançamentos.');
+    return;
+  }
+  if (!iniciarProcessamentoLancamento('Mantendo despesa fixa')) return;
+
+  try {
+    const atual = lancamentos.find((item) => String(item.id) === String(lanc.id));
+    let recorrenciaId = atual?.recorrenciaId || lanc.recorrenciaId || null;
+
+    if (!recorrenciaId) {
+      const despesaBase = despesasCadastradas.find((despesa) => despesa.nome === lanc.despesa);
+      const recorrenciaCriada = await inserirRecorrencia({
+        empresaId,
+        nome: lanc.despesa,
+        categoria: despesaBase?.categoria || 'Sem categoria',
+        descricao: lanc.descricao || '',
+        dia: Math.max(1, Math.min(31, Number(lanc.dia) || 1)),
+        centroCustoId: atual?.centroCustoId || null,
+      });
+
+      if (recorrenciaCriada.erro || !recorrenciaCriada.data) {
+        abrirAviso('Não foi possível manter a despesa fixa', 'Tente novamente em alguns instantes.', undefined, 'erro');
+        return;
+      }
+
+      recorrenciaId = recorrenciaCriada.data.id;
+      const { error } = await supabase
+        .from('lancamentos')
+        .update({ tipo_obs: 'fixa', recorrencia_id: recorrenciaId, updated_at: new Date().toISOString() })
+        .eq('id', lanc.id)
+        .eq('empresa_id', empresaId);
+      if (error) {
+        await deletarRecorrencia(recorrenciaId);
+        abrirAviso('Não foi possível manter a despesa fixa', 'A vinculação do lançamento não foi concluída. Nenhuma alteração foi mantida.', undefined, 'erro');
+        return;
+      }
+    }
+
+    await garantirFixasDoMesAtual(empresaId, 3);
+    await recarregarDadosFinanceirosAtual();
+    notificarFinanceiroAtualizado();
+    abrirAviso(
+      'Despesa fixa contínua',
+      'A despesa ficará em “Sempre”. O sistema mantém este mês e os próximos três; quando um mês termina, acrescenta o próximo.',
+      undefined,
+      'sucesso'
+    );
+  } finally {
+    finalizarProcessamentoLancamento();
+  }
+};
+
 const confirmarDespesaPrevista = async (id: string | number) => {
   const lancamento = lancamentos.find((item) => String(item.id) === String(id));
   if (lancamento) await aceitarDespesaPrevistaHoje(lancamento);
@@ -5470,9 +5530,7 @@ const iniciarEdicaoLancamento = (lanc: TabelaLancamentoDespesa) => {
 );
   return;
 }
-  const parcelamento = lanc.tipo === 'parcela'
-    ? lerParcelamentoEditavel(lanc.descricao)
-    : null;
+  const parcelamento = lerParcelamentoEditavel(lanc.descricao);
   setLancamentoEditandoId(lanc.id);
   setEditDia(String(lanc.dia));
   setEditDespesa(lanc.despesa);
@@ -5828,10 +5886,8 @@ const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
 
   const lancamentoAtual = lancamentos.find((item) => String(item.id) === String(lancamentoEditandoId));
   const ehFixaEditada = lancamentoAtual?.tipo === 'fixa' || Boolean(lancamentoAtual?.recorrenciaId);
-  const ehParcelaEditada = lancamentoAtual?.tipo === 'parcela';
-  const parcelamentoOriginal = ehParcelaEditada
-    ? lerParcelamentoEditavel(lancamentoAtual?.descricao)
-    : null;
+  const parcelamentoOriginal = lerParcelamentoEditavel(lancamentoAtual?.descricao);
+  const ehParcelaEditada = lancamentoAtual?.tipo === 'parcela' || Boolean(parcelamentoOriginal);
   const parcelaAtual = Math.trunc(Number(editParcelaAtual));
   const totalParcelas = Math.trunc(Number(editTotalParcelas));
   const descricaoBase = formatarDescricao(editDescricao);
@@ -11772,6 +11828,7 @@ if (validacaoTelefoneObrigatoria) {
               cancelarEdicaoLancamento={cancelarEdicaoLancamento}
               iniciarEdicaoLancamento={iniciarEdicaoLancamento}
               onAceitarPrevistaHoje={aceitarDespesaPrevistaHoje}
+              onDefinirDespesaFixaSempre={definirDespesaFixaSempre}
               onSolicitarExclusaoLancamento={solicitarExclusaoLancamento}
               alturaTabelaLancamentos={alturaTabelaLancamentos}
               setAlturaTabelaLancamentos={setAlturaTabelaLancamentos}
@@ -12453,17 +12510,12 @@ if (validacaoTelefoneObrigatoria) {
                 className={`h-9 w-full rounded-md border px-2.5 text-right text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
               />
             </div>
-            <label className={`grid gap-1 text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>
-              Aplicar nos próximos meses
-              <input
-                type="number"
-                min="1"
-                max="60"
-                value={novaRecorrMesesFrente}
-                onChange={(e) => setNovaRecorrMesesFrente(e.target.value)}
-                className={`h-9 w-full rounded-md border px-2.5 text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
-              />
-            </label>
+            <div className={`rounded-md border px-3 py-2 ${darkMode ? 'border-indigo-400/30 bg-indigo-400/10' : 'border-indigo-200 bg-indigo-50'}`}>
+              <p className={`text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-indigo-100' : 'text-indigo-900'}`}>Sempre</p>
+              <p className={`mt-0.5 text-[10px] font-medium leading-tight ${darkMode ? 'text-indigo-100/80' : 'text-indigo-800/80'}`}>
+                Cria os próximos 3 meses. Quando um mês termina, o próximo é acrescentado automaticamente.
+              </p>
+            </div>
             <button type="button" onClick={salvarNovaRecorrencia}
               disabled={recorrSalvando || !novaRecorrNome.trim()}
               className="h-9 rounded-md text-xs font-black uppercase text-white shadow-sm transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
@@ -12555,7 +12607,7 @@ if (validacaoTelefoneObrigatoria) {
 
       <div className={`shrink-0 border-t px-5 py-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-100 bg-slate-50'}`}>
         <p className={`text-[10px] font-semibold leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-          Despesas fixas são lançadas automaticamente no início de cada mês com o valor do mês anterior.
+          Despesas fixas ficam em “Sempre”: o sistema mantém este mês e os próximos três, acrescentando um novo mês ao final do ciclo.
         </p>
       </div>
     </DraggableModalCard>

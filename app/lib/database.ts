@@ -495,14 +495,18 @@ export async function buscarCaixinhaMovimentos(empresaId: string, ano?: number) 
 
 const MESES_DB = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 
-// Garante que cada despesa fixa ativa tenha lancamento no mes corrente real e no proximo mes.
-// Idempotente (checa recorrencia_id no mes). Valor inicial = valor da mesma fixa no mes anterior mais proximo.
-export async function garantirFixasDoMesAtual(empresaId: string): Promise<void> {
+// Mantém uma janela de meses futuros para cada despesa fixa ativa. A janela é
+// renovada automaticamente: quando um mês termina, entra exatamente um novo
+// mês no fim. Assim "Sempre" não depende de uma fila local nem expira.
+// Idempotente (checa recorrencia_id no mês). Valor inicial = valor da mesma
+// fixa no mês anterior mais próximo.
+export async function garantirFixasDoMesAtual(empresaId: string, mesesAdiante = 3): Promise<void> {
   try {
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
     const mesIdx = hoje.getMonth();
-    const alvos = [0, 1].map((offset) => {
+    const horizonte = Math.max(1, Math.min(60, Math.trunc(mesesAdiante) || 3));
+    const alvos = Array.from({ length: horizonte + 1 }, (_valor, offset) => {
       const idxTotal = mesIdx + offset;
       return {
         ano: anoAtual + Math.floor(idxTotal / 12),

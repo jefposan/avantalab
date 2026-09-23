@@ -17,6 +17,7 @@ export type LancamentoDespesa = {
   valor: number;
   status?: string | null;
   tipo?: string | null;
+  recorrenciaId?: string | null;
   notaArquivoPath?: string | null;
 };
 
@@ -123,6 +124,7 @@ type TabelaLancamentosDespesaProps = {
   cancelarEdicaoLancamento: () => void;
   iniciarEdicaoLancamento: (lancamento: LancamentoDespesa) => void;
   onAceitarPrevistaHoje: (lancamento: LancamentoDespesa) => void | Promise<void>;
+  onDefinirDespesaFixaSempre: (lancamento: LancamentoDespesa) => void | Promise<void>;
   onSolicitarExclusaoLancamento: (lancamento: LancamentoDespesa) => void;
   alturaTabelaLancamentos: number;
   setAlturaTabelaLancamentos: (valor: number) => void;
@@ -192,6 +194,7 @@ export default function TabelaLancamentosDespesa({
   cancelarEdicaoLancamento,
   iniciarEdicaoLancamento,
   onAceitarPrevistaHoje,
+  onDefinirDespesaFixaSempre,
   onSolicitarExclusaoLancamento,
   alturaTabelaLancamentos,
   setAlturaTabelaLancamentos,
@@ -378,7 +381,14 @@ export default function TabelaLancamentosDespesa({
             <table className="w-full min-w-[540px] table-fixed text-left border-collapse">
               <tbody>
               {lancamentosFiltradosDoMes.length > 0 ? (
-                lancamentosFiltradosDoMes.map((lanc) => (
+                lancamentosFiltradosDoMes.map((lanc) => {
+                  // Alguns lançamentos importados foram gravados antes do tipo
+                  // "parcela" existir. A sequência no fim da descrição é a fonte
+                  // segura para ainda permitir a correção desses registros.
+                  const temParcelamento = lanc.tipo === 'parcela' || /\(\s*\d+\s*\/\s*\d+\s*\)\s*$/.test(lanc.descricao || '');
+                  const ehDespesaFixa = lanc.tipo === 'fixa' || Boolean(lanc.recorrenciaId);
+
+                  return (
                   <tr
                     key={lanc.id}
                     onClick={(event) => {
@@ -445,12 +455,12 @@ export default function TabelaLancamentosDespesa({
                             }`}
                             placeholder="Descrição..."
                           />
-                          {lanc.tipo === 'parcela' && (
+                          {temParcelamento && (
                             <div className={`mt-1.5 rounded-md border px-2 py-1.5 ${
                               darkMode ? 'border-violet-400/30 bg-violet-400/10' : 'border-violet-200 bg-violet-50'
                             }`}>
-                              <div className="flex items-center gap-1.5 text-[10px] font-bold">
-                                <span className={darkMode ? 'text-violet-100' : 'text-violet-900'}>Parcela</span>
+                              <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-bold" role="group" aria-label="Configuração do parcelamento">
+                                <span className={darkMode ? 'text-violet-100' : 'text-violet-900'}>Parcela atual</span>
                                 <input
                                   type="number"
                                   min={1}
@@ -476,8 +486,30 @@ export default function TabelaLancamentosDespesa({
                                 />
                               </div>
                               <p className={`mt-1 text-[9px] font-medium leading-tight ${darkMode ? 'text-violet-100/80' : 'text-violet-800/80'}`}>
-                                Ao salvar, as próximas parcelas serão reorganizadas.
+                                Altere a contagem e salve para reorganizar apenas as parcelas seguintes.
                               </p>
+                            </div>
+                          )}
+                          {ehDespesaFixa && (
+                            <div className={`mt-1.5 flex flex-wrap items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 ${
+                              darkMode ? 'border-indigo-400/30 bg-indigo-400/10' : 'border-indigo-200 bg-indigo-50'
+                            }`}>
+                              <div>
+                                <p className={`text-[10px] font-black ${darkMode ? 'text-indigo-100' : 'text-indigo-900'}`}>Despesa fixa · Sempre</p>
+                                <p className={`text-[9px] font-medium leading-tight ${darkMode ? 'text-indigo-100/80' : 'text-indigo-800/80'}`}>
+                                  Mantém este mês e os próximos 3; ao fechar um mês, acrescenta o próximo.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => onDefinirDespesaFixaSempre(lanc)}
+                                className={`h-6 cursor-pointer rounded border px-1.5 text-[9px] font-black transition ${
+                                  darkMode ? 'border-indigo-300/50 text-indigo-100 hover:bg-indigo-300/15' : 'border-indigo-300 text-indigo-700 hover:bg-indigo-100'
+                                }`}
+                                title="Manter esta despesa fixa continuamente"
+                              >
+                                Manter sempre
+                              </button>
                             </div>
                           )}
                         </td>
@@ -608,7 +640,8 @@ export default function TabelaLancamentosDespesa({
                       </>
                     )}
                   </tr>
-                ))
+                  );
+                })
               ) : (
                 <tr>
                   <td

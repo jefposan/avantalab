@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.41.0 -->
+<!-- ava-version: 1.41.0.01 -->
+
+> Revisão 1.41.0.01: a despesa fixa contínua e o refinamento do editor de
+> parcelamento pertencem à Gestão Web; sem impacto operacional no
+> AvantaVendas.
 
 > Revisão 1.41.0: sessões por dispositivo e a revisão concorrente de
 > lançamentos pertencem à Gestão Web e Mobile; sem impacto operacional no

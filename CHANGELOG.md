@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.41.0.01 - 2026-09-23
+- **Despesa fixa contínua na Gestão Web**: ao editar uma despesa fixa, o modo
+  **Sempre** mantém o mês atual e os três próximos. Ao fim de cada mês, a
+  janela se renova com somente um novo lançamento, sem duplicar a sequência.
+  Lançamentos fixos antigos sem vínculo também podem ser convertidos com
+  segurança para esse fluxo.
+- **Parcelamento completo na Gestão Web**: o editor agora reconhece sequências
+  já cadastradas, inclusive as legadas, e deixa corrigir a parcela atual e o
+  total. A confirmação reorganiza somente a parcela aberta e as seguintes;
+  o histórico anterior permanece preservado.
+
 ## 1.41.0 - 2026-09-23
 - **Sessões empresariais por dispositivo**: no Business Básico, entrar em outro
   aparelho encerra a sessão anterior. Business Pro e Business Premium mantêm

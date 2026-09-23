@@ -14,6 +14,8 @@ test('Gestão Web separa a descrição da identificação da parcela e pede conf
   assert.match(gestao, /reorganizar_parcelamento_despesa_rpc/);
   assert.match(gestao, /titulo: 'Reorganizar parcelamento\?'/);
   assert.match(gestao, /As parcelas seguintes serão reprogramadas a partir desta data; as anteriores permanecerão como estão\./);
+  assert.match(gestao, /const parcelamento = lerParcelamentoEditavel\(lanc\.descricao\)/);
+  assert.match(gestao, /const ehParcelaEditada = lancamentoAtual\?\.tipo === 'parcela' \|\| Boolean\(parcelamentoOriginal\)/);
 });
 
 test('linha editada de parcela mostra posição, total e explicação do alcance', () => {
@@ -21,7 +23,8 @@ test('linha editada de parcela mostra posição, total e explicação do alcance
   assert.match(tabelaDespesas, /editTotalParcelas: number/);
   assert.match(tabelaDespesas, /Número da parcela atual/);
   assert.match(tabelaDespesas, /Quantidade total de parcelas/);
-  assert.match(tabelaDespesas, /Ao salvar, as próximas parcelas serão reorganizadas\./);
+  assert.match(tabelaDespesas, /temParcelamento = lanc\.tipo === 'parcela'/);
+  assert.match(tabelaDespesas, /Altere a contagem e salve para reorganizar apenas as parcelas seguintes\./);
 });
 
 test('Gestão Mobile oferece a mesma edição e confirma a reorganização', () => {

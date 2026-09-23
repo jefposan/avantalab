@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.41.0 -->
+<!-- ava-version: 1.41.0.01 -->
+
+> Revisão 1.41.0.01: o refinamento de **Sempre** para despesas fixas e a
+> identificação de sequências parceladas legadas pertencem ao editor da Gestão
+> Web; o fluxo de parcelamento já existente na Gestão Mobile permanece igual.
 
 > Revisão 1.41.0: no **Business Básico**, acessar em outro aparelho encerra o
 > acesso anterior. **Business Pro** e **Business Premium** permitem aparelhos

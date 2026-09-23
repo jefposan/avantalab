@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.41.0.01: na Gestão Web, a despesa fixa pode ficar em
+// “Sempre”, mantendo o mês atual e os três próximos e renovando um no fim do
+// ciclo. O editor também reconhece sequências parceladas legadas para corrigir
+// posição e total, preservando as parcelas anteriores.
 // Revisado na versão 1.41.0: Business Básico mantém uma sessão empresarial por
 // vez; Business Pro e Premium permitem dispositivos simultâneos. Lançamentos
 // e receitas recusam uma edição desatualizada em vez de sobrescrever dados
