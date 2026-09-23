@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.41.0.14 -->
+<!-- ava-version: 1.41.0.15 -->
+
+> Revisão 1.41.0.15: em **Custos e Precificação**, abra a composição e digite
+> o código ou nome para localizar um recurso. A quantidade começa em `1,00`.
+> Em **Uso**, escolha **Integral** ou uma fração de `1/2` a `1/48`; por
+> exemplo, `1/6` apropria um sexto do custo unitário da embalagem.
 
 > Revisão 1.41.0.14: nas buscas da Gestão Web, você pode digitar com ou sem
 > acento — por exemplo, `valvula` localiza `válvula`. Quando houver texto, use

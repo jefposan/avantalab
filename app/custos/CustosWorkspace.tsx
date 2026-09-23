@@ -14,7 +14,7 @@ import { carregarCustos, enviarImagemProduto, salvarDocumentoCustos, salvarPreco
 import {
   calcularComposicao, composicaoVazia, documentoVazio, novoProduto, precoEfetivoTabela, proximoCodigo, sugerirCodigosEmpresa,
   type CampoCenario, type CenarioPreco, type ComposicaoCusto, type DocumentoCustos,
-  type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
+  type ItemComposicao, type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
 } from './types';
 import styles from './custos.module.css';
 
@@ -30,6 +30,7 @@ const navegacao: Array<{ id: Aba; rotulo: string; icone: string }> = [
 ];
 
 const erroTexto = (erro: unknown) => erro instanceof Error ? erro.message : 'Não foi possível concluir a operação.';
+const divisoresPraticos = Array.from({ length: 48 }, (_, indice) => indice + 1);
 
 export default function CustosWorkspace({ companyId, access, initialNewType }: { companyId: string; access: CustosAccess; initialNewType?: 'produto' }) {
   const [aba, setAba] = useState<Aba>(initialNewType ? 'produtos' : 'visao');
@@ -226,6 +227,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   const codigos = produtos.filter((produto) => produto.id !== rascunho.id).map((produto) => produto.sku).filter(Boolean);
   const sugestoesCodigo = sugerirCodigosEmpresa(produtos, rascunho);
   const alterar = <K extends keyof ProdutoCustos>(campo: K, valor: ProdutoCustos[K]) => setRascunho((atual) => ({ ...atual, [campo]: valor }));
+  const alterarItemComposicao = (id: string, patch: Partial<ItemComposicao>) => setComposicao((atual) => ({ ...atual, itens: atual.itens.map((linha) => linha.id === id ? { ...linha, ...patch } : linha) }));
   const registrarReferenciaEdicao = (produto: ProdutoCustos, proximaComposicao: ComposicaoCusto) => setReferenciaEdicao(JSON.stringify({ rascunho: produto, composicao: proximaComposicao }));
   const possuiEdicaoPendente = modo === 'cadastro' && JSON.stringify({ rascunho, composicao }) !== referenciaEdicao;
 
@@ -447,8 +449,8 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
         </div>}
       </section>
 
-      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Composição do custo</h2><p>Insumos, embalagens, mão de obra e recursos compartilhados.</p></div><button type="button" className={styles.secondaryButton} onClick={() => setComposicao((atual) => ({ ...atual, itens: [...atual.itens, { id: crypto.randomUUID(), recursoId: documento.recursos[0]?.id || '', quantidade: 1, perda: 0 }] }))}>Adicionar recurso</button></div>
-        <div className={styles.tableWrap}><table><thead><tr><th>Recurso</th><th>Quantidade</th><th>Perda</th><th className={styles.numeric}>Custo</th><th /></tr></thead><tbody>{composicao.itens.map((item) => { const recurso = documento.recursos.find((registro) => registro.id === item.recursoId); const custo = (recurso?.custo || 0) * item.quantidade * (1 + item.perda / 100); return <tr key={item.id}><td><select value={item.recursoId} onChange={(e) => setComposicao((atual) => ({ ...atual, itens: atual.itens.map((linha) => linha.id === item.id ? { ...linha, recursoId: e.target.value } : linha) }))}><option value="">Selecione</option>{documento.recursos.map((registro) => <option key={registro.id} value={registro.id}>{registro.codigo} · {registro.nome}</option>)}</select></td><td><input className={styles.compactNumber} type="number" min="0" step="0.001" value={item.quantidade} onChange={(e) => setComposicao((atual) => ({ ...atual, itens: atual.itens.map((linha) => linha.id === item.id ? { ...linha, quantidade: Number(e.target.value) || 0 } : linha) }))} /></td><td><PercentInput compact value={item.perda} onChange={(valor) => setComposicao((atual) => ({ ...atual, itens: atual.itens.map((linha) => linha.id === item.id ? { ...linha, perda: valor } : linha) }))} /></td><td className={styles.numeric}><b>{formatarMoeda(custo)}</b></td><td><button className={styles.rowAction} type="button" aria-label={`Remover ${recurso?.nome || 'recurso'}`} onClick={() => setComposicao((atual) => ({ ...atual, itens: atual.itens.filter((linha) => linha.id !== item.id) }))}>×</button></td></tr>; })}{!composicao.itens.length && <tr><td colSpan={5} className={styles.empty}>Nenhum recurso adicionado.</td></tr>}</tbody></table></div>
+      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Composição do custo</h2><p>Pesquise o recurso e defina a quantidade. Em “uso”, a fração divide o custo — por exemplo, 1,00 com 1/6 apropria um sexto da embalagem.</p></div><button type="button" className={styles.secondaryButton} disabled={!podeEditar} onClick={() => setComposicao((atual) => ({ ...atual, itens: [...atual.itens, { id: crypto.randomUUID(), recursoId: '', quantidade: 1, divisor: 1, perda: 0 }] }))}>Adicionar recurso</button></div>
+        <div className={`${styles.tableWrap} ${styles.compositionTableWrap}`}><table className={styles.compositionTable}><thead><tr><th>Recurso</th><th>Quantidade</th><th>Uso</th><th>Perda</th><th className={styles.numeric}>Custo</th><th /></tr></thead><tbody>{composicao.itens.map((item) => { const recurso = documento.recursos.find((registro) => registro.id === item.recursoId); const custo = calculo.linhas.find((linha) => linha.item.id === item.id)?.custo || 0; return <tr key={item.id}><td><RecursoComposicaoPicker recursos={documento.recursos} recursoId={item.recursoId} disabled={!podeEditar} onSelecionar={(recursoId) => alterarItemComposicao(item.id, { recursoId })} /></td><td><QuantidadeComposicaoInput value={item.quantidade} disabled={!podeEditar} label={`Quantidade de ${recurso?.nome || 'recurso'}`} onChange={(quantidade) => alterarItemComposicao(item.id, { quantidade })} /></td><td><UsoFracionadoInput item={item} disabled={!podeEditar} onChange={(divisor) => alterarItemComposicao(item.id, { divisor })} /></td><td><PercentInput compact disabled={!podeEditar} value={item.perda} onChange={(perda) => alterarItemComposicao(item.id, { perda })} /></td><td className={styles.numeric}><b>{formatarMoeda(custo)}</b></td><td><button className={styles.rowAction} type="button" disabled={!podeEditar} aria-label={`Remover ${recurso?.nome || 'recurso'}`} onClick={() => setComposicao((atual) => ({ ...atual, itens: atual.itens.filter((linha) => linha.id !== item.id) }))}>×</button></td></tr>; })}{!composicao.itens.length && <tr><td colSpan={6} className={styles.empty}>Nenhum recurso adicionado.</td></tr>}</tbody></table></div>
       </section>
 
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Formação do preço</h2><p>Percentuais próprios deste produto ou serviço.</p></div></div><div className={styles.priceParams}><Field label="Custos indiretos"><PercentInput value={composicao.indiretos} onChange={(valor) => setComposicao({ ...composicao, indiretos: valor })} /></Field><Field label="Impostos"><PercentInput value={composicao.impostos} onChange={(valor) => setComposicao({ ...composicao, impostos: valor })} /></Field><Field label="Taxas e comissões"><PercentInput value={composicao.taxas} onChange={(valor) => setComposicao({ ...composicao, taxas: valor })} /></Field><Field label="Margem desejada"><PercentInput value={composicao.margem} onChange={(valor) => setComposicao({ ...composicao, margem: valor })} /></Field></div>
@@ -517,6 +519,80 @@ function SimulacoesView({ documento, onDocumento, podeEditar, onMensagem }: { do
 function HistoricoView({ produtos, documento, produtoAtivoId, onSelecionar }: { produtos: ProdutoCustos[]; documento: DocumentoCustos; produtoAtivoId: string; onSelecionar: (id: string) => void }) {
   const versoes = documento.historico.filter((versao) => !produtoAtivoId || versao.produtoId === produtoAtivoId);
   return <><PageHeader title="Histórico de custos" description="Compare versões registradas sempre que a composição alterar valores." /><section className={styles.panel}><div className={styles.panelTitle}><div><h2>Produto ou serviço</h2><p>O histórico permanece mesmo se o cadastro for inativado.</p></div><label className={`${styles.search} ${styles.historyProductSelector}`}><span>Selecionar</span><select value={produtoAtivoId} onChange={(e) => onSelecionar(e.target.value)}><option value="">Todos</option>{produtos.map((produto) => <option key={produto.id} value={produto.id}>{produto.sku} · {produto.nome}</option>)}</select></label></div><div className={styles.tableWrap}><table><thead><tr><th>Data</th><th>Cadastro</th><th className={styles.numeric}>Custo direto</th><th className={styles.numeric}>Custo total</th><th className={styles.numeric}>Preço sugerido</th><th className={styles.numeric}>Variação</th></tr></thead><tbody>{versoes.map((versao, indice) => { const produto = produtos.find((item) => item.id === versao.produtoId); const anterior = versoes.slice(indice + 1).find((item) => item.produtoId === versao.produtoId); const variacao = anterior?.custoTotal ? (versao.custoTotal / anterior.custoTotal - 1) * 100 : null; return <tr key={versao.id}><td>{new Date(versao.criadoEm).toLocaleString('pt-BR')}</td><td><b>{produto?.sku || '—'}</b><small>{produto?.nome || 'Cadastro não localizado'}</small></td><td className={styles.numeric}>{formatarMoeda(versao.custoDireto)}</td><td className={styles.numeric}><b>{formatarMoeda(versao.custoTotal)}</b></td><td className={styles.numeric}>{formatarMoeda(versao.precoSugerido)}</td><td className={styles.numeric}>{variacao === null ? 'Versão inicial' : `${variacao >= 0 ? '+' : ''}${variacao.toFixed(2)}%`}</td></tr>; })}{!versoes.length && <tr><td colSpan={6} className={styles.empty}>Nenhuma versão registrada para esta seleção.</td></tr>}</tbody></table></div></section></>;
+}
+
+function RecursoComposicaoPicker({ recursos, recursoId, disabled = false, onSelecionar }: { recursos: RecursoCusto[]; recursoId: string; disabled?: boolean; onSelecionar: (recursoId: string) => void }) {
+  const [busca, setBusca] = useState('');
+  const [aberto, setAberto] = useState(false);
+  const seletorRef = useRef<HTMLDivElement>(null);
+  const selecionado = recursos.find((recurso) => recurso.id === recursoId);
+  const filtrados = recursos.filter((recurso) => normalizarTexto(`${recurso.codigo} ${recurso.nome} ${recurso.categoria} ${recurso.unidade}`).includes(normalizarTexto(busca))).slice(0, 60);
+  const selecionar = (id: string) => { onSelecionar(id); setBusca(''); setAberto(false); };
+
+  useEffect(() => {
+    if (!aberto) return;
+    const fecharAoClicarFora = (evento: PointerEvent) => {
+      if (!seletorRef.current?.contains(evento.target as Node)) setAberto(false);
+    };
+    const fecharAoPressionarTecla = (evento: KeyboardEvent) => { if (evento.key === 'Escape') setAberto(false); };
+    document.addEventListener('pointerdown', fecharAoClicarFora);
+    document.addEventListener('keydown', fecharAoPressionarTecla);
+    return () => {
+      document.removeEventListener('pointerdown', fecharAoClicarFora);
+      document.removeEventListener('keydown', fecharAoPressionarTecla);
+    };
+  }, [aberto]);
+
+  return <div ref={seletorRef} className={styles.resourcePicker}>
+    <CampoBusca
+      className={styles.resourcePickerInput}
+      value={busca}
+      disabled={disabled}
+      role="combobox"
+      aria-label="Pesquisar recurso da composição"
+      aria-expanded={aberto}
+      aria-autocomplete="list"
+      placeholder={selecionado ? `${selecionado.codigo} · ${selecionado.nome}` : 'Digite código ou nome'}
+      rotuloLimpar="Limpar pesquisa de recurso"
+      onFocus={() => setAberto(true)}
+      onKeyDown={(evento) => {
+        if (evento.key === 'Escape') setAberto(false);
+        if (evento.key === 'Enter' && filtrados[0]) { evento.preventDefault(); selecionar(filtrados[0].id); }
+      }}
+      onChange={(valor) => { setBusca(valor); setAberto(true); }}
+    />
+    {aberto && <div className={styles.resourcePickerResults} role="listbox" aria-label="Recursos localizados">
+      {filtrados.map((recurso) => <button key={recurso.id} type="button" role="option" aria-selected={recurso.id === recursoId} onClick={() => selecionar(recurso.id)}><b>{recurso.codigo}</b><span>{recurso.nome}</span><small>{recurso.categoria} · {recurso.unidade}</small></button>)}
+      {!filtrados.length && <p>Nenhum recurso localizado.</p>}
+      {recursos.length > filtrados.length && !busca && <p>Digite para localizar entre os recursos disponíveis.</p>}
+    </div>}
+  </div>;
+}
+
+function formatarQuantidadeComposicao(valor: number) {
+  return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 }).format(Number.isFinite(valor) ? valor : 0);
+}
+
+function QuantidadeComposicaoInput({ value, onChange, label, disabled = false, className = '' }: { value: number; onChange: (valor: number) => void; label: string; disabled?: boolean; className?: string }) {
+  const [texto, setTexto] = useState(formatarQuantidadeComposicao(value));
+  const [editando, setEditando] = useState(false);
+  const exibido = editando ? texto : formatarQuantidadeComposicao(value);
+  return <input className={`${styles.compactNumber} ${className}`.trim()} disabled={disabled} aria-label={label} inputMode="decimal" value={exibido} onFocus={(evento) => { setTexto(formatarQuantidadeComposicao(value)); setEditando(true); evento.currentTarget.select(); }} onChange={(evento) => {
+    const proximoTexto = evento.target.value.replace(/[^0-9,\.]/g, '').replace('.', ',').replace(/(,.*),/g, '$1');
+    setTexto(proximoTexto);
+    const proximoValor = Number(proximoTexto.replace(',', '.'));
+    if (Number.isFinite(proximoValor)) onChange(Math.max(0, proximoValor));
+  }} onBlur={() => { if (!texto) onChange(0); setEditando(false); }} />;
+}
+
+function UsoFracionadoInput({ item, disabled = false, onChange }: { item: ItemComposicao; disabled?: boolean; onChange: (divisor: number) => void }) {
+  const divisorInformado = Number(item.divisor);
+  const divisorAtual = Number.isFinite(divisorInformado) && divisorInformado > 0 ? divisorInformado : 1;
+  return <div className={styles.fractionControl}>
+    <select disabled={disabled} aria-label="Fração de uso do recurso" value={String(Math.min(48, divisorAtual))} onChange={(evento) => onChange(Number(evento.target.value))}>
+      {divisoresPraticos.map((divisor) => <option key={divisor} value={divisor}>{divisor === 1 ? 'Integral' : `1/${divisor}`}</option>)}
+    </select>
+  </div>;
 }
 
 function Field({ label, wide = false, children }: { label: string; wide?: boolean; children: React.ReactNode }) {

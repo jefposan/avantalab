@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.41.0.15: a composição de Custos permite pesquisar
+// recursos e ratear o custo por frações de 1/2 a 1/48.
 // Revisado na versão 1.41.0.14: buscas ignoram acentos e exibem × para limpar
 // somente quando há termo digitado.
 // Revisado na versão 1.41.0.13: em Custos e Precificação, Custo unitário vazio

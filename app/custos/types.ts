@@ -49,6 +49,8 @@ export type ItemComposicao = {
   id: string;
   recursoId: string;
   quantidade: number;
+  /** Quantas partes dividem a quantidade informada. Ausente nos dados legados = 1. */
+  divisor?: number;
   perda: number;
 };
 
@@ -183,11 +185,25 @@ export function novoProduto(tipo: TipoItem, catalogoId: string): ProdutoCustos {
   };
 }
 
+export function divisorDoItemComposicao(item: ItemComposicao) {
+  const divisor = Number(item.divisor);
+  return Number.isFinite(divisor) && divisor > 0 ? Math.min(48, divisor) : 1;
+}
+
+export function quantidadeEfetivaDoItemComposicao(item: ItemComposicao) {
+  return item.quantidade / divisorDoItemComposicao(item);
+}
+
+export function custoDoItemComposicao(item: ItemComposicao, recurso?: RecursoCusto) {
+  return (recurso?.custo || 0) * quantidadeEfetivaDoItemComposicao(item) * (1 + item.perda / 100);
+}
+
 export function calcularComposicao(composicao: ComposicaoCusto, recursos: RecursoCusto[]) {
   const linhas = composicao.itens.map((item) => {
     const recurso = recursos.find((registro) => registro.id === item.recursoId);
-    const custo = (recurso?.custo || 0) * item.quantidade * (1 + item.perda / 100);
-    return { item, recurso, custo };
+    const quantidadeEfetiva = quantidadeEfetivaDoItemComposicao(item);
+    const custo = custoDoItemComposicao(item, recurso);
+    return { item, recurso, quantidadeEfetiva, custo };
   });
   const direto = linhas.reduce((total, linha) => total + linha.custo, 0);
   const indireto = direto * composicao.indiretos / 100;

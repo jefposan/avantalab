@@ -38,6 +38,7 @@ const paginaProjetos = readFileSync('app/projetos/page.tsx', 'utf8');
 const paginaRecebimentos = readFileSync('app/recebimentos/page.tsx', 'utf8');
 const paginaVendas = readFileSync('app/vendas/page.tsx', 'utf8');
 const carregamentoDadosModulo = readFileSync('app/components/CarregamentoDadosModulo.tsx', 'utf8');
+const tiposCustos = readFileSync('app/custos/types.ts', 'utf8');
 
 test('Custos usa página total e exige o acesso oficial do módulo', () => {
   assert.match(registro, /id: 'custos'/);
@@ -160,6 +161,23 @@ test('custo unitário vazio usa placeholder e inicia a digitação pelos centavo
   assert.match(workspace, /placeholder=\{zeroComoPlaceholder \? '0,00' : undefined\}/);
   assert.match(workspace, /setTexto\(zeroSemValor \? '' : valorFormatado\)/);
   assert.match(workspace, /formatarMoedaDigitada\(e\.target\.value\)/);
+});
+
+test('composição pesquisa recursos e aplica a fração selecionada ao custo', () => {
+  assert.match(workspace, /RecursoComposicaoPicker/);
+  assert.match(workspace, /Digite código ou nome/);
+  assert.match(workspace, /normalizarTexto\(`\$\{recurso\.codigo\}/);
+  assert.match(workspace, /QuantidadeComposicaoInput/);
+  assert.match(workspace, /minimumFractionDigits: 2/);
+  assert.match(workspace, /Array\.from\(\{ length: 48 \}/);
+  assert.match(workspace, /`1\/\$\{divisor\}`/);
+  assert.match(workspace, /Fração de uso do recurso/);
+  assert.match(tiposCustos, /divisor\?: number/);
+  assert.match(tiposCustos, /quantidadeEfetivaDoItemComposicao/);
+  assert.match(tiposCustos, /item\.quantidade \/ divisorDoItemComposicao\(item\)/);
+  assert.match(tiposCustos, /custoDoItemComposicao/);
+  assert.match(estilos, /\.resourcePickerResults\{position:absolute/);
+  assert.match(estilos, /\.compositionTableWrap\{position:relative;overflow:visible/);
 });
 
 test('produto conserva apenas a identificação fiscal e delega a tributação à empresa', () => {

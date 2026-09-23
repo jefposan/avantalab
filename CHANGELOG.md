@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.41.0.15 - 2026-09-23
+- **Composição com pesquisa e fração**: a seleção de recursos em Custos e
+  Precificação agora permite pesquisar por código ou nome. A quantidade começa
+  em `1,00` e o uso pode ser integral ou uma fração de `1/2` até `1/48`,
+  apropriando automaticamente a parcela correspondente do custo unitário.
+
 ## 1.41.0.14 - 2026-09-23
 - **Busca mais tolerante**: pesquisas textuais agora encontram termos com ou
   sem acento, cedilha ou diferença de caixa. O botão `×` limpa o termo e aparece

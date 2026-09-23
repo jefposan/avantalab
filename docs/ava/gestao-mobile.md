@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.41.0.14 -->
+<!-- ava-version: 1.41.0.15 -->
+
+> Revisão 1.41.0.15: a pesquisa e o rateio por fração de recursos pertencem a
+> Custos e Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.41.0.14: as buscas textuais da Gestão Mobile aceitam termos com ou
 > sem acento; o `×` aparece somente quando há pesquisa para limpar o campo.

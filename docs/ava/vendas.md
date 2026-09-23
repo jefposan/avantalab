@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.41.0.14 -->
+<!-- ava-version: 1.41.0.15 -->
+
+> Revisão 1.41.0.15: a pesquisa e o rateio por fração de recursos pertencem a
+> Custos e Precificação; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.41.0.14: no AvantaVendas, buscas de textos aceitam termos com ou
 > sem acento e exibem `×` para limpar somente enquanto houver texto digitado.
