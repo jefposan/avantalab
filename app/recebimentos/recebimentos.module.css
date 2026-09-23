@@ -1749,6 +1749,7 @@
   color: #0f172a;
 }
 .buscaFixaInput::placeholder { color: #94a3b8; }
+.buscaFixaInput[type="search"]::-webkit-search-cancel-button { display: none; -webkit-appearance: none; appearance: none; }
 .buscaLimpar {
   border: none;
   background: transparent;

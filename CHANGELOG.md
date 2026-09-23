@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.41.0.16 - 2026-09-23
+- **Limpeza única nas buscas**: a auditoria dos campos de pesquisa remove o
+  botão `×` nativo do navegador quando a tela já fornece o controle clicável
+  oficial. Gestão Web e Mobile, Vendas e Operações mantêm uma única ação de
+  limpar, visível somente quando há texto.
+
 ## 1.41.0.15 - 2026-09-23
 - **Composição com pesquisa e fração**: a seleção de recursos em Custos e
   Precificação agora permite pesquisar por código ou nome. A quantidade começa

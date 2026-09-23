@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.41.0.16: buscas com limpeza própria ocultam o × nativo
+// do navegador, preservando uma única ação clicável de limpar.
 // Revisado na versão 1.41.0.15: a composição de Custos permite pesquisar
 // recursos e ratear o custo por frações de 1/2 a 1/48.
 // Revisado na versão 1.41.0.14: buscas ignoram acentos e exibem × para limpar

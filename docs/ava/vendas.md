@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.41.0.15 -->
+<!-- ava-version: 1.41.0.16 -->
+
+> Revisão 1.41.0.16: no AvantaVendas, buscas com limpeza própria exibem somente
+> o botão clicável da tela, sem duplicar o `×` nativo do navegador.
 
 > Revisão 1.41.0.15: a pesquisa e o rateio por fração de recursos pertencem a
 > Custos e Precificação; sem impacto operacional no AvantaVendas.

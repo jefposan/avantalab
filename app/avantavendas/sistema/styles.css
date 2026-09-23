@@ -1218,6 +1218,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dashboard-stock-search > div { display: flex; height: 40px; align-items: center; gap: 8px; border: 1px solid #cfe1ed; border-radius: 12px; padding: 0 8px 0 11px; background: #f5fbff; }
 .dashboard-stock-search .svg-icon { width: 16px; height: 16px; flex: 0 0 auto; color: #1687D9; }
 .dashboard-stock-search input { min-width: 0; height: 38px; flex: 1; border: 0; outline: 0; color: #334155; background: transparent; font: inherit; font-size: 16px; font-weight: 650; }
+.dashboard-stock-search input::-webkit-search-cancel-button { display: none; -webkit-appearance: none; appearance: none; }
 .dashboard-stock-search button { display: grid; width: 27px; height: 27px; flex: 0 0 27px; place-items: center; border: 0; border-radius: 999px; padding: 0; color: #1687D9; background: #fff; font-size: 18px; font-weight: 900; }
 .dashboard-stock-panel td { padding-top: 10px; padding-bottom: 10px; font-size: 12px; }
 .dashboard-stock-panel td:first-child b { color: #334155; font-size: 13px; }

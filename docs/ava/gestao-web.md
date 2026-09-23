@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.41.0.15 -->
+<!-- ava-version: 1.41.0.16 -->
+
+> Revisão 1.41.0.16: em cada busca com texto, há apenas um `×`: o botão
+> clicável de limpar da própria tela. O controle nativo duplicado do navegador
+> não é exibido.
 
 > Revisão 1.41.0.15: em **Custos e Precificação**, abra a composição e digite
 > o código ou nome para localizar um recurso. A quantidade começa em `1,00`.

@@ -294,6 +294,8 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
             @keyframes agendaInPrev { from { opacity: .35; transform: translateX(-26px); } to { opacity: 1; transform: none; } }
             @keyframes pullRefreshSpin { to { transform: rotate(270deg); } }
             @keyframes pullRefreshReady { 0%,100% { filter: drop-shadow(0 0 5px rgba(56,189,248,.35)); } 50% { filter: drop-shadow(0 0 12px rgba(56,189,248,.78)); } }
+            input[type="search"]::-webkit-search-cancel-button,
+            input[type="search"]::-webkit-search-decoration { display: none; -webkit-appearance: none; appearance: none; }
             .agenda-anim-prox { animation: agendaInProx .24s ease-out; }
             .agenda-anim-prev { animation: agendaInPrev .24s ease-out; }
             #chat-ia-input::placeholder { color: #94a3b8; opacity: 1; }

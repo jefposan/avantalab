@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.41.0.15 -->
+<!-- ava-version: 1.41.0.16 -->
+
+> Revisão 1.41.0.16: as buscas da Gestão Mobile mostram somente o botão
+> clicável de limpar fornecido pela tela, sem o `×` duplicado do navegador.
 
 > Revisão 1.41.0.15: a pesquisa e o rateio por fração de recursos pertencem a
 > Custos e Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.

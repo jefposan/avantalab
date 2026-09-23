@@ -361,6 +361,7 @@ select:focus-visible {
 .search-field { display: flex; align-items: center; gap: 9px; min-width: 260px; max-width: 520px; height: 44px; flex: 1; padding: 0 12px; color: #7d8b99; background: #f7fafc; border: 1px solid var(--av-border); border-radius: 10px; }
 .search-field:focus-within { color: var(--av-text-strong); background: #fff; border-color: #78b9d2; box-shadow: 0 0 0 3px rgba(24,167,201,.1); }
 .search-field input { min-width: 0; width: 100%; height: 100%; padding: 0; color: var(--av-ink); background: transparent; border: 0; outline: 0; font-size: 14px; }
+.search-field input::-webkit-search-cancel-button { display: none; -webkit-appearance: none; appearance: none; }
 .search-field-clear { display: grid; width: 32px; height: 32px; min-width: 32px; place-items: center; padding: 0; border: 0; border-radius: 8px; color: #5f7284; background: transparent; font-size: 20px; line-height: 1; cursor: pointer; }
 .search-field-clear:hover, .search-field-clear:focus-visible { color: var(--av-text-strong); background: #eaf2f6; outline: none; }
 .toolbar > select, .period-control select { min-width: 0; min-height: 44px; padding: 0 34px 0 12px; color: #415366; background: #fff; border: 1px solid var(--av-border); border-radius: 10px; font-size: 14px; }

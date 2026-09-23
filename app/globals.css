@@ -591,6 +591,14 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
   padding-right: 44px !important;
 }
 
+/* O navegador não pode duplicar o controle oficial de limpar. */
+.avanta-campo-busca > input[type="search"]::-webkit-search-cancel-button,
+.avanta-campo-busca > input[type="search"]::-webkit-search-decoration {
+  display: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .avanta-campo-busca-limpar {
   position: absolute;
   top: 50%;
