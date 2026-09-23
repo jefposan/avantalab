@@ -1,6 +1,30 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.41.0.01 -->
+<!-- ava-version: 1.41.0.09 -->
+
+> Revisão 1.41.0.09: o comportamento de cards inativos compactos pertence à
+> Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.41.0.08: o reposicionamento de Recolher lista pertence à Gestão
+> Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.41.0.07: o alinhamento de Recolher lista pertence à Gestão Web;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.41.0.06: a organização visual do ajuste de parcelamento pertence à
+> Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.41.0.05: o refinamento da expansão das listas pertence à Gestão
+> Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.41.0.04: a padronização dos tooltips de importação pertence à
+> Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.41.0.03: o ajuste visual da indicação de parcelamento pertence à
+> Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.41.0.02: a expansão de listas de Despesas e Receitas pertence à
+> Gestão Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.41.0.01: a despesa fixa contínua e o refinamento do editor de
 > parcelamento pertencem à Gestão Web; sem impacto operacional no

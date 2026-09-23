@@ -18,13 +18,16 @@ test('Gestão Web separa a descrição da identificação da parcela e pede conf
   assert.match(gestao, /const ehParcelaEditada = lancamentoAtual\?\.tipo === 'parcela' \|\| Boolean\(parcelamentoOriginal\)/);
 });
 
-test('linha editada de parcela mostra posição, total e explicação do alcance', () => {
+test('linha editada de parcela ocupa uma faixa própria abaixo dos campos', () => {
   assert.match(tabelaDespesas, /editParcelaAtual: number/);
   assert.match(tabelaDespesas, /editTotalParcelas: number/);
   assert.match(tabelaDespesas, /Número da parcela atual/);
   assert.match(tabelaDespesas, /Quantidade total de parcelas/);
   assert.match(tabelaDespesas, /temParcelamento = lanc\.tipo === 'parcela'/);
-  assert.match(tabelaDespesas, /Altere a contagem e salve para reorganizar apenas as parcelas seguintes\./);
+  assert.match(tabelaDespesas, /<Fragment key=\{lanc\.id\}>/);
+  assert.match(tabelaDespesas, /<td colSpan=\{5\} className="px-2 pb-2 pt-0\.5">/);
+  assert.match(tabelaDespesas, /mx-auto flex w-fit items-center justify-center/);
+  assert.match(tabelaDespesas, /Salve para reorganizar as próximas parcelas\./);
 });
 
 test('Gestão Mobile oferece a mesma edição e confirma a reorganização', () => {

@@ -977,9 +977,9 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
 } | null>(null);
   const ALTURA_LINHA_LANCAMENTO = 44;
   const ALTURA_PADRAO_TABELA = 440;
-  const ESPACO_PUXADOR_TABELA = 42;
+  const ESPACO_ACAO_EXPANSAO_TABELA = 48;
 
-  const [alturaTabelaLancamentos, setAlturaTabelaLancamentos] = useState(ALTURA_PADRAO_TABELA);
+  const alturaTabelaLancamentos = ALTURA_PADRAO_TABELA;
 
 
   // NOVO: Estado do Ano Selecionado
@@ -11830,13 +11830,11 @@ if (validacaoTelefoneObrigatoria) {
               onAceitarPrevistaHoje={aceitarDespesaPrevistaHoje}
               onDefinirDespesaFixaSempre={definirDespesaFixaSempre}
               onSolicitarExclusaoLancamento={solicitarExclusaoLancamento}
-              alturaTabelaLancamentos={alturaTabelaLancamentos}
-              setAlturaTabelaLancamentos={setAlturaTabelaLancamentos}
               alturaFinalTabelaLancamentos={alturaFinalTabelaLancamentos}
               alturaMaximaTabelaLancamentos={alturaMaximaTabelaLancamentos}
               quantidadeLancamentosMes={quantidadeLancamentosMes}
               alturaPadraoTabela={ALTURA_PADRAO_TABELA}
-              espacoPuxadorTabela={ESPACO_PUXADOR_TABELA}
+              espacoAcaoExpansaoTabela={ESPACO_ACAO_EXPANSAO_TABELA}
               estiloTemaPrimario={estiloTemaPrimario}
               getMaxDias={getMaxDias}
               formatarMoeda={formatarMoeda}

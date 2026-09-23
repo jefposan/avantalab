@@ -1,5 +1,23 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.41.0.09: na Gestão Web, o card inativo de Despesas ou
+// Receitas mostra só o cabeçalho e abre o conteúdo ao ser selecionado.
+// Revisado na versão 1.41.0.08: em Despesas, Recolher lista fica entre
+// Parcelar e os atalhos de arquivo na barra do lançamento.
+// Revisado na versão 1.41.0.07: Recolher lista fica alinhado dentro da busca
+// da Gestão Web, sem deslocar a tabela.
+// Revisado na versão 1.41.0.06: o ajuste de parcela atual e total ocupa uma
+// faixa própria abaixo da linha editada na Gestão Web.
+// Revisado na versão 1.41.0.05: ampliar listas de Despesas ou Receitas
+// preserva a linha em leitura; recolher retorna ao topo do card.
+// Revisado na versão 1.41.0.04: os atalhos Modelo Excel e Carregar arquivo
+// da Gestão Web usam o tooltip institucional do sistema.
+// Revisado na versão 1.41.0.03: na Gestão Web, a leitura de parcelamento fica
+// em uma única linha, preservando os dois campos editáveis.
+// Revisado na versão 1.41.0.02: na Gestão Web, listas longas de Despesas e
+// Receitas usam Expandir lista no rodapé para crescer na própria página; há
+// Recolher lista antes e depois dela. O ícone do cabeçalho continua abrindo
+// somente o pop-up, sem cancelar uma edição aberta.
 // Revisado na versão 1.41.0.01: na Gestão Web, a despesa fixa pode ficar em
 // “Sempre”, mantendo o mês atual e os três próximos e renovando um no fim do
 // ciclo. O editor também reconhece sequências parceladas legadas para corrigir

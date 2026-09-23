@@ -1,6 +1,37 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.41.0.01 -->
+<!-- ava-version: 1.41.0.09 -->
+
+> Revisão 1.41.0.09: quando você está lançando uma **Despesa**, o card de
+> **Receitas** mostra somente o cabeçalho, e vice-versa. Clique no cabeçalho
+> para alternar o card ativo e exibir seus campos.
+
+> Revisão 1.41.0.08: em Despesas, **Recolher lista** fica na barra do
+> lançamento, entre **Parcelar** e os atalhos de arquivo.
+
+> Revisão 1.41.0.07: ao ampliar a lista, **Recolher lista** aparece alinhado
+> dentro da busca; o botão do rodapé continua disponível ao fim da lista.
+
+> Revisão 1.41.0.06: ao editar uma despesa parcelada, a correção de parcela
+> atual e total fica em uma faixa própria abaixo dos campos da linha. Salve
+> para reorganizar apenas as parcelas seguintes.
+
+> Revisão 1.41.0.05: em uma lista ampliada de **Despesas** ou **Receitas**, a
+> linha que você estiver lendo permanece no mesmo ponto ao expandir. Ao usar
+> **Recolher lista**, a tela retorna ao início do card.
+
+> Revisão 1.41.0.04: os atalhos **Modelo Excel** e **Carregar arquivo** usam
+> o mesmo tooltip do restante da Gestão Web. O fluxo de importação não muda.
+
+> Revisão 1.41.0.03: no editor de uma despesa parcelada, a indicação
+> **Parcela atual 2 de 3** permanece em uma única linha; os campos continuam
+> permitindo corrigir a posição e a quantidade total normalmente.
+
+> Revisão 1.41.0.02: em listas longas de **Despesas** e **Receitas**, use
+> **Expandir lista** no rodapé para exibir todos os lançamentos na própria
+> página. **Recolher lista** aparece antes e depois da lista ampliada. O ícone
+> no cabeçalho continua abrindo a visualização em pop-up. Nenhum dos dois
+> modos cancela o lançamento que estiver sendo editado.
 
 > Revisão 1.41.0.01: ao editar uma **despesa fixa**, use **Manter sempre**.
 > A Gestão conserva o mês atual e os três seguintes; quando um mês termina,

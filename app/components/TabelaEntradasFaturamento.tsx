@@ -32,6 +32,7 @@ type TabelaEntradasFaturamentoProps = {
   onCancelarEdicaoEntrada: () => void;
   onExcluirEntrada: (entrada: EntradaFaturamento) => void | Promise<void>;
   expandidoPopup?: boolean;
+  listaExpandida?: boolean;
 };
 
 function formatarMoedaLocal(valor: number | string | null) {
@@ -61,6 +62,7 @@ export default function TabelaEntradasFaturamento({
   onCancelarEdicaoEntrada,
   onExcluirEntrada,
   expandidoPopup = false,
+  listaExpandida = false,
 }: TabelaEntradasFaturamentoProps) {
   const listaEntradasRef = useRef<HTMLDivElement | null>(null);
 
@@ -75,12 +77,15 @@ export default function TabelaEntradasFaturamento({
   return (
     <div className="relative">
       <div
+        data-tabela-entradas
         ref={listaEntradasRef}
-        className="w-full max-w-full overflow-x-auto overflow-y-auto rounded-xl border border-slate-200/20"
+        className={`w-full max-w-full overflow-x-auto rounded-xl border border-slate-200/20 ${listaExpandida && !expandidoPopup ? 'overflow-y-visible' : 'overflow-y-auto'}`}
         style={{
           maxHeight: expandidoPopup
             ? 'clamp(260px, calc(90dvh - 270px), 680px)'
-            : '440px',
+            : listaExpandida
+              ? undefined
+              : '440px',
         }}
       >
         <table className="w-full min-w-[560px] text-left border-collapse">

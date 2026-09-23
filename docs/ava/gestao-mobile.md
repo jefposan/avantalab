@@ -1,6 +1,30 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.41.0.01 -->
+<!-- ava-version: 1.41.0.09 -->
+
+> Revisão 1.41.0.09: o comportamento de cards inativos compactos pertence à
+> Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.08: o reposicionamento de Recolher lista pertence à Gestão
+> Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.07: o alinhamento de Recolher lista pertence à Gestão Web;
+> sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.06: a organização visual do ajuste de parcelamento pertence à
+> Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.05: o refinamento da expansão das listas pertence à Gestão
+> Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.04: a padronização dos tooltips de importação pertence à
+> Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.03: o ajuste de organização da indicação de parcelamento
+> pertence ao editor da Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.02: os botões de expandir e recolher listas pertencem à
+> Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.41.0.01: o refinamento de **Sempre** para despesas fixas e a
 > identificação de sequências parceladas legadas pertencem ao editor da Gestão

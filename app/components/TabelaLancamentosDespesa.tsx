@@ -1,12 +1,13 @@
 'use client';
 
-import { useRef, useState, type ChangeEvent, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import { Fragment, useLayoutEffect, useRef, useState, type ChangeEvent, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
 import BotaoProximoScroll from './BotaoProximoScroll';
 import CardExpandidoModal from './CardExpandidoModal';
 import { executarTransicaoCard } from '@/app/lib/transicao-card';
 import CardLancamentoDespesa, {
   type DespesaCadastrada,
 } from './CardLancamentoDespesa';
+import BotaoExpandirCard from './BotaoExpandirCard';
 
 export type LancamentoDespesa = {
   id: string | number;
@@ -126,13 +127,11 @@ type TabelaLancamentosDespesaProps = {
   onAceitarPrevistaHoje: (lancamento: LancamentoDespesa) => void | Promise<void>;
   onDefinirDespesaFixaSempre: (lancamento: LancamentoDespesa) => void | Promise<void>;
   onSolicitarExclusaoLancamento: (lancamento: LancamentoDespesa) => void;
-  alturaTabelaLancamentos: number;
-  setAlturaTabelaLancamentos: (valor: number) => void;
   alturaFinalTabelaLancamentos: number;
   alturaMaximaTabelaLancamentos: number;
   quantidadeLancamentosMes: number;
   alturaPadraoTabela: number;
-  espacoPuxadorTabela: number;
+  espacoAcaoExpansaoTabela: number;
   estiloTemaPrimario: CSSProperties;
   getMaxDias: (mes: string | null, ano: string | number) => number;
   formatarMoeda: (valor: number) => string;
@@ -196,13 +195,11 @@ export default function TabelaLancamentosDespesa({
   onAceitarPrevistaHoje,
   onDefinirDespesaFixaSempre,
   onSolicitarExclusaoLancamento,
-  alturaTabelaLancamentos,
-  setAlturaTabelaLancamentos,
   alturaFinalTabelaLancamentos,
   alturaMaximaTabelaLancamentos,
   quantidadeLancamentosMes,
   alturaPadraoTabela,
-  espacoPuxadorTabela,
+  espacoAcaoExpansaoTabela,
   estiloTemaPrimario,
   getMaxDias,
   formatarMoeda,
@@ -223,7 +220,10 @@ export default function TabelaLancamentosDespesa({
   onVerNota,
 }: TabelaLancamentosDespesaProps) {
   const listaLancamentosRef = useRef<HTMLDivElement | null>(null);
+  const cardLancamentosRef = useRef<HTMLDivElement | null>(null);
+  const linhaReferenciaExpansaoRef = useRef<{ elemento: HTMLTableRowElement; topo: number } | null>(null);
   const [popupExpandido, setPopupExpandido] = useState(false);
+  const [listaExpandida, setListaExpandida] = useState(false);
   const definirPopupExpandido = (aberto: boolean) => {
     executarTransicaoCard(
       () => setPopupExpandido(aberto),
@@ -231,10 +231,50 @@ export default function TabelaLancamentosDespesa({
       aberto ? 'expandir' : 'recolher'
     );
   };
+  const definirListaExpandida = (aberta: boolean) => {
+    if (aberta && listaLancamentosRef.current && typeof window !== 'undefined') {
+      const linhas = Array.from(listaLancamentosRef.current.querySelectorAll<HTMLTableRowElement>('tbody tr'));
+      const centroDaTela = window.innerHeight / 2;
+      const linhaVisivel = linhas.find((linha) => {
+        const limite = linha.getBoundingClientRect();
+        return limite.top <= centroDaTela && limite.bottom >= centroDaTela;
+      }) ?? linhas[0];
+      if (linhaVisivel) {
+        linhaReferenciaExpansaoRef.current = {
+          elemento: linhaVisivel,
+          topo: linhaVisivel.getBoundingClientRect().top,
+        };
+      }
+      setListaExpandida(true);
+      return;
+    }
+
+    setListaExpandida(false);
+    requestAnimationFrame(() => {
+      listaLancamentosRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      const card = cardLancamentosRef.current;
+      if (card) window.scrollTo({ top: Math.max(0, window.scrollY + card.getBoundingClientRect().top - 12), behavior: 'auto' });
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!listaExpandida || popupExpandido) return;
+    const referencia = linhaReferenciaExpansaoRef.current;
+    if (!referencia?.elemento.isConnected || typeof window === 'undefined') return;
+
+    requestAnimationFrame(() => {
+      const deslocamento = referencia.elemento.getBoundingClientRect().top - referencia.topo;
+      if (Math.abs(deslocamento) > 1) window.scrollTo({ top: window.scrollY + deslocamento, behavior: 'auto' });
+      linhaReferenciaExpansaoRef.current = null;
+    });
+  }, [listaExpandida, popupExpandido]);
 
   const conteudoCard = (
     <div
-      className={`av-card-transicao-despesas-elemento relative h-full w-full min-w-0 max-w-full overflow-hidden bg-white p-3 text-slate-900 transition-all duration-300 sm:p-4 ${
+      ref={cardLancamentosRef}
+      className={`av-card-transicao-despesas-elemento relative h-full w-full min-w-0 max-w-full bg-white p-3 text-slate-900 transition-[box-shadow,filter] duration-200 sm:p-4 ${
+        listaExpandida && !popupExpandido ? 'overflow-visible' : 'overflow-hidden'
+      } ${
         popupExpandido ? 'max-h-[calc(100dvh-2rem)]' : ''
       }`}
       style={{
@@ -248,16 +288,22 @@ export default function TabelaLancamentosDespesa({
       <div
         className="relative custom-scroll"
         style={{
-          height: popupExpandido
+          height: !expandidoDespesa && !popupExpandido
             ? 'auto'
-            : `${alturaFinalTabelaLancamentos + 130 + espacoPuxadorTabela}px`,
-          minHeight: popupExpandido
+            : popupExpandido || listaExpandida
+            ? 'auto'
+            : `${alturaFinalTabelaLancamentos + 130 + espacoAcaoExpansaoTabela}px`,
+          minHeight: !expandidoDespesa && !popupExpandido
             ? undefined
-            : `${alturaPadraoTabela + 130 + espacoPuxadorTabela}px`,
+            : popupExpandido || listaExpandida
+            ? undefined
+            : `${alturaPadraoTabela + 130 + espacoAcaoExpansaoTabela}px`,
           maxHeight: popupExpandido
             ? 'calc(100dvh - 6rem)'
-            : `${alturaMaximaTabelaLancamentos + 130 + espacoPuxadorTabela}px`,
-          overflow: 'hidden',
+            : listaExpandida
+              ? undefined
+              : `${alturaMaximaTabelaLancamentos + 130 + espacoAcaoExpansaoTabela}px`,
+          overflow: listaExpandida && !popupExpandido ? 'visible' : 'hidden',
         }}
       >
         <CardLancamentoDespesa
@@ -297,7 +343,11 @@ export default function TabelaLancamentosDespesa({
           expandidoPopup={popupExpandido}
           expansaoDesabilitada={!expandidoDespesa}
           onAlternarExpansao={() => definirPopupExpandido(!popupExpandido)}
+          listaExpandida={listaExpandida && !popupExpandido}
+          onRecolherLista={() => definirListaExpandida(false)}
         />
+        {expandidoDespesa && (
+        <>
         <div className="mb-3">
           <div className="flex-1">
             <div className="relative">
@@ -343,7 +393,7 @@ export default function TabelaLancamentosDespesa({
                 <button
                   type="button"
                   onClick={() => setBuscaLancamento('')}
-                  className={`absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-sm font-black shadow-sm transition cursor-pointer ${
+                  className={`absolute right-2 top-1/2 z-20 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-sm font-black shadow-sm transition cursor-pointer ${
                     darkMode
                       ? 'bg-slate-600 text-white hover:bg-slate-500'
                       : 'bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-900'
@@ -368,14 +418,18 @@ export default function TabelaLancamentosDespesa({
         <div className="relative">
           <div
             ref={listaLancamentosRef}
-            className="overflow-y-auto overflow-x-auto custom-scroll"
+            className={`${listaExpandida && !popupExpandido ? 'overflow-x-auto overflow-y-visible' : 'overflow-y-auto overflow-x-auto'} custom-scroll`}
             style={{
               height: popupExpandido
                 ? 'clamp(260px, calc(90dvh - 270px), 680px)'
-                : `${alturaFinalTabelaLancamentos}px`,
+                : listaExpandida
+                  ? 'auto'
+                  : `${alturaFinalTabelaLancamentos}px`,
               maxHeight: popupExpandido
                 ? 'clamp(260px, calc(90dvh - 270px), 680px)'
-                : `${alturaMaximaTabelaLancamentos}px`,
+                : listaExpandida
+                  ? undefined
+                  : `${alturaMaximaTabelaLancamentos}px`,
             }}
           >
             <table className="w-full min-w-[540px] table-fixed text-left border-collapse">
@@ -389,8 +443,8 @@ export default function TabelaLancamentosDespesa({
                   const ehDespesaFixa = lanc.tipo === 'fixa' || Boolean(lanc.recorrenciaId);
 
                   return (
+                  <Fragment key={lanc.id}>
                   <tr
-                    key={lanc.id}
                     onClick={(event) => {
                       if (lancamentoEditandoId === lanc.id) return;
                       if ((event.target as HTMLElement).closest('button, input, select, textarea, a')) return;
@@ -455,41 +509,6 @@ export default function TabelaLancamentosDespesa({
                             }`}
                             placeholder="Descrição..."
                           />
-                          {temParcelamento && (
-                            <div className={`mt-1.5 rounded-md border px-2 py-1.5 ${
-                              darkMode ? 'border-violet-400/30 bg-violet-400/10' : 'border-violet-200 bg-violet-50'
-                            }`}>
-                              <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-bold" role="group" aria-label="Configuração do parcelamento">
-                                <span className={darkMode ? 'text-violet-100' : 'text-violet-900'}>Parcela atual</span>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  max={editTotalParcelas || 120}
-                                  value={editParcelaAtual}
-                                  onChange={(e) => setEditParcelaAtual(Math.max(1, Number(e.target.value) || 1))}
-                                  aria-label="Número da parcela atual"
-                                  className={`h-7 w-11 rounded border px-1 text-center text-[11px] font-black outline-none ${
-                                    darkMode ? 'border-violet-300/40 bg-slate-800 text-white' : 'border-violet-200 bg-white text-slate-800'
-                                  }`}
-                                />
-                                <span className={darkMode ? 'text-violet-100' : 'text-violet-900'}>de</span>
-                                <input
-                                  type="number"
-                                  min={editParcelaAtual || 1}
-                                  max={120}
-                                  value={editTotalParcelas}
-                                  onChange={(e) => setEditTotalParcelas(Math.max(editParcelaAtual || 1, Number(e.target.value) || 1))}
-                                  aria-label="Quantidade total de parcelas"
-                                  className={`h-7 w-11 rounded border px-1 text-center text-[11px] font-black outline-none ${
-                                    darkMode ? 'border-violet-300/40 bg-slate-800 text-white' : 'border-violet-200 bg-white text-slate-800'
-                                  }`}
-                                />
-                              </div>
-                              <p className={`mt-1 text-[9px] font-medium leading-tight ${darkMode ? 'text-violet-100/80' : 'text-violet-800/80'}`}>
-                                Altere a contagem e salve para reorganizar apenas as parcelas seguintes.
-                              </p>
-                            </div>
-                          )}
                           {ehDespesaFixa && (
                             <div className={`mt-1.5 flex flex-wrap items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 ${
                               darkMode ? 'border-indigo-400/30 bg-indigo-400/10' : 'border-indigo-200 bg-indigo-50'
@@ -640,6 +659,48 @@ export default function TabelaLancamentosDespesa({
                       </>
                     )}
                   </tr>
+                  {lancamentoEditandoId === lanc.id && temParcelamento && (
+                    <tr className={darkMode ? 'border-b border-violet-400/20 bg-violet-400/5' : 'border-b border-violet-200 bg-violet-50/80'}>
+                      <td colSpan={5} className="px-2 pb-2 pt-0.5">
+                        <div
+                          className={`mx-auto flex w-fit items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-[10px] font-bold ${
+                            darkMode ? 'border-violet-400/30 bg-violet-400/10 text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-900'
+                          }`}
+                          role="group"
+                          aria-label="Configuração do parcelamento"
+                        >
+                          <span className="whitespace-nowrap">Parcela atual</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={editTotalParcelas || 120}
+                            value={editParcelaAtual}
+                            onChange={(e) => setEditParcelaAtual(Math.max(1, Number(e.target.value) || 1))}
+                            aria-label="Número da parcela atual"
+                            className={`h-7 w-10 rounded border px-1 text-center text-[11px] font-black outline-none ${
+                              darkMode ? 'border-violet-300/40 bg-slate-800 text-white' : 'border-violet-200 bg-white text-slate-800'
+                            }`}
+                          />
+                          <span>de</span>
+                          <input
+                            type="number"
+                            min={editParcelaAtual || 1}
+                            max={120}
+                            value={editTotalParcelas}
+                            onChange={(e) => setEditTotalParcelas(Math.max(editParcelaAtual || 1, Number(e.target.value) || 1))}
+                            aria-label="Quantidade total de parcelas"
+                            className={`h-7 w-10 rounded border px-1 text-center text-[11px] font-black outline-none ${
+                              darkMode ? 'border-violet-300/40 bg-slate-800 text-white' : 'border-violet-200 bg-white text-slate-800'
+                            }`}
+                          />
+                          <span className={`ml-1 border-l pl-2 text-[9px] font-medium whitespace-nowrap ${darkMode ? 'border-violet-300/30 text-violet-100/80' : 'border-violet-200 text-violet-800/80'}`}>
+                            Salve para reorganizar as próximas parcelas.
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                   );
                 })
               ) : (
@@ -655,53 +716,33 @@ export default function TabelaLancamentosDespesa({
               </tbody>
             </table>
           </div>
-          <BotaoProximoScroll
-            modo="container"
-            scrollContainerRef={listaLancamentosRef}
-            className={popupExpandido ? 'av-proximo-scroll-sobre-popup' : ''}
-            ariaLabel="Avançar nos lançamentos de despesas"
-            title="Próximos lançamentos"
-          />
+          {!listaExpandida && (
+            <BotaoProximoScroll
+              modo="container"
+              scrollContainerRef={listaLancamentosRef}
+              className={popupExpandido ? 'av-proximo-scroll-sobre-popup' : ''}
+              ariaLabel="Avançar nos lançamentos de despesas"
+              title="Próximos lançamentos"
+            />
+          )}
         </div>
+        </>
+        )}
       </div>
 
-      {!popupExpandido && (
+      {!popupExpandido && expandidoDespesa && (
         <div
           className="flex items-center justify-center"
-          style={{ height: `${espacoPuxadorTabela}px` }}
+          style={{ height: `${espacoAcaoExpansaoTabela}px` }}
         >
           {quantidadeLancamentosMes > 10 && (
-            <div
-              title="Arraste para aumentar ou reduzir a área de lançamentos"
-              className="flex h-5 w-28 cursor-row-resize items-center justify-center rounded-full border border-slate-400 bg-white shadow-md transition hover:bg-slate-100"
-              onPointerDown={(e) => {
-                e.preventDefault();
-
-                const inicioY = e.clientY;
-                const alturaInicial = alturaTabelaLancamentos;
-
-                const aoMover = (event: PointerEvent) => {
-                  const diferenca = event.clientY - inicioY;
-
-                  const novaAltura = Math.min(
-                    Math.max(alturaInicial + diferenca, alturaPadraoTabela),
-                    alturaMaximaTabelaLancamentos
-                  );
-
-                  setAlturaTabelaLancamentos(novaAltura);
-                };
-
-                const aoSoltar = () => {
-                  window.removeEventListener('pointermove', aoMover);
-                  window.removeEventListener('pointerup', aoSoltar);
-                };
-
-                window.addEventListener('pointermove', aoMover);
-                window.addEventListener('pointerup', aoSoltar);
-              }}
-            >
-              <span className="h-1 w-16 rounded-full bg-slate-500" />
-            </div>
+            <BotaoExpandirCard
+              expandido={listaExpandida}
+              variante="rodape"
+              modo="lista"
+              desabilitado={!expandidoDespesa}
+              onClick={() => definirListaExpandida(!listaExpandida)}
+            />
           )}
         </div>
       )}

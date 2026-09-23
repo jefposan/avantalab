@@ -1,5 +1,50 @@
 # Changelog
 
+## 1.41.0.09 - 2026-09-23
+- **Cards inativos compactos**: o card que não está em uso, seja Despesas ou
+  Receitas, exibe somente o cabeçalho. Formulário, busca, lista e ações ficam
+  ocultos até o card ser selecionado, evitando campos cortados ou conteúdo fora
+  da área visual.
+
+## 1.41.0.08 - 2026-09-23
+- **Recolher lista no lançamento**: no card de Despesas, **Recolher lista**
+  passou para a barra de ações do lançamento, entre **Parcelar** e os atalhos
+  de arquivo, mantendo a busca livre.
+
+## 1.41.0.07 - 2026-09-23
+- **Recolher lista alinhado**: o controle superior de recolhimento agora fica
+  dentro do campo de busca, com espaço reservado para ele e para limpar a
+  busca, sem sobrepor a borda ou deslocar a tabela.
+
+## 1.41.0.06 - 2026-09-23
+- **Parcelamento sem sobreposição**: a correção de parcela atual e total agora
+  ocupa uma faixa centralizada abaixo de toda a linha de edição da despesa.
+  Assim, descrição e valor conservam suas larguras e o controle não vaza para
+  fora do campo.
+
+## 1.41.0.05 - 2026-09-23
+- **Expansão de listas estável**: os controles **Expandir lista** e
+  **Recolher lista** ficaram mais discretos. Ao expandir Despesas ou Receitas,
+  a linha visível permanece na mesma posição da tela e a lista cresce somente
+  para baixo; ao recolher, a página retorna ao topo do respectivo card.
+
+## 1.41.0.04 - 2026-09-23
+- **Tooltips de importação**: os botões **Modelo Excel** e **Carregar
+  arquivo** da Gestão Web agora usam o tooltip institucional, exibido ao
+  passar o cursor ou receber foco, em vez do balão nativo do navegador.
+
+## 1.41.0.03 - 2026-09-23
+- **Parcelamento compacto**: o editor Web mantém a leitura **Parcela atual
+  2 de 3** em uma única linha, inclusive em áreas estreitas, sem reduzir a
+  acessibilidade dos dois campos numéricos.
+
+## 1.41.0.02 - 2026-09-23
+- **Expansão de listas mais clara**: nas listas de Despesas e Receitas, o
+  rodapé agora oferece **Expandir lista**, em substituição à alça de arrastar.
+  A lista cresce na própria página até exibir todos os lançamentos; **Recolher
+  lista** fica disponível antes e depois dela, sem descartar edições. O ícone
+  do cabeçalho continua exclusivo para a visualização ampliada em pop-up.
+
 ## 1.41.0.01 - 2026-09-23
 - **Despesa fixa contínua na Gestão Web**: ao editar uma despesa fixa, o modo
   **Sempre** mantém o mês atual e os três próximos. Ao fim de cada mês, a

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import type { ChangeEvent, CSSProperties, Dispatch, SetStateAction } from 'react';
 import { baixarModeloImportacaoDespesas } from '@/app/modules/importador-despesas/lib/modelo-excel';
 import BotaoExpandirCard from './BotaoExpandirCard';
+import Tooltip from './Tooltip';
 
 export type DespesaCadastrada = {
   nome: string;
@@ -47,6 +48,8 @@ type CardLancamentoDespesaProps = {
   expandidoPopup?: boolean;
   expansaoDesabilitada?: boolean;
   onAlternarExpansao?: () => void;
+  listaExpandida?: boolean;
+  onRecolherLista?: () => void;
 };
 
 export default function CardLancamentoDespesa({
@@ -84,6 +87,8 @@ export default function CardLancamentoDespesa({
   expandidoPopup = false,
   expansaoDesabilitada = false,
   onAlternarExpansao,
+  listaExpandida = false,
+  onRecolherLista,
 }: CardLancamentoDespesaProps) {
   const despesaRef = useRef<HTMLSelectElement>(null);
   const descricaoRef = useRef<HTMLInputElement>(null);
@@ -99,7 +104,7 @@ export default function CardLancamentoDespesa({
   return (
     <>
       <div
-        className="mb-3 grid grid-cols-[minmax(68px,84px)_minmax(0,1fr)_minmax(68px,84px)] items-center gap-2 px-3 py-2 transition-all duration-300 [container-type:inline-size]"
+        className={`${expandido ? 'mb-3' : 'mb-0'} grid grid-cols-[minmax(68px,84px)_minmax(0,1fr)_minmax(68px,84px)] items-center gap-2 px-3 py-2 transition-all duration-300 [container-type:inline-size]`}
         style={{
           borderRadius: '6px 16px 16px 16px',
           background: expandido
@@ -146,6 +151,7 @@ export default function CardLancamentoDespesa({
         )}
       </div>
 
+      {expandido && (
       <div
         className={`mb-3 rounded-lg border p-2.5 ${
           darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50'
@@ -316,7 +322,18 @@ export default function CardLancamentoDespesa({
               </>
             )}
 
-            <div className="ml-auto flex items-center gap-1.5">
+            {listaExpandida && onRecolherLista && (
+              <div className="ml-auto">
+                <BotaoExpandirCard
+                  expandido
+                  variante="rodape"
+                  modo="lista"
+                  onClick={onRecolherLista}
+                />
+              </div>
+            )}
+
+            <div className={`${listaExpandida ? '' : 'ml-auto'} flex items-center gap-1.5`}>
               <input
                 ref={arquivoRef}
                 type="file"
@@ -329,6 +346,7 @@ export default function CardLancamentoDespesa({
                 }}
               />
               {temRascunhoImportador && <button type="button" onClick={onRetomarRascunhoImportador} title="Retomar a importação salva" className="flex h-7 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 text-[10px] font-black uppercase text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100 active:scale-95">Continuar importação salva</button>}
+              <Tooltip texto="Baixe o modelo de planilha para importar despesas." posicao="top" desativado={baixandoModelo}>
               <button
                 type="button"
                 onClick={() => {
@@ -340,7 +358,6 @@ export default function CardLancamentoDespesa({
                     .finally(() => setBaixandoModelo(false));
                 }}
                 disabled={baixandoModelo}
-                title="Baixar planilha modelo para importar despesas"
                 aria-label="Baixar modelo Excel de importação de despesas"
                 className={`flex h-7 min-w-[92px] items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-black uppercase shadow-sm transition active:scale-95 disabled:cursor-wait disabled:opacity-70 ${
                   darkMode
@@ -353,16 +370,19 @@ export default function CardLancamentoDespesa({
                 </svg>
                 {baixandoModelo ? 'Gerando…' : 'Modelo Excel'}
               </button>
+              </Tooltip>
+              <Tooltip texto="Envie uma nota, extrato, fatura ou planilha." posicao="top" desativado={lendoNota || salvandoDespesa}>
               <button
                 type="button"
                 onClick={() => arquivoRef.current?.click()}
                 disabled={lendoNota || salvandoDespesa}
-                title="Enviar nota, extrato, fatura ou planilha"
+                aria-label="Carregar arquivo para importar despesas"
                 className="flex h-7 items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 text-[10px] font-black uppercase text-sky-800 shadow-sm transition hover:border-sky-400 hover:bg-sky-100 active:scale-95 disabled:opacity-60"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v6h6M8 14h8M8 17h5"/></svg>
                 Carregar arquivo
               </button>
+              </Tooltip>
             </div>
           </div>
           {(lendoNota || notaPendente || erroModelo) && (
@@ -372,6 +392,7 @@ export default function CardLancamentoDespesa({
           )}
         </div>
       </div>
+      )}
     </>
   );
 }

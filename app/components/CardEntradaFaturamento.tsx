@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react';
+import { useLayoutEffect, useRef, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react';
 import BotaoExpandirCard from './BotaoExpandirCard';
 import CardExpandidoModal from './CardExpandidoModal';
 import { executarTransicaoCard } from '@/app/lib/transicao-card';
@@ -83,7 +83,10 @@ export default function CardEntradaFaturamento({
   ativo = false,
 }: CardEntradaFaturamentoProps) {
   const origemRef = useRef<HTMLInputElement>(null);
+  const cardEntradasRef = useRef<HTMLDivElement | null>(null);
+  const linhaReferenciaExpansaoRef = useRef<{ elemento: HTMLTableRowElement; topo: number } | null>(null);
   const [popupExpandido, setPopupExpandido] = useState(false);
+  const [listaExpandida, setListaExpandida] = useState(false);
   const definirPopupExpandido = (aberto: boolean) => {
     executarTransicaoCard(
       () => setPopupExpandido(aberto),
@@ -91,6 +94,43 @@ export default function CardEntradaFaturamento({
       aberto ? 'expandir' : 'recolher'
     );
   };
+  const definirListaExpandida = (aberta: boolean) => {
+    if (aberta && typeof window !== 'undefined') {
+      const linhas = Array.from(document.querySelectorAll<HTMLTableRowElement>('[data-tabela-entradas] tbody tr'));
+      const centroDaTela = window.innerHeight / 2;
+      const linhaVisivel = linhas.find((linha) => {
+        const limite = linha.getBoundingClientRect();
+        return limite.top <= centroDaTela && limite.bottom >= centroDaTela;
+      }) ?? linhas[0];
+      if (linhaVisivel) {
+        linhaReferenciaExpansaoRef.current = {
+          elemento: linhaVisivel,
+          topo: linhaVisivel.getBoundingClientRect().top,
+        };
+      }
+      setListaExpandida(true);
+      return;
+    }
+
+    setListaExpandida(false);
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>('[data-tabela-entradas]')?.scrollTo({ top: 0, behavior: 'auto' });
+      const card = cardEntradasRef.current;
+      if (card) window.scrollTo({ top: Math.max(0, window.scrollY + card.getBoundingClientRect().top - 12), behavior: 'auto' });
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!listaExpandida || popupExpandido) return;
+    const referencia = linhaReferenciaExpansaoRef.current;
+    if (!referencia?.elemento.isConnected || typeof window === 'undefined') return;
+
+    requestAnimationFrame(() => {
+      const deslocamento = referencia.elemento.getBoundingClientRect().top - referencia.topo;
+      if (Math.abs(deslocamento) > 1) window.scrollTo({ top: window.scrollY + deslocamento, behavior: 'auto' });
+      linhaReferenciaExpansaoRef.current = null;
+    });
+  }, [listaExpandida, popupExpandido]);
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
       ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-400'
@@ -98,7 +138,10 @@ export default function CardEntradaFaturamento({
   }`;
   const conteudoCard = (
     <div
-      className={`av-card-transicao-receitas-elemento relative h-full w-full min-w-0 max-w-full overflow-hidden bg-white p-3 text-slate-900 transition-all duration-300 sm:p-4 ${
+      ref={cardEntradasRef}
+      className={`av-card-transicao-receitas-elemento relative h-full w-full min-w-0 max-w-full bg-white p-3 text-slate-900 transition-[box-shadow,filter] duration-200 sm:p-4 ${
+        listaExpandida && !popupExpandido ? 'overflow-visible' : 'overflow-hidden'
+      } ${
         popupExpandido ? 'max-h-[calc(100dvh-2rem)]' : ''
       }`}
       style={{
@@ -110,7 +153,7 @@ export default function CardEntradaFaturamento({
       }}
     >
       <div
-        className="mb-3 grid grid-cols-[minmax(68px,84px)_minmax(0,1fr)_minmax(68px,84px)] items-center gap-2 px-3 py-2 transition-all duration-300 [container-type:inline-size]"
+        className={`${ativo ? 'mb-3' : 'mb-0'} grid grid-cols-[minmax(68px,84px)_minmax(0,1fr)_minmax(68px,84px)] items-center gap-2 px-3 py-2 transition-all duration-300 [container-type:inline-size]`}
         style={{
           borderRadius: '6px 16px 16px 16px',
           background: ativo
@@ -153,6 +196,8 @@ export default function CardEntradaFaturamento({
         />
       </div>
 
+      {ativo && (
+      <>
       <div
         className={`mb-3 rounded-lg border p-2.5 ${
           darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50'
@@ -252,7 +297,7 @@ export default function CardEntradaFaturamento({
             onChange={(e) => setBuscaEntradaFaturamento(e.target.value)}
             onFocus={onFocoReceita}
             placeholder="Buscar receita por origem, dia ou valor..."
-            className={`h-9 w-full rounded-lg border py-2 pl-9 pr-9 text-xs font-semibold outline-none transition focus:ring-1 focus:ring-inset ${
+            className={`h-9 w-full rounded-lg border py-2 pl-9 ${listaExpandida && !popupExpandido ? 'pr-44' : 'pr-9'} text-xs font-semibold outline-none transition focus:ring-1 focus:ring-inset ${
               darkMode
                 ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400'
                 : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
@@ -263,11 +308,22 @@ export default function CardEntradaFaturamento({
             }}
           />
 
+          {listaExpandida && !popupExpandido && (
+            <div className="absolute right-2 top-1/2 z-10 -translate-y-1/2">
+              <BotaoExpandirCard
+                expandido
+                variante="rodape"
+                modo="lista"
+                onClick={() => definirListaExpandida(false)}
+              />
+            </div>
+          )}
+
           {buscaEntradaFaturamento && (
             <button
               type="button"
               onClick={() => setBuscaEntradaFaturamento('')}
-              className={`absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-sm font-black shadow-sm transition cursor-pointer ${
+              className={`absolute ${listaExpandida && !popupExpandido ? 'right-36' : 'right-2'} top-1/2 z-20 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-sm font-black shadow-sm transition cursor-pointer ${
                 darkMode
                   ? 'bg-slate-600 text-white hover:bg-slate-500'
                   : 'bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-900'
@@ -288,25 +344,41 @@ export default function CardEntradaFaturamento({
         )}
       </div>
 
-      <TabelaEntradasFaturamento
-        entradas={entradas}
-        mesAtivo={mesAtivo}
-        anoSelecionado={anoSelecionado}
-        podeEditarEntradas={podeEditarEntradas}
-        entradaEditandoId={entradaEditandoId}
-        editEntradaDia={editEntradaDia}
-        setEditEntradaDia={setEditEntradaDia}
-        editEntradaOrigem={editEntradaOrigem}
-        setEditEntradaOrigem={setEditEntradaOrigem}
-        editEntradaValor={editEntradaValor}
-        handleEditEntradaValorChange={handleEditEntradaValorChange}
-        onIniciarEdicaoEntrada={onIniciarEdicaoEntrada}
-        onSalvarEdicaoEntrada={onSalvarEdicaoEntrada}
-        onAceitarPrevistaHoje={onAceitarPrevistaHoje}
-        onCancelarEdicaoEntrada={onCancelarEdicaoEntrada}
-        onExcluirEntrada={onExcluirEntrada}
-        expandidoPopup={popupExpandido}
-      />
+      <div className="relative">
+        <TabelaEntradasFaturamento
+          entradas={entradas}
+          mesAtivo={mesAtivo}
+          anoSelecionado={anoSelecionado}
+          podeEditarEntradas={podeEditarEntradas}
+          entradaEditandoId={entradaEditandoId}
+          editEntradaDia={editEntradaDia}
+          setEditEntradaDia={setEditEntradaDia}
+          editEntradaOrigem={editEntradaOrigem}
+          setEditEntradaOrigem={setEditEntradaOrigem}
+          editEntradaValor={editEntradaValor}
+          handleEditEntradaValorChange={handleEditEntradaValorChange}
+          onIniciarEdicaoEntrada={onIniciarEdicaoEntrada}
+          onSalvarEdicaoEntrada={onSalvarEdicaoEntrada}
+          onAceitarPrevistaHoje={onAceitarPrevistaHoje}
+          onCancelarEdicaoEntrada={onCancelarEdicaoEntrada}
+          onExcluirEntrada={onExcluirEntrada}
+          expandidoPopup={popupExpandido}
+          listaExpandida={listaExpandida}
+        />
+      </div>
+      {!popupExpandido && entradas.length > 10 && (
+        <div className="mt-3 flex items-center justify-center">
+          <BotaoExpandirCard
+            expandido={listaExpandida}
+            variante="rodape"
+            modo="lista"
+            desabilitado={!ativo}
+            onClick={() => definirListaExpandida(!listaExpandida)}
+          />
+        </div>
+      )}
+      </>
+      )}
     </div>
   );
 
