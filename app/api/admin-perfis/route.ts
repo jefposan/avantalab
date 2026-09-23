@@ -4,6 +4,7 @@ import { DATA_LANCAMENTO, assinaturaVigente, type EstadoAcesso, type TipoPerfil,
 import { normalizarStatusTemporal } from '../../lib/cobranca-fluxo';
 import { removerAssinaturaAsaas, removerCobrancaAsaas } from '../../lib/asaas';
 import { normalizarPlanoComercial, resolverPlanoCortesia, type PlanoEmpresarial } from '../../lib/planos-comerciais';
+import { normalizarTexto } from '../../lib/formatters';
 
 function naoAutorizado() {
   return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
@@ -148,19 +149,19 @@ export async function GET(request: Request) {
     let query = db.from('empresas')
       .select('id, nome, tipo_perfil, created_at, assinatura_origem_empresa_id')
       .order('nome', { ascending: true });
-    if (q) query = query.ilike('nome', `%${q}%`);
     if (tipo !== 'todos') query = query.eq('tipo_perfil', tipo);
 
     const { data: empresas, error } = await query;
     if (error) throw error;
 
-    const ids = (empresas || []).map((e) => e.id);
+    const empresasFiltradas = (empresas || []).filter((empresa) => !q || normalizarTexto(empresa.nome).includes(normalizarTexto(q)));
+    const ids = empresasFiltradas.map((e) => e.id);
     const idsAssinaturas = Array.from(new Set([
       ...ids,
-      ...(empresas || []).map((empresa) => empresa.assinatura_origem_empresa_id).filter(Boolean),
+      ...empresasFiltradas.map((empresa) => empresa.assinatura_origem_empresa_id).filter(Boolean),
     ]));
     const origensIds = Array.from(new Set(
-      (empresas || []).map((empresa) => empresa.assinatura_origem_empresa_id).filter(Boolean),
+      empresasFiltradas.map((empresa) => empresa.assinatura_origem_empresa_id).filter(Boolean),
     )) as string[];
     const { data: origens, error: erroOrigens } = origensIds.length
       ? await db.from('empresas').select('id, nome').in('id', origensIds)
@@ -172,7 +173,7 @@ export async function GET(request: Request) {
       : [];
     const mapa = new Map(assinaturas.map((a) => [a.empresa_id, a]));
 
-    const perfisCompletos = (empresas || []).map((e) => {
+    const perfisCompletos = empresasFiltradas.map((e) => {
       const tipoPerfil: TipoPerfil = e.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
       const assinaturaEfetiva = e.assinatura_origem_empresa_id
         ? mapa.get(e.assinatura_origem_empresa_id)

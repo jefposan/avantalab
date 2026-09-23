@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { exigirAdmin } from '../../lib/admin-server';
+import { normalizarTexto } from '../../lib/formatters';
 
 export const runtime = 'nodejs';
 
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
     if (!autorizado) return naoAutorizado();
 
     const url = new URL(request.url);
-    const q = (url.searchParams.get('q') || '').trim().toLocaleLowerCase('pt-BR');
+    const q = normalizarTexto(url.searchParams.get('q') || '');
     const plataforma = plataformaValida(url.searchParams.get('plataforma'))
       ? url.searchParams.get('plataforma') as PlataformaCadastro
       : 'todos';
@@ -131,7 +132,7 @@ export async function GET(request: Request) {
             : '';
         return [registro.nome, registro.email, nomeAuth, usuario?.email]
           .filter(Boolean)
-          .some((valor) => String(valor).toLocaleLowerCase('pt-BR').includes(q));
+          .some((valor) => normalizarTexto(valor).includes(q));
       });
     }
 

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
+import { normalizarTexto } from '@/app/lib/formatters';
 import type { AbrirAvisoFn } from '@/app/hooks/useUI';
 import { validarNomeCompleto } from '@/app/lib/nome-pessoa';
 import type { Empresa, FrequenciaExecucaoServico, Subempresa, TipoCadastroEmpresa, TipoNivelEndereco } from './types';
@@ -114,7 +115,7 @@ export default function ListaEmpresas({
   const [popupExecucaoServico, setPopupExecucaoServico] = useState<FrequenciaExecucaoServico | null>(null);
   const chaveRascunho = `avantalab:rascunho:v1:recebimentos:empresa:${rascunhoEscopo}`;
 
-  const termo = busca.trim().toLowerCase();
+  const termo = normalizarTexto(busca);
 
   useEffect(() => {
     if (!portalAcoesId) return;
@@ -226,10 +227,10 @@ export default function ListaEmpresas({
   const empresasFiltradas = useMemo(() => {
     if (!termo) return empresas;
     return empresas.filter((emp) => {
-      const alvoEmpresa = `${emp.nome} ${emp.responsavel} ${emp.telefone} ${emp.email}`.toLowerCase();
+      const alvoEmpresa = normalizarTexto(`${emp.nome} ${emp.responsavel} ${emp.telefone} ${emp.email}`);
       if (alvoEmpresa.includes(termo)) return true;
       return subempresas.some(
-        (s) => s.empresaId === emp.id && `${s.nome} ${s.endereco} ${s.responsavel}`.toLowerCase().includes(termo),
+        (s) => s.empresaId === emp.id && normalizarTexto(`${s.nome} ${s.endereco} ${s.responsavel}`).includes(termo),
       );
     });
   }, [empresas, subempresas, termo]);
@@ -239,10 +240,10 @@ export default function ListaEmpresas({
     if (!termo) return subs;
     const empresa = empresas.find((e) => e.id === empresaId);
     const empresaBate = empresa
-      ? `${empresa.nome} ${empresa.responsavel} ${empresa.telefone} ${empresa.email}`.toLowerCase().includes(termo)
+      ? normalizarTexto(`${empresa.nome} ${empresa.responsavel} ${empresa.telefone} ${empresa.email}`).includes(termo)
       : false;
     if (empresaBate) return subs;
-    return subs.filter((s) => `${s.nome} ${s.endereco} ${s.responsavel}`.toLowerCase().includes(termo));
+    return subs.filter((s) => normalizarTexto(`${s.nome} ${s.endereco} ${s.responsavel}`).includes(termo));
   }
 
   // Rola o bloco da empresa para o topo do corpo rolável, com fôlego para

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
+import { normalizarTexto } from '@/app/lib/formatters';
 import type { ComprovanteRecebimento } from '../data/repo';
 import type { Colaborador, Empresa, Servico, Subempresa } from './types';
 import { formatarDataHora, limitesDoMes } from './helpers';
@@ -84,13 +85,13 @@ export default function RelatorioServicosModal({ aberto, referenciaInicial, serv
 
   const clientesPorEmpresa = useMemo(() => new Map(empresas.map((empresa) => [empresa.id, subempresas.filter((subempresa) => subempresa.empresaId === empresa.id).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }))])), [empresas, subempresas]);
   const empresasVisiveis = useMemo(() => {
-    const termo = buscaCliente.trim().toLocaleLowerCase('pt-BR');
+    const termo = normalizarTexto(buscaCliente);
     return [...empresas]
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }))
       .map((empresa) => {
         const locais = clientesPorEmpresa.get(empresa.id) ?? [];
-        const empresaCombina = !termo || empresa.nome.toLocaleLowerCase('pt-BR').includes(termo);
-        const locaisVisiveis = empresaCombina ? locais : locais.filter((local) => local.nome.toLocaleLowerCase('pt-BR').includes(termo));
+        const empresaCombina = !termo || normalizarTexto(empresa.nome).includes(termo);
+        const locaisVisiveis = empresaCombina ? locais : locais.filter((local) => normalizarTexto(local.nome).includes(termo));
         return { empresa, locais: locaisVisiveis, exibir: empresaCombina || locaisVisiveis.length > 0 };
       })
       .filter((item) => item.exibir);

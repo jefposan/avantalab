@@ -2,10 +2,11 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import CampoBusca from '@/app/components/CampoBusca';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
 import { Modal } from '@/app/projetos/components/Modal';
-import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
+import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero, normalizarTexto } from '@/app/lib/formatters';
 import { supabase } from '@/app/lib/supabase';
 import type { CustosAccess } from './CustosClient';
 import TabelasPrecosView from './TabelasPrecosView';
@@ -143,9 +144,9 @@ function Metric({ label, value, detail, accent = false }: { label: string; value
 
 function ProductStrip({ produtos, ativoId, documento, onSelecionar }: { produtos: ProdutoCustos[]; ativoId: string; documento: DocumentoCustos; onSelecionar: (id: string) => void }) {
   const [busca, setBusca] = useState('');
-  const filtrados = produtos.filter((produto) => `${produto.sku} ${produto.nome} ${produto.categoria}`.toLocaleLowerCase('pt-BR').includes(busca.toLocaleLowerCase('pt-BR')));
+  const filtrados = produtos.filter((produto) => normalizarTexto(`${produto.sku} ${produto.nome} ${produto.categoria}`).includes(normalizarTexto(busca)));
   return <section className={styles.panel}>
-    <div className={styles.panelTitle}><div><h2>Produtos cadastrados</h2><p>Selecione um card para visualizar e trabalhar o cadastro.</p></div><label className={styles.search}><span>Procurar</span><input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Código ou nome" /></label></div>
+    <div className={styles.panelTitle}><div><h2>Produtos cadastrados</h2><p>Selecione um card para visualizar e trabalhar o cadastro.</p></div><label className={styles.search}><span>Procurar</span><CampoBusca value={busca} onChange={setBusca} placeholder="Código ou nome" /></label></div>
     <div className={styles.productStrip} tabIndex={filtrados.length > 1 ? 0 : undefined}>
       {filtrados.map((produto) => {
         const calculo = calcularComposicao(documento.composicoes[produto.id] || composicaoVazia(), documento.recursos);
@@ -333,7 +334,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     catch (falha) { onErro(erroTexto(falha)); } finally { setSalvando(false); }
   };
 
-  const listaFiltrada = produtos.filter((produto) => produto.tipo_item === tipoLista && `${produto.sku} ${produto.nome} ${produto.marca} ${produto.categoria}`.toLocaleLowerCase('pt-BR').includes(buscaLista.toLocaleLowerCase('pt-BR')));
+  const listaFiltrada = produtos.filter((produto) => produto.tipo_item === tipoLista && normalizarTexto(`${produto.sku} ${produto.nome} ${produto.marca} ${produto.categoria}`).includes(normalizarTexto(buscaLista)));
   const alternarMenuAcoes = (produtoId: string, acionador: HTMLButtonElement) => {
     if (menuAcao?.produtoId === produtoId) { setMenuAcao(null); return; }
     const limites = acionador.getBoundingClientRect();
@@ -410,7 +411,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
     <section className={styles.panel}>
       <div className={styles.catalogListTools}>
         <div className={styles.listTabs} role="tablist" aria-label="Tipo de cadastro"><button type="button" role="tab" aria-selected={tipoLista === 'produto'} className={tipoLista === 'produto' ? styles.listTabActive : ''} onClick={() => setTipoLista('produto')}>Produtos <b>{produtos.filter((produto) => produto.tipo_item === 'produto').length}</b></button><button type="button" role="tab" aria-selected={tipoLista === 'servico'} className={tipoLista === 'servico' ? styles.listTabActive : ''} onClick={() => setTipoLista('servico')}>Serviços <b>{produtos.filter((produto) => produto.tipo_item === 'servico').length}</b></button></div>
-        <label className={styles.search}><span>Localizar</span><input type="search" value={buscaLista} onChange={(event) => setBuscaLista(event.target.value)} placeholder="Código, nome, marca…" /></label>
+        <label className={styles.search}><span>Localizar</span><CampoBusca value={buscaLista} onChange={setBuscaLista} placeholder="Código, nome, marca…" /></label>
       </div>
       <div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => <tr key={produto.id}><td><b>{produto.sku}</b></td><td><b>{produto.nome}</b><small>{produto.unidade}</small></td><td>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${!produto.ativo ? styles.statusInactive : produto.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!produto.ativo ? 'Inativo' : produto.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button></div>}</td></tr>)}{!listaFiltrada.length && <tr><td colSpan={6} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
     </section>
@@ -474,7 +475,7 @@ function RecursosView({ documento, produtos, onDocumento, podeEditar, onMensagem
   const usados = documento.recursos.map((recurso) => recurso.codigo).filter((codigo) => codigo !== form.codigo);
   const prefixo = form.codigo.match(/^[A-Za-z_-]+/)?.[0] || (form.categoria === 'Embalagem' ? 'EMB' : 'MP');
   const proximo = proximoCodigo(prefixo, [...usados, ...produtos.map((produto) => produto.sku)]);
-  const filtrados = documento.recursos.filter((recurso) => `${recurso.codigo} ${recurso.nome} ${recurso.categoria}`.toLowerCase().includes(busca.toLowerCase()));
+  const filtrados = documento.recursos.filter((recurso) => normalizarTexto(`${recurso.codigo} ${recurso.nome} ${recurso.categoria}`).includes(normalizarTexto(busca)));
   const salvar = async (e: React.FormEvent) => { e.preventDefault(); if (!form.codigo.trim() || !form.nome.trim()) { onMensagem('Informe código e nome do recurso.'); return; } if (usados.some((codigo) => codigo.toUpperCase() === form.codigo.toUpperCase())) { onMensagem('Este código já está em uso.'); return; } const pronto = { ...form, codigo: form.codigo.trim().toUpperCase(), nome: form.nome.trim() }; const recursos = editando ? documento.recursos.map((recurso) => recurso.id === pronto.id ? pronto : recurso) : [pronto, ...documento.recursos]; await onDocumento({ ...documento, recursos }, editando ? 'Recurso atualizado.' : 'Recurso cadastrado.'); setForm(vazio()); setEditando(false); };
   const confirmarExclusao = async () => { if (!excluir) return; if (Object.values(documento.composicoes).some((composicao) => composicao.itens.some((item) => item.recursoId === excluir.id))) { setExcluir(null); onMensagem('Este recurso está em uso e não pode ser excluído.'); return; } await onDocumento({ ...documento, recursos: documento.recursos.filter((recurso) => recurso.id !== excluir.id) }, 'Recurso excluído.'); setExcluir(null); };
   return <>
@@ -492,7 +493,7 @@ function RecursosView({ documento, produtos, onDocumento, podeEditar, onMensagem
         <div className={styles.codeAssistant}><span>Próximo código <b>{proximo}</b></span><button type="button" className={styles.linkButton} disabled={!podeEditar} onClick={() => setForm({ ...form, codigo: proximo })}>Usar código</button></div>
         <div className={styles.formActions}>{editando && <button type="button" className={styles.secondaryButton} onClick={() => { setForm(vazio()); setEditando(false); }}>Cancelar</button>}<button type="submit" className={styles.primaryButton} disabled={!podeEditar}>{editando ? 'Salvar alterações' : 'Cadastrar recurso'}</button></div>
       </form>
-      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Recursos cadastrados</h2><p>{documento.recursos.length} disponíveis nas composições.</p></div><label className={styles.search}><span>Procurar</span><input value={busca} onChange={(e) => setBusca(e.target.value)} /></label></div><div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>Recurso</th><th>Categoria</th><th>Unidade</th><th className={styles.numeric}>Custo</th><th /></tr></thead><tbody>{filtrados.map((recurso) => <tr key={recurso.id}><td><b>{recurso.codigo}</b></td><td>{recurso.nome}</td><td>{recurso.categoria}</td><td>{recurso.unidade}</td><td className={styles.numeric}><b>{formatarMoeda(recurso.custo)}</b></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar} aria-label={`Opções de ${recurso.nome}`} onClick={() => setMenu(menu === recurso.id ? '' : recurso.id)}>•••</button>{menu === recurso.id && <div className={styles.contextMenu}><button type="button" onClick={() => { setForm({ ...recurso }); setEditando(true); setMenu(''); }}>Editar</button><button type="button" className={styles.dangerLink} onClick={() => { setExcluir(recurso); setMenu(''); }}>Excluir</button></div>}</td></tr>)}</tbody></table></div></section></div>
+      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Recursos cadastrados</h2><p>{documento.recursos.length} disponíveis nas composições.</p></div><label className={styles.search}><span>Procurar</span><CampoBusca value={busca} onChange={setBusca} placeholder="Código, recurso ou categoria" /></label></div><div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>Recurso</th><th>Categoria</th><th>Unidade</th><th className={styles.numeric}>Custo</th><th /></tr></thead><tbody>{filtrados.map((recurso) => <tr key={recurso.id}><td><b>{recurso.codigo}</b></td><td>{recurso.nome}</td><td>{recurso.categoria}</td><td>{recurso.unidade}</td><td className={styles.numeric}><b>{formatarMoeda(recurso.custo)}</b></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar} aria-label={`Opções de ${recurso.nome}`} onClick={() => setMenu(menu === recurso.id ? '' : recurso.id)}>•••</button>{menu === recurso.id && <div className={styles.contextMenu}><button type="button" onClick={() => { setForm({ ...recurso }); setEditando(true); setMenu(''); }}>Editar</button><button type="button" className={styles.dangerLink} onClick={() => { setExcluir(recurso); setMenu(''); }}>Excluir</button></div>}</td></tr>)}</tbody></table></div></section></div>
     <ModalConfirmacao aberto={Boolean(excluir)} titulo={`Excluir ${excluir?.nome || 'recurso'}?`} mensagem="A exclusão só será permitida se o recurso não estiver em nenhuma composição." textoConfirmar="Excluir" corPrimaria="var(--custos-brand)" aoCancelar={() => setExcluir(null)} aoConfirmar={() => void confirmarExclusao()} />
   </>;
 }

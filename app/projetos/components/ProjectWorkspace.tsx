@@ -10,6 +10,7 @@ import { KanbanView } from './KanbanView';
 import { ListView } from './ListView';
 import { MapCanvas } from './MapCanvas';
 import { Modal } from './Modal';
+import { correspondeBusca, normalizarTexto } from '@/app/lib/formatters';
 
 function downloadJson(project: Project) {
   const blob = new Blob([JSON.stringify(exportProject(project), null, 2)], { type: 'application/json' });
@@ -68,11 +69,11 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
   const detailsNode = detailsId ? project.nodes.find((node) => node.id === detailsId) ?? null : null;
   const deleteNodeChildren = useMemo(() => deleteNode ? project.nodes.filter((node) => node.parentId === deleteNode.id) : [], [deleteNode, project.nodes]);
   const searchResults = useMemo(() => {
-    const term = query.trim().toLocaleLowerCase('pt-BR');
+    const term = normalizarTexto(query);
     if (!term) return [];
     return project.nodes.filter((node) => {
       const personNames = node.assigneeIds.map((id) => people.find((person) => person.id === id)?.name ?? '').join(' ');
-      return `${node.title} ${node.description} ${node.tags.join(' ')} ${personNames}`.toLocaleLowerCase('pt-BR').includes(term)
+      return correspondeBusca(`${node.title} ${node.description} ${node.tags.join(' ')} ${personNames}`, term)
         && (statusFilter === 'todos' || node.status === statusFilter)
         && (priorityFilter === 'todos' || node.priority === priorityFilter)
         && (assigneeFilter === 'todos' || node.assigneeIds.includes(assigneeFilter))

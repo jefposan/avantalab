@@ -32,7 +32,11 @@ erro. Placeholder é exemplo, não substitui label. Associar label e controle po
 - E-mail, senha, URL, código e identificador: nunca capitalizar automaticamente.
 - Nome e descrição: aplicar formatador compartilhado apenas quando semanticamente
   correto; não alterar silenciosamente o conteúdo durante digitação.
-- Busca: não formatar o termo; normalizar somente para comparação.
+- Busca: não formatar nem alterar o termo exibido; normalizar somente para
+  comparação com `normalizarTexto`/`correspondeBusca`. A busca não diferencia
+  acentuação, cedilha, caixa ou espaços repetidos. Havendo termo digitado,
+  exibir `×` acessível no canto direito para limpar o campo; vazio, o botão não
+  é renderizado. Em React, usar `app/components/CampoBusca.tsx`.
 
 ## Validação
 

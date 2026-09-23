@@ -1,5 +1,12 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.17.0 - 2026-09-23
+
+- Formalizado o campo oficial de busca: comparação tolerante a acentos,
+  cedilha, caixa e espaços repetidos, sem mudar o dado original.
+- O botão `×` para limpar aparece somente com termo preenchido e deve ser
+  acessível em todas as buscas existentes e futuras.
+
 ## 1.16.0 - 2026-09-19
 
 - Upgrade de nível pode ser imediato, enquanto downgrade e mudança de ciclo

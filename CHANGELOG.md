@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.41.0.14 - 2026-09-23
+- **Busca mais tolerante**: pesquisas textuais agora encontram termos com ou
+  sem acento, cedilha ou diferença de caixa. O botão `×` limpa o termo e aparece
+  apenas enquanto houver texto digitado.
+
 ## 1.41.0.13 - 2026-09-23
 - **Custo unitário sem valor fictício**: em Insumos e recursos, `0,00` passou
   a ser somente a sugestão visual de um custo vazio. Ao clicar no campo, a

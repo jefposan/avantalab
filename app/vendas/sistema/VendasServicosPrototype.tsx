@@ -963,7 +963,7 @@ function Table({ headers, children, minWidth = 960, className = '' }: { headers:
 }
 
 function SearchToolbar({ value, onChange, children, placeholder = 'Buscar por cliente, número ou situação' }: { value: string; onChange: (value: string) => void; children?: ReactNode; placeholder?: string }) {
-  return <div className="toolbar"><label className="search-field"><span className="sr-only">Buscar</span><Icon name="search" size={18}/><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder}/></label>{children}</div>;
+  return <div className="toolbar"><label className="search-field"><span className="sr-only">Buscar</span><Icon name="search" size={18}/><input type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder}/>{value && <button type="button" className="search-field-clear" onClick={() => onChange('')} aria-label="Limpar pesquisa">×</button>}</label>{children}</div>;
 }
 
 function Dialog({ open, title, description, onClose, children, eyebrow = 'Vendas e serviços' }: { open: boolean; title: string; description: string; onClose: () => void; children: ReactNode; eyebrow?: string }) {
@@ -1103,6 +1103,7 @@ function CatalogSearch({ id, items, onAdd, kind = 'todos' }: { id: string; items
             if (event.key === 'Enter' && results[0]) { event.preventDefault(); select(results[0]); }
           }}
         />
+        {query && <button type="button" className="catalog-search-clear" onClick={() => { setQuery(''); setSelectedSku(''); }} aria-label="Limpar pesquisa">×</button>}
         <button type="button" className="catalog-list-toggle" aria-label={open ? 'Fechar lista do catálogo' : 'Exibir lista completa do catálogo'} aria-expanded={open} onClick={() => { setQuery(''); setSelectedSku(''); setOpen((value) => !value); }}><Icon name="menu" size={18}/></button>
       </div>
     </label>

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.41.0.13 -->
+<!-- ava-version: 1.41.0.14 -->
+
+> Revisão 1.41.0.14: as buscas textuais da Gestão Mobile aceitam termos com ou
+> sem acento; o `×` aparece somente quando há pesquisa para limpar o campo.
 
 > Revisão 1.41.0.13: o refinamento de Custo unitário pertence a Custos e
 > Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.

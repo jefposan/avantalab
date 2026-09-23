@@ -9,6 +9,8 @@ import { Icon } from './Icon';
 import { Modal } from './Modal';
 import Tooltip from '@/app/components/Tooltip';
 import { supabase } from '@/app/lib/supabase';
+import CampoBusca from '@/app/components/CampoBusca';
+import { correspondeBusca } from '@/app/lib/formatters';
 
 const TEMPLATE_OPTIONS: Array<[ProjectTemplate, string, string]> = [
   ['blank', 'Projeto em branco', 'Comece apenas com o nó principal.'],
@@ -214,26 +216,24 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
   }), [collection.projects, externalSharedProjects]);
 
   const projects = useMemo(() => collection.projects.filter((project) => {
-    const normalized = `${project.name} ${project.description}`.toLocaleLowerCase('pt-BR');
     const inSection = section === 'all' ? !project.archivedAt
       : section === 'favorites' ? project.favorite && !project.archivedAt
       : section === 'active' ? ['ideia', 'planejado', 'em_andamento', 'aguardando'].includes(project.status) && !project.archivedAt
       : section === 'completed' ? project.status === 'concluido' && !project.archivedAt
       : Boolean(project.archivedAt);
     const dueMatches = dateFilter === 'todos' || (dateFilter === 'com_prazo' ? Boolean(project.dueDate) : !project.dueDate);
-    return inSection && (!query || normalized.includes(query.toLocaleLowerCase('pt-BR'))) && (status === 'todos' || project.status === status)
+    return inSection && correspondeBusca(`${project.name} ${project.description}`, query) && (status === 'todos' || project.status === status)
       && (assignee === 'todos' || project.participantIds.includes(assignee)) && dueMatches;
   }), [collection.projects, section, query, status, assignee, dateFilter]);
 
   const filteredSharedProjects = useMemo(() => externalSharedProjects.filter((project) => {
-    const normalized = `${project.name} ${project.description} ${project.companyName}`.toLocaleLowerCase('pt-BR');
     const inSection = section === 'all' ? !project.archivedAt
       : section === 'favorites' ? false
       : section === 'active' ? ['ideia', 'planejado', 'em_andamento', 'aguardando'].includes(project.status) && !project.archivedAt
       : section === 'completed' ? project.status === 'concluido' && !project.archivedAt
       : Boolean(project.archivedAt);
     const dueMatches = dateFilter === 'todos' || (dateFilter === 'com_prazo' ? Boolean(project.dueDate) : !project.dueDate);
-    return inSection && (!query || normalized.includes(query.toLocaleLowerCase('pt-BR'))) && (status === 'todos' || project.status === status)
+    return inSection && correspondeBusca(`${project.name} ${project.description} ${project.companyName}`, query) && (status === 'todos' || project.status === status)
       && assignee === 'todos' && dueMatches;
   }), [externalSharedProjects, section, query, status, assignee, dateFilter]);
 
@@ -543,7 +543,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
     </nav>
 
     <section className={styles.filters} aria-label="Filtros de projetos">
-      <label className={styles.searchField}><span className={styles.srOnly}>Pesquisar projetos</span><Icon name="search" size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar por nome" /></label>
+      <label className={styles.searchField}><span className={styles.srOnly}>Pesquisar projetos</span><Icon name="search" size={18} /><CampoBusca value={query} onChange={setQuery} placeholder="Pesquisar por nome" /></label>
       <label><span className={styles.srOnly}>Status</span><select value={status} onChange={(event) => setStatus(event.target.value as ProjectStatus | 'todos')}><option value="todos">Todos os status</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label><span className={styles.srOnly}>Responsável</span><select value={assignee} onChange={(event) => setAssignee(event.target.value)}><option value="todos">Todos responsáveis</option>{collection.people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
       <label><span className={styles.srOnly}>Prazo</span><select value={dateFilter} onChange={(event) => setDateFilter(event.target.value)}><option value="todos">Todas as datas</option><option value="com_prazo">Com data final</option><option value="sem_prazo">Sem data final</option></select></label>

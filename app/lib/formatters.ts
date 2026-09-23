@@ -167,13 +167,20 @@ export const getMaxDias = (mes: string | null, ano: string | number) => {
 
   return 31;
 };
-export const normalizarTexto = (texto: string) => {
+/** Normaliza textos para comparações e buscas sem diferença de acentuação. */
+export const normalizarTexto = (texto: unknown) => {
   return String(texto || '')
     .trim()
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ');
+};
+
+/** Compara um texto ao termo digitado sem diferenciar maiúsculas ou acentos. */
+export const correspondeBusca = (texto: unknown, termo: unknown) => {
+  const termoNormalizado = normalizarTexto(termo);
+  return !termoNormalizado || normalizarTexto(texto).includes(termoNormalizado);
 };
 
 export const ordenarDespesasAlfabeticamente = <T extends { nome: string }>(

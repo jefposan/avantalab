@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import styles from '../recebimentos.module.css';
+import { normalizarTexto } from '@/app/lib/formatters';
 import type { Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
 import { diferencaDiasIso, diasEmAtraso, formatarData, formatarMoeda } from './helpers';
 import IdentificacaoCliente from './IdentificacaoCliente';
@@ -51,10 +52,10 @@ export default function TabelaVencimentos({
   const [erroBaixa, setErroBaixa] = useState('');
   const nomeEmpresa = useCallback((id: string) => empresas.find((empresa) => empresa.id === id)?.nome ?? '—', [empresas]);
   const nomeSubempresa = useCallback((id: string | null) => id ? subempresas.find((subempresa) => subempresa.id === id)?.nome ?? '—' : 'Cliente direto', [subempresas]);
-  const termo = busca.trim().toLocaleLowerCase('pt-BR');
+  const termo = normalizarTexto(busca);
   const recebimentosFiltrados = useMemo(
     () => !termo ? recebimentos : recebimentos.filter((recebimento) =>
-      `${nomeEmpresa(recebimento.empresaId)} ${nomeSubempresa(recebimento.subempresaId)}`.toLocaleLowerCase('pt-BR').includes(termo),
+      normalizarTexto(`${nomeEmpresa(recebimento.empresaId)} ${nomeSubempresa(recebimento.subempresaId)}`).includes(termo),
     ),
     [recebimentos, termo, nomeEmpresa, nomeSubempresa],
   );

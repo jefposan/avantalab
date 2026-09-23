@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@/app/projetos/components/Icon';
 import { Modal } from '@/app/projetos/components/Modal';
-import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
+import CampoBusca from '@/app/components/CampoBusca';
+import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero, normalizarTexto } from '@/app/lib/formatters';
 import {
   importarCadastroProdutosPrecos, salvarPrecoTabela, salvarTabelaPreco,
 } from './repository';
@@ -80,9 +81,9 @@ export default function TabelasPrecosView({
   const inputArquivo = useRef<HTMLInputElement>(null);
   const tabelaAtiva = tabelas.find((item) => item.id === tabelaAtivaId) || tabelas[0];
   const produtosFiltrados = useMemo(() => {
-    const termo = busca.trim().toLocaleLowerCase('pt-BR');
+    const termo = normalizarTexto(busca);
     return produtos.filter((produto) => !termo || [produto.sku, produto.nome, produto.marca, produto.categoria]
-      .some((valor) => String(valor || '').toLocaleLowerCase('pt-BR').includes(termo)));
+      .some((valor) => normalizarTexto(valor).includes(termo)));
   }, [busca, produtos]);
 
   const exportar = async () => {
@@ -270,7 +271,7 @@ export default function TabelasPrecosView({
 
     {tabelaAtiva ? <section className={styles.panel}>
       <div className={styles.panelTitle}><div><h2>{tabelaAtiva.nome}</h2><p>{tabelaAtiva.padrao ? 'Preço principal do cadastro mestre.' : tabelaAtiva.descricao || 'Preços específicos desta negociação.'}</p></div><div className={styles.priceTableTools}>
-        <label className={styles.search}>Localizar produto<input value={busca} onChange={(evento) => setBusca(evento.target.value)} placeholder="Código, nome, marca…" /></label>
+        <label className={styles.search}>Localizar produto<CampoBusca value={busca} onChange={setBusca} placeholder="Código, nome, marca…" /></label>
         {!tabelaAtiva.padrao && <button type="button" className={styles.secondaryButton} disabled={!podeEditar} onClick={() => setEditandoTabela(tabelaAtiva)}>Ajustar tabela</button>}
       </div></div>
       <div className={styles.tableWrap}><table><thead><tr><th scope="col">Código</th><th scope="col">Produto ou serviço</th><th scope="col">Preço padrão</th><th scope="col">Preço nesta tabela</th></tr></thead><tbody>

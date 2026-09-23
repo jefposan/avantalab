@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.41.0.13 -->
+<!-- ava-version: 1.41.0.14 -->
+
+> Revisão 1.41.0.14: nas buscas da Gestão Web, você pode digitar com ou sem
+> acento — por exemplo, `valvula` localiza `válvula`. Quando houver texto, use
+> o `×` no fim do campo para limpar a pesquisa.
 
 > Revisão 1.41.0.13: em **Custos e Precificação**, o campo **Custo unitário**
 > de um recurso sem custo usa `0,00` apenas como sugestão visual. Clique no

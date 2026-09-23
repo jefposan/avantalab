@@ -47,6 +47,19 @@ divisor ou agrupamento sem identidade própria.
 - Tabela fornece cabeçalho, vazio, carregamento e comportamento responsivo.
 - Modal fornece título, fechamento acessível, foco inicial e restauração do foco.
 
+### Campo de busca
+
+- Todo campo destinado a pesquisar cadastros, listas ou resultados deve usar
+  `app/components/CampoBusca.tsx` quando estiver em React. O componente mostra
+  o botão `×` no canto direito somente enquanto existir um termo digitado;
+  acioná-lo limpa o campo sem alterar os demais filtros.
+- A comparação deve usar `normalizarTexto` ou `correspondeBusca` de
+  `app/lib/formatters.ts`: acentos, cedilha, caixa e espaços repetidos não
+  diferenciam resultados. O texto salvo nunca é modificado por essa regra.
+- Em superfícies fora de React, preservar o mesmo contrato funcional e o nome
+  acessível **Limpar pesquisa**. Buscas remotas também precisam normalizar no
+  servidor/banco antes de filtrar, sem depender apenas da lista já carregada.
+
 ### Acesso e autenticação mobile
 
 Este padrão vale para os cards de **login, cadastro e recuperação de acesso**

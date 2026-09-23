@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.41.0.14: buscas ignoram acentos e exibem × para limpar
+// somente quando há termo digitado.
 // Revisado na versão 1.41.0.13: em Custos e Precificação, Custo unitário vazio
 // mostra 0,00 como placeholder e começa a digitação pelos centavos.
 // Revisado na versão 1.41.0.12: a galeria pública da Gestão mantém as quatro

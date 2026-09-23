@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.41.0.13 -->
+<!-- ava-version: 1.41.0.14 -->
+
+> Revisão 1.41.0.14: no AvantaVendas, buscas de textos aceitam termos com ou
+> sem acento e exibem `×` para limpar somente enquanto houver texto digitado.
 
 > Revisão 1.41.0.13: o refinamento de Custo unitário pertence a Custos e
 > Precificação; sem impacto operacional no AvantaVendas.

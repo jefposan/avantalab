@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
+import { normalizarTexto } from '@/app/lib/formatters';
 import type { ComprovanteRecebimento } from '../data/repo';
 import type { Colaborador, Empresa, Servico, Subempresa } from './types';
 import { dataLocalIso, diferencaDiasIso, formatarData, formatarDataHora } from './helpers';
@@ -66,10 +67,10 @@ export default function PainelServicos({ filtro, servicos, empresas, subempresas
     if (servico.avaliacao !== 'regular' || (!todosAvisos && (referencia?.ano !== mesAvisos.ano || referencia.mes !== mesAvisos.mes))) return false;
     if (situacaoAvisos === 'pendentes' && servico.avisoConcluidoEm) return false;
     if (situacaoAvisos === 'concluidos' && !servico.avisoConcluidoEm) return false;
-    const busca = buscaAvisos.trim().toLocaleLowerCase('pt-BR');
+    const busca = normalizarTexto(buscaAvisos);
     if (!busca) return true;
-    return [nomeEmpresa(servico.empresaId), nomeCliente(servico), servico.clienteNome, servico.observacaoCliente]
-      .filter(Boolean).join(' ').toLocaleLowerCase('pt-BR').includes(busca);
+    return normalizarTexto([nomeEmpresa(servico.empresaId), nomeCliente(servico), servico.clienteNome, servico.observacaoCliente]
+      .filter(Boolean).join(' ')).includes(busca);
   }).sort((a, b) => {
     if (filtro === 'realizados') return (b.realizadoEm ?? '').localeCompare(a.realizadoEm ?? '');
     if (filtro === 'avisos_servico') {

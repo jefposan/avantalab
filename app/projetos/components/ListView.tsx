@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { NODE_TYPE_LABELS, PRIORITY_LABELS, PRIORITIES, STATUS_LABELS, STATUSES, type Person, type Project, type ProjectNode } from '../types';
 import styles from '../projetos.module.css';
+import { correspondeBusca } from '@/app/lib/formatters';
 
 function flatten(nodes: ProjectNode[]) {
   const result: Array<{ node: ProjectNode; depth: number }> = [];
@@ -21,7 +22,7 @@ export function ListView({ project, people, query, onUpdate, onOpen, readOnly = 
   onOpen: (nodeId: string) => void;
   readOnly?: boolean;
 }) {
-  const rows = useMemo(() => flatten(project.nodes).filter(({ node }) => !query || `${node.title} ${node.description} ${node.tags.join(' ')} ${node.assigneeIds.map((id) => people.find((person) => person.id === id)?.name ?? '').join(' ')}`.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR'))), [project.nodes, query, people]);
+  const rows = useMemo(() => flatten(project.nodes).filter(({ node }) => correspondeBusca(`${node.title} ${node.description} ${node.tags.join(' ')} ${node.assigneeIds.map((id) => people.find((person) => person.id === id)?.name ?? '').join(' ')}`, query)), [project.nodes, query, people]);
   return <div className={styles.listView}>
     <div className={styles.taskTable} role="table" aria-label="Lista hierárquica de tarefas">
       <div className={styles.taskTableHead} role="row"><span>Item</span><span>Status</span><span>Prioridade</span><span>Responsável</span><span>Prazo</span></div>

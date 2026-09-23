@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import styles from '../recebimentos.module.css';
+import { normalizarTexto } from '@/app/lib/formatters';
 import type { Colaborador, Empresa, Recebimento, SituacaoRecebimento, Subempresa } from './types';
 import { formatarMoeda, limitesDoMes, rotuloFormaPagamento, rotuloSituacao } from './helpers';
 import type { ComprovanteRecebimento } from '../data/repo';
@@ -75,14 +76,14 @@ export default function ListaRecebimentos({ chaveMes, todosMeses = false, empres
   const nomeEmpresa = useCallback((id: string) => empresas.find((e) => e.id === id)?.nome ?? '—', [empresas]);
   const nomeSub = useCallback((id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto', [subempresas]);
   const nomeColab = useCallback((id: string | null) => (id ? colaboradores.find((c) => c.id === id)?.nome ?? '—' : '—'), [colaboradores]);
-  const termoBusca = busca.trim().toLocaleLowerCase('pt-BR');
+  const termoBusca = normalizarTexto(busca);
 
   const filtrados = useMemo(() => {
     return recebimentos.filter((r) => {
       // Previsões alimentam os totais dos meses futuros, mas sua composição
       // não é exposta na listagem detalhada de recebimentos.
       if (r.situacao === 'previsto') return false;
-      if (termoBusca && !`${nomeEmpresa(r.empresaId)} ${nomeSub(r.subempresaId)} ${nomeColab(r.colaboradorId)}`.toLocaleLowerCase('pt-BR').includes(termoBusca)) return false;
+      if (termoBusca && !normalizarTexto(`${nomeEmpresa(r.empresaId)} ${nomeSub(r.subempresaId)} ${nomeColab(r.colaboradorId)}`).includes(termoBusca)) return false;
       if (fEmpresa && r.empresaId !== fEmpresa) return false;
       if (fSub && r.subempresaId !== fSub) return false;
       if (fColab && r.colaboradorId !== fColab) return false;

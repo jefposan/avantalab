@@ -3,6 +3,7 @@
 import { STATUS_LABELS, STATUSES, type Person, type Project, type ProjectNode } from '../types';
 import styles from '../projetos.module.css';
 import Tooltip from '@/app/components/Tooltip';
+import { correspondeBusca } from '@/app/lib/formatters';
 
 export function KanbanView({ project, people, query, onUpdate, onOpen, readOnly = false }: {
   project: Project;
@@ -12,7 +13,7 @@ export function KanbanView({ project, people, query, onUpdate, onOpen, readOnly 
   onOpen: (nodeId: string) => void;
   readOnly?: boolean;
 }) {
-  const cards = project.nodes.filter((node) => node.type === 'tarefa' || node.type === 'marco').filter((node) => !query || `${node.title} ${node.description} ${node.tags.join(' ')}`.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')));
+  const cards = project.nodes.filter((node) => node.type === 'tarefa' || node.type === 'marco').filter((node) => correspondeBusca(`${node.title} ${node.description} ${node.tags.join(' ')}`, query));
   return <div className={styles.kanban} aria-label="Quadro Kanban por status">{STATUSES.map((status) => {
     const items = cards.filter((node) => node.status === status);
     return <section key={status} className={styles.kanbanColumn}

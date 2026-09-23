@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
+import { normalizarTexto } from '@/app/lib/formatters';
 import { FORMAS_PAGAMENTO_RECEBIMENTO, type Colaborador, type Empresa, type FormaPagamentoRecebimento, type Recebimento, type Subempresa } from './types';
 import { aguardandoConferencia, formatarDataHora, formatarMoeda, rotuloFormaPagamento, rotuloSituacao } from './helpers';
 import type { ComprovanteRecebimento } from '../data/repo';
@@ -71,10 +72,10 @@ export default function PainelConferencia({
   const nomeEmpresa = useCallback((id: string) => empresas.find((e) => e.id === id)?.nome ?? '—', [empresas]);
   const nomeSub = useCallback((id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto', [subempresas]);
   const nomeColab = useCallback((id: string | null) => (id ? colaboradores.find((c) => c.id === id)?.nome ?? '—' : '—'), [colaboradores]);
-  const termoBusca = busca.trim().toLocaleLowerCase('pt-BR');
+  const termoBusca = normalizarTexto(busca);
   const pendentesFiltrados = useMemo(
     () => !termoBusca ? pendentes : pendentes.filter((r) =>
-      `${nomeEmpresa(r.empresaId)} ${nomeSub(r.subempresaId)} ${nomeColab(r.colaboradorId)}`.toLocaleLowerCase('pt-BR').includes(termoBusca),
+      normalizarTexto(`${nomeEmpresa(r.empresaId)} ${nomeSub(r.subempresaId)} ${nomeColab(r.colaboradorId)}`).includes(termoBusca),
     ),
     [pendentes, termoBusca, nomeEmpresa, nomeSub, nomeColab],
   );
