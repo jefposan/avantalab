@@ -1,6 +1,24 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.41.0.09 -->
+<!-- ava-version: 1.41.0.13 -->
+
+> Revisão 1.41.0.13: em **Custos e Precificação**, o campo **Custo unitário**
+> de um recurso sem custo usa `0,00` apenas como sugestão visual. Clique no
+> campo e digite normalmente; o valor começa pelos centavos.
+
+> Revisão 1.41.0.12: a galeria da landing pública mantém somente as quatro
+> capturas verticais oficiais do aplicativo. A arte horizontal da App Store
+> não é apresentada como tela. Isso não altera nenhuma função da Gestão Web.
+
+> Revisão 1.41.0.11: a galeria da landing pública da Gestão agora mostra todas
+> as imagens usadas na App Store, preserva o topo de cada peça e acompanha o
+> arraste com transição mais suave. Isso não altera nenhuma função dentro da
+> Gestão Web.
+
+> Revisão 1.41.0.10: a landing pública da Gestão ganhou uma galeria de telas
+> do aplicativo. Arraste para os lados, use as setas ou as teclas direcionais
+> para alternar as imagens. Isso não altera nenhuma função dentro da Gestão
+> Web.
 
 > Revisão 1.41.0.09: quando você está lançando uma **Despesa**, o card de
 > **Receitas** mostra somente o cabeçalho, e vice-versa. Clique no cabeçalho

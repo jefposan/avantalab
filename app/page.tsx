@@ -10,6 +10,7 @@ import LinkRolagemPublica from './components/LinkRolagemPublica';
 import AvaPlansPreview from './components/AvaPlansPreview';
 import LandingAppsSection from './components/LandingAppsSection';
 import LandingBrandLabSection from './components/LandingBrandLabSection';
+import LandingImageCarousel, { type LandingCarouselItem } from './components/LandingImageCarousel';
 import { AVANTAVENDAS_APP_STORE_URL_PADRAO, AVANTAVENDAS_PLAY_STORE_URL_PADRAO } from './lib/avantavendas-download';
 import styles from './styles/landing/landing.module.css';
 import mobileSpacing from './styles/landing/landing-mobile-gestao.module.css';
@@ -99,6 +100,15 @@ const perguntas = [
   ['Qual plano é indicado para empresas?', 'O Business atende pequenos negócios com limites essenciais e módulos contratados separadamente. O Business Pro inclui todos os módulos existentes e limites maiores para usuários, perfis e Controle de Ponto.'],
   ['O AvantaLab funciona no celular?', 'Sim. A plataforma foi pensada para acompanhar o trabalho no computador e no celular, com as informações sincronizadas.'],
   ['A Ava substitui suporte ou consultoria?', 'A Ava orienta o uso do AvantaLab e ajuda a interpretar informações do sistema. Ela não substitui contabilidade, consultoria ou decisões profissionais.'],
+];
+
+// As quatro capturas verticais oficiais da App Store alimentam a galeria da
+// landing. Peças horizontais de destaque não entram no carrossel de telas.
+const telasGestao: readonly LandingCarouselItem[] = [
+  { src: '/images/play-store/avantalab-gestao-01-acesso.png', alt: 'Tela de acesso do aplicativo AvantaLab Gestão', label: 'Acesso simples' },
+  { src: '/images/play-store/avantalab-gestao-02-painel.png', alt: 'Painel financeiro do aplicativo AvantaLab Gestão', label: 'Painel da operação' },
+  { src: '/images/play-store/avantalab-gestao-03-ava.png', alt: 'Ava, assistente de inteligência artificial do AvantaLab', label: 'Ava para orientar' },
+  { src: '/images/play-store/avantalab-gestao-04-despesa.png', alt: 'Cadastro de despesa no aplicativo AvantaLab Gestão', label: 'Rotina organizada' },
 ];
 
 const dadosEstruturados = {
@@ -225,6 +235,13 @@ export function AvantaLandingPage({ contexto = 'laboratorio' }: { contexto?: 'la
       </section>
 
       <LandingAppsSection />
+
+      <LandingImageCarousel
+        items={telasGestao}
+        eyebrow="O AvantaLab em ação"
+        title="Uma rotina mais clara, na palma da mão."
+        description="Arraste para explorar as telas do app e conhecer uma amostra da experiência que acompanha sua gestão todos os dias."
+      />
 
       <section className={`${styles.section} ${styles.flow}`} id="como-funciona" data-flow-section data-full-section>
         <div className={styles.wrap} data-scroll-target>

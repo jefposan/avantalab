@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.41.0.13 - 2026-09-23
+- **Custo unitário sem valor fictício**: em Insumos e recursos, `0,00` passou
+  a ser somente a sugestão visual de um custo vazio. Ao clicar no campo, a
+  digitação começa pelos centavos, sem exigir apagar um zero pré-preenchido.
+
+## 1.41.0.12 - 2026-09-23
+- **Carrossel de telas consistente**: a arte horizontal de destaque da App
+  Store ficou fora do carrossel para preservar a leitura das quatro capturas
+  verticais oficiais do aplicativo.
+
+## 1.41.0.11 - 2026-09-23
+- **Galeria da landing refinada**: a galeria agora preserva o topo das imagens,
+  acompanha o arraste antes de concluir a transição e usa um deslizamento mais
+  leve. As quatro telas oficiais da App Store estão disponíveis.
+
+## 1.41.0.10 - 2026-09-23
+- **Galeria interativa na landing**: a página pública da Gestão agora exibe
+  telas do app em um carrossel de profundidade navegável por arraste, setas e
+  teclado. A lista de imagens está preparada para receber as futuras peças de
+  campanha.
+
 ## 1.41.0.09 - 2026-09-23
 - **Cards inativos compactos**: o card que não está em uso, seja Despesas ou
   Receitas, exibe somente o cabeçalho. Formulário, busca, lista e ações ficam

@@ -1,6 +1,18 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.41.0.09 -->
+<!-- ava-version: 1.41.0.13 -->
+
+> Revisão 1.41.0.13: o refinamento de Custo unitário pertence a Custos e
+> Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.12: o ajuste da galeria da landing pública pertence à Gestão
+> Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.11: o refinamento da galeria da landing pública pertence à
+> Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.41.0.10: a galeria de telas foi adicionada somente à landing
+> pública da Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.41.0.09: o comportamento de cards inativos compactos pertence à
 > Gestão Web; sem impacto operacional na Gestão Mobile.

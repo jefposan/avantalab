@@ -153,6 +153,15 @@ test('edição concentra o cancelamento na barra flutuante e orienta erros no c�
   assert.match(estilos, /\.moneyInputSimple\{grid-template-columns:auto minmax\(0,1fr\)\}/);
 });
 
+test('custo unitário vazio usa placeholder e inicia a digitação pelos centavos', () => {
+  assert.match(workspace, /label="Custo unitário" zeroComoPlaceholder/);
+  assert.match(workspace, /zeroComoPlaceholder = false/);
+  assert.match(workspace, /const zeroSemValor = zeroComoPlaceholder && value === 0/);
+  assert.match(workspace, /placeholder=\{zeroComoPlaceholder \? '0,00' : undefined\}/);
+  assert.match(workspace, /setTexto\(zeroSemValor \? '' : valorFormatado\)/);
+  assert.match(workspace, /formatarMoedaDigitada\(e\.target\.value\)/);
+});
+
 test('produto conserva apenas a identificação fiscal e delega a tributação à empresa', () => {
   assert.match(workspace, /Identificação fiscal do produto/);
   assert.match(workspace, /NCM \*/);

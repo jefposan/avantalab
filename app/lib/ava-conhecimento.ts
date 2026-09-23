@@ -1,5 +1,13 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.41.0.13: em Custos e Precificação, Custo unitário vazio
+// mostra 0,00 como placeholder e começa a digitação pelos centavos.
+// Revisado na versão 1.41.0.12: a galeria pública da Gestão mantém as quatro
+// telas verticais da App Store; a arte horizontal não entra no carrossel.
+// Revisado na versão 1.41.0.11: a galeria pública da Gestão mostra as peças da
+// App Store sem cortar o topo e acompanha o arraste com uma transição mais leve.
+// Revisado na versão 1.41.0.10: a landing pública da Gestão oferece uma galeria
+// de telas do app, navegável por arraste, setas ou teclado; não muda a operação.
 // Revisado na versão 1.41.0.09: na Gestão Web, o card inativo de Despesas ou
 // Receitas mostra só o cabeçalho e abre o conteúdo ao ser selecionado.
 // Revisado na versão 1.41.0.08: em Despesas, Recolher lista fica entre
