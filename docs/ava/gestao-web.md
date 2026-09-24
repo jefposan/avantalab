@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.42.0.02 -->
+<!-- ava-version: 1.42.0.03 -->
+
+> Revisão 1.42.0.03: correção exclusiva do salvamento de despesa prevista na
+> Gestão Mobile, sem alteração operacional na Gestão Web.
 
 > Revisão 1.42.0.02: no formulário de Insumos e recursos, **Unidade** e
 > **Custo unitário** agora aparecem juntos na mesma linha, sem mudança no

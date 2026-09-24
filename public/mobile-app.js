@@ -593,6 +593,9 @@
     // global do dashboard, que deve ficar reservado a falhas fora do card.
     lancamentoErro: '',
     modalAcao: null,
+    // Última despesa prevista confirmada pelo banco. Protege somente essa
+    // linha caso uma leitura iniciada antes do salvar termine depois.
+    lancamentoSalvoConfirmado: null,
     aplicacaoLancamento: false,
     aplicacaoLancamentoMensagem: '',
     exclusaoRecorrencia: null,
@@ -3826,6 +3829,55 @@
     state.carregando = false;
     notificarFinanceiroAtualizadoMobile();
     mostrarToast(mensagem);
+  }
+
+  function aplicarDespesaPrevistaSalvaMobile(registro) {
+    if (!registro || !registro.id || !state.empresa) return false;
+    var atualizada = {
+      id: registro.id,
+      mes: registro.mes,
+      dia: Number(registro.dia),
+      despesa: formatarDescricao(registro.despesa_nome),
+      descricao: registro.descricao || '',
+      valor: Number(registro.valor || 0),
+      status: registro.status || null,
+      tipo: registro.tipo_obs || null,
+      recorrenciaId: registro.recorrencia_id || null,
+      notaArquivoPath: registro.nota_arquivo_path || null,
+      centroCustoId: registro.centro_custo_id ? String(registro.centro_custo_id) : null,
+      revisao: Number(registro.revisao || 1),
+    };
+    var encontrou = false;
+    state.lancamentos = (state.lancamentos || []).map(function (item) {
+      if (String(item.id) !== String(atualizada.id)) return item;
+      encontrou = true;
+      return atualizada;
+    });
+    if (!encontrou) return false;
+    state.lancamentoSalvoConfirmado = {
+      empresaId: state.empresa.id,
+      lancamento: atualizada,
+    };
+    return true;
+  }
+
+  function preservarDespesaPrevistaSalvaContraLeituraAntigaMobile() {
+    var confirmada = state.lancamentoSalvoConfirmado;
+    if (!confirmada) return;
+    if (!state.empresa || String(confirmada.empresaId) !== String(state.empresa.id)) {
+      state.lancamentoSalvoConfirmado = null;
+      return;
+    }
+    var recebida = (state.lancamentos || []).find(function (item) {
+      return String(item.id) === String(confirmada.lancamento.id);
+    });
+    if (recebida && Number(recebida.revisao || 0) >= Number(confirmada.lancamento.revisao || 0)) {
+      state.lancamentoSalvoConfirmado = null;
+      return;
+    }
+    state.lancamentos = (state.lancamentos || []).map(function (item) {
+      return String(item.id) === String(confirmada.lancamento.id) ? confirmada.lancamento : item;
+    });
   }
 
   function ordenarDespesasAlfabeticamenteMobile(despesas) {
@@ -7356,6 +7408,7 @@
         revisao: Number(item.revisao || 1),
       };
     });
+    preservarDespesaPrevistaSalvaContraLeituraAntigaMobile();
 
     var ocultarReceitaVendas = premiumPessoalBloqueadoMobile();
     var receitaVendasOcultaPorMes = {};
@@ -10630,10 +10683,21 @@
         .select()
         .single();
 
-      if (despesa.error) {
-        falharAplicacaoLancamentoMobile(despesa.error.code === 'PGRST116'
+      if (despesa.error || !despesa.data) {
+        falharAplicacaoLancamentoMobile(despesa.error && despesa.error.code === 'PGRST116'
           ? 'Esta despesa foi alterada em outro dispositivo. Atualize a lista e revise os dados antes de salvar novamente.'
-          : 'Nao foi possivel editar a despesa: ' + (despesa.error.message || despesa.error.code || 'erro'));
+          : 'Nao foi possivel editar a despesa: ' + ((despesa.error && (despesa.error.message || despesa.error.code)) || 'a confirmação do banco não foi recebida'));
+        return;
+      }
+
+      // Para uma despesa prevista, só fecha depois de receber o registro
+      // atualizado. A cópia confirmada também impede que uma leitura anterior
+      // ao salvar volte a mostrar os dados antigos.
+      if (eraPrevista) {
+        aplicarDespesaPrevistaSalvaMobile(despesa.data);
+        state.modalAcao = null;
+        concluirAplicacaoLancamentoMobile('Despesa atualizada.');
+        render();
         return;
       }
     }

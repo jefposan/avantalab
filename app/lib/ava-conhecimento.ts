@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.42.0.03: Salvar previsto confirma a despesa no banco
+// antes de fechar o editor móvel; nenhuma outra regra de lançamento mudou.
 // Revisado na versão 1.42.0.02: Unidade e Custo unitário de Insumos ficam na
 // mesma linha; é um refinamento visual, sem alterar o fluxo orientado pela Ava.
 // Revisado na versão 1.42.0.01: produtos e insumos usam a mesma lista de

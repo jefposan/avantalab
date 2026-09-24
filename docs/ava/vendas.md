@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.42.0.02 -->
+<!-- ava-version: 1.42.0.03 -->
+
+> Revisão 1.42.0.03: correção exclusiva da Gestão Mobile, sem impacto
+> operacional no AvantaVendas.
 
 > Revisão 1.42.0.02: ajuste visual em Custos e Precificação, sem impacto
 > operacional no AvantaVendas.

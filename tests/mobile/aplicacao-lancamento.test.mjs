@@ -18,6 +18,48 @@ test('alterações de lançamento bloqueiam a tela e comunicam o progresso', asy
   assert.match(mobile, /async function salvarEdicaoLancamentoSelecionado\(confirmarPrevista\)[\s\S]*?iniciarAplicacaoLancamentoMobile\(\)[\s\S]*?concluirAplicacaoLancamentoMobile\(/);
 });
 
+test('despesa prevista só fecha após a confirmação do registro atualizado', async () => {
+  const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
+  const inicio = mobile.indexOf('async function salvarEdicaoLancamentoSelecionado(confirmarPrevista)');
+  const fim = mobile.indexOf('function periodoFinanceiroHojeMobile()', inicio);
+  const salvar = mobile.slice(inicio, fim);
+
+  assert.match(mobile, /lancamentoSalvoConfirmado: null/);
+  assert.match(mobile, /function aplicarDespesaPrevistaSalvaMobile\(registro\)/);
+  assert.match(mobile, /function preservarDespesaPrevistaSalvaContraLeituraAntigaMobile\(\)/);
+  assert.match(salvar, /if \(despesa\.error \|\| !despesa\.data\)[\s\S]*?return;/);
+  assert.match(salvar, /if \(eraPrevista\) \{[\s\S]*?aplicarDespesaPrevistaSalvaMobile\(despesa\.data\)[\s\S]*?state\.modalAcao = null[\s\S]*?concluirAplicacaoLancamentoMobile\('Despesa atualizada\.'\)[\s\S]*?render\(\)[\s\S]*?return;/);
+});
+
+test('leitura antiga preserva apenas a despesa prevista já confirmada', async () => {
+  const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
+  const inicio = mobile.indexOf('function aplicarDespesaPrevistaSalvaMobile(registro)');
+  const fim = mobile.indexOf('function ordenarDespesasAlfabeticamenteMobile', inicio);
+  const funcoes = mobile.slice(inicio, fim);
+  const state = {
+    empresa: { id: 'empresa-1' },
+    lancamentos: [
+      { id: 'prevista', descricao: 'antes', valor: 10, revisao: 2 },
+      { id: 'outra', descricao: 'inalterada', valor: 20, revisao: 5 },
+    ],
+    lancamentoSalvoConfirmado: null,
+  };
+  const contexto = { state, formatarDescricao: (valor) => valor };
+  vm.runInNewContext(`${funcoes}\nthis.aplicar = aplicarDespesaPrevistaSalvaMobile; this.preservar = preservarDespesaPrevistaSalvaContraLeituraAntigaMobile;`, contexto);
+
+  assert.equal(contexto.aplicar({ id: 'prevista', mes: 'Setembro', dia: 18, despesa_nome: 'Fornecedor', descricao: 'depois', valor: 30, status: 'prevista', tipo_obs: 'previsto', revisao: 3 }), true);
+  state.lancamentos = [
+    { id: 'prevista', descricao: 'antes', valor: 10, revisao: 2 },
+    { id: 'outra', descricao: 'inalterada', valor: 20, revisao: 5 },
+  ];
+  contexto.preservar();
+
+  assert.deepEqual(state.lancamentos.map((item) => [item.id, item.descricao, item.valor, item.revisao]), [
+    ['prevista', 'depois', 30, 3],
+    ['outra', 'inalterada', 20, 5],
+  ]);
+});
+
 test('Editar nos avisos de previsão abre diretamente o formulário do lançamento', async () => {
   const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.42.0.03 - 2026-09-24
+- **Salvar previsão no mobile**: ao editar uma despesa prevista, o card só
+  fecha após receber o registro atualizado do banco. Uma leitura anterior em
+  segundo plano não pode mais repor a versão antiga apenas dessa despesa.
+
 ## 1.42.0.02 - 2026-09-23
 - **Insumos mais compactos**: os campos **Unidade** e **Custo unitário**
   ficam na mesma linha. O custo usa uma largura menor, preservando a leitura

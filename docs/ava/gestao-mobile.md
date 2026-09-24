@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.42.0.02 -->
+<!-- ava-version: 1.42.0.03 -->
+
+> Revisão 1.42.0.03: ao editar uma despesa prevista, **Salvar previsto** só
+> fecha o card depois da confirmação do banco. Se a confirmação falhar, o
+> editor permanece aberto para que nenhum dado digitado seja perdido.
 
 > Revisão 1.42.0.02: no formulário de Insumos e recursos, **Unidade** e
 > **Custo unitário** agora aparecem juntos na mesma linha, sem mudança no
