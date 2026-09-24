@@ -47,7 +47,8 @@ export function mapearItemCustosParaVendas(
       cest: texto(linha.cest),
       origemMercadoria: texto(linha.origem_mercadoria),
       unidadeTributavel: texto(linha.unidade_tributavel),
-      cfopPadrao: texto(linha.cfop_padrao),
+      // CFOP é definido pela operação escolhida na emissão; nunca pelo item.
+      cfopPadrao: '',
       cst: texto(linha.cst),
       csosn: texto(linha.csosn),
       cstPis: texto(linha.cst_pis),

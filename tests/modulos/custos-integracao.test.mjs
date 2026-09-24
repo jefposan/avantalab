@@ -39,6 +39,10 @@ const paginaRecebimentos = readFileSync('app/recebimentos/page.tsx', 'utf8');
 const paginaVendas = readFileSync('app/vendas/page.tsx', 'utf8');
 const carregamentoDadosModulo = readFileSync('app/components/CarregamentoDadosModulo.tsx', 'utf8');
 const tiposCustos = readFileSync('app/custos/types.ts', 'utf8');
+const catalogoVendasServidor = readFileSync('app/modules/vendas/services/catalogo-servidor.ts', 'utf8');
+const catalogoVendas = readFileSync('app/modules/vendas/catalog.ts', 'utf8');
+const migracaoInsumoFiscal = readFileSync('supabase/migrations/20260923173000_insumos_itens_fiscais.sql', 'utf8');
+const fornecedoresCustos = readFileSync('app/api/modulos/custos/fornecedores/route.ts', 'utf8');
 
 test('Custos usa página total e exige o acesso oficial do módulo', () => {
   assert.match(registro, /id: 'custos'/);
@@ -187,6 +191,31 @@ test('produto conserva apenas a identificação fiscal e delega a tributação �
   assert.match(workspace, /Os demais tributos seguem o enquadramento da empresa/);
   assert.doesNotMatch(workspace, /<Field label="CFOP padrão">/);
   assert.doesNotMatch(workspace, /<Field label="CST ICMS">/);
+});
+
+test('insumo fiscal preserva uma identidade com composição, estoque e emissão', () => {
+  assert.match(workspace, /Habilitar como item fiscal/);
+  assert.match(workspace, /Dados do item para NF-e/);
+  assert.match(workspace, /O CFOP e a natureza serão escolhidos somente na emissão/);
+  assert.match(workspace, /disponivel_catalogo: base\.id \? base\.disponivel_catalogo : false/);
+  assert.match(workspace, /habilitado_fiscal: true/);
+  assert.match(tiposCustos, /produto_fiscal_id/);
+  assert.match(tiposCustos, /habilitado_fiscal/);
+  assert.match(migracaoInsumoFiscal, /add column if not exists habilitado_fiscal boolean not null default false/);
+  assert.match(migracaoInsumoFiscal, /new\.habilitado_fiscal is not true/);
+  assert.match(catalogoVendasServidor, /incluirItensFiscais = false/);
+  assert.match(catalogoVendasServidor, /habilitado_fiscal\.eq\.true/);
+  assert.match(catalogoVendas, /CFOP é definido pela operação escolhida na emissão/);
+});
+
+test('produtos e insumos escolhem o mesmo fornecedor da empresa', () => {
+  assert.match(workspace, /<Field label="Fornecedor"><select value=\{rascunho\.fornecedor_id\}/);
+  assert.match(workspace, /<Field label="Fornecedor"><select disabled=\{!podeEditar \|\| salvando\} value=\{form\.fornecedor_id/);
+  assert.match(tiposCustos, /fornecedor_id/);
+  assert.match(repositorio, /carregarFornecedoresCustos/);
+  assert.match(repositorio, /fornecedor_id: produto\.fornecedor_id \|\| null/);
+  assert.match(fornecedoresCustos, /from\('vendas_fornecedores'\)/);
+  assert.match(fornecedoresCustos, /modulo_id', 'custos'/);
 });
 
 test('Gestão mantém o Dashboard montado e recebe o retorno seguro do módulo embutido', () => {

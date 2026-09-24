@@ -16,6 +16,9 @@ export type ProdutoCustos = {
   codigo_barras: string;
   ativo: boolean;
   disponivel_catalogo: boolean;
+  /** Permite o uso na NF-e e no estoque sem forçar publicação comercial. */
+  habilitado_fiscal: boolean;
+  fornecedor_id: string;
   ncm: string;
   cest: string;
   origem_mercadoria: string;
@@ -43,6 +46,21 @@ export type RecursoCusto = {
   categoria: string;
   unidade: string;
   custo: number;
+  /** O mesmo item pode compor custos e também ser escolhido em operações fiscais. */
+  habilitado_fiscal?: boolean;
+  /** Cadastro mestre usado por estoque e emissão; nunca cria uma segunda identidade lógica. */
+  produto_fiscal_id?: string;
+  ncm?: string;
+  unidade_tributavel?: string;
+  codigo_barras?: string;
+  origem_mercadoria?: string;
+  fornecedor_id?: string;
+};
+
+export type FornecedorCustos = {
+  id: string;
+  nome: string;
+  codigo: string;
 };
 
 export type ItemComposicao = {
@@ -164,9 +182,19 @@ export const composicaoVazia = (): ComposicaoCusto => ({
 export function normalizarDocumento(valor: unknown): DocumentoCustos {
   if (!valor || typeof valor !== 'object') return documentoVazio();
   const dado = valor as Partial<DocumentoCustos>;
+  const recursos = Array.isArray(dado.recursos) ? dado.recursos.map((recurso) => ({
+    ...recurso,
+    habilitado_fiscal: recurso.habilitado_fiscal === true,
+    produto_fiscal_id: String(recurso.produto_fiscal_id || ''),
+    ncm: String(recurso.ncm || '').replace(/\D/g, '').slice(0, 8),
+    unidade_tributavel: String(recurso.unidade_tributavel || ''),
+    codigo_barras: String(recurso.codigo_barras || ''),
+    origem_mercadoria: String(recurso.origem_mercadoria || '0 - Nacional'),
+    fornecedor_id: String(recurso.fornecedor_id || ''),
+  })) : [];
   return {
     version: 1,
-    recursos: Array.isArray(dado.recursos) ? dado.recursos : [],
+    recursos,
     composicoes: dado.composicoes && typeof dado.composicoes === 'object' ? dado.composicoes : {},
     cenarios: Array.isArray(dado.cenarios) ? dado.cenarios : [],
     historico: Array.isArray(dado.historico) ? dado.historico : [],
@@ -177,7 +205,7 @@ export function novoProduto(tipo: TipoItem, catalogoId: string): ProdutoCustos {
   return {
     id: '', catalogo_id: catalogoId, sku: '', tipo_item: tipo, nome: '', marca: '', categoria: '', descricao: '',
     preco_custo: 0, preco_venda: 0, unidade: tipo === 'produto' ? 'un' : 'serviço', imagem_url: '', codigo_barras: '',
-    ativo: true, disponivel_catalogo: false, ncm: '', cest: '', origem_mercadoria: '0 - Nacional',
+    ativo: true, disponivel_catalogo: false, habilitado_fiscal: false, fornecedor_id: '', ncm: '', cest: '', origem_mercadoria: '0 - Nacional',
     unidade_tributavel: tipo === 'produto' ? 'un' : 'serviço', cfop_padrao: '', cst: '', csosn: '', cst_pis: '',
     cst_cofins: '', cst_ibs_cbs: '', classificacao_ibs_cbs: '', codigo_tributacao_nacional: '',
     codigo_tributacao_municipal: '', nbs: '', item_lc116: '', municipio_prestacao: '', aliquota_iss: 0,

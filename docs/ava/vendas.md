@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.41.0.16 -->
+<!-- ava-version: 1.42.0.01 -->
+
+> Revisão 1.42.0.01: Produtos e Insumos selecionam o mesmo fornecedor ativo da
+> empresa em Custos e Precificação; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.42.0: itens fiscais criados a partir de insumos preservam o mesmo
+> cadastro mestre. Na emissão, CFOP e natureza vêm da operação selecionada para
+> a nota, não do item; a interface de venda comum não passa a exibir insumos
+> fiscais privados.
 
 > Revisão 1.41.0.16: no AvantaVendas, buscas com limpeza própria exibem somente
 > o botão clicável da tela, sem duplicar o `×` nativo do navegador.

@@ -1,10 +1,10 @@
 import { supabase } from '@/app/lib/supabase';
 import {
-  documentoVazio, normalizarDocumento, type DocumentoCustos, type PrecoTabelaItem,
+  documentoVazio, normalizarDocumento, type DocumentoCustos, type FornecedorCustos, type PrecoTabelaItem,
   type ProdutoCustos, type ResumoImportacaoCadastro, type TabelaPreco,
 } from './types';
 
-const CAMPOS_PRODUTO = 'id,catalogo_id,sku,tipo_item,nome,marca,categoria,descricao,preco_custo,preco_venda,unidade,imagem_url,codigo_barras,ativo,disponivel_catalogo,ncm,cest,origem_mercadoria,unidade_tributavel,cfop_padrao,cst,csosn,cst_pis,cst_cofins,cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,nbs,item_lc116,municipio_prestacao,aliquota_iss,atualizado_em';
+const CAMPOS_PRODUTO = 'id,catalogo_id,sku,tipo_item,nome,marca,categoria,descricao,preco_custo,preco_venda,unidade,imagem_url,codigo_barras,ativo,disponivel_catalogo,habilitado_fiscal,fornecedor_id,ncm,cest,origem_mercadoria,unidade_tributavel,cfop_padrao,cst,csosn,cst_pis,cst_cofins,cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,nbs,item_lc116,municipio_prestacao,aliquota_iss,atualizado_em';
 
 const texto = (valor: unknown) => String(valor || '');
 const mapearProduto = (linha: Record<string, unknown>): ProdutoCustos => ({
@@ -12,7 +12,7 @@ const mapearProduto = (linha: Record<string, unknown>): ProdutoCustos => ({
   tipo_item: linha.tipo_item === 'servico' ? 'servico' : 'produto', nome: texto(linha.nome), marca: texto(linha.marca),
   categoria: texto(linha.categoria), descricao: texto(linha.descricao), preco_custo: Number(linha.preco_custo) || 0,
   preco_venda: Number(linha.preco_venda) || 0, unidade: texto(linha.unidade) || 'un', imagem_url: texto(linha.imagem_url),
-  codigo_barras: texto(linha.codigo_barras), ativo: linha.ativo !== false, disponivel_catalogo: linha.disponivel_catalogo !== false,
+  codigo_barras: texto(linha.codigo_barras), ativo: linha.ativo !== false, disponivel_catalogo: linha.disponivel_catalogo !== false, habilitado_fiscal: linha.habilitado_fiscal === true, fornecedor_id: texto(linha.fornecedor_id),
   ncm: texto(linha.ncm), cest: texto(linha.cest), origem_mercadoria: texto(linha.origem_mercadoria),
   unidade_tributavel: texto(linha.unidade_tributavel), cfop_padrao: texto(linha.cfop_padrao), cst: texto(linha.cst),
   csosn: texto(linha.csosn), cst_pis: texto(linha.cst_pis), cst_cofins: texto(linha.cst_cofins),
@@ -124,6 +124,16 @@ export async function salvarDocumentoCustos(empresaId: string, documento: Docume
   return Number(data.revisao);
 }
 
+export async function carregarFornecedoresCustos(empresaId: string): Promise<FornecedorCustos[]> {
+  const { data: sessao } = await supabase.auth.getSession();
+  const token = sessao.session?.access_token;
+  if (!token) throw new Error('Confirme novamente sua sessão para carregar os fornecedores.');
+  const resposta = await fetch(`/api/modulos/custos/fornecedores?empresaId=${encodeURIComponent(empresaId)}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+  const corpo = await resposta.json().catch(() => ({}));
+  if (!resposta.ok || corpo.ok !== true || !Array.isArray(corpo.fornecedores)) throw new Error(corpo.mensagem || 'Não foi possível carregar os fornecedores.');
+  return corpo.fornecedores.map((fornecedor: Record<string, unknown>) => ({ id: texto(fornecedor.id), nome: texto(fornecedor.nome), codigo: texto(fornecedor.codigo) }));
+}
+
 export async function salvarProdutoCustos(produto: ProdutoCustos) {
   const payload = {
     catalogo_id: produto.catalogo_id, sku: produto.sku.trim().toUpperCase(), tipo_item: produto.tipo_item,
@@ -131,7 +141,7 @@ export async function salvarProdutoCustos(produto: ProdutoCustos) {
     descricao: produto.descricao.trim() || null, preco_custo: produto.preco_custo, preco_venda: produto.preco_venda,
     unidade: produto.unidade.trim() || 'un', imagem_url: produto.imagem_url.trim() || null,
     codigo_barras: produto.codigo_barras.trim() || null, ativo: produto.ativo,
-    disponivel_catalogo: produto.disponivel_catalogo, ncm: produto.ncm.trim() || null, cest: produto.cest.trim() || null,
+    disponivel_catalogo: produto.disponivel_catalogo, habilitado_fiscal: produto.habilitado_fiscal, fornecedor_id: produto.fornecedor_id || null, ncm: produto.ncm.trim() || null, cest: produto.cest.trim() || null,
     origem_mercadoria: produto.origem_mercadoria.trim() || null, unidade_tributavel: produto.unidade_tributavel.trim() || null,
     cfop_padrao: produto.cfop_padrao.trim() || null, cst: produto.cst.trim() || null, csosn: produto.csosn.trim() || null,
     cst_pis: produto.cst_pis.trim() || null, cst_cofins: produto.cst_cofins.trim() || null,

@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.41.0.16 -->
+<!-- ava-version: 1.42.0.01 -->
+
+> Revisão 1.42.0.01: a seleção de fornecedor em Produtos e Insumos pertence a
+> Custos e Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.42.0: a habilitação de insumo como item fiscal pertence a Custos e
+> Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.41.0.16: as buscas da Gestão Mobile mostram somente o botão
 > clicável de limpar fornecido pela tela, sem o `×` duplicado do navegador.

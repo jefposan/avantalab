@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.42.0.01 - 2026-09-23
+- **Fornecedor no cadastro**: Produtos e Insumos agora selecionam o mesmo
+  fornecedor ativo da empresa. O vínculo acompanha o item mestre quando um
+  insumo é habilitado para estoque e emissão fiscal, incluindo produtos prontos
+  que não usam composição de custos.
+
+## 1.42.0 - 2026-09-23
+- **Insumo também fiscal**: em **Custos e Precificação > Insumos e recursos**,
+  **Habilitar como item fiscal** mantém o mesmo código e custo na composição,
+  cria ou atualiza o cadastro mestre de estoque/emissão e solicita apenas NCM,
+  unidade tributável, origem e código de barras opcional. O item não é publicado
+  automaticamente para venda. CFOP e natureza continuam definidos para a nota
+  inteira no momento da emissão.
+
 ## 1.41.0.16 - 2026-09-23
 - **Limpeza única nas buscas**: a auditoria dos campos de pesquisa remove o
   botão `×` nativo do navegador quando a tela já fornece o controle clicável

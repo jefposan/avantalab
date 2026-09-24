@@ -10,11 +10,11 @@ import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero, normaliz
 import { supabase } from '@/app/lib/supabase';
 import type { CustosAccess } from './CustosClient';
 import TabelasPrecosView from './TabelasPrecosView';
-import { carregarCustos, enviarImagemProduto, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos } from './repository';
+import { carregarCustos, carregarFornecedoresCustos, enviarImagemProduto, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos } from './repository';
 import {
   calcularComposicao, composicaoVazia, documentoVazio, novoProduto, precoEfetivoTabela, proximoCodigo, sugerirCodigosEmpresa,
   type CampoCenario, type CenarioPreco, type ComposicaoCusto, type DocumentoCustos,
-  type ItemComposicao, type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
+  type FornecedorCustos, type ItemComposicao, type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
 } from './types';
 import styles from './custos.module.css';
 
@@ -38,6 +38,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
   const [produtos, setProdutos] = useState<ProdutoCustos[]>([]);
   const [tabelasPreco, setTabelasPreco] = useState<TabelaPreco[]>([]);
   const [precosTabela, setPrecosTabela] = useState<PrecoTabelaItem[]>([]);
+  const [fornecedores, setFornecedores] = useState<FornecedorCustos[]>([]);
   const [documento, setDocumento] = useState<DocumentoCustos>(documentoVazio);
   const [produtoAtivoId, setProdutoAtivoId] = useState('');
   const [carregando, setCarregando] = useState(true);
@@ -68,6 +69,11 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
   }, [access.podeEditar, companyId]);
 
   useEffect(() => { const timer = window.setTimeout(() => void recarregar(), 0); return () => window.clearTimeout(timer); }, [recarregar]);
+  useEffect(() => {
+    let ativo = true;
+    void carregarFornecedoresCustos(companyId).then((lista) => { if (ativo) setFornecedores(lista); }).catch(() => { if (ativo) setFornecedores([]); });
+    return () => { ativo = false; };
+  }, [companyId]);
   useEffect(() => {
     if (!catalogoId) return;
     const canal = supabase.channel(`custos-produtos-${catalogoId}`)
@@ -123,9 +129,9 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
         {mensagem && <div className={styles.success}>{mensagem}</div>}
       </div>
       {aba === 'visao' && <VisaoGeral produtos={produtos} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => abrirAba('produtos')} onAtualizar={() => void recarregar()} />}
-      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onMensagem={setMensagem} onErro={setErro} />}
+      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} fornecedores={fornecedores} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
-      {aba === 'recursos' && <RecursosView documento={documento} produtos={produtos} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
+      {aba === 'recursos' && <RecursosView catalogoId={catalogoId} documento={documento} produtos={produtos} fornecedores={fornecedores} setProdutos={setProdutos} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} podeEditar={access.podeEditar} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onMensagem={setMensagem} />}
       {aba === 'historico' && <HistoricoView produtos={produtos} documento={documento} produtoAtivoId={produtoAtivoId} onSelecionar={selecionarProduto} />}
     </section>
@@ -192,8 +198,8 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
   </>;
 }
 
-function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, solicitacaoInicio, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onEdicaoPendente, onMensagem, onErro }: {
-  companyId: string; catalogoId: string; produtos: ProdutoCustos[]; tabelas: TabelaPreco[]; precos: PrecoTabelaItem[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
+function ProdutosView({ companyId, catalogoId, produtos, fornecedores, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, solicitacaoInicio, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onEdicaoPendente, onMensagem, onErro }: {
+  companyId: string; catalogoId: string; produtos: ProdutoCustos[]; fornecedores: FornecedorCustos[]; tabelas: TabelaPreco[]; precos: PrecoTabelaItem[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
   documento: DocumentoCustos; produtoAtivoId: string; initialNewType?: 'produto'; solicitacaoInicio: number; onSelecionar: (id: string) => void;
   onDocumento: (proximo: DocumentoCustos, retorno: string) => Promise<void>; podeEditar: boolean;
   onSalvarProduto: (produto: ProdutoCustos) => Promise<ProdutoCustos>; onEnviarImagem: (arquivo: File) => Promise<string>;
@@ -434,6 +440,7 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
             <Field label="Nome *" wide><input value={rascunho.nome} onChange={(e) => alterar('nome', e.target.value)} /></Field>
             <Field label="Categoria"><input value={rascunho.categoria} onChange={(e) => alterar('categoria', e.target.value)} /></Field>
             <Field label="Marca"><input value={rascunho.marca} onChange={(e) => alterar('marca', e.target.value)} /></Field>
+            <Field label="Fornecedor"><select value={rascunho.fornecedor_id} onChange={(e) => alterar('fornecedor_id', e.target.value)}><option value="">Não informado</option>{fornecedores.map((fornecedor) => <option key={fornecedor.id} value={fornecedor.id}>{fornecedor.codigo ? `${fornecedor.codigo} · ` : ''}{fornecedor.nome}</option>)}</select></Field>
             <Field label="Unidade"><input value={rascunho.unidade} onChange={(e) => alterar('unidade', e.target.value)} /></Field>
             <Field label="Preço de venda da empresa"><MoneyInput value={rascunho.preco_venda} onChange={(valor) => alterar('preco_venda', valor)} label="Preço de venda da empresa" mostrarAjustes={false} /></Field>
             <Field label="Descrição" wide><textarea rows={2} value={rascunho.descricao} onChange={(e) => alterar('descricao', e.target.value)} /></Field>
@@ -467,10 +474,15 @@ function ProdutosView({ companyId, catalogoId, produtos, tabelas, precos, setPro
   </>;
 }
 
-function RecursosView({ documento, produtos, onDocumento, podeEditar, onMensagem }: { documento: DocumentoCustos; produtos: ProdutoCustos[]; onDocumento: (proximo: DocumentoCustos, retorno: string) => Promise<void>; podeEditar: boolean; onMensagem: (texto: string) => void }) {
-  const vazio = (): RecursoCusto => ({ id: crypto.randomUUID(), codigo: '', nome: '', categoria: 'Matéria-prima', unidade: 'un', custo: 0 });
+function RecursosView({ catalogoId, documento, produtos, fornecedores, setProdutos, onDocumento, onSalvarProduto, podeEditar, onMensagem, onErro }: {
+  catalogoId: string; documento: DocumentoCustos; produtos: ProdutoCustos[]; fornecedores: FornecedorCustos[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
+  onDocumento: (proximo: DocumentoCustos, retorno: string) => Promise<void>; onSalvarProduto: (produto: ProdutoCustos) => Promise<ProdutoCustos>;
+  podeEditar: boolean; onMensagem: (texto: string) => void; onErro: (texto: string) => void;
+}) {
+  const vazio = (): RecursoCusto => ({ id: crypto.randomUUID(), codigo: '', nome: '', categoria: 'Matéria-prima', unidade: 'un', custo: 0, habilitado_fiscal: false, produto_fiscal_id: '', ncm: '', unidade_tributavel: 'UN', codigo_barras: '', origem_mercadoria: '0 - Nacional', fornecedor_id: '' });
   const [form, setForm] = useState<RecursoCusto>(vazio);
   const [editando, setEditando] = useState(false);
+  const [salvando, setSalvando] = useState(false);
   const [busca, setBusca] = useState('');
   const [menu, setMenu] = useState('');
   const [excluir, setExcluir] = useState<RecursoCusto | null>(null);
@@ -478,24 +490,86 @@ function RecursosView({ documento, produtos, onDocumento, podeEditar, onMensagem
   const prefixo = form.codigo.match(/^[A-Za-z_-]+/)?.[0] || (form.categoria === 'Embalagem' ? 'EMB' : 'MP');
   const proximo = proximoCodigo(prefixo, [...usados, ...produtos.map((produto) => produto.sku)]);
   const filtrados = documento.recursos.filter((recurso) => normalizarTexto(`${recurso.codigo} ${recurso.nome} ${recurso.categoria}`).includes(normalizarTexto(busca)));
-  const salvar = async (e: React.FormEvent) => { e.preventDefault(); if (!form.codigo.trim() || !form.nome.trim()) { onMensagem('Informe código e nome do recurso.'); return; } if (usados.some((codigo) => codigo.toUpperCase() === form.codigo.toUpperCase())) { onMensagem('Este código já está em uso.'); return; } const pronto = { ...form, codigo: form.codigo.trim().toUpperCase(), nome: form.nome.trim() }; const recursos = editando ? documento.recursos.map((recurso) => recurso.id === pronto.id ? pronto : recurso) : [pronto, ...documento.recursos]; await onDocumento({ ...documento, recursos }, editando ? 'Recurso atualizado.' : 'Recurso cadastrado.'); setForm(vazio()); setEditando(false); };
+  const salvar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.codigo.trim() || !form.nome.trim()) { onMensagem('Informe código e nome do recurso.'); return; }
+    if (usados.some((codigo) => codigo.toUpperCase() === form.codigo.toUpperCase())) { onMensagem('Este código já está em uso.'); return; }
+    if (form.habilitado_fiscal && form.ncm?.length !== 8) { onErro('Informe o NCM com 8 dígitos para habilitar este item na emissão fiscal.'); return; }
+    if (form.habilitado_fiscal && !form.unidade_tributavel?.trim()) { onErro('Informe a unidade tributável para habilitar este item na emissão fiscal.'); return; }
+
+    setSalvando(true);
+    try {
+      let pronto: RecursoCusto = { ...form, codigo: form.codigo.trim().toUpperCase(), nome: form.nome.trim(), ncm: form.ncm?.trim() || '', unidade_tributavel: form.unidade_tributavel?.trim().toUpperCase() || '', codigo_barras: form.codigo_barras?.trim() || '', origem_mercadoria: form.origem_mercadoria?.trim() || '0 - Nacional' };
+      if (pronto.habilitado_fiscal) {
+        const vinculado = produtos.find((produto) => produto.id === pronto.produto_fiscal_id)
+          || produtos.find((produto) => produto.sku.toUpperCase() === pronto.codigo.toUpperCase());
+        const jaVinculado = documento.recursos.find((recurso) => recurso.id !== pronto.id && recurso.habilitado_fiscal && recurso.produto_fiscal_id && recurso.produto_fiscal_id === vinculado?.id);
+        if (jaVinculado) { onErro(`O item fiscal ${pronto.codigo} já está vinculado ao recurso ${jaVinculado.nome}.`); return; }
+        const base = vinculado || novoProduto('produto', catalogoId);
+        const produtoFiscal = await onSalvarProduto({
+          ...base,
+          id: base.id,
+          catalogo_id: catalogoId,
+          sku: pronto.codigo,
+          tipo_item: 'produto',
+          nome: pronto.nome,
+          categoria: pronto.categoria,
+          preco_custo: pronto.custo,
+          preco_venda: base.preco_venda || 0,
+          unidade: pronto.unidade || 'un',
+          fornecedor_id: pronto.fornecedor_id || '',
+          codigo_barras: pronto.codigo_barras || '',
+          ncm: pronto.ncm || '',
+          origem_mercadoria: pronto.origem_mercadoria || '0 - Nacional',
+          unidade_tributavel: pronto.unidade_tributavel || '',
+          cfop_padrao: '',
+          ativo: true,
+          // Um insumo fiscal não vira produto divulgado automaticamente.
+          disponivel_catalogo: base.id ? base.disponivel_catalogo : false,
+          habilitado_fiscal: true,
+        });
+        pronto = { ...pronto, produto_fiscal_id: produtoFiscal.id };
+        setProdutos((atuais) => atuais.some((produto) => produto.id === produtoFiscal.id) ? atuais.map((produto) => produto.id === produtoFiscal.id ? produtoFiscal : produto) : [produtoFiscal, ...atuais]);
+      }
+      const recursos = editando ? documento.recursos.map((recurso) => recurso.id === pronto.id ? pronto : recurso) : [pronto, ...documento.recursos];
+      await onDocumento({ ...documento, recursos }, pronto.habilitado_fiscal ? 'Recurso e item fiscal salvos. O CFOP e a natureza serão escolhidos somente na emissão.' : editando ? 'Recurso atualizado.' : 'Recurso cadastrado.');
+      setForm(vazio());
+      setEditando(false);
+    } catch (falha) { onErro(erroTexto(falha)); }
+    finally { setSalvando(false); }
+  };
   const confirmarExclusao = async () => { if (!excluir) return; if (Object.values(documento.composicoes).some((composicao) => composicao.itens.some((item) => item.recursoId === excluir.id))) { setExcluir(null); onMensagem('Este recurso está em uso e não pode ser excluído.'); return; } await onDocumento({ ...documento, recursos: documento.recursos.filter((recurso) => recurso.id !== excluir.id) }, 'Recurso excluído.'); setExcluir(null); };
   return <>
-    <PageHeader title="Insumos e recursos" description="Base compartilhada das composições de todos os produtos e serviços." />
+    <PageHeader title="Insumos e recursos" description="Base compartilhada das composições; um insumo pode também ser habilitado para estoque e emissão fiscal." />
     <div className={styles.resourcesLayout}>
       <form className={styles.panel} onSubmit={(e) => void salvar(e)}>
         <div className={styles.panelTitle}><div><h2>{editando ? 'Editar recurso' : 'Novo recurso'}</h2><p>Matéria-prima, embalagem, mão de obra ou operação.</p></div></div>
         <div className={styles.formGrid}>
-          <Field label="Código *"><input disabled={!podeEditar} value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase() })} placeholder={proximo} /></Field>
-          <Field label="Nome *"><input disabled={!podeEditar} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
-          <Field label="Categoria"><select disabled={!podeEditar} value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}><option>Matéria-prima</option><option>Embalagem</option><option>Mão de obra</option><option>Operação</option><option>Terceirização</option><option>Outro</option></select></Field>
-          <Field label="Unidade"><input disabled={!podeEditar} value={form.unidade} onChange={(e) => setForm({ ...form, unidade: e.target.value })} /></Field>
-          <Field label="Custo unitário" wide><MoneyInput disabled={!podeEditar} value={form.custo} onChange={(custo) => setForm({ ...form, custo })} label="Custo unitário" zeroComoPlaceholder /></Field>
+          <Field label="Código *"><input disabled={!podeEditar || salvando} value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase() })} placeholder={proximo} /></Field>
+          <Field label="Nome *"><input disabled={!podeEditar || salvando} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
+          <Field label="Categoria"><select disabled={!podeEditar || salvando} value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}><option>Matéria-prima</option><option>Embalagem</option><option>Mão de obra</option><option>Operação</option><option>Terceirização</option><option>Outro</option></select></Field>
+          <Field label="Fornecedor"><select disabled={!podeEditar || salvando} value={form.fornecedor_id || ''} onChange={(e) => setForm({ ...form, fornecedor_id: e.target.value })}><option value="">Não informado</option>{fornecedores.map((fornecedor) => <option key={fornecedor.id} value={fornecedor.id}>{fornecedor.codigo ? `${fornecedor.codigo} · ` : ''}{fornecedor.nome}</option>)}</select></Field>
+          <Field label="Unidade"><input disabled={!podeEditar || salvando} value={form.unidade} onChange={(e) => setForm({ ...form, unidade: e.target.value })} /></Field>
+          <Field label="Custo unitário" wide><MoneyInput disabled={!podeEditar || salvando} value={form.custo} onChange={(custo) => setForm({ ...form, custo })} label="Custo unitário" zeroComoPlaceholder /></Field>
         </div>
+        <div className={styles.fiscalResourceToggle}>
+          <label><input type="checkbox" disabled={!podeEditar || salvando || Boolean(form.produto_fiscal_id)} checked={form.habilitado_fiscal === true} onChange={(e) => setForm((atual) => ({ ...atual, habilitado_fiscal: e.target.checked, unidade_tributavel: atual.unidade_tributavel || atual.unidade.toUpperCase() || 'UN' }))} /> Habilitar como item fiscal</label>
+          <p>{form.produto_fiscal_id ? 'O vínculo fiscal já existe para preservar estoque e histórico. Para retirar o item de uso, inative o cadastro mestre.' : 'O insumo continua na composição. Ao habilitar, ele usa o mesmo código no estoque e pode entrar em NF-e; CFOP e natureza pertencem à emissão.'}</p>
+        </div>
+        {form.habilitado_fiscal && <div className={styles.fiscalResourceFields}>
+          <strong>Dados do item para NF-e</strong>
+          <p>Preencha somente a identificação própria da mercadoria. A tributação da empresa e a operação serão aplicadas na emissão.</p>
+          <div className={styles.formGrid}>
+            <Field label="NCM *"><input disabled={!podeEditar || salvando} value={form.ncm || ''} onChange={(e) => setForm({ ...form, ncm: e.target.value.replace(/\D/g, '').slice(0, 8) })} inputMode="numeric" placeholder="00000000" maxLength={8} /></Field>
+            <Field label="Unidade tributável *"><input disabled={!podeEditar || salvando} value={form.unidade_tributavel || ''} onChange={(e) => setForm({ ...form, unidade_tributavel: e.target.value.toUpperCase() })} placeholder="UN" maxLength={20} /></Field>
+            <Field label="Código de barras"><input disabled={!podeEditar || salvando} value={form.codigo_barras || ''} onChange={(e) => setForm({ ...form, codigo_barras: e.target.value.replace(/\s/g, '') })} inputMode="numeric" /></Field>
+            <Field label="Origem da mercadoria"><select disabled={!podeEditar || salvando} value={form.origem_mercadoria || '0 - Nacional'} onChange={(e) => setForm({ ...form, origem_mercadoria: e.target.value })}><option>0 - Nacional</option><option>1 - Estrangeira - importação direta</option><option>2 - Estrangeira - adquirida no mercado interno</option></select></Field>
+          </div>
+        </div>}
         <div className={styles.codeAssistant}><span>Próximo código <b>{proximo}</b></span><button type="button" className={styles.linkButton} disabled={!podeEditar} onClick={() => setForm({ ...form, codigo: proximo })}>Usar código</button></div>
-        <div className={styles.formActions}>{editando && <button type="button" className={styles.secondaryButton} onClick={() => { setForm(vazio()); setEditando(false); }}>Cancelar</button>}<button type="submit" className={styles.primaryButton} disabled={!podeEditar}>{editando ? 'Salvar alterações' : 'Cadastrar recurso'}</button></div>
+        <div className={styles.formActions}>{editando && <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => { setForm(vazio()); setEditando(false); }}>Cancelar</button>}<button type="submit" className={styles.primaryButton} disabled={!podeEditar || salvando}>{salvando ? 'Salvando…' : editando ? 'Salvar alterações' : 'Cadastrar recurso'}</button></div>
       </form>
-      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Recursos cadastrados</h2><p>{documento.recursos.length} disponíveis nas composições.</p></div><label className={styles.search}><span>Procurar</span><CampoBusca value={busca} onChange={setBusca} placeholder="Código, recurso ou categoria" /></label></div><div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>Recurso</th><th>Categoria</th><th>Unidade</th><th className={styles.numeric}>Custo</th><th /></tr></thead><tbody>{filtrados.map((recurso) => <tr key={recurso.id}><td><b>{recurso.codigo}</b></td><td>{recurso.nome}</td><td>{recurso.categoria}</td><td>{recurso.unidade}</td><td className={styles.numeric}><b>{formatarMoeda(recurso.custo)}</b></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar} aria-label={`Opções de ${recurso.nome}`} onClick={() => setMenu(menu === recurso.id ? '' : recurso.id)}>•••</button>{menu === recurso.id && <div className={styles.contextMenu}><button type="button" onClick={() => { setForm({ ...recurso }); setEditando(true); setMenu(''); }}>Editar</button><button type="button" className={styles.dangerLink} onClick={() => { setExcluir(recurso); setMenu(''); }}>Excluir</button></div>}</td></tr>)}</tbody></table></div></section></div>
+      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Recursos cadastrados</h2><p>{documento.recursos.length} disponíveis nas composições.</p></div><label className={styles.search}><span>Procurar</span><CampoBusca value={busca} onChange={setBusca} placeholder="Código, recurso ou categoria" /></label></div><div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>Recurso</th><th>Categoria</th><th>Unidade</th><th>Uso fiscal</th><th className={styles.numeric}>Custo</th><th /></tr></thead><tbody>{filtrados.map((recurso) => <tr key={recurso.id}><td><b>{recurso.codigo}</b></td><td>{recurso.nome}</td><td>{recurso.categoria}</td><td>{recurso.unidade}</td><td>{recurso.habilitado_fiscal ? <span className={styles.fiscalBadge}>Item fiscal</span> : <span className={styles.muted}>Somente custo</span>}</td><td className={styles.numeric}><b>{formatarMoeda(recurso.custo)}</b></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar || salvando} aria-label={`Opções de ${recurso.nome}`} onClick={() => setMenu(menu === recurso.id ? '' : recurso.id)}>•••</button>{menu === recurso.id && <div className={styles.contextMenu}><button type="button" onClick={() => { setForm({ ...vazio(), ...recurso }); setEditando(true); setMenu(''); }}>Editar</button><button type="button" className={styles.dangerLink} onClick={() => { setExcluir(recurso); setMenu(''); }}>Excluir</button></div>}</td></tr>)}</tbody></table></div></section></div>
     <ModalConfirmacao aberto={Boolean(excluir)} titulo={`Excluir ${excluir?.nome || 'recurso'}?`} mensagem="A exclusão só será permitida se o recurso não estiver em nenhuma composição." textoConfirmar="Excluir" corPrimaria="var(--custos-brand)" aoCancelar={() => setExcluir(null)} aoConfirmar={() => void confirmarExclusao()} />
   </>;
 }

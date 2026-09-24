@@ -3,7 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { montarCatalogoVendasDTO } from '../catalog';
 
-const CAMPOS_ITEM = 'id,sku,tipo_item,nome,categoria,descricao,preco_venda,unidade,imagem_url,codigo_barras,ncm,cest,origem_mercadoria,unidade_tributavel,cfop_padrao,cst,csosn,cst_pis,cst_cofins,cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,nbs,item_lc116,municipio_prestacao,aliquota_iss,atualizado_em';
+const CAMPOS_ITEM = 'id,sku,tipo_item,nome,categoria,descricao,preco_venda,unidade,imagem_url,codigo_barras,ncm,cest,origem_mercadoria,unidade_tributavel,cfop_padrao,cst,csosn,cst_pis,cst_cofins,cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,nbs,item_lc116,municipio_prestacao,aliquota_iss,habilitado_fiscal,atualizado_em';
 
 export class ErroCatalogoVendas extends Error {
   constructor(message: string, readonly status: number) {
@@ -15,10 +15,13 @@ export async function carregarCatalogoCustosParaVendas({
   db,
   empresaId,
   tabelaPrecoId,
+  incluirItensFiscais = false,
 }: {
   db: SupabaseClient;
   empresaId: string;
   tabelaPrecoId?: string;
+  /** A emissão pode enxergar insumos fiscais sem expô-los à venda comum. */
+  incluirItensFiscais?: boolean;
 }) {
   const [{ data: custos }, { data: catalogo, error: erroCatalogo }, { data: tabelas, error: erroTabelas }] = await Promise.all([
     db.from('empresa_modulos').select('ativo,expira_em').eq('empresa_id', empresaId).eq('modulo_id', 'custos').maybeSingle(),
@@ -41,13 +44,16 @@ export async function carregarCatalogoCustosParaVendas({
     || tabelasAtivas.find((item) => item.padrao)
     || tabelasAtivas[0]
     || null;
-  const { data: produtos, error: erroProdutos } = await db
+  let consultaProdutos = db
     .from('vendas_mobile_catalogo_produtos')
     .select(CAMPOS_ITEM)
     .eq('catalogo_id', catalogo.id)
     .eq('ativo', true)
-    .eq('disponivel_catalogo', true)
     .order('nome');
+  consultaProdutos = incluirItensFiscais
+    ? consultaProdutos.or('disponivel_catalogo.eq.true,habilitado_fiscal.eq.true')
+    : consultaProdutos.eq('disponivel_catalogo', true);
+  const { data: produtos, error: erroProdutos } = await consultaProdutos;
   if (erroProdutos) throw new ErroCatalogoVendas('Não foi possível carregar os produtos e serviços publicados.', 500);
 
   const { data: localEstoque, error: erroLocalEstoque } = await db

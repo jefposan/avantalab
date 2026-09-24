@@ -1,6 +1,18 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.41.0.16 -->
+<!-- ava-version: 1.42.0.01 -->
+
+> Revisão 1.42.0.01: selecione o **Fornecedor** no cadastro de um produto ou
+> insumo. A mesma lista de fornecedores ativos da empresa é usada nos dois
+> locais; por isso, produtos prontos também podem ter fornecedor mesmo sem uma
+> composição de custos.
+
+> Revisão 1.42.0: em **Custos e Precificação > Insumos e recursos**, marque
+> **Habilitar como item fiscal** para usar um frasco, tampa, rótulo ou outro
+> insumo também no estoque e em NF-e, sem criar outro código nem publicá-lo no
+> catálogo comercial. Preencha NCM e unidade tributável; origem e código de
+> barras são complementares. CFOP e natureza da operação são escolhidos uma vez
+> na emissão e se aplicam à nota, não ao cadastro do item.
 
 > Revisão 1.41.0.16: em cada busca com texto, há apenas um `×`: o botão
 > clicável de limpar da própria tela. O controle nativo duplicado do navegador

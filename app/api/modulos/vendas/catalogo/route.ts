@@ -14,6 +14,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const empresaId = String(url.searchParams.get('empresaId') || '').trim();
   const tabelaPrecoId = String(url.searchParams.get('tabelaPrecoId') || '').trim();
+  const modoFiscal = url.searchParams.get('modo') === 'fiscal';
   if (!empresaId) return NextResponse.json({ erro: true, mensagem: 'Selecione um perfil empresarial.' }, { status: 400 });
   const acesso = await autenticarPerfilCobranca(request, empresaId);
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ erro: true, mensagem: 'Instale o módulo Vendas e Serviços neste perfil empresarial.' }, { status: 403 });
   }
   try {
-    const catalogo = await carregarCatalogoCustosParaVendas({ db: acesso.db, empresaId, tabelaPrecoId });
+    const catalogo = await carregarCatalogoCustosParaVendas({ db: acesso.db, empresaId, tabelaPrecoId, incluirItensFiscais: modoFiscal });
     return NextResponse.json({ ok: true, catalogo }, { headers: { 'Cache-Control': 'no-store, private' } });
   } catch (error) {
     if (error instanceof ErroCatalogoVendas) {
