@@ -1,5 +1,19 @@
 export type TipoItem = 'produto' | 'servico';
 
+export type OrigemCatalogoEmpresa = 'externa' | 'custos_local' | 'manual';
+
+/** Catálogo empresarial: a fonte indica de onde vieram os itens, sem duplicá-los. */
+export type CatalogoEmpresa = {
+  id: string;
+  empresa_id: string;
+  nome: string;
+  codigo: string;
+  origem: OrigemCatalogoEmpresa;
+  ativo: boolean;
+  padrao: boolean;
+  atualizado_em: string;
+};
+
 export type ProdutoCustos = {
   id: string;
   catalogo_id: string;

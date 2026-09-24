@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.43.0.05 - 2026-09-24
+- **Editor ampliado no catálogo**: durante a edição de um produto em Conteúdo
+  AvantaVendas, os controles gerais ficam recolhidos e o formulário usa toda a
+  altura útil do modal. Em telas médias, a lista fica temporariamente fora da
+  cena para o editor permanecer inteiro, sem rolagem nessa área.
+
+## 1.43.0.04 - 2026-09-24
+- **Editor contido no catálogo**: ao editar um produto em Conteúdo
+  AvantaVendas, formulário e lista passam a dividir a altura interna do modal.
+  Apenas cada área rola quando necessário; a página não se desloca nem ganha
+  barra de rolagem externa.
+
+## 1.43.0.03 - 2026-09-24
+- **ZIP por catálogo**: quando houver mais de um catálogo ativo, **Gerar ZIP**
+  pede a escolha da fonte antes de criar o pacote. A exportação não troca o
+  catálogo atual do Vendas e o arquivo identifica o catálogo de origem.
+
+## 1.43.0.02 - 2026-09-24
+- **Barra compacta do catálogo**: em Conteúdo AvantaVendas > Produtos, os
+  indicadores, exportação e ações de catálogo agora ocupam uma grade curta e
+  previsível. **Novo catálogo** e **Novo produto** usam a mesma altura,
+  tipografia e largura, sem crescimento visual indevido.
+
+## 1.43.0.01 - 2026-09-24
+- **Catálogos no Conteúdo AvantaVendas**: a aba **Produtos** agora traz
+  **Novo catálogo** e **Gerenciar catálogos**. A gestão editorial pode criar,
+  renomear, ativar, desativar e tornar atual cada catálogo diretamente de onde
+  os produtos e o pacote ZIP são administrados. A lista e a exportação seguem
+  sempre o catálogo atual; fontes externa e de Custos seguem independentes.
+
+## 1.43.0 - 2026-09-24
+- **Gestão de catálogos empresariais**: em **Custos e Precificação >
+  Catálogos**, a empresa pode criar catálogos independentes, editar seus dados,
+  ativar ou desativar cada um e definir qual catálogo ativo é o atual no
+  Vendas. A fonte externa e o catálogo local de Custos continuam separados;
+  desativar não apaga produtos, imagens, preços ou histórico.
+
+## 1.42.0.04 - 2026-09-24
+- **Catálogos separados e publicação em lote**: o catálogo de origem externa
+  permanece independente do catálogo local de Custos e Precificação. A lista
+  local permite selecionar um, alguns ou todos os itens filtrados e aplicar
+  **Adicionar ao catálogo**, retirar, ativar ou inativar sem alterar preço,
+  imagem, estoque, fornecedor ou demais campos do cadastro.
+
 ## 1.42.0.03 - 2026-09-24
 - **Salvar previsão no mobile**: ao editar uma despesa prevista, o card só
   fecha após receber o registro atualizado do banco. Uma leitura anterior em

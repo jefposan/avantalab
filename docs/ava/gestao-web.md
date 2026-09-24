@@ -1,6 +1,45 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.42.0.03 -->
+<!-- ava-version: 1.43.0.05 -->
+
+> Revisão 1.43.0.05: ao abrir **Editar produto** em **Conteúdo AvantaVendas
+> > Produtos**, o formulário passa a usar toda a altura útil do modal. Os
+> controles gerais ficam recolhidos e, em telas médias, a lista sai
+> temporariamente de cena para não criar rolagem no editor. **Salvar produto**
+> ou **Cancelar** devolve a lista completa.
+
+> Revisão 1.43.0.04: ao editar um produto em **Conteúdo AvantaVendas >
+> Produtos**, o editor cabe na altura do modal. Se necessário, somente o
+> formulário e a lista rolam internamente; a página não é deslocada.
+
+> Revisão 1.43.0.03: em **Conteúdo AvantaVendas > Produtos**, **Gerar ZIP**
+> pede a escolha do catálogo quando houver mais de um ativo. A exportação não
+> troca o catálogo atual entregue ao Vendas; o pacote identifica a sua origem.
+
+> Revisão 1.43.0.02: a barra de ações de **Conteúdo AvantaVendas > Produtos**
+> foi compactada e padronizada. Não há mudança no fluxo de criar, gerir ou
+> publicar catálogos.
+
+> Revisão 1.43.0.01: em **Conteúdo AvantaVendas > Produtos**, use **Novo
+> catálogo** para criar um catálogo próprio ou **Gerenciar catálogos** para
+> renomear, ativar, desativar e escolher o catálogo atual do Vendas. A lista
+> de produtos e o pacote ZIP passam a mostrar esse catálogo atual. A mesma
+> gestão permanece acessível em **Custos e Precificação > Catálogos**; fonte
+> externa e catálogo de Custos continuam independentes e nada é apagado.
+
+> Revisão 1.43.0: em **Custos e Precificação > Catálogos**, crie catálogos
+> independentes, edite seu nome e, quando for próprio, o código interno. Use
+> **Tornar atual** para definir o catálogo usado no Vendas. Qualquer catálogo
+> pode ser ativado ou desativado; ao desativar o atual, outro ativo assume.
+> Nenhum item, preço, imagem ou histórico é apagado. O catálogo vindo de
+> Custos e a fonte externa continuam identificados e separados.
+
+> Revisão 1.42.0.04: em **Custos e Precificação > Produtos e serviços**, a
+> lista pertence ao catálogo local da empresa, separado de eventuais catálogos
+> recebidos de fonte externa. Marque um ou mais itens — ou use o controle no
+> topo da primeira coluna para selecionar os resultados filtrados — e escolha
+> **Adicionar ao catálogo**, retirar, ativar ou inativar. As ações em lote não
+> mudam imagem, preço, estoque, fornecedor, composição ou dados fiscais.
 
 > Revisão 1.42.0.03: correção exclusiva do salvamento de despesa prevista na
 > Gestão Mobile, sem alteração operacional na Gestão Web.

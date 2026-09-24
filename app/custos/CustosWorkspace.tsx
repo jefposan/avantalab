@@ -10,18 +10,19 @@ import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero, normaliz
 import { supabase } from '@/app/lib/supabase';
 import type { CustosAccess } from './CustosClient';
 import TabelasPrecosView from './TabelasPrecosView';
-import { carregarCustos, carregarFornecedoresCustos, enviarImagemProduto, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos } from './repository';
+import { alterarStatusCatalogoEmpresa, aplicarAcaoLoteCatalogo, carregarCustos, carregarFornecedoresCustos, definirCatalogoAtual, enviarImagemProduto, salvarCatalogoEmpresa, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos, type AcaoLoteCatalogo } from './repository';
 import {
   calcularComposicao, composicaoVazia, documentoVazio, novoProduto, precoEfetivoTabela, proximoCodigo, sugerirCodigosEmpresa,
   type CampoCenario, type CenarioPreco, type ComposicaoCusto, type DocumentoCustos,
-  type FornecedorCustos, type ItemComposicao, type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
+  type CatalogoEmpresa, type FornecedorCustos, type ItemComposicao, type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
 } from './types';
 import styles from './custos.module.css';
 
-type Aba = 'visao' | 'produtos' | 'precos' | 'recursos' | 'simulacoes' | 'historico';
+type Aba = 'visao' | 'catalogos' | 'produtos' | 'precos' | 'recursos' | 'simulacoes' | 'historico';
 
 const navegacao: Array<{ id: Aba; rotulo: string; icone: string }> = [
   { id: 'visao', rotulo: 'Visão geral', icone: '▦' },
+  { id: 'catalogos', rotulo: 'Catálogos', icone: '▤' },
   { id: 'produtos', rotulo: 'Produtos e serviços', icone: '≡' },
   { id: 'precos', rotulo: 'Tabelas de preços', icone: 'R$' },
   { id: 'recursos', rotulo: 'Insumos e recursos', icone: '◇' },
@@ -31,10 +32,17 @@ const navegacao: Array<{ id: Aba; rotulo: string; icone: string }> = [
 
 const erroTexto = (erro: unknown) => erro instanceof Error ? erro.message : 'Não foi possível concluir a operação.';
 const divisoresPraticos = Array.from({ length: 48 }, (_, indice) => indice + 1);
+const acoesLoteCatalogo: Array<{ valor: AcaoLoteCatalogo; rotulo: string; confirmacao?: string }> = [
+  { valor: 'publicar_catalogo', rotulo: 'Adicionar ao catálogo local' },
+  { valor: 'retirar_catalogo', rotulo: 'Retirar do catálogo local', confirmacao: 'Os itens deixarão de aparecer no catálogo local, mas seus preços, imagens, estoque e cadastro serão preservados.' },
+  { valor: 'ativar', rotulo: 'Ativar cadastros' },
+  { valor: 'inativar', rotulo: 'Inativar cadastros', confirmacao: 'Os cadastros selecionados ficarão indisponíveis no Catálogo e em Custos. Preços, imagens, estoque, composições e histórico serão preservados.' },
+];
 
 export default function CustosWorkspace({ companyId, access, initialNewType }: { companyId: string; access: CustosAccess; initialNewType?: 'produto' }) {
   const [aba, setAba] = useState<Aba>(initialNewType ? 'produtos' : 'visao');
   const [catalogoId, setCatalogoId] = useState('');
+  const [catalogos, setCatalogos] = useState<CatalogoEmpresa[]>([]);
   const [produtos, setProdutos] = useState<ProdutoCustos[]>([]);
   const [tabelasPreco, setTabelasPreco] = useState<TabelaPreco[]>([]);
   const [precosTabela, setPrecosTabela] = useState<PrecoTabelaItem[]>([]);
@@ -58,6 +66,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
       const dados = await carregarCustos(companyId, access.podeEditar);
       if (chamada !== carregamentoRef.current) return;
       setCatalogoId(dados.catalogoId);
+      setCatalogos(dados.catalogos);
       setProdutos(dados.produtos);
       setTabelasPreco(dados.tabelasPreco);
       setPrecosTabela(dados.precosTabela);
@@ -81,6 +90,12 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
       .subscribe();
     return () => { void supabase.removeChannel(canal); };
   }, [catalogoId, recarregar]);
+  useEffect(() => {
+    const canal = supabase.channel(`custos-catalogos-${companyId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_catalogos', filter: `empresa_id=eq.${companyId}` }, () => void recarregar(true))
+      .subscribe();
+    return () => { void supabase.removeChannel(canal); };
+  }, [companyId, recarregar]);
   useEffect(() => {
     const canal = supabase.channel(`custos-precos-${companyId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'custos_tabelas_preco', filter: `empresa_id=eq.${companyId}` }, () => void recarregar(true))
@@ -121,7 +136,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
     <div className={styles.workspaceContent} aria-hidden={carregando || undefined} inert={carregando || undefined}>
     <aside className={styles.sidebar} aria-label="Áreas de Custos e Precificação">
       <nav>{navegacao.map((item) => <button key={item.id} type="button" className={aba === item.id ? styles.navActive : ''} onClick={() => abrirAba(item.id)}><span aria-hidden="true">{item.icone}</span>{item.rotulo}</button>)}</nav>
-      <div className={styles.sharedNote}><strong>Base compartilhada</strong><p>Catálogo e Custos usam o mesmo produto. Não há cópias para sincronizar.</p></div>
+      <div className={styles.sharedNote}><strong>Catálogos separados</strong><p>A fonte externa é preservada. Os itens selecionados aqui formam o catálogo local de Custos.</p></div>
     </aside>
     <section className={styles.content}>
       <div className={styles.feedbackBar} aria-live="polite">
@@ -129,6 +144,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
         {mensagem && <div className={styles.success}>{mensagem}</div>}
       </div>
       {aba === 'visao' && <VisaoGeral produtos={produtos} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => abrirAba('produtos')} onAtualizar={() => void recarregar()} />}
+      {aba === 'catalogos' && <CatalogosView companyId={companyId} catalogos={catalogos} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} fornecedores={fornecedores} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onMensagem={setMensagem} onErro={setErro} />}
       {aba === 'recursos' && <RecursosView catalogoId={catalogoId} documento={documento} produtos={produtos} fornecedores={fornecedores} setProdutos={setProdutos} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} podeEditar={access.podeEditar} onMensagem={setMensagem} onErro={setErro} />}
@@ -194,7 +210,81 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
       <section className={styles.twoColumns}><article className={styles.panel}><div className={styles.panelTitle}><div><h2>Composição de {produtoAtivo.nome}</h2><p>Participação dos principais componentes no custo.</p></div><button type="button" className={styles.linkButton} onClick={onAbrir}>Abrir cadastro</button></div>
         <div className={styles.costBars}>{calculo.linhas.sort((a, b) => b.custo - a.custo).slice(0, 8).map((linha) => <div key={linha.item.id}><span>{linha.recurso?.nome || 'Recurso não localizado'}<b>{formatarMoeda(linha.custo)}</b></span><i><em style={{ width: `${calculo.total ? Math.max(3, linha.custo / calculo.total * 100) : 3}%` }} /></i></div>)}{!calculo.linhas.length && <p className={styles.empty}>Ainda não há componentes neste cadastro.</p>}</div>
       </article><article className={`${styles.panel} ${styles.quickRead}`}><span>Leitura rápida</span><h2>{produtoAtivo.disponivel_catalogo ? 'Disponível no catálogo' : 'Produto em estudo'}</h2><p>Alterações de identificação feitas no Catálogo aparecem aqui porque o registro é único.</p><ul><li>{produtoAtivo.sku ? '✓' : '!'} Código interno</li><li>{calculo.linhas.length ? '✓' : '!'} Composição de custo</li><li>{produtoAtivo.tipo_item === 'produto' ? (produtoAtivo.ncm && produtoAtivo.unidade_tributavel ? '✓ NCM e unidade tributável informados' : '! NCM ou unidade tributável pendente') : '✓ Tributação definida na emissão'}</li></ul></article></section>
-    </> : <section className={styles.panel}><p className={styles.empty}>Cadastre o primeiro produto ou serviço na área Produtos e serviços.</p></section>}
+  </> : <section className={styles.panel}><p className={styles.empty}>Cadastre o primeiro produto ou serviço na área Produtos e serviços.</p></section>}
+  </>;
+}
+
+const descricaoOrigemCatalogo = (origem: CatalogoEmpresa['origem']) => origem === 'custos_local'
+  ? { titulo: 'Custos e Precificação', texto: 'Itens selecionados no módulo de Custos. A fonte externa permanece separada.' }
+  : origem === 'externa'
+    ? { titulo: 'Fonte externa', texto: 'Catálogo preservado da fonte externa, com seus itens e imagens próprios.' }
+    : { titulo: 'Catálogo independente', texto: 'Catálogo criado pela empresa, pronto para receber a sua seleção de itens.' };
+
+function CatalogosView({ companyId, catalogos, podeEditar, onRecarregar, onMensagem, onErro }: {
+  companyId: string; catalogos: CatalogoEmpresa[]; podeEditar: boolean; onRecarregar: () => Promise<void>;
+  onMensagem: (texto: string) => void; onErro: (texto: string) => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const [rascunho, setRascunho] = useState<Partial<CatalogoEmpresa>>({});
+  const [salvando, setSalvando] = useState(false);
+  const [confirmarStatus, setConfirmarStatus] = useState<CatalogoEmpresa | null>(null);
+  const ativos = catalogos.filter((catalogo) => catalogo.ativo);
+  const abrirNovo = () => { setRascunho({ nome: '', codigo: '', origem: 'manual' }); setAberto(true); };
+  const abrirEdicao = (catalogo: CatalogoEmpresa) => { setRascunho(catalogo); setAberto(true); };
+  const salvar = async (evento: React.FormEvent) => {
+    evento.preventDefault();
+    setSalvando(true);
+    try {
+      const salvo = await salvarCatalogoEmpresa(companyId, rascunho);
+      await onRecarregar(); setAberto(false); onMensagem(rascunho.id ? `Catálogo “${salvo.nome}” atualizado.` : `Catálogo “${salvo.nome}” criado.`);
+    } catch (falha) { onErro(erroTexto(falha)); }
+    finally { setSalvando(false); }
+  };
+  const alterarStatus = async () => {
+    if (!confirmarStatus) return;
+    setSalvando(true);
+    try {
+      const proximoAtivo = !confirmarStatus.ativo;
+      await alterarStatusCatalogoEmpresa(companyId, confirmarStatus.id, proximoAtivo);
+      await onRecarregar(); onMensagem(`Catálogo ${proximoAtivo ? 'ativado' : 'desativado'}.`); setConfirmarStatus(null);
+    } catch (falha) { onErro(erroTexto(falha)); }
+    finally { setSalvando(false); }
+  };
+  const tornarAtual = async (catalogo: CatalogoEmpresa) => {
+    setSalvando(true);
+    try { await definirCatalogoAtual(companyId, catalogo.id); await onRecarregar(); onMensagem(`“${catalogo.nome}” agora é o catálogo atual.`); }
+    catch (falha) { onErro(erroTexto(falha)); }
+    finally { setSalvando(false); }
+  };
+  return <>
+    <PageHeader title="Catálogos" description="Crie e organize catálogos independentes. Somente o catálogo atual é usado no Vendas; os demais permanecem preservados." actions={podeEditar ? <button type="button" className={styles.primaryButton} onClick={abrirNovo}>Novo catálogo</button> : undefined} />
+    <section className={styles.catalogGuidance}><strong>Como funciona</strong><p>Você pode manter vários catálogos ativos. Defina qual é o atual para o Vendas. Desativar um catálogo não apaga produtos, imagens, preços ou histórico.</p></section>
+    <section className={styles.catalogCards} aria-label="Catálogos desta empresa">
+      {catalogos.map((catalogo) => {
+        const origem = descricaoOrigemCatalogo(catalogo.origem);
+        const ultimoAtivo = catalogo.ativo && ativos.length === 1;
+        return <article key={catalogo.id} className={`${styles.catalogCard} ${catalogo.padrao ? styles.catalogCardCurrent : ''} ${!catalogo.ativo ? styles.catalogCardInactive : ''}`}>
+          <div className={styles.catalogCardHeading}><div><span className={styles.catalogOrigin}>{origem.titulo}</span><h2>{catalogo.nome}</h2><small>{catalogo.codigo}</small></div>{catalogo.padrao && <span className={styles.catalogCurrent}>Atual no Vendas</span>}</div>
+          <p>{origem.texto}</p>
+          <div className={styles.catalogMeta}><span>{catalogo.ativo ? 'Ativo' : 'Desativado'}</span><span>Atualizado {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(catalogo.atualizado_em))}</span></div>
+          {podeEditar && <div className={styles.catalogActions}>
+            <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => abrirEdicao(catalogo)}>Editar</button>
+            {catalogo.ativo && !catalogo.padrao && <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => void tornarAtual(catalogo)}>Tornar atual</button>}
+            <button type="button" className={catalogo.ativo ? styles.dangerButton : styles.secondaryButton} disabled={salvando || (ultimoAtivo && catalogo.ativo)} title={ultimoAtivo ? 'Ative outro catálogo antes de desativar este.' : undefined} onClick={() => setConfirmarStatus(catalogo)}>{catalogo.ativo ? 'Desativar' : 'Ativar'}</button>
+          </div>}
+        </article>;
+      })}
+      {!catalogos.length && <div className={styles.empty}>Nenhum catálogo foi encontrado para esta empresa.</div>}
+    </section>
+    <Modal open={aberto} title={rascunho.id ? 'Editar catálogo' : 'Novo catálogo'} description={rascunho.id ? 'Altere o nome e, para catálogos independentes, o código de identificação.' : 'O novo catálogo começa vazio e fica separado das fontes externa e de Custos.'} onClose={() => !salvando && setAberto(false)} compact>
+      <form className={styles.catalogForm} onSubmit={(evento) => void salvar(evento)}>
+        <label><span>Nome do catálogo</span><input autoFocus required maxLength={90} value={rascunho.nome || ''} onChange={(evento) => setRascunho((atual) => ({ ...atual, nome: evento.target.value }))} /></label>
+        <label><span>Código interno</span><input autoCapitalize="characters" maxLength={40} disabled={rascunho.origem !== 'manual'} placeholder={rascunho.id ? undefined : 'Gerado automaticamente se vazio'} value={rascunho.codigo || ''} onChange={(evento) => setRascunho((atual) => ({ ...atual, codigo: evento.target.value.toUpperCase() }))} /></label>
+        {rascunho.origem && rascunho.origem !== 'manual' && <p className={styles.muted}>O código desta origem é protegido para não romper a integração.</p>}
+        <div className={styles.formActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => setAberto(false)}>Cancelar</button><button type="submit" className={styles.primaryButton} disabled={salvando}>{salvando ? 'Salvando…' : 'Salvar catálogo'}</button></div>
+      </form>
+    </Modal>
+    <ModalConfirmacao aberto={Boolean(confirmarStatus)} titulo={`${confirmarStatus?.ativo ? 'Desativar' : 'Ativar'} catálogo?`} mensagem={confirmarStatus?.ativo ? (confirmarStatus.padrao ? 'O catálogo atual deixará de ser usado no Vendas e outro catálogo ativo assumirá essa função. Nenhum item será apagado.' : 'O catálogo deixará de estar disponível no Vendas, mas todos os seus itens, imagens, preços e histórico serão preservados.') : 'O catálogo voltará a ficar disponível para ser definido como o catálogo atual.'} textoCancelar="Cancelar" textoConfirmar={confirmarStatus?.ativo ? 'Desativar' : 'Ativar'} carregando={salvando} corPrimaria="var(--custos-brand)" variante={confirmarStatus?.ativo ? 'alerta' : 'primaria'} aoCancelar={() => setConfirmarStatus(null)} aoConfirmar={() => void alterarStatus()} />
   </>;
 }
 
@@ -209,6 +299,10 @@ function ProdutosView({ companyId, catalogoId, produtos, fornecedores, tabelas, 
   const [modo, setModo] = useState<'lista' | 'cadastro'>(initialNewType ? 'cadastro' : 'lista');
   const [tipoLista, setTipoLista] = useState<TipoItem>('produto');
   const [buscaLista, setBuscaLista] = useState('');
+  const [produtosSelecionados, setProdutosSelecionados] = useState<string[]>([]);
+  const [acaoLote, setAcaoLote] = useState<AcaoLoteCatalogo>('publicar_catalogo');
+  const [processandoLote, setProcessandoLote] = useState(false);
+  const [confirmarAcaoLote, setConfirmarAcaoLote] = useState(false);
   const [menuAcao, setMenuAcao] = useState<{ produtoId: string; top: number; left: number } | null>(null);
   const [precosDoProduto, setPrecosDoProduto] = useState<ProdutoCustos | null>(null);
   const [valoresTabela, setValoresTabela] = useState<Record<string, number>>({});
@@ -343,6 +437,35 @@ function ProdutosView({ companyId, catalogoId, produtos, fornecedores, tabelas, 
   };
 
   const listaFiltrada = produtos.filter((produto) => produto.tipo_item === tipoLista && normalizarTexto(`${produto.sku} ${produto.nome} ${produto.marca} ${produto.categoria}`).includes(normalizarTexto(buscaLista)));
+  const idsListaFiltrada = listaFiltrada.map((produto) => produto.id);
+  const todosListadosSelecionados = idsListaFiltrada.length > 0 && idsListaFiltrada.every((id) => produtosSelecionados.includes(id));
+  const quantidadeSelecionada = produtosSelecionados.length;
+  const detalheAcaoLote = acoesLoteCatalogo.find((acao) => acao.valor === acaoLote)!;
+  const alternarSelecaoProduto = (produtoId: string) => setProdutosSelecionados((atuais) => atuais.includes(produtoId) ? atuais.filter((id) => id !== produtoId) : [...atuais, produtoId]);
+  const alternarTodosListados = () => setProdutosSelecionados((atuais) => {
+    const selecionadosAtuais = new Set(atuais);
+    if (todosListadosSelecionados) idsListaFiltrada.forEach((id) => selecionadosAtuais.delete(id));
+    else idsListaFiltrada.forEach((id) => selecionadosAtuais.add(id));
+    return [...selecionadosAtuais];
+  });
+  const executarAcaoLote = async () => {
+    if (!quantidadeSelecionada) return;
+    setProcessandoLote(true);
+    onErro('');
+    try {
+      const atualizados = await aplicarAcaoLoteCatalogo(companyId, produtosSelecionados, acaoLote);
+      await onRecarregar();
+      setProdutosSelecionados([]);
+      setConfirmarAcaoLote(false);
+      onMensagem(atualizados ? `${atualizados} ${atualizados === 1 ? 'cadastro atualizado' : 'cadastros atualizados'}: ${detalheAcaoLote.rotulo.toLocaleLowerCase('pt-BR')}.` : 'Os cadastros selecionados já estavam nesta situação.');
+    } catch (falha) { onErro(erroTexto(falha)); }
+    finally { setProcessandoLote(false); }
+  };
+  const solicitarAcaoLote = () => {
+    if (!quantidadeSelecionada) return;
+    if (detalheAcaoLote.confirmacao) { setConfirmarAcaoLote(true); return; }
+    void executarAcaoLote();
+  };
   const alternarMenuAcoes = (produtoId: string, acionador: HTMLButtonElement) => {
     if (menuAcao?.produtoId === produtoId) { setMenuAcao(null); return; }
     const limites = acionador.getBoundingClientRect();
@@ -421,11 +544,18 @@ function ProdutosView({ companyId, catalogoId, produtos, fornecedores, tabelas, 
         <div className={styles.listTabs} role="tablist" aria-label="Tipo de cadastro"><button type="button" role="tab" aria-selected={tipoLista === 'produto'} className={tipoLista === 'produto' ? styles.listTabActive : ''} onClick={() => setTipoLista('produto')}>Produtos <b>{produtos.filter((produto) => produto.tipo_item === 'produto').length}</b></button><button type="button" role="tab" aria-selected={tipoLista === 'servico'} className={tipoLista === 'servico' ? styles.listTabActive : ''} onClick={() => setTipoLista('servico')}>Serviços <b>{produtos.filter((produto) => produto.tipo_item === 'servico').length}</b></button></div>
         <label className={styles.search}><span>Localizar</span><CampoBusca value={buscaLista} onChange={setBuscaLista} placeholder="Código, nome, marca…" /></label>
       </div>
-      <div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => <tr key={produto.id}><td><b>{produto.sku}</b></td><td><b>{produto.nome}</b><small>{produto.unidade}</small></td><td>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${!produto.ativo ? styles.statusInactive : produto.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!produto.ativo ? 'Inativo' : produto.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button></div>}</td></tr>)}{!listaFiltrada.length && <tr><td colSpan={6} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
+      {quantidadeSelecionada > 0 && <div className={styles.batchActions} aria-live="polite">
+        <strong>{quantidadeSelecionada} {quantidadeSelecionada === 1 ? 'item selecionado' : 'itens selecionados'}</strong>
+        <label>Ação para os selecionados<select value={acaoLote} disabled={!podeEditar || processandoLote} onChange={(evento) => setAcaoLote(evento.target.value as AcaoLoteCatalogo)}>{acoesLoteCatalogo.map((acao) => <option key={acao.valor} value={acao.valor}>{acao.rotulo}</option>)}</select></label>
+        <button type="button" className={styles.secondaryButton} disabled={!podeEditar || processandoLote} onClick={() => setProdutosSelecionados([])}>Limpar seleção</button>
+        <button type="button" className={styles.primaryButton} disabled={!podeEditar || processandoLote} onClick={solicitarAcaoLote}>{processandoLote ? 'Aplicando…' : detalheAcaoLote.rotulo}</button>
+      </div>}
+      <div className={styles.tableWrap}><table><thead><tr><th className={styles.selectionHeader}><button type="button" disabled={!podeEditar || !idsListaFiltrada.length || processandoLote} aria-label={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} title={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} onClick={alternarTodosListados}>{todosListadosSelecionados ? '−' : '✓'}</button></th><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => <tr key={produto.id} className={produtosSelecionados.includes(produto.id) ? styles.selectedRow : undefined}><td className={styles.selectionCell}><input type="checkbox" checked={produtosSelecionados.includes(produto.id)} disabled={!podeEditar || processandoLote} onChange={() => alternarSelecaoProduto(produto.id)} aria-label={`Selecionar ${produto.nome}`} /></td><td><b>{produto.sku}</b></td><td><b>{produto.nome}</b><small>{produto.unidade}</small></td><td>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${!produto.ativo ? styles.statusInactive : produto.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!produto.ativo ? 'Inativo' : produto.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar || processandoLote} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button></div>}</td></tr>)}{!listaFiltrada.length && <tr><td colSpan={7} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
     </section>
     <Modal open={Boolean(precosDoProduto)} onClose={() => !salvando && setPrecosDoProduto(null)} title="Atualizar listas de preços" description={precosDoProduto ? `${precosDoProduto.sku} · ${precosDoProduto.nome}` : ''}>
       {precosDoProduto && <div className={styles.productPriceList}>{tabelas.filter((tabela) => tabela.ativo).map((tabela) => <label key={tabela.id}><span>{tabela.nome}{tabela.padrao && <small>Preço principal</small>}</span><MoneyInput value={valoresTabela[tabela.id] ?? 0} onChange={(valor) => setValoresTabela((atuais) => ({ ...atuais, [tabela.id]: valor }))} label={`Preço ${tabela.nome}`} disabled={salvando || !podeEditar} /></label>)}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => setPrecosDoProduto(null)}>Cancelar</button><button type="button" className={styles.primaryButton} disabled={salvando || !podeEditar} onClick={() => void salvarListasPrecos()}>{salvando ? 'Salvando…' : 'Salvar preços'}</button></div></div>}
     </Modal>
+    <ModalConfirmacao aberto={confirmarAcaoLote} titulo={`${detalheAcaoLote.rotulo}?`} mensagem={detalheAcaoLote.confirmacao || ''} textoCancelar="Cancelar" textoConfirmar={detalheAcaoLote.rotulo} carregando={processandoLote} corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => { if (!processandoLote) setConfirmarAcaoLote(false); }} aoConfirmar={() => void executarAcaoLote()} />
   </>;
 
   return <>

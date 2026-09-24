@@ -1,6 +1,32 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.42.0.03 -->
+<!-- ava-version: 1.43.0.05 -->
+
+> Revisão 1.43.0.05: ajuste visual no editor de produtos da Gestão Web, sem
+> mudança no catálogo entregue ao Vendas Mobile.
+
+> Revisão 1.43.0.04: ajuste visual no editor de produtos da Gestão Web, sem
+> mudança no catálogo entregue ao Vendas Mobile.
+
+> Revisão 1.43.0.03: o ZIP pode ser exportado de qualquer catálogo ativo,
+> sem alterar qual catálogo está atual no Vendas Mobile.
+
+> Revisão 1.43.0.02: ajuste visual exclusivo da Gestão Web, sem mudança no
+> catálogo entregue ao Vendas Mobile.
+
+> Revisão 1.43.0.01: gestores criam e administram catálogos em **Conteúdo
+> AvantaVendas > Produtos** na Gestão Web. Ao definir outro catálogo como
+> atual, a lista disponibilizada ao Vendas passa imediatamente a usar essa
+> fonte; os catálogos não atuais continuam preservados e separados.
+
+> Revisão 1.43.0: a empresa pode manter mais de um catálogo na Gestão Web.
+> O catálogo marcado como **atual** em Custos e Precificação é o utilizado no
+> Vendas; fontes externa e de Custos seguem separadas e desativar uma fonte
+> nunca apaga seus itens.
+
+> Revisão 1.42.0.04: catálogos de fonte externa e de Custos permanecem
+> separados. Itens locais só passam a compor seu catálogo quando forem
+> selecionados e publicados na Gestão Web.
 
 > Revisão 1.42.0.03: correção exclusiva da Gestão Mobile, sem impacto
 > operacional no AvantaVendas.

@@ -1,6 +1,28 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.42.0.03 -->
+<!-- ava-version: 1.43.0.05 -->
+
+> Revisão 1.43.0.05: ajuste visual exclusivo da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.43.0.04: ajuste visual exclusivo da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.43.0.03: a escolha de catálogo para exportação ZIP pertence ao
+> Conteúdo AvantaVendas na Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.43.0.02: ajuste visual exclusivo da Gestão Web, sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.43.0.01: a criação e a gestão de catálogos ficam em **Conteúdo
+> AvantaVendas > Produtos** na Gestão Web. A escolha do catálogo atual é
+> refletida no Vendas; sem novo fluxo operacional na Gestão Mobile.
+
+> Revisão 1.43.0: a gestão de vários catálogos pertence a Custos e
+> Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.42.0.04: a separação entre catálogo externo e catálogo local de
+> Custos pertence à Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.42.0.03: ao editar uma despesa prevista, **Salvar previsto** só
 > fecha o card depois da confirmação do banco. Se a confirmação falhar, o

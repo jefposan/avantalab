@@ -25,7 +25,7 @@ export async function carregarCatalogoCustosParaVendas({
 }) {
   const [{ data: custos }, { data: catalogo, error: erroCatalogo }, { data: tabelas, error: erroTabelas }] = await Promise.all([
     db.from('empresa_modulos').select('ativo,expira_em').eq('empresa_id', empresaId).eq('modulo_id', 'custos').maybeSingle(),
-    db.from('vendas_mobile_catalogos').select('id').eq('empresa_id', empresaId).eq('ativo', true).order('criado_em').limit(1).maybeSingle(),
+    db.from('vendas_mobile_catalogos').select('id').eq('empresa_id', empresaId).eq('ativo', true).order('padrao', { ascending: false }).order('criado_em').limit(1).maybeSingle(),
     db.from('custos_tabelas_preco').select('id,nome,padrao').eq('empresa_id', empresaId).eq('ativo', true).order('padrao', { ascending: false }).order('nome'),
   ]);
   const expiraEm = custos?.expira_em ? new Date(custos.expira_em) : null;
