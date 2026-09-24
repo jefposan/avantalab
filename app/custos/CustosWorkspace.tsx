@@ -549,8 +549,10 @@ function RecursosView({ catalogoId, documento, produtos, fornecedores, setProdut
           <Field label="Nome *"><input disabled={!podeEditar || salvando} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
           <Field label="Categoria"><select disabled={!podeEditar || salvando} value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}><option>Matéria-prima</option><option>Embalagem</option><option>Mão de obra</option><option>Operação</option><option>Terceirização</option><option>Outro</option></select></Field>
           <Field label="Fornecedor"><select disabled={!podeEditar || salvando} value={form.fornecedor_id || ''} onChange={(e) => setForm({ ...form, fornecedor_id: e.target.value })}><option value="">Não informado</option>{fornecedores.map((fornecedor) => <option key={fornecedor.id} value={fornecedor.id}>{fornecedor.codigo ? `${fornecedor.codigo} · ` : ''}{fornecedor.nome}</option>)}</select></Field>
-          <Field label="Unidade"><input disabled={!podeEditar || salvando} value={form.unidade} onChange={(e) => setForm({ ...form, unidade: e.target.value })} /></Field>
-          <Field label="Custo unitário" wide><MoneyInput disabled={!podeEditar || salvando} value={form.custo} onChange={(custo) => setForm({ ...form, custo })} label="Custo unitário" zeroComoPlaceholder /></Field>
+          <div className={styles.resourceUnitCost}>
+            <Field label="Unidade"><input disabled={!podeEditar || salvando} value={form.unidade} onChange={(e) => setForm({ ...form, unidade: e.target.value })} /></Field>
+            <Field label="Custo unitário"><MoneyInput disabled={!podeEditar || salvando} value={form.custo} onChange={(custo) => setForm({ ...form, custo })} label="Custo unitário" zeroComoPlaceholder /></Field>
+          </div>
         </div>
         <div className={styles.fiscalResourceToggle}>
           <label><input type="checkbox" disabled={!podeEditar || salvando || Boolean(form.produto_fiscal_id)} checked={form.habilitado_fiscal === true} onChange={(e) => setForm((atual) => ({ ...atual, habilitado_fiscal: e.target.checked, unidade_tributavel: atual.unidade_tributavel || atual.unidade.toUpperCase() || 'UN' }))} /> Habilitar como item fiscal</label>

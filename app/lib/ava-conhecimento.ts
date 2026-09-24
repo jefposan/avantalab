@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.42.0.02: Unidade e Custo unitário de Insumos ficam na
+// mesma linha; é um refinamento visual, sem alterar o fluxo orientado pela Ava.
 // Revisado na versão 1.42.0.01: produtos e insumos usam a mesma lista de
 // fornecedores ativos da empresa, inclusive quando o produto é comprado pronto.
 // Revisado na versão 1.42.0: um insumo pode ser habilitado como item fiscal

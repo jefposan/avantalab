@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.42.0.02 - 2026-09-23
+- **Insumos mais compactos**: os campos **Unidade** e **Custo unitário**
+  ficam na mesma linha. O custo usa uma largura menor, preservando a leitura
+  do valor e sem quebrar a organização em telas estreitas.
+
 ## 1.42.0.01 - 2026-09-23
 - **Fornecedor no cadastro**: Produtos e Insumos agora selecionam o mesmo
   fornecedor ativo da empresa. O vínculo acompanha o item mestre quando um

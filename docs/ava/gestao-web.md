@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.42.0.01 -->
+<!-- ava-version: 1.42.0.02 -->
+
+> Revisão 1.42.0.02: no formulário de Insumos e recursos, **Unidade** e
+> **Custo unitário** agora aparecem juntos na mesma linha, sem mudança no
+> preenchimento ou no comportamento operacional.
 
 > Revisão 1.42.0.01: selecione o **Fornecedor** no cadastro de um produto ou
 > insumo. A mesma lista de fornecedores ativos da empresa é usada nos dois

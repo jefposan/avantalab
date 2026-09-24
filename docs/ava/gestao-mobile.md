@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.42.0.01 -->
+<!-- ava-version: 1.42.0.02 -->
+
+> Revisão 1.42.0.02: no formulário de Insumos e recursos, **Unidade** e
+> **Custo unitário** agora aparecem juntos na mesma linha, sem mudança no
+> preenchimento ou no comportamento operacional.
 
 > Revisão 1.42.0.01: a seleção de fornecedor em Produtos e Insumos pertence a
 > Custos e Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.
