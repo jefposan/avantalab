@@ -8,6 +8,9 @@ const REDIRECT_OAUTH_NATIVO_VENDAS = 'br.com.avantalab.vendas://auth/callback';
 const LEMBRAR_CONECTADO_ATE_KEY = 'avantalab.vendas_mobile.lembrar_conectado_ate';
 const SESSAO_TEMPORARIA_KEY = 'avantalab.vendas_mobile.sessao_temporaria';
 const OAUTH_TEMPORARIO_ATE_KEY = 'avantalab.vendas_mobile.oauth_temporario_ate';
+const LOGIN_LEMBRAR_KEY = 'avantalab.vendas_mobile.lembrar';
+const LOGIN_CONTATO_LEMBRADO_KEY = 'avantalab.vendas_mobile.login_contato';
+const LOGIN_TIPO_LEMBRADO_KEY = 'avantalab.vendas_mobile.login_tipo';
 const ACESSO_OFFLINE_VENDAS_KEY = 'avantalab.vendas_mobile.acesso_offline.v1';
 const TRINTA_DIAS_MS = 1000 * 60 * 60 * 24 * 30;
 const DEZ_MINUTOS_MS = 1000 * 60 * 10;
@@ -152,11 +155,12 @@ let assinaturaPreferenciasServidor = '';
 let assinaturaPreferenciasAgendada = '';
 let timerPreferenciasServidor = null;
 let salvamentoPreferenciasServidor = null;
-let loginTipo = 'email';
+const loginLembradoVendas = carregarLoginLembradoVendas();
+let loginTipo = loginLembradoVendas.tipo;
 let modoLogin = 'entrar';
 let cadastroEtapa = 'dados';
 let cadastroPendente = null;
-let loginRascunho = { contato: '', senha: '', lembrar: true };
+let loginRascunho = { contato: loginLembradoVendas.contato, senha: '', lembrar: loginLembradoVendas.lembrar };
 let cadastroRascunho = carregarRascunhoCadastroVendas();
 let campoRetornoAvisoAcessoVendas = '';
 let retomarRecuperacaoSenhaAposAviso = false;
@@ -258,6 +262,34 @@ function prepararOrigemAcessoVendas() {
   try {
     const origem = new URLSearchParams(window.location.search).get('origem');
     sessionStorage.setItem(ORIGEM_ACESSO_VENDAS_KEY, origem === 'gestao' ? 'gestao' : 'vendas');
+  } catch { /* armazenamento indisponível */ }
+}
+
+function carregarLoginLembradoVendas() {
+  try {
+    const lembrarSalvo = localStorage.getItem(LOGIN_LEMBRAR_KEY);
+    const lembrar = lembrarSalvo === null ? true : lembrarSalvo === '1';
+    const tipo = localStorage.getItem(LOGIN_TIPO_LEMBRADO_KEY) === 'telefone' ? 'telefone' : 'email';
+    return {
+      contato: lembrar ? String(localStorage.getItem(LOGIN_CONTATO_LEMBRADO_KEY) || '') : '',
+      lembrar,
+      tipo,
+    };
+  } catch {
+    return { contato: '', lembrar: true, tipo: 'email' };
+  }
+}
+
+function salvarLoginLembradoVendas(manter, contato, tipo) {
+  try {
+    localStorage.setItem(LOGIN_LEMBRAR_KEY, manter ? '1' : '0');
+    if (manter) {
+      localStorage.setItem(LOGIN_CONTATO_LEMBRADO_KEY, String(contato || '').trim());
+      localStorage.setItem(LOGIN_TIPO_LEMBRADO_KEY, tipo === 'telefone' ? 'telefone' : 'email');
+      return;
+    }
+    localStorage.removeItem(LOGIN_CONTATO_LEMBRADO_KEY);
+    localStorage.removeItem(LOGIN_TIPO_LEMBRADO_KEY);
   } catch { /* armazenamento indisponível */ }
 }
 
@@ -1023,6 +1055,10 @@ async function atualizarIndicadoresSincronizacaoVendas() {
 function erroTemporarioPersistencia(error) {
   const texto = String(error?.message || error || '');
   return !navigator.onLine || /fetch|network|conex|offline|timeout|tempo limite|failed to fetch|load failed/i.test(texto);
+}
+
+function erroSessaoExpiradaVendas(error) {
+  return /sess[aã]o expirada|invalid refresh token|refresh token.*(?:invalid|expired|not found)/i.test(String(error?.message || error || ''));
 }
 
 function marcarResultadoPendenteOfflineVendas(resultado) {
@@ -3231,7 +3267,7 @@ async function entrarSistema(event) {
     else await window.VendasDb.signInPhone(`+55${contato.replace(/\D/g, '')}`, senha);
     atualizarProgressoPreparacao('auth', 1, 1, 'Sessão autenticada');
     registrarPreferenciaSessaoVendas(lembrar === '1');
-    localStorage.setItem('avantalab.vendas_mobile.lembrar', lembrar);
+    salvarLoginLembradoVendas(lembrar === '1', contato, loginTipo);
     const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
     carregandoBackend = false;
     if (aguardandoEscolha) {
@@ -7948,7 +7984,9 @@ async function finalizarPedidoCliente() {
         financeiroAnterior = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId, rascunho.editandoId || '');
       } catch (error) {
         if (!erroTemporarioPersistencia(error)) {
-          toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
+          toast(erroSessaoExpiradaVendas(error)
+            ? 'Sua sessão expirou. Entre novamente para continuar. O pedido preenchido foi preservado.'
+            : 'Não foi possível confirmar o saldo atual da cliente no servidor. Tente novamente.');
           return;
         }
       }
@@ -8180,7 +8218,9 @@ async function confirmarPagamentoCliente() {
         resumo = resumoPagamentoCliente();
       } catch (error) {
         if (!erroTemporarioPersistencia(error)) {
-          toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
+          toast(erroSessaoExpiradaVendas(error)
+            ? 'Sua sessão expirou. Entre novamente para continuar. O pagamento preenchido foi preservado.'
+            : 'Não foi possível confirmar o saldo atual da cliente no servidor. Tente novamente.');
           return;
         }
       }
@@ -10531,6 +10571,11 @@ window.addEventListener('focus', () => {
 });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && state.autenticado) {
+    if (backendAtivo && navigator.onLine) {
+      void Promise.resolve(window.VendasDb.ensureSession?.())
+        .then((sessao) => { if (sessao) renovarSessaoPersistenteVendas(); })
+        .catch(() => undefined);
+    }
     void Promise.resolve(window.VendasDb.registrarAtividadeAplicativo?.()).catch(() => undefined);
   }
   if (document.visibilityState === 'visible' && solicitacaoVendasAguardandoAprovacao()) {

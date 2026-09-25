@@ -83,6 +83,26 @@ test('cabeçalho informa a rede offline e a fila real de sincronização', () =>
   assert.match(estilos, /\.sync-pending-header-button/);
 });
 
+test('sessão expirada é renovada antes da conferência financeira', () => {
+  assert.match(cliente, /let renovacaoSessaoPendente = null;/);
+  assert.match(cliente, /function sessaoPrecisaRenovar\(sessao\)/);
+  assert.match(cliente, /async function ensureSession\(\)/);
+  assert.match(cliente, /sessao = await ensureSession\(\)/);
+  assert.match(cliente, /sessao = await refreshSession\(\)/);
+  assert.match(cliente, /window\.VendasDb = \{ client, currentUser, hasSession, ensureSession, refreshSession/);
+  assert.match(aplicacao, /window\.VendasDb\.ensureSession\?\.\(\)/);
+  assert.match(aplicacao, /Sua sessão expirou\. Entre novamente para continuar\. O pedido preenchido foi preservado\./);
+  assert.match(aplicacao, /Sua sessão expirou\. Entre novamente para continuar\. O pagamento preenchido foi preservado\./);
+});
+
+test('Lembrar-me conserva somente o identificador e nunca a senha', () => {
+  assert.match(aplicacao, /LOGIN_CONTATO_LEMBRADO_KEY = 'avantalab\.vendas_mobile\.login_contato'/);
+  assert.match(aplicacao, /function carregarLoginLembradoVendas\(\)/);
+  assert.match(aplicacao, /function salvarLoginLembradoVendas\(manter, contato, tipo\)/);
+  assert.match(aplicacao, /salvarLoginLembradoVendas\(lembrar === '1', contato, loginTipo\)/);
+  assert.doesNotMatch(aplicacao, /localStorage\.setItem\([^\n]*(?:senha|password)/i);
+});
+
 test('aviso rápido permanece acessível acima das camadas modais', () => {
   assert.match(aplicacao, /el\.setAttribute\('role', dados\.tipo === 'erro' \? 'alert' : 'status'\)/);
   assert.match(aplicacao, /el\.setAttribute\('aria-live', dados\.tipo === 'erro' \? 'assertive' : 'polite'\)/);

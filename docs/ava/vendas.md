@@ -2,6 +2,11 @@
 
 <!-- ava-version: 1.43.0.05 -->
 
+> Revisão 1.43.0.05-av154: o AvantaVendas renova a sessão expirada antes das
+> leituras financeiras e ao voltar do segundo plano. Pedido e pagamento deixam
+> de falhar depois do vencimento do token; **Lembrar-me** mantém somente o
+> e-mail ou telefone e nunca grava a senha.
+
 > Revisão 1.43.0.05: ajuste visual no editor de produtos da Gestão Web, sem
 > mudança no catálogo entregue ao Vendas Mobile.
 
@@ -1009,7 +1014,7 @@
 > Revisão 1.18.0: a regra de vencimento mensal e execução de serviço foi
 > aplicada somente ao módulo de Recebimentos Presenciais; sem impacto
 > operacional no AvantaVendas.
-<!-- avantavendas-asset-revision: 153 -->
+<!-- avantavendas-asset-revision: 154 -->
 
 > Revisão 1.17.0.04: a Solicitação por Voz compara o nome falado com o
 > catálogo ativo completo da conta sem permitir que uma palavra apenas parecida

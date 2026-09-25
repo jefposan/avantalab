@@ -20,6 +20,7 @@
   let usuarioCanalAtualizacoesVinculo = '';
   let canalAtualizacoesCatalogo = null;
   let contaCanalAtualizacoesCatalogo = '';
+  let renovacaoSessaoPendente = null;
 
   function contaAtivaId() { try { return localStorage.getItem(contaAtivaStorageKey) || ''; } catch { return ''; } }
   function definirContaAtiva(contaId) { try { contaId ? localStorage.setItem(contaAtivaStorageKey, contaId) : localStorage.removeItem(contaAtivaStorageKey); } catch { /* armazenamento indisponível */ } }
@@ -70,28 +71,79 @@
     return { data: registros, error: null };
   }
 
+  function sessaoPrecisaRenovar(sessao) {
+    const expiraEm = Number(sessao?.expires_at || 0) * 1000;
+    return Boolean(sessao && expiraEm && expiraEm <= Date.now() + 60_000);
+  }
+
+  function erroRedeAutenticacao(error) {
+    const texto = String(error?.message || error || '');
+    return /fetch|network|conex|offline|timeout|tempo limite|failed to fetch|load failed/i.test(texto);
+  }
+
+  async function refreshSession() {
+    if (!renovacaoSessaoPendente) {
+      renovacaoSessaoPendente = (async () => {
+        const { data, error } = await requireClient().auth.refreshSession();
+        if (error) throw error;
+        return data.session || null;
+      })().finally(() => { renovacaoSessaoPendente = null; });
+    }
+    return renovacaoSessaoPendente;
+  }
+
+  async function ensureSession() {
+    const { data, error } = await requireClient().auth.getSession();
+    if (error) throw error;
+    if (!data.session) return null;
+    if (!sessaoPrecisaRenovar(data.session)) return data.session;
+    return refreshSession();
+  }
+
   async function currentUser() {
-    const { data, error } = await requireClient().auth.getUser();
-    if (error) return null;
-    return data.user || null;
+    let sessao;
+    try {
+      sessao = await ensureSession();
+    } catch (error) {
+      if (erroRedeAutenticacao(error)) throw error;
+      return null;
+    }
+    if (!sessao) return null;
+
+    const primeiraLeitura = await requireClient().auth.getUser();
+    if (!primeiraLeitura.error && primeiraLeitura.data.user) return primeiraLeitura.data.user;
+
+    try {
+      sessao = await refreshSession();
+    } catch (error) {
+      if (erroRedeAutenticacao(error)) throw error;
+      return null;
+    }
+    if (!sessao) return null;
+    const segundaLeitura = await requireClient().auth.getUser();
+    if (segundaLeitura.error) {
+      if (erroRedeAutenticacao(segundaLeitura.error)) throw segundaLeitura.error;
+      return null;
+    }
+    return segundaLeitura.data.user || null;
   }
 
   async function hasSession() {
     const { data, error } = await requireClient().auth.getSession();
-    if (error) return false;
-    return Boolean(data.session);
-  }
-
-  async function refreshSession() {
-    const { data, error } = await requireClient().auth.refreshSession();
-    if (error) throw error;
-    return data.session || null;
+    if (error || !data.session) return false;
+    if (!sessaoPrecisaRenovar(data.session)) return true;
+    try {
+      return Boolean(await refreshSession());
+    } catch (refreshError) {
+      // Quando a internet caiu, mantemos a sessão local para que a aplicação
+      // possa restaurar o acesso offline. Tokens realmente inválidos voltam ao login.
+      return erroRedeAutenticacao(refreshError);
+    }
   }
 
   async function getAccessToken() {
-    const { data, error } = await requireClient().auth.getSession();
-    if (error) throw error;
-    return data.session?.access_token || '';
+    const sessao = await ensureSession();
+    return sessao?.access_token || '';
   }
 
   async function verificarPremiumVendas(empresaId) {
@@ -1281,5 +1333,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, refreshSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, assinarAtualizacoesCatalogo, cancelarAtualizacoesCatalogo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveAgendaItem, deleteAgendaItem, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, registrarAtividadeAplicativo, ativarNotificacoes, desativarNotificacoes, estadoNotificacoes, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
+  window.VendasDb = { client, currentUser, hasSession, ensureSession, refreshSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, assinarAtualizacoesCatalogo, cancelarAtualizacoesCatalogo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveAgendaItem, deleteAgendaItem, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, registrarAtividadeAplicativo, ativarNotificacoes, desativarNotificacoes, estadoNotificacoes, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };
 })();

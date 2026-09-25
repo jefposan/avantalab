@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.43.0.05-av154 - 2026-09-25
+- **Sessão recuperada antes do lançamento**: pedido e pagamento renovam o token
+  expirado antes de conferir o financeiro da cliente, evitando a falsa mensagem
+  de falha no saldo depois de o aplicativo permanecer aberto.
+- **Retomada segura no iPhone**: ao voltar do segundo plano, o AvantaVendas
+  valida a sessão e compartilha uma única renovação entre chamadas simultâneas,
+  sem duplicar lançamentos nem alterar o funcionamento offline.
+- **Lembrar-me coerente e seguro**: a preferência mantém a sessão e preenche
+  somente o e-mail ou telefone usado no acesso. A senha continua restrita ao
+  gerenciador seguro do aparelho e nunca é gravada pelo sistema.
+
 ## 1.43.0.05 - 2026-09-24
 - **Editor ampliado no catálogo**: durante a edição de um produto em Conteúdo
   AvantaVendas, os controles gerais ficam recolhidos e o formulário usa toda a
