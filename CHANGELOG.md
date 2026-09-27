@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.44.0.12-av155 - 2026-09-26
+- **Relatório anual no Dashboard do Vendas**: abaixo do movimento financeiro,
+  o Dashboard passa a reunir vendas, custo, recebido e lucro do ano escolhido.
+  O seletor mantém a consulta em um ano por vez; lucro considera vendas menos
+  custo, e pedidos cancelados, consignados e somente bonificados não entram
+  nesses indicadores.
+
 ## 1.44.0.11 - 2026-09-26
 - **Controle ainda mais discreto**: a face visual do botão de expandir/recolher
   listas foi reduzida, mantendo a área de clique acessível ampliada.

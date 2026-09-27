@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.11 -->
+<!-- ava-version: 1.44.0.12 -->
+
+> Revisão 1.44.0.12: relatório anual pertence ao Dashboard do AvantaVendas;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.44.0.11: ajuste de dimensão do controle pertence à Gestão Web; sem
 > impacto operacional no Mobile.

@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.12: no Dashboard do AvantaVendas, o relatório anual
+// permite escolher um ano e consulta vendas, custo, recebido e lucro.
 // Revisado na versão 1.44.0.11: o controle visual de expandir/recolher na
 // Gestão Web ficou menor, preservando a área clicável ampliada.
 // Revisado na versão 1.44.0.10: o controle de lista na Gestão Web usa a cor
@@ -1536,6 +1538,7 @@ CLIENTES
 - A abertura do Vendas reaproveita a validação já concluída do perfil e libera a tela antes da sincronização automática do catálogo. A opção Verificar agora atualiza apenas o catálogo, sem recarregar todo o sistema.
 - Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas e exibem 10 registros por vez; Carregar mais acrescenta o próximo lote sem perder a posição. Abrir um pagamento mostra o comprovante e permite editar ou excluir o registro.
 - Depois da confirmação no servidor de um pedido ou pagamento, o Dashboard recalcula seus totais, recebimentos, ranking e indicadores com a mesma revisão salva no cache local. Ao abrir o Dashboard, o lançamento confirmado já faz parte do período correspondente.
+- Abaixo de **Movimento financeiro**, o **Relatório anual** permite escolher o ano. **Vendas anuais** e **Custo anual** usam os pedidos válidos do ano; **Recebido anual** reúne os pagamentos registrados no ano; e **Lucro anual** é Vendas menos Custo. Pedidos cancelados, consignados e somente bonificados não entram nas vendas, custos nem lucro.
 - O card **Estoque atual** do Dashboard lista produtos ativos acompanhados, com nome à esquerda e saldo à direita. Ele mostra três itens inicialmente, pode expandir/recolher toda a lista e abre a pesquisa interna pela lupa.
 - O card largo **Estoque consignado** mantém o resumo no cabeçalho institucional e lista nome do produto à esquerda e quantidade à direita. **Expandir** com seta para baixo abre a lista; **Recolher** com seta para cima fecha a lista.
 - Ao tocar em Pagamento no card da cliente, o foco ocorre no mesmo toque: o formulário permanece fixo, o campo Valor pago fica selecionado e o teclado numérico abre pronto para digitação.

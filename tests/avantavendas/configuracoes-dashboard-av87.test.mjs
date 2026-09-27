@@ -75,6 +75,30 @@ test('Dashboard padroniza consignados e permite ordenar clientes pela última co
   assert.match(css, /\.dashboard-inactive-sort/);
 });
 
+test('Dashboard reúne o relatório anual abaixo do movimento financeiro', async () => {
+  const app = await ler('app/avantavendas/sistema/app.js');
+  const css = await ler('app/avantavendas/sistema/styles.css');
+  const dashboard = app.slice(app.indexOf('function renderDashboard'), app.indexOf('function kpi'));
+
+  assert.match(app, /function vendasValidasNoPeriodo/);
+  assert.match(app, /function custoDasVendas/);
+  assert.match(app, /function resumoAnualDashboard/);
+  assert.match(app, /function selecionarAnoRelatorioDashboard/);
+  assert.match(app, /dashboardAnoRelatorio/);
+  assert.match(dashboard, /Relatório anual/);
+  assert.match(dashboard, /Vendas anuais/);
+  assert.match(dashboard, /Custo anual/);
+  assert.match(dashboard, /Recebido anual/);
+  assert.match(dashboard, /Lucro anual/);
+  assert.ok(
+    dashboard.indexOf('dashboard-movement-card') < dashboard.indexOf('dashboard-annual-report')
+      && dashboard.indexOf('dashboard-annual-report') < dashboard.indexOf('dashboard-panel dashboard-consignment-card'),
+    'Relatório anual deve ficar depois do movimento financeiro e antes dos demais painéis',
+  );
+  assert.match(css, /\.dashboard-annual-report-grid \{ display: grid; grid-template-columns: repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.dashboard-annual-report-grid \{ grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/);
+});
+
 test('revisão av87 documenta os três ajustes', async () => {
   const [changelog, manual] = await Promise.all([
     ler('CHANGELOG.md'),

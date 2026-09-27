@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.11 -->
+<!-- ava-version: 1.44.0.12 -->
+<!-- avantavendas-asset-revision: 155 -->
+
+> Revisão 1.44.0.12-av155: no **Dashboard**, abaixo de **Movimento financeiro**, o
+> **Relatório anual** permite escolher o ano e mostra Vendas, Custo, Recebido e
+> Lucro anuais. O lucro é calculado pelas vendas menos o custo; pedidos
+> cancelados, consignados e somente bonificados não compõem o relatório.
 
 > Revisão 1.44.0.11: ajuste de dimensão do controle pertence à Gestão Web, sem
 > impacto operacional no Vendas.

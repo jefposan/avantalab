@@ -108,6 +108,7 @@ const estadoInicial = {
   agendaAlertaAniversarioDias: 7,
   metaMensal: 0,
   dashboardDiasInativos: 30,
+  dashboardAnoRelatorio: new Date().getFullYear(),
   dashboardClientesInativosOrdem: 'mais-antiga',
   dashboardConsignadosExpandido: false,
   dashboardEvolucaoMesSelecionado: '',
@@ -742,6 +743,7 @@ function normalizarPreferenciasVendas(origem = {}) {
     agendaAlertaAniversarioDias: limitarNumeroPreferenciaVendas(origem.agendaAlertaAniversarioDias, 0, 30, estadoInicial.agendaAlertaAniversarioDias),
     metaMensal: limitarNumeroPreferenciaVendas(origem.metaMensal, 0, Number.MAX_SAFE_INTEGER, estadoInicial.metaMensal),
     dashboardDiasInativos: limitarNumeroPreferenciaVendas(origem.dashboardDiasInativos, 1, 365, estadoInicial.dashboardDiasInativos),
+    dashboardAnoRelatorio: limitarNumeroPreferenciaVendas(origem.dashboardAnoRelatorio, 2000, 2100, estadoInicial.dashboardAnoRelatorio),
     dashboardClientesInativosOrdem: origem.dashboardClientesInativosOrdem === 'mais-recente' ? 'mais-recente' : 'mais-antiga',
   };
 }
@@ -852,6 +854,7 @@ function salvarEstado() {
     agendaAlertaAniversarioDias: state.agendaAlertaAniversarioDias,
     metaMensal: state.metaMensal,
     dashboardDiasInativos: state.dashboardDiasInativos,
+    dashboardAnoRelatorio: state.dashboardAnoRelatorio,
     dashboardClientesInativosOrdem: state.dashboardClientesInativosOrdem,
     dashboardConsignadosExpandido: state.dashboardConsignadosExpandido,
     dashboardEvolucaoMesSelecionado: state.dashboardEvolucaoMesSelecionado,
@@ -1527,13 +1530,31 @@ function abrirSalaBotoes() {
   render();
 }
 
-function totaisPeriodo() {
-  const inicio = new Date(`${state.filtroInicio}T00:00:00`);
-  const fim = new Date(`${state.filtroFim}T23:59:59`);
-  const vendasMes = state.vendas.filter((v) => {
+function vendasValidasNoPeriodo(inicio, fim) {
+  return state.vendas.filter((v) => {
     const d = new Date(v.criado_em);
     return d >= inicio && d <= fim && v.status !== 'cancelada' && !pedidoEhConsignado(v) && !pedidoSomenteBonificado(v);
   });
+}
+
+function custoDasVendas(vendas) {
+  return vendas.reduce((soma, venda) => {
+    const itensVenda = venda.itens || [];
+    const todosComCustoHistorico = itensVenda.length > 0 && itensVenda.every((item) => item.preco_custo !== null && item.preco_custo !== undefined && Number.isFinite(Number(item.preco_custo)));
+    if (todosComCustoHistorico) return soma + itensVenda.reduce((subtotal, item) => subtotal + Number(item.quantidade || 0) * Number(item.preco_custo || 0), 0);
+    const custoRegistrado = Number(metadadosPedido(venda).custo_total);
+    if (Number.isFinite(custoRegistrado) && custoRegistrado > 0) return soma + custoRegistrado;
+    return soma + itensVenda.reduce((subtotal, item) => {
+      const produto = state.produtos.find((registro) => registro.id === item.produto_id);
+      return subtotal + Number(item.quantidade || 0) * Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
+    }, 0);
+  }, 0);
+}
+
+function totaisPeriodo() {
+  const inicio = new Date(`${state.filtroInicio}T00:00:00`);
+  const fim = new Date(`${state.filtroFim}T23:59:59`);
+  const vendasMes = vendasValidasNoPeriodo(inicio, fim);
   const total = vendasMes.reduce((s, v) => s + Number(v.total || 0), 0);
   const itens = vendasMes.reduce((s, v) => s + (v.itens || []).reduce(
     (x, i) => x + (itemPedidoBonificado(i) ? 0 : Number(i.quantidade || 0)),
@@ -1545,17 +1566,7 @@ function totaisPeriodo() {
     const custoItem = Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
     if (Number(item.quantidade || 0) > 0 && custoItem <= 0) produtosSemCusto.add(item.produto_id || item.produto_nome || 'produto');
   }));
-  const custo = vendasMes.reduce((soma, venda) => {
-    const itensVenda = venda.itens || [];
-    const todosComCustoHistorico = itensVenda.length > 0 && itensVenda.every((item) => item.preco_custo !== null && item.preco_custo !== undefined && Number.isFinite(Number(item.preco_custo)));
-    if (todosComCustoHistorico) return soma + itensVenda.reduce((subtotal, item) => subtotal + Number(item.quantidade || 0) * Number(item.preco_custo || 0), 0);
-    const custoRegistrado = Number(metadadosPedido(venda).custo_total);
-    if (Number.isFinite(custoRegistrado) && custoRegistrado > 0) return soma + custoRegistrado;
-    return soma + itensVenda.reduce((subtotal, item) => {
-      const produto = state.produtos.find((registro) => registro.id === item.produto_id);
-      return subtotal + Number(item.quantidade || 0) * Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
-    }, 0);
-  }, 0);
+  const custo = custoDasVendas(vendasMes);
   return {
     vendasMes,
     total,
@@ -1598,6 +1609,37 @@ function evolucaoVendasDashboard() {
 
 function selecionarEvolucaoVendasDashboard(chaveMes) {
   state.dashboardEvolucaoMesSelecionado = String(chaveMes || '');
+  render();
+}
+
+function anosRelatorioAnualDashboard() {
+  const anos = new Set([new Date().getFullYear(), Number(state.dashboardAnoRelatorio)]);
+  const adicionarAno = (valor, meioDia = false) => {
+    const data = new Date(meioDia ? `${valor || ''}T12:00:00` : valor || 0);
+    if (Number.isFinite(data.getTime())) anos.add(data.getFullYear());
+  };
+  state.vendas.forEach((venda) => adicionarAno(venda.criado_em));
+  (state.pagamentos || []).forEach((pagamento) => adicionarAno(pagamento.data_pagamento || String(pagamento.criado_em || '').slice(0, 10), true));
+  return [...anos].filter((ano) => Number.isInteger(ano) && ano >= 2000 && ano <= 2100).sort((a, b) => b - a);
+}
+
+function resumoAnualDashboard(ano) {
+  const anoSelecionado = Math.max(2000, Math.min(2100, Number(ano) || new Date().getFullYear()));
+  const inicio = new Date(`${anoSelecionado}-01-01T00:00:00`);
+  const fim = new Date(`${anoSelecionado}-12-31T23:59:59`);
+  const vendas = vendasValidasNoPeriodo(inicio, fim);
+  const totalVendas = vendas.reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const custo = custoDasVendas(vendas);
+  const recebido = (state.pagamentos || []).filter((pagamento) => {
+    const dataPagamento = new Date(`${pagamento.data_pagamento || String(pagamento.criado_em || '').slice(0, 10)}T12:00:00`);
+    return dataPagamento >= inicio && dataPagamento <= fim;
+  }).reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
+  return { ano: anoSelecionado, vendas: totalVendas, custo, recebido, lucro: totalVendas - custo };
+}
+
+function selecionarAnoRelatorioDashboard(ano) {
+  state.dashboardAnoRelatorio = Math.max(2000, Math.min(2100, Number(ano) || new Date().getFullYear()));
+  salvarEstado();
   render();
 }
 
@@ -4531,6 +4573,11 @@ function renderDashboard() {
     return dataPagamento >= new Date(`${state.filtroInicio}T00:00:00`) && dataPagamento <= new Date(`${state.filtroFim}T23:59:59`);
   });
   const totalRecebido = pagamentosPeriodo.reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
+  const anosRelatorio = anosRelatorioAnualDashboard();
+  const anoRelatorio = anosRelatorio.includes(Number(state.dashboardAnoRelatorio))
+    ? Number(state.dashboardAnoRelatorio)
+    : anosRelatorio[0];
+  const relatorioAnual = resumoAnualDashboard(anoRelatorio);
   const totalAReceber = state.clientes.reduce((soma, cliente) => soma + saldoFinanceiroCliente(cliente.id).debito, 0);
   const clientesTop = rankingClientesDashboard(t.vendasMes);
   const produtosTop = rankingProdutosDashboard(t.vendasMes);
@@ -4600,6 +4647,15 @@ function renderDashboard() {
         </div>
       </section>
       <section class="dashboard-movement-card"><header><h3>${svgIcon('dollar')} Movimento financeiro</h3><small>${escapeHtml(nomeMesReferencia())}</small></header><div class="dashboard-finance-bars"><div><span>Vendas <b>${moeda(t.total)}</b></span><i><em style="width:${t.total / maiorMovimento * 100}%"></em></i></div><div><span>Recebimentos <b>${moeda(totalRecebido)}</b></span><i><em style="width:${totalRecebido / maiorMovimento * 100}%"></em></i></div></div></section>
+      <section class="dashboard-annual-report" aria-labelledby="dashboardAnnualReportTitle">
+        <header><h3 id="dashboardAnnualReportTitle">${svgIcon('calendar')}<span>Relatório anual</span></h3><label class="dashboard-annual-year"><span class="sr-only">Ano do relatório anual</span><select onchange="selecionarAnoRelatorioDashboard(this.value)" aria-label="Ano do relatório anual">${anosRelatorio.map((ano) => `<option value="${ano}" ${ano === relatorioAnual.ano ? 'selected' : ''}>${ano}</option>`).join('')}</select></label></header>
+        <div class="dashboard-annual-report-grid">
+          <article><span>Vendas anuais</span><strong>${moeda(relatorioAnual.vendas)}</strong></article>
+          <article><span>Custo anual</span><strong>${moeda(relatorioAnual.custo)}</strong></article>
+          <article><span>Recebido anual</span><strong>${moeda(relatorioAnual.recebido)}</strong></article>
+          <article class="dashboard-annual-profit"><span>Lucro anual</span><strong>${moeda(relatorioAnual.lucro)}</strong></article>
+        </div>
+      </section>
       <article class="dashboard-panel dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}"><h3 class="dashboard-consignment-header"><span class="dashboard-consignment-heading"><span class="dashboard-consignment-title">${svgIcon('package')}<span>Estoque consignado</span></span><small>${consignados.pedidos.length} ${consignados.pedidos.length === 1 ? 'consignado ativo' : 'consignados ativos'} · ${consignados.quantidade.toLocaleString('pt-BR')} unidades · ${moeda(consignados.total)}</small></span><button type="button" class="dashboard-consignment-toggle" onclick="alternarConsignadosDashboard()" aria-expanded="${state.dashboardConsignadosExpandido}" aria-label="${state.dashboardConsignadosExpandido ? 'Recolher estoque consignado' : 'Expandir estoque consignado'}"><span>${state.dashboardConsignadosExpandido ? 'Recolher' : 'Expandir'}</span>${svgIconEstavel(state.dashboardConsignadosExpandido ? 'chevron-up' : 'chevron-down')}</button></h3>${state.dashboardConsignadosExpandido ? `<div class="dashboard-consignment-products">${listaConsignados}</div>` : ''}</article>
       <section class="dashboard-tables">
         <article class="dashboard-panel dashboard-stock-panel ${estoqueExpandido ? 'is-expanded' : ''}">

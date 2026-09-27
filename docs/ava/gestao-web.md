@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.11 -->
+<!-- ava-version: 1.44.0.12 -->
+
+> Revisão 1.44.0.12: relatório anual pertence ao Dashboard do AvantaVendas;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.44.0.11: o controle visual de expandir/recolher ficou menor, mas
 > mantém área de clique ampliada; sem mudança operacional.
