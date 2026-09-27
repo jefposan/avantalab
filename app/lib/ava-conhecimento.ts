@@ -1,5 +1,31 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.11: o controle visual de expandir/recolher na
+// Gestão Web ficou menor, preservando a área clicável ampliada.
+// Revisado na versão 1.44.0.10: o controle de lista na Gestão Web usa a cor
+// primária no tema claro e superfície escura com contraste invertido no tema escuro.
+// Revisado na versão 1.44.0.09: o controle de lista na Gestão Web mantém a
+// cor no hover, cresce ao apontar e reduz durante o clique.
+// Revisado na versão 1.44.0.08: o botão do rodapé da lista foi compactado e
+// afastado do atalho circular de próxima rolagem na Gestão Web.
+// Revisado na versão 1.44.0.07: o rodapé de expandir/recolher as listas da
+// Gestão Web foi compactado, sem mudança no comportamento da lista.
+// Revisado na versão 1.44.0.06: na Gestão Web, o relatório é acessado somente
+// por Menu > Configurações > Exportar relatório, sem atalho na barra mensal.
+// Revisado na versão 1.44.0.05: a Gestão Web também oferece Menu > Exportar
+// relatório, com a mesma configuração do atalho da barra da competência.
+// Revisado na versão 1.44.0.04: na Gestão Mobile, Mês e Ano do relatório
+// permanecem na mesma linha, com os controles separados.
+// Revisado na versão 1.44.0.03: mês e ano do relatório ficam em seletores
+// independentes e excluem competências sem lançamentos no contexto aberto.
+// Revisado na versão 1.44.0.02: em Menu > Exportar relatório no Mobile e no
+// botão Exportar mês da Web, o usuário escolhe mês, realizados por tipo e/ou
+// previsões antes de gerar XLS ou PDF.
+// Revisado na versão 1.44.0.01: a gaveta da Gestão Mobile anima somente na
+// primeira montagem; atualizações em segundo plano não reiniciam sua entrada.
+// Revisado na versão 1.44.0: Gestão Web e Mobile exportam a competência
+// aberta em XLS ou PDF, incluindo receitas, despesas e previsões com resumo.
+// No Mobile, a abertura do menu espera o fim do toque e não deve piscar.
 // Revisado na versão 1.43.0.05: o editor de produto prioriza a altura útil do
 // modal e recolhe os controles gerais durante a edição, sem mudar o catálogo.
 // Revisado na versão 1.43.0.04: a edição de produto no Conteúdo permanece
@@ -1326,6 +1352,7 @@ NAVEGAÇÃO E PERFIS
 
 FINANCEIRO
 - Para lançar receita, despesa, despesa futura, parcelamento ou despesa fixa, use os controles de novo lançamento/cadastro da página. No Gestão Mobile, o cabeçalho do novo lançamento começa no mês vigente e as setas escolhem o mês e ano que receberão o registro, sem mudar o período do painel. Uma despesa programada aparece como Previsto antes da data, A confirmar no dia e Pendente depois do vencimento; somente a confirmação manual a inclui nos totais, gráficos e resultado realizado.
+- Para guardar ou compartilhar uma competência, use **Menu > Configurações > Exportar relatório** na Gestão Web ou **Menu > Exportar relatório** na Gestão Mobile. Escolha **Planilha XLS** para uma relação editável ou **PDF** para relatório. Os arquivos incluem receitas, despesas e previsões do mês escolhido, com data, descrição, natureza, situação e o resumo de receitas, despesas e saldo. A exportação respeita o perfil e, quando houver, o centro de custo atualmente selecionado.
 - Para editar uma despesa já registrada na Gestão Web, clique a própria linha no card **Lançamentos do período**: ela vira o formulário de edição na mesma linha. **Cadastrar despesas** serve apenas para administrar tipos e categorias, não para editar um lançamento existente. Em uma despesa parcelada, o editor mostra **Parcela atual** e **Total de parcelas**: se a posição ou o total estiver incorreto, ajuste-os e confirme **Reorganizar parcelas**. A parcela aberta e as próximas serão reprogramadas a partir da data informada; o histórico anterior não é modificado. Para a recorrência completa, use **Menu > Despesas fixas**; editar a linha mensal afeta só aquele mês.
 - Em **Configurações**, Gestor Master ou Administrador pode ativar **Centros de custo** no perfil quando o plano for Business Pro ou Business Premium. No Business Básico, a opção informa que é necessário mudar de plano. Com o recurso ativo, o menu permite cadastrar centros por texto ou número e o seletor junto a **Despesas fixas** define o centro dos novos lançamentos avulsos, parcelados e fixos. O Dashboard mostra as despesas realizadas por centro no mês; registros sem centro e receitas continuam no total do perfil. Ao desativar ou mudar para o Business Básico, os dados não são movidos nem apagados e o financeiro volta a ser exibido como um único conjunto.
 - Ao incluir, editar, excluir ou confirmar uma receita ou despesa, a Gestão bloqueia a tela com fundo escuro e informa a operação em andamento até o servidor responder. Oriente a aguardar o indicador desaparecer; toques adicionais não iniciam outra solicitação.

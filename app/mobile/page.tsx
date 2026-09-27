@@ -8,6 +8,7 @@ import IosBillingBridge from './IosBillingBridge';
 import AndroidBillingBridge from './AndroidBillingBridge';
 import NativeShellBridge from './NativeShellBridge';
 import NativePushNotificationsBridge from './NativePushNotificationsBridge';
+import ExportarLancamentosMobileBridge from './ExportarLancamentosMobileBridge';
 import { APP_VERSION } from '../lib/version';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -719,6 +720,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
       />
       <NativeShellBridge />
       <NativePushNotificationsBridge />
+      <ExportarLancamentosMobileBridge />
 
       <Script
         id="avantalab-mobile-bootstrap"

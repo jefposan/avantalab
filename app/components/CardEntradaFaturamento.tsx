@@ -367,11 +367,14 @@ export default function CardEntradaFaturamento({
         />
       </div>
       {!popupExpandido && entradas.length > 10 && (
-        <div className="mt-3 flex items-center justify-center">
+        <div data-rodape-expansao-lista="receitas" className="mt-1 flex h-9 shrink-0 items-center justify-center">
           <BotaoExpandirCard
             expandido={listaExpandida}
             variante="rodape"
             modo="lista"
+            compactoNoRodape
+            corPrimaria={corPrimaria}
+            darkMode={darkMode}
             desabilitado={!ativo}
             onClick={() => definirListaExpandida(!listaExpandida)}
           />

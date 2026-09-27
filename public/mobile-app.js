@@ -620,6 +620,14 @@
     menuConfigAberto: false,
     menuConfigAnimacao: '',
     menuAnimacao: '',
+    exportacaoMesAberta: false,
+    exportacaoMesProcessando: '',
+    exportacaoMesPedidoId: '',
+    exportacaoMesSelecionado: '',
+    exportacaoAnoSelecionado: '',
+    exportacaoIncluirDespesas: true,
+    exportacaoIncluirReceitas: true,
+    exportacaoIncluirPrevistos: true,
     modalMenu: '',
     modalMenuRetorno: '',
     changelog: null,
@@ -3349,6 +3357,10 @@
     state.menuSistemasAnimacao = '';
     state.menuConfigAberto = false;
     state.menuConfigAnimacao = '';
+    state.menuAnimacao = '';
+    state.exportacaoMesAberta = false;
+    state.exportacaoMesProcessando = '';
+    state.exportacaoMesPedidoId = '';
     state.busca = '';
     render();
   }
@@ -4774,22 +4786,25 @@
   }
 
   function abrirMenuPelaNavegacao() {
-    if (state.menuAberto) {
-      fecharMenuLateralAnimado();
-      return;
-    }
+    // A gaveta pode receber atualizações assíncronas (centros de custo e
+    // avisos) já durante sua abertura. A animação precisa pertencer somente à
+    // primeira montagem: se um novo render a reaplicar, o painel parece fechar
+    // e abrir uma segunda vez.
+    if (Date.now() - Number(window._avaMenuAbertoEm || 0) < 420) return;
+    if (state.menuAberto) return;
     cancelarJanelasMobile();
     state.visao = 'home';
     state.busca = '';
     state.agendaDiaSelecionado = null;
     state.menuAberto = true;
     state.menuAnimacao = 'entrar';
+    window._avaMenuAbertoEm = Date.now();
     render();
+    // O DOM atual conserva a animação CSS até seu fim. Limpar o estado logo
+    // depois evita que qualquer render posterior reinicie a entrada.
+    state.menuAnimacao = '';
     sincronizarCentrosCustoMobile();
     atualizarEstadoNotificacoesMobile(false);
-    setTimeout(function () {
-      if (state.menuAberto && state.menuAnimacao === 'entrar') state.menuAnimacao = '';
-    }, 390);
   }
 
   function fecharMenuLateralAnimado(acaoDepois) {
@@ -4812,6 +4827,141 @@
       if (typeof acaoDepois === 'function') acaoDepois();
       else render();
     }, 315);
+  }
+
+  function mesesComDadosExportacaoMobile() {
+    var comDados = {};
+    lancamentosDoCentroCustoAtualMobile().forEach(function (item) {
+      if (item && item.status !== 'cancelada' && item.mes) comDados[item.mes] = true;
+    });
+    entradasDoCentroCustoAtualMobile().forEach(function (item) {
+      if (item && item.mes) comDados[item.mes] = true;
+    });
+    return meses.filter(function (mes) { return comDados[mes]; });
+  }
+
+  function anosComDadosExportacaoMobile() {
+    return mesesComDadosExportacaoMobile().length ? [String(state.ano)] : [];
+  }
+
+  function linhasExportacaoMesMobile(mesSelecionado, filtros, anoSelecionado) {
+    var mes = mesSelecionado || state.mes;
+    var indice = indiceMes(mes) + 1;
+    var prefixoData = String(anoSelecionado || state.ano || new Date().getFullYear());
+    var data = function (dia) {
+      return String(dia || '').padStart(2, '0') + '/' + String(indice).padStart(2, '0') + '/' + prefixoData;
+    };
+    var despesas = lancamentosDoCentroCustoAtualMobile()
+      .filter(function (item) { return item.mes === mes && item.status !== 'cancelada'; })
+      .map(function (item) {
+        return {
+          tipo: 'Despesa', data: data(item.dia),
+          descricao: [item.despesa, item.descricao].filter(Boolean).join(' · ') || 'Despesa sem descrição',
+          natureza: item.tipo === 'fixa' ? 'Fixa' : (item.tipo === 'parcela' ? 'Parcela' : 'Avulsa'),
+          status: item.status === 'prevista' ? 'Prevista' : 'Realizada', valor: Number(item.valor || 0),
+        };
+      });
+    var receitas = entradasDoCentroCustoAtualMobile()
+      .filter(function (item) { return item.mes === mes; })
+      .map(function (item) {
+        return {
+          tipo: 'Receita', data: data(item.dia), descricao: item.origem || 'Receita sem descrição',
+          natureza: 'Avulsa', status: item.status === 'prevista' ? 'Prevista' : 'Realizada', valor: Number(item.valor || 0),
+        };
+      });
+    return receitas.concat(despesas).filter(function (linha) {
+      if (linha.status === 'Prevista') return filtros.previstos;
+      return linha.tipo === 'Despesa' ? filtros.despesas : filtros.receitas;
+    });
+  }
+
+  function abrirExportacaoMesMobile() {
+    state.exportacaoMesAberta = true;
+    state.exportacaoMesProcessando = '';
+    state.exportacaoMesPedidoId = '';
+    var mesesComDados = mesesComDadosExportacaoMobile();
+    state.exportacaoAnoSelecionado = String(state.ano);
+    state.exportacaoMesSelecionado = mesesComDados.indexOf(state.mes) >= 0 ? state.mes : (mesesComDados[0] || '');
+    state.exportacaoIncluirDespesas = true;
+    state.exportacaoIncluirReceitas = true;
+    state.exportacaoIncluirPrevistos = true;
+    render();
+  }
+
+  function exportarLancamentosMesMobile(formato) {
+    var filtros = {
+      despesas: Boolean(state.exportacaoIncluirDespesas),
+      receitas: Boolean(state.exportacaoIncluirReceitas),
+      previstos: Boolean(state.exportacaoIncluirPrevistos),
+    };
+    if (!filtros.despesas && !filtros.receitas && !filtros.previstos) {
+      mostrarToast('Selecione ao menos um tipo de lançamento para o relatório.');
+      return;
+    }
+    var mes = state.exportacaoMesSelecionado || state.mes;
+    var ano = state.exportacaoAnoSelecionado || state.ano;
+    var linhas = linhasExportacaoMesMobile(mes, filtros, ano);
+    if (!linhas.length) {
+      mostrarToast('Não há lançamentos com estes filtros neste mês.');
+      return;
+    }
+    var id = 'exportacao-mes-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+    state.exportacaoMesPedidoId = id;
+    state.exportacaoMesProcessando = formato;
+    render();
+    window.dispatchEvent(new CustomEvent('avantalab:exportar-lancamentos-mes', {
+      detail: {
+        id: id,
+        formato: formato,
+        mes: mes,
+        ano: String(ano),
+        perfil: nomeEmpresa(state.empresa),
+        linhas: linhas,
+      },
+    }));
+  }
+
+  function exportacaoMesMobileHtml() {
+    if (!state.exportacaoMesAberta) return '';
+    var escuro = state.darkMode;
+    var processando = state.exportacaoMesProcessando;
+    var card = escuro ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900';
+    var auxiliar = escuro ? 'text-slate-300' : 'text-slate-600';
+    var mes = state.exportacaoMesSelecionado || state.mes;
+    var ano = state.exportacaoAnoSelecionado || state.ano;
+    var filtros = {
+      despesas: Boolean(state.exportacaoIncluirDespesas),
+      receitas: Boolean(state.exportacaoIncluirReceitas),
+      previstos: Boolean(state.exportacaoIncluirPrevistos),
+    };
+    var quantidade = linhasExportacaoMesMobile(mes, filtros, ano).length;
+    var opcoesMes = mesesComDadosExportacaoMobile().map(function (opcao) {
+      return '<option value="' + escapeHtml(opcao) + '"' + (opcao === mes ? ' selected' : '') + '>' + escapeHtml(nomeMesCompleto(opcao)) + '</option>';
+    }).join('');
+    var opcoesAno = anosComDadosExportacaoMobile().map(function (opcao) {
+      return '<option value="' + escapeHtml(opcao) + '"' + (opcao === String(ano) ? ' selected' : '') + '>' + escapeHtml(opcao) + '</option>';
+    }).join('');
+    function opcaoFiltro(id, marcada, titulo, ajuda) {
+      return '<label class="flex min-h-14 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 ' + (escuro ? 'border-slate-700 bg-slate-800/70' : '') + '"><input id="' + id + '" type="checkbox"' + (marcada ? ' checked' : '') + ' class="h-4 w-4 rounded border-slate-400" style="accent-color:#003E73"><span><span class="block text-xs font-black">' + titulo + '</span><span class="block text-[10px] font-semibold ' + auxiliar + '">' + ajuda + '</span></span></label>';
+    }
+    return (
+      '<div id="exportacao-mes-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950/75 px-4 py-6" style="z-index:13020" role="presentation">' +
+        '<section class="flex max-h-full w-full max-w-sm flex-col overflow-hidden rounded-2xl border shadow-2xl ' + card + '" role="dialog" aria-modal="true" aria-labelledby="titulo-exportacao-mes">' +
+          '<header class="shrink-0 bg-[#003E73] px-5 py-4 text-white"><p class="text-[10px] font-black uppercase tracking-[.18em] text-cyan-100">Relatório financeiro</p><h2 id="titulo-exportacao-mes" class="mt-1 text-lg font-black">Configurar exportação</h2></header>' +
+          '<div class="grid gap-4 overflow-y-auto p-5"><div class="grid grid-cols-[minmax(0,1fr)_104px] gap-3"><label class="grid gap-1.5 text-xs font-black uppercase tracking-wide"><span class="' + auxiliar + '">Mês</span><select id="exportacao-mes-mes" class="h-11 min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold normal-case text-slate-800 outline-none focus:ring-2 focus:ring-sky-400">' + opcoesMes + '</select></label><label class="grid gap-1.5 text-xs font-black uppercase tracking-wide"><span class="' + auxiliar + '">Ano</span><select id="exportacao-mes-ano" class="h-11 min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-400">' + opcoesAno + '</select></label></div>' +
+            '<fieldset class="grid gap-2"><legend class="text-xs font-black uppercase tracking-wide ' + auxiliar + '">Incluir no relatório</legend><div class="grid gap-2">' +
+              opcaoFiltro('exportacao-mes-despesas', filtros.despesas, 'Despesas', 'Realizadas') +
+              opcaoFiltro('exportacao-mes-receitas', filtros.receitas, 'Receitas', 'Realizadas') +
+              opcaoFiltro('exportacao-mes-previstos', filtros.previstos, 'Previstos', 'Receitas e despesas') +
+            '</div></fieldset>' +
+            '<p class="text-xs font-semibold leading-relaxed ' + auxiliar + '">' + quantidade + ' lançamento' + (quantidade === 1 ? '' : 's') + ' será' + (quantidade === 1 ? '' : 'ão') + ' incluído' + (quantidade === 1 ? '' : 's') + ' em <strong>' + escapeHtml(nomeMesCompleto(mes)) + ' de ' + escapeHtml(String(ano)) + '</strong>.</p>' +
+            '<div class="grid gap-2 sm:grid-cols-2"><button id="exportar-mes-excel" type="button"' + (processando ? ' disabled' : '') + ' class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-left disabled:opacity-60"><span class="block text-sm font-black text-emerald-700">Planilha XLS</span><span class="mt-1 block text-xs font-semibold text-slate-600">' + (processando === 'excel' ? 'Gerando arquivo…' : 'Dados detalhados e resumo mensal.') + '</span></button>' +
+            '<button id="exportar-mes-pdf" type="button"' + (processando ? ' disabled' : '') + ' class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-left disabled:opacity-60"><span class="block text-sm font-black text-sky-700">PDF</span><span class="mt-1 block text-xs font-semibold text-slate-600">' + (processando === 'pdf' ? 'Gerando arquivo…' : 'Relatório pronto para compartilhar ou imprimir.') + '</span></button></div>' +
+          '</div>' +
+          '<footer class="border-t ' + (escuro ? 'border-slate-700' : 'border-slate-200') + ' p-3"><button id="cancelar-exportacao-mes" type="button"' + (processando ? ' disabled' : '') + ' class="h-10 w-full rounded-lg border border-slate-300 text-xs font-black uppercase tracking-wide ' + (escuro ? 'text-slate-100' : 'text-slate-700') + ' disabled:opacity-60">Cancelar</button></footer>' +
+        '</section>' +
+      '</div>'
+    );
   }
 
   function executarAposFecharMenu(acao) {
@@ -11496,6 +11646,7 @@
           agendaMobileHtml(atual) +
           (state.modalLancamento ? modalLancamentoHtml() : '') +
           (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
+          exportacaoMesMobileHtml() +
           (state.menuAberto ? menuLateralHtml() : '') +
           (state.modalMenu ? modalMenuHtml() : '') +
           (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
@@ -11553,6 +11704,7 @@
         (opcoesDashboardAberta ? menuOpcoesCardDashboardHtml() : '') +
         (state.modalLancamento ? modalLancamentoHtml() : '') +
         (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
+        exportacaoMesMobileHtml() +
         (state.menuAberto ? menuLateralHtml() : '') +
         (state.modalMenu ? modalMenuHtml() : '') +
         (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
@@ -13380,6 +13532,7 @@
             menuBotaoHtml('menu-avisos', 'Central de avisos', 'Consultar e apagar avisos recebidos', false, premiumInativo) +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa') +
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais') +
+            menuBotaoHtml('menu-exportar-mes', 'Exportar relatório', 'Escolher mês, lançamentos e formato') +
             (state.centrosCustoAtivo && podeGerenciarUsuarios()
               ? menuBotaoHtml('menu-centros-custo', 'Centros de custo', 'Cadastrar, pausar ou editar centros')
               : '') +
@@ -13655,6 +13808,7 @@
       'menu-organizar-atalhos': '<path d="M7 7h13M17 3l4 4-4 4M17 17H4M7 13l-4 4 4 4"/>',
       'menu-categorias': '<path d="M12 5v14M5 12h14"/>',
       'menu-despesas-fixas': '<path d="M20 6v5h-5M4 18v-5h5M18 9a7 7 0 0 0-12-2l-2 4M6 15a7 7 0 0 0 12 2l2-4"/>',
+      'menu-exportar-mes': '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
       'menu-centros-custo': '<path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v18M16 3v18"/>',
       'menu-ajuda-categorias': '<circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 3.3 2.37c-.9.36-.9 1.13-.9 1.63M12 17h.01"/>',
       'menu-tutorial': '<path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 12.5V17c3 2 7 2 10 0v-4.5M21 10v6"/>',
@@ -13686,6 +13840,7 @@
       'menu-organizar-atalhos': ['linear-gradient(90deg,#E3FAFC 0%,#F9FEFF 100%)', '#BDEBF0', 'linear-gradient(135deg,#22D3EE,#0891B2)', '#FFFFFF'],
       'menu-categorias': ['linear-gradient(90deg,#E3F8F3 0%,#FAFEFD 100%)', '#BDE9DD', 'linear-gradient(135deg,#2DD4BF,#0F766E)', '#FFFFFF'],
       'menu-despesas-fixas': ['linear-gradient(90deg,#E7F1FF 0%,#FAFCFF 100%)', '#C6DCF7', 'linear-gradient(135deg,#38BDF8,#1D4ED8)', '#FFFFFF'],
+      'menu-exportar-mes': ['linear-gradient(90deg,#E6F8F7 0%,#FBFEFE 100%)', '#BCE8E4', 'linear-gradient(135deg,#14B8A6,#0F766E)', '#FFFFFF'],
       'menu-centros-custo': ['linear-gradient(90deg,#E6FBF9 0%,#FAFFFE 100%)', '#BDEBE6', 'linear-gradient(135deg,#14B8A6,#0F766E)', '#FFFFFF'],
       'menu-ajuda-categorias': ['linear-gradient(90deg,#ECEBFF 0%,#FCFBFF 100%)', '#D4D5FA', 'linear-gradient(135deg,#818CF8,#4F46E5)', '#FFFFFF'],
       'menu-tutorial': ['linear-gradient(90deg,#F0EAFE 0%,#FCFAFF 100%)', '#DED4FA', 'linear-gradient(135deg,#A78BFA,#7C3AED)', '#FFFFFF'],
@@ -15719,8 +15874,9 @@
     bind('fechar-menu', fecharMenuLateralAnimado);
     var menuOverlay = document.getElementById('menu-overlay');
     if (menuOverlay) {
-      menuOverlay.addEventListener('click', function (event) {
+      menuOverlay.addEventListener('pointerdown', function (event) {
         if (event.target !== menuOverlay) return;
+        if (Date.now() - Number(window._avaMenuAbertoEm || 0) < 420) return;
         fecharMenuLateralAnimado();
       });
     }
@@ -15796,6 +15952,7 @@
     bind('tour-proximo', function () { tourIr(1); });
     bind('menu-categorias', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('categorias'); }); });
     bind('menu-despesas-fixas', function () { fecharMenuLateralAnimado(abrirModalMenuDespesasFixas); });
+    bind('menu-exportar-mes', function () { fecharMenuLateralAnimado(abrirExportacaoMesMobile); });
     bind('menu-centros-custo', function () { fecharMenuLateralAnimado(abrirCentrosCustoMobile); });
     bind('menu-ajuda-categorias', function () {
       if (state.modalMenu === 'categorias') state.modalMenuRetorno = 'categorias';
@@ -16602,11 +16759,69 @@
     bind('reset-atalhos-inferiores', restaurarAtalhosInferiores);
     bind('nav-home', voltarDashboard);
     bind('nav-lancamento', function () { executarAposFecharMenu(abrirLancamentoPelaNavegacao); });
-    bind('nav-menu', abrirMenuPelaNavegacao);
+    var botaoAbrirMenu = document.getElementById('nav-menu');
+    if (botaoAbrirMenu) {
+      // Pointerdown dá retorno imediato no toque e impede que o click
+      // sintetizado reabra a gaveta. Click com detail 0 continua atendendo
+      // teclado e tecnologias assistivas.
+      botaoAbrirMenu.addEventListener('pointerdown', function (event) {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        abrirMenuPelaNavegacao();
+      });
+      botaoAbrirMenu.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.detail !== 0) return;
+        abrirMenuPelaNavegacao();
+      });
+    }
     bind('nav-atalho-esquerdo', function () { executarAposFecharMenu(function () { executarAtalhoInferior(premiumPessoalBloqueadoMobile() ? 'perfil' : state.atalhoInferiorEsquerdo); }); });
     bind('nav-atalho-direito', function () { executarAposFecharMenu(function () { executarAtalhoInferior(premiumPessoalBloqueadoMobile() ? 'agenda' : state.atalhoInferiorDireito); }); });
     bind('mes-anterior', function () { mudarMes(-1); });
     bind('mes-proximo', function () { mudarMes(1); });
+    bindChange('exportacao-mes-mes', function () {
+      if (state.exportacaoMesProcessando) return;
+      state.exportacaoMesSelecionado = this.value || state.mes;
+      render();
+    });
+    bindChange('exportacao-mes-ano', function () {
+      if (state.exportacaoMesProcessando) return;
+      state.exportacaoAnoSelecionado = this.value || state.ano;
+      state.exportacaoMesSelecionado = mesesComDadosExportacaoMobile()[0] || '';
+      render();
+    });
+    bindChange('exportacao-mes-despesas', function () {
+      if (state.exportacaoMesProcessando) return;
+      state.exportacaoIncluirDespesas = Boolean(this.checked);
+      render();
+    });
+    bindChange('exportacao-mes-receitas', function () {
+      if (state.exportacaoMesProcessando) return;
+      state.exportacaoIncluirReceitas = Boolean(this.checked);
+      render();
+    });
+    bindChange('exportacao-mes-previstos', function () {
+      if (state.exportacaoMesProcessando) return;
+      state.exportacaoIncluirPrevistos = Boolean(this.checked);
+      render();
+    });
+    bind('exportar-mes-excel', function () { exportarLancamentosMesMobile('excel'); });
+    bind('exportar-mes-pdf', function () { exportarLancamentosMesMobile('pdf'); });
+    bind('cancelar-exportacao-mes', function () {
+      if (state.exportacaoMesProcessando) return;
+      state.exportacaoMesAberta = false;
+      render();
+    });
+    var exportacaoMesOverlay = document.getElementById('exportacao-mes-overlay');
+    if (exportacaoMesOverlay) {
+      exportacaoMesOverlay.addEventListener('pointerdown', function (event) {
+        if (event.target !== exportacaoMesOverlay || state.exportacaoMesProcessando) return;
+        state.exportacaoMesAberta = false;
+        render();
+      });
+    }
     bind('agenda-mes-prev', function () { state.agendaAnimar = 'prev'; mudarMes(-1); });
     bind('agenda-mes-prox', function () { state.agendaAnimar = 'prox'; mudarMes(1); });
     bind('ver-despesas', function () {
@@ -18201,6 +18416,16 @@
       document.addEventListener('DOMContentLoaded', iniciarAposRenderInicial, { once: true });
     }
   }
+
+  window.addEventListener('avantalab:exportar-lancamentos-mes-resultado', function (event) {
+    var detalhe = event && event.detail ? event.detail : {};
+    if (!detalhe.id || detalhe.id !== state.exportacaoMesPedidoId) return;
+    state.exportacaoMesProcessando = '';
+    state.exportacaoMesPedidoId = '';
+    state.exportacaoMesAberta = false;
+    render();
+    mostrarToast(detalhe.sucesso ? 'Arquivo exportado com sucesso.' : (detalhe.mensagem || 'Não foi possível exportar o arquivo.'));
+  });
 
   iniciarQuandoPaginaEstiverPronta();
 })();

@@ -142,6 +142,7 @@ import { useEmpresas } from '@/app/hooks/useEmpresas';
 import ChatFlutuante from '@/app/components/ChatFlutuante';
 import AppHeader from '@/app/components/AppHeader';
 import AuthCard from '@/app/components/AuthCard';
+import ExportarLancamentosMes from '@/app/components/ExportarLancamentosMes';
 
 
 type AgendaItem = {
@@ -929,6 +930,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>(ocultosDashboardPadrao);
 const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
 const [ajustesAberto, setAjustesAberto] = useState(false);
+const [exportacaoRelatorioAberta, setExportacaoRelatorioAberta] = useState(false);
 const [alturaHeaderGestao, setAlturaHeaderGestao] = useState(0);
 const [menuAjuste, setMenuAjuste] = useState<null | 'visual' | 'config'>(null);
 const [menuAjusteRect, setMenuAjusteRect] = useState<{ top: number; left: number } | null>(null);
@@ -977,7 +979,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
 } | null>(null);
   const ALTURA_LINHA_LANCAMENTO = 44;
   const ALTURA_PADRAO_TABELA = 440;
-  const ESPACO_ACAO_EXPANSAO_TABELA = 48;
+  const ESPACO_ACAO_EXPANSAO_TABELA = 36;
 
   const alturaTabelaLancamentos = ALTURA_PADRAO_TABELA;
 
@@ -4275,6 +4277,37 @@ const entradasFaturamentoDoMes = useMemo(() => {
     return textoBusca.includes(termo);
   });
 }, [buscaEntradaFaturamento, entradasFaturamentoOrdenadasDoMes]);
+
+const opcoesExportacaoMensal = useMemo(() => meses.map((mes) => {
+  const prefixoData = `${String(anoSelecionado)}`;
+  const data = (dia: string | number) => `${String(dia).padStart(2, '0')}/${String(meses.indexOf(mes) + 1).padStart(2, '0')}/${prefixoData}`;
+  const despesas = lancamentos
+    .filter((lancamento) => lancamento.mes === mes && lancamento.status !== 'cancelada')
+    .map((lancamento) => ({
+      tipo: 'Despesa' as const,
+      data: data(lancamento.dia),
+      descricao: [lancamento.despesa, lancamento.descricao].filter(Boolean).join(' · '),
+      natureza: lancamento.tipo === 'fixa' ? 'Fixa' : lancamento.tipo === 'parcela' ? 'Parcela' : 'Avulsa',
+      status: lancamento.status === 'prevista' ? 'Prevista' : 'Realizada',
+      valor: Number(lancamento.valor || 0),
+    }));
+  const receitas = faturamentosEntradas
+    .filter((entrada) => entrada.mes === mes)
+    .map((entrada) => ({
+      tipo: 'Receita' as const,
+      data: data(entrada.dia),
+      descricao: entrada.origem || 'Receita sem descrição',
+      natureza: 'Avulsa',
+      status: entrada.status === 'prevista' ? 'Prevista' : 'Realizada',
+      valor: Number(entrada.valor || 0),
+    }));
+  return {
+    mes,
+    ano: anoSelecionado,
+    perfil: nomeEmpresaAtual || 'Perfil financeiro',
+    linhas: [...receitas, ...despesas],
+  };
+}).filter((opcao) => opcao.linhas.length > 0), [anoSelecionado, faturamentosEntradas, lancamentos, meses, nomeEmpresaAtual]);
 
   const maiorGasto = lancamentosRealizadosDoMes.length > 0 ? lancamentosRealizadosDoMes.reduce((prev, curr) => (curr.valor > prev.valor ? curr : prev), { despesa: '', valor: 0 }) : { despesa: 'Nenhuma despesa', valor: 0 };
   const receitasTotais = Object.values(faturamentos).reduce((a, b) => a + b, 0);
@@ -11567,6 +11600,17 @@ if (validacaoTelefoneObrigatoria) {
 
           <div className="my-1 border-t border-slate-700" />
 
+          <Tooltip texto="Escolha o período, os lançamentos e gere o relatório em XLS ou PDF." posicao="right" wrapperClassName="w-full">
+            <button
+              type="button"
+              onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setExportacaoRelatorioAberta(true); }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-sky-300 transition-colors hover:bg-slate-700"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v12m0 0 4-4m-4 4-4-4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" /></svg>
+              Exportar relatório
+            </button>
+          </Tooltip>
+
           <Tooltip texto="Exporte os dados do perfil atual para um arquivo Excel." posicao="right" wrapperClassName="w-full">
             <button
               onClick={() => { if (recursoBloqueado('exportacao')) { setAjustesAberto(false); abrirPremium('exportacao'); return; } if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para gerar backup dos dados da empresa.'); return; } setAjustesAberto(false); setBackupNuvemDestinoAberto(true); }}
@@ -11611,6 +11655,15 @@ if (validacaoTelefoneObrigatoria) {
     </div>
       </>
 )}
+
+      <ExportarLancamentosMes
+        opcoesMes={opcoesExportacaoMensal}
+        mesInicial={mesAtivo || ''}
+        darkMode={darkMode}
+        corPrimaria={corPrimaria}
+        aberto={exportacaoRelatorioAberta}
+        onAbertoChange={setExportacaoRelatorioAberta}
+      />
 
       {/* RENDERIZAÇÃO CONDICIONAL DAS TELAS */}
       {mesAtivo ? (
@@ -11687,19 +11740,21 @@ if (validacaoTelefoneObrigatoria) {
       </div>
 
       {/* DESPESAS FIXAS */}
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">
-          Repetem todo mês
-        </span>
-        <button
-          type="button"
-          onClick={abrirModalDespesasFixas}
-          className="flex h-9 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-black/15 px-3 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 sm:w-auto cursor-pointer"
-          title="Gerenciar despesas fixas"
-        >
-          <span>⚙</span>
-          <span>Despesas fixas</span>
-        </button>
+      <div className="flex flex-wrap items-end justify-center gap-2">
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">
+            Repetem todo mês
+          </span>
+          <button
+            type="button"
+            onClick={abrirModalDespesasFixas}
+            className="flex h-9 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-black/15 px-3 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 sm:w-auto cursor-pointer"
+            title="Gerenciar despesas fixas"
+          >
+            <span>⚙</span>
+            <span>Despesas fixas</span>
+          </button>
+        </div>
       </div>
 
     </div>

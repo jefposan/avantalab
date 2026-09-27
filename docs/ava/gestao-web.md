@@ -1,6 +1,48 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.43.0.05 -->
+<!-- ava-version: 1.44.0.11 -->
+
+> Revisão 1.44.0.11: o controle visual de expandir/recolher ficou menor, mas
+> mantém área de clique ampliada; sem mudança operacional.
+
+> Revisão 1.44.0.10: o controle compacto de expandir/recolher usa a cor do
+> perfil no tema claro e contraste invertido no tema escuro; sem mudança operacional.
+
+> Revisão 1.44.0.09: o controle do rodapé mantém a mesma cor de texto no hover,
+> cresce suavemente ao passar o mouse e reduz no clique; sem mudança operacional.
+
+> Revisão 1.44.0.08: o controle de expandir/recolher do rodapé ficou menor e
+> abaixo do atalho de avançar a lista; sem mudança operacional.
+
+> Revisão 1.44.0.07: o rodapé de expandir/recolher listas de receitas e
+> despesas ficou mais compacto; sem mudança operacional.
+
+> Revisão 1.44.0.06: na Gestão Web, o relatório é acessado somente em
+> **Menu > Configurações > Exportar relatório**. Não há atalho visível na barra
+> do mês.
+
+> Revisão 1.44.0.05: além do atalho ao lado de **Despesas fixas**, use
+> **Menu > Exportar relatório** para abrir a mesma configuração de período,
+> tipos de lançamento e formato **Planilha XLS** ou **PDF**.
+
+> Revisão 1.44.0.04: alinhamento de Mês e Ano pertence ao card móvel da
+> exportação; sem impacto operacional na Gestão Web.
+
+> Revisão 1.44.0.03: em **Exportar mês**, **Mês** e **Ano** ficam separados e
+> exibem somente períodos que possuem lançamentos no contexto financeiro aberto.
+
+> Revisão 1.44.0.02: em **Exportar mês**, escolha o mês e os grupos
+> **Despesas**, **Receitas** e/ou **Previstos** antes de gerar **Planilha XLS**
+> ou **PDF**. Despesas e receitas representam lançamentos realizados; previstos
+> reúne receitas e despesas ainda previstas.
+
+> Revisão 1.44.0.01: ajuste exclusivo da abertura do menu na Gestão Mobile,
+> sem impacto operacional na Gestão Web.
+
+> Revisão 1.44.0: com uma competência aberta, use **Exportar mês** ao lado de
+> **Despesas fixas**. Escolha **Planilha XLS** para editar a relação ou **PDF**
+> para compartilhar/imprimir. O arquivo inclui receitas, despesas e previsões
+> do mês selecionado, com data, situação, natureza e resumo financeiro.
 
 > Revisão 1.43.0.05: ao abrir **Editar produto** em **Conteúdo AvantaVendas
 > > Produtos**, o formulário passa a usar toda a altura útil do modal. Os

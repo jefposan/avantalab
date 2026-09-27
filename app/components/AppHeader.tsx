@@ -164,13 +164,33 @@ export default function AppHeader({
     setAjustesAberto(false);
   };
 
+  const abrirMenuResponsivo = (evento: React.PointerEvent<HTMLButtonElement>) => {
+    // O painel é criado após o toque. Interromper a propagação do gesto evita
+    // que o backdrop recém-montado interprete esse mesmo toque como clique fora.
+    evento.preventDefault();
+    evento.stopPropagation();
+    setPainelAvisosAberto(false);
+    setAjustesAberto(false);
+    setMenuResponsivoAberto(true);
+  };
+
+  const abrirMenuResponsivoComTeclado = (evento: React.MouseEvent<HTMLButtonElement>) => {
+    if (menuResponsivoAberto) return;
+    evento.preventDefault();
+    setPainelAvisosAberto(false);
+    setAjustesAberto(false);
+    setMenuResponsivoAberto(true);
+  };
+
   return (
     <>
       {/* ── MENU RESPONSIVO (gaveta lateral mobile) ── */}
       {menuResponsivoAberto && (
         <div
           className="fixed inset-0 z-[1200] bg-black/40 xl:hidden"
-          onClick={fecharMenuResponsivo}
+          onPointerDown={(evento) => {
+            if (evento.target === evento.currentTarget) fecharMenuResponsivo();
+          }}
         >
           <aside
             onClick={(e) => e.stopPropagation()}
@@ -399,7 +419,8 @@ export default function AppHeader({
           {/* Hamburger mobile */}
           <button
             type="button"
-            onClick={() => setMenuResponsivoAberto(true)}
+            onPointerDown={abrirMenuResponsivo}
+            onClick={abrirMenuResponsivoComTeclado}
             className={`order-3 ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition cursor-pointer xl:hidden ${
               darkMode
                 ? 'border-slate-700 text-slate-100 hover:bg-slate-800'

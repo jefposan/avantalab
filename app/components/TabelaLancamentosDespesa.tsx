@@ -732,7 +732,8 @@ export default function TabelaLancamentosDespesa({
 
       {!popupExpandido && expandidoDespesa && (
         <div
-          className="flex items-center justify-center"
+          data-rodape-expansao-lista="despesas"
+          className="flex shrink-0 items-center justify-center"
           style={{ height: `${espacoAcaoExpansaoTabela}px` }}
         >
           {quantidadeLancamentosMes > 10 && (
@@ -740,6 +741,9 @@ export default function TabelaLancamentosDespesa({
               expandido={listaExpandida}
               variante="rodape"
               modo="lista"
+              compactoNoRodape
+              corPrimaria={corPrimaria}
+              darkMode={darkMode}
               desabilitado={!expandidoDespesa}
               onClick={() => definirListaExpandida(!listaExpandida)}
             />

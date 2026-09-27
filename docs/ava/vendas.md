@@ -1,6 +1,42 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.43.0.05 -->
+<!-- ava-version: 1.44.0.11 -->
+
+> Revisão 1.44.0.11: ajuste de dimensão do controle pertence à Gestão Web, sem
+> impacto operacional no Vendas.
+
+> Revisão 1.44.0.10: ajuste de tema do controle pertence à Gestão Web, sem
+> impacto operacional no Vendas.
+
+> Revisão 1.44.0.09: ajuste de interação do rodapé pertence à Gestão Web, sem
+> impacto operacional no Vendas.
+
+> Revisão 1.44.0.08: ajuste visual de lançamentos pertence à Gestão Web, sem
+> impacto operacional no Vendas.
+
+> Revisão 1.44.0.07: ajuste visual de lançamentos pertence à Gestão Web, sem
+> impacto operacional no Vendas.
+
+> Revisão 1.44.0.06: ajuste de acesso ao relatório pertence à Gestão, sem
+> impacto operacional no Vendas.
+
+> Revisão 1.44.0.05: acesso adicional à exportação pertence à Gestão Web, sem
+> impacto operacional no Vendas.
+
+> Revisão 1.44.0.04: ajuste visual exclusivo da exportação móvel da Gestão,
+> sem impacto operacional no Vendas.
+
+> Revisão 1.44.0.03: ajuste de competência da exportação pertence à Gestão,
+> sem impacto operacional no Vendas.
+
+> Revisão 1.44.0.02: configuração de relatório mensal pertence à Gestão Web e
+> Mobile; sem impacto operacional no Vendas.
+
+> Revisão 1.44.0.01: ajuste exclusivo da abertura do menu na Gestão Mobile,
+> sem impacto operacional no Vendas.
+
+> Revisão 1.44.0: exportação mensal e estabilidade do menu pertencem à Gestão
+> Web e Mobile, sem impacto operacional no AvantaVendas.
 
 > Revisão 1.43.0.05-av154: o AvantaVendas renova a sessão expirada antes das
 > leituras financeiras e ao voltar do segundo plano. Pedido e pagamento deixam

@@ -1,6 +1,49 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.43.0.05 -->
+<!-- ava-version: 1.44.0.11 -->
+
+> Revisão 1.44.0.11: ajuste de dimensão do controle pertence à Gestão Web; sem
+> impacto operacional no Mobile.
+
+> Revisão 1.44.0.10: ajuste de tema do controle pertence à Gestão Web; sem
+> impacto operacional no Mobile.
+
+> Revisão 1.44.0.09: ajuste de interação do rodapé pertence à Gestão Web; sem
+> impacto operacional no Mobile.
+
+> Revisão 1.44.0.08: ajuste visual exclusivo dos lançamentos na Gestão Web;
+> sem impacto operacional no Mobile.
+
+> Revisão 1.44.0.07: ajuste visual exclusivo dos cards de lançamentos na
+> Gestão Web; sem impacto operacional no Mobile.
+
+> Revisão 1.44.0.06: a retirada do atalho da barra é exclusiva da Gestão Web;
+> no Mobile, o relatório continua disponível em **Menu > Exportar relatório**.
+
+> Revisão 1.44.0.05: o novo acesso pelo menu é exclusivo da Gestão Web; o
+> fluxo de **Menu > Exportar relatório** do Mobile permanece igual.
+
+> Revisão 1.44.0.04: no Mobile, os seletores de **Mês** e **Ano** do relatório
+> ficam lado a lado na mesma linha.
+
+> Revisão 1.44.0.03: em **Exportar relatório**, os seletores de **Mês** e
+> **Ano** são independentes e mostram somente períodos com lançamentos no
+> contexto financeiro aberto.
+
+> Revisão 1.44.0.02: em **Menu > Exportar relatório**, escolha o mês, marque
+> **Despesas**, **Receitas** e/ou **Previstos** e selecione **Planilha XLS** ou
+> **PDF**. Despesas e receitas se referem aos lançamentos realizados; previstos
+> inclui receitas e despesas ainda previstas.
+
+> Revisão 1.44.0.01: ajuste técnico da abertura da gaveta. O botão **Menu**
+> mantém uma única abertura, inclusive enquanto o aplicativo atualiza dados em
+> segundo plano; sem mudança nos itens ou ações disponíveis.
+
+> Revisão 1.44.0: no cabeçalho do período, toque em **Exportar mês** e escolha
+> **Planilha XLS** ou **PDF**. Os dois formatos reúnem receitas, despesas e
+> previsões da competência atual, com um resumo de receitas, despesas e saldo.
+> A abertura do menu lateral também foi estabilizada: um toque abre somente uma
+> vez, sem piscar.
 
 > Revisão 1.43.0.05: ajuste visual exclusivo da Gestão Web, sem impacto
 > operacional na Gestão Mobile.

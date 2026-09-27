@@ -1,5 +1,69 @@
 # Changelog
 
+## 1.44.0.11 - 2026-09-26
+- **Controle ainda mais discreto**: a face visual do botão de expandir/recolher
+  listas foi reduzida, mantendo a área de clique acessível ampliada.
+
+## 1.44.0.10 - 2026-09-26
+- **Ação de lista com tema do perfil**: o botão compacto de expandir/recolher
+  usa a cor primária no tema claro. No tema escuro, a superfície fica escura e
+  o contorno e texto assumem uma versão clara da cor do perfil.
+
+## 1.44.0.09 - 2026-09-26
+- **Interação legível no rodapé**: o botão de expandir/recolher desce mais um
+  pouco, conserva a cor do texto ao passar o mouse, aumenta suavemente no hover
+  e reduz durante o clique.
+
+## 1.44.0.08 - 2026-09-26
+- **Controle abaixo da rolagem assistida**: o botão de expandir/recolher no
+  rodapé ficou menor e foi deslocado para baixo, evitando sobreposição com o
+  atalho circular de avançar lançamentos.
+
+## 1.44.0.07 - 2026-09-26
+- **Rodapé compacto dos lançamentos**: as áreas de expandir/recolher listas de
+  receitas e despesas foram reduzidas e o botão fica centralizado verticalmente
+  na faixa reservada.
+
+## 1.44.0.06 - 2026-09-26
+- **Relatório somente no Menu Web**: removido o atalho visível acima da barra
+  de mês. Na Gestão Web, a exportação passa a ser acessada exclusivamente por
+  **Menu > Configurações > Exportar relatório**.
+
+## 1.44.0.05 - 2026-09-26
+- **Relatório também no Menu Web**: a Gestão Web agora oferece **Menu >
+  Exportar relatório**, com a mesma configuração de competência, tipos de
+  lançamento e formatos XLS/PDF do atalho da barra mensal.
+
+## 1.44.0.04 - 2026-09-26
+- **Período compacto no Mobile**: os seletores independentes de **Mês** e
+  **Ano** da exportação agora permanecem lado a lado, com largura reservada ao
+  ano e o restante disponível para o mês.
+
+## 1.44.0.03 - 2026-09-26
+- **Competência sem opções vazias**: a configuração de exportação separa
+  **Mês** e **Ano**. Cada seletor mostra somente competências que possuem ao
+  menos uma receita ou despesa no contexto financeiro carregado.
+
+## 1.44.0.02 - 2026-09-26
+- **Relatório mensal configurável**: na Gestão Web, o botão **Exportar mês**
+  permanece na barra da competência; no Mobile, ele fica no **Menu** como
+  **Exportar relatório**. Antes de gerar XLS ou PDF, ambos permitem escolher o
+  mês e incluir apenas despesas realizadas, receitas realizadas e/ou previsões.
+
+## 1.44.0.01 - 2026-09-26
+- **Abertura única do menu móvel**: a animação da gaveta ocorre somente na
+  primeira renderização. Atualizações de dados durante a abertura não reiniciam
+  o painel, e o toque sintético subsequente não pode acioná-lo novamente.
+
+## 1.44.0 - 2026-09-26
+- **Exportação mensal na Gestão**: Web e Mobile agora oferecem **Exportar mês**
+  com escolha entre planilha XLS e PDF. O arquivo reúne receitas e despesas da
+  competência selecionada, inclusive previsões, com situação, natureza e
+  resumo de receitas, despesas e saldo.
+- **Menu móvel estável**: a abertura da gaveta passa a esperar o fim do toque
+  que a acionou. Assim, o backdrop não recebe o mesmo gesto e o menu não pisca
+  abrindo, fechando e abrindo novamente.
+
 ## 1.43.0.05-av154 - 2026-09-25
 - **Sessão recuperada antes do lançamento**: pedido e pagamento renovam o token
   expirado antes de conferir o financeiro da cliente, evitando a falsa mensagem
