@@ -69,8 +69,6 @@ export default function AvantaVendasPage() {
         'vendor/supabase.min.js',
         'config.js',
         'supabase-client.js',
-        'payment-receipt-v2.js',
-        'order-receipt-v2.js',
         'app.js',
       ].map((arquivo) => (
         <link

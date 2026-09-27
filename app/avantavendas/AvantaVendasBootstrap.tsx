@@ -30,6 +30,7 @@ type JanelaAvantaVendas = Window & typeof globalThis & {
   ) => void;
   __avantalabReiniciarProgressoVendas?: (rotulo?: string) => void;
   __avantalabCarregarPdfJs?: () => Promise<ModuloPdfJs>;
+  __avantalabCarregarComprovantesVendas?: () => Promise<void>;
 };
 
 type AvantaVendasBootstrapProps = {
@@ -70,12 +71,12 @@ export default function AvantaVendasBootstrap({
 
     const pesosProgresso: Record<string, number> = {
       shell: 5,
-      scripts: 20,
+      scripts: 15,
       auth: 10,
       access: 15,
-      resources: 10,
-      interface: 40,
-      data: 0,
+      resources: 20,
+      data: 30,
+      interface: 5,
     };
     const progresso = janela.__AVANTALAB_VENDAS_PROGRESSO__ || {
       grupos: {},
@@ -104,12 +105,17 @@ export default function AvantaVendasBootstrap({
       progresso.valor = Math.max(progresso.valor, Math.min(100, Math.round(calculado)));
       if (rotulo) progresso.rotulo = rotulo;
 
-      const barra = document.getElementById('accessProgressBar');
-      const texto = document.getElementById('accessProgressValue');
-      const etapa = document.getElementById('accessProgressLabel');
-      if (barra) barra.style.width = `${progresso.valor}%`;
-      if (texto) texto.textContent = `${progresso.valor}%`;
-      if (etapa) etapa.textContent = progresso.rotulo;
+      for (const [barraId, textoId, etapaId] of [
+        ['accessProgressBar', 'accessProgressValue', 'accessProgressLabel'],
+        ['dataProgressBar', 'dataProgressValue', 'dataProgressLabel'],
+      ]) {
+        const barra = document.getElementById(barraId);
+        const texto = document.getElementById(textoId);
+        const etapa = document.getElementById(etapaId);
+        if (barra) barra.style.width = `${progresso.valor}%`;
+        if (texto) texto.textContent = `${progresso.valor}%`;
+        if (etapa) etapa.textContent = progresso.rotulo;
+      }
     };
 
     janela.__avantalabReiniciarProgressoVendas = (rotulo) => {
@@ -148,14 +154,50 @@ export default function AvantaVendasBootstrap({
       return carregamentoPdfJs;
     };
 
-    const arquivos = [
+    const arquivosEssenciais = [
       `${caminhoRecursos}/vendor/supabase.min.js`,
       `${caminhoRecursos}/config.js`,
       `${caminhoRecursos}/supabase-client.js`,
-      `${caminhoRecursos}/payment-receipt-v2.js`,
-      `${caminhoRecursos}/order-receipt-v2.js`,
       `${caminhoRecursos}/app.js`,
     ];
+    const arquivosComprovantes = [
+      `${caminhoRecursos}/payment-receipt-v2.js`,
+      `${caminhoRecursos}/order-receipt-v2.js`,
+    ];
+    let carregamentoComprovantes: Promise<void> | null = null;
+
+    const carregarScriptAuxiliar = (arquivo: string) => new Promise<void>((resolver, rejeitar) => {
+      const script = document.createElement('script');
+      script.src = `${arquivo}?v=${encodeURIComponent(assetVersion)}`;
+      script.dataset.avantavendasRecurso = arquivo;
+      script.onload = () => resolver();
+      script.onerror = () => rejeitar(new Error(`Falha ao carregar ${arquivo}`));
+      document.body.appendChild(script);
+    });
+
+    const carregarComprovantes = () => {
+      carregamentoComprovantes ||= Promise.all(
+        arquivosComprovantes.map((arquivo) => carregarScriptAuxiliar(arquivo)),
+      ).then(() => undefined);
+      return carregamentoComprovantes;
+    };
+    janela.__avantalabCarregarComprovantesVendas = carregarComprovantes;
+
+    const aquecerComprovantes = () => {
+      const iniciar = () => {
+        void carregarComprovantes().catch((error) => {
+          console.warn('Não foi possível aquecer os comprovantes do AvantaVendas.', error);
+        });
+      };
+      const janelaComIdle = janela as Window & {
+        requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      };
+      if (janelaComIdle.requestIdleCallback) {
+        janelaComIdle.requestIdleCallback(iniciar, { timeout: 1500 });
+      } else {
+        janela.setTimeout(iniciar, 350);
+      }
+    };
 
     const falhar = (arquivo: string) => {
       const app = document.getElementById('app');
@@ -172,8 +214,8 @@ export default function AvantaVendasBootstrap({
     };
 
     const carregar = (indice: number) => {
-      if (indice >= arquivos.length) return;
-      const arquivo = arquivos[indice];
+      if (indice >= arquivosEssenciais.length) return;
+      const arquivo = arquivosEssenciais[indice];
       const script = document.createElement('script');
       script.src = `${arquivo}?v=${encodeURIComponent(assetVersion)}`;
       script.dataset.avantavendasRecurso = arquivo;
@@ -181,11 +223,15 @@ export default function AvantaVendasBootstrap({
         janela.__avantalabAtualizarProgressoVendas?.(
           'scripts',
           indice + 1,
-          arquivos.length,
-          indice + 1 === arquivos.length
+          arquivosEssenciais.length,
+          indice + 1 === arquivosEssenciais.length
             ? 'Aplicativo carregado'
             : 'Carregando componentes seguros',
         );
+        if (indice + 1 === arquivosEssenciais.length) {
+          aquecerComprovantes();
+          return;
+        }
         carregar(indice + 1);
       };
       script.onerror = () => falhar(arquivo);

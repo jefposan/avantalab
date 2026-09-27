@@ -47,8 +47,6 @@ test('Gestão inicia no DOM pronto e Vendas antecipa os scripts críticos', () =
     'vendor/supabase.min.js',
     'config.js',
     'supabase-client.js',
-    'payment-receipt-v2.js',
-    'order-receipt-v2.js',
     'app.js',
   ]) {
     assert.ok(paginaVendas.includes(`'${arquivo}'`), `preload ausente para ${arquivo}`);
@@ -61,12 +59,17 @@ test('Vendas restaura o cache da conta ativa e não bloqueia a Sala com Divulga�
   assert.match(bancoVendas, /contaVendasAtiva: contaContexto/);
   assert.match(appVendas, /state\.contaVendasAtiva = acessoVendas\.contaVendasAtiva \|\| null/);
   assert.match(appVendas, /const cache = await lerCacheVendas\(\)/);
-  assert.match(appVendas, /dadosOperacionaisCarregando = true;[\s\S]*await recursosSala;[\s\S]*await carregarDadosBackend\(false, true, true\)/);
+  assert.match(appVendas, /const dadosIniciais = carregarDadosBackend\(false, true, true\);[\s\S]*await recursosSala;[\s\S]*await dadosIniciais/);
   assert.match(appVendas, /carregarConteudosSecundariosVendas\(false\)/);
-  assert.match(bootstrapVendas, /interface: 40/);
-  assert.match(bootstrapVendas, /data: 0/);
+  assert.match(bootstrapVendas, /const arquivosEssenciais = \[/);
+  assert.match(bootstrapVendas, /const arquivosComprovantes = \[/);
+  assert.match(bootstrapVendas, /__avantalabCarregarComprovantesVendas/);
+  assert.match(bootstrapVendas, /interface: 5/);
+  assert.match(bootstrapVendas, /data: 30/);
   assert.match(appVendas, /function concluirPreparacaoInicialVendas\(\)/);
-  assert.match(appVendas, /atualizarProgressoPreparacao\('interface', 1, 1, 'Acesso pronto'\)/);
+  assert.match(appVendas, /atualizarProgressoPreparacao\('interface', 1, 1, 'Sala de botões pronta'\)/);
+  assert.match(appVendas, /dataProgressBar/);
+  assert.match(appVendas, /__avantalabCarregarComprovantesVendas/);
   assert.match(appVendas, /await concluirPreparacaoInicialVendas\(\);\s*carregandoBackend = false;[\s\S]*render\(\)/);
 
   const inicioCargaPrincipal = bancoVendas.indexOf('async function loadAll(');

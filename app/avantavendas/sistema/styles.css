@@ -1457,6 +1457,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
   border-top-color: var(--azul);
   background: transparent;
 }
+.module-local-progress { width: min(100%, 238px); height: 8px; overflow: hidden; margin: 16px auto 0; border-radius: 999px; background: rgba(0, 62, 115, .13); box-shadow: inset 0 1px 2px rgba(0, 41, 76, .08); }
+.module-local-progress > i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--azul), #1687d9); transition: width .24s ease-out; }
+.module-local-progress-value { display: block; margin-top: 8px; color: #0874a8; font-size: 11px; font-variant-numeric: tabular-nums; }
 .materials-page { display: grid; gap: 20px; }
 .materials-search { display: flex; gap: 8px; }
 .materials-search input { min-width: 0; height: 42px; flex: 1; border: 1px solid #dfe3e7; border-radius: 12px; padding: 0 14px; font: inherit; }

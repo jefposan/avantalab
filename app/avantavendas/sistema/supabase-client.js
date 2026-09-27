@@ -602,7 +602,6 @@
       const contaInicial = await garantirContaVendas();
       definirContaAtiva(contaInicial.id);
       contasVendas = [contaInicial];
-      atualizarProgresso('data', 1, 1, 'Conta de vendas pronta');
     }
     let contaId = contextoPreparado?.contaId || contaAtivaId();
     if (!contasVendas.some((conta) => conta.id === contaId)) contaId = contasVendas[0]?.id || '';

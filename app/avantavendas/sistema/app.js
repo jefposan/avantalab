@@ -2115,21 +2115,26 @@ function atualizarProgressoPreparacao(grupo, concluido, total, rotulo) {
 }
 
 function concluirPreparacaoInicialVendas() {
-  atualizarProgressoPreparacao('interface', 1, 1, 'Acesso pronto');
-  // Permite que os 100% sejam efetivamente desenhados antes de a Sala ocupar
-  // a tela; as sincronizações não essenciais continuam após essa transição.
+  atualizarProgressoPreparacao('interface', 1, 1, 'Sala de botões pronta');
+  // A Sala pode ser usada antes de todos os dados operacionais terminarem.
+  // Nesse caso, o percentual continua visível no módulo aberto pelo usuário.
   return new Promise((resolver) => requestAnimationFrame(() => requestAnimationFrame(resolver)));
 }
 
 function sincronizarProgressoPreparacao() {
   const progresso = window.__AVANTALAB_VENDAS_PROGRESSO__;
   if (!progresso) return;
-  const barra = document.getElementById('accessProgressBar');
-  const texto = document.getElementById('accessProgressValue');
-  const etapa = document.getElementById('accessProgressLabel');
-  if (barra) barra.style.width = `${progresso.valor}%`;
-  if (texto) texto.textContent = `${progresso.valor}%`;
-  if (etapa) etapa.textContent = progresso.rotulo;
+  [
+    ['accessProgressBar', 'accessProgressValue', 'accessProgressLabel'],
+    ['dataProgressBar', 'dataProgressValue', 'dataProgressLabel'],
+  ].forEach(([barraId, textoId, etapaId]) => {
+    const barra = document.getElementById(barraId);
+    const texto = document.getElementById(textoId);
+    const etapa = document.getElementById(etapaId);
+    if (barra) barra.style.width = `${progresso.valor}%`;
+    if (texto) texto.textContent = `${progresso.valor}%`;
+    if (etapa) etapa.textContent = progresso.rotulo;
+  });
 }
 
 function limparFocoInicialLogin() {
@@ -4226,17 +4231,7 @@ async function carregarSistemaVendasCompleto() {
     const restauradoDoCache = restaurarCacheVendas(cache);
     if (restauradoDoCache) {
       dadosOperacionaisCarregando = false;
-      await concluirPreparacaoInicialVendas();
-      carregandoBackend = false;
-      preparandoRecursosSala = false;
-      render();
-      liberarAlturaPreparacao();
-      await Promise.all([carregarDadosBackend(false, true, true), recursosSala]);
-    } else {
-      // Primeira abertura: a Sala de Botões depende apenas das imagens locais.
-      // Os dados operacionais continuam sendo sincronizados sem bloquear toda
-      // a aplicação; cada módulo informa sua própria espera se for aberto.
-      dadosOperacionaisCarregando = true;
+      atualizarProgressoPreparacao('data', 1, 1, 'Dados recentes restaurados');
       await recursosSala;
       await concluirPreparacaoInicialVendas();
       carregandoBackend = false;
@@ -4244,6 +4239,19 @@ async function carregarSistemaVendasCompleto() {
       render();
       liberarAlturaPreparacao();
       await carregarDadosBackend(false, true, true);
+    } else {
+      // Na primeira abertura, dados e imagens independentes são buscados em
+      // paralelo. A Sala abre assim que suas imagens estiverem prontas; os
+      // dados restantes continuam com o percentual real dentro do módulo.
+      dadosOperacionaisCarregando = true;
+      const dadosIniciais = carregarDadosBackend(false, true, true);
+      await recursosSala;
+      await concluirPreparacaoInicialVendas();
+      carregandoBackend = false;
+      preparandoRecursosSala = false;
+      render();
+      liberarAlturaPreparacao();
+      await dadosIniciais;
       dadosOperacionaisCarregando = false;
       render();
     }
@@ -4418,7 +4426,10 @@ async function aguardarSessaoSocialVendas() {
 
 function renderConteudo() {
   if (dadosOperacionaisCarregando && ['dashboard', 'produtos', 'clientes', 'vender', 'novo-pedido', 'vendas', 'importar', 'configuracoes'].includes(state.aba)) {
-    return `<section class="module-page module-local-loading" role="status" aria-live="polite" aria-busy="true"><div class="publication-empty material-local-loading"><span class="loader" aria-hidden="true"></span><h3>Carregando informações</h3><p>Os dados deste perfil aparecerão juntos assim que a sincronização terminar.</p></div></section>`;
+    const progresso = window.__AVANTALAB_VENDAS_PROGRESSO__ || {};
+    const percentual = Math.max(0, Math.min(100, Number(progresso.valor || 0)));
+    const rotulo = escapeHtml(progresso.rotulo || 'Sincronizando informações do perfil');
+    return `<section class="module-page module-local-loading" role="status" aria-live="polite" aria-busy="true"><div class="publication-empty material-local-loading"><span class="loader" aria-hidden="true"></span><h3>Carregando informações</h3><p id="dataProgressLabel">${rotulo}</p><div class="module-local-progress" aria-label="Progresso da sincronização"><i id="dataProgressBar" style="width:${percentual}%"></i></div><b id="dataProgressValue" class="module-local-progress-value">${percentual}%</b></div></section>`;
   }
   if (state.aba === 'dashboard') return renderDashboard();
   if (state.aba === 'produtos') return renderProdutos();
@@ -9060,6 +9071,7 @@ function detalheQuantidadeItemComprovante(item) {
 async function compartilharPedido(pedidoId) {
   const venda = state.vendas.find((item) => item.id === pedidoId);
   if (!venda) return false;
+  await window.__avantalabCarregarComprovantesVendas?.().catch(() => undefined);
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
   const resumo = resumoComprovantePedido(venda);
   const desconto = Math.max(0, Number(venda.desconto || 0));
@@ -9107,6 +9119,7 @@ async function compartilharPedido(pedidoId) {
 async function compartilharPagamento(pagamentoId) {
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamento) return false;
+  await window.__avantalabCarregarComprovantesVendas?.().catch(() => undefined);
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
   const desconto = Number(pagamento.desconto || 0);

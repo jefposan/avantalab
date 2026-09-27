@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.44.0.13-av156 - 2026-09-26
+- **Abertura mais ágil do AvantaVendas**: a consulta dos dados operacionais
+  passa a ocorrer em paralelo ao preparo das imagens da Sala de Botões, e os
+  renderizadores de comprovante deixam de atrasar a entrada no aplicativo.
+- **Progresso fiel à preparação**: os 100% agora representam scripts, sessão,
+  permissões, imagens, dados e interface. Quando os dados continuam após a
+  Sala abrir, o módulo exibe o mesmo percentual até a sincronização terminar.
+
 ## 1.44.0.12-av155 - 2026-09-26
 - **Relatório anual no Dashboard do Vendas**: abaixo do movimento financeiro,
   o Dashboard passa a reunir vendas, custo, recebido e lucro do ano escolhido.

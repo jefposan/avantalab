@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.12 -->
-<!-- avantavendas-asset-revision: 155 -->
+<!-- ava-version: 1.44.0.13 -->
+<!-- avantavendas-asset-revision: 156 -->
+
+> Revisão 1.44.0.13-av156: a preparação do AvantaVendas carrega dados e
+> imagens da Sala de Botões em paralelo. A barra distribui o avanço entre as
+> etapas reais e, se a Sala abrir antes do fim da sincronização, o módulo
+> mostra o mesmo percentual até os dados do perfil estarem prontos.
 
 > Revisão 1.44.0.12-av155: no **Dashboard**, abaixo de **Movimento financeiro**, o
 > **Relatório anual** permite escolher o ano e mostra Vendas, Custo, Recebido e
