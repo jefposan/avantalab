@@ -99,6 +99,11 @@ test('Lembrar-me conserva somente o identificador e nunca a senha', () => {
   assert.match(aplicacao, /LOGIN_CONTATO_LEMBRADO_KEY = 'avantalab\.vendas_mobile\.login_contato'/);
   assert.match(aplicacao, /function carregarLoginLembradoVendas\(\)/);
   assert.match(aplicacao, /function salvarLoginLembradoVendas\(manter, contato, tipo\)/);
+  assert.match(aplicacao, /async function sincronizarLoginLembradoComSessaoVendas\(\)/);
+  assert.match(aplicacao, /renovarSessaoPersistenteVendas\(true\);\s*await sincronizarLoginLembradoComSessaoVendas\(\);/);
+  assert.match(aplicacao, /if \(migrarPreferenciaLegada && lembrarMeAtivoVendas\(\)\) \{\s*registrarPreferenciaSessaoVendas\(true\);/);
+  assert.match(aplicacao, /if \(migrarPreferenciaLegada && !preferenciaLembrarRegistradaVendas\(\)\) \{\s*salvarLoginLembradoVendas\(true, '', 'email'\);/);
+  assert.match(aplicacao, /registrarPreferenciaSessaoVendas\(lembrar, true\);\s*salvarLoginLembradoVendas\(lembrar, '', loginTipo\);/);
   assert.match(aplicacao, /salvarLoginLembradoVendas\(lembrar === '1', contato, loginTipo\)/);
   assert.doesNotMatch(aplicacao, /localStorage\.setItem\([^\n]*(?:senha|password)/i);
 });

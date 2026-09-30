@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.44.0.14-av157 - 2026-09-30
+- **Lembrar-me restaurado com segurança**: sessões marcadas em versões
+  anteriores recuperam a validade de 30 dias e o e-mail ou telefone confirmado
+  pelo login, inclusive ao entrar por Google ou Apple. Nenhuma senha é
+  armazenada, e quem optou por não permanecer conectado continua com sessão
+  temporária.
+
 ## 1.44.0.13-av156 - 2026-09-26
 - **Abertura mais ágil do AvantaVendas**: a consulta dos dados operacionais
   passa a ocorrer em paralelo ao preparo das imagens da Sala de Botões, e os

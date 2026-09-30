@@ -1,7 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.13 -->
-<!-- avantavendas-asset-revision: 156 -->
+<!-- ava-version: 1.44.0.14 -->
+<!-- avantavendas-asset-revision: 157 -->
+
+> Revisão 1.44.0.14-av157: quando **Lembrar-me** já estava marcado em uma
+> sessão anterior, o Vendas restaura com segurança sua validade de 30 dias e o
+> identificador confirmado (e-mail ou telefone), inclusive para Google e Apple.
+> A senha nunca é salva; ao desmarcar a opção, o acesso continua somente durante
+> o uso atual.
 
 > Revisão 1.44.0.13-av156: a preparação do AvantaVendas carrega dados e
 > imagens da Sala de Botões em paralelo. A barra distribui o avanço entre as

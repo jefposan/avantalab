@@ -294,6 +294,46 @@ function salvarLoginLembradoVendas(manter, contato, tipo) {
   } catch { /* armazenamento indisponível */ }
 }
 
+function lembrarMeAtivoVendas() {
+  try {
+    return localStorage.getItem(LOGIN_LEMBRAR_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function preferenciaLembrarRegistradaVendas() {
+  try {
+    return localStorage.getItem(LOGIN_LEMBRAR_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+async function sincronizarLoginLembradoComSessaoVendas() {
+  if (!lembrarMeAtivoVendas()) return;
+
+  try {
+    const contatoSalvo = String(localStorage.getItem(LOGIN_CONTATO_LEMBRADO_KEY) || '').trim();
+    if (contatoSalvo) return;
+
+    const usuario = await window.VendasDb.currentUser();
+    const email = String(usuario?.email || '').trim();
+    if (email) {
+      salvarLoginLembradoVendas(true, email, 'email');
+      return;
+    }
+
+    const telefoneCompleto = String(usuario?.phone || '').replace(/\D/g, '');
+    const telefone = telefoneCompleto.startsWith('55') && telefoneCompleto.length > 11
+      ? telefoneCompleto.slice(2)
+      : telefoneCompleto;
+    if (telefone) salvarLoginLembradoVendas(true, telefone, 'telefone');
+  } catch {
+    // A sessão continua válida; a próxima abertura tenta concluir a migração.
+  }
+}
+
 function origemAcessoVendas() {
   try { return sessionStorage.getItem(ORIGEM_ACESSO_VENDAS_KEY) || 'vendas'; } catch { return 'vendas'; }
 }
@@ -334,8 +374,17 @@ function sessaoPersistenteValidaVendas() {
   return false;
 }
 
-function renovarSessaoPersistenteVendas() {
-  if (!sessaoPersistenteValidaVendas()) return;
+function renovarSessaoPersistenteVendas(migrarPreferenciaLegada = false) {
+  const sessaoPersistente = sessaoPersistenteValidaVendas();
+  if (!sessaoPersistente) {
+    if (migrarPreferenciaLegada && lembrarMeAtivoVendas()) {
+      registrarPreferenciaSessaoVendas(true);
+    }
+    return;
+  }
+  if (migrarPreferenciaLegada && !preferenciaLembrarRegistradaVendas()) {
+    salvarLoginLembradoVendas(true, '', 'email');
+  }
   try { localStorage.setItem(LEMBRAR_CONECTADO_ATE_KEY, String(Date.now() + TRINTA_DIAS_MS)); } catch { /* armazenamento indisponível */ }
 }
 
@@ -3356,6 +3405,7 @@ async function continuarLoginSocialNativoVendas() {
     if (!await window.VendasDb.hasSession()) throw new Error('A sessão social não pôde ser confirmada.');
     atualizarProgressoPreparacao('auth', 1, 1, 'Sessão autenticada');
     renovarSessaoPersistenteVendas();
+    await sincronizarLoginLembradoComSessaoVendas();
     carregandoBackend = true;
     state.autenticado = false;
     render();
@@ -3440,6 +3490,7 @@ async function entrarComProvedorSocialVendas(provedor) {
   prepararAlturaPreparacao();
   salvarLoginSocialPendenteVendas(provedor);
   registrarPreferenciaSessaoVendas(lembrar, true);
+  salvarLoginLembradoVendas(lembrar, '', loginTipo);
   window.__avantalabReiniciarProgressoVendas?.(`Conectando com ${provedor === 'apple' ? 'Apple' : 'Google'}`);
   render();
   try {
@@ -4385,7 +4436,8 @@ async function inicializarApp() {
       liberarAlturaPreparacao();
       return;
     }
-    renovarSessaoPersistenteVendas();
+    renovarSessaoPersistenteVendas(true);
+    await sincronizarLoginLembradoComSessaoVendas();
     const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
     carregandoBackend = false;
     if (aguardandoEscolha) {

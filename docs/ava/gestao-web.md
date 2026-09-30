@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.13 -->
+<!-- ava-version: 1.44.0.14 -->
+
+> Revisão 1.44.0.14: ajuste de **Lembrar-me** pertence ao AvantaVendas, sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.44.0.13: abertura e percentual do AvantaVendas foram otimizados;
 > sem impacto operacional na Gestão Web.

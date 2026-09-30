@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.14: no AvantaVendas, Lembrar-me restaura sessões
+// anteriores com a validade de 30 dias e somente o identificador confirmado;
+// o mesmo vale para Google e Apple. A senha nunca é armazenada e a opção
+// desmarcada mantém sessão temporária.
 // Revisado na versão 1.44.0.13: a abertura do AvantaVendas busca dados e imagens
 // da Sala de Botões em paralelo; o percentual acompanha as etapas reais mesmo
 // quando a Sala abre antes do fim da sincronização.
