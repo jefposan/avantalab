@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.44.0.16-av159 - 2026-09-30
+- **Avaliação Android estável do AvantaVendas**: quando o aplicativo nativo não
+  dispõe de push configurado, a ponte de notificações não tenta iniciar o FCM.
+  Isso evita o encerramento por Firebase sem configuração reportado no Google
+  Play. Notificações push nativas Android ficam temporariamente indisponíveis;
+  pedidos, clientes, catálogo e pagamentos continuam normais.
+
 ## 1.44.0.15-av158 - 2026-09-30
 - **Troca de perfil sem dados transitórios**: ao mudar de perfil de vendas, o
   aplicativo limpa imediatamente os dados operacionais, Novidades e Divulgação

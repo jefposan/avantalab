@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.15 -->
-<!-- avantavendas-asset-revision: 158 -->
+<!-- ava-version: 1.44.0.16 -->
+<!-- avantavendas-asset-revision: 159 -->
+
+> Revisão 1.44.0.16-av159: a versão Android em avaliação abre o AvantaVendas
+> sem inicializar notificações push nativas enquanto o Firebase não estiver
+> configurado para o pacote. Pedidos, pagamentos, catálogo e clientes seguem
+> disponíveis normalmente.
 
 > Revisão 1.44.0.15-av158: ao trocar o **perfil de vendas**, o conteúdo do
 > perfil anterior é removido antes da atualização, inclusive em **Divulgação**

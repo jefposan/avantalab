@@ -19,7 +19,10 @@ declare global {
 
 export default function NativePushNotificationsBridge() {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
+    // A versão Android em avaliação não embute FCM enquanto a configuração
+    // Firebase oficial do pacote não estiver disponível. Sem o plugin nativo,
+    // a ponte deve permanecer inativa para não interromper a abertura do app.
+    if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('PushNotifications')) return;
     let resolverToken: ((token: TokenPushNativo) => void) | null = null;
     let rejeitarToken: ((erro: Error) => void) | null = null;
 

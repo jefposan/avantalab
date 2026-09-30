@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.16: na avaliação Android do AvantaVendas, a ponte
+// não inicia FCM quando o plugin nativo não está disponível; os fluxos de venda
+// permanecem iguais, enquanto o push Android aguarda configuração Firebase.
 // Revisado na versão 1.44.0.15: no AvantaVendas, trocar o perfil limpa os dados
 // anteriores antes de carregar a nova conta; respostas antigas são descartadas.
 // Em Consignado > Gerar pedido, a data pode ser escolhida até o dia atual.
