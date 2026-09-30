@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.44.0.15-av158 - 2026-09-30
+- **Troca de perfil sem dados transitórios**: ao mudar de perfil de vendas, o
+  aplicativo limpa imediatamente os dados operacionais, Novidades e Divulgação
+  do perfil anterior. Respostas que terminem depois da troca são descartadas,
+  evitando que catálogo ou materiais de outra conta apareçam antes da atualização.
+- **Pedido a partir do consignado com data**: a conversão agora permite escolher
+  a data do pedido (até o dia atual), preservando o lançamento no período correto.
+
 ## 1.44.0.14-av157 - 2026-09-30
 - **Lembrar-me restaurado com segurança**: sessões marcadas em versões
   anteriores recuperam a validade de 30 dias e o e-mail ou telefone confirmado

@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.15: no AvantaVendas, trocar o perfil limpa os dados
+// anteriores antes de carregar a nova conta; respostas antigas são descartadas.
+// Em Consignado > Gerar pedido, a data pode ser escolhida até o dia atual.
 // Revisado na versão 1.44.0.14: no AvantaVendas, Lembrar-me restaura sessões
 // anteriores com a validade de 30 dias e somente o identificador confirmado;
 // o mesmo vale para Google e Apple. A senha nunca é armazenada e a opção

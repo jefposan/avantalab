@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.14 -->
+<!-- ava-version: 1.44.0.15 -->
+
+> Revisão 1.44.0.15: troca de perfil e data de pedido consignado pertencem ao
+> AvantaVendas, sem impacto operacional na Gestão Web.
 
 > Revisão 1.44.0.14: ajuste de **Lembrar-me** pertence ao AvantaVendas, sem
 > impacto operacional na Gestão Web.

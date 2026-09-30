@@ -1,7 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.14 -->
-<!-- avantavendas-asset-revision: 157 -->
+<!-- ava-version: 1.44.0.15 -->
+<!-- avantavendas-asset-revision: 158 -->
+
+> Revisão 1.44.0.15-av158: ao trocar o **perfil de vendas**, o conteúdo do
+> perfil anterior é removido antes da atualização, inclusive em **Divulgação**
+> e **Novidades**. Em um **Consignado**, toque em **Gerar pedido**, selecione as
+> quantidades e, em **Data do pedido**, escolha hoje ou uma data anterior antes
+> de confirmar.
 
 > Revisão 1.44.0.14-av157: quando **Lembrar-me** já estava marcado em uma
 > sessão anterior, o Vendas restaura com segurança sua validade de 30 dias e o

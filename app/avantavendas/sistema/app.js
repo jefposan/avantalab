@@ -489,6 +489,13 @@ const LIMITE_SELECAO_MATERIAIS_DIVULGACAO = 10;
 let divulgacaoAtualizando = false;
 let conteudosSecundariosCarregando = false;
 let conteudosSecundariosCarregados = false;
+// Toda resposta assíncrona de uma conta só pode alterar a tela enquanto aquele
+// mesmo perfil continuar ativo. Isso impede que o catálogo ou os conteúdos do
+// perfil anterior apareçam durante a troca de perfil.
+let revisaoContaVendasAtiva = 0;
+let requisicaoCarregamentoBackendVendas = 0;
+let requisicaoConteudosSecundariosVendas = 0;
+let requisicaoAtualizacaoDivulgacao = 0;
 let gestoAtualizacaoDivulgacao = null;
 let indicadorAtualizacaoDivulgacaoEl = null;
 let camadaAtualizacaoDivulgacaoEl = null;
@@ -1700,8 +1707,8 @@ function aplicarFiltroDashboard() {
 
 function campoDataCentralizado(idCampo, data, rotulo) {
   const valorData = /^\d{4}-\d{2}-\d{2}$/.test(String(data || '')) ? data : isoData(new Date());
-  const pagamento = idCampo === 'pagamentoClienteData' || idCampo === 'editarPagamentoData';
-  return `<label class="transaction-field transaction-date-field"><span>${escapeHtml(rotulo)}</span><button id="${idCampo}" type="button" class="date-picker-button" value="${valorData}" data-bloquear-futuro="${pagamento ? 'true' : 'false'}" onclick="abrirCalendarioCentralizado('${idCampo}')">${dataBR(`${valorData}T12:00:00`)}</button></label>`;
+  const bloquearFuturo = ['pagamentoClienteData', 'editarPagamentoData', 'consignadoPedidoData'].includes(idCampo);
+  return `<label class="transaction-field transaction-date-field"><span>${escapeHtml(rotulo)}</span><button id="${idCampo}" type="button" class="date-picker-button" value="${valorData}" data-bloquear-futuro="${bloquearFuturo ? 'true' : 'false'}" onclick="abrirCalendarioCentralizado('${idCampo}')">${dataBR(`${valorData}T12:00:00`)}</button></label>`;
 }
 
 function dataEhFutura(data) {
@@ -1765,9 +1772,12 @@ function mudarMesCalendario(delta) {
 function selecionarDataCalendario(data) {
   if (!calendarioCentralizado) return;
   if (calendarioBloqueiaDatasFuturas() && dataEhFutura(data)) {
-    toast(calendarioCentralizado.idCampo === 'estoqueData'
+    const mensagem = calendarioCentralizado.idCampo === 'estoqueData'
       ? 'A data da movimentação não pode estar no futuro.'
-      : 'Pagamento não pode ter data futura.');
+      : calendarioCentralizado.idCampo === 'consignadoPedidoData'
+        ? 'A data do pedido não pode estar no futuro.'
+        : 'Pagamento não pode ter data futura.';
+    toast(mensagem);
     return;
   }
   const idCampo = calendarioCentralizado.idCampo;
@@ -4061,8 +4071,20 @@ function comLimiteDeTempo(promessa, mensagem = 'A conexão com o AvantaLab demor
   ]);
 }
 
+function contaVendasDoContextoAtual() {
+  return String(window.VendasDb?.contaAtivaId?.() || state.contaVendasAtiva?.id || '');
+}
+
+function contextoContaVendasPermaneceAtual(revisao, contaId) {
+  return revisao === revisaoContaVendasAtiva
+    && (!contaId || contaVendasDoContextoAtual() === String(contaId));
+}
+
 async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacaoAteRecursos = false, preservarTelaAtual = false) {
   const revisaoAoIniciar = revisaoDadosOperacionais;
+  const revisaoContaAoIniciar = revisaoContaVendasAtiva;
+  const contaAoIniciar = contaVendasDoContextoAtual();
+  const requisicaoAtual = ++requisicaoCarregamentoBackendVendas;
   carregandoBackend = mostrarCarregamento;
   if (mostrarCarregamento) render();
   try {
@@ -4077,6 +4099,8 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
         dados = await comLimiteDeTempo(window.VendasDb.loadAll());
       }
     }
+    const contaDaResposta = String(dados.contaVendasAtiva?.id || contaAoIniciar || '');
+    if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
     state.autenticado = Boolean(dados.user);
     if (dados.user) {
       state.usuario = {
@@ -4093,7 +4117,9 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
           if (state.notificacoesAtivas) marcarPromptNotificacoesVendas('ativado');
         }),
       ]);
+      if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
       await inicializarPreferenciasVendasServidor(dados);
+      if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
       const houveAlteracaoDuranteCarga = revisaoDadosOperacionais !== revisaoAoIniciar;
       if (!houveAlteracaoDuranteCarga) {
         const agendaLocalLegada = [...(state.agendaItens || [])];
@@ -4125,13 +4151,16 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.contaVendasAtiva = dados.contaVendasAtiva || null;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
       await window.VendasDb.assinarAtualizacoesCatalogo?.(agendarAtualizacaoCatalogoPublicado);
+      if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
       await salvarCacheVendas();
     }
   } catch (error) {
+    if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return;
     console.error(error);
     if (!preservarTelaAtual) state.autenticado = false;
     state.erroBackend = traduzErro(error);
   } finally {
+    if (requisicaoAtual !== requisicaoCarregamentoBackendVendas) return;
     carregandoBackend = false;
     provedorOAuthNativoPendente = '';
     limparLoginSocialPendenteVendas();
@@ -4152,18 +4181,28 @@ async function carregarConteudosSecundariosVendas(renderizar = true) {
     || state.premiumVendasBloqueado
     || !window.VendasDb?.carregarConteudosSecundarios
   ) return;
+  const revisaoContaAoIniciar = revisaoContaVendasAtiva;
+  const contaAoIniciar = contaVendasDoContextoAtual();
+  const requisicaoAtual = ++requisicaoConteudosSecundariosVendas;
   conteudosSecundariosCarregando = true;
   if (renderizar && !conteudosSecundariosCarregados && ['divulgacao', 'informacoes', 'novidades'].includes(state.aba)) render();
   try {
     const dados = await window.VendasDb.carregarConteudosSecundarios();
+    if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return;
     state.conteudosVendas = dados.conteudos || [];
     state.divulgacaoPastas = dados.divulgacaoPastas || [];
     state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
     conteudosSecundariosCarregados = true;
     await salvarCacheVendas();
   } catch (error) {
-    console.warn('Não foi possível atualizar novidades e Divulgação em segundo plano.', error);
+    if (contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) {
+      console.warn('Não foi possível atualizar novidades e Divulgação em segundo plano.', error);
+    }
   } finally {
+    if (
+      requisicaoAtual !== requisicaoConteudosSecundariosVendas
+      || !contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)
+    ) return;
     conteudosSecundariosCarregando = false;
     if (renderizar && ['divulgacao', 'informacoes', 'novidades'].includes(state.aba) && !state.menuAberto) render();
   }
@@ -4171,12 +4210,16 @@ async function carregarConteudosSecundariosVendas(renderizar = true) {
 
 async function sincronizarCatalogoAutomaticamente(atualizarTela = false) {
   if (sincronizacaoCatalogoEmAndamento || !backendAtivo || state.moduloVendasAtivo === false || !state.acessoVendas) return state.sincronizacaoCatalogo;
+  const revisaoContaAoIniciar = revisaoContaVendasAtiva;
+  const contaAoIniciar = contaVendasDoContextoAtual();
   sincronizacaoCatalogoEmAndamento = true;
   try {
     const sincronizacao = await window.VendasDb.sincronizarCatalogoVendas();
+    if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return state.sincronizacaoCatalogo;
     state.sincronizacaoCatalogo = sincronizacao || { adicionados: 0, ja_recebidos: 0, sem_preco: 0 };
     if (Number(state.sincronizacaoCatalogo.adicionados || 0) > 0) {
       const catalogo = await window.VendasDb.listarCatalogoVendas();
+      if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return state.sincronizacaoCatalogo;
       state.produtos = catalogo.produtos;
       state.pacotesProdutos = catalogo.pacotes;
       const campoAtivo = document.activeElement;
@@ -4205,9 +4248,12 @@ async function atualizarCatalogoPublicadoAutomaticamente() {
     agendarAtualizacaoCatalogoPublicado();
     return;
   }
+  const revisaoContaAoIniciar = revisaoContaVendasAtiva;
+  const contaAoIniciar = contaVendasDoContextoAtual();
   atualizacaoCatalogoEmAndamento = true;
   try {
     const catalogo = await window.VendasDb.listarCatalogoVendas();
+    if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return;
     state.produtos = catalogo.produtos;
     state.pacotesProdutos = catalogo.pacotes;
     await salvarCacheVendas();
@@ -5085,6 +5131,9 @@ async function atualizarDivulgacao(origem = 'entrada') {
   }
   const posicaoAnterior = posicaoRolagemPrincipalVendas();
   const iniciadoEm = Date.now();
+  const revisaoContaAoIniciar = revisaoContaVendasAtiva;
+  const contaAoIniciar = contaVendasDoContextoAtual();
+  const requisicaoAtual = ++requisicaoAtualizacaoDivulgacao;
   divulgacaoAtualizando = true;
   gestoAtualizacaoDivulgacao = null;
   sincronizarBotaoAtualizacaoDivulgacao();
@@ -5096,6 +5145,7 @@ async function atualizarDivulgacao(origem = 'entrada') {
   }
   try {
     const dados = await window.VendasDb.carregarDivulgacao();
+    if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return;
     state.divulgacaoPastas = dados.divulgacaoPastas || [];
     state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
     if (divulgacaoPastaAtualId && !state.divulgacaoPastas.some((pasta) => pasta.id === divulgacaoPastaAtualId)) {
@@ -5104,9 +5154,15 @@ async function atualizarDivulgacao(origem = 'entrada') {
     await salvarCacheVendas();
     if (origem === 'atalho' || origem === 'botao') toast('Materiais atualizados.');
   } catch (error) {
-    console.warn('Não foi possível atualizar a Divulgação.', error);
-    if (origem !== 'entrada') toast(`${traduzErro(error)} Os materiais anteriores continuam disponíveis.`);
+    if (contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) {
+      console.warn('Não foi possível atualizar a Divulgação.', error);
+      if (origem !== 'entrada') toast(`${traduzErro(error)} Os materiais anteriores continuam disponíveis.`);
+    }
   } finally {
+    if (
+      requisicaoAtual !== requisicaoAtualizacaoDivulgacao
+      || !contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)
+    ) return;
     if (origem === 'gesto') {
       const espera = Math.max(0, 750 - (Date.now() - iniciadoEm));
       if (espera) await new Promise((resolve) => window.setTimeout(resolve, espera));
@@ -6471,6 +6527,47 @@ function nomeEmpresaParaComprovantes() {
   return String(state.nomeEmpresaComprovantes || state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
 }
 
+function prepararTrocaContaVendas(contaId) {
+  const contaSelecionada = (state.contasVendas || []).find((conta) => conta.id === contaId) || { id: contaId };
+  revisaoContaVendasAtiva += 1;
+  requisicaoConteudosSecundariosVendas += 1;
+  requisicaoAtualizacaoDivulgacao += 1;
+  divulgacaoAtualizando = false;
+  conteudosSecundariosCarregando = false;
+  conteudosSecundariosCarregados = false;
+  cancelarGestoAtualizacaoDivulgacao();
+  limparSelecaoMateriaisDivulgacao(false);
+  divulgacaoPastaAtualId = null;
+  divulgacaoMaterialAtualId = null;
+  arquivoMaterialDivulgacaoPreparado = null;
+  revisaoPreparacaoArquivoMaterialDivulgacao += 1;
+  state.produtos = [];
+  state.pacotesProdutos = [];
+  state.clientes = [];
+  state.vendas = [];
+  state.pagamentos = [];
+  state.agendaItens = [];
+  state.conteudosVendas = [];
+  state.divulgacaoPastas = [];
+  state.divulgacaoMateriais = [];
+  state.acessoVendas = null;
+  state.solicitacaoAcesso = null;
+  state.sincronizacaoCatalogo = { adicionados: 0, ja_recebidos: 0, sem_preco: 0 };
+  state.integracaoGestao = { base_receita: 'recebidos', pode_configurar: false };
+  state.vinculosComerciais = [];
+  state.vinculoComercialAtivo = null;
+  state.perfisFinanceiros = [];
+  state.nomeEmpresaComprovantes = '';
+  state.contaVendasAtiva = contaSelecionada;
+  preferenciasServidorCarregadas = false;
+  assinaturaPreferenciasServidor = '';
+  assinaturaPreferenciasAgendada = '';
+  if (timerPreferenciasServidor) {
+    window.clearTimeout(timerPreferenciasServidor);
+    timerPreferenciasServidor = null;
+  }
+}
+
 function salvarNomeEmpresaComprovantes() {
   if (!['proprietario', 'administrador'].includes(state.contaVendasAtiva?.papel)) {
     toast('Somente proprietário ou administrador pode alterar este nome.');
@@ -6486,6 +6583,7 @@ async function trocarContaVendas(contaId) {
   if (!contaId || contaId === state.contaVendasAtiva?.id) return;
   try {
     window.VendasDb.definirContaAtiva(contaId);
+    prepararTrocaContaVendas(contaId);
     await carregarDadosBackend(true, false, true);
     toast(`Conta ${state.contaVendasAtiva?.nome || 'de vendas'} carregada.`);
   } catch (error) {
@@ -8746,6 +8844,7 @@ function abrirConversaoConsignado(pedidoId, retornoClienteId = '', retornoAba = 
   conversaoConsignadoRascunho = {
     pedidoId,
     quantidades: {},
+    dataPedido: isoData(new Date()),
     retornoClienteId,
     retornoAba,
     retornoPagina: Number(retornoPagina) || 0,
@@ -8768,6 +8867,7 @@ function abrirConversaoConsignado(pedidoId, retornoClienteId = '', retornoAba = 
     </div>
     <div class="consignment-conversion-layout">
       <p class="consignment-conversion-help">Informe quanto foi vendido de cada produto. A quantidade não pode ultrapassar o saldo consignado.</p>
+      ${campoDataCentralizado('consignadoPedidoData', conversaoConsignadoRascunho.dataPedido, 'Data do pedido')}
       <section class="consignment-conversion-scroll">${itensHtml}</section>
       <div class="consignment-conversion-total"><span>Itens selecionados</span><b id="consignadoTotalSelecionado">0</b></div>
       <footer class="consignment-conversion-actions">
@@ -8837,15 +8937,19 @@ function atualizarResumoConversaoConsignado() {
 async function gerarPedidoDoConsignado(pedidoId) {
   const consignado = state.vendas.find((item) => item.id === pedidoId);
   if (!consignado || !pedidoEhConsignado(consignado) || conversaoConsignadoRascunho?.pedidoId !== pedidoId) return;
+  const dataPedido = String(document.getElementById('consignadoPedidoData')?.value || conversaoConsignadoRascunho.dataPedido || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPedido) || dataEhFutura(dataPedido)) {
+    toast('Informe uma data válida que não seja futura.');
+    return;
+  }
   const selecionados = (consignado.itens || []).map((item, indice) => ({ item, quantidade: Number(conversaoConsignadoRascunho?.quantidades?.[indice] || 0) })).filter((registro) => registro.quantidade > 0);
   if (!selecionados.length) { toast('Selecione ao menos uma quantidade para gerar o pedido.'); return; }
   const itensPedido = selecionados.map(({ item, quantidade }) => ({ ...item, id: undefined, quantidade, preco: Number(item.preco ?? item.preco_unitario ?? 0), bonificado: false, desconto: 0, total: quantidade * Number(item.preco ?? item.preco_unitario ?? 0) }));
   const restantes = (consignado.itens || []).map((item, indice) => ({ ...item, quantidade: Number(item.quantidade || 0) - Number(conversaoConsignadoRascunho.quantidades[indice] || 0) })).filter((item) => item.quantidade > 0);
   const subtotalPedido = itensPedido.reduce((soma, item) => soma + item.total, 0);
   const subtotalRestante = restantes.reduce((soma, item) => soma + Number(item.quantidade || 0) * Number(item.preco ?? item.preco_unitario ?? 0), 0);
-  const agora = new Date().toISOString();
   const pedido = {
-    id: uuidPersistenciaVendas(), cliente_id: consignado.cliente_id, status: 'concluida', subtotal: subtotalPedido, desconto: 0, total: subtotalPedido, forma_pagamento: 'Venda', criado_em: agora,
+    id: uuidPersistenciaVendas(), cliente_id: consignado.cliente_id, status: 'concluida', subtotal: subtotalPedido, desconto: 0, total: subtotalPedido, forma_pagamento: 'Venda', criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
     observacoes: JSON.stringify({ avantalab_pedido: true, tipo: 'venda', descricao: 'Venda originada de consignado', consignado_origem_id: consignado.id }), itens: itensPedido,
   };
   const consignadoAtualizado = { ...consignado, itens: restantes, subtotal: subtotalRestante, total: subtotalRestante, status: restantes.length ? 'concluida' : 'convertida', observacoes: JSON.stringify({ ...metadadosPedido(consignado), convertido_parcialmente: true }) };
