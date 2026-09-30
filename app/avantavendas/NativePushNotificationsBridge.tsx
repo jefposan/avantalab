@@ -19,10 +19,7 @@ declare global {
 
 export default function NativePushNotificationsBridge() {
   useEffect(() => {
-    // No Android desta versão o FCM fica fora do pacote até haver uma
-    // configuração Firebase oficial para br.com.avantalab.app. A ponte não
-    // deve chamar um plugin ausente nem deixar a abertura do app falhar.
-    if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('PushNotifications')) return;
+    if (!Capacitor.isNativePlatform()) return;
     let resolverToken: ((token: TokenPushNativo) => void) | null = null;
     let rejeitarToken: ((erro: Error) => void) | null = null;
 

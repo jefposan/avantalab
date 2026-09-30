@@ -1,8 +1,5 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
-// Revisado na versão 1.44.0.16: o pacote Android do AvantaVendas abre o domínio
-// próprio do módulo e não inicializa FCM sem configuração Firebase; notificações
-// push nativas Android ficam temporariamente indisponíveis, sem afetar vendas.
 // Revisado na versão 1.44.0.15: no AvantaVendas, trocar o perfil limpa os dados
 // anteriores antes de carregar a nova conta; respostas antigas são descartadas.
 // Em Consignado > Gerar pedido, a data pode ser escolhida até o dia atual.

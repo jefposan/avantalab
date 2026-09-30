@@ -1,12 +1,7 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.16 -->
+<!-- ava-version: 1.44.0.15 -->
 <!-- avantavendas-asset-revision: 158 -->
-
-> Revisão 1.44.0.16: a nova versão Android do **AvantaVendas** abre diretamente
-> o Vendas. Durante a avaliação do Google, notificações push nativas do Android
-> ficam temporariamente indisponíveis para evitar uma falha de abertura; pedidos,
-> clientes, catálogo, pagamentos e os demais fluxos permanecem iguais.
 
 > Revisão 1.44.0.15-av158: ao trocar o **perfil de vendas**, o conteúdo do
 > perfil anterior é removido antes da atualização, inclusive em **Divulgação**

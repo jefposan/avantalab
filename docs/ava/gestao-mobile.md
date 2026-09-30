@@ -1,9 +1,6 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.16 -->
-
-> Revisão 1.44.0.16: a correção da versão Android do AvantaVendas não altera os
-> fluxos da Gestão Mobile.
+<!-- ava-version: 1.44.0.15 -->
 
 > Revisão 1.44.0.15: troca de perfil e data de pedido consignado pertencem ao
 > AvantaVendas, sem impacto operacional na Gestão Mobile.

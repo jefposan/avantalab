@@ -1,14 +1,5 @@
 # Changelog
 
-## 1.44.0.16 - 2026-09-30
-- **Nova avaliação Android do AvantaVendas**: o pacote nativo passa a abrir o
-  domínio próprio do AvantaVendas e identifica o aplicativo corretamente.
-- **Abertura estável no Android**: a versão 1.0.2 (código 3) remove, de forma
-  temporária, o componente FCM que tentava iniciar sem a configuração Firebase
-  do pacote e causava o encerramento reportado pelo Google Play. As
-  notificações push nativas no Android serão reativadas após a configuração
-  oficial do Firebase; as demais funções de vendas permanecem disponíveis.
-
 ## 1.44.0.15-av158 - 2026-09-30
 - **Troca de perfil sem dados transitórios**: ao mudar de perfil de vendas, o
   aplicativo limpa imediatamente os dados operacionais, Novidades e Divulgação
