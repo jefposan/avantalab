@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.16 -->
+<!-- ava-version: 1.44.0.17 -->
+
+> Revisão 1.44.0.17: a verificação de cadastro passou a usar a mesma
+> autorização oficial dos recursos da Gestão. Não há mudança nos perfis ou nas
+> permissões exibidas ao usuário.
 
 > Revisão 1.44.0.16: a proteção de abertura da versão Android do AvantaVendas
 > não altera fluxos da Gestão Web.

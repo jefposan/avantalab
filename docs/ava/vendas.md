@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.16 -->
+<!-- ava-version: 1.44.0.17 -->
 <!-- avantavendas-asset-revision: 159 -->
+
+> Revisão 1.44.0.17: a validação de cadastro do perfil pertence à Gestão; não
+> altera os fluxos operacionais do AvantaVendas.
 
 > Revisão 1.44.0.16-av159: a versão Android em avaliação abre o AvantaVendas
 > sem inicializar notificações push nativas enquanto o Firebase não estiver

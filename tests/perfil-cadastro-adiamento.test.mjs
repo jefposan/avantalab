@@ -16,6 +16,18 @@ test('o adiamento do cadastro é persistido no perfil, sem remover a validação
   assert.match(route, /concluido_em: cadastroAtual\?\.concluido_em \|\| new Date\(\)\.toISOString\(\), adiado_em: null/);
 });
 
+test('a verificação do cadastro reutiliza a autorização oficial e o Mobile revalida token transitório', () => {
+  const route = read('app/api/perfil-cadastro/route.ts');
+  const mobile = read('public/mobile-app.js');
+
+  assert.match(route, /import \{ autenticarPerfilCobranca \} from '\.\.\/\.\.\/lib\/cobranca-servidor'/);
+  assert.match(route, /const acesso = await autenticarPerfilCobranca\(request, empresaId\)/);
+  assert.match(route, /\.eq\('id', acesso\.vinculo\.id\)/);
+  assert.match(mobile, /async function aguardarTokenSessaoAtualizadoMobile\(\)/);
+  assert.match(mobile, /resposta\.status === 401 \|\| resposta\.status === 403/);
+  assert.match(mobile, /Authorization: 'Bearer ' \+ tokenRenovado/);
+});
+
 test('web e mobile não bloqueiam o uso comum depois do adiamento', () => {
   const web = read('app/gestao/page.tsx');
   const mobile = read('public/mobile-app.js');

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import {
   ESTADOS_BRASIL,
   CONFIGURACAO_FISCAL_EMPRESA_VAZIA,
@@ -11,6 +10,7 @@ import {
   validarNomeCompleto,
 } from '../../lib/cadastro-perfil';
 import { ehContaRevisaoLoja } from '../../lib/conta-revisao';
+import { autenticarPerfilCobranca } from '../../lib/cobranca-servidor';
 
 export const runtime = 'nodejs';
 
@@ -72,28 +72,31 @@ function normalizarCadastro(cadastro: Record<string, unknown>) {
 }
 
 async function contexto(request: Request, empresaId: string) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
-  if (!url || !anon || !service || !token || !empresaId) return null;
+  // O cadastro precisa usar exatamente a mesma fronteira de autorização dos
+  // demais recursos da Gestão. Antes havia uma segunda implementação local
+  // dessa regra; qualquer ajuste nela podia deixar um perfil válido no painel
+  // sem conseguir concluir a verificação inicial do cadastro.
+  const acesso = await autenticarPerfilCobranca(request, empresaId);
+  if (!acesso) return null;
 
-  const cliente = createClient(url, anon);
-  const { data } = await cliente.auth.getUser(token);
-  if (!data.user) return null;
-
-  const admin = createClient(url, service);
-  const { data: vinculo } = await admin
+  // Nome, e-mail e telefone apenas preenchem o rascunho inicial. Uma falha
+  // nessa leitura complementar não pode invalidar um vínculo já autorizado.
+  const { data: detalhesVinculo } = await acesso.db
     .from('usuarios_empresa')
-    .select('id, perfil, nome, email, telefone, status')
-    .eq('empresa_id', empresaId)
-    .eq('user_id', data.user.id)
-    .eq('status', 'ativo')
-    .limit(1)
+    .select('nome, email, telefone')
+    .eq('id', acesso.vinculo.id)
     .maybeSingle();
-  if (!vinculo) return null;
 
-  return { admin, usuario: data.user, vinculo };
+  return {
+    admin: acesso.db,
+    usuario: acesso.usuario,
+    vinculo: {
+      ...acesso.vinculo,
+      nome: detalhesVinculo?.nome || '',
+      email: detalhesVinculo?.email || '',
+      telefone: detalhesVinculo?.telefone || '',
+    },
+  };
 }
 
 function statusCadastro(cadastro: Record<string, unknown>, tipoPerfil: 'empresa' | 'pessoal', podeEditar: boolean) {

@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.17: a verificação de cadastro da Gestão reutiliza
+// a autorização oficial do perfil. No Mobile, 401/403 transitório tenta uma
+// única renovação da sessão; vínculo sem acesso continua bloqueado.
 // Revisado na versão 1.44.0.16: na avaliação Android do AvantaVendas, a ponte
 // não inicia FCM quando o plugin nativo não está disponível; os fluxos de venda
 // permanecem iguais, enquanto o push Android aguarda configuração Firebase.

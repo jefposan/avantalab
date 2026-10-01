@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.44.0.17 - 2026-10-01
+- **Acesso consistente entre perfis**: a verificação de cadastro agora usa a
+  mesma autorização oficial dos demais recursos da Gestão. No Mobile, uma
+  resposta temporária de sessão expirada ou em renovação tenta novamente uma
+  vez com token novo; vínculos realmente removidos continuam bloqueados.
+
 ## 1.44.0.16-av159 - 2026-09-30
 - **Avaliação Android estável do AvantaVendas**: quando o aplicativo nativo não
   dispõe de push configurado, a ponte de notificações não tenta iniciar o FCM.

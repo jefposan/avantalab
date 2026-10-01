@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.16 -->
+<!-- ava-version: 1.44.0.17 -->
+
+> Revisão 1.44.0.17: ao abrir um perfil, a Gestão Mobile confirma o vínculo
+> pela autorização oficial. Se a sessão estiver em renovação, ela tenta uma vez
+> com token novo antes de informar falha; isso não concede acesso a perfil sem
+> vínculo ativo.
 
 > Revisão 1.44.0.16: a proteção de abertura da versão Android do AvantaVendas
 > não altera fluxos da Gestão Mobile.

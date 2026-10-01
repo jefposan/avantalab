@@ -6079,6 +6079,14 @@
     return sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
   }
 
+  async function aguardarTokenSessaoAtualizadoMobile() {
+    // A instância proprietária já mantém autoRefreshToken ativo. Esperar uma
+    // pequena janela e reler a sessão evita competir com a renovação nativa
+    // do Supabase ou criar uma segunda renovação concorrente no iOS.
+    await new Promise(function (resolver) { window.setTimeout(resolver, 350); });
+    return tokenSessao();
+  }
+
   function idDispositivoSessaoMobile() {
     var chave = 'avantalab.dispositivo.v1';
     try {
@@ -7198,6 +7206,20 @@
       });
       var resposta = retorno.resposta;
       var json = retorno.json;
+      // Em iOS, uma troca de perfil pode coincidir com a renovação silenciosa
+      // do token. Revalida uma única vez com token novo antes de concluir que
+      // o acesso foi negado. A segunda resposta continua sendo a fonte de
+      // verdade: não há bypass de vínculo ou permissão.
+      if (!resposta.ok && (resposta.status === 401 || resposta.status === 403)) {
+        var tokenRenovado = await aguardarTokenSessaoAtualizadoMobile().catch(function () { return ''; });
+        if (tokenRenovado) {
+          retorno = await requisitarJsonMobileComRetry('/api/perfil-cadastro?empresaId=' + encodeURIComponent(state.empresa.id), {
+            headers: { Authorization: 'Bearer ' + tokenRenovado },
+          });
+          resposta = retorno.resposta;
+          json = retorno.json;
+        }
+      }
       if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível verificar o cadastro deste perfil.');
       state.cadastroPerfilStatus = json;
       state.cadastroPerfilDados = json.cadastro;
