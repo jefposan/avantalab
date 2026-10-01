@@ -4,9 +4,31 @@ import AvantaVendasBootstrap from './AvantaVendasBootstrap';
 import NativePushNotificationsBridge from './NativePushNotificationsBridge';
 import { AVANTAVENDAS_VERSION } from './version';
 
+const shareImage = 'https://vendas.avantalab.com.br/images/avantavendas-share-meta.jpg?v=20261001-01';
+
 export const metadata: Metadata = {
-  title: 'AvantaVendas',
-  description: 'Clientes, produtos, pedidos e controle de vendas AvantaLab.',
+  metadataBase: new URL('https://vendas.avantalab.com.br'),
+  title: { absolute: 'AvantaVendas' },
+  description: 'Sistema de gestão de vendas da AvantaLab.',
+  openGraph: {
+    title: 'AvantaVendas',
+    description: 'Sistema de gestão de vendas da AvantaLab.',
+    type: 'website',
+    url: 'https://vendas.avantalab.com.br/',
+    siteName: 'AvantaVendas',
+    images: [{
+      url: shareImage,
+      width: 1200,
+      height: 630,
+      alt: 'AvantaVendas — Sistema de Gestão de Vendas',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AvantaVendas',
+    description: 'Sistema de gestão de vendas da AvantaLab.',
+    images: [shareImage],
+  },
   manifest: '/avantavendas/manifest.webmanifest',
   icons: {
     icon: '/images/avanta-vendas-pwa-192.png',

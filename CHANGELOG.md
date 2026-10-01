@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.44.0.18 - 2026-10-01
+- **Prévia oficial do AvantaVendas**: `vendas.avantalab.com.br` passa a declarar
+  uma única imagem própria de 1200 × 630 para WhatsApp e redes sociais, com
+  título e descrição do Vendas em vez da identidade herdada da Gestão.
+
 ## 1.44.0.17 - 2026-10-01
 - **Acesso consistente entre perfis**: a verificação de cadastro agora usa a
   mesma autorização oficial dos demais recursos da Gestão. No Mobile, uma

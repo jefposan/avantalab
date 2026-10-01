@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.18: a prévia pública do link do AvantaVendas usa
+// imagem própria; não há mudança operacional para a Ava orientar.
 // Revisado na versão 1.44.0.17: a verificação de cadastro da Gestão reutiliza
 // a autorização oficial do perfil. No Mobile, 401/403 transitório tenta uma
 // única renovação da sessão; vínculo sem acesso continua bloqueado.

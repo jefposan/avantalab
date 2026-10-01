@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.17 -->
+<!-- ava-version: 1.44.0.18 -->
 <!-- avantavendas-asset-revision: 159 -->
+
+> Revisão 1.44.0.18: compartilhar o endereço do AvantaVendas passa a usar a
+> identidade visual própria do aplicativo; sem impacto nos fluxos operacionais.
 
 > Revisão 1.44.0.17: a validação de cadastro do perfil pertence à Gestão; não
 > altera os fluxos operacionais do AvantaVendas.

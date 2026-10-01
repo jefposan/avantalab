@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.17 -->
+<!-- ava-version: 1.44.0.18 -->
+
+> Revisão 1.44.0.18: a prévia pública do link do AvantaVendas foi atualizada;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.44.0.17: a verificação de cadastro passou a usar a mesma
 > autorização oficial dos recursos da Gestão. Não há mudança nos perfis ou nas

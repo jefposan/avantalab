@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.17 -->
+<!-- ava-version: 1.44.0.18 -->
+
+> Revisão 1.44.0.18: a prévia pública do link do AvantaVendas foi atualizada;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.44.0.17: ao abrir um perfil, a Gestão Mobile confirma o vínculo
 > pela autorização oficial. Se a sessão estiver em renovação, ela tenta uma vez
