@@ -2328,6 +2328,8 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
   const [lookup, setLookup] = useState<{ kind: 'cnpj' | 'cep'; message: string; tone: 'success' | 'error' } | null>(null);
   const [searching, setSearching] = useState<'cnpj' | 'cep' | null>(null);
   const [saving, setSaving] = useState(false);
+  const [profilePickerOpen, setProfilePickerOpen] = useState(false);
+  const profilePickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -2336,6 +2338,7 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
     setLookup(null);
     setSearching(null);
     setSaving(false);
+    setProfilePickerOpen(false);
   }, [client, defaultSeller, open]);
 
   const update = <K extends keyof ClientRecord>(key: K, value: ClientRecord[K]) => setForm((current) => ({ ...current, [key]: value }));
@@ -2349,6 +2352,28 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
     });
     setLookup(null);
   };
+  const changeProfile = (profile: ClientRecord['profile']) => {
+    setForm((current) => ({ ...current, profile, document: '', tradeName: profile === 'Pessoa física' ? current.legalName : current.tradeName, stateRegistration: profile === 'Pessoa física' ? '' : current.stateRegistration, municipalRegistration: profile === 'Pessoa física' ? '' : current.municipalRegistration, fiscal: profile === 'Pessoa física' ? 'Não contribuinte' : current.fiscal, consumerFinal: profile === 'Pessoa física' ? true : current.consumerFinal }));
+    setLookup(null);
+    setError('');
+    setProfilePickerOpen(false);
+  };
+  useEffect(() => {
+    if (!profilePickerOpen) return;
+    const close = (event: PointerEvent) => {
+      if (profilePickerRef.current?.contains(event.target as Node)) return;
+      setProfilePickerOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setProfilePickerOpen(false);
+    };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [profilePickerOpen]);
   const searchCnpj = async () => {
     const digits = form.document.replace(/\D/g, '');
     if (!isValidCnpj(digits)) { setLookup({ kind: 'cnpj', message: 'Informe um CNPJ válido para consultar.', tone: 'error' }); return; }
@@ -2482,7 +2507,7 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
     const cepDigits = form.cep.replace(/\D/g, '');
     const cityCode = resolveMunicipalityCode({ city: form.cityName, uf: form.state, cep: form.cep, currentCode: form.cityCode });
     if (isIndividual ? !isValidCpf(documentDigits) : !isValidCnpj(documentDigits)) { setError(`Informe um ${isIndividual ? 'CPF' : 'CNPJ'} válido.`); return; }
-    if (!form.legalName.trim() || (!isIndividual && !form.tradeName.trim())) { setError(isIndividual ? 'Informe o nome completo.' : 'Informe a razão social e o nome fantasia.'); return; }
+    if (!form.legalName.trim()) { setError(isIndividual ? 'Informe o nome completo.' : 'Informe a razão social.'); return; }
     if (!isValidEmail(form.email)) { setError('Informe um e-mail válido para o contato comercial.'); return; }
     if (![10, 11].includes(form.phone.replace(/\D/g, '').length)) { setError('Informe um telefone com DDD válido.'); return; }
     if (form.fiscal === 'Contribuinte ICMS' && !form.stateRegistration.trim()) { setError('Informe a inscrição estadual do contribuinte de ICMS.'); return; }
@@ -2495,6 +2520,7 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
       id: form.id || `CLI-${Date.now().toString().slice(-6)}`,
       name: form.tradeName.trim() || form.legalName.trim(),
       tradeName: isIndividual ? form.legalName.trim() : form.tradeName.trim(),
+      contactName: isIndividual ? form.legalName.trim() : form.contactName.trim(),
       document: isIndividual ? formatCpf(form.document) : formatCnpj(form.document),
       cep: formatCep(form.cep),
       cityCode,
@@ -2510,49 +2536,50 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
     }
     setError(result.message || 'Não foi possível salvar o cliente. Os dados foram mantidos para uma nova tentativa.');
   };
+  const isIndividual = form.profile === 'Pessoa física';
 
-  return <Dialog open={open} title={client ? `Editar ${client.tradeName}` : 'Novo cliente'} description="Cadastro comercial, fiscal, de cobrança e entrega usado em pedidos, orçamentos e notas fiscais." onClose={saving ? () => undefined : onClose}>
+  return <Dialog open={open} title={client ? `Editar ${client.tradeName}` : 'Novo cliente'} description="Dados do cliente para operações e documentos fiscais." onClose={saving ? () => undefined : onClose}>
     <div className="dialog-body client-form">
-      <div className="lookup-notice"><Icon name="search" size={18}/><div><strong>{connected ? 'Consulta cadastral integrada' : 'Busca assistida em demonstração'}</strong><p>{connected ? 'CNPJ e CEP consultam fontes públicas; confirme inscrições, contatos e endereço antes de gravar no perfil.' : 'CNPJ e CEP usam dados locais para validar o fluxo. Teste com CNPJ 74.283.915/0001-98 e CEP 04538-000.'}</p></div></div>
       <section className="client-form-section" aria-labelledby="client-identification-title">
-        <div className="client-section-heading"><h3 id="client-identification-title">Identificação fiscal</h3><p>Dados que identificam o destinatário nos documentos fiscais.</p></div>
-        <div className="form-grid">
-          <label className="field"><span>{form.profile === 'Pessoa física' ? 'CPF' : 'CNPJ'} *</span><div className="lookup-control"><input inputMode="numeric" maxLength={form.profile === 'Pessoa física' ? 14 : 18} value={form.document} onChange={(event) => { update('document', form.profile === 'Pessoa física' ? formatCpf(event.target.value) : formatCnpj(event.target.value)); setLookup(null); }} placeholder={form.profile === 'Pessoa física' ? '000.000.000-00' : '00.000.000/0000-00'}/>{form.profile === 'Pessoa jurídica' && <button type="button" onClick={searchCnpj} disabled={searching === 'cnpj'}>{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button>}</div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
-          <label className="field"><span>Tipo de pessoa *</span><select value={form.profile} onChange={(event) => { const profile = event.target.value as ClientRecord['profile']; setForm((current) => ({ ...current, profile, document: '', tradeName: profile === 'Pessoa física' ? current.legalName : current.tradeName, fiscal: profile === 'Pessoa física' ? 'Não contribuinte' : current.fiscal, consumerFinal: profile === 'Pessoa física' ? true : current.consumerFinal })); setLookup(null); setError(''); }}><option>Pessoa jurídica</option><option>Pessoa física</option></select><small className="field-message">CPF e CNPJ são validados antes da gravação.</small></label>
-          <label className="field field-wide"><span>{form.profile === 'Pessoa física' ? 'Nome completo' : 'Razão social'} *</span><input value={form.legalName} onChange={(event) => update('legalName', event.target.value)} placeholder={form.profile === 'Pessoa física' ? 'Nome civil completo' : 'Nome empresarial registrado'}/></label>
-          {form.profile === 'Pessoa jurídica' && <label className="field"><span>Nome fantasia *</span><input value={form.tradeName} onChange={(event) => update('tradeName', event.target.value)} placeholder="Nome usado comercialmente"/></label>}
-          <label className="field"><span>Situação da inscrição estadual *</span><select value={form.fiscal} onChange={(event) => update('fiscal', event.target.value as ClientRecord['fiscal'])}><option>Contribuinte ICMS</option><option>Contribuinte isento</option><option>Não contribuinte</option></select></label>
-          <label className="field"><span>Consumidor final *</span><select value={form.consumerFinal ? 'Sim' : 'Não'} onChange={(event) => update('consumerFinal', event.target.value === 'Sim')}><option>Sim</option><option>Não</option></select><small className="field-message">Independe da situação da inscrição estadual.</small></label>
-          <label className="field"><span>Inscrição estadual</span><input value={form.stateRegistration} onChange={(event) => update('stateRegistration', event.target.value)} placeholder="Número ou Isento"/></label>
-          <label className="field"><span>Inscrição municipal</span><input value={form.municipalRegistration} onChange={(event) => update('municipalRegistration', event.target.value)} placeholder="Quando aplicável"/></label>
+        <div className="client-section-heading"><h3 id="client-identification-title">Identificação fiscal</h3></div>
+        <div className={`form-grid${!isIndividual ? ' client-fiscal-grid' : ''}`}>
+          <div className="field client-profile-field"><span id="client-profile-label">Tipo de pessoa *</span><div className="client-profile-picker" ref={profilePickerRef}><button type="button" className="client-profile-trigger" aria-labelledby="client-profile-label" aria-haspopup="listbox" aria-expanded={profilePickerOpen} aria-controls="client-profile-options" onClick={() => setProfilePickerOpen((open) => !open)} onKeyDown={(event) => { if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); setProfilePickerOpen(true); } }}><span>{form.profile}</span><Icon name="chevron" size={18}/></button>{profilePickerOpen && <div className="client-profile-options" id="client-profile-options" role="listbox" aria-labelledby="client-profile-label"><button type="button" role="option" aria-selected={form.profile === 'Pessoa jurídica'} onClick={() => changeProfile('Pessoa jurídica')}>{form.profile === 'Pessoa jurídica' && <Icon name="check" size={17}/>}<span>Pessoa jurídica</span></button><button type="button" role="option" aria-selected={form.profile === 'Pessoa física'} onClick={() => changeProfile('Pessoa física')}>{form.profile === 'Pessoa física' && <Icon name="check" size={17}/>}<span>Pessoa física</span></button></div>}</div></div>
+          <label className="field"><span>{isIndividual ? 'CPF' : 'CNPJ'} *</span><div className="lookup-control"><input inputMode="numeric" maxLength={isIndividual ? 14 : 18} value={form.document} onChange={(event) => { update('document', isIndividual ? formatCpf(event.target.value) : formatCnpj(event.target.value)); setLookup(null); }} placeholder={isIndividual ? '000.000.000-00' : '00.000.000/0000-00'}/>{!isIndividual && <button type="button" onClick={searchCnpj} disabled={searching === 'cnpj'}>{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button>}</div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
+          <label className={`field${isIndividual ? ' client-individual-name' : ' field-wide'}`}><span>{isIndividual ? 'Nome completo' : 'Razão social'} *</span><input value={form.legalName} onChange={(event) => update('legalName', event.target.value)} placeholder={isIndividual ? 'Nome civil completo' : 'Nome empresarial registrado'}/></label>
+          {!isIndividual && <label className="field"><span>Nome fantasia</span><input value={form.tradeName} onChange={(event) => update('tradeName', event.target.value)} placeholder="Nome usado comercialmente"/></label>}
+          {!isIndividual && <label className="field"><span>Situação da inscrição estadual *</span><select value={form.fiscal} onChange={(event) => update('fiscal', event.target.value as ClientRecord['fiscal'])}><option>Contribuinte ICMS</option><option>Contribuinte isento</option><option>Não contribuinte</option></select></label>}
+          <label className="field client-consumer-final"><span>Consumidor final *</span><select value={form.consumerFinal ? 'Sim' : 'Não'} onChange={(event) => update('consumerFinal', event.target.value === 'Sim')}><option>Sim</option><option>Não</option></select></label>
+          {!isIndividual && <label className="field client-state-registration"><span>Inscrição estadual</span><input value={form.stateRegistration} onChange={(event) => update('stateRegistration', event.target.value)} placeholder="Número ou Isento"/></label>}
+          {!isIndividual && <label className="field client-municipal-registration"><span>Inscrição municipal</span><input value={form.municipalRegistration} onChange={(event) => update('municipalRegistration', event.target.value)} placeholder="Quando aplicável"/></label>}
         </div>
       </section>
       <section className="client-form-section" aria-labelledby="client-contact-title">
-        <div className="client-section-heading"><h3 id="client-contact-title">Contato e relacionamento</h3><p>Informações usadas em propostas, cobranças e acompanhamento.</p></div>
+        <div className="client-section-heading"><h3 id="client-contact-title">Contato e relacionamento</h3></div>
         <div className="form-grid">
-          <label className="field"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', event.target.value)} placeholder="Nome do contato"/></label>
+          {!isIndividual && <label className="field"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', event.target.value)} placeholder="Nome do contato"/></label>}
           <label className="field"><span>Telefone *</span><input inputMode="tel" value={form.phone} onChange={(event) => update('phone', formatPhone(event.target.value))} placeholder="(00) 00000-0000"/></label>
-          <label className="field field-wide"><span>E-mail *</span><input type="email" value={form.email} onChange={(event) => update('email', event.target.value)} placeholder="financeiro@empresa.com.br"/></label>
+          <label className={`field${isIndividual ? '' : ' field-wide'}`}><span>E-mail *</span><input type="email" value={form.email} onChange={(event) => update('email', event.target.value)} placeholder="financeiro@empresa.com.br"/></label>
         </div>
       </section>
       <section className="client-form-section" aria-labelledby="client-address-title">
-        <div className="client-section-heading"><h3 id="client-address-title">Endereço de faturamento e entrega</h3><p>O primeiro endereço será usado como padrão nas operações.</p></div>
-        <div className="form-grid">
+        <div className="client-section-heading"><h3 id="client-address-title">Endereço de faturamento e entrega</h3></div>
+        <div className="form-grid client-address-grid">
           <label className="field"><span>CEP *</span><div className="lookup-control"><input inputMode="numeric" maxLength={9} value={form.cep} onChange={(event) => updateMunicipality({ cep: formatCep(event.target.value) })} placeholder="00000-000"/><button type="button" onClick={searchCep} disabled={searching === 'cep'}>{searching === 'cep' ? 'Buscando…' : 'Buscar'}</button></div>{lookup?.kind === 'cep' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
           <label className="field"><span>Logradouro *</span><input value={form.street} onChange={(event) => update('street', event.target.value)} placeholder="Rua, avenida ou estrada"/></label>
           <label className="field"><span>Número *</span><input value={form.number} onChange={(event) => update('number', event.target.value)} placeholder="Número ou S/N"/></label>
           <label className="field"><span>Complemento</span><input value={form.complement} onChange={(event) => update('complement', event.target.value)} placeholder="Sala, bloco, conjunto"/></label>
-          <label className="field"><span>Bairro *</span><input value={form.district} onChange={(event) => update('district', event.target.value)} placeholder="Bairro"/></label>
-          <label className="field"><span>Cidade *</span><input value={form.cityName} onChange={(event) => updateMunicipality({ cityName: event.target.value })} placeholder="Município"/></label>
-          <label className="field"><span>UF *</span><input maxLength={2} value={form.state} onChange={(event) => updateMunicipality({ state: event.target.value.toLocaleUpperCase('pt-BR') })} placeholder="SP"/><small className={`field-message${municipalityIsResolved(form.cityCode) ? '' : ' error'}`} role="status">{municipalityIsResolved(form.cityCode) ? 'Município fiscal identificado automaticamente.' : 'Busque o CEP ou revise cidade e UF para identificar o município fiscal.'}</small></label>
+          <label className="field client-address-district"><span>Bairro *</span><input value={form.district} onChange={(event) => update('district', event.target.value)} placeholder="Bairro"/></label>
+          <label className="field client-address-city"><span>Cidade *</span><input value={form.cityName} onChange={(event) => updateMunicipality({ cityName: event.target.value })} placeholder="Município"/></label>
+          <label className="field client-address-state"><span>UF *</span><input maxLength={2} value={form.state} onChange={(event) => updateMunicipality({ state: event.target.value.toLocaleUpperCase('pt-BR') })} placeholder="SP"/></label>
+          {!municipalityIsResolved(form.cityCode) && <p className="field-message error client-address-error" role="status">Busque o CEP ou revise cidade e UF para identificar o município fiscal.</p>}
         </div>
       </section>
       <section className="client-form-section" aria-labelledby="client-commercial-title">
-        <div className="client-section-heading"><h3 id="client-commercial-title">Preferências comerciais</h3><p>Responsável, prazo padrão e situação do relacionamento.</p></div>
-        <div className="form-grid">
-          <label className="field"><span>Vendedor responsável</span><select value={form.seller} onChange={(event) => update('seller', event.target.value)}>{sellers.map((seller) => <option key={seller}>{seller}</option>)}</select></label>
-          <label className="field"><span>Condição padrão</span><select value={form.paymentTerms} onChange={(event) => update('paymentTerms', event.target.value)}><option>À vista</option><option>7 dias</option><option>14 dias</option><option>28 dias</option><option>30 dias</option></select></label>
-          <label className="field"><span>Status</span><select value={form.status} onChange={(event) => update('status', event.target.value as ClientRecord['status'])}><option>Ativo</option><option>Revisar cadastro</option><option>Inativo</option></select></label>
+        <div className="client-section-heading"><h3 id="client-commercial-title">Preferências comerciais</h3></div>
+        <div className="form-grid client-commercial-grid">
+          <label className="field client-commercial-seller"><span>Vendedor responsável</span><select value={form.seller} onChange={(event) => update('seller', event.target.value)}>{sellers.map((seller) => <option key={seller}>{seller}</option>)}</select></label>
+          <label className="field client-commercial-terms"><span>Condição padrão</span><select value={form.paymentTerms} onChange={(event) => update('paymentTerms', event.target.value)}><option>À vista</option><option>7 dias</option><option>14 dias</option><option>28 dias</option><option>30 dias</option></select></label>
+          <label className="field client-commercial-status"><span>Status</span><select value={form.status} onChange={(event) => update('status', event.target.value as ClientRecord['status'])}><option>Ativo</option><option>Revisar cadastro</option><option>Inativo</option></select></label>
         </div>
       </section>
       {error && <p className="form-error" role="alert">{error}</p>}

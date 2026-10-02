@@ -1,6 +1,34 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.23 -->
+<!-- ava-version: 1.44.0.30 -->
+
+> Revisão 1.44.0.30: a lista de **Tipo de pessoa** no cadastro de cliente em
+> **Vendas e Serviços** abre abaixo do campo e se fecha ao escolher uma opção,
+> clicar fora ou pressionar Esc.
+
+> Revisão 1.44.0.29: para cliente Pessoa física em **Vendas e Serviços**,
+> Telefone e E-mail compartilham a linha em tela ampla e permanecem em coluna
+> no celular.
+
+> Revisão 1.44.0.28: no cadastro de cliente Pessoa jurídica em **Vendas e
+> Serviços**, Consumidor final, Inscrição estadual e Inscrição municipal ficam
+> na mesma linha em tela ampla; no celular seguem empilhados para leitura.
+
+> Revisão 1.44.0.27: em **Vendas e Serviços > Clientes**, Bairro, Cidade e UF
+> compartilham a linha, com UF compacta. Pessoa física usa o próprio nome como
+> contato; Nome fantasia de empresa é opcional. A orientação para localizar o
+> município fiscal aparece somente quando ainda houver pendência.
+
+> Revisão 1.44.0.26: para CPF, o campo Consumidor final não repete ajuda
+> redundante; o usuário apenas confirma Sim ou Não.
+
+> Revisão 1.44.0.25: para cliente Pessoa física, Nome completo e Consumidor
+> final compartilham a mesma linha em telas amplas. O seletor Sim/Não é compacto
+> e no mobile os campos permanecem em uma coluna.
+
+> Revisão 1.44.0.24: no cadastro de cliente em **Vendas e Serviços**, escolha
+> primeiro Pessoa física ou Pessoa jurídica e depois informe CPF ou CNPJ. CPF
+> não usa situação de inscrição estadual, inscrição estadual ou municipal.
 
 > Revisão 1.44.0.23: as ações em lote de **Produtos e serviços** usam os
 > rótulos **Adicionar ao catálogo**, **Retirar do catálogo**, **Ativar

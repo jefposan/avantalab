@@ -1,5 +1,23 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.30: em Vendas e Serviços, a lista de Tipo de
+// pessoa abre abaixo e alinhada ao campo; fecha por escolha, clique externo ou
+// Esc.
+// Revisado na versão 1.44.0.29: para cliente Pessoa física em Vendas e
+// Serviços, Telefone e E-mail compartilham a linha ampla e empilham no mobile.
+// Revisado na versão 1.44.0.28: no cadastro de cliente Pessoa jurídica de
+// Vendas e Serviços, Consumidor final e as inscrições estadual e municipal
+// compartilham uma linha ampla; no mobile, permanecem empilhados.
+// Revisado na versão 1.44.0.27: no cliente de Vendas e Serviços, Bairro,
+// Cidade e UF compartilham uma linha com UF compacta. Pessoa física usa o
+// próprio nome como contato e Nome fantasia de empresa é opcional; o aviso de
+// município fiscal só aparece quando houver pendência.
+// Revisado na versão 1.44.0.26: CPF confirma Consumidor final sem texto
+// redundante sobre uso ou consumo.
+// Revisado na versão 1.44.0.25: em Pessoa física, Nome completo e Consumidor
+// final compartilham linha ampla; Sim/Não permanece compacto.
+// Revisado na versão 1.44.0.24: no cliente de Vendas e Serviços, Tipo de
+// pessoa vem antes do CPF/CNPJ. CPF não usa nem preserva inscrições fiscais.
 // Revisado na versão 1.44.0.23: as ações em lote de Produtos e serviços usam
 // rótulos curtos e indicam estado já aplicado somente pela indisponibilidade.
 // Revisado na versão 1.44.0.22: contagem, explicação e seletor da ação em lote

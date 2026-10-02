@@ -61,17 +61,18 @@ function accessError(context, permission) {
 
 export function normalizeCommercialCustomerInput(input = {}) {
   const documentType = text(input.documentType || 'cnpj', 4).toLowerCase();
-  const stateRegistrationIndicator = text(input.stateRegistrationIndicator || 'nao_contribuinte', 30).toLowerCase();
+  const isIndividual = documentType === 'cpf';
+  const stateRegistrationIndicator = isIndividual ? 'nao_contribuinte' : text(input.stateRegistrationIndicator || 'nao_contribuinte', 30).toLowerCase();
   const requestedStatus = text(input.status || 'ativo', 30).toLowerCase();
   const normalized = {
-    personType: documentType === 'cpf' ? 'fisica' : 'juridica',
+    personType: isIndividual ? 'fisica' : 'juridica',
     documentType,
     document: digits(input.document),
     legalName: text(input.legalName, 160),
     tradeName: text(input.tradeName, 160),
     displayName: text(input.displayName || input.tradeName || input.legalName, 160),
-    stateRegistration: text(input.stateRegistration, 40),
-    municipalRegistration: text(input.municipalRegistration, 40),
+    stateRegistration: isIndividual ? '' : text(input.stateRegistration, 40),
+    municipalRegistration: isIndividual ? '' : text(input.municipalRegistration, 40),
     stateRegistrationIndicator,
     consumerFinal: input.consumerFinal === true,
     email: text(input.email, 254).toLowerCase(),

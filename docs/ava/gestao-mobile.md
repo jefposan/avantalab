@@ -1,6 +1,27 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.23 -->
+<!-- ava-version: 1.44.0.30 -->
+
+> Revisão 1.44.0.30: o seletor visual de tipo de pessoa pertence a Vendas e
+> Serviços na Gestão Web; não altera a orientação da Ava Mobile.
+
+> Revisão 1.44.0.29: o alinhamento do contato de cliente pertence a Vendas e
+> Serviços na Gestão Web; não altera a orientação da Ava Mobile.
+
+> Revisão 1.44.0.28: o alinhamento da linha fiscal de cliente pertence a Vendas
+> e Serviços na Gestão Web; não altera a orientação da Ava Mobile.
+
+> Revisão 1.44.0.27: a compactação do cadastro de cliente pertence a Vendas e
+> Serviços na Gestão Web; não altera a orientação da Ava Mobile.
+
+> Revisão 1.44.0.26: o refinamento do rótulo de consumidor final pertence a
+> Vendas e Serviços na Gestão Web; não altera a Ava Mobile.
+
+> Revisão 1.44.0.25: o refinamento visual do cadastro de cliente pertence a
+> Vendas e Serviços na Gestão Web; não altera a Ava Mobile.
+
+> Revisão 1.44.0.24: o ajuste do cadastro de cliente pertence a Vendas e
+> Serviços na Gestão Web; não altera a orientação operacional da Ava Mobile.
 
 > Revisão 1.44.0.23: os novos rótulos das ações em lote pertencem ao módulo web
 > de Custos e Precificação; sem impacto operacional na Gestão Mobile.

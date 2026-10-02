@@ -241,7 +241,7 @@ test('cadastro empresarial consulta CNPJ e CEP reais e preserva o formulário at
   assert.match(source, /fetch\('\/api\/consultas\/cnpj'/);
   assert.match(source, /fetch\(`\/api\/cep\?cep=\$\{digits\}`/);
   assert.match(source, /if \(!connected\) \{[\s\S]*demoCnpjDirectory/);
-  assert.match(source, /Consulta cadastral integrada/);
+  assert.doesNotMatch(source, /lookup-notice|Consulta cadastral integrada/);
   assert.match(source, /const result = await onSave\(saved\);[\s\S]*if \(result\.ok\) \{[\s\S]*onClose\(\)/);
   assert.match(source, /pendingCustomerRef\.current\.set\(requestId, \{ timer, resolve \}\)/);
   assert.match(source, /pendingSupplierRef\.current\.set\(requestId, \{ timer, resolve \}\)/);

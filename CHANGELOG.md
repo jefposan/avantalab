@@ -1,5 +1,44 @@
 # Changelog
 
+## 1.44.0.30 - 2026-10-02
+- **Lista de tipo de pessoa**: o seletor foi substituído por uma lista acessível
+  posicionada abaixo e alinhada ao campo, sem depender do menu nativo do
+  navegador.
+
+## 1.44.0.29 - 2026-10-02
+- **Contato de pessoa física**: Telefone e E-mail passam a ocupar a mesma linha
+  em telas amplas, sem reduzir a leitura no mobile.
+
+## 1.44.0.28 - 2026-10-02
+- **Linha fiscal empresarial**: Consumidor final, Inscrição estadual e Inscrição
+  municipal agora compartilham a mesma linha no desktop. O seletor Sim/Não
+  ocupa uma coluna curta; as duas inscrições usam o restante com equilíbrio.
+
+## 1.44.0.27 - 2026-10-02
+- **Cadastros de cliente mais objetivos**: Pessoa física dispensa o campo de
+  contato principal e usa o próprio nome no registro; para Pessoa jurídica,
+  Nome fantasia deixa de ser obrigatório.
+- **Formulário compacto**: Bairro, Cidade e UF passam a ocupar uma única linha,
+  com UF proporcional à sigla. Preferências comerciais também ficam em uma
+  linha no desktop; mensagens introdutórias repetitivas foram removidas.
+- **Orientação só quando necessária**: a correção de município fiscal aparece
+  apenas se Cidade e UF ainda não identificarem o município.
+
+## 1.44.0.26 - 2026-10-02
+- **Rótulo de consumidor final**: para CPF, a ajuda redundante foi removida; a
+  seleção Sim/Não permanece objetiva e sem interpretar a finalidade da compra.
+
+## 1.44.0.25 - 2026-10-02
+- **Cliente pessoa física compacto**: Nome completo e Consumidor final ficam na
+  mesma linha em telas amplas; o seletor Sim/Não ocupa somente a largura
+  necessária e a tela mantém uma coluna no mobile.
+
+## 1.44.0.24 - 2026-10-02
+- **Cadastro de cliente por tipo de pessoa**: o formulário agora pede primeiro
+  Pessoa física ou Pessoa jurídica e, em seguida, CPF ou CNPJ. Para CPF, não
+  exibe nem grava situação de inscrição estadual, inscrição estadual ou
+  inscrição municipal.
+
 ## 1.44.0.23 - 2026-10-02
 - **Rótulos diretos nas ações em lote**: as opções agora são **Adicionar ao
   catálogo**, **Retirar do catálogo**, **Ativar cadastro** e **Inativar

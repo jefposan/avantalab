@@ -1470,11 +1470,6 @@ td strong { color: #293c4e; font-size: 10.7px; }
 .icon-button { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; padding: 0; color: #647587; background: transparent; border: 0; border-radius: 10px; cursor: pointer; }
 .icon-button:hover { background: #eff4f7; }
 .dialog-body { padding: 20px 22px; }
-.lookup-notice { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 16px; padding: 12px 14px; color: #285e74; background: #e7f5f8; border-radius: 11px; }
-.lookup-notice > .icon { margin-top: 2px; flex: 0 0 auto; }
-.lookup-notice div { display: grid; gap: 3px; min-width: 0; }
-.lookup-notice strong { font-size: 11px; }
-.lookup-notice p { margin: 0; font-size: 9.5px; line-height: 1.45; overflow-wrap: anywhere; }
 .client-form { display: grid; gap: 14px; }
 .client-form-section { padding: 16px; background: #f7fafc; border-radius: 12px; }
 .client-section-heading { display: grid; gap: 3px; margin-bottom: 13px; }
@@ -1622,6 +1617,31 @@ td strong { color: #293c4e; font-size: 10.7px; }
 .field { display: grid; align-content: start; gap: 6px; min-width: 0; color: #45586a; font-size: 12px; font-weight: 750; line-height: 1.2; }
 .field > span:first-child { display: flex; align-items: flex-end; min-width: 0; min-height: 14px; line-height: 14px; overflow-wrap: anywhere; }
 .field-wide { grid-column: 1 / -1; }
+.client-profile-picker { position: relative; }
+.client-profile-trigger { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 44px; padding: 0 11px; color: var(--av-ink); background: #fff; border: 1px solid #cddae3; border-radius: 10px; cursor: pointer; font: inherit; font-size: 14px; text-align: left; }
+.client-profile-trigger:hover { border-color: #a9c9d7; }
+.client-profile-trigger:focus-visible { border-color: #69b2ce; outline: none; box-shadow: 0 0 0 3px rgba(24,167,201,.1); }
+.client-profile-trigger > .icon { transition: transform .16s ease; }
+.client-profile-trigger[aria-expanded="true"] > .icon { transform: rotate(180deg); }
+.client-profile-options { position: absolute; z-index: 12; top: calc(100% + 6px); right: 0; left: 0; display: grid; gap: 3px; padding: 5px; background: #fff; border: 1px solid #b9cad6; border-radius: 10px; box-shadow: 0 10px 24px rgba(0,42,73,.16); }
+.client-profile-options > button { display: flex; align-items: center; gap: 7px; min-height: 38px; padding: 7px 9px; color: #314658; background: transparent; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 750; text-align: left; }
+.client-profile-options > button:hover, .client-profile-options > button:focus-visible { color: var(--av-blue-950); background: #eaf5fa; outline: none; }
+.client-profile-options > button[aria-selected="true"] { color: #fff; background: var(--av-blue-700); }
+.client-consumer-final { width: min(100%, 190px); }
+.client-fiscal-grid { grid-template-columns: repeat(12,minmax(0,1fr)); }
+.client-fiscal-grid > .field { grid-column: span 6; }
+.client-fiscal-grid > .field-wide { grid-column: 1 / -1; }
+.client-fiscal-grid > .client-consumer-final { grid-column: span 2; width: auto; }
+.client-fiscal-grid > .client-state-registration, .client-fiscal-grid > .client-municipal-registration { grid-column: span 5; }
+.client-address-grid, .client-commercial-grid { grid-template-columns: repeat(12,minmax(0,1fr)); }
+.client-address-grid > .field { grid-column: span 6; }
+.client-address-grid > .client-address-district, .client-address-grid > .client-address-city { grid-column: span 5; }
+.client-address-grid > .client-address-state { grid-column: span 2; }
+.client-address-grid > .client-address-error { grid-column: 1 / -1; margin: -4px 0 0; }
+.client-address-state input { text-transform: uppercase; }
+.client-commercial-grid > .client-commercial-seller { grid-column: span 5; }
+.client-commercial-grid > .client-commercial-terms { grid-column: span 4; }
+.client-commercial-grid > .client-commercial-status { grid-column: span 3; }
 .field input, .field select { width: 100%; height: 44px; min-width: 0; padding: 0 11px; color: var(--av-ink); background: #fff; border: 1px solid #cddae3; border-radius: 10px; outline: none; font-size: 14px; line-height: 1.2; text-overflow: ellipsis; }
 .field input:focus, .field select:focus { border-color: #69b2ce; box-shadow: 0 0 0 3px rgba(24,167,201,.1); }
 .input-prefix { display: flex; align-items: center; min-width: 0; height: 44px; overflow: hidden; background: #fff; border: 1px solid #cddae3; border-radius: 10px; }
@@ -1919,6 +1939,9 @@ td strong { color: #293c4e; font-size: 10.7px; }
   .form-grid { grid-template-columns: 1fr; }
   .fiscal-rejection-items { grid-template-columns: 1fr; }
   .field-wide { grid-column: auto; }
+  .client-fiscal-grid, .client-address-grid, .client-commercial-grid { grid-template-columns: 1fr; }
+  .client-fiscal-grid > .field, .client-fiscal-grid > .field-wide, .client-fiscal-grid > .client-consumer-final, .client-fiscal-grid > .client-state-registration, .client-fiscal-grid > .client-municipal-registration, .client-address-grid > .field, .client-address-grid > .client-address-district, .client-address-grid > .client-address-city, .client-address-grid > .client-address-state, .client-address-grid > .client-address-error, .client-commercial-grid > .client-commercial-seller, .client-commercial-grid > .client-commercial-terms, .client-commercial-grid > .client-commercial-status { grid-column: auto; }
+  .client-fiscal-grid > .client-consumer-final { width: min(100%, 190px); }
   .dialog-backdrop { align-items: end; padding: 0; }
   .dialog { width: 100%; max-height: 92vh; border-radius: 18px 18px 0 0; }
   .dialog > header, .dialog-body, .dialog-footer { padding-left: 16px; padding-right: 16px; }
