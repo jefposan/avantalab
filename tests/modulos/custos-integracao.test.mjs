@@ -251,6 +251,21 @@ test('catálogo externo permanece separado da base local de Custos e a publicaç
   assert.match(workspace, /Selecionar todos os itens listados/);
   assert.match(workspace, /Limpar seleção/);
   assert.match(workspace, /aplicarAcaoLoteCatalogo/);
+  assert.match(workspace, /acaoLoteIndisponivel/);
+  assert.doesNotMatch(workspace, /— já aplicado/);
+  assert.match(workspace, /rotulo: 'Adicionar ao catálogo'/);
+  assert.match(workspace, /rotulo: 'Retirar do catálogo'/);
+  assert.match(workspace, /rotulo: 'Ativar cadastro'/);
+  assert.match(workspace, /rotulo: 'Inativar cadastro'/);
+  assert.match(workspace, /Aplicando…' : 'Confirmar'/);
+  assert.match(workspace, /<th>Catálogo local<\/th>/);
+  assert.match(workspace, /produto\.disponivel_catalogo \? 'No catálogo' : 'Fora do catálogo'/);
+  assert.match(workspace, /className=\{styles\.batchActionHelp\}[\s\S]*className=\{styles\.batchActionField\}/);
+  assert.match(workspace, /className=\{styles\.batchSelectionCount\}><b>\{quantidadeSelecionada\}<\/b><span>/);
+  assert.match(estilos, /\.batchActions select option\{font-size:14px\}/);
+  assert.match(estilos, /grid-template-columns:104px minmax\(220px,1fr\) minmax\(260px,340px\) auto auto/);
+  assert.match(estilos, /\.batchSelectionCount b\{color:var\(--text\);font-size:18px/);
+  assert.match(estilos, /\.batchActionHelp\{min-height:54px;display:flex/);
 });
 
 test('Gestão mantém o Dashboard montado e recebe o retorno seguro do módulo embutido', () => {

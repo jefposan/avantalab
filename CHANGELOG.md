@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.44.0.23 - 2026-10-02
+- **Rótulos diretos nas ações em lote**: as opções agora são **Adicionar ao
+  catálogo**, **Retirar do catálogo**, **Ativar cadastro** e **Inativar
+  cadastro**. O estado já aplicado continua bloqueando a opção, mas não
+  acrescenta texto ao rótulo.
+
+## 1.44.0.22 - 2026-10-02
+- **Regiões legíveis na ação em lote**: contagem, explicação e seletor receberam
+  superfícies e recortes próprios, mantendo a barra leve e distinguindo cada
+  função visualmente.
+- **Contagem compacta**: o número de itens selecionados fica em uma linha e o
+  rótulo em outra, evitando que quantidades com três ou mais algarismos ampliem
+  a primeira região.
+
+## 1.44.0.21 - 2026-10-01
+- **Barra de ações em uma linha**: a explicação da ação em lote de Produtos e
+  serviços agora fica à esquerda do seletor, mantendo contagem, orientação,
+  escolha e botões alinhados horizontalmente no desktop.
+
+## 1.44.0.20 - 2026-10-01
+- **Ações em lote mais claras em Produtos e serviços**: o seletor ganhou texto
+  maior, explicação da ação escolhida e bloqueia opções que já estejam aplicadas
+  a todos os itens selecionados. O botão de execução agora se chama
+  **Confirmar**.
+- **Situação sem ambiguidade**: a lista separa **Ativo/Inativo** de **No
+  catálogo/Fora do catálogo**, permitindo conferir a publicação mesmo quando
+  o cadastro estiver inativo.
+
 ## 1.44.0.19 - 2026-10-01
 - **Ordem dos lançamentos no Gestão Mobile**: despesas e receitas agora possuem
   controle próprio para alternar entre os dias mais recentes e mais antigos,

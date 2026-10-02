@@ -1,6 +1,27 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.19 -->
+<!-- ava-version: 1.44.0.23 -->
+
+> Revisão 1.44.0.23: as ações em lote de **Produtos e serviços** usam os
+> rótulos **Adicionar ao catálogo**, **Retirar do catálogo**, **Ativar
+> cadastro** e **Inativar cadastro**. Quando uma opção já está aplicada a todos
+> os selecionados, ela fica indisponível sem acrescentar texto ao rótulo.
+
+> Revisão 1.44.0.22: a barra de ações em lote de **Custos e Precificação >
+> Produtos e serviços** separa visualmente contagem, explicação e seletor. A
+> quantidade aparece acima de “item selecionado” ou “itens selecionados”; sem
+> mudança operacional nas ações.
+
+> Revisão 1.44.0.21: a explicação da ação em lote aparece à esquerda do seletor
+> em **Custos e Precificação > Produtos e serviços**, mantendo a barra em uma
+> linha no desktop; sem mudança na função de cada ação.
+
+> Revisão 1.44.0.20: em **Custos e Precificação > Produtos e serviços**, a
+> coluna **Situação** informa Ativo ou Inativo e a coluna **Catálogo local**
+> informa No catálogo ou Fora do catálogo. Ao selecionar itens, escolha a ação
+> em lote, leia sua explicação e use **Confirmar**. Uma ação fica indisponível
+> quando todos os itens selecionados já estão naquele estado; em seleção mista,
+> ela continua disponível para ajustar somente os que precisam.
 
 > Revisão 1.44.0.19: ordenação e pílula de recolhimento pertencem à Gestão
 > Mobile; sem impacto operacional na Gestão Web.

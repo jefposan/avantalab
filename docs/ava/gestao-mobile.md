@@ -1,6 +1,18 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.19 -->
+<!-- ava-version: 1.44.0.23 -->
+
+> Revisão 1.44.0.23: os novos rótulos das ações em lote pertencem ao módulo web
+> de Custos e Precificação; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.44.0.22: a separação visual das regiões da ação em lote pertence ao
+> módulo web de Custos e Precificação; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.44.0.21: o alinhamento horizontal da barra de ações pertence ao
+> módulo web de Custos e Precificação; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.44.0.20: a leitura separada de situação e catálogo pertence ao
+> módulo web de Custos e Precificação; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.44.0.19: **Despesas do mês** e **Receitas do mês** permitem alternar
 > a ordem por data entre lançamentos mais recentes e mais antigos. Quando a

@@ -32,11 +32,11 @@ const navegacao: Array<{ id: Aba; rotulo: string; icone: string }> = [
 
 const erroTexto = (erro: unknown) => erro instanceof Error ? erro.message : 'Não foi possível concluir a operação.';
 const divisoresPraticos = Array.from({ length: 48 }, (_, indice) => indice + 1);
-const acoesLoteCatalogo: Array<{ valor: AcaoLoteCatalogo; rotulo: string; confirmacao?: string }> = [
-  { valor: 'publicar_catalogo', rotulo: 'Adicionar ao catálogo local' },
-  { valor: 'retirar_catalogo', rotulo: 'Retirar do catálogo local', confirmacao: 'Os itens deixarão de aparecer no catálogo local, mas seus preços, imagens, estoque e cadastro serão preservados.' },
-  { valor: 'ativar', rotulo: 'Ativar cadastros' },
-  { valor: 'inativar', rotulo: 'Inativar cadastros', confirmacao: 'Os cadastros selecionados ficarão indisponíveis no Catálogo e em Custos. Preços, imagens, estoque, composições e histórico serão preservados.' },
+const acoesLoteCatalogo: Array<{ valor: AcaoLoteCatalogo; rotulo: string; descricao: string; confirmacao?: string }> = [
+  { valor: 'publicar_catalogo', rotulo: 'Adicionar ao catálogo', descricao: 'Inclui os itens no catálogo local, preservando preços, imagens, estoque e composição.' },
+  { valor: 'retirar_catalogo', rotulo: 'Retirar do catálogo', descricao: 'Remove os itens do catálogo local, sem apagar o cadastro ou seus dados.', confirmacao: 'Os itens deixarão de aparecer no catálogo local, mas seus preços, imagens, estoque e cadastro serão preservados.' },
+  { valor: 'ativar', rotulo: 'Ativar cadastro', descricao: 'Reativa os cadastros para uso em Custos e, quando publicados, no catálogo.' },
+  { valor: 'inativar', rotulo: 'Inativar cadastro', descricao: 'Torna os cadastros indisponíveis para uso, preservando dados e histórico.', confirmacao: 'Os cadastros selecionados ficarão indisponíveis no Catálogo e em Custos. Preços, imagens, estoque, composições e histórico serão preservados.' },
 ];
 
 export default function CustosWorkspace({ companyId, access, initialNewType }: { companyId: string; access: CustosAccess; initialNewType?: 'produto' }) {
@@ -440,7 +440,16 @@ function ProdutosView({ companyId, catalogoId, produtos, fornecedores, tabelas, 
   const idsListaFiltrada = listaFiltrada.map((produto) => produto.id);
   const todosListadosSelecionados = idsListaFiltrada.length > 0 && idsListaFiltrada.every((id) => produtosSelecionados.includes(id));
   const quantidadeSelecionada = produtosSelecionados.length;
+  const itensSelecionados = produtos.filter((produto) => produtosSelecionados.includes(produto.id));
+  const acaoLoteIndisponivel = (acao: AcaoLoteCatalogo) => {
+    if (!itensSelecionados.length) return true;
+    if (acao === 'publicar_catalogo') return itensSelecionados.every((produto) => produto.disponivel_catalogo);
+    if (acao === 'retirar_catalogo') return itensSelecionados.every((produto) => !produto.disponivel_catalogo);
+    if (acao === 'ativar') return itensSelecionados.every((produto) => produto.ativo);
+    return itensSelecionados.every((produto) => !produto.ativo);
+  };
   const detalheAcaoLote = acoesLoteCatalogo.find((acao) => acao.valor === acaoLote)!;
+  const acaoSelecionadaIndisponivel = acaoLoteIndisponivel(acaoLote);
   const alternarSelecaoProduto = (produtoId: string) => setProdutosSelecionados((atuais) => atuais.includes(produtoId) ? atuais.filter((id) => id !== produtoId) : [...atuais, produtoId]);
   const alternarTodosListados = () => setProdutosSelecionados((atuais) => {
     const selecionadosAtuais = new Set(atuais);
@@ -449,7 +458,7 @@ function ProdutosView({ companyId, catalogoId, produtos, fornecedores, tabelas, 
     return [...selecionadosAtuais];
   });
   const executarAcaoLote = async () => {
-    if (!quantidadeSelecionada) return;
+    if (!quantidadeSelecionada || acaoSelecionadaIndisponivel) return;
     setProcessandoLote(true);
     onErro('');
     try {
@@ -462,7 +471,7 @@ function ProdutosView({ companyId, catalogoId, produtos, fornecedores, tabelas, 
     finally { setProcessandoLote(false); }
   };
   const solicitarAcaoLote = () => {
-    if (!quantidadeSelecionada) return;
+    if (!quantidadeSelecionada || acaoSelecionadaIndisponivel) return;
     if (detalheAcaoLote.confirmacao) { setConfirmarAcaoLote(true); return; }
     void executarAcaoLote();
   };
@@ -545,12 +554,13 @@ function ProdutosView({ companyId, catalogoId, produtos, fornecedores, tabelas, 
         <label className={styles.search}><span>Localizar</span><CampoBusca value={buscaLista} onChange={setBuscaLista} placeholder="Código, nome, marca…" /></label>
       </div>
       {quantidadeSelecionada > 0 && <div className={styles.batchActions} aria-live="polite">
-        <strong>{quantidadeSelecionada} {quantidadeSelecionada === 1 ? 'item selecionado' : 'itens selecionados'}</strong>
-        <label>Ação para os selecionados<select value={acaoLote} disabled={!podeEditar || processandoLote} onChange={(evento) => setAcaoLote(evento.target.value as AcaoLoteCatalogo)}>{acoesLoteCatalogo.map((acao) => <option key={acao.valor} value={acao.valor}>{acao.rotulo}</option>)}</select></label>
+        <strong className={styles.batchSelectionCount}><b>{quantidadeSelecionada}</b><span>{quantidadeSelecionada === 1 ? 'item selecionado' : 'itens selecionados'}</span></strong>
+        <small id="ajuda-acao-lote" className={styles.batchActionHelp}>{detalheAcaoLote.descricao}{acaoSelecionadaIndisponivel ? ' Os itens selecionados já estão nesta situação.' : ''}</small>
+        <label className={styles.batchActionField}>Ação<select value={acaoLote} disabled={!podeEditar || processandoLote} aria-describedby="ajuda-acao-lote" onChange={(evento) => setAcaoLote(evento.target.value as AcaoLoteCatalogo)}>{acoesLoteCatalogo.map((acao) => <option key={acao.valor} value={acao.valor} disabled={acaoLoteIndisponivel(acao.valor)}>{acao.rotulo}</option>)}</select></label>
         <button type="button" className={styles.secondaryButton} disabled={!podeEditar || processandoLote} onClick={() => setProdutosSelecionados([])}>Limpar seleção</button>
-        <button type="button" className={styles.primaryButton} disabled={!podeEditar || processandoLote} onClick={solicitarAcaoLote}>{processandoLote ? 'Aplicando…' : detalheAcaoLote.rotulo}</button>
+        <button type="button" className={styles.primaryButton} disabled={!podeEditar || processandoLote || acaoSelecionadaIndisponivel} onClick={solicitarAcaoLote}>{processandoLote ? 'Aplicando…' : 'Confirmar'}</button>
       </div>}
-      <div className={styles.tableWrap}><table><thead><tr><th className={styles.selectionHeader}><button type="button" disabled={!podeEditar || !idsListaFiltrada.length || processandoLote} aria-label={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} title={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} onClick={alternarTodosListados}>{todosListadosSelecionados ? '−' : '✓'}</button></th><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => <tr key={produto.id} className={produtosSelecionados.includes(produto.id) ? styles.selectedRow : undefined}><td className={styles.selectionCell}><input type="checkbox" checked={produtosSelecionados.includes(produto.id)} disabled={!podeEditar || processandoLote} onChange={() => alternarSelecaoProduto(produto.id)} aria-label={`Selecionar ${produto.nome}`} /></td><td><b>{produto.sku}</b></td><td><b>{produto.nome}</b><small>{produto.unidade}</small></td><td>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${!produto.ativo ? styles.statusInactive : produto.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!produto.ativo ? 'Inativo' : produto.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar || processandoLote} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button></div>}</td></tr>)}{!listaFiltrada.length && <tr><td colSpan={7} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
+      <div className={styles.tableWrap}><table><thead><tr><th className={styles.selectionHeader}><button type="button" disabled={!podeEditar || !idsListaFiltrada.length || processandoLote} aria-label={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} title={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} onClick={alternarTodosListados}>{todosListadosSelecionados ? '−' : '✓'}</button></th><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th>Catálogo local</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => <tr key={produto.id} className={produtosSelecionados.includes(produto.id) ? styles.selectedRow : undefined}><td className={styles.selectionCell}><input type="checkbox" checked={produtosSelecionados.includes(produto.id)} disabled={!podeEditar || processandoLote} onChange={() => alternarSelecaoProduto(produto.id)} aria-label={`Selecionar ${produto.nome}`} /></td><td><b>{produto.sku}</b></td><td><b>{produto.nome}</b><small>{produto.unidade}</small></td><td>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${produto.ativo ? styles.statusActive : styles.statusInactive}`}>{produto.ativo ? 'Ativo' : 'Inativo'}</span></td><td><span className={`${styles.status} ${produto.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{produto.disponivel_catalogo ? 'No catálogo' : 'Fora do catálogo'}</span></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar || processandoLote} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button></div>}</td></tr>)}{!listaFiltrada.length && <tr><td colSpan={8} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
     </section>
     <Modal open={Boolean(precosDoProduto)} onClose={() => !salvando && setPrecosDoProduto(null)} title="Atualizar listas de preços" description={precosDoProduto ? `${precosDoProduto.sku} · ${precosDoProduto.nome}` : ''}>
       {precosDoProduto && <div className={styles.productPriceList}>{tabelas.filter((tabela) => tabela.ativo).map((tabela) => <label key={tabela.id}><span>{tabela.nome}{tabela.padrao && <small>Preço principal</small>}</span><MoneyInput value={valoresTabela[tabela.id] ?? 0} onChange={(valor) => setValoresTabela((atuais) => ({ ...atuais, [tabela.id]: valor }))} label={`Preço ${tabela.nome}`} disabled={salvando || !podeEditar} /></label>)}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => setPrecosDoProduto(null)}>Cancelar</button><button type="button" className={styles.primaryButton} disabled={salvando || !podeEditar} onClick={() => void salvarListasPrecos()}>{salvando ? 'Salvando…' : 'Salvar preços'}</button></div></div>}
