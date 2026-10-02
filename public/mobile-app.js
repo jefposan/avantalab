@@ -646,6 +646,8 @@
     tiposDespesaExpandido: false,
     ultimasDespesasExpandido: false,
     ultimasReceitasExpandido: false,
+    ultimasDespesasOrdem: 'desc',
+    ultimasReceitasOrdem: 'desc',
     ultimasDespesasBuscaAberta: false,
     ultimasReceitasBuscaAberta: false,
     ultimasDespesasBusca: '',
@@ -12873,6 +12875,41 @@
     return base + '</svg>';
   }
 
+  function iconeOrdemUltimas(ordem) {
+    var seta = ordem === 'desc'
+      ? '<path d="M12 4v16m0 0 4-4m-4 4-4-4"/>'
+      : '<path d="M12 20V4m0 0 4 4m-4-4-4 4"/>';
+    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="shrink-0">' + seta + '</svg>';
+  }
+
+  function ordenarLancamentosPorDiaMobile(lista, ordem) {
+    return (lista || []).slice().sort(function (a, b) {
+      var diaA = Number(a && a.dia) || 0;
+      var diaB = Number(b && b.dia) || 0;
+      return ordem === 'asc' ? diaA - diaB : diaB - diaA;
+    });
+  }
+
+  function controlesUltimosLancamentosHtml(configuracao) {
+    var plural = configuracao.tipo === 'despesa' ? 'despesas' : 'receitas';
+    var recolherVisivel = configuracao.expandido && configuracao.total > 3;
+    var proximaOrdem = configuracao.ordem === 'desc' ? 'mais antigas primeiro' : 'mais recentes primeiro';
+    var buscaBloqueada = premiumPessoalBloqueadoMobile();
+    var classePilula = recolherVisivel
+      ? 'av-mobile-lancamentos-pilula av-mobile-lancamentos-pilula-expandida'
+      : 'av-mobile-lancamentos-pilula';
+
+    return '<div class="relative z-10 flex shrink-0 -translate-y-1 items-center gap-2">' +
+      '<button id="ordenar-ultimas-' + plural + '" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur transition active:scale-95 active:bg-white/20" aria-label="Ordenar ' + plural + ' por data: ' + proximaOrdem + '" title="Ordenar por data: ' + proximaOrdem + '">' + iconeOrdemUltimas(configuracao.ordem) + '</button>' +
+      '<div class="' + classePilula + ' flex h-8 items-center overflow-hidden rounded-full border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur" role="group" aria-label="Ações da lista de ' + plural + '">' +
+        (recolherVisivel
+          ? '<button id="toggle-ultimas-' + plural + '" type="button" class="flex h-8 items-center justify-center whitespace-nowrap px-2.5 text-[10px] font-bold text-white transition active:bg-white/20" aria-label="Recolher lista de ' + plural + '">Recolher</button><span class="h-4 w-px shrink-0 bg-white/25" aria-hidden="true"></span>'
+          : '') +
+        '<button id="buscar-ultimas-' + plural + '" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center text-sm font-black text-white transition active:bg-white/20' + (buscaBloqueada ? ' grayscale opacity-50' : '') + '" aria-label="' + (configuracao.pesquisando ? 'Fechar busca de ' : 'Buscar ') + plural + '"' + (buscaBloqueada ? ' aria-disabled="true"' : '') + '>' + iconeBuscaUltimas(configuracao.pesquisando) + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
   function recorteHeaderLancamentosHtml(tipo) {
     var fundoCard = state.darkMode ? '#0F172A' : '#FFFFFF';
     var corDetalhe = tipo === 'despesa' ? '#FB7185' : '#34D399';
@@ -12883,13 +12920,13 @@
   }
 
   function ultimasDespesasHtml(lancamentos) {
-    var todos = lancamentos.slice().sort(function (a, b) { return b.dia - a.dia; });
+    var todos = ordenarLancamentosPorDiaMobile(lancamentos, state.ultimasDespesasOrdem);
     var pesquisando = state.ultimasDespesasBuscaAberta;
     var itens = pesquisando ? todos : (state.ultimasDespesasExpandido ? todos : todos.slice(0, 3));
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70" style="background:' + (state.darkMode ? '#0F172A' : '#FFFFFF') + ';">' +
-        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#A63D52 0%,#D65F6D 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke-linecap="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Despesas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (state.ultimasDespesasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20' + (premiumPessoalBloqueadoMobile() ? ' grayscale opacity-50' : '') + '" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar despesas') + '"' + (premiumPessoalBloqueadoMobile() ? ' aria-disabled="true"' : '') + '>' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('despesa') + '</div>' +
+        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#A63D52 0%,#D65F6D 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke-linecap="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Despesas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div>' + controlesUltimosLancamentosHtml({ tipo: 'despesa', ordem: state.ultimasDespesasOrdem, expandido: state.ultimasDespesasExpandido, pesquisando: pesquisando, total: todos.length }) + recorteHeaderLancamentosHtml('despesa') + '</div>' +
         (state.ultimasDespesasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-red-100 bg-red-50/60 px-3"><input id="busca-ultimas-despesas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasDespesasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-despesas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-red-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
           (itens.length ? itens.map(function (item) {
@@ -12911,13 +12948,13 @@
   }
 
 	  function ultimasReceitasHtml(entradas) {
-	    var todos = entradas.slice().sort(function (a, b) { return b.dia - a.dia; });
+	    var todos = ordenarLancamentosPorDiaMobile(entradas, state.ultimasReceitasOrdem);
     var pesquisando = state.ultimasReceitasBuscaAberta;
     var itens = pesquisando ? todos : (state.ultimasReceitasExpandido ? todos : todos.slice(0, 3));
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70" style="background:' + (state.darkMode ? '#0F172A' : '#FFFFFF') + ';">' +
-        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#14786F 0%,#2A9D8F 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 16 10 10l4 4 6-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Receitas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20' + (premiumPessoalBloqueadoMobile() ? ' grayscale opacity-50' : '') + '" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar receitas') + '"' + (premiumPessoalBloqueadoMobile() ? ' aria-disabled="true"' : '') + '>' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('receita') + '</div>' +
+        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#14786F 0%,#2A9D8F 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 16 10 10l4 4 6-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Receitas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div>' + controlesUltimosLancamentosHtml({ tipo: 'receita', ordem: state.ultimasReceitasOrdem, expandido: state.ultimasReceitasExpandido, pesquisando: pesquisando, total: todos.length }) + recorteHeaderLancamentosHtml('receita') + '</div>' +
         (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3"><input id="busca-ultimas-receitas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-receitas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-emerald-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-receitas-lista">' +
 	          (itens.length ? itens.map(function (item) {
@@ -16733,6 +16770,14 @@
         state.ultimasReceitasBuscaAberta = false;
         state.ultimasReceitasBusca = '';
       }
+      render();
+    });
+    bind('ordenar-ultimas-despesas', function () {
+      state.ultimasDespesasOrdem = state.ultimasDespesasOrdem === 'desc' ? 'asc' : 'desc';
+      render();
+    });
+    bind('ordenar-ultimas-receitas', function () {
+      state.ultimasReceitasOrdem = state.ultimasReceitasOrdem === 'desc' ? 'asc' : 'desc';
       render();
     });
     bind('buscar-ultimas-despesas', function () {

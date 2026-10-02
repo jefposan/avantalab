@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.19: lançamentos do Gestão Mobile alternam a ordem
+// por data; Recolher e lupa dividem uma única pílula quando a lista é expandida.
 // Revisado na versão 1.44.0.18: a prévia pública do link do AvantaVendas usa
 // imagem própria; não há mudança operacional para a Ava orientar.
 // Revisado na versão 1.44.0.17: a verificação de cadastro da Gestão reutiliza
@@ -1496,7 +1498,7 @@ LANÇAMENTOS E RESULTADOS
 - Em Menu > Cadastrar despesas e no cadastro inline do lançamento, novos tipos entram imediatamente em ordem alfabética nas listas e seletores. No cadastro inline, ele já volta selecionado no lançamento aberto, sem fechar ou recarregar a tela. Inclusões, edições e exclusões do catálogo atualizam também a Gestão Web aberta no mesmo perfil. A pílula do perfil ativo mantém a transparência durante salvamentos e edições; sua aparência é recalculada somente pela rolagem do conteúdo.
 - Em Receita, o usuário informa dia, origem e valor e salva uma entrada comum. Não existe opção para definir, substituir ou excluir o total do mês; o consolidado é calculado a partir das entradas preservadas.
 - Confirmações operacionais aparecem em cards do sistema. Fechar, tocar fora, pressionar Esc ou escolher Voltar sem excluir não remove dados. Em despesa parcelada, escolha Excluir somente esta ou Excluir todas; em despesa fixa, escolha Excluir somente este mês ou Abrir despesas fixas.
-- Nos cards Despesas do mês e Receitas do mês, tocar na lupa abre o campo de busca já focado e pronto para digitação; enquanto a busca estiver aberta, a ação Recolher permanece disponível e fecha a busca para retornar à lista compacta.
+- Nos cards Despesas do mês e Receitas do mês, o controle de ordem alterna entre os dias mais recentes e os mais antigos. Tocar na lupa abre o campo de busca já focado e pronto para digitação; quando a lista está expandida, Recolher fica à esquerda da lupa dentro da mesma pílula e fecha a busca ao retornar à lista compacta.
 - Para editar ou excluir um lançamento já registrado no Gestão Mobile, toque a própria linha no card Despesas do mês ou Receitas do mês. Despesa ou receita confirmada abre diretamente o editor com **Salvar** e **Excluir**; a exclusão pede confirmação. Para receita efetivada, a exclusão também reduz o total mensal correspondente; uma receita prevista ainda não entra nesse total. Em um lançamento previsto, primeiro aparecem as opções de editar, excluir ou confirmar hoje. Menu > Cadastrar despesas serve apenas para cadastrar ou revisar os tipos e categorias, nunca para editar a linha já lançada. Para alterar uma recorrência inteira, use Despesas fixas.
 - Para cadastrar ou revisar despesas e categorias: Menu > Cadastrar despesas. Despesas fixas devem ser gerenciadas na área própria para afetar a recorrência completa.
 - Agenda mostra lembretes e compromissos financeiros. Puxar para atualizar exige um gesto longo e conexão ativa.

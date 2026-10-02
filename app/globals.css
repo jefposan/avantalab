@@ -572,6 +572,29 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
   animation: av-menu-gestao-entrada 620ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
+@keyframes av-mobile-lancamentos-pilula-expandir {
+  from {
+    max-width: 32px;
+  }
+  to {
+    max-width: 112px;
+  }
+}
+
+/* No Gestão Mobile, a lupa é a própria extremidade direita do controle. Ao
+   expandir a lista, o mesmo círculo cresce para receber Recolher à esquerda. */
+.av-mobile-lancamentos-pilula {
+  width: 32px;
+  max-width: 32px;
+  transform-origin: right center;
+}
+
+.av-mobile-lancamentos-pilula-expandida {
+  width: auto;
+  max-width: 112px;
+  animation: av-mobile-lancamentos-pilula-expandir 180ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
 /* Os atalhos principais deixam uma margem à direita para avançarem no hover. */
 .av-menu-gestao-atalho {
   width: calc(100% - 14px) !important;
@@ -650,6 +673,10 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
   }
 
   .av-menu-gestao-entrada {
+    animation: none;
+  }
+
+  .av-mobile-lancamentos-pilula-expandida {
     animation: none;
   }
 

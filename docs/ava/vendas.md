@@ -1,7 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.18 -->
+<!-- ava-version: 1.44.0.19 -->
 <!-- avantavendas-asset-revision: 159 -->
+
+> Revisão 1.44.0.19: ordenação e pílula de recolhimento pertencem à Gestão
+> Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.44.0.18: compartilhar o endereço do AvantaVendas passa a usar a
 > identidade visual própria do aplicativo; sem impacto nos fluxos operacionais.

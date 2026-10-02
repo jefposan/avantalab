@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.18 -->
+<!-- ava-version: 1.44.0.19 -->
+
+> Revisão 1.44.0.19: ordenação e pílula de recolhimento pertencem à Gestão
+> Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.44.0.18: a prévia pública do link do AvantaVendas foi atualizada;
 > sem impacto operacional na Gestão Web.

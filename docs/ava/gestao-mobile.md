@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.18 -->
+<!-- ava-version: 1.44.0.19 -->
+
+> Revisão 1.44.0.19: **Despesas do mês** e **Receitas do mês** permitem alternar
+> a ordem por data entre lançamentos mais recentes e mais antigos. Quando a
+> lista está expandida, **Recolher** e a lupa formam uma única pílula.
 
 > Revisão 1.44.0.18: a prévia pública do link do AvantaVendas foi atualizada;
 > sem impacto operacional na Gestão Mobile.
@@ -3537,7 +3541,9 @@ deve usar os nomes do menu e da barra inferior do celular.
   seletores. Alterações feitas no Mobile atualizam a Gestão Web aberta no mesmo
   perfil, e as alterações da Web atualizam o Mobile.
 - Nos cards **Despesas do mês** e **Receitas do mês**, tocar na lupa abre a busca
-  já focada e pronta para digitação.
+  já focada e pronta para digitação. O controle de ordem alterna a lista entre
+  os dias mais recentes e os mais antigos. Ao expandir, **Recolher** aparece à
+  esquerda da lupa dentro da mesma pílula.
 - Para editar ou excluir um lançamento já registrado, toque a própria linha
   nesses cards. Uma despesa confirmada abre o editor com **Salvar** e
   **Excluir**; excluir sempre pede confirmação. Em previsões, escolha antes

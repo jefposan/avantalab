@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.44.0.19 - 2026-10-01
+- **Ordem dos lançamentos no Gestão Mobile**: despesas e receitas agora possuem
+  controle próprio para alternar entre os dias mais recentes e mais antigos,
+  seguindo a mesma regra cronológica da Gestão Web.
+- **Cabeçalho compacto dos lançamentos**: ao expandir uma lista, o círculo da
+  lupa cresce e reúne **Recolher** à esquerda e a busca à direita em uma única
+  pílula, nos cards de despesas e receitas.
+
 ## 1.44.0.18 - 2026-10-01
 - **Prévia oficial do AvantaVendas**: `vendas.avantalab.com.br` passa a declarar
   uma única imagem própria de 1200 × 630 para WhatsApp e redes sociais, com
