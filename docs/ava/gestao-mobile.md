@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.30 -->
+<!-- ava-version: 1.44.0.31 -->
+
+> Revisão 1.44.0.31: a capitalização dos nomes de cliente pertence a Vendas e
+> Serviços na Gestão Web; não altera a orientação da Ava Mobile.
 
 > Revisão 1.44.0.30: o seletor visual de tipo de pessoa pertence a Vendas e
 > Serviços na Gestão Web; não altera a orientação da Ava Mobile.

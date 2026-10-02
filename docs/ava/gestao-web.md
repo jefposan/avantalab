@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.30 -->
+<!-- ava-version: 1.44.0.31 -->
+
+> Revisão 1.44.0.31: em cliente Pessoa física ou jurídica de **Vendas e
+> Serviços**, Nome completo/Razão social, Nome fantasia e Contato principal
+> ajustam a capitalização durante a digitação. Conectivos como “de”, “da” e
+> “dos” ficam minúsculos; LTDA e S/A permanecem em maiúsculas.
 
 > Revisão 1.44.0.30: a lista de **Tipo de pessoa** no cadastro de cliente em
 > **Vendas e Serviços** abre abaixo do campo e se fecha ao escolher uma opção,

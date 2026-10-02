@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.44.0.31 - 2026-10-02
+- **Nomes padronizados**: os campos de Nome completo, Razão social, Nome
+  fantasia e Contato principal passam a ajustar maiúsculas e minúsculas durante
+  a digitação, preservando conectivos como “de”, “da” e “dos” e siglas
+  empresariais como LTDA e S/A.
+
 ## 1.44.0.30 - 2026-10-02
 - **Lista de tipo de pessoa**: o seletor foi substituído por uma lista acessível
   posicionada abaixo e alinhada ao campo, sem depender do menu nativo do

@@ -38,6 +38,11 @@ test('formulário pede tipo de pessoa antes do documento e esconde campos empres
   assert.match(form, /stateRegistration: profile === 'Pessoa física' \? ''/);
   assert.match(form, /municipalRegistration: profile === 'Pessoa física' \? ''/);
   assert.match(form, /client-individual-name/);
+  assert.match(source, /function formatName\(value: string\)/);
+  assert.match(source, /legalNameAcronyms = new Set\(\['ei', 'eireli', 'epp', 'ltda'/);
+  assert.match(form, /update\('legalName', formatName\(event\.target\.value\)\)/);
+  assert.match(form, /update\('tradeName', formatName\(event\.target\.value\)\)/);
+  assert.match(form, /update\('contactName', formatName\(event\.target\.value\)\)/);
   assert.match(form, /client-consumer-final/);
   assert.match(form, /form-grid\$\{!isIndividual \? ' client-fiscal-grid' : ''\}/);
   assert.match(form, /client-state-registration/);

@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.31: os nomes de cliente Pessoa física ou jurídica
+// em Vendas e Serviços ajustam capitalização durante a digitação; conectivos
+// ficam minúsculos, e LTDA e S/A permanecem em maiúsculas.
 // Revisado na versão 1.44.0.30: em Vendas e Serviços, a lista de Tipo de
 // pessoa abre abaixo e alinhada ao campo; fecha por escolha, clique externo ou
 // Esc.

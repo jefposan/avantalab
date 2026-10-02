@@ -2322,6 +2322,22 @@ function formatPhone(value: string) {
   return digits.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
 }
 
+const nameConnectors = new Set(['da', 'das', 'de', 'do', 'dos', 'e']);
+const legalNameAcronyms = new Set(['ei', 'eireli', 'epp', 'ltda', 'me', 'mei', 'sa', 's/a', 's.a.', 's.a']);
+
+function formatName(value: string) {
+  let wordIndex = 0;
+  return value.toLocaleLowerCase('pt-BR').split(/(\s+)/).map((part) => {
+    if (/^\s+$/.test(part)) return part;
+    const lower = part.toLocaleLowerCase('pt-BR');
+    const isConnector = wordIndex > 0 && nameConnectors.has(lower);
+    wordIndex += 1;
+    if (isConnector) return lower;
+    if (legalNameAcronyms.has(lower)) return lower.toLocaleUpperCase('pt-BR');
+    return lower.split('-').map((namePart) => namePart ? namePart.charAt(0).toLocaleUpperCase('pt-BR') + namePart.slice(1) : '').join('-');
+  }).join('');
+}
+
 function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller, connected, onClose, onSave }: { open: boolean; client: ClientRecord | null; clientRecords: ClientRecord[]; sellers: string[]; defaultSeller: string; connected: boolean; onClose: () => void; onSave: (client: ClientRecord) => Promise<ConfirmedSave> }) {
   const [form, setForm] = useState<ClientRecord>(() => client ? { ...client } : emptyClient(defaultSeller));
   const [error, setError] = useState('');
@@ -2353,7 +2369,7 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
     setLookup(null);
   };
   const changeProfile = (profile: ClientRecord['profile']) => {
-    setForm((current) => ({ ...current, profile, document: '', tradeName: profile === 'Pessoa física' ? current.legalName : current.tradeName, stateRegistration: profile === 'Pessoa física' ? '' : current.stateRegistration, municipalRegistration: profile === 'Pessoa física' ? '' : current.municipalRegistration, fiscal: profile === 'Pessoa física' ? 'Não contribuinte' : current.fiscal, consumerFinal: profile === 'Pessoa física' ? true : current.consumerFinal }));
+    setForm((current) => ({ ...current, profile, document: '', legalName: formatName(current.legalName), tradeName: profile === 'Pessoa física' ? formatName(current.legalName) : formatName(current.tradeName), contactName: formatName(current.contactName), stateRegistration: profile === 'Pessoa física' ? '' : current.stateRegistration, municipalRegistration: profile === 'Pessoa física' ? '' : current.municipalRegistration, fiscal: profile === 'Pessoa física' ? 'Não contribuinte' : current.fiscal, consumerFinal: profile === 'Pessoa física' ? true : current.consumerFinal }));
     setLookup(null);
     setError('');
     setProfilePickerOpen(false);
@@ -2545,8 +2561,8 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
         <div className={`form-grid${!isIndividual ? ' client-fiscal-grid' : ''}`}>
           <div className="field client-profile-field"><span id="client-profile-label">Tipo de pessoa *</span><div className="client-profile-picker" ref={profilePickerRef}><button type="button" className="client-profile-trigger" aria-labelledby="client-profile-label" aria-haspopup="listbox" aria-expanded={profilePickerOpen} aria-controls="client-profile-options" onClick={() => setProfilePickerOpen((open) => !open)} onKeyDown={(event) => { if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); setProfilePickerOpen(true); } }}><span>{form.profile}</span><Icon name="chevron" size={18}/></button>{profilePickerOpen && <div className="client-profile-options" id="client-profile-options" role="listbox" aria-labelledby="client-profile-label"><button type="button" role="option" aria-selected={form.profile === 'Pessoa jurídica'} onClick={() => changeProfile('Pessoa jurídica')}>{form.profile === 'Pessoa jurídica' && <Icon name="check" size={17}/>}<span>Pessoa jurídica</span></button><button type="button" role="option" aria-selected={form.profile === 'Pessoa física'} onClick={() => changeProfile('Pessoa física')}>{form.profile === 'Pessoa física' && <Icon name="check" size={17}/>}<span>Pessoa física</span></button></div>}</div></div>
           <label className="field"><span>{isIndividual ? 'CPF' : 'CNPJ'} *</span><div className="lookup-control"><input inputMode="numeric" maxLength={isIndividual ? 14 : 18} value={form.document} onChange={(event) => { update('document', isIndividual ? formatCpf(event.target.value) : formatCnpj(event.target.value)); setLookup(null); }} placeholder={isIndividual ? '000.000.000-00' : '00.000.000/0000-00'}/>{!isIndividual && <button type="button" onClick={searchCnpj} disabled={searching === 'cnpj'}>{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button>}</div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
-          <label className={`field${isIndividual ? ' client-individual-name' : ' field-wide'}`}><span>{isIndividual ? 'Nome completo' : 'Razão social'} *</span><input value={form.legalName} onChange={(event) => update('legalName', event.target.value)} placeholder={isIndividual ? 'Nome civil completo' : 'Nome empresarial registrado'}/></label>
-          {!isIndividual && <label className="field"><span>Nome fantasia</span><input value={form.tradeName} onChange={(event) => update('tradeName', event.target.value)} placeholder="Nome usado comercialmente"/></label>}
+          <label className={`field${isIndividual ? ' client-individual-name' : ' field-wide'}`}><span>{isIndividual ? 'Nome completo' : 'Razão social'} *</span><input value={form.legalName} onChange={(event) => update('legalName', formatName(event.target.value))} placeholder={isIndividual ? 'Nome civil completo' : 'Nome empresarial registrado'}/></label>
+          {!isIndividual && <label className="field"><span>Nome fantasia</span><input value={form.tradeName} onChange={(event) => update('tradeName', formatName(event.target.value))} placeholder="Nome usado comercialmente"/></label>}
           {!isIndividual && <label className="field"><span>Situação da inscrição estadual *</span><select value={form.fiscal} onChange={(event) => update('fiscal', event.target.value as ClientRecord['fiscal'])}><option>Contribuinte ICMS</option><option>Contribuinte isento</option><option>Não contribuinte</option></select></label>}
           <label className="field client-consumer-final"><span>Consumidor final *</span><select value={form.consumerFinal ? 'Sim' : 'Não'} onChange={(event) => update('consumerFinal', event.target.value === 'Sim')}><option>Sim</option><option>Não</option></select></label>
           {!isIndividual && <label className="field client-state-registration"><span>Inscrição estadual</span><input value={form.stateRegistration} onChange={(event) => update('stateRegistration', event.target.value)} placeholder="Número ou Isento"/></label>}
@@ -2556,7 +2572,7 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
       <section className="client-form-section" aria-labelledby="client-contact-title">
         <div className="client-section-heading"><h3 id="client-contact-title">Contato e relacionamento</h3></div>
         <div className="form-grid">
-          {!isIndividual && <label className="field"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', event.target.value)} placeholder="Nome do contato"/></label>}
+          {!isIndividual && <label className="field"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', formatName(event.target.value))} placeholder="Nome do contato"/></label>}
           <label className="field"><span>Telefone *</span><input inputMode="tel" value={form.phone} onChange={(event) => update('phone', formatPhone(event.target.value))} placeholder="(00) 00000-0000"/></label>
           <label className={`field${isIndividual ? '' : ' field-wide'}`}><span>E-mail *</span><input type="email" value={form.email} onChange={(event) => update('email', event.target.value)} placeholder="financeiro@empresa.com.br"/></label>
         </div>
