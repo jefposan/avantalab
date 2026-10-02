@@ -6,6 +6,34 @@ import {
   createFiscalCertificateActivateRequest,
   parseFiscalCertificateActivateResponse,
 } from '../../app/vendas/lib/fiscal-status-bridge.mjs';
+import { resolveFiscalDatabaseConnectionString } from '../../app/vendas/lib/server/fiscal-database-connection.mjs';
+
+test('runtime fiscal usa os dados do pooler sem duplicar a senha protegida', async () => {
+  const connection = resolveFiscalDatabaseConnectionString({
+    FISCAL_DATABASE_URL: 'postgresql://postgres:segredo%402026@db.projeto.supabase.co:5432/postgres?sslmode=require',
+    FISCAL_DATABASE_HOST_OVERRIDE: 'aws-1-us-west-1.pooler.supabase.com',
+    FISCAL_DATABASE_USERNAME_OVERRIDE: 'postgres.projeto',
+    FISCAL_DATABASE_PORT_OVERRIDE: '6543',
+  });
+  const parsed = new URL(connection);
+  assert.equal(parsed.hostname, 'aws-1-us-west-1.pooler.supabase.com');
+  assert.equal(parsed.username, 'postgres.projeto');
+  assert.equal(parsed.password, 'segredo%402026');
+  assert.equal(parsed.port, '6543');
+  assert.equal(parsed.pathname, '/postgres');
+  assert.equal(parsed.searchParams.get('sslmode'), 'require');
+  assert.equal(resolveFiscalDatabaseConnectionString({
+    FISCAL_DATABASE_URL: 'postgresql://postgres:segredo@db.projeto.supabase.co/postgres',
+    FISCAL_DATABASE_HOST_OVERRIDE: 'host inválido',
+  }), '');
+
+  const [statusRuntime, downloadRuntime] = await Promise.all([
+    readFile('app/vendas/lib/server/fiscal-status-runtime.mjs', 'utf8'),
+    readFile('app/vendas/lib/server/fiscal-download-runtime.mjs', 'utf8'),
+  ]);
+  assert.match(statusRuntime, /resolveFiscalDatabaseConnectionString\(environment\)/);
+  assert.match(downloadRuntime, /resolveFiscalDatabaseConnectionString\(environment\)/);
+});
 
 test('certificado A1 atravessa somente a rota autenticada e o handler protegido', async () => {
   const [bridge, route, handler] = await Promise.all([

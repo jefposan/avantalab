@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.44.0.33 - 2026-10-02
+- **Cadastro comercial em produção**: o runtime fiscal volta a usar a conexão
+  pelo pooler configurado, permitindo confirmar o acesso do perfil e salvar
+  clientes e fornecedores.
+- **Mensagem única no formulário**: uma falha de cadastro deixa de abrir um
+  aviso global atrás do modal; êxitos são confirmados somente após o modal
+  fechar.
+
+## 1.44.0.32 - 2026-10-02
+- **E-mails padronizados**: todos os campos de e-mail dos cadastros passam a
+  converter letras em minúsculas durante a digitação, na Gestão Web, Gestão
+  Mobile e AvantaVendas.
+
 ## 1.44.0.31 - 2026-10-02
 - **Nomes padronizados**: os campos de Nome completo, Razão social, Nome
   fantasia e Contato principal passam a ajustar maiúsculas e minúsculas durante

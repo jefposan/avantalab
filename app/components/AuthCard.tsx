@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import { normalizarTipoPerfil, rotuloTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { PAISES } from '../lib/paises';
 import { COBRANCA_ATIVA } from '../lib/cobranca';
+import { normalizarEmail } from '../lib/email';
 import DraggableModalCard from './DraggableModalCard';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -845,7 +846,7 @@ export default function AuthCard({
   autoComplete="off"
   placeholder="Email"
   value={cadastroEmail}
-  onChange={(e) => setCadastroEmail(e.target.value)}
+  onChange={(e) => setCadastroEmail(normalizarEmail(e.target.value))}
   className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
 

@@ -26,6 +26,7 @@ import type {
   EmpresaConsultada,
 } from '../../lib/consultas/types';
 import { formatarCnpjParaExibicao } from '../../lib/consultas/validators/cnpj';
+import { normalizarEmail } from '../lib/email';
 
 type DadosCobranca = { nome: string; cpfCnpj: string; email: string; telefone: string };
 
@@ -524,7 +525,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     <label className={label}>Telefone<input className={input} inputMode="tel" value={dados.telefone} onChange={(e) => set('telefone', e.target.value)} /></label>
                     <label className={label}>WhatsApp<input className={input} inputMode="tel" value={dados.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} /></label>
-                    <label className={label}>E-mail {pessoal ? '' : 'da empresa'}<input className={input} type="email" value={dados.email_empresa} onChange={(e) => set('email_empresa', e.target.value)} /></label>
+                    <label className={label}>E-mail {pessoal ? '' : 'da empresa'}<input className={input} type="email" value={dados.email_empresa} onChange={(e) => set('email_empresa', normalizarEmail(e.target.value))} /></label>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {!pessoal && <label className={label}>Responsável<input className={input} value={dados.nome_responsavel} onChange={(e) => set('nome_responsavel', e.target.value)} /></label>}

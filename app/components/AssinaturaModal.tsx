@@ -12,6 +12,7 @@ import {
   type EstadoAcesso,
 } from '../lib/cobranca';
 import { PLANOS_COMERCIAIS, type PlanoEmpresarial } from '../lib/planos-comerciais';
+import { normalizarEmail } from '../lib/email';
 
 type PlanoContratavel = 'pessoal_premium' | PlanoEmpresarial;
 type AlteracaoGerenciavel = 'mensal' | 'anual' | PlanoEmpresarial;
@@ -398,7 +399,7 @@ export default function AssinaturaModal({
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <input type="text" value={nomeCobranca} onChange={(e) => setNomeCobranca(e.target.value)} placeholder="Nome ou razão social" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
                 <input type="text" inputMode="numeric" value={cpfCnpj} onChange={(e) => setCpfCnpj(e.target.value)} placeholder="CPF ou CNPJ" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
-                <input type="email" value={emailCobranca} onChange={(e) => setEmailCobranca(e.target.value)} placeholder="E-mail de cobrança" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
+                <input type="email" value={emailCobranca} onChange={(e) => setEmailCobranca(normalizarEmail(e.target.value))} placeholder="E-mail de cobrança" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
                 <input type="tel" inputMode="tel" value={telefoneCobranca} onChange={(e) => setTelefoneCobranca(e.target.value)} placeholder="Telefone" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">

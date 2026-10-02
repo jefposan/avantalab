@@ -70,6 +70,7 @@ import { buildQuotePdf, quotePdfFileName, type QuotePdfInput } from '../lib/quot
 import { buildServiceOrderPdf, serviceOrderPdfFileName, type ServiceOrderPdfInput } from '../lib/service-order-pdf.mjs';
 import { FISCAL_REFERENCE_DATE, buildFiscalWorkflow, getFiscalDocumentProfile } from '../lib/fiscal-flow.mjs';
 import { municipalityIsResolved, resolveMunicipalityCode } from '../lib/municipality.mjs';
+import { normalizarEmail } from '../../lib/email';
 import { TAX_PROFILE_REFERENCE, evaluateCatalogTaxProfile, normalizeCatalogTaxProfile, type CatalogTaxProfile } from '../lib/tax-profile.mjs';
 import { createDefaultFiscalMatrix, normalizeFiscalMatrix, resolveFiscalMatrixRule, validateFiscalMatrix, type FiscalMatrix, type FiscalMatrixRule } from '../lib/fiscal-matrix.mjs';
 import { FISCAL_HOMOLOGATION_REFERENCE, FISCAL_HOMOLOGATION_STATUSES, createDefaultFiscalHomologationPlan, normalizeFiscalHomologationPlan, validateFiscalHomologationPlan, type FiscalHomologationDocument, type FiscalHomologationPlan, type FiscalHomologationScenario, type FiscalHomologationStatus } from '../lib/fiscal-homologation.mjs';
@@ -2338,7 +2339,7 @@ function formatName(value: string) {
   }).join('');
 }
 
-function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller, connected, onClose, onSave }: { open: boolean; client: ClientRecord | null; clientRecords: ClientRecord[]; sellers: string[]; defaultSeller: string; connected: boolean; onClose: () => void; onSave: (client: ClientRecord) => Promise<ConfirmedSave> }) {
+function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller, connected, onClose, onNotify, onSave }: { open: boolean; client: ClientRecord | null; clientRecords: ClientRecord[]; sellers: string[]; defaultSeller: string; connected: boolean; onClose: () => void; onNotify: (message: string) => void; onSave: (client: ClientRecord) => Promise<ConfirmedSave> }) {
   const [form, setForm] = useState<ClientRecord>(() => client ? { ...client } : emptyClient(defaultSeller));
   const [error, setError] = useState('');
   const [lookup, setLookup] = useState<{ kind: 'cnpj' | 'cep'; message: string; tone: 'success' | 'error' } | null>(null);
@@ -2548,6 +2549,7 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
     setSaving(false);
     if (result.ok) {
       onClose();
+      onNotify(result.message || 'Cliente salvo no perfil empresarial.');
       return;
     }
     setError(result.message || 'Não foi possível salvar o cliente. Os dados foram mantidos para uma nova tentativa.');
@@ -2574,7 +2576,7 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
         <div className="form-grid">
           {!isIndividual && <label className="field"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', formatName(event.target.value))} placeholder="Nome do contato"/></label>}
           <label className="field"><span>Telefone *</span><input inputMode="tel" value={form.phone} onChange={(event) => update('phone', formatPhone(event.target.value))} placeholder="(00) 00000-0000"/></label>
-          <label className={`field${isIndividual ? '' : ' field-wide'}`}><span>E-mail *</span><input type="email" value={form.email} onChange={(event) => update('email', event.target.value)} placeholder="financeiro@empresa.com.br"/></label>
+          <label className={`field${isIndividual ? '' : ' field-wide'}`}><span>E-mail *</span><input type="email" value={form.email} onChange={(event) => update('email', normalizarEmail(event.target.value))} placeholder="financeiro@empresa.com.br"/></label>
         </div>
       </section>
       <section className="client-form-section" aria-labelledby="client-address-title">
@@ -2604,7 +2606,7 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
   </Dialog>;
 }
 
-function SupplierFormDialog({ open, suppliers, onClose, onSave }: { open: boolean; suppliers: SupplierRecord[]; onClose: () => void; onSave: (supplier: SupplierRecord) => Promise<ConfirmedSave> }) {
+function SupplierFormDialog({ open, suppliers, onClose, onNotify, onSave }: { open: boolean; suppliers: SupplierRecord[]; onClose: () => void; onNotify: (message: string) => void; onSave: (supplier: SupplierRecord) => Promise<ConfirmedSave> }) {
   const [form, setForm] = useState({ name: '', document: '', contactName: '', email: '', phone: '' });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -2629,6 +2631,7 @@ function SupplierFormDialog({ open, suppliers, onClose, onSave }: { open: boolea
     setSaving(false);
     if (result.ok) {
       onClose();
+      onNotify(result.message || 'Fornecedor salvo no perfil empresarial.');
       return;
     }
     setError(result.message || 'Não foi possível salvar o fornecedor. Os dados foram mantidos para uma nova tentativa.');
@@ -2642,7 +2645,7 @@ function SupplierFormDialog({ open, suppliers, onClose, onSave }: { open: boolea
           <label className="field"><span>CNPJ</span><input inputMode="numeric" maxLength={18} value={form.document} onChange={(event) => update('document', formatCnpj(event.target.value))} placeholder="00.000.000/0000-00"/></label>
           <label className="field"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', event.target.value)} placeholder="Nome do contato"/></label>
           <label className="field"><span>Telefone</span><input inputMode="tel" value={form.phone} onChange={(event) => update('phone', formatPhone(event.target.value))} placeholder="(00) 00000-0000"/></label>
-          <label className="field"><span>E-mail</span><input type="email" value={form.email} onChange={(event) => update('email', event.target.value)} placeholder="compras@fornecedor.com.br"/></label>
+          <label className="field"><span>E-mail</span><input type="email" value={form.email} onChange={(event) => update('email', normalizarEmail(event.target.value))} placeholder="compras@fornecedor.com.br"/></label>
         </div>
       </section>
       {error && <p className="form-error" role="alert">{error}</p>}
@@ -2750,7 +2753,7 @@ function ClientsView({ clientRecords, createdRecords, receivableRecords, setting
       </Table>
       {records.length === 0 && <EmptyState title="Nenhum cliente encontrado" description="Ajuste a busca ou o filtro para consultar a carteira."/>}
     </Panel>
-    <ClientFormDialog open={formOpen} client={editingClient} clientRecords={clientRecords} sellers={settings.commercial.sellers} defaultSeller={settings.commercial.defaultSeller} connected={connected} onClose={() => setFormOpen(false)} onSave={onSave}/>
+    <ClientFormDialog open={formOpen} client={editingClient} clientRecords={clientRecords} sellers={settings.commercial.sellers} defaultSeller={settings.commercial.defaultSeller} connected={connected} onClose={() => setFormOpen(false)} onNotify={onNotify} onSave={onSave}/>
     <ClientReportDialog client={reportClient} createdRecords={createdRecords} receivableRecords={receivableRecords} onClose={() => setReportClient(null)} onNewOrder={onNewOrder} onNewService={onNewService} onNewQuote={onNewQuote}/>
   </>;
 }
@@ -4657,7 +4660,7 @@ function SettingsDialog({ section, settings, onClose, onSave }: { section: Setti
           <label className="field"><span>Regime tributário *</span><select value={draft.company.taxRegime} onChange={(event) => updateCompany('taxRegime', event.target.value)}><option>Simples Nacional</option><option>Lucro Presumido</option><option>Lucro Real</option></select></label>
           <label className="field"><span>Inscrição estadual</span><input value={draft.company.stateRegistration} onChange={(event) => updateCompany('stateRegistration', event.target.value)} maxLength={30}/></label>
           <label className="field"><span>Inscrição municipal</span><input value={draft.company.municipalRegistration} onChange={(event) => updateCompany('municipalRegistration', event.target.value)} maxLength={30}/></label>
-          <label className="field"><span>E-mail comercial</span><input type="email" value={draft.company.email} onChange={(event) => updateCompany('email', event.target.value)} maxLength={120}/></label>
+          <label className="field"><span>E-mail comercial</span><input type="email" value={draft.company.email} onChange={(event) => updateCompany('email', normalizarEmail(event.target.value))} maxLength={120}/></label>
           <label className="field"><span>Telefone</span><input value={draft.company.phone} onChange={(event) => updateCompany('phone', formatPhone(event.target.value))} maxLength={24}/></label>
         </div></section>
         <section className="settings-form-section"><div className="client-section-heading"><h3>Endereço fiscal</h3><p>Use o CEP quando o CNPJ não retornar o endereço ou quando precisar atualizá-lo.</p></div><div className="form-grid">
@@ -5625,7 +5628,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         pendingReceivableRef.current.delete(receivableMove.requestId);
         const result={ok:receivableMove.ok,message:receivableMove.message||(receivableMove.ok?'Operação financeira registrada.':'Não foi possível concluir a operação financeira.')};
         pending.resolve(result);
-        setToast(result.message);
         return;
       }
       const stockSnapshot=parseStockSnapshot(event.data);
@@ -5645,7 +5647,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         }
         const result = { ok: customerSave.ok, message: customerSave.message || (customerSave.ok ? 'Cliente salvo no perfil empresarial.' : 'Não foi possível salvar o cliente.') };
         pending.resolve(result);
-        setToast(result.message);
         return;
       }
       const supplierSnapshot = parsePartySnapshot(event.data, SUPPLIER_SNAPSHOT_TYPE, 'suppliers');
@@ -5662,7 +5663,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         }
         const result = { ok: supplierSave.ok, message: supplierSave.message || (supplierSave.ok ? 'Fornecedor salvo no perfil empresarial.' : 'Não foi possível salvar o fornecedor.') };
         pending.resolve(result);
-        setToast(result.message);
         return;
       }
       if (event.data?.type === OPERATION_SAVE_RESPONSE_TYPE && typeof event.data.requestId === 'string') {
@@ -6613,12 +6613,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         const timer = window.setTimeout(() => {
           pendingCustomerRef.current.delete(requestId);
           const result = { ok: false, message: 'A confirmação demorou mais que o esperado. Os dados foram mantidos; tente salvar novamente.' };
-          setToast(result.message);
           resolve(result);
         }, 20_000);
         pendingCustomerRef.current.set(requestId, { timer, resolve });
         window.parent.postMessage({ type: CUSTOMER_SAVE_REQUEST_TYPE, requestId, customer: client }, managementBridgeOrigin);
-        setToast(exists ? 'Salvando atualização do cliente…' : 'Cadastrando cliente no perfil empresarial…');
       });
     }
     setClientRecords((current) => {
@@ -6628,7 +6626,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       return next;
     });
     const message = `${client.tradeName} ${clientRecords.some((item) => item.id === client.id) ? 'atualizado' : 'cadastrado'} localmente.`;
-    setToast(message);
     return { ok: true, message };
   };
   const saveSupplier = async (supplier: SupplierRecord): Promise<ConfirmedSave> => {
@@ -6639,12 +6636,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         const timer = window.setTimeout(() => {
           pendingSupplierRef.current.delete(requestId);
           const result = { ok: false, message: 'A confirmação demorou mais que o esperado. Os dados foram mantidos; tente salvar novamente.' };
-          setToast(result.message);
           resolve(result);
         }, 20_000);
         pendingSupplierRef.current.set(requestId, { timer, resolve });
         window.parent.postMessage({ type: SUPPLIER_SAVE_REQUEST_TYPE, requestId, supplier }, managementBridgeOrigin);
-        setToast('Cadastrando fornecedor no perfil empresarial…');
       });
     }
     setSupplierRecords((current) => {
@@ -6653,7 +6648,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       return next;
     });
     const message = `${supplier.name} cadastrado para compras e entradas de estoque.`;
-    setToast(message);
     return { ok: true, message };
   };
   const saveCatalogItem = (item: CatalogItem) => {
@@ -7365,8 +7359,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     </div>
     <NewRecordDialog type={newType} fiscalOrigin={fiscalOrigin} fiscalConfig={currentFiscalConfig} settings={moduleSettings} onClose={() => setNewType(null)} onCreated={createRecord}/>
     <CertificateDigitalDialog open={certificateOpen} company={moduleSettings.company} bridge={fiscalCertificateBridgeState} onClose={() => setCertificateOpen(false)} onRequestCompanyRegistration={() => { setCertificateOpen(false); setCompanyRegistrationOpen(true); }} onInstall={installProtectedCertificate} onActivate={activateProtectedCertificate}/>
-    <ClientFormDialog open={clientCreateOpen} client={null} clientRecords={clientRecords} sellers={moduleSettings.commercial.sellers} defaultSeller={moduleSettings.commercial.defaultSeller} connected={Boolean(managementCatalogBridge)} onClose={() => setClientCreateOpen(false)} onSave={saveClient}/>
-    <SupplierFormDialog open={supplierCreateOpen} suppliers={supplierRecords} onClose={() => setSupplierCreateOpen(false)} onSave={saveSupplier}/>
+    <ClientFormDialog open={clientCreateOpen} client={null} clientRecords={clientRecords} sellers={moduleSettings.commercial.sellers} defaultSeller={moduleSettings.commercial.defaultSeller} connected={Boolean(managementCatalogBridge)} onClose={() => setClientCreateOpen(false)} onNotify={setToast} onSave={saveClient}/>
+    <SupplierFormDialog open={supplierCreateOpen} suppliers={supplierRecords} onClose={() => setSupplierCreateOpen(false)} onNotify={setToast} onSave={saveSupplier}/>
     <SettingsDialog section={companyRegistrationOpen ? 'empresa' : null} settings={moduleSettings} onClose={() => { setCompanyRegistrationOpen(false); setCertificateOpen(true); }} onSave={(next) => { if (!saveModuleSettings(next)) return; setCompanyRegistrationOpen(false); setCertificateOpen(true); }}/>
     {toast && <div className="toast" role="status"><Icon name="check" size={18}/><span>{toast}</span><button type="button" onClick={() => setToast('')} aria-label="Fechar mensagem"><Icon name="close" size={16}/></button></div>}
   </div></PermissionContext.Provider>;

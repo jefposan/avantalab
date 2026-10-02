@@ -1,7 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.31 -->
+<!-- ava-version: 1.44.0.33 -->
 <!-- avantavendas-asset-revision: 159 -->
+
+> Revisão 1.44.0.33: a confirmação de cadastro comercial pertence a Vendas e
+> Serviços na Gestão Web; não altera o AvantaVendas.
+
+> Revisão 1.44.0.32: os e-mails digitados no cadastro de acesso e ao adicionar
+> usuário à conta são convertidos para minúsculas automaticamente.
 
 > Revisão 1.44.0.31: a capitalização dos nomes de cliente pertence a Vendas e
 > Serviços na Gestão Web; não altera o AvantaVendas.

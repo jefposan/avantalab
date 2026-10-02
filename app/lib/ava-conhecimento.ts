@@ -1,5 +1,9 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.33: o cadastro de cliente ou fornecedor confirma
+// o perfil pela conexão fiscal; falhas ficam no formulário e preservam dados.
+// Revisado na versão 1.44.0.32: os campos de e-mail dos cadastros convertem
+// letras em minúsculas durante a digitação na Gestão, Mobile e AvantaVendas.
 // Revisado na versão 1.44.0.31: os nomes de cliente Pessoa física ou jurídica
 // em Vendas e Serviços ajustam capitalização durante a digitação; conectivos
 // ficam minúsculos, e LTDA e S/A permanecem em maiúsculas.

@@ -7,6 +7,7 @@ import { validateFiscalDurableStorageConfiguration } from './fiscal-durable-stor
 import { createSupabaseFiscalArtifactStorage } from './supabase-fiscal-artifact-storage.mjs';
 import { createAvantaLabAccessResolver, createPostgresAvantaLabModuleAccessRepository } from './avantalab-module-access.mjs';
 import { NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION, NFE_ISSUANCE_ORCHESTRATOR_SCOPE } from './nfe-issuance-orchestrator.mjs';
+import { resolveFiscalDatabaseConnectionString } from './fiscal-database-connection.mjs';
 
 const { Pool } = pg;
 const HTTPS_URL = /^https:\/\//i;
@@ -35,7 +36,7 @@ export async function createFiscalDownloadRuntimeFromEnvironment(environment = p
   const supabaseUrl = text(environment.NEXT_PUBLIC_SUPABASE_URL);
   const anonKey = text(environment.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const serviceRoleKey = text(environment.SUPABASE_SERVICE_ROLE_KEY);
-  const databaseUrl = text(environment.FISCAL_DATABASE_URL);
+  const databaseUrl = resolveFiscalDatabaseConnectionString(environment);
   const bucket = text(environment.FISCAL_STORAGE_BUCKET);
   const homologation = homologationDownloadEnabled(environment);
   const policyInput = homologation ? null : parsePolicy(environment.FISCAL_STORAGE_POLICY_JSON);

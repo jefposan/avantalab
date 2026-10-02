@@ -7,6 +7,7 @@ import type { Colaborador, Recebimento } from './types';
 import { aguardandoConferencia, cpfValido, formatarCpf, formatarMoeda, formatarNomeProprio, formatarTelefone } from './helpers';
 import CampoSenha from './CampoSenha';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
+import { normalizarEmail } from '../../lib/email';
 
 type DadosColaborador = Omit<Colaborador, 'id' | 'ativo'>;
 
@@ -264,7 +265,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
           </div>
           <div className={styles.field} style={{ flex: '1 1 160px', marginBottom: 0 }}>
             <label className={styles.label}>E-mail *</label>
-            <input className={styles.input} placeholder="Ex: joao@empresa.com.br" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input className={styles.input} type="email" placeholder="Ex: joao@empresa.com.br" value={email} onChange={(e) => setEmail(normalizarEmail(e.target.value))} />
           </div>
           <div className={styles.acoesForm}>
             <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={limparForm}>

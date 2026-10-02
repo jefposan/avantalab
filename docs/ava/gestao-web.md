@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.31 -->
+<!-- ava-version: 1.44.0.33 -->
+
+> Revisão 1.44.0.33: ao salvar cliente ou fornecedor em **Vendas e Serviços**,
+> a Gestão confirma o acesso do perfil pela conexão fiscal configurada. Se
+> ocorrer uma falha, o aviso fica no formulário e os dados permanecem
+> disponíveis para nova tentativa; ao concluir, a confirmação aparece depois
+> de fechar o cadastro.
+
+> Revisão 1.44.0.32: os campos de e-mail dos cadastros passam a converter
+> letras em minúsculas durante a digitação, incluindo clientes, fornecedores,
+> empresa, usuários, perfis e cobranças.
 
 > Revisão 1.44.0.31: em cliente Pessoa física ou jurídica de **Vendas e
 > Serviços**, Nome completo/Razão social, Nome fantasia e Contato principal

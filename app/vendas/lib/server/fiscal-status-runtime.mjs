@@ -54,6 +54,7 @@ import { createFiscalEmissionLifecycleService } from './fiscal-emission-lifecycl
 import { createFiscalEmissionStatusService } from './fiscal-emission-status-service.mjs';
 import { createPostgresFiscalRepository } from './fiscal-postgres-repository.mjs';
 import { createSupabaseFiscalArtifactStorage } from './supabase-fiscal-artifact-storage.mjs';
+import { resolveFiscalDatabaseConnectionString } from './fiscal-database-connection.mjs';
 
 const { Pool } = pg;
 const HTTPS_URL = /^https:\/\//i;
@@ -262,7 +263,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
   if (text(environment.FISCAL_STATUS_ENABLED).toLowerCase() !== 'true') return disabled('integration_disabled');
   const supabaseUrl = text(environment.NEXT_PUBLIC_SUPABASE_URL);
   const anonKey = text(environment.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  const databaseUrl = text(environment.FISCAL_DATABASE_URL);
+  const databaseUrl = resolveFiscalDatabaseConnectionString(environment);
   const statusOnly = text(environment.FISCAL_SANDBOX_STATUS_ONLY).toLowerCase() === 'true';
   if (!HTTPS_URL.test(supabaseUrl) || !anonKey || !databaseUrl) return disabled('configuration_incomplete');
   const localDatabase = isLocalDatabase(databaseUrl);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import DraggableModalCard from './DraggableModalCard';
 import type { DadosCobrancaAssinatura } from '../lib/cobranca';
+import { normalizarEmail } from '../lib/email';
 
 type Props = {
   aberto: boolean;
@@ -98,7 +99,7 @@ export default function PerfilAdicionalPremiumModal({
               <input value={cpfCnpj} onChange={(event) => setCpfCnpj(event.target.value)} inputMode="numeric" autoComplete="off" className="h-11 rounded-xl border border-slate-300 px-3 text-sm font-semibold outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />
             </label>
             <label className="grid gap-1 text-xs font-black text-slate-700">E-mail de cobrança
-              <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" className="h-11 rounded-xl border border-slate-300 px-3 text-sm font-semibold outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />
+              <input value={email} onChange={(event) => setEmail(normalizarEmail(event.target.value))} type="email" autoComplete="email" className="h-11 rounded-xl border border-slate-300 px-3 text-sm font-semibold outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />
             </label>
             <label className="grid gap-1 text-xs font-black text-slate-700">Telefone
               <input value={telefone} onChange={(event) => setTelefone(event.target.value)} inputMode="tel" autoComplete="tel" className="h-11 rounded-xl border border-slate-300 px-3 text-sm font-semibold outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />

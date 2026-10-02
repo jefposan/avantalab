@@ -11,6 +11,7 @@ import Tooltip from '@/app/components/Tooltip';
 import { supabase } from '@/app/lib/supabase';
 import CampoBusca from '@/app/components/CampoBusca';
 import { correspondeBusca } from '@/app/lib/formatters';
+import { normalizarEmail } from '@/app/lib/email';
 
 const TEMPLATE_OPTIONS: Array<[ProjectTemplate, string, string]> = [
   ['blank', 'Projeto em branco', 'Comece apenas com o nó principal.'],
@@ -666,7 +667,7 @@ export function ProjectHome({ collection, onChange, onOpen, onMessage, readOnly 
       <form className={`${styles.projectForm} ${styles.shareForm}`} onSubmit={createShare}>
         <div className={`${styles.formGrid} ${styles.shareFormGrid}`}>
           <label>Nome completo<input required maxLength={120} autoFocus value={shareForm.name} onChange={(event) => setShareForm({ ...shareForm, name: event.target.value })} placeholder="Ex.: Maria Silva" /></label>
-          <label>E-mail<input required type="email" autoCapitalize="none" value={shareForm.email} onChange={(event) => setShareForm({ ...shareForm, email: event.target.value })} placeholder="nome@empresa.com" /></label>
+          <label>E-mail<input required type="email" autoCapitalize="none" value={shareForm.email} onChange={(event) => setShareForm({ ...shareForm, email: normalizarEmail(event.target.value) })} placeholder="nome@empresa.com" /></label>
           <div className={styles.shareAccessRow}>
             <label>Acesso<select value={shareForm.access} onChange={(event) => setShareForm({ ...shareForm, access: event.target.value })}><option value="editor">Pode editar o projeto</option><option value="observador">Somente visualizar</option></select></label>
             <button type="submit" className={`${styles.primaryButton} ${styles.shareVerifyButton}`} disabled={sharing}>{sharing ? 'Verificando…' : 'Verificar e adicionar'}</button>

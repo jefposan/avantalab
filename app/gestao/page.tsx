@@ -61,6 +61,7 @@ import {
   type TipoPerfil,
 } from '@/app/lib/perfis';
 import { APP_VERSION } from '@/app/lib/version';
+import { normalizarEmail } from '@/app/lib/email';
 import { consolidarReceitasRealizadasPorMes } from '@/app/lib/financeiro-consolidado';
 import {
   ehCriacaoDePerfilAdicional,
@@ -10388,7 +10389,7 @@ if (validacaoTelefoneObrigatoria) {
             id="editar-usuario-email"
             type="email"
             value={editUsuarioEmail}
-            onChange={(e) => setEditUsuarioEmail(e.target.value)}
+            onChange={(e) => setEditUsuarioEmail(normalizarEmail(e.target.value))}
             placeholder="usuario@empresa.com.br"
             autoComplete="email"
             autoCapitalize="none"
@@ -10724,7 +10725,7 @@ if (validacaoTelefoneObrigatoria) {
                 id="novo-usuario-email"
                 type="email"
                 value={usuarioEmail}
-                onChange={(e) => setUsuarioEmail(e.target.value)}
+                onChange={(e) => setUsuarioEmail(normalizarEmail(e.target.value))}
                 placeholder="usuario@empresa.com.br"
                 autoComplete="email"
                 autoCapitalize="none"

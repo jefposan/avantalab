@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.31 -->
+<!-- ava-version: 1.44.0.33 -->
+
+> Revisão 1.44.0.33: a confirmação de cadastro comercial pertence a Vendas e
+> Serviços na Gestão Web; não altera a orientação da Ava Mobile.
+
+> Revisão 1.44.0.32: os campos de e-mail dos cadastros convertem letras em
+> minúsculas durante a digitação, inclusive nos cadastros de usuários e nas
+> informações de cobrança.
 
 > Revisão 1.44.0.31: a capitalização dos nomes de cliente pertence a Vendas e
 > Serviços na Gestão Web; não altera a orientação da Ava Mobile.

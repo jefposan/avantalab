@@ -2,6 +2,7 @@
 import React, { useRef, useState } from 'react';
 import { type DadosCobrancaAssinatura, type EstadoAcesso } from '../lib/cobranca';
 import { PLANOS_COMERCIAIS, type PlanoEmpresarial } from '../lib/planos-comerciais';
+import { normalizarEmail } from '../lib/email';
 
 type PlanoContratavel = 'pessoal_premium' | PlanoEmpresarial;
 
@@ -325,7 +326,7 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
                   <input
                     type="email"
                     value={emailCobranca}
-                    onChange={(e) => setEmailCobranca(e.target.value)}
+                    onChange={(e) => setEmailCobranca(normalizarEmail(e.target.value))}
                     placeholder="financeiro@empresa.com"
                     className={`${inputCls} mt-1`}
                   />
