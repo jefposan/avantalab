@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.44.0.34-av160 - 2026-10-02
+- **Ordenação visível em Pedidos**: a página do AvantaVendas ganhou um botão
+  permanente de ordem no cabeçalho, seguindo o padrão de Pagamentos e
+  alternando a lista entre A/Z e Z/A sem depender da pesquisa.
+- **Preferência isolada**: ordenar Pedidos não muda a ordem utilizada em
+  Clientes, Produtos ou outros módulos.
+
 ## 1.44.0.33 - 2026-10-02
 - **Cadastro comercial em produção**: o runtime fiscal volta a usar a conexão
   pelo pooler configurado, permitindo confirmar o acesso do perfil e salvar

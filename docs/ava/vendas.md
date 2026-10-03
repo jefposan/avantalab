@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.33 -->
-<!-- avantavendas-asset-revision: 159 -->
+<!-- ava-version: 1.44.0.34 -->
+<!-- avantavendas-asset-revision: 160 -->
+
+> Revisão 1.44.0.34-av160: a página **Pedidos** passa a exibir a ordenação
+> A/Z ou Z/A como ação permanente no cabeçalho, no mesmo padrão de
+> **Pagamentos**. A ordenação é própria da página e não altera a preferência de
+> Clientes ou Produtos.
 
 > Revisão 1.44.0.33: a confirmação de cadastro comercial pertence a Vendas e
 > Serviços na Gestão Web; não altera o AvantaVendas.

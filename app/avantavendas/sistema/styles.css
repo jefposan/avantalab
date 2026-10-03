@@ -1327,7 +1327,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .feedback-success h3, .feedback-success p { margin: 0; }
 .feedback-success h3 { font-size: 14px; }.feedback-success p { font-size: 11px; }
 .feedback-success button { min-height: 34px; margin-top: 4px; border-radius: 999px; font-size: 9px; }
-.clientes-page .module-title > button.primary, .produtos-page .module-title > button.primary, .pedidos-page .module-title > button.primary { border-color: #1687D9; color: #fff; background: #1687D9; }
+.clientes-page .module-title > button.primary, .produtos-page .module-title > button.primary, .pedidos-page .module-title > button.primary, .pedidos-page .orders-title-actions > button.primary { border-color: #1687D9; color: #fff; background: #1687D9; }
 .produtos-page { padding-top: 214px; }
 .produtos-page.is-searching { padding-top: 268px; }
 .produtos-actions { display: grid; grid-template-columns: repeat(3, max-content); align-items: center; justify-content: start; gap: 10px; }
@@ -1350,6 +1350,10 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .pedidos-page .module-title { flex-wrap: nowrap; align-items: center; }
 .pedidos-page .module-title > div { min-width: 0; }
 .pedidos-page .module-title > button { flex: 0 0 auto; margin-left: auto; }
+.pedidos-title > div:first-child { min-width: 0; flex: 1 1 auto; }
+.orders-title-actions { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 7px; }
+.orders-title-actions > button.primary { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 5px; border-radius: 9px; padding: 0 10px; font-size: 10px; white-space: nowrap; }
+.orders-title-actions > button.primary .svg-icon { width: 14px; height: 14px; }
 .order-type-filters { display: flex; width: 100%; min-width: 0; justify-content: center; gap: 7px; overflow: visible; scrollbar-width: none; }
 .order-type-filters::-webkit-scrollbar { display: none; }
 .order-type-filters button { display: inline-flex; min-width: 0; min-height: 34px; flex: 1 1 0; align-items: center; justify-content: center; gap: 6px; border: 1px solid #d6e1ea; border-radius: 999px; padding: 0 8px; color: #536273; background: rgba(255,255,255,.86); font-size: 11px; font-weight: 800; white-space: nowrap; }
@@ -2505,6 +2509,9 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .pedidos-page .module-title > div { flex: 1 1 auto; }
   .pedidos-page .module-title p { font-size: 12px; }
   .pedidos-page .module-title > button { min-height: 34px; padding: 0 10px; font-size: 10px; }
+  .orders-title-actions { flex: 0 0 auto; gap: 5px; }
+  .orders-title-actions .payment-order-button { padding: 0 7px; }
+  .orders-title-actions > button.primary { padding: 0 8px; }
   .order-type-filters { gap: 5px; }
   .order-type-filters button { min-height: 32px; padding: 0 4px; font-size: 9.5px; }
   .produtos-actions { width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }.produtos-actions button { min-width: 0; width: 100%; padding: 0 7px; font-size: 8.5px; }.produtos-actions button .svg-icon { width: 14px; height: 14px; }

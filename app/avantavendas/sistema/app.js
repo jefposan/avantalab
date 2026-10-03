@@ -459,6 +459,7 @@ let calendarioCentralizado = null;
 let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
 let filtroPedidos = 'todos';
+let ordemPedidos = 'asc';
 let filtroPagamentos = 'todos';
 let ordemPagamentos = 'asc';
 let erroAcessoVendas = '';
@@ -7342,6 +7343,31 @@ function renderBarraBuscaPagamentos() {
   return `<div class="payment-search-toolbar"><div class="client-search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="Pesquisar clientes" oninput="atualizarBuscaPagamentos(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="client-search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBuscaPagamentos()" aria-label="Limpar pesquisa">×</button></div><button type="button" class="primary payment-search-submit" onclick="aplicarBusca()">Buscar</button></div>`;
 }
 
+function renderBarraBuscaPedidos() {
+  const temBusca = Boolean(String(state.busca || '').trim());
+  return `<div class="payment-search-toolbar order-search-toolbar"><div class="client-search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="Pesquisar pedidos" oninput="atualizarBuscaPedidos(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="client-search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBuscaPedidos()" aria-label="Limpar pesquisa">×</button></div><button type="button" class="primary payment-search-submit" onclick="aplicarBusca()">Buscar</button></div>`;
+}
+
+function atualizarBuscaPedidos(valor) {
+  state.busca = valor;
+  const temBusca = Boolean(String(valor || '').trim());
+  app.querySelector('.pedidos-page .client-search-clear')?.classList.toggle('is-hidden', !temBusca);
+  if (!temBusca && buscaAplicada) {
+    buscaAplicada = '';
+    limitePedidos = 10;
+    render();
+    requestAnimationFrame(() => app.querySelector('.pedidos-page .client-search-input-wrap input')?.focus());
+  }
+}
+
+function limparBuscaPedidos() {
+  state.busca = '';
+  buscaAplicada = '';
+  limitePedidos = 10;
+  render();
+  requestAnimationFrame(() => app.querySelector('.pedidos-page .client-search-input-wrap input')?.focus());
+}
+
 function atualizarBuscaPagamentos(valor) {
   state.busca = valor;
   const temBusca = Boolean(String(valor || '').trim());
@@ -9426,7 +9452,6 @@ function renderProdutoVenda(p) {
 function renderVendas() {
   const vendas = pedidosFiltrados();
   const exibidas = vendas.slice(0, limitePedidos);
-  const temBusca = Boolean(String(state.busca || '').trim());
   const quantidadeProximoLote = Math.min(ITENS_POR_LOTE_HISTORICO, vendas.length - exibidas.length);
   const rotuloProximoLote = filtroPedidos === 'consignados'
     ? 'consignados'
@@ -9434,10 +9459,10 @@ function renderVendas() {
       ? 'bonificações'
       : 'pedidos';
   return `
-    <section class="module-page pedidos-page${temBusca ? ' is-searching' : ''}">
+    <section class="module-page pedidos-page">
       <div class="module-sticky-head">
-        <div class="module-title"><div><h2>Pedidos</h2><p>Acompanhe todos os pedidos registrados.</p></div><button class="primary" onclick="abrirNovoPedidoGeral()">${svgIcon('plus')} Novo pedido</button></div>
-        ${renderBarraBusca('Pesquisar pedidos', 'Ordem Alfabética')}
+        <div class="module-title pedidos-title"><div><h2>Pedidos</h2><p>Acompanhe todos os pedidos registrados.</p></div><span class="orders-title-actions"><button type="button" class="payment-order-button" onclick="alternarOrdemPedidos()" aria-label="Alternar ordem dos pedidos" title="${ordemPedidos === 'asc' ? 'Ordem A/Z' : 'Ordem Z/A'}">${svgIcon('filter')}Ordem${svgIcon('chevron-down')}</button><button type="button" class="primary" onclick="abrirNovoPedidoGeral()">${svgIcon('plus')} Novo pedido</button></span></div>
+        ${renderBarraBuscaPedidos()}
         <nav class="order-type-filters" aria-label="Filtrar pedidos por tipo">
           ${botaoFiltroPedidos('todos', 'Todos')}
           ${botaoFiltroPedidos('pedidos', 'Pedidos')}
@@ -9499,9 +9524,15 @@ function pedidosFiltrados() {
       const clienteA = state.clientes.find((item) => item.id === a.cliente_id)?.nome || '';
       const clienteB = state.clientes.find((item) => item.id === b.cliente_id)?.nome || '';
       const comparacao = String(clienteA).localeCompare(String(clienteB), 'pt-BR', { sensitivity: 'base' });
-      if (comparacao) return ordemAlfabetica === 'asc' ? comparacao : -comparacao;
+      if (comparacao) return ordemPedidos === 'asc' ? comparacao : -comparacao;
       return new Date(b.criado_em) - new Date(a.criado_em);
     });
+}
+
+function alternarOrdemPedidos() {
+  ordemPedidos = ordemPedidos === 'asc' ? 'desc' : 'asc';
+  limitePedidos = 10;
+  render();
 }
 
 function botaoFiltroPedidos(tipo, rotulo) {
@@ -10963,6 +10994,9 @@ window.irMesAtual = irMesAtual;
 window.aplicarBusca = aplicarBusca;
 window.alternarOrdemAlfabetica = alternarOrdemAlfabetica;
 window.alternarOrdemPagamentos = alternarOrdemPagamentos;
+window.alternarOrdemPedidos = alternarOrdemPedidos;
+window.atualizarBuscaPedidos = atualizarBuscaPedidos;
+window.limparBuscaPedidos = limparBuscaPedidos;
 window.selecionarFiltroPedidos = selecionarFiltroPedidos;
 window.carregarMaisPedidos = carregarMaisPedidos;
 window.selecionarDiaAgenda = selecionarDiaAgenda;

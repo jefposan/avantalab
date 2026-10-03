@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.33 -->
+<!-- ava-version: 1.44.0.34 -->
+
+> Revisão 1.44.0.34: a ordenação permanente de Pedidos pertence ao
+> AvantaVendas; não altera os pedidos ou relatórios da Gestão Web.
 
 > Revisão 1.44.0.33: ao salvar cliente ou fornecedor em **Vendas e Serviços**,
 > a Gestão confirma o acesso do perfil pela conexão fiscal configurada. Se

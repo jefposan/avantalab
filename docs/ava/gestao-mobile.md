@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.33 -->
+<!-- ava-version: 1.44.0.34 -->
+
+> Revisão 1.44.0.34: a ordenação permanente de Pedidos pertence ao
+> AvantaVendas; não altera a orientação operacional da Ava Mobile.
 
 > Revisão 1.44.0.33: a confirmação de cadastro comercial pertence a Vendas e
 > Serviços na Gestão Web; não altera a orientação da Ava Mobile.

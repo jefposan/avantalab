@@ -13,5 +13,6 @@ test('ponte de notificações não inicia plugin nativo ausente no Android', () 
 });
 
 test('revisão de recursos do AvantaVendas invalida o JavaScript corrigido', () => {
-  assert.match(version, /AVANTAVENDAS_ASSET_REVISION = '159'/);
+  const revisao = Number(version.match(/AVANTAVENDAS_ASSET_REVISION = '(\d+)'/)?.[1] || 0);
+  assert.ok(revisao >= 159, 'A revisão não pode voltar a usar recursos anteriores ao fallback Android.');
 });
