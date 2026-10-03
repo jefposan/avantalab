@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.36 -->
-<!-- avantavendas-asset-revision: 162 -->
+<!-- ava-version: 1.44.0.37 -->
+<!-- avantavendas-asset-revision: 163 -->
+
+> Revisão 1.44.0.37-av163: em **Pedidos**, o seletor de ordem fica mais baixo e
+> encostado no canto direito da linha, com o funil e o texto completo. Após
+> escolher uma opção, a lista fecha imediatamente e a nova ordem permanece
+> aplicada.
 
 > Revisão 1.44.0.36-av162: em **Pedidos**, a contagem **Exibindo** fica à
 > esquerda e o seletor compacto de ordem fica alinhado à direita na mesma

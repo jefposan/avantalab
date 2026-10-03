@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.44.0.37-av163 - 2026-10-02
+- **Posição corrigida em Pedidos**: o seletor de ordem passa a prevalecer no
+  canto direito da linha de contagem e recebe um pequeno deslocamento para
+  baixo, sem alterar a posição do indicador “Exibindo”. A largura acomoda todo
+  o rótulo selecionado e o funil SVG volta a identificar a ação.
+- **Seleção encerrada imediatamente**: depois de escolher a ordem, o sistema
+  deixa de devolver foco ao campo, permitindo que a lista seja fechada de forma
+  natural no celular e no navegador.
+
 ## 1.44.0.36-av162 - 2026-10-02
 - **Ordenação compacta em Pedidos**: o seletor saiu da linha do título e passou
   a ficar alinhado à direita da contagem “Exibindo”, com largura reduzida e

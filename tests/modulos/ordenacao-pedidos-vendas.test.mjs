@@ -68,8 +68,18 @@ test('exibe a ordenação permanentemente ao lado da contagem de Pedidos', () =>
   assert.match(app, /window\.selecionarOrdemPedidos = selecionarOrdemPedidos/);
   assert.match(styles, /\.orders-title-actions \{[^}]*display: inline-flex/);
   assert.match(styles, /\.order-results-summary \{[^}]*justify-content: space-between/);
-  assert.match(styles, /\.order-results-summary \.order-sort-control \{[^}]*width: 122px/);
+  assert.match(styles, /\.order-results-summary \.order-sort-control \{[^}]*width: 148px/);
+  assert.match(styles, /\.payment-results-stats\.order-results-summary \{[^}]*justify-content: flex-end/);
+  assert.match(styles, /\.payment-results-stats\.order-results-summary \.order-sort-control \{[^}]*margin: 4px 0 -4px auto/);
   assert.match(styles, /\.order-sort-control:focus-within/);
+  assert.match(app, /order-results-summary[^\n]*\$\{svgIcon\('filter'\)\}<select aria-label="Ordenar pedidos"/);
+});
+
+test('fecha o seletor depois de aplicar a ordem escolhida', () => {
+  const inicioSelecao = app.indexOf('function selecionarOrdemPedidos(valor)');
+  const trechoSelecao = app.slice(inicioSelecao, app.indexOf('\nfunction botaoFiltroPedidos', inicioSelecao));
+  assert.match(trechoSelecao, /limitePedidos = 10;\s*render\(\);/);
+  assert.doesNotMatch(trechoSelecao, /\.focus\(\)/);
 });
 
 test('posiciona a contagem no cabeçalho como em Pagamentos', () => {

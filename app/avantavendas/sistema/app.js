@@ -9470,7 +9470,7 @@ function renderVendas() {
           ${botaoFiltroPedidos('bonificacoes', 'Bonificações')}
           ${botaoFiltroPedidos('consignados', 'Consignados')}
         </nav>
-        <div class="module-stats payment-results-stats order-results-summary"><span aria-live="polite">Exibindo <b>${Math.min(exibidas.length, vendas.length)}</b> de <b>${vendas.length}</b> pedidos</span><label class="payment-order-button order-sort-control"><select aria-label="Ordenar pedidos" onchange="selecionarOrdemPedidos(this.value)">${opcoesOrdemPedidos()}</select>${svgIcon('chevron-down')}</label></div>
+        <div class="module-stats payment-results-stats order-results-summary"><span aria-live="polite">Exibindo <b>${Math.min(exibidas.length, vendas.length)}</b> de <b>${vendas.length}</b> pedidos</span><label class="payment-order-button order-sort-control">${svgIcon('filter')}<select aria-label="Ordenar pedidos" onchange="selecionarOrdemPedidos(this.value)">${opcoesOrdemPedidos()}</select>${svgIcon('chevron-down')}</label></div>
       </div>
       <div class="orders-card-grid">${exibidas.length ? exibidas.map(renderVenda).join('') : '<div class="table-empty orders-empty">Nenhum pedido encontrado.</div>'}</div>
       ${vendas.length > exibidas.length ? `<button class="ghost orders-load-more" onclick="carregarMaisPedidos()">Carregar mais ${quantidadeProximoLote} ${rotuloProximoLote}</button>` : ''}
@@ -9551,7 +9551,6 @@ function selecionarOrdemPedidos(valor) {
   [criterioOrdemPedidos, ordemPedidos] = selecionada.split('_');
   limitePedidos = 10;
   render();
-  requestAnimationFrame(() => app.querySelector('.order-sort-control select')?.focus());
 }
 
 function botaoFiltroPedidos(tipo, rotulo) {

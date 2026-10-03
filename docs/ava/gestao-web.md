@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.36 -->
+<!-- ava-version: 1.44.0.37 -->
+
+> Revisão 1.44.0.37: o posicionamento e fechamento do seletor de ordem de
+> Pedidos pertencem ao AvantaVendas; não alteram a Gestão Web.
 
 > Revisão 1.44.0.36: o refinamento do seletor de ordem de Pedidos pertence ao
 > AvantaVendas; não altera a Gestão Web.
