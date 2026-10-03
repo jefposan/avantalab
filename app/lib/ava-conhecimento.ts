@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.38: no AvantaVendas, o seletor de ordem de Pedidos
+// ficou mais largo para exibir as opções e mais baixo, com fonte compacta e
+// área segura de toque preservada.
 // Revisado na versão 1.44.0.37: no AvantaVendas, o seletor de ordem de Pedidos
 // fica no canto inferior direito, exibe funil e texto completo e fecha depois
 // da opção escolhida.

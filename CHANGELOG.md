@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.44.0.38-av164 - 2026-10-02
+- **Texto integral no seletor de Pedidos**: a largura da pílula de ordenação foi
+  ampliada para acomodar as opções completas, inclusive em celulares com fonte
+  ampliada, preservando o funil e o alinhamento no canto direito. A face ficou
+  mais baixa e com tipografia compacta, sem reduzir a área segura de toque.
+
 ## 1.44.0.37-av163 - 2026-10-02
 - **Posição corrigida em Pedidos**: o seletor de ordem passa a prevalecer no
   canto direito da linha de contagem e recebe um pequeno deslocamento para

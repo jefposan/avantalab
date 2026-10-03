@@ -68,9 +68,11 @@ test('exibe a ordenação permanentemente ao lado da contagem de Pedidos', () =>
   assert.match(app, /window\.selecionarOrdemPedidos = selecionarOrdemPedidos/);
   assert.match(styles, /\.orders-title-actions \{[^}]*display: inline-flex/);
   assert.match(styles, /\.order-results-summary \{[^}]*justify-content: space-between/);
-  assert.match(styles, /\.order-results-summary \.order-sort-control \{[^}]*width: 148px/);
+  assert.match(styles, /\.order-results-summary \.order-sort-control \{[^}]*width: 176px/);
+  assert.match(styles, /\.order-results-summary \.order-sort-control \{[^}]*height: 28px[^}]*font-size: 9px/);
+  assert.match(styles, /\.order-results-summary \.order-sort-control::before \{[^}]*inset: -8px 0/);
   assert.match(styles, /\.payment-results-stats\.order-results-summary \{[^}]*justify-content: flex-end/);
-  assert.match(styles, /\.payment-results-stats\.order-results-summary \.order-sort-control \{[^}]*margin: 4px 0 -4px auto/);
+  assert.match(styles, /\.payment-results-stats\.order-results-summary \.order-sort-control \{[^}]*margin-left: auto/);
   assert.match(styles, /\.order-sort-control:focus-within/);
   assert.match(app, /order-results-summary[^\n]*\$\{svgIcon\('filter'\)\}<select aria-label="Ordenar pedidos"/);
 });

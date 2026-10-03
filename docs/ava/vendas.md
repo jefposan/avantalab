@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.37 -->
-<!-- avantavendas-asset-revision: 163 -->
+<!-- ava-version: 1.44.0.38 -->
+<!-- avantavendas-asset-revision: 164 -->
+
+> Revisão 1.44.0.38-av164: em **Pedidos**, o seletor de ordem ficou mais largo
+> para exibir integralmente as opções, inclusive com fonte ampliada no celular.
+> A face ficou mais baixa, com tipografia compacta e área segura de toque. O
+> funil, a posição no canto direito e o fechamento após a escolha permanecem.
 
 > Revisão 1.44.0.37-av163: em **Pedidos**, o seletor de ordem fica mais baixo e
 > encostado no canto direito da linha, com o funil e o texto completo. Após

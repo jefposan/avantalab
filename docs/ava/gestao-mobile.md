@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.37 -->
+<!-- ava-version: 1.44.0.38 -->
+
+> Revisão 1.44.0.38: a ampliação do seletor de ordem de Pedidos pertence ao
+> AvantaVendas; não altera a orientação da Ava Mobile.
 
 > Revisão 1.44.0.37: o posicionamento e fechamento do seletor de ordem de
 > Pedidos pertencem ao AvantaVendas; não alteram a orientação da Ava Mobile.
