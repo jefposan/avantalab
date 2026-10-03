@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.34 -->
+<!-- ava-version: 1.44.0.35 -->
+
+> Revisão 1.44.0.35: o posicionamento da contagem de Pedidos pertence ao
+> AvantaVendas; não altera a Gestão Web.
 
 > Revisão 1.44.0.34: a ordenação permanente de Pedidos pertence ao
 > AvantaVendas; não altera os pedidos ou relatórios da Gestão Web.

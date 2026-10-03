@@ -1,5 +1,8 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.35: no AvantaVendas, a contagem “Exibindo” de
+// Pedidos fica no cabeçalho fixo. O seletor de ordem oferece Cliente A/Z,
+// Cliente Z/A, Data mais recente e Data mais antiga.
 // Revisado na versão 1.44.0.34: no AvantaVendas, Pedidos possui um controle
 // próprio e sempre visível para alternar a ordem A/Z ou Z/A no cabeçalho.
 // Revisado na versão 1.44.0.33: o cadastro de cliente ou fornecedor confirma

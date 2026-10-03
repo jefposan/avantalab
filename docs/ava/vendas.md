@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.34 -->
-<!-- avantavendas-asset-revision: 160 -->
+<!-- ava-version: 1.44.0.35 -->
+<!-- avantavendas-asset-revision: 161 -->
+
+> Revisão 1.44.0.35-av161: em **Pedidos**, o indicador **Exibindo** permanece
+> dentro do cabeçalho fixo, abaixo dos filtros e com a mesma posição e leitura
+> utilizadas em **Pagamentos**. Toque no seletor de ordem para escolher
+> **Cliente A/Z**, **Cliente Z/A**, **Data: recentes** ou **Data: antigas**.
 
 > Revisão 1.44.0.34-av160: a página **Pedidos** passa a exibir a ordenação
 > A/Z ou Z/A como ação permanente no cabeçalho, no mesmo padrão de

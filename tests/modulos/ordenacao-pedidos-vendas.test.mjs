@@ -6,10 +6,10 @@ const app = await readFile(new URL('../../app/avantavendas/sistema/app.js', impo
 const styles = await readFile(new URL('../../app/avantavendas/sistema/styles.css', import.meta.url), 'utf8');
 
 const inicio = app.indexOf('function pedidosFiltrados()');
-const fim = app.indexOf('\nfunction alternarOrdemPedidos()', inicio);
+const fim = app.indexOf('\nfunction opcoesOrdemPedidos()', inicio);
 assert.ok(inicio >= 0 && fim > inicio, 'A ordenação de pedidos deve existir no aplicativo.');
 
-function criarOrdenador(ordemPedidos) {
+function criarOrdenador(criterioOrdemPedidos, ordemPedidos) {
   const state = {
     vendas: [
       { id: '2', cliente_id: 'cliente-b', criado_em: '2026-10-02T12:00:00Z' },
@@ -29,6 +29,7 @@ function criarOrdenador(ordemPedidos) {
     'filtroPedidos',
     'tipoPedido',
     'textoPesquisaPedido',
+    'criterioOrdemPedidos',
     'ordemPedidos',
     `${app.slice(inicio, fim)}; return pedidosFiltrados;`,
   );
@@ -41,26 +42,45 @@ function criarOrdenador(ordemPedidos) {
     'todos',
     () => 'pedidos',
     () => '',
+    criterioOrdemPedidos,
     ordemPedidos,
   );
 }
 
 test('ordena pedidos por cliente em A/Z e Z/A', () => {
-  assert.deepEqual(criarOrdenador('asc')().map(({ id }) => id), ['1', '2']);
-  assert.deepEqual(criarOrdenador('desc')().map(({ id }) => id), ['2', '1']);
+  assert.deepEqual(criarOrdenador('cliente', 'asc')().map(({ id }) => id), ['1', '2']);
+  assert.deepEqual(criarOrdenador('cliente', 'desc')().map(({ id }) => id), ['2', '1']);
+});
+
+test('ordena pedidos por data recente ou antiga', () => {
+  assert.deepEqual(criarOrdenador('data', 'desc')().map(({ id }) => id), ['2', '1']);
+  assert.deepEqual(criarOrdenador('data', 'asc')().map(({ id }) => id), ['1', '2']);
 });
 
 test('exibe a ordenação permanentemente no cabeçalho de Pedidos', () => {
   assert.match(app, /class="module-title pedidos-title"/);
-  assert.match(app, /class="payment-order-button" onclick="alternarOrdemPedidos\(\)"/);
+  assert.match(app, /class="payment-order-button order-sort-control"/);
+  assert.match(app, /<select aria-label="Ordenar pedidos" onchange="selecionarOrdemPedidos\(this\.value\)"/);
+  assert.match(app, /\['data_desc', 'Data: recentes'\]/);
+  assert.match(app, /\['data_asc', 'Data: antigas'\]/);
   assert.match(app, /function renderBarraBuscaPedidos\(\)/);
   assert.match(app, /\$\{renderBarraBuscaPedidos\(\)\}/);
-  assert.match(app, /window\.alternarOrdemPedidos = alternarOrdemPedidos/);
+  assert.match(app, /window\.selecionarOrdemPedidos = selecionarOrdemPedidos/);
   assert.match(styles, /\.orders-title-actions \{[^}]*display: inline-flex/);
+  assert.match(styles, /\.order-sort-control:focus-within/);
+});
+
+test('posiciona a contagem no cabeçalho como em Pagamentos', () => {
+  assert.match(app, /class="module-stats payment-results-stats order-results-summary" aria-live="polite"/);
+  const inicioPedidos = app.indexOf('function renderVendas()');
+  const trechoPedidos = app.slice(inicioPedidos, app.indexOf('\nfunction tipoPedido', inicioPedidos));
+  assert.match(trechoPedidos, /<\/nav>\s*<div class="module-stats payment-results-stats order-results-summary"/);
+  assert.doesNotMatch(styles, /\.order-results-stats/);
 });
 
 test('a ordem de Pedidos é independente dos demais módulos', () => {
+  assert.match(app, /let criterioOrdemPedidos = 'cliente';/);
   assert.match(app, /let ordemPedidos = 'asc';/);
-  assert.match(app, /return ordemPedidos === 'asc' \? comparacao : -comparacao;/);
+  assert.match(app, /criterioOrdemPedidos === 'data'/);
   assert.doesNotMatch(app.slice(inicio, fim), /ordemAlfabetica/);
 });

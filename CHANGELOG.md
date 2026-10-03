@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.44.0.35-av161 - 2026-10-02
+- **Contagem alinhada em Pedidos**: o indicador “Exibindo” passa a ocupar o
+  cabeçalho fixo, logo abaixo dos filtros, com a mesma posição, dimensão e
+  tratamento visual usados em Pagamentos.
+- **Ordenação completa em um único seletor**: a ação do cabeçalho permite
+  escolher Cliente A/Z, Cliente Z/A, Data mais recente ou Data mais antiga sem
+  adicionar outro botão à tela.
+
 ## 1.44.0.34-av160 - 2026-10-02
 - **Ordenação visível em Pedidos**: a página do AvantaVendas ganhou um botão
   permanente de ordem no cabeçalho, seguindo o padrão de Pagamentos e
