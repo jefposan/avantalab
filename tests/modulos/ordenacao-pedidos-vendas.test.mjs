@@ -57,24 +57,28 @@ test('ordena pedidos por data recente ou antiga', () => {
   assert.deepEqual(criarOrdenador('data', 'asc')().map(({ id }) => id), ['1', '2']);
 });
 
-test('exibe a ordenação permanentemente no cabeçalho de Pedidos', () => {
+test('exibe a ordenação permanentemente ao lado da contagem de Pedidos', () => {
   assert.match(app, /class="module-title pedidos-title"/);
   assert.match(app, /class="payment-order-button order-sort-control"/);
   assert.match(app, /<select aria-label="Ordenar pedidos" onchange="selecionarOrdemPedidos\(this\.value\)"/);
-  assert.match(app, /\['data_desc', 'Data: recentes'\]/);
-  assert.match(app, /\['data_asc', 'Data: antigas'\]/);
+  assert.match(app, /\['data_desc', 'Mais recentes'\]/);
+  assert.match(app, /\['data_asc', 'Mais antigos'\]/);
   assert.match(app, /function renderBarraBuscaPedidos\(\)/);
   assert.match(app, /\$\{renderBarraBuscaPedidos\(\)\}/);
   assert.match(app, /window\.selecionarOrdemPedidos = selecionarOrdemPedidos/);
   assert.match(styles, /\.orders-title-actions \{[^}]*display: inline-flex/);
+  assert.match(styles, /\.order-results-summary \{[^}]*justify-content: space-between/);
+  assert.match(styles, /\.order-results-summary \.order-sort-control \{[^}]*width: 122px/);
   assert.match(styles, /\.order-sort-control:focus-within/);
 });
 
 test('posiciona a contagem no cabeçalho como em Pagamentos', () => {
-  assert.match(app, /class="module-stats payment-results-stats order-results-summary" aria-live="polite"/);
+  assert.match(app, /class="module-stats payment-results-stats order-results-summary"><span aria-live="polite"/);
   const inicioPedidos = app.indexOf('function renderVendas()');
   const trechoPedidos = app.slice(inicioPedidos, app.indexOf('\nfunction tipoPedido', inicioPedidos));
   assert.match(trechoPedidos, /<\/nav>\s*<div class="module-stats payment-results-stats order-results-summary"/);
+  assert.match(trechoPedidos, /pedidos<\/span><label class="payment-order-button order-sort-control"/);
+  assert.doesNotMatch(trechoPedidos, /pedidos-title[^\n]*order-sort-control/);
   assert.doesNotMatch(styles, /\.order-results-stats/);
 });
 

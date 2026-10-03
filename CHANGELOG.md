@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.44.0.36-av162 - 2026-10-02
+- **Ordenação compacta em Pedidos**: o seletor saiu da linha do título e passou
+  a ficar alinhado à direita da contagem “Exibindo”, com largura reduzida e
+  rótulos curtos que permanecem legíveis no mobile.
+- **Ação principal preservada**: “Novo pedido” continua isolado no cabeçalho,
+  sem mudanças na filtragem ou na lógica de ordenação dos registros.
+
 ## 1.44.0.35-av161 - 2026-10-02
 - **Contagem alinhada em Pedidos**: o indicador “Exibindo” passa a ocupar o
   cabeçalho fixo, logo abaixo dos filtros, com a mesma posição, dimensão e

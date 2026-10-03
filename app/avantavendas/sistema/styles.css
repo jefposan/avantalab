@@ -1346,7 +1346,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .module-stats { display: flex; flex-wrap: wrap; gap: 10px; }
 .module-stats span { padding: 8px 12px; border-radius: 999px; color: #5e6671; background: #eff8f7; font-size: 13px; }
 .module-stats b { color: #248b85; }
-.pedidos-page { padding-top: 224px; }
+.pedidos-page { padding-top: 232px; }
 .pedidos-page .module-title { flex-wrap: nowrap; align-items: center; }
 .pedidos-page .module-title > div { min-width: 0; }
 .pedidos-page .module-title > button { flex: 0 0 auto; margin-left: auto; }
@@ -1355,7 +1355,10 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .orders-title-actions > button.primary { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 5px; border-radius: 9px; padding: 0 10px; font-size: 10px; white-space: nowrap; }
 .orders-title-actions > button.primary .svg-icon { width: 14px; height: 14px; }
 .order-sort-control { cursor: pointer; }
-.order-sort-control select { width: auto; max-width: 104px; appearance: none; border: 0; outline: 0; padding: 0; color: inherit; background: transparent; font: inherit; font-weight: inherit; line-height: inherit; cursor: pointer; }
+.order-results-summary { width: 100%; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 8px; }
+.order-results-summary > span { min-width: 0; }
+.order-results-summary .order-sort-control { width: 122px; min-width: 122px; max-width: 122px; flex: 0 0 122px; justify-content: flex-end; padding: 0 8px; }
+.order-sort-control select { width: 100%; min-width: 0; appearance: none; border: 0; outline: 0; padding: 0; color: inherit; background: transparent; font: inherit; font-weight: inherit; line-height: inherit; cursor: pointer; }
 .order-sort-control:focus-within { border-color: #1687D9; box-shadow: 0 0 0 2px rgba(22,135,217,.16); }
 .order-sort-control option { color: #1f2937; background: #fff; }
 .order-type-filters { display: flex; width: 100%; min-width: 0; justify-content: center; gap: 7px; overflow: visible; scrollbar-width: none; }
@@ -2489,8 +2492,8 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .clientes-page, .clientes-page.is-searching { padding-top: 184px; }
   .produtos-page { padding-top: 240px; }
   .produtos-page.is-searching { padding-top: 294px; }
-  .pedidos-page { padding-top: 236px; }
-  .pedidos-page.is-searching { padding-top: 290px; }
+  .pedidos-page { padding-top: 244px; }
+  .pedidos-page.is-searching { padding-top: 298px; }
   .pagamentos-page, .pagamentos-page.is-searching { padding-top: 236px; }
   .updates-feed, .information-grid { grid-template-columns: 1fr; }
   .update-card.featured, .information-card.wide, .feedback-sales-card, .updates-future-note { grid-column: 1; }
@@ -2513,8 +2516,6 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .pedidos-page .module-title p { font-size: 12px; }
   .pedidos-page .module-title > button { min-height: 34px; padding: 0 10px; font-size: 10px; }
   .orders-title-actions { flex: 0 0 auto; gap: 5px; }
-  .orders-title-actions .payment-order-button { padding: 0 7px; }
-  .order-sort-control select { max-width: 88px; }
   .orders-title-actions > button.primary { padding: 0 8px; }
   .order-type-filters { gap: 5px; }
   .order-type-filters button { min-height: 32px; padding: 0 4px; font-size: 9.5px; }

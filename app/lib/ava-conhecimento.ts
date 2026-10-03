@@ -1,5 +1,7 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.36: no AvantaVendas, o seletor compacto de ordem
+// fica à direita da contagem de Pedidos, com rótulos legíveis no mobile.
 // Revisado na versão 1.44.0.35: no AvantaVendas, a contagem “Exibindo” de
 // Pedidos fica no cabeçalho fixo. O seletor de ordem oferece Cliente A/Z,
 // Cliente Z/A, Data mais recente e Data mais antiga.

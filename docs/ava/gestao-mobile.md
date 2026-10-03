@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.35 -->
+<!-- ava-version: 1.44.0.36 -->
+
+> Revisão 1.44.0.36: o refinamento do seletor de ordem de Pedidos pertence ao
+> AvantaVendas; não altera a orientação operacional da Ava Mobile.
 
 > Revisão 1.44.0.35: o posicionamento da contagem de Pedidos pertence ao
 > AvantaVendas; não altera a orientação operacional da Ava Mobile.

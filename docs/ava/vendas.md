@@ -1,7 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.35 -->
-<!-- avantavendas-asset-revision: 161 -->
+<!-- ava-version: 1.44.0.36 -->
+<!-- avantavendas-asset-revision: 162 -->
+
+> Revisão 1.44.0.36-av162: em **Pedidos**, a contagem **Exibindo** fica à
+> esquerda e o seletor compacto de ordem fica alinhado à direita na mesma
+> linha. As opções são **Cliente A/Z**, **Cliente Z/A**, **Mais recentes** e
+> **Mais antigos**; a forma de ordenar os registros não mudou.
 
 > Revisão 1.44.0.35-av161: em **Pedidos**, o indicador **Exibindo** permanece
 > dentro do cabeçalho fixo, abaixo dos filtros e com a mesma posição e leitura

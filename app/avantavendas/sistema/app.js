@@ -9462,7 +9462,7 @@ function renderVendas() {
   return `
     <section class="module-page pedidos-page">
       <div class="module-sticky-head">
-        <div class="module-title pedidos-title"><div><h2>Pedidos</h2><p>Acompanhe todos os pedidos registrados.</p></div><span class="orders-title-actions"><label class="payment-order-button order-sort-control">${svgIcon('filter')}<select aria-label="Ordenar pedidos" onchange="selecionarOrdemPedidos(this.value)">${opcoesOrdemPedidos()}</select>${svgIcon('chevron-down')}</label><button type="button" class="primary" onclick="abrirNovoPedidoGeral()">${svgIcon('plus')} Novo pedido</button></span></div>
+        <div class="module-title pedidos-title"><div><h2>Pedidos</h2><p>Acompanhe todos os pedidos registrados.</p></div><span class="orders-title-actions"><button type="button" class="primary" onclick="abrirNovoPedidoGeral()">${svgIcon('plus')} Novo pedido</button></span></div>
         ${renderBarraBuscaPedidos()}
         <nav class="order-type-filters" aria-label="Filtrar pedidos por tipo">
           ${botaoFiltroPedidos('todos', 'Todos')}
@@ -9470,7 +9470,7 @@ function renderVendas() {
           ${botaoFiltroPedidos('bonificacoes', 'Bonificações')}
           ${botaoFiltroPedidos('consignados', 'Consignados')}
         </nav>
-        <div class="module-stats payment-results-stats order-results-summary" aria-live="polite"><span>Exibindo <b>${Math.min(exibidas.length, vendas.length)}</b> de <b>${vendas.length}</b> pedidos</span></div>
+        <div class="module-stats payment-results-stats order-results-summary"><span aria-live="polite">Exibindo <b>${Math.min(exibidas.length, vendas.length)}</b> de <b>${vendas.length}</b> pedidos</span><label class="payment-order-button order-sort-control"><select aria-label="Ordenar pedidos" onchange="selecionarOrdemPedidos(this.value)">${opcoesOrdemPedidos()}</select>${svgIcon('chevron-down')}</label></div>
       </div>
       <div class="orders-card-grid">${exibidas.length ? exibidas.map(renderVenda).join('') : '<div class="table-empty orders-empty">Nenhum pedido encontrado.</div>'}</div>
       ${vendas.length > exibidas.length ? `<button class="ghost orders-load-more" onclick="carregarMaisPedidos()">Carregar mais ${quantidadeProximoLote} ${rotuloProximoLote}</button>` : ''}
@@ -9540,8 +9540,8 @@ function opcoesOrdemPedidos() {
   return [
     ['cliente_asc', 'Cliente A/Z'],
     ['cliente_desc', 'Cliente Z/A'],
-    ['data_desc', 'Data: recentes'],
-    ['data_asc', 'Data: antigas'],
+    ['data_desc', 'Mais recentes'],
+    ['data_asc', 'Mais antigos'],
   ].map(([valor, rotulo]) => `<option value="${valor}" ${selecionada === valor ? 'selected' : ''}>${rotulo}</option>`).join('');
 }
 
