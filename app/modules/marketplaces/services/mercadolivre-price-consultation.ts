@@ -47,9 +47,32 @@ export function calculatePriceSuggestions(pricesInCents: readonly number[]): Pri
   };
 }
 
-function productReferencePrices(raw: Record<string, unknown>) {
+function isVisibleProviderFailure(error: unknown) {
+  return error instanceof MarketplaceError
+    && (error.code === 'provider_403' || error.code === 'provider_429' || error.status === 403 || error.status === 429);
+}
+
+async function productReferencePrices(
+  db: SupabaseClient,
+  connection: SellerConnection,
+  raw: Record<string, unknown>,
+) {
   const values: number[] = [];
   const winner = objectValue(raw.buy_box_winner);
+
+  // O preço exposto na ficha pode ser uma faixa ou ficar ausente. O item que
+  // venceu a buy box é a referência oficial para consultar o preço de venda.
+  if (listingIdIsValid(winner.item_id)) {
+    const salePrice = objectValue(await mlRequest(
+      db,
+      connection,
+      `/items/${winner.item_id}/sale_price?context=channel_marketplace`,
+    ));
+    const cents = finitePrice(salePrice.amount);
+    if (cents != null) return [cents];
+  }
+
+  // Compatibilidade com fichas legadas que ainda não informam item_id.
   const range = objectValue(raw.buy_box_winner_price_range);
   const minimum = objectValue(range.min);
   const maximum = objectValue(range.max);
@@ -82,7 +105,8 @@ async function activeOfferPrices(
     try {
       const salePrice = objectValue(await mlRequest(db, connection, `/items/${item.id}/sale_price?context=channel_marketplace`));
       return finitePrice(salePrice.amount);
-    } catch {
+    } catch (error) {
+      if (isVisibleProviderFailure(error)) throw error;
       // Compatibilidade enquanto o campo price ainda coexistir na busca pública.
       return finitePrice(item.price);
     }
@@ -115,12 +139,13 @@ export async function consultMercadoLivrePrice(
   let values: number[] = [];
   try {
     values = await activeOfferPrices(db, connection, product);
-  } catch {
+  } catch (error) {
+    if (isVisibleProviderFailure(error)) throw error;
     values = [];
   }
   if (!values.length) {
     source = 'catalog_reference';
-    values = productReferencePrices(product.raw);
+    values = await productReferencePrices(db, connection, product.raw);
   }
   if (!values.length) {
     throw new MarketplaceError(409, 'price_unavailable', 'Produto localizado, mas o Mercado Livre não retornou preços comparáveis no momento.');

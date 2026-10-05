@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.15 -->
+<!-- ava-version: 1.48.0.16 -->
+
+> Revisão 1.48.0.16: a consulta do **AvantaPreços** usa o preço efetivo do
+> item vencedor da buy box quando não há amostra ativa comparável. Permissão
+> negada e limite de consultas do Mercado Livre são exibidos sem disfarçar o
+> motivo da falha.
 
 > Revisão 1.48.0.15: os logotipos dos cabeçalhos usam altura contida com folga
 > superior e inferior e largura proporcional. Nenhuma parte da marca pode ser

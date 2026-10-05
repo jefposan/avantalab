@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.16 - 2026-10-05
+- **Preço oficial do catálogo no AvantaPreços**: quando não há uma amostra de anúncios equivalentes, a consulta usa `buy_box_winner.item_id` e obtém o preço efetivo em `/items/{ITEM_ID}/sale_price?context=channel_marketplace`; funciona com e sem faixa de preço na ficha.
+- **Falhas do Mercado Livre visíveis**: respostas de permissão (`403`) e limite de consultas (`429`) deixam de ser convertidas silenciosamente em falta de preço e passam a orientar a pessoa usuária com o motivo real.
+
 ## 1.48.0.15 - 2026-10-05
 - **Logo inteiro no cabeçalho**: a altura da marca passa a ser explícita e menor que a área útil do topo, mantendo folga acima e abaixo. A largura é sempre automática e preserva a proporção original.
 - **Sem recorte acidental**: removido o `overflow` que ocultava parte de imagens altas; logos já carregados antes da hidratação também recebem o ajuste automático de margens sem cortar a marca.

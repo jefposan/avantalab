@@ -118,7 +118,7 @@ export async function mlRequest(db: SupabaseClient, connection: SellerConnection
         // Não repassar mensagens arbitrárias do provedor, tokens ou outros campos.
         if (Object.keys(fields).length) throw new MarketplaceError(400, 'invalid_fields', 'Revise os campos indicados pelo Mercado Livre.', fields);
       }
-      throw new MarketplaceError(response.status === 429 ? 429 : 409, `provider_${response.status}`,
+      throw new MarketplaceError([403, 429].includes(response.status) ? response.status : 409, `provider_${response.status}`,
         response.status === 403 ? 'O Mercado Livre negou este recurso. A conexão segue ativa; confira as permissões funcionais do aplicativo e da conta.' : response.status === 429 ? 'Limite de consultas do Mercado Livre. Aguarde antes de tentar novamente.' : 'O Mercado Livre recusou a operação. Atualize os dados e confira o anúncio na plataforma.');
     }
     if (response.status === 204) return null;

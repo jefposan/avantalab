@@ -8,7 +8,7 @@ import { existsSync } from 'node:fs';
 const root = resolve(import.meta.dirname, '../..');
 const hooks = registerHooks({ resolve(specifier, context, next) {
   if (specifier === 'server-only') return { url: 'data:text/javascript,export {}', shortCircuit: true };
-  if (specifier.endsWith('/management-access') || specifier === './management-access') return { url: 'data:text/javascript,export class MarketplaceError extends Error { constructor(status,code,message,fields){super(message);this.status=status;this.code=code;this.fields=fields;} }', shortCircuit: true };
+  if (specifier.endsWith('/management-access') || specifier.endsWith('/management-access.ts') || specifier === './management-access') return { url: 'data:text/javascript,export class MarketplaceError extends Error { constructor(status,code,message,fields){super(message);this.status=status;this.code=code;this.fields=fields;} }', shortCircuit: true };
   if (specifier.endsWith('/mercadolivre-management') || specifier === './mercadolivre-management') return { url: 'data:text/javascript,export async function mlRequest(db,connection,path){return globalThis.__mlPriceMock(path)}', shortCircuit: true };
   let candidate;
   if (specifier.startsWith('@/')) candidate = resolve(root, specifier.slice(2));
@@ -17,6 +17,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   return next(specifier, context);
 } });
 const { calculatePriceSuggestions, consultMercadoLivrePrice } = await import('../../app/modules/marketplaces/services/mercadolivre-price-consultation.ts');
+const { MarketplaceError } = await import('../../app/modules/marketplaces/services/management-access.ts');
 hooks.deregister();
 
 const ean = '7891129598607';
@@ -55,18 +56,59 @@ test('consulta por EAN reutiliza a ficha e calcula a média apenas com ofertas a
   assert.deepEqual(result.sample, { count: 3, minimum: 90, maximum: 110, source: 'active_offers' });
 });
 
-test('consulta usa a referência oficial do catálogo quando não há amostra de ofertas', async () => {
+test('consulta usa sale_price do item vencedor mesmo quando a ficha possui faixa de preço', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  const winnerItemId = 'MLB5000000099';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
     if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { price: 100 }, buy_box_winner_price_range: { min: { price: 80 }, max: { price: 120 } } });
+    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId, price: 100 }, buy_box_winner_price_range: { min: { price: 80 }, max: { price: 120 } } });
     if (url.pathname === '/sites/MLB/search') return { results: [] };
+    if (url.pathname === `/items/${winnerItemId}/sale_price`) {
+      assert.equal(url.searchParams.get('context'), 'channel_marketplace');
+      return { amount: 109.9 };
+    }
     throw new Error(`Rota inesperada: ${path}`);
   };
 
   const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.deepEqual(result.prices, { market: 100, minimum: 50, medium: 70, ideal: 90 });
-  assert.equal(result.sample?.source, 'catalog_reference');
+  assert.deepEqual(result.prices, { market: 109.9, minimum: 54.95, medium: 76.93, ideal: 98.91 });
+  assert.deepEqual(result.sample, { count: 1, minimum: 109.9, maximum: 109.9, source: 'catalog_reference' });
 });
 
+test('consulta usa sale_price do item vencedor quando a ficha não possui faixa de preço', async () => {
+  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  const winnerItemId = 'MLB5000000100';
+  globalThis.__mlPriceMock = async (path) => {
+    const url = new URL(`https://api.mercadolibre.com${path}`);
+    if (url.pathname === '/products/search') return { results: [product()] };
+    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
+    if (url.pathname === '/sites/MLB/search') return { results: [] };
+    if (url.pathname === `/items/${winnerItemId}/sale_price`) {
+      assert.equal(url.searchParams.get('context'), 'channel_marketplace');
+      return { amount: 160 };
+    }
+    throw new Error(`Rota inesperada: ${path}`);
+  };
+
+  const result = await consultMercadoLivrePrice({}, connection, { ean });
+  assert.deepEqual(result.prices, { market: 160, minimum: 80, medium: 112, ideal: 144 });
+  assert.deepEqual(result.sample, { count: 1, minimum: 160, maximum: 160, source: 'catalog_reference' });
+});
+
+test('consulta não oculta negação de acesso ou limite do Mercado Livre', async () => {
+  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  for (const [status, code] of [[403, 'provider_403'], [429, 'provider_429']]) {
+    const winnerItemId = `MLB5000000${status}`;
+    globalThis.__mlPriceMock = async (path) => {
+      const url = new URL(`https://api.mercadolibre.com${path}`);
+      if (url.pathname === '/products/search') return { results: [product()] };
+      if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
+      if (url.pathname === '/sites/MLB/search') return { results: [] };
+      if (url.pathname === `/items/${winnerItemId}/sale_price`) throw new MarketplaceError(status, code, `Erro ${status} visível`);
+      throw new Error(`Rota inesperada: ${path}`);
+    };
+
+    await assert.rejects(consultMercadoLivrePrice({}, connection, { ean }), (error) => error?.status === status && error?.code === code);
+  }
+});

@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.16: AvantaPreços consulta o sale_price do item
+// vencedor da buy box e mostra bloqueios 403/429 do Mercado Livre.
 // Revisado na versão 1.48.0.15: logos dos módulos usam altura contida, folga
 // vertical e largura proporcional, sem recorte da marca.
 // Revisado na versão 1.48.0.14: cabeçalhos compartilhados ampliam a área visual

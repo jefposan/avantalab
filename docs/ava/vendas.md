@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.15 -->
+<!-- ava-version: 1.48.0.16 -->
+
+> Revisão 1.48.0.16: a consulta de preço pelo item vencedor do Mercado Livre
+> pertence ao AvantaPreços e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.15: o cabeçalho do módulo Vendas preserva o logotipo inteiro,
 > com altura contida e largura proporcional; o fluxo operacional não mudou.

@@ -69,7 +69,12 @@ test('validador do Mercado Livre aceita sucesso 204 sem exigir JSON', () => envi
 test('negação de recurso não é apresentada como perda da conexão', () => environment(async () => {
   const db=database(), connection=await loadConnection(db,company,connectionId);
   globalThis.fetch=async () => Response.json({code:'PA_UNAUTHORIZED_RESULT_FROM_POLICIES'},{status:403});
-  await assert.rejects(mlRequest(db,connection,'/categories/MLB1/shipping_preferences'), (error) => error.code==='provider_403' && /conexão segue ativa/i.test(error.message));
+  await assert.rejects(mlRequest(db,connection,'/categories/MLB1/shipping_preferences'), (error) => error.status===403 && error.code==='provider_403' && /conexão segue ativa/i.test(error.message));
+}));
+test('limite de consulta preserva o status e a orientação do Mercado Livre', () => environment(async () => {
+  const db=database(), connection=await loadConnection(db,company,connectionId);
+  globalThis.fetch=async () => Response.json({message:'too many requests'},{status:429});
+  await assert.rejects(mlRequest(db,connection,'/items/MLB1/sale_price?context=channel_marketplace'), (error) => error.status===429 && error.code==='provider_429' && /limite de consultas/i.test(error.message));
 }));
 test('refresh concorrente troca uma única vez e salva o par novo atomicamente', () => environment(async () => {
   const db=database(true), connection=await loadConnection(db,company,connectionId);

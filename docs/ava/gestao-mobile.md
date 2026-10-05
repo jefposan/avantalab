@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.15 -->
+<!-- ava-version: 1.48.0.16 -->
+
+> Revisão 1.48.0.16: a correção de consulta do AvantaPreços pertence ao PWA
+> de marketplaces e não altera os fluxos da Gestão Mobile.
 
 > Revisão 1.48.0.15: a correção de proporção e altura dos logotipos pertence
 > aos módulos da Gestão Web e não altera a operação da Gestão Mobile.
