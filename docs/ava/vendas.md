@@ -1,7 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.40 -->
+<!-- ava-version: 1.44.0.42 -->
 <!-- avantavendas-asset-revision: 164 -->
+
+> Revisão 1.44.0.42: a conexão OAuth do Mercado Livre pertence à Gestão Web e
+> não altera os fluxos do AvantaVendas.
+
+> Revisão 1.44.0.41: a estrutura inicial de **Anúncios em marketplaces** é da
+> Gestão Web e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.44.0.40: a entrega nativa de XLS/PDF pertence à exportação da
 > Gestão Mobile; não altera o funcionamento do AvantaVendas.

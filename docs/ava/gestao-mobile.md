@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.40 -->
+<!-- ava-version: 1.44.0.42 -->
+
+> Revisão 1.44.0.42: a conexão OAuth do Mercado Livre pertence à Gestão Web e
+> não altera a Ava Mobile.
+
+> Revisão 1.44.0.41: a estrutura inicial de **Anúncios em marketplaces** é
+> exclusiva da Gestão Web. Não cria fluxo novo na Ava Mobile nem pede senhas de
+> marketplaces.
 
 > Revisão 1.44.0.40: em **Menu > Exportar relatório**, depois de escolher XLS
 > ou PDF, o aplicativo abre as opções do aparelho para salvar em Arquivos ou

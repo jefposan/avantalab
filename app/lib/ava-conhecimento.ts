@@ -1,5 +1,13 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.42: em Anúncios em marketplaces, somente Gestor
+// Master ou Administrador inicia a conexão do Mercado Livre na página oficial.
+// A Ava nunca solicita a senha do seller; o retorno confirma a conexão ou
+// explica a falha sem revelar tokens.
+// Revisado na versão 1.44.0.41: o módulo Anúncios em marketplaces está sendo
+// estruturado para a Gestão Web. Ele valida EAN/GTIN e valor, solicita só os
+// dados complementares exigidos e usa OAuth na página do marketplace; senha
+// nunca é solicitada pela Ava nem guardada no AvantaLab.
 // Revisado na versão 1.44.0.40: Exportar relatório na Gestão Mobile entrega
 // o XLS/PDF ao compartilhamento nativo; no navegador, compartilha o arquivo
 // quando possível e usa download como alternativa. Cancelar não gera sucesso.

@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.40 -->
+<!-- ava-version: 1.44.0.42 -->
+
+> Revisão 1.44.0.42: em **Anúncios em marketplaces**, Gestor Master ou
+> Administrador usa **Conectar conta** para entrar na página oficial do Mercado
+> Livre. A senha nunca é informada à Ava; após autorizar, o sistema retorna ao
+> módulo e confirma ou explica a falha da conexão.
+
+> Revisão 1.44.0.41: o módulo **Anúncios em marketplaces** está em estruturação
+> para a Gestão Web. Ele pedirá EAN/GTIN e valor, validará as exigências do
+> marketplace e só enviará uma publicação após confirmação. A conexão é feita
+> na página oficial do marketplace; a Ava nunca pede senha da conta.
 
 > Revisão 1.44.0.40: a entrega do arquivo por compartilhamento nativo pertence
 > à Gestão Mobile; a exportação da Gestão Web continua usando o download do

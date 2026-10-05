@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.44.0.42 - 2026-10-04
+- **Conexão Mercado Livre**: o módulo inicia OAuth com PKCE, confere o retorno
+  de autorização e grava os tokens cifrados por empresa. Somente Gestor Master
+  ou Administrador pode vincular uma conta; o seller entra apenas na página
+  oficial do Mercado Livre.
+
+## 1.44.0.41 - 2026-10-04
+- **Estrutura de Anúncios em marketplaces**: novo módulo empresarial para
+  preparar anúncios por EAN/GTIN e valor, com Mercado Livre como primeira
+  integração e as demais plataformas claramente identificadas como planejadas.
+- **Credenciais protegidas**: a arquitetura usa OAuth 2.0 com PKCE, tokens
+  cifrados no servidor e confirmação explícita antes da publicação; senha de
+  marketplace não é coletada, salva ou exibida.
+
 ## 1.44.0.40 - 2026-10-04
 - **Entrega real do relatório no Mobile**: XLS e PDF deixam de depender do
   download silencioso do WebView. No aplicativo nativo, o arquivo é gravado em
