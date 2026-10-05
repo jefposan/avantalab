@@ -69,7 +69,7 @@ test('login do AvantaPreços segue a composição aprovada e o padrão do Recebi
   assert.match(client, /aria-pressed=\{showPassword\}/);
   assert.match(client, /name=\{showPassword \? 'eyeOff' : 'eye'\}/);
   assert.match(client, /className=\{styles\.loginSubmitTarget\}/);
-  assert.match(css, /\.loginWrap \{[^}]*min-height: 100dvh;[^}]*grid-template-rows: minmax\(0,1fr\) auto minmax\(0,1fr\);/);
+  assert.match(css, /\.loginWrap \{[^}]*min-height: calc\(var\(--avanta-access-viewport-height\) \+ var\(--avanta-access-safe-extension\)\);[^}]*grid-template-rows: minmax\(0,1fr\) auto minmax\(0,1fr\);/);
   assert.match(css, /\.brandLogo \{[^}]*grid-row: 1;[^}]*margin-top: env\(safe-area-inset-top\);/);
   assert.match(css, /\.loginContent \{[^}]*grid-row: 2;/);
   assert.match(css, /\.loginCard \{[^}]*width: min\(100%, 336px\);/);
@@ -123,9 +123,10 @@ test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas 
   assert.match(css, /\.topbar \{[^}]*top: 0;[^}]*background: color-mix\(in srgb, var\(--brand\) 96%, #000\);/);
   assert.match(css, /\.topbarInner \{[^}]*padding: calc\(14px \+ var\(--avanta-safe-top\)\) 16px 14px;/);
   assert.match(css, /\.topbarMobile \.topbarInner \{[^}]*min-height: calc\(76px \+ var\(--avanta-safe-top\)\);/);
-  assert.match(css, /\.loginWrap \{[^}]*min-height: 100dvh;[^}]*background-image: image-set\([^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
+  assert.match(css, /\.loginWrap \{[^}]*--avanta-access-viewport-height: 100dvh;[^}]*--avanta-access-safe-extension: 0px;[^}]*min-height: calc\(var\(--avanta-access-viewport-height\) \+ var\(--avanta-access-safe-extension\)\);[^}]*background-image: image-set\([^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
   assert.match(css, /@media \(max-width: 1023px\) \{ \.page, \.loginWrap \{[^}]*background-size: 100% auto;/);
   assert.match(css, /@media \(max-width: 1023px\) and \(min-aspect-ratio: 9\/16\), \(max-width: 1023px\) and \(max-aspect-ratio: 9\/18\) \{ \.page, \.loginWrap \{[^}]*background-size: auto 100%;/);
+  assert.match(css, /@media \(display-mode: standalone\) and \(max-width: 1023px\) \{ \.loginWrap \{[^}]*--avanta-access-safe-extension: env\(safe-area-inset-top\);/);
   assert.match(css, /@supports \(-webkit-touch-callout: none\) \{ \.page, \.loginWrap \{[^}]*background-attachment: scroll;/);
   assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background-color: #eef6fb;[^}]*background-image: none;/);
   assert.match(viewportShell, /body:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background: transparent;/);
@@ -142,6 +143,8 @@ test('rota isolada valida login, carregamento e cabeçalho com área segura simu
   assert.match(viewportValidationPage, /estado === 'pronto'/);
   assert.match(viewportValidationPage, /estado === 'carregando'/);
   assert.match(viewportValidationPage, /'--avanta-safe-top': '47px'/);
+  assert.match(viewportValidationPage, /'--avanta-access-viewport-height': 'calc\(100dvh - 62px\)'/);
+  assert.match(viewportValidationPage, /'--avanta-access-safe-extension': '62px'/);
   assert.match(viewportValidationPage, /className=\{styles\.loginWrap\} data-avantaprecos-viewport="access"/);
   assert.match(viewportValidationPage, /className=\{styles\.page\} data-avantaprecos-viewport="ready"/);
   assert.match(viewportValidationPage, /className=\{`\$\{styles\.topbar\} \$\{styles\.topbarMobile\}`\}/);

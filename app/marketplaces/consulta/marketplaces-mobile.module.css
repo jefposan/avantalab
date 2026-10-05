@@ -115,7 +115,7 @@
 .scanComplete { border-color: #55df9b; color: #fff; background: rgba(24,132,88,.68); }
 .scannerSheet { display: grid; gap: 8px; border-radius: 22px 22px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); color: #1e293b; background: #fff; }
 .scannerSheet p { margin: 0; color: #a12a2a; font-size: 11px; font-weight: 700; }
-.loginWrap { display: grid; width: 100%; min-height: 100dvh; grid-template-rows: minmax(0,1fr) auto minmax(0,1fr); align-items: stretch; justify-items: center; overflow-x: hidden; overflow-y: auto; overscroll-behavior: none; padding: 0 max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left)); background-color: #eef6fb; background-image: image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-sem-logo.png') type('image/png')); background-position: center bottom; background-repeat: no-repeat; background-size: cover; background-attachment: fixed; }
+.loginWrap { --avanta-access-viewport-height: 100dvh; --avanta-access-safe-extension: 0px; display: grid; width: 100%; min-height: calc(var(--avanta-access-viewport-height) + var(--avanta-access-safe-extension)); grid-template-rows: minmax(0,1fr) auto minmax(0,1fr); align-items: stretch; justify-items: center; overflow-x: hidden; overflow-y: auto; overscroll-behavior: none; padding: 0 max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left)); background-color: #eef6fb; background-image: image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-sem-logo.png') type('image/png')); background-position: center bottom; background-repeat: no-repeat; background-size: cover; background-attachment: fixed; }
 .brandLogo { grid-row: 1; align-self: center; justify-self: center; width: clamp(136px,46.4vw,220px); max-width: 66%; max-height: 58%; height: auto; margin-top: env(safe-area-inset-top); object-fit: contain; }
 .loginContent { grid-row: 2; width: min(100%,336px); }
 .loadingStage { grid-row: 2; display: grid; justify-items: center; gap: 12px; color: #51606e; text-align: center; }
@@ -157,6 +157,7 @@
 @keyframes shimmer { to { background-position: -200% 0; } }
 @media (max-width: 1023px) { .page, .loginWrap { background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png')); background-size: 100% auto; } }
 @media (max-width: 1023px) and (min-aspect-ratio: 9/16), (max-width: 1023px) and (max-aspect-ratio: 9/18) { .page, .loginWrap { background-size: auto 100%; } }
+@media (display-mode: standalone) and (max-width: 1023px) { .loginWrap { --avanta-access-safe-extension: env(safe-area-inset-top); } }
 @supports (-webkit-touch-callout: none) { .page, .loginWrap { background-attachment: scroll; } }
 @media (min-width: 700px) { .content, .resultPage { padding-top: 32px; } .scanButton { min-height: 164px; } .priceGrid { grid-template-columns: 1fr 1fr; }.marketPrice { grid-column: 1 / -1; } }
 @media (prefers-reduced-motion: reduce) { .inlineLoading span, .loadingStage > span, .scanWindow > span, .historySkeleton span { animation: none; } .scanButton:active { transform: none; } }

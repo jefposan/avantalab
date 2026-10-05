@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.08 - 2026-10-05
+- **Rodapé do acesso corrigido no PWA instalado**: no iPhone, a superfície de login e carregamento agora prolonga o fundo institucional pela área que o modo standalone desconta do viewport, eliminando a faixa clara junto ao indicador inferior.
+- **Teste móvel equivalente ao aparelho**: a rota técnica reproduz separadamente os 62 px da área de status e validou login e carregamento em 440 × 956 px, com o contêiner e o fundo alcançando exatamente o último pixel do viewport.
+
 ## 1.48.0.07 - 2026-10-05
 - **Fundo do acesso ancorado no contêiner visível**: o AvantaPreços passa a aplicar a imagem institucional diretamente no mesmo `loginWrap` usado pelo Recebimentos, com posição `center bottom`, enquanto a raiz mantém somente a cor de proteção das áreas seguras. Isso impede que o quadro de pintura do `html` desloque o desenho no PWA instalado.
 - **Paridade visual verificada**: a rota técnica confirmou, em 390 × 844 px e 430 × 932 px, que AvantaPreços e Recebimentos usam o mesmo arquivo, posição, dimensionamento e limites exatos do fundo até o rodapé.

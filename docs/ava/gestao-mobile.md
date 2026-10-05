@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.07 -->
+<!-- ava-version: 1.48.0.08 -->
+
+> Revisão 1.48.0.08: no PWA instalado no iPhone, o fundo do acesso do
+> **AvantaPreços** inclui a parcela superior descontada pelo viewport standalone
+> e termina no último pixel da tela, sem faixa clara junto ao indicador inferior.
 
 > Revisão 1.48.0.07: o fundo institucional do acesso do **AvantaPreços** fica
 > ancorado diretamente no contêiner visível, com a mesma posição e escala do

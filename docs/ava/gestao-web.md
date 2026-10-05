@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.07 -->
+<!-- ava-version: 1.48.0.08 -->
+
+> Revisão 1.48.0.08: a correção da extensão do fundo no modo standalone
+> pertence ao PWA **AvantaPreços**; a Gestão Web não é alterada.
 
 > Revisão 1.48.0.07: o ajuste de ancoragem do fundo pertence ao acesso do PWA
 > **AvantaPreços**; a Gestão Web não é alterada.

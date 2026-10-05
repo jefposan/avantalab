@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.08: fundo do acesso do AvantaPreços cobre também
+// a parcela descontada do viewport pelo modo standalone no iPhone.
 // Revisado na versão 1.48.0.07: fundo do acesso do AvantaPreços fica ancorado
 // no contêiner visível, com a mesma posição e escala do Recebimentos.
 // Revisado na versão 1.48.0.06: AvantaPreços cobre as áreas seguras na raiz

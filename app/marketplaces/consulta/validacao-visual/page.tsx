@@ -22,6 +22,9 @@ export default async function MarketplaceViewportValidationPage({ searchParams }
   const query = await searchParams;
   const estado = query.estado;
   const safeStyle = query.segura === 'sim' ? ({ '--avanta-safe-top': '47px' } as CSSProperties) : undefined;
+  const accessSafeStyle = query.segura === 'iphone'
+    ? ({ '--avanta-access-viewport-height': 'calc(100dvh - 62px)', '--avanta-access-safe-extension': '62px' } as CSSProperties)
+    : undefined;
 
   if (estado === 'pronto') {
     return (
@@ -48,7 +51,7 @@ export default async function MarketplaceViewportValidationPage({ searchParams }
 
   const carregando = estado === 'carregando';
   return (
-    <main className={styles.loginWrap} data-avantaprecos-viewport="access">
+    <main className={styles.loginWrap} data-avantaprecos-viewport="access" style={accessSafeStyle}>
       {carregando ? (
         <section className={styles.loadingStage} role="status">
           <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
