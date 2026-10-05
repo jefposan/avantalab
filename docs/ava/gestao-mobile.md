@@ -1,6 +1,20 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.46.0.06 -->
+<!-- ava-version: 1.47.0.03 -->
+
+> Revisão 1.47.0.03: o Marketplaces Mobile recebeu ícone próprio de consulta
+> de preços; não houve alteração no fluxo operacional descrito abaixo.
+
+> Revisão 1.47.0.02: o aplicativo agora se chama **Marketplaces Mobile** e usa
+> a rota genérica `/marketplaces/consulta`; a consulta de preços é sua primeira
+> função, não a identidade de um aplicativo exclusivo para uma operação.
+
+> Revisão 1.47.0.01: o novo PWA **Marketplaces Mobile** usa o mesmo login, perfil empresarial
+> e conexão Mercado Livre já configurada em Anúncios em marketplaces. Em
+> `/marketplaces/consulta`, **Ler EAN** abre a câmera e aguarda a confirmação em **Consultar**;
+> também é possível digitar o EAN ou pesquisar pelo nome. O resultado mostra a
+> média encontrada e os valores de 50%, 70% e 90%; consultas anteriores ficam
+> no histórico da empresa. O aplicativo não solicita nova conexão do marketplace.
 
 > Revisão 1.46.0.06: fluxo de preparação e publicação por EAN corrigido no
 > módulo Marketplaces da Gestão Web; sem impacto operacional na Gestão Mobile.

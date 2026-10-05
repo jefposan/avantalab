@@ -23,6 +23,22 @@ export async function loadConnection(db: SupabaseClient, company: string, id: un
   return data as SellerConnection;
 }
 
+export async function resolveMercadoLivreConnection(db: SupabaseClient, company: string, requestedId?: unknown) {
+  if (requestedId != null && String(requestedId).trim()) return loadConnection(db, company, requestedId);
+  const { data, error } = await db.from('marketplace_connections')
+    .select('id')
+    .eq('empresa_id', company)
+    .eq('provider', 'mercado_livre')
+    .eq('status', 'connected')
+    .not('token_sealed', 'is', null)
+    .order('connected_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new MarketplaceError(503, 'database', 'Não foi possível consultar a conexão do Mercado Livre.');
+  if (!data?.id) throw new MarketplaceError(409, 'marketplace_not_connected', 'Esta empresa ainda não possui uma conta do Mercado Livre conectada.');
+  return loadConnection(db, company, data.id);
+}
+
 async function accessToken(db: SupabaseClient, initial: SellerConnection, force = false): Promise<string> {
   let connection = initial;
   for (let attempt = 0; attempt < 12; attempt++) {

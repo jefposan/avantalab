@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.47.0.03 - 2026-10-05
+- **Ícone do Marketplaces Mobile**: novo ativo próprio, coerente com a família visual AvantaLab, combina código de barras, lupa e etiqueta de preço. O manifesto, os metadados Apple e o cache offline usam as versões de 180, 192 e 512 px.
+
+## 1.47.0.02 - 2026-10-05
+- **Identidade genérica**: o novo aplicativo passa a se chamar **Marketplaces Mobile** e usa a rota `/marketplaces/consulta`. Pasta, manifesto, cache offline, atalho, interface, testes e documentação seguem a nova identidade, preparada para receber outras funções de marketplaces.
+
+## 1.47.0.01 - 2026-10-05
+- **Novo PWA Marketplaces Mobile**: experiência mobile própria em `/marketplaces/consulta`, com o mesmo login e perfis do AvantaLab, leitura de EAN pela câmera, digitação manual e pesquisa por nome. O leitor confirma o código antes da consulta e mantém alternativa manual quando a câmera não estiver disponível.
+- **Mercado Livre reutilizado por empresa**: nenhuma nova autorização foi criada. O backend reaproveita a conexão, os tokens criptografados, a renovação e as permissões do módulo Marketplaces, sempre depois de validar usuário, empresa e acesso ativo ao módulo.
+- **Preços sugeridos**: a ficha localizada é comparada com ofertas ativas equivalentes; o resultado apresenta média do Mercado Livre e sugestões de 50%, 70% e 90% dessa média. Quando não há amostra de ofertas, a referência oficial do catálogo é usada e identificada no resultado.
+- **Histórico isolado**: consultas registram produto, imagem, horário, amostra e os quatro valores por empresa. A tabela possui RLS, acesso exclusivo do backend e não expõe credenciais; uma consulta anterior pode ser reaberta ou atualizada.
+- **Instalação e acesso**: manifesto e service worker próprios permitem instalar o Marketplaces Mobile; o módulo Anúncios em marketplaces ganhou um atalho para abrir o aplicativo. Testes cobrem cálculos, isolamento, câmera, confirmação, histórico, PWA e reutilização da integração.
+
 ## 1.46.0.06 - 2026-10-05
 - **Publicação por EAN corrigida**: selecionar a categoria não apaga mais a ficha quando o Mercado Livre restringe uma consulta complementar. Os modos de envio vêm da categoria e são refinados pela conta quando disponíveis; se a categoria não os declarar e a consulta logística for restrita, o formulário oferece somente os modos canônicos e confirma a escolha na validação oficial antes da criação.
 - **Fluxo completo auditado**: categoria, limites de preço e descrição, estoque, tipo de anúncio, envio, condição, garantia e atributos obrigatórios são validados no cliente e novamente no servidor. Recondicionados exigem garantia mínima de 90 dias e nenhum anúncio é criado enquanto houver pendência bloqueante.

@@ -2,7 +2,8 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MarketplaceError } from './management-access';
 import { mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
-import { catalogAttributes, catalogCandidate, catalogPictures, publicationErrors, safeText, validEan, type CatalogPreparation, type PublicationForm } from './catalog-publication';
+import { publicationErrors, safeText, validEan, type CatalogPreparation, type PublicationForm } from './catalog-publication';
+import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import { listingIdIsValid, objectValue, uuidIsValid } from './listing-model';
 
 const listingTypeIds = new Set(['free', 'gold_special', 'gold_pro']);
@@ -18,21 +19,13 @@ function preparationIssue(error: unknown, code: string, denied: string, unavaila
 export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection: SellerConnection, input: { ean: unknown; productId?: unknown; categoryId?: unknown }): Promise<CatalogPreparation> {
   const ean = validEan(input.ean);
   if (!ean) throw new MarketplaceError(400, 'invalid_ean', 'Informe um EAN/GTIN válido com dígito verificador.');
-  if (!process.env.MARKETPLACE_SECRETS_KEY) throw new MarketplaceError(503, 'integration_not_configured', 'A conexão do Mercado Livre não está configurada neste ambiente local. Configure a chave da integração para consultar o catálogo.');
-  const query = new URLSearchParams({ site_id: 'MLB', status: 'active', product_identifier: ean, limit: '20' });
-  const search = objectValue(await mlRequest(db, connection, `/products/search?${query}`));
-  if (!Array.isArray(search.results)) throw new MarketplaceError(503, 'catalog_unavailable', 'O catálogo não retornou uma lista válida. Tente novamente.');
-  const candidates = search.results.map(catalogCandidate).filter((candidate): candidate is NonNullable<typeof candidate> => !!candidate);
-  if (!candidates.length) return { status: 'not_found', ean, notice: 'EAN não localizado no catálogo ativo do Mercado Livre.' };
-  const selectedId = safeText(input.productId, 30);
-  const chosen = selectedId ? candidates.find((candidate) => candidate.id === selectedId) : candidates.length === 1 ? candidates[0] : null;
-  if (!chosen) return { status: 'found', ean, candidates, notice: 'Mais de um produto foi localizado. Escolha a ficha que corresponde exatamente ao item que será vendido.' };
-  const detail = objectValue(await mlRequest(db, connection, `/products/${chosen.id}`));
-  const product = catalogCandidate(detail);
-  if (!product || product.id !== chosen.id || product.domainId !== chosen.domainId) throw new MarketplaceError(409, 'catalog_changed', 'A ficha do produto mudou. Consulte o EAN novamente.');
-  const pictures = catalogPictures(detail.pictures);
-  const attributes = catalogAttributes(detail.attributes);
-  const fullProduct = { ...product, attributes, pictures, description: safeText(detail.short_description, 5000) || safeText(objectValue(detail.short_description).content, 5000) };
+  const identification = await identifyMercadoLivreCatalog(db, connection, { ean, productId: input.productId });
+  const candidates = identification.candidates;
+  if (identification.status === 'not_found') return { status: 'not_found', ean, notice: identification.notice };
+  if (identification.status === 'choose' || !identification.product) return { status: 'found', ean, candidates, notice: identification.notice };
+  const fullProduct = identification.product;
+  const product = fullProduct;
+  const attributes = fullProduct.attributes;
 
   const categoryCandidates = new Map<string, { id: string; name: string }>();
   const domainCategories = await mlRequest(db, connection, `/catalog_domains/${encodeURIComponent(product.domainId)}/categories`);

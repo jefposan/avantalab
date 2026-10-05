@@ -89,6 +89,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     <div className={styles.content}>
     <section className={styles.hero} aria-labelledby="module-title">
       <div><p className={styles.eyebrow}>Conexão e gestão</p><h1 id="module-title">Anúncios em marketplaces</h1></div>
+      <a className={styles.marketplaceMobileLink} href={`/marketplaces/consulta?empresaId=${encodeURIComponent(companyId)}`} target="_blank" rel="noopener noreferrer">Abrir consulta de preços</a>
     </section>
 
     <section className={styles.grid} aria-label="Configuração de publicação">

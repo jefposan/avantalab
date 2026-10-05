@@ -1,6 +1,20 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.46.0.06 -->
+<!-- ava-version: 1.47.0.03 -->
+
+> Revisão 1.47.0.03: o Marketplaces Mobile recebeu ícone próprio; sem mudança
+> no acesso, na consulta ou na conexão reutilizada do Mercado Livre.
+
+> Revisão 1.47.0.02: o PWA passa a se chamar **Marketplaces Mobile** e usa a
+> rota genérica `/marketplaces/consulta`, preservando o atalho de consulta.
+
+> Revisão 1.47.0.01: **Anúncios em marketplaces** oferece **Abrir consulta de
+> preços**, que inicia o PWA Marketplaces Mobile. Ele reutiliza a empresa e uma conta Mercado
+> Livre já conectada; com várias contas, permite escolher a usada na consulta.
+> Não há novo OAuth. O EAN pode ser lido pela câmera ou digitado, e a pesquisa
+> textual apresenta fichas para seleção. O resultado calcula mínimo, médio de
+> venda e ideal como 50%, 70% e 90% da média encontrada. O histórico pertence
+> somente à empresa ativa e **Consultar novamente** atualiza o preço.
 
 > Revisão 1.46.0.06: ao escolher a categoria no card **Novo anúncio**, a ficha
 > localizada permanece visível mesmo se o Mercado Livre negar uma consulta

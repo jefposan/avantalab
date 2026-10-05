@@ -30,6 +30,12 @@ function formatarTelefoneCadastro(valor: string, ddi: string) {
 }
 
 interface AuthCardProps {
+  appTitle?: string;
+  appDescription?: string;
+  installLabel?: string;
+  installPath?: string;
+  serviceWorkerUrl?: string;
+  serviceWorkerScope?: string;
   // Modal Aviso
   modalAvisoAberto: boolean;
   tituloAviso: string;
@@ -124,6 +130,12 @@ function IconeVendas({ nome }: { nome: string }) {
 }
 
 export default function AuthCard({
+  appTitle = 'Gestão Financeira',
+  appDescription = 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.',
+  installLabel = 'Instalar AvantaLab',
+  installPath = '/mobile',
+  serviceWorkerUrl = '/sw.js?v=2',
+  serviceWorkerScope = '/',
   modalAvisoAberto, tituloAviso, mensagemAviso, tipoAviso, fecharAviso,
   modoAuth, setModoAuth,
   loginEmail, setLoginEmail,
@@ -187,13 +199,13 @@ export default function AuthCard({
     atualizarEstadoInstalacao();
     window.addEventListener('beforeinstallprompt', capturarPrompt);
     window.addEventListener('appinstalled', concluirInstalacao);
-    navigator.serviceWorker?.register('/sw.js?v=2', { scope: '/' }).catch(() => undefined);
+    navigator.serviceWorker?.register(serviceWorkerUrl, { scope: serviceWorkerScope }).catch(() => undefined);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', capturarPrompt);
       window.removeEventListener('appinstalled', concluirInstalacao);
     };
-  }, []);
+  }, [serviceWorkerScope, serviceWorkerUrl]);
 
   const instalarAplicativo = async () => {
     if (!promptInstalacao) {
@@ -208,7 +220,7 @@ export default function AuthCard({
   };
 
   const abrirQrMobile = async () => {
-    const link = `${window.location.origin}/mobile`;
+    const link = `${window.location.origin}${installPath}`;
     setQrMobileAberto(true);
     setQrMobileLink(link);
     setQrMobileDataUrl('');
@@ -357,7 +369,7 @@ export default function AuthCard({
   {modoRedefinirSenha
     ? 'Criar nova senha'
     : modoAuth === 'login'
-      ? 'Gestão Financeira'
+      ? appTitle
       : 'Criar cadastro'}
 </h1>
 
@@ -365,7 +377,7 @@ export default function AuthCard({
   {modoRedefinirSenha
     ? 'Digite e confirme sua nova senha para recuperar o acesso ao sistema.'
     : modoAuth === 'login'
-      ? 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.'
+      ? appDescription
       : 'Preencha seus dados para criar acesso ao sistema.'}
 </p>
             </div>
@@ -750,7 +762,7 @@ export default function AuthCard({
       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
       </svg>
-      Instalar AvantaLab
+      {installLabel}
     </button>
     {mostrarInstrucaoInstalacao && (
       <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-center text-xs font-medium leading-relaxed text-slate-600">

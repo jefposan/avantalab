@@ -1,6 +1,6 @@
 # Anúncios em marketplaces
 
-Módulo web por empresa para conectar contas de marketplaces e preparar publicações por EAN.
+Módulo Web e PWA por empresa para conectar contas de marketplaces, preparar publicações por EAN e consultar produtos e preços.
 
 ## Segurança
 
@@ -32,6 +32,15 @@ logs, preferências de navegador ou banco de dados sem criptografia.
   preço e estoque do cache visíveis, mas bloqueia alterações e salvamento.
 - A migração `20261005190000_marketplace_listing_edit.sql` habilita a auditoria
   de edição; aplicar antes de testar salvamentos reais. GET não altera anúncios.
+- O PWA Marketplaces Mobile, em `/marketplaces/consulta`, usa o mesmo login,
+  empresa e conexão Mercado Livre do módulo.
+  Ele não possui fluxo OAuth próprio, não recebe tokens no cliente e permite
+  leitura por câmera, EAN manual, pesquisa textual, comparação e histórico.
+- A média considera ofertas ativas do mesmo produto de catálogo e seus preços
+  atuais; sem amostra, usa as referências oficiais disponíveis na ficha. As
+  sugestões são calculadas sobre a média: mínimo 50%, médio 70% e ideal 90%.
+- A migração `20261005213000_marketplace_price_consultations.sql` registra o
+  histórico por empresa com RLS e acesso direto revogado de anon/authenticated.
 
 ## Limites atuais
 

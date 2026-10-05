@@ -115,7 +115,7 @@ export const REGISTRO_MODULOS: readonly RegistroModulo[] = [
     descricao: 'Conecte marketplaces e publique anúncios assistidos por EAN e valor.',
     icone: 'marketplaces',
     ordem: 7,
-    superficies: ['web'],
+    superficies: ['web', 'pwa'],
     navegacao: { modo: 'pagina_total', rotuloMenu: 'Anúncios em marketplaces', rota: '/marketplaces', retorno: '/gestao' },
     comercial: { precoMensal: VALOR_MODULO_AVULSO_MENSAL, vendavelNoBusiness: true, incluidoNoBusinessPro: true },
     dados: { escopo: 'empresa', preservarAoRemover: true },

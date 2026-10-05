@@ -1,6 +1,16 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.46.0.06 -->
+<!-- ava-version: 1.47.0.03 -->
+
+> Revisão 1.47.0.03: novo ícone do Marketplaces Mobile, sem impacto operacional
+> no AvantaVendas.
+
+> Revisão 1.47.0.02: a identidade e a rota do PWA foram generalizadas como
+> **Marketplaces Mobile** em `/marketplaces/consulta`, sem impacto no Vendas.
+
+> Revisão 1.47.0.01: o novo PWA Marketplaces Mobile pertence ao módulo Marketplaces e
+> reutiliza a conexão Mercado Livre da empresa; não altera pedidos, catálogo,
+> estoque ou demais fluxos do AvantaVendas.
 
 > Revisão 1.46.0.06: fluxo de preparação e publicação por EAN corrigido no
 > módulo Marketplaces da Gestão Web; sem impacto operacional no AvantaVendas.
