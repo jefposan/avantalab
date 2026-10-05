@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.44.0.40 - 2026-10-04
+- **Entrega real do relatório no Mobile**: XLS e PDF deixam de depender do
+  download silencioso do WebView. No aplicativo nativo, o arquivo é gravado em
+  cache e abre a folha do sistema para salvar ou compartilhar; no navegador
+  mobile, o compartilhamento de arquivo é usado quando estiver disponível.
+- **Sucesso confirmado**: a mensagem positiva só aparece depois que o arquivo
+  foi disponibilizado ao sistema. Cancelamento mantém a configuração aberta e
+  falhas exibem o erro real, sem informar uma exportação inexistente.
+
+## 1.44.0.39 - 2026-10-03
+- **Catálogos utilizáveis em Custos**: o catálogo selecionado para novos
+  produtos e serviços aparece ao lado das contagens no topo da lista. Por
+  padrão, é usado o catálogo atual do Vendas, mas qualquer catálogo ativo da
+  empresa pode ser escolhido.
+- **Vínculo individual e em massa**: a edição permite mudar o catálogo de um
+  item; a seleção em lote ganha “Mover para catálogo”. A transferência mantém
+  o mesmo cadastro, preços, imagens, estoque, composição e histórico.
+- **Proteção de destino**: o banco confirma permissão, empresa e catálogo
+  ativo, além de impedir códigos duplicados antes de concluir a movimentação.
+
 ## 1.44.0.38-av164 - 2026-10-02
 - **Texto integral no seletor de Pedidos**: a largura da pílula de ordenação foi
   ampliada para acomodar as opções completas, inclusive em celulares com fonte

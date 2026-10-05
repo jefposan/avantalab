@@ -14,6 +14,12 @@ export type DadosExportacaoLancamentosMes = {
   linhas: LinhaExportacaoLancamentoMes[];
 };
 
+export type ArquivoExportacaoLancamentosMes = {
+  nome: string;
+  tipo: string;
+  blob: Blob;
+};
+
 const moeda = (valor: number) => new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
@@ -24,11 +30,11 @@ const textoSeguro = (valor: string | undefined) => String(valor || '—').replac
 const nomeArquivo = ({ mes, ano }: DadosExportacaoLancamentosMes, extensao: 'xlsx' | 'pdf') =>
   `lancamentos-avantalab-${String(mes || 'mes').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')}-${ano}.${extensao}`;
 
-const baixar = (conteudo: BlobPart, tipo: string, arquivo: string) => {
-  const url = URL.createObjectURL(new Blob([conteudo], { type: tipo }));
+const baixar = ({ blob, nome }: ArquivoExportacaoLancamentosMes) => {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = arquivo;
+  link.download = nome;
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -45,7 +51,7 @@ const totais = (linhas: LinhaExportacaoLancamentoMes[]) => {
   return { receitas, despesas, saldo: receitas - despesas };
 };
 
-export async function exportarLancamentosMesExcel(dados: DadosExportacaoLancamentosMes) {
+export async function gerarLancamentosMesExcel(dados: DadosExportacaoLancamentosMes): Promise<ArquivoExportacaoLancamentosMes> {
   const XLSX = await import('xlsx');
   const resumo = totais(dados.linhas);
   const linhas = [...dados.linhas].sort((a, b) => a.data.localeCompare(b.data) || a.tipo.localeCompare(b.tipo));
@@ -87,10 +93,15 @@ export async function exportarLancamentosMesExcel(dados: DadosExportacaoLancamen
   const livro = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(livro, planilha, 'Lançamentos');
   XLSX.utils.book_append_sheet(livro, resumoPlanilha, 'Resumo');
-  XLSX.writeFile(livro, nomeArquivo(dados, 'xlsx'));
+  const conteudo = XLSX.write(livro, { bookType: 'xlsx', type: 'array', compression: true }) as ArrayBuffer;
+  return {
+    nome: nomeArquivo(dados, 'xlsx'),
+    tipo: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    blob: new Blob([conteudo], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+  };
 }
 
-export async function exportarLancamentosMesPdf(dados: DadosExportacaoLancamentosMes) {
+export async function gerarLancamentosMesPdf(dados: DadosExportacaoLancamentosMes): Promise<ArquivoExportacaoLancamentosMes> {
   const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
   const pdf = await PDFDocument.create();
   const fonte = await pdf.embedFont(StandardFonts.Helvetica);
@@ -175,5 +186,17 @@ export async function exportarLancamentosMesPdf(dados: DadosExportacaoLancamento
   rodape();
   const arquivo = await pdf.save();
   const bytes = arquivo.buffer.slice(arquivo.byteOffset, arquivo.byteOffset + arquivo.byteLength) as ArrayBuffer;
-  baixar(bytes, 'application/pdf', nomeArquivo(dados, 'pdf'));
+  return {
+    nome: nomeArquivo(dados, 'pdf'),
+    tipo: 'application/pdf',
+    blob: new Blob([bytes], { type: 'application/pdf' }),
+  };
+}
+
+export async function exportarLancamentosMesExcel(dados: DadosExportacaoLancamentosMes) {
+  baixar(await gerarLancamentosMesExcel(dados));
+}
+
+export async function exportarLancamentosMesPdf(dados: DadosExportacaoLancamentosMes) {
+  baixar(await gerarLancamentosMesPdf(dados));
 }

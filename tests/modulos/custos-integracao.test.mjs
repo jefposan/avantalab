@@ -45,6 +45,7 @@ const migracaoInsumoFiscal = readFileSync('supabase/migrations/20260923173000_in
 const migracaoCatalogosSeparados = readFileSync('supabase/migrations/20260924100000_separar_catalogo_externo_e_local_custos.sql', 'utf8');
 const migracaoAcoesLoteCatalogo = readFileSync('supabase/migrations/20260924103000_acoes_lote_catalogo_custos.sql', 'utf8');
 const migracaoCatalogosGerenciaveis = readFileSync('supabase/migrations/20260924110000_catalogos_empresa_gerenciaveis.sql', 'utf8');
+const migracaoMoverCatalogo = readFileSync('supabase/migrations/20261003150000_mover_produtos_entre_catalogos_custos.sql', 'utf8');
 const fornecedoresCustos = readFileSync('app/api/modulos/custos/fornecedores/route.ts', 'utf8');
 
 test('Custos usa página total e exige o acesso oficial do módulo', () => {
@@ -133,12 +134,16 @@ test('Catálogo e Custos usam o mesmo cadastro mestre e a mesma inativação', (
   assert.match(migracao, /disponivel_catalogo boolean not null default true/);
 });
 
-test('empresa organiza múltiplos catálogos sem misturar a fonte externa e Custos', () => {
+test('empresa organiza múltiplos catálogos e escolhe o destino de cada produto', () => {
   assert.match(workspace, /rotulo: 'Catálogos'/);
   assert.match(workspace, /title="Catálogos"/);
   assert.match(workspace, /Novo catálogo/);
   assert.match(workspace, /Tornar atual/);
-  assert.match(workspace, /Catálogos separados/);
+  assert.match(workspace, /Catálogos da empresa/);
+  assert.match(workspace, /Catálogo para novo cadastro/);
+  assert.match(workspace, /label="Catálogo"/);
+  assert.match(workspace, /mover_catalogo/);
+  assert.match(workspace, /moverProdutosParaCatalogo/);
   assert.match(repositorio, /salvarCatalogoEmpresa/);
   assert.match(repositorio, /alterarStatusCatalogoEmpresa/);
   assert.match(repositorio, /definirCatalogoAtual/);
@@ -148,6 +153,22 @@ test('empresa organiza múltiplos catálogos sem misturar a fonte externa e Cust
   assert.match(migracaoCatalogosGerenciaveis, /custos_alterar_status_catalogo_empresa_rpc/);
   assert.match(migracaoCatalogosGerenciaveis, /custos_definir_catalogo_atual_rpc/);
   assert.match(catalogoVendasServidor, /order\('padrao', \{ ascending: false \}\)/);
+});
+
+test('movimentação entre catálogos preserva o cadastro e protege empresa, destino e códigos', () => {
+  assert.match(repositorio, /catalogoAtual = catalogos\.find\(\(item\) => item\.padrao && item\.ativo\)/);
+  assert.match(repositorio, /\.in\('catalogo_id', catalogos\.map\(\(item\) => item\.id\)\)/);
+  assert.match(repositorio, /custos_mover_produtos_catalogo_rpc/);
+  assert.match(workspace, /catalogo_id === rascunho\.catalogo_id/);
+  assert.match(migracaoMoverCatalogo, /custos_pode_acessar_empresa\(p_empresa_id, true\)/);
+  assert.match(migracaoMoverCatalogo, /catalogo\.empresa_id = p_empresa_id/);
+  assert.match(migracaoMoverCatalogo, /catalogo\.ativo = true/);
+  assert.match(migracaoMoverCatalogo, /for update/);
+  assert.match(migracaoMoverCatalogo, /produto\.id = any\(v_ids\)/);
+  assert.match(migracaoMoverCatalogo, /catalogo_id = p_catalogo_destino_id/);
+  assert.match(migracaoMoverCatalogo, /código % aparece mais de uma vez/);
+  assert.match(migracaoMoverCatalogo, /já usa o código % em outro cadastro/);
+  assert.doesNotMatch(migracaoMoverCatalogo, /delete from public\.vendas_mobile_catalogo_produtos/);
 });
 
 test('Dados próprios preservam composições, simulações e histórico', () => {
@@ -238,7 +259,7 @@ test('produtos e insumos escolhem o mesmo fornecedor da empresa', () => {
   assert.match(fornecedoresCustos, /modulo_id', 'custos'/);
 });
 
-test('catálogo externo permanece separado da base local de Custos e a publicação pode ser feita em lote', () => {
+test('catálogos mantêm a origem e a publicação pode ser administrada em lote', () => {
   assert.match(migracaoCatalogosSeparados, /origem text not null default 'externa'/);
   assert.match(migracaoCatalogosSeparados, /'custos_local'/);
   assert.match(migracaoCatalogosSeparados, /custos_restaurar_catalogo_externo_e_separar_local_rpc/);
@@ -247,19 +268,20 @@ test('catálogo externo permanece separado da base local de Custos e a publicaç
   assert.match(repositorio, /origem\.eq\.custos_local,codigo\.eq\.CUSTOS_LOCAL/);
   assert.match(migracaoAcoesLoteCatalogo, /custos_aplicar_acao_produtos_lote_rpc/);
   assert.match(migracaoAcoesLoteCatalogo, /catalogo\.origem = 'custos_local'/);
-  assert.match(workspace, /Adicionar ao catálogo/);
+  assert.match(workspace, /Disponibilizar no catálogo/);
   assert.match(workspace, /Selecionar todos os itens listados/);
   assert.match(workspace, /Limpar seleção/);
   assert.match(workspace, /aplicarAcaoLoteCatalogo/);
   assert.match(workspace, /acaoLoteIndisponivel/);
   assert.doesNotMatch(workspace, /— já aplicado/);
-  assert.match(workspace, /rotulo: 'Adicionar ao catálogo'/);
+  assert.match(workspace, /rotulo: 'Mover para catálogo'/);
+  assert.match(workspace, /rotulo: 'Disponibilizar no catálogo'/);
   assert.match(workspace, /rotulo: 'Retirar do catálogo'/);
   assert.match(workspace, /rotulo: 'Ativar cadastro'/);
   assert.match(workspace, /rotulo: 'Inativar cadastro'/);
-  assert.match(workspace, /Aplicando…' : 'Confirmar'/);
-  assert.match(workspace, /<th>Catálogo local<\/th>/);
-  assert.match(workspace, /produto\.disponivel_catalogo \? 'No catálogo' : 'Fora do catálogo'/);
+  assert.match(workspace, /Mover' : 'Confirmar'/);
+  assert.match(workspace, /<th>Catálogo<\/th>/);
+  assert.match(workspace, /produto\.disponivel_catalogo \? 'Disponível' : 'Em estudo'/);
   assert.match(workspace, /className=\{styles\.batchActionHelp\}[\s\S]*className=\{styles\.batchActionField\}/);
   assert.match(workspace, /className=\{styles\.batchSelectionCount\}><b>\{quantidadeSelecionada\}<\/b><span>/);
   assert.match(estilos, /\.batchActions select option\{font-size:14px\}/);

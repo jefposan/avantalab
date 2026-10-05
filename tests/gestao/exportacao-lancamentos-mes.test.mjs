@@ -9,6 +9,9 @@ test('exportação mensal gera os dois formatos com receitas e despesas', async 
   const fonte = await ler('app/lib/exportacao-lancamentos-mes.ts');
   assert.match(fonte, /exportarLancamentosMesExcel/);
   assert.match(fonte, /exportarLancamentosMesPdf/);
+  assert.match(fonte, /gerarLancamentosMesExcel/);
+  assert.match(fonte, /gerarLancamentosMesPdf/);
+  assert.match(fonte, /type: 'array'/);
   assert.match(fonte, /await import\('xlsx'\)/);
   assert.match(fonte, /await import\('pdf-lib'\)/);
   assert.match(fonte, /linha\.tipo === 'Receita'/);
@@ -35,6 +38,10 @@ test('Gestão Web oferece exportação na competência selecionada', async () =>
 test('Gestão Mobile usa uma ponte segura para arquivos e não abre-fecha o menu no mesmo toque', async () => {
   const mobile = await ler('public/mobile-app.js');
   const ponte = await ler('app/mobile/ExportarLancamentosMobileBridge.tsx');
+  const pacote = await ler('package.json');
+  const android = await ler('android/app/capacitor.build.gradle');
+  const ios = await ler('ios/App/CapApp-SPM/Package.swift');
+  const privacidadeIos = await ler('ios/App/App/PrivacyInfo.xcprivacy');
   assert.match(mobile, /function abrirMenuPelaNavegacao\(\)[\s\S]*?state\.menuAnimacao = 'entrar';[\s\S]*?render\(\);[\s\S]*?state\.menuAnimacao = '';/);
   assert.match(mobile, /botaoAbrirMenu\.addEventListener\('pointerdown'/);
   assert.match(mobile, /if \(event\.detail !== 0\) return;/);
@@ -47,6 +54,21 @@ test('Gestão Mobile usa uma ponte segura para arquivos e não abre-fecha o menu
   assert.match(mobile, /mesesComDadosExportacaoMobile/);
   assert.match(mobile, /grid-cols-\[minmax\(0,1fr\)_104px\]/);
   assert.match(mobile, /exportar-mes-excel/);
-  assert.match(ponte, /exportarLancamentosMesExcel/);
-  assert.match(ponte, /exportarLancamentosMesPdf/);
+  assert.match(ponte, /gerarLancamentosMesExcel/);
+  assert.match(ponte, /gerarLancamentosMesPdf/);
+  assert.match(ponte, /Capacitor\.isNativePlatform/);
+  assert.match(ponte, /Capacitor\.isPluginAvailable\('Filesystem'\)/);
+  assert.match(ponte, /Capacitor\.isPluginAvailable\('Share'\)/);
+  assert.match(ponte, /Filesystem\.writeFile/);
+  assert.match(ponte, /Share\.share/);
+  assert.match(ponte, /navigator\.share/);
+  assert.match(ponte, /compartilhamentoCancelado/);
+  assert.match(mobile, /Arquivo disponibilizado para salvar ou compartilhar/);
+  assert.match(pacote, /@capacitor\/filesystem/);
+  assert.match(pacote, /@capacitor\/share/);
+  assert.match(android, /project\(':capacitor-filesystem'\)/);
+  assert.match(android, /project\(':capacitor-share'\)/);
+  assert.match(ios, /CapacitorFilesystem/);
+  assert.match(ios, /CapacitorShare/);
+  assert.match(privacidadeIos, /NSPrivacyAccessedAPICategoryFileTimestamp/);
 });

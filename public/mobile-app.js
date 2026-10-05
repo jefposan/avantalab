@@ -18489,9 +18489,16 @@
     if (!detalhe.id || detalhe.id !== state.exportacaoMesPedidoId) return;
     state.exportacaoMesProcessando = '';
     state.exportacaoMesPedidoId = '';
+    if (detalhe.cancelado) {
+      render();
+      mostrarToast(detalhe.mensagem || 'Compartilhamento cancelado.');
+      return;
+    }
     state.exportacaoMesAberta = false;
     render();
-    mostrarToast(detalhe.sucesso ? 'Arquivo exportado com sucesso.' : (detalhe.mensagem || 'Não foi possível exportar o arquivo.'));
+    mostrarToast(detalhe.sucesso
+      ? (detalhe.entrega === 'compartilhado' ? 'Arquivo disponibilizado para salvar ou compartilhar.' : 'Download do arquivo iniciado.')
+      : (detalhe.mensagem || 'Não foi possível exportar o arquivo.'));
   });
 
   iniciarQuandoPaginaEstiverPronta();

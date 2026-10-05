@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.38 -->
+<!-- ava-version: 1.44.0.40 -->
+
+> Revisão 1.44.0.40: a entrega do arquivo por compartilhamento nativo pertence
+> à Gestão Mobile; a exportação da Gestão Web continua usando o download do
+> navegador, sem alteração operacional.
+
+> Revisão 1.44.0.39: em **Custos e Precificação > Produtos e serviços**, o
+> seletor ao lado de **Produtos/Serviços** define o catálogo de novos
+> cadastros; por padrão, ele usa o catálogo atual do Vendas. No editor, o
+> campo **Catálogo** também permite alterar o destino de um item. Para muitos
+> itens, selecione-os na lista, escolha **Mover para catálogo**, informe o
+> destino e confirme. A movimentação preserva cadastro, preços, imagens,
+> estoque, composição e histórico; se um código já existir no destino, ajuste
+> o código antes de mover.
 
 > Revisão 1.44.0.38: a ampliação do seletor de ordem de Pedidos pertence ao
 > AvantaVendas; não altera a Gestão Web.

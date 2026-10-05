@@ -1,5 +1,12 @@
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
+// Revisado na versão 1.44.0.40: Exportar relatório na Gestão Mobile entrega
+// o XLS/PDF ao compartilhamento nativo; no navegador, compartilha o arquivo
+// quando possível e usa download como alternativa. Cancelar não gera sucesso.
+// Revisado na versão 1.44.0.39: em Custos e Precificação, o catálogo atual do
+// Vendas é o destino inicial de novos itens; o usuário pode escolher outro
+// catálogo ativo no topo da lista, no editor ou em massa. O AvantaVendas
+// continua mostrando apenas o catálogo atual da empresa.
 // Revisado na versão 1.44.0.38: no AvantaVendas, o seletor de ordem de Pedidos
 // ficou mais largo para exibir as opções e mais baixo, com fonte compacta e
 // área segura de toque preservada.

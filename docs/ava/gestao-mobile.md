@@ -1,6 +1,17 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.38 -->
+<!-- ava-version: 1.44.0.40 -->
+
+> Revisão 1.44.0.40: em **Menu > Exportar relatório**, depois de escolher XLS
+> ou PDF, o aplicativo abre as opções do aparelho para salvar em Arquivos ou
+> compartilhar. No navegador mobile, o compartilhamento de arquivo é usado
+> quando suportado e o download fica como alternativa. A mensagem de sucesso só
+> aparece depois que o arquivo foi disponibilizado; cancelar mantém o card
+> aberto para uma nova tentativa.
+
+> Revisão 1.44.0.39: a escolha e a movimentação de catálogos pertencem a
+> **Custos e Precificação** na Gestão Web; não alteram a orientação da Ava
+> Mobile.
 
 > Revisão 1.44.0.38: a ampliação do seletor de ordem de Pedidos pertence ao
 > AvantaVendas; não altera a orientação da Ava Mobile.

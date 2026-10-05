@@ -1,7 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.38 -->
+<!-- ava-version: 1.44.0.40 -->
 <!-- avantavendas-asset-revision: 164 -->
+
+> Revisão 1.44.0.40: a entrega nativa de XLS/PDF pertence à exportação da
+> Gestão Mobile; não altera o funcionamento do AvantaVendas.
+
+> Revisão 1.44.0.39: produtos e serviços passam a poder ser vinculados a
+> qualquer catálogo ativo em **Custos e Precificação**. O AvantaVendas continua
+> a mostrar somente o catálogo definido como atual pela empresa.
 
 > Revisão 1.44.0.38-av164: em **Pedidos**, o seletor de ordem ficou mais largo
 > para exibir integralmente as opções, inclusive com fonte ampliada no celular.
