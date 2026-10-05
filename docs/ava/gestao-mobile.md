@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.16 -->
+<!-- ava-version: 1.48.0.17 -->
+
+> Revisão 1.48.0.17: quando a conta não possui permissão para a cotação
+> detalhada do Mercado Livre, o **AvantaPreços** pode concluir a consulta pela
+> referência pública da ficha e informa que o valor é estimado. Limite de
+> consultas e ausência de referência continuam explícitos; a Gestão Mobile não
+> é alterada.
 
 > Revisão 1.48.0.16: a correção de consulta do AvantaPreços pertence ao PWA
 > de marketplaces e não altera os fluxos da Gestão Mobile.

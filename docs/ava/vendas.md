@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.16 -->
+<!-- ava-version: 1.48.0.17 -->
+
+> Revisão 1.48.0.17: o fallback de preço público do AvantaPreços pertence ao
+> PWA de marketplaces e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.16: a consulta de preço pelo item vencedor do Mercado Livre
 > pertence ao AvantaPreços e não altera os fluxos do AvantaVendas.

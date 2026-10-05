@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.16 -->
+<!-- ava-version: 1.48.0.17 -->
+
+> Revisão 1.48.0.17: o **AvantaPreços** não falha quando somente a cotação
+> detalhada `sale_price` é negada (`403`) e a ficha já fornece preço público da
+> buy box ou faixa: calcula a estimativa e a identifica no resultado. Sem essa
+> referência, o `403` permanece visível; `429` continua sendo limite explícito.
 
 > Revisão 1.48.0.16: a consulta do **AvantaPreços** usa o preço efetivo do
 > item vencedor da buy box quando não há amostra ativa comparável. Permissão

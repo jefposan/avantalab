@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.17 - 2026-10-05
+- **Consulta compatível com a permissão disponível**: se o Mercado Livre negar somente o endpoint detalhado `sale_price` (`403`), o AvantaPreços usa a referência pública já retornada na ficha do catálogo — preço da buy box e, quando houver, sua faixa — para concluir o cálculo.
+- **Transparência preservada**: o resultado identifica que é uma estimativa pela referência pública. Sem preço público disponível, a negação `403` continua explícita; o limite `429` nunca é substituído por estimativa e permanece visível para nova tentativa posterior.
+
 ## 1.48.0.16 - 2026-10-05
 - **Preço oficial do catálogo no AvantaPreços**: quando não há uma amostra de anúncios equivalentes, a consulta usa `buy_box_winner.item_id` e obtém o preço efetivo em `/items/{ITEM_ID}/sale_price?context=channel_marketplace`; funciona com e sem faixa de preço na ficha.
 - **Falhas do Mercado Livre visíveis**: respostas de permissão (`403`) e limite de consultas (`429`) deixam de ser convertidas silenciosamente em falta de preço e passam a orientar a pessoa usuária com o motivo real.

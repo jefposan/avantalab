@@ -96,19 +96,50 @@ test('consulta usa sale_price do item vencedor quando a ficha não possui faixa 
   assert.deepEqual(result.sample, { count: 1, minimum: 160, maximum: 160, source: 'catalog_reference' });
 });
 
-test('consulta não oculta negação de acesso ou limite do Mercado Livre', async () => {
+test('consulta usa a referência pública da ficha quando sale_price é negado para esta conta', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  for (const [status, code] of [[403, 'provider_403'], [429, 'provider_429']]) {
-    const winnerItemId = `MLB5000000${status}`;
-    globalThis.__mlPriceMock = async (path) => {
-      const url = new URL(`https://api.mercadolibre.com${path}`);
-      if (url.pathname === '/products/search') return { results: [product()] };
-      if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
-      if (url.pathname === '/sites/MLB/search') return { results: [] };
-      if (url.pathname === `/items/${winnerItemId}/sale_price`) throw new MarketplaceError(status, code, `Erro ${status} visível`);
-      throw new Error(`Rota inesperada: ${path}`);
-    };
+  const winnerItemId = 'MLB5000000403';
+  globalThis.__mlPriceMock = async (path) => {
+    const url = new URL(`https://api.mercadolibre.com${path}`);
+    if (url.pathname === '/products/search') return { results: [product()] };
+    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId, price: 110 }, buy_box_winner_price_range: { min: { price: 100 }, max: { price: 120 } } });
+    if (url.pathname === '/sites/MLB/search') return { results: [] };
+    if (url.pathname === `/items/${winnerItemId}/sale_price`) throw new MarketplaceError(403, 'provider_403', 'Erro 403 visível');
+    throw new Error(`Rota inesperada: ${path}`);
+  };
 
-    await assert.rejects(consultMercadoLivrePrice({}, connection, { ean }), (error) => error?.status === status && error?.code === code);
-  }
+  const result = await consultMercadoLivrePrice({}, connection, { ean });
+  assert.deepEqual(result.prices, { market: 110, minimum: 55, medium: 77, ideal: 99 });
+  assert.deepEqual(result.sample, { count: 3, minimum: 100, maximum: 120, source: 'catalog_reference' });
+  assert.match(result.notice || '', /referência pública/i);
+});
+
+test('consulta mantém 403 visível quando a ficha não traz referência pública', async () => {
+  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  const winnerItemId = 'MLB5000000404';
+  globalThis.__mlPriceMock = async (path) => {
+    const url = new URL(`https://api.mercadolibre.com${path}`);
+    if (url.pathname === '/products/search') return { results: [product()] };
+    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
+    if (url.pathname === '/sites/MLB/search') return { results: [] };
+    if (url.pathname === `/items/${winnerItemId}/sale_price`) throw new MarketplaceError(403, 'provider_403', 'Erro 403 visível');
+    throw new Error(`Rota inesperada: ${path}`);
+  };
+
+  await assert.rejects(consultMercadoLivrePrice({}, connection, { ean }), (error) => error?.status === 403 && error?.code === 'provider_403');
+});
+
+test('consulta mantém limite 429 visível mesmo quando a ficha possui preço de referência', async () => {
+  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  const winnerItemId = 'MLB5000000429';
+  globalThis.__mlPriceMock = async (path) => {
+    const url = new URL(`https://api.mercadolibre.com${path}`);
+    if (url.pathname === '/products/search') return { results: [product()] };
+    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId, price: 110 } });
+    if (url.pathname === '/sites/MLB/search') return { results: [] };
+    if (url.pathname === `/items/${winnerItemId}/sale_price`) throw new MarketplaceError(429, 'provider_429', 'Erro 429 visível');
+    throw new Error(`Rota inesperada: ${path}`);
+  };
+
+  await assert.rejects(consultMercadoLivrePrice({}, connection, { ean }), (error) => error?.status === 429 && error?.code === 'provider_429');
 });

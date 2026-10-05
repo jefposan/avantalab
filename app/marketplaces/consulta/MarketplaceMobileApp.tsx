@@ -347,6 +347,7 @@ export default function MarketplaceMobileApp() {
           <div className={styles.idealPrice}><span>Preço ideal</span><small>90% do preço médio</small><strong>{money.format(result.prices.ideal)}</strong></div>
         </div>
         {result.sample && <p className={styles.sampleNote}>{result.sample.count} {result.sample.count === 1 ? 'referência considerada' : 'referências consideradas'} · faixa de {money.format(result.sample.minimum)} a {money.format(result.sample.maximum)}</p>}
+        {result.notice && <p className={styles.sampleNote} role="status">{result.notice}</p>}
         {result.consultedAt && <p className={styles.consultedAt}>Consultado em {dateTime.format(new Date(result.consultedAt))}</p>}
         <button type="button" className={styles.secondaryButton} disabled={loading} onClick={() => void consult({ ...(result.ean ? { ean: result.ean } : { query: result.query || result.product!.name }), productId: result.product!.id })}><Icon name="refresh" />{loading ? 'Atualizando…' : 'Consultar novamente'}</button>
       </article>
