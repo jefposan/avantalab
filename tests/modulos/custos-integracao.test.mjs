@@ -4,6 +4,7 @@ import { test } from 'node:test';
 
 const registro = readFileSync('app/lib/modulos-registro.ts', 'utf8');
 const cliente = readFileSync('app/custos/CustosClient.tsx', 'utf8');
+const cabecalhoModulo = readFileSync('app/components/ModuloHeader.tsx', 'utf8');
 const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const estilos = readFileSync('app/custos/custos.module.css', 'utf8');
 const estilosProjetos = readFileSync('app/projetos/projetos.module.css', 'utf8');
@@ -114,7 +115,8 @@ test('Hierarquia e vigência são reconfirmadas no servidor e no banco', () => {
 
 test('Cabeçalho de Custos segue Projetos, retorna ao Dashboard e alterna o tema do perfil', () => {
   assert.match(cliente, /Voltar ao Dashboard do AvantaLab/);
-  assert.match(cliente, /className=\{styles\.moduleLogo\}/);
+  assert.match(cliente, /<ModuloHeader empresa=\{access\.empresa\} onBack=\{voltar\}/);
+  assert.match(cabecalhoModulo, /className=\{styles\.moduleLogo\}/);
   assert.match(cliente, /Abrir ajustes de Custos e Precificação/);
   assert.match(cliente, /\/api\/modulos\/custos\/ajustes/);
   assert.match(ajustes, /\.eq\('modulo_id', 'custos'\)/);
@@ -397,7 +399,9 @@ test('tipografia dos módulos usa tons neutros e preserva a cor de perfil para a
 });
 
 test('todos os cabeçalhos dos módulos exibem a logo do perfil ou o nome como alternativa', () => {
-  assert.match(cliente, /access\.empresa\.logoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.moduleLogo\}/);
+  assert.match(cliente, /<ModuloHeader empresa=\{access\.empresa\}/);
+  assert.match(cabecalhoModulo, /empresa\.logoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.moduleLogo\}/);
+  assert.match(cabecalhoModulo, /<span>\{empresa\.nome\}<\/span>/);
   assert.match(projetos, /companyLogoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.companyLogo\}/);
   assert.match(recebimentos, /acesso\.empresa\.logoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.logoEmpresaModulo\}/);
   assert.match(vendasSistema, /companyLogoUrl\s*\?\s*<img[\s\S]*?className="company-logo"/);

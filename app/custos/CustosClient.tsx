@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
+import ModuloHeader from '@/app/components/ModuloHeader';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import { Icon } from '@/app/projetos/components/Icon';
@@ -101,18 +102,10 @@ export default function CustosClient({ companyId, initialNewType, returnTo, init
   };
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>
-    <header className={styles.moduleHeader}>
-      <button type="button" onClick={voltar} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</button>
-      <div className={styles.moduleIdentity}>
-        {access.empresa.logoUrl
-          ? <img src={access.empresa.logoUrl} alt={access.empresa.nome} className={styles.moduleLogo} />
-          : <span>{access.empresa.nome}</span>}
-      </div>
-      <div className={styles.moduleHeaderActions}>
+    <ModuloHeader empresa={access.empresa} onBack={voltar} returnLabel={returnLabel} returnAriaLabel={returnAriaLabel}>
         {access.podeGerenciarModulo && <button type="button" className={styles.moduleSettingsButton} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Custos e Precificação" title="Ajustes"><Icon name="settings" size={18} /></button>}
         {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
-      </div>
-    </header>
+    </ModuloHeader>
     <CustosWorkspace companyId={companyId} access={access} initialNewType={initialNewType} />
     <RodapeAvanta darkMode={access.empresa.temaEscuro} />
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes de Custos e Precificação" description="Preferências do perfil que também orientam a aparência no AvantaLab.">

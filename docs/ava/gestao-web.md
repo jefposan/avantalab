@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.53 -->
+<!-- ava-version: 1.44.0.55 -->
+
+> Revisão 1.44.0.55: Marketplaces usa cabeçalho com Início e marca do perfil,
+> cards alinhados e interface enxuta. Anunciados possui conta, busca e situação;
+> sua ativação depende da migração de gestão. Enquanto pendente, a consulta
+> informa indisponibilidade. Não afirmar que dados foram sincronizados ou que
+> anúncios foram publicados. Validar e preparar ainda só valida EAN e valor.
+> As alterações de catálogos, importação e Vendas permanecem preservadas.
 
 > Revisão 1.44.0.53: o modelo Excel de **Custos e Precificação > Catálogos >
 > Novo catálogo** ganhou identidade visual AvantaLab. A aba **Produtos**, os

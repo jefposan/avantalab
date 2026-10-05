@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.44.0.55 - 2026-10-05
+- **Marketplaces integrado à main**: republicação do visual aprovado sobre a
+  versão atual, preservando as alterações de Vendas, catálogos e importação Excel.
+- **Interface enxuta**: cabeçalho compartilhado com Custos, marca do perfil e
+  retorno Início; formulário alinhado à esquerda e remoção de explicações fixas.
+- **Anunciados**: interface e rotas de gestão com conta, busca, situação e
+  confirmações de ações. A ativação depende da migração de gestão de anúncios,
+  ainda pendente; publicação automática por EAN não está implementada.
+
+## 1.44.0.54 - 2026-10-05
+- **Visual de Marketplaces aprovado**: entrega isolada no Vercel, agora
+  incorporada à main na versão 1.44.0.55 para preservar futuras publicações.
+
 ## 1.44.0.53 - 2026-10-05
 - **Modelo Excel do novo catálogo**: cabeçalho azul-escuro institucional,
   logo oficial, instruções compactas e linhas alternadas. Os 25 campos e a

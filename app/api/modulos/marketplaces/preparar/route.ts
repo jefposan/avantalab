@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   if (!url || !serviceRole) return NextResponse.json({ error: true, message: 'A publicação ainda não está configurada no servidor.' }, { status: 503 });
   const db = createClient(url, serviceRole, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: connection } = await db.from('marketplace_connections')
-    .select('id, status').eq('empresa_id', empresaId).eq('provider', provider).eq('status', 'connected').maybeSingle();
+    .select('id, status').eq('empresa_id', empresaId).eq('provider', provider).eq('status', 'connected').eq('id', typeof body.connectionId === 'string' ? body.connectionId : '00000000-0000-0000-0000-000000000000').maybeSingle();
 
   const result = preparePublicationInput({ ean: body?.ean, price: body?.price, connectionId: connection?.id });
   return NextResponse.json({ error: false, result });

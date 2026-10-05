@@ -48,7 +48,7 @@ export function getMercadoLivreOAuthConfiguration(): MercadoLivreOAuthConfigurat
   const clientId = process.env.MERCADOLIVRE_CLIENT_ID || '';
   const clientSecret = process.env.MERCADOLIVRE_CLIENT_SECRET || '';
   const redirectUri = process.env.MERCADOLIVRE_OAUTH_REDIRECT_URI || '';
-  if (!clientId || !clientSecret || !redirectUri) {
+  if (!clientId || !clientSecret || clientSecret === '<redacted>' || !redirectUri) {
     throw new Error('A integração do Mercado Livre ainda não está configurada neste ambiente.');
   }
   return { clientId, clientSecret, redirectUri };
@@ -64,15 +64,26 @@ export async function exchangeMercadoLivreAuthorizationCode(code: string, codeVe
     redirect_uri: configuration.redirectUri,
     code_verifier: codeVerifier,
   });
+  return requestToken(body);
+}
+
+export async function refreshMercadoLivreToken(refreshToken: string) {
+  const configuration = getMercadoLivreOAuthConfiguration();
+  return requestToken(new URLSearchParams({ grant_type: 'refresh_token', client_id: configuration.clientId,
+    client_secret: configuration.clientSecret, refresh_token: refreshToken }));
+}
+
+async function requestToken(body: URLSearchParams) {
   const response = await fetch('https://api.mercadolibre.com/oauth/token', {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
     cache: 'no-store',
+    signal: AbortSignal.timeout(12_000),
   });
   const data = await response.json().catch(() => ({})) as MercadoLivreTokenResponse;
-  if (!response.ok || !data.access_token || !data.refresh_token || !data.user_id) {
-    const providerCode = String(data.error || data.message || 'resposta-incompleta').slice(0, 120);
+  if (!response.ok || !data.access_token || !data.refresh_token || !data.user_id || !data.expires_in || !Number.isFinite(Number(data.expires_in)) || Number(data.expires_in) <= 0) {
+    const providerCode = ['invalid_client', 'invalid_grant', 'unauthorized_client'].includes(data.error || '') ? data.error : 'resposta-incompleta';
     throw new Error(`OAuth do Mercado Livre recusado (${response.status}: ${providerCode}).`);
   }
   return {

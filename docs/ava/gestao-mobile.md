@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.53 -->
+<!-- ava-version: 1.44.0.55 -->
+
+> Revisão 1.44.0.55: republicação visual de Marketplaces na Gestão Web;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.44.0.53: novo visual do modelo Excel de catálogos na Gestão Web;
 > sem impacto operacional neste aplicativo.

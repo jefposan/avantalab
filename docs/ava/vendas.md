@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.53 -->
+<!-- ava-version: 1.44.0.55 -->
+
+> Revisão 1.44.0.55: republicação visual de Marketplaces na Gestão Web;
+> preservadas as alterações de Vendas, sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.44.0.53: novo visual do modelo Excel de catálogos na Gestão Web;
 > sem impacto operacional no Vendas Mobile.

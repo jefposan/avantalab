@@ -40,6 +40,16 @@ divisor ou agrupamento sem identidade própria.
 
 ## Controles
 
+### Cabeçalho de módulo
+
+- Reutilizar `app/components/ModuloHeader.tsx` para cabeçalhos leves de módulos:
+  retorno à esquerda, identidade do perfil centralizada e ações opcionais à direita.
+- O componente reutiliza os estilos consolidados de Custos e Precificação, sem
+  uma cópia local de CSS. Recebe marca, tema e retorno do módulo; não persiste
+  preferências nem adiciona botões sem uma ação implementada.
+- O `AppHeader` continua destinado ao dashboard completo, com abas e controles
+  próprios; não é equivalente a esse cabeçalho de módulo.
+
 - Botões devem possuir variantes: primário, secundário, discreto e destrutivo.
 - Inputs, selects, textareas, checkboxes, datas e moeda devem convergir para
   componentes compartilhados conforme forem introduzidos.
