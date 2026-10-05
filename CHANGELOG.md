@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.48.0.19-av165 - 2026-10-05
+- **Vínculo comercial imediato no AvantaVendas**: a empresa é resolvida pelo
+  perfil de vendas ativo, inclusive quando a conta permanece independente para
+  seus próprios pedidos e financeiro. Repetir um código já ativo informa que a
+  empresa foi adicionada e repara a sincronização sem abrir nova solicitação.
+- **Aprovação sem reinício**: ao aprovar, Novidades, Divulgação e Catálogo são
+  liberados na conta e o catálogo é sincronizado no mesmo navegador. A revisão
+  `av165` renova os recursos em cache do PWA.
+
 ## 1.48.0.18 - 2026-10-05
 - **EAN fácil de corrigir**: o campo de EAN/GTIN do novo anúncio passa a usar o campo oficial de busca, com `×` acessível para limpar o código, sem remover o leitor por código de barras.
 - **Contas no contexto correto**: as contas Mercado Livre conectadas agora aparecem como pílulas selecionáveis no rodapé do card **Marketplace**, com desconexão confirmada no mesmo lugar. **Anunciados** ficou restrito aos filtros e à gestão dos produtos da conta já selecionada.

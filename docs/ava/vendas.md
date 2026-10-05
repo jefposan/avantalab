@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.18 -->
+<!-- ava-version: 1.48.0.19 -->
+
+<!-- avantavendas-asset-revision: 165 -->
+
+> Revisão 1.48.0.19-av165: o vínculo comercial pertence à conta de vendas
+> ativa. Código já usado informa que a empresa já foi adicionada; uma aprovação
+> libera Novidades, Divulgação e Catálogo e sincroniza os produtos no navegador
+> sem exigir reinício ou nova solicitação.
 
 > Revisão 1.48.0.18: o refinamento de EAN e contas conectadas em Marketplaces
 > pertence à Gestão Web e não altera os fluxos do AvantaVendas.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.18 -->
+<!-- ava-version: 1.48.0.19 -->
+
+> Revisão 1.48.0.19: a correção de vínculo comercial no AvantaVendas pertence
+> ao perfil de vendas e não altera os fluxos da Gestão Mobile.
 
 > Revisão 1.48.0.18: o `×` de limpar EAN e a reorganização das contas conectadas
 > pertencem ao módulo Marketplaces da Gestão Web; a Gestão Mobile não é alterada.

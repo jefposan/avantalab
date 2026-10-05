@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.18 -->
+<!-- ava-version: 1.48.0.19 -->
+
+> Revisão 1.48.0.19: a correção de vínculo comercial no AvantaVendas pertence
+> ao perfil de vendas e não altera os fluxos da Gestão Web.
 
 > Revisão 1.48.0.18: no card **Novo anúncio**, o EAN/GTIN tem `×` para limpar
 > o código sem remover o leitor. As contas conectadas ficam no rodapé do card
