@@ -13,7 +13,7 @@ test('atualização, filtros e troca de conta não descartam edição aberta', (
   assert.match(page,/syncController.current \|\| acting \|\| expanded/);
   assert.match(page,/syncController.current\?\.abort\(\);\n    setExpanded/);
   assert.match(page,/<ListingEditor key=\{`\$\{accountId\}-\$\{item.id\}`\}/);
-  assert.match(page,/disabled=\{syncing \|\| acting \|\| !!expanded\}/);
+  assert.match(page,/disabled=\{syncing \|\| acting \|\| !!expanded \|\| publicationBusy\}/);
 });
 test('os quatro campos editáveis antecedem o EAN na mesma lista expandida', () => {
   const row = page.split('{expanded === item.id && <tr')[1];

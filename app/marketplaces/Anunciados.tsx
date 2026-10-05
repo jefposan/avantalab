@@ -10,8 +10,9 @@ import type { ListingAction, ListingSnapshot } from '@/app/modules/marketplaces/
 import styles from './marketplaces.module.css';
 import { shippingLabels } from './shipping-labels';
 import ListingEditor from './ListingEditor';
+import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 
-type Account = { id: string; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
+export type MarketplaceAccount = { id: string; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
 type Row = { snapshot: ListingSnapshot; status: string };
 type Confirmation = { action: ListingAction | 'disconnect'; id: string; name: string; connectionId: string };
 const statusNames: Record<string, string> = { connected: 'Conectada', expired: 'Reconectar', attention: 'Requer atenção', connecting: 'Conectando', active: 'Ativo', paused: 'Pausado', closed: 'Encerrado', deleted: 'Excluído', under_review: 'Em revisão', inactive: 'Inativo' };
@@ -33,16 +34,18 @@ export async function marketplaceClientRequest(path: string, body?: unknown, sig
   return payload;
 }
 
-export default function Anunciados({ companyId, dark, brand, onSelectAccount }: { companyId: string; dark: boolean; brand: string; onSelectAccount: (id: string) => void }) {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [accountId, setAccountId] = useState('');
+export default function Anunciados({ companyId, dark, brand, accountId, onSelectAccount, onAccountsLoaded, onAccountSelectionLockedChange, publicationBusy, refreshKey = 0 }: { companyId: string; dark: boolean; brand: string; accountId: string; onSelectAccount: (id: string) => void; onAccountsLoaded: (accounts: MarketplaceAccount[]) => void; onAccountSelectionLockedChange: (locked: boolean) => void; publicationBusy: boolean; refreshKey?: number }) {
+  const [accounts, setAccounts] = useState<MarketplaceAccount[]>([]);
   const [canConnect, setCanConnect] = useState(false);
   const [canManage, setCanManage] = useState(false);
   const [accountsLoaded, setAccountsLoaded] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
+  const [rowsAccountId, setRowsAccountId] = useState('');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
-  const [page, setPage] = useState(1);
+  const [pageSelection, setPageSelection] = useState({ accountId: '', page: 1 });
+  const page = pageSelection.accountId === accountId ? pageSelection.page : 1;
+  const setPage = (nextPage: number) => setPageSelection({ accountId, page: nextPage });
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -56,14 +59,15 @@ export default function Anunciados({ companyId, dark, brand, onSelectAccount }: 
   const syncController = useRef<AbortController | null>(null);
   const listController = useRef<AbortController | null>(null);
   const account = accounts.find((candidate) => candidate.id === accountId);
+  const visibleRows = rowsAccountId === accountId ? rows : [];
   const editing = !!expanded && canManage && account?.status === 'connected';
 
   const loadAccounts = useCallback(async (signal?: AbortSignal) => {
     const data = await marketplaceClientRequest(`conexoes?empresaId=${encodeURIComponent(companyId)}`, undefined, signal);
     if (signal?.aborted) return;
     setAccounts(data.accounts); setCanConnect(data.canConnect); setCanManage(data.canManage); setAccountsLoaded(true);
-    setAccountId((current) => data.accounts.some((candidate: Account) => candidate.id === current) ? current : data.accounts.find((candidate: Account) => candidate.status === 'connected')?.id || data.accounts[0]?.id || '');
-  }, [companyId]);
+    onAccountsLoaded(data.accounts);
+  }, [companyId, onAccountsLoaded]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -71,7 +75,7 @@ export default function Anunciados({ companyId, dark, brand, onSelectAccount }: 
     return () => controller.abort();
   }, [loadAccounts]);
 
-  useEffect(() => { onSelectAccount(accountId); }, [accountId, onSelectAccount]);
+  useEffect(() => { onAccountSelectionLockedChange(syncing || acting || !!expanded); }, [syncing, acting, expanded, onAccountSelectionLockedChange]);
 
   const loadList = useCallback(async () => {
     listController.current?.abort();
@@ -81,12 +85,13 @@ export default function Anunciados({ companyId, dark, brand, onSelectAccount }: 
     try {
       const params = new URLSearchParams({ empresaId: companyId, connectionId: accountId, q: query, status, page: String(page) });
       const data = await marketplaceClientRequest(`anunciados?${params}`, undefined, controller.signal);
-      if (!controller.signal.aborted) { setRows(data.listings); setTotal(data.total); }
+      if (!controller.signal.aborted) { setRows(data.listings); setRowsAccountId(accountId); setTotal(data.total); }
     } catch (failure) { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : 'Falha ao carregar anúncios.'); }
     finally { if (!controller.signal.aborted) setLoading(false); }
   }, [companyId, accountId, query, status, page]);
   const loadListRef = useRef(loadList);
   useEffect(() => { loadListRef.current = loadList; }, [loadList]);
+  useEffect(() => { if (refreshKey) void loadListRef.current(); }, [refreshKey]);
 
   useEffect(() => {
     const timer = setTimeout(() => { setRows([]); void loadList(); }, 250);
@@ -154,10 +159,7 @@ export default function Anunciados({ companyId, dark, brand, onSelectAccount }: 
   return <section className={`${styles.panel} ${styles.listingsPanel}`} aria-labelledby="announced-title">
     <div className={styles.panelHeading}><div><h2 id="announced-title">Anunciados</h2></div><button className={styles.primary} type="button" disabled={!accountId || account?.status !== 'connected' || syncing || acting || !!expanded} onClick={() => void synchronize()}>{syncing ? 'Atualizando…' : 'Atualizar'}</button></div>
     <div className={styles.listingFilters}>
-      <label>Conta do Mercado Livre<select value={accountId} disabled={syncing || acting || !!expanded} onChange={(event) => { setRows([]); setTotal(0); setAccountId(event.target.value); setPage(1); setExpanded(''); setSyncNotice(''); setError(''); }}>
-        {!accounts.length && <option value="">{accountsLoaded ? 'Nenhuma conta conectada' : 'Carregando contas…'}</option>}
-        {accounts.map((item) => <option key={item.id} value={item.id}>{item.seller_name || `Vendedor ${item.seller_reference}`} · {statusNames[item.status] || item.status}</option>)}
-      </select></label>
+      <MarketplaceAccountPicker label="Conta do Mercado Livre" value={accountId} options={accounts.map((item) => ({ id: item.id, name: item.seller_name || `Vendedor ${item.seller_reference}`, detail: `ID ${item.seller_reference} · ${statusNames[item.status] || item.status}` }))} placeholder={!accountsLoaded ? 'Carregando contas…' : !accounts.length ? 'Nenhuma conta conectada' : 'Selecione uma conta'} disabled={syncing || acting || !!expanded || publicationBusy} onChange={(id) => { setRows([]); setTotal(0); onSelectAccount(id); setPage(1); setExpanded(''); setSyncNotice(''); setError(''); }} />
       <label>Pesquisar<CampoBusca disabled={!!expanded} aria-label="Pesquisar por nome, código, EAN ou SKU" value={query} onChange={(value) => { if (expanded) return; setQuery(value); setPage(1); }} placeholder="Nome, código, EAN ou SKU" /></label>
       <label>Situação<select value={status} disabled={!!expanded} onChange={(event) => { setStatus(event.target.value); setPage(1); }}><option value="">Todas</option>{['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].map((value) => <option key={value} value={value}>{statusNames[value]}</option>)}</select></label>
     </div>
@@ -166,7 +168,7 @@ export default function Anunciados({ companyId, dark, brand, onSelectAccount }: 
     <p role="status" className={styles.help}>{syncNotice || (loading ? 'Carregando anúncios…' : `${total} anúncio(s) nesta seleção.`)}</p>
     <div ref={tableScroll} className={styles.tableScroll} tabIndex={0} aria-label="Tabela de anúncios, role horizontalmente para ver todas as colunas" aria-busy={loading || syncing}>
       <table className={styles.listingTable}><caption className={styles.srOnly}>Produtos anunciados na conta selecionada</caption><colgroup><col style={{ width: '23%' }} /><col style={{ width: '9%' }} /><col style={{ width: '10%' }} /><col style={{ width: '11%' }} /><col style={{ width: '10%' }} /><col style={{ width: '7%' }} /><col style={{ width: '7%' }} /><col /><col style={{ width: 64 }} /></colgroup><thead><tr>{['Anúncio', 'Situação', 'Preço', 'Frete vendedor estimado', 'Taxa estimada', 'Estoque', 'Vendidos', 'Envio', 'Ações'].map((name) => <th key={name} scope="col" className={name === 'Ações' ? styles.listingActions : undefined}>{name}</th>)}</tr></thead>
-        <tbody>{rows.map(({ snapshot: item, status: rowStatus }) => {
+        <tbody>{visibleRows.map(({ snapshot: item, status: rowStatus }) => {
           const shipping = shippingLabels(item.shipping);
           return <Fragment key={item.id}><tr>
           <th scope="row" title={item.title}><strong>{item.title}</strong><small>{item.id}{item.sku ? ` · SKU ${item.sku}` : ''}</small></th>
@@ -185,7 +187,7 @@ export default function Anunciados({ companyId, dark, brand, onSelectAccount }: 
           {item.variations.length > 0 && <div><strong>Variações</strong>{item.variations.map((variation) => <p key={variation.id}>{variation.attributes} · {money(variation.price, item.currency)} · Estoque: {variation.stock ?? 'Indisponível'}</p>)}</div>}
         </div></td></tr>}</Fragment>;
         })}
-        {!rows.length && <tr><td colSpan={9}>{loading ? 'Carregando…' : !accountId ? 'Nenhuma conta conectada.' : syncing ? 'Aguardando sincronização…' : 'Nenhum anúncio encontrado.'}</td></tr>}
+        {!visibleRows.length && <tr><td colSpan={9}>{loading ? 'Carregando…' : !accountId ? 'Selecione uma conta.' : syncing ? 'Aguardando sincronização…' : 'Nenhum anúncio encontrado.'}</td></tr>}
         </tbody></table>
     </div>
     <nav className={styles.pagination} aria-label="Páginas dos anúncios"><button type="button" disabled={page <= 1 || loading || !!expanded} onClick={() => setPage(page - 1)}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil(total / 25))}</span><button type="button" disabled={page * 25 >= total || loading || !!expanded} onClick={() => setPage(page + 1)}>Próxima</button></nav>

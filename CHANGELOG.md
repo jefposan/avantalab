@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.46.0.02 - 2026-10-05
+- **Novo anúncio por EAN**: consulta o catálogo do Mercado Livre após selecionar a conta, mostra ficha e campos complementares no card 2 e só publica por ação explícita do usuário. O EAN não localizado é informado sem criar anúncio.
+- **Contas**: seletor compartilhado com Anunciados; seleção obrigatória quando houver mais de uma conta conectada. Formulário alinhado na mesma linha em telas largas e adaptado a mobile.
+
 ## 1.45.0.03 - 2026-10-05
 - **Nome de anúncio individual**: para User Products sem vendas e com um único anúncio vinculado confirmado pela API, o editor altera o `family_name`, usado pelo Mercado Livre para gerar o título visível. Anúncios vinculados, vendidos ou não confirmados permanecem bloqueados; tooltip compartilhado explica o motivo sem afirmar que o site do Mercado Livre sempre permitirá editar.
 - **Sem alteração de anúncios reais**: a mudança habilita o formulário e valida a permissão novamente antes de salvar; nenhum título foi enviado ao Mercado Livre nesta revisão.

@@ -1,6 +1,6 @@
 # Anúncios em marketplaces
 
-Módulo web por empresa para conectar contas de marketplaces e preparar publicações por EAN e preço.
+Módulo web por empresa para conectar contas de marketplaces e preparar publicações por EAN.
 
 ## Segurança
 
@@ -35,18 +35,17 @@ logs, preferências de navegador ou banco de dados sem criptografia.
 
 ## Limites atuais
 
-- `Validar e preparar` só valida os dados iniciais; publicação por EAN ainda não
-  está implementada. Os passos abaixo descrevem o fluxo planejado.
+- `Validar e preparar` consulta o catálogo do Mercado Livre sem publicar. Após revisão da ficha e preenchimento dos campos obrigatórios, `Publicar` executa a criação mediante ação explícita do usuário.
 - Cron e webhook não foram ativados; o cache não se atualiza com o módulo fechado.
 - Outras contas podem ser vinculadas por OAuth e escolhidas no seletor; a
   validação ao vivo usou somente a conta que já estava conectada.
 
-## Fluxo de publicação planejado
+## Fluxo de publicação
 
 1. Gestor ou administrador conecta a conta no domínio oficial do marketplace.
-2. Operador autorizado informa EAN e valor de venda.
-3. O conector consulta o catálogo e devolve somente os campos obrigatórios ausentes.
-4. O usuário confirma a publicação; o backend executa a chamada e grava o resultado idempotente.
+2. Operador autorizado seleciona a conta e informa o EAN.
+3. O conector consulta o catálogo, apresenta a ficha e solicita preço e campos obrigatórios ausentes.
+4. O usuário confirma em `Publicar`; o backend revalida os dados e registra o resultado.
 
 Outros marketplaces aparecem como integrações planejadas até que seus contratos e credenciais oficiais sejam configurados.
 

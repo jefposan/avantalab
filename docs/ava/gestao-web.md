@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.45.0.03 -->
+<!-- ava-version: 1.46.0.02 -->
+
+> Revisão 1.46.0.02: em Marketplaces, selecione a conta no card Novo anúncio,
+> informe o EAN e use Validar e preparar. A ficha do catálogo aparece no mesmo
+> card, com os campos complementares e preço antes de Publicar. A conta escolhida
+> é compartilhada com Anunciados; com várias contas, a seleção é obrigatória.
+> Validar e preparar apenas consulta: não cria anúncio.
 
 > Revisão 1.45.0.03: no anúncio User Products individual, sem vendas e com
 > vínculo confirmado pela API, o campo **Nome base do título** pode ser editado
