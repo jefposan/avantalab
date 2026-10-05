@@ -9,11 +9,14 @@ test('formulário comum permite salvar/cancelar, valida, protege descarte e usa 
   assert.match(form,/requestKey\.current/);
   assert.match(form,/document.getElementById.*?\.focus\(\)/);
 });
-test('atualização, filtros e troca de conta não descartam edição aberta', () => {
+test('atualização e filtros não descartam edição aberta; a conta é bloqueada no card Marketplace', () => {
   assert.match(page,/syncController.current \|\| acting \|\| expanded/);
   assert.match(page,/syncController.current\?\.abort\(\);\n    setExpanded/);
   assert.match(page,/<ListingEditor key=\{`\$\{accountId\}-\$\{item.id\}`\}/);
-  assert.match(page,/disabled=\{syncing \|\| acting \|\| !!expanded \|\| publicationBusy\}/);
+  assert.match(page,/disabled=\{!accountId \|\| account\?\.status !== 'connected' \|\| syncing \|\| acting \|\| !!expanded\}/);
+  assert.doesNotMatch(page, /MarketplaceAccountPicker/);
+  const client = read('app/marketplaces/MarketplacesClient.tsx');
+  assert.match(client,/disabled=\{accountSelectionLocked \|\| publicationBusy\}/);
 });
 test('os quatro campos editáveis antecedem o EAN na mesma lista expandida', () => {
   const row = page.split('{expanded === item.id && <tr')[1];

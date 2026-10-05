@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.17 -->
+<!-- ava-version: 1.48.0.18 -->
+
+> Revisão 1.48.0.18: o `×` de limpar EAN e a reorganização das contas conectadas
+> pertencem ao módulo Marketplaces da Gestão Web; a Gestão Mobile não é alterada.
 
 > Revisão 1.48.0.17: quando a conta não possui permissão para a cotação
 > detalhada do Mercado Livre, o **AvantaPreços** pode concluir a consulta pela

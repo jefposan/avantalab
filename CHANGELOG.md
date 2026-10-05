@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.18 - 2026-10-05
+- **EAN fácil de corrigir**: o campo de EAN/GTIN do novo anúncio passa a usar o campo oficial de busca, com `×` acessível para limpar o código, sem remover o leitor por código de barras.
+- **Contas no contexto correto**: as contas Mercado Livre conectadas agora aparecem como pílulas selecionáveis no rodapé do card **Marketplace**, com desconexão confirmada no mesmo lugar. **Anunciados** ficou restrito aos filtros e à gestão dos produtos da conta já selecionada.
+
 ## 1.48.0.17 - 2026-10-05
 - **Consulta compatível com a permissão disponível**: se o Mercado Livre negar somente o endpoint detalhado `sale_price` (`403`), o AvantaPreços usa a referência pública já retornada na ficha do catálogo — preço da buy box e, quando houver, sua faixa — para concluir o cálculo.
 - **Transparência preservada**: o resultado identifica que é uma estimativa pela referência pública. Sem preço público disponível, a negação `403` continua explícita; o limite `429` nunca é substituído por estimativa e permanece visível para nova tentativa posterior.

@@ -1,6 +1,6 @@
 'use client';
 
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, Ref } from 'react';
 
 type CampoBuscaProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'type'> & {
   value: string;
@@ -8,6 +8,7 @@ type CampoBuscaProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 
   className?: string;
   classNameControle?: string;
   rotuloLimpar?: string;
+  inputRef?: Ref<HTMLInputElement>;
 };
 
 /** Campo oficial para pesquisas textuais do AvantaLab. */
@@ -17,10 +18,11 @@ export default function CampoBusca({
   className = '',
   classNameControle = '',
   rotuloLimpar = 'Limpar pesquisa',
+  inputRef,
   ...inputProps
 }: CampoBuscaProps) {
   return <span className={`avanta-campo-busca ${classNameControle}`.trim()}>
-    <input {...inputProps} className={className} type="search" value={value} onChange={(event) => onChange(event.target.value)} />
+    <input {...inputProps} ref={inputRef} className={className} type="search" value={value} onChange={(event) => onChange(event.target.value)} />
     {value && <button type="button" className="avanta-campo-busca-limpar" onClick={() => onChange('')} aria-label={rotuloLimpar}>×</button>}
   </span>;
 }

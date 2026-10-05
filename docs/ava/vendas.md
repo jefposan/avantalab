@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.17 -->
+<!-- ava-version: 1.48.0.18 -->
+
+> Revisão 1.48.0.18: o refinamento de EAN e contas conectadas em Marketplaces
+> pertence à Gestão Web e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.17: o fallback de preço público do AvantaPreços pertence ao
 > PWA de marketplaces e não altera os fluxos do AvantaVendas.

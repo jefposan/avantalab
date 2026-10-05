@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.17 -->
+<!-- ava-version: 1.48.0.18 -->
+
+> Revisão 1.48.0.18: no card **Novo anúncio**, o EAN/GTIN tem `×` para limpar
+> o código sem remover o leitor. As contas conectadas ficam no rodapé do card
+> **Marketplace**, onde podem ser selecionadas ou desconectadas com confirmação;
+> a área **Anunciados** não repete mais esse controle.
 
 > Revisão 1.48.0.17: o **AvantaPreços** não falha quando somente a cotação
 > detalhada `sale_price` é negada (`403`) e a ficha já fornece preço público da

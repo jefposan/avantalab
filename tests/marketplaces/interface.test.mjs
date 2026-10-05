@@ -49,13 +49,15 @@ test('listing widths fit desktop and keep an accessible pencil visible when scro
   assert.match(read('app/projetos/components/Icon.tsx'), /edit:.*M16.5 3.5/);
 });
 
-test('selected account is enclosed with its action in a rounded, theme-aware border', () => {
-  assert.match(listings, /<div className=\{styles\.accountSummary\}><span>[\s\S]*?<button[\s\S]*?>Desconectar<\/button>\}<\/div>/);
-  assert.match(css, /\.accountSummary \{[^}]*padding: 14px 18px;[^}]*border: 1px solid color-mix\([^}]*border-radius: 16px;/);
-  assert.match(css, /\.accountSummary > span \{ min-width: 0; overflow-wrap: anywhere; \}/);
-  assert.match(css, /\.accountSummary > button \{ flex-shrink: 0; \}/);
-  assert.match(css, /\.dark \.accountSummary \{[^}]*border-color:[^}]*background:/);
-  assert.match(css, /@media \(max-width: 760px\)[^}]*\}\.accountSummary \{ flex-wrap: wrap;/);
+test('connected accounts stay in rounded controls at the bottom of the marketplace card', () => {
+  assert.match(client, /<div className=\{styles\.connectedAccounts\} aria-labelledby="connected-accounts-title">/);
+  assert.match(client, /<h3 id="connected-accounts-title">Contas conectadas<\/h3>/);
+  assert.match(client, /className=\{styles\.connectedAccountSelect\}/);
+  assert.match(client, /className=\{styles\.disconnectAccountButton\}/);
+  assert.doesNotMatch(listings, /Conta do Mercado Livre|accountSummary|Desconectar conta/);
+  assert.match(css, /\.connectedAccount \{[^}]*border: 1px solid color-mix\([^}]*border-radius: 14px;/);
+  assert.match(css, /\.connectedAccountSelected \{ border-color: var\(--brand\);/);
+  assert.match(css, /\.dark \.connectedAccount \{[^}]*background:/);
 });
 
 test('marketplaces and costs reuse the same company header and return action', () => {
@@ -107,11 +109,11 @@ test('static notices are removed without disguising validation or hiding importa
   assert.match(listings, /Frete vendedor estimado/);
 });
 
-test('both marketplace account fields use the same dropdown below the field', () => {
+test('the publication account field uses the standard dropdown and listings use the selected account from card one', () => {
   assert.match(client, /connected\.length === 1 \? connected\[0\]\.id : ''/);
   assert.match(client, /accountId=\{selectedAccount\}/);
   assert.match(newListing, /<MarketplaceAccountPicker label="Publicar na conta"/);
-  assert.match(listings, /<MarketplaceAccountPicker label="Conta do Mercado Livre"/);
+  assert.doesNotMatch(listings, /<MarketplaceAccountPicker label="Conta do Mercado Livre"/);
   assert.match(accountPicker, /<MarketplaceSelect/);
   assert.match(marketplaceSelect, /role="listbox"/);
   assert.match(marketplaceSelect, /role="option"/);
@@ -153,6 +155,10 @@ test('EAN reader button arms keyboard scanners and submits their Enter suffix', 
   assert.match(newListing, /event\.key === 'Enter' && event\.currentTarget\.value/);
   assert.match(newListing, /void prepare\(event\.currentTarget\.value\)/);
   assert.match(newListing, /requestAnimationFrame\(\(\) => \{ eanInputRef\.current\?\.focus\(\); eanInputRef\.current\?\.select\(\); \}\)/);
+  assert.match(newListing, /<CampoBusca inputRef=\{eanInputRef\} id="new-ean"/);
+  assert.match(newListing, /rotuloLimpar="Limpar EAN \/ GTIN"/);
+  assert.match(newListing, /function changeEan\(value: string\)/);
+  assert.match(css, /\.eanControl :global\(\.avanta-campo-busca-limpar\) \{ right: 46px;/);
   assert.match(css, /\.scannerButton \{[^}]*width: 44px; min-height: 44px;/);
   assert.match(css, /\.scannerButton\[aria-pressed="true"\] \{ color: #fff; background: var\(--brand\); \}/);
   assert.match(read('app/projetos/components/Icon.tsx'), /barcode:.*M4 5v14/);

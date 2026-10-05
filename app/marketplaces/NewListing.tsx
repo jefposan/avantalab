@@ -5,6 +5,7 @@ import { formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/format
 import { publicationErrors, type CatalogPreparation, type PublicationForm } from '@/app/modules/marketplaces/services/catalog-publication';
 import { Icon } from '@/app/projetos/components/Icon';
 import { marketplaceClientRequest, type MarketplaceAccount } from './Anunciados';
+import CampoBusca from '@/app/components/CampoBusca';
 import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 import MarketplaceSelect from './MarketplaceSelect';
 import styles from './marketplaces.module.css';
@@ -91,13 +92,18 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     requestAnimationFrame(() => { eanInputRef.current?.focus(); eanInputRef.current?.select(); });
   }
 
+  function changeEan(value: string) {
+    change('ean', value.replace(/\D/g, '').slice(0, 14));
+    setPrepared(null); setMatched(false); setPublishedId(''); setMessage('');
+  }
+
   return <div className={styles.newListing}>
     <div className={styles.form}>
       <MarketplaceAccountPicker label="Publicar na conta" value={accountId} options={connectedAccounts.map((account) => ({ id: account.id, name: account.seller_name || `Vendedor ${account.seller_reference}`, detail: `ID ${account.seller_reference}` }))} placeholder={connectedAccounts.length ? 'Selecione uma conta' : 'Nenhuma conta conectada'} disabled={accountSelectionLocked || preparing || publishing} onChange={onSelectAccount} />
       <div className={styles.eanField}>
         <label htmlFor="new-ean">EAN / GTIN</label>
         <div className={styles.eanControl}>
-          <input ref={eanInputRef} id="new-ean" inputMode="numeric" autoComplete="off" value={form.ean} aria-describedby={scannerArmed ? 'ean-scanner-status' : undefined} onChange={(event) => { change('ean', event.target.value.replace(/\D/g, '').slice(0, 14)); setPrepared(null); setMatched(false); setPublishedId(''); }} onKeyDown={(event) => { if (event.key === 'Escape') setScannerArmed(false); if (event.key === 'Enter' && event.currentTarget.value) { event.preventDefault(); setScannerArmed(false); void prepare(event.currentTarget.value); } }} placeholder="Ex.: 7899882306941" />
+          <CampoBusca inputRef={eanInputRef} id="new-ean" className={styles.eanInput} classNameControle={styles.eanSearchControl} inputMode="numeric" autoComplete="off" value={form.ean} aria-describedby={scannerArmed ? 'ean-scanner-status' : undefined} onChange={changeEan} onKeyDown={(event) => { if (event.key === 'Escape') setScannerArmed(false); if (event.key === 'Enter' && event.currentTarget.value) { event.preventDefault(); setScannerArmed(false); void prepare(event.currentTarget.value); } }} placeholder="Ex.: 7899882306941" rotuloLimpar="Limpar EAN / GTIN" />
           <button type="button" className={styles.scannerButton} aria-label={scannerArmed ? 'Desativar leitor de código de barras' : 'Ativar leitor de código de barras'} aria-pressed={scannerArmed} title={scannerArmed ? 'Leitor ativo — escaneie o código' : 'Ativar leitor de código de barras'} disabled={!canManage || !selectedAccount || preparing || publishing} onClick={toggleScanner}><Icon name="barcode" size={20} /></button>
         </div>
         <span id="ean-scanner-status" className={styles.srOnly} role="status">{scannerArmed ? 'Leitor ativado. Escaneie o código de barras agora.' : ''}</span>

@@ -10,14 +10,13 @@ import type { ListingAction, ListingSnapshot } from '@/app/modules/marketplaces/
 import styles from './marketplaces.module.css';
 import { shippingLabels } from './shipping-labels';
 import ListingEditor from './ListingEditor';
-import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 import MarketplaceSelect from './MarketplaceSelect';
 
 export type MarketplaceAccount = { id: string; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
 type Row = { snapshot: ListingSnapshot; status: string };
-type Confirmation = { action: ListingAction | 'disconnect'; id: string; name: string; connectionId: string };
+type Confirmation = { action: ListingAction; id: string; name: string; connectionId: string };
 const statusNames: Record<string, string> = { connected: 'Conectada', expired: 'Reconectar', attention: 'Requer atenção', connecting: 'Conectando', active: 'Ativo', paused: 'Pausado', closed: 'Encerrado', deleted: 'Excluído', under_review: 'Em revisão', inactive: 'Inativo' };
-const actionNames = { pause: 'Pausar', resume: 'Reativar', close: 'Encerrar', delete: 'Excluir', disconnect: 'Desconectar conta' };
+const actionNames = { pause: 'Pausar', resume: 'Reativar', close: 'Encerrar', delete: 'Excluir' };
 const dateLabel = (value: string | null) => value ? new Date(value).toLocaleString('pt-BR') : 'Ainda não sincronizado';
 const money = (value: number | null, currency = 'BRL') => value == null ? 'Indisponível' : currency === 'BRL' ? formatarMoeda(value) : `${currency} ${value.toFixed(2)}`;
 
@@ -35,11 +34,9 @@ export async function marketplaceClientRequest(path: string, body?: unknown, sig
   return payload;
 }
 
-export default function Anunciados({ companyId, dark, brand, accountId, onSelectAccount, onAccountsLoaded, onAccountSelectionLockedChange, publicationBusy, refreshKey = 0 }: { companyId: string; dark: boolean; brand: string; accountId: string; onSelectAccount: (id: string) => void; onAccountsLoaded: (accounts: MarketplaceAccount[]) => void; onAccountSelectionLockedChange: (locked: boolean) => void; publicationBusy: boolean; refreshKey?: number }) {
+export default function Anunciados({ companyId, dark, brand, accountId, onAccountsLoaded, onAccountSelectionLockedChange, refreshKey = 0 }: { companyId: string; dark: boolean; brand: string; accountId: string; onAccountsLoaded: (accounts: MarketplaceAccount[], canDisconnect: boolean) => void; onAccountSelectionLockedChange: (locked: boolean) => void; refreshKey?: number }) {
   const [accounts, setAccounts] = useState<MarketplaceAccount[]>([]);
-  const [canConnect, setCanConnect] = useState(false);
   const [canManage, setCanManage] = useState(false);
-  const [accountsLoaded, setAccountsLoaded] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
   const [rowsAccountId, setRowsAccountId] = useState('');
   const [query, setQuery] = useState('');
@@ -66,13 +63,13 @@ export default function Anunciados({ companyId, dark, brand, accountId, onSelect
   const loadAccounts = useCallback(async (signal?: AbortSignal) => {
     const data = await marketplaceClientRequest(`conexoes?empresaId=${encodeURIComponent(companyId)}`, undefined, signal);
     if (signal?.aborted) return;
-    setAccounts(data.accounts); setCanConnect(data.canConnect); setCanManage(data.canManage); setAccountsLoaded(true);
-    onAccountsLoaded(data.accounts);
+    setAccounts(data.accounts); setCanManage(data.canManage);
+    onAccountsLoaded(data.accounts, data.canConnect);
   }, [companyId, onAccountsLoaded]);
 
   useEffect(() => {
     const controller = new AbortController();
-    queueMicrotask(() => { if (!controller.signal.aborted) void loadAccounts(controller.signal).catch((failure) => { if (!controller.signal.aborted) { setAccountsLoaded(true); setError(failure.message); } }); });
+    queueMicrotask(() => { if (!controller.signal.aborted) void loadAccounts(controller.signal).catch((failure) => { if (!controller.signal.aborted) setError(failure.message); }); });
     return () => controller.abort();
   }, [loadAccounts]);
 
@@ -146,13 +143,8 @@ export default function Anunciados({ companyId, dark, brand, accountId, onSelect
     if (!confirmation || acting || confirmation.connectionId !== accountId) return;
     setActing(true); setError('');
     try {
-      if (confirmation.action === 'disconnect') {
-        await marketplaceClientRequest('conexoes', { empresaId: companyId, connectionId: accountId, confirmation: accountId }, undefined, 'DELETE');
-        await loadAccounts();
-      } else {
-        await marketplaceClientRequest('anunciados/acao', { empresaId: companyId, connectionId: accountId, id: confirmation.id, action: confirmation.action, confirmation: confirmation.id, requestKey: crypto.randomUUID() });
-        await loadListRef.current();
-      }
+      await marketplaceClientRequest('anunciados/acao', { empresaId: companyId, connectionId: accountId, id: confirmation.id, action: confirmation.action, confirmation: confirmation.id, requestKey: crypto.randomUUID() });
+      await loadListRef.current();
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Falha na alteração.'); }
     finally { setActing(false); setConfirmation(null); }
   }
@@ -160,11 +152,9 @@ export default function Anunciados({ companyId, dark, brand, accountId, onSelect
   return <section className={`${styles.panel} ${styles.listingsPanel}`} aria-labelledby="announced-title">
     <div className={styles.panelHeading}><div><h2 id="announced-title">Anunciados</h2></div><button className={styles.primary} type="button" disabled={!accountId || account?.status !== 'connected' || syncing || acting || !!expanded} onClick={() => void synchronize()}>{syncing ? 'Atualizando…' : 'Atualizar'}</button></div>
     <div className={styles.listingFilters}>
-      <MarketplaceAccountPicker label="Conta do Mercado Livre" value={accountId} options={accounts.map((item) => ({ id: item.id, name: item.seller_name || `Vendedor ${item.seller_reference}`, detail: `ID ${item.seller_reference} · ${statusNames[item.status] || item.status}` }))} placeholder={!accountsLoaded ? 'Carregando contas…' : !accounts.length ? 'Nenhuma conta conectada' : 'Selecione uma conta'} disabled={syncing || acting || !!expanded || publicationBusy} onChange={(id) => { setRows([]); setTotal(0); onSelectAccount(id); setPage(1); setExpanded(''); setSyncNotice(''); setError(''); }} />
       <label>Pesquisar<CampoBusca disabled={!!expanded} aria-label="Pesquisar por nome, código, EAN ou SKU" value={query} onChange={(value) => { if (expanded) return; setQuery(value); setPage(1); }} placeholder="Nome, código, EAN ou SKU" /></label>
       <MarketplaceSelect label="Situação" value={status} options={[{ value: '', label: 'Todas' }, ...['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].map((value) => ({ value, label: statusNames[value] }))]} placeholder="Todas" disabled={!!expanded} onChange={(value) => { setStatus(value); setPage(1); }} />
     </div>
-    {account && <div className={styles.accountSummary}><span>{account.seller_name || 'Conta do Mercado Livre'} · ID {account.seller_reference} · {statusNames[account.status] || account.status}<br />Última sincronização completa: {dateLabel(account.last_synced_at)}</span>{canConnect && <button type="button" disabled={acting || syncing || !!expanded} onClick={() => setConfirmation({ action: 'disconnect', id: account.id, name: account.seller_name || account.seller_reference, connectionId: accountId })}>Desconectar</button>}</div>}
     {error && <p role="alert" className={styles.connectionMessage}>{error}</p>}
     <p role="status" className={styles.help}>{syncNotice || (loading ? 'Carregando anúncios…' : `${total} anúncio(s) nesta seleção.`)}</p>
     <div ref={tableScroll} className={styles.tableScroll} tabIndex={0} aria-label="Tabela de anúncios, role horizontalmente para ver todas as colunas" aria-busy={loading || syncing}>
@@ -192,6 +182,6 @@ export default function Anunciados({ companyId, dark, brand, accountId, onSelect
         </tbody></table>
     </div>
     <nav className={styles.pagination} aria-label="Páginas dos anúncios"><button type="button" disabled={page <= 1 || loading || !!expanded} onClick={() => setPage(page - 1)}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil(total / 25))}</span><button type="button" disabled={page * 25 >= total || loading || !!expanded} onClick={() => setPage(page + 1)}>Próxima</button></nav>
-    <ModalConfirmacao aberto={!!confirmation} titulo={confirmation ? `${actionNames[confirmation.action]}?` : ''} mensagem={confirmation ? `${confirmation.name}. ${confirmation.action === 'close' ? 'Esta ação encerra definitivamente o anúncio e não permite reativação.' : confirmation.action === 'delete' ? 'O anúncio será marcado como excluído no Mercado Livre. O histórico local é preservado.' : confirmation.action === 'disconnect' ? 'O AvantaLab apagará os tokens desta conexão. Os anúncios no Mercado Livre não serão alterados.' : confirmation.action === 'pause' ? 'O anúncio deixará de vender até ser reativado.' : 'O anúncio voltará a vender se o Mercado Livre permitir.'}` : ''} textoConfirmar={confirmation ? actionNames[confirmation.action] : 'Confirmar'} carregando={acting} darkMode={dark} corPrimaria={brand} variante={confirmation?.action === 'resume' ? 'primaria' : 'destrutiva'} aoCancelar={() => { if (!acting) setConfirmation(null); }} aoConfirmar={executeAction} />
+    <ModalConfirmacao aberto={!!confirmation} titulo={confirmation ? `${actionNames[confirmation.action]}?` : ''} mensagem={confirmation ? `${confirmation.name}. ${confirmation.action === 'close' ? 'Esta ação encerra definitivamente o anúncio e não permite reativação.' : confirmation.action === 'delete' ? 'O anúncio será marcado como excluído no Mercado Livre. O histórico local é preservado.' : confirmation.action === 'pause' ? 'O anúncio deixará de vender até ser reativado.' : 'O anúncio voltará a vender se o Mercado Livre permitir.'}` : ''} textoConfirmar={confirmation ? actionNames[confirmation.action] : 'Confirmar'} carregando={acting} darkMode={dark} corPrimaria={brand} variante={confirmation?.action === 'resume' ? 'primaria' : 'destrutiva'} aoCancelar={() => { if (!acting) setConfirmation(null); }} aoConfirmar={executeAction} />
   </section>;
 }
