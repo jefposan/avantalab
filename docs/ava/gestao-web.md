@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.12 -->
+<!-- ava-version: 1.48.0.13 -->
+
+> Revisão 1.48.0.13: no cabeçalho de **Anúncios em marketplaces**, **Copiar
+> link do AvantaPreços** copia o endereço completo do PWA para envio ao usuário
+> no celular. A ação confirma **Link copiado** e não abre outra página.
 
 > Revisão 1.48.0.12: auditoria técnica corrigiu erros bloqueantes de qualidade
 > em componentes e integrações compartilhadas, sem alterar a operação orientada

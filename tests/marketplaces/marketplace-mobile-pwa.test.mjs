@@ -98,13 +98,16 @@ test('histórico é isolado por empresa e inacessível diretamente pelo navegado
   assert.match(migration, /grant select, insert, update, delete on public\.marketplace_price_consultations to service_role/);
 });
 
-test('manifesto, service worker e atalhos tornam o Marketplaces Mobile instalável e acessível pelo módulo', () => {
+test('manifesto, service worker e cópia do endereço tornam o AvantaPreços instalável e compartilhável pelo módulo', () => {
   assert.match(pwaPage, /manifest: '\/marketplaces\/consulta\/manifest\.webmanifest'/);
   assert.match(pwaPage, /marketplaces-mobile-icon-180\.png/);
   assert.match(pwaManifest, /display: 'standalone'/);
   assert.match(pwaManifest, /marketplaces-mobile-icon-512\.png/);
   assert.match(read('app/marketplaces/consulta/sw.js/route.ts'), /avantalab-marketplaces-mobile-/);
-  assert.match(read('app/marketplaces/MarketplacesClient.tsx'), /href="\/marketplaces\/consulta"/);
+  const moduleClient = read('app/marketplaces/MarketplacesClient.tsx');
+  assert.match(moduleClient, /new URL\('\/marketplaces\/consulta', window\.location\.origin\)\.toString\(\)/);
+  assert.match(moduleClient, /navigator\.clipboard\.writeText\(link\)/);
+  assert.doesNotMatch(moduleClient, /href="\/marketplaces\/consulta"/);
   assert.match(pwaManifest, /short_name: 'AvantaPreços'/);
 });
 

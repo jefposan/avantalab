@@ -66,6 +66,17 @@ test('marketplaces and costs reuse the same company header and return action', (
   assert.match(read('app/components/ModuloHeader.tsx'), /app\/custos\/custos.module.css/);
 });
 
+test('AvantaPreços header action copies the mobile link instead of opening it', () => {
+  assert.match(client, /new URL\('\/marketplaces\/consulta', window\.location\.origin\)\.toString\(\)/);
+  assert.match(client, /navigator\.clipboard\.writeText\(link\)/);
+  assert.match(client, /onClick=\{\(\) => void copyPriceLink\(\)\}/);
+  assert.match(client, /Copiar link do AvantaPreços/);
+  assert.match(client, /Link copiado/);
+  assert.match(client, /aria-live="polite"/);
+  assert.doesNotMatch(client, /<a className=\{styles\.marketplaceMobileLink\} href="\/marketplaces\/consulta"/);
+  assert.match(css, /\.marketplaceMobileLink \{[^}]*border: 0;[^}]*cursor: pointer;/);
+});
+
 test('marketplaces validates access on the official AvantaLab loading scene before rendering the module', () => {
   assert.match(client, /import TelaCarregandoAcesso from '@\/app\/components\/TelaCarregandoAcesso'/);
   assert.match(client, /const \[accessState, setAccessState\] = useState<'loading' \| 'ready' \| 'error'>\('loading'\)/);

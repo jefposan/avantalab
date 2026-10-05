@@ -37,6 +37,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [publicationBusy, setPublicationBusy] = useState(false);
   const [connectionNotice, setConnectionNotice] = useState(() => connectionStatus === 'error' ? connectionMessage || 'Não foi possível conectar a conta do Mercado Livre.' : '');
   const [priceUsersOpen, setPriceUsersOpen] = useState(false);
+  const [priceLinkStatus, setPriceLinkStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const returnHref = `/gestao?empresaId=${encodeURIComponent(companyId)}`;
   const selectedProvider = useMemo(() => providers.find((provider) => provider.id === marketplace)!, [marketplace]);
   const loadAccounts = useCallback((available: MarketplaceAccount[]) => {
@@ -74,8 +75,24 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     return () => controller.abort();
   }, [companyId]);
 
+  useEffect(() => {
+    if (priceLinkStatus !== 'copied') return;
+    const timer = window.setTimeout(() => setPriceLinkStatus('idle'), 2500);
+    return () => window.clearTimeout(timer);
+  }, [priceLinkStatus]);
+
   function voltar() {
     if (!solicitarRetornoAoModuloHospedeiro()) router.push(returnHref);
+  }
+
+  async function copyPriceLink() {
+    const link = new URL('/marketplaces/consulta', window.location.origin).toString();
+    try {
+      await navigator.clipboard.writeText(link);
+      setPriceLinkStatus('copied');
+    } catch {
+      setPriceLinkStatus('error');
+    }
   }
 
   async function connectMarketplace() {
@@ -120,7 +137,15 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     <div className={styles.content}>
     <section className={styles.hero} aria-labelledby="module-title">
       <div><p className={styles.eyebrow}>Conexão e gestão</p><h1 id="module-title">Anúncios em marketplaces</h1></div>
-      <div className={styles.heroActions}>{canManage && <button type="button" className={styles.settingsButton} onClick={() => setPriceUsersOpen(true)} aria-label="Gerenciar usuários do AvantaPreços" title="Usuários do AvantaPreços"><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21H9.6v-.1A1.7 1.7 0 0 0 8.5 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3V9.6h.1A1.7 1.7 0 0 0 4.6 8.5a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1A1.7 1.7 0 0 0 15.5 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.14.38.36.72.66 1 .3.27.68.4 1.08.4H21v4h-.1A1.7 1.7 0 0 0 19.4 15Z"/></svg></button>}<a className={styles.marketplaceMobileLink} href="/marketplaces/consulta" target="_blank" rel="noopener noreferrer">Abrir consulta de preços</a></div>
+      <div className={styles.heroActions}>
+        {canManage && <button type="button" className={styles.settingsButton} onClick={() => setPriceUsersOpen(true)} aria-label="Gerenciar usuários do AvantaPreços" title="Usuários do AvantaPreços"><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21H9.6v-.1A1.7 1.7 0 0 0 8.5 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3V9.6h.1A1.7 1.7 0 0 0 4.6 8.5a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1A1.7 1.7 0 0 0 15.5 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.14.38.36.72.66 1 .3.27.68.4 1.08.4H21v4h-.1A1.7 1.7 0 0 0 19.4 15Z"/></svg></button>}
+        <div className={styles.copyPriceLinkControl}>
+          <button type="button" className={`${styles.marketplaceMobileLink} ${priceLinkStatus === 'copied' ? styles.marketplaceMobileLinkCopied : ''}`} onClick={() => void copyPriceLink()} aria-live="polite">
+            {priceLinkStatus === 'copied' ? 'Link copiado' : 'Copiar link do AvantaPreços'}
+          </button>
+          {priceLinkStatus === 'error' && <small role="alert">Não foi possível copiar. Tente novamente.</small>}
+        </div>
+      </div>
     </section>
 
     <section className={styles.grid} aria-label="Configuração de publicação">

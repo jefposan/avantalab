@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.12 -->
+<!-- ava-version: 1.48.0.13 -->
+
+> Revisão 1.48.0.13: o botão para copiar o endereço do AvantaPreços pertence
+> ao módulo Marketplaces da Gestão Web e não altera os fluxos móveis.
 
 > Revisão 1.48.0.12: auditoria técnica estabilizou efeitos e contratos
 > compartilhados de backup, Marketplaces e Recebimentos, sem alterar os fluxos

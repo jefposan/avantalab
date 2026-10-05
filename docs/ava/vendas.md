@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.12 -->
+<!-- ava-version: 1.48.0.13 -->
+
+> Revisão 1.48.0.13: o compartilhamento do link do AvantaPreços no módulo
+> Marketplaces não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.12: auditoria técnica reforçou a tipagem do catálogo e do
 > processamento de notificações, sem alterar os fluxos orientados pela Ava no

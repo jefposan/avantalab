@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.13 - 2026-10-05
+- **Compartilhamento do AvantaPreços**: a ação no cabeçalho de Marketplaces deixa de abrir o PWA e passa a copiar o endereço completo da consulta para envio ao usuário no celular.
+- **Retorno imediato e acessível**: o botão confirma **Link copiado** após a ação e informa falhas sem redirecionar ou trocar a tela atual.
+
 ## 1.48.0.12 - 2026-10-05
 - **Auditoria global de estabilidade**: o lint completo do AvantaLab voltou a passar sem erros bloqueantes. Foram corrigidos 28 erros em autenticação de módulos, backup em nuvem, Dashboard, Custos, Marketplaces, Recebimentos, catálogo de Vendas e processamento de notificações.
 - **Estados assíncronos estabilizados**: sincronizações de propriedades e abertura de modais deixam de disparar atualizações síncronas durante efeitos React, reduzindo renderizações encadeadas e preservando cancelamento ao desmontar.
