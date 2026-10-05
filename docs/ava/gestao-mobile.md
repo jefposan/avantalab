@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.46.0.02 -->
+<!-- ava-version: 1.46.0.03 -->
+
+> Revisão 1.46.0.03: listas padronizadas no módulo Marketplaces da Gestão Web;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.46.0.02: consulta de EAN e seleção de conta em Marketplaces na
 > Gestão Web; sem impacto operacional na Gestão Mobile.

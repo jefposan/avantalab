@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.46.0.02 -->
+<!-- ava-version: 1.46.0.03 -->
+
+> Revisão 1.46.0.03: listas padronizadas no módulo Marketplaces da Gestão Web;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.46.0.02: consulta de EAN em Marketplaces na Gestão Web;
 > sem impacto operacional no AvantaVendas.

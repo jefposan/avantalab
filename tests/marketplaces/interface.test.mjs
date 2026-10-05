@@ -7,6 +7,7 @@ const client = read('app/marketplaces/MarketplacesClient.tsx');
 const listings = read('app/marketplaces/Anunciados.tsx');
 const newListing = read('app/marketplaces/NewListing.tsx');
 const accountPicker = read('app/marketplaces/MarketplaceAccountPicker.tsx');
+const marketplaceSelect = read('app/marketplaces/MarketplaceSelect.tsx');
 const css = read('app/marketplaces/marketplaces.module.css');
 
 test('Envio uses human-readable labels rather than raw provider codes', () => {
@@ -91,10 +92,28 @@ test('both marketplace account fields use the same dropdown below the field', ()
   assert.match(client, /accountId=\{selectedAccount\}/);
   assert.match(newListing, /<MarketplaceAccountPicker label="Publicar na conta"/);
   assert.match(listings, /<MarketplaceAccountPicker label="Conta do Mercado Livre"/);
-  assert.match(accountPicker, /role="listbox"/);
-  assert.match(accountPicker, /role="option"/);
-  assert.match(accountPicker, /event\.key === 'Escape'/);
-  assert.match(css, /\.accountPickerList \{ position: absolute; top: calc\(100% \+ 5px\);/);
+  assert.match(accountPicker, /<MarketplaceSelect/);
+  assert.match(marketplaceSelect, /role="listbox"/);
+  assert.match(marketplaceSelect, /role="option"/);
+  assert.match(marketplaceSelect, /event\.key === 'Escape'/);
+  assert.match(css, /\.selectControl \{ position: relative;/);
+  assert.match(css, /\.selectList \{ position: absolute; top: calc\(100% \+ 5px\);/);
+});
+
+test('every marketplace list opens in the same anchored system component', () => {
+  assert.doesNotMatch(newListing, /<select|<option/);
+  assert.doesNotMatch(listings, /<select|<option/);
+  assert.match(newListing, /<MarketplaceSelect id="new-productId"/);
+  assert.match(newListing, /label="Categoria"/);
+  assert.match(newListing, /label="Tipo de anúncio"/);
+  assert.match(newListing, /label="Forma de envio"/);
+  assert.match(newListing, /label="Condição"/);
+  assert.match(newListing, /label="Garantia"/);
+  assert.match(newListing, /key=\{attribute\.id\} id=\{`new-attribute:/);
+  assert.match(listings, /<MarketplaceSelect label="Situação"/);
+  assert.match(marketplaceSelect, /aria-haspopup="listbox"/);
+  assert.match(marketplaceSelect, /aria-expanded=\{visibleOpen\}/);
+  assert.match(css, /\.selectList \{[^}]*right: 0; left: 0;[^}]*max-height: 260px; overflow-y: auto;/);
 });
 
 test('new listing keeps account, EAN and prepare action on one desktop row', () => {

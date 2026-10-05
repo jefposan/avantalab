@@ -39,6 +39,8 @@ logs, preferências de navegador ou banco de dados sem criptografia.
 - Cron e webhook não foram ativados; o cache não se atualiza com o módulo fechado.
 - Outras contas podem ser vinculadas por OAuth e escolhidas no seletor; a
   validação ao vivo usou somente a conta que já estava conectada.
+- Todas as listas do módulo usam o seletor AvantaLab ancorado imediatamente
+  abaixo do campo, com teclado, foco visível, rolagem e adaptação a mobile.
 
 ## Fluxo de publicação
 

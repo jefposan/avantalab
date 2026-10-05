@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.46.0.02 -->
+<!-- ava-version: 1.46.0.03 -->
+
+> Revisão 1.46.0.03: todas as listas de Marketplaces abrem imediatamente abaixo
+> do respectivo campo. O padrão vale para conta, produto, categoria, tipo de
+> anúncio, envio, condição, garantia, atributos e situação.
 
 > Revisão 1.46.0.02: em Marketplaces, selecione a conta no card Novo anúncio,
 > informe o EAN e use Validar e preparar. A ficha do catálogo aparece no mesmo

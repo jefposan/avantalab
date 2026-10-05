@@ -11,6 +11,7 @@ import styles from './marketplaces.module.css';
 import { shippingLabels } from './shipping-labels';
 import ListingEditor from './ListingEditor';
 import MarketplaceAccountPicker from './MarketplaceAccountPicker';
+import MarketplaceSelect from './MarketplaceSelect';
 
 export type MarketplaceAccount = { id: string; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
 type Row = { snapshot: ListingSnapshot; status: string };
@@ -161,7 +162,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onSelect
     <div className={styles.listingFilters}>
       <MarketplaceAccountPicker label="Conta do Mercado Livre" value={accountId} options={accounts.map((item) => ({ id: item.id, name: item.seller_name || `Vendedor ${item.seller_reference}`, detail: `ID ${item.seller_reference} · ${statusNames[item.status] || item.status}` }))} placeholder={!accountsLoaded ? 'Carregando contas…' : !accounts.length ? 'Nenhuma conta conectada' : 'Selecione uma conta'} disabled={syncing || acting || !!expanded || publicationBusy} onChange={(id) => { setRows([]); setTotal(0); onSelectAccount(id); setPage(1); setExpanded(''); setSyncNotice(''); setError(''); }} />
       <label>Pesquisar<CampoBusca disabled={!!expanded} aria-label="Pesquisar por nome, código, EAN ou SKU" value={query} onChange={(value) => { if (expanded) return; setQuery(value); setPage(1); }} placeholder="Nome, código, EAN ou SKU" /></label>
-      <label>Situação<select value={status} disabled={!!expanded} onChange={(event) => { setStatus(event.target.value); setPage(1); }}><option value="">Todas</option>{['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].map((value) => <option key={value} value={value}>{statusNames[value]}</option>)}</select></label>
+      <MarketplaceSelect label="Situação" value={status} options={[{ value: '', label: 'Todas' }, ...['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].map((value) => ({ value, label: statusNames[value] }))]} placeholder="Todas" disabled={!!expanded} onChange={(value) => { setStatus(value); setPage(1); }} />
     </div>
     {account && <div className={styles.accountSummary}><span>{account.seller_name || 'Conta do Mercado Livre'} · ID {account.seller_reference} · {statusNames[account.status] || account.status}<br />Última sincronização completa: {dateLabel(account.last_synced_at)}</span>{canConnect && <button type="button" disabled={acting || syncing || !!expanded} onClick={() => setConfirmation({ action: 'disconnect', id: account.id, name: account.seller_name || account.seller_reference, connectionId: accountId })}>Desconectar</button>}</div>}
     {error && <p role="alert" className={styles.connectionMessage}>{error}</p>}

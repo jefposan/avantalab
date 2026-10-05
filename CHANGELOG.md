@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.46.0.03 - 2026-10-05
+- **Listas de Marketplaces**: conta, produto, categoria, tipo de anúncio, envio, condição, garantia, atributos e situação agora usam o mesmo seletor AvantaLab, aberto imediatamente abaixo do campo em vez do menu nativo do navegador.
+- **Acessibilidade e responsividade**: navegação por teclado, foco visível, fechamento por Escape ou clique externo, rolagem interna, temas claro/escuro e área de toque mobile preservados.
+
 ## 1.46.0.02 - 2026-10-05
 - **Novo anúncio por EAN**: consulta o catálogo do Mercado Livre após selecionar a conta, mostra ficha e campos complementares no card 2 e só publica por ação explícita do usuário. O EAN não localizado é informado sem criar anúncio.
 - **Contas**: seletor compartilhado com Anunciados; seleção obrigatória quando houver mais de uma conta conectada. Formulário alinhado na mesma linha em telas largas e adaptado a mobile.
