@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.46.0.03 -->
+<!-- ava-version: 1.46.0.04 -->
+
+> Revisão 1.46.0.04: botão para leitor de EAN adicionado ao módulo Marketplaces
+> da Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.46.0.03: listas padronizadas no módulo Marketplaces da Gestão Web;
 > sem impacto operacional na Gestão Mobile.

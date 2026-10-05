@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.46.0.03 -->
+<!-- ava-version: 1.46.0.04 -->
+
+> Revisão 1.46.0.04: no card **Novo anúncio**, o botão com código de barras no
+> campo EAN ativa a captura de um leitor USB/Bluetooth que opere como teclado.
+> Escaneie o produto; o Enter enviado pelo leitor executa **Validar e preparar**.
+> Escape ou um novo clique no botão encerra o modo leitor.
 
 > Revisão 1.46.0.03: todas as listas de Marketplaces abrem imediatamente abaixo
 > do respectivo campo. O padrão vale para conta, produto, categoria, tipo de

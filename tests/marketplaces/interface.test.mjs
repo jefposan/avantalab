@@ -117,7 +117,21 @@ test('every marketplace list opens in the same anchored system component', () =>
 });
 
 test('new listing keeps account, EAN and prepare action on one desktop row', () => {
-  assert.match(newListing, /<div className=\{styles\.form\}>\s*<MarketplaceAccountPicker[\s\S]*?<label htmlFor="new-ean">[\s\S]*?<button type="button" className=\{styles\.primary\}/);
+  assert.match(newListing, /<div className=\{styles\.form\}>\s*<MarketplaceAccountPicker[\s\S]*?<div className=\{styles\.eanField\}>[\s\S]*?<button type="button" className=\{styles\.primary\}/);
   assert.match(css, /\.newListing \.form \{ grid-template-columns: minmax\(0, 1\.15fr\) minmax\(0, \.85fr\) auto; align-items: end;/);
   assert.match(css, /@media \(max-width: 760px\) \{ \.newListing \.form, \.catalogFields, \.catalogAttributes \{ grid-template-columns: 1fr;/);
+});
+
+test('EAN reader button arms keyboard scanners and submits their Enter suffix', () => {
+  assert.match(newListing, /const eanInputRef = useRef<HTMLInputElement>\(null\)/);
+  assert.match(newListing, /const \[scannerArmed, setScannerArmed\] = useState\(false\)/);
+  assert.match(newListing, /aria-label=\{scannerArmed \? 'Desativar leitor de código de barras' : 'Ativar leitor de código de barras'\}/);
+  assert.match(newListing, /aria-pressed=\{scannerArmed\}/);
+  assert.match(newListing, /<Icon name="barcode" size=\{20\}/);
+  assert.match(newListing, /event\.key === 'Enter' && event\.currentTarget\.value/);
+  assert.match(newListing, /void prepare\(event\.currentTarget\.value\)/);
+  assert.match(newListing, /requestAnimationFrame\(\(\) => \{ eanInputRef\.current\?\.focus\(\); eanInputRef\.current\?\.select\(\); \}\)/);
+  assert.match(css, /\.scannerButton \{[^}]*width: 44px; min-height: 44px;/);
+  assert.match(css, /\.scannerButton\[aria-pressed="true"\] \{ color: #fff; background: var\(--brand\); \}/);
+  assert.match(read('app/projetos/components/Icon.tsx'), /barcode:.*M4 5v14/);
 });

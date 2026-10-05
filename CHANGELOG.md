@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.46.0.04 - 2026-10-05
+- **Leitor de código de barras**: o campo EAN do Novo anúncio ganhou um botão acessível para armar leitores USB/Bluetooth conectados ao computador. O foco e a seleção do campo são preparados para a captura e o Enter enviado pelo leitor executa Validar e preparar.
+- **Operação preservada**: digitação manual e botão de validação continuam disponíveis; o modo leitor pode ser cancelado por Escape ou pelo próprio botão e não exige acesso direto ao hardware no navegador.
+
 ## 1.46.0.03 - 2026-10-05
 - **Listas de Marketplaces**: conta, produto, categoria, tipo de anúncio, envio, condição, garantia, atributos e situação agora usam o mesmo seletor AvantaLab, aberto imediatamente abaixo do campo em vez do menu nativo do navegador.
 - **Acessibilidade e responsividade**: navegação por teclado, foco visível, fechamento por Escape ou clique externo, rolagem interna, temas claro/escuro e área de toque mobile preservados.

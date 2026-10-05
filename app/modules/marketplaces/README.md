@@ -46,6 +46,8 @@ logs, preferências de navegador ou banco de dados sem criptografia.
 
 1. Gestor ou administrador conecta a conta no domínio oficial do marketplace.
 2. Operador autorizado seleciona a conta e informa o EAN.
+   O botão de código de barras arma leitores USB/Bluetooth em modo teclado;
+   o sufixo Enter enviado pelo equipamento inicia a validação.
 3. O conector consulta o catálogo, apresenta a ficha e solicita preço e campos obrigatórios ausentes.
 4. O usuário confirma em `Publicar`; o backend revalida os dados e registra o resultado.
 
