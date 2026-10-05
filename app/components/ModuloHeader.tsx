@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties, type ReactNode, type SyntheticEvent } from 'react';
+import { useCallback, useState, type CSSProperties, type ReactNode, type SyntheticEvent } from 'react';
 import { Icon } from '@/app/projetos/components/Icon';
 import styles from '@/app/custos/custos.module.css';
 
@@ -114,17 +114,26 @@ function cropNeutralLogoMargins(image: HTMLImageElement) {
 export function AdaptiveModuleLogo({ src, alt, className = styles.moduleLogo, frameClassName }: { src: string; alt: string; className?: string; frameClassName?: string }) {
   const [displaySrc, setDisplaySrc] = useState(src);
 
-  function handleLoad(event: SyntheticEvent<HTMLImageElement>) {
+  const processImage = useCallback((image: HTMLImageElement) => {
     if (displaySrc !== src) return;
     try {
-      const cropped = cropNeutralLogoMargins(event.currentTarget);
+      const cropped = cropNeutralLogoMargins(image);
       if (cropped) setDisplaySrc(cropped);
     } catch {
       // Imagens externas sem CORS continuam visíveis com o ajuste responsivo padrão.
     }
+  }, [displaySrc, src]);
+
+  const assignImage = useCallback((image: HTMLImageElement | null) => {
+    if (!image?.complete || displaySrc !== src) return;
+    requestAnimationFrame(() => processImage(image));
+  }, [displaySrc, processImage, src]);
+
+  function handleLoad(event: SyntheticEvent<HTMLImageElement>) {
+    processImage(event.currentTarget);
   }
 
-  const logo = <img src={displaySrc} alt={alt} className={className} onLoad={handleLoad} />;
+  const logo = <img ref={assignImage} src={displaySrc} alt={alt} className={className} onLoad={handleLoad} />;
   return frameClassName ? <div className={frameClassName}>{logo}</div> : logo;
 }
 

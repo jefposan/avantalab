@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.15 - 2026-10-05
+- **Logo inteiro no cabeçalho**: a altura da marca passa a ser explícita e menor que a área útil do topo, mantendo folga acima e abaixo. A largura é sempre automática e preserva a proporção original.
+- **Sem recorte acidental**: removido o `overflow` que ocultava parte de imagens altas; logos já carregados antes da hidratação também recebem o ajuste automático de margens sem cortar a marca.
+
 ## 1.48.0.14 - 2026-10-05
 - **Logotipos proporcionais nos módulos**: o cabeçalho compartilhado identifica margens transparentes ou neutras excessivas nos arquivos das empresas e usa somente a área visual da marca, sem modificar a imagem original.
 - **Limites responsivos protegidos**: a marca recebe uma área útil maior no desktop e no celular, mas continua contida entre as ações do cabeçalho e dentro da altura disponível. Imagens externas que não permitem análise mantêm o encaixe proporcional seguro.

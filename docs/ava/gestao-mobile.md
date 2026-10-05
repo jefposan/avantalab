@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.14 -->
+<!-- ava-version: 1.48.0.15 -->
+
+> Revisão 1.48.0.15: a correção de proporção e altura dos logotipos pertence
+> aos módulos da Gestão Web e não altera a operação da Gestão Mobile.
 
 > Revisão 1.48.0.14: o ajuste proporcional dos logotipos pertence aos
 > cabeçalhos compartilhados dos módulos da Gestão Web e não altera os fluxos

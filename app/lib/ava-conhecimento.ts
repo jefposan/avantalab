@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.15: logos dos módulos usam altura contida, folga
+// vertical e largura proporcional, sem recorte da marca.
 // Revisado na versão 1.48.0.14: cabeçalhos compartilhados ampliam a área visual
 // dos logotipos sem ultrapassar a altura ou as ações do módulo.
 // Revisado na versão 1.48.0.13: Marketplaces copia o link completo do

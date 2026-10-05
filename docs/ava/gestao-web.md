@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.14 -->
+<!-- ava-version: 1.48.0.15 -->
+
+> Revisão 1.48.0.15: os logotipos dos cabeçalhos usam altura contida com folga
+> superior e inferior e largura proporcional. Nenhuma parte da marca pode ser
+> ocultada pela área do cabeçalho.
 
 > Revisão 1.48.0.14: os cabeçalhos compartilhados dos módulos ajustam
 > automaticamente a área útil do logotipo da empresa. Margens vazias do arquivo

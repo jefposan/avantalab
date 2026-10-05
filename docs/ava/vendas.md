@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.14 -->
+<!-- ava-version: 1.48.0.15 -->
+
+> Revisão 1.48.0.15: o cabeçalho do módulo Vendas preserva o logotipo inteiro,
+> com altura contida e largura proporcional; o fluxo operacional não mudou.
 
 > Revisão 1.48.0.14: o ajuste proporcional dos logotipos nos módulos da
 > Gestão Web não altera os fluxos do AvantaVendas.
