@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.44.0.56 - 2026-10-05
+- **Lista de anúncios ativada**: migração aditiva aplicada ao Supabase AvantaLab
+  com RLS e acesso exclusivo do backend. Conta existente preservada; consulta
+  real confirmou sete anúncios e nenhuma ação de alteração foi executada.
+- **Gestão por conta**: Anunciados oferece busca, situação e detalhes por Editar.
+  Preço, estoque, vendidos e estimativas disponíveis vêm da API. Frete não
+  obtido permanece Indisponível, nunca zero. A atualização automática ocorre
+  enquanto a página está visível; cron e webhook não foram ativados.
+- **Ava e recuperação**: orientação atualizada para a consulta já operacional,
+  mantendo explícito que publicação por EAN não foi implementada.
+
 ## 1.44.0.55 - 2026-10-05
 - **Marketplaces integrado à main**: republicação do visual aprovado sobre a
   versão atual, preservando as alterações de Vendas, catálogos e importação Excel.

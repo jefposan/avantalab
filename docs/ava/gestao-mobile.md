@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.55 -->
+<!-- ava-version: 1.44.0.56 -->
+
+> Revisão 1.44.0.56: lista de anúncios ativada na Gestão Web;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.44.0.55: republicação visual de Marketplaces na Gestão Web;
 > sem impacto operacional na Gestão Mobile.

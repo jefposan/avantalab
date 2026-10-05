@@ -1,8 +1,18 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.55 -->
+<!-- ava-version: 1.44.0.56 -->
 
-> Revisão 1.44.0.55: Marketplaces usa cabeçalho com Início e marca do perfil,
+> Revisão 1.44.0.56: a lista **Anunciados** foi ativada no ambiente AvantaLab
+> após aplicação da migração. Selecione a conta, pesquise e filtre a situação;
+> **Atualizar** consulta o Mercado Livre. A consulta automática roda a cada
+> minuto com a página visível, não em segundo plano com o módulo fechado.
+> **Editar** abre detalhes e ações permitidas pelo perfil/situação, sempre
+> com confirmação antes de alterar. Encerrar é definitivo; Excluir exige
+> anúncio encerrado. Indisponível não significa custo zero; taxa/frete são
+> estimativas. Validar e preparar não publica por EAN. A Ava só confirma
+> sincronização quando a tela indicar sua conclusão, não pelo status Conectada.
+
+> Histórico da revisão 1.44.0.55: Marketplaces usa cabeçalho com Início e marca do perfil,
 > cards alinhados e interface enxuta. Anunciados possui conta, busca e situação;
 > sua ativação depende da migração de gestão. Enquanto pendente, a consulta
 > informa indisponibilidade. Não afirmar que dados foram sincronizados ou que
