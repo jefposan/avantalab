@@ -137,3 +137,12 @@ test('EAN reader button arms keyboard scanners and submits their Enter suffix', 
   assert.match(css, /\.scannerButton\[aria-pressed="true"\] \{ color: #fff; background: var\(--brand\); \}/);
   assert.match(read('app/projetos/components/Icon.tsx'), /barcode:.*M4 5v14/);
 });
+
+test('category preparation preserves the located product and distinguishes blockers from warnings', () => {
+  assert.match(newListing, /if \(!productId && !categoryId\) setPrepared\(null\)/);
+  assert.match(newListing, /!prepared\.blockingIssues\?\.length/);
+  assert.match(newListing, /prepared\.blockingIssues\.map/);
+  assert.match(newListing, /prepared\.warnings\.map/);
+  assert.match(newListing, /id="catalog-errors"[^>]*tabIndex=\{-1\}/);
+  assert.match(css, /\.catalogWarnings \{ color: #1e4f78; background: #eff6ff;/);
+});

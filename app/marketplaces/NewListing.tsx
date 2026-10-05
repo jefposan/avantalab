@@ -38,9 +38,16 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       const response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: accountId, ean, productId, categoryId }) as { result: CatalogPreparation };
       if (!activeRef.current) return;
       setPrepared(response.result);
-      setForm((current) => ({ ...current, ean: response.result.ean, productId: response.result.product?.id || '', categoryId: response.result.categoryId || '', description: current.description || response.result.product?.description || '', attributes: current.attributes || {} }));
+      setForm((current) => {
+        const sameProduct = !!response.result.product && current.productId === response.result.product.id;
+        const sameCategory = sameProduct && current.categoryId === (response.result.categoryId || '');
+        const allowed = <T extends { id: string }>(options: T[] | undefined, value: string) => options?.some((option) => option.id === value) ? value : '';
+        return { ...current, ean: response.result.ean, productId: response.result.product?.id || '', categoryId: response.result.categoryId || '',
+          listingType: allowed(response.result.listingTypes, current.listingType), shippingMode: allowed(response.result.shippingModes, current.shippingMode), condition: allowed(response.result.conditions, current.condition),
+          description: sameProduct ? current.description : response.result.product?.description || '', attributes: sameCategory ? current.attributes || {} : {} };
+      });
       setRequestKey(crypto.randomUUID());
-    } catch (failure) { if (activeRef.current) { setPrepared(null); setMessage(failure instanceof Error ? failure.message : 'Não foi possível consultar o EAN.'); } }
+    } catch (failure) { if (activeRef.current) { if (!productId && !categoryId) setPrepared(null); setMessage(failure instanceof Error ? failure.message : 'Não foi possível consultar o EAN.'); } }
     finally { setPreparing(false); }
   }
 
@@ -50,14 +57,14 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     const validation = publicationErrors(current, prepared);
     if (!matched) validation.match = 'Confirme que a ficha corresponde exatamente ao produto.';
     setErrors(validation); setMessage('');
-    if (Object.keys(validation).length) { document.getElementById(Object.keys(validation)[0] === 'match' ? 'catalog-match' : `new-${Object.keys(validation)[0]}`)?.focus(); return; }
+    if (Object.keys(validation).length) { focusFirstError(validation); return; }
     setPublishing(true);
     try {
       const result = await marketplaceClientRequest('publicar', { empresaId: companyId, connectionId: accountId, requestKey, form: current }) as { status: string; listing: { id: string; title: string } };
       setPublishedId(result.listing.id); setMessage(`Anúncio ${result.listing.id} publicado e adicionado à lista.`); onPublished();
     } catch (failure) {
       const detail = failure as Error & { fields?: Record<string, string> };
-      if (detail.fields) setErrors(detail.fields);
+      if (detail.fields) { setErrors(detail.fields); requestAnimationFrame(() => focusFirstError(detail.fields || {})); }
       setMessage(detail.message || 'Não foi possível confirmar a publicação. Confira a lista antes de tentar novamente.');
       // Esta chave não é substituída automaticamente: uma resposta perdida pode ter criado o anúncio.
     } finally { setPublishing(false); }
@@ -66,8 +73,15 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
   const product = prepared?.product;
   const connectedAccounts = accounts.filter((account) => account.status === 'connected');
   const selectedAccount = connectedAccounts.find((account) => account.id === accountId);
-  const ready = !!product && !!prepared?.categoryId && !!prepared.listingTypes?.length && !!prepared.shippingModes?.length && !!prepared.conditions?.length;
+  const ready = !!product && !!prepared?.categoryId && !prepared.blockingIssues?.length && !!prepared.listingTypes?.length && !!prepared.shippingModes?.length && !!prepared.conditions?.length;
   const change = <K extends keyof PublicationForm>(key: K, value: PublicationForm[K]) => { setForm((current) => ({ ...current, [key]: value })); setErrors((current) => ({ ...current, [key]: '' })); };
+
+  function focusFirstError(currentErrors: Record<string, string>) {
+    const first = Object.keys(currentErrors).find((key) => currentErrors[key]);
+    if (!first) return;
+    const target = first === 'match' ? 'catalog-match' : first === 'attributes' ? 'catalog-errors' : `new-${first}`;
+    (document.getElementById(target) || document.getElementById('catalog-errors'))?.focus();
+  }
 
   function toggleScanner() {
     if (scannerArmed) { setScannerArmed(false); return; }
@@ -100,6 +114,8 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       {product.pictures.length > 0 && <div className={styles.catalogPictures}>{product.pictures.slice(0, 5).map((url) => <img key={url} src={url} alt={`Imagem do catálogo de ${product.name}`} />)}</div>}
       <details><summary>Características localizadas ({product.attributes.length})</summary><dl className={styles.catalogAttributes}>{product.attributes.map((attribute) => <div key={attribute.id}><dt>{attribute.name}</dt><dd>{attribute.value}</dd></div>)}</dl></details>
       {prepared.notice && <p className={styles.catalogNotice}>{prepared.notice}</p>}
+      {!!prepared.blockingIssues?.length && <ul className={styles.catalogErrors} role="alert">{prepared.blockingIssues.map((issue) => <li key={issue.code}>{issue.message}</li>)}</ul>}
+      {!!prepared.warnings?.length && <ul className={styles.catalogWarnings}>{prepared.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
 
       <div className={styles.catalogFields}>
         <MarketplaceSelect id="new-categoryId" className={styles.catalogField} label="Categoria" value={form.categoryId} options={(prepared.categories || []).map((category) => ({ value: category.id, label: category.name, detail: category.id }))} placeholder="Selecione" error={errors.categoryId} onChange={(value) => { change('categoryId', value); void prepare(prepared.ean, product.id, value); }} />
@@ -113,7 +129,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
         {prepared.requiredAttributes?.map((attribute) => attribute.values.length ? <MarketplaceSelect key={attribute.id} id={`new-attribute:${attribute.id}`} className={styles.catalogField} label={attribute.name} value={form.attributes?.[attribute.id] || ''} options={attribute.values.map((option) => ({ value: option.id, label: option.name }))} placeholder="Selecione" error={errors[`attribute:${attribute.id}`]} onChange={(value) => change('attributes', { ...form.attributes, [attribute.id]: value })} /> : <label key={attribute.id} className={styles.catalogField} htmlFor={`new-attribute:${attribute.id}`}>{attribute.name}<input id={`new-attribute:${attribute.id}`} value={form.attributes?.[attribute.id] || ''} onChange={(event) => change('attributes', { ...form.attributes, [attribute.id]: event.target.value })} />{errors[`attribute:${attribute.id}`] && <small role="alert">{errors[`attribute:${attribute.id}`]}</small>}</label>)}
         <label className={`${styles.catalogField} ${styles.catalogWide}`} htmlFor="new-description">Descrição<textarea id="new-description" rows={5} value={form.description || ''} onChange={(event) => change('description', event.target.value)} placeholder="Informações adicionais do produto" />{errors.description && <small role="alert">{errors.description}</small>}</label>
       </div>
-      {Object.values(errors).filter(Boolean).length > 0 && <ul className={styles.catalogErrors} role="alert">{[...new Set(Object.values(errors).filter(Boolean))].map((error) => <li key={error}>{error}</li>)}</ul>}
+      {Object.values(errors).filter(Boolean).length > 0 && <ul id="catalog-errors" className={styles.catalogErrors} role="alert" tabIndex={-1}>{[...new Set(Object.values(errors).filter(Boolean))].map((error) => <li key={error}>{error}</li>)}</ul>}
       <label className={styles.catalogMatch}><input id="catalog-match" type="checkbox" checked={matched} onChange={(event) => { setMatched(event.target.checked); setErrors((current) => ({ ...current, match: '' })); }} />Confirmo que a ficha do catálogo corresponde exatamente ao produto que vou vender.</label>{errors.match && <p className={styles.connectionMessage} role="alert">{errors.match}</p>}
       <button type="button" className={styles.primary} disabled={!selectedAccount || !ready || !matched || publishing || preparing || !!publishedId} onClick={() => void publish()}>{publishing ? 'Publicando…' : publishedId ? 'Publicado' : 'Publicar'}</button>
       {!ready && <p className={styles.help}>A publicação só fica disponível após confirmar categoria e opções de venda permitidas pelo Mercado Livre.</p>}

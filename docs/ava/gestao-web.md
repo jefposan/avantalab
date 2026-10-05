@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.46.0.05 -->
+<!-- ava-version: 1.46.0.06 -->
+
+> Revisão 1.46.0.06: ao escolher a categoria no card **Novo anúncio**, a ficha
+> localizada permanece visível mesmo se o Mercado Livre negar uma consulta
+> complementar de envio. Pendências bloqueantes e avisos aparecem separadamente.
+> O formulário valida categoria, preço, estoque, tipo de anúncio, envio,
+> condição, garantia, atributos e descrição; **Publicar** executa primeiro a
+> validação oficial do Mercado Livre e só cria o anúncio após a confirmação.
+> Uma negação de recurso não significa que a conta foi desconectada.
 
 > Revisão 1.46.0.05: a ação do card **Novo anúncio** se chama
 > **Pesquisar**. Ela consulta o produto pelo EAN e exibe os dados encontrados

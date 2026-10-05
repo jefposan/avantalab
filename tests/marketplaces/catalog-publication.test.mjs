@@ -21,3 +21,18 @@ test('publicação só libera preço, estoque, categoria, opções e atributos p
   const invalid = publicationErrors({ ...form, price: 0, stock: -1, shippingMode: 'custom', condition: 'used', attributes: { BRAND: 'inventado' } }, preparation);
   assert.ok(invalid.price && invalid.stock && invalid.shippingMode && invalid.condition && invalid['attribute:BRAND']);
 });
+
+test('limites da categoria e pendências da preparação bloqueiam a publicação', () => {
+  const constrained = { ...preparation, constraints: { minimumPrice: 100, maximumPrice: 200, maxDescriptionLength: 10 } };
+  assert.ok(publicationErrors({ ...form, price: 99, description: '12345678901' }, constrained).price);
+  assert.ok(publicationErrors({ ...form, price: 201 }, constrained).price);
+  assert.ok(publicationErrors({ ...form, stock: 0 }, constrained).stock);
+  assert.ok(publicationErrors(form, { ...preparation, blockingIssues: [{ code: 'permission', message: 'Permissão pendente' }] }).preparation);
+});
+
+test('produto recondicionado exige garantia mínima de noventa dias', () => {
+  const refurbished = { ...preparation, conditions: [...preparation.conditions, { id: 'refurbished', name: 'Recondicionado' }] };
+  assert.ok(publicationErrors({ ...form, condition: 'refurbished', warrantyType: 'none' }, refurbished).warrantyType);
+  assert.ok(publicationErrors({ ...form, condition: 'refurbished', warrantyType: 'seller', warrantyTime: '2 meses' }, refurbished).warrantyTime);
+  assert.equal(publicationErrors({ ...form, condition: 'refurbished', warrantyType: 'seller', warrantyTime: '3 meses' }, refurbished).warrantyTime, undefined);
+});

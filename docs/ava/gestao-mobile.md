@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.46.0.05 -->
+<!-- ava-version: 1.46.0.06 -->
+
+> Revisão 1.46.0.06: fluxo de preparação e publicação por EAN corrigido no
+> módulo Marketplaces da Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.46.0.05: largura do EAN e nome da ação de pesquisa ajustados
 > no módulo Marketplaces da Gestão Web; sem impacto operacional na Gestão Mobile.

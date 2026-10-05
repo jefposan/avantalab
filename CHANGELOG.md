@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.46.0.06 - 2026-10-05
+- **Publicação por EAN corrigida**: selecionar a categoria não apaga mais a ficha quando o Mercado Livre restringe uma consulta complementar. Os modos de envio vêm da categoria e são refinados pela conta quando disponíveis; uma restrição logística vira aviso e a escolha continua sujeita à validação oficial antes da criação.
+- **Fluxo completo auditado**: categoria, limites de preço e descrição, estoque, tipo de anúncio, envio, condição, garantia e atributos obrigatórios são validados no cliente e novamente no servidor. Recondicionados exigem garantia mínima de 90 dias e nenhum anúncio é criado enquanto houver pendência bloqueante.
+- **Validação oficial reparada**: o sucesso `204 No Content` de `/items/validate` agora é reconhecido corretamente. Erros do provedor são associados aos campos correspondentes e a publicação só segue para `/items` depois dessa confirmação.
+- **Resiliência e testes**: a preparação usa resultados independentes, preserva o produto localizado e diferencia falta de permissão de perda da conexão. Testes cobrem o bloqueio `403`, o fallback de envio e o caminho completo validação → criação → descrição → sincronização.
+
 ## 1.46.0.05 - 2026-10-05
 - **Pesquisa por EAN**: a ação do card Novo anúncio agora se chama **Pesquisar**, refletindo que consulta o produto e apresenta os dados encontrados antes da publicação.
 - **Layout do card 2**: o campo EAN recuperou largura no desktop mesmo com o leitor integrado, enquanto o botão de pesquisa ficou mais compacto. No mobile, os controles continuam em coluna e com largura integral.

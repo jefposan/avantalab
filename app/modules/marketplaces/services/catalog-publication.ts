@@ -2,6 +2,7 @@ import { isValidEan, normalizeEan } from './ean.ts';
 
 export type CatalogAttribute = { id: string; name: string; value: string };
 export type CatalogCandidate = { id: string; name: string; domainId: string; picture: string | null };
+export type CatalogPreparationIssue = { code: string; message: string };
 export type CatalogPreparation = {
   status: 'found' | 'not_found';
   ean: string;
@@ -9,11 +10,13 @@ export type CatalogPreparation = {
   candidates?: CatalogCandidate[];
   categories?: Array<{ id: string; name: string }>;
   categoryId?: string;
-  userProductSeller?: boolean;
   listingTypes?: Array<{ id: string; name: string }>;
   shippingModes?: Array<{ id: string; name: string }>;
   conditions?: Array<{ id: string; name: string }>;
   requiredAttributes?: Array<{ id: string; name: string; values: Array<{ id: string; name: string }> }>;
+  constraints?: { minimumPrice?: number; maximumPrice?: number; maxDescriptionLength: number };
+  blockingIssues?: CatalogPreparationIssue[];
+  warnings?: string[];
   notice?: string;
 };
 
@@ -67,17 +70,27 @@ export function catalogPictures(value: unknown): string[] {
 
 export function publicationErrors(form: PublicationForm, preparation: CatalogPreparation): Record<string, string> {
   const errors: Record<string, string> = {};
+  if (preparation.blockingIssues?.length) errors.preparation = 'Resolva as pendências da preparação antes de publicar.';
   if (!validEan(form.ean) || form.ean !== preparation.ean) errors.ean = 'Valide novamente o EAN.';
   if (!preparation.product || form.productId !== preparation.product.id) errors.productId = 'Valide novamente o produto.';
   if (!form.categoryId || !preparation.categories?.some((option) => option.id === form.categoryId)) errors.categoryId = 'Selecione uma categoria confirmada para este produto.';
   if (!Number.isFinite(form.price) || form.price <= 0 || Math.abs(Math.round(form.price * 100) - form.price * 100) > 0.0001) errors.price = 'Informe um preço válido em reais e centavos.';
-  if (!Number.isSafeInteger(form.stock) || form.stock < 0 || form.stock > 99999) errors.stock = 'Informe o estoque disponível (0 a 99.999).';
+  else if (preparation.constraints?.minimumPrice != null && form.price < preparation.constraints.minimumPrice) errors.price = `O preço mínimo desta categoria é R$ ${preparation.constraints.minimumPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`;
+  else if (preparation.constraints?.maximumPrice != null && form.price > preparation.constraints.maximumPrice) errors.price = `O preço máximo desta categoria é R$ ${preparation.constraints.maximumPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`;
+  if (!Number.isSafeInteger(form.stock) || form.stock < 1 || form.stock > 99999) errors.stock = 'Informe o estoque disponível (1 a 99.999).';
   if (!preparation.listingTypes?.some((option) => option.id === form.listingType)) errors.listingType = 'Escolha um tipo de anúncio permitido para esta conta.';
   if (!preparation.shippingModes?.some((option) => option.id === form.shippingMode)) errors.shippingMode = 'Escolha uma forma de envio permitida para esta conta e categoria.';
   if (!preparation.conditions?.some((option) => option.id === form.condition)) errors.condition = 'Escolha uma condição permitida para esta categoria.';
   if (!['none', 'seller', 'factory'].includes(form.warrantyType)) errors.warrantyType = 'Selecione a garantia.';
   if (form.warrantyType !== 'none' && !safeText(form.warrantyTime, 40)) errors.warrantyTime = 'Informe o prazo da garantia.';
-  if (form.description && form.description.length > 50000) errors.description = 'A descrição deve ter até 50.000 caracteres.';
+  if (form.condition === 'refurbished' && form.warrantyType === 'none') errors.warrantyType = 'Produto recondicionado precisa ter garantia.';
+  if (form.condition === 'refurbished' && form.warrantyType !== 'none' && safeText(form.warrantyTime, 40)) {
+    const warranty = safeText(form.warrantyTime, 40).toLocaleLowerCase('pt-BR').match(/^(\d+)\s*(dia|dias|m[eê]s|meses|ano|anos)$/);
+    const days = warranty ? Number(warranty[1]) * (/ano/.test(warranty[2]) ? 365 : /m[eê]s|meses/.test(warranty[2]) ? 30 : 1) : 0;
+    if (days < 90) errors.warrantyTime = 'Produto recondicionado precisa ter garantia mínima de 90 dias.';
+  }
+  const descriptionLimit = preparation.constraints?.maxDescriptionLength || 50000;
+  if (form.description && form.description.length > descriptionLimit) errors.description = `A descrição deve ter até ${descriptionLimit.toLocaleString('pt-BR')} caracteres.`;
   if (form.pictureUrl && !safeCatalogImage(form.pictureUrl)) errors.pictureUrl = 'Use uma imagem HTTPS hospedada no Mercado Livre.';
   for (const attribute of preparation.requiredAttributes || []) {
     const value = form.attributes?.[attribute.id]?.trim();

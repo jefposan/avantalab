@@ -88,22 +88,24 @@ export async function mlRequest(db: SupabaseClient, connection: SellerConnection
       if (method !== 'GET' && [400, 409].includes(response.status)) {
         const problem = objectValue(await response.json().catch(() => null));
         const fields: Record<string, string> = {};
-        const names: Record<string, string> = { title: 'title', family_name: 'title', price: 'price', available_quantity: 'stock', plain_text: 'description' };
-        const labels: Record<string, string> = { title: 'título', price: 'preço', stock: 'estoque', description: 'descrição' };
+        const names: Record<string, string> = { title: 'title', family_name: 'title', price: 'price', available_quantity: 'stock', plain_text: 'description', category_id: 'categoryId', listing_type_id: 'listingType', condition: 'condition', item_condition: 'condition', shipping: 'shippingMode', mode: 'shippingMode', sale_terms: 'warrantyType', warranty_type: 'warrantyType', warranty_time: 'warrantyTime', pictures: 'pictureUrl', catalog_product_id: 'productId', attributes: 'attributes' };
+        const labels: Record<string, string> = { title: 'título', price: 'preço', stock: 'estoque', description: 'descrição', categoryId: 'categoria', listingType: 'tipo de anúncio', shippingMode: 'forma de envio', condition: 'condição', warrantyType: 'garantia', warrantyTime: 'prazo da garantia', pictureUrl: 'imagem', productId: 'produto', attributes: 'atributos obrigatórios' };
         for (const cause of (Array.isArray(problem.cause) ? problem.cause : [])) {
           const references = objectValue(cause).references;
           for (const reference of (Array.isArray(references) ? references : [])) {
             if (typeof reference !== 'string') continue;
-            const field = names[reference.replace(/^(item|body)\./, '').split('[')[0]];
-            if (field) fields[field] = `O Mercado Livre recusou este ${labels[field] === 'descrição' ? 'campo de descrição' : labels[field]}. Confira as regras e o valor informado.`;
+            const normalized = reference.toLowerCase().replace(/^(item|body)\./, '').replace(/\[[^\]]*\]/g, '').split('.');
+            const field = normalized.map((part) => names[part]).find(Boolean);
+            if (field) fields[field] = `O Mercado Livre recusou ${labels[field] === 'descrição' ? 'a descrição' : labels[field] === 'imagem' ? 'a imagem' : `o campo ${labels[field]}`}. Confira as regras e o valor informado.`;
           }
         }
         // Não repassar mensagens arbitrárias do provedor, tokens ou outros campos.
         if (Object.keys(fields).length) throw new MarketplaceError(400, 'invalid_fields', 'Revise os campos indicados pelo Mercado Livre.', fields);
       }
       throw new MarketplaceError(response.status === 429 ? 429 : 409, `provider_${response.status}`,
-        response.status === 403 ? 'O Mercado Livre negou o acesso. Verifique as permissões do aplicativo e da conta.' : response.status === 429 ? 'Limite de consultas do Mercado Livre. Aguarde antes de tentar novamente.' : 'O Mercado Livre recusou a operação. Atualize os dados e confira o anúncio na plataforma.');
+        response.status === 403 ? 'O Mercado Livre negou este recurso. A conexão segue ativa; confira as permissões funcionais do aplicativo e da conta.' : response.status === 429 ? 'Limite de consultas do Mercado Livre. Aguarde antes de tentar novamente.' : 'O Mercado Livre recusou a operação. Atualize os dados e confira o anúncio na plataforma.');
     }
+    if (response.status === 204) return null;
     return await response.json().catch(() => { throw new MarketplaceError(503, method === 'GET' ? 'invalid_response' : 'mutation_uncertain', 'Resposta incompleta. Atualize a lista antes de repetir.'); });
   }
   throw new MarketplaceError(409, 'reconnect', 'Reconecte a conta do Mercado Livre.');

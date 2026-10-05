@@ -7,7 +7,13 @@ import { listingIdIsValid, objectValue, uuidIsValid } from './listing-model';
 
 const listingTypeIds = new Set(['free', 'gold_special', 'gold_pro']);
 const shippingNames: Record<string, string> = { me2: 'Mercado Envios', not_specified: 'A combinar com o comprador' };
+const conditionNames: Record<string, string> = { new: 'Novo', used: 'Usado', refurbished: 'Recondicionado' };
+const conditionValueIds: Record<string, string> = { new: '2230284', used: '2230581', refurbished: '2230582' };
 const safeArray = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
+
+function preparationIssue(error: unknown, code: string, denied: string, unavailable: string) {
+  return { code, message: error instanceof MarketplaceError && error.code === 'provider_403' ? denied : unavailable };
+}
 
 export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection: SellerConnection, input: { ean: unknown; productId?: unknown; categoryId?: unknown }): Promise<CatalogPreparation> {
   const ean = validEan(input.ean);
@@ -40,23 +46,39 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
   const categoryId = requestedCategory && categoryCandidates.has(requestedCategory) ? requestedCategory : categories.length === 1 ? categories[0].id : '';
   if (!categoryId) return { status: 'found', ean, product: fullProduct, candidates, categories, notice: categories.length ? 'Selecione a categoria correta para consultar as condições de venda.' : 'Não foi possível confirmar a categoria do produto. Não publique sem revisar a ficha no Mercado Livre.' };
 
-  const [category, available, sellerShipping, categoryShipping, categoryAttributes, user] = await Promise.all([
+  const [categoryResult, availableResult, sellerShippingResult, categoryAttributesResult] = await Promise.allSettled([
     mlRequest(db, connection, `/categories/${categoryId}`).then(objectValue),
     mlRequest(db, connection, `/users/${connection.seller_reference}/available_listing_types?category_id=${categoryId}`).then(objectValue),
     mlRequest(db, connection, `/users/${connection.seller_reference}/shipping_preferences`).then(objectValue),
-    mlRequest(db, connection, `/categories/${categoryId}/shipping_preferences`).then(objectValue),
     mlRequest(db, connection, `/categories/${categoryId}/attributes`),
-    mlRequest(db, connection, `/users/${connection.seller_reference}`).then(objectValue),
   ]);
-  if (safeText(objectValue(category.settings).catalog_domain, 100) !== product.domainId) throw new MarketplaceError(409, 'category_mismatch', 'A categoria selecionada não corresponde ao domínio do produto. Confira a ficha no Mercado Livre.');
-  const listingTypes = safeArray(available.available).map(objectValue).flatMap((row) => {
+  const blockingIssues = [] as Array<{ code: string; message: string }>;
+  const warnings: string[] = [];
+  const category = categoryResult.status === 'fulfilled' ? categoryResult.value : null;
+  const available = availableResult.status === 'fulfilled' ? availableResult.value : null;
+  const sellerShipping = sellerShippingResult.status === 'fulfilled' ? sellerShippingResult.value : null;
+  const categoryAttributes = categoryAttributesResult.status === 'fulfilled' && Array.isArray(categoryAttributesResult.value) ? categoryAttributesResult.value : [];
+  if (!category) blockingIssues.push(preparationIssue(categoryResult.status === 'rejected' ? categoryResult.reason : null, 'category_unavailable', 'O aplicativo não tem permissão para confirmar esta categoria.', 'Não foi possível confirmar a categoria agora. Tente novamente.'));
+  if (!available) blockingIssues.push(preparationIssue(availableResult.status === 'rejected' ? availableResult.reason : null, 'listing_types_unavailable', 'O aplicativo não tem permissão para consultar os tipos de anúncio desta conta.', 'Não foi possível consultar os tipos de anúncio agora. Tente novamente.'));
+  if (categoryAttributesResult.status === 'rejected') blockingIssues.push(preparationIssue(categoryAttributesResult.reason, 'attributes_unavailable', 'O aplicativo não tem permissão para consultar os campos obrigatórios desta categoria.', 'Não foi possível consultar os campos obrigatórios agora. Tente novamente.'));
+  if (!sellerShipping) warnings.push(sellerShippingResult.status === 'rejected' && sellerShippingResult.reason instanceof MarketplaceError && sellerShippingResult.reason.code === 'provider_403'
+    ? 'O Mercado Livre não liberou a consulta prévia dos envios desta conta. A opção escolhida será confirmada na validação antes de publicar.'
+    : 'Não foi possível consultar os envios da conta agora. A opção escolhida será confirmada na validação antes de publicar.');
+
+  const settings = objectValue(category?.settings);
+  if (category && safeText(settings.catalog_domain, 100) !== product.domainId) throw new MarketplaceError(409, 'category_mismatch', 'A categoria selecionada não corresponde ao domínio do produto. Confira a ficha no Mercado Livre.');
+  if (category && (settings.listing_allowed === false || safeText(settings.status, 30) === 'disabled')) blockingIssues.push({ code: 'category_not_allowed', message: 'O Mercado Livre não permite criar anúncios nesta categoria.' });
+  const listingTypes = safeArray(available?.available).map(objectValue).flatMap((row) => {
     const id = safeText(row.id, 40);
     return listingTypeIds.has(id) && (row.remaining_listings == null || Number(row.remaining_listings) > 0) ? [{ id, name: safeText(row.name, 100) || id }] : [];
   });
-  const accountModes = new Set(safeArray(sellerShipping.modes).filter((value): value is string => typeof value === 'string'));
-  const categoryModes = new Set(safeArray(categoryShipping.logistics).map((value) => safeText(objectValue(value).mode, 40)));
+  const categoryModes = new Set(safeArray(settings.shipping_modes).filter((value): value is string => typeof value === 'string'));
+  const accountModes = sellerShipping ? new Set(safeArray(sellerShipping.modes).filter((value): value is string => typeof value === 'string')) : categoryModes;
   const shippingModes = Object.entries(shippingNames).filter(([id]) => accountModes.has(id) && categoryModes.has(id)).map(([id, name]) => ({ id, name }));
-  const conditions = safeArray(objectValue(category.settings).item_conditions).filter((id) => id === 'new' || id === 'used').map((id) => ({ id: String(id), name: id === 'new' ? 'Novo' : 'Usado' }));
+  const configuredConditions = new Set(safeArray(settings.item_conditions).filter((value): value is string => typeof value === 'string'));
+  const itemCondition = categoryAttributes.map(objectValue).find((row) => row.id === 'ITEM_CONDITION');
+  const attributeConditions = new Set(safeArray(itemCondition?.values).map((value) => safeText(objectValue(value).id, 30)));
+  const conditions = Object.entries(conditionNames).filter(([id]) => configuredConditions.has(id) || attributeConditions.has(conditionValueIds[id])).map(([id, name]) => ({ id, name }));
   const present = new Set(attributes.map((attribute) => attribute.id));
   const requiredAttributes = safeArray(categoryAttributes).map(objectValue).filter((row) => {
     const tags = objectValue(row.tags), id = safeText(row.id, 80);
@@ -68,15 +90,19 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
       return id && name ? [{ id, name }] : [];
     }),
   }));
-  const userTags = safeArray(user.tags);
+  if (available && !listingTypes.length) blockingIssues.push({ code: 'listing_types_empty', message: 'Esta conta não possui um tipo de anúncio disponível para a categoria.' });
+  if (!shippingModes.length) blockingIssues.push({ code: 'shipping_modes_empty', message: 'Nenhuma forma de envio compatível foi encontrada para esta conta e categoria.' });
+  if (category && !conditions.length) blockingIssues.push({ code: 'conditions_empty', message: 'A categoria não retornou uma condição de produto compatível.' });
+  const minimumPrice = Number(settings.minimum_price), maximumPrice = Number(settings.maximum_price), descriptionLimit = Number(settings.max_description_length);
   return { status: 'found', ean, product: fullProduct, candidates, categories, categoryId, listingTypes, shippingModes, conditions, requiredAttributes,
-    userProductSeller: userTags.includes('user_product_seller'),
-    notice: !listingTypes.length || !shippingModes.length || !conditions.length ? 'Esta conta ou categoria não retornou opções de anúncio/envio/condição suficientes para publicar com segurança.' : undefined };
+    constraints: { ...(Number.isFinite(minimumPrice) && minimumPrice > 0 ? { minimumPrice } : {}), ...(Number.isFinite(maximumPrice) && maximumPrice > 0 ? { maximumPrice } : {}), maxDescriptionLength: Number.isSafeInteger(descriptionLimit) && descriptionLimit > 0 ? descriptionLimit : 50000 },
+    ...(blockingIssues.length ? { blockingIssues } : {}), ...(warnings.length ? { warnings } : {}),
+    notice: blockingIssues.length ? 'Revise as pendências abaixo antes de publicar.' : undefined };
 }
 
 function publicationBody(form: PublicationForm, prepared: CatalogPreparation) {
   const product = prepared.product!;
-  const attrs: Array<Record<string, string>> = [{ id: 'GTIN', value_name: prepared.ean }, { id: 'ITEM_CONDITION', value_id: form.condition === 'new' ? '2230284' : '2230581', value_name: form.condition === 'new' ? 'Novo' : 'Usado' }];
+  const attrs: Array<Record<string, string>> = [{ id: 'GTIN', value_name: prepared.ean }, { id: 'ITEM_CONDITION', value_id: conditionValueIds[form.condition], value_name: conditionNames[form.condition] }];
   for (const field of prepared.requiredAttributes || []) {
     const value = form.attributes?.[field.id]?.trim() || '';
     const option = field.values.find((choice) => choice.id === value);
@@ -85,9 +111,9 @@ function publicationBody(form: PublicationForm, prepared: CatalogPreparation) {
   const warranty = form.warrantyType === 'none' ? 'Sem garantia' : form.warrantyType === 'seller' ? 'Garantia do vendedor' : 'Garantia de fábrica';
   return {
     site_id: 'MLB', catalog_product_id: product.id, catalog_listing: true, category_id: form.categoryId,
-    ...(prepared.userProductSeller ? { family_name: product.name } : { title: product.name }),
+    title: product.name,
     price: form.price, currency_id: 'BRL', available_quantity: form.stock, buying_mode: 'buy_it_now',
-    listing_type_id: form.listingType, condition: form.condition,
+    listing_type_id: form.listingType, ...(form.condition === 'new' || form.condition === 'used' ? { condition: form.condition } : {}),
     shipping: { mode: form.shippingMode, local_pick_up: false, free_shipping: false },
     sale_terms: [{ id: 'WARRANTY_TYPE', value_name: warranty }, ...(form.warrantyType !== 'none' ? [{ id: 'WARRANTY_TIME', value_name: form.warrantyTime!.trim() }] : [])],
     attributes: attrs, pictures: form.pictureUrl ? [{ source: form.pictureUrl }] : [],
@@ -116,6 +142,7 @@ export async function publishMercadoLivreCatalog(db: SupabaseClient, connection:
   const form = parsePublicationForm(raw);
   const prepared = await prepareMercadoLivreCatalog(db, connection, { ean: form.ean, productId: form.productId, categoryId: form.categoryId });
   if (prepared.status !== 'found' || !prepared.product || !prepared.categoryId) throw new MarketplaceError(409, 'catalog_changed', 'O produto ou a categoria não estão mais disponíveis. Consulte o EAN novamente.');
+  if (prepared.blockingIssues?.length) throw new MarketplaceError(409, 'preparation_blocked', 'O Mercado Livre não confirmou todos os dados necessários. Pesquise novamente e revise as pendências exibidas.');
   const errors = publicationErrors(form, prepared);
   if (Object.keys(errors).length) throw new MarketplaceError(400, 'invalid_fields', 'Revise os campos indicados.', errors);
   const body = publicationBody(form, prepared);
