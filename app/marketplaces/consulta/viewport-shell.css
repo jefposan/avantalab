@@ -12,5 +12,5 @@ body:has([data-avantaprecos-viewport='access']) {
 html:has([data-avantaprecos-viewport='ready']),
 body:has([data-avantaprecos-viewport='ready']) {
   min-height: 100%;
-  background-color: #003e73;
+  background: #003e73;
 }

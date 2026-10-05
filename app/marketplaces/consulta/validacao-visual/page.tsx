@@ -6,7 +6,7 @@ import '../viewport-shell.css';
 export const metadata: Metadata = {
   title: 'Validação visual do AvantaPreços',
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'AvantaPreços' },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'AvantaPreços' },
 };
 
 export const viewport: Viewport = {

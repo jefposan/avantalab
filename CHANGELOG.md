@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.09 - 2026-10-05
+- **Cabeçalho sólido no iPhone**: a barra de status do AvantaPreços passa a mostrar diretamente a mesma superfície azul do cabeçalho, sem a composição clara do modo `default` sobre o topo do título e do botão Sair.
+- **Uma única superfície superior**: raiz, corpo e cabeçalho autenticado usam exatamente `#003E73`; o cabeçalho não possui transparência nem `backdrop-filter`, e o conteúdo permanece acima de qualquer camada de fundo e abaixo da área segura.
+
 ## 1.48.0.08 - 2026-10-05
 - **Rodapé do acesso corrigido no PWA instalado**: no iPhone, a superfície de login e carregamento agora prolonga o fundo institucional pela área que o modo standalone desconta do viewport, eliminando a faixa clara junto ao indicador inferior.
 - **Teste móvel equivalente ao aparelho**: a rota técnica reproduz separadamente os 62 px da área de status e validou login e carregamento em 440 × 956 px, com o contêiner e o fundo alcançando exatamente o último pixel do viewport.

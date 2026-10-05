@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.08 -->
+<!-- ava-version: 1.48.0.09 -->
+
+> Revisão 1.48.0.09: o topo autenticado do **AvantaPreços** usa uma única
+> superfície azul sólida sob a barra de status do iPhone, sem camada clara ou
+> translúcida sobre o nome da empresa e o botão **Sair**.
 
 > Revisão 1.48.0.08: no PWA instalado no iPhone, o fundo do acesso do
 > **AvantaPreços** inclui a parcela superior descontada pelo viewport standalone

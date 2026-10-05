@@ -108,9 +108,9 @@ test('manifesto, service worker e atalhos tornam o Marketplaces Mobile instaláv
   assert.match(pwaManifest, /short_name: 'AvantaPreços'/);
 });
 
-test('barra de status do iPhone segue o topo sólido do PWA Recebimentos', () => {
-  assert.match(pwaPage, /statusBarStyle: 'default'/);
-  assert.doesNotMatch(pwaPage, /black-translucent/);
+test('barra de status do iPhone mostra diretamente o topo sólido do AvantaPreços', () => {
+  assert.match(pwaPage, /statusBarStyle: 'black-translucent'/);
+  assert.doesNotMatch(pwaPage, /statusBarStyle: 'default'/);
   assert.doesNotMatch(pwaPage, /interactiveWidget/);
   assert.doesNotMatch(receiptsPwaPage, /interactiveWidget/);
   assert.match(pwaPage, /themeColor: '#003E73'/);
@@ -120,8 +120,8 @@ test('barra de status do iPhone segue o topo sólido do PWA Recebimentos', () =>
 
 test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas paralelas', () => {
   assert.match(css, /\.page \{[^}]*position: relative;[^}]*--avanta-safe-top: env\(safe-area-inset-top\);[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
-  assert.match(css, /\.topbar \{[^}]*top: 0;[^}]*background: color-mix\(in srgb, var\(--brand\) 96%, #000\);/);
-  assert.match(css, /\.topbarInner \{[^}]*padding: calc\(14px \+ var\(--avanta-safe-top\)\) 16px 14px;/);
+  assert.match(css, /\.topbar \{[^}]*top: 0;[^}]*background: var\(--brand\);[^}]*opacity: 1;[^}]*backdrop-filter: none;/);
+  assert.match(css, /\.topbarInner \{[^}]*position: relative;[^}]*z-index: 1;[^}]*padding: calc\(14px \+ var\(--avanta-safe-top\)\) 16px 14px;/);
   assert.match(css, /\.topbarMobile \.topbarInner \{[^}]*min-height: calc\(76px \+ var\(--avanta-safe-top\)\);/);
   assert.match(css, /\.loginWrap \{[^}]*--avanta-access-viewport-height: 100dvh;[^}]*--avanta-access-safe-extension: 0px;[^}]*min-height: calc\(var\(--avanta-access-viewport-height\) \+ var\(--avanta-access-safe-extension\)\);[^}]*background-image: image-set\([^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
   assert.match(css, /@media \(max-width: 1023px\) \{ \.page, \.loginWrap \{[^}]*background-size: 100% auto;/);
@@ -130,7 +130,7 @@ test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas 
   assert.match(css, /@supports \(-webkit-touch-callout: none\) \{ \.page, \.loginWrap \{[^}]*background-attachment: scroll;/);
   assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background-color: #eef6fb;[^}]*background-image: none;/);
   assert.match(viewportShell, /body:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background: transparent;/);
-  assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='ready'\]\),\s*body:has\(\[data-avantaprecos-viewport='ready'\]\) \{[^}]*background-color: #003e73;/);
+  assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='ready'\]\),\s*body:has\(\[data-avantaprecos-viewport='ready'\]\) \{[^}]*background: #003e73;/);
   assert.doesNotMatch(viewportShell, /bg-avantalab-mobile|background-position|background-size|background-attachment/);
   assert.match(client, /data-avantaprecos-viewport="access"/);
   assert.match(client, /data-avantaprecos-viewport="ready"/);

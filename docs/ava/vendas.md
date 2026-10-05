@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.08 -->
+<!-- ava-version: 1.48.0.09 -->
+
+> Revisão 1.48.0.09: o refinamento do cabeçalho do **AvantaPreços** no iPhone
+> não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.08: a extensão do fundo do **AvantaPreços** no modo
 > standalone não altera os fluxos do AvantaVendas.

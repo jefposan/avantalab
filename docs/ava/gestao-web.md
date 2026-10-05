@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.08 -->
+<!-- ava-version: 1.48.0.09 -->
+
+> Revisão 1.48.0.09: a uniformização do topo autenticado pertence ao PWA
+> **AvantaPreços** no iPhone; a Gestão Web não é alterada.
 
 > Revisão 1.48.0.08: a correção da extensão do fundo no modo standalone
 > pertence ao PWA **AvantaPreços**; a Gestão Web não é alterada.

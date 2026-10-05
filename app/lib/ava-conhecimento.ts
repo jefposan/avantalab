@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.09: cabeçalho autenticado do AvantaPreços usa uma
+// única superfície azul sólida sob a barra de status do iPhone.
 // Revisado na versão 1.48.0.08: fundo do acesso do AvantaPreços cobre também
 // a parcela descontada do viewport pelo modo standalone no iPhone.
 // Revisado na versão 1.48.0.07: fundo do acesso do AvantaPreços fica ancorado
