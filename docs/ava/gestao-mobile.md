@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.04 -->
+<!-- ava-version: 1.48.0.05 -->
+
+> Revisão 1.48.0.05: o **AvantaPreços** passa a repetir diretamente a
+> estrutura de viewport do PWA Recebimentos. O fundo ocupa toda a altura sem
+> faixa branca no rodapé e o cabeçalho não duplica a área segura superior,
+> mantendo o azul sólido sob a barra de status.
 
 > Revisão 1.48.0.04: o login do **AvantaPreços** segue a composição visual do
 > PWA Recebimentos, sem ícone dentro do card e com olho para exibir ou ocultar

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.05 - 2026-10-05
+- **Viewport do AvantaPreços corrigido pela referência real**: fundo, dimensionamento por proporção e comportamento no iOS agora repetem diretamente a estrutura do PWA Recebimentos. Foram removidas as camadas paralelas em `html/body` e o pseudo-elemento fixo que deixavam a faixa branca no rodapé.
+- **Topo sólido sem compensação duplicada**: o cabeçalho passou a usar exatamente a altura e o espaçamento do Recebimentos, sem acrescentar novamente a área segura superior. A barra de status mantém o azul institucional contínuo, sem degradê branco sob a ilha.
+
 ## 1.48.0.04 - 2026-10-05
 - **Login do AvantaPreços**: composição aprovada aplicada no padrão do PWA Recebimentos, com logo oficial dimensionado, título e instrução centralizados, card compacto, botão azul e controle de senha por ícone de olho acessível. O ícone próprio do aplicativo permanece no manifesto e na instalação, mas não aparece no formulário.
 - **Últimas consultas**: o botão à direita foi identificado como **Atualizar histórico** e agora usa duas setas circulares completas, com dica textual, foco visível e área de toque de 44 px.

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import MarketplaceMobileApp from './MarketplaceMobileApp';
-import './viewport-root.css';
 
 export const metadata: Metadata = {
   title: 'AvantaPreços — Consulta de preços | AvantaLab',
@@ -26,5 +25,15 @@ export const viewport: Viewport = {
 };
 
 export default function MarketplaceMobilePage() {
-  return <MarketplaceMobileApp />;
+  return (
+    <>
+      <link
+        rel="preload"
+        href="/images/bg-avantalab-mobile-1080x1920-sem-logo.webp"
+        as="image"
+        type="image/webp"
+      />
+      <MarketplaceMobileApp />
+    </>
+  );
 }

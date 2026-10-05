@@ -12,7 +12,6 @@ const accessMigration = read('supabase/migrations/20261006090000_avantaprecos_us
 const priceAccess = read('app/modules/marketplaces/services/price-access.ts');
 const pwaPage = read('app/marketplaces/consulta/page.tsx');
 const pwaManifest = read('app/marketplaces/consulta/manifest.webmanifest/route.ts');
-const viewportRootCss = read('app/marketplaces/consulta/viewport-root.css');
 const receiptsPwaPage = read('app/recebimentos/colaborador/page.tsx');
 
 test('PWA reutiliza autenticação, empresa e conexão do módulo sem novo OAuth', () => {
@@ -115,16 +114,17 @@ test('barra de status do iPhone segue o topo sólido do PWA Recebimentos', () =>
   assert.match(pwaManifest, /theme_color: '#003E73'/);
 });
 
-test('cenas de acesso cobrem o viewport e a área segura inferior do iPhone', () => {
-  assert.match(css, /\.loadingScreen, \.emptyAccess, \.companySelection, \.loginScreen \{[^}]*position: fixed;[^}]*inset: 0;[^}]*min-height: 100dvh;/);
+test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas paralelas', () => {
+  assert.match(css, /\.app \{[^}]*position: relative;[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
+  assert.match(css, /\.loadingScreen, \.emptyAccess, \.companySelection, \.loginScreen \{[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
   assert.match(css, /padding: max\(28px, env\(safe-area-inset-top\)\)[^;]*max\(28px, env\(safe-area-inset-bottom\)\)/);
-  assert.match(css, /\.loadingScreen::before[^}]*position: fixed;[^}]*inset: 0;[^}]*background-position: center bottom;/);
-  assert.match(css, /@media \(min-aspect-ratio: 9\/16\), \(max-aspect-ratio: 9\/18\)[^{]*\{[^}]*background-size: auto 100%;/);
-  assert.match(client, /document\.documentElement, document\.body/);
-  assert.match(client, /classList\.add\('avantaprecos-pwa-root'\)/);
-  assert.match(client, /classList\.toggle\('avantaprecos-pwa-access-root', accessScene\)/);
-  assert.equal((client.match(/data-avantaprecos-access/g) || []).length, 4);
-  assert.match(viewportRootCss, /html\.avantaprecos-pwa-access-root,[\s\S]*body:has\(\[data-avantaprecos-access\]\)[\s\S]*background-position: center bottom;/);
-  assert.match(viewportRootCss, /background-size: auto 100%;/);
-  assert.match(viewportRootCss, /@supports \(-webkit-touch-callout: none\)/);
+  assert.match(css, /\.headerInner \{[^}]*min-height: 76px;[^}]*padding: 14px 16px;/);
+  assert.doesNotMatch(css.match(/\.headerInner \{[^}]*\}/)?.[0] || '', /safe-area-inset-top/);
+  assert.match(css, /@media \(max-width: 1023px\) \{ \.app,[^}]*background-size: 100% auto;/);
+  assert.match(css, /@media \(max-width: 1023px\) and \(min-aspect-ratio: 9\/16\), \(max-width: 1023px\) and \(max-aspect-ratio: 9\/18\) \{ \.app,[^}]*background-size: auto 100%;/);
+  assert.match(css, /@supports \(-webkit-touch-callout: none\) \{ \.app,[^}]*background-attachment: scroll;/);
+  assert.doesNotMatch(css, /\.loadingScreen::before/);
+  assert.doesNotMatch(client, /document\.documentElement|document\.body|avantaprecos-pwa-root|data-avantaprecos-access/);
+  assert.doesNotMatch(pwaPage, /viewport-root\.css/);
+  assert.match(pwaPage, /rel="preload"[\s\S]*bg-avantalab-mobile-1080x1920-sem-logo\.webp/);
 });
