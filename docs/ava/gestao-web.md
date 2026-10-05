@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.10 -->
+<!-- ava-version: 1.48.0.11 -->
+
+> Revisão 1.48.0.11: ao abrir **Anúncios em marketplaces**, a validação de
+> acesso usa a cena oficial compartilhada, com fundo institucional e card
+> **Validando acesso**. A interface só é exibida depois de confirmar sessão,
+> perfil, instalação do módulo e permissão; falhas mostram uma mensagem segura.
 
 > Revisão 1.48.0.10: **Anúncios em marketplaces** abre dentro da Gestão pela
 > rota oficial `/marketplaces`; o contexto curto da navegação não transporta

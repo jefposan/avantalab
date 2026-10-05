@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.48.0.11 - 2026-10-05
+- **Carregamento oficial no Marketplaces**: ao abrir o módulo, a validação do perfil usa exatamente a cena compartilhada do AvantaLab, com fundo institucional e card de “Validando acesso”. O conteúdo só aparece depois da autorização confirmada, evitando cabeçalho genérico e dados parciais.
+- **Falha de acesso explícita**: sessão ausente, perfil inválido, módulo não instalado ou permissão insuficiente encerram o carregamento e mostram uma mensagem de retorno segura, em vez de liberar a interface sem identidade confirmada.
+- **Saldão Aline verificado**: o perfil abriu Projetos e Anúncios em marketplaces após atualizar da versão antiga `1.48.0.09` para a correção já publicada; as URLs internas ficaram curtas e deixaram de carregar o logotipo em base64.
+
 ## 1.48.0.10 - 2026-10-05
 - **Marketplaces disponível na Gestão**: a navegação interna deixa de transportar logotipos em base64 pela URL do módulo. Isso elimina a URL excessiva que o Chrome bloqueava como `about:blank#blocked` e permite abrir Anúncios em marketplaces diretamente no AvantaLab de produção.
 - **Proteção contra regressão**: teste automatizado garante que o contexto visual continue levando empresa, perfil e permissões, mas nunca incorpore o arquivo pesado do logotipo à URL do iframe.

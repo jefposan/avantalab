@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.10 -->
+<!-- ava-version: 1.48.0.11 -->
+
+> Revisão 1.48.0.11: o carregamento oficial adicionado ao módulo web
+> **Anúncios em marketplaces** não altera os fluxos da Gestão Mobile nem do
+> AvantaPreços.
 
 > Revisão 1.48.0.10: a correção da abertura de **Anúncios em marketplaces**
 > pertence à Gestão Web e não altera os fluxos móveis ou do AvantaPreços.

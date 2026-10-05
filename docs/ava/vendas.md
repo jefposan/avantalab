@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.10 -->
+<!-- ava-version: 1.48.0.11 -->
+
+> Revisão 1.48.0.11: o carregamento oficial da validação de acesso em
+> Marketplaces não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.10: a correção da navegação embutida de Marketplaces não
 > altera os fluxos do AvantaVendas.

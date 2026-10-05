@@ -1,5 +1,13 @@
 .page { --brand: var(--marketplace-brand, #003E73); min-height: 100dvh; color: #1f2937; background: #f6f8fb; font-family: var(--av-font-family, Inter, sans-serif); }
 .page, .page * { box-sizing: border-box; }
+.accessState { min-height: 100dvh; display: grid; place-items: center; padding: 24px; color: #17222d; background: #f3f6f8; text-align: center; font-family: var(--av-font-family, Inter, sans-serif); }
+.accessState > div { display: grid; width: min(100%, 500px); justify-items: center; gap: 10px; padding: 30px; border: 1px solid #dce4e9; border-radius: 8px 18px 18px 18px; background: #fff; box-shadow: 0 18px 45px #102f4315; }
+.accessState > div > span { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 14px; color: #1687d9; background: #e8f4fb; font-size: 24px; }
+.accessState h1, .accessState p { margin: 0; }
+.accessState h1 { font-size: 22px; }
+.accessState p { color: #667684; line-height: 1.5; }
+.accessState button { min-height: 44px; margin-top: 4px; border: 0; border-radius: 11px; padding: 0 16px; color: #fff; background: #003e73; font: inherit; font-weight: 800; cursor: pointer; }
+.accessState button:focus-visible { outline: 3px solid #1687d955; outline-offset: 2px; }
 .content { width: 100%; max-width: 1292px; margin: 0 auto; padding: 24px clamp(16px, 4vw, 56px) 56px; }
 .hero h1, .panel h2 { margin: 0; letter-spacing: -.01em; }
 .eyebrow { margin: 0 0 4px; color: color-mix(in srgb, var(--brand) 74%, #475569); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }

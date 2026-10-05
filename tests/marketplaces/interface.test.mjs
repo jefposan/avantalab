@@ -66,6 +66,15 @@ test('marketplaces and costs reuse the same company header and return action', (
   assert.match(read('app/components/ModuloHeader.tsx'), /app\/custos\/custos.module.css/);
 });
 
+test('marketplaces validates access on the official AvantaLab loading scene before rendering the module', () => {
+  assert.match(client, /import TelaCarregandoAcesso from '@\/app\/components\/TelaCarregandoAcesso'/);
+  assert.match(client, /const \[accessState, setAccessState\] = useState<'loading' \| 'ready' \| 'error'>\('loading'\)/);
+  assert.match(client, /if \(accessState === 'loading'\) \{\s*return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" \/>;/);
+  assert.match(client, /if \(!response\.ok \|\| !payload\?\.empresa\) throw new Error/);
+  assert.match(client, /setAccessState\('ready'\)/);
+  assert.match(client, /setAccessState\('error'\)/);
+});
+
 test('grid panels fill their track without auto margins, sharing the content wrapper', () => {
   assert.match(client, /<div className=\{styles.content\}>/);
   assert.match(css, /\.grid > \.panel \{ margin: 0; width: 100%; min-width: 0;/);

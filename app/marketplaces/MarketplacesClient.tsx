@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import ModuloHeader from '@/app/components/ModuloHeader';
 import type { MarketplaceId } from '@/app/modules/marketplaces/types';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
@@ -24,6 +25,8 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const router = useRouter();
   const [context] = useState(() => initialContext ?? consumirNavegacaoModulo('marketplaces', companyId));
   const [empresa, setEmpresa] = useState(() => context?.empresa ?? { nome: 'Perfil empresarial', corPrimaria: '#003E73', temaEscuro: false, logoUrl: '' });
+  const [accessState, setAccessState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [accessError, setAccessError] = useState('');
   const [marketplace, setMarketplace] = useState<MarketplaceId>('mercado_livre');
   const [canManage, setCanManage] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -48,15 +51,26 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   useEffect(() => {
     const controller = new AbortController();
     async function loadIdentity() {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session?.access_token || controller.signal.aborted || !companyId) return;
-      const response = await fetch(`/api/modulos/acesso?empresaId=${encodeURIComponent(companyId)}&moduloId=marketplaces`, { signal: controller.signal, headers: { Authorization: `Bearer ${data.session.access_token}` } });
-      const payload = await response.json().catch(() => null);
-      if (controller.signal.aborted) return;
-      if (response.ok && payload?.empresa) { setEmpresa(payload.empresa); setCanManage(['gestor_master', 'administrador', 'operador_completo'].includes(payload.perfil)); }
-      else setConnectionNotice(payload?.mensagem || 'Não foi possível carregar o perfil empresarial.');
+      setAccessState('loading');
+      setAccessError('');
+      try {
+        if (!companyId) throw new Error('Selecione um perfil empresarial na Gestão antes de abrir este módulo.');
+        const { data } = await supabase.auth.getSession();
+        if (!data.session?.access_token) throw new Error('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.');
+        const response = await fetch(`/api/modulos/acesso?empresaId=${encodeURIComponent(companyId)}&moduloId=marketplaces`, { signal: controller.signal, headers: { Authorization: `Bearer ${data.session.access_token}` } });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.empresa) throw new Error(payload?.mensagem || 'Não foi possível abrir este módulo.');
+        if (controller.signal.aborted) return;
+        setEmpresa(payload.empresa);
+        setCanManage(['gestor_master', 'administrador', 'operador_completo'].includes(payload.perfil));
+        setAccessState('ready');
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setAccessError(error instanceof Error ? error.message : 'Não foi possível abrir este módulo.');
+        setAccessState('error');
+      }
     }
-    void loadIdentity().catch(() => { if (!controller.signal.aborted) setConnectionNotice('Não foi possível carregar o perfil empresarial.'); });
+    void loadIdentity();
     return () => controller.abort();
   }, [companyId]);
 
@@ -84,6 +98,21 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       setConnectionNotice(error instanceof Error ? error.message : 'Não foi possível iniciar a conexão.');
       setConnecting(false);
     }
+  }
+
+  if (accessState === 'loading') {
+    return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" />;
+  }
+
+  if (accessState === 'error') {
+    return <main className={styles.accessState}>
+      <div>
+        <span aria-hidden="true">◇</span>
+        <h1>Anúncios em marketplaces</h1>
+        <p>{accessError}</p>
+        <button type="button" onClick={() => router.push('/gestao')}>‹ Início</button>
+      </div>
+    </main>;
   }
 
   return <main className={`${styles.page} ${empresa.temaEscuro ? styles.dark : ''}`} style={{ '--marketplace-brand': empresa.corPrimaria } as CSSProperties}>
