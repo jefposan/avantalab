@@ -73,8 +73,16 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
     return listingTypeIds.has(id) && (row.remaining_listings == null || Number(row.remaining_listings) > 0) ? [{ id, name: safeText(row.name, 100) || id }] : [];
   });
   const categoryModes = new Set(safeArray(settings.shipping_modes).filter((value): value is string => typeof value === 'string'));
-  const accountModes = sellerShipping ? new Set(safeArray(sellerShipping.modes).filter((value): value is string => typeof value === 'string')) : categoryModes;
-  const shippingModes = Object.entries(shippingNames).filter(([id]) => accountModes.has(id) && categoryModes.has(id)).map(([id, name]) => ({ id, name }));
+  const accountModes = sellerShipping ? new Set(safeArray(sellerShipping.modes).filter((value): value is string => typeof value === 'string')) : new Set<string>();
+  // Algumas categorias de catálogo não expõem shipping_modes e a consulta logística da conta
+  // pode ser protegida por permissão funcional. Nesse caso exibimos somente os modos canônicos
+  // que este fluxo sabe publicar e deixamos /items/validate confirmar a escolha antes do POST /items.
+  const fallbackModes = !sellerShipping && !categoryModes.size ? new Set(Object.keys(shippingNames)) : new Set<string>();
+  const shippingModes = Object.entries(shippingNames).filter(([id]) => {
+    const accountAllows = accountModes.size ? accountModes.has(id) : fallbackModes.has(id) || categoryModes.has(id);
+    const categoryAllows = categoryModes.size ? categoryModes.has(id) : true;
+    return accountAllows && categoryAllows;
+  }).map(([id, name]) => ({ id, name }));
   const configuredConditions = new Set(safeArray(settings.item_conditions).filter((value): value is string => typeof value === 'string'));
   const itemCondition = categoryAttributes.map(objectValue).find((row) => row.id === 'ITEM_CONDITION');
   const attributeConditions = new Set(safeArray(itemCondition?.values).map((value) => safeText(objectValue(value).id, 30)));
