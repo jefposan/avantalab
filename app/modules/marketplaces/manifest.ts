@@ -8,7 +8,7 @@ export const MARKETPLACES_MANIFEST = {
   technicalName: 'marketplaces',
   commercialName: 'Anúncios em marketplaces',
   featureName: 'Conexões e publicação de produtos',
-  version: '0.1.0',
+  version: '0.2.0',
   audience: ['empresas-assinantes-avantalab'],
   route: '/marketplaces',
   navigationMode: 'full-page',

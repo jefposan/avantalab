@@ -27,6 +27,11 @@ logs, preferências de navegador ou banco de dados sem criptografia.
 - Migração `20261005140000_marketplace_listing_management.sql` aplicada ao projeto
   AvantaLab em 2026-10-05; consulta real da conta existente trouxe sete anúncios.
 - Taxa/frete são estimativas quando disponíveis. Falha de obtenção não vira zero.
+- O editor inline apresenta título, preço, estoque e descrição antes do EAN,
+  respeitando permissões atuais da integração. Falha na consulta mantém título,
+  preço e estoque do cache visíveis, mas bloqueia alterações e salvamento.
+- A migração `20261005190000_marketplace_listing_edit.sql` habilita a auditoria
+  de edição; aplicar antes de testar salvamentos reais. GET não altera anúncios.
 
 ## Limites atuais
 

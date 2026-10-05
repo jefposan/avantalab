@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.56 -->
+<!-- ava-version: 1.45.0.01 -->
+
+> Revisão 1.45.0.01: em **Anunciados**, o lápis abre título, preço, estoque e
+> descrição na própria linha, antes do EAN. O editor consulta permissões e
+> dados atuais do Mercado Livre; apenas campos liberados podem ser alterados.
+> Salvar envia só mudanças válidas e confirma o resultado. Cancelar descarta
+> uma edição não salva mediante confirmação. Se a consulta falhar, título,
+> preço e estoque da última sincronização continuam visíveis, mas bloqueados;
+> descrição fica indisponível e não é possível salvar. Recarregar edição após
+> restabelecer a consulta. Migração de auditoria de edição necessária para
+> salvamentos; não afirmar edição real concluída sem confirmação do provedor.
 
 > Revisão 1.44.0.56: a lista **Anunciados** foi ativada no ambiente AvantaLab
 > após aplicação da migração. Selecione a conta, pesquise e filtre a situação;

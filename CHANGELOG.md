@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.45.0.01 - 2026-10-05
+- **Edição de anúncios na mesma linha**: título, preço, estoque e descrição aparecem antes do EAN; alterações permitidas são verificadas na API atual do Mercado Livre antes de salvar. O editor protege contra conflitos, valida os campos, audita tentativas e exige confirmação dos valores após envio. Não houve alteração de anúncio real durante a validação.
+- **Falha de consulta**: título, preço e estoque da última sincronização continuam visíveis, com descrição indisponível e salvamento bloqueado até confirmar permissões atuais. A edição não presume que dados em cache estejam atualizados.
+- **Interface de Anunciados**: conta conectada delimitada, tabela ajustada, lápis acessível e botão Cancelar na própria linha. A migração de auditoria de edição é necessária para efetivar salvamentos neste ambiente.
+
 ## 1.44.0.56 - 2026-10-05
 - **Lista de anúncios ativada**: migração aditiva aplicada ao Supabase AvantaLab
   com RLS e acesso exclusivo do backend. Conta existente preservada; consulta

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.56 -->
+<!-- ava-version: 1.45.0.01 -->
+
+> Revisão 1.45.0.01: edição de anúncios pertence à Gestão Web;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.44.0.56: lista de anúncios ativada na Gestão Web;
 > sem impacto operacional no Vendas Mobile ou na importação de catálogos.

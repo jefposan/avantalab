@@ -12,6 +12,7 @@ export const MARKETPLACE_PERMISSION_GROUPS = [
     permissions: [
       { code: 'marketplaces.drafts.create', name: 'Preparar anúncio' },
       { code: 'marketplaces.publish', name: 'Publicar anúncio' },
+      { code: 'marketplaces.listings.manage', name: 'Gerenciar anúncios publicados' },
     ],
   },
   {
@@ -33,7 +34,7 @@ const all = [...MARKETPLACE_PERMISSION_CODES];
 export const MARKETPLACE_PERMISSIONS_BY_PROFILE: Readonly<Record<PerfilModulo, readonly string[]>> = {
   gestor_master: all,
   administrador: all,
-  operador_completo: ['marketplaces.view', 'marketplaces.drafts.create', 'marketplaces.publish'],
+  operador_completo: ['marketplaces.view', 'marketplaces.drafts.create', 'marketplaces.publish', 'marketplaces.listings.manage'],
   operador_simples: ['marketplaces.view'],
 };
 

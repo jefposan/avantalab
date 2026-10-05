@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.56 -->
+<!-- ava-version: 1.45.0.01 -->
+
+> Revisão 1.45.0.01: editor de anúncios pertence à Gestão Web;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.44.0.56: lista de anúncios ativada na Gestão Web;
 > sem impacto operacional na Gestão Mobile.

@@ -1,3 +1,5 @@
+// Revisado na versão 1.45.0.01: editor inline; em falha de consulta, cache
+// visível sem permitir salvar até confirmar dados e permissões atuais.
 export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 
 // Revisado na versão 1.44.0.56: migração de Anunciados aplicada e consulta
@@ -1447,6 +1449,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Em Anúncios em marketplaces, Início retorna à Gestão e o cabeçalho mostra a marca do perfil. Anunciados oferece seleção de conta, busca, situação e detalhes por Editar. A migração foi aplicada ao ambiente AvantaLab; confirme uma consulta pela última sincronização completa e pelo resultado na tela, nunca apenas pelo status Conectada. Atualizar consulta o Mercado Livre; a consulta automática roda a cada minuto somente com a página visível. Não há cron/webhook ativo para atualizar com o módulo fechado. Gestor Master e Administrador gerenciam conexões; Operador Completo também pode gerir anúncios e Operador Simples só consulta. Pausar/Reativar, Encerrar e Excluir exigem confirmação; encerramento é definitivo e exclusão exige anúncio encerrado. As ações não foram testadas alterando anúncios reais. Validar e preparar somente valida dados iniciais: publicação por EAN não está implementada. Taxa e frete são estimativas; indisponível não significa zero. Nunca pedir senhas de marketplaces. Se houver erro de configuração em outro ambiente, não afirmar que a consulta está operacional nele.
+Ao abrir o lápis, Título, Preço, Estoque e Descrição aparecem na própria linha antes do EAN. O editor consulta permissões atuais do Mercado Livre; só campos autorizados podem ser alterados. Se a consulta falhar, título, preço e estoque vêm da última sincronização, descrição fica indisponível e não é possível salvar. Cancelar e Recarregar edição ficam na mesma área. A migração de auditoria de edição é necessária para salvar neste ambiente; não afirmar edição real concluída sem confirmação do provedor.
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
 
 NAVEGAÇÃO E PERFIS
