@@ -60,7 +60,12 @@ export async function GET(request: Request) {
       : await db.from('marketplace_connections').insert(connection);
     if (error) throw error;
     return destination(request, pending.empresa_id, 'connected');
-  } catch {
+  } catch (error) {
+    // Mantém a resposta ao usuário genérica e registra somente diagnóstico sem tokens/códigos OAuth.
+    console.error('[marketplaces] Falha no callback OAuth do Mercado Livre', {
+      message: error instanceof Error ? error.message : 'erro-desconhecido',
+      empresaId: pending.empresa_id,
+    });
     return destination(request, pending.empresa_id, 'error', 'Não foi possível concluir a conexão. Verifique a autorização e tente novamente.');
   }
 }

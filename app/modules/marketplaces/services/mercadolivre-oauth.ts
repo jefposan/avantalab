@@ -72,7 +72,8 @@ export async function exchangeMercadoLivreAuthorizationCode(code: string, codeVe
   });
   const data = await response.json().catch(() => ({})) as MercadoLivreTokenResponse;
   if (!response.ok || !data.access_token || !data.refresh_token || !data.user_id) {
-    throw new Error('O Mercado Livre não concluiu a autorização. Verifique a conta e tente novamente.');
+    const providerCode = String(data.error || data.message || 'resposta-incompleta').slice(0, 120);
+    throw new Error(`OAuth do Mercado Livre recusado (${response.status}: ${providerCode}).`);
   }
   return {
     accessToken: data.access_token,
