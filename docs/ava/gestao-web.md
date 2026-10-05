@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.21 -->
+<!-- ava-version: 1.48.0.22 -->
+
+> Revisão 1.48.0.22: o **AvantaPreços** consulta primeiro a busca pública de
+> consumidor do Mercado Livre pelo EAN e usa os anúncios ativos retornados na
+> amostra. A vitrine não precisa exibir o GTIN no card para a oferta entrar.
 
 > Revisão 1.48.0.21: o **AvantaPreços** também encontra anúncios normais pelo
 > EAN e confere o GTIN no detalhe antes de calcular a média. Anúncios apenas

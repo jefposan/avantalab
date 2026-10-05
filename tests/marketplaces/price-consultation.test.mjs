@@ -24,6 +24,18 @@ const ean = '7891129598607';
 const productId = 'MLB75636839';
 const connection = { id: crypto.randomUUID(), empresa_id: crypto.randomUUID() };
 const product = (extra = {}) => ({ id: productId, name: 'Fogão de teste', domain_id: 'MLB-STOVES', status: 'active', pictures: [{ secure_url: 'https://http2.mlstatic.com/a.jpg' }], attributes: [], ...extra });
+const nativeFetch = globalThis.fetch;
+
+test.after(() => { globalThis.fetch = nativeFetch; });
+
+function publicSearchResults(results = []) {
+  globalThis.fetch = async (url) => {
+    const parsed = new URL(String(url));
+    assert.equal(parsed.pathname, '/sites/MLB/search');
+    assert.equal(parsed.searchParams.get('q'), ean);
+    return new Response(JSON.stringify({ results }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+}
 
 test('sugestões aplicam exatamente 50%, 70% e 90% sobre a média', () => {
   assert.deepEqual(calculatePriceSuggestions([9000, 10000, 11000]), { market: 100, minimum: 50, medium: 70, ideal: 90 });
@@ -31,6 +43,7 @@ test('sugestões aplicam exatamente 50%, 70% e 90% sobre a média', () => {
 
 test('consulta por EAN reutiliza a ficha e calcula a média apenas com ofertas ativas equivalentes', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  publicSearchResults();
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
     if (url.pathname === '/products/search') {
@@ -56,6 +69,7 @@ test('consulta por EAN reutiliza a ficha e calcula a média apenas com ofertas a
 
 test('consulta por EAN inclui anúncio normal após conferir seu GTIN público', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  publicSearchResults();
   const itemId = 'MLB5000000098';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
@@ -77,6 +91,7 @@ test('consulta por EAN inclui anúncio normal após conferir seu GTIN público',
 
 test('consulta usa o preço público do anúncio vencedor sem depender da faixa da ficha', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  publicSearchResults();
   const winnerItemId = 'MLB5000000099';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
@@ -93,6 +108,7 @@ test('consulta usa o preço público do anúncio vencedor sem depender da faixa 
 
 test('consulta busca o preço público do item vencedor quando a ficha não o traz', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  publicSearchResults();
   const winnerItemId = 'MLB5000000100';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
@@ -110,6 +126,7 @@ test('consulta busca o preço público do item vencedor quando a ficha não o tr
 
 test('consulta nunca chama a cotação restrita quando o anúncio vencedor já expõe preço público', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  publicSearchResults();
   const winnerItemId = 'MLB5000000403';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
@@ -128,6 +145,7 @@ test('consulta nunca chama a cotação restrita quando o anúncio vencedor já e
 
 test('restrição pontual do item retorna preço indisponível, não erro de permissão', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  publicSearchResults();
   const winnerItemId = 'MLB5000000404';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
@@ -143,6 +161,7 @@ test('restrição pontual do item retorna preço indisponível, não erro de per
 
 test('consulta mantém limite 429 visível ao consultar o anúncio vencedor', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  publicSearchResults();
   const winnerItemId = 'MLB5000000429';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
@@ -154,4 +173,23 @@ test('consulta mantém limite 429 visível ao consultar o anúncio vencedor', as
   };
 
   await assert.rejects(consultMercadoLivrePrice({}, connection, { ean }), (error) => error?.status === 429 && error?.code === 'provider_429');
+});
+
+test('consulta usa os preços retornados pela busca pública de consumidor para o EAN', async () => {
+  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  publicSearchResults([
+    { id: 'MLB5000000701', currency_id: 'BRL', condition: 'new', status: 'active', price: 180 },
+    { id: 'MLB5000000702', currency_id: 'BRL', condition: 'new', status: 'active', price: 220 },
+    { id: 'MLB5000000703', currency_id: 'BRL', condition: 'used', status: 'active', price: 10 },
+  ]);
+  globalThis.__mlPriceMock = async (path) => {
+    const url = new URL(`https://api.mercadolibre.com${path}`);
+    if (url.pathname === '/products/search') return { results: [product()] };
+    if (url.pathname === `/products/${productId}`) return product();
+    throw new Error(`A busca auxiliar não deveria ser chamada: ${path}`);
+  };
+
+  const result = await consultMercadoLivrePrice({}, connection, { ean });
+  assert.deepEqual(result.prices, { market: 200, minimum: 100, medium: 140, ideal: 180 });
+  assert.deepEqual(result.sample, { count: 2, minimum: 180, maximum: 220, source: 'active_offers' });
 });

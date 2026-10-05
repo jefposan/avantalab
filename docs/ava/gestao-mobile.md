@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.21 -->
+<!-- ava-version: 1.48.0.22 -->
+
+> Revisão 1.48.0.22: o **AvantaPreços** consulta a vitrine pública do Mercado
+> Livre pelo EAN, sem usar o token da loja para compor a referência de preço.
+> A Gestão Mobile não é alterada.
 
 > Revisão 1.48.0.21: o **AvantaPreços** confirma o GTIN de anúncios públicos
 > encontrados pelo EAN antes de incluí-los na média. A Gestão Mobile não é

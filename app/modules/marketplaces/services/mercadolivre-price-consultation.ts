@@ -57,6 +57,46 @@ function winningOfferPrice(raw: Record<string, unknown>) {
   return finitePrice(winner.price);
 }
 
+/**
+ * Pesquisa a mesma vitrine pública consumida por quem navega no Mercado Livre.
+ * Esta leitura não envia o token da loja: preço de referência precisa vir dos
+ * anúncios públicos, e não das permissões do vendedor conectado.
+ */
+async function searchPublicMarketplace(query: string) {
+  const params = new URLSearchParams({ q: query, limit: '50' });
+  let response: Response;
+  try {
+    response = await fetch(`https://api.mercadolibre.com/sites/MLB/search?${params}`, {
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(8_000),
+    });
+  } catch {
+    throw new MarketplaceError(503, 'public_search_unavailable', 'Não foi possível consultar os anúncios públicos do Mercado Livre. Tente novamente.');
+  }
+  if (!response.ok) {
+    if (response.status === 429) throw new MarketplaceError(429, 'public_search_429', 'Limite de consultas públicas do Mercado Livre. Aguarde antes de tentar novamente.');
+    throw new MarketplaceError(503, `public_search_${response.status}`, 'Não foi possível consultar os anúncios públicos do Mercado Livre. Tente novamente.');
+  }
+  try {
+    return objectValue(await response.json());
+  } catch {
+    throw new MarketplaceError(503, 'public_search_invalid_response', 'O Mercado Livre retornou uma resposta incompleta. Tente novamente.');
+  }
+}
+
+async function consumerEanOfferPrices(ean: string) {
+  const search = await searchPublicMarketplace(ean);
+  const results = Array.isArray(search.results) ? search.results.map(objectValue) : [];
+  return results
+    // A consulta por EAN é feita diretamente na busca pública. Não exigimos que
+    // a vitrine exponha GTIN nos atributos do card — ela não o faz em todas as
+    // categorias — pois isso eliminava anúncios que o próprio consumidor vê.
+    .filter((item) => item.currency_id === 'BRL' && item.condition !== 'used' && item.status !== 'closed')
+    .map((item) => finitePrice(item.price))
+    .filter((price): price is number => price != null);
+}
+
 async function productReferencePrices(
   db: SupabaseClient,
   connection: SellerConnection,
@@ -157,11 +197,15 @@ export async function consultMercadoLivrePrice(
   const product = identification.product;
   let source: 'active_offers' | 'catalog_reference' = 'active_offers';
   let values: number[] = [];
+  // A prioridade é a vitrine pública: é a referência que um consumidor recebe
+  // ao pesquisar o próprio código de barras no Mercado Livre.
+  if (ean) values = await consumerEanOfferPrices(ean);
   try {
-    values = await activeOfferPrices(db, connection, product, ean);
+    if (!values.length) values = await activeOfferPrices(db, connection, product, ean);
   } catch (error) {
     if (isRateLimitFailure(error)) throw error;
-    values = [];
+    // A busca pública acima continua sendo válida quando a busca auxiliar por
+    // catálogo não estiver disponível para aquela conta/categoria.
   }
   if (!values.length) {
     source = 'catalog_reference';
