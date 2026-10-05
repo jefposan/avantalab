@@ -1381,7 +1381,7 @@ function quotePdfBlob(quote: QuotePdfInput) {
   return new Blob([buffer], { type: 'application/pdf' });
 }
 
-function downloadQuote(record: CreatedRecord, onNotify: (message: string) => void) {
+function downloadQuote(record: CreatedRecord) {
   if (!record.quote) return;
   const url = URL.createObjectURL(quotePdfBlob(record.quote));
   const link = document.createElement('a');
@@ -1391,7 +1391,6 @@ function downloadQuote(record: CreatedRecord, onNotify: (message: string) => voi
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  onNotify(`PDF do orçamento ${record.id} salvo no dispositivo.`);
 }
 
 async function shareQuote(record: CreatedRecord, onNotify: (message: string) => void) {
@@ -1400,21 +1399,20 @@ async function shareQuote(record: CreatedRecord, onNotify: (message: string) => 
   try {
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
       await navigator.share({ title: `Orçamento ${record.id}`, text: `Orçamento comercial para ${record.client}.`, files: [file] });
-      onNotify(`Orçamento ${record.id} compartilhado.`);
       return;
     }
-    downloadQuote(record, onNotify);
+    downloadQuote(record);
     onNotify('O compartilhamento direto não está disponível neste navegador. O PDF foi salvo para você enviar.');
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') return;
-    downloadQuote(record, onNotify);
+    downloadQuote(record);
     onNotify('Não foi possível abrir o compartilhamento. O PDF foi salvo para envio manual.');
   }
 }
 
 function QuoteActions({ record, onNotify }: { record: CreatedRecord; onNotify: (message: string) => void }) {
   const [open, setOpen] = useState(false);
-  return <><button type="button" className="button secondary quote-options-button" onClick={() => setOpen(true)}><Icon name="document" size={16}/> Compartilhar ou salvar</button><Dialog open={open} title={`Enviar ${record.id}`} description="Escolha como deseja disponibilizar o orçamento em PDF." onClose={() => setOpen(false)}><div className="dialog-body quote-file-options"><button type="button" onClick={() => { setOpen(false); void shareQuote(record, onNotify); }}><Icon name="arrow" size={19}/><span><strong>Compartilhar orçamento</strong><small>Abre as opções disponíveis no dispositivo</small></span><Icon name="chevron" size={17}/></button><button type="button" onClick={() => { setOpen(false); downloadQuote(record, onNotify); }}><Icon name="document" size={19}/><span><strong>Salvar arquivo PDF</strong><small>Baixa uma cópia pronta para envio</small></span><Icon name="chevron" size={17}/></button></div><footer className="dialog-footer"><button type="button" className="button secondary" onClick={() => setOpen(false)}>Cancelar</button></footer></Dialog></>;
+  return <><button type="button" className="button secondary quote-options-button" onClick={() => setOpen(true)}><Icon name="document" size={16}/> Compartilhar ou salvar</button><Dialog open={open} title={`Enviar ${record.id}`} description="Escolha como deseja disponibilizar o orçamento em PDF." onClose={() => setOpen(false)}><div className="dialog-body quote-file-options"><button type="button" onClick={() => { setOpen(false); void shareQuote(record, onNotify); }}><Icon name="arrow" size={19}/><span><strong>Compartilhar orçamento</strong><small>Abre as opções disponíveis no dispositivo</small></span><Icon name="chevron" size={17}/></button><button type="button" onClick={() => { setOpen(false); downloadQuote(record); }}><Icon name="document" size={19}/><span><strong>Salvar arquivo PDF</strong><small>Baixa uma cópia pronta para envio</small></span><Icon name="chevron" size={17}/></button></div><footer className="dialog-footer"><button type="button" className="button secondary" onClick={() => setOpen(false)}>Cancelar</button></footer></Dialog></>;
 }
 
 function servicePdfInput(record: CreatedRecord, client: ClientRecord | undefined, company: CompanyProfile): ServiceOrderPdfInput | null {
@@ -1451,7 +1449,7 @@ function servicePdfBlob(record: CreatedRecord, client: ClientRecord | undefined,
   return new Blob([buffer], { type: 'application/pdf' });
 }
 
-function downloadServiceOrder(record: CreatedRecord, client: ClientRecord | undefined, company: CompanyProfile, onNotify: (message: string) => void) {
+function downloadServiceOrder(record: CreatedRecord, client: ClientRecord | undefined, company: CompanyProfile) {
   const blob = servicePdfBlob(record, client, company);
   if (!blob) return;
   const url = URL.createObjectURL(blob);
@@ -1462,7 +1460,6 @@ function downloadServiceOrder(record: CreatedRecord, client: ClientRecord | unde
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  onNotify(`PDF operacional de ${record.id} salvo no dispositivo.`);
 }
 
 async function shareServiceOrder(record: CreatedRecord, client: ClientRecord | undefined, company: CompanyProfile, onNotify: (message: string) => void) {
@@ -1472,21 +1469,20 @@ async function shareServiceOrder(record: CreatedRecord, client: ClientRecord | u
   try {
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
       await navigator.share({ title: `Ordem de serviço ${record.id}`, text: `Ordem de serviço de ${record.client}.`, files: [file] });
-      onNotify(`${record.id} compartilhada.`);
       return;
     }
-    downloadServiceOrder(record, client, company, onNotify);
+    downloadServiceOrder(record, client, company);
     onNotify('O compartilhamento direto não está disponível. O PDF da OS foi salvo para envio manual.');
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') return;
-    downloadServiceOrder(record, client, company, onNotify);
+    downloadServiceOrder(record, client, company);
     onNotify('Não foi possível abrir o compartilhamento. O PDF da OS foi salvo para envio manual.');
   }
 }
 
 function ServicePdfDialog({ record, client, company, onNotify, onClose }: { record: CreatedRecord | null; client?: ClientRecord; company: CompanyProfile; onNotify: (message: string) => void; onClose: () => void }) {
   if (!record) return null;
-  return <Dialog open title={`Documento operacional · ${record.id}`} description="O PDF usa a identificação da empresa ativa e os apontamentos preservados nesta ordem." onClose={onClose}><div className="dialog-body quote-file-options"><button type="button" onClick={() => { onClose(); void shareServiceOrder(record, client, company, onNotify); }}><Icon name="arrow" size={19}/><span><strong>Compartilhar ordem de serviço</strong><small>Abre as opções disponíveis no dispositivo</small></span><Icon name="chevron" size={17}/></button><button type="button" onClick={() => { onClose(); downloadServiceOrder(record, client, company, onNotify); }}><Icon name="document" size={19}/><span><strong>Salvar arquivo PDF</strong><small>Baixa o documento operacional com execução e aceite</small></span><Icon name="chevron" size={17}/></button></div><footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button></footer></Dialog>;
+  return <Dialog open title={`Documento operacional · ${record.id}`} description="O PDF usa a identificação da empresa ativa e os apontamentos preservados nesta ordem." onClose={onClose}><div className="dialog-body quote-file-options"><button type="button" onClick={() => { onClose(); void shareServiceOrder(record, client, company, onNotify); }}><Icon name="arrow" size={19}/><span><strong>Compartilhar ordem de serviço</strong><small>Abre as opções disponíveis no dispositivo</small></span><Icon name="chevron" size={17}/></button><button type="button" onClick={() => { onClose(); downloadServiceOrder(record, client, company); }}><Icon name="document" size={19}/><span><strong>Salvar arquivo PDF</strong><small>Baixa o documento operacional com execução e aceite</small></span><Icon name="chevron" size={17}/></button></div><footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button></footer></Dialog>;
 }
 
 function ServicePdfActions({ record, client, company, onNotify, compact = false }: { record: CreatedRecord; client?: ClientRecord; company: CompanyProfile; onNotify: (message: string) => void; compact?: boolean }) {
@@ -2339,7 +2335,7 @@ function formatName(value: string) {
   }).join('');
 }
 
-function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller, connected, onClose, onNotify, onSave }: { open: boolean; client: ClientRecord | null; clientRecords: ClientRecord[]; sellers: string[]; defaultSeller: string; connected: boolean; onClose: () => void; onNotify: (message: string) => void; onSave: (client: ClientRecord) => Promise<ConfirmedSave> }) {
+function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller, connected, onClose, onSave }: { open: boolean; client: ClientRecord | null; clientRecords: ClientRecord[]; sellers: string[]; defaultSeller: string; connected: boolean; onClose: () => void; onSave: (client: ClientRecord) => Promise<ConfirmedSave> }) {
   const [form, setForm] = useState<ClientRecord>(() => client ? { ...client } : emptyClient(defaultSeller));
   const [error, setError] = useState('');
   const [lookup, setLookup] = useState<{ kind: 'cnpj' | 'cep'; message: string; tone: 'success' | 'error' } | null>(null);
@@ -2421,7 +2417,6 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
         state: found.state ?? current.state,
         city: found.city ?? current.city,
       }));
-      setLookup({ kind: 'cnpj', message: 'Dados da empresa preenchidos. Revise antes de salvar.', tone: 'success' });
       return;
     }
     const controller = new AbortController();
@@ -2479,7 +2474,6 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
         city: address.cidade && state ? `${address.cidade}/${state}` : current.city,
         status: company.situacaoCadastral?.toLocaleUpperCase('pt-BR') === 'ATIVA' ? current.status : 'Revisar cadastro',
       }));
-      setLookup({ kind: 'cnpj', message: 'Dados públicos inseridos. Revise contatos, inscrições e endereço antes de salvar.', tone: 'success' });
     } catch (cause) {
       setLookup({ kind: 'cnpj', message: controller.signal.aborted ? 'A consulta demorou mais que o esperado. Tente novamente.' : cause instanceof Error ? cause.message : 'O serviço de consulta está indisponível.', tone: 'error' });
     } finally {
@@ -2497,7 +2491,6 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
       setSearching(null);
       if (!found) { setLookup({ kind: 'cep', message: 'CEP não encontrado nos dados locais da demonstração.', tone: 'error' }); return; }
       setForm((current) => ({ ...current, cep: formatCep(found.cep), street: found.street, district: found.district, cityName: found.cityName, cityCode: found.cityCode, state: found.state, city: found.city }));
-      setLookup({ kind: 'cep', message: 'Endereço preenchido. Informe número e complemento.', tone: 'success' });
       return;
     }
     const controller = new AbortController();
@@ -2509,7 +2502,6 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
       const state = String(payload.estado ?? '').toLocaleUpperCase('pt-BR');
       const cityName = String(payload.cidade ?? '').trim();
       setForm((current) => ({ ...current, cep: formatCep(payload.cep || digits), street: payload.rua?.trim() || current.street, complement: current.complement || payload.complemento?.trim() || '', district: payload.bairro?.trim() || current.district, cityName: cityName || current.cityName, cityCode: String(payload.codigoIbge ?? '').replace(/\D/g, '').slice(0, 7), state: state || current.state, city: cityName && state ? `${cityName}/${state}` : current.city }));
-      setLookup({ kind: 'cep', message: 'Endereço e município fiscal identificados. Informe o número e revise os dados.', tone: 'success' });
     } catch (cause) {
       setLookup({ kind: 'cep', message: controller.signal.aborted ? 'A consulta demorou mais que o esperado. Tente novamente.' : cause instanceof Error ? cause.message : 'Não foi possível consultar o CEP.', tone: 'error' });
     } finally {
@@ -2549,7 +2541,6 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
     setSaving(false);
     if (result.ok) {
       onClose();
-      onNotify(result.message || 'Cliente salvo no perfil empresarial.');
       return;
     }
     setError(result.message || 'Não foi possível salvar o cliente. Os dados foram mantidos para uma nova tentativa.');
@@ -2606,7 +2597,7 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
   </Dialog>;
 }
 
-function SupplierFormDialog({ open, suppliers, onClose, onNotify, onSave }: { open: boolean; suppliers: SupplierRecord[]; onClose: () => void; onNotify: (message: string) => void; onSave: (supplier: SupplierRecord) => Promise<ConfirmedSave> }) {
+function SupplierFormDialog({ open, suppliers, onClose, onSave }: { open: boolean; suppliers: SupplierRecord[]; onClose: () => void; onSave: (supplier: SupplierRecord) => Promise<ConfirmedSave> }) {
   const [form, setForm] = useState({ name: '', document: '', contactName: '', email: '', phone: '' });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -2631,7 +2622,6 @@ function SupplierFormDialog({ open, suppliers, onClose, onNotify, onSave }: { op
     setSaving(false);
     if (result.ok) {
       onClose();
-      onNotify(result.message || 'Fornecedor salvo no perfil empresarial.');
       return;
     }
     setError(result.message || 'Não foi possível salvar o fornecedor. Os dados foram mantidos para uma nova tentativa.');
@@ -2701,7 +2691,7 @@ function ClientRecordActions({ client, onEdit, onReport, onNewOrder, onNewServic
   const copyData = () => {
     const content = `${client.legalName}\nCNPJ: ${client.document}\n${client.street}, ${client.number}${client.complement ? `, ${client.complement}` : ''}\n${client.city} · CEP ${client.cep}\n${client.email} · ${client.phone}`;
     if (!navigator.clipboard) { onNotify('A cópia não está disponível neste navegador.'); return; }
-    void navigator.clipboard.writeText(content).then(() => onNotify('Dados cadastrais copiados.')).catch(() => onNotify('Não foi possível copiar os dados cadastrais.'));
+    void navigator.clipboard.writeText(content).catch(() => onNotify('Não foi possível copiar os dados cadastrais.'));
   };
   const actions: RecordAction[] = [
     { label: 'Novo pedido', description: 'Inicia um pedido com o cliente já selecionado', icon: 'sale', onSelect: onNewOrder, permission: 'sales.create' },
@@ -2753,7 +2743,7 @@ function ClientsView({ clientRecords, createdRecords, receivableRecords, setting
       </Table>
       {records.length === 0 && <EmptyState title="Nenhum cliente encontrado" description="Ajuste a busca ou o filtro para consultar a carteira."/>}
     </Panel>
-    <ClientFormDialog open={formOpen} client={editingClient} clientRecords={clientRecords} sellers={settings.commercial.sellers} defaultSeller={settings.commercial.defaultSeller} connected={connected} onClose={() => setFormOpen(false)} onNotify={onNotify} onSave={onSave}/>
+    <ClientFormDialog open={formOpen} client={editingClient} clientRecords={clientRecords} sellers={settings.commercial.sellers} defaultSeller={settings.commercial.defaultSeller} connected={connected} onClose={() => setFormOpen(false)} onSave={onSave}/>
     <ClientReportDialog client={reportClient} createdRecords={createdRecords} receivableRecords={receivableRecords} onClose={() => setReportClient(null)} onNewOrder={onNewOrder} onNewService={onNewService} onNewQuote={onNewQuote}/>
   </>;
 }
@@ -3003,7 +2993,7 @@ function StockItemActions({ item, onEntry, onExit, onInventory, onHistory }: { i
   return <RecordActionsDialog title={`Estoque de ${item.sku}`} description={`${item.name}. Saldo físico ${item.current} ${item.unit}, reservado ${item.reserved} ${item.unit} e disponível ${item.available} ${item.unit}.`} actions={actions} triggerLabel={`Ações de estoque de ${item.name}`}/>;
 }
 
-function InventoryView({ catalogRecords, movementRecords, suppliers, settings, initialOrigin = '', onClearOrigin, onSave, onNotify }: { catalogRecords: CatalogItem[]; movementRecords: StockMovementRecord[]; suppliers: SupplierRecord[]; settings: ModuleSettings; initialOrigin?: string; onClearOrigin: () => void; onSave: (item: CatalogItem, movement: StockMovementRecord) => Promise<ConfirmedSave>; onNotify: (message: string) => void }) {
+function InventoryView({ catalogRecords, movementRecords, suppliers, settings, initialOrigin = '', onClearOrigin, onSave }: { catalogRecords: CatalogItem[]; movementRecords: StockMovementRecord[]; suppliers: SupplierRecord[]; settings: ModuleSettings; initialOrigin?: string; onClearOrigin: () => void; onSave: (item: CatalogItem, movement: StockMovementRecord) => Promise<ConfirmedSave> }) {
   const { can } = useContext(PermissionContext);
   const products = catalogRecords.filter((item) => item.category !== 'Serviço' && item.trackStock);
   const [query, setQuery] = useState('');
@@ -3034,7 +3024,7 @@ function InventoryView({ catalogRecords, movementRecords, suppliers, settings, i
   const low = products.filter((item) => stockStatus(item.available, item.minimum) !== 'normal');
   const openMovement = (mode: StockMovementMode, item: CatalogItem | null = null) => { setMovementItem(item); setMovementMode(mode); };
   const openInventory = (item: CatalogItem | null = null) => { setInventoryItem(item); setInventoryOpen(true); };
-  const filterHistory = (item: CatalogItem) => { setMovementQuery(item.sku); onNotify(`Movimentações de ${item.name} filtradas abaixo.`); window.setTimeout(() => document.getElementById('stock-movements')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
+  const filterHistory = (item: CatalogItem) => { setMovementQuery(item.sku); window.setTimeout(() => document.getElementById('stock-movements')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
   return <>
     <PageHeading view="estoque" action={<div className="heading-actions"><button type="button" className="button secondary" disabled={!can('stock.inventory')} onClick={() => openInventory()}>Novo inventário</button><button type="button" className="button primary" disabled={!can('stock.entry')} onClick={() => openMovement('entrada')}><Icon name="plus" size={18}/> Registrar entrada</button></div>}/>
     <div className="scope-note"><Icon name="warning" size={18}/><p><strong>Controle operacional:</strong> pedidos reservam e vendas baixam estoque; entradas e ajustes exigem documento, usuário e saldo resultante. Compras e Financeiro serão origens integradas futuras, sem duplicação nesta tela.</p></div>
@@ -3543,7 +3533,6 @@ function FiscalIssuerRegistryDialog({ open, registry, company, readOnly, onClose
         uf: found.state ?? selected.uf,
         phone: found.phone?.replace(/\D/g, '') ?? selected.phone,
       });
-      setLookup({ kind: 'cnpj', message: 'Dados cadastrais preenchidos. Revise as informações antes de salvar.', tone: 'success' });
     }, 320);
   };
   const searchEstablishmentCep = () => {
@@ -3557,7 +3546,6 @@ function FiscalIssuerRegistryDialog({ open, registry, company, readOnly, onClose
       setSearching(null);
       if (!found) { setLookup({ kind: 'cep', message: 'CEP não encontrado na base local. Você pode preencher o endereço manualmente.', tone: 'error' }); return; }
       updateEstablishment({ cep, street: found.street, district: found.district, city: found.cityName, cityCode: found.cityCode, uf: found.state });
-      setLookup({ kind: 'cep', message: 'Endereço preenchido. Revise e complete número e complemento.', tone: 'success' });
     }, 320);
   };
   const removeEstablishment = () => {
@@ -4470,7 +4458,7 @@ type ReportId = 'comercial' | 'produtos' | 'servicos' | 'estoque' | 'fiscal' | '
 type ReportPeriod = 'all' | '2026-08' | '2026-07';
 type ReportVisualRow = { label: string; detail: string; primary: string; secondary: string; value: number; badge?: string; tone?: 'success' | 'warning' | 'danger' | 'info' | 'neutral' };
 
-function ReportsView({ created, catalogRecords, movementRecords, receivableRecords, fiscalDrafts, onNotify }: { created: CreatedRecord[]; catalogRecords: CatalogItem[]; movementRecords: StockMovementRecord[]; receivableRecords: ReceivableRecord[]; fiscalDrafts: FiscalDraftRecord[]; onNotify: (message: string) => void }) {
+function ReportsView({ created, catalogRecords, movementRecords, receivableRecords, fiscalDrafts }: { created: CreatedRecord[]; catalogRecords: CatalogItem[]; movementRecords: StockMovementRecord[]; receivableRecords: ReceivableRecord[]; fiscalDrafts: FiscalDraftRecord[] }) {
   const { can } = useContext(PermissionContext);
   const [report, setReport] = useState<ReportId>('comercial');
   const [period, setPeriod] = useState<ReportPeriod>('all');
@@ -4533,7 +4521,6 @@ function ReportsView({ created, catalogRecords, movementRecords, receivableRecor
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-    onNotify(`Relatório ${reports.find(([id]) => id === report)?.[1]} exportado em CSV.`);
   };
   return <>
     <PageHeading view="relatorios" action={<div className="period-control"><label>Período<select value={period} onChange={(event) => setPeriod(event.target.value as ReportPeriod)}><option value="all">Todo o histórico</option><option value="2026-08">Agosto de 2026</option><option value="2026-07">Julho de 2026</option></select></label><button type="button" className="button secondary" onClick={exportCsv} disabled={!activeRows.length || !can('reports.export')}><Icon name="document" size={16}/> Exportar CSV</button></div>}/>
@@ -4607,7 +4594,6 @@ function SettingsDialog({ section, settings, onClose, onSave }: { section: Setti
           cityCode: found.cityCode ?? resolveMunicipalityCode({ city: cityName, uf: state, cep, currentCode: current.company.cityCode }),
         } };
       });
-      setLookup({ kind: 'cnpj', message: 'Dados cadastrais preenchidos. Revise as informações antes de salvar.', tone: 'success' });
     }, 320);
   };
   const searchCompanyCep = () => {
@@ -4620,7 +4606,6 @@ function SettingsDialog({ section, settings, onClose, onSave }: { section: Setti
       setSearching(null);
       if (!found) { setLookup({ kind: 'cep', message: 'CEP não encontrado na base local. Você pode preencher o endereço manualmente.', tone: 'error' }); return; }
       setDraft((current) => ({ ...current, company: { ...current.company, cep: formatCep(found.cep), street: found.street, district: found.district, city: found.city, cityCode: found.cityCode } }));
-      setLookup({ kind: 'cep', message: 'Endereço preenchido. Revise e complete número e complemento.', tone: 'success' });
     }, 320);
   };
   const updateCommercial = (patch: Partial<ModuleSettings['commercial']>) => setDraft((current) => ({ ...current, commercial: { ...current.commercial, ...patch } }));
@@ -5479,7 +5464,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         if (timer) window.clearTimeout(timer);
         pendingAccessSaveRef.current.delete(accessSave.requestId);
         setAccessBridgeState((current) => ({ ...current, loading: false, message: accessSave.message }));
-        setToast(accessSave.message);
+        if (!accessSave.ok) setToast(accessSave.message);
         return;
       }
       const fiscalProfileSnapshot = parseFiscalProfileSnapshot(event.data);
@@ -5502,7 +5487,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           setFiscalProfileBridgeState((current) => ({ ...current, available: true, writable: true, loading: false, message: fiscalProfileSave.message, profile: fiscalProfileSave.profile }));
           setModuleSettings((current) => normalizeModuleSettings({ ...current, commercial: { ...current.commercial, defaultFiscalDocument: fiscalProfileSave.profile?.defaultDocument || 'nenhum' }, fiscal: { ...current.fiscal, documentScope: fiscalProfileSave.profile?.documentScope || current.fiscal.documentScope } }, defaultModuleSettings) as ModuleSettings);
         } else setFiscalProfileBridgeState((current) => ({ ...current, loading: false, message: fiscalProfileSave.message }));
-        setToast(fiscalProfileSave.message);
+        if (!fiscalProfileSave.ok) setToast(fiscalProfileSave.message);
         return;
       }
       const fiscalRulesSnapshot = parseFiscalRulesSnapshot(event.data);
@@ -5523,7 +5508,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         } else {
           setFiscalRulesBridgeState((current) => ({ ...current, loading: false, message: fiscalRulesSave.message }));
         }
-        setToast(fiscalRulesSave.message);
+        if (!fiscalRulesSave.ok) setToast(fiscalRulesSave.message);
         return;
       }
       const certificateStatus = parseFiscalCertificateStatusResponse(event.data);
@@ -5676,7 +5661,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         }
         const persisted = event.data.order || event.data.operation;
         if (persisted?.id) setCreated((current) => current.map((record) => record.id === pending.recordId ? { ...record, id: `${persisted.year}/${persisted.number}`, persistence: { operationId: persisted.id, customerId: persisted.customerId || '', version: Number(persisted.version) || 1, status: String(persisted.status || '') } } : record));
-        setToast(String(event.data.message || 'Documento salvo no perfil empresarial.'));
         return;
       }
       if (event.data?.type === OPERATION_SNAPSHOT_TYPE && typeof event.data.ok === 'boolean') {
@@ -5805,9 +5789,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         ...(connected.company ? { company: { ...current.company, ...connected.company } } : {}),
         commercial: { ...current.commercial, reserveStockDefault: connected.stockIntegrated },
       }));
-      setToast(connected.catalogAvailable
-        ? `${connected.items.length} itens carregados de Custos e Precificação. ${connected.stockIntegrated ? 'Saldos do estoque principal conectados.' : 'Configure o local principal para ativar o estoque.'}`
-        : connected.message || 'O perfil empresarial foi carregado, mas o catálogo de Custos está indisponível.');
+      if (!connected.catalogAvailable) setToast(connected.message || 'O catálogo de Custos está indisponível para este perfil.');
     };
     window.addEventListener('message', receive);
     window.parent.postMessage({ type: MANAGEMENT_CATALOG_READY_TYPE }, parentOrigin);
@@ -6659,7 +6641,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       writeCompanyStorage(CATALOG_STORAGE_KEY, JSON.stringify({ version: 3, catalog: next }));
       return next;
     });
-    setToast(`Complementos de ${item.name} salvos neste protótipo.`);
   };
   const saveStockMovement = async (item: CatalogItem, movement: StockMovementRecord): Promise<ConfirmedSave> => {
     if (managementCatalogBridge) {
@@ -7311,7 +7292,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             initialOrigin={stockOrigin}
             onClearOrigin={() => setStockOrigin('')}
             onSave={saveStockMovement}
-            onNotify={setToast}
           />
         )}
         {view === 'fiscal' && <FiscalView
@@ -7336,7 +7316,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           onSaveNumbering={persistFiscalNumbering}
         />}
         {view === 'recebimentos' && <ReceivablesView records={receivableRecords} initialOrigin={receivableOrigin} connected={Boolean(managementCatalogBridge)} onReceive={receiveInstallment} onRefund={refundInstallment}/>}
-        {view === 'relatorios' && <ReportsView created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords} onNotify={setToast}/>}
+        {view === 'relatorios' && <ReportsView created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords}/>}
         {view === 'configuracoes' && (
           <SettingsView
             settings={moduleSettings}
@@ -7359,8 +7339,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     </div>
     <NewRecordDialog type={newType} fiscalOrigin={fiscalOrigin} fiscalConfig={currentFiscalConfig} settings={moduleSettings} onClose={() => setNewType(null)} onCreated={createRecord}/>
     <CertificateDigitalDialog open={certificateOpen} company={moduleSettings.company} bridge={fiscalCertificateBridgeState} onClose={() => setCertificateOpen(false)} onRequestCompanyRegistration={() => { setCertificateOpen(false); setCompanyRegistrationOpen(true); }} onInstall={installProtectedCertificate} onActivate={activateProtectedCertificate}/>
-    <ClientFormDialog open={clientCreateOpen} client={null} clientRecords={clientRecords} sellers={moduleSettings.commercial.sellers} defaultSeller={moduleSettings.commercial.defaultSeller} connected={Boolean(managementCatalogBridge)} onClose={() => setClientCreateOpen(false)} onNotify={setToast} onSave={saveClient}/>
-    <SupplierFormDialog open={supplierCreateOpen} suppliers={supplierRecords} onClose={() => setSupplierCreateOpen(false)} onNotify={setToast} onSave={saveSupplier}/>
+    <ClientFormDialog open={clientCreateOpen} client={null} clientRecords={clientRecords} sellers={moduleSettings.commercial.sellers} defaultSeller={moduleSettings.commercial.defaultSeller} connected={Boolean(managementCatalogBridge)} onClose={() => setClientCreateOpen(false)} onSave={saveClient}/>
+    <SupplierFormDialog open={supplierCreateOpen} suppliers={supplierRecords} onClose={() => setSupplierCreateOpen(false)} onSave={saveSupplier}/>
     <SettingsDialog section={companyRegistrationOpen ? 'empresa' : null} settings={moduleSettings} onClose={() => { setCompanyRegistrationOpen(false); setCertificateOpen(true); }} onSave={(next) => { if (!saveModuleSettings(next)) return; setCompanyRegistrationOpen(false); setCertificateOpen(true); }}/>
     {toast && <div className="toast" role="status"><Icon name="check" size={18}/><span>{toast}</span><button type="button" onClick={() => setToast('')} aria-label="Fechar mensagem"><Icon name="close" size={16}/></button></div>}
   </div></PermissionContext.Provider>;

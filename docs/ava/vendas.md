@@ -1,6 +1,42 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.44.0.42 -->
+<!-- ava-version: 1.44.0.53 -->
+
+> Revisão 1.44.0.53: novo visual do modelo Excel de catálogos na Gestão Web;
+> sem impacto operacional no Vendas Mobile.
+
+> Revisão 1.44.0.52: ajuste visual dos botões de importação na Gestão Web;
+> sem impacto operacional no Vendas Mobile.
+
+> Revisão 1.44.0.51: produtos importados sem preço ficam fora do Vendas até
+> a conclusão do cadastro na Gestão Web. Códigos ausentes são gerados para o
+> novo catálogo; sem alteração operacional no Vendas Mobile.
+
+> Revisão 1.44.0.50: a importação de produtos para um novo catálogo ocorre na
+> Gestão Web. Produtos ativos e disponíveis de catálogos ativos passam a
+> compor o Vendas; a importação não cria insumos nem altera o fluxo mobile.
+
+> Revisão 1.44.0.49: ajuste visual da tabela de Custos na Gestão Web; sem
+> impacto operacional no Vendas Mobile.
+
+> Revisão 1.44.0.48: opções do filtro de catálogos de Custos na Gestão Web;
+> sem impacto operacional no Vendas Mobile.
+
+> Revisão 1.44.0.47: filtro de catálogos da lista de Custos na Gestão Web;
+> sem impacto operacional no Vendas Mobile.
+
+> Revisão 1.44.0.46: ajuste de pontuação no título de Custos e Precificação;
+> sem impacto operacional no Vendas Mobile.
+
+> Revisão 1.44.0.45: a redução de avisos rotineiros nos módulos Vendas e
+> Serviços e Custos e Precificação não altera o Vendas Mobile.
+
+> Revisão 1.44.0.44: a ativação e desativação direta dos catálogos na Gestão
+> Web não altera o uso do Vendas Mobile; nenhum aviso novo foi incluído.
+
+> Revisão 1.44.0.43: o Vendas reúne os produtos de todos os catálogos ativos
+> do perfil empresarial. Ativar outro não desativa os anteriores; desativar
+> retira apenas o catálogo escolhido, preservando produtos e histórico.
 <!-- avantavendas-asset-revision: 164 -->
 
 > Revisão 1.44.0.42: a conexão OAuth do Mercado Livre pertence à Gestão Web e

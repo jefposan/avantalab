@@ -48,12 +48,12 @@ export function createPostgresCommercialCatalogRepository({ pool } = {}) {
     async list({ companyId, priceTableId = '' } = {}) {
       const [catalogResult, tableResult] = await Promise.all([
         pool.query(`select id from public.vendas_mobile_catalogos
-          where empresa_id=$1 and ativo=true order by criado_em,id limit 1`, [companyId]),
+          where empresa_id=$1 and ativo=true order by padrao desc,criado_em,id`, [companyId]),
         pool.query(`select id,nome,padrao from public.custos_tabelas_preco
           where empresa_id=$1 and ativo=true order by padrao desc,nome,id`, [companyId]),
       ]);
-      const catalog = catalogResult.rows?.[0];
-      if (!catalog) return null;
+      const catalogIds = (catalogResult.rows || []).map((row) => clean(row.id, 36));
+      if (!catalogIds.length) return null;
       const tables = (tableResult.rows || []).map((row) => Object.freeze({ id: clean(row.id, 36), nome: clean(row.nome, 120), padrao: row.padrao === true }));
       const table = tables.find((row) => row.id === priceTableId) || tables.find((row) => row.padrao) || tables[0] || null;
       const products = await pool.query(`
@@ -62,9 +62,9 @@ export function createPostgresCommercialCatalogRepository({ pool } = {}) {
           cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,
           nbs,item_lc116,municipio_prestacao,aliquota_iss,atualizado_em
         from public.vendas_mobile_catalogo_produtos
-        where catalogo_id=$1 and ativo=true and disponivel_catalogo=true
-        order by nome,id limit 500
-      `, [catalog.id]);
+        where catalogo_id=any($1::uuid[]) and ativo=true and disponivel_catalogo=true
+        order by nome,id
+      `, [catalogIds]);
       let prices = new Map();
       if (table && !table.padrao) {
         const rows = await pool.query(`select produto_id,preco from public.custos_tabela_preco_itens
@@ -77,7 +77,7 @@ export function createPostgresCommercialCatalogRepository({ pool } = {}) {
         somenteLeitura: true,
         estoqueIntegrado: false,
         empresaId: clean(companyId, 36),
-        catalogoId: clean(catalog.id, 36),
+        catalogoId: catalogIds[0],
         tabelaPreco: table,
         tabelasDisponiveis: Object.freeze(tables),
         itens: Object.freeze((products.rows || []).map((row) => mapItem(row, table?.padrao ? null : prices.get(clean(row.id, 36))))),

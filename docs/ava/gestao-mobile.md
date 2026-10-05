@@ -1,6 +1,40 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.44.0.42 -->
+<!-- ava-version: 1.44.0.53 -->
+
+> Revisão 1.44.0.53: novo visual do modelo Excel de catálogos na Gestão Web;
+> sem impacto operacional neste aplicativo.
+
+> Revisão 1.44.0.52: ajuste visual de botões na Gestão Web; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.44.0.51: campos opcionais e códigos automáticos da importação de
+> catálogos são ajustes da Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.44.0.50: importação de produtos ao criar catálogo é exclusiva
+> de Custos e Precificação na Gestão Web; sem impacto operacional no mobile.
+
+> Revisão 1.44.0.49: ajuste visual da tabela de Custos na Gestão Web; sem
+> impacto operacional na Gestão Mobile.
+
+> Revisão 1.44.0.48: simplificação do filtro de catálogos restrita a Custos
+> e Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.44.0.47: filtro de catálogos alterado somente em Custos e
+> Precificação na Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.44.0.46: ajuste de pontuação no título de Custos e Precificação
+> da Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.44.0.45: a redução de avisos rotineiros é restrita aos módulos
+> Vendas e Serviços e Custos e Precificação na Gestão Web; sem impacto
+> operacional na Gestão Mobile.
+
+> Revisão 1.44.0.44: a retirada dos avisos redundantes da gestão de catálogos
+> na Web não altera o fluxo da Gestão Mobile.
+
+> Revisão 1.44.0.43: vários catálogos podem ficar ativos no Vendas ao mesmo
+> tempo; a gestão deles continua na Gestão Web, sem novo fluxo na Gestão Mobile.
 
 > Revisão 1.44.0.42: a conexão OAuth do Mercado Livre pertence à Gestão Web e
 > não altera a Ava Mobile.

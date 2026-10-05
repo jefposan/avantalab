@@ -1,6 +1,70 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.44.0.42 -->
+<!-- ava-version: 1.44.0.53 -->
+
+> Revisão 1.44.0.53: o modelo Excel de **Custos e Precificação > Catálogos >
+> Novo catálogo** ganhou identidade visual AvantaLab. A aba **Produtos**, os
+> 25 cabeçalhos e as regras de importação permanecem iguais; sem mudança no
+> procedimento orientado pela Ava.
+
+> Revisão 1.44.0.52: os botões de baixar modelo e importar produtos no card de
+> novo catálogo foram padronizados visualmente; sem alteração operacional na
+> orientação da Ava.
+
+> Revisão 1.44.0.51: na planilha de **Novo catálogo**, só **Nome** é
+> obrigatório. As demais colunas ou células podem ficar vazias. Se **Código
+> interno** faltar, o banco gera uma sequência exclusiva do catálogo sem
+> repetir códigos do perfil. A prévia mostra quantos códigos serão gerados.
+> Produto sem preço positivo não é disponibilizado no Vendas; sem NCM ou
+> unidade tributável não é habilitado para uso fiscal. Complete os campos
+> depois em **Produtos e serviços**. Salvar sem composição mantém o custo
+> importado.
+
+> Revisão 1.44.0.50: em **Custos e Precificação > Catálogos > Novo
+> catálogo**, baixe o modelo Excel, preencha a aba **Produtos** sem alterar os
+> cabeçalhos e importe o arquivo. A prévia mostra quantos itens foram validados
+> e eventuais erros por linha. Só **Criar com produtos** grava o catálogo e os
+> itens juntos; insumos/composições não são importados. Fornecedor deve usar o
+> código de um cadastro ativo do mesmo perfil empresarial. As colunas de
+> situação aceitam **Sim** ou **Não**; a prévia mostra quantos produtos entrarão
+> no Vendas.
+
+> Revisão 1.44.0.49: a tabela de **Produtos e serviços** mantém a mesma grade
+> de colunas e altura de linhas em todos os catálogos; textos longos podem
+> aparecer abreviados na célula, com conteúdo completo ao passar o cursor.
+> Sem mudança no cadastro ou no filtro.
+
+> Revisão 1.44.0.48: o filtro de **Produtos e serviços** oferece **Todos os
+> catálogos** e somente catálogos ativos, exibidos apenas pelo nome. Se um
+> catálogo escolhido for desativado, o filtro retorna a **Todos os catálogos**
+> e limpa a seleção em lote; cadastros não são apagados.
+
+> Revisão 1.44.0.47: em **Custos e Precificação > Produtos e serviços**, o
+> seletor da lista inicia em **Todos os catálogos** e filtra itens e contagens
+> pelo catálogo escolhido. Ele não define o vínculo de novos cadastros: no
+> formulário, escolha o catálogo no campo **Catálogo**. Trocar o filtro limpa
+> a seleção em lote anterior.
+
+> Revisão 1.44.0.46: o título de composição na visão geral de Custos e
+> Precificação ganhou pontuação para separar rótulo e nome do produto; sem
+> impacto operacional na orientação da Ava.
+
+> Revisão 1.44.0.45: em **Custos e Precificação** e **Vendas e Serviços**,
+> ações rotineiras concluídas aparecem no estado da tela, sem avisos extras de
+> sucesso. A Ava deve orientar pelo resultado visível e continuar explicando
+> falhas, validações e operações fiscais ou financeiras que exigem atenção.
+
+> Revisão 1.44.0.44: em **Custos e Precificação > Catálogos** e em **Conteúdo
+> AvantaVendas > Gerenciar catálogos**, **Ativar** e **Desativar** são ações
+> diretas, sem confirmação ou aviso de sucesso. O estado atualizado aparece
+> no próprio card; falhas continuam sendo informadas.
+
+> Revisão 1.44.0.43: em **Custos e Precificação > Catálogos** e **Conteúdo
+> AvantaVendas > Produtos > Gerenciar catálogos**, todos os catálogos com borda
+> verde e selo **Ativo no Vendas** abastecem o Vendas ao mesmo tempo. **Ativar**
+> acrescenta o catálogo sem desativar os outros; **Desativar** retira somente
+> o escolhido. Sem nenhum ativo, o cadastro de novos produtos em Conteúdo
+> AvantaVendas fica indisponível até uma ativação. Os dados são preservados.
 
 > Revisão 1.44.0.42: em **Anúncios em marketplaces**, Gestor Master ou
 > Administrador usa **Conectar conta** para entrar na página oficial do Mercado
@@ -18,7 +82,7 @@
 
 > Revisão 1.44.0.39: em **Custos e Precificação > Produtos e serviços**, o
 > seletor ao lado de **Produtos/Serviços** define o catálogo de novos
-> cadastros; por padrão, ele usa o catálogo atual do Vendas. No editor, o
+> cadastros; por padrão, ele usa o catálogo de referência para novos itens. No editor, o
 > campo **Catálogo** também permite alterar o destino de um item. Para muitos
 > itens, selecione-os na lista, escolha **Mover para catálogo**, informe o
 > destino e confirme. A movimentação preserva cadastro, preços, imagens,
@@ -183,7 +247,7 @@
 
 > Revisão 1.43.0.03: em **Conteúdo AvantaVendas > Produtos**, **Gerar ZIP**
 > pede a escolha do catálogo quando houver mais de um ativo. A exportação não
-> troca o catálogo atual entregue ao Vendas; o pacote identifica a sua origem.
+> altera os catálogos ativos no Vendas; o pacote identifica a sua origem.
 
 > Revisão 1.43.0.02: a barra de ações de **Conteúdo AvantaVendas > Produtos**
 > foi compactada e padronizada. Não há mudança no fluxo de criar, gerir ou
@@ -191,15 +255,15 @@
 
 > Revisão 1.43.0.01: em **Conteúdo AvantaVendas > Produtos**, use **Novo
 > catálogo** para criar um catálogo próprio ou **Gerenciar catálogos** para
-> renomear, ativar, desativar e escolher o catálogo atual do Vendas. A lista
-> de produtos e o pacote ZIP passam a mostrar esse catálogo atual. A mesma
+> renomear, ativar e desativar. A lista de produtos reúne os catálogos ativos;
+> o pacote ZIP exporta somente o catálogo escolhido. A mesma
 > gestão permanece acessível em **Custos e Precificação > Catálogos**; fonte
 > externa e catálogo de Custos continuam independentes e nada é apagado.
 
 > Revisão 1.43.0: em **Custos e Precificação > Catálogos**, crie catálogos
 > independentes, edite seu nome e, quando for próprio, o código interno. Use
-> **Tornar atual** para definir o catálogo usado no Vendas. Qualquer catálogo
-> pode ser ativado ou desativado; ao desativar o atual, outro ativo assume.
+> A antiga ação **Tornar atual** foi substituída por **Ativar**: vários
+> catálogos ativos podem abastecer o Vendas; desativar um preserva os demais.
 > Nenhum item, preço, imagem ou histórico é apagado. O catálogo vindo de
 > Custos e a fonte externa continuam identificados e separados.
 

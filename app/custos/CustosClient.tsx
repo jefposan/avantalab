@@ -87,7 +87,7 @@ export default function CustosClient({ companyId, initialNewType, returnTo, init
       });
       const json = await resposta.json().catch(() => ({}));
       if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível atualizar o modo visual.');
-      setMensagem(temaEscuro ? 'Modo escuro ativado para este perfil.' : 'Modo claro ativado para este perfil.');
+      setMensagem('');
     } catch (falha) {
       setAccess({ ...access, empresa: { ...access.empresa, temaEscuro: temaEscuroAnterior } });
       setMensagem(falha instanceof Error ? falha.message : 'Não foi possível atualizar o modo visual.');

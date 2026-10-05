@@ -40,11 +40,13 @@ const paginaVendas = readFileSync('app/vendas/page.tsx', 'utf8');
 const carregamentoDadosModulo = readFileSync('app/components/CarregamentoDadosModulo.tsx', 'utf8');
 const tiposCustos = readFileSync('app/custos/types.ts', 'utf8');
 const catalogoVendasServidor = readFileSync('app/modules/vendas/services/catalogo-servidor.ts', 'utf8');
+const catalogoConteudoVendas = readFileSync('app/components/CatalogoProdutosVendas.tsx', 'utf8');
 const catalogoVendas = readFileSync('app/modules/vendas/catalog.ts', 'utf8');
 const migracaoInsumoFiscal = readFileSync('supabase/migrations/20260923173000_insumos_itens_fiscais.sql', 'utf8');
 const migracaoCatalogosSeparados = readFileSync('supabase/migrations/20260924100000_separar_catalogo_externo_e_local_custos.sql', 'utf8');
 const migracaoAcoesLoteCatalogo = readFileSync('supabase/migrations/20260924103000_acoes_lote_catalogo_custos.sql', 'utf8');
 const migracaoCatalogosGerenciaveis = readFileSync('supabase/migrations/20260924110000_catalogos_empresa_gerenciaveis.sql', 'utf8');
+const migracaoAtivacaoCatalogo = readFileSync('supabase/migrations/20261004110000_ativacao_catalogo_vendas_explicita.sql', 'utf8');
 const migracaoMoverCatalogo = readFileSync('supabase/migrations/20261003150000_mover_produtos_entre_catalogos_custos.sql', 'utf8');
 const fornecedoresCustos = readFileSync('app/api/modulos/custos/fornecedores/route.ts', 'utf8');
 
@@ -134,13 +136,37 @@ test('Catálogo e Custos usam o mesmo cadastro mestre e a mesma inativação', (
   assert.match(migracao, /disponivel_catalogo boolean not null default true/);
 });
 
+test('ações da planilha usam a mesma tipografia e área de toque no novo catálogo', () => {
+  assert.match(workspace, /<Icon name="download" size=\{18\} \/>Baixar modelo Excel/);
+  assert.match(workspace, /<Icon name="upload" size=\{18\} \/>\{lendoArquivo/);
+  assert.match(estilos, /\.catalogImportActions :is\(a,button\)\{[^}]*min-height:44px;[^}]*font-family:var\(--av-font-family\);font-size:14px;font-weight:500/);
+  assert.match(estilos, /\.catalogImportActions a:focus-visible\{outline:3px/);
+  assert.match(estilos, /@media\(max-width:560px\)\{\.catalogImportActions\{display:grid;grid-template-columns:1fr\}/);
+});
+
 test('empresa organiza múltiplos catálogos e escolhe o destino de cada produto', () => {
   assert.match(workspace, /rotulo: 'Catálogos'/);
   assert.match(workspace, /title="Catálogos"/);
   assert.match(workspace, /Novo catálogo/);
-  assert.match(workspace, /Tornar atual/);
+  assert.match(workspace, /void ativarCatalogo\(catalogo\)}>Ativar/);
+  assert.doesNotMatch(workspace, /Tornar atual/);
+  assert.match(workspace, /catalogo\.ativo \? styles\.catalogCardCurrent : styles\.catalogCardInactive/);
+  assert.match(workspace, /Ativo no Vendas/);
+  assert.match(estilos, /\.catalogCardCurrent\{border:4px solid var\(--success\)/);
   assert.match(workspace, /Catálogos da empresa/);
-  assert.match(workspace, /Catálogo para novo cadastro/);
+  assert.match(workspace, /<option value="">Todos os catálogos<\/option>/);
+  assert.match(workspace, /aria-label="Filtrar por catálogo"/);
+  assert.match(workspace, /catalogos\.filter\(\(catalogo\) => catalogo\.ativo\)\.map\(\(catalogo\) => <option key=\{catalogo\.id\} value=\{catalogo\.id\}>\{catalogo\.nome\}<\/option>\)/);
+  assert.match(workspace, /catalogo\.id === catalogoFiltroId && catalogo\.ativo/);
+  assert.match(workspace, /produto\.catalogo_id === catalogoFiltroId/);
+  assert.match(workspace, /const listaFiltrada = produtosCatalogo\.filter/);
+  assert.match(workspace, /produtosCatalogo\.filter\(\(produto\) => produto\.tipo_item === 'produto'\)\.length/);
+  assert.match(workspace, /setCatalogoFiltroId\(evento\.target\.value\); setProdutosSelecionados\(\[\]\)/);
+  assert.match(workspace, /<table className=\{styles\.catalogProductsTable\}><colgroup>(<col \/>){8}<\/colgroup>/);
+  assert.match(estilos, /\.catalogProductsTable\{min-width:1060px;table-layout:fixed\}/);
+  assert.match(estilos, /\.catalogProductsTable td\{height:48px\}/);
+  assert.match(workspace, /const novo = novoProduto\(tipo, catalogoId\)/);
+  assert.doesNotMatch(workspace, /Catálogo para novo cadastro/);
   assert.match(workspace, /label="Catálogo"/);
   assert.match(workspace, /mover_catalogo/);
   assert.match(workspace, /moverProdutosParaCatalogo/);
@@ -152,7 +178,27 @@ test('empresa organiza múltiplos catálogos e escolhe o destino de cada produto
   assert.match(migracaoCatalogosGerenciaveis, /custos_salvar_catalogo_empresa_rpc/);
   assert.match(migracaoCatalogosGerenciaveis, /custos_alterar_status_catalogo_empresa_rpc/);
   assert.match(migracaoCatalogosGerenciaveis, /custos_definir_catalogo_atual_rpc/);
-  assert.match(catalogoVendasServidor, /order\('padrao', \{ ascending: false \}\)/);
+  assert.match(catalogoVendasServidor, /\.eq\('ativo', true\)\.order\('padrao'/);
+  assert.match(catalogoVendasServidor, /\.in\('catalogo_id', catalogoIds\)/);
+  assert.doesNotMatch(catalogoVendasServidor, /\.eq\('padrao', true\)/);
+  assert.match(migracaoAtivacaoCatalogo, /set ativo = true, padrao = true, atualizado_em = now\(\)/);
+  assert.match(migracaoAtivacaoCatalogo, /set ativo = coalesce\(p_ativo, false\)/);
+  assert.doesNotMatch(migracaoAtivacaoCatalogo, /return public\.custos_definir_catalogo_atual_rpc/);
+  assert.match(migracaoAtivacaoCatalogo, /catalogo\.empresa_id = p_empresa_id and catalogo\.ativo = true/);
+  assert.match(catalogoConteudoVendas, /p_ativo: true/);
+  assert.match(catalogoConteudoVendas, /Ativo no Vendas/);
+  assert.match(catalogoConteudoVendas, /Nenhum catálogo está ativo no Vendas/);
+  assert.match(catalogoConteudoVendas, /disabled=\{carregando \|\| salvando \|\| !haCatalogoAtivo\}/);
+});
+
+test('ativar e desativar catálogos atualiza os cards sem avisos ou confirmação redundante', () => {
+  const gestaoCatalogos = workspace.split('function CatalogosView')[1]?.split('function ProdutosView')[0] || '';
+  assert.match(gestaoCatalogos, /void desativarCatalogo\(catalogo\)/);
+  assert.match(gestaoCatalogos, /void ativarCatalogo\(catalogo\)/);
+  assert.doesNotMatch(gestaoCatalogos, /confirmarStatus|ModalConfirmacao|onMensagem|catalogGuidance/);
+  assert.match(gestaoCatalogos, /onErro\(erroTexto\(falha\)\)/);
+  assert.match(catalogoConteudoVendas, /void desativarCatalogo\(catalogo\)/);
+  assert.doesNotMatch(catalogoConteudoVendas, /catalogoStatusPendente|confirmarStatusCatalogo/);
 });
 
 test('movimentação entre catálogos preserva o cadastro e protege empresa, destino e códigos', () => {
@@ -227,9 +273,10 @@ test('composição pesquisa recursos e aplica a fração selecionada ao custo', 
 
 test('produto conserva apenas a identificação fiscal e delega a tributação à empresa', () => {
   assert.match(workspace, /Identificação fiscal do produto/);
-  assert.match(workspace, /NCM \*/);
-  assert.match(workspace, /Unidade tributável \*/);
-  assert.match(workspace, /Os demais tributos seguem o enquadramento da empresa/);
+  assert.match(workspace, /<Field label="NCM">/);
+  assert.match(workspace, /<Field label="Unidade tributável">/);
+  assert.match(workspace, /NCM e unidade tributável podem ser completados depois/);
+  assert.match(workspace, /necessários para habilitar o item na emissão fiscal/);
   assert.doesNotMatch(workspace, /<Field label="CFOP padrão">/);
   assert.doesNotMatch(workspace, /<Field label="CST ICMS">/);
 });
@@ -237,7 +284,7 @@ test('produto conserva apenas a identificação fiscal e delega a tributação �
 test('insumo fiscal preserva uma identidade com composição, estoque e emissão', () => {
   assert.match(workspace, /Habilitar como item fiscal/);
   assert.match(workspace, /Dados do item para NF-e/);
-  assert.match(workspace, /O CFOP e a natureza serão escolhidos somente na emissão/);
+  assert.match(workspace, /CFOP e natureza pertencem à emissão/);
   assert.match(workspace, /disponivel_catalogo: base\.id \? base\.disponivel_catalogo : false/);
   assert.match(workspace, /habilitado_fiscal: true/);
   assert.match(tiposCustos, /produto_fiscal_id/);
@@ -280,14 +327,17 @@ test('catálogos mantêm a origem e a publicação pode ser administrada em lote
   assert.match(workspace, /rotulo: 'Ativar cadastro'/);
   assert.match(workspace, /rotulo: 'Inativar cadastro'/);
   assert.match(workspace, /Mover' : 'Confirmar'/);
+  assert.match(workspace, /styles\.batchActionButton/);
   assert.match(workspace, /<th>Catálogo<\/th>/);
-  assert.match(workspace, /produto\.disponivel_catalogo \? 'Disponível' : 'Em estudo'/);
-  assert.match(workspace, /className=\{styles\.batchActionHelp\}[\s\S]*className=\{styles\.batchActionField\}/);
+  assert.match(workspace, /catalogoProduto\?\.ativo \? \(produto\.disponivel_catalogo \? 'No Vendas' : 'Em estudo'\) : 'Catálogo desativado'/);
+  assert.doesNotMatch(workspace, /batchActionHelp|ajuda-acao-lote/);
   assert.match(workspace, /className=\{styles\.batchSelectionCount\}><b>\{quantidadeSelecionada\}<\/b><span>/);
   assert.match(estilos, /\.batchActions select option\{font-size:14px\}/);
-  assert.match(estilos, /grid-template-columns:104px minmax\(220px,1fr\) minmax\(260px,340px\) auto auto/);
+  assert.match(estilos, /grid-template-columns:104px minmax\(250px,1fr\) auto auto/);
+  assert.match(estilos, /\.batchSelectionCount\{min-width:104px;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px/);
   assert.match(estilos, /\.batchSelectionCount b\{color:var\(--text\);font-size:18px/);
-  assert.match(estilos, /\.batchActionHelp\{min-height:54px;display:flex/);
+  assert.match(estilos, /\.batchActionsMove\{grid-template-columns:104px minmax\(220px,1fr\) minmax\(220px,1fr\) auto auto/);
+  assert.match(estilos, /\.batchActionButton\{min-width:116px\}/);
 });
 
 test('Gestão mantém o Dashboard montado e recebe o retorno seguro do módulo embutido', () => {

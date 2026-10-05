@@ -23,9 +23,9 @@ export async function carregarCatalogoCustosParaVendas({
   /** A emissão pode enxergar insumos fiscais sem expô-los à venda comum. */
   incluirItensFiscais?: boolean;
 }) {
-  const [{ data: custos }, { data: catalogo, error: erroCatalogo }, { data: tabelas, error: erroTabelas }] = await Promise.all([
+  const [{ data: custos }, { data: catalogos, error: erroCatalogo }, { data: tabelas, error: erroTabelas }] = await Promise.all([
     db.from('empresa_modulos').select('ativo,expira_em').eq('empresa_id', empresaId).eq('modulo_id', 'custos').maybeSingle(),
-    db.from('vendas_mobile_catalogos').select('id').eq('empresa_id', empresaId).eq('ativo', true).order('padrao', { ascending: false }).order('criado_em').limit(1).maybeSingle(),
+    db.from('vendas_mobile_catalogos').select('id,padrao').eq('empresa_id', empresaId).eq('ativo', true).order('padrao', { ascending: false }).order('criado_em'),
     db.from('custos_tabelas_preco').select('id,nome,padrao').eq('empresa_id', empresaId).eq('ativo', true).order('padrao', { ascending: false }).order('nome'),
   ]);
   const expiraEm = custos?.expira_em ? new Date(custos.expira_em) : null;
@@ -33,7 +33,8 @@ export async function carregarCatalogoCustosParaVendas({
     throw new ErroCatalogoVendas('Custos e Precificação precisa estar ativo neste perfil.', 403);
   }
   if (erroCatalogo || erroTabelas) throw new ErroCatalogoVendas('Não foi possível consultar o catálogo mestre.', 500);
-  if (!catalogo) throw new ErroCatalogoVendas('Este perfil ainda não possui um catálogo mestre ativo.', 404);
+  if (!catalogos?.length) throw new ErroCatalogoVendas('Ative ao menos um catálogo em Custos e Precificação para usá-lo no Vendas.', 409);
+  const catalogoIds = catalogos.map((catalogo) => String(catalogo.id));
 
   const tabelasAtivas = (tabelas || []).map((tabela) => ({
     id: String(tabela.id),
@@ -44,17 +45,25 @@ export async function carregarCatalogoCustosParaVendas({
     || tabelasAtivas.find((item) => item.padrao)
     || tabelasAtivas[0]
     || null;
-  let consultaProdutos = db
-    .from('vendas_mobile_catalogo_produtos')
-    .select(CAMPOS_ITEM)
-    .eq('catalogo_id', catalogo.id)
-    .eq('ativo', true)
-    .order('nome');
-  consultaProdutos = incluirItensFiscais
-    ? consultaProdutos.or('disponivel_catalogo.eq.true,habilitado_fiscal.eq.true')
-    : consultaProdutos.eq('disponivel_catalogo', true);
-  const { data: produtos, error: erroProdutos } = await consultaProdutos;
-  if (erroProdutos) throw new ErroCatalogoVendas('Não foi possível carregar os produtos e serviços publicados.', 500);
+  const produtos: Record<string, unknown>[] = [];
+  const tamanhoPagina = 1000;
+  for (let inicio = 0; ; inicio += tamanhoPagina) {
+    let consultaProdutos = db
+      .from('vendas_mobile_catalogo_produtos')
+      .select(CAMPOS_ITEM)
+      .in('catalogo_id', catalogoIds)
+      .eq('ativo', true)
+      .order('nome')
+      .order('id')
+      .range(inicio, inicio + tamanhoPagina - 1);
+    consultaProdutos = incluirItensFiscais
+      ? consultaProdutos.or('disponivel_catalogo.eq.true,habilitado_fiscal.eq.true')
+      : consultaProdutos.eq('disponivel_catalogo', true);
+    const { data: paginaProdutos, error: erroProdutos } = await consultaProdutos;
+    if (erroProdutos) throw new ErroCatalogoVendas('Não foi possível carregar os produtos e serviços publicados.', 500);
+    produtos.push(...(paginaProdutos || []));
+    if (!paginaProdutos || paginaProdutos.length < tamanhoPagina) break;
+  }
 
   const { data: localEstoque, error: erroLocalEstoque } = await db
     .from('vendas_estoque_locais')
@@ -67,32 +76,42 @@ export async function carregarCatalogoCustosParaVendas({
     .maybeSingle();
   if (erroLocalEstoque) throw new ErroCatalogoVendas('Não foi possível consultar o local principal de estoque.', 500);
   let saldos: Record<string, Record<string, unknown>> = {};
-  if (localEstoque && (produtos || []).length) {
-    const { data: linhasSaldo, error: erroSaldos } = await db
-      .from('vendas_estoque_saldos')
-      .select('produto_id,saldo_fisico,saldo_reservado,estoque_minimo,permite_negativo')
-      .eq('empresa_id', empresaId)
-      .eq('local_id', localEstoque.id);
-    if (erroSaldos) throw new ErroCatalogoVendas('Não foi possível consultar os saldos de estoque.', 500);
-    saldos = Object.fromEntries((linhasSaldo || []).map((saldo) => [String(saldo.produto_id), saldo as Record<string, unknown>]));
+  if (localEstoque && produtos.length) {
+    for (let inicio = 0; ; inicio += tamanhoPagina) {
+      const { data: linhasSaldo, error: erroSaldos } = await db
+        .from('vendas_estoque_saldos')
+        .select('produto_id,saldo_fisico,saldo_reservado,estoque_minimo,permite_negativo')
+        .eq('empresa_id', empresaId)
+        .eq('local_id', localEstoque.id)
+        .order('produto_id')
+        .range(inicio, inicio + tamanhoPagina - 1);
+      if (erroSaldos) throw new ErroCatalogoVendas('Não foi possível consultar os saldos de estoque.', 500);
+      Object.assign(saldos, Object.fromEntries((linhasSaldo || []).map((saldo) => [String(saldo.produto_id), saldo as Record<string, unknown>])));
+      if (!linhasSaldo || linhasSaldo.length < tamanhoPagina) break;
+    }
   }
 
   let precos: Record<string, number> = {};
   if (tabela && !tabela.padrao) {
-    const { data: itensPreco, error } = await db
-      .from('custos_tabela_preco_itens')
-      .select('produto_id,preco')
-      .eq('tabela_preco_id', tabela.id);
-    if (error) throw new ErroCatalogoVendas('Não foi possível carregar a tabela de preços selecionada.', 500);
-    precos = Object.fromEntries((itensPreco || []).map((item) => [String(item.produto_id), Number(item.preco) || 0]));
+    for (let inicio = 0; ; inicio += tamanhoPagina) {
+      const { data: itensPreco, error } = await db
+        .from('custos_tabela_preco_itens')
+        .select('produto_id,preco')
+        .eq('tabela_preco_id', tabela.id)
+        .order('produto_id')
+        .range(inicio, inicio + tamanhoPagina - 1);
+      if (error) throw new ErroCatalogoVendas('Não foi possível carregar a tabela de preços selecionada.', 500);
+      Object.assign(precos, Object.fromEntries((itensPreco || []).map((item) => [String(item.produto_id), Number(item.preco) || 0])));
+      if (!itensPreco || itensPreco.length < tamanhoPagina) break;
+    }
   }
 
   return montarCatalogoVendasDTO({
     empresaId,
-    catalogoId: String(catalogo.id),
+    catalogoId: catalogoIds[0],
     tabela,
     tabelas: tabelasAtivas,
-    produtos: (produtos || []).map((produto) => {
+    produtos: produtos.map((produto) => {
       const saldo = saldos[String(produto.id)] || {};
       return {
         ...produto,

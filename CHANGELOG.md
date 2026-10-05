@@ -1,5 +1,73 @@
 # Changelog
 
+## 1.44.0.53 - 2026-10-05
+- **Modelo Excel do novo catálogo**: cabeçalho azul-escuro institucional,
+  logo oficial, instruções compactas e linhas alternadas. Os 25 campos e a
+  aba Produtos permanecem compatíveis com o importador.
+
+## 1.44.0.52 - 2026-10-05
+- **Ações de importação padronizadas**: Baixar modelo Excel e Importar
+  produtos usam a mesma fonte, altura, espaçamento e ícones claros no card de
+  novo catálogo. Mantêm foco visível e se organizam em coluna no mobile.
+
+## 1.44.0.51 - 2026-10-05
+- **Importação flexível de catálogo**: somente o nome do produto é obrigatório.
+  Colunas e valores opcionais podem faltar; códigos internos vazios recebem
+  sequência própria do catálogo, sem repetir códigos existentes no perfil.
+  Itens sem preço não são publicados e itens sem identificação fiscal não são
+  habilitados para emissão. O editor permite completar o cadastro depois sem
+  zerar o custo importado quando ainda não houver composição de insumos.
+
+## 1.44.0.50 - 2026-10-05
+- **Novo catálogo com produtos por Excel**: o card oferece modelo AvantaLab
+  e importação de até 1.000 produtos, sem insumos. A prévia valida cabeçalho,
+  identificação, NCM, preços, indicadores e duplicidades; a gravação no banco
+  cria catálogo e itens em uma transação, vinculados ao perfil empresarial.
+  Um erro em qualquer item cancela toda a criação.
+
+## 1.44.0.49 - 2026-10-05
+- **Grade estável em Produtos e serviços**: a lista usa a mesma largura de
+  colunas e altura de linhas do catálogo local ao alternar entre catálogos ou
+  visualizar todos. Textos extensos não redimensionam a tabela e ficam
+  disponíveis ao passar o cursor.
+
+## 1.44.0.48 - 2026-10-04
+- **Filtro de catálogos simplificado**: em Produtos e serviços, o seletor
+  oferece “Todos os catálogos” e apenas catálogos ativos, identificados só
+  pelo nome. Se o catálogo filtrado for desativado, a lista volta para
+  “Todos os catálogos” e limpa a seleção em lote.
+
+## 1.44.0.47 - 2026-10-04
+- **Filtro de catálogos em Custos**: Produtos e serviços inicia em “Todos os
+  catálogos”; selecionar um catálogo filtra a lista e as contagens de produtos
+  e serviços, inclusive para catálogos inativos. O cadastro novo continua com
+  seu próprio campo de catálogo, sem depender do filtro da lista.
+- **Seleção em lote**: trocar o catálogo visualizado limpa a seleção anterior
+  para não aplicar ações inadvertidamente em itens ocultos pelo filtro.
+
+## 1.44.0.46 - 2026-10-04
+- **Título da composição**: a visão geral de Custos e Precificação exibe
+  “Composição de: Nome” com separação clara entre rótulo e produto.
+
+## 1.44.0.45 - 2026-10-04
+- **Avisos enxutos nos módulos em ajuste**: Custos e Precificação deixa de
+  anunciar operações já refletidas na tela, como salvar cadastros e tabelas,
+  importar/exportar e alterar o tema. Vendas e Serviços dispensa avisos
+  redundantes de consulta, cadastro, cópia, download, exportação e carregamento
+  do catálogo. Erros, validações, estados fiscais e confirmações de ações com
+  risco de perda de dados permanecem.
+
+## 1.44.0.44 - 2026-10-04
+- **Catálogos sem avisos redundantes**: ativar e desativar atualizam o card
+  diretamente, sem confirmação nem mensagem de sucesso. A criação e edição de
+  catálogos também dispensam aviso de sucesso; falhas continuam informadas.
+
+## 1.44.0.43 - 2026-10-04
+- **Catálogos simultâneos no Vendas**: Ativar um catálogo não desativa os
+  anteriores. Todos os ativos recebem borda verde e seus produtos são reunidos
+  no Vendas; Desativar afeta somente o catálogo escolhido. Os desativados ficam
+  visualmente atenuados, sem apagar produtos ou histórico.
+
 ## 1.44.0.42 - 2026-10-04
 - **Conexão Mercado Livre**: o módulo inicia OAuth com PKCE, confere o retorno
   de autorização e grava os tokens cifrados por empresa. Somente Gestor Master

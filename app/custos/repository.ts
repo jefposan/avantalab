@@ -1,4 +1,5 @@
 import { supabase } from '@/app/lib/supabase';
+import type { ProdutoImportadoCatalogo } from './importacao-catalogo';
 import {
   documentoVazio, normalizarDocumento, type CatalogoEmpresa, type DocumentoCustos, type FornecedorCustos, type PrecoTabelaItem,
   type ProdutoCustos, type ResumoImportacaoCadastro, type TabelaPreco,
@@ -92,6 +93,15 @@ export async function salvarCatalogoEmpresa(empresaId: string, catalogo: Partial
     p_nome: String(catalogo.nome || '').trim(), p_codigo: String(catalogo.codigo || '').trim() || null,
   });
   if (error) throw new Error(error.message || 'Não foi possível salvar o catálogo.');
+  return mapearCatalogo(data as unknown as Record<string, unknown>);
+}
+
+export async function criarCatalogoComProdutos(empresaId: string, catalogo: Partial<CatalogoEmpresa>, produtos: ProdutoImportadoCatalogo[]) {
+  const { data, error } = await supabase.rpc('custos_criar_catalogo_com_produtos_rpc', {
+    p_empresa_id: empresaId, p_nome: String(catalogo.nome || '').trim(),
+    p_codigo: String(catalogo.codigo || '').trim() || null, p_produtos: produtos,
+  });
+  if (error) throw new Error(error.message || 'Não foi possível criar o catálogo com os produtos.');
   return mapearCatalogo(data as unknown as Record<string, unknown>);
 }
 

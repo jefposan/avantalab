@@ -61,7 +61,7 @@ const numeroPlanilhaOpcional = (valor: unknown, contexto: string) => {
 const valorLinha = (linha: Record<string, unknown>, cabecalho: string) => linha[cabecalho];
 
 export default function TabelasPrecosView({
-  companyId, catalogoId, produtos, tabelas, precos, podeEditar, onRecarregar, onMensagem, onErro,
+  companyId, catalogoId, produtos, tabelas, precos, podeEditar, onRecarregar, onErro,
 }: {
   companyId: string;
   catalogoId: string;
@@ -70,7 +70,6 @@ export default function TabelasPrecosView({
   precos: PrecoTabelaItem[];
   podeEditar: boolean;
   onRecarregar: () => Promise<void>;
-  onMensagem: (texto: string) => void;
   onErro: (texto: string) => void;
 }) {
   const [tabelaAtivaId, setTabelaAtivaId] = useState(tabelas.find((item) => item.padrao)?.id || tabelas[0]?.id || '');
@@ -155,7 +154,6 @@ export default function TabelasPrecosView({
       XLSX.utils.book_append_sheet(livro, metadados, 'Metadados');
       if (livro.Workbook?.Sheets) livro.Workbook.Sheets.find((item) => item.name === 'Metadados')!.Hidden = 2;
       XLSX.writeFile(livro, `avantalab-produtos-precos-${agora.slice(0, 10)}.xlsx`, { compression: true });
-      onMensagem('Cadastro e tabelas de preços exportados para Excel.');
     } catch (falha) { onErro(falha instanceof Error ? falha.message : 'Não foi possível gerar a planilha.'); }
     finally { setProcessando(false); }
   };
@@ -228,10 +226,9 @@ export default function TabelasPrecosView({
     if (!importacao) return;
     setProcessando(true); onErro('');
     try {
-      const resumo = await importarCadastroProdutosPrecos(companyId, catalogoId, importacao.arquivoNome, importacao.exportadoEm, importacao.produtos, importacao.precos, true);
+      await importarCadastroProdutosPrecos(companyId, catalogoId, importacao.arquivoNome, importacao.exportadoEm, importacao.produtos, importacao.precos, true);
       setImportacao(null);
       await onRecarregar();
-      onMensagem(`${resumo.produtos_criados} produtos criados, ${resumo.produtos_atualizados} atualizados e ${resumo.precos_atualizados} preços processados.`);
     } catch (falha) { onErro(falha instanceof Error ? falha.message : 'Não foi possível aplicar a planilha.'); }
     finally { setProcessando(false); }
   };
@@ -247,7 +244,7 @@ export default function TabelasPrecosView({
           : gerarCodigoTecnicoTabelaPreco(editandoTabela.nome || '', tabelas.map((tabela) => tabela.codigo)),
       });
       setTabelaAtivaId(salva.id); setEditandoTabela(null);
-      await onRecarregar(); onMensagem('Tabela de preços salva.');
+      await onRecarregar();
     } catch (falha) { onErro(falha instanceof Error ? falha.message : 'Não foi possível salvar a tabela.'); }
     finally { setProcessando(false); }
   };
@@ -275,7 +272,7 @@ export default function TabelasPrecosView({
         {!tabelaAtiva.padrao && <button type="button" className={styles.secondaryButton} disabled={!podeEditar} onClick={() => setEditandoTabela(tabelaAtiva)}>Ajustar tabela</button>}
       </div></div>
       <div className={styles.tableWrap}><table><thead><tr><th scope="col">Código</th><th scope="col">Produto ou serviço</th><th scope="col">Preço padrão</th><th scope="col">Preço nesta tabela</th></tr></thead><tbody>
-        {produtosFiltrados.map((produto) => <tr key={produto.id}><td><b>{produto.sku}</b></td><td>{produto.nome}<small>{produto.tipo_item === 'servico' ? 'Serviço' : 'Produto'} · {produto.unidade}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td className={styles.priceEditorCell}><PriceEditor value={precoEfetivoTabela(tabelaAtiva, produto, precos)} disabled={!podeEditar || !tabelaAtiva.ativo || processando} onSave={async (valor) => { try { await salvarPrecoTabela(companyId, tabelaAtiva.id, produto.id, valor); await onRecarregar(); onMensagem(`Preço de ${produto.sku} atualizado.`); } catch (falha) { onErro(falha instanceof Error ? falha.message : 'Não foi possível salvar o preço.'); throw falha; } }} /></td></tr>)}
+        {produtosFiltrados.map((produto) => <tr key={produto.id}><td><b>{produto.sku}</b></td><td>{produto.nome}<small>{produto.tipo_item === 'servico' ? 'Serviço' : 'Produto'} · {produto.unidade}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td className={styles.priceEditorCell}><PriceEditor value={precoEfetivoTabela(tabelaAtiva, produto, precos)} disabled={!podeEditar || !tabelaAtiva.ativo || processando} onSave={async (valor) => { try { await salvarPrecoTabela(companyId, tabelaAtiva.id, produto.id, valor); await onRecarregar(); } catch (falha) { onErro(falha instanceof Error ? falha.message : 'Não foi possível salvar o preço.'); throw falha; } }} /></td></tr>)}
         {!produtosFiltrados.length && <tr><td colSpan={4} className={styles.empty}>Nenhum produto localizado.</td></tr>}
       </tbody></table></div>
     </section> : <section className={styles.panel}><p className={styles.empty}>A tabela padrão ainda não foi preparada.</p></section>}

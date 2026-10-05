@@ -16,6 +16,7 @@ import {
 } from '../../app/modules/vendas/catalog.ts';
 import { parseManagementCatalogMessage } from '../../app/vendas/lib/management-catalog-bridge.mjs';
 import { parseAccessSnapshotMessage } from '../../app/vendas/lib/access-settings-bridge.mjs';
+import { createPostgresCommercialCatalogRepository } from '../../app/vendas/lib/server/commercial-catalog.mjs';
 test('contrato distingue Vendas da Gestão do Vendas Mobile', async () => {
   const manifesto = await readFile('app/modules/vendas/manifest.ts', 'utf8');
   assert.match(manifesto, /VENDAS_MODULE_ID = 'vendas'/);
@@ -231,6 +232,29 @@ test('catálogo oficial exige sessão, empresa piloto e módulo instalado', asyn
   assert.match(pagina, /VendasIntegrado/);
   assert.match(cliente, /postMessage/);
   assert.match(cliente, /AVANTALAB_VENDAS_CATALOGO_V1/);
+});
+
+test('Vendas reúne os produtos de todos os catálogos ativos sem substituir o primeiro', async () => {
+  const catalogoIds = [
+    '11111111-1111-4111-8111-111111111111',
+    '22222222-2222-4222-8222-222222222222',
+  ];
+  const pool = { async query(sql, params) {
+    if (sql.includes('from public.vendas_mobile_catalogos')) return { rows: catalogoIds.map((id) => ({ id })) };
+    if (sql.includes('from public.custos_tabelas_preco')) return { rows: [{ id: 'tabela-1', nome: 'Padrão', padrao: true }] };
+    if (sql.includes('from public.vendas_mobile_catalogo_produtos')) {
+      assert.match(sql, /catalogo_id=any\(\$1::uuid\[\]\)/);
+      assert.deepEqual(params[0], catalogoIds);
+      return { rows: [
+        { id: 'produto-1', nome: 'Produto A', preco_venda: 10 },
+        { id: 'produto-2', nome: 'Produto B', preco_venda: 20 },
+      ] };
+    }
+    throw new Error('Consulta inesperada no catálogo comercial.');
+  } };
+  const catalogo = await createPostgresCommercialCatalogRepository({ pool }).list({ companyId: 'empresa-1' });
+  assert.equal(catalogo.catalogoId, catalogoIds[0]);
+  assert.deepEqual(catalogo.itens.map((item) => item.id), ['produto-1', 'produto-2']);
 });
 
 test('catálogo indisponível em Custos usa apenas o laboratório local protegido', async () => {
