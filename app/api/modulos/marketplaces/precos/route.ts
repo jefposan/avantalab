@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
+import { managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
+import { authorizePriceConsultation } from '@/app/modules/marketplaces/services/price-access';
 import { resolveMercadoLivreConnection } from '@/app/modules/marketplaces/services/mercadolivre-management';
 import { consultMercadoLivrePrice } from '@/app/modules/marketplaces/services/mercadolivre-price-consultation';
 
@@ -13,7 +14,7 @@ function cents(value: number) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { db, empresaId, usuario } = await authorizeMarketplace(request, body.empresaId, 'view');
+    const { db, empresaId, usuario } = await authorizePriceConsultation(request, body.empresaId);
     const connection = await resolveMercadoLivreConnection(db, empresaId, body.connectionId);
     const result = await consultMercadoLivrePrice(db, connection, {
       ean: body.ean,

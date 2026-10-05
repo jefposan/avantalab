@@ -1,3 +1,6 @@
+// Revisado na versão 1.47.0.05: o AvantaPreços usa usuários operacionais próprios,
+// cadastrados na engrenagem do módulo Marketplaces, com login e senha e sem acesso
+// aos demais módulos. A conexão Mercado Livre permanece vinculada à empresa.
 // Revisado na versão 1.47.0.04: o PWA é instalado como AvantaPreços; quando há
 // várias empresas, a escolha pós-login fica fixa até sair da sessão.
 // Revisado na versão 1.47.0.03: ícone próprio do Marketplaces Mobile, sem mudar

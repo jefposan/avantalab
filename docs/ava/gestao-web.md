@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.47.0.04 -->
+<!-- ava-version: 1.47.0.05 -->
+
+> Revisão 1.47.0.05: a engrenagem de **Anúncios em marketplaces** gerencia
+> usuários exclusivos do **AvantaPreços**. O gestor cria nome, login e senha,
+> pode editar ou excluir o acesso, sem liberar os demais módulos da empresa.
 
 > Revisão 1.47.0.04: o atalho abre o **AvantaPreços** sem antecipar a empresa.
 > Quando o usuário possui vários perfis, escolhe um após o login; a troca exige

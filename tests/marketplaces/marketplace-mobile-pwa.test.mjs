@@ -8,18 +8,22 @@ const css = read('app/marketplaces/consulta/marketplaces-mobile.module.css');
 const api = read('app/api/modulos/marketplaces/precos/route.ts');
 const historyApi = read('app/api/modulos/marketplaces/precos/historico/route.ts');
 const migration = read('supabase/migrations/20261005213000_marketplace_price_consultations.sql');
+const accessMigration = read('supabase/migrations/20261006090000_avantaprecos_users.sql');
+const priceAccess = read('app/modules/marketplaces/services/price-access.ts');
 
 test('PWA reutiliza autenticação, empresa e conexão do módulo sem novo OAuth', () => {
-  assert.match(client, /<AuthCard \{\.\.\.auth\}/);
-  assert.match(client, /useAuth\(/);
-  assert.match(client, /buscarEmpresasDoUsuario/);
+  assert.match(client, /signInWithPassword/);
+  assert.match(client, /Digite seu login/);
+  assert.doesNotMatch(client, /Google|CPF|tipoLogin/);
   assert.match(client, /avantalab_marketplaces_mobile_empresa_id/);
   assert.match(client, /localStorage\.setItem\(SESSION_COMPANY_KEY/);
   assert.match(client, /localStorage\.removeItem\(SESSION_COMPANY_KEY/);
   assert.match(client, /setAccess\('choose-company'\)/);
-  assert.match(client, /\/api\/modulos\/marketplaces\/conexoes\?empresaId=/);
+  assert.match(client, /\/api\/modulos\/marketplaces\/precos\/contexto\?empresaId=/);
   assert.doesNotMatch(client, /oauth|authorizationUrl|conexoes\/mercado-livre\/iniciar/i);
-  assert.match(api, /authorizeMarketplace\(request, body\.empresaId, 'view'\)/);
+  assert.match(api, /authorizePriceConsultation\(request, body\.empresaId\)/);
+  assert.match(priceAccess, /marketplace_price_users/);
+  assert.match(accessMigration, /revoke all on public\.marketplace_price_users from anon, authenticated/);
   assert.match(api, /resolveMercadoLivreConnection/);
 });
 
@@ -57,7 +61,7 @@ test('seletores de empresa e conta seguem lista ancorada do sistema', () => {
 });
 
 test('histórico é isolado por empresa e inacessível diretamente pelo navegador', () => {
-  assert.match(historyApi, /authorizeMarketplace\(request, empresaId, 'view'\)/);
+  assert.match(historyApi, /authorizePriceConsultation\(request, empresaId\)/);
   assert.match(historyApi, /\.eq\('empresa_id', empresaId\)/);
   assert.match(migration, /empresa_id uuid not null references public\.empresas/);
   assert.match(migration, /enable row level security/);

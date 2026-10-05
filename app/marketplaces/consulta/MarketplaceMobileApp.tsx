@@ -2,10 +2,6 @@
 
 import Image from 'next/image';
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
-import AuthCard from '@/app/components/AuthCard';
-import { useAuth } from '@/app/hooks/useAuth';
-import { buscarEmpresasDoUsuario } from '@/app/lib/database';
-import type { TipoPerfil } from '@/app/lib/perfis';
 import { supabase } from '@/app/lib/supabase';
 import { isValidEan, normalizeEan } from '@/app/modules/marketplaces/services/ean';
 import styles from './marketplaces-mobile.module.css';
@@ -158,9 +154,11 @@ export default function MarketplaceMobileApp() {
   const [access, setAccess] = useState<'loading' | 'guest' | 'choose-company' | 'ready' | 'no-company'>('loading');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
-  const [, setProfileType] = useState<TipoPerfil>('empresa');
-  const [, setDuplicates] = useState(false);
-  const [notice, setNotice] = useState<{ title: string; message: string; type: 'alerta' | 'erro' | 'sucesso' } | null>(null);
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [connectionId, setConnectionId] = useState('');
   const [connectionMessage, setConnectionMessage] = useState('');
@@ -192,14 +190,21 @@ export default function MarketplaceMobileApp() {
     else { setCompany(null); setAccess('choose-company'); }
   }, [selectCompany]);
 
-  const auth = useAuth({
-    abrirAviso: (title, message, _action, type = 'alerta') => setNotice({ title, message, type }),
-    carregarEmpresaSelecionada: selectCompany,
-    onMultiplasEmpresas: selectCompanies,
-    onSemEmpresa: () => setAccess('no-company'),
-    setTipoPerfilAtual: setProfileType,
-    setDuplicadosAtivo: setDuplicates,
-  });
+  const request = useCallback(async (path: string, options?: RequestInit) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw new Error('Sua sessão expirou. Entre novamente.');
+    const response = await fetch(path, { ...options, cache: 'no-store', headers: { ...(options?.body ? { 'Content-Type': 'application/json' } : {}), Authorization: `Bearer ${token}`, ...(options?.headers || {}) } });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.message || 'Não foi possível concluir a consulta.');
+    return body;
+  }, []);
+
+  const loadAccesses = useCallback(async () => {
+    const body = await request('/api/modulos/marketplaces/precos/acessos');
+    const items = Array.isArray(body.companies) ? body.companies as Company[] : [];
+    if (!items.length) setAccess('no-company'); else selectCompanies(items);
+  }, [request, selectCompanies]);
 
   useEffect(() => {
     navigator.serviceWorker?.register('/marketplaces/consulta/sw.js', { scope: '/marketplaces/consulta' }).catch(() => undefined);
@@ -210,26 +215,28 @@ export default function MarketplaceMobileApp() {
         try { localStorage.removeItem(SESSION_COMPANY_KEY); } catch {}
         setAccess('guest'); return;
       }
-      try {
-        const items = await buscarEmpresasDoUsuario(data.user.id) as Company[];
-        if (!active) return;
-        if (!items.length) setAccess('no-company'); else selectCompanies(items);
-      } catch { if (active) { setAccess('guest'); auth.setAuthErro('Não foi possível carregar seus perfis. Entre novamente.'); } }
+      try { await loadAccesses(); }
+      catch { if (active) { await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined); setLoginError('Não foi possível carregar seu acesso. Entre novamente.'); setAccess('guest'); } }
     });
     return () => { active = false; };
-  // A hidratação da sessão ocorre uma única vez; seleção posterior é explícita.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadAccesses]);
 
-  const request = useCallback(async (path: string, options?: RequestInit) => {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (!token) throw new Error('Sua sessão expirou. Entre novamente.');
-    const response = await fetch(path, { ...options, cache: 'no-store', headers: { ...(options?.body ? { 'Content-Type': 'application/json' } : {}), Authorization: `Bearer ${token}`, ...(options?.headers || {}) } });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.message || 'Não foi possível concluir a consulta.');
-    return body;
-  }, []);
+  const signIn = async (event: FormEvent) => {
+    event.preventDefault();
+    const normalized = login.trim().toLowerCase();
+    if (!normalized) { setLoginError('Informe seu login.'); return; }
+    if (!password) { setLoginError('Informe sua senha.'); return; }
+    setLoginLoading(true); setLoginError('');
+    try {
+      const resolution = await fetch('/api/modulos/marketplaces/precos/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ login: normalized }) });
+      const accessData = await resolution.json().catch(() => ({}));
+      if (!resolution.ok || !accessData.email) throw new Error(accessData.message || 'Login ou senha inválidos.');
+      const { error } = await supabase.auth.signInWithPassword({ email: String(accessData.email), password });
+      if (error) throw new Error('Login ou senha inválidos.');
+      await loadAccesses(); setPassword('');
+    } catch (reason) { await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined); setLoginError(reason instanceof Error ? reason.message : 'Não foi possível entrar.'); }
+    finally { setLoginLoading(false); }
+  };
 
   const loadHistory = useCallback(async (companyId: string) => {
     setHistoryLoading(true);
@@ -245,7 +252,7 @@ export default function MarketplaceMobileApp() {
     setAccounts([]); setConnectionId(''); setConnectionMessage(''); setHistory([]); setResult(null); setCandidates([]); setError('');
     void (async () => {
       try {
-        const body = await request(`/api/modulos/marketplaces/conexoes?empresaId=${encodeURIComponent(company.id)}`);
+        const body = await request(`/api/modulos/marketplaces/precos/contexto?empresaId=${encodeURIComponent(company.id)}`);
         const connected = (Array.isArray(body.accounts) ? body.accounts : []).filter((account: Account) => account.status === 'connected');
         setAccounts(connected); setConnectionId(connected[0]?.id || '');
         if (!connected.length) setConnectionMessage('O Mercado Livre ainda não está conectado nesta empresa. Conecte-o no módulo Anúncios em marketplaces.');
@@ -276,8 +283,20 @@ export default function MarketplaceMobileApp() {
   };
 
   if (access === 'loading') return <main className={styles.loadingScreen}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></main>;
-  if (access === 'guest') return <AuthCard {...auth} appTitle="AvantaPreços" appDescription="Entre para consultar produtos e preços pelo código de barras." installLabel="Instalar AvantaPreços" installPath="/marketplaces/consulta" serviceWorkerUrl="/marketplaces/consulta/sw.js" serviceWorkerScope="/marketplaces/consulta" modalAvisoAberto={Boolean(notice)} tituloAviso={notice?.title || ''} mensagemAviso={notice?.message || ''} tipoAviso={notice?.type || 'alerta'} fecharAviso={() => setNotice(null)} onAbrirTermos={() => window.open('/termos', '_blank', 'noopener,noreferrer')} onAbrirPrivacidade={() => window.open('/privacidade', '_blank', 'noopener,noreferrer')} />;
-  if (access === 'no-company') return <main className={styles.emptyAccess}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={240} height={60} /><h1>Perfil empresarial necessário</h1><p>Use a Gestão para criar ou solicitar acesso a uma empresa antes de consultar preços.</p><a href="/mobile">Abrir Gestão Mobile</a><button type="button" onClick={() => void logout()}>Sair</button></main>;
+  if (access === 'guest') return <main className={styles.loginScreen}>
+    <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={250} height={63} priority />
+    <section className={styles.loginCard} aria-labelledby="avantaprecos-login-title">
+      <div className={styles.loginIcon}><Image src="/images/marketplaces-mobile-icon-192.png" alt="" width={66} height={66} /></div>
+      <h1 id="avantaprecos-login-title">AvantaPreços</h1><p>Entre para consultar produtos e preços.</p>
+      <form onSubmit={signIn}>
+        <label htmlFor="price-login">Login</label><input id="price-login" value={login} onChange={(event) => setLogin(event.target.value)} autoCapitalize="none" autoComplete="username" placeholder="Digite seu login" />
+        <label htmlFor="price-password">Senha</label><div className={styles.passwordField}><input id="price-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" placeholder="Digite sua senha" /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}>{showPassword ? 'Ocultar' : 'Exibir'}</button></div>
+        {loginError && <p className={styles.loginError} role="alert">{loginError}</p>}
+        <button className={styles.loginSubmit} type="submit" disabled={loginLoading}>{loginLoading ? 'Entrando…' : 'Entrar'}</button>
+      </form>
+    </section>
+  </main>;
+  if (access === 'no-company') return <main className={styles.emptyAccess}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={240} height={60} /><h1>Acesso não liberado</h1><p>Peça ao gestor da empresa para cadastrar seu usuário no módulo Marketplaces.</p><button type="button" onClick={() => void logout()}>Sair</button></main>;
   if (access === 'choose-company') return <main className={styles.companySelection}>
     <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={230} height={58} priority />
     <section className={styles.companySelectionCard} aria-labelledby="company-selection-title">

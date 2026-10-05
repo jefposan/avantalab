@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.47.0.04 -->
+<!-- ava-version: 1.47.0.05 -->
+
+> Revisão 1.47.0.05: o AvantaPreços ganhou usuários operacionais próprios por
+> login e senha, sem impacto operacional no AvantaVendas.
 
 > Revisão 1.47.0.04: o PWA de consulta passa a ser instalado como AvantaPreços
 > e fixa a empresa por sessão; sem impacto operacional no AvantaVendas.

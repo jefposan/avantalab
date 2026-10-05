@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.47.0.04 -->
+<!-- ava-version: 1.47.0.05 -->
+
+> Revisão 1.47.0.05: o **AvantaPreços** usa acesso operacional simplificado,
+> somente com login e senha cadastrados pelo gestor no módulo Marketplaces.
+> Não oferece entrada por Google, e-mail ou CPF e não libera outros módulos.
 
 > Revisão 1.47.0.04: o PWA é instalado como **AvantaPreços**. Havendo vários
 > perfis empresariais, a escolha ocorre depois do login e fica fixa durante a

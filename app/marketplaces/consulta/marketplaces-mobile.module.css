@@ -111,7 +111,7 @@
 .scanComplete { border-color: #55df9b; color: #fff; background: rgba(24,132,88,.68); }
 .scannerSheet { display: grid; gap: 8px; border-radius: 22px 22px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); color: #1e293b; background: #fff; }
 .scannerSheet p { margin: 0; color: #a12a2a; font-size: 11px; font-weight: 700; }
-.loadingScreen, .emptyAccess, .companySelection { display: flex; min-height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 28px; text-align: center; background: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png')) center bottom / cover no-repeat; }
+.loadingScreen, .emptyAccess, .companySelection, .loginScreen { display: flex; min-height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 28px; text-align: center; background: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png')) center bottom / cover no-repeat; }
 .loadingScreen img, .emptyAccess img, .companySelection > img { width: min(62vw, 250px); height: auto; }
 .loadingScreen p, .emptyAccess p { max-width: 330px; margin: 0; color: #51606e; font-size: 13px; line-height: 1.5; }
 .emptyAccess h1 { margin: 4px 0 0; color: #172033; font-size: 22px; }
@@ -127,6 +127,22 @@
 .companySelectionList strong { overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
 .companySelectionList small { color: #64748b; font-size: 11px; }
 .companySelectionLogout { justify-self: center; min-height: 38px; border: 1px solid color-mix(in srgb, #003e73 34%, #cbd5e1); border-radius: 999px; padding: 8px 18px; color: #003e73; background: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; }
+.loginScreen > img { width: min(62vw, 250px); height: auto; }
+.loginCard { display: grid; width: min(100%, 370px); gap: 8px; border: 1px solid rgba(255,255,255,.76); border-radius: 24px; padding: 24px 22px; color: #172033; text-align: left; background: rgba(255,255,255,.88); box-shadow: 0 22px 55px rgba(0,43,75,.16); backdrop-filter: blur(18px); }
+.loginIcon { display: grid; width: 68px; height: 68px; place-items: center; overflow: hidden; border-radius: 18px; box-shadow: 0 9px 20px rgba(0,62,115,.16); }
+.loginIcon img { width: 100%; height: 100%; }
+.loginCard h1 { margin: 8px 0 0; font-size: 26px; line-height: 1.1; letter-spacing: -.03em; }
+.loginCard > p { margin: 0 0 8px; color: #64748b; font-size: 13px; }
+.loginCard form { display: grid; gap: 8px; }
+.loginCard label { margin-top: 6px; color: #344054; font-size: 12px; font-weight: 850; }
+.loginCard input { width: 100%; min-width: 0; height: 50px; border: 1px solid #cbd8df; border-radius: 14px; padding: 0 14px; color: #172033; background: #fff; font: inherit; font-size: 16px; outline: none; }
+.loginCard input:focus { border-color: #1ca49f; box-shadow: 0 0 0 3px rgba(28,164,159,.14); }
+.passwordField { position: relative; }
+.passwordField input { padding-right: 72px; }
+.passwordField button { position: absolute; top: 0; right: 0; height: 50px; border: 0; padding: 0 13px; color: #087f8b; background: transparent; font: inherit; font-size: 11px; font-weight: 850; }
+.loginSubmit { min-height: 50px; margin-top: 9px; border: 0; border-radius: 14px; color: #fff; background: linear-gradient(135deg,#149e99,#087f8b); font: inherit; font-size: 14px; font-weight: 900; }
+.loginSubmit:disabled { opacity: .58; }
+.loginError { margin: 4px 0 0; border-radius: 11px; padding: 10px 11px; color: #a12a2a; background: #fff0f0; font-size: 11px; font-weight: 750; line-height: 1.4; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes scan { from { transform: translateY(-34px); } to { transform: translateY(34px); } }
 @keyframes shimmer { to { background-position: -200% 0; } }
