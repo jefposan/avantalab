@@ -35,9 +35,12 @@ export async function GET(request: Request) {
     .select('id').maybeSingle();
   if (!claimed) return destination(request, pending.empresa_id, 'error', 'Esta autorização já foi utilizada. Inicie uma nova conexão.');
 
+  let stage = 'abrir-verificador';
   try {
     const verifier = openMarketplaceSecret(pending.verifier_sealed as SealedMarketplaceSecret);
+    stage = 'trocar-autorizacao';
     const credentials = await exchangeMercadoLivreAuthorizationCode(code, verifier);
+    stage = 'gravar-conexao';
     const { data: existing } = await db.from('marketplace_connections')
       .select('id').eq('empresa_id', pending.empresa_id).eq('provider', 'mercado_livre').eq('seller_reference', credentials.sellerReference).maybeSingle();
     const connection = {
@@ -61,11 +64,18 @@ export async function GET(request: Request) {
     if (error) throw error;
     return destination(request, pending.empresa_id, 'connected');
   } catch (error) {
-    // Mantém a resposta ao usuário genérica e registra somente diagnóstico sem tokens/códigos OAuth.
+    const detail = error instanceof Error ? error.message : 'erro-desconhecido';
+    // Registra somente diagnóstico sem tokens/códigos OAuth e preserva uma orientação acionável para o usuário.
     console.error('[marketplaces] Falha no callback OAuth do Mercado Livre', {
-      message: error instanceof Error ? error.message : 'erro-desconhecido',
+      stage,
+      message: detail,
       empresaId: pending.empresa_id,
     });
-    return destination(request, pending.empresa_id, 'error', 'Não foi possível concluir a conexão. Verifique a autorização e tente novamente.');
+    const message = stage === 'abrir-verificador'
+      ? 'Não foi possível validar a configuração segura desta conexão. Verifique a chave de criptografia do ambiente.'
+      : stage === 'trocar-autorizacao' && detail.includes('invalid_client')
+        ? 'O Mercado Livre recusou a configuração do aplicativo. Confirme o Client ID e a chave secreta cadastrados no ambiente.'
+        : 'Não foi possível concluir a conexão. Verifique a autorização e tente novamente.';
+    return destination(request, pending.empresa_id, 'error', message);
   }
 }
