@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const raiz = new URL('../..', import.meta.url);
 const ler = (caminho) => readFile(new URL(caminho, raiz), 'utf8');
+const existe = async (caminho) => access(new URL(caminho, raiz)).then(() => true, () => false);
 
 test('exportação mensal gera os dois formatos com receitas e despesas', async () => {
   const fonte = await ler('app/lib/exportacao-lancamentos-mes.ts');
@@ -39,9 +40,6 @@ test('Gestão Mobile usa uma ponte segura para arquivos e não abre-fecha o menu
   const mobile = await ler('public/mobile-app.js');
   const ponte = await ler('app/mobile/ExportarLancamentosMobileBridge.tsx');
   const pacote = await ler('package.json');
-  const android = await ler('android/app/capacitor.build.gradle');
-  const ios = await ler('ios/App/CapApp-SPM/Package.swift');
-  const privacidadeIos = await ler('ios/App/App/PrivacyInfo.xcprivacy');
   assert.match(mobile, /function abrirMenuPelaNavegacao\(\)[\s\S]*?state\.menuAnimacao = 'entrar';[\s\S]*?render\(\);[\s\S]*?state\.menuAnimacao = '';/);
   assert.match(mobile, /botaoAbrirMenu\.addEventListener\('pointerdown'/);
   assert.match(mobile, /if \(event\.detail !== 0\) return;/);
@@ -66,9 +64,18 @@ test('Gestão Mobile usa uma ponte segura para arquivos e não abre-fecha o menu
   assert.match(mobile, /Arquivo disponibilizado para salvar ou compartilhar/);
   assert.match(pacote, /@capacitor\/filesystem/);
   assert.match(pacote, /@capacitor\/share/);
-  assert.match(android, /project\(':capacitor-filesystem'\)/);
-  assert.match(android, /project\(':capacitor-share'\)/);
-  assert.match(ios, /CapacitorFilesystem/);
-  assert.match(ios, /CapacitorShare/);
-  assert.match(privacidadeIos, /NSPrivacyAccessedAPICategoryFileTimestamp/);
+  // A Vercel remove ios/ e android/ do artefato web via .vercelignore. Quando
+  // os projetos nativos estão presentes, a sincronização continua obrigatória.
+  if (await existe('android/app/capacitor.build.gradle')) {
+    const android = await ler('android/app/capacitor.build.gradle');
+    assert.match(android, /project\(':capacitor-filesystem'\)/);
+    assert.match(android, /project\(':capacitor-share'\)/);
+  }
+  if (await existe('ios/App/CapApp-SPM/Package.swift')) {
+    const ios = await ler('ios/App/CapApp-SPM/Package.swift');
+    const privacidadeIos = await ler('ios/App/App/PrivacyInfo.xcprivacy');
+    assert.match(ios, /CapacitorFilesystem/);
+    assert.match(ios, /CapacitorShare/);
+    assert.match(privacidadeIos, /NSPrivacyAccessedAPICategoryFileTimestamp/);
+  }
 });
