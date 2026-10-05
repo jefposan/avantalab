@@ -22,6 +22,14 @@ test('os quatro campos editáveis antecedem o EAN na mesma lista expandida', () 
   assert.match(form, /<dl>[\s\S]*EDIT_FIELDS\.map[\s\S]*\{children\}[\s\S]*<\/dl>/);
   assert.doesNotMatch(form, /editorPanel|editorFields|<h3/);
 });
+test('nome base editável e bloqueios usam o tooltip compartilhado e campo correto da API', () => {
+  const service = read('app/modules/marketplaces/services/mercadolivre-editor.ts');
+  assert.match(service, /titleAssociationForItem/);
+  assert.match(service, /body\[locked\.titleWriteField\] = changes\.title/);
+  assert.match(form, /import Tooltip from '@\/app\/components\/Tooltip'/);
+  assert.match(form, /<Tooltip texto=\{rule\?\.reason/);
+  assert.match(form, /rule\?\.label \|\| labels\[field\]/);
+});
 test('falha na consulta preserva os campos visíveis sem permitir salvar dados em cache', () => {
   assert.match(page, /snapshot=\{item\}/);
   assert.match(form, /title: snapshot\.title, price: snapshot\.price, stock: snapshot\.stock/);

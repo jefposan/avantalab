@@ -88,7 +88,7 @@ export async function mlRequest(db: SupabaseClient, connection: SellerConnection
       if (method !== 'GET' && [400, 409].includes(response.status)) {
         const problem = objectValue(await response.json().catch(() => null));
         const fields: Record<string, string> = {};
-        const names: Record<string, string> = { title: 'title', price: 'price', available_quantity: 'stock', plain_text: 'description' };
+        const names: Record<string, string> = { title: 'title', family_name: 'title', price: 'price', available_quantity: 'stock', plain_text: 'description' };
         const labels: Record<string, string> = { title: 'título', price: 'preço', stock: 'estoque', description: 'descrição' };
         for (const cause of (Array.isArray(problem.cause) ? problem.cause : [])) {
           const references = objectValue(cause).references;

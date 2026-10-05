@@ -57,6 +57,9 @@
 .readOnlyTag { padding: 3px 7px; border-radius: 8px; color: #64748b; background: #f1f5f9; font-size: 11px; font-weight: 400; }
 .listingDetails dt label { display: inline; }
 .listingDetails dt .readOnlyTag { display: inline-block; margin-left: 8px; }
+.listingsPanel button.readOnlyHelp { display: inline-flex; width: 44px; height: 44px; min-height: 44px; align-items: center; justify-content: center; margin-left: 2px; border: 0; padding: 0; background: transparent; color: var(--brand); font-size: 17px; vertical-align: middle; }
+.listingsPanel button.readOnlyHelp:hover { background: color-mix(in srgb, var(--brand) 9%, transparent); }
+.blockedReason { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .editorValue :is(input, textarea):focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
 .dark .editorValue :is(input, textarea) { border-color: #475569; background: #182235; }
 .dark .editorValue :is(input, textarea):disabled, .dark .readOnlyTag { background: #111b2b; color: #b8c5d7; }
@@ -70,5 +73,8 @@
 .dark .listingsPanel .actionBar button { background: transparent; }
 .dark .actionBar button::before { border-color: #475569; background: #182235; }
 .dark .accountSummary { border-color: color-mix(in srgb, var(--brand) 45%, #475569); background: color-mix(in srgb, var(--brand) 8%, #182235); }
+.dark .listingsPanel button.readOnlyHelp { color: #bfdbfe; background: transparent; }
+.dark .listingsPanel button.readOnlyHelp:hover { background: color-mix(in srgb, #bfdbfe 10%, transparent); }
+@media (max-width: 760px) { .blockedReason { position: static; width: auto; height: auto; margin: 5px 0 0; clip: auto; white-space: normal; color: #64748b; font-size: 12px; line-height: 1.5; }.dark .blockedReason { color: #b8c5d7; } }
 @media (max-width: 760px) { .listingFilters { grid-template-columns: 1fr; }.accountSummary { flex-wrap: wrap; }.pagination { justify-content: center; gap: 10px; }.listingsPanel button.editListing { width: 48px; min-height: 48px; } }
 @media (max-width: 760px) { .listingsPanel .actionBar button { height: 48px; min-height: 48px; }.listingsPanel .actionBar button::before { inset: 8px 0; } }

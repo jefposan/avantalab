@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
+import Tooltip from '@/app/components/Tooltip';
 import { formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
 import { changedFields, EDIT_FIELDS, validateChanges, type EditField, type ListingEditor as Editor, type ListingEditValues } from '@/app/modules/marketplaces/listing-editor';
 import type { ListingSnapshot } from '@/app/modules/marketplaces/services/listing-model';
@@ -95,17 +96,19 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
       <dl>
         {EDIT_FIELDS.map((field) => {
           const rule = editor?.fields[field], id = `${prefix}-${field}`, disabled = !editor || !rule?.editable || saving || stale;
-          const help = errors[field] || (!editor && field === 'description' ? 'Descrição indisponível até confirmar os dados atuais.' : rule?.reason) || rule?.notice || (field === 'stock' ? 'Estoque zero pode pausar o anúncio automaticamente.' : field === 'description' ? 'Texto simples, sem HTML.' : field === 'title' && rule?.maxLength ? `${values.title.length}/${rule.maxLength} caracteres` : '');
+          const label = rule?.label || labels[field], blocked = !!editor && !rule?.editable;
+          const help = errors[field] || (!editor && field === 'description' ? 'Descrição indisponível até confirmar os dados atuais.' : '') || (blocked ? '' : rule?.notice || (field === 'stock' ? 'Estoque zero pode pausar o anúncio automaticamente.' : field === 'description' ? 'Texto simples, sem HTML.' : field === 'title' && rule?.maxLength ? `${values.title.length}/${rule.maxLength} caracteres` : ''));
           return <Fragment key={field}>
-            <dt><label htmlFor={id}>{labels[field]}</label>{!editor ? <span className={styles.readOnlyTag}>Pendente de confirmação</span> : !rule?.editable && <span className={styles.readOnlyTag}>Somente leitura</span>}</dt>
+            <dt><label htmlFor={id}>{label}</label>{!editor ? <span className={styles.readOnlyTag}>Pendente de confirmação</span> : blocked && <><span className={styles.readOnlyTag}>Somente leitura</span><Tooltip texto={rule?.reason || 'Campo indisponível neste anúncio.'} posicao="top"><button type="button" className={styles.readOnlyHelp} aria-label={`Por que ${label} está bloqueado? ${rule?.reason || 'Campo indisponível neste anúncio.'}`}>ⓘ</button></Tooltip></>}</dt>
             <dd className={`${styles.editorValue} ${field === 'price' || field === 'stock' ? styles.editorCompact : ''}`}>
-            {field === 'description' ? <textarea id={id} value={values.description} disabled={disabled} maxLength={rule?.maxLength} rows={6} aria-describedby={help ? `${id}-help` : undefined} aria-invalid={!!errors[field]} onChange={(event) => change(field, event.target.value)} />
-              : <input id={id} type="text" inputMode={field === 'price' ? 'decimal' : field === 'stock' ? 'numeric' : 'text'} value={field === 'price' ? priceText : field === 'stock' ? stockText : values.title} disabled={disabled} maxLength={field === 'title' ? rule?.maxLength : undefined} aria-describedby={help ? `${id}-help` : undefined} aria-invalid={!!errors[field]} onChange={(event) => {
+            {field === 'description' ? <textarea id={id} value={values.description} disabled={disabled} maxLength={rule?.maxLength} rows={6} aria-describedby={help || blocked ? `${id}-help` : undefined} aria-invalid={!!errors[field]} onChange={(event) => change(field, event.target.value)} />
+              : <input id={id} type="text" inputMode={field === 'price' ? 'decimal' : field === 'stock' ? 'numeric' : 'text'} value={field === 'price' ? priceText : field === 'stock' ? stockText : values.title} disabled={disabled} maxLength={field === 'title' ? rule?.maxLength : undefined} aria-describedby={help || blocked ? `${id}-help` : undefined} aria-invalid={!!errors[field]} onChange={(event) => {
                 if (field === 'price') { const masked = formatarMoedaDigitada(event.target.value); setPriceText(masked); change('price', moedaDigitadaParaNumero(masked)); }
                 else if (field === 'stock') { const raw = event.target.value.replace(/\D/g, '').slice(0, 10); setStockText(raw); change('stock', raw === '' ? null : Number(raw)); }
                 else change('title', event.target.value);
               }} />}
             {help && <p id={`${id}-help`} className={styles.help} role={errors[field] ? 'alert' : undefined}>{help}</p>}
+            {!help && blocked && <p id={`${id}-help`} className={styles.blockedReason}>{rule?.reason}</p>}
             </dd>
           </Fragment>;
         })}

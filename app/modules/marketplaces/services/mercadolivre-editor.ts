@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ListingEditor } from '../listing-editor';
 import { validateChanges } from '../listing-editor';
-import { mercadoLivreEditPolicy, stockModelFromResponse } from './mercadolivre-edit-policy';
+import { mercadoLivreEditPolicy, stockModelFromResponse, titleAssociationFromResponse } from './mercadolivre-edit-policy';
 import { listingIdIsValid, normalizeListing, objectValue, uuidIsValid } from './listing-model';
 import { mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
 import { MarketplaceError } from './management-access';
@@ -14,17 +14,28 @@ async function freshEditor(db: SupabaseClient, connection: SellerConnection, id:
   const item = objectValue(await mlRequest(db, connection, `/items/${id}`));
   normalizeListing(item, connection.seller_reference); // Nunca consultar dados complementares de anúncio alheio.
   if (!/^MLB\d+$/.test(String(item.category_id))) throw new MarketplaceError(409, 'invalid_category', 'Categoria do anúncio indisponível.');
-  const [category, user, description, automation, stockModel] = await Promise.all([
+  const [category, user, description, automation, stockModel, titleAssociation] = await Promise.all([
     mlRequest(db, connection, `/categories/${item.category_id}`).then(objectValue),
     mlRequest(db, connection, `/users/${connection.seller_reference}`).then(objectValue).catch(() => ({} as Record<string, unknown>)),
     mlRequest(db, connection, `/items/${id}/description`).then((value) => ({ text: typeof objectValue(value).plain_text === 'string' ? objectValue(value).plain_text as string : null, exists: true })).catch((error) => ({ text: error instanceof MarketplaceError && error.code === 'provider_404' ? '' : null, exists: false })),
     priceAutomation(db, connection, id),
     stockModelForItem(db, connection, item),
+    titleAssociationForItem(db, connection, item),
   ]);
   if (user.id != null && String(user.id) !== connection.seller_reference) throw new MarketplaceError(409, 'seller_mismatch', 'Identidade da conta divergente. Reconecte a conta.');
-  const editor = mercadoLivreEditPolicy(item, category, user, description.text, automation, stockModel);
+  const editor = mercadoLivreEditPolicy(item, category, user, description.text, automation, stockModel, titleAssociation);
   const revision = createHash('sha256').update(JSON.stringify({ connection: connection.id, updated: item.last_updated, editor })).digest('hex');
-  return { editor: { ...editor, revision } as ListingEditor, descriptionExists: description.exists };
+  return { editor: { ...editor, revision } as ListingEditor, descriptionExists: description.exists, titleWriteField: item.user_product_id ? 'family_name' : 'title' };
+}
+
+async function titleAssociationForItem(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>): Promise<'single' | 'shared' | 'unknown'> {
+  const upId = item.user_product_id;
+  if (typeof upId !== 'string') return item.family_name || (Array.isArray(item.tags) && item.tags.includes('user_product_listing')) ? 'unknown' : 'single';
+  if (!/^MLB[A-Z]?\d+$/.test(upId)) return 'unknown';
+  try {
+    const query = new URLSearchParams({ user_product_id: upId, limit: '2' });
+    return titleAssociationFromResponse(await mlRequest(db, connection, `/users/${connection.seller_reference}/items/search?${query}`), connection.seller_reference, String(item.id));
+  } catch { return 'unknown'; }
 }
 
 async function stockModelForItem(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>): Promise<'single' | 'multi' | 'unknown'> {
@@ -71,7 +82,7 @@ export async function saveMercadoLivreEditor(db: SupabaseClient, connection: Sel
     const locked = await freshEditor(db, connection, input.id);
     if (locked.editor.revision !== input.revision) throw new MarketplaceError(409, 'edit_conflict', 'O anúncio mudou durante a edição. Recarregue antes de salvar.');
     const body: Record<string, unknown> = {};
-    if (changes.title !== undefined) body.title = changes.title;
+    if (changes.title !== undefined) body[locked.titleWriteField] = changes.title;
     if (changes.price !== undefined) body.price = changes.price;
     if (changes.stock !== undefined) body.available_quantity = changes.stock;
     if (Object.keys(body).length) {

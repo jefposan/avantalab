@@ -4,7 +4,7 @@ import type { MarketplaceId } from './types';
 export const EDIT_FIELDS = ['title', 'price', 'stock', 'description'] as const;
 export type EditField = typeof EDIT_FIELDS[number];
 export type ListingEditValues = { title: string; price: number | null; stock: number | null; description: string };
-export type FieldPermission = { editable: boolean; reason?: string; notice?: string; maxLength?: number; min?: number; max?: number };
+export type FieldPermission = { editable: boolean; reason?: string; notice?: string; label?: string; maxLength?: number; min?: number; max?: number };
 export type ListingEditor = {
   provider: MarketplaceId; id: string; revision: string; currency: string;
   values: ListingEditValues; fields: Record<EditField, FieldPermission>;

@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.45.0.02 -->
+<!-- ava-version: 1.45.0.03 -->
+
+> Revisão 1.45.0.03: no anúncio User Products individual, sem vendas e com
+> vínculo confirmado pela API, o campo **Nome base do título** pode ser editado
+> na própria linha. O Mercado Livre gera o título visível a partir desse nome.
+> Se o produto tiver outros anúncios vinculados, vendas, catálogo ou consulta
+> inconclusiva, o campo fica somente leitura; o tooltip informa o motivo.
+> Vínculo compartilhado pode ser revisto no Mercado Livre, mas vendas podem
+> impedir a alteração também na própria plataforma. Nenhum anúncio real foi
+> alterado nesta revisão.
 
 > Revisão 1.45.0.02: corrigidas as permissões de edição de anúncios do Mercado
 > Livre. Em User Products fora do catálogo, descrição pode ser alterada. O

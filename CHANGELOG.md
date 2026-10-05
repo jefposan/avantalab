@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.45.0.03 - 2026-10-05
+- **Nome de anúncio individual**: para User Products sem vendas e com um único anúncio vinculado confirmado pela API, o editor altera o `family_name`, usado pelo Mercado Livre para gerar o título visível. Anúncios vinculados, vendidos ou não confirmados permanecem bloqueados; tooltip compartilhado explica o motivo sem afirmar que o site do Mercado Livre sempre permitirá editar.
+- **Sem alteração de anúncios reais**: a mudança habilita o formulário e valida a permissão novamente antes de salvar; nenhum título foi enviado ao Mercado Livre nesta revisão.
+
+## 1.45.0.02 - 2026-10-05
+- **Permissões de User Products**: descrição editável fora do catálogo e estoque editável quando a localização única é confirmada; kits virtuais, Full e depósitos múltiplos seguem protegidos. O título gerado permaneceu bloqueado nesta revisão.
+
 ## 1.45.0.01 - 2026-10-05
 - **Edição de anúncios na mesma linha**: título, preço, estoque e descrição aparecem antes do EAN; alterações permitidas são verificadas na API atual do Mercado Livre antes de salvar. O editor protege contra conflitos, valida os campos, audita tentativas e exige confirmação dos valores após envio. Não houve alteração de anúncio real durante a validação.
 - **Falha de consulta**: título, preço e estoque da última sincronização continuam visíveis, com descrição indisponível e salvamento bloqueado até confirmar permissões atuais. A edição não presume que dados em cache estejam atualizados.
