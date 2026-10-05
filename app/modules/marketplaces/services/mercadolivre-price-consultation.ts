@@ -91,21 +91,48 @@ async function activeOfferPrices(
   db: SupabaseClient,
   connection: SellerConnection,
   product: { id: string; name: string },
+  ean: string | null,
 ) {
-  const search = objectValue(await mlRequest(
-    db,
-    connection,
-    `/sites/MLB/search?${new URLSearchParams({ q: product.name, limit: '50' })}`,
-  ));
-  const rows = Array.isArray(search.results) ? search.results.map(objectValue) : [];
-  const exact = rows.filter((item) => (
-    item.catalog_product_id === product.id
-    && item.currency_id === 'BRL'
-    && item.condition !== 'used'
-    && listingIdIsValid(item.id)
-  )).slice(0, 20);
+  const terms = [product.name, ...(ean ? [ean] : [])];
+  const searches = await Promise.all(terms.map(async (term) => {
+    const search = objectValue(await mlRequest(
+      db,
+      connection,
+      `/sites/MLB/search?${new URLSearchParams({ q: term, limit: '50' })}`,
+    ));
+    return (Array.isArray(search.results) ? search.results.map(objectValue) : []).map((item) => ({ item, searchedByEan: term === ean }));
+  }));
+  const unique = new Map<string, { item: Record<string, unknown>; searchedByEan: boolean }>();
+  for (const row of searches.flat()) {
+    if (!listingIdIsValid(row.item.id)) continue;
+    const current = unique.get(row.item.id);
+    unique.set(row.item.id, { item: row.item, searchedByEan: Boolean(current?.searchedByEan || row.searchedByEan) });
+  }
 
-  return exact.map((item) => finitePrice(item.price)).filter((price): price is number => price != null);
+  const isPublicOffer = (item: Record<string, unknown>) => item.currency_id === 'BRL' && item.condition !== 'used' && item.status !== 'closed';
+  const attributeContainsEan = (item: Record<string, unknown>) => {
+    if (!ean) return false;
+    const attributes = Array.isArray(item.attributes) ? item.attributes.map(objectValue) : [];
+    return attributes.some((attribute) => {
+      if (!['GTIN', 'EAN', 'UPC', 'PRODUCT_IDENTIFIER'].includes(String(attribute.id).toUpperCase())) return false;
+      const values = [attribute.value_name, attribute.value_id, objectValue(attribute.value_struct).number,
+        ...(Array.isArray(attribute.values) ? attribute.values.map(objectValue).flatMap((value) => [value.name, value.id]) : [])];
+      return values.some((value) => String(value || '').replace(/\D/g, '') === ean);
+    });
+  };
+
+  const known = [...unique.values()].filter(({ item }) => isPublicOffer(item) && (item.catalog_product_id === product.id || attributeContainsEan(item)));
+  const unchecked = [...unique.values()]
+    .filter(({ item, searchedByEan }) => searchedByEan && isPublicOffer(item) && item.catalog_product_id !== product.id && !attributeContainsEan(item))
+    .slice(0, 20);
+  const checked: Record<string, unknown>[] = [];
+  if (unchecked.length) {
+    const bulk = await mlRequest(db, connection, `/items/bulk?ids=${unchecked.map(({ item }) => item.id).join(',')}`);
+    if (Array.isArray(bulk)) checked.push(...bulk.map((entry) => objectValue(objectValue(entry).body)));
+  }
+
+  return [...known.map(({ item }) => item), ...checked.filter((item) => isPublicOffer(item) && attributeContainsEan(item))]
+    .map((item) => finitePrice(item.price)).filter((price): price is number => price != null);
 }
 
 export async function consultMercadoLivrePrice(
@@ -131,7 +158,7 @@ export async function consultMercadoLivrePrice(
   let source: 'active_offers' | 'catalog_reference' = 'active_offers';
   let values: number[] = [];
   try {
-    values = await activeOfferPrices(db, connection, product);
+    values = await activeOfferPrices(db, connection, product, ean);
   } catch (error) {
     if (isRateLimitFailure(error)) throw error;
     values = [];

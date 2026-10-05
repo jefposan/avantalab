@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.20 -->
+<!-- ava-version: 1.48.0.21 -->
+
+> Revisão 1.48.0.21: a confirmação pública de GTIN no AvantaPreços pertence ao
+> PWA de marketplaces e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.20: a fonte pública de preços do AvantaPreços pertence ao PWA
 > de marketplaces e não altera os fluxos do AvantaVendas.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.21 - 2026-10-05
+- **Ofertas normais por EAN no AvantaPreços**: além das publicações vinculadas à ficha de catálogo, a consulta pesquisa anúncios públicos pelo próprio EAN e confirma o GTIN no detalhe antes de usar o preço.
+- **Média mais abrangente, sem aproximação indevida**: anúncios comuns entram no cálculo somente após a correspondência exata do código de barras; resultados apenas parecidos continuam fora da amostra.
+
 ## 1.48.0.20 - 2026-10-05
 - **Preço público como fonte do AvantaPreços**: a consulta passa a calcular a média pelo campo público `price` dos anúncios ativos equivalentes e, sem amostra, pelo preço público do anúncio vencedor da buy box.
 - **Sem dependência de permissão especial**: o endpoint restrito `sale_price` deixa de ser chamado. Se não houver oferta pública comparável, o PWA informa isso claramente; um bloqueio pontual do item não é mais apresentado como perda de conexão.

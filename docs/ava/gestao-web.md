@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.20 -->
+<!-- ava-version: 1.48.0.21 -->
+
+> Revisão 1.48.0.21: o **AvantaPreços** também encontra anúncios normais pelo
+> EAN e confere o GTIN no detalhe antes de calcular a média. Anúncios apenas
+> parecidos não entram na referência.
 
 > Revisão 1.48.0.20: o **AvantaPreços** calcula a média com o preço público
 > dos anúncios ativos equivalentes. Sem amostra, usa o preço público do anúncio

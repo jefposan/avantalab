@@ -38,12 +38,13 @@ test('consulta por EAN reutiliza a ficha e calcula a média apenas com ofertas a
       return { results: [product()] };
     }
     if (url.pathname === `/products/${productId}`) return product({ short_description: { content: 'Produto localizado' } });
-    if (url.pathname === '/sites/MLB/search') return { results: [
+    if (url.pathname === '/sites/MLB/search' && url.searchParams.get('q') === 'Fogão de teste') return { results: [
       { id: 'MLB5000000001', catalog_product_id: productId, currency_id: 'BRL', condition: 'new', price: 90 },
       { id: 'MLB5000000002', catalog_product_id: productId, currency_id: 'BRL', condition: 'new', price: 100 },
       { id: 'MLB5000000003', catalog_product_id: productId, currency_id: 'BRL', condition: 'new', price: 110 },
       { id: 'MLB5000000004', catalog_product_id: 'MLB00000001', currency_id: 'BRL', condition: 'new', price: 1 },
     ] };
+    if (url.pathname === '/sites/MLB/search') return { results: [] };
     throw new Error(`Rota inesperada: ${path}`);
   };
 
@@ -51,6 +52,27 @@ test('consulta por EAN reutiliza a ficha e calcula a média apenas com ofertas a
   assert.equal(result.status, 'found');
   assert.deepEqual(result.prices, { market: 100, minimum: 50, medium: 70, ideal: 90 });
   assert.deepEqual(result.sample, { count: 3, minimum: 90, maximum: 110, source: 'active_offers' });
+});
+
+test('consulta por EAN inclui anúncio normal após conferir seu GTIN público', async () => {
+  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  const itemId = 'MLB5000000098';
+  globalThis.__mlPriceMock = async (path) => {
+    const url = new URL(`https://api.mercadolibre.com${path}`);
+    if (url.pathname === '/products/search') return { results: [product()] };
+    if (url.pathname === `/products/${productId}`) return product();
+    if (url.pathname === '/sites/MLB/search' && url.searchParams.get('q') === 'Fogão de teste') return { results: [] };
+    if (url.pathname === '/sites/MLB/search' && url.searchParams.get('q') === ean) return { results: [{ id: itemId, currency_id: 'BRL', condition: 'new', price: 319.9 }] };
+    if (url.pathname === '/items/bulk') {
+      assert.equal(url.searchParams.get('ids'), itemId);
+      return [{ id: itemId, status_code: 200, body: { id: itemId, currency_id: 'BRL', condition: 'new', status: 'active', price: 319.9, attributes: [{ id: 'GTIN', value_name: ean }] } }];
+    }
+    throw new Error(`Rota inesperada: ${path}`);
+  };
+
+  const result = await consultMercadoLivrePrice({}, connection, { ean });
+  assert.deepEqual(result.prices, { market: 319.9, minimum: 159.95, medium: 223.93, ideal: 287.91 });
+  assert.deepEqual(result.sample, { count: 1, minimum: 319.9, maximum: 319.9, source: 'active_offers' });
 });
 
 test('consulta usa o preço público do anúncio vencedor sem depender da faixa da ficha', async () => {
