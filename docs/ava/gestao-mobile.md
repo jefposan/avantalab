@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.13 -->
+<!-- ava-version: 1.48.0.14 -->
+
+> Revisão 1.48.0.14: o ajuste proporcional dos logotipos pertence aos
+> cabeçalhos compartilhados dos módulos da Gestão Web e não altera os fluxos
+> orientados pela Ava na Gestão Mobile.
 
 > Revisão 1.48.0.13: o botão para copiar o endereço do AvantaPreços pertence
 > ao módulo Marketplaces da Gestão Web e não altera os fluxos móveis.

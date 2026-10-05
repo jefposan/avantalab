@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.13 -->
+<!-- ava-version: 1.48.0.14 -->
+
+> Revisão 1.48.0.14: os cabeçalhos compartilhados dos módulos ajustam
+> automaticamente a área útil do logotipo da empresa. Margens vazias do arquivo
+> deixam de reduzir a marca visual, que permanece contida entre as ações do topo.
 
 > Revisão 1.48.0.13: no cabeçalho de **Anúncios em marketplaces**, **Copiar
 > link do AvantaPreços** copia o endereço completo do PWA para envio ao usuário

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { AdaptiveModuleLogo } from '@/app/components/ModuloHeader';
 import {
   activeCompany,
   clients,
@@ -7241,7 +7242,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       </div>
       <div className="module-brand">
         {companyLogoUrl
-          ? <img src={companyLogoUrl} alt={moduleSettings.company.name} className="company-logo"/>
+          ? <AdaptiveModuleLogo key={companyLogoUrl} src={companyLogoUrl} alt={moduleSettings.company.name} className="company-logo"/>
           : <span>{managementProfileReady ? moduleSettings.company.name : 'Carregando perfil empresarial'}</span>}
       </div>
       <div className="topbar-actions">

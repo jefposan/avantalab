@@ -2328,7 +2328,7 @@
 }
 .botaoInicio:hover { border-color: color-mix(in srgb, var(--cp) 48%, var(--pagina-borda)); background: color-mix(in srgb, var(--cp) 6%, var(--pagina-superficie)); }
 .identidadeModulo { display: grid; min-width: 0; justify-items: center; gap: 3px; line-height: 1.2; text-align: center; }
-.logoEmpresaModulo { display: block; width: clamp(112px, 13vw, 164px); height: 36px; max-width: min(38vw, 260px); object-fit: contain; }
+.logoEmpresaModulo { display: block; width: clamp(144px, 17vw, 220px); height: 52px; max-width: min(42vw, 260px); object-fit: contain; }
 .nomeEmpresaModulo { max-width: min(38vw, 290px); overflow: hidden; color: color-mix(in srgb, var(--pagina-texto) 78%, transparent); font-size: 10px; font-weight: 800; letter-spacing: .01em; text-overflow: ellipsis; white-space: nowrap; }
 .botaoAjustes {
   justify-self: end;
@@ -2383,7 +2383,7 @@
 @media (max-width: 680px) {
   .cabecalhoModulo { min-height: 68px; grid-template-columns: auto 1fr auto; gap: 8px; padding-inline: 12px; }
   .paginaModulo .botaoInicio { height: 38px; min-height: 38px; padding: 7px 12px; font-size: 11px; }
-  .logoEmpresaModulo { width: min(30vw, 120px); height: 30px; }.nomeEmpresaModulo { max-width: 30vw; font-size: 8px; }
+  .logoEmpresaModulo { width: min(34vw, 140px); height: 40px; }.nomeEmpresaModulo { max-width: 30vw; font-size: 8px; }
   .ajustesSecaoCabecalho { flex-direction: column; gap: 10px; }.ajustesCampos, .ajustesBaseValor { grid-template-columns: 1fr; }.ajustesCheck { white-space: normal; }.ajustesAcoes .btn { width: 100%; }
   .areaModulo { padding: 18px 12px 24px; }.tituloPaginaModulo p { font-size: 12px; }.workspaceModulo { min-height: calc(100dvh - 174px); padding: 10px; border-radius: 14px; }
 }

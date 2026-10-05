@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.14: cabeçalhos compartilhados ampliam a área visual
+// dos logotipos sem ultrapassar a altura ou as ações do módulo.
 // Revisado na versão 1.48.0.13: Marketplaces copia o link completo do
 // AvantaPreços para compartilhamento, sem abrir outra página.
 // Revisado na versão 1.48.0.12: auditoria global estabilizou efeitos e contratos

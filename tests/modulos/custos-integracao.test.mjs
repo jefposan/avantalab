@@ -116,7 +116,7 @@ test('Hierarquia e vigência são reconfirmadas no servidor e no banco', () => {
 test('Cabeçalho de Custos segue Projetos, retorna ao Dashboard e alterna o tema do perfil', () => {
   assert.match(cliente, /Voltar ao Dashboard do AvantaLab/);
   assert.match(cliente, /<ModuloHeader empresa=\{access\.empresa\} onBack=\{voltar\}/);
-  assert.match(cabecalhoModulo, /className=\{styles\.moduleLogo\}/);
+  assert.match(cabecalhoModulo, /className = styles\.moduleLogo/);
   assert.match(cliente, /Abrir ajustes de Custos e Precificação/);
   assert.match(cliente, /\/api\/modulos\/custos\/ajustes/);
   assert.match(ajustes, /\.eq\('modulo_id', 'custos'\)/);
@@ -400,11 +400,19 @@ test('tipografia dos módulos usa tons neutros e preserva a cor de perfil para a
 
 test('todos os cabeçalhos dos módulos exibem a logo do perfil ou o nome como alternativa', () => {
   assert.match(cliente, /<ModuloHeader empresa=\{access\.empresa\}/);
-  assert.match(cabecalhoModulo, /empresa\.logoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.moduleLogo\}/);
+  assert.match(cabecalhoModulo, /empresa\.logoUrl\s*\?\s*<AdaptiveModuleLogo[\s\S]*?src=\{empresa\.logoUrl\}/);
+  assert.match(cabecalhoModulo, /function cropNeutralLogoMargins\(image: HTMLImageElement\)/);
+  assert.match(cabecalhoModulo, /getImageData\(0, 0, sampleWidth, sampleHeight\)/);
+  assert.match(cabecalhoModulo, /outputCanvas\.toDataURL\('image\/png'\)/);
+  assert.match(estilos, /\.moduleLogoFrame\{[^}]*height:52px;[^}]*overflow:hidden\}/);
+  assert.match(estilos, /@media\(max-width:760px\)\{[\s\S]*?\.moduleLogoFrame\{width:min\(34vw,140px\);height:40px;max-width:100%\}/);
   assert.match(cabecalhoModulo, /<span>\{empresa\.nome\}<\/span>/);
-  assert.match(projetos, /companyLogoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.companyLogo\}/);
-  assert.match(recebimentos, /acesso\.empresa\.logoUrl\s*\?\s*<img[\s\S]*?className=\{styles\.logoEmpresaModulo\}/);
-  assert.match(vendasSistema, /companyLogoUrl\s*\?\s*<img[\s\S]*?className="company-logo"/);
+  assert.match(projetos, /companyLogoUrl\s*\?\s*<AdaptiveModuleLogo[\s\S]*?className=\{styles\.companyLogo\}/);
+  assert.match(recebimentos, /acesso\.empresa\.logoUrl[\s\S]*?\?\s*<AdaptiveModuleLogo[\s\S]*?className=\{styles\.logoEmpresaModulo\}/);
+  assert.match(vendasSistema, /companyLogoUrl\s*\?\s*<AdaptiveModuleLogo[\s\S]*?className="company-logo"/);
+  assert.match(estilosProjetos, /\.companyLogo \{[^}]*width: clamp\(144px, 17vw, 220px\);[^}]*height: 52px;/);
+  assert.match(estilosOperacoes, /\.logoEmpresaModulo \{[^}]*width: clamp\(144px, 17vw, 220px\);[^}]*height: 52px;/);
+  assert.match(estilosVendas, /\.company-logo \{[^}]*width: clamp\(144px, 17vw, 220px\);[^}]*height: 52px;/);
   assert.doesNotMatch(estilos, /@media\(max-width:760px\)\{[\s\S]*?\.moduleIdentity\{display:none\}/);
   assert.doesNotMatch(estilosProjetos, /@media \(max-width:760px\) \{[\s\S]*?\.moduleIdentity \{ display: none; \}/);
   assert.doesNotMatch(estilosVendas, /@media \(max-width:760px\) \{[\s\S]*?\.module-brand \{ display: none; \}/);

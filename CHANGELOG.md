@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.14 - 2026-10-05
+- **Logotipos proporcionais nos módulos**: o cabeçalho compartilhado identifica margens transparentes ou neutras excessivas nos arquivos das empresas e usa somente a área visual da marca, sem modificar a imagem original.
+- **Limites responsivos protegidos**: a marca recebe uma área útil maior no desktop e no celular, mas continua contida entre as ações do cabeçalho e dentro da altura disponível. Imagens externas que não permitem análise mantêm o encaixe proporcional seguro.
+
 ## 1.48.0.13 - 2026-10-05
 - **Compartilhamento do AvantaPreços**: a ação no cabeçalho de Marketplaces deixa de abrir o PWA e passa a copiar o endereço completo da consulta para envio ao usuário no celular.
 - **Retorno imediato e acessível**: o botão confirma **Link copiado** após a ação e informa falhas sem redirecionar ou trocar a tela atual.

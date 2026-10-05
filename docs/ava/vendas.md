@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.13 -->
+<!-- ava-version: 1.48.0.14 -->
+
+> Revisão 1.48.0.14: o ajuste proporcional dos logotipos nos módulos da
+> Gestão Web não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.13: o compartilhamento do link do AvantaPreços no módulo
 > Marketplaces não altera os fluxos do AvantaVendas.

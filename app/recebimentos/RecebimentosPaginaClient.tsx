@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
+import { AdaptiveModuleLogo } from '@/app/components/ModuloHeader';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import { Icon } from '@/app/projetos/components/Icon';
@@ -100,7 +101,7 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
         <button type="button" onClick={retornarInicio} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>
         <div className={styles.identidadeModulo}>
           {acesso.empresa.logoUrl
-            ? <img src={acesso.empresa.logoUrl} alt={acesso.empresa.nome} className={styles.logoEmpresaModulo} />
+            ? <AdaptiveModuleLogo key={acesso.empresa.logoUrl} src={acesso.empresa.logoUrl} alt={acesso.empresa.nome} className={styles.logoEmpresaModulo} />
             : <span className={styles.nomeEmpresaModulo}>{acesso.empresa.nome}</span>}
         </div>
         <button type="button" className={styles.botaoAjustes} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Operações de Campo" title="Ajustes">⚙</button>

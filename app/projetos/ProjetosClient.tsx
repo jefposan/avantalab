@@ -8,6 +8,7 @@ import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
+import { AdaptiveModuleLogo } from '@/app/components/ModuloHeader';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { useProjectCollection } from './hooks/useProjectCollection';
 import { SupabaseProjectRepository } from './services/supabase-repository';
@@ -46,7 +47,7 @@ function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId
       ? <button type="button" onClick={onReturn} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>
       : <Link href={`/gestao?empresaId=${encodeURIComponent(returnCompanyId)}`} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</Link>}
     <div className={styles.moduleIdentity}>
-      {companyLogoUrl ? <img src={companyLogoUrl} alt={companyName} className={styles.companyLogo} /> : <span>{companyName}</span>}
+      {companyLogoUrl ? <AdaptiveModuleLogo key={companyLogoUrl} src={companyLogoUrl} alt={companyName} className={styles.companyLogo} /> : <span>{companyName}</span>}
     </div>
     <div className={styles.moduleHeaderActions}>
       {showSettings && <button type="button" className={styles.moduleSettingsButton} onClick={onSettings} aria-label="Abrir ajustes do AvantaProjetos" title="Ajustes"><Icon name="settings" size={18} /></button>}
