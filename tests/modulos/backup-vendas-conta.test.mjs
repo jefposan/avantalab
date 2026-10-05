@@ -46,7 +46,7 @@ test('empresa financeira e fornecedor do catálogo permanecem separados', () => 
   assert.match(migracaoVinculoConta, /join public\.vendas_mobile_catalogos catalogo on catalogo\.id = p\.catalogo_empresa_id/);
   assert.match(migracaoVinculoConta, /public\.vendas_mobile_vinculo_conta_valido\(v\.conta_id, v\.empresa_id\)/);
   assert.match(migracaoVinculoConta, /p_conta_id uuid/);
-  assert.match(cliente, /p_conta_id: contaAtivaId\(\) \|\| null/);
+  assert.match(cliente, /meus_vinculos_comerciais_vendas_mobile_rpc', \{ p_conta_id: contaContexto\.id \}/);
 });
 
 test('migração do vínculo protege todos os dados operacionais', () => {

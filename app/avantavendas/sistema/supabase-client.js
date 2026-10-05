@@ -341,14 +341,28 @@
   }
 
   async function solicitarAcesso({ codigo, nome, telefone }) {
+    const contaId = contaAtivaId();
+    if (!contaId) throw new Error('Selecione uma conta de vendas.');
+    const { data: consulta, error: erroConsulta } = await requireClient().rpc('consultar_codigo_vinculo_vendas_mobile_rpc', {
+      p_codigo_empresa: codigo,
+      p_conta_id: contaId,
+    });
+    if (erroConsulta) throw erroConsulta;
+    if (consulta?.ja_adicionada) {
+      return {
+        status: 'ja_adicionada',
+        empresa_id: consulta.empresa_id,
+        empresa_nome: consulta.empresa_nome,
+      };
+    }
     const { data, error } = await requireClient().rpc('solicitar_acesso_vendas_mobile_rpc', {
       p_codigo_empresa: codigo,
       p_nome: nome,
       p_telefone: telefone || null,
-      p_conta_id: contaAtivaId() || null,
+      p_conta_id: contaId,
     });
     if (error) throw error;
-    return data;
+    return { ...data, empresa_nome: consulta?.empresa_nome || null };
   }
 
   async function buscarAcessoVendas() {
@@ -363,10 +377,9 @@
     const acessoGestorRes = await requireClient().rpc('garantir_acessos_gestor_vendas_mobile_rpc');
     if (acessoGestorRes.error) throw acessoGestorRes.error;
     atualizarProgresso('access', 2, 4, 'Conferindo permissões');
-    const [acessosRes, solicitacaoRes, vinculosRes, contasDisponiveis] = await Promise.all([
+    const [acessosRes, solicitacaoRes, contasDisponiveis] = await Promise.all([
       requireClient().rpc('meus_acessos_vendas_mobile_rpc'),
       requireClient().from('vendas_mobile_solicitacoes_acesso').select('*').eq('user_id', user.id).order('atualizado_em', { ascending: false }).limit(1).maybeSingle(),
-      requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'),
       listarContasVendas().catch(() => []),
     ]);
     if (acessosRes.error) throw acessosRes.error;
@@ -378,8 +391,16 @@
       empresaContexto = JSON.parse(localStorage.getItem('avantalab_mobile_sistema_contexto') || 'null')?.empresaId || '';
     } catch { /* preferência inválida */ }
     const contaContexto = contasDisponiveis.find((conta) => conta.id === contaAtivaId()) || contasDisponiveis[0] || null;
+    const vinculosRes = contaContexto?.id
+      ? await requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc', { p_conta_id: contaContexto.id })
+      : { data: [], error: null };
+    if (vinculosRes.error) throw vinculosRes.error;
     const empresaContaAtiva = contaContexto?.empresa_id || '';
-    const contaIndependenteAtiva = Boolean(contaContexto && !contaContexto.empresa_id);
+    const vinculoComercialAtivoId = (vinculosRes.data || []).find((item) => item.ativo)?.empresa_id || '';
+    // Uma conta pode ser operacionalmente independente e, ainda assim, receber
+    // conteúdo de uma empresa pelo vínculo comercial. Esse vínculo é a fonte
+    // de verdade para o acesso ao catálogo, às notícias e à Divulgação.
+    const contaIndependenteAtiva = Boolean(contaContexto && !contaContexto.empresa_id && !vinculoComercialAtivoId);
     const candidatos = [...acessosAtivos].sort((a, b) =>
       Number(b.empresa_id === empresaContaAtiva) - Number(a.empresa_id === empresaContaAtiva)
       || Number(b.empresa_id === empresaContexto) - Number(a.empresa_id === empresaContexto));
@@ -389,7 +410,6 @@
     const acessosComModulo = candidatos.filter((_, indice) => !modulos[indice].error && modulos[indice].data === true);
     atualizarProgresso('access', 4, 4, 'Acesso ao Vendas confirmado');
     const moduloAtivo = acessosComModulo.length > 0;
-    const vinculoComercialAtivoId = (vinculosRes.data || []).find((item) => item.ativo)?.empresa_id || '';
     // A conta ativa define o contexto comercial. Um perfil independente nao
     // herda assinatura nem catalogo de outro perfil do mesmo login.
     const acessoBase = contaIndependenteAtiva ? null : (

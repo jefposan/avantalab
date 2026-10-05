@@ -3891,7 +3891,19 @@ function cancelarTelefoneVinculo() {
 
 async function enviarSolicitacaoComTelefone({ codigo, nome, telefone, erro }) {
   try {
-    await window.VendasDb.solicitarAcesso({ codigo, nome, telefone });
+    const resposta = await window.VendasDb.solicitarAcesso({ codigo, nome, telefone });
+    if (resposta?.status === 'ja_adicionada') {
+      state.solicitacaoAcesso = { status: 'aprovada' };
+      await atualizarVinculoAprovadoAutomaticamente(true);
+      toast(`A empresa ${resposta.empresa_nome || ''} já está adicionada a esta conta.`.trim());
+      return;
+    }
+    if (resposta?.status === 'aprovada') {
+      state.solicitacaoAcesso = { status: 'aprovada' };
+      await atualizarVinculoAprovadoAutomaticamente(true);
+      toast(`Empresa ${resposta.empresa_nome || ''} vinculada e conteúdos liberados.`.trim());
+      return;
+    }
     state.solicitacaoAcesso = { status: 'pendente' };
     sincronizarVerificacaoAprovacao();
     render();
@@ -4401,7 +4413,7 @@ function agendarAtualizacaoVinculoAprovado() {
   }, 450);
 }
 
-async function atualizarVinculoAprovadoAutomaticamente() {
+async function atualizarVinculoAprovadoAutomaticamente(forcarAtualizacao = false) {
   if (atualizandoVinculoAprovado || !backendAtivo || !state.usuario?.id) return;
   if (carregandoBackend || preparandoRecursosSala) {
     agendarAtualizacaoVinculoAprovado();
@@ -4423,7 +4435,14 @@ async function atualizarVinculoAprovadoAutomaticamente() {
       await carregarDadosBackend(false, false, true);
     }
     const empresaAtualId = state.vinculoComercialAtivo?.empresa_id || '';
-    if (state.autenticado && empresaAtualId && (aguardavaAprovacao || empresaAtualId !== empresaAnteriorId)) {
+    if (state.autenticado && empresaAtualId && (forcarAtualizacao || aguardavaAprovacao || empresaAtualId !== empresaAnteriorId)) {
+      // A aprovação não pode depender de reiniciar o navegador: primeiro
+      // atualiza as três fontes de conteúdo e então traz o catálogo para a
+      // conta que recebeu o vínculo comercial.
+      await Promise.all([
+        carregarConteudosSecundariosVendas(false),
+        sincronizarCatalogoAutomaticamente(true),
+      ]);
       const empresaNome = state.vinculoComercialAtivo?.empresa_nome || state.acessoVendas?.empresa_nome || 'empresa';
       toast(`Vínculo com ${empresaNome} aprovado. Conteúdos atualizados.`);
     }
@@ -6862,9 +6881,17 @@ async function solicitarNovoVinculoComercial() {
   if (!codigo || codigo !== confirma) { toast('Confirme o mesmo código da empresa duas vezes.'); return; }
   if (!nomeCompletoValido(nome)) { toast('Informe seu nome completo, com nome e sobrenome.'); return; }
   try {
-    await window.VendasDb.solicitarAcesso({ codigo, nome, telefone: state.usuario?.telefone || '' });
+    const resposta = await window.VendasDb.solicitarAcesso({ codigo, nome, telefone: state.usuario?.telefone || '' });
     fecharSheet();
-    toast('Solicitação enviada. Após a aprovação, os conteúdos da empresa ficarão disponíveis.');
+    if (resposta?.status === 'ja_adicionada') {
+      await atualizarVinculoAprovadoAutomaticamente(true);
+      toast(`A empresa ${resposta.empresa_nome || ''} já está adicionada a esta conta.`.trim());
+    } else if (resposta?.status === 'aprovada') {
+      await atualizarVinculoAprovadoAutomaticamente(true);
+      toast(`Empresa ${resposta.empresa_nome || ''} vinculada e conteúdos liberados.`.trim());
+    } else {
+      toast('Solicitação enviada. Após a aprovação, os conteúdos da empresa ficarão disponíveis.');
+    }
   } catch (error) { toast(traduzErro(error)); }
 }
 
