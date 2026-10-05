@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.06 -->
+<!-- ava-version: 1.48.0.07 -->
+
+> Revisão 1.48.0.07: a ancoragem do fundo de acesso do **AvantaPreços** não
+> altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.06: a correção das áreas seguras do **AvantaPreços** não
 > altera os fluxos do AvantaVendas.

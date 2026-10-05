@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.06 -->
+<!-- ava-version: 1.48.0.07 -->
+
+> Revisão 1.48.0.07: o ajuste de ancoragem do fundo pertence ao acesso do PWA
+> **AvantaPreços**; a Gestão Web não é alterada.
 
 > Revisão 1.48.0.06: a cobertura das áreas seguras e a posição do cabeçalho
 > foram corrigidas no PWA **AvantaPreços**; a Gestão Web não é alterada.

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.06 -->
+<!-- ava-version: 1.48.0.07 -->
+
+> Revisão 1.48.0.07: o fundo institucional do acesso do **AvantaPreços** fica
+> ancorado diretamente no contêiner visível, com a mesma posição e escala do
+> Recebimentos. A raiz conserva somente a cor das áreas seguras, sem deslocar
+> o desenho em relação ao rodapé.
 
 > Revisão 1.48.0.06: o fundo do acesso do **AvantaPreços** cobre a raiz real
 > do PWA e a área do indicador inferior. Na tela autenticada, o cabeçalho

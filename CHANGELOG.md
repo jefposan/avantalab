@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.07 - 2026-10-05
+- **Fundo do acesso ancorado no contêiner visível**: o AvantaPreços passa a aplicar a imagem institucional diretamente no mesmo `loginWrap` usado pelo Recebimentos, com posição `center bottom`, enquanto a raiz mantém somente a cor de proteção das áreas seguras. Isso impede que o quadro de pintura do `html` desloque o desenho no PWA instalado.
+- **Paridade visual verificada**: a rota técnica confirmou, em 390 × 844 px e 430 × 932 px, que AvantaPreços e Recebimentos usam o mesmo arquivo, posição, dimensionamento e limites exatos do fundo até o rodapé.
+
 ## 1.48.0.06 - 2026-10-05
 - **Áreas seguras corrigidas na superfície real**: o AvantaPreços agora aplica o fundo do acesso na raiz do documento, mantendo o corpo transparente, para cobrir também o rodapé reservado pelo iPhone. Na área autenticada, `html`, `body` e o cabeçalho usam o mesmo azul institucional contínuo.
 - **Cabeçalho abaixo da ilha**: a altura e o espaçamento do Recebimentos foram preservados, com acréscimo exclusivo da área segura superior quando o iOS sobrepõe o conteúdo. Nome da empresa, finalidade e botão Sair deixam de ficar escondidos sob a barra de status.
