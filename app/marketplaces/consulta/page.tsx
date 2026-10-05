@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import MarketplaceMobileApp from './MarketplaceMobileApp';
 
 export const metadata: Metadata = {
-  title: 'Marketplaces Mobile — Consulta de preços | AvantaLab',
+  title: 'AvantaPreços — Consulta de preços | AvantaLab',
   description: 'Consulte produtos e preços do Mercado Livre pelo EAN.',
   manifest: '/marketplaces/consulta/manifest.webmanifest',
   icons: {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/images/marketplaces-mobile-icon-180.png', sizes: '180x180', type: 'image/png' }],
   },
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Marketplaces' },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'AvantaPreços' },
   other: { 'apple-mobile-web-app-capable': 'yes' },
 };
 

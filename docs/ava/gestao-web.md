@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.47.0.03 -->
+<!-- ava-version: 1.47.0.04 -->
+
+> Revisão 1.47.0.04: o atalho abre o **AvantaPreços** sem antecipar a empresa.
+> Quando o usuário possui vários perfis, escolhe um após o login; a troca exige
+> sair do PWA e autenticar novamente.
 
 > Revisão 1.47.0.03: o Marketplaces Mobile recebeu ícone próprio; sem mudança
 > no acesso, na consulta ou na conexão reutilizada do Mercado Livre.

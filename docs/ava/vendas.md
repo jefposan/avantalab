@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.47.0.03 -->
+<!-- ava-version: 1.47.0.04 -->
+
+> Revisão 1.47.0.04: o PWA de consulta passa a ser instalado como AvantaPreços
+> e fixa a empresa por sessão; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.47.0.03: novo ícone do Marketplaces Mobile, sem impacto operacional
 > no AvantaVendas.

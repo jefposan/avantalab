@@ -13,8 +13,10 @@ test('PWA reutiliza autenticação, empresa e conexão do módulo sem novo OAuth
   assert.match(client, /<AuthCard \{\.\.\.auth\}/);
   assert.match(client, /useAuth\(/);
   assert.match(client, /buscarEmpresasDoUsuario/);
-  assert.match(client, /avantalab_mobile_ultimo_perfil_id/);
-  assert.match(client, /new URLSearchParams\(window\.location\.search\)\.get\('empresaId'\)/);
+  assert.match(client, /avantalab_marketplaces_mobile_empresa_id/);
+  assert.match(client, /localStorage\.setItem\(SESSION_COMPANY_KEY/);
+  assert.match(client, /localStorage\.removeItem\(SESSION_COMPANY_KEY/);
+  assert.match(client, /setAccess\('choose-company'\)/);
   assert.match(client, /\/api\/modulos\/marketplaces\/conexoes\?empresaId=/);
   assert.doesNotMatch(client, /oauth|authorizationUrl|conexoes\/mercado-livre\/iniciar/i);
   assert.match(api, /authorizeMarketplace\(request, body\.empresaId, 'view'\)/);
@@ -49,6 +51,9 @@ test('seletores de empresa e conta seguem lista ancorada do sistema', () => {
   assert.match(client, /event\.key === 'Escape'/);
   assert.match(css, /\.pickerList \{[^}]*position: absolute;[^}]*top: calc\(100% \+ 5px\);/);
   assert.match(client, /label="Conta usada na consulta"/);
+  assert.doesNotMatch(client, /label="Empresa ativa"/);
+  assert.match(client, /Selecione o perfil que será usado nesta sessão/);
+  assert.match(client, /Consulta rápida de produtos e preços/);
 });
 
 test('histórico é isolado por empresa e inacessível diretamente pelo navegador', () => {
@@ -66,5 +71,6 @@ test('manifesto, service worker e atalhos tornam o Marketplaces Mobile instaláv
   assert.match(read('app/marketplaces/consulta/manifest.webmanifest/route.ts'), /display: 'standalone'/);
   assert.match(read('app/marketplaces/consulta/manifest.webmanifest/route.ts'), /marketplaces-mobile-icon-512\.png/);
   assert.match(read('app/marketplaces/consulta/sw.js/route.ts'), /avantalab-marketplaces-mobile-/);
-  assert.match(read('app/marketplaces/MarketplacesClient.tsx'), /href=\{`\/marketplaces\/consulta\?empresaId=\$\{encodeURIComponent\(companyId\)\}`\}/);
+  assert.match(read('app/marketplaces/MarketplacesClient.tsx'), /href="\/marketplaces\/consulta"/);
+  assert.match(read('app/marketplaces/consulta/manifest.webmanifest/route.ts'), /short_name: 'AvantaPreços'/);
 });

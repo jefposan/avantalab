@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.47.0.03 -->
+<!-- ava-version: 1.47.0.04 -->
+
+> Revisão 1.47.0.04: o PWA é instalado como **AvantaPreços**. Havendo vários
+> perfis empresariais, a escolha ocorre depois do login e fica fixa durante a
+> sessão; para trocar, a pessoa deve sair e entrar novamente. O cabeçalho mostra
+> somente o nome do perfil, a finalidade da consulta e **Sair**.
 
 > Revisão 1.47.0.03: o Marketplaces Mobile recebeu ícone próprio de consulta
 > de preços; não houve alteração no fluxo operacional descrito abaixo.

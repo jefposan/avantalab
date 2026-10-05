@@ -32,17 +32,16 @@ type HistoryRow = {
 };
 type Account = { id: string; status: string; seller_name: string | null; seller_reference: string };
 
-const LAST_COMPANY_KEY = 'avantalab_mobile_ultimo_perfil_id';
+const SESSION_COMPANY_KEY = 'avantalab_marketplaces_mobile_empresa_id';
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
-function Icon({ name, size = 22 }: { name: 'barcode' | 'search' | 'history' | 'back' | 'logout' | 'refresh' | 'check' | 'camera' | 'chevron'; size?: number }) {
+function Icon({ name, size = 22 }: { name: 'barcode' | 'search' | 'history' | 'back' | 'refresh' | 'check' | 'camera' | 'chevron'; size?: number }) {
   const paths = {
     barcode: <><path d="M4 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14" /><path d="M2 8V4a2 2 0 0 1 2-2h4M22 8V4a2 2 0 0 0-2-2h-4M2 16v4a2 2 0 0 0 2 2h4M22 16v4a2 2 0 0 1-2 2h-4" /></>,
     search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
     history: <><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></>,
     back: <><path d="m15 18-6-6 6-6" /></>,
-    logout: <><path d="M10 17l5-5-5-5M15 12H3M21 19V5a2 2 0 0 0-2-2h-6" /></>,
     refresh: <><path d="M20 11a8 8 0 1 0-2.3 5.7L20 14" /><path d="M20 8v6h-6" /></>,
     check: <path d="m5 12 4 4L19 6" />,
     camera: <><path d="M14.5 4 16 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3l1.5-3z" /><circle cx="12" cy="13" r="3" /></>,
@@ -51,12 +50,11 @@ function Icon({ name, size = 22 }: { name: 'barcode' | 'search' | 'history' | 'b
   return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
 
-function MobilePicker({ label, value, options, onChange, compact = false }: {
+function MobilePicker({ label, value, options, onChange }: {
   label: string;
   value: string;
   options: Array<{ value: string; label: string; detail?: string }>;
   onChange: (value: string) => void;
-  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -71,8 +69,8 @@ function MobilePicker({ label, value, options, onChange, compact = false }: {
     return () => document.removeEventListener('pointerdown', close);
   }, [open]);
 
-  return <div ref={rootRef} className={`${styles.picker} ${compact ? styles.pickerCompact : ''}`}>
-    <span className={compact ? 'sr-only' : styles.pickerLabel}>{label}</span>
+  return <div ref={rootRef} className={styles.picker}>
+    <span className={styles.pickerLabel}>{label}</span>
     <button type="button" className={styles.pickerTrigger} aria-label={label} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((current) => !current)} onKeyDown={(event) => { if (event.key === 'Escape') setOpen(false); }}>
       <span>{selected?.label || 'Selecione'}</span><Icon name="chevron" size={17} />
     </button>
@@ -157,7 +155,7 @@ function ScannerModal({ initialEan, onClose, onConsult }: { initialEan: string; 
 }
 
 export default function MarketplaceMobileApp() {
-  const [access, setAccess] = useState<'loading' | 'guest' | 'ready' | 'no-company'>('loading');
+  const [access, setAccess] = useState<'loading' | 'guest' | 'choose-company' | 'ready' | 'no-company'>('loading');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [, setProfileType] = useState<TipoPerfil>('empresa');
@@ -180,16 +178,18 @@ export default function MarketplaceMobileApp() {
   const selectCompany = useCallback(async (selected: Company) => {
     setCompanies((current) => current.some((item) => item.id === selected.id) ? current : [...current, selected]);
     setCompany(selected); setAccess('ready');
-    try { localStorage.setItem(LAST_COMPANY_KEY, selected.id); } catch {}
+    try { localStorage.setItem(SESSION_COMPANY_KEY, selected.id); } catch {}
   }, []);
 
   const selectCompanies = useCallback((items: Company[]) => {
     setCompanies(items);
-    let last = '';
-    try { last = localStorage.getItem(LAST_COMPANY_KEY) || ''; } catch {}
-    const requested = new URLSearchParams(window.location.search).get('empresaId') || '';
-    const selected = items.find((item) => item.id === requested) || items.find((item) => item.id === last) || items[0] || null;
-    if (selected) void selectCompany(selected); else setAccess('no-company');
+    if (!items.length) { setAccess('no-company'); return; }
+    if (items.length === 1) { void selectCompany(items[0]); return; }
+    let selectedId = '';
+    try { selectedId = localStorage.getItem(SESSION_COMPANY_KEY) || ''; } catch {}
+    const selected = items.find((item) => item.id === selectedId);
+    if (selected) void selectCompany(selected);
+    else { setCompany(null); setAccess('choose-company'); }
   }, [selectCompany]);
 
   const auth = useAuth({
@@ -206,7 +206,10 @@ export default function MarketplaceMobileApp() {
     let active = true;
     void supabase.auth.getUser().then(async ({ data }) => {
       if (!active) return;
-      if (!data.user) { setAccess('guest'); return; }
+      if (!data.user) {
+        try { localStorage.removeItem(SESSION_COMPANY_KEY); } catch {}
+        setAccess('guest'); return;
+      }
       try {
         const items = await buscarEmpresasDoUsuario(data.user.id) as Company[];
         if (!active) return;
@@ -266,18 +269,30 @@ export default function MarketplaceMobileApp() {
     finally { setLoading(false); }
   }, [company, connectionId, loadHistory, request]);
 
-  const logout = async () => { await supabase.auth.signOut({ scope: 'local' }); setCompany(null); setCompanies([]); setAccess('guest'); };
+  const logout = async () => {
+    try { localStorage.removeItem(SESSION_COMPANY_KEY); } catch {}
+    await supabase.auth.signOut({ scope: 'local' });
+    setCompany(null); setCompanies([]); setAccess('guest');
+  };
 
   if (access === 'loading') return <main className={styles.loadingScreen}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></main>;
-  if (access === 'guest') return <AuthCard {...auth} appTitle="Marketplaces Mobile" appDescription="Entre para consultar produtos e preços pelo código de barras." installLabel="Instalar Marketplaces" installPath="/marketplaces/consulta" serviceWorkerUrl="/marketplaces/consulta/sw.js" serviceWorkerScope="/marketplaces/consulta" modalAvisoAberto={Boolean(notice)} tituloAviso={notice?.title || ''} mensagemAviso={notice?.message || ''} tipoAviso={notice?.type || 'alerta'} fecharAviso={() => setNotice(null)} onAbrirTermos={() => window.open('/termos', '_blank', 'noopener,noreferrer')} onAbrirPrivacidade={() => window.open('/privacidade', '_blank', 'noopener,noreferrer')} />;
+  if (access === 'guest') return <AuthCard {...auth} appTitle="AvantaPreços" appDescription="Entre para consultar produtos e preços pelo código de barras." installLabel="Instalar AvantaPreços" installPath="/marketplaces/consulta" serviceWorkerUrl="/marketplaces/consulta/sw.js" serviceWorkerScope="/marketplaces/consulta" modalAvisoAberto={Boolean(notice)} tituloAviso={notice?.title || ''} mensagemAviso={notice?.message || ''} tipoAviso={notice?.type || 'alerta'} fecharAviso={() => setNotice(null)} onAbrirTermos={() => window.open('/termos', '_blank', 'noopener,noreferrer')} onAbrirPrivacidade={() => window.open('/privacidade', '_blank', 'noopener,noreferrer')} />;
   if (access === 'no-company') return <main className={styles.emptyAccess}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={240} height={60} /><h1>Perfil empresarial necessário</h1><p>Use a Gestão para criar ou solicitar acesso a uma empresa antes de consultar preços.</p><a href="/mobile">Abrir Gestão Mobile</a><button type="button" onClick={() => void logout()}>Sair</button></main>;
+  if (access === 'choose-company') return <main className={styles.companySelection}>
+    <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={230} height={58} priority />
+    <section className={styles.companySelectionCard} aria-labelledby="company-selection-title">
+      <h1 id="company-selection-title">Escolha a empresa</h1>
+      <p>Selecione o perfil que será usado nesta sessão.</p>
+      <div className={styles.companySelectionList}>{companies.map((item) => <button key={item.id} type="button" onClick={() => void selectCompany(item)}><strong>{item.nome}</strong><small>Abrir consulta de preços</small></button>)}</div>
+      <button type="button" className={styles.companySelectionLogout} onClick={() => void logout()}>Sair</button>
+    </section>
+  </main>;
 
   return <main className={styles.app}>
     <header className={styles.header}>
-      <div className={styles.brand}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={170} height={42} priority /><span>Marketplaces</span></div>
-      <div className={styles.headerActions}>
-        {companies.length > 1 ? <MobilePicker compact label="Empresa ativa" value={company?.id || ''} options={companies.map((item) => ({ value: item.id, label: item.nome }))} onChange={(value) => { const next = companies.find((item) => item.id === value); if (next) void selectCompany(next); }} /> : <span className={styles.companyName}>{company?.nome}</span>}
-        <button type="button" className={styles.iconButton} onClick={() => void logout()} aria-label="Sair"><Icon name="logout" /></button>
+      <div className={styles.headerInner}>
+        <div className={styles.brand}><strong>{company?.nome || 'Perfil da empresa'}</strong><span>Consulta rápida de produtos e preços</span></div>
+        <button type="button" className={styles.logoutButton} onClick={() => void logout()}>Sair</button>
       </div>
     </header>
 

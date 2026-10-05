@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.47.0.04 - 2026-10-05
+- **AvantaPreços**: nome instalado do PWA atualizado no manifesto, metadados Apple e tela de acesso. A rota técnica permanece genérica em `/marketplaces/consulta`.
+- **Empresa fixa por sessão**: usuários com uma empresa entram diretamente; usuários com várias escolhem o perfil depois do login. A empresa não pode ser trocada dentro do aplicativo: para selecionar outra, é necessário sair e entrar novamente.
+- **Cabeçalho de operação**: passa a seguir o PWA Recebimentos, exibindo somente nome da empresa, a frase “Consulta rápida de produtos e preços” e o botão textual Sair.
+
 ## 1.47.0.03 - 2026-10-05
 - **Ícone do Marketplaces Mobile**: novo ativo próprio, coerente com a família visual AvantaLab, combina código de barras, lupa e etiqueta de preço. O manifesto, os metadados Apple e o cache offline usam as versões de 180, 192 e 512 px.
 

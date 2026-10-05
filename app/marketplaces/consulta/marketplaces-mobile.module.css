@@ -1,11 +1,13 @@
 .app { --brand: #003e73; --accent: #21aaa5; --ink: #152033; min-height: 100dvh; color: var(--ink); background: #f4f7f8; }
 
-.header { position: sticky; z-index: 30; top: 0; display: flex; min-height: calc(68px + env(safe-area-inset-top)); align-items: flex-end; justify-content: space-between; gap: 14px; padding: calc(12px + env(safe-area-inset-top)) 16px 12px; color: #fff; background: linear-gradient(135deg, #003e73 0%, #006b86 100%); box-shadow: 0 5px 20px rgba(0, 43, 75, .16); }
-.brand { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
-.brand img { width: 116px; height: auto; filter: brightness(0) invert(1); }
-.brand span { font-size: 11px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; opacity: .82; }
-.headerActions { display: flex; min-width: 0; align-items: center; justify-content: flex-end; gap: 8px; }
-.companyName { max-width: 140px; overflow: hidden; font-size: 12px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.header { position: sticky; z-index: 30; top: 0; color: #fff; background: color-mix(in srgb, var(--brand) 96%, #000); box-shadow: 0 5px 20px rgba(0, 43, 75, .16); }
+.headerInner { display: flex; width: 100%; max-width: 1080px; min-height: calc(76px + env(safe-area-inset-top)); align-items: center; justify-content: space-between; gap: 12px; margin: 0 auto; padding: calc(14px + env(safe-area-inset-top)) 16px 14px; }
+.brand { display: flex; min-width: 0; flex: 1 1 160px; flex-direction: column; gap: 2px; line-height: 1.1; }
+.brand strong { max-width: 100%; overflow: hidden; font-size: 16px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.brand span { width: fit-content; max-width: 100%; overflow: hidden; border-radius: 999px; padding: 3px 8px 3px 0; font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.logoutButton { min-height: 34px; flex: 0 0 auto; border: 1px solid #cbd5e1; border-radius: 10px; padding: 6px 12px; color: #1f2937; background: #fff; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.logoutButton:hover { filter: brightness(1.06); }
+.logoutButton:focus-visible { outline: 3px solid color-mix(in srgb, #fff 72%, transparent); outline-offset: 2px; }
 .picker { position: relative; display: grid; gap: 6px; text-align: left; }
 .pickerLabel { color: #344054; font-size: 11px; font-weight: 850; }
 .pickerTrigger { display: flex; width: 100%; min-height: 48px; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #cbd8df; border-radius: 14px; padding: 0 13px; color: #172033; background: #fff; font: inherit; font-size: 13px; font-weight: 800; text-align: left; }
@@ -15,9 +17,6 @@
 .pickerList button[aria-selected="true"], .pickerList button:active { background: #e8f5f5; }
 .pickerList strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .pickerList small { color: #70808d; font-size: 10px; }
-.pickerCompact { width: min(42vw, 190px); }
-.pickerCompact .pickerTrigger { min-height: 44px; border-color: rgba(255,255,255,.35); color: #fff; background: rgba(255,255,255,.12); font-size: 12px; }
-.pickerCompact .pickerList { top: calc(100% + 6px); right: 0; left: auto; width: min(76vw, 280px); }
 .iconButton, .iconButtonLight { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; border: 0; border-radius: 12px; color: inherit; background: rgba(255,255,255,.12); }
 .content, .resultPage { width: min(100%, 540px); margin: 0 auto; padding: 22px 16px calc(34px + env(safe-area-inset-bottom)); }
 .hero { text-align: center; }
@@ -112,12 +111,22 @@
 .scanComplete { border-color: #55df9b; color: #fff; background: rgba(24,132,88,.68); }
 .scannerSheet { display: grid; gap: 8px; border-radius: 22px 22px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); color: #1e293b; background: #fff; }
 .scannerSheet p { margin: 0; color: #a12a2a; font-size: 11px; font-weight: 700; }
-.loadingScreen, .emptyAccess { display: flex; min-height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 28px; text-align: center; background: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png')) center bottom / cover no-repeat; }
-.loadingScreen img, .emptyAccess img { width: min(62vw, 250px); height: auto; }
+.loadingScreen, .emptyAccess, .companySelection { display: flex; min-height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 28px; text-align: center; background: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png')) center bottom / cover no-repeat; }
+.loadingScreen img, .emptyAccess img, .companySelection > img { width: min(62vw, 250px); height: auto; }
 .loadingScreen p, .emptyAccess p { max-width: 330px; margin: 0; color: #51606e; font-size: 13px; line-height: 1.5; }
 .emptyAccess h1 { margin: 4px 0 0; color: #172033; font-size: 22px; }
 .emptyAccess a, .emptyAccess button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; border: 0; border-radius: 13px; padding: 0 18px; color: #fff; background: #087f8b; font-size: 13px; font-weight: 850; text-decoration: none; }
 .emptyAccess button { color: #49616f; background: rgba(255,255,255,.7); }
+.companySelectionCard { display: grid; width: min(100%, 360px); gap: 12px; border: 1px solid rgba(255,255,255,.72); border-radius: 20px; padding: 20px; text-align: left; background: rgba(255,255,255,.82); box-shadow: 0 20px 50px rgba(0,43,75,.15); backdrop-filter: blur(18px); }
+.companySelectionCard h1 { margin: 0; color: #172033; font-size: 22px; line-height: 1.2; }
+.companySelectionCard > p { margin: -5px 0 2px; color: #64748b; font-size: 13px; line-height: 1.45; }
+.companySelectionList { display: grid; gap: 9px; }
+.companySelectionList button { display: grid; width: 100%; min-height: 68px; gap: 4px; align-content: center; border: 1px solid color-mix(in srgb, #003e73 22%, #cbd5e1); border-radius: 14px; padding: 12px 14px; color: #003e73; background: color-mix(in srgb, #003e73 5%, #fff); cursor: pointer; font: inherit; text-align: left; }
+.companySelectionList button:hover { border-color: #003e73; background: color-mix(in srgb, #003e73 10%, #fff); }
+.companySelectionList button:focus-visible, .companySelectionLogout:focus-visible { outline: 3px solid color-mix(in srgb, #003e73 38%, transparent); outline-offset: 3px; }
+.companySelectionList strong { overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.companySelectionList small { color: #64748b; font-size: 11px; }
+.companySelectionLogout { justify-self: center; min-height: 38px; border: 1px solid color-mix(in srgb, #003e73 34%, #cbd5e1); border-radius: 999px; padding: 8px 18px; color: #003e73; background: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes scan { from { transform: translateY(-34px); } to { transform: translateY(34px); } }
 @keyframes shimmer { to { background-position: -200% 0; } }

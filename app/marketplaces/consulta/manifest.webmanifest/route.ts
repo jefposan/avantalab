@@ -4,8 +4,8 @@ export const dynamic = 'force-dynamic';
 
 const manifest: MetadataRoute.Manifest = {
   id: '/marketplaces/consulta',
-  name: 'AvantaLab Marketplaces',
-  short_name: 'Marketplaces',
+  name: 'AvantaPreços',
+  short_name: 'AvantaPreços',
   description: 'Consulta rápida de produtos e preços por EAN.',
   start_url: '/marketplaces/consulta',
   scope: '/marketplaces/consulta',
