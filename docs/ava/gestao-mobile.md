@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.47.0.07 -->
+<!-- ava-version: 1.48.0.03 -->
+
+> Revisão 1.48.0.03: o **AvantaPreços** permanece consultando o Mercado Livre
+> e os produtos do perfil; não usa serviço externo GS1/GTIN.
+
+> Revisão 1.48.0.02: o fundo do **AvantaPreços** passa a cobrir também a raiz
+> visual do iOS, incluindo a barra superior e a área do indicador inferior,
+> com o mesmo viewport adotado pelo PWA Recebimentos.
+
+> Revisão 1.48.0.01: as telas de carregamento e acesso do **AvantaPreços**
+> cobrem também a área segura inferior do iPhone, sem faixa branca no rodapé.
 
 > Revisão 1.47.0.07: no iPhone, o topo do **AvantaPreços** mantém o mesmo azul
 > sólido do cabeçalho ao redor da ilha, como no PWA Recebimentos.

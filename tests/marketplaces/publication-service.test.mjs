@@ -30,6 +30,8 @@ class Query {
   constructor(db, table) { this.db = db; this.table = table; this.filters = []; this.mode = 'select'; this.one = false; }
   select() { return this; }
   eq(key, value) { this.filters.push((row) => row[key] === value); return this; }
+  in(key, values) { this.filters.push((row) => values.includes(row[key])); return this; }
+  order() { return this; }
   update(values) { this.mode = 'update'; this.values = values; return this; }
   insert(values) { this.mode = 'insert'; this.values = values; return this; }
   upsert(values) { this.mode = 'upsert'; this.values = values; return this; }
@@ -46,8 +48,8 @@ class Query {
   }
 }
 
-function database() {
-  return { tables: { marketplace_publications: [], marketplace_listings: [] }, from(table) { return new Query(this, table); } };
+function database(overrides = {}) {
+  return { tables: { marketplace_publications: [], marketplace_listings: [], vendas_mobile_catalogos: [], vendas_mobile_catalogo_produtos: [], ...overrides }, from(table) { return new Query(this, table); } };
 }
 
 function connection() {
@@ -99,4 +101,30 @@ test('fluxo completo valida antes de criar e registra o anúncio confirmado', ()
   assert.ok(mock.sequence.indexOf('POST /items/validate') < mock.sequence.indexOf('POST /items'));
   assert.equal(db.tables.marketplace_publications[0].status, 'published');
   assert.equal(db.tables.marketplace_listings[0].provider_listing_id, itemId);
+}));
+
+test('EAN ausente no catálogo do ML usa o cadastro isolado da empresa e o preditor sem publicar', () => environment(async () => {
+  const requests = [];
+  globalThis.fetch = async (input) => {
+    const url = new URL(input); requests.push(`${url.hostname}${url.pathname}`);
+    if (url.hostname === 'api.mercadolibre.com' && url.pathname === '/products/search') return Response.json({ results: [] });
+    if (url.hostname === 'api.mercadolibre.com' && url.pathname === '/sites/MLB/domain_discovery/search') return Response.json([
+      { domain_id: 'MLB-GINS', category_id: 'MLB32130', category_name: 'Gin', attributes: [{ id: 'BRAND', name: 'Marca', value_name: 'Bóra' }] },
+      { domain_id: 'MLB-ALCOHOLIC-DRINKS', category_id: 'MLB12345', category_name: 'Outras bebidas', attributes: [] },
+    ]);
+    throw new Error(`Unexpected provider route: ${url}`);
+  };
+  const profileCatalogId = '33333333-3333-4333-8333-333333333333';
+  const profileProductId = '44444444-4444-4444-8444-444444444444';
+  const db = database({
+    vendas_mobile_catalogos: [{ id: profileCatalogId, empresa_id: company, ativo: true, padrao: true }],
+    vendas_mobile_catalogo_produtos: [{ id: profileProductId, catalogo_id: profileCatalogId, nome: 'Bóra London Dry Gin 700 ml', marca: 'Bóra', descricao: 'Gin cadastrado no perfil.', imagem_url: 'https://images.example.test/bora.jpg', codigo_barras: ean, ativo: true }],
+  });
+  const result = await prepareMercadoLivreCatalog(db, connection(), { ean });
+  assert.equal(result.product.source, 'profile_catalog');
+  assert.equal(result.product.name, 'Bóra London Dry Gin 700 ml');
+  assert.deepEqual(result.categories, [{ id: 'MLB32130', name: 'Gin' }, { id: 'MLB12345', name: 'Outras bebidas' }]);
+  assert.equal(result.categoryId, undefined);
+  assert.equal(requests.some((request) => request.includes('gs1')), false);
+  assert.equal(requests.some((request) => request.endsWith('/items')), false);
 }));

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.48.0.03 - 2026-10-05
+- **Pesquisa por EAN sem serviço pago**: o cadastro de anúncios consulta primeiro o catálogo do Mercado Livre e, quando necessário, os produtos ativos cadastrados no perfil da própria empresa.
+- **Isolamento por empresa**: a alternativa local limita a busca aos catálogos ativos da empresa da conexão selecionada; produtos de outros perfis não são consultados ou exibidos.
+- **Publicação revisável**: um produto do perfil recebe sugestões oficiais de categoria do Mercado Livre, exige imagem HTTPS e todos os campos obrigatórios antes da validação e da publicação explícita.
+- **GTIN externo adiado**: nenhuma integração, credencial ou variável de ambiente GS1/GTIN é necessária nesta versão. O AvantaPreços permanece somente com Mercado Livre e catálogo do perfil.
+
+## 1.48.0.02 - 2026-10-05
+- **Áreas de sistema do AvantaPreços no iPhone**: o fundo oficial agora é aplicado também à raiz `html/body`, cobrindo a barra superior e a área do indicador inferior fora do conteúdo React. O viewport foi igualado ao PWA Recebimentos e o cache do service worker recebe uma nova versão para distribuir o ajuste aos aplicativos instalados.
+
+## 1.48.0.01 - 2026-10-05
+- **Fundo do AvantaPreços no iPhone**: carregamento, login, seleção de empresa e bloqueio agora usam uma camada fixa que cobre todo o viewport e as áreas seguras. O dimensionamento da imagem segue o padrão dos demais PWAs e elimina a faixa branca junto ao indicador inferior.
+
 ## 1.47.0.07 - 2026-10-05
 - **Topo do AvantaPreços no iPhone**: a barra de status e a área ao redor da ilha passam a usar o mesmo azul institucional sólido do cabeçalho, seguindo o comportamento do PWA Recebimentos e removendo o efeito translúcido em degradê.
 

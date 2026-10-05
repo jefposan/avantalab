@@ -15,6 +15,10 @@ Para habilitar a conexão no ambiente, o servidor precisa receber
 base64url) como variáveis secretas. Elas não pertencem a `NEXT_PUBLIC_*`, a
 logs, preferências de navegador ou banco de dados sem criptografia.
 
+Não há integração externa de GTIN ativa nesta versão. O fallback do cadastro por
+EAN usa apenas produtos ativos dos catálogos da própria empresa e não exige
+credenciais adicionais no ambiente.
+
 ## Implementado e validado
 
 - Conexão Mercado Livre por OAuth, sem senha no AvantaLab.
@@ -44,7 +48,7 @@ logs, preferências de navegador ou banco de dados sem criptografia.
 
 ## Limites atuais
 
-- `Pesquisar` consulta o catálogo do Mercado Livre pelo EAN sem publicar. Após revisão da ficha e preenchimento dos campos obrigatórios, `Publicar` executa a criação mediante ação explícita do usuário.
+- `Pesquisar` consulta primeiro o catálogo do Mercado Livre e, na ausência de ficha, os produtos ativos cadastrados no perfil da empresa. Após revisão da ficha e preenchimento dos campos obrigatórios, `Publicar` executa a criação mediante ação explícita do usuário.
 - Cron e webhook não foram ativados; o cache não se atualiza com o módulo fechado.
 - Outras contas podem ser vinculadas por OAuth e escolhidas no seletor; a
   validação ao vivo usou somente a conta que já estava conectada.
@@ -57,7 +61,7 @@ logs, preferências de navegador ou banco de dados sem criptografia.
 2. Operador autorizado seleciona a conta e informa o EAN.
    O botão de código de barras arma leitores USB/Bluetooth em modo teclado;
    o sufixo Enter enviado pelo equipamento inicia a validação.
-3. O conector consulta o catálogo, apresenta a ficha e solicita preço e campos obrigatórios ausentes.
+3. O conector consulta o catálogo do Mercado Livre. Se não houver ficha, consulta os produtos ativos do perfil, usa o preditor oficial do Mercado Livre e solicita os campos obrigatórios ausentes.
 4. O usuário confirma em `Publicar`; o backend revalida os dados e registra o resultado.
 
 Outros marketplaces aparecem como integrações planejadas até que seus contratos e credenciais oficiais sejam configurados.

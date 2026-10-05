@@ -1,7 +1,7 @@
 import { isValidEan, normalizeEan } from './ean.ts';
 
-export type CatalogAttribute = { id: string; name: string; value: string };
-export type CatalogCandidate = { id: string; name: string; domainId: string; picture: string | null };
+export type CatalogAttribute = { id: string; name: string; value: string; valueId?: string };
+export type CatalogCandidate = { id: string; name: string; domainId: string; picture: string | null; source?: 'mercadolivre_catalog' | 'profile_catalog' };
 export type CatalogPreparationIssue = { code: string; message: string };
 export type CatalogPreparation = {
   status: 'found' | 'not_found';
@@ -14,6 +14,7 @@ export type CatalogPreparation = {
   shippingModes?: Array<{ id: string; name: string }>;
   conditions?: Array<{ id: string; name: string }>;
   requiredAttributes?: Array<{ id: string; name: string; values: Array<{ id: string; name: string }> }>;
+  presetAttributes?: CatalogAttribute[];
   constraints?: { minimumPrice?: number; maximumPrice?: number; maxDescriptionLength: number };
   blockingIssues?: CatalogPreparationIssue[];
   warnings?: string[];
@@ -40,6 +41,13 @@ export function safeCatalogImage(value: unknown): string | null {
   try {
     const url = new URL(String(value));
     return url.protocol === 'https:' && (url.hostname === 'mlstatic.com' || url.hostname.endsWith('.mlstatic.com')) ? url.toString() : null;
+  } catch { return null; }
+}
+
+export function safeHttpsImage(value: unknown): string | null {
+  try {
+    const url = new URL(String(value));
+    return url.protocol === 'https:' ? url.toString().slice(0, 2048) : null;
   } catch { return null; }
 }
 
@@ -91,7 +99,9 @@ export function publicationErrors(form: PublicationForm, preparation: CatalogPre
   }
   const descriptionLimit = preparation.constraints?.maxDescriptionLength || 50000;
   if (form.description && form.description.length > descriptionLimit) errors.description = `A descrição deve ter até ${descriptionLimit.toLocaleString('pt-BR')} caracteres.`;
-  if (form.pictureUrl && !safeCatalogImage(form.pictureUrl)) errors.pictureUrl = 'Use uma imagem HTTPS hospedada no Mercado Livre.';
+  if (preparation.product?.source === 'profile_catalog') {
+    if (!form.pictureUrl || !safeHttpsImage(form.pictureUrl) || !preparation.product.pictures.includes(form.pictureUrl)) errors.pictureUrl = 'Selecione a imagem cadastrada para este produto no perfil.';
+  } else if (form.pictureUrl && !safeCatalogImage(form.pictureUrl)) errors.pictureUrl = 'Use uma imagem HTTPS hospedada no Mercado Livre.';
   for (const attribute of preparation.requiredAttributes || []) {
     const value = form.attributes?.[attribute.id]?.trim();
     if (!value || (attribute.values.length > 0 && !attribute.values.some((option) => option.id === value))) errors[`attribute:${attribute.id}`] = `Informe ${attribute.name}.`;

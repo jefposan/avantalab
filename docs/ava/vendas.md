@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.47.0.07 -->
+<!-- ava-version: 1.48.0.03 -->
+
+> Revisão 1.48.0.03: o cadastro por EAN em Marketplaces pode reutilizar os
+> produtos ativos do perfil; não altera os fluxos do AvantaVendas.
+
+> Revisão 1.48.0.02: a raiz visual do PWA **AvantaPreços** passa a cobrir as
+> áreas de sistema do iPhone; o ajuste não altera os fluxos do AvantaVendas.
+
+> Revisão 1.48.0.01: o ajuste de fundo do AvantaPreços no iPhone não altera
+> os fluxos do AvantaVendas.
 
 > Revisão 1.47.0.07: o topo sólido no iPhone pertence ao PWA **AvantaPreços**;
 > não altera os fluxos do AvantaVendas.

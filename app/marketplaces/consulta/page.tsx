@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import MarketplaceMobileApp from './MarketplaceMobileApp';
+import './viewport-root.css';
 
 export const metadata: Metadata = {
   title: 'AvantaPreços — Consulta de preços | AvantaLab',
@@ -21,7 +22,6 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  interactiveWidget: 'resizes-content',
   themeColor: '#003E73',
 };
 

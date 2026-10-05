@@ -1,6 +1,18 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.47.0.07 -->
+<!-- ava-version: 1.48.0.03 -->
+
+> Revisão 1.48.0.03: em **Anúncios em marketplaces**, Pesquisar consulta
+> primeiro o catálogo do Mercado Livre e, se não houver ficha, os produtos
+> ativos cadastrados no perfil da própria empresa. Não há consulta externa
+> GS1/GTIN nem credenciais adicionais nesta versão.
+
+> Revisão 1.48.0.02: o PWA **AvantaPreços** iguala o viewport ao Recebimentos
+> e aplica o fundo oficial à raiz visual do iOS, sem faixa branca nas áreas de
+> sistema superior ou inferior; a Gestão Web não é alterada.
+
+> Revisão 1.48.0.01: a correção do fundo e da área segura pertence às telas de
+> acesso do AvantaPreços; não altera a operação da Gestão Web.
 
 > Revisão 1.47.0.07: a uniformização da barra de status pertence ao PWA
 > **AvantaPreços** no iPhone; não altera a Gestão Web.

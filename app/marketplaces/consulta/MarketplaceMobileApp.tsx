@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
 import { isValidEan, normalizeEan } from '@/app/modules/marketplaces/services/ean';
 import styles from './marketplaces-mobile.module.css';
@@ -173,6 +173,22 @@ export default function MarketplaceMobileApp() {
   const [error, setError] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
 
+  useLayoutEffect(() => {
+    const roots = [document.documentElement, document.body];
+    roots.forEach((element) => element.classList.add('avantaprecos-pwa-root'));
+    return () => roots.forEach((element) => {
+      element.classList.remove('avantaprecos-pwa-root');
+      element.classList.remove('avantaprecos-pwa-access-root');
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    const roots = [document.documentElement, document.body];
+    const accessScene = access !== 'ready';
+    roots.forEach((element) => element.classList.toggle('avantaprecos-pwa-access-root', accessScene));
+    return () => roots.forEach((element) => element.classList.remove('avantaprecos-pwa-access-root'));
+  }, [access]);
+
   const selectCompany = useCallback(async (selected: Company) => {
     setCompanies((current) => current.some((item) => item.id === selected.id) ? current : [...current, selected]);
     setCompany(selected); setAccess('ready');
@@ -292,8 +308,8 @@ export default function MarketplaceMobileApp() {
     setScannerOpen(true);
   };
 
-  if (access === 'loading') return <main className={styles.loadingScreen}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></main>;
-  if (access === 'guest') return <main className={styles.loginScreen}>
+  if (access === 'loading') return <main className={styles.loadingScreen} data-avantaprecos-access><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></main>;
+  if (access === 'guest') return <main className={styles.loginScreen} data-avantaprecos-access>
     <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={250} height={63} priority />
     <section className={styles.loginCard} aria-labelledby="avantaprecos-login-title">
       <div className={styles.loginIcon}><Image src="/images/marketplaces-mobile-icon-192.png" alt="" width={66} height={66} /></div>
@@ -306,8 +322,8 @@ export default function MarketplaceMobileApp() {
       </form>
     </section>
   </main>;
-  if (access === 'no-company') return <main className={styles.emptyAccess}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={240} height={60} /><h1>Acesso não liberado</h1><p>Peça ao gestor da empresa para cadastrar seu usuário no módulo Marketplaces.</p><button type="button" onClick={() => void logout()}>Sair</button></main>;
-  if (access === 'choose-company') return <main className={styles.companySelection}>
+  if (access === 'no-company') return <main className={styles.emptyAccess} data-avantaprecos-access><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={240} height={60} /><h1>Acesso não liberado</h1><p>Peça ao gestor da empresa para cadastrar seu usuário no módulo Marketplaces.</p><button type="button" onClick={() => void logout()}>Sair</button></main>;
+  if (access === 'choose-company') return <main className={styles.companySelection} data-avantaprecos-access>
     <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={230} height={58} priority />
     <section className={styles.companySelectionCard} aria-labelledby="company-selection-title">
       <h1 id="company-selection-title">Escolha a empresa</h1>

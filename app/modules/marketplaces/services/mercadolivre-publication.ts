@@ -4,6 +4,7 @@ import { MarketplaceError } from './management-access';
 import { mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
 import { publicationErrors, safeText, validEan, type CatalogPreparation, type PublicationForm } from './catalog-publication';
 import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
+import { lookupProfileCatalogByEan } from './profile-catalog';
 import { listingIdIsValid, objectValue, uuidIsValid } from './listing-model';
 
 const listingTypeIds = new Set(['free', 'gold_special', 'gold_pro']);
@@ -21,23 +22,48 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
   if (!ean) throw new MarketplaceError(400, 'invalid_ean', 'Informe um EAN/GTIN válido com dígito verificador.');
   const identification = await identifyMercadoLivreCatalog(db, connection, { ean, productId: input.productId });
   const candidates = identification.candidates;
-  if (identification.status === 'not_found') return { status: 'not_found', ean, notice: identification.notice };
-  if (identification.status === 'choose' || !identification.product) return { status: 'found', ean, candidates, notice: identification.notice };
-  const fullProduct = identification.product;
-  const product = fullProduct;
-  const attributes = fullProduct.attributes;
-
-  const categoryCandidates = new Map<string, { id: string; name: string }>();
-  const domainCategories = await mlRequest(db, connection, `/catalog_domains/${encodeURIComponent(product.domainId)}/categories`);
-  if (!Array.isArray(domainCategories)) throw new MarketplaceError(503, 'catalog_unavailable', 'O catálogo não retornou as categorias do produto. Tente novamente.');
-  for (const raw of domainCategories) {
-    const row = objectValue(raw), id = safeText(row.id, 30);
-    if (/^MLB\d+$/.test(id)) categoryCandidates.set(id, { id, name: safeText(row.name, 120) || id });
+  let sourceNotice = identification.notice;
+  let externalCategories: Array<{ id: string; name: string; domainId: string; attributes: Array<{ id: string; name: string; value: string }> }> = [];
+  let fullProduct: CatalogPreparation['product'] = identification.product;
+  if (identification.status === 'not_found') {
+    const profile = await lookupProfileCatalogByEan(db, connection.empresa_id, ean, input.productId);
+    if (profile.status === 'choose') return { status: 'found', ean, candidates: profile.candidates, notice: profile.notice };
+    if (profile.status !== 'found' || !profile.product) return { status: 'not_found', ean, notice: profile.notice };
+    fullProduct = profile.product;
+    sourceNotice = profile.notice;
+    const predicted = await mlRequest(db, connection, `/sites/MLB/domain_discovery/search?${new URLSearchParams({ q: profile.product.name, limit: '3', target: 'core' })}`);
+    externalCategories = safeArray(predicted).map(objectValue).flatMap((row) => {
+      const id = safeText(row.category_id, 30), name = safeText(row.category_name, 120), domainId = safeText(row.domain_id, 100);
+      if (!/^MLB\d+$/.test(id) || !name || !domainId.startsWith('MLB-')) return [];
+      const attributes = safeArray(row.attributes).map(objectValue).flatMap((attribute) => {
+        const attributeId = safeText(attribute.id, 80), value = safeText(attribute.value_name, 300), valueId = safeText(attribute.value_id, 80);
+        return attributeId && value ? [{ id: attributeId, name: safeText(attribute.name, 120) || attributeId, value, ...(valueId ? { valueId } : {}) }] : [];
+      });
+      return [{ id, name, domainId, attributes }];
+    });
+    if (!externalCategories.length) return { status: 'found', ean, product: fullProduct, blockingIssues: [{ code: 'category_prediction_empty', message: 'Produto localizado no cadastro do perfil, mas o Mercado Livre não sugeriu uma categoria. Revise o nome do produto ou cadastre-o diretamente no Mercado Livre.' }], notice: sourceNotice };
   }
-  const categories = [...categoryCandidates.values()];
+  if (identification.status === 'choose') return { status: 'found', ean, candidates, notice: identification.notice };
+  if (!fullProduct) return { status: 'not_found', ean, notice: identification.notice };
+  let product = fullProduct;
+
+  const categoryCandidates = new Map<string, { id: string; name: string; domainId: string; attributes: Array<{ id: string; name: string; value: string }> }>();
+  if (product.source === 'profile_catalog') {
+    for (const category of externalCategories) categoryCandidates.set(category.id, category);
+  } else {
+    const domainCategories = await mlRequest(db, connection, `/catalog_domains/${encodeURIComponent(product.domainId)}/categories`);
+    if (!Array.isArray(domainCategories)) throw new MarketplaceError(503, 'catalog_unavailable', 'O catálogo não retornou as categorias do produto. Tente novamente.');
+    for (const raw of domainCategories) {
+      const row = objectValue(raw), id = safeText(row.id, 30);
+      if (/^MLB\d+$/.test(id)) categoryCandidates.set(id, { id, name: safeText(row.name, 120) || id, domainId: product.domainId, attributes: [] });
+    }
+  }
+  const categories = [...categoryCandidates.values()].map(({ id, name }) => ({ id, name }));
   const requestedCategory = safeText(input.categoryId, 30);
   const categoryId = requestedCategory && categoryCandidates.has(requestedCategory) ? requestedCategory : categories.length === 1 ? categories[0].id : '';
-  if (!categoryId) return { status: 'found', ean, product: fullProduct, candidates, categories, notice: categories.length ? 'Selecione a categoria correta para consultar as condições de venda.' : 'Não foi possível confirmar a categoria do produto. Não publique sem revisar a ficha no Mercado Livre.' };
+  if (!categoryId) return { status: 'found', ean, product, candidates, categories, notice: categories.length ? `${sourceNotice ? `${sourceNotice} ` : ''}Selecione a categoria correta para consultar as condições de venda.` : 'Não foi possível confirmar a categoria do produto. Não publique sem revisar a ficha no Mercado Livre.' };
+  const selectedCategory = categoryCandidates.get(categoryId)!;
+  if (product.source === 'profile_catalog') product = { ...product, domainId: selectedCategory.domainId };
 
   const [categoryResult, availableResult, sellerShippingResult, categoryAttributesResult] = await Promise.allSettled([
     mlRequest(db, connection, `/categories/${categoryId}`).then(objectValue),
@@ -59,7 +85,7 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
     : 'Não foi possível consultar os envios da conta agora. A opção escolhida será confirmada na validação antes de publicar.');
 
   const settings = objectValue(category?.settings);
-  if (category && safeText(settings.catalog_domain, 100) !== product.domainId) throw new MarketplaceError(409, 'category_mismatch', 'A categoria selecionada não corresponde ao domínio do produto. Confira a ficha no Mercado Livre.');
+  if (category && product.source !== 'profile_catalog' && safeText(settings.catalog_domain, 100) !== product.domainId) throw new MarketplaceError(409, 'category_mismatch', 'A categoria selecionada não corresponde ao domínio do produto. Confira a ficha no Mercado Livre.');
   if (category && (settings.listing_allowed === false || safeText(settings.status, 30) === 'disabled')) blockingIssues.push({ code: 'category_not_allowed', message: 'O Mercado Livre não permite criar anúncios nesta categoria.' });
   const listingTypes = safeArray(available?.available).map(objectValue).flatMap((row) => {
     const id = safeText(row.id, 40);
@@ -80,10 +106,14 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
   const itemCondition = categoryAttributes.map(objectValue).find((row) => row.id === 'ITEM_CONDITION');
   const attributeConditions = new Set(safeArray(itemCondition?.values).map((value) => safeText(objectValue(value).id, 30)));
   const conditions = Object.entries(conditionNames).filter(([id]) => configuredConditions.has(id) || attributeConditions.has(conditionValueIds[id])).map(([id, name]) => ({ id, name }));
-  const present = new Set(attributes.map((attribute) => attribute.id));
+  const knownAttributeIds = new Set(safeArray(categoryAttributes).map((row) => safeText(objectValue(row).id, 80)).filter(Boolean));
+  const presetAttributes = [...product.attributes, ...selectedCategory.attributes]
+    .filter((attribute, index, all) => knownAttributeIds.has(attribute.id) && all.findIndex((candidate) => candidate.id === attribute.id) === index);
+  const present = new Set(presetAttributes.map((attribute) => attribute.id));
   const requiredAttributes = safeArray(categoryAttributes).map(objectValue).filter((row) => {
     const tags = objectValue(row.tags), id = safeText(row.id, 80);
-    return id && !present.has(id) && !['GTIN', 'ITEM_CONDITION'].includes(id) && (tags.required === true || tags.new_required === true);
+    return id && !present.has(id) && !['GTIN', 'ITEM_CONDITION'].includes(id)
+      && (tags.required === true || tags.new_required === true || (product.source === 'profile_catalog' && tags.catalog_required === true));
   }).slice(0, 30).map((row) => ({
     id: safeText(row.id, 80), name: safeText(row.name, 120) || safeText(row.id, 80),
     values: safeArray(row.values).slice(0, 50).map(objectValue).flatMap((value) => {
@@ -94,16 +124,20 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
   if (available && !listingTypes.length) blockingIssues.push({ code: 'listing_types_empty', message: 'Esta conta não possui um tipo de anúncio disponível para a categoria.' });
   if (!shippingModes.length) blockingIssues.push({ code: 'shipping_modes_empty', message: 'Nenhuma forma de envio compatível foi encontrada para esta conta e categoria.' });
   if (category && !conditions.length) blockingIssues.push({ code: 'conditions_empty', message: 'A categoria não retornou uma condição de produto compatível.' });
+  if (product.source === 'profile_catalog' && !product.pictures.length) blockingIssues.push({ code: 'picture_required', message: 'O produto cadastrado no perfil não possui uma imagem HTTPS utilizável. Adicione uma imagem ao cadastro antes de publicar.' });
   const minimumPrice = Number(settings.minimum_price), maximumPrice = Number(settings.maximum_price), descriptionLimit = Number(settings.max_description_length);
-  return { status: 'found', ean, product: fullProduct, candidates, categories, categoryId, listingTypes, shippingModes, conditions, requiredAttributes,
+  return { status: 'found', ean, product, candidates, categories, categoryId, listingTypes, shippingModes, conditions, requiredAttributes, presetAttributes,
     constraints: { ...(Number.isFinite(minimumPrice) && minimumPrice > 0 ? { minimumPrice } : {}), ...(Number.isFinite(maximumPrice) && maximumPrice > 0 ? { maximumPrice } : {}), maxDescriptionLength: Number.isSafeInteger(descriptionLimit) && descriptionLimit > 0 ? descriptionLimit : 50000 },
     ...(blockingIssues.length ? { blockingIssues } : {}), ...(warnings.length ? { warnings } : {}),
-    notice: blockingIssues.length ? 'Revise as pendências abaixo antes de publicar.' : undefined };
+    notice: blockingIssues.length ? 'Revise as pendências abaixo antes de publicar.' : sourceNotice };
 }
 
 function publicationBody(form: PublicationForm, prepared: CatalogPreparation) {
   const product = prepared.product!;
   const attrs: Array<Record<string, string>> = [{ id: 'GTIN', value_name: prepared.ean }, { id: 'ITEM_CONDITION', value_id: conditionValueIds[form.condition], value_name: conditionNames[form.condition] }];
+  for (const attribute of prepared.presetAttributes || []) attrs.push(attribute.valueId
+    ? { id: attribute.id, value_id: attribute.valueId, value_name: attribute.value }
+    : { id: attribute.id, value_name: attribute.value });
   for (const field of prepared.requiredAttributes || []) {
     const value = form.attributes?.[field.id]?.trim() || '';
     const option = field.values.find((choice) => choice.id === value);
@@ -111,7 +145,7 @@ function publicationBody(form: PublicationForm, prepared: CatalogPreparation) {
   }
   const warranty = form.warrantyType === 'none' ? 'Sem garantia' : form.warrantyType === 'seller' ? 'Garantia do vendedor' : 'Garantia de fábrica';
   return {
-    site_id: 'MLB', catalog_product_id: product.id, catalog_listing: true, category_id: form.categoryId,
+    site_id: 'MLB', ...(product.source === 'profile_catalog' ? {} : { catalog_product_id: product.id, catalog_listing: true }), category_id: form.categoryId,
     title: product.name,
     price: form.price, currency_id: 'BRL', available_quantity: form.stock, buying_mode: 'buy_it_now',
     listing_type_id: form.listingType, ...(form.condition === 'new' || form.condition === 'used' ? { condition: form.condition } : {}),
@@ -128,7 +162,7 @@ function parsePublicationForm(raw: unknown): PublicationForm {
     if (/^[A-Z0-9_]{1,80}$/.test(id) && typeof choice === 'string') attributes[id] = choice.trim().slice(0, 301);
   }
   return {
-    ean: safeText(value.ean, 14), productId: safeText(value.productId, 30), categoryId: safeText(value.categoryId, 30),
+    ean: safeText(value.ean, 14), productId: safeText(value.productId, 90), categoryId: safeText(value.categoryId, 30),
     price: typeof value.price === 'number' ? value.price : NaN,
     stock: typeof value.stock === 'number' ? value.stock : NaN,
     listingType: safeText(value.listingType, 40), shippingMode: safeText(value.shippingMode, 40), condition: safeText(value.condition, 20),
