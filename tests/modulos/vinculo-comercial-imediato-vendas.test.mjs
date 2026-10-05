@@ -21,7 +21,7 @@ test('aprovação mantém os três recursos ativos e sincroniza sem reiniciar', 
   assert.match(migracao, /on conflict \(conta_id\) do update\s+set novidades_ativas = true,\s+divulgacao_ativa = true,\s+catalogo_ativo = true/);
   assert.match(aplicacao, /carregarConteudosSecundariosVendas\(false\)/);
   assert.match(aplicacao, /sincronizarCatalogoAutomaticamente\(true\)/);
-  assert.match(aplicacao, /atualizarVinculoAprovadoAutomaticamente\(true\)/);
+  assert.match(aplicacao, /atualizarVinculoAprovadoComSincronizacaoForcada\(\)/);
 });
 
 test('sincronização do catálogo resolve a empresa pelo vínculo da conta', () => {

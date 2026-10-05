@@ -479,7 +479,7 @@ exigir(
 );
 exigir(
   cliente.includes('async function carregarDivulgacao()')
-    && cliente.includes("rpc('meus_vinculos_comerciais_vendas_mobile_rpc')")
+    && cliente.includes("rpc('meus_vinculos_comerciais_vendas_mobile_rpc'")
     && cliente.includes("from('vendas_mobile_divulgacao_pastas')")
     && cliente.includes("from('vendas_mobile_divulgacao_materiais')")
     && cliente.includes('pastasPermitidas.has(material.pasta_id)')
