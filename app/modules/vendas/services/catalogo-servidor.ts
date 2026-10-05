@@ -75,7 +75,7 @@ export async function carregarCatalogoCustosParaVendas({
     .limit(1)
     .maybeSingle();
   if (erroLocalEstoque) throw new ErroCatalogoVendas('Não foi possível consultar o local principal de estoque.', 500);
-  let saldos: Record<string, Record<string, unknown>> = {};
+  const saldos: Record<string, Record<string, unknown>> = {};
   if (localEstoque && produtos.length) {
     for (let inicio = 0; ; inicio += tamanhoPagina) {
       const { data: linhasSaldo, error: erroSaldos } = await db
@@ -91,7 +91,7 @@ export async function carregarCatalogoCustosParaVendas({
     }
   }
 
-  let precos: Record<string, number> = {};
+  const precos: Record<string, number> = {};
   if (tabela && !tabela.padrao) {
     for (let inicio = 0; ; inicio += tamanhoPagina) {
       const { data: itensPreco, error } = await db

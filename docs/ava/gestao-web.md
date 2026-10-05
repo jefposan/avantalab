@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.11 -->
+<!-- ava-version: 1.48.0.12 -->
+
+> Revisão 1.48.0.12: auditoria técnica corrigiu erros bloqueantes de qualidade
+> em componentes e integrações compartilhadas, sem alterar a operação orientada
+> pela Ava na Gestão Web.
 
 > Revisão 1.48.0.11: ao abrir **Anúncios em marketplaces**, a validação de
 > acesso usa a cena oficial compartilhada, com fundo institucional e card

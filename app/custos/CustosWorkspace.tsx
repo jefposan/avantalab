@@ -352,14 +352,31 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
   const alterarItemComposicao = (id: string, patch: Partial<ItemComposicao>) => setComposicao((atual) => ({ ...atual, itens: atual.itens.map((linha) => linha.id === id ? { ...linha, ...patch } : linha) }));
   const registrarReferenciaEdicao = (produto: ProdutoCustos, proximaComposicao: ComposicaoCusto) => setReferenciaEdicao(JSON.stringify({ rascunho: produto, composicao: proximaComposicao }));
   const possuiEdicaoPendente = modo === 'cadastro' && JSON.stringify({ rascunho, composicao }) !== referenciaEdicao;
+  const irParaInicioProdutos = useCallback(() => {
+    setConfirmarRetornoInicio(false);
+    setConfirmarDescarte(false);
+    setProdutoPendenteId('');
+    setMenuAcao(null);
+    setPrecosDoProduto(null);
+    setBuscaLista('');
+    setTipoLista('produto');
+    setModo('lista');
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
+  }, []);
 
   useEffect(() => {
-    setCatalogoDestinoLoteId((atual) => catalogos.some((catalogo) => catalogo.id === atual && catalogo.ativo) ? atual : catalogoId);
+    const quadro = window.requestAnimationFrame(() => {
+      setCatalogoDestinoLoteId((atual) => catalogos.some((catalogo) => catalogo.id === atual && catalogo.ativo) ? atual : catalogoId);
+    });
+    return () => window.cancelAnimationFrame(quadro);
   }, [catalogoId, catalogos]);
   useEffect(() => {
     if (!catalogoFiltroId || catalogos.some((catalogo) => catalogo.id === catalogoFiltroId && catalogo.ativo)) return;
-    setCatalogoFiltroId('');
-    setProdutosSelecionados([]);
+    const quadro = window.requestAnimationFrame(() => {
+      setCatalogoFiltroId('');
+      setProdutosSelecionados([]);
+    });
+    return () => window.cancelAnimationFrame(quadro);
   }, [catalogoFiltroId, catalogos]);
   const iniciar = (tipo: TipoItem) => { const novo = novoProduto(tipo, catalogoId); const novaComposicao = composicaoVazia(); setRascunho(novo); setComposicao(novaComposicao); registrarReferenciaEdicao(novo, novaComposicao); onSelecionar(''); setModo('cadastro'); };
   useEffect(() => {
@@ -384,9 +401,12 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
   useEffect(() => {
     if (solicitacaoInicioAnteriorRef.current === solicitacaoInicio) return;
     solicitacaoInicioAnteriorRef.current = solicitacaoInicio;
-    if (possuiEdicaoPendente) { setConfirmarRetornoInicio(true); return; }
-    irParaInicioProdutos();
-  }, [solicitacaoInicio]);
+    const quadro = window.requestAnimationFrame(() => {
+      if (possuiEdicaoPendente) { setConfirmarRetornoInicio(true); return; }
+      irParaInicioProdutos();
+    });
+    return () => window.cancelAnimationFrame(quadro);
+  }, [irParaInicioProdutos, possuiEdicaoPendente, solicitacaoInicio]);
   useEffect(() => { onEdicaoPendente(possuiEdicaoPendente); }, [onEdicaoPendente, possuiEdicaoPendente]);
   useEffect(() => () => onEdicaoPendente(false), [onEdicaoPendente]);
   useEffect(() => {
@@ -545,17 +565,6 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
       await onRecarregar(); setPrecosDoProduto(null);
     } catch (falha) { onErro(erroTexto(falha)); }
     finally { setSalvando(false); }
-  };
-  const irParaInicioProdutos = () => {
-    setConfirmarRetornoInicio(false);
-    setConfirmarDescarte(false);
-    setProdutoPendenteId('');
-    setMenuAcao(null);
-    setPrecosDoProduto(null);
-    setBuscaLista('');
-    setTipoLista('produto');
-    setModo('lista');
-    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
   };
   const salvarERetornarInicio = async () => {
     if (await salvar()) irParaInicioProdutos();

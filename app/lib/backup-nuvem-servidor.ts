@@ -4,6 +4,15 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 export type ProvedorBackupNuvem = 'google_drive' | 'onedrive';
 
 type Credenciais = { accessToken: string; refreshToken: string; expiraEm?: string | null; email?: string | null; pastaId: string };
+type ArquivoBackupRemoto = {
+  id?: string;
+  name?: string;
+  size?: number | string;
+  file?: unknown;
+  lastModifiedDateTime?: string;
+  modifiedTime?: string;
+  createdTime?: string;
+};
 
 const PREFIXO = 'v1';
 
@@ -118,13 +127,16 @@ export async function enviarBackupNuvem(provedor: ProvedorBackupNuvem, accessTok
 export async function listarBackupsNuvem(provedor: ProvedorBackupNuvem, accessToken: string, pastaId: string) {
   if (provedor === 'onedrive') {
     const dados = await respostaJson('https://graph.microsoft.com/v1.0/me/special/approot/children?$select=id,name,size,lastModifiedDateTime,file&$orderby=lastModifiedDateTime desc', { headers: { Authorization: `Bearer ${accessToken}` } });
-    return (dados.value || []).filter((item: any) => item.file && /\.xlsx$/i.test(item.name || '')).map((item: any) => ({ id: item.id, nome: item.name, tamanho: Number(item.size || 0), criadoEm: item.lastModifiedDateTime }));
+    return ((dados.value || []) as ArquivoBackupRemoto[])
+      .filter((item) => item.file && /\.xlsx$/i.test(item.name || ''))
+      .map((item) => ({ id: item.id, nome: item.name, tamanho: Number(item.size || 0), criadoEm: item.lastModifiedDateTime }));
   }
   const url = new URL('https://www.googleapis.com/drive/v3/files');
   url.searchParams.set('q', `'${pastaId}' in parents and trashed = false and mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'`);
   url.searchParams.set('fields', 'files(id,name,size,createdTime,modifiedTime)'); url.searchParams.set('orderBy', 'createdTime desc');
   const dados = await respostaJson(url.toString(), { headers: { Authorization: `Bearer ${accessToken}` } });
-  return (dados.files || []).map((item: any) => ({ id: item.id, nome: item.name, tamanho: Number(item.size || 0), criadoEm: item.modifiedTime || item.createdTime }));
+  return ((dados.files || []) as ArquivoBackupRemoto[])
+    .map((item) => ({ id: item.id, nome: item.name, tamanho: Number(item.size || 0), criadoEm: item.modifiedTime || item.createdTime }));
 }
 
 export async function baixarBackupNuvem(provedor: ProvedorBackupNuvem, accessToken: string, id: string) {

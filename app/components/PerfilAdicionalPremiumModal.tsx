@@ -29,11 +29,14 @@ export default function PerfilAdicionalPremiumModal({
 
   useEffect(() => {
     if (!aberto) return;
-    setNome(nomePadrao);
-    setEmail(emailPadrao);
-    setTelefone(telefonePadrao);
-    setCpfCnpj('');
-    setErro('');
+    const quadro = window.requestAnimationFrame(() => {
+      setNome(nomePadrao);
+      setEmail(emailPadrao);
+      setTelefone(telefonePadrao);
+      setCpfCnpj('');
+      setErro('');
+    });
+    return () => window.cancelAnimationFrame(quadro);
   }, [aberto, emailPadrao, nomePadrao, telefonePadrao]);
 
   if (!aberto) return null;

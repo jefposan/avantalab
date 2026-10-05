@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { randomBytes } from 'node:crypto';
 import {
   cifrarBackupNuvem, configuracaoProvedor, decifrarBackupNuvem, enviarBackupNuvem,
@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
 
 // A instância é criada com as variáveis de ambiente em tempo de execução; não
 // há schema TypeScript gerado para estas tabelas privadas neste projeto.
-type Contexto = { admin: any; userId: string; perfil: string };
+type Contexto = { admin: SupabaseClient; userId: string; perfil: string };
 const perfisBackup = ['gestor_master', 'administrador', 'operador_completo'];
 
 async function contexto(request: Request, empresaId: string): Promise<Contexto | null> {

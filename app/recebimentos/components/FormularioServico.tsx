@@ -88,18 +88,21 @@ export default function FormularioServico({ empresas, subempresas, servicos, sel
 
   useEffect(() => {
     if (!selecaoInicial) return;
-    const subempresaSelecionada = subempresas.find((item) => item.id === selecaoInicial.subcompanyId);
-    setEtapa('destino');
-    setEmpresaId(selecaoInicial.companyId);
-    setSubempresaId(selecaoInicial.subcompanyId ?? '');
-    setServicoId(selecaoInicial.serviceId);
-    setNivelSelecionado(subempresaSelecionada ? chaveNivel(subempresaSelecionada) : '');
-    setClienteNome('');
-    setAssinatura('');
-    setAvaliacao(null);
-    setObservacao('');
-    setErro('');
-    setProximoCampoEmDestaque('assinador');
+    const quadro = window.requestAnimationFrame(() => {
+      const subempresaSelecionada = subempresas.find((item) => item.id === selecaoInicial.subcompanyId);
+      setEtapa('destino');
+      setEmpresaId(selecaoInicial.companyId);
+      setSubempresaId(selecaoInicial.subcompanyId ?? '');
+      setServicoId(selecaoInicial.serviceId);
+      setNivelSelecionado(subempresaSelecionada ? chaveNivel(subempresaSelecionada) : '');
+      setClienteNome('');
+      setAssinatura('');
+      setAvaliacao(null);
+      setObservacao('');
+      setErro('');
+      setProximoCampoEmDestaque('assinador');
+    });
+    return () => window.cancelAnimationFrame(quadro);
   }, [selecaoInicial?.requestId]);
 
   useEffect(() => {

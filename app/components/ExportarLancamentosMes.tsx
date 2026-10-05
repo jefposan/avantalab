@@ -40,13 +40,16 @@ export default function ExportarLancamentosMes({ opcoesMes, mesInicial, darkMode
   };
 
   useEffect(() => {
-    if (aberto) {
-      setErro('');
-      return;
-    }
-    const inicial = opcoesMes.find((opcao) => opcao.mes === mesInicial && opcao.linhas.length) || opcoesMes.find((opcao) => opcao.linhas.length);
-    setAnoSelecionado(String(inicial?.ano || ''));
-    setMesSelecionado(inicial?.mes || mesInicial);
+    const quadro = window.requestAnimationFrame(() => {
+      if (aberto) {
+        setErro('');
+        return;
+      }
+      const inicial = opcoesMes.find((opcao) => opcao.mes === mesInicial && opcao.linhas.length) || opcoesMes.find((opcao) => opcao.linhas.length);
+      setAnoSelecionado(String(inicial?.ano || ''));
+      setMesSelecionado(inicial?.mes || mesInicial);
+    });
+    return () => window.cancelAnimationFrame(quadro);
   }, [aberto, mesInicial, opcoesMes]);
 
   const opcoesComDados = useMemo(() => opcoesMes.filter((opcao) => opcao.linhas.length > 0), [opcoesMes]);

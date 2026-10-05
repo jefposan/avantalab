@@ -37,11 +37,14 @@ export default function PainelServicosColaborador({ colaborador, empresas, subem
   }, [sucesso]);
   useEffect(() => {
     if (!registroInicial) return;
-    setRegistroPreparado(registroInicial);
-    setAcaoAtiva('registrar');
-    setSucesso(false);
-    setFormAberto(true);
-    onRegistroInicialConsumido?.();
+    const quadro = window.requestAnimationFrame(() => {
+      setRegistroPreparado(registroInicial);
+      setAcaoAtiva('registrar');
+      setSucesso(false);
+      setFormAberto(true);
+      onRegistroInicialConsumido?.();
+    });
+    return () => window.cancelAnimationFrame(quadro);
   }, [registroInicial?.requestId]);
   function selecionarRegistro() {
     setRegistroPreparado(null);

@@ -17,21 +17,29 @@ type Programacao = {
   intervalo_valor: number | null;
   intervalo_unidade: 'horas' | 'dias' | 'semanas' | null;
 };
+type ClienteSupabase = ReturnType<typeof createClient>;
+type UsuarioGestao = { user_id: string | null };
+type MembroVendas = { conta_id: string; user_id: string | null };
+type ContaVendas = { id: string };
 
-async function usuariosAtivosDoAplicativo(db: any, aplicativo: Aplicativo) {
+async function usuariosAtivosDoAplicativo(db: ClienteSupabase, aplicativo: Aplicativo) {
   if (aplicativo === 'gestao') {
     const { data, error } = await db.from('usuarios_empresa').select('user_id').eq('status', 'ativo').neq('perfil', 'funcionario_ponto');
     if (error) throw error;
-    return Array.from(new Set((data || []).map((item: any) => item.user_id).filter(Boolean))) as string[];
+    return Array.from(new Set(((data || []) as UsuarioGestao[]).map((item) => item.user_id).filter((id): id is string => Boolean(id))));
   }
   const { data: membros, error: erroMembros } = await db.from('vendas_mobile_contas_usuarios').select('conta_id, user_id').eq('status', 'ativo');
   if (erroMembros) throw erroMembros;
-  const contasIds = Array.from(new Set((membros || []).map((item: any) => item.conta_id).filter(Boolean))) as string[];
+  const membrosTipados = (membros || []) as MembroVendas[];
+  const contasIds = Array.from(new Set(membrosTipados.map((item) => item.conta_id).filter(Boolean)));
   if (!contasIds.length) return [];
   const { data: contas, error: erroContas } = await db.from('vendas_mobile_contas').select('id').in('id', contasIds).is('arquivada_em', null);
   if (erroContas) throw erroContas;
-  const contasAtivas = new Set((contas || []).map((item: any) => item.id));
-  return Array.from(new Set((membros || []).filter((item: any) => contasAtivas.has(item.conta_id)).map((item: any) => item.user_id).filter(Boolean))) as string[];
+  const contasAtivas = new Set(((contas || []) as ContaVendas[]).map((item) => item.id));
+  return Array.from(new Set(membrosTipados
+    .filter((item) => contasAtivas.has(item.conta_id))
+    .map((item) => item.user_id)
+    .filter((id): id is string => Boolean(id))));
 }
 
 Deno.serve(async (request) => {

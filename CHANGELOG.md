@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.48.0.12 - 2026-10-05
+- **Auditoria global de estabilidade**: o lint completo do AvantaLab voltou a passar sem erros bloqueantes. Foram corrigidos 28 erros em autenticação de módulos, backup em nuvem, Dashboard, Custos, Marketplaces, Recebimentos, catálogo de Vendas e processamento de notificações.
+- **Estados assíncronos estabilizados**: sincronizações de propriedades e abertura de modais deixam de disparar atualizações síncronas durante efeitos React, reduzindo renderizações encadeadas e preservando cancelamento ao desmontar.
+- **Contratos de integração tipados**: clientes Supabase, arquivos remotos de backup e destinatários de disparos ganharam tipos explícitos, removendo acessos sem validação estática em rotas e funções críticas.
+
 ## 1.48.0.11 - 2026-10-05
 - **Carregamento oficial no Marketplaces**: ao abrir o módulo, a validação do perfil usa exatamente a cena compartilhada do AvantaLab, com fundo institucional e card de “Validando acesso”. O conteúdo só aparece depois da autorização confirmada, evitando cabeçalho genérico e dados parciais.
 - **Falha de acesso explícita**: sessão ausente, perfil inválido, módulo não instalado ou permissão insuficiente encerram o carregamento e mostram uma mensagem de retorno segura, em vez de liberar a interface sem identidade confirmada.

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
 
 export type DestinoBackup = 'local' | 'nuvem' | 'ambos';
@@ -19,8 +19,12 @@ function bytes(valor: number) { return valor > 1024 * 1024 ? `${(valor / 1024 / 
 
 export function DestinoBackupNuvemModal({ aberto, empresaId, darkMode, corPrimaria = '#003E73', origem, onFechar, onConfirmar }: { aberto: boolean; empresaId: string; darkMode: boolean; corPrimaria?: string; origem: 'web' | 'mobile'; onFechar: () => void; onConfirmar: (destino: DestinoBackup) => Promise<void> | void }) {
   const [conexao, setConexao] = useState<Conexao>(null); const [podeConectar, setPodeConectar] = useState<boolean | null>(null); const [carregando, setCarregando] = useState(false); const [destino, setDestino] = useState<DestinoBackup>('local'); const [erro, setErro] = useState('');
-  const carregar = async () => { if (!empresaId) return; setCarregando(true); setErro(''); try { const r = await fetch(`/api/backup-nuvem?empresaId=${encodeURIComponent(empresaId)}`, { headers: await cabecalhos() }); const json = await r.json(); if (!r.ok) throw new Error(json.mensagem); setConexao(json.conexao); setPodeConectar(Boolean(json.podeConectar)); if (!json.conexao) setDestino('local'); } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível consultar a conexão.'); setPodeConectar(null); } finally { setCarregando(false); } };
-  useEffect(() => { if (!aberto) return; setPodeConectar(null); void carregar(); }, [aberto, empresaId]);
+  const carregar = useCallback(async () => { if (!empresaId) return; setCarregando(true); setErro(''); try { const r = await fetch(`/api/backup-nuvem?empresaId=${encodeURIComponent(empresaId)}`, { headers: await cabecalhos() }); const json = await r.json(); if (!r.ok) throw new Error(json.mensagem); setConexao(json.conexao); setPodeConectar(Boolean(json.podeConectar)); if (!json.conexao) setDestino('local'); } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível consultar a conexão.'); setPodeConectar(null); } finally { setCarregando(false); } }, [empresaId]);
+  useEffect(() => {
+    if (!aberto) return;
+    const quadro = window.requestAnimationFrame(() => { setPodeConectar(null); void carregar(); });
+    return () => window.cancelAnimationFrame(quadro);
+  }, [aberto, carregar]);
   if (!aberto) return null;
   const conectar = async (provedor: 'google_drive' | 'onedrive') => { setCarregando(true); setErro(''); try { const r = await fetch('/api/backup-nuvem', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await cabecalhos()) }, body: JSON.stringify({ acao: 'iniciar', empresaId, provedor, origem }) }); const json = await r.json(); if (!r.ok) throw new Error(json.mensagem); window.location.assign(json.url); } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível iniciar a conexão.'); setCarregando(false); } };
   return <div className={painel} role="dialog" aria-modal="true" aria-labelledby="titulo-destino-backup"><section className={card(darkMode)}>
@@ -40,7 +44,14 @@ export function DestinoBackupNuvemModal({ aberto, empresaId, darkMode, corPrimar
 
 export function RestaurarDaNuvemModal({ aberto, empresaId, darkMode, corPrimaria = '#003E73', onFechar, onSelecionar }: { aberto: boolean; empresaId: string; darkMode: boolean; corPrimaria?: string; onFechar: () => void; onSelecionar: (arquivo: File) => Promise<void> | void }) {
   const [arquivos, setArquivos] = useState<ArquivoNuvem[]>([]); const [carregando, setCarregando] = useState(false); const [erro, setErro] = useState('');
-  useEffect(() => { if (!aberto || !empresaId) return; setCarregando(true); setErro(''); void (async () => { try { const r = await fetch(`/api/backup-nuvem?acao=arquivos&empresaId=${encodeURIComponent(empresaId)}`, { headers: await cabecalhos() }); const json = await r.json(); if (!r.ok) throw new Error(json.mensagem); setArquivos(json.arquivos || []); } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível abrir os backups em nuvem.'); } finally { setCarregando(false); } })(); }, [aberto, empresaId]);
+  useEffect(() => {
+    if (!aberto || !empresaId) return;
+    const quadro = window.requestAnimationFrame(() => {
+      setCarregando(true); setErro('');
+      void (async () => { try { const r = await fetch(`/api/backup-nuvem?acao=arquivos&empresaId=${encodeURIComponent(empresaId)}`, { headers: await cabecalhos() }); const json = await r.json(); if (!r.ok) throw new Error(json.mensagem); setArquivos(json.arquivos || []); } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível abrir os backups em nuvem.'); } finally { setCarregando(false); } })();
+    });
+    return () => window.cancelAnimationFrame(quadro);
+  }, [aberto, empresaId]);
   const escolher = async (item: ArquivoNuvem) => { setCarregando(true); setErro(''); try { const r = await fetch(`/api/backup-nuvem/arquivo?empresaId=${encodeURIComponent(empresaId)}&id=${encodeURIComponent(item.id)}&nome=${encodeURIComponent(item.nome)}`, { headers: await cabecalhos() }); if (!r.ok) { const json = await r.json().catch(() => ({})); throw new Error(json.mensagem || 'Não foi possível baixar o arquivo.'); } await onSelecionar(new File([await r.blob()], item.nome, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível abrir o backup.'); } finally { setCarregando(false); } };
   if (!aberto) return null;
   return <div className={painel} role="dialog" aria-modal="true" aria-labelledby="titulo-restaurar-nuvem"><section className={card(darkMode)}><header className="shrink-0 px-5 py-4 text-white" style={{ backgroundColor: corPrimaria }}><p className="text-[10px] font-black uppercase tracking-[.18em] text-white/75">Restauração</p><h2 id="titulo-restaurar-nuvem" className="text-xl font-black">Backup da conta conectada</h2></header><div className="min-h-0 overflow-y-auto p-4">{carregando && <p className="text-sm font-semibold">Carregando backups…</p>}{!carregando && !erro && arquivos.length === 0 && <p className="text-sm font-semibold">Nenhum backup Excel foi encontrado na pasta do AvantaLab.</p>}{arquivos.map((item) => <button type="button" key={item.id} disabled={carregando} onClick={() => void escolher(item)} className={`mb-2 flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left ${darkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}><span className="min-w-0"><strong className="block truncate text-sm">{item.nome}</strong><span className="text-xs font-semibold opacity-70">{new Date(item.criadoEm).toLocaleString('pt-BR')} · {bytes(item.tamanho)}</span></span><span aria-hidden="true">›</span></button>)}{erro && <p role="alert" className="rounded-lg bg-red-50 p-3 text-xs font-bold text-red-700">{erro}</p>}</div><footer className={`shrink-0 border-t p-3 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={onFechar} className="h-11 w-full rounded-xl border border-slate-300 text-xs font-black uppercase">Fechar</button></footer></section></div>;

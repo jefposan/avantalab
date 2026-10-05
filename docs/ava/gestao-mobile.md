@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.11 -->
+<!-- ava-version: 1.48.0.12 -->
+
+> Revisão 1.48.0.12: auditoria técnica estabilizou efeitos e contratos
+> compartilhados de backup, Marketplaces e Recebimentos, sem alterar os fluxos
+> orientados pela Ava na Gestão Mobile.
 
 > Revisão 1.48.0.11: o carregamento oficial adicionado ao módulo web
 > **Anúncios em marketplaces** não altera os fluxos da Gestão Mobile nem do

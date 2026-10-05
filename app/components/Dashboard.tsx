@@ -409,7 +409,7 @@ export default function Dashboard({
       return;
     }
     setPerfilDetalhado(perfil);
-  }, []);
+  }, [setPerfilDetalhado]);
   const alternarGraficosPerfis = useCallback(() => {
     if (graficosPerfisVisiveis) {
       setGraficosPerfisVisiveis(false);

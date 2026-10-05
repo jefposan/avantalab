@@ -156,7 +156,9 @@ export default function AppHeader({
   }, [listaCentroCustoAberta]);
 
   useEffect(() => {
-    if (!centrosCustoAtivo) setListaCentroCustoAberta(false);
+    if (centrosCustoAtivo) return;
+    const quadro = window.requestAnimationFrame(() => setListaCentroCustoAberta(false));
+    return () => window.cancelAnimationFrame(quadro);
   }, [centrosCustoAtivo]);
 
   const fecharMenuResponsivo = () => {

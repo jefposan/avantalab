@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.12: auditoria global estabilizou efeitos e contratos
+// compartilhados sem alterar a orientação operacional da Ava.
 // Revisado na versão 1.48.0.11: Marketplaces valida acesso com a cena oficial
 // de fundo e card antes de exibir qualquer conteúdo do módulo.
 // Revisado na versão 1.48.0.10: Anúncios em marketplaces abre na Gestão sem

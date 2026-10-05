@@ -38,7 +38,10 @@ export default function PriceUsersPanel({ companyId, onClose }: { companyId: str
     finally { setLoading(false); }
   }, [api]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const quadro = window.requestAnimationFrame(() => { void load(); });
+    return () => window.cancelAnimationFrame(quadro);
+  }, [load]);
 
   function startEdit(user: PriceUser) {
     setEditing(user); setDraft({ nome: user.nome, login: user.login, senha: '' }); setMessage(''); setConfirmDelete('');

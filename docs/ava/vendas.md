@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.11 -->
+<!-- ava-version: 1.48.0.12 -->
+
+> Revisão 1.48.0.12: auditoria técnica reforçou a tipagem do catálogo e do
+> processamento de notificações, sem alterar os fluxos orientados pela Ava no
+> AvantaVendas.
 
 > Revisão 1.48.0.11: o carregamento oficial da validação de acesso em
 > Marketplaces não altera os fluxos do AvantaVendas.

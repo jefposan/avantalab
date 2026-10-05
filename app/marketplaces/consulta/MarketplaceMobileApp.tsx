@@ -251,16 +251,22 @@ export default function MarketplaceMobileApp() {
 
   useEffect(() => {
     if (!company?.id) return;
-    setAccounts([]); setConnectionId(''); setConnectionMessage(''); setHistory([]); setResult(null); setCandidates([]); setError('');
-    void (async () => {
-      try {
-        const body = await request(`/api/modulos/marketplaces/precos/contexto?empresaId=${encodeURIComponent(company.id)}`);
-        const connected = (Array.isArray(body.accounts) ? body.accounts : []).filter((account: Account) => account.status === 'connected');
-        setAccounts(connected); setConnectionId(connected[0]?.id || '');
-        if (!connected.length) setConnectionMessage('O Mercado Livre ainda não está conectado nesta empresa. Conecte-o no módulo Anúncios em marketplaces.');
-        await loadHistory(company.id);
-      } catch (reason) { setConnectionMessage(reason instanceof Error ? reason.message : 'Não foi possível validar a integração.'); }
-    })();
+    let ativo = true;
+    const empresaId = company.id;
+    const quadro = window.requestAnimationFrame(() => {
+      setAccounts([]); setConnectionId(''); setConnectionMessage(''); setHistory([]); setResult(null); setCandidates([]); setError('');
+      void (async () => {
+        try {
+          const body = await request(`/api/modulos/marketplaces/precos/contexto?empresaId=${encodeURIComponent(empresaId)}`);
+          if (!ativo) return;
+          const connected = (Array.isArray(body.accounts) ? body.accounts : []).filter((account: Account) => account.status === 'connected');
+          setAccounts(connected); setConnectionId(connected[0]?.id || '');
+          if (!connected.length) setConnectionMessage('O Mercado Livre ainda não está conectado nesta empresa. Conecte-o no módulo Anúncios em marketplaces.');
+          await loadHistory(empresaId);
+        } catch (reason) { if (ativo) setConnectionMessage(reason instanceof Error ? reason.message : 'Não foi possível validar a integração.'); }
+      })();
+    });
+    return () => { ativo = false; window.cancelAnimationFrame(quadro); };
   }, [company?.id, loadHistory, request]);
 
   const consult = useCallback(async (input: { ean?: string; query?: string; productId?: string }) => {

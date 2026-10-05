@@ -60,14 +60,17 @@ export default function RelatorioServicosModal({ aberto, referenciaInicial, serv
 
   useEffect(() => {
     if (!aberto) return;
-    const limites = limitesDoMes(`${referenciaInicial.ano}-${String(referenciaInicial.mes + 1).padStart(2, '0')}`);
-    setDataInicio(limites.inicio);
-    setDataFim(limites.fim);
-    setClienteSelecionado('');
-    setSeletorClientesAberto(false);
-    setBuscaCliente('');
-    setErro('');
-    setRelatorioConsultado(false);
+    const quadro = window.requestAnimationFrame(() => {
+      const limites = limitesDoMes(`${referenciaInicial.ano}-${String(referenciaInicial.mes + 1).padStart(2, '0')}`);
+      setDataInicio(limites.inicio);
+      setDataFim(limites.fim);
+      setClienteSelecionado('');
+      setSeletorClientesAberto(false);
+      setBuscaCliente('');
+      setErro('');
+      setRelatorioConsultado(false);
+    });
+    return () => window.cancelAnimationFrame(quadro);
   }, [aberto, referenciaInicial.ano, referenciaInicial.mes]);
 
   useEffect(() => {
