@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.09 -->
+<!-- ava-version: 1.48.0.10 -->
+
+> Revisão 1.48.0.10: **Anúncios em marketplaces** abre dentro da Gestão pela
+> rota oficial `/marketplaces`; o contexto curto da navegação não transporta
+> logotipos em base64, evitando o bloqueio do quadro interno pelo navegador.
 
 > Revisão 1.48.0.09: a uniformização do topo autenticado pertence ao PWA
 > **AvantaPreços** no iPhone; a Gestão Web não é alterada.

@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.10: Anúncios em marketplaces abre na Gestão sem
+// transportar logotipos em base64 pela URL do módulo embutido.
 // Revisado na versão 1.48.0.09: cabeçalho autenticado do AvantaPreços usa uma
 // única superfície azul sólida sob a barra de status do iPhone.
 // Revisado na versão 1.48.0.08: fundo do acesso do AvantaPreços cobre também

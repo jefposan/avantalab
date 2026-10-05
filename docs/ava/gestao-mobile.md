@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.09 -->
+<!-- ava-version: 1.48.0.10 -->
+
+> Revisão 1.48.0.10: a correção da abertura de **Anúncios em marketplaces**
+> pertence à Gestão Web e não altera os fluxos móveis ou do AvantaPreços.
 
 > Revisão 1.48.0.09: o topo autenticado do **AvantaPreços** usa uma única
 > superfície azul sólida sob a barra de status do iPhone, sem camada clara ou

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.10 - 2026-10-05
+- **Marketplaces disponível na Gestão**: a navegação interna deixa de transportar logotipos em base64 pela URL do módulo. Isso elimina a URL excessiva que o Chrome bloqueava como `about:blank#blocked` e permite abrir Anúncios em marketplaces diretamente no AvantaLab de produção.
+- **Proteção contra regressão**: teste automatizado garante que o contexto visual continue levando empresa, perfil e permissões, mas nunca incorpore o arquivo pesado do logotipo à URL do iframe.
+
 ## 1.48.0.09 - 2026-10-05
 - **Cabeçalho sólido no iPhone**: a barra de status do AvantaPreços passa a mostrar diretamente a mesma superfície azul do cabeçalho, sem a composição clara do modo `default` sobre o topo do título e do botão Sair.
 - **Uma única superfície superior**: raiz, corpo e cabeçalho autenticado usam exatamente `#003E73`; o cabeçalho não possui transparência nem `backdrop-filter`, e o conteúdo permanece acima de qualquer camada de fundo e abaixo da área segura.

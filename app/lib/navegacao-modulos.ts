@@ -89,8 +89,19 @@ export function consumirNavegacaoModulo(destino: string, empresaId?: string): Co
 /** Cria a URL interna do iframe sem transportar credenciais nem conceder acesso. */
 export function criarHrefModuloEmbutido(rota: string, contexto: ContextoNavegacaoModulo) {
   const url = new URL(rota, window.location.origin);
+  const contextoTransportavel: ContextoNavegacaoModulo = {
+    ...contexto,
+    empresa: {
+      nome: contexto.empresa.nome,
+      corPrimaria: contexto.empresa.corPrimaria,
+      temaEscuro: contexto.empresa.temaEscuro,
+    },
+  };
   url.searchParams.set('empresaId', contexto.empresaId);
-  url.searchParams.set(CHAVE_CONTEXTO_URL, JSON.stringify({ ...contexto, expiraEm: Date.now() + DURACAO_CONTEXTO_MS }));
+  // A marca completa permanece no sessionStorage da navegação. Nunca a levamos
+  // na URL: logotipos em data URI podem ter megabytes e o navegador bloqueia o
+  // iframe antes mesmo de a rota oficial do módulo ser carregada.
+  url.searchParams.set(CHAVE_CONTEXTO_URL, JSON.stringify({ ...contextoTransportavel, expiraEm: Date.now() + DURACAO_CONTEXTO_MS }));
   return `${url.pathname}${url.search}`;
 }
 
