@@ -87,7 +87,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
         </div>
         <span id="ean-scanner-status" className={styles.srOnly} role="status">{scannerArmed ? 'Leitor ativado. Escaneie o código de barras agora.' : ''}</span>
       </div>
-      <button type="button" className={styles.primary} disabled={!canManage || !selectedAccount || preparing || publishing || !form.ean} onClick={() => void prepare()}>{preparing ? 'Consultando catálogo…' : 'Validar e preparar'}</button>
+      <button type="button" className={`${styles.primary} ${styles.searchAction}`} disabled={!canManage || !selectedAccount || preparing || publishing || !form.ean} onClick={() => void prepare()}>{preparing ? 'Pesquisando…' : 'Pesquisar'}</button>
       {!selectedAccount && <p className={styles.help}>{accountId ? 'Esta conta não está conectada. Reconecte-a ou selecione outra conta para publicar.' : 'Conecte ou selecione uma conta do Mercado Livre para consultar o EAN.'}</p>}
       {accountId && !canManage && <p className={styles.help}>Seu perfil pode consultar anúncios, mas não preparar publicações.</p>}
     </div>

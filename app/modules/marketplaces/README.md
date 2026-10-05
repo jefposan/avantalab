@@ -35,7 +35,7 @@ logs, preferências de navegador ou banco de dados sem criptografia.
 
 ## Limites atuais
 
-- `Validar e preparar` consulta o catálogo do Mercado Livre sem publicar. Após revisão da ficha e preenchimento dos campos obrigatórios, `Publicar` executa a criação mediante ação explícita do usuário.
+- `Pesquisar` consulta o catálogo do Mercado Livre pelo EAN sem publicar. Após revisão da ficha e preenchimento dos campos obrigatórios, `Publicar` executa a criação mediante ação explícita do usuário.
 - Cron e webhook não foram ativados; o cache não se atualiza com o módulo fechado.
 - Outras contas podem ser vinculadas por OAuth e escolhidas no seletor; a
   validação ao vivo usou somente a conta que já estava conectada.

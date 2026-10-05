@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.46.0.05 - 2026-10-05
+- **Pesquisa por EAN**: a ação do card Novo anúncio agora se chama **Pesquisar**, refletindo que consulta o produto e apresenta os dados encontrados antes da publicação.
+- **Layout do card 2**: o campo EAN recuperou largura no desktop mesmo com o leitor integrado, enquanto o botão de pesquisa ficou mais compacto. No mobile, os controles continuam em coluna e com largura integral.
+
 ## 1.46.0.04 - 2026-10-05
 - **Leitor de código de barras**: o campo EAN do Novo anúncio ganhou um botão acessível para armar leitores USB/Bluetooth conectados ao computador. O foco e a seleção do campo são preparados para a captura e o Enter enviado pelo leitor executa Validar e preparar.
 - **Operação preservada**: digitação manual e botão de validação continuam disponíveis; o modo leitor pode ser cancelado por Escape ou pelo próprio botão e não exige acesso direto ao hardware no navegador.

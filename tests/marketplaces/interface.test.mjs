@@ -77,7 +77,7 @@ test('static notices are removed without disguising validation or hiding importa
   assert.doesNotMatch(client, /OAuth|PKCE|styles.webOnly|styles.security|styles.flow|Nesta etapa/);
   assert.doesNotMatch(listings, /Para adicionar ou reconectar|Atualização automática enquanto|Anúncios da conta selecionada, inclusive/);
   assert.match(client, /<NewListing key=\{selectedAccount \|\| 'unselected'\} companyId=/);
-  assert.match(newListing, /'Validar e preparar'/);
+  assert.match(newListing, /'Pesquisar'/);
   assert.match(newListing, /EAN não localizado/);
   assert.match(newListing, /'Publicar'/);
   assert.doesNotMatch(client, /Valor de venda/);
@@ -116,9 +116,11 @@ test('every marketplace list opens in the same anchored system component', () =>
   assert.match(css, /\.selectList \{[^}]*right: 0; left: 0;[^}]*max-height: 260px; overflow-y: auto;/);
 });
 
-test('new listing keeps account, EAN and prepare action on one desktop row', () => {
-  assert.match(newListing, /<div className=\{styles\.form\}>\s*<MarketplaceAccountPicker[\s\S]*?<div className=\{styles\.eanField\}>[\s\S]*?<button type="button" className=\{styles\.primary\}/);
-  assert.match(css, /\.newListing \.form \{ grid-template-columns: minmax\(0, 1\.15fr\) minmax\(0, \.85fr\) auto; align-items: end;/);
+test('new listing keeps account, a wide EAN field and a compact search action on one desktop row', () => {
+  assert.match(newListing, /<div className=\{styles\.form\}>\s*<MarketplaceAccountPicker[\s\S]*?<div className=\{styles\.eanField\}>[\s\S]*?<button type="button" className=\{`\$\{styles\.primary\} \$\{styles\.searchAction\}`\}/);
+  assert.match(newListing, /\{preparing \? 'Pesquisando…' : 'Pesquisar'\}/);
+  assert.match(css, /\.newListing \.form \{ grid-template-columns: minmax\(0, 1fr\) minmax\(260px, 1\.25fr\) auto; align-items: end;/);
+  assert.match(css, /\.newListing \.searchAction \{ min-width: 94px; padding-inline: 14px; \}/);
   assert.match(css, /@media \(max-width: 760px\) \{ \.newListing \.form, \.catalogFields, \.catalogAttributes \{ grid-template-columns: 1fr;/);
 });
 

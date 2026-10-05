@@ -1,10 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.46.0.04 -->
+<!-- ava-version: 1.46.0.05 -->
+
+> Revisão 1.46.0.05: a ação do card **Novo anúncio** se chama
+> **Pesquisar**. Ela consulta o produto pelo EAN e exibe os dados encontrados
+> para complemento e revisão; não publica o anúncio. O campo EAN permanece
+> largo no desktop mesmo com o botão do leitor integrado.
 
 > Revisão 1.46.0.04: no card **Novo anúncio**, o botão com código de barras no
 > campo EAN ativa a captura de um leitor USB/Bluetooth que opere como teclado.
-> Escaneie o produto; o Enter enviado pelo leitor executa **Validar e preparar**.
+> Escaneie o produto; o Enter enviado pelo leitor executa **Pesquisar**.
 > Escape ou um novo clique no botão encerra o modo leitor.
 
 > Revisão 1.46.0.03: todas as listas de Marketplaces abrem imediatamente abaixo
@@ -12,10 +17,10 @@
 > anúncio, envio, condição, garantia, atributos e situação.
 
 > Revisão 1.46.0.02: em Marketplaces, selecione a conta no card Novo anúncio,
-> informe o EAN e use Validar e preparar. A ficha do catálogo aparece no mesmo
+> informe o EAN e use Pesquisar. A ficha do catálogo aparece no mesmo
 > card, com os campos complementares e preço antes de Publicar. A conta escolhida
 > é compartilhada com Anunciados; com várias contas, a seleção é obrigatória.
-> Validar e preparar apenas consulta: não cria anúncio.
+> Pesquisar apenas consulta: não cria anúncio.
 
 > Revisão 1.45.0.03: no anúncio User Products individual, sem vendas e com
 > vínculo confirmado pela API, o campo **Nome base do título** pode ser editado
