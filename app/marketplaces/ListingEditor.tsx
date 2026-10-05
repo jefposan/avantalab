@@ -95,7 +95,7 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
       <dl>
         {EDIT_FIELDS.map((field) => {
           const rule = editor?.fields[field], id = `${prefix}-${field}`, disabled = !editor || !rule?.editable || saving || stale;
-          const help = errors[field] || (!editor && field === 'description' ? 'Descrição indisponível até confirmar os dados atuais.' : rule?.reason) || (field === 'stock' ? 'Estoque zero pode pausar o anúncio automaticamente.' : field === 'description' ? 'Texto simples, sem HTML.' : field === 'title' && rule?.maxLength ? `${values.title.length}/${rule.maxLength} caracteres` : '');
+          const help = errors[field] || (!editor && field === 'description' ? 'Descrição indisponível até confirmar os dados atuais.' : rule?.reason) || rule?.notice || (field === 'stock' ? 'Estoque zero pode pausar o anúncio automaticamente.' : field === 'description' ? 'Texto simples, sem HTML.' : field === 'title' && rule?.maxLength ? `${values.title.length}/${rule.maxLength} caracteres` : '');
           return <Fragment key={field}>
             <dt><label htmlFor={id}>{labels[field]}</label>{!editor ? <span className={styles.readOnlyTag}>Pendente de confirmação</span> : !rule?.editable && <span className={styles.readOnlyTag}>Somente leitura</span>}</dt>
             <dd className={`${styles.editorValue} ${field === 'price' || field === 'stock' ? styles.editorCompact : ''}`}>

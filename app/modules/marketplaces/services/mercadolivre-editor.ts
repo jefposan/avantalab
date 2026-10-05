@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ListingEditor } from '../listing-editor';
 import { validateChanges } from '../listing-editor';
-import { mercadoLivreEditPolicy } from './mercadolivre-edit-policy';
+import { mercadoLivreEditPolicy, stockModelFromResponse } from './mercadolivre-edit-policy';
 import { listingIdIsValid, normalizeListing, objectValue, uuidIsValid } from './listing-model';
 import { mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
 import { MarketplaceError } from './management-access';
@@ -14,16 +14,26 @@ async function freshEditor(db: SupabaseClient, connection: SellerConnection, id:
   const item = objectValue(await mlRequest(db, connection, `/items/${id}`));
   normalizeListing(item, connection.seller_reference); // Nunca consultar dados complementares de anúncio alheio.
   if (!/^MLB\d+$/.test(String(item.category_id))) throw new MarketplaceError(409, 'invalid_category', 'Categoria do anúncio indisponível.');
-  const [category, user, description, automation] = await Promise.all([
+  const [category, user, description, automation, stockModel] = await Promise.all([
     mlRequest(db, connection, `/categories/${item.category_id}`).then(objectValue),
     mlRequest(db, connection, `/users/${connection.seller_reference}`).then(objectValue).catch(() => ({} as Record<string, unknown>)),
     mlRequest(db, connection, `/items/${id}/description`).then((value) => ({ text: typeof objectValue(value).plain_text === 'string' ? objectValue(value).plain_text as string : null, exists: true })).catch((error) => ({ text: error instanceof MarketplaceError && error.code === 'provider_404' ? '' : null, exists: false })),
     priceAutomation(db, connection, id),
+    stockModelForItem(db, connection, item),
   ]);
   if (user.id != null && String(user.id) !== connection.seller_reference) throw new MarketplaceError(409, 'seller_mismatch', 'Identidade da conta divergente. Reconecte a conta.');
-  const editor = mercadoLivreEditPolicy(item, category, user, description.text, automation);
+  const editor = mercadoLivreEditPolicy(item, category, user, description.text, automation, stockModel);
   const revision = createHash('sha256').update(JSON.stringify({ connection: connection.id, updated: item.last_updated, editor })).digest('hex');
   return { editor: { ...editor, revision } as ListingEditor, descriptionExists: description.exists };
+}
+
+async function stockModelForItem(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>): Promise<'single' | 'multi' | 'unknown'> {
+  const upId = item.user_product_id;
+  if (typeof upId !== 'string') return 'single';
+  if (!/^MLB[A-Z]?\d+$/.test(upId)) return 'unknown';
+  try {
+    return stockModelFromResponse(await mlRequest(db, connection, `/user-products/${upId}/stock`), connection.seller_reference);
+  } catch { return 'unknown'; }
 }
 
 async function priceAutomation(db: SupabaseClient, connection: SellerConnection, id: string): Promise<'active' | 'none' | 'unknown'> {

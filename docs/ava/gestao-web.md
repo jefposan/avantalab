@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.45.0.01 -->
+<!-- ava-version: 1.45.0.02 -->
+
+> Revisão 1.45.0.02: corrigidas as permissões de edição de anúncios do Mercado
+> Livre. Em User Products fora do catálogo, descrição pode ser alterada. O
+> estoque só é editável após confirmar endereço único, sem Full, depósitos ou
+> kit virtual; a mudança pode refletir em outros anúncios do mesmo produto.
+> O título de User Products é gerado a partir do nome da família e segue
+> somente leitura, pois mudar a família pode afetar outros anúncios.
 
 > Revisão 1.45.0.01: em **Anunciados**, o lápis abre título, preço, estoque e
 > descrição na própria linha, antes do EAN. O editor consulta permissões e
