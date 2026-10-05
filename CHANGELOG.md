@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.04 - 2026-10-05
+- **Login do AvantaPreços**: composição aprovada aplicada no padrão do PWA Recebimentos, com logo oficial dimensionado, título e instrução centralizados, card compacto, botão azul e controle de senha por ícone de olho acessível. O ícone próprio do aplicativo permanece no manifesto e na instalação, mas não aparece no formulário.
+- **Últimas consultas**: o botão à direita foi identificado como **Atualizar histórico** e agora usa duas setas circulares completas, com dica textual, foco visível e área de toque de 44 px.
+
 ## 1.48.0.03 - 2026-10-05
 - **Pesquisa por EAN sem serviço pago**: o cadastro de anúncios consulta primeiro o catálogo do Mercado Livre e, quando necessário, os produtos ativos cadastrados no perfil da própria empresa.
 - **Isolamento por empresa**: a alternativa local limita a busca aos catálogos ativos da empresa da conexão selecionada; produtos de outros perfis não são consultados ou exibidos.

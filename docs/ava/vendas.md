@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.03 -->
+<!-- ava-version: 1.48.0.04 -->
+
+> Revisão 1.48.0.04: o ajuste visual do login e do histórico do
+> **AvantaPreços** não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.03: o cadastro por EAN em Marketplaces pode reutilizar os
 > produtos ativos do perfil; não altera os fluxos do AvantaVendas.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.03 -->
+<!-- ava-version: 1.48.0.04 -->
+
+> Revisão 1.48.0.04: a nova composição do login e a correção do botão de
+> atualização pertencem ao PWA **AvantaPreços**; não alteram a Gestão Web.
 
 > Revisão 1.48.0.03: em **Anúncios em marketplaces**, Pesquisar consulta
 > primeiro o catálogo do Mercado Livre e, se não houver ficha, os produtos

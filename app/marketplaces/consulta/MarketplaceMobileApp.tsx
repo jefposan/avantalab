@@ -32,16 +32,18 @@ const SESSION_COMPANY_KEY = 'avantalab_marketplaces_mobile_empresa_id';
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
-function Icon({ name, size = 22 }: { name: 'barcode' | 'search' | 'history' | 'back' | 'refresh' | 'check' | 'camera' | 'chevron'; size?: number }) {
+function Icon({ name, size = 22 }: { name: 'barcode' | 'search' | 'history' | 'back' | 'refresh' | 'check' | 'camera' | 'chevron' | 'eye' | 'eyeOff'; size?: number }) {
   const paths = {
     barcode: <><path d="M4 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14" /><path d="M2 8V4a2 2 0 0 1 2-2h4M22 8V4a2 2 0 0 0-2-2h-4M2 16v4a2 2 0 0 0 2 2h4M22 16v4a2 2 0 0 1-2 2h-4" /></>,
     search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
     history: <><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></>,
     back: <><path d="m15 18-6-6 6-6" /></>,
-    refresh: <><path d="M20 11a8 8 0 1 0-2.3 5.7L20 14" /><path d="M20 8v6h-6" /></>,
+    refresh: <><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /></>,
     check: <path d="m5 12 4 4L19 6" />,
     camera: <><path d="M14.5 4 16 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3l1.5-3z" /><circle cx="12" cy="13" r="3" /></>,
     chevron: <path d="m6 9 6 6 6-6" />,
+    eye: <><path d="M3 9.5S6.5 4 12 4s9 5.5 9 5.5S17.5 15 12 15 3 9.5 3 9.5Z" /><circle cx="12" cy="9.5" r="2.5" /></>,
+    eyeOff: <path d="m3 3 18 18M10.6 10.7a2 2 0 0 0 2.7 2.7M9.9 4.2A10.7 10.7 0 0 1 12 4c5.5 0 9 5.5 9 5.5a15 15 0 0 1-2.2 2.8M6.6 6.6A15.8 15.8 0 0 0 3 9.5S6.5 15 12 15a10.3 10.3 0 0 0 3.4-.6" />,
   };
   return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
@@ -310,15 +312,14 @@ export default function MarketplaceMobileApp() {
 
   if (access === 'loading') return <main className={styles.loadingScreen} data-avantaprecos-access><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></main>;
   if (access === 'guest') return <main className={styles.loginScreen} data-avantaprecos-access>
-    <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={250} height={63} priority />
+    <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={220} height={55} preload />
     <section className={styles.loginCard} aria-labelledby="avantaprecos-login-title">
-      <div className={styles.loginIcon}><Image src="/images/marketplaces-mobile-icon-192.png" alt="" width={66} height={66} /></div>
       <h1 id="avantaprecos-login-title">AvantaPreços</h1><p>Entre para consultar produtos e preços.</p>
       <form onSubmit={signIn}>
         <label htmlFor="price-login">Login</label><input id="price-login" value={login} onChange={(event) => setLogin(event.target.value)} autoCapitalize="none" autoComplete="username" placeholder="Digite seu login" />
-        <label htmlFor="price-password">Senha</label><div className={styles.passwordField}><input id="price-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" placeholder="Digite sua senha" /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}>{showPassword ? 'Ocultar' : 'Exibir'}</button></div>
+        <label htmlFor="price-password">Senha</label><div className={styles.passwordField}><input id="price-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" placeholder="Digite sua senha" /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'} aria-pressed={showPassword} title={showPassword ? 'Ocultar senha' : 'Exibir senha'}><Icon name={showPassword ? 'eyeOff' : 'eye'} size={20} /></button></div>
         {loginError && <p className={styles.loginError} role="alert">{loginError}</p>}
-        <button className={styles.loginSubmit} type="submit" disabled={loginLoading}>{loginLoading ? 'Entrando…' : 'Entrar'}</button>
+        <div className={styles.loginSubmitTarget}><button className={styles.loginSubmit} type="submit" disabled={loginLoading}>{loginLoading ? 'Entrando…' : 'Entrar'}</button></div>
       </form>
     </section>
   </main>;
@@ -384,7 +385,7 @@ export default function MarketplaceMobileApp() {
       </section>
 
       <section className={styles.historySection} aria-labelledby="history-title">
-        <div className={styles.sectionTitle}><span><Icon name="history" /><h2 id="history-title">Últimas consultas</h2></span><button type="button" onClick={() => company && void loadHistory(company.id)} aria-label="Atualizar histórico" disabled={historyLoading}><Icon name="refresh" size={19} /></button></div>
+        <div className={styles.sectionTitle}><span><Icon name="history" /><h2 id="history-title">Últimas consultas</h2></span><button type="button" onClick={() => company && void loadHistory(company.id)} aria-label="Atualizar histórico" title="Atualizar histórico" disabled={historyLoading}><Icon name="refresh" size={20} /></button></div>
         {historyLoading && !history.length ? <div className={styles.historySkeleton}><span /><span /><span /></div> : history.length ? <div className={styles.historyList}>{history.map((item) => <button type="button" key={item.id} onClick={() => setResult(historyToConsultation(item))}><span className={styles.historyImage}>{item.image_url ? <img src={item.image_url} alt="" /> : <Icon name="barcode" />}</span><span className={styles.historyText}><strong>{item.product_name}</strong><small>{item.ean ? `EAN ${item.ean}` : item.input_value} · {dateTime.format(new Date(item.created_at))}</small></span><span className={styles.historyPrice}>{money.format(item.market_price_cents / 100)}</span></button>)}</div> : <p className={styles.emptyHistory}>Suas consultas aparecerão aqui.</p>}
       </section>
     </div>}

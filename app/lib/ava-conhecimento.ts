@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.04: login do AvantaPreços segue o Recebimentos e
+// Atualizar histórico usa o símbolo acessível de duas setas circulares.
 // Revisado na versão 1.48.0.03: cadastro por EAN usa Mercado Livre e produtos
 // ativos do perfil; não há consulta externa GS1/GTIN nesta versão.
 // Revisado na versão 1.48.0.02: o AvantaPreços aplica o fundo oficial também

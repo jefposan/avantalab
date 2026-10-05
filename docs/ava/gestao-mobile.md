@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.03 -->
+<!-- ava-version: 1.48.0.04 -->
+
+> Revisão 1.48.0.04: o login do **AvantaPreços** segue a composição visual do
+> PWA Recebimentos, sem ícone dentro do card e com olho para exibir ou ocultar
+> a senha. Em **Últimas consultas**, a seta circular atualiza o histórico.
 
 > Revisão 1.48.0.03: o **AvantaPreços** permanece consultando o Mercado Livre
 > e os produtos do perfil; não usa serviço externo GS1/GTIN.

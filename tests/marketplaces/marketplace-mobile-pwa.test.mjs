@@ -57,6 +57,21 @@ test('resultado diferencia os quatro valores e o histórico pode ser reaberto e 
   assert.match(css, /\.minimumPrice \{[^}]*background:/);
   assert.match(css, /\.mediumPrice \{[^}]*background:/);
   assert.match(css, /\.idealPrice \{[^}]*background:/);
+  assert.match(client, /aria-label="Atualizar histórico" title="Atualizar histórico"/);
+  assert.match(client, /M21 12a9 9 0 0 1-15 6\.7L3 16/);
+  assert.match(client, /M3 12a9 9 0 0 1 15-6\.7L21 8/);
+});
+
+test('login do AvantaPreços segue a composição aprovada e o padrão do Recebimentos', () => {
+  assert.doesNotMatch(client, /className=\{styles\.loginIcon\}/);
+  assert.match(client, /<h1 id="avantaprecos-login-title">AvantaPreços<\/h1>/);
+  assert.match(client, /aria-pressed=\{showPassword\}/);
+  assert.match(client, /name=\{showPassword \? 'eyeOff' : 'eye'\}/);
+  assert.match(client, /className=\{styles\.loginSubmitTarget\}/);
+  assert.match(css, /\.loginScreen \{[^}]*grid-template-rows: minmax\(0,1fr\) auto minmax\(0,1fr\);/);
+  assert.match(css, /\.loginCard \{[^}]*width: min\(100%, 336px\);/);
+  assert.match(css, /\.loginCard h1 \{[^}]*text-align: center;/);
+  assert.match(css, /\.loginSubmit \{[^}]*height: 36px;[^}]*background: #1687d9;/);
 });
 
 test('seletores de empresa e conta seguem lista ancorada do sistema', () => {
