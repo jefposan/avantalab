@@ -47,32 +47,14 @@ export function calculatePriceSuggestions(pricesInCents: readonly number[]): Pri
   };
 }
 
-type PriceReferences = {
-  values: number[];
-  usedPublicReferenceFallback: boolean;
-};
-
-function isPermissionFailure(error: unknown) {
-  return error instanceof MarketplaceError
-    && (error.code === 'provider_403' || error.status === 403);
-}
-
 function isRateLimitFailure(error: unknown) {
   return error instanceof MarketplaceError
     && (error.code === 'provider_429' || error.status === 429);
 }
 
-function publicCatalogPrices(raw: Record<string, unknown>) {
-  const values: number[] = [];
+function winningOfferPrice(raw: Record<string, unknown>) {
   const winner = objectValue(raw.buy_box_winner);
-  const range = objectValue(raw.buy_box_winner_price_range);
-  const minimum = objectValue(range.min);
-  const maximum = objectValue(range.max);
-  for (const value of [winner.price, minimum.price, maximum.price]) {
-    const cents = finitePrice(value);
-    if (cents != null) values.push(cents);
-  }
-  return [...new Set(values)];
+  return finitePrice(winner.price);
 }
 
 async function productReferencePrices(
@@ -81,33 +63,28 @@ async function productReferencePrices(
   raw: Record<string, unknown>,
 ) {
   const winner = objectValue(raw.buy_box_winner);
-  const fallback = publicCatalogPrices(raw);
+  const priceInCatalog = winningOfferPrice(raw);
+  if (priceInCatalog != null) return [priceInCatalog];
 
-  // O preço exposto na ficha pode ser uma faixa ou ficar ausente. O item que
-  // venceu a buy box é a referência oficial para consultar o preço de venda.
+  // Em algumas fichas a buy box não carrega price. O item vencedor continua
+  // expondo o preço público do anúncio; esta leitura não usa a cotação líquida
+  // /sale_price, que depende de uma permissão funcional opcional da conta.
   if (listingIdIsValid(winner.item_id)) {
     try {
-      const salePrice = objectValue(await mlRequest(
+      const item = objectValue(await mlRequest(
         db,
         connection,
-        `/items/${winner.item_id}/sale_price?context=channel_marketplace`,
+        `/items/${winner.item_id}`,
       ));
-      const cents = finitePrice(salePrice.amount);
-      if (cents != null) return { values: [cents], usedPublicReferenceFallback: false } satisfies PriceReferences;
+      const cents = finitePrice(item.price);
+      if (cents != null) return [cents];
     } catch (error) {
-      // A ficha já traz uma referência pública. Só a usamos quando a conta não
-      // tem permissão para a cotação detalhada; 429 continua explícito para não
-      // mascarar limite de consultas do provedor.
       if (isRateLimitFailure(error)) throw error;
-      if (isPermissionFailure(error) && fallback.length) {
-        return { values: fallback, usedPublicReferenceFallback: true } satisfies PriceReferences;
-      }
-      throw error;
+      // Uma restrição pontual do item não invalida a conexão e não deve virar
+      // erro de permissão para quem está consultando preço no PWA.
     }
   }
-
-  // Compatibilidade com fichas legadas que ainda não informam item_id.
-  return { values: fallback, usedPublicReferenceFallback: false } satisfies PriceReferences;
+  return [];
 }
 
 async function activeOfferPrices(
@@ -128,26 +105,7 @@ async function activeOfferPrices(
     && listingIdIsValid(item.id)
   )).slice(0, 20);
 
-  const current = await Promise.all(exact.map(async (item) => {
-    try {
-      const salePrice = objectValue(await mlRequest(db, connection, `/items/${item.id}/sale_price?context=channel_marketplace`));
-      return { cents: finitePrice(salePrice.amount), usedPublicReferenceFallback: false };
-    } catch (error) {
-      if (isRateLimitFailure(error)) throw error;
-      const cents = finitePrice(item.price);
-      if (isPermissionFailure(error)) {
-        if (cents == null) throw error;
-        return { cents, usedPublicReferenceFallback: true };
-      }
-      // Compatibilidade enquanto o campo price ainda coexistir na busca pública.
-      return { cents, usedPublicReferenceFallback: false };
-    }
-  }));
-
-  return {
-    values: current.map((value) => value.cents).filter((value): value is number => value != null),
-    usedPublicReferenceFallback: current.some((value) => value.usedPublicReferenceFallback),
-  } satisfies PriceReferences;
+  return exact.map((item) => finitePrice(item.price)).filter((price): price is number => price != null);
 }
 
 export async function consultMercadoLivrePrice(
@@ -172,26 +130,18 @@ export async function consultMercadoLivrePrice(
   const product = identification.product;
   let source: 'active_offers' | 'catalog_reference' = 'active_offers';
   let values: number[] = [];
-  let usedPublicReferenceFallback = false;
-  let permissionFailure: unknown = null;
   try {
-    const offers = await activeOfferPrices(db, connection, product);
-    values = offers.values;
-    usedPublicReferenceFallback = offers.usedPublicReferenceFallback;
+    values = await activeOfferPrices(db, connection, product);
   } catch (error) {
     if (isRateLimitFailure(error)) throw error;
-    if (isPermissionFailure(error)) permissionFailure = error;
     values = [];
   }
   if (!values.length) {
     source = 'catalog_reference';
-    const reference = await productReferencePrices(db, connection, product.raw);
-    values = reference.values;
-    usedPublicReferenceFallback = usedPublicReferenceFallback || reference.usedPublicReferenceFallback || Boolean(permissionFailure);
+    values = await productReferencePrices(db, connection, product.raw);
   }
   if (!values.length) {
-    if (permissionFailure) throw permissionFailure;
-    throw new MarketplaceError(409, 'price_unavailable', 'Produto localizado, mas o Mercado Livre não retornou preços comparáveis no momento.');
+    throw new MarketplaceError(409, 'price_unavailable', 'Produto localizado, mas não há ofertas públicas comparáveis no Mercado Livre no momento.');
   }
 
   const prices = calculatePriceSuggestions(values);
@@ -213,8 +163,5 @@ export async function consultMercadoLivrePrice(
       maximum: Math.max(...values) / 100,
       source,
     },
-    ...(usedPublicReferenceFallback ? {
-      notice: 'Preço estimado pela referência pública do catálogo. A cotação detalhada do Mercado Livre não está disponível para esta conexão.',
-    } : {}),
   };
 }

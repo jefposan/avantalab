@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.20 - 2026-10-05
+- **Preço público como fonte do AvantaPreços**: a consulta passa a calcular a média pelo campo público `price` dos anúncios ativos equivalentes e, sem amostra, pelo preço público do anúncio vencedor da buy box.
+- **Sem dependência de permissão especial**: o endpoint restrito `sale_price` deixa de ser chamado. Se não houver oferta pública comparável, o PWA informa isso claramente; um bloqueio pontual do item não é mais apresentado como perda de conexão.
+
 ## 1.48.0.19-av165 - 2026-10-05
 - **Vínculo comercial imediato no AvantaVendas**: a empresa é resolvida pelo
   perfil de vendas ativo, inclusive quando a conta permanece independente para

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.19 -->
+<!-- ava-version: 1.48.0.20 -->
+
+> Revisão 1.48.0.20: o **AvantaPreços** calcula a média com o preço público
+> dos anúncios ativos equivalentes. Sem amostra, usa o preço público do anúncio
+> vencedor da buy box; sem ofertas comparáveis, informa indisponibilidade sem
+> atribuir o caso a uma desconexão da conta.
 
 > Revisão 1.48.0.19: a correção de vínculo comercial no AvantaVendas pertence
 > ao perfil de vendas e não altera os fluxos da Gestão Web.

@@ -39,14 +39,11 @@ test('consulta por EAN reutiliza a ficha e calcula a média apenas com ofertas a
     }
     if (url.pathname === `/products/${productId}`) return product({ short_description: { content: 'Produto localizado' } });
     if (url.pathname === '/sites/MLB/search') return { results: [
-      { id: 'MLB5000000001', catalog_product_id: productId, currency_id: 'BRL', condition: 'new' },
-      { id: 'MLB5000000002', catalog_product_id: productId, currency_id: 'BRL', condition: 'new' },
-      { id: 'MLB5000000003', catalog_product_id: productId, currency_id: 'BRL', condition: 'new' },
+      { id: 'MLB5000000001', catalog_product_id: productId, currency_id: 'BRL', condition: 'new', price: 90 },
+      { id: 'MLB5000000002', catalog_product_id: productId, currency_id: 'BRL', condition: 'new', price: 100 },
+      { id: 'MLB5000000003', catalog_product_id: productId, currency_id: 'BRL', condition: 'new', price: 110 },
       { id: 'MLB5000000004', catalog_product_id: 'MLB00000001', currency_id: 'BRL', condition: 'new', price: 1 },
     ] };
-    if (url.pathname.endsWith('/MLB5000000001/sale_price')) return { amount: 90 };
-    if (url.pathname.endsWith('/MLB5000000002/sale_price')) return { amount: 100 };
-    if (url.pathname.endsWith('/MLB5000000003/sale_price')) return { amount: 110 };
     throw new Error(`Rota inesperada: ${path}`);
   };
 
@@ -56,7 +53,7 @@ test('consulta por EAN reutiliza a ficha e calcula a média apenas com ofertas a
   assert.deepEqual(result.sample, { count: 3, minimum: 90, maximum: 110, source: 'active_offers' });
 });
 
-test('consulta usa sale_price do item vencedor mesmo quando a ficha possui faixa de preço', async () => {
+test('consulta usa o preço público do anúncio vencedor sem depender da faixa da ficha', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
   const winnerItemId = 'MLB5000000099';
   globalThis.__mlPriceMock = async (path) => {
@@ -64,19 +61,15 @@ test('consulta usa sale_price do item vencedor mesmo quando a ficha possui faixa
     if (url.pathname === '/products/search') return { results: [product()] };
     if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId, price: 100 }, buy_box_winner_price_range: { min: { price: 80 }, max: { price: 120 } } });
     if (url.pathname === '/sites/MLB/search') return { results: [] };
-    if (url.pathname === `/items/${winnerItemId}/sale_price`) {
-      assert.equal(url.searchParams.get('context'), 'channel_marketplace');
-      return { amount: 109.9 };
-    }
     throw new Error(`Rota inesperada: ${path}`);
   };
 
   const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.deepEqual(result.prices, { market: 109.9, minimum: 54.95, medium: 76.93, ideal: 98.91 });
-  assert.deepEqual(result.sample, { count: 1, minimum: 109.9, maximum: 109.9, source: 'catalog_reference' });
+  assert.deepEqual(result.prices, { market: 100, minimum: 50, medium: 70, ideal: 90 });
+  assert.deepEqual(result.sample, { count: 1, minimum: 100, maximum: 100, source: 'catalog_reference' });
 });
 
-test('consulta usa sale_price do item vencedor quando a ficha não possui faixa de preço', async () => {
+test('consulta busca o preço público do item vencedor quando a ficha não o traz', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
   const winnerItemId = 'MLB5000000100';
   globalThis.__mlPriceMock = async (path) => {
@@ -84,10 +77,7 @@ test('consulta usa sale_price do item vencedor quando a ficha não possui faixa 
     if (url.pathname === '/products/search') return { results: [product()] };
     if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
     if (url.pathname === '/sites/MLB/search') return { results: [] };
-    if (url.pathname === `/items/${winnerItemId}/sale_price`) {
-      assert.equal(url.searchParams.get('context'), 'channel_marketplace');
-      return { amount: 160 };
-    }
+    if (url.pathname === `/items/${winnerItemId}`) return { id: winnerItemId, price: 160, currency_id: 'BRL' };
     throw new Error(`Rota inesperada: ${path}`);
   };
 
@@ -96,7 +86,7 @@ test('consulta usa sale_price do item vencedor quando a ficha não possui faixa 
   assert.deepEqual(result.sample, { count: 1, minimum: 160, maximum: 160, source: 'catalog_reference' });
 });
 
-test('consulta usa a referência pública da ficha quando sale_price é negado para esta conta', async () => {
+test('consulta nunca chama a cotação restrita quando o anúncio vencedor já expõe preço público', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
   const winnerItemId = 'MLB5000000403';
   globalThis.__mlPriceMock = async (path) => {
@@ -104,17 +94,17 @@ test('consulta usa a referência pública da ficha quando sale_price é negado p
     if (url.pathname === '/products/search') return { results: [product()] };
     if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId, price: 110 }, buy_box_winner_price_range: { min: { price: 100 }, max: { price: 120 } } });
     if (url.pathname === '/sites/MLB/search') return { results: [] };
-    if (url.pathname === `/items/${winnerItemId}/sale_price`) throw new MarketplaceError(403, 'provider_403', 'Erro 403 visível');
+    if (url.pathname.includes('sale_price')) throw new Error('sale_price não deve ser chamado');
     throw new Error(`Rota inesperada: ${path}`);
   };
 
   const result = await consultMercadoLivrePrice({}, connection, { ean });
   assert.deepEqual(result.prices, { market: 110, minimum: 55, medium: 77, ideal: 99 });
-  assert.deepEqual(result.sample, { count: 3, minimum: 100, maximum: 120, source: 'catalog_reference' });
-  assert.match(result.notice || '', /referência pública/i);
+  assert.deepEqual(result.sample, { count: 1, minimum: 110, maximum: 110, source: 'catalog_reference' });
+  assert.equal(result.notice, undefined);
 });
 
-test('consulta mantém 403 visível quando a ficha não traz referência pública', async () => {
+test('restrição pontual do item retorna preço indisponível, não erro de permissão', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
   const winnerItemId = 'MLB5000000404';
   globalThis.__mlPriceMock = async (path) => {
@@ -122,22 +112,22 @@ test('consulta mantém 403 visível quando a ficha não traz referência públic
     if (url.pathname === '/products/search') return { results: [product()] };
     if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
     if (url.pathname === '/sites/MLB/search') return { results: [] };
-    if (url.pathname === `/items/${winnerItemId}/sale_price`) throw new MarketplaceError(403, 'provider_403', 'Erro 403 visível');
+    if (url.pathname === `/items/${winnerItemId}`) throw new MarketplaceError(403, 'provider_403', 'Erro 403 visível');
     throw new Error(`Rota inesperada: ${path}`);
   };
 
-  await assert.rejects(consultMercadoLivrePrice({}, connection, { ean }), (error) => error?.status === 403 && error?.code === 'provider_403');
+  await assert.rejects(consultMercadoLivrePrice({}, connection, { ean }), (error) => error?.status === 409 && error?.code === 'price_unavailable');
 });
 
-test('consulta mantém limite 429 visível mesmo quando a ficha possui preço de referência', async () => {
+test('consulta mantém limite 429 visível ao consultar o anúncio vencedor', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
   const winnerItemId = 'MLB5000000429';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
     if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId, price: 110 } });
+    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
     if (url.pathname === '/sites/MLB/search') return { results: [] };
-    if (url.pathname === `/items/${winnerItemId}/sale_price`) throw new MarketplaceError(429, 'provider_429', 'Erro 429 visível');
+    if (url.pathname === `/items/${winnerItemId}`) throw new MarketplaceError(429, 'provider_429', 'Erro 429 visível');
     throw new Error(`Rota inesperada: ${path}`);
   };
 

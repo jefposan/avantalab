@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.19 -->
+<!-- ava-version: 1.48.0.20 -->
+
+> Revisão 1.48.0.20: a fonte pública de preços do AvantaPreços pertence ao PWA
+> de marketplaces e não altera os fluxos do AvantaVendas.
 
 <!-- avantavendas-asset-revision: 165 -->
 

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.19 -->
+<!-- ava-version: 1.48.0.20 -->
+
+> Revisão 1.48.0.20: o **AvantaPreços** usa preços públicos dos anúncios ativos
+> e da buy box, sem depender da cotação restrita do Mercado Livre. A Gestão
+> Mobile não é alterada.
 
 > Revisão 1.48.0.19: a correção de vínculo comercial no AvantaVendas pertence
 > ao perfil de vendas e não altera os fluxos da Gestão Mobile.
