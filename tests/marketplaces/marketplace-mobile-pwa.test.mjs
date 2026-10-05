@@ -13,6 +13,8 @@ const priceAccess = read('app/modules/marketplaces/services/price-access.ts');
 const pwaPage = read('app/marketplaces/consulta/page.tsx');
 const pwaManifest = read('app/marketplaces/consulta/manifest.webmanifest/route.ts');
 const receiptsPwaPage = read('app/recebimentos/colaborador/page.tsx');
+const viewportShell = read('app/marketplaces/consulta/viewport-shell.css');
+const viewportValidationPage = read('app/marketplaces/consulta/validacao-visual/page.tsx');
 
 test('PWA reutiliza autenticação, empresa e conexão do módulo sem novo OAuth', () => {
   assert.match(client, /signInWithPassword/);
@@ -67,7 +69,9 @@ test('login do AvantaPreços segue a composição aprovada e o padrão do Recebi
   assert.match(client, /aria-pressed=\{showPassword\}/);
   assert.match(client, /name=\{showPassword \? 'eyeOff' : 'eye'\}/);
   assert.match(client, /className=\{styles\.loginSubmitTarget\}/);
-  assert.match(css, /\.loginScreen \{[^}]*grid-template-rows: minmax\(0,1fr\) auto minmax\(0,1fr\);/);
+  assert.match(css, /\.loginWrap \{[^}]*min-height: 100dvh;[^}]*grid-template-rows: minmax\(0,1fr\) auto minmax\(0,1fr\);/);
+  assert.match(css, /\.brandLogo \{[^}]*grid-row: 1;[^}]*margin-top: env\(safe-area-inset-top\);/);
+  assert.match(css, /\.loginContent \{[^}]*grid-row: 2;/);
   assert.match(css, /\.loginCard \{[^}]*width: min\(100%, 336px\);/);
   assert.match(css, /\.loginCard h1 \{[^}]*text-align: center;/);
   assert.match(css, /\.loginSubmit \{[^}]*height: 36px;[^}]*background: #1687d9;/);
@@ -115,16 +119,33 @@ test('barra de status do iPhone segue o topo sólido do PWA Recebimentos', () =>
 });
 
 test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas paralelas', () => {
-  assert.match(css, /\.app \{[^}]*position: relative;[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
-  assert.match(css, /\.loadingScreen, \.emptyAccess, \.companySelection, \.loginScreen \{[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
-  assert.match(css, /padding: max\(28px, env\(safe-area-inset-top\)\)[^;]*max\(28px, env\(safe-area-inset-bottom\)\)/);
-  assert.match(css, /\.headerInner \{[^}]*min-height: 76px;[^}]*padding: 14px 16px;/);
-  assert.doesNotMatch(css.match(/\.headerInner \{[^}]*\}/)?.[0] || '', /safe-area-inset-top/);
-  assert.match(css, /@media \(max-width: 1023px\) \{ \.app,[^}]*background-size: 100% auto;/);
-  assert.match(css, /@media \(max-width: 1023px\) and \(min-aspect-ratio: 9\/16\), \(max-width: 1023px\) and \(max-aspect-ratio: 9\/18\) \{ \.app,[^}]*background-size: auto 100%;/);
-  assert.match(css, /@supports \(-webkit-touch-callout: none\) \{ \.app,[^}]*background-attachment: scroll;/);
-  assert.doesNotMatch(css, /\.loadingScreen::before/);
-  assert.doesNotMatch(client, /document\.documentElement|document\.body|avantaprecos-pwa-root|data-avantaprecos-access/);
-  assert.doesNotMatch(pwaPage, /viewport-root\.css/);
+  assert.match(css, /\.page \{[^}]*position: relative;[^}]*--avanta-safe-top: env\(safe-area-inset-top\);[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
+  assert.match(css, /\.topbar \{[^}]*top: 0;[^}]*background: color-mix\(in srgb, var\(--brand\) 96%, #000\);/);
+  assert.match(css, /\.topbarInner \{[^}]*padding: calc\(14px \+ var\(--avanta-safe-top\)\) 16px 14px;/);
+  assert.match(css, /\.topbarMobile \.topbarInner \{[^}]*min-height: calc\(76px \+ var\(--avanta-safe-top\)\);/);
+  assert.match(css, /\.loginWrap \{[^}]*min-height: 100dvh;[^}]*background: transparent;/);
+  assert.match(css, /@media \(max-width: 1023px\) \{ \.page \{[^}]*background-size: 100% auto;/);
+  assert.match(css, /@media \(max-width: 1023px\) and \(min-aspect-ratio: 9\/16\), \(max-width: 1023px\) and \(max-aspect-ratio: 9\/18\) \{ \.page \{[^}]*background-size: auto 100%;/);
+  assert.match(css, /@supports \(-webkit-touch-callout: none\) \{ \.page \{[^}]*background-attachment: scroll;/);
+  assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
+  assert.match(viewportShell, /body:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background: transparent;/);
+  assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='ready'\]\),\s*body:has\(\[data-avantaprecos-viewport='ready'\]\) \{[^}]*background-color: #003e73;/);
+  assert.match(viewportShell, /@media \(max-width: 1023px\)[\s\S]*background-size: 100% auto;/);
+  assert.match(viewportShell, /max-aspect-ratio: 9\/18\)[\s\S]*background-size: auto 100%;/);
+  assert.match(viewportShell, /@supports \(-webkit-touch-callout: none\)[\s\S]*background-attachment: scroll;/);
+  assert.match(client, /data-avantaprecos-viewport="access"/);
+  assert.match(client, /data-avantaprecos-viewport="ready"/);
+  assert.doesNotMatch(client, /document\.documentElement|document\.body|avantaprecos-pwa-root/);
+  assert.match(pwaPage, /import '\.\/viewport-shell\.css'/);
   assert.match(pwaPage, /rel="preload"[\s\S]*bg-avantalab-mobile-1080x1920-sem-logo\.webp/);
+});
+
+test('rota isolada valida login, carregamento e cabeçalho com área segura simulada', () => {
+  assert.match(viewportValidationPage, /estado === 'pronto'/);
+  assert.match(viewportValidationPage, /estado === 'carregando'/);
+  assert.match(viewportValidationPage, /'--avanta-safe-top': '47px'/);
+  assert.match(viewportValidationPage, /className=\{styles\.loginWrap\} data-avantaprecos-viewport="access"/);
+  assert.match(viewportValidationPage, /className=\{styles\.page\} data-avantaprecos-viewport="ready"/);
+  assert.match(viewportValidationPage, /className=\{`\$\{styles\.topbar\} \$\{styles\.topbarMobile\}`\}/);
+  assert.match(viewportValidationPage, /robots: \{ index: false, follow: false \}/);
 });

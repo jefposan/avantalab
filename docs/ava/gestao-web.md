@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.05 -->
+<!-- ava-version: 1.48.0.06 -->
+
+> Revisão 1.48.0.06: a cobertura das áreas seguras e a posição do cabeçalho
+> foram corrigidas no PWA **AvantaPreços**; a Gestão Web não é alterada.
 
 > Revisão 1.48.0.05: a correção de viewport, fundo e cabeçalho pertence ao
 > PWA **AvantaPreços** e replica a implementação do Recebimentos; a Gestão Web

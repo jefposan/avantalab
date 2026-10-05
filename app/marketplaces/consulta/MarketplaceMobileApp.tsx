@@ -294,10 +294,10 @@ export default function MarketplaceMobileApp() {
     setScannerOpen(true);
   };
 
-  if (access === 'loading') return <main className={styles.loadingScreen}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></main>;
-  if (access === 'guest') return <main className={styles.loginScreen}>
-    <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={220} height={55} preload />
-    <section className={styles.loginCard} aria-labelledby="avantaprecos-login-title">
+  if (access === 'loading') return <main className={styles.loginWrap} data-avantaprecos-viewport="access"><section className={styles.loadingStage} role="status" aria-live="polite"><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></section></main>;
+  if (access === 'guest') return <main className={styles.loginWrap} data-avantaprecos-viewport="access">
+    <Image className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={220} height={55} preload />
+    <section className={styles.loginContent} aria-labelledby="avantaprecos-login-title"><div className={styles.loginCard}>
       <h1 id="avantaprecos-login-title">AvantaPreços</h1><p>Entre para consultar produtos e preços.</p>
       <form onSubmit={signIn}>
         <label htmlFor="price-login">Login</label><input id="price-login" value={login} onChange={(event) => setLogin(event.target.value)} autoCapitalize="none" autoComplete="username" placeholder="Digite seu login" />
@@ -305,12 +305,12 @@ export default function MarketplaceMobileApp() {
         {loginError && <p className={styles.loginError} role="alert">{loginError}</p>}
         <div className={styles.loginSubmitTarget}><button className={styles.loginSubmit} type="submit" disabled={loginLoading}>{loginLoading ? 'Entrando…' : 'Entrar'}</button></div>
       </form>
-    </section>
+    </div></section>
   </main>;
-  if (access === 'no-company') return <main className={styles.emptyAccess}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={240} height={60} /><h1>Acesso não liberado</h1><p>Peça ao gestor da empresa para cadastrar seu usuário no módulo Marketplaces.</p><button type="button" onClick={() => void logout()}>Sair</button></main>;
-  if (access === 'choose-company') return <main className={styles.companySelection}>
-    <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={230} height={58} priority />
-    <section className={styles.companySelectionCard} aria-labelledby="company-selection-title">
+  if (access === 'no-company') return <main className={styles.loginWrap} data-avantaprecos-viewport="access"><Image className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={240} height={60} /><section className={`${styles.loginCard} ${styles.emptyAccessCard}`}><h1>Acesso não liberado</h1><p>Peça ao gestor da empresa para cadastrar seu usuário no módulo Marketplaces.</p><button type="button" onClick={() => void logout()}>Sair</button></section></main>;
+  if (access === 'choose-company') return <main className={styles.loginWrap} data-avantaprecos-viewport="access">
+    <Image className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={230} height={58} priority />
+    <section className={`${styles.loginCard} ${styles.companySelectionCard}`} aria-labelledby="company-selection-title">
       <h1 id="company-selection-title">Escolha a empresa</h1>
       <p>Selecione o perfil que será usado nesta sessão.</p>
       <div className={styles.companySelectionList}>{companies.map((item) => <button key={item.id} type="button" onClick={() => void selectCompany(item)}><strong>{item.nome}</strong><small>Abrir consulta de preços</small></button>)}</div>
@@ -318,13 +318,13 @@ export default function MarketplaceMobileApp() {
     </section>
   </main>;
 
-  return <main className={styles.app}>
-    <header className={styles.header}>
-      <div className={styles.headerInner}>
-        <div className={styles.brand}><strong>{company?.nome || 'Perfil da empresa'}</strong><span>Consulta rápida de produtos e preços</span></div>
+  return <div className={styles.page} data-avantaprecos-viewport="ready">
+    <div className={`${styles.topbar} ${styles.topbarMobile}`}>
+      <div className={styles.topbarInner}>
+        <div className={styles.brand}><span className={styles.brandTitle}>{company?.nome || 'Perfil da empresa'}</span><span className={styles.brandSubtitle}>Consulta rápida de produtos e preços</span></div>
         <button type="button" className={styles.logoutButton} onClick={() => void logout()}>Sair</button>
       </div>
-    </header>
+    </div>
 
     {result?.status === 'found' && result.product && result.prices ? <section className={styles.resultPage} aria-labelledby="result-title">
       <button type="button" className={styles.backButton} onClick={() => setResult(null)}><Icon name="back" /> Nova consulta</button>
@@ -374,5 +374,5 @@ export default function MarketplaceMobileApp() {
       </section>
     </div>}
     {scannerOpen && <ScannerModal initialEan={ean} onClose={() => setScannerOpen(false)} onConsult={(value) => { setEan(value); setScannerOpen(false); void consult({ ean: value }); }} />}
-  </main>;
+  </div>;
 }

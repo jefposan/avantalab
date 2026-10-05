@@ -1,5 +1,6 @@
-// Revisado na versão 1.48.0.05: AvantaPreços replica o viewport do Recebimentos,
-// sem camada paralela no fundo nem compensação duplicada no topo do iPhone.
+// Revisado na versão 1.48.0.06: AvantaPreços cobre as áreas seguras na raiz
+// do PWA e mantém o cabeçalho abaixo da ilha quando o iOS sobrepõe o conteúdo.
+// Revisado na versão 1.48.0.05: AvantaPreços replica o viewport do Recebimentos.
 // Revisado na versão 1.48.0.04: login do AvantaPreços segue o Recebimentos e
 // Atualizar histórico usa o símbolo acessível de duas setas circulares.
 // Revisado na versão 1.48.0.03: cadastro por EAN usa Mercado Livre e produtos

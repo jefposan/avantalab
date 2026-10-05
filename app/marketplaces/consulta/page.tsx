@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import MarketplaceMobileApp from './MarketplaceMobileApp';
+import './viewport-shell.css';
 
 export const metadata: Metadata = {
   title: 'AvantaPreços — Consulta de preços | AvantaLab',
@@ -14,7 +15,6 @@ export const metadata: Metadata = {
     apple: [{ url: '/images/marketplaces-mobile-icon-180.png', sizes: '180x180', type: 'image/png' }],
   },
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'AvantaPreços' },
-  other: { 'apple-mobile-web-app-capable': 'yes', 'mobile-web-app-title': 'AvantaPreços' },
 };
 
 export const viewport: Viewport = {

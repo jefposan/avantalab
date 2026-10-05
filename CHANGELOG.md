@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.48.0.06 - 2026-10-05
+- **Áreas seguras corrigidas na superfície real**: o AvantaPreços agora aplica o fundo do acesso na raiz do documento, mantendo o corpo transparente, para cobrir também o rodapé reservado pelo iPhone. Na área autenticada, `html`, `body` e o cabeçalho usam o mesmo azul institucional contínuo.
+- **Cabeçalho abaixo da ilha**: a altura e o espaçamento do Recebimentos foram preservados, com acréscimo exclusivo da área segura superior quando o iOS sobrepõe o conteúdo. Nome da empresa, finalidade e botão Sair deixam de ficar escondidos sob a barra de status.
+- **Validação visual reproduzível**: uma rota técnica sem indexação cobre login, carregamento e tela autenticada com área segura simulada; testes verificam a cobertura integral de 390 × 844 px e impedem regressões do fundo e do topo.
+
 ## 1.48.0.05 - 2026-10-05
 - **Viewport do AvantaPreços corrigido pela referência real**: fundo, dimensionamento por proporção e comportamento no iOS agora repetem diretamente a estrutura do PWA Recebimentos. Foram removidas as camadas paralelas em `html/body` e o pseudo-elemento fixo que deixavam a faixa branca no rodapé.
 - **Topo sólido sem compensação duplicada**: o cabeçalho passou a usar exatamente a altura e o espaçamento do Recebimentos, sem acrescentar novamente a área segura superior. A barra de status mantém o azul institucional contínuo, sem degradê branco sob a ilha.

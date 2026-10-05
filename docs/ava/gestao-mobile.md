@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.05 -->
+<!-- ava-version: 1.48.0.06 -->
+
+> Revisão 1.48.0.06: o fundo do acesso do **AvantaPreços** cobre a raiz real
+> do PWA e a área do indicador inferior. Na tela autenticada, o cabeçalho
+> preserva a altura do Recebimentos e acrescenta a área segura somente quando
+> o iOS sobrepõe a barra de status, mantendo texto e ações abaixo da ilha.
 
 > Revisão 1.48.0.05: o **AvantaPreços** passa a repetir diretamente a
 > estrutura de viewport do PWA Recebimentos. O fundo ocupa toda a altura sem

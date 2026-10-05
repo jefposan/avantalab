@@ -1,0 +1,46 @@
+html:has([data-avantaprecos-viewport='access']) {
+  min-height: 100%;
+  background-color: #eef6fb;
+  background-image: image-set(
+    url('/images/bg-avantalab-sem-logo.webp') type('image/webp'),
+    url('/images/bg-avantalab-sem-logo.png') type('image/png')
+  );
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+body:has([data-avantaprecos-viewport='access']) {
+  min-height: 100%;
+  background: transparent;
+}
+
+html:has([data-avantaprecos-viewport='ready']),
+body:has([data-avantaprecos-viewport='ready']) {
+  min-height: 100%;
+  background-color: #003e73;
+}
+
+@media (max-width: 1023px) {
+  html:has([data-avantaprecos-viewport='access']) {
+    background-image: image-set(
+      url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'),
+      url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png')
+    );
+    background-size: 100% auto;
+  }
+}
+
+@media (max-width: 1023px) and (min-aspect-ratio: 9/16),
+  (max-width: 1023px) and (max-aspect-ratio: 9/18) {
+  html:has([data-avantaprecos-viewport='access']) {
+    background-size: auto 100%;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  html:has([data-avantaprecos-viewport='access']) {
+    background-attachment: scroll;
+  }
+}

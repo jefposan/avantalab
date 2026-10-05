@@ -1,10 +1,11 @@
-.app { position: relative; --brand: #003e73; --accent: #21aaa5; --ink: #152033; min-height: 100dvh; color: var(--ink); background-color: #eef6fb; background-image: image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-sem-logo.png') type('image/png')); background-position: center bottom; background-repeat: no-repeat; background-size: cover; background-attachment: fixed; }
+.page { position: relative; --brand: #003e73; --accent: #21aaa5; --ink: #152033; --avanta-safe-top: env(safe-area-inset-top); min-height: 100dvh; color: var(--ink); background-color: #eef6fb; background-image: image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-sem-logo.png') type('image/png')); background-position: center bottom; background-repeat: no-repeat; background-size: cover; background-attachment: fixed; }
 
-.header { position: sticky; z-index: 30; top: 0; color: #fff; background: color-mix(in srgb, var(--brand) 96%, #000); box-shadow: 0 5px 20px rgba(0, 43, 75, .16); }
-.headerInner { display: flex; width: 100%; max-width: 1080px; min-height: 76px; align-items: center; justify-content: space-between; gap: 12px; margin: 0 auto; padding: 14px 16px; }
+.topbar { position: sticky; z-index: 30; top: 0; color: #fff; background: color-mix(in srgb, var(--brand) 96%, #000); box-shadow: 0 5px 20px rgba(0, 43, 75, .16); }
+.topbarInner { display: flex; width: 100%; max-width: 1080px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 auto; padding: calc(14px + var(--avanta-safe-top)) 16px 14px; }
+.topbarMobile .topbarInner { min-height: calc(76px + var(--avanta-safe-top)); }
 .brand { display: flex; min-width: 0; flex: 1 1 160px; flex-direction: column; gap: 2px; line-height: 1.1; }
-.brand strong { max-width: 100%; overflow: hidden; font-size: 16px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
-.brand span { width: fit-content; max-width: 100%; overflow: hidden; border-radius: 999px; padding: 3px 8px 3px 0; font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.brandTitle { max-width: 100%; overflow: hidden; font-size: 16px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.brandSubtitle { width: fit-content; max-width: min(70vw,680px); overflow: hidden; color: color-mix(in srgb,#fff 86%,var(--brand)); font-size: 13px; font-weight: 700; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
 .logoutButton { min-height: 34px; flex: 0 0 auto; border: 1px solid #cbd5e1; border-radius: 10px; padding: 6px 12px; color: #1f2937; background: #fff; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
 .logoutButton:hover { filter: brightness(1.06); }
 .logoutButton:focus-visible { outline: 3px solid color-mix(in srgb, #fff 72%, transparent); outline-offset: 2px; }
@@ -47,7 +48,7 @@
 .divider::before { position: absolute; top: 50%; right: 0; left: 0; height: 1px; background: #e7ecef; content: ''; }
 .divider span { position: relative; padding: 0 10px; background: #fff; }
 .inlineLoading { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 15px; color: #426174; font-size: 12px; font-weight: 800; }
-.inlineLoading span, .loadingScreen > span { width: 18px; height: 18px; border: 2px solid #d4e4e7; border-top-color: #179d98; border-radius: 50%; animation: spin .8s linear infinite; }
+.inlineLoading span, .loadingStage > span { width: 18px; height: 18px; border: 2px solid #d4e4e7; border-top-color: #179d98; border-radius: 50%; animation: spin .8s linear infinite; }
 .error { margin: 14px 0 0; border-radius: 12px; padding: 11px 12px; color: #a12a2a; background: #fff0f0; font-size: 12px; font-weight: 750; line-height: 1.4; }
 .candidates { display: grid; gap: 8px; margin-top: 16px; }
 .candidates h3 { margin: 0 0 3px; font-size: 13px; }
@@ -114,13 +115,15 @@
 .scanComplete { border-color: #55df9b; color: #fff; background: rgba(24,132,88,.68); }
 .scannerSheet { display: grid; gap: 8px; border-radius: 22px 22px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); color: #1e293b; background: #fff; }
 .scannerSheet p { margin: 0; color: #a12a2a; font-size: 11px; font-weight: 700; }
-.loadingScreen, .emptyAccess, .companySelection, .loginScreen { display: flex; width: 100%; min-height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 14px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: none; padding: max(28px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left)); text-align: center; background-color: #eef6fb; background-image: image-set(url('/images/bg-avantalab-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-sem-logo.png') type('image/png')); background-position: center bottom; background-repeat: no-repeat; background-size: cover; background-attachment: fixed; }
-.loadingScreen img, .emptyAccess img, .companySelection > img { width: min(62vw, 250px); height: auto; }
-.loadingScreen p, .emptyAccess p { max-width: 330px; margin: 0; color: #51606e; font-size: 13px; line-height: 1.5; }
-.emptyAccess h1 { margin: 4px 0 0; color: #172033; font-size: 22px; }
-.emptyAccess a, .emptyAccess button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; border: 0; border-radius: 13px; padding: 0 18px; color: #fff; background: #087f8b; font-size: 13px; font-weight: 850; text-decoration: none; }
-.emptyAccess button { color: #49616f; background: rgba(255,255,255,.7); }
-.companySelectionCard { display: grid; width: min(100%, 360px); gap: 12px; border: 1px solid rgba(255,255,255,.72); border-radius: 20px; padding: 20px; text-align: left; background: rgba(255,255,255,.82); box-shadow: 0 20px 50px rgba(0,43,75,.15); backdrop-filter: blur(18px); }
+.loginWrap { display: grid; width: 100%; min-height: 100dvh; grid-template-rows: minmax(0,1fr) auto minmax(0,1fr); align-items: stretch; justify-items: center; overflow-x: hidden; overflow-y: auto; overscroll-behavior: none; padding: 0 max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left)); background: transparent; }
+.brandLogo { grid-row: 1; align-self: center; justify-self: center; width: clamp(136px,46.4vw,220px); max-width: 66%; max-height: 58%; height: auto; margin-top: env(safe-area-inset-top); object-fit: contain; }
+.loginContent { grid-row: 2; width: min(100%,336px); }
+.loadingStage { grid-row: 2; display: grid; justify-items: center; gap: 12px; color: #51606e; text-align: center; }
+.loadingStage img { width: min(62vw,250px); height: auto; }
+.loadingStage p { max-width: 330px; margin: 0; font-size: 13px; line-height: 1.5; }
+.emptyAccessCard h1 { margin: 4px 0 0; color: #172033; font-size: 22px; }
+.emptyAccessCard button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; border: 0; border-radius: 13px; padding: 0 18px; color: #49616f; background: rgba(255,255,255,.7); font-size: 13px; font-weight: 850; text-decoration: none; }
+.companySelectionCard { width: min(100%,360px); gap: 12px; padding: 20px; text-align: left; background: rgba(255,255,255,.82); backdrop-filter: blur(18px); }
 .companySelectionCard h1 { margin: 0; color: #172033; font-size: 22px; line-height: 1.2; }
 .companySelectionCard > p { margin: -5px 0 2px; color: #64748b; font-size: 13px; line-height: 1.45; }
 .companySelectionList { display: grid; gap: 9px; }
@@ -130,9 +133,8 @@
 .companySelectionList strong { overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
 .companySelectionList small { color: #64748b; font-size: 11px; }
 .companySelectionLogout { justify-self: center; min-height: 38px; border: 1px solid color-mix(in srgb, #003e73 34%, #cbd5e1); border-radius: 999px; padding: 8px 18px; color: #003e73; background: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; }
-.loginScreen { display: grid; grid-template-rows: minmax(0,1fr) auto minmax(0,1fr); align-items: stretch; justify-items: center; gap: 0; padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)); text-align: left; }
-.loginScreen > img { grid-row: 1; align-self: center; width: clamp(136px,46vw,220px); max-width: 66%; max-height: 58%; height: auto; margin-top: env(safe-area-inset-top); object-fit: contain; }
 .loginCard { grid-row: 2; display: grid; width: min(100%, 336px); gap: 8px; border: 1px solid rgba(255,255,255,.82); border-radius: 22px; padding: 24px; color: #172033; text-align: left; background: rgba(255,255,255,.94); box-shadow: 0 20px 48px rgba(0,43,75,.15); backdrop-filter: blur(18px); }
+.loginContent .loginCard { width: 100%; }
 .loginCard h1 { margin: 0; font-size: 25px; line-height: 1.1; letter-spacing: -.03em; text-align: center; }
 .loginCard > p { margin: 0 0 10px; color: #64748b; font-size: 13px; line-height: 1.45; text-align: center; }
 .loginCard form { display: grid; gap: 8px; }
@@ -153,8 +155,8 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes scan { from { transform: translateY(-34px); } to { transform: translateY(34px); } }
 @keyframes shimmer { to { background-position: -200% 0; } }
-@media (max-width: 1023px) { .app, .loadingScreen, .emptyAccess, .companySelection, .loginScreen { background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png')); background-size: 100% auto; } }
-@media (max-width: 1023px) and (min-aspect-ratio: 9/16), (max-width: 1023px) and (max-aspect-ratio: 9/18) { .app, .loadingScreen, .emptyAccess, .companySelection, .loginScreen { background-size: auto 100%; } }
-@supports (-webkit-touch-callout: none) { .app, .loadingScreen, .emptyAccess, .companySelection, .loginScreen { background-attachment: scroll; } }
+@media (max-width: 1023px) { .page { background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'),url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png')); background-size: 100% auto; } }
+@media (max-width: 1023px) and (min-aspect-ratio: 9/16), (max-width: 1023px) and (max-aspect-ratio: 9/18) { .page { background-size: auto 100%; } }
+@supports (-webkit-touch-callout: none) { .page { background-attachment: scroll; } }
 @media (min-width: 700px) { .content, .resultPage { padding-top: 32px; } .scanButton { min-height: 164px; } .priceGrid { grid-template-columns: 1fr 1fr; }.marketPrice { grid-column: 1 / -1; } }
-@media (prefers-reduced-motion: reduce) { .inlineLoading span, .loadingScreen > span, .scanWindow > span, .historySkeleton span { animation: none; } .scanButton:active { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .inlineLoading span, .loadingStage > span, .scanWindow > span, .historySkeleton span { animation: none; } .scanButton:active { transform: none; } }
