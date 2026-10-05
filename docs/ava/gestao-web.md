@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.47.0.05 -->
+<!-- ava-version: 1.47.0.07 -->
+
+> Revisão 1.47.0.07: a uniformização da barra de status pertence ao PWA
+> **AvantaPreços** no iPhone; não altera a Gestão Web.
+
+> Revisão 1.47.0.06: o ajuste de limpeza ao iniciar uma nova leitura pertence
+> ao PWA **AvantaPreços**; não altera a operação da Gestão Web.
 
 > Revisão 1.47.0.05: a engrenagem de **Anúncios em marketplaces** gerencia
 > usuários exclusivos do **AvantaPreços**. O gestor cria nome, login e senha,

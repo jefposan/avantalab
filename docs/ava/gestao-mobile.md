@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.47.0.05 -->
+<!-- ava-version: 1.47.0.07 -->
+
+> Revisão 1.47.0.07: no iPhone, o topo do **AvantaPreços** mantém o mesmo azul
+> sólido do cabeçalho ao redor da ilha, como no PWA Recebimentos.
+
+> Revisão 1.47.0.06: no **AvantaPreços**, tocar em **Ler EAN** encerra a
+> pesquisa exibida e abre o leitor com o campo vazio para uma nova consulta.
 
 > Revisão 1.47.0.05: o **AvantaPreços** usa acesso operacional simplificado,
 > somente com login e senha cadastrados pelo gestor no módulo Marketplaces.

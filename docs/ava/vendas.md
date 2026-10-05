@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.47.0.05 -->
+<!-- ava-version: 1.47.0.07 -->
+
+> Revisão 1.47.0.07: o topo sólido no iPhone pertence ao PWA **AvantaPreços**;
+> não altera os fluxos do AvantaVendas.
+
+> Revisão 1.47.0.06: a nova leitura com campo limpo pertence ao PWA
+> **AvantaPreços**; não altera os fluxos do AvantaVendas.
 
 > Revisão 1.47.0.05: o AvantaPreços ganhou usuários operacionais próprios por
 > login e senha, sem impacto operacional no AvantaVendas.

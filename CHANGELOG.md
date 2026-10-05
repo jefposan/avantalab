@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.47.0.07 - 2026-10-05
+- **Topo do AvantaPreços no iPhone**: a barra de status e a área ao redor da ilha passam a usar o mesmo azul institucional sólido do cabeçalho, seguindo o comportamento do PWA Recebimentos e removendo o efeito translúcido em degradê.
+
+## 1.47.0.06 - 2026-10-05
+- **Nova leitura no AvantaPreços**: ao tocar em **Ler EAN**, a consulta anterior é descartada antes da abertura da câmera. EAN, pesquisa textual, candidatos, resultado e mensagens começam vazios, evitando reaproveitamento acidental do produto anterior.
+
 ## 1.47.0.04 - 2026-10-05
 - **AvantaPreços**: nome instalado do PWA atualizado no manifesto, metadados Apple e tela de acesso. A rota técnica permanece genérica em `/marketplaces/consulta`.
 - **Empresa fixa por sessão**: usuários com uma empresa entram diretamente; usuários com várias escolhem o perfil depois do login. A empresa não pode ser trocada dentro do aplicativo: para selecionar outra, é necessário sair e entrar novamente.

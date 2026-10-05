@@ -10,6 +10,8 @@ const historyApi = read('app/api/modulos/marketplaces/precos/historico/route.ts'
 const migration = read('supabase/migrations/20261005213000_marketplace_price_consultations.sql');
 const accessMigration = read('supabase/migrations/20261006090000_avantaprecos_users.sql');
 const priceAccess = read('app/modules/marketplaces/services/price-access.ts');
+const pwaPage = read('app/marketplaces/consulta/page.tsx');
+const pwaManifest = read('app/marketplaces/consulta/manifest.webmanifest/route.ts');
 
 test('PWA reutiliza autenticação, empresa e conexão do módulo sem novo OAuth', () => {
   assert.match(client, /signInWithPassword/);
@@ -36,6 +38,13 @@ test('leitor usa formatos EAN e só consulta após confirmação explícita', ()
   assert.match(client, /onConsult=\{\(value\) =>/);
   assert.match(css, /\.scanWindow \{[^}]*height: 108px;/);
   assert.match(css, /\.cameraShade \{[^}]*background:/);
+});
+
+test('nova leitura de EAN descarta a pesquisa anterior antes de abrir a câmera', () => {
+  const action = client.match(/const startEanReading = \(\) => \{([\s\S]*?)\n  \};/)?.[1] || '';
+  for (const reset of ["setEan('')", "setQuery('')", 'setPendingInput({})', 'setCandidates([])', 'setResult(null)', "setError('')"]) assert.ok(action.includes(reset), `A ação deve executar ${reset}`);
+  assert.match(action, /setScannerOpen\(true\)/);
+  assert.match(client, /className=\{styles\.scanButton\} onClick=\{startEanReading\}/);
 });
 
 test('resultado diferencia os quatro valores e o histórico pode ser reaberto e atualizado', () => {
@@ -70,11 +79,19 @@ test('histórico é isolado por empresa e inacessível diretamente pelo navegado
 });
 
 test('manifesto, service worker e atalhos tornam o Marketplaces Mobile instalável e acessível pelo módulo', () => {
-  assert.match(read('app/marketplaces/consulta/page.tsx'), /manifest: '\/marketplaces\/consulta\/manifest\.webmanifest'/);
-  assert.match(read('app/marketplaces/consulta/page.tsx'), /marketplaces-mobile-icon-180\.png/);
-  assert.match(read('app/marketplaces/consulta/manifest.webmanifest/route.ts'), /display: 'standalone'/);
-  assert.match(read('app/marketplaces/consulta/manifest.webmanifest/route.ts'), /marketplaces-mobile-icon-512\.png/);
+  assert.match(pwaPage, /manifest: '\/marketplaces\/consulta\/manifest\.webmanifest'/);
+  assert.match(pwaPage, /marketplaces-mobile-icon-180\.png/);
+  assert.match(pwaManifest, /display: 'standalone'/);
+  assert.match(pwaManifest, /marketplaces-mobile-icon-512\.png/);
   assert.match(read('app/marketplaces/consulta/sw.js/route.ts'), /avantalab-marketplaces-mobile-/);
   assert.match(read('app/marketplaces/MarketplacesClient.tsx'), /href="\/marketplaces\/consulta"/);
-  assert.match(read('app/marketplaces/consulta/manifest.webmanifest/route.ts'), /short_name: 'AvantaPreços'/);
+  assert.match(pwaManifest, /short_name: 'AvantaPreços'/);
+});
+
+test('barra de status do iPhone segue o topo sólido do PWA Recebimentos', () => {
+  assert.match(pwaPage, /statusBarStyle: 'default'/);
+  assert.doesNotMatch(pwaPage, /black-translucent/);
+  assert.match(pwaPage, /themeColor: '#003E73'/);
+  assert.match(pwaManifest, /background_color: '#003E73'/);
+  assert.match(pwaManifest, /theme_color: '#003E73'/);
 });

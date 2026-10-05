@@ -10,7 +10,7 @@ const manifest: MetadataRoute.Manifest = {
   start_url: '/marketplaces/consulta',
   scope: '/marketplaces/consulta',
   display: 'standalone',
-  background_color: '#f4f7f8',
+  background_color: '#003E73',
   theme_color: '#003E73',
   orientation: 'portrait',
   icons: [

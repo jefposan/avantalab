@@ -282,6 +282,16 @@ export default function MarketplaceMobileApp() {
     setCompany(null); setCompanies([]); setAccess('guest');
   };
 
+  const startEanReading = () => {
+    setEan('');
+    setQuery('');
+    setPendingInput({});
+    setCandidates([]);
+    setResult(null);
+    setError('');
+    setScannerOpen(true);
+  };
+
   if (access === 'loading') return <main className={styles.loadingScreen}><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></main>;
   if (access === 'guest') return <main className={styles.loginScreen}>
     <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={250} height={63} priority />
@@ -336,7 +346,7 @@ export default function MarketplaceMobileApp() {
     </section> : <div className={styles.content}>
       <section className={styles.hero} aria-labelledby="marketplace-mobile-title">
         <p className={styles.eyebrow}>Consulta rápida</p><h1 id="marketplace-mobile-title">Qual é o preço?</h1><p>Leia o código do produto e compare em poucos segundos.</p>
-        <button type="button" className={styles.scanButton} onClick={() => setScannerOpen(true)} disabled={!connectionId}><span><Icon name="camera" size={34} /></span><strong>Ler EAN</strong><small>Abrir câmera</small></button>
+        <button type="button" className={styles.scanButton} onClick={startEanReading} disabled={!connectionId || loading}><span><Icon name="camera" size={34} /></span><strong>Ler EAN</strong><small>Abrir câmera</small></button>
         {connectionMessage ? <p className={styles.connectionAlert} role="alert">{connectionMessage}</p> : <p className={styles.connectionOk}><span /> Mercado Livre conectado{accounts.length > 1 ? ` em ${accounts.length} contas` : ''}</p>}
         {accounts.length > 1 && <div className={styles.accountPicker}><MobilePicker label="Conta usada na consulta" value={connectionId} options={accounts.map((account) => ({ value: account.id, label: account.seller_name || account.seller_reference, detail: `ID ${account.seller_reference}` }))} onChange={setConnectionId} /></div>}
       </section>
