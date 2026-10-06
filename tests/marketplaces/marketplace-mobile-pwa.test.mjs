@@ -32,15 +32,23 @@ test('PWA reutiliza autenticação, empresa e conexão do módulo sem novo OAuth
   assert.match(api, /resolveMercadoLivreConnection/);
 });
 
-test('leitor usa formatos EAN e só consulta após confirmação explícita', () => {
+test('leitor reduz pedidos de câmera e só consulta após confirmação explícita', () => {
   assert.match(client, /BarcodeFormat\.EAN_13/);
   assert.match(client, /BarcodeFormat\.EAN_8/);
   assert.match(client, /facingMode: \{ ideal: 'environment' \}/);
   assert.match(client, /Código lido com sucesso/);
+  assert.match(client, /navigator\.permissions\?\.query\(\{ name: 'camera' \} as PermissionDescriptor\)/);
+  assert.match(client, /CAMERA_ACCESS_KEY/);
+  assert.match(client, /permission\?\.state === 'granted'\) \{ void startCamera\(\); return; \}/);
+  assert.match(client, />Ativar câmera<\/button>/);
+  assert.match(client, /onClick=\{\(\) => void startCamera\(\)\}/);
+  assert.match(client, /Libere-a nos ajustes do aparelho/);
   assert.match(client, />Consultar<\/button>/);
   assert.match(client, /onConsult=\{\(value\) =>/);
   assert.match(css, /\.scanWindow \{[^}]*height: 108px;/);
   assert.match(css, /\.cameraShade \{[^}]*background:/);
+  assert.match(css, /\.cameraPrompt \{[^}]*position: absolute;/);
+  assert.match(css, /\.cameraPrompt button \{[^}]*min-height: 48px;/);
 });
 
 test('nova leitura de EAN descarta a pesquisa anterior antes de abrir a câmera', () => {

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.26 -->
+<!-- ava-version: 1.48.0.27 -->
+
+> Revisão 1.48.0.27: ao tocar em **Ler EAN**, o **AvantaPreços** consulta antes
+> o estado da câmera. Permissão persistida abre o leitor diretamente; sem
+> permissão, a pessoa usa **Ativar câmera**. Se o sistema bloqueá-la, o app não
+> insiste no pedido e mantém o EAN manual disponível.
 
 > Revisão 1.48.0.26: o **AvantaPreços** identifica o produto e oferece busca
 > pública assistida no Mercado Livre ou Amazon. O preço informado pela pessoa

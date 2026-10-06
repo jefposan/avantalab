@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.26 -->
+<!-- ava-version: 1.48.0.27 -->
+
+> Revisão 1.48.0.27: o leitor do **AvantaPreços** verifica a permissão de
+> câmera já existente. A câmera abre direto quando o navegador a mantém
+> concedida; autorização pendente pede toque explícito e bloqueio mantém a
+> digitação manual, sem novas tentativas automáticas.
 
 > Revisão 1.48.0.26: o **AvantaPreços** passa a usar busca pública assistida e
 > preço informado pela pessoa, sem leitura automatizada de vitrines de terceiros.

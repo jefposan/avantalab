@@ -30,6 +30,7 @@ type HistoryRow = {
 type Account = { id: string; status: string; seller_name: string | null; seller_reference: string };
 
 const SESSION_COMPANY_KEY = 'avantalab_marketplaces_mobile_empresa_id';
+const CAMERA_ACCESS_KEY = 'avantalab_marketplaces_camera_access';
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
@@ -115,56 +116,85 @@ function ScannerModal({ initialEan, onClose, onConsult }: { initialEan: string; 
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<{ stop: () => void } | null>(null);
   const [ean, setEan] = useState(initialEan);
-  const [state, setState] = useState<'opening' | 'reading' | 'read' | 'error'>('opening');
-  const [message, setMessage] = useState('Abrindo a câmera…');
+  const [state, setState] = useState<'checking' | 'ready' | 'opening' | 'reading' | 'read' | 'denied' | 'error'>('checking');
+  const [message, setMessage] = useState('Verificando o acesso à câmera…');
+
+  const startCamera = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia || !videoRef.current) {
+      setState('error'); setMessage('A câmera não está disponível neste navegador. Digite o EAN abaixo.'); return;
+    }
+    controlsRef.current?.stop();
+    setState('opening'); setMessage('Ativando a câmera…');
+    try {
+      const { BrowserMultiFormatReader, BarcodeFormat } = await import('@zxing/browser');
+      if (!videoRef.current) return;
+      const reader = new BrowserMultiFormatReader(undefined, { delayBetweenScanAttempts: 90, delayBetweenScanSuccess: 600 });
+      reader.possibleFormats = [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E];
+      const controls = await reader.decodeFromConstraints(
+        { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        videoRef.current,
+        (result) => {
+          if (!result) return;
+          const value = normalizeEan(result.getText());
+          if (!isValidEan(value)) return;
+          controlsRef.current?.stop();
+          setEan(value); setState('read'); setMessage('Código lido com sucesso');
+          if ('vibrate' in navigator) navigator.vibrate?.(80);
+        },
+      );
+      controlsRef.current = controls;
+      try { localStorage.setItem(CAMERA_ACCESS_KEY, 'granted'); } catch {}
+      setState('reading'); setMessage('Centralize o código de barras no visor');
+    } catch (error) {
+      const denied = error instanceof DOMException && ['NotAllowedError', 'PermissionDeniedError'].includes(error.name);
+      setState(denied ? 'denied' : 'error');
+      setMessage(denied
+        ? 'A câmera está bloqueada para este app. Libere-a nos ajustes do aparelho ou digite o EAN abaixo.'
+        : 'Não foi possível iniciar a câmera. Digite o EAN abaixo.');
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const start = async () => {
+    let permission: PermissionStatus | null = null;
+    const verifyPermission = async () => {
       if (!navigator.mediaDevices?.getUserMedia || !videoRef.current) {
         setState('error'); setMessage('A câmera não está disponível neste navegador. Digite o EAN abaixo.'); return;
       }
       try {
-        const { BrowserMultiFormatReader, BarcodeFormat } = await import('@zxing/browser');
-        if (cancelled || !videoRef.current) return;
-        const reader = new BrowserMultiFormatReader(undefined, { delayBetweenScanAttempts: 90, delayBetweenScanSuccess: 600 });
-        reader.possibleFormats = [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E];
-        const controls = await reader.decodeFromConstraints(
-          { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-          videoRef.current,
-          (result) => {
-            if (!result || cancelled) return;
-            const value = normalizeEan(result.getText());
-            if (!isValidEan(value)) return;
-            controlsRef.current?.stop();
-            setEan(value); setState('read'); setMessage('Código lido com sucesso');
-            if ('vibrate' in navigator) navigator.vibrate?.(80);
-          },
-        );
-        if (cancelled) controls.stop();
-        else { controlsRef.current = controls; setState('reading'); setMessage('Centralize o código de barras no visor'); }
-      } catch (error) {
-        const denied = error instanceof DOMException && ['NotAllowedError', 'PermissionDeniedError'].includes(error.name);
-        setState('error');
-        setMessage(denied ? 'Permita o uso da câmera para ler o código ou digite o EAN abaixo.' : 'Não foi possível iniciar a câmera. Digite o EAN abaixo.');
+        permission = await navigator.permissions?.query({ name: 'camera' } as PermissionDescriptor) || null;
+      } catch {}
+      if (cancelled) return;
+      if (permission?.state === 'granted') { void startCamera(); return; }
+      if (permission?.state === 'denied') {
+        setState('denied'); setMessage('A câmera está bloqueada para este app. Libere-a nos ajustes do aparelho ou digite o EAN abaixo.'); return;
       }
+      let alreadyActivated = false;
+      try { alreadyActivated = localStorage.getItem(CAMERA_ACCESS_KEY) === 'granted'; } catch {}
+      setState('ready');
+      setMessage(alreadyActivated
+        ? 'Toque em Ativar câmera para retomar a leitura.'
+        : 'Ative a câmera para ler o código de barras.');
     };
-    void start();
-    return () => { cancelled = true; controlsRef.current?.stop(); controlsRef.current = null; };
-  }, []);
+    void verifyPermission();
+    return () => { cancelled = true; if (permission) permission.onchange = null; controlsRef.current?.stop(); controlsRef.current = null; };
+  }, [startCamera]);
 
   const valid = isValidEan(ean);
+  const cameraActive = state === 'reading' || state === 'read';
   return <div className={styles.scannerOverlay} role="dialog" aria-modal="true" aria-labelledby="scanner-title">
     <div className={styles.scannerTop}>
       <button type="button" className={styles.iconButtonLight} onClick={onClose} aria-label="Fechar leitor"><Icon name="back" /></button>
       <div><strong id="scanner-title">Ler código de barras</strong><span>{message}</span></div>
     </div>
     <div className={styles.cameraStage}>
-      <video ref={videoRef} muted playsInline aria-label="Imagem da câmera para leitura do código" />
-      <div className={styles.cameraShade} aria-hidden="true" />
-      <div className={`${styles.scanWindow} ${state === 'read' ? styles.scanComplete : ''}`} aria-hidden="true">
-        {state === 'read' ? <Icon name="check" size={36} /> : <span />}
-      </div>
+      <video ref={videoRef} className={cameraActive ? undefined : styles.cameraVideoInactive} muted playsInline aria-label="Imagem da câmera para leitura do código" />
+      {cameraActive ? <><div className={styles.cameraShade} aria-hidden="true" />
+        <div className={`${styles.scanWindow} ${state === 'read' ? styles.scanComplete : ''}`} aria-hidden="true">
+          {state === 'read' ? <Icon name="check" size={36} /> : <span />}
+        </div></> : <div className={styles.cameraPrompt} role="status" aria-live="polite">
+          {state === 'checking' || state === 'opening' ? <span className={styles.cameraSpinner} aria-hidden="true" /> : <><strong>{state === 'denied' ? 'Câmera bloqueada' : 'Leitor de código de barras'}</strong><span>{message}</span>{state === 'ready' && <button type="button" onClick={() => void startCamera()}>Ativar câmera</button>}</>}
+        </div>}
     </div>
     <div className={styles.scannerSheet}>
       <label htmlFor="scanner-ean">EAN encontrado</label>

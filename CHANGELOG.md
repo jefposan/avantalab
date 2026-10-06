@@ -1,5 +1,7 @@
 # Changelog
 
+- **Câmera com menos pedidos no AvantaPreços**: o leitor verifica a permissão existente antes de abrir a câmera. Quando ela já estiver concedida pelo navegador, inicia diretamente; quando ainda não houver autorização, exibe o botão explícito **Ativar câmera**. Bloqueios do sistema não disparam novas tentativas automáticas e mantêm a digitação manual disponível.
+
 - **Consulta assistida no AvantaPreços**: após identificar o produto, o PWA abre a busca pública já preenchida no Mercado Livre ou na Amazon. A pessoa escolhe a referência, informa o preço encontrado e o sistema calcula 50%, 70% e 90%, registrando no histórico que o valor foi informado após consulta — sem coleta automatizada de vitrines de terceiros.
 
 ## 1.48.0.25 - 2026-10-05

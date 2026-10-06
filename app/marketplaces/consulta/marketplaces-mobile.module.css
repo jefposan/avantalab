@@ -121,6 +121,13 @@
 .iconButtonLight { color: #fff; background: rgba(255,255,255,.1); }
 .cameraStage { position: relative; min-height: 260px; overflow: hidden; }
 .cameraStage video { width: 100%; height: 100%; object-fit: cover; }
+.cameraVideoInactive { opacity: 0; }
+.cameraPrompt { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 9px; padding: 28px; color: #eef8fb; background: #102b3c; text-align: center; }
+.cameraPrompt strong { font-size: 16px; }
+.cameraPrompt > span:not(.cameraSpinner) { max-width: 290px; color: #c8dce4; font-size: 12px; line-height: 1.45; }
+.cameraPrompt button { min-height: 48px; margin-top: 5px; border: 1px solid rgba(255,255,255,.35); border-radius: 12px; padding: 0 18px; color: #043144; background: #fff; font: inherit; font-size: 13px; font-weight: 900; }
+.cameraPrompt button:focus-visible { outline: 3px solid #4de0d6; outline-offset: 3px; }
+.cameraSpinner { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,.24); border-top-color: #4de0d6; border-radius: 50%; animation: spin .8s linear infinite; }
 .cameraShade { position: absolute; inset: 0; background: linear-gradient(to bottom,rgba(4,14,21,.65) 0 calc(50% - 54px),transparent calc(50% - 54px) calc(50% + 54px),rgba(4,14,21,.65) calc(50% + 54px)); }
 .scanWindow { position: absolute; top: 50%; left: 50%; display: grid; width: min(84vw, 420px); height: 108px; place-items: center; transform: translate(-50%,-50%); border: 2px solid rgba(255,255,255,.92); border-radius: 18px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), inset 0 0 25px rgba(0,0,0,.1); }
 .scanWindow::before, .scanWindow::after { position: absolute; width: 30px; height: 30px; border-color: #40d4cb; content: ''; }
@@ -175,4 +182,4 @@
 @media (display-mode: standalone) and (max-width: 1023px) { .loginWrap { --avanta-access-safe-extension: env(safe-area-inset-top); } }
 @supports (-webkit-touch-callout: none) { .page, .loginWrap { background-attachment: scroll; } }
 @media (min-width: 700px) { .content, .resultPage { padding-top: 32px; } .scanButton { min-height: 164px; } .priceGrid { grid-template-columns: 1fr 1fr; }.marketPrice { grid-column: 1 / -1; } }
-@media (prefers-reduced-motion: reduce) { .inlineLoading span, .loadingStage > span, .scanWindow > span, .historySkeleton span { animation: none; } .scanButton:active { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .inlineLoading span, .loadingStage > span, .cameraSpinner, .scanWindow > span, .historySkeleton span { animation: none; } .scanButton:active { transform: none; } }
