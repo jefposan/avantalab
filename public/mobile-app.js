@@ -4716,9 +4716,7 @@
         tipo: state.feedbackTipo,
         mensagem: mensagemLimpa,
         status: 'novo',
-      })
-      .select()
-      .single();
+      });
 
     state.feedbackEnviando = false;
 

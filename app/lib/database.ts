@@ -1846,7 +1846,7 @@ export async function salvarFeedback({
   tipo: 'sugestao' | 'duvida' | 'reclamacao' | 'avaliacao';
   mensagem: string;
 }) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('feedbacks')
     .insert({
       empresa_id: empresaId,
@@ -1858,9 +1858,7 @@ export async function salvarFeedback({
       tipo,
       mensagem,
       status: 'novo',
-    })
-    .select()
-    .single();
+    });
 
   if (error) {
     console.error('Erro ao salvar feedback:', error);
@@ -1876,7 +1874,7 @@ export async function salvarFeedback({
   return {
     erro: false,
     mensagem: 'Feedback registrado com sucesso.',
-    data,
+    data: null,
   };
 }
 

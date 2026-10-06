@@ -1378,7 +1378,7 @@
       || user.user_metadata?.name
       || user.email
       || null;
-    const { data, error } = await client
+    const { error } = await client
       .from('feedbacks')
       .insert({
         empresa_id: empresaId,
@@ -1390,11 +1390,9 @@
         tipo: 'sugestao',
         mensagem: `[App Vendas]\n${mensagem}`,
         status: 'novo',
-      })
-      .select()
-      .single();
+      });
     if (error) throw error;
-    return data;
+    return true;
   }
 
   window.VendasDb = { client, currentUser, hasSession, ensureSession, refreshSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, signInWithApple, iniciarOAuthNativo, exchangeCodeForSession, setSession, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, assinarAtualizacoesVinculo, cancelarAtualizacoesVinculo, assinarAtualizacoesCatalogo, cancelarAtualizacoesCatalogo, loadAll, carregarDivulgacao, carregarConteudosSecundarios, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveAgendaItem, deleteAgendaItem, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, excluirContaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, registrarAtividadeAplicativo, ativarNotificacoes, desativarNotificacoes, estadoNotificacoes, saveFeedback, listarContasVendas, criarContaVendas, garantirContaVendas, adicionarUsuarioContaVendas, contaAtivaId, definirContaAtiva };

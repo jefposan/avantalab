@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.48.0.43-av167 - 2026-10-06
+
+- **Compartilhamento nativo no AvantaVendas**: materiais abrem o seletor de
+  aplicativos do Android e iPhone no app instalado; no navegador, seguem os
+  fallbacks de arquivo, endereço do material e download.
+- **Feedback confirmado sem falsa falha**: Dúvidas e Sugestões não dependem
+  mais de uma leitura após a inserção — restrita em alguns vínculos — para
+  reconhecer a mensagem salva.
+- **Sucesso mais objetivo**: o aviso **Tudo certo** fica visível por 2,1
+  segundos, metade do tempo anterior.
+
 ## 1.48.0.42 - 2026-10-06
 
 - **Navegação contínua entre Dashboard e módulos**: a entrada interna reutiliza

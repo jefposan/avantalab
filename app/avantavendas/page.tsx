@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import AvaMobileBridge from '../mobile/AvaMobileBridge';
 import AvantaVendasBootstrap from './AvantaVendasBootstrap';
 import NativePushNotificationsBridge from './NativePushNotificationsBridge';
+import NativeShareBridge from './NativeShareBridge';
 import { AVANTAVENDAS_VERSION } from './version';
 
 const shareImage = 'https://vendas.avantalab.com.br/images/avantavendas-share-meta.jpg?v=20261001-01';
@@ -126,6 +127,7 @@ export default function AvantaVendasPage() {
         supabaseUrl={supabaseUrl}
       />
       <NativePushNotificationsBridge />
+      <NativeShareBridge />
       <AvaMobileBridge />
     </main>
   );

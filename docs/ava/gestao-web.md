@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.42 -->
+<!-- ava-version: 1.48.0.43 -->
+
+> Revisão 1.48.0.43: o envio em **Dúvidas e Sugestões** é confirmado pela
+> gravação da mensagem, sem depender da leitura de retorno. Em falhas reais, o
+> formulário preserva o conteúdo e orienta uma nova tentativa.
 
 > Revisão 1.48.0.42: ao abrir um módulo pelo Dashboard ou voltar pelo botão
 > **Início**, a navegação reutiliza a sessão e o perfil já validados e não exibe

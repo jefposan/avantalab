@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.42 -->
+<!-- ava-version: 1.48.0.43 -->
+
+> Revisão 1.48.0.43: em **Dúvidas e Sugestões**, o envio é confirmado pela
+> gravação da mensagem, sem uma leitura de retorno que podia falhar para alguns
+> vínculos. O formulário continua informando erro real e preserva o texto para
+> nova tentativa.
 
 > Revisão 1.48.0.42: navegação entre o Dashboard Web e módulos de página total;
 > sem impacto operacional na Gestão Mobile.

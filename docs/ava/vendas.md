@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.42 -->
+<!-- ava-version: 1.48.0.43 -->
+
+<!-- avantavendas-asset-revision: 167 -->
+
+> Revisão 1.48.0.43-av167: ao compartilhar um material no app instalado, o
+> AvantaVendas abre o seletor nativo de aplicativos no Android e no iPhone. No
+> navegador, mantém o compartilhamento de arquivo e, quando o aparelho não o
+> aceitar, oferece o endereço do material antes de recorrer ao download. O
+> envio de sugestões é confirmado pela gravação, sem tentar ler o registro de
+> volta; o aviso **Tudo certo** permanece por 2,1 segundos.
 
 > Revisão 1.48.0.42: navegação interna da Gestão Web foi otimizada; sem impacto
 > operacional nos cadastros, pedidos e pagamentos do AvantaVendas.

@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.43: no AvantaVendas, o compartilhamento no app
+// instalado chama o seletor nativo Android/iPhone; feedback confirma pela
+// gravação sem leitura posterior restrita por RLS; sucesso dura 2,1 segundos.
 // Revisado na versão 1.48.0.42: Dashboard e módulos de página total reutilizam
 // a sessão e o perfil já validados na navegação interna. Acesso direto e recarga
 // completa continuam validando a sessão; sem mudança nas autorizações de dados.
