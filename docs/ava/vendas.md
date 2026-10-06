@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.23 -->
+<!-- ava-version: 1.48.0.24 -->
+
+> Revisão 1.48.0.24: a compatibilidade de títulos públicos no AvantaPreços
+> pertence ao PWA de marketplaces e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.23: a autorização da leitura pública de preços no
 > AvantaPreços pertence ao PWA de marketplaces e não altera os fluxos do

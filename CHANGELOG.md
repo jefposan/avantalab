@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.24 - 2026-10-05
+- **Compatibilidade entre ficha e vitrine**: a busca pública não descarta mais um anúncio porque o `catalog_product_id` exibido na vitrine difere do identificador interno da ficha. A equivalência passa a ser conferida pelo título público do anúncio, normalizando acentos, pontuação e caixa.
+- **Média protegida**: anúncios de título sem correspondência suficiente continuam fora da amostra; a busca por EAN permanece direta e a busca por nome só usa anúncios que representam o produto escolhido.
+
 ## 1.48.0.23 - 2026-10-05
 - **Consulta pública autorizada corrigida**: a API de busca de itens do Mercado Livre exige autenticação quando é chamada pelo servidor. O AvantaPreços passa a usar a conexão existente somente para autorizar essa leitura, preservando como fonte os anúncios públicos da vitrine — e não anúncios da conta conectada.
 - **Resultado prático para EAN e texto**: a consulta pesquisa o código de barras e, quando a vitrine não o indexar, o título exato da ficha escolhida. Resultados pelo título ainda precisam corresponder ao produto de catálogo, evitando que itens apenas parecidos contaminem a média.

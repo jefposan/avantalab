@@ -34,6 +34,20 @@ const finitePrice = (value: unknown) => {
   return Number.isFinite(number) && number > 0 ? Math.round(number * 100) : null;
 };
 
+function titleMatchesProduct(title: unknown, productName?: string) {
+  if (!productName) return true;
+  const words = (value: unknown) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 2);
+  const expected = [...new Set(words(productName))];
+  const found = new Set(words(title));
+  if (!expected.length) return false;
+  const matched = expected.filter((word) => found.has(word)).length;
+  // Título de vitrine não é padronizado como a ficha: 75% dos termos da
+  // variante escolhida preservam precisão sem descartar anúncio público por
+  // diferenças de pontuação, ordem ou "GB"/"Gb".
+  return matched >= Math.max(2, Math.ceil(expected.length * 0.75));
+}
+
 export function calculatePriceSuggestions(pricesInCents: readonly number[]): PriceSuggestions {
   const values = pricesInCents.filter((value) => Number.isSafeInteger(value) && value > 0);
   if (!values.length) throw new Error('Nenhum preço válido para calcular a média.');
@@ -66,7 +80,7 @@ async function consumerListingPrices(
   db: SupabaseClient,
   connection: SellerConnection,
   query: string,
-  catalogProductId?: string,
+  productName?: string,
 ) {
   const search = objectValue(await mlRequest(
     db,
@@ -79,7 +93,7 @@ async function consumerListingPrices(
     // card exponha GTIN nos atributos: em várias categorias ele não aparece,
     // embora o anúncio seja visível ao consumidor.
     .filter((item) => item.currency_id === 'BRL' && item.condition !== 'used' && item.status !== 'closed'
-      && (!catalogProductId || item.catalog_product_id === catalogProductId))
+      && titleMatchesProduct(item.title, productName))
     .map((item) => finitePrice(item.price))
     .filter((price): price is number => price != null);
 }
@@ -193,7 +207,7 @@ export async function consultMercadoLivrePrice(
     : [{ term: product.name, catalogProductId: product.id }];
   try {
     for (const { term, catalogProductId } of consumerTerms) {
-      values = await consumerListingPrices(db, connection, term, catalogProductId);
+      values = await consumerListingPrices(db, connection, term, catalogProductId ? product.name : undefined);
       if (values.length) break;
     }
     if (!values.length) values = await activeOfferPrices(db, connection, product, ean);

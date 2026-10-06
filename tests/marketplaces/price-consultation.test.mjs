@@ -39,10 +39,10 @@ test('consulta por EAN reutiliza a ficha e calcula a média apenas com ofertas a
     }
     if (url.pathname === `/products/${productId}`) return product({ short_description: { content: 'Produto localizado' } });
     if (url.pathname === '/sites/MLB/search' && url.searchParams.get('q') === 'Fogão de teste') return { results: [
-      { id: 'MLB5000000001', catalog_product_id: productId, currency_id: 'BRL', condition: 'new', price: 90 },
-      { id: 'MLB5000000002', catalog_product_id: productId, currency_id: 'BRL', condition: 'new', price: 100 },
-      { id: 'MLB5000000003', catalog_product_id: productId, currency_id: 'BRL', condition: 'new', price: 110 },
-      { id: 'MLB5000000004', catalog_product_id: 'MLB00000001', currency_id: 'BRL', condition: 'new', price: 1 },
+      { id: 'MLB5000000001', catalog_product_id: 'MLB99999991', title: 'Fogão de teste 4 bocas', currency_id: 'BRL', condition: 'new', price: 90 },
+      { id: 'MLB5000000002', catalog_product_id: 'MLB99999992', title: 'Fogão de teste com forno', currency_id: 'BRL', condition: 'new', price: 100 },
+      { id: 'MLB5000000003', catalog_product_id: 'MLB99999993', title: 'Fogão de teste inox', currency_id: 'BRL', condition: 'new', price: 110 },
+      { id: 'MLB5000000004', catalog_product_id: 'MLB00000001', title: 'Produto sem relação', currency_id: 'BRL', condition: 'new', price: 1 },
     ] };
     if (url.pathname === '/sites/MLB/search') return { results: [] };
     throw new Error(`Rota inesperada: ${path}`);

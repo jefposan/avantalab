@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.23 -->
+<!-- ava-version: 1.48.0.24 -->
+
+> Revisão 1.48.0.24: o **AvantaPreços** confere os títulos públicos da vitrine
+> ao montar a referência, sem depender do identificador interno de catálogo. A
+> Gestão Mobile não é alterada.
 
 > Revisão 1.48.0.23: o **AvantaPreços** usa a conexão já existente apenas para
 > autorizar a leitura da vitrine pública do Mercado Livre. A Gestão Mobile não

@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.24: AvantaPreços associa anúncios públicos pelo
+// título de vitrine normalizado, sem exigir igualdade do ID de catálogo.
 // Revisado na versão 1.48.0.23: AvantaPreços usa a conexão apenas para
 // autorizar a leitura da vitrine pública do Mercado Livre por EAN ou título.
 // Revisado na versão 1.48.0.22: AvantaPreços consulta a vitrine pública do

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.23 -->
+<!-- ava-version: 1.48.0.24 -->
+
+> Revisão 1.48.0.24: resultados públicos de preço são associados pelo título
+> do anúncio visível na vitrine, com normalização de texto; diferença de ID de
+> catálogo não impede mais uma referência válida.
 
 > Revisão 1.48.0.23: a busca de preço do **AvantaPreços** usa o token já
 > conectado somente para autorizar a consulta de itens públicos; a amostra não
