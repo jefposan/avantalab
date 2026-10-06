@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.24 -->
+<!-- ava-version: 1.48.0.25 -->
+
+> Revisão 1.48.0.25: o **AvantaPreços** diferencia média de anúncios e
+> referência pública da oferta vencedora; sugestões derivadas da segunda fonte
+> deixam isso claro. A Gestão Mobile não é alterada.
 
 > Revisão 1.48.0.24: o **AvantaPreços** confere os títulos públicos da vitrine
 > ao montar a referência, sem depender do identificador interno de catálogo. A

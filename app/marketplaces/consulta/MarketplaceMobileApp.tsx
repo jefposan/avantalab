@@ -341,10 +341,10 @@ export default function MarketplaceMobileApp() {
         </div>
         {result.product.description && <p className={styles.description}>{result.product.description}</p>}
         <div className={styles.priceGrid}>
-          <div className={styles.marketPrice}><span>Preço médio Mercado Livre</span><strong>{money.format(result.prices.market)}</strong></div>
-          <div className={styles.minimumPrice}><span>Preço mínimo</span><small>50% do preço médio</small><strong>{money.format(result.prices.minimum)}</strong></div>
-          <div className={styles.mediumPrice}><span>Preço médio de venda</span><small>70% do preço médio</small><strong>{money.format(result.prices.medium)}</strong></div>
-          <div className={styles.idealPrice}><span>Preço ideal</span><small>90% do preço médio</small><strong>{money.format(result.prices.ideal)}</strong></div>
+          <div className={styles.marketPrice}><span>{result.sample?.source === 'active_offers' ? 'Preço médio Mercado Livre' : 'Preço de referência Mercado Livre'}</span><strong>{money.format(result.prices.market)}</strong></div>
+          <div className={styles.minimumPrice}><span>Preço mínimo</span><small>{result.sample?.source === 'active_offers' ? '50% do preço médio' : '50% da referência'}</small><strong>{money.format(result.prices.minimum)}</strong></div>
+          <div className={styles.mediumPrice}><span>Preço médio de venda</span><small>{result.sample?.source === 'active_offers' ? '70% do preço médio' : '70% da referência'}</small><strong>{money.format(result.prices.medium)}</strong></div>
+          <div className={styles.idealPrice}><span>Preço ideal</span><small>{result.sample?.source === 'active_offers' ? '90% do preço médio' : '90% da referência'}</small><strong>{money.format(result.prices.ideal)}</strong></div>
         </div>
         {result.sample && <p className={styles.sampleNote}>{result.sample.count} {result.sample.count === 1 ? 'referência considerada' : 'referências consideradas'} · faixa de {money.format(result.sample.minimum)} a {money.format(result.sample.maximum)}</p>}
         {result.notice && <p className={styles.sampleNote} role="status">{result.notice}</p>}

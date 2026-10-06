@@ -104,6 +104,21 @@ test('consulta busca o preço público do item vencedor quando a ficha não o tr
   assert.deepEqual(result.sample, { count: 1, minimum: 160, maximum: 160, source: 'catalog_reference' });
 });
 
+test('consulta usa o ponto médio da faixa pública da oferta vencedora quando não há itens comparáveis', async () => {
+  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
+  globalThis.__mlPriceMock = async (path) => {
+    const url = new URL(`https://api.mercadolibre.com${path}`);
+    if (url.pathname === '/products/search') return { results: [product()] };
+    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner_price_range: { min: { price: 800 }, max: { price: 1000 } } });
+    if (url.pathname === '/sites/MLB/search') return { results: [] };
+    throw new Error(`Rota inesperada: ${path}`);
+  };
+
+  const result = await consultMercadoLivrePrice({}, connection, { ean });
+  assert.deepEqual(result.prices, { market: 900, minimum: 450, medium: 630, ideal: 810 });
+  assert.deepEqual(result.sample, { count: 2, minimum: 800, maximum: 1000, source: 'catalog_reference' });
+});
+
 test('consulta nunca chama a cotação restrita quando o anúncio vencedor já expõe preço público', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
   const winnerItemId = 'MLB5000000403';

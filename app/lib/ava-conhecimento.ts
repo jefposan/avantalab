@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.25: AvantaPreços diferencia média de anúncios da
+// referência pública da oferta vencedora ao mostrar as sugestões de preço.
 // Revisado na versão 1.48.0.24: AvantaPreços associa anúncios públicos pelo
 // título de vitrine normalizado, sem exigir igualdade do ID de catálogo.
 // Revisado na versão 1.48.0.23: AvantaPreços usa a conexão apenas para

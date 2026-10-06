@@ -71,6 +71,13 @@ function winningOfferPrice(raw: Record<string, unknown>) {
   return finitePrice(winner.price);
 }
 
+function winningOfferRangePrices(raw: Record<string, unknown>) {
+  const range = objectValue(raw.buy_box_winner_price_range);
+  const values = [finitePrice(objectValue(range.min).price), finitePrice(objectValue(range.max).price)]
+    .filter((price): price is number => price != null);
+  return [...new Set(values)];
+}
+
 /**
  * A busca é a vitrine pública de itens do Mercado Livre. Atualmente esse
  * recurso exige o bearer da integração para ser acessado por servidor; o token
@@ -125,7 +132,9 @@ async function productReferencePrices(
       // erro de permissão para quem está consultando preço no PWA.
     }
   }
-  return [];
+  // A ficha pública pode expor a faixa da oferta vencedora, mesmo quando a
+  // vitrine de itens não autoriza detalhar as ofertas individualmente.
+  return winningOfferRangePrices(raw);
 }
 
 async function activeOfferPrices(

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.24 -->
+<!-- ava-version: 1.48.0.25 -->
+
+> Revisão 1.48.0.25: sem uma amostra pública comparável, o **AvantaPreços**
+> usa a faixa da oferta vencedora da ficha do Mercado Livre como referência e
+> rotula o resultado de forma distinta da média.
 
 > Revisão 1.48.0.24: resultados públicos de preço são associados pelo título
 > do anúncio visível na vitrine, com normalização de texto; diferença de ID de

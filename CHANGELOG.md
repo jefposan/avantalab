@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.25 - 2026-10-05
+- **Referência pública quando não há amostra**: se a vitrine não liberar ofertas comparáveis, o AvantaPreços usa a faixa pública da oferta vencedora retornada na ficha do catálogo e calcula seu ponto médio. A tela identifica corretamente esse caso como **Preço de referência Mercado Livre**, não como média.
+- **Sugestões coerentes com a fonte**: mínimo, médio e ideal passam a informar que derivam da referência quando a amostra de anúncios públicos não estiver disponível.
+
 ## 1.48.0.24 - 2026-10-05
 - **Compatibilidade entre ficha e vitrine**: a busca pública não descarta mais um anúncio porque o `catalog_product_id` exibido na vitrine difere do identificador interno da ficha. A equivalência passa a ser conferida pelo título público do anúncio, normalizando acentos, pontuação e caixa.
 - **Média protegida**: anúncios de título sem correspondência suficiente continuam fora da amostra; a busca por EAN permanece direta e a busca por nome só usa anúncios que representam o produto escolhido.
