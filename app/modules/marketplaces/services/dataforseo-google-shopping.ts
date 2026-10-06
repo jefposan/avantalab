@@ -94,7 +94,9 @@ function productMatchScore(title: string, productName: string) {
 }
 
 function productReferenceFrom(payload: unknown, productName: string, ean?: string | null): GoogleShoppingProductReference | null {
-  let selected: { value: GoogleShoppingProductReference; score: number } | null = null;
+  // A caixa mutável torna a atualização feita pelo visitante recursivo visível
+  // ao analisador de fluxo do TypeScript usado pelo build do Next.js.
+  const selected: { current: { value: GoogleShoppingProductReference; score: number } | null } = { current: null };
   const visit = (value: unknown) => {
     if (Array.isArray(value)) {
       value.forEach(visit);
@@ -109,12 +111,12 @@ function productReferenceFrom(payload: unknown, productName: string, ean?: strin
         value: { productId, dataDocId: text(item.data_docid) || null, gid: text(item.gid) || null },
         score: productMatchScore(title, productName),
       };
-      if (!selected || candidate.score > selected.score) selected = candidate;
+      if (!selected.current || candidate.score > selected.current.score) selected.current = candidate;
     }
     for (const child of Object.values(item)) if (child && typeof child === 'object') visit(child);
   };
   visit(payload);
-  return selected?.value || null;
+  return selected.current?.value || null;
 }
 
 function sellerIsAvailable(seller: JsonRecord) {
