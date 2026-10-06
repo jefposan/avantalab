@@ -8,6 +8,7 @@ import styles from './marketplaces-mobile.module.css';
 
 type Company = { id: string; nome: string; perfil: string; [key: string]: unknown };
 type Candidate = { id: string; name: string; picture: string | null };
+type PriceSource = 'active_offers' | 'catalog_reference' | 'manual_reference';
 type Consultation = {
   status: 'found' | 'not_found' | 'choose';
   ean: string | null;
@@ -15,7 +16,7 @@ type Consultation = {
   product?: { id: string; name: string; description: string; image: string | null; attributes: Array<{ id: string; name: string; value: string }> };
   candidates?: Candidate[];
   prices?: { market: number; minimum: number; medium: number; ideal: number };
-  sample?: { count: number; minimum: number; maximum: number; source: 'active_offers' | 'catalog_reference' };
+  sample?: { count: number; minimum: number; maximum: number; source: PriceSource };
   notice?: string;
   historyId?: string;
   consultedAt?: string;
@@ -24,13 +25,35 @@ type HistoryRow = {
   id: string; ean: string | null; input_type: 'ean' | 'text'; input_value: string; provider_product_id: string;
   product_name: string; product_description: string | null; image_url: string | null; currency: string;
   market_price_cents: number; minimum_price_cents: number; medium_price_cents: number; ideal_price_cents: number;
-  sample_count: number; sample_min_cents: number; sample_max_cents: number; sample_source: 'active_offers' | 'catalog_reference'; created_at: string;
+  sample_count: number; sample_min_cents: number; sample_max_cents: number; sample_source: PriceSource; created_at: string;
 };
 type Account = { id: string; status: string; seller_name: string | null; seller_reference: string };
 
 const SESSION_COMPANY_KEY = 'avantalab_marketplaces_mobile_empresa_id';
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
+
+function parseBrl(value: string) {
+  const normalized = value.trim().replace(/\s/g, '').replace(/^R\$/i, '').replace(/\./g, '').replace(',', '.');
+  const amount = Number(normalized);
+  return Number.isFinite(amount) && amount > 0 && Math.abs(Math.round(amount * 100) - amount * 100) < 0.000001 ? amount : null;
+}
+
+function publicSearchTerm(result: Consultation) {
+  return result.ean || result.query || result.product?.name || '';
+}
+
+function priceReferenceLabel(source?: PriceSource) {
+  if (source === 'manual_reference') return 'Preço informado';
+  if (source === 'catalog_reference') return 'Preço de catálogo';
+  return 'Preço médio Mercado Livre';
+}
+
+function priceReferenceNote(source?: PriceSource) {
+  if (source === 'manual_reference') return 'Preço confirmado por você após a consulta pública.';
+  if (source === 'catalog_reference') return 'Preço obtido de uma referência de catálogo anterior.';
+  return 'Preço obtido de ofertas públicas anteriores do Mercado Livre.';
+}
 
 function Icon({ name, size = 22 }: { name: 'barcode' | 'search' | 'history' | 'back' | 'refresh' | 'check' | 'camera' | 'chevron' | 'eye' | 'eyeOff'; size?: number }) {
   const paths = {
@@ -171,6 +194,7 @@ export default function MarketplaceMobileApp() {
   const [pendingInput, setPendingInput] = useState<{ ean?: string; query?: string }>({});
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [result, setResult] = useState<Consultation | null>(null);
+  const [manualPrice, setManualPrice] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -269,17 +293,17 @@ export default function MarketplaceMobileApp() {
     return () => { ativo = false; window.cancelAnimationFrame(quadro); };
   }, [company?.id, loadHistory, request]);
 
-  const consult = useCallback(async (input: { ean?: string; query?: string; productId?: string }) => {
+  const consult = useCallback(async (input: { ean?: string; query?: string; productId?: string; manualPrice?: number }) => {
     if (!company) return;
     setLoading(true); setError(''); setCandidates([]);
     const clean = input.ean ? { ean: normalizeEan(input.ean) } : { query: String(input.query || '').trim() };
     setPendingInput(clean);
     try {
-      const body = await request('/api/modulos/marketplaces/precos', { method: 'POST', body: JSON.stringify({ empresaId: company.id, connectionId: connectionId || undefined, ...clean, productId: input.productId }) });
+      const body = await request('/api/modulos/marketplaces/precos', { method: 'POST', body: JSON.stringify({ empresaId: company.id, connectionId: connectionId || undefined, ...clean, productId: input.productId, manualPrice: input.manualPrice }) });
       const next = body.result as Consultation;
       if (next.status === 'choose') { setCandidates(next.candidates || []); setError(''); }
       else if (next.status === 'not_found') { setResult(null); setError(next.notice || 'Produto não localizado.'); }
-      else { setResult(next); setCandidates([]); await loadHistory(company.id); }
+      else { setResult(next); setManualPrice(next.prices ? money.format(next.prices.market) : ''); setCandidates([]); if (next.prices) await loadHistory(company.id); }
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível consultar o produto.'); }
     finally { setLoading(false); }
   }, [company, connectionId, loadHistory, request]);
@@ -296,6 +320,7 @@ export default function MarketplaceMobileApp() {
     setPendingInput({});
     setCandidates([]);
     setResult(null);
+    setManualPrice('');
     setError('');
     setScannerOpen(true);
   };
@@ -332,7 +357,7 @@ export default function MarketplaceMobileApp() {
       </div>
     </div>
 
-    {result?.status === 'found' && result.product && result.prices ? <section className={styles.resultPage} aria-labelledby="result-title">
+    {result?.status === 'found' && result.product ? <section className={styles.resultPage} aria-labelledby="result-title">
       <button type="button" className={styles.backButton} onClick={() => setResult(null)}><Icon name="back" /> Nova consulta</button>
       <article className={styles.resultCard}>
         <div className={styles.productTop}>
@@ -340,16 +365,27 @@ export default function MarketplaceMobileApp() {
           <div><p className={styles.eyebrow}>Produto localizado</p><h1 id="result-title">{result.product.name}</h1>{result.ean && <p className={styles.ean}>EAN {result.ean}</p>}</div>
         </div>
         {result.product.description && <p className={styles.description}>{result.product.description}</p>}
-        <div className={styles.priceGrid}>
-          <div className={styles.marketPrice}><span>{result.sample?.source === 'active_offers' ? 'Preço médio Mercado Livre' : 'Preço de referência Mercado Livre'}</span><strong>{money.format(result.prices.market)}</strong></div>
-          <div className={styles.minimumPrice}><span>Preço mínimo</span><small>{result.sample?.source === 'active_offers' ? '50% do preço médio' : '50% da referência'}</small><strong>{money.format(result.prices.minimum)}</strong></div>
-          <div className={styles.mediumPrice}><span>Preço médio de venda</span><small>{result.sample?.source === 'active_offers' ? '70% do preço médio' : '70% da referência'}</small><strong>{money.format(result.prices.medium)}</strong></div>
-          <div className={styles.idealPrice}><span>Preço ideal</span><small>{result.sample?.source === 'active_offers' ? '90% do preço médio' : '90% da referência'}</small><strong>{money.format(result.prices.ideal)}</strong></div>
-        </div>
-        {result.sample && <p className={styles.sampleNote}>{result.sample.count} {result.sample.count === 1 ? 'referência considerada' : 'referências consideradas'} · faixa de {money.format(result.sample.minimum)} a {money.format(result.sample.maximum)}</p>}
+        {result.prices ? <><div className={styles.priceGrid}>
+          <div className={styles.marketPrice}><span>{priceReferenceLabel(result.sample?.source)}</span><strong>{money.format(result.prices.market)}</strong></div>
+          <div className={styles.minimumPrice}><span>Preço mínimo</span><small>50% da referência</small><strong>{money.format(result.prices.minimum)}</strong></div>
+          <div className={styles.mediumPrice}><span>Preço médio de venda</span><small>70% da referência</small><strong>{money.format(result.prices.medium)}</strong></div>
+          <div className={styles.idealPrice}><span>Preço ideal</span><small>90% da referência</small><strong>{money.format(result.prices.ideal)}</strong></div>
+        </div><p className={styles.sampleNote}>{priceReferenceNote(result.sample?.source)}</p></> : <section className={styles.assistedPrice} aria-labelledby="assisted-price-title">
+          <h2 id="assisted-price-title">Consulte o preço</h2>
+          <p>Abra uma busca pública, escolha a oferta que deseja usar como referência e informe o valor abaixo.</p>
+          <div className={styles.marketplaceLinks}>
+            <a href={`https://lista.mercadolivre.com.br/${encodeURIComponent(publicSearchTerm(result))}`} target="_blank" rel="noreferrer">Pesquisar no Mercado Livre</a>
+            <a href={`https://www.amazon.com.br/s?k=${encodeURIComponent(publicSearchTerm(result))}`} target="_blank" rel="noreferrer">Pesquisar na Amazon</a>
+          </div>
+          <form onSubmit={(event) => { event.preventDefault(); const price = parseBrl(manualPrice); if (price != null) void consult({ ...(result.ean ? { ean: result.ean } : { query: result.query || result.product!.name }), productId: result.product!.id, manualPrice: price }); }}>
+            <label htmlFor="manual-price">Preço encontrado</label>
+            <div className={styles.manualPriceAction}><input id="manual-price" value={manualPrice} onChange={(event) => setManualPrice(event.target.value)} inputMode="decimal" autoComplete="off" placeholder="Ex.: 199,90" aria-describedby="manual-price-help" /><button type="submit" disabled={parseBrl(manualPrice) == null || loading}>{loading ? 'Calculando…' : 'Calcular'}</button></div>
+            <small id="manual-price-help">Use o valor total exibido pelo marketplace, antes de frete.</small>
+          </form>
+        </section>}
         {result.notice && <p className={styles.sampleNote} role="status">{result.notice}</p>}
         {result.consultedAt && <p className={styles.consultedAt}>Consultado em {dateTime.format(new Date(result.consultedAt))}</p>}
-        <button type="button" className={styles.secondaryButton} disabled={loading} onClick={() => void consult({ ...(result.ean ? { ean: result.ean } : { query: result.query || result.product!.name }), productId: result.product!.id })}><Icon name="refresh" />{loading ? 'Atualizando…' : 'Consultar novamente'}</button>
+        {result.prices && <button type="button" className={styles.secondaryButton} onClick={() => { setManualPrice(''); setResult({ ...result, prices: undefined, sample: undefined, historyId: undefined, consultedAt: undefined, notice: 'Consulte novamente e informe a nova referência.' }); }}><Icon name="refresh" />Consultar novamente</button>}
       </article>
     </section> : <div className={styles.content}>
       <section className={styles.hero} aria-labelledby="marketplace-mobile-title">

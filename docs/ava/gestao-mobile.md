@@ -1,7 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.25 -->
+<!-- ava-version: 1.48.0.26 -->
 
+> Revisão 1.48.0.26: o **AvantaPreços** identifica o produto e oferece busca
+> pública assistida no Mercado Livre ou Amazon. O preço informado pela pessoa
+> fica explícito no resultado e no histórico; as sugestões de 50%, 70% e 90%
+> são calculadas sobre ele, sem coleta automatizada de vitrines de terceiros.
+>
 > Revisão 1.48.0.25: o **AvantaPreços** diferencia média de anúncios e
 > referência pública da oferta vencedora; sugestões derivadas da segunda fonte
 > deixam isso claro. A Gestão Mobile não é alterada.

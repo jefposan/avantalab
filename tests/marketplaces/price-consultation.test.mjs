@@ -25,163 +25,67 @@ const productId = 'MLB75636839';
 const connection = { id: crypto.randomUUID(), empresa_id: crypto.randomUUID() };
 const product = (extra = {}) => ({ id: productId, name: 'Fogão de teste', domain_id: 'MLB-STOVES', status: 'active', pictures: [{ secure_url: 'https://http2.mlstatic.com/a.jpg' }], attributes: [], ...extra });
 
-test('sugestões aplicam exatamente 50%, 70% e 90% sobre a média', () => {
-  assert.deepEqual(calculatePriceSuggestions([9000, 10000, 11000]), { market: 100, minimum: 50, medium: 70, ideal: 90 });
-});
-
-test('consulta por EAN reutiliza a ficha e calcula a média apenas com ofertas ativas equivalentes', async () => {
+function mockCatalog() {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
-    if (url.pathname === '/products/search') {
-      assert.equal(url.searchParams.get('product_identifier'), ean);
-      return { results: [product()] };
-    }
+    if (url.pathname === '/products/search') return { results: [product()] };
     if (url.pathname === `/products/${productId}`) return product({ short_description: { content: 'Produto localizado' } });
-    if (url.pathname === '/sites/MLB/search' && url.searchParams.get('q') === 'Fogão de teste') return { results: [
-      { id: 'MLB5000000001', catalog_product_id: 'MLB99999991', title: 'Fogão de teste 4 bocas', currency_id: 'BRL', condition: 'new', price: 90 },
-      { id: 'MLB5000000002', catalog_product_id: 'MLB99999992', title: 'Fogão de teste com forno', currency_id: 'BRL', condition: 'new', price: 100 },
-      { id: 'MLB5000000003', catalog_product_id: 'MLB99999993', title: 'Fogão de teste inox', currency_id: 'BRL', condition: 'new', price: 110 },
-      { id: 'MLB5000000004', catalog_product_id: 'MLB00000001', title: 'Produto sem relação', currency_id: 'BRL', condition: 'new', price: 1 },
-    ] };
-    if (url.pathname === '/sites/MLB/search') return { results: [] };
-    throw new Error(`Rota inesperada: ${path}`);
+    throw new Error(`A consulta assistida não deve acessar a vitrine pública: ${path}`);
   };
+}
 
+test('sugestões aplicam exatamente 50%, 70% e 90% sobre o preço informado', () => {
+  assert.deepEqual(calculatePriceSuggestions([10000]), { market: 100, minimum: 50, medium: 70, ideal: 90 });
+});
+
+test('consulta identifica o produto sem automatizar leitura da vitrine', async () => {
+  mockCatalog();
   const result = await consultMercadoLivrePrice({}, connection, { ean });
   assert.equal(result.status, 'found');
-  assert.deepEqual(result.prices, { market: 100, minimum: 50, medium: 70, ideal: 90 });
-  assert.deepEqual(result.sample, { count: 3, minimum: 90, maximum: 110, source: 'active_offers' });
+  assert.equal(result.product?.name, 'Fogão de teste');
+  assert.equal(result.prices, undefined);
+  assert.match(result.notice || '', /busca pública/i);
 });
 
-test('consulta por EAN inclui anúncio normal retornado pela vitrine pública', async () => {
+test('EAN fora do catálogo público usa o cadastro do perfil para iniciar a consulta assistida', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  const itemId = 'MLB5000000098';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
-    if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product();
-    if (url.pathname === '/sites/MLB/search' && url.searchParams.get('q') === 'Fogão de teste') return { results: [] };
-    if (url.pathname === '/sites/MLB/search' && url.searchParams.get('q') === ean) return { results: [{ id: itemId, currency_id: 'BRL', condition: 'new', price: 319.9 }] };
-    throw new Error(`Rota inesperada: ${path}`);
+    if (url.pathname === '/products/search') return { results: [] };
+    throw new Error(`Não deve consultar vitrine nem ficha pública: ${path}`);
   };
+  const profileProductId = crypto.randomUUID();
+  const db = {
+    from(table) {
+      if (table === 'vendas_mobile_catalogos') return {
+        select() { return this; },
+        eq() { return this; },
+        order() { return Promise.resolve({ data: [{ id: crypto.randomUUID(), padrao: true }], error: null }); },
+      };
+      if (table === 'vendas_mobile_catalogo_produtos') return {
+        select() { return this; },
+        in() { return this; },
+        eq() { return Promise.resolve({ data: [{ id: profileProductId, nome: 'Bóra London Dry Gin 700 ml', marca: 'Bóra', codigo_barras: ean }], error: null }); },
+      };
+      throw new Error(`Tabela inesperada: ${table}`);
+    },
+  };
+  const result = await consultMercadoLivrePrice(db, connection, { ean });
+  assert.equal(result.status, 'found');
+  assert.equal(result.product?.id, `PROFILE:${profileProductId}`);
+  assert.equal(result.product?.name, 'Bóra London Dry Gin 700 ml');
+  assert.equal(result.prices, undefined);
+});
 
-  const result = await consultMercadoLivrePrice({}, connection, { ean });
+test('preço informado gera sugestões e identifica a fonte manual', async () => {
+  mockCatalog();
+  const result = await consultMercadoLivrePrice({}, connection, { ean, manualPrice: 319.9 });
   assert.deepEqual(result.prices, { market: 319.9, minimum: 159.95, medium: 223.93, ideal: 287.91 });
-  assert.deepEqual(result.sample, { count: 1, minimum: 319.9, maximum: 319.9, source: 'active_offers' });
+  assert.deepEqual(result.sample, { count: 1, minimum: 319.9, maximum: 319.9, source: 'manual_reference' });
 });
 
-test('consulta usa o preço público do anúncio vencedor sem depender da faixa da ficha', async () => {
-  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  const winnerItemId = 'MLB5000000099';
-  globalThis.__mlPriceMock = async (path) => {
-    const url = new URL(`https://api.mercadolibre.com${path}`);
-    if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId, price: 100 }, buy_box_winner_price_range: { min: { price: 80 }, max: { price: 120 } } });
-    if (url.pathname === '/sites/MLB/search') return { results: [] };
-    throw new Error(`Rota inesperada: ${path}`);
-  };
-
-  const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.deepEqual(result.prices, { market: 100, minimum: 50, medium: 70, ideal: 90 });
-  assert.deepEqual(result.sample, { count: 1, minimum: 100, maximum: 100, source: 'catalog_reference' });
-});
-
-test('consulta busca o preço público do item vencedor quando a ficha não o traz', async () => {
-  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  const winnerItemId = 'MLB5000000100';
-  globalThis.__mlPriceMock = async (path) => {
-    const url = new URL(`https://api.mercadolibre.com${path}`);
-    if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
-    if (url.pathname === '/sites/MLB/search') return { results: [] };
-    if (url.pathname === `/items/${winnerItemId}`) return { id: winnerItemId, price: 160, currency_id: 'BRL' };
-    throw new Error(`Rota inesperada: ${path}`);
-  };
-
-  const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.deepEqual(result.prices, { market: 160, minimum: 80, medium: 112, ideal: 144 });
-  assert.deepEqual(result.sample, { count: 1, minimum: 160, maximum: 160, source: 'catalog_reference' });
-});
-
-test('consulta usa o ponto médio da faixa pública da oferta vencedora quando não há itens comparáveis', async () => {
-  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  globalThis.__mlPriceMock = async (path) => {
-    const url = new URL(`https://api.mercadolibre.com${path}`);
-    if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner_price_range: { min: { price: 800 }, max: { price: 1000 } } });
-    if (url.pathname === '/sites/MLB/search') return { results: [] };
-    throw new Error(`Rota inesperada: ${path}`);
-  };
-
-  const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.deepEqual(result.prices, { market: 900, minimum: 450, medium: 630, ideal: 810 });
-  assert.deepEqual(result.sample, { count: 2, minimum: 800, maximum: 1000, source: 'catalog_reference' });
-});
-
-test('consulta nunca chama a cotação restrita quando o anúncio vencedor já expõe preço público', async () => {
-  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  const winnerItemId = 'MLB5000000403';
-  globalThis.__mlPriceMock = async (path) => {
-    const url = new URL(`https://api.mercadolibre.com${path}`);
-    if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId, price: 110 }, buy_box_winner_price_range: { min: { price: 100 }, max: { price: 120 } } });
-    if (url.pathname === '/sites/MLB/search') return { results: [] };
-    if (url.pathname.includes('sale_price')) throw new Error('sale_price não deve ser chamado');
-    throw new Error(`Rota inesperada: ${path}`);
-  };
-
-  const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.deepEqual(result.prices, { market: 110, minimum: 55, medium: 77, ideal: 99 });
-  assert.deepEqual(result.sample, { count: 1, minimum: 110, maximum: 110, source: 'catalog_reference' });
-  assert.equal(result.notice, undefined);
-});
-
-test('restrição pontual do item retorna preço indisponível, não erro de permissão', async () => {
-  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  const winnerItemId = 'MLB5000000404';
-  globalThis.__mlPriceMock = async (path) => {
-    const url = new URL(`https://api.mercadolibre.com${path}`);
-    if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
-    if (url.pathname === '/sites/MLB/search') return { results: [] };
-    if (url.pathname === `/items/${winnerItemId}`) throw new MarketplaceError(403, 'provider_403', 'Erro 403 visível');
-    throw new Error(`Rota inesperada: ${path}`);
-  };
-
-  await assert.rejects(consultMercadoLivrePrice({}, connection, { ean }), (error) => error?.status === 409 && error?.code === 'price_unavailable');
-});
-
-test('consulta mantém limite 429 visível ao consultar o anúncio vencedor', async () => {
-  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  const winnerItemId = 'MLB5000000429';
-  globalThis.__mlPriceMock = async (path) => {
-    const url = new URL(`https://api.mercadolibre.com${path}`);
-    if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product({ buy_box_winner: { item_id: winnerItemId } });
-    if (url.pathname === '/sites/MLB/search') return { results: [] };
-    if (url.pathname === `/items/${winnerItemId}`) throw new MarketplaceError(429, 'provider_429', 'Erro 429 visível');
-    throw new Error(`Rota inesperada: ${path}`);
-  };
-
-  await assert.rejects(consultMercadoLivrePrice({}, connection, { ean }), (error) => error?.status === 429 && error?.code === 'provider_429');
-});
-
-test('consulta usa os preços retornados pela busca pública autenticada para o EAN', async () => {
-  process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  globalThis.__mlPriceMock = async (path) => {
-    const url = new URL(`https://api.mercadolibre.com${path}`);
-    if (url.pathname === '/products/search') return { results: [product()] };
-    if (url.pathname === `/products/${productId}`) return product();
-    if (url.pathname === '/sites/MLB/search' && url.searchParams.get('q') === ean) return { results: [
-      { id: 'MLB5000000701', currency_id: 'BRL', condition: 'new', status: 'active', price: 180 },
-      { id: 'MLB5000000702', currency_id: 'BRL', condition: 'new', status: 'active', price: 220 },
-      { id: 'MLB5000000703', currency_id: 'BRL', condition: 'used', status: 'active', price: 10 },
-    ] };
-    throw new Error(`A busca auxiliar não deveria ser chamada: ${path}`);
-  };
-
-  const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.deepEqual(result.prices, { market: 200, minimum: 100, medium: 140, ideal: 180 });
-  assert.deepEqual(result.sample, { count: 2, minimum: 180, maximum: 220, source: 'active_offers' });
+test('preço manual inválido é recusado sem salvar referência', async () => {
+  mockCatalog();
+  await assert.rejects(consultMercadoLivrePrice({}, connection, { ean, manualPrice: 0 }), (error) => error instanceof MarketplaceError && error.code === 'invalid_manual_price');
 });

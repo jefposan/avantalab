@@ -1,5 +1,7 @@
 # Changelog
 
+- **Consulta assistida no AvantaPreços**: após identificar o produto, o PWA abre a busca pública já preenchida no Mercado Livre ou na Amazon. A pessoa escolhe a referência, informa o preço encontrado e o sistema calcula 50%, 70% e 90%, registrando no histórico que o valor foi informado após consulta — sem coleta automatizada de vitrines de terceiros.
+
 ## 1.48.0.25 - 2026-10-05
 - **Referência pública quando não há amostra**: se a vitrine não liberar ofertas comparáveis, o AvantaPreços usa a faixa pública da oferta vencedora retornada na ficha do catálogo e calcula seu ponto médio. A tela identifica corretamente esse caso como **Preço de referência Mercado Livre**, não como média.
 - **Sugestões coerentes com a fonte**: mínimo, médio e ideal passam a informar que derivam da referência quando a amostra de anúncios públicos não estiver disponível.

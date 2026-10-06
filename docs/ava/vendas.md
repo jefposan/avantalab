@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.25 -->
+<!-- ava-version: 1.48.0.26 -->
 
+> Revisão 1.48.0.26: a busca pública assistida do **AvantaPreços** e o preço
+> informado pela pessoa pertencem ao PWA de marketplaces e não alteram os fluxos
+> do AvantaVendas.
+>
 > Revisão 1.48.0.25: a referência pública da oferta vencedora no AvantaPreços
 > pertence ao PWA de marketplaces e não altera os fluxos do AvantaVendas.
 

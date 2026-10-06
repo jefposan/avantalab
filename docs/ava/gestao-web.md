@@ -1,7 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.25 -->
+<!-- ava-version: 1.48.0.26 -->
 
+> Revisão 1.48.0.26: o **AvantaPreços** passa a usar busca pública assistida e
+> preço informado pela pessoa, sem leitura automatizada de vitrines de terceiros.
+> O histórico identifica essa origem e as sugestões mantêm os percentuais 50/70/90.
+>
 > Revisão 1.48.0.25: sem uma amostra pública comparável, o **AvantaPreços**
 > usa a faixa da oferta vencedora da ficha do Mercado Livre como referência e
 > rotula o resultado de forma distinta da média.

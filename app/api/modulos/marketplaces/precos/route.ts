@@ -20,6 +20,7 @@ export async function POST(request: Request) {
       ean: body.ean,
       query: body.query,
       productId: body.productId,
+      manualPrice: body.manualPrice,
     });
 
     if (result.status === 'found' && result.product && result.prices && result.sample) {
