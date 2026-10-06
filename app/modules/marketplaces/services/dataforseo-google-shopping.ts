@@ -133,7 +133,12 @@ async function providerRequest(path: string, init: RequestInit, fetcher: typeof 
   if (status === 40200 || status === 40201 || status === 40202 || status === 40203) {
     throw new MarketplaceError(503, 'price_provider_balance', 'A consulta de preços precisa de saldo disponível no provedor.');
   }
-  if (!task || (Number.isFinite(status) && status >= 40000)) {
+  // A leitura de uma tarefa recém-criada pode responder 40602 (Task In Queue)
+  // antes de o Merchant API terminar a coleta. Esse é um estado transitório,
+  // não uma recusa da credencial ou do produto: o loop abaixo deve aguardar e
+  // consultar novamente o mesmo id, sem criar uma nova tarefa cobrável.
+  const pendingTask = path.includes('/task_get/advanced/') && status === 40602;
+  if (!task || (Number.isFinite(status) && status >= 40000 && !pendingTask)) {
     throw new MarketplaceError(503, 'price_provider_failed', 'A consulta de preços não foi aceita. Tente novamente.');
   }
   return record(body);

@@ -1,5 +1,7 @@
 # Changelog
 
+- **Fila de preços concluída corretamente**: o AvantaPreços não trata mais o estado temporário `Task In Queue` do provedor como recusa de consulta. A mesma tarefa é aguardada e lida novamente, sem criar uma segunda consulta cobrável, até retornar as ofertas ou atingir o prazo seguro.
+
 - **Permissão única de câmera no AvantaPreços**: **Ler EAN** passa a acionar o diálogo nativo do aparelho diretamente, no próprio toque. O PWA não exibe mais o botão intermediário **Ativar câmera**. Depois que o sistema mantém a autorização, as próximas leituras abrem o visor sem confirmação adicional; bloqueios continuam com orientação e entrada manual do EAN.
 
 - **Catálogos internos e AvantaVendas separados**: ativar um catálogo em

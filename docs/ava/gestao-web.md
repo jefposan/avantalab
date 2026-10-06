@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.29 -->
+<!-- ava-version: 1.48.0.30 -->
+
+> Revisão 1.48.0.30: quando o provedor de preços informa que a consulta ainda
+> está na fila, o **AvantaPreços** aguarda a mesma tarefa e tenta novamente.
+> Esse estado transitório não é mais apresentado como recusa de acesso.
 
 > Revisão 1.48.0.29: o **AvantaPreços** aciona a permissão nativa de câmera
 > diretamente no toque em **Ler EAN**, sem botão ou autorização intermediária

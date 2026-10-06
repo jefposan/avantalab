@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.29 -->
+<!-- ava-version: 1.48.0.30 -->
+
+> Revisão 1.48.0.30: a espera pela fila da consulta de preços pertence ao PWA
+> de marketplaces e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.29: a permissão nativa única de câmera do AvantaPreços
 > pertence ao PWA de marketplaces e não altera os fluxos do AvantaVendas.

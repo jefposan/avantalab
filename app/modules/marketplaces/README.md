@@ -48,6 +48,9 @@ credenciais adicionais no ambiente.
   identificação do produto e pela conexão da empresa. `DATAFORSEO_API_LOGIN`,
   `DATAFORSEO_API_PASSWORD` e `DATAFORSEO_PRICE_LOOKUP_ENABLED` são secrets de
   produção e nunca podem ser expostos ao navegador, ao banco ou a logs.
+- O estado temporário `Task In Queue` da DataForSEO é aguardado na mesma tarefa
+  até a conclusão, sem interpretar a fila como recusa e sem criar nova consulta
+  cobrável durante a espera.
 - A migração `20261005213000_marketplace_price_consultations.sql` registra o
   histórico por empresa com RLS e acesso direto revogado de anon/authenticated.
 

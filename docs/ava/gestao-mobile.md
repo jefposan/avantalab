@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.29 -->
+<!-- ava-version: 1.48.0.30 -->
+
+> Revisão 1.48.0.30: o **AvantaPreços** espera a conclusão da mesma consulta
+> quando a fonte de preços a coloca temporariamente em fila; isso evita que a
+> leitura seja exibida indevidamente como erro ou reenviada com nova cobrança.
 
 > Revisão 1.48.0.29: ao tocar em **Ler EAN**, o **AvantaPreços** abre somente
 > o pedido nativo de câmera do aparelho; não há confirmação intermediária do

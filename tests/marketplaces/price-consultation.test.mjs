@@ -36,21 +36,26 @@ function mockCatalog() {
   };
 }
 
-function mockPriceProvider() {
+function mockPriceProvider({ pendingPolls = 0 } = {}) {
   process.env.DATAFORSEO_PRICE_LOOKUP_ENABLED = 'true';
   process.env.DATAFORSEO_API_LOGIN = 'test-login';
   process.env.DATAFORSEO_API_PASSWORD = 'test-password';
   process.env.DATAFORSEO_API_BASE_URL = 'https://sandbox.dataforseo.com';
+  let polls = 0;
   globalThis.fetch = async (url, init) => {
     if (String(url).endsWith('/task_post')) {
       assert.equal(init?.method, 'POST');
       return Response.json({ tasks: [{ id: '11111111-1111-1111-1111-111111111111', status_code: 20100, result: null }] });
     }
-    if (String(url).includes('/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
+    if (String(url).includes('/task_get/advanced/')) {
+      polls++;
+      if (polls <= pendingPolls) return Response.json({ tasks: [{ status_code: 40602, status_message: 'Task In Queue.', result: null }] });
+      return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
       { title: 'Fogão de teste', price: 800, currency: 'BRL' },
       { title: 'Fogão de teste 4 bocas', price: 900, currency: 'BRL' },
       { title: 'Produto não relacionado', price: 1, currency: 'BRL' },
-    ] }] }] });
+      ] }] }] });
+    }
     throw new Error(`URL DataForSEO inesperada: ${url}`);
   };
 }
@@ -67,6 +72,14 @@ test('consulta identifica o produto e calcula a média sem consultar a vitrine d
   assert.equal(result.product?.name, 'Fogão de teste');
   assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
   assert.deepEqual(result.sample, { count: 2, minimum: 800, maximum: 900, source: 'google_shopping' });
+});
+
+test('consulta aguarda tarefa em fila antes de obter o preço, sem criar nova tarefa', async () => {
+  mockCatalog();
+  mockPriceProvider({ pendingPolls: 1 });
+  const result = await consultMercadoLivrePrice({}, connection, { ean });
+  assert.equal(result.status, 'found');
+  assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
 });
 
 test('EAN fora do catálogo público usa o cadastro do perfil para iniciar a consulta assistida', async () => {
