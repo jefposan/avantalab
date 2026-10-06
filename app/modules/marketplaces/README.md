@@ -56,6 +56,13 @@ credenciais adicionais no ambiente.
   recusa e sem criar nova consulta cobrável durante a espera.
 - A migração `20261005213000_marketplace_price_consultations.sql` registra o
   histórico por empresa com RLS e acesso direto revogado de anon/authenticated.
+- A migração `20261006162000_marketplace_price_history_reuse.sql` complementa
+  esse histórico com data da última pesquisa e data de ajuste manual. O mesmo
+  EAN reutiliza primeiro a referência isolada da empresa; **Últimas consultas**
+  entrega somente as 20 mais recentes e **Produtos precificados** concentra a
+  base completa com busca e ordenação. Produto sem ficha pode virar uma
+  referência manual, que calcula 50%, 70% e 90% e pode ser pesquisada depois
+  no Google Shopping sem repetir a identificação no Mercado Livre.
 
 ## Limites atuais
 

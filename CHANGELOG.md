@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.48.0.34 - 2026-10-06
+
+- **Base reutilizável no AvantaPreços**: um EAN já precificado na empresa abre
+  o cálculo salvo antes de iniciar uma nova identificação ou consulta externa.
+  O resultado informa a data da pesquisa e pode ser atualizado manualmente sem
+  perder o isolamento por empresa.
+- **Produtos precificados**: a tela inicial mantém somente as 20 últimas
+  consultas. A lista integral ganhou uma página própria, com busca por produto
+  ou EAN e ordenação alfabética padrão ou por data da pesquisa.
+- **Referência manual para produto sem catálogo**: quando o Mercado Livre não
+  localizar o item, é possível registrar nome e preço médio de referência. O
+  sistema calcula 50%, 70% e 90%, salva no histórico e permite consultar esse
+  produto novamente no Google Shopping depois, sem voltar ao Mercado Livre.
+
 - **Consulta de preços contínua**: quando a coleta do Google Shopping ainda
   estiver na fila, o AvantaPreços preserva e acompanha a mesma tarefa no PWA
   automaticamente, sem pedir nova tentativa e sem criar uma nova consulta

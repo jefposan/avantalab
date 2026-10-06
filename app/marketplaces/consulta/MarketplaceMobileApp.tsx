@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
+import CampoBusca from '@/app/components/CampoBusca';
+import { correspondeBusca } from '@/app/lib/formatters';
 import { isValidEan, normalizeEan } from '@/app/modules/marketplaces/services/ean';
 import styles from './marketplaces-mobile.module.css';
 
@@ -26,6 +28,7 @@ type HistoryRow = {
   product_name: string; product_description: string | null; image_url: string | null; currency: string;
   market_price_cents: number; minimum_price_cents: number; medium_price_cents: number; ideal_price_cents: number;
   sample_count: number; sample_min_cents: number; sample_max_cents: number; sample_source: PriceSource; created_at: string;
+  updated_at: string; last_researched_at: string; manually_updated_at: string | null;
 };
 type Account = { id: string; status: string; seller_name: string | null; seller_reference: string };
 
@@ -99,8 +102,12 @@ function historyToConsultation(row: HistoryRow): Consultation {
     product: { id: row.provider_product_id, name: row.product_name, description: row.product_description || '', image: row.image_url, attributes: [] },
     prices: { market: row.market_price_cents / 100, minimum: row.minimum_price_cents / 100, medium: row.medium_price_cents / 100, ideal: row.ideal_price_cents / 100 },
     sample: { count: row.sample_count, minimum: row.sample_min_cents / 100, maximum: row.sample_max_cents / 100, source: row.sample_source },
-    historyId: row.id, consultedAt: row.created_at,
+    historyId: row.id, consultedAt: row.last_researched_at || row.created_at,
   };
+}
+
+function historyDate(row: HistoryRow) {
+  return row.last_researched_at || row.created_at;
 }
 
 type ScannerIssue = 'denied' | 'error' | null;
@@ -194,15 +201,25 @@ export default function MarketplaceMobileApp() {
   const [connectionMessage, setConnectionMessage] = useState('');
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [pricedProducts, setPricedProducts] = useState<HistoryRow[]>([]);
+  const [pricedProductsLoading, setPricedProductsLoading] = useState(false);
+  const [pricedProductsOpen, setPricedProductsOpen] = useState(false);
+  const [historySearch, setHistorySearch] = useState('');
+  const [historySearchOpen, setHistorySearchOpen] = useState(false);
+  const [historySort, setHistorySort] = useState<'alpha' | 'date'>('alpha');
   const [ean, setEan] = useState('');
   const [query, setQuery] = useState('');
   const [pendingInput, setPendingInput] = useState<{ ean?: string; query?: string }>({});
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [result, setResult] = useState<Consultation | null>(null);
+  const [resultFromCatalog, setResultFromCatalog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannerIssue, setScannerIssue] = useState<ScannerIssue>(null);
+  const [manualRegistration, setManualRegistration] = useState<{ ean: string; productName: string; productDescription: string; marketPrice: string } | null>(null);
+  const [marketPriceDraft, setMarketPriceDraft] = useState('');
+  const [savingPrice, setSavingPrice] = useState(false);
   const consultationRunRef = useRef(0);
 
   const selectCompany = useCallback(async (selected: Company) => {
@@ -279,12 +296,34 @@ export default function MarketplaceMobileApp() {
     finally { setHistoryLoading(false); }
   }, [request]);
 
+  const loadPricedProducts = useCallback(async (companyId: string, order = historySort) => {
+    setPricedProductsLoading(true);
+    try {
+      const body = await request(`/api/modulos/marketplaces/precos/historico?empresaId=${encodeURIComponent(companyId)}&view=catalog&sort=${order}`);
+      setPricedProducts(Array.isArray(body.history) ? body.history : []);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível carregar os produtos precificados.'); }
+    finally { setPricedProductsLoading(false); }
+  }, [historySort, request]);
+
+  const openHistoryResult = useCallback((row: HistoryRow, fromCatalog = false) => {
+    setResultFromCatalog(fromCatalog);
+    setResult(historyToConsultation(row));
+  }, []);
+
+  useEffect(() => {
+    setMarketPriceDraft(result?.prices ? result.prices.market.toFixed(2).replace('.', ',') : '');
+  }, [result?.historyId, result?.prices?.market]);
+
+  useEffect(() => {
+    if (pricedProductsOpen && company?.id) void loadPricedProducts(company.id, historySort);
+  }, [company?.id, historySort, loadPricedProducts, pricedProductsOpen]);
+
   useEffect(() => {
     if (!company?.id) return;
     let ativo = true;
     const empresaId = company.id;
     const quadro = window.requestAnimationFrame(() => {
-      setAccounts([]); setConnectionId(''); setConnectionMessage(''); setHistory([]); setResult(null); setCandidates([]); setError('');
+      setAccounts([]); setConnectionId(''); setConnectionMessage(''); setHistory([]); setPricedProducts([]); setPricedProductsOpen(false); setResult(null); setCandidates([]); setManualRegistration(null); setError('');
       void (async () => {
         try {
           const body = await request(`/api/modulos/marketplaces/precos/contexto?empresaId=${encodeURIComponent(empresaId)}`);
@@ -299,24 +338,36 @@ export default function MarketplaceMobileApp() {
     return () => { ativo = false; window.cancelAnimationFrame(quadro); };
   }, [company?.id, loadHistory, request]);
 
-  const consult = useCallback(async (input: { ean?: string; query?: string; productId?: string }) => {
+  const consult = useCallback(async (input: { ean?: string; query?: string; productId?: string; historyId?: string }) => {
     if (!company) return;
     const run = ++consultationRunRef.current;
     setLoading(true); setError(''); setCandidates([]);
     const clean = input.ean ? { ean: normalizeEan(input.ean) } : { query: String(input.query || '').trim() };
     setPendingInput(clean);
+    setManualRegistration(null);
     try {
+      // Um EAN já precificado é uma base da empresa: reapresentamos o cálculo
+      // salvo antes de gastar tempo e crédito em uma nova pesquisa externa.
+      if (clean.ean && !input.productId && !input.historyId) {
+        const cached = await request(`/api/modulos/marketplaces/precos/historico?empresaId=${encodeURIComponent(company.id)}&ean=${encodeURIComponent(clean.ean)}`);
+        const row = Array.isArray(cached.history) ? cached.history[0] as HistoryRow | undefined : undefined;
+        if (row) { setResultFromCatalog(false); setResult(historyToConsultation(row)); setCandidates([]); return; }
+      }
       let continuation: unknown = null;
       for (let attempt = 0; attempt < 1_400 && run === consultationRunRef.current; attempt++) {
         const body = await request('/api/modulos/marketplaces/precos', {
           method: 'POST',
           body: JSON.stringify(continuation
             ? { continuation }
-            : { empresaId: company.id, connectionId: connectionId || undefined, ...clean, productId: input.productId }),
+            : { empresaId: company.id, connectionId: connectionId || undefined, ...clean, productId: input.productId, historyId: input.historyId }),
         });
         const next = body.result as Consultation;
         if (next.status === 'choose') { setCandidates(next.candidates || []); setError(''); return; }
-        if (next.status === 'not_found') { setResult(null); setError(next.notice || 'Produto não localizado.'); return; }
+        if (next.status === 'not_found') {
+          setResult(null); setError('');
+          setManualRegistration({ ean: next.ean || clean.ean || '', productName: clean.query || '', productDescription: '', marketPrice: '' });
+          return;
+        }
         setResult(next); setCandidates([]);
         continuation = body.continuation;
         if (!continuation) {
@@ -329,6 +380,45 @@ export default function MarketplaceMobileApp() {
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível consultar o produto.'); }
     finally { if (run === consultationRunRef.current) setLoading(false); }
   }, [company, connectionId, loadHistory, request]);
+
+  const saveManualRegistration = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!company || !manualRegistration) return;
+    setSavingPrice(true); setError('');
+    try {
+      const body = await request('/api/modulos/marketplaces/precos/historico', {
+        method: 'POST',
+        body: JSON.stringify({ empresaId: company.id, ...manualRegistration }),
+      });
+      const row = body.history as HistoryRow;
+      setResultFromCatalog(false); setResult(historyToConsultation(row));
+      setManualRegistration(null);
+      await loadHistory(company.id);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível registrar o cálculo manual.'); }
+    finally { setSavingPrice(false); }
+  };
+
+  const updateHistoryPrice = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!company || !result?.historyId) return;
+    setSavingPrice(true); setError('');
+    try {
+      const body = await request('/api/modulos/marketplaces/precos/historico', {
+        method: 'PATCH',
+        body: JSON.stringify({ empresaId: company.id, historyId: result.historyId, marketPrice: marketPriceDraft }),
+      });
+      const row = body.history as HistoryRow;
+      setResult(historyToConsultation(row));
+      await loadHistory(company.id);
+      if (pricedProductsOpen) await loadPricedProducts(company.id);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível atualizar os cálculos.'); }
+    finally { setSavingPrice(false); }
+  };
+
+  const openPricedProducts = () => {
+    if (!company) return;
+    setError(''); setResult(null); setManualRegistration(null); setPricedProductsOpen(true);
+  };
 
   const logout = async () => {
     try { localStorage.removeItem(SESSION_COMPANY_KEY); } catch {}
@@ -343,6 +433,8 @@ export default function MarketplaceMobileApp() {
     setPendingInput({});
     setCandidates([]);
     setResult(null);
+    setResultFromCatalog(false);
+    setManualRegistration(null);
     setError('');
     setScannerIssue(null);
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -365,6 +457,8 @@ export default function MarketplaceMobileApp() {
       setScannerOpen(true);
     });
   };
+
+  const filteredPricedProducts = pricedProducts.filter((item) => correspondeBusca(`${item.product_name} ${item.ean || ''} ${item.input_value}`, historySearch));
 
   if (access === 'loading') return <main className={styles.loginWrap} data-avantaprecos-viewport="access"><section className={styles.loadingStage} role="status" aria-live="polite"><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></section></main>;
   if (access === 'guest') return <main className={styles.loginWrap} data-avantaprecos-viewport="access">
@@ -399,7 +493,7 @@ export default function MarketplaceMobileApp() {
     </div>
 
     {result?.status === 'found' && result.product ? <section className={styles.resultPage} aria-labelledby="result-title">
-      <button type="button" className={styles.backButton} onClick={() => setResult(null)}><Icon name="back" /> Nova consulta</button>
+      <button type="button" className={styles.backButton} onClick={() => { setResult(null); if (!resultFromCatalog) setResultFromCatalog(false); }}><Icon name="back" /> {resultFromCatalog ? 'Produtos precificados' : 'Nova consulta'}</button>
       <article className={styles.resultCard}>
         <div className={styles.productTop}>
           <div className={styles.productImage}>{result.product.image ? <img src={result.product.image} alt={`Imagem de ${result.product.name}`} /> : <Icon name="barcode" size={44} />}</div>
@@ -414,11 +508,24 @@ export default function MarketplaceMobileApp() {
         </div><p className={styles.sampleNote}>{priceReferenceNote(result.sample?.source)}</p></> : <section className={styles.assistedPrice} aria-labelledby="assisted-price-title">
           <h2 id="assisted-price-title">{loading ? 'Consultando preços' : 'Preço indisponível'}</h2>
           <p>{loading ? 'Estamos acompanhando a coleta de ofertas automaticamente.' : 'Não foram encontradas ofertas comparáveis para este produto neste momento.'}</p>
-          {!loading && <button type="button" className={styles.secondaryButton} onClick={() => void consult({ ...(result.ean ? { ean: result.ean } : { query: result.query || result.product!.name }), productId: result.product!.id })}><Icon name="refresh" />Tentar novamente</button>}
+          {!loading && result.historyId && <button type="button" className={styles.secondaryButton} onClick={() => void consult({ historyId: result.historyId })}><Icon name="refresh" />Consultar novamente</button>}
         </section>}
         {result.notice && <p className={styles.sampleNote} role="status">{result.notice}</p>}
-        {result.consultedAt && <p className={styles.consultedAt}>Consultado em {dateTime.format(new Date(result.consultedAt))}</p>}
-        {result.prices && <button type="button" className={styles.secondaryButton} disabled={loading} onClick={() => void consult({ ...(result.ean ? { ean: result.ean } : { query: result.query || result.product!.name }), productId: result.product!.id })}><Icon name="refresh" />{loading ? 'Consultando…' : 'Consultar novamente'}</button>}
+        {result.consultedAt && <p className={styles.consultedAt}>Preço pesquisado em {dateTime.format(new Date(result.consultedAt))}</p>}
+        {result.prices && result.historyId && <form className={styles.manualPriceEdit} onSubmit={updateHistoryPrice}>
+          <label htmlFor="history-market-price">Ajustar preço médio</label>
+          <p>Altere a referência e atualize os três preços sugeridos.</p>
+          <div><input id="history-market-price" value={marketPriceDraft} onChange={(event) => setMarketPriceDraft(event.target.value)} inputMode="decimal" placeholder="R$ 0,00" /><button type="submit" disabled={savingPrice}>{savingPrice ? 'Atualizando…' : 'Atualizar cálculos'}</button></div>
+        </form>}
+        {result.historyId && <button type="button" className={styles.secondaryButton} disabled={loading || savingPrice} onClick={() => void consult({ historyId: result.historyId })}><Icon name="refresh" />{loading ? 'Consultando…' : 'Consultar novamente'}</button>}
+      </article>
+    </section> : pricedProductsOpen ? <section className={styles.resultPage} aria-labelledby="priced-products-title">
+      <button type="button" className={styles.backButton} onClick={() => { setPricedProductsOpen(false); setHistorySearch(''); setHistorySearchOpen(false); }}><Icon name="back" /> Nova consulta</button>
+      <article className={`${styles.resultCard} ${styles.pricedProductsCard}`}>
+        <div className={styles.catalogHeading}><div><p className={styles.eyebrow}>Base da empresa</p><h1 id="priced-products-title">Produtos precificados</h1><p>Use um preço registrado como referência ou atualize a pesquisa.</p></div><button type="button" className={styles.catalogSearchButton} onClick={() => setHistorySearchOpen((value) => !value)} aria-label={historySearchOpen ? 'Fechar busca no histórico' : 'Buscar produtos precificados'} aria-expanded={historySearchOpen} title="Buscar"><Icon name="search" /></button></div>
+        {historySearchOpen && <div className={styles.catalogSearch}><CampoBusca id="priced-products-search" value={historySearch} onChange={setHistorySearch} placeholder="Buscar por produto ou EAN" aria-label="Buscar produtos precificados" /></div>}
+        <div className={styles.catalogSort}><MobilePicker label="Ordenar produtos" value={historySort} options={[{ value: 'alpha', label: 'Ordem alfabética' }, { value: 'date', label: 'Data da pesquisa' }]} onChange={(value) => setHistorySort(value === 'date' ? 'date' : 'alpha')} /></div>
+        {pricedProductsLoading && !pricedProducts.length ? <div className={styles.historySkeleton}><span /><span /><span /></div> : filteredPricedProducts.length ? <div className={styles.historyList}>{filteredPricedProducts.map((item) => <button type="button" key={item.id} onClick={() => openHistoryResult(item, true)}><span className={styles.historyImage}>{item.image_url ? <img src={item.image_url} alt="" /> : <Icon name="barcode" />}</span><span className={styles.historyText}><strong>{item.product_name}</strong><small>{item.ean ? `EAN ${item.ean}` : item.input_value} · Pesquisa: {dateTime.format(new Date(historyDate(item)))}</small></span><span className={styles.historyPrice}>{money.format(item.market_price_cents / 100)}</span></button>)}</div> : <p className={styles.emptyHistory}>{historySearch ? 'Nenhum produto precificado corresponde à busca.' : 'Ainda não há produtos precificados.'}</p>}
       </article>
     </section> : <div className={styles.content}>
       <section className={styles.hero} aria-labelledby="marketplace-mobile-title">
@@ -442,11 +549,18 @@ export default function MarketplaceMobileApp() {
         {loading && <div className={styles.inlineLoading} role="status"><span />Pesquisando no Mercado Livre…</div>}
         {error && <p className={styles.error} role="alert">{error}</p>}
         {candidates.length > 0 && <div className={styles.candidates}><h3>Selecione o produto</h3>{candidates.map((candidate) => <button key={candidate.id} type="button" onClick={() => void consult({ ...pendingInput, productId: candidate.id })}>{candidate.picture ? <img src={candidate.picture} alt="" /> : <span className={styles.candidateFallback}><Icon name="barcode" /></span>}<span><strong>{candidate.name}</strong><small>{candidate.id}</small></span></button>)}</div>}
+        {manualRegistration && <form className={styles.manualRegistration} onSubmit={saveManualRegistration}>
+          <h3>Registrar cálculo manual</h3><p>Este produto não foi localizado no catálogo. Salve uma referência para reutilizá-la nas próximas consultas.</p>
+          <label htmlFor="manual-product-name">Nome do produto</label><input id="manual-product-name" value={manualRegistration.productName} onChange={(event) => setManualRegistration((current) => current ? { ...current, productName: event.target.value } : current)} placeholder="Ex.: Produto, marca ou modelo" required />
+          <label htmlFor="manual-product-price">Preço médio de referência</label><input id="manual-product-price" value={manualRegistration.marketPrice} onChange={(event) => setManualRegistration((current) => current ? { ...current, marketPrice: event.target.value } : current)} inputMode="decimal" placeholder="R$ 0,00" required />
+          <button type="submit" className={styles.primaryButton} disabled={savingPrice}>{savingPrice ? 'Salvando…' : 'Salvar cálculo'}</button>
+        </form>}
       </section>
 
       <section className={styles.historySection} aria-labelledby="history-title">
         <div className={styles.sectionTitle}><span><Icon name="history" /><h2 id="history-title">Últimas consultas</h2></span><button type="button" onClick={() => company && void loadHistory(company.id)} aria-label="Atualizar histórico" title="Atualizar histórico" disabled={historyLoading}><Icon name="refresh" size={20} /></button></div>
-        {historyLoading && !history.length ? <div className={styles.historySkeleton}><span /><span /><span /></div> : history.length ? <div className={styles.historyList}>{history.map((item) => <button type="button" key={item.id} onClick={() => setResult(historyToConsultation(item))}><span className={styles.historyImage}>{item.image_url ? <img src={item.image_url} alt="" /> : <Icon name="barcode" />}</span><span className={styles.historyText}><strong>{item.product_name}</strong><small>{item.ean ? `EAN ${item.ean}` : item.input_value} · {dateTime.format(new Date(item.created_at))}</small></span><span className={styles.historyPrice}>{money.format(item.market_price_cents / 100)}</span></button>)}</div> : <p className={styles.emptyHistory}>Suas consultas aparecerão aqui.</p>}
+        {historyLoading && !history.length ? <div className={styles.historySkeleton}><span /><span /><span /></div> : history.length ? <div className={styles.historyList}>{history.map((item) => <button type="button" key={item.id} onClick={() => openHistoryResult(item)}><span className={styles.historyImage}>{item.image_url ? <img src={item.image_url} alt="" /> : <Icon name="barcode" />}</span><span className={styles.historyText}><strong>{item.product_name}</strong><small>{item.ean ? `EAN ${item.ean}` : item.input_value} · Pesquisa: {dateTime.format(new Date(historyDate(item)))}</small></span><span className={styles.historyPrice}>{money.format(item.market_price_cents / 100)}</span></button>)}</div> : <p className={styles.emptyHistory}>Suas consultas aparecerão aqui.</p>}
+        <button type="button" className={styles.allPricedProductsButton} onClick={openPricedProducts}>Ver produtos precificados</button>
       </section>
     </div>}
     {scannerOpen && <ScannerModal initialEan={ean} issue={scannerIssue} onClose={() => setScannerOpen(false)} onConsult={(value) => { setEan(value); setScannerOpen(false); void consult({ ean: value }); }} />}

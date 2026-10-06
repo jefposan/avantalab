@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.33 -->
+<!-- ava-version: 1.48.0.34 -->
+
+> Revisão 1.48.0.34: o **AvantaPreços** abre imediatamente a referência já
+> salva quando o mesmo EAN for lido. **Últimas consultas** fica limitada às 20
+> mais recentes; a base completa está em **Produtos precificados**, com busca e
+> ordenação alfabética inicial ou por data. Um item salvo permite ajustar o
+> preço médio, recalcular as sugestões ou consultar novamente só as ofertas de
+> preço. Sem catálogo Mercado Livre, a pessoa pode registrar um cálculo manual.
 
 > Revisão 1.48.0.33: depois de iniciar a coleta de ofertas, o
 > **AvantaPreços** mantém a tela em consulta e acompanha a mesma tarefa

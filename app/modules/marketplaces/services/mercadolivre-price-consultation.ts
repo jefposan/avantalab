@@ -30,6 +30,8 @@ export type PriceConsultationResult = {
   prices?: PriceSuggestions;
   sample?: { count: number; minimum: number; maximum: number; source: PriceSampleSource };
   pendingPriceTaskId?: string;
+  historyId?: string;
+  consultedAt?: string;
   notice?: string;
 };
 

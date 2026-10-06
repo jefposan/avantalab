@@ -1,3 +1,9 @@
+// Revisado na versão 1.48.0.34: AvantaPreços reutiliza primeiro o cálculo da
+// empresa para o mesmo EAN. Últimas consultas mostra 20 registros; Produtos
+// precificados reúne a base pesquisável e ordenável. O item salvo pode receber
+// preço médio manual e recalcular 50%, 70% e 90%, ou consultar novamente apenas
+// as ofertas. Sem ficha no Mercado Livre, nome e preço criam uma referência
+// manual reutilizável e isolada por empresa.
 // Revisado na versão 1.48.0.33: quando a coleta do Google Shopping permanece
 // em fila, o AvantaPreços acompanha automaticamente a mesma tarefa protegida,
 // sem pedir nova tentativa e sem criar nova consulta cobrável.

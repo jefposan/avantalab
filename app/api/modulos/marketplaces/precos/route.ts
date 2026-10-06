@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
 import { authorizePriceConsultation } from '@/app/modules/marketplaces/services/price-access';
 import { resolveMercadoLivreConnection } from '@/app/modules/marketplaces/services/mercadolivre-management';
-import { consultMercadoLivrePrice } from '@/app/modules/marketplaces/services/mercadolivre-price-consultation';
+import { calculatePriceSuggestions, consultMercadoLivrePrice, type PriceConsultationResult } from '@/app/modules/marketplaces/services/mercadolivre-price-consultation';
+import { consultGoogleShoppingPrices } from '@/app/modules/marketplaces/services/dataforseo-google-shopping';
 import { openMarketplaceSecret, sealMarketplaceSecret, type SealedMarketplaceSecret } from '@/app/modules/marketplaces/services/secret-vault';
 
 export const runtime = 'nodejs';
@@ -16,7 +17,8 @@ type PendingPriceContinuation = {
   version: 1;
   expiresAt: number;
   empresaId: string;
-  connectionId: string;
+  connectionId?: string;
+  historyId?: string;
   ean?: string;
   query?: string;
   productId?: string;
@@ -28,12 +30,77 @@ function readPendingContinuation(value: unknown): PendingPriceContinuation | nul
   try {
     const parsed = JSON.parse(openMarketplaceSecret(value as SealedMarketplaceSecret)) as PendingPriceContinuation;
     if (parsed.version !== 1 || !Number.isFinite(parsed.expiresAt) || parsed.expiresAt <= Date.now()
-      || typeof parsed.empresaId !== 'string' || typeof parsed.connectionId !== 'string'
+      || typeof parsed.empresaId !== 'string' || (!parsed.connectionId && !parsed.historyId)
+      || (parsed.connectionId !== undefined && typeof parsed.connectionId !== 'string')
+      || (parsed.historyId !== undefined && typeof parsed.historyId !== 'string')
       || typeof parsed.taskId !== 'string' || !/^[0-9a-f-]{20,}$/i.test(parsed.taskId)) return null;
     return parsed;
   } catch {
     return null;
   }
+}
+
+type HistoryRecord = {
+  id: string;
+  ean: string | null;
+  input_type: 'ean' | 'text';
+  input_value: string;
+  provider_product_id: string;
+  product_name: string;
+  product_description: string | null;
+  image_url: string | null;
+  market_price_cents: number;
+  minimum_price_cents: number;
+  medium_price_cents: number;
+  ideal_price_cents: number;
+  sample_count: number;
+  sample_min_cents: number;
+  sample_max_cents: number;
+  sample_source: 'manual_reference' | 'google_shopping';
+  created_at: string;
+  last_researched_at: string;
+};
+
+function historyToResult(row: HistoryRecord, notice?: string): PriceConsultationResult {
+  return {
+    status: 'found',
+    ean: row.ean,
+    query: row.input_type === 'text' ? row.input_value : null,
+    product: { id: row.provider_product_id, name: row.product_name, description: row.product_description || '', image: row.image_url, attributes: [] },
+    prices: { market: row.market_price_cents / 100, minimum: row.minimum_price_cents / 100, medium: row.medium_price_cents / 100, ideal: row.ideal_price_cents / 100 },
+    sample: { count: row.sample_count, minimum: row.sample_min_cents / 100, maximum: row.sample_max_cents / 100, source: row.sample_source },
+    historyId: row.id,
+    consultedAt: row.last_researched_at || row.created_at,
+    ...(notice ? { notice } : {}),
+  };
+}
+
+async function refreshHistoryPrice(db: Awaited<ReturnType<typeof authorizePriceConsultation>>['db'], empresaId: string, historyId: string, pendingTaskId?: string) {
+  const { data: row, error } = await db.from('marketplace_price_consultations')
+    .select('id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,created_at,last_researched_at')
+    .eq('id', historyId).eq('empresa_id', empresaId).maybeSingle();
+  if (error) throw new MarketplaceError(503, 'history_unavailable', 'Não foi possível consultar o histórico agora.');
+  if (!row) throw new MarketplaceError(404, 'history_not_found', 'Esta consulta não está disponível para esta empresa.');
+  const stored = row as HistoryRecord;
+  const lookup = await consultGoogleShoppingPrices({ ean: stored.ean, productName: stored.product_name }, pendingTaskId);
+  if (lookup.status === 'pending') return { result: { ...historyToResult(stored, 'Estamos consultando novamente as ofertas públicas.'), pendingPriceTaskId: lookup.taskId }, historyId };
+  if (!lookup.sample) return { result: historyToResult(stored, 'Não foram encontradas ofertas comparáveis agora. Mantivemos o valor registrado anteriormente.'), historyId };
+  const prices = calculatePriceSuggestions(lookup.sample.pricesInCents);
+  const now = new Date().toISOString();
+  const { data: updated, error: updateError } = await db.from('marketplace_price_consultations').update({
+    market_price_cents: cents(prices.market),
+    minimum_price_cents: cents(prices.minimum),
+    medium_price_cents: cents(prices.medium),
+    ideal_price_cents: cents(prices.ideal),
+    sample_count: lookup.sample.count,
+    sample_min_cents: cents(lookup.sample.minimum),
+    sample_max_cents: cents(lookup.sample.maximum),
+    sample_source: 'google_shopping',
+    updated_at: now,
+    last_researched_at: now,
+  }).eq('id', historyId).eq('empresa_id', empresaId).select('id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,created_at,last_researched_at').single();
+  if (updateError || !updated) throw new MarketplaceError(503, 'history_unavailable', 'A nova pesquisa foi concluída, mas não foi possível atualizar o histórico.');
+  return { result: historyToResult(updated as HistoryRecord, `Média atualizada a partir de ${lookup.sample.count} oferta${lookup.sample.count === 1 ? '' : 's'} comparável${lookup.sample.count === 1 ? '' : 'is'} no Google Shopping.`), historyId };
 }
 
 function sealPendingContinuation(value: Omit<PendingPriceContinuation, 'version' | 'expiresAt'>) {
@@ -47,6 +114,17 @@ export async function POST(request: Request) {
     if (body.continuation && !resumed) throw new MarketplaceError(400, 'invalid_price_continuation', 'A consulta pendente expirou. Faça uma nova consulta.');
     const input = resumed || body;
     const { db, empresaId, usuario } = await authorizePriceConsultation(request, input.empresaId);
+    if (input.historyId) {
+      const refreshed = await refreshHistoryPrice(db, empresaId, input.historyId, resumed?.taskId);
+      if (refreshed.result.pendingPriceTaskId) {
+        const { pendingPriceTaskId, ...pendingResult } = refreshed.result;
+        return NextResponse.json({
+          result: pendingResult,
+          continuation: sealPendingContinuation({ empresaId, historyId: refreshed.historyId, taskId: pendingPriceTaskId }),
+        }, { status: 202, headers: { 'Cache-Control': 'no-store' } });
+      }
+      return NextResponse.json({ result: refreshed.result }, { headers: { 'Cache-Control': 'no-store' } });
+    }
     const connection = await resolveMercadoLivreConnection(db, empresaId, input.connectionId);
     const result = await consultMercadoLivrePrice(db, connection, {
       ean: input.ean,
@@ -92,9 +170,11 @@ export async function POST(request: Request) {
         sample_min_cents: cents(result.sample.minimum),
         sample_max_cents: cents(result.sample.maximum),
         sample_source: result.sample.source,
-      }).select('id,created_at').single();
+        updated_at: new Date().toISOString(),
+        last_researched_at: new Date().toISOString(),
+      }).select('id,created_at,last_researched_at').single();
       if (error || !saved) throw new MarketplaceError(503, 'history_unavailable', 'A consulta foi concluída, mas não foi possível salvar o histórico. Tente novamente.');
-      return NextResponse.json({ result: { ...result, historyId: saved.id, consultedAt: saved.created_at } }, { headers: { 'Cache-Control': 'no-store' } });
+      return NextResponse.json({ result: { ...result, historyId: saved.id, consultedAt: saved.last_researched_at || saved.created_at } }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
     return NextResponse.json({ result }, { headers: { 'Cache-Control': 'no-store' } });

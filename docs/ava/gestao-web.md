@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.33 -->
+<!-- ava-version: 1.48.0.34 -->
+
+> Revisão 1.48.0.34: no **AvantaPreços**, um EAN que já possui cálculo salvo
+> abre a referência da empresa sem repetir a consulta. A tela inicial mostra
+> somente as 20 últimas consultas; **Produtos precificados** abre a base
+> completa com busca e ordem alfabética padrão ou por data. Ao abrir um item,
+> é possível ajustar o preço médio e recalcular 50%, 70% e 90%, ou consultar
+> novamente somente as ofertas de preço, sem pesquisar o Mercado Livre outra vez.
+> Produto sem catálogo pode ser salvo como cálculo manual com nome e referência.
 
 > Revisão 1.48.0.33: se a coleta de preços do **AvantaPreços** permanecer na
 > fila, o PWA acompanha automaticamente a mesma tarefa até finalizar. Não peça

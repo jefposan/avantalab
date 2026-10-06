@@ -61,10 +61,14 @@ test('nova leitura de EAN descarta a pesquisa anterior antes de abrir a câmera'
   assert.match(client, /className=\{styles\.scanButton\} onClick=\{startEanReading\}/);
 });
 
-test('resultado diferencia os quatro valores e o histórico pode ser reaberto e atualizado', () => {
-  for (const text of ['Preço médio Google Shopping', 'Preço mínimo', 'Preço médio de venda', 'Preço ideal', 'Últimas consultas', 'Consultar novamente']) assert.match(client, new RegExp(text));
-  assert.match(client, /setResult\(historyToConsultation\(item\)\)/);
+test('resultado diferencia os quatro valores e o histórico pode ser reaberto, ajustado e pesquisado novamente', () => {
+  for (const text of ['Preço médio Google Shopping', 'Preço mínimo', 'Preço médio de venda', 'Preço ideal', 'Últimas consultas', 'Consultar novamente', 'Atualizar cálculos', 'Produtos precificados', 'Registrar cálculo manual']) assert.match(client, new RegExp(text));
+  assert.match(client, /openHistoryResult\(item/);
   assert.match(client, /loadHistory\(company\.id\)/);
+  assert.match(client, /historyId: result\.historyId/);
+  assert.match(client, /view=catalog&sort=/);
+  assert.match(client, /CampoBusca/);
+  assert.match(client, /correspondeBusca/);
   assert.match(css, /\.marketPrice \{[^}]*background:/);
   assert.match(css, /\.minimumPrice \{[^}]*background:/);
   assert.match(css, /\.mediumPrice \{[^}]*background:/);
@@ -107,6 +111,8 @@ test('histórico é isolado por empresa e inacessível diretamente pelo navegado
   assert.match(migration, /enable row level security/);
   assert.match(migration, /revoke all on public\.marketplace_price_consultations from anon, authenticated/);
   assert.match(migration, /grant select, insert, update, delete on public\.marketplace_price_consultations to service_role/);
+  assert.match(historyApi, /searchParams\.get\('view'\) === 'catalog'/);
+  assert.match(historyApi, /limit\(ean \? 1 : catalog \? 1_000 : 20\)/);
 });
 
 test('manifesto, service worker e cópia do endereço tornam o AvantaPreços instalável e compartilhável pelo módulo', () => {

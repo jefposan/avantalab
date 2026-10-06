@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.33 -->
+<!-- ava-version: 1.48.0.34 -->
+
+> Revisão 1.48.0.34: histórico reutilizável, cálculo manual e a página
+> **Produtos precificados** pertencem ao PWA **AvantaPreços** e não alteram os
+> fluxos do AvantaVendas.
 
 > Revisão 1.48.0.33: a continuidade automática da fila de preços no
 > **AvantaPreços** pertence ao PWA de marketplaces e não altera os fluxos do

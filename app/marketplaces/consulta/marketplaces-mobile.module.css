@@ -76,8 +76,28 @@
 .emptyHistory { border: 1px dashed #ced9de; border-radius: 16px; padding: 22px; color: #7b8792; background: rgba(255,255,255,.58); font-size: 13px; text-align: center; }
 .historySkeleton { display: grid; gap: 8px; }
 .historySkeleton span { height: 72px; border-radius: 17px; background: linear-gradient(90deg,#e9eef0,#f7f9fa,#e9eef0); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+.allPricedProductsButton { display: inline-flex; width: 100%; min-height: 48px; align-items: center; justify-content: center; margin-top: 14px; border: 1px solid #b8d7d9; border-radius: 14px; color: #086d75; background: rgba(255,255,255,.84); font: inherit; font-size: 13px; font-weight: 900; }
+.allPricedProductsButton:hover { background: #e6f4f4; }
+.allPricedProductsButton:focus-visible, .catalogSearchButton:focus-visible { outline: 3px solid color-mix(in srgb, #1687d9 34%, transparent); outline-offset: 2px; }
 .backButton { display: inline-flex; min-height: 44px; align-items: center; gap: 6px; margin-bottom: 12px; border: 0; padding: 0 4px; color: #326d78; background: transparent; font-size: 13px; font-weight: 850; }
 .resultCard { padding: 20px; }
+.catalogHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.catalogHeading h1 { margin: 4px 0 4px; color: #172033; font-size: 22px; line-height: 1.18; letter-spacing: -.03em; }
+.catalogHeading p:not(.eyebrow) { max-width: 280px; margin: 0; color: #647184; font-size: 12px; line-height: 1.45; }
+.catalogSearchButton { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; border: 1px solid #c7dadd; border-radius: 12px; color: #087f8b; background: #f4fbfb; }
+.catalogSearch { margin-top: 16px; }
+.catalogSearch :global(.avanta-campo-busca) { display: block; }
+.catalogSearch input { width: 100%; height: 48px; border: 1px solid #cbd8df; border-radius: 12px; padding: 0 42px 0 12px; color: #172033; background: #fff; font: inherit; font-size: 14px; outline: none; }
+.catalogSearch input:focus { border-color: #1ca49f; box-shadow: 0 0 0 3px rgba(28,164,159,.14); }
+.catalogSort { margin: 14px 0 16px; }
+.catalogSort .pickerLabel { font-size: 11px; }
+.manualRegistration { display: grid; gap: 7px; margin-top: 18px; border-radius: 16px; padding: 15px; color: #173c58; background: #edf7f8; text-align: left; }
+.manualRegistration h3 { margin: 0; font-size: 15px; line-height: 1.2; }
+.manualRegistration > p { margin: -2px 0 5px; color: #526d7c; font-size: 11px; line-height: 1.45; }
+.manualRegistration label, .manualPriceEdit label { color: #344054; font-size: 12px; font-weight: 850; }
+.manualRegistration input { width: 100%; height: 48px; min-width: 0; border: 1px solid #a8c7ca; border-radius: 12px; padding: 0 12px; color: #172033; background: #fff; font: inherit; font-size: 15px; outline: none; }
+.manualRegistration input:focus { border-color: #149e99; box-shadow: 0 0 0 3px rgba(20,158,153,.16); }
+.manualRegistration .primaryButton { margin-top: 3px; }
 .productTop { display: grid; grid-template-columns: 92px minmax(0,1fr); align-items: center; gap: 15px; }
 .productImage { display: grid; width: 92px; height: 92px; place-items: center; overflow: hidden; border-radius: 18px; color: #78909c; background: #f3f6f7; }
 .productImage img { width: 100%; height: 100%; object-fit: contain; }
@@ -110,6 +130,13 @@
 .idealPrice { color: #176b50; background: #e5f7ed; }
 .sampleNote, .consultedAt { margin: 12px 2px 0; color: #7a8692; font-size: 10px; line-height: 1.4; text-align: center; }
 .consultedAt { margin-top: 3px; }
+.manualPriceEdit { display: grid; gap: 7px; margin-top: 16px; border-radius: 16px; padding: 15px; color: #173c58; background: #edf7f8; }
+.manualPriceEdit > p { margin: -3px 0 3px; color: #526d7c; font-size: 11px; line-height: 1.4; }
+.manualPriceEdit > div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+.manualPriceEdit input { width: 100%; min-width: 0; height: 48px; border: 1px solid #a8c7ca; border-radius: 12px; padding: 0 12px; color: #172033; background: #fff; font: inherit; font-size: 16px; outline: none; }
+.manualPriceEdit input:focus { border-color: #149e99; box-shadow: 0 0 0 3px rgba(20,158,153,.16); }
+.manualPriceEdit button { min-height: 48px; border: 0; border-radius: 12px; padding: 0 13px; color: #fff; background: #087f8b; font: inherit; font-size: 12px; font-weight: 900; }
+.manualPriceEdit button:disabled { opacity: .48; }
 .secondaryButton, .primaryButton { display: inline-flex; width: 100%; min-height: 48px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 14px; font-size: 13px; font-weight: 900; }
 .secondaryButton { margin-top: 16px; color: #086d75; background: #e6f4f4; }
 .primaryButton { color: #fff; background: linear-gradient(135deg,#149e99,#087f8b); }
