@@ -58,41 +58,28 @@ function winningOfferPrice(raw: Record<string, unknown>) {
 }
 
 /**
- * Pesquisa a mesma vitrine pública consumida por quem navega no Mercado Livre.
- * Esta leitura não envia o token da loja: preço de referência precisa vir dos
- * anúncios públicos, e não das permissões do vendedor conectado.
+ * A busca é a vitrine pública de itens do Mercado Livre. Atualmente esse
+ * recurso exige o bearer da integração para ser acessado por servidor; o token
+ * autoriza somente a consulta, não muda a origem dos anúncios ou dos preços.
  */
-async function searchPublicMarketplace(query: string) {
-  const params = new URLSearchParams({ q: query, limit: '50' });
-  let response: Response;
-  try {
-    response = await fetch(`https://api.mercadolibre.com/sites/MLB/search?${params}`, {
-      cache: 'no-store',
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(8_000),
-    });
-  } catch {
-    throw new MarketplaceError(503, 'public_search_unavailable', 'Não foi possível consultar os anúncios públicos do Mercado Livre. Tente novamente.');
-  }
-  if (!response.ok) {
-    if (response.status === 429) throw new MarketplaceError(429, 'public_search_429', 'Limite de consultas públicas do Mercado Livre. Aguarde antes de tentar novamente.');
-    throw new MarketplaceError(503, `public_search_${response.status}`, 'Não foi possível consultar os anúncios públicos do Mercado Livre. Tente novamente.');
-  }
-  try {
-    return objectValue(await response.json());
-  } catch {
-    throw new MarketplaceError(503, 'public_search_invalid_response', 'O Mercado Livre retornou uma resposta incompleta. Tente novamente.');
-  }
-}
-
-async function consumerEanOfferPrices(ean: string) {
-  const search = await searchPublicMarketplace(ean);
+async function consumerListingPrices(
+  db: SupabaseClient,
+  connection: SellerConnection,
+  query: string,
+  catalogProductId?: string,
+) {
+  const search = objectValue(await mlRequest(
+    db,
+    connection,
+    `/sites/MLB/search?${new URLSearchParams({ q: query, limit: '50' })}`,
+  ));
   const results = Array.isArray(search.results) ? search.results.map(objectValue) : [];
   return results
-    // A consulta por EAN é feita diretamente na busca pública. Não exigimos que
-    // a vitrine exponha GTIN nos atributos do card — ela não o faz em todas as
-    // categorias — pois isso eliminava anúncios que o próprio consumidor vê.
-    .filter((item) => item.currency_id === 'BRL' && item.condition !== 'used' && item.status !== 'closed')
+    // O EAN ou título exato é pesquisado na própria vitrine. Não exigimos que o
+    // card exponha GTIN nos atributos: em várias categorias ele não aparece,
+    // embora o anúncio seja visível ao consumidor.
+    .filter((item) => item.currency_id === 'BRL' && item.condition !== 'used' && item.status !== 'closed'
+      && (!catalogProductId || item.catalog_product_id === catalogProductId))
     .map((item) => finitePrice(item.price))
     .filter((price): price is number => price != null);
 }
@@ -197,10 +184,18 @@ export async function consultMercadoLivrePrice(
   const product = identification.product;
   let source: 'active_offers' | 'catalog_reference' = 'active_offers';
   let values: number[] = [];
-  // A prioridade é a vitrine pública: é a referência que um consumidor recebe
-  // ao pesquisar o próprio código de barras no Mercado Livre.
-  if (ean) values = await consumerEanOfferPrices(ean);
+  // Prioridade: a vitrine pública de itens. A API hoje exige bearer, então
+  // reutilizamos a conexão apenas para autorizar a chamada pública. Para EAN,
+  // tentamos o próprio código e, se a vitrine não o indexar, o título exato da
+  // ficha escolhida — ainda sem depender dos anúncios da conta conectada.
+  const consumerTerms = ean
+    ? [{ term: ean }, { term: product.name, catalogProductId: product.id }]
+    : [{ term: product.name, catalogProductId: product.id }];
   try {
+    for (const { term, catalogProductId } of consumerTerms) {
+      values = await consumerListingPrices(db, connection, term, catalogProductId);
+      if (values.length) break;
+    }
     if (!values.length) values = await activeOfferPrices(db, connection, product, ean);
   } catch (error) {
     if (isRateLimitFailure(error)) throw error;

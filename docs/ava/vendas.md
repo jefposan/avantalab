@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.22 -->
+<!-- ava-version: 1.48.0.23 -->
+
+> Revisão 1.48.0.23: a autorização da leitura pública de preços no
+> AvantaPreços pertence ao PWA de marketplaces e não altera os fluxos do
+> AvantaVendas.
 
 > Revisão 1.48.0.22: a consulta pública por EAN no AvantaPreços pertence ao
 > PWA de marketplaces e não altera os fluxos do AvantaVendas.

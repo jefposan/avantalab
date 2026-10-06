@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.23: AvantaPreços usa a conexão apenas para
+// autorizar a leitura da vitrine pública do Mercado Livre por EAN ou título.
 // Revisado na versão 1.48.0.22: AvantaPreços consulta a vitrine pública do
 // Mercado Livre diretamente pelo EAN, sem token da loja para formar a amostra.
 // Revisado na versão 1.48.0.21: AvantaPreços também confirma GTIN de anúncios

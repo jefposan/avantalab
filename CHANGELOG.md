@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.48.0.23 - 2026-10-05
+- **Consulta pública autorizada corrigida**: a API de busca de itens do Mercado Livre exige autenticação quando é chamada pelo servidor. O AvantaPreços passa a usar a conexão existente somente para autorizar essa leitura, preservando como fonte os anúncios públicos da vitrine — e não anúncios da conta conectada.
+- **Resultado prático para EAN e texto**: a consulta pesquisa o código de barras e, quando a vitrine não o indexar, o título exato da ficha escolhida. Resultados pelo título ainda precisam corresponder ao produto de catálogo, evitando que itens apenas parecidos contaminem a média.
+
 ## 1.48.0.22 - 2026-10-05
 - **Busca de preço como consumidor**: o AvantaPreços consulta primeiro a vitrine pública do Mercado Livre pelo EAN, sem enviar o token da loja. Assim, a amostra usa os anúncios ativos que a pessoa consumidora encontra na pesquisa pública, inclusive quando a vitrine não expõe o GTIN no card do resultado.
 - **Sem bloqueio pelo filtro de catálogo**: a confirmação de atributo do anúncio deixa de excluir resultados da busca direta por código de barras. A verificação por catálogo continua como alternativa, e indisponibilidade ou limite da busca pública passam a ser comunicados pelo motivo real.

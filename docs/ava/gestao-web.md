@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.22 -->
+<!-- ava-version: 1.48.0.23 -->
+
+> Revisão 1.48.0.23: a busca de preço do **AvantaPreços** usa o token já
+> conectado somente para autorizar a consulta de itens públicos; a amostra não
+> é formada pelos anúncios da própria conta.
 
 > Revisão 1.48.0.22: o **AvantaPreços** consulta primeiro a busca pública de
 > consumidor do Mercado Livre pelo EAN e usa os anúncios ativos retornados na
