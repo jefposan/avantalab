@@ -62,7 +62,7 @@ test('nova leitura de EAN descarta a pesquisa anterior antes de abrir a câmera'
 });
 
 test('resultado diferencia os quatro valores e o histórico pode ser reaberto, ajustado e pesquisado novamente', () => {
-  for (const text of ['Preço médio Google Shopping', 'Preço mínimo', 'Preço médio de venda', 'Preço ideal', 'Últimas consultas', 'Consultar novamente', 'Atualizar cálculos', 'Produtos precificados', 'Registrar cálculo manual']) assert.match(client, new RegExp(text));
+  for (const text of ['Média dos até 5 menores preços', 'Preço mínimo', 'Preço médio de venda', 'Preço ideal', 'Últimas consultas', 'Consultar novamente', 'Atualizar cálculos', 'Produtos precificados', 'Registrar cálculo manual']) assert.match(client, new RegExp(text));
   assert.match(client, /openHistoryResult\(item/);
   assert.match(client, /loadHistory\(company\.id\)/);
   assert.match(client, /historyId: result\.historyId/);

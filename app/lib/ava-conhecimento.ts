@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.37: AvantaPreços usa a média de até cinco menores
+// ofertas comparáveis como referência. Um registro anterior só recebe a regra
+// nova quando for consultado novamente.
 // Revisado na versão 1.48.0.35: cada catálogo possui estados independentes para
 // Vendas e Serviços e AvantaVendas. Um destino nunca ativa nem desativa o outro;
 // o AvantaVendas recebe somente o conteúdo ativado especificamente para ele.

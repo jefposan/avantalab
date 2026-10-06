@@ -65,6 +65,13 @@ test('sugestões aplicam exatamente 50%, 70% e 90% sobre o preço informado', ()
   assert.deepEqual(calculatePriceSuggestions([10000]), { market: 100, minimum: 50, medium: 70, ideal: 90 });
 });
 
+test('referência usa somente a média das cinco menores ofertas válidas', () => {
+  assert.deepEqual(
+    calculatePriceSuggestions([99900, 10000, 11000, 12000, 13000, 14000]),
+    { market: 120, minimum: 60, medium: 84, ideal: 108 },
+  );
+});
+
 test('consulta identifica o produto e calcula a média sem consultar a vitrine do Mercado Livre', async () => {
   mockCatalog();
   mockPriceProvider();
@@ -135,6 +142,18 @@ test('amostra Google Shopping aceita somente valores em reais do produto corresp
     { title: 'Gin Bóra London Dry 700 ml', price: 200, currency: 'USD' },
   ] }] }] }, 'Gin Bóra London Dry 700 ml', '7890000000000');
   assert.deepEqual(sample, { pricesInCents: [12500, 15050], count: 2, minimum: 125, maximum: 150.5 });
+});
+
+test('amostra Google Shopping descarta ofertas altas após selecionar as cinco menores', () => {
+  const sample = extractGoogleShoppingPriceSample({ tasks: [{ result: [{ items: [
+    { title: 'Gin Bóra London Dry 700 ml', price: 100, currency: 'BRL' },
+    { title: 'Gin Bóra London Dry 700 ml', price: 110, currency: 'BRL' },
+    { title: 'Gin Bóra London Dry 700 ml', price: 120, currency: 'BRL' },
+    { title: 'Gin Bóra London Dry 700 ml', price: 130, currency: 'BRL' },
+    { title: 'Gin Bóra London Dry 700 ml', price: 140, currency: 'BRL' },
+    { title: 'Gin Bóra London Dry 700 ml', price: 999, currency: 'BRL' },
+  ] }] }] }, 'Gin Bóra London Dry 700 ml', '7890000000000');
+  assert.deepEqual(sample, { pricesInCents: [10000, 11000, 12000, 13000, 14000], count: 5, minimum: 100, maximum: 140 });
 });
 
 test('amostra Google Shopping reconhece um modelo presente em título comercial mais curto', () => {

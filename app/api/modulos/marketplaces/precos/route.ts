@@ -100,7 +100,7 @@ async function refreshHistoryPrice(db: Awaited<ReturnType<typeof authorizePriceC
     last_researched_at: now,
   }).eq('id', historyId).eq('empresa_id', empresaId).select('id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,created_at,last_researched_at').single();
   if (updateError || !updated) throw new MarketplaceError(503, 'history_unavailable', 'A nova pesquisa foi concluída, mas não foi possível atualizar o histórico.');
-  return { result: historyToResult(updated as HistoryRecord, `Média atualizada a partir de ${lookup.sample.count} oferta${lookup.sample.count === 1 ? '' : 's'} comparável${lookup.sample.count === 1 ? '' : 'is'} no Google Shopping.`), historyId };
+  return { result: historyToResult(updated as HistoryRecord, `Referência atualizada com ${lookup.sample.count} menor${lookup.sample.count === 1 ? '' : 'es'} oferta${lookup.sample.count === 1 ? '' : 's'} comparável${lookup.sample.count === 1 ? '' : 'is'} no Google Shopping.`), historyId };
 }
 
 function sealPendingContinuation(value: Omit<PendingPriceContinuation, 'version' | 'expiresAt'>) {

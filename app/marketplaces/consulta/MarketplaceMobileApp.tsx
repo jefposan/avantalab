@@ -37,14 +37,14 @@ const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
 function priceReferenceLabel(source?: PriceSource) {
-  if (source === 'google_shopping') return 'Preço médio Google Shopping';
+  if (source === 'google_shopping') return 'Média dos até 5 menores preços';
   if (source === 'manual_reference') return 'Preço informado';
   if (source === 'catalog_reference') return 'Preço de catálogo';
   return 'Preço médio Mercado Livre';
 }
 
 function priceReferenceNote(source?: PriceSource) {
-  if (source === 'google_shopping') return 'Média de ofertas comparáveis encontradas no Google Shopping.';
+  if (source === 'google_shopping') return 'Média das até 5 menores ofertas comparáveis localizadas no Google Shopping.';
   if (source === 'manual_reference') return 'Preço confirmado por você após a consulta pública.';
   if (source === 'catalog_reference') return 'Preço obtido de uma referência de catálogo anterior.';
   return 'Preço obtido de ofertas públicas anteriores do Mercado Livre.';

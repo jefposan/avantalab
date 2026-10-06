@@ -1,5 +1,6 @@
 import 'server-only';
 import { MarketplaceError } from './management-access';
+import { selectReferencePriceCents } from './price-reference';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -86,7 +87,7 @@ export function extractGoogleShoppingPriceSample(payload: unknown, productName: 
     }
   };
   visit(payload);
-  const values = prices.sort((left, right) => left - right);
+  const values = selectReferencePriceCents(prices);
   if (!values.length) return null;
   return {
     pricesInCents: values,

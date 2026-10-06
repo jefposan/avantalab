@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.48.0.37 - 2026-10-06
+
+- **Referência comercial mais realista no AvantaPreços**: a pesquisa de preços
+  passou a formar a referência pela média de até cinco menores ofertas
+  comparáveis. Ofertas muito acima do mercado deixam de elevar a sugestão.
+
 ## 1.48.0.36 - 2026-10-06
 
 - **Hierarquia da consulta no AvantaPreços**: a consulta manual agora vem antes

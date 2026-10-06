@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.36 -->
+<!-- ava-version: 1.48.0.37 -->
+
+> Revisão 1.48.0.37: a referência automática do **AvantaPreços** é a média de
+> até cinco menores ofertas comparáveis. Uma nova consulta aplica o critério
+> aos preços atuais; cálculos históricos permanecem preservados até serem
+> consultados novamente.
 
 > Revisão 1.48.0.36: na tela inicial do **AvantaPreços**, a consulta manual vem
 > antes do leitor de câmera, que ficou mais compacto. **Produtos precificados**

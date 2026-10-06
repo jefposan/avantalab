@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.36 -->
+<!-- ava-version: 1.48.0.37 -->
+
+> Revisão 1.48.0.37: no **AvantaPreços**, o preço de referência usa a média de
+> até cinco menores ofertas comparáveis, evitando que anúncios muito acima do
+> mercado distorçam o cálculo. Registros já salvos são atualizados com a regra
+> nova ao usar **Consultar novamente**.
 
 > Revisão 1.48.0.36: a organização inicial do PWA **AvantaPreços** prioriza a
 > consulta manual, mantém o leitor de EAN mais compacto e coloca o acesso à

@@ -5,6 +5,7 @@ import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import type { SellerConnection } from './mercadolivre-management';
 import { lookupProfileCatalogByEan } from './profile-catalog';
 import { consultGoogleShoppingPrices } from './dataforseo-google-shopping';
+import { selectReferencePriceCents } from './price-reference';
 
 export type PriceSuggestions = {
   market: number;
@@ -43,7 +44,10 @@ function priceInCents(value: unknown) {
 }
 
 export function calculatePriceSuggestions(pricesInCents: readonly number[]): PriceSuggestions {
-  const values = pricesInCents.filter((value) => Number.isSafeInteger(value) && value > 0);
+  // Preços excepcionalmente altos costumam ser anúncios fora do mercado. A
+  // referência comercial é formada pelas até cinco menores ofertas válidas,
+  // inclusive quando a fonte externa trouxer mais resultados.
+  const values = selectReferencePriceCents(pricesInCents);
   if (!values.length) throw new Error('Nenhum preço válido para calcular as sugestões.');
   const marketCents = Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
   const amount = (factor: number) => Math.round(marketCents * factor) / 100;
@@ -137,6 +141,6 @@ export async function consultMercadoLivrePrice(
     ...base,
     prices,
     sample: { count: lookup.sample.count, minimum: lookup.sample.minimum, maximum: lookup.sample.maximum, source: 'google_shopping' },
-    notice: `Média calculada a partir de ${lookup.sample.count} oferta${lookup.sample.count === 1 ? '' : 's'} comparável${lookup.sample.count === 1 ? '' : 'is'} no Google Shopping.`,
+    notice: `Referência calculada com ${lookup.sample.count} menor${lookup.sample.count === 1 ? '' : 'es'} oferta${lookup.sample.count === 1 ? '' : 's'} comparável${lookup.sample.count === 1 ? '' : 'is'} no Google Shopping.`,
   };
 }
