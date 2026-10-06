@@ -5,6 +5,10 @@
 > Revisão 1.48.0.31: tolerância a rede lenta foi ajustada somente no
 > AvantaVendas; sem impacto operacional na Gestão Mobile.
 
+> Revisão 1.48.0.31: o **AvantaPreços** espera até 45 segundos pela conclusão
+> da mesma consulta de preços. A espera adicional evita que resultados normais
+> do provedor sejam interrompidos e não cria uma segunda tarefa cobrável.
+
 > Revisão 1.48.0.30: o **AvantaPreços** espera a conclusão da mesma consulta
 > quando a fonte de preços a coloca temporariamente em fila; isso evita que a
 > leitura seja exibida indevidamente como erro ou reenviada com nova cobrança.

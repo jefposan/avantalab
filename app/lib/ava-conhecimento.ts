@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.31: o AvantaPreços acompanha a mesma tarefa de
+// consulta por até 45 segundos, cobrindo a coleta assíncrona normal sem abrir
+// uma segunda tarefa cobrável.
 // Revisado na versão 1.48.0.30: uma tarefa de consulta de preços temporariamente
 // na fila é aguardada e reutilizada; o PWA não a apresenta como recusa nem cria
 // uma nova consulta cobrável.

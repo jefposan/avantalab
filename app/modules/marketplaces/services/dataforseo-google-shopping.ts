@@ -11,7 +11,10 @@ export type GoogleShoppingPriceSample = {
 };
 
 const DEFAULT_BASE_URL = 'https://api.dataforseo.com';
-const MAX_POLL_ATTEMPTS = 20;
+// A coleta do Merchant API é assíncrona. Em produção há tarefas legítimas que
+// levam quase 30 segundos; 45 leituras de um segundo preservam margem para a
+// conclusão sem deixar a rota (60 s) sem tempo para finalizar a resposta.
+const MAX_POLL_ATTEMPTS = 45;
 const POLL_INTERVAL_MS = 1_000;
 
 function record(value: unknown): JsonRecord {
@@ -170,5 +173,5 @@ export async function consultGoogleShoppingPrices(input: { ean: string | null; p
     if (!taskHasResult(result)) continue;
     return extractGoogleShoppingPriceSample(result, input.productName, input.ean);
   }
-  throw new MarketplaceError(503, 'price_provider_timeout', 'A consulta de preços demorou mais que o esperado. Tente novamente.');
+  throw new MarketplaceError(503, 'price_provider_timeout', 'A consulta de preços continua sendo processada. Aguarde alguns segundos e tente novamente.');
 }

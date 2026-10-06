@@ -1,5 +1,10 @@
 # Changelog
 
+- **Prazo real da consulta de preços**: o AvantaPreços acompanha a mesma tarefa
+  da DataForSEO por até 45 segundos. Consultas legítimas que ultrapassavam os
+  20 segundos anteriores agora aguardam o resultado antes de informar demora,
+  sem abrir uma segunda tarefa cobrável.
+
 - **Fila de preços concluída corretamente**: o AvantaPreços não trata mais o estado temporário `Task In Queue` do provedor como recusa de consulta. A mesma tarefa é aguardada e lida novamente, sem criar uma segunda consulta cobrável, até retornar as ofertas ou atingir o prazo seguro.
 
 ## 1.48.0.31-av166 - 2026-10-06

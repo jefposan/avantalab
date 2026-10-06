@@ -8,6 +8,9 @@
 > ele será enviado automaticamente quando a conexão voltar. Não orientar a
 > pessoa a repetir o lançamento; ela pode acompanhar pendências no cabeçalho.
 
+> Revisão 1.48.0.31: o prazo ampliado da mesma consulta de preços pertence ao
+> PWA de marketplaces e não altera os fluxos do AvantaVendas.
+
 > Revisão 1.48.0.30: a espera pela fila da consulta de preços pertence ao PWA
 > de marketplaces e não altera os fluxos do AvantaVendas.
 
