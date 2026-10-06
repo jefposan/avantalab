@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.41 -->
+<!-- ava-version: 1.48.0.42 -->
+
+> Revisão 1.48.0.42: ao abrir um módulo pelo Dashboard ou voltar pelo botão
+> **Início**, a navegação reutiliza a sessão e o perfil já validados e não exibe
+> uma nova tela de validação. Acesso direto e recarga completa continuam
+> verificando a sessão normalmente.
 
 > Revisão 1.48.0.41: em **Anúncios em marketplaces**, as contas conectadas
 > são carregadas novamente ao abrir o perfil e uma nova conta é conectada em

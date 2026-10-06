@@ -26,10 +26,12 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const router = useRouter();
   const [context] = useState(() => initialContext ?? consumirNavegacaoModulo('marketplaces', companyId));
   const [empresa, setEmpresa] = useState(() => context?.empresa ?? { nome: 'Perfil empresarial', corPrimaria: '#003E73', temaEscuro: false, logoUrl: '' });
-  const [accessState, setAccessState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [accessState, setAccessState] = useState<'loading' | 'ready' | 'error'>(() => context ? 'ready' : 'loading');
   const [accessError, setAccessError] = useState('');
   const [marketplace, setMarketplace] = useState<MarketplaceId>('mercado_livre');
-  const [canManage, setCanManage] = useState(false);
+  const [canManage, setCanManage] = useState(() => context
+    ? ['gestor_master', 'administrador', 'operador_completo'].includes(context.perfil)
+    : false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [connecting, setConnecting] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState('');
@@ -80,6 +82,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   useEffect(() => {
     const controller = new AbortController();
     async function loadIdentity() {
+      if (context) return;
       setAccessState('loading');
       setAccessError('');
       try {
@@ -101,7 +104,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     }
     void loadIdentity();
     return () => controller.abort();
-  }, [companyId]);
+  }, [companyId, context]);
 
   useEffect(() => {
     if (accessState !== 'ready') return;

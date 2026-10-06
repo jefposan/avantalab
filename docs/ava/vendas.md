@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.41 -->
+<!-- ava-version: 1.48.0.42 -->
+
+> Revisão 1.48.0.42: navegação interna da Gestão Web foi otimizada; sem impacto
+> operacional nos cadastros, pedidos e pagamentos do AvantaVendas.
 
 > Revisão 1.48.0.41: conexões adicionais e edição de taxas de anúncios no
 > módulo Marketplaces pertencem à Gestão Web e não alteram o AvantaVendas.

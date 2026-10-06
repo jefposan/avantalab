@@ -14,7 +14,7 @@ export type ContextoNavegacaoModulo = {
 
 const CHAVE_CONTEXTO_NAVEGACAO = 'avantalab.navegacao-modulos.v1';
 const CHAVE_CONTEXTO_URL = '__avctx';
-const DURACAO_CONTEXTO_MS = 15_000;
+const DURACAO_CONTEXTO_MS = 30 * 60 * 1000;
 export const MENSAGEM_RETORNO_MODULO_EMBUTIDO = 'AVANTALAB_MODULO_EMBUTIDO_RETORNAR_V1';
 
 type ContextoArmazenado = ContextoNavegacaoModulo & { expiraEm: number };
@@ -47,16 +47,16 @@ function validarContexto(bruto: string | null, destino: string, empresaId?: stri
 
 /**
  * Lê a prévia visual também no servidor, antes da hidratação do iframe.
- * O resultado serve exclusivamente para evitar um salto de layout; acesso
- * efetivo sempre é confirmado pela rota protegida do módulo.
+ * Ela evita uma segunda tela de validação durante a navegação interna, mas
+ * nunca substitui a autorização dos endpoints protegidos nem as políticas RLS.
  */
 export function lerContextoVisualModulo(bruto: string | undefined, destino: string, empresaId?: string) {
   return validarContexto(bruto ?? null, destino, empresaId);
 }
 
 /**
- * Mantém somente uma prévia visual curta entre páginas internas. Nunca concede
- * acesso: cada módulo confirma sessão e permissões novamente no servidor.
+ * Mantém o contexto da navegação interna na aba autenticada. Nunca concede
+ * acesso: endpoints protegidos e políticas RLS continuam autorizando cada ação.
  */
 export function prepararNavegacaoModulo(contexto: ContextoNavegacaoModulo) {
   if (typeof window === 'undefined') return;
@@ -74,15 +74,25 @@ export function consumirNavegacaoModulo(destino: string, empresaId?: string): Co
 
   try {
     const bruto = window.sessionStorage.getItem(CHAVE_CONTEXTO_NAVEGACAO);
-    window.sessionStorage.removeItem(CHAVE_CONTEXTO_NAVEGACAO);
     const contextoLocal = validarContexto(bruto, destino, empresaId);
     if (contextoLocal) return contextoLocal;
 
-    // Iframes possuem contexto de sessão próprio. Este parâmetro leva só uma
-    // prévia visual de curta duração; a rota ainda confirma acesso no servidor.
+    // O parâmetro transporta apenas o contexto visual até o iframe. No acesso
+    // direto, a rota ainda confirma acesso no servidor; operações internas
+    // continuam protegidas no servidor e no banco de dados.
     return lerContextoVisualModulo(new URLSearchParams(window.location.search).get(CHAVE_CONTEXTO_URL) ?? undefined, destino, empresaId);
   } catch {
     return null;
+  }
+}
+
+/** Remove o contexto visual junto com o encerramento explícito da sessão. */
+export function limparNavegacaoModulos() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(CHAVE_CONTEXTO_NAVEGACAO);
+  } catch {
+    // O logout continua mesmo quando o navegador impede sessionStorage.
   }
 }
 

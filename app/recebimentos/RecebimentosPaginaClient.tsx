@@ -39,6 +39,7 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
         router.replace('/gestao?abrirModulo=recebimentos_presencial');
         return;
       }
+      if (contextoInicial?.podeGerenciarModulo) return;
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) {
@@ -63,7 +64,7 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
     }
     void verificarAcesso();
     return () => { ativo = false; };
-  }, [empresaId, router]);
+  }, [contextoInicial, empresaId, router]);
 
   const repo = useMemo(() => acesso ? criarRepoSupabase(acesso.empresa.id) : null, [acesso]);
   const inicioHref = empresaId ? `/gestao?empresaId=${encodeURIComponent(empresaId)}` : '/gestao';

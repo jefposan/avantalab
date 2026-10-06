@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.48.0.42 - 2026-10-06
+
+- **Navegação contínua entre Dashboard e módulos**: a entrada interna reutiliza
+  o perfil e a sessão já validados, sem repetir a tela de validação. O retorno
+  revela imediatamente o Dashboard que permaneceu montado. Acesso direto e
+  recarga continuam validando a sessão; APIs protegidas e RLS continuam
+  autorizando cada consulta ou alteração de dados.
+
 ## 1.48.0.41 - 2026-10-06
 
 - **Conexões persistentes em Marketplaces**: as contas conectadas voltam a

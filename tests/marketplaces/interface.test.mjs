@@ -80,9 +80,10 @@ test('AvantaPreços header action copies the mobile link instead of opening it',
   assert.match(css, /\.marketplaceMobileLink \{[^}]*border: 0;[^}]*cursor: pointer;/);
 });
 
-test('marketplaces validates access on the official AvantaLab loading scene before rendering the module', () => {
+test('marketplaces reutiliza o contexto interno e mantém validação oficial no acesso direto', () => {
   assert.match(client, /import TelaCarregandoAcesso from '@\/app\/components\/TelaCarregandoAcesso'/);
-  assert.match(client, /const \[accessState, setAccessState\] = useState<'loading' \| 'ready' \| 'error'>\('loading'\)/);
+  assert.match(client, /const \[accessState, setAccessState\] = useState<'loading' \| 'ready' \| 'error'>\(\(\) => context \? 'ready' : 'loading'\)/);
+  assert.match(client, /async function loadIdentity\(\) \{\s*if \(context\) return;/);
   assert.match(client, /if \(accessState === 'loading'\) \{\s*return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" \/>;/);
   assert.match(client, /if \(!response\.ok \|\| !payload\?\.empresa\) throw new Error/);
   assert.match(client, /setAccessState\('ready'\)/);

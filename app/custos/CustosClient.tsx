@@ -42,6 +42,7 @@ export default function CustosClient({ companyId, initialNewType, returnTo, init
         router.replace('/gestao?abrirModulo=custos');
         return;
       }
+      if (contextoInicial) return;
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) { setError('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.'); return; }
@@ -53,7 +54,7 @@ export default function CustosClient({ companyId, initialNewType, returnTo, init
     };
     void verificar();
     return () => { ativo = false; };
-  }, [companyId, router]);
+  }, [companyId, contextoInicial, router]);
 
   useEffect(() => {
     if (!mensagem) return;

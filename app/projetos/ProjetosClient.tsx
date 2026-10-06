@@ -202,6 +202,20 @@ export default function ProjetosClient({ companyId, initialProjectId = '', retur
       const token = data.session?.access_token;
       if (!token) { setError('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.'); return; }
       const headers = { Authorization: `Bearer ${token}` };
+      if (contextoInicial) {
+        const sharedResponse = await fetch(`/api/modulos/projetos/compartilhados?empresaId=${encodeURIComponent(returnCompanyId || companyId)}`, { headers, cache: 'no-store' });
+        const sharedJson = await sharedResponse.json().catch(() => ({}));
+        if (!active) return;
+        if (sharedResponse.ok) {
+          setSharedProjects(Array.isArray(sharedJson.projetos) ? sharedJson.projetos as SharedProjectSummary[] : []);
+          setSharedContext(sharedJson.contexto || { id: companyId, nome: 'Projetos compartilhados', corPrimaria: '#003E73', temaEscuro: false });
+          setSharedProjectsState('ready');
+        } else {
+          setSharedProjects([]);
+          setSharedProjectsState('error');
+        }
+        return;
+      }
       const [accessResponse, sharedResponse] = await Promise.all([
         fetch(`/api/modulos/acesso?empresaId=${encodeURIComponent(companyId)}&moduloId=projetos`, { headers }),
         fetch(`/api/modulos/projetos/compartilhados?empresaId=${encodeURIComponent(returnCompanyId || companyId)}`, { headers, cache: 'no-store' }),

@@ -69,7 +69,7 @@ import {
   type SubAcaoGerenciarPerfil,
 } from '@/app/lib/perfis-quota';
 import { modulosPaginaTotalAtivos, obterRegistroModulo } from '@/app/lib/modulos-registro';
-import { criarHrefModuloEmbutido, MENSAGEM_RETORNO_MODULO_EMBUTIDO, prepararNavegacaoModulo } from '@/app/lib/navegacao-modulos';
+import { criarHrefModuloEmbutido, limparNavegacaoModulos, MENSAGEM_RETORNO_MODULO_EMBUTIDO, prepararNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { resolverAcessoComercialModulo } from '@/app/lib/modulos-acesso-comercial';
 import { validarSessaoDoDispositivo } from '@/app/lib/sessao-acesso-cliente';
 import {
@@ -595,11 +595,10 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
 
   const fecharModuloEmbutido = useCallback(() => {
     const params = new URLSearchParams(window.location.search);
+    setModuloEmbutido(null);
     if (params.has('modulo')) {
       window.history.back();
-      return;
     }
-    setModuloEmbutido(null);
   }, []);
 
   useEffect(() => {
@@ -7467,6 +7466,7 @@ const sairDaSelecaoEmpresa = async () => {
 
 const handleLogout = async () => {
   logoutManualEmCursoRef.current = true;
+  limparNavegacaoModulos();
   try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
 
   localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
