@@ -7,6 +7,10 @@
 > PWA. Quando o sistema mantém a autorização, as leituras seguintes abrem o
 > visor diretamente. Bloqueios ainda oferecem digitação manual do código.
 
+> Revisão 1.48.0.29: a separação entre catálogos internos e publicação no
+> AvantaVendas pertence à Gestão Web. A Gestão Mobile não recebe alteração de
+> fluxo nesta revisão.
+
 > Revisão 1.48.0.28: depois de identificar um produto, o **AvantaPreços**
 > consulta automaticamente ofertas comparáveis em reais no Google Shopping via
 > DataForSEO e apresenta a média com mínimo (50%), médio (70%) e ideal (90%).

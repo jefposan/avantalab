@@ -188,9 +188,9 @@ test('empresa organiza múltiplos catálogos e escolhe o destino de cada produto
   assert.doesNotMatch(migracaoAtivacaoCatalogo, /return public\.custos_definir_catalogo_atual_rpc/);
   assert.match(migracaoAtivacaoCatalogo, /catalogo\.empresa_id = p_empresa_id and catalogo\.ativo = true/);
   assert.match(catalogoConteudoVendas, /p_ativo: true/);
-  assert.match(catalogoConteudoVendas, /Ativo no Vendas/);
-  assert.match(catalogoConteudoVendas, /Nenhum catálogo está ativo no Vendas/);
-  assert.match(catalogoConteudoVendas, /disabled=\{carregando \|\| salvando \|\| !haCatalogoAtivo\}/);
+  assert.match(catalogoConteudoVendas, /Publicado no AvantaVendas/);
+  assert.match(catalogoConteudoVendas, /Nenhum catálogo está publicado no AvantaVendas/);
+  assert.match(catalogoConteudoVendas, /disabled=\{carregando \|\| salvando \|\| !haCatalogoPublicado\}/);
 });
 
 test('ativar e desativar catálogos atualiza os cards sem avisos ou confirmação redundante', () => {

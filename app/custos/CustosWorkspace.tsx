@@ -11,7 +11,7 @@ import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero, normaliz
 import { supabase } from '@/app/lib/supabase';
 import type { CustosAccess } from './CustosClient';
 import TabelasPrecosView from './TabelasPrecosView';
-import { alterarStatusCatalogoEmpresa, aplicarAcaoLoteCatalogo, carregarCustos, carregarFornecedoresCustos, criarCatalogoComProdutos, enviarImagemProduto, moverProdutosParaCatalogo, salvarCatalogoEmpresa, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos, type AcaoLoteCatalogo } from './repository';
+import { alterarPublicacaoAvantaVendasCatalogo, alterarStatusCatalogoEmpresa, aplicarAcaoLoteCatalogo, carregarCustos, carregarFornecedoresCustos, criarCatalogoComProdutos, enviarImagemProduto, moverProdutosParaCatalogo, salvarCatalogoEmpresa, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos, type AcaoLoteCatalogo } from './repository';
 import { validarPlanilhaCatalogo, type ProdutoImportadoCatalogo } from './importacao-catalogo';
 import {
   calcularComposicao, composicaoVazia, documentoVazio, novoProduto, precoEfetivoTabela, proximoCodigo, sugerirCodigosEmpresa,
@@ -135,7 +135,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
     <div className={styles.workspaceContent} aria-hidden={carregando || undefined} inert={carregando || undefined}>
     <aside className={styles.sidebar} aria-label="Áreas de Custos e Precificação">
       <nav>{navegacao.map((item) => <button key={item.id} type="button" className={aba === item.id ? styles.navActive : ''} onClick={() => abrirAba(item.id)}><span aria-hidden="true">{item.icone}</span>{item.rotulo}</button>)}</nav>
-      <div className={styles.sharedNote}><strong>Catálogos da empresa</strong><p>Produtos e serviços podem ser vinculados ao catálogo adequado. Todos os catálogos ativos abastecem o Vendas.</p></div>
+      <div className={styles.sharedNote}><strong>Catálogos da empresa</strong><p>Catálogos ativos abastecem o Vendas interno. A publicação no AvantaVendas é escolhida separadamente em cada catálogo.</p></div>
     </aside>
     <section className={styles.content}>
       <div className={styles.feedbackBar} aria-live="polite">
@@ -270,19 +270,27 @@ function CatalogosView({ companyId, catalogos, fornecedores, podeEditar, onRecar
     catch (falha) { onErro(erroTexto(falha)); }
     finally { setSalvando(false); }
   };
+  const alterarPublicacao = async (catalogo: CatalogoEmpresa, publicado: boolean) => {
+    setSalvando(true);
+    try { await alterarPublicacaoAvantaVendasCatalogo(companyId, catalogo.id, publicado); await onRecarregar(); }
+    catch (falha) { onErro(erroTexto(falha)); }
+    finally { setSalvando(false); }
+  };
   return <>
-    <PageHeader title="Catálogos" description="Crie e organize catálogos independentes. Todos os destacados em verde estão disponíveis no Vendas." actions={podeEditar ? <button type="button" className={styles.primaryButton} onClick={abrirNovo}>Novo catálogo</button> : undefined} />
+    <PageHeader title="Catálogos" description="Ative para o Vendas interno e publique no AvantaVendas somente os catálogos que desejar compartilhar." actions={podeEditar ? <button type="button" className={styles.primaryButton} onClick={abrirNovo}>Novo catálogo</button> : undefined} />
     <section className={styles.catalogCards} aria-label="Catálogos desta empresa">
       {catalogos.map((catalogo) => {
         const origem = descricaoOrigemCatalogo(catalogo.origem);
         return <article key={catalogo.id} className={`${styles.catalogCard} ${catalogo.ativo ? styles.catalogCardCurrent : styles.catalogCardInactive}`}>
-          <div className={styles.catalogCardHeading}><div><span className={styles.catalogOrigin}>{origem.titulo}</span><h2>{catalogo.nome}</h2><small>{catalogo.codigo}</small></div>{catalogo.ativo && <span className={styles.catalogCurrent}>Ativo no Vendas</span>}</div>
+          <div className={styles.catalogCardHeading}><div><span className={styles.catalogOrigin}>{origem.titulo}</span><h2>{catalogo.nome}</h2><small>{catalogo.codigo}</small></div>{catalogo.publicado_avantavendas ? <span className={styles.catalogCurrent}>No AvantaVendas</span> : catalogo.ativo ? <span className={styles.catalogCurrent}>Ativo no Vendas</span> : undefined}</div>
           <p>{origem.texto}</p>
-          <div className={styles.catalogMeta}><span>{catalogo.ativo ? 'Ativo no Vendas' : 'Desativado'}</span><span>Atualizado {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(catalogo.atualizado_em))}</span></div>
+          <div className={styles.catalogMeta}><span>{catalogo.ativo ? 'Ativo no Vendas' : 'Desativado'} · {catalogo.publicado_avantavendas ? 'Publicado no AvantaVendas' : 'Não publicado no AvantaVendas'}</span><span>Atualizado {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(catalogo.atualizado_em))}</span></div>
           {podeEditar && <div className={styles.catalogActions}>
             <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => abrirEdicao(catalogo)}>Editar</button>
             {!catalogo.ativo && <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => void ativarCatalogo(catalogo)}>Ativar</button>}
             {catalogo.ativo && <button type="button" className={styles.dangerButton} disabled={salvando} onClick={() => void desativarCatalogo(catalogo)}>Desativar</button>}
+            {catalogo.ativo && !catalogo.publicado_avantavendas && <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => void alterarPublicacao(catalogo, true)}>Publicar no AvantaVendas</button>}
+            {catalogo.publicado_avantavendas && <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => void alterarPublicacao(catalogo, false)}>Retirar do AvantaVendas</button>}
           </div>}
         </article>;
       })}

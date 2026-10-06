@@ -11,7 +11,8 @@ const texto = (valor: unknown) => String(valor || '');
 const mapearCatalogo = (linha: Record<string, unknown>): CatalogoEmpresa => ({
   id: texto(linha.id), empresa_id: texto(linha.empresa_id), nome: texto(linha.nome), codigo: texto(linha.codigo),
   origem: linha.origem === 'custos_local' ? 'custos_local' : linha.origem === 'manual' ? 'manual' : 'externa',
-  ativo: linha.ativo !== false, padrao: linha.padrao === true, atualizado_em: texto(linha.atualizado_em),
+  ativo: linha.ativo !== false, publicado_avantavendas: linha.publicado_avantavendas === true,
+  padrao: linha.padrao === true, atualizado_em: texto(linha.atualizado_em),
 });
 const mapearProduto = (linha: Record<string, unknown>): ProdutoCustos => ({
   id: texto(linha.id), catalogo_id: texto(linha.catalogo_id), sku: texto(linha.sku),
@@ -42,7 +43,7 @@ export async function carregarCustos(empresaId: string, podeEditar: boolean) {
   if (erroCatalogo) throw new Error('Não foi possível preparar o cadastro mestre desta empresa.');
 
   const catalogosResultado = await supabase.from('vendas_mobile_catalogos')
-    .select('id,empresa_id,nome,codigo,origem,ativo,padrao,atualizado_em').eq('empresa_id', empresaId)
+    .select('id,empresa_id,nome,codigo,origem,ativo,publicado_avantavendas,padrao,atualizado_em').eq('empresa_id', empresaId)
     .order('padrao', { ascending: false }).order('ativo', { ascending: false }).order('nome');
   if (catalogosResultado.error) throw new Error('Não foi possível carregar os catálogos desta empresa.');
   const catalogos = ((catalogosResultado.data || []) as unknown as Record<string, unknown>[]).map(mapearCatalogo);
@@ -110,6 +111,14 @@ export async function alterarStatusCatalogoEmpresa(empresaId: string, catalogoId
     p_empresa_id: empresaId, p_catalogo_id: catalogoId, p_ativo: ativo,
   });
   if (error) throw new Error(error.message || 'Não foi possível alterar o status do catálogo.');
+  return mapearCatalogo(data as unknown as Record<string, unknown>);
+}
+
+export async function alterarPublicacaoAvantaVendasCatalogo(empresaId: string, catalogoId: string, publicado: boolean) {
+  const { data, error } = await supabase.rpc('custos_alterar_publicacao_avantavendas_catalogo_rpc', {
+    p_empresa_id: empresaId, p_catalogo_id: catalogoId, p_publicado: publicado,
+  });
+  if (error) throw new Error(error.message || 'Não foi possível alterar a publicação no AvantaVendas.');
   return mapearCatalogo(data as unknown as Record<string, unknown>);
 }
 

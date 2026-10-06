@@ -5,6 +5,11 @@
 > Revisão 1.48.0.29: a permissão nativa única de câmera do AvantaPreços
 > pertence ao PWA de marketplaces e não altera os fluxos do AvantaVendas.
 
+> Revisão 1.48.0.29: contas vinculadas recebem somente catálogos marcados
+> explicitamente como **Publicados no AvantaVendas**. Ativar um catálogo para o
+> Vendas interno da empresa não o compartilha automaticamente; as cópias
+> duplicadas do fluxo anterior são ocultadas sem apagar o histórico.
+
 > Revisão 1.48.0.28: a consulta automática de preços via Google Shopping no
 > **AvantaPreços** pertence ao PWA de marketplaces e não altera os fluxos do
 > AvantaVendas.

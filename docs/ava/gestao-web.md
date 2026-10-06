@@ -6,6 +6,11 @@
 > diretamente no toque em **Ler EAN**, sem botão ou autorização intermediária
 > do PWA. Depois que o aparelho preserva a permissão, o leitor abre direto.
 
+> Revisão 1.48.0.29: em **Custos e Precificação > Catálogos**, ativar um
+> catálogo o mantém disponível apenas no Vendas interno. Para disponibilizá-lo
+> a contas vinculadas do AvantaVendas, use explicitamente **Publicar no
+> AvantaVendas**; retirar essa publicação não desativa o catálogo interno.
+
 > Revisão 1.48.0.28: o **AvantaPreços** identifica o produto com a conexão
 > Mercado Livre ou o catálogo do perfil e calcula sugestões usando ofertas em
 > reais do Google Shopping pela integração DataForSEO no servidor. A Gestão Web
