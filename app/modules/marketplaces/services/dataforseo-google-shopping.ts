@@ -18,6 +18,11 @@ function record(value: unknown): JsonRecord {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as JsonRecord : {};
 }
 
+function tasksFrom(body: JsonRecord) {
+  const tasks = body.tasks;
+  return Array.isArray(tasks) ? tasks.map(record) : [];
+}
+
 function text(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
@@ -114,7 +119,7 @@ async function providerRequest(path: string, init: RequestInit, fetcher: typeof 
     throw new MarketplaceError(response.status === 429 ? 429 : 503, response.status === 429 ? 'price_provider_limited' : 'price_provider_failed',
       response.status === 429 ? 'Limite de consultas de preços atingido. Aguarde alguns instantes.' : 'Não foi possível consultar os preços agora. Tente novamente.');
   }
-  const task = Array.isArray(record(body).tasks) ? record(body).tasks[0] : null;
+  const task = tasksFrom(record(body))[0] || null;
   const status = Number(record(task).status_code);
   if (!task || (Number.isFinite(status) && status >= 40000)) {
     throw new MarketplaceError(503, 'price_provider_failed', 'A consulta de preços não foi aceita. Tente novamente.');
@@ -123,15 +128,13 @@ async function providerRequest(path: string, init: RequestInit, fetcher: typeof 
 }
 
 function taskId(body: JsonRecord) {
-  const tasks = Array.isArray(body.tasks) ? body.tasks : [];
-  const id = text(record(tasks[0]).id);
+  const id = text(tasksFrom(body)[0]?.id);
   if (!/^[0-9a-f-]{20,}$/i.test(id)) throw new MarketplaceError(503, 'price_provider_invalid_response', 'A consulta de preços retornou uma resposta incompleta. Tente novamente.');
   return id;
 }
 
 function taskHasResult(body: JsonRecord) {
-  const tasks = Array.isArray(body.tasks) ? body.tasks : [];
-  const result = record(tasks[0]).result;
+  const result = tasksFrom(body)[0]?.result;
   return Array.isArray(result) && result.length > 0;
 }
 
