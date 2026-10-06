@@ -48,6 +48,7 @@ const migracaoCatalogosSeparados = readFileSync('supabase/migrations/20260924100
 const migracaoAcoesLoteCatalogo = readFileSync('supabase/migrations/20260924103000_acoes_lote_catalogo_custos.sql', 'utf8');
 const migracaoCatalogosGerenciaveis = readFileSync('supabase/migrations/20260924110000_catalogos_empresa_gerenciaveis.sql', 'utf8');
 const migracaoAtivacaoCatalogo = readFileSync('supabase/migrations/20261004110000_ativacao_catalogo_vendas_explicita.sql', 'utf8');
+const migracaoDestinosCatalogo = readFileSync('supabase/migrations/20261006150000_independencia_destinos_catalogo.sql', 'utf8');
 const migracaoMoverCatalogo = readFileSync('supabase/migrations/20261003150000_mover_produtos_entre_catalogos_custos.sql', 'utf8');
 const fornecedoresCustos = readFileSync('app/api/modulos/custos/fornecedores/route.ts', 'utf8');
 
@@ -150,10 +151,11 @@ test('empresa organiza múltiplos catálogos e escolhe o destino de cada produto
   assert.match(workspace, /rotulo: 'Catálogos'/);
   assert.match(workspace, /title="Catálogos"/);
   assert.match(workspace, /Novo catálogo/);
-  assert.match(workspace, /void ativarCatalogo\(catalogo\)}>Ativar/);
+  assert.match(workspace, /catalogo\.ativo \? desativarCatalogo\(catalogo\) : ativarCatalogo\(catalogo\)/);
   assert.doesNotMatch(workspace, /Tornar atual/);
-  assert.match(workspace, /catalogo\.ativo \? styles\.catalogCardCurrent : styles\.catalogCardInactive/);
-  assert.match(workspace, /Ativo no Vendas/);
+  assert.match(workspace, /ativoEmAlgumDestino \? styles\.catalogCardCurrent : styles\.catalogCardInactive/);
+  assert.match(workspace, /<strong>Vendas e Serviços<\/strong>/);
+  assert.match(workspace, /<strong>AvantaVendas<\/strong>/);
   assert.match(estilos, /\.catalogCardCurrent\{border:4px solid var\(--success\)/);
   assert.match(workspace, /Catálogos da empresa/);
   assert.match(workspace, /<option value="">Todos os catálogos<\/option>/);
@@ -188,15 +190,30 @@ test('empresa organiza múltiplos catálogos e escolhe o destino de cada produto
   assert.doesNotMatch(migracaoAtivacaoCatalogo, /return public\.custos_definir_catalogo_atual_rpc/);
   assert.match(migracaoAtivacaoCatalogo, /catalogo\.empresa_id = p_empresa_id and catalogo\.ativo = true/);
   assert.match(catalogoConteudoVendas, /p_ativo: true/);
-  assert.match(catalogoConteudoVendas, /Publicado no AvantaVendas/);
-  assert.match(catalogoConteudoVendas, /Nenhum catálogo está publicado no AvantaVendas/);
+  assert.match(catalogoConteudoVendas, /Ativo no AvantaVendas/);
+  assert.match(catalogoConteudoVendas, /Nenhum catálogo está ativo no AvantaVendas/);
   assert.match(catalogoConteudoVendas, /disabled=\{carregando \|\| salvando \|\| !haCatalogoPublicado\}/);
+});
+
+test('destinos do catálogo são independentes no banco e na interface', () => {
+  assert.match(migracaoDestinosCatalogo, /v_publicavel := v_catalogo\.publicado_avantavendas\s+and v_produto\.ativo/);
+  assert.doesNotMatch(migracaoDestinosCatalogo, /v_publicavel := v_catalogo\.ativo/);
+  assert.match(migracaoDestinosCatalogo, /where empresa_id = p_empresa_id and publicado_avantavendas/);
+  assert.doesNotMatch(migracaoDestinosCatalogo, /where empresa_id = p_empresa_id and ativo and publicado_avantavendas/);
+  assert.match(migracaoDestinosCatalogo, /set publicado_avantavendas = coalesce\(p_publicado, false\)/);
+  assert.doesNotMatch(migracaoDestinosCatalogo, /Ative o catálogo no Vendas antes/);
+  assert.match(migracaoDestinosCatalogo, /and not public\.custos_pode_acessar_empresa\(v_catalogo\.empresa_id, true\)/);
+  assert.doesNotMatch(migracaoAtivacaoCatalogo, /publicado_avantavendas/);
+  assert.match(migracaoDestinosCatalogo, /if not v_publicavel then[\s\S]*where catalogo_produto_origem_id = v_produto\.id[\s\S]*return jsonb_build_object/);
+  assert.match(migracaoDestinosCatalogo, /values \(p_empresa_id, v_nome, v_codigo, 'manual', false, false, true, auth\.uid\(\)\)/);
+  assert.match(catalogoConteudoVendas, /catalogos\.some\(\(catalogo\) => catalogo\.publicado_avantavendas\)/);
+  assert.doesNotMatch(catalogoConteudoVendas, /catalogos\.some\(\(catalogo\) => catalogo\.ativo && catalogo\.publicado_avantavendas\)/);
 });
 
 test('ativar e desativar catálogos atualiza os cards sem avisos ou confirmação redundante', () => {
   const gestaoCatalogos = workspace.split('function CatalogosView')[1]?.split('function ProdutosView')[0] || '';
-  assert.match(gestaoCatalogos, /void desativarCatalogo\(catalogo\)/);
-  assert.match(gestaoCatalogos, /void ativarCatalogo\(catalogo\)/);
+  assert.match(gestaoCatalogos, /desativarCatalogo\(catalogo\)/);
+  assert.match(gestaoCatalogos, /ativarCatalogo\(catalogo\)/);
   assert.doesNotMatch(gestaoCatalogos, /confirmarStatus|ModalConfirmacao|onMensagem|catalogGuidance/);
   assert.match(gestaoCatalogos, /onErro\(erroTexto\(falha\)\)/);
   assert.match(catalogoConteudoVendas, /void desativarCatalogo\(catalogo\)/);

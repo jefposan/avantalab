@@ -277,21 +277,20 @@ function CatalogosView({ companyId, catalogos, fornecedores, podeEditar, onRecar
     finally { setSalvando(false); }
   };
   return <>
-    <PageHeader title="Catálogos" description="Ative para o Vendas interno e publique no AvantaVendas somente os catálogos que desejar compartilhar." actions={podeEditar ? <button type="button" className={styles.primaryButton} onClick={abrirNovo}>Novo catálogo</button> : undefined} />
+    <PageHeader title="Catálogos" description="Defina separadamente onde cada catálogo será utilizado. Um destino nunca altera o outro." actions={podeEditar ? <button type="button" className={styles.primaryButton} onClick={abrirNovo}>Novo catálogo</button> : undefined} />
     <section className={styles.catalogCards} aria-label="Catálogos desta empresa">
       {catalogos.map((catalogo) => {
         const origem = descricaoOrigemCatalogo(catalogo.origem);
-        return <article key={catalogo.id} className={`${styles.catalogCard} ${catalogo.ativo ? styles.catalogCardCurrent : styles.catalogCardInactive}`}>
-          <div className={styles.catalogCardHeading}><div><span className={styles.catalogOrigin}>{origem.titulo}</span><h2>{catalogo.nome}</h2><small>{catalogo.codigo}</small></div>{catalogo.publicado_avantavendas ? <span className={styles.catalogCurrent}>No AvantaVendas</span> : catalogo.ativo ? <span className={styles.catalogCurrent}>Ativo no Vendas</span> : undefined}</div>
+        const ativoEmAlgumDestino = catalogo.ativo || catalogo.publicado_avantavendas;
+        return <article key={catalogo.id} className={`${styles.catalogCard} ${ativoEmAlgumDestino ? styles.catalogCardCurrent : styles.catalogCardInactive}`}>
+          <div className={styles.catalogCardHeading}><div><span className={styles.catalogOrigin}>{origem.titulo}</span><h2>{catalogo.nome}</h2><small>{catalogo.codigo}</small></div>{!ativoEmAlgumDestino && <span className={styles.catalogInactiveBadge}>Inativo</span>}</div>
           <p>{origem.texto}</p>
-          <div className={styles.catalogMeta}><span>{catalogo.ativo ? 'Ativo no Vendas' : 'Desativado'} · {catalogo.publicado_avantavendas ? 'Publicado no AvantaVendas' : 'Não publicado no AvantaVendas'}</span><span>Atualizado {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(catalogo.atualizado_em))}</span></div>
-          {podeEditar && <div className={styles.catalogActions}>
-            <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => abrirEdicao(catalogo)}>Editar</button>
-            {!catalogo.ativo && <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => void ativarCatalogo(catalogo)}>Ativar</button>}
-            {catalogo.ativo && <button type="button" className={styles.dangerButton} disabled={salvando} onClick={() => void desativarCatalogo(catalogo)}>Desativar</button>}
-            {catalogo.ativo && !catalogo.publicado_avantavendas && <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => void alterarPublicacao(catalogo, true)}>Publicar no AvantaVendas</button>}
-            {catalogo.publicado_avantavendas && <button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => void alterarPublicacao(catalogo, false)}>Retirar do AvantaVendas</button>}
-          </div>}
+          <div className={styles.catalogDestinations} aria-label={`Destinos do catálogo ${catalogo.nome}`}>
+            <div><span><strong>Vendas e Serviços</strong><small>{catalogo.ativo ? 'Ativo' : 'Desativado'}</small></span>{podeEditar && <button type="button" className={catalogo.ativo ? styles.dangerButton : styles.secondaryButton} disabled={salvando} onClick={() => void (catalogo.ativo ? desativarCatalogo(catalogo) : ativarCatalogo(catalogo))}>{catalogo.ativo ? 'Desativar' : 'Ativar'}</button>}</div>
+            <div><span><strong>AvantaVendas</strong><small>{catalogo.publicado_avantavendas ? 'Ativo' : 'Desativado'}</small></span>{podeEditar && <button type="button" className={catalogo.publicado_avantavendas ? styles.dangerButton : styles.secondaryButton} disabled={salvando} onClick={() => void alterarPublicacao(catalogo, !catalogo.publicado_avantavendas)}>{catalogo.publicado_avantavendas ? 'Desativar' : 'Ativar'}</button>}</div>
+          </div>
+          <div className={styles.catalogMeta}><span>Atualizado {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(catalogo.atualizado_em))}</span></div>
+          {podeEditar && <div className={styles.catalogActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => abrirEdicao(catalogo)}>Editar</button></div>}
         </article>;
       })}
       {!catalogos.length && <div className={styles.empty}>Nenhum catálogo foi encontrado para esta empresa.</div>}

@@ -47,7 +47,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
   const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['unidade', 'Unidade'], ['preco_divulgacao', 'Preço sugerido de revenda'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
-  const haCatalogoPublicado = catalogos.some((catalogo) => catalogo.ativo && catalogo.publicado_avantavendas);
+  const haCatalogoPublicado = catalogos.some((catalogo) => catalogo.publicado_avantavendas);
 
   const solicitarIndiceVoz = useCallback(async (productId = '') => {
     try {
@@ -94,7 +94,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
   const iniciarNovoProduto = () => {
     if (!haCatalogoPublicado) {
-      setErro('Publique um catálogo no AvantaVendas antes de cadastrar produtos.');
+      setErro('Ative um catálogo no AvantaVendas antes de cadastrar produtos.');
       return;
     }
     setErro('');
@@ -187,7 +187,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     const produtoSalvo = data as { id?: string } | null;
     setSalvando(false);
     if (error || !produtoSalvo?.id) {
-      setErro(error?.message.toLowerCase().includes('sku') ? 'Este SKU já existe neste pacote.' : error?.message.includes('Publique um catálogo') ? 'Publique um catálogo no AvantaVendas antes de cadastrar produtos.' : 'Não foi possível salvar o produto.');
+      setErro(error?.message.toLowerCase().includes('sku') ? 'Este SKU já existe neste pacote.' : error?.message.includes('Ative um catálogo') ? 'Ative um catálogo no AvantaVendas antes de cadastrar produtos.' : 'Não foi possível salvar o produto.');
       return;
     }
     void solicitarIndiceVoz(produtoSalvo.id);
@@ -215,9 +215,9 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     mudar('imagem_url', supabase.storage.from('vendas-produtos').getPublicUrl(caminho).data.publicUrl);
   };
 
-  const catalogosExportaveis = catalogos.filter((catalogo) => catalogo.ativo && catalogo.publicado_avantavendas);
+  const catalogosExportaveis = catalogos.filter((catalogo) => catalogo.publicado_avantavendas);
   const abrirExportacao = () => {
-    if (!catalogosExportaveis.length) { setErro('Publique ao menos um catálogo no AvantaVendas antes de gerar o pacote.'); return; }
+    if (!catalogosExportaveis.length) { setErro('Ative ao menos um catálogo no AvantaVendas antes de gerar o pacote.'); return; }
     if (catalogosExportaveis.length === 1) { void exportarPacoteZip(catalogosExportaveis[0]); return; }
     setErro('');
     setCatalogoParaExportarId(catalogos.find((catalogo) => catalogo.padrao)?.id || catalogosExportaveis[0].id);
@@ -285,16 +285,16 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
 
   return <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
     <div className={`${formularioAberto ? 'mb-2' : 'mb-4'} shrink-0 sm:flex sm:items-start sm:justify-between sm:gap-5`}>
-      <div className="min-w-0"><h3 className="text-base font-black">Pacote de produtos</h3>{!formularioAberto && <p className={`mt-1 max-w-xl text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Somente catálogos publicados no AvantaVendas alimentam as contas vinculadas. Ativar no Vendas interno não publica automaticamente.</p>}</div>
+      <div className="min-w-0"><h3 className="text-base font-black">Pacote de produtos</h3>{!formularioAberto && <p className={`mt-1 max-w-xl text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Somente catálogos ativos no AvantaVendas alimentam as contas vinculadas. O estado em Vendas e Serviços é independente.</p>}</div>
       <div className={`${formularioAberto ? 'hidden' : 'grid'} mt-3 w-full grid-cols-2 gap-2 sm:mt-0 sm:w-72 sm:shrink-0`} aria-label="Ações do catálogo">
         <span className="flex h-9 items-center justify-center rounded-lg bg-cyan-500/10 px-2 text-[10px] font-black uppercase text-cyan-700">{produtos.length} produtos</span>
         <button type="button" onClick={abrirExportacao} disabled={exportando} className="h-9 rounded-lg border border-cyan-300 px-2 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-60">{exportando ? 'Gerando...' : 'Gerar ZIP'}</button>
         <button type="button" onClick={abrirGerenciadorCatalogos} className="col-span-2 h-9 rounded-lg border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700">Gerenciar catálogos</button>
         <button type="button" onClick={abrirNovoCatalogo} disabled={carregando || salvandoCatalogo} className="h-9 rounded-lg border border-cyan-300 px-2 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-60">Novo catálogo</button>
-        <button ref={botaoNovoRef} type="button" onClick={iniciarNovoProduto} disabled={carregando || salvando || !haCatalogoPublicado} title={!haCatalogoPublicado ? 'Publique um catálogo em Gerenciar catálogos.' : undefined} className="h-9 rounded-lg px-2 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>Novo produto</button>
+        <button ref={botaoNovoRef} type="button" onClick={iniciarNovoProduto} disabled={carregando || salvando || !haCatalogoPublicado} title={!haCatalogoPublicado ? 'Ative um catálogo no AvantaVendas em Gerenciar catálogos.' : undefined} className="h-9 rounded-lg px-2 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>Novo produto</button>
       </div>
     </div>
-    {!carregando && !haCatalogoPublicado && !formularioAberto && <p role="status" className={`mb-3 rounded-lg border px-3 py-2 text-xs font-bold ${darkMode ? 'border-amber-500/40 bg-amber-500/10 text-amber-200' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>Nenhum catálogo está publicado no AvantaVendas. Use Gerenciar catálogos para publicar o desejado.</p>}
+    {!carregando && !haCatalogoPublicado && !formularioAberto && <p role="status" className={`mb-3 rounded-lg border px-3 py-2 text-xs font-bold ${darkMode ? 'border-amber-500/40 bg-amber-500/10 text-amber-200' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>Nenhum catálogo está ativo no AvantaVendas. Use Gerenciar catálogos para ativar o desejado.</p>}
     <div className={`grid min-h-0 flex-1 gap-4 ${formularioAberto ? 'grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]' : 'grid-rows-[minmax(0,1fr)]'}`}>
       {formularioAberto && <div className="flex min-h-0">
       <section ref={formularioRef} tabIndex={-1} className={`h-full min-h-0 w-full overflow-y-auto rounded-xl border p-3 focus:outline-none md:overflow-visible ${painel}`}>
@@ -348,8 +348,8 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
           <div className="mt-3 grid gap-2">{catalogos.map((catalogo) => {
             return <article key={catalogo.id} className={`rounded-xl border p-3 ${catalogo.publicado_avantavendas ? 'border-4 border-emerald-600' : darkMode ? 'border-slate-700' : 'border-slate-200'} ${catalogo.publicado_avantavendas ? darkMode ? 'bg-slate-800' : 'bg-slate-50' : darkMode ? 'bg-slate-800/60' : 'bg-slate-100'}`}>
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className={catalogo.ativo ? '' : 'opacity-60'}><div className="flex flex-wrap items-center gap-1.5"><h4 className="text-sm font-black">{catalogo.nome}</h4>{catalogo.publicado_avantavendas && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-700">Publicado no AvantaVendas</span>}{!catalogo.publicado_avantavendas && <span className="rounded-full bg-slate-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-slate-500">Não publicado</span>}</div><p className={`mt-1 text-[10px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{rotuloOrigemCatalogo(catalogo.origem)} · {catalogo.codigo}{!catalogo.ativo ? ' · desativado no Vendas' : ''}</p></div>
-                <div className="flex flex-wrap justify-end gap-1.5"><button type="button" onClick={() => setCatalogoEmEdicao(catalogo)} disabled={salvandoCatalogo} className="min-h-9 rounded-lg border px-2.5 text-[10px] font-black uppercase">Editar</button>{catalogo.ativo && !catalogo.publicado_avantavendas && <button type="button" onClick={() => void ativarCatalogo(catalogo)} disabled={salvandoCatalogo} className="min-h-9 rounded-lg border border-emerald-500 px-2.5 text-[10px] font-black uppercase text-emerald-700">Publicar</button>}{catalogo.publicado_avantavendas && <button type="button" onClick={() => void desativarCatalogo(catalogo)} disabled={salvandoCatalogo} className="min-h-9 rounded-lg border px-2.5 text-[10px] font-black uppercase">Retirar</button>}</div>
+                <div><div className="flex flex-wrap items-center gap-1.5"><h4 className="text-sm font-black">{catalogo.nome}</h4>{catalogo.publicado_avantavendas && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-700">Ativo no AvantaVendas</span>}{!catalogo.publicado_avantavendas && <span className="rounded-full bg-slate-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-slate-500">Desativado no AvantaVendas</span>}</div><p className={`mt-1 text-[10px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{rotuloOrigemCatalogo(catalogo.origem)} · {catalogo.codigo} · Vendas e Serviços: {catalogo.ativo ? 'ativo' : 'desativado'}</p></div>
+                <div className="flex flex-wrap justify-end gap-1.5"><button type="button" onClick={() => setCatalogoEmEdicao(catalogo)} disabled={salvandoCatalogo} className="min-h-9 rounded-lg border px-2.5 text-[10px] font-black uppercase">Editar</button>{!catalogo.publicado_avantavendas && <button type="button" onClick={() => void ativarCatalogo(catalogo)} disabled={salvandoCatalogo} className="min-h-9 rounded-lg border border-emerald-500 px-2.5 text-[10px] font-black uppercase text-emerald-700">Ativar no AvantaVendas</button>}{catalogo.publicado_avantavendas && <button type="button" onClick={() => void desativarCatalogo(catalogo)} disabled={salvandoCatalogo} className="min-h-9 rounded-lg border px-2.5 text-[10px] font-black uppercase">Desativar no AvantaVendas</button>}</div>
               </div>
             </article>;
           })}</div>

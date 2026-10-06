@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.34 -->
+<!-- ava-version: 1.48.0.35 -->
+
+> Revisão 1.48.0.35: a separação dos destinos **Vendas e Serviços** e
+> **AvantaVendas** é administrada na Gestão Web; sem impacto operacional na
+> Gestão Mobile.
 
 > Revisão 1.48.0.34: o **AvantaPreços** abre imediatamente a referência já
 > salva quando o mesmo EAN for lido. **Últimas consultas** fica limitada às 20

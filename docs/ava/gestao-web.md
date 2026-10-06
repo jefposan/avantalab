@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.34 -->
+<!-- ava-version: 1.48.0.35 -->
+
+> Revisão 1.48.0.35: em **Custos e Precificação > Catálogos**, cada card
+> separa os destinos **Vendas e Serviços** e **AvantaVendas**, ambos com ações
+> próprias de **Ativar** e **Desativar**. Um estado nunca altera o outro. Use o
+> primeiro para a operação interna da empresa e o segundo somente para os itens
+> que podem ser visualizados e utilizados pelos usuários do AvantaVendas.
 
 > Revisão 1.48.0.34: no **AvantaPreços**, um EAN que já possui cálculo salvo
 > abre a referência da empresa sem repetir a consulta. A tela inicial mostra

@@ -10,7 +10,7 @@ export type CatalogoEmpresa = {
   codigo: string;
   origem: OrigemCatalogoEmpresa;
   ativo: boolean;
-  /** Disponibiliza este catálogo para cópia em contas vinculadas do AvantaVendas. */
+  /** Disponibiliza este catálogo nas contas vinculadas do AvantaVendas, independentemente de `ativo`. */
   publicado_avantavendas: boolean;
   padrao: boolean;
   atualizado_em: string;

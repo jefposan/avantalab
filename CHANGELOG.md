@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.48.0.35 - 2026-10-06
+
+- **Destinos independentes por catálogo**: cada catálogo passa a ter controles
+  separados para **Vendas e Serviços** e **AvantaVendas**. Ativar ou desativar
+  um destino não altera o outro; assim, insumos e produtos internos podem
+  permanecer fora da visualização dos vendedores, enquanto catálogos próprios
+  do AvantaVendas podem ser distribuídos sem entrar no Vendas interno.
+- **Sincronização coerente com o destino**: contas vinculadas recebem somente
+  catálogos ativos no AvantaVendas. A mudança de publicação atualiza as cópias
+  imediatamente e preserva cadastros, estoque e histórico ao desativar.
+
 ## 1.48.0.34 - 2026-10-06
 
 - **Base reutilizável no AvantaPreços**: um EAN já precificado na empresa abre

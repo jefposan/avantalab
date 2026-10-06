@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.34 -->
+<!-- ava-version: 1.48.0.35 -->
+
+> Revisão 1.48.0.35: o AvantaVendas recebe somente os catálogos ativados
+> especificamente para ele. O estado **Vendas e Serviços** é independente e
+> não libera nem bloqueia a visualização dos vendedores. Desativar no
+> AvantaVendas oculta as cópias recebidas sem apagar cadastros ou histórico.
 
 > Revisão 1.48.0.34: histórico reutilizável, cálculo manual e a página
 > **Produtos precificados** pertencem ao PWA **AvantaPreços** e não alteram os
