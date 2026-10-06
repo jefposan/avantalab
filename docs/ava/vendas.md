@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.31 -->
+<!-- ava-version: 1.48.0.32 -->
+
+> Revisão 1.48.0.32: a pesquisa de preços pelo título confirmado no
+> AvantaPreços pertence ao PWA de marketplaces e não altera os fluxos do
+> AvantaVendas.
 
 > Revisão 1.48.0.31-av166: com conexão lenta ou instável, o AvantaVendas
 > aguarda no máximo oito segundos pelas gravações de clientes, pedidos e

@@ -1,5 +1,11 @@
 # Changelog
 
+- **Pesquisa de preços pelo produto confirmado**: o AvantaPreços usa o título
+  da ficha confirmada no Mercado Livre para pesquisar preços no Google
+  Shopping. O EAN permanece na identificação e validação, mas não é mais usado
+  sozinho como consulta de vitrine — situação que podia devolver itens sem
+  relação e impedir a formação da média.
+
 - **Prazo real da consulta de preços**: o AvantaPreços acompanha a mesma tarefa
   da DataForSEO por até 45 segundos. Consultas legítimas que ultrapassavam os
   20 segundos anteriores agora aguardam o resultado antes de informar demora,

@@ -45,7 +45,9 @@ credenciais adicionais no ambiente.
   sugestões são calculadas sobre a média: mínimo 50%, médio 70% e ideal 90%.
 - A consulta automática de preço usa a API Merchant do Google Shopping da
   DataForSEO apenas no servidor. O Mercado Livre continua responsável pela
-  identificação do produto e pela conexão da empresa. `DATAFORSEO_API_LOGIN`,
+  identificação do produto e pela conexão da empresa; o título confirmado da
+  ficha é a consulta enviada ao Google Shopping, enquanto o EAN permanece na
+  validação. `DATAFORSEO_API_LOGIN`,
   `DATAFORSEO_API_PASSWORD` e `DATAFORSEO_PRICE_LOOKUP_ENABLED` são secrets de
   produção e nunca podem ser expostos ao navegador, ao banco ou a logs.
 - O estado temporário `Task In Queue` da DataForSEO é aguardado na mesma tarefa

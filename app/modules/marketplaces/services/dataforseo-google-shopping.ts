@@ -40,15 +40,22 @@ function normalizedWords(value: string) {
     .replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter((word) => word.length >= 3));
 }
 
+function modelTokens(value: string) {
+  return [...normalizedWords(value)].filter((word) => word.length >= 4 && /[a-z]/.test(word) && /\d/.test(word));
+}
+
 function titleMatchesProduct(title: string, productName: string, ean?: string | null) {
   const normalizedTitle = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   if (ean && normalizedTitle.includes(ean)) return true;
   const wanted = normalizedWords(productName);
   const actual = normalizedWords(title);
   if (!wanted.size || !actual.size) return false;
+  // Modelos como ME20B distinguem melhor produtos longos do que exigir que o
+  // título de uma loja reproduza toda a descrição do catálogo Mercado Livre.
+  if (modelTokens(productName).some((model) => actual.has(model))) return true;
   let matches = 0;
   for (const word of wanted) if (actual.has(word)) matches++;
-  return matches / wanted.size >= 0.6;
+  return matches / wanted.size >= (wanted.size >= 8 ? 0.45 : 0.6);
 }
 
 /**
@@ -161,7 +168,13 @@ function taskHasResult(body: JsonRecord) {
 const wait = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
 export async function consultGoogleShoppingPrices(input: { ean: string | null; productName: string }) {
-  const keyword = input.ean || input.productName;
+  // O EAN serve para identificar com precisão a ficha no Mercado Livre. O
+  // Google Shopping não o interpreta de forma confiável como uma pesquisa de
+  // produto e pode devolver uma vitrine de itens aleatórios. A consulta de
+  // preço usa o título já confirmado da ficha; o EAN continua na validação das
+  // ofertas quando estiver presente no resultado.
+  const keyword = text(input.productName) || text(input.ean);
+  if (!keyword) throw new MarketplaceError(400, 'invalid_price_query', 'Não foi possível determinar o produto para consultar preços.');
   const posted = await providerRequest('/v3/merchant/google/products/task_post', {
     method: 'POST',
     body: JSON.stringify([{ keyword, location_name: 'Brazil', language_code: 'pt', depth: 20 }]),

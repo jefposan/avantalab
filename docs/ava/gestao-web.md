@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.31 -->
+<!-- ava-version: 1.48.0.32 -->
+
+> Revisão 1.48.0.32: o **AvantaPreços** identifica o EAN no Mercado Livre e
+> usa o título confirmado da ficha para pesquisar preços no Google Shopping.
+> Isso evita que uma busca pelo código isolado retorne produtos não relacionados.
 
 > Revisão 1.48.0.31: tolerância a rede lenta foi ajustada somente no
 > AvantaVendas; sem impacto operacional na Gestão Web.

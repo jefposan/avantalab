@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.31 -->
+<!-- ava-version: 1.48.0.32 -->
+
+> Revisão 1.48.0.32: depois de identificar o EAN no Mercado Livre, o
+> **AvantaPreços** consulta o Google Shopping pelo nome confirmado do produto.
+> O código continua sendo usado na identificação, sem limitar a pesquisa de
+> ofertas a títulos que exibam o EAN.
 
 > Revisão 1.48.0.31: tolerância a rede lenta foi ajustada somente no
 > AvantaVendas; sem impacto operacional na Gestão Mobile.

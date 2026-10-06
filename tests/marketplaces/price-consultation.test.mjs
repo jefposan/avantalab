@@ -45,6 +45,7 @@ function mockPriceProvider({ pendingPolls = 0 } = {}) {
   globalThis.fetch = async (url, init) => {
     if (String(url).endsWith('/task_post')) {
       assert.equal(init?.method, 'POST');
+      globalThis.__priceLookupKeyword = JSON.parse(String(init?.body)).at(0)?.keyword;
       return Response.json({ tasks: [{ id: '11111111-1111-1111-1111-111111111111', status_code: 20100, result: null }] });
     }
     if (String(url).includes('/task_get/advanced/')) {
@@ -70,6 +71,7 @@ test('consulta identifica o produto e calcula a média sem consultar a vitrine d
   const result = await consultMercadoLivrePrice({}, connection, { ean });
   assert.equal(result.status, 'found');
   assert.equal(result.product?.name, 'Fogão de teste');
+  assert.equal(globalThis.__priceLookupKeyword, 'Fogão de teste');
   assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
   assert.deepEqual(result.sample, { count: 2, minimum: 800, maximum: 900, source: 'google_shopping' });
 });
@@ -133,4 +135,11 @@ test('amostra Google Shopping aceita somente valores em reais do produto corresp
     { title: 'Gin Bóra London Dry 700 ml', price: 200, currency: 'USD' },
   ] }] }] }, 'Gin Bóra London Dry 700 ml', '7890000000000');
   assert.deepEqual(sample, { pricesInCents: [12500, 15050], count: 2, minimum: 125, maximum: 150.5 });
+});
+
+test('amostra Google Shopping reconhece um modelo presente em título comercial mais curto', () => {
+  const sample = extractGoogleShoppingPriceSample({ tasks: [{ result: [{ items: [
+    { title: 'Micro-ondas Electrolux ME20B 20L Branco', price: 599.9, currency: 'BRL' },
+  ] }] }] }, 'Micro-ondas Electrolux Efficient 20L Branco Função Descongelar e Receitas Pré-Programadas (ME20B)', '7909569511480');
+  assert.deepEqual(sample, { pricesInCents: [59990], count: 1, minimum: 599.9, maximum: 599.9 });
 });
