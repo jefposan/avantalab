@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.38 -->
+<!-- ava-version: 1.48.0.39 -->
+
+> Revisão 1.48.0.39: o **AvantaPreços** reconhece SKU mesmo quando o Google
+> Shopping remove sua pontuação — por exemplo, `69065/011` como `69065011`.
+> Após selecionar a ficha, usa seus vendedores mesmo que o título resumido não
+> replique toda a descrição vinda do Mercado Livre.
 
 > Revisão 1.48.0.38: ao consultar preços no **AvantaPreços**, o sistema abre a
 > lista de vendedores da ficha confirmada no Google Shopping e calcula a média

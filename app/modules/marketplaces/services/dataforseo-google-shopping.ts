@@ -16,7 +16,7 @@ export type GoogleShoppingPriceLookup =
   | { status: 'completed'; sample: GoogleShoppingPriceSample | null };
 
 type GoogleShoppingProductReference = {
-  productId: string;
+  productId: string | null;
   dataDocId: string | null;
   gid: string | null;
 };
@@ -47,6 +47,11 @@ function text(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function identifier(value: unknown) {
+  if (typeof value === 'string') return value.trim();
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+}
+
 function amountInCents(value: unknown) {
   const amount = typeof value === 'number' ? value : Number.NaN;
   return Number.isFinite(amount) && amount > 0 && amount < 1_000_000 ? Math.round(amount * 100) : null;
@@ -70,12 +75,28 @@ function modelTokens(value: string) {
   return [...normalizedWords(value)].filter((word) => word.length >= 4 && /[a-z]/.test(word) && /\d/.test(word));
 }
 
+function productCodes(value: string) {
+  const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  return (normalized.match(/[a-z]*\d[a-z\d]*(?:[/-]\d[a-z\d]*)*/g) || [])
+    .map((code) => code.replace(/[^a-z0-9]/g, ''))
+    .filter((code) => code.length >= 4);
+}
+
+function compact(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 function titleMatchesProduct(title: string, productName: string, ean?: string | null) {
   const normalizedTitle = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   if (ean && normalizedTitle.includes(ean)) return true;
   const wanted = normalizedWords(productName);
   const actual = normalizedWords(title);
   if (!wanted.size || !actual.size) return false;
+  // Lojas e o próprio Google alternam, por exemplo, entre "69065/011" e
+  // "69065011". O SKU é a evidência mais segura para títulos comerciais
+  // encurtados e precisa sobreviver à remoção de pontuação.
+  const compactTitle = compact(title);
+  if (productCodes(productName).some((code) => compactTitle.includes(code))) return true;
   // Modelos como ME20B distinguem melhor produtos longos do que exigir que o
   // título de uma loja reproduza toda a descrição do catálogo Mercado Livre.
   if (modelTokens(productName).some((model) => actual.has(model))) return true;
@@ -89,6 +110,8 @@ function productMatchScore(title: string, productName: string) {
   const actual = normalizedWords(title);
   let score = 0;
   for (const word of wanted) if (actual.has(word)) score++;
+  const compactTitle = compact(title);
+  for (const code of productCodes(productName)) if (compactTitle.includes(code)) score += 100;
   for (const model of modelTokens(productName)) if (actual.has(model)) score += 100;
   return score;
 }
@@ -105,10 +128,12 @@ function productReferenceFrom(payload: unknown, productName: string, ean?: strin
     const item = record(value);
     if (!Object.keys(item).length) return;
     const title = text(item.title);
-    const productId = text(item.product_id);
-    if (title && productId && titleMatchesProduct(title, productName, ean)) {
+    const productId = identifier(item.product_id) || null;
+    const dataDocId = identifier(item.data_docid) || null;
+    const gid = identifier(item.gid) || null;
+    if (title && (productId || dataDocId || gid) && titleMatchesProduct(title, productName, ean)) {
       const candidate = {
-        value: { productId, dataDocId: text(item.data_docid) || null, gid: text(item.gid) || null },
+        value: { productId, dataDocId, gid },
         score: productMatchScore(title, productName),
       };
       if (!selected.current || candidate.score > selected.current.score) selected.current = candidate;
@@ -157,6 +182,43 @@ export function extractGoogleShoppingPriceSample(payload: unknown, productName: 
     for (const child of Object.values(item)) {
       if (child && typeof child === 'object') visit(child);
     }
+  };
+  visit(payload);
+  const values = selectReferencePriceCents(prices);
+  if (!values.length) return null;
+  return {
+    pricesInCents: values,
+    count: values.length,
+    minimum: values[0] / 100,
+    maximum: values.at(-1)! / 100,
+  };
+}
+
+/**
+ * A tarefa `product_info` já foi criada a partir de uma ficha específica do
+ * Google Shopping. Portanto, nesta etapa não devemos descartar os vendedores
+ * porque o título resumido da ficha não repete integralmente o do Mercado
+ * Livre: os preços pertencem à ficha escolhida na etapa anterior.
+ */
+export function extractGoogleShoppingSellerPriceSample(payload: unknown): GoogleShoppingPriceSample | null {
+  const prices: number[] = [];
+  const visit = (value: unknown) => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    const item = record(value);
+    if (!Object.keys(item).length) return;
+    const sellers = item.sellers;
+    if (Array.isArray(sellers)) {
+      for (const sellerValue of sellers) {
+        const seller = record(sellerValue);
+        if (!sellerIsAvailable(seller)) continue;
+        const { amount, currency } = priceFromListing(seller);
+        if (currency === 'BRL' && amount != null) prices.push(amount);
+      }
+    }
+    for (const child of Object.values(item)) if (child && typeof child === 'object') visit(child);
   };
   visit(payload);
   const values = selectReferencePriceCents(prices);
@@ -278,7 +340,7 @@ async function postGoogleShoppingProductInfoLookup(reference: GoogleShoppingProd
     body: JSON.stringify([{
       location_name: 'Brazil',
       language_code: 'pt',
-      product_id: reference.productId,
+      ...(reference.productId ? { product_id: reference.productId } : {}),
       ...(reference.dataDocId ? { data_docid: reference.dataDocId } : {}),
       ...(reference.gid ? { gid: reference.gid } : {}),
     }]),
@@ -298,7 +360,7 @@ async function readGoogleShoppingPriceLookup(taskIdValue: string, input: { ean: 
     const productInfoTaskId = await postGoogleShoppingProductInfoLookup(reference);
     return { status: 'pending', taskId: encodePendingLookup({ phase: 'product_info', id: productInfoTaskId }) };
   }
-  return { status: 'completed', sample: extractGoogleShoppingPriceSample(result, input.productName, input.ean) };
+  return { status: 'completed', sample: extractGoogleShoppingSellerPriceSample(result) };
 }
 
 export async function consultGoogleShoppingPrices(

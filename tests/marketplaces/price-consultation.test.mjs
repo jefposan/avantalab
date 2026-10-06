@@ -17,7 +17,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   return next(specifier, context);
 } });
 const { calculatePriceSuggestions, consultMercadoLivrePrice } = await import('../../app/modules/marketplaces/services/mercadolivre-price-consultation.ts');
-const { extractGoogleShoppingPriceSample } = await import('../../app/modules/marketplaces/services/dataforseo-google-shopping.ts');
+const { extractGoogleShoppingPriceSample, extractGoogleShoppingSellerPriceSample } = await import('../../app/modules/marketplaces/services/dataforseo-google-shopping.ts');
 const { MarketplaceError } = await import('../../app/modules/marketplaces/services/management-access.ts');
 hooks.deregister();
 
@@ -50,19 +50,22 @@ function mockPriceProvider({ pendingPolls = 0 } = {}) {
     }
     if (String(url).endsWith('/product_info/task_post')) {
       const payload = JSON.parse(String(init?.body)).at(0);
-      assert.equal(payload?.product_id, 'google-product-1');
+      assert.equal(payload?.product_id, '550011');
       return Response.json({ tasks: [{ id: '22222222-2222-2222-2222-222222222222', status_code: 20100, result: null }] });
     }
     if (String(url).includes('/products/task_get/advanced/')) {
       polls++;
       if (polls <= pendingPolls) return Response.json({ tasks: [{ status_code: 40602, status_message: 'Task In Queue.', result: null }] });
       return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
-      { title: 'Fogão de teste', price: 800, currency: 'BRL', product_id: 'google-product-1', data_docid: 'doc-1', gid: 'gid-1' },
+      { title: 'Fogão de teste', price: 800, currency: 'BRL', product_id: 550011, data_docid: 'doc-1', gid: 'gid-1' },
       { title: 'Produto não relacionado', price: 1, currency: 'BRL', product_id: 'google-product-2' },
       ] }] }] });
     }
     if (String(url).includes('/product_info/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [{
-      title: 'Fogão de teste',
+      // A ficha de vendedores pode abreviar o título e não repetir o nome
+      // que veio do catálogo Mercado Livre. Como ela deriva do product_id
+      // escolhido acima, seus vendedores ainda são a fonte correta.
+      title: 'Ficha Google Shopping',
       sellers: [
         { title: 'Loja A', product_availability: 'in_stock', price: { current: 800, regular: 1_000, currency: 'BRL' } },
         { title: 'Loja B', product_availability: 'limited_stock', price: { current: 900, regular: 1_100, currency: 'BRL' } },
@@ -190,4 +193,23 @@ test('amostra Google Shopping reconhece um modelo presente em título comercial 
     { title: 'Micro-ondas Electrolux ME20B 20L Branco', price: 599.9, currency: 'BRL' },
   ] }] }] }, 'Micro-ondas Electrolux Efficient 20L Branco Função Descongelar e Receitas Pré-Programadas (ME20B)', '7909569511480');
   assert.deepEqual(sample, { pricesInCents: [59990], count: 1, minimum: 599.9, maximum: 599.9 });
+});
+
+test('amostra Google Shopping reconhece SKU com barra mesmo quando a vitrine remove a pontuação', () => {
+  const sample = extractGoogleShoppingPriceSample({ tasks: [{ result: [{ items: [
+    { title: 'Cafeteira Tramontina Breville Express 69065011 127V', price: 4_734.68, currency: 'BRL' },
+  ] }] }] }, 'CAFETEIRA ELÉTRICA TRAMONTINA BY BREVILLE EXPRESS AÇO INOX 1,8L 127V 69065/011');
+  assert.deepEqual(sample, { pricesInCents: [473468], count: 1, minimum: 4734.68, maximum: 4734.68 });
+});
+
+test('amostra de vendedores usa a ficha selecionada mesmo com título resumido', () => {
+  const sample = extractGoogleShoppingSellerPriceSample({ tasks: [{ result: [{ items: [{
+    title: 'Ficha Google Shopping',
+    sellers: [
+      { product_availability: 'in_stock', price: { current: 4_166.55, currency: 'BRL' } },
+      { product_availability: 'in_stock', price: { current: 4_734.68, currency: 'BRL' } },
+      { product_availability: 'out_of_stock', price: { current: 100, currency: 'BRL' } },
+    ],
+  }] }] }] });
+  assert.deepEqual(sample, { pricesInCents: [416655, 473468], count: 2, minimum: 4166.55, maximum: 4734.68 });
 });

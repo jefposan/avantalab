@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.39: AvantaPreços trata SKU com ou sem pontuação
+// como a mesma referência comercial e, após escolher a ficha Google Shopping,
+// usa os vendedores dela mesmo que seu título resumido difira do catálogo ML.
 // Revisado na versão 1.48.0.38: AvantaPreços abre os vendedores da ficha do
 // Google Shopping e calcula a média das até cinco menores ofertas ativas em
 // reais; preço de lista, frete e oferta indisponível não entram na referência.

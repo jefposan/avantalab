@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.38 -->
+<!-- ava-version: 1.48.0.39 -->
+
+> Revisão 1.48.0.39: no **AvantaPreços**, SKU com e sem pontuação representam
+> o mesmo produto na pesquisa Google Shopping — como `69065/011` e `69065011`.
+> A coleta de vendedores da ficha selecionada não exige que o título resumido
+> repita integralmente o título confirmado do catálogo Mercado Livre.
 
 > Revisão 1.48.0.38: a referência automática do **AvantaPreços** vem dos
 > vendedores da ficha identificada no Google Shopping. A média usa as até cinco

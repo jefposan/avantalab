@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.48.0.39 - 2026-10-06
+
+- **Fichas Google Shopping mais tolerantes no AvantaPreços**: a seleção agora
+  reconhece referências comerciais mesmo quando a vitrine remove a pontuação
+  do SKU — como `69065/011` exibido como `69065011`. Uma vez identificada a
+  ficha, a coleta usa diretamente os vendedores retornados por ela, sem
+  descartar ofertas válidas porque o título resumido do Google difere do título
+  completo do catálogo Mercado Livre.
+
 ## 1.48.0.38 - 2026-10-06
 
 - **Cinco menores ofertas reais no AvantaPreços**: após identificar a ficha no

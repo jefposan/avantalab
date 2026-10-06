@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.38 -->
+<!-- ava-version: 1.48.0.39 -->
+
+> Revisão 1.48.0.39: o reconhecimento de SKU sem pontuação e a leitura dos
+> vendedores da ficha Google Shopping pertencem ao **AvantaPreços** e não
+> alteram os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.38: a consulta de vendedores e a média das cinco menores
 > ofertas do **AvantaPreços** não alteram os fluxos do AvantaVendas.
