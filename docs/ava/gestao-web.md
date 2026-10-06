@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.27 -->
+<!-- ava-version: 1.48.0.28 -->
+
+> Revisão 1.48.0.28: o **AvantaPreços** identifica o produto com a conexão
+> Mercado Livre ou o catálogo do perfil e calcula sugestões usando ofertas em
+> reais do Google Shopping pela integração DataForSEO no servidor. A Gestão Web
+> não recebe credenciais nem expõe a consulta externa; a ativação produtiva é
+> controlada pelo ambiente para evitar consumo involuntário de créditos.
 
 > Revisão 1.48.0.27: o leitor do **AvantaPreços** verifica a permissão de
 > câmera já existente. A câmera abre direto quando o navegador a mantém

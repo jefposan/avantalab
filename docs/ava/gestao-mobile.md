@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.27 -->
+<!-- ava-version: 1.48.0.28 -->
+
+> Revisão 1.48.0.28: depois de identificar um produto, o **AvantaPreços**
+> consulta automaticamente ofertas comparáveis em reais no Google Shopping via
+> DataForSEO e apresenta a média com mínimo (50%), médio (70%) e ideal (90%).
+> A conexão Mercado Livre continua sendo reutilizada apenas para identificar o
+> produto; nenhum token ou credencial externa chega ao PWA.
 
 > Revisão 1.48.0.27: ao tocar em **Ler EAN**, o **AvantaPreços** consulta antes
 > o estado da câmera. Permissão persistida abre o leitor diretamente; sem

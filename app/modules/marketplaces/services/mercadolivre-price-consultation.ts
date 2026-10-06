@@ -4,6 +4,7 @@ import { MarketplaceError } from './management-access';
 import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import type { SellerConnection } from './mercadolivre-management';
 import { lookupProfileCatalogByEan } from './profile-catalog';
+import { consultGoogleShoppingPrices } from './dataforseo-google-shopping';
 
 export type PriceSuggestions = {
   market: number;
@@ -12,7 +13,7 @@ export type PriceSuggestions = {
   ideal: number;
 };
 
-export type PriceSampleSource = 'manual_reference';
+export type PriceSampleSource = 'manual_reference' | 'google_shopping';
 
 export type PriceConsultationResult = {
   status: 'found' | 'not_found' | 'choose';
@@ -52,10 +53,9 @@ export function calculatePriceSuggestions(pricesInCents: readonly number[]): Pri
 }
 
 /**
- * O PWA identifica o produto pela integração já conectada, mas a comparação de
- * preço é feita na página pública aberta pela própria pessoa. Isso evita leitura
- * automatizada de vitrines de terceiros e registra com transparência a origem
- * do valor usado nas sugestões.
+ * O PWA usa a conexão Mercado Livre apenas para identificar o produto no
+ * catálogo isolado da empresa. A média vem da integração de pesquisa de preços
+ * configurada somente no servidor; nenhum segredo ou token é enviado ao PWA.
  */
 export async function consultMercadoLivrePrice(
   db: SupabaseClient,
@@ -109,18 +109,26 @@ export async function consultMercadoLivrePrice(
       attributes: product.attributes,
     },
   };
-  if (manualCents == null) {
+  if (manualCents != null) {
+    const prices = calculatePriceSuggestions([manualCents]);
     return {
       ...base,
-      notice: 'Produto localizado. Abra a busca pública, escolha a referência que faz sentido e informe o preço encontrado.',
+      prices,
+      sample: { count: 1, minimum: prices.market, maximum: prices.market, source: 'manual_reference' },
+      notice: 'Registro histórico calculado a partir de um preço informado manualmente.',
     };
   }
 
-  const prices = calculatePriceSuggestions([manualCents]);
+  const sample = await consultGoogleShoppingPrices({ ean, productName: product.name });
+  if (!sample) return {
+    ...base,
+    notice: 'Produto localizado, mas não há preços comparáveis em reais no Google Shopping neste momento.',
+  };
+  const prices = calculatePriceSuggestions(sample.pricesInCents);
   return {
     ...base,
     prices,
-    sample: { count: 1, minimum: prices.market, maximum: prices.market, source: 'manual_reference' },
-    notice: 'Sugestões calculadas a partir do preço informado após sua consulta pública.',
+    sample: { count: sample.count, minimum: sample.minimum, maximum: sample.maximum, source: 'google_shopping' },
+    notice: `Média calculada a partir de ${sample.count} oferta${sample.count === 1 ? '' : 's'} comparável${sample.count === 1 ? '' : 'is'} no Google Shopping.`,
   };
 }

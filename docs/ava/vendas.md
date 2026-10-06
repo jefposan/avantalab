@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.27 -->
+<!-- ava-version: 1.48.0.28 -->
+
+> Revisão 1.48.0.28: a consulta automática de preços via Google Shopping no
+> **AvantaPreços** pertence ao PWA de marketplaces e não altera os fluxos do
+> AvantaVendas.
 
 > Revisão 1.48.0.27: a redução de pedidos de câmera no leitor do
 > **AvantaPreços** pertence ao PWA de marketplaces e não altera os fluxos do

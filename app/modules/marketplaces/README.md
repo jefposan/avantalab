@@ -43,6 +43,11 @@ credenciais adicionais no ambiente.
 - A média considera ofertas ativas do mesmo produto de catálogo e seus preços
   atuais; sem amostra, usa as referências oficiais disponíveis na ficha. As
   sugestões são calculadas sobre a média: mínimo 50%, médio 70% e ideal 90%.
+- A consulta automática de preço usa a API Merchant do Google Shopping da
+  DataForSEO apenas no servidor. O Mercado Livre continua responsável pela
+  identificação do produto e pela conexão da empresa. `DATAFORSEO_API_LOGIN`,
+  `DATAFORSEO_API_PASSWORD` e `DATAFORSEO_PRICE_LOOKUP_ENABLED` são secrets de
+  produção e nunca podem ser expostos ao navegador, ao banco ou a logs.
 - A migração `20261005213000_marketplace_price_consultations.sql` registra o
   histórico por empresa com RLS e acesso direto revogado de anon/authenticated.
 

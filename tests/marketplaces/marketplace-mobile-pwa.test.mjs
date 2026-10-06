@@ -19,7 +19,7 @@ const viewportValidationPage = read('app/marketplaces/consulta/validacao-visual/
 test('PWA reutiliza autenticação, empresa e conexão do módulo sem novo OAuth', () => {
   assert.match(client, /signInWithPassword/);
   assert.match(client, /Digite seu login/);
-  assert.doesNotMatch(client, /Google|CPF|tipoLogin/);
+  assert.doesNotMatch(client, /Continuar com Google|CPF|tipoLogin/);
   assert.match(client, /avantalab_marketplaces_mobile_empresa_id/);
   assert.match(client, /localStorage\.setItem\(SESSION_COMPANY_KEY/);
   assert.match(client, /localStorage\.removeItem\(SESSION_COMPANY_KEY/);
@@ -59,7 +59,7 @@ test('nova leitura de EAN descarta a pesquisa anterior antes de abrir a câmera'
 });
 
 test('resultado diferencia os quatro valores e o histórico pode ser reaberto e atualizado', () => {
-  for (const text of ['Preço médio Mercado Livre', 'Preço mínimo', 'Preço médio de venda', 'Preço ideal', 'Últimas consultas', 'Consultar novamente']) assert.match(client, new RegExp(text));
+  for (const text of ['Preço médio Google Shopping', 'Preço mínimo', 'Preço médio de venda', 'Preço ideal', 'Últimas consultas', 'Consultar novamente']) assert.match(client, new RegExp(text));
   assert.match(client, /setResult\(historyToConsultation\(item\)\)/);
   assert.match(client, /loadHistory\(company\.id\)/);
   assert.match(css, /\.marketPrice \{[^}]*background:/);

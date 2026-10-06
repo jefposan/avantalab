@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.28: AvantaPreços identifica o produto pela conexão
+// Mercado Livre ou catálogo do perfil e calcula a média em reais via Google
+// Shopping/DataForSEO no servidor; credenciais e tokens não chegam ao PWA.
 // Revisado na versão 1.48.0.27: o leitor do AvantaPreços consulta a permissão
 // de câmera antes de pedir acesso; quando já concedida, abre direto, e bloqueio
 // mantém EAN manual sem novas tentativas automáticas.
