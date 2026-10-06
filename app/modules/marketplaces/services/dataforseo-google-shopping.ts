@@ -116,11 +116,23 @@ async function providerRequest(path: string, init: RequestInit, fetcher: typeof 
   }
   const body = await response.json().catch(() => null);
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new MarketplaceError(503, 'price_provider_authorization', 'A credencial da consulta de preços não foi aceita. Atualize as credenciais de API do provedor.');
+    }
+    if (response.status === 402) {
+      throw new MarketplaceError(503, 'price_provider_balance', 'A consulta de preços precisa de saldo disponível no provedor.');
+    }
     throw new MarketplaceError(response.status === 429 ? 429 : 503, response.status === 429 ? 'price_provider_limited' : 'price_provider_failed',
       response.status === 429 ? 'Limite de consultas de preços atingido. Aguarde alguns instantes.' : 'Não foi possível consultar os preços agora. Tente novamente.');
   }
   const task = tasksFrom(record(body))[0] || null;
   const status = Number(record(task).status_code);
+  if (status === 40100 || status === 40101 || status === 40102 || status === 40301) {
+    throw new MarketplaceError(503, 'price_provider_authorization', 'A credencial da consulta de preços não foi aceita. Atualize as credenciais de API do provedor.');
+  }
+  if (status === 40200 || status === 40201 || status === 40202 || status === 40203) {
+    throw new MarketplaceError(503, 'price_provider_balance', 'A consulta de preços precisa de saldo disponível no provedor.');
+  }
   if (!task || (Number.isFinite(status) && status >= 40000)) {
     throw new MarketplaceError(503, 'price_provider_failed', 'A consulta de preços não foi aceita. Tente novamente.');
   }
