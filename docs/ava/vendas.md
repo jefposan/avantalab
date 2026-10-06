@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.28 -->
+<!-- ava-version: 1.48.0.29 -->
+
+> Revisão 1.48.0.29: a permissão nativa única de câmera do AvantaPreços
+> pertence ao PWA de marketplaces e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.28: a consulta automática de preços via Google Shopping no
 > **AvantaPreços** pertence ao PWA de marketplaces e não altera os fluxos do

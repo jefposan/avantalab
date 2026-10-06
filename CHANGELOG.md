@@ -1,5 +1,7 @@
 # Changelog
 
+- **Permissão única de câmera no AvantaPreços**: **Ler EAN** passa a acionar o diálogo nativo do aparelho diretamente, no próprio toque. O PWA não exibe mais o botão intermediário **Ativar câmera**. Depois que o sistema mantém a autorização, as próximas leituras abrem o visor sem confirmação adicional; bloqueios continuam com orientação e entrada manual do EAN.
+
 - **Consulta automática de preços preparada**: o AvantaPreços mantém a identificação segura pelo catálogo Mercado Livre ou pelo catálogo do perfil e passa a ter uma fonte de preços Google Shopping via DataForSEO, isolada no servidor. A integração registra média, menor e maior oferta em reais, calcula mínimo (50%), médio (70%) e ideal (90%) e não expõe credenciais ao PWA. A ativação produtiva permanece deliberada por variável secreta para impedir consumo involuntário de créditos.
 
 - **Câmera com menos pedidos no AvantaPreços**: o leitor verifica a permissão existente antes de abrir a câmera. Quando ela já estiver concedida pelo navegador, inicia diretamente; quando ainda não houver autorização, exibe o botão explícito **Ativar câmera**. Bloqueios do sistema não disparam novas tentativas automáticas e mantêm a digitação manual disponível.

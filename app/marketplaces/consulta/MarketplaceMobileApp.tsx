@@ -30,7 +30,6 @@ type HistoryRow = {
 type Account = { id: string; status: string; seller_name: string | null; seller_reference: string };
 
 const SESSION_COMPANY_KEY = 'avantalab_marketplaces_mobile_empresa_id';
-const CAMERA_ACCESS_KEY = 'avantalab_marketplaces_camera_access';
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
@@ -104,12 +103,18 @@ function historyToConsultation(row: HistoryRow): Consultation {
   };
 }
 
-function ScannerModal({ initialEan, onClose, onConsult }: { initialEan: string; onClose: () => void; onConsult: (ean: string) => void }) {
+type ScannerIssue = 'denied' | 'error' | null;
+
+function ScannerModal({ initialEan, issue, onClose, onConsult }: { initialEan: string; issue: ScannerIssue; onClose: () => void; onConsult: (ean: string) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<{ stop: () => void } | null>(null);
   const [ean, setEan] = useState(initialEan);
-  const [state, setState] = useState<'checking' | 'ready' | 'opening' | 'reading' | 'read' | 'denied' | 'error'>('checking');
-  const [message, setMessage] = useState('Verificando o acesso à câmera…');
+  const [state, setState] = useState<'opening' | 'reading' | 'read' | 'denied' | 'error'>(issue || 'opening');
+  const [message, setMessage] = useState(issue === 'denied'
+    ? 'A câmera está bloqueada para este app. Libere-a nos ajustes do aparelho ou digite o EAN abaixo.'
+    : issue === 'error'
+      ? 'Não foi possível iniciar a câmera. Digite o EAN abaixo.'
+      : 'Abrindo a câmera…');
 
   const startCamera = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia || !videoRef.current) {
@@ -135,7 +140,6 @@ function ScannerModal({ initialEan, onClose, onConsult }: { initialEan: string; 
         },
       );
       controlsRef.current = controls;
-      try { localStorage.setItem(CAMERA_ACCESS_KEY, 'granted'); } catch {}
       setState('reading'); setMessage('Centralize o código de barras no visor');
     } catch (error) {
       const denied = error instanceof DOMException && ['NotAllowedError', 'PermissionDeniedError'].includes(error.name);
@@ -147,30 +151,9 @@ function ScannerModal({ initialEan, onClose, onConsult }: { initialEan: string; 
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    let permission: PermissionStatus | null = null;
-    const verifyPermission = async () => {
-      if (!navigator.mediaDevices?.getUserMedia || !videoRef.current) {
-        setState('error'); setMessage('A câmera não está disponível neste navegador. Digite o EAN abaixo.'); return;
-      }
-      try {
-        permission = await navigator.permissions?.query({ name: 'camera' } as PermissionDescriptor) || null;
-      } catch {}
-      if (cancelled) return;
-      if (permission?.state === 'granted') { void startCamera(); return; }
-      if (permission?.state === 'denied') {
-        setState('denied'); setMessage('A câmera está bloqueada para este app. Libere-a nos ajustes do aparelho ou digite o EAN abaixo.'); return;
-      }
-      let alreadyActivated = false;
-      try { alreadyActivated = localStorage.getItem(CAMERA_ACCESS_KEY) === 'granted'; } catch {}
-      setState('ready');
-      setMessage(alreadyActivated
-        ? 'Toque em Ativar câmera para retomar a leitura.'
-        : 'Ative a câmera para ler o código de barras.');
-    };
-    void verifyPermission();
-    return () => { cancelled = true; if (permission) permission.onchange = null; controlsRef.current?.stop(); controlsRef.current = null; };
-  }, [startCamera]);
+    if (!issue) void startCamera();
+    return () => { controlsRef.current?.stop(); controlsRef.current = null; };
+  }, [issue, startCamera]);
 
   const valid = isValidEan(ean);
   const cameraActive = state === 'reading' || state === 'read';
@@ -185,7 +168,7 @@ function ScannerModal({ initialEan, onClose, onConsult }: { initialEan: string; 
         <div className={`${styles.scanWindow} ${state === 'read' ? styles.scanComplete : ''}`} aria-hidden="true">
           {state === 'read' ? <Icon name="check" size={36} /> : <span />}
         </div></> : <div className={styles.cameraPrompt} role="status" aria-live="polite">
-          {state === 'checking' || state === 'opening' ? <span className={styles.cameraSpinner} aria-hidden="true" /> : <><strong>{state === 'denied' ? 'Câmera bloqueada' : 'Leitor de código de barras'}</strong><span>{message}</span>{state === 'ready' && <button type="button" onClick={() => void startCamera()}>Ativar câmera</button>}</>}
+          {state === 'opening' ? <span className={styles.cameraSpinner} aria-hidden="true" /> : <><strong>{state === 'denied' ? 'Câmera bloqueada' : 'Leitor de código de barras'}</strong><span>{message}</span></>}
         </div>}
     </div>
     <div className={styles.scannerSheet}>
@@ -219,6 +202,7 @@ export default function MarketplaceMobileApp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerIssue, setScannerIssue] = useState<ScannerIssue>(null);
 
   const selectCompany = useCallback(async (selected: Company) => {
     setCompanies((current) => current.some((item) => item.id === selected.id) ? current : [...current, selected]);
@@ -342,7 +326,26 @@ export default function MarketplaceMobileApp() {
     setCandidates([]);
     setResult(null);
     setError('');
-    setScannerOpen(true);
+    setScannerIssue(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setScannerIssue('error');
+      setScannerOpen(true);
+      return;
+    }
+
+    // A permissão nativa precisa nascer no gesto de "Ler EAN". Assim o PWA não
+    // acrescenta uma confirmação própria antes do diálogo do sistema.
+    void navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+    }).then((stream) => {
+      stream.getTracks().forEach((track) => track.stop());
+      setScannerOpen(true);
+    }).catch((reason: unknown) => {
+      const denied = reason instanceof DOMException && ['NotAllowedError', 'PermissionDeniedError'].includes(reason.name);
+      setScannerIssue(denied ? 'denied' : 'error');
+      setScannerOpen(true);
+    });
   };
 
   if (access === 'loading') return <main className={styles.loginWrap} data-avantaprecos-viewport="access"><section className={styles.loadingStage} role="status" aria-live="polite"><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></section></main>;
@@ -428,6 +431,6 @@ export default function MarketplaceMobileApp() {
         {historyLoading && !history.length ? <div className={styles.historySkeleton}><span /><span /><span /></div> : history.length ? <div className={styles.historyList}>{history.map((item) => <button type="button" key={item.id} onClick={() => setResult(historyToConsultation(item))}><span className={styles.historyImage}>{item.image_url ? <img src={item.image_url} alt="" /> : <Icon name="barcode" />}</span><span className={styles.historyText}><strong>{item.product_name}</strong><small>{item.ean ? `EAN ${item.ean}` : item.input_value} · {dateTime.format(new Date(item.created_at))}</small></span><span className={styles.historyPrice}>{money.format(item.market_price_cents / 100)}</span></button>)}</div> : <p className={styles.emptyHistory}>Suas consultas aparecerão aqui.</p>}
       </section>
     </div>}
-    {scannerOpen && <ScannerModal initialEan={ean} onClose={() => setScannerOpen(false)} onConsult={(value) => { setEan(value); setScannerOpen(false); void consult({ ean: value }); }} />}
+    {scannerOpen && <ScannerModal initialEan={ean} issue={scannerIssue} onClose={() => setScannerOpen(false)} onConsult={(value) => { setEan(value); setScannerOpen(false); void consult({ ean: value }); }} />}
   </div>;
 }

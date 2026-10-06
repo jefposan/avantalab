@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.28 -->
+<!-- ava-version: 1.48.0.29 -->
+
+> Revisão 1.48.0.29: o **AvantaPreços** aciona a permissão nativa de câmera
+> diretamente no toque em **Ler EAN**, sem botão ou autorização intermediária
+> do PWA. Depois que o aparelho preserva a permissão, o leitor abre direto.
 
 > Revisão 1.48.0.28: o **AvantaPreços** identifica o produto com a conexão
 > Mercado Livre ou o catálogo do perfil e calcula sugestões usando ofertas em

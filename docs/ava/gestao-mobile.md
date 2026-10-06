@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.28 -->
+<!-- ava-version: 1.48.0.29 -->
+
+> Revisão 1.48.0.29: ao tocar em **Ler EAN**, o **AvantaPreços** abre somente
+> o pedido nativo de câmera do aparelho; não há confirmação intermediária do
+> PWA. Quando o sistema mantém a autorização, as leituras seguintes abrem o
+> visor diretamente. Bloqueios ainda oferecem digitação manual do código.
 
 > Revisão 1.48.0.28: depois de identificar um produto, o **AvantaPreços**
 > consulta automaticamente ofertas comparáveis em reais no Google Shopping via

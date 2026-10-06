@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.29: Ler EAN solicita exclusivamente a permissão
+// nativa de câmera no próprio gesto, sem confirmação intermediária do PWA; após
+// concessão persistida pelo sistema, o visor abre direto.
 // Revisado na versão 1.48.0.28: AvantaPreços identifica o produto pela conexão
 // Mercado Livre ou catálogo do perfil e calcula a média em reais via Google
 // Shopping/DataForSEO no servidor; credenciais e tokens não chegam ao PWA.

@@ -32,28 +32,28 @@ test('PWA reutiliza autenticação, empresa e conexão do módulo sem novo OAuth
   assert.match(api, /resolveMercadoLivreConnection/);
 });
 
-test('leitor reduz pedidos de câmera e só consulta após confirmação explícita', () => {
+test('leitor pede somente a permissão nativa e só consulta após confirmação explícita', () => {
   assert.match(client, /BarcodeFormat\.EAN_13/);
   assert.match(client, /BarcodeFormat\.EAN_8/);
   assert.match(client, /facingMode: \{ ideal: 'environment' \}/);
   assert.match(client, /Código lido com sucesso/);
-  assert.match(client, /navigator\.permissions\?\.query\(\{ name: 'camera' \} as PermissionDescriptor\)/);
-  assert.match(client, /CAMERA_ACCESS_KEY/);
-  assert.match(client, /permission\?\.state === 'granted'\) \{ void startCamera\(\); return; \}/);
-  assert.match(client, />Ativar câmera<\/button>/);
-  assert.match(client, /onClick=\{\(\) => void startCamera\(\)\}/);
+  assert.match(client, /A permissão nativa precisa nascer no gesto de "Ler EAN"/);
+  assert.match(client, /void navigator\.mediaDevices\.getUserMedia\(/);
+  assert.match(client, /stream\.getTracks\(\)\.forEach\(\(track\) => track\.stop\(\)\)/);
+  assert.doesNotMatch(client, /CAMERA_ACCESS_KEY|Ativar câmera/);
   assert.match(client, /Libere-a nos ajustes do aparelho/);
   assert.match(client, />Consultar<\/button>/);
   assert.match(client, /onConsult=\{\(value\) =>/);
   assert.match(css, /\.scanWindow \{[^}]*height: 108px;/);
   assert.match(css, /\.cameraShade \{[^}]*background:/);
   assert.match(css, /\.cameraPrompt \{[^}]*position: absolute;/);
-  assert.match(css, /\.cameraPrompt button \{[^}]*min-height: 48px;/);
+  assert.doesNotMatch(css, /\.cameraPrompt button/);
 });
 
 test('nova leitura de EAN descarta a pesquisa anterior antes de abrir a câmera', () => {
   const action = client.match(/const startEanReading = \(\) => \{([\s\S]*?)\n  \};/)?.[1] || '';
   for (const reset of ["setEan('')", "setQuery('')", 'setPendingInput({})', 'setCandidates([])', 'setResult(null)', "setError('')"]) assert.ok(action.includes(reset), `A ação deve executar ${reset}`);
+  assert.match(action, /navigator\.mediaDevices\.getUserMedia/);
   assert.match(action, /setScannerOpen\(true\)/);
   assert.match(client, /className=\{styles\.scanButton\} onClick=\{startEanReading\}/);
 });
