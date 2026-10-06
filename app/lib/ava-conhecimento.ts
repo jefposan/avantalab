@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.38: AvantaPreços abre os vendedores da ficha do
+// Google Shopping e calcula a média das até cinco menores ofertas ativas em
+// reais; preço de lista, frete e oferta indisponível não entram na referência.
 // Revisado na versão 1.48.0.37: AvantaPreços usa a média de até cinco menores
 // ofertas comparáveis como referência. Um registro anterior só recebe a regra
 // nova quando for consultado novamente.

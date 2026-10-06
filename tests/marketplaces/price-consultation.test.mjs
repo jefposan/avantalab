@@ -43,20 +43,32 @@ function mockPriceProvider({ pendingPolls = 0 } = {}) {
   process.env.DATAFORSEO_API_BASE_URL = 'https://sandbox.dataforseo.com';
   let polls = 0;
   globalThis.fetch = async (url, init) => {
-    if (String(url).endsWith('/task_post')) {
+    if (String(url).endsWith('/products/task_post')) {
       assert.equal(init?.method, 'POST');
       globalThis.__priceLookupKeyword = JSON.parse(String(init?.body)).at(0)?.keyword;
       return Response.json({ tasks: [{ id: '11111111-1111-1111-1111-111111111111', status_code: 20100, result: null }] });
     }
-    if (String(url).includes('/task_get/advanced/')) {
+    if (String(url).endsWith('/product_info/task_post')) {
+      const payload = JSON.parse(String(init?.body)).at(0);
+      assert.equal(payload?.product_id, 'google-product-1');
+      return Response.json({ tasks: [{ id: '22222222-2222-2222-2222-222222222222', status_code: 20100, result: null }] });
+    }
+    if (String(url).includes('/products/task_get/advanced/')) {
       polls++;
       if (polls <= pendingPolls) return Response.json({ tasks: [{ status_code: 40602, status_message: 'Task In Queue.', result: null }] });
       return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
-      { title: 'Fogão de teste', price: 800, currency: 'BRL' },
-      { title: 'Fogão de teste 4 bocas', price: 900, currency: 'BRL' },
-      { title: 'Produto não relacionado', price: 1, currency: 'BRL' },
+      { title: 'Fogão de teste', price: 800, currency: 'BRL', product_id: 'google-product-1', data_docid: 'doc-1', gid: 'gid-1' },
+      { title: 'Produto não relacionado', price: 1, currency: 'BRL', product_id: 'google-product-2' },
       ] }] }] });
     }
+    if (String(url).includes('/product_info/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [{
+      title: 'Fogão de teste',
+      sellers: [
+        { title: 'Loja A', product_availability: 'in_stock', price: { current: 800, regular: 1_000, currency: 'BRL' } },
+        { title: 'Loja B', product_availability: 'limited_stock', price: { current: 900, regular: 1_100, currency: 'BRL' } },
+        { title: 'Loja indisponível', product_availability: 'out_of_stock', price: { current: 1, currency: 'BRL' } },
+      ],
+    }] }] }] });
     throw new Error(`URL DataForSEO inesperada: ${url}`);
   };
 }
@@ -154,6 +166,23 @@ test('amostra Google Shopping descarta ofertas altas após selecionar as cinco m
     { title: 'Gin Bóra London Dry 700 ml', price: 999, currency: 'BRL' },
   ] }] }] }, 'Gin Bóra London Dry 700 ml', '7890000000000');
   assert.deepEqual(sample, { pricesInCents: [10000, 11000, 12000, 13000, 14000], count: 5, minimum: 100, maximum: 140 });
+});
+
+test('amostra Google Shopping usa preço atual dos vendedores e ignora preço regular, indisponível e acima da faixa', () => {
+  const sample = extractGoogleShoppingPriceSample({ tasks: [{ result: [{ items: [{
+    title: 'Robô Aspirador Kärcher RCV 2 Bivolt',
+    sellers: [
+      { title: 'Loja oficial', product_availability: 'in_stock', price: { current: 999.9, regular: 2_000, currency: 'BRL' } },
+      { title: 'Loja A', product_availability: 'in_stock', price: { current: 1_100, regular: 1_820, currency: 'BRL' } },
+      { title: 'Loja B', product_availability: 'limited_stock', price: { current: 1_142.1, currency: 'BRL' } },
+      { title: 'Loja C', product_availability: 'in_stock', price: { current: 1_190.41, currency: 'BRL' } },
+      { title: 'Loja D', product_availability: 'in_stock', price: { current: 1_200, currency: 'BRL' } },
+      { title: 'Loja cara', product_availability: 'in_stock', price: { current: 1_820, currency: 'BRL' } },
+      { title: 'Sem estoque', product_availability: 'out_of_stock', price: { current: 850, currency: 'BRL' } },
+    ],
+  }] }] }] }, 'Robô Aspirador Kärcher RCV 2 Bivolt');
+  assert.deepEqual(sample, { pricesInCents: [99990, 110000, 114210, 119041, 120000], count: 5, minimum: 999.9, maximum: 1200 });
+  assert.equal(calculatePriceSuggestions(sample?.pricesInCents || []).market, 1126.48);
 });
 
 test('amostra Google Shopping reconhece um modelo presente em título comercial mais curto', () => {

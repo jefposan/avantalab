@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.48.0.38 - 2026-10-06
+
+- **Cinco menores ofertas reais no AvantaPreços**: após identificar a ficha no
+  Google Shopping, a consulta passa a abrir a lista de vendedores da própria
+  ficha. A referência usa exclusivamente o preço atual de ofertas ativas em
+  reais, seleciona as cinco menores e só então calcula a média. Preço de lista,
+  frete, oferta sem estoque e anúncios acima dessa faixa não entram no cálculo.
+
 ## 1.48.0.37 - 2026-10-06
 
 - **Referência comercial mais realista no AvantaPreços**: a pesquisa de preços

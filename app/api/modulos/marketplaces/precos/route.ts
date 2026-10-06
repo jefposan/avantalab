@@ -33,7 +33,10 @@ function readPendingContinuation(value: unknown): PendingPriceContinuation | nul
       || typeof parsed.empresaId !== 'string' || (!parsed.connectionId && !parsed.historyId)
       || (parsed.connectionId !== undefined && typeof parsed.connectionId !== 'string')
       || (parsed.historyId !== undefined && typeof parsed.historyId !== 'string')
-      || typeof parsed.taskId !== 'string' || !/^[0-9a-f-]{20,}$/i.test(parsed.taskId)) return null;
+      || typeof parsed.taskId !== 'string'
+      // A continuação protegida pode representar a etapa de produtos legada
+      // (UUID puro) ou a etapa atual de vendedores do Google Shopping.
+      || !/^(?:(?:products|product_info):)?[0-9a-f-]{20,}$/i.test(parsed.taskId)) return null;
     return parsed;
   } catch {
     return null;

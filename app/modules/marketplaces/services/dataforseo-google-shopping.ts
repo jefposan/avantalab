@@ -15,6 +15,17 @@ export type GoogleShoppingPriceLookup =
   | { status: 'pending'; taskId: string }
   | { status: 'completed'; sample: GoogleShoppingPriceSample | null };
 
+type GoogleShoppingProductReference = {
+  productId: string;
+  dataDocId: string | null;
+  gid: string | null;
+};
+
+type PendingLookup = {
+  phase: 'products' | 'product_info';
+  id: string;
+};
+
 const DEFAULT_BASE_URL = 'https://api.dataforseo.com';
 // A coleta do Merchant API é assíncrona. A fila normal contratada pelo provedor
 // pode ultrapassar a duração de uma Function. A rota faz uma primeira espera
@@ -41,6 +52,15 @@ function amountInCents(value: unknown) {
   return Number.isFinite(amount) && amount > 0 && amount < 1_000_000 ? Math.round(amount * 100) : null;
 }
 
+function priceFromListing(value: JsonRecord) {
+  const details = record(value.price);
+  // Merchant Products returns `price` directly. Product Info (sellers) returns
+  // the current offer in `price.current`; regular is deliberately not used.
+  const amount = amountInCents(value.price) ?? amountInCents(details.current);
+  const currency = text(value.currency || details.currency).toUpperCase();
+  return { amount, currency };
+}
+
 function normalizedWords(value: string) {
   return new Set(value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter((word) => word.length >= 3));
@@ -64,13 +84,17 @@ function titleMatchesProduct(title: string, productName: string, ean?: string | 
   return matches / wanted.size >= (wanted.size >= 8 ? 0.45 : 0.6);
 }
 
-/**
- * The API returns product cards in `items`. Some layouts nest seller cards in
- * child arrays, therefore we walk the response defensively and deduplicate the
- * actual listing price instead of relying on one unstable presentation shape.
- */
-export function extractGoogleShoppingPriceSample(payload: unknown, productName: string, ean?: string | null): GoogleShoppingPriceSample | null {
-  const prices: number[] = [];
+function productMatchScore(title: string, productName: string) {
+  const wanted = normalizedWords(productName);
+  const actual = normalizedWords(title);
+  let score = 0;
+  for (const word of wanted) if (actual.has(word)) score++;
+  for (const model of modelTokens(productName)) if (actual.has(model)) score += 100;
+  return score;
+}
+
+function productReferenceFrom(payload: unknown, productName: string, ean?: string | null): GoogleShoppingProductReference | null {
+  let selected: { value: GoogleShoppingProductReference; score: number } | null = null;
   const visit = (value: unknown) => {
     if (Array.isArray(value)) {
       value.forEach(visit);
@@ -78,10 +102,56 @@ export function extractGoogleShoppingPriceSample(payload: unknown, productName: 
     }
     const item = record(value);
     if (!Object.keys(item).length) return;
-    const currency = text(item.currency).toUpperCase();
-    const price = amountInCents(item.price);
     const title = text(item.title);
-    if (currency === 'BRL' && price != null && title && titleMatchesProduct(title, productName, ean)) prices.push(price);
+    const productId = text(item.product_id);
+    if (title && productId && titleMatchesProduct(title, productName, ean)) {
+      const candidate = {
+        value: { productId, dataDocId: text(item.data_docid) || null, gid: text(item.gid) || null },
+        score: productMatchScore(title, productName),
+      };
+      if (!selected || candidate.score > selected.score) selected = candidate;
+    }
+    for (const child of Object.values(item)) if (child && typeof child === 'object') visit(child);
+  };
+  visit(payload);
+  return selected?.value || null;
+}
+
+function sellerIsAvailable(seller: JsonRecord) {
+  const availability = text(seller.product_availability).toLowerCase();
+  return !availability || availability === 'in_stock' || availability === 'limited_stock';
+}
+
+/**
+ * Google Merchant uses a direct numeric `price` in product cards and
+ * `price.current` in product-seller cards. We collect only active seller
+ * offers for an identified product, never `price.regular` or delivery prices.
+ */
+export function extractGoogleShoppingPriceSample(payload: unknown, productName: string, ean?: string | null): GoogleShoppingPriceSample | null {
+  const prices: number[] = [];
+  const add = (item: JsonRecord) => {
+    const { amount, currency } = priceFromListing(item);
+    if (currency === 'BRL' && amount != null) prices.push(amount);
+  };
+  const visit = (value: unknown) => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    const item = record(value);
+    if (!Object.keys(item).length) return;
+    const title = text(item.title);
+    const matches = title && titleMatchesProduct(title, productName, ean);
+    if (matches) {
+      add(item);
+      const sellers = item.sellers;
+      if (Array.isArray(sellers)) {
+        for (const sellerValue of sellers) {
+          const seller = record(sellerValue);
+          if (sellerIsAvailable(seller)) add(seller);
+        }
+      }
+    }
     for (const child of Object.values(item)) {
       if (child && typeof child === 'object') visit(child);
     }
@@ -166,6 +236,18 @@ function taskId(body: JsonRecord) {
   return id;
 }
 
+function encodePendingLookup(value: PendingLookup) {
+  return `${value.phase}:${value.id}`;
+}
+
+function pendingLookup(value: string | undefined): PendingLookup | null {
+  if (!value) return null;
+  const match = /^(products|product_info):([0-9a-f-]{20,})$/i.exec(value);
+  if (match) return { phase: match[1].toLowerCase() as PendingLookup['phase'], id: match[2] };
+  // Continuations emitted before this change were a bare products task id.
+  return /^[0-9a-f-]{20,}$/i.test(value) ? { phase: 'products', id: value } : null;
+}
+
 function taskHasResult(body: JsonRecord) {
   const result = tasksFrom(body)[0]?.result;
   return Array.isArray(result) && result.length > 0;
@@ -188,9 +270,32 @@ async function postGoogleShoppingPriceLookup(input: { ean: string | null; produc
   return taskId(posted);
 }
 
-async function readGoogleShoppingPriceLookup(taskIdValue: string, input: { ean: string | null; productName: string }): Promise<GoogleShoppingPriceLookup> {
-  const result = await providerRequest(`/v3/merchant/google/products/task_get/advanced/${encodeURIComponent(taskIdValue)}`, { method: 'GET' });
-  if (!taskHasResult(result)) return { status: 'pending', taskId: taskIdValue };
+async function postGoogleShoppingProductInfoLookup(reference: GoogleShoppingProductReference) {
+  const posted = await providerRequest('/v3/merchant/google/product_info/task_post', {
+    method: 'POST',
+    body: JSON.stringify([{
+      location_name: 'Brazil',
+      language_code: 'pt',
+      product_id: reference.productId,
+      ...(reference.dataDocId ? { data_docid: reference.dataDocId } : {}),
+      ...(reference.gid ? { gid: reference.gid } : {}),
+    }]),
+  });
+  return taskId(posted);
+}
+
+async function readGoogleShoppingPriceLookup(taskIdValue: string, input: { ean: string | null; productName: string }, phase: PendingLookup['phase']): Promise<GoogleShoppingPriceLookup> {
+  const endpoint = phase === 'product_info' ? 'product_info' : 'products';
+  const result = await providerRequest(`/v3/merchant/google/${endpoint}/task_get/advanced/${encodeURIComponent(taskIdValue)}`, { method: 'GET' });
+  if (!taskHasResult(result)) return { status: 'pending', taskId: encodePendingLookup({ phase, id: taskIdValue }) };
+  if (phase === 'products') {
+    const reference = productReferenceFrom(result, input.productName, input.ean);
+    // If Google does not expose an individual product id, retain the useful
+    // product-card sample rather than inventing a seller-level result.
+    if (!reference) return { status: 'completed', sample: extractGoogleShoppingPriceSample(result, input.productName, input.ean) };
+    const productInfoTaskId = await postGoogleShoppingProductInfoLookup(reference);
+    return { status: 'pending', taskId: encodePendingLookup({ phase: 'product_info', id: productInfoTaskId }) };
+  }
   return { status: 'completed', sample: extractGoogleShoppingPriceSample(result, input.productName, input.ean) };
 }
 
@@ -198,11 +303,14 @@ export async function consultGoogleShoppingPrices(
   input: { ean: string | null; productName: string },
   pendingTaskId?: string,
 ): Promise<GoogleShoppingPriceLookup> {
-  const id = pendingTaskId || await postGoogleShoppingPriceLookup(input);
+  let lookup = pendingLookup(pendingTaskId) || { phase: 'products' as const, id: await postGoogleShoppingPriceLookup(input) };
   for (let attempt = 0; attempt < INITIAL_POLL_ATTEMPTS; attempt++) {
     await wait(POLL_INTERVAL_MS);
-    const lookup = await readGoogleShoppingPriceLookup(id, input);
-    if (lookup.status === 'completed') return lookup;
+    const result = await readGoogleShoppingPriceLookup(lookup.id, input, lookup.phase);
+    if (result.status === 'completed') return result;
+    const next = pendingLookup(result.taskId);
+    if (!next) throw new MarketplaceError(503, 'price_provider_invalid_response', 'A consulta de preços retornou uma resposta incompleta. Tente novamente.');
+    lookup = next;
   }
-  return { status: 'pending', taskId: id };
+  return { status: 'pending', taskId: encodePendingLookup(lookup) };
 }

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.37 -->
+<!-- ava-version: 1.48.0.38 -->
+
+> Revisão 1.48.0.38: a consulta de vendedores e a média das cinco menores
+> ofertas do **AvantaPreços** não alteram os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.37: o novo critério de referência de até cinco menores ofertas
 > pertence ao PWA **AvantaPreços** e não altera os fluxos do AvantaVendas.

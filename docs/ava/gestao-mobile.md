@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.37 -->
+<!-- ava-version: 1.48.0.38 -->
+
+> Revisão 1.48.0.38: ao consultar preços no **AvantaPreços**, o sistema abre a
+> lista de vendedores da ficha confirmada no Google Shopping e calcula a média
+> das até cinco menores ofertas ativas em reais. Valor de lista, frete e itens
+> sem estoque não entram na referência.
 
 > Revisão 1.48.0.37: a referência automática do **AvantaPreços** é a média de
 > até cinco menores ofertas comparáveis. Uma nova consulta aplica o critério

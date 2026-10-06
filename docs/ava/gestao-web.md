@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.37 -->
+<!-- ava-version: 1.48.0.38 -->
+
+> Revisão 1.48.0.38: a referência automática do **AvantaPreços** vem dos
+> vendedores da ficha identificada no Google Shopping. A média usa as até cinco
+> menores ofertas ativas em reais e desconsidera preço de lista, frete e item
+> indisponível.
 
 > Revisão 1.48.0.37: no **AvantaPreços**, o preço de referência usa a média de
 > até cinco menores ofertas comparáveis, evitando que anúncios muito acima do
