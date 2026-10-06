@@ -181,6 +181,8 @@ let timerAtualizacaoVinculo = null;
 let atualizandoVinculoAprovado = false;
 let atualizacaoVinculoForcada = false;
 let modoOfflineVendas = false;
+const INTERVALO_TENTATIVA_REDE_VENDAS_MS = 15000;
+let timerTentativaRedeVendas = null;
 
 function carregarRascunhoCadastroVendas() {
   try {
@@ -1116,7 +1118,28 @@ async function atualizarIndicadoresSincronizacaoVendas() {
 
 function erroTemporarioPersistencia(error) {
   const texto = String(error?.message || error || '');
-  return !navigator.onLine || /fetch|network|conex|offline|timeout|tempo limite|failed to fetch|load failed/i.test(texto);
+  return !navigator.onLine || /fetch|network|conex|offline|timeout|tempo limite|demorou|abort|failed to fetch|load failed/i.test(texto);
+}
+
+function limparTentativaRedeVendas() {
+  if (!timerTentativaRedeVendas) return;
+  window.clearTimeout(timerTentativaRedeVendas);
+  timerTentativaRedeVendas = null;
+}
+
+function agendarTentativaRedeVendas() {
+  if (timerTentativaRedeVendas || navigator.onLine === false) return;
+  timerTentativaRedeVendas = window.setTimeout(() => {
+    timerTentativaRedeVendas = null;
+    void sincronizarAoReconectarVendas().catch(() => agendarTentativaRedeVendas());
+  }, INTERVALO_TENTATIVA_REDE_VENDAS_MS);
+}
+
+function marcarRedeIndisponivelVendas() {
+  modoOfflineVendas = true;
+  atualizarAcoesCabecalhoSistemaVendas();
+  atualizarDisponibilidadeSolicitacaoVozVendas();
+  agendarTentativaRedeVendas();
 }
 
 function erroSessaoExpiradaVendas(error) {
@@ -1142,6 +1165,7 @@ function mutacaoPendenteOfflineVendas(resultado) {
 
 async function executarMutacaoGarantidaVendas(tipo, identificador, payload, executar) {
   const chave = await registrarPendenciaVendas(tipo, identificador, payload);
+  if (!navigator.onLine) marcarRedeIndisponivelVendas();
   if (!navigator.onLine && chave) return resultadoPendenteOfflineVendas(tipo, payload);
   try {
     const resultado = await executar();
@@ -1149,7 +1173,10 @@ async function executarMutacaoGarantidaVendas(tipo, identificador, payload, exec
     return resultado;
   } catch (error) {
     if (!erroTemporarioPersistencia(error)) await removerPendenciaVendas(chave);
-    else if (chave) return resultadoPendenteOfflineVendas(tipo, payload);
+    else if (chave) {
+      marcarRedeIndisponivelVendas();
+      return resultadoPendenteOfflineVendas(tipo, payload);
+    }
     else error.persistenciaLocalIndisponivel = true;
     throw error;
   }
@@ -3322,6 +3349,7 @@ async function sairSistema(destinoForcado = '') {
   if (timerAtualizacaoVinculo) window.clearTimeout(timerAtualizacaoVinculo);
   timerVerificacaoAprovacao = null;
   timerAtualizacaoVinculo = null;
+  limparTentativaRedeVendas();
   void limparCacheVendas();
   limparAcessoOfflineVendas();
   await suspenderSincronizacaoPreferenciasVendas();
@@ -4065,6 +4093,7 @@ async function reenviarPendenciasVendas() {
           console.error('Pendência operacional rejeitada pelo servidor.', error);
           continue;
         }
+        marcarRedeIndisponivelVendas();
         break;
       }
     }
@@ -10855,10 +10884,19 @@ async function sincronizarAoReconectarVendas() {
       const sessao = await window.VendasDb.refreshSession?.();
       if (sessao) {
         modoOfflineVendas = false;
+        limparTentativaRedeVendas();
         await prepararSelecaoSistemaAntesDosDadosVendas();
         await carregarDadosBackend(false, true, true);
+      } else {
+        agendarTentativaRedeVendas();
+        await atualizarIndicadoresSincronizacaoVendas();
+        return;
       }
-    } catch { /* mantém a sessão offline até a próxima tentativa */ }
+    } catch {
+      agendarTentativaRedeVendas();
+      await atualizarIndicadoresSincronizacaoVendas();
+      return;
+    }
   }
   await reenviarPendenciasVendas();
   await atualizarIndicadoresSincronizacaoVendas();

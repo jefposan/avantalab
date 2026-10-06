@@ -1,6 +1,10 @@
 // Revisado na versão 1.48.0.30: uma tarefa de consulta de preços temporariamente
 // na fila é aguardada e reutilizada; o PWA não a apresenta como recusa nem cria
 // uma nova consulta cobrável.
+// Revisado na versão 1.48.0.31: no AvantaVendas, uma gravação de cliente,
+// pedido ou pagamento que não responde em oito segundos permanece local e é
+// reenviada automaticamente ao restabelecer a conexão. Não orientar a repetir
+// o lançamento enquanto houver pendência de sincronização.
 // Revisado na versão 1.48.0.29: Ler EAN solicita exclusivamente a permissão
 // nativa de câmera no próprio gesto, sem confirmação intermediária do PWA; após
 // concessão persistida pelo sistema, o visor abre direto.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.30 -->
+<!-- ava-version: 1.48.0.31 -->
+
+> Revisão 1.48.0.31: tolerância a rede lenta foi ajustada somente no
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.48.0.30: o **AvantaPreços** espera a conclusão da mesma consulta
 > quando a fonte de preços a coloca temporariamente em fila; isso evita que a

@@ -6,6 +6,50 @@
   // Vendas silenciosamente ao abrir ou trocar de aplicativo.
   const vendasStorageKey = 'avantalab-vendas-mobile-auth';
   const contaAtivaStorageKey = 'avantalab.vendas_mobile.conta_ativa.v1';
+  // O navegador pode continuar dizendo que está online mesmo quando a rede não
+  // consegue completar uma gravação. Sem um prazo, a promessa do Supabase fica
+  // aberta e impede que a aplicação use a fila local já existente.
+  const PRAZO_REDE_VENDAS_MS = 8000;
+
+  function criarErroRedeLentaVendas() {
+    const erro = new Error('A conexão demorou para responder. A alteração será enviada quando a conexão voltar.');
+    erro.name = 'TimeoutError';
+    erro.code = 'AVANTAVENDAS_REDE_LENTA';
+    return erro;
+  }
+
+  function criarFetchComPrazoDeRedeVendas(fetchNativo) {
+    return async (entrada, opcoes = {}) => {
+      if (typeof AbortController === 'undefined') {
+        return fetchNativo(entrada, opcoes);
+      }
+
+      const controlador = new AbortController();
+      const sinalExterno = opcoes?.signal || entrada?.signal;
+      const abortarPorSinalExterno = () => controlador.abort();
+      if (sinalExterno?.aborted) abortarPorSinalExterno();
+      else sinalExterno?.addEventListener?.('abort', abortarPorSinalExterno, { once: true });
+
+      let prazoExcedido = false;
+      const temporizador = window.setTimeout(() => {
+        prazoExcedido = true;
+        controlador.abort();
+      }, PRAZO_REDE_VENDAS_MS);
+      try {
+        return await fetchNativo(entrada, { ...opcoes, signal: controlador.signal });
+      } catch (error) {
+        if (prazoExcedido) throw criarErroRedeLentaVendas();
+        throw error;
+      } finally {
+        window.clearTimeout(temporizador);
+        sinalExterno?.removeEventListener?.('abort', abortarPorSinalExterno);
+      }
+    };
+  }
+
+  const fetchComPrazoDeRedeVendas = typeof window.fetch === 'function'
+    ? criarFetchComPrazoDeRedeVendas(window.fetch.bind(window))
+    : null;
   const client = sdk && config.supabaseUrl && config.supabaseAnonKey
     ? sdk.createClient(config.supabaseUrl, config.supabaseAnonKey, {
         auth: {
@@ -14,6 +58,7 @@
           autoRefreshToken: true,
           detectSessionInUrl: true,
         },
+        ...(fetchComPrazoDeRedeVendas ? { global: { fetch: fetchComPrazoDeRedeVendas } } : {}),
       })
     : null;
   let canalAtualizacoesVinculo = null;
@@ -78,7 +123,7 @@
 
   function erroRedeAutenticacao(error) {
     const texto = String(error?.message || error || '');
-    return /fetch|network|conex|offline|timeout|tempo limite|failed to fetch|load failed/i.test(texto);
+    return /fetch|network|conex|offline|timeout|tempo limite|demorou|abort|failed to fetch|load failed/i.test(texto);
   }
 
   async function refreshSession() {

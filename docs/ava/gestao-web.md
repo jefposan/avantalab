@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.30 -->
+<!-- ava-version: 1.48.0.31 -->
+
+> Revisão 1.48.0.31: tolerância a rede lenta foi ajustada somente no
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.48.0.30: quando o provedor de preços informa que a consulta ainda
 > está na fila, o **AvantaPreços** aguarda a mesma tarefa e tenta novamente.

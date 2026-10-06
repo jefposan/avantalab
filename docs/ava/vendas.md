@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.30 -->
+<!-- ava-version: 1.48.0.31 -->
+
+> Revisão 1.48.0.31-av166: com conexão lenta ou instável, o AvantaVendas
+> aguarda no máximo oito segundos pelas gravações de clientes, pedidos e
+> pagamentos. Depois disso, confirma o lançamento neste aparelho e informa que
+> ele será enviado automaticamente quando a conexão voltar. Não orientar a
+> pessoa a repetir o lançamento; ela pode acompanhar pendências no cabeçalho.
 
 > Revisão 1.48.0.30: a espera pela fila da consulta de preços pertence ao PWA
 > de marketplaces e não altera os fluxos do AvantaVendas.
@@ -44,7 +50,7 @@
 > Revisão 1.48.0.20: a fonte pública de preços do AvantaPreços pertence ao PWA
 > de marketplaces e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 165 -->
+<!-- avantavendas-asset-revision: 166 -->
 
 > Revisão 1.48.0.19-av165: o vínculo comercial pertence à conta de vendas
 > ativa. Código já usado informa que a empresa já foi adicionada; uma aprovação

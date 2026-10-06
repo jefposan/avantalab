@@ -17,6 +17,27 @@ function criarBanco(auth) {
   return window.VendasDb;
 }
 
+function criarBancoComFetch(fetch) {
+  let opcoesCliente = null;
+  const window = {
+    VENDAS_MOBILE_CONFIG: { supabaseUrl: 'https://teste.supabase.co', supabaseAnonKey: 'anon' },
+    fetch,
+    setTimeout: (acao) => {
+      queueMicrotask(acao);
+      return 1;
+    },
+    clearTimeout: () => undefined,
+    supabase: {
+      createClient: (_url, _chave, opcoes) => {
+        opcoesCliente = opcoes;
+        return { auth: {} };
+      },
+    },
+  };
+  vm.runInNewContext(fonte, { window, console, URLSearchParams, AbortController, setTimeout, clearTimeout, queueMicrotask });
+  return opcoesCliente.global.fetch;
+}
+
 test('sessão expirada é renovada antes de identificar o usuário', async () => {
   let renovacoes = 0;
   const usuario = { id: 'usuario-1' };
@@ -72,4 +93,34 @@ test('token inválido não é tratado como uma sessão válida', async () => {
   });
 
   assert.equal(await banco.hasSession(), false);
+});
+
+test('gravação em rede lenta é abortada para a fila local assumir sem aguardar indefinidamente', async () => {
+  let recebeuAbort = false;
+  const fetchComPrazo = criarBancoComFetch((_entrada, opcoes) => new Promise((_resolver, rejeitar) => {
+    opcoes.signal.addEventListener('abort', () => {
+      recebeuAbort = true;
+      const erro = new Error('aborted');
+      erro.name = 'AbortError';
+      rejeitar(erro);
+    }, { once: true });
+  }));
+
+  await assert.rejects(
+    () => fetchComPrazo('https://teste.supabase.co/rest/v1/vendas_mobile_pedidos', { method: 'POST' }),
+    (erro) => erro?.code === 'AVANTAVENDAS_REDE_LENTA' && /conexão demorou/i.test(erro.message),
+  );
+  assert.equal(recebeuAbort, true);
+});
+
+test('leitura concluída antes do prazo preserva a resposta normal', async () => {
+  let recebeuSinalDeCancelamento = false;
+  const fetchComPrazo = criarBancoComFetch(async (_entrada, opcoes) => {
+    recebeuSinalDeCancelamento = Boolean(opcoes.signal);
+    return { ok: true };
+  });
+
+  const resposta = await fetchComPrazo('https://teste.supabase.co/rest/v1/vendas_mobile_pedidos', { method: 'GET' });
+  assert.deepEqual(resposta, { ok: true });
+  assert.equal(recebeuSinalDeCancelamento, true);
 });
