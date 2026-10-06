@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.40 -->
+<!-- ava-version: 1.48.0.41 -->
+
+> Revisão 1.48.0.41: conexões adicionais e edição de taxas de anúncios no
+> módulo Marketplaces pertencem à Gestão Web e não alteram o AvantaVendas.
 
 > Revisão 1.48.0.40: o feedback visual de recálculo do **AvantaPreços**
 > pertence ao PWA de consulta e não altera os fluxos do AvantaVendas.

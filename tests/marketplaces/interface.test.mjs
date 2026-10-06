@@ -16,13 +16,14 @@ test('Envio uses human-readable labels rather than raw provider codes', () => {
   assert.doesNotMatch(listings, /\{item.shipping.mode\}|\{item.shipping.logisticType\}/);
 });
 
-test('editing actions have compact faces, accessible hit targets and breathing room', () => {
-  assert.match(css, /\.actionBar \{[^}]*gap: 12px; margin-bottom: 24px;/);
+test('editing actions use one visual border, an accessible target and hover feedback', () => {
+  assert.match(css, /\.actionBar \{[^}]*gap: 10px; margin-bottom: 24px;/);
   assert.match(css, /\.listingDetails dl \{[^}]*margin: 0;/);
-  assert.match(css, /\.listingsPanel \.actionBar button \{[^}]*height: 44px; min-height: 44px; min-width: 44px;[^}]*background: transparent;/);
-  assert.match(css, /\.listingsPanel \.actionBar button::before \{[^}]*inset: 6px 0;[^}]*pointer-events: none;/);
-  assert.match(css, /@media \(max-width: 760px\) \{ \.listingsPanel \.actionBar button \{ height: 48px; min-height: 48px; \}\.listingsPanel \.actionBar button::before \{ inset: 8px 0;/);
-  assert.match(css, /\.dark \.actionBar button::before \{[^}]*border-color:[^}]*background:/);
+  assert.match(css, /\.listingsPanel \.actionBar :is\(button, a\) \{[^}]*min-height: 40px;[^}]*border: 1px solid #cbd5e1;[^}]*padding: 0 14px;/);
+  assert.match(css, /\.listingsPanel \.actionBar :is\(button, a\):hover:not\(:disabled\) \{[^}]*box-shadow:[^}]*transform: translateY\(-1px\);/);
+  assert.doesNotMatch(css, /\.actionBar button::before/);
+  assert.match(css, /@media \(max-width: 760px\) \{ \.listingsPanel \.actionBar :is\(button, a\) \{ min-height: 48px;/);
+  assert.match(css, /\.dark \.listingsPanel \.actionBar :is\(button, a\) \{[^}]*border-color:[^}]*background:/);
 });
 
 test('cancel closes details locally and restores focus without changing the listing', () => {
@@ -110,7 +111,7 @@ test('static notices are removed without disguising validation or hiding importa
 });
 
 test('the publication account field uses the standard dropdown and listings use the selected account from card one', () => {
-  assert.match(client, /connected\.length === 1 \? connected\[0\]\.id : ''/);
+  assert.match(client, /return connected\[0\]\?\.id \|\| ''/);
   assert.match(client, /accountId=\{selectedAccount\}/);
   assert.match(newListing, /<MarketplaceAccountPicker label="Publicar na conta"/);
   assert.doesNotMatch(listings, /<MarketplaceAccountPicker label="Conta do Mercado Livre"/);
@@ -120,6 +121,16 @@ test('the publication account field uses the standard dropdown and listings use 
   assert.match(marketplaceSelect, /event\.key === 'Escape'/);
   assert.match(css, /\.selectControl \{ position: relative;/);
   assert.match(css, /\.selectList \{ position: absolute; top: calc\(100% \+ 5px\);/);
+});
+
+test('connections load from the persisted company records and OAuth returns without replacing the module page', () => {
+  assert.match(client, /const refreshConnections = useCallback/);
+  assert.match(client, /if \(accessState !== 'ready'\) return;\s*void refreshConnections\(\)/);
+  assert.match(client, /window\.open\('', 'avantalab-mercado-livre-oauth'/);
+  assert.match(client, /window\.addEventListener\('message', receiveAuthorization\)/);
+  assert.match(client, /data\.type !== 'avantalab-marketplace-oauth'/);
+  assert.match(read('app/api/modulos/marketplaces/conexoes/mercado-livre/callback/route.ts'), /window\.opener\.postMessage\(message,target\)/);
+  assert.match(read('app/api/modulos/marketplaces/conexoes/mercado-livre/callback/route.ts'), /window\.close\(\)/);
 });
 
 test('every marketplace list opens in the same anchored system component', () => {

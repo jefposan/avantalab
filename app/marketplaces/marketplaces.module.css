@@ -97,10 +97,10 @@
 .listingDetails { padding: 8px; font-size: 13px; }
 .listingDetails dl { display: grid; grid-template-columns: minmax(170px, 1fr) 3fr; gap: 8px 18px; max-width: 1000px; margin: 0; }
 .listingDetails dt { font-weight: 700; }.listingDetails dd { margin: 0; overflow-wrap: anywhere; }
-.actionBar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 24px; }
-.listingsPanel .actionBar button { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; height: 44px; min-height: 44px; min-width: 44px; border: 0; background: transparent; line-height: 20px; }
-.listingsPanel .actionBar button::before { content: ""; position: absolute; inset: 6px 0; z-index: -1; pointer-events: none; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; }
-.actionBar a { color: var(--brand); min-height: 44px; display: inline-flex; align-items: center; }
+.actionBar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 24px; }
+.listingsPanel .actionBar :is(button, a) { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-height: 40px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 14px; color: var(--brand); background: #fff; font: inherit; line-height: 20px; text-decoration: none; cursor: pointer; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.listingsPanel .actionBar :is(button, a):hover:not(:disabled) { border-color: color-mix(in srgb, var(--brand) 55%, #cbd5e1); background: color-mix(in srgb, var(--brand) 7%, #fff); box-shadow: 0 3px 8px color-mix(in srgb, var(--brand) 14%, transparent); transform: translateY(-1px); }
+.listingsPanel .actionBar button:disabled { transform: none; box-shadow: none; }
 .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 16px; font-size: 13px; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .inlineEditorForm { min-width: 0; }
@@ -112,8 +112,8 @@
 .editorValue :is(input, textarea):disabled { background: #f1f5f9; color: #64748b; }
 .editorValue [aria-invalid="true"] { border-color: #b91c1c; }
 .editorValue .help { margin: 5px 0 0; }
-.inlineEditorForm .actionBar .primary { color: #fff; }
-.inlineEditorForm .actionBar .primary::before { background: var(--brand); border-color: var(--brand); }
+.inlineEditorForm .actionBar .primary { color: #fff; border-color: var(--brand); background: var(--brand); }
+.inlineEditorForm .actionBar .primary:hover:not(:disabled) { color: #fff; border-color: var(--brand); background: color-mix(in srgb, var(--brand) 88%, #000); }
 .readOnlyTag { padding: 3px 7px; border-radius: 8px; color: #64748b; background: #f1f5f9; font-size: 11px; font-weight: 400; }
 .listingDetails dt label { display: inline; }
 .listingDetails dt .readOnlyTag { display: inline-block; margin-left: 8px; }
@@ -129,11 +129,11 @@
 .dark .listingTable thead { background: #111b2b; }.dark .listingTable small { color: #b8c5d7; }
 .dark .listingTable .listingActions { background: #182235; box-shadow: -1px 0 0 #334155; }
 .dark .listingTable thead .listingActions { background: #111b2b; }
-.dark .actionBar a { color: #bfdbfe; }
-.dark .listingsPanel .actionBar button { background: transparent; }
-.dark .actionBar button::before { border-color: #475569; background: #182235; }
+.dark .listingsPanel .actionBar :is(button, a) { color: #bfdbfe; border-color: #475569; background: #182235; }
+.dark .listingsPanel .actionBar :is(button, a):hover:not(:disabled) { background: color-mix(in srgb, var(--brand) 24%, #182235); border-color: color-mix(in srgb, var(--brand) 55%, #475569); }
+.dark .inlineEditorForm .actionBar .primary { color: #fff; border-color: var(--brand); background: var(--brand); }
 .dark .listingsPanel button.readOnlyHelp { color: #bfdbfe; background: transparent; }
 .dark .listingsPanel button.readOnlyHelp:hover { background: color-mix(in srgb, #bfdbfe 10%, transparent); }
 @media (max-width: 760px) { .blockedReason { position: static; width: auto; height: auto; margin: 5px 0 0; clip: auto; white-space: normal; color: #64748b; font-size: 12px; line-height: 1.5; }.dark .blockedReason { color: #b8c5d7; } }
 @media (max-width: 760px) { .listingFilters { grid-template-columns: 1fr; }.pagination { justify-content: center; gap: 10px; }.listingsPanel button.editListing { width: 48px; min-height: 48px; } }
-@media (max-width: 760px) { .listingsPanel .actionBar button { height: 48px; min-height: 48px; }.listingsPanel .actionBar button::before { inset: 8px 0; } }
+@media (max-width: 760px) { .listingsPanel .actionBar :is(button, a) { min-height: 48px; } }

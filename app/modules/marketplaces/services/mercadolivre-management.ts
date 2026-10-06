@@ -7,6 +7,8 @@ import { openMarketplaceSecret, sealMarketplaceSecret } from './secret-vault';
 import { MarketplaceError } from './management-access';
 import { actionBody, listingIdIsValid, normalizeListing, objectValue, uuidIsValid, type ListingAction } from './listing-model';
 
+export type ListingTypeFeeEstimate = { fee: number | null; percent: number | null; notice?: string };
+
 export type SellerConnection = {
   id: string; empresa_id: string; seller_reference: string; status: string; seller_name: string | null;
   token_sealed: Parameters<typeof openMarketplaceSecret>[0]; expires_at: string | null;
@@ -127,11 +129,12 @@ export async function mlRequest(db: SupabaseClient, connection: SellerConnection
   throw new MarketplaceError(409, 'reconnect', 'Reconecte a conta do Mercado Livre.');
 }
 
-async function estimates(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>) {
+export async function estimateMercadoLivreListingTypeFee(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>, listingTypeId = String(item.listing_type_id || '')): Promise<ListingTypeFeeEstimate> {
   const warnings: string[] = [];
-  let fee: unknown, percent: unknown, freight: unknown;
   const shipping = objectValue(item.shipping);
-  const query = new URLSearchParams({ price: String(item.price), listing_type_id: String(item.listing_type_id) });
+  const price = typeof item.price === 'number' ? item.price : NaN;
+  if (!listingTypeId || !Number.isFinite(price) || price <= 0) return { fee: null, percent: null, notice: 'Preço indisponível para calcular a taxa.' };
+  const query = new URLSearchParams({ price: String(price), listing_type_id: listingTypeId });
   if (item.catalog_product_id) query.set('catalog_product_id', String(item.catalog_product_id));
   else query.set('category_id', String(item.category_id));
   if (shipping.mode) query.set('shipping_mode', String(shipping.mode));
@@ -139,10 +142,23 @@ async function estimates(db: SupabaseClient, connection: SellerConnection, item:
   try {
     const data = await mlRequest(db, connection, `/sites/MLB/listing_prices?${query}`);
     const rows = Array.isArray(data) ? data : [data];
-    const row = rows.map(objectValue).find((row) => row.listing_type_id === item.listing_type_id);
-    fee = row?.sale_fee_amount; percent = objectValue(row?.sale_fee_details).percentage_fee ?? objectValue(row?.sale_fee_details).percent;
-    if (fee == null) warnings.push('Taxa estimada indisponível.');
-  } catch { warnings.push('Não foi possível obter a taxa estimada.'); }
+    const row = rows.map(objectValue).find((candidate) => candidate.listing_type_id === listingTypeId);
+    const fee = typeof row?.sale_fee_amount === 'number' ? row.sale_fee_amount : null;
+    const details = objectValue(row?.sale_fee_details);
+    const percentage = details.percentage_fee ?? details.percent;
+    const percent = typeof percentage === 'number' ? percentage : null;
+    return { fee, percent, ...(fee == null ? { notice: 'Taxa estimada indisponível.' } : {}) };
+  } catch {
+    return { fee: null, percent: null, notice: 'Não foi possível obter a taxa estimada.' };
+  }
+}
+
+async function estimates(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>) {
+  const warnings: string[] = [];
+  let freight: unknown;
+  const feeEstimate = await estimateMercadoLivreListingTypeFee(db, connection, item);
+  if (feeEstimate.notice) warnings.push(feeEstimate.notice);
+  const shipping = objectValue(item.shipping);
   if (['active', 'paused'].includes(String(item.status)) && shipping.mode === 'me2' && typeof shipping.free_shipping === 'boolean') {
     try {
       const data = objectValue(await mlRequest(db, connection, `/users/${connection.seller_reference}/shipping_options/free?${new URLSearchParams({ item_id: String(item.id), free_shipping: shipping.free_shipping ? 'True' : 'False' })}`));
@@ -151,7 +167,7 @@ async function estimates(db: SupabaseClient, connection: SellerConnection, item:
       if (freight == null) warnings.push('Frete estimado do vendedor indisponível.');
     } catch { warnings.push('Não foi possível estimar o frete do vendedor.'); }
   }
-  return { fee, percent, freight, warnings };
+  return { fee: feeEstimate.fee, percent: feeEstimate.percent, freight, warnings };
 }
 
 export async function saveListing(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>, includeEstimates = true) {

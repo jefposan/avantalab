@@ -10,7 +10,13 @@ function destination(request: Request, empresaId: string, status: 'connected' | 
   if (empresaId) url.searchParams.set('empresaId', empresaId);
   url.searchParams.set('marketplaceConnection', status);
   if (message) url.searchParams.set('message', message.slice(0, 180));
-  return NextResponse.redirect(url);
+  const origin = new URL(request.url).origin;
+  const payload = JSON.stringify({ type: 'avantalab-marketplace-oauth', provider: 'mercado_livre', empresaId, status, message: message.slice(0, 180) });
+  const fallback = JSON.stringify(url.toString());
+  // Quando a autorização nasce em uma janela, ela atualiza a aba original e fecha.
+  // Sem opener (fluxos antigos, favoritos ou bloqueio de popup), preserva o redirecionamento seguro.
+  const document = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Conexão Mercado Livre</title></head><body><p>Concluindo conexão…</p><script>const target=${JSON.stringify(origin)};const message=${payload};const fallback=${fallback};if(window.opener&&!window.opener.closed){window.opener.postMessage(message,target);window.close();}window.setTimeout(()=>window.location.replace(fallback),350);</script></body></html>`;
+  return new NextResponse(document, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } });
 }
 
 export async function GET(request: Request) {

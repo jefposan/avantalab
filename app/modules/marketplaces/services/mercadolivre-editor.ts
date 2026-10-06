@@ -1,11 +1,11 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ListingEditor } from '../listing-editor';
+import type { ListingEditor, ListingTypeOption } from '../listing-editor';
 import { validateChanges } from '../listing-editor';
 import { mercadoLivreEditPolicy, stockModelFromResponse, titleAssociationFromResponse } from './mercadolivre-edit-policy';
 import { listingIdIsValid, normalizeListing, objectValue, uuidIsValid } from './listing-model';
-import { mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
+import { estimateMercadoLivreListingTypeFee, mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
 import { MarketplaceError } from './management-access';
 import type { SaveListingInput } from './listing-edit-adapters';
 
@@ -14,18 +14,71 @@ async function freshEditor(db: SupabaseClient, connection: SellerConnection, id:
   const item = objectValue(await mlRequest(db, connection, `/items/${id}`));
   normalizeListing(item, connection.seller_reference); // Nunca consultar dados complementares de anúncio alheio.
   if (!/^MLB\d+$/.test(String(item.category_id))) throw new MarketplaceError(409, 'invalid_category', 'Categoria do anúncio indisponível.');
-  const [category, user, description, automation, stockModel, titleAssociation] = await Promise.all([
+  const [category, user, description, automation, stockModel, titleAssociation, availableListingTypes] = await Promise.all([
     mlRequest(db, connection, `/categories/${item.category_id}`).then(objectValue),
     mlRequest(db, connection, `/users/${connection.seller_reference}`).then(objectValue).catch(() => ({} as Record<string, unknown>)),
     mlRequest(db, connection, `/items/${id}/description`).then((value) => ({ text: typeof objectValue(value).plain_text === 'string' ? objectValue(value).plain_text as string : null, exists: true })).catch((error) => ({ text: error instanceof MarketplaceError && error.code === 'provider_404' ? '' : null, exists: false })),
     priceAutomation(db, connection, id),
     stockModelForItem(db, connection, item),
     titleAssociationForItem(db, connection, item),
+    listingTypesForItem(db, connection, item),
   ]);
   if (user.id != null && String(user.id) !== connection.seller_reference) throw new MarketplaceError(409, 'seller_mismatch', 'Identidade da conta divergente. Reconecte a conta.');
-  const editor = mercadoLivreEditPolicy(item, category, user, description.text, automation, stockModel, titleAssociation);
+  const editor = mercadoLivreEditPolicy(item, category, user, description.text, automation, stockModel, titleAssociation, availableListingTypes);
   const revision = createHash('sha256').update(JSON.stringify({ connection: connection.id, updated: item.last_updated, editor })).digest('hex');
   return { editor: { ...editor, revision } as ListingEditor, descriptionExists: description.exists, titleWriteField: item.user_product_id ? 'family_name' : 'title' };
+}
+
+const listingTypeNames: Record<string, string> = { gold_special: 'Clássico', gold_pro: 'Premium', gold_premium: 'Premium', free: 'Grátis' };
+
+function listingTypeId(value: unknown) {
+  return typeof value === 'string' && /^[a-z][a-z0-9_]{1,39}$/.test(value) ? value : '';
+}
+
+function listingTypesFromResponse(value: unknown, currentId: string) {
+  const data = objectValue(value);
+  const result = new Map<string, string>();
+  for (const raw of Array.isArray(data.available) ? data.available : []) {
+    const row = objectValue(raw), id = listingTypeId(row.id);
+    const name = typeof row.name === 'string' ? row.name.trim().slice(0, 100) : '';
+    if (id && (row.remaining_listings == null || Number(row.remaining_listings) > 0)) result.set(id, name || listingTypeNames[id] || id);
+  }
+  if (currentId && !result.has(currentId)) result.set(currentId, listingTypeNames[currentId] || currentId);
+  return [...result].map(([id, name]) => ({ id, name }));
+}
+
+async function listingTypesForItem(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>): Promise<ListingTypeOption[]> {
+  const currentId = listingTypeId(item.listing_type_id);
+  try {
+    const available = await mlRequest(db, connection, `/users/${connection.seller_reference}/available_listing_types?category_id=${encodeURIComponent(String(item.category_id))}`);
+    const types = listingTypesFromResponse(available, currentId);
+    return await Promise.all(types.map(async ({ id, name }) => {
+      const estimate = await estimateMercadoLivreListingTypeFee(db, connection, item, id);
+      return { id, name, ...estimate };
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function readMercadoLivreListingTypeFee(db: SupabaseClient, connection: SellerConnection, id: unknown, listingType: unknown, price: unknown) {
+  if (!listingIdIsValid(id)) throw new MarketplaceError(400, 'invalid_item', 'Identificador de anúncio inválido.');
+  const selectedType = listingTypeId(listingType);
+  if (!selectedType || typeof price !== 'number' || !Number.isFinite(price) || price <= 0 || Math.round(price * 100) !== price * 100) {
+    throw new MarketplaceError(400, 'invalid_fee_input', 'Informe um preço válido e um tipo de anúncio permitido.');
+  }
+  const item = objectValue(await mlRequest(db, connection, `/items/${id}`));
+  normalizeListing(item, connection.seller_reference);
+  if (!/^MLB\d+$/.test(String(item.category_id))) throw new MarketplaceError(409, 'invalid_category', 'Categoria do anúncio indisponível.');
+  const types = await listingTypesForItem(db, connection, item);
+  if (!types.some((option) => option.id === selectedType)) throw new MarketplaceError(400, 'invalid_listing_type', 'Este tipo de anúncio não está disponível para esta publicação.');
+  const category = objectValue(await mlRequest(db, connection, `/categories/${item.category_id}`));
+  const settings = objectValue(category.settings);
+  const minimum = typeof settings.minimum_price === 'number' ? settings.minimum_price : .01;
+  const maximum = typeof settings.maximum_price === 'number' ? settings.maximum_price : null;
+  if (price < Math.max(.01, minimum) || (maximum != null && price > maximum)) throw new MarketplaceError(400, 'invalid_fee_price', 'O preço está fora dos limites informados pelo Mercado Livre para esta categoria.');
+  const estimate = await estimateMercadoLivreListingTypeFee(db, connection, { ...item, price }, selectedType);
+  return { listingType: selectedType, ...estimate };
 }
 
 async function titleAssociationForItem(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>): Promise<'single' | 'shared' | 'unknown'> {
@@ -87,6 +140,11 @@ export async function saveMercadoLivreEditor(db: SupabaseClient, connection: Sel
     if (changes.stock !== undefined) body.available_quantity = changes.stock;
     if (Object.keys(body).length) {
       await mlRequest(db, connection, `/items/${editor.id}`, 'PUT', body);
+      applied = true;
+    }
+    if (changes.listingType !== undefined) {
+      // O Mercado Livre exige o recurso específico para mudar Clássico/Premium.
+      await mlRequest(db, connection, `/items/${editor.id}/listing_type`, 'POST', { id: changes.listingType });
       applied = true;
     }
     if (changes.description !== undefined) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import ModuloHeader from '@/app/components/ModuloHeader';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
@@ -34,7 +34,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [connecting, setConnecting] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState('');
   const [accounts, setAccounts] = useState<MarketplaceAccount[]>([]);
-  const [canDisconnectAccount, setCanDisconnectAccount] = useState(false);
+  const [canManageConnections, setCanManageConnections] = useState(false);
   const [accountSelectionLocked, setAccountSelectionLocked] = useState(false);
   const [publicationBusy, setPublicationBusy] = useState(false);
   const [connectionNotice, setConnectionNotice] = useState(() => connectionStatus === 'error' ? connectionMessage || 'Não foi possível conectar a conta do Mercado Livre.' : '');
@@ -42,17 +42,23 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [priceLinkStatus, setPriceLinkStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [disconnectAccount, setDisconnectAccount] = useState<MarketplaceAccount | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
+  const oauthWindow = useRef<Window | null>(null);
   const returnHref = `/gestao?empresaId=${encodeURIComponent(companyId)}`;
   const selectedProvider = useMemo(() => providers.find((provider) => provider.id === marketplace)!, [marketplace]);
-  const loadAccounts = useCallback((available: MarketplaceAccount[], canDisconnect: boolean) => {
+  const loadAccounts = useCallback((available: MarketplaceAccount[], canManageConnection: boolean) => {
     setAccounts(available);
-    setCanDisconnectAccount(canDisconnect);
+    setCanManageConnections(canManageConnection);
     setSelectedAccount((current) => {
       if (available.some((account) => account.id === current && account.status === 'connected')) return current;
       const connected = available.filter((account) => account.status === 'connected');
-      return connected.length === 1 ? connected[0].id : '';
+      return connected[0]?.id || '';
     });
   }, []);
+
+  const refreshConnections = useCallback(async () => {
+    const data = await marketplaceClientRequest(`conexoes?empresaId=${encodeURIComponent(companyId)}`) as { accounts: MarketplaceAccount[]; canConnect: boolean };
+    loadAccounts(data.accounts, data.canConnect);
+  }, [companyId, loadAccounts]);
 
   const connectedAccounts = accounts.filter((account) => account.status === 'connected');
 
@@ -62,8 +68,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     setConnectionNotice('');
     try {
       await marketplaceClientRequest('conexoes', { empresaId: companyId, connectionId: disconnectAccount.id, confirmation: disconnectAccount.id }, undefined, 'DELETE');
-      setAccounts((current) => current.filter((account) => account.id !== disconnectAccount.id));
-      setSelectedAccount((current) => current === disconnectAccount.id ? '' : current);
+      await refreshConnections();
     } catch (error) {
       setConnectionNotice(error instanceof Error ? error.message : 'Não foi possível desconectar a conta.');
     } finally {
@@ -99,6 +104,40 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }, [companyId]);
 
   useEffect(() => {
+    if (accessState !== 'ready') return;
+    void refreshConnections().catch((error) => setConnectionNotice(error instanceof Error ? error.message : 'Não foi possível carregar as contas conectadas.'));
+  }, [accessState, refreshConnections]);
+
+  useEffect(() => {
+    const receiveAuthorization = (event: MessageEvent<unknown>) => {
+      if (event.origin !== window.location.origin || !event.data || typeof event.data !== 'object') return;
+      const data = event.data as { type?: string; provider?: string; empresaId?: string; status?: string; message?: string };
+      if (data.type !== 'avantalab-marketplace-oauth' || data.provider !== 'mercado_livre' || data.empresaId !== companyId) return;
+      oauthWindow.current = null;
+      setConnecting(false);
+      if (data.status === 'connected') {
+        setConnectionNotice('Conta conectada. Atualizando a lista de contas…');
+        void refreshConnections().then(() => setConnectionNotice('Conta conectada com sucesso.')).catch((error) => setConnectionNotice(error instanceof Error ? error.message : 'A conta foi conectada, mas a lista ainda não foi atualizada.'));
+      } else {
+        setConnectionNotice(data.message || 'Não foi possível concluir a conexão. Tente novamente.');
+      }
+    };
+    window.addEventListener('message', receiveAuthorization);
+    return () => window.removeEventListener('message', receiveAuthorization);
+  }, [companyId, refreshConnections]);
+
+  useEffect(() => {
+    if (!connecting || !oauthWindow.current) return;
+    const timer = window.setInterval(() => {
+      if (oauthWindow.current?.closed) {
+        oauthWindow.current = null;
+        setConnecting(false);
+      }
+    }, 400);
+    return () => window.clearInterval(timer);
+  }, [connecting]);
+
+  useEffect(() => {
     if (priceLinkStatus !== 'copied') return;
     const timer = window.setTimeout(() => setPriceLinkStatus('idle'), 2500);
     return () => window.clearTimeout(timer);
@@ -120,6 +159,12 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
 
   async function connectMarketplace() {
     if (marketplace !== 'mercado_livre' || connecting || !companyId) return;
+    // A abertura acontece no gesto de clique para evitar bloqueio de popup e manter a tela atual intacta.
+    const popup = window.open('', 'avantalab-mercado-livre-oauth', 'popup=yes,width=560,height=760,resizable=yes,scrollbars=yes');
+    if (popup) {
+      oauthWindow.current = popup;
+      popup.document.title = 'Conectando Mercado Livre';
+    }
     setConnecting(true);
     setConnectionNotice('');
     try {
@@ -133,8 +178,11 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.authorizationUrl) throw new Error(payload.message || 'Não foi possível iniciar a conexão.');
-      window.location.assign(payload.authorizationUrl);
+      if (popup && !popup.closed) popup.location.replace(payload.authorizationUrl);
+      else window.location.assign(payload.authorizationUrl);
     } catch (error) {
+      if (popup && !popup.closed) popup.close();
+      oauthWindow.current = null;
       setConnectionNotice(error instanceof Error ? error.message : 'Não foi possível iniciar a conexão.');
       setConnecting(false);
     }
@@ -179,14 +227,14 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
             <strong>{provider.name}</strong>{!provider.available && <small>Em breve</small>}
           </button>)}
         </div>
-        <div className={styles.connectionNotice}>{selectedProvider.available && <button type="button" disabled={connecting || !companyId} onClick={() => void connectMarketplace()}>{connecting ? 'Abrindo Mercado Livre…' : 'Conectar conta'}</button>}{connectionNotice && <p className={styles.connectionMessage} role="alert">{connectionNotice}</p>}</div>
+        <div className={styles.connectionNotice}>{selectedProvider.available && <button type="button" disabled={connecting || !companyId || !canManageConnections} onClick={() => void connectMarketplace()}>{connecting ? 'Abrindo Mercado Livre…' : 'Conectar conta'}</button>}{connectionNotice && <p className={styles.connectionMessage} role="alert">{connectionNotice}</p>}</div>
         {marketplace === 'mercado_livre' && <div className={styles.connectedAccounts} aria-labelledby="connected-accounts-title">
           <div className={styles.connectedAccountsHeading}><h3 id="connected-accounts-title">Contas conectadas</h3><span>{connectedAccounts.length}</span></div>
           {connectedAccounts.length ? <div className={styles.connectedAccountsList}>{connectedAccounts.map((account) => <article key={account.id} className={`${styles.connectedAccount} ${account.id === selectedAccount ? styles.connectedAccountSelected : ''}`}>
             <button type="button" className={styles.connectedAccountSelect} onClick={() => setSelectedAccount(account.id)} disabled={accountSelectionLocked || publicationBusy} aria-pressed={account.id === selectedAccount}>
               <strong>{account.seller_name || `Vendedor ${account.seller_reference}`}</strong><small>ID {account.seller_reference} · Conectada<br />Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
             </button>
-            {canDisconnectAccount && <button type="button" className={styles.disconnectAccountButton} disabled={disconnecting || accountSelectionLocked || publicationBusy} onClick={() => setDisconnectAccount(account)}>Desconectar</button>}
+            {canManageConnections && <button type="button" className={styles.disconnectAccountButton} disabled={disconnecting || accountSelectionLocked || publicationBusy} onClick={() => setDisconnectAccount(account)}>Desconectar</button>}
           </article>)}</div> : <p className={styles.emptyConnectedAccounts}>Nenhuma conta conectada.</p>}
         </div>}
       </article>

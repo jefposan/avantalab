@@ -18,7 +18,7 @@ test('atualização e filtros não descartam edição aberta; a conta é bloquea
   const client = read('app/marketplaces/MarketplacesClient.tsx');
   assert.match(client,/disabled=\{accountSelectionLocked \|\| publicationBusy\}/);
 });
-test('os quatro campos editáveis antecedem o EAN na mesma lista expandida', () => {
+test('os campos editáveis, incluindo tipo e taxa do anúncio, antecedem o EAN na mesma lista expandida', () => {
   const row = page.split('{expanded === item.id && <tr')[1];
   assert.ok(row.includes('<ListingEditor') && row.includes('<ListingData item={item} /></ListingEditor>'));
   assert.ok(page.indexOf('<ListingEditor') > page.indexOf('className={styles.tableScroll}'));
@@ -35,11 +35,21 @@ test('nome base editável e bloqueios usam o tooltip compartilhado e campo corre
 });
 test('falha na consulta preserva os campos visíveis sem permitir salvar dados em cache', () => {
   assert.match(page, /snapshot=\{item\}/);
-  assert.match(form, /title: snapshot\.title, price: snapshot\.price, stock: snapshot\.stock/);
+  assert.match(form, /title: snapshot\.title, price: snapshot\.price, listingType: snapshot\.listingType \|\| '', stock: snapshot\.stock/);
   assert.match(form, /\{EDIT_FIELDS\.map\(\(field\) =>/);
   assert.doesNotMatch(form, /\{editor && EDIT_FIELDS\.map/);
   assert.match(form, /disabled = !editor \|\| !rule\?\.editable/);
   assert.match(form, /descrição não está no cache/i);
+});
+test('editor carrega os tipos autorizados e recalcula a taxa no preço selecionado', () => {
+  const service = read('app/modules/marketplaces/services/mercadolivre-editor.ts');
+  const feeRoute = read('app/api/modulos/marketplaces/anunciados/editar/taxa/route.ts');
+  assert.match(form, /<MarketplaceSelect id=\{id\} label="" ariaLabel=\{label\} value=\{values\.listingType\}/);
+  assert.match(form, /refreshListingTypeFee/);
+  assert.match(form, /onBlur=\{field === 'price' \? \(\) => void refreshListingTypeFee\(\)/);
+  assert.match(service, /available_listing_types\?category_id=/);
+  assert.match(service, /\/items\/\$\{editor\.id\}\/listing_type`, 'POST', \{ id: changes\.listingType \}/);
+  assert.match(feeRoute, /readMercadoLivreListingTypeFee/);
 });
 test('GET e PATCH autenticam gestão e isolam empresa/conta; migração preserva acesso backend', () => {
   assert.equal((route.match(/authorizeMarketplace\(request, .*?, 'manage'\)/g)||[]).length,2);

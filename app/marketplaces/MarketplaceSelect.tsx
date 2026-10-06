@@ -8,6 +8,7 @@ export type MarketplaceSelectOption = { value: string; label: string; detail?: s
 type Props = {
   id?: string;
   label: string;
+  ariaLabel?: string;
   value: string;
   options: MarketplaceSelectOption[];
   placeholder: string;
@@ -17,7 +18,7 @@ type Props = {
   onChange: (value: string) => void;
 };
 
-export default function MarketplaceSelect({ id, label, value, options, placeholder, disabled = false, error, className = '', onChange }: Props) {
+export default function MarketplaceSelect({ id, label, ariaLabel, value, options, placeholder, disabled = false, error, className = '', onChange }: Props) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -62,14 +63,15 @@ export default function MarketplaceSelect({ id, label, value, options, placehold
   }
 
   return <div ref={root} className={`${styles.selectField} ${className}`.trim()}>
-    <span id={labelId} className={styles.selectLabel}>{label}</span>
+    {label && <span id={labelId} className={styles.selectLabel}>{label}</span>}
     <div className={styles.selectControl}>
       <button
         ref={trigger}
         id={controlId}
         type="button"
         className={styles.selectTrigger}
-        aria-labelledby={`${labelId} ${valueId}`}
+        aria-label={!label ? ariaLabel || placeholder : undefined}
+        aria-labelledby={label ? `${labelId} ${valueId}` : undefined}
         aria-describedby={error ? errorId : undefined}
         data-invalid={error ? 'true' : undefined}
         aria-haspopup="listbox"
@@ -91,7 +93,7 @@ export default function MarketplaceSelect({ id, label, value, options, placehold
         id={listId}
         className={styles.selectList}
         role="listbox"
-        aria-labelledby={labelId}
+        aria-label={label || ariaLabel || placeholder}
         onKeyDown={(event) => {
           if (event.key === 'ArrowDown') { event.preventDefault(); focusOption('next'); }
           if (event.key === 'ArrowUp') { event.preventDefault(); focusOption('previous'); }

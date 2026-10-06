@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.40 -->
+<!-- ava-version: 1.48.0.41 -->
+
+> Revisão 1.48.0.41: em **Anúncios em marketplaces**, as contas conectadas
+> são carregadas novamente ao abrir o perfil e uma nova conta é conectada em
+> janela própria, sem reiniciar o módulo. Ao editar, o tipo de anúncio mostra
+> as opções liberadas pelo Mercado Livre e a taxa correspondente é recalculada
+> após mudar preço ou tipo.
 
 > Revisão 1.48.0.40: o botão **Consultar novamente** do **AvantaPreços**
 > informa claramente o cálculo em andamento, com ícone circular animado e o

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.40 -->
+<!-- ava-version: 1.48.0.41 -->
+
+> Revisão 1.48.0.41: conexões e edição comercial de **Anúncios em
+> marketplaces** pertencem à Gestão Web; não alteram os fluxos da Gestão
+> Mobile.
 
 > Revisão 1.48.0.40: ao tocar em **Consultar novamente** no
 > **AvantaPreços**, o botão passa a informar **Calculando, aguarde…** e mostra

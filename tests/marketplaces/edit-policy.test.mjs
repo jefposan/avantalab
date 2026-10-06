@@ -67,6 +67,21 @@ test('catálogo e falha ao consultar descrição mantêm proteção', () => {
   assert.equal(policy({}, {}, 'single', null).fields.description.editable, false);
   assert.equal(policy({}, { id: undefined }).fields.stock.editable, false);
 });
+test('tipo de anúncio só é liberado quando a plataforma retorna uma alternativa permitida', () => {
+  const types = [
+    { id: 'gold_special', name: 'Clássico', fee: 20, percent: 13 },
+    { id: 'gold_pro', name: 'Premium', fee: 28, percent: 18 },
+  ];
+  const withTypes = mercadoLivreEditPolicy(item, category, user, 'Descrição original', 'none', 'single', 'single', types);
+  assert.equal(withTypes.fields.listingType.editable, true);
+  assert.equal(withTypes.values.listingType, 'gold_pro');
+  assert.equal(withTypes.listingTypes[0].name, 'Clássico');
+  assert.equal(policy().fields.listingType.editable, false);
+  assert.match(policy().fields.listingType.reason, /Não foi possível carregar/);
+  const currentOnly = mercadoLivreEditPolicy(item, category, user, 'Descrição original', 'none', 'single', 'single', [types[1]]);
+  assert.equal(currentOnly.fields.listingType.editable, false);
+  assert.match(currentOnly.fields.listingType.reason, /não disponibilizou outro tipo/);
+});
 test('modelo de estoque só é simples para endereço único confirmado do vendedor', () => {
   assert.equal(stockModelFromResponse({ user_id: 123, locations: [{ type: 'selling_address', quantity: 30 }] }, '123'), 'single');
   assert.equal(stockModelFromResponse({ user_id: 123, locations: [{ type: 'seller_warehouse', quantity: 30 }] }, '123'), 'multi');

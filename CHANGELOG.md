@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.48.0.41 - 2026-10-06
+
+- **Conexões persistentes em Marketplaces**: as contas conectadas voltam a
+  aparecer ao abrir o perfil e a seleção permanece válida com mais de uma
+  conta. Uma nova conexão abre em sua própria janela e atualiza a lista ao
+  concluir, sem recarregar a área de trabalho.
+- **Edição comercial do anúncio**: o editor consulta os tipos de anúncio
+  permitidos pelo Mercado Livre — incluindo Clássico e Premium quando
+  disponíveis — e exibe a taxa retornada pela plataforma. Ao mudar preço ou
+  tipo, a taxa é recalculada antes do salvamento.
+- **Ações sem borda dupla**: Cancelar, Recarregar, Salvar e o atalho do
+  Mercado Livre agora possuem uma única face, hover e foco consistentes.
+
 ## 1.48.0.40 - 2026-10-06
 
 - **Feedback claro ao recalcular no AvantaPreços**: ao usar **Consultar

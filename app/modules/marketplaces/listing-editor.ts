@@ -1,13 +1,14 @@
 import type { MarketplaceId } from './types';
 
 // Contrato de edição independente do provedor. Cada conector calcula suas permissões.
-export const EDIT_FIELDS = ['title', 'price', 'stock', 'description'] as const;
+export const EDIT_FIELDS = ['title', 'price', 'listingType', 'stock', 'description'] as const;
 export type EditField = typeof EDIT_FIELDS[number];
-export type ListingEditValues = { title: string; price: number | null; stock: number | null; description: string };
+export type ListingEditValues = { title: string; price: number | null; listingType: string; stock: number | null; description: string };
 export type FieldPermission = { editable: boolean; reason?: string; notice?: string; label?: string; maxLength?: number; min?: number; max?: number };
+export type ListingTypeOption = { id: string; name: string; fee: number | null; percent: number | null; notice?: string };
 export type ListingEditor = {
   provider: MarketplaceId; id: string; revision: string; currency: string;
-  values: ListingEditValues; fields: Record<EditField, FieldPermission>;
+  values: ListingEditValues; fields: Record<EditField, FieldPermission>; listingTypes: ListingTypeOption[];
 };
 export type ListingChanges = Partial<ListingEditValues>;
 
@@ -25,7 +26,10 @@ export function validateChanges(editor: ListingEditor, input: unknown): { change
     if (!Object.hasOwn(raw, key)) continue;
     const rule = editor.fields[key], value = raw[key];
     if (!rule.editable) { errors[key] = rule.reason || 'Campo bloqueado nesta publicação.'; continue; }
-    if (key === 'title' || key === 'description') {
+    if (key === 'listingType') {
+      if (typeof value !== 'string' || !editor.listingTypes.some((option) => option.id === value)) errors[key] = 'Selecione um tipo de anúncio permitido pelo Mercado Livre.';
+      else changes[key] = value;
+    } else if (key === 'title' || key === 'description') {
       if (typeof value !== 'string' || !value.trim()) errors[key] = 'Preencha este campo.';
       else if (rule.maxLength && value.length > rule.maxLength) errors[key] = `Use no máximo ${rule.maxLength} caracteres.`;
       else if (key === 'description' && /<[^>]*>/.test(value)) errors[key] = 'Use somente texto, sem HTML.';

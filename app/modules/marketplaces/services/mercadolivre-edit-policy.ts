@@ -1,4 +1,4 @@
-import type { ListingEditor, FieldPermission } from '../listing-editor';
+import type { ListingEditor, FieldPermission, ListingTypeOption } from '../listing-editor';
 import { objectValue } from './listing-model';
 
 export function stockModelFromResponse(value: unknown, sellerReference: string): 'single' | 'multi' | 'unknown' {
@@ -14,7 +14,7 @@ export function titleAssociationFromResponse(value: unknown, sellerReference: st
   return search.results.length === 1 && search.results[0] === itemId ? 'single' : 'unknown';
 }
 
-export function mercadoLivreEditPolicy(item: Record<string, unknown>, category: Record<string, unknown>, user: Record<string, unknown>, description: string | null, automation: 'active' | 'none' | 'unknown', stockModel: 'single' | 'multi' | 'unknown', titleAssociation: 'single' | 'shared' | 'unknown'): Omit<ListingEditor, 'revision'> {
+export function mercadoLivreEditPolicy(item: Record<string, unknown>, category: Record<string, unknown>, user: Record<string, unknown>, description: string | null, automation: 'active' | 'none' | 'unknown', stockModel: 'single' | 'multi' | 'unknown', titleAssociation: 'single' | 'shared' | 'unknown', listingTypes: ListingTypeOption[] = []): Omit<ListingEditor, 'revision'> {
   const tags = Array.isArray(item.tags) ? item.tags : [];
   const userTags = Array.isArray(user.tags) ? user.tags : [];
   const shipping = objectValue(item.shipping), settings = objectValue(category.settings);
@@ -43,12 +43,15 @@ export function mercadoLivreEditPolicy(item: Record<string, unknown>, category: 
   return {
     provider: 'mercado_livre', id: String(item.id), currency: String(item.currency_id || ''),
     values: { title: up ? familyName ?? '' : typeof item.title === 'string' ? item.title : '', price: typeof item.price === 'number' ? item.price : null,
+      listingType: typeof item.listing_type_id === 'string' ? item.listing_type_id : '',
       stock: typeof item.available_quantity === 'number' ? item.available_quantity : null, description: description ?? '' },
     fields: {
       title: permission(titleReason, { maxLength: maxTitle, ...(up ? { label: 'Nome base do título', notice: 'O Mercado Livre monta o título visível a partir deste nome e dos atributos do produto.' } : {}) }),
       price: permission(stateReason || (item.currency_id !== 'BRL' ? 'Moeda não suportada neste editor.' : item.buying_mode !== 'buy_it_now' ? 'Este editor atende anúncios de preço fixo.' : variants ? 'Preço com variações: gerencie no Mercado Livre nesta etapa.' : automation === 'active' || tags.includes('dynamic_standard_price') ? 'Preço controlado por automatização do Mercado Livre.' : automation === 'unknown' ? 'Não foi possível verificar a automatização de preço. Recarregue a edição.' : Array.isArray(item.deal_ids) && item.deal_ids.length ? 'Anúncio vinculado a oferta. Gerencie o preço no Mercado Livre.' : undefined), { min: Math.max(.01, minPrice), max: maxPrice }),
+      listingType: permission(stateReason || (item.buying_mode !== 'buy_it_now' ? 'Este editor atende anúncios de preço fixo.' : !listingTypes.length ? 'Não foi possível carregar os tipos de anúncio permitidos pelo Mercado Livre. Recarregue a edição.' : !listingTypes.some((option) => option.id !== item.listing_type_id) ? 'O Mercado Livre não disponibilizou outro tipo de anúncio para esta publicação.' : undefined), { label: 'Tipo de anúncio', notice: 'As taxas são consultadas diretamente no Mercado Livre para o preço informado.' }),
       stock: permission(stateReason || (kit ? 'O estoque deste kit virtual é calculado pelos produtos componentes.' : shipping.logistic_type === 'fulfillment' ? 'Estoque Full administrado pelos depósitos do Mercado Livre.' : user.id == null ? 'Não foi possível verificar o modelo de estoque da conta.' : userTags.includes('warehouse_management') || stockModel === 'multi' ? 'Estoque por depósitos: gerencie no Mercado Livre nesta etapa.' : stockModel === 'unknown' ? 'Não foi possível confirmar a localização do estoque. Recarregue a edição.' : variants ? 'Estoque por variação: gerencie no Mercado Livre nesta etapa.' : typeof item.available_quantity !== 'number' ? 'Estoque indisponível para esta conta.' : item.condition !== 'new' || item.listing_type_id === 'free' ? 'Condição ou tipo de anúncio exige gestão específica de estoque.' : undefined), { min: 0, max: stockLimit, ...(up ? { notice: 'Estoque compartilhado com outros anúncios deste produto. Zero pode pausar o anúncio.' } : {}) }),
       description: permission(stateReason || (catalog ? 'Conteúdo definido pelo catálogo do Mercado Livre.' : description == null ? 'Não foi possível consultar a descrição. Recarregue a edição.' : undefined), { maxLength: 50000 }),
     },
+    listingTypes,
   };
 }
