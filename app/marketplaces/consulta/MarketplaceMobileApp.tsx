@@ -517,7 +517,7 @@ export default function MarketplaceMobileApp() {
           <p>Altere a referência e atualize os três preços sugeridos.</p>
           <div><input id="history-market-price" value={marketPriceDraft} onChange={(event) => setMarketPriceDraft(event.target.value)} inputMode="decimal" placeholder="R$ 0,00" /><button type="submit" disabled={savingPrice}>{savingPrice ? 'Atualizando…' : 'Atualizar cálculos'}</button></div>
         </form>}
-        {result.historyId && <button type="button" className={styles.secondaryButton} disabled={loading || savingPrice} onClick={() => void consult({ historyId: result.historyId })}><Icon name="refresh" />{loading ? 'Consultando…' : 'Consultar novamente'}</button>}
+        {result.historyId && <button type="button" className={styles.secondaryButton} disabled={loading || savingPrice} onClick={() => void consult({ historyId: result.historyId })} aria-label={loading ? 'Calculando, aguarde' : 'Consultar novamente'}>{loading ? <><span className={styles.refreshingIcon} aria-hidden="true"><Icon name="refresh" /></span><span role="status" aria-live="polite">Calculando, aguarde…</span></> : <><Icon name="refresh" />Consultar novamente</>}</button>}
       </article>
     </section> : pricedProductsOpen ? <section className={styles.resultPage} aria-labelledby="priced-products-title">
       <button type="button" className={styles.backButton} onClick={() => { setPricedProductsOpen(false); setHistorySearch(''); setHistorySearchOpen(false); }}><Icon name="back" /> Nova consulta</button>

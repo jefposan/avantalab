@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.39 -->
+<!-- ava-version: 1.48.0.40 -->
+
+> Revisão 1.48.0.40: ao tocar em **Consultar novamente** no
+> **AvantaPreços**, o botão passa a informar **Calculando, aguarde…** e mostra
+> a seta circular em movimento até a conclusão da consulta.
 
 > Revisão 1.48.0.39: o **AvantaPreços** reconhece SKU mesmo quando o Google
 > Shopping remove sua pontuação — por exemplo, `69065/011` como `69065011`.

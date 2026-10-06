@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.39 -->
+<!-- ava-version: 1.48.0.40 -->
+
+> Revisão 1.48.0.40: o botão **Consultar novamente** do **AvantaPreços**
+> informa claramente o cálculo em andamento, com ícone circular animado e o
+> texto **Calculando, aguarde…**.
 
 > Revisão 1.48.0.39: no **AvantaPreços**, SKU com e sem pontuação representam
 > o mesmo produto na pesquisa Google Shopping — como `69065/011` e `69065011`.

@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.40: ao recalcular no AvantaPreços, o botão informa
+// “Calculando, aguarde…” e anima a seta circular enquanto a consulta ocorre.
 // Revisado na versão 1.48.0.39: AvantaPreços trata SKU com ou sem pontuação
 // como a mesma referência comercial e, após escolher a ficha Google Shopping,
 // usa os vendedores dela mesmo que seu título resumido difira do catálogo ML.

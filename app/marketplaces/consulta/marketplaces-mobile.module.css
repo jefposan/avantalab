@@ -141,6 +141,7 @@
 .manualPriceEdit button:disabled { opacity: .48; }
 .secondaryButton, .primaryButton { display: inline-flex; width: 100%; min-height: 48px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 14px; font-size: 13px; font-weight: 900; }
 .secondaryButton { margin-top: 16px; color: #086d75; background: #e6f4f4; }
+.refreshingIcon { display: inline-grid; place-items: center; animation: spin .8s linear infinite; }
 .primaryButton { color: #fff; background: linear-gradient(135deg,#149e99,#087f8b); }
 .scannerOverlay { position: fixed; z-index: 100; inset: 0; display: grid; grid-template-rows: auto minmax(0,1fr) auto; min-height: 100dvh; color: #fff; background: #07131c; }
 .scannerTop { display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top)) 14px 10px; background: #07131c; }
@@ -209,4 +210,4 @@
 @media (display-mode: standalone) and (max-width: 1023px) { .loginWrap { --avanta-access-safe-extension: env(safe-area-inset-top); } }
 @supports (-webkit-touch-callout: none) { .page, .loginWrap { background-attachment: scroll; } }
 @media (min-width: 700px) { .content, .resultPage { padding-top: 32px; } .scanButton { min-height: 164px; } .priceGrid { grid-template-columns: 1fr 1fr; }.marketPrice { grid-column: 1 / -1; } }
-@media (prefers-reduced-motion: reduce) { .inlineLoading span, .loadingStage > span, .cameraSpinner, .scanWindow > span, .historySkeleton span { animation: none; } .scanButton:active { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .inlineLoading span, .loadingStage > span, .cameraSpinner, .scanWindow > span, .historySkeleton span, .refreshingIcon { animation: none; } .scanButton:active { transform: none; } }

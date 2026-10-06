@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.0.40 - 2026-10-06
+
+- **Feedback claro ao recalcular no AvantaPreços**: ao usar **Consultar
+  novamente**, o botão mostra a seta circular em movimento e o texto
+  **Calculando, aguarde…** enquanto a nova referência é apurada. O indicador
+  respeita a preferência do aparelho por reduzir animações.
+
 ## 1.48.0.39 - 2026-10-06
 
 - **Fichas Google Shopping mais tolerantes no AvantaPreços**: a seleção agora
