@@ -26,10 +26,13 @@ test('PWA reutiliza autenticação, empresa e conexão do módulo sem novo OAuth
   assert.match(client, /setAccess\('choose-company'\)/);
   assert.match(client, /\/api\/modulos\/marketplaces\/precos\/contexto\?empresaId=/);
   assert.doesNotMatch(client, /oauth|authorizationUrl|conexoes\/mercado-livre\/iniciar/i);
-  assert.match(api, /authorizePriceConsultation\(request, body\.empresaId\)/);
+  assert.match(api, /authorizePriceConsultation\(request, input\.empresaId\)/);
   assert.match(priceAccess, /marketplace_price_users/);
   assert.match(accessMigration, /revoke all on public\.marketplace_price_users from anon, authenticated/);
   assert.match(api, /resolveMercadoLivreConnection/);
+  assert.match(api, /sealPendingContinuation/);
+  assert.match(client, /continuation/);
+  assert.match(client, /acompanhando a coleta de ofertas automaticamente/);
 });
 
 test('leitor pede somente a permissão nativa e só consulta após confirmação explícita', () => {

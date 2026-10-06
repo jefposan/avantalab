@@ -3,6 +3,7 @@ import { managementFailure, MarketplaceError } from '@/app/modules/marketplaces/
 import { authorizePriceConsultation } from '@/app/modules/marketplaces/services/price-access';
 import { resolveMercadoLivreConnection } from '@/app/modules/marketplaces/services/mercadolivre-management';
 import { consultMercadoLivrePrice } from '@/app/modules/marketplaces/services/mercadolivre-price-consultation';
+import { openMarketplaceSecret, sealMarketplaceSecret, type SealedMarketplaceSecret } from '@/app/modules/marketplaces/services/secret-vault';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -11,17 +12,64 @@ function cents(value: number) {
   return Math.round(value * 100);
 }
 
+type PendingPriceContinuation = {
+  version: 1;
+  expiresAt: number;
+  empresaId: string;
+  connectionId: string;
+  ean?: string;
+  query?: string;
+  productId?: string;
+  taskId: string;
+};
+
+function readPendingContinuation(value: unknown): PendingPriceContinuation | null {
+  if (!value || typeof value !== 'object') return null;
+  try {
+    const parsed = JSON.parse(openMarketplaceSecret(value as SealedMarketplaceSecret)) as PendingPriceContinuation;
+    if (parsed.version !== 1 || !Number.isFinite(parsed.expiresAt) || parsed.expiresAt <= Date.now()
+      || typeof parsed.empresaId !== 'string' || typeof parsed.connectionId !== 'string'
+      || typeof parsed.taskId !== 'string' || !/^[0-9a-f-]{20,}$/i.test(parsed.taskId)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function sealPendingContinuation(value: Omit<PendingPriceContinuation, 'version' | 'expiresAt'>) {
+  return sealMarketplaceSecret(JSON.stringify({ ...value, version: 1, expiresAt: Date.now() + 60 * 60_000 } satisfies PendingPriceContinuation));
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { db, empresaId, usuario } = await authorizePriceConsultation(request, body.empresaId);
-    const connection = await resolveMercadoLivreConnection(db, empresaId, body.connectionId);
+    const resumed = readPendingContinuation(body.continuation);
+    if (body.continuation && !resumed) throw new MarketplaceError(400, 'invalid_price_continuation', 'A consulta pendente expirou. Faça uma nova consulta.');
+    const input = resumed || body;
+    const { db, empresaId, usuario } = await authorizePriceConsultation(request, input.empresaId);
+    const connection = await resolveMercadoLivreConnection(db, empresaId, input.connectionId);
     const result = await consultMercadoLivrePrice(db, connection, {
-      ean: body.ean,
-      query: body.query,
-      productId: body.productId,
+      ean: input.ean,
+      query: input.query,
+      productId: input.productId,
       manualPrice: body.manualPrice,
+      pendingPriceTaskId: resumed?.taskId,
     });
+
+    if (result.pendingPriceTaskId) {
+      const { pendingPriceTaskId, ...pendingResult } = result;
+      return NextResponse.json({
+        result: pendingResult,
+        continuation: sealPendingContinuation({
+          empresaId,
+          connectionId: connection.id,
+          taskId: pendingPriceTaskId,
+          ...(result.ean ? { ean: result.ean } : {}),
+          ...(result.query ? { query: result.query } : {}),
+          ...(result.product?.id ? { productId: result.product.id } : {}),
+        }),
+      }, { status: 202, headers: { 'Cache-Control': 'no-store' } });
+    }
 
     if (result.status === 'found' && result.product && result.prices && result.sample) {
       const { data: saved, error } = await db.from('marketplace_price_consultations').insert({

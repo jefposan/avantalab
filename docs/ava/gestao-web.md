@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.32 -->
+<!-- ava-version: 1.48.0.33 -->
+
+> Revisão 1.48.0.33: se a coleta de preços do **AvantaPreços** permanecer na
+> fila, o PWA acompanha automaticamente a mesma tarefa até finalizar. Não peça
+> para a pessoa tentar de novo; uma nova consulta só é necessária se ela quiser
+> pesquisar outro produto.
 
 > Revisão 1.48.0.32: o **AvantaPreços** identifica o EAN no Mercado Livre e
 > usa o título confirmado da ficha para pesquisar preços no Google Shopping.

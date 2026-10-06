@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.32 -->
+<!-- ava-version: 1.48.0.33 -->
+
+> Revisão 1.48.0.33: a continuidade automática da fila de preços no
+> **AvantaPreços** pertence ao PWA de marketplaces e não altera os fluxos do
+> AvantaVendas.
 
 > Revisão 1.48.0.32: a pesquisa de preços pelo título confirmado no
 > AvantaPreços pertence ao PWA de marketplaces e não altera os fluxos do

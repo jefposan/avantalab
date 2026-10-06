@@ -10,11 +10,16 @@ export type GoogleShoppingPriceSample = {
   maximum: number;
 };
 
+export type GoogleShoppingPriceLookup =
+  | { status: 'pending'; taskId: string }
+  | { status: 'completed'; sample: GoogleShoppingPriceSample | null };
+
 const DEFAULT_BASE_URL = 'https://api.dataforseo.com';
-// A coleta do Merchant API é assíncrona. Em produção há tarefas legítimas que
-// levam quase 30 segundos; 45 leituras de um segundo preservam margem para a
-// conclusão sem deixar a rota (60 s) sem tempo para finalizar a resposta.
-const MAX_POLL_ATTEMPTS = 45;
+// A coleta do Merchant API é assíncrona. A fila normal contratada pelo provedor
+// pode ultrapassar a duração de uma Function. A rota faz uma primeira espera
+// curta e entrega uma continuação protegida ao PWA, que acompanha a MESMA
+// tarefa automaticamente sem publicar uma segunda consulta cobrável.
+const INITIAL_POLL_ATTEMPTS = 24;
 const POLL_INTERVAL_MS = 1_000;
 
 function record(value: unknown): JsonRecord {
@@ -167,7 +172,7 @@ function taskHasResult(body: JsonRecord) {
 
 const wait = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
-export async function consultGoogleShoppingPrices(input: { ean: string | null; productName: string }) {
+async function postGoogleShoppingPriceLookup(input: { ean: string | null; productName: string }) {
   // O EAN serve para identificar com precisão a ficha no Mercado Livre. O
   // Google Shopping não o interpreta de forma confiável como uma pesquisa de
   // produto e pode devolver uma vitrine de itens aleatórios. A consulta de
@@ -179,12 +184,24 @@ export async function consultGoogleShoppingPrices(input: { ean: string | null; p
     method: 'POST',
     body: JSON.stringify([{ keyword, location_name: 'Brazil', language_code: 'pt', depth: 20 }]),
   });
-  const id = taskId(posted);
-  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+  return taskId(posted);
+}
+
+async function readGoogleShoppingPriceLookup(taskIdValue: string, input: { ean: string | null; productName: string }): Promise<GoogleShoppingPriceLookup> {
+  const result = await providerRequest(`/v3/merchant/google/products/task_get/advanced/${encodeURIComponent(taskIdValue)}`, { method: 'GET' });
+  if (!taskHasResult(result)) return { status: 'pending', taskId: taskIdValue };
+  return { status: 'completed', sample: extractGoogleShoppingPriceSample(result, input.productName, input.ean) };
+}
+
+export async function consultGoogleShoppingPrices(
+  input: { ean: string | null; productName: string },
+  pendingTaskId?: string,
+): Promise<GoogleShoppingPriceLookup> {
+  const id = pendingTaskId || await postGoogleShoppingPriceLookup(input);
+  for (let attempt = 0; attempt < INITIAL_POLL_ATTEMPTS; attempt++) {
     await wait(POLL_INTERVAL_MS);
-    const result = await providerRequest(`/v3/merchant/google/products/task_get/advanced/${encodeURIComponent(id)}`, { method: 'GET' });
-    if (!taskHasResult(result)) continue;
-    return extractGoogleShoppingPriceSample(result, input.productName, input.ean);
+    const lookup = await readGoogleShoppingPriceLookup(id, input);
+    if (lookup.status === 'completed') return lookup;
   }
-  throw new MarketplaceError(503, 'price_provider_timeout', 'A consulta de preços continua sendo processada. Aguarde alguns segundos e tente novamente.');
+  return { status: 'pending', taskId: id };
 }

@@ -29,6 +29,7 @@ export type PriceConsultationResult = {
   candidates?: Array<{ id: string; name: string; picture: string | null }>;
   prices?: PriceSuggestions;
   sample?: { count: number; minimum: number; maximum: number; source: PriceSampleSource };
+  pendingPriceTaskId?: string;
   notice?: string;
 };
 
@@ -60,7 +61,7 @@ export function calculatePriceSuggestions(pricesInCents: readonly number[]): Pri
 export async function consultMercadoLivrePrice(
   db: SupabaseClient,
   connection: SellerConnection,
-  input: { ean?: unknown; query?: unknown; productId?: unknown; manualPrice?: unknown },
+  input: { ean?: unknown; query?: unknown; productId?: unknown; manualPrice?: unknown; pendingPriceTaskId?: string },
 ): Promise<PriceConsultationResult> {
   let identification = await identifyMercadoLivreCatalog(db, connection, input);
 
@@ -119,16 +120,21 @@ export async function consultMercadoLivrePrice(
     };
   }
 
-  const sample = await consultGoogleShoppingPrices({ ean, productName: product.name });
-  if (!sample) return {
+  const lookup = await consultGoogleShoppingPrices({ ean, productName: product.name }, input.pendingPriceTaskId);
+  if (lookup.status === 'pending') return {
+    ...base,
+    pendingPriceTaskId: lookup.taskId,
+    notice: 'Estamos comparando ofertas públicas. A consulta continuará automaticamente.',
+  };
+  if (!lookup.sample) return {
     ...base,
     notice: 'Produto localizado, mas não há preços comparáveis em reais no Google Shopping neste momento.',
   };
-  const prices = calculatePriceSuggestions(sample.pricesInCents);
+  const prices = calculatePriceSuggestions(lookup.sample.pricesInCents);
   return {
     ...base,
     prices,
-    sample: { count: sample.count, minimum: sample.minimum, maximum: sample.maximum, source: 'google_shopping' },
-    notice: `Média calculada a partir de ${sample.count} oferta${sample.count === 1 ? '' : 's'} comparável${sample.count === 1 ? '' : 'is'} no Google Shopping.`,
+    sample: { count: lookup.sample.count, minimum: lookup.sample.minimum, maximum: lookup.sample.maximum, source: 'google_shopping' },
+    notice: `Média calculada a partir de ${lookup.sample.count} oferta${lookup.sample.count === 1 ? '' : 's'} comparável${lookup.sample.count === 1 ? '' : 'is'} no Google Shopping.`,
   };
 }

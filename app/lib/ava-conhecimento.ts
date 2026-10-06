@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.33: quando a coleta do Google Shopping permanece
+// em fila, o AvantaPreços acompanha automaticamente a mesma tarefa protegida,
+// sem pedir nova tentativa e sem criar nova consulta cobrável.
 // Revisado na versão 1.48.0.32: AvantaPreços identifica o EAN no Mercado Livre
 // e pesquisa preços pelo título confirmado no Google Shopping, evitando uma
 // vitrine aleatória devolvida por consulta do código isolado.

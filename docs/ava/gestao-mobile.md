@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.32 -->
+<!-- ava-version: 1.48.0.33 -->
+
+> Revisão 1.48.0.33: depois de iniciar a coleta de ofertas, o
+> **AvantaPreços** mantém a tela em consulta e acompanha a mesma tarefa
+> automaticamente. Não é preciso tocar em tentar novamente nem reenviar o EAN.
 
 > Revisão 1.48.0.32: depois de identificar o EAN no Mercado Livre, o
 > **AvantaPreços** consulta o Google Shopping pelo nome confirmado do produto.

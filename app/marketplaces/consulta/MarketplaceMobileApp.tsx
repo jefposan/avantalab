@@ -203,6 +203,7 @@ export default function MarketplaceMobileApp() {
   const [error, setError] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannerIssue, setScannerIssue] = useState<ScannerIssue>(null);
+  const consultationRunRef = useRef(0);
 
   const selectCompany = useCallback(async (selected: Company) => {
     setCompanies((current) => current.some((item) => item.id === selected.id) ? current : [...current, selected]);
@@ -300,17 +301,33 @@ export default function MarketplaceMobileApp() {
 
   const consult = useCallback(async (input: { ean?: string; query?: string; productId?: string }) => {
     if (!company) return;
+    const run = ++consultationRunRef.current;
     setLoading(true); setError(''); setCandidates([]);
     const clean = input.ean ? { ean: normalizeEan(input.ean) } : { query: String(input.query || '').trim() };
     setPendingInput(clean);
     try {
-      const body = await request('/api/modulos/marketplaces/precos', { method: 'POST', body: JSON.stringify({ empresaId: company.id, connectionId: connectionId || undefined, ...clean, productId: input.productId }) });
-      const next = body.result as Consultation;
-      if (next.status === 'choose') { setCandidates(next.candidates || []); setError(''); }
-      else if (next.status === 'not_found') { setResult(null); setError(next.notice || 'Produto não localizado.'); }
-      else { setResult(next); setCandidates([]); if (next.prices) await loadHistory(company.id); }
+      let continuation: unknown = null;
+      for (let attempt = 0; attempt < 1_400 && run === consultationRunRef.current; attempt++) {
+        const body = await request('/api/modulos/marketplaces/precos', {
+          method: 'POST',
+          body: JSON.stringify(continuation
+            ? { continuation }
+            : { empresaId: company.id, connectionId: connectionId || undefined, ...clean, productId: input.productId }),
+        });
+        const next = body.result as Consultation;
+        if (next.status === 'choose') { setCandidates(next.candidates || []); setError(''); return; }
+        if (next.status === 'not_found') { setResult(null); setError(next.notice || 'Produto não localizado.'); return; }
+        setResult(next); setCandidates([]);
+        continuation = body.continuation;
+        if (!continuation) {
+          if (next.prices) await loadHistory(company.id);
+          return;
+        }
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 2_000));
+      }
+      if (run === consultationRunRef.current) setError('A consulta está demorando mais que o previsto. Mantenha o app aberto; ela será retomada automaticamente ao iniciar uma nova consulta.');
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível consultar o produto.'); }
-    finally { setLoading(false); }
+    finally { if (run === consultationRunRef.current) setLoading(false); }
   }, [company, connectionId, loadHistory, request]);
 
   const logout = async () => {
@@ -320,6 +337,7 @@ export default function MarketplaceMobileApp() {
   };
 
   const startEanReading = () => {
+    consultationRunRef.current++;
     setEan('');
     setQuery('');
     setPendingInput({});
@@ -394,9 +412,9 @@ export default function MarketplaceMobileApp() {
           <div className={styles.mediumPrice}><span>Preço médio de venda</span><small>70% da referência</small><strong>{money.format(result.prices.medium)}</strong></div>
           <div className={styles.idealPrice}><span>Preço ideal</span><small>90% da referência</small><strong>{money.format(result.prices.ideal)}</strong></div>
         </div><p className={styles.sampleNote}>{priceReferenceNote(result.sample?.source)}</p></> : <section className={styles.assistedPrice} aria-labelledby="assisted-price-title">
-          <h2 id="assisted-price-title">Preço indisponível</h2>
-          <p>Não foram encontradas ofertas comparáveis para este produto neste momento.</p>
-          <button type="button" className={styles.secondaryButton} disabled={loading} onClick={() => void consult({ ...(result.ean ? { ean: result.ean } : { query: result.query || result.product!.name }), productId: result.product!.id })}><Icon name="refresh" />{loading ? 'Consultando…' : 'Tentar novamente'}</button>
+          <h2 id="assisted-price-title">{loading ? 'Consultando preços' : 'Preço indisponível'}</h2>
+          <p>{loading ? 'Estamos acompanhando a coleta de ofertas automaticamente.' : 'Não foram encontradas ofertas comparáveis para este produto neste momento.'}</p>
+          {!loading && <button type="button" className={styles.secondaryButton} onClick={() => void consult({ ...(result.ean ? { ean: result.ean } : { query: result.query || result.product!.name }), productId: result.product!.id })}><Icon name="refresh" />Tentar novamente</button>}
         </section>}
         {result.notice && <p className={styles.sampleNote} role="status">{result.notice}</p>}
         {result.consultedAt && <p className={styles.consultedAt}>Consultado em {dateTime.format(new Date(result.consultedAt))}</p>}

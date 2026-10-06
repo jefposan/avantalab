@@ -1,5 +1,10 @@
 # Changelog
 
+- **Consulta de preços contínua**: quando a coleta do Google Shopping ainda
+  estiver na fila, o AvantaPreços preserva e acompanha a mesma tarefa no PWA
+  automaticamente, sem pedir nova tentativa e sem criar uma nova consulta
+  cobrável. O resultado segue para o histórico assim que estiver pronto.
+
 - **Pesquisa de preços pelo produto confirmado**: o AvantaPreços usa o título
   da ficha confirmada no Mercado Livre para pesquisar preços no Google
   Shopping. O EAN permanece na identificação e validação, mas não é mais usado
