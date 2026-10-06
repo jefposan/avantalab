@@ -44,6 +44,29 @@ export default async function MarketplaceViewportValidationPage({ searchParams }
             <h1>Qual é o preço?</h1>
             <p>Leia o código do produto e compare em poucos segundos.</p>
           </section>
+          <section className={styles.manualCard} aria-labelledby="validacao-manual-title">
+            <h2 id="validacao-manual-title">Consultar manualmente</h2>
+            <form>
+              <label htmlFor="validacao-ean">EAN / código de barras</label>
+              <div className={styles.inputAction}><input id="validacao-ean" inputMode="numeric" placeholder="Ex.: 7898996110321" /><button type="button" aria-label="Consultar EAN">⌕</button></div>
+            </form>
+            <div className={styles.divider}><span>ou</span></div>
+            <form>
+              <label htmlFor="validacao-produto">Pesquisar produto</label>
+              <div className={styles.inputAction}><input id="validacao-produto" placeholder="Nome, marca ou modelo" /><button type="button" aria-label="Pesquisar produto">⌕</button></div>
+            </form>
+          </section>
+          <section className={styles.scanSection} aria-label="Ler EAN com a câmera">
+            <button type="button" className={styles.scanButton}><span>◉</span><strong>Ler EAN</strong><small>Abrir câmera</small></button>
+            <p className={styles.connectionOk}><span /> Mercado Livre conectado</p>
+          </section>
+          <button type="button" className={styles.allPricedProductsButton}>Ver produtos precificados</button>
+          <section className={styles.historySection} aria-labelledby="validacao-history-title">
+            <div className={styles.sectionTitle}><span><span aria-hidden="true">◷</span><h2 id="validacao-history-title">Últimas consultas</h2></span><button type="button" aria-label="Atualizar histórico">↻</button></div>
+            <div className={styles.historyList}>
+              <button type="button"><span className={styles.historyImage}>▥</span><span className={styles.historyText}><strong>Produto consultado recentemente</strong><small>EAN 7898996110321 · Pesquisa: hoje</small></span><span className={styles.historyPrice}>R$ 100,00</span></button>
+            </div>
+          </section>
         </main>
       </div>
     );

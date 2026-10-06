@@ -24,11 +24,12 @@
 .eyebrow { margin: 0; color: #238e8a; font-size: 11px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
 .hero h1 { margin: 3px 0 4px; font-size: clamp(28px, 9vw, 40px); line-height: 1.04; letter-spacing: -.04em; }
 .hero > p:not(.eyebrow, .connectionAlert, .connectionOk) { margin: 0 auto; max-width: 330px; color: #647184; font-size: 14px; line-height: 1.45; }
-.scanButton { display: grid; width: min(100%, 360px); min-height: 150px; margin: 22px auto 12px; place-items: center; align-content: center; gap: 3px; border: 0; border-radius: 28px; color: #fff; background: linear-gradient(145deg, #1fb6ad, #0b8f9a); box-shadow: 0 18px 34px rgba(11,143,154,.28), inset 0 1px 0 rgba(255,255,255,.28); }
+.scanSection { text-align: center; }
+.scanButton { display: grid; width: min(100%, 360px); min-height: 105px; margin: 18px auto 10px; place-items: center; align-content: center; gap: 1px; border: 0; border-radius: 24px; color: #fff; background: linear-gradient(145deg, #1fb6ad, #0b8f9a); box-shadow: 0 14px 28px rgba(11,143,154,.24), inset 0 1px 0 rgba(255,255,255,.28); }
 .scanButton:active { transform: scale(.985); }
 .scanButton:disabled { filter: grayscale(.55); opacity: .56; }
-.scanButton > span { display: grid; width: 56px; height: 56px; margin-bottom: 5px; place-items: center; border-radius: 18px; background: rgba(255,255,255,.16); }
-.scanButton strong { font-size: 26px; font-weight: 950; letter-spacing: .03em; text-transform: uppercase; }
+.scanButton > span { display: grid; width: 46px; height: 46px; margin-bottom: 1px; place-items: center; border-radius: 15px; background: rgba(255,255,255,.16); }
+.scanButton strong { font-size: 21px; font-weight: 950; letter-spacing: .03em; text-transform: uppercase; }
 .scanButton small { font-size: 12px; font-weight: 700; opacity: .86; }
 .connectionOk, .connectionAlert { display: inline-flex; max-width: 100%; align-items: center; gap: 7px; margin: 0 auto 18px; border-radius: 999px; padding: 7px 11px; font-size: 11px; font-weight: 750; line-height: 1.35; }
 .connectionOk { color: #166b58; background: #e1f5ed; }
@@ -36,6 +37,7 @@
 .connectionAlert { border-radius: 14px; color: #92400e; background: #fff1cf; }
 .accountPicker { width: min(100%, 360px); margin: -6px auto 18px; }
 .manualCard, .resultCard { border: 1px solid #dde5e9; border-radius: 22px; padding: 18px; background: #fff; box-shadow: 0 12px 28px rgba(0,43,75,.07); }
+.manualCard { margin-top: 18px; }
 .manualCard h2, .sectionTitle h2 { margin: 0; font-size: 17px; font-weight: 900; letter-spacing: -.02em; }
 .manualCard form { display: grid; gap: 7px; margin-top: 15px; text-align: left; }
 .manualCard label, .scannerSheet label { color: #344054; font-size: 12px; font-weight: 850; }
@@ -58,7 +60,7 @@
 .candidates button > span:last-child { display: grid; gap: 3px; }
 .candidates strong { font-size: 12px; line-height: 1.35; }
 .candidates small { color: #7a8794; font-size: 10px; }
-.historySection { margin-top: 24px; }
+.historySection { margin-top: 18px; }
 .sectionTitle { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .sectionTitle > span { display: flex; align-items: center; gap: 8px; color: #27364a; }
 .sectionTitle > button { display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 12px; color: #247f84; background: transparent; cursor: pointer; }
@@ -76,7 +78,7 @@
 .emptyHistory { border: 1px dashed #ced9de; border-radius: 16px; padding: 22px; color: #7b8792; background: rgba(255,255,255,.58); font-size: 13px; text-align: center; }
 .historySkeleton { display: grid; gap: 8px; }
 .historySkeleton span { height: 72px; border-radius: 17px; background: linear-gradient(90deg,#e9eef0,#f7f9fa,#e9eef0); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
-.allPricedProductsButton { display: inline-flex; width: 100%; min-height: 48px; align-items: center; justify-content: center; margin-top: 14px; border: 1px solid #b8d7d9; border-radius: 14px; color: #086d75; background: rgba(255,255,255,.84); font: inherit; font-size: 13px; font-weight: 900; }
+.allPricedProductsButton { display: inline-flex; width: 100%; min-height: 48px; align-items: center; justify-content: center; margin-top: 18px; border: 1px solid #b8d7d9; border-radius: 14px; color: #086d75; background: rgba(255,255,255,.84); font: inherit; font-size: 13px; font-weight: 900; }
 .allPricedProductsButton:hover { background: #e6f4f4; }
 .allPricedProductsButton:focus-visible, .catalogSearchButton:focus-visible { outline: 3px solid color-mix(in srgb, #1687d9 34%, transparent); outline-offset: 2px; }
 .backButton { display: inline-flex; min-height: 44px; align-items: center; gap: 6px; margin-bottom: 12px; border: 0; padding: 0 4px; color: #326d78; background: transparent; font-size: 13px; font-weight: 850; }

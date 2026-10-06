@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.35 -->
+<!-- ava-version: 1.48.0.36 -->
+
+> Revisão 1.48.0.36: a reorganização visual da tela inicial do PWA
+> **AvantaPreços** não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.35: o AvantaVendas recebe somente os catálogos ativados
 > especificamente para ele. O estado **Vendas e Serviços** é independente e

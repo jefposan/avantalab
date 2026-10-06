@@ -1,6 +1,9 @@
 // Revisado na versão 1.48.0.35: cada catálogo possui estados independentes para
 // Vendas e Serviços e AvantaVendas. Um destino nunca ativa nem desativa o outro;
 // o AvantaVendas recebe somente o conteúdo ativado especificamente para ele.
+// Revisado na versão 1.48.0.36: a tela inicial do AvantaPreços prioriza a
+// consulta manual, compacta o leitor de EAN e exibe Produtos precificados antes
+// das últimas consultas.
 // Revisado na versão 1.48.0.34: AvantaPreços reutiliza primeiro o cálculo da
 // empresa para o mesmo EAN. Últimas consultas mostra 20 registros; Produtos
 // precificados reúne a base pesquisável e ordenável. O item salvo pode receber

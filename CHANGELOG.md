@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.48.0.36 - 2026-10-06
+
+- **Hierarquia da consulta no AvantaPreços**: a consulta manual agora vem antes
+  da leitura por câmera; o botão **Ler EAN** ficou 30% mais compacto. O acesso
+  a **Produtos precificados** passou a anteceder as últimas consultas.
+
 ## 1.48.0.35 - 2026-10-06
 
 - **Destinos independentes por catálogo**: cada catálogo passa a ter controles

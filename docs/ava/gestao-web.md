@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.35 -->
+<!-- ava-version: 1.48.0.36 -->
+
+> Revisão 1.48.0.36: a organização inicial do PWA **AvantaPreços** prioriza a
+> consulta manual, mantém o leitor de EAN mais compacto e coloca o acesso à
+> base de produtos precificados antes das últimas consultas.
 
 > Revisão 1.48.0.35: em **Custos e Precificação > Catálogos**, cada card
 > separa os destinos **Vendas e Serviços** e **AvantaVendas**, ambos com ações

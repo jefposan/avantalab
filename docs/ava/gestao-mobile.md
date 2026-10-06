@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.35 -->
+<!-- ava-version: 1.48.0.36 -->
+
+> Revisão 1.48.0.36: na tela inicial do **AvantaPreços**, a consulta manual vem
+> antes do leitor de câmera, que ficou mais compacto. **Produtos precificados**
+> aparece antes de **Últimas consultas**.
 
 > Revisão 1.48.0.35: a separação dos destinos **Vendas e Serviços** e
 > **AvantaVendas** é administrada na Gestão Web; sem impacto operacional na

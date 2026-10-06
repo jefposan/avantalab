@@ -78,6 +78,16 @@ test('resultado diferencia os quatro valores e o histórico pode ser reaberto, a
   assert.match(client, /M3 12a9 9 0 0 1 15-6\.7L21 8/);
 });
 
+test('início prioriza a consulta manual, compacta o leitor e deixa o catálogo antes das últimas consultas', () => {
+  const manual = client.indexOf('id="manual-title">Consultar manualmente');
+  const scan = client.indexOf('className={styles.scanSection}');
+  const priced = client.indexOf('>Ver produtos precificados</button>');
+  const history = client.indexOf('id="history-title">Últimas consultas');
+  assert.ok(manual > -1 && scan > manual, 'A leitura por câmera deve vir após a consulta manual.');
+  assert.ok(priced > scan && history > priced, 'O catálogo completo deve anteceder as últimas consultas.');
+  assert.match(css, /\.scanButton \{[^}]*min-height: 105px;/);
+});
+
 test('login do AvantaPreços segue a composição aprovada e o padrão do Recebimentos', () => {
   assert.doesNotMatch(client, /className=\{styles\.loginIcon\}/);
   assert.match(client, /<h1 id="avantaprecos-login-title">AvantaPreços<\/h1>/);

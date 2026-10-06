@@ -530,9 +530,6 @@ export default function MarketplaceMobileApp() {
     </section> : <div className={styles.content}>
       <section className={styles.hero} aria-labelledby="marketplace-mobile-title">
         <p className={styles.eyebrow}>Consulta rápida</p><h1 id="marketplace-mobile-title">Qual é o preço?</h1><p>Leia o código do produto e compare em poucos segundos.</p>
-        <button type="button" className={styles.scanButton} onClick={startEanReading} disabled={!connectionId || loading}><span><Icon name="camera" size={34} /></span><strong>Ler EAN</strong><small>Abrir câmera</small></button>
-        {connectionMessage ? <p className={styles.connectionAlert} role="alert">{connectionMessage}</p> : <p className={styles.connectionOk}><span /> Mercado Livre conectado{accounts.length > 1 ? ` em ${accounts.length} contas` : ''}</p>}
-        {accounts.length > 1 && <div className={styles.accountPicker}><MobilePicker label="Conta usada na consulta" value={connectionId} options={accounts.map((account) => ({ value: account.id, label: account.seller_name || account.seller_reference, detail: `ID ${account.seller_reference}` }))} onChange={setConnectionId} /></div>}
       </section>
 
       <section className={styles.manualCard} aria-labelledby="manual-title">
@@ -557,10 +554,17 @@ export default function MarketplaceMobileApp() {
         </form>}
       </section>
 
+      <section className={styles.scanSection} aria-label="Ler EAN com a câmera">
+        <button type="button" className={styles.scanButton} onClick={startEanReading} disabled={!connectionId || loading}><span><Icon name="camera" size={30} /></span><strong>Ler EAN</strong><small>Abrir câmera</small></button>
+        {connectionMessage ? <p className={styles.connectionAlert} role="alert">{connectionMessage}</p> : <p className={styles.connectionOk}><span /> Mercado Livre conectado{accounts.length > 1 ? ` em ${accounts.length} contas` : ''}</p>}
+        {accounts.length > 1 && <div className={styles.accountPicker}><MobilePicker label="Conta usada na consulta" value={connectionId} options={accounts.map((account) => ({ value: account.id, label: account.seller_name || account.seller_reference, detail: `ID ${account.seller_reference}` }))} onChange={setConnectionId} /></div>}
+      </section>
+
+      <button type="button" className={styles.allPricedProductsButton} onClick={openPricedProducts}>Ver produtos precificados</button>
+
       <section className={styles.historySection} aria-labelledby="history-title">
         <div className={styles.sectionTitle}><span><Icon name="history" /><h2 id="history-title">Últimas consultas</h2></span><button type="button" onClick={() => company && void loadHistory(company.id)} aria-label="Atualizar histórico" title="Atualizar histórico" disabled={historyLoading}><Icon name="refresh" size={20} /></button></div>
         {historyLoading && !history.length ? <div className={styles.historySkeleton}><span /><span /><span /></div> : history.length ? <div className={styles.historyList}>{history.map((item) => <button type="button" key={item.id} onClick={() => openHistoryResult(item)}><span className={styles.historyImage}>{item.image_url ? <img src={item.image_url} alt="" /> : <Icon name="barcode" />}</span><span className={styles.historyText}><strong>{item.product_name}</strong><small>{item.ean ? `EAN ${item.ean}` : item.input_value} · Pesquisa: {dateTime.format(new Date(historyDate(item)))}</small></span><span className={styles.historyPrice}>{money.format(item.market_price_cents / 100)}</span></button>)}</div> : <p className={styles.emptyHistory}>Suas consultas aparecerão aqui.</p>}
-        <button type="button" className={styles.allPricedProductsButton} onClick={openPricedProducts}>Ver produtos precificados</button>
       </section>
     </div>}
     {scannerOpen && <ScannerModal initialEan={ean} issue={scannerIssue} onClose={() => setScannerOpen(false)} onConsult={(value) => { setEan(value); setScannerOpen(false); void consult({ ean: value }); }} />}
