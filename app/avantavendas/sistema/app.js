@@ -4332,8 +4332,10 @@ async function atualizarProdutos() {
   const revisaoContaAoIniciar = revisaoContaVendasAtiva;
   const contaAoIniciar = contaVendasDoContextoAtual();
   const posicaoAnterior = posicaoRolagemPrincipalVendas();
+  const iniciadoEm = performance.now();
   produtosAtualizando = true;
   renderizarProdutosPreservandoRolagem(posicaoAnterior);
+  await new Promise((resolve) => requestAnimationFrame(resolve));
 
   try {
     try {
@@ -4355,6 +4357,8 @@ async function atualizarProdutos() {
       toast('Não foi possível atualizar os produtos. Tente novamente.');
     }
   } finally {
+    const esperaMinima = Math.max(0, 520 - (performance.now() - iniciadoEm));
+    if (esperaMinima) await new Promise((resolve) => window.setTimeout(resolve, esperaMinima));
     produtosAtualizando = false;
     if (contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) {
       renderizarProdutosPreservandoRolagem(posicaoAnterior);
@@ -10905,6 +10909,7 @@ function escapeAttr(v) {
 function botaoTemAcaoVisual(botao) {
   if (!(botao instanceof HTMLButtonElement) || botao.disabled) return false;
   if (botao.matches('.icon-button, .close, .password-toggle, .search-clear, .client-more, .home-button, .system-brand, .menu-toggle, .vendas-nav-item, .vendas-nav-add')) return false;
+  if (botao.matches('.product-refresh-button')) return true;
   if (botao.closest('.mobile-menu') && !botao.matches('.mobile-menu-card:not(.is-organizable)')) return false;
   const texto = (botao.textContent || '').replace(/[×⋮+＋]/g, '').trim();
   return Boolean(texto);

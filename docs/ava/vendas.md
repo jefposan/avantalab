@@ -1,8 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.08 -->
+<!-- ava-version: 1.48.0.43.09 -->
 
-<!-- avantavendas-asset-revision: 173 -->
+<!-- avantavendas-asset-revision: 174 -->
+
+> Revisão 1.48.0.43.09-av174: **Novo produto** permanece na ancoragem original
+> do topo direito. Ao atualizar, o sistema deixa o estado visível por tempo
+> suficiente para o ícone girar e a mensagem **Atualizando** ser percebida.
 
 > Revisão 1.48.0.43.08-av173: o ícone **Atualizar** permanece imediatamente à
 > esquerda de **Novo produto**. Durante a consulta, ele gira e exibe

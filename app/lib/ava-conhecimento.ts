@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.43.09: em Produtos, Atualizar preserva a posição de
+// Novo produto e mantém o giro e o texto visíveis durante a atualização.
 // Revisado na versão 1.48.0.43.08: em Produtos, Atualizar fica à esquerda de
 // Novo produto e informa o carregamento com ícone girando e texto curto.
 // Revisado na versão 1.48.0.43.07: a lista Produtos exibe somente itens ativos;

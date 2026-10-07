@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.0.43.09-av174 - 2026-10-06
+
+- **Atualizar Produtos com retorno visível**: **Novo produto** volta à sua
+  ancoragem original no topo direito. A atualização agora aguarda um frame de
+  pintura e mantém o estado por tempo mínimo, para exibir de forma perceptível
+  o ícone girando e a mensagem **Atualizando**.
+
 ## 1.48.0.43.08-av173 - 2026-10-06
 
 - **Atualizar Produtos refinado**: o atalho fica imediatamente à esquerda de
