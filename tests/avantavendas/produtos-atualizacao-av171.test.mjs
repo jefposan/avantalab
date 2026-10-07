@@ -21,8 +21,11 @@ test('Produtos oferece atualização localizada acessível com ícone SVG', () =
 test('botão de atualizar Produtos respeita toque, tema e redução de movimento', () => {
   assert.match(estilos, /\.product-refresh-button \{[^}]*width: 44px[^}]*height: 44px/);
   assert.match(estilos, /\.dark-theme \.product-refresh-button/);
-  assert.match(estilos, /\.produtos-page \.module-title \{[^}]*flex-wrap: nowrap/);
-  assert.match(estilos, /\.product-title-actions \{[^}]*align-items: center/);
+  assert.match(estilos, /\.produtos-page \.module-title \{[^}]*flex-wrap: nowrap[^}]*align-items: flex-start/);
+  assert.match(estilos, /\.product-title-actions \{[^}]*align-items: flex-start/);
+  assert.match(estilos, /\.content-area \.produtos-page \.product-new-button[\s\S]*background: #1687D9/);
+  assert.match(estilos, /\.pedidos-page \.module-title \{[^}]*align-items: flex-start/);
+  assert.match(estilos, /\.content-area \.pedidos-page \.orders-title-actions > button\.primary[\s\S]*width: 124px[\s\S]*height: 30px/);
   assert.match(estilos, /\.product-refresh-button \.(?:is-spinning) \{[^}]*productRefreshSpin/);
   assert.match(estilos, /@keyframes productRefreshSpin/);
   assert.match(estilos, /\.product-refresh-status\.is-loading \.product-refresh-label \{ display: inline; \}/);

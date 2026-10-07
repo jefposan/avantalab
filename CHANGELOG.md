@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.48.0.43.12-av176 - 2026-10-07
+
+- **Ações principais coerentes**: em Produtos, **Novo produto** volta ao topo
+  direito e usa o azul claro institucional. Em Pedidos, **Novo pedido** passa a
+  seguir exatamente a posição, altura e largura de **Novo cliente**.
+
 ## 1.48.0.43.11-av175 - 2026-10-07
 
 - **Controles de Produtos no cabeçalho**: **Novo produto** permanece ancorado

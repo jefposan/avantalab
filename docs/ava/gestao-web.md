@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.11 -->
+<!-- ava-version: 1.48.0.43.12 -->
+
+> Revisão 1.48.0.43.12: o alinhamento das ações de Produtos e Pedidos pertence
+> ao AvantaVendas e não altera os fluxos da Gestão Web.
 
 > Revisão 1.48.0.43.11: o ajuste de posição e atualização visível da tela
 > **Produtos** pertence ao AvantaVendas e não altera os fluxos da Gestão Web.

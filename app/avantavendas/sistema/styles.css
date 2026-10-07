@@ -1272,9 +1272,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .divulgacao-refresh-button .is-spinning { animation: divulgacaoRefreshSpin .72s linear infinite; }
 .divulgacao-refresh-button:focus-visible { outline: 3px solid rgba(22,135,217,.28); outline-offset: 2px; }
 .divulgacao-refresh-button:disabled { cursor: wait; opacity: .72; }
-.produtos-page .module-title { flex-wrap: nowrap; align-items: center; }
+.produtos-page .module-title { flex-wrap: nowrap; align-items: flex-start; }
 .produtos-page .module-title > div:first-child { min-width: 0; flex: 1 1 auto; }
-.product-title-actions { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 8px; }
+.product-title-actions { display: inline-flex; flex: 0 0 auto; align-items: flex-start; gap: 8px; }
 .product-refresh-status { display: inline-flex; align-items: center; gap: 6px; }
 .product-refresh-label { display: none; color: #126fae; font-size: 10px; font-weight: 850; white-space: nowrap; }
 .product-refresh-status.is-loading .product-refresh-label { display: inline; }
@@ -1360,12 +1360,12 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .module-stats span { padding: 8px 12px; border-radius: 999px; color: #5e6671; background: #eff8f7; font-size: 13px; }
 .module-stats b { color: #248b85; }
 .pedidos-page { padding-top: 226px; }
-.pedidos-page .module-title { flex-wrap: nowrap; align-items: center; }
+.pedidos-page .module-title { flex-wrap: nowrap; align-items: flex-start; }
 .pedidos-page .module-title > div { min-width: 0; }
 .pedidos-page .module-title > button { flex: 0 0 auto; margin-left: auto; }
 .pedidos-title > div:first-child { min-width: 0; flex: 1 1 auto; }
-.orders-title-actions { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 7px; }
-.orders-title-actions > button.primary { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 5px; border-radius: 9px; padding: 0 10px; font-size: 10px; white-space: nowrap; }
+.orders-title-actions { display: inline-flex; flex: 0 0 auto; align-items: flex-start; gap: 7px; }
+.orders-title-actions > button.primary { display: inline-flex; width: 124px; min-height: 30px; height: 30px; align-items: center; justify-content: center; gap: 5px; border-radius: 9px; padding: 0 10px; font-size: 10px; white-space: nowrap; }
 .orders-title-actions > button.primary .svg-icon { width: 14px; height: 14px; }
 .order-sort-control { cursor: pointer; }
 .order-results-summary { width: 100%; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 8px; }
@@ -2133,6 +2133,19 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .debt-actions button {
   color: #fff;
   background: #0A1F44;
+}
+.content-area .clientes-page .client-title-actions > button.primary,
+.content-area .produtos-page .product-new-button,
+.content-area .pedidos-page .orders-title-actions > button.primary {
+  border-color: #1687D9;
+  color: #fff;
+  background: #1687D9;
+}
+.content-area .clientes-page .client-title-actions > button.primary,
+.content-area .pedidos-page .orders-title-actions > button.primary {
+  width: 124px;
+  min-height: 30px;
+  height: 30px;
 }
 .login-screen .login-submit { background: #1687D9; }
 @media (hover: hover) and (pointer: fine) {
