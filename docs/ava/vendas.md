@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.19 -->
+<!-- ava-version: 1.48.0.43.20 -->
+
+> Revisão 1.48.0.43.20: a pesquisa web de preços com OpenAI e os links das
+> ofertas pertencem ao módulo Marketplaces/AvantaPreços. O AvantaVendas não
+> chama essa pesquisa nem compartilha catálogo, histórico ou credenciais.
 
 > Revisão 1.48.0.43.19: o refinamento da pesquisa pública pertence ao PWA
 > **AvantaPreços** e não altera os fluxos do AvantaVendas.

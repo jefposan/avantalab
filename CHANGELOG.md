@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.48.0.43.20 - 2026-10-07
+
+- **Pesquisa de preços com IA e fontes verificáveis**: o AvantaPreços mantém o
+  Mercado Livre para identificar o produto e passa a usar a integração OpenAI
+  já configurada no AvantaLab para pesquisar ofertas atuais na web. A IA
+  entrega loja, preço e URL; o servidor valida, ordena e calcula a média das
+  cinco menores ofertas. Os links usados no cálculo ficam visíveis no produto
+  e são preservados no histórico para conferência.
+- **Proteção contra preço inconsistente**: a antiga integração DataForSEO passa
+  a reconhecer o preço brasileiro exibido quando ele divergir do campo técnico
+  do provedor e seleciona a ficha equivalente mais barata. Essa defesa fica no
+  código de contingência, embora o fluxo principal agora use a pesquisa OpenAI.
+
 ## 1.48.0.43.19 - 2026-10-07
 
 - **Pesquisa comercial objetiva**: o AvantaPreços pesquisa a vitrine pelo nome

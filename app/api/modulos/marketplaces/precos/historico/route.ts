@@ -13,7 +13,7 @@ function toCents(value: unknown) {
 }
 
 function historyFields() {
-  return 'id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,currency,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,created_at,updated_at,last_researched_at,manually_updated_at';
+  return 'id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,currency,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,source_offers,created_at,updated_at,last_researched_at,manually_updated_at';
 }
 
 export async function GET(request: Request) {
@@ -70,6 +70,7 @@ export async function POST(request: Request) {
       sample_min_cents: referenceCents,
       sample_max_cents: referenceCents,
       sample_source: 'manual_reference',
+      source_offers: [],
       created_at: now,
       updated_at: now,
       last_researched_at: now,
@@ -101,6 +102,7 @@ export async function PATCH(request: Request) {
       sample_min_cents: referenceCents,
       sample_max_cents: referenceCents,
       sample_source: 'manual_reference',
+      source_offers: [],
       updated_at: now,
       manually_updated_at: now,
     }).eq('id', historyId).eq('empresa_id', empresaId).select(historyFields()).maybeSingle();

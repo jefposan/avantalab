@@ -36,46 +36,20 @@ function mockCatalog() {
   };
 }
 
-function mockPriceProvider({ pendingPolls = 0 } = {}) {
-  process.env.DATAFORSEO_PRICE_LOOKUP_ENABLED = 'true';
-  process.env.DATAFORSEO_API_LOGIN = 'test-login';
-  process.env.DATAFORSEO_API_PASSWORD = 'test-password';
-  process.env.DATAFORSEO_API_BASE_URL = 'https://sandbox.dataforseo.com';
-  let polls = 0;
+function mockPriceProvider({ offers = [
+  { title: 'Fogão de teste', seller: 'Loja A', price: 800, url: 'https://loja-a.example/fogao' },
+  { title: 'Fogão de teste', seller: 'Loja B', price: 900, url: 'https://loja-b.example/fogao' },
+] } = {}) {
+  process.env.OPENAI_API_KEY = 'test-openai-key';
+  process.env.OPENAI_PRICE_SEARCH_MODEL = 'test-search-model';
   globalThis.fetch = async (url, init) => {
-    if (String(url).endsWith('/products/task_post')) {
+    if (String(url) === 'https://api.openai.com/v1/responses') {
       assert.equal(init?.method, 'POST');
-      const payload = JSON.parse(String(init?.body)).at(0);
-      globalThis.__priceLookupKeyword = payload?.keyword;
-      globalThis.__priceLookupSearchParam = payload?.search_param;
-      globalThis.__priceLookupDepth = payload?.depth;
-      return Response.json({ tasks: [{ id: '11111111-1111-1111-1111-111111111111', status_code: 20100, result: null }] });
+      const payload = JSON.parse(String(init?.body));
+      globalThis.__openAIPriceRequest = payload;
+      return Response.json({ output: [{ content: [{ type: 'output_text', text: JSON.stringify({ offers }) }] }] });
     }
-    if (String(url).endsWith('/product_info/task_post')) {
-      const payload = JSON.parse(String(init?.body)).at(0);
-      assert.equal(payload?.product_id, '550011');
-      return Response.json({ tasks: [{ id: '22222222-2222-2222-2222-222222222222', status_code: 20100, result: null }] });
-    }
-    if (String(url).includes('/products/task_get/advanced/')) {
-      polls++;
-      if (polls <= pendingPolls) return Response.json({ tasks: [{ status_code: 40602, status_message: 'Task In Queue.', result: null }] });
-      return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
-      { title: 'Fogão de teste', price: 800, currency: 'BRL', product_id: 550011, data_docid: 'doc-1', gid: 'gid-1' },
-      { title: 'Produto não relacionado', price: 1, currency: 'BRL', product_id: 'google-product-2' },
-      ] }] }] });
-    }
-    if (String(url).includes('/product_info/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [{
-      // A ficha de vendedores pode abreviar o título e não repetir o nome
-      // que veio do catálogo Mercado Livre. Como ela deriva do product_id
-      // escolhido acima, seus vendedores ainda são a fonte correta.
-      title: 'Ficha Google Shopping',
-      sellers: [
-        { title: 'Loja A', product_availability: 'in_stock', price: { current: 800, regular: 1_000, currency: 'BRL' } },
-        { title: 'Loja B', product_availability: 'limited_stock', price: { current: 900, regular: 1_100, currency: 'BRL' } },
-        { title: 'Loja indisponível', product_availability: 'out_of_stock', price: { current: 1, currency: 'BRL' } },
-      ],
-    }] }] }] });
-    throw new Error(`URL DataForSEO inesperada: ${url}`);
+    throw new Error(`URL OpenAI inesperada: ${url}`);
   };
 }
 
@@ -104,19 +78,29 @@ test('consulta identifica o produto e calcula a média sem consultar a vitrine d
   const result = await consultMercadoLivrePrice({}, connection, { ean });
   assert.equal(result.status, 'found');
   assert.equal(result.product?.name, 'Fogão de teste');
-  assert.equal(globalThis.__priceLookupKeyword, 'Fogão teste');
-  assert.equal(globalThis.__priceLookupSearchParam, '&udm=28');
-  assert.equal(globalThis.__priceLookupDepth, 40);
+  assert.equal(globalThis.__openAIPriceRequest.model, 'test-search-model');
+  assert.equal(globalThis.__openAIPriceRequest.tool_choice, 'required');
+  assert.equal(globalThis.__openAIPriceRequest.tools[0].type, 'web_search');
+  assert.match(globalThis.__openAIPriceRequest.input, /Fogão de teste/);
   assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
-  assert.deepEqual(result.sample, { count: 2, minimum: 800, maximum: 900, source: 'google_shopping' });
+  assert.equal(result.sample?.source, 'openai_web_search');
+  assert.deepEqual(result.sample?.offers?.map(({ seller, price }) => ({ seller, price })), [{ seller: 'Loja A', price: 800 }, { seller: 'Loja B', price: 900 }]);
 });
 
-test('consulta aguarda tarefa em fila antes de obter o preço, sem criar nova tarefa', async () => {
+test('consulta com IA usa somente as cinco menores ofertas comprovadas', async () => {
   mockCatalog();
-  mockPriceProvider({ pendingPolls: 1 });
+  mockPriceProvider({ offers: [
+    { title: 'Fogão de teste', seller: 'Loja cara', price: 5_000, url: 'https://cara.example/fogao' },
+    { title: 'Fogão de teste', seller: 'Loja 5', price: 500, url: 'https://cinco.example/fogao' },
+    { title: 'Fogão de teste', seller: 'Loja 1', price: 100, url: 'https://um.example/fogao' },
+    { title: 'Fogão de teste', seller: 'Loja 4', price: 400, url: 'https://quatro.example/fogao' },
+    { title: 'Fogão de teste', seller: 'Loja 2', price: 200, url: 'https://dois.example/fogao' },
+    { title: 'Fogão de teste', seller: 'Loja 3', price: 300, url: 'https://tres.example/fogao' },
+  ] });
   const result = await consultMercadoLivrePrice({}, connection, { ean });
   assert.equal(result.status, 'found');
-  assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
+  assert.deepEqual(result.prices, { market: 300, minimum: 150, medium: 210, ideal: 270 });
+  assert.deepEqual(result.sample?.offers?.map((offer) => offer.price), [100, 200, 300, 400, 500]);
 });
 
 test('tarefa Google concluída sem ofertas encerra a consulta em vez de permanecer pendente', async () => {
@@ -214,13 +198,20 @@ test('consulta combina vitrine e vendedores antes de calcular as cinco menores o
       return Response.json({ tasks: [{ id: '99999999-9999-9999-9999-999999999999', status_code: 20100, result: null }] });
     }
     if (String(url).includes('/products/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
-      { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 579, currency: 'BRL', product_id: '550011' },
+      { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 579, currency: 'BRL', product_id: 'cheap-rcv2' },
       { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 729.9, currency: 'BRL' },
       { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 899.91, currency: 'BRL' },
       { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 951, currency: 'BRL' },
       { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 2_051.82, currency: 'BRL' },
+      // O título completo tem mais palavras coincidentes, porém não deve fazer
+      // o detalhamento abandonar a ficha equivalente e mais barata.
+      { title: 'Robô Aspirador de Pó Kärcher RCV 2 com Navegação e Controle Remoto – Bivolt.', price: 3_060.05, currency: 'BRL', product_id: 'expensive-rcv2' },
     ] }] }] });
-    if (String(url).endsWith('/product_info/task_post')) return Response.json({ tasks: [{ id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', status_code: 20100, result: null }] });
+    if (String(url).endsWith('/product_info/task_post')) {
+      const payload = JSON.parse(String(init?.body)).at(0);
+      assert.equal(payload?.product_id, 'cheap-rcv2');
+      return Response.json({ tasks: [{ id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', status_code: 20100, result: null }] });
+    }
     if (String(url).includes('/product_info/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [{ sellers: [
       { product_availability: 'in_stock', price: { current: 3_060.05, currency: 'BRL' } },
       // A mesma oferta pode aparecer nas duas camadas e não deve pesar duas vezes.
@@ -232,6 +223,14 @@ test('consulta combina vitrine e vendedores antes de calcular as cinco menores o
   assert.equal(result.status, 'completed');
   assert.deepEqual(result.sample, { pricesInCents: [57900, 72990, 89991, 95100, 205182], count: 5, minimum: 579, maximum: 2051.82 });
   assert.equal(calculatePriceSuggestions(result.sample?.pricesInCents || []).market, 1042.33);
+});
+
+test('preço exibido pelo Google prevalece quando o campo numérico do provedor está inconsistente', () => {
+  const sample = extractGoogleShoppingSellerPriceSample({ items: [{ sellers: [{
+    product_availability: 'in_stock',
+    price: { current: 3_060.10, displayed_price: 'R$ 2.631,64', currency: 'BRL' },
+  }] }] });
+  assert.deepEqual(sample, { pricesInCents: [263164], count: 1, minimum: 2631.64, maximum: 2631.64 });
 });
 
 test('resposta Google sem resultados encerra como consulta concluída, sem erro genérico', async () => {
@@ -262,7 +261,7 @@ test('falha de execução do provedor explica a causa sem mascará-la como recus
 
 test('EAN fora do catálogo público usa o cadastro do perfil para iniciar a consulta assistida', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
-  mockPriceProvider();
+  mockPriceProvider({ offers: [] });
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
     if (url.pathname === '/products/search') return { results: [] };

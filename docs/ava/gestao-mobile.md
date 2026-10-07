@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.19 -->
+<!-- ava-version: 1.48.0.43.20 -->
+
+> Revisão 1.48.0.43.20: o **AvantaPreços** mantém a identificação pelo Mercado
+> Livre ou catálogo da empresa e pesquisa preços atuais pela integração OpenAI
+> do AvantaLab. Loja, valor e link de cada oferta ficam visíveis; a aplicação
+> calcula no servidor a média das cinco menores ofertas válidas e guarda as
+> fontes junto ao histórico.
 
 > Revisão 1.48.0.43.19: o **AvantaPreços** pesquisa por uma expressão comercial
 > curta com produto, marca e modelo; o título integral permanece como validador

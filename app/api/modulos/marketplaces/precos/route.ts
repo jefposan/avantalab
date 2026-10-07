@@ -3,7 +3,7 @@ import { managementFailure, MarketplaceError } from '@/app/modules/marketplaces/
 import { authorizePriceConsultation } from '@/app/modules/marketplaces/services/price-access';
 import { resolveMercadoLivreConnection } from '@/app/modules/marketplaces/services/mercadolivre-management';
 import { calculatePriceSuggestions, consultMercadoLivrePrice, type PriceConsultationResult } from '@/app/modules/marketplaces/services/mercadolivre-price-consultation';
-import { consultGoogleShoppingPrices } from '@/app/modules/marketplaces/services/dataforseo-google-shopping';
+import { consultOpenAIWebPrices, type WebPriceOffer } from '@/app/modules/marketplaces/services/openai-web-price-search';
 import { openMarketplaceSecret, sealMarketplaceSecret, type SealedMarketplaceSecret } from '@/app/modules/marketplaces/services/secret-vault';
 
 export const runtime = 'nodejs';
@@ -61,7 +61,8 @@ type HistoryRecord = {
   sample_count: number;
   sample_min_cents: number;
   sample_max_cents: number;
-  sample_source: 'manual_reference' | 'google_shopping';
+  sample_source: 'manual_reference' | 'google_shopping' | 'openai_web_search';
+  source_offers: WebPriceOffer[] | null;
   created_at: string;
   last_researched_at: string;
 };
@@ -73,22 +74,21 @@ function historyToResult(row: HistoryRecord, notice?: string): PriceConsultation
     query: row.input_type === 'text' ? row.input_value : null,
     product: { id: row.provider_product_id, name: row.product_name, description: row.product_description || '', image: row.image_url, attributes: [] },
     prices: { market: row.market_price_cents / 100, minimum: row.minimum_price_cents / 100, medium: row.medium_price_cents / 100, ideal: row.ideal_price_cents / 100 },
-    sample: { count: row.sample_count, minimum: row.sample_min_cents / 100, maximum: row.sample_max_cents / 100, source: row.sample_source },
+    sample: { count: row.sample_count, minimum: row.sample_min_cents / 100, maximum: row.sample_max_cents / 100, source: row.sample_source, ...(Array.isArray(row.source_offers) && row.source_offers.length ? { offers: row.source_offers } : {}) },
     historyId: row.id,
     consultedAt: row.last_researched_at || row.created_at,
     ...(notice ? { notice } : {}),
   };
 }
 
-async function refreshHistoryPrice(db: Awaited<ReturnType<typeof authorizePriceConsultation>>['db'], empresaId: string, historyId: string, pendingTaskId?: string) {
+async function refreshHistoryPrice(db: Awaited<ReturnType<typeof authorizePriceConsultation>>['db'], empresaId: string, historyId: string) {
   const { data: row, error } = await db.from('marketplace_price_consultations')
-    .select('id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,created_at,last_researched_at')
+    .select('id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,source_offers,created_at,last_researched_at')
     .eq('id', historyId).eq('empresa_id', empresaId).maybeSingle();
   if (error) throw new MarketplaceError(503, 'history_unavailable', 'Não foi possível consultar o histórico agora.');
   if (!row) throw new MarketplaceError(404, 'history_not_found', 'Esta consulta não está disponível para esta empresa.');
   const stored = row as HistoryRecord;
-  const lookup = await consultGoogleShoppingPrices({ ean: stored.ean, productName: stored.product_name }, pendingTaskId);
-  if (lookup.status === 'pending') return { result: { ...historyToResult(stored, 'Estamos consultando novamente as ofertas públicas.'), pendingPriceTaskId: lookup.taskId }, historyId };
+  const lookup = await consultOpenAIWebPrices({ ean: stored.ean, productName: stored.product_name });
   if (!lookup.sample) return { result: historyToResult(stored, 'Não foram encontradas ofertas comparáveis agora. Mantivemos o valor registrado anteriormente.'), historyId };
   const prices = calculatePriceSuggestions(lookup.sample.pricesInCents);
   const now = new Date().toISOString();
@@ -100,12 +100,13 @@ async function refreshHistoryPrice(db: Awaited<ReturnType<typeof authorizePriceC
     sample_count: lookup.sample.count,
     sample_min_cents: cents(lookup.sample.minimum),
     sample_max_cents: cents(lookup.sample.maximum),
-    sample_source: 'google_shopping',
+    sample_source: 'openai_web_search',
+    source_offers: lookup.sample.offers,
     updated_at: now,
     last_researched_at: now,
-  }).eq('id', historyId).eq('empresa_id', empresaId).select('id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,created_at,last_researched_at').single();
+  }).eq('id', historyId).eq('empresa_id', empresaId).select('id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,source_offers,created_at,last_researched_at').single();
   if (updateError || !updated) throw new MarketplaceError(503, 'history_unavailable', 'A nova pesquisa foi concluída, mas não foi possível atualizar o histórico.');
-  return { result: historyToResult(updated as HistoryRecord, `Referência atualizada com ${lookup.sample.count} menor${lookup.sample.count === 1 ? '' : 'es'} oferta${lookup.sample.count === 1 ? '' : 's'} comparável${lookup.sample.count === 1 ? '' : 'is'} no Google Shopping.`), historyId };
+  return { result: historyToResult(updated as HistoryRecord, `Referência atualizada com ${lookup.sample.count} menor${lookup.sample.count === 1 ? '' : 'es'} oferta${lookup.sample.count === 1 ? '' : 's'} comprovada${lookup.sample.count === 1 ? '' : 's'} pela pesquisa web com IA.`), historyId };
 }
 
 function sealPendingContinuation(value: Omit<PendingPriceContinuation, 'version' | 'expiresAt'>) {
@@ -120,7 +121,7 @@ export async function POST(request: Request) {
     const input = resumed || body;
     const { db, empresaId, usuario } = await authorizePriceConsultation(request, input.empresaId);
     if (input.historyId) {
-      const refreshed = await refreshHistoryPrice(db, empresaId, input.historyId, resumed?.taskId);
+      const refreshed = await refreshHistoryPrice(db, empresaId, input.historyId);
       if (refreshed.result.pendingPriceTaskId) {
         const { pendingPriceTaskId, ...pendingResult } = refreshed.result;
         return NextResponse.json({
@@ -175,6 +176,7 @@ export async function POST(request: Request) {
         sample_min_cents: cents(result.sample.minimum),
         sample_max_cents: cents(result.sample.maximum),
         sample_source: result.sample.source,
+        source_offers: result.sample.offers || [],
         updated_at: new Date().toISOString(),
         last_researched_at: new Date().toISOString(),
       }).select('id,created_at,last_researched_at').single();

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.19 -->
+<!-- ava-version: 1.48.0.43.20 -->
+
+> Revisão 1.48.0.43.20: o módulo Marketplaces usa a integração OpenAI já
+> configurada no AvantaLab para a pesquisa web de preços do AvantaPreços. O
+> cálculo permanece determinístico no servidor e as fontes são armazenadas para
+> auditoria; as conexões Mercado Livre continuam responsáveis pela identificação.
 
 > Revisão 1.48.0.43.19: a coleta do **AvantaPreços** usa uma pesquisa curta de
 > produto, marca e modelo, sem exigir que as lojas repitam todo o título do

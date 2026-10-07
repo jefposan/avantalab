@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.43.20: o AvantaPreços identifica o produto pelo
+// Mercado Livre ou catálogo do perfil e usa a pesquisa web OpenAI para obter
+// ofertas com preço, loja e link; a média das cinco menores é feita no servidor.
 // Revisado na versão 1.48.0.43.19: o AvantaPreços pesquisa produto, marca e
 // modelo em uma expressão curta e valida ofertas contra o título completo.
 // Revisado na versão 1.48.0.43.18: o AvantaPreços usa a vitrine atual do Google

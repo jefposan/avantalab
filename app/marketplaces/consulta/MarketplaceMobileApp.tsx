@@ -10,7 +10,8 @@ import styles from './marketplaces-mobile.module.css';
 
 type Company = { id: string; nome: string; perfil: string; [key: string]: unknown };
 type Candidate = { id: string; name: string; picture: string | null };
-type PriceSource = 'active_offers' | 'catalog_reference' | 'manual_reference' | 'google_shopping';
+type PriceSource = 'active_offers' | 'catalog_reference' | 'manual_reference' | 'google_shopping' | 'openai_web_search';
+type PriceOffer = { title: string; seller: string; price: number; url: string };
 type Consultation = {
   status: 'found' | 'not_found' | 'choose';
   ean: string | null;
@@ -18,7 +19,7 @@ type Consultation = {
   product?: { id: string; name: string; description: string; image: string | null; attributes: Array<{ id: string; name: string; value: string }> };
   candidates?: Candidate[];
   prices?: { market: number; minimum: number; medium: number; ideal: number };
-  sample?: { count: number; minimum: number; maximum: number; source: PriceSource };
+  sample?: { count: number; minimum: number; maximum: number; source: PriceSource; offers?: PriceOffer[] };
   notice?: string;
   historyId?: string;
   consultedAt?: string;
@@ -27,7 +28,7 @@ type HistoryRow = {
   id: string; ean: string | null; input_type: 'ean' | 'text'; input_value: string; provider_product_id: string;
   product_name: string; product_description: string | null; image_url: string | null; currency: string;
   market_price_cents: number; minimum_price_cents: number; medium_price_cents: number; ideal_price_cents: number;
-  sample_count: number; sample_min_cents: number; sample_max_cents: number; sample_source: PriceSource; created_at: string;
+  sample_count: number; sample_min_cents: number; sample_max_cents: number; sample_source: PriceSource; source_offers?: PriceOffer[]; created_at: string;
   updated_at: string; last_researched_at: string; manually_updated_at: string | null;
 };
 type Account = { id: string; status: string; seller_name: string | null; seller_reference: string };
@@ -39,13 +40,14 @@ const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
 function priceReferenceLabel(source?: PriceSource) {
-  if (source === 'google_shopping') return 'Média dos até 5 menores preços';
+  if (source === 'google_shopping' || source === 'openai_web_search') return 'Média dos até 5 menores preços';
   if (source === 'manual_reference') return 'Preço informado';
   if (source === 'catalog_reference') return 'Preço de catálogo';
   return 'Preço médio Mercado Livre';
 }
 
 function priceReferenceNote(source?: PriceSource) {
+  if (source === 'openai_web_search') return 'Média das até 5 menores ofertas atuais verificadas pela pesquisa web com IA.';
   if (source === 'google_shopping') return 'Média das até 5 menores ofertas comparáveis localizadas no Google Shopping.';
   if (source === 'manual_reference') return 'Preço confirmado por você após a consulta pública.';
   if (source === 'catalog_reference') return 'Preço obtido de uma referência de catálogo anterior.';
@@ -103,7 +105,7 @@ function historyToConsultation(row: HistoryRow): Consultation {
     status: 'found', ean: row.ean, query: row.input_type === 'text' ? row.input_value : null,
     product: { id: row.provider_product_id, name: row.product_name, description: row.product_description || '', image: row.image_url, attributes: [] },
     prices: { market: row.market_price_cents / 100, minimum: row.minimum_price_cents / 100, medium: row.medium_price_cents / 100, ideal: row.ideal_price_cents / 100 },
-    sample: { count: row.sample_count, minimum: row.sample_min_cents / 100, maximum: row.sample_max_cents / 100, source: row.sample_source },
+    sample: { count: row.sample_count, minimum: row.sample_min_cents / 100, maximum: row.sample_max_cents / 100, source: row.sample_source, ...(row.source_offers?.length ? { offers: row.source_offers } : {}) },
     historyId: row.id, consultedAt: row.last_researched_at || row.created_at,
   };
 }
@@ -524,7 +526,8 @@ export default function MarketplaceMobileApp() {
           <div className={styles.minimumPrice}><span>Preço mínimo</span><small>50% da referência</small><strong>{money.format(result.prices.minimum)}</strong></div>
           <div className={styles.mediumPrice}><span>Preço médio de venda</span><small>70% da referência</small><strong>{money.format(result.prices.medium)}</strong></div>
           <div className={styles.idealPrice}><span>Preço ideal</span><small>90% da referência</small><strong>{money.format(result.prices.ideal)}</strong></div>
-        </div><p className={styles.sampleNote}>{priceReferenceNote(result.sample?.source)}</p></> : <section className={styles.assistedPrice} aria-labelledby="assisted-price-title">
+        </div><p className={styles.sampleNote}>{priceReferenceNote(result.sample?.source)}</p>
+        {result.sample?.offers?.length ? <section className={styles.priceSources} aria-labelledby="price-sources-title"><h2 id="price-sources-title">Ofertas usadas no cálculo</h2><div>{result.sample.offers.map((offer) => <a key={`${offer.url}-${offer.price}`} href={offer.url} target="_blank" rel="noreferrer"><span><strong>{offer.seller}</strong><small>{offer.title}</small></span><b>{money.format(offer.price)}</b></a>)}</div></section> : null}</> : <section className={styles.assistedPrice} aria-labelledby="assisted-price-title">
           <h2 id="assisted-price-title">{loading ? 'Consultando preços' : 'Preço indisponível'}</h2>
           <p>{loading ? 'Estamos acompanhando a coleta de ofertas automaticamente.' : 'Não foram encontradas ofertas comparáveis para este produto neste momento.'}</p>
           {!loading && result.historyId && <button type="button" className={styles.secondaryButton} onClick={() => void consult({ historyId: result.historyId })}><Icon name="refresh" />Consultar novamente</button>}

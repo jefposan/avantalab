@@ -4,7 +4,7 @@ import { MarketplaceError } from './management-access';
 import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import type { SellerConnection } from './mercadolivre-management';
 import { lookupProfileCatalogByEan } from './profile-catalog';
-import { consultGoogleShoppingPrices } from './dataforseo-google-shopping';
+import { consultOpenAIWebPrices, type WebPriceOffer } from './openai-web-price-search';
 import { selectReferencePriceCents } from './price-reference';
 
 export type PriceSuggestions = {
@@ -14,7 +14,7 @@ export type PriceSuggestions = {
   ideal: number;
 };
 
-export type PriceSampleSource = 'manual_reference' | 'google_shopping';
+export type PriceSampleSource = 'manual_reference' | 'google_shopping' | 'openai_web_search';
 
 export type PriceConsultationResult = {
   status: 'found' | 'not_found' | 'choose';
@@ -29,7 +29,7 @@ export type PriceConsultationResult = {
   };
   candidates?: Array<{ id: string; name: string; picture: string | null }>;
   prices?: PriceSuggestions;
-  sample?: { count: number; minimum: number; maximum: number; source: PriceSampleSource };
+  sample?: { count: number; minimum: number; maximum: number; source: PriceSampleSource; offers?: WebPriceOffer[] };
   pendingPriceTaskId?: string;
   historyId?: string;
   consultedAt?: string;
@@ -126,21 +126,16 @@ export async function consultMercadoLivrePrice(
     };
   }
 
-  const lookup = await consultGoogleShoppingPrices({ ean, productName: product.name }, input.pendingPriceTaskId);
-  if (lookup.status === 'pending') return {
-    ...base,
-    pendingPriceTaskId: lookup.taskId,
-    notice: 'Estamos comparando ofertas públicas. A consulta continuará automaticamente.',
-  };
+  const lookup = await consultOpenAIWebPrices({ ean, productName: product.name });
   if (!lookup.sample) return {
     ...base,
-    notice: 'Produto localizado, mas não há preços comparáveis em reais no Google Shopping neste momento.',
+    notice: 'Produto localizado, mas a pesquisa com IA não encontrou ofertas atuais e comprováveis neste momento.',
   };
   const prices = calculatePriceSuggestions(lookup.sample.pricesInCents);
   return {
     ...base,
     prices,
-    sample: { count: lookup.sample.count, minimum: lookup.sample.minimum, maximum: lookup.sample.maximum, source: 'google_shopping' },
-    notice: `Referência calculada com ${lookup.sample.count} menor${lookup.sample.count === 1 ? '' : 'es'} oferta${lookup.sample.count === 1 ? '' : 's'} comparável${lookup.sample.count === 1 ? '' : 'is'} no Google Shopping.`,
+    sample: { count: lookup.sample.count, minimum: lookup.sample.minimum, maximum: lookup.sample.maximum, source: 'openai_web_search', offers: lookup.sample.offers },
+    notice: `Referência calculada no servidor com ${lookup.sample.count} menor${lookup.sample.count === 1 ? '' : 'es'} oferta${lookup.sample.count === 1 ? '' : 's'} comprovada${lookup.sample.count === 1 ? '' : 's'} pela pesquisa web com IA.`,
   };
 }

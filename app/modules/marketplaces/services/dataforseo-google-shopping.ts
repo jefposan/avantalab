@@ -60,11 +60,27 @@ function amountInCents(value: unknown) {
   return Number.isFinite(amount) && amount > 0 && amount < 1_000_000 ? Math.round(amount * 100) : null;
 }
 
+function displayedAmountInCents(value: unknown) {
+  const displayed = text(value).replace(/\u00a0/g, ' ');
+  const match = /R\$\s*([\d.]+)(?:,(\d{1,2}))?/i.exec(displayed);
+  if (!match) return null;
+  const reais = Number(match[1].replace(/\./g, ''));
+  const centavos = Number((match[2] || '').padEnd(2, '0'));
+  if (!Number.isSafeInteger(reais) || reais <= 0 || !Number.isSafeInteger(centavos)) return null;
+  const amount = (reais * 100) + centavos;
+  return amount > 0 && amount < 100_000_000 ? amount : null;
+}
+
 function priceFromListing(value: JsonRecord) {
   const details = record(value.price);
   // Merchant Products returns `price` directly. Product Info (sellers) returns
-  // the current offer in `price.current`; regular is deliberately not used.
-  const amount = amountInCents(value.price) ?? amountInCents(details.current);
+  // the current offer in `price.current`. DataForSEO can return a stale numeric
+  // `current` while `displayed_price` contains the price actually rendered by
+  // Google (observed as 3,060.10 versus "R$ 2.631,64" in the same offer). The
+  // visible BRL value is therefore authoritative whenever it is available.
+  const displayedAmount = displayedAmountInCents(value.displayed_price)
+    ?? displayedAmountInCents(details.displayed_price);
+  const amount = displayedAmount ?? amountInCents(value.price) ?? amountInCents(details.current);
   const currency = text(value.currency || details.currency).toUpperCase();
   return { amount, currency };
 }
@@ -83,6 +99,22 @@ function productCodes(value: string) {
   return (normalized.match(/[a-z]*\d[a-z\d]*(?:[/-]\d[a-z\d]*)*/g) || [])
     .map((code) => code.replace(/[^a-z0-9]/g, ''))
     .filter((code) => code.length >= 4);
+}
+
+function separatedModelCodes(value: string) {
+  const tokens = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .match(/[a-z]+|\d+/g) || [];
+  const codes: string[] = [];
+  for (let index = 0; index < tokens.length - 1; index++) {
+    const left = tokens[index];
+    const right = tokens[index + 1];
+    if (/^[a-z]{2,}$/.test(left) && /^\d{1,4}$/.test(right)) codes.push(`${left}${right}`);
+  }
+  return codes;
+}
+
+function identityCodes(value: string) {
+  return [...new Set([...productCodes(value), ...separatedModelCodes(value)])];
 }
 
 function compact(value: string) {
@@ -124,7 +156,7 @@ function titleMatchesProduct(title: string, productName: string, ean?: string | 
   // "69065011". O SKU é a evidência mais segura para títulos comerciais
   // encurtados e precisa sobreviver à remoção de pontuação.
   const compactTitle = compact(title);
-  if (productCodes(productName).some((code) => compactTitle.includes(code))) return true;
+  if (identityCodes(productName).some((code) => compactTitle.includes(code))) return true;
   // Modelos como ME20B distinguem melhor produtos longos do que exigir que o
   // título de uma loja reproduza toda a descrição do catálogo Mercado Livre.
   if (modelTokens(productName).some((model) => actual.has(model))) return true;
@@ -139,7 +171,7 @@ function productMatchScore(title: string, productName: string) {
   let score = 0;
   for (const word of wanted) if (actual.has(word)) score++;
   const compactTitle = compact(title);
-  for (const code of productCodes(productName)) if (compactTitle.includes(code)) score += 100;
+  for (const code of identityCodes(productName)) if (compactTitle.includes(code)) score += 100;
   for (const model of modelTokens(productName)) if (actual.has(model)) score += 100;
   return score;
 }
@@ -147,7 +179,7 @@ function productMatchScore(title: string, productName: string) {
 function productReferenceFrom(payload: unknown, productName: string, ean?: string | null): GoogleShoppingProductReference | null {
   // A caixa mutável torna a atualização feita pelo visitante recursivo visível
   // ao analisador de fluxo do TypeScript usado pelo build do Next.js.
-  const selected: { current: { value: GoogleShoppingProductReference; score: number } | null } = { current: null };
+  const selected: { current: { value: GoogleShoppingProductReference; score: number; amount: number | null } | null } = { current: null };
   const visit = (value: unknown) => {
     if (Array.isArray(value)) {
       value.forEach(visit);
@@ -163,8 +195,20 @@ function productReferenceFrom(payload: unknown, productName: string, ean?: strin
       const candidate = {
         value: { productId, dataDocId, gid },
         score: productMatchScore(title, productName),
+        amount: priceFromListing(item).amount,
       };
-      if (!selected.current || candidate.score > selected.current.score) selected.current = candidate;
+      const candidateHasStrongIdentity = candidate.score >= 100;
+      const selectedHasStrongIdentity = (selected.current?.score || 0) >= 100;
+      const candidateHasLowerPrice = candidate.amount != null
+        && (selected.current?.amount == null || candidate.amount < selected.current.amount);
+      if (!selected.current
+        || (candidateHasStrongIdentity && !selectedHasStrongIdentity)
+        || (candidateHasStrongIdentity === selectedHasStrongIdentity && candidateHasLowerPrice)
+        || (candidateHasStrongIdentity === selectedHasStrongIdentity
+          && candidate.amount === selected.current.amount
+          && candidate.score > selected.current.score)) {
+        selected.current = candidate;
+      }
     }
     for (const child of Object.values(item)) if (child && typeof child === 'object') visit(child);
   };
