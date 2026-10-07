@@ -21,6 +21,9 @@ type Props = { searchParams: Promise<{ estado?: string; segura?: string }> };
 export default async function MarketplaceViewportValidationPage({ searchParams }: Props) {
   const query = await searchParams;
   const estado = query.estado;
+  const headerSafeStyle = query.segura === 'iphone'
+    ? ({ '--avanta-status-inset-top': '62px' } as CSSProperties)
+    : undefined;
   const accessSafeStyle = query.segura === 'iphone'
     ? ({ '--avanta-access-viewport-height': 'calc(100dvh - 62px)', '--avanta-access-safe-extension': '62px' } as CSSProperties)
     : undefined;
@@ -28,7 +31,7 @@ export default async function MarketplaceViewportValidationPage({ searchParams }
   if (estado === 'pronto') {
     return (
       <div className={styles.page} data-avantaprecos-viewport="ready">
-        <div className={`${styles.topbar} ${styles.topbarMobile}`}>
+        <div className={`${styles.topbar} ${styles.topbarMobile}`} style={headerSafeStyle}>
           <div className={styles.topbarInner}>
             <div className={styles.brand}>
               <span className={styles.brandTitle}>TRIDIUM COSMETICOS</span>

@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.43.23: AvantaPreços reserva a área segura
+// superior fora do cabeçalho útil e usa fundo raiz autenticado azul e opaco.
+// Sem alteração no fluxo de consulta; validar a barra nativa no iPhone.
 // Revisado na versão 1.48.0.43.22: o topo do AvantaPreços usa o mesmo modelo
 // de barra de status, altura e espaçamento do PWA Recebimentos, sem somar uma
 // segunda compensação manual da área segura do iPhone.

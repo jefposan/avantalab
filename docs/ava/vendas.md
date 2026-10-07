@@ -1,6 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.22 -->
+<!-- ava-version: 1.48.0.43.23 -->
+
+> Revisão 1.48.0.43.23: Correção restrita ao topo do AvantaPreços no iPhone. Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.48.0.43.22: o alinhamento do cabeçalho com o PWA Recebimentos
 > pertence exclusivamente ao **AvantaPreços** e não altera telas, fluxos ou

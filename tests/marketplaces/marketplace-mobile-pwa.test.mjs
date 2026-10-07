@@ -168,9 +168,10 @@ test('barra de status do iPhone usa o mesmo modelo do PWA Recebimentos', () => {
   assert.match(pwaManifest, /theme_color: '#003E73'/);
 });
 
-test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas paralelas', () => {
+test('AvantaPreços protege o topo exposto ao iPhone mantendo a geometria do Recebimentos', () => {
   assert.match(css, /\.page \{[^}]*position: relative;[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
-  assert.doesNotMatch(css, /--avanta-safe-top/);
+  assert.match(css, /padding-top: var\(--avanta-status-inset-top, env\(safe-area-inset-top, 0px\)\);/);
+  assert.doesNotMatch(css, /min-height: calc\(76px|padding: calc\(14px/);
   assert.match(css, /\.topbar \{[^}]*position: sticky;[^}]*z-index: 20;[^}]*top: 0;[^}]*background: color-mix\(in srgb, var\(--brand\) 96%, #000\);/);
   assert.match(css, /\.topbarInner \{[^}]*max-width: 1080px;[^}]*padding: 12px 16px;/);
   assert.match(css, /\.topbarMobile \.topbarInner \{[^}]*min-height: 76px;[^}]*padding-block: 14px;/);
@@ -184,7 +185,8 @@ test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas 
   assert.match(css, /@supports \(-webkit-touch-callout: none\) \{ \.page, \.loginWrap \{[^}]*background-attachment: scroll;/);
   assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background-color: #eef6fb;[^}]*background-image: none;/);
   assert.match(viewportShell, /body:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background: transparent;/);
-  assert.doesNotMatch(viewportShell, /data-avantaprecos-viewport='ready'/);
+  assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='ready'\]\),\s*body:has\(\[data-avantaprecos-viewport='ready'\]\) \{\s*background-color: #003E73;/);
+  assert.doesNotMatch(viewportShell, /position: fixed|backdrop-filter|linear-gradient/);
   assert.doesNotMatch(viewportShell, /bg-avantalab-mobile|background-position|background-size|background-attachment/);
   assert.match(client, /data-avantaprecos-viewport="access"/);
   assert.match(client, /data-avantaprecos-viewport="ready"/);
@@ -193,10 +195,11 @@ test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas 
   assert.match(pwaPage, /rel="preload"[\s\S]*bg-avantalab-mobile-1080x1920-sem-logo\.webp/);
 });
 
-test('rota isolada valida login, carregamento e cabeçalho sem compensação manual', () => {
+test('rota isolada valida login, carregamento e cabeçalho com área segura exposta', () => {
   assert.match(viewportValidationPage, /estado === 'pronto'/);
   assert.match(viewportValidationPage, /estado === 'carregando'/);
-  assert.doesNotMatch(viewportValidationPage, /--avanta-safe-top/);
+  assert.match(viewportValidationPage, /'--avanta-status-inset-top': '62px'/);
+  assert.match(viewportValidationPage, /style=\{headerSafeStyle\}/);
   assert.match(viewportValidationPage, /'--avanta-access-viewport-height': 'calc\(100dvh - 62px\)'/);
   assert.match(viewportValidationPage, /'--avanta-access-safe-extension': '62px'/);
   assert.match(viewportValidationPage, /className=\{styles\.loginWrap\} data-avantaprecos-viewport="access"/);

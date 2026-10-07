@@ -1,6 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.22 -->
+<!-- ava-version: 1.48.0.43.23 -->
+
+> Revisão 1.48.0.43.23: O AvantaPreços mantém o cabeçalho útil de 76 px e reserva, fora dele, a área segura superior informada pelo navegador. A superfície raiz autenticada fica azul e opaca. A mudança protege instalações que ainda expõem conteúdo atrás da barra do iPhone; a aparência nativa precisa de conferência no aparelho.
 
 > Revisão 1.48.0.43.22: o topo autenticado do **AvantaPreços** replica o padrão
 > do PWA Recebimentos: barra de status padrão do iPhone, cabeçalho de 76 px e o

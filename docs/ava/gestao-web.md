@@ -1,6 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.22 -->
+<!-- ava-version: 1.48.0.43.23 -->
+
+> Revisão 1.48.0.43.23: Correção do topo do AvantaPreços no iPhone: área segura aplicada fora do cabeçalho útil e fundo raiz autenticado opaco. Sem impacto operacional na Gestão Web.
 
 > Revisão 1.48.0.43.22: o cabeçalho autenticado do **AvantaPreços** segue o
 > mesmo modelo visual e de viewport do PWA Recebimentos. A correção é restrita

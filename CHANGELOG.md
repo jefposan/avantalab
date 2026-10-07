@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.48.0.43.23 - 2026-10-07
+
+- **Proteção do cabeçalho do AvantaPreços no iPhone**: após a comparação com
+  o vídeo do Recebimentos, a área segura informada pelo navegador é reservada
+  no cabeçalho externo. O conteúdo interno mantém 76 px e padding de 14 px;
+  quando o navegador já exclui a barra de status, o inset zero não adiciona espaço.
+- **Superfície autenticada opaca**: html/body usam o azul institucional nas
+  áreas expostas pelo iPhone e durante o overscroll, sem camada de vidro no CSS.
+- **Validação da sobreposição**: a rota visual também permite simular uma área
+  superior exposta de 62 px. A aparência da barra nativa continua dependendo do
+  iOS e da instalação e precisa ser conferida no aparelho.
+
 ## 1.48.0.43.22 - 2026-10-07
 
 - **Topo do AvantaPreços alinhado ao Recebimentos**: o PWA passa a usar o
