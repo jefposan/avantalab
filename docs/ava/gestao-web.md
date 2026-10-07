@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.10 -->
+<!-- ava-version: 1.48.0.43.11 -->
+
+> Revisão 1.48.0.43.11: o ajuste de posição e atualização visível da tela
+> **Produtos** pertence ao AvantaVendas e não altera os fluxos da Gestão Web.
 
 > Revisão 1.48.0.43.10: no **AvantaPreços**, **Consultar novamente** em um
 > item do histórico consulta apenas o Google Shopping com o produto já salvo —

@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.43.11: em Produtos, Novo produto permanece fixo no
+// canto original e Atualizar ocupa espaço independente à esquerda.
 // Revisado na versão 1.48.0.43.09: em Produtos, Atualizar preserva a posição de
 // Novo produto e mantém o giro e o texto visíveis durante a atualização.
 // Revisado na versão 1.48.0.43.08: em Produtos, Atualizar fica à esquerda de

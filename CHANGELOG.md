@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.48.0.43.11-av175 - 2026-10-07
+
+- **Controles de Produtos no cabeçalho**: **Novo produto** permanece ancorado
+  no canto direito; **Atualizar** fica imediatamente à esquerda sem deslocar a
+  ação principal e sua seta gira durante a atualização.
+
 ## 1.48.0.43.10 - 2026-10-07
 
 - **Consulta de preço sem espera infinita**: **Consultar novamente** em um
@@ -7,7 +13,6 @@
   sem voltar ao Mercado Livre. Uma tarefa concluída sem ofertas agora encerra
   corretamente com aviso, e o acompanhamento possui limite objetivo para o
   botão não permanecer em cálculo indefinidamente.
-
 ## 1.48.0.43.09-av174 - 2026-10-06
 
 - **Atualizar Produtos com retorno visível**: **Novo produto** volta à sua
