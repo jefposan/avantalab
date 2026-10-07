@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.48.0.43.21 - 2026-10-07
+
+- **Mercado Livre e Amazon obrigatórios no AvantaPreços**: toda pesquisa web de
+  preços passa a procurar primeiro o produto exato nesses dois marketplaces e,
+  quando disponível, inclui o menor preço válido de produto novo de cada um na
+  base usada para a média. As vagas restantes continuam sendo preenchidas pelas
+  menores ofertas comprovadas encontradas em outras fontes; usados,
+  recondicionados, avariados, kits ou variantes incompatíveis são excluídos.
+- **Validação determinística das fontes prioritárias**: além da instrução dada à
+  IA, o servidor reconhece URLs/sellers de Mercado Livre e Amazon e preserva o
+  menor anúncio válido de cada plataforma na amostra final, evitando que uma
+  oferta mais alta ou a ordenação geral retire essas referências.
+
 ## 1.48.0.43.20 - 2026-10-07
 
 - **Pesquisa de preços com IA e fontes verificáveis**: o AvantaPreços mantém o

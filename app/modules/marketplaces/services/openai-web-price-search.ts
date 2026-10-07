@@ -85,18 +85,51 @@ function normalizedOffer(value: unknown): WebPriceOffer | null {
   }
 }
 
+type RequiredMarketplace = 'mercado_livre' | 'amazon';
+
+function requiredMarketplace(offer: WebPriceOffer): RequiredMarketplace | null {
+  let hostname = '';
+  try {
+    hostname = new URL(offer.url).hostname.toLocaleLowerCase('pt-BR');
+  } catch {
+    // normalizedOffer já valida a URL; o fallback por seller mantém a função defensiva.
+  }
+  const seller = offer.seller.toLocaleLowerCase('pt-BR');
+  if (hostname === 'meli.la' || hostname === 'mercadolivre.com.br' || hostname.endsWith('.mercadolivre.com.br') || /mercado\s*livre/.test(seller)) {
+    return 'mercado_livre';
+  }
+  if (hostname === 'amzn.to' || hostname === 'amazon.com.br' || hostname.endsWith('.amazon.com.br') || /\bamazon\b/.test(seller)) {
+    return 'amazon';
+  }
+  return null;
+}
+
+function selectReferenceOffers(offers: WebPriceOffer[]) {
+  const sorted = [...offers].sort((left, right) => left.price - right.price);
+  const required = (['mercado_livre', 'amazon'] as const)
+    .map((marketplace) => sorted.find((offer) => requiredMarketplace(offer) === marketplace))
+    .filter((offer): offer is WebPriceOffer => Boolean(offer));
+  const selected = [...required];
+  for (const offer of sorted) {
+    if (selected.length >= 5) break;
+    if (!selected.includes(offer)) selected.push(offer);
+  }
+  return selected.sort((left, right) => left.price - right.price);
+}
+
 function priceSample(payload: unknown): OpenAIWebPriceSample | null {
   const record = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload as JsonRecord : {};
   const offers = Array.isArray(record.offers) ? record.offers.map(normalizedOffer).filter((offer): offer is WebPriceOffer => Boolean(offer)) : [];
   const unique = offers.filter((offer, index) => {
     const key = `${offer.url}|${offer.seller.toLocaleLowerCase('pt-BR')}|${offer.price}`;
     return offers.findIndex((candidate) => `${candidate.url}|${candidate.seller.toLocaleLowerCase('pt-BR')}|${candidate.price}` === key) === index;
-  }).sort((left, right) => left.price - right.price).slice(0, 5);
-  const selectedPrices = selectReferencePriceCents(unique.map((offer) => Math.round(offer.price * 100)));
+  });
+  const selectedOffers = selectReferenceOffers(unique);
+  const selectedPrices = selectReferencePriceCents(selectedOffers.map((offer) => Math.round(offer.price * 100)));
   if (!selectedPrices.length) return null;
   return {
     pricesInCents: selectedPrices,
-    offers: unique,
+    offers: selectedOffers,
     count: selectedPrices.length,
     minimum: selectedPrices[0] / 100,
     maximum: selectedPrices.at(-1)! / 100,
@@ -115,8 +148,14 @@ export async function consultOpenAIWebPrices(input: { ean: string | null; produc
     input.ean ? `EAN: ${input.ean}` : '',
     '',
     'Regras obrigatórias:',
+    '- pesquise obrigatoriamente Mercado Livre e Amazon Brasil antes de completar a amostra com outras lojas brasileiras;',
+    '- no Mercado Livre, se o produto exato estiver disponível, retorne o MENOR preço válido encontrado para produto novo;',
+    '- na Amazon Brasil, se o produto exato estiver disponível, retorne o MENOR preço válido encontrado para produto novo;',
+    '- as ofertas mais baratas válidas de Mercado Livre e Amazon têm prioridade e devem permanecer na resposta mesmo quando não estiverem entre os cinco menores preços gerais;',
+    '- se o produto exato não existir em um desses marketplaces, não substitua por modelo parecido e não invente oferta; apenas omita esse marketplace;',
+    '- quando houver EAN, use-o como identificador prioritário; confirme também marca, modelo, versão, voltagem, capacidade e demais características relevantes;',
     '- procure preços à vista/totais em reais (BRL), em lojas brasileiras e marketplaces;',
-    '- retorne somente o mesmo modelo, versão, voltagem e capacidade; exclua acessórios, peças, kits diferentes, usados, aluguel e produtos similares;',
+    '- retorne somente produto novo e disponível; exclua acessórios, peças, kits diferentes, usados, recondicionados, avariados, aluguel e produtos similares;',
     '- cada oferta precisa ter preço atual, nome da loja e URL HTTPS da página que comprova a oferta;',
     '- não use parcelas, frete, preço antigo riscado nem preço de produto indisponível;',
     '- encontre até 12 ofertas válidas; não calcule média e não invente valores;',

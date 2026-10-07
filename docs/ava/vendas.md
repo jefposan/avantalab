@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.20 -->
+<!-- ava-version: 1.48.0.43.21 -->
+
+> Revisão 1.48.0.43.21: a obrigatoriedade de Mercado Livre e Amazon na base de
+> preços pertence exclusivamente ao **AvantaPreços** e não altera os fluxos,
+> catálogo ou credenciais do AvantaVendas.
 
 > Revisão 1.48.0.43.20: a pesquisa web de preços com OpenAI e os links das
 > ofertas pertencem ao módulo Marketplaces/AvantaPreços. O AvantaVendas não

@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.43.21: o AvantaPreços pesquisa obrigatoriamente
+// Mercado Livre e Amazon Brasil e preserva na média o menor preço válido de
+// produto novo de cada plataforma quando o item exato estiver disponível.
 // Revisado na versão 1.48.0.43.20: o AvantaPreços identifica o produto pelo
 // Mercado Livre ou catálogo do perfil e usa a pesquisa web OpenAI para obter
 // ofertas com preço, loja e link; a média das cinco menores é feita no servidor.

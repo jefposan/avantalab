@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.20 -->
+<!-- ava-version: 1.48.0.43.21 -->
+
+> Revisão 1.48.0.43.21: o **AvantaPreços** pesquisa obrigatoriamente Mercado
+> Livre e Amazon Brasil e inclui, quando houver correspondência exata, o menor
+> preço válido de produto novo de cada plataforma na amostra usada para a média.
+> A validação por EAN/modelo evita usados, recondicionados e variantes diferentes.
 
 > Revisão 1.48.0.43.20: o **AvantaPreços** mantém a identificação pelo Mercado
 > Livre ou catálogo da empresa e pesquisa preços atuais pela integração OpenAI

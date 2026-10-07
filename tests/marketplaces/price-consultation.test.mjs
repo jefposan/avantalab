@@ -87,6 +87,31 @@ test('consulta identifica o produto e calcula a média sem consultar a vitrine d
   assert.deepEqual(result.sample?.offers?.map(({ seller, price }) => ({ seller, price })), [{ seller: 'Loja A', price: 800 }, { seller: 'Loja B', price: 900 }]);
 });
 
+
+test('consulta inclui o menor Mercado Livre e o menor Amazon na base da média', async () => {
+  mockCatalog();
+  mockPriceProvider({ offers: [
+    { title: 'Fogão de teste', seller: 'Loja 1', price: 100, url: 'https://um.example/fogao' },
+    { title: 'Fogão de teste', seller: 'Loja 2', price: 110, url: 'https://dois.example/fogao' },
+    { title: 'Fogão de teste', seller: 'Loja 3', price: 120, url: 'https://tres.example/fogao' },
+    { title: 'Fogão de teste', seller: 'Mercado Livre - caro', price: 350, url: 'https://produto.mercadolivre.com.br/MLB-350' },
+    { title: 'Fogão de teste', seller: 'Mercado Livre - menor', price: 300, url: 'https://produto.mercadolivre.com.br/MLB-300' },
+    { title: 'Fogão de teste', seller: 'Amazon - caro', price: 450, url: 'https://www.amazon.com.br/dp/TEST450' },
+    { title: 'Fogão de teste', seller: 'Amazon - menor', price: 400, url: 'https://www.amazon.com.br/dp/TEST400' },
+  ] });
+  const result = await consultMercadoLivrePrice({}, connection, { ean });
+  assert.match(globalThis.__openAIPriceRequest.input, /Mercado Livre/);
+  assert.match(globalThis.__openAIPriceRequest.input, /Amazon Brasil/);
+  assert.deepEqual(result.sample?.offers?.map(({ seller, price }) => ({ seller, price })), [
+    { seller: 'Loja 1', price: 100 },
+    { seller: 'Loja 2', price: 110 },
+    { seller: 'Loja 3', price: 120 },
+    { seller: 'Mercado Livre - menor', price: 300 },
+    { seller: 'Amazon - menor', price: 400 },
+  ]);
+  assert.deepEqual(result.prices, { market: 206, minimum: 103, medium: 144.2, ideal: 185.4 });
+});
+
 test('consulta com IA usa somente as cinco menores ofertas comprovadas', async () => {
   mockCatalog();
   mockPriceProvider({ offers: [

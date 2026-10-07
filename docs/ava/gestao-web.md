@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.20 -->
+<!-- ava-version: 1.48.0.43.21 -->
+
+> Revisão 1.48.0.43.21: no **AvantaPreços**, Mercado Livre e Amazon Brasil são
+> fontes obrigatórias da pesquisa. Quando o produto exato estiver disponível,
+> o menor preço válido de produto novo de cada marketplace é preservado na base
+> da média; as demais posições são completadas pelas ofertas comprovadas mais
+> baratas encontradas na web.
 
 > Revisão 1.48.0.43.20: o módulo Marketplaces usa a integração OpenAI já
 > configurada no AvantaLab para a pesquisa web de preços do AvantaPreços. O
