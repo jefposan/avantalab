@@ -175,6 +175,13 @@ let loginSocialPendente = lerLoginSocialPendenteVendas();
 let provedorOAuthNativoPendente = loginSocialPendente;
 let appVendasInicializado = false;
 let concluindoOAuthNativoVendas = false;
+let processandoRetornoOAuthNativoVendas = false;
+let retornoOAuthNativoConcluidoVendas = false;
+let revisaoLoginSocialVendas = 0;
+let conclusaoAcessoVendas = null;
+let assinaturaPersistenciaSessaoVendas = null;
+let preparoOAuthNativoVendas = null;
+let listenersOAuthNativoVendas = [];
 const INTERVALO_VERIFICACAO_APROVACAO_MS = 15000;
 let timerVerificacaoAprovacao = null;
 let timerAtualizacaoVinculo = null;
@@ -229,10 +236,11 @@ function lerLoginSocialPendenteVendas() {
     const provedorSessao = sessionStorage.getItem(LOGIN_SOCIAL_PENDENTE_KEY);
     const validadeLocal = Number(localStorage.getItem(LOGIN_SOCIAL_PENDENTE_ATE_KEY) || 0);
     const provedorLocal = validadeLocal > Date.now() ? localStorage.getItem(LOGIN_SOCIAL_PENDENTE_KEY) : '';
-    const provedor = provedorSessao || provedorLocal;
+    const provedor = validadeLocal > Date.now() ? provedorSessao || provedorLocal : '';
     if (provedor === 'google' || provedor === 'apple') return provedor;
     localStorage.removeItem(LOGIN_SOCIAL_PENDENTE_KEY);
     localStorage.removeItem(LOGIN_SOCIAL_PENDENTE_ATE_KEY);
+    sessionStorage.removeItem(LOGIN_SOCIAL_PENDENTE_KEY);
     if (sessionStorage.getItem(GOOGLE_CONNECTING_KEY_ANTIGA) === '1') {
       sessionStorage.setItem(LOGIN_SOCIAL_PENDENTE_KEY, 'google');
       sessionStorage.removeItem(GOOGLE_CONNECTING_KEY_ANTIGA);
@@ -243,6 +251,7 @@ function lerLoginSocialPendenteVendas() {
 }
 
 function salvarLoginSocialPendenteVendas(provedor) {
+  revisaoLoginSocialVendas += 1;
   loginSocialPendente = provedor === 'apple' ? 'apple' : 'google';
   try {
     sessionStorage.setItem(LOGIN_SOCIAL_PENDENTE_KEY, loginSocialPendente);
@@ -253,6 +262,7 @@ function salvarLoginSocialPendenteVendas(provedor) {
 }
 
 function limparLoginSocialPendenteVendas() {
+  revisaoLoginSocialVendas += 1;
   loginSocialPendente = '';
   try {
     sessionStorage.removeItem(LOGIN_SOCIAL_PENDENTE_KEY);
@@ -305,6 +315,10 @@ function lembrarMeAtivoVendas() {
   }
 }
 
+function lerLembrarLoginVendas() {
+  return document.getElementById('loginLembrar')?.checked ?? loginRascunho.lembrar;
+}
+
 function preferenciaLembrarRegistradaVendas() {
   try {
     return localStorage.getItem(LOGIN_LEMBRAR_KEY) !== null;
@@ -352,6 +366,7 @@ function limparPreferenciaSessaoVendas() {
 
 function registrarPreferenciaSessaoVendas(manterConectado, aguardandoOAuth = false) {
   try {
+    localStorage.setItem(LOGIN_LEMBRAR_KEY, manterConectado ? '1' : '0');
     if (manterConectado) {
       localStorage.setItem(LEMBRAR_CONECTADO_ATE_KEY, String(Date.now() + TRINTA_DIAS_MS));
       localStorage.removeItem(SESSAO_TEMPORARIA_KEY);
@@ -372,7 +387,8 @@ function sessaoPersistenteValidaVendas() {
     const validade = Number(localStorage.getItem(LEMBRAR_CONECTADO_ATE_KEY) || 0);
     if (!validade) return false;
     if (validade > Date.now()) return true;
-    limparPreferenciaSessaoVendas();
+    // A consulta não apaga o prazo vencido: a abertura precisa reconhecer
+    // a expiração antes de decidir encerrar ou migrar uma sessão legada.
   } catch { /* armazenamento indisponível */ }
   return false;
 }
@@ -380,7 +396,9 @@ function sessaoPersistenteValidaVendas() {
 function renovarSessaoPersistenteVendas(migrarPreferenciaLegada = false) {
   const sessaoPersistente = sessaoPersistenteValidaVendas();
   if (!sessaoPersistente) {
-    if (migrarPreferenciaLegada && lembrarMeAtivoVendas()) {
+    if (migrarPreferenciaLegada && lembrarMeAtivoVendas()
+      && !localStorage.getItem(LEMBRAR_CONECTADO_ATE_KEY)
+      && localStorage.getItem(SESSAO_TEMPORARIA_KEY) !== '1') {
       registrarPreferenciaSessaoVendas(true);
     }
     return;
@@ -389,6 +407,19 @@ function renovarSessaoPersistenteVendas(migrarPreferenciaLegada = false) {
     salvarLoginLembradoVendas(true, '', 'email');
   }
   try { localStorage.setItem(LEMBRAR_CONECTADO_ATE_KEY, String(Date.now() + TRINTA_DIAS_MS)); } catch { /* armazenamento indisponível */ }
+}
+
+function assinarPersistenciaSessaoVendas() {
+  if (assinaturaPersistenciaSessaoVendas || !window.VendasDb?.client?.auth?.onAuthStateChange) return;
+  const { data } = window.VendasDb.client.auth.onAuthStateChange((evento, sessao) => {
+    // Callback síncrono: não consultar Supabase aqui (o SDK antigo mantém
+    // um lock de autenticação enquanto notifica seus assinantes).
+    if (sessao && (evento === 'SIGNED_IN' || evento === 'TOKEN_REFRESHED')) {
+      renovarSessaoPersistenteVendas();
+    }
+    if (evento === 'SIGNED_OUT') limparPreferenciaSessaoVendas();
+  });
+  assinaturaPersistenciaSessaoVendas = data?.subscription || null;
 }
 
 function salvarAcessoOfflineVendas() {
@@ -435,6 +466,8 @@ function limparAcessoOfflineVendas() {
 function deveEncerrarSessaoSalvaVendas() {
   try {
     if (sessaoPersistenteValidaVendas()) return false;
+    const prazoPersistente = Number(localStorage.getItem(LEMBRAR_CONECTADO_ATE_KEY) || 0);
+    if (prazoPersistente && prazoPersistente <= Date.now()) return true;
     if (localStorage.getItem(SESSAO_TEMPORARIA_KEY) !== '1') return false;
     if (sessionStorage.getItem(SESSAO_TEMPORARIA_KEY) === '1') return false;
     const validadeOAuth = Number(localStorage.getItem(OAUTH_TEMPORARIO_ATE_KEY) || 0);
@@ -593,6 +626,9 @@ function liberarAlturaPreparacao() {
 }
 
 function cancelarLoginSocialVendas() {
+  // Depois de recebido o callback, não interromper a confirmação da sessão.
+  // O card deixa de oferecer cancelamento nessa etapa.
+  if (processandoRetornoOAuthNativoVendas) return;
   provedorOAuthNativoPendente = '';
   carregandoBackend = false;
   preparandoRecursosSala = false;
@@ -2195,7 +2231,7 @@ function renderMarcaAcesso() {
 
 function renderPreparandoAcesso() {
   const progresso = window.__AVANTALAB_VENDAS_PROGRESSO__ || { valor: 5, rotulo: 'Preparando recursos do aplicativo' };
-  const acaoCancelar = loginSocialPendente
+  const acaoCancelar = loginSocialPendente && !processandoRetornoOAuthNativoVendas
     ? '<button type="button" class="preparing-access-cancel" onclick="cancelarLoginSocialVendas()">Cancelar e voltar ao login</button>'
     : '';
   return `<section class="login-screen preparing-access-screen">${renderMarcaAcesso()}<div class="preparing-access-card" role="status" aria-live="polite" aria-busy="true"><span class="loader" aria-hidden="true"></span><h1>Preparando acesso</h1><small id="accessProgressLabel">${escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo')}</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:${Number(progresso.valor || 5)}%"></i></div><b id="accessProgressValue" class="access-progress-value">${Number(progresso.valor || 5)}%</b>${acaoCancelar}</div></section>`;
@@ -3381,9 +3417,10 @@ async function sairSistema(destinoForcado = '') {
 
 async function entrarSistema(event) {
   event.preventDefault();
+  if (carregandoBackend || loginSocialPendente) return;
   const contato = valor('loginContato').trim();
   const senha = valor('loginSenha');
-  const lembrar = document.getElementById('loginLembrar')?.checked ? '1' : '0';
+  const lembrar = lerLembrarLoginVendas() ? '1' : '0';
   loginRascunho = { contato, senha, lembrar: lembrar === '1' };
   if (!contato) {
     abrirAvisoAcessoVendas('Confira seus dados', `Informe ${loginTipo === 'email' ? 'seu e-mail' : 'seu telefone'} para entrar.`, 'loginContato');
@@ -3407,14 +3444,7 @@ async function entrarSistema(event) {
     atualizarProgressoPreparacao('auth', 1, 1, 'Sessão autenticada');
     registrarPreferenciaSessaoVendas(lembrar === '1');
     salvarLoginLembradoVendas(lembrar === '1', contato, loginTipo);
-    const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
-    carregandoBackend = false;
-    if (aguardandoEscolha) {
-      render();
-      liberarAlturaPreparacao();
-      return;
-    }
-    await carregarSistemaVendasCompleto();
+    await concluirAcessoAutenticadoVendas();
   } catch (error) {
     carregandoBackend = false;
     erroAcessoVendas = traduzErro(error);
@@ -3441,30 +3471,43 @@ async function fecharNavegadorOAuthVendas() {
   try { await window.Capacitor?.Plugins?.Browser?.close?.(); } catch { /* navegador já fechado */ }
 }
 
-async function continuarLoginSocialNativoVendas() {
-  if (concluindoOAuthNativoVendas || !appVendasInicializado) return;
-  concluindoOAuthNativoVendas = true;
-  try {
-    if (!await window.VendasDb.hasSession()) throw new Error('A sessão social não pôde ser confirmada.');
-    atualizarProgressoPreparacao('auth', 1, 1, 'Sessão autenticada');
-    renovarSessaoPersistenteVendas();
-    await sincronizarLoginLembradoComSessaoVendas();
-    carregandoBackend = true;
-    state.autenticado = false;
-    render();
+function concluirAcessoAutenticadoVendas() {
+  if (conclusaoAcessoVendas) return conclusaoAcessoVendas;
+  carregandoBackend = true;
+  // Ao sair do provedor, a preparação já está ativa antes de limpar a
+  // intenção social. Não existe um estado intermediário que renderize login.
+  limparLoginSocialPendenteVendas();
+  render();
+  conclusaoAcessoVendas = (async () => {
     const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
-    carregandoBackend = false;
     if (aguardandoEscolha) {
+      carregandoBackend = false;
       render();
       liberarAlturaPreparacao();
       return;
     }
     await carregarSistemaVendasCompleto();
+  })().finally(() => { conclusaoAcessoVendas = null; });
+  return conclusaoAcessoVendas;
+}
+
+async function continuarLoginSocialNativoVendas() {
+  if (concluindoOAuthNativoVendas || !appVendasInicializado) return;
+  concluindoOAuthNativoVendas = true;
+  carregandoBackend = true;
+  render();
+  try {
+    if (!await window.VendasDb.hasSession()) throw new Error('A sessão social não pôde ser confirmada.');
+    atualizarProgressoPreparacao('auth', 1, 1, 'Sessão autenticada');
+    registrarPreferenciaSessaoVendas(lembrarMeAtivoVendas());
+    await sincronizarLoginLembradoComSessaoVendas();
+    await concluirAcessoAutenticadoVendas();
   } catch (error) {
     carregandoBackend = false;
     preparandoRecursosSala = false;
     state.autenticado = false;
-    limparPreferenciaSessaoVendas();
+    // Falha em perfis/dados não revoga o login confirmado nem o lembrar-me.
+    limparLoginSocialPendenteVendas();
     liberarAlturaPreparacao();
     erroAcessoVendas = traduzErro(error);
     render();
@@ -3478,19 +3521,26 @@ async function processarRetornoOAuthNativoVendas(urlRecebida) {
   let callbackUrl;
   try { callbackUrl = new URL(urlRecebida); } catch { return false; }
   if (callbackUrl.protocol !== 'br.com.avantalab.vendas:' || callbackUrl.hostname !== 'auth' || callbackUrl.pathname !== '/callback') return false;
+  if (processandoRetornoOAuthNativoVendas || retornoOAuthNativoConcluidoVendas) return true;
+  if (appVendasInicializado && !provedorOAuthNativoPendente && !loginSocialPendente) return false;
 
   const provedor = provedorOAuthNativoPendente || loginSocialPendente;
+  processandoRetornoOAuthNativoVendas = true;
   provedorOAuthNativoPendente = '';
+  carregandoBackend = true;
+  render();
   try {
     const erroOAuth = lerParametroOAuthVendas(callbackUrl, 'error_description') ?? lerParametroOAuthVendas(callbackUrl, 'error');
     if (erroOAuth) throw new Error(erroOAuth);
     const codigo = lerParametroOAuthVendas(callbackUrl, 'code');
     const accessToken = lerParametroOAuthVendas(callbackUrl, 'access_token');
     const refreshToken = lerParametroOAuthVendas(callbackUrl, 'refresh_token');
-    if (codigo) await window.VendasDb.exchangeCodeForSession(codigo);
-    else if (accessToken && refreshToken) await window.VendasDb.setSession(accessToken, refreshToken);
+    if (codigo) await comLimiteDeTempo(window.VendasDb.exchangeCodeForSession(codigo), 'Não foi possível confirmar seu acesso. Tente novamente.', 12000);
+    else if (accessToken && refreshToken) await comLimiteDeTempo(window.VendasDb.setSession(accessToken, refreshToken), 'Não foi possível confirmar seu acesso. Tente novamente.', 12000);
     else throw new Error('O provedor não retornou os dados necessários para concluir o login.');
 
+    retornoOAuthNativoConcluidoVendas = true;
+    registrarPreferenciaSessaoVendas(lembrarMeAtivoVendas());
     limparLoginSocialPendenteVendas();
     await fecharNavegadorOAuthVendas();
     await continuarLoginSocialNativoVendas();
@@ -3506,6 +3556,8 @@ async function processarRetornoOAuthNativoVendas(urlRecebida) {
       abrirAvisoAcessoVendas(`Não foi possível continuar com ${nomeProvedor}`, 'Tente novamente em alguns instantes.');
     }
     await fecharNavegadorOAuthVendas();
+  } finally {
+    processandoRetornoOAuthNativoVendas = false;
   }
   return true;
 }
@@ -3515,23 +3567,47 @@ async function prepararOAuthNativoVendas() {
   const App = window.Capacitor?.Plugins?.App;
   const Browser = window.Capacitor?.Plugins?.Browser;
   if (!App?.addListener || !Browser?.addListener) return;
+  if (preparoOAuthNativoVendas) return preparoOAuthNativoVendas;
 
-  await App.addListener('appUrlOpen', ({ url }) => { void processarRetornoOAuthNativoVendas(url); });
-  await Browser.addListener('browserFinished', () => {
-    if (!provedorOAuthNativoPendente && !loginSocialPendente) return;
-    provedorOAuthNativoPendente = '';
-    cancelarLoginSocialVendas();
+  preparoOAuthNativoVendas = (async () => {
+    listenersOAuthNativoVendas.push(await App.addListener('appUrlOpen', ({ url }) => { void processarRetornoOAuthNativoVendas(url); }));
+    listenersOAuthNativoVendas.push(await Browser.addListener('browserFinished', () => {
+      // Como na Gestão, o callback assume a operação antes de trocar os tokens.
+      // Uma breve janela tolera plataformas que entregam fechamento antes do link.
+      if (!provedorOAuthNativoPendente || processandoRetornoOAuthNativoVendas) return;
+      const revisao = revisaoLoginSocialVendas;
+      window.setTimeout(() => {
+        if (revisao !== revisaoLoginSocialVendas || !provedorOAuthNativoPendente || processandoRetornoOAuthNativoVendas) return;
+        cancelarLoginSocialVendas();
+      }, 500);
+    }));
+    const aberturaInicial = await App.getLaunchUrl?.();
+    if (aberturaInicial?.url) await processarRetornoOAuthNativoVendas(aberturaInicial.url);
+  })().catch((error) => {
+    removerListenersOAuthNativoVendas();
+    throw error;
   });
-  const aberturaInicial = await App.getLaunchUrl?.();
-  if (aberturaInicial?.url) await processarRetornoOAuthNativoVendas(aberturaInicial.url);
+  return preparoOAuthNativoVendas;
+}
+
+function removerListenersOAuthNativoVendas() {
+  const listeners = listenersOAuthNativoVendas;
+  listenersOAuthNativoVendas = [];
+  preparoOAuthNativoVendas = null;
+  listeners.forEach((listener) => {
+    void Promise.resolve().then(() => listener?.remove?.()).catch(() => {});
+  });
 }
 
 async function entrarComProvedorSocialVendas(provedor) {
-  if (loginSocialPendente) return;
-  const lembrar = document.getElementById('loginLembrar')?.checked === true;
+  if (loginSocialPendente || carregandoBackend || concluindoOAuthNativoVendas) return;
+  const lembrar = lerLembrarLoginVendas();
+  loginRascunho.lembrar = lembrar;
+  retornoOAuthNativoConcluidoVendas = false;
   document.activeElement?.blur();
   prepararAlturaPreparacao();
   salvarLoginSocialPendenteVendas(provedor);
+  const revisao = revisaoLoginSocialVendas;
   registrarPreferenciaSessaoVendas(lembrar, true);
   salvarLoginLembradoVendas(lembrar, '', loginTipo);
   window.__avantalabReiniciarProgressoVendas?.(`Conectando com ${provedor === 'apple' ? 'Apple' : 'Google'}`);
@@ -3542,6 +3618,7 @@ async function entrarComProvedorSocialVendas(provedor) {
       if (!Browser?.open) throw new Error('O navegador seguro não está disponível.');
       provedorOAuthNativoPendente = provedor;
       const url = await window.VendasDb.iniciarOAuthNativo(provedor, REDIRECT_OAUTH_NATIVO_VENDAS);
+      if (revisao !== revisaoLoginSocialVendas) return;
       await Browser.open({ url, presentationStyle: 'fullscreen' });
       return;
     }
@@ -3550,6 +3627,7 @@ async function entrarComProvedorSocialVendas(provedor) {
     if (provedor === 'apple') await window.VendasDb.signInWithApple(redirectTo);
     else await window.VendasDb.signInWithGoogle(redirectTo);
   } catch (error) {
+    if (revisao !== revisaoLoginSocialVendas) return;
     provedorOAuthNativoPendente = '';
     limparLoginSocialPendenteVendas();
     limparPreferenciaSessaoVendas();
@@ -4576,16 +4654,26 @@ async function inicializarApp() {
   try {
     if (deveEncerrarSessaoSalvaVendas()) {
       await window.VendasDb.signOut();
+      limparPreferenciaSessaoVendas();
+      limparLoginSocialPendenteVendas();
       carregandoBackend = false;
       render();
       liberarAlturaPreparacao();
       return;
     }
-    const sessaoAtiva = loginSocialPendente
+    const aguardandoProvedorNativo = ehAplicativoNativoVendas() && Boolean(loginSocialPendente);
+    const sessaoAtiva = loginSocialPendente && !aguardandoProvedorNativo
       ? await comLimiteDeTempo(aguardarSessaoSocialVendas(), 'Não foi possível concluir o login social.', 12000)
       : await comLimiteDeTempo(window.VendasDb.hasSession(), 'Não foi possível restaurar sua sessão.', 10000);
     atualizarProgressoPreparacao('auth', 1, 1, sessaoAtiva ? 'Sessão restaurada' : 'Sessão não encontrada');
     if (!sessaoAtiva) {
+      if (aguardandoProvedorNativo) {
+        // Dez segundos limitam a confirmação de uma sessão retornada, não o
+        // tempo que a pessoa pode precisar para autorizar Google ou Apple.
+        carregandoBackend = false;
+        render();
+        return;
+      }
       if (restaurarAcessoOfflineVendas()) {
         atualizarProgressoPreparacao('auth', 1, 1, 'Modo offline restaurado');
         carregandoBackend = false;
@@ -4600,15 +4688,9 @@ async function inicializarApp() {
       return;
     }
     renovarSessaoPersistenteVendas(true);
+    if (loginSocialPendente) registrarPreferenciaSessaoVendas(lembrarMeAtivoVendas());
     await sincronizarLoginLembradoComSessaoVendas();
-    const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
-    carregandoBackend = false;
-    if (aguardandoEscolha) {
-      render();
-      liberarAlturaPreparacao();
-      return;
-    }
-    await carregarSistemaVendasCompleto();
+    await concluirAcessoAutenticadoVendas();
   } catch (error) {
     console.error('Falha ao inicializar o Vendas Mobile.', error);
     if (restaurarAcessoOfflineVendas()) {
@@ -11442,6 +11524,13 @@ document.addEventListener('keyup', (event) => {
 });
 
 prepararSpriteIconesEstavel();
+assinarPersistenciaSessaoVendas();
+window.addEventListener('pagehide', (event) => {
+  if (event.persisted) return; // Preservar a página quando houver retorno pelo bfcache.
+  assinaturaPersistenciaSessaoVendas?.unsubscribe?.();
+  assinaturaPersistenciaSessaoVendas = null;
+  removerListenersOAuthNativoVendas();
+});
 prepararOAuthNativoVendas()
   .catch((error) => {
     console.error('Não foi possível preparar o retorno OAuth nativo do AvantaVendas.', error);

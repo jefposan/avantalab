@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.44 -->
+<!-- ava-version: 1.48.0.44.01 -->
+
+> Revisão 1.48.0.44.01-av181: Google e Apple retornam diretamente à preparação
+> do acesso, sem reapresentar o formulário durante a confirmação. Lembrar-me
+> funciona com senha e ambos os provedores: mantém a sessão por 30 dias com
+> renovação pelo uso, sem guardar senha. Desmarcado mantém acesso temporário.
+> Falhas ao carregar perfis ou de conexão não devem apagar a escolha salva.
+> Cancelar a autorização permite nova tentativa sem reabrir uma tentativa antiga.
 
 > Revisão 1.48.0.44: sem impacto operacional nos comandos do AvantaVendas.
 > A Gestão deixa de revogar globalmente o login Supabase ao abrir outro perfil.
@@ -63,7 +70,7 @@
 > Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
 > ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 180 -->
+<!-- avantavendas-asset-revision: 181 -->
 
 > Revisão 1.48.0.43.11-av175: **Novo produto** conserva sua posição original
 > no canto direito. **Atualizar** ocupa uma posição independente à esquerda e

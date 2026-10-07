@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.44 -->
+<!-- ava-version: 1.48.0.44.01 -->
+
+> Revisão 1.48.0.44.01: correção do retorno social e do lembrar-me no
+> AvantaVendas. Sem alterações operacionais na Gestão Web.
 
 > Revisão 1.48.0.44: controle de sessão por perfil. Business Básico acessado em
 > outro dispositivo retorna à seleção de perfil, sem encerrar o login da conta.

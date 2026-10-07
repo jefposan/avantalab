@@ -100,8 +100,8 @@ test('Lembrar-me conserva somente o identificador e nunca a senha', () => {
   assert.match(aplicacao, /function carregarLoginLembradoVendas\(\)/);
   assert.match(aplicacao, /function salvarLoginLembradoVendas\(manter, contato, tipo\)/);
   assert.match(aplicacao, /async function sincronizarLoginLembradoComSessaoVendas\(\)/);
-  assert.match(aplicacao, /renovarSessaoPersistenteVendas\(true\);\s*await sincronizarLoginLembradoComSessaoVendas\(\);/);
-  assert.match(aplicacao, /if \(migrarPreferenciaLegada && lembrarMeAtivoVendas\(\)\) \{\s*registrarPreferenciaSessaoVendas\(true\);/);
+  assert.match(aplicacao, /renovarSessaoPersistenteVendas\(true\);\s*if \(loginSocialPendente\) registrarPreferenciaSessaoVendas\(lembrarMeAtivoVendas\(\)\);\s*await sincronizarLoginLembradoComSessaoVendas\(\);/);
+  assert.match(aplicacao, /if \(migrarPreferenciaLegada && lembrarMeAtivoVendas\(\)[\s\S]*?!localStorage\.getItem\(LEMBRAR_CONECTADO_ATE_KEY\)[\s\S]*?localStorage\.getItem\(SESSAO_TEMPORARIA_KEY\) !== '1'\) \{\s*registrarPreferenciaSessaoVendas\(true\);/);
   assert.match(aplicacao, /if \(migrarPreferenciaLegada && !preferenciaLembrarRegistradaVendas\(\)\) \{\s*salvarLoginLembradoVendas\(true, '', 'email'\);/);
   assert.match(aplicacao, /registrarPreferenciaSessaoVendas\(lembrar, true\);\s*salvarLoginLembradoVendas\(lembrar, '', loginTipo\);/);
   assert.match(aplicacao, /salvarLoginLembradoVendas\(lembrar === '1', contato, loginTipo\)/);

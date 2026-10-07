@@ -157,6 +157,9 @@
 
     const primeiraLeitura = await requireClient().auth.getUser();
     if (!primeiraLeitura.error && primeiraLeitura.data.user) return primeiraLeitura.data.user;
+    // Uma queda de rede não é rejeição do token. Não forçar sua rotação nem
+    // invalidar a sessão salva só porque o servidor não respondeu ao getUser.
+    if (primeiraLeitura.error && erroRedeAutenticacao(primeiraLeitura.error)) throw primeiraLeitura.error;
 
     try {
       sessao = await refreshSession();
@@ -175,6 +178,7 @@
 
   async function hasSession() {
     const { data, error } = await requireClient().auth.getSession();
+    if (error && erroRedeAutenticacao(error)) throw error;
     if (error || !data.session) return false;
     if (!sessaoPrecisaRenovar(data.session)) return true;
     try {

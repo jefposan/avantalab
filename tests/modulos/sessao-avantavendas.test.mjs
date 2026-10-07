@@ -95,6 +95,24 @@ test('token inválido não é tratado como uma sessão válida', async () => {
   assert.equal(await banco.hasSession(), false);
 });
 
+test('getUser sem rede não força rotação nem descarta sessão persistida', async () => {
+  let renovacoes = 0;
+  const banco = criarBanco({
+    getSession: async () => ({ data: { session: { expires_at: Math.floor(Date.now() / 1000) + 3600 } }, error: null }),
+    getUser: async () => ({ data: { user: null }, error: new Error('Failed to fetch') }),
+    refreshSession: async () => { renovacoes++; return { data: { session: null }, error: null }; },
+  });
+  await assert.rejects(() => banco.currentUser(), /Failed to fetch/);
+  assert.equal(renovacoes, 0);
+});
+
+test('erro de rede na leitura da sessão não vira sessão inexistente', async () => {
+  const banco = criarBanco({
+    getSession: async () => ({ data: { session: null }, error: new Error('Network timeout') }),
+  });
+  await assert.rejects(() => banco.hasSession(), /Network timeout/);
+});
+
 test('gravação em rede lenta é abortada para a fila local assumir sem aguardar indefinidamente', async () => {
   let recebeuAbort = false;
   const fetchComPrazo = criarBancoComFetch((_entrada, opcoes) => new Promise((_resolver, rejeitar) => {

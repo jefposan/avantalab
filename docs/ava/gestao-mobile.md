@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.44 -->
+<!-- ava-version: 1.48.0.44.01 -->
+
+> Revisão 1.48.0.44.01: correção do retorno social e da persistência do login
+> restrita ao AvantaVendas. A Gestão Mobile foi usada como referência e seu
+> fluxo não foi alterado nesta revisão.
 
 > Revisão 1.48.0.44: sessão inexistente no servidor retorna ao login deste
 > aparelho, preservando dados salvos. Falhas temporárias permitem tentar de

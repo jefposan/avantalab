@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.48.0.44.01-av181 - 2026-10-07
+
+- **Retorno Google/Apple no AvantaVendas**: a preparação permanece visível
+  enquanto o aplicativo confirma a sessão e carrega o acesso, seguindo o fluxo
+  da Gestão. Fechar o navegador de autorização não cancela um callback em
+  processamento; retornos duplicados e tentativas já canceladas são ignorados.
+- **Lembrar-me unificado**: senha, Google e Apple conservam a mesma escolha,
+  inclusive sem o checkbox montado. Sessões lembradas mantêm a janela de 30 dias
+  renovada com uso; desmarcadas continuam temporárias. Prazo vencido não é
+  confundido com sessão legada e falha ao carregar perfis não apaga a preferência.
+- **Falha de rede não é logout**: consultas temporariamente indisponíveis não
+  forçam a rotação do token nem são tratadas como ausência de sessão. Listeners
+  nativos são registrados uma vez e liberados na saída efetiva da página.
+- **Escopo restrito**: nenhuma alteração nas APIs da Gestão, nos cadastros,
+  vendas, catálogos, vínculos ou esquemas do banco. Provedores e plugins foram
+  simulados na auditoria Chrome; autorização real no aparelho ainda precisa
+  ser conferida antes da liberação final.
+
 ## 1.48.0.44 - 2026-10-07
 
 - **Sessões isoladas por perfil**: abrir um Pessoal não revoga o login inteiro
