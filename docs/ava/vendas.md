@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.16 -->
+<!-- ava-version: 1.48.0.43.17 -->
+
+> Revisão 1.48.0.43.17: a correção da composição das cinco menores ofertas
+> pertence ao PWA **AvantaPreços** e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.43.16: a correção da reconsulta assíncrona de preços pertence
 > ao PWA **AvantaPreços** e não altera os fluxos do AvantaVendas.

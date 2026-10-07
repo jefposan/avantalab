@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.48.0.43.17 - 2026-10-07
+
+- **Cinco menores preços reais no AvantaPreços**: a consulta do Google
+  Shopping solicita os produtos em ordem crescente de preço e reúne as ofertas
+  válidas da vitrine com os vendedores da ficha detalhada antes de selecionar
+  as cinco menores. Uma única oferta cara da ficha deixa de substituir toda a
+  amostra; valores repetidos entre as duas fontes não pesam duas vezes.
+
 ## 1.48.0.43.16 - 2026-10-07
 
 - **Reconsulta de preço concluída de ponta a ponta**: **Consultar novamente**

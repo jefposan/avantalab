@@ -338,6 +338,15 @@ function sampleFromPrices(prices: number[] | undefined) {
   } satisfies GoogleShoppingPriceSample;
 }
 
+function combinePriceSamples(...samples: Array<GoogleShoppingPriceSample | null>) {
+  // A vitrine e a ficha detalhada podem repetir a mesma oferta. Unimos as
+  // fontes sem duplicar valores idênticos e só depois selecionamos as cinco
+  // menores. Assim, uma ficha com um único vendedor caro nunca substitui os
+  // preços menores e válidos que o Google já exibiu na pesquisa do produto.
+  const prices = [...new Set(samples.flatMap((sample) => sample?.pricesInCents || []))];
+  return sampleFromPrices(prices);
+}
+
 function encodePendingLookup(value: PendingLookup) {
   // A continuação é posteriormente lacrada pela rota. Este envelope interno
   // conserva a amostra da vitrine enquanto a ficha de vendedores é processada,
@@ -389,7 +398,7 @@ async function postGoogleShoppingPriceLookup(input: { ean: string | null; produc
   if (!keyword) throw new MarketplaceError(400, 'invalid_price_query', 'Não foi possível determinar o produto para consultar preços.');
   const posted = await providerRequest('/v3/merchant/google/products/task_post', {
     method: 'POST',
-    body: JSON.stringify([{ keyword, location_name: 'Brazil', language_code: 'pt', depth: 20 }]),
+    body: JSON.stringify([{ keyword, location_name: 'Brazil', language_code: 'pt', depth: 20, sort_by: 'price_low_to_high' }]),
   });
   return taskId(posted);
 }
@@ -428,9 +437,10 @@ async function readGoogleShoppingPriceLookup(lookup: PendingLookup, input: { ean
       }),
     };
   }
+  const sellerSample = extractGoogleShoppingSellerPriceSample(result);
   return {
     status: 'completed',
-    sample: extractGoogleShoppingSellerPriceSample(result) || sampleFromPrices(lookup.fallbackPricesInCents),
+    sample: combinePriceSamples(sampleFromPrices(lookup.fallbackPricesInCents), sellerSample),
   };
 }
 

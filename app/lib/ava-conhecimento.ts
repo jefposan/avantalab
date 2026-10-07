@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.43.17: o AvantaPreços reúne preços da vitrine e da
+// ficha detalhada antes de selecionar as cinco menores ofertas comparáveis.
 // Revisado na versão 1.48.0.43.16: no AvantaPreços, Consultar novamente
 // acompanha a mesma tarefa Google Shopping por até três minutos, preserva a
 // amostra da vitrine se a ficha detalhada vier vazia e atualiza preço e data.

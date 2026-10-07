@@ -45,7 +45,9 @@ function mockPriceProvider({ pendingPolls = 0 } = {}) {
   globalThis.fetch = async (url, init) => {
     if (String(url).endsWith('/products/task_post')) {
       assert.equal(init?.method, 'POST');
-      globalThis.__priceLookupKeyword = JSON.parse(String(init?.body)).at(0)?.keyword;
+      const payload = JSON.parse(String(init?.body)).at(0);
+      globalThis.__priceLookupKeyword = payload?.keyword;
+      globalThis.__priceLookupSort = payload?.sort_by;
       return Response.json({ tasks: [{ id: '11111111-1111-1111-1111-111111111111', status_code: 20100, result: null }] });
     }
     if (String(url).endsWith('/product_info/task_post')) {
@@ -102,6 +104,7 @@ test('consulta identifica o produto e calcula a média sem consultar a vitrine d
   assert.equal(result.status, 'found');
   assert.equal(result.product?.name, 'Fogão de teste');
   assert.equal(globalThis.__priceLookupKeyword, 'Fogão de teste');
+  assert.equal(globalThis.__priceLookupSort, 'price_low_to_high');
   assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
   assert.deepEqual(result.sample, { count: 2, minimum: 800, maximum: 900, source: 'google_shopping' });
 });
@@ -170,7 +173,7 @@ test('consulta demorada continua na mesma tarefa até receber os preços', async
   };
   const result = await completeGoogleLookup({ ean, productName: 'Fogão de teste' });
   assert.equal(result.status, 'completed');
-  assert.deepEqual(result.sample, { pricesInCents: [79000, 81000], count: 2, minimum: 790, maximum: 810 });
+  assert.deepEqual(result.sample, { pricesInCents: [79000, 80000, 81000], count: 3, minimum: 790, maximum: 810 });
   assert.equal(productsPosts, 1, 'a continuação não pode publicar outra pesquisa de produtos');
   assert.equal(infoPosts, 1, 'a continuação não pode publicar outra pesquisa de vendedores');
 });
@@ -193,6 +196,38 @@ test('consulta conserva os preços da vitrine quando a ficha de vendedores termi
   const result = await completeGoogleLookup({ ean, productName: 'Fogão de teste' });
   assert.equal(result.status, 'completed');
   assert.deepEqual(result.sample, { pricesInCents: [78000, 82000], count: 2, minimum: 780, maximum: 820 });
+});
+
+test('consulta combina vitrine e vendedores antes de calcular as cinco menores ofertas', async () => {
+  process.env.DATAFORSEO_PRICE_LOOKUP_ENABLED = 'true';
+  process.env.DATAFORSEO_API_LOGIN = 'test-login';
+  process.env.DATAFORSEO_API_PASSWORD = 'test-password';
+  process.env.DATAFORSEO_API_BASE_URL = 'https://sandbox.dataforseo.com';
+  globalThis.fetch = async (url, init) => {
+    if (String(url).endsWith('/products/task_post')) {
+      const payload = JSON.parse(String(init?.body)).at(0);
+      assert.equal(payload?.sort_by, 'price_low_to_high');
+      return Response.json({ tasks: [{ id: '99999999-9999-9999-9999-999999999999', status_code: 20100, result: null }] });
+    }
+    if (String(url).includes('/products/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
+      { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 579, currency: 'BRL', product_id: '550011' },
+      { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 729.9, currency: 'BRL' },
+      { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 899.91, currency: 'BRL' },
+      { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 951, currency: 'BRL' },
+      { title: 'Robô Aspirador Kärcher RCV 2 Bivolt', price: 2_051.82, currency: 'BRL' },
+    ] }] }] });
+    if (String(url).endsWith('/product_info/task_post')) return Response.json({ tasks: [{ id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', status_code: 20100, result: null }] });
+    if (String(url).includes('/product_info/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [{ sellers: [
+      { product_availability: 'in_stock', price: { current: 3_060.05, currency: 'BRL' } },
+      // A mesma oferta pode aparecer nas duas camadas e não deve pesar duas vezes.
+      { product_availability: 'in_stock', price: { current: 951, currency: 'BRL' } },
+    ] }] }] }] });
+    throw new Error(`URL DataForSEO inesperada: ${url}`);
+  };
+  const result = await completeGoogleLookup({ ean: '7891374302240', productName: 'Robô Aspirador Kärcher RCV 2 Bivolt' });
+  assert.equal(result.status, 'completed');
+  assert.deepEqual(result.sample, { pricesInCents: [57900, 72990, 89991, 95100, 205182], count: 5, minimum: 579, maximum: 2051.82 });
+  assert.equal(calculatePriceSuggestions(result.sample?.pricesInCents || []).market, 1042.33);
 });
 
 test('resposta Google sem resultados encerra como consulta concluída, sem erro genérico', async () => {

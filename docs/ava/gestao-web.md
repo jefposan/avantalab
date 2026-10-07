@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.16 -->
+<!-- ava-version: 1.48.0.43.17 -->
+
+> Revisão 1.48.0.43.17: no **AvantaPreços**, as ofertas da vitrine e dos
+> vendedores da ficha são reunidas antes da seleção das cinco menores; uma
+> oferta isolada e cara não substitui mais os demais preços encontrados.
 
 > Revisão 1.48.0.43.16: no **AvantaPreços**, **Consultar novamente** acompanha
 > a mesma coleta do Google Shopping por até três minutos. Preços válidos da
