@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.44.01 -->
+<!-- ava-version: 1.48.0.44.02 -->
+
+> Revisão 1.48.0.44.02: previsão de despesas e aviso de valor repetido restritos
+> à Gestão Web/Mobile. Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.48.0.44.01-av181: Google e Apple retornam diretamente à preparação
 > do acesso, sem reapresentar o formulário durante a confirmação. Lembrar-me

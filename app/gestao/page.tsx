@@ -20,6 +20,7 @@ import PontoAdminModal, { type AbaPontoAdmin, type DocumentoRepP, type EstadoAss
 import type { EstadoCobrancaFacial } from '@/app/lib/ponto-facial-cobranca';
 import SobreModal from '@/app/components/SobreModal';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
+import { despesasComMesmoValor, mensagemDespesasMesmoValor } from '@/app/lib/despesas-conferencia';
 import DraggableModalCard from '@/app/components/DraggableModalCard';
 import CardEntradaFaturamento from '@/app/components/CardEntradaFaturamento';
 import type { EntradaFaturamento as TabelaEntradaFaturamento } from '@/app/components/TabelaEntradasFaturamento';
@@ -4955,16 +4956,15 @@ const adicionarDespesa = async () => {
   }
 
   if (duplicadosAtivo) {
-    const existeIgual = lancamentosDoMes.some(
-      (l) => l.despesa === formDespesa && l.valor === valorNumericoRaw
-    );
+    const iguais = despesasComMesmoValor(lancamentos, valorNumericoRaw, mesAtivo);
 
-    if (existeIgual) {
+    if (iguais.length) {
       abrirConfirmacao({
-        titulo: 'Despesa duplicada',
-        mensagem:
-          'Já existe uma despesa com o mesmo nome e valor neste mês.\n\nDeseja adicionar mesmo assim?',
-        textoConfirmar: 'Adicionar mesmo assim',
+        titulo: 'Valor já existente',
+        mensagem: mensagemDespesasMesmoValor(iguais, Number(anoSelecionado)),
+        variante: 'alerta',
+        textoCancelar: 'Voltar à edição',
+        textoConfirmar: 'Salvar mesmo assim',
         acao: async () => {
           if (!iniciarProcessamentoLancamento('Salvando despesa')) return;
           setSalvandoDespesa(true);
@@ -5893,7 +5893,7 @@ const reorganizarParcelamentoEmEdicao = async (dados: ReorganizacaoParcelamento)
   }
 };
 
-const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
+const salvarEdicaoLancamento = async (confirmarPrevista = false, ignorarAvisoDuplicado = false) => {
   if (!empresaId) {
   abrirAviso(
     'Empresa não carregada',
@@ -5983,11 +5983,13 @@ const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
         : null;
   const statusEditado = confirmarAgora
     ? 'confirmada'
-    : ehParcelaEditada
-    ? (lancamentoAtual?.status || null)
     : ehFuturaEditada || continuavaPrevista
       ? 'prevista'
-      : null;
+      : lancamentoAtual?.status || null;
+
+  const iguais = duplicadosAtivo && !ignorarAvisoDuplicado
+    ? despesasComMesmoValor(lancamentos, editValorNumerico, mesAtivo, lancamentoEditandoId)
+    : [];
 
   const sequenciaMudou = Boolean(
     parcelamentoOriginal
@@ -6006,10 +6008,22 @@ const salvarEdicaoLancamento = async (confirmarPrevista = false) => {
     };
     abrirConfirmacao({
       titulo: 'Reorganizar parcelamento?',
-      mensagem: `Esta despesa passará a ser a parcela ${parcelaAtual}/${totalParcelas}. As parcelas seguintes serão reprogramadas a partir desta data; as anteriores permanecerão como estão.`,
+      mensagem: `Esta despesa passará a ser a parcela ${parcelaAtual}/${totalParcelas}. As parcelas seguintes serão reprogramadas a partir desta data; as anteriores permanecerão como estão.${iguais.length ? `\n\n${mensagemDespesasMesmoValor(iguais, Number(anoSelecionado))}` : ''}`,
       textoConfirmar: 'Reorganizar parcelas',
       variante: 'alerta',
       acao: async () => { await reorganizarParcelamentoEmEdicao(dadosReorganizacao); },
+    });
+    return;
+  }
+
+  if (iguais.length) {
+    abrirConfirmacao({
+      titulo: 'Valor já existente',
+      mensagem: mensagemDespesasMesmoValor(iguais, Number(anoSelecionado)),
+      variante: 'alerta',
+      textoCancelar: 'Voltar à edição',
+      textoConfirmar: 'Salvar mesmo assim',
+      acao: async () => { await salvarEdicaoLancamento(confirmarPrevista, true); },
     });
     return;
   }

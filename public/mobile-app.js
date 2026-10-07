@@ -783,7 +783,6 @@
     avisoAssinanteAberto: false,
     avisoAssinanteTitulo: '',
     avisoAssinanteMensagem: '',
-    duplicadoConfirmacaoAberta: false,
     dialogoSistemaMobile: null,
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
@@ -2173,29 +2172,77 @@
     );
   }
 
-  function avisoDuplicadoMobileHtml() {
-    if (!state.duplicadoConfirmacaoAberta) return '';
-    var card = state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900';
-    var detalhe = state.darkMode
-      ? 'border-amber-400/35 bg-amber-400/10 text-amber-50'
-      : 'border-amber-200 bg-amber-50 text-amber-950';
-    return (
-      '<div id="aviso-duplicado-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950/90 px-4" style="z-index:13010" role="dialog" aria-modal="true" aria-labelledby="aviso-duplicado-titulo">' +
-        '<section class="w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl ' + card + '">' +
-          '<header class="flex items-center gap-3 bg-[#003E73] px-4 py-3 text-white">' +
-            '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black">!</span>' +
-            '<div><p class="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">Conferência de lançamento</p><h2 id="aviso-duplicado-titulo" class="text-base font-black">Valor já existente</h2></div>' +
-          '</header>' +
-          '<div class="p-4">' +
-            '<div class="rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">Já existe uma despesa com este valor neste mês. Deseja adicioná-la mesmo assim?</div>' +
-          '</div>' +
-          '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3 ' + (state.darkMode ? 'border-slate-700' : '') + '">' +
-            '<button id="cancelar-aviso-duplicado" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Revisar</button>' +
-            '<button id="confirmar-aviso-duplicado" type="button" class="h-11 rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">Adicionar</button>' +
-          '</footer>' +
-        '</section>' +
-      '</div>'
-    );
+  // A lista está restrita ao perfil/ano carregado e ao centro de custo atual.
+  function despesasComMesmoValorMobile(valor, mes, ignorarId) {
+    var centavos = Math.round(Number(valor) * 100);
+    if (!Number.isFinite(centavos) || centavos <= 0) return [];
+    return lancamentosDoCentroCustoAtualMobile().filter(function (item) {
+      return String(item.mes).toUpperCase() === String(mes).toUpperCase()
+        && item.status !== 'cancelada'
+        && (ignorarId === undefined || String(item.id) !== String(ignorarId))
+        && Math.round(Number(item.valor) * 100) === centavos;
+    }).sort(function (a, b) { return Number(a.dia) - Number(b.dia); });
+  }
+
+  function mensagemDespesasMesmoValorMobile(lista, ano) {
+    var detalhes = lista.map(function (item) {
+      var data = String(item.dia).padStart(2, '0') + '/' + String(indiceMes(item.mes) + 1).padStart(2, '0') + '/' + ano;
+      return data + ' · ' + item.despesa + '\n' + (item.descricao || 'Sem descrição') + '\n'
+        + Number(item.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        + ' · ' + (item.status === 'prevista' ? 'Prevista' : 'Confirmada');
+    });
+    return 'Já existe uma despesa com este valor neste período. Confira os registros encontrados:\n\n'
+      + detalhes.join('\n\n──────────\n\n') + '\n\nDeseja salvar mesmo assim?';
+  }
+
+  async function confirmarDespesasMesmoValorMobile(valor, mes, ano, ignorarId) {
+    if (!state.duplicadosAtivo) return true;
+    var empresaId = state.empresa && state.empresa.id;
+    var modalOriginal = state.modalAcao;
+    var iguais = despesasComMesmoValorMobile(valor, mes, ignorarId);
+    // O card de novo lançamento permite outro ano sem trocar o dashboard.
+    // Nesse caso não comparar com a lista em memória do ano anterior.
+    if (Number(ano) !== Number(state.ano)) {
+      var consulta = db.from('lancamentos')
+        .select('id, mes, dia, despesa_nome, descricao, valor, status')
+        .eq('empresa_id', empresaId).eq('ano', Number(ano))
+        .eq('mes', mes).eq('valor', Number(valor));
+      if (state.centrosCustoAtivo && !state.centroCustoTodosSelecionado) {
+        consulta = consulta.eq('centro_custo_id', state.centroCustoSelecionadoId);
+      }
+      var encontrados = await consulta;
+      if (!state.empresa || state.empresa.id !== empresaId || state.modalAcao !== modalOriginal) return false;
+      if (encontrados.error) {
+        setErroLancamentoMobile('Não foi possível conferir despesas com este valor. Tente novamente.');
+        return false;
+      }
+      iguais = (encontrados.data || []).filter(function (item) {
+        return item.status !== 'cancelada' && (ignorarId === undefined || String(item.id) !== String(ignorarId));
+      }).map(function (item) {
+        return Object.assign({}, item, { despesa: item.despesa_nome });
+      }).sort(function (a, b) { return Number(a.dia) - Number(b.dia); });
+    }
+    if (!iguais.length) return true;
+    // O diálogo oficial remonta o DOM. Preserva o rascunho sem alterar o registro.
+    var ids = ['despesa-dia', 'despesa-nome', 'despesa-descricao', 'despesa-valor', 'editar-dia', 'editar-despesa', 'editar-descricao', 'editar-valor', 'editar-parcela-atual', 'editar-total-parcelas'];
+    var rascunho = ids.map(function (id) { return { id: id, valor: campo(id) }; });
+    var resultado = await solicitarDialogoSistemaMobile({
+      titulo: 'Valor já existente',
+      rotulo: 'Conferência de lançamento',
+      mensagem: mensagemDespesasMesmoValorMobile(iguais, ano),
+      variante: 'alerta',
+      acoes: [
+        { valor: 'revisar', rotulo: 'Voltar à edição', estilo: 'secundaria' },
+        { valor: 'salvar', rotulo: 'Salvar mesmo assim', estilo: 'primaria' },
+      ],
+    });
+    if (!state.empresa || state.empresa.id !== empresaId || state.modalAcao !== modalOriginal) return false;
+    rascunho.forEach(function (item) {
+      var elemento = document.getElementById(item.id);
+      if (elemento) elemento.value = item.valor;
+    });
+    atualizarAvisoDataFuturaDespesaMobile();
+    return resultado === 'salvar';
   }
 
   function solicitarDialogoSistemaMobile(configuracao) {
@@ -9282,17 +9329,7 @@
       return;
     }
 
-    if (state.duplicadosAtivo) {
-      var existeIgual = lancamentosDoCentroCustoAtualMobile().some(function (item) {
-        return item.mes === periodo.mes && Number(item.valor) === Number(valor);
-      });
-
-      if (existeIgual && !ignorarAvisoDuplicado) {
-        state.duplicadoConfirmacaoAberta = true;
-        render();
-        return;
-      }
-    }
+    if (!ignorarAvisoDuplicado && !await confirmarDespesasMesmoValorMobile(valor, periodo.mes, periodo.ano)) return;
 
     if (!iniciarAplicacaoLancamentoMobile('Salvando despesa')) return;
     state.lancandoDespesa = true;
@@ -10754,7 +10791,7 @@
     }
     var mesItem = item.mes || state.mes;
     var eraPrevista = item.status === 'prevista';
-    var confirmarAgora = Boolean(confirmarPrevista && eraPrevista);
+    var confirmarAgora = Boolean(confirmarPrevista === true && eraPrevista);
     // Confirmar hoje tem data própria: preserva as demais alterações do editor,
     // mas efetiva o lançamento no período financeiro atual automaticamente.
     var periodoConfirmacao = confirmarAgora ? periodoFinanceiroHojeMobile() : null;
@@ -10798,6 +10835,8 @@
       parcelaAtual !== parcelamentoOriginal.parcelaAtual
       || totalParcelas !== parcelamentoOriginal.totalParcelas
     ));
+
+    if (tipo === 'despesa' && !await confirmarDespesasMesmoValorMobile(valor, mesDestino, anoDestino, item.id)) return;
 
     if (sequenciaMudou) {
       var confirmarReorganizacao = await solicitarDialogoSistemaMobile({
@@ -10929,9 +10968,7 @@
           : (ehFuturaEditada || (continuavaPrevista && item.tipo === 'previsto') ? 'previsto' : null));
       var statusEditado = confirmarAgora
         ? 'confirmada'
-        : ehParcelaEditada
-        ? (item.status || null)
-        : (ehFuturaEditada || continuavaPrevista ? 'prevista' : null);
+        : (ehFuturaEditada || continuavaPrevista ? 'prevista' : (item.status || null));
       var despesa = await db
         .from('lancamentos')
         .update({
@@ -10960,7 +10997,7 @@
       // Para uma despesa prevista, só fecha depois de receber o registro
       // atualizado. A cópia confirmada também impede que uma leitura anterior
       // ao salvar volte a mostrar os dados antigos.
-      if (eraPrevista) {
+      if (eraPrevista || ehFuturaEditada) {
         aplicarDespesaPrevistaSalvaMobile(despesa.data);
         state.modalAcao = null;
         concluirAplicacaoLancamentoMobile('Despesa atualizada.');
@@ -13518,11 +13555,21 @@
         campoClaro('editar-descricao', 'Descricao', 'value="' + escapeHtml(parcelamento ? parcelamento.descricaoBase : (item.descricao || '')) + '"') +
         campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
         blocoParcelamento +
+        '<p id="editar-despesa-aviso-futura" role="status" hidden class="rounded-xl border p-3 text-xs font-semibold ' + (escuro ? 'border-amber-400/30 bg-amber-400/10 text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-900') + '">Este pagamento ficará como previsto ao salvar. Valor e parcelamento serão preservados.</p>' +
         (item.status === 'prevista'
           ? '<p class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] font-semibold leading-relaxed text-emerald-800">Ao confirmar, esta despesa será registrada automaticamente na data de hoje.</p><div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white px-2 text-[11px] font-black uppercase tracking-wide text-slate-700 disabled:opacity-60">Salvar previsto</button><button id="confirmar-edicao-prevista" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-emerald-600 px-2 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60">Confirmar hoje</button></div>'
           : '<div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-2 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar') + '</button><button id="excluir-lancamento-edicao" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-red-200 bg-red-50 px-2 text-xs font-black uppercase tracking-wide text-red-700 disabled:opacity-60">Excluir</button></div>') +
       '</div>'
     );
+  }
+
+  function atualizarAvisoDataFuturaDespesaMobile() {
+    var aviso = document.getElementById('editar-despesa-aviso-futura');
+    if (!aviso || !state.modalAcao || state.modalAcao.tipo !== 'despesa') return;
+    var mes = state.modalAcao.item.mes || state.mes;
+    var dia = Number(campo('editar-dia'));
+    aviso.hidden = !(dia >= 1 && dia <= maxDias(mes, Number(state.ano))
+      && dataFutura(Number(state.ano), indiceMes(mes), dia));
   }
 
   function menuLateralHtml() {
@@ -15788,7 +15835,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml();
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml();
     window.dispatchEvent(new CustomEvent('avantalab:theme-changed', {
       detail: { dark: Boolean(state.autenticado && state.darkMode) }
     }));
@@ -16555,14 +16602,6 @@
       state.avisoAssinanteAberto = false;
       abrirContratacaoAssinaturaMobile();
     });
-    bind('cancelar-aviso-duplicado', function () {
-      state.duplicadoConfirmacaoAberta = false;
-      render();
-    });
-    bind('confirmar-aviso-duplicado', function () {
-      state.duplicadoConfirmacaoAberta = false;
-      salvarDespesa(true);
-    });
     var dialogoSistemaOverlay = document.getElementById('dialogo-sistema-mobile-overlay');
     if (dialogoSistemaOverlay && state.dialogoSistemaMobile) {
       Array.prototype.forEach.call(root.children, function (elemento) {
@@ -17192,8 +17231,10 @@
 	      if (!state.modalAcao || !state.modalAcao.item) return;
 	      aceitarPrevistaHojeMobile(state.modalAcao.tipo, state.modalAcao.item.id);
 	    });
-	    bind('salvar-edicao-lancamento', salvarEdicaoLancamentoSelecionado);
+	    bind('salvar-edicao-lancamento', function () { salvarEdicaoLancamentoSelecionado(false); });
 	    bind('confirmar-edicao-prevista', function () { salvarEdicaoLancamentoSelecionado(true); });
+    bindInput('editar-dia', atualizarAvisoDataFuturaDespesaMobile);
+    atualizarAvisoDataFuturaDespesaMobile();
     ['despesa-valor', 'entrada-valor', 'editar-valor'].forEach(function (id) {
       bindInput(id, function () {
         var item = document.getElementById(id);

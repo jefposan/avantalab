@@ -28,7 +28,7 @@ test('despesa prevista só fecha após a confirmação do registro atualizado', 
   assert.match(mobile, /function aplicarDespesaPrevistaSalvaMobile\(registro\)/);
   assert.match(mobile, /function preservarDespesaPrevistaSalvaContraLeituraAntigaMobile\(\)/);
   assert.match(salvar, /if \(despesa\.error \|\| !despesa\.data\)[\s\S]*?return;/);
-  assert.match(salvar, /if \(eraPrevista\) \{[\s\S]*?aplicarDespesaPrevistaSalvaMobile\(despesa\.data\)[\s\S]*?state\.modalAcao = null[\s\S]*?concluirAplicacaoLancamentoMobile\('Despesa atualizada\.'\)[\s\S]*?render\(\)[\s\S]*?return;/);
+  assert.match(salvar, /if \(eraPrevista \|\| ehFuturaEditada\) \{[\s\S]*?aplicarDespesaPrevistaSalvaMobile\(despesa\.data\)[\s\S]*?state\.modalAcao = null[\s\S]*?concluirAplicacaoLancamentoMobile\('Despesa atualizada\.'\)[\s\S]*?render\(\)[\s\S]*?return;/);
 });
 
 test('leitura antiga preserva apenas a despesa prevista já confirmada', async () => {

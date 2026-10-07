@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.44.01 -->
+<!-- ava-version: 1.48.0.44.02 -->
+
+> Revisão 1.48.0.44.02: ao editar uma despesa e adiar o pagamento para qualquer
+> data futura, ela passa a Prevista, inclusive fixa ou parcela, preservando
+> valor e sequência. Permanece prevista até confirmação explícita. Com o aviso
+> de duplicados ativo, salvar uma inclusão ou edição mostra as despesas com o
+> mesmo valor no mês/ano e centro selecionados, com data, nome, descrição, valor
+> e situação. A própria linha e canceladas não entram na comparação. Voltar à
+> edição mantém os campos; Salvar mesmo assim permite o lançamento legítimo.
 
 > Revisão 1.48.0.44.01: correção do retorno social e do lembrar-me no
 > AvantaVendas. Sem alterações operacionais na Gestão Web.

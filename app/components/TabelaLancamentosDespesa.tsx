@@ -659,6 +659,15 @@ export default function TabelaLancamentosDespesa({
                       </>
                     )}
                   </tr>
+                  {lancamentoEditandoId === lanc.id && Number(editDia) >= 1 && Number(editDia) <= getMaxDias(mesAtivo, anoSelecionado) && dataFuturaTab(Number(anoSelecionado), MESES_TAB.indexOf(String(mesAtivo).toUpperCase()), Number(editDia)) && (
+                    <tr>
+                      <td colSpan={5} className="px-3 py-2">
+                        <p role="status" className={`rounded-md px-3 py-2 text-xs font-medium ${darkMode ? 'bg-amber-400/10 text-amber-100' : 'bg-amber-50 text-amber-900'}`}>
+                          Este pagamento ficará como previsto ao salvar. Valor e parcelamento serão preservados.
+                        </p>
+                      </td>
+                    </tr>
+                  )}
                   {lancamentoEditandoId === lanc.id && temParcelamento && (
                     <tr className={darkMode ? 'border-b border-violet-400/20 bg-violet-400/5' : 'border-b border-violet-200 bg-violet-50/80'}>
                       <td colSpan={5} className="px-2 pb-2 pt-0.5">

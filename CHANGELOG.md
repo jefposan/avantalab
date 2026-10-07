@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.48.0.44.02 - 2026-10-07
+
+- **Pagamento adiado é previsto**: na Gestão Web e Mobile, qualquer despesa
+  transferida para uma data futura passa a Prevista, inclusive fixa e parcela.
+  O valor, a descrição, o vínculo de recorrência e a contagem não são alterados
+  ao mudar apenas o dia. A passagem do tempo não confirma o pagamento.
+- **Conferência do mesmo valor**: inclusão e edição exibem os registros
+  encontrados no mês/ano e centro de custo, com data, despesa, descrição,
+  valor e situação. Nomes diferentes também são conferidos; a própria linha
+  editada e despesas canceladas são excluídas. Voltar preserva o rascunho.
+- **Salvar previsto no mobile**: o evento de clique não é mais interpretado
+  como pedido de confirmação. O editor fecha somente após o banco devolver
+  o registro salvo; conflito ou falha mantém a edição, sem aviso de sucesso.
+- **Proteção no banco**: migração `20261007210000_despesa_futura_prevista.sql`
+  mantém a mesma regra para novas despesas e reorganizações de parcelas,
+  sem migrar histórico ou modificar valores, tipos, receitas e cadastros.
+
 ## 1.48.0.44.01-av181 - 2026-10-07
 
 - **Retorno Google/Apple no AvantaVendas**: a preparação permanece visível

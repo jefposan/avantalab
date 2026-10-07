@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.44.01 -->
+<!-- ava-version: 1.48.0.44.02 -->
+
+> Revisão 1.48.0.44.02: adiar uma despesa para qualquer data futura marca
+> Prevista, também em fixas e parcelas, sem mudar valor ou sequência. A data
+> chegar não confirma o pagamento. Salvar previsto conserva a previsão;
+> somente Confirmar hoje efetiva. O editor fecha após confirmação do banco.
+> Com aviso de duplicados ativo, inclusão e edição mostram todos os registros
+> do mesmo valor no mês/ano e centro de custo, incluindo descrição e parcela,
+> data e situação. Voltar à edição preserva os campos; Salvar mesmo assim
+> prossegue. A própria linha e canceladas não são consideradas duplicadas.
 
 > Revisão 1.48.0.44.01: correção do retorno social e da persistência do login
 > restrita ao AvantaVendas. A Gestão Mobile foi usada como referência e seu
