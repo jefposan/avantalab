@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.25 -->
+<!-- ava-version: 1.48.0.43.26 -->
+
+> Revisão 1.48.0.43.26: download provisório da Divulgação no Android instalado
+> antigo do AvantaVendas. Nenhuma alteração nos fluxos da Gestão Web.
 
 > Revisão 1.48.0.43.25: correção restrita ao compartilhamento de materiais da
 > Divulgação no AvantaVendas para Android; sem impacto operacional na Gestão Web.

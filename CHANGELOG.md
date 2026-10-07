@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.48.0.43.26-av180 - 2026-10-07
+
+- **Download provisório no Android instalado**: pacotes antigos sem os plugins
+  Share/Filesystem abrem o download HTTPS do material pelo Browser já disponível,
+  sem tentar salvar um blob dentro do WebView. A seleção múltipla oferece um
+  botão de download para cada arquivo.
+- **Aviso fiel ao resultado**: informa Download iniciado e orienta compartilhar
+  após concluir, pela galeria ou Downloads; PDFs somente por Downloads. Não
+  afirma salvamento concluído, pois o navegador não devolve essa confirmação.
+- **Fluxos preservados**: iPhone, navegador e Android com compartilhamento nativo
+  continuam usando o fluxo existente. Nenhum pacote nativo ou banco foi alterado.
+
 ## 1.48.0.43.25-av179 - 2026-10-07
 
 - **Compartilhamento de materiais corrigido no Android**: imagens, vídeos e

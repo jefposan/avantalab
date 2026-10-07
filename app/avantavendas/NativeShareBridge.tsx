@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { Browser } from '@capacitor/browser';
 
 type PedidoCompartilhamento = {
   arquivos: File[];
@@ -14,6 +15,7 @@ type PedidoCompartilhamento = {
 declare global {
   interface Window {
     __avantavendasCompartilharArquivos?: (pedido: PedidoCompartilhamento) => Promise<boolean>;
+    __avantavendasAbrirDownloadAndroid?: (url: string) => Promise<void>;
   }
 }
 
@@ -42,13 +44,33 @@ function nomeSeguro(nome: string, indice: number) {
 
 export default function NativeShareBridge() {
   useEffect(() => {
-    if (
-      !Capacitor.isNativePlatform()
-      || !Capacitor.isPluginAvailable('Filesystem')
-      || !Capacitor.isPluginAvailable('Share')
-    ) return;
-
+    if (!Capacitor.isNativePlatform()) return;
     let ativo = true;
+    const limpar = () => {
+      ativo = false;
+      delete window.__avantavendasCompartilharArquivos;
+      delete window.__avantavendasAbrirDownloadAndroid;
+    };
+
+    // O pacote Android antigo já embute Browser, mas pode não embutir Share
+    // e Filesystem. O navegador consegue baixar uma URL HTTPS com attachment;
+    // um blob: criado dentro do WebView não pode ser entregue a ele.
+    if (Capacitor.getPlatform() === 'android' && Capacitor.isPluginAvailable('Browser')) {
+      window.__avantavendasAbrirDownloadAndroid = async (endereco) => {
+        const url = new URL(endereco);
+        if (!ativo || url.protocol !== 'https:' || url.username || url.password
+          || !url.pathname.startsWith('/storage/v1/object/public/vendas-divulgacao/')
+          || !url.searchParams.get('download')) {
+          throw new Error('Não foi possível iniciar o download. Tente novamente.');
+        }
+        await Browser.open({ url: url.href });
+      };
+    }
+
+    if (!Capacitor.isPluginAvailable('Filesystem') || !Capacitor.isPluginAvailable('Share')) {
+      return limpar;
+    }
+
     window.__avantavendasCompartilharArquivos = async ({ arquivos, titulo, tituloDialogo }) => {
       if (!ativo || !Array.isArray(arquivos) || !arquivos.length) {
         throw new Error('Não foi possível preparar o arquivo.');
@@ -85,10 +107,7 @@ export default function NativeShareBridge() {
       }
     };
 
-    return () => {
-      ativo = false;
-      delete window.__avantavendasCompartilharArquivos;
-    };
+    return limpar;
   }, []);
 
   return null;

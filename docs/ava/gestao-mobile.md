@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.25 -->
+<!-- ava-version: 1.48.0.43.26 -->
+
+> Revisão 1.48.0.43.26: download provisório da Divulgação no Android instalado
+> antigo do AvantaVendas. Nenhuma alteração nos fluxos da Gestão Mobile.
 
 > Revisão 1.48.0.43.25: o AvantaVendas prepara o tipo e a extensão dos materiais
 > antes de abrir o compartilhamento Android. A Gestão Mobile não foi alterada.

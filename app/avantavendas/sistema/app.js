@@ -484,6 +484,7 @@ let divulgacaoPastaAtualId = null;
 let divulgacaoMaterialAtualId = null;
 let arquivoMaterialDivulgacaoPreparado = null;
 let revisaoPreparacaoArquivoMaterialDivulgacao = 0;
+let downloadMaterialAndroidEmAndamento = false;
 let divulgacaoSelecaoAtiva = false;
 let divulgacaoSelecaoPastaId = null;
 const divulgacaoMateriaisSelecionados = new Set();
@@ -6082,6 +6083,10 @@ async function prepararCompartilhamentoMaterialDivulgacao(materialId) {
   if (!material) return;
   const revisao = ++revisaoPreparacaoArquivoMaterialDivulgacao;
   arquivoMaterialDivulgacaoPreparado = null;
+  if (usarDownloadProvisorioAndroidDivulgacao()) {
+    atualizarBotoesCompartilharMaterial({ desabilitado: false, ocupado: false, rotulo: 'Compartilhar material' });
+    return;
+  }
   atualizarBotoesCompartilharMaterial({ desabilitado: true, ocupado: true, rotulo: 'Preparando material...' });
   try {
     const arquivo = await prepararArquivoMaterialDivulgacao(material);
@@ -6144,6 +6149,54 @@ function podeCompartilharEnderecoMaterialDivulgacao(material) {
   return Boolean(navigator.share && String(material?.arquivo_url || '').trim());
 }
 
+function usarDownloadProvisorioAndroidDivulgacao() {
+  return ehAplicativoNativoVendas()
+    && (window.Capacitor?.getPlatform?.() === 'android' || navegadorAndroidDivulgacao())
+    && typeof window.__avantavendasCompartilharArquivos !== 'function';
+}
+
+function enderecoDownloadMaterialAndroid(material) {
+  const url = new URL(material.arquivo_url);
+  const origemStorage = new URL(window.VENDAS_MOBILE_CONFIG.supabaseUrl).origin;
+  if (url.protocol !== 'https:' || url.origin !== origemStorage || url.username || url.password
+    || !url.pathname.startsWith('/storage/v1/object/public/vendas-divulgacao/')) {
+    throw new Error('Não foi possível iniciar o download deste material.');
+  }
+  url.hash = '';
+  url.searchParams.set('download', nomeArquivoMaterialDivulgacao(material, tipoMimeMaterialDivulgacao(material)));
+  return url.href;
+}
+
+async function baixarMaterialDivulgacaoAndroid(materialId, botao = null) {
+  if (downloadMaterialAndroidEmAndamento) return;
+  const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
+  if (!material || !usarDownloadProvisorioAndroidDivulgacao()) return;
+  downloadMaterialAndroidEmAndamento = true;
+  if (botao) botao.disabled = true;
+  try {
+    const abrirDownload = window.__avantavendasAbrirDownloadAndroid;
+    if (typeof abrirDownload !== 'function') throw new Error('Não foi possível iniciar o download. Tente novamente.');
+    await abrirDownload(enderecoDownloadMaterialAndroid(material));
+    const destino = material.tipo === 'pdf' ? 'pela pasta Downloads' : 'pela galeria ou pela pasta Downloads';
+    // Browser.open confirma a abertura do navegador, não o término do download.
+    toast(`Download iniciado. Após concluir, compartilhe o arquivo ${destino}.`, { tipo: 'informacao', titulo: 'Baixar para compartilhar' });
+  } catch (error) {
+    const mensagem = traduzErroCompartilhamento(error);
+    if (mensagem) toast(mensagem, { tipo: 'erro', titulo: 'Não foi possível baixar o arquivo' });
+  } finally {
+    downloadMaterialAndroidEmAndamento = false;
+    if (botao) botao.disabled = false;
+  }
+}
+
+function abrirDownloadsMateriaisAndroidDivulgacao(materiais) {
+  const botoes = materiais.map((material, indice) => {
+    const rotulo = material.tipo === 'pdf' ? material.titulo || 'PDF' : `${material.tipo === 'video' ? 'Vídeo' : 'Imagem'} ${indice + 1}`;
+    return `<button type="button" class="secondary" onclick="baixarMaterialDivulgacaoAndroid('${escapeAttr(material.id)}', this)">${svgIcon('download')} ${escapeHtml(rotulo)}</button>`;
+  }).join('');
+  sheet(`<div class="sheet-header"><div><h2>Baixar materiais</h2><p class="muted small">Baixe cada arquivo e compartilhe pela galeria ou Downloads.</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar downloads">×</button></div><div class="grid">${botoes}</div>`, 'sheet-backdrop-centered');
+}
+
 function atualizarStatusCompartilhamentoMultiploDivulgacao(mensagem) {
   divulgacaoCompartilhamentoStatus = mensagem;
   const status = document.getElementById('materialSelectionStatus');
@@ -6158,6 +6211,12 @@ async function compartilharMateriaisSelecionadosDivulgacao() {
     .slice(0, LIMITE_SELECAO_MATERIAIS_DIVULGACAO);
   if (!materiais.length) {
     toast('Selecione pelo menos um arquivo para compartilhar.');
+    return;
+  }
+
+  if (usarDownloadProvisorioAndroidDivulgacao()) {
+    if (materiais.length === 1) await baixarMaterialDivulgacaoAndroid(materiais[0].id);
+    else abrirDownloadsMateriaisAndroidDivulgacao(materiais);
     return;
   }
 
@@ -6224,6 +6283,15 @@ async function compartilharMateriaisSelecionadosDivulgacao() {
 async function compartilharMaterialDivulgacao(materialId) {
   const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
   if (!material) return;
+  if (usarDownloadProvisorioAndroidDivulgacao()) {
+    atualizarBotoesCompartilharMaterial({ desabilitado: true, ocupado: true, rotulo: 'Iniciando download...' });
+    try {
+      await baixarMaterialDivulgacaoAndroid(materialId);
+    } finally {
+      atualizarBotoesCompartilharMaterial({ desabilitado: false, ocupado: false, rotulo: 'Compartilhar material' });
+    }
+    return;
+  }
   const preparado = arquivoMaterialDivulgacaoPreparado?.materialId === materialId
     ? arquivoMaterialDivulgacaoPreparado.arquivo
     : null;
@@ -11336,6 +11404,7 @@ window.cancelarGestoMaterialDivulgacao = cancelarGestoMaterialDivulgacao;
 window.alternarMaterialExpandido = alternarMaterialExpandido;
 window.alternarPdfTelaCheia = alternarPdfTelaCheia;
 window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
+window.baixarMaterialDivulgacaoAndroid = baixarMaterialDivulgacaoAndroid;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });

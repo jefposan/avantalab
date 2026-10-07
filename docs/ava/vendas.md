@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.25 -->
+<!-- ava-version: 1.48.0.43.26 -->
+
+> Revisão 1.48.0.43.26-av180: no Android instalado antigo, sem compartilhamento
+> nativo, Compartilhar material abre o download no navegador. O aviso informa
+> Download iniciado; após concluir, procure imagens e vídeos na galeria ou
+> Downloads, e PDFs em Downloads. Com vários materiais, baixe cada um pelos
+> botões individuais. O app não confirma o término nem a inclusão na galeria.
+> Android com Share/Filesystem e iPhone mantêm o compartilhamento atual.
 
 > Revisão 1.48.0.43.25-av179: ao compartilhar imagem, vídeo ou PDF da
 > Divulgação no Android, o AvantaVendas prepara o arquivo com MIME e extensão
@@ -52,7 +59,7 @@
 > Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
 > ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 179 -->
+<!-- avantavendas-asset-revision: 180 -->
 
 > Revisão 1.48.0.43.11-av175: **Novo produto** conserva sua posição original
 > no canto direito. **Atualizar** ocupa uma posição independente à esquerda e
