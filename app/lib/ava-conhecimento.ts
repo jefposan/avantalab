@@ -1,5 +1,5 @@
-// Revisado na versão 1.48.0.43.12: em Produtos e Pedidos, as ações de criação
-// ficam no topo direito, com o azul claro institucional e geometria consistente.
+// Revisado na versão 1.48.0.43.13: o botão Atualizar de Produtos tem a mesma
+// altura visual da ação Novo produto, sem reduzir sua área de toque.
 // Revisado na versão 1.48.0.43.09: em Produtos, Atualizar preserva a posição de
 // Novo produto e mantém o giro e o texto visíveis durante a atualização.
 // Revisado na versão 1.48.0.43.08: em Produtos, Atualizar fica à esquerda de

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.48.0.43.13-av177 - 2026-10-07
+
+- **Atualizar compacto em Produtos**: o botão circular agora possui a mesma
+  altura visual de **Novo produto** (30 px), mantendo uma área de toque de 44 px.
+
 ## 1.48.0.43.12-av176 - 2026-10-07
 
 - **Ações principais coerentes**: em Produtos, **Novo produto** volta ao topo

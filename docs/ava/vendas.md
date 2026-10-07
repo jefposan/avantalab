@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.12 -->
+<!-- ava-version: 1.48.0.43.13 -->
+
+> Revisão 1.48.0.43.13-av177: **Atualizar** em Produtos tem a mesma altura
+> visual de **Novo produto**, preservando a área confortável para toque.
 
 > Revisão 1.48.0.43.12-av176: as ações **Novo produto** e **Novo pedido** ficam
 > no topo direito; ambas usam o azul claro institucional, e **Novo pedido**
@@ -9,7 +12,7 @@
 > Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
 > ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 176 -->
+<!-- avantavendas-asset-revision: 177 -->
 
 > Revisão 1.48.0.43.11-av175: **Novo produto** conserva sua posição original
 > no canto direito. **Atualizar** ocupa uma posição independente à esquerda e
