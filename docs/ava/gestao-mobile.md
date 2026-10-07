@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43 -->
+<!-- ava-version: 1.48.0.43.01 -->
+
+> Revisão 1.48.0.43.01: o limite responsivo do **Histórico do cliente**
+> pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.48.0.43: em **Dúvidas e Sugestões**, o envio é confirmado pela
 > gravação da mensagem, sem uma leitura de retorno que podia falhar para alguns

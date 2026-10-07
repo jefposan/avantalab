@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.43.01: o histórico do cliente respeita a área
+// segura superior e inferior e mantém cabeçalho, abas e fechamento acessíveis
+// enquanto somente a lista longa rola.
 // Revisado na versão 1.48.0.43: no AvantaVendas, o compartilhamento no app
 // instalado chama o seletor nativo Android/iPhone; feedback confirma pela
 // gravação sem leitura posterior restrita por RLS; sucesso dura 2,1 segundos.

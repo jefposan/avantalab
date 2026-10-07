@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.0.43.01-av168 - 2026-10-06
+
+- **Histórico do cliente seguro em qualquer tela**: o card agora limita sua
+  altura ao espaço visível, incluindo as áreas seguras superior e inferior de
+  iPhone e Android. Em históricos longos, somente a lista interna rola; o
+  título, as abas e o fechamento permanecem sempre acessíveis.
+
 ## 1.48.0.43-av167 - 2026-10-06
 
 - **Compartilhamento nativo no AvantaVendas**: materiais abrem o seletor de

@@ -1075,7 +1075,7 @@ body.sheet-open {
 }
 
 /* Casca de gestão refeita a partir das telas reais do Tridium. */
-:root { --tridium: #55b9b1; --tridium-dark: #379f9a; --line: #e4e6ea; --ink: #202124; --vendas-safe-top: env(safe-area-inset-top, 0px); --vendas-safe-right: env(safe-area-inset-right, 0px); --vendas-safe-bottom: env(safe-area-inset-bottom, 0px); --vendas-safe-left: env(safe-area-inset-left, 0px); --vendas-viewport-height: 100dvh; --vendas-system-header-height: calc(59px + var(--vendas-safe-top)); }
+:root { --tridium: #55b9b1; --tridium-dark: #379f9a; --line: #e4e6ea; --ink: #202124; --vendas-safe-top: env(safe-area-inset-top, 0px); --vendas-safe-right: env(safe-area-inset-right, 0px); --vendas-safe-bottom: env(safe-area-inset-bottom, 0px); --vendas-safe-left: env(safe-area-inset-left, 0px); --vendas-modal-safe-top: max(24px, calc(var(--vendas-safe-top) + 12px)); --vendas-modal-safe-bottom: max(24px, calc(var(--vendas-safe-bottom) + 12px)); --vendas-viewport-height: 100dvh; --vendas-system-header-height: calc(59px + var(--vendas-safe-top)); }
 .capacitor-ios { --vendas-viewport-height: 100vh; }
 @supports (height: 100svh) {
   .capacitor-ios { --vendas-viewport-height: 100svh; }
@@ -2348,8 +2348,8 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .maps-option-list a:nth-child(3) { background: #1687D9; }
 .client-option-list { display: grid; gap: 10px; }
 .client-option-list button { display: flex; align-items: center; justify-content: flex-start; gap: 10px; }
-.client-detail-backdrop { padding: 12px 12px calc(env(safe-area-inset-bottom) + 94px); }
-.client-detail-backdrop .sheet { display: flex; width: min(92vw, 520px); max-height: calc(100dvh - env(safe-area-inset-bottom) - 116px); flex-direction: column; overflow: hidden; }
+.client-detail-backdrop { padding: var(--vendas-modal-safe-top) 12px var(--vendas-modal-safe-bottom); }
+.client-detail-backdrop .sheet { display: flex; width: min(92vw, 520px); max-height: calc(var(--vendas-viewport-height) - var(--vendas-modal-safe-top) - var(--vendas-modal-safe-bottom)); box-sizing: border-box; flex-direction: column; overflow: hidden; }
 .client-detail-backdrop .sheet > .sheet-header, .client-detail-backdrop .client-detail-tabs { flex: 0 0 auto; }
 .client-detail-backdrop .sheet > .sheet-header { margin-bottom: 11px; }
 .client-detail-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-bottom: 14px; }

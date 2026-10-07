@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43 -->
+<!-- ava-version: 1.48.0.43.01 -->
+
+<!-- avantavendas-asset-revision: 168 -->
+
+> Revisão 1.48.0.43.01-av168: o card de **Histórico do cliente** adapta sua
+> altura à área realmente visível do aparelho, respeitando o recorte superior e
+> inferior. Em listas extensas, role somente os lançamentos; título, abas e
+> botão de fechar continuam acessíveis.
 
 <!-- avantavendas-asset-revision: 167 -->
 

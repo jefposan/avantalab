@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43 -->
+<!-- ava-version: 1.48.0.43.01 -->
+
+> Revisão 1.48.0.43.01: o limite responsivo do **Histórico do cliente**
+> pertence ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.48.0.43: o envio em **Dúvidas e Sugestões** é confirmado pela
 > gravação da mensagem, sem depender da leitura de retorno. Em falhas reais, o
