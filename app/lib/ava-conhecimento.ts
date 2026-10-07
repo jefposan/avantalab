@@ -1,5 +1,5 @@
-// Revisado na versão 1.48.0.43.13: o botão Atualizar de Produtos tem a mesma
-// altura visual da ação Novo produto, sem reduzir sua área de toque.
+// Revisado na versão 1.48.0.43.14: Atualizar Produtos mantém círculo 30 x 30 e
+// o texto de carregamento não desloca o título nem o subtítulo do cabeçalho.
 // Revisado na versão 1.48.0.43.09: em Produtos, Atualizar preserva a posição de
 // Novo produto e mantém o giro e o texto visíveis durante a atualização.
 // Revisado na versão 1.48.0.43.08: em Produtos, Atualizar fica à esquerda de

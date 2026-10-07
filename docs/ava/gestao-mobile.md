@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.13 -->
+<!-- ava-version: 1.48.0.43.14 -->
+
+> Revisão 1.48.0.43.14: a estabilização visual de Atualizar Produtos pertence
+> ao AvantaVendas e não altera os fluxos da Gestão Mobile.
 
 > Revisão 1.48.0.43.13: o ajuste visual de Atualizar Produtos pertence ao
 > AvantaVendas e não altera os fluxos da Gestão Mobile.

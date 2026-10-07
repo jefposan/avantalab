@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.48.0.43.14-av178 - 2026-10-07
+
+- **Atualizar circular e estável**: a ação de atualização em Produtos mantém
+  proporção circular 30×30. O texto **Atualizando** fica posicionado à esquerda
+  sem alterar a largura disponível para o título e o subtítulo.
+
 ## 1.48.0.43.13-av177 - 2026-10-07
 
 - **Atualizar compacto em Produtos**: o botão circular agora possui a mesma

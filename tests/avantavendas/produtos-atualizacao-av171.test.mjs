@@ -20,7 +20,9 @@ test('Produtos oferece atualização localizada acessível com ícone SVG', () =
 
 test('botão de atualizar Produtos respeita toque, tema e redução de movimento', () => {
   assert.match(estilos, /\.product-refresh-button \{[^}]*width: 30px[^}]*height: 30px/);
-  assert.match(estilos, /\.product-refresh-status \{[^}]*padding: 7px 0[^}]*margin: -7px 0/);
+  assert.match(estilos, /\.content-area \.produtos-page \.product-refresh-button \{[^}]*min-width: 30px[^}]*min-height: 30px[^}]*border-radius: 50%/);
+  assert.match(estilos, /\.product-refresh-button::before \{[^}]*inset: -7px/);
+  assert.match(estilos, /\.product-refresh-label \{[^}]*position: absolute[^}]*right: calc\(100% \+ 6px\)/);
   assert.match(estilos, /\.dark-theme \.product-refresh-button/);
   assert.match(estilos, /\.produtos-page \.module-title \{[^}]*flex-wrap: nowrap[^}]*align-items: flex-start/);
   assert.match(estilos, /\.product-title-actions \{[^}]*align-items: flex-start/);

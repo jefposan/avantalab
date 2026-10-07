@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.13 -->
+<!-- ava-version: 1.48.0.43.14 -->
+
+> Revisão 1.48.0.43.14-av178: **Atualizar** permanece circular em 30×30 e o
+> estado **Atualizando** não desloca nem quebra o subtítulo de Produtos.
 
 > Revisão 1.48.0.43.13-av177: **Atualizar** em Produtos tem a mesma altura
 > visual de **Novo produto**, preservando a área confortável para toque.
@@ -12,7 +15,7 @@
 > Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
 > ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 177 -->
+<!-- avantavendas-asset-revision: 178 -->
 
 > Revisão 1.48.0.43.11-av175: **Novo produto** conserva sua posição original
 > no canto direito. **Atualizar** ocupa uma posição independente à esquerda e
