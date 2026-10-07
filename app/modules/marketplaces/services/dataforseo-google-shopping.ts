@@ -89,6 +89,31 @@ function compact(value: string) {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+const SEARCH_STOP_WORDS = new Set(['a', 'as', 'o', 'os', 'de', 'da', 'das', 'do', 'dos', 'e', 'em', 'para', 'por', 'com', 'sem', 'by']);
+
+function shoppingSearchKeyword(productName: string, ean?: string | null) {
+  const tokens = productName.match(/[\p{L}\p{N}]+(?:[/-][\p{L}\p{N}]+)*/gu) || [];
+  const core = tokens.filter((token) => {
+    const normalized = compact(token);
+    return (normalized.length > 1 || /^\d+$/.test(normalized)) && !SEARCH_STOP_WORDS.has(normalized);
+  }).slice(0, 6);
+  // Modelos/SKUs que aparecem no fim do título (ME20B, BFO4NBB,
+  // 69065/011) são mantidos. Medidas genéricas como 20L e 127V não ocupam o
+  // lugar do identificador comercial.
+  const identifiers = tokens.filter((token) => {
+    const normalized = compact(token);
+    if (normalized.length < 4 || !/\d/.test(normalized)) return false;
+    if (/^\d+(?:l|ml|w|v|kg|g|cm|mm|hz)$/.test(normalized)) return false;
+    return /[a-z]/.test(normalized) || /[/-]/.test(token);
+  });
+  const selected = [...core];
+  for (const identifier of identifiers) {
+    if (!selected.some((token) => compact(token) === compact(identifier))) selected.push(identifier);
+    if (selected.length >= 8) break;
+  }
+  return selected.join(' ').trim() || text(productName) || text(ean);
+}
+
 function titleMatchesProduct(title: string, productName: string, ean?: string | null) {
   const normalizedTitle = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   if (ean && normalizedTitle.includes(ean)) return true;
@@ -394,14 +419,14 @@ async function postGoogleShoppingPriceLookup(input: { ean: string | null; produc
   // produto e pode devolver uma vitrine de itens aleatórios. A consulta de
   // preço usa o título já confirmado da ficha; o EAN continua na validação das
   // ofertas quando estiver presente no resultado.
-  const keyword = text(input.productName) || text(input.ean);
+  const keyword = shoppingSearchKeyword(text(input.productName), input.ean);
   if (!keyword) throw new MarketplaceError(400, 'invalid_price_query', 'Não foi possível determinar o produto para consultar preços.');
   const posted = await providerRequest('/v3/merchant/google/products/task_post', {
     method: 'POST',
     // `udm=28` usa a vitrine atual do Google Shopping — a mesma exibida na
-    // pesquisa pública — e retorna até 40 cards no primeiro lote. A ordem não
-    // precisa vir do Google: filtramos o produto e selecionamos localmente as
-    // cinco menores ofertas válidas, sem perder carrosséis patrocinados.
+    // pesquisa pública — e retorna até 40 cards no primeiro lote. A palavra-
+    // chave curta preserva produto, marca e modelo; o título completo continua
+    // sendo usado para validar cada oferta antes de calcular as cinco menores.
     body: JSON.stringify([{ keyword, location_name: 'Brazil', language_code: 'pt', depth: 40, search_param: '&udm=28' }]),
   });
   return taskId(posted);

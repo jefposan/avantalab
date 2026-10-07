@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.18 -->
+<!-- ava-version: 1.48.0.43.19 -->
+
+> Revisão 1.48.0.43.19: a coleta do **AvantaPreços** usa uma pesquisa curta de
+> produto, marca e modelo, sem exigir que as lojas repitam todo o título do
+> catálogo para participar das cinco menores ofertas.
 
 > Revisão 1.48.0.43.18: o **AvantaPreços** coleta a vitrine pública atual do
 > Google Shopping com até 40 cards no primeiro lote, evitando a amostra curta

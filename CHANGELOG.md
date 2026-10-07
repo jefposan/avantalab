@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.48.0.43.19 - 2026-10-07
+
+- **Pesquisa comercial objetiva**: o AvantaPreços pesquisa a vitrine pelo nome
+  curto formado por produto, marca e modelo, mantendo o título completo apenas
+  para validar as ofertas. Títulos extensos do catálogo, como o do Kärcher RCV
+  2, deixam de restringir a coleta aos poucos anúncios que repetem toda a
+  descrição do Mercado Livre.
+
 ## 1.48.0.43.18 - 2026-10-07
 
 - **Vitrine atual do Google Shopping**: o AvantaPreços passa a consultar a

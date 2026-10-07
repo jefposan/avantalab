@@ -104,7 +104,7 @@ test('consulta identifica o produto e calcula a média sem consultar a vitrine d
   const result = await consultMercadoLivrePrice({}, connection, { ean });
   assert.equal(result.status, 'found');
   assert.equal(result.product?.name, 'Fogão de teste');
-  assert.equal(globalThis.__priceLookupKeyword, 'Fogão de teste');
+  assert.equal(globalThis.__priceLookupKeyword, 'Fogão teste');
   assert.equal(globalThis.__priceLookupSearchParam, '&udm=28');
   assert.equal(globalThis.__priceLookupDepth, 40);
   assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
@@ -208,6 +208,7 @@ test('consulta combina vitrine e vendedores antes de calcular as cinco menores o
   globalThis.fetch = async (url, init) => {
     if (String(url).endsWith('/products/task_post')) {
       const payload = JSON.parse(String(init?.body)).at(0);
+      assert.equal(payload?.keyword, 'Robô Aspirador Pó Kärcher RCV 2');
       assert.equal(payload?.search_param, '&udm=28');
       assert.equal(payload?.depth, 40);
       return Response.json({ tasks: [{ id: '99999999-9999-9999-9999-999999999999', status_code: 20100, result: null }] });
@@ -227,7 +228,7 @@ test('consulta combina vitrine e vendedores antes de calcular as cinco menores o
     ] }] }] }] });
     throw new Error(`URL DataForSEO inesperada: ${url}`);
   };
-  const result = await completeGoogleLookup({ ean: '7891374302240', productName: 'Robô Aspirador Kärcher RCV 2 Bivolt' });
+  const result = await completeGoogleLookup({ ean: '7891374302240', productName: 'Robô Aspirador de Pó Kärcher RCV 2 com Navegação e Controle Remoto – Bivolt.' });
   assert.equal(result.status, 'completed');
   assert.deepEqual(result.sample, { pricesInCents: [57900, 72990, 89991, 95100, 205182], count: 5, minimum: 579, maximum: 2051.82 });
   assert.equal(calculatePriceSuggestions(result.sample?.pricesInCents || []).market, 1042.33);

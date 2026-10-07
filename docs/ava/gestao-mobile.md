@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.18 -->
+<!-- ava-version: 1.48.0.43.19 -->
+
+> Revisão 1.48.0.43.19: o **AvantaPreços** pesquisa por uma expressão comercial
+> curta com produto, marca e modelo; o título integral permanece como validador
+> das ofertas antes da seleção das cinco menores.
 
 > Revisão 1.48.0.43.18: a pesquisa do **AvantaPreços** usa a vitrine atual do
 > Google Shopping, reúne até 40 cards do primeiro lote e só então filtra o

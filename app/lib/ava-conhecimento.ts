@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.43.19: o AvantaPreços pesquisa produto, marca e
+// modelo em uma expressão curta e valida ofertas contra o título completo.
 // Revisado na versão 1.48.0.43.18: o AvantaPreços usa a vitrine atual do Google
 // Shopping com até 40 cards antes de filtrar as cinco menores ofertas.
 // Revisado na versão 1.48.0.43.17: o AvantaPreços reúne preços da vitrine e da

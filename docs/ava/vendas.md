@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.18 -->
+<!-- ava-version: 1.48.0.43.19 -->
+
+> Revisão 1.48.0.43.19: o refinamento da pesquisa pública pertence ao PWA
+> **AvantaPreços** e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.43.18: a atualização da fonte pública de preços pertence ao
 > PWA **AvantaPreços** e não altera os fluxos do AvantaVendas.
