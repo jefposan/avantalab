@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.01 -->
+<!-- ava-version: 1.48.0.43.02 -->
+
+> Revisão 1.48.0.43.02: quando já houver conta de um marketplace vinculada, o
+> botão passa a ser **Conectar outra conta**. Essa ação preserva as conexões
+> existentes; a pessoa só precisa autorizar a segunda conta na página oficial
+> do marketplace.
 
 > Revisão 1.48.0.43.01: o limite responsivo do **Histórico do cliente**
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Web.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.01 -->
+<!-- ava-version: 1.48.0.43.02 -->
+
+> Revisão 1.48.0.43.02: a ação **Conectar outra conta** de Marketplaces
+> pertence à Gestão Web e não altera os fluxos da Gestão Mobile.
 
 > Revisão 1.48.0.43.01: o limite responsivo do **Histórico do cliente**
 > pertence ao AvantaVendas; sem impacto operacional na Gestão Mobile.

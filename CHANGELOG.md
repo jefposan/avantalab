@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.48.0.43.02 - 2026-10-06
+
+- **Nova conta no mesmo marketplace**: após existir uma conexão, o card passa a
+  oferecer **Conectar outra conta**. A autorização adicional mantém as contas
+  atuais vinculadas e informa isso antes de abrir o Mercado Livre.
+
 ## 1.48.0.43.01-av168 - 2026-10-06
 
 - **Histórico do cliente seguro em qualquer tela**: o card agora limita sua
@@ -25,7 +31,6 @@
   revela imediatamente o Dashboard que permaneceu montado. Acesso direto e
   recarga continuam validando a sessão; APIs protegidas e RLS continuam
   autorizando cada consulta ou alteração de dados.
-
 ## 1.48.0.41 - 2026-10-06
 
 - **Conexões persistentes em Marketplaces**: as contas conectadas voltam a

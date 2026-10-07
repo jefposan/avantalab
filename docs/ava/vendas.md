@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.01 -->
+<!-- ava-version: 1.48.0.43.02 -->
+
+> Revisão 1.48.0.43.02: a conexão adicional de conta em Marketplaces pertence à
+> Gestão Web e não altera o AvantaVendas.
 
 <!-- avantavendas-asset-revision: 168 -->
 

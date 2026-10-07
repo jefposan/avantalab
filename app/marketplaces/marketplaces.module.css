@@ -134,6 +134,9 @@
 .dark .inlineEditorForm .actionBar .primary { color: #fff; border-color: var(--brand); background: var(--brand); }
 .dark .listingsPanel button.readOnlyHelp { color: #bfdbfe; background: transparent; }
 .dark .listingsPanel button.readOnlyHelp:hover { background: color-mix(in srgb, #bfdbfe 10%, transparent); }
+.connectionNotice button:hover:not(:disabled) { filter: brightness(1.06); }
+.connectionHelp { margin: 0; color: #64748b; font-size: 12px; }
+.dark .connectionHelp { color: #b8c5d7; }
 @media (max-width: 760px) { .blockedReason { position: static; width: auto; height: auto; margin: 5px 0 0; clip: auto; white-space: normal; color: #64748b; font-size: 12px; line-height: 1.5; }.dark .blockedReason { color: #b8c5d7; } }
 @media (max-width: 760px) { .listingFilters { grid-template-columns: 1fr; }.pagination { justify-content: center; gap: 10px; }.listingsPanel button.editListing { width: 48px; min-height: 48px; } }
 @media (max-width: 760px) { .listingsPanel .actionBar :is(button, a) { min-height: 48px; } }

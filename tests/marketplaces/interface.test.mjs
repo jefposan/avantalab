@@ -61,6 +61,13 @@ test('connected accounts stay in rounded controls at the bottom of the marketpla
   assert.match(css, /\.dark \.connectedAccount \{[^}]*background:/);
 });
 
+test('connecting another marketplace account keeps the existing connections intact', () => {
+  assert.match(client, /connectedAccounts\.length \? 'Conectar outra conta' : 'Conectar conta'/);
+  assert.match(client, /id="connect-another-account-help" className=\{styles\.connectionHelp\}>As contas já conectadas serão mantidas\./);
+  assert.match(client, /aria-describedby=\{connectedAccounts\.length \? 'connect-another-account-help' : undefined\}/);
+  assert.match(css, /\.connectionHelp \{ margin: 0; color: #64748b; font-size: 12px; \}/);
+});
+
 test('marketplaces and costs reuse the same company header and return action', () => {
   assert.match(client, /<ModuloHeader empresa=\{empresa\} onBack=\{voltar\}/);
   assert.match(read('app/custos/CustosClient.tsx'), /<ModuloHeader empresa=\{access.empresa\}/);

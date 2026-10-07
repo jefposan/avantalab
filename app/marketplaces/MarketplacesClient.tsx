@@ -230,7 +230,11 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
             <strong>{provider.name}</strong>{!provider.available && <small>Em breve</small>}
           </button>)}
         </div>
-        <div className={styles.connectionNotice}>{selectedProvider.available && <button type="button" disabled={connecting || !companyId || !canManageConnections} onClick={() => void connectMarketplace()}>{connecting ? 'Abrindo Mercado Livre…' : 'Conectar conta'}</button>}{connectionNotice && <p className={styles.connectionMessage} role="alert">{connectionNotice}</p>}</div>
+        <div className={styles.connectionNotice}>
+          {selectedProvider.available && <button type="button" disabled={connecting || !companyId || !canManageConnections} onClick={() => void connectMarketplace()} aria-describedby={connectedAccounts.length ? 'connect-another-account-help' : undefined}>{connecting ? 'Abrindo Mercado Livre…' : connectedAccounts.length ? 'Conectar outra conta' : 'Conectar conta'}</button>}
+          {connectedAccounts.length > 0 && <p id="connect-another-account-help" className={styles.connectionHelp}>As contas já conectadas serão mantidas.</p>}
+          {connectionNotice && <p className={styles.connectionMessage} role="alert">{connectionNotice}</p>}
+        </div>
         {marketplace === 'mercado_livre' && <div className={styles.connectedAccounts} aria-labelledby="connected-accounts-title">
           <div className={styles.connectedAccountsHeading}><h3 id="connected-accounts-title">Contas conectadas</h3><span>{connectedAccounts.length}</span></div>
           {connectedAccounts.length ? <div className={styles.connectedAccountsList}>{connectedAccounts.map((account) => <article key={account.id} className={`${styles.connectedAccount} ${account.id === selectedAccount ? styles.connectedAccountSelected : ''}`}>
