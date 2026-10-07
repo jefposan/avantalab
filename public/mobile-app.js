@@ -470,6 +470,7 @@
     cadastroPerfilSalvando: false,
     cadastroPerfilVerificado: false,
     cadastroPerfilErro: '',
+    cadastroPerfilErroCodigo: '',
     cadastroPerfilEditando: false,
     cadastroPerfilRetornoGerenciar: false,
     // Perfil já verificado pelo paywall (evita a tela cheia de carregamento
@@ -1142,7 +1143,7 @@
   db.auth.onAuthStateChange(function (evento, sessao) {
     if (sessao && (evento === 'SIGNED_IN' || evento === 'TOKEN_REFRESHED')) {
       renovarSessaoPersistenteMobile();
-    } else if (evento === 'SIGNED_OUT' && state.pronto) {
+    } else if (evento === 'SIGNED_OUT' && state.pronto && !recuperacaoSessaoMobilePromise) {
       window.location.replace(destinoLogoutMobile());
     }
   });
@@ -1500,11 +1501,15 @@
   }
 
   function telaErroCadastroPerfilMobile() {
+    var perfilBloqueado = state.cadastroPerfilErroCodigo === 'perfil_em_outro_dispositivo'
+      || state.cadastroPerfilErroCodigo === 'perfil_nao_autorizado';
     return telaLoginWrapper(
       '<div class="px-5 py-6 text-center">' +
         '<h2 class="text-base font-black text-slate-900">Não foi possível verificar o cadastro</h2>' +
         '<p class="mt-2 text-sm font-semibold leading-relaxed text-slate-600">' + escapeHtml(state.cadastroPerfilErro || 'Confira sua conexão e tente novamente.') + '</p>' +
-        '<button id="cp-tentar-novamente" type="button" class="mt-4 h-10 rounded-xl bg-[#003E73] px-5 text-xs font-black uppercase tracking-wide text-white">Tentar novamente</button>' +
+        (perfilBloqueado
+          ? '<div class="mt-4 grid gap-2"><button id="cp-trocar-perfil" type="button" class="h-11 rounded-xl bg-[#003E73] px-5 text-xs font-black uppercase tracking-wide text-white">Trocar perfil</button><button id="cp-entrar-novamente" type="button" class="h-11 rounded-xl border border-slate-300 px-5 text-xs font-black text-slate-700">Entrar novamente</button></div>'
+          : '<button id="cp-tentar-novamente" type="button" class="mt-4 h-10 rounded-xl bg-[#003E73] px-5 text-xs font-black uppercase tracking-wide text-white">Tentar novamente</button>') +
       '</div>',
       'AvantaLab Gestão',
       ''
@@ -2095,6 +2100,8 @@
     if (!selecionarEmpresaMobile(id, true)) return;
     state.paywallSelecionando = false;
     state.paywallAtivo = false;
+    state.cadastroPerfilErro = '';
+    state.cadastroPerfilErroCodigo = '';
     carregarDados();
   };
 
@@ -6087,6 +6094,58 @@
     return tokenSessao();
   }
 
+  var recuperacaoSessaoMobilePromise = null;
+  async function recuperarSessaoExpiradaMobile(tokenAnterior) {
+    if (recuperacaoSessaoMobilePromise) return recuperacaoSessaoMobilePromise;
+    recuperacaoSessaoMobilePromise = (async function () {
+      var tokenAtual = await aguardarTokenSessaoAtualizadoMobile();
+      if (tokenAtual && tokenAtual !== tokenAnterior) return tokenAtual;
+      // getSession lê o armazenamento local. Somente getUser confirma se o
+      // login ainda existe no servidor; falha de internet não é expiração.
+      var validacao = await promessaMobileComPrazo(db.auth.getUser(), 8000, 'Não foi possível confirmar a sessão agora.');
+      if (!validacao.error && validacao.data && validacao.data.user) return '';
+      var erro = validacao.error || {};
+      var definitiva = erro.name === 'AuthSessionMissingError' || erro.status === 401 || erro.status === 403
+        || ['session_not_found', 'session_expired', 'refresh_token_not_found', 'refresh_token_already_used', 'bad_jwt', 'user_not_found', 'user_banned'].indexOf(erro.code) >= 0;
+      if (!definitiva) return '';
+      if (state.sessaoDispositivoTimer) window.clearInterval(state.sessaoDispositivoTimer);
+      state.sessaoDispositivoTimer = null;
+      state.sessaoDispositivoEmpresa = '';
+      state.pronto = false;
+      // LOCAL, nunca global: não encerra acessos válidos de outros aparelhos.
+      await db.auth.signOut({ scope: 'local' }).catch(function () {});
+      limparSessaoLocalMobile();
+      limparPreferenciaSessaoMobile();
+      cancelarJanelasMobile();
+      state.chatIAAberto = false;
+      state.avisoAssinanteAberto = false;
+      state.dialogoSistemaMobile = null;
+      state.paywallSelecionando = false;
+      ['_avaRealtimeFinanceiro', '_avaRealtimeAgenda', '_avaRealtimeNotificacoes', '_avaRealtimeAprovacoesVendas', '_avaRealtimePonto'].forEach(function (chave) {
+        if (window[chave]) Promise.resolve(db.removeChannel(window[chave])).catch(function () {});
+        window[chave] = null;
+      });
+      window._avaRealtimeFinanceiroEmpresaId = '';
+      state.empresa = null;
+      state.empresas = [];
+      state.lancamentos = [];
+      state.faturamentos = {};
+      state.cadastroPerfilErro = '';
+      state.cadastroPerfilStatus = null;
+      state.paywallAtivo = false;
+      state.validacaoTelefoneObrigatoria = false;
+      state.modoCriarPerfil = false;
+      state.modoCadastro = false;
+      state.modoSenha = false;
+      state.erro = '';
+      state.mensagem = 'Sua sessão expirou. Entre novamente para continuar. Seus dados foram preservados.';
+      abrirLoginAposFalhaSessaoMobile(new Error('Sessão encerrada no servidor.'));
+      return '';
+    })();
+    try { return await recuperacaoSessaoMobilePromise; }
+    finally { recuperacaoSessaoMobilePromise = null; }
+  }
+
   function idDispositivoSessaoMobile() {
     var chave = 'avantalab.dispositivo.v1';
     try {
@@ -6102,29 +6161,45 @@
     }
   }
 
-  async function confirmarSessaoDispositivoMobile(acao) {
+  async function confirmarSessaoDispositivoMobile(acao, revalidada) {
     if (!COBRANCA_ATIVA_MOBILE || !state.empresa || !state.empresa.id) return { ativa: true, ignorado: true };
+    var empresaIdSessao = state.empresa.id;
     var token = await tokenSessao().catch(function () { return ''; });
-    if (!token) return { ativa: false, mensagem: 'Sua sessão expirou.' };
+    if (!token) {
+      await recuperarSessaoExpiradaMobile('').catch(function () {});
+      return { ativa: false, temporaria: state.autenticado, mensagem: 'Sua sessão expirou.' };
+    }
     var resposta;
+    var dados;
     try {
-      resposta = await fetch('/api/cobranca/sessoes', {
+      var retornoSessao = await requisitarJsonMobile('/api/cobranca/sessoes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ empresaId: state.empresa.id, dispositivoId: idDispositivoSessaoMobile(), acao: acao }),
-      });
+        body: JSON.stringify({ empresaId: empresaIdSessao, dispositivoId: idDispositivoSessaoMobile(), acao: acao }),
+      }, 8000);
+      resposta = retornoSessao.resposta;
+      dados = retornoSessao.json || {};
     } catch (erro) {
       // Sem conexão não há fila de escrita: o app mantém apenas leitura local.
-      return { ativa: true, offline: true };
+      return { ativa: false, temporaria: true };
     }
-    var dados = await resposta.json().catch(function () { return {}; });
-    if (dados.ativa !== false) return { ativa: true, ignorado: Boolean(dados.ignorado) };
-    try { await db.auth.signOut({ scope: 'local' }); } catch (erro) {}
-    state.pronto = false;
+    if (!state.empresa || state.empresa.id !== empresaIdSessao) return { ativa: false, obsoleta: true };
+    if (resposta.status === 401) {
+      var tokenRenovado = await recuperarSessaoExpiradaMobile(token).catch(function () { return ''; });
+      if (tokenRenovado && !revalidada) return confirmarSessaoDispositivoMobile(acao, true);
+      return { ativa: false, temporaria: state.autenticado };
+    }
+    if (resposta.ok && dados.ok && dados.ativa === true) return { ativa: true, ignorado: Boolean(dados.ignorado) };
+    if (resposta.status !== 403 && !(resposta.ok && dados.ok && dados.ativa === false)) return { ativa: false, temporaria: true };
+    if (state.sessaoDispositivoTimer) window.clearInterval(state.sessaoDispositivoTimer);
+    state.sessaoDispositivoTimer = null;
+    state.dadosCriticosProntos = false;
+    state.pronto = true;
     state.carregando = false;
-    state.erro = dados.mensagem || 'Esta conta foi acessada em outro dispositivo.';
-    window.location.replace(destinoLogoutMobile());
-    return { ativa: false, mensagem: state.erro };
+    state.cadastroPerfilErro = dados.mensagem || 'Este perfil foi acessado em outro dispositivo.';
+    state.cadastroPerfilErroCodigo = dados.codigo || 'perfil_nao_autorizado';
+    render();
+    return { ativa: false, mensagem: state.cadastroPerfilErro };
   }
 
   function iniciarControleSessaoDispositivoMobile() {
@@ -7196,36 +7271,42 @@
     }
     state.cadastroPerfilVerificado = false;
     state.cadastroPerfilErro = '';
+    state.cadastroPerfilErroCodigo = '';
+    var empresaCadastroId = state.empresa.id;
     try {
       var token = tokenCompartilhado
         ? await Promise.resolve(tokenCompartilhado)
         : await tokenSessao();
-      if (!token) throw new Error('Sessão indisponível. Entre novamente.');
-      var retorno = await requisitarJsonMobileComRetry('/api/perfil-cadastro?empresaId=' + encodeURIComponent(state.empresa.id), {
+      if (!token) {
+        await recuperarSessaoExpiradaMobile('');
+        return false;
+      }
+      var retorno = await requisitarJsonMobileComRetry('/api/perfil-cadastro?empresaId=' + encodeURIComponent(empresaCadastroId), {
         headers: { Authorization: 'Bearer ' + token },
       });
       var resposta = retorno.resposta;
       var json = retorno.json;
-      // Em iOS, uma troca de perfil pode coincidir com a renovação silenciosa
-      // do token. Revalida uma única vez com token novo antes de concluir que
-      // o acesso foi negado. A segunda resposta continua sendo a fonte de
-      // verdade: não há bypass de vínculo ou permissão.
-      if (!resposta.ok && (resposta.status === 401 || resposta.status === 403)) {
-        var tokenRenovado = await aguardarTokenSessaoAtualizadoMobile().catch(function () { return ''; });
+      // Apenas 401 permite recuperar a autenticação. 403 é permissão do
+      // perfil e 503 é falha transitória: nenhum dos dois força logout.
+      if (!resposta.ok && resposta.status === 401) {
+        var tokenRenovado = await recuperarSessaoExpiradaMobile(token).catch(function () { return ''; });
         if (tokenRenovado) {
-          retorno = await requisitarJsonMobileComRetry('/api/perfil-cadastro?empresaId=' + encodeURIComponent(state.empresa.id), {
+          retorno = await requisitarJsonMobileComRetry('/api/perfil-cadastro?empresaId=' + encodeURIComponent(empresaCadastroId), {
             headers: { Authorization: 'Bearer ' + tokenRenovado },
           });
           resposta = retorno.resposta;
           json = retorno.json;
         }
       }
+      if (!state.autenticado || !state.empresa || state.empresa.id !== empresaCadastroId) return false;
+      state.cadastroPerfilErroCodigo = json.codigo || '';
       if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível verificar o cadastro deste perfil.');
       state.cadastroPerfilStatus = json;
       state.cadastroPerfilDados = json.cadastro;
       state.cadastroPerfilVerificado = true;
       return true;
     } catch (e) {
+      if (!state.autenticado || !state.empresa || state.empresa.id !== empresaCadastroId) return false;
       console.error('Erro ao carregar cadastro do perfil:', e);
       state.cadastroPerfilErro = e && e.message ? e.message : 'Não foi possível verificar o cadastro deste perfil.';
       return false;
@@ -7429,6 +7510,24 @@
     }
     var empresaId = state.empresa.id;
     var ano = Number(state.ano);
+    // Registra/valida a sessão ANTES das leituras financeiras e do cache.
+    // Uma falha transitória não pode liberar dados nem encerrar o login.
+    var sessaoDispositivo = await confirmarSessaoDispositivoMobile(
+      state.sessaoDispositivoEmpresa === empresaId ? 'verificar' : 'entrar'
+    );
+    if (!sessaoDispositivo.ativa) {
+      if (sessaoDispositivo.temporaria && state.autenticado) {
+        state.carregando = false;
+        // Atualização em segundo plano sem rede mantém a leitura já aberta.
+        if (!exibeTelaPreparacao && state.dadosCriticosProntos) return;
+        state.pronto = true;
+        state.cadastroPerfilErro = 'Não foi possível confirmar o acesso agora. Confira sua conexão e tente novamente.';
+        state.cadastroPerfilErroCodigo = '';
+        render();
+      }
+      return;
+    }
+    state.sessaoDispositivoEmpresa = empresaId;
     // A leitura local começa junto com as demais preparações. O cache nunca
     // libera a interface antes de sessão, perfil, assinatura e cadastro serem
     // confirmados para o usuário atual.
@@ -7553,11 +7652,7 @@
       render();
       return;
     }
-    var sessaoDispositivo = await confirmarSessaoDispositivoMobile(
-      state.sessaoDispositivoEmpresa === empresaId ? 'verificar' : 'entrar'
-    );
-    if (!sessaoDispositivo.ativa) return;
-    state.sessaoDispositivoEmpresa = empresaId;
+    if (!state.autenticado || !state.empresa || state.empresa.id !== empresaId) return;
     // Guarda o dia da carga (São Paulo) — usado para só recarregar ao voltar
     // ao app quando o dia virou (despesas previstas do novo dia).
     try { state.diaUltimoCarregamento = dataHoraPontoMobile().data; } catch (e) {}
@@ -15686,6 +15781,7 @@
     else if (state.validacaoTelefoneObrigatoria) telaAtual = telaTelefoneObrigatorioMobile(false);
     else if (state.paywallCadastroCiclo) telaAtual = telaCadastroPerfilMobile('paywall');
     else if (state.paywallAtivo) telaAtual = telaPaywallMobile();
+    else if (state.cadastroPerfilErro && state.paywallSelecionando) telaAtual = telaPaywallSelecaoMobile();
     else if (state.cadastroPerfilErro) telaAtual = telaErroCadastroPerfilMobile();
     else if (deveExibirCadastroPerfilMobile()) telaAtual = telaCadastroPerfilMobile('lembrete');
     else if (state.cadastroPerfilEditando) telaAtual = telaCadastroPerfilMobile('edicao');
@@ -15749,6 +15845,8 @@
     bind('cp-fechar-edicao', fecharEdicaoCadastroPerfilMobile);
     bind('cp-cancelar-edicao', fecharEdicaoCadastroPerfilMobile);
     bind('cp-tentar-novamente', carregarDados);
+    bind('cp-trocar-perfil', function () { state.paywallSelecionando = true; render(); });
+    bind('cp-entrar-novamente', sair);
     bindChange('cp-tipo-empresa', function () { capturarCadastroPerfilMobile(); state.cadastroPerfilDados.documento = ''; render(); });
     bindChange('cp-ie-isento', function () { var el = document.getElementById('cp-ie'); if (el) { el.disabled = this.checked; if (this.checked) el.value = ''; } });
     bindChange('cp-im-isento', function () { var el = document.getElementById('cp-im'); if (el) { el.disabled = this.checked; if (this.checked) el.value = ''; } });

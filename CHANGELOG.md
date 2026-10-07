@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.48.0.44 - 2026-10-07
+
+- **Sessões isoladas por perfil**: abrir um Pessoal não revoga o login inteiro
+  nem os acessos empresariais Pro/Premium. Business Básico substitui somente a
+  sessão daquele perfil; a sessão substituída não se reativa ao recarregar,
+  alterar o identificador do aparelho ou renovar o token. A decisão é atômica
+  no banco, com trava por usuário/perfil, e não usa logout global Supabase.
+  A rota legada de sessão única também deixa de encerrar logins globalmente.
+- **Recuperação do acesso mobile**: sessão comprovadamente inexistente abre o
+  login do próprio mobile após limpeza somente local. Permissão negada e
+  indisponibilidade são tratadas separadamente; não apagam autenticação nem
+  dados salvos. Uma renovação nativa usa o token novo uma única vez.
+- **Bloqueio restrito**: perfil em outro dispositivo oferece troca de perfil
+  ou novo login, preservando os demais perfis. A autorização compartilhada das
+  APIs e políticas restritivas financeiras impedem uso da sessão substituída.
+- **Publicação coordenada**: depende da migração
+  `20261007190000_sessoes_isoladas_por_perfil.sql` antes do deploy das rotas.
+  Auditoria SQL disponível em `scripts/auditar-sessoes-perfil-banco.mjs`, sem
+  conexão com produção. Cadastros, preços, catálogos e valores não são migrados.
+
 ## 1.48.0.43.26-av180 - 2026-10-07
 
 - **Download provisório no Android instalado**: pacotes antigos sem os plugins

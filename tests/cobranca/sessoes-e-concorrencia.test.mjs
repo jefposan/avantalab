@@ -5,18 +5,20 @@ import { readFile } from 'node:fs/promises';
 test('sessões empresariais são decididas no servidor por dispositivo e plano', async () => {
   const [rota, migracao, planos] = await Promise.all([
     readFile(new URL('../../app/api/cobranca/sessoes/route.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../../supabase/migrations/20260923110000_sessoes_e_concorrencia_financeira.sql', import.meta.url), 'utf8'),
+    readFile(new URL('../../supabase/migrations/20261007190000_sessoes_isoladas_por_perfil.sql', import.meta.url), 'utf8'),
     readFile(new URL('../../app/lib/planos-comerciais.ts', import.meta.url), 'utf8'),
   ]);
 
   assert.match(rota, /acao: AcaoSessao = corpo\.acao === 'verificar' \? 'verificar' : 'entrar'/);
   assert.match(rota, /permiteSessoesSimultaneasDoMesmoUsuario/);
-  assert.match(rota, /neq\('dispositivo_id', dispositivoId\)/);
-  assert.match(rota, /signOut\(token, 'others'\)/);
+  assert.match(rota, /avantalab_confirmar_sessao_perfil/);
+  assert.doesNotMatch(rota, /signOut\(/);
   assert.match(rota, /dispositivo nunca pode reativar-se por/);
-  assert.match(migracao, /create table if not exists public\.sessoes_acesso/);
-  assert.match(migracao, /unique \(user_id, dispositivo_id\)/);
-  assert.match(migracao, /Usuário consulta as próprias sessões/);
+  assert.match(migracao, /primary key \(user_id, empresa_id, sessao_auth_id\)/);
+  assert.match(migracao, /pg_advisory_xact_lock/);
+  assert.match(migracao, /not p_simultaneas and \(p_acao = 'entrar' or v_simultaneas\)/);
+  assert.match(migracao, /empresa_id = p_empresa_id/);
+  assert.match(migracao, /as restrictive for all/);
   assert.match(planos, /permiteSessoesSimultaneasDoMesmoUsuario: false/);
   assert.match(planos, /permiteSessoesSimultaneasDoMesmoUsuario: true/);
 });

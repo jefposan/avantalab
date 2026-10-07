@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { erroAutenticacaoDefinitivo } from './sessao-perfil';
 
 const CHAVE_DISPOSITIVO = 'avantalab.dispositivo.v1';
 
@@ -14,9 +15,10 @@ export function obterIdDispositivo() {
 }
 
 export async function validarSessaoDoDispositivo(empresaId: string, acao: 'entrar' | 'verificar') {
-  const { data } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getSession().catch(() => ({ data: { session: null }, error: { status: 503 } }));
+  if (error) return { ok: false, ativa: false, expirada: erroAutenticacaoDefinitivo(error), mensagem: 'Não foi possível confirmar a sessão agora.' };
   const token = data.session?.access_token;
-  if (!token) return { ok: false, ativa: false, mensagem: 'Sua sessão expirou.' };
+  if (!token) return { ok: false, ativa: false, expirada: true, mensagem: 'Sua sessão expirou.' };
   const resposta = await fetch('/api/cobranca/sessoes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -25,7 +27,10 @@ export async function validarSessaoDoDispositivo(empresaId: string, acao: 'entra
   const dados = await resposta?.json().catch(() => null);
   return {
     ok: Boolean(resposta?.ok && dados?.ok),
-    ativa: dados?.ativa !== false,
+    // Falha de rede/servidor não encerra o login; tampouco vira confirmação.
+    ativa: Boolean(resposta?.ok && dados?.ok && dados?.ativa === true),
+    expirada: resposta?.status === 401,
+    bloqueada: resposta?.status === 403 || Boolean(resposta?.ok && dados?.ativa === false),
     ignorado: Boolean(dados?.ignorado),
     mensagem: String(dados?.mensagem || ''),
   };

@@ -710,8 +710,20 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     const confirmar = async (acao: 'entrar' | 'verificar') => {
       const resultado = await validarSessaoDoDispositivo(empresaId, acao);
       if (!ativo || resultado.ignorado || resultado.ativa) return;
-      await encerrarSessaoExpirada();
-      if (ativo) setAuthErro(resultado.mensagem || 'Esta conta foi acessada em outro dispositivo. Entre novamente para continuar.');
+      if (resultado.expirada) {
+        await encerrarSessaoExpirada();
+        if (ativo) setAuthErro(resultado.mensagem || 'Sua sessão expirou. Entre novamente.');
+      } else if (resultado.bloqueada) {
+        // O bloqueio pertence a este perfil, não à autenticação inteira.
+        limparNavegacaoModulos();
+        setAcessoLiberado(false);
+        setEmpresaId(null);
+        setPerfilUsuario(null);
+        setModoSelecaoPerfil('entrada');
+        setEmpresaParaSelecionar(null);
+        setModalSelecionarEmpresa(true);
+        abrirAviso('Acesso a este perfil', resultado.mensagem);
+      }
     };
     void confirmar('entrar');
     const intervalo = window.setInterval(() => { void confirmar('verificar'); }, 8000);

@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.26 -->
+<!-- ava-version: 1.48.0.44 -->
+
+> Revisão 1.48.0.44: sessão inexistente no servidor retorna ao login deste
+> aparelho, preservando dados salvos. Falhas temporárias permitem tentar de
+> novo sem logout. Perfil Business Básico substituído em outro aparelho oferece
+> Trocar perfil ou Entrar novamente; Pessoal não encerra perfis empresariais,
+> e Pro/Premium mantêm acessos simultâneos. Não orientar reinstalação do app.
 
 > Revisão 1.48.0.43.26: download provisório da Divulgação no Android instalado
 > antigo do AvantaVendas. Nenhuma alteração nos fluxos da Gestão Mobile.

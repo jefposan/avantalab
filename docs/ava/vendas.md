@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.26 -->
+<!-- ava-version: 1.48.0.44 -->
+
+> Revisão 1.48.0.44: sem impacto operacional nos comandos do AvantaVendas.
+> A Gestão deixa de revogar globalmente o login Supabase ao abrir outro perfil.
+> Permissões específicas do Vendas, catálogo, preços e pedidos permanecem iguais.
 
 > Revisão 1.48.0.43.26-av180: no Android instalado antigo, sem compartilhamento
 > nativo, Compartilhar material abre o download no navegador. O aviso informa

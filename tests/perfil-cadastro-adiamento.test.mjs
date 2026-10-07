@@ -20,11 +20,12 @@ test('a verificação do cadastro reutiliza a autorização oficial e o Mobile r
   const route = read('app/api/perfil-cadastro/route.ts');
   const mobile = read('public/mobile-app.js');
 
-  assert.match(route, /import \{ autenticarPerfilCobranca \} from '\.\.\/\.\.\/lib\/cobranca-servidor'/);
-  assert.match(route, /const acesso = await autenticarPerfilCobranca\(request, empresaId\)/);
+  assert.match(route, /import \{ autenticarPerfilCobrancaDetalhado \} from '\.\.\/\.\.\/lib\/cobranca-servidor'/);
+  assert.match(route, /const resultado = await autenticarPerfilCobrancaDetalhado\(request, empresaId\)/);
   assert.match(route, /\.eq\('id', acesso\.vinculo\.id\)/);
   assert.match(mobile, /async function aguardarTokenSessaoAtualizadoMobile\(\)/);
-  assert.match(mobile, /resposta\.status === 401 \|\| resposta\.status === 403/);
+  assert.match(mobile, /!resposta\.ok && resposta\.status === 401/);
+  assert.match(mobile, /recuperarSessaoExpiradaMobile\(token\)/);
   assert.match(mobile, /Authorization: 'Bearer ' \+ tokenRenovado/);
 });
 

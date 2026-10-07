@@ -10,7 +10,7 @@ import {
   validarNomeCompleto,
 } from '../../lib/cadastro-perfil';
 import { ehContaRevisaoLoja } from '../../lib/conta-revisao';
-import { autenticarPerfilCobranca } from '../../lib/cobranca-servidor';
+import { autenticarPerfilCobrancaDetalhado } from '../../lib/cobranca-servidor';
 
 export const runtime = 'nodejs';
 
@@ -76,8 +76,9 @@ async function contexto(request: Request, empresaId: string) {
   // demais recursos da Gestão. Antes havia uma segunda implementação local
   // dessa regra; qualquer ajuste nela podia deixar um perfil válido no painel
   // sem conseguir concluir a verificação inicial do cadastro.
-  const acesso = await autenticarPerfilCobranca(request, empresaId);
-  if (!acesso) return null;
+  const resultado = await autenticarPerfilCobrancaDetalhado(request, empresaId);
+  const acesso = resultado.acesso;
+  if (!acesso) return NextResponse.json({ erro: true, ...resultado.erro }, { status: resultado.erro!.status });
 
   // Nome, e-mail e telefone apenas preenchem o rascunho inicial. Uma falha
   // nessa leitura complementar não pode invalidar um vínculo já autorizado.
@@ -117,7 +118,7 @@ function statusCadastro(cadastro: Record<string, unknown>, tipoPerfil: 'empresa'
 export async function GET(request: Request) {
   const empresaId = texto(new URL(request.url).searchParams.get('empresaId'), 60);
   const ctx = await contexto(request, empresaId);
-  if (!ctx) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
+  if (ctx instanceof NextResponse) return ctx;
 
   const [{ data: empresa }, { data: assinatura }, { data: cadastroAtual }, { data: configuracao }, { data: configuracaoMarca }] = await Promise.all([
     ctx.admin.from('empresas').select('id, nome, tipo_perfil').eq('id', empresaId).maybeSingle(),
@@ -179,7 +180,7 @@ export async function PUT(request: Request) {
   const corpo = await request.json().catch(() => ({}));
   const empresaId = texto(corpo.empresaId, 60);
   const ctx = await contexto(request, empresaId);
-  if (!ctx) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 403 });
+  if (ctx instanceof NextResponse) return ctx;
   if (!['gestor_master', 'administrador'].includes(ctx.vinculo.perfil || '')) {
     return NextResponse.json({ erro: true, mensagem: 'Somente gestores e administradores podem concluir este cadastro.' }, { status: 403 });
   }

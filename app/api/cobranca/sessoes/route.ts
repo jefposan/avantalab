@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA, assinaturaVigente } from '../../../lib/cobranca';
 import { resolverEstadoAcesso } from '../../../lib/cobranca-servidor';
 import { normalizarPlanoComercial, PLANOS_COMERCIAIS } from '../../../lib/planos-comerciais';
+import { erroAutenticacaoDefinitivo, idSessaoAutenticada, permiteSessoesDoPerfil } from '../../../lib/sessao-perfil';
 
 export const runtime = 'nodejs';
 
@@ -35,16 +36,21 @@ export async function POST(request: Request) {
 
   const publico = createClient(url, anon);
   const { data: autenticacao, error: erroAutenticacao } = await publico.auth.getUser(token);
-  if (erroAutenticacao || !autenticacao.user) return respostaErro(401, 'Sua sessão expirou. Entre novamente.');
+  if (erroAutenticacao) return respostaErro(erroAutenticacaoDefinitivo(erroAutenticacao) ? 401 : 503,
+    erroAutenticacaoDefinitivo(erroAutenticacao) ? 'Sua sessão expirou. Entre novamente.' : 'Não foi possível confirmar a sessão agora. Tente novamente.');
+  if (!autenticacao.user) return respostaErro(401, 'Sua sessão expirou. Entre novamente.');
+  const sessaoAuthId = idSessaoAutenticada(token, autenticacao.user.id);
+  if (!sessaoAuthId) return respostaErro(401, 'Sua sessão expirou. Entre novamente.');
 
   const admin = createClient(url, service);
-  const { data: vinculo } = await admin
+  const { data: vinculo, error: erroVinculo } = await admin
     .from('usuarios_empresa')
     .select('id')
     .eq('empresa_id', empresaId)
     .eq('user_id', autenticacao.user.id)
     .eq('status', 'ativo')
     .maybeSingle();
+  if (erroVinculo) return respostaErro(503, 'Não foi possível consultar o acesso ao perfil. Tente novamente.');
   if (!vinculo) return respostaErro(403, 'Você não tem acesso a este perfil.');
 
   const estado = await resolverEstadoAcesso(empresaId);
@@ -53,51 +59,16 @@ export async function POST(request: Request) {
   }
 
   const plano = normalizarPlanoComercial(estado.plano) || 'free';
-  const simultaneas = PLANOS_COMERCIAIS[plano].limites.permiteSessoesSimultaneasDoMesmoUsuario;
-  const agora = new Date().toISOString();
-  const base = admin.from('sessoes_acesso');
-
-  if (acao === 'verificar') {
-    const { data: sessao, error } = await base
-      .select('status')
-      .eq('user_id', autenticacao.user.id)
-      .eq('dispositivo_id', dispositivoId)
-      .maybeSingle();
-    if (error) return respostaErro(502, 'Não foi possível confirmar a sessão.');
-    const ativa = !sessao || sessao.status === 'ativa';
-    return NextResponse.json({
-      ok: true,
-      ativa,
-      politica: simultaneas ? 'simultaneas' : 'unica',
-      mensagem: ativa ? undefined : 'Esta conta foi acessada em outro dispositivo.',
-    });
-  }
-
-  if (!simultaneas) {
-    const { error: revogarErro } = await base
-      .update({ status: 'revogada', revogada_em: agora, atualizado_em: agora })
-      .eq('user_id', autenticacao.user.id)
-      .eq('status', 'ativa')
-      .neq('dispositivo_id', dispositivoId);
-    if (revogarErro) return respostaErro(502, 'Não foi possível encerrar a sessão anterior.');
-
-    // Revoga também refresh tokens de outros dispositivos. A confirmação pela
-    // tabela acima permite que a outra interface reaja imediatamente, mesmo
-    // antes de seu token curto expirar.
-    const { error: signOutErro } = await admin.auth.admin.signOut(token, 'others');
-    if (signOutErro) return respostaErro(502, 'Não foi possível encerrar a sessão anterior.');
-  }
-
-  const { error: salvarErro } = await base.upsert({
-    user_id: autenticacao.user.id,
-    dispositivo_id: dispositivoId,
-    empresa_id: empresaId,
-    plano,
-    status: 'ativa',
-    atualizado_em: agora,
-    revogada_em: null,
-  }, { onConflict: 'user_id,dispositivo_id' });
-  if (salvarErro) return respostaErro(502, 'Não foi possível registrar esta sessão.');
-
-  return NextResponse.json({ ok: true, ativa: true, politica: simultaneas ? 'simultaneas' : 'unica' });
+  const simultaneas = permiteSessoesDoPerfil(estado.tipoPerfil,
+    PLANOS_COMERCIAIS[plano].limites.permiteSessoesSimultaneasDoMesmoUsuario);
+  const { data: ativa, error } = await admin.rpc('avantalab_confirmar_sessao_perfil', {
+    p_user_id: autenticacao.user.id, p_empresa_id: empresaId,
+    p_sessao_auth_id: sessaoAuthId, p_dispositivo_id: dispositivoId,
+    p_plano: plano, p_simultaneas: simultaneas, p_acao: acao,
+  });
+  if (error || typeof ativa !== 'boolean') return respostaErro(503, 'Não foi possível confirmar a sessão do perfil. Tente novamente.');
+  return NextResponse.json({ ok: true, ativa, politica: simultaneas ? 'simultaneas' : 'unica',
+    codigo: ativa ? undefined : 'perfil_em_outro_dispositivo',
+    mensagem: ativa ? undefined : 'Este perfil foi acessado em outro dispositivo. Escolha outro perfil ou entre novamente para usá-lo aqui.',
+  });
 }

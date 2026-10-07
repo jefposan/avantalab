@@ -12,6 +12,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { createClient } from '@supabase/supabase-js';
+import { erroAutenticacaoDefinitivo, idSessaoAutenticada } from './sessao-perfil';
 import {
   DATA_LANCAMENTO,
   type EstadoAcesso,
@@ -129,7 +130,7 @@ export async function resolverDireitoDePerfisDoPerfil(
   };
 }
 
-export async function autenticarPerfilCobranca(
+export async function autenticarPerfilCobrancaDetalhado(
   request: Request,
   empresaId: string,
   exigirGestao = false,
@@ -137,16 +138,23 @@ export async function autenticarPerfilCobranca(
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  if (!url || !anonKey || !serviceRole || !empresaId) return null;
+  const falha = (status: number, codigo: string, mensagem: string) => ({ acesso: null, erro: { status, codigo, mensagem } });
+  if (!url || !anonKey || !serviceRole) return falha(503, 'servico_indisponivel', 'Não foi possível verificar o acesso agora. Tente novamente.');
+  if (!empresaId) return falha(400, 'perfil_ausente', 'Selecione um perfil.');
 
   const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
-  if (!token) return null;
+  if (!token) return falha(401, 'sessao_expirada', 'Sua sessão expirou. Entre novamente.');
   const cliente = createClient(url, anonKey);
   const { data: auth, error } = await cliente.auth.getUser(token);
-  if (error || !auth.user) return null;
+  if (error) return erroAutenticacaoDefinitivo(error)
+    ? falha(401, 'sessao_expirada', 'Sua sessão expirou. Entre novamente.')
+    : falha(503, 'servico_indisponivel', 'Não foi possível confirmar a sessão agora. Tente novamente.');
+  if (!auth.user) return falha(401, 'sessao_expirada', 'Sua sessão expirou. Entre novamente.');
+  const sessaoAuthId = idSessaoAutenticada(token, auth.user.id);
+  if (!sessaoAuthId) return falha(401, 'sessao_expirada', 'Sua sessão expirou. Entre novamente.');
 
   const db = createClient(url, serviceRole);
-  const { data: vinculo } = await db
+  const { data: vinculo, error: erroVinculo } = await db
     .from('usuarios_empresa')
     .select('id, perfil, status')
     .eq('user_id', auth.user.id)
@@ -154,10 +162,25 @@ export async function autenticarPerfilCobranca(
     .eq('status', 'ativo')
     .limit(1)
     .maybeSingle();
-  if (!vinculo) return null;
+  if (erroVinculo) return falha(503, 'servico_indisponivel', 'Não foi possível consultar o acesso ao perfil. Tente novamente.');
+  if (!vinculo) return falha(403, 'perfil_nao_autorizado', 'Você não tem acesso a este perfil.');
   const podeGerenciar = ['gestor_master', 'administrador'].includes(vinculo.perfil || '');
-  if (exigirGestao && !podeGerenciar) return null;
-  return { db, usuario: auth.user, vinculo, podeGerenciar };
+  if (exigirGestao && !podeGerenciar) return falha(403, 'perfil_nao_autorizado', 'Você não tem permissão para esta ação.');
+  const { data: sessoesPerfil, error: erroSessao } = await db.from('sessoes_acesso_perfil')
+    .select('status, sessao_auth_id, simultaneas').eq('user_id', auth.user.id).eq('empresa_id', empresaId)
+    .or(`sessao_auth_id.eq.${sessaoAuthId},and(status.eq.ativa,simultaneas.eq.false)`);
+  if (erroSessao) return falha(503, 'servico_indisponivel', 'Não foi possível confirmar a sessão do perfil. Tente novamente.');
+  const bloqueada = (sessoesPerfil || []).some(sessao => sessao.sessao_auth_id === sessaoAuthId
+    ? sessao.status === 'revogada'
+    : sessao.status === 'ativa' && sessao.simultaneas === false);
+  if (bloqueada) return falha(409, 'perfil_em_outro_dispositivo', 'Este perfil foi acessado em outro dispositivo. Escolha outro perfil ou entre novamente.');
+  return { acesso: { db, usuario: auth.user, vinculo, podeGerenciar }, erro: null };
+}
+
+// Preserva o contrato dos demais endpoints; o cadastro usa o resultado
+// detalhado para distinguir sessão expirada, vínculo negado e falha de rede.
+export async function autenticarPerfilCobranca(request: Request, empresaId: string, exigirGestao = false) {
+  return (await autenticarPerfilCobrancaDetalhado(request, empresaId, exigirGestao)).acesso;
 }
 
 export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAcesso | null> {

@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.26 -->
+<!-- ava-version: 1.48.0.44 -->
+
+> Revisão 1.48.0.44: controle de sessão por perfil. Business Básico acessado em
+> outro dispositivo retorna à seleção de perfil, sem encerrar o login da conta.
+> Para reassumir aquele perfil, faça novo login; recarregar não remove o bloqueio.
+> Pessoal não revoga Pro/Premium, que preservam acessos simultâneos. Falha de rede
+> não provoca logout; as demais funcionalidades não foram alteradas.
 
 > Revisão 1.48.0.43.26: download provisório da Divulgação no Android instalado
 > antigo do AvantaVendas. Nenhuma alteração nos fluxos da Gestão Web.
