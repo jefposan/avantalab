@@ -8,9 +8,3 @@ body:has([data-avantaprecos-viewport='access']) {
   min-height: 100%;
   background: transparent;
 }
-
-html:has([data-avantaprecos-viewport='ready']),
-body:has([data-avantaprecos-viewport='ready']) {
-  min-height: 100%;
-  background: #003e73;
-}

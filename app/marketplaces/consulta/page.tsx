@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/images/marketplaces-mobile-icon-180.png', sizes: '180x180', type: 'image/png' }],
   },
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'AvantaPreços' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'AvantaPreços' },
 };
 
 export const viewport: Viewport = {

@@ -6,7 +6,7 @@ import '../viewport-shell.css';
 export const metadata: Metadata = {
   title: 'Validação visual do AvantaPreços',
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'AvantaPreços' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'AvantaPreços' },
 };
 
 export const viewport: Viewport = {
@@ -21,14 +21,13 @@ type Props = { searchParams: Promise<{ estado?: string; segura?: string }> };
 export default async function MarketplaceViewportValidationPage({ searchParams }: Props) {
   const query = await searchParams;
   const estado = query.estado;
-  const safeStyle = query.segura === 'sim' ? ({ '--avanta-safe-top': '47px' } as CSSProperties) : undefined;
   const accessSafeStyle = query.segura === 'iphone'
     ? ({ '--avanta-access-viewport-height': 'calc(100dvh - 62px)', '--avanta-access-safe-extension': '62px' } as CSSProperties)
     : undefined;
 
   if (estado === 'pronto') {
     return (
-      <div className={styles.page} data-avantaprecos-viewport="ready" style={safeStyle}>
+      <div className={styles.page} data-avantaprecos-viewport="ready">
         <div className={`${styles.topbar} ${styles.topbarMobile}`}>
           <div className={styles.topbarInner}>
             <div className={styles.brand}>

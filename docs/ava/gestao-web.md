@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.21 -->
+<!-- ava-version: 1.48.0.43.22 -->
+
+> Revisão 1.48.0.43.22: o cabeçalho autenticado do **AvantaPreços** segue o
+> mesmo modelo visual e de viewport do PWA Recebimentos. A correção é restrita
+> ao PWA de consulta e não altera a gestão web de preços ou conexões.
 
 > Revisão 1.48.0.43.21: no **AvantaPreços**, Mercado Livre e Amazon Brasil são
 > fontes obrigatórias da pesquisa. Quando o produto exato estiver disponível,

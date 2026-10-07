@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.21 -->
+<!-- ava-version: 1.48.0.43.22 -->
+
+> Revisão 1.48.0.43.22: o alinhamento do cabeçalho com o PWA Recebimentos
+> pertence exclusivamente ao **AvantaPreços** e não altera telas, fluxos ou
+> instalação do AvantaVendas.
 
 > Revisão 1.48.0.43.21: a obrigatoriedade de Mercado Livre e Amazon na base de
 > preços pertence exclusivamente ao **AvantaPreços** e não altera os fluxos,

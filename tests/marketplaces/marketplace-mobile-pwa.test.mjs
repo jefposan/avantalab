@@ -13,6 +13,7 @@ const priceAccess = read('app/modules/marketplaces/services/price-access.ts');
 const pwaPage = read('app/marketplaces/consulta/page.tsx');
 const pwaManifest = read('app/marketplaces/consulta/manifest.webmanifest/route.ts');
 const receiptsPwaPage = read('app/recebimentos/colaborador/page.tsx');
+const receiptsCss = read('app/recebimentos/recebimentos.module.css');
 const viewportShell = read('app/marketplaces/consulta/viewport-shell.css');
 const viewportValidationPage = read('app/marketplaces/consulta/validacao-visual/page.tsx');
 
@@ -156,9 +157,10 @@ test('manifesto, service worker e cópia do endereço tornam o AvantaPreços ins
   assert.match(pwaManifest, /short_name: 'AvantaPreços'/);
 });
 
-test('barra de status do iPhone mostra diretamente o topo sólido do AvantaPreços', () => {
-  assert.match(pwaPage, /statusBarStyle: 'black-translucent'/);
-  assert.doesNotMatch(pwaPage, /statusBarStyle: 'default'/);
+test('barra de status do iPhone usa o mesmo modelo do PWA Recebimentos', () => {
+  assert.match(pwaPage, /statusBarStyle: 'default'/);
+  assert.doesNotMatch(pwaPage, /statusBarStyle: 'black-translucent'/);
+  assert.match(receiptsPwaPage, /statusBarStyle: 'default'/);
   assert.doesNotMatch(pwaPage, /interactiveWidget/);
   assert.doesNotMatch(receiptsPwaPage, /interactiveWidget/);
   assert.match(pwaPage, /themeColor: '#003E73'/);
@@ -167,10 +169,14 @@ test('barra de status do iPhone mostra diretamente o topo sólido do AvantaPreç
 });
 
 test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas paralelas', () => {
-  assert.match(css, /\.page \{[^}]*position: relative;[^}]*--avanta-safe-top: env\(safe-area-inset-top\);[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
-  assert.match(css, /\.topbar \{[^}]*top: 0;[^}]*background: var\(--brand\);[^}]*opacity: 1;[^}]*backdrop-filter: none;/);
-  assert.match(css, /\.topbarInner \{[^}]*position: relative;[^}]*z-index: 1;[^}]*padding: calc\(14px \+ var\(--avanta-safe-top\)\) 16px 14px;/);
-  assert.match(css, /\.topbarMobile \.topbarInner \{[^}]*min-height: calc\(76px \+ var\(--avanta-safe-top\)\);/);
+  assert.match(css, /\.page \{[^}]*position: relative;[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
+  assert.doesNotMatch(css, /--avanta-safe-top/);
+  assert.match(css, /\.topbar \{[^}]*position: sticky;[^}]*z-index: 20;[^}]*top: 0;[^}]*background: color-mix\(in srgb, var\(--brand\) 96%, #000\);/);
+  assert.match(css, /\.topbarInner \{[^}]*max-width: 1080px;[^}]*padding: 12px 16px;/);
+  assert.match(css, /\.topbarMobile \.topbarInner \{[^}]*min-height: 76px;[^}]*padding-block: 14px;/);
+  assert.match(receiptsCss, /\.topbar \{[^}]*position: sticky;[^}]*top: 0;[^}]*z-index: 20;[^}]*background: color-mix\(in srgb, var\(--cp\) 96%, #000\);/);
+  assert.match(receiptsCss, /\.topbarInner \{[^}]*max-width: 1080px;[^}]*padding: 12px 16px;/);
+  assert.match(receiptsCss, /\.topbarColaborador \.topbarInner \{[^}]*min-height: 76px;[^}]*padding-block: 14px;/);
   assert.match(css, /\.loginWrap \{[^}]*--avanta-access-viewport-height: 100dvh;[^}]*--avanta-access-safe-extension: 0px;[^}]*min-height: calc\(var\(--avanta-access-viewport-height\) \+ var\(--avanta-access-safe-extension\)\);[^}]*background-image: image-set\([^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
   assert.match(css, /@media \(max-width: 1023px\) \{ \.page, \.loginWrap \{[^}]*background-size: 100% auto;/);
   assert.match(css, /@media \(max-width: 1023px\) and \(min-aspect-ratio: 9\/16\), \(max-width: 1023px\) and \(max-aspect-ratio: 9\/18\) \{ \.page, \.loginWrap \{[^}]*background-size: auto 100%;/);
@@ -178,7 +184,7 @@ test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas 
   assert.match(css, /@supports \(-webkit-touch-callout: none\) \{ \.page, \.loginWrap \{[^}]*background-attachment: scroll;/);
   assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background-color: #eef6fb;[^}]*background-image: none;/);
   assert.match(viewportShell, /body:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background: transparent;/);
-  assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='ready'\]\),\s*body:has\(\[data-avantaprecos-viewport='ready'\]\) \{[^}]*background: #003e73;/);
+  assert.doesNotMatch(viewportShell, /data-avantaprecos-viewport='ready'/);
   assert.doesNotMatch(viewportShell, /bg-avantalab-mobile|background-position|background-size|background-attachment/);
   assert.match(client, /data-avantaprecos-viewport="access"/);
   assert.match(client, /data-avantaprecos-viewport="ready"/);
@@ -187,14 +193,15 @@ test('AvantaPreços replica a estrutura de viewport do Recebimentos sem camadas 
   assert.match(pwaPage, /rel="preload"[\s\S]*bg-avantalab-mobile-1080x1920-sem-logo\.webp/);
 });
 
-test('rota isolada valida login, carregamento e cabeçalho com área segura simulada', () => {
+test('rota isolada valida login, carregamento e cabeçalho sem compensação manual', () => {
   assert.match(viewportValidationPage, /estado === 'pronto'/);
   assert.match(viewportValidationPage, /estado === 'carregando'/);
-  assert.match(viewportValidationPage, /'--avanta-safe-top': '47px'/);
+  assert.doesNotMatch(viewportValidationPage, /--avanta-safe-top/);
   assert.match(viewportValidationPage, /'--avanta-access-viewport-height': 'calc\(100dvh - 62px\)'/);
   assert.match(viewportValidationPage, /'--avanta-access-safe-extension': '62px'/);
   assert.match(viewportValidationPage, /className=\{styles\.loginWrap\} data-avantaprecos-viewport="access"/);
   assert.match(viewportValidationPage, /className=\{styles\.page\} data-avantaprecos-viewport="ready"/);
   assert.match(viewportValidationPage, /className=\{`\$\{styles\.topbar\} \$\{styles\.topbarMobile\}`\}/);
+  assert.match(viewportValidationPage, /statusBarStyle: 'default'/);
   assert.match(viewportValidationPage, /robots: \{ index: false, follow: false \}/);
 });

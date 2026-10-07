@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.43.22: o topo do AvantaPreços usa o mesmo modelo
+// de barra de status, altura e espaçamento do PWA Recebimentos, sem somar uma
+// segunda compensação manual da área segura do iPhone.
 // Revisado na versão 1.48.0.43.21: o AvantaPreços pesquisa obrigatoriamente
 // Mercado Livre e Amazon Brasil e preserva na média o menor preço válido de
 // produto novo de cada plataforma quando o item exato estiver disponível.

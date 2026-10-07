@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.21 -->
+<!-- ava-version: 1.48.0.43.22 -->
+
+> Revisão 1.48.0.43.22: o topo autenticado do **AvantaPreços** replica o padrão
+> do PWA Recebimentos: barra de status padrão do iPhone, cabeçalho de 76 px e o
+> mesmo espaçamento interno. A área segura não é somada manualmente, evitando
+> uma faixa ou altura duplicada no topo quando o app está instalado.
 
 > Revisão 1.48.0.43.21: o **AvantaPreços** pesquisa obrigatoriamente Mercado
 > Livre e Amazon Brasil e inclui, quando houver correspondência exata, o menor

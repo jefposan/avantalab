@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.0.43.22 - 2026-10-07
+
+- **Topo do AvantaPreços alinhado ao Recebimentos**: o PWA passa a usar o
+  mesmo modelo de barra de status do iPhone, altura de 76 px e espaçamento do
+  cabeçalho do PWA Recebimentos. A compensação manual da área segura foi
+  removida para evitar faixa ou altura duplicada acima do conteúdo.
+
 ## 1.48.0.43.21 - 2026-10-07
 
 - **Mercado Livre e Amazon obrigatórios no AvantaPreços**: toda pesquisa web de
