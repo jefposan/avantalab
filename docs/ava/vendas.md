@@ -1,8 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.06 -->
+<!-- ava-version: 1.48.0.43.07 -->
 
-<!-- avantavendas-asset-revision: 171 -->
+<!-- avantavendas-asset-revision: 172 -->
+
+> Revisão 1.48.0.43.07-av172: a tela **Produtos** mostra e contabiliza somente
+> produtos ativos. Cópias inativas preservadas para auditoria não aparecem no
+> catálogo nem ficam disponíveis para novos pedidos.
 
 > Revisão 1.48.0.43.06-av171: a tela **Produtos** possui o ícone
 > **Atualizar**. Ele atualiza somente a lista de produtos e pacotes do perfil

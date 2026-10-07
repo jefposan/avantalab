@@ -494,6 +494,7 @@
       .from('vendas_mobile_produtos')
       .select('*')
       .eq('conta_id', contaId)
+      .eq('ativo', true)
       .order('criado_em', { ascending: false })
       .order('id', { ascending: false }));
     if (error) throw error;

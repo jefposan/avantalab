@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.06 -->
+<!-- ava-version: 1.48.0.43.07 -->
+
+> Revisão 1.48.0.43.07: o filtro de Produtos ativos pertence ao AvantaVendas e
+> não altera os fluxos da Gestão Web.
 
 > Revisão 1.48.0.43.06: o botão Atualizar Produtos pertence ao AvantaVendas e
 > não altera os fluxos da Gestão Web.

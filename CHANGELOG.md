@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.48.0.43.07-av172 - 2026-10-06
+
+- **Produtos ativos apenas**: a lista e a contagem de Produtos agora ignoram
+  cópias inativas mantidas somente para auditoria. Produtos desativados deixam
+  de aparecer tanto na tela quanto no catálogo disponível para vendas.
+
 ## 1.48.0.43.06-av171 - 2026-10-06
 
 - **Atualizar Produtos**: a tela de Produtos passa a ter um botão com ícone SVG

@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.43.07: a lista Produtos exibe somente itens ativos;
+// cópias inativas preservadas para auditoria não ficam disponíveis para venda.
 // Revisado na versão 1.48.0.43.06: o botão Atualizar da tela Produtos consulta
 // novamente catálogo e pacotes apenas do perfil ativo, preservando a lista.
 // Revisado na versão 1.48.0.43.05: cada conta mantém uma só cópia por produto
