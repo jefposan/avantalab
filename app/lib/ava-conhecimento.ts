@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.43.05: cada conta mantém uma só cópia por produto
+// de catálogo. A correção transfere as referências para a cópia original,
+// preserva pedidos, recebimentos, movimentos e aprendizado por voz.
 // Revisado na versão 1.48.0.43.01: o histórico do cliente respeita a área
 // segura superior e inferior e mantém cabeçalho, abas e fechamento acessíveis
 // enquanto somente a lista longa rola.

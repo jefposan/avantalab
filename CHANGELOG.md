@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.48.0.43.05-av170 - 2026-10-06
+
+- **Catálogo sem cópias repetidas**: uma migração preserva a primeira cópia de
+  cada produto publicado, move pedidos, recebimentos, movimentos e termos de
+  voz para ela e inativa a cópia redundante apenas para auditoria. Nenhum pedido
+  ou pagamento é apagado.
+- **Proteção de origem por conta**: o banco passa a aceitar somente uma cópia
+  de cada produto de catálogo em cada conta. Publicações concorrentes usam um
+  bloqueio transacional e reutilizam a cópia já criada.
+
 ## 1.48.0.43.04 - 2026-10-06
 
 - **Gestão de situação no editor**: o lápis do anúncio agora exibe as ações
@@ -18,7 +28,6 @@
 - **Nova conta no mesmo marketplace**: após existir uma conexão, o card passa a
   oferecer **Conectar outra conta**. A autorização adicional mantém as contas
   atuais vinculadas e informa isso antes de abrir o Mercado Livre.
-
 ## 1.48.0.43.01-av168 - 2026-10-06
 
 - **Histórico do cliente seguro em qualquer tela**: o card agora limita sua

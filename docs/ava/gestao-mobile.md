@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.04 -->
+<!-- ava-version: 1.48.0.43.05 -->
+
+> Revisão 1.48.0.43.05: a deduplicação de produtos de catálogo pertence ao
+> AvantaVendas e preserva seu histórico; sem impacto operacional na Gestão
+> Mobile.
 
 > Revisão 1.48.0.43.04: as ações de situação dos anúncios dentro do editor de
 > Marketplaces pertencem à Gestão Web e não alteram a Gestão Mobile.

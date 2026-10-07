@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.04 -->
+<!-- ava-version: 1.48.0.43.05 -->
+
+> Revisão 1.48.0.43.05: a deduplicação de produtos de catálogo pertence ao
+> AvantaVendas e preserva seu histórico; sem impacto operacional na Gestão Web.
 
 > Revisão 1.48.0.43.04: ao abrir o lápis de um anúncio, as ações aplicáveis
 > aparecem junto da edição: **Pausar**, **Reativar**, **Encerrar** ou **Excluir

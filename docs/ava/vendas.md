@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.04 -->
+<!-- ava-version: 1.48.0.43.05 -->
+
+<!-- avantavendas-asset-revision: 170 -->
+
+> Revisão 1.48.0.43.05-av170: cada produto publicado aparece uma única vez na
+> conta de vendas. Quando existia cópia repetida, pedidos, recebimentos,
+> movimentos e termos de voz passam para a cópia original; a repetida fica
+> inativa somente para auditoria. Nenhum pedido, pagamento ou histórico é
+> apagado.
 
 > Revisão 1.48.0.43.04: as ações de pausar, reativar, encerrar ou excluir
 > anúncios no editor de Marketplaces pertencem à Gestão Web e não alteram o
