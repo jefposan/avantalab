@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.48.0.43.03 - 2026-10-06
+
+- **Orientação para segunda conta**: ao usar **Conectar outra conta**, o módulo
+  informa que as conexões atuais permanecem vinculadas, mas a sessão atual do
+  Mercado Livre no navegador deve ser trocada ou usada em janela anônima.
+
 ## 1.48.0.43.02 - 2026-10-06
 
 - **Nova conta no mesmo marketplace**: após existir uma conexão, o card passa a

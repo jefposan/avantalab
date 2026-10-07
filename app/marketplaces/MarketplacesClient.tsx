@@ -232,7 +232,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
         </div>
         <div className={styles.connectionNotice}>
           {selectedProvider.available && <button type="button" disabled={connecting || !companyId || !canManageConnections} onClick={() => void connectMarketplace()} aria-describedby={connectedAccounts.length ? 'connect-another-account-help' : undefined}>{connecting ? 'Abrindo Mercado Livre…' : connectedAccounts.length ? 'Conectar outra conta' : 'Conectar conta'}</button>}
-          {connectedAccounts.length > 0 && <p id="connect-another-account-help" className={styles.connectionHelp}>As contas já conectadas serão mantidas.</p>}
+          {connectedAccounts.length > 0 && <p id="connect-another-account-help" className={styles.connectionHelp}>As contas já conectadas serão mantidas. Para autorizar outra, saia da conta atual do Mercado Livre neste navegador ou use uma janela anônima.</p>}
           {connectionNotice && <p className={styles.connectionMessage} role="alert">{connectionNotice}</p>}
         </div>
         {marketplace === 'mercado_livre' && <div className={styles.connectedAccounts} aria-labelledby="connected-accounts-title">

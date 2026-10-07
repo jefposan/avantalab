@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.02 -->
+<!-- ava-version: 1.48.0.43.03 -->
+
+> Revisão 1.48.0.43.03: ao usar **Conectar outra conta**, a tela orienta sair
+> da conta atual do marketplace no navegador ou usar janela anônima antes de
+> autorizar a próxima, sem desconectar as contas já vinculadas ao AvantaLab.
 
 > Revisão 1.48.0.43.02: quando já houver conta de um marketplace vinculada, o
 > botão passa a ser **Conectar outra conta**. Essa ação preserva as conexões

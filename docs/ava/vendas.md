@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.02 -->
+<!-- ava-version: 1.48.0.43.03 -->
+
+> Revisão 1.48.0.43.03: a orientação para trocar a sessão antes de conectar
+> outra conta em Marketplaces pertence à Gestão Web e não altera o AvantaVendas.
 
 > Revisão 1.48.0.43.02: a conexão adicional de conta em Marketplaces pertence à
 > Gestão Web e não altera o AvantaVendas.
