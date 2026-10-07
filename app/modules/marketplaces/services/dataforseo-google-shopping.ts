@@ -24,6 +24,7 @@ type GoogleShoppingProductReference = {
 type PendingLookup = {
   phase: 'products' | 'product_info';
   id: string;
+  fallbackPricesInCents?: number[];
 };
 
 const DEFAULT_BASE_URL = 'https://api.dataforseo.com';
@@ -33,8 +34,8 @@ const DEFAULT_BASE_URL = 'https://api.dataforseo.com';
 // tarefa automaticamente sem publicar uma segunda consulta cobrável.
 // Mantemos cada requisição curta para não prender a Function. Caso a coleta
 // ainda esteja na fila, o PWA continua consultando o MESMO task id.
-const INITIAL_POLL_ATTEMPTS = 5;
-const POLL_INTERVAL_MS = 1_000;
+const POLL_ATTEMPTS_PER_REQUEST = 3;
+const POLL_INTERVAL_MS = 750;
 
 function record(value: unknown): JsonRecord {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as JsonRecord : {};
@@ -320,12 +321,48 @@ function taskId(body: JsonRecord) {
   return id;
 }
 
+function validFallbackPrices(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  const prices = value.filter((price): price is number => Number.isSafeInteger(price) && price > 0 && price < 100_000_000);
+  return prices.length && prices.length === value.length ? selectReferencePriceCents(prices) : undefined;
+}
+
+function sampleFromPrices(prices: number[] | undefined) {
+  const values = selectReferencePriceCents(prices || []);
+  if (!values.length) return null;
+  return {
+    pricesInCents: values,
+    count: values.length,
+    minimum: values[0] / 100,
+    maximum: values.at(-1)! / 100,
+  } satisfies GoogleShoppingPriceSample;
+}
+
 function encodePendingLookup(value: PendingLookup) {
-  return `${value.phase}:${value.id}`;
+  // A continuação é posteriormente lacrada pela rota. Este envelope interno
+  // conserva a amostra da vitrine enquanto a ficha de vendedores é processada,
+  // evitando perder preços válidos quando o segundo endpoint volta vazio.
+  return `v2.${Buffer.from(JSON.stringify({
+    phase: value.phase,
+    id: value.id,
+    ...(value.fallbackPricesInCents?.length ? { fallbackPricesInCents: value.fallbackPricesInCents } : {}),
+  })).toString('base64url')}`;
 }
 
 function pendingLookup(value: string | undefined): PendingLookup | null {
   if (!value) return null;
+  if (/^v2\.[a-z0-9_-]{20,1200}$/i.test(value)) {
+    try {
+      const parsed = record(JSON.parse(Buffer.from(value.slice(3), 'base64url').toString('utf8')));
+      const phase = text(parsed.phase).toLowerCase();
+      const id = text(parsed.id);
+      if ((phase !== 'products' && phase !== 'product_info') || !/^[0-9a-f-]{20,}$/i.test(id)) return null;
+      const fallbackPricesInCents = validFallbackPrices(parsed.fallbackPricesInCents);
+      return { phase, id, ...(fallbackPricesInCents ? { fallbackPricesInCents } : {}) };
+    } catch {
+      return null;
+    }
+  }
   const match = /^(products|product_info):([0-9a-f-]{20,})$/i.exec(value);
   if (match) return { phase: match[1].toLowerCase() as PendingLookup['phase'], id: match[2] };
   // Continuations emitted before this change were a bare products task id.
@@ -371,19 +408,30 @@ async function postGoogleShoppingProductInfoLookup(reference: GoogleShoppingProd
   return taskId(posted);
 }
 
-async function readGoogleShoppingPriceLookup(taskIdValue: string, input: { ean: string | null; productName: string }, phase: PendingLookup['phase']): Promise<GoogleShoppingPriceLookup> {
-  const endpoint = phase === 'product_info' ? 'product_info' : 'products';
-  const result = await providerRequest(`/v3/merchant/google/${endpoint}/task_get/advanced/${encodeURIComponent(taskIdValue)}`, { method: 'GET' });
-  if (!taskIsComplete(result)) return { status: 'pending', taskId: encodePendingLookup({ phase, id: taskIdValue }) };
-  if (phase === 'products') {
+async function readGoogleShoppingPriceLookup(lookup: PendingLookup, input: { ean: string | null; productName: string }): Promise<GoogleShoppingPriceLookup> {
+  const endpoint = lookup.phase === 'product_info' ? 'product_info' : 'products';
+  const result = await providerRequest(`/v3/merchant/google/${endpoint}/task_get/advanced/${encodeURIComponent(lookup.id)}`, { method: 'GET' });
+  if (!taskIsComplete(result)) return { status: 'pending', taskId: encodePendingLookup(lookup) };
+  if (lookup.phase === 'products') {
+    const productSample = extractGoogleShoppingPriceSample(result, input.productName, input.ean);
     const reference = productReferenceFrom(result, input.productName, input.ean);
     // If Google does not expose an individual product id, retain the useful
     // product-card sample rather than inventing a seller-level result.
-    if (!reference) return { status: 'completed', sample: extractGoogleShoppingPriceSample(result, input.productName, input.ean) };
+    if (!reference) return { status: 'completed', sample: productSample };
     const productInfoTaskId = await postGoogleShoppingProductInfoLookup(reference);
-    return { status: 'pending', taskId: encodePendingLookup({ phase: 'product_info', id: productInfoTaskId }) };
+    return {
+      status: 'pending',
+      taskId: encodePendingLookup({
+        phase: 'product_info',
+        id: productInfoTaskId,
+        ...(productSample ? { fallbackPricesInCents: productSample.pricesInCents } : {}),
+      }),
+    };
   }
-  return { status: 'completed', sample: extractGoogleShoppingSellerPriceSample(result) };
+  return {
+    status: 'completed',
+    sample: extractGoogleShoppingSellerPriceSample(result) || sampleFromPrices(lookup.fallbackPricesInCents),
+  };
 }
 
 export async function consultGoogleShoppingPrices(
@@ -391,9 +439,9 @@ export async function consultGoogleShoppingPrices(
   pendingTaskId?: string,
 ): Promise<GoogleShoppingPriceLookup> {
   let lookup = pendingLookup(pendingTaskId) || { phase: 'products' as const, id: await postGoogleShoppingPriceLookup(input) };
-  for (let attempt = 0; attempt < INITIAL_POLL_ATTEMPTS; attempt++) {
+  for (let attempt = 0; attempt < POLL_ATTEMPTS_PER_REQUEST; attempt++) {
     await wait(POLL_INTERVAL_MS);
-    const result = await readGoogleShoppingPriceLookup(lookup.id, input, lookup.phase);
+    const result = await readGoogleShoppingPriceLookup(lookup, input);
     if (result.status === 'completed') return result;
     const next = pendingLookup(result.taskId);
     if (!next) throw new MarketplaceError(503, 'price_provider_invalid_response', 'A consulta de preços retornou uma resposta incompleta. Tente novamente.');

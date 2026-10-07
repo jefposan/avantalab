@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.15 -->
+<!-- ava-version: 1.48.0.43.16 -->
+
+> Revisão 1.48.0.43.16: a correção da reconsulta assíncrona de preços pertence
+> ao PWA **AvantaPreços** e não altera os fluxos do AvantaVendas.
 
 > Revisão 1.48.0.43.15: as mensagens de diagnóstico de preço do
 > **AvantaPreços** pertencem ao PWA de consulta e não alteram o AvantaVendas.

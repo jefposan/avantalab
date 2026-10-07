@@ -76,6 +76,14 @@ function mockPriceProvider({ pendingPolls = 0 } = {}) {
   };
 }
 
+async function completeGoogleLookup(input, pendingTaskId) {
+  let result = await consultGoogleShoppingPrices(input, pendingTaskId);
+  for (let attempt = 0; result.status === 'pending' && attempt < 20; attempt++) {
+    result = await consultGoogleShoppingPrices(input, result.taskId);
+  }
+  return result;
+}
+
 test('sugestões aplicam exatamente 50%, 70% e 90% sobre o preço informado', () => {
   assert.deepEqual(calculatePriceSuggestions([10000]), { market: 100, minimum: 50, medium: 70, ideal: 90 });
 });
@@ -123,6 +131,68 @@ test('tarefa Google concluída sem ofertas encerra a consulta em vez de permanec
   };
   const result = await consultGoogleShoppingPrices({ ean, productName: 'Produto sem ofertas' });
   assert.deepEqual(result, { status: 'completed', sample: null });
+});
+
+test('consulta demorada continua na mesma tarefa até receber os preços', async () => {
+  process.env.DATAFORSEO_PRICE_LOOKUP_ENABLED = 'true';
+  process.env.DATAFORSEO_API_LOGIN = 'test-login';
+  process.env.DATAFORSEO_API_PASSWORD = 'test-password';
+  process.env.DATAFORSEO_API_BASE_URL = 'https://sandbox.dataforseo.com';
+  let productsPosts = 0;
+  let infoPosts = 0;
+  let productPolls = 0;
+  let infoPolls = 0;
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith('/products/task_post')) {
+      productsPosts++;
+      return Response.json({ tasks: [{ id: '55555555-5555-5555-5555-555555555555', status_code: 20100, result: null }] });
+    }
+    if (String(url).includes('/products/task_get/advanced/')) {
+      productPolls++;
+      if (productPolls <= 8) return Response.json({ tasks: [{ status_code: 40602, result: null }] });
+      return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
+        { title: 'Fogão de teste', price: 800, currency: 'BRL', product_id: '550011' },
+      ] }] }] });
+    }
+    if (String(url).endsWith('/product_info/task_post')) {
+      infoPosts++;
+      return Response.json({ tasks: [{ id: '66666666-6666-6666-6666-666666666666', status_code: 20100, result: null }] });
+    }
+    if (String(url).includes('/product_info/task_get/advanced/')) {
+      infoPolls++;
+      if (infoPolls <= 8) return Response.json({ tasks: [{ status_code: 40602, result: null }] });
+      return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [{ sellers: [
+        { product_availability: 'in_stock', price: { current: 790, currency: 'BRL' } },
+        { product_availability: 'in_stock', price: { current: 810, currency: 'BRL' } },
+      ] }] }] }] });
+    }
+    throw new Error(`URL DataForSEO inesperada: ${url}`);
+  };
+  const result = await completeGoogleLookup({ ean, productName: 'Fogão de teste' });
+  assert.equal(result.status, 'completed');
+  assert.deepEqual(result.sample, { pricesInCents: [79000, 81000], count: 2, minimum: 790, maximum: 810 });
+  assert.equal(productsPosts, 1, 'a continuação não pode publicar outra pesquisa de produtos');
+  assert.equal(infoPosts, 1, 'a continuação não pode publicar outra pesquisa de vendedores');
+});
+
+test('consulta conserva os preços da vitrine quando a ficha de vendedores termina vazia', async () => {
+  process.env.DATAFORSEO_PRICE_LOOKUP_ENABLED = 'true';
+  process.env.DATAFORSEO_API_LOGIN = 'test-login';
+  process.env.DATAFORSEO_API_PASSWORD = 'test-password';
+  process.env.DATAFORSEO_API_BASE_URL = 'https://sandbox.dataforseo.com';
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith('/products/task_post')) return Response.json({ tasks: [{ id: '77777777-7777-7777-7777-777777777777', status_code: 20100, result: null }] });
+    if (String(url).includes('/products/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
+      { title: 'Fogão de teste', price: 820, currency: 'BRL', product_id: '550011' },
+      { title: 'Fogão de teste', price: 780, currency: 'BRL' },
+    ] }] }] });
+    if (String(url).endsWith('/product_info/task_post')) return Response.json({ tasks: [{ id: '88888888-8888-8888-8888-888888888888', status_code: 20100, result: null }] });
+    if (String(url).includes('/product_info/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 40102, result: null }] });
+    throw new Error(`URL DataForSEO inesperada: ${url}`);
+  };
+  const result = await completeGoogleLookup({ ean, productName: 'Fogão de teste' });
+  assert.equal(result.status, 'completed');
+  assert.deepEqual(result.sample, { pricesInCents: [78000, 82000], count: 2, minimum: 780, maximum: 820 });
 });
 
 test('resposta Google sem resultados encerra como consulta concluída, sem erro genérico', async () => {

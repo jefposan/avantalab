@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.48.0.43.16 - 2026-10-07
+
+- **Reconsulta de preço concluída de ponta a ponta**: **Consultar novamente**
+  acompanha a mesma tarefa assíncrona do Google Shopping por até três minutos,
+  sem repetir a pesquisa cobrável nem voltar ao Mercado Livre. Quando a ficha
+  detalhada de vendedores não traz ofertas, os preços válidos já encontrados
+  na vitrine são preservados; ao concluir, a nova média das até cinco menores
+  ofertas, os três cálculos, a data e o histórico são atualizados juntos.
+
 ## 1.48.0.43.15 - 2026-10-07
 
 - **Falhas claras na atualização de preço**: o tratamento da resposta do

@@ -55,9 +55,10 @@ credenciais adicionais no ambiente.
   mesma tarefa automaticamente, sem interpretar a fila como recusa e sem criar
   nova consulta cobrável durante a espera. Em **Consultar novamente** de
   histórico, a rota usa apenas o produto já salvo e Google Shopping — nunca
-  inicia outra identificação no Mercado Livre. Uma tarefa `20000` sem ofertas
-  é finalizada como consulta sem preços, e o acompanhamento tem limite objetivo
-  para não manter a interface em cálculo indefinidamente. Respostas sem
+  inicia outra identificação no Mercado Livre. Acompanhamentos podem durar até
+  três minutos e preservam a amostra válida da vitrine caso a ficha detalhada
+  de vendedores termine vazia. Uma tarefa `20000` sem qualquer oferta é
+  finalizada como consulta sem preços. Respostas sem
   resultado (`40102`) e parciais (`40106`) são resultados concluídos; falhas
   reais de execução, validação, limite ou indisponibilidade retornam mensagem
   específica dentro do resultado que está sendo atualizado.

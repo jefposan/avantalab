@@ -33,6 +33,8 @@ type HistoryRow = {
 type Account = { id: string; status: string; seller_name: string | null; seller_reference: string };
 
 const SESSION_COMPANY_KEY = 'avantalab_marketplaces_mobile_empresa_id';
+const PRICE_CONTINUATION_TIMEOUT_MS = 180_000;
+const PRICE_CONTINUATION_INTERVAL_MS = 2_000;
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
@@ -359,10 +361,13 @@ export default function MarketplaceMobileApp() {
       }
       // Uma continuação apenas lê o mesmo task do Google Shopping; não repete
       // a identificação no Mercado Livre nem publica outra consulta cobrável.
-      // Há um limite objetivo para o botão nunca ficar girando indefinidamente.
-      const maxPriceContinuationRequests = 6;
+      // A fila normal do provedor é assíncrona e pode ultrapassar o antigo
+      // limite de seis leituras. Acompanhamos a MESMA tarefa por até três
+      // minutos: não repetimos a identificação no Mercado Livre, não abrimos
+      // uma segunda consulta cobrável e mantemos o resultado anterior visível.
+      const priceContinuationDeadline = Date.now() + PRICE_CONTINUATION_TIMEOUT_MS;
       let continuation: unknown = null;
-      for (let attempt = 0; attempt < maxPriceContinuationRequests && run === consultationRunRef.current; attempt++) {
+      while (run === consultationRunRef.current && Date.now() < priceContinuationDeadline) {
         const body = await request('/api/modulos/marketplaces/precos', {
           method: 'POST',
           body: JSON.stringify(continuation
@@ -382,10 +387,10 @@ export default function MarketplaceMobileApp() {
           if (next.prices) await loadHistory(company.id);
           return;
         }
-        await new Promise<void>((resolve) => window.setTimeout(resolve, 2_000));
+        await new Promise<void>((resolve) => window.setTimeout(resolve, PRICE_CONTINUATION_INTERVAL_MS));
       }
       if (run === consultationRunRef.current) {
-        const message = 'A consulta de preços demorou mais que o esperado. Tente novamente em alguns instantes.';
+        const message = 'O Google Shopping ainda não concluiu esta coleta. Nenhum valor foi alterado; tente novamente em alguns instantes.';
         if (isHistoryRefresh) setResultError(message); else setError(message);
       }
     } catch (reason) {

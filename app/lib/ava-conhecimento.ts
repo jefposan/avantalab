@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.43.16: no AvantaPreços, Consultar novamente
+// acompanha a mesma tarefa Google Shopping por até três minutos, preserva a
+// amostra da vitrine se a ficha detalhada vier vazia e atualiza preço e data.
 // Revisado na versão 1.48.0.43.14: Atualizar Produtos mantém círculo 30 x 30 e
 // o texto de carregamento não desloca o título nem o subtítulo do cabeçalho.
 // Revisado na versão 1.48.0.43.09: em Produtos, Atualizar preserva a posição de

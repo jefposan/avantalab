@@ -35,8 +35,10 @@ function readPendingContinuation(value: unknown): PendingPriceContinuation | nul
       || (parsed.historyId !== undefined && typeof parsed.historyId !== 'string')
       || typeof parsed.taskId !== 'string'
       // A continuação protegida pode representar a etapa de produtos legada
-      // (UUID puro) ou a etapa atual de vendedores do Google Shopping.
-      || !/^(?:(?:products|product_info):)?[0-9a-f-]{20,}$/i.test(parsed.taskId)) return null;
+      // (UUID puro), a etapa anterior `fase:UUID` ou o envelope atual, que
+      // também preserva uma amostra de preços enquanto a ficha é processada.
+      || !(/^(?:(?:products|product_info):)?[0-9a-f-]{20,}$/i.test(parsed.taskId)
+        || /^v2\.[a-z0-9_-]{20,1200}$/i.test(parsed.taskId))) return null;
     return parsed;
   } catch {
     return null;

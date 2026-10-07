@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.15 -->
+<!-- ava-version: 1.48.0.43.16 -->
+
+> Revisão 1.48.0.43.16: **Consultar novamente** no **AvantaPreços** acompanha
+> por até três minutos a mesma tarefa do Google Shopping, sem nova cobrança nem
+> nova identificação no Mercado Livre. Ao concluir, a tela e o histórico usam
+> a nova média das até cinco menores ofertas e exibem a nova data da pesquisa.
 
 > Revisão 1.48.0.43.15: ao usar **Consultar novamente** no **AvantaPreços**,
 > o aviso de falha fica no resultado aberto e explica se houve ausência de

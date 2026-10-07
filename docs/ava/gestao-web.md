@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.15 -->
+<!-- ava-version: 1.48.0.43.16 -->
+
+> Revisão 1.48.0.43.16: no **AvantaPreços**, **Consultar novamente** acompanha
+> a mesma coleta do Google Shopping por até três minutos. Preços válidos da
+> vitrine são preservados se a ficha detalhada vier vazia; quando a coleta
+> termina, a referência, os três cálculos, a data e o histórico são atualizados.
 
 > Revisão 1.48.0.43.15: a mensagem de **Consultar novamente** permanece no
 > produto aberto. A consulta agora diferencia ausência de oferta de falha do
