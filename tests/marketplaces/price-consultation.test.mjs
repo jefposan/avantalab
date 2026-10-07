@@ -17,7 +17,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   return next(specifier, context);
 } });
 const { calculatePriceSuggestions, consultMercadoLivrePrice } = await import('../../app/modules/marketplaces/services/mercadolivre-price-consultation.ts');
-const { extractGoogleShoppingPriceSample, extractGoogleShoppingSellerPriceSample } = await import('../../app/modules/marketplaces/services/dataforseo-google-shopping.ts');
+const { consultGoogleShoppingPrices, extractGoogleShoppingPriceSample, extractGoogleShoppingSellerPriceSample } = await import('../../app/modules/marketplaces/services/dataforseo-google-shopping.ts');
 const { MarketplaceError } = await import('../../app/modules/marketplaces/services/management-access.ts');
 hooks.deregister();
 
@@ -104,6 +104,25 @@ test('consulta aguarda tarefa em fila antes de obter o preço, sem criar nova ta
   const result = await consultMercadoLivrePrice({}, connection, { ean });
   assert.equal(result.status, 'found');
   assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
+});
+
+test('tarefa Google concluída sem ofertas encerra a consulta em vez de permanecer pendente', async () => {
+  process.env.DATAFORSEO_PRICE_LOOKUP_ENABLED = 'true';
+  process.env.DATAFORSEO_API_LOGIN = 'test-login';
+  process.env.DATAFORSEO_API_PASSWORD = 'test-password';
+  process.env.DATAFORSEO_API_BASE_URL = 'https://sandbox.dataforseo.com';
+  globalThis.fetch = async (url, init) => {
+    if (String(url).endsWith('/products/task_post')) {
+      assert.equal(init?.method, 'POST');
+      return Response.json({ tasks: [{ id: '33333333-3333-3333-3333-333333333333', status_code: 20100, result: null }] });
+    }
+    if (String(url).includes('/products/task_get/advanced/')) {
+      return Response.json({ tasks: [{ status_code: 20000, result: [] }] });
+    }
+    throw new Error(`URL DataForSEO inesperada: ${url}`);
+  };
+  const result = await consultGoogleShoppingPrices({ ean, productName: 'Produto sem ofertas' });
+  assert.deepEqual(result, { status: 'completed', sample: null });
 });
 
 test('EAN fora do catálogo público usa o cadastro do perfil para iniciar a consulta assistida', async () => {

@@ -31,7 +31,9 @@ const DEFAULT_BASE_URL = 'https://api.dataforseo.com';
 // pode ultrapassar a duração de uma Function. A rota faz uma primeira espera
 // curta e entrega uma continuação protegida ao PWA, que acompanha a MESMA
 // tarefa automaticamente sem publicar uma segunda consulta cobrável.
-const INITIAL_POLL_ATTEMPTS = 24;
+// Mantemos cada requisição curta para não prender a Function. Caso a coleta
+// ainda esteja na fila, o PWA continua consultando o MESMO task id.
+const INITIAL_POLL_ATTEMPTS = 5;
 const POLL_INTERVAL_MS = 1_000;
 
 function record(value: unknown): JsonRecord {
@@ -312,9 +314,12 @@ function pendingLookup(value: string | undefined): PendingLookup | null {
   return /^[0-9a-f-]{20,}$/i.test(value) ? { phase: 'products', id: value } : null;
 }
 
-function taskHasResult(body: JsonRecord) {
-  const result = tasksFrom(body)[0]?.result;
-  return Array.isArray(result) && result.length > 0;
+function taskIsComplete(body: JsonRecord) {
+  const task = tasksFrom(body)[0] || {};
+  // `20000` significa que a tarefa terminou, inclusive quando o Google não
+  // encontrou itens e devolve `result: []`. Antes esse caso era confundido com
+  // fila e o cliente permanecia em “Calculando” indefinidamente.
+  return Number(task.status_code) === 20000 || Array.isArray(task.result);
 }
 
 const wait = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
@@ -351,7 +356,7 @@ async function postGoogleShoppingProductInfoLookup(reference: GoogleShoppingProd
 async function readGoogleShoppingPriceLookup(taskIdValue: string, input: { ean: string | null; productName: string }, phase: PendingLookup['phase']): Promise<GoogleShoppingPriceLookup> {
   const endpoint = phase === 'product_info' ? 'product_info' : 'products';
   const result = await providerRequest(`/v3/merchant/google/${endpoint}/task_get/advanced/${encodeURIComponent(taskIdValue)}`, { method: 'GET' });
-  if (!taskHasResult(result)) return { status: 'pending', taskId: encodePendingLookup({ phase, id: taskIdValue }) };
+  if (!taskIsComplete(result)) return { status: 'pending', taskId: encodePendingLookup({ phase, id: taskIdValue }) };
   if (phase === 'products') {
     const reference = productReferenceFrom(result, input.productName, input.ean);
     // If Google does not expose an individual product id, retain the useful

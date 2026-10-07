@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.09 -->
+<!-- ava-version: 1.48.0.43.10 -->
+
+> Revisão 1.48.0.43.10: no **AvantaPreços**, **Consultar novamente** em um
+> item do histórico consulta apenas o Google Shopping com o produto já salvo —
+> não busca a ficha de novo no Mercado Livre. Tarefa concluída sem oferta
+> encerra com aviso; a espera tem limite e nunca fica calculando sem fim.
 
 > Revisão 1.48.0.43.09: o retorno visível de Atualizar Produtos pertence ao
 > AvantaVendas e não altera os fluxos da Gestão Web.

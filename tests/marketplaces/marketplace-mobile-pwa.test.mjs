@@ -78,6 +78,15 @@ test('resultado diferencia os quatro valores e o histórico pode ser reaberto, a
   assert.match(client, /M3 12a9 9 0 0 1 15-6\.7L21 8/);
 });
 
+test('Consultar novamente no histórico usa apenas a coleta Google Shopping e sempre encerra a espera', () => {
+  const historyBranch = api.match(/if \(input\.historyId\) \{([\s\S]*?)\n    \}\n    const connection = await resolveMercadoLivreConnection/)?.[1] || '';
+  assert.match(historyBranch, /refreshHistoryPrice\(db, empresaId, input\.historyId, resumed\?\.taskId\)/);
+  assert.doesNotMatch(historyBranch, /resolveMercadoLivreConnection|consultMercadoLivrePrice/);
+  assert.match(api, /consultGoogleShoppingPrices\(\{ ean: stored\.ean, productName: stored\.product_name \}, pendingTaskId\)/);
+  assert.match(client, /const maxPriceContinuationRequests = 6;/);
+  assert.doesNotMatch(client, /attempt < 1_400/);
+});
+
 test('início prioriza a consulta manual, compacta o leitor e deixa o catálogo antes das últimas consultas', () => {
   const manual = client.indexOf('id="manual-title">Consultar manualmente');
   const scan = client.indexOf('className={styles.scanSection}');

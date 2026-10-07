@@ -72,6 +72,10 @@
 // Revisado na versão 1.48.0.26: AvantaPreços identifica o produto, abre a busca
 // pública assistida no Mercado Livre ou Amazon e calcula sugestões somente sobre
 // o preço informado pela pessoa, registrando essa origem no histórico.
+// Revisado na versão 1.48.0.43.10: no AvantaPreços, Consultar novamente de um
+// item salvo consulta exclusivamente o Google Shopping usando o produto já
+// confirmado. Resultado concluído sem ofertas encerra com aviso e a espera
+// possui limite, sem repetir Mercado Livre nem deixar cálculo infinito.
 // Revisado na versão 1.48.0.43.04: Marketplaces restaura as contas conectadas do
 // perfil ao abrir. Quando uma já existe, Conectar outra conta preserva as
 // conexões atuais e explica que a sessão atual do marketplace deve ser trocada

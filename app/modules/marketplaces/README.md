@@ -52,8 +52,12 @@ credenciais adicionais no ambiente.
   produção e nunca podem ser expostos ao navegador, ao banco ou a logs.
 - O estado temporário `Task In Queue` da DataForSEO mantém uma continuação
   criptografada, vinculada à empresa e à conta selecionada. O PWA acompanha a
-  mesma tarefa automaticamente até concluir, sem interpretar a fila como
-  recusa e sem criar nova consulta cobrável durante a espera.
+  mesma tarefa automaticamente, sem interpretar a fila como recusa e sem criar
+  nova consulta cobrável durante a espera. Em **Consultar novamente** de
+  histórico, a rota usa apenas o produto já salvo e Google Shopping — nunca
+  inicia outra identificação no Mercado Livre. Uma tarefa `20000` sem ofertas
+  é finalizada como consulta sem preços, e o acompanhamento tem limite objetivo
+  para não manter a interface em cálculo indefinidamente.
 - A migração `20261005213000_marketplace_price_consultations.sql` registra o
   histórico por empresa com RLS e acesso direto revogado de anon/authenticated.
 - A migração `20261006162000_marketplace_price_history_reuse.sql` complementa

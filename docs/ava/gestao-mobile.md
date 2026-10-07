@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.09 -->
+<!-- ava-version: 1.48.0.43.10 -->
+
+> Revisão 1.48.0.43.10: **Consultar novamente** do **AvantaPreços** usa a
+> coleta Google Shopping do produto já salvo, sem nova identificação no Mercado
+> Livre. A espera agora termina com resultado ou aviso, sem cálculo infinito.
 
 > Revisão 1.48.0.43.09: o retorno visível de Atualizar Produtos pertence ao
 > AvantaVendas e não altera os fluxos da Gestão Mobile.

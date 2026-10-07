@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.48.0.43.10 - 2026-10-07
+
+- **Consulta de preço sem espera infinita**: **Consultar novamente** em um
+  produto já salvo reutiliza somente o produto e a tarefa do Google Shopping —
+  sem voltar ao Mercado Livre. Uma tarefa concluída sem ofertas agora encerra
+  corretamente com aviso, e o acompanhamento possui limite objetivo para o
+  botão não permanecer em cálculo indefinidamente.
+
 ## 1.48.0.43.09-av174 - 2026-10-06
 
 - **Atualizar Produtos com retorno visível**: **Novo produto** volta à sua

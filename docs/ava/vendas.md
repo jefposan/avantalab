@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.09 -->
+<!-- ava-version: 1.48.0.43.10 -->
+
+> Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
+> ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
 <!-- avantavendas-asset-revision: 174 -->
 

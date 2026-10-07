@@ -353,8 +353,12 @@ export default function MarketplaceMobileApp() {
         const row = Array.isArray(cached.history) ? cached.history[0] as HistoryRow | undefined : undefined;
         if (row) { setResultFromCatalog(false); setResult(historyToConsultation(row)); setCandidates([]); return; }
       }
+      // Uma continuação apenas lê o mesmo task do Google Shopping; não repete
+      // a identificação no Mercado Livre nem publica outra consulta cobrável.
+      // Há um limite objetivo para o botão nunca ficar girando indefinidamente.
+      const maxPriceContinuationRequests = 6;
       let continuation: unknown = null;
-      for (let attempt = 0; attempt < 1_400 && run === consultationRunRef.current; attempt++) {
+      for (let attempt = 0; attempt < maxPriceContinuationRequests && run === consultationRunRef.current; attempt++) {
         const body = await request('/api/modulos/marketplaces/precos', {
           method: 'POST',
           body: JSON.stringify(continuation
@@ -376,7 +380,7 @@ export default function MarketplaceMobileApp() {
         }
         await new Promise<void>((resolve) => window.setTimeout(resolve, 2_000));
       }
-      if (run === consultationRunRef.current) setError('A consulta está demorando mais que o previsto. Mantenha o app aberto; ela será retomada automaticamente ao iniciar uma nova consulta.');
+      if (run === consultationRunRef.current) setError('A consulta de preços demorou mais que o esperado. Tente novamente em alguns instantes.');
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível consultar o produto.'); }
     finally { if (run === consultationRunRef.current) setLoading(false); }
   }, [company, connectionId, loadHistory, request]);
