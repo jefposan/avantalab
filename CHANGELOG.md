@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.0.43.06-av171 - 2026-10-06
+
+- **Atualizar Produtos**: a tela de Produtos passa a ter um botão com ícone SVG
+  para consultar novamente o catálogo e os pacotes do perfil atual. O botão
+  mostra carregamento, preserva a busca e a posição da lista, sem recarregar o
+  sistema inteiro.
+
 ## 1.48.0.43.05-av170 - 2026-10-06
 
 - **Catálogo sem cópias repetidas**: uma migração preserva a primeira cópia de

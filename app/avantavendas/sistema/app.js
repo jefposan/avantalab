@@ -535,6 +535,7 @@ let rolagemPorAba = {};
 let contextoAberturaVendas = null;
 let sincronizacaoCatalogoEmAndamento = false;
 let atualizacaoCatalogoEmAndamento = false;
+let produtosAtualizando = false;
 let timerAtualizacaoCatalogo = null;
 let dadosOperacionaisCarregando = false;
 let revisaoDadosOperacionais = 0;
@@ -4311,6 +4312,56 @@ async function atualizarCatalogoPublicadoAutomaticamente() {
   }
 }
 
+function renderizarProdutosPreservandoRolagem(posicao) {
+  if (state.aba !== 'produtos' || state.menuAberto) return;
+  render();
+  requestAnimationFrame(() => rolarConteudoPrincipalVendas(posicao));
+}
+
+async function atualizarProdutos() {
+  if (produtosAtualizando) return;
+  if (!backendAtivo || !window.VendasDb?.listarCatalogoVendas) {
+    toast('Não foi possível atualizar os produtos neste momento.');
+    return;
+  }
+  if (!navigator.onLine) {
+    toast('Conecte-se à internet para atualizar os produtos.');
+    return;
+  }
+
+  const revisaoContaAoIniciar = revisaoContaVendasAtiva;
+  const contaAoIniciar = contaVendasDoContextoAtual();
+  const posicaoAnterior = posicaoRolagemPrincipalVendas();
+  produtosAtualizando = true;
+  renderizarProdutosPreservandoRolagem(posicaoAnterior);
+
+  try {
+    try {
+      await sincronizarCatalogoAutomaticamente(false);
+    } catch (error) {
+      // A atualização manual da lista ainda deve funcionar mesmo se a
+      // verificação de publicações novas estiver momentaneamente indisponível.
+      console.warn('Não foi possível verificar novas publicações de catálogo.', error);
+    }
+    const catalogo = await window.VendasDb.listarCatalogoVendas();
+    if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return;
+    state.produtos = catalogo.produtos;
+    state.pacotesProdutos = catalogo.pacotes;
+    await salvarCacheVendas();
+    toast('Produtos atualizados.');
+  } catch (error) {
+    console.warn('Não foi possível atualizar os produtos.', error);
+    if (contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) {
+      toast('Não foi possível atualizar os produtos. Tente novamente.');
+    }
+  } finally {
+    produtosAtualizando = false;
+    if (contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) {
+      renderizarProdutosPreservandoRolagem(posicaoAnterior);
+    }
+  }
+}
+
 async function prepararSelecaoSistemaAntesDosDadosVendas() {
   prepararOrigemAcessoVendas();
   const [user, acessoVendas] = await Promise.all([
@@ -7673,9 +7724,10 @@ function aplicarBusca() {
 function renderProdutos() {
   const produtos = produtosFiltrados();
   const temBusca = Boolean(String(state.busca || '').trim());
+  const botaoAtualizar = `<button id="produtosAtualizar" type="button" class="product-refresh-button" onclick="atualizarProdutos()" aria-label="Atualizar produtos" title="Atualizar produtos" aria-busy="${produtosAtualizando}" ${produtosAtualizando ? 'disabled' : ''}>${svgIconEstavel('rotate-ccw', produtosAtualizando ? 'is-spinning' : '')}</button>`;
   return `
     <section class="module-page produtos-page${temBusca ? ' is-searching' : ''}">
-      <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><button class="primary product-new-button" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}<div class="module-stats product-package-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.pacotesProdutos.length}</b> pacotes ativos</span><button class="package-manage-link" onclick="abrirGerenciarPacotes()">${svgIcon('package')} Gerenciar</button></div></div>
+      <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><div class="product-title-actions">${botaoAtualizar}<button class="primary product-new-button" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}<div class="module-stats product-package-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.pacotesProdutos.length}</b> pacotes ativos</span><button class="package-manage-link" onclick="abrirGerenciarPacotes()">${svgIcon('package')} Gerenciar</button></div></div>
       <section class="product-grid module-product-grid">
       ${produtos.length ? produtos.map(renderProduto).join('') : empty('Nenhum produto cadastrado.')}
     </section>
@@ -11186,6 +11238,7 @@ window.abrirImportacaoPacoteZip = abrirImportacaoPacoteZip;
 window.importarArquivoPacoteZip = importarArquivoPacoteZip;
 window.mostrarSincronizacaoCatalogo = mostrarSincronizacaoCatalogo;
 window.sincronizarCatalogoAgora = sincronizarCatalogoAgora;
+window.atualizarProdutos = atualizarProdutos;
 window.enviarSugestaoVendas = enviarSugestaoVendas;
 window.novaSugestaoVendas = novaSugestaoVendas;
 window.atualizarDivulgacao = atualizarDivulgacao;

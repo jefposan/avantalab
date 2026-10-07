@@ -1,8 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.05 -->
+<!-- ava-version: 1.48.0.43.06 -->
 
-<!-- avantavendas-asset-revision: 170 -->
+<!-- avantavendas-asset-revision: 171 -->
+
+> Revisão 1.48.0.43.06-av171: a tela **Produtos** possui o ícone
+> **Atualizar**. Ele atualiza somente a lista de produtos e pacotes do perfil
+> ativo, mantém a busca e a posição da lista e não recarrega o sistema inteiro.
 
 > Revisão 1.48.0.43.05-av170: cada produto publicado aparece uma única vez na
 > conta de vendas. Quando existia cópia repetida, pedidos, recebimentos,

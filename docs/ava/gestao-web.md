@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.05 -->
+<!-- ava-version: 1.48.0.43.06 -->
+
+> Revisão 1.48.0.43.06: o botão Atualizar Produtos pertence ao AvantaVendas e
+> não altera os fluxos da Gestão Web.
 
 > Revisão 1.48.0.43.05: a deduplicação de produtos de catálogo pertence ao
 > AvantaVendas e preserva seu histórico; sem impacto operacional na Gestão Web.
