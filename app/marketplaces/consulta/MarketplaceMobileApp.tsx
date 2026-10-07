@@ -215,6 +215,7 @@ export default function MarketplaceMobileApp() {
   const [resultFromCatalog, setResultFromCatalog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resultError, setResultError] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannerIssue, setScannerIssue] = useState<ScannerIssue>(null);
   const [manualRegistration, setManualRegistration] = useState<{ ean: string; productName: string; productDescription: string; marketPrice: string } | null>(null);
@@ -306,6 +307,7 @@ export default function MarketplaceMobileApp() {
   }, [historySort, request]);
 
   const openHistoryResult = useCallback((row: HistoryRow, fromCatalog = false) => {
+    setResultError('');
     setResultFromCatalog(fromCatalog);
     setResult(historyToConsultation(row));
   }, []);
@@ -323,7 +325,7 @@ export default function MarketplaceMobileApp() {
     let ativo = true;
     const empresaId = company.id;
     const quadro = window.requestAnimationFrame(() => {
-      setAccounts([]); setConnectionId(''); setConnectionMessage(''); setHistory([]); setPricedProducts([]); setPricedProductsOpen(false); setResult(null); setCandidates([]); setManualRegistration(null); setError('');
+      setAccounts([]); setConnectionId(''); setConnectionMessage(''); setHistory([]); setPricedProducts([]); setPricedProductsOpen(false); setResult(null); setCandidates([]); setManualRegistration(null); setError(''); setResultError('');
       void (async () => {
         try {
           const body = await request(`/api/modulos/marketplaces/precos/contexto?empresaId=${encodeURIComponent(empresaId)}`);
@@ -341,7 +343,9 @@ export default function MarketplaceMobileApp() {
   const consult = useCallback(async (input: { ean?: string; query?: string; productId?: string; historyId?: string }) => {
     if (!company) return;
     const run = ++consultationRunRef.current;
-    setLoading(true); setError(''); setCandidates([]);
+    const isHistoryRefresh = Boolean(input.historyId);
+    setLoading(true); setCandidates([]);
+    if (isHistoryRefresh) setResultError(''); else setError('');
     const clean = input.ean ? { ean: normalizeEan(input.ean) } : { query: String(input.query || '').trim() };
     setPendingInput(clean);
     setManualRegistration(null);
@@ -380,8 +384,14 @@ export default function MarketplaceMobileApp() {
         }
         await new Promise<void>((resolve) => window.setTimeout(resolve, 2_000));
       }
-      if (run === consultationRunRef.current) setError('A consulta de preços demorou mais que o esperado. Tente novamente em alguns instantes.');
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível consultar o produto.'); }
+      if (run === consultationRunRef.current) {
+        const message = 'A consulta de preços demorou mais que o esperado. Tente novamente em alguns instantes.';
+        if (isHistoryRefresh) setResultError(message); else setError(message);
+      }
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : 'Não foi possível consultar o produto.';
+      if (isHistoryRefresh) setResultError(message); else setError(message);
+    }
     finally { if (run === consultationRunRef.current) setLoading(false); }
   }, [company, connectionId, loadHistory, request]);
 
@@ -497,7 +507,7 @@ export default function MarketplaceMobileApp() {
     </div>
 
     {result?.status === 'found' && result.product ? <section className={styles.resultPage} aria-labelledby="result-title">
-      <button type="button" className={styles.backButton} onClick={() => { setResult(null); if (!resultFromCatalog) setResultFromCatalog(false); }}><Icon name="back" /> {resultFromCatalog ? 'Produtos precificados' : 'Nova consulta'}</button>
+      <button type="button" className={styles.backButton} onClick={() => { setResult(null); setResultError(''); if (!resultFromCatalog) setResultFromCatalog(false); }}><Icon name="back" /> {resultFromCatalog ? 'Produtos precificados' : 'Nova consulta'}</button>
       <article className={styles.resultCard}>
         <div className={styles.productTop}>
           <div className={styles.productImage}>{result.product.image ? <img src={result.product.image} alt={`Imagem de ${result.product.name}`} /> : <Icon name="barcode" size={44} />}</div>
@@ -515,6 +525,7 @@ export default function MarketplaceMobileApp() {
           {!loading && result.historyId && <button type="button" className={styles.secondaryButton} onClick={() => void consult({ historyId: result.historyId })}><Icon name="refresh" />Consultar novamente</button>}
         </section>}
         {result.notice && <p className={styles.sampleNote} role="status">{result.notice}</p>}
+        {resultError && <p className={styles.error} role="alert">{resultError}</p>}
         {result.consultedAt && <p className={styles.consultedAt}>Preço pesquisado em {dateTime.format(new Date(result.consultedAt))}</p>}
         {result.prices && result.historyId && <form className={styles.manualPriceEdit} onSubmit={updateHistoryPrice}>
           <label htmlFor="history-market-price">Ajustar preço médio</label>

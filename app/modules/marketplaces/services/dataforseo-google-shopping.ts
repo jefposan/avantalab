@@ -278,20 +278,38 @@ async function providerRequest(path: string, init: RequestInit, fetcher: typeof 
       response.status === 429 ? 'Limite de consultas de preços atingido. Aguarde alguns instantes.' : 'Não foi possível consultar os preços agora. Tente novamente.');
   }
   const task = tasksFrom(record(body))[0] || null;
-  const status = Number(record(task).status_code);
-  if (status === 40100 || status === 40101 || status === 40102 || status === 40301) {
+  const taskRecord = record(task);
+  const status = Number(taskRecord.status_code);
+  if (status === 40100 || status === 40301) {
     throw new MarketplaceError(503, 'price_provider_authorization', 'A credencial da consulta de preços não foi aceita. Atualize as credenciais de API do provedor.');
   }
-  if (status === 40200 || status === 40201 || status === 40202 || status === 40203) {
+  if (status === 40104) {
+    throw new MarketplaceError(503, 'price_provider_account_verification', 'A conta do provedor de preços ainda precisa ser validada para realizar consultas.');
+  }
+  if (status === 40200 || status === 40201) {
     throw new MarketplaceError(503, 'price_provider_balance', 'A consulta de preços precisa de saldo disponível no provedor.');
+  }
+  if (status === 40202 || status === 40203 || status === 40205 || status === 40206) {
+    throw new MarketplaceError(429, 'price_provider_limited', 'O limite de consultas de preços foi atingido. Aguarde alguns instantes antes de tentar novamente.');
   }
   // A leitura de uma tarefa recém-criada pode responder 40602 (Task In Queue)
   // antes de o Merchant API terminar a coleta. Esse é um estado transitório,
   // não uma recusa da credencial ou do produto: o loop abaixo deve aguardar e
   // consultar novamente o mesmo id, sem criar uma nova tarefa cobrável.
-  const pendingTask = path.includes('/task_get/advanced/') && status === 40602;
-  if (!task || (Number.isFinite(status) && status >= 40000 && !pendingTask)) {
-    throw new MarketplaceError(503, 'price_provider_failed', 'A consulta de preços não foi aceita. Tente novamente.');
+  const readingTask = path.includes('/task_get/advanced/');
+  const pendingTask = readingTask && (status === 40601 || status === 40602);
+  // 40102 significa que a pesquisa terminou sem resultados; 40106 conserva os
+  // resultados parciais disponíveis. Ambos devem finalizar a tela com o estado
+  // correto, não virar uma recusa genérica.
+  const completedWithoutResults = readingTask && status === 40102;
+  const completedWithPartialResults = readingTask && status === 40106 && Array.isArray(taskRecord.result);
+  if (!task || (Number.isFinite(status) && status >= 40000 && !pendingTask && !completedWithoutResults && !completedWithPartialResults)) {
+    if (status === 40101) throw new MarketplaceError(503, 'price_provider_search_unavailable', 'O Google Shopping não respondeu a esta consulta. Tente novamente em alguns instantes.');
+    if (status === 40103) throw new MarketplaceError(503, 'price_provider_task_failed', 'O provedor não conseguiu concluir esta consulta de preços. Tente novamente em alguns instantes.');
+    if (status === 40105) throw new MarketplaceError(503, 'price_provider_task_expired', 'Esta consulta de preços expirou. Faça uma nova consulta.');
+    if (status === 40505 || status === 40506) throw new MarketplaceError(503, 'price_provider_request_invalid', 'A configuração da consulta de preços precisa ser atualizada. Tente novamente em alguns instantes.');
+    if (status >= 50000) throw new MarketplaceError(503, 'price_provider_unavailable', 'O provedor de preços está indisponível no momento. Tente novamente em alguns instantes.');
+    throw new MarketplaceError(503, 'price_provider_failed', `A consulta de preços foi recusada pelo provedor (código ${Number.isFinite(status) ? status : 'indisponível'}). Tente novamente.`);
   }
   return record(body);
 }
@@ -319,7 +337,7 @@ function taskIsComplete(body: JsonRecord) {
   // `20000` significa que a tarefa terminou, inclusive quando o Google não
   // encontrou itens e devolve `result: []`. Antes esse caso era confundido com
   // fila e o cliente permanecia em “Calculando” indefinidamente.
-  return Number(task.status_code) === 20000 || Array.isArray(task.result);
+  return Number(task.status_code) === 20000 || Number(task.status_code) === 40102 || Array.isArray(task.result);
 }
 
 const wait = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));

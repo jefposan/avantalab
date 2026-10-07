@@ -87,6 +87,14 @@ test('Consultar novamente no histórico usa apenas a coleta Google Shopping e se
   assert.doesNotMatch(client, /attempt < 1_400/);
 });
 
+test('falha ao consultar novamente permanece no resultado aberto, não no dashboard', () => {
+  assert.match(client, /const \[resultError, setResultError\] = useState\(''\)/);
+  assert.match(client, /const isHistoryRefresh = Boolean\(input\.historyId\)/);
+  assert.match(client, /if \(isHistoryRefresh\) setResultError\(message\); else setError\(message\);/);
+  const resultPage = client.match(/\{result\?\.status === 'found'[\s\S]*?<\/section> : pricedProductsOpen/)?.[0] || '';
+  assert.match(resultPage, /\{resultError && <p className=\{styles\.error\} role="alert">\{resultError\}<\/p>\}/);
+});
+
 test('início prioriza a consulta manual, compacta o leitor e deixa o catálogo antes das últimas consultas', () => {
   const manual = client.indexOf('id="manual-title">Consultar manualmente');
   const scan = client.indexOf('className={styles.scanSection}');

@@ -125,6 +125,32 @@ test('tarefa Google concluída sem ofertas encerra a consulta em vez de permanec
   assert.deepEqual(result, { status: 'completed', sample: null });
 });
 
+test('resposta Google sem resultados encerra como consulta concluída, sem erro genérico', async () => {
+  process.env.DATAFORSEO_PRICE_LOOKUP_ENABLED = 'true';
+  process.env.DATAFORSEO_API_LOGIN = 'test-login';
+  process.env.DATAFORSEO_API_PASSWORD = 'test-password';
+  process.env.DATAFORSEO_API_BASE_URL = 'https://sandbox.dataforseo.com';
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith('/products/task_post')) return Response.json({ tasks: [{ id: '44444444-4444-4444-4444-444444444444', status_code: 20100, result: null }] });
+    if (String(url).includes('/products/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 40102, result: null }] });
+    throw new Error(`URL DataForSEO inesperada: ${url}`);
+  };
+  const result = await consultGoogleShoppingPrices({ ean, productName: 'Produto sem resultados' });
+  assert.deepEqual(result, { status: 'completed', sample: null });
+});
+
+test('falha de execução do provedor explica a causa sem mascará-la como recusa genérica', async () => {
+  process.env.DATAFORSEO_PRICE_LOOKUP_ENABLED = 'true';
+  process.env.DATAFORSEO_API_LOGIN = 'test-login';
+  process.env.DATAFORSEO_API_PASSWORD = 'test-password';
+  process.env.DATAFORSEO_API_BASE_URL = 'https://sandbox.dataforseo.com';
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith('/products/task_post')) return Response.json({ tasks: [{ status_code: 40103, result: null }] });
+    throw new Error(`URL DataForSEO inesperada: ${url}`);
+  };
+  await assert.rejects(consultGoogleShoppingPrices({ ean, productName: 'Produto com falha transitória' }), (error) => error instanceof MarketplaceError && error.code === 'price_provider_task_failed' && /não conseguiu concluir/i.test(error.message));
+});
+
 test('EAN fora do catálogo público usa o cadastro do perfil para iniciar a consulta assistida', async () => {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
   mockPriceProvider();

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.14 -->
+<!-- ava-version: 1.48.0.43.15 -->
+
+> Revisão 1.48.0.43.15: a mensagem de **Consultar novamente** permanece no
+> produto aberto. A consulta agora diferencia ausência de oferta de falha do
+> provedor, limite, validação ou indisponibilidade temporária.
 
 > Revisão 1.48.0.43.14: a estabilização visual de Atualizar Produtos pertence
 > ao AvantaVendas e não altera os fluxos da Gestão Web.

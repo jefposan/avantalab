@@ -74,6 +74,9 @@
 // Revisado na versão 1.48.0.26: AvantaPreços identifica o produto, abre a busca
 // pública assistida no Mercado Livre ou Amazon e calcula sugestões somente sobre
 // o preço informado pela pessoa, registrando essa origem no histórico.
+// Revisado na versão 1.48.0.43.15: no AvantaPreços, uma falha de Consultar
+// novamente permanece no produto aberto e distingue ausência de oferta, limite,
+// validação e indisponibilidade do provedor.
 // Revisado na versão 1.48.0.43.10: no AvantaPreços, Consultar novamente de um
 // item salvo consulta exclusivamente o Google Shopping usando o produto já
 // confirmado. Resultado concluído sem ofertas encerra com aviso e a espera

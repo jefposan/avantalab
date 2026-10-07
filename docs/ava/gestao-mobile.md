@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.14 -->
+<!-- ava-version: 1.48.0.43.15 -->
+
+> Revisão 1.48.0.43.15: ao usar **Consultar novamente** no **AvantaPreços**,
+> o aviso de falha fica no resultado aberto e explica se houve ausência de
+> oferta, limite, validação ou indisponibilidade do provedor.
 
 > Revisão 1.48.0.43.14: a estabilização visual de Atualizar Produtos pertence
 > ao AvantaVendas e não altera os fluxos da Gestão Mobile.

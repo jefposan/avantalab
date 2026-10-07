@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.48.0.43.15 - 2026-10-07
+
+- **Falhas claras na atualização de preço**: o tratamento da resposta do
+  Google Shopping diferencia consulta sem resultado, parcial, temporariamente
+  indisponível, limite, validação ou execução recusada. Ao usar **Consultar
+  novamente**, qualquer aviso aparece dentro do produto aberto, e não no
+  dashboard de nova pesquisa.
+
 ## 1.48.0.43.14-av178 - 2026-10-07
 
 - **Atualizar circular e estável**: a ação de atualização em Produtos mantém

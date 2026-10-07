@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.14 -->
+<!-- ava-version: 1.48.0.43.15 -->
+
+> Revisão 1.48.0.43.15: as mensagens de diagnóstico de preço do
+> **AvantaPreços** pertencem ao PWA de consulta e não alteram o AvantaVendas.
 
 > Revisão 1.48.0.43.14-av178: **Atualizar** permanece circular em 30×30 e o
 > estado **Atualizando** não desloca nem quebra o subtítulo de Produtos.

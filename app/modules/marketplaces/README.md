@@ -57,7 +57,10 @@ credenciais adicionais no ambiente.
   histórico, a rota usa apenas o produto já salvo e Google Shopping — nunca
   inicia outra identificação no Mercado Livre. Uma tarefa `20000` sem ofertas
   é finalizada como consulta sem preços, e o acompanhamento tem limite objetivo
-  para não manter a interface em cálculo indefinidamente.
+  para não manter a interface em cálculo indefinidamente. Respostas sem
+  resultado (`40102`) e parciais (`40106`) são resultados concluídos; falhas
+  reais de execução, validação, limite ou indisponibilidade retornam mensagem
+  específica dentro do resultado que está sendo atualizado.
 - A migração `20261005213000_marketplace_price_consultations.sql` registra o
   histórico por empresa com RLS e acesso direto revogado de anon/authenticated.
 - A migração `20261006162000_marketplace_price_history_reuse.sql` complementa
