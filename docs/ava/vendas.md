@@ -1,6 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.23 -->
+<!-- ava-version: 1.48.0.43.24 -->
+
+> Revisão 1.48.0.43.24: Reutilização do cabeçalho do Recebimentos no AvantaPreços. Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.48.0.43.23: Correção restrita ao topo do AvantaPreços no iPhone. Sem impacto operacional no AvantaVendas.
 

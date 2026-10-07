@@ -3,6 +3,7 @@
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './recebimentos.module.css';
+import ColaboradorTopbar from './components/ColaboradorTopbar';
 import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import type { AvaliacaoServico, Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, Servico, Subempresa } from './components/types';
 import type { ResultadoRegistroServico } from './components/PainelServicosColaborador';
@@ -655,20 +656,12 @@ export default function ColaboradorApp() {
   );
   return (
     <div className={`${styles.page} ${comandoVozPermitido ? styles.pageComVoz : ''}`}>
-      <div className={`${styles.topbar} ${styles.topbarColaborador}`}>
-        <div className={styles.topbarInner}>
-          <div className={styles.brand}>
-            <span className={styles.brandTitle}>{nomeDoPerfil}</span>
-            <span className={styles.brandEmpresa}>{descricaoDaOperacao}</span>
-          </div>
-          <div className={styles.topbarAcoesColaborador}>
-            {semRede && <span className={styles.indicadorRedeOffline} role="status" aria-label="Sem conexão. Os lançamentos manuais serão enviados ao reconectar." title="Sem conexão: trabalhando offline"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5a12 12 0 0 1 14.8-1.8M2.8 5.2 21.2 18.8M7.6 13.2a7 7 0 0 1 5.3-.5M12 19h.01" /></svg></span>}
-            {pendenciasOffline > 0 && <button type="button" className={styles.botaoPendenciasOffline} onClick={() => void abrirFilaOffline()} aria-label={`${pendenciasOffline} atendimento${pendenciasOffline === 1 ? '' : 's'} aguardando sincronização`} title="Atendimentos aguardando sincronização"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M5 7h14M5 17h14M7 7v10m10-10v10M9 10h6M9 14h4" /></svg><b>{pendenciasOffline}</b></button>}
-            {podeTrocarOperacao && <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => setOperacao('seletor')}>Trocar sistema</button>}
-            <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button>
-          </div>
-        </div>
-      </div>
+      <ColaboradorTopbar nomeDoPerfil={nomeDoPerfil} descricaoDaOperacao={descricaoDaOperacao}>
+        {semRede && <span className={styles.indicadorRedeOffline} role="status" aria-label="Sem conexão. Os lançamentos manuais serão enviados ao reconectar." title="Sem conexão: trabalhando offline"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5a12 12 0 0 1 14.8-1.8M2.8 5.2 21.2 18.8M7.6 13.2a7 7 0 0 1 5.3-.5M12 19h.01" /></svg></span>}
+        {pendenciasOffline > 0 && <button type="button" className={styles.botaoPendenciasOffline} onClick={() => void abrirFilaOffline()} aria-label={`${pendenciasOffline} atendimento${pendenciasOffline === 1 ? '' : 's'} aguardando sincronização`} title="Atendimentos aguardando sincronização"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M5 7h14M5 17h14M7 7v10m10-10v10M9 10h6M9 14h4" /></svg><b>{pendenciasOffline}</b></button>}
+        {podeTrocarOperacao && <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => setOperacao('seletor')}>Trocar sistema</button>}
+        <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button>
+      </ColaboradorTopbar>
       <div className={styles.container}>
         {erro && <div className={styles.aviso} role="alert">{erro}</div>}
         {operacao === 'recebimentos' ? <PainelColaborador

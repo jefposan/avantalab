@@ -1,6 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.23 -->
+<!-- ava-version: 1.48.0.43.24 -->
+
+> Revisão 1.48.0.43.24: O AvantaPreços usa diretamente o cabeçalho e CSS de página do Recebimentos. Sem impacto operacional na Gestão Web.
 
 > Revisão 1.48.0.43.23: Correção do topo do AvantaPreços no iPhone: área segura aplicada fora do cabeçalho útil e fundo raiz autenticado opaco. Sem impacto operacional na Gestão Web.
 

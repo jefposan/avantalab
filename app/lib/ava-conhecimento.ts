@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.43.24: AvantaPreços e Recebimentos reutilizam
+// o mesmo ColaboradorTopbar e o mesmo CSS de página autenticada.
+// Sem mudança nas consultas, no login ou nos comandos do Recebimentos.
 // Revisado na versão 1.48.0.43.23: AvantaPreços reserva a área segura
 // superior fora do cabeçalho útil e usa fundo raiz autenticado azul e opaco.
 // Sem alteração no fluxo de consulta; validar a barra nativa no iPhone.

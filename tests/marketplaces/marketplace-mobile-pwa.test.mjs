@@ -168,43 +168,38 @@ test('barra de status do iPhone usa o mesmo modelo do PWA Recebimentos', () => {
   assert.match(pwaManifest, /theme_color: '#003E73'/);
 });
 
-test('AvantaPreços protege o topo exposto ao iPhone mantendo a geometria do Recebimentos', () => {
-  assert.match(css, /\.page \{[^}]*position: relative;[^}]*min-height: 100dvh;[^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
-  assert.match(css, /padding-top: var\(--avanta-status-inset-top, env\(safe-area-inset-top, 0px\)\);/);
-  assert.doesNotMatch(css, /min-height: calc\(76px|padding: calc\(14px/);
-  assert.match(css, /\.topbar \{[^}]*position: sticky;[^}]*z-index: 20;[^}]*top: 0;[^}]*background: color-mix\(in srgb, var\(--brand\) 96%, #000\);/);
-  assert.match(css, /\.topbarInner \{[^}]*max-width: 1080px;[^}]*padding: 12px 16px;/);
-  assert.match(css, /\.topbarMobile \.topbarInner \{[^}]*min-height: 76px;[^}]*padding-block: 14px;/);
-  assert.match(receiptsCss, /\.topbar \{[^}]*position: sticky;[^}]*top: 0;[^}]*z-index: 20;[^}]*background: color-mix\(in srgb, var\(--cp\) 96%, #000\);/);
-  assert.match(receiptsCss, /\.topbarInner \{[^}]*max-width: 1080px;[^}]*padding: 12px 16px;/);
+test('AvantaPreços e Recebimentos usam o mesmo componente de topo e o mesmo CSS de página', () => {
+  const shared = read('app/recebimentos/components/ColaboradorTopbar.tsx');
+  const receiptsClient = read('app/recebimentos/ColaboradorApp.tsx');
+  assert.match(shared, /import styles from '..\/recebimentos\.module\.css'/);
+  for (const name of ['topbar', 'topbarColaborador', 'topbarInner', 'brand', 'brandTitle', 'brandEmpresa', 'topbarAcoesColaborador']) {
+    assert.ok(shared.includes(`styles.${name}`));
+  }
+  assert.match(shared, /\{children\}/);
+  assert.match(receiptsClient, /import ColaboradorTopbar from '.\/components\/ColaboradorTopbar'/);
+  assert.match(receiptsClient, /<ColaboradorTopbar nomeDoPerfil=\{nomeDoPerfil\} descricaoDaOperacao=\{descricaoDaOperacao\}>/);
+  assert.match(client, /import ColaboradorTopbar from '@\/app\/recebimentos\/components\/ColaboradorTopbar'/);
+  assert.match(client, /import recebimentosStyles from '@\/app\/recebimentos\/recebimentos\.module\.css'/);
+  assert.match(client, /className=\{`\$\{recebimentosStyles.page\} \$\{styles.page\}`\}/);
+  assert.match(client, /<ColaboradorTopbar/);
+  assert.match(client, /recebimentosStyles.btnGhost/);
+  assert.doesNotMatch(css, /\.(?:topbar|topbarInner|topbarMobile|brandTitle|brandSubtitle|logoutButton)\b/);
+  assert.match(css, /\.page \{ --brand: var\(--cp\); --accent: #21aaa5; --ink: #152033; \}/);
+  assert.doesNotMatch(css, /--avanta-status-inset-top/);
+  assert.doesNotMatch(viewportShell, /data-avantaprecos-viewport='ready'/);
+  assert.doesNotMatch(shared, /safe-area|backdrop-filter|style=/);
   assert.match(receiptsCss, /\.topbarColaborador \.topbarInner \{[^}]*min-height: 76px;[^}]*padding-block: 14px;/);
-  assert.match(css, /\.loginWrap \{[^}]*--avanta-access-viewport-height: 100dvh;[^}]*--avanta-access-safe-extension: 0px;[^}]*min-height: calc\(var\(--avanta-access-viewport-height\) \+ var\(--avanta-access-safe-extension\)\);[^}]*background-image: image-set\([^}]*background-position: center bottom;[^}]*background-size: cover;[^}]*background-attachment: fixed;/);
-  assert.match(css, /@media \(max-width: 1023px\) \{ \.page, \.loginWrap \{[^}]*background-size: 100% auto;/);
-  assert.match(css, /@media \(max-width: 1023px\) and \(min-aspect-ratio: 9\/16\), \(max-width: 1023px\) and \(max-aspect-ratio: 9\/18\) \{ \.page, \.loginWrap \{[^}]*background-size: auto 100%;/);
-  assert.match(css, /@media \(display-mode: standalone\) and \(max-width: 1023px\) \{ \.loginWrap \{[^}]*--avanta-access-safe-extension: env\(safe-area-inset-top\);/);
-  assert.match(css, /@supports \(-webkit-touch-callout: none\) \{ \.page, \.loginWrap \{[^}]*background-attachment: scroll;/);
-  assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background-color: #eef6fb;[^}]*background-image: none;/);
-  assert.match(viewportShell, /body:has\(\[data-avantaprecos-viewport='access'\]\) \{[^}]*background: transparent;/);
-  assert.match(viewportShell, /html:has\(\[data-avantaprecos-viewport='ready'\]\),\s*body:has\(\[data-avantaprecos-viewport='ready'\]\) \{\s*background-color: #003E73;/);
-  assert.doesNotMatch(viewportShell, /position: fixed|backdrop-filter|linear-gradient/);
-  assert.doesNotMatch(viewportShell, /bg-avantalab-mobile|background-position|background-size|background-attachment/);
-  assert.match(client, /data-avantaprecos-viewport="access"/);
-  assert.match(client, /data-avantaprecos-viewport="ready"/);
-  assert.doesNotMatch(client, /document\.documentElement|document\.body|avantaprecos-pwa-root/);
-  assert.match(pwaPage, /import '\.\/viewport-shell\.css'/);
-  assert.match(pwaPage, /rel="preload"[\s\S]*bg-avantalab-mobile-1080x1920-sem-logo\.webp/);
+  assert.match(css, /@media \(max-width: 1023px\) \{ \.loginWrap \{/);
+  assert.doesNotMatch(css, /\.page, \.loginWrap/);
 });
 
-test('rota isolada valida login, carregamento e cabeçalho com área segura exposta', () => {
+test('rota de validação reutiliza o topo real sem inserir outra área segura', () => {
   assert.match(viewportValidationPage, /estado === 'pronto'/);
   assert.match(viewportValidationPage, /estado === 'carregando'/);
-  assert.match(viewportValidationPage, /'--avanta-status-inset-top': '62px'/);
-  assert.match(viewportValidationPage, /style=\{headerSafeStyle\}/);
-  assert.match(viewportValidationPage, /'--avanta-access-viewport-height': 'calc\(100dvh - 62px\)'/);
-  assert.match(viewportValidationPage, /'--avanta-access-safe-extension': '62px'/);
-  assert.match(viewportValidationPage, /className=\{styles\.loginWrap\} data-avantaprecos-viewport="access"/);
-  assert.match(viewportValidationPage, /className=\{styles\.page\} data-avantaprecos-viewport="ready"/);
-  assert.match(viewportValidationPage, /className=\{`\$\{styles\.topbar\} \$\{styles\.topbarMobile\}`\}/);
+  assert.match(viewportValidationPage, /import ColaboradorTopbar from '@\/app\/recebimentos\/components\/ColaboradorTopbar'/);
+  assert.match(viewportValidationPage, /<ColaboradorTopbar/);
+  assert.match(viewportValidationPage, /recebimentosStyles.page/);
+  assert.doesNotMatch(viewportValidationPage, /headerSafeStyle|--avanta-status-inset-top|styles.topbar/);
   assert.match(viewportValidationPage, /statusBarStyle: 'default'/);
   assert.match(viewportValidationPage, /robots: \{ index: false, follow: false \}/);
 });

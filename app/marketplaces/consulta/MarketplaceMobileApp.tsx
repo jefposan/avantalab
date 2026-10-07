@@ -7,6 +7,8 @@ import CampoBusca from '@/app/components/CampoBusca';
 import { correspondeBusca } from '@/app/lib/formatters';
 import { isValidEan, normalizeEan } from '@/app/modules/marketplaces/services/ean';
 import styles from './marketplaces-mobile.module.css';
+import recebimentosStyles from '@/app/recebimentos/recebimentos.module.css';
+import ColaboradorTopbar from '@/app/recebimentos/components/ColaboradorTopbar';
 
 type Company = { id: string; nome: string; perfil: string; [key: string]: unknown };
 type Candidate = { id: string; name: string; picture: string | null };
@@ -505,13 +507,10 @@ export default function MarketplaceMobileApp() {
     </section>
   </main>;
 
-  return <div className={styles.page} data-avantaprecos-viewport="ready">
-    <div className={`${styles.topbar} ${styles.topbarMobile}`}>
-      <div className={styles.topbarInner}>
-        <div className={styles.brand}><span className={styles.brandTitle}>{company?.nome || 'Perfil da empresa'}</span><span className={styles.brandSubtitle}>Consulta rápida de produtos e preços</span></div>
-        <button type="button" className={styles.logoutButton} onClick={() => void logout()}>Sair</button>
-      </div>
-    </div>
+  return <div className={`${recebimentosStyles.page} ${styles.page}`} data-avantaprecos-viewport="ready">
+    <ColaboradorTopbar nomeDoPerfil={company?.nome || 'Perfil da empresa'} descricaoDaOperacao="Consulta rápida de produtos e preços">
+      <button type="button" className={`${recebimentosStyles.btn} ${recebimentosStyles.btnGhost} ${recebimentosStyles.btnSm}`} onClick={() => void logout()}>Sair</button>
+    </ColaboradorTopbar>
 
     {result?.status === 'found' && result.product ? <section className={styles.resultPage} aria-labelledby="result-title">
       <button type="button" className={styles.backButton} onClick={() => { setResult(null); setResultError(''); if (!resultFromCatalog) setResultFromCatalog(false); }}><Icon name="back" /> {resultFromCatalog ? 'Produtos precificados' : 'Nova consulta'}</button>

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.48.0.43.24 - 2026-10-07
+
+- **Código único para o topo dos PWAs**: a estrutura existente do Recebimentos
+  foi extraída sem alterações para ColaboradorTopbar. Recebimentos,
+  AvantaPreços e a rota de validação passam a renderizar esse mesmo componente
+  com os mesmos estilos originais, incluindo as ações no cabeçalho.
+- **Página autenticada original**: AvantaPreços usa diretamente a classe page
+  do Recebimentos. Foram removidas as cópias locais do topo, os ajustes extras
+  de área segura, os overrides de fundo raiz e de responsividade autenticada.
+- **Ações preservadas**: indicadores offline, fila pendente, troca de operação
+  e saída do Recebimentos continuam com os mesmos handlers e condições.
+
 ## 1.48.0.43.23 - 2026-10-07
 
 - **Proteção do cabeçalho do AvantaPreços no iPhone**: após a comparação com

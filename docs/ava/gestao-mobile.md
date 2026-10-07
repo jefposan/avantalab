@@ -1,6 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.23 -->
+<!-- ava-version: 1.48.0.43.24 -->
+
+> Revisão 1.48.0.43.24: O AvantaPreços reutiliza diretamente o componente ColaboradorTopbar e o CSS de página do PWA Recebimentos. O cabeçalho e os botões compartilham a implementação; as compensações locais de área segura, fundo e responsividade autenticada foram removidas.
 
 > Revisão 1.48.0.43.23: O AvantaPreços mantém o cabeçalho útil de 76 px e reserva, fora dele, a área segura superior informada pelo navegador. A superfície raiz autenticada fica azul e opaca. A mudança protege instalações que ainda expõem conteúdo atrás da barra do iPhone; a aparência nativa precisa de conferência no aparelho.
 

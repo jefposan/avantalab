@@ -8,10 +8,3 @@ body:has([data-avantaprecos-viewport='access']) {
   min-height: 100%;
   background: transparent;
 }
-
-/* The system paints exposed safe areas and overscroll using the root surface.
-   Keep it opaque blue while authenticated, without another overlay on the header. */
-html:has([data-avantaprecos-viewport='ready']),
-body:has([data-avantaprecos-viewport='ready']) {
-  background-color: #003E73;
-}

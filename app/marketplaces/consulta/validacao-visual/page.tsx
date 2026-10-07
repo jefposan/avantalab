@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import type { CSSProperties } from 'react';
 import styles from '../marketplaces-mobile.module.css';
+import recebimentosStyles from '@/app/recebimentos/recebimentos.module.css';
+import ColaboradorTopbar from '@/app/recebimentos/components/ColaboradorTopbar';
 import '../viewport-shell.css';
 
 export const metadata: Metadata = {
@@ -21,25 +23,16 @@ type Props = { searchParams: Promise<{ estado?: string; segura?: string }> };
 export default async function MarketplaceViewportValidationPage({ searchParams }: Props) {
   const query = await searchParams;
   const estado = query.estado;
-  const headerSafeStyle = query.segura === 'iphone'
-    ? ({ '--avanta-status-inset-top': '62px' } as CSSProperties)
-    : undefined;
   const accessSafeStyle = query.segura === 'iphone'
     ? ({ '--avanta-access-viewport-height': 'calc(100dvh - 62px)', '--avanta-access-safe-extension': '62px' } as CSSProperties)
     : undefined;
 
   if (estado === 'pronto') {
     return (
-      <div className={styles.page} data-avantaprecos-viewport="ready">
-        <div className={`${styles.topbar} ${styles.topbarMobile}`} style={headerSafeStyle}>
-          <div className={styles.topbarInner}>
-            <div className={styles.brand}>
-              <span className={styles.brandTitle}>TRIDIUM COSMETICOS</span>
-              <span className={styles.brandSubtitle}>Consulta rápida de produtos e preços</span>
-            </div>
-            <button type="button" className={styles.logoutButton}>Sair</button>
-          </div>
-        </div>
+      <div className={`${recebimentosStyles.page} ${styles.page}`} data-avantaprecos-viewport="ready">
+        <ColaboradorTopbar nomeDoPerfil="TRIDIUM COSMETICOS" descricaoDaOperacao="Consulta rápida de produtos e preços">
+          <button type="button" className={`${recebimentosStyles.btn} ${recebimentosStyles.btnGhost} ${recebimentosStyles.btnSm}`}>Sair</button>
+        </ColaboradorTopbar>
         <main className={styles.content}>
           <section className={styles.hero}>
             <p className={styles.eyebrow}>Consulta rápida</p>
