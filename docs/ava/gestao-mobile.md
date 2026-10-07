@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.24 -->
+<!-- ava-version: 1.48.0.43.25 -->
+
+> Revisão 1.48.0.43.25: o AvantaVendas prepara o tipo e a extensão dos materiais
+> antes de abrir o compartilhamento Android. A Gestão Mobile não foi alterada.
 
 > Revisão 1.48.0.43.24: O AvantaPreços reutiliza diretamente o componente ColaboradorTopbar e o CSS de página do PWA Recebimentos. O cabeçalho e os botões compartilham a implementação; as compensações locais de área segura, fundo e responsividade autenticada foram removidas.
 

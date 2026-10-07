@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.48.0.43.25-av179 - 2026-10-07
+
+- **Compartilhamento de materiais corrigido no Android**: imagens, vídeos e
+  PDFs passam a usar o tipo MIME original cadastrado, a extensão compatível e,
+  quando necessário, uma tentativa direta do seletor Android mesmo diante de
+  uma detecção incompleta do navegador. O aplicativo nativo continua usando a
+  ponte Capacitor; iPhone e compartilhamento múltiplo preservam o fluxo atual.
+- **Contingência sem falso sucesso**: se o navegador realmente não disponibilizar
+  o compartilhamento, o aviso informa que houve salvamento para envio manual em
+  vez de afirmar que o seletor foi aberto.
+
 ## 1.48.0.43.24 - 2026-10-07
 
 - **Código único para o topo dos PWAs**: a estrutura existente do Recebimentos

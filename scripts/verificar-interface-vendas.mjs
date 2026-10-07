@@ -34,6 +34,9 @@ const ondaDois = estilos.slice(inicioOndaDois, fimOndas);
 const inicioCompartilhamentoMaterial = aplicacao.indexOf('async function compartilharMaterialDivulgacao(');
 const fimCompartilhamentoMaterial = aplicacao.indexOf('\nasync function ', inicioCompartilhamentoMaterial + 1);
 const compartilhamentoMaterial = aplicacao.slice(inicioCompartilhamentoMaterial, fimCompartilhamentoMaterial);
+const inicioCompartilhamentoWebMaterial = aplicacao.indexOf('async function tentarCompartilharArquivosWebDivulgacao(');
+const fimCompartilhamentoWebMaterial = aplicacao.indexOf('\nfunction solicitarCompartilhamentoNativoDivulgacao', inicioCompartilhamentoWebMaterial);
+const compartilhamentoWebMaterial = aplicacao.slice(inicioCompartilhamentoWebMaterial, fimCompartilhamentoWebMaterial);
 
 const acaoPagamento = '<button class="secondary quick-action-button quick-action-payment" onclick="abrirNovoPagamentoGeral()">';
 const acaoPedido = '<button class="primary quick-action-button quick-action-order" onclick="abrirNovoPedidoGeral()">';
@@ -395,8 +398,9 @@ exigir(
     && aplicacao.includes('await navigator.share({ files: [arquivo], title: mensagem, text: mensagem });')
     && aplicacao.includes("compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido')")
     && aplicacao.includes("compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento')")
-    && compartilhamentoMaterial.includes('navigator.share({ files: [arquivo] })')
-    && !/navigator\.share\(\{[^}]*\b(?:title|text)\s*:/.test(compartilhamentoMaterial),
+    && compartilhamentoMaterial.includes('tentarCompartilharArquivosWebDivulgacao([arquivo])')
+    && compartilhamentoWebMaterial.includes('navigator.share({ files: arquivos })')
+    && !/navigator\.share\(\{[^}]*\b(?:title|text)\s*:/.test(compartilhamentoWebMaterial),
   'Comprovantes devem compartilhar imagem e mensagem pronta correspondente; materiais de Divulgação continuam sem mensagem automática.',
 );
 exigir(

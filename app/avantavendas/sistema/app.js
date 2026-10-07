@@ -5993,12 +5993,55 @@ function alternarMaterialExpandido(evento = null) {
   document.getElementById('sheetBackdrop')?.classList.toggle('material-expanded');
 }
 
-function nomeArquivoMaterialDivulgacao(material, blob, nomesUsados = null) {
-  const tipoBlob = String(blob.type || '').split(';')[0].toLowerCase();
-  const subtipo = tipoBlob.split('/')[1] || '';
-  const extensao = tipoBlob === 'application/pdf' || material.tipo === 'pdf'
-    ? 'pdf'
-    : subtipo.replace('jpeg', 'jpg').replace('quicktime', 'mov') || (material.tipo === 'video' ? 'mp4' : 'jpg');
+function tipoMimeMaterialDivulgacao(material, blob) {
+  const tiposAceitos = new Set([
+    'application/pdf',
+    'image/gif',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'video/mp4',
+    'video/quicktime',
+    'video/webm',
+  ]);
+  const declarado = String(material?.mime_type || '').split(';')[0].trim().toLowerCase();
+  const recebido = String(blob?.type || '').split(';')[0].trim().toLowerCase();
+  const extensao = String(material?.arquivo_url || '').split(/[?#]/)[0].split('.').pop()?.toLowerCase();
+  const tiposPorExtensao = {
+    gif: 'image/gif',
+    jpeg: 'image/jpeg',
+    jpg: 'image/jpeg',
+    mov: 'video/quicktime',
+    mp4: 'video/mp4',
+    pdf: 'application/pdf',
+    png: 'image/png',
+    webm: 'video/webm',
+    webp: 'image/webp',
+  };
+  if (tiposAceitos.has(declarado)) return declarado;
+  if (tiposAceitos.has(recebido)) return recebido;
+  if (tiposPorExtensao[extensao]) return tiposPorExtensao[extensao];
+  if (material?.tipo === 'pdf') return 'application/pdf';
+  if (material?.tipo === 'video') return 'video/mp4';
+  return 'image/jpeg';
+}
+
+function extensaoMaterialDivulgacao(tipoMime) {
+  const extensoes = {
+    'application/pdf': 'pdf',
+    'image/gif': 'gif',
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'video/mp4': 'mp4',
+    'video/quicktime': 'mov',
+    'video/webm': 'webm',
+  };
+  return extensoes[tipoMime] || 'bin';
+}
+
+function nomeArquivoMaterialDivulgacao(material, tipoMime, nomesUsados = null) {
+  const extensao = extensaoMaterialDivulgacao(tipoMime);
   const base = String(material.titulo || 'material')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -6014,11 +6057,15 @@ function nomeArquivoMaterialDivulgacao(material, blob, nomesUsados = null) {
 async function prepararArquivoMaterialDivulgacao(material, opcoes = {}) {
   const resposta = await fetch(material.arquivo_url, { signal: opcoes.signal });
   if (!resposta.ok) throw new Error(`Não foi possível baixar “${material.titulo || 'material'}”.`);
-  const blob = await resposta.blob();
+  const blobRecebido = await resposta.blob();
+  const tipoMime = tipoMimeMaterialDivulgacao(material, blobRecebido);
+  const blob = blobRecebido.type === tipoMime
+    ? blobRecebido
+    : new Blob([blobRecebido], { type: tipoMime });
   return new File(
     [blob],
-    nomeArquivoMaterialDivulgacao(material, blob, opcoes.nomesUsados),
-    { type: blob.type || 'application/octet-stream' },
+    nomeArquivoMaterialDivulgacao(material, tipoMime, opcoes.nomesUsados),
+    { type: tipoMime },
   );
 }
 
@@ -6055,6 +6102,31 @@ function podeCompartilharArquivosDivulgacao(arquivos) {
     return !navigator.canShare || navigator.canShare({ files: arquivos });
   } catch {
     return false;
+  }
+}
+
+function navegadorAndroidDivulgacao() {
+  return /Android/i.test(navigator.userAgent || '');
+}
+
+function compartilhamentoCanceladoDivulgacao(error) {
+  return error?.name === 'AbortError' || /cancel|canceled|cancelled|cancelado/i.test(String(error?.message || ''));
+}
+
+async function tentarCompartilharArquivosWebDivulgacao(arquivos) {
+  if (!navigator.share) return false;
+  const suporteConfirmado = podeCompartilharArquivosDivulgacao(arquivos);
+  if (!suporteConfirmado && !navegadorAndroidDivulgacao()) return false;
+  try {
+    await navigator.share({ files: arquivos });
+    return true;
+  } catch (error) {
+    if (compartilhamentoCanceladoDivulgacao(error)) throw error;
+    const incompatibilidade = error?.name === 'TypeError'
+      || error?.name === 'DataError'
+      || error?.name === 'NotSupportedError';
+    if (!suporteConfirmado || incompatibilidade) return false;
+    throw error;
   }
 }
 
@@ -6113,20 +6185,26 @@ async function compartilharMateriaisSelecionadosDivulgacao() {
     if (compartilhamentoNativo) {
       atualizarStatusCompartilhamentoMultiploDivulgacao('Abrindo opções de compartilhamento...');
       await compartilhamentoNativo;
-    } else if (podeCompartilharArquivosDivulgacao(arquivos)) {
-      atualizarStatusCompartilhamentoMultiploDivulgacao('Abrindo opções de compartilhamento...');
-      await navigator.share({ files: arquivos });
-    } else if (arquivos.length === 1) {
-      baixarArquivoGeradoVendas(arquivos[0], arquivos[0].name);
-      toast('Arquivo baixado para compartilhar.');
     } else {
-      atualizarStatusCompartilhamentoMultiploDivulgacao('Organizando arquivos para download...');
-      const JSZip = await carregarBibliotecaZip();
-      const zip = new JSZip();
-      arquivos.forEach((arquivo) => zip.file(arquivo.name, arquivo));
-      const pacote = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
-      baixarArquivoGeradoVendas(pacote, 'materiais-avantalab.zip');
-      toast('Arquivos reunidos em um pacote para compartilhar.');
+      atualizarStatusCompartilhamentoMultiploDivulgacao('Abrindo opções de compartilhamento...');
+      const compartilhadoPeloNavegador = await tentarCompartilharArquivosWebDivulgacao(arquivos);
+      if (!compartilhadoPeloNavegador && arquivos.length === 1) {
+        const material = materiais[0];
+        if (podeCompartilharEnderecoMaterialDivulgacao(material)) {
+          await navigator.share({ url: material.arquivo_url });
+        } else {
+          baixarArquivoGeradoVendas(arquivos[0], arquivos[0].name);
+          toast('Seu navegador não abriu o compartilhamento. O arquivo foi salvo para envio manual.', { tipo: 'atencao' });
+        }
+      } else if (!compartilhadoPeloNavegador) {
+        atualizarStatusCompartilhamentoMultiploDivulgacao('Organizando arquivos para download...');
+        const JSZip = await carregarBibliotecaZip();
+        const zip = new JSZip();
+        arquivos.forEach((arquivo) => zip.file(arquivo.name, arquivo));
+        const pacote = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+        baixarArquivoGeradoVendas(pacote, 'materiais-avantalab.zip');
+        toast('Arquivos reunidos em um pacote para compartilhar.');
+      }
     }
     compartilhamentoConcluido = true;
   } catch (error) {
@@ -6161,16 +6239,13 @@ async function compartilharMaterialDivulgacao(materialId) {
       await compartilhamentoNativo;
       return;
     }
-    if (podeCompartilharArquivosDivulgacao([arquivo])) {
-      await navigator.share({ files: [arquivo] });
-      return;
-    }
+    if (await tentarCompartilharArquivosWebDivulgacao([arquivo])) return;
     if (podeCompartilharEnderecoMaterialDivulgacao(material)) {
       await navigator.share({ url: material.arquivo_url });
       return;
     }
     baixarArquivoGeradoVendas(arquivo, arquivo.name);
-    toast('Material baixado para compartilhar.');
+    toast('Seu navegador não abriu o compartilhamento. O material foi salvo para envio manual.', { tipo: 'atencao' });
   } catch (error) {
     const mensagem = traduzErroCompartilhamento(error);
     if (mensagem) toast(mensagem, { tipo: 'erro', titulo: 'Não foi possível enviar o arquivo' });

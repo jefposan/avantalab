@@ -30,6 +30,9 @@ const visualizadorPdf = aplicacao.slice(inicioPdf, fimPdf);
 const inicioAtualizacao = aplicacao.indexOf('async function atualizarDivulgacao(');
 const fimAtualizacao = aplicacao.indexOf('\nfunction posicionarIndicadorAtualizacaoDivulgacao(', inicioAtualizacao);
 const atualizacaoDivulgacao = aplicacao.slice(inicioAtualizacao, fimAtualizacao);
+const inicioCompartilhamentoWeb = aplicacao.indexOf('async function tentarCompartilharArquivosWebDivulgacao(arquivos)');
+const fimCompartilhamentoWeb = aplicacao.indexOf('\nfunction solicitarCompartilhamentoNativoDivulgacao', inicioCompartilhamentoWeb);
+const compartilhamentoWeb = aplicacao.slice(inicioCompartilhamentoWeb, fimCompartilhamentoWeb);
 
 test('Divulgação permite selecionar até dez arquivos da pasta atual', () => {
   assert.match(aplicacao, /const LIMITE_SELECAO_MATERIAIS_DIVULGACAO = 10;/);
@@ -76,8 +79,9 @@ test('PDF possui tela cheia com links externos e navegação interna preservados
 test('arquivos são preparados em sequência e compartilhados sem texto automático', () => {
   assert.ok(inicioCompartilhamento >= 0 && fimCompartilhamento > inicioCompartilhamento);
   assert.match(compartilhamentoMultiplo, /for \(let indice = 0; indice < materiais\.length; indice \+= 1\)/);
-  assert.match(compartilhamentoMultiplo, /navigator\.share\(\{ files: arquivos \}\)/);
-  assert.doesNotMatch(compartilhamentoMultiplo, /navigator\.share\(\{[^}]*\b(?:text|title|url)\s*:/);
+  assert.match(compartilhamentoMultiplo, /tentarCompartilharArquivosWebDivulgacao\(arquivos\)/);
+  assert.match(compartilhamentoWeb, /navigator\.share\(\{ files: arquivos \}\)/);
+  assert.doesNotMatch(compartilhamentoWeb, /navigator\.share\(\{[^}]*\b(?:text|title|url)\s*:/);
   assert.match(compartilhamentoMultiplo, /zip\.generateAsync\(\{ type: 'blob', compression: 'STORE' \}\)/);
   assert.match(compartilhamentoMultiplo, /materiais-avantalab\.zip/);
 });
@@ -91,7 +95,8 @@ test('vídeo é preparado antes do toque que abre o compartilhamento no iPhone',
   assert.match(preparoUnico, /atualizarBotoesCompartilharMaterial\(\{ desabilitado: false, ocupado: false, rotulo: 'Compartilhar material' \}\)/);
   assert.match(compartilhamentoUnico, /const preparado = arquivoMaterialDivulgacaoPreparado\?\.materialId === materialId/);
   assert.doesNotMatch(compartilhamentoUnico, /await prepararArquivoMaterialDivulgacao/);
-  assert.match(compartilhamentoUnico, /await navigator\.share\(\{ files: \[arquivo\] \}\)/);
+  assert.match(compartilhamentoUnico, /await tentarCompartilharArquivosWebDivulgacao\(\[arquivo\]\)/);
+  assert.match(compartilhamentoWeb, /await navigator\.share\(\{ files: arquivos \}\)/);
 });
 
 test('falhas do compartilhamento nunca exibem a mensagem técnica em inglês', () => {

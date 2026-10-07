@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.24 -->
+<!-- ava-version: 1.48.0.43.25 -->
+
+> Revisão 1.48.0.43.25: correção restrita ao compartilhamento de materiais da
+> Divulgação no AvantaVendas para Android; sem impacto operacional na Gestão Web.
 
 > Revisão 1.48.0.43.24: O AvantaPreços usa diretamente o cabeçalho e CSS de página do Recebimentos. Sem impacto operacional na Gestão Web.
 

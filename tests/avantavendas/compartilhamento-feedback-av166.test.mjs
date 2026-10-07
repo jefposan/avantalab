@@ -36,9 +36,30 @@ test('navegador mantém compartilhamento do arquivo e tenta o endereço antes do
     'async function compartilharMaterialDivulgacao(materialId)',
     '\nconst CONFIGURACOES_CARD_ID_POR_TITULO',
   );
-  assert.match(compartilhamentoUnico, /await navigator\.share\(\{ files: \[arquivo\] \}\)/);
+  const compartilhamentoWeb = recorte(
+    aplicativo,
+    'async function tentarCompartilharArquivosWebDivulgacao(arquivos)',
+    '\nfunction solicitarCompartilhamentoNativoDivulgacao',
+  );
+  assert.match(compartilhamentoUnico, /await tentarCompartilharArquivosWebDivulgacao\(\[arquivo\]\)/);
+  assert.match(compartilhamentoWeb, /await navigator\.share\(\{ files: arquivos \}\)/);
+  assert.match(compartilhamentoWeb, /!suporteConfirmado && !navegadorAndroidDivulgacao\(\)/);
   assert.match(compartilhamentoUnico, /await navigator\.share\(\{ url: material\.arquivo_url \}\)/);
   assert.match(compartilhamentoUnico, /baixarArquivoGeradoVendas\(arquivo, arquivo\.name\)/);
+});
+
+test('arquivo de divulgação recebe MIME e extensão aceitos pelo compartilhamento do Android', () => {
+  const preparo = recorte(
+    aplicativo,
+    'function tipoMimeMaterialDivulgacao(material, blob)',
+    '\nfunction atualizarBotoesCompartilharMaterial',
+  );
+  assert.match(preparo, /material\?\.mime_type/);
+  assert.match(preparo, /tiposPorExtensao/);
+  assert.match(preparo, /return 'image\/jpeg'/);
+  assert.match(preparo, /new Blob\(\[blobRecebido\], \{ type: tipoMime \}\)/);
+  assert.match(preparo, /new File\([\s\S]+\{ type: tipoMime \}/);
+  assert.doesNotMatch(preparo, /application\/octet-stream/);
 });
 
 test('feedback não exige leitura da linha inserida para confirmar o envio', () => {

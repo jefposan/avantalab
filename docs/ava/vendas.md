@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.24 -->
+<!-- ava-version: 1.48.0.43.25 -->
+
+> Revisão 1.48.0.43.25-av179: ao compartilhar imagem, vídeo ou PDF da
+> Divulgação no Android, o AvantaVendas prepara o arquivo com MIME e extensão
+> compatíveis e abre o seletor do aparelho. A ponte nativa permanece prioritária;
+> no navegador, a tentativa direta corrige detecções incompletas do suporte a
+> arquivos. Cancelar não gera erro e o iPhone mantém o fluxo atual.
 
 > Revisão 1.48.0.43.24: Reutilização do cabeçalho do Recebimentos no AvantaPreços. Sem impacto operacional no AvantaVendas.
 
@@ -46,7 +52,7 @@
 > Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
 > ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 178 -->
+<!-- avantavendas-asset-revision: 179 -->
 
 > Revisão 1.48.0.43.11-av175: **Novo produto** conserva sua posição original
 > no canto direito. **Atualizar** ocupa uma posição independente à esquerda e
