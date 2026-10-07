@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.03 -->
+<!-- ava-version: 1.48.0.43.04 -->
+
+> Revisão 1.48.0.43.04: as ações de situação dos anúncios dentro do editor de
+> Marketplaces pertencem à Gestão Web e não alteram a Gestão Mobile.
 
 > Revisão 1.48.0.43.03: a orientação de trocar a sessão do marketplace para
 > conectar outra conta pertence à Gestão Web e não altera a Gestão Mobile.

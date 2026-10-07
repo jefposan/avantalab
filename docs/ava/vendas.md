@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.03 -->
+<!-- ava-version: 1.48.0.43.04 -->
+
+> Revisão 1.48.0.43.04: as ações de pausar, reativar, encerrar ou excluir
+> anúncios no editor de Marketplaces pertencem à Gestão Web e não alteram o
+> AvantaVendas.
 
 > Revisão 1.48.0.43.03: a orientação para trocar a sessão antes de conectar
 > outra conta em Marketplaces pertence à Gestão Web e não altera o AvantaVendas.

@@ -5,21 +5,23 @@ import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import Tooltip from '@/app/components/Tooltip';
 import { formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
 import { changedFields, EDIT_FIELDS, validateChanges, type EditField, type ListingEditor as Editor, type ListingEditValues } from '@/app/modules/marketplaces/listing-editor';
-import type { ListingSnapshot } from '@/app/modules/marketplaces/services/listing-model';
+import type { ListingAction, ListingSnapshot } from '@/app/modules/marketplaces/services/listing-model';
 import styles from './marketplaces.module.css';
 import MarketplaceSelect from './MarketplaceSelect';
 
 type Requester = (path: string, body?: unknown, signal?: AbortSignal, method?: string) => Promise<unknown>;
 const labels = { title: 'Título', price: 'Preço de venda (R$)', listingType: 'Tipo de anúncio', stock: 'Estoque disponível', description: 'Descrição' };
+const lifecycleActions: Record<string, ListingAction[]> = { active: ['pause', 'close'], paused: ['resume', 'close'], closed: ['delete'] };
+const lifecycleLabels: Record<ListingAction, string> = { pause: 'Pausar', resume: 'Reativar', close: 'Encerrar', delete: 'Excluir definitivamente' };
 function feeDetail(fee: number | null, percent: number | null, notice?: string) {
   if (fee == null) return notice || 'Taxa indisponível';
   const formatted = fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   return `Taxa ${formatted}${percent == null ? '' : ` · ${percent}%`}`;
 }
-export default function ListingEditor({ companyId, accountId, itemId, snapshot, permalink, children, dark, brand, request, onClose, onSaved, onBusy }: {
+export default function ListingEditor({ companyId, accountId, itemId, snapshot, permalink, children, dark, brand, request, onClose, onSaved, onBusy, onListingAction }: {
   companyId: string; accountId: string; itemId: string; dark: boolean; brand: string; request: Requester;
   snapshot: ListingSnapshot; permalink: string | null; children: ReactNode;
-  onClose: () => void; onSaved: (listing: ListingSnapshot) => void; onBusy: (busy: boolean) => void;
+  onClose: () => void; onSaved: (listing: ListingSnapshot) => void; onBusy: (busy: boolean) => void; onListingAction?: (action: ListingAction) => void;
 }) {
   const prefix = useId();
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -38,6 +40,8 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
   const requestKey = useRef(crypto.randomUUID());
   const formRef = useRef<HTMLFormElement>(null);
   const dirty = !!editor && Object.keys(changedFields(editor, values)).length > 0;
+  const availableLifecycleActions = snapshot.substatus.includes('deleted') ? [] : lifecycleActions[snapshot.status] || [];
+  const lifecycleDisabled = loading || saving || stale || dirty;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -108,6 +112,7 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
       <div className={styles.actionBar}>
         <button type="button" disabled={saving} onClick={cancel}>Cancelar</button>
         <button type="button" disabled={loading || saving} onClick={refresh}>Recarregar edição</button>
+        {onListingAction && availableLifecycleActions.map((action) => <button key={action} type="button" className={action === 'close' || action === 'delete' ? styles.destructiveAction : undefined} disabled={lifecycleDisabled} title={dirty ? 'Salve ou cancele as alterações antes de mudar a situação do anúncio.' : undefined} onClick={() => onListingAction(action)}>{lifecycleLabels[action]}</button>)}
         <button type="submit" className={styles.primary} disabled={loading || saving || stale || !dirty}>{saving ? 'Salvando…' : 'Salvar alterações'}</button>
         {permalink && <a href={permalink} target="_blank" rel="noopener noreferrer">Abrir no Mercado Livre ↗</a>}
       </div>

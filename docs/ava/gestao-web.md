@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.03 -->
+<!-- ava-version: 1.48.0.43.04 -->
+
+> Revisão 1.48.0.43.04: ao abrir o lápis de um anúncio, as ações aplicáveis
+> aparecem junto da edição: **Pausar**, **Reativar**, **Encerrar** ou **Excluir
+> definitivamente** após o encerramento. Elas sempre pedem confirmação e ficam
+> indisponíveis enquanto houver alteração de campos não salva.
 
 > Revisão 1.48.0.43.03: ao usar **Conectar outra conta**, a tela orienta sair
 > da conta atual do marketplace no navegador ou usar janela anônima antes de

@@ -16,7 +16,7 @@ export type MarketplaceAccount = { id: string; seller_reference: string; seller_
 type Row = { snapshot: ListingSnapshot; status: string };
 type Confirmation = { action: ListingAction; id: string; name: string; connectionId: string };
 const statusNames: Record<string, string> = { connected: 'Conectada', expired: 'Reconectar', attention: 'Requer atenção', connecting: 'Conectando', active: 'Ativo', paused: 'Pausado', closed: 'Encerrado', deleted: 'Excluído', under_review: 'Em revisão', inactive: 'Inativo' };
-const actionNames = { pause: 'Pausar', resume: 'Reativar', close: 'Encerrar', delete: 'Excluir' };
+const actionNames = { pause: 'Pausar', resume: 'Reativar', close: 'Encerrar', delete: 'Excluir definitivamente' };
 const dateLabel = (value: string | null) => value ? new Date(value).toLocaleString('pt-BR') : 'Ainda não sincronizado';
 const money = (value: number | null, currency = 'BRL') => value == null ? 'Indisponível' : currency === 'BRL' ? formatarMoeda(value) : `${currency} ${value.toFixed(2)}`;
 
@@ -145,6 +145,9 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
     try {
       await marketplaceClientRequest('anunciados/acao', { empresaId: companyId, connectionId: accountId, id: confirmation.id, action: confirmation.action, confirmation: confirmation.id, requestKey: crypto.randomUUID() });
       await loadListRef.current();
+      setExpanded('');
+      setSyncNotice('Ação confirmada pelo Mercado Livre.');
+      requestAnimationFrame(() => editButtons.current.get(confirmation.id)?.focus());
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Falha na alteração.'); }
     finally { setActing(false); setConfirmation(null); }
   }
@@ -166,7 +169,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
           <td>{statusNames[rowStatus] || rowStatus}</td><td>{money(item.price, item.currency)}</td><td>{money(item.freightEstimate)}</td><td>{money(item.feeEstimate)}{item.feePercent != null && <small>{item.feePercent}%</small>}</td><td>{item.stock ?? 'Indisponível'}</td><td>{item.sold ?? 'Indisponível'}</td><td>{shipping.freight}<small>{shipping.method}</small></td>
           <td className={styles.listingActions}><button type="button" ref={(button) => { if (button) editButtons.current.set(item.id, button); else editButtons.current.delete(item.id); }} className={styles.editListing} aria-label={`Editar anúncio: ${item.title}`} title="Editar anúncio" aria-expanded={expanded === item.id} aria-controls={`details-${item.id}`} disabled={acting || editing || (!!expanded && expanded !== item.id)} onClick={() => openEditing(item.id)}><Icon name="edit" size={18} /></button></td>
         </tr>{expanded === item.id && <tr id={`details-${item.id}`}><td colSpan={9}><div className={styles.listingDetails}>
-          {editing ? <ListingEditor key={`${accountId}-${item.id}`} companyId={companyId} accountId={accountId} itemId={item.id} snapshot={item} permalink={item.permalink} dark={dark} brand={brand} request={marketplaceClientRequest} onBusy={setActing} onClose={() => cancelEditing(item.id)} onSaved={(listing) => {
+          {editing ? <ListingEditor key={`${accountId}-${item.id}`} companyId={companyId} accountId={accountId} itemId={item.id} snapshot={item} permalink={item.permalink} dark={dark} brand={brand} request={marketplaceClientRequest} onBusy={setActing} onClose={() => cancelEditing(item.id)} onListingAction={(action) => setConfirmation({ action, id: item.id, name: item.title, connectionId: accountId })} onSaved={(listing) => {
             setRows((current) => current.map((row) => row.snapshot.id === listing.id ? { snapshot: listing, status: listing.substatus.includes('deleted') ? 'deleted' : listing.status } : row));
             setExpanded(''); setSyncNotice('Alterações confirmadas pelo Mercado Livre.'); requestAnimationFrame(() => editButtons.current.get(listing.id)?.focus());
           }}><ListingData item={item} /></ListingEditor> : <>

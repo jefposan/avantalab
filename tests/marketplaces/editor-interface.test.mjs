@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 const read=(file) => readFileSync(new URL(`../../${file}`,import.meta.url),'utf8');
-const form=read('app/marketplaces/ListingEditor.tsx'),page=read('app/marketplaces/Anunciados.tsx'),route=read('app/api/modulos/marketplaces/anunciados/editar/route.ts');
+const form=read('app/marketplaces/ListingEditor.tsx'),page=read('app/marketplaces/Anunciados.tsx'),route=read('app/api/modulos/marketplaces/anunciados/editar/route.ts'),css=read('app/marketplaces/marketplaces.module.css');
 test('formulário comum permite salvar/cancelar, valida, protege descarte e usa formatação oficial', () => {
   for(const text of ['Salvar alterações','Cancelar','Descartar alterações?','Recarregar edição','changedFields','validateChanges','moedaDigitadaParaNumero','formatarMoedaDigitada','aria-describedby','aria-invalid','beforeunload']) assert.ok(form.includes(text),text);
   assert.match(form,/setStale\(true\)/);
@@ -50,6 +50,15 @@ test('editor carrega os tipos autorizados e recalcula a taxa no preço seleciona
   assert.match(service, /available_listing_types\?category_id=/);
   assert.match(service, /\/items\/\$\{editor\.id\}\/listing_type`, 'POST', \{ id: changes\.listingType \}/);
   assert.match(feeRoute, /readMercadoLivreListingTypeFee/);
+});
+test('ações de publicação ficam disponíveis na própria edição e preservam alterações não salvas', () => {
+  assert.match(form, /const lifecycleActions: Record<string, ListingAction\[]> = \{ active: \['pause', 'close'\], paused: \['resume', 'close'\], closed: \['delete'\] \}/);
+  assert.match(form, /'Excluir definitivamente'/);
+  assert.match(form, /const lifecycleDisabled = loading \|\| saving \|\| stale \|\| dirty;/);
+  assert.match(form, /Salve ou cancele as alterações antes de mudar a situação do anúncio\./);
+  assert.match(page, /onListingAction=\{\(action\) => setConfirmation\(\{ action, id: item\.id, name: item\.title, connectionId: accountId \}\)\}/);
+  assert.match(page, /setExpanded\(''\);\n      setSyncNotice\('Ação confirmada pelo Mercado Livre\.'/);
+  assert.match(css, /\.inlineEditorForm \.actionBar \.destructiveAction \{[^}]*color: #b42318;/);
 });
 test('GET e PATCH autenticam gestão e isolam empresa/conta; migração preserva acesso backend', () => {
   assert.equal((route.match(/authorizeMarketplace\(request, .*?, 'manage'\)/g)||[]).length,2);

@@ -114,6 +114,8 @@
 .editorValue .help { margin: 5px 0 0; }
 .inlineEditorForm .actionBar .primary { color: #fff; border-color: var(--brand); background: var(--brand); }
 .inlineEditorForm .actionBar .primary:hover:not(:disabled) { color: #fff; border-color: var(--brand); background: color-mix(in srgb, var(--brand) 88%, #000); }
+.inlineEditorForm .actionBar .destructiveAction { border-color: #fecaca; color: #b42318; background: #fff; }
+.inlineEditorForm .actionBar .destructiveAction:hover:not(:disabled) { border-color: #b42318; color: #fff; background: #b42318; }
 .readOnlyTag { padding: 3px 7px; border-radius: 8px; color: #64748b; background: #f1f5f9; font-size: 11px; font-weight: 400; }
 .listingDetails dt label { display: inline; }
 .listingDetails dt .readOnlyTag { display: inline-block; margin-left: 8px; }
@@ -132,6 +134,7 @@
 .dark .listingsPanel .actionBar :is(button, a) { color: #bfdbfe; border-color: #475569; background: #182235; }
 .dark .listingsPanel .actionBar :is(button, a):hover:not(:disabled) { background: color-mix(in srgb, var(--brand) 24%, #182235); border-color: color-mix(in srgb, var(--brand) 55%, #475569); }
 .dark .inlineEditorForm .actionBar .primary { color: #fff; border-color: var(--brand); background: var(--brand); }
+.dark .inlineEditorForm .actionBar .destructiveAction { border-color: #b45309; color: #fecaca; background: #3a1515; }
 .dark .listingsPanel button.readOnlyHelp { color: #bfdbfe; background: transparent; }
 .dark .listingsPanel button.readOnlyHelp:hover { background: color-mix(in srgb, #bfdbfe 10%, transparent); }
 .connectionNotice button:hover:not(:disabled) { filter: brightness(1.06); }

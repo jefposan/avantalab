@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.0.43.04 - 2026-10-06
+
+- **Gestão de situação no editor**: o lápis do anúncio agora exibe as ações
+  aplicáveis na própria edição — pausar, reativar, encerrar ou excluir
+  definitivamente após encerramento — sempre com confirmação. Ações de situação
+  ficam bloqueadas enquanto houver alteração de campos ainda não salva.
+
 ## 1.48.0.43.03 - 2026-10-06
 
 - **Orientação para segunda conta**: ao usar **Conectar outra conta**, o módulo
