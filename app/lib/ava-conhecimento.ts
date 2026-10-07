@@ -1,3 +1,5 @@
+// Revisado na versão 1.48.0.43.08: em Produtos, Atualizar fica à esquerda de
+// Novo produto e informa o carregamento com ícone girando e texto curto.
 // Revisado na versão 1.48.0.43.07: a lista Produtos exibe somente itens ativos;
 // cópias inativas preservadas para auditoria não ficam disponíveis para venda.
 // Revisado na versão 1.48.0.43.06: o botão Atualizar da tela Produtos consulta

@@ -1,8 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.43.07 -->
+<!-- ava-version: 1.48.0.43.08 -->
 
-<!-- avantavendas-asset-revision: 172 -->
+<!-- avantavendas-asset-revision: 173 -->
+
+> Revisão 1.48.0.43.08-av173: o ícone **Atualizar** permanece imediatamente à
+> esquerda de **Novo produto**. Durante a consulta, ele gira e exibe
+> **Atualizando** à esquerda, sem mover a ação de criar produto.
 
 > Revisão 1.48.0.43.07-av172: a tela **Produtos** mostra e contabiliza somente
 > produtos ativos. Cópias inativas preservadas para auditoria não aparecem no

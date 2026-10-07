@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.0.43.08-av173 - 2026-10-06
+
+- **Atualizar Produtos refinado**: o atalho fica imediatamente à esquerda de
+  **Novo produto**, sem mover a ação principal. Ao carregar, o ícone gira e a
+  mensagem **Atualizando** aparece ao lado esquerdo; o toque reduz levemente o
+  botão como nos demais controles do AvantaVendas.
+
 ## 1.48.0.43.07-av172 - 2026-10-06
 
 - **Produtos ativos apenas**: a lista e a contagem de Produtos agora ignoram
