@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.48.0.43.18 - 2026-10-07
+
+- **Vitrine atual do Google Shopping**: o AvantaPreços passa a consultar a
+  marcação pública `udm=28`, com até 40 cards no primeiro lote, antes de filtrar
+  o produto e calcular as cinco menores ofertas. A coleta deixa de depender da
+  vitrine antiga, que no RCV 2 retornava somente três valores e omitia ofertas
+  menores visíveis na pesquisa pública.
+
 ## 1.48.0.43.17 - 2026-10-07
 
 - **Cinco menores preços reais no AvantaPreços**: a consulta do Google

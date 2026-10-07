@@ -398,7 +398,11 @@ async function postGoogleShoppingPriceLookup(input: { ean: string | null; produc
   if (!keyword) throw new MarketplaceError(400, 'invalid_price_query', 'Não foi possível determinar o produto para consultar preços.');
   const posted = await providerRequest('/v3/merchant/google/products/task_post', {
     method: 'POST',
-    body: JSON.stringify([{ keyword, location_name: 'Brazil', language_code: 'pt', depth: 20, sort_by: 'price_low_to_high' }]),
+    // `udm=28` usa a vitrine atual do Google Shopping — a mesma exibida na
+    // pesquisa pública — e retorna até 40 cards no primeiro lote. A ordem não
+    // precisa vir do Google: filtramos o produto e selecionamos localmente as
+    // cinco menores ofertas válidas, sem perder carrosséis patrocinados.
+    body: JSON.stringify([{ keyword, location_name: 'Brazil', language_code: 'pt', depth: 40, search_param: '&udm=28' }]),
   });
   return taskId(posted);
 }

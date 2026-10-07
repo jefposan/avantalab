@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.43.17 -->
+<!-- ava-version: 1.48.0.43.18 -->
+
+> Revisão 1.48.0.43.18: o **AvantaPreços** coleta a vitrine pública atual do
+> Google Shopping com até 40 cards no primeiro lote, evitando a amostra curta
+> da marcação anterior antes do cálculo das cinco menores ofertas.
 
 > Revisão 1.48.0.43.17: no **AvantaPreços**, as ofertas da vitrine e dos
 > vendedores da ficha são reunidas antes da seleção das cinco menores; uma

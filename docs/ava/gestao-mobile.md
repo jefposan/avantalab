@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.43.17 -->
+<!-- ava-version: 1.48.0.43.18 -->
+
+> Revisão 1.48.0.43.18: a pesquisa do **AvantaPreços** usa a vitrine atual do
+> Google Shopping, reúne até 40 cards do primeiro lote e só então filtra o
+> produto e seleciona as cinco menores ofertas comparáveis.
 
 > Revisão 1.48.0.43.17: o **AvantaPreços** combina a vitrine e a ficha
 > detalhada do Google Shopping, remove repetições entre as fontes e calcula a

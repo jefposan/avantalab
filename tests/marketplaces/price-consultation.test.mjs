@@ -47,7 +47,8 @@ function mockPriceProvider({ pendingPolls = 0 } = {}) {
       assert.equal(init?.method, 'POST');
       const payload = JSON.parse(String(init?.body)).at(0);
       globalThis.__priceLookupKeyword = payload?.keyword;
-      globalThis.__priceLookupSort = payload?.sort_by;
+      globalThis.__priceLookupSearchParam = payload?.search_param;
+      globalThis.__priceLookupDepth = payload?.depth;
       return Response.json({ tasks: [{ id: '11111111-1111-1111-1111-111111111111', status_code: 20100, result: null }] });
     }
     if (String(url).endsWith('/product_info/task_post')) {
@@ -104,7 +105,8 @@ test('consulta identifica o produto e calcula a média sem consultar a vitrine d
   assert.equal(result.status, 'found');
   assert.equal(result.product?.name, 'Fogão de teste');
   assert.equal(globalThis.__priceLookupKeyword, 'Fogão de teste');
-  assert.equal(globalThis.__priceLookupSort, 'price_low_to_high');
+  assert.equal(globalThis.__priceLookupSearchParam, '&udm=28');
+  assert.equal(globalThis.__priceLookupDepth, 40);
   assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
   assert.deepEqual(result.sample, { count: 2, minimum: 800, maximum: 900, source: 'google_shopping' });
 });
@@ -206,7 +208,8 @@ test('consulta combina vitrine e vendedores antes de calcular as cinco menores o
   globalThis.fetch = async (url, init) => {
     if (String(url).endsWith('/products/task_post')) {
       const payload = JSON.parse(String(init?.body)).at(0);
-      assert.equal(payload?.sort_by, 'price_low_to_high');
+      assert.equal(payload?.search_param, '&udm=28');
+      assert.equal(payload?.depth, 40);
       return Response.json({ tasks: [{ id: '99999999-9999-9999-9999-999999999999', status_code: 20100, result: null }] });
     }
     if (String(url).includes('/products/task_get/advanced/')) return Response.json({ tasks: [{ status_code: 20000, result: [{ items: [
