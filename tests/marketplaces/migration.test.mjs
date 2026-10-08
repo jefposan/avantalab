@@ -23,3 +23,14 @@ test('cache, auditoria e notificações são inacessíveis diretamente pelo nave
   assert.match(sql, /unique \(connection_id, provider_listing_id\)/);
   assert.match(sql, /unique \(empresa_id, request_key\)/);
 });
+
+test('vendas de marketplaces ficam em fila privada e separadas por conta', () => {
+  const salesSql = readFileSync('supabase/migrations/20261007230000_marketplace_sales_notifications.sql', 'utf8');
+  for (const table of ['marketplace_sale_notifications', 'marketplace_sales']) {
+    assert.match(salesSql, new RegExp(`create table if not exists public\\.${table}`, 'i'));
+    assert.match(salesSql, new RegExp(`alter table public\\.${table} enable row level security`, 'i'));
+    assert.match(salesSql, new RegExp(`revoke all on public\\.${table} from anon, authenticated`, 'i'));
+  }
+  assert.match(salesSql, /unique \(connection_id, provider_order_id\)/);
+  assert.match(salesSql, /topic in \('orders_v2', 'orders', 'shipments'\)/);
+});

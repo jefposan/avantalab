@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.45.01 -->
+<!-- ava-version: 1.49.0 -->
+
+> Revisão 1.49.0: em **Anúncios em marketplaces**, o sino e o contador de cada
+> conta mostram novas vendas recebidas do Mercado Livre. Abra a conta para ver
+> itens e situação do envio. Quando houver **Imprimir etiqueta**, o PDF abre
+> pelo AvantaLab; em envio Full, a expedição é feita pelo Mercado Livre. Para
+> operar em produção, a aplicação Mercado Livre precisa ter configurado o
+> callback HTTPS `/api/webhooks/mercado-livre` nos tópicos `orders_v2` e
+> `shipments`.
 
 > Revisão 1.48.0.45.01: o cabeçalho de **Anúncios em marketplaces** volta a
 > carregar a logo configurada do perfil empresarial. Sem impacto operacional

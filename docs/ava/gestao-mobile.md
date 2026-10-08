@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.45.01 -->
+<!-- ava-version: 1.49.0 -->
+
+> Revisão 1.49.0: os avisos e a impressão de etiquetas de vendas pertencem ao
+> Marketplaces da Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.48.0.45.01: a restauração da logo no cabeçalho de Marketplaces
 > pertence à Gestão Web; sem impacto operacional na Gestão Mobile.

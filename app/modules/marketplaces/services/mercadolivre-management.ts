@@ -129,6 +129,27 @@ export async function mlRequest(db: SupabaseClient, connection: SellerConnection
   throw new MarketplaceError(409, 'reconnect', 'Reconecte a conta do Mercado Livre.');
 }
 
+/** Busca documentos do Mercado Livre sem expor o token ao navegador. */
+export async function mlBinaryRequest(db: SupabaseClient, connection: SellerConnection, path: string) {
+  if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Invalid API path');
+  let token = await accessToken(db, connection);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let response: Response;
+    try {
+      response = await fetch(`https://api.mercadolibre.com${path}`, { cache: 'no-store', signal: AbortSignal.timeout(12_000), headers: { Authorization: `Bearer ${token}`, Accept: 'application/pdf' } });
+    } catch { throw new MarketplaceError(503, 'provider_unavailable', 'Mercado Livre indisponível. Tente imprimir novamente.'); }
+    if (response.status === 401 && attempt === 0) { token = await accessToken(db, connection, true); continue; }
+    if (!response.ok) {
+      if (response.status === 400) throw new MarketplaceError(409, 'label_unavailable', 'A etiqueta ainda não está disponível para este envio.');
+      throw new MarketplaceError([403, 429].includes(response.status) ? response.status : 503, `provider_${response.status}`, 'Não foi possível obter a etiqueta no Mercado Livre.');
+    }
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('pdf')) throw new MarketplaceError(503, 'invalid_label', 'O Mercado Livre não devolveu uma etiqueta em PDF.');
+    return new Uint8Array(await response.arrayBuffer());
+  }
+  throw new MarketplaceError(409, 'reconnect', 'Reconecte esta conta para imprimir a etiqueta.');
+}
+
 export async function estimateMercadoLivreListingTypeFee(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>, listingTypeId = String(item.listing_type_id || '')): Promise<ListingTypeFeeEstimate> {
   const warnings: string[] = [];
   const shipping = objectValue(item.shipping);

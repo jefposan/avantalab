@@ -12,6 +12,7 @@ import styles from './marketplaces.module.css';
 import Anunciados, { marketplaceClientRequest, type MarketplaceAccount } from './Anunciados';
 import NewListing, { type ListingCopyRequest } from './NewListing';
 import PriceUsersPanel from './PriceUsersPanel';
+import Vendas from './Vendas';
 
 const providers: Array<{ id: MarketplaceId; name: string; available: boolean }> = [
   { id: 'mercado_livre', name: 'Mercado Livre', available: true },
@@ -45,6 +46,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [priceLinkStatus, setPriceLinkStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [disconnectAccount, setDisconnectAccount] = useState<MarketplaceAccount | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [pendingSales, setPendingSales] = useState<Record<string, number>>({});
   const oauthWindow = useRef<Window | null>(null);
   const returnHref = `/gestao?empresaId=${encodeURIComponent(companyId)}`;
   const selectedProvider = useMemo(() => providers.find((provider) => provider.id === marketplace)!, [marketplace]);
@@ -64,6 +66,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }, [companyId, loadAccounts]);
 
   const connectedAccounts = accounts.filter((account) => account.status === 'connected');
+  const pendingSalesTotal = Object.values(pendingSales).reduce((total, count) => total + count, 0);
 
   async function confirmDisconnectAccount() {
     if (!disconnectAccount || disconnecting) return;
@@ -218,7 +221,11 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }
 
   return <main className={`${styles.page} ${empresa.temaEscuro ? styles.dark : ''}`} style={{ '--marketplace-brand': empresa.corPrimaria } as CSSProperties}>
-    <ModuloHeader empresa={empresa} onBack={voltar} />
+    <ModuloHeader empresa={empresa} onBack={voltar}>
+      <button type="button" className={styles.salesNotification} onClick={() => document.getElementById('sales-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} aria-label={pendingSalesTotal ? `${pendingSalesTotal} aviso${pendingSalesTotal === 1 ? '' : 's'} de vendas` : 'Ver vendas'} title="Vendas">
+        <span aria-hidden="true">▣</span>{pendingSalesTotal > 0 && <b>{pendingSalesTotal > 99 ? '99+' : pendingSalesTotal}</b>}
+      </button>
+    </ModuloHeader>
     <div className={styles.content}>
     <section className={styles.hero} aria-labelledby="module-title">
       <div><p className={styles.eyebrow}>Conexão e gestão</p><h1 id="module-title">Anúncios em marketplaces</h1></div>
@@ -250,7 +257,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
           <div className={styles.connectedAccountsHeading}><h3 id="connected-accounts-title">Contas conectadas</h3><span>{connectedAccounts.length}</span></div>
           {connectedAccounts.length ? <div className={styles.connectedAccountsList}>{connectedAccounts.map((account) => <article key={account.id} className={`${styles.connectedAccount} ${account.id === selectedAccount ? styles.connectedAccountSelected : ''}`}>
             <button type="button" className={styles.connectedAccountSelect} onClick={() => setSelectedAccount(account.id)} disabled={accountSelectionLocked || publicationBusy} aria-pressed={account.id === selectedAccount}>
-              <strong>{account.seller_name || `Vendedor ${account.seller_reference}`}</strong><small>ID {account.seller_reference} · Conectada<br />Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
+              <strong>{account.seller_name || `Vendedor ${account.seller_reference}`}{pendingSales[account.id] ? <em className={styles.accountSalesBadge}>{pendingSales[account.id] > 99 ? '99+' : pendingSales[account.id]}</em> : null}</strong><small>ID {account.seller_reference} · Conectada<br />Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
             </button>
             {canManageConnections && <button type="button" className={styles.disconnectAccountButton} disabled={disconnecting || accountSelectionLocked || publicationBusy} onClick={() => setDisconnectAccount(account)}>Desconectar</button>}
           </article>)}</div> : <p className={styles.emptyConnectedAccounts}>Nenhuma conta conectada.</p>}
@@ -267,6 +274,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       setSelectedAccount(targetConnectionId);
       setCopyRequest({ id: crypto.randomUUID(), sourceConnectionId, listingId, targetConnectionId });
     }} refreshKey={refreshKey} />}
+    {marketplace === 'mercado_livre' && <Vendas companyId={companyId} accountId={selectedAccount} canManage={canManage} refreshKey={refreshKey} onPendingChange={setPendingSales} />}
     {priceUsersOpen && <PriceUsersPanel companyId={companyId} onClose={() => setPriceUsersOpen(false)} />}
     <ModalConfirmacao aberto={!!disconnectAccount} titulo="Desconectar conta?" mensagem={disconnectAccount ? `${disconnectAccount.seller_name || disconnectAccount.seller_reference}. O AvantaLab apagará os tokens desta conexão. Os anúncios no Mercado Livre não serão alterados.` : ''} textoConfirmar="Desconectar" carregando={disconnecting} darkMode={empresa.temaEscuro} corPrimaria={empresa.corPrimaria} variante="destrutiva" aoCancelar={() => { if (!disconnecting) setDisconnectAccount(null); }} aoConfirmar={() => void confirmDisconnectAccount()} />
     </div>

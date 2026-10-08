@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.49.0 - 2026-10-07
+
+- **Vendas por conta Mercado Livre**: Marketplaces passa a receber os avisos de
+  pedidos e envios em fila privada, separada por empresa e conta conectada. O
+  módulo mostra os contadores no cabeçalho e junto de cada conta, e uma caixa de
+  vendas com itens, situação e atualização manual.
+- **Etiqueta local e protegida**: quando o envio estiver pronto para impressão,
+  a pessoa autorizada abre o PDF pelo AvantaLab, sem token no navegador ou link
+  externo. Envio Full explica que a operação é do Mercado Livre; demais estados
+  aguardam a disponibilidade oficial da etiqueta.
+- **Ativação necessária**: configurar no aplicativo Mercado Livre o callback
+  HTTPS `/api/webhooks/mercado-livre` e os tópicos `orders_v2` e `shipments`.
+
 ## 1.48.0.45.01 - 2026-10-07
 
 - **Marca no cabeçalho de Marketplaces**: a navegação interna volta a carregar
