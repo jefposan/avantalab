@@ -10,7 +10,7 @@ import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type Conte
 import { supabase } from '@/app/lib/supabase';
 import styles from './marketplaces.module.css';
 import Anunciados, { marketplaceClientRequest, type MarketplaceAccount } from './Anunciados';
-import NewListing from './NewListing';
+import NewListing, { type ListingCopyRequest } from './NewListing';
 import PriceUsersPanel from './PriceUsersPanel';
 
 const providers: Array<{ id: MarketplaceId; name: string; available: boolean }> = [
@@ -39,6 +39,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [canManageConnections, setCanManageConnections] = useState(false);
   const [accountSelectionLocked, setAccountSelectionLocked] = useState(false);
   const [publicationBusy, setPublicationBusy] = useState(false);
+  const [copyRequest, setCopyRequest] = useState<ListingCopyRequest | null>(null);
   const [connectionNotice, setConnectionNotice] = useState(() => connectionStatus === 'error' ? connectionMessage || 'Não foi possível conectar a conta do Mercado Livre.' : '');
   const [priceUsersOpen, setPriceUsersOpen] = useState(false);
   const [priceLinkStatus, setPriceLinkStatus] = useState<'idle' | 'copied' | 'error'>('idle');
@@ -248,11 +249,14 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
 
       <article className={styles.panel}>
         <div className={styles.panelHeading}><div><p className={styles.step}>2</p><h2>Novo anúncio</h2></div></div>
-        {marketplace === 'mercado_livre' && <NewListing key={selectedAccount || 'unselected'} companyId={companyId} accountId={selectedAccount} accounts={accounts} accountSelectionLocked={accountSelectionLocked} onSelectAccount={setSelectedAccount} onBusyChange={setPublicationBusy} canManage={canManage} onPublished={() => setRefreshKey((value) => value + 1)} />}
+        {marketplace === 'mercado_livre' && <NewListing companyId={companyId} accountId={selectedAccount} accounts={accounts} accountSelectionLocked={accountSelectionLocked} onSelectAccount={setSelectedAccount} onBusyChange={setPublicationBusy} canManage={canManage} onPublished={() => setRefreshKey((value) => value + 1)} copyRequest={copyRequest} onCopyHandled={() => setCopyRequest(null)} />}
       </article>
     </section>
 
-    {marketplace === 'mercado_livre' && <Anunciados companyId={companyId} dark={empresa.temaEscuro} brand={empresa.corPrimaria} accountId={selectedAccount} onAccountsLoaded={loadAccounts} onAccountSelectionLockedChange={setAccountSelectionLocked} refreshKey={refreshKey} />}
+    {marketplace === 'mercado_livre' && <Anunciados companyId={companyId} dark={empresa.temaEscuro} brand={empresa.corPrimaria} accountId={selectedAccount} onAccountsLoaded={loadAccounts} onAccountSelectionLockedChange={setAccountSelectionLocked} onPublishInAnotherAccount={(sourceConnectionId, listingId, targetConnectionId) => {
+      setSelectedAccount(targetConnectionId);
+      setCopyRequest({ id: crypto.randomUUID(), sourceConnectionId, listingId, targetConnectionId });
+    }} refreshKey={refreshKey} />}
     {priceUsersOpen && <PriceUsersPanel companyId={companyId} onClose={() => setPriceUsersOpen(false)} />}
     <ModalConfirmacao aberto={!!disconnectAccount} titulo="Desconectar conta?" mensagem={disconnectAccount ? `${disconnectAccount.seller_name || disconnectAccount.seller_reference}. O AvantaLab apagará os tokens desta conexão. Os anúncios no Mercado Livre não serão alterados.` : ''} textoConfirmar="Desconectar" carregando={disconnecting} darkMode={empresa.temaEscuro} corPrimaria={empresa.corPrimaria} variante="destrutiva" aoCancelar={() => { if (!disconnecting) setDisconnectAccount(null); }} aoConfirmar={() => void confirmDisconnectAccount()} />
     </div>

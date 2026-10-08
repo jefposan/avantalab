@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.48.0.44.02 -->
+<!-- ava-version: 1.48.0.45 -->
+
+> Revisão 1.48.0.45: a preparação de publicação em outra conta Mercado Livre
+> pertence ao módulo Marketplaces da Gestão Web; sem impacto operacional no
+> AvantaVendas.
 
 > Revisão 1.48.0.44.02: previsão de despesas e aviso de valor repetido restritos
 > à Gestão Web/Mobile. Sem impacto operacional no AvantaVendas.

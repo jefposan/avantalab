@@ -14,7 +14,7 @@ test('atualização e filtros não descartam edição aberta; a conta é bloquea
   assert.match(page,/syncController.current\?\.abort\(\);\n    setExpanded/);
   assert.match(page,/<ListingEditor key=\{`\$\{accountId\}-\$\{item.id\}`\}/);
   assert.match(page,/disabled=\{!accountId \|\| account\?\.status !== 'connected' \|\| syncing \|\| acting \|\| !!expanded\}/);
-  assert.doesNotMatch(page, /MarketplaceAccountPicker/);
+  assert.match(page, /MarketplaceAccountPicker label="Conta de destino"/);
   const client = read('app/marketplaces/MarketplacesClient.tsx');
   assert.match(client,/disabled=\{accountSelectionLocked \|\| publicationBusy\}/);
 });

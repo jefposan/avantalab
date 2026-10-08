@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.44.02 -->
+<!-- ava-version: 1.48.0.45 -->
+
+> Revisão 1.48.0.45: a preparação de uma publicação para outra conta Mercado
+> Livre pertence à Gestão Web, exige revisão e confirmação separada por conta e
+> não altera os fluxos da Gestão Mobile.
 
 > Revisão 1.48.0.44.02: adiar uma despesa para qualquer data futura marca
 > Prevista, também em fixas e parcelas, sem mudar valor ou sequência. A data

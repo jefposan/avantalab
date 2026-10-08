@@ -2,7 +2,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MarketplaceError } from './management-access';
 import { mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
-import { publicationErrors, safeText, validEan, type CatalogPreparation, type PublicationForm } from './catalog-publication';
+import { publicationErrors, safeHttpsImage, safeText, validEan, type CatalogPreparation, type PublicationForm } from './catalog-publication';
 import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import { lookupProfileCatalogByEan } from './profile-catalog';
 import { listingIdIsValid, objectValue, uuidIsValid } from './listing-model';
@@ -130,6 +130,78 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
     constraints: { ...(Number.isFinite(minimumPrice) && minimumPrice > 0 ? { minimumPrice } : {}), ...(Number.isFinite(maximumPrice) && maximumPrice > 0 ? { maximumPrice } : {}), maxDescriptionLength: Number.isSafeInteger(descriptionLimit) && descriptionLimit > 0 ? descriptionLimit : 50000 },
     ...(blockingIssues.length ? { blockingIssues } : {}), ...(warnings.length ? { warnings } : {}),
     notice: blockingIssues.length ? 'Revise as pendências abaixo antes de publicar.' : sourceNotice };
+}
+
+function copiedWarranty(saleTerms: unknown[]) {
+  const terms = saleTerms.map(objectValue);
+  const type = safeText(terms.find((term) => term.id === 'WARRANTY_TYPE')?.value_name, 120).toLocaleLowerCase('pt-BR');
+  const time = safeText(terms.find((term) => term.id === 'WARRANTY_TIME')?.value_name, 40);
+  return {
+    warrantyType: /fábrica|fabrica/.test(type) ? 'factory' : /vendedor/.test(type) ? 'seller' : 'none',
+    ...(time ? { warrantyTime: time } : {}),
+  } as Pick<PublicationForm, 'warrantyType' | 'warrantyTime'>;
+}
+
+function copiedAttributes(attributes: unknown[]) {
+  const values: Record<string, string> = {};
+  for (const raw of attributes.slice(0, 80)) {
+    const attribute = objectValue(raw);
+    const id = safeText(attribute.id, 80);
+    const valueId = safeText(attribute.value_id, 300);
+    const value = valueId || safeText(attribute.value_name, 300);
+    if (/^[A-Z0-9_]{1,80}$/.test(id) && value) values[id] = value;
+  }
+  return values;
+}
+
+/**
+ * Reabre um anúncio atual como rascunho em outra conta da mesma empresa.
+ * A cópia nunca publica: o destino recebe uma preparação própria e o cliente
+ * ainda precisa revisar, confirmar a ficha e acionar Publicar explicitamente.
+ */
+export async function prepareMercadoLivreListingCopy(db: SupabaseClient, source: SellerConnection, target: SellerConnection, listingId: unknown) {
+  if (source.empresa_id !== target.empresa_id) throw new MarketplaceError(403, 'cross_company_copy', 'A conta de destino precisa pertencer à mesma empresa.');
+  if (!listingIdIsValid(listingId)) throw new MarketplaceError(400, 'invalid_item', 'Identificador de anúncio inválido.');
+  if (source.id === target.id) throw new MarketplaceError(400, 'same_account_copy', 'Selecione outra conta para preparar esta publicação.');
+
+  const item = objectValue(await mlRequest(db, source, `/items/${listingId}`));
+  if (!listingIdIsValid(item.id) || item.id !== listingId || String(item.seller_id) !== source.seller_reference) {
+    throw new MarketplaceError(404, 'listing_not_found', 'O anúncio não pertence à conta de origem selecionada.');
+  }
+  const attributes = safeArray(item.attributes).map(objectValue);
+  const ean = validEan(attributes.find((attribute) => attribute.id === 'GTIN')?.value_name);
+  if (!ean) throw new MarketplaceError(409, 'copy_ean_required', 'Este anúncio não possui um EAN/GTIN válido. Informe um EAN no novo anúncio para continuar.');
+
+  const description = objectValue(await mlRequest(db, source, `/items/${listingId}/description`));
+  const pictures = safeArray(item.pictures).map(objectValue);
+  const pictureUrl = pictures.map((picture) => safeHttpsImage(picture.secure_url || picture.url)).find(Boolean) || '';
+  const shipping = objectValue(item.shipping);
+  const catalogProductId = safeText(item.catalog_product_id, 90);
+  const sourceForm: PublicationForm = {
+    ean,
+    productId: /^MLB\d+$/.test(catalogProductId) ? catalogProductId : '',
+    categoryId: safeText(item.category_id, 30),
+    price: typeof item.price === 'number' ? item.price : 0,
+    stock: typeof item.available_quantity === 'number' ? item.available_quantity : -1,
+    listingType: safeText(item.listing_type_id, 40),
+    shippingMode: safeText(shipping.mode, 40),
+    condition: safeText(item.condition, 20),
+    ...copiedWarranty(safeArray(item.sale_terms)),
+    description: safeText(description.plain_text, 50000),
+    ...(pictureUrl ? { pictureUrl } : {}),
+    attributes: copiedAttributes(attributes),
+  };
+
+  let result: CatalogPreparation;
+  try {
+    result = await prepareMercadoLivreCatalog(db, target, sourceForm);
+  } catch (error) {
+    // A categoria que a origem aceitou pode não pertencer ao domínio vigente no destino.
+    // Nesse caso, preservamos a ficha e deixamos a pessoa escolher a categoria novamente.
+    if (!(error instanceof MarketplaceError) || error.code !== 'category_mismatch') throw error;
+    result = await prepareMercadoLivreCatalog(db, target, { ean, productId: sourceForm.productId });
+  }
+  return { result, form: sourceForm, sourceTitle: safeText(item.title, 220) || listingId };
 }
 
 function publicationBody(form: PublicationForm, prepared: CatalogPreparation) {

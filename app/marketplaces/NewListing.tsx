@@ -10,10 +10,11 @@ import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 import MarketplaceSelect from './MarketplaceSelect';
 import styles from './marketplaces.module.css';
 
-type Props = { companyId: string; accountId: string; accounts: MarketplaceAccount[]; accountSelectionLocked: boolean; onSelectAccount: (id: string) => void; onBusyChange: (busy: boolean) => void; canManage: boolean; onPublished: () => void };
+export type ListingCopyRequest = { id: string; sourceConnectionId: string; targetConnectionId: string; listingId: string };
+type Props = { companyId: string; accountId: string; accounts: MarketplaceAccount[]; accountSelectionLocked: boolean; onSelectAccount: (id: string) => void; onBusyChange: (busy: boolean) => void; canManage: boolean; onPublished: () => void; copyRequest: ListingCopyRequest | null; onCopyHandled: () => void };
 const initial = (): PublicationForm => ({ ean: '', productId: '', categoryId: '', price: 0, stock: -1, listingType: '', shippingMode: '', condition: '', warrantyType: '', description: '', attributes: {} });
 
-export default function NewListing({ companyId, accountId, accounts, accountSelectionLocked, onSelectAccount, onBusyChange, canManage, onPublished }: Props) {
+export default function NewListing({ companyId, accountId, accounts, accountSelectionLocked, onSelectAccount, onBusyChange, canManage, onPublished, copyRequest, onCopyHandled }: Props) {
   const activeRef = useRef(true);
   const eanInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<PublicationForm>(initial);
@@ -28,30 +29,63 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [scannerArmed, setScannerArmed] = useState(false);
   const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
+  const [copyTargetId, setCopyTargetId] = useState('');
+  const [preserveCopiedFields, setPreserveCopiedFields] = useState(false);
+  const handledCopy = useRef('');
 
   useEffect(() => { activeRef.current = true; return () => { activeRef.current = false; }; }, []);
   useEffect(() => { onBusyChange(preparing || publishing); return () => onBusyChange(false); }, [preparing, publishing, onBusyChange]);
 
-  async function prepare(ean = form.ean, productId = '', categoryId = '') {
-    if (!canManage || !accountId || preparing || publishing) return;
+  function applyPreparation(result: CatalogPreparation, preferred?: PublicationForm, preserve = preserveCopiedFields) {
+    setPrepared(result);
+    setForm((current) => {
+      const base = preferred ? { ...current, ...preferred, attributes: preferred.attributes || {} } : current;
+      const sameProduct = !!result.product && base.productId === result.product.id;
+      const allowed = <T extends { id: string }>(options: T[] | undefined, value: string) => options?.some((option) => option.id === value) ? value : '';
+      const profilePicture = result.product?.source === 'profile_catalog'
+        ? result.product.pictures.includes(base.pictureUrl || '') ? base.pictureUrl : result.product.pictures[0] || ''
+        : sameProduct ? base.pictureUrl : result.product?.pictures[0] || base.pictureUrl || '';
+      return { ...base, ean: result.ean, productId: result.product?.id || '', categoryId: result.categoryId || '',
+        listingType: allowed(result.listingTypes, base.listingType), shippingMode: allowed(result.shippingModes, base.shippingMode), condition: allowed(result.conditions, base.condition),
+        description: result.product && !sameProduct && !preserve ? result.product.description || '' : base.description || result.product?.description || '', pictureUrl: profilePicture,
+        attributes: base.attributes || {} };
+    });
+    setPreserveCopiedFields(preserve || !!preferred);
+    setRequestKey(crypto.randomUUID());
+  }
+
+  async function prepare(ean = form.ean, productId = '', categoryId = '', connectionId = accountId, preferred?: PublicationForm) {
+    if (!canManage || !connectionId || preparing || publishing) return;
     setPreparing(true); setScannerArmed(false); setMessage(''); setErrors({}); setPublishedId(''); setMatched(false);
     try {
-      const response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: accountId, ean, productId, categoryId }) as { result: CatalogPreparation };
+      const response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId, ean, productId, categoryId }) as { result: CatalogPreparation };
       if (!activeRef.current) return;
-      setPrepared(response.result);
-      setForm((current) => {
-        const sameProduct = !!response.result.product && current.productId === response.result.product.id;
-        const sameCategory = sameProduct && current.categoryId === (response.result.categoryId || '');
-        const allowed = <T extends { id: string }>(options: T[] | undefined, value: string) => options?.some((option) => option.id === value) ? value : '';
-        return { ...current, ean: response.result.ean, productId: response.result.product?.id || '', categoryId: response.result.categoryId || '',
-          listingType: allowed(response.result.listingTypes, current.listingType), shippingMode: allowed(response.result.shippingModes, current.shippingMode), condition: allowed(response.result.conditions, current.condition),
-          description: sameProduct ? current.description : response.result.product?.description || '', pictureUrl: sameProduct ? current.pictureUrl : response.result.product?.pictures[0] || '',
-          attributes: sameCategory ? current.attributes || {} : {} };
-      });
-      setRequestKey(crypto.randomUUID());
+      applyPreparation(response.result, preferred);
     } catch (failure) { if (activeRef.current) { if (!productId && !categoryId) setPrepared(null); setMessage(failure instanceof Error ? failure.message : 'Não foi possível consultar o EAN.'); } }
     finally { setPreparing(false); }
   }
+
+  useEffect(() => {
+    if (!copyRequest || copyRequest.targetConnectionId !== accountId || handledCopy.current === copyRequest.id) return;
+    const currentCopy = copyRequest;
+    handledCopy.current = currentCopy.id;
+    async function copyListing() {
+      if (!canManage || preparing || publishing) return;
+      setPreparing(true); setScannerArmed(false); setMessage(''); setErrors({}); setPublishedId(''); setMatched(false);
+      try {
+        const response = await marketplaceClientRequest('preparar-copia', { empresaId: companyId, sourceConnectionId: currentCopy.sourceConnectionId, targetConnectionId: currentCopy.targetConnectionId, listingId: currentCopy.listingId }) as { result: CatalogPreparation; form: PublicationForm; sourceTitle: string };
+        if (!activeRef.current) return;
+        applyPreparation(response.result, response.form);
+        setMessage(`A ficha de “${response.sourceTitle}” foi preparada nesta conta. Revise todos os dados antes de publicar.`);
+      } catch (failure) {
+        if (activeRef.current) setMessage(failure instanceof Error ? failure.message : 'Não foi possível preparar a cópia do anúncio.');
+      } finally {
+        if (activeRef.current) setPreparing(false);
+        onCopyHandled();
+      }
+    }
+    void copyListing();
+  }, [accountId, canManage, companyId, copyRequest, onCopyHandled, preparing, publishing]);
 
   async function publish() {
     if (!prepared?.product || !canManage || !accountId || preparing || publishing || publishedId) return;
@@ -94,12 +128,37 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
 
   function changeEan(value: string) {
     change('ean', value.replace(/\D/g, '').slice(0, 14));
+    setPreserveCopiedFields(false);
     setPrepared(null); setMatched(false); setPublishedId(''); setMessage('');
+  }
+
+  async function prepareForAnotherAccount() {
+    const target = connectedAccounts.find((account) => account.id === copyTargetId);
+    if (!target || target.status !== 'connected' || preparing || publishing) return;
+    const copiedForm = { ...form, attributes: { ...form.attributes } };
+    setPreparing(true); setScannerArmed(false); setMessage(''); setErrors({}); setPublishedId(''); setMatched(false);
+    try {
+      let response: { result: CatalogPreparation };
+      try {
+        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: copiedForm.categoryId }) as { result: CatalogPreparation };
+      } catch (failure) {
+        const detail = failure as Error & { code?: string };
+        if (detail.code !== 'category_mismatch') throw failure;
+        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: '' }) as { result: CatalogPreparation };
+      }
+      if (!activeRef.current) return;
+      onSelectAccount(target.id);
+      applyPreparation(response.result, copiedForm);
+      setCopyTargetId('');
+      setMessage(`A ficha foi preparada em ${target.seller_name || `Vendedor ${target.seller_reference}`}. Revise todos os dados antes de publicar.`);
+    } catch (failure) {
+      if (activeRef.current) setMessage(failure instanceof Error ? failure.message : 'Não foi possível preparar a publicação na outra conta.');
+    } finally { setPreparing(false); }
   }
 
   return <div className={styles.newListing}>
     <div className={styles.form}>
-      <MarketplaceAccountPicker label="Publicar na conta" value={accountId} options={connectedAccounts.map((account) => ({ id: account.id, name: account.seller_name || `Vendedor ${account.seller_reference}`, detail: `ID ${account.seller_reference}` }))} placeholder={connectedAccounts.length ? 'Selecione uma conta' : 'Nenhuma conta conectada'} disabled={accountSelectionLocked || preparing || publishing} onChange={onSelectAccount} />
+      <MarketplaceAccountPicker label="Publicar na conta" value={accountId} options={connectedAccounts.map((account) => ({ id: account.id, name: account.seller_name || `Vendedor ${account.seller_reference}`, detail: `ID ${account.seller_reference}` }))} placeholder={connectedAccounts.length ? 'Selecione uma conta' : 'Nenhuma conta conectada'} disabled={accountSelectionLocked || preparing || publishing || !!prepared} onChange={onSelectAccount} />
       <div className={styles.eanField}>
         <label htmlFor="new-ean">EAN / GTIN</label>
         <div className={styles.eanControl}>
@@ -140,6 +199,11 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       {Object.values(errors).filter(Boolean).length > 0 && <ul id="catalog-errors" className={styles.catalogErrors} role="alert" tabIndex={-1}>{[...new Set(Object.values(errors).filter(Boolean))].map((error) => <li key={error}>{error}</li>)}</ul>}
       <label className={styles.catalogMatch}><input id="catalog-match" type="checkbox" checked={matched} onChange={(event) => { setMatched(event.target.checked); setErrors((current) => ({ ...current, match: '' })); }} />Confirmo que a ficha localizada corresponde exatamente ao produto que vou vender.</label>{errors.match && <p className={styles.connectionMessage} role="alert">{errors.match}</p>}
       <button type="button" className={styles.primary} disabled={!selectedAccount || !ready || !matched || publishing || preparing || !!publishedId} onClick={() => void publish()}>{publishing ? 'Publicando…' : publishedId ? 'Publicado' : 'Publicar'}</button>
+      {publishedId && connectedAccounts.filter((account) => account.id !== accountId).length > 0 && <div className={styles.publishAnotherAccount}>
+        <MarketplaceAccountPicker label="Publicar esta ficha em outra conta" value={copyTargetId} options={connectedAccounts.filter((account) => account.id !== accountId).map((account) => ({ id: account.id, name: account.seller_name || `Vendedor ${account.seller_reference}`, detail: `ID ${account.seller_reference}` }))} placeholder="Selecione a conta de destino" disabled={preparing || publishing} onChange={setCopyTargetId} />
+        <button type="button" disabled={!copyTargetId || preparing || publishing} onClick={() => void prepareForAnotherAccount()}>Preparar em outra conta</button>
+        <p>Os dados são copiados apenas para revisão. A nova conta só recebe o anúncio após uma confirmação separada.</p>
+      </div>}
       {!ready && <p className={styles.help}>A publicação só fica disponível após confirmar categoria e opções de venda permitidas pelo Mercado Livre.</p>}
     </div>}
     {message && <p className={publishedId ? styles.catalogSuccess : styles.connectionMessage} role="status">{message}</p>}

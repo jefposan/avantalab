@@ -77,7 +77,9 @@ credenciais adicionais no ambiente.
 - `Pesquisar` consulta primeiro o catálogo do Mercado Livre e, na ausência de ficha, os produtos ativos cadastrados no perfil da empresa. Após revisão da ficha e preenchimento dos campos obrigatórios, `Publicar` executa a criação mediante ação explícita do usuário.
 - Cron e webhook não foram ativados; o cache não se atualiza com o módulo fechado.
 - Outras contas podem ser vinculadas por OAuth e escolhidas no seletor; a
-  validação ao vivo usou somente a conta que já estava conectada.
+  validação ao vivo usou somente a conta que já estava conectada. Uma ficha
+  publicada pode ser preparada para outra conta conectada da mesma empresa,
+  sempre com revisão e confirmação independentes.
 - Todas as listas do módulo usam o seletor AvantaLab ancorado imediatamente
   abaixo do campo, com teclado, foco visível, rolagem e adaptação a mobile.
 
@@ -89,6 +91,12 @@ credenciais adicionais no ambiente.
    o sufixo Enter enviado pelo equipamento inicia a validação.
 3. O conector consulta o catálogo do Mercado Livre. Se não houver ficha, consulta os produtos ativos do perfil, usa o preditor oficial do Mercado Livre e solicita os campos obrigatórios ausentes.
 4. O usuário confirma em `Publicar`; o backend revalida os dados e registra o resultado.
+5. Depois de publicada, a ficha pode ser preparada em outra conta conectada.
+   Preço, descrição, estoque, garantia e atributos permanecem editáveis, mas o
+   destino é consultado e validado novamente antes de uma nova confirmação.
+6. Em **Anunciados**, **Publicar em outra conta** relê o item e a descrição
+   atuais da origem no Mercado Livre e abre esse mesmo rascunho revisável no
+   destino. A preparação não cria anúncio e nunca atravessa empresas.
 
 Outros marketplaces aparecem como integrações planejadas até que seus contratos e credenciais oficiais sejam configurados.
 

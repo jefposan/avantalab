@@ -15,7 +15,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   if (candidate && existsSync(`${candidate}.ts`)) return next(pathToFileURL(`${candidate}.ts`).href, context);
   return next(specifier, context);
 } });
-const { prepareMercadoLivreCatalog, publishMercadoLivreCatalog } = await import('../../app/modules/marketplaces/services/mercadolivre-publication.ts');
+const { prepareMercadoLivreCatalog, prepareMercadoLivreListingCopy, publishMercadoLivreCatalog } = await import('../../app/modules/marketplaces/services/mercadolivre-publication.ts');
 const { sealMarketplaceSecret } = await import('../../app/modules/marketplaces/services/secret-vault.ts');
 hooks.deregister();
 
@@ -70,7 +70,8 @@ function provider() {
     if (path === '/items/validate' && method === 'POST') return new Response(null, { status: 204 });
     if (path === '/items' && method === 'POST') return Response.json({ id: itemId, seller_id: 230210240 }, { status: 201 });
     if (path === `/items/${itemId}/description` && method === 'POST') return Response.json({ text: '' }, { status: 201 });
-    if (path === `/items/${itemId}`) return Response.json({ id: itemId, seller_id: 230210240, title: 'Geladeira Brastemp', status: 'active', price: 160, available_quantity: 1, sold_quantity: 0, listing_type_id: 'gold_special', category_id: categoryId, catalog_product_id: productId, shipping: { mode: 'me2', free_shipping: false }, attributes: [{ id: 'GTIN', name: 'EAN', value_name: ean }] });
+    if (path === `/items/${itemId}/description`) return Response.json({ plain_text: 'Descrição revisável da origem.' });
+    if (path === `/items/${itemId}`) return Response.json({ id: itemId, seller_id: 230210240, title: 'Geladeira Brastemp', status: 'active', price: 160, available_quantity: 1, sold_quantity: 0, listing_type_id: 'gold_special', category_id: categoryId, catalog_product_id: productId, condition: 'new', shipping: { mode: 'me2', free_shipping: false }, sale_terms: [{ id: 'WARRANTY_TYPE', value_name: 'Garantia do vendedor' }, { id: 'WARRANTY_TIME', value_name: '12 meses' }], pictures: [{ secure_url: 'https://http2.mlstatic.com/origem.jpg' }], attributes: [{ id: 'GTIN', name: 'EAN', value_name: ean }, { id: 'BRAND', value_id: '123', value_name: 'Brastemp' }] });
     if (path === '/sites/MLB/listing_prices') return Response.json([{ listing_type_id: 'gold_special', sale_fee_amount: 20 }]);
     if (path.endsWith('/shipping_options/free')) return Response.json({ coverage: { all_country: { currency_id: 'BRL', list_cost: 40 } } });
     throw new Error(`Unexpected provider route: ${method} ${url}`);
@@ -101,6 +102,27 @@ test('fluxo completo valida antes de criar e registra o anúncio confirmado', ()
   assert.ok(mock.sequence.indexOf('POST /items/validate') < mock.sequence.indexOf('POST /items'));
   assert.equal(db.tables.marketplace_publications[0].status, 'published');
   assert.equal(db.tables.marketplace_listings[0].provider_listing_id, itemId);
+}));
+
+test('anúncio existente é relido e preparado como rascunho em outra conta, sem publicar', () => environment(async () => {
+  const mock = provider(); globalThis.fetch = mock.fetch;
+  const target = { ...connection(), id: '33333333-3333-4333-8333-333333333333', seller_reference: '99887766', seller_name: 'DESTINO' };
+  const copied = await prepareMercadoLivreListingCopy(database(), connection(), target, itemId);
+  assert.equal(copied.form.price, 160);
+  assert.equal(copied.form.description, 'Descrição revisável da origem.');
+  assert.equal(copied.form.warrantyType, 'seller');
+  assert.equal(copied.form.warrantyTime, '12 meses');
+  assert.equal(copied.result.product.id, productId);
+  assert.ok(mock.sequence.includes(`GET /items/${itemId}`));
+  assert.ok(mock.sequence.includes(`GET /items/${itemId}/description`));
+  assert.equal(mock.sequence.some((request) => request.startsWith('POST /items')), false);
+}));
+
+test('cópia entre empresas é recusada antes de consultar ou publicar', () => environment(async () => {
+  const mock = provider(); globalThis.fetch = mock.fetch;
+  const target = { ...connection(), id: '33333333-3333-4333-8333-333333333333', empresa_id: '44444444-4444-4444-8444-444444444444' };
+  await assert.rejects(() => prepareMercadoLivreListingCopy(database(), connection(), target, itemId), { code: 'cross_company_copy' });
+  assert.equal(mock.sequence.length, 0);
 }));
 
 test('EAN ausente no catálogo do ML usa o cadastro isolado da empresa e o preditor sem publicar', () => environment(async () => {

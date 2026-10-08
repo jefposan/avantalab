@@ -11,6 +11,7 @@ import styles from './marketplaces.module.css';
 import { shippingLabels } from './shipping-labels';
 import ListingEditor from './ListingEditor';
 import MarketplaceSelect from './MarketplaceSelect';
+import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 
 export type MarketplaceAccount = { id: string; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
 type Row = { snapshot: ListingSnapshot; status: string };
@@ -34,7 +35,7 @@ export async function marketplaceClientRequest(path: string, body?: unknown, sig
   return payload;
 }
 
-export default function Anunciados({ companyId, dark, brand, accountId, onAccountsLoaded, onAccountSelectionLockedChange, refreshKey = 0 }: { companyId: string; dark: boolean; brand: string; accountId: string; onAccountsLoaded: (accounts: MarketplaceAccount[], canDisconnect: boolean) => void; onAccountSelectionLockedChange: (locked: boolean) => void; refreshKey?: number }) {
+export default function Anunciados({ companyId, dark, brand, accountId, onAccountsLoaded, onAccountSelectionLockedChange, onPublishInAnotherAccount, refreshKey = 0 }: { companyId: string; dark: boolean; brand: string; accountId: string; onAccountsLoaded: (accounts: MarketplaceAccount[], canDisconnect: boolean) => void; onAccountSelectionLockedChange: (locked: boolean) => void; onPublishInAnotherAccount: (sourceConnectionId: string, listingId: string, targetConnectionId: string) => void; refreshKey?: number }) {
   const [accounts, setAccounts] = useState<MarketplaceAccount[]>([]);
   const [canManage, setCanManage] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
@@ -53,6 +54,8 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
   const editButtons = useRef(new Map<string, HTMLButtonElement>());
   const tableScroll = useRef<HTMLDivElement>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [copyingListing, setCopyingListing] = useState<ListingSnapshot | null>(null);
+  const [copyTargetId, setCopyTargetId] = useState('');
   const [acting, setActing] = useState(false);
   const syncController = useRef<AbortController | null>(null);
   const listController = useRef<AbortController | null>(null);
@@ -73,7 +76,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
     return () => controller.abort();
   }, [loadAccounts]);
 
-  useEffect(() => { onAccountSelectionLockedChange(syncing || acting || !!expanded); }, [syncing, acting, expanded, onAccountSelectionLockedChange]);
+  useEffect(() => { onAccountSelectionLockedChange(syncing || acting || !!expanded || !!copyingListing); }, [syncing, acting, expanded, copyingListing, onAccountSelectionLockedChange]);
 
   const loadList = useCallback(async () => {
     listController.current?.abort();
@@ -127,6 +130,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
 
   function cancelEditing(id: string) {
     if (acting) return;
+    setCopyingListing(null); setCopyTargetId('');
     setExpanded('');
     editButtons.current.get(id)?.focus();
     requestAnimationFrame(() => editButtons.current.get(id)?.focus());
@@ -167,17 +171,25 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
           return <Fragment key={item.id}><tr>
           <th scope="row" title={item.title}><strong>{item.title}</strong><small>{item.id}{item.sku ? ` · SKU ${item.sku}` : ''}</small></th>
           <td>{statusNames[rowStatus] || rowStatus}</td><td>{money(item.price, item.currency)}</td><td>{money(item.freightEstimate)}</td><td>{money(item.feeEstimate)}{item.feePercent != null && <small>{item.feePercent}%</small>}</td><td>{item.stock ?? 'Indisponível'}</td><td>{item.sold ?? 'Indisponível'}</td><td>{shipping.freight}<small>{shipping.method}</small></td>
-          <td className={styles.listingActions}><button type="button" ref={(button) => { if (button) editButtons.current.set(item.id, button); else editButtons.current.delete(item.id); }} className={styles.editListing} aria-label={`Editar anúncio: ${item.title}`} title="Editar anúncio" aria-expanded={expanded === item.id} aria-controls={`details-${item.id}`} disabled={acting || editing || (!!expanded && expanded !== item.id)} onClick={() => openEditing(item.id)}><Icon name="edit" size={18} /></button></td>
+          <td className={styles.listingActions}><button type="button" ref={(button) => { if (button) editButtons.current.set(item.id, button); else editButtons.current.delete(item.id); }} className={styles.editListing} aria-label={`Editar anúncio: ${item.title}`} title="Editar anúncio" aria-expanded={expanded === item.id} aria-controls={`details-${item.id}`} disabled={acting || editing || (!!expanded && expanded !== item.id) || !!copyingListing} onClick={() => openEditing(item.id)}><Icon name="edit" size={18} /></button></td>
         </tr>{expanded === item.id && <tr id={`details-${item.id}`}><td colSpan={9}><div className={styles.listingDetails}>
-          {editing ? <ListingEditor key={`${accountId}-${item.id}`} companyId={companyId} accountId={accountId} itemId={item.id} snapshot={item} permalink={item.permalink} dark={dark} brand={brand} request={marketplaceClientRequest} onBusy={setActing} onClose={() => cancelEditing(item.id)} onListingAction={(action) => setConfirmation({ action, id: item.id, name: item.title, connectionId: accountId })} onSaved={(listing) => {
+          {editing ? <><div className={styles.actionBar}><button type="button" disabled={acting || syncing || (!!copyingListing && copyingListing.id !== item.id)} onClick={() => { setCopyingListing(copyingListing?.id === item.id ? null : item); setCopyTargetId(''); }}>Publicar em outra conta</button></div>{copyingListing?.id === item.id && <div className={styles.listingCopy}>
+            <MarketplaceAccountPicker label="Conta de destino" value={copyTargetId} options={accounts.filter((candidate) => candidate.status === 'connected' && candidate.id !== accountId).map((candidate) => ({ id: candidate.id, name: candidate.seller_name || `Vendedor ${candidate.seller_reference}`, detail: `ID ${candidate.seller_reference}` }))} placeholder="Selecione outra conta conectada" disabled={acting || syncing} onChange={setCopyTargetId} />
+            <div className={styles.actionBar}><button type="button" onClick={() => { setCopyingListing(null); setCopyTargetId(''); }}>Cancelar</button><button type="button" className={styles.primary} disabled={!copyTargetId || acting || syncing} onClick={() => { onPublishInAnotherAccount(accountId, item.id, copyTargetId); setCopyingListing(null); setCopyTargetId(''); }}>Preparar publicação</button></div>
+            <p>O AvantaLab consulta os dados atuais, prepara a ficha no destino e abre o formulário para sua revisão. Nada é publicado nesta etapa.</p>
+          </div>}<ListingEditor key={`${accountId}-${item.id}`} companyId={companyId} accountId={accountId} itemId={item.id} snapshot={item} permalink={item.permalink} dark={dark} brand={brand} request={marketplaceClientRequest} onBusy={setActing} onClose={() => cancelEditing(item.id)} onListingAction={(action) => setConfirmation({ action, id: item.id, name: item.title, connectionId: accountId })} onSaved={(listing) => {
             setRows((current) => current.map((row) => row.snapshot.id === listing.id ? { snapshot: listing, status: listing.substatus.includes('deleted') ? 'deleted' : listing.status } : row));
             setExpanded(''); setSyncNotice('Alterações confirmadas pelo Mercado Livre.'); requestAnimationFrame(() => editButtons.current.get(listing.id)?.focus());
-          }}><ListingData item={item} /></ListingEditor> : <>
-          <div className={styles.actionBar}><button type="button" disabled={acting} onClick={() => cancelEditing(item.id)}>Cancelar</button>{canManage && account?.status === 'connected' && ['pause', 'resume', 'close', 'delete'].map((action) => {
+          }}><ListingData item={item} /></ListingEditor></> : <>
+          <div className={styles.actionBar}><button type="button" disabled={acting || !!copyingListing} onClick={() => cancelEditing(item.id)}>Cancelar</button>{canManage && account?.status === 'connected' && <button type="button" disabled={acting || syncing || (!!copyingListing && copyingListing.id !== item.id)} onClick={() => { setCopyingListing(copyingListing?.id === item.id ? null : item); setCopyTargetId(''); }}>Publicar em outra conta</button>}{canManage && account?.status === 'connected' && ['pause', 'resume', 'close', 'delete'].map((action) => {
             const allowed = !item.substatus.includes('deleted') && (action === 'pause' ? item.status === 'active' : action === 'resume' ? item.status === 'paused' : action === 'close' ? ['active', 'paused'].includes(item.status) : item.status === 'closed');
             return <button key={action} type="button" disabled={!allowed || acting || syncing} onClick={() => setConfirmation({ action: action as ListingAction, id: item.id, name: item.title, connectionId: accountId })}>{actionNames[action as ListingAction]}</button>;
           })}{item.permalink && <a href={item.permalink} target="_blank" rel="noopener noreferrer">Abrir no Mercado Livre ↗</a>}</div>
-          <dl><ListingData item={item} /></dl></>}
+          <dl><ListingData item={item} /></dl>{copyingListing?.id === item.id && <div className={styles.listingCopy}>
+            <MarketplaceAccountPicker label="Conta de destino" value={copyTargetId} options={accounts.filter((candidate) => candidate.status === 'connected' && candidate.id !== accountId).map((candidate) => ({ id: candidate.id, name: candidate.seller_name || `Vendedor ${candidate.seller_reference}`, detail: `ID ${candidate.seller_reference}` }))} placeholder="Selecione outra conta conectada" disabled={acting || syncing} onChange={setCopyTargetId} />
+            <div className={styles.actionBar}><button type="button" onClick={() => { setCopyingListing(null); setCopyTargetId(''); }}>Cancelar</button><button type="button" className={styles.primary} disabled={!copyTargetId || acting || syncing} onClick={() => { onPublishInAnotherAccount(accountId, item.id, copyTargetId); setCopyingListing(null); setCopyTargetId(''); }}>Preparar publicação</button></div>
+            <p>O AvantaLab consulta os dados atuais, prepara a ficha no destino e abre o formulário para sua revisão. Nada é publicado nesta etapa.</p>
+          </div>}</>}
           {item.variations.length > 0 && <div><strong>Variações</strong>{item.variations.map((variation) => <p key={variation.id}>{variation.attributes} · {money(variation.price, item.currency)} · Estoque: {variation.stock ?? 'Indisponível'}</p>)}</div>}
         </div></td></tr>}</Fragment>;
         })}

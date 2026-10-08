@@ -107,7 +107,7 @@ test('grid panels fill their track without auto margins, sharing the content wra
 test('static notices are removed without disguising validation or hiding important errors', () => {
   assert.doesNotMatch(client, /OAuth|PKCE|styles.webOnly|styles.security|styles.flow|Nesta etapa/);
   assert.doesNotMatch(listings, /Para adicionar ou reconectar|Atualização automática enquanto|Anúncios da conta selecionada, inclusive/);
-  assert.match(client, /<NewListing key=\{selectedAccount \|\| 'unselected'\} companyId=/);
+  assert.match(client, /<NewListing companyId=\{companyId\} accountId=\{selectedAccount\}/);
   assert.match(newListing, /'Pesquisar'/);
   assert.match(newListing, /EAN não localizado/);
   assert.match(newListing, /'Publicar'/);
@@ -190,4 +190,14 @@ test('category preparation preserves the located product and distinguishes block
   assert.match(newListing, /prepared\.warnings\.map/);
   assert.match(newListing, /id="catalog-errors"[^>]*tabIndex=\{-1\}/);
   assert.match(css, /\.catalogWarnings \{ color: #1e4f78; background: #eff6ff;/);
+});
+
+test('a publicação pode ser preparada para outra conta com revisão separada', () => {
+  assert.match(newListing, /Preparar em outra conta/);
+  assert.match(newListing, /A nova conta só recebe o anúncio após uma confirmação separada/);
+  assert.match(newListing, /preparar-copia/);
+  assert.match(listings, /Publicar em outra conta/);
+  assert.match(listings, /Preparar publicação/);
+  assert.match(listings, /Nada é publicado nesta etapa/);
+  assert.match(client, /onPublishInAnotherAccount/);
 });

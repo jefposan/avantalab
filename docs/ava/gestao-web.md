@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.44.02 -->
+<!-- ava-version: 1.48.0.45 -->
+
+> Revisão 1.48.0.45: em **Anúncios em marketplaces**, depois de publicar uma
+> ficha, use **Preparar em outra conta** para levá-la a outra conta Mercado
+> Livre conectada da mesma empresa. Preço, estoque, descrição, garantia e
+> atributos continuam editáveis; a conta de destino é consultada novamente e
+> só recebe o anúncio após a nova confirmação em **Publicar**. Em um anúncio
+> já feito, abra **Editar** e use **Publicar em outra conta**: o AvantaLab relê
+> o anúncio e a descrição atuais, abre a mesma revisão no destino e não publica
+> nada nessa etapa. Contas de empresas diferentes não podem ser usadas.
 
 > Revisão 1.48.0.44.02: ao editar uma despesa e adiar o pagamento para qualquer
 > data futura, ela passa a Prevista, inclusive fixa ou parcela, preservando

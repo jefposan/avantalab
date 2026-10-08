@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.48.0.45 - 2026-10-07
+
+- **Publicação assistida em outra conta**: depois de publicar uma ficha, é
+  possível prepará-la em outra conta Mercado Livre conectada da mesma empresa.
+  Preço, estoque, descrição, garantia e atributos seguem como rascunho para
+  revisão; a conta de destino é validada novamente e exige confirmação própria.
+- **Anúncio existente como rascunho**: em Anunciados, **Publicar em outra
+  conta** relê o item e a descrição atuais no Mercado Livre, prepara o destino
+  e abre o mesmo formulário de publicação. A ação não cria anúncio sozinha.
+- **Isolamento preservado**: origem e destino são conferidos no servidor,
+  precisam pertencer à mesma empresa e usam tokens independentes. Falhas ou
+  restrições do destino não alteram o anúncio de origem.
+
 ## 1.48.0.44.02 - 2026-10-07
 
 - **Pagamento adiado é previsto**: na Gestão Web e Mobile, qualquer despesa
