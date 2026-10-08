@@ -87,10 +87,13 @@ test('AvantaPreços header action copies the mobile link instead of opening it',
   assert.match(css, /\.marketplaceMobileLink \{[^}]*border: 0;[^}]*cursor: pointer;/);
 });
 
-test('marketplaces reutiliza o contexto interno e mantém validação oficial no acesso direto', () => {
+test('marketplaces carrega a marca ausente do contexto interno e mantém validação oficial no acesso direto', () => {
   assert.match(client, /import TelaCarregandoAcesso from '@\/app\/components\/TelaCarregandoAcesso'/);
   assert.match(client, /const \[accessState, setAccessState\] = useState<'loading' \| 'ready' \| 'error'>\(\(\) => context \? 'ready' : 'loading'\)/);
-  assert.match(client, /async function loadIdentity\(\) \{\s*if \(context\) return;/);
+  assert.match(client, /async function loadIdentity\(\) \{[\s\S]*?if \(context\?\.empresa\.logoUrl\) return;/);
+  assert.match(client, /const needsAccessValidation = !context;/);
+  assert.match(client, /if \(needsAccessValidation\) \{\s*setAccessState\('loading'\);/);
+  assert.match(client, /if \(!needsAccessValidation\) return;/);
   assert.match(client, /if \(accessState === 'loading'\) \{\s*return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" \/>;/);
   assert.match(client, /if \(!response\.ok \|\| !payload\?\.empresa\) throw new Error/);
   assert.match(client, /setAccessState\('ready'\)/);

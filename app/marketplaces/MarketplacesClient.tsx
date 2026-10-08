@@ -83,9 +83,15 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   useEffect(() => {
     const controller = new AbortController();
     async function loadIdentity() {
-      if (context) return;
-      setAccessState('loading');
-      setAccessError('');
+      // O contexto do iframe não leva logoUrl na URL, para não expor data URIs
+      // grandes. Quando a prévia não tiver a marca, complementamos somente a
+      // identidade visual pelo endpoint já autorizado, sem atrasar o módulo.
+      if (context?.empresa.logoUrl) return;
+      const needsAccessValidation = !context;
+      if (needsAccessValidation) {
+        setAccessState('loading');
+        setAccessError('');
+      }
       try {
         if (!companyId) throw new Error('Selecione um perfil empresarial na Gestão antes de abrir este módulo.');
         const { data } = await supabase.auth.getSession();
@@ -96,9 +102,13 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
         if (controller.signal.aborted) return;
         setEmpresa(payload.empresa);
         setCanManage(['gestor_master', 'administrador', 'operador_completo'].includes(payload.perfil));
-        setAccessState('ready');
+        if (needsAccessValidation) setAccessState('ready');
       } catch (error) {
         if (controller.signal.aborted) return;
+        // A prévia interna já liberou a tela; se a leitura complementar da
+        // marca falhar, preservamos a navegação e tentamos novamente no acesso
+        // seguinte, em vez de substituir a tela por um erro de identidade.
+        if (!needsAccessValidation) return;
         setAccessError(error instanceof Error ? error.message : 'Não foi possível abrir este módulo.');
         setAccessState('error');
       }

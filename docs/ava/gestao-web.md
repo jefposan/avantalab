@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.48.0.45 -->
+<!-- ava-version: 1.48.0.45.01 -->
+
+> Revisão 1.48.0.45.01: o cabeçalho de **Anúncios em marketplaces** volta a
+> carregar a logo configurada do perfil empresarial. Sem impacto operacional
+> nos fluxos de publicação, conexão ou preços.
 
 > Revisão 1.48.0.45: em **Anúncios em marketplaces**, depois de publicar uma
 > ficha, use **Preparar em outra conta** para levá-la a outra conta Mercado

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.48.0.45 -->
+<!-- ava-version: 1.48.0.45.01 -->
+
+> Revisão 1.48.0.45.01: a restauração da logo no cabeçalho de Marketplaces
+> pertence à Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.48.0.45: a preparação de uma publicação para outra conta Mercado
 > Livre pertence à Gestão Web, exige revisão e confirmação separada por conta e

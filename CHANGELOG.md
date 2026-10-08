@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.0.45.01 - 2026-10-07
+
+- **Marca no cabeçalho de Marketplaces**: a navegação interna volta a carregar
+  a logo configurada da empresa no cabeçalho oficial do módulo. A prévia segue
+  sem imagem na URL; quando necessário, a marca é complementada pelo acesso
+  autorizado, sem interromper a tela já aberta.
+
 ## 1.48.0.45 - 2026-10-07
 
 - **Publicação assistida em outra conta**: depois de publicar uma ficha, é

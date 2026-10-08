@@ -1,3 +1,6 @@
+// Revisado na versão 1.48.0.45.01: o cabeçalho de Marketplaces Web volta a
+// carregar a logo configurada do perfil sem colocá-la na URL do módulo.
+// Sem impacto nos fluxos de publicação, conexão ou preços.
 // Revisado na versão 1.48.0.45: em Marketplaces Web, uma ficha publicada ou
 // um anúncio existente pode ser preparado em outra conta da mesma empresa.
 // O destino recebe os dados para revisão, é validado de novo e só publica após
