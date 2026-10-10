@@ -1,3 +1,5 @@
+// Revisado na versão 1.49.0.02: Voltar nas pastas de Divulgação do AvantaVendas
+// usa fundo branco, borda e texto azuis, sem sombra. Sem impacto operacional.
 // Revisado na versão 1.49.0.01: comprovante de pedido do AvantaVendas mostra
 // crédito anterior com etiqueta CRÉDITO à esquerda, no card e na imagem.
 // Novos pedidos guardam o retrato; valores financeiros não são alterados.

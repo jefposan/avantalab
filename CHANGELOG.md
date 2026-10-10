@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.49.0.02-av183 - 2026-10-10
+
+- **Voltar nas pastas de Divulgação**: visual aprovado com fundo branco,
+  borda azul definida e seta/texto azuis, sem sombra, distinto do Selecionar.
+  Mantém a navegação existente e oferece alvo de toque de 44 px, foco visível
+  e contraste no tema escuro. Nenhuma alteração no compartilhamento ou banco.
+
 ## 1.49.0.01-av182 - 2026-10-10
 
 - **Crédito no saldo anterior do pedido**: o comprovante aberto e a imagem

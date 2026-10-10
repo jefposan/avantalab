@@ -1508,8 +1508,11 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .divulgacao-page .search-compact-always button { height: 30px; min-height: 30px; padding: 0 11px; font-size: 10px; }
 .divulgacao-page .search-compact-always button .svg-icon { width: 13px; height: 13px; }
 .material-page-location { display: flex; min-height: 42px; align-items: center; gap: 9px; overflow: hidden; border: 1px solid #cfe0ec; border-radius: 12px; padding: 5px 8px; background: linear-gradient(135deg,#f2f8fc,#fff); box-shadow: 0 4px 12px rgba(15,42,80,.06); }
-.material-page-back { display: inline-flex; min-height: 30px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 4px; border: 1px solid #b9d7e9; border-radius: 999px; padding: 0 10px; color: #0874a8; background: #eaf7fd; font-size: 10px; font-weight: 850; }
-.material-page-back .svg-icon { width: 14px; height: 14px; }
+.material-page-back { --voltar-azul: color-mix(in srgb, var(--vendas-pedido) 75%, #003E73); display: inline-flex; min-height: 44px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 5px; border: 1.5px solid var(--voltar-azul); border-radius: 999px; padding: 0 11px; color: var(--voltar-azul); background: #fff; box-shadow: none; font-size: 11px; font-weight: 600; transition: transform 110ms ease-out; }
+.material-page-back .svg-icon { width: 16px; height: 16px; }
+.material-page-back:active { transform: scale(.965); }
+.material-page-back:focus-visible { outline: 3px solid #003E73; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .material-page-back { transition: none; } }
 .material-page-location p { min-width: 0; flex: 1 1 auto; overflow: hidden; margin: 0; color: #526477; font-size: 11px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 .material-page-location b { color: #0A1F44; font-size: 12px; font-weight: 900; }
 .material-page-location .material-select-mode { display: grid; min-width: 106px; min-height: 30px; flex: 0 0 auto; place-items: center; border: 1px solid #1687D9; border-radius: 999px; padding: 0 12px; color: #fff; background: #1687D9; box-shadow: 0 4px 10px rgba(22,135,217,.22); font-size: 10px; font-weight: 850; line-height: 1; text-align: center; }
@@ -1614,7 +1617,8 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dark-theme .material-selection-bar small { color: #94a3b8; }
 .dark-theme .material-folder-cover { background: linear-gradient(145deg,#1e293b,#102838); }.dark-theme .material-folder-info small,.dark-theme .material-thumb small { color: #94a3b8; }
 .dark-theme .material-cover-processing { color: #67e8f9; background: linear-gradient(145deg,#17283b,#102838); }.dark-theme .material-cover-processing small { color: #cbd5e1; }
-.dark-theme .material-page-location { border-color: #334155; background: linear-gradient(135deg,#17283b,#172033); }.dark-theme .material-page-location b { color: #f8fafc; }.dark-theme .material-page-location small,.dark-theme .material-page-location span,.dark-theme .material-page-section > h3 { color: #94a3b8; }.dark-theme .material-page-back { border-color: #155e75; color: #67e8f9; background: #102838; }
+.dark-theme .material-page-location { border-color: #334155; background: linear-gradient(135deg,#17283b,#172033); }.dark-theme .material-page-location b { color: #f8fafc; }.dark-theme .material-page-location small,.dark-theme .material-page-location span,.dark-theme .material-page-section > h3 { color: #94a3b8; }.dark-theme .material-page-back { border-color: #7dd3fc; color: #7dd3fc; background: #172033; }
+.dark-theme .material-page-back:focus-visible { outline-color: #7dd3fc; }
 .dark-theme .material-page-location .material-select-mode { border-color: #1687D9; color: #fff; background: #1687D9; }
 .dark-theme .material-subfolder { border-color: #334155; color: #f8fafc; background: #172033; }.dark-theme .material-subfolder > span { background: #102838; }.dark-theme .material-subfolder small,.dark-theme .material-subfolders > h3,.dark-theme .material-files > h3 { color: #94a3b8; }
 .payment-search { display: flex; align-items: center; gap: 12px; border: 1px solid #e2e3e6; border-radius: 12px; padding: 16px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.05); }

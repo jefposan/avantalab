@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0.01 -->
+<!-- ava-version: 1.49.0.02 -->
+
+> Revisão 1.49.0.02: ajuste visual do botão Voltar em Divulgação do
+> AvantaVendas. Sem impacto operacional na Gestão Web.
 
 > Revisão 1.49.0.01: crédito anterior identificado nos comprovantes de pedido
 > do AvantaVendas. Sem impacto operacional na Gestão Web.

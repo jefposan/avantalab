@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.49.0.01 -->
+<!-- ava-version: 1.49.0.02 -->
+
+> Revisão 1.49.0.02-av183: o botão Voltar nas pastas de Divulgação passa a
+> ter fundo branco, borda azul e seta/texto azuis, sem sombra. Permanece no
+> mesmo local e retorna à pasta anterior como antes, distinto de Selecionar.
+> Apenas ajuste visual; sem mudança operacional de navegação ou compartilhamento.
 
 > Revisão 1.49.0.01-av182: no comprovante de pedido, Saldo anterior exibe o
 > crédito disponível com a etiqueta CRÉDITO à esquerda do valor, também na
@@ -90,7 +95,7 @@
 > Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
 > ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 182 -->
+<!-- avantavendas-asset-revision: 183 -->
 
 > Revisão 1.48.0.43.11-av175: **Novo produto** conserva sua posição original
 > no canto direito. **Atualizar** ocupa uma posição independente à esquerda e
