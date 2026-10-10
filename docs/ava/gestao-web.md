@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0 -->
+<!-- ava-version: 1.49.0.01 -->
+
+> Revisão 1.49.0.01: crédito anterior identificado nos comprovantes de pedido
+> do AvantaVendas. Sem impacto operacional na Gestão Web.
 
 > Revisão 1.49.0: em **Anúncios em marketplaces**, o sino e o contador de cada
 > conta mostram novas vendas recebidas do Mercado Livre. Abra a conta para ver

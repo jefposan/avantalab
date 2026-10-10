@@ -8638,6 +8638,7 @@ async function finalizarPedidoCliente() {
         desconto_tipo: rascunho.descontoTipo || 'valor',
         desconto_percentual: rascunho.descontoTipo === 'percentual' ? Number(rascunho.descontoPercentual || 0) : 0,
         saldo_anterior: financeiroAnterior.debito,
+        credito_anterior: financeiroAnterior.credito,
         saldo_final: saldoAtual,
       }),
       itens: rascunho.itens.map((item) => {
@@ -9205,7 +9206,7 @@ function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', re
     const totalItem = bonificado ? 0 : Number(item.total ?? Number(item.quantidade || 0) * preco);
     return `<div class="receipt-order-row ${bonificado ? 'is-bonus' : ''}"><div class="receipt-order-product"><b>${escapeHtml(item.produto_nome)}</b>${bonificado ? '<em>Bonificado</em>' : ''}</div><span class="receipt-order-quantity">${Number(item.quantidade || 0)}</span><span class="receipt-order-price">${bonificado ? '—' : moeda(preco)}</span><strong class="receipt-order-total">${moeda(totalItem)}</strong></div>`;
   }).join('') || '<p class="muted">Sem itens registrados.</p>';
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pedido</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header><div class="receipt-order-scroll">${itensHtml}</div></section><div class="receipt-order-footer"><section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div>${descontoHtml}<div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button></div>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pedido</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header><div class="receipt-order-scroll">${itensHtml}</div></section><div class="receipt-order-footer"><section class="receipt-balance-summary"><div><span>Saldo anterior</span>${saldoAnteriorPedidoHtml(resumo)}</div>${descontoHtml}<div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button></div>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
 }
 
 function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
@@ -9424,7 +9425,17 @@ function metadadosPedido(venda) {
 function resumoComprovantePedido(venda) {
   const metadados = metadadosPedido(venda);
   if (Object.prototype.hasOwnProperty.call(metadados, 'saldo_anterior') && Object.prototype.hasOwnProperty.call(metadados, 'saldo_final')) {
-    return { saldoAnterior: Number(metadados.saldo_anterior || 0), saldoAtual: Number(metadados.saldo_final || 0) };
+    const saldoAnterior = Number(metadados.saldo_anterior || 0);
+    const saldoAtual = Number(metadados.saldo_final || 0);
+    let creditoAnterior = Math.max(0, Number(metadados.credito_anterior || 0), -saldoAnterior);
+    // O retrato antigo salvava só o débito, apagando a informação do crédito.
+    // Quando restou débito após uma venda, a diferença revela exatamente o
+    // crédito consumido, sem consultar o saldo de hoje nem alterar o pedido.
+    if (!Object.prototype.hasOwnProperty.call(metadados, 'credito_anterior')
+      && saldoAnterior === 0 && saldoAtual > 0 && pedidoGeraDebito(venda)) {
+      creditoAnterior = Math.max(0, Math.round((Number(venda.total || 0) - saldoAtual) * 100) / 100);
+    }
+    return { saldoAnterior: Math.max(0, saldoAnterior), creditoAnterior, saldoAtual };
   }
   const limite = timestampPedido(venda);
   const debitosAnteriores = state.vendas
@@ -9434,8 +9445,16 @@ function resumoComprovantePedido(venda) {
     .filter((item) => item.cliente_id === venda.cliente_id && timestampPagamento(item) < limite)
     .reduce((soma, item) => soma + Number(item.valor || 0) + Number(item.desconto || 0), 0);
   const saldoAnterior = Math.max(0, debitosAnteriores - abatimentosAnteriores);
+  const creditoAnterior = Math.max(0, abatimentosAnteriores - debitosAnteriores);
   const saldoAtual = Math.max(0, debitosAnteriores + (pedidoGeraDebito(venda) ? Number(venda.total || 0) : 0) - abatimentosAnteriores);
-  return { saldoAnterior, saldoAtual };
+  return { saldoAnterior, creditoAnterior, saldoAtual };
+}
+
+function saldoAnteriorPedidoHtml(resumo) {
+  if (resumo.creditoAnterior > 0) {
+    return `<b class="receipt-previous-credit"><span class="receipt-credit-badge">CRÉDITO</span><span>${moeda(resumo.creditoAnterior)}</span></b>`;
+  }
+  return `<b>${moeda(resumo.saldoAnterior)}</b>`;
 }
 
 function resumoFinanceiroParaConfirmarPagamento(pagamento) {
@@ -9535,6 +9554,13 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     linhasRegulares.forEach((linha, indice) => {
       if (indice) { ctx.strokeStyle = '#e1e9f0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(78, y - 27); ctx.lineTo(1002, y - 27); ctx.stroke(); }
       ctx.fillStyle = '#526477'; ctx.font = '750 30px Arial, sans-serif'; ctx.fillText(linha.rotulo, 88, y + 14);
+      ctx.font = '850 36px Arial, sans-serif';
+      if (linha.credito) {
+        const xCredito = 992 - ctx.measureText(linha.valor).width - 170;
+        caminhoRetanguloArredondado(ctx, xCredito, y - 16, 150, 40, 20);
+        ctx.fillStyle = '#dcfce7'; ctx.fill();
+        ctx.fillStyle = '#166534'; ctx.font = '800 20px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('CRÉDITO', xCredito + 75, y + 12);
+      }
       ctx.fillStyle = '#0A1F44'; ctx.textAlign = 'right'; ctx.font = '850 36px Arial, sans-serif'; ctx.fillText(linha.valor, 992, y + 15); ctx.textAlign = 'left';
       y += 72;
     });
@@ -9648,7 +9674,8 @@ async function compartilharPedido(pedidoId) {
     empresa: nomeEmpresaParaComprovantes(),
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(venda.criado_em),
-    saldoAnterior: moeda(resumo.saldoAnterior),
+    saldoAnterior: moeda(resumo.creditoAnterior > 0 ? resumo.creditoAnterior : resumo.saldoAnterior),
+    saldoAnteriorCredito: resumo.creditoAnterior > 0,
     valorPedido: moeda(venda.total),
     saldoAtual: moeda(resumo.saldoAtual),
     desconto: desconto > 0 ? moeda(desconto) : '',
@@ -9667,7 +9694,7 @@ async function compartilharPedido(pedidoId) {
       temaEtiqueta: 'verde',
       linhas,
       resumo: [
-        { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
+        { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior, credito: dadosComprovante.saldoAnteriorCredito },
         { rotulo: titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', valor: dadosComprovante.valorPedido, destaque: 'principal', tituloDestaque: 'Pedido registrado', ...(desconto > 0 ? { complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto } } : {}) },
         { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],

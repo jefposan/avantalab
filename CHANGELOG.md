@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.49.0.01-av182 - 2026-10-10
+
+- **Crédito no saldo anterior do pedido**: o comprovante aberto e a imagem
+  compartilhada mostram o valor disponível com a etiqueta CRÉDITO à esquerda,
+  em vez de exibir somente o débito anterior zerado. Débitos mantêm o formato.
+- **Retrato financeiro preservado**: novos pedidos guardam o crédito anterior
+  nos metadados já existentes, inclusive quando cobre toda a compra. Pedidos
+  antigos com débito restante recuperam o crédito pela diferença exata entre
+  pedido e saldo final; não usam o saldo atual do cadastro nem inventam valores
+  quando o retrato antigo é insuficiente.
+- **Sem recálculo financeiro**: totais, descontos, abatimentos, estoque e
+  lançamentos existentes não são modificados. Não requer migração do Supabase.
+
 ## 1.49.0 - 2026-10-07
 
 - **Vendas por conta Mercado Livre**: Marketplaces passa a receber os avisos de

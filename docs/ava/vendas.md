@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.49.0 -->
+<!-- ava-version: 1.49.0.01 -->
+
+> Revisão 1.49.0.01-av182: no comprovante de pedido, Saldo anterior exibe o
+> crédito disponível com a etiqueta CRÉDITO à esquerda do valor, também na
+> imagem compartilhada. Novos pedidos preservam essa informação mesmo se o
+> crédito cobrir toda a compra. Pedidos antigos recuperam a informação quando
+> a diferença entre pedido e saldo final determina o valor com segurança.
+> Não recalcula lançamentos nem usa o crédito atual para alterar um comprovante.
 
 > Revisão 1.49.0: os avisos e a impressão de etiquetas de vendas pertencem ao
 > Marketplaces da Gestão Web; sem impacto operacional no AvantaVendas.
@@ -83,7 +90,7 @@
 > Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
 > ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 181 -->
+<!-- avantavendas-asset-revision: 182 -->
 
 > Revisão 1.48.0.43.11-av175: **Novo produto** conserva sua posição original
 > no canto direito. **Atualizar** ocupa uma posição independente à esquerda e

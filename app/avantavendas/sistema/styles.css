@@ -2517,6 +2517,9 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .receipt-balance-summary { display: grid; gap: 7px; margin-top: 10px; border: 1px solid #cfe0ec; border-radius: 14px; padding: 10px; background: #f5f9fc; }
 .receipt-balance-summary > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #526477; font-size: 11px; font-weight: 800; }
 .receipt-balance-summary b { color: #0A1F44; font-size: 13px; }
+.receipt-balance-summary .receipt-previous-credit { display: inline-flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
+.receipt-previous-credit > span { white-space: nowrap; }
+.receipt-previous-credit .receipt-credit-badge { display: inline-flex; align-items: center; padding: 3px 7px; border-radius: 999px; background: #dcfce7; color: #166534; font-size: 9px; font-weight: 800; line-height: 1.2; }
 .receipt-current-balance { grid-column: 1 / -1; border-top: 1px solid #c7dce9; padding-top: 8px !important; color: #0A1F44 !important; background: #e5f4ff !important; }
 .receipt-current-balance b { color: #075985 !important; font-size: 16px !important; }
 .receipt-detail-summary .receipt-current-balance { display: flex; align-items: center; justify-content: space-between; }
@@ -2981,6 +2984,7 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .dark-theme .receipt-balance-summary, .dark-theme .receipt-detail-summary div { border-color: #334155; background: #111d2f; }
 .dark-theme .receipt-balance-summary > div, .dark-theme .receipt-detail-summary span { color: #cbd5e1; }
 .dark-theme .receipt-balance-summary b, .dark-theme .receipt-detail-summary b { color: #f8fafc; }
+.dark-theme .receipt-previous-credit .receipt-credit-badge { background: #143a2b; color: #bbf7d0; }
 .dark-theme .receipt-current-balance { border-color: #155e75; color: #f8fafc !important; background: #102838 !important; }
 .dark-theme .receipt-current-balance b { color: #67e8f9 !important; }
 .dark-theme .order-view-actions .ghost { border-color: #475569; color: #cbd5e1; background: #172033; }.dark-theme .order-view-actions .secondary { border-color: #155e75; color: #7dd3fc; background: #102838; }.dark-theme .order-view-actions .danger, .dark-theme .order-confirm-actions .danger { border-color: #be123c; color: #fff; background: #9f1239; }.dark-theme .receipt-view-backdrop .order-share { border-color: #38bdf8; color: #fff; background: linear-gradient(135deg,#1687D9,#0284c7); }

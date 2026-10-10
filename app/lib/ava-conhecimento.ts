@@ -1,3 +1,6 @@
+// Revisado na versão 1.49.0.01: comprovante de pedido do AvantaVendas mostra
+// crédito anterior com etiqueta CRÉDITO à esquerda, no card e na imagem.
+// Novos pedidos guardam o retrato; valores financeiros não são alterados.
 // Revisado na versão 1.49.0: Marketplaces Web recebe vendas e envios do Mercado
 // Livre em fila privada por conta; a etiqueta pronta abre em PDF pelo AvantaLab.
 // Full é operado pelo Mercado Livre. Exige callback orders_v2 e shipments.
@@ -1887,6 +1890,7 @@ CLIENTES
 - O campo Data de Aniversário, identificado pelo ícone de bolo, recebe dia e mês em dd/mm. O aniversário cadastrado entra na agenda e pode aparecer no aviso do cabeçalho no dia correspondente.
 
 CATÁLOGO, PEDIDOS E PAGAMENTOS
+- No comprovante de pedido do AvantaVendas, Saldo anterior mostra o valor do crédito anterior com a etiqueta CRÉDITO à esquerda quando havia crédito, no card e na imagem compartilhada. O retrato dos novos pedidos conserva o crédito total antes da compra, mesmo quando maior que ela. O comprovante antigo da venda com débito restante recupera o crédito pela diferença exata entre valor do pedido e saldo final, sem mudar lançamentos nem usar o saldo do cadastro de hoje. Um retrato antigo sem informação suficiente não deve inventar crédito.
 - Produtos permite cadastrar, editar, ativar/desativar, buscar, trabalhar com pacotes e imagens. Custo e preço de venda são usados para rentabilidade; estoque é opcional e pode ser ajustado em Configurações > Controle de estoque. Ao registrar entrada ou ajuste, Quantidade e Data ficam na mesma linha; tocar na data abre o calendário centralizado, a exibição usa dd/mm/aaaa, aceita lançamento anterior e não permite dia futuro. Depois de ativado, o estoque é abatido por vendas, consignados e itens bonificados; editar, cancelar ou excluir devolve somente a diferença necessária, e converter consignado em pedido não gera uma segunda saída.
 - Pedido e itens são salvos na mesma transação: se alguma parte falhar, o pedido anterior permanece intacto.
 - No comprovante compartilhado de **pagamento**, Saldo anterior é uma informação isolada, sem o título Resumo financeiro. Valor recebido, forma de pagamento e eventual desconto aparecem no mesmo painel do lançamento; o ícone muda conforme Pix, boleto, cartão, dinheiro, cheque ou outra modalidade. Essa organização não altera saldo, cálculo, exportação ou o compartilhamento.

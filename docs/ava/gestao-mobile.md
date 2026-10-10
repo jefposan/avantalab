@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.49.0 -->
+<!-- ava-version: 1.49.0.01 -->
+
+> Revisão 1.49.0.01: crédito anterior identificado nos comprovantes de pedido
+> do AvantaVendas. Sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.49.0: os avisos e a impressão de etiquetas de vendas pertencem ao
 > Marketplaces da Gestão Web; sem impacto operacional na Gestão Mobile.

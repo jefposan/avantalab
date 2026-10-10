@@ -17,10 +17,11 @@ function canvasDeTeste() {
     fillRect() {}, lineTo() {},
     moveTo(...argumentos) { caminho.push(['moveTo', ...argumentos]); },
     restore() {}, save() {}, stroke() {}, strokeRect() {}, translate() {},
-    fillText(texto) { textos.push(String(texto)); },
+    fillText(texto, x, y) { textos.push(String(texto)); this.posicoes.push({ texto: String(texto), x, y }); },
+    posicoes: [],
     measureText(texto) { return { width: String(texto).length * 13 }; },
   };
-  return { canvas: { width: 0, height: 0, getContext: () => contexto }, preenchimentos, textos };
+  return { canvas: { width: 0, height: 0, getContext: () => contexto }, preenchimentos, textos, posicoes: contexto.posicoes };
 }
 
 test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', async () => {
@@ -93,4 +94,19 @@ test('o PWA carrega e coloca em cache o renderizador de pedido', async () => {
   ]);
   assert.match(bootstrap, /order-receipt-v2\.js/);
   assert.match(serviceWorker, /order-receipt-v2\.js\?v=/);
+});
+
+test('crédito aparece à esquerda do valor no comprovante compartilhado', async () => {
+  const codigo = await readFile(new URL('../../app/avantavendas/sistema/order-receipt-v2.js', import.meta.url), 'utf8');
+  const { canvas, textos, posicoes } = canvasDeTeste();
+  class ImagemFalsa { set src(valor) { queueMicrotask(() => this.onload?.()); } }
+  const janela = {};
+  vm.runInNewContext(codigo, { Image: ImagemFalsa, Object, Promise, encodeURIComponent, queueMicrotask, window: janela, document: { createElement: () => canvas } });
+  await janela.OrderReceiptV2.criarCanvas({ saldoAnterior: 'R$ 22,00', saldoAnteriorCredito: true, valorPedido: 'R$ 56,00', saldoAtual: 'R$ 34,00' });
+  assert.ok(textos.includes('CRÉDITO'));
+  assert.ok(textos.includes('R$ 22,00'));
+  assert.ok(posicoes.find(({ texto }) => texto === 'CRÉDITO').x < posicoes.find(({ texto }) => texto === 'R$ 22,00').x);
+  textos.length = 0;
+  await janela.OrderReceiptV2.criarCanvas({ saldoAnterior: 'R$ 15,00' });
+  assert.ok(!textos.includes('CRÉDITO'), 'débito não deve receber a etiqueta');
 });

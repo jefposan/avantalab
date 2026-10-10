@@ -102,7 +102,7 @@
     texto(ctx, conteudoLimitado, LARGURA / 2, y, { tamanho: 28, peso: 700, cor: '#0A2F6B', alinhamento: 'center' });
   }
 
-  async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', valorPedido = 'R$ 0,00', saldoAtual = 'R$ 0,00', desconto = '', titulo = 'Comprovante de pedido', itens = [] } = {}) {
+  async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', saldoAnteriorCredito = false, valorPedido = 'R$ 0,00', saldoAtual = 'R$ 0,00', desconto = '', titulo = 'Comprovante de pedido', itens = [] } = {}) {
     const clienteExibido = primeiroNomeClienteComprovante(cliente);
     const itensExibidos = Array.isArray(itens) ? itens : [];
     const temDesconto = Boolean(desconto);
@@ -135,7 +135,16 @@
 
     retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3'); icone(ctx, 'confirmado', 288, 367, 44, '#168448'); texto(ctx, 'Pedido registrado com sucesso!', 570, 367, { tamanho: 24, peso: 800, cor: '#16773F', alinhamento: 'center', largura: 460, linhaBase: 'middle' });
 
-    card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, yResumo + 72, 86, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, yResumo + 125, { tamanho: 26, peso: 600, cor: '#425675' }); texto(ctx, saldoAnterior, 928, yResumo + 125, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 340 });
+    card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'); fundoDeValor(ctx, yResumo + 72, 86, '#F3F7FC'); texto(ctx, 'Saldo anterior', 180, yResumo + 125, { tamanho: 26, peso: 600, cor: '#425675' });
+    if (saldoAnteriorCredito) {
+      // Reservar espaço à esquerda do valor, inclusive para moedas longas.
+      ctx.font = '800 31px Arial, sans-serif';
+      const larguraValor = Math.min(280, ctx.measureText(saldoAnterior).width);
+      const xCredito = 928 - larguraValor - 150;
+      retangulo(ctx, xCredito, yResumo + 98, 130, 36, 18, '#DCFCE7', '#BBF7D0');
+      texto(ctx, 'CRÉDITO', xCredito + 65, yResumo + 122, { tamanho: 18, peso: 800, cor: '#166534', alinhamento: 'center' });
+    }
+    texto(ctx, saldoAnterior, 928, yResumo + 125, { tamanho: 31, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: saldoAnteriorCredito ? 280 : 340 });
 
     card(ctx, yPedido, alturaCardPedido, '', 'PEDIDO REGISTRADO'); fundoDeValor(ctx, yPedido + 72, temDesconto ? 174 : 112, '#1674D1'); icone(ctx, 'confirmado', 208, yPedido + 128, 58, '#FFFFFF'); texto(ctx, titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', 276, yPedido + 137, { tamanho: 26, peso: 700, cor: '#FFFFFF', largura: 370 }); texto(ctx, valorPedido, 922, yPedido + 141, { tamanho: 43, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 355 });
     if (temDesconto) { linha(ctx, 180, yPedido + 154, 922, yPedido + 154, 'rgba(255,255,255,.42)', 2); texto(ctx, 'Desconto concedido', 276, yPedido + 208, { tamanho: 24, peso: 600, cor: '#D9F0FF', largura: 390 }); texto(ctx, desconto, 922, yPedido + 208, { tamanho: 31, peso: 800, cor: '#FFFFFF', alinhamento: 'right', largura: 330 }); }
