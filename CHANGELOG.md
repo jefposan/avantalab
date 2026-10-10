@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.49.0.03-av184 - 2026-10-10
+
+- **Top clientes completo no Dashboard**: o card deixa de limitar o ranking
+  a dez clientes. Lista todos com compras válidas no período selecionado,
+  agrupados por cliente e ordenados do maior total comprado para o menor.
+  Mantém a contagem de pedidos, o layout e o filtro de datas existentes.
+  O Top 10 Produtos e os lançamentos financeiros não são alterados.
+
 ## 1.49.0.02-av183 - 2026-10-10
 
 - **Voltar nas pastas de Divulgação**: visual aprovado com fundo branco,

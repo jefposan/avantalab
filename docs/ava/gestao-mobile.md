@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.49.0.02 -->
+<!-- ava-version: 1.49.0.03 -->
+
+> Revisão 1.49.0.03: Top clientes completo no Dashboard do AvantaVendas.
+> Sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.49.0.02: ajuste visual do botão Voltar em Divulgação do
 > AvantaVendas. Sem impacto operacional na Gestão Mobile.

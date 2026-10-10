@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.49.0.02 -->
+<!-- ava-version: 1.49.0.03 -->
+
+> Revisão 1.49.0.03-av184: no Dashboard, Top clientes lista todos os clientes
+> com compras válidas no período selecionado, sem limite de dez, ordenados
+> pelo total comprado do maior para o menor. A contagem de pedidos e os filtros
+> existentes são mantidos. Top 10 Produtos permanece limitado a dez produtos.
 
 > Revisão 1.49.0.02-av183: o botão Voltar nas pastas de Divulgação passa a
 > ter fundo branco, borda azul e seta/texto azuis, sem sombra. Permanece no
@@ -95,7 +100,7 @@
 > Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
 > ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 183 -->
+<!-- avantavendas-asset-revision: 184 -->
 
 > Revisão 1.48.0.43.11-av175: **Novo produto** conserva sua posição original
 > no canto direito. **Atualizar** ocupa uma posição independente à esquerda e
@@ -4441,8 +4446,10 @@ função existir ali.
   recalculado com a mesma revisão salva no cache local. Totais, recebimentos,
   ranking e indicadores do período já incluem o lançamento ao abrir o Dashboard.
 - Os comprovantes priorizam leitura: título, cliente, itens, valores e saldo
-  final usam fonte ampliada. No Dashboard, a tabela **Top 10 Clientes** também
-  usa fonte maior para facilitar a conferência.
+  final usam fonte ampliada. No Dashboard, a tabela **Top clientes** também
+  usa fonte maior para facilitar a conferência e lista todos os clientes com
+  compras válidas no período selecionado, sem limite de dez, do maior total
+  comprado para o menor, agrupando os pedidos de cada cliente.
 - A imagem compartilhada de pedido ou pagamento usa cabeçalho com empresa,
   cliente e data; não leva os botões da tela. Ela separa saldo anterior, valor
   do lançamento e saldo atual, deixando os dois últimos em faixas maiores para
