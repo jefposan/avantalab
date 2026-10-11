@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.50.0.01 -->
+<!-- ava-version: 1.50.0.04 -->
+
+> Revisão 1.50.0.04: hover unificado dos controles de Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.50.0.03: ajuste dos botões do cabeçalho de Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.50.0.02: ordenação por data em Vendas/Anunciados do Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
 
 > Revisão 1.50.0.01: indicador de busca individual em Novo anúncio do
 > Marketplaces Web. Sem impacto operacional na Gestão Mobile ou AvantaPreços.

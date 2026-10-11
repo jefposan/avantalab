@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.50.0.04 - 2026-10-11
+
+- Classificar, Atualizar e Recolher/Expandir têm o mesmo hover de fundo e
+  borda na cor da empresa nos cabeçalhos de Vendas e Anunciados, incluindo
+  tema escuro. Sem alteração de medidas ou do componente compartilhado.
+- Efeito restrito ao mouse, sem aplicar em botões desabilitados; transição
+  respeita movimento reduzido. Ava revisada, sem impacto operacional.
+
+## 1.50.0.03 - 2026-10-11
+
+- Classificação em Vendas/Anunciados reutiliza o SVG de filtro do sistema
+  e tem largura fixa nos dois rótulos, sem deslocar os outros controles.
+- Classificar e Recolher/Expandir usam a mesma altura de Atualizar nos
+  cabeçalhos: face de 40px no desktop e 48px no mobile, com alvo clicável de
+  pelo menos 48px. Sem alteração do componente compartilhado ou de outros módulos.
+- Ava revisada, sem impacto operacional na ordenação e nos filtros.
+
+## 1.50.0.02 - 2026-10-11
+
+- Vendas e Anunciados têm botão independente no topo para alternar entre
+  Mais recentes e Mais antigas pela data original de venda ou criação do anúncio.
+  Iniciam pelos mais recentes; filtros e contadores são preservados.
+- Anúncios são ordenados antes da paginação, retornando à primeira página ao
+  alternar. Ordenação bloqueada durante edição/publicação para preservar a ficha.
+- Tooltip oficial, foco por teclado, tema escuro e manuais da Ava atualizados.
+
 ## 1.50.0.01 - 2026-10-11
 
 - Novo anúncio mostra Pesquisando… somente no botão da busca acionada (EAN

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { normalizarTexto } from '@/app/lib/formatters';
 import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
 import { uuidIsValid } from '@/app/modules/marketplaces/services/listing-model';
+import { dateOrder } from '@/app/modules/marketplaces/date-order';
 export const runtime = 'nodejs';
 export async function GET(request: Request) {
   try {
@@ -15,7 +16,9 @@ export async function GET(request: Request) {
     if (['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].includes(status || '')) query = query.eq('status', status);
     const search = normalizarTexto((params.get('q') || '').slice(0, 120)).replace(/[%_\\]/g, '');
     if (search) query = query.ilike('search_text', `%${search}%`);
-    const { data, error, count } = await query.order('title').order('provider_listing_id').range((page - 1) * 25, page * 25 - 1);
+    const order = dateOrder(params.get('order'));
+    // A criação original no ML, não a última sincronização. Ordenar antes de paginar.
+    const { data, error, count } = await query.order('snapshot->>createdAt', { ascending: order === 'asc', nullsFirst: false }).order('provider_listing_id').range((page - 1) * 25, page * 25 - 1);
     if (error) throw error;
     return NextResponse.json({ listings: data || [], total: count || 0, page }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return managementFailure(error); }

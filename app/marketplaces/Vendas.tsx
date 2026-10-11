@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
 import Tooltip from '@/app/components/Tooltip';
 import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, orderStatusText, saleConflictText } from '@/app/modules/marketplaces/sales-status';
@@ -8,6 +8,8 @@ import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercad
 import type { MarketplaceAccount } from './Anunciados';
 import MarketplaceSelect from './MarketplaceSelect';
 import SalePostSale from './SalePostSale';
+import DateOrderButton from './DateOrderButton';
+import { sortSalesByDate, type DateOrder } from '@/app/modules/marketplaces/date-order';
 import styles from './marketplaces.module.css';
 
 type Sale = MarketplaceSale;
@@ -22,6 +24,8 @@ export default function Vendas({ companyId, accountId, onAccountChange, accounts
   const [printError, setPrintError] = useState('');
   const [open, setOpen] = useState('');
   const [printing, setPrinting] = useState('');
+  const [order, setOrder] = useState<DateOrder>('desc');
+  const orderedSales = useMemo(() => sortSalesByDate(sales, order), [sales, order]);
 
   async function printLabel(sale: Sale) {
     if (printing || !canManage) return;
@@ -41,13 +45,13 @@ export default function Vendas({ companyId, accountId, onAccountChange, accounts
   }
 
   return <section className={`${styles.panel} ${styles.salesPanel}`} aria-labelledby="sales-title">
-    <div className={`${styles.panelHeading} ${!expanded ? styles.panelHeadingCollapsed : ''}`}><div><p className={styles.step}>3</p><h2 id="sales-title">Vendas · {sales.length}</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<Tooltip texto="Atualizar vendas e envios"><button type="button" className={styles.refreshSales} onClick={onRefresh} disabled={loading}>{loading ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Vendas" controlsId="sales-content" expandido={expanded} onClick={() => onExpandedChange(!expanded)} corPrimaria={brand} darkMode={dark} /></div></div>
+    <div className={`${styles.panelHeading} ${!expanded ? styles.panelHeadingCollapsed : ''}`}><div><p className={styles.step}>3</p><h2 id="sales-title">Vendas · {sales.length}</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<DateOrderButton context="Vendas" order={order} onChange={setOrder} disabled={loading} /><Tooltip texto="Atualizar vendas e envios"><button type="button" className={styles.refreshSales} onClick={onRefresh} disabled={loading}>{loading ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Vendas" controlsId="sales-content" expandido={expanded} onClick={() => onExpandedChange(!expanded)} corPrimaria={brand} darkMode={dark} /></div></div>
     <div id="sales-content" hidden={!expanded}>
     <MarketplaceSelect label="Conta das vendas" value={accountId} placeholder="Todas as contas" onChange={onAccountChange} options={[{ value: '', label: 'Todas as contas' }, ...accounts.map((account) => ({ value: account.id, label: account.seller_name || `Vendedor ${account.seller_reference}` }))]} className={styles.salesAccountFilter} />
     <p className={styles.salesScopeHelp}>Pedidos únicos no período e na situação selecionados no cabeçalho. O sino reúne todas as contas.</p>
     {awaitingUpdates > 0 && <p className={styles.salesScopeHelp} role="status">Há atualizações de vendas em processamento. Use Atualizar para conferir novamente.</p>}
     {printError && <p className={styles.salesError} role="alert">{printError}</p>}
-    {error ? <p className={styles.salesError} role="alert">{error}</p> : loading ? <p className={styles.salesEmpty} role="status">Carregando vendas…</p> : !sales.length ? <p className={styles.salesEmpty}>Nenhuma venda encontrada nos filtros selecionados.</p> : <div className={styles.salesList}>{sales.map((sale) => <article key={sale.id} className={styles.saleCard}>
+    {error ? <p className={styles.salesError} role="alert">{error}</p> : loading ? <p className={styles.salesEmpty} role="status">Carregando vendas…</p> : !sales.length ? <p className={styles.salesEmpty}>Nenhuma venda encontrada nos filtros selecionados.</p> : <div className={styles.salesList}>{orderedSales.map((sale) => <article key={sale.id} className={styles.saleCard}>
       <button type="button" className={styles.saleSummary} onClick={() => setOpen((current) => current === sale.id ? '' : sale.id)} aria-expanded={open === sale.id}>
         <span><strong>Pedido #{sale.orderId}</strong><small>{accounts.find((account) => account.id === sale.connectionId)?.seller_name || 'Mercado Livre'} · {date.format(new Date(sale.soldAt))}{sale.buyer ? ` · ${sale.buyer}` : ''}</small></span><b data-status={sale.status === 'cancelled' ? 'cancelled' : sale.labelStatus}>{saleStatusText(sale)}</b>
       </button>

@@ -47,10 +47,36 @@ const { default: Toggle } = await import(pathToFileURL(resolve(root, 'app/compon
 const { default: Vendas } = await import(pathToFileURL(resolve(root, 'app/marketplaces/Vendas.tsx')).href);
 const { default: Anunciados } = await import(pathToFileURL(resolve(root, 'app/marketplaces/Anunciados.tsx')).href);
 const { default: AvantaKanban } = await import(pathToFileURL(resolve(root, 'app/components/AvantaKanban.tsx')).href);
+const { default: DateOrderButton } = await import(pathToFileURL(resolve(root, 'app/marketplaces/DateOrderButton.tsx')).href);
 hooks.deregister();
 const render = (Component, props) => renderToStaticMarkup(React.createElement(Component, props));
 const noop = () => {};
 const salesProps = { companyId: 'empresa', accountId: '', onAccountChange: noop, accounts: [], sales: [], canManage: false, loading: false, error: '', awaitingUpdates: 0, onRefresh: noop, onSaleUpdated: noop, onExpandedChange: noop, dark: false, brand: '#003E73' };
+
+test('botão de data alterna nos dois sentidos com rótulo acessível e tooltip oficial', () => {
+  for (const context of ['Vendas', 'Anunciados']) for (const order of ['asc', 'desc']) {
+    let next;
+    const props = { context, order, onChange: (value) => { next = value; } };
+    const element = DateOrderButton(props);
+    const button = element.props.children;
+    button.props.onClick();
+    assert.equal(next, order === 'asc' ? 'desc' : 'asc');
+    assert.match(element.props.texto, new RegExp(`${context}:`));
+    assert.equal(button.props['aria-label'], element.props.texto);
+    const html = render(DateOrderButton, props);
+    assert.match(html, new RegExp(order === 'desc' ? 'Mais recentes' : 'Mais antigas'));
+    assert.match(render(DateOrderButton, { ...props, disabled: true }), /disabled=""/);
+  }
+});
+
+test('Vendas renderiza datas mais recentes primeiro sem modificar os dados recebidos', () => {
+  const make = (id, soldAt) => ({ id, orderId: id, connectionId: 'conta', soldAt, status: 'paid', labelStatus: 'unavailable', items: [] });
+  const sales = [make('1001', '2026-10-01T10:00:00Z'), make('1003', '2026-10-11T10:00:00Z'), make('1002', '2026-10-05T10:00:00Z')];
+  const html = render(Vendas, { ...salesProps, sales, expanded: true });
+  assert.ok(html.indexOf('Pedido #1003') < html.indexOf('Pedido #1002'));
+  assert.ok(html.indexOf('Pedido #1002') < html.indexOf('Pedido #1001'));
+  assert.deepEqual(sales.map((sale) => sale.id), ['1001', '1003', '1002']);
+});
 
 test('AvantaKanban entrega acionadores acessíveis no cabeçalho e respeita ordem controlada', () => {
   const items = [

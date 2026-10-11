@@ -25,8 +25,23 @@
 .salesPanel { scroll-margin-top: 100px; }
 .panelOrder { margin-top: 24px; }
 .dark .panelOrder { --avanta-kanban-control: #bfdbfe; }
-.panelHeadingActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.panelHeadingActions { --heading-control-height: 40px; --heading-control-hover-background: color-mix(in srgb, var(--brand) 7%, #fff); display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.dark .panelHeadingActions { --heading-control-hover-background: color-mix(in srgb, var(--brand) 22%, #182235); }
 .panelHeadingCollapsed { margin-bottom: 0; }
+.panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"]) { position: relative; min-height: var(--heading-control-height); height: var(--heading-control-height); transition: background-color .15s ease, border-color .15s ease; }
+/* Face compacta no desktop; área clicável continua com 48px de altura. */
+.panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"])::after { content: ''; position: absolute; inset: calc((var(--heading-control-height) - 48px) / 2) 0; }
+.panelHeadingActions .dateOrderButton { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 150px; flex: 0 0 150px; white-space: nowrap; font-weight: 600; }
+.dateOrderButton svg { flex: 0 0 16px; }
+.dateOrderButton:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 28%, transparent); outline-offset: 2px; }
+.dateOrderButton:disabled { opacity: .55; cursor: not-allowed; }
+@media (hover: hover) and (pointer: fine) {
+  /* Prevalece sobre as cores inline do BotaoExpandirCard só durante hover. */
+  .panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"]):hover:not(:disabled) { border-color: var(--brand) !important; background-color: var(--heading-control-hover-background) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"]) { transition: none; }
+}
 @media (max-width: 480px) { .listingsPanel > .panelHeading, .salesPanel > .panelHeading { flex-wrap: wrap; }.panelHeadingActions { margin-left: auto; } }
 @media (max-width: 1100px) {
   .page .salesHeader { grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
@@ -37,6 +52,7 @@
   .salesPanel { scroll-margin-top: 200px; }
 }
 @media (max-width: 760px) {
+  .panelHeadingActions { --heading-control-height: 48px; }
   .salesHeader > div:last-child { align-items: flex-end; }
   .salesFilters { justify-content: stretch; }
   .salesDateFilters { width: 100%; }

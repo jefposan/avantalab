@@ -1,6 +1,21 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.50.0.01 -->
+<!-- ava-version: 1.50.0.04 -->
+
+> Revisão 1.50.0.04: Classificar, Atualizar e Recolher/Expandir têm o mesmo
+> efeito ao passar o mouse. Sem impacto operacional nas ações ou na ordenação.
+
+> Revisão 1.50.0.03: classificação mostra o ícone de filtro, tem largura
+> constante e altura igual à de Atualizar/Recolher. Sem impacto operacional:
+> Mais recentes/Mais antigas continuam alternando a ordem por data.
+
+> Revisão 1.50.0.02: Vendas e Anunciados têm no topo **Mais recentes** /
+> **Mais antigas**. Clique para inverter a ordem pela data de venda ou criação
+> original do anúncio no Mercado Livre (não pela sincronização). Cada bloco tem
+> sua própria ordem, começando pelos mais recentes. Filtros/contadores e detalhes
+> das vendas são preservados. Nos anúncios, retorna à página 1; durante edição
+> ou preparação em outra conta, termine/cancele antes de ordenar. A ordem vale
+> para a tela atual, sem alterar dados no marketplace nem salvar preferências.
 
 > Revisão 1.50.0.01: em Novo anúncio, apenas o botão da pesquisa iniciada
 > mostra **Pesquisando…**. O outro mantém seu texto, mas aguarda a busca atual

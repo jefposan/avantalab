@@ -14,6 +14,8 @@ import { shippingLabels } from './shipping-labels';
 import ListingEditor from './ListingEditor';
 import MarketplaceSelect from './MarketplaceSelect';
 import MarketplaceAccountPicker from './MarketplaceAccountPicker';
+import DateOrderButton from './DateOrderButton';
+import type { DateOrder } from '@/app/modules/marketplaces/date-order';
 
 export type MarketplaceAccount = { id: string; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
 type Row = { snapshot: ListingSnapshot; status: string };
@@ -44,6 +46,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
   const [rowsAccountId, setRowsAccountId] = useState('');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
+  const [order, setOrder] = useState<DateOrder>('desc');
   const [pageSelection, setPageSelection] = useState({ accountId: '', page: 1 });
   const page = pageSelection.accountId === accountId ? pageSelection.page : 1;
   const setPage = (nextPage: number) => setPageSelection({ accountId, page: nextPage });
@@ -87,12 +90,12 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
     const controller = new AbortController(); listController.current = controller;
     setLoading(true);
     try {
-      const params = new URLSearchParams({ empresaId: companyId, connectionId: accountId, q: query, status, page: String(page) });
+      const params = new URLSearchParams({ empresaId: companyId, connectionId: accountId, q: query, status, order, page: String(page) });
       const data = await marketplaceClientRequest(`anunciados?${params}`, undefined, controller.signal);
       if (!controller.signal.aborted) { setRows(data.listings); setRowsAccountId(accountId); setTotal(data.total); }
     } catch (failure) { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : 'Falha ao carregar anúncios.'); }
     finally { if (!controller.signal.aborted) setLoading(false); }
-  }, [companyId, accountId, query, status, page]);
+  }, [companyId, accountId, query, status, order, page]);
   const loadListRef = useRef(loadList);
   useEffect(() => { loadListRef.current = loadList; }, [loadList]);
   useEffect(() => { if (refreshKey) void loadListRef.current(); }, [refreshKey]);
@@ -173,7 +176,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
   }
 
   return <section className={`${styles.panel} ${styles.listingsPanel}`} aria-labelledby="announced-title">
-    <div className={`${styles.panelHeading} ${!panelExpanded ? styles.panelHeadingCollapsed : ''}`}><div><h2 id="announced-title">Anunciados</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<Tooltip texto="Atualizar anúncios da conta selecionada"><button className={styles.refreshSales} type="button" disabled={!accountId || account?.status !== 'connected' || syncing || acting || !!expanded} onClick={() => void synchronize()}>{syncing ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Anunciados" controlsId="announced-content" expandido={panelExpanded} onClick={() => setPanelExpanded((current) => !current)} corPrimaria={brand} darkMode={dark} /></div></div>
+    <div className={`${styles.panelHeading} ${!panelExpanded ? styles.panelHeadingCollapsed : ''}`}><div><h2 id="announced-title">Anunciados</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<DateOrderButton context="Anunciados" order={order} disabled={loading || syncing || acting || !!expanded || !!copyingListing} onChange={(value) => { setOrder(value); setPage(1); }} /><Tooltip texto="Atualizar anúncios da conta selecionada"><button className={styles.refreshSales} type="button" disabled={!accountId || account?.status !== 'connected' || syncing || acting || !!expanded} onClick={() => void synchronize()}>{syncing ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Anunciados" controlsId="announced-content" expandido={panelExpanded} onClick={() => setPanelExpanded((current) => !current)} corPrimaria={brand} darkMode={dark} /></div></div>
     <div id="announced-content" hidden={!panelExpanded}>
     <div className={styles.listingFilters}>
       <label>Pesquisar<CampoBusca disabled={!!expanded} aria-label="Pesquisar por nome, código, EAN ou SKU" value={query} onChange={(value) => { if (expanded) return; setQuery(value); setPage(1); }} placeholder="Nome, código, EAN ou SKU" /></label>
