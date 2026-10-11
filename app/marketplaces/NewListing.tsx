@@ -18,10 +18,12 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
   const activeRef = useRef(true);
   const eanInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<PublicationForm>(initial);
+  const [searchDescription, setSearchDescription] = useState('');
   const [priceText, setPriceText] = useState('');
   const [stockText, setStockText] = useState('');
   const [prepared, setPrepared] = useState<CatalogPreparation | null>(null);
   const [preparing, setPreparing] = useState(false);
+  const [searchingBy, setSearchingBy] = useState<'ean' | 'description' | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [matched, setMatched] = useState(false);
   const [message, setMessage] = useState('');
@@ -38,6 +40,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
 
   function applyPreparation(result: CatalogPreparation, preferred?: PublicationForm, preserve = preserveCopiedFields) {
     setPrepared(result);
+    if (!result.query) setSearchDescription('');
     setForm((current) => {
       const base = preferred ? { ...current, ...preferred, attributes: preferred.attributes || {} } : current;
       const sameProduct = !!result.product && base.productId === result.product.id;
@@ -54,15 +57,16 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     setRequestKey(crypto.randomUUID());
   }
 
-  async function prepare(ean = form.ean, productId = '', categoryId = '', connectionId = accountId, preferred?: PublicationForm) {
+  async function prepare(ean = form.ean, productId = '', categoryId = '', connectionId = accountId, preferred?: PublicationForm, query = '') {
     if (!canManage || !connectionId || preparing || publishing) return;
+    setSearchingBy(productId || categoryId ? null : query ? 'description' : 'ean');
     setPreparing(true); setScannerArmed(false); setMessage(''); setErrors({}); setPublishedId(''); setMatched(false);
     try {
-      const response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId, ean, productId, categoryId }) as { result: CatalogPreparation };
+      const response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId, ean, query, productId, categoryId }) as { result: CatalogPreparation };
       if (!activeRef.current) return;
       applyPreparation(response.result, preferred);
-    } catch (failure) { if (activeRef.current) { if (!productId && !categoryId) setPrepared(null); setMessage(failure instanceof Error ? failure.message : 'Não foi possível consultar o EAN.'); } }
-    finally { setPreparing(false); }
+    } catch (failure) { if (activeRef.current) { if (!productId && !categoryId) setPrepared(null); setMessage(failure instanceof Error ? failure.message : 'Não foi possível pesquisar o produto.'); } }
+    finally { setPreparing(false); setSearchingBy(null); }
   }
 
   useEffect(() => {
@@ -127,9 +131,24 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
   }
 
   function changeEan(value: string) {
+    if (preparing || publishing) return;
+    setSearchDescription('');
     change('ean', value.replace(/\D/g, '').slice(0, 14));
     setPreserveCopiedFields(false);
     setPrepared(null); setMatched(false); setPublishedId(''); setMessage('');
+  }
+
+  function changeSearchDescription(value: string) {
+    if (preparing || publishing) return;
+    setSearchDescription(value);
+    change('ean', '');
+    setScannerArmed(false); setPreserveCopiedFields(false);
+    setPrepared(null); setMatched(false); setPublishedId(''); setMessage('');
+  }
+
+  function searchByDescription() {
+    if (searchDescription.trim().length < 3) return;
+    void prepare('', '', '', accountId, undefined, searchDescription);
   }
 
   async function prepareForAnotherAccount() {
@@ -162,28 +181,38 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       <div className={styles.eanField}>
         <label htmlFor="new-ean">EAN / GTIN</label>
         <div className={styles.eanControl}>
-          <CampoBusca inputRef={eanInputRef} id="new-ean" className={styles.eanInput} classNameControle={styles.eanSearchControl} inputMode="numeric" autoComplete="off" value={form.ean} aria-describedby={scannerArmed ? 'ean-scanner-status' : undefined} onChange={changeEan} onKeyDown={(event) => { if (event.key === 'Escape') setScannerArmed(false); if (event.key === 'Enter' && event.currentTarget.value) { event.preventDefault(); setScannerArmed(false); void prepare(event.currentTarget.value); } }} placeholder="Ex.: 7899882306941" rotuloLimpar="Limpar EAN / GTIN" />
+          <CampoBusca inputRef={eanInputRef} id="new-ean" className={styles.eanInput} classNameControle={styles.eanSearchControl} inputMode="numeric" autoComplete="off" disabled={preparing || publishing} value={form.ean} aria-describedby={scannerArmed ? 'ean-scanner-status' : undefined} onChange={changeEan} onKeyDown={(event) => { if (event.key === 'Escape') setScannerArmed(false); if (event.key === 'Enter' && event.currentTarget.value) { event.preventDefault(); setScannerArmed(false); void prepare(event.currentTarget.value); } }} placeholder="Ex.: 7899882306941" rotuloLimpar="Limpar EAN / GTIN" />
           <button type="button" className={styles.scannerButton} aria-label={scannerArmed ? 'Desativar leitor de código de barras' : 'Ativar leitor de código de barras'} aria-pressed={scannerArmed} title={scannerArmed ? 'Leitor ativo — escaneie o código' : 'Ativar leitor de código de barras'} disabled={!canManage || !selectedAccount || preparing || publishing} onClick={toggleScanner}><Icon name="barcode" size={20} /></button>
         </div>
         <span id="ean-scanner-status" className={styles.srOnly} role="status">{scannerArmed ? 'Leitor ativado. Escaneie o código de barras agora.' : ''}</span>
       </div>
-      <button type="button" className={`${styles.primary} ${styles.searchAction}`} disabled={!canManage || !selectedAccount || preparing || publishing || !form.ean} onClick={() => void prepare()}>{preparing ? 'Pesquisando…' : 'Pesquisar'}</button>
-      {!selectedAccount && <p className={styles.help}>{accountId ? 'Esta conta não está conectada. Reconecte-a ou selecione outra conta para publicar.' : 'Conecte ou selecione uma conta do Mercado Livre para consultar o EAN.'}</p>}
+      <button type="button" className={`${styles.primary} ${styles.searchAction}`} aria-busy={searchingBy === 'ean'} disabled={!canManage || !selectedAccount || preparing || publishing || !form.ean} onClick={() => void prepare()}>{searchingBy === 'ean' ? 'Pesquisando…' : 'Pesquisar'}</button>
+      <div className={styles.descriptionSearchRow}>
+        <div className={styles.eanField}>
+          <label htmlFor="new-search-description">Ou pesquise por nome, marca ou modelo</label>
+          <CampoBusca id="new-search-description" autoComplete="off" maxLength={120} disabled={preparing || publishing} value={searchDescription} onChange={changeSearchDescription} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); searchByDescription(); } }} placeholder="Ex.: Cooktop Mondial Fast Cook 220V" rotuloLimpar="Limpar pesquisa por descrição" aria-describedby="new-search-description-help" />
+        </div>
+        <button type="button" className={`${styles.primary} ${styles.searchAction}`} aria-busy={searchingBy === 'description'} disabled={!canManage || !selectedAccount || preparing || publishing || searchDescription.trim().length < 3} onClick={searchByDescription}>{searchingBy === 'description' ? 'Pesquisando…' : 'Buscar produto'}</button>
+        <p id="new-search-description-help" className={styles.help}>Digite pelo menos 3 caracteres e escolha a ficha correta. Nada é publicado nesta pesquisa.</p>
+      </div>
+      {!selectedAccount && <p className={styles.help}>{accountId ? 'Esta conta não está conectada. Reconecte-a ou selecione outra conta para publicar.' : 'Conecte ou selecione uma conta do Mercado Livre para pesquisar o produto.'}</p>}
       {accountId && !canManage && <p className={styles.help}>Seu perfil pode consultar anúncios, mas não preparar publicações.</p>}
     </div>
 
     {prepared?.status === 'not_found' && <p className={styles.catalogNotice} role="status">{prepared.notice || 'EAN não localizado. Confira o código; nenhum anúncio foi criado.'}</p>}
-    {prepared?.candidates && prepared.candidates.length > 1 && !product && <MarketplaceSelect id="new-productId" className={styles.catalogField} label="Produto encontrado" value="" options={prepared.candidates.map((candidate) => ({ value: candidate.id, label: candidate.name, detail: candidate.id }))} placeholder="Selecione a ficha correta" onChange={(value) => void prepare(prepared.ean, value)} />}
+    {prepared?.status === 'found' && !product && prepared.notice && <p className={styles.catalogNotice} role="status">{prepared.notice}</p>}
+    {prepared?.candidates && prepared.candidates.length > 0 && !product && <MarketplaceSelect id="new-productId" className={styles.catalogField} label={`Produto encontrado (${prepared.candidates.length})`} disabled={preparing || publishing} value="" options={prepared.candidates.map((candidate) => ({ value: candidate.id, label: candidate.name, detail: candidate.id }))} placeholder="Selecione a ficha correta" onChange={(value) => void prepare(prepared.ean, value, '', accountId, undefined, prepared.query || '')} />}
 
     {product && <div className={styles.catalogResult} aria-live="polite">
-      <div className={styles.catalogIdentity}>{product.picture && <img src={product.picture} alt={product.name} />}<div><strong>{product.name}</strong><small>{product.source === 'profile_catalog' ? 'Cadastro do perfil' : `Catálogo ML · ${product.id}`}</small><small>EAN {prepared.ean}</small></div></div>
+      <div className={styles.catalogIdentity}>{product.picture && <img src={product.picture} alt={product.name} />}<div><strong>{product.name}</strong><small>{product.source === 'profile_catalog' ? 'Cadastro do perfil' : `Catálogo ML · ${product.id}`}</small><small>{prepared.ean ? `EAN ${prepared.ean}` : 'EAN a confirmar'}</small></div></div>
       {product.pictures.length > 0 && <div className={styles.catalogPictures}>{product.pictures.slice(0, 5).map((url) => <img key={url} src={url} alt={`Imagem do catálogo de ${product.name}`} />)}</div>}
       <details><summary>Características localizadas ({product.attributes.length})</summary><dl className={styles.catalogAttributes}>{product.attributes.map((attribute) => <div key={attribute.id}><dt>{attribute.name}</dt><dd>{attribute.value}</dd></div>)}</dl></details>
       {prepared.notice && <p className={styles.catalogNotice}>{prepared.notice}</p>}
       {!!prepared.blockingIssues?.length && <ul className={styles.catalogErrors} role="alert">{prepared.blockingIssues.map((issue) => <li key={issue.code}>{issue.message}</li>)}</ul>}
       {!!prepared.warnings?.length && <ul className={styles.catalogWarnings}>{prepared.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
+      {!prepared.ean && !!prepared.gtins?.length && <MarketplaceSelect id="new-gtin" className={styles.catalogField} label="EAN da embalagem" value="" disabled={preparing || publishing} options={prepared.gtins.map((code) => ({ value: code, label: code }))} placeholder="Selecione o código do seu produto" onChange={(value) => void prepare(value, product.id, '', accountId, undefined, prepared.query || '')} />}
 
-      <div className={styles.catalogFields}>
+      {prepared.ean && <><div className={styles.catalogFields}>
         <MarketplaceSelect id="new-categoryId" className={styles.catalogField} label="Categoria" value={form.categoryId} options={(prepared.categories || []).map((category) => ({ value: category.id, label: category.name, detail: category.id }))} placeholder="Selecione" error={errors.categoryId} onChange={(value) => { change('categoryId', value); void prepare(prepared.ean, product.id, value); }} />
         <label className={styles.catalogField} htmlFor="new-price">Preço de venda<input id="new-price" inputMode="decimal" value={priceText} onChange={(event) => { const text = formatarMoedaDigitada(event.target.value); setPriceText(text); change('price', moedaDigitadaParaNumero(text) ?? 0); }} placeholder="R$ 0,00" />{errors.price && <small role="alert">{errors.price}</small>}</label>
         <label className={styles.catalogField} htmlFor="new-stock">Estoque disponível<input id="new-stock" inputMode="numeric" value={stockText} onChange={(event) => { const text = event.target.value.replace(/\D/g, '').slice(0, 5); setStockText(text); change('stock', text ? Number(text) : -1); }} placeholder="Quantidade" />{errors.stock && <small role="alert">{errors.stock}</small>}</label>
@@ -205,6 +234,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
         <p>Os dados são copiados apenas para revisão. A nova conta só recebe o anúncio após uma confirmação separada.</p>
       </div>}
       {!ready && <p className={styles.help}>A publicação só fica disponível após confirmar categoria e opções de venda permitidas pelo Mercado Livre.</p>}
+      </>}
     </div>}
     {message && <p className={publishedId ? styles.catalogSuccess : styles.connectionMessage} role="status">{message}</p>}
   </div>;

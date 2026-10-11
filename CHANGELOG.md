@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.50.0.01 - 2026-10-11
+
+- Novo anúncio mostra Pesquisando… somente no botão da busca acionada (EAN
+  ou descrição). O outro preserva seu rótulo, com bloqueio de pesquisas
+  simultâneas. Indicador acessível e limpeza do estado após sucesso ou erro.
+- Ava revisada, sem impacto operacional nos fluxos de publicação.
+
+## 1.50.0 - 2026-10-11
+
+- Novo anúncio em Marketplaces permite pesquisar por nome, marca ou modelo
+  em uma linha abaixo do EAN, reutilizando a busca de catálogo do Mercado Livre.
+  Leitores de código de barras e consulta por EAN preservados.
+- A pesquisa textual exige escolher a ficha, mesmo com resultado único.
+  EAN válido único é preenchido e reconfirmado; múltiplos códigos exigem
+  seleção, e ficha sem código não libera publicação. Nenhum anúncio é criado
+  ao pesquisar. Permissões e isolamento entre empresas mantidos.
+- CampoBusca e seletores existentes reutilizados com teclado, limpeza,
+  carregamento, vazio/erro, responsividade e tema escuro. Ava atualizada.
+
 ## 1.49.0.23 - 2026-10-11
 
 - Aviso de dados anteriores na edição de anúncio encurtado para linguagem

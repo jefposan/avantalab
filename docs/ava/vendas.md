@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.49.0.23 -->
+<!-- ava-version: 1.50.0.01 -->
+
+> Revisão 1.50.0.01: indicador de busca individual em Novo anúncio do
+> Marketplaces Web. Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.50.0: busca por descrição em Novo anúncio do Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.49.0.23: aviso de edição de anúncio em linguagem simples.
 > Sem impacto operacional no AvantaVendas.

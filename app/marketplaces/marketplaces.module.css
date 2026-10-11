@@ -132,6 +132,9 @@
 @media (max-width: 760px) { .newListing .form, .catalogFields, .catalogAttributes { grid-template-columns: 1fr; }.newListing .form .primary { width: 100%; }.newListing .searchAction { min-width: 0; }.catalogField :is(input, textarea) { min-height: 48px; } }
 @media (max-width: 760px) { .publishAnotherAccount { grid-template-columns: 1fr; }.publishAnotherAccount > button { min-height: 48px; } }
 .listingsPanel { margin-top: 24px; }
+.newListing .descriptionSearchRow { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; }
+.descriptionSearchRow :global(.avanta-campo-busca) { display: block; min-width: 0; }
+@media (max-width: 760px) { .newListing .descriptionSearchRow { grid-template-columns: 1fr; } }
 .listingsPanel .help { margin: 8px 0; }
 .listingFilters { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(180px, .7fr); gap: 16px; margin: 18px 0; }
 .listingFilters label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; min-width: 0; }

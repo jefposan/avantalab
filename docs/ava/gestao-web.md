@@ -1,6 +1,22 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0.23 -->
+<!-- ava-version: 1.50.0.01 -->
+
+> Revisão 1.50.0.01: em Novo anúncio, apenas o botão da pesquisa iniciada
+> mostra **Pesquisando…**. O outro mantém seu texto, mas aguarda a busca atual
+> terminar. Sem impacto operacional na seleção, revisão ou publicação.
+
+> Revisão 1.50.0: **Novo anúncio** oferece **Ou pesquise por nome, marca ou
+> modelo**, abaixo do EAN. Digite ao menos 3 caracteres e use **Buscar produto**
+> ou Enter. Escolha a ficha em **Produto encontrado**, mesmo se houver uma só.
+> A busca por descrição consulta o catálogo ativo do Mercado Livre, não a web
+> nem os produtos do perfil. Com EAN único válido, o código é preenchido e
+> reconfirmado. Com vários, escolha **EAN da embalagem**; sem código válido,
+> digite/leia o EAN acima para pesquisar novamente. Não inventar códigos nem
+> afirmar que uma ficha sem EAN está pronta. Pesquisa não publica: a confirmação
+> da ficha e a revisão dos dados de venda continuam obrigatórias. Digitar em
+> uma busca limpa a outra e descarta a preparação anterior. EAN mantém seu fluxo
+> existente, incluindo produtos cadastrados no perfil se ausentes no catálogo ML.
 
 > Revisão 1.49.0.23: aviso de dados anteriores na edição de anúncio simplificado,
 > orientando usar **Recarregar edição**. Sem impacto operacional; os campos

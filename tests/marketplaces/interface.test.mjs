@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { stripTypeScriptTypes } from 'node:module';
+import { runInNewContext } from 'node:vm';
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const client = read('app/marketplaces/MarketplacesClient.tsx');
@@ -162,7 +164,7 @@ test('every marketplace list opens in the same anchored system component', () =>
 
 test('new listing keeps account, a wide EAN field and a compact search action on one desktop row', () => {
   assert.match(newListing, /<div className=\{styles\.form\}>\s*<MarketplaceAccountPicker[\s\S]*?<div className=\{styles\.eanField\}>[\s\S]*?<button type="button" className=\{`\$\{styles\.primary\} \$\{styles\.searchAction\}`\}/);
-  assert.match(newListing, /\{preparing \? 'Pesquisando…' : 'Pesquisar'\}/);
+  assert.match(newListing, /\{searchingBy === 'ean' \? 'Pesquisando…' : 'Pesquisar'\}/);
   assert.match(css, /\.newListing \.form \{ grid-template-columns: minmax\(0, 1fr\) minmax\(260px, 1\.25fr\) auto; align-items: end;/);
   assert.match(css, /\.newListing \.searchAction \{ min-width: 94px; padding-inline: 14px; \}/);
   assert.match(css, /@media \(max-width: 760px\) \{ \.newListing \.form, \.catalogFields, \.catalogAttributes \{ grid-template-columns: 1fr;/);
@@ -184,6 +186,73 @@ test('EAN reader button arms keyboard scanners and submits their Enter suffix', 
   assert.match(css, /\.scannerButton \{[^}]*width: 44px; min-height: 44px;/);
   assert.match(css, /\.scannerButton\[aria-pressed="true"\] \{ color: #fff; background: var\(--brand\); \}/);
   assert.match(read('app/projetos/components/Icon.tsx'), /barcode:.*M4 5v14/);
+});
+
+test('cada botão de busca tem indicador e rótulo próprios, mantendo bloqueio concorrente', () => {
+  assert.match(newListing, /aria-busy=\{searchingBy === 'ean'\}/);
+  assert.match(newListing, /aria-busy=\{searchingBy === 'description'\}/);
+  assert.match(newListing, /searchingBy === 'description' \? 'Pesquisando…' : 'Buscar produto'/);
+  assert.doesNotMatch(newListing, /preparing \? 'Pesquisando…'/);
+  assert.match(newListing, /setSearchingBy\(productId \|\| categoryId \? null : query \? 'description' : 'ean'\)/);
+  assert.match(newListing, /finally \{ setPreparing\(false\); setSearchingBy\(null\); \}/);
+});
+
+for (const [mode, args, expected] of [
+  ['EAN', [], 'ean'],
+  ['descrição', ['', '', '', 'account', undefined, 'cooktop mondial'], 'description'],
+  ['seleção de ficha', ['', 'MLB123', '', 'account', undefined, 'cooktop mondial'], null],
+]) {
+  test(`indicador de ${mode} termina após sucesso ou falha sem ativar o outro botão`, async () => {
+    const start = newListing.indexOf('  async function prepare(');
+    const end = newListing.indexOf('\n  useEffect(', start);
+    const source = stripTypeScriptTypes(newListing.slice(start, end));
+    for (const fail of [false, true]) {
+      let finish;
+      const pending = new Promise((resolve, reject) => { finish = () => fail ? reject(new Error('Falha de teste')) : resolve({ result: {} }); });
+      const context = {
+        canManage: true, accountId: 'account', form: { ean: '7899882306941' },
+        preparing: false, publishing: false, activeRef: { current: true }, companyId: 'company',
+        searchingBy: null, applied: false,
+        marketplaceClientRequest: () => pending,
+        setPreparing(value) { context.preparing = value; },
+        setSearchingBy(value) { context.searchingBy = value; },
+        setScannerArmed() {}, setMessage() {}, setErrors() {}, setPublishedId() {}, setMatched() {}, setPrepared() {},
+        applyPreparation() { context.applied = true; },
+      };
+      const prepare = runInNewContext(`(${source})`, context);
+      const request = prepare(...args);
+      assert.equal(context.searchingBy, expected);
+      assert.equal(context.preparing, true);
+      await prepare(...args); // A segunda ação não inicia outra busca.
+      assert.equal(context.searchingBy, expected);
+      finish(); await request;
+      assert.equal(context.searchingBy, null);
+      assert.equal(context.preparing, false);
+      assert.equal(context.applied, !fail);
+    }
+  });
+}
+
+test('descrição em linha própria usa CampoBusca, Enter e seleção antes de preparar, sem publicar', () => {
+  assert.match(newListing, /className=\{styles\.descriptionSearchRow\}/);
+  assert.match(newListing, /<label htmlFor="new-search-description">Ou pesquise por nome, marca ou modelo/);
+  assert.match(newListing, /<CampoBusca id="new-search-description"[^>]*maxLength=\{120\}/);
+  assert.match(newListing, /rotuloLimpar="Limpar pesquisa por descrição"/);
+  assert.match(newListing, /event\.key === 'Enter'\) \{ event\.preventDefault\(\); searchByDescription\(\)/);
+  assert.match(newListing, /searchDescription\.trim\(\)\.length < 3/);
+  assert.match(newListing, /void prepare\('', '', '', accountId, undefined, searchDescription\)/);
+  assert.match(newListing, /prepared\.candidates\.length > 0 && !product/);
+  assert.match(newListing, /prepared\.query \|\| ''/);
+  assert.match(newListing, /!prepared\.ean && !!prepared\.gtins\?\.length/);
+  assert.match(newListing, /\{prepared\.ean && <><div className=\{styles\.catalogFields\}/);
+  assert.match(newListing, /function changeEan\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setSearchDescription\(''\)/);
+  assert.match(newListing, /function changeSearchDescription\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setSearchDescription\(value\);\s*change\('ean', ''\)/);
+  assert.match(css, /\.newListing \.descriptionSearchRow \{ grid-column: 1 \/ -1; display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);
+  assert.match(css, /@media \(max-width: 760px\) \{ \.newListing \.descriptionSearchRow \{ grid-template-columns: 1fr;/);
+  const route = read('app/api/modulos/marketplaces/preparar/route.ts');
+  assert.match(route, /authorizeMarketplace\(request, body\.empresaId, 'manage'\)/);
+  assert.match(route, /loadConnection\(db, empresaId, body\.connectionId\)/);
+  assert.match(route, /query: body\.query/);
 });
 
 test('category preparation preserves the located product and distinguishes blockers from warnings', () => {

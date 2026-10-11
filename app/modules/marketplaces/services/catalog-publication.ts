@@ -6,6 +6,8 @@ export type CatalogPreparationIssue = { code: string; message: string };
 export type CatalogPreparation = {
   status: 'found' | 'not_found';
   ean: string;
+  query?: string;
+  gtins?: string[];
   product?: CatalogCandidate & { attributes: CatalogAttribute[]; pictures: string[]; description: string };
   candidates?: CatalogCandidate[];
   categories?: Array<{ id: string; name: string }>;
@@ -31,6 +33,20 @@ export type PublicationForm = {
 export function validEan(input: unknown): string | null {
   const ean = normalizeEan(input);
   return isValidEan(ean) ? ean : null;
+}
+
+/** Códigos fornecidos pela ficha, nunca deduzidos do nome ou do texto livre. */
+export function catalogGtins(attributes: unknown): string[] {
+  const codes = (Array.isArray(attributes) ? attributes : []).slice(0, 80).flatMap((raw) => {
+    if (!raw || typeof raw !== 'object' || raw.id !== 'GTIN') return [];
+    const values = [raw.value_name, ...(Array.isArray(raw.values) ? raw.values.slice(0, 80).map((value: Record<string, unknown>) => value?.name) : [])];
+    return values.flatMap((value) => typeof value === 'string' ? value.split(/[,;\s]+/).flatMap((code) => {
+      if (!/^\d{8,14}$/.test(code)) return [];
+      const ean = validEan(code);
+      return ean ? [ean] : [];
+    }) : []);
+  });
+  return [...new Set(codes)].slice(0, 80);
 }
 
 export function safeText(value: unknown, max = 180): string {

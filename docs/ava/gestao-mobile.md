@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.49.0.23 -->
+<!-- ava-version: 1.50.0.01 -->
+
+> Revisão 1.50.0.01: indicador de busca individual em Novo anúncio do
+> Marketplaces Web. Sem impacto operacional na Gestão Mobile ou AvantaPreços.
+
+> Revisão 1.50.0: busca por descrição em Novo anúncio do Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
 
 > Revisão 1.49.0.23: texto do aviso de edição de anúncio simplificado.
 > Sem impacto operacional na Gestão Mobile ou AvantaPreços.

@@ -2,7 +2,8 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MarketplaceError } from './management-access';
 import { mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
-import { publicationErrors, safeHttpsImage, safeText, validEan, type CatalogPreparation, type PublicationForm } from './catalog-publication';
+import { catalogGtins, publicationErrors, safeHttpsImage, safeText, validEan, type CatalogPreparation, type PublicationForm } from './catalog-publication';
+import { normalizarTexto } from '@/app/lib/formatters';
 import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import { lookupProfileCatalogByEan } from './profile-catalog';
 import { listingIdIsValid, objectValue, uuidIsValid } from './listing-model';
@@ -17,7 +18,25 @@ function preparationIssue(error: unknown, code: string, denied: string, unavaila
   return { code, message: error instanceof MarketplaceError && error.code === 'provider_403' ? denied : unavailable };
 }
 
-export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection: SellerConnection, input: { ean: unknown; productId?: unknown; categoryId?: unknown }): Promise<CatalogPreparation> {
+export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection: SellerConnection, input: { ean?: unknown; query?: unknown; productId?: unknown; categoryId?: unknown }): Promise<CatalogPreparation> {
+  const query = normalizarTexto(safeText(input.query, 120));
+  if (query) {
+    const identification = await identifyMercadoLivreCatalog(db, connection, { query, productId: input.productId });
+    if (identification.status === 'not_found') return { status: 'not_found', ean: '', query, notice: identification.notice };
+    // Mesmo um resultado único deve ser escolhido antes de preencher o anúncio.
+    if (!safeText(input.productId, 30) || !identification.product) return { status: 'found', ean: '', query, candidates: identification.candidates, notice: 'Selecione o produto que você quer anunciar.' };
+    const { raw, ...product } = identification.product;
+    const gtins = catalogGtins(raw.attributes);
+    const suppliedEan = input.ean != null && String(input.ean).trim() ? validEan(input.ean) : null;
+    if (input.ean != null && String(input.ean).trim() && (!suppliedEan || !gtins.includes(suppliedEan))) throw new MarketplaceError(400, 'gtin_mismatch', 'Este código não está na ficha selecionada. Confira o produto e o EAN.');
+    const selectedEan = suppliedEan || (gtins.length === 1 ? gtins[0] : '');
+    if (!selectedEan) return { status: 'found', ean: '', query, product, gtins, candidates: identification.candidates,
+      notice: gtins.length ? 'Selecione o EAN que aparece na embalagem do seu produto.' : 'Esta ficha não informa um EAN válido. Digite ou leia o código da embalagem no campo acima.',
+      blockingIssues: [{ code: 'gtin_required', message: 'Confirme o EAN antes de preparar a publicação.' }] };
+    const preparation = await prepareMercadoLivreCatalog(db, connection, { ean: selectedEan, productId: product.id, categoryId: input.categoryId });
+    if (preparation.product?.id !== product.id) throw new MarketplaceError(409, 'catalog_changed', 'Não foi possível confirmar o código desta ficha. Confira o EAN na embalagem e pesquise novamente.');
+    return { ...preparation, query };
+  }
   const ean = validEan(input.ean);
   if (!ean) throw new MarketplaceError(400, 'invalid_ean', 'Informe um EAN/GTIN válido com dígito verificador.');
   const identification = await identifyMercadoLivreCatalog(db, connection, { ean, productId: input.productId });

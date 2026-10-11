@@ -1,11 +1,21 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { catalogAttributes, catalogCandidate, catalogPictures, publicationErrors, validEan } from '../../app/modules/marketplaces/services/catalog-publication.ts';
+import { catalogAttributes, catalogCandidate, catalogGtins, catalogPictures, publicationErrors, validEan } from '../../app/modules/marketplaces/services/catalog-publication.ts';
 
 const ean = '7899882306941';
 const product = { id: 'MLB40220538', name: 'Produto teste', domainId: 'MLB-GINS', picture: null, attributes: [], pictures: [], description: '' };
 const preparation = { status: 'found', ean, product, categories: [{ id: 'MLB32130', name: 'Gin' }], categoryId: 'MLB32130', listingTypes: [{ id: 'gold_special', name: 'Clássico' }], shippingModes: [{ id: 'me2', name: 'Mercado Envios' }], conditions: [{ id: 'new', name: 'Novo' }], requiredAttributes: [{ id: 'BRAND', name: 'Marca', values: [{ id: '123', name: 'Marca A' }] }] };
 const form = { ean, productId: product.id, categoryId: 'MLB32130', price: 160, stock: 30, listingType: 'gold_special', shippingMode: 'me2', condition: 'new', warrantyType: 'none', attributes: { BRAND: '123' } };
+
+test('GTINs da ficha aceitam apenas códigos válidos, sem inventar EAN de outros atributos', () => {
+  assert.deepEqual(catalogGtins([
+    { id: 'GTIN', value_name: `${ean}, 7891129598607`, values: [{ name: ean }, { name: '7899882306942' }, { name: `EAN ${ean}` }] },
+    { id: 'BRAND', value_name: '12345670' },
+    { id: 'GTIN', value_name: '7899-8823-0694-1' },
+    null,
+  ]), [ean, '7891129598607']);
+  assert.deepEqual(catalogGtins(null), []);
+});
 
 test('EAN exige dígito verificador; ficha e fotos só aceitam formato confirmado', () => {
   assert.equal(validEan(ean), ean);

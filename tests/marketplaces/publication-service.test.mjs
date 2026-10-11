@@ -95,6 +95,86 @@ test('preparação preserva o produto e usa envio seguro quando a consulta logí
   assert.equal(mock.sequence.some((request) => request.includes(`/categories/${categoryId}/shipping_preferences`)), false);
 }));
 
+function descriptionProvider(gtins = [ean]) {
+  const base = provider();
+  const urls = [];
+  return { sequence: base.sequence, urls, fetch: async (input, options) => {
+    const url = new URL(input); urls.push(url);
+    const response = await base.fetch(input, options);
+    if (url.pathname === `/products/${productId}`) {
+      const detail = await response.json();
+      detail.attributes.push({ id: 'GTIN', name: 'Código universal', values: gtins.map((name) => ({ name })) });
+      return Response.json(detail);
+    }
+    return response;
+  } };
+}
+
+test('descrição normalizada apresenta a ficha para escolha, inclusive resultado único, sem publicar', () => environment(async () => {
+  const mock = descriptionProvider(); globalThis.fetch = mock.fetch;
+  const result = await prepareMercadoLivreCatalog(database(), connection(), { query: '  GELADEÍRA   Brastemp  ' });
+  assert.equal(result.query, 'geladeira brastemp');
+  assert.equal(result.ean, ''); assert.equal(result.product, undefined);
+  assert.equal(result.candidates[0].id, productId);
+  assert.equal(mock.urls[0].searchParams.get('q'), 'geladeira brastemp');
+  assert.equal(mock.urls[0].searchParams.has('product_identifier'), false);
+  assert.equal(mock.sequence.some((request) => request.startsWith('POST')), false);
+}));
+
+test('escolher ficha por descrição preenche EAN único e reconfirma a mesma ficha pelo código', () => environment(async () => {
+  const mock = descriptionProvider(); globalThis.fetch = mock.fetch;
+  const result = await prepareMercadoLivreCatalog(database(), connection(), { query: 'geladeira brastemp', productId });
+  assert.equal(result.ean, ean); assert.equal(result.product.id, productId);
+  assert.equal(result.categoryId, categoryId);
+  assert.ok(mock.urls.some((url) => url.searchParams.get('product_identifier') === ean));
+  assert.equal(mock.sequence.some((request) => request.startsWith('POST')), false);
+}));
+
+test('ficha com vários EANs exige escolher o código da embalagem antes de preparar', () => environment(async () => {
+  const codes = [ean, '7899882306941'];
+  const mock = descriptionProvider(codes); globalThis.fetch = mock.fetch;
+  const input = { query: 'geladeira brastemp', productId };
+  const result = await prepareMercadoLivreCatalog(database(), connection(), input);
+  assert.equal(result.ean, ''); assert.deepEqual(result.gtins, codes);
+  assert.equal(result.blockingIssues[0].code, 'gtin_required');
+  assert.equal(result.categoryId, undefined);
+  assert.equal(result.product.raw, undefined);
+  await assert.rejects(() => prepareMercadoLivreCatalog(database(), connection(), { ...input, ean: '12345670' }), { code: 'gtin_mismatch' });
+  const chosen = await prepareMercadoLivreCatalog(database(), connection(), { ...input, ean: codes[1] });
+  assert.equal(chosen.ean, codes[1]);
+  assert.equal(mock.sequence.some((request) => request.startsWith('POST')), false);
+}));
+
+test('ficha sem EAN válido não prepara publicação nem deduz código do texto', () => environment(async () => {
+  const mock = descriptionProvider(['7891129598608', 'sem código']); globalThis.fetch = mock.fetch;
+  const result = await prepareMercadoLivreCatalog(database(), connection(), { query: 'geladeira brastemp', productId });
+  assert.equal(result.ean, ''); assert.deepEqual(result.gtins, []);
+  assert.equal(result.blockingIssues[0].code, 'gtin_required');
+  assert.match(result.notice, /Digite ou leia o código da embalagem/);
+  assert.equal(mock.sequence.some((request) => request.startsWith('POST')), false);
+}));
+
+test('descrição sem resultados ou curta informa vazio/erro sem alterar cadastros', () => environment(async () => {
+  const mock = provider(); const db = database();
+  globalThis.fetch = async (input, options) => new URL(input).pathname === '/products/search' ? Response.json({ results: [] }) : mock.fetch(input, options);
+  const result = await prepareMercadoLivreCatalog(db, connection(), { query: 'produto inexistente' });
+  assert.equal(result.status, 'not_found'); assert.equal(result.ean, '');
+  await assert.rejects(() => prepareMercadoLivreCatalog(db, connection(), { query: 'ab' }), { code: 'invalid_query' });
+  assert.deepEqual(db.tables.marketplace_publications, []);
+  assert.deepEqual(db.tables.marketplace_listings, []);
+}));
+
+test('EAN da descrição que não reconfirma a ficha selecionada bloqueia a preparação', () => environment(async () => {
+  const mock = descriptionProvider();
+  globalThis.fetch = async (input, options) => {
+    const url = new URL(input);
+    if (url.pathname === '/products/search' && url.searchParams.has('product_identifier')) return Response.json({ results: [{ id: 'MLB999999', name: 'Outra ficha', domain_id: 'MLB-REFRIGERATORS', status: 'active' }] });
+    return mock.fetch(input, options);
+  };
+  await assert.rejects(() => prepareMercadoLivreCatalog(database(), connection(), { query: 'geladeira brastemp', productId }), { code: 'catalog_changed' });
+  assert.equal(mock.sequence.some((request) => request.startsWith('POST')), false);
+}));
+
 test('fluxo completo valida antes de criar e registra o anúncio confirmado', () => environment(async () => {
   const mock = provider(); globalThis.fetch = mock.fetch; const db = database();
   const result = await publishMercadoLivreCatalog(db, connection(), 'actor', crypto.randomUUID(), { ean, productId, categoryId, price: 160, stock: 1, listingType: 'gold_special', shippingMode: 'me2', condition: 'new', warrantyType: 'none', description: 'Produto novo.', attributes: {} });
