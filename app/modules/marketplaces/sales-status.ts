@@ -57,12 +57,22 @@ export function shipmentStatusText(status: string | null, substatus: string | nu
 }
 
 export function saleStatusText(sale: SaleStatusInput) {
-  if (sale.status === 'cancelled') return 'Venda cancelada';
+  if (sale.status === 'cancelled') return sale.shipmentStatus === 'delivered' ? 'Cancelada · envio original entregue' : 'Venda cancelada';
   if (sale.shipmentStatus === 'delivered') return 'Entregue';
   if (sale.labelStatus === 'fulfilled') return 'Envio Full';
   return shipmentStatusText(sale.shipmentStatus, sale.shipmentSubstatus)
     || orderStates[sale.status]
     || 'Venda em atualização';
+}
+
+export function orderStatusText(status: string) {
+  return orderStates[status] || (status === 'refunded' ? 'Pagamento estornado' : 'Pedido em atualização');
+}
+
+export function saleConflictText(sale: SaleStatusInput) {
+  return sale.status === 'cancelled' && sale.shipmentStatus === 'delivered'
+    ? 'O pedido está cancelado, mas o envio original consta como entregue. Isso não confirma devolução do produto nem reembolso: confira o pós-venda abaixo.'
+    : null;
 }
 
 export function labelActionText(sale: SaleStatusInput) {

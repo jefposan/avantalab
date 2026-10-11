@@ -198,3 +198,16 @@
 @media (max-width: 760px) { .listingFilters { grid-template-columns: 1fr; }.pagination { justify-content: center; gap: 10px; }.listingsPanel button.editListing { width: 48px; min-height: 48px; } }
 @media (max-width: 760px) { .listingsPanel .actionBar :is(button, a) { min-height: 48px; } }
 @media (max-width: 760px) { .salesNotification { width: 44px; height: 44px; }.refreshSales { min-height: 48px; }.saleSummary { min-height: 62px; }.saleDetails dl > div { grid-template-columns: 1fr; gap: 3px; }.saleDetails .primary { width: 100%; min-height: 48px; } }
+.postSale { display: grid; gap: 12px; min-width: 0; }
+.postSaleHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.postSaleHeading h3, .claimDetails h4 { margin: 0; color: inherit; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.postSale .refreshSales { min-height: 44px; }
+.postSale dl > div { grid-template-columns: 160px minmax(0, 1fr); }
+.claimDetails { display: grid; gap: 10px; min-width: 0; padding-top: 12px; }
+.postSaleLink { display: inline-flex; align-items: center; min-height: 44px; justify-self: start; color: var(--brand); font-size: 12px; font-weight: 600; text-decoration: underline; }
+.postSale :is(button, a):focus-visible, .saleSummary:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 45%, transparent); outline-offset: 2px; }
+.saleSummary b { max-width: 48%; overflow-wrap: anywhere; }
+.saleSummary b[data-status="cancelled"] { color: #9a3412; background: #fff7ed; }
+.dark .saleSummary b[data-status="cancelled"] { color: #fdba74; background: #3a2d19; }
+.dark .postSaleLink { color: #bfdbfe; }
+@media (max-width: 760px) { .postSale dl > div { grid-template-columns: 1fr; }.postSale .refreshSales, .postSaleLink { min-height: 48px; }.saleSummary b { max-width: 42%; } }

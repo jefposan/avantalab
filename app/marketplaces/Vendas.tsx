@@ -1,19 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText } from '@/app/modules/marketplaces/sales-status';
+import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, orderStatusText, saleConflictText } from '@/app/modules/marketplaces/sales-status';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import type { MarketplaceAccount } from './Anunciados';
 import MarketplaceSelect from './MarketplaceSelect';
+import SalePostSale from './SalePostSale';
 import styles from './marketplaces.module.css';
 
 type Sale = MarketplaceSale;
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
-export default function Vendas({ companyId, accountId, onAccountChange, accounts, sales, canManage, loading, error, awaitingUpdates, onRefresh }: {
+export default function Vendas({ companyId, accountId, onAccountChange, accounts, sales, canManage, loading, error, awaitingUpdates, onRefresh, onSaleUpdated }: {
   companyId: string; accountId: string; onAccountChange: (id: string) => void; accounts: MarketplaceAccount[];
-  sales: Sale[]; canManage: boolean; loading: boolean; error: string; awaitingUpdates: number; onRefresh: () => void;
+  sales: Sale[]; canManage: boolean; loading: boolean; error: string; awaitingUpdates: number; onRefresh: () => void; onSaleUpdated: (sale: Sale) => void;
 }) {
   const [printError, setPrintError] = useState('');
   const [open, setOpen] = useState('');
@@ -44,10 +45,12 @@ export default function Vendas({ companyId, accountId, onAccountChange, accounts
     {printError && <p className={styles.salesError} role="alert">{printError}</p>}
     {error ? <p className={styles.salesError} role="alert">{error}</p> : loading ? <p className={styles.salesEmpty} role="status">Carregando vendas…</p> : !sales.length ? <p className={styles.salesEmpty}>Nenhuma venda encontrada nos filtros selecionados.</p> : <div className={styles.salesList}>{sales.map((sale) => <article key={sale.id} className={styles.saleCard}>
       <button type="button" className={styles.saleSummary} onClick={() => setOpen((current) => current === sale.id ? '' : sale.id)} aria-expanded={open === sale.id}>
-        <span><strong>Pedido #{sale.orderId}</strong><small>{accounts.find((account) => account.id === sale.connectionId)?.seller_name || 'Mercado Livre'} · {date.format(new Date(sale.soldAt))}{sale.buyer ? ` · ${sale.buyer}` : ''}</small></span><b data-status={sale.labelStatus}>{saleStatusText(sale)}</b>
+        <span><strong>Pedido #{sale.orderId}</strong><small>{accounts.find((account) => account.id === sale.connectionId)?.seller_name || 'Mercado Livre'} · {date.format(new Date(sale.soldAt))}{sale.buyer ? ` · ${sale.buyer}` : ''}</small></span><b data-status={sale.status === 'cancelled' ? 'cancelled' : sale.labelStatus}>{saleStatusText(sale)}</b>
       </button>
-      {open === sale.id && <div className={styles.saleDetails}><dl><div><dt>Itens</dt><dd>{sale.items.map((item) => <span key={`${item.title}-${item.quantity}`}>{item.quantity}× {item.title}{item.unitPrice != null ? ` · ${money.format(item.unitPrice)}` : ''}</span>)}</dd></div><div><dt>Total</dt><dd>{sale.total == null ? 'Indisponível' : money.format(sale.total)}</dd></div><div><dt>Situação do envio</dt><dd>{shipmentStatusText(sale.shipmentStatus, sale.shipmentSubstatus) || 'Em atualização'}</dd></div></dl>
+      {open === sale.id && <div className={styles.saleDetails}><dl><div><dt>Itens</dt><dd>{sale.items.map((item) => <span key={`${item.title}-${item.quantity}`}>{item.quantity}× {item.title}{item.unitPrice != null ? ` · ${money.format(item.unitPrice)}` : ''}</span>)}</dd></div><div><dt>Total</dt><dd>{sale.total == null ? 'Indisponível' : money.format(sale.total)}</dd></div><div><dt>Situação do pedido</dt><dd>{orderStatusText(sale.status)}</dd></div><div><dt>Envio original ao comprador</dt><dd>{shipmentStatusText(sale.shipmentStatus, sale.shipmentSubstatus) || 'Em atualização'}</dd></div></dl>
+        {saleConflictText(sale) && <p className={styles.salesError}>{saleConflictText(sale)}</p>}
         {sale.labelStatus === 'ready' && sale.shipmentStatus === 'ready_to_ship' && sale.status !== 'cancelled' ? <button type="button" className={styles.primary} disabled={!canManage || printing === sale.id} onClick={() => void printLabel(sale)}>{printing === sale.id ? 'Preparando etiqueta…' : labelActionText(sale)}</button> : labelUnavailableText(sale) ? <p className={styles.labelUnavailable}>{labelUnavailableText(sale)}</p> : null}
+        <SalePostSale key={`${companyId}:${sale.connectionId}:${sale.id}`} companyId={companyId} saleId={sale.id} connectionId={sale.connectionId} onSaleUpdated={onSaleUpdated} />
       </div>}
     </article>)}</div>}
   </section>;

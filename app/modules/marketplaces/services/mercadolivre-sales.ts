@@ -2,7 +2,8 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MarketplaceError } from './management-access';
 import { loadConnection, mlBinaryRequest, mlRequest, type SellerConnection } from './mercadolivre-management';
-import { objectValue } from './listing-model';
+import { objectValue, uuidIsValid } from './listing-model';
+import { readPostSale } from '../post-sale';
 
 export type SaleNotification = { id: string; seller: string; topic: 'orders_v2' | 'orders' | 'shipments'; resource: string; orderId?: string; shipmentId?: string };
 export type MarketplaceSale = { id: string; connectionId: string; orderId: string; soldAt: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
@@ -103,6 +104,43 @@ export async function listSales(db: SupabaseClient, companyId: string, connectio
 
 export async function markSalesSeen(db: SupabaseClient, companyId: string, connectionId: string) {
   await db.from('marketplace_sales').update({ seen_at: new Date().toISOString() }).eq('empresa_id', companyId).eq('connection_id', connectionId).is('seen_at', null);
+}
+
+/** Atualização pontual do pedido ao abrir os detalhes; nenhuma ação de pós-venda é enviada. */
+export async function postSaleForSale(db: SupabaseClient, companyId: string, connectionId: unknown, saleId: unknown) {
+  if (!uuidIsValid(saleId)) throw new MarketplaceError(400, 'invalid_sale', 'Pedido inválido.');
+  const connection = await loadConnection(db, companyId, connectionId);
+  const { data: saved, error } = await db.from('marketplace_sales').select('*').eq('empresa_id', companyId).eq('connection_id', connection.id).eq('id', saleId).maybeSingle();
+  if (error) throw new MarketplaceError(503, 'database', 'Não foi possível consultar o pedido.');
+  if (!saved || !orderId(saved.provider_order_id)) throw new MarketplaceError(404, 'sale_not_found', 'Venda não encontrada nesta conta.');
+  const order = objectValue(await mlRequest(db, connection, `/orders/${saved.provider_order_id}`));
+  if (orderId(order.id) !== saved.provider_order_id || orderId(objectValue(order.seller).id) !== connection.seller_reference) throw new MarketplaceError(503, 'invalid_order', 'O Mercado Livre não confirmou o pedido desta conta.');
+  const shippingId = shipmentId(objectValue(order.shipping).id);
+  const [postSale, shipmentResult] = await Promise.all([
+    readPostSale(order, connection.seller_reference, (path) => mlRequest(db, connection, path)),
+    (async () => {
+      if (!shippingId) return { shipment: null, complete: true };
+      try {
+        const shipment = objectValue(await mlRequest(db, connection, `/shipments/${shippingId}`));
+        if (shipmentId(shipment.id) !== shippingId) throw new Error('invalid_shipment');
+        return { shipment, complete: true };
+      } catch { return { shipment: null, complete: false }; }
+    })(),
+  ]);
+  const snapshot = saleSnapshot(order, shipmentResult.shipment);
+  if (!shipmentResult.complete) {
+    // Não transformar indisponibilidade de consulta em alteração logística.
+    const sameShipment = shippingId === saved.shipment_id;
+    snapshot.shipmentStatus = sameShipment ? saved.shipment_status : null;
+    snapshot.shipmentSubstatus = sameShipment ? saved.shipment_substatus : null;
+    snapshot.labelStatus = sameShipment && saved.label_status === 'fulfilled' ? 'fulfilled' : 'unavailable';
+    postSale.warnings.push(sameShipment ? 'O envio original não pôde ser atualizado. Sua situação é a do último registro salvo; a etiqueta não foi revalidada.' : 'O envio do pedido mudou e sua situação atual não pôde ser confirmada. A situação do envio anterior não será atribuída ao novo.');
+  }
+  const updated = { status: snapshot.status, shipment_id: snapshot.shipmentId, shipment_status: snapshot.shipmentStatus, shipment_substatus: snapshot.shipmentSubstatus, label_status: snapshot.labelStatus, snapshot, updated_at: new Date().toISOString() };
+  const { data: persisted, error: saveError } = await db.from('marketplace_sales').update(updated).eq('empresa_id', companyId).eq('connection_id', connection.id).eq('id', saleId).eq('updated_at', saved.updated_at).select('id').maybeSingle();
+  if (saveError) throw new MarketplaceError(503, 'database', 'Os dados chegaram, mas não foram salvos. Atualize os detalhes novamente.');
+  if (!persisted) throw new MarketplaceError(409, 'sale_changed', 'Outra atualização deste pedido chegou durante a consulta. Atualize o pós-venda novamente para ver a situação mais recente.');
+  return { sale: publicSale({ ...saved, ...updated }), postSale };
 }
 
 export async function labelForSale(db: SupabaseClient, companyId: string, connectionId: string, saleId: string) {

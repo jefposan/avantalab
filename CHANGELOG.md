@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.49.0.06 - 2026-10-11
+
+- **Pós-venda consultado ao abrir o pedido**: relê pedido/envio e consulta
+  reclamações abertas ou encerradas e devoluções pelos recursos oficiais atuais
+  do Mercado Livre. Conta, empresa e titular do pedido/caso são revalidados;
+  credenciais e endereços não chegam à tela. Sem migração de banco.
+- **Estados independentes e em português**: pedido cancelado com envio original
+  entregue recebe explicação explícita, sem presumir devolução ou reembolso.
+  Detalhes mostram categoria/solicitante/data do cancelamento, motivo traduzido
+  quando conhecido, resolução, retorno do produto, destino, rastreamento,
+  dinheiro do caso e valores de reembolso informados nos pagamentos.
+- **Consulta honesta e recuperável**: horário da consulta, Atualizar pós-venda,
+  indisponibilidade/permissão negada, códigos ainda não traduzidos e histórico
+  limitado são explicados. Regra de reembolso não equivale a pagamento; retorno
+  ao depósito não equivale a recebimento pelo vendedor. Até 5 casos recentes.
+- **Pendências sem execução automática**: ações/prazos do vendedor orientam a
+  resolução no Mercado Livre, com link às vendas e lembrete da conta correta.
+  Sem responder, aceitar devolução ou reembolsar pelo AvantaLab. Consulta sob
+  demanda; não adiciona notificações push nem inscrição no feed de reclamações.
+  Os filtros continuam agrupando o pedido, não as etapas do retorno.
+
 ## 1.49.0.05 - 2026-10-11
 
 - **Filtros de vendas no cabeçalho de Marketplaces**: competência reutiliza o

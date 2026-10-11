@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.49.0.05 -->
+<!-- ava-version: 1.49.0.06 -->
+
+> Revisão 1.49.0.06: consulta de pós-venda do Mercado Livre nos detalhes de
+> Marketplaces da Gestão Web. Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.49.0.05: filtros de vendas e contadores de Marketplaces pertencem
 > à Gestão Web; sem impacto operacional no AvantaVendas.

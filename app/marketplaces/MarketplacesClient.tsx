@@ -57,6 +57,9 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [salesAccount, setSalesAccount] = useState('');
   const [salesGroup, setSalesGroup] = useState<SaleGroup | ''>('');
   const [salesPeriod, setSalesPeriod] = useState(() => monthPeriod(new Date().getFullYear(), new Date().getMonth()));
+  const updateSale = useCallback((updated: MarketplaceSale) => {
+    setSales((current) => current.map((sale) => sale.id === updated.id && sale.connectionId === updated.connectionId ? updated : sale));
+  }, []);
   const oauthWindow = useRef<Window | null>(null);
   const returnHref = `/gestao?empresaId=${encodeURIComponent(companyId)}`;
   const selectedProvider = useMemo(() => providers.find((provider) => provider.id === marketplace)!, [marketplace]);
@@ -307,7 +310,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       setSelectedAccount(targetConnectionId);
       setCopyRequest({ id: crypto.randomUUID(), sourceConnectionId, listingId, targetConnectionId });
     }} refreshKey={refreshKey} />}
-    {marketplace === 'mercado_livre' && <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={setSalesAccount} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} />}
+    {marketplace === 'mercado_livre' && <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={setSalesAccount} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} />}
     {priceUsersOpen && <PriceUsersPanel companyId={companyId} onClose={() => setPriceUsersOpen(false)} />}
     <ModalConfirmacao aberto={!!disconnectAccount} titulo="Desconectar conta?" mensagem={disconnectAccount ? `${disconnectAccount.seller_name || disconnectAccount.seller_reference}. O AvantaLab apagará os tokens desta conexão. Os anúncios no Mercado Livre não serão alterados.` : ''} textoConfirmar="Desconectar" carregando={disconnecting} darkMode={empresa.temaEscuro} corPrimaria={empresa.corPrimaria} variante="destrutiva" aoCancelar={() => { if (!disconnecting) setDisconnectAccount(null); }} aoConfirmar={() => void confirmDisconnectAccount()} />
     </div>

@@ -1,6 +1,24 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0.05 -->
+<!-- ava-version: 1.49.0.06 -->
+
+> Revisão 1.49.0.06: ao abrir uma venda em **Anúncios em marketplaces**, o
+> **Pós-venda · Mercado Livre** consulta pedido, envio original, reclamações
+> abertas/encerradas e devoluções. Pedido cancelado com envio entregue não
+> comprova devolução nem reembolso. Confira categoria, solicitante e data do
+> cancelamento, motivo traduzido quando disponível, resolução, retorno,
+> destino/rastreamento e situação do dinheiro. Retorno entregue ao depósito do
+> Mercado Livre não significa produto recebido pelo vendedor. Reembolso dos
+> pagamentos e dinheiro do caso são fontes distintas; a regra de quando haverá
+> reembolso não comprova que ele já aconteceu. **Atualizar pós-venda** repete a
+> consulta, que mostra data/hora, falhas de permissão e dados incompletos. Não
+> interpretar indisponibilidade como ausência de devolução ou desconexão.
+> Mostra até 5 casos recentes; histórico maior é sinalizado. Motivos/códigos
+> desconhecidos recebem aviso em português, sem inventar tradução. Ações e
+> prazos apontam para o Mercado Livre; use **Abrir vendas no Mercado Livre**,
+> na mesma conta do pedido. Não há resposta, aceite ou reembolso automático
+> pelo AvantaLab nem novas notificações push/feed de reclamações nesta etapa.
+> Os filtros do cabeçalho continuam classificando o pedido, não seu retorno.
 
 > Revisão 1.49.0.05: no cabeçalho de **Anúncios em marketplaces**, use as setas
 > para escolher o mês, **Todos** para todas as datas, ou **Período** para aplicar
