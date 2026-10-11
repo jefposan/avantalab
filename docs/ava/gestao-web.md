@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0.04 -->
+<!-- ava-version: 1.49.0.05 -->
+
+> Revisão 1.49.0.05: no cabeçalho de **Anúncios em marketplaces**, use as setas
+> para escolher o mês, **Todos** para todas as datas, ou **Período** para aplicar
+> datas inicial e final. O seletor de situação informa a quantidade em cada
+> grupo; os grupos somam o total de pedidos únicos no período. O sino e os
+> contadores das contas respeitam os filtros e não contam eventos repetidos.
+> O sino abre as vendas de todas as contas; **Conta das vendas** permite uma
+> conta específica. Vendas já entregues/enviadas/canceladas não aguardam etiqueta.
+> **Atualizar** processa os avisos recebidos. Dados antigos sem data original
+> usam a data de entrada no AvantaLab até serem sincronizados novamente.
 
 > Revisão 1.49.0.04: em **Anúncios em marketplaces**, a etiqueta de uma venda
 > Mercado Livre continua disponível como **Reimprimir etiqueta** depois de já

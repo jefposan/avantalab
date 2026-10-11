@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
 import { loadConnection } from '@/app/modules/marketplaces/services/mercadolivre-management';
-import { listSales, markSalesSeen, pendingSalesByConnection, processSaleNotifications } from '@/app/modules/marketplaces/services/mercadolivre-sales';
+import { listSales, markSalesSeen, processSaleNotifications } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -10,11 +10,27 @@ export async function GET(request: Request) {
   try {
     const params = new URL(request.url).searchParams;
     const { db, empresaId } = await authorizeMarketplace(request, params.get('empresaId'));
-    const connection = await loadConnection(db, empresaId, params.get('connectionId'));
-    await processSaleNotifications(db, connection);
-    const [sales, pendingByConnection] = await Promise.all([listSales(db, empresaId, connection.id), pendingSalesByConnection(db, empresaId)]);
-    if (params.get('markSeen') === 'true') await markSalesSeen(db, empresaId, connection.id);
-    return NextResponse.json({ sales, pendingByConnection }, { headers: { 'Cache-Control': 'no-store' } });
+    const allAccounts = params.get('scope') === 'all';
+    const ids: string[] = [];
+    if (allAccounts) {
+      const { data, error } = await db.from('marketplace_connections').select('id').eq('empresa_id', empresaId).eq('provider', 'mercado_livre').eq('status', 'connected');
+      if (error) throw new MarketplaceError(503, 'database', 'Não foi possível consultar as contas de vendas.');
+      ids.push(...(data || []).map((row) => row.id));
+    } else {
+      ids.push((await loadConnection(db, empresaId, params.get('connectionId'))).id);
+    }
+    if (!ids.length) return NextResponse.json({ sales: [], awaitingUpdates: 0 }, { headers: { 'Cache-Control': 'no-store' } });
+    // Só relê contas que possuem eventos prontos. O total conta pedidos, nunca a fila.
+    const { data: queued, error: queueError } = await db.from('marketplace_sale_notifications').select('connection_id').eq('empresa_id', empresaId).is('processed_at', null).lte('next_attempt_at', new Date().toISOString());
+    if (queueError) throw new MarketplaceError(503, 'database', 'Não foi possível atualizar os avisos de vendas.');
+    const pending = new Set((queued || []).map((row) => row.connection_id));
+    await Promise.all(ids.filter((id) => pending.has(id)).map(async (id) => {
+      await processSaleNotifications(db, await loadConnection(db, empresaId, id));
+    }));
+    const sales = await listSales(db, empresaId, ids);
+    const { count: awaitingUpdates, error: countError } = await db.from('marketplace_sale_notifications').select('id', { count: 'exact', head: true }).eq('empresa_id', empresaId).in('connection_id', ids).is('processed_at', null);
+    if (countError) throw new MarketplaceError(503, 'database', 'Não foi possível conferir as atualizações pendentes.');
+    return NextResponse.json({ sales, awaitingUpdates: awaitingUpdates || 0 }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return managementFailure(error); }
 }
 

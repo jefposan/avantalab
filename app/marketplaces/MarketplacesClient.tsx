@@ -13,6 +13,9 @@ import Anunciados, { marketplaceClientRequest, type MarketplaceAccount } from '.
 import NewListing, { type ListingCopyRequest } from './NewListing';
 import PriceUsersPanel from './PriceUsersPanel';
 import Vendas from './Vendas';
+import SalesFilters, { monthPeriod } from './SalesFilters';
+import { saleGroup, salesInPeriod, salesSummary, type SaleGroup } from '@/app/modules/marketplaces/sales-status';
+import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 
 const providers: Array<{ id: MarketplaceId; name: string; available: boolean }> = [
   { id: 'mercado_livre', name: 'Mercado Livre', available: true },
@@ -46,7 +49,14 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [priceLinkStatus, setPriceLinkStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [disconnectAccount, setDisconnectAccount] = useState<MarketplaceAccount | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
-  const [pendingSales, setPendingSales] = useState<Record<string, number>>({});
+  const [sales, setSales] = useState<MarketplaceSale[]>([]);
+  const [salesLoading, setSalesLoading] = useState(true);
+  const [salesError, setSalesError] = useState('');
+  const [salesRefresh, setSalesRefresh] = useState(0);
+  const [awaitingUpdates, setAwaitingUpdates] = useState(0);
+  const [salesAccount, setSalesAccount] = useState('');
+  const [salesGroup, setSalesGroup] = useState<SaleGroup | ''>('');
+  const [salesPeriod, setSalesPeriod] = useState(() => monthPeriod(new Date().getFullYear(), new Date().getMonth()));
   const oauthWindow = useRef<Window | null>(null);
   const returnHref = `/gestao?empresaId=${encodeURIComponent(companyId)}`;
   const selectedProvider = useMemo(() => providers.find((provider) => provider.id === marketplace)!, [marketplace]);
@@ -66,7 +76,29 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }, [companyId, loadAccounts]);
 
   const connectedAccounts = accounts.filter((account) => account.status === 'connected');
-  const pendingSalesTotal = Object.values(pendingSales).reduce((total, count) => total + count, 0);
+  const accountSignature = connectedAccounts.map((account) => account.id).sort().join(',');
+  const periodSales = useMemo(() => salesInPeriod(sales, salesPeriod), [sales, salesPeriod]);
+  const summary = useMemo(() => salesSummary(periodSales, salesGroup), [periodSales, salesGroup]);
+  const pendingSales = summary.byConnection;
+  const pendingSalesTotal = summary.filteredTotal;
+  const visibleSales = useMemo(() => periodSales.filter((sale) => (!salesGroup || saleGroup(sale) === salesGroup) && (!salesAccount || sale.connectionId === salesAccount)), [periodSales, salesGroup, salesAccount]);
+
+  useEffect(() => {
+    if (accessState !== 'ready') return;
+    const controller = new AbortController();
+    setSalesLoading(true); setSalesError('');
+    void marketplaceClientRequest(`vendas?empresaId=${encodeURIComponent(companyId)}&scope=all`, undefined, controller.signal).then((data: { sales: MarketplaceSale[]; awaitingUpdates: number }) => {
+      if (controller.signal.aborted) return;
+      setSales(data.sales || []); setAwaitingUpdates(data.awaitingUpdates || 0);
+    }).catch((error) => {
+      if (!controller.signal.aborted) setSalesError(error instanceof Error ? error.message : 'Não foi possível carregar as vendas.');
+    }).finally(() => { if (!controller.signal.aborted) setSalesLoading(false); });
+    return () => controller.abort();
+  }, [accessState, companyId, accountSignature, refreshKey, salesRefresh]);
+
+  useEffect(() => {
+    if (salesAccount && !accountSignature.split(',').includes(salesAccount)) setSalesAccount('');
+  }, [accountSignature, salesAccount]);
 
   async function confirmDisconnectAccount() {
     if (!disconnectAccount || disconnecting) return;
@@ -221,9 +253,10 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }
 
   return <main className={`${styles.page} ${empresa.temaEscuro ? styles.dark : ''}`} style={{ '--marketplace-brand': empresa.corPrimaria } as CSSProperties}>
-    <ModuloHeader empresa={empresa} onBack={voltar}>
-      <button type="button" className={styles.salesNotification} onClick={() => document.getElementById('sales-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} aria-label={pendingSalesTotal ? `${pendingSalesTotal} aviso${pendingSalesTotal === 1 ? '' : 's'} de vendas` : 'Ver vendas'} title="Vendas">
-        <span aria-hidden="true">▣</span>{pendingSalesTotal > 0 && <b>{pendingSalesTotal > 99 ? '99+' : pendingSalesTotal}</b>}
+    <ModuloHeader empresa={empresa} onBack={voltar} className={styles.salesHeader}>
+      <SalesFilters period={salesPeriod} onPeriodChange={setSalesPeriod} group={salesGroup} onGroupChange={setSalesGroup} counts={summary.byGroup} total={summary.total} dark={empresa.temaEscuro} brand={empresa.corPrimaria} />
+      <button type="button" className={styles.salesNotification} onClick={() => { setSalesAccount(''); document.getElementById('sales-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }} aria-label={`${pendingSalesTotal} vendas nos filtros selecionados. Ver todas as contas.`} title="Vendas nos filtros selecionados" aria-busy={salesLoading}>
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>{pendingSalesTotal > 0 && <b>{pendingSalesTotal}</b>}
       </button>
     </ModuloHeader>
     <div className={styles.content}>
@@ -256,8 +289,8 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
         {marketplace === 'mercado_livre' && <div className={styles.connectedAccounts} aria-labelledby="connected-accounts-title">
           <div className={styles.connectedAccountsHeading}><h3 id="connected-accounts-title">Contas conectadas</h3><span>{connectedAccounts.length}</span></div>
           {connectedAccounts.length ? <div className={styles.connectedAccountsList}>{connectedAccounts.map((account) => <article key={account.id} className={`${styles.connectedAccount} ${account.id === selectedAccount ? styles.connectedAccountSelected : ''}`}>
-            <button type="button" className={styles.connectedAccountSelect} onClick={() => setSelectedAccount(account.id)} disabled={accountSelectionLocked || publicationBusy} aria-pressed={account.id === selectedAccount}>
-              <strong>{account.seller_name || `Vendedor ${account.seller_reference}`}{pendingSales[account.id] ? <em className={styles.accountSalesBadge}>{pendingSales[account.id] > 99 ? '99+' : pendingSales[account.id]}</em> : null}</strong><small>ID {account.seller_reference} · Conectada<br />Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
+            <button type="button" className={styles.connectedAccountSelect} onClick={() => { setSelectedAccount(account.id); setSalesAccount(account.id); }} disabled={accountSelectionLocked || publicationBusy} aria-pressed={account.id === selectedAccount}>
+              <strong>{account.seller_name || `Vendedor ${account.seller_reference}`}{pendingSales[account.id] ? <em className={styles.accountSalesBadge} title="Vendas nos filtros selecionados">{pendingSales[account.id]}</em> : null}</strong><small>ID {account.seller_reference} · Conectada<br />Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
             </button>
             {canManageConnections && <button type="button" className={styles.disconnectAccountButton} disabled={disconnecting || accountSelectionLocked || publicationBusy} onClick={() => setDisconnectAccount(account)}>Desconectar</button>}
           </article>)}</div> : <p className={styles.emptyConnectedAccounts}>Nenhuma conta conectada.</p>}
@@ -274,7 +307,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       setSelectedAccount(targetConnectionId);
       setCopyRequest({ id: crypto.randomUUID(), sourceConnectionId, listingId, targetConnectionId });
     }} refreshKey={refreshKey} />}
-    {marketplace === 'mercado_livre' && <Vendas companyId={companyId} accountId={selectedAccount} canManage={canManage} refreshKey={refreshKey} onPendingChange={setPendingSales} />}
+    {marketplace === 'mercado_livre' && <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={setSalesAccount} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} />}
     {priceUsersOpen && <PriceUsersPanel companyId={companyId} onClose={() => setPriceUsersOpen(false)} />}
     <ModalConfirmacao aberto={!!disconnectAccount} titulo="Desconectar conta?" mensagem={disconnectAccount ? `${disconnectAccount.seller_name || disconnectAccount.seller_reference}. O AvantaLab apagará os tokens desta conexão. Os anúncios no Mercado Livre não serão alterados.` : ''} textoConfirmar="Desconectar" carregando={disconnecting} darkMode={empresa.temaEscuro} corPrimaria={empresa.corPrimaria} variante="destrutiva" aoCancelar={() => { if (!disconnecting) setDisconnectAccount(null); }} aoConfirmar={() => void confirmDisconnectAccount()} />
     </div>

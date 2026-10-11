@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.49.0.04 -->
+<!-- ava-version: 1.49.0.05 -->
+
+> Revisão 1.49.0.05: filtros de vendas e contadores de Marketplaces pertencem
+> à Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.49.0.04: reimpressão de etiquetas e tradução das situações de
 > Marketplaces pertencem à Gestão Web; sem impacto operacional na Gestão Mobile.

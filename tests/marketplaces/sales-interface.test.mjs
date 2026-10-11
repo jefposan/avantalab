@@ -23,7 +23,7 @@ test('vendas chegam por webhook validado, são enfileiradas e relidas no provedo
 
 test('contadores e etiquetas são isolados por conta e a impressão fica no AvantaLab', () => {
   assert.match(client, /pendingSales\[account\.id\]/);
-  assert.match(client, /<Vendas companyId=\{companyId\} accountId=\{selectedAccount\}/);
+  assert.match(client, /<Vendas companyId=\{companyId\} accountId=\{salesAccount\}/);
   assert.match(sales, /\/api\/modulos\/marketplaces\/vendas\/etiqueta/);
   assert.match(sales, /URL\.createObjectURL/);
   assert.match(sales, /labelActionText/);

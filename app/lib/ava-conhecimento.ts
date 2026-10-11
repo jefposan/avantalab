@@ -1,3 +1,9 @@
+// Revisado na versão 1.49.0.05: Marketplaces Web filtra vendas por mês, todas
+// as datas ou período inicial/final e por situação com contagens por grupo.
+// Sino/contas contam pedidos únicos dos filtros. O sino abre todas as contas;
+// Conta das vendas restringe a lista. Entregues/enviadas/canceladas não exibem
+// espera de etiqueta. Atualizar processa eventos recebidos; datas antigas sem
+// data original usam a entrada no AvantaLab. Sem impacto nos outros aplicativos.
 // Revisado na versão 1.49.0.04: Marketplaces Web permite reimprimir a etiqueta
 // Mercado Livre já impressa e traduz situações de pedido e envio para português.
 // Quando a etiqueta não estiver disponível, informa nota fiscal/DC-e, geração,

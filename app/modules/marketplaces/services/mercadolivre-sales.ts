@@ -5,7 +5,7 @@ import { loadConnection, mlBinaryRequest, mlRequest, type SellerConnection } fro
 import { objectValue } from './listing-model';
 
 export type SaleNotification = { id: string; seller: string; topic: 'orders_v2' | 'orders' | 'shipments'; resource: string; orderId?: string; shipmentId?: string };
-export type MarketplaceSale = { id: string; orderId: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
+export type MarketplaceSale = { id: string; connectionId: string; orderId: string; soldAt: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
 
 const orderId = (value: unknown) => /^\d{1,24}$/.test(String(value)) ? String(value) : '';
 const shipmentId = orderId;
@@ -35,7 +35,7 @@ function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, u
     return { title: text(item.title) || 'Produto', quantity: Math.max(1, Math.floor(amount(row.quantity) || 1)), unitPrice: amount(row.unit_price) };
   }).slice(0, 100);
   return {
-    orderId: orderId(order.id), status: text(order.status, 80) || 'unknown', shipmentId: shipmentId(shipment?.id || shipping.id) || null,
+    orderId: orderId(order.id), soldAt: text(order.date_created, 80), status: text(order.status, 80) || 'unknown', shipmentId: shipmentId(shipment?.id || shipping.id) || null,
     shipmentStatus, shipmentSubstatus, labelStatus, buyer: text(objectValue(order.buyer).nickname, 160) || null,
     total: amount(order.total_amount), currency: text(order.currency_id, 12) || 'BRL', items,
   };
@@ -43,7 +43,7 @@ function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, u
 
 function publicSale(row: Record<string, unknown>): MarketplaceSale {
   const snapshot = objectValue(row.snapshot);
-  return { id: String(row.id), orderId: String(row.provider_order_id), status: text(row.status, 80), shipmentId: typeof row.shipment_id === 'string' ? row.shipment_id : null,
+  return { id: String(row.id), connectionId: String(row.connection_id), orderId: String(row.provider_order_id), soldAt: text(snapshot.soldAt, 80) || String(row.created_at), status: text(row.status, 80), shipmentId: typeof row.shipment_id === 'string' ? row.shipment_id : null,
     shipmentStatus: typeof row.shipment_status === 'string' ? row.shipment_status : null, shipmentSubstatus: typeof row.shipment_substatus === 'string' ? row.shipment_substatus : null,
     labelStatus: row.label_status === 'ready' || row.label_status === 'fulfilled' ? row.label_status : 'unavailable', seenAt: typeof row.seen_at === 'string' ? row.seen_at : null,
     createdAt: String(row.created_at), updatedAt: String(row.updated_at), buyer: typeof snapshot.buyer === 'string' ? snapshot.buyer : null,
@@ -90,19 +90,15 @@ export async function processSaleNotifications(db: SupabaseClient, connection: S
   }
 }
 
-export async function listSales(db: SupabaseClient, companyId: string, connectionId: string) {
-  const { data, error } = await db.from('marketplace_sales').select('*').eq('empresa_id', companyId).eq('connection_id', connectionId).order('updated_at', { ascending: false }).limit(50);
-  if (error) throw new MarketplaceError(503, 'database', 'Não foi possível carregar as vendas.');
-  return (data || []).map((row) => publicSale(row as Record<string, unknown>));
-}
-
-export async function pendingSalesByConnection(db: SupabaseClient, companyId: string) {
-  const [{ data: sales, error: salesError }, { data: queued, error: queuedError }] = await Promise.all([
-    db.from('marketplace_sales').select('connection_id').eq('empresa_id', companyId).is('seen_at', null).in('status', ['paid', 'confirmed']),
-    db.from('marketplace_sale_notifications').select('connection_id').eq('empresa_id', companyId).is('processed_at', null),
-  ]);
-  if (salesError || queuedError) throw new MarketplaceError(503, 'database', 'Não foi possível calcular os avisos de venda.');
-  return [...(sales || []), ...(queued || [])].reduce<Record<string, number>>((counts, row) => ({ ...counts, [row.connection_id]: (counts[row.connection_id] || 0) + 1 }), {});
+export async function listSales(db: SupabaseClient, companyId: string, connectionIds: string[]) {
+  if (!connectionIds.length) return [];
+  const sales: MarketplaceSale[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await db.from('marketplace_sales').select('*').eq('empresa_id', companyId).in('connection_id', connectionIds).order('updated_at', { ascending: false }).order('id').range(offset, offset + 499);
+    if (error) throw new MarketplaceError(503, 'database', 'Não foi possível carregar as vendas.');
+    sales.push(...(data || []).map((row) => publicSale(row as Record<string, unknown>)));
+    if (!data || data.length < 500) return sales;
+  }
 }
 
 export async function markSalesSeen(db: SupabaseClient, companyId: string, connectionId: string) {

@@ -1,5 +1,46 @@
 .page { --brand: var(--marketplace-brand, #003E73); min-height: 100dvh; color: #1f2937; background: #f6f8fb; font-family: var(--av-font-family, Inter, sans-serif); }
 .page, .page * { box-sizing: border-box; }
+.page .salesHeader { grid-template-columns: auto minmax(110px, 1fr) auto; }
+.salesHeader > div:nth-child(2) { min-width: 0; }
+.salesHeader > div:nth-child(2) > div { width: min(18vw, 180px); }
+.salesHeader > div:last-child { min-width: 0; }
+.salesFilters, .salesDateFilters { display: flex; min-width: 0; align-items: center; gap: 8px; }
+.salesFilters { flex-wrap: wrap; }
+.salesDateFilters { flex-wrap: wrap; }
+.salesDateFilters > div > div { height: 44px; border-radius: 12px; }
+.salesDateFilters button { min-height: 44px; }
+.salesDateFilters > div > div > button { min-width: 44px; }
+.salesDateFilters button:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 28%, transparent); outline-offset: 2px; }
+.salesStatusFilter { width: 210px; }
+.salesAccountFilter { max-width: 340px; margin-bottom: 12px; }
+.salesScopeHelp { margin: 0 0 14px; color: #64748b; font-size: 12px; line-height: 1.5; }
+.salesPeriodDialog { max-width: 480px; margin: 0 auto; font-family: var(--av-font-family, Inter, sans-serif); }
+.salesPeriodDates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.salesPeriodDates input { width: 100%; min-width: 0; }
+.salesPeriodActions { display: flex; justify-content: flex-end; gap: 10px; }
+.salesPeriodTheme { --brand: #003E73; background: transparent; }
+.salesPeriodTheme .help { margin: 0; }
+.dark .salesScopeHelp { color: #b8c5d7; }
+.dark .salesPeriodDialog { color: #f8fafc; border-color: #334155; background: #182235; }
+.salesPanel { scroll-margin-top: 100px; }
+@media (max-width: 1100px) {
+  .page .salesHeader { grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
+  .salesHeader > div:nth-child(2) { justify-self: end; }
+  .salesHeader > div:nth-child(2) > div { width: min(42vw, 180px); }
+  .salesHeader > div:last-child { grid-column: 1 / -1; justify-self: stretch; justify-content: flex-end; }
+  .salesFilters { flex: 1; justify-content: flex-end; }
+  .salesPanel { scroll-margin-top: 200px; }
+}
+@media (max-width: 760px) {
+  .salesHeader > div:last-child { align-items: flex-end; }
+  .salesFilters { justify-content: stretch; }
+  .salesDateFilters { width: 100%; }
+  .salesStatusFilter { width: 100%; }
+  .salesPeriodDates { grid-template-columns: 1fr; }
+  .salesPeriodDialog { padding: 20px; }
+  .saleSummary { flex-wrap: wrap; }
+  .saleSummary b { max-width: 100%; white-space: normal; }
+}
 .accessState { min-height: 100dvh; display: grid; place-items: center; padding: 24px; color: #17222d; background: #f3f6f8; text-align: center; font-family: var(--av-font-family, Inter, sans-serif); }
 .accessState > div { display: grid; width: min(100%, 500px); justify-items: center; gap: 10px; padding: 30px; border: 1px solid #dce4e9; border-radius: 8px 18px 18px 18px; background: #fff; box-shadow: 0 18px 45px #102f4315; }
 .accessState > div > span { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 14px; color: #1687d9; background: #e8f4fb; font-size: 24px; }

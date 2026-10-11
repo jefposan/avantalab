@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.49.0.05 - 2026-10-11
+
+- **Filtros de vendas no cabeçalho de Marketplaces**: competência reutiliza o
+  seletor oficial de Recebimentos, com Todos e seleção de período inclusivo por
+  datas inicial/final em card padrão. A situação lista a quantidade de cada
+  grupo, incluindo entregues, canceladas, em trânsito e aguardando envio.
+- **Contagem por pedido único**: sino e contas usam as mesmas vendas dos
+  filtros. Eventos de atualização deixam de aumentar o contador; grupos
+  exclusivos somam o total. O sino abre todas as contas e a lista permite
+  escolher uma conta. A consulta paginada deixa de truncar a base em 50 vendas.
+- **Etiqueta após despacho/encerramento**: entregues, em trânsito, não entregues
+  e canceladas não exibem mais mensagem de espera por etiqueta. Entrega Full
+  concluída também aparece como Entregue.
+- **Data da venda preservada**: novas sincronizações guardam a data original do
+  Mercado Livre no snapshot existente. Registros legados usam a data de entrada
+  no AvantaLab até a próxima sincronização. Sem alteração de esquema do banco.
+
 ## 1.49.0.04 - 2026-10-11
 
 - **Etiqueta disponível também para reimpressão**: vendas Mercado Livre com
