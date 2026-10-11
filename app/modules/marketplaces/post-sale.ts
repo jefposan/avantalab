@@ -1,6 +1,6 @@
 /** Contratos oficiais: /post-purchase/v1/claims e /post-purchase/v2/claims/{id}/returns.
  * O retorno do produto e o reembolso nunca são inferidos do cancelamento do pedido.
- * Apenas campos traduzidos/permitidos chegam à tela; mensagens e endereços brutos não.
+ * Apenas campos permitidos chegam à tela; conversa, anexos e endereços brutos não.
  */
 export type ReturnDetails = {
   id: string; statusText: string; moneyText: string; refundRuleText: string | null;
@@ -8,13 +8,17 @@ export type ReturnDetails = {
 };
 export type ClaimDetails = {
   id: string; statusText: string; typeText: string; reasonText: string;
-  resolutionText: string | null; actions: Array<{ text: string; dueAt: string | null }>;
+  resolutionText: string | null; actions: Array<{ text: string; dueAt: string | null; required: boolean }>;
+  stageText: string; responsibleText: string | null; dueAt: string | null;
+  problemText: string | null; detailComplete: boolean;
+  createdAt: string | null; updatedAt: string | null; closedAt: string | null;
   returnDetails: ReturnDetails | null;
 };
 export type PostSaleDetails = {
   checkedAt: string; cancellation: { reasonText: string; requestedByText: string; date: string | null } | null;
   refundText: string; refundedAmount: number | null; currency: string;
   claims: ClaimDetails[]; claimsComplete: boolean; returnsComplete: boolean; warnings: string[];
+  accessIssues: Array<{ area: string; claimId: string | null; permissionDenied: boolean; policyDenied: boolean }>;
 };
 
 const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -61,6 +65,21 @@ const returnShipmentStates: Record<string, string> = {
   shipped: 'Retorno em trânsito', delivered: 'Retorno entregue ao destino', not_delivered: 'Retorno não entregue', cancelled: 'Envio de retorno cancelado',
 };
 const moneyStates: Record<string, string> = { retained: 'Dinheiro retido pelo Mercado Livre', refunded: 'Dinheiro reembolsado ao comprador', available: 'Dinheiro disponível, conforme o Mercado Livre' };
+const stages: Record<string, string> = { claim: 'Tratativa entre comprador e vendedor', dispute: 'Mediação do Mercado Livre', recontact: 'Caso reaberto para novo contato', stale: 'Análise entre comprador e Mercado Livre', none: 'Sem etapa adicional informada' };
+const actionNames: Record<string, string> = {
+  send_message_to_complainant: 'Responder ao comprador no Mercado Livre', send_message_to_mediator: 'Responder à mediação no Mercado Livre',
+  return_review: 'Revisar o produto devolvido no Mercado Livre', return_review_ok: 'Revisar o produto devolvido e informar que chegou conforme esperado no Mercado Livre',
+  return_review_fail: 'Revisar o produto devolvido e informar um problema no Mercado Livre', refund: 'Avaliar reembolso no Mercado Livre',
+  allow_partial_refund: 'Avaliar proposta de reembolso parcial no Mercado Livre', allow_return: 'Avaliar devolução no Mercado Livre',
+  open_dispute: 'Solicitar mediação no Mercado Livre', send_shipping_evidence: 'Apresentar comprovante de envio no Mercado Livre',
+};
+const reasonCategories: Record<string, string> = { repentant: 'Comprador desistiu da compra', defective: 'Produto com defeito', incomplete: 'Produto incompleto', different: 'Produto diferente do esperado', not_working: 'Produto não funciona' };
+
+/** Texto do problema é conteúdo do caso, nunca HTML nem instrução executável. */
+function problemText(value: unknown) {
+  const valueText = text(value, 600).replace(/<[^>]*>/g, '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
+  return valueText || null;
+}
 
 export function cancellationDetails(order: Record<string, unknown>): PostSaleDetails['cancellation'] {
   if (order.status !== 'cancelled' && order.status !== 'pending_cancel') return null;
@@ -108,29 +127,42 @@ export function normalizeReturn(value: unknown, claimId: string, orderId: string
   };
 }
 
-function lookupWarning(error: unknown) {
+function lookupWarning(error: unknown, area: string) {
   const code = text(object(error).code);
-  if (code === 'provider_403') return 'O Mercado Livre não autorizou a consulta de parte do pós-venda. Confira as permissões do aplicativo; a conta não foi desconectada.';
-  if (code === 'provider_429') return 'Limite de consultas do Mercado Livre atingido. Aguarde e atualize o pós-venda.';
-  return 'Parte do pós-venda não pôde ser consultada. Atualize ou confira diretamente no Mercado Livre.';
+  if (code === 'provider_403' || code === 'provider_policy_403') return `O Mercado Livre não autorizou a consulta: ${area} (403). ${code === 'provider_policy_403' ? 'A política de acesso do Mercado Livre recusou o recurso. ' : ''}Confira as permissões do aplicativo e a autorização da conta; a conta não foi desconectada.`;
+  if (code === 'provider_429') return `Limite de consultas do Mercado Livre atingido: ${area}. Aguarde e atualize o pós-venda.`;
+  if (code === 'reconnect' || code === 'provider_401') return `A autorização da conta precisa ser renovada para consultar ${area}. Reconecte a mesma conta do pedido.`;
+  return `Não foi possível consultar ${area}. Atualize ou confira diretamente no Mercado Livre.`;
 }
 
 /** Leitura injetada mantém a orquestração testável e sem acesso direto a credenciais. */
 export async function readPostSale(order: Record<string, unknown>, sellerId: string, read: (path: string) => Promise<unknown>): Promise<PostSaleDetails> {
   const orderId = id(order.id);
   if (!orderId || id(object(order.seller).id) !== sellerId) throw new Error('invalid_order_owner');
-  const result: PostSaleDetails = { checkedAt: new Date().toISOString(), cancellation: cancellationDetails(order), ...refundDetails(order), claims: [], claimsComplete: false, returnsComplete: false, warnings: [] };
-  const warn = (error: unknown) => result.warnings.push(lookupWarning(error));
+  const result: PostSaleDetails = { checkedAt: new Date().toISOString(), cancellation: cancellationDetails(order), ...refundDetails(order), claims: [], claimsComplete: false, returnsComplete: false, warnings: [], accessIssues: [] };
+  const warn = (error: unknown, area: string, claimId: string | null = null) => {
+    const code = text(object(error).code);
+    result.accessIssues.push({ area, claimId, permissionDenied: ['provider_403', 'provider_policy_403'].includes(code), policyDenied: code === 'provider_policy_403' });
+    result.warnings.push(lookupWarning(error, area));
+  };
+  let claims: Record<string, unknown>[] = [];
   try {
     // Busca delimitada pelo pedido, sem filtro de status: inclui casos abertos e encerrados.
-    const search = object(await read(`/post-purchase/v1/claims/search?order_id=${orderId}&limit=20&offset=0&sort=date_created:desc`));
+    const search = object(await read(`/post-purchase/v1/claims/search?order_id=${orderId}&limit=20&offset=0&sort=date_created:desc&players.user_id=${sellerId}&players.role=respondent`));
     if (!Array.isArray(search.data) || !Number.isInteger(object(search.paging).total) || Number(object(search.paging).total) < 0) throw new Error('invalid_claim_search');
-    const claims = [...new Map(list(search.data).map((claim) => [id(claim.id), claim])).values()];
+    claims = [...new Map(list(search.data).map((claim) => [id(claim.id), claim])).values()];
     if (claims.some((claim) => !id(claim.id))) throw new Error('invalid_claim');
     result.claimsComplete = Number(object(search.paging).total) === claims.length && claims.length <= 5;
     result.returnsComplete = result.claimsComplete;
     if (!result.claimsComplete) result.warnings.push('Mostrando até 5 casos recentes. Há mais casos ou a consulta está incompleta; confira o histórico completo no Mercado Livre.');
-    result.claims = (await Promise.all(claims.slice(0, 5).map(async (entry): Promise<ClaimDetails | null> => {
+  } catch (error) {
+    warn(error, 'busca de reclamações deste pedido');
+    // IDs fornecidos pelo próprio pedido, nunca adivinhados. Cada caso será
+    // autorizado pelo ML e validado pelo pedido/vendedor abaixo. Não atesta histórico completo.
+    claims = [...new Map(list(order.mediations).filter((entry) => id(entry.id)).map((entry) => [id(entry.id), entry])).values()];
+    if (claims.length) result.warnings.push('Consultando os casos identificados no próprio pedido. A busca completa de reclamações continua indisponível.');
+  }
+  result.claims = (await Promise.all(claims.slice(0, 5).map(async (entry): Promise<ClaimDetails | null> => {
       try {
         const claim = object(await read(`/post-purchase/v1/claims/${id(entry.id)}`));
         const sellers = list(claim.players).filter((player) => player.type === 'seller');
@@ -139,8 +171,10 @@ export async function readPostSale(order: Record<string, unknown>, sellerId: str
         const detail: ClaimDetails = {
           id: id(claim.id), typeText, statusText: claim.status === 'closed' ? 'Encerrada' : claim.status === 'opened' ? claim.stage === 'dispute' ? 'Em mediação com o Mercado Livre' : 'Aberta' : 'Situação não informada',
           reasonText: 'Motivo específico não disponibilizado em português pelo Mercado Livre',
+          stageText: stages[text(claim.stage)] || 'Etapa não informada pelo Mercado Livre', responsibleText: null, dueAt: null,
+          problemText: null, detailComplete: false, createdAt: date(claim.date_created), updatedAt: date(claim.last_updated), closedAt: date(object(claim.resolution).date_created),
           resolutionText: object(claim.resolution).reason ? resolutions[text(object(claim.resolution).reason)] || 'Caso encerrado com resolução não traduzida — confira no Mercado Livre' : null,
-          actions: sellers.filter((seller) => id(seller.user_id) === sellerId).flatMap((seller) => list(seller.available_actions)).filter((action) => action.mandatory === true || ['return_review', 'return_review_ok', 'return_review_fail'].includes(text(action.action))).map((action) => ({ text: ['return_review', 'return_review_ok', 'return_review_fail'].includes(text(action.action)) ? 'Revisar o produto devolvido no Mercado Livre' : action.action === 'send_message_to_complainant' ? 'Responder ao comprador no Mercado Livre' : action.action === 'send_message_to_mediator' ? 'Responder à mediação no Mercado Livre' : 'Há uma ação pendente no Mercado Livre', dueAt: date(action.due_date) })),
+          actions: claim.status === 'opened' ? sellers.filter((seller) => id(seller.user_id) === sellerId).flatMap((seller) => list(seller.available_actions)).slice(0, 20).map((action) => ({ text: actionNames[text(action.action)] || 'Consultar ação disponível no Mercado Livre', dueAt: date(action.due_date), required: action.mandatory === true })) : [],
           returnDetails: null,
         };
         const hasReturn = claim.type === 'return' || (Array.isArray(claim.related_entities) && claim.related_entities.includes('return'));
@@ -150,21 +184,35 @@ export async function readPostSale(order: Record<string, unknown>, sellerId: str
         }
         await Promise.all([
           (async () => {
+            try {
+              const info = object(await read(`/post-purchase/v1/claims/${detail.id}/detail`));
+              if (!['action_responsible', 'due_date', 'problem', 'title', 'description'].some((key) => Object.hasOwn(info, key))) throw new Error('invalid_claim_detail');
+              detail.detailComplete = true;
+              detail.problemText = problemText(info.problem);
+              detail.responsibleText = ({ seller: 'Vendedor — sua conta', buyer: 'Comprador', mediator: 'Mercado Livre' } as Record<string, string>)[text(info.action_responsible)] || null;
+              // Prazo de caso encerrado não é pendência atual.
+              detail.dueAt = claim.status === 'opened' ? date(info.due_date) : null;
+            } catch (error) { warn(error, 'detalhamento da reclamação', detail.id); }
+          })(),
+          (async () => {
             const reasonId = text(claim.reason_id);
             if (!/^[A-Za-z0-9_-]{1,80}$/.test(reasonId)) return;
-            try { const reason = object(await read(`/post-purchase/v1/claims/reasons/${reasonId}`)); detail.reasonText = reasons[text(reason.name)] || detail.reasonText; }
-            catch (error) { warn(error); }
+            try {
+              const reason = object(await read(`/post-purchase/v1/claims/reasons/${reasonId}`));
+              const categories = object(reason.settings).rules_engine_triage;
+              const translated = Array.isArray(categories) ? categories.filter((value): value is string => typeof value === 'string').map((value) => reasonCategories[value]).filter(Boolean) : [];
+              detail.reasonText = reasons[text(reason.name)] || (translated.length ? `Categoria informada: ${[...new Set(translated)].join('; ')}` : detail.reasonText);
+            } catch (error) { warn(error, 'motivo da reclamação', detail.id); }
           })(),
           (async () => {
             if (!hasReturn) return;
             try { detail.returnDetails = normalizeReturn(await read(`/post-purchase/v2/claims/${detail.id}/returns`), detail.id, orderId); }
-            catch (error) { result.returnsComplete = false; warn(error); }
+            catch (error) { result.returnsComplete = false; warn(error, 'devolução do produto', detail.id); }
           })(),
         ]);
         return detail;
-      } catch (error) { result.claimsComplete = false; result.returnsComplete = false; warn(error); return null; }
+      } catch (error) { result.claimsComplete = false; result.returnsComplete = false; warn(error, 'dados da reclamação', id(entry.id)); return null; }
     }))).filter((claim): claim is ClaimDetails => claim != null);
-  } catch (error) { warn(error); }
   if (object(order.order_request).return != null && !result.claims.some((claim) => claim.returnDetails)) {
     result.returnsComplete = false;
     result.warnings.push('O pedido indica uma solicitação de retorno, mas os detalhes da devolução não foram confirmados nesta consulta.');

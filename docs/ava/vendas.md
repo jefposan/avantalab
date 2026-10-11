@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.49.0.12 -->
+<!-- ava-version: 1.49.0.13 -->
+
+> Revisão 1.49.0.13: detalhamento e diagnóstico de acesso do pós-venda
+> Mercado Livre na Gestão Web. Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.49.0.12: texto do tooltip de organização de Marketplaces Web
 > encurtado. Sem impacto operacional no AvantaVendas.

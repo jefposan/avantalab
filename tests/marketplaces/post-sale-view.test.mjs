@@ -25,3 +25,21 @@ test('ausência é exibida somente quando os casos e retornos foram consultados 
   assert.match(renderPostSale({ details: { ...details, returnsComplete: false } }), /Não foi possível confirmar se existe devolução/);
   assert.match(renderPostSale({ details: { ...details, claimsComplete: false } }), /Não foi possível confirmar se existe devolução/);
 });
+
+test('detalhe orienta próximo responsável e separa opção disponível de pendência', () => {
+  const claim = { ...fixtureDetails.claims[0], detailComplete: true, stageText: 'Mediação do Mercado Livre', problemText: 'O produto não funciona.', responsibleText: 'Vendedor — sua conta', dueAt: '2026-10-13T12:00:00Z', actions: [{ text: 'Responder ao comprador no Mercado Livre', required: true, dueAt: null }, { text: 'Avaliar reembolso no Mercado Livre', required: false, dueAt: null }] };
+  const html = renderPostSale({ details: { ...fixtureDetails, claims: [claim] } });
+  for (const expected of ['Etapa do processo', 'Problema relatado', 'Vendedor — sua conta', 'Prazo informado', 'Pendente: Responder', 'Disponível: Avaliar']) assert.ok(html.includes(expected), expected);
+  const closed = renderPostSale({ details: { ...fixtureDetails, claims: [{ ...claim, statusText: 'Encerrada', actions: [], dueAt: null }] } });
+  assert.match(closed, /Caso encerrado — confira a resolução/);
+  assert.ok(!closed.includes('Prazo informado'));
+});
+
+test('acesso negado oferece orientação sem declarar ausência nem autorizar reembolso', () => {
+  const html = renderPostSale({ details: { ...fixtureDetails, claims: [], claimsComplete: false, returnsComplete: false, accessIssues: [{ area: 'busca de reclamações', permissionDenied: true, policyDenied: false }] } });
+  assert.match(html, /Como liberar a consulta do pós-venda/);
+  assert.match(html, /claims e returns/);
+  assert.match(html, /Não é necessário excluir a conta/);
+  assert.ok(!html.includes('Nenhuma reclamação vinculada'));
+  assert.match(html, /Não foi possível confirmar se existe devolução/);
+});

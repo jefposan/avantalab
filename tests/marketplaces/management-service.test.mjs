@@ -76,6 +76,14 @@ test('limite de consulta preserva o status e a orientação do Mercado Livre', (
   globalThis.fetch=async () => Response.json({message:'too many requests'},{status:429});
   await assert.rejects(mlRequest(db,connection,'/items/MLB1/sale_price?context=channel_marketplace'), (error) => error.status===429 && error.code==='provider_429' && /limite de consultas/i.test(error.message));
 }));
+test('pós-venda distingue política de acesso sem revelar a resposta privada nem desconectar', () => environment(async () => {
+  const db=database(), connection=await loadConnection(db,company,connectionId);
+  globalThis.fetch=async () => Response.json({code:'PA_UNAUTHORIZED_RESULT_FROM_POLICIES',message:'PRIVATE',cause:['SECRET']},{status:403});
+  await assert.rejects(mlRequest(db,connection,'/post-purchase/v1/claims/search?order_id=123'), (error) => error.status===403 && error.code==='provider_policy_403' && !error.message.includes('PRIVATE'));
+  assert.equal(db.tables.marketplace_connections[0].status,'connected');
+  globalThis.fetch=async () => Response.json({error:'forbidden_error',message:'PRIVATE'},{status:403});
+  await assert.rejects(mlRequest(db,connection,'/post-purchase/v1/claims/123'), (error) => error.code==='provider_403' && !error.message.includes('PRIVATE'));
+}));
 test('refresh concorrente troca uma única vez e salva o par novo atomicamente', () => environment(async () => {
   const db=database(true), connection=await loadConnection(db,company,connectionId);
   let refreshes=0;

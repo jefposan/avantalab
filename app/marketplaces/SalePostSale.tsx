@@ -43,6 +43,12 @@ export function SalePostSaleView({ details, loading, error, onRefresh }: {
     {details && <>
       <p className={styles.salesScopeHelp}>Consulta realizada em {formatDate(details.checkedAt)}. Os estados abaixo são independentes da entrega original.</p>
       {details.warnings.map((warning) => <p key={warning} className={styles.salesError} role="status">{warning}</p>)}
+      {details.accessIssues?.some((issue) => issue.permissionDenied) && <div className={styles.claimDetails} role="status">
+        <h4>Como liberar a consulta do pós-venda</h4>
+        <p className={styles.salesScopeHelp}>O administrador do aplicativo deve conferir, no DevCenter do Mercado Livre, as permissões dos recursos reclamações e devoluções (claims e returns), em Vendas e envios / Comunicação pré e pós-venda. Habilite o acesso necessário para consulta. Se o Mercado Livre solicitar nova autorização, reconecte a mesma conta no AvantaLab; depois clique em Atualizar pós-venda. Não é necessário excluir a conta.</p>
+        <p className={styles.salesScopeHelp}>Um bloqueio 403 também pode depender da autorização da conta ou de uma política de acesso do Mercado Livre. Atualizar a página, sozinho, não concede essa permissão.</p>
+        <a className={styles.postSaleLink} href="https://developers.mercadolivre.com.br/pt_br/permissoes-funcionais/" target="_blank" rel="noopener noreferrer">Consultar orientação oficial de permissões ↗</a>
+      </div>}
       <dl>
         {details.cancellation && <>
           <div><dt>Cancelamento</dt><dd>{details.cancellation.reasonText}</dd></div>
@@ -55,8 +61,21 @@ export function SalePostSaleView({ details, loading, error, onRefresh }: {
       {!details.claims.length && details.claimsComplete && <p className={styles.salesScopeHelp}>Nenhuma reclamação vinculada a este pedido foi encontrada nesta consulta.</p>}
       {details.claims.map((claim) => <section key={claim.id} className={styles.claimDetails} aria-label={`Caso de pós-venda ${claim.id}`}>
         <h4>{claim.typeText} #{claim.id} · {claim.statusText}</h4>
-        <dl><div><dt>Motivo</dt><dd>{claim.reasonText}</dd></div>{claim.resolutionText && <div><dt>Resolução do caso</dt><dd>{claim.resolutionText}</dd></div>}</dl>
-        {claim.actions.map((action, index) => <p key={index} className={styles.salesError}>{action.text}{action.dueAt ? ` · Prazo: ${formatDate(action.dueAt)}` : ''}.</p>)}
+        <dl>
+          <div><dt>Motivo</dt><dd>{claim.reasonText}</dd></div>
+          {claim.problemText && <div><dt>Problema relatado</dt><dd>{claim.problemText}<span>Texto informado pelo Mercado Livre.</span></dd></div>}
+          {claim.stageText && <div><dt>Etapa do processo</dt><dd>{claim.stageText}</dd></div>}
+          <div><dt>Próximo responsável</dt><dd>{claim.statusText === 'Encerrada' ? 'Caso encerrado — confira a resolução e o retorno do produto.' : claim.responsibleText || 'Não confirmado nesta consulta.'}</dd></div>
+          {claim.dueAt && <div><dt>Prazo informado</dt><dd>{formatDate(claim.dueAt)}</dd></div>}
+          {claim.createdAt && <div><dt>Abertura do caso</dt><dd>{formatDate(claim.createdAt)}</dd></div>}
+          {claim.updatedAt && <div><dt>Última atualização no ML</dt><dd>{formatDate(claim.updatedAt)}</dd></div>}
+          {claim.closedAt && <div><dt>Encerramento do caso</dt><dd>{formatDate(claim.closedAt)}</dd></div>}
+          {claim.resolutionText && <div><dt>Resolução do caso</dt><dd>{claim.resolutionText}</dd></div>}
+        </dl>
+        {claim.detailComplete === false && <p className={styles.salesScopeHelp}>O detalhamento deste caso está incompleto: motivo específico, responsável ou prazo podem não estar disponíveis. Os demais dados confirmados foram mantidos.</p>}
+        {claim.actions.length > 0 && <h4>Ações da sua conta no Mercado Livre</h4>}
+        {claim.actions.map((action, index) => <p key={index} className={action.required ? styles.salesError : styles.salesScopeHelp}>{action.required ? 'Pendente' : 'Disponível'}: {action.text}{action.dueAt ? ` · Prazo: ${formatDate(action.dueAt)}` : ''}.</p>)}
+        {!claim.actions.length && claim.statusText !== 'Encerrada' && <p className={styles.salesScopeHelp}>Nenhuma ação da sua conta foi informada nesta consulta. Isso não confirma que o processo foi resolvido; confira o responsável e o prazo.</p>}
         {claim.returnDetails && <>
           <dl><div><dt>Situação da devolução</dt><dd>{claim.returnDetails.statusText}</dd></div><div><dt>Dinheiro deste caso</dt><dd>{claim.returnDetails.moneyText}</dd></div></dl>
           {claim.returnDetails.refundRuleText && <p className={styles.salesScopeHelp}>{claim.returnDetails.refundRuleText}</p>}

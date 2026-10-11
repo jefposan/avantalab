@@ -1,6 +1,20 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0.12 -->
+<!-- ava-version: 1.49.0.13 -->
+
+> Revisão 1.49.0.13: o pós-venda de Marketplaces mostra problema relatado
+> (texto fornecido pelo ML), etapa em português, próximo responsável, prazo e
+> datas do caso quando autorizados. **Pendente** é ação obrigatória informada
+> pelo ML; **Disponível** é opção, não recomendação de reembolso ou aceite.
+> Casos encerrados não têm pendências atuais. Falhas parciais conservam os
+> dados confirmados e identificam a área bloqueada. Uma busca negada pode
+> recuperar os casos identificados pelo próprio pedido, sem confirmar que o
+> histórico está completo. O aviso de permissão orienta o administrador a
+> conferir claims/returns no DevCenter, autorização da mesma conta e atualizar
+> a consulta; reconectar apenas quando necessária nova autorização. Não excluir
+> a conta nem presumir devolução por cancelamento. Código não concede permissão
+> do ML. Respostas, aceites e reembolsos continuam na plataforma. Gestão Mobile
+> e PWA AvantaPreços não foram alterados.
 
 > Revisão 1.49.0.12: tooltip dos pontos de organização encurtado para “segure
 > arraste para mudar a ordem”. Ajuste de texto, sem impacto operacional.

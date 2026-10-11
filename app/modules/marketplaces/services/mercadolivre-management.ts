@@ -103,6 +103,11 @@ export async function mlRequest(db: SupabaseClient, connection: SellerConnection
     }
     if (response.status === 401 && attempt === 0) { token = await accessToken(db, connection, true); continue; }
     if (!response.ok) {
+      if (method === 'GET' && response.status === 403 && path.startsWith('/post-purchase/')) {
+        const denied = objectValue(await response.json().catch(() => null));
+        // Reconhecer apenas código documentado; nunca enviar mensagem/cause brutos.
+        if (denied.code === 'PA_UNAUTHORIZED_RESULT_FROM_POLICIES') throw new MarketplaceError(403, 'provider_policy_403', 'A política de acesso do Mercado Livre recusou a consulta de pós-venda. Confira as permissões funcionais e a autorização da conta.');
+      }
       if (method !== 'GET' && [400, 409].includes(response.status)) {
         const problem = objectValue(await response.json().catch(() => null));
         const fields: Record<string, string> = {};

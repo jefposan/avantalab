@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.49.0.13 - 2026-10-11
+
+- **Pós-venda Mercado Livre mais claro**: consulta o detalhe da reclamação para
+  exibir problema relatado, etapa traduzida, próximo responsável, prazo e datas.
+  Motivos usam também as categorias oficiais em português. Ações obrigatórias
+  são separadas das opções disponíveis; casos encerrados não exibem pendências
+  antigas. Conversa, anexos e endereços não são carregados.
+- Busca delimitada por pedido e vendedor. Se indisponível, consulta somente os
+  IDs de casos fornecidos pelo próprio pedido, revalidando conta e propriedade,
+  sem declarar o histórico completo. Falhas parciais preservam os dados obtidos.
+- Bloqueio 403 identifica a área; código documentado de política é reconhecido
+  sem expor resposta privada. Orientação de permissões e reautorização no painel;
+  nenhum acesso externo é concedido, conta excluída ou ação financeira executada.
+- Testes de serviço, apresentação, isolamento e falha parcial ampliados. Ava
+  revisada. Validação real do acesso depende da autorização do Mercado Livre.
+
 ## 1.49.0.12 - 2026-10-11
 
 - Tooltip de arraste encurtado para “segure arraste para mudar a ordem”,

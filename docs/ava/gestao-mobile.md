@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.49.0.12 -->
+<!-- ava-version: 1.49.0.13 -->
+
+> Revisão 1.49.0.13: detalhamento e diagnóstico de acesso do pós-venda
+> Mercado Livre na Gestão Web. Sem impacto operacional na Gestão Mobile
+> ou no PWA AvantaPreços.
 
 > Revisão 1.49.0.12: texto do tooltip de organização de Marketplaces Web
 > encurtado. Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.

@@ -26,6 +26,7 @@ export const fixtureDetails = {
   cancellation: { reasonText: 'Cancelamento relacionado a reclamação ou mediação', requestedByText: 'Comprador', date: '2026-10-11T10:00:00Z' },
   refundText: 'Reembolso parcial informado pelo Mercado Livre', refundedAmount: 20.15, currency: 'BRL',
   claimsComplete: true, returnsComplete: true, warnings: [],
+  accessIssues: [],
   claims: [{ id: '987', typeText: 'Devolução', statusText: 'Aberta', reasonText: 'Comprador desistiu da compra', resolutionText: null, actions: [{ text: 'Revisar o produto devolvido no Mercado Livre', dueAt: '2026-10-13T12:00:00Z' }], returnDetails: { id: '321', statusText: 'Devolução entregue ao destino', physicalReturn: true, moneyText: 'Dinheiro retido pelo Mercado Livre', refundRuleText: 'Regra do ML: reembolso previsto após recebimento e análise do retorno; não confirma pagamento.', shipments: [{ id: '222', statusText: 'Retorno entregue ao destino', destinationText: 'Depósito do Mercado Livre', tracking: 'TRACK-TEST' }] } }],
 };
 

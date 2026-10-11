@@ -10,6 +10,7 @@ const provider = (cases = [claim()], returnValue = returned()) => async (path) =
   if (path.includes('/claims/search?')) return { data: cases, paging: { total: cases.length } };
   if (path.includes('/claims/reasons/')) return { name: 'repentant_buyer', detail: 'Spanish raw text' };
   if (path.endsWith('/returns')) return returnValue;
+  if (path.endsWith('/detail')) return { problem: 'O produto não funciona.', action_responsible: 'seller', due_date: '2026-10-13T12:00:00Z' };
   if (path === '/post-purchase/v1/claims/987') return cases[0];
   throw new Error(`Unexpected path: ${path}`);
 };
@@ -142,4 +143,67 @@ test('pedido com solicitação de retorno sem claims ou entidades incompletas ex
   assert.equal(hinted.returnsComplete, false);
   const missing = await readPostSale(order(), '123', provider([claim({ type: 'mediations', related_entities: undefined })]));
   assert.equal(missing.returnsComplete, false);
+});
+
+test('detalhamento informa problema, etapa, responsável, prazo e datas sem conversa/anexos', async () => {
+  const read = provider([claim({ stage: 'dispute', date_created: '2026-10-10T12:00:00Z', last_updated: '2026-10-11T12:00:00Z' })]);
+  const result = await readPostSale(order(), '123', async (path) => path.endsWith('/detail') ? { problem: '<b>O produto não funciona.</b>', action_responsible: 'mediator', due_date: '2026-10-14T12:00:00Z', messages: ['PRIVATE'], attachments: ['SECRET'] } : read(path));
+  const detail = result.claims[0];
+  assert.equal(detail.detailComplete, true);
+  assert.equal(detail.problemText, 'O produto não funciona.');
+  assert.equal(detail.stageText, 'Mediação do Mercado Livre');
+  assert.equal(detail.responsibleText, 'Mercado Livre');
+  assert.equal(detail.dueAt, '2026-10-14T12:00:00Z');
+  assert.equal(detail.createdAt, '2026-10-10T12:00:00Z');
+  assert.equal(detail.updatedAt, '2026-10-11T12:00:00Z');
+  assert.ok(!JSON.stringify(result).includes('SECRET'));
+  assert.ok(!JSON.stringify(result).includes('PRIVATE'));
+});
+
+test('falha parcial do detalhe conserva motivo, resolução e retorno e identifica a área', async () => {
+  const read = provider();
+  const result = await readPostSale(order(), '123', async (path) => { if (path.endsWith('/detail')) throw Object.assign(new Error('PRIVATE'), { code: 'provider_policy_403' }); return read(path); });
+  assert.equal(result.claims[0].detailComplete, false);
+  assert.equal(result.claims[0].reasonText, 'Comprador desistiu da compra');
+  assert.ok(result.claims[0].returnDetails);
+  assert.deepEqual(result.accessIssues, [{ area: 'detalhamento da reclamação', claimId: '987', permissionDenied: true, policyDenied: true }]);
+  assert.match(result.warnings.join(), /detalhamento da reclamação.*403/);
+});
+
+test('busca falha recupera somente IDs do próprio pedido sem declarar histórico completo', async () => {
+  const paths = []; const read = provider();
+  const result = await readPostSale(order({ mediations: [{ id: 987 }, { id: '../../SECRET' }, { id: 987 }] }), '123', async (path) => { paths.push(path); if (path.includes('/search?')) throw Object.assign(new Error(), { code: 'provider_403' }); return read(path); });
+  assert.equal(result.claims.length, 1);
+  assert.equal(result.claimsComplete, false);
+  assert.equal(result.returnsComplete, false);
+  assert.ok(result.claims[0].detailComplete);
+  assert.equal(paths.filter((path) => path === '/post-purchase/v1/claims/987').length, 1);
+  assert.ok(paths.every((path) => !path.includes('SECRET')));
+  assert.match(paths[0], /players.user_id=123&players.role=respondent/);
+});
+
+test('recuperação por pedido ainda rejeita caso de outro pedido antes do detalhe', async () => {
+  const paths = [];
+  const result = await readPostSale(order({ mediations: [{ id: 987 }] }), '123', async (path) => { paths.push(path); if (path.includes('/search?')) throw new Error(); return claim({ resource_id: 999 }); });
+  assert.equal(result.claims.length, 0);
+  assert.equal(paths.length, 2);
+});
+
+test('ações opcionais não são obrigações e caso encerrado não tem prazo pendente', async () => {
+  const current = claim({ players: [{ type: 'seller', user_id: 123, available_actions: [{ action: 'refund', mandatory: false }, { action: 'send_message_to_mediator', mandatory: true }] }] });
+  const result = await readPostSale(order(), '123', provider([current]));
+  assert.equal(result.claims[0].actions[0].required, false);
+  assert.match(result.claims[0].actions[0].text, /Avaliar reembolso/);
+  assert.equal(result.claims[0].actions[1].required, true);
+  const closed = await readPostSale(order(), '123', provider([claim({ ...current, status: 'closed', resolution: { reason: 'payment_refunded', date_created: '2026-10-11T12:00:00Z' } })]));
+  assert.equal(closed.claims[0].dueAt, null);
+  assert.deepEqual(closed.claims[0].actions, []);
+  assert.equal(closed.claims[0].closedAt, '2026-10-11T12:00:00Z');
+});
+
+test('categorias oficiais de motivo desconhecido são traduzidas sem inventar texto livre', async () => {
+  const read = provider();
+  const result = await readPostSale(order(), '123', async (path) => path.includes('/reasons/') ? { name: 'new_reason', detail: 'Spanish PRIVATE', settings: { rules_engine_triage: ['defective', 'incomplete', 'unknown'] } } : read(path));
+  assert.equal(result.claims[0].reasonText, 'Categoria informada: Produto com defeito; Produto incompleto');
+  assert.ok(!JSON.stringify(result).includes('Spanish PRIVATE'));
 });
