@@ -1,6 +1,17 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.50.0.04 -->
+<!-- ava-version: 1.50.0.05 -->
+
+> Revisão 1.50.0.05: em **Renovar autorização**, mantenha aberto o painel
+> da conta enquanto concluir **Autorizar agora** ou o titular usar o link.
+> O servidor confirma a solicitação automaticamente; a conta alvo atualiza e
+> o card mostra **Renovação concluída**, sem clicar em Atualizar contas. A aba
+> aberta pelo botão fecha após sucesso. Se o navegador impedir ou o titular
+> abrir o link numa aba comum, a mensagem informa que pode fechá-la. Cancelar,
+> expirar ou autorizar outra conta não confirma renovação nem apaga a conexão.
+> Fechar o painel interrompe a conferência automática, mas não cancela o link.
+> Renovação concluída não comprova acesso a todas as reclamações/devoluções:
+> use Atualizar pós-venda no pedido para conferir o acesso real.
 
 > Revisão 1.50.0.04: Classificar, Atualizar e Recolher/Expandir têm o mesmo
 > efeito ao passar o mouse. Sem impacto operacional nas ações ou na ordenação.

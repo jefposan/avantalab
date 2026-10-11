@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { randomBytes } from 'node:crypto';
+import { runInNewContext } from 'node:vm';
 
 const root = resolve(import.meta.dirname, '../..');
 const hooks = registerHooks({ resolve(specifier, context, next) {
@@ -215,3 +216,131 @@ test('destino inesperado, sem URL ou malformado nunca navega o titular',async()=
   globalThis.fetch=async()=>Response.json({message:'Solicitação expirada.'},{status:410});
   await assert.rejects(clientAuthorization.renewalAuthorizationUrl('fixture-request'),{message:'Solicitação expirada.'});
 });
+
+test('conclusão da solicitação exata atualiza só a conta e não expõe tokens/PKCE', async () => {
+  const { db, request } = await requested(); globalThis.renewalDb = db;
+  globalThis.fetch = async () => Response.json({ access_token: 'new-access', refresh_token: 'new-refresh', user_id: 123, expires_in: 21600, scope: 'read write' });
+  assert.equal((await service.authorizationRenewalStatus(db, company, actor, connection, request.requestId)).status, 'pending');
+  await callback.GET(new Request(`https://avantalab.com.br/api/modulos/marketplaces/conexoes/mercado-livre/callback?state=${request.requestId}&code=fixture-code`));
+  const result = await service.authorizationRenewalStatus(db, company, actor, connection, request.requestId);
+  assert.equal(result.status, 'completed'); assert.equal(result.account.id, connection); assert.equal(result.account.status, 'connected');
+  assert.ok(!JSON.stringify(result).includes('token_sealed')); assert.ok(!JSON.stringify(result).includes('new-access')); assert.ok(!JSON.stringify(result).includes('verifier'));
+  assert.equal(db.tables.marketplace_sales.length, 1); assert.equal(db.tables.marketplace_listings.length, 1);
+  // Refresh da conta sem conclusão da solicitação não produz sucesso.
+  const another = await service.createAuthorizationRenewal(db, company, actor, connection, 'https://avantalab.com.br');
+  db.tables.marketplace_connections[0].last_checked_at = new Date().toISOString();
+  assert.equal((await service.authorizationRenewalStatus(db, company, actor, connection, another.requestId)).status, 'pending');
+});
+
+test('status exige empresa, solicitante e conta; consumido, expirado ou desconectado não vira sucesso', async () => {
+  const { db, request, pending, intent } = await requested();
+  for (const args of [
+    ['99999999-9999-4999-8999-999999999999', actor, connection, request.requestId],
+    [company, '44444444-4444-4444-8444-444444444444', connection, request.requestId],
+    [company, actor, '55555555-5555-4555-8555-555555555555', request.requestId],
+    [company, actor, connection, 'guess'],
+  ]) await assert.rejects(service.authorizationRenewalStatus(db, ...args));
+  pending.consumed_at = new Date().toISOString();
+  assert.equal((await service.authorizationRenewalStatus(db, company, actor, connection, request.requestId)).status, 'processing');
+  pending.consumed_at = new Date(Date.now() - 120_001).toISOString();
+  assert.equal((await service.authorizationRenewalStatus(db, company, actor, connection, request.requestId)).status, 'failed');
+  pending.expires_at = new Date(Date.now() - 1).toISOString();
+  assert.equal((await service.authorizationRenewalStatus(db, company, actor, connection, request.requestId)).status, 'expired');
+  await service.recordAuthorizationRenewalResult(db, pending, intent, 'completed');
+  assert.equal((await service.authorizationRenewalStatus(db, company, actor, connection, request.requestId)).status, 'completed');
+  db.tables.marketplace_connections[0].status = 'disconnected';
+  assert.equal((await service.authorizationRenewalStatus(db, company, actor, connection, request.requestId)).status, 'failed');
+});
+
+test('cancelamento e vendedor divergente persistem falha, nunca conclusão', async () => {
+  for (const mode of ['cancel', 'wrong-seller']) {
+    const { db, request } = await requested(); globalThis.renewalDb = db;
+    const before = JSON.stringify(db.tables.marketplace_connections);
+    globalThis.fetch = async () => Response.json({ access_token: 'new-access', refresh_token: 'new-refresh', user_id: 456, expires_in: 21600, scope: 'read write' });
+    await callback.GET(new Request(`https://avantalab.com.br/api/modulos/marketplaces/conexoes/mercado-livre/callback?state=${request.requestId}${mode === 'cancel' ? '&error=access_denied' : '&code=fixture-code'}`));
+    const result = await service.authorizationRenewalStatus(db, company, actor, connection, request.requestId);
+    assert.equal(result.status, 'failed'); assert.ok(result.message);
+    assert.equal(JSON.stringify(db.tables.marketplace_connections), before);
+  }
+});
+
+test('status privado autentica e revalida escopo sem depender da configuração OAuth de geração', async () => {
+  const { db, request } = await requested();
+  globalThis.renewalAccess = async () => ({ db, empresaId: company, usuario: { id: actor } });
+  const makeRequest = () => new Request('https://avantalab.com.br/api/modulos/marketplaces/conexoes/mercado-livre/renovar', { method: 'POST', body: JSON.stringify({ action: 'status', empresaId: company, connectionId: connection, requestId: request.requestId }) });
+  const original = process.env.MERCADOLIVRE_CLIENT_ID; delete process.env.MERCADOLIVRE_CLIENT_ID;
+  try {
+    const response = await privateRoute.POST(makeRequest());
+    assert.equal(response.status, 200); assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.deepEqual(await response.json(), { status: 'pending' });
+  } finally { process.env.MERCADOLIVRE_CLIENT_ID = original; }
+  globalThis.renewalAccess = async () => { throw Object.assign(new Error('Acesso negado'), { status: 403 }); };
+  assert.equal((await privateRoute.POST(makeRequest())).status, 403);
+});
+
+test('callback de renovação fecha janela sem opener e mantém fallback se navegador impedir', async () => {
+  const { db, request } = await requested(); globalThis.renewalDb = db;
+  globalThis.fetch = async () => Response.json({ access_token: 'new-access', refresh_token: 'new-refresh', user_id: 123, expires_in: 21600, scope: 'read write' });
+  const html = await (await callback.GET(new Request(`https://avantalab.com.br/api/modulos/marketplaces/conexoes/mercado-livre/callback?state=${request.requestId}&code=fixture-code`))).text();
+  assert.match(html, /Renovação concluída/);
+  const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  let closed = 0, fallback, timer;
+  runInNewContext(script, { window: { opener: null, close() { closed++; }, setTimeout(fn) { timer = fn; }, location: { replace(url) { fallback = url; } } } });
+  assert.equal(closed, 1); timer();
+  assert.match(fallback, /\/marketplaces\/renovar\?resultado=connected/);
+  assert.ok(!fallback.includes(request.requestId));
+});
+
+test('card confere resultado autenticado, preserva noopener e remove instrução de atualização manual', () => {
+  const panel = readFileSync(resolve(root, 'app/marketplaces/AuthorizationRenewal.tsx'), 'utf8');
+  assert.match(panel, /action: 'status', empresaId: companyId, connectionId: account.id, requestId: tracking.requestId/);
+  assert.match(panel, /setTracking\(draft\)/); assert.match(panel, /setTracking\(result\)/);
+  assert.match(panel, /setNotice\('Renovação concluída'\)/);
+  assert.match(panel, /popup\.opener = null/);
+  assert.doesNotMatch(panel, /use Atualizar contas|Ao concluir, use/);
+  const client = readFileSync(resolve(root, 'app/marketplaces/MarketplacesClient.tsx'), 'utf8');
+  assert.match(client, /current\.map\(\(account\) => account.id === updated.id \? updated : account\)/);
+  assert.match(client, /onCompleted=\{completeAccountRenewal\}/);
+  assert.match(client, /if \(data.renewal\) return/);
+  const landing = readFileSync(resolve(root, 'app/marketplaces/renovar/RenewalClient.tsx'), 'utf8');
+  assert.match(landing, /Renovação concluída\. Você pode fechar esta aba\./);
+  assert.doesNotMatch(landing, /Avise quem enviou o link/);
+});
+
+async function browserFixture(task) {
+  const originalWindow = globalThis.window, originalDocument = globalThis.document;
+  const intervals = new Map(), events = new Map(); let index = 0;
+  globalThis.window = { setInterval(fn) { intervals.set(++index, fn); return index; }, clearInterval(id) { intervals.delete(id); }, addEventListener(name, fn) { events.set(name, fn); }, removeEventListener(name) { events.delete(name); } };
+  globalThis.document = { visibilityState: 'visible', addEventListener(name, fn) { events.set(name, fn); }, removeEventListener(name) { events.delete(name); } };
+  try { await task({ intervals, events, tick: () => new Promise(resolve => setImmediate(resolve)) }); }
+  finally { globalThis.window = originalWindow; globalThis.document = originalDocument; }
+}
+
+test('conferência automática conclui uma vez, não sobrepõe consultas e remove listeners', () => browserFixture(async ({ intervals, events, tick }) => {
+  let resolveRead, reads = 0; const results = [];
+  const stop = clientAuthorization.monitorAuthorizationRenewal({ expiresAt: new Date(Date.now() + 60_000).toISOString(), read: () => { reads++; return new Promise(resolve => { resolveRead = resolve; }); }, onResult: result => results.push(result.status), onError: assert.fail });
+  await events.get('focus')(); assert.equal(reads, 1);
+  resolveRead({ status: 'pending' }); await tick();
+  intervals.values().next().value(); assert.equal(reads, 2);
+  resolveRead({ status: 'completed', account: { id: connection, status: 'connected' } }); await tick();
+  assert.deepEqual(results, ['pending', 'completed']); assert.equal(intervals.size, 0); assert.equal(events.size, 0);
+  stop(); assert.deepEqual(results, ['pending', 'completed']);
+}));
+
+test('página oculta pausa; retorno confere; desmontagem aborta e ignora resposta tardia', () => browserFixture(async ({ events, tick }) => {
+  let reads = 0, resolveRead, signal; const results = [];
+  document.visibilityState = 'hidden';
+  const stop = clientAuthorization.monitorAuthorizationRenewal({ expiresAt: new Date(Date.now() + 60_000).toISOString(), read: current => { reads++; signal = current; return new Promise(resolve => { resolveRead = resolve; }); }, onResult: result => results.push(result), onError: assert.fail });
+  assert.equal(reads, 0); document.visibilityState = 'visible'; events.get('visibilitychange')(); assert.equal(reads, 1);
+  stop(); assert.equal(signal.aborted, true);
+  resolveRead({ status: 'completed' }); await tick(); assert.deepEqual(results, []); assert.equal(events.size, 0);
+}));
+
+test('falha de rede tenta novamente; expiração e resultado final encerram a conferência', () => browserFixture(async ({ intervals, tick }) => {
+  let reads = 0, errors = 0; const results = [];
+  clientAuthorization.monitorAuthorizationRenewal({ expiresAt: new Date(Date.now() + 60_000).toISOString(), read: async () => { if (++reads === 1) throw new Error('network'); return { status: 'expired' }; }, onResult: result => results.push(result.status), onError: () => errors++ });
+  await tick(); assert.equal(errors, 1); assert.equal(intervals.size, 1);
+  await intervals.values().next().value(); assert.deepEqual(results, ['expired']); assert.equal(intervals.size, 0);
+  clientAuthorization.monitorAuthorizationRenewal({ expiresAt: new Date(Date.now() - 1).toISOString(), read: async () => { throw new Error('network'); }, onResult: assert.fail, onError: () => errors++ });
+  await tick(); assert.equal(intervals.size, 0); assert.equal(errors, 2);
+}));

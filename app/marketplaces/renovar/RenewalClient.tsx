@@ -20,7 +20,7 @@ export default function RenewalClient() {
       if (controller.signal.aborted) return;
       const outcome = new URLSearchParams(window.location.search).get('resultado');
       if (outcome) {
-        setResult(outcome === 'connected' ? 'Autorização renovada. Avise quem enviou o link para atualizar a consulta no AvantaLab.' : 'Não foi possível concluir. A conexão existente não foi excluída. Peça um novo link ao administrador e entre na conta indicada.');
+        setResult(outcome === 'connected' ? 'Renovação concluída. Você pode fechar esta aba.' : 'Não foi possível concluir. A conexão existente não foi excluída. Peça um novo link ao administrador e entre na conta indicada.');
         setBusy(false); return;
       }
       const id = new URLSearchParams(window.location.hash.slice(1)).get('solicitacao') || '';

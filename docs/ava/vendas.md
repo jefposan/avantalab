@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.50.0.04 -->
+<!-- ava-version: 1.50.0.05 -->
+
+> Revisão 1.50.0.05: confirmação automática da renovação de conta no
+> Marketplaces Web. Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.50.0.04: hover unificado dos controles de Marketplaces Web.
 > Sem impacto operacional no AvantaVendas.

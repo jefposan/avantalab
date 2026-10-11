@@ -86,6 +86,13 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     loadAccounts(data.accounts, data.canConnect);
   }, [companyId, loadAccounts]);
 
+  const completeAccountRenewal = useCallback((updated: MarketplaceAccount) => {
+    setAccounts((current) => current.map((account) => account.id === updated.id ? updated : account));
+    setRenewAccount((current) => current?.id === updated.id ? updated : current);
+    setSelectedAccount((current) => current || updated.id);
+    setConnectionNotice('');
+  }, []);
+
   async function updateConnections() {
     if (connectionsRefreshing) return;
     setConnectionsRefreshing(true);
@@ -93,7 +100,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     try {
       await refreshConnections();
       setRefreshKey((value) => value + 1);
-      setConnectionNotice('Lista de contas atualizada. Após renovar a autorização, atualize também o pós-venda da venda.');
+      setConnectionNotice('Lista de contas atualizada.');
     } catch (error) {
       setConnectionNotice(error instanceof Error && ['TimeoutError', 'AbortError'].includes(error.name)
         ? 'A consulta demorou mais que o esperado. Tente novamente.'
@@ -187,8 +194,9 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   useEffect(() => {
     const receiveAuthorization = (event: MessageEvent<unknown>) => {
       if (event.origin !== window.location.origin || !event.data || typeof event.data !== 'object') return;
-      const data = event.data as { type?: string; provider?: string; empresaId?: string; status?: string; message?: string };
+      const data = event.data as { type?: string; provider?: string; empresaId?: string; status?: string; message?: string; renewal?: boolean };
       if (data.type !== 'avantalab-marketplace-oauth' || data.provider !== 'mercado_livre' || data.empresaId !== companyId) return;
+      if (data.renewal) return; // Renovação é confirmada pela solicitação autenticada, não pela mensagem da janela.
       oauthWindow.current = null;
       setConnecting(false);
       if (data.status === 'connected') {
@@ -326,7 +334,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
               <Tooltip texto="Renovar a autorização desta conta sem excluir a conexão ou o histórico"><button id={`renew-account-${account.id}`} type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton}`} disabled={disconnecting || connecting || accountSelectionLocked || publicationBusy} aria-expanded={renewAccount?.id === account.id} aria-controls={`account-renewal-${account.id}`} onClick={() => setRenewAccount((current) => current?.id === account.id ? null : account)}>Renovar autorização</button></Tooltip>
               <button type="button" className={`${styles.disconnectAccountButton} ${styles.compactConnectionButton}`} disabled={disconnecting || accountSelectionLocked || publicationBusy} onClick={() => setDisconnectAccount(account)}>Desconectar</button>
             </div>}
-            {canManageConnections && renewAccount?.id === account.id && <div id={`account-renewal-${account.id}`}><AuthorizationRenewal companyId={companyId} account={account} onClose={() => { setRenewAccount(null); document.getElementById(`renew-account-${account.id}`)?.focus(); }} /></div>}
+            {canManageConnections && renewAccount?.id === account.id && <div id={`account-renewal-${account.id}`}><AuthorizationRenewal companyId={companyId} account={account} onCompleted={completeAccountRenewal} onClose={() => { setRenewAccount(null); document.getElementById(`renew-account-${account.id}`)?.focus(); }} /></div>}
           </article>)}</div> : <p className={styles.emptyConnectedAccounts}>Nenhuma conta conectada.</p>}
         </div>}
       </article>

@@ -5,7 +5,7 @@ import { uuidIsValid } from './listing-model';
 import { createMercadoLivreOAuthState, createPkceVerifier } from './mercadolivre-oauth';
 import { openMarketplaceSecret, sealMarketplaceSecret, type SealedMarketplaceSecret } from './secret-vault';
 
-export type RenewalIntent = { purpose: 'renewal'; verifier: string; connectionId: string; sellerReference: string };
+export type RenewalIntent = { purpose: 'renewal'; verifier: string; connectionId: string; sellerReference: string; result?: 'completed' | 'failed'; resultMessage?: string };
 export type PendingAuthorization = { id: string; empresa_id: string; started_by: string; expires_at: string; consumed_at: string | null; verifier_sealed: SealedMarketplaceSecret };
 const unavailable = () => new MarketplaceError(410, 'renewal_unavailable', 'Solicitação indisponível, expirada ou já utilizada. Peça um novo link ao administrador.');
 export function authorizationIntent(value: string): RenewalIntent | { purpose: 'connection'; verifier: string } {
@@ -56,6 +56,41 @@ export async function readAuthorizationRenewal(db: SupabaseClient, state: unknow
   if (intent.purpose !== 'renewal') throw unavailable();
   const account = await renewalContext(db, pending, intent);
   return { pending: pending as PendingAuthorization, intent, account };
+}
+
+/** Resultado autenticado da solicitação exata. Consumo do link não significa sucesso. */
+export async function authorizationRenewalStatus(db: SupabaseClient, companyId: string, actorId: string, connectionId: unknown, state: unknown) {
+  if (!uuidIsValid(connectionId) || typeof state !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(state)) throw unavailable();
+  const { data: pending, error } = await db.from('marketplace_oauth_pending').select('*')
+    .eq('empresa_id', companyId).eq('started_by', actorId).eq('provider', 'mercado_livre').eq('state', state).maybeSingle();
+  if (error) throw new MarketplaceError(503, 'database', 'Não foi possível conferir a renovação.');
+  if (!pending) throw unavailable();
+  const intent = authorizationIntent(openMarketplaceSecret(pending.verifier_sealed));
+  if (intent.purpose !== 'renewal' || intent.connectionId !== connectionId) throw unavailable();
+  if (pending.consumed_at && intent.result === 'failed') return { status: 'failed' as const, message: intent.resultMessage || 'Não foi possível renovar. Tente novamente.' };
+  if (pending.consumed_at && intent.result === 'completed') {
+    const { data: account, error: accountError } = await db.from('marketplace_connections')
+      .select('id,seller_reference,seller_name,status,last_synced_at,expires_at')
+      .eq('empresa_id', companyId).eq('id', connectionId).eq('provider', 'mercado_livre').eq('seller_reference', intent.sellerReference).eq('status', 'connected').maybeSingle();
+    if (accountError) throw new MarketplaceError(503, 'database', 'Não foi possível atualizar a conta renovada.');
+    if (!account) return { status: 'failed' as const, message: 'A conexão mudou após a renovação. Confira a conta novamente.' };
+    return { status: 'completed' as const, account: {
+      id: account.id, seller_reference: account.seller_reference, seller_name: account.seller_name,
+      status: account.status, last_synced_at: account.last_synced_at, expires_at: account.expires_at,
+    } };
+  }
+  if (!Number.isFinite(Date.parse(pending.expires_at)) || Date.parse(pending.expires_at) <= Date.now()) return { status: 'expired' as const, message: 'A solicitação expirou. Tente renovar novamente.' };
+  if (pending.consumed_at && Date.parse(pending.consumed_at) + 120_000 <= Date.now()) return { status: 'failed' as const, message: 'Não foi possível confirmar a renovação. Tente novamente.' };
+  return { status: pending.consumed_at ? 'processing' as const : 'pending' as const };
+}
+
+/** Usa o envelope criptografado existente, sem expor PKCE ou exigir nova coluna. */
+export async function recordAuthorizationRenewalResult(db: SupabaseClient, pending: PendingAuthorization, intent: RenewalIntent, result: 'completed' | 'failed', message = '') {
+  const { data, error } = await db.from('marketplace_oauth_pending')
+    .update({ verifier_sealed: sealMarketplaceSecret(JSON.stringify({ ...intent, result, resultMessage: message.slice(0, 180) })) })
+    .eq('id', pending.id).eq('empresa_id', pending.empresa_id).eq('started_by', pending.started_by)
+    .filter('verifier_sealed', 'eq', JSON.stringify(pending.verifier_sealed)).select('id').maybeSingle();
+  if (error || !data) throw new MarketplaceError(503, 'renewal_status_unavailable', 'Não foi possível registrar a confirmação da renovação. Confira a conta antes de tentar novamente.');
 }
 
 export async function completeAuthorizationRenewal(db: SupabaseClient, pending: PendingAuthorization, intent: RenewalIntent, credentials: { sellerReference: string; accessToken: string; refreshToken: string; scopes: string[]; expiresAt: string | null }) {

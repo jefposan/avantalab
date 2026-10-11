@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
-import { createAuthorizationRenewal } from '@/app/modules/marketplaces/services/authorization-renewal';
+import { authorizationRenewalStatus, createAuthorizationRenewal } from '@/app/modules/marketplaces/services/authorization-renewal';
 import { getMercadoLivreOAuthConfiguration } from '@/app/modules/marketplaces/services/mercadolivre-oauth';
 export const runtime = 'nodejs';
 
@@ -8,6 +8,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { db, empresaId, usuario } = await authorizeMarketplace(request, body.empresaId, 'connections');
+    if (body.action === 'status') {
+      const result = await authorizationRenewalStatus(db, empresaId, usuario.id, body.connectionId, body.requestId);
+      return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } });
+    }
     getMercadoLivreOAuthConfiguration();
     const result = await createAuthorizationRenewal(db, empresaId, usuario.id, body.connectionId, new URL(request.url).origin);
     return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } });

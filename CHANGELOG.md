@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.50.0.05 - 2026-10-11
+
+- Renovar autorização confirma automaticamente a solicitação no servidor,
+  tanto por Autorizar agora quanto pelo link ao titular. Ao concluir, atualiza
+  somente a conta alvo e mostra Renovação concluída dentro do seu card.
+- A janela criada pelo botão fecha após sucesso, mesmo sem opener. Se o
+  navegador impedir, o retorno orienta que a aba pode ser fechada. Não exige
+  Atualizar contas nem orienta avisar manualmente quem enviou o link.
+- Confirmação vinculada à empresa, solicitante, conta e solicitação; consumo
+  do link, refresh comum, cancelamento, expiração e conta divergente não viram
+  sucesso. Resultado permanece no envelope criptografado existente, sem
+  migração ou exposição de tokens/PKCE. Conexão de outra conta preservada.
+- Verificação a cada 3s com painel aberto/página visível e ao retornar; sem
+  consultas concorrentes e com limpeza ao concluir ou fechar. Renovar não
+  comprova autorização a todos os recursos do pós-venda. Ava atualizada.
+
 ## 1.50.0.04 - 2026-10-11
 
 - Classificar, Atualizar e Recolher/Expandir têm o mesmo hover de fundo e
