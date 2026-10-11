@@ -140,6 +140,33 @@ testes. Esta seção resume apenas a face dos controles.
 - O adaptador pode desativar **Salvar para depois** quando o módulo não oferece
   retomada de pendências e pode compactar listas curtas sem rolagem interna.
 
+### Recolher e expandir blocos
+
+- Reutilizar `app/components/BotaoExpandirCard.tsx`, com `variante="painel"`
+  e `modo="lista"`, para recolher conteúdo no cabeçalho de blocos gerais.
+  `contexto` identifica o bloco no nome acessível; `controlsId` associa o
+  acionador ao conteúdo. O controle mostra Recolher/Expandir, possui alvo de
+  48px e recebe `corPrimaria` e `darkMode` do shell.
+- Ocultar com `hidden` quando for necessário preservar edição/filtros montados.
+  Manter o título e o acionador disponíveis; recolher não cancela operações.
+  As variantes existentes de cabeçalho e rodapé mantêm seu comportamento.
+
+### Blocos reordenáveis — AvantaKanban
+
+- Reutilizar `app/components/AvantaKanban.tsx` para blocos React empilhados;
+  recebe `items` com `id`, `title` e `render(handle)`, `order` controlada,
+  `onOrderChange` e `disabled`. Inserir o handle no cabeçalho existente.
+- Seguir `planejamento/padrao-avanta-kanban.md` e o núcleo de `app/lib/dnd.ts`:
+  slots capturados uma vez, histerese oficial, cópia inerte transparente,
+  vizinhos por transformações e atualização única da ordem ao concluir.
+  Alturas diferentes usam o retrato inicial para evitar sobreposição.
+- O acionador de seis pontos tem 48px, teclado por setas/Início/Fim,
+  instruções, foco preservado, retorno por Escape/cancelamento e suporte a
+  movimento reduzido. A cópia não monta componentes nem dispara consultas.
+- Persistência pertence ao módulo; em Marketplaces é local, versionada,
+  validada, separada por usuário/empresa e gravada apenas após concluir.
+  Preferência inválida retorna à ordem padrão; falha ao salvar é informada.
+
 ## Estados assíncronos
 
 - Desabilitar submissão duplicada e indicar ação em andamento.

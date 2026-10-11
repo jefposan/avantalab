@@ -1,6 +1,25 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.49.0.06 -->
+<!-- ava-version: 1.49.0.12 -->
+
+> Revisão 1.49.0.12: texto do tooltip de organização de Marketplaces Web
+> encurtado. Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.49.0.11: texto do tooltip de organização de Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.49.0.10: tooltips nos cabeçalhos de Marketplaces da Gestão Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.49.0.09: uniformização dos botões de Anunciados na Gestão Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.49.0.08: organização dos blocos Vendas e Anunciados em Marketplaces
+> da Gestão Web, com Vendas primeiro. Sem impacto operacional na Gestão Mobile
+> ou no PWA AvantaPreços.
+
+> Revisão 1.49.0.07: blocos recolhíveis em Marketplaces da Gestão Web.
+> Sem impacto operacional na Gestão Mobile e no PWA AvantaPreços.
 
 > Revisão 1.49.0.06: consulta de pós-venda do Mercado Livre nos detalhes de
 > Marketplaces da Gestão Web. Sem impacto operacional na Gestão Mobile.

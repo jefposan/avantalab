@@ -1,6 +1,33 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0.06 -->
+<!-- ava-version: 1.49.0.12 -->
+
+> Revisão 1.49.0.12: tooltip dos pontos de organização encurtado para “segure
+> arraste para mudar a ordem”. Ajuste de texto, sem impacto operacional.
+
+> Revisão 1.49.0.11: tooltip de organização dos blocos informa “segure arraste
+> para mudar a ordem dos blocos”. Ajuste de texto, sem impacto operacional.
+
+> Revisão 1.49.0.10: tooltips oficiais explicam Atualizar, os pontos de organização
+> e Expandir/Recolher nos blocos Anunciados e Vendas. Sem impacto operacional.
+
+> Revisão 1.49.0.09: botões Atualizar e Recolher/Expandir de Anunciados usam
+> o mesmo visual de Vendas. Sem impacto operacional: ações e permissões mantidas.
+
+> Revisão 1.49.0.08: em **Anúncios em marketplaces**, **Vendas** vem antes de
+> **Anunciados** por padrão. Arraste pelos seis pontos do cabeçalho para mudar
+> a ordem dos blocos completos (não dos pedidos ou anúncios). Com foco nos
+> pontos, as setas ou Início/Fim também organizam. Escape cancela um arraste.
+> Recolher os blocos facilita mover. A escolha fica salva neste navegador,
+> separada por usuário e empresa; não sincroniza entre aparelhos. Mantém
+> filtros, edição, detalhes e Recolher/Expandir; recolhimento vale só nesta
+> abertura. Não modifica produtos, vendas nem contas do Mercado Livre.
+
+> Revisão 1.49.0.07: em **Anúncios em marketplaces**, **Anunciados** e
+> **Vendas** oferecem **Recolher/Expandir** no topo, independentemente. Ambos
+> iniciam expandidos. Recolher mantém filtros, edição e detalhes; título e
+> Atualizar continuam acessíveis. O sino expande Vendas e mostra todas as contas
+> nos filtros atuais. O estado vale durante esta abertura, sem preferência salva.
 
 > Revisão 1.49.0.06: ao abrir uma venda em **Anúncios em marketplaces**, o
 > **Pós-venda · Mercado Livre** consulta pedido, envio original, reclamações

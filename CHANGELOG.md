@@ -1,5 +1,58 @@
 # Changelog
 
+## 1.49.0.12 - 2026-10-11
+
+- Tooltip de arraste encurtado para “segure arraste para mudar a ordem”,
+  retirando “dos blocos” nos dois cabeçalhos. Componente oficial e ações
+  preservados. Teste e conhecimento da Ava revisados; sem impacto operacional.
+
+## 1.49.0.11 - 2026-10-11
+
+- Tooltip dos pontos de organização de Anunciados e Vendas ajustado para
+  “segure arraste para mudar a ordem dos blocos”, mantendo o componente oficial
+  e o comportamento do arraste. Teste de regressão e revisão da Ava atualizados;
+  sem impacto operacional.
+
+## 1.49.0.10 - 2026-10-11
+
+- **Tooltips nos cabeçalhos de Marketplaces**: Atualizar anúncios, Atualizar
+  vendas e os seis pontos de organização passam a reutilizar o Tooltip oficial
+  do sistema. Expandir/Recolher mantém o tooltip contextual já existente.
+  Mensagens no hover e foco por teclado, sem alterar medidas, cores ou ações.
+- Manuais e conhecimento da Ava revisados: sem impacto operacional.
+
+## 1.49.0.09 - 2026-10-11
+
+- **Cabeçalhos de Anunciados e Vendas uniformes**: Atualizar em Anunciados
+  reutiliza exatamente o estilo de Vendas (fundo claro, borda, cor e dimensões).
+  Regras genéricas da listagem não sobrescrevem mais os botões do cabeçalho,
+  preservando tamanho, tipografia e cores do Recolher/Expandir compartilhado.
+  Mantidos tema escuro, estados desabilitados e comportamento das ações.
+- Manuais e conhecimento da Ava revisados: sem impacto operacional.
+
+## 1.49.0.08 - 2026-10-11
+
+- **Organização dos blocos de Marketplaces**: Vendas vem antes de Anunciados
+  por padrão. Os seis pontos no cabeçalho permitem mudar a ordem dos blocos
+  completos por arraste ou pelas setas do teclado; preserva filtros, detalhes,
+  edição e Recolher/Expandir. A ordem fica salva neste navegador por usuário
+  e empresa, sem alterar anúncios ou pedidos no Mercado Livre.
+- **AvantaKanban compartilhado**: reutiliza o núcleo oficial de slots fixos e
+  histerese; move vizinhos apenas por transformações e confirma a ordem uma
+  vez ao soltar. Suporta alturas diferentes, rolagem de borda, Escape,
+  cancelamento do ponteiro, foco, anúncios acessíveis e movimento reduzido.
+  Orientações da Ava revisadas. Sem migração ou mudança nos PWAs.
+
+## 1.49.0.07 - 2026-10-11
+
+- **Anunciados e Vendas recolhíveis**: controle independente Recolher/Expandir
+  no topo de cada bloco, reutilizando BotaoExpandirCard. Mantém filtros, edição
+  e detalhes montados; o cabeçalho e Atualizar continuam disponíveis. O sino
+  expande Vendas antes de levar à lista. Ambos iniciam expandidos, sem nova
+  preferência persistida nem mudanças na integração Mercado Livre.
+- **Acessibilidade e responsividade**: estado expandido, associação com conteúdo,
+  teclado, foco visível e alvo de toque de 48px. Orientações da Ava revisadas.
+
 ## 1.49.0.06 - 2026-10-11
 
 - **Pós-venda consultado ao abrir o pedido**: relê pedido/envio e consulta

@@ -31,6 +31,19 @@ function distanciaDoCentro(ponto: KanbanPonto, slot: KanbanSlot) {
   );
 }
 
+/** Tops in the preview, retaining each item's captured height and the stack gap. */
+export function posicoesVerticaisKanbanEstavel(slots: readonly KanbanSlot[], origem: number, destino: number) {
+  if (!slots.length) return [];
+  const visual = moverItemNaOrdem(slots.map((_, index) => index), origem, destino);
+  const gap = slots.length > 1 ? slots[1].top - slots[0].top - slots[0].height : 0;
+  let top = slots[0].top;
+  return visual.map((index) => {
+    const position = { index, top };
+    top += slots[index].height + gap;
+    return position;
+  });
+}
+
 export function encontrarSlotKanbanEstavel({
   ponto,
   slots,

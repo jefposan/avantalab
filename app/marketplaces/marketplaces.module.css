@@ -23,6 +23,11 @@
 .dark .salesScopeHelp { color: #b8c5d7; }
 .dark .salesPeriodDialog { color: #f8fafc; border-color: #334155; background: #182235; }
 .salesPanel { scroll-margin-top: 100px; }
+.panelOrder { margin-top: 24px; }
+.dark .panelOrder { --avanta-kanban-control: #bfdbfe; }
+.panelHeadingActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.panelHeadingCollapsed { margin-bottom: 0; }
+@media (max-width: 480px) { .listingsPanel > .panelHeading, .salesPanel > .panelHeading { flex-wrap: wrap; }.panelHeadingActions { margin-left: auto; } }
 @media (max-width: 1100px) {
   .page .salesHeader { grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
   .salesHeader > div:nth-child(2) { justify-self: end; }
@@ -139,7 +144,7 @@
 .listingTable :is(td:nth-child(3), td:nth-child(4), td:nth-child(5)) { white-space: nowrap; }
 .listingTable tbody th strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .listingTable small { display: block; font-size: 11px; font-weight: 400; color: #64748b; margin-top: 4px; }
-.listingsPanel button:not(.primary):not(.selectTrigger):not(.selectOption) { min-height: 44px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: var(--brand); padding: 0 12px; font: inherit; cursor: pointer; }
+.listingsPanel button:not(.primary):not(.selectTrigger):not(.selectOption):not([data-avanta-kanban-handle]):not(:where(.panelHeadingActions button)) { min-height: 44px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: var(--brand); padding: 0 12px; font: inherit; cursor: pointer; }
 .listingTable .listingActions { position: sticky; right: 0; z-index: 1; text-align: center; background: #fff; box-shadow: -1px 0 0 #e2e8f0; }
 .listingTable thead .listingActions { background: #f1f5f9; }
 .listingsPanel button.editListing { display: inline-flex; align-items: center; justify-content: center; width: 44px; padding: 0; border: 0; border-radius: 12px; background: transparent; }
@@ -178,7 +183,7 @@
 .dark .editorValue :is(input, textarea) { border-color: #475569; background: #182235; }
 .dark .editorValue :is(input, textarea):disabled, .dark .readOnlyTag { background: #111b2b; color: #b8c5d7; }
 @media (max-width: 760px) { .listingDetails { width: min(100%, calc(100vw - 72px)); }.listingDetails dl { grid-template-columns: 1fr; }.editorValue :is(input, textarea) { min-height: 48px; } }
-.dark .listingFilters input, .dark .listingsPanel button:not(.primary):not(.selectTrigger):not(.selectOption) { background: #182235; color: #e2e8f0; border-color: #475569; }
+.dark .listingFilters input, .dark .listingsPanel button:not(.primary):not(.selectTrigger):not(.selectOption):not([data-avanta-kanban-handle]):not(:where(.panelHeadingActions button)) { background: #182235; color: #e2e8f0; border-color: #475569; }
 .dark .tableScroll, .dark .listingTable th, .dark .listingTable td { border-color: #334155; }
 .dark .listingTable thead { background: #111b2b; }.dark .listingTable small { color: #b8c5d7; }
 .dark .listingTable .listingActions { background: #182235; box-shadow: -1px 0 0 #334155; }

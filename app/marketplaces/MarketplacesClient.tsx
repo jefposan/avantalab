@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import ModuloHeader from '@/app/components/ModuloHeader';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
+import AvantaKanban from '@/app/components/AvantaKanban';
+import usePanelOrder from './usePanelOrder';
 import type { MarketplaceId } from '@/app/modules/marketplaces/types';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
@@ -28,6 +30,7 @@ const providers: Array<{ id: MarketplaceId; name: string; available: boolean }> 
 
 export default function MarketplacesClient({ companyId, initialContext, connectionStatus, connectionMessage }: { companyId: string; initialContext: ContextoNavegacaoModulo | null; connectionStatus?: string; connectionMessage?: string }) {
   const router = useRouter();
+  const panelOrder = usePanelOrder(companyId);
   const [context] = useState(() => initialContext ?? consumirNavegacaoModulo('marketplaces', companyId));
   const [empresa, setEmpresa] = useState(() => context?.empresa ?? { nome: 'Perfil empresarial', corPrimaria: '#003E73', temaEscuro: false, logoUrl: '' });
   const [accessState, setAccessState] = useState<'loading' | 'ready' | 'error'>(() => context ? 'ready' : 'loading');
@@ -55,6 +58,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [salesRefresh, setSalesRefresh] = useState(0);
   const [awaitingUpdates, setAwaitingUpdates] = useState(0);
   const [salesAccount, setSalesAccount] = useState('');
+  const [salesExpanded, setSalesExpanded] = useState(true);
   const [salesGroup, setSalesGroup] = useState<SaleGroup | ''>('');
   const [salesPeriod, setSalesPeriod] = useState(() => monthPeriod(new Date().getFullYear(), new Date().getMonth()));
   const updateSale = useCallback((updated: MarketplaceSale) => {
@@ -258,7 +262,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   return <main className={`${styles.page} ${empresa.temaEscuro ? styles.dark : ''}`} style={{ '--marketplace-brand': empresa.corPrimaria } as CSSProperties}>
     <ModuloHeader empresa={empresa} onBack={voltar} className={styles.salesHeader}>
       <SalesFilters period={salesPeriod} onPeriodChange={setSalesPeriod} group={salesGroup} onGroupChange={setSalesGroup} counts={summary.byGroup} total={summary.total} dark={empresa.temaEscuro} brand={empresa.corPrimaria} />
-      <button type="button" className={styles.salesNotification} onClick={() => { setSalesAccount(''); document.getElementById('sales-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }} aria-label={`${pendingSalesTotal} vendas nos filtros selecionados. Ver todas as contas.`} title="Vendas nos filtros selecionados" aria-busy={salesLoading}>
+      <button type="button" className={styles.salesNotification} onClick={() => { setSalesExpanded(true); setSalesAccount(''); document.getElementById('sales-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }} aria-label={`${pendingSalesTotal} vendas nos filtros selecionados. Ver todas as contas.`} title="Vendas nos filtros selecionados" aria-busy={salesLoading}>
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>{pendingSalesTotal > 0 && <b>{pendingSalesTotal}</b>}
       </button>
     </ModuloHeader>
@@ -306,11 +310,14 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       </article>
     </section>
 
-    {marketplace === 'mercado_livre' && <Anunciados companyId={companyId} dark={empresa.temaEscuro} brand={empresa.corPrimaria} accountId={selectedAccount} onAccountsLoaded={loadAccounts} onAccountSelectionLockedChange={setAccountSelectionLocked} onPublishInAnotherAccount={(sourceConnectionId, listingId, targetConnectionId) => {
+    {marketplace === 'mercado_livre' && <AvantaKanban className={styles.panelOrder} order={panelOrder.order} onOrderChange={panelOrder.change} disabled={!panelOrder.ready || publicationBusy || priceUsersOpen || !!disconnectAccount} items={[
+      { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={setSalesAccount} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
+      { id: 'announced', title: 'Anunciados', render: (handle) => <Anunciados companyId={companyId} dark={empresa.temaEscuro} brand={empresa.corPrimaria} accountId={selectedAccount} onAccountsLoaded={loadAccounts} onAccountSelectionLockedChange={setAccountSelectionLocked} onPublishInAnotherAccount={(sourceConnectionId, listingId, targetConnectionId) => {
       setSelectedAccount(targetConnectionId);
       setCopyRequest({ id: crypto.randomUUID(), sourceConnectionId, listingId, targetConnectionId });
-    }} refreshKey={refreshKey} />}
-    {marketplace === 'mercado_livre' && <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={setSalesAccount} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} />}
+    }} refreshKey={refreshKey} reorderHandle={handle} /> },
+    ]} />}
+    {panelOrder.notice && <p className={styles.connectionMessage} role="status">{panelOrder.notice}</p>}
     {priceUsersOpen && <PriceUsersPanel companyId={companyId} onClose={() => setPriceUsersOpen(false)} />}
     <ModalConfirmacao aberto={!!disconnectAccount} titulo="Desconectar conta?" mensagem={disconnectAccount ? `${disconnectAccount.seller_name || disconnectAccount.seller_reference}. O AvantaLab apagará os tokens desta conexão. Os anúncios no Mercado Livre não serão alterados.` : ''} textoConfirmar="Desconectar" carregando={disconnecting} darkMode={empresa.temaEscuro} corPrimaria={empresa.corPrimaria} variante="destrutiva" aoCancelar={() => { if (!disconnecting) setDisconnectAccount(null); }} aoConfirmar={() => void confirmDisconnectAccount()} />
     </div>

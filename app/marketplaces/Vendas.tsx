@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
+import Tooltip from '@/app/components/Tooltip';
 import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, orderStatusText, saleConflictText } from '@/app/modules/marketplaces/sales-status';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import type { MarketplaceAccount } from './Anunciados';
@@ -12,9 +14,10 @@ type Sale = MarketplaceSale;
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
-export default function Vendas({ companyId, accountId, onAccountChange, accounts, sales, canManage, loading, error, awaitingUpdates, onRefresh, onSaleUpdated }: {
+export default function Vendas({ companyId, accountId, onAccountChange, accounts, sales, canManage, loading, error, awaitingUpdates, onRefresh, onSaleUpdated, expanded, onExpandedChange, dark, brand, reorderHandle }: {
   companyId: string; accountId: string; onAccountChange: (id: string) => void; accounts: MarketplaceAccount[];
   sales: Sale[]; canManage: boolean; loading: boolean; error: string; awaitingUpdates: number; onRefresh: () => void; onSaleUpdated: (sale: Sale) => void;
+  expanded: boolean; onExpandedChange: (expanded: boolean) => void; dark: boolean; brand: string; reorderHandle?: ReactNode;
 }) {
   const [printError, setPrintError] = useState('');
   const [open, setOpen] = useState('');
@@ -38,7 +41,8 @@ export default function Vendas({ companyId, accountId, onAccountChange, accounts
   }
 
   return <section className={`${styles.panel} ${styles.salesPanel}`} aria-labelledby="sales-title">
-    <div className={styles.panelHeading}><div><p className={styles.step}>3</p><h2 id="sales-title">Vendas · {sales.length}</h2></div><button type="button" className={styles.refreshSales} onClick={onRefresh} disabled={loading}>{loading ? 'Atualizando…' : 'Atualizar'}</button></div>
+    <div className={`${styles.panelHeading} ${!expanded ? styles.panelHeadingCollapsed : ''}`}><div><p className={styles.step}>3</p><h2 id="sales-title">Vendas · {sales.length}</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<Tooltip texto="Atualizar vendas e envios"><button type="button" className={styles.refreshSales} onClick={onRefresh} disabled={loading}>{loading ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Vendas" controlsId="sales-content" expandido={expanded} onClick={() => onExpandedChange(!expanded)} corPrimaria={brand} darkMode={dark} /></div></div>
+    <div id="sales-content" hidden={!expanded}>
     <MarketplaceSelect label="Conta das vendas" value={accountId} placeholder="Todas as contas" onChange={onAccountChange} options={[{ value: '', label: 'Todas as contas' }, ...accounts.map((account) => ({ value: account.id, label: account.seller_name || `Vendedor ${account.seller_reference}` }))]} className={styles.salesAccountFilter} />
     <p className={styles.salesScopeHelp}>Pedidos únicos no período e na situação selecionados no cabeçalho. O sino reúne todas as contas.</p>
     {awaitingUpdates > 0 && <p className={styles.salesScopeHelp} role="status">Há atualizações de vendas em processamento. Use Atualizar para conferir novamente.</p>}
@@ -53,5 +57,6 @@ export default function Vendas({ companyId, accountId, onAccountChange, accounts
         <SalePostSale key={`${companyId}:${sale.connectionId}:${sale.id}`} companyId={companyId} saleId={sale.id} connectionId={sale.connectionId} onSaleUpdated={onSaleUpdated} />
       </div>}
     </article>)}</div>}
+    </div>
   </section>;
 }

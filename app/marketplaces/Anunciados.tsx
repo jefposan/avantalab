@@ -1,7 +1,9 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import CampoBusca from '@/app/components/CampoBusca';
+import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
+import Tooltip from '@/app/components/Tooltip';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import { Icon } from '@/app/projetos/components/Icon';
 import { supabase } from '@/app/lib/supabase';
@@ -35,7 +37,7 @@ export async function marketplaceClientRequest(path: string, body?: unknown, sig
   return payload;
 }
 
-export default function Anunciados({ companyId, dark, brand, accountId, onAccountsLoaded, onAccountSelectionLockedChange, onPublishInAnotherAccount, refreshKey = 0 }: { companyId: string; dark: boolean; brand: string; accountId: string; onAccountsLoaded: (accounts: MarketplaceAccount[], canDisconnect: boolean) => void; onAccountSelectionLockedChange: (locked: boolean) => void; onPublishInAnotherAccount: (sourceConnectionId: string, listingId: string, targetConnectionId: string) => void; refreshKey?: number }) {
+export default function Anunciados({ companyId, dark, brand, accountId, onAccountsLoaded, onAccountSelectionLockedChange, onPublishInAnotherAccount, refreshKey = 0, reorderHandle }: { companyId: string; dark: boolean; brand: string; accountId: string; onAccountsLoaded: (accounts: MarketplaceAccount[], canDisconnect: boolean) => void; onAccountSelectionLockedChange: (locked: boolean) => void; onPublishInAnotherAccount: (sourceConnectionId: string, listingId: string, targetConnectionId: string) => void; refreshKey?: number; reorderHandle?: ReactNode }) {
   const [accounts, setAccounts] = useState<MarketplaceAccount[]>([]);
   const [canManage, setCanManage] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
@@ -51,6 +53,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
   const [syncNotice, setSyncNotice] = useState('');
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState('');
+  const [panelExpanded, setPanelExpanded] = useState(true);
   const editButtons = useRef(new Map<string, HTMLButtonElement>());
   const tableScroll = useRef<HTMLDivElement>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
@@ -157,7 +160,8 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
   }
 
   return <section className={`${styles.panel} ${styles.listingsPanel}`} aria-labelledby="announced-title">
-    <div className={styles.panelHeading}><div><h2 id="announced-title">Anunciados</h2></div><button className={styles.primary} type="button" disabled={!accountId || account?.status !== 'connected' || syncing || acting || !!expanded} onClick={() => void synchronize()}>{syncing ? 'Atualizando…' : 'Atualizar'}</button></div>
+    <div className={`${styles.panelHeading} ${!panelExpanded ? styles.panelHeadingCollapsed : ''}`}><div><h2 id="announced-title">Anunciados</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<Tooltip texto="Atualizar anúncios da conta selecionada"><button className={styles.refreshSales} type="button" disabled={!accountId || account?.status !== 'connected' || syncing || acting || !!expanded} onClick={() => void synchronize()}>{syncing ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Anunciados" controlsId="announced-content" expandido={panelExpanded} onClick={() => setPanelExpanded((current) => !current)} corPrimaria={brand} darkMode={dark} /></div></div>
+    <div id="announced-content" hidden={!panelExpanded}>
     <div className={styles.listingFilters}>
       <label>Pesquisar<CampoBusca disabled={!!expanded} aria-label="Pesquisar por nome, código, EAN ou SKU" value={query} onChange={(value) => { if (expanded) return; setQuery(value); setPage(1); }} placeholder="Nome, código, EAN ou SKU" /></label>
       <MarketplaceSelect label="Situação" value={status} options={[{ value: '', label: 'Todas' }, ...['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].map((value) => ({ value, label: statusNames[value] }))]} placeholder="Todas" disabled={!!expanded} onChange={(value) => { setStatus(value); setPage(1); }} />
@@ -197,6 +201,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
         </tbody></table>
     </div>
     <nav className={styles.pagination} aria-label="Páginas dos anúncios"><button type="button" disabled={page <= 1 || loading || !!expanded} onClick={() => setPage(page - 1)}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil(total / 25))}</span><button type="button" disabled={page * 25 >= total || loading || !!expanded} onClick={() => setPage(page + 1)}>Próxima</button></nav>
+    </div>
     <ModalConfirmacao aberto={!!confirmation} titulo={confirmation ? `${actionNames[confirmation.action]}?` : ''} mensagem={confirmation ? `${confirmation.name}. ${confirmation.action === 'close' ? 'Esta ação encerra definitivamente o anúncio e não permite reativação.' : confirmation.action === 'delete' ? 'O anúncio será marcado como excluído no Mercado Livre. O histórico local é preservado.' : confirmation.action === 'pause' ? 'O anúncio deixará de vender até ser reativado.' : 'O anúncio voltará a vender se o Mercado Livre permitir.'}` : ''} textoConfirmar={confirmation ? actionNames[confirmation.action] : 'Confirmar'} carregando={acting} darkMode={dark} corPrimaria={brand} variante={confirmation?.action === 'resume' ? 'primaria' : 'destrutiva'} aoCancelar={() => { if (!acting) setConfirmation(null); }} aoConfirmar={executeAction} />
   </section>;
 }
