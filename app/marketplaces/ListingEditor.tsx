@@ -18,9 +18,9 @@ function feeDetail(fee: number | null, percent: number | null, notice?: string) 
   const formatted = fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   return `Taxa ${formatted}${percent == null ? '' : ` · ${percent}%`}`;
 }
-export default function ListingEditor({ companyId, accountId, itemId, snapshot, permalink, children, dark, brand, request, onClose, onSaved, onBusy, onListingAction }: {
+export default function ListingEditor({ companyId, accountId, itemId, snapshot, permalink, children, additionalAction, dark, brand, request, onClose, onSaved, onBusy, onListingAction }: {
   companyId: string; accountId: string; itemId: string; dark: boolean; brand: string; request: Requester;
-  snapshot: ListingSnapshot; permalink: string | null; children: ReactNode;
+  snapshot: ListingSnapshot; permalink: string | null; children: ReactNode; additionalAction?: ReactNode;
   onClose: () => void; onSaved: (listing: ListingSnapshot) => void; onBusy: (busy: boolean) => void; onListingAction?: (action: ListingAction) => void;
 }) {
   const prefix = useId();
@@ -53,7 +53,7 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
       setPriceText(result.values.price == null ? '' : result.values.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       setStockText(result.values.stock == null ? '' : String(result.values.stock));
       requestKey.current = crypto.randomUUID(); setStale(false); setErrors({}); setMessage('');
-      requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('input:not([disabled]), textarea:not([disabled]), button')?.focus());
+      requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('input:not([disabled]), textarea:not([disabled]), button')?.focus({ preventScroll: true }));
     }).catch((failure) => { if (!controller.signal.aborted) setMessage(failure instanceof Error ? failure.message : 'Não foi possível abrir a edição.'); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -115,10 +115,11 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
         {onListingAction && availableLifecycleActions.map((action) => <button key={action} type="button" className={action === 'close' || action === 'delete' ? styles.destructiveAction : undefined} disabled={lifecycleDisabled} title={dirty ? 'Salve ou cancele as alterações antes de mudar a situação do anúncio.' : undefined} onClick={() => onListingAction(action)}>{lifecycleLabels[action]}</button>)}
         <button type="submit" className={styles.primary} disabled={loading || saving || stale || !dirty}>{saving ? 'Salvando…' : 'Salvar alterações'}</button>
         {permalink && <a href={permalink} target="_blank" rel="noopener noreferrer">Abrir no Mercado Livre ↗</a>}
+        {additionalAction}
       </div>
       {loading && <p role="status">Consultando permissões e dados atuais…</p>}
       {(message || errors.form) && <p role="alert" className={styles.connectionMessage}>{message || errors.form}</p>}
-      {!editor && !loading && <p className={styles.help}>Título, preço e estoque abaixo vêm da última sincronização. A descrição não está no cache. Para alterar e salvar, recarregue a edição após restabelecer a consulta ao marketplace.</p>}
+      {!editor && !loading && <p className={styles.help}>Estes dados são da última atualização e estão sem descrição. Clique em “Recarregar edição” para tentar novamente.</p>}
       <dl>
         {EDIT_FIELDS.map((field) => {
           const rule = editor?.fields[field], id = `${prefix}-${field}`, disabled = !editor || !rule?.editable || saving || stale;

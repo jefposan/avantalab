@@ -1,6 +1,31 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0.17 -->
+<!-- ava-version: 1.49.0.23 -->
+
+> Revisão 1.49.0.23: aviso de dados anteriores na edição de anúncio simplificado,
+> orientando usar **Recarregar edição**. Sem impacto operacional; os campos
+> continuam bloqueados até confirmar os dados atuais.
+
+> Revisão 1.49.0.22: passar o mouse sobre um anúncio destaca suavemente sua
+> linha, sem alterar o texto ou o destaque de edição. Foco por teclado tem
+> efeito equivalente. Sem impacto operacional: o lápis continua abrindo a edição.
+
+> Revisão 1.49.0.21: clicar no lápis para editar leva o título do anúncio
+> ao topo visível, abaixo do cabeçalho. O carregamento dos dados não muda essa
+> posição. Cancelar, salvar e confirmar a publicação continuam iguais.
+
+> Revisão 1.49.0.20: o anúncio em edição é destacado pelo fundo e pela faixa
+> lateral, sem mudar a cor do texto. Os nomes/descrições da lista aparecem
+> completos com quebra de linha. Sem impacto operacional no fluxo de edição.
+
+> Revisão 1.49.0.19: o anúncio aberto para edição mostra o título completo
+> destacado na cor da empresa e a indicação **Em edição**. Sem impacto
+> operacional: revisão, salvamento e confirmação continuam iguais.
+
+> Revisão 1.49.0.18: **Publicar em outra conta** fica à direita na mesma barra
+> das ações do anúncio, com destaque na cor do perfil e tooltip de preparação.
+> Sem impacto operacional: a publicação no destino continua exigindo revisão
+> e confirmação separadas; abrir a opção não publica o anúncio.
 
 > Revisão 1.49.0.17: **Atualizar contas** é uma ação geral ao lado de
 > **Conectar outra conta**; recarrega as contas da empresa e listas locais, não

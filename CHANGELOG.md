@@ -1,5 +1,52 @@
 # Changelog
 
+## 1.49.0.23 - 2026-10-11
+
+- Aviso de dados anteriores na edição de anúncio encurtado para linguagem
+  simples, sem termos técnicos, indicando a ausência da descrição e o botão
+  Recarregar edição. Bloqueios e recuperação mantidos. Ava revisada, sem
+  impacto operacional.
+
+## 1.49.0.22 - 2026-10-11
+
+- Linha do anúncio recebe fundo suave da cor primária ao passar o mouse,
+  incluindo a coluna de ações. Texto e destaque mais forte do título em edição
+  preservados. Tema escuro e foco por teclado com tratamento equivalente;
+  hover restrito a dispositivos com mouse, sem efeito persistente no toque.
+- Manuais e conhecimento da Ava revisados, sem impacto operacional.
+
+## 1.49.0.21 - 2026-10-11
+
+- Ao abrir a edição de um anúncio, seu título é levado ao topo visível,
+  abaixo da altura real do cabeçalho. Mantido o retorno horizontal ao início
+  da tabela, com movimento reduzido respeitado. Fechar não dispara a rolagem.
+- O foco inicial do formulário não altera a posição quando os dados chegam.
+  Ava e testes revisados; sem publicação automática ou mudança de permissões.
+
+## 1.49.0.20 - 2026-10-11
+
+- Destaque do anúncio em edição transferido do texto para fundo suave e faixa
+  lateral na cor primária, preservando as cores habituais do título e dos dados
+  no tema claro e escuro. Mantida a indicação “Em edição”.
+- Nomes/descrições dos produtos na lista de anunciados aparecem completos,
+  com quebra de linha em todos os itens, sem reticências. Sem mudança nos dados
+  ou no fluxo de publicação. Ava revisada, sem impacto operacional.
+
+## 1.49.0.19 - 2026-10-11
+
+- Título do anúncio em edição destacado na cor primária da empresa, sem
+  truncamento e com identificação textual “Em edição”. Demais anúncios e
+  detalhes sem permissão de edição mantêm a apresentação habitual. Tema escuro
+  com tom claro derivado da cor primária. Sem alteração do fluxo ou de dados.
+- Conhecimento e manuais da Ava revisados, sem impacto operacional.
+
+## 1.49.0.18 - 2026-10-11
+
+- Publicar em outra conta passa para a barra de ações do anúncio, à direita,
+  com fundo suave e borda derivados da cor primária, tooltip oficial e contraste
+  em tema escuro. Mantidos revisão, destino e confirmação separada de publicação.
+- Layout responsivo sem forçar rolagem horizontal das ações. Ava revisada.
+
 ## 1.49.0.17 - 2026-10-11
 
 - Atualizar contas movido para ao lado de Conectar outra conta, como ação geral

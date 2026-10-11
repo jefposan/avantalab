@@ -1,6 +1,24 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.49.0.17 -->
+<!-- ava-version: 1.49.0.23 -->
+
+> Revisão 1.49.0.23: aviso de edição de anúncio em linguagem simples.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.49.0.22: destaque leve ao passar o mouse na lista de Marketplaces.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.49.0.21: rolagem ao abrir edição de anúncio no Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.49.0.20: destaque pelo fundo e nomes completos em Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.49.0.19: identificação visual do anúncio em edição no Marketplaces
+> Web. Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.49.0.18: Publicar em outra conta na barra de ações do Marketplaces
+> Web. Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.49.0.17: renovação dentro da conta e atualização geral ao lado
 > de Conectar outra conta no módulo Marketplaces. Sem impacto operacional

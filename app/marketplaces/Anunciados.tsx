@@ -143,7 +143,20 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
     if (acting || (expanded && expanded !== id)) return;
     syncController.current?.abort();
     setExpanded(expanded === id ? '' : id);
-    if (expanded !== id) tableScroll.current?.scrollTo({ left: 0 });
+    if (expanded !== id) {
+      tableScroll.current?.scrollTo({ left: 0 });
+      requestAnimationFrame(() => {
+        const button = editButtons.current.get(id);
+        const row = button?.closest('tr');
+        if (!row || button?.getAttribute('aria-expanded') !== 'true') return;
+        const header = tableScroll.current?.closest('main')?.querySelector('header');
+        const headerBottom = Math.max(0, header?.getBoundingClientRect().bottom ?? 0);
+        window.scrollTo({
+          top: Math.max(0, window.scrollY + row.getBoundingClientRect().top - headerBottom - 8),
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+        });
+      });
+    }
   }
 
   async function executeAction() {
@@ -172,24 +185,27 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
       <table className={styles.listingTable}><caption className={styles.srOnly}>Produtos anunciados na conta selecionada</caption><colgroup><col style={{ width: '23%' }} /><col style={{ width: '9%' }} /><col style={{ width: '10%' }} /><col style={{ width: '11%' }} /><col style={{ width: '10%' }} /><col style={{ width: '7%' }} /><col style={{ width: '7%' }} /><col /><col style={{ width: 64 }} /></colgroup><thead><tr>{['Anúncio', 'Situação', 'Preço', 'Frete vendedor estimado', 'Taxa estimada', 'Estoque', 'Vendidos', 'Envio', 'Ações'].map((name) => <th key={name} scope="col" className={name === 'Ações' ? styles.listingActions : undefined}>{name}</th>)}</tr></thead>
         <tbody>{visibleRows.map(({ snapshot: item, status: rowStatus }) => {
           const shipping = shippingLabels(item.shipping);
-          return <Fragment key={item.id}><tr>
-          <th scope="row" title={item.title}><strong>{item.title}</strong><small>{item.id}{item.sku ? ` · SKU ${item.sku}` : ''}</small></th>
+          const publishOtherAccountAction = canManage && account?.status === 'connected' && <div className={styles.publishOtherAccountAction}>
+            <Tooltip texto="Preparar este anúncio em outra conta para revisar antes de publicar"><button type="button" className={styles.publishOtherAccountButton} disabled={acting || syncing || (!!copyingListing && copyingListing.id !== item.id)} aria-expanded={copyingListing?.id === item.id} aria-controls={`listing-copy-${item.id}`} onClick={() => { setCopyingListing(copyingListing?.id === item.id ? null : item); setCopyTargetId(''); }}>Publicar em outra conta</button></Tooltip>
+          </div>;
+          return <Fragment key={item.id}><tr className={styles.listingRow}>
+          <th scope="row" title={item.title} className={expanded === item.id && editing ? styles.editingListingTitle : undefined}>{expanded === item.id && editing && <small className={styles.editingListingLabel}>Em edição</small>}<strong>{item.title}</strong><small>{item.id}{item.sku ? ` · SKU ${item.sku}` : ''}</small></th>
           <td>{statusNames[rowStatus] || rowStatus}</td><td>{money(item.price, item.currency)}</td><td>{money(item.freightEstimate)}</td><td>{money(item.feeEstimate)}{item.feePercent != null && <small>{item.feePercent}%</small>}</td><td>{item.stock ?? 'Indisponível'}</td><td>{item.sold ?? 'Indisponível'}</td><td>{shipping.freight}<small>{shipping.method}</small></td>
           <td className={styles.listingActions}><button type="button" ref={(button) => { if (button) editButtons.current.set(item.id, button); else editButtons.current.delete(item.id); }} className={styles.editListing} aria-label={`Editar anúncio: ${item.title}`} title="Editar anúncio" aria-expanded={expanded === item.id} aria-controls={`details-${item.id}`} disabled={acting || editing || (!!expanded && expanded !== item.id) || !!copyingListing} onClick={() => openEditing(item.id)}><Icon name="edit" size={18} /></button></td>
         </tr>{expanded === item.id && <tr id={`details-${item.id}`}><td colSpan={9}><div className={styles.listingDetails}>
-          {editing ? <><div className={styles.actionBar}><button type="button" disabled={acting || syncing || (!!copyingListing && copyingListing.id !== item.id)} onClick={() => { setCopyingListing(copyingListing?.id === item.id ? null : item); setCopyTargetId(''); }}>Publicar em outra conta</button></div>{copyingListing?.id === item.id && <div className={styles.listingCopy}>
+          {editing ? <>{copyingListing?.id === item.id && <div id={`listing-copy-${item.id}`} className={styles.listingCopy}>
             <MarketplaceAccountPicker label="Conta de destino" value={copyTargetId} options={accounts.filter((candidate) => candidate.status === 'connected' && candidate.id !== accountId).map((candidate) => ({ id: candidate.id, name: candidate.seller_name || `Vendedor ${candidate.seller_reference}`, detail: `ID ${candidate.seller_reference}` }))} placeholder="Selecione outra conta conectada" disabled={acting || syncing} onChange={setCopyTargetId} />
             <div className={styles.actionBar}><button type="button" onClick={() => { setCopyingListing(null); setCopyTargetId(''); }}>Cancelar</button><button type="button" className={styles.primary} disabled={!copyTargetId || acting || syncing} onClick={() => { onPublishInAnotherAccount(accountId, item.id, copyTargetId); setCopyingListing(null); setCopyTargetId(''); }}>Preparar publicação</button></div>
             <p>O AvantaLab consulta os dados atuais, prepara a ficha no destino e abre o formulário para sua revisão. Nada é publicado nesta etapa.</p>
-          </div>}<ListingEditor key={`${accountId}-${item.id}`} companyId={companyId} accountId={accountId} itemId={item.id} snapshot={item} permalink={item.permalink} dark={dark} brand={brand} request={marketplaceClientRequest} onBusy={setActing} onClose={() => cancelEditing(item.id)} onListingAction={(action) => setConfirmation({ action, id: item.id, name: item.title, connectionId: accountId })} onSaved={(listing) => {
+          </div>}<ListingEditor key={`${accountId}-${item.id}`} companyId={companyId} accountId={accountId} itemId={item.id} snapshot={item} permalink={item.permalink} additionalAction={publishOtherAccountAction} dark={dark} brand={brand} request={marketplaceClientRequest} onBusy={setActing} onClose={() => cancelEditing(item.id)} onListingAction={(action) => setConfirmation({ action, id: item.id, name: item.title, connectionId: accountId })} onSaved={(listing) => {
             setRows((current) => current.map((row) => row.snapshot.id === listing.id ? { snapshot: listing, status: listing.substatus.includes('deleted') ? 'deleted' : listing.status } : row));
             setExpanded(''); setSyncNotice('Alterações confirmadas pelo Mercado Livre.'); requestAnimationFrame(() => editButtons.current.get(listing.id)?.focus());
           }}><ListingData item={item} /></ListingEditor></> : <>
-          <div className={styles.actionBar}><button type="button" disabled={acting || !!copyingListing} onClick={() => cancelEditing(item.id)}>Cancelar</button>{canManage && account?.status === 'connected' && <button type="button" disabled={acting || syncing || (!!copyingListing && copyingListing.id !== item.id)} onClick={() => { setCopyingListing(copyingListing?.id === item.id ? null : item); setCopyTargetId(''); }}>Publicar em outra conta</button>}{canManage && account?.status === 'connected' && ['pause', 'resume', 'close', 'delete'].map((action) => {
+          <div className={styles.actionBar}><button type="button" disabled={acting || !!copyingListing} onClick={() => cancelEditing(item.id)}>Cancelar</button>{canManage && account?.status === 'connected' && ['pause', 'resume', 'close', 'delete'].map((action) => {
             const allowed = !item.substatus.includes('deleted') && (action === 'pause' ? item.status === 'active' : action === 'resume' ? item.status === 'paused' : action === 'close' ? ['active', 'paused'].includes(item.status) : item.status === 'closed');
             return <button key={action} type="button" disabled={!allowed || acting || syncing} onClick={() => setConfirmation({ action: action as ListingAction, id: item.id, name: item.title, connectionId: accountId })}>{actionNames[action as ListingAction]}</button>;
-          })}{item.permalink && <a href={item.permalink} target="_blank" rel="noopener noreferrer">Abrir no Mercado Livre ↗</a>}</div>
-          <dl><ListingData item={item} /></dl>{copyingListing?.id === item.id && <div className={styles.listingCopy}>
+          })}{item.permalink && <a href={item.permalink} target="_blank" rel="noopener noreferrer">Abrir no Mercado Livre ↗</a>}{publishOtherAccountAction}</div>
+          <dl><ListingData item={item} /></dl>{copyingListing?.id === item.id && <div id={`listing-copy-${item.id}`} className={styles.listingCopy}>
             <MarketplaceAccountPicker label="Conta de destino" value={copyTargetId} options={accounts.filter((candidate) => candidate.status === 'connected' && candidate.id !== accountId).map((candidate) => ({ id: candidate.id, name: candidate.seller_name || `Vendedor ${candidate.seller_reference}`, detail: `ID ${candidate.seller_reference}` }))} placeholder="Selecione outra conta conectada" disabled={acting || syncing} onChange={setCopyTargetId} />
             <div className={styles.actionBar}><button type="button" onClick={() => { setCopyingListing(null); setCopyTargetId(''); }}>Cancelar</button><button type="button" className={styles.primary} disabled={!copyTargetId || acting || syncing} onClick={() => { onPublishInAnotherAccount(accountId, item.id, copyTargetId); setCopyingListing(null); setCopyTargetId(''); }}>Preparar publicação</button></div>
             <p>O AvantaLab consulta os dados atuais, prepara a ficha no destino e abre o formulário para sua revisão. Nada é publicado nesta etapa.</p>

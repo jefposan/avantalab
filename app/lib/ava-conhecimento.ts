@@ -1,3 +1,15 @@
+// Revisado na versão 1.49.0.23: aviso de dados anteriores na edição
+// simplificado; Recarregar edição tenta novamente. Sem impacto operacional.
+// Revisado na versão 1.49.0.22: hover/foco suave na linha do anúncio, sem
+// mudar texto ou destaque de edição. Sem impacto operacional.
+// Revisado na versão 1.49.0.21: abrir edição leva o título ao topo abaixo
+// do cabeçalho; carregar os dados não desloca a tela. Demais fluxos mantidos.
+// Revisado na versão 1.49.0.20: anúncio em edição destacado pelo fundo/faixa,
+// sem mudar a cor do texto; nomes completos na lista. Sem impacto operacional.
+// Revisado na versão 1.49.0.19: título completo destacado na cor da empresa
+// e indicação Em edição no anúncio aberto. Sem impacto operacional.
+// Revisado na versão 1.49.0.18: Publicar em outra conta à direita na barra
+// de ações do anúncio, com destaque contextual. Sem impacto operacional.
 // Revisado na versão 1.49.0.17: renovação dentro da conta com duas ações;
 // Atualizar contas é geral e fica ao lado de Conectar outra conta.
 // Revisado na versão 1.49.0.16: três ações da renovação na mesma linha,

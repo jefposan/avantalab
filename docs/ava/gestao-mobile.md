@@ -1,6 +1,25 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.49.0.17 -->
+<!-- ava-version: 1.49.0.23 -->
+
+> Revisão 1.49.0.23: texto do aviso de edição de anúncio simplificado.
+> Sem impacto operacional na Gestão Mobile ou AvantaPreços.
+
+> Revisão 1.49.0.22: hover/foco na lista de Marketplaces Web. Hover restrito
+> a dispositivos com mouse. Sem impacto operacional na Gestão Mobile ou AvantaPreços.
+
+> Revisão 1.49.0.21: edição de anúncio no Marketplaces Web rola até seu título
+> respeitando o cabeçalho responsivo. Sem impacto operacional na Gestão Mobile
+> ou AvantaPreços.
+
+> Revisão 1.49.0.20: fundo/faixa no anúncio em edição e nomes completos na
+> lista de Marketplaces Web. Sem impacto operacional na Gestão Mobile ou AvantaPreços.
+
+> Revisão 1.49.0.19: título destacado e identificação do anúncio em edição
+> no Marketplaces Web. Sem impacto operacional na Gestão Mobile ou AvantaPreços.
+
+> Revisão 1.49.0.18: destaque e posição de Publicar em outra conta no
+> Marketplaces Web. Sem impacto operacional na Gestão Mobile ou AvantaPreços.
 
 > Revisão 1.49.0.17: renovação integrada ao card da conta e atualização geral
 > ao lado de Conectar outra conta no Marketplaces Web. Sem impacto operacional
