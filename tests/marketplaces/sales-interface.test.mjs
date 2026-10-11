@@ -9,6 +9,7 @@ const webhook = read('app/api/webhooks/mercado-livre/route.ts');
 const route = read('app/api/modulos/marketplaces/vendas/route.ts');
 const label = read('app/api/modulos/marketplaces/vendas/etiqueta/route.ts');
 const service = read('app/modules/marketplaces/services/mercadolivre-sales.ts');
+const saleStatus = read('app/modules/marketplaces/sales-status.ts');
 
 test('vendas chegam por webhook validado, são enfileiradas e relidas no provedor', () => {
   assert.match(webhook, /parseSaleNotification/);
@@ -25,7 +26,10 @@ test('contadores e etiquetas são isolados por conta e a impressão fica no Avan
   assert.match(client, /<Vendas companyId=\{companyId\} accountId=\{selectedAccount\}/);
   assert.match(sales, /\/api\/modulos\/marketplaces\/vendas\/etiqueta/);
   assert.match(sales, /URL\.createObjectURL/);
-  assert.match(sales, /Imprimir etiqueta/);
+  assert.match(sales, /labelActionText/);
+  assert.match(saleStatus, /Imprimir etiqueta/);
+  assert.match(saleStatus, /Reimprimir etiqueta/);
+  assert.match(service, /'ready_to_print', 'printed'/);
   assert.match(label, /authorizeMarketplace\(request, body\.empresaId, 'manage'\)/);
   assert.match(label, /Content-Type': 'application\/pdf'/);
   assert.match(service, /label_status !== 'ready'/);

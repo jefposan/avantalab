@@ -29,7 +29,7 @@ function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, u
   const logisticType = text(logistics.logistic_type || (shipment || shipping).logistic_type, 80);
   const shipmentStatus = shipment ? text(shipment.status, 80) || null : null;
   const shipmentSubstatus = shipment ? text(shipment.substatus, 80) || null : null;
-  const labelStatus: MarketplaceSale['labelStatus'] = logisticType === 'fulfillment' ? 'fulfilled' : mode === 'me2' && shipmentStatus === 'ready_to_ship' && shipmentSubstatus === 'ready_to_print' ? 'ready' : 'unavailable';
+  const labelStatus: MarketplaceSale['labelStatus'] = logisticType === 'fulfillment' ? 'fulfilled' : mode === 'me2' && shipmentStatus === 'ready_to_ship' && ['ready_to_print', 'printed'].includes(shipmentSubstatus || '') ? 'ready' : 'unavailable';
   const items = (Array.isArray(order.order_items) ? order.order_items : []).map(objectValue).map((row) => {
     const item = objectValue(row.item);
     return { title: text(item.title) || 'Produto', quantity: Math.max(1, Math.floor(amount(row.quantity) || 1)), unitPrice: amount(row.unit_price) };

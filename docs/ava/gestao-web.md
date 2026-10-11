@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0.03 -->
+<!-- ava-version: 1.49.0.04 -->
+
+> Revisão 1.49.0.04: em **Anúncios em marketplaces**, a etiqueta de uma venda
+> Mercado Livre continua disponível como **Reimprimir etiqueta** depois de já
+> impressa. As situações de pedido e envio aparecem em português; quando a
+> impressão ainda não puder ser feita, a tela informa se depende de nota
+> fiscal/DC-e, geração do Mercado Livre, cancelamento ou operação Full.
 
 > Revisão 1.49.0.03: Top clientes completo no Dashboard do AvantaVendas.
 > Sem impacto operacional na Gestão Web.

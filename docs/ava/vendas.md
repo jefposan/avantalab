@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.49.0.03 -->
+<!-- ava-version: 1.49.0.04 -->
+
+> Revisão 1.49.0.04: reimpressão de etiquetas e tradução das situações de
+> Marketplaces pertencem à Gestão Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.49.0.03-av184: no Dashboard, Top clientes lista todos os clientes
 > com compras válidas no período selecionado, sem limite de dez, ordenados

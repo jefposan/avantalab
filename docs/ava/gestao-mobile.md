@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.49.0.03 -->
+<!-- ava-version: 1.49.0.04 -->
+
+> Revisão 1.49.0.04: reimpressão de etiquetas e tradução das situações de
+> Marketplaces pertencem à Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.49.0.03: Top clientes completo no Dashboard do AvantaVendas.
 > Sem impacto operacional na Gestão Mobile.

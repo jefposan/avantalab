@@ -1,3 +1,7 @@
+// Revisado na versão 1.49.0.04: Marketplaces Web permite reimprimir a etiqueta
+// Mercado Livre já impressa e traduz situações de pedido e envio para português.
+// Quando a etiqueta não estiver disponível, informa nota fiscal/DC-e, geração,
+// cancelamento ou envio Full. Gestão Mobile e AvantaVendas não são alterados.
 // Revisado na versão 1.49.0.03: Top clientes no Dashboard do AvantaVendas lista
 // todos com compras válidas no período, do maior total para o menor, sem limite.
 // Revisado na versão 1.49.0.02: Voltar nas pastas de Divulgação do AvantaVendas

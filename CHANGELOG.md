@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.49.0.04 - 2026-10-11
+
+- **Etiqueta disponível também para reimpressão**: vendas Mercado Livre com
+  envio `ready_to_ship` e etiqueta já marcada como impressa voltam a oferecer
+  o PDF pelo AvantaLab. A impressão inicial permanece protegida pela mesma
+  permissão de gerenciamento e pelo isolamento da conta.
+- **Situações em português**: pedido, pagamento, despacho, coleta, trânsito,
+  entrega, devolução e cancelamento deixam de exibir os códigos técnicos do
+  Mercado Livre. Mensagens de etiqueta agora explicam quando dependem de nota
+  fiscal/DC-e, geração do provedor, cancelamento ou operação Full.
+
 ## 1.49.0.03-av184 - 2026-10-10
 
 - **Top clientes completo no Dashboard**: o card deixa de limitar o ranking

@@ -1,19 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText } from '@/app/modules/marketplaces/sales-status';
 import { marketplaceClientRequest } from './Anunciados';
 import styles from './marketplaces.module.css';
 
 type Sale = { id: string; orderId: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-
-function saleStatus(sale: Sale) {
-  if (sale.labelStatus === 'ready') return 'Etiqueta pronta';
-  if (sale.labelStatus === 'fulfilled') return 'Envio Full';
-  if (sale.shipmentStatus === 'shipped') return 'Enviado';
-  return sale.status === 'paid' ? 'Venda confirmada' : sale.status || 'Em atualização';
-}
 
 export default function Vendas({ companyId, accountId, canManage, refreshKey, onPendingChange }: { companyId: string; accountId: string; canManage: boolean; refreshKey: number; onPendingChange: (counts: Record<string, number>) => void }) {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -55,10 +49,10 @@ export default function Vendas({ companyId, accountId, canManage, refreshKey, on
     <div className={styles.panelHeading}><div><p className={styles.step}>3</p><h2 id="sales-title">Vendas da conta</h2></div><button type="button" className={styles.refreshSales} onClick={() => void load()} disabled={loading || !accountId}>{loading ? 'Atualizando…' : 'Atualizar'}</button></div>
     {!accountId ? <p className={styles.help}>Selecione uma conta conectada para acompanhar as vendas.</p> : error ? <p className={styles.salesError} role="alert">{error}</p> : !sales.length ? <p className={styles.salesEmpty}>Nenhuma venda recebida nesta conta ainda.</p> : <div className={styles.salesList}>{sales.map((sale) => <article key={sale.id} className={styles.saleCard}>
       <button type="button" className={styles.saleSummary} onClick={() => setOpen((current) => current === sale.id ? '' : sale.id)} aria-expanded={open === sale.id}>
-        <span><strong>Pedido #{sale.orderId}</strong><small>{date.format(new Date(sale.updatedAt))}{sale.buyer ? ` · ${sale.buyer}` : ''}</small></span><b data-status={sale.labelStatus}>{saleStatus(sale)}</b>
+        <span><strong>Pedido #{sale.orderId}</strong><small>{date.format(new Date(sale.updatedAt))}{sale.buyer ? ` · ${sale.buyer}` : ''}</small></span><b data-status={sale.labelStatus}>{saleStatusText(sale)}</b>
       </button>
-      {open === sale.id && <div className={styles.saleDetails}><dl><div><dt>Itens</dt><dd>{sale.items.map((item) => <span key={`${item.title}-${item.quantity}`}>{item.quantity}× {item.title}{item.unitPrice != null ? ` · ${money.format(item.unitPrice)}` : ''}</span>)}</dd></div><div><dt>Total</dt><dd>{sale.total == null ? 'Indisponível' : money.format(sale.total)}</dd></div><div><dt>Envio</dt><dd>{sale.shipmentStatus || 'Em atualização'}{sale.shipmentSubstatus ? ` · ${sale.shipmentSubstatus}` : ''}</dd></div></dl>
-        {sale.labelStatus === 'ready' ? <button type="button" className={styles.primary} disabled={!canManage || printing === sale.id} onClick={() => void printLabel(sale)}>{printing === sale.id ? 'Preparando etiqueta…' : 'Imprimir etiqueta'}</button> : <p className={styles.labelUnavailable}>{sale.labelStatus === 'fulfilled' ? 'Envio Full: a etiqueta é operada pelo Mercado Livre.' : 'A etiqueta aparecerá aqui quando o envio estiver pronto para impressão.'}</p>}
+      {open === sale.id && <div className={styles.saleDetails}><dl><div><dt>Itens</dt><dd>{sale.items.map((item) => <span key={`${item.title}-${item.quantity}`}>{item.quantity}× {item.title}{item.unitPrice != null ? ` · ${money.format(item.unitPrice)}` : ''}</span>)}</dd></div><div><dt>Total</dt><dd>{sale.total == null ? 'Indisponível' : money.format(sale.total)}</dd></div><div><dt>Situação do envio</dt><dd>{shipmentStatusText(sale.shipmentStatus, sale.shipmentSubstatus) || 'Em atualização'}</dd></div></dl>
+        {sale.labelStatus === 'ready' ? <button type="button" className={styles.primary} disabled={!canManage || printing === sale.id} onClick={() => void printLabel(sale)}>{printing === sale.id ? 'Preparando etiqueta…' : labelActionText(sale)}</button> : <p className={styles.labelUnavailable}>{labelUnavailableText(sale)}</p>}
       </div>}
     </article>)}</div>}
   </section>;
