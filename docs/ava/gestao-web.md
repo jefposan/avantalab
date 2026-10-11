@@ -11,6 +11,7 @@
 > conta específica. Vendas já entregues/enviadas/canceladas não aguardam etiqueta.
 > **Atualizar** processa os avisos recebidos. Dados antigos sem data original
 > usam a data de entrada no AvantaLab até serem sincronizados novamente.
+> A Ava orienta estes filtros e não confunde o contador de pedidos com push.
 
 > Revisão 1.49.0.04: em **Anúncios em marketplaces**, a etiqueta de uma venda
 > Mercado Livre continua disponível como **Reimprimir etiqueta** depois de já

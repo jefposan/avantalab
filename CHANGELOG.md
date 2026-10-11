@@ -16,6 +16,8 @@
 - **Data da venda preservada**: novas sincronizações guardam a data original do
   Mercado Livre no snapshot existente. Registros legados usam a data de entrada
   no AvantaLab até a próxima sincronização. Sem alteração de esquema do banco.
+- **Ava atualizada**: orientação executável acompanha os filtros, a contagem
+  por pedido, a reimpressão e os estados que já não aguardam etiqueta.
 
 ## 1.49.0.04 - 2026-10-11
 
