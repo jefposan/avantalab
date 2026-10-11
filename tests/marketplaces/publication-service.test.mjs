@@ -15,7 +15,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   if (candidate && existsSync(`${candidate}.ts`)) return next(pathToFileURL(`${candidate}.ts`).href, context);
   return next(specifier, context);
 } });
-const { prepareMercadoLivreCatalog, prepareMercadoLivreListingCopy, prepareMercadoLivrePublication, publishMercadoLivreCatalog } = await import('../../app/modules/marketplaces/services/mercadolivre-publication.ts');
+const { prepareMercadoLivreCatalog, prepareMercadoLivreListingCopy, prepareMercadoLivrePublication, prepareLocalProductPublication, refreshLocalProductListing, publishMercadoLivreCatalog } = await import('../../app/modules/marketplaces/services/mercadolivre-publication.ts');
 const { sealMarketplaceSecret } = await import('../../app/modules/marketplaces/services/secret-vault.ts');
 hooks.deregister();
 
@@ -30,6 +30,7 @@ class Query {
   constructor(db, table) { this.db = db; this.table = table; this.filters = []; this.mode = 'select'; this.one = false; }
   select() { return this; }
   eq(key, value) { this.filters.push((row) => row[key] === value); return this; }
+  is(key, value) { this.filters.push((row) => (row[key] ?? null) === value); return this; }
   in(key, values) { this.filters.push((row) => values.includes(row[key])); return this; }
   order() { return this; }
   update(values) { this.mode = 'update'; this.values = values; return this; }
@@ -49,7 +50,30 @@ class Query {
 }
 
 function database(overrides = {}) {
-  return { tables: { marketplace_publications: [], marketplace_listings: [], vendas_mobile_catalogos: [], vendas_mobile_catalogo_produtos: [], ...overrides }, from(table) { return new Query(this, table); } };
+  return { tables: { marketplace_products: [], marketplace_product_links: [], marketplace_publications: [], marketplace_listings: [], vendas_mobile_catalogos: [], vendas_mobile_catalogo_produtos: [], ...overrides }, from(table) { return new Query(this, table); },
+    async rpc(name, args) {
+      assert.equal(name, 'marketplace_product_command');
+      const data = args.p_data;
+      if (args.p_action === 'draft') {
+        const row = { id: crypto.randomUUID(), empresa_id: args.p_empresa_id, ...data }; this.tables.marketplace_products.push(row);
+        return { data: { product_id: row.id, created: true }, error: null };
+      }
+      if (args.p_action === 'import') {
+        const link = this.tables.marketplace_product_links.find(row => row.connection_id === data.connection_id && row.provider_listing_id === data.provider_listing_id);
+        assert.ok(link, 'fixture de cópia deve ter estoque físico já confirmado');
+        return { data: { product_id: link.product_id, created: false }, error: null };
+      }
+      if (args.p_action === 'enrich') {
+        const row = this.tables.marketplace_products.find(row => row.id === data.product_id && row.empresa_id === args.p_empresa_id);
+        assert.ok(row);
+        if (!row.description) row.description = data.description;
+        if (!row.pictures.length) row.pictures = data.pictures;
+        return { data: { product_id: row.id, created: false }, error: null };
+      }
+      assert.equal(args.p_action, 'link');
+      this.tables.marketplace_product_links.push(data);
+      return { data: { product_id: data.product_id, created: false }, error: null };
+    } };
 }
 
 function connection() {
@@ -182,6 +206,8 @@ test('fluxo completo valida antes de criar e registra o anúncio confirmado', ()
   assert.ok(mock.sequence.indexOf('POST /items/validate') < mock.sequence.indexOf('POST /items'));
   assert.equal(db.tables.marketplace_publications[0].status, 'published');
   assert.equal(db.tables.marketplace_listings[0].provider_listing_id, itemId);
+  assert.equal(db.tables.marketplace_products[0].stock_quantity, 1);
+  assert.equal(db.tables.marketplace_publications[0].response_summary.local_product_id, result.localProductId);
 }));
 
 test('anúncio existente é relido e preparado como rascunho em outra conta, sem publicar', () => environment(async () => {
@@ -233,6 +259,75 @@ function noEanProvider({ traditional = false, gtinTags = {}, reason = false, own
 }
 
 const copyTarget = () => ({ ...connection(), id: '33333333-3333-4333-8333-333333333333', seller_reference: '99887766' });
+
+const localFixture = (overrides = {}) => ({ id: '55555555-5555-4555-8555-555555555555', empresa_id: company, name: 'Geladeira local', sku: 'MP-TESTE', ean: null, description: 'Descrição local completa.', pictures: ['https://http2.mlstatic.com/origem.jpg'], category_id: categoryId, catalog_product_id: '', attributes: [{ id: 'BRAND', name: 'Marca', value: 'Brastemp' }], publication_form: { listingType: 'gold_special', shippingMode: 'me2', condition: 'new', warrantyType: 'none', stock: 99 }, price_cents: 17000, stock_quantity: 3, revision: 1, ...overrides });
+
+test('preparar cadastro local relê ficha e quantidade física, sem publicar ou usar estoque antigo da conta', () => environment(async () => {
+  const local = localFixture(), db = database({ marketplace_products: [local] });
+  const mock = provider(); globalThis.fetch = mock.fetch;
+  const result = await prepareLocalProductPublication(db, connection(), local.id);
+  assert.equal(result.form.stock, 3); assert.equal(result.form.localProductId, local.id);
+  assert.equal(result.form.description, local.description); assert.equal(result.form.ean, '');
+  assert.equal(result.result.product.source, 'local_product'); assert.equal(result.result.localProductId, local.id);
+  assert.equal(mock.sequence.some(request => request.startsWith('POST')), false);
+  await assert.rejects(() => prepareLocalProductPublication(database({ marketplace_products: [{...local, empresa_id:'other'}] }), connection(), local.id), { code:'product_missing' });
+}));
+
+test('publicar cadastro local vincula o anúncio e mantém o saldo físico, sem criar outro cadastro', () => environment(async () => {
+  const local = localFixture(), db = database({ marketplace_products: [local] });
+  const mock = noEanProvider(); globalThis.fetch = mock.fetch;
+  const target = copyTarget(); const prepared = await prepareLocalProductPublication(db, target, local.id);
+  const result = await publishMercadoLivreCatalog(db, target, 'actor', crypto.randomUUID(), {...prepared.form, stock:1});
+  assert.equal(result.localProductId, local.id); assert.equal(db.tables.marketplace_products.length,1);
+  assert.equal(db.tables.marketplace_products[0].stock_quantity,3);
+  assert.equal(db.tables.marketplace_product_links[0].product_id,local.id);
+  assert.equal(mock.bodies.find(entry=>entry.path==='/items').body.attributes.some(attr=>attr.id==='GTIN'),false);
+}));
+
+test('estoque pendente ou insuficiente impede criação no ML e não altera saldo', () => environment(async () => {
+  for (const quantity of [null,0]) {
+    const local=localFixture({stock_quantity:quantity}), db=database({marketplace_products:[local]});
+    const mock=provider(); globalThis.fetch=mock.fetch;
+    const prepared=await prepareLocalProductPublication(db,connection(),local.id);
+    await assert.rejects(()=>publishMercadoLivreCatalog(db,connection(),'actor',crypto.randomUUID(),{...prepared.form,stock:1}),{code:quantity==null?'physical_stock_pending':'physical_stock_exceeded'});
+    assert.equal(mock.sequence.includes('POST /items'),false); assert.equal(db.tables.marketplace_publications.length,0);
+    assert.equal(db.tables.marketplace_products[0].stock_quantity,quantity);
+  }
+}));
+
+test('variações não são copiadas como um único saldo físico', () => environment(async () => {
+  const mock=provider(); globalThis.fetch=async(input,options)=>{
+    const response=await mock.fetch(input,options);
+    if (new URL(input).pathname===`/items/${itemId}`) return Response.json({...await response.json(),variations:[{id:123}]});
+    return response;
+  };
+  await assert.rejects(()=>prepareMercadoLivreListingCopy(database(),connection(),copyTarget(),itemId),{code:'variants_pending'});
+  assert.equal(mock.sequence.some(request=>request.startsWith('POST')),false);
+}));
+
+test('consultar ficha completa fotos/descrição sem confirmar estoque e exige vínculo da mesma empresa', () => environment(async () => {
+  const local=localFixture({stock_quantity:null,description:'',pictures:[]});
+  const source={...connection(),provider:'mercado_livre'};
+  const link={empresa_id:company,product_id:local.id,connection_id:source.id,provider_listing_id:itemId,id:crypto.randomUUID()};
+  const db=database({marketplace_products:[local],marketplace_product_links:[link],marketplace_connections:[source]});
+  const mock=provider(); globalThis.fetch=mock.fetch;
+  await refreshLocalProductListing(db,company,'actor',local.id,source.id,itemId,crypto.randomUUID());
+  assert.equal(db.tables.marketplace_products[0].stock_quantity,null);
+  assert.equal(db.tables.marketplace_products[0].description,'Descrição revisável da origem.');
+  assert.deepEqual(db.tables.marketplace_products[0].pictures,['https://http2.mlstatic.com/origem.jpg']);
+  assert.equal(mock.sequence.some(request=>request.startsWith('POST')),false);
+  const before=mock.sequence.length;
+  await assert.rejects(()=>refreshLocalProductListing(database({marketplace_products:[local],marketplace_product_links:[{...link,empresa_id:'other'}]}),company,'actor',local.id,source.id,itemId,crypto.randomUUID()),{code:'listing_missing'});
+  assert.equal(mock.sequence.length,before);
+}));
+
+test('consulta sem chave do ambiente informa configuração, sem desconectar conta ou inventar ficha', () => environment(async () => {
+  const local=localFixture(),db=database({marketplace_products:[local]});
+  const mock=provider(); globalThis.fetch=mock.fetch;
+  delete process.env.MARKETPLACE_SECRETS_KEY;
+  await assert.rejects(()=>refreshLocalProductListing(db,company,'actor',local.id,connectionId,itemId,crypto.randomUUID()),error=>error.code==='local_integration_not_configured' && /continuam conectadas/.test(error.message));
+  assert.equal(mock.sequence.length,0); assert.deepEqual(db.tables.marketplace_products,[local]);
+}));
 
 test('cópia de catálogo sem EAN usa a ficha original ativa, sem pesquisa textual ou publicação', () => environment(async () => {
   const mock = noEanProvider(); globalThis.fetch = mock.fetch;
@@ -292,7 +387,8 @@ test('ausência confirmada de descrição não exige EAN, mas recusa de acesso c
 test('publicação de cópia sem EAN relê origem e valida payload sem GTIN vazio ou fictício', () => environment(async () => {
   for (const traditional of [false, true]) {
     const source = { ...connection(), provider: 'mercado_livre' }; const target = copyTarget();
-    const db = database({ marketplace_connections: [source] });
+    const localId = crypto.randomUUID();
+    const db = database({ marketplace_connections: [source], marketplace_products: [{ id: localId, empresa_id: company, stock_quantity: 1 }], marketplace_product_links: [{ product_id: localId, connection_id: source.id, provider_listing_id: itemId }], marketplace_listings: [{ empresa_id: company, connection_id: source.id, provider: 'mercado_livre', provider_listing_id: itemId, status: 'active', snapshot: { title: 'Geladeira Brastemp', stock: 1, price: 160, ean: '', category: categoryId, shipping: { mode: 'me2' } } }] });
     const mock = noEanProvider({ traditional }); globalThis.fetch = mock.fetch;
     const copied = await prepareMercadoLivreListingCopy(db, source, target, itemId);
     const result = await publishMercadoLivreCatalog(db, target, 'actor', crypto.randomUUID(), { ...copied.form, price: 170, description: 'Descrição alterada no destino.' });

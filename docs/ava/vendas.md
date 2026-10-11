@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.50.0.07 -->
+<!-- ava-version: 1.51.0.01 -->
+
+> Revisão 1.51.0.01: espaçamento na ficha local de Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.51.0: cadastro local de produtos e estoque do Marketplaces Web.
+> Sem impacto operacional no AvantaVendas: os saldos não foram unificados com
+> o estoque por conta do AvantaVendas e não há baixa automática por venda no ML.
 
 > Revisão 1.50.0.07: cópia de anúncios sem EAN no Marketplaces Web.
 > Sem impacto operacional no AvantaVendas.

@@ -4,17 +4,19 @@ import { DEFAULT_MARKETPLACE_PANEL_ORDER, marketplacePanelOrderKey, parseMarketp
 import { posicoesVerticaisKanbanEstavel, moverItemNaOrdem } from '../../app/lib/dnd.ts';
 
 test('ordem inicial: Vendas antes de Anunciados, independente de preferência inválida', () => {
-  assert.deepEqual(DEFAULT_MARKETPLACE_PANEL_ORDER, ['sales', 'announced']);
+  assert.deepEqual(DEFAULT_MARKETPLACE_PANEL_ORDER, ['sales', 'products', 'announced']);
   for (const value of [null, '', 'bad', '[]', 'null', '{"version":2,"order":["announced","sales"]}', '{"version":1,"order":["sales","sales"]}', '{"version":1,"order":["sales","other"]}', '{"version":1,"order":["sales"]}', '{"version":1,"order":"sales"}']) {
-    assert.deepEqual(parseMarketplacePanelOrder(value), ['sales', 'announced']);
+    assert.deepEqual(parseMarketplacePanelOrder(value), ['sales', 'products', 'announced']);
   }
 });
 
-test('preferência versionada restaura apenas os dois blocos permitidos', () => {
-  assert.deepEqual(parseMarketplacePanelOrder('{"version":1,"order":["announced","sales"]}'), ['announced', 'sales']);
+test('preferência antiga preserva sua ordem e acrescenta Produtos; a nova aceita os três blocos', () => {
+  assert.deepEqual(parseMarketplacePanelOrder('{"version":1,"order":["announced","sales"]}'), ['announced', 'sales', 'products']);
+  assert.deepEqual(parseMarketplacePanelOrder('{"version":2,"order":["products","sales","announced"]}'), ['products', 'sales', 'announced']);
+  assert.deepEqual(parseMarketplacePanelOrder('{"version":2,"order":["products","products","sales"]}'), DEFAULT_MARKETPLACE_PANEL_ORDER);
   const value = parseMarketplacePanelOrder(null);
   value.reverse();
-  assert.deepEqual(DEFAULT_MARKETPLACE_PANEL_ORDER, ['sales', 'announced']);
+  assert.deepEqual(DEFAULT_MARKETPLACE_PANEL_ORDER, ['sales', 'products', 'announced']);
 });
 
 test('chave da ordem isola usuário e empresa e não salva preferência anônima', () => {
@@ -35,6 +37,6 @@ test('prévia de blocos com alturas diferentes conserva espaços sem sobreposiç
 });
 
 test('reordenação não remove nem duplica blocos', () => {
-  assert.deepEqual(moverItemNaOrdem(DEFAULT_MARKETPLACE_PANEL_ORDER, 1, 0), ['announced', 'sales']);
+  assert.deepEqual(moverItemNaOrdem(DEFAULT_MARKETPLACE_PANEL_ORDER, 1, 0), ['products', 'sales', 'announced']);
   assert.deepEqual(moverItemNaOrdem(DEFAULT_MARKETPLACE_PANEL_ORDER, 0, 9), DEFAULT_MARKETPLACE_PANEL_ORDER);
 });

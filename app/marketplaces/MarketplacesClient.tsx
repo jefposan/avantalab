@@ -15,6 +15,7 @@ import { supabase } from '@/app/lib/supabase';
 import styles from './marketplaces.module.css';
 import Anunciados, { marketplaceClientRequest, type MarketplaceAccount } from './Anunciados';
 import NewListing, { type ListingCopyRequest } from './NewListing';
+import ProductsStock from './ProductsStock';
 import PriceUsersPanel from './PriceUsersPanel';
 import Vendas from './Vendas';
 import SalesFilters, { monthPeriod } from './SalesFilters';
@@ -340,14 +341,19 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       </article>
 
       <article className={styles.panel}>
-        <div className={styles.panelHeading}><div><p className={styles.step}>2</p><h2>Novo anúncio</h2></div></div>
-        {marketplace === 'mercado_livre' && <NewListing companyId={companyId} accountId={selectedAccount} accounts={accounts} accountSelectionLocked={accountSelectionLocked} onSelectAccount={setSelectedAccount} onBusyChange={setPublicationBusy} canManage={canManage} onPublished={() => setRefreshKey((value) => value + 1)} copyRequest={copyRequest} onCopyHandled={() => setCopyRequest(null)} />}
+        <div className={styles.panelHeading}><div><p className={styles.step}>2</p><h2 id="new-listing-title">Novo anúncio</h2></div></div>
+        {marketplace === 'mercado_livre' && <NewListing key={companyId} companyId={companyId} accountId={selectedAccount} accounts={accounts} accountSelectionLocked={accountSelectionLocked} onSelectAccount={setSelectedAccount} onBusyChange={setPublicationBusy} canManage={canManage} onPublished={() => setRefreshKey((value) => value + 1)} copyRequest={copyRequest} onCopyHandled={() => { setCopyRequest(null); setRefreshKey((value) => value + 1); }} />}
       </article>
     </section>
 
     {marketplace === 'mercado_livre' && <AvantaKanban className={styles.panelOrder} order={panelOrder.order} onOrderChange={panelOrder.change} disabled={!panelOrder.ready || publicationBusy || priceUsersOpen || !!disconnectAccount} items={[
       { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={setSalesAccount} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
+      { id: 'products', title: 'Produtos e estoque', render: (handle) => <ProductsStock key={companyId} companyId={companyId} accounts={accounts} canManage={canManage} dark={empresa.temaEscuro} brand={empresa.corPrimaria} refreshKey={refreshKey} preparationLocked={publicationBusy || accountSelectionLocked} reorderHandle={handle} onPrepare={(localProductId, targetConnectionId) => {
+        setSelectedAccount(targetConnectionId); setCopyRequest({ id: crypto.randomUUID(), localProductId, targetConnectionId });
+        requestAnimationFrame(() => document.getElementById('new-listing-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }));
+      }} /> },
       { id: 'announced', title: 'Anunciados', render: (handle) => <Anunciados companyId={companyId} dark={empresa.temaEscuro} brand={empresa.corPrimaria} accountId={selectedAccount} onAccountsLoaded={loadAccounts} onAccountSelectionLockedChange={setAccountSelectionLocked} onPublishInAnotherAccount={(sourceConnectionId, listingId, targetConnectionId) => {
+      if (publicationBusy) { setConnectionNotice('Conclua ou limpe a preparação em Novo anúncio antes de abrir outra.'); return; }
       setSelectedAccount(targetConnectionId);
       setCopyRequest({ id: crypto.randomUUID(), sourceConnectionId, listingId, targetConnectionId });
     }} refreshKey={refreshKey} reorderHandle={handle} /> },

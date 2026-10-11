@@ -138,7 +138,7 @@ test('grid panels fill their track without auto margins, sharing the content wra
 test('static notices are removed without disguising validation or hiding important errors', () => {
   assert.doesNotMatch(client, /OAuth|PKCE|styles.webOnly|styles.security|styles.flow|Nesta etapa/);
   assert.doesNotMatch(listings, /Para adicionar ou reconectar|Atualização automática enquanto|Anúncios da conta selecionada, inclusive/);
-  assert.match(client, /<NewListing companyId=\{companyId\} accountId=\{selectedAccount\}/);
+  assert.match(client, /<NewListing key=\{companyId\} companyId=\{companyId\} accountId=\{selectedAccount\}/);
   assert.match(newListing, /'Pesquisar'/);
   assert.match(newListing, /EAN não localizado/);
   assert.match(newListing, /'Publicar'/);
@@ -270,8 +270,8 @@ test('descrição em linha própria usa CampoBusca, Enter e seleção antes de p
   assert.match(newListing, /prepared\.candidates\.length > 0 && !product/);
   assert.match(newListing, /prepared\.query \|\| ''/);
   assert.match(newListing, /!prepared\.ean && !!prepared\.gtins\?\.length/);
-  assert.match(newListing, /\{\(prepared\.ean \|\| prepared\.copySource\) && <><div className=\{styles\.catalogFields\}/);
-  assert.match(newListing, /prepared\.copySource \? 'Anúncio original sem EAN'/);
+  assert.match(newListing, /\{\(prepared\.ean \|\| prepared\.copySource \|\| prepared\.localProductId\) && <><div className=\{styles\.catalogFields\}/);
+  assert.match(newListing, /prepared\.copySource \|\| prepared\.localProductId \? 'Produto sem EAN'/);
   assert.match(newListing, /change\('copySource', undefined\)/);
   assert.match(newListing, /function changeEan\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setSearchDescription\(''\)/);
   assert.match(newListing, /function changeSearchDescription\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setSearchDescription\(value\);\s*change\('ean', ''\)/);

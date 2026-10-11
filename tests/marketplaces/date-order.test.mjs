@@ -49,7 +49,7 @@ test('classificação reutiliza SVG de filtro e largura fixa; altura é comparti
   assert.match(button, /import \{ Icon \} from '@\/app\/projetos\/components\/Icon'/);
   assert.match(button, /<Icon name="filter" size=\{16\} \/>/);
   assert.match(css, /\.panelHeadingActions \.dateOrderButton \{[^}]*width: 150px;[^}]*flex: 0 0 150px;[^}]*white-space: nowrap;/);
-  assert.match(css, /\.panelHeadingActions :is\(\.refreshSales, button\[aria-controls="sales-content"\], button\[aria-controls="announced-content"\]\) \{[^}]*min-height: var\(--heading-control-height\); height: var\(--heading-control-height\);/);
+  assert.match(css, /\.panelHeadingActions :is\(\.refreshSales, button\[aria-controls="sales-content"\], button\[aria-controls="announced-content"\], button\[aria-controls="products-content"\]\) \{[^}]*min-height: var\(--heading-control-height\); height: var\(--heading-control-height\);/);
   assert.match(css, /\.panelHeadingActions \{ --heading-control-height: 40px;/);
   assert.match(css, /@media \(max-width: 760px\) \{\s*\.panelHeadingActions \{ --heading-control-height: 48px; \}/);
   assert.match(css, /inset: calc\(\(var\(--heading-control-height\) - 48px\) \/ 2\) 0;/);
@@ -57,7 +57,7 @@ test('classificação reutiliza SVG de filtro e largura fixa; altura é comparti
 
 test('os três controles compartilham hover sem afetar toque, desabilitados ou outros módulos', () => {
   const css = readFileSync(new URL('../../app/marketplaces/marketplaces.module.css', import.meta.url), 'utf8');
-  assert.match(css, /@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\.panelHeadingActions :is\(\.refreshSales, button\[aria-controls="sales-content"\], button\[aria-controls="announced-content"\]\):hover:not\(:disabled\) \{ border-color: var\(--brand\) !important; background-color: var\(--heading-control-hover-background\) !important; \}/);
+  assert.match(css, /@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\.panelHeadingActions :is\(\.refreshSales, button\[aria-controls="sales-content"\], button\[aria-controls="announced-content"\], button\[aria-controls="products-content"\]\):hover:not\(:disabled\) \{ border-color: var\(--brand\) !important; background-color: var\(--heading-control-hover-background\) !important; \}/);
   assert.match(css, /\.dark \.panelHeadingActions \{ --heading-control-hover-background: color-mix\(in srgb, var\(--brand\) 22%, #182235\); \}/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.panelHeadingActions :is\([^)]+\) \{ transition: none; \}/);
   assert.doesNotMatch(css, /\.dateOrderButton:hover/);

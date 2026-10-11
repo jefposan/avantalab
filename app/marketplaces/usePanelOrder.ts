@@ -23,11 +23,11 @@ export default function usePanelOrder(companyId: string) {
   }, [companyId]);
   const current = preference.companyId === companyId ? preference : { companyId, key: null, order: [...DEFAULT_MARKETPLACE_PANEL_ORDER], ready: false };
   function change(order: string[]) {
-    const validated = parseMarketplacePanelOrder(JSON.stringify({ version: 1, order }));
+    const validated = parseMarketplacePanelOrder(JSON.stringify({ version: 2, order }));
     setPreference({ ...current, order: validated });
     setNotice('');
     if (!current.key) { setNotice('Ordem alterada apenas nesta abertura. Entre novamente para salvar a preferência.'); return; }
-    try { localStorage.setItem(current.key, JSON.stringify({ version: 1, order: validated })); }
+    try { localStorage.setItem(current.key, JSON.stringify({ version: 2, order: validated })); }
     catch { setNotice('Ordem alterada, mas este navegador não permitiu salvá-la.'); }
   }
   return { order: current.order, ready: current.ready, change, notice };

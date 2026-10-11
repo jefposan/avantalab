@@ -7,6 +7,8 @@ import { normalizarTexto } from '@/app/lib/formatters';
 import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import { lookupProfileCatalogByEan } from './profile-catalog';
 import { listingIdIsValid, objectValue, uuidIsValid } from './listing-model';
+import { getLocalProduct, importLocalListing, productCommand } from './local-products';
+import { productFromPreparation } from './local-product-model';
 
 const listingTypeIds = new Set(['free', 'gold_special', 'gold_pro']);
 const shippingNames: Record<string, string> = { me2: 'Mercado Envios', not_specified: 'A combinar com o comprador' };
@@ -19,7 +21,7 @@ function preparationIssue(error: unknown, code: string, denied: string, unavaila
 }
 
 type PreparationInput = { ean?: unknown; query?: unknown; productId?: unknown; categoryId?: unknown };
-type CopySeed = { product: NonNullable<CatalogPreparation['product']>; categoryId: string; source: NonNullable<PublicationForm['copySource']> };
+type CopySeed = { product: NonNullable<CatalogPreparation['product']>; categoryId: string; source?: NonNullable<PublicationForm['copySource']>; localProductId?: string };
 
 export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection: SellerConnection, input: PreparationInput): Promise<CatalogPreparation> {
   return prepareCatalog(db, connection, input);
@@ -75,7 +77,7 @@ async function prepareCatalog(db: SupabaseClient, connection: SellerConnection, 
   let product = fullProduct;
 
   const categoryCandidates = new Map<string, { id: string; name: string; domainId: string; attributes: Array<{ id: string; name: string; value: string }> }>();
-  if (product.source === 'marketplace_listing' && seed) {
+  if (['marketplace_listing', 'local_product'].includes(product.source || '') && seed) {
     categoryCandidates.set(seed.categoryId, { id: seed.categoryId, name: seed.categoryId, domainId: product.domainId, attributes: [] });
   } else if (product.source === 'profile_catalog') {
     for (const category of externalCategories) categoryCandidates.set(category.id, category);
@@ -114,7 +116,7 @@ async function prepareCatalog(db: SupabaseClient, connection: SellerConnection, 
     : 'Não foi possível consultar os envios da conta agora. A opção escolhida será confirmada na validação antes de publicar.');
 
   const settings = objectValue(category?.settings);
-  if (category && !['profile_catalog', 'marketplace_listing'].includes(product.source || '') && safeText(settings.catalog_domain, 100) !== product.domainId) throw new MarketplaceError(409, 'category_mismatch', 'A categoria selecionada não corresponde ao domínio do produto. Confira a ficha no Mercado Livre.');
+  if (category && !['profile_catalog', 'marketplace_listing', 'local_product'].includes(product.source || '') && safeText(settings.catalog_domain, 100) !== product.domainId) throw new MarketplaceError(409, 'category_mismatch', 'A categoria selecionada não corresponde ao domínio do produto. Confira a ficha no Mercado Livre.');
   if (category && (settings.listing_allowed === false || safeText(settings.status, 30) === 'disabled')) blockingIssues.push({ code: 'category_not_allowed', message: 'O Mercado Livre não permite criar anúncios nesta categoria.' });
   const listingTypes = safeArray(available?.available).map(objectValue).flatMap((row) => {
     const id = safeText(row.id, 40);
@@ -143,7 +145,7 @@ async function prepareCatalog(db: SupabaseClient, connection: SellerConnection, 
     const tags = objectValue(row.tags), id = safeText(row.id, 80);
     return id && !present.has(id) && !['GTIN', 'ITEM_CONDITION'].includes(id)
       && (tags.required === true || tags.new_required === true || (product.source === 'profile_catalog' && tags.catalog_required === true)
-        || (seed && !ean && product.source === 'marketplace_listing' && id === 'EMPTY_GTIN_REASON' && objectValue(categoryAttributes.map(objectValue).find((attr) => attr.id === 'GTIN')?.tags).conditional_required === true));
+        || (seed && !ean && ['marketplace_listing', 'local_product'].includes(product.source || '') && id === 'EMPTY_GTIN_REASON' && objectValue(categoryAttributes.map(objectValue).find((attr) => attr.id === 'GTIN')?.tags).conditional_required === true));
   }).slice(0, 30).map((row) => ({
     id: safeText(row.id, 80), name: safeText(row.name, 120) || safeText(row.id, 80),
     values: safeArray(row.values).slice(0, 50).map(objectValue).flatMap((value) => {
@@ -152,13 +154,13 @@ async function prepareCatalog(db: SupabaseClient, connection: SellerConnection, 
     }),
   }));
   const gtinTags = objectValue(categoryAttributes.map(objectValue).find((attr) => attr.id === 'GTIN')?.tags);
-  if (seed && !ean && product.source === 'marketplace_listing' && (gtinTags.required === true || gtinTags.new_required === true)) blockingIssues.push({ code: 'provider_gtin_required', message: 'O Mercado Livre exige EAN nesta categoria para uma nova publicação. Informe o código real do produto para continuar.' });
+  if (seed && !ean && ['marketplace_listing', 'local_product'].includes(product.source || '') && (gtinTags.required === true || gtinTags.new_required === true)) blockingIssues.push({ code: 'provider_gtin_required', message: 'O Mercado Livre exige EAN nesta categoria para uma nova publicação. Informe o código real do produto para continuar.' });
   if (available && !listingTypes.length) blockingIssues.push({ code: 'listing_types_empty', message: 'Esta conta não possui um tipo de anúncio disponível para a categoria.' });
   if (!shippingModes.length) blockingIssues.push({ code: 'shipping_modes_empty', message: 'Nenhuma forma de envio compatível foi encontrada para esta conta e categoria.' });
   if (category && !conditions.length) blockingIssues.push({ code: 'conditions_empty', message: 'A categoria não retornou uma condição de produto compatível.' });
   if (product.source === 'profile_catalog' && !product.pictures.length) blockingIssues.push({ code: 'picture_required', message: 'O produto cadastrado no perfil não possui uma imagem HTTPS utilizável. Adicione uma imagem ao cadastro antes de publicar.' });
   const minimumPrice = Number(settings.minimum_price), maximumPrice = Number(settings.maximum_price), descriptionLimit = Number(settings.max_description_length);
-  return { status: 'found', ean, ...(seed ? { copySource: seed.source } : {}), product, candidates, categories, categoryId, listingTypes, shippingModes, conditions, requiredAttributes, presetAttributes,
+  return { status: 'found', ean, ...(seed?.source ? { copySource: seed.source } : {}), ...(seed?.localProductId ? { localProductId: seed.localProductId } : {}), product, candidates, categories, categoryId, listingTypes, shippingModes, conditions, requiredAttributes, presetAttributes,
     constraints: { ...(Number.isFinite(minimumPrice) && minimumPrice > 0 ? { minimumPrice } : {}), ...(Number.isFinite(maximumPrice) && maximumPrice > 0 ? { maximumPrice } : {}), maxDescriptionLength: Number.isSafeInteger(descriptionLimit) && descriptionLimit > 0 ? descriptionLimit : 50000 },
     ...(blockingIssues.length ? { blockingIssues } : {}), ...(warnings.length ? { warnings } : {}),
     notice: blockingIssues.length ? 'Revise as pendências abaixo antes de publicar.' : sourceNotice };
@@ -200,6 +202,7 @@ export async function prepareMercadoLivreListingCopy(db: SupabaseClient, source:
   if (!listingIdIsValid(item.id) || item.id !== listingId || String(item.seller_id) !== source.seller_reference) {
     throw new MarketplaceError(404, 'listing_not_found', 'O anúncio não pertence à conta de origem selecionada.');
   }
+  if (safeArray(item.variations).length) throw new MarketplaceError(409, 'variants_pending', 'Este anúncio tem variações. Nesta etapa, é necessário cadastrar cada variação separadamente; a cópia não foi preparada.');
   const attributes = safeArray(item.attributes).map(objectValue);
   const ean = validEan(attributes.find((attribute) => attribute.id === 'GTIN')?.value_name) || '';
 
@@ -275,13 +278,13 @@ function publicationBody(form: PublicationForm, prepared: CatalogPreparation) {
   }
   const warranty = form.warrantyType === 'none' ? 'Sem garantia' : form.warrantyType === 'seller' ? 'Garantia do vendedor' : 'Garantia de fábrica';
   return {
-    site_id: 'MLB', ...(['profile_catalog', 'marketplace_listing'].includes(product.source || '') ? {} : { catalog_product_id: product.id, catalog_listing: true }), category_id: form.categoryId,
+    site_id: 'MLB', ...(['profile_catalog', 'marketplace_listing', 'local_product'].includes(product.source || '') ? {} : { catalog_product_id: product.id, catalog_listing: true }), category_id: form.categoryId,
     title: product.name,
     price: form.price, currency_id: 'BRL', available_quantity: form.stock, buying_mode: 'buy_it_now',
     listing_type_id: form.listingType, ...(form.condition === 'new' || form.condition === 'used' ? { condition: form.condition } : {}),
     shipping: { mode: form.shippingMode, local_pick_up: false, free_shipping: false },
     sale_terms: [{ id: 'WARRANTY_TYPE', value_name: warranty }, ...(form.warrantyType !== 'none' ? [{ id: 'WARRANTY_TIME', value_name: form.warrantyTime!.trim() }] : [])],
-    attributes: attrs, pictures: form.pictureUrl ? [{ source: form.pictureUrl }] : [],
+    attributes: attrs, pictures: [...new Set([form.pictureUrl, ...product.pictures].filter((url): url is string => !!safeHttpsImage(url)))].slice(0, 12).map(source => ({ source })),
   };
 }
 
@@ -299,6 +302,7 @@ function parsePublicationForm(raw: unknown): PublicationForm {
     warrantyType: safeText(value.warrantyType, 20), warrantyTime: safeText(value.warrantyTime, 41),
     description: typeof value.description === 'string' ? value.description.slice(0, 50001) : '',
     pictureUrl: safeText(value.pictureUrl, 2048), attributes,
+    ...(value.localProductId != null ? { localProductId: safeText(value.localProductId, 36) } : {}),
     ...(value.copySource != null ? { copySource: { connectionId: safeText(objectValue(value.copySource).connectionId, 36), listingId: safeText(objectValue(value.copySource).listingId, 30) } } : {}),
   };
 }
@@ -306,6 +310,7 @@ function parsePublicationForm(raw: unknown): PublicationForm {
 /** Revalida a origem no servidor; um identificador vindo do navegador não dispensa autorização. */
 export async function prepareMercadoLivrePublication(db: SupabaseClient, connection: SellerConnection, raw: unknown) {
   const form = objectValue(raw);
+  if (form.localProductId != null) return (await prepareLocalProductPublication(db, connection, form.localProductId)).result;
   if (form.copySource != null) {
     const sourceRef = objectValue(form.copySource);
     if (!uuidIsValid(sourceRef.connectionId) || !listingIdIsValid(sourceRef.listingId)) throw new MarketplaceError(400, 'invalid_copy_source', 'A origem da cópia é inválida. Prepare o anúncio novamente.');
@@ -313,6 +318,53 @@ export async function prepareMercadoLivrePublication(db: SupabaseClient, connect
     return (await prepareMercadoLivreListingCopy(db, source, connection, sourceRef.listingId, { categoryId: form.categoryId })).result;
   }
   return prepareMercadoLivreCatalog(db, connection, form);
+}
+
+/** Cadastro relido no servidor e condições confirmadas na conta de destino. Não publica. */
+export async function prepareLocalProductPublication(db: SupabaseClient, connection: SellerConnection, productId: unknown) {
+  const local = await getLocalProduct(db, connection.empresa_id, productId);
+  if (!local.category_id || !local.pictures.length) throw new MarketplaceError(409, 'product_incomplete', 'Complete a categoria e as fotos do cadastro. Para um anúncio importado, use “Consultar ficha do anúncio” em Produtos e estoque.');
+  let product: NonNullable<CatalogPreparation['product']>;
+  if (local.catalog_product_id) {
+    const detail = objectValue(await mlRequest(db, connection, `/products/${local.catalog_product_id}`));
+    const candidate = catalogCandidate(detail);
+    if (!candidate || candidate.id !== local.catalog_product_id) throw new MarketplaceError(409, 'catalog_changed', 'A ficha não está mais disponível no Mercado Livre.');
+    const gtins = catalogGtins(detail.attributes);
+    if (local.ean && gtins.length && !gtins.includes(local.ean)) throw new MarketplaceError(409, 'gtin_mismatch', 'O EAN do cadastro não corresponde à ficha do Mercado Livre. Confira o produto.');
+    product = { ...candidate, source: 'mercadolivre_catalog', attributes: catalogAttributes(detail.attributes), pictures: catalogPictures(detail.pictures), description: local.description };
+  } else product = { id: local.id, name: local.name, domainId: '', picture: local.pictures[0], source: 'local_product', pictures: local.pictures, description: local.description, attributes: local.attributes };
+  const result = await prepareCatalog(db, connection, { ean: local.ean, categoryId: local.category_id }, { product, categoryId: local.category_id, localProductId: local.id });
+  const form: PublicationForm = { ean: local.ean || '', productId: product.id, categoryId: local.category_id, price: local.price_cents ? local.price_cents / 100 : 0,
+    stock: local.stock_quantity ?? -1, listingType: '', shippingMode: '', condition: '', warrantyType: '', ...local.publication_form,
+    localProductId: local.id, copySource: undefined, description: local.description, pictureUrl: local.pictures[0], attributes: local.publication_form.attributes || {} };
+  form.stock = local.stock_quantity ?? -1; form.ean = local.ean || ''; form.productId = product.id; form.price = local.price_cents ? local.price_cents / 100 : 0;
+  return { result, form, sourceTitle: local.name };
+}
+
+/** Completa a importação com a ficha atual, sem confirmar saldo ou editar o provedor. */
+export async function refreshLocalProductListing(db: SupabaseClient, empresaId: string, actor: string, productId: unknown, connectionId: unknown, listingId: unknown, requestKey: unknown) {
+  const local = await getLocalProduct(db, empresaId, productId);
+  if (!process.env.MARKETPLACE_SECRETS_KEY) throw new MarketplaceError(503, 'local_integration_not_configured', 'A consulta ao Mercado Livre não está configurada neste ambiente. As contas continuam conectadas; não é necessário reconectá-las.');
+  if (!uuidIsValid(connectionId) || !listingIdIsValid(listingId)) throw new MarketplaceError(400, 'invalid_item', 'Selecione um anúncio vinculado a este cadastro.');
+  const link = await db.from('marketplace_product_links').select('id').eq('empresa_id', empresaId).eq('product_id', local.id).eq('connection_id', connectionId).eq('provider_listing_id', listingId).maybeSingle();
+  if (link.error || !link.data) throw new MarketplaceError(404, 'listing_missing', 'O anúncio não está vinculado a este produto da empresa.');
+  const source = await loadConnection(db, empresaId, connectionId);
+  const item = objectValue(await mlRequest(db, source, `/items/${listingId}`));
+  if (item.id !== listingId || String(item.seller_id) !== source.seller_reference) throw new MarketplaceError(404, 'listing_not_found', 'O anúncio não pertence à conta selecionada.');
+  if (safeArray(item.variations).length) throw new MarketplaceError(409, 'variants_pending', 'Este anúncio possui variações e precisa de cadastro por variação.');
+  const description = await mlRequest(db, source, `/items/${listingId}/description`).then(objectValue).catch((error: unknown) => {
+    if (error instanceof MarketplaceError && error.code === 'provider_404') return {} as Record<string, unknown>;
+    throw error;
+  });
+  const attributes = safeArray(item.attributes).map(objectValue);
+  const pictures = safeArray(item.pictures).map(objectValue).flatMap(picture => { const url = safeHttpsImage(picture.secure_url || picture.url); return url ? [url] : []; });
+  const form: PublicationForm = { ean: validEan(attributes.find(attribute => attribute.id === 'GTIN')?.value_name) || '', productId: safeText(item.catalog_product_id, 30), categoryId: safeText(item.category_id, 30), price: typeof item.price === 'number' ? item.price : 0, stock: typeof item.available_quantity === 'number' ? item.available_quantity : -1,
+    listingType: safeText(item.listing_type_id, 40), shippingMode: safeText(objectValue(item.shipping).mode, 40), condition: safeText(item.condition, 20), ...copiedWarranty(safeArray(item.sale_terms)), description: safeText(description.plain_text, 50000), pictureUrl: pictures[0] || '', attributes: copiedAttributes(attributes) };
+  const product = { name: safeText(item.title, 220), pictures, attributes: attributes.flatMap(attribute => {
+    const id = safeText(attribute.id, 80), value = safeText(attribute.value_name, 300), valueId = safeText(attribute.value_id, 80);
+    return id && value ? [{ id, name: safeText(attribute.name, 120) || id, value, ...(valueId ? { valueId } : {}) }] : [];
+  }) };
+  return productCommand(db, empresaId, actor, 'enrich', { ...productFromPreparation(form, product), product_id: local.id, revision: local.revision, catalog_product_id: /^MLB\d+$/.test(form.productId) ? form.productId : '' }, requestKey);
 }
 
 export async function publishMercadoLivreCatalog(db: SupabaseClient, connection: SellerConnection, actor: string, requestKey: unknown, raw: unknown) {
@@ -326,10 +378,19 @@ export async function publishMercadoLivreCatalog(db: SupabaseClient, connection:
   const body = publicationBody(form, prepared);
   // A validação do provedor é sem publicação e identifica requisitos condicionais da categoria.
   await mlRequest(db, connection, '/items/validate', 'POST', body);
+  let localProductId = form.localProductId;
+  if (!localProductId && form.copySource) localProductId = (await importLocalListing(db, connection.empresa_id, actor, form.copySource.connectionId, form.copySource.listingId)).product_id;
+  if (!localProductId) {
+    const registered = await productCommand(db, connection.empresa_id, actor, 'draft', { ...productFromPreparation(form, prepared.product), catalog_product_id: ['profile_catalog', 'marketplace_listing', 'local_product'].includes(prepared.product.source || '') ? '' : prepared.product.id, stock_quantity: form.stock, physical_confirmation: true }, requestKey);
+    localProductId = registered.product_id;
+  }
+  const local = await getLocalProduct(db, connection.empresa_id, localProductId);
+  if (local.stock_quantity == null) throw new MarketplaceError(409, 'physical_stock_pending', 'Confirme o estoque físico em “Produtos e estoque” antes de publicar.');
+  if (form.stock > local.stock_quantity) throw new MarketplaceError(409, 'physical_stock_exceeded', 'A quantidade do anúncio supera o estoque físico confirmado. Confira o cadastro.');
   const { data: draft, error: insertError } = await db.from('marketplace_publications').insert({
     empresa_id: connection.empresa_id, connection_id: connection.id, provider: 'mercado_livre', ean: prepared.ean,
     price_cents: Math.round(form.price * 100), status: 'publishing', idempotency_key: requestKey, created_by: actor,
-    response_summary: { product_id: prepared.product.id, category_id: form.categoryId },
+    response_summary: { product_id: prepared.product.id, category_id: form.categoryId, local_product_id: localProductId },
   }).select('id').single();
   if (insertError || !draft) throw new MarketplaceError(insertError?.code === '23505' ? 409 : 503, insertError?.code === '23505' ? 'duplicate_publish' : 'publication_audit_unavailable',
     insertError?.code === '23505' ? 'Esta publicação já foi solicitada. Confira “Anunciados” antes de tentar novamente.' : 'Não foi possível registrar a publicação. Nada foi enviado ao Mercado Livre.');
@@ -339,15 +400,16 @@ export async function publishMercadoLivreCatalog(db: SupabaseClient, connection:
     const created = objectValue(await mlRequest(db, connection, '/items', 'POST', body));
     if (!listingIdIsValid(created.id) || String(created.seller_id) !== connection.seller_reference) throw new MarketplaceError(409, 'publication_uncertain', 'O Mercado Livre não confirmou a identificação do novo anúncio. Confira a conta antes de tentar novamente.');
     itemId = created.id;
+    await productCommand(db, connection.empresa_id, actor, 'link', { product_id: localProductId, connection_id: connection.id, provider: 'mercado_livre', provider_listing_id: itemId, title: prepared.product.name, reported_stock: form.stock, status: safeText(created.status, 40), source_snapshot: productFromPreparation(form, prepared.product).publication_form }, crypto.randomUUID());
     await db.from('marketplace_publications').update({ provider_listing_id: itemId }).eq('id', draft.id).eq('empresa_id', connection.empresa_id);
     if (form.description?.trim()) await mlRequest(db, connection, `/items/${itemId}/description`, 'POST', { plain_text: form.description.trim() });
     const listing = await recordPublishedListing(db, connection, itemId);
-    const { error: completedError } = await db.from('marketplace_publications').update({ status: 'published', provider_listing_id: itemId, published_by: actor, published_at: new Date().toISOString(), response_summary: { product_id: prepared.product.id, category_id: form.categoryId, item_id: itemId } })
+    const { error: completedError } = await db.from('marketplace_publications').update({ status: 'published', provider_listing_id: itemId, published_by: actor, published_at: new Date().toISOString(), response_summary: { product_id: prepared.product.id, category_id: form.categoryId, item_id: itemId, local_product_id: localProductId } })
       .eq('id', draft.id).eq('empresa_id', connection.empresa_id);
     if (completedError) throw new Error('Publication persistence failed');
-    return { status: 'published' as const, listing };
+    return { status: 'published' as const, listing, localProductId };
   } catch (failure) {
-    await db.from('marketplace_publications').update({ status: 'failed', ...(itemId ? { provider_listing_id: itemId } : {}), response_summary: { product_id: prepared.product.id, category_id: form.categoryId, ...(itemId ? { item_id: itemId } : {}), error_code: failure instanceof MarketplaceError ? failure.code : 'integration' } })
+    await db.from('marketplace_publications').update({ status: 'failed', ...(itemId ? { provider_listing_id: itemId } : {}), response_summary: { product_id: prepared.product.id, category_id: form.categoryId, local_product_id: localProductId, ...(itemId ? { item_id: itemId } : {}), error_code: failure instanceof MarketplaceError ? failure.code : 'integration' } })
       .eq('id', draft.id).eq('empresa_id', connection.empresa_id);
     if (itemId) throw new MarketplaceError(409, 'publication_partial', `O anúncio ${itemId} foi criado, mas a descrição ou a sincronização não foi confirmada. Confira-o no Mercado Livre; não clique em Publicar novamente.`);
     if (failure instanceof MarketplaceError && failure.code === 'mutation_uncertain') throw new MarketplaceError(409, 'publication_uncertain', 'A resposta da publicação não chegou. Ela pode ter sido criada. Confira “Anunciados” e o Mercado Livre antes de tentar novamente.');

@@ -1,12 +1,13 @@
 import { isValidEan, normalizeEan } from './ean.ts';
 
 export type CatalogAttribute = { id: string; name: string; value: string; valueId?: string };
-export type CatalogCandidate = { id: string; name: string; domainId: string; picture: string | null; source?: 'mercadolivre_catalog' | 'profile_catalog' | 'marketplace_listing' };
+export type CatalogCandidate = { id: string; name: string; domainId: string; picture: string | null; source?: 'mercadolivre_catalog' | 'profile_catalog' | 'marketplace_listing' | 'local_product' };
 export type CatalogPreparationIssue = { code: string; message: string };
 export type CatalogPreparation = {
   status: 'found' | 'not_found';
   ean: string;
   copySource?: { connectionId: string; listingId: string };
+  localProductId?: string;
   query?: string;
   gtins?: string[];
   product?: CatalogCandidate & { attributes: CatalogAttribute[]; pictures: string[]; description: string };
@@ -30,6 +31,7 @@ export type PublicationForm = {
   warrantyTime?: string; description?: string; pictureUrl?: string;
   attributes?: Record<string, string>;
   copySource?: { connectionId: string; listingId: string };
+  localProductId?: string;
 };
 
 export function validEan(input: unknown): string | null {
@@ -98,7 +100,8 @@ export function publicationErrors(form: PublicationForm, preparation: CatalogPre
   const errors: Record<string, string> = {};
   if (preparation.blockingIssues?.length) errors.preparation = 'Resolva as pendências da preparação antes de publicar.';
   const sameCopy = !!preparation.copySource && form.copySource?.connectionId === preparation.copySource.connectionId && form.copySource?.listingId === preparation.copySource.listingId;
-  if ((!(sameCopy && !preparation.ean && !form.ean) && !validEan(form.ean)) || form.ean !== preparation.ean) errors.ean = 'Valide novamente o EAN.';
+  const sameLocal = !!preparation.localProductId && preparation.localProductId === form.localProductId;
+  if ((!((sameCopy || sameLocal) && !preparation.ean && !form.ean) && !validEan(form.ean)) || form.ean !== preparation.ean) errors.ean = 'Valide novamente o EAN.';
   if (!preparation.product || form.productId !== preparation.product.id) errors.productId = 'Valide novamente o produto.';
   if (!form.categoryId || !preparation.categories?.some((option) => option.id === form.categoryId)) errors.categoryId = 'Selecione uma categoria confirmada para este produto.';
   if (!Number.isFinite(form.price) || form.price <= 0 || Math.abs(Math.round(form.price * 100) - form.price * 100) > 0.0001) errors.price = 'Informe um preço válido em reais e centavos.';
@@ -118,7 +121,7 @@ export function publicationErrors(form: PublicationForm, preparation: CatalogPre
   }
   const descriptionLimit = preparation.constraints?.maxDescriptionLength || 50000;
   if (form.description && form.description.length > descriptionLimit) errors.description = `A descrição deve ter até ${descriptionLimit.toLocaleString('pt-BR')} caracteres.`;
-  if (preparation.product?.source === 'profile_catalog') {
+  if (preparation.product?.source === 'profile_catalog' || preparation.product?.source === 'local_product') {
     if (!form.pictureUrl || !safeHttpsImage(form.pictureUrl) || !preparation.product.pictures.includes(form.pictureUrl)) errors.pictureUrl = 'Selecione a imagem cadastrada para este produto no perfil.';
   } else if (form.pictureUrl && !safeCatalogImage(form.pictureUrl)) errors.pictureUrl = 'Use uma imagem HTTPS hospedada no Mercado Livre.';
   for (const attribute of preparation.requiredAttributes || []) {

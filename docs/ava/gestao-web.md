@@ -1,6 +1,29 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.50.0.07 -->
+<!-- ava-version: 1.51.0.01 -->
+
+> Revisão 1.51.0.01: espaçamento vertical na ficha de Produtos e estoque,
+> entre campos, confirmações e ações. Sem impacto operacional.
+
+> Revisão 1.51.0: Marketplaces tem **Produtos e estoque**, uma lista expansível
+> por empresa. **Importar anúncios existentes** importa os anúncios já
+> sincronizados das contas, sem somar quantidades e sem confirmar estoque.
+> Abra cada produto e confirme as unidades físicas (zero é válido), com
+> histórico. Para o mesmo produto em contas diferentes, use **Vincular ao
+> cadastro** no registro com estoque ainda não confirmado: confirme que é o
+> mesmo produto e mantenha o cadastro correto; os saldos nunca são somados.
+> **Novo produto** salva nome, SKU, EAN opcional, descrição, preço, categoria e
+> fotos sem publicar. **Preparar anúncio** escolhe uma conta e abre Novo anúncio
+> para revisão separada; estoque deve estar confirmado. Uma primeira publicação
+> nova registra a ficha e o estoque inicial no cadastro local antes de enviar
+> ao ML. Republicações vinculam outro anúncio ao mesmo produto e não aumentam
+> estoque. Dados locais não alteram anúncios existentes. Importação do cache
+> pode ter ficha parcial: **Consultar ficha do anúncio** completa fotos, descrição
+> e características ausentes sem alterar anúncios, saldo físico ou dados revisados.
+> Anúncios com variações não são importados/copiados nesta primeira etapa; precisam
+> de cadastro por variação. Ainda não há reserva, baixa automática por venda nem
+> sincronização do saldo com as contas. Não prometer proteção contra venda sem
+> estoque; mantenha o saldo físico revisado. AvantaVendas não usa este saldo.
 
 > Revisão 1.50.0.07: **Publicar em outra conta** aceita o anúncio original
 > sem EAN: usa a ficha ativa do catálogo ou o anúncio tradicional confirmado

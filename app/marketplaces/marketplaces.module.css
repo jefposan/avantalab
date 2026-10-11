@@ -24,23 +24,64 @@
 .dark .salesPeriodDialog { color: #f8fafc; border-color: #334155; background: #182235; }
 .salesPanel { scroll-margin-top: 100px; }
 .panelOrder { margin-top: 24px; }
+.localToolbar, .localPagination { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+.localToolbar > div:first-child { flex: 1 1 260px; min-width: 0; }
+.localProducts { display: grid; gap: 12px; }
+.localProduct { border: 1px solid #dbe3ee; border-radius: 16px; overflow: hidden; background: #fff; }
+.localProductOpen { border-color: var(--brand); }
+.localProductHeading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; }
+.localProductHeading > div:first-child { min-width: 0; }
+.localProductHeading strong { display: block; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.localProductHeading small { display: block; color: #64748b; margin: 4px 0 8px; }
+.localStockPending, .localStock { display: inline-block; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+.localStockPending { background: #fff7ed; color: #9a3412; }
+.localStock { background: #ecfdf5; color: #065f46; }
+.localProductDetail { padding: 20px 16px; border-top: 1px solid #dbe3ee; }
+.localFacts { display: grid; grid-template-columns: minmax(120px, 180px) minmax(0, 1fr); gap: 10px 16px; margin: 0; font-size: 13px; line-height: 1.6; }
+.localFacts dt { font-weight: 600; color: #64748b; }
+.localFacts dd { margin: 0; overflow-wrap: anywhere; }
+.localFacts > div { display: contents; }
+.localDescription { white-space: pre-wrap; }
+.localSection, .localForm { margin: 20px 0 0; padding: 18px; border-radius: 12px; background: #f8fafc; border: 1px solid #dbe3ee; }
+.localSection h3, .localSection summary { font-weight: 600; font-size: 14px; margin: 0 0 12px; }
+.localSection summary { cursor: pointer; min-height: 32px; }
+.localSection ul { display: grid; gap: 10px; margin: 12px 0 0; padding-left: 20px; }
+.localSection li > :is(strong, span) { display: block; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.localSection > button { margin-top: 12px; }
+.localProductDetail > .localSection { margin-bottom: 24px; }
+.localProductDetail > button { margin-bottom: 12px; }
+.localProductDetail > .help { margin: 0 0 16px; }
+.localSection > .catalogFields { margin-top: 16px; }
+.localSection > .catalogMatch { margin: 20px 0; }
+.localSection > .catalogMatch + button { margin-top: 0; }
+.localSection > .form { margin: 16px 0; }
+.localSection > button + .help { margin-top: 12px; }
+.dark .localProduct { background: #182235; border-color: #475569; }
+.dark .localProductOpen { border-color: var(--brand); }
+.dark .localProductDetail { border-color: #475569; }
+.dark :is(.localSection, .localForm) { background: #111b2b; border-color: #475569; }
+.dark :is(.localProductHeading small, .localFacts dt) { color: #b8c5d7; }
+.dark .localStockPending { color: #fed7aa; background: #3a2d19; }
+.dark .localStock { color: #6ee7b7; background: #12382d; }
+@media (hover: hover) { .localProduct:not(.localProductOpen):hover { border-color: color-mix(in srgb, var(--brand) 45%, #dbe3ee); background: color-mix(in srgb, var(--brand) 3%, #fff); } .dark .localProduct:not(.localProductOpen):hover { background: color-mix(in srgb, var(--brand) 8%, #182235); } }
+@media (max-width: 600px) { .localProductHeading { gap: 8px; padding: 12px; } .localProductDetail { padding: 16px 12px; } .localSection, .localForm { padding: 12px; } .localFacts { grid-template-columns: 1fr; gap: 4px; } .localFacts dd { margin-bottom: 10px; } }
 .dark .panelOrder { --avanta-kanban-control: #bfdbfe; }
 .panelHeadingActions { --heading-control-height: 40px; --heading-control-hover-background: color-mix(in srgb, var(--brand) 7%, #fff); display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .dark .panelHeadingActions { --heading-control-hover-background: color-mix(in srgb, var(--brand) 22%, #182235); }
 .panelHeadingCollapsed { margin-bottom: 0; }
-.panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"]) { position: relative; min-height: var(--heading-control-height); height: var(--heading-control-height); transition: background-color .15s ease, border-color .15s ease; }
+.panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"], button[aria-controls="products-content"]) { position: relative; min-height: var(--heading-control-height); height: var(--heading-control-height); transition: background-color .15s ease, border-color .15s ease; }
 /* Face compacta no desktop; área clicável continua com 48px de altura. */
-.panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"])::after { content: ''; position: absolute; inset: calc((var(--heading-control-height) - 48px) / 2) 0; }
+.panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"], button[aria-controls="products-content"])::after { content: ''; position: absolute; inset: calc((var(--heading-control-height) - 48px) / 2) 0; }
 .panelHeadingActions .dateOrderButton { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 150px; flex: 0 0 150px; white-space: nowrap; font-weight: 600; }
 .dateOrderButton svg { flex: 0 0 16px; }
 .dateOrderButton:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 28%, transparent); outline-offset: 2px; }
 .dateOrderButton:disabled { opacity: .55; cursor: not-allowed; }
 @media (hover: hover) and (pointer: fine) {
   /* Prevalece sobre as cores inline do BotaoExpandirCard só durante hover. */
-  .panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"]):hover:not(:disabled) { border-color: var(--brand) !important; background-color: var(--heading-control-hover-background) !important; }
+  .panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"], button[aria-controls="products-content"]):hover:not(:disabled) { border-color: var(--brand) !important; background-color: var(--heading-control-hover-background) !important; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"]) { transition: none; }
+  .panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"], button[aria-controls="products-content"]) { transition: none; }
 }
 @media (max-width: 480px) { .listingsPanel > .panelHeading, .salesPanel > .panelHeading { flex-wrap: wrap; }.panelHeadingActions { margin-left: auto; } }
 @media (max-width: 1100px) {
@@ -172,7 +213,7 @@
 }
 .listingTable tbody .listingRow:has(:focus-visible) > :is(th, td):not(.editingListingTitle) { background: color-mix(in srgb, var(--brand) 4%, #fff); }
 .dark .listingTable tbody .listingRow:has(:focus-visible) > :is(th, td):not(.editingListingTitle) { background: color-mix(in srgb, var(--brand) 10%, #182235); }
-.listingsPanel button:not(.primary):not(.selectTrigger):not(.selectOption):not(.publishOtherAccountButton):not([data-avanta-kanban-handle]):not(:where(.panelHeadingActions button)) { min-height: 44px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: var(--brand); padding: 0 12px; font: inherit; cursor: pointer; }
+.listingsPanel button:not(.primary):not(.selectTrigger):not(.selectOption):not(.publishOtherAccountButton):not(:global(.avanta-campo-busca-limpar)):not([data-avanta-kanban-handle]):not(:where(.panelHeadingActions button)) { min-height: 44px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: var(--brand); padding: 0 12px; font: inherit; cursor: pointer; }
 .listingTable .listingActions { position: sticky; right: 0; z-index: 1; text-align: center; background: #fff; box-shadow: -1px 0 0 #e2e8f0; }
 .listingTable thead .listingActions { background: #f1f5f9; }
 .listingsPanel button.editListing { display: inline-flex; align-items: center; justify-content: center; width: 44px; padding: 0; border: 0; border-radius: 12px; background: transparent; }

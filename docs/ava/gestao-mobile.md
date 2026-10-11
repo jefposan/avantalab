@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.50.0.07 -->
+<!-- ava-version: 1.51.0.01 -->
+
+> Revisão 1.51.0.01: espaçamento na ficha local de Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.51.0: cadastro local de produtos e estoque no Marketplaces Web,
+> também acessível em tela estreita. Sem impacto operacional na Gestão Mobile
+> ou no PWA AvantaPreços; não há baixa automática por venda nesta etapa.
 
 > Revisão 1.50.0.07: cópia de anúncios sem EAN no Marketplaces Web.
 > Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.

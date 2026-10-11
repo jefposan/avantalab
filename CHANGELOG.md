@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.51.0.01 - 2026-10-11
+
+- Mais espaço vertical em Produtos e estoque: entre anúncios vinculados e
+  ações, campos de quantidade/observação, confirmação e botão de estoque.
+  Ajuste restrito à ficha local, no desktop e mobile; sem mudar dados ou fluxo.
+
+## 1.51.0 - 2026-10-11
+
+- Cadastro local de Produtos e estoque por empresa, com lista expansível,
+  busca, paginação, ficha editável, preparação de anúncio em uma conta escolhida
+  e uso dos componentes oficiais do Padrão Avanta v1.17.0.
+- Importação idempotente dos anúncios sincronizados com estoque físico pendente.
+  Confirmação/ajuste explícito com histórico e revisão concorrente; anúncios do
+  mesmo produto podem ser vinculados sem somar as quantidades das contas.
+- Consultar ficha do anúncio completa fotos, descrição e características
+  ausentes por leitura da origem validada, preservando o estoque físico local.
+- Primeira publicação registra ficha completa e estoque inicial antes do envio
+  ao Mercado Livre; republicação conserva o mesmo cadastro e apenas vincula
+  outro anúncio. Revalidação por empresa, produto e conta no servidor.
+- Migração aditiva `20261011200000_marketplace_local_products.sql` aplicada ao
+  Supabase AvantaLab em 11/10/2026; 28 anúncios existentes importados sem saldo
+  confirmado. RLS, RPC privada, confirmação atômica e testes PostgreSQL isolados.
+- Não inclui reservas, baixa automática por venda, sincronização de quantidade
+  com marketplaces ou integração ao estoque do AvantaVendas. Anúncios com
+  variações aguardam cadastro específico; nenhum anúncio real foi publicado.
+- Ava revisada nos três ambientes. Versão minor para recurso aditivo sem
+  migração/destruição de dados ou mudança de contrato dos demais módulos.
+
 ## 1.50.0.07 - 2026-10-11
 
 - Publicar em outra conta prepara anúncios originais sem EAN, usando a ficha

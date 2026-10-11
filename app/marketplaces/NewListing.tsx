@@ -10,7 +10,7 @@ import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 import MarketplaceSelect from './MarketplaceSelect';
 import styles from './marketplaces.module.css';
 
-export type ListingCopyRequest = { id: string; sourceConnectionId: string; targetConnectionId: string; listingId: string };
+export type ListingCopyRequest = { id: string; targetConnectionId: string } & ({ sourceConnectionId: string; listingId: string; localProductId?: never } | { localProductId: string; sourceConnectionId?: never; listingId?: never });
 type Props = { companyId: string; accountId: string; accounts: MarketplaceAccount[]; accountSelectionLocked: boolean; onSelectAccount: (id: string) => void; onBusyChange: (busy: boolean) => void; canManage: boolean; onPublished: () => void; copyRequest: ListingCopyRequest | null; onCopyHandled: () => void };
 const initial = (): PublicationForm => ({ ean: '', productId: '', categoryId: '', price: 0, stock: -1, listingType: '', shippingMode: '', condition: '', warrantyType: '', description: '', attributes: {} });
 
@@ -36,7 +36,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
   const handledCopy = useRef('');
 
   useEffect(() => { activeRef.current = true; return () => { activeRef.current = false; }; }, []);
-  useEffect(() => { onBusyChange(preparing || publishing); return () => onBusyChange(false); }, [preparing, publishing, onBusyChange]);
+  useEffect(() => { onBusyChange(preparing || publishing || !!prepared); return () => onBusyChange(false); }, [preparing, publishing, prepared, onBusyChange]);
 
   function applyPreparation(result: CatalogPreparation, preferred?: PublicationForm, preserve = preserveCopiedFields) {
     setPrepared(result);
@@ -66,7 +66,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     setSearchingBy(productId || categoryId ? null : query ? 'description' : 'ean');
     setPreparing(true); setScannerArmed(false); setMessage(''); setErrors({}); setPublishedId(''); setMatched(false);
     try {
-      const response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId, ean, query, productId, categoryId, ...(!query && form.copySource ? { copySource: form.copySource } : {}) }) as { result: CatalogPreparation };
+      const response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId, ean, query, productId, categoryId, ...(!query && form.localProductId ? { localProductId: form.localProductId } : {}), ...(!query && form.copySource ? { copySource: form.copySource } : {}) }) as { result: CatalogPreparation };
       if (!activeRef.current) return;
       applyPreparation(response.result, preferred);
     } catch (failure) { if (activeRef.current) { if (!productId && !categoryId) setPrepared(null); setMessage(failure instanceof Error ? failure.message : 'Não foi possível pesquisar o produto.'); } }
@@ -81,7 +81,9 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       if (!canManage || preparing || publishing) return;
       setPreparing(true); setScannerArmed(false); setMessage(''); setErrors({}); setPublishedId(''); setMatched(false);
       try {
-        const response = await marketplaceClientRequest('preparar-copia', { empresaId: companyId, sourceConnectionId: currentCopy.sourceConnectionId, targetConnectionId: currentCopy.targetConnectionId, listingId: currentCopy.listingId }) as { result: CatalogPreparation; form: PublicationForm; sourceTitle: string };
+        const response = await (currentCopy.localProductId
+          ? marketplaceClientRequest('produtos/preparar', { empresaId: companyId, connectionId: currentCopy.targetConnectionId, productId: currentCopy.localProductId })
+          : marketplaceClientRequest('preparar-copia', { empresaId: companyId, sourceConnectionId: currentCopy.sourceConnectionId, targetConnectionId: currentCopy.targetConnectionId, listingId: currentCopy.listingId })) as { result: CatalogPreparation; form: PublicationForm; sourceTitle: string };
         if (!activeRef.current) return;
         applyPreparation(response.result, response.form);
         setMessage(`A ficha de “${response.sourceTitle}” foi preparada nesta conta. Revise todos os dados antes de publicar.`);
@@ -104,7 +106,8 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     if (Object.keys(validation).length) { focusFirstError(validation); return; }
     setPublishing(true);
     try {
-      const result = await marketplaceClientRequest('publicar', { empresaId: companyId, connectionId: accountId, requestKey, form: current }) as { status: string; listing: { id: string; title: string } };
+      const result = await marketplaceClientRequest('publicar', { empresaId: companyId, connectionId: accountId, requestKey, form: current }) as { status: string; listing: { id: string; title: string }; localProductId: string };
+      change('localProductId', result.localProductId);
       setPublishedId(result.listing.id); setMessage(`Anúncio ${result.listing.id} publicado e adicionado à lista.`); onPublished();
     } catch (failure) {
       const detail = failure as Error & { fields?: Record<string, string> };
@@ -139,6 +142,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     setSearchDescription('');
     change('ean', value.replace(/\D/g, '').slice(0, 14));
     change('copySource', undefined);
+    change('localProductId', undefined);
     setPreserveCopiedFields(false);
     setPrepared(null); setMatched(false); setPublishedId(''); setMessage('');
   }
@@ -148,6 +152,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     setSearchDescription(value);
     change('ean', '');
     change('copySource', undefined);
+    change('localProductId', undefined);
     setScannerArmed(false); setPreserveCopiedFields(false);
     setPrepared(null); setMatched(false); setPublishedId(''); setMessage('');
   }
@@ -165,11 +170,11 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     try {
       let response: { result: CatalogPreparation };
       try {
-        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: copiedForm.categoryId, copySource: copiedForm.copySource }) as { result: CatalogPreparation };
+        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: copiedForm.categoryId, copySource: copiedForm.copySource, localProductId: copiedForm.localProductId }) as { result: CatalogPreparation };
       } catch (failure) {
         const detail = failure as Error & { code?: string };
         if (detail.code !== 'category_mismatch') throw failure;
-        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: '', copySource: copiedForm.copySource }) as { result: CatalogPreparation };
+        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: '', copySource: copiedForm.copySource, localProductId: copiedForm.localProductId }) as { result: CatalogPreparation };
       }
       if (!activeRef.current) return;
       onSelectAccount(target.id);
@@ -202,6 +207,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
         <p id="new-search-description-help" className={styles.help}>Digite pelo menos 3 caracteres e escolha a ficha correta. Nada é publicado nesta pesquisa.</p>
       </div>
       {!selectedAccount && <p className={styles.help}>{accountId ? 'Esta conta não está conectada. Reconecte-a ou selecione outra conta para publicar.' : 'Conecte ou selecione uma conta do Mercado Livre para pesquisar o produto.'}</p>}
+      <p className={styles.help}>O produto já está cadastrado? Prepare o anúncio em Produtos e estoque para reutilizar a ficha e o mesmo saldo físico.</p>
       {accountId && !canManage && <p className={styles.help}>Seu perfil pode consultar anúncios, mas não preparar publicações.</p>}
     </div>
 
@@ -210,7 +216,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     {prepared?.candidates && prepared.candidates.length > 0 && !product && <MarketplaceSelect id="new-productId" className={styles.catalogField} label={`Produto encontrado (${prepared.candidates.length})`} disabled={preparing || publishing} value="" options={prepared.candidates.map((candidate) => ({ value: candidate.id, label: candidate.name, detail: candidate.id }))} placeholder="Selecione a ficha correta" onChange={(value) => void prepare(prepared.ean, value, '', accountId, undefined, prepared.query || '')} />}
 
     {product && <div className={styles.catalogResult} aria-live="polite">
-      <div className={styles.catalogIdentity}>{product.picture && <img src={product.picture} alt={product.name} />}<div><strong>{product.name}</strong><small>{product.source === 'profile_catalog' ? 'Cadastro do perfil' : product.source === 'marketplace_listing' ? `Anúncio de origem · ${product.id}` : `Catálogo ML · ${product.id}`}</small><small>{prepared.ean ? `EAN ${prepared.ean}` : prepared.copySource ? 'Anúncio original sem EAN' : 'EAN a confirmar'}</small></div></div>
+      <div className={styles.catalogIdentity}>{product.picture && <img src={product.picture} alt={product.name} />}<div><strong>{product.name}</strong><small>{product.source === 'local_product' ? 'Cadastro local da empresa' : product.source === 'profile_catalog' ? 'Cadastro do perfil' : product.source === 'marketplace_listing' ? `Anúncio de origem · ${product.id}` : `Catálogo ML · ${product.id}`}</small><small>{prepared.ean ? `EAN ${prepared.ean}` : prepared.copySource || prepared.localProductId ? 'Produto sem EAN' : 'EAN a confirmar'}</small></div></div>
       {product.pictures.length > 0 && <div className={styles.catalogPictures}>{product.pictures.slice(0, 5).map((url) => <img key={url} src={url} alt={`Imagem do catálogo de ${product.name}`} />)}</div>}
       <details><summary>Características localizadas ({product.attributes.length})</summary><dl className={styles.catalogAttributes}>{product.attributes.map((attribute) => <div key={attribute.id}><dt>{attribute.name}</dt><dd>{attribute.value}</dd></div>)}</dl></details>
       {prepared.notice && <p className={styles.catalogNotice}>{prepared.notice}</p>}
@@ -218,7 +224,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       {!!prepared.warnings?.length && <ul className={styles.catalogWarnings}>{prepared.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
       {!prepared.ean && !!prepared.gtins?.length && <MarketplaceSelect id="new-gtin" className={styles.catalogField} label="EAN da embalagem" value="" disabled={preparing || publishing} options={prepared.gtins.map((code) => ({ value: code, label: code }))} placeholder="Selecione o código do seu produto" onChange={(value) => void prepare(value, product.id, '', accountId, undefined, prepared.query || '')} />}
 
-      {(prepared.ean || prepared.copySource) && <><div className={styles.catalogFields}>
+      {(prepared.ean || prepared.copySource || prepared.localProductId) && <><div className={styles.catalogFields}>
         <MarketplaceSelect id="new-categoryId" className={styles.catalogField} label="Categoria" value={form.categoryId} options={(prepared.categories || []).map((category) => ({ value: category.id, label: category.name, detail: category.id }))} placeholder="Selecione" error={errors.categoryId} onChange={(value) => { change('categoryId', value); void prepare(prepared.ean, product.id, value); }} />
         <label className={styles.catalogField} htmlFor="new-price">Preço de venda<input id="new-price" inputMode="decimal" value={priceText} onChange={(event) => { const text = formatarMoedaDigitada(event.target.value); setPriceText(text); change('price', moedaDigitadaParaNumero(text) ?? 0); }} placeholder="R$ 0,00" />{errors.price && <small role="alert">{errors.price}</small>}</label>
         <label className={styles.catalogField} htmlFor="new-stock">Estoque disponível<input id="new-stock" inputMode="numeric" value={stockText} onChange={(event) => { const text = event.target.value.replace(/\D/g, '').slice(0, 5); setStockText(text); change('stock', text ? Number(text) : -1); }} placeholder="Quantidade" />{errors.stock && <small role="alert">{errors.stock}</small>}</label>
@@ -232,8 +238,10 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
         <label className={`${styles.catalogField} ${styles.catalogWide}`} htmlFor="new-description">Descrição<textarea id="new-description" rows={5} value={form.description || ''} onChange={(event) => change('description', event.target.value)} placeholder="Informações adicionais do produto" />{errors.description && <small role="alert">{errors.description}</small>}</label>
       </div>
       {Object.values(errors).filter(Boolean).length > 0 && <ul id="catalog-errors" className={styles.catalogErrors} role="alert" tabIndex={-1}>{[...new Set(Object.values(errors).filter(Boolean))].map((error) => <li key={error}>{error}</li>)}</ul>}
-      <label className={styles.catalogMatch}><input id="catalog-match" type="checkbox" checked={matched} onChange={(event) => { setMatched(event.target.checked); setErrors((current) => ({ ...current, match: '' })); }} />Confirmo que a ficha localizada corresponde exatamente ao produto que vou vender.</label>{errors.match && <p className={styles.connectionMessage} role="alert">{errors.match}</p>}
+      <label className={styles.catalogMatch}><input id="catalog-match" type="checkbox" checked={matched} onChange={(event) => { setMatched(event.target.checked); setErrors((current) => ({ ...current, match: '' })); }} />{form.localProductId ? 'Confirmo o produto e os dados desta publicação.' : 'Confirmo o produto e a quantidade física informada. Este será o estoque inicial do cadastro local.'}</label>{errors.match && <p className={styles.connectionMessage} role="alert">{errors.match}</p>}
+      <p className={styles.help}>Publicar em outra conta não acrescenta estoque. Nesta etapa, vendas e ajustes no Mercado Livre ainda não atualizam o saldo físico automaticamente.</p>
       <button type="button" className={styles.primary} disabled={!selectedAccount || !ready || !matched || publishing || preparing || !!publishedId} onClick={() => void publish()}>{publishing ? 'Publicando…' : publishedId ? 'Publicado' : 'Publicar'}</button>
+      <button type="button" className={styles.refreshSales} disabled={publishing || preparing} onClick={() => { setPrepared(null); setForm(initial()); setPriceText(''); setStockText(''); setMatched(false); setPublishedId(''); setMessage(''); setPreserveCopiedFields(false); setRequestKey(crypto.randomUUID()); }}>Limpar preparação</button>
       {publishedId && connectedAccounts.filter((account) => account.id !== accountId).length > 0 && <div className={styles.publishAnotherAccount}>
         <MarketplaceAccountPicker label="Publicar esta ficha em outra conta" value={copyTargetId} options={connectedAccounts.filter((account) => account.id !== accountId).map((account) => ({ id: account.id, name: account.seller_name || `Vendedor ${account.seller_reference}`, detail: `ID ${account.seller_reference}` }))} placeholder="Selecione a conta de destino" disabled={preparing || publishing} onChange={setCopyTargetId} />
         <button type="button" disabled={!copyTargetId || preparing || publishing} onClick={() => void prepareForAnotherAccount()}>Preparar em outra conta</button>

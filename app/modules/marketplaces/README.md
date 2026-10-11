@@ -21,6 +21,25 @@ credenciais adicionais no ambiente.
 
 ## Implementado e validado
 
+- **Produtos e estoque** (1.51.0): cadastro separado por empresa, SKU local,
+  EAN opcional, fotos, descrição, atributos e opções da ficha de publicação.
+  Importação do cache é parcial; **Consultar ficha do anúncio** busca os dados
+  atuais e completa apenas os campos ausentes, sem confirmar estoque. Não
+  associa produtos por título/EAN e não soma quantidades entre anúncios.
+- Estoque físico começa desconhecido na importação. O usuário confirma ou
+  ajusta a contagem; RPC registra histórico e usa revisão para impedir
+  sobrescritas concorrentes. Zero confirmado é diferente de saldo desconhecido.
+  Um cadastro pendente pode ser arquivado ao mover seus vínculos ao produto
+  correto, com confirmação explícita e sem somar estoque.
+- Primeira publicação validada registra um produto local antes de criar no ML.
+  Outras contas recebem anúncios vinculados ao mesmo produto. Se houver falha
+  parcial, a auditoria retém o produto local e ID confirmado; não repetir envio.
+  Preparação a partir do cadastro relê empresa, ficha e opções da conta destino.
+- Migração `20261011200000_marketplace_local_products.sql` aplicada ao projeto
+  `qzewxhdkwettnlmkjoqd` em 11/10/2026, sem tocar no saldo dos marketplaces.
+  Saldo local ainda não tem reservas/baixa de vendas/sincronização com ML ou
+  AvantaVendas. Variações exigem implementação específica antes de importar/copiar.
+
 - Conexão Mercado Livre por OAuth, sem senha no AvantaLab.
 - Lista por empresa e conta, cache isolado, busca, situação e detalhes.
 - Consulta manual e automática a cada minuto enquanto a página estiver visível.
