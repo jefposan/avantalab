@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { stripTypeScriptTypes } from 'node:module';
 import { runInNewContext } from 'node:vm';
+import { formatarMoedaDigitada } from '../../app/lib/formatters.ts';
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const client = read('app/marketplaces/MarketplacesClient.tsx');
@@ -11,6 +12,31 @@ const newListing = read('app/marketplaces/NewListing.tsx');
 const accountPicker = read('app/marketplaces/MarketplaceAccountPicker.tsx');
 const marketplaceSelect = read('app/marketplaces/MarketplaceSelect.tsx');
 const css = read('app/marketplaces/marketplaces.module.css');
+
+test('cópia sem EAN preenche valores visíveis e mantém origem, descrição e opções para revisão', () => {
+  const start = newListing.indexOf('  function applyPreparation(');
+  const end = newListing.indexOf('\n  async function prepare(', start);
+  const source = stripTypeScriptTypes(newListing.slice(start, end));
+  const copySource = { connectionId: 'origem', listingId: 'MLB123' };
+  const product = { id: 'MLB456', name: 'Produto', pictures: [], description: '' };
+  const preferred = { ean: '', productId: product.id, price: 1500, stock: 1, listingType: 'gold_pro', shippingMode: 'me2', condition: 'new', description: 'Descrição original completa.', copySource, attributes: {} };
+  const result = { ean: '', product, categoryId: 'MLB1', listingTypes: [{ id: 'gold_pro' }], shippingModes: [{ id: 'me2' }], conditions: [{ id: 'new' }], copySource };
+  const state = { form: {}, priceText: '', stockText: '', preserve: false };
+  const context = {
+    preserveCopiedFields: false, crypto: { randomUUID: () => 'request-key' }, formatarMoedaDigitada,
+    setPrepared(value) { state.prepared = value; }, setSearchDescription() {}, setRequestKey() {},
+    setForm(update) { state.form = update(state.form); },
+    setPreserveCopiedFields(value) { state.preserve = value; },
+    setPriceText(value) { state.priceText = value; }, setStockText(value) { state.stockText = value; },
+  };
+  runInNewContext(`(${source})`, context)(result, preferred);
+  assert.equal(state.priceText, formatarMoedaDigitada('150000'));
+  assert.equal(state.stockText, '1'); assert.equal(state.form.ean, '');
+  assert.equal(state.form.description, preferred.description);
+  assert.equal(state.form.copySource, copySource);
+  assert.equal(state.form.listingType, 'gold_pro'); assert.equal(state.preserve, true);
+  assert.equal(state.prepared, result);
+});
 
 test('Envio uses human-readable labels rather than raw provider codes', () => {
   assert.match(listings, /shippingLabels\(item.shipping\)/);
@@ -244,7 +270,9 @@ test('descrição em linha própria usa CampoBusca, Enter e seleção antes de p
   assert.match(newListing, /prepared\.candidates\.length > 0 && !product/);
   assert.match(newListing, /prepared\.query \|\| ''/);
   assert.match(newListing, /!prepared\.ean && !!prepared\.gtins\?\.length/);
-  assert.match(newListing, /\{prepared\.ean && <><div className=\{styles\.catalogFields\}/);
+  assert.match(newListing, /\{\(prepared\.ean \|\| prepared\.copySource\) && <><div className=\{styles\.catalogFields\}/);
+  assert.match(newListing, /prepared\.copySource \? 'Anúncio original sem EAN'/);
+  assert.match(newListing, /change\('copySource', undefined\)/);
   assert.match(newListing, /function changeEan\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setSearchDescription\(''\)/);
   assert.match(newListing, /function changeSearchDescription\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setSearchDescription\(value\);\s*change\('ean', ''\)/);
   assert.match(css, /\.newListing \.descriptionSearchRow \{ grid-column: 1 \/ -1; display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);

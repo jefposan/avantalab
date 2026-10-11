@@ -15,7 +15,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   if (candidate && existsSync(`${candidate}.ts`)) return next(pathToFileURL(`${candidate}.ts`).href, context);
   return next(specifier, context);
 } });
-const { prepareMercadoLivreCatalog, prepareMercadoLivreListingCopy, publishMercadoLivreCatalog } = await import('../../app/modules/marketplaces/services/mercadolivre-publication.ts');
+const { prepareMercadoLivreCatalog, prepareMercadoLivreListingCopy, prepareMercadoLivrePublication, publishMercadoLivreCatalog } = await import('../../app/modules/marketplaces/services/mercadolivre-publication.ts');
 const { sealMarketplaceSecret } = await import('../../app/modules/marketplaces/services/secret-vault.ts');
 hooks.deregister();
 
@@ -203,6 +203,128 @@ test('cópia entre empresas é recusada antes de consultar ou publicar', () => e
   const target = { ...connection(), id: '33333333-3333-4333-8333-333333333333', empresa_id: '44444444-4444-4444-8444-444444444444' };
   await assert.rejects(() => prepareMercadoLivreListingCopy(database(), connection(), target, itemId), { code: 'cross_company_copy' });
   assert.equal(mock.sequence.length, 0);
+}));
+
+function noEanProvider({ traditional = false, gtinTags = {}, reason = false, owner = '230210240', inactive = false, rejectValidation = false } = {}) {
+  const base = provider();
+  const bodies = [];
+  let created = false;
+  return { sequence: base.sequence, bodies, fetch: async (input, options = {}) => {
+    const path = new URL(input).pathname;
+    if (options.method === 'POST' && ['/items', '/items/validate'].includes(path)) bodies.push({ path, body: JSON.parse(options.body) });
+    if (rejectValidation && path === '/items/validate') return Response.json({ message: 'GTIN exigido pelo provedor' }, { status: 400 });
+    const response = await base.fetch(input, options);
+    if (path === '/items' && options.method === 'POST') { created = true; return Response.json({ id: itemId, seller_id: 99887766 }, { status: 201 }); }
+    if (path === `/items/${itemId}`) {
+      const item = await response.json();
+      item.seller_id = created ? 99887766 : owner;
+      item.attributes = item.attributes.filter(attribute => attribute.id !== 'GTIN');
+      if (traditional) { delete item.catalog_product_id; item.domain_id = 'MLB-REFRIGERATORS'; }
+      if (reason) item.attributes.push({ id: 'EMPTY_GTIN_REASON', name: 'Motivo sem EAN', value_id: '17055161', value_name: 'O produto não tem código cadastrado' });
+      return Response.json(item);
+    }
+    if (inactive && path === `/products/${productId}`) { const item = await response.json(); item.status = 'inactive'; return Response.json(item); }
+    if (path === `/categories/${categoryId}/attributes`) return Response.json([
+      ...(await response.json()), { id: 'BRAND', name: 'Marca' }, { id: 'GTIN', name: 'EAN', tags: gtinTags },
+      { id: 'EMPTY_GTIN_REASON', name: 'Motivo da ausência de EAN', values: [{ id: '17055161', name: 'O produto não tem código cadastrado' }] },
+    ]);
+    return response;
+  } };
+}
+
+const copyTarget = () => ({ ...connection(), id: '33333333-3333-4333-8333-333333333333', seller_reference: '99887766' });
+
+test('cópia de catálogo sem EAN usa a ficha original ativa, sem pesquisa textual ou publicação', () => environment(async () => {
+  const mock = noEanProvider(); globalThis.fetch = mock.fetch;
+  const copied = await prepareMercadoLivreListingCopy(database(), connection(), copyTarget(), itemId);
+  assert.equal(copied.result.ean, ''); assert.equal(copied.form.ean, '');
+  assert.equal(copied.result.product.id, productId);
+  assert.equal(copied.result.copySource.listingId, itemId);
+  assert.equal(copied.result.blockingIssues, undefined);
+  assert.equal(mock.sequence.includes('GET /products/search'), false);
+  assert.equal(mock.sequence.some(request => request.startsWith('POST')), false);
+}));
+
+test('cópia tradicional sem EAN preserva título, descrição, categoria e motivo real da origem', () => environment(async () => {
+  const mock = noEanProvider({ traditional: true, gtinTags: { conditional_required: true }, reason: true }); globalThis.fetch = mock.fetch;
+  const copied = await prepareMercadoLivreListingCopy(database(), connection(), copyTarget(), itemId);
+  assert.equal(copied.result.product.source, 'marketplace_listing');
+  assert.equal(copied.result.product.id, itemId);
+  assert.equal(copied.result.product.name, 'Geladeira Brastemp');
+  assert.equal(copied.result.categoryId, categoryId);
+  assert.equal(copied.form.description, 'Descrição revisável da origem.');
+  assert.equal(copied.result.presetAttributes.find(attr => attr.id === 'EMPTY_GTIN_REASON').valueId, '17055161');
+  assert.equal(mock.sequence.includes('GET /products/search'), false);
+}));
+
+test('GTIN obrigatório continua bloqueando tradicional e motivo condicional não é inventado', () => environment(async () => {
+  for (const tags of [{ required: true }, { conditional_required: true }]) {
+    const mock = noEanProvider({ traditional: true, gtinTags: tags }); globalThis.fetch = mock.fetch;
+    const copied = await prepareMercadoLivreListingCopy(database(), connection(), copyTarget(), itemId);
+    if (tags.required) assert.equal(copied.result.blockingIssues[0].code, 'provider_gtin_required');
+    else {
+      assert.equal(copied.result.requiredAttributes[0].id, 'EMPTY_GTIN_REASON');
+      assert.equal(copied.form.attributes.EMPTY_GTIN_REASON, undefined);
+    }
+    assert.equal(mock.sequence.some(request => request.startsWith('POST')), false);
+  }
+}));
+
+test('origem de outro vendedor ou ficha inativa não libera cópia sem EAN', () => environment(async () => {
+  const wrongOwner = noEanProvider({ owner: '99999' }); globalThis.fetch = wrongOwner.fetch;
+  await assert.rejects(() => prepareMercadoLivreListingCopy(database(), connection(), copyTarget(), itemId), { code: 'listing_not_found' });
+  const inactive = noEanProvider({ inactive: true }); globalThis.fetch = inactive.fetch;
+  await assert.rejects(() => prepareMercadoLivreListingCopy(database(), connection(), copyTarget(), itemId), { code: 'catalog_changed' });
+}));
+
+test('ausência confirmada de descrição não exige EAN, mas recusa de acesso continua bloqueando', () => environment(async () => {
+  for (const status of [404, 403]) {
+    const mock = noEanProvider();
+    globalThis.fetch = (input, options) => new URL(input).pathname === `/items/${itemId}/description` ? Response.json({ message: 'Descrição indisponível' }, { status }) : mock.fetch(input, options);
+    if (status === 404) {
+      const copied = await prepareMercadoLivreListingCopy(database(), connection(), copyTarget(), itemId);
+      assert.equal(copied.form.description, ''); assert.equal(copied.form.ean, '');
+      assert.equal(copied.result.product.id, productId);
+    } else await assert.rejects(() => prepareMercadoLivreListingCopy(database(), connection(), copyTarget(), itemId), { code: 'provider_403' });
+  }
+}));
+
+test('publicação de cópia sem EAN relê origem e valida payload sem GTIN vazio ou fictício', () => environment(async () => {
+  for (const traditional of [false, true]) {
+    const source = { ...connection(), provider: 'mercado_livre' }; const target = copyTarget();
+    const db = database({ marketplace_connections: [source] });
+    const mock = noEanProvider({ traditional }); globalThis.fetch = mock.fetch;
+    const copied = await prepareMercadoLivreListingCopy(db, source, target, itemId);
+    const result = await publishMercadoLivreCatalog(db, target, 'actor', crypto.randomUUID(), { ...copied.form, price: 170, description: 'Descrição alterada no destino.' });
+    assert.equal(result.status, 'published');
+    assert.equal(mock.sequence.filter(request => request === `GET /items/${itemId}`).length, 3);
+    assert.ok(mock.sequence.indexOf('POST /items/validate') < mock.sequence.indexOf('POST /items'));
+    const payload = mock.bodies.find(entry => entry.path === '/items').body;
+    assert.equal(payload.attributes.some(attr => attr.id === 'GTIN'), false);
+    assert.equal(payload.price, 170);
+    assert.equal(payload.catalog_product_id, traditional ? undefined : productId);
+    assert.equal(payload.title, 'Geladeira Brastemp');
+    assert.equal(db.tables.marketplace_publications[0].ean, '');
+  }
+}));
+
+test('origem falsa, empresa divergente e EAN ausente sem cópia autenticada são recusados', () => environment(async () => {
+  const mock = noEanProvider(); globalThis.fetch = mock.fetch;
+  const source = { ...connection(), provider: 'mercado_livre', empresa_id: '44444444-4444-4444-8444-444444444444' };
+  const db = database({ marketplace_connections: [source] });
+  await assert.rejects(() => prepareMercadoLivrePublication(db, copyTarget(), { copySource: { connectionId: 'invalid', listingId: itemId } }), { code: 'invalid_copy_source' });
+  await assert.rejects(() => prepareMercadoLivrePublication(db, copyTarget(), { copySource: { connectionId: source.id, listingId: itemId } }), { code: 'account_not_found' });
+  await assert.rejects(() => publishMercadoLivreCatalog(db, copyTarget(), 'actor', crypto.randomUUID(), { ean: '', productId }), { code: 'invalid_ean' });
+  assert.equal(mock.sequence.length, 0);
+}));
+
+test('validador do Mercado Livre pode recusar cópia sem EAN; não cria anúncio nem auditoria de publicação', () => environment(async () => {
+  const source = { ...connection(), provider: 'mercado_livre' }; const db = database({ marketplace_connections: [source] });
+  const mock = noEanProvider({ rejectValidation: true }); globalThis.fetch = mock.fetch;
+  const copied = await prepareMercadoLivreListingCopy(db, source, copyTarget(), itemId);
+  await assert.rejects(() => publishMercadoLivreCatalog(db, copyTarget(), 'actor', crypto.randomUUID(), copied.form));
+  assert.equal(mock.sequence.includes('POST /items'), false);
+  assert.deepEqual(db.tables.marketplace_publications, []);
 }));
 
 test('EAN ausente no catálogo do ML usa o cadastro isolado da empresa e o preditor sem publicar', () => environment(async () => {

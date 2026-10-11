@@ -1,11 +1,12 @@
 import { isValidEan, normalizeEan } from './ean.ts';
 
 export type CatalogAttribute = { id: string; name: string; value: string; valueId?: string };
-export type CatalogCandidate = { id: string; name: string; domainId: string; picture: string | null; source?: 'mercadolivre_catalog' | 'profile_catalog' };
+export type CatalogCandidate = { id: string; name: string; domainId: string; picture: string | null; source?: 'mercadolivre_catalog' | 'profile_catalog' | 'marketplace_listing' };
 export type CatalogPreparationIssue = { code: string; message: string };
 export type CatalogPreparation = {
   status: 'found' | 'not_found';
   ean: string;
+  copySource?: { connectionId: string; listingId: string };
   query?: string;
   gtins?: string[];
   product?: CatalogCandidate & { attributes: CatalogAttribute[]; pictures: string[]; description: string };
@@ -28,6 +29,7 @@ export type PublicationForm = {
   listingType: string; shippingMode: string; condition: string; warrantyType: string;
   warrantyTime?: string; description?: string; pictureUrl?: string;
   attributes?: Record<string, string>;
+  copySource?: { connectionId: string; listingId: string };
 };
 
 export function validEan(input: unknown): string | null {
@@ -95,7 +97,8 @@ export function catalogPictures(value: unknown): string[] {
 export function publicationErrors(form: PublicationForm, preparation: CatalogPreparation): Record<string, string> {
   const errors: Record<string, string> = {};
   if (preparation.blockingIssues?.length) errors.preparation = 'Resolva as pendências da preparação antes de publicar.';
-  if (!validEan(form.ean) || form.ean !== preparation.ean) errors.ean = 'Valide novamente o EAN.';
+  const sameCopy = !!preparation.copySource && form.copySource?.connectionId === preparation.copySource.connectionId && form.copySource?.listingId === preparation.copySource.listingId;
+  if ((!(sameCopy && !preparation.ean && !form.ean) && !validEan(form.ean)) || form.ean !== preparation.ean) errors.ean = 'Valide novamente o EAN.';
   if (!preparation.product || form.productId !== preparation.product.id) errors.productId = 'Valide novamente o produto.';
   if (!form.categoryId || !preparation.categories?.some((option) => option.id === form.categoryId)) errors.categoryId = 'Selecione uma categoria confirmada para este produto.';
   if (!Number.isFinite(form.price) || form.price <= 0 || Math.abs(Math.round(form.price * 100) - form.price * 100) > 0.0001) errors.price = 'Informe um preço válido em reais e centavos.';

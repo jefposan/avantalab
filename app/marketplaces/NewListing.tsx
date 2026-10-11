@@ -54,6 +54,10 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
         attributes: base.attributes || {} };
     });
     setPreserveCopiedFields(preserve || !!preferred);
+    if (preferred) {
+      setPriceText(Number.isFinite(preferred.price) && preferred.price > 0 ? formatarMoedaDigitada(String(Math.round(preferred.price * 100))) : '');
+      setStockText(Number.isSafeInteger(preferred.stock) && preferred.stock >= 0 ? String(preferred.stock) : '');
+    }
     setRequestKey(crypto.randomUUID());
   }
 
@@ -62,7 +66,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     setSearchingBy(productId || categoryId ? null : query ? 'description' : 'ean');
     setPreparing(true); setScannerArmed(false); setMessage(''); setErrors({}); setPublishedId(''); setMatched(false);
     try {
-      const response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId, ean, query, productId, categoryId }) as { result: CatalogPreparation };
+      const response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId, ean, query, productId, categoryId, ...(!query && form.copySource ? { copySource: form.copySource } : {}) }) as { result: CatalogPreparation };
       if (!activeRef.current) return;
       applyPreparation(response.result, preferred);
     } catch (failure) { if (activeRef.current) { if (!productId && !categoryId) setPrepared(null); setMessage(failure instanceof Error ? failure.message : 'Não foi possível pesquisar o produto.'); } }
@@ -134,6 +138,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     if (preparing || publishing) return;
     setSearchDescription('');
     change('ean', value.replace(/\D/g, '').slice(0, 14));
+    change('copySource', undefined);
     setPreserveCopiedFields(false);
     setPrepared(null); setMatched(false); setPublishedId(''); setMessage('');
   }
@@ -142,6 +147,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     if (preparing || publishing) return;
     setSearchDescription(value);
     change('ean', '');
+    change('copySource', undefined);
     setScannerArmed(false); setPreserveCopiedFields(false);
     setPrepared(null); setMatched(false); setPublishedId(''); setMessage('');
   }
@@ -159,11 +165,11 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     try {
       let response: { result: CatalogPreparation };
       try {
-        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: copiedForm.categoryId }) as { result: CatalogPreparation };
+        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: copiedForm.categoryId, copySource: copiedForm.copySource }) as { result: CatalogPreparation };
       } catch (failure) {
         const detail = failure as Error & { code?: string };
         if (detail.code !== 'category_mismatch') throw failure;
-        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: '' }) as { result: CatalogPreparation };
+        response = await marketplaceClientRequest('preparar', { empresaId: companyId, connectionId: target.id, ean: copiedForm.ean, productId: copiedForm.productId, categoryId: '', copySource: copiedForm.copySource }) as { result: CatalogPreparation };
       }
       if (!activeRef.current) return;
       onSelectAccount(target.id);
@@ -204,7 +210,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
     {prepared?.candidates && prepared.candidates.length > 0 && !product && <MarketplaceSelect id="new-productId" className={styles.catalogField} label={`Produto encontrado (${prepared.candidates.length})`} disabled={preparing || publishing} value="" options={prepared.candidates.map((candidate) => ({ value: candidate.id, label: candidate.name, detail: candidate.id }))} placeholder="Selecione a ficha correta" onChange={(value) => void prepare(prepared.ean, value, '', accountId, undefined, prepared.query || '')} />}
 
     {product && <div className={styles.catalogResult} aria-live="polite">
-      <div className={styles.catalogIdentity}>{product.picture && <img src={product.picture} alt={product.name} />}<div><strong>{product.name}</strong><small>{product.source === 'profile_catalog' ? 'Cadastro do perfil' : `Catálogo ML · ${product.id}`}</small><small>{prepared.ean ? `EAN ${prepared.ean}` : 'EAN a confirmar'}</small></div></div>
+      <div className={styles.catalogIdentity}>{product.picture && <img src={product.picture} alt={product.name} />}<div><strong>{product.name}</strong><small>{product.source === 'profile_catalog' ? 'Cadastro do perfil' : product.source === 'marketplace_listing' ? `Anúncio de origem · ${product.id}` : `Catálogo ML · ${product.id}`}</small><small>{prepared.ean ? `EAN ${prepared.ean}` : prepared.copySource ? 'Anúncio original sem EAN' : 'EAN a confirmar'}</small></div></div>
       {product.pictures.length > 0 && <div className={styles.catalogPictures}>{product.pictures.slice(0, 5).map((url) => <img key={url} src={url} alt={`Imagem do catálogo de ${product.name}`} />)}</div>}
       <details><summary>Características localizadas ({product.attributes.length})</summary><dl className={styles.catalogAttributes}>{product.attributes.map((attribute) => <div key={attribute.id}><dt>{attribute.name}</dt><dd>{attribute.value}</dd></div>)}</dl></details>
       {prepared.notice && <p className={styles.catalogNotice}>{prepared.notice}</p>}
@@ -212,7 +218,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       {!!prepared.warnings?.length && <ul className={styles.catalogWarnings}>{prepared.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
       {!prepared.ean && !!prepared.gtins?.length && <MarketplaceSelect id="new-gtin" className={styles.catalogField} label="EAN da embalagem" value="" disabled={preparing || publishing} options={prepared.gtins.map((code) => ({ value: code, label: code }))} placeholder="Selecione o código do seu produto" onChange={(value) => void prepare(value, product.id, '', accountId, undefined, prepared.query || '')} />}
 
-      {prepared.ean && <><div className={styles.catalogFields}>
+      {(prepared.ean || prepared.copySource) && <><div className={styles.catalogFields}>
         <MarketplaceSelect id="new-categoryId" className={styles.catalogField} label="Categoria" value={form.categoryId} options={(prepared.categories || []).map((category) => ({ value: category.id, label: category.name, detail: category.id }))} placeholder="Selecione" error={errors.categoryId} onChange={(value) => { change('categoryId', value); void prepare(prepared.ean, product.id, value); }} />
         <label className={styles.catalogField} htmlFor="new-price">Preço de venda<input id="new-price" inputMode="decimal" value={priceText} onChange={(event) => { const text = formatarMoedaDigitada(event.target.value); setPriceText(text); change('price', moedaDigitadaParaNumero(text) ?? 0); }} placeholder="R$ 0,00" />{errors.price && <small role="alert">{errors.price}</small>}</label>
         <label className={styles.catalogField} htmlFor="new-stock">Estoque disponível<input id="new-stock" inputMode="numeric" value={stockText} onChange={(event) => { const text = event.target.value.replace(/\D/g, '').slice(0, 5); setStockText(text); change('stock', text ? Number(text) : -1); }} placeholder="Quantidade" />{errors.stock && <small role="alert">{errors.stock}</small>}</label>

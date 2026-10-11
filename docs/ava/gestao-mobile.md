@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.50.0.05 -->
+<!-- ava-version: 1.50.0.07 -->
+
+> Revisão 1.50.0.07: cópia de anúncios sem EAN no Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.50.0.06: espaçamento na edição de Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
 
 > Revisão 1.50.0.05: confirmação automática da renovação de conta no
 > Marketplaces Web. Sem impacto operacional na Gestão Mobile ou no AvantaPreços.

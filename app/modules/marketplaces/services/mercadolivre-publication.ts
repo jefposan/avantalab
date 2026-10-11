@@ -1,8 +1,8 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MarketplaceError } from './management-access';
-import { mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
-import { catalogGtins, publicationErrors, safeHttpsImage, safeText, validEan, type CatalogPreparation, type PublicationForm } from './catalog-publication';
+import { loadConnection, mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
+import { catalogAttributes, catalogCandidate, catalogPictures, catalogGtins, publicationErrors, safeHttpsImage, safeText, validEan, type CatalogPreparation, type PublicationForm } from './catalog-publication';
 import { normalizarTexto } from '@/app/lib/formatters';
 import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import { lookupProfileCatalogByEan } from './profile-catalog';
@@ -18,9 +18,17 @@ function preparationIssue(error: unknown, code: string, denied: string, unavaila
   return { code, message: error instanceof MarketplaceError && error.code === 'provider_403' ? denied : unavailable };
 }
 
-export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection: SellerConnection, input: { ean?: unknown; query?: unknown; productId?: unknown; categoryId?: unknown }): Promise<CatalogPreparation> {
+type PreparationInput = { ean?: unknown; query?: unknown; productId?: unknown; categoryId?: unknown };
+type CopySeed = { product: NonNullable<CatalogPreparation['product']>; categoryId: string; source: NonNullable<PublicationForm['copySource']> };
+
+export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection: SellerConnection, input: PreparationInput): Promise<CatalogPreparation> {
+  return prepareCatalog(db, connection, input);
+}
+
+// Semente disponível somente depois de reler e validar o anúncio de origem no servidor.
+async function prepareCatalog(db: SupabaseClient, connection: SellerConnection, input: PreparationInput, seed?: CopySeed): Promise<CatalogPreparation> {
   const query = normalizarTexto(safeText(input.query, 120));
-  if (query) {
+  if (query && !seed) {
     const identification = await identifyMercadoLivreCatalog(db, connection, { query, productId: input.productId });
     if (identification.status === 'not_found') return { status: 'not_found', ean: '', query, notice: identification.notice };
     // Mesmo um resultado único deve ser escolhido antes de preencher o anúncio.
@@ -37,9 +45,9 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
     if (preparation.product?.id !== product.id) throw new MarketplaceError(409, 'catalog_changed', 'Não foi possível confirmar o código desta ficha. Confira o EAN na embalagem e pesquise novamente.');
     return { ...preparation, query };
   }
-  const ean = validEan(input.ean);
-  if (!ean) throw new MarketplaceError(400, 'invalid_ean', 'Informe um EAN/GTIN válido com dígito verificador.');
-  const identification = await identifyMercadoLivreCatalog(db, connection, { ean, productId: input.productId });
+  const ean = validEan(input.ean) || '';
+  if (!ean && !seed) throw new MarketplaceError(400, 'invalid_ean', 'Informe um EAN/GTIN válido com dígito verificador.');
+  const identification = seed ? { status: 'found' as const, candidates: [], product: seed.product, notice: 'Dados do anúncio original. Revise antes de publicar nesta conta.' } : await identifyMercadoLivreCatalog(db, connection, { ean, productId: input.productId });
   const candidates = identification.candidates;
   let sourceNotice = identification.notice;
   let externalCategories: Array<{ id: string; name: string; domainId: string; attributes: Array<{ id: string; name: string; value: string }> }> = [];
@@ -67,7 +75,9 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
   let product = fullProduct;
 
   const categoryCandidates = new Map<string, { id: string; name: string; domainId: string; attributes: Array<{ id: string; name: string; value: string }> }>();
-  if (product.source === 'profile_catalog') {
+  if (product.source === 'marketplace_listing' && seed) {
+    categoryCandidates.set(seed.categoryId, { id: seed.categoryId, name: seed.categoryId, domainId: product.domainId, attributes: [] });
+  } else if (product.source === 'profile_catalog') {
     for (const category of externalCategories) categoryCandidates.set(category.id, category);
   } else {
     const domainCategories = await mlRequest(db, connection, `/catalog_domains/${encodeURIComponent(product.domainId)}/categories`);
@@ -104,7 +114,7 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
     : 'Não foi possível consultar os envios da conta agora. A opção escolhida será confirmada na validação antes de publicar.');
 
   const settings = objectValue(category?.settings);
-  if (category && product.source !== 'profile_catalog' && safeText(settings.catalog_domain, 100) !== product.domainId) throw new MarketplaceError(409, 'category_mismatch', 'A categoria selecionada não corresponde ao domínio do produto. Confira a ficha no Mercado Livre.');
+  if (category && !['profile_catalog', 'marketplace_listing'].includes(product.source || '') && safeText(settings.catalog_domain, 100) !== product.domainId) throw new MarketplaceError(409, 'category_mismatch', 'A categoria selecionada não corresponde ao domínio do produto. Confira a ficha no Mercado Livre.');
   if (category && (settings.listing_allowed === false || safeText(settings.status, 30) === 'disabled')) blockingIssues.push({ code: 'category_not_allowed', message: 'O Mercado Livre não permite criar anúncios nesta categoria.' });
   const listingTypes = safeArray(available?.available).map(objectValue).flatMap((row) => {
     const id = safeText(row.id, 40);
@@ -127,12 +137,13 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
   const conditions = Object.entries(conditionNames).filter(([id]) => configuredConditions.has(id) || attributeConditions.has(conditionValueIds[id])).map(([id, name]) => ({ id, name }));
   const knownAttributeIds = new Set(safeArray(categoryAttributes).map((row) => safeText(objectValue(row).id, 80)).filter(Boolean));
   const presetAttributes = [...product.attributes, ...selectedCategory.attributes]
-    .filter((attribute, index, all) => knownAttributeIds.has(attribute.id) && all.findIndex((candidate) => candidate.id === attribute.id) === index);
+    .filter((attribute, index, all) => !['GTIN', 'ITEM_CONDITION'].includes(attribute.id) && knownAttributeIds.has(attribute.id) && all.findIndex((candidate) => candidate.id === attribute.id) === index);
   const present = new Set(presetAttributes.map((attribute) => attribute.id));
   const requiredAttributes = safeArray(categoryAttributes).map(objectValue).filter((row) => {
     const tags = objectValue(row.tags), id = safeText(row.id, 80);
     return id && !present.has(id) && !['GTIN', 'ITEM_CONDITION'].includes(id)
-      && (tags.required === true || tags.new_required === true || (product.source === 'profile_catalog' && tags.catalog_required === true));
+      && (tags.required === true || tags.new_required === true || (product.source === 'profile_catalog' && tags.catalog_required === true)
+        || (seed && !ean && product.source === 'marketplace_listing' && id === 'EMPTY_GTIN_REASON' && objectValue(categoryAttributes.map(objectValue).find((attr) => attr.id === 'GTIN')?.tags).conditional_required === true));
   }).slice(0, 30).map((row) => ({
     id: safeText(row.id, 80), name: safeText(row.name, 120) || safeText(row.id, 80),
     values: safeArray(row.values).slice(0, 50).map(objectValue).flatMap((value) => {
@@ -140,12 +151,14 @@ export async function prepareMercadoLivreCatalog(db: SupabaseClient, connection:
       return id && name ? [{ id, name }] : [];
     }),
   }));
+  const gtinTags = objectValue(categoryAttributes.map(objectValue).find((attr) => attr.id === 'GTIN')?.tags);
+  if (seed && !ean && product.source === 'marketplace_listing' && (gtinTags.required === true || gtinTags.new_required === true)) blockingIssues.push({ code: 'provider_gtin_required', message: 'O Mercado Livre exige EAN nesta categoria para uma nova publicação. Informe o código real do produto para continuar.' });
   if (available && !listingTypes.length) blockingIssues.push({ code: 'listing_types_empty', message: 'Esta conta não possui um tipo de anúncio disponível para a categoria.' });
   if (!shippingModes.length) blockingIssues.push({ code: 'shipping_modes_empty', message: 'Nenhuma forma de envio compatível foi encontrada para esta conta e categoria.' });
   if (category && !conditions.length) blockingIssues.push({ code: 'conditions_empty', message: 'A categoria não retornou uma condição de produto compatível.' });
   if (product.source === 'profile_catalog' && !product.pictures.length) blockingIssues.push({ code: 'picture_required', message: 'O produto cadastrado no perfil não possui uma imagem HTTPS utilizável. Adicione uma imagem ao cadastro antes de publicar.' });
   const minimumPrice = Number(settings.minimum_price), maximumPrice = Number(settings.maximum_price), descriptionLimit = Number(settings.max_description_length);
-  return { status: 'found', ean, product, candidates, categories, categoryId, listingTypes, shippingModes, conditions, requiredAttributes, presetAttributes,
+  return { status: 'found', ean, ...(seed ? { copySource: seed.source } : {}), product, candidates, categories, categoryId, listingTypes, shippingModes, conditions, requiredAttributes, presetAttributes,
     constraints: { ...(Number.isFinite(minimumPrice) && minimumPrice > 0 ? { minimumPrice } : {}), ...(Number.isFinite(maximumPrice) && maximumPrice > 0 ? { maximumPrice } : {}), maxDescriptionLength: Number.isSafeInteger(descriptionLimit) && descriptionLimit > 0 ? descriptionLimit : 50000 },
     ...(blockingIssues.length ? { blockingIssues } : {}), ...(warnings.length ? { warnings } : {}),
     notice: blockingIssues.length ? 'Revise as pendências abaixo antes de publicar.' : sourceNotice };
@@ -178,7 +191,7 @@ function copiedAttributes(attributes: unknown[]) {
  * A cópia nunca publica: o destino recebe uma preparação própria e o cliente
  * ainda precisa revisar, confirmar a ficha e acionar Publicar explicitamente.
  */
-export async function prepareMercadoLivreListingCopy(db: SupabaseClient, source: SellerConnection, target: SellerConnection, listingId: unknown) {
+export async function prepareMercadoLivreListingCopy(db: SupabaseClient, source: SellerConnection, target: SellerConnection, listingId: unknown, options?: { categoryId?: unknown }) {
   if (source.empresa_id !== target.empresa_id) throw new MarketplaceError(403, 'cross_company_copy', 'A conta de destino precisa pertencer à mesma empresa.');
   if (!listingIdIsValid(listingId)) throw new MarketplaceError(400, 'invalid_item', 'Identificador de anúncio inválido.');
   if (source.id === target.id) throw new MarketplaceError(400, 'same_account_copy', 'Selecione outra conta para preparar esta publicação.');
@@ -188,10 +201,13 @@ export async function prepareMercadoLivreListingCopy(db: SupabaseClient, source:
     throw new MarketplaceError(404, 'listing_not_found', 'O anúncio não pertence à conta de origem selecionada.');
   }
   const attributes = safeArray(item.attributes).map(objectValue);
-  const ean = validEan(attributes.find((attribute) => attribute.id === 'GTIN')?.value_name);
-  if (!ean) throw new MarketplaceError(409, 'copy_ean_required', 'Este anúncio não possui um EAN/GTIN válido. Informe um EAN no novo anúncio para continuar.');
+  const ean = validEan(attributes.find((attribute) => attribute.id === 'GTIN')?.value_name) || '';
 
-  const description = objectValue(await mlRequest(db, source, `/items/${listingId}/description`));
+  const description = await mlRequest(db, source, `/items/${listingId}/description`).then(objectValue).catch((error: unknown) => {
+    // Ausência confirmada de descrição é diferente de consulta negada ou indisponível.
+    if (error instanceof MarketplaceError && error.code === 'provider_404') return {} as Record<string, unknown>;
+    throw error;
+  });
   const pictures = safeArray(item.pictures).map(objectValue);
   const pictureUrl = pictures.map((picture) => safeHttpsImage(picture.secure_url || picture.url)).find(Boolean) || '';
   const shipping = objectValue(item.shipping);
@@ -209,23 +225,46 @@ export async function prepareMercadoLivreListingCopy(db: SupabaseClient, source:
     description: safeText(description.plain_text, 50000),
     ...(pictureUrl ? { pictureUrl } : {}),
     attributes: copiedAttributes(attributes),
+    copySource: { connectionId: source.id, listingId },
   };
+
+  let seed: CopySeed | undefined;
+  if (!ean) {
+    if (!/^MLB\d+$/.test(sourceForm.categoryId)) throw new MarketplaceError(409, 'copy_category_unavailable', 'Não foi possível confirmar a categoria do anúncio original.');
+    let product: NonNullable<CatalogPreparation['product']>;
+    if (sourceForm.productId) {
+      const detail = objectValue(await mlRequest(db, target, `/products/${sourceForm.productId}`));
+      const candidate = catalogCandidate(detail);
+      if (!candidate || candidate.id !== sourceForm.productId) throw new MarketplaceError(409, 'catalog_changed', 'A ficha original não está disponível no catálogo. Confira o anúncio no Mercado Livre.');
+      product = { ...candidate, source: 'mercadolivre_catalog', attributes: catalogAttributes(detail.attributes), pictures: catalogPictures(detail.pictures), description: sourceForm.description || '' };
+    } else {
+      const urls = pictures.map((picture) => safeHttpsImage(picture.secure_url || picture.url)).filter((url): url is string => !!url);
+      product = { id: listingId, name: safeText(item.title, 220), domainId: safeText(item.domain_id, 100), picture: urls[0] || null, source: 'marketplace_listing', pictures: urls, description: sourceForm.description || '', attributes: attributes.flatMap(attribute => {
+        const id = safeText(attribute.id, 80), value = safeText(attribute.value_name, 300), valueId = safeText(attribute.value_id, 80);
+        return id && value ? [{ id, name: safeText(attribute.name, 120) || id, value, ...(valueId ? { valueId } : {}) }] : [];
+      }) };
+      if (!product.name || !urls.length) throw new MarketplaceError(409, 'copy_product_unavailable', 'O anúncio original precisa ter título e imagens válidos para preparar a cópia.');
+      sourceForm.productId = product.id;
+    }
+    seed = { product, categoryId: sourceForm.categoryId, source: sourceForm.copySource! };
+  }
 
   let result: CatalogPreparation;
   try {
-    result = await prepareMercadoLivreCatalog(db, target, sourceForm);
+    result = await prepareCatalog(db, target, { ...sourceForm, categoryId: options?.categoryId ?? sourceForm.categoryId }, seed);
   } catch (error) {
     // A categoria que a origem aceitou pode não pertencer ao domínio vigente no destino.
     // Nesse caso, preservamos a ficha e deixamos a pessoa escolher a categoria novamente.
     if (!(error instanceof MarketplaceError) || error.code !== 'category_mismatch') throw error;
-    result = await prepareMercadoLivreCatalog(db, target, { ean, productId: sourceForm.productId });
+    result = await prepareCatalog(db, target, { ean, productId: sourceForm.productId }, seed);
   }
+  result = { ...result, copySource: sourceForm.copySource };
   return { result, form: sourceForm, sourceTitle: safeText(item.title, 220) || listingId };
 }
 
 function publicationBody(form: PublicationForm, prepared: CatalogPreparation) {
   const product = prepared.product!;
-  const attrs: Array<Record<string, string>> = [{ id: 'GTIN', value_name: prepared.ean }, { id: 'ITEM_CONDITION', value_id: conditionValueIds[form.condition], value_name: conditionNames[form.condition] }];
+  const attrs: Array<Record<string, string>> = [...(prepared.ean ? [{ id: 'GTIN', value_name: prepared.ean }] : []), { id: 'ITEM_CONDITION', value_id: conditionValueIds[form.condition], value_name: conditionNames[form.condition] }];
   for (const attribute of prepared.presetAttributes || []) attrs.push(attribute.valueId
     ? { id: attribute.id, value_id: attribute.valueId, value_name: attribute.value }
     : { id: attribute.id, value_name: attribute.value });
@@ -236,7 +275,7 @@ function publicationBody(form: PublicationForm, prepared: CatalogPreparation) {
   }
   const warranty = form.warrantyType === 'none' ? 'Sem garantia' : form.warrantyType === 'seller' ? 'Garantia do vendedor' : 'Garantia de fábrica';
   return {
-    site_id: 'MLB', ...(product.source === 'profile_catalog' ? {} : { catalog_product_id: product.id, catalog_listing: true }), category_id: form.categoryId,
+    site_id: 'MLB', ...(['profile_catalog', 'marketplace_listing'].includes(product.source || '') ? {} : { catalog_product_id: product.id, catalog_listing: true }), category_id: form.categoryId,
     title: product.name,
     price: form.price, currency_id: 'BRL', available_quantity: form.stock, buying_mode: 'buy_it_now',
     listing_type_id: form.listingType, ...(form.condition === 'new' || form.condition === 'used' ? { condition: form.condition } : {}),
@@ -260,13 +299,26 @@ function parsePublicationForm(raw: unknown): PublicationForm {
     warrantyType: safeText(value.warrantyType, 20), warrantyTime: safeText(value.warrantyTime, 41),
     description: typeof value.description === 'string' ? value.description.slice(0, 50001) : '',
     pictureUrl: safeText(value.pictureUrl, 2048), attributes,
+    ...(value.copySource != null ? { copySource: { connectionId: safeText(objectValue(value.copySource).connectionId, 36), listingId: safeText(objectValue(value.copySource).listingId, 30) } } : {}),
   };
+}
+
+/** Revalida a origem no servidor; um identificador vindo do navegador não dispensa autorização. */
+export async function prepareMercadoLivrePublication(db: SupabaseClient, connection: SellerConnection, raw: unknown) {
+  const form = objectValue(raw);
+  if (form.copySource != null) {
+    const sourceRef = objectValue(form.copySource);
+    if (!uuidIsValid(sourceRef.connectionId) || !listingIdIsValid(sourceRef.listingId)) throw new MarketplaceError(400, 'invalid_copy_source', 'A origem da cópia é inválida. Prepare o anúncio novamente.');
+    const source = await loadConnection(db, connection.empresa_id, sourceRef.connectionId);
+    return (await prepareMercadoLivreListingCopy(db, source, connection, sourceRef.listingId, { categoryId: form.categoryId })).result;
+  }
+  return prepareMercadoLivreCatalog(db, connection, form);
 }
 
 export async function publishMercadoLivreCatalog(db: SupabaseClient, connection: SellerConnection, actor: string, requestKey: unknown, raw: unknown) {
   if (!uuidIsValid(requestKey)) throw new MarketplaceError(400, 'invalid_request', 'Tentativa de publicação inválida. Recarregue o formulário.');
   const form = parsePublicationForm(raw);
-  const prepared = await prepareMercadoLivreCatalog(db, connection, { ean: form.ean, productId: form.productId, categoryId: form.categoryId });
+  const prepared = await prepareMercadoLivrePublication(db, connection, form);
   if (prepared.status !== 'found' || !prepared.product || !prepared.categoryId) throw new MarketplaceError(409, 'catalog_changed', 'O produto ou a categoria não estão mais disponíveis. Consulte o EAN novamente.');
   if (prepared.blockingIssues?.length) throw new MarketplaceError(409, 'preparation_blocked', 'O Mercado Livre não confirmou todos os dados necessários. Pesquise novamente e revise as pendências exibidas.');
   const errors = publicationErrors(form, prepared);

@@ -4,6 +4,17 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 const read=(file) => readFileSync(new URL(`../../${file}`,import.meta.url),'utf8');
 const form=read('app/marketplaces/ListingEditor.tsx'),page=read('app/marketplaces/Anunciados.tsx'),route=read('app/api/modulos/marketplaces/anunciados/editar/route.ts'),css=read('app/marketplaces/marketplaces.module.css');
+test('trocar para o destino não mantém a edição invisível da conta de origem bloqueando a seleção', () => {
+  assert.match(page, /const expanded = expandedState\.accountId === accountId \? expandedState\.id : ''/);
+  const source = page.match(/const expanded = ([^;]+);/)[1];
+  assert.equal(runInNewContext(source, { accountId: 'destino', expandedState: { accountId: 'origem', id: 'MLB123' } }), '');
+  assert.equal(runInNewContext(source, { accountId: 'origem', expandedState: { accountId: 'origem', id: 'MLB123' } }), 'MLB123');
+});
+test('preparação em outra conta tem respiro vertical sem alterar a barra de ações', () => {
+  assert.match(css, /\.listingCopy \{ margin-block: 24px;/);
+  assert.match(css, /\.listingCopy \.actionBar \{ margin: 0; \}/);
+  assert.match(css, /\.actionBar \{[^}]*gap: 10px; margin-bottom: 24px;/);
+});
 test('formulário comum permite salvar/cancelar, valida, protege descarte e usa formatação oficial', () => {
   for(const text of ['Salvar alterações','Cancelar','Descartar alterações?','Recarregar edição','changedFields','validateChanges','moedaDigitadaParaNumero','formatarMoedaDigitada','aria-describedby','aria-invalid','beforeunload']) assert.ok(form.includes(text),text);
   assert.match(form,/setStale\(true\)/);

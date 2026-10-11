@@ -97,6 +97,12 @@ credenciais adicionais no ambiente.
 6. Em **Anunciados**, **Publicar em outra conta** relê o item e a descrição
    atuais da origem no Mercado Livre e abre esse mesmo rascunho revisável no
    destino. A preparação não cria anúncio e nunca atravessa empresas.
+   Anúncio original sem EAN usa a ficha ativa do catálogo ou a categoria,
+   título, imagens e atributos atuais do anúncio tradicional. Não cria GTIN
+   fictício: só exige código/motivo quando o Mercado Livre exigir. A origem
+   é relida e autorizada na mesma empresa antes da publicação; não basta
+   enviar um identificador de catálogo/origem pelo navegador. O validador
+   oficial ainda pode recusar exigências condicionais da conta e categoria.
 
 Outros marketplaces aparecem como integrações planejadas até que seus contratos e credenciais oficiais sejam configurados.
 

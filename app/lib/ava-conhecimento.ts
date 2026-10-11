@@ -1,3 +1,7 @@
+// Revisado na versão 1.50.0.07: cópia sem EAN usa origem confirmada,
+// revisão no destino e validador oficial do ML, sem inventar códigos.
+// Revisado na versão 1.50.0.06: espaço vertical no painel Publicar em outra
+// conta, sem alterar ações ou revisão. Sem impacto operacional.
 // Revisado na versão 1.50.0.05: renovação confirma automaticamente no
 // card da conta e fecha popup após sucesso, sem Atualizar contas manual.
 // Revisado na versão 1.50.0.04: hover igual em Classificar, Atualizar e
@@ -1723,6 +1727,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // orientação operacional da Ava nos ambientes Gestão Web, Gestão Mobile e Vendas.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
+Em **Publicar em outra conta**, um anúncio original sem EAN pode ser preparado sem EAN, usando sua ficha ativa de catálogo ou os dados atuais do anúncio tradicional. Não invente códigos nem exija EAN só por mudar de conta. Preço e estoque vêm preenchidos; revise descrição, opções de venda e confirme a ficha antes de Publicar. A origem pertence à mesma empresa e é relida no servidor antes da criação. Se o Mercado Livre exigir EAN ou motivo de ausência agora, informe apenas dados reais: regras da categoria e validação oficial continuam valendo. Preparar não publica nem altera a origem. Falha na cópia não prende a seleção de conta. Isso não dispensa o EAN na pesquisa inicial por código.
 O controle de acesso é por perfil: abrir Pessoal não encerra sessões empresariais Pro/Premium. Business Básico acessado em outro aparelho bloqueia somente aquele perfil e abre a seleção para trocar; para reassumi-lo, faça novo login. Pro/Premium permitem simultâneas. Erro de conexão não força logout. As permissões de cada operação continuam sendo verificadas no servidor.
 Em **Novo anúncio** de Marketplaces, **Ou pesquise por nome, marca ou modelo** fica abaixo do EAN: digite ao menos 3 caracteres e use **Buscar produto** ou Enter. Consulta o catálogo ativo do Mercado Livre, não a web nem os produtos do perfil. Escolha **Produto encontrado**, mesmo com uma ficha única. EAN único válido é preenchido e reconfirmado; se houver vários, escolha **EAN da embalagem**. Sem código válido, digite/leia o EAN acima para pesquisar novamente. Nunca deduza EAN pela descrição. Digitar em uma busca limpa a outra e descarta a preparação anterior. A consulta por EAN mantém o cadastro do perfil como alternativa existente. Pesquisar não publica: revisar preço, estoque e demais dados e confirmar a ficha continuam obrigatórios. Sem impacto na pesquisa do PWA AvantaPreços.
 Ao abrir um módulo pelo Dashboard ou usar **Início** para retornar, a troca é imediata e reutiliza a sessão e o perfil já validados. Se houver recarga completa ou acesso direto pela URL, a confirmação de acesso pode aparecer novamente. Isso não remove as autorizações de cada operação protegida.

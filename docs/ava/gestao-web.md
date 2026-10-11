@@ -1,6 +1,20 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.50.0.05 -->
+<!-- ava-version: 1.50.0.07 -->
+
+> Revisão 1.50.0.07: **Publicar em outra conta** aceita o anúncio original
+> sem EAN: usa a ficha ativa do catálogo ou o anúncio tradicional confirmado
+> na conta de origem. Não inventar código nem exigir EAN apenas porque mudou
+> de conta. Revise preço, estoque, descrição e opções no destino; preparar não
+> publica. Se o Mercado Livre exigir EAN ou motivo da ausência, informe apenas
+> dados reais. A categoria e o validador do ML continuam obrigatórios; a origem
+> é da mesma empresa e é relida antes da publicação. Preço/estoque copiados
+> aparecem preenchidos e falha na cópia não prende a troca de conta. Não muda
+> a exigência de EAN na pesquisa inicial por código. Consulta real no local
+> depende das chaves seguras da integração.
+
+> Revisão 1.50.0.06: mais espaço vertical entre o painel de publicação em
+> outra conta e as ações de edição. Sem impacto operacional no fluxo.
 
 > Revisão 1.50.0.05: em **Renovar autorização**, mantenha aberto o painel
 > da conta enquanto concluir **Autorizar agora** ou o titular usar o link.

@@ -7,6 +7,15 @@ const product = { id: 'MLB40220538', name: 'Produto teste', domainId: 'MLB-GINS'
 const preparation = { status: 'found', ean, product, categories: [{ id: 'MLB32130', name: 'Gin' }], categoryId: 'MLB32130', listingTypes: [{ id: 'gold_special', name: 'Clássico' }], shippingModes: [{ id: 'me2', name: 'Mercado Envios' }], conditions: [{ id: 'new', name: 'Novo' }], requiredAttributes: [{ id: 'BRAND', name: 'Marca', values: [{ id: '123', name: 'Marca A' }] }] };
 const form = { ean, productId: product.id, categoryId: 'MLB32130', price: 160, stock: 30, listingType: 'gold_special', shippingMode: 'me2', condition: 'new', warrantyType: 'none', attributes: { BRAND: '123' } };
 
+test('EAN vazio só é permitido quando a origem da cópia coincide com a preparação', () => {
+  const copySource = { connectionId: 'origem', listingId: 'MLB123' };
+  const preparedCopy = { ...preparation, ean: '', copySource };
+  assert.deepEqual(publicationErrors({ ...form, ean: '', copySource }, preparedCopy), {});
+  assert.ok(publicationErrors({ ...form, ean: '' }, preparedCopy).ean);
+  assert.ok(publicationErrors({ ...form, ean: '', copySource: { ...copySource, listingId: 'outro' } }, preparedCopy).ean);
+  assert.ok(publicationErrors({ ...form, ean: '' }, { ...preparation, ean: '' }).ean);
+});
+
 test('GTINs da ficha aceitam apenas códigos válidos, sem inventar EAN de outros atributos', () => {
   assert.deepEqual(catalogGtins([
     { id: 'GTIN', value_name: `${ean}, 7891129598607`, values: [{ name: ean }, { name: '7899882306942' }, { name: `EAN ${ean}` }] },

@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.50.0.07 - 2026-10-11
+
+- Publicar em outra conta prepara anúncios originais sem EAN, usando a ficha
+  ativa do catálogo ou os dados do anúncio tradicional, sem inventar códigos.
+  A origem e a empresa são revalidadas antes da publicação; exigências atuais
+  do Mercado Livre e seu validador final continuam obrigatórios.
+- Revisão de preço, estoque e descrição disponível também nas cópias sem EAN.
+  Preço/estoque copiados aparecem preenchidos; nenhuma preparação publica.
+- Edição vinculada à conta para não travar a seleção após preparar uma cópia.
+  Ava atualizada; sem migração ou alteração de anúncios reais.
+
+## 1.50.0.06 - 2026-10-11
+
+- Área de preparação para publicar em outra conta ganha 24px de espaço
+  acima e abaixo, separando o painel da barra de ações da edição. Mesma
+  medida no desktop e mobile; alinhamento dos botões e fluxo preservados.
+- Ava revisada, sem impacto operacional.
+
 ## 1.50.0.05 - 2026-10-11
 
 - Renovar autorização confirma automaticamente a solicitação no servidor,

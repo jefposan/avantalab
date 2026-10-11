@@ -120,7 +120,7 @@
 .publishAnotherAccount > p, .listingCopy > p { grid-column: 1 / -1; margin: 0; color: #475569; font-size: 12px; line-height: 1.5; }
 .publishAnotherAccount > button { min-height: 44px; border: 1px solid #cbd5e1; border-radius: 12px; padding: 0 14px; color: var(--brand); background: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 .publishAnotherAccount > button:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 28%, transparent); outline-offset: 2px; }
-.listingCopy { margin-top: 18px; border: 1px solid color-mix(in srgb, var(--brand) 22%, #e2e8f0); }
+.listingCopy { margin-block: 24px; border: 1px solid color-mix(in srgb, var(--brand) 22%, #e2e8f0); }
 .listingCopy .actionBar { margin: 0; }
 .dark .publishAnotherAccount, .dark .listingCopy { border-color: color-mix(in srgb, var(--brand) 42%, #475569); background: color-mix(in srgb, var(--brand) 10%, #182235); }
 .dark .publishAnotherAccount > p, .dark .listingCopy > p { color: #b8c5d7; }
