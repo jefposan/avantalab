@@ -1,6 +1,20 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.49.0.13 -->
+<!-- ava-version: 1.49.0.17 -->
+
+> Revisão 1.49.0.17: renovação dentro da conta e atualização geral ao lado
+> de Conectar outra conta no módulo Marketplaces. Sem impacto operacional
+> no AvantaVendas.
+
+> Revisão 1.49.0.16: alinhamento horizontal das ações no painel de renovação
+> de Marketplaces. Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.49.0.15: autorização direta e painel compacto do módulo Marketplaces.
+> Sem impacto operacional no AvantaVendas; login e consentimento da conta no
+> Mercado Livre continuam obrigatórios.
+
+> Revisão 1.49.0.14: renovação por conta e link temporário de autorização
+> do Mercado Livre na Gestão Web. Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.49.0.13: detalhamento e diagnóstico de acesso do pós-venda
 > Mercado Livre na Gestão Web. Sem impacto operacional no AvantaVendas.

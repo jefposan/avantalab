@@ -6,6 +6,8 @@ import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import ModuloHeader from '@/app/components/ModuloHeader';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import AvantaKanban from '@/app/components/AvantaKanban';
+import Tooltip from '@/app/components/Tooltip';
+import AuthorizationRenewal from './AuthorizationRenewal';
 import usePanelOrder from './usePanelOrder';
 import type { MarketplaceId } from '@/app/modules/marketplaces/types';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
@@ -41,6 +43,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     : false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [connecting, setConnecting] = useState(false);
+  const [connectionsRefreshing, setConnectionsRefreshing] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState('');
   const [accounts, setAccounts] = useState<MarketplaceAccount[]>([]);
   const [canManageConnections, setCanManageConnections] = useState(false);
@@ -52,6 +55,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [priceLinkStatus, setPriceLinkStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [disconnectAccount, setDisconnectAccount] = useState<MarketplaceAccount | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [renewAccount, setRenewAccount] = useState<MarketplaceAccount | null>(null);
   const [sales, setSales] = useState<MarketplaceSale[]>([]);
   const [salesLoading, setSalesLoading] = useState(true);
   const [salesError, setSalesError] = useState('');
@@ -78,11 +82,27 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }, []);
 
   const refreshConnections = useCallback(async () => {
-    const data = await marketplaceClientRequest(`conexoes?empresaId=${encodeURIComponent(companyId)}`) as { accounts: MarketplaceAccount[]; canConnect: boolean };
+    const data = await marketplaceClientRequest(`conexoes?empresaId=${encodeURIComponent(companyId)}`, undefined, AbortSignal.timeout(15_000)) as { accounts: MarketplaceAccount[]; canConnect: boolean };
     loadAccounts(data.accounts, data.canConnect);
   }, [companyId, loadAccounts]);
 
+  async function updateConnections() {
+    if (connectionsRefreshing) return;
+    setConnectionsRefreshing(true);
+    setConnectionNotice('');
+    try {
+      await refreshConnections();
+      setRefreshKey((value) => value + 1);
+      setConnectionNotice('Lista de contas atualizada. Após renovar a autorização, atualize também o pós-venda da venda.');
+    } catch (error) {
+      setConnectionNotice(error instanceof Error && ['TimeoutError', 'AbortError'].includes(error.name)
+        ? 'A consulta demorou mais que o esperado. Tente novamente.'
+        : error instanceof Error ? error.message : 'Não foi possível atualizar as contas. Tente novamente.');
+    } finally { setConnectionsRefreshing(false); }
+  }
+
   const connectedAccounts = accounts.filter((account) => account.status === 'connected');
+  const renewableAccounts = accounts.filter((account) => ['connected', 'expired', 'attention'].includes(account.status));
   const accountSignature = connectedAccounts.map((account) => account.id).sort().join(',');
   const periodSales = useMemo(() => salesInPeriod(sales, salesPeriod), [sales, salesPeriod]);
   const summary = useMemo(() => salesSummary(periodSales, salesGroup), [periodSales, salesGroup]);
@@ -289,17 +309,24 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
           </button>)}
         </div>
         <div className={styles.connectionNotice}>
-          {selectedProvider.available && <button type="button" disabled={connecting || !companyId || !canManageConnections} onClick={() => void connectMarketplace()} aria-describedby={connectedAccounts.length ? 'connect-another-account-help' : undefined}>{connecting ? 'Abrindo Mercado Livre…' : connectedAccounts.length ? 'Conectar outra conta' : 'Conectar conta'}</button>}
+          {selectedProvider.available && <div className={styles.connectionGeneralActions}>
+            <button type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton} ${styles.renewalPrimary}`} disabled={connecting || connectionsRefreshing || !companyId || !canManageConnections} onClick={() => void connectMarketplace()} aria-describedby={connectedAccounts.length ? 'connect-another-account-help' : undefined}>{connecting ? 'Abrindo Mercado Livre…' : connectedAccounts.length ? 'Conectar outra conta' : 'Conectar conta'}</button>
+            <Tooltip texto="Recarregar a lista de todas as contas desta empresa; não renova autorizações nem consulta reclamações"><button type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton}`} disabled={connecting || connectionsRefreshing || disconnecting || accountSelectionLocked || publicationBusy || !companyId} onClick={() => void updateConnections()}>{connectionsRefreshing ? 'Atualizando…' : 'Atualizar contas'}</button></Tooltip>
+          </div>}
           {connectedAccounts.length > 0 && <p id="connect-another-account-help" className={styles.connectionHelp}>As contas já conectadas serão mantidas. Para autorizar outra, saia da conta atual do Mercado Livre neste navegador ou use uma janela anônima.</p>}
           {connectionNotice && <p className={styles.connectionMessage} role="alert">{connectionNotice}</p>}
         </div>
         {marketplace === 'mercado_livre' && <div className={styles.connectedAccounts} aria-labelledby="connected-accounts-title">
           <div className={styles.connectedAccountsHeading}><h3 id="connected-accounts-title">Contas conectadas</h3><span>{connectedAccounts.length}</span></div>
-          {connectedAccounts.length ? <div className={styles.connectedAccountsList}>{connectedAccounts.map((account) => <article key={account.id} className={`${styles.connectedAccount} ${account.id === selectedAccount ? styles.connectedAccountSelected : ''}`}>
+          {renewableAccounts.length ? <div className={styles.connectedAccountsList}>{renewableAccounts.map((account) => <article key={account.id} className={`${styles.connectedAccount} ${account.id === selectedAccount ? styles.connectedAccountSelected : ''}`}>
             <button type="button" className={styles.connectedAccountSelect} onClick={() => { setSelectedAccount(account.id); setSalesAccount(account.id); }} disabled={accountSelectionLocked || publicationBusy} aria-pressed={account.id === selectedAccount}>
-              <strong>{account.seller_name || `Vendedor ${account.seller_reference}`}{pendingSales[account.id] ? <em className={styles.accountSalesBadge} title="Vendas nos filtros selecionados">{pendingSales[account.id]}</em> : null}</strong><small>ID {account.seller_reference} · Conectada<br />Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
+              <strong>{account.seller_name || `Vendedor ${account.seller_reference}`}{pendingSales[account.id] ? <em className={styles.accountSalesBadge} title="Vendas nos filtros selecionados">{pendingSales[account.id]}</em> : null}</strong><small>ID {account.seller_reference} · {account.status === 'connected' ? 'Conectada' : account.status === 'expired' ? 'Autorização expirada' : 'Requer atenção'}<br />Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
             </button>
-            {canManageConnections && <button type="button" className={styles.disconnectAccountButton} disabled={disconnecting || accountSelectionLocked || publicationBusy} onClick={() => setDisconnectAccount(account)}>Desconectar</button>}
+            {canManageConnections && <div className={styles.accountConnectionActions}>
+              <Tooltip texto="Renovar a autorização desta conta sem excluir a conexão ou o histórico"><button id={`renew-account-${account.id}`} type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton}`} disabled={disconnecting || connecting || accountSelectionLocked || publicationBusy} aria-expanded={renewAccount?.id === account.id} aria-controls={`account-renewal-${account.id}`} onClick={() => setRenewAccount((current) => current?.id === account.id ? null : account)}>Renovar autorização</button></Tooltip>
+              <button type="button" className={`${styles.disconnectAccountButton} ${styles.compactConnectionButton}`} disabled={disconnecting || accountSelectionLocked || publicationBusy} onClick={() => setDisconnectAccount(account)}>Desconectar</button>
+            </div>}
+            {canManageConnections && renewAccount?.id === account.id && <div id={`account-renewal-${account.id}`}><AuthorizationRenewal companyId={companyId} account={account} onClose={() => { setRenewAccount(null); document.getElementById(`renew-account-${account.id}`)?.focus(); }} /></div>}
           </article>)}</div> : <p className={styles.emptyConnectedAccounts}>Nenhuma conta conectada.</p>}
         </div>}
       </article>

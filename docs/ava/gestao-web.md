@@ -1,6 +1,36 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.49.0.13 -->
+<!-- ava-version: 1.49.0.17 -->
+
+> Revisão 1.49.0.17: **Atualizar contas** é uma ação geral ao lado de
+> **Conectar outra conta**; recarrega as contas da empresa e listas locais, não
+> renova permissões ou consulta reclamações. **Renovar autorização** expande
+> para baixo dentro do card da conta escolhida, com **Autorizar agora** e
+> **Gerar link** lado a lado. **Fechar** recolhe a área sem cancelar o link.
+> Após concluir no Mercado Livre, use a atualização geral e depois
+> **Atualizar pós-venda** na venda. Atualizar contas não comprova acesso ao pós-venda.
+
+> Revisão 1.49.0.16: Autorizar agora, Gerar link e Atualizar contas ficam
+> alinhados na mesma linha do painel de renovação. Sem impacto operacional.
+
+> Revisão 1.49.0.15: os dados da conta Marketplaces ocupam a largura inteira;
+> Renovar autorização e Desconectar ficam lado a lado abaixo, em faces compactas.
+> O painel foi simplificado: **Autorizar agora** abre o Mercado Livre diretamente
+> em janela separada, para entrar na conta indicada e consentir. Sem o login,
+> **Gerar link** permite enviá-lo ao titular. **Atualizar contas** fica dentro do
+> painel; depois, atualizar o pós-venda. Identidade, permissões, validade, uso
+> único e preservação do histórico seguem iguais.
+
+> Revisão 1.49.0.14: em Contas conectadas de Marketplaces, gestor/administrador
+> pode usar **Renovar autorização** e **Gerar link**.
+> **Copiar link** permite envio manual, sem solicitar senha ou acesso AvantaLab
+> ao titular. O responsável confirma a conta indicada e continua no Mercado
+> Livre; usar janela anônima se outra conta estiver conectada. Link válido por
+> 30 minutos e um retorno, só para a conta/empresa selecionadas. **Cancelar link**
+> invalida uma solicitação ainda pendente; **Fechar** não cancela. Atualizar
+> contas e pós-venda após conclusão. Contas expiradas também são renováveis.
+> Não desconectar, excluir histórico ou prometer que renovar resolverá o 403:
+> as permissões/políticas do ML continuam sendo verificadas pela plataforma.
 
 > Revisão 1.49.0.13: o pós-venda de Marketplaces mostra problema relatado
 > (texto fornecido pelo ML), etapa em português, próximo responsável, prazo e

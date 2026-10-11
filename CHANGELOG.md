@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.49.0.17 - 2026-10-11
+
+- Atualizar contas movido para ao lado de Conectar outra conta, como ação geral
+  da empresa, com carregamento, erro e limite de espera. Recarrega dados salvos;
+  não concede permissões nem consulta reclamações.
+- Renovar autorização expande o próprio card da conta escolhida. Autorizar
+  agora e Gerar link ficam lado a lado, sem painel externo ou terceiro botão.
+  Fechar devolve o foco ao acionador; preservados link, consentimento e histórico.
+- Manuais e conhecimento da Ava revisados para a nova localização das ações.
+
+## 1.49.0.16 - 2026-10-11
+
+- Autorizar agora, Gerar link e Atualizar contas alinhados horizontalmente
+  no painel de renovação, com três colunas responsivas, altura compacta,
+  tooltips e alvos de toque preservados. Sem alteração do fluxo de autorização.
+
+## 1.49.0.15 - 2026-10-11
+
+- Contas do Mercado Livre com identificação em largura inteira e ações
+  Renovar autorização/Desconectar lado a lado abaixo. Faces de botões de 32px
+  com alvos de interação de 44px no desktop e 48px no mobile.
+- Painel de renovação simplificado com Autorizar agora, Gerar link e Atualizar
+  contas. A autorização direta abre o Mercado Livre em janela separada, sem
+  acesso à janela original, e reutiliza a validação do destino do link.
+- Mantidos consentimento, conta/empresa esperadas, uso único e preservação de
+  anúncios e histórico. Link continua disponível para quem não possui o login.
+  Documentação da Ava e testes revisados; sem mudança de permissões ou banco.
+
+## 1.49.0.14 - 2026-10-11
+
+- **Renovar autorização por conta do Mercado Livre**: gestor/administrador pode
+  gerar e copiar um link de uso único, válido por 30 minutos, para o responsável
+  autorizar no próprio ML sem senha compartilhada ou login no AvantaLab. O link
+  também pode ser aberto no navegador e cancelado pelo solicitante.
+- Conta esperada e empresa são vinculadas ao verificador criptografado. Retorno
+  de outra conta é recusado antes de gravar. Expiração, uso único, acesso atual
+  do administrador, módulo ativo e conexão são revalidados. Tokens concorrentes
+  não são sobrescritos; id, anúncios, vendas e histórico permanecem preservados.
+- Link em fragmento, sem segredo nos logs HTTP; dados do titular limitados ao
+  nome/ID da conta e validade. Renovação não garante liberação de claims/returns.
+  Contas com autorização expirada/requerendo atenção também oferecem renovação.
+- Reutiliza OAuth/PKCE, cofre e tabela de pendências existentes, sem migração de
+  banco. Ava e testes de isolamento, cancelamento e callback revisados.
+
 ## 1.49.0.13 - 2026-10-11
 
 - **Pós-venda Mercado Livre mais claro**: consulta o detalhe da reclamação para

@@ -1,6 +1,21 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.49.0.13 -->
+<!-- ava-version: 1.49.0.17 -->
+
+> Revisão 1.49.0.17: renovação integrada ao card da conta e atualização geral
+> ao lado de Conectar outra conta no Marketplaces Web. Sem impacto operacional
+> na Gestão Mobile ou no PWA AvantaPreços; alvos de toque preservados.
+
+> Revisão 1.49.0.16: alinhamento horizontal das três ações da renovação de
+> Marketplaces; alvos de toque preservados. Sem impacto operacional.
+
+> Revisão 1.49.0.15: painel web de renovação de Marketplaces compacto, com
+> autorização direta ou link para o titular. Sem impacto operacional na Gestão
+> Mobile; alvos de toque da interface de renovação continuam preservados.
+
+> Revisão 1.49.0.14: renovação por conta e link temporário de autorização
+> do Mercado Livre na Gestão Web. Sem impacto operacional na Gestão Mobile
+> ou no PWA AvantaPreços; o titular pode abrir o link em navegador no celular.
 
 > Revisão 1.49.0.13: detalhamento e diagnóstico de acesso do pós-venda
 > Mercado Livre na Gestão Web. Sem impacto operacional na Gestão Mobile

@@ -54,7 +54,7 @@ test('connected accounts stay in rounded controls at the bottom of the marketpla
   assert.match(client, /<div className=\{styles\.connectedAccounts\} aria-labelledby="connected-accounts-title">/);
   assert.match(client, /<h3 id="connected-accounts-title">Contas conectadas<\/h3>/);
   assert.match(client, /className=\{styles\.connectedAccountSelect\}/);
-  assert.match(client, /className=\{styles\.disconnectAccountButton\}/);
+  assert.match(client, /className=\{`\$\{styles\.disconnectAccountButton\} \$\{styles\.compactConnectionButton\}`\}/);
   assert.doesNotMatch(listings, /Conta do Mercado Livre|accountSummary|Desconectar conta/);
   assert.match(css, /\.connectedAccount \{[^}]*border: 1px solid color-mix\([^}]*border-radius: 14px;/);
   assert.match(css, /\.connectedAccountSelected \{ border-color: var\(--brand\);/);

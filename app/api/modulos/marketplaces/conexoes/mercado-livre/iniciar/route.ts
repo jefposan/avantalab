@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     const state = createMercadoLivreOAuthState();
     const verifier = createPkceVerifier();
     await access.db.from('marketplace_oauth_pending')
-      .delete().eq('empresa_id', empresaId).eq('provider', 'mercado_livre').eq('started_by', access.usuario.id).is('consumed_at', null);
+      .delete().eq('empresa_id', empresaId).eq('provider', 'mercado_livre').eq('started_by', access.usuario.id).lt('expires_at', new Date().toISOString());
     const { error } = await access.db.from('marketplace_oauth_pending').insert({
       empresa_id: empresaId,
       provider: 'mercado_livre',
