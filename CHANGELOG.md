@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0.02 - 2026-10-11
+
+- Carga inicial de estoque: Carregar saldos no local, Consultar novamente e
+  Fechar ficam antes da lista de resultados, sem duplicação no rodapé.
+  Mantidas revisão, confirmação e proteção dos saldos já definidos.
+
 ## 2.0.0.01 - 2026-10-11
 
 - Marketplaces inicia com Anunciados e Produtos e estoque recolhidos e Vendas

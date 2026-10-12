@@ -166,6 +166,17 @@ test('endpoint exige gestão, usa empresa/ator autorizados; interface exige revi
   assert.match(css,/\.localStockLoad button, \.initialStockTrigger \{ min-height: 48px !important; \}/);
 });
 
+test('ações da carga inicial ficam antes dos resultados, sem duplicar no rodapé',()=>{
+  const ui=readFileSync(new URL('../../app/marketplaces/InitialStockLoad.tsx',import.meta.url),'utf8');
+  const results=ui.indexOf("{phase !== 'loading' && <>");
+  assert.ok(results>0);
+  for(const action of ['`Carregar ${selected.length} saldos no local`','Consultar novamente',"'Fechar'"]) {
+    const position=ui.indexOf(action);
+    assert.ok(position>=0&&position<results,`${action} deve ficar antes dos resultados`);
+  }
+  assert.equal((ui.match(/<div className=\{styles\.actionBar\}>/g)||[]).length,1);
+});
+
 test('cursor percorre pendentes sem incluir outra empresa ou saldos definidos',async t=>{
   const {db}=setup(t); db.tables.marketplace_products=[]; db.tables.marketplace_product_links=[];
   const ids=['66666666-6666-4666-8666-666666666661','66666666-6666-4666-8666-666666666662','66666666-6666-4666-8666-666666666663','66666666-6666-4666-8666-666666666664'];

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 2.0.0.01 -->
+<!-- ava-version: 2.0.0.02 -->
+
+> Revisão 2.0.0.02: ações da carga inicial ficam no topo dos resultados em
+> Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa ou no PWA.
 
 > Revisão 2.0.0.01: Marketplaces Web inicia apenas Vendas aberto; Anunciados
 > e Produtos e estoque recolhidos, inclusive em navegador estreito.

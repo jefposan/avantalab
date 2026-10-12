@@ -86,6 +86,11 @@ export default function InitialStockLoad({ companyId, dark, brand, onBusyChange,
     {phase === 'loading' && <p role="status">Consultando anúncios… {progress} cadastros conferidos.</p>}
     {error && <p className={styles.connectionMessage} role="alert">{error}</p>}
     {result && <p className={styles.catalogSuccess} role="status">{result}</p>}
+    <div className={styles.actionBar}>
+      <button type="button" className={styles.primary} disabled={phase !== 'review' || !selected.length} onClick={() => setConfirming(true)}>{phase === 'saving' ? 'Carregando estoque…' : `Carregar ${selected.length} saldos no local`}</button>
+      <button type="button" disabled={phase !== 'review'} onClick={() => void preview()}>Consultar novamente</button>
+      <button type="button" disabled={phase === 'saving'} onClick={onClose}>{phase === 'loading' ? 'Cancelar consulta' : 'Fechar'}</button>
+    </div>
     {phase !== 'loading' && <>
       {ignored > 0 && <p className={styles.help}>{ignored} cadastros sem anúncio ativo com quantidade foram desconsiderados.</p>}
       {!rows.length && !error && !result && <p className={styles.help}>Nenhum cadastro com estoque pendente para esta carga. Importe os anúncios existentes se ainda não estiverem cadastrados.</p>}
@@ -101,11 +106,6 @@ export default function InitialStockLoad({ companyId, dark, brand, onBusyChange,
         {errors[row.productId] && <p className={styles.connectionMessage} role="alert">{errors[row.productId]}</p>}
       </div>)}
     </>}
-    <div className={styles.actionBar}>
-      <button type="button" className={styles.primary} disabled={phase !== 'review' || !selected.length} onClick={() => setConfirming(true)}>{phase === 'saving' ? 'Carregando estoque…' : `Carregar ${selected.length} saldos no local`}</button>
-      <button type="button" disabled={phase !== 'review'} onClick={() => void preview()}>Consultar novamente</button>
-      <button type="button" disabled={phase === 'saving'} onClick={onClose}>{phase === 'loading' ? 'Cancelar consulta' : 'Fechar'}</button>
-    </div>
     <ModalConfirmacao aberto={confirming} titulo="Carregar estoque local?" mensagem={`Usar as quantidades dos ${selected.length} anúncios selecionados como saldo inicial? Apenas cadastros sem saldo serão preenchidos. Não soma contas e não altera anúncios no Mercado Livre.`}
       textoConfirmar="Carregar estoque" variante="primaria" carregando={phase === 'saving'} corPrimaria={brand} darkMode={dark} aoCancelar={() => { if (phase !== 'saving') setConfirming(false); }} aoConfirmar={() => { void apply(); }} />
   </section>;

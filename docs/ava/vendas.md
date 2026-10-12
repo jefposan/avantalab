@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 2.0.0.01 -->
+<!-- ava-version: 2.0.0.02 -->
+
+> Revisão 2.0.0.02: ações da carga inicial de estoque movidas no Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
 
 > Revisão 2.0.0.01: estado inicial dos blocos de Marketplaces Web ajustado.
 > Sem impacto operacional no AvantaVendas.

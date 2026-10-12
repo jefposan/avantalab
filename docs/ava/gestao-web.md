@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 2.0.0.01 -->
+<!-- ava-version: 2.0.0.02 -->
+
+> Revisão 2.0.0.02: na carga inicial de estoque, **Carregar saldos no local**,
+> **Consultar novamente** e **Fechar** ficam no topo dos resultados.
+> A função continua disponível para produtos sem saldo definido, inclusive
+> anúncios antigos de novas contas. Não sobrescreve saldos já confirmados.
 
 > Revisão 2.0.0.01: ao abrir ou recarregar Marketplaces, somente **Vendas**
 > inicia aberto. **Anunciados** e **Produtos e estoque** iniciam recolhidos;
