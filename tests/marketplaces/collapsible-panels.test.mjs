@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { salesSummary } from '../../app/modules/marketplaces/sales-status.ts';
 
 const root = resolve(import.meta.dirname, '../..');
 const stubs = new Map([
@@ -56,7 +57,7 @@ const { Icon: OfficialIcon } = await import(pathToFileURL(resolve(root, 'app/pro
 hooks.deregister();
 const render = (Component, props) => renderToStaticMarkup(React.createElement(Component, props));
 const noop = () => {};
-const salesProps = { companyId: 'empresa', accountId: '', onAccountChange: noop, accounts: [], sales: [], canManage: false, loading: false, error: '', awaitingUpdates: 0, onRefresh: noop, onSaleUpdated: noop, onExpandedChange: noop, dark: false, brand: '#003E73' };
+const salesProps = { companyId: 'empresa', accountId: '', onAccountChange: noop, group: '', onGroupChange: noop, counts: salesSummary([], '').byGroup, total: 0, accounts: [], sales: [], canManage: false, loading: false, error: '', awaitingUpdates: 0, onRefresh: noop, onSaleUpdated: noop, onExpandedChange: noop, dark: false, brand: '#003E73' };
 
 test('ícone compartilhado refresh usa quatro traços completos e cantos arredondados', () => {
   const html = render(OfficialIcon, { name: 'refresh', size: 20 });
@@ -181,6 +182,18 @@ test('Vendas recolhe só o conteúdo e mantém título, total, atualizar e filtr
   const expanded = render(Vendas, { ...salesProps, expanded: true });
   assert.match(expanded, /aria-label="Recolher Vendas"/);
   assert.ok(!expanded.includes('id="sales-content" hidden'));
+});
+
+test('Vendas agrupa conta e situação no mesmo trecho, com seleção controlada e layout responsivo', () => {
+  const html = render(Vendas, { ...salesProps, expanded: true, group: 'delivered', counts: { ...salesProps.counts, delivered: 6 }, total: 10 });
+  assert.match(html, /class="salesListFilters"/);
+  assert.match(html, /Conta das vendas/); assert.match(html, /Situação/);
+  assert.match(html, /Entregues/); assert.match(html, />6<\/small>/);
+  assert.match(html, /Vale a última situação escolhida/);
+  assert.ok(html.indexOf('Conta das vendas') < html.indexOf('Vale a última situação escolhida'));
+  const css = readFileSync(resolve(root, 'app/marketplaces/marketplaces.module.css'), 'utf8');
+  assert.match(css, /\.salesListFilters \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /@media \(max-width: 760px\) \{ \.salesListFilters \{ grid-template-columns: minmax\(0, 1fr\)/);
 });
 
 test('Anunciados inicia recolhido com controle próprio no topo e filtros montados', () => {

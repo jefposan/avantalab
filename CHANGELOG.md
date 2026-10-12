@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0.13 - 2026-10-12
+
+- Filtro Situação ao lado de Conta das vendas, usando o mesmo estado do header:
+  prevalece a última escolha, sem combinar duas situações incompatíveis.
+- Situação no bloco mantém a conta e o período; nova seleção no header volta
+  a todas as contas. Os dois seletores exibem a situação atual. Contagens no
+  bloco são da conta/período; header continua global. Opções por quantidade.
+- Filtros lado a lado no desktop e em coluna no celular, reutilizando o seletor
+  existente. Mantidos atualização oculta, permissões e estoque. Sem publicação.
+
 ## 3.0.0.12 - 2026-10-12
 
 - Marketplaces inicia vendas em todas as datas, situações e contas; Anunciados

@@ -18,6 +18,8 @@ const handler = find(node => ts.isFunctionDeclaration(node) && node.name?.text =
 const visible = find(node => ts.isVariableDeclaration(node) && node.name.getText(source) === 'visibleSales');
 const compile = text => ts.transpileModule(text, { compilerOptions: { target: ts.ScriptTarget.ESNext } }).outputText;
 const choose = new Function('sales', 'setSalesSnapshot', 'setSalesAccount', 'setSalesExpanded', 'setSalesPeriod', 'setSalesGroup', `${compile(handler.getText(source))}; return selectSalesFromHeader;`);
+const panelHandler = find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'selectSalesInPanel');
+const chooseInPanel = new Function('sales', 'setSalesSnapshot', 'setSalesGroup', `${compile(panelHandler.getText(source))}; return selectSalesInPanel;`);
 const readVisible = new Function('salesSnapshot', 'salesPeriod', 'salesGroup', 'salesAccount', 'salesInPeriod', 'saleGroup', `${compile(`const read = ${visible.initializer.arguments[0].getText(source)};`)} return read();`);
 const fixture = (connectionId, orderId, shipmentStatus, soldAt = '2026-10-10T15:00:00Z') => ({ connectionId, orderId, status: 'paid', shipmentStatus, shipmentSubstatus: null, labelStatus: 'unavailable', soldAt, createdAt: soldAt });
 const sales = [
@@ -28,8 +30,9 @@ const sales = [
 function setup() {
   const state = { snapshot: [], account: 'conta-c', expanded: false, period: { start: '2026-10-01', end: '2026-10-31' }, group: '' };
   const select = choose(sales, value => state.snapshot = value, value => state.account = value, value => state.expanded = value, value => state.period = value, value => state.group = value);
+  const selectInPanel = chooseInPanel(sales, value => state.snapshot = value, value => state.group = value);
   const rows = () => readVisible(state.snapshot, state.period, state.group, state.account, salesInPeriod, saleGroup);
-  return { state, select, rows };
+  return { state, select, selectInPanel, rows };
 }
 
 test('inicia período, situações e contas em Todos, inclusive nos anúncios', () => {
@@ -72,4 +75,30 @@ test('header usa o handler global e escolher conta para publicar não restringe 
   assert.match(client, /connectedAccountSelect\} onClick=\{\(\) => setSelectedAccount\(account.id\)\}/);
   assert.match(client, /onAccountChange=\{account => \{ setSalesSnapshot\(sales\); setSalesAccount\(account\); \}\}/);
   assert.match(client, /setSalesAccount\(current => available.some\(account => account.id === current && account.status === 'connected'\) \? current : ''\)/);
+});
+
+test('situação do bloco substitui a do header sem perder conta ou período; última escolha prevalece', () => {
+  const { state, select, selectInPanel, rows } = setup();
+  select({ group: 'delivered' }); assert.equal(rows().length, 6);
+  state.account = 'conta-c'; assert.equal(rows().length, 0);
+  selectInPanel('awaiting_dispatch');
+  assert.equal(state.account, 'conta-c'); assert.equal(state.group, 'awaiting_dispatch');
+  assert.deepEqual(rows().map(row => row.orderId), ['pendente']);
+  select({ group: 'delivered' });
+  assert.equal(state.account, ''); assert.equal(state.group, 'delivered'); assert.equal(rows().length, 6);
+  state.account = 'conta-b'; selectInPanel('');
+  assert.equal(state.account, 'conta-b'); assert.equal(rows().length, 3);
+  assert.deepEqual(state.period, { start: '2026-10-01', end: '2026-10-31' });
+  assert.match(client, /group=\{salesGroup\} onGroupChange=\{selectSalesInPanel\}/);
+});
+
+test('contagens no bloco respeitam conta e período, sem ficarem limitadas à situação atual', () => {
+  const summary = find(node => ts.isVariableDeclaration(node) && node.name.getText(source) === 'accountSalesSummary');
+  const count = new Function('periodSales', 'salesAccount', 'salesSummary', `${compile(`const count = ${summary.initializer.arguments[0].getText(source)};`)} return count();`);
+  const inPeriod = salesInPeriod(sales, { start: '2026-10-01', end: '2026-10-31' });
+  assert.equal(count(inPeriod, 'conta-c', salesSummary).byGroup.awaiting_dispatch, 1);
+  assert.equal(count(inPeriod, 'conta-c', salesSummary).byGroup.delivered, 0);
+  assert.equal(count(inPeriod, 'conta-b', salesSummary).byGroup.delivered, 3);
+  assert.equal(count(inPeriod, '', salesSummary).total, 7);
+  assert.match(client, /counts=\{accountSalesSummary.byGroup\} total=\{accountSalesSummary.total\}/);
 });

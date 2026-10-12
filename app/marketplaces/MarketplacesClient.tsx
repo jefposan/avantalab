@@ -114,6 +114,10 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     if (selection.period !== undefined) setSalesPeriod(selection.period);
     if (selection.group !== undefined) setSalesGroup(selection.group);
   }
+  function selectSalesInPanel(group: SaleGroup | '') {
+    setSalesSnapshot(sales);
+    setSalesGroup(group);
+  }
   const updateSale = useCallback((updated: MarketplaceSale) => {
     setSales((current) => current.map((sale) => sale.id === updated.id && sale.connectionId === updated.connectionId ? updated : sale));
   }, []);
@@ -195,6 +199,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const accountSignature = connectedAccounts.map((account) => account.id).sort().join(',');
   const periodSales = useMemo(() => salesInPeriod(sales, salesPeriod), [sales, salesPeriod]);
   const summary = useMemo(() => salesSummary(periodSales, salesGroup), [periodSales, salesGroup]);
+  const accountSalesSummary = useMemo(() => salesSummary(periodSales.filter(sale => !salesAccount || sale.connectionId === salesAccount), ''), [periodSales, salesAccount]);
   const pendingSales = summary.byConnection;
   const pendingSalesTotal = summary.filteredTotal;
   const visibleSales = useMemo(() => salesInPeriod(salesSnapshot, salesPeriod).filter((sale) => (!salesGroup || saleGroup(sale) === salesGroup) && (!salesAccount || sale.connectionId === salesAccount)), [salesSnapshot, salesPeriod, salesGroup, salesAccount]);
@@ -489,7 +494,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       </> : inventorySnapshot ? 'A sincronização automática de estoque ainda precisa ser ativada nesta empresa.' : 'Consultando situação da sincronização…'}
     </div>
     <AvantaKanban className={styles.panelOrder} order={panelOrder.order} onOrderChange={panelOrder.change} disabled={!panelOrder.ready || publicationBusy || priceUsersOpen || !!disconnectAccount} items={[
-      { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={account => { setSalesSnapshot(sales); setSalesAccount(account); }} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
+      { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={account => { setSalesSnapshot(sales); setSalesAccount(account); }} group={salesGroup} onGroupChange={selectSalesInPanel} counts={accountSalesSummary.byGroup} total={accountSalesSummary.total} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
       { id: 'products', title: 'Produtos e estoque', render: (handle) => <ProductsStock key={companyId} companyId={companyId} accounts={accounts} publicationAccounts={marketplaceAccounts} canManage={canManage} dark={empresa.temaEscuro} brand={empresa.corPrimaria} refreshKey={refreshKey} preparationLocked={publicationBusy || accountSelectionLocked || !selectedProvider.available} reorderHandle={handle} onPrepare={(localProductId, targetConnectionId) => {
         if (!marketplaceAccounts.some(account => account.id === targetConnectionId && account.status === 'connected')) return;
         setSelectedAccount(targetConnectionId); setCopyRequest({ id: crypto.randomUUID(), localProductId, targetConnectionId });

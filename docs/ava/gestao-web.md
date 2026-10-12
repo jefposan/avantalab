@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.12 -->
+<!-- ava-version: 3.0.0.13 -->
+
+> Revisão 3.0.0.13: **Situação** fica ao lado de **Conta das vendas**.
+> Vale a última situação escolhida, no bloco ou no header; os dois seletores
+> mostram o mesmo estado, sem somar filtros incompatíveis. Escolher situação
+> no bloco mantém conta e período; escolher novamente no header volta a todas
+> as contas. Contagens do bloco correspondem à conta/período, antes do recorte
+> de situação; contagens do header continuam globais. Desktop lado a lado,
+> celular em coluna. Sem publicação.
 
 > Revisão 3.0.0.12: Marketplaces inicia em **Todo o período**, **Todas** as
 > situações de vendas e **Todas as contas**. Anunciados também inicia em

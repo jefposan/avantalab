@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
 import Tooltip from '@/app/components/Tooltip';
 import { Icon } from '@/app/projetos/components/Icon';
-import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, orderStatusText, saleConflictText } from '@/app/modules/marketplaces/sales-status';
+import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, orderStatusText, saleConflictText, orderedSaleGroups, type SaleGroup } from '@/app/modules/marketplaces/sales-status';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import type { MarketplaceAccount } from './Anunciados';
 import MarketplaceSelect from './MarketplaceSelect';
@@ -20,8 +20,9 @@ type Sale = MarketplaceSale;
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
-export default function Vendas({ companyId, accountId, onAccountChange, accounts, sales, canManage, loading, error, awaitingUpdates, onRefresh, onSaleUpdated, expanded, onExpandedChange, dark, brand, reorderHandle }: {
+export default function Vendas({ companyId, accountId, onAccountChange, group, onGroupChange, counts, total, accounts, sales, canManage, loading, error, awaitingUpdates, onRefresh, onSaleUpdated, expanded, onExpandedChange, dark, brand, reorderHandle }: {
   companyId: string; accountId: string; onAccountChange: (id: string) => void; accounts: MarketplaceAccount[];
+  group: SaleGroup | ''; onGroupChange: (group: SaleGroup | '') => void; counts: Record<SaleGroup, number>; total: number;
   sales: Sale[]; canManage: boolean; loading: boolean; error: string; awaitingUpdates: number; onRefresh: () => void; onSaleUpdated: (sale: Sale) => void;
   expanded: boolean; onExpandedChange: (expanded: boolean) => void; dark: boolean; brand: string; reorderHandle?: ReactNode;
 }) {
@@ -51,8 +52,14 @@ export default function Vendas({ companyId, accountId, onAccountChange, accounts
   return <section className={`${styles.panel} ${styles.salesPanel}`} aria-labelledby="sales-title">
     <div className={`${styles.panelHeading} ${!expanded ? styles.panelHeadingCollapsed : ''}`}><div><h2 id="sales-title">Vendas · {sales.length}</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<DateOrderButton context="Vendas" order={order} onChange={setOrder} disabled={loading} /><Tooltip texto="Atualizar vendas e envios"><button type="button" className={styles.refreshSales} onClick={onRefresh} disabled={loading}>{loading ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Vendas" controlsId="sales-content" expandido={expanded} onClick={() => onExpandedChange(!expanded)} corPrimaria={brand} darkMode={dark} /></div></div>
     <div id="sales-content" hidden={!expanded}>
-    <MarketplaceSelect label="Conta das vendas" value={accountId} placeholder="Todas as contas" onChange={onAccountChange} options={[{ value: '', label: 'Todas as contas' }, ...accounts.map((account) => ({ value: account.id, label: accountDisplayName(account) }))]} className={styles.salesAccountFilter} />
-    <p className={styles.salesScopeHelp}>Pedidos únicos no período e na situação selecionados no cabeçalho. O sino reúne todas as contas.</p>
+    <div className={styles.salesListFilters}>
+      <MarketplaceSelect label="Conta das vendas" value={accountId} placeholder="Todas as contas" onChange={onAccountChange} options={[{ value: '', label: 'Todas as contas' }, ...accounts.map((account) => ({ value: account.id, label: accountDisplayName(account) }))]} className={styles.salesAccountFilter} />
+      <MarketplaceSelect label="Situação" value={group} placeholder="Todas as situações" leadingIcon={<Icon name="filter" size={16} />} detailAsBadge onChange={value => onGroupChange(value as SaleGroup | '')} options={[
+        { value: '', label: 'Todas', detail: String(total) },
+        ...orderedSaleGroups(counts).map(({ value, label }) => ({ value, label, detail: String(counts[value]) })),
+      ]} />
+    </div>
+    <p className={styles.salesScopeHelp}>Vale a última situação escolhida, aqui ou no cabeçalho. O período é o mesmo.</p>
     {awaitingUpdates > 0 && <p className={styles.salesScopeHelp} role="status">Há atualizações de vendas em processamento. Use Atualizar para conferir novamente.</p>}
     {printError && <p className={styles.salesError} role="alert">{printError}</p>}
     {error ? <p className={styles.salesError} role="alert">{error}</p> : loading ? <p className={styles.salesEmpty} role="status">Carregando vendas…</p> : !sales.length ? <p className={styles.salesEmpty}>Nenhuma venda encontrada nos filtros selecionados.</p> : <div className={styles.salesList}>{orderedSales.map((sale) => <article key={sale.id} className={styles.saleCard}>

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.12 -->
+<!-- ava-version: 3.0.0.13 -->
+
+> Revisão 3.0.0.13: seletor Situação no bloco Vendas do Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile nativa ou no AvantaPreços.
 
 > Revisão 3.0.0.12: filtros iniciais em Todos e seleção global no header do
 > Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa/AvantaPreços.

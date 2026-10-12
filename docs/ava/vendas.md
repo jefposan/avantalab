@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.12 -->
+<!-- ava-version: 3.0.0.13 -->
+
+> Revisão 3.0.0.13: situações sincronizadas entre bloco e header Marketplaces.
+> Sem impacto operacional no AvantaVendas; estoques continuam separados.
 
 > Revisão 3.0.0.12: filtros Todos e contas independentes no Marketplaces Web.
 > Sem impacto operacional no AvantaVendas; estoques continuam separados.

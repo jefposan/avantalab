@@ -17,7 +17,9 @@
 @media (max-width: 760px) { .salesDateFilters > div > div { height: 48px; } }
 .salesDateFilters button:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 28%, transparent); outline-offset: 2px; }
 .salesStatusFilter { width: 210px; }
-.salesAccountFilter { max-width: 340px; margin-bottom: 12px; }
+.salesListFilters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 692px; gap: 12px; margin-bottom: 12px; }
+.salesAccountFilter { min-width: 0; }
+@media (max-width: 760px) { .salesListFilters { grid-template-columns: minmax(0, 1fr); } }
 .announcedAccountFilter { width: 210px; min-width: 0; }
 .announcedAccountFilter .selectTrigger { min-height: 44px; height: 44px; }
 @media (max-width: 760px) { .announcedAccountFilter .selectTrigger { min-height: 48px; height: 48px; } }
